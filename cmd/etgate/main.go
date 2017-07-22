@@ -17,18 +17,23 @@ import (
 func main() {
     var RootCmd = &cobra.Command {
         Use: "etgate",
-        Short: "ethereum log relaying plugin for basecoin"
+        Short: "ethereum log relaying plugin for basecoin",
     }
 
     RootCmd.AddCommand(
         commands.InitCmd,
         commands.StartCmd,
+        commands.RelayCmd,
+        GateCmd,
         commands.UnsafeResetAllCmd,
         commands.VersionCmd,
     )
+    
+    commands.RegisterStartPlugin("ETGATE", func() types.Plugin { return etgate.New() })
 
-    commands.RegisterStartPlugin("etgate", func() types.Plugin { return etgate.New() })
     cmd := cli.PrepareMainCmd(RootCmd, "ETG", os.ExpandEnv("$HOME/.etgate"))
-    cmd.Excute()
+    if err := cmd.Execute(); err != nil {
+        os.Exit(1)
+    }
 }
 
