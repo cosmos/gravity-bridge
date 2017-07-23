@@ -12,6 +12,8 @@ import (
     cmn "github.com/tendermint/tmlibs/common"
 
     eth "github.com/ethereum/go-ethereum/core/types"
+    "github.com/ethereum/go-ethereum/common"
+//    "github.com/ethereum/go-ethereum/accounts/abi"
 //    "github.com/ethereum/go-ethereum/consensus/ethash"
 //    "github.com/ethereum/go-ethereum/core"
 )
@@ -22,6 +24,7 @@ const (
     _GENESIS = "genesis"
     _CONFIRM = "confirm"
     _BUFFER = "buffer"
+    _CONTRACT = "contract"
 
     confirmation = 12
 )
@@ -40,6 +43,18 @@ type ETGateUpdateChainTx struct {
 
 func (tx ETGateUpdateChainTx) Validate() abci.Result {
     // TODO: ethash.VerifyHeader?
+    return abci.OK
+}
+
+type ETGateRegisterContractTx struct {
+    Address string 
+    Code string
+}
+
+func (tx ETGateRegisterContractTx) Validate() abci.Result {
+    if !common.IsHexAddress(tx.Address) {
+        return abci.ErrInternalError.AppendLog("Invalid address format")
+    }
     return abci.OK
 }
 
@@ -76,16 +91,23 @@ func (gp *ETGatePlugin) RunTx(store types.KVStore, ctx types.CallContext, txByte
     if err := wire.ReadBinaryBytes(txBytes, &tx); err != nil {
         return abci.ErrBaseEncodingError.AppendLog("Error decoding tx: " + err.Error())
     }
-    
+
+    res := tx.Validate()
+    if res.IsErr() {
+        return res.PrependLog("Validate failed: ")
+    }
+
     sm := &ETGateStateMachine{store, ctx, abci.OK}
 
     switch tx := tx.(type) {
     case ETGateUpdateChainTx:
-        sm.runUpdateChainTx(gp, tx)
+        sm.runUpdateChainTx(tx)
+    case ETGateRegisterContractTx:
+        sm.runRegisterContractTx(tx)
 //    case ETGatePacketCreateTx:
-//        sm.runPacketCreateTx(gp, tx)
+//        sm.runPacketCreateTx(tx)
     case ETGatePacketPostTx:
-        sm.runPacketPostTx(gp, tx)
+        sm.runPacketPostTx(tx)
     }
 
     return sm.res
@@ -97,7 +119,7 @@ type ETGateStateMachine struct {
     res abci.Result
 }
 
-func (sm *ETGateStateMachine) runUpdateChainTx(gp *ETGatePlugin, tx ETGateUpdateChainTx) {
+func (sm *ETGateStateMachine) runUpdateChainTx(tx ETGateUpdateChainTx) {
     hash := tx.Header.Hash().Str()
     bufferKey := toKey(_ETGATE, _BLOCKCHAIN, _BUFFER, hash)
 
@@ -107,9 +129,11 @@ func (sm *ETGateStateMachine) runUpdateChainTx(gp *ETGatePlugin, tx ETGateUpdate
         exists, err := load(sm.store, bufferKey, &ancestor)
         if err != nil {
             sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Loading ancestor header: %+v", err.Error()))
+            return
         }
         if !exists {
             sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Missing ancestor header"))
+            return
         }
     }
 
@@ -125,7 +149,25 @@ func (sm *ETGateStateMachine) runUpdateChainTx(gp *ETGatePlugin, tx ETGateUpdate
     save(sm.store, confirmKey, ancestor)
 }
 
-func (sm *ETGateStateMachine) runPacketPostTx(gp *ETGatePlugin, tx ETGatePacketPostTx) {
+func (sm *ETGateStateMachine) runRegisterContractTx(tx ETGateRegisterContractTx) {
+    var code string
+    conKey := toKey(_ETGATE, _CONTRACT, tx.Address)
+    exists, err := load(sm.store, conKey, &code)
+    if err != nil {
+        sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Loading code of address: %+v", tx.Address))
+        return
+    }
+    if !exists {
+        save(sm.store, conKey, tx.Code)
+    } else if code != tx.Code {
+        sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Contract already registered with diffrent code: %s", code))
+        return
+    }
+    // does nothing if contract already registered
+}
+
+func (sm *ETGateStateMachine) runPacketPostTx(tx ETGatePacketPostTx) {
+    
 }
 
 func (gp *ETGatePlugin) Name() string{
