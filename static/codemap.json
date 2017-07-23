@@ -1,0 +1,50 @@
+{
+    "test": [
+      {
+        "constant":false,
+        "inputs":[
+          {
+            "name":"n",
+            "type":"uint256"
+          },
+          {
+            "name":"b",
+            "type":"bool"
+          },
+          {
+            "name":"s",
+            "type":"string"
+          }
+        ],
+        "name":"makeEvent",
+        "outputs":[
+
+        ],
+        "payable":false,
+        "type":"function"
+      },
+      {
+        "anonymous":false,
+        "inputs":[
+          {
+            "indexed":false,
+            "name":"n",
+            "type":"uint256"
+          },
+          {
+            "indexed":true,
+            "name":"b",
+            "type":"bool"
+          },
+          {
+            "indexed":false,
+            "name":"s",
+            "type":"string"
+          }
+        ],
+        "name":"Event",
+        "type":"event"
+      }
+    ]
+  }
+]
