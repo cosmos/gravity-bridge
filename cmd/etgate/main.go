@@ -31,7 +31,7 @@ func main() {
     
     commands.RegisterStartPlugin("ETGATE", func() types.Plugin { return etgate.New() })
 
-    cmd := cli.PrepareMainCmd(RootCmd, "ETG", os.ExpandEnv("$HOME/.etgate"))
+    cmd := cli.PrepareMainCmd(RootCmd, "ETGATE", os.ExpandEnv("$HOME/.etgate/server"))
     if err := cmd.Execute(); err != nil {
         os.Exit(1)
     }

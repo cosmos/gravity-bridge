@@ -61,13 +61,15 @@ var (
     testnetFlag bool
     datadirFlag string
     ipcpathFlag string
-
     nodeaddrFlag string
+    chainIDFlag string
 )
 
 func init() {
     flags := []commands.Flag2Register {
         {&testnetFlag, "testnet", false, "Ropsten network: pre-configured test network"},
+        {&nodeaddrFlag, "nodeaddr", "tcp://localhost:46657", "Node address for tendermint chain"},
+        {&chainIDFlag, "chain-id", "etgate-chain", "Chain ID"},
     }
 
     commands.RegisterPersistentFlags(GateCmd, flags)
@@ -75,7 +77,6 @@ func init() {
     startFlags := []commands.Flag2Register {
         {&datadirFlag, "datadir", filepath.Join(os.Getenv("HOME"), ".ethereum"), "Data directory for the databases and keystore"},
         {&ipcpathFlag, "ipcpath", "geth.ipc", "Filename for IPC socket/pipe within the datadir"},
-        {&nodeaddrFlag, "nodeaddr", "tcp://localhost:46657", "Node address for tendermint chain"},
     }
 
     commands.RegisterFlags(GateStartCmd, startFlags)
@@ -118,9 +119,14 @@ func gateInitCmd(cmd *cobra.Command, args []string) error {
         return err
     }
 
+    mintkey, err := commands.LoadKey(filepath.Join(os.Getenv("HOME"), ".etgate", "server", "key.json"))
+    if err != nil {
+        return err
+    }
+
     g := gateway {
         mintclient: mintclient.NewHTTP(nodeaddrFlag, "/websocket"),
-//        mintkey: ,
+        mintkey: mintkey,
     }
 
     for _, con := range data {
@@ -333,22 +339,24 @@ func (g *gateway) appTx(etgateTx etgate.ETGateTx) error {
         etgate.ETGateTx `json:"unwrap"`
     }{etgateTx}))
 
-    dummyCoins := bctypes.Coin{Denom: "dummy", Amount: 1}
+    smallCoins := bctypes.Coin{Denom: "mycoin", Amount: 1}
 
-    input := bctypes.NewTxInput(g.mintkey.PubKey, bctypes.Coins{dummyCoins}, sequence)
+    input := bctypes.NewTxInput(g.mintkey.PubKey, bctypes.Coins{smallCoins}, sequence)
     tx := &bctypes.AppTx {
         Gas: 0,
-        Fee: dummyCoins,
+        Fee: smallCoins,
         Name: "ETGATE",
         Input: input,
         Data: data,
     }
-    if testnetFlag {
+/*    if testnetFlag {
         tx.Input.Signature = g.mintkey.Sign(tx.SignBytes("ethereum-ropsten"))
     } else {
         tx.Input.Signature = g.mintkey.Sign(tx.SignBytes("ethereum-mainnet"))
     }
-
+*/
+    fmt.Println(chainIDFlag)
+    tx.Input.Signature = g.mintkey.Sign(tx.SignBytes(chainIDFlag))
     txBytes := []byte(wire.BinaryBytes(struct {
         bctypes.Tx `json:"unwrap"`
     }{tx}))

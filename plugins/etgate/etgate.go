@@ -37,6 +37,14 @@ type ETGateTx interface {
     Validate() abci.Result
 }
 
+var _ = wire.RegisterInterface (
+    struct { ETGateTx }{},
+    wire.ConcreteType{ETGateRegisterContractTx{}, ETGateTxTypeRegisterContract},
+    wire.ConcreteType{ETGateUpdateChainTx{}, ETGateTxTypeUpdateChain},
+//    wire.ConcreteType{ETGatePacketCreateTx{}, ETGateTxTypePacketCreate},
+    wire.ConcreteType{ETGatePacketPostTx{}, ETGateTxTypePacketPost},
+)
+
 type ETGateUpdateChainTx struct {
     Header eth.Header
 }
@@ -55,10 +63,15 @@ func (tx ETGateRegisterContractTx) Validate() abci.Result {
     if !common.IsHexAddress(tx.Address) {
         return abci.ErrInternalError.AppendLog("Invalid address format")
     }
+    codemap := get()
+    if _, exists := codemap[tx.Code]; !exists {
+        return abci.ErrInternalError.AppendLog(cmn.Fmt("Invalid code"))
+    }
     return abci.OK
 }
 
 type ETGatePacketPostTx struct {
+    Name string
     Proof LogProof
 }
 
@@ -70,10 +83,10 @@ func (tx ETGatePacketPostTx) Validate() abci.Result {
 //}
 
 const (
-    ETGateTxTypeUpdateChainTx = byte(0x01)
-    ETGateTxTypeRegisterContractTx = byte(0x02)
-//    ETGateTxTypePacketCreateTx = byte(0x03)
-    ETGateTxTypePacketPostTx = byte(0x04)    
+    ETGateTxTypeUpdateChain = byte(0x01)
+    ETGateTxTypeRegisterContract = byte(0x02)
+//    ETGateTxTypePacketCreate = byte(0x03)
+    ETGateTxTypePacketPost = byte(0x04)    
 
     ETGateCodeConflictingChain = abci.CodeType(1001)
 )
@@ -150,6 +163,7 @@ func (sm *ETGateStateMachine) runUpdateChainTx(tx ETGateUpdateChainTx) {
 }
 
 func (sm *ETGateStateMachine) runRegisterContractTx(tx ETGateRegisterContractTx) {
+    
     var code string
     conKey := toKey(_ETGATE, _CONTRACT, tx.Address)
     exists, err := load(sm.store, conKey, &code)
@@ -167,11 +181,30 @@ func (sm *ETGateStateMachine) runRegisterContractTx(tx ETGateRegisterContractTx)
 }
 
 func (sm *ETGateStateMachine) runPacketPostTx(tx ETGatePacketPostTx) {
-    
+    var code string
+    log := tx.Proof.Log()
+    conKey := toKey(_ETGATE, _CONTRACT, log.Address.Str())
+    exists, err := load(sm.store, conKey, &code)
+    if err != nil {
+        sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Loading code of log: %s", log.Address.Str()))
+        return
+    }
+    if !exists { 
+        sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Contract not registered: %s", log.Address.Str()))
+        return
+    }
+   
+    codemap := get()
+
+    res := codemap[code].Run(sm, tx.Name, log)
+    if res.IsErr() {
+        sm.res = res.PrependLog("runPacketPostTx failed: ")
+        return
+    }
 }
 
 func (gp *ETGatePlugin) Name() string{
-    return "etgate"
+    return "ETGATE"
 }
 
 func (gp *ETGatePlugin) SetOption(store types.KVStore, key string, value string) (log string) {
