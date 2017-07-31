@@ -108,7 +108,12 @@ func (abi ABI) Unpack(v interface{}, name string, log types.Log) error {
     }
 
     var inter interface{}
-    iIndexed := 0
+    var iIndexed int
+    if event.Anonymous {
+        iIndexed = 0
+    } else {
+        iIndexed = 1
+    }
     iNormal := 0
 
     for _, input := range event.Inputs {
