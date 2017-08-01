@@ -42,7 +42,7 @@ echo "etcli tx send"
 
 $etcli tx send --amount=100000mycoin --sequence=1 --to=$RELAY_ADDR --name=money
 
-cp $SERVER/../abimap.json $SERVER
+cp ../../static/abimap.json $SERVER
 
 sleep 2
 

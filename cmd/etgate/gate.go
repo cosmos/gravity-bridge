@@ -174,7 +174,6 @@ func gateStartCmd(cmd *cobra.Command, args []string) error {
         return err
     }
    
-    fmt.Println("aa")
     var cons []etgate.Contract
     for _, con := range data {
         addr := con["address"].(string)
@@ -195,7 +194,7 @@ func gateStartCmd(cmd *cobra.Command, args []string) error {
     if err != nil {
         return err
     }
-    fmt.Println("bb")
+
 
     gateway.start()
 
@@ -311,8 +310,6 @@ func (g *gateway) loop() {
     for {
         select {
         case head := <-heads:
-            fmt.Println("Received new header")
-            //debugging 
             // Check if there is no submitted headers
             if g.recentHeader() == nil {
                 header, err := rlp.EncodeToBytes(head)
