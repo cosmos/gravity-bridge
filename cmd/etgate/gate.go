@@ -10,7 +10,6 @@ import (
     "encoding/json"
     "io/ioutil"
     "math/big"
-    "time"
     "strconv"
 
     "github.com/spf13/cobra"
@@ -36,7 +35,8 @@ import (
 )
 
 var ( 
-    chunksize = big.NewInt(1024)
+    one = big.NewInt(1)
+    chunksize = big.NewInt(16)
 )
 
 type gateway struct {
@@ -173,7 +173,8 @@ func gateStartCmd(cmd *cobra.Command, args []string) error {
     if err != nil {
         return err
     }
-    
+   
+    fmt.Println("aa")
     var cons []etgate.Contract
     for _, con := range data {
         addr := con["address"].(string)
@@ -194,6 +195,7 @@ func gateStartCmd(cmd *cobra.Command, args []string) error {
     if err != nil {
         return err
     }
+    fmt.Println("bb")
 
     gateway.start()
 
@@ -310,8 +312,26 @@ func (g *gateway) loop() {
         select {
         case head := <-heads:
             fmt.Println("Received new header")
+            //debugging 
+            // Check if there is no submitted headers
+            if g.recentHeader() == nil {
+                header, err := rlp.EncodeToBytes(head)
+                if err != nil {
+                    fmt.Printf("Failed to encode header: \"%s\".", err)
+                    continue
+                }
+                updateTx := etgate.ETGateUpdateChainTx {
+                    Headers: [][]byte{ header },
+                }
+                if err := g.appTx(updateTx); err != nil {
+                    fmt.Printf("Error sending updateTx: \"%s\".", err)
+                    continue
+                }
+                continue
+            }
+
             // Check if the header already exists
-            key := fmt.Sprintf("etgate,blockchain,buffer,%s", head.Hash().Str())
+            key := fmt.Sprintf("etgate,blockchain,buffer,%v", head.Hash().Hex())
             query, err := queryWithClient(g.mintclient, []byte(key))
             if err != nil {
                 fmt.Printf("Failed to query: \"%s\"", err)
@@ -319,21 +339,28 @@ func (g *gateway) loop() {
             }
             
             if len(query.Value) != 0 {
+                fmt.Printf("Header already submitted: %v. Skipping.", head.Number)
+                // TODO: submit log before skip
                 continue
             }
 
             // Check the the header's parent exists
-            // If it does, updateTx current header.
-            key = fmt.Sprintf("etgate,blockchain,buffer,%s", head.ParentHash.Str())
+            // If it does, updateTx only the current header.
+            key = fmt.Sprintf("etgate,blockchain,buffer,%v", head.ParentHash.Hex())
             query, err = queryWithClient(g.mintclient, []byte(key))
             if err != nil {
                 fmt.Printf("Failed to query: \"%s\"", err)
                 continue
             }
-
-            if len(query.Value) != 0 {
+   
+            if len(query.Value) != 0 {    
+                header, err := rlp.EncodeToBytes(head)
+                if err != nil {
+                    fmt.Printf("Failed to encode header: \"%s\".\n", err)
+                    continue
+                }
                 updateTx := etgate.ETGateUpdateChainTx {
-                    Header: *head,
+                    Headers: [][]byte{ header },
                 }
                 if err := g.appTx(updateTx); err != nil {
                     fmt.Printf("Error sending updateTx: \"%s\". Skipping.\n", err)
@@ -358,71 +385,86 @@ func (g *gateway) recentHeader() *big.Int { // in mintchain
         panic("Error querying recent chain header")
     }
 
-    var recent *big.Int
+    recent := new(big.Int)
     if len(query.Value) == 0 {
-        recent = big.NewInt(0)
+        recent = nil 
     } else {
-        wire.ReadBinaryBytes(query.Value, recent)
+        var recentNumber uint64
+        if err = wire.ReadBinaryBytes(query.Value, &recentNumber); err != nil {
+            panic(err)
+        }/*
+        var recentInt int64
+        recentInt, err = strconv.ParseInt(recentNumber, 10, 64)
+        if err != nil {
+            panic(err)
+        }*/
+        recent.SetUint64(recentNumber)
     }
 
     return recent
 }
 
 func (g *gateway) sync(recent *big.Int, to *big.Int) { // (recent, to]
-    one := big.NewInt(1)
-    recent.Add(recent, one)
+    temp := big.NewInt(0) // or whatever
+
+    var err error
 
     for recent.Cmp(to) == -1 {
-        header, err := g.ethclient.HeaderByNumber(context.Background(), recent)
-        if err != nil {
-            fmt.Printf("Error retrieving headers: \"%s\". Retrying...\n", err)
-            time.Sleep(time.Second)
-            continue
-        }
-
-        key := fmt.Sprintf("etgate,blockchain,buffer,%s", header.Hash().Str())
-        query, err := queryWithClient(g.mintclient, []byte(key))
-        if err != nil {
-            fmt.Printf("Error querying header: \"%s\", Retrying...\n", err)
-            time.Sleep(time.Second)
-            continue
-        }
-        if len(query.Value) != 0 {
-            fmt.Printf("Header is already submitted. Skipping.")
-            continue
+        var headers [][]byte
+        if recent.Cmp(temp.Sub(to, chunksize)) == -1 {
+            headers, err = g.getHeaders(temp.Add(recent, one), recent.Add(recent, chunksize))
+            if err != nil {
+                panic(err)
+            }
+        } else {
+            headers, err = g.getHeaders(temp.Add(recent, one), recent.Add(recent, one))
+            if err != nil {
+                panic(err)
+            }
         }
 
         updateTx := etgate.ETGateUpdateChainTx {
-            Header: *header,
+            Headers: headers,
         }
-        if err := g.appTx(updateTx); err != nil {
+        if err = g.appTx(updateTx); err != nil {
             fmt.Printf("Error sending updateTx: \"%s\". Skipping.\n", err)
-            recent.Add(recent, one)
             continue
         }
 
-        fmt.Printf("Submitted header: %v\n", recent)
-
-        recent.Add(recent, one)
+        fmt.Printf("Submitted headers: %v\n", recent)
     }
 }
 
-func (g *gateway) submit(blocknumber *big.Int) error {
-    header, err := g.ethclient.HeaderByNumber(context.Background(), blocknumber)
-    if err != nil {
-        return err
-    }
+func (g *gateway) getHeaders(from *big.Int, to *big.Int) ([][]byte, error) { // [from, to]
+    res := [][]byte{}
 
-    updateTx := etgate.ETGateUpdateChainTx {
-        Header: *header,
-    }
-    if err := g.appTx(updateTx); err != nil {
-        return err
-    }
+    for i := from; i.Cmp(to) != 1; i.Add(i, one) {
+        header, err := g.ethclient.HeaderByNumber(context.Background(), i)
+        if err != nil {
+            fmt.Printf("Error retrieving headers: \"%s\".\n", err)
+            return nil, err
+        }
 
-    g.post(blocknumber)
+        key := fmt.Sprintf("etgate,blockchain,buffer,%s", header.Hash().Hex())
+        query, err := queryWithClient(g.mintclient, []byte(key))
+        if err != nil {
+            fmt.Printf("Error querying header: \"%s\".\n", err)
+            return nil, err
+        }
+        if len(query.Value) != 0 {
+            fmt.Printf("Header already submitted: %v. Skipping.\n", i)
+            continue
+        }
 
-    return nil
+        headerb, err := rlp.EncodeToBytes(header)
+        if err != nil {
+            fmt.Printf("Error querying header: \"%s\".\n", err)
+            return nil, err
+        }
+
+        res = append(res, headerb)
+    }
+    return res, nil
 }
 
 func (g *gateway) post(blocknumber *big.Int) {

@@ -5,7 +5,7 @@ import (
     "strings"
     "errors"
     "net/url"
-    "math/big"
+    "strconv"
 
     abci "github.com/tendermint/abci/types"
     "github.com/tendermint/basecoin/types"
@@ -14,6 +14,7 @@ import (
 
     eth "github.com/ethereum/go-ethereum/core/types"
     "github.com/ethereum/go-ethereum/common"
+    "github.com/ethereum/go-ethereum/rlp"
 //    "github.com/ethereum/go-ethereum/accounts/abi"
 //    "github.com/ethereum/go-ethereum/consensus/ethash"
 //    "github.com/ethereum/go-ethereum/core"
@@ -36,11 +37,19 @@ type Contract struct {
     Code string
 }
 
+type Header struct {
+    ParentHash common.Hash
+    Hash common.Hash
+    Number uint64
+    ReceiptHash common.Hash
+    Time uint64
+}
+
 type ETGatePluginState struct {
     // @[:etgate, :contract, Address] <~
     // @[:etgate, :blockchain, :buffer, Hash] <~ 
     // @[:etgate, :blockchain, :confirm, Height] <~
-    // @[:etgate, :blockchain, :confirm] <~
+    // @[:etgate, :blockchain, :recent] <~
     // @[:etgate, :egress, Dst, Sequence]
     // @[:etgate, :ingress, Src, Sequence] <~
 }
@@ -58,7 +67,7 @@ var _ = wire.RegisterInterface (
 )
 
 type ETGateUpdateChainTx struct {
-    Header eth.Header
+    Headers [][]byte
 }
 
 func (tx ETGateUpdateChainTx) Validate() abci.Result {
@@ -102,6 +111,7 @@ const (
     ETGateCodeConflictingChain = abci.CodeType(1001)
     ETGateCodeMissingAncestor = abci.CodeType(1002)
     ETGateCodeExistingHeader = abci.CodeType(1003)
+    ETGateCodeInvalidHeader = abci.CodeType(1004)
 )
 
 type ETGatePlugin struct {
@@ -145,60 +155,101 @@ type ETGateStateMachine struct {
     res abci.Result
 }
 
-func (sm *ETGateStateMachine) getAncestor(header eth.Header) (eth.Header, abci.Result) {
+func (sm *ETGateStateMachine) getAncestor(header Header) (Header, abci.Result) {
+    var genesis uint64
+    genesisKey := toKey(_ETGATE, _BLOCKCHAIN, _GENESIS)
+    exists, err := load(sm.store, genesisKey, &genesis)
+    if !exists {
+        return Header{}, abci.ErrInternalError.AppendLog(cmn.Fmt("Genesis not exists: %s", err))
+    }
+    if err != nil {
+        return Header{}, abci.ErrInternalError.AppendLog(cmn.Fmt("Error loading genesis: %s", err))
+    }
+
     for i := 0; i < confirmation; i++ {
-        if header.Number.Cmp(big.NewInt(0)) == 0 {
+        if header.Number == genesis {
             return header, abci.OK
         }
-        bufferKey := toKey(_ETGATE, _BLOCKCHAIN, _BUFFER, header.ParentHash.Str())
+        bufferKey := toKey(_ETGATE, _BLOCKCHAIN, _BUFFER, header.ParentHash.Hex())
         exists, err := load(sm.store, bufferKey, &header)
         if err != nil {
-            return eth.Header{}, abci.ErrInternalError.AppendLog(cmn.Fmt("Error loading parent header: %s", err))
+            return Header{}, abci.ErrInternalError.AppendLog(cmn.Fmt("Error loading parent header: %s", err))
         }
         if !exists {
             var res abci.Result
             res.Code = ETGateCodeMissingAncestor
             res.Log = "Missing ancestor"
-            return eth.Header{}, res
+            return Header{}, res
         }
     }
     return header, abci.OK
 }
 
-func (sm *ETGateStateMachine) runUpdateChainTx(tx ETGateUpdateChainTx) abci.Result {
+func (sm *ETGateStateMachine) runUpdateChainTx(tx ETGateUpdateChainTx) {
+    for _, headerb := range tx.Headers {
+        var header eth.Header
+        if err := rlp.DecodeBytes(headerb, &header); err != nil {
+            sm.res.Code = ETGateCodeInvalidHeader
+            sm.res.Log = "Invalid header"
+            return
+        }
+        res := sm.updateHeader(Header {
+            ParentHash: header.ParentHash,
+            Hash: header.Hash(),
+            ReceiptHash: header.ReceiptHash,
+            Number: header.Number.Uint64(),
+            Time: header.Time.Uint64(),
+        })
+        if res.IsErr() {
+            sm.res = res.PrependLog(cmn.Fmt("In %vth header: ", header.Number))
+            return
+        }
+    }
+}
+
+func (sm *ETGateStateMachine) updateHeader(header Header) abci.Result {
     var res abci.Result
 
-    header := tx.Header
+    bufferKey := toKey(_ETGATE, _BLOCKCHAIN, _BUFFER, header.Hash.Hex())
+    recentKey := toKey(_ETGATE, _BLOCKCHAIN, _RECENT)
 
-    bufferKey := toKey(_ETGATE, _BLOCKCHAIN, _BUFFER, header.Hash().Str())
-    if exists(sm.store, bufferKey) {
-        res.Code = ETGateCodeExistingHeader
-        res.Log = "Existing header"
-        return res
+    if !exists(sm.store, bufferKey) {
+        save(sm.store, bufferKey, header)
     }
-    save(sm.store, bufferKey, header)
+
+    genesisKey := toKey(_ETGATE, _BLOCKCHAIN, _GENESIS)
+    if !exists(sm.store, genesisKey) { // genesis
+        confirmKey := toKey(_ETGATE, _BLOCKCHAIN, _CONFIRM, strconv.FormatUint(header.Number, 10))
+        save(sm.store, recentKey, header.Number)
+        save(sm.store, genesisKey, header.Number)
+        save(sm.store, confirmKey, header)
+        return abci.OK
+    }
+
 
     ancestor, res := sm.getAncestor(header)
     if res.IsErr() {
         return res
     }
     
-    var confirmed eth.Header
-    confirmKey := toKey(_ETGATE, _BLOCKCHAIN, _CONFIRM, ancestor.Number.String())
+    var confirmed Header
+    confirmKey := toKey(_ETGATE, _BLOCKCHAIN, _CONFIRM, strconv.FormatUint(ancestor.Number, 10))
     exists, err := load(sm.store, confirmKey, &confirmed)
     if err != nil {
         return abci.ErrInternalError.AppendLog(cmn.Fmt("Loading confirmed header: %s", err))
     }
-    if exists && confirmed.Hash() != ancestor.Hash() {
-        res.Code = ETGateCodeConflictingChain
-        res.Log = "Conflicting chain"
-        return res
-    } else if !exists {
+    
+    if exists {    
+        if confirmed.Hash != ancestor.Hash {
+            res.Code = ETGateCodeConflictingChain
+            res.Log = "Conflicting chain"
+            return res
+        } 
+    } else {
         save(sm.store, confirmKey, ancestor)
     }
 
-    recentKey := toKey(_ETGATE, _BLOCKCHAIN, _CONFIRM)
-    save(sm.store, recentKey, ancestor)
+    save(sm.store, recentKey, ancestor.Number)
   
     return abci.OK
 }
@@ -215,7 +266,7 @@ func (sm *ETGateStateMachine) runRegisterContractTx(tx ETGateRegisterContractTx)
     if !exists {
         save(sm.store, conKey, tx.Code)
     } else if code != tx.Code {
-        sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Contract already registered with diffrent code: %s", code))
+        sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Contract already registered with diffrent code: %s", code)) // TODO: change to code
         return
     }
     // does nothing if contract already registered
@@ -232,7 +283,7 @@ func (sm *ETGateStateMachine) runPacketPostTx(tx ETGatePacketPostTx) {
         return
     }
     if !exists { 
-        sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Contract not registered: %s", log.Address.Str()))
+        sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Contract not registered: %s", log.Address.Str())) // TODO: change to code
         return
     }
     fmt.Println("bb")
