@@ -7,7 +7,7 @@ import (
     "io/ioutil"
     "encoding/json"
     "reflect"
-    "math/big"
+    "strconv"
 
     abci "github.com/tendermint/abci/types"
 
@@ -24,26 +24,66 @@ const (
     _CODE = "code"
 )
 
+type Query struct {
+   ethereum.FilterQuery
+   Name string
+}
+
 type Code struct {
     abi abi.ABI 
-    run func(*ETGateStateMachine, interface{}) abci.Result
+    run func(*ETGateStateMachine, common.Address, Payload) abci.Result
     format map[string]reflect.Type
 }
 
-func (code Code) Run(sm *ETGateStateMachine, name string, log types.Log) abci.Result {
-    v := reflect.New(code.format[name]) 
-    if err := code.abi.Unpack(v, name, log); err != nil {
-        return abci.ErrInternalError.AppendLog("Error unpacking log")
+func savePayload(sm *ETGateStateMachine, addr common.Address, payload Payload) abci.Result {
+    packetKeyIngress := toKey(_ETGATE, _INGRESS,
+        addr.Hex(),
+        strconv.FormatUint((payload).Sequence(), 10),
+    )
+    if exists(sm.store, packetKeyIngress) {
+        var res abci.Result
+        res.Code = ETGateCodePacketAlreadyExists
+        res.Log = "Packet already exists"
+        return res
     }
-    return code.run(sm, v)
+    save(sm.store, packetKeyIngress, payload)
+    return abci.OK
 }
 
-func (code Code) Query(addr common.Address) []ethereum.FilterQuery {
-    res := make([]ethereum.FilterQuery, len(code.abi.Events))
+func (code Code) Run(sm *ETGateStateMachine, name string, log types.Log) abci.Result {
+    f, ok := code.format[name]
+    if !ok {
+        var res abci.Result
+        res.Code = ETGateCodeInvalidEventName
+        res.Log = "Invalid event name"
+        return res
+    }
+    v := reflect.New(f) 
+    if !v.CanInterface() {
+        return abci.ErrInternalError.AppendLog("Cannot convert reflect value to interface")
+    }
+    payload := v.Interface().(Payload)
+
+    if err := code.abi.Unpack(payload, name, log); err != nil {
+        return abci.ErrInternalError.AppendLog("Error unpacking log")
+    }
+
+    if res := savePayload(sm, log.Address, payload); res.IsErr() {
+        return res
+    }
+
+    return code.run(sm, log.Address, payload)
+}
+
+func (code Code) Query(addr common.Address) []Query {
+    res := []Query{}
     for _, event := range code.abi.Events {
-        res = append(res, ethereum.FilterQuery {
-            Addresses: []common.Address{addr},
-            Topics: [][]common.Hash{{event.Id()}},
+        res = append(res, Query {
+            Name: event.Name,
+            FilterQuery: ethereum.FilterQuery {
+                Addresses: []common.Address{ addr },
+                Topics: [][]common.Hash{{ event.Id() }},
+            },
         })
     }
     return res
@@ -81,10 +121,10 @@ func GetCodemap() map[string]*Code {
 
 func genCodemap(abimap map[string]abi.ABI) map[string]*Code {
     codes := map[string]*Code {
-        "test": &Code {
-            run: runTestCode,
+        "data": &Code {
+            run: runDataCode,
             format: map[string]reflect.Type {
-                "Event": reflect.TypeOf(TestEvent{}),
+                "Submit": reflect.TypeOf(DataSubmit{}),
             },
         },
         "token": &Code {
@@ -102,38 +142,50 @@ func genCodemap(abimap map[string]abi.ABI) map[string]*Code {
     return codes
 }
 
-type TestEvent struct {
-    N *big.Int
-    B bool
-    S string
+type Payload interface {
+    Sequence() uint64
+}
+
+type DataSubmit struct {
+    Data []byte
+    Seq uint64
+}
+
+func (ds DataSubmit) Sequence() uint64 {
+    return ds.Seq
 }
 
 type TokenDeposit struct {
-    From common.Address
-    To common.Address
-    Value *big.Int
-    Name string
+    To common.Address // Assuming (basecoin)commands.Address == (ethereum)common.Address == [20]byte
+    Value uint64
+    Addr common.Address // token contract address
+    Seq uint64
 }
 
-func runTestCode(sm *ETGateStateMachine, test interface{}) abci.Result {
-    switch test := test.(type) {
-    case TestEvent:
-        codeKey := toKey(_ETGATE, _CODE, "test", test.N.String())
-        save(sm.store, codeKey, test)
+func (td TokenDeposit) Sequence() uint64 {
+    return td.Seq
+}
+
+
+func runDataCode(sm *ETGateStateMachine, addr common.Address, data Payload) abci.Result {
+    switch data.(type) {
+    case *DataSubmit:
+        return abci.OK
     default:
-        return abci.ErrInternalError.AppendLog("Type error in runTestCode")
+        return abci.ErrInternalError.AppendLog("Type error in runDataCode")
     }
     return abci.OK
 }
 
-func runTokenCode(sm *ETGateStateMachine, token interface{}) abci.Result {
+
+func runTokenCode(sm *ETGateStateMachine, addr common.Address, token Payload) abci.Result {
     switch token := token.(type) {
-    case TokenDeposit:
+    case *TokenDeposit:
         acc := bctypes.GetAccount(sm.store, token.To[:])
         if acc == nil {
             return abci.ErrInternalError.AppendLog("Destination address does not exist")
         }
-        coins := bctypes.Coins{bctypes.Coin{Denom: token.Name, Amount: token.Value.Int64()}}
+        coins := bctypes.Coins{bctypes.Coin{Denom: fmt.Sprintf("%s,%s", token.Addr.Hex(), addr.Hex()), Amount: int64(token.Value)}} // TODO: check uint64->int64 information loss
         acc.Balance = acc.Balance.Plus(coins)
         bctypes.SetAccount(sm.store, token.To[:], acc)
     default:

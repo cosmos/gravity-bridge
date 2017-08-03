@@ -1,7 +1,6 @@
 package etgate
 
 import (
-    "fmt"
     "strings"
     "errors"
     "net/url"
@@ -28,6 +27,8 @@ const (
     _BUFFER = "buffer"
     _RECENT = "recent"
     _CONTRACT = "contract"
+    _INGRESS = "ingress"
+    _EGRESS = "egress"
 
     confirmation = 12
 )
@@ -88,19 +89,18 @@ func (tx ETGateRegisterContractTx) Validate() abci.Result {
 }
 
 type ETGatePacketPostTx struct {
+    Name string
     Proof LogProof
-    Sequence uint64
 }
 
 func (tx ETGatePacketPostTx) Validate() abci.Result {
-    if !tx.Proof.IsValid() {
-        return abci.ErrInternalError.AppendLog("Invalid Logproof")
-    }
     return abci.OK
 }
 
 //type ETGatePacketPostTx struct {
 //}
+
+//func SaveNewETGatePacket(state types.KVStore, src, dst string, )
 
 const (
     ETGateTxTypeUpdateChain = byte(0x01)
@@ -112,6 +112,11 @@ const (
     ETGateCodeMissingAncestor = abci.CodeType(1002)
     ETGateCodeExistingHeader = abci.CodeType(1003)
     ETGateCodeInvalidHeader = abci.CodeType(1004)
+    ETGateCodeInvalidLogProof = abci.CodeType(1005)
+    ETGateCodeLogHeaderNotFound = abci.CodeType(1006)
+    ETGateCodePacketAlreadyExists = abci.CodeType(1007)
+    ETGateCodeUnregisteredContract = abci.CodeType(1008)
+    ETGateCodeInvalidEventName = abci.CodeType(1009)
 )
 
 type ETGatePlugin struct {
@@ -217,6 +222,7 @@ func (sm *ETGateStateMachine) updateHeader(header Header) abci.Result {
         save(sm.store, bufferKey, header)
     }
 
+    // TODO: use InitChain to submit genesis, delete this code
     genesisKey := toKey(_ETGATE, _BLOCKCHAIN, _GENESIS)
     if !exists(sm.store, genesisKey) { // genesis
         confirmKey := toKey(_ETGATE, _BLOCKCHAIN, _CONFIRM, strconv.FormatUint(header.Number, 10))
@@ -273,23 +279,48 @@ func (sm *ETGateStateMachine) runRegisterContractTx(tx ETGateRegisterContractTx)
 }
 
 func (sm *ETGateStateMachine) runPacketPostTx(tx ETGatePacketPostTx) {
-    fmt.Println("aa")
+   
+    log, err := tx.Proof.Log()
+    if err != nil {
+        sm.res.Code = ETGateCodeInvalidLogProof
+        sm.res.Log = "Invalid log proof"
+        return
+    }
+   
+    var header Header
+    confirmKey := toKey(_ETGATE, _BLOCKCHAIN, _CONFIRM, strconv.FormatUint(tx.Proof.Number, 10))
+       exists, err := load(sm.store, confirmKey, &header)
+    if err != nil {
+        sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Loading corresponding header to submitted log"))
+        return
+    }
+    if !exists {
+        sm.res.Code = ETGateCodeLogHeaderNotFound
+        sm.res.Log = "Log header not found"
+        return
+    }
+    if !tx.Proof.IsValid(header.ReceiptHash) {
+        sm.res.Code = ETGateCodeInvalidLogProof
+        sm.res.Log = "Invalid log proof"
+        return
+    }
+
     var code string
-    log := tx.Proof.Log()
     conKey := toKey(_ETGATE, _CONTRACT, log.Address.Str())
-    exists, err := load(sm.store, conKey, &code)
+    exists, err = load(sm.store, conKey, &code)
     if err != nil {
         sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Loading code of log: %s", log.Address.Str()))
         return
     }
     if !exists { 
-        sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Contract not registered: %s", log.Address.Str())) // TODO: change to code
+        sm.res.Code = ETGateCodeUnregisteredContract
+        sm.res.Log = "Unregistered Contract"
         return
     }
-    fmt.Println("bb")
-//    codemap := get()
 
-    res := /*codemap[code].Run(sm, tx.Name, log)*/ abci.OK
+    codemap := GetCodemap()
+
+    res := codemap[code].Run(sm, tx.Name, log)
     if res.IsErr() {
         sm.res = res.PrependLog("runPacketPostTx failed: ")
         return
@@ -305,6 +336,7 @@ func (gp *ETGatePlugin) SetOption(store types.KVStore, key string, value string)
 }
 
 func (gp *ETGatePlugin) InitChain(store types.KVStore, vals []*abci.Validator) {
+    // TODO: save ethereum genesis block
 }
 
 func (gp *ETGatePlugin) BeginBlock(store types.KVStore, hash []byte, header *abci.Header) {

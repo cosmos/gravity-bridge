@@ -3,6 +3,7 @@ package etgate
 import (
     "bytes"
     "fmt"
+    "errors"
 
     "github.com/ethereum/go-ethereum/core/types"
     "github.com/ethereum/go-ethereum/rlp"
@@ -12,30 +13,71 @@ import (
 
 
 type LogProof struct {
-    ReceiptHash common.Hash
-    Receipt *types.Receipt
+    Receipt []byte // rlp-encoded
     TxIndex uint
     Index uint
     Proof []rlp.RawValue
+    Number uint64
 }
 
-func (proof *LogProof) Log() (types.Log) {
-    return *proof.Receipt.Logs[proof.Index]
+func NewLogProof(receipts []*types.Receipt, txIndex uint, index uint, number uint64) (LogProof, error) {
+    var logReceipt []byte
+    keybuf := new(bytes.Buffer)
+    trie := new(trie.Trie)
+
+    for i, receipt := range receipts {
+        keybuf.Reset()
+        rlp.Encode(keybuf, uint(i))
+
+        bytes, err := rlp.EncodeToBytes(receipt)
+        if err != nil {
+            return LogProof{}, err
+        }
+        trie.Update(keybuf.Bytes(), bytes)
+        
+        if txIndex == uint(i) {
+            logReceipt = bytes
+        }
+    }
+
+    if logReceipt == nil {
+        return LogProof{}, errors.New("Receipt array does not contain txIndex")
+    }
+
+    keybuf.Reset()
+    rlp.Encode(keybuf, txIndex)
+
+    return LogProof {
+        Receipt: logReceipt,
+        TxIndex: txIndex,
+        Index: index,
+        Proof: trie.Prove(keybuf.Bytes()),
+        Number: number,
+    }, nil
 }
 
-func (proof *LogProof) IsValid() bool {
+func (proof LogProof) Log() (types.Log, error) {
+    var receipt types.Receipt
+    if err := rlp.DecodeBytes(proof.Receipt, &receipt); err != nil {
+        return types.Log{}, err
+    }
+    fmt.Printf("len(receipt.Logs): %v, proof.Index: %v\n", len(receipt.Logs), proof.Index)
+    if int(proof.Index) >= len(receipt.Logs) {
+        return types.Log{}, errors.New("Index out of range while accessing log array")
+    }
+    return *receipt.Logs[proof.Index], nil
+}
+
+func (proof LogProof) IsValid(receiptHash common.Hash) bool {
     keybuf := new(bytes.Buffer)
     rlp.Encode(keybuf, proof.TxIndex)
-    res, err := trie.VerifyProof(proof.ReceiptHash, keybuf.Bytes(), proof.Proof)
+    res, err := trie.VerifyProof(receiptHash, keybuf.Bytes(), proof.Proof)
     if err != nil {
         fmt.Println("Error in isValid, VerifyProof: ", err)
-//        fmt.Printf("log: %+v\n", proof.Log())
-//        fmt.Printf("proof: %+v\n", proof)
         return false
     }
 
-    rec, err := rlp.EncodeToBytes(proof.Receipt) 
-    if err != nil || !bytes.Equal(rec, res) {
+    if err != nil || !bytes.Equal(proof.Receipt, res) {
         fmt.Println("Error in isValid, EncodeToBytes: ", err)
         return false
     }

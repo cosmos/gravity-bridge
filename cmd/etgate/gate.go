@@ -6,20 +6,16 @@ import (
     "errors"
     "path/filepath"
     "context"
-    "bytes"
     "encoding/json"
     "io/ioutil"
     "math/big"
-    "strconv"
 
     "github.com/spf13/cobra"
 
     "github.com/ethereum/go-ethereum/ethclient"
-    "github.com/ethereum/go-ethereum/trie"
 //    "github.com/ethereum/go-ethereum/core"
     "github.com/ethereum/go-ethereum/core/types"
     "github.com/ethereum/go-ethereum/common"
-    "github.com/ethereum/go-ethereum"
     "github.com/ethereum/go-ethereum/rlp"
  
     abci "github.com/tendermint/abci/types"
@@ -39,12 +35,12 @@ var (
     chunksize = big.NewInt(16)
 )
 
+
 type gateway struct {
     ethclient *ethclient.Client
     mintclient *mintclient.HTTP
     mintkey *commands.Key
-    query []ethereum.FilterQuery
-    buffer map[uint64][]*etgate.LogProof
+    query []etgate.Query
 }
 
 var GateCmd = &cobra.Command {
@@ -211,13 +207,12 @@ func newGateway(ipc string, cons []etgate.Contract) (*gateway, error) {
 
     codemap := etgate.GetCodemap()
    
-    queries := []ethereum.FilterQuery{}
+    queries := []etgate.Query{}
 
     for _, con := range cons {
         query := codemap[con.Code].Query(con.Address)
         queries = append(queries, query...)
     }
-    fmt.Printf("%v\n", queries)
 
     mintkey, err := commands.LoadKey(filepath.Join(os.Getenv("HOME"), ".etgate", "server", "key.json"))
     if err != nil {
@@ -229,74 +224,12 @@ func newGateway(ipc string, cons []etgate.Contract) (*gateway, error) {
         mintclient: mintclient.NewHTTP(nodeaddrFlag, "/websocket"),
         mintkey: mintkey,
         query: queries,
-        buffer: make(map[uint64][]*etgate.LogProof),
     }, nil
 }
 
 func (g *gateway) start() {
     go g.loop()
 }
-/*
-func (g *gateway) logloop() {
-    logs := [](chan types.Log){}
-    for _, q := range g.query {
-        log := make(chan types.Log)
-        sub, err := g.ethclient.SubscribeFilterLogs(context.Background(), q, log)
-        if err != nil {
-            fmt.Println("Failed to subscribe log events")
-            panic(err)
-        }
-        defer sub.Unsubscribe()
-        logs = append(logs, log)
-    }
-    cases := make([]reflect.SelectCase, len(logs))
-
-    for i, ch := range logs {
-        cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ch)}
-    }
-
-    for {
-        _, data, ok := reflect.Select(cases)
-        if !ok {
-            panic("Channel closed unexpectedly")
-        }
-        log := data.Interface().(types.Log)
-        proof, err := g.NewLogProof(log)
-        if err != nil {
-            fmt.Println("Error in NewLogProof: ", err)
-            fmt.Printf("%+v\n", log)
-            header, _ := g.ethclient.HeaderByHash(context.Background(), log.BlockHash)
-            fmt.Printf("%+v\n", header)
-            continue
-        }
-      
-        if !proof.IsValid() {
-            fmt.Println("Invalid log proof generation")
-            fmt.Printf("%+v\n", log)
-            header, _ := g.ethclient.HeaderByHash(context.Background(), log.BlockHash)
-            fmt.Printf("%+v\n", header)
-            continue
-        }
-        
-        g.buffer[log.BlockNumber] = append(g.buffer[log.BlockNumber], proof)
-
-        fmt.Println("Received log")
-
-        
-        postTx := etgate.ETGatePacketPostTx {
-            Name: "",
-            Proof: *proof,
-        }
-
-        if err := g.appTx(postTx); err != nil {
-            fmt.Println("Error submitting logs: ", err)
-            continue
-        }
-
-        fmt.Printf("Submitted log\n")
-    } 
-}
-*/
 
 func (g *gateway) loop() {
     heads := make(chan *types.Header) 
@@ -311,6 +244,7 @@ func (g *gateway) loop() {
         select {
         case head := <-heads:
             // Check if there is no submitted headers
+            // TODO: remove this code at production phase
             if g.recentHeader() == nil {
                 header, err := rlp.EncodeToBytes(head)
                 if err != nil {
@@ -336,8 +270,8 @@ func (g *gateway) loop() {
             }
             
             if len(query.Value) != 0 {
-                fmt.Printf("Header already submitted: %v. Skipping.", head.Number)
-                // TODO: submit log before skip
+                fmt.Printf("Header already submitted: %v. Skipping.\n", head.Number)
+                g.post(g.recentHeader())
                 continue
             }
 
@@ -364,6 +298,7 @@ func (g *gateway) loop() {
                     continue
                 }
                 fmt.Printf("Submitted header: %v\n", head.Number)
+                g.post(g.recentHeader())
                 continue
             }
 
@@ -401,6 +336,7 @@ func (g *gateway) recentHeader() *big.Int { // in mintchain
     return recent
 }
 
+// sync does not post logs
 func (g *gateway) sync(recent *big.Int, to *big.Int) { // (recent, to]
     temp := big.NewInt(0) // or whatever
 
@@ -465,190 +401,81 @@ func (g *gateway) getHeaders(from *big.Int, to *big.Int) ([][]byte, error) { // 
 }
 
 func (g *gateway) post(blocknumber *big.Int) {
+    header, err := g.ethclient.HeaderByNumber(context.Background(), blocknumber)
+    if err != nil {
+        fmt.Printf("Error retrieving header: \"%s\". Skipping.\n", err)
+        return
+    }
+    fmt.Printf("%v\n", header.Hash().Hex())
+
     for _, q := range g.query {
-        logs, err := g.ethclient.FilterLogs(context.Background(), q)
+        q.FromBlock = blocknumber
+        q.ToBlock = blocknumber
+        logs, err := g.ethclient.FilterLogs(context.Background(), q.FilterQuery)
         if err != nil {
             fmt.Printf("Error retrieving logs: \"%s\". Skipping.\n", err)
             continue
         }
 
         for _, log := range logs {
-            proof, err := g.NewLogProof(log)
+            fmt.Printf("%v\n", log.BlockHash.Hex())
+            proof, err := g.newLogProof(log)
             if err != nil {
                 fmt.Printf("Error generating logproof: \"%s\". Skipping.\n", err)
                 continue
             }
-            if !proof.IsValid() {
+            logt, err := proof.Log()
+            if err != nil {
+                fmt.Printf("aa: %s", err)
+                continue
+            }
+            fmt.Printf("%+v\n", logt)
+            if !proof.IsValid(header.ReceiptHash) {
                 fmt.Println("Invalid logproof. Skipping.")
+                fmt.Printf("%+v\n", log)
                 continue
             }
             
-            seq, err := g.getSequence()
             if err != nil {
                 panic(fmt.Sprintf("Error getting sequence: \"%s\".\n", err))
             }   
 
             postTx := etgate.ETGatePacketPostTx {
-                Proof: *proof,
-                Sequence: seq,
+                Name: q.Name,
+                Proof: proof,
             }
             if err := g.appTx(postTx); err != nil {
                 fmt.Printf("Error sending postTx: \"%s\". Skipping.\n", err)
                 continue
             }
+            fmt.Println("Submitted log")
         }
     }
 }
 
-func (g *gateway) getSequence() (uint64, error) {
-    key := fmt.Sprintf("etgate,contract")
-    query, err := queryWithClient(g.mintclient, []byte(key))
-    if err != nil {
-        return 0, err
-    }
-    if len(query.Value) == 0 {
-        return 0, nil
-    }
-
-    seq, err := strconv.ParseUint(string(query.Value), 10, 64)
-    if err != nil {
-        return 0, err
-    }
-
-    return seq, nil
-}
-/*
-func (g *gateway) headsync(recent *big.Int, to *big.Int) { // after recent, including to
-    recent.Add(recent, big.NewInt(1))
-    for recent.Cmp(to) == -1 {
-        temp := big.NewInt(0)
-        headers := make([]types.Header, chunksize.Int64())
-        for i := big.NewInt(0); i.Cmp(chunksize) == -1 && temp.Add(recent, i).Cmp(to) != 1; i.Add(i, big.NewInt(1)) {
-            header, err := g.ethclient.HeaderByNumber(context.Background(), temp.Add(i, recent))
-            if err != nil {
-                panic(err)
-            }
-            headers[i.Int64()] = *header
-        }
-        updateTx := etgate.ETGateUpdateChainTx {
-            Header: headers,
-        }
-        if err := g.appTx(updateTx); err != nil {
-            fmt.Println("Error in headsync")
-            panic(err)
-        }
-        fmt.Printf("Submitted headers: %v\n", temp.Add(recent, chunksize))
-        recent = g.recentHeader()
-    }
-}
-
-func (g *gateway) headloop() {
-    heads := make(chan *types.Header) 
-    headsub, err := g.ethclient.SubscribeNewHead(context.Background(), heads)
-    if err != nil {
-        panic("Failed to subscribe to new headers")
-    }  
-
-    defer headsub.Unsubscribe()
-
-    for {
-        select {
-            case head := <-heads:
-            before := big.NewInt(1)
-            before.Sub(head.Number, before)
-            recent := g.recentHeader()
-            if recent.Cmp(before) == 0 { // recent submitted header == right before
-                updateTx := etgate.ETGateUpdateChainTx {
-                    Headers: []types.Header{ *head },
-                }
-
-                if err := g.appTx(updateTx); err != nil {
-                    fmt.Printf("Error in UpdateChain: ", err)
-                    continue
-                }
-                fmt.Printf("Submitted header: %v\n", head.Number)
-            } else if recent.Cmp(before) == -1 { // recent submitted header < right before
-                g.headsync(recent, head.Number)
-            } // nothing to do if recent submitted header >= received
-            recent = g.recentHeader()
-
-            var packets []etgate.Packet
-
-            for q := range g.query {
-                q.FromBlock = recent
-                q.ToBlock = recent
-                logs, err := g.ethclient.FilterLogs(context.Background(), q)
-                if err != nil {
-                    fmt.Println("Error querying filterquery")
-                    fmt.Println(err)
-                    continue
-                }
-
-                for log := range logs {
-                    proof := g.NewLogProof(log)
-                    key := fmt.Sprintf("etgate,contract,")
-                    queryWithClient(g.mintclient, []byte(key))
-                }
-            }
-        }
-    }
-}*/
-
-func (g *gateway) NewLogProof(log types.Log) (*etgate.LogProof, error) {
-    var logReceipt *types.Receipt
-    keybuf := new(bytes.Buffer)
-    trie := new(trie.Trie)
+func (g *gateway) newLogProof(log types.Log) (etgate.LogProof, error) {
+    var receipts []*types.Receipt
 
     count, err := g.ethclient.TransactionCount(context.Background(), log.BlockHash)
     if err != nil {
-        return nil, err
+        return etgate.LogProof{}, err
     }
-
 
     for i := 0; i < int(count); i++ {
         tx, err := g.ethclient.TransactionInBlock(context.Background(), log.BlockHash, uint(i))
         if err != nil {
-            return nil, err
+            return etgate.LogProof{}, err
         }
 
         receipt, err := g.ethclient.TransactionReceipt(context.Background(), tx.Hash())
         if err != nil {
-            return nil, err
+            return etgate.LogProof{}, err
         }
 
-        keybuf.Reset()
-        rlp.Encode(keybuf, uint(i))
-        bytes, err := rlp.EncodeToBytes(receipt)
-        if err != nil {
-            return nil, err
-        }
-        trie.Update(keybuf.Bytes(), bytes)
-
-        if log.TxIndex == uint(i) {
-            logReceipt = receipt
-        }
+        receipts = append(receipts, receipt)
     }
 
-    if logReceipt == nil {
-        return nil, errors.New("Error in NewLogProof")   
-    }
-
-    keybuf.Reset()
-    rlp.Encode(keybuf, log.TxIndex)
-
-
-    header, err := g.ethclient.HeaderByHash(context.Background(), log.BlockHash)
-    if err != nil {
-        return nil, err
-    }
-
-    return &etgate.LogProof {
-        ReceiptHash: header.ReceiptHash,
-        Receipt: logReceipt,
-        TxIndex: log.TxIndex,
-        Index: log.Index,
-        Proof: trie.Prove(keybuf.Bytes()),  
-    }, nil
+    return etgate.NewLogProof(receipts, log.TxIndex, log.Index, log.BlockNumber)
 }
 
 func (g *gateway) appTx(etgateTx etgate.ETGateTx) error {
