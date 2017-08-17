@@ -9,6 +9,9 @@ import (
     "encoding/json"
     "io/ioutil"
     "math/big"
+    "bytes"
+
+    "golang.org/x/crypto/ripemd160"
 
     "github.com/spf13/cobra"
 
@@ -20,10 +23,11 @@ import (
  
     abci "github.com/tendermint/abci/types"
     cmn "github.com/tendermint/tmlibs/common"
-    "github.com/tendermint/basecoin/cmd/basecoin/commands"
+    basecmd "github.com/tendermint/basecoin/cmd/basecoin/commands"
     bctypes "github.com/tendermint/basecoin/types"
     mintclient "github.com/tendermint/tendermint/rpc/client"
     tmtypes "github.com/tendermint/tendermint/types"
+    "github.com/tendermint/tmlibs/merkle"
 
     "github.com/tendermint/go-wire"
 
@@ -39,7 +43,7 @@ var (
 type gateway struct {
     ethclient *ethclient.Client
     mintclient *mintclient.HTTP
-    mintkey *commands.Key
+    mintkey *basecmd.Key
     query []etgate.Query
 }
 
@@ -70,20 +74,20 @@ var (
 )
 
 func init() {
-    flags := []commands.Flag2Register {
+    flags := []basecmd.Flag2Register {
         {&testnetFlag, "testnet", false, "Ropsten network: pre-configured test network"},
         {&nodeaddrFlag, "nodeaddr", "tcp://localhost:46657", "Node address for tendermint chain"},
         {&chainIDFlag, "chain-id", "etgate-chain", "Chain ID"},
     }
 
-    commands.RegisterPersistentFlags(GateCmd, flags)
+    basecmd.RegisterPersistentFlags(GateCmd, flags)
 
-    startFlags := []commands.Flag2Register {
+    startFlags := []basecmd.Flag2Register {
         {&datadirFlag, "datadir", filepath.Join(os.Getenv("HOME"), ".ethereum"), "Data directory for the databases and keystore"},
         {&ipcpathFlag, "ipcpath", "geth.ipc", "Filename for IPC socket/pipe within the datadir"},
     }
 
-    commands.RegisterFlags(GateStartCmd, startFlags)
+    basecmd.RegisterFlags(GateStartCmd, startFlags)
 
     GateCmd.AddCommand(GateStartCmd)
     GateCmd.AddCommand(GateInitCmd)
@@ -123,7 +127,7 @@ func gateInitCmd(cmd *cobra.Command, args []string) error {
         return err
     }
 
-    mintkey, err := commands.LoadKey(filepath.Join(os.Getenv("HOME"), ".etgate", "server", "key.json"))
+    mintkey, err := basecmd.LoadKey(filepath.Join(os.Getenv("HOME"), ".etgate", "server", "key.json"))
     if err != nil {
         return err
     }
@@ -154,10 +158,11 @@ func gateInitCmd(cmd *cobra.Command, args []string) error {
 
 func gateStartCmd(cmd *cobra.Command, args []string) error {
     if len(args) < 1 {
-        return errors.New("Usage: etgate gate start [--testnet] [--datadir ~/.ethereum] [--ipcpath geth.ipc] contractsfile")
+        return errors.New("Usage: etgate gate start [--testnet] [--datadir ~/.ethereum] [--ipcpath geth.ipc] [--rpcpath localhost:1234] contractsfile")
     } 
     consfile := args[0]
 
+    var clientpath string
     var datadir string
     if testnetFlag {
         datadir = filepath.Join(datadirFlag, "testnet")
@@ -165,11 +170,13 @@ func gateStartCmd(cmd *cobra.Command, args []string) error {
         datadir = datadirFlag
     }
 
+    clientpath = filepath.Join(datadir, ipcpathFlag)
+
     data, err := getConsfile(consfile)
     if err != nil {
         return err
-    }
-   
+    }   
+ 
     var cons []etgate.Contract
     for _, con := range data {
         addr := con["address"].(string)
@@ -186,7 +193,8 @@ func gateStartCmd(cmd *cobra.Command, args []string) error {
         })
     }
 
-    gateway, err := newGateway(filepath.Join(datadir, ipcpathFlag), cons)
+
+    gateway, err := newGateway(clientpath, cons)
     if err != nil {
         return err
     }
@@ -214,7 +222,7 @@ func newGateway(ipc string, cons []etgate.Contract) (*gateway, error) {
         queries = append(queries, query...)
     }
 
-    mintkey, err := commands.LoadKey(filepath.Join(os.Getenv("HOME"), ".etgate", "server", "key.json"))
+    mintkey, err := basecmd.LoadKey(filepath.Join(os.Getenv("HOME"), ".etgate", "server", "key.json"))
     if err != nil {
         return nil, err
     }
@@ -228,10 +236,70 @@ func newGateway(ipc string, cons []etgate.Contract) (*gateway, error) {
 }
 
 func (g *gateway) start() {
-    go g.loop()
+    go g.mintloop()
+    go g.ethloop()
 }
 
-func (g *gateway) loop() {
+func (g *gateway) mintloop() {
+    for {
+        status, err := g.mintclient.Status()
+        if err != nil {
+            fmt.Printf("Failed to get status: \"%s\"\n", err)
+            continue
+        }
+        height := status.LatestBlockHeight
+        
+        commit, err := g.mintclient.Commit(height)
+        if err != nil {
+            fmt.Printf("Failed to get commit: \"%s\"\n", err)
+            continue
+        }
+        /*
+        for _, pc := range commit.Commit.Precommits {
+              fmt.Printf("%+v\n", tmtypes.SignBytes("etgate-chain", pc))
+        }*/
+
+        fmt.Printf("%+v\n", commit.Header.Hash())
+/*
+        proofs := merkle.SimpleProofsFromHashables([]merkle.Hashable{commit.Header})
+        fmt.Printf("%+v\n", proofs[0])
+
+        */
+
+        header := commit.Header
+        headerMap := map[string]interface{}{
+            "ChainID": header.ChainID,
+            "Height": header.Height,
+            "Time": header.Time,
+            "NumTxs": header.NumTxs,
+            "LastBlockID": header.LastBlockID,
+            "Data": header.DataHash,
+            "Validators": header.ValidatorsHash,
+            "App": header.AppHash,
+        }
+        kpPairsH := merkle.MakeSortedKVPairs(headerMap)
+        fmt.Printf("%+v\n", kpPairsH)
+
+        for _, data := range []int{4, 16, 256, 65536, 100000, 4294967296} {
+            hasher := ripemd160.New()
+            buf := new(bytes.Buffer)
+            n, err := int(0), error(nil)
+            wire.WriteInt8(data*2+1, buf, &n, &err)
+            hasher.Write(buf.Bytes())
+            fmt.Printf("%d:\t%+v\n", data*2+1, hasher.Sum(nil))
+        }
+
+
+        for {
+            status, _ := g.mintclient.Status()
+            if status.LatestBlockHeight > height {
+                break
+            }
+        }
+    }
+}
+
+func (g *gateway) ethloop() {
     heads := make(chan *types.Header) 
     headsub, err := g.ethclient.SubscribeNewHead(context.Background(), heads)
     if err != nil {
@@ -248,14 +316,14 @@ func (g *gateway) loop() {
             if g.recentHeader() == nil {
                 header, err := rlp.EncodeToBytes(head)
                 if err != nil {
-                    fmt.Printf("Failed to encode header: \"%s\".", err)
+                    fmt.Printf("Failed to encode header: \"%s\"\n", err)
                     continue
                 }
                 updateTx := etgate.ETGateUpdateChainTx {
                     Headers: [][]byte{ header },
                 }
                 if err := g.appTx(updateTx); err != nil {
-                    fmt.Printf("Error sending updateTx: \"%s\".", err)
+                    fmt.Printf("Error sending updateTx: \"%s\"\n", err)
                     continue
                 }
                 continue
@@ -267,7 +335,8 @@ func (g *gateway) loop() {
             if err != nil {
                 fmt.Printf("Failed to query: \"%s\"", err)
                 continue
-            }
+            }          
+            
             
             if len(query.Value) != 0 {
                 fmt.Printf("Header already submitted: %v. Skipping.\n", head.Number)

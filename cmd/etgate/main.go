@@ -7,11 +7,11 @@ import (
 
     "github.com/tendermint/tmlibs/cli"
 
-    "github.com/tendermint/basecoin/cmd/basecoin/commands"
+    basecmd "github.com/tendermint/basecoin/cmd/basecoin/commands"
     "github.com/tendermint/basecoin/types"
 
     "../../plugins/etgate"
-
+    "./commands"
 )
 
 func main() {
@@ -22,14 +22,14 @@ func main() {
 
     RootCmd.AddCommand(
         commands.InitCmd,
-        commands.StartCmd,
-        commands.RelayCmd,
+        basecmd.StartCmd,
+        basecmd.RelayCmd,
         GateCmd,
-        commands.UnsafeResetAllCmd,
-        commands.VersionCmd,
+        basecmd.UnsafeResetAllCmd,
+        basecmd.VersionCmd,
     )
     
-    commands.RegisterStartPlugin("ETGATE", func() types.Plugin { return etgate.New() })
+    basecmd.RegisterStartPlugin("ETGATE", func() types.Plugin { return etgate.New() })
 
     cmd := cli.PrepareMainCmd(RootCmd, "ETGATE", os.ExpandEnv("$HOME/.etgate/server"))
     if err := cmd.Execute(); err != nil {
