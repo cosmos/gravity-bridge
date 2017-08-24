@@ -1,10 +1,12 @@
 package etgate
 
 import (
+    "fmt"
     "strings"
     "errors"
     "net/url"
     "strconv"
+    "bytes"
 
     abci "github.com/tendermint/abci/types"
     "github.com/tendermint/basecoin/types"
@@ -29,6 +31,7 @@ const (
     _CONTRACT = "contract"
     _INGRESS = "ingress"
     _EGRESS = "egress"
+    _WITHDRAW = "withdraw"
 
     confirmation = 12
 )
@@ -63,7 +66,7 @@ var _ = wire.RegisterInterface (
     struct { ETGateTx }{},
     wire.ConcreteType{ETGateRegisterContractTx{}, ETGateTxTypeRegisterContract},
     wire.ConcreteType{ETGateUpdateChainTx{}, ETGateTxTypeUpdateChain},
-//    wire.ConcreteType{ETGatePacketCreateTx{}, ETGateTxTypePacketCreate},
+    wire.ConcreteType{ETGateWithdrawTx{}, ETGateTxTypeWithdraw},
     wire.ConcreteType{ETGatePacketPostTx{}, ETGateTxTypePacketPost},
 )
 
@@ -97,15 +100,24 @@ func (tx ETGatePacketPostTx) Validate() abci.Result {
     return abci.OK
 }
 
-//type ETGatePacketPostTx struct {
-//}
+type ETGateWithdrawTx struct {
+    To []byte 
+    Value uint
+    Token []byte
+    ChainID string
+    Sequence uint64
+}
+
+func (tx ETGateWithdrawTx) Validate() abci.Result {
+    return abci.OK
+}
 
 //func SaveNewETGatePacket(state types.KVStore, src, dst string, )
 
 const (
     ETGateTxTypeUpdateChain = byte(0x01)
     ETGateTxTypeRegisterContract = byte(0x02)
-//    ETGateTxTypePacketCreate = byte(0x03)
+    ETGateTxTypeWithdraw = byte(0x03)
     ETGateTxTypePacketPost = byte(0x04)    
 
     ETGateCodeConflictingChain = abci.CodeType(1001)
@@ -117,6 +129,7 @@ const (
     ETGateCodePacketAlreadyExists = abci.CodeType(1007)
     ETGateCodeUnregisteredContract = abci.CodeType(1008)
     ETGateCodeInvalidEventName = abci.CodeType(1009)
+    ETGateCodeAlreadyWithdrawn = abci.CodeType(1010)
 )
 
 type ETGatePlugin struct {
@@ -145,8 +158,8 @@ func (gp *ETGatePlugin) RunTx(store types.KVStore, ctx types.CallContext, txByte
         sm.runUpdateChainTx(tx)
     case ETGateRegisterContractTx:
         sm.runRegisterContractTx(tx)
-//    case ETGatePacketCreateTx:
-//        sm.runPacketCreateTx(tx)
+    case ETGateWithdrawTx:
+        sm.runWithdrawTx(tx)
     case ETGatePacketPostTx:
         sm.runPacketPostTx(tx)
     }
@@ -327,6 +340,37 @@ func (sm *ETGateStateMachine) runPacketPostTx(tx ETGatePacketPostTx) {
     }
 }
 
+func WithdrawValue(tx ETGateWithdrawTx) ([]byte, error) {
+    // store the simplest form
+    buf, n, err := new(bytes.Buffer), new(int), new(error)
+    wire.WriteByteSlice(tx.To, buf, n, err)
+    wire.WriteUvarint(tx.Value, buf, n, err)
+    wire.WriteByteSlice(tx.Token, buf, n, err)
+    if *err != nil {
+        return []byte{}, *err
+    }
+    return buf.Bytes(), nil
+}
+
+func (sm *ETGateStateMachine) runWithdrawTx(tx ETGateWithdrawTx) {
+    withdrawKey := toKey(_ETGATE, _WITHDRAW, tx.ChainID, cmn.Fmt("%v", tx.Sequence))
+
+    if exists(sm.store, withdrawKey) {
+        sm.res.Code = ETGateCodeAlreadyWithdrawn
+        sm.res.Log = "Already withdrawn"
+        return
+    }
+
+    val, err := WithdrawValue(tx)
+    if err != nil {
+        sm.res = abci.ErrInternalError.AppendLog("Error writing withdraw key-value")
+        return
+    }
+
+    sequenceKey := toKey(_ETGATE, _WITHDRAW, tx.ChainID)
+    sm.store.Set(sequenceKey, val)
+}
+
 func (gp *ETGatePlugin) Name() string{
     return "ETGATE"
 }
@@ -340,6 +384,7 @@ func (gp *ETGatePlugin) InitChain(store types.KVStore, vals []*abci.Validator) {
 }
 
 func (gp *ETGatePlugin) BeginBlock(store types.KVStore, hash []byte, header *abci.Header) {
+    fmt.Printf("%+v\n%+v\n%+v\n", store, hash, header)
 }
 
 func (gp *ETGatePlugin) EndBlock(store types.KVStore, height uint64) (res abci.ResponseEndBlock) {

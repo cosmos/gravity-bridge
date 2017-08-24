@@ -11,7 +11,7 @@ import (
     "math/big"
     "bytes"
 
-    "golang.org/x/crypto/ripemd160"
+//    "golang.org/x/crypto/ripemd160"
 
     "github.com/spf13/cobra"
 
@@ -27,7 +27,7 @@ import (
     bctypes "github.com/tendermint/basecoin/types"
     mintclient "github.com/tendermint/tendermint/rpc/client"
     tmtypes "github.com/tendermint/tendermint/types"
-    "github.com/tendermint/tmlibs/merkle"
+ //   "github.com/tendermint/tmlibs/merkle"
 
     "github.com/tendermint/go-wire"
 
@@ -265,7 +265,7 @@ func (g *gateway) mintloop() {
         fmt.Printf("%+v\n", proofs[0])
 
         */
-
+/*
         header := commit.Header
         headerMap := map[string]interface{}{
             "ChainID": header.ChainID,
@@ -273,22 +273,20 @@ func (g *gateway) mintloop() {
             "Time": header.Time,
             "NumTxs": header.NumTxs,
             "LastBlockID": header.LastBlockID,
+            "LastCommit": header.LastCommitHash,
             "Data": header.DataHash,
             "Validators": header.ValidatorsHash,
             "App": header.AppHash,
         }
         kpPairsH := merkle.MakeSortedKVPairs(headerMap)
         fmt.Printf("%+v\n", kpPairsH)
-
-        for _, data := range []int{4, 16, 256, 65536, 100000, 4294967296} {
-            hasher := ripemd160.New()
+*/
+        for _, data := range []uint{4, 16, 256, 65536, 100000, 4294967296, 18446744073709551615} {
             buf := new(bytes.Buffer)
             n, err := int(0), error(nil)
-            wire.WriteInt8(data*2+1, buf, &n, &err)
-            hasher.Write(buf.Bytes())
-            fmt.Printf("%d:\t%+v\n", data*2+1, hasher.Sum(nil))
+            wire.WriteUvarint(data, buf, &n, &err)
+            fmt.Printf("%d:\t%+v\n", data*2+1, buf.Bytes())
         }
-
 
         for {
             status, _ := g.mintclient.Status()
