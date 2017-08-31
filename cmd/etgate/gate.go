@@ -7,31 +7,42 @@ import (
     "path/filepath"
     "context"
     "encoding/json"
+    "encoding/hex"
     "io/ioutil"
     "math/big"
-    "bytes"
+    "strings"
+//    "bytes"
 
 //    "golang.org/x/crypto/ripemd160"
 
     "github.com/spf13/cobra"
 
+    "github.com/ethereum/go-ethereum"
     "github.com/ethereum/go-ethereum/ethclient"
 //    "github.com/ethereum/go-ethereum/core"
     "github.com/ethereum/go-ethereum/core/types"
     "github.com/ethereum/go-ethereum/common"
     "github.com/ethereum/go-ethereum/rlp"
+    "github.com/ethereum/go-ethereum/accounts/abi/bind"
+    ecrypto "github.com/ethereum/go-ethereum/crypto"
  
-    abci "github.com/tendermint/abci/types"
+//    abci "github.com/tendermint/abci/types"
     cmn "github.com/tendermint/tmlibs/common"
     basecmd "github.com/tendermint/basecoin/cmd/basecoin/commands"
-    bctypes "github.com/tendermint/basecoin/types"
+//    bctypes "github.com/tendermint/basecoin/types"
     mintclient "github.com/tendermint/tendermint/rpc/client"
     tmtypes "github.com/tendermint/tendermint/types"
  //   "github.com/tendermint/tmlibs/merkle"
 
     "github.com/tendermint/go-wire"
+    "github.com/tendermint/go-crypto"
 
     "../../plugins/etgate"
+    "../../commands"
+    "../../contracts"
+    "../../plugins/etgate/abi"
+
+    secp256k1 "github.com/btcsuite/btcd/btcec"
 )
 
 var ( 
@@ -43,8 +54,9 @@ var (
 type gateway struct {
     ethclient *ethclient.Client
     mintclient *mintclient.HTTP
+    ethauth *bind.TransactOpts
     mintkey *basecmd.Key
-    query []etgate.Query
+//    query []etgate.Query
 }
 
 var GateCmd = &cobra.Command {
@@ -71,6 +83,9 @@ var (
     ipcpathFlag string
     nodeaddrFlag string
     chainIDFlag string
+    addressFlag string
+    genesisFlag string
+    depositABI abi.ABI
 )
 
 func init() {
@@ -78,9 +93,16 @@ func init() {
         {&testnetFlag, "testnet", false, "Ropsten network: pre-configured test network"},
         {&nodeaddrFlag, "nodeaddr", "tcp://localhost:46657", "Node address for tendermint chain"},
         {&chainIDFlag, "chain-id", "etgate-chain", "Chain ID"},
+        {&addressFlag, "address", "", "ETGate contract address on Ethereum chain"},
     }
 
     basecmd.RegisterPersistentFlags(GateCmd, flags)
+
+    initFlags := []basecmd.Flag2Register {
+        {&genesisFlag, "genesis", "", "Path to genesis file"},
+    }
+
+    basecmd.RegisterPersistentFlags(GateInitCmd, initFlags)
 
     startFlags := []basecmd.Flag2Register {
         {&datadirFlag, "datadir", filepath.Join(os.Getenv("HOME"), ".ethereum"), "Data directory for the databases and keystore"},
@@ -91,6 +113,13 @@ func init() {
 
     GateCmd.AddCommand(GateStartCmd)
     GateCmd.AddCommand(GateInitCmd)
+
+    var err error
+    depositABI, err = abi.JSON(strings.NewReader(contracts.ETGateABI))
+    if err != nil {
+        panic(err)
+    }
+
 }
 
 func getConsfile(consfile string) ([]map[string]interface{}, error) {
@@ -117,7 +146,7 @@ func getConsfile(consfile string) ([]map[string]interface{}, error) {
 }
 
 func gateInitCmd(cmd *cobra.Command, args []string) error {
-    if len(args) < 1 {
+/*    if len(args) < 1 {
         return errors.New("Usage: etgate gate init [--testnet] contractsfile")
     }
     consfile := args[0]
@@ -126,17 +155,13 @@ func gateInitCmd(cmd *cobra.Command, args []string) error {
     if err != nil {
         return err
     }
-
-    mintkey, err := basecmd.LoadKey(filepath.Join(os.Getenv("HOME"), ".etgate", "server", "key.json"))
+*/
+    g, err := newGateway()
     if err != nil {
         return err
     }
-
-    g := gateway {
-        mintclient: mintclient.NewHTTP(nodeaddrFlag, "/websocket"),
-        mintkey: mintkey,
-    }
-
+/*
+    // Delete this part
     for _, con := range data {
         addr, code := con["address"].(string), con["code"].(string)
         if !common.IsHexAddress(addr) {
@@ -153,6 +178,53 @@ func gateInitCmd(cmd *cobra.Command, args []string) error {
             return err
         }
     }
+    // ^
+*/
+
+    genesisBytes, err := ioutil.ReadFile(genesisFlag)
+    if err != nil {
+        return err
+    }
+
+    chainGenDoc := new(tmtypes.GenesisDoc)
+    if err = json.Unmarshal(genesisBytes, chainGenDoc); err != nil {
+        return err
+    }
+   
+    validatorsBytes := []byte{}
+    votingPowers := []*big.Int{}
+    for _, val := range chainGenDoc.Validators {
+        pub_, err := getSecp256k1Pub(val.PubKey)
+        if err != nil {
+            return err
+        }
+
+        pub, err := secp256k1.ParsePubKey(pub_[:], secp256k1.S256())
+        if err != nil {
+            return err
+        }
+
+        validatorsBytes = append(validatorsBytes, pub.SerializeUncompressed()[:]...)
+        votingPowers = append(votingPowers, big.NewInt(val.Amount))
+    }
+
+    validatorsHex := "["
+
+    for i := 0; i < len(validatorsBytes); i++ {
+        validatorsHex = validatorsHex + "\"0x" + hex.EncodeToString(validatorsBytes[i:i+1]) + "\", "
+    }
+    
+    validatorsHex = validatorsHex+ "]"
+
+    fmt.Printf("%+v\n%+v\n", validatorsHex, votingPowers)
+
+    address, _, _, err := contracts.DeployETGate(g.ethauth, g.ethclient, []byte("etgate-chain"), validatorsBytes, votingPowers)
+    if err != nil {
+        return err
+    }
+
+    fmt.Printf("ETGate contract is deployed on %s", address.Hex())
+
     return nil
 }
 
@@ -160,7 +232,22 @@ func gateStartCmd(cmd *cobra.Command, args []string) error {
     if len(args) < 1 {
         return errors.New("Usage: etgate gate start [--testnet] [--datadir ~/.ethereum] [--ipcpath geth.ipc] [--rpcpath localhost:1234] contractsfile")
     } 
-    consfile := args[0]
+   
+
+    gateway, err := newGateway()
+    if err != nil {
+        return err
+    }
+
+
+    gateway.start()
+
+    cmn.TrapSignal(func() {})
+
+    return nil
+}
+
+func newGateway() (*gateway, error) {
 
     var clientpath string
     var datadir string
@@ -172,11 +259,15 @@ func gateStartCmd(cmd *cobra.Command, args []string) error {
 
     clientpath = filepath.Join(datadir, ipcpathFlag)
 
-    data, err := getConsfile(consfile)
+    ethclient, err := ethclient.Dial(clientpath)
     if err != nil {
-        return err
-    }   
- 
+        return nil, err
+    }
+/*
+    codemap := etgate.GetCodemap()
+   
+    queries := []etgate.Query{}
+
     var cons []etgate.Contract
     for _, con := range data {
         addr := con["address"].(string)
@@ -193,46 +284,73 @@ func gateStartCmd(cmd *cobra.Command, args []string) error {
         })
     }
 
-
-    gateway, err := newGateway(clientpath, cons)
-    if err != nil {
-        return err
-    }
-
-
-    gateway.start()
-
-    cmn.TrapSignal(func() {})
-
-    return nil
-}
-
-func newGateway(ipc string, cons []etgate.Contract) (*gateway, error) {
-    ethclient, err := ethclient.Dial(ipc)
-    if err != nil {
-        return nil, err
-    }
-
-    codemap := etgate.GetCodemap()
-   
-    queries := []etgate.Query{}
-
     for _, con := range cons {
         query := codemap[con.Code].Query(con.Address)
         queries = append(queries, query...)
     }
-
+*/
     mintkey, err := basecmd.LoadKey(filepath.Join(os.Getenv("HOME"), ".etgate", "server", "key.json"))
     if err != nil {
         return nil, err
     }
+ /*   if len(mintkey.PrivKey) != 32 {
+        return nil, errors.New("Tendermint keyfile is not secp256k1")
+    }
+*/
 
+    priv, err := getSecp256k1Priv(mintkey.PrivKey)
+    if err != nil {
+        return nil, err
+    }
+
+    ecdsa, err := ecrypto.ToECDSA(priv[:])
+    fmt.Printf("%+v\n%+v\n", ecdsa, priv)
+    if err != nil {
+        return nil, err
+    }
+
+    fmt.Printf("%+v\n", ecrypto.PubkeyToAddress(ecdsa.PublicKey).Hex())
+
+//    pub_, _ := getSecp256k1Pub(mintkey.PubKey)
+//    _, pub := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv[:])
+    //ecrypto.PubkeyToAddress(ecdsa.PublicKey)
+/*    fmt.Printf("ecrypto pubkey: %v\n", ecdsa.PublicKey)
+    fmt.Printf("crypto pubkey:    %v\n", pub)*/
+
+    ethauth := bind.NewKeyedTransactor(ecdsa)
+
+    ethauth.GasLimit = big.NewInt(4700000)
+
+    /*   data, err := getConsfile(consfile)
+    if err != nil {
+        return err
+    }    
+   */ 
     return &gateway{
         ethclient: ethclient, 
         mintclient: mintclient.NewHTTP(nodeaddrFlag, "/websocket"),
+        ethauth: ethauth, 
         mintkey: mintkey,
-        query: queries,
+//        query: queries,
     }, nil
+}
+
+func getSecp256k1Priv(priv crypto.PrivKey) (crypto.PrivKeySecp256k1, error) {
+    switch inner := priv.Unwrap().(type) {
+    case crypto.PrivKeySecp256k1:
+        return inner, nil
+    default:
+        return crypto.PrivKeySecp256k1{}, errors.New("PrivKey is not secp256k1")
+    }
+}
+
+func getSecp256k1Pub(pub crypto.PubKey) (crypto.PubKeySecp256k1, error) {
+    switch inner := pub.Unwrap().(type) {
+    case crypto.PubKeySecp256k1:
+        return inner, nil
+    default:
+        return crypto.PubKeySecp256k1{}, errors.New("PubKey is not secp256k1")
+    }
 }
 
 func (g *gateway) start() {
@@ -241,6 +359,8 @@ func (g *gateway) start() {
 }
 
 func (g *gateway) mintloop() {
+    // Get last submitted withdrawal's sequence from ethereum    
+
     for {
         status, err := g.mintclient.Status()
         if err != nil {
@@ -249,51 +369,23 @@ func (g *gateway) mintloop() {
         }
         height := status.LatestBlockHeight
         
-        commit, err := g.mintclient.Commit(height)
+        _, err = g.mintclient.Commit(height)
         if err != nil {
             fmt.Printf("Failed to get commit: \"%s\"\n", err)
             continue
         }
-        /*
-        for _, pc := range commit.Commit.Precommits {
-              fmt.Printf("%+v\n", tmtypes.SignBytes("etgate-chain", pc))
-        }*/
 
-        fmt.Printf("%+v\n", commit.Header.Hash())
-/*
-        proofs := merkle.SimpleProofsFromHashables([]merkle.Hashable{commit.Header})
-        fmt.Printf("%+v\n", proofs[0])
-
-        */
-/*
-        header := commit.Header
-        headerMap := map[string]interface{}{
-            "ChainID": header.ChainID,
-            "Height": header.Height,
-            "Time": header.Time,
-            "NumTxs": header.NumTxs,
-            "LastBlockID": header.LastBlockID,
-            "LastCommit": header.LastCommitHash,
-            "Data": header.DataHash,
-            "Validators": header.ValidatorsHash,
-            "App": header.AppHash,
+        key := fmt.Sprintf("etgate,withdraw,%s", /*change it later*/"etgate-chain")
+        query, err := commands.QueryWithClient(g.mintclient, []byte(key))
+        if err != nil {
+            fmt.Printf("Failed to query last withdrawal: \"%s\"\n", err)
+            continue
         }
-        kpPairsH := merkle.MakeSortedKVPairs(headerMap)
-        fmt.Printf("%+v\n", kpPairsH)
-*/
-        for _, data := range []uint{4, 16, 256, 65536, 100000, 4294967296, 18446744073709551615} {
-            buf := new(bytes.Buffer)
-            n, err := int(0), error(nil)
-            wire.WriteUvarint(data, buf, &n, &err)
-            fmt.Printf("%d:\t%+v\n", data*2+1, buf.Bytes())
+        if len(query.Value) == 0 {
+            continue
         }
 
-        for {
-            status, _ := g.mintclient.Status()
-            if status.LatestBlockHeight > height {
-                break
-            }
-        }
+        // submit withdrawals
     }
 }
 
@@ -329,7 +421,7 @@ func (g *gateway) ethloop() {
 
             // Check if the header already exists
             key := fmt.Sprintf("etgate,blockchain,buffer,%v", head.Hash().Hex())
-            query, err := queryWithClient(g.mintclient, []byte(key))
+            query, err := commands.QueryWithClient(g.mintclient, []byte(key))
             if err != nil {
                 fmt.Printf("Failed to query: \"%s\"", err)
                 continue
@@ -345,7 +437,7 @@ func (g *gateway) ethloop() {
             // Check the the header's parent exists
             // If it does, updateTx only the current header.
             key = fmt.Sprintf("etgate,blockchain,buffer,%v", head.ParentHash.Hex())
-            query, err = queryWithClient(g.mintclient, []byte(key))
+            query, err = commands.QueryWithClient(g.mintclient, []byte(key))
             if err != nil {
                 fmt.Printf("Failed to query: \"%s\"", err)
                 continue
@@ -378,7 +470,7 @@ func (g *gateway) ethloop() {
 
 func (g *gateway) recentHeader() *big.Int { // in mintchain
     key := fmt.Sprintf("etgate,blockchain,recent")
-    query, err := queryWithClient(g.mintclient, []byte(key))
+    query, err := commands.QueryWithClient(g.mintclient, []byte(key))
     
     if err != nil {
         panic("Error querying recent chain header")
@@ -446,7 +538,7 @@ func (g *gateway) getHeaders(from *big.Int, to *big.Int) ([][]byte, error) { // 
         }
 
         key := fmt.Sprintf("etgate,blockchain,buffer,%s", header.Hash().Hex())
-        query, err := queryWithClient(g.mintclient, []byte(key))
+        query, err := commands.QueryWithClient(g.mintclient, []byte(key))
         if err != nil {
             fmt.Printf("Error querying header: \"%s\".\n", err)
             return nil, err
@@ -474,11 +566,16 @@ func (g *gateway) post(blocknumber *big.Int) {
         return
     }
     fmt.Printf("%v\n", header.Hash().Hex())
-
-    for _, q := range g.query {
+    
+        
+    depositQuery := ethereum.FilterQuery {
+        Addresses: []common.Address{common.HexToAddress(addressFlag)},
+        Topics: [][]common.Hash{{depositABI.Events["Deposit"].Id()}},
+    }
+    for _, q := range /*g.query*/ []ethereum.FilterQuery{depositQuery} {
         q.FromBlock = blocknumber
         q.ToBlock = blocknumber
-        logs, err := g.ethclient.FilterLogs(context.Background(), q.FilterQuery)
+        logs, err := g.ethclient.FilterLogs(context.Background(), q)
         if err != nil {
             fmt.Printf("Error retrieving logs: \"%s\". Skipping.\n", err)
             continue
@@ -507,9 +604,8 @@ func (g *gateway) post(blocknumber *big.Int) {
                 panic(fmt.Sprintf("Error getting sequence: \"%s\".\n", err))
             }   
 
-            postTx := etgate.ETGatePacketPostTx {
-                Name: q.Name,
-                Proof: proof,
+            postTx := etgate.ETGateDepositTx {
+                proof,
             }
             if err := g.appTx(postTx); err != nil {
                 fmt.Printf("Error sending postTx: \"%s\". Skipping.\n", err)
@@ -546,90 +642,5 @@ func (g *gateway) newLogProof(log types.Log) (etgate.LogProof, error) {
 }
 
 func (g *gateway) appTx(etgateTx etgate.ETGateTx) error {
-    acc, err := getAccWithClient(g.mintclient, g.mintkey.Address[:])
-    if err != nil {
-        return err
-    }
-    sequence := acc.Sequence + 1
-
-    data := []byte(wire.BinaryBytes(struct {
-        etgate.ETGateTx `json:"unwrap"`
-    }{etgateTx}))
-
-    smallCoins := bctypes.Coin{Denom: "mycoin", Amount: 1}
-
-    input := bctypes.NewTxInput(g.mintkey.PubKey, bctypes.Coins{smallCoins}, sequence)
-    tx := &bctypes.AppTx {
-        Gas: 0,
-        Fee: smallCoins,
-        Name: "ETGATE",
-        Input: input,
-        Data: data,
-    }
-    tx.Input.Signature = g.mintkey.Sign(tx.SignBytes(chainIDFlag))
-    txBytes := []byte(wire.BinaryBytes(struct {
-        bctypes.Tx `json:"unwrap"`
-    }{tx}))
-
-    data, log, err := broadcastTxWithClient(g.mintclient, txBytes)
-    if err != nil {
-        return err
-    }
-
-    _, _ = data, log
-    return nil
-}
-
-func getAccWithClient(httpClient *mintclient.HTTP, address []byte) (*bctypes.Account, error) {
-
-	key := bctypes.AccountKey(address)
-	response, err := queryWithClient(httpClient, key)
-	if err != nil {
-		return nil, err
-	}
-
-	accountBytes := response.Value
-
-	if len(accountBytes) == 0 {
-		return nil, fmt.Errorf("Account bytes are empty for address: %X ", address) //never stack trace
-	}
-
-	var acc *bctypes.Account
-	err = wire.ReadBinaryBytes(accountBytes, &acc)
-	if err != nil {
-		return nil, fmt.Errorf("Error reading account %X error: %v",
-			accountBytes, err.Error())
-	}
-
-	return acc, nil
-}
-
-func queryWithClient(httpClient *mintclient.HTTP, key []byte) (*abci.ResultQuery, error) {
-	res, err := httpClient.ABCIQuery("/key", key, true)
-	if err != nil {
-		return nil, fmt.Errorf("Error calling /abci_query: %v", err)
-	}
-	if !res.Code.IsOK() {
-		return nil, fmt.Errorf("Query got non-zero exit code: %v. %s", res.Code, res.Log)
-	}
-	return res.ResultQuery, nil
-}
-
-func broadcastTxWithClient(httpClient *mintclient.HTTP, tx tmtypes.Tx) ([]byte, string, error) {
-    res, err := httpClient.BroadcastTxCommit(tx)
-    if err != nil {
-        return nil, "", fmt.Errorf("Error on broadcast tx: %v", err)
-    }
-
-    if !res.CheckTx.Code.IsOK() {
-        r := res.CheckTx
-        return nil, "", fmt.Errorf("BroadcastTxCommit got non-zero exit code: %v, %X; %s", r.Code, r.Data, r.Log)
-   }
-
-    if !res.DeliverTx.Code.IsOK() {
-        r := res.DeliverTx
-        return nil, "", fmt.Errorf("BroadcastTxCommit got non-zero exit code: %v, %X; %s", r.Code, r.Data, r.Log)
-    }
-
-    return res.DeliverTx.Data, res.DeliverTx.Log, nil
+	return commands.AppTx(g.mintclient, g.mintkey, etgateTx, chainIDFlag)
 }

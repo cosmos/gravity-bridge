@@ -134,11 +134,11 @@ contract IAVL {
 }
 
 contract ETGate is IAVL {
-    
     mapping (uint => Header) headers;
     mapping (uint => uint) updated;
     mapping (bytes => bool) used;
     mapping (bytes => mapping (address => uint)) deposited;
+    
     uint delay = 50;
     
     struct AppHash {
@@ -147,8 +147,9 @@ contract ETGate is IAVL {
     }
     
     struct Validator {
-        address addr;
-        bytes32 pubkey;
+        address ethaddr;
+        bytes20 mintaddr;
+        bytes pubkey; // uncompressed
         uint votingPower;
         uint accum;
     }
@@ -255,7 +256,7 @@ contract ETGate is IAVL {
         Deposit(to, value, token, chain, accSeq++);
     }
     
-    function depositEther(bytes to, uint64 value, bytes chain) payable { deposit(to, value, 0, chain); }
+    function depositEther(bytes to, uint64 value, bytes chain) payable { deposit(to, value, 0, chain); } 
     
     
     
@@ -308,7 +309,7 @@ contract ETGate is IAVL {
     
     modifier onlyValidator() {
         for (uint i = 0; i < chainState.validators.length; i++) {
-            if (msg.sender == chainState.validators[i].addr) break;
+            if (msg.sender == chainState.validators[i].ethaddr) break;
         }
         assert(i != chainState.validators.length);
         _;
@@ -356,5 +357,38 @@ contract ETGate is IAVL {
             _validatorHash,
             _appHash
         ));
+    }
+
+    function newValidator(bytes pubkey, uint votingPower) internal returns (Validator) {
+        address ethaddr = address(uint(keccak256(pubkey)) & 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+        bytes memory compressed = new bytes(33);
+        for (uint i = 0; i < 32; i++) {
+            compressed[i] = pubkey[i];
+        }
+        compressed[32] = pubkey[64];
+        bytes20 mintaddr = ripemd160(sha256(compressed));
+        return Validator(ethaddr, mintaddr, pubkey, votingPower, 0);
+    }
+    
+    function ETGate(
+        bytes32 _chainID,
+        bytes _pubkey,
+        uint[] _votingPower
+    ) {
+        require(_pubkey.length == _votingPower.length * 63);
+        Validator[] storage validators;
+        uint totalVotingPower = 0;
+        for (uint i = 0; i < _votingPower.length; i++) {
+            bytes memory pubkey = new bytes(63);
+            for (uint j = 0; j < 63; j++) {
+                pubkey[j] = _pubkey[i*63+j];
+            }   
+            validators.push(newValidator(pubkey, _votingPower[i]));
+            totalVotingPower += _votingPower[i];
+        }
+        chainState.chainID = _chainID;
+        chainState.validators = validators;
+        chainState.lastBlockHeight = 0;
+        chainState.totalVotingPower = totalVotingPower;
     }
 }

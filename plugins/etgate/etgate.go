@@ -19,6 +19,8 @@ import (
 //    "github.com/ethereum/go-ethereum/accounts/abi"
 //    "github.com/ethereum/go-ethereum/consensus/ethash"
 //    "github.com/ethereum/go-ethereum/core"
+    "./abi"
+    "../../contracts"
 )
 
 const (
@@ -28,13 +30,23 @@ const (
     _CONFIRM = "confirm"
     _BUFFER = "buffer"
     _RECENT = "recent"
-    _CONTRACT = "contract"
-    _INGRESS = "ingress"
-    _EGRESS = "egress"
+//    _CONTRACT = "contract"
+    _DEPOSIT = "deposit"
     _WITHDRAW = "withdraw"
 
     confirmation = 12
+
 )
+
+var depositabi abi.ABI
+
+func init() {
+    deposit, err := abi.JSON(strings.NewReader(contracts.ETGateABI))
+    if err != nil {
+        panic(err)
+    }
+    depositabi = deposit
+}
 
 type Contract struct {
     Address common.Address
@@ -64,10 +76,10 @@ type ETGateTx interface {
 
 var _ = wire.RegisterInterface (
     struct { ETGateTx }{},
-    wire.ConcreteType{ETGateRegisterContractTx{}, ETGateTxTypeRegisterContract},
+//    wire.ConcreteType{ETGateRegisterContractTx{}, ETGateTxTypeRegisterContract},
     wire.ConcreteType{ETGateUpdateChainTx{}, ETGateTxTypeUpdateChain},
     wire.ConcreteType{ETGateWithdrawTx{}, ETGateTxTypeWithdraw},
-    wire.ConcreteType{ETGatePacketPostTx{}, ETGateTxTypePacketPost},
+    wire.ConcreteType{ETGateDepositTx{}, ETGateTxTypeDeposit},
 )
 
 type ETGateUpdateChainTx struct {
@@ -78,11 +90,11 @@ func (tx ETGateUpdateChainTx) Validate() abci.Result {
     // TODO: ethash.VerifyHeader?
     return abci.OK
 }
-
+/*
 type ETGateRegisterContractTx struct {
     Contract
-}
-
+}*/
+/*
 func (tx ETGateRegisterContractTx) Validate() abci.Result {
     codemap := GetCodemap()
     if _, exists := codemap[tx.Code]; !exists {
@@ -90,20 +102,19 @@ func (tx ETGateRegisterContractTx) Validate() abci.Result {
     }
     return abci.OK
 }
-
-type ETGatePacketPostTx struct {
-    Name string
-    Proof LogProof
+*/
+type ETGateDepositTx struct {
+    LogProof
 }
 
-func (tx ETGatePacketPostTx) Validate() abci.Result {
+func (tx ETGateDepositTx) Validate() abci.Result {
     return abci.OK
 }
 
 type ETGateWithdrawTx struct {
-    To []byte 
-    Value uint
-    Token []byte
+    To [20]byte 
+    Value uint64
+    Token [20]byte
     ChainID string
     Sequence uint64
 }
@@ -116,9 +127,9 @@ func (tx ETGateWithdrawTx) Validate() abci.Result {
 
 const (
     ETGateTxTypeUpdateChain = byte(0x01)
-    ETGateTxTypeRegisterContract = byte(0x02)
+    //ETGateTxTypeRegisterContract = byte(0x02)
     ETGateTxTypeWithdraw = byte(0x03)
-    ETGateTxTypePacketPost = byte(0x04)    
+    ETGateTxTypeDeposit = byte(0x04)    
 
     ETGateCodeConflictingChain = abci.CodeType(1001)
     ETGateCodeMissingAncestor = abci.CodeType(1002)
@@ -126,10 +137,12 @@ const (
     ETGateCodeInvalidHeader = abci.CodeType(1004)
     ETGateCodeInvalidLogProof = abci.CodeType(1005)
     ETGateCodeLogHeaderNotFound = abci.CodeType(1006)
-    ETGateCodePacketAlreadyExists = abci.CodeType(1007)
-    ETGateCodeUnregisteredContract = abci.CodeType(1008)
+    ETGateCodeDepositAlreadyExists = abci.CodeType(1007)
+    ETGateCodeLogUnpackingError = abci.CodeType(1008)
     ETGateCodeInvalidEventName = abci.CodeType(1009)
     ETGateCodeAlreadyWithdrawn = abci.CodeType(1010)
+    ETGateCodeInvalidCoins = abci.CodeType(1011)
+    ETGateCodeInvalidSequence = abci.CodeType(1012)
 )
 
 type ETGatePlugin struct {
@@ -143,7 +156,7 @@ func (gp *ETGatePlugin) RunTx(store types.KVStore, ctx types.CallContext, txByte
     var tx ETGateTx
     
     if err := wire.ReadBinaryBytes(txBytes, &tx); err != nil {
-        return abci.ErrBaseEncodingError.AppendLog("Error decoding tx: " + err.Error())
+        return abci.ErrBaseEncodingError.AppendLog("AError decoding tx: " + err.Error())
     }
 
     res := tx.Validate()
@@ -156,12 +169,12 @@ func (gp *ETGatePlugin) RunTx(store types.KVStore, ctx types.CallContext, txByte
     switch tx := tx.(type) {
     case ETGateUpdateChainTx:
         sm.runUpdateChainTx(tx)
-    case ETGateRegisterContractTx:
-        sm.runRegisterContractTx(tx)
-    case ETGateWithdrawTx:
+    //case ETGateRegisterContractTx:
+     //   sm.runRegisterContractTx(tx)
+    case ETGateWithdrawTx:        
         sm.runWithdrawTx(tx)
-    case ETGatePacketPostTx:
-        sm.runPacketPostTx(tx)
+    case ETGateDepositTx:
+        sm.runDepositTx(tx)
     }
 
     return sm.res
@@ -272,7 +285,7 @@ func (sm *ETGateStateMachine) updateHeader(header Header) abci.Result {
   
     return abci.OK
 }
-
+/*
 func (sm *ETGateStateMachine) runRegisterContractTx(tx ETGateRegisterContractTx) {
     
     var code string
@@ -290,10 +303,10 @@ func (sm *ETGateStateMachine) runRegisterContractTx(tx ETGateRegisterContractTx)
     }
     // does nothing if contract already registered
 }
-
-func (sm *ETGateStateMachine) runPacketPostTx(tx ETGatePacketPostTx) {
+*/
+func (sm *ETGateStateMachine) runDepositTx(tx ETGateDepositTx) {
    
-    log, err := tx.Proof.Log()
+    log, err := tx.Log()
     if err != nil {
         sm.res.Code = ETGateCodeInvalidLogProof
         sm.res.Log = "Invalid log proof"
@@ -301,23 +314,23 @@ func (sm *ETGateStateMachine) runPacketPostTx(tx ETGatePacketPostTx) {
     }
    
     var header Header
-    confirmKey := toKey(_ETGATE, _BLOCKCHAIN, _CONFIRM, strconv.FormatUint(tx.Proof.Number, 10))
-       exists, err := load(sm.store, confirmKey, &header)
+    confirmKey := toKey(_ETGATE, _BLOCKCHAIN, _CONFIRM, strconv.FormatUint(tx.Number, 10))
+    exi, err := load(sm.store, confirmKey, &header)
     if err != nil {
         sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Loading corresponding header to submitted log"))
         return
     }
-    if !exists {
+    if !exi {
         sm.res.Code = ETGateCodeLogHeaderNotFound
         sm.res.Log = "Log header not found"
         return
     }
-    if !tx.Proof.IsValid(header.ReceiptHash) {
+    if !tx.IsValid(header.ReceiptHash) {
         sm.res.Code = ETGateCodeInvalidLogProof
         sm.res.Log = "Invalid log proof"
         return
     }
-
+/*
     var code string
     conKey := toKey(_ETGATE, _CONTRACT, log.Address.Str())
     exists, err = load(sm.store, conKey, &code)
@@ -335,17 +348,45 @@ func (sm *ETGateStateMachine) runPacketPostTx(tx ETGatePacketPostTx) {
 
     res := codemap[code].Run(sm, tx.Name, log)
     if res.IsErr() {
-        sm.res = res.PrependLog("runPacketPostTx failed: ")
+        sm.res = res.PrependLog("runDepositTx failed: ")
         return
     }
+*/
+  
+    deposit := new(Deposit)
+    if err := depositabi.Unpack(deposit, "Deposit", log); err != nil {
+        sm.res.Code = ETGateCodeLogUnpackingError
+        sm.res.Log = "Log unpacking error"
+        return
+    }
+
+    depositKey := toKey(_ETGATE, _DEPOSIT, 
+        deposit.Chain, 
+        strconv.FormatUint(deposit.Seq, 10))
+
+    if exists(sm.store, depositKey) {
+        sm.res.Code = ETGateCodeDepositAlreadyExists
+        sm.res.Log = "Deposit already exists"
+        return 
+    }
+    
+    save(sm.store, depositKey, deposit)
+}
+
+type Deposit struct {
+    To [20]byte
+    Value uint64
+    Token common.Address
+    Chain string
+    Seq uint64
 }
 
 func WithdrawValue(tx ETGateWithdrawTx) ([]byte, error) {
-    // store the simplest form
+    // store as simplest as possible
     buf, n, err := new(bytes.Buffer), new(int), new(error)
-    wire.WriteByteSlice(tx.To, buf, n, err)
-    wire.WriteUvarint(tx.Value, buf, n, err)
-    wire.WriteByteSlice(tx.Token, buf, n, err)
+    wire.WriteByteSlice(tx.To[:], buf, n, err)
+    wire.WriteUint64(tx.Value, buf, n, err)
+    wire.WriteByteSlice(tx.Token[:], buf, n, err)
     if *err != nil {
         return []byte{}, *err
     }
@@ -353,6 +394,32 @@ func WithdrawValue(tx ETGateWithdrawTx) ([]byte, error) {
 }
 
 func (sm *ETGateStateMachine) runWithdrawTx(tx ETGateWithdrawTx) {
+    for i, _ := range tx.Token {
+        if i == 1 {
+            continue
+        }
+        tx.Token[i] -= 32
+    }
+    if len(sm.ctx.Coins) != 1 || uint64(sm.ctx.Coins[0].Amount) != tx.Value || common.HexToAddress(sm.ctx.Coins[0].Denom) != tx.Token {
+        sm.res.Code = ETGateCodeInvalidCoins
+        sm.res.Log = fmt.Sprintf("Invalid coins, %v", len(sm.ctx.Coins) /*!= 1, uint64(sm.ctx.Coins[0].Amount) != tx.Value, common.HexToAddress(sm.ctx.Coins[0].Denom) != tx.Token*/)
+        return
+    }
+
+    sequenceKey := toKey(_ETGATE, _WITHDRAW, tx.ChainID)
+
+    var seq uint64
+    exi, err := load(sm.store, sequenceKey, &seq)
+    if err != nil {
+        sm.res = abci.ErrInternalError.AppendLog("Error loading sequence")
+        return
+    }
+
+    if !(exi && tx.Sequence == seq+1 || !exi && tx.Sequence == 0) {
+        sm.res.Code = ETGateCodeInvalidSequence
+        sm.res.Log = "Invalid sequence"
+    }
+
     withdrawKey := toKey(_ETGATE, _WITHDRAW, tx.ChainID, cmn.Fmt("%v", tx.Sequence))
 
     if exists(sm.store, withdrawKey) {
@@ -367,8 +434,8 @@ func (sm *ETGateStateMachine) runWithdrawTx(tx ETGateWithdrawTx) {
         return
     }
 
-    sequenceKey := toKey(_ETGATE, _WITHDRAW, tx.ChainID)
-    sm.store.Set(sequenceKey, val)
+    sm.store.Set(withdrawKey, val)
+    save(sm.store, sequenceKey, cmn.Fmt("%v", tx.Sequence))
 }
 
 func (gp *ETGatePlugin) Name() string{
