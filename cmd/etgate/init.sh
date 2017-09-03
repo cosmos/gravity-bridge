@@ -28,7 +28,7 @@ sed -ie "s/4665/$PORT_PREFIX/" $SERVER/config.toml
 
 $etgate start &> etgate.log &
 
-sleep 5 
+sleep 15
 
 # etcli init
 
@@ -47,4 +47,4 @@ cp ../../static/abimap.json $SERVER
 
 # etgate gate init
 
-$etgate gate init --testnet --chain-id=$CHAINID --nodeaddr=tcp://localhost:${RPC_PORT} --genesis $SERVER/genesis.json ../../static/example.json
+$etgate gate init --testnet --chain-id=$CHAINID --nodeaddr=tcp://localhost:${RPC_PORT} --genesis $SERVER/genesis.json 

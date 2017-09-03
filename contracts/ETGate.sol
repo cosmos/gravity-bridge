@@ -136,8 +136,11 @@ contract IAVL {
 contract ETGate is IAVL {
     mapping (uint => Header) headers;
     mapping (uint => uint) updated;
+    function getUpdated(uint k) constant returns (uint) { return updated[k]; }
     mapping (bytes => bool) used;
+    function getUsed(bytes k) constant returns (bool) { return used[k]; }
     mapping (bytes => mapping (address => uint)) deposited;
+    function getDeposited(bytes k1, address k2) constant returns (uint) { return deposited[k1][k2]; }
     
     uint delay = 50;
     
@@ -155,10 +158,20 @@ contract ETGate is IAVL {
     }
     
     struct BlockchainState {
-        bytes32 chainID;
+        string chainID;
         Validator[] validators;
         uint lastBlockHeight;
         uint totalVotingPower;
+    }
+    function test() constant returns (bytes) {
+        return chainState.validators[0].pubkey;
+    }
+    function getEthaddrs() constant returns (address[]) {
+        address[] memory addresses = new address[](chainState.validators.length);
+        for (uint i = 0; i < chainState.validators.length; i++) {
+            addresses[i] = chainState.validators[i].ethaddr;
+        }
+        return addresses;
     }
     
     BlockchainState public chainState;
@@ -176,16 +189,14 @@ contract ETGate is IAVL {
     struct Header {
         string chainID;
         uint height;
-        uint time;
+        bytes20 timeHash;
         uint numTxs;
         BlockID lastBlockID;
         bytes20 lastCommitHash;
         bytes20 dataHash;
-        bytes20 validatorHash;
+        bytes20 validatorsHash;
         bytes20 appHash;
     }
-    
-    Header lastHeader;
     
     function toKey(bytes chain, bytes seq) constant returns (bytes) {
         bytes memory prefix = "etgate,withdraw,";
@@ -307,17 +318,22 @@ contract ETGate is IAVL {
                deposited[chain][token] >= value;
     }
     
-    modifier onlyValidator() {
+    function senderIsValidator() constant returns (bool) {
         for (uint i = 0; i < chainState.validators.length; i++) {
             if (msg.sender == chainState.validators[i].ethaddr) break;
         }
-        assert(i != chainState.validators.length);
+        return i != chainState.validators.length;
+    }
+    
+    modifier onlyValidator() {
+        assert(senderIsValidator());
         _;
     }
     
     function updateHeader(Header header) internal {
         headers[header.height] = header;
         updated[header.height] = block.number;
+        chainState.lastBlockHeight = header.height;
     }
     
     // update() accepts header submission that is from any of the known validators.
@@ -326,16 +342,17 @@ contract ETGate is IAVL {
     function update(
         string _chainID,
         uint _height,
-        uint _time,
+        bytes20 _timeHash,
         uint _numTxs,
         bytes20 _blockIDHash,
         uint _blockIDPartSetHeaderTotal,
-        bytes20 _blockIDPartSetHEaderHash,
+        bytes20 _blockIDPartSetHeaderHash,
         bytes20 _lastCommitHash,
         bytes20 _dataHash,
-        bytes20 _validatorHash,
+        bytes20 _validatorsHash,
         bytes20 _appHash
     ) onlyValidator {
+        require(_height == chainState.lastBlockHeight+1);
         if (updated[_height] != 0) {
             // Verify
             revert();
@@ -343,45 +360,61 @@ contract ETGate is IAVL {
         updateHeader(Header(
             _chainID,
             _height,
-            _time,
+            _timeHash,
             _numTxs,
             BlockID (
                 _blockIDHash,
                 PartSetHeader(
                     _blockIDPartSetHeaderTotal,
-                    _blockIDPartSetHEaderHash
+                    _blockIDPartSetHeaderHash
                 )
             ),
             _lastCommitHash,
             _dataHash,
-            _validatorHash,
+            _validatorsHash,
             _appHash
         ));
     }
+    
+    function newEthaddr(bytes pubkey) constant returns (address) {
+        bytes memory sliced = new bytes(pubkey.length - 1); // inefficient
+        for (uint i = 1; i < pubkey.length; i++) {
+            sliced[i] = pubkey[i];
+        }
+        return address(uint(keccak256(sliced)) & 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+    }
 
+    // https://github.com/ethereum/go-ethereum/blob/f272879e5ac464b7260e898c0de0721c46d59195/crypto/crypto.go
+    // FromECDSAPub or
+    // https://github.com/btcsuite/btcd/blob/master/btcec/pubkey.go
+    // SerializeUncompressed
     function newValidator(bytes pubkey, uint votingPower) internal returns (Validator) {
-        address ethaddr = address(uint(keccak256(pubkey)) & 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+        address ethaddr = newEthaddr(pubkey);
         bytes memory compressed = new bytes(33);
-        for (uint i = 0; i < 32; i++) {
+        if (uint8(pubkey[64])%2 == 0) {
+            compressed[0] = byte(2);
+        } else {
+            compressed[0] = byte(3);
+        }
+        for (uint i = 1; i < 33; i++) {
             compressed[i] = pubkey[i];
         }
-        compressed[32] = pubkey[64];
         bytes20 mintaddr = ripemd160(sha256(compressed));
         return Validator(ethaddr, mintaddr, pubkey, votingPower, 0);
     }
     
     function ETGate(
-        bytes32 _chainID,
+        string _chainID,
         bytes _pubkey,
         uint[] _votingPower
     ) {
-        require(_pubkey.length == _votingPower.length * 63);
+        require(_pubkey.length == _votingPower.length * 65);
         Validator[] storage validators;
         uint totalVotingPower = 0;
         for (uint i = 0; i < _votingPower.length; i++) {
-            bytes memory pubkey = new bytes(63);
-            for (uint j = 0; j < 63; j++) {
-                pubkey[j] = _pubkey[i*63+j];
+            bytes memory pubkey = new bytes(65);
+            for (uint j = 0; j < 65; j++) {
+                pubkey[j] = _pubkey[i*65+j];
             }   
             validators.push(newValidator(pubkey, _votingPower[i]));
             totalVotingPower += _votingPower[i];

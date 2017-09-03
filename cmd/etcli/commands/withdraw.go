@@ -1,10 +1,17 @@
 package commands
 
 import (
+    "path/filepath"
+    "os"
+    "io/ioutil"
     "fmt"
+    "math/big"
+    "bytes"
 
     "github.com/spf13/cobra"
     "github.com/spf13/viper"
+
+    "github.com/bgentry/speakeasy"
 
     "github.com/tendermint/light-client/commands"
     txcmd "github.com/tendermint/light-client/commands/txs"
@@ -18,15 +25,23 @@ import (
     "github.com/tendermint/go-wire"
 
     "github.com/ethereum/go-ethereum/common"
+    "github.com/ethereum/go-ethereum/ethclient"
+    "github.com/ethereum/go-ethereum/accounts/abi/bind"
 
     etcmd "../../../commands"
     "../../../plugins/etgate"
+    "../../../contracts"
 )
 
 const (
     FlagTo       = "to"
+    FlagValue    = "value"
     FlagToken    = "token"
     FlagSequence = "sequence"
+    FlagKey      = "key"
+    FlagDatadir  = "datadir"
+    FlagTestnet  = "testnet"
+    FlagAddress  = "address"
 )
 
 var valueFlag int64
@@ -34,8 +49,12 @@ var valueFlag int64
 func init() {
     flags := WithdrawTxCmd.Flags()
     flags.String(FlagTo, "", "Destination ethereum address")
-    flags.Int64VarP(&valueFlag, "value", "v",  0, "Value of coins to send")
+    flags.Int64(FlagValue, 0, "Value of coins to send")
     flags.String(FlagToken, "", "Token ethereum address")
+    flags.String(FlagKey, "", "Ethereum key json file path")
+    flags.String(FlagDatadir, filepath.Join(os.Getenv("HOME"), ".ethereum"), "Data directory for the databases and keystore")
+    flags.Bool(FlagTestnet, false, "Ropsten network: pre-configured test network")
+    flags.String(FlagAddress, "", "ETGate contract address on Ethereum chain")
 }
 
 var WithdrawTxCmd = &cobra.Command {
@@ -51,6 +70,8 @@ func getInfo() (keys.Info, error) {
 }
 
 func withdrawCmd(cmd *cobra.Command, args []string) error {
+    originChainID := "etgate-chain" // for now
+
     node := commands.GetNode()
     info, err := getInfo()
     if err != nil {
@@ -65,7 +86,7 @@ func withdrawCmd(cmd *cobra.Command, args []string) error {
     sequence := acc.Sequence + 1
     */
 
-    key := fmt.Sprintf("etgate,withdraw,etgate-chain")
+    key := fmt.Sprintf("etgate,withdraw,%s", /*change it later*/originChainID)
     query, err := etcmd.QueryWithClient(node, []byte(key))
     if err != nil {
         return err
@@ -85,10 +106,9 @@ func withdrawCmd(cmd *cobra.Command, args []string) error {
         To: common.HexToAddress(viper.GetString(FlagTo)),
         Value: uint64(valueFlag),
         Token: common.HexToAddress(token),
-        ChainID: "etgate-chain", // change it later
+        ChainID: originChainID, // change it later
         Sequence: seq+1,
     }
-    fmt.Printf("%+v\n", inner)
     acc, err := etcmd.GetAccWithClient(node, info.Address[:])
     if err != nil {
         return err
@@ -97,11 +117,7 @@ func withdrawCmd(cmd *cobra.Command, args []string) error {
     feeCoins := bctypes.Coin{Denom: "mycoin", Amount: 1}
 
     enctoken := ""
-    for i, s := range token {
-        if i == 1 {
-            enctoken = enctoken + string(s)
-            continue
-        }
+    for _, s := range token[2:] {
         enctoken = enctoken + string(s+32) // coin denom dosent work on numerics
     }
     ethCoins := bctypes.Coin{Denom: enctoken, Amount: int64(valueFlag)}
@@ -125,7 +141,67 @@ func withdrawCmd(cmd *cobra.Command, args []string) error {
         return err
     }
 
-    return txcmd.OutputTx(res)
+    fmt.Printf("%s\n", txcmd.OutputTx(res))
+
+    password, err := speakeasy.Ask("Enter the password for keyfile: ")
+    if err != nil {
+        return err
+    }
+
+    keyBytes, err := ioutil.ReadFile(viper.GetString(FlagKey))
+    if err != nil {
+        return err
+    }
+/*
+    priv, err := keystore.DecryptKey(keyBytes, password)
+    if err != nil {
+        return err
+    }
+*/
+
+// TODO: move boilerplate to commands
+    var datadir string
+    if viper.GetBool(FlagTestnet) {
+        datadir = filepath.Join(viper.GetString(FlagDatadir), "testnet")
+    } else {
+        datadir = viper.GetString(FlagDatadir)
+    }
+
+    ethclient, err := ethclient.Dial(filepath.Join(datadir, "geth.ipc"))
+
+    if err != nil {
+        return err
+    }
+
+    contract, err := contracts.NewETGate(common.HexToAddress(viper.GetString(FlagAddress)), ethclient)
+    if err != nil {
+        return err
+    }
+
+    _, err = bind.NewTransactor(bytes.NewReader(keyBytes), password)     
+    if err != nil {
+        return err
+    }
+
+    fmt.Println("Waiting for the header to be uploaded...")
+
+    for {
+        withdrawable, err := contract.Withdrawable(
+            nil, 
+            big.NewInt(int64(res.Height)), 
+            /*change it later*/[]byte(originChainID), common.HexToAddress(viper.GetString(FlagTo)), 
+            uint64(viper.GetInt64(FlagValue)))
+        if err != nil {
+            return err
+        }
+        if withdrawable {
+            break
+        }
+    }
+
+//    contract.Withdraw
+
+    return nil
 }
 /*
 func withdrawCmd(cmd *cobra.Command, args []string) error {

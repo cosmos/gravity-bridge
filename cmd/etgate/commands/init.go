@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+    "path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -50,10 +51,21 @@ func setupFile(path, data string, perm os.FileMode) (int, error) {
 
 func initCmd(cmd *cobra.Command, args []string) error {
 	// this will ensure that config.toml is there if not yet created, and create dir
-	cfg, err := tcmd.ParseConfig()
+	cfg, err := tcmd.ParseConfig() 
 	if err != nil {
 		return err
 	}
+
+    cfgpath := filepath.Join(cfg.Consensus.RootDir, "config.toml")
+
+    cfgfile, err := ioutil.ReadFile(cfgpath)
+    if err != nil {
+        return err
+    }
+
+    cfgfile = append(cfgfile, []byte("\n[consensus]\ntimeout_commit = 10000\n")...)
+
+    ioutil.WriteFile(cfgpath, cfgfile, 0644)
 
 	if len(args) != 1 {
 		return fmt.Errorf("`init` takes one argument, a basecoin account address. Generate one using `basecli keys new mykey`")
@@ -97,7 +109,7 @@ func initCmd(cmd *cobra.Command, args []string) error {
 }
 
 var PrivValJSON = `{
-  "address": "FC2582CC198FA734A751EABDCF8C0977B786D3F9",
+  "address": "F576A0E8A42CD55653E313912990C316B73DBA8F",
   "last_height": 0,
   "last_round": 0,
   "last_signature": null,
@@ -105,11 +117,11 @@ var PrivValJSON = `{
   "last_step": 0,
   "priv_key": {
     "type": "secp256k1",
-    "data": "13D0B182D12A2C9F0E5510D97E7B8F30A2901041711EBCB67F4552ADE94A67CA"
+    "data": "6D7307523FD2A16A95128CDE9A4D6ABF9FB34F60AE0710F05DF4B345A2DA13EC"
   },
   "pub_key": {
     "type": "secp256k1",
-    "data": "03F21BF92B81FBDC29430C64456F9722E6D84A86F738ABA3CEBDA11539C3BA6841"
+    "data": "02AA2BDD2DE54BAC25629C8730D7934F71740F78A5A5DEA2201978F2CADE834727"
   }
 }`
 
@@ -127,7 +139,7 @@ func GetGenesisJSON(chainID, addr string) string {
       "name": "",
       "pub_key": {
         "type": "secp256k1",
-        "data": "03F21BF92B81FBDC29430C64456F9722E6D84A86F738ABA3CEBDA11539C3BA6841"
+        "data": "02AA2BDD2DE54BAC25629C8730D7934F71740F78A5A5DEA2201978F2CADE834727"
       }
     }
   ],
@@ -147,13 +159,13 @@ func GetGenesisJSON(chainID, addr string) string {
 
 // TODO: remove this once not needed for relay
 var KeyJSON = `{
-  "address": "FC2582CC198FA734A751EABDCF8C0977B786D3F9",
+  "address": "F576A0E8A42CD55653E313912990C316B73DBA8F",
   "priv_key": {
     "type": "secp256k1",
-    "data": "13D0B182D12A2C9F0E5510D97E7B8F30A2901041711EBCB67F4552ADE94A67CA"
+    "data": "6D7307523FD2A16A95128CDE9A4D6ABF9FB34F60AE0710F05DF4B345A2DA13EC"
   },
   "pub_key": { 
     "type": "secp256k1",
-    "data": "03F21BF92B81FBDC29430C64456F9722E6D84A86F738ABA3CEBDA11539C3BA6841"
+    "data": "02AA2BDD2DE54BAC25629C8730D7934F71740F78A5A5DEA2201978F2CADE834727"
   }
 }`

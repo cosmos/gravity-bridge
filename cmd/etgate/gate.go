@@ -12,6 +12,7 @@ import (
     "math/big"
     "strings"
 //    "bytes"
+    "time"
 
 //    "golang.org/x/crypto/ripemd160"
 
@@ -32,7 +33,7 @@ import (
 //    bctypes "github.com/tendermint/basecoin/types"
     mintclient "github.com/tendermint/tendermint/rpc/client"
     tmtypes "github.com/tendermint/tendermint/types"
- //   "github.com/tendermint/tmlibs/merkle"
+    "github.com/tendermint/tmlibs/merkle"
 
     "github.com/tendermint/go-wire"
     "github.com/tendermint/go-crypto"
@@ -59,9 +60,17 @@ type gateway struct {
 //    query []etgate.Query
 }
 
+
+
 var GateCmd = &cobra.Command {
     Use: "gate",
     Short: "Relay ethereum logs to tendermint",
+}
+
+var GateGenValidatorCmd = &cobra.Command {
+    Use: "genval",
+    Short: "Generate secp256k1 validator",
+    RunE: gateGenValidatorCmd,
 }
 
 var GateStartCmd = &cobra.Command {
@@ -113,6 +122,7 @@ func init() {
 
     GateCmd.AddCommand(GateStartCmd)
     GateCmd.AddCommand(GateInitCmd)
+    GateCmd.AddCommand(GateGenValidatorCmd)
 
     var err error
     depositABI, err = abi.JSON(strings.NewReader(contracts.ETGateABI))
@@ -121,7 +131,7 @@ func init() {
     }
 
 }
-
+/*
 func getConsfile(consfile string) ([]map[string]interface{}, error) {
     if !filepath.IsAbs(consfile) {
         wd, err := os.Getwd()
@@ -144,42 +154,26 @@ func getConsfile(consfile string) ([]map[string]interface{}, error) {
 
     return data, nil
 }
+*/
+
+func gateGenValidatorCmd(cmd *cobra.Command, args []string) error {
+    privKey := crypto.GenPrivKeySecp256k1()
+    pubKey := privKey.Wrap().PubKey().Unwrap()
+    var addr common.Address
+    copy(addr[:], pubKey.Address())
+    fmt.Printf("Priv:\t%v\nPub:\t%v\nAddr:\t%v\n", strings.ToUpper(hex.EncodeToString(privKey[:])), pubKey.KeyString(), strings.ToUpper(addr.Hex()[2:]))
+
+    return nil
+}
 
 func gateInitCmd(cmd *cobra.Command, args []string) error {
-/*    if len(args) < 1 {
-        return errors.New("Usage: etgate gate init [--testnet] contractsfile")
-    }
-    consfile := args[0]
 
-    data, err := getConsfile(consfile)
-    if err != nil {
-        return err
-    }
-*/
     g, err := newGateway()
     if err != nil {
         return err
     }
-/*
-    // Delete this part
-    for _, con := range data {
-        addr, code := con["address"].(string), con["code"].(string)
-        if !common.IsHexAddress(addr) {
-            return errors.New("Invalid address format")
-        }
 
-        registerTx := etgate.ETGateRegisterContractTx {
-            etgate.Contract {
-                Address: common.HexToAddress(addr),
-                Code: code,
-            },
-        }
-        if err := g.appTx(registerTx); err != nil {
-            return err
-        }
-    }
-    // ^
-*/
+    g.ethauth.GasLimit = big.NewInt(4700000)
 
     genesisBytes, err := ioutil.ReadFile(genesisFlag)
     if err != nil {
@@ -208,32 +202,17 @@ func gateInitCmd(cmd *cobra.Command, args []string) error {
         votingPowers = append(votingPowers, big.NewInt(val.Amount))
     }
 
-    validatorsHex := "["
-
-    for i := 0; i < len(validatorsBytes); i++ {
-        validatorsHex = validatorsHex + "\"0x" + hex.EncodeToString(validatorsBytes[i:i+1]) + "\", "
-    }
-    
-    validatorsHex = validatorsHex+ "]"
-
-    fmt.Printf("%+v\n%+v\n", validatorsHex, votingPowers)
-
-    address, _, _, err := contracts.DeployETGate(g.ethauth, g.ethclient, []byte("etgate-chain"), validatorsBytes, votingPowers)
+    address, _, _, err := contracts.DeployETGate(g.ethauth, g.ethclient, "etgate-chain", validatorsBytes, votingPowers)
     if err != nil {
         return err
     }
 
-    fmt.Printf("ETGate contract is deployed on %s", address.Hex())
+    fmt.Printf("ETGate contract is deployed on %s\n", address.Hex())
 
     return nil
 }
 
 func gateStartCmd(cmd *cobra.Command, args []string) error {
-    if len(args) < 1 {
-        return errors.New("Usage: etgate gate start [--testnet] [--datadir ~/.ethereum] [--ipcpath geth.ipc] [--rpcpath localhost:1234] contractsfile")
-    } 
-   
-
     gateway, err := newGateway()
     if err != nil {
         return err
@@ -263,40 +242,11 @@ func newGateway() (*gateway, error) {
     if err != nil {
         return nil, err
     }
-/*
-    codemap := etgate.GetCodemap()
-   
-    queries := []etgate.Query{}
 
-    var cons []etgate.Contract
-    for _, con := range data {
-        addr := con["address"].(string)
-        if !common.IsHexAddress(addr) {
-            return errors.New("Invalid address format")
-        }
-        code, exists := con["code"]
-        if !exists {
-            return errors.New("Invalid code format")
-        }
-        cons = append(cons, etgate.Contract {
-            Address: common.HexToAddress(addr),
-            Code: code.(string),
-        })
-    }
-
-    for _, con := range cons {
-        query := codemap[con.Code].Query(con.Address)
-        queries = append(queries, query...)
-    }
-*/
     mintkey, err := basecmd.LoadKey(filepath.Join(os.Getenv("HOME"), ".etgate", "server", "key.json"))
     if err != nil {
         return nil, err
     }
- /*   if len(mintkey.PrivKey) != 32 {
-        return nil, errors.New("Tendermint keyfile is not secp256k1")
-    }
-*/
 
     priv, err := getSecp256k1Priv(mintkey.PrivKey)
     if err != nil {
@@ -304,34 +254,19 @@ func newGateway() (*gateway, error) {
     }
 
     ecdsa, err := ecrypto.ToECDSA(priv[:])
-    fmt.Printf("%+v\n%+v\n", ecdsa, priv)
     if err != nil {
         return nil, err
     }
 
-    fmt.Printf("%+v\n", ecrypto.PubkeyToAddress(ecdsa.PublicKey).Hex())
-
-//    pub_, _ := getSecp256k1Pub(mintkey.PubKey)
-//    _, pub := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv[:])
-    //ecrypto.PubkeyToAddress(ecdsa.PublicKey)
-/*    fmt.Printf("ecrypto pubkey: %v\n", ecdsa.PublicKey)
-    fmt.Printf("crypto pubkey:    %v\n", pub)*/
+    fmt.Printf("Using Ethereum address %+v\n", ecrypto.PubkeyToAddress(ecdsa.PublicKey).Hex())
 
     ethauth := bind.NewKeyedTransactor(ecdsa)
 
-    ethauth.GasLimit = big.NewInt(4700000)
-
-    /*   data, err := getConsfile(consfile)
-    if err != nil {
-        return err
-    }    
-   */ 
     return &gateway{
         ethclient: ethclient, 
         mintclient: mintclient.NewHTTP(nodeaddrFlag, "/websocket"),
         ethauth: ethauth, 
         mintkey: mintkey,
-//        query: queries,
     }, nil
 }
 
@@ -359,33 +294,121 @@ func (g *gateway) start() {
 }
 
 func (g *gateway) mintloop() {
-    // Get last submitted withdrawal's sequence from ethereum    
+    contract, err := contracts.NewETGate(common.HexToAddress(addressFlag), g.ethclient)
+    if err != nil {
+        panic(err)
+    }
 
+ /*
+    isVal, err := contract.SenderIsValidator(nil)
+    if err != nil {
+        panic(err)
+    }
+    if !isVal {
+        fmt.Println("This key is not a validator.")
+        return
+    }
+*/
     for {
+        time.Sleep(5 * time.Second)
+
+        chainState, err := contract.ChainState(nil)
+        if err != nil {
+            panic(err)
+        }
+
+        lastHeight := chainState.LastBlockHeight
+
         status, err := g.mintclient.Status()
         if err != nil {
             fmt.Printf("Failed to get status: \"%s\"\n", err)
             continue
         }
         height := status.LatestBlockHeight
-        
-        _, err = g.mintclient.Commit(height)
+        fmt.Printf("Current height: %d\n", height)
+
+        updated, err := contract.GetUpdated(nil, big.NewInt(int64(height)))
         if err != nil {
-            fmt.Printf("Failed to get commit: \"%s\"\n", err)
+            fmt.Printf("Failed to get updated: \"%s\"\n", err)
             continue
         }
-
-        key := fmt.Sprintf("etgate,withdraw,%s", /*change it later*/"etgate-chain")
+        if updated.Cmp(big.NewInt(0)) != 0 {
+            // compare hash in production phase
+            fmt.Printf("Header already submitted\n")
+            continue
+        }
+/*
+        key := fmt.Sprintf("etgate,withdraw,%s", /*change it later/"etgate-chain")
         query, err := commands.QueryWithClient(g.mintclient, []byte(key))
         if err != nil {
             fmt.Printf("Failed to query last withdrawal: \"%s\"\n", err)
             continue
         }
         if len(query.Value) == 0 {
+            query.Value = 0
+        }
+
+        var sequence uint64
+        if err = wire.ReadBinaryBytes(query.Value, &sequence); err != nil {
+            fmt.Printf("Error reading sequence from query: \"%s\"\n", err)
             continue
         }
 
-        // submit withdrawals
+        bigSequence := new(big.Int)
+        bigSequence.SetUint64(sequence)
+
+        fmt.Printf("%d, %d\n", lastHeight.Uint64(), sequence)
+*/
+
+        fmt.Printf("debug: %+v, %+v\n", lastHeight.Uint64(), height)
+
+        bigHeight := big.NewInt(int64(height))
+        for lastHeight.Add(lastHeight, one); lastHeight.Cmp(bigHeight) != 1; lastHeight.Add(lastHeight, one) {
+            commit, err := g.mintclient.Commit(int(lastHeight.Uint64()))
+            if err != nil {
+                fmt.Printf("Failed to get commit: \"%s\"\n", err)
+                break
+            }
+    
+            header := commit.Header
+
+            var timeHashArr [20]byte
+            copy(timeHashArr[:], merkle.KVPair{Key: "Time", Value: header.Time}.Hash())
+            var blockIDHashArr [20]byte
+            copy(blockIDHashArr[:], header.LastBlockID.Hash)
+            var partsHeaderHashArr [20]byte
+            copy(partsHeaderHashArr[:], header.LastBlockID.PartsHeader.Hash)
+            var lastCommitHashArr [20]byte
+            copy(lastCommitHashArr[:], header.LastCommitHash)
+            var dataHashArr [20]byte
+            copy(dataHashArr[:], header.DataHash)
+            var validatorsHashArr [20]byte
+            copy(validatorsHashArr[:], header.ValidatorsHash)
+            var appHashArr [20]byte
+            copy(appHashArr[:], header.AppHash)
+
+            tx, err := contract.Update(
+                g.ethauth, 
+                /*change it later*/"etgate-chain", 
+                big.NewInt(int64(header.Height)), 
+                timeHashArr,
+                big.NewInt(int64(header.NumTxs)),
+                blockIDHashArr,
+                big.NewInt(int64(header.LastBlockID.PartsHeader.Total)),
+                partsHeaderHashArr,
+                lastCommitHashArr,
+                dataHashArr,
+                validatorsHashArr,
+                appHashArr,
+            )
+            if err != nil {
+                fmt.Printf("Failed to update header: \"%s\", Waiting...\n", err)
+                time.Sleep(30 * time.Second)
+                break
+            }
+            fmt.Printf("Submitted header: %d\nTx hash: %v\n", header.Height, tx.Hash().Hex())
+            time.Sleep(3 * time.Second)
+        }
     }
 }
 
@@ -582,7 +605,6 @@ func (g *gateway) post(blocknumber *big.Int) {
         }
 
         for _, log := range logs {
-            fmt.Printf("%v\n", log.BlockHash.Hex())
             proof, err := g.newLogProof(log)
             if err != nil {
                 fmt.Printf("Error generating logproof: \"%s\". Skipping.\n", err)

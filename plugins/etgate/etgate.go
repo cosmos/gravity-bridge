@@ -394,11 +394,9 @@ func WithdrawValue(tx ETGateWithdrawTx) ([]byte, error) {
 }
 
 func (sm *ETGateStateMachine) runWithdrawTx(tx ETGateWithdrawTx) {
+    tokenHex := "0x"
     for i, _ := range tx.Token {
-        if i == 1 {
-            continue
-        }
-        tx.Token[i] -= 32
+        tokenHex = tokenHex + string(tx.Token[i]-32)
     }
     if len(sm.ctx.Coins) != 1 || uint64(sm.ctx.Coins[0].Amount) != tx.Value || common.HexToAddress(sm.ctx.Coins[0].Denom) != tx.Token {
         sm.res.Code = ETGateCodeInvalidCoins
@@ -415,7 +413,7 @@ func (sm *ETGateStateMachine) runWithdrawTx(tx ETGateWithdrawTx) {
         return
     }
 
-    if !(exi && tx.Sequence == seq+1 || !exi && tx.Sequence == 0) {
+    if !(exi && tx.Sequence == seq+1 || !exi && tx.Sequence == 1) {
         sm.res.Code = ETGateCodeInvalidSequence
         sm.res.Log = "Invalid sequence"
     }
@@ -435,7 +433,7 @@ func (sm *ETGateStateMachine) runWithdrawTx(tx ETGateWithdrawTx) {
     }
 
     sm.store.Set(withdrawKey, val)
-    save(sm.store, sequenceKey, cmn.Fmt("%v", tx.Sequence))
+    save(sm.store, sequenceKey, tx.Sequence)
 }
 
 func (gp *ETGatePlugin) Name() string{
@@ -451,7 +449,6 @@ func (gp *ETGatePlugin) InitChain(store types.KVStore, vals []*abci.Validator) {
 }
 
 func (gp *ETGatePlugin) BeginBlock(store types.KVStore, hash []byte, header *abci.Header) {
-    fmt.Printf("%+v\n%+v\n%+v\n", store, hash, header)
 }
 
 func (gp *ETGatePlugin) EndBlock(store types.KVStore, height uint64) (res abci.ResponseEndBlock) {
