@@ -1,9 +1,74 @@
 <html>
-    <head>
-        <title>ETGate</title>
-        <script src="./index.js"></script>
-    </head>
+  <head>
+    <title>ETGate</title>
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.min.js"
+      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+      crossorigin="anonymous"></script>
+    <script src="./index.js"></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css' rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.2.13/dist/semantic.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.2.13/dist/semantic.min.js"></script>
+    <style>
+      html {
+      }
+      body {
+        background-color: B2DFDB;
+        font-family: 'Spoqa Han Sans', 'Sans-serif';
+      }
+      .main.container {
+        margin-top: 2em !important;
+        padding: 25px;
+      }
+    </style>
+  </head>
     <body>
+      <div id="main" class="ui main text container raised segment">
+        <h1 class="ui huge teal header">ETGate</h1> 
+        <div id="notifications"></div>
+        <div class="ui divider"></div>
+
+        <div class="ui hidden divider"></div>
+        <div class="ui labeled input" id="contract-input">
+          <div class="ui label">Contract</div>
+          <input type="text" placeholder="0xabcd..." id="contract-text">
+        </div>
+        <div class="ui hidden divider"></div>
+        <div class="ui labeled input">
+          <div class="ui label">Key</div>
+          <input type="text" placeholder="money" id="keyname-text">
+        </div>
+        <div class="ui hidden divider"></div>
+        <button class="ui primary button" id="setup-button">Setup</button>
+        <div class="ui divider"></div>
+
+        <div class="ui hidden divider"></div>
+        <div class="ui labeled input">
+          <div class="ui label">To</div>
+          <input type="text" placeholder="0xabcd..." id="to-text">
+        </div>
+        <div class="ui hidden divider"></div>
+        <div class="ui labeled input">
+          <div class="ui label">Value</div>
+          <input type="text" placeholder="1000" id="value-text">
+          <select class="ui compact selection dropdown" id="value-select">
+            <option selected="" value="ether">Ether</option>
+            <option value="wei">Wei</option>
+          </select>
+        </div>
+        <div class="ui hidden divider"></div>
+        <div class="ui labeled disabled input">
+          <div class="ui label">ChainID</div>
+          <input type="text" placeholder="etgate-chain" id="chainid-text">
+        </div>
+        <div class="ui hidden divider"></div>
+        <button class="ui primary button" id="deposit-button">Deposit</button>
+        <button class="ui primary button" id="withdraw-button">Withdraw</button>
+       <div class="ui divider"></div> 
+      </div>
     </body>
 </html>
 

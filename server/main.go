@@ -204,9 +204,6 @@ func GetAccount(w http.ResponseWriter, request *http.Request) {
 func main() {
     r := mux.NewRouter()
     
-    // Frontend
-    r.Handle("/", http.FileServer(http.Dir("./static/")))
-
     // Keys
     k := keyserver.New(manager, "secp256k1")
     r.HandleFunc("/keys", k.GenerateKey).Methods("POST")
@@ -220,6 +217,10 @@ func main() {
 
     // Txs
     r.HandleFunc("/withdraw", PostWithdraw).Methods("POST")
+
+    // Frontend
+    //r.Handle("/", http.FileServer(http.Dir("./static/")))
+    r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
 
     http.Handle("/", r)
     http.ListenAndServe(":12349", nil)
