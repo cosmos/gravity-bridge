@@ -43,8 +43,6 @@ sleep 3
 
 $etcli tx send --amount=100000mycoin --sequence=1 --to=$RELAY_ADDR --name=money
 
-cp ../../static/abimap.json $SERVER
-
 # etgate gate init
 
 $etgate gate init --testnet --chain-id=$CHAINID --nodeaddr=tcp://localhost:${RPC_PORT} --genesis $SERVER/genesis.json 

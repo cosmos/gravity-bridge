@@ -63,7 +63,7 @@ func initCmd(cmd *cobra.Command, args []string) error {
         return err
     }
 
-    cfgfile = append(cfgfile, []byte("\n[consensus]\ntimeout_commit = 10000\n")...)
+    cfgfile = append(cfgfile, []byte("\n[consensus]\ntimeout_commit = 10000\ncreate_empty_blocks = false\ncreate_empty_blocks_interval = 1800\n")...) // 30 min
 
     ioutil.WriteFile(cfgpath, cfgfile, 0644)
 
@@ -109,7 +109,7 @@ func initCmd(cmd *cobra.Command, args []string) error {
 }
 
 var PrivValJSON = `{
-  "address": "F576A0E8A42CD55653E313912990C316B73DBA8F",
+  "address": "5683A1E28A791BADE84A7A1D562241E314D61DAF",
   "last_height": 0,
   "last_round": 0,
   "last_signature": null,
@@ -117,11 +117,11 @@ var PrivValJSON = `{
   "last_step": 0,
   "priv_key": {
     "type": "secp256k1",
-    "data": "6D7307523FD2A16A95128CDE9A4D6ABF9FB34F60AE0710F05DF4B345A2DA13EC"
+    "data": "F1C075541D98BC45F9DFA19EA2691E61DE9E347B83AA65935D1EA90BE0369D80"
   },
   "pub_key": {
     "type": "secp256k1",
-    "data": "02AA2BDD2DE54BAC25629C8730D7934F71740F78A5A5DEA2201978F2CADE834727"
+    "data": "0276954FB8E6E2303CA72BC082D5F5EE89A4C50451F277197C9236E5931D779774"
   }
 }`
 
@@ -139,7 +139,7 @@ func GetGenesisJSON(chainID, addr string) string {
       "name": "",
       "pub_key": {
         "type": "secp256k1",
-        "data": "02AA2BDD2DE54BAC25629C8730D7934F71740F78A5A5DEA2201978F2CADE834727"
+        "data": "0276954FB8E6E2303CA72BC082D5F5EE89A4C50451F277197C9236E5931D779774"
       }
     }
   ],
@@ -159,13 +159,13 @@ func GetGenesisJSON(chainID, addr string) string {
 
 // TODO: remove this once not needed for relay
 var KeyJSON = `{
-  "address": "F576A0E8A42CD55653E313912990C316B73DBA8F",
+  "address": "5683A1E28A791BADE84A7A1D562241E314D61DAF",
   "priv_key": {
     "type": "secp256k1",
-    "data": "6D7307523FD2A16A95128CDE9A4D6ABF9FB34F60AE0710F05DF4B345A2DA13EC"
+    "data": "F1C075541D98BC45F9DFA19EA2691E61DE9E347B83AA65935D1EA90BE0369D80"
   },
   "pub_key": { 
     "type": "secp256k1",
-    "data": "02AA2BDD2DE54BAC25629C8730D7934F71740F78A5A5DEA2201978F2CADE834727"
+    "data": "0276954FB8E6E2303CA72BC082D5F5EE89A4C50451F277197C9236E5931D779774"
   }
 }`

@@ -6,6 +6,7 @@ import (
     "errors"
     "net/http"
     "encoding/json"
+    "encoding/hex"
     "path/filepath"
 
     "github.com/spf13/viper"
@@ -29,6 +30,10 @@ import (
     "github.com/tendermint/light-client/proofs"
     proofcmd "github.com/tendermint/light-client/commands/proofs"
 
+    rpcclient "github.com/tendermint/tendermint/rpc/client"
+
+    "github.com/tendermint/merkleeyes/iavl"
+
     "github.com/ethereum/go-ethereum/common"
 
     etcmd "../commands"
@@ -45,19 +50,21 @@ func GetKeyManager() keys.Manager {
 
 func init() {
     viper.Set("home", filepath.Join(os.Getenv("HOME"), ".etgate", "client"))
-    viper.Set("node", "localhost:12347")
+    viper.Set("node", "tcp://localhost:12347")
     viper.Set("chain-id", "etgate-chain")
+    manager = GetKeyManager()
+    node = commands.GetNode()
 }
 
 var (
-    manager = GetKeyManager()
-    node = commands.GetNode()
+    manager keys.Manager
+    node    rpcclient.Client
 )
 
 
 type ResultJSON struct {
-    Result interface{} `json:result`
-    Error  string      `json:error`
+    Result interface{} `json:"result"`
+    Error  string      `json:"error"`
 }
 
 func Result(w http.ResponseWriter, result interface{}) {
@@ -69,21 +76,50 @@ func Error(w http.ResponseWriter, tag string, err error) {
 }
 
 type PostWithdrawRequest struct {
-    Name       string `json:name`
-    Passphrase string `json:passphrase`
-//  Origin     string `json:origin`  
-    To         string `json:to`
-    Value      int64  `json:value`
-    Token      string `json:token`
-    ChainID    string `json:chainid`
+    Name       string `json:"name"`
+    Passphrase string `json:"passphrase"`
+//  Origin     string `json:"origin"`  
+    To         string `json:"to"`
+    Value      int64  `json:"value"`
+    Token      string `json:"token"`
+    ChainID    string `json:"chainid"`
 }
 
+type PostWithdrawResponse struct {
+    Height               uint64         `json:"height"`
+    IavlProofLeafHash    string         `json:"iavlProofLeafHash"` // [20]byte
+    IavlProofInnerHeight []int8         `json:"iavlProofInnerHeight"` // [20]byte
+    IavlProofInnerSize   []int          `json:"iavlProofInnerSize"`
+    IavlProofInnerLeft   []string       `json:"iavlProofInnerLeft"` // [][20]byte
+    IavlProofInnerRight  []string       `json:"iavlProofInnerRight"` // [][20]byte
+    IavlProofRootHash    string         `json:"iavlProofRootHash"` // [20]byte
+    To                   string         `json:"to"`
+    Value                uint64         `json:"value"`
+    Token                string         `json:"token"`
+    Chain                string         `json:"chain"`
+    Seq                  string         `json:"seq"`
+}
+
+func Debug(tag string, data interface{}) {
+    fmt.Printf("%s: %+v\n", tag, data)
+}
+
+func toHex(s []byte) string {
+    return fmt.Sprintf("%040s", hex.EncodeToString(s))
+}   
+
 func PostWithdraw(w http.ResponseWriter, request *http.Request) {
+    if request.Body == nil {
+        Error(w, "Request body is empty", nil)
+    }
     var req PostWithdrawRequest
-    json.NewDecoder(request.Body).Decode(&req)
+    if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
+        Error(w, "Error decoding request: ", err)
+        return
+    }
 
     originChainID := "etgate-chain" // for now
-    
+
     sequenceKey := fmt.Sprintf("etgate,withdraw,%s", originChainID)
     query, err := etcmd.QueryWithClient(node, []byte(sequenceKey))
     if err != nil {
@@ -100,9 +136,10 @@ func PostWithdraw(w http.ResponseWriter, request *http.Request) {
         }
     }
     
+
     info, err := manager.Get(req.Name)
     if err != nil {
-        Error(w, "Error getting key info", err)
+        Error(w, "Error getting key info: ", err)
         return
     }
 
@@ -115,7 +152,7 @@ func PostWithdraw(w http.ResponseWriter, request *http.Request) {
     inner := etgate.ETGateWithdrawTx {
         To: common.HexToAddress(req.To),
         Value: uint64(req.Value),
-        Token: common.HexToAddress(req.Token),
+        Token: req.Token,
         ChainID: originChainID,
         Sequence: seq+1,
     }
@@ -127,11 +164,14 @@ func PostWithdraw(w http.ResponseWriter, request *http.Request) {
     }
     ethCoins := bctypes.Coin{Denom: enctoken, Amount: int64(req.Value)}
 
+    coins := bctypes.Coins{ethCoins, feeCoins}
+    coins.Sort()
+
     tx := &bctypes.AppTx {
         Gas: 0,
         Fee: feeCoins,
         Name: "ETGATE",
-        Input: bctypes.NewTxInput(info.PubKey, bctypes.Coins{ethCoins}, acc.Sequence+1),
+        Input: bctypes.NewTxInput(info.PubKey, coins, acc.Sequence+1),
         Data: wire.BinaryBytes(struct {
             etgate.ETGateTx `json:"unwrap"`
         }{inner}),
@@ -147,6 +187,7 @@ func PostWithdraw(w http.ResponseWriter, request *http.Request) {
         return
     }
 
+
     err = manager.Sign(req.Name, req.Passphrase, apptx)
     if err != nil {
         Error(w, "", err)
@@ -159,15 +200,59 @@ func PostWithdraw(w http.ResponseWriter, request *http.Request) {
         return
     }
 
-    res, err := node.BroadcastTxCommit(packet)
+    _, err = node.BroadcastTxCommit(packet)
     if err != nil {
         Error(w, "", err)
         return
     }
 
-    Result(w, res)
-}
+    // returns needed arguments for withdraw()
+    key := fmt.Sprintf("etgate,withdraw,%s,%v", originChainID, seq+1)
+    Debug("key", key)
+    query, err = etcmd.QueryWithClient(node, []byte(key))
+    if err != nil {
+        Error(w, "", err)
+        return
+    }
+    Debug("query", query)
 
+    proof, err := iavl.ReadProof(query.Proof)
+    if err != nil {
+        Error(w, "", err)
+        return
+    }
+    Debug("proof", proof)
+
+    var iavlProofInnerHeight []int8
+    var iavlProofInnerSize []int
+    var iavlProofInnerLeft []string
+    var iavlProofInnerRight []string
+    for _, in := range proof.InnerNodes {
+        iavlProofInnerHeight = append(iavlProofInnerHeight, in.Height)
+        iavlProofInnerSize   = append(iavlProofInnerSize,   in.Size)
+        iavlProofInnerLeft   = append(iavlProofInnerLeft,   toHex(in.Left))
+        iavlProofInnerRight  = append(iavlProofInnerRight,  toHex(in.Right))
+    }
+
+    response := PostWithdrawResponse {
+        Height:               query.Height,
+        IavlProofLeafHash:    toHex(proof.LeafHash),
+        IavlProofInnerHeight: iavlProofInnerHeight,
+        IavlProofInnerSize:   iavlProofInnerSize,
+        IavlProofInnerLeft:   iavlProofInnerLeft,
+        IavlProofInnerRight:  iavlProofInnerRight,
+        IavlProofRootHash:    toHex(proof.RootHash),
+        To:                   req.To,
+        Value:                uint64(req.Value),
+        Token:                req.Token,
+        Chain:                originChainID,
+        Seq:                  fmt.Sprintf("%v", seq+1),
+    }
+
+    Debug("response", response)
+
+    Result(w, response)    
+}
 func GetAccount(w http.ResponseWriter, request *http.Request) {
     params := mux.Vars(request)
     info, err := manager.Get(params["name"])
@@ -219,7 +304,6 @@ func main() {
     r.HandleFunc("/withdraw", PostWithdraw).Methods("POST")
 
     // Frontend
-    //r.Handle("/", http.FileServer(http.Dir("./static/")))
     r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
 
     http.Handle("/", r)

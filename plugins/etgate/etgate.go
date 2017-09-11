@@ -6,7 +6,6 @@ import (
     "errors"
     "net/url"
     "strconv"
-    "bytes"
 
     abci "github.com/tendermint/abci/types"
     "github.com/tendermint/basecoin/types"
@@ -34,7 +33,7 @@ const (
     _DEPOSIT = "deposit"
     _WITHDRAW = "withdraw"
 
-    confirmation = 12
+    confirmation = 4 
 
 )
 
@@ -104,7 +103,7 @@ func (tx ETGateRegisterContractTx) Validate() abci.Result {
 }
 */
 type ETGateDepositTx struct {
-    LogProof
+    Proof LogProof
 }
 
 func (tx ETGateDepositTx) Validate() abci.Result {
@@ -112,9 +111,10 @@ func (tx ETGateDepositTx) Validate() abci.Result {
 }
 
 type ETGateWithdrawTx struct {
+    Height uint
     To [20]byte 
     Value uint64
-    Token [20]byte
+    Token string
     ChainID string
     Sequence uint64
 }
@@ -305,8 +305,7 @@ func (sm *ETGateStateMachine) runRegisterContractTx(tx ETGateRegisterContractTx)
 }
 */
 func (sm *ETGateStateMachine) runDepositTx(tx ETGateDepositTx) {
-   
-    log, err := tx.Log()
+    log, err := tx.Proof.Log()
     if err != nil {
         sm.res.Code = ETGateCodeInvalidLogProof
         sm.res.Log = "Invalid log proof"
@@ -314,7 +313,7 @@ func (sm *ETGateStateMachine) runDepositTx(tx ETGateDepositTx) {
     }
    
     var header Header
-    confirmKey := toKey(_ETGATE, _BLOCKCHAIN, _CONFIRM, strconv.FormatUint(tx.Number, 10))
+    confirmKey := toKey(_ETGATE, _BLOCKCHAIN, _CONFIRM, strconv.FormatUint(tx.Proof.Number, 10))
     exi, err := load(sm.store, confirmKey, &header)
     if err != nil {
         sm.res = abci.ErrInternalError.AppendLog(cmn.Fmt("Loading corresponding header to submitted log"))
@@ -325,7 +324,7 @@ func (sm *ETGateStateMachine) runDepositTx(tx ETGateDepositTx) {
         sm.res.Log = "Log header not found"
         return
     }
-    if !tx.IsValid(header.ReceiptHash) {
+    if !tx.Proof.IsValid(header.ReceiptHash) {
         sm.res.Code = ETGateCodeInvalidLogProof
         sm.res.Log = "Invalid log proof"
         return
@@ -356,12 +355,12 @@ func (sm *ETGateStateMachine) runDepositTx(tx ETGateDepositTx) {
     deposit := new(Deposit)
     if err := depositabi.Unpack(deposit, "Deposit", log); err != nil {
         sm.res.Code = ETGateCodeLogUnpackingError
-        sm.res.Log = "Log unpacking error"
+        sm.res.Log = "Log unpacking error: " + err.Error()
         return
     }
 
     depositKey := toKey(_ETGATE, _DEPOSIT, 
-        deposit.Chain, 
+        string(deposit.Chain), 
         strconv.FormatUint(deposit.Seq, 10))
 
     if exists(sm.store, depositKey) {
@@ -371,36 +370,40 @@ func (sm *ETGateStateMachine) runDepositTx(tx ETGateDepositTx) {
     }
     
     save(sm.store, depositKey, deposit)
+
+    acc := types.GetAccount(sm.store, deposit.To[:])
+    if acc == nil {
+        acc = &types.Account{}
+    }
+    acc.Balance = acc.Balance.Plus(types.Coins{{Denom:EncodeToken(deposit.Token.Hex()), Amount:int64(deposit.Value)}})
+    types.SetAccount(sm.store, deposit.To[:], acc)
 }
 
 type Deposit struct {
     To [20]byte
     Value uint64
     Token common.Address
-    Chain string
+    Chain []byte
     Seq uint64
 }
 
 func WithdrawValue(tx ETGateWithdrawTx) ([]byte, error) {
-    // store as simplest as possible
+/*    // store as simplest as possible
     buf, n, err := new(bytes.Buffer), new(int), new(error)
     wire.WriteByteSlice(tx.To[:], buf, n, err)
     wire.WriteUint64(tx.Value, buf, n, err)
-    wire.WriteByteSlice(tx.Token[:], buf, n, err)
+    wire.WriteByteSlice(common.HexToAddress(DecodeToken(tx.Token)).Bytes(), buf, n, err)
     if *err != nil {
         return []byte{}, *err
     }
-    return buf.Bytes(), nil
+    return buf.Bytes(), nil*/
+    return wire.BinaryBytes(tx), nil
 }
 
 func (sm *ETGateStateMachine) runWithdrawTx(tx ETGateWithdrawTx) {
-    tokenHex := "0x"
-    for i, _ := range tx.Token {
-        tokenHex = tokenHex + string(tx.Token[i]-32)
-    }
-    if len(sm.ctx.Coins) != 1 || uint64(sm.ctx.Coins[0].Amount) != tx.Value || common.HexToAddress(sm.ctx.Coins[0].Denom) != tx.Token {
+    if len(sm.ctx.Coins) != 1 || uint64(sm.ctx.Coins[0].Amount) != tx.Value || sm.ctx.Coins[0].Denom != EncodeToken(tx.Token) {
         sm.res.Code = ETGateCodeInvalidCoins
-        sm.res.Log = fmt.Sprintf("Invalid coins, %v", len(sm.ctx.Coins) /*!= 1, uint64(sm.ctx.Coins[0].Amount) != tx.Value, common.HexToAddress(sm.ctx.Coins[0].Denom) != tx.Token*/)
+        sm.res.Log = fmt.Sprintf("Invalid coins, %v, %v, %v, %v, %v", len(sm.ctx.Coins), uint64(sm.ctx.Coins[0].Amount), tx.Value, sm.ctx.Coins[0].Denom, EncodeToken(tx.Token)) /*!= 1, uint64(sm.ctx.Coins[0].Amount) != tx.Value, common.HexToAddress(sm.ctx.Coins[0].Denom) != tx.Token*/
         return
     }
 
@@ -492,4 +495,20 @@ func toKey(parts ...string) []byte {
         escParts[i] = url.QueryEscape(part)
     }
     return []byte(strings.Join(escParts, ","))
+}
+
+func EncodeToken(token string) string {
+    enctoken := ""
+    for _, s := range token[2:] {
+        enctoken = enctoken + string(s+32)
+    }
+    return enctoken
+}
+
+func DecodeToken(token string) string {
+    dectoken := "0x"
+    for _, s := range token {
+        dectoken = dectoken + string(s-32)
+    }
+    return dectoken
 }

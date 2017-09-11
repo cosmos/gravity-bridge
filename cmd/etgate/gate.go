@@ -11,29 +11,23 @@ import (
     "io/ioutil"
     "math/big"
     "strings"
-//    "bytes"
     "time"
 
-//    "golang.org/x/crypto/ripemd160"
 
     "github.com/spf13/cobra"
 
     "github.com/ethereum/go-ethereum"
     "github.com/ethereum/go-ethereum/ethclient"
-//    "github.com/ethereum/go-ethereum/core"
     "github.com/ethereum/go-ethereum/core/types"
     "github.com/ethereum/go-ethereum/common"
     "github.com/ethereum/go-ethereum/rlp"
     "github.com/ethereum/go-ethereum/accounts/abi/bind"
     ecrypto "github.com/ethereum/go-ethereum/crypto"
  
-//    abci "github.com/tendermint/abci/types"
     cmn "github.com/tendermint/tmlibs/common"
     basecmd "github.com/tendermint/basecoin/cmd/basecoin/commands"
-//    bctypes "github.com/tendermint/basecoin/types"
     mintclient "github.com/tendermint/tendermint/rpc/client"
     tmtypes "github.com/tendermint/tendermint/types"
-    "github.com/tendermint/tmlibs/merkle"
 
     "github.com/tendermint/go-wire"
     "github.com/tendermint/go-crypto"
@@ -261,6 +255,7 @@ func newGateway() (*gateway, error) {
     fmt.Printf("Using Ethereum address %+v\n", ecrypto.PubkeyToAddress(ecdsa.PublicKey).Hex())
 
     ethauth := bind.NewKeyedTransactor(ecdsa)
+    ethauth.GasPrice = big.NewInt(20000000000)
 
     return &gateway{
         ethclient: ethclient, 
@@ -311,11 +306,15 @@ func (g *gateway) mintloop() {
 */
     for {
         time.Sleep(5 * time.Second)
+/*
+        // update headers mint->eth
+        // uncomment this part when started using iavl directly
 
         chainState, err := contract.ChainState(nil)
         if err != nil {
             panic(err)
         }
+
 
         lastHeight := chainState.LastBlockHeight
 
@@ -337,28 +336,7 @@ func (g *gateway) mintloop() {
             fmt.Printf("Header already submitted\n")
             continue
         }
-/*
-        key := fmt.Sprintf("etgate,withdraw,%s", /*change it later/"etgate-chain")
-        query, err := commands.QueryWithClient(g.mintclient, []byte(key))
-        if err != nil {
-            fmt.Printf("Failed to query last withdrawal: \"%s\"\n", err)
-            continue
-        }
-        if len(query.Value) == 0 {
-            query.Value = 0
-        }
 
-        var sequence uint64
-        if err = wire.ReadBinaryBytes(query.Value, &sequence); err != nil {
-            fmt.Printf("Error reading sequence from query: \"%s\"\n", err)
-            continue
-        }
-
-        bigSequence := new(big.Int)
-        bigSequence.SetUint64(sequence)
-
-        fmt.Printf("%d, %d\n", lastHeight.Uint64(), sequence)
-*/
 
         fmt.Printf("debug: %+v, %+v\n", lastHeight.Uint64(), height)
 
@@ -389,7 +367,7 @@ func (g *gateway) mintloop() {
 
             tx, err := contract.Update(
                 g.ethauth, 
-                /*change it later*/"etgate-chain", 
+                "etgate-chain", 
                 big.NewInt(int64(header.Height)), 
                 timeHashArr,
                 big.NewInt(int64(header.NumTxs)),
@@ -407,8 +385,91 @@ func (g *gateway) mintloop() {
                 break
             }
             fmt.Printf("Submitted header: %d\nTx hash: %v\n", header.Height, tx.Hash().Hex())
-            time.Sleep(3 * time.Second)
+            time.Sleep(5 * time.Second)
         }
+*/
+        // relay withdraw
+
+        key := fmt.Sprintf("etgate,withdraw,%s", "etgate-chain")
+        query, err := commands.QueryWithClient(g.mintclient, []byte(key))
+        if err != nil {
+            fmt.Printf("Failed to query last withdrawal: \"%s\"\n", err)
+            continue
+        }
+
+        var sequence uint64
+        if len(query.Value) == 0 {
+            sequence = 0
+        } else {
+            if err = wire.ReadBinaryBytes(query.Value, &sequence); err != nil {
+                fmt.Printf("Error reading sequence from query: \"%s\"\n", err)
+                continue
+            }
+        }
+        
+        lastWithdraw, err := contract.LastWithdraw(nil)
+        if err != nil {
+            fmt.Printf("Failed to get lastWithdraw: \"%s\", Waiting...\n", err)
+            continue
+        }
+
+        fmt.Printf("debug: %d, %d\n", lastWithdraw.Uint64()+1, sequence)
+        for i := lastWithdraw.Uint64()+1; i <= sequence; i++ {
+            key = fmt.Sprintf("etgate,withdraw,%s,%v", "etgate-chain", i)
+            query, err = commands.QueryWithClient(g.mintclient, []byte(key))
+            if err != nil {
+                fmt.Printf("Failed to query withdrawal: \"%s\", Waiting...\n", err)
+                break
+            }
+            if len(query.Value) == 0 {
+                fmt.Printf("Failed to query withdrawal: len(query.Value) == 0, Waiting...")
+                break
+            }
+            var w etgate.ETGateWithdrawTx
+            if err = wire.ReadBinaryBytes(query.Value, &w); err != nil {
+                fmt.Printf("Failed to read withdraw tx: \"%s\", Waiting...\n", err)
+                break
+            }
+            
+            able, err := contract.Withdrawable(
+                nil, 
+                big.NewInt(int64(w.Height)), 
+                common.BytesToAddress(w.To[:]), 
+                w.Value, 
+                common.HexToAddress(etgate.DecodeToken(w.Token)), 
+                []byte(w.ChainID), 
+                big.NewInt(int64(i)),
+            ) 
+            
+            if err != nil {
+                fmt.Printf("Error calling withdrawable: \"%s\", Waiting...", err)
+            }
+
+            if !able {
+                fmt.Printf("#%d is not withdrawable, Waiting...\n", i)
+                break
+            }
+
+            tx, err := contract.Withdraw(
+                g.ethauth, 
+                big.NewInt(int64(w.Height)), 
+                common.BytesToAddress(w.To[:]), 
+                w.Value, 
+                common.HexToAddress(etgate.DecodeToken(w.Token)),
+                []byte(w.ChainID),
+                big.NewInt(int64(i)),
+            )
+            if err != nil {
+                fmt.Printf("Failed to submit withdraw: \"%s\", Waiting...\n", err)
+                break
+            }
+            
+            fmt.Printf("Submitted withdraw: %d\nTx hash: %v\n", i, tx.Hash().Hex())
+            time.Sleep(5 * time.Second)
+
+        }
+        
+        
     }
 }
 
@@ -604,6 +665,7 @@ func (g *gateway) post(blocknumber *big.Int) {
             continue
         }
 
+        fmt.Printf("%+v\n", logs)
         for _, log := range logs {
             proof, err := g.newLogProof(log)
             if err != nil {
@@ -612,7 +674,7 @@ func (g *gateway) post(blocknumber *big.Int) {
             }
             logt, err := proof.Log()
             if err != nil {
-                fmt.Printf("aa: %s", err)
+                fmt.Printf("aa: %s\n", err)
                 continue
             }
             fmt.Printf("%+v\n", logt)
@@ -627,7 +689,7 @@ func (g *gateway) post(blocknumber *big.Int) {
             }   
 
             postTx := etgate.ETGateDepositTx {
-                proof,
+                Proof: proof,
             }
             if err := g.appTx(postTx); err != nil {
                 fmt.Printf("Error sending postTx: \"%s\". Skipping.\n", err)
@@ -660,7 +722,7 @@ func (g *gateway) newLogProof(log types.Log) (etgate.LogProof, error) {
         receipts = append(receipts, receipt)
     }
 
-    return etgate.NewLogProof(receipts, log.TxIndex, log.Index, log.BlockNumber)
+    return etgate.NewLogProof(receipts, log.TxIndex, log.BlockNumber)
 }
 
 func (g *gateway) appTx(etgateTx etgate.ETGateTx) error {

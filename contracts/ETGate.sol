@@ -30,6 +30,13 @@ contract IAVL {
         bytes20 rootHash;
     }
     
+    function bytes20IsZero(bytes20 arr) constant returns (bool) {
+        for (uint i = 0; i < 20; i++) {
+            if (arr[i] != 0) break;
+        }
+        return i == 20;
+    }
+    
     function verify(IAVLProof memory proof, bytes key, bytes value, bytes20 root) internal returns (bool) {
         if (sha3(proof.rootHash) != sha3(root)) return false;
         bytes20 hash = leafHash(IAVLProofLeafNode(key, value));
@@ -117,7 +124,7 @@ contract IAVL {
     }
     
     function innerHash(IAVLProofInnerNode branch, bytes20 childHash) internal returns (bytes20) {
-        if (branch.left.length == 0) {
+        if (bytes20IsZero(branch.left)) {
             return ripemd160(byte(branch.height),
                              writeUvarint(uint64(branch.size)),
                              writeUvarint(uint64(20)), childHash,
@@ -137,17 +144,18 @@ contract ETGate is IAVL {
     mapping (uint => Header) headers;
     mapping (uint => uint) updated;
     function getUpdated(uint k) constant returns (uint) { return updated[k]; }
+    mapping (bytes20 => address[]) buffer; // apphash => ethaddr[]
+    mapping (uint => bytes20) confirmed; // mintheight => apphash
     mapping (bytes => bool) used;
     function getUsed(bytes k) constant returns (bool) { return used[k]; }
     mapping (bytes => mapping (address => uint)) deposited;
     function getDeposited(bytes k1, address k2) constant returns (uint) { return deposited[k1][k2]; }
+    mapping (bytes32 => address[]) withdrawBuffer;
+    mapping (bytes32 => bool) alreadyWithdrawn;
     
-    uint delay = 50;
+    uint public lastWithdraw = 0;
     
-    struct AppHash {
-        bytes20 hash;
-        uint block;
-    }
+    uint public delay = 5;
     
     struct Validator {
         address ethaddr;
@@ -163,17 +171,7 @@ contract ETGate is IAVL {
         uint lastBlockHeight;
         uint totalVotingPower;
     }
-    function test() constant returns (bytes) {
-        return chainState.validators[0].pubkey;
-    }
-    function getEthaddrs() constant returns (address[]) {
-        address[] memory addresses = new address[](chainState.validators.length);
-        for (uint i = 0; i < chainState.validators.length; i++) {
-            addresses[i] = chainState.validators[i].ethaddr;
-        }
-        return addresses;
-    }
-    
+
     BlockchainState public chainState;
     
     struct PartSetHeader {
@@ -258,18 +256,23 @@ contract ETGate is IAVL {
     
     uint64 accSeq;
     
-    event Deposit(bytes to, uint64 value, address token, bytes chain, uint64 seq);
+    event Deposit(address to, uint64 value, address token, bytes chain, uint64 seq);
     
-    function deposit(bytes to, uint64 value, address token, bytes chain) payable {
+    function deposit(address to, uint64 value, address token, bytes chain) payable {
         if (token == 0) assert(value == msg.value);
         else assert(ERC20(token).transferFrom(msg.sender, this, value));
         deposited[chain][token] += value;
         Deposit(to, value, token, chain, accSeq++);
     }
     
-    function depositEther(bytes to, uint64 value, bytes chain) payable { deposit(to, value, 0, chain); } 
+    function depositEther(address to, uint64 value, bytes chain) payable { deposit(to, value, 0, chain); } 
     
-    
+    function withdrawIsSigned(bytes32 w) internal returns (bool) {
+        for (uint i = 0; i < withdrawBuffer[w].length; i++) {
+            if (withdrawBuffer[w][i] == msg.sender) break;
+        }
+        return i != withdrawBuffer[w].length;
+    }
     
     event Withdraw(address to, uint64 value, address token, bytes chain);
     
@@ -282,20 +285,20 @@ contract ETGate is IAVL {
     
     function withdraw( // use when withdrawable(height)
         uint height, 
-        bytes20 iavlProofLeafHash, 
+        /*bytes20 iavlProofLeafHash, 
         int8[] iavlProofInnerHeight, 
         int[] iavlProofInnerSize,
         bytes20[] iavlProofInnerLeft,
         bytes20[] iavlProofInnerRight,
-        bytes20 iavlProofRootHash,
+        bytes20 iavlProofRootHash,*/
         address to,
         uint64 value,
         address token,
         bytes chain,
-        bytes seq
-    ) {
-        require(withdrawable(height, chain, token, value));
-        IAVLProof memory proof = getProof(iavlProofLeafHash,
+        uint seq
+    ) onlyValidator {
+        require(withdrawable(height, to, value, token, chain, seq));
+        /*IAVLProof memory proof = getProof(iavlProofLeafHash,
                                           iavlProofInnerHeight,
                                           iavlProofInnerSize,
                                           iavlProofInnerLeft,
@@ -303,26 +306,41 @@ contract ETGate is IAVL {
                                           iavlProofRootHash);
                                           
         verifyWithdraw(proof, height, to, value, token, chain, seq);
-               
-        if (token == 0) {
-            assert(to.send(value));
-        } else {
-            assert(ERC20(token).transfer(to, value));
+        */       
+        bytes32 w = sha3(height, to, value, token, chain, seq);
+        
+        require(!withdrawIsSigned(w));
+        withdrawBuffer[w].push(msg.sender);
+        if (withdrawBuffer[w].length * 3 > chainState.validators.length * 2 && !alreadyWithdrawn[w]) {
+            alreadyWithdrawn[w] = true;
+            lastWithdraw = seq;
+            if (token == 0) {
+                assert(to.send(value));
+            } else {
+                assert(ERC20(token).transfer(to, value));
+            }
+            Withdraw(to, value, token, chain);    
         }
         
-        Withdraw(to, value, token, chain);
+        
     }
     
-    function withdrawable(uint height, bytes chain, address token, uint64 value) constant returns (bool) {
-        return updated[height] != 0 && updated[height] < block.number-delay &&
+    function withdrawable(uint height, address to, uint64 value, address token, bytes chain, uint seq) constant returns (bool) {
+        return /*updated[height] != 0 && updated[height] < block.number-delay &&*/
+               !alreadyWithdrawn[sha3(height, to, value, token, chain, seq)] &&
+               uint(lastWithdraw+1) == seq &&
                deposited[chain][token] >= value;
     }
     
-    function senderIsValidator() constant returns (bool) {
+    function isValidator(address addr) constant returns (bool) {
         for (uint i = 0; i < chainState.validators.length; i++) {
-            if (msg.sender == chainState.validators[i].ethaddr) break;
+            if (addr == chainState.validators[i].ethaddr) break;
         }
         return i != chainState.validators.length;
+    }
+    
+    function senderIsValidator() constant returns (bool) {
+        return isValidator(msg.sender);
     }
     
     modifier onlyValidator() {
@@ -330,10 +348,22 @@ contract ETGate is IAVL {
         _;
     }
     
+    event Update(address uploader, uint height);
+    
     function updateHeader(Header header) internal {
-        headers[header.height] = header;
-        updated[header.height] = block.number;
-        chainState.lastBlockHeight = header.height;
+        buffer[header.appHash].push(msg.sender);
+        if (buffer[header.appHash].length * 3 > chainState.validators.length * 2 && updated[header.height] == 0) {
+            headers[header.height] = header;
+            updated[header.height] = block.number;
+            chainState.lastBlockHeight = header.height;
+        }
+    }
+    
+    function isUpdated(bytes20 appHash) constant returns (bool) {
+        for (uint i = 0; i < buffer[appHash].length; i++) {
+            if (buffer[appHash][i] == msg.sender) break;
+        }
+        return i != buffer[appHash].length;
     }
     
     // update() accepts header submission that is from any of the known validators.
@@ -353,10 +383,13 @@ contract ETGate is IAVL {
         bytes20 _appHash
     ) onlyValidator {
         require(_height == chainState.lastBlockHeight+1);
+        /*
         if (updated[_height] != 0) {
             // Verify
             revert();
         }
+        */
+        require(!isUpdated(_appHash));
         updateHeader(Header(
             _chainID,
             _height,
@@ -374,12 +407,13 @@ contract ETGate is IAVL {
             _validatorsHash,
             _appHash
         ));
+        Update(msg.sender, _height);
     }
     
-    function newEthaddr(bytes pubkey) constant returns (address) {
+    function newEthAddr(bytes pubkey) constant returns (address) {
         bytes memory sliced = new bytes(pubkey.length - 1); // inefficient
         for (uint i = 1; i < pubkey.length; i++) {
-            sliced[i] = pubkey[i];
+            sliced[i-1] = pubkey[i];
         }
         return address(uint(keccak256(sliced)) & 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
     }
@@ -389,7 +423,7 @@ contract ETGate is IAVL {
     // https://github.com/btcsuite/btcd/blob/master/btcec/pubkey.go
     // SerializeUncompressed
     function newValidator(bytes pubkey, uint votingPower) internal returns (Validator) {
-        address ethaddr = newEthaddr(pubkey);
+        address ethaddr = newEthAddr(pubkey);
         bytes memory compressed = new bytes(33);
         if (uint8(pubkey[64])%2 == 0) {
             compressed[0] = byte(2);
