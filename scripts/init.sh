@@ -1,7 +1,7 @@
 CLIENT=~/.etgate/client
 SERVER=~/.etgate/server
 etcli="basecli --home $CLIENT"
-etgate="./etgate --home $SERVER"
+etgate="../cmd/etgate/etgate --home $SERVER"
 
 CHAINID="etgate-chain"
 
