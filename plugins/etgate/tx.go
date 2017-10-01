@@ -1,41 +1,25 @@
 package etgate
 
 import (
+    "math/big"
+
     sdk "github.com/cosmos/cosmos-sdk" // dev branch
     "github.com/tendermint/iavl" // dev branch
 )
 
 const (
-    ByteInit  = byte(0xe0)
-    ByteUpdate    = byte(0xe1)
-//    ByteValChange = byte(0xe2)
-    ByteDeposit   = byte(0xe3)
-//    ByteWithdraw  = byte(0xe4)
-//    ByteTransfer  = byte(0xe5)
+    ByteUpdate    = byte(0xe0)
+//    ByteValChange = byte(0xe1)
+    ByteDeposit   = byte(0xe2)
+    ByteWithdraw  = byte(0xe3)
+    ByteTransfer  = byte(0xe4)
 
-    TypeInit  = NameETGate + "/register"
     TypeUpdate    = NameETGate + "/update"
 //    TypeValChange = NameETGate + "/valchange"
     TypeDeposit   = NameETGate + "/deposit"
-//    TypeWithdraw  = NameETGate + "/withdraw"
-//    TypeTransfer  = NameETGate + "/transfer"
+    TypeWithdraw  = NameETGate + "/withdraw"
+    TypeTransfer  = NameETGate + "/transfer"
 )
-
-type InitTx struct {
-    Header []byte
-}
-
-func (tx InitTx) Wrap() sdk.Tx {
-    return sdk.Tx{tx}
-}
-
-func (tx InitTx) ValidateBasic() error {
-    var header eth.Header
-    if err := rlp.DecodeBytes(tx.Header, &header); err != nil {
-        return err
-    }
-    return nil
-}
 
 type UpdateTx struct {
     Headers [][]byte   
@@ -60,10 +44,10 @@ type DepositTx struct {
 
 type Deposit struct {
     To [20]byte
-    Value uint64 // extend this, 2^64 wei is not enough
+    Value *big.Int
     Token common.Address
     Chain []byte
-    Seq uint64
+    Sequence uint64
 }
 
 func (tx DepositTx) Wrap() sdk.Tx {
@@ -80,15 +64,11 @@ func (tx DepositTx) ValidateBasic() error {
     deposit := new(Deposit)
     return depositabi.Unpack(deposit, "Deposit", log)
 }
-/*
-// this will be replaced by IBC packetpost
+
 type WithdrawTx struct {
-    Height uint
     To [20]byte
-    Value uint64
+    Value coin.Coins
     Token string
-    ChainID string
-    Sequence uint64
 }
 
 func (tx WithdrawTx) Wrap() sdk.Tx {
@@ -97,4 +77,20 @@ func (tx WithdrawTx) Wrap() sdk.Tx {
 
 func (tx WithdrawTx) ValidateBasic() error {
     return nil
-}*/
+}
+
+type TransferTx struct {
+    DestChain string
+    To [20]byte
+    Value coin.Coins
+}
+
+func (tx TransferTx) Wrap() sdk.Tx {
+    return sdk.Tx{tx}
+}
+
+func (tx WithdrawTx) ValidateBasic() error {
+    if !tx.Value.IsValid() {
+        return
+    }
+}

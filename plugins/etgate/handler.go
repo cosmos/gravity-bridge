@@ -36,8 +36,9 @@ func init() {
 // TODO: handle them manually, we need to know valset
 type Handler struct {
     stack.PassInitValidate
-    stack.PassInitState
 }
+
+func (Handler) AssertDispatcher() {}
 
 var _ stack.Dispatchable = Handler{}
 
@@ -49,39 +50,45 @@ func (Handler) AssertDispather() {}
 
 // https://github.com/cosmos/cosmos-sdk/blob/develop/modules/ibc/handler.go
 
-func (h Handler) CheckTx(ctx sdk.Context, store state.SimpleDB, tx sdk.Tx) (res sdk.DeliverResult, err error) {
+func (h Handler) CheckTx(ctx sdk.Context, store state.SimpleDB, tx sdk.Tx, next sdk.Checker) (res sdk.DeliverResult, err error) {
     err := tx.ValidateBasic()
     if err != nil {
         return res, err
     }
 
     switch tx.Unwrap().(type) {
-    case ChainTx:
+    case UpdateTx:
         return res, nil
-    // case UpdateValidatorTx:
+    // case ValChangeTx:
     case DepositTx:
+        return res, nil
+    case WithdrawTx:
+        return res, nil
+    case TransferTx:
         return res, nil
     }
 
     return res, errors.ErrUnknownTxType(tx.Unwrap())
 }
 
-func (h Handler) DeliverTx(ctx sdk.Context, store state.SimpleDB, tx sdk.Tx) (res sdk.DeliverResult, err error) {
+func (h Handler) DeliverTx(ctx sdk.Context, store state.SimpleDB, tx sdk.Tx, next sdk.Deliver) (res sdk.DeliverResult, err error) {
     err := tx.ValidateBasic()
     if err != nil {
         return res, err
     }
 
     switch t := tx.Unwrap().(type) {
-    case InitTx:
-        return h.registerTx(ctx, store, t)
     case UpdateTx:
         return h.updateTx(ctx, store, t)
     // case ValChangeTx:
     case DepositTx:
-        return h.depositTx(ctx, store, t)
-    // case WithdrawTx? How can I dispatch an incoming IBC packet?
+        return h.depositTx(ctx, store, t, next)
+    case WithdrawTx:
+        return h.withdrawTx(ctx, store, t)
+    case TransferTx:
+        return h.transferTx(ctx, store, t, next)
     }
+
 
     return res, errors.ErrUnknownTxType(tx.Unwrap())
 }
@@ -169,26 +176,7 @@ func updateHeaders(headers []Header, set ChainSet) error {
     return nil
 }
 
-func (h Handler) registerTx(ctx sdk.Context, store state.SimpleDB, t InitTx) (res sdk.DeliverResult, err error) {
-    // TODO: check sender is a validator
 
-    set := NewChainSet(store)
-
-    if set.IsInitialized() {
-        return res, errAlreadyInitialized()
-    }
-
-    header, err := decodeHeader(tx.Header)
-    if err != nil {
-        return res, err
-    }
-
-    set.ToBuffer(header)
-    set.Finalize(header)
-    set.Initialize(header)
-
-    return res, nil
-}
 
 func (h Handler) updateTx(ctx sdk.Context, store state.SimpleDB, t UpdateTx) (res sdk.DeliverResult, err error) {
     // TODO: check sender is a validator
@@ -196,7 +184,7 @@ func (h Handler) updateTx(ctx sdk.Context, store state.SimpleDB, t UpdateTx) (re
     set := NewChainSet(store)
 
     if !set.IsInitialized() {
-        return res, errNotInitialized()
+        return res, ErrNotInitialized()
     }
 
     headers, err := decodeHeaders(tx.Headers)
@@ -217,4 +205,92 @@ func (h Handler) updateTx(ctx sdk.Context, store state.SimpleDB, t UpdateTx) (re
     return
 }
 
-func LoadState
+func (h Handler) depositTx(ctx sdk.Context, store state.SimpleDB, t DepositTx, next sdk.Deliver) (res sdk.DeliverResult, err error) {
+    log, err := tx.Proof.Log()
+    if err != nil {
+        return res, ErrInvalidLogProof(log, err)
+    }
+
+    set := NewChainSet(store)
+
+    header, err := set.GetHeader(tx.Proof.Number)
+    if err != nil {
+        return res, err
+    }
+
+    if !tx.Proof.IsValid(header.ReceiptHash) {
+        return res, ErrInvalidLogProof(log, header)
+    }
+
+    deposit := new(etend.DepositTx)
+    if err != depositabi.Unpack(deposit, "Deposit", log); err != nil {
+        return res, ErrLogUnpackingError(log, err)
+    }
+
+    if c.DepositExists(deposit) {
+        return res, ErrDepositExists(deposit)
+    }
+
+    if deposit.DestChain == ctx.ChainID() {
+        return res, ErrInvalidDestChain(deposit.DestChain)
+    }
+
+    packet := ibc.CreatePacketTx {
+        DestChain: string(deposit.DestChain),
+        Permissions: 
+        Tx: deposit
+    }
+
+    ibcCtx := ctx.WithPermissions(ibc.AllowIBC(NameETGate)) // NameETEnd?
+    _, err := next.DeliverTx(ibcCtx, store, packet.Wrap())
+    if err != nil {
+        return err
+    }
+}
+
+func (h Handler) withdrawTx(ctx sdk.Context, store state.SimpleDB, tx WithdrawTx, next sdk.Deliver) (res sdk.DeliverResult, err error) {
+    setWithdraw()
+}
+
+func (h Handler) transferTx(ctx sdk.Context, store state.SimpleDB, tx TransferTx, next sdk.Deliver) (res sdk.DeliverResult, err error) {
+    setTransfer()
+    for _, coin := range tx.Value {
+        
+    }
+}
+
+func (h Handler) setGenesis(store state.SimpleDB, value string) (log string, err error) {
+    // TODO: check sender is a validator
+
+    set := NewChainSet(store)
+
+    if set.IsInitialized() {
+        return res, ErrAlreadyInitialized()
+    }
+
+    var header Header
+    err = data.FromJSON([]byte(value), &header)
+    if err != nil {
+        return "", err
+    }
+
+    set.ToBuffer(header)
+    set.Finalize(header)
+    set.Initialize(header)
+
+    return res, nil
+}
+
+func (h Handler) InitState(l log.Logger, store state.SimpleDB, module, key, value string, cb sdk.InitStater) (log string, err error) {
+    if module != NameETGate {
+        return "", errors.ErrUnknownModule(module)
+    }
+
+    switch key {
+    // should be the block header that the contract is deployed
+    // it can be not real genesis (height 0)
+    case "genesis":   
+        return setGenesis(store, value)
+    }
+    return "", 
+}

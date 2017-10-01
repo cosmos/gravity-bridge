@@ -7,10 +7,29 @@ import (
     wire "github.com/tendermint/go-wire"
 )
 
+/*
+- i: info
+    - l: last finalized, header
+    - g: genesis, header
+    - w: withdraw, uint
+    - t: transfer, uint
+- b: buffer, hash => header
+- f: final, uint => header
+- w: withdraw, uint => Withdraw
+- t: transfer, uint => Transfer
+*/
+
 const (
     prefixInfo   = "i"
-    prefixBuffer = "b"
-    prefixFinal  = "f"
+    infoLast     = "l"
+    infoGenesis  = "g"
+    infoWithdraw = "w"
+    infoTransfer = "t"
+
+    prefixBuffer   = "b"
+    prefixFinal    = "f"
+    prefixWithdraw = "w"
+    prefixTransfer = "t"
 )
 
 var (
@@ -22,10 +41,6 @@ type Header struct {
     Hash common.Hash
     Number uint64
     ReceiptHash common.Hash
-}
-
-type ChainInfo struct {
-
 }
 
 type ChainSet struct {
@@ -50,7 +65,7 @@ func (c ChainSet) GetGenesis() (genesis Header, error) {
 }
 
 func (c ChainSet) LastFinalized() (lf uint, error) {
-    d := set.InfoSet.Get([]byte("l"))
+    d := set.InfoSet.Get([]byte(infoLast))
     if len(d) == 0 {
         return 0, ErrNotInitialized()
     }
@@ -106,11 +121,11 @@ func (c ChainSet) Finalize(header Header) error {
 func (c ChainSet) Initialize(header Header) {
     set.ToBuffer(header)
     set.Finalize(header)
-    set.InfoSet.Set([]byte("g"), header)
+    set.InfoSet.Set([]byte(infoGenesis), header)
 }
 
 func (c ChainSet) IsInitialized() bool {
-    return set.InfoSet.Exists([]byte("g"))
+    return set.InfoSet.Exists([]byte(infoGenesis))
 }
 
 func (c ChainSet) UpdateBuffer(header Header) error {
@@ -118,4 +133,12 @@ func (c ChainSet) UpdateBuffer(header Header) error {
         return ErrConflictingChain(header.Hash)
     }
     c.BufferSet.Set([]byte(header.Hash), header)
+}
+
+func (c ChainSet) setWithdraw(tx WithdrawTx) error {
+
+}
+
+func (c ChainSet) setTransfer(tx TransferTx) error {
+
 }
