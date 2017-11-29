@@ -1,18 +1,25 @@
 package etgate
 
 import (
+    "strings"
+
     sdk "github.com/cosmos/cosmos-sdk"
     "github.com/cosmos/cosmos-sdk/errors"
-    "github.com/cosmos/cosmos-sdk/modules/auth"
-    "github.com/cosmos/cosmos-sdk/modules/base"
-    "github.com/cosmos/cosmos-sdk/modules/coin"
-    "github.com/cosmos/cosmos-sdk/modules/fee"
+    //"github.com/cosmos/cosmos-sdk/modules/auth"
+   //"github.com/cosmos/cosmos-sdk/modules/base"
+    //"github.com/cosmos/cosmos-sdk/modules/coin"
+    //"github.com/cosmos/cosmos-sdk/modules/fee"
     "github.com/cosmos/cosmos-sdk/modules/ibc"
-    "github.com/cosmos/cosmos-sdk/modules/nonce"
-    "github.com/cosmos/cosmos-sdk/modules/roles"
+    //"github.com/cosmos/cosmos-sdk/modules/nonce"
+    //"github.com/cosmos/cosmos-sdk/modules/roles"
     "github.com/cosmos/cosmos-sdk/stack"
     "github.com/cosmos/cosmos-sdk/state"
 
+    eth "github.com/ethereum/go-ethereum/core/types"
+    "github.com/ethereum/go-ethereum/rlp"
+
+    "./abi"
+    "../../contracts"
 )
 
 const (
@@ -51,7 +58,7 @@ func (Handler) AssertDispather() {}
 // https://github.com/cosmos/cosmos-sdk/blob/develop/modules/ibc/handler.go
 
 func (h Handler) CheckTx(ctx sdk.Context, store state.SimpleDB, tx sdk.Tx, next sdk.Checker) (res sdk.DeliverResult, err error) {
-    err := tx.ValidateBasic()
+    err = tx.ValidateBasic()
     if err != nil {
         return res, err
     }
@@ -72,7 +79,7 @@ func (h Handler) CheckTx(ctx sdk.Context, store state.SimpleDB, tx sdk.Tx, next 
 }
 
 func (h Handler) DeliverTx(ctx sdk.Context, store state.SimpleDB, tx sdk.Tx, next sdk.Deliver) (res sdk.DeliverResult, err error) {
-    err := tx.ValidateBasic()
+    err = tx.ValidateBasic()
     if err != nil {
         return res, err
     }
@@ -84,7 +91,7 @@ func (h Handler) DeliverTx(ctx sdk.Context, store state.SimpleDB, tx sdk.Tx, nex
     case DepositTx:
         return h.depositTx(ctx, store, t, next)
     case WithdrawTx:
-        return h.withdrawTx(ctx, store, t)
+        return h.withdrawTx(ctx, store, t, next)
     case TransferTx:
         return h.transferTx(ctx, store, t, next)
     }
@@ -96,7 +103,7 @@ func (h Handler) DeliverTx(ctx sdk.Context, store state.SimpleDB, tx sdk.Tx, nex
 func validateHeaders(headers []Header) error {
     for i, h := range headers[1:] {
         if h.ParentHash != headers[i-1].Hash {
-            return errors.New("Non-continuous header list")
+            return errors.New("Non-continuous header list", ETGateCodeNonContinuousHeaderList)
         }
     }
     return nil
@@ -112,16 +119,15 @@ func decodeHeader(headerb []byte) (Header, error) {
         Hash:        header.Hash(),
         ReceiptHash: header.ReceiptHash,
         Number:      header.Number.Uint64(),
-        Time:        header.Time.Uint64()
     }, nil
 }
 
-func decodeHeaders(headersb [][]byte) (headers []Header, error) {
+func decodeHeaders(headersb [][]byte) (headers []Header, err error) {
     headers = make([]Header, len(headersb))
     for i, headerb := range headersb {
         header, err := decodeHeader(headerb)
         if err != nil {
-            return err
+            return headers, err
         }
         headers[i] = header
     }
@@ -152,8 +158,8 @@ func updateHeaders(headers []Header, set ChainSet) error {
     }
 
     // check headAnc is the direct child of lf
-    if lf != headAnc.Number-1 {
-        return Err
+    if uint64(lf) != headAnc.Number-1 {
+        return errors.New("Conflicting chain", ETGateCodeConflictingChain)
     }
     
     lastAnc, err := set.GetAncestor(headers[len(headers)-1], genesis)
@@ -178,13 +184,13 @@ func updateHeaders(headers []Header, set ChainSet) error {
 
 
 
-func (h Handler) updateTx(ctx sdk.Context, store state.SimpleDB, t UpdateTx) (res sdk.DeliverResult, err error) {
+func (h Handler) updateTx(ctx sdk.Context, store state.SimpleDB, tx UpdateTx) (res sdk.DeliverResult, err error) {
     // TODO: check sender is a validator
 
     set := NewChainSet(store)
 
     if !set.IsInitialized() {
-        return res, ErrNotInitialized()
+        return res, errNotInitialized
     }
 
     headers, err := decodeHeaders(tx.Headers)
@@ -205,7 +211,7 @@ func (h Handler) updateTx(ctx sdk.Context, store state.SimpleDB, t UpdateTx) (re
     return
 }
 
-func (h Handler) depositTx(ctx sdk.Context, store state.SimpleDB, t DepositTx, next sdk.Deliver) (res sdk.DeliverResult, err error) {
+func (h Handler) depositTx(ctx sdk.Context, store state.SimpleDB, tx DepositTx, next sdk.Deliver) (res sdk.DeliverResult, err error) {
     log, err := tx.Proof.Log()
     if err != nil {
         return res, ErrInvalidLogProof(log, err)
@@ -237,14 +243,15 @@ func (h Handler) depositTx(ctx sdk.Context, store state.SimpleDB, t DepositTx, n
 
     packet := ibc.CreatePacketTx {
         DestChain: string(deposit.DestChain),
-        Permissions: 
-        Tx: deposit
+        Permissions: nil, // TODO: it is placeholder, fix it
+        Tx: deposit,
     }
 
     ibcCtx := ctx.WithPermissions(ibc.AllowIBC(NameETGate)) // NameETEnd?
-    _, err := next.DeliverTx(ibcCtx, store, packet.Wrap())
+    _, err = next.DeliverTx(ibcCtx, store, packet.Wrap())
+    
     if err != nil {
-        return err
+        return res, err
     }
 }
 
@@ -292,5 +299,5 @@ func (h Handler) InitState(l log.Logger, store state.SimpleDB, module, key, valu
     case "genesis":   
         return setGenesis(store, value)
     }
-    return "", 
+    return "", errors.ErrUnknownKey(key)
 }

@@ -4,7 +4,11 @@ import (
     "math/big"
 
     sdk "github.com/cosmos/cosmos-sdk" // dev branch
-    "github.com/tendermint/iavl" // dev branch
+    "github.com/cosmos/cosmos-sdk/modules/coin"
+    
+    //"github.com/tendermint/iavl" // dev branch
+
+    "github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -89,7 +93,7 @@ func (tx TransferTx) Wrap() sdk.Tx {
     return sdk.Tx{tx}
 }
 
-func (tx WithdrawTx) ValidateBasic() error {
+func (tx TransferTx) ValidateBasic() error {
     if !tx.Value.IsValid() {
         return
     }

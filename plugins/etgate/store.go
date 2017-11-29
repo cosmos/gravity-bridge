@@ -1,10 +1,12 @@
 package etgate 
 
 import (
-    sdk "github.com/cosmos/cosmos-sdk"
+//    sdk "github.com/cosmos/cosmos-sdk"
     "github.com/cosmos/cosmos-sdk/stack"
     "github.com/cosmos/cosmos-sdk/state"
     wire "github.com/tendermint/go-wire"
+
+    "github.com/ethereum/go-ethereum/common"
 )
 
 /*
@@ -54,17 +56,17 @@ func NewChainSet(store state.SimpleDB) ChainSet {
     bufferSpace := stack.PrefixedStore(prefixBuffer, store)
     finalSpace  := stack.PrefixedStore(prefixFinal,  store)
     return ChainSet {
-        InfoSet:   state.NewSet(infoSpace)
-        BufferSet: state.NewSet(bufferSpace)
-        FinalSet:  state.NewSet(finalSpace)
+        InfoSet:   state.NewSet(infoSpace),
+        BufferSet: state.NewSet(bufferSpace),
+        FinalSet:  state.NewSet(finalSpace),
     }
 }
 
-func (c ChainSet) GetGenesis() (genesis Header, error) {
+func (c ChainSet) GetGenesis() (genesis Header, err error) {
 
 }
 
-func (c ChainSet) LastFinalized() (lf uint, error) {
+func (c ChainSet) LastFinalized() (lf uint, err error) {
     d := set.InfoSet.Get([]byte(infoLast))
     if len(d) == 0 {
         return 0, ErrNotInitialized()
@@ -89,7 +91,11 @@ func (c ChainSet) GetAncestor(header Header, genesis Header) (ancestor Header, e
     return 
 }
 
-func (c ChainSet) Parent(header Header) (parent Header, error) {
+func (c ChainSet) GetHeader(number uint) (header Header, err error) { 
+    return c.
+}   
+
+func (c ChainSet) Parent(header Header) (parent Header, err error) {
     d := set.BufferSet.Get([]byte(header.ParentHash))
     if len(d) == 0 {
         return parent, ErrParentNotFound(header)
@@ -110,7 +116,7 @@ func (c ChainSet) ToBuffer(header Header) error {
 
 func (c ChainSet) Finalize(header Header) error {
     n := strconv.FormatUint(header.Number, 10)
-    if set.FinalSet.Exists([]byte(n) {
+    if set.FinalSet.Exists([]byte(n)) {
         return ErrAlreadyFinalized(header)
     }
     set.BufferSet.Set([]byte(n), header)
