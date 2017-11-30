@@ -6,13 +6,75 @@ contract TendermintLC is IAVL {
     // entry points
 
     // updates certifier (validator set)
-    function update() internal {
-
+    function update(
+    ) external {
     }
 
     // updates header with last known valset
-    function certify()
-         internal {
+    // https://github.com/tendermint/tendermint/blob/master/types/validator_set.go verifycommit
+    function certify(
+        // signbytes (extracted from commit)
+        uint signlen,
+        bytes voteHash,
+        bytes partsHash,
+        uint partsTotal,
+        uint height,
+        uint round,
+        // signs
+        uint8[] v,
+        bytes32[] r,
+        bytes32[] s,
+        // apphash
+        bytes20 appHash
+    ) external {
+        require(v.length == r.length && r.length == s.length);
+
+        bytes memory o = new bytes(signlen);
+        uint n = 0;
+        // {"chain_id":"test-chain","vote":{"block_id":{"hash":"68617368","parts":{"hash":"70617274735F68617368","total":1000000}},"height":12345,"round":23456,"type":2}}
+        // a lot of function call and array passing is here, just hoping the optimizer will inline these...
+        (o, n) = openBrace(o, n);
+        (o, n) = objectKey(o, n, "chain_id");
+        (o, n) = objectStr(o, n, chainid);
+        (o, n) = objectCma(o, n);
+        (o, n) = objectKey(o, n, "vote");
+        (o, n) = openBrace(o, n);
+        (o, n) = objectKey(o, n, "block_id");
+        (o, n) = openBrace(o, n);
+        (o, n) = objectKey(o, n, "hash");
+        (o, n) = objectStr(o, n, voteHash);
+        (o, n) = objectCma(o, n);
+        (o, n) = objectKey(o, n, "parts");
+        (o, n) = openBrace(o, n);
+        (o, n) = objectKey(o, n, "hash");
+        (o, n) = objectStr(o, n, partsHash);
+        (o, n) = objectCma(o, n);
+        (o, n) = objectKey(o, n, "total");
+        (o, n) = objectInt(o, n, partsTotal);
+        (o, n) = closBrace(o, n);
+        (o, n) = closBrace(o, n);
+        (o, n) = objectCma(o, n);
+        (o, n) = objectKey(o, n, "height");
+        (o, n) = objectInt(o, n, height);
+        (o, n) = objectCma(o, n);
+        (o, n) = objectKey(o, n, "round");
+        (o, n) = objectInt(o, n, round);
+        (o, n) = objectCma(o, n);
+        (o, n) = objectKey(o, n, "type");
+        (o, n) = objectInt(o, n, 3); // https://github.com/tendermint/tendermint/blob/master/types/priv_validator.go
+        (o, n) = closBrace(o, n);
+        (o, n) = closBrace(o, n);
+
+        assert(n == signlen);
+
+        bytes32 hash = sha256(o); // or keccak256? tendermint uses golang's crypto/sha256, not sure it is identital with sol's sha256
+
+        for (uint i = 0; i < v.length; i++) {
+            address signer = ecrecover(hash, v[i], r[i], s[i]);
+            // check if the signer is one of the validators
+        }
+
+        // and verify the merkle proof of apphash, push it to apphash[height]
     }
 
     // verify a key -value pair with a known header
@@ -47,6 +109,8 @@ contract TendermintLC is IAVL {
     }
 
     // structs and state variables
+
+    bytes public chainid;
 
     uint private nextSeq = 0;
 
@@ -127,7 +191,7 @@ contract TendermintLC is IAVL {
          Commit commit;
      }    
  
-     function validateCheckpoint(Checkpoint check, string chainID) private view returns (bool) {
+     function validateCheckpoint(Checkpoint check, string chainID) private constant returns (bool) {
          if (keccak256(check.header.chainID) != keccak256(chainID)) return false;
          if (check.header.height != commitHeight(check.commit)) return false;
          if (headerHash(check.header) != check.commit.blockID.hash) return false; 
