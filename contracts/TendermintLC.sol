@@ -1,22 +1,16 @@
 pragma solidity ^0.4.11;
 
 import "./IAVL.sol";
+import "./SimpleTree.sol";
 
-contract TendermintLC is IAVL {
-    // entry points
-
-    // updates certifier (validator set)
-    function update(
-    ) external {
-    }
-
+contract TendermintLC is IAVL, SimpleTree {
     // updates header with last known valset
     // https://github.com/tendermint/tendermint/blob/master/types/validator_set.go verifycommit
     function certify(
         // signbytes (extracted from commit)
         uint signlen,
-        bytes voteHash,
-        bytes partsHash,
+        bytes20 voteHash,
+        bytes20 partsHash,
         uint partsTotal,
         uint height,
         uint round,
@@ -25,7 +19,9 @@ contract TendermintLC is IAVL {
         bytes32[] r,
         bytes32[] s,
         // apphash
-        bytes20 appHash
+        bytes20 appHash,
+        // apphash simpletree merkle proof
+        bytes20[] appHashInner
     ) external {
         require(v.length == r.length && r.length == s.length);
 
@@ -42,12 +38,12 @@ contract TendermintLC is IAVL {
         (o, n) = objectKey(o, n, "block_id");
         (o, n) = openBrace(o, n);
         (o, n) = objectKey(o, n, "hash");
-        (o, n) = objectStr(o, n, voteHash);
+        (o, n) = objectB20(o, n, voteHash);
         (o, n) = objectCma(o, n);
         (o, n) = objectKey(o, n, "parts");
         (o, n) = openBrace(o, n);
         (o, n) = objectKey(o, n, "hash");
-        (o, n) = objectStr(o, n, partsHash);
+        (o, n) = objectB20(o, n, partsHash);
         (o, n) = objectCma(o, n);
         (o, n) = objectKey(o, n, "total");
         (o, n) = objectInt(o, n, partsTotal);
@@ -69,12 +65,30 @@ contract TendermintLC is IAVL {
 
         bytes32 hash = sha256(o); // or keccak256? tendermint uses golang's crypto/sha256, not sure it is identital with sol's sha256
 
+        uint sum = 0;
+
         for (uint i = 0; i < v.length; i++) {
             address signer = ecrecover(hash, v[i], r[i], s[i]);
-            // check if the signer is one of the validators
+            for (uint j = 0; j < c.vSet.length; j++) {
+                if (c.vSet[j].ethaddr == signer) {
+                    sum++;
+                    break;
+                }
+            }
         }
 
+        assert(sum * 3 >= c.vSet.length * 2);
+
         // and verify the merkle proof of apphash, push it to apphash[height]
+
+        bytes memory appHashBytes = new bytes(20);
+        for (i = 0; i < 20; i++) {
+            appHashBytes[i] = appHash[i];
+        }
+
+        assert(verifySimple(0, 9, kvPairHash("App", appHashBytes), voteHash, appHashInner));
+       
+        apphash[height] = appHash;
     }
 
     // verify a key -value pair with a known header

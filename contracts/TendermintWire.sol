@@ -68,6 +68,14 @@ contract TendermintWire {
         return (o, n);
     }
 
+    function objectB20(bytes o, uint n, bytes20 b) internal pure returns (bytes, uint) {
+        for (uint i = 0; i < 20; i++) {
+            o[n++] = b[i];
+        }
+
+        return (o, n);
+    }
+
     function objectIntLen(uint v) internal pure returns (uint) {
         if (v == 0) return 1;
         for (uint i = 0; v != 0; i++) {
@@ -158,5 +166,7 @@ contract TendermintWire {
         return res;
     }
 
-    
+    function writeByteSlice(bytes o, uint n, bytes k) internal pure returns (bytes, uint) {
+
+    }
 }
