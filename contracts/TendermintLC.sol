@@ -2,8 +2,13 @@ pragma solidity ^0.4.11;
 
 import "./IAVL.sol";
 import "./SimpleTree.sol";
+import "./ValidatorSet.sol";
 
 contract TendermintLC is IAVL, SimpleTree {
+    function TendermintLC(address _vs) {
+        vs = ValidatorSet(_vs);
+    }
+
     // updates header with last known valset
     // https://github.com/tendermint/tendermint/blob/master/types/validator_set.go verifycommit
     function certify(
@@ -28,7 +33,7 @@ contract TendermintLC is IAVL, SimpleTree {
         bytes memory o = new bytes(signlen);
         uint n = 0;
         // {"chain_id":"test-chain","vote":{"block_id":{"hash":"68617368","parts":{"hash":"70617274735F68617368","total":1000000}},"height":12345,"round":23456,"type":2}}
-        // a lot of function call and array passing is here, just hoping the optimizer will inline these...
+        // a lot of function call and array passing is here, just hope that the optimizer will inline these...
         (o, n) = openBrace(o, n);
         (o, n) = objectKey(o, n, "chain_id");
         (o, n) = objectStr(o, n, chainid);
@@ -69,15 +74,10 @@ contract TendermintLC is IAVL, SimpleTree {
 
         for (uint i = 0; i < v.length; i++) {
             address signer = ecrecover(hash, v[i], r[i], s[i]);
-            for (uint j = 0; j < c.vSet.length; j++) {
-                if (c.vSet[j].ethaddr == signer) {
-                    sum++;
-                    break;
-                }
-            }
+            if (vs.isValidator(signer)) sum++;
         }
 
-        assert(sum * 3 >= c.vSet.length * 2);
+        assert(sum * 3 >= vs.numValidator() * 2);
 
         // and verify the merkle proof of apphash, push it to apphash[height]
 
@@ -132,91 +132,52 @@ contract TendermintLC is IAVL, SimpleTree {
 
     mapping (uint => bytes20) private apphash;
 
-    struct Certifier {
-         string chainID;
-         Validator[] vSet;
-         int lastHeight;
-         bytes32 vHash;
-     }
- 
-     Certifier c;
- 
-     struct Validator {
-         address ethaddr;
-         bytes20 mintaddr;
-         bytes pubkey; // uncompressed
-         uint votingPower;
-         uint accum;
-     }
+    ValidatorSet vs;
      
-     struct PartSetHeader {
-         uint total;
-         bytes20 hash;
-     }
+    struct PartSetHeader {
+        uint total;
+        bytes20 hash;
+    }
      
-     struct BlockID {
-         bytes20 hash;
-         PartSetHeader partsHeader;
-     }
+    struct BlockID {
+        bytes20 hash;
+        PartSetHeader partsHeader;
+    }
      
-     struct Header {
-         string chainID;
-         int height;
-         bytes20 timeHash;
-         uint numTxs;
-         BlockID lastBlockID;
-         bytes20 lastCommitHash;
-         bytes20 dataHash;
-         bytes20 validatorsHash;
-         bytes20 appHash;
-     }
+    struct Header {
+        string chainID;
+        int height;
+        bytes20 timeHash;
+        uint numTxs;
+        BlockID lastBlockID;
+        bytes20 lastCommitHash;
+        bytes20 dataHash;
+        bytes20 validatorsHash;
+        bytes20 appHash;
+    }
+    function headerHash(Header header) internal returns (bytes20) {
+        return 0x00;
+    }
+    struct Vote {
+        address validatorAddress;
+        int validatorIndex;
+        int height;
+        int round;
+        bytes20 blockID;
+    }
+    struct Commit {
+        BlockID blockID;
+        Vote[] precommits;
+    }
+    function validateCommit(Commit commit) internal returns (bool) {
+        
+    }
  
-     function headerHash(Header header) internal returns (bytes20) {
-         return 0x00;
-     }
- 
-     struct Vote {
-         address validatorAddress;
-         int validatorIndex;
-         int height;
-         int round;
-         bytes20 blockID;
- 
-     }
- 
-     struct Commit {
-         BlockID blockID;
-         Vote[] precommits;
-     }
- 
-     function validateCommit(Commit commit) internal returns (bool) {
-         
-     }
- 
-     function commitHeight(Commit commit) internal pure returns (int){
-         if (commit.precommits.length == 0) 
-             return 0;
-         else                               
-             return commit.precommits[0].height;
-     }
- 
-     struct Checkpoint {
-         Header header;
-         Commit commit;
-     }    
- 
-     function validateCheckpoint(Checkpoint check, string chainID) private constant returns (bool) {
-         if (keccak256(check.header.chainID) != keccak256(chainID)) return false;
-         if (check.header.height != commitHeight(check.commit)) return false;
-         if (headerHash(check.header) != check.commit.blockID.hash) return false; 
-         return validateCommit(check.commit);
-     }
-     
-     function updateCertifierInternal(Checkpoint check, Validator[] vset) private returns (bool) {
-         assert(check.header.height > c.lastHeight);
-         assert(validateCheckpoint(check, c.chainID));
-         
-     }
- 
+    function commitHeight(Commit commit) internal pure returns (int){
+        if (commit.precommits.length == 0) 
+            return 0;
+        else                               
+            return commit.precommits[0].height;
+    }
  
 } 

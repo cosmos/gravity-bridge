@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-contract ERC20 {
+interface ERC20 {
     function totalSupply() constant returns (uint totalSupply);
     function balanceOf(address _owner) constant returns (uint balance);
     function transfer(address _to, uint _value) returns (bool success);

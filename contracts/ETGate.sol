@@ -5,6 +5,10 @@ import "./TendermintLC.sol";
 import "./TendermintUtil.sol";
 
 contract ETGate is TendermintLC, TendermintUtil {
+    function ETGate(address _vs) TendermintLC(_vs) {
+
+    }
+
     // entry points
 
     event Deposit(address to, uint64 value, address token, bytes chain, uint64 seq);
