@@ -12,6 +12,14 @@ interface ValidatorSet {
 }
 
 contract BasicValidatorSet is ValidatorSet {
+    ERC20 public token;
+
+    address[] private vs;
+    uint private minval;
+
+    mapping (address => uint) public bonded; 
+    function getBonded(address k1) public constant returns (uint) { return bonded[k1]; }
+
     function BasicValidatorSet(address _token, address[] _vs) {
         token = ERC20(_token);
         vs = _vs;    
@@ -38,10 +46,6 @@ contract BasicValidatorSet is ValidatorSet {
         return false;
     }
 
-    // we need synced valset change between eth-mint
-    // there could not be consensus about that the chain is failed
-    // consider waiting for delay before actually update valset
-    // but how should we define delay? eth block or mint block?
     function bond(uint amount) external {
         assert(token.transferFrom(msg.sender, this, amount));
         bonded[msg.sender] += amount;
@@ -69,21 +73,7 @@ contract BasicValidatorSet is ValidatorSet {
             minval = newMinval();
             Update(vs);
         }
-    }
-
-    
-
-    // state variables 
-
-    ERC20 public token;
-
-    address[] private vs;
-    uint private minval;
-
-    mapping (address => uint) public bonded; 
-    function getBonded(address k1) public constant returns (uint) { return bonded[k1]; }
-
-    uint public delay;
+    }    
 
     // helper functions 
 
@@ -129,7 +119,42 @@ contract StaticValidatorSet is ValidatorSet {
 }
 
 contract DynamicValidatorSet is ValidatorSet {
- 
+    struct Header {
+        string chainID;
+        int height;
+        bytes20 timeHash;
+        uint numTxs;
+        BlockID lastBlockID;
+        bytes20 lastCommitHash;
+        bytes20 dataHash;
+        bytes20 validatorsHash;
+        bytes20 appHash;
+    }
+    struct Commit {
+        BlockID blockID;
+        Vote[] precommits;
+    }
+
+    struct PartSetHeader {
+        uint total;
+        bytes20 hash;
+    }
+     
+    struct BlockID {
+        bytes20 hash;
+        PartSetHeader partsHeader;
+    }
+     
+    struct Vote {
+        address validatorAddress;
+        int validatorIndex;
+        int height;
+        int round;
+        bytes20 blockID;
+    }
+
+
+
     struct Certifier {
         string chainID;
         address[] vSet;
@@ -155,6 +180,16 @@ contract DynamicValidatorSet is ValidatorSet {
         if (headerHash(check.header) != check.commit.blockID.hash) return false; 
         return validateCommit(check.commit);
     } 
+    function validateCommit(Commit commit) internal returns (bool) {
+        
+    }
+ 
+    function commitHeight(Commit commit) internal pure returns (int){
+        if (commit.precommits.length == 0) 
+            return 0;
+        else                               
+            return commit.precommits[0].height;
+    }
 
 }
 

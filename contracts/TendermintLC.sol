@@ -1,10 +1,19 @@
 pragma solidity ^0.4.11;
 
-import "./IAVL.sol";
-import "./SimpleTree.sol";
+import "./TendermintMerkle.sol";
 import "./ValidatorSet.sol";
 
-contract TendermintLC is IAVL, SimpleTree {
+contract TendermintLC is TendermintMerkle {
+    bytes public chainid;
+
+    uint private nextSeq = 0;
+
+    mapping (uint => bool) private submitted;
+
+    mapping (uint => bytes20) private apphash;
+
+    ValidatorSet vs;
+     
     function TendermintLC(address _vs) {
         vs = ValidatorSet(_vs);
     }
@@ -103,13 +112,13 @@ contract TendermintLC is IAVL, SimpleTree {
     ) internal {
         bytes20 proofRootHash = apphash[height]; 
 
-        IAVL.verify(key, 
-                    value, 
-                    proofInnerHeight, 
-                    proofInnerSize, 
-                    proofInnerHash,
-                    proofInnerDirection,
-                    proofRootHash);
+        TendermintMerkle.verify(key, 
+                                value, 
+                                proofInnerHeight, 
+                                proofInnerSize, 
+                                proofInnerHash,
+                                proofInnerDirection,
+                                proofRootHash);
     }
 
     // check the header is submitted
@@ -122,62 +131,5 @@ contract TendermintLC is IAVL, SimpleTree {
         return seq == nextSeq;
     }
 
-    // structs and state variables
-
-    bytes public chainid;
-
-    uint private nextSeq = 0;
-
-    mapping (uint => bool) private submitted;
-
-    mapping (uint => bytes20) private apphash;
-
-    ValidatorSet vs;
-     
-    struct PartSetHeader {
-        uint total;
-        bytes20 hash;
-    }
-     
-    struct BlockID {
-        bytes20 hash;
-        PartSetHeader partsHeader;
-    }
-     
-    struct Header {
-        string chainID;
-        int height;
-        bytes20 timeHash;
-        uint numTxs;
-        BlockID lastBlockID;
-        bytes20 lastCommitHash;
-        bytes20 dataHash;
-        bytes20 validatorsHash;
-        bytes20 appHash;
-    }
-    function headerHash(Header header) internal returns (bytes20) {
-        return 0x00;
-    }
-    struct Vote {
-        address validatorAddress;
-        int validatorIndex;
-        int height;
-        int round;
-        bytes20 blockID;
-    }
-    struct Commit {
-        BlockID blockID;
-        Vote[] precommits;
-    }
-    function validateCommit(Commit commit) internal returns (bool) {
-        
-    }
- 
-    function commitHeight(Commit commit) internal pure returns (int){
-        if (commit.precommits.length == 0) 
-            return 0;
-        else                               
-            return commit.precommits[0].height;
-    }
  
 } 

@@ -4,7 +4,13 @@ import "./ERC20.sol";
 import "./TendermintLC.sol";
 import "./TendermintUtil.sol";
 
-contract ETGate is TendermintLC, TendermintUtil {
+contract ETGate is TendermintLC {
+    uint64 public depositSeq = 0;
+
+    mapping (bytes => mapping (address => uint)) public deposited;
+    function getDeposited(bytes k1, address k2) constant returns (uint) { return deposited[k1][k2]; }
+
+
     function ETGate(address _vs) TendermintLC(_vs) {
 
     }
@@ -29,7 +35,6 @@ contract ETGate is TendermintLC, TendermintUtil {
         address token,
         bytes   chain,
         uint64    seq,
-        // uint fee,
         // TendermintLC data
         uint      height,
         int8[]    proofInnerHeight,
@@ -40,17 +45,52 @@ contract ETGate is TendermintLC, TendermintUtil {
         require(withdrawable(height, value, token, chain, seq));
 
         TendermintLC.verify(writeUvarint(seq), 
-                            bytes20ToBytes(ripemd160(to, value, token, chain)), 
+                            bytes20ToBytes(ripemd160("w", to, value, token, chain)), 
                             height,
                             proofInnerHeight,
                             proofInnerSize,
                             proofInnerHash,
                             proofInnerDirection);
 
+        deposited[chain][token] -= value;
+
         if (token == 0) assert(to.send(value));
         else            assert(ERC20(token).transfer(to, value));
 
         Withdraw(to, value, token, chain, seq);
+    }
+
+    event Transfer(address to, uint64 value, address token, bytes fromchain, bytes tochain, uint64 seq);
+
+    function transfer(
+        // transfer data
+        address to,
+        uint64 value,
+        address token,
+        bytes fromchain,
+        bytes tochain,
+        uint64 seq,
+        // TendermintLC data
+        uint height,
+        int8[] proofInnerHeight,
+        int[] proofInnerSize,
+        bytes20[] proofInnerHash,
+        bytes proofInnerDirection
+    ) external {
+        require(withdrawable(height, value, token, fromchain, seq));
+
+        TendermintLC.verify(writeUvarint(seq),
+                            bytes20ToBytes(ripemd160("t", to, value, token, fromchain, tochain)),
+                            height,
+                            proofInnerHeight,
+                            proofInnerSize,
+                            proofInnerHash,
+                            proofInnerDirection);
+        
+        deposited[fromchain][token] -= value;
+        deposited[tochain][token] += value;
+
+        Transfer(to, value, token, fromchain, tochain, seq);
     }
 
     // helper functions
@@ -67,14 +107,6 @@ contract ETGate is TendermintLC, TendermintUtil {
         return available(height) &&              // is the header submitted by the relayers?
                continuous(seq) &&                // is the sequence continuous?
                deposited[chain][token] >= value; // is the zone holding enough value?
-        }
+    }
 
-    // structs and state variables
-
-    // deposit()
-
-    uint64 public depositSeq = 0;
-
-    mapping (bytes => mapping (address => uint)) public deposited;
-    function getDeposited(bytes k1, address k2) constant returns (uint) { return deposited[k1][k2]; }
 }
