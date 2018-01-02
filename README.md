@@ -7,7 +7,7 @@ Send ethereum tokens to tendermint zones.
 ### Start etgate
 
 1. Install [golang](https://golang.org/dl), [geth](https://github.com/ethereum/go-ethereum), and [basecoin](https://github.com/tendermint/basecoin).
-2. Git clone this repository.
+2. go get this repository, and run `glide update` 
 3. cd to cmd/etgate and go build.
 4. Run `geth --testnet --fast` on the other window and wait until sync is completed.
 5. Run `./init.sh`
