@@ -10,8 +10,8 @@ import (
     basecmd "github.com/tendermint/basecoin/cmd/basecoin/commands"
     "github.com/tendermint/basecoin/types"
 
-    "../../plugins/etgate"
-    "./commands"
+    "github.com/cosmos/peggy/plugins/etgate"
+    "github.com/cosmos/peggy/cmd/etgate/commands"
 )
 
 func main() {

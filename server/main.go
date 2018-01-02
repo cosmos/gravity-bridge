@@ -36,8 +36,8 @@ import (
 
     "github.com/ethereum/go-ethereum/common"
 
-    etcmd "../commands"
-    "../plugins/etgate"
+    etcmd "github.com/cosmos/peggy/commands"
+    "github.com/cosmos/peggy/plugins/etgate"
 )
 
 func GetKeyManager() keys.Manager {

@@ -100,9 +100,11 @@ func initCmd(cmd *cobra.Command, args []string) error {
 
 	if (mod1 + mod2 + mod3) > 0 {
 		msg := fmt.Sprintf("Initialized %s", cmd.Root().Name())
-		logger.Info(msg, "genesis", genesisFile, "priv_validator", privValFile)
+        fmt.Printf("%s\n", msg)
+//		logger.Info(msg, "genesis", genesisFile, "priv_validator", privValFile)
 	} else {
-		logger.Info("Already initialized", "priv_validator", privValFile)
+        fmt.Printf("Already initialized\n")
+//		logger.Info("Already initialized", "priv_validator", privValFile)
 	}
 
 	return nil

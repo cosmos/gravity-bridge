@@ -18,8 +18,8 @@ import (
 //    "github.com/ethereum/go-ethereum/accounts/abi"
 //    "github.com/ethereum/go-ethereum/consensus/ethash"
 //    "github.com/ethereum/go-ethereum/core"
-    "./abi"
-    "../../contracts"
+    "github.com/cosmos/peggy/plugins/etgate/abi"
+    "github.com/cosmos/peggy/contracts"
 )
 
 const (

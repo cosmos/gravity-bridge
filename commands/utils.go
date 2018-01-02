@@ -10,7 +10,7 @@ import (
     basecmd "github.com/tendermint/basecoin/cmd/basecoin/commands"
     tmtypes "github.com/tendermint/tendermint/types"
     
-    "../plugins/etgate"
+    "github.com/cosmos/peggy/plugins/etgate"
 )
 
 

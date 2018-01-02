@@ -32,10 +32,10 @@ import (
     "github.com/tendermint/go-wire"
     "github.com/tendermint/go-crypto"
 
-    "../../plugins/etgate"
-    "../../commands"
-    "../../contracts"
-    "../../plugins/etgate/abi"
+    "github.com/cosmos/peggy/plugins/etgate"
+    "github.com/cosmos/peggy/commands"
+    "github.com/cosmos/peggy/contracts"
+    "github.com/cosmos/peggy/plugins/etgate/abi"
 
     secp256k1 "github.com/btcsuite/btcd/btcec"
 )
