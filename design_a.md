@@ -1,12 +1,5 @@
 # Design A
 
-## Overview
-
-There are two major pieces:
-* Cosmos ABCI app
-* Signing app
-
-
 ## Sending tokens from Cosmos to Ethereum
 
 ### Cosmos Peg Zone
