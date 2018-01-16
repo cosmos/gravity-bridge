@@ -14,6 +14,9 @@ posts the signed transaction bytes as a transaction to the  Cosmos peg zone.
 The peg zone then comes to consensus over the signed bytes. The signed bytes 
 are stored under original transaction bytes.
 
+The signing app signs the transactions using secpk256k1 keys in order for 
+Ethereum to be able to run `ecrecover`.
+
 ### Relayer Process
 The relayer process takes the signed transaction bytes and posts them to the 
 set of Ethereum smart contracts.

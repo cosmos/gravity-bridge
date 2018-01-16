@@ -3,7 +3,13 @@
 ## Sending tokens from Cosmos to Ethereum
 
 ### Cosmos Peg Zone
-The peg zone receives an incoming IBC packets and decodes it. It then verifies the correctness of the IBC packet and write an easily parsed by EVM datastructure into the state tree indicating what asset, address, etc the tokens need to be sent to.
+The peg zone receives an incoming IBC packets and decodes it. It then verifies 
+the correctness of the IBC packet and write an easily parsed by EVM 
+datastructure into the state tree indicating what asset, address, etc the 
+tokens need to be sent to.
+
+In order for Ethereum to verify the signatures, Tendermint Core would need to
+use secpk256k1 keys. This functionality is mostly build already.
 
 ### Relayer Process
 The relayer process takes a recent block header and a merkle proof to the
@@ -19,3 +25,5 @@ and eventually release funds to the destination address.
 It is the same as design A.
 
 
+## Updating the validator set
+// TODO
