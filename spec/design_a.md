@@ -33,13 +33,14 @@ on the Cosmos side. It locks the received funds to the consensus of the peg
 zone.
 
 ### Relayer Process
-In this case the relayer process is an Ethereum full node. Once the node sees
+In this case the relayer process connected via RPC to an Ethereum full node. Once the node recieves
 a deposit to the smart contract it waits for 100 blocks (finality threshold)
-and then fires an event to which the Cosmos peg zone is listening.
+and then generates and signs a transactions that attests witness to the event
+to which the Cosmos peg zone is listening.
 
 ### Cosmos Peg Zone
-The peg zone receives an event from the Ethereum full node and treats it as 
-trusted. The node then updates the state with an internal transaction to
+The peg zone recieves witness transactions. When a super-majority of the voting power has witnessed an event,
+the node then updates the state with an internal transaction to
 reflect that someone wants to send tokens from Ethereum. Every subsequent
 node adds another confirmation to the peg zone state. Every BeginBlock
 invocation the peg zone checks whether any incoming Ethereum transfers have 
