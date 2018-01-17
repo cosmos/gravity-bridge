@@ -35,6 +35,8 @@ chains or an automatic process that is run alongside the peg zone. It is
 responsible for taking data from the Cosmos peg zone and posting it to the 
 Ethereum chain. Furthermore it takes data from Ethereum and posts it as a 
 transaction to the Cosmos peg zone.
+The relayer has at-least-once delivery semantics from one chain to
+another, and every operation it performs against a chain is idempotent.
 We do not yet define the specifics of this relayer process or the economic 
 incentives to run it. Generally anyone that wants the peg zone to be successful
 has an incentive to run the relayer process.
