@@ -41,7 +41,7 @@ contract ETGate is Valset {
         
     }
 
-    function ETGate(address[] initAddress, uint64[] initPower) {
+    function ETGate(address[] initAddress, uint64[] initPower) Valset(initAddress, initPower) {
 
     }
 }
