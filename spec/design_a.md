@@ -48,3 +48,48 @@ reflect that someone wants to send tokens from Ethereum. Every subsequent
 node adds another confirmation to the peg zone state. Every BeginBlock
 invocation the peg zone checks whether any incoming Ethereum transfers have 
 reached a super-majority of confirmations and if so creates an IBC packet.
+
+## API
+
+### Ethereum Smart Contract
+
+#### update(address[] newAddress, uint64[] newPower, /*bytes32 nonce,*/ uint8[] v, bytes32[] r, bytes32[] s)
+
+Updates validator set. 
+
+* order of the signature variables(`v`, `r`, and `s`) must be same with internal variable `Validator[] validators`
+* nil signature is represented by `0` on `v[i]`
+
+#### lock(bytes to, uint64 value, address token, bytes chain) payable
+
+Locks Ethereum user's ethers/ERC20s in the contract and loggs an event.
+
+* `token` being `0x0` means ethereum; in this case `msg.value` must be same with `value`
+* `event Lock(bytes to, uint64 value, address token, bytes chain, uint64 nonce)` is logged, seen by the relayers
+
+#### unlock(address to, uint64 value, address token, bytes chain, /*bytes32 nonce,*/ uint8[] v, bytes32[] r, bytes32[] s)
+
+Unlocks Ethereum tokens according to the incoming information from the pegzone.
+
+* order of the signature variables(`v`, `r`, and `s`) must be same with internal variable `Validator[] validators`
+* nil signature is represented by `0` on `v[i]`
+* transfer tokens to `to`
+
+#### mint(address to, uint64 value, bytes token, bytes chain, /*bytes32 nonce,*/ uint8[] v, bytes32[] r, bytes32[] s)
+
+Mints 1:1 backed credit for atoms/photons.
+
+* order of the signature variables(`v`, `r`, and `s`) must be same with internal variable `Validator[] validators`
+* nil signature is represented by `0` on `v[i]`
+* transfer minted tokens to `to`
+
+
+#### burn(bytes to, uint64 value, bytes token, bytes chain)
+
+Burns credit for atoms/photons and loggs an event
+
+* `event Burn(bytes to, uint64 value, bytes token, bytes chain)` is logged, seen by the relayers
+
+### Relayer
+
+### Cosmos Peg Zone

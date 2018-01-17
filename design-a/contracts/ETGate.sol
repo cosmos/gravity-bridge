@@ -5,25 +5,25 @@ import './Valset.sol';
 contract ETGate is Valset {
     event Lock();
 
-    function Lock() external { // deposit ether/ERC20s
+    function lock() external { // deposit ether/ERC20s
 
     }
 
     event Unlock();
 
-    function Unlock() external { // withdraw ether/ERC20s
-
-    }
-
-    event Burn();
-
-    function Burn() external { // withdraw atom/photons
+    function unlock() external { // withdraw ether/ERC20s
 
     }
 
     event Mint();
 
-    function Mint() external { // deposit atom/photons
+    function mint() external { // deposit atom/photons
+
+    }
+
+    event Burn();
+
+    function burn() external { // withdraw atom/photons
 
     }
 }
