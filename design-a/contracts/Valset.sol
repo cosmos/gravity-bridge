@@ -11,18 +11,19 @@ contract Valset {
 
     uint updateSeq = 0;
 
-    function verify(bytes32 hash, uint8[] v, bytes32[] r, bytes32[] s) returns (bool) {
-        if (!(v.length == r.length &&
+    function verify(bytes32 hash, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s) returns (bool) {
+        if (!(idxs.length <= validators.length)) return false;
+        if (!(idxs.length == v.length &&
+              v.length == r.length &&
               r.length == s.length)) {
             return false;
         }
 
         uint64 signedPower = 0;
 
-        for (uint i = 0; i < v.length; i++) {
-            if (v[i] == 0) continue;
-            if (ecrecover(hash, v[i], r[i], s[i]) == validators[i].Address) 
-                signedPower += validators[i].Power;
+        for (uint i = 0; i < idxs.length; i++) {
+            if (ecrecover(hash, v[idxs[i]], r[idxs[i]], s[idxs[i]]) == validators[idxs[i]].Address) 
+                signedPower += validators[idxs[i]].Power;
         }
 
         if (signedPower * 3 <= totalPower * 2) return false;
@@ -43,10 +44,10 @@ contract Valset {
         Update(validators, updateSeq++);
     }
 
-    function update(address[] newAddress, uint64[] newPowers, uint8[] v, bytes32[] r, bytes32[] s) {
+    function update(address[] newAddress, uint64[] newPowers, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s) {
         require(newAddress.length == newPowers.length);
         
-        assert(verify(keccak256(newAddress, newPowers), v, r, s)); // hashing can be changed
+        assert(verify(keccak256(newAddress, newPowers), idxs, v, r, s)); // hashing can be changed
 
         updateInternal(newAddress, newPowers);
     }

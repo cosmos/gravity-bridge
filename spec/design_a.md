@@ -53,12 +53,16 @@ reached a super-majority of confirmations and if so creates an IBC packet.
 
 ### Ethereum Smart Contract
 
-#### update(address[] newAddress, uint64[] newPower, /*bytes32 nonce,*/ uint8[] v, bytes32[] r, bytes32[] s)
+#### about signature variables(common for update(), unlock(), mint(), and register())
+
+* signatures are flattened as `uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s`
+* `idxs` must be ordered increasing and not repeated
+* `v[i]`, `r[i]`, and `s[i]` must be `ecrecover()` argument for `idxs[i]`th validator 
+* hashing method for data is not decided yet
+
+#### update(address[] newAddress, uint64[] newPower, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
 
 Updates validator set. Called by the relayers.
-
-* order of the signature variables(`v`, `r`, and `s`) must be same with internal variable `Validator[] validators`
-* nil signature is represented by `0` on `v[i]`
 
 #### lock(bytes to, uint64 value, address token, bytes chain) payable
 
@@ -67,22 +71,18 @@ Locks Ethereum user's ethers/ERC20s in the contract and loggs an event. Called b
 * `token` being `0x0` means ethereum; in this case `msg.value` must be same with `value`
 * `event Lock(bytes to, uint64 value, address token, bytes chain, uint64 nonce)` is logged, seen by the relayers
 
-#### unlock(address to, uint64 value, address token, bytes chain, /*bytes32 nonce,*/ uint8[] v, bytes32[] r, bytes32[] s)
+#### unlock(address to, uint64 value, address token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
 
 Unlocks Ethereum tokens according to the incoming information from the pegzone. Called by the relayers.
 
-* order of the signature variables(`v`, `r`, and `s`) must be same with internal variable `Validator[] validators`
-* nil signature is represented by `0` on `v[i]`
 * transfer tokens to `to`
 
-#### mint(address to, uint64 value, bytes token, bytes chain, /*bytes32 nonce,*/ uint8[] v, bytes32[] r, bytes32[] s)
+#### mint(address to, uint64 value, bytes token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
 
 Mints 1:1 backed credit for atoms/photons. Called by the relayers.
 
-* order of the signature variables(`v`, `r`, and `s`) must be same with internal variable `Validator[] validators`
-* nil signature is represented by `0` on `v[i]`
+* `token` has to be `register`ed before the call
 * transfer minted tokens to `to`
-
 
 #### burn(bytes to, uint64 value, bytes token, bytes chain)
 
@@ -90,12 +90,10 @@ Burns credit for atoms/photons and loggs an event. Called by the users.
 
 * `event Burn(bytes to, uint64 value, bytes token, bytes chain, uint64 nonce)` is logged, seen by the relayers
 
-#### register(string name, address token, uint8[] v, bytes32[] r, bytes32[] s)
+#### register(string name, address token, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
 
 Registers new Cosmos token name with its CosmosERC20 address. Called by the relayers.
 
-* order of the signature variables(`v`, `r`, and `s`) must be same with internal variable `Validator[] validators`
-* nil signature is represented by `0` on `v[i]`
 * deploys new CosmosERC20 contract and stores it in a mapping
 
 ### Relayer
