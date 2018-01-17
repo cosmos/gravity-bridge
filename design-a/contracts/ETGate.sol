@@ -1,29 +1,47 @@
 pragma solidity ^0.4.11;
 
+import './CosmosERC20.sol';
 import './Valset.sol';
 
 contract ETGate is Valset {
-    event Lock();
+    mapping (string => CosmosERC20) cosmosTokenAddress;
 
-    function lock() external { // deposit ether/ERC20s
+    function getCosmosTokenAddress(string name) constant returns (address) {
+        return cosmosTokenAddress[name];
+    }
+
+    uint64 private _nonce = 0;
+
+    event Lock(bytes to, uint64 value, address token, bytes indexed chain, uint64 indexed nonce);
+
+    function lock(bytes to, uint64 value, address token, bytes chain) external payable { 
 
     }
 
-    event Unlock();
+    event Unlock(address to, uint64 value, address token);
 
-    function unlock() external { // withdraw ether/ERC20s
-
-    }
-
-    event Mint();
-
-    function mint() external { // deposit atom/photons
+    function unlock(address to, uint64 value, address token, uint8[] v, bytes32[] r, bytes32[] s) external { 
 
     }
 
-    event Burn();
+    event Mint(address to, uint64 value, bytes token);
 
-    function burn() external { // withdraw atom/photons
+    function mint(address to, uint64 value, bytes token, uint8[] v, bytes32[] r, bytes32[] s) external { 
+    }
+
+    event Burn(bytes to, uint64 value, bytes token, bytes chain);
+
+    function burn(bytes to, uint64 value, bytes token, bytes chain) external { 
+
+    }
+
+    event Register(string name, address token);
+
+    function register(string name, address token, uint8[] v, bytes32 r, bytes32[] s) external {
+        
+    }
+
+    function ETGate(address[] initAddress, uint64[] initPower) {
 
     }
 }

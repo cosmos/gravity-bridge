@@ -88,7 +88,15 @@ Mints 1:1 backed credit for atoms/photons. Called by the relayers.
 
 Burns credit for atoms/photons and loggs an event. Called by the users.
 
-* `event Burn(bytes to, uint64 value, bytes token, bytes chain)` is logged, seen by the relayers
+* `event Burn(bytes to, uint64 value, bytes token, bytes chain, uint64 nonce)` is logged, seen by the relayers
+
+#### register(string name, address token, uint8[] v, bytes32[] r, bytes32[] s)
+
+Registers new Cosmos token name with its CosmosERC20 address. Called by the relayers.
+
+* order of the signature variables(`v`, `r`, and `s`) must be same with internal variable `Validator[] validators`
+* nil signature is represented by `0` on `v[i]`
+* deploys new CosmosERC20 contract and stores it in a mapping
 
 ### Relayer
 

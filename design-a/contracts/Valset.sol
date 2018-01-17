@@ -46,7 +46,7 @@ contract Valset {
     function update(address[] newAddress, uint64[] newPowers, uint8[] v, bytes32[] r, bytes32[] s) {
         require(newAddress.length == newPowers.length);
         
-        assert(verify(keccak256(newAddress, newPowers), v, r, s));
+        assert(verify(keccak256(newAddress, newPowers), v, r, s)); // hashing can be changed
 
         updateInternal(newAddress, newPowers);
     }
