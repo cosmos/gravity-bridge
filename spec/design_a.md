@@ -55,21 +55,21 @@ reached a super-majority of confirmations and if so creates an IBC packet.
 
 #### update(address[] newAddress, uint64[] newPower, /*bytes32 nonce,*/ uint8[] v, bytes32[] r, bytes32[] s)
 
-Updates validator set. 
+Updates validator set. Called by the relayers.
 
 * order of the signature variables(`v`, `r`, and `s`) must be same with internal variable `Validator[] validators`
 * nil signature is represented by `0` on `v[i]`
 
 #### lock(bytes to, uint64 value, address token, bytes chain) payable
 
-Locks Ethereum user's ethers/ERC20s in the contract and loggs an event.
+Locks Ethereum user's ethers/ERC20s in the contract and loggs an event. Called by the users.
 
 * `token` being `0x0` means ethereum; in this case `msg.value` must be same with `value`
 * `event Lock(bytes to, uint64 value, address token, bytes chain, uint64 nonce)` is logged, seen by the relayers
 
 #### unlock(address to, uint64 value, address token, bytes chain, /*bytes32 nonce,*/ uint8[] v, bytes32[] r, bytes32[] s)
 
-Unlocks Ethereum tokens according to the incoming information from the pegzone.
+Unlocks Ethereum tokens according to the incoming information from the pegzone. Called by the relayers.
 
 * order of the signature variables(`v`, `r`, and `s`) must be same with internal variable `Validator[] validators`
 * nil signature is represented by `0` on `v[i]`
@@ -77,7 +77,7 @@ Unlocks Ethereum tokens according to the incoming information from the pegzone.
 
 #### mint(address to, uint64 value, bytes token, bytes chain, /*bytes32 nonce,*/ uint8[] v, bytes32[] r, bytes32[] s)
 
-Mints 1:1 backed credit for atoms/photons.
+Mints 1:1 backed credit for atoms/photons. Called by the relayers.
 
 * order of the signature variables(`v`, `r`, and `s`) must be same with internal variable `Validator[] validators`
 * nil signature is represented by `0` on `v[i]`
@@ -86,7 +86,7 @@ Mints 1:1 backed credit for atoms/photons.
 
 #### burn(bytes to, uint64 value, bytes token, bytes chain)
 
-Burns credit for atoms/photons and loggs an event
+Burns credit for atoms/photons and loggs an event. Called by the users.
 
 * `event Burn(bytes to, uint64 value, bytes token, bytes chain)` is logged, seen by the relayers
 
