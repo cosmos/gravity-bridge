@@ -17,6 +17,9 @@ are stored under original transaction bytes.
 The signing app signs the transactions using secpk256k1 keys in order for 
 Ethereum to be able to run `ecrecover`.
 
+This signing app must trigger on validator set changes. Produce a "Update Validators"
+transaction and then sign it with every validators private key.
+
 ### Relayer Process
 The relayer process takes the signed transaction bytes and posts them to the 
 set of Ethereum smart contracts.
