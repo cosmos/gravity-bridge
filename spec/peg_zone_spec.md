@@ -118,3 +118,61 @@ to which the Cosmos peg zone is listening.
 1. Once the node receives a deposit to the smart contract it waits for 100 blocks (finality threshold) and then generates and signs a transactions that attests witness to the event
 1. The peg zone receives witness transactions until a super-majority of the voting power has witnessed an event. Every BeginBlock invocation the peg zone checks whether any incoming Ethereum transfers have reached a super-majority of confirmations.
 1. The node then updates the state with an internal transaction to reflect that someone wants to send tokens from Ethereum and generates IBC packet to release the tokens to specified destination chain.
+
+# API
+
+## ABCI app
+
+## Signing app
+
+## Ethereum Smart Contracts
+
+### update(address[] newAddress, uint64[] newPower, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+
+Updates validator set. Called by the relayers.
+
+* hash value for `ecrecover` is calculated as: 
+```
+byte(0) + newAddress.length.PutUint256() + newAddress[0].Bytes() + ... + newPower[0].PutUint64() + ...
+```
+
+### lock(bytes to, uint64 value, address token, bytes chain) payable
+
+Locks Ethereum user's ethers/ERC20s in the contract and loggs an event. Called by the users.
+
+* `token` being `0x0` means ethereum; in this case `msg.value` must be same with `value`
+* `event Lock(bytes to, uint64 value, address token, bytes chain, uint64 nonce)` is logged, seen by the relayers
+
+### unlock(address to, uint64 value, address token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+
+Unlocks Ethereum tokens according to the incoming information from the pegzone. Called by the relayers.
+
+* transfer tokens to `to`
+* hash value for `ecrecover` is calculated as:
+```
+byte(1) + to.Bytes() + value.PutUint64() + chain.length.PutUint256() + chain
+```
+### mint(address to, uint64 value, bytes token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+
+Mints 1:1 backed credit for atoms/photons. Called by the relayers.
+
+* `token` has to be `register`ed before the call
+* transfer minted tokens to `to`
+* hash value for `ecrecover` is calculated as:
+```
+byte(2) + to.Bytes() + value.PutUint64() + token.length.PutUint256() + token + chain.length.PutUint256() + chain
+```
+
+### burn(bytes to, uint64 value, bytes token, bytes chain)
+
+Burns credit for atoms/photons and loggs an event. Called by the users.
+
+* `event Burn(bytes to, uint64 value, bytes token, bytes chain, uint64 nonce)` is logged, seen by the relayers
+
+### register(string name, address token, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+
+Registers new Cosmos token name with its CosmosERC20 address. Called by the relayers.
+
+* deploys new CosmosERC20 contract and stores it in a mapping
+
+## Relayer Process
