@@ -69,45 +69,110 @@ it sends a signed message to the ABCI app.
 
 # Transfer Protocols
 
-## Sending tokens from Cosmos to Ethereum
+## Sending Ethereum tokens from Ethereum to Cosmos
 
-1. the ABCI app receives an IBC packet from the hub and handles
-   it according to the IBC specification.
-1. the ABCI app generates a valid Ethereum transaction containing
-   {address, denomination, amount, nonce}, and writes it to its state 
-1. each signing app is watching for new transactions in the ABCI state,
-   and detects the new transaction. each signing app signs the transaction
-   using secp256k1 using a key that is known to the Ethereum smart
-   contracts.
-1. each signing app submits their signatures back to the ABCI app for replication.
-1. the relayer processes, which periodically query the ABCI app's transactions,
-   see that the transaction has reached the required signature threshold,
-   and transaction is sent to the smart contracts by calling the
-   `mint` function.
-1. the smart contracts use `ecrecover` to check that it was signed
-   by a super-majority of the validator set corresponding to the
-   height of the transaction (this may have been updated)
-1. the smart contracts make newly minted ERC20 tokens available to
-   the specified address in the transaction.
+![Ethereum to Cosmos](./ether-to-pegzone.jpg)
 
-## Sending tokens from Ethereum to Cosmos
-
-### Ethereum Smart Contracts
-The contract receives a transaction with a token and a destination address
+1. The contract receives a `lock` transaction with a `ERC20` token and a destination address
 on the Cosmos side. It locks the received funds to the consensus of the peg
-zone.
-
-### Relayer Process
-In this case the relayer process connected via RPC to an Ethereum full node. Once the node receives
-a deposit to the smart contract it waits for 100 blocks (finality threshold)
-and then generates and signs a transactions that attests witness to the event
+zone, logging an event that notifies the relayers.
+1. The relayers process connected via RPC to an Ethereum full node, listening for `Lock` event.
+1. Once the node receives a deposit to the smart contract it waits for 100 blocks (finality threshold) and then generates and signs a transactions that attests witness to the event
 to which the Cosmos peg zone is listening.
+1. The peg zone receives witness transactions until a super-majority of the voting power has witnessed an event. Every BeginBlock invocation the peg zone checks whether any incoming Ethereum transfers have reached a super-majority of confirmations.
+1. The node then updates the state with an internal transaction to reflect that someone wants to send tokens from Ethereum and generates IBC packet to mint the tokens to specified destination chain.
 
-### ABCI app
-The peg zone receixves witness transactions. When a super-majority of the voting power has witnessed an event,
-the node then updates the state with an internal transaction to
-reflect that someone wants to send tokens from Ethereum. Every subsequent
-node adds another confirmation to the peg zone state. Every BeginBlock
-invocation the peg zone checks whether any incoming Ethereum transfers have 
-reached a super-majority of confirmations and if so creates an IBC packet.
+## Sending Ethereum tokens from Cosmos to Ethereum
 
+![Cosmos to Ethereum](./pegzone-to-ether.jpg)
+
+1. The ABCI app receives an IBC packet that requests for burning Ethereum tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, token address, amount, nonce}, and writes it to its state.
+1. Each signing app is watching for new transactions in the ABCI state, and detects the new transaction. 
+1. Each signing app signs the transaction using secp256k1 using a key that is known to the Ethereum smart contracts.
+1. Each signing app submits their signatures back to the ABCI app for replication.
+1. The relayer processes, which periodically query the ABCI app's transactions,
+   see that the transaction has reached the required signature threshold. 
+1. One of the relayers send the transaction to the smart contract by calling the `unlock` function
+1. The smart contracts use `ecrecover` to check that it was signed by a super-majority of the validator set corresponding to the height of the transaction (this may have been updated). The smart contracts release the token as specified in the transaction making it available to the destination address.
+
+## Sending Cosmos tokens from Cosmos to Ethereum
+
+![Cosmos to Ethereum](./pegzone-to-ether.jpg)
+
+1. the ABCI app receives an IBC packet from the hub that requests for locking Cosmos tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, denomination, amount, nonce}, and writes it to its state. 
+1. Each signing app is watching for new transactions in the ABCI state,
+   and detects the new transaction. 
+1. Each signing app signs the transaction using secp256k1 using a key that is known to the Ethereum smart contracts.
+1. Each signing app submits their signatures back to the ABCI app for replication.
+1. The relayer processes, which periodically query the ABCI app's transactions,
+   see that the transaction has reached the required signature threshold.
+1. One of the relayers send the transaction to the smart contract by calling the `mint` function.
+1. The smart contracts use `ecrecover` to check that it was signed by a super-majority of the validator set corresponding to the height of the transaction (this may have been updated). The smart contracts make newly minted `CosmosERC20` tokens available to the specified address in the transaction.
+
+## Sending Cosmos tokens from Ethereum to Cosmos
+
+![Ethereum to Cosmos](./ether-to-pegzone.jpg)
+
+1. The contract receives a `burn` transaction with a `CosmosERC20` token and a destination address on the Cosmos side. It burns the received funds, logging an event that notifies the relayers.
+1. The relayers process conttected via RPC to an Ethereum full node, listening for `Burn` event.  
+1. Once the node receives a deposit to the smart contract it waits for 100 blocks (finality threshold) and then generates and signs a transactions that attests witness to the event
+1. The peg zone receives witness transactions until a super-majority of the voting power has witnessed an event. Every BeginBlock invocation the peg zone checks whether any incoming Ethereum transfers have reached a super-majority of confirmations.
+1. The node then updates the state with an internal transaction to reflect that someone wants to send tokens from Ethereum and generates IBC packet to release the tokens to specified destination chain.
+
+# API
+
+## ABCI app
+
+## Signing app
+
+## Ethereum Smart Contracts
+
+### update(address[] newAddress, uint64[] newPower, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+
+Updates validator set. Called by the relayers.
+
+* hash value for `ecrecover` is calculated as: 
+```
+byte(0) + newAddress.length.PutUint256() + newAddress[0].Bytes() + ... + newPower[0].PutUint64() + ...
+```
+
+### lock(bytes to, uint64 value, address token, bytes chain) payable
+
+Locks Ethereum user's ethers/ERC20s in the contract and loggs an event. Called by the users.
+
+* `token` being `0x0` means ethereum; in this case `msg.value` must be same with `value`
+* `event Lock(bytes to, uint64 value, address token, bytes chain, uint64 nonce)` is logged, seen by the relayers
+
+### unlock(address to, uint64 value, address token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+
+Unlocks Ethereum tokens according to the incoming information from the pegzone. Called by the relayers.
+
+* transfer tokens to `to`
+* hash value for `ecrecover` is calculated as:
+```
+byte(1) + to.Bytes() + value.PutUint64() + chain.length.PutUint256() + chain
+```
+### mint(address to, uint64 value, bytes token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+
+Mints 1:1 backed credit for atoms/photons. Called by the relayers.
+
+* `token` has to be `register`ed before the call
+* transfer minted tokens to `to`
+* hash value for `ecrecover` is calculated as:
+```
+byte(2) + to.Bytes() + value.PutUint64() + token.length.PutUint256() + token + chain.length.PutUint256() + chain
+```
+
+### burn(bytes to, uint64 value, bytes token, bytes chain)
+
+Burns credit for atoms/photons and loggs an event. Called by the users.
+
+* `event Burn(bytes to, uint64 value, bytes token, bytes chain, uint64 nonce)` is logged, seen by the relayers
+
+### register(string name, address token, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+
+Registers new Cosmos token name with its CosmosERC20 address. Called by the relayers.
+
+* deploys new CosmosERC20 contract and stores it in a mapping
+
+## Relayer Process
