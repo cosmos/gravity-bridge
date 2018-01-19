@@ -15,6 +15,25 @@ packet it processes it and then affects a change on the Ethereum state. When
 the app is informed of a state change on Ethereum it generates and sends an IBC
 packet.
 
+### Rejected alternate design
+
+The team reccomends this design over an alternate design we called Design B.
+Design B minimizes the role of the signing apps and places more functionality in
+tendermint core and the abci app.
+
+Here the ABCI app would contain a ethereum light client implementation and the relayer 
+would send light client proofs and block headers from the peg zone contract.
+
+The pegzone contract would release funds based on light client proofs from tendermint.
+
+The biggest changes we realized we would need.
+
+1. Tendermint header serialization that is easy to for solidity to parse. Most likely bitcoin style fixed byte structure.
+1. Secp256k1 signatures in Tendermint consensus.
+
+This design seems cleaner in some ways but more difficult to MVP.
+
+
 ### Cosmos Peg Zone Components
 1. a *Cosmos ABCI app*
 1. a set of *signing apps* 
