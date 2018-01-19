@@ -31,7 +31,7 @@ The biggest changes we realized we would need.
 1. Tendermint header serialization that is easy to for solidity to parse. Most likely bitcoin style fixed byte structure.
 1. Secp256k1 signatures in Tendermint consensus.
 
-This design seems cleaner is some ways but more difficult to MVP.
+This design seems cleaner in some ways but more difficult to MVP.
 
 
 ### Cosmos Peg Zone Components
