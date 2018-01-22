@@ -77,19 +77,19 @@ it sends a signed message to the ABCI app.
 on the Cosmos side. It locks the received funds to the consensus of the peg
 zone, logging an event that notifies the relayers.
 1. The relayers process connected via RPC to an Ethereum full node, listening for `Lock` event.
-1. Once the node receives a deposit to the smart contract it waits for 100 blocks (finality threshold) and then generates and signs a `SignIncomingMsg` that attests witness to the event
+1. Once the node receives a deposit to the smart contract it waits for 100 blocks (finality threshold) and then generates and signs a `SignWitnessMsg` that attests witness to the event
 to which the Cosmos peg zone is listening.
 1. The peg zone receives witness transactions until a super-majority of the voting power has witnessed an event. Every BeginBlock invocation the peg zone checks whether any incoming Ethereum transfers have reached a super-majority of confirmations.
-1. The node then updates the state with an internal transaction to reflect that someone wants to send tokens from Ethereum and generates `IBCIncoming` to mint the tokens to specified destination chain.
+1. The node then updates the state with an internal transaction to reflect that someone wants to send tokens from Ethereum and generates `IBCWitness` to mint the tokens to specified destination chain.
 
 ## Sending Ethereum tokens from Cosmos to Ethereum
 
 ![Cosmos to Ethereum](./pegzone-to-ether.jpg)
 
-1. The ABCI app receives an `IBCOutgoing` that requests for burning Ethereum tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, token address, amount, nonce}, and writes it to its state.
+1. The ABCI app receives an `IBCSignature` that requests for burning Ethereum tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, token address, amount, nonce}, and writes it to its state.
 1. Each signing app is watching for new transactions in the ABCI state, and detects the new transaction. 
 1. Each signing app signs the transaction using secp256k1 using a key that is known to the Ethereum smart contracts.
-1. Each signing app submits their signatures back to the ABCI app as `SignOutgoingMsg` for replication.
+1. Each signing app submits their signatures back to the ABCI app as `SignSignatureMsg` for replication.
 1. The relayer processes, which periodically query the ABCI app's transactions,
    see that the transaction has reached the required signature threshold. 
 1. One of the relayers send the transaction to the smart contract by calling the `unlock` function
@@ -99,11 +99,11 @@ to which the Cosmos peg zone is listening.
 
 ![Cosmos to Ethereum](./pegzone-to-ether.jpg)
 
-1. the ABCI app receives an `IBCOutgoing` from the hub that requests for locking Cosmos tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, denomination, amount, nonce}, and writes it to its state. 
+1. the ABCI app receives an `IBCSignature` from the hub that requests for locking Cosmos tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, denomination, amount, nonce}, and writes it to its state. 
 1. Each signing app is watching for new transactions in the ABCI state,
    and detects the new transaction. 
 1. Each signing app signs the transaction using secp256k1 using a key that is known to the Ethereum smart contracts.
-1. Each signing app submits their signatures back to the ABCI app as `SignOutgoingMsg` for replication.
+1. Each signing app submits their signatures back to the ABCI app as `SignSignatureMsg` for replication.
 1. The relayer processes, which periodically query the ABCI app's transactions,
    see that the transaction has reached the required signature threshold.
 1. One of the relayers send the transaction to the smart contract by calling the `mint` function.
@@ -115,9 +115,9 @@ to which the Cosmos peg zone is listening.
 
 1. The contract receives a `burn` transaction with a `CosmosERC20` token and a destination address on the Cosmos side. It burns the received funds, logging an event that notifies the relayers.
 1. The relayers process conttected via RPC to an Ethereum full node, listening for `Burn` event.  
-1. Once the node receives a deposit to the smart contract it waits for 100 blocks (finality threshold) and then generates and signs a `SignIncomingMsg` that attests witness to the event
+1. Once the node receives a deposit to the smart contract it waits for 100 blocks (finality threshold) and then generates and signs a `SignWitnessMsg` that attests witness to the event
 1. The peg zone receives witness transactions until a super-majority of the voting power has witnessed an event. Every BeginBlock invocation the peg zone checks whether any incoming Ethereum transfers have reached a super-majority of confirmations.
-1. The node then updates the state with an internal transaction to reflect that someone wants to send tokens from Ethereum and generates `IBCIncoming` to release the tokens to specified destination chain.
+1. The node then updates the state with an internal transaction to reflect that someone wants to send tokens from Ethereum and generates `IBCWitness` to release the tokens to specified destination chain.
 
 # API
 
@@ -125,11 +125,11 @@ to which the Cosmos peg zone is listening.
 
 ### Common Types
 
-#### Incoming{Nonce() (uint64), Chain() ([]byte)}
-Interface that Lock{} and Burn{} implements. All incoming packets are generated by validators multisig and generates IBC packet that goes to Chain().
+#### Witness{Nonce() (uint64), Chain() ([]byte)}
+Interface that Lock{} and Burn{} implements. All Witnesses are generated by validators multisig and generates IBC packet that goes to Chain().
 
-#### Outgoing{}
-Interface that Unlock{}, Mint{}, Register{} and Update{} implements. All outgoing packets are generated by IBC packets and stored in ABCI app storage with nonce.
+#### Signature{}
+Interface that Unlock{}, Mint{}, Register{} and Update{} implements. All signature packets are generated by IBC packets and stored in ABCI app storage with nonce.
 
 #### Update{Validators []Validator}
 #### Lock{To []byte, Value uint64, Token common.Address, Chain []byte, Nonce uint64}
@@ -140,51 +140,51 @@ Interface that Unlock{}, Mint{}, Register{} and Update{} implements. All outgoin
 
 ### IBC Packet Types
 
-#### IBCIncoming{Incoming}
+#### IBCWitness{Witness}
 
-The zones that uses the pegzone will receives and handles IBCIncoming packet.
+The zones that uses the pegzone will receives and handles IBCWitness packet.
 
-#### IBCOutgoing{Outgoing}
+#### IBCSignature{Signature}
 
-The zones that uses the pegzone will sends IBCOutgoing packet.
+The zones that uses the pegzone will sends IBCSignature packet.
 
 ### Msg Types
 
-#### SignIncomingMsg{Incoming} 
+#### SignWitnessMsg{Witness} 
 
-Used for voting on incoming packets.
+Used for voting on witness packets.
 
-#### SignOutgoingMsg{Outgoing, Nonce uint64, Sig []byte}
+#### SignSignatureMsg{Signature, Nonce uint64, Sig []byte}
 
-Used for add signs on outgoing packets which will be submitted on the Ethereum contract later.
+Used for add signs on signature packets which will be submitted on the Ethereum contract later.
 
 * `Sig` must be length of 65 and concatenated value of `v`, `r`, and `s` of the sender's signature. 
 
 ### Querying Functions
 
-#### OutgoingPacketNonce() (uint64)
+#### SignaturePacketNonce() (uint64)
 
-Returns last outgoing packet nonce. 
+Returns last signature packet nonce. 
 
-#### OutgoingPacketByNonce(nonce uint64) (Outgoing)
+#### SignaturePacketByNonce(nonce uint64) (Signature)
 
-Returns outgoing packet by its nonce. Returns nil if it dosen't exist.
+Returns signature packet by its nonce. Returns nil if it dosen't exist.
 
-#### OutgoingSignByNonce(nonce uint64) ([]uint16, [][]byte)
+#### SignatureSignByNonce(nonce uint64) ([]uint16, [][]byte)
 
-Returns outgoing packet's validator signatures by its nonce. (Signed validators by their indexes, Array of signatures).
+Returns signature packet's validator signatures by its nonce. (Signed validators by their indexes, Array of signatures).
 
-#### OutgoingSignSatisfied(nonce uint64) (bool)
+#### SignatureSignSatisfied(nonce uint64) (bool)
 
-True if the outgoing packet has enough signatures.
+True if the signature packet has enough signatures.
 
-#### IncomingPacketNonce() (uint64)
+#### WitnessPacketNonce() (uint64)
 
-Returns last incoming packet nonce.
+Returns last witness packet nonce.
 
-#### IncomingSignByNonce(nonce uint64) ([]uint16)
+#### WitnessSignByNonce(nonce uint64) ([]uint16)
 
-Returns the indexes of the validators who signed on the incoming packet.
+Returns the indexes of the validators who signed on the witness.
 
 ## Signing app
 
@@ -210,7 +210,7 @@ Locks Ethereum user's ethers/ERC20s in the contract and loggs an event. Called b
 
 #### unlock(address to, uint64 value, address token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
 
-Unlocks Ethereum tokens according to the incoming information from the pegzone. Called by the relayers.
+Unlocks Ethereum tokens according to the information from the pegzone. Called by the relayers.
 
 * transfer tokens to `to`
 * hash value for `ecrecover` is calculated as:
