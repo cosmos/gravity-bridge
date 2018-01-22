@@ -158,8 +158,7 @@ Used for voting on incoming packets.
 
 Used for add signs on outgoing packets which will be submitted on the Ethereum contract later.
 
-* `Chain` must be length of 65 and concatenated value of `v`, `r`, and `s`. 
-* `Chain` must be a signature of the sender
+* `Sig` must be length of 65 and concatenated value of `v`, `r`, and `s` of the sender's signature. 
 
 ### Querying Functions
 
