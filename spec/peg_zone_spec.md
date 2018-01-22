@@ -77,19 +77,19 @@ it sends a signed message to the ABCI app.
 on the Cosmos side. It locks the received funds to the consensus of the peg
 zone, logging an event that notifies the relayers.
 1. The relayers process connected via RPC to an Ethereum full node, listening for `Lock` event.
-1. Once the node receives a deposit to the smart contract it waits for 100 blocks (finality threshold) and then generates and signs a `SignIncomingLockMsg` that attests witness to the event
+1. Once the node receives a deposit to the smart contract it waits for 100 blocks (finality threshold) and then generates and signs a `SignIncomingMsg` that attests witness to the event
 to which the Cosmos peg zone is listening.
 1. The peg zone receives witness transactions until a super-majority of the voting power has witnessed an event. Every BeginBlock invocation the peg zone checks whether any incoming Ethereum transfers have reached a super-majority of confirmations.
-1. The node then updates the state with an internal transaction to reflect that someone wants to send tokens from Ethereum and generates IBC packet to mint the tokens to specified destination chain.
+1. The node then updates the state with an internal transaction to reflect that someone wants to send tokens from Ethereum and generates `IBCIncoming` to mint the tokens to specified destination chain.
 
 ## Sending Ethereum tokens from Cosmos to Ethereum
 
 ![Cosmos to Ethereum](./pegzone-to-ether.jpg)
 
-1. The ABCI app receives an IBC packet that requests for burning Ethereum tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, token address, amount, nonce}, and writes it to its state.
+1. The ABCI app receives an `IBCOutgoing` that requests for burning Ethereum tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, token address, amount, nonce}, and writes it to its state.
 1. Each signing app is watching for new transactions in the ABCI state, and detects the new transaction. 
 1. Each signing app signs the transaction using secp256k1 using a key that is known to the Ethereum smart contracts.
-1. Each signing app submits their signatures back to the ABCI app for replication.
+1. Each signing app submits their signatures back to the ABCI app as `SignOutgoingMsg` for replication.
 1. The relayer processes, which periodically query the ABCI app's transactions,
    see that the transaction has reached the required signature threshold. 
 1. One of the relayers send the transaction to the smart contract by calling the `unlock` function
@@ -99,11 +99,11 @@ to which the Cosmos peg zone is listening.
 
 ![Cosmos to Ethereum](./pegzone-to-ether.jpg)
 
-1. the ABCI app receives an IBC packet from the hub that requests for locking Cosmos tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, denomination, amount, nonce}, and writes it to its state. 
+1. the ABCI app receives an `IBCOutgoing` from the hub that requests for locking Cosmos tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, denomination, amount, nonce}, and writes it to its state. 
 1. Each signing app is watching for new transactions in the ABCI state,
    and detects the new transaction. 
 1. Each signing app signs the transaction using secp256k1 using a key that is known to the Ethereum smart contracts.
-1. Each signing app submits their signatures back to the ABCI app for replication.
+1. Each signing app submits their signatures back to the ABCI app as `SignOutgoingMsg` for replication.
 1. The relayer processes, which periodically query the ABCI app's transactions,
    see that the transaction has reached the required signature threshold.
 1. One of the relayers send the transaction to the smart contract by calling the `mint` function.
@@ -115,9 +115,9 @@ to which the Cosmos peg zone is listening.
 
 1. The contract receives a `burn` transaction with a `CosmosERC20` token and a destination address on the Cosmos side. It burns the received funds, logging an event that notifies the relayers.
 1. The relayers process conttected via RPC to an Ethereum full node, listening for `Burn` event.  
-1. Once the node receives a deposit to the smart contract it waits for 100 blocks (finality threshold) and then generates and signs a transactions that attests witness to the event
+1. Once the node receives a deposit to the smart contract it waits for 100 blocks (finality threshold) and then generates and signs a `SignIncomingMsg` that attests witness to the event
 1. The peg zone receives witness transactions until a super-majority of the voting power has witnessed an event. Every BeginBlock invocation the peg zone checks whether any incoming Ethereum transfers have reached a super-majority of confirmations.
-1. The node then updates the state with an internal transaction to reflect that someone wants to send tokens from Ethereum and generates IBC packet to release the tokens to specified destination chain.
+1. The node then updates the state with an internal transaction to reflect that someone wants to send tokens from Ethereum and generates `IBCIncoming` to release the tokens to specified destination chain.
 
 # API
 
