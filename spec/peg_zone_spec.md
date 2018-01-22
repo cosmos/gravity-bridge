@@ -123,11 +123,66 @@ to which the Cosmos peg zone is listening.
 
 ## ABCI app
 
+### Common Types
+
+#### Lock{To []byte, Value uint64, Token common.Address, Chain []byte, Nonce uint64}
+#### Unlock{To common.Address, Value uint64, Token common.Address, Chain []byte}
+#### Mint{To common.Address, Value uint64, Token []byte, Chain []byte}
+#### Burn{To []byte, Value uint64, Token []byte, Chain []byte, Nonce uint64}
+
+### IBC Packet Types
+
+#### IBCIncomingLock{Lock}
+#### IBCIncomingBurn{Burn}
+#### IBCOutgoingMint{Mint}
+#### IBCOutgoingUnlock{Unlock}
+#### IBCValidatorSync{PubKey crypto.PubKey, EthAddress common.Address}
+
+### Msg Types
+
+// Naming convention is following the Ethereum contract's perspective, please suggest better options to make it more clear...
+
+All `Sign*Msg`s are used by the relayers.
+
+#### SignIncomingLockMsg{Lock} 
+#### SignIncomingBurnMsg{Burn}
+#### SignOutgoingUnlockMsg{Unlock, Nonce uint64, Sig []byte}
+
+* `Chain` must be length of 65 and concatenated value of `v`, `r`, and `s`. 
+* `Chain` must be a signature of the sender
+
+#### SignOutgoingMintMsg{Mint, Nonce uint64, Sig []byte}
+
+Used by the relayers.
+
+* `Chain` must be length of 65 and concatenated value of `v`, `r`, and `s`.
+* `Chain` must be a signature of the sender.
+
+#### FinalizeIncomingSignMsg{Nonce uint64}
+
+Count the signatures that signed on the msg corresponding to given nonce. Failes if the power is not reached super majority.
+Generates `IBCIncoming*`.
+
+#### FinalizeOutgoingSignMsg{Nonce uint64}
+
+Count the signatures that signed on the msg corresponding to given nonce. Failes if the power is not reached super majority.
+The msg sender has the duty for relay it on the Ethereum side(for now).
+
+### Querying Functions
+
+#### OutgoingPacketNonce() (uint64)
+#### OutgoingPacketByNonce(nonce uint64) (Outgoing)
+#### OutgoingSignByNonce(nonce uint64) ([]uint16, [][]byte, bool)
+#### IncomingPacketNonce() (uint64)
+#### IncomingSignByNonce(nonce uint64) ([]uint16, bool)
+
 ## Signing app
 
 ## Ethereum Smart Contracts
 
-### update(address[] newAddress, uint64[] newPower, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+### External Entry Points
+
+#### update(address[] newAddress, uint64[] newPower, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
 
 Updates validator set. Called by the relayers.
 
@@ -136,14 +191,14 @@ Updates validator set. Called by the relayers.
 byte(0) + newAddress.length.PutUint256() + newAddress[0].Bytes() + ... + newPower[0].PutUint64() + ...
 ```
 
-### lock(bytes to, uint64 value, address token, bytes chain) payable
+#### lock(bytes to, uint64 value, address token, bytes chain) payable
 
 Locks Ethereum user's ethers/ERC20s in the contract and loggs an event. Called by the users.
 
 * `token` being `0x0` means ethereum; in this case `msg.value` must be same with `value`
 * `event Lock(bytes to, uint64 value, address token, bytes chain, uint64 nonce)` is logged, seen by the relayers
 
-### unlock(address to, uint64 value, address token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+#### unlock(address to, uint64 value, address token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
 
 Unlocks Ethereum tokens according to the incoming information from the pegzone. Called by the relayers.
 
@@ -152,7 +207,7 @@ Unlocks Ethereum tokens according to the incoming information from the pegzone. 
 ```
 byte(1) + to.Bytes() + value.PutUint64() + chain.length.PutUint256() + chain
 ```
-### mint(address to, uint64 value, bytes token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+#### mint(address to, uint64 value, bytes token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
 
 Mints 1:1 backed credit for atoms/photons. Called by the relayers.
 
@@ -163,13 +218,13 @@ Mints 1:1 backed credit for atoms/photons. Called by the relayers.
 byte(2) + to.Bytes() + value.PutUint64() + token.length.PutUint256() + token + chain.length.PutUint256() + chain
 ```
 
-### burn(bytes to, uint64 value, bytes token, bytes chain)
+#### burn(bytes to, uint64 value, bytes token, bytes chain)
 
 Burns credit for atoms/photons and loggs an event. Called by the users.
 
 * `event Burn(bytes to, uint64 value, bytes token, bytes chain, uint64 nonce)` is logged, seen by the relayers
 
-### register(string name, address token, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+#### register(string name, address token, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
 
 Registers new Cosmos token name with its CosmosERC20 address. Called by the relayers.
 
