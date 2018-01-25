@@ -23,7 +23,7 @@ contract Valset {
 
         for (uint i = 0; i < idxs.length; i++) {
             if (i >= 1 && idxs[i] <= idxs[i-1]) return false;
-            if (ecrecover(hash, v[idxs[i]], r[idxs[i]], s[idxs[i]]) == validators[idxs[i]].Address) 
+            if (ecrecover(hash, v[idxs[i]], r[idxs[i]], s[idxs[i]]) == validators[idxs[i]].Address)
                 signedPower += validators[idxs[i]].Power;
         }
 
@@ -45,9 +45,19 @@ contract Valset {
         Update(validators, updateSeq++);
     }
 
+    /// Updates validator set. Called by the relayers.
+    /*
+     * @param newAddress  new validators addresses
+     * @param newPower    power of each validator
+     * @param idxs        indexes of each validator
+     * @param v           recovery id. Used to compute ecrecover
+     * @param r           output of ECDSA signature. Used to compute ecrecover
+     * @param s           output of ECDSA signature.  Used to compute ecrecover
+     */
+
     function update(address[] newAddress, uint64[] newPowers, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s) {
         require(newAddress.length == newPowers.length);
-        
+
         assert(verify(keccak256(newAddress, newPowers), idxs, v, r, s)); // hashing can be changed
 
         updateInternal(newAddress, newPowers);
