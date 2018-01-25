@@ -11,11 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/modules/auth"
 	"github.com/cosmos/cosmos-sdk/modules/base"
 	"github.com/cosmos/cosmos-sdk/modules/coin"
-	"github.com/cosmos/cosmos-sdk/modules/eyes"
 	"github.com/cosmos/cosmos-sdk/modules/fee"
-	"github.com/cosmos/cosmos-sdk/modules/ibc"
 	"github.com/cosmos/cosmos-sdk/modules/nonce"
-	"github.com/cosmos/cosmos-sdk/modules/roles"
 	"github.com/cosmos/cosmos-sdk/server/commands"
 	"github.com/cosmos/cosmos-sdk/stack"
 )
@@ -35,19 +32,11 @@ func BuildApp(feeDenom string) sdk.Handler {
 		base.Chain{},
 		stack.Checkpoint{OnCheck: true},
 		nonce.ReplayCheck{},
+		fee.NewSimpleFeeMiddleware(coin.Coin{feeDenom, 0}, fee.Bank),
+		stack.Checkpoint{OnDeliver: true},
 	).
-		IBC(ibc.NewMiddleware()).
-		Apps(
-			roles.NewMiddleware(),
-			fee.NewSimpleFeeMiddleware(coin.Coin{feeDenom, 0}, fee.Bank),
-			stack.Checkpoint{OnDeliver: true},
-		).
 		Dispatch(
 			coin.NewHandler(),
-			stack.WrapHandler(roles.NewHandler()),
-			stack.WrapHandler(ibc.NewHandler()),
-			// and just for run, add eyes as well
-			stack.WrapHandler(eyes.NewHandler()),
 		)
 }
 

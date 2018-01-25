@@ -48,11 +48,6 @@ test01SendTx() {
     # Make sure tx is indexed
     checkSendTx $HASH $TX_HEIGHT $SENDER "992"
 
-    # For demoing output
-    # CMD="${CLIENT_EXE} search sent ${SENDER}"
-    # echo $CMD
-    # $CMD
-
     SENT_TX=$(${CLIENT_EXE} search sent ${SENDER})
     assertEquals "line=${LINENO}" 1 $(echo ${SENT_TX} | jq '. | length')
     assertEquals "line=${LINENO}" $TX_HEIGHT $(echo ${SENT_TX} | jq '.[0].height')
@@ -135,7 +130,6 @@ test03CreditTx() {
 
 # Load common then run these tests with shunit2!
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #get this files directory
-CLI_DIR=$GOPATH/src/github.com/cosmos/cosmos-sdk/tests/cli
 
-. $CLI_DIR/common.sh
-. $CLI_DIR/shunit2
+. $DIR/common.sh
+. $DIR/shunit2

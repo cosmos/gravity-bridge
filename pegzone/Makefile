@@ -17,15 +17,11 @@ test_unit:
 	@go test $(NOVENDOR)
 
 test_cli:
-	./tests/cli/keys.sh
-	./tests/cli/rpc.sh
-	./tests/cli/init.sh
-	./tests/cli/init-server.sh
 	./tests/cli/basictx.sh
-	./tests/cli/roles.sh
+	./tests/cli/keys.sh
+	./tests/cli/init.sh
+	./tests/cli/rpc.sh
 	./tests/cli/restart.sh
-	./tests/cli/rest.sh
-	./tests/cli/ibc.sh
 
 
 get_vendor_deps: tools

@@ -8,10 +8,8 @@ import (
 	"github.com/tendermint/tmlibs/cli"
 
 	"github.com/cosmos/cosmos-sdk/client/commands"
-	"github.com/cosmos/cosmos-sdk/client/commands/auto"
 	"github.com/cosmos/cosmos-sdk/client/commands/commits"
 	"github.com/cosmos/cosmos-sdk/client/commands/keys"
-	"github.com/cosmos/cosmos-sdk/client/commands/proxy"
 	"github.com/cosmos/cosmos-sdk/client/commands/query"
 	rpccmd "github.com/cosmos/cosmos-sdk/client/commands/rpc"
 	"github.com/cosmos/cosmos-sdk/client/commands/search"
@@ -20,9 +18,7 @@ import (
 	basecmd "github.com/cosmos/cosmos-sdk/modules/base/commands"
 	coincmd "github.com/cosmos/cosmos-sdk/modules/coin/commands"
 	feecmd "github.com/cosmos/cosmos-sdk/modules/fee/commands"
-	ibccmd "github.com/cosmos/cosmos-sdk/modules/ibc/commands"
 	noncecmd "github.com/cosmos/cosmos-sdk/modules/nonce/commands"
-	rolecmd "github.com/cosmos/cosmos-sdk/modules/roles/commands"
 )
 
 // BaseCli - main basecoin client command
@@ -46,8 +42,6 @@ func main() {
 		query.KeyQueryCmd,
 		coincmd.AccountQueryCmd,
 		noncecmd.NonceQueryCmd,
-		rolecmd.RoleQueryCmd,
-		ibccmd.IBCQueryCmd,
 	)
 
 	// these are queries to search for a tx
@@ -58,7 +52,6 @@ func main() {
 	// set up the middleware
 	txcmd.Middleware = txcmd.Wrappers{
 		feecmd.FeeWrapper{},
-		rolecmd.RoleWrapper{},
 		noncecmd.NonceWrapper{},
 		basecmd.ChainWrapper{},
 		authcmd.SigWrapper{},
@@ -70,12 +63,6 @@ func main() {
 		// This is the default transaction, optional in your app
 		coincmd.SendTxCmd,
 		coincmd.CreditTxCmd,
-		// this enables creating roles
-		rolecmd.CreateRoleTxCmd,
-		// these are for handling ibc
-		ibccmd.RegisterChainTxCmd,
-		ibccmd.UpdateChainTxCmd,
-		ibccmd.PostPacketTxCmd,
 	)
 
 	// Set up the various commands to use
@@ -88,9 +75,8 @@ func main() {
 		query.RootCmd,
 		search.RootCmd,
 		txcmd.RootCmd,
-		proxy.RootCmd,
 		commands.VersionCmd,
-		auto.AutoCompleteCmd,
+		// auto.AutoCompleteCmd,
 	)
 
 	cmd := cli.PrepareMainCmd(BaseCli, "BC", os.ExpandEnv("$HOME/.basecli"))

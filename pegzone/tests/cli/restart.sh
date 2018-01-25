@@ -78,8 +78,7 @@ test01OnRestart() {
 
 # Load common then run these tests with shunit2!
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #get this files directory
-CLI_DIR=$GOPATH/src/github.com/cosmos/cosmos-sdk/tests/cli
 
-. $CLI_DIR/common.sh
-. $CLI_DIR/shunit2
+. $DIR/common.sh
+. $DIR/shunit2
 
