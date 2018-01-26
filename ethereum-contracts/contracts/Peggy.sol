@@ -1,8 +1,9 @@
 pragma solidity ^0.4.17;
 
 import "./CosmosERC20.sol";
+import "./Valset.sol";
 
-contract Peggy {
+contract Peggy is Valset {
     mapping (bytes => CosmosERC20) cosmosTokenAddress;
 
     function getCosmosTokenAddress(bytes name) internal constant returns (address) {
@@ -40,25 +41,27 @@ contract Peggy {
      * @param r           output of ECDSA signature
      * @param s           output of ECDSA signature
      */
-    event Unlock(address to, uint64 value, address token, bytes indexed chain);
+    event Unlock(address to, uint64 value, address token/*, bytes indexed chain*/);
     
     function unlock(
         address[2] addressArg, 
         uint64 value, 
-        bytes chain, 
         uint16[] idxs, 
         uint8[] v, 
-        bytes32[2][] rs 
+        bytes32[] r,
+        bytes32[] s 
     ) external returns (bool) {
-        bytes32 hash = keccak256(byte(1), addressArg[0], value, chain.length, chain);
+        bytes32 hash = keccak256(byte(1), addressArg[0], value/*, chain.length, chain*/);
+        require(Valset.verify(hash, idxs, v, r, s));
         if (addressArg[1] == address(0)) {
             assert(addressArg[0].send(value));
         } else {
             assert(ERC20(addressArg[1]).transfer(addressArg[1], value));
         }
-        Unlock(addressArg[0], value, addressArg[1], chain);
+        Unlock(addressArg[0], value, addressArg[1]);
         return true;
     }
 
-    function Peggy(address[] initAddress, uint64[] initPower) { }
+    function Peggy(address[] initAddress, uint64[] initPowers) public Valset(initAddress, initPowers) {
+    }
 }
