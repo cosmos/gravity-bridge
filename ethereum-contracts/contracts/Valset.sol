@@ -1,6 +1,7 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.17;
 
 contract Valset {
+
     struct Validator {
         address Address;
         uint64 Power;
@@ -11,11 +12,9 @@ contract Valset {
 
     uint updateSeq = 0;
 
-    function verify(bytes32 hash, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s) returns (bool) {
+    function verify(bytes32 hash, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s) public returns (bool) {
         if (!(idxs.length <= validators.length)) return false;
-        if (!(idxs.length == v.length &&
-              v.length == r.length &&
-              r.length == s.length)) {
+        if (!( (idxs.length == v.length) && (v.length == r.length) && (r.length == s.length))) {
             return false;
         }
 
@@ -28,21 +27,20 @@ contract Valset {
         }
 
         if (signedPower * 3 <= totalPower * 2) return false;
-
         return true;
     }
 
     event Update(Validator[] validators, uint indexed seq);
 
-    function updateInternal(address[] newAddress, uint64[] newPowers) internal {
+    function updateInternal(address[] newAddress, uint64[] newPowers) internal returns (bool) {
         validators = new Validator[](newAddress.length);
         totalPower = 0;
         for (uint i = 0; i < newAddress.length; i++) {
             validators[i] = Validator(newAddress[i], newPowers[i]);
             totalPower += newPowers[i];
         }
-
         Update(validators, updateSeq++);
+        return true;
     }
 
     /// Updates validator set. Called by the relayers.
@@ -55,7 +53,7 @@ contract Valset {
      * @param s           output of ECDSA signature.  Used to compute ecrecover
      */
 
-    function update(address[] newAddress, uint64[] newPowers, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s) {
+    function update(address[] newAddress, uint64[] newPowers, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s) public returns (bool) {
         require(newAddress.length == newPowers.length);
 
         assert(verify(keccak256(newAddress, newPowers), idxs, v, r, s)); // hashing can be changed
@@ -63,7 +61,7 @@ contract Valset {
         updateInternal(newAddress, newPowers);
     }
 
-    function Valset(address[] initAddress, uint64[] initPowers) {
+    function Valset(address[] initAddress, uint64[] initPowers) public {
         updateInternal(initAddress, initPowers);
     }
 }
