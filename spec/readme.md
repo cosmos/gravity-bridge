@@ -1,56 +1,181 @@
-# Specifcation for 2-way peg between a Tendermint chain and an Ethereum chain
+# 2-way permissionless pegzones
 
-#### Terminology
-* The *Cosmos Peg Zone* is the blanket term for the four components
-involved in Ethereum <-> Tendermint asset transfer.
+## Introduction
 
-## Overview
-The goal of the Peg Zone is to enable the movement of assets between a Tendermint
-chain and an Ethereum chain. It is designed to allow for secure and cheap
-transfers of all Ethereum tokens (Ether and ERC20) as well as all Cosmos
-tokens.
+This document describes the process of building 2-way pegzones between two
+separate blockchains. Pegzones are needed if one and/or both chains only have
+probabalistic finality. An example of probalistic finality is Bitcoin or
+Ethereum. If both chains have true finality transferring value between both is
+achieved by implementing the "Inter Blockchain Communiciation Protocol" or IBC for
+short. Blockchain engines such as [Tendermint Core](https://github.com/tendermint/tendermint)
+support true finality due to the use of [Tendermint Consensus]().
 
-The Cosmos peg zone accepts and sends IBC packets. When it receives an IBC
-packet it processes it and then affects a change on the Ethereum state. When
-the app is informed of a state change on Ethereum it generates and sends an IBC
-packet.
+The reason why pegzones are needed in the former case is that in order to 
+separate the global state into two blockchains instead of just one we need a 
+finality guarantee after which neither of the chains is allowed to revert any
+transactions. The pegzones main duty is to guarantee this finality even though
+the underlying chain does not offer it.
 
-### Rejected alternate design
+Even though this document explains a general concept it choses to use Ethereum
+and Cosmos as practical examples and shows how to build a pegzone between them.
 
-The team reccomends this design over an alternate design we called Design B.
-Design B minimizes the role of the signing apps and places more functionality in
-tendermint core and the abci app.
+In the following paragraphs we describe how to build a pegzone between Ethereum
+and Cosmos, which is a Tendermint-based chain. It provides pegged assets on
+either side that have the same security properties as the pegzone. Any failure
+in the pegzone results in massive issues, which have to resolved through 
+governance. However this design guarantees that no assets are locked forever
+should the consensus of the pegzone fail.
 
-Here the ABCI app would contain a ethereum light client implementation and the relayer 
-would send light client proofs and block headers from the peg zone contract.
+Concretely this specification describes a pegzone which allows the movement of
+ERC20 and Ether tokens from Ethereum to Cosmos and of all Cosmos native assets
+to Ethereum, where they are represented as ERC20 tokens.
 
-The pegzone contract would release funds based on light client proofs from tendermint.
-
-The biggest changes we realized we would need.
-
-1. Tendermint header serialization that is easy to for solidity to parse. Most likely bitcoin style fixed byte structure.
-1. Secp256k1 signatures in Tendermint consensus.
-
-This design seems cleaner in some ways but more difficult to MVP.
+This design does not describe how tokens move into the Cosmos pegzone. It
+assumes that the pegzone itself establishes connectivity over IBC to a hub or
+other chains.
 
 
-### Cosmos Peg Zone Components
-1. a *Cosmos ABCI app*
-1. a set of *signing apps* 
-1. a set of Ethereum *smart contracts* 
-1. a set of *relayer* processes
+## Structure
 
-#### Cosmos ABCI App
-The ABCI app serves as the interface to the peg zone. It communicates
-using IBC packets with the hub.
+* [Overview of the design and its components](##overview-of-the-design-and-its-components)
+* [Ethereum smart contract component](##smart-contract-component)
+* [Witness component](##witness-component)
+* [Pegzone blockchain](##pegzone-blockchain)
+* [Signer component](##signer-component)
+* [Relayer component](##relayer-component)
+* Conclusion
+
+
+## Overview of the design and its components
+
+The pegzone is split into five logical components, the Ethereum smart contract,
+the witness, the pegzone, the signer and the relayer. The last four can all be
+implemented within the some software and are only split for convenience of 
+understanding.
+
+The Ethereum smart contract acts as the custodian of assets, whose origin is
+Ethereum and as issuer of assets, whose origin is on Cosmos.
+
+The witness attests to the state of Ethereum and implements the finality
+threshold over the non-finality chain. It follows and validates the Ethereum
+consensus and attests to events happening within Ethereum by posting a 
+message to the pegzone.
+
+The pegzone is a blockchain that allows users to store balances of assets and
+interact with them via transactions. It allows users to send assets to other
+users, receive and send assets from/to Ethereum and receive/send from/to other
+blockchains via IBC.
+
+The signer signs messages in a form that the Ethereum smart contract can
+validate. Those messages contain information in order to release tokens on
+Ethereum.
+
+The relayer is responsible for taking signed messages and posting them to the
+Ethereum smart contract.
+
+### Flow
+
+Now we will describe the typical flow of an asset transfer that originates on 
+Ethereum to Cosmos and back. Furthermore we will describe the transfer of an 
+assets that originates on Cosmos to Ethereum and back.
+
+#### Ethereum native token
+1. Alice sends a transaction with 10 Ether and a destination address to the
+Ethereum smart contract. The destination address is Alice's on the Pegzone 
+blockchain.
+
+2. The witness component sees the transaction on the Ethereum smart contract
+and after the finality threshold attests to the fact by submitting a WitnessTx
+to the pegzone. 
+
+3. The pegzone receives the WitnessTx and credits the destination address from
+step 1 with 10 Ether.
+
+4. Alice receives the 10 CEther on the pegzone. 
+
+5. Alice now sends 4 CEther to Bob on the pegzone.
+
+6. Bob now sends those 4 CEther to Ethereum by submitting a RedeemTx. 
+
+7. The signer component sees the RedeemTx and generates a signature for it. It
+then posts that signature to the pegzone via a SignTx.
+
+8. The relayer component sees the SignTxs. After >2/3 of the validator by 
+voting power have submitted a SignTx it posts all SignTx and the original
+message to the Ethereum smart contract. 
+
+Alice started with 10 Ether on Ethereum. She sent all of them to Cosmos. There
+she sent 4 CEther to Bob. Bob then redeemed those 4 CEther back to Ethereum.
+The end result is that Alice holds 6 CEther and 0 Ether and Bob holds 4 Ether 
+and 0 CEther.
+
+
+#### Cosmos native token
+1. Alice owns 10 Photons. She sends a RedeemTx with 10 Photons and a destination 
+address to the pegzone. The pegzone takes custody of those 10 Photons and Alice
+still holds 0 Photons.
+
+2. The signer sees that transaction and signs a message that can be interpreted
+by the Ethereum smart contract. It then posts a SignTx to the pegzone.
+
+3. The relayer sees the SignTxs and once >2/3 of the validators have posted
+them invokes a function on the Ethereum smart contract.
+
+4. The Ethereum smart contract validates that the data was correctly signed
+by a super-majority of the validator set. It then generates an ERC20 contract
+for Photons unless it already has generated an ERC20 contract for Photons
+previously. It then credits the destination address, which Alice controls,
+with 6 Photons.
+
+5. Alice then sends 10 EPhotons to Bob on Ethereum. 
+
+6. Bob transfers 4 EPhotons to the Ethereum smart contract with a destination
+address. The contract burns those tokens and raises an event.
+
+7. The witness process attests to the burning of 4 EPhotons and sends a 
+WitnessTx to the pegzone.
+
+8. The pegzone receives the WitnessTx and credits Bob with 4 Photons.
+
+Alice started with 10 Photons on Cosmos. She sent all of them to herself on
+Ethereum. On Ethereum she sent 4 EPhotons to Bob. Bob sent those EPhotons back
+to Cosmos. The end result is that Alice holds 6 EPhotons and 0 Photons and Bob
+holds 4 Photons and 0 EPhotons.
+
+
+## Ethereum smart contract component
+
+The smart contracts verify updates coming from the pegzone
+using the known keys of the signing apps. The smart contracts
+track updates to the set of signer components, and their associated
+signatures. The smart contracts supports 6 functions:
+
+* `lock` ETH or ERC20 tokens for use in Cosmos
+* `unlock` previously-locked (encumbered) ETH or ERC20 tokens
+* `update` signing app set signatures
+* `mint` ERC20 tokens for encumbered denominations
+* `burn` ERC20 tokens for encumbered denominations
+* `register` denomination
+
+
+## Witness component
+
+The witness component runs a full Ethereum node. When it sees an event from
+the smart contract that it tracks it sends a WitnessTx to the pegzone.
+
+## Pegzone blockchain
+
+The pegzone is a normal blockchain that keeps user accounts. It allows for
+users to send assets to each other. 
 
 It allows querying of transactions in these ways:
 
-1. query all transactions
-1. query all transactions >= a specific block height
-1. query all state, including signatures, for a particular transaction
+* query all transactions
+* query all transactions >= a specific block height
+* query all state, including signatures, for a particular transaction
 
-#### Signing Apps
+## Signer component
+
 The signing apps sign transactions using secp256k1 such that the
 Ethereum smart contracts can verify them. The signing apps also have an
 ethereum address, because they have an identity in the Ethereum
@@ -58,20 +183,8 @@ contract. They watch for new Ethereum-bound transactions using
 the ABCI app's query functionality, and submit their signatures
 back to it for replication.
 
-#### Ethereum Smart Contracts
-The smart contracts verify updates coming from the ABCI app
-using the known keys of the signing apps. The smart contracts
-track updates to the set of signing apps, and their associated
-signatures. The smart contracts support 6 functions:
+## Relayer component
 
-1. `lock` ETH or ERC20 tokens for use in Cosmos
-1. `unlock` previously-locked (encumbered) ETH or ERC20 tokens
-1. `update` signing app set signatures
-1. `mint` ERC20 tokens for encumbered denominations
-1. `burn` ERC20 tokens for encumbered denominations
-1. `register` denomination
-
-#### Relayer Process
 The relayer process is responsible for communication
 of state changes between Tendermint and Ethereum.
 It is stateless, and has at-least-once delivery semantics 
@@ -81,10 +194,7 @@ either chain is idempotent.
 Generally anyone that wants the peg zone to be successful
 has an incentive to run the relayer process.
 
-It follows updates to the Ethereum chain by communicating
-with a node-local Ethereum node.
-When it detects locked or burned updates by the smart contracts,
-it sends a signed message to the ABCI app.
+
 
 # Transfer Protocols
 
@@ -260,3 +370,23 @@ Registers new Cosmos token name with its CosmosERC20 address. Called by the rela
 * deploys new CosmosERC20 contract and stores it in a mapping
 
 ## Relayer Process
+
+### Rejected alternate design
+
+The team reccomends this design over an alternate design we called Design B.
+Design B minimizes the role of the signing apps and places more functionality in
+tendermint core and the abci app.
+
+Here the ABCI app would contain a ethereum light client implementation and the relayer 
+would send light client proofs and block headers from the peg zone contract.
+
+The pegzone contract would release funds based on light client proofs from tendermint.
+
+The biggest changes we realized we would need.
+
+1. Tendermint header serialization that is easy to for solidity to parse. Most likely bitcoin style fixed byte structure.
+1. Secp256k1 signatures in Tendermint consensus.
+
+This design seems cleaner in some ways but more difficult to MVP.
+
+
