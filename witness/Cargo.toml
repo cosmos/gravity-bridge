@@ -1,0 +1,18 @@
+[package]
+name = "witness"
+version = "0.1.0"
+authors = ["Tyler Neely <t@jujit.su>"]
+
+[dependencies]
+log = "0.4"
+env_logger = "0.5"
+ethabi = "5.0"
+ethabi-derive = "5.0"
+ethabi-contract = "5.0"
+web3 = { git = "https://github.com/tomusdrw/rust-web3", branch = "bridge" }
+futures = "0.1"
+tokio-core = "0.1.8"
+tokio-timer = "0.1.2"
+serde = "1.0"
+serde_derive = "1.0"
+docopt = "0.8"
