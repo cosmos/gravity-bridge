@@ -1,11 +1,54 @@
 pragma solidity ^0.4.11;
 
 contract Valset {
+
+    /* Variables */
+
     address[] public addresses;
     uint64[] public powers;
     uint64 public totalPower;
+    uint internal updateSeq = 0;
 
-    uint updateSeq = 0;
+    /* modifiers */
+
+    modifier indexDoesntOverflow(uint index, uint length) {
+      require(index < length);
+      _;
+    }
+
+    modifier equalSizeArrays(uint validatorsLength, uint powersLenght) {
+      require(validatorsLength == powersLenght);
+      _;
+    }
+
+    modifier validatorSizeAtMost100(uint length) {
+      require(length <= 100);
+      _;
+    }
+
+    /* Functions */
+
+    function getTotalPower() public constant returns (uint64) {
+      return totalPower;
+    }
+
+    function getValidator(uint index)
+      indexDoesntOverflow(index, addresses.length)
+      public
+      constant
+      returns (address)
+    {
+      return addresses[index];
+    }
+
+    function getPower(uint index)
+      indexDoesntOverflow(index, powers.length)
+      public
+      constant
+      returns (uint64)
+    {
+      return powers[index];
+    }
 
     function verify(bytes32 hash, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s) public constant returns (bool) {
         if (!(idxs.length <= addresses.length)) return false;
@@ -30,8 +73,10 @@ contract Valset {
 
     event Update(address[] newAddresses, uint64[] newPowers, uint indexed seq);
 
-    function updateInternal(address[] newAddress, uint64[] newPowers) internal {
-        require(newAddress.length == newPowers.length);
+    function updateInternal(address[] newAddress, uint64[] newPowers)
+      equalSizeArrays(newAddress.length, newPowers.length)
+      validatorSizeAtMost100(newAddress.length)
+      internal {
         addresses = new address[](newAddress.length);
         powers    = new uint64[](newPowers.length);
         totalPower = 0;
@@ -40,8 +85,8 @@ contract Valset {
             powers[i]    = newPowers[i];
             totalPower  += newPowers[i];
         }
-        
-        Update(addresses, powers, updateSeq++);
+        Update(addresses, powers, updateSeq);
+        updateSeq++;
     }
 
     /// Updates validator set. Called by the relayers.
@@ -63,6 +108,6 @@ contract Valset {
     }
 */
     function Valset(address[] initAddress, uint64[] initPowers) public {
-        updateInternal(initAddress, initPowers); 
+        updateInternal(initAddress, initPowers);
     }
 }
