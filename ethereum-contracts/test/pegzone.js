@@ -1,114 +1,106 @@
 'use strict';
-
 /* Add the dependencies you're testing */
+const web3 = global.web3;
 const CosmosERC20 = artifacts.require("./../contracts/CosmosERC20.sol");
 const Peggy = artifacts.require("./../contracts/Peggy.sol");
 // const Valset = artifacts.require("./../contracts/Valset.sol");
 
-// function stringToBytes(string) {
-//   var bytes = [];
-//   for (var i = 0; i < string.length; ++i)
-//   {
-//     bytes.push(string.charCodeAt(i));
-//   }
-//   return bytes;
-// }
-
-
 contract('CosmosERC20', function(accounts) {
   const args = {
     _default: accounts[0],
-    _owner: accounts[1],
+    _other: accounts[1],
     _zero: 0,
+    _initialSupply: 0,
     _amount: 1000
   };
   let cosmosToken;
   /* Do something before every `describe` method */
-	beforeEach(async function() {
-    cosmosToken = CosmosERC20.new(args.default, 'Cosmos');
+	beforeEach('Setup contract', async function() {
+    cosmosToken = await CosmosERC20.new(args._default, 'Cosmos', {from: accounts[0]});
 	});
 
-  describe('Deployment', function() {
-    it("The contract can be deployed", function() {
-  		return CosmosERC20.new()
-  		.then(function(instance) {
-  			assert.ok(instance.address);
-  		});
-  	});
+  /* Functions */
+
+  describe('Supply control', function () {
+    let supply;
+    beforeEach(async function() {
+      supply = await cosmosToken.totalSupply.call();
+    });
+
+    it("Initial Supply is Correct", async function() {
+			supply = await cosmosToken.totalSupply.call()
+			assert.strictEqual(supply.toNumber(), args._initialSupply, "Initial supply must be 0");
+		});
+
+    /* approve(address spender, uint tokens) */
+    // allowed[tokenOwner][spender]
+
+  describe('', function() {
+    let minted;
+    beforeEach('Mint', async function() {
+      minted = await cosmosToken.mint(args._other, args._amount, {from: accounts[0]});
+    });
+
+    /* mint(address to, uint tokens) */
+
+    it("Can Mint Tokens", async function() {
+      assert.isTrue(Boolean(minted.receipt.status), "Successful mint should return true");
+			let totalSupply2 = await cosmosToken.totalSupply.call();
+			assert.strictEqual(totalSupply2.toNumber(), args._amount, "Supply should increase in 1000");
+      let balanceAfter = await cosmosToken.balanceOf.call(args._other);
+      assert.strictEqual(balanceAfter.toNumber(), args._amount, "Controller's balance should increase in 1000");
+		});
+
+    /* burn(address from, uint tokens) */
+
+    it("Can Burn tokens from a user's balance", async function() {
+      // initial supply and balance = 1000
+      let res = await cosmosToken.burn(args._other, 100, {from: accounts[0]});
+      assert.isTrue(Boolean(res.receipt.status), "Successful burning should return true");
+      let totalSupply3 = await cosmosToken.totalSupply.call();
+      assert.strictEqual(totalSupply3.toNumber(), 900, "Supply should decrease in 100");
+      let balanceAfter = await cosmosToken.balanceOf.call(args._other);
+      assert.strictEqual(balanceAfter.toNumber(), 900, "Controller's balance should decrease by 100");
+    });
+
+
+    /* transfer(address to, uint tokens) */
+
+    it("Can transfer tokens from caller to a recipient", async function() {
+      let res = await cosmosToken.transfer(args._default, 50, {from: accounts[1]});
+      assert.isTrue(Boolean(res.receipt.status), "Successful transfer should return true");
+      let balanceSender = await cosmosToken.balanceOf.call(args._other);
+      assert.strictEqual(balanceSender.toNumber(), 950, "Sender's balance should decrease by 50");
+      let balanceRecipient = await cosmosToken.balanceOf.call(args._default);
+      assert.strictEqual(balanceRecipient.toNumber(), 50, "Recipient's balance should increase by 50");
+    });
+
+    describe('', function() {
+      let approved;
+      beforeEach('Mint', async function() {
+        approved = await cosmosToken.approve(accounts[2], args._amount, {from: accounts[1]});
+      });
+
+      it("Can Approve a certain amount to be spend by an user", async function() {
+        assert.isTrue(Boolean(approved.receipt.status), "Successful approval should always return true");
+        let amountAllowed = await cosmosToken.allowance.call(accounts[1], accounts[2]);
+        assert.strictEqual(Number(amountAllowed.toNumber()), args._amount, "Approved amount should be the same as the user allowed balance");
+      });
+
+      /* transferFrom(address from, address to, uint tokens) */
+
+      it("Can transfer tokens from one account to another", async function() {
+        let res = await cosmosToken.transferFrom(accounts[1], args._default, 100, {from: accounts[2]});
+        assert.isTrue(Boolean(res.receipt.status), "Successful transfer should return true");
+        let balanceSender = await cosmosToken.balanceOf.call(args._other);
+        assert.strictEqual(balanceSender.toNumber(), 900, "Sender's balance should decrease by 100");
+        let balanceRecipient = await cosmosToken.balanceOf.call(args._default);
+        assert.strictEqual(balanceRecipient.toNumber(), 100, "Recipient's balance should increase by 100");
+      });
+    });
+
   });
 
-  // describe('Functions', function() {
-  //   describe('totalsupply()', function {
-  //     it("returns a number", function() {
-  //       cosmosToken.totalSupply.call().then((supply) => {
-  //         assert.isNumber(supply, 'return value should be of type number');
-  //       });
-  //     });
-  //
-  //     it("Supply is not zero", function() {
-  //       cosmosToken.totalSupply.call().then((supply) => {
-  //         return assert.isAtLeast(supply, args._zero, 'Supply must be ≥ 0');
-  //       })
-  //     });
-  //
-  //   });
-  //   describe('transfer(address to, uint tokens)', function {
-  //     it("returns a number", function() {
-  //       cosmosToken.transfer.call(args._default {to: args._owner, args._amount }).then((supply) => {
-  //         assert.isNumber(supply, 'return value should be of type number');
-  //       });
-  //     });
-  //
-  //
-  //
-  //   });
-  // });
-  //
-  // it("Initial Supply is Correct", async function() {
-  //   return cosmosToken.totalSupply.call().then(supply => {
-  //     assert.equal(supply, 100);
-  //   });
-  // });
-  // it("Can Mint Tokens", async function() {
-  //   return cosmosToken.mint.call(100, {from: accounts[0]}).then(_ => {
-  //     return cosmosToken.totalSupply.call().then(supply => {
-  //       assert.equal(supply, 200);
-  //     });
-  //   });
-  // });
-  // it("Can Burn Tokens", async function() {
-  //   return cosmosToken.burn.call(90, {from: accounts[0]}).then(() => {
-  //     return cosmosToken.totalSupply.call().then(supply => {
-  //       assert.equal(supply, 10);
-  //     });
-  //   });
-  // });
-  // it("Can retrieve the balance from an account", async function() {
-	// 	return token.balanceOf.call(args._default).then(balance => {
-  //     console.log(balance);
-	// 		return assert.isAtLeast(balance, args._zero, 'balance ≥ 0');
-	// 	});
-  // });
-  // it("Can transfer tokens from one account to another", async function() {
-	// 	return token.balanceOf.call(args._default).then(balance => {
-  //     console.log(balance);
-	// 		return assert.isAtLeast(balance, args._zero, 'balance ≥ 0');
-	// 	});
-  // });
 
-});
-
-contract('Peggy', function(accounts) {
-  const args = {_default: accounts[0], _owner: accounts[1],
-  _null_address: '0x0000000000000000000000000000000000000000'};
-
-  describe('Deployment', function() {
-  	it("The contract can be deployed", function() {
-  		return Peggy.new()
-  		.then(function(instance) {
-  			assert.ok(instance.address);
-  		});
-  	});
   });
-
 });
