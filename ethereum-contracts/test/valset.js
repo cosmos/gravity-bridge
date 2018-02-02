@@ -25,18 +25,20 @@ contract('Valset', function(accounts) {
     "0x8125648effea25d483412886741d0630f7693499",
     "0xb2c1bafa9419f03e08cffa9b86c3bfe8e3c068dc"
   ];
-  let initialPowers = [
-    9,
-    15,
-    9,
-    13,
-    19,
-    11,
-    16,
-    13,
-    11,
-    12,
+  let initialPowers = [ 9, 15, 9, 13, 19, 11, 16, 13, 11, 12 ];
+  let newValidators = [
+    "0x669ef6f50d14490584e98d6c8a2b29e55842da97",
+    "0x81f2a757e418b484950a3f2d3b15b56a218fbca1",
+    "0x99ebe5e9934e92eb8320d110415344ee6f3955d0",
+    "0xd23d8393a7258bcea86d7c7a1abd299af8bc130b",
+    "0xfd30d0acf42667cd5f893301dc23ee7c558a3e14",
+    "0xdb231190506e958de59b9e24af9bdf31ae73eadb",
+    "0x0f3918e784a94e1ed6fb13f9d8db1cf1793c80c4",
+    "0x03542245d1b555bcec48f1692bf49c1e8640f186",
+    "0xfca7d6dba53c9c29d8b0acb951fe87245229d56d",
+    "0x7e82bb8859b766f716128291299f28828430f6c7"
   ];
+  let initialPowers = [ 23, 11, 23, 13, 3, 6, 13, 12, 18, 17 ];
 
   beforeEach('Setup contract', async function() {
     valSet = await Valset.new(initialValidators, initialPowers, {from: args._default});
@@ -77,7 +79,6 @@ contract('Valset', function(accounts) {
       let accumulatedPower = initialPowers.reduce(sumArrayValues);
       assert.strictEqual(totalPower.toNumber(), accumulatedPower, "totalSum should the sum of each individual validator's power")
     });
-
 
 
   })

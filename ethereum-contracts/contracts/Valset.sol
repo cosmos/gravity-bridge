@@ -76,7 +76,9 @@ contract Valset {
     function updateInternal(address[] newAddress, uint64[] newPowers)
       equalSizeArrays(newAddress.length, newPowers.length)
       validatorSizeAtMost100(newAddress.length)
-      internal {
+      internal
+      returns (bool)
+      {
         addresses = new address[](newAddress.length);
         powers    = new uint64[](newPowers.length);
         totalPower = 0;
@@ -85,8 +87,10 @@ contract Valset {
             powers[i]    = newPowers[i];
             totalPower  += newPowers[i];
         }
-        Update(addresses, powers, updateSeq);
+        uint updateCount = updateSeq;
+        Update(addresses, powers, updateCount);
         updateSeq++;
+        return true;
     }
 
     /// Updates validator set. Called by the relayers.
@@ -98,15 +102,17 @@ contract Valset {
      * @param r           output of ECDSA signature. Used to compute ecrecover
      * @param s           output of ECDSA signature.  Used to compute ecrecover
      */
-/*
-    function update(address[] newAddress, uint64[] newPowers, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s) {
-        require(newAddress.length == newPowers.length);
 
+    function update(address[] newAddress, uint64[] newPowers, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+      equalSizeArrays(newAddress.length, newPowers.length)
+      public
+      returns (bool)
+    {
         assert(verify(keccak256(newAddress, newPowers), idxs, v, r, s)); // hashing can be changed
-
-        updateInternal(newAddress, newPowers);
+        if (updateInternal(newAddress, newPowers)) return true;
+        else return false;
     }
-*/
+
     function Valset(address[] initAddress, uint64[] initPowers) public {
         updateInternal(initAddress, initPowers);
     }
