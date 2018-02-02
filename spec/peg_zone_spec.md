@@ -29,7 +29,7 @@ The pegzone contract would release funds based on light client proofs from tende
 The biggest changes we realized we would need.
 
 1. Tendermint header serialization that is easy to for solidity to parse. Most likely bitcoin style fixed byte structure.
-1. Secp256k1 signatures in Tendermint consensus.
+1. Secp256k1 relays in Tendermint consensus.
 
 This design seems cleaner in some ways but more difficult to MVP.
 
@@ -48,25 +48,25 @@ It allows querying of transactions in these ways:
 
 1. query all transactions
 1. query all transactions >= a specific block height
-1. query all state, including signatures, for a particular transaction
+1. query all state, including relays, for a particular transaction
 
 #### Signing Apps
 The signing apps sign transactions using secp256k1 such that the
 Ethereum smart contracts can verify them. The signing apps also have an
 ethereum address, because they have an identity in the Ethereum
 contract. They watch for new Ethereum-bound transactions using
-the ABCI app's query functionality, and submit their signatures
+the ABCI app's query functionality, and submit their relays
 back to it for replication.
 
 #### Ethereum Smart Contracts
 The smart contracts verify updates coming from the ABCI app
 using the known keys of the signing apps. The smart contracts
 track updates to the set of signing apps, and their associated
-signatures. The smart contracts support 6 functions:
+relays. The smart contracts support 6 functions:
 
 1. `lock` ETH or ERC20 tokens for use in Cosmos
 1. `unlock` previously-locked (encumbered) ETH or ERC20 tokens
-1. `update` signing app set signatures
+1. `update` signing app set relays
 1. `mint` ERC20 tokens for encumbered denominations
 1. `burn` ERC20 tokens for encumbered denominations
 1. `register` denomination
@@ -105,12 +105,12 @@ to which the Cosmos peg zone is listening.
 
 ![Cosmos to Ethereum](./pegzone-to-ether.jpg)
 
-1. The ABCI app receives an `IBCSignature` that requests for burning Ethereum tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, token address, amount, nonce}, and writes it to its state.
+1. The ABCI app receives an `IBCRelay` that requests for burning Ethereum tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, token address, amount, nonce}, and writes it to its state.
 1. Each signing app is watching for new transactions in the ABCI state, and detects the new transaction. 
 1. Each signing app signs the transaction using secp256k1 using a key that is known to the Ethereum smart contracts.
-1. Each signing app submits their signatures back to the ABCI app as `SignSignatureMsg` for replication.
+1. Each signing app submits their relays back to the ABCI app as `SignRelayMsg` for replication.
 1. The relayer processes, which periodically query the ABCI app's transactions,
-   see that the transaction has reached the required signature threshold. 
+   see that the transaction has reached the required relay threshold. 
 1. One of the relayers send the transaction to the smart contract by calling the `unlock` function
 1. The smart contracts use `ecrecover` to check that it was signed by a super-majority of the validator set corresponding to the height of the transaction (this may have been updated). The smart contracts release the token as specified in the transaction making it available to the destination address.
 
@@ -118,13 +118,13 @@ to which the Cosmos peg zone is listening.
 
 ![Cosmos to Ethereum](./pegzone-to-ether.jpg)
 
-1. the ABCI app receives an `IBCSignature` from the hub that requests for locking Cosmos tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, denomination, amount, nonce}, and writes it to its state. 
+1. the ABCI app receives an `IBCRelay` from the hub that requests for locking Cosmos tokens and handles it according to the IBC specification. The ABCI app generates a valid Ethereum transaction containing {address, denomination, amount, nonce}, and writes it to its state. 
 1. Each signing app is watching for new transactions in the ABCI state,
    and detects the new transaction. 
 1. Each signing app signs the transaction using secp256k1 using a key that is known to the Ethereum smart contracts.
-1. Each signing app submits their signatures back to the ABCI app as `SignSignatureMsg` for replication.
+1. Each signing app submits their relays back to the ABCI app as `SignRelayMsg` for replication.
 1. The relayer processes, which periodically query the ABCI app's transactions,
-   see that the transaction has reached the required signature threshold.
+   see that the transaction has reached the required relay threshold.
 1. One of the relayers send the transaction to the smart contract by calling the `mint` function.
 1. The smart contracts use `ecrecover` to check that it was signed by a super-majority of the validator set corresponding to the height of the transaction (this may have been updated). The smart contracts make newly minted `CosmosERC20` tokens available to the specified address in the transaction.
 
@@ -147,8 +147,8 @@ to which the Cosmos peg zone is listening.
 #### Witness{Nonce() (uint64), Chain() ([]byte)}
 Interface that Lock{} and Burn{} implements. All Witnesses are generated by validators multisig and generates IBC packet that goes to Chain().
 
-#### Signature{}
-Interface that Unlock{}, Mint{}, Register{} and Update{} implements. All signature packets are generated by IBC packets and stored in ABCI app storage with nonce.
+#### Relay{}
+Interface that Unlock{}, Mint{}, Register{} and Update{} implements. All relay packets are generated by IBC packets and stored in ABCI app storage with nonce.
 
 #### Update{Validators []Validator}
 #### Lock{To []byte, Value uint64, Token common.Address, Chain []byte, Nonce uint64}
@@ -163,9 +163,9 @@ Interface that Unlock{}, Mint{}, Register{} and Update{} implements. All signatu
 
 The zones that uses the pegzone will receives and handles IBCWitness packet.
 
-#### IBCSignature{Signature}
+#### IBCRelay{Relay}
 
-The zones that uses the pegzone will sends IBCSignature packet.
+The zones that uses the pegzone will sends IBCRelay packet.
 
 ### Msg Types
 
@@ -173,29 +173,29 @@ The zones that uses the pegzone will sends IBCSignature packet.
 
 Used for voting on witness packets.
 
-#### SignSignatureMsg{Signature, Nonce uint64, Sig []byte}
+#### SignRelayMsg{Relay, Nonce uint64, Sig []byte}
 
-Used for add signs on signature packets which will be submitted on the Ethereum contract later.
+Used for add signs on relay packets which will be submitted on the Ethereum contract later.
 
-* `Sig` must be length of 65 and concatenated value of `v`, `r`, and `s` of the sender's signature. 
+* `Sig` must be length of 65 and concatenated value of `v`, `r`, and `s` of the sender's relay. 
 
 ### Querying Functions
 
-#### SignaturePacketNonce() (uint64)
+#### RelayPacketNonce() (uint64)
 
-Returns last signature packet nonce. 
+Returns last relay packet nonce. 
 
-#### SignaturePacketByNonce(nonce uint64) (Signature)
+#### RelayPacketByNonce(nonce uint64) (Relay)
 
-Returns signature packet by its nonce. Returns nil if it dosen't exist.
+Returns relay packet by its nonce. Returns nil if it dosen't exist.
 
-#### SignatureSignByNonce(nonce uint64) ([]uint16, [][]byte)
+#### RelaySignByNonce(nonce uint64) ([]uint16, [][]byte)
 
-Returns signature packet's validator signatures by its nonce. (Signed validators by their indexes, Array of signatures).
+Returns relay packet's validator relays by its nonce. (Signed validators by their indexes, Array of relays).
 
-#### SignatureSignSatisfied(nonce uint64) (bool)
+#### RelaySignSatisfied(nonce uint64) (bool)
 
-True if the signature packet has enough signatures.
+True if the relay packet has enough relays.
 
 #### WitnessPacketNonce() (uint64)
 
@@ -211,52 +211,22 @@ Returns the indexes of the validators who signed on the witness.
 
 ### External Entry Points
 
-#### update(address[] newAddress, uint64[] newPower, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
-
-Updates validator set. Called by the relayers.
-
-* hash value for `ecrecover` is calculated as: 
-```
-byte(0) + newAddress.length.PutUint256() + newAddress[0].Bytes() + ... + newPower[0].PutUint64() + ...
-```
-
-#### lock(bytes to, uint64 value, address token, bytes chain) payable
+#### lock(bytes to, uint64 value, address token) external payable returns (bool)
 
 Locks Ethereum user's ethers/ERC20s in the contract and loggs an event. Called by the users.
 
 * `token` being `0x0` means ethereum; in this case `msg.value` must be same with `value`
-* `event Lock(bytes to, uint64 value, address token, bytes chain, uint64 nonce)` is logged, seen by the relayers
+* `event Lock(bytes to, uint64 value, address token)` is logged, seen by the relayers
 
-#### unlock(address to, uint64 value, address token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+#### unlock(address[2] addressArg, uint64 value, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s) external returns (bool)
 
 Unlocks Ethereum tokens according to the information from the pegzone. Called by the relayers.
 
+* `addressArg[0]` == `to`, `addressArg[1]` == `token`
 * transfer tokens to `to`
 * hash value for `ecrecover` is calculated as:
 ```
 byte(1) + to.Bytes() + value.PutUint64() + chain.length.PutUint256() + chain
 ```
-#### mint(address to, uint64 value, bytes token, bytes chain, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
-
-Mints 1:1 backed credit for atoms/photons. Called by the relayers.
-
-* `token` has to be `register`ed before the call
-* transfer minted tokens to `to`
-* hash value for `ecrecover` is calculated as:
-```
-byte(2) + to.Bytes() + value.PutUint64() + token.length.PutUint256() + token + chain.length.PutUint256() + chain
-```
-
-#### burn(bytes to, uint64 value, bytes token, bytes chain)
-
-Burns credit for atoms/photons and loggs an event. Called by the users.
-
-* `event Burn(bytes to, uint64 value, bytes token, bytes chain, uint64 nonce)` is logged, seen by the relayers
-
-#### register(string name, address token, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
-
-Registers new Cosmos token name with its CosmosERC20 address. Called by the relayers.
-
-* deploys new CosmosERC20 contract and stores it in a mapping
 
 ## Relayer Process

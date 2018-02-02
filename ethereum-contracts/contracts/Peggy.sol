@@ -10,23 +10,22 @@ contract Peggy is Valset {
         return cosmosTokenAddress[name];
     }
 
-    event Lock(bytes to, uint64 value, address token, bytes indexed chain);
+    event Lock(bytes to, uint64 value, address token);
 
 
     /// Locks received funds to the consensus of the peg zone
     /*
      * @param to          bytes representation of destination address
      * @param value       value of transference
-     * @param token       token address in origin chain (0x0 if Ethereum, Cosmos for other values)
-     * @param chain       bytes respresentation of the destination chain
+     * @param token       token address in origin chain (0x0 if Ethereum, Cosmos for other values) 
      */
-    function lock(bytes to, uint64 value, address token, bytes chain) external payable returns (bool) {
+    function lock(bytes to, uint64 value, address token) external payable returns (bool) {
         if (token == address(0)) {
             assert(msg.value == value);
         } else {
             assert(ERC20(token).transferFrom(msg.sender, this, value));
         }
-        Lock(to, value, token, chain);
+        Lock(to, value, token);
         return true;
     }
 
@@ -41,7 +40,7 @@ contract Peggy is Valset {
      * @param r           output of ECDSA signature
      * @param s           output of ECDSA signature
      */
-    event Unlock(address to, uint64 value, address token/*, bytes indexed chain*/);
+    event Unlock(address to, uint64 value, address token);
     
     function unlock(
         address[2] addressArg, 
