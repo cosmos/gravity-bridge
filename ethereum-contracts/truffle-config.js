@@ -16,10 +16,15 @@ module.exports = {
     useColors: true
   },
   authors: [
-  "Federico Kunze <federico@tendermint.com>"
+    "Adrian Brink <adrian@tendermint.com>",
+    "Federico Kunze <federico@tendermint.com>"
+  ],
+  keywords: [
+    "peggy",
+    "peg zone",
+    "Cosmos"
   ],
   dependencies: {
     "bignumber.js": "^6.0.0"
-  ,
-  license: "MIT"
+  }
 }

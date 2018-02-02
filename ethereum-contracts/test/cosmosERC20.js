@@ -2,8 +2,6 @@
 /* Add the dependencies you're testing */
 const web3 = global.web3;
 const CosmosERC20 = artifacts.require("./../contracts/CosmosERC20.sol");
-const Peggy = artifacts.require("./../contracts/Peggy.sol");
-// const Valset = artifacts.require("./../contracts/Valset.sol");
 
 contract('CosmosERC20', function(accounts) {
   const args = {

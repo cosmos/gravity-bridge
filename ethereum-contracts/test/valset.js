@@ -11,6 +11,4 @@ contract('Valset', function(accounts) {
     valSet = await Valset.new();
 	});
 
-  
-
 });
