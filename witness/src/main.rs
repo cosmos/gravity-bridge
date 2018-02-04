@@ -26,10 +26,10 @@ use ethabi::RawLog;
 use_contract!(toy, "Toy", "SolidityToy.abi");
 
 const USAGE: &'static str = "
-Usage: signer [--contract=<address>] [--ipc=<path.ipc>]
+Usage: sfeature/eth_witnessigner [--contract=<address>] [--ipc=<path.ipc>]
 
 Options:
-    --ipc=<path>                Path to unix socket. [default: /home/t/.local/share/io.parity.ethereum/jsonrpc.ipc]
+    --ipc=<path>                Path to unix socket. [default: /Users/adrianbrink/.peggy/jsonrpc.ipc]
     --contract=<address>        Contract address.    [default: 0xdd1cB580B505b59962Ef7a31d21CEE7234225C29]
 ";
 
