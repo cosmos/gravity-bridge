@@ -40,7 +40,7 @@ contract Valset {
             powers[i]    = newPowers[i];
             totalPower  += newPowers[i];
         }
-        
+
         Update(addresses, powers, updateSeq++);
     }
 
@@ -63,6 +63,6 @@ contract Valset {
     }
 */
     function Valset(address[] initAddress, uint64[] initPowers) public {
-        updateInternal(initAddress, initPowers); 
+        updateInternal(initAddress, initPowers);
     }
 }
