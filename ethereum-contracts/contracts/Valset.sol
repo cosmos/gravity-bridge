@@ -26,13 +26,13 @@ contract Valset {
       _;
     }
 
-    modifier valSetLargerThanIdxs(uint idxsLen, uint valLen) {
-      require(idxsLen <= valLen);
+    modifier valSetLargerThanSigners(uint signersLen, uint valLen) {
+      require(signersLen <= valLen);
       _;
     }
 
-    modifier equalSignatureLen(uint idxsLen, uint vLen, uint rLen, uint sLen) {
-      require((idxsLen == vLen) && (vLen == rLen) && (rLen == sLen));
+    modifier equalSignatureLen(uint signersLen, uint vLen, uint rLen, uint sLen) {
+      require((signersLen == vLen) && (vLen == rLen) && (rLen == sLen));
       _;
     }
 
@@ -71,20 +71,20 @@ contract Valset {
       return ecrecover(prefixedHash, v, r, s) == (valAddress);
     }
 
-    function verifyValidators(bytes32 hash, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
-      valSetLargerThanIdxs(idxs.length, addresses.length)
-      equalSignatureLen(idxs.length, v.length, r.length, s.length)
+    function verifyValidators(bytes32 hash, uint16[] signers, uint8[] v, bytes32[] r, bytes32[] s)
+      valSetLargerThanSigners(signers.length, addresses.length)
+      equalSignatureLen(signers.length, v.length, r.length, s.length)
       public
       constant
       returns (bool)
     {
       uint64 signedPower = 0;
       uint64 currentIdx;
-      for (uint i = 0; i < idxs.length; i++) {
-          currentIdx = idxs[i];
-          if (i >= 1 && currentIdx <= idxs[i-1]) return false;
+      for (uint i = 0; i < signers.length; i++) {
+          currentIdx = signers[i];
+          if (i >= 1 && currentIdx <= signers[i-1]) return false;
           if (verify(hash, v[currentIdx], r[currentIdx], s[currentIdx], addresses[currentIdx])) {
-            signedPower += powers[idxs[i]];
+            signedPower += powers[signers[i]];
           }
       }
       if (signedPower * 3 <= totalPower * 2) return false;
@@ -117,18 +117,18 @@ contract Valset {
     /*
      * @param newAddress  new validators addresses
      * @param newPower    power of each validator
-     * @param idxs        indexes of each validator
+     * @param signers     indexes of each signer validator
      * @param v           recovery id. Used to compute ecrecover
      * @param r           output of ECDSA signature. Used to compute ecrecover
      * @param s           output of ECDSA signature.  Used to compute ecrecover
      */
 
-    function update(address[] newAddress, uint64[] newPowers, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+    function update(address[] newAddress, uint64[] newPowers, uint16[] signers, uint8[] v, bytes32[] r, bytes32[] s)
       equalSizeArrays(newAddress.length, newPowers.length)
       public
       returns (bool)
     {
-        assert(verifyValidators(keccak256(newAddress, newPowers), idxs, v, r, s)); // hashing can be changed
+        assert(verifyValidators(keccak256(newAddress, newPowers), signers, v, r, s)); // hashing can be changed
         if (updateInternal(newAddress, newPowers)) return true;
         else return false;
     }

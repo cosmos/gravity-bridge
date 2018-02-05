@@ -1,9 +1,36 @@
 'use strict';
+// var createValidators = require('./valset/createValidators');
 const web3 = global.web3;
 const Valset = artifacts.require("./../contracts/Valset.sol");
+const createKeccakHash = require('keccak');
+const keythereum = require("keythereum");
+const ethUtils = require('ethereumjs-util');
 
 function sumArrayValues(total, uint64) {
   return total + uint64;
+}
+
+function createValidators(size) {
+  var newValidators = {
+    addresses: [],
+    pubKeys: [],
+    privateKeys: [],
+    powers: []
+  };
+  let privateKey,hexPrivate, pubKey, address;
+  for (var i=0; i< size; i++) {
+    privateKey = keythereum.create().privateKey;
+    hexPrivate = ethUtils.bufferToHex(privateKey);
+    address = ethUtils.addHexPrefix(ethUtils.bufferToHex(ethUtils.privateToAddress(privateKey)));
+    pubKey = ethUtils.bufferToHex(ethUtils.privateToPublic(privateKey));
+
+    // console.log("Keys: \n\tPrivate: " + hexPrivate + "\n\tPublic:" + pubKey + "\n\Address:" + address);
+    newValidators.addresses.push(address);
+    newValidators.privateKeys.push(hexPrivate);
+    newValidators.pubKeys.push(pubKey);
+    newValidators.powers.push(Math.floor((Math.random() * 50) + 1));
+    }
+  return newValidators;
 }
 
 contract('Valset', function(accounts) {
@@ -14,40 +41,13 @@ contract('Valset', function(accounts) {
   };
   let valSet, totalGas, gasPrice;
   let addresses, powers, first_element, second_element, totalPower;
-  let initialValidators = [
-    "0xe81e0f466dc44478a4db02d21e10680bd794b549",
-    "0x36e6068382b6c51e3861cef20fb9c1199c42fd5d",
-    "0xf2de4bfb3919b9bfbce3122c992d2b6b6dd55f68",
-    "0x6a6a13a4f861e3d728d6afea34b83fbc938d7135",
-    "0x7b5749433eea79dff3b16317942261edf2bec622",
-    "0xac650b4029cdbff2f272d068b340da8a47849250",
-    "0x05df294534a201a5fbbfb75a4e2c337f0d3000c8",
-    "0x66190eb0a5f1161729bcf1ba4b3631c75264e043",
-    "0x8125648effea25d483412886741d0630f7693499",
-    "0xb2c1bafa9419f03e08cffa9b86c3bfe8e3c068dc"
-  ];
-  let  initialPowers = [ 9, 15, 9, 13, 19, 11, 16, 13, 11, 12 ];
-  let newValidators = [
-    "0x669ef6f50d14490584e98d6c8a2b29e55842da97",
-    "0x81f2a757e418b484950a3f2d3b15b56a218fbca1",
-    "0x99ebe5e9934e92eb8320d110415344ee6f3955d0",
-    "0xd23d8393a7258bcea86d7c7a1abd299af8bc130b",
-    "0xfd30d0acf42667cd5f893301dc23ee7c558a3e14",
-    "0xdb231190506e958de59b9e24af9bdf31ae73eadb",
-    "0x0f3918e784a94e1ed6fb13f9d8db1cf1793c80c4",
-    "0x03542245d1b555bcec48f1692bf49c1e8640f186",
-    "0xfca7d6dba53c9c29d8b0acb951fe87245229d56d",
-    "0x7e82bb8859b766f716128291299f28828430f6c7"
-  ];
-
-  let newPowers = [ 23, 11, 23, 13, 3, 6, 13, 12, 18, 17 ];
-
+  let totalValidators = (Math.random() * 100) + 1; // 1-100 validators
+  let validators = createValidators(totalValidators);
   beforeEach('Setup contract', async function() {
-    valSet = await Valset.new(initialValidators, initialPowers, {from: args._default});
+    valSet = await Valset.new(validators.addresses, validators.powers, {from: args._default});
   });
 
   describe('Constructor function', function() {
-
 
     // Proved by induction
     it("Saves initial validators' address in array", async function() {
@@ -56,17 +56,14 @@ contract('Valset', function(accounts) {
       // returns the string Address of the elements and check if they exist
       // console.log("First Validator: ",String(first_element));
       // console.log("Second Validator: ",String(second_element));
-      assert.isTrue((String(first_element) == initialValidators[0]) &&
-       (String(second_element) == initialValidators[1])),
-       "Initial validators' addresses array should be equal as the saved one");
+      assert.isTrue(((String(first_element) == validators.addresses[0]) && (String(second_element) == validators.addresses[1])), "Initial validators' addresses array should be equal as the saved one");
     });
 
     // Proved by induction
     it("Saves initial validators' powers in array", async function() {
       first_element = await valSet.getPower(0);
       second_element = await valSet.getPower(1);
-      assert.isTrue(Boolean(first_element.toNumber() && second_element.toNumber()),
-       "Initial validators' powers array should be equal as the saved one");
+      assert.isTrue(((first_element.toNumber() == validators.powers[0]) && (second_element.toNumber() == validators.powers[1])), "Initial validators' powers array should be equal as the saved one");
     });
 
     it("Checks that addresses and powers arrays have the same length", async function() {
@@ -84,27 +81,75 @@ contract('Valset', function(accounts) {
 
     it("Sums totalPower correctly", async function() {
       totalPower = await valSet.getTotalPower();
-      let accumulatedPower = initialPowers.reduce(sumArrayValues);
-      assert.strictEqual(totalPower.toNumber(), accumulatedPower,
-       "totalSum should the sum of each individual validator's power")
+      let accumulatedPower = validators.powers.reduce(sumArrayValues);
+      assert.strictEqual(totalPower.toNumber(), accumulatedPower, "totalSum should the sum of each individual validator's power")
     });
   });
 
-  describe('Update Validator set', function() {
-    let prevAddresses, prevPowers, newSavedAddresses, newSavedPowers, response;
+  describe('Updates the Validator set', function() {
+    let prevAddresses, prevPowers, newValidators, response, signs, signature;
+    let vArray = [];
+    let rArray = [];
+    let sArray = [];
+    let signers = [];
 
-    beforeEach('Get previous validator data', async function() {
-      prevAddresses = await valSet.addresses;;
+    before('Get previous validator data', async function() {
+      totalValidators = (Math.random() * 100) + 1; // 1-100 validators
+      validators = createValidators(totalValidators);
+      // let msgHash = {
+      //   addresses: validators.addresses,
+      //   powers: validators.powers
+      // };
+      for (var i = 0; i < totalValidators; i++) {
+        signs = Math.random() <= 0.682; // one std range from 0.5
+        if (signs) {
+          signature = ethUtils.ecsign(ethUtils.hashPersonalMessage(ethUtils.toBuffer(validators.addresses, validators.powers)), ethUtils.toBuffer(validators.privateKeys[i]));
+          vArray.push(signature.v);
+          rArray.push(signature.r);
+          sArray.push(signature.s);
+          signers.push(i);
+        }
+      }
+      console.log('Test');
+      prevAddresses = await valSet.addresses;
+      console.log('Test2');
       prevPowers = await valSet.powers;
-      // response = await valSet.update(newValidators, newPowers, )
+      console.log('Test3');
+      response = await valSet.update(validators.addresses, validators.powers, signers, vArray, rArray, sArray, {from: args._default, gas: "220000"});
     });
 
-    it("Updates a new validator set with their new respective powers", async function() {
 
+    /* TODO check signatures */
+
+    // Proved by induction
+    it("Saves updated validators' address in array", async function() {
+      console.log('Testing');
+      first_element = await valSet.getValidator(0);
+      console.log('Testing2');
+      second_element = await valSet.getValidator(1);
+      assert.isTrue(((String(first_element) == validators.addresses[0]) && (String(second_element) == validators.addresses[1])), "Initial validators' addresses array should be equal as the saved one");
     });
-    // if valset is equal, powers must change
 
+    // Proved by induction
+    it("Changes the validators' addresses", async function() {
+      first_element = await valSet.getValidator(0);
+      second_element = await valSet.getValidator(1);
+      assert.isFalse(((String(first_element) == prevAddresses[0]) || (String(second_element) == prevAddresses[1])), "New validators' addresses should be disctinct as the previous validator set addresses");
+    });
 
+    // Proved by induction
+    it("Saves updated validators' powers in array", async function() {
+      first_element = await valSet.getPower(0);
+      second_element = await valSet.getPower(1);
+      assert.isTrue(((first_element.toNumber() == validators.powers[0]) && (second_element.toNumber() == validators.powers[1])), "Initial validators' powers array should be equal as the saved one");
+    });
+
+    // Proved by induction
+    it("Changes the validators' powers", async function() {
+      first_element = await valSet.getPower(0);
+      second_element = await valSet.getPower(1);
+      assert.isFalse(((String(first_element) == prevPowers[0]) || (String(second_element) == prevPowers[1])), "New validators' powers should be disctinct as the previous validator set powers");
+    });
   });
 
 

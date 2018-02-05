@@ -25,6 +25,9 @@ module.exports = {
     "Cosmos"
   ],
   dependencies: {
-    "bignumber.js": "^6.0.0"
+    "bignumber.js": "^6.0.0",
+    "ethereumjs-util": "^5.1.3",
+    "keccak": "^1.4.0",
+    "keythereum": "^1.0.2"
   }
 }
