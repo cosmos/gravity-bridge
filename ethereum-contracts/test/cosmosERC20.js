@@ -2,6 +2,8 @@
 /* Add the dependencies you're testing */
 const web3 = global.web3;
 const CosmosERC20 = artifacts.require("./../contracts/CosmosERC20.sol");
+const Peggy = artifacts.require("./../contracts/Peggy.sol");
+// const Valset = artifacts.require("./../contracts/Valset.sol");
 
 contract('CosmosERC20', function(accounts) {
   const args = {
@@ -61,6 +63,29 @@ contract('CosmosERC20', function(accounts) {
       assert.strictEqual(balanceAfter.toNumber(), 900, "Controller's balance should decrease by 100");
     });
 
+    describe('', function() {
+      let approved
+
+
+      it("Can Approve a certain amount to be spend by an user", async function() {
+        let res = await cosmosToken.approve(accounts[2], args._amount, {from: accounts[1]});
+        assert.isTrue(Boolean(res.receipt.status), "Successful approval should always return true");
+        let amountAllowed = await cosmosToken.allowance.call(accounts[1], accounts[2]);
+        assert.strictEqual(Number(amountAllowed.toNumber()), args._amount, "Approved amount should be the same as the user allowed balance");
+      });
+    });
+
+    /* transferFrom(address from, address to, uint tokens) */
+
+    it("Can transfer tokens from one account to another", async function() {
+      await cosmosToken.approve(accounts[2], args._amount, {from: accounts[1]});
+      let res = await cosmosToken.transferFrom(accounts[1], args._default, 100, {from: accounts[2]});
+      assert.isTrue(Boolean(res.receipt.status), "Successful transfer should return true");
+      let balanceSender = await cosmosToken.balanceOf.call(args._other);
+      assert.strictEqual(balanceSender.toNumber(), 900, "Sender's balance should decrease by 100");
+      let balanceRecipient = await cosmosToken.balanceOf.call(args._default);
+      assert.strictEqual(balanceRecipient.toNumber(), 100, "Recipient's balance should increase by 100");
+    });
 
     /* transfer(address to, uint tokens) */
 
@@ -73,32 +98,28 @@ contract('CosmosERC20', function(accounts) {
       assert.strictEqual(balanceRecipient.toNumber(), 50, "Recipient's balance should increase by 50");
     });
 
-    describe('', function() {
-      let approved;
-      beforeEach('Mint', async function() {
-        approved = await cosmosToken.approve(accounts[2], args._amount, {from: accounts[1]});
-      });
-
-      it("Can Approve a certain amount to be spend by an user", async function() {
-        assert.isTrue(Boolean(approved.receipt.status), "Successful approval should always return true");
-        let amountAllowed = await cosmosToken.allowance.call(accounts[1], accounts[2]);
-        assert.strictEqual(Number(amountAllowed.toNumber()), args._amount, "Approved amount should be the same as the user allowed balance");
-      });
-
-      /* transferFrom(address from, address to, uint tokens) */
-
-      it("Can transfer tokens from one account to another", async function() {
-        let res = await cosmosToken.transferFrom(accounts[1], args._default, 100, {from: accounts[2]});
-        assert.isTrue(Boolean(res.receipt.status), "Successful transfer should return true");
-        let balanceSender = await cosmosToken.balanceOf.call(args._other);
-        assert.strictEqual(balanceSender.toNumber(), 900, "Sender's balance should decrease by 100");
-        let balanceRecipient = await cosmosToken.balanceOf.call(args._default);
-        assert.strictEqual(balanceRecipient.toNumber(), 100, "Recipient's balance should increase by 100");
-      });
-    });
-
   });
-
-
   });
 });
+
+// CosmosERC20.web3.eth.getGasPrice(async function(error, result){
+//   gasPrice = Number(result);
+//   console.log("CosmosERC20: Gas Price is " + gasPrice + " wei"); // "10000000000000"
+//
+//   await CosmosERC20.deployed().then(function(instance) {
+//     // Use the keyword 'estimateGas' after the function name to get the gas estimation for this particular function
+//     totalGas += instance.mint.estimateGas(1);
+//     totalGas += instance.transfer.estimateGas(1);
+//     totalGas += instance.approve.estimateGas(1);
+//     totalGas += instance.transferFrom.estimateGas(1);
+//     totalGas += instance.burn.estimateGas(1);
+//
+//     return totalGas;
+//   }).then(function(result) {
+//     var gas = Number(result);
+//
+//     console.log("gas estimation = " + gas + " units");
+//     console.log("gas cost estimation = " + (gas * gasPrice) + " wei");
+//     console.log("gas cost estimation = " + TestContract.web3.fromWei((gas * gasPrice), 'ether') + " ether");
+//   });
+// });

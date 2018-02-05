@@ -1,5 +1,5 @@
 'use strict';
-
+const web3 = global.web3;
 const Valset = artifacts.require("./../contracts/Valset.sol");
 
 function sumArrayValues(total, uint64) {
@@ -12,7 +12,8 @@ contract('Valset', function(accounts) {
     _account_one: accounts[1],
     _account_two: accounts[2]
   };
-  let valSet;
+  let valSet, totalGas, gasPrice;
+  let addresses, powers, first_element, second_element, totalPower;
   let initialValidators = [
     "0xe81e0f466dc44478a4db02d21e10680bd794b549",
     "0x36e6068382b6c51e3861cef20fb9c1199c42fd5d",
@@ -25,7 +26,7 @@ contract('Valset', function(accounts) {
     "0x8125648effea25d483412886741d0630f7693499",
     "0xb2c1bafa9419f03e08cffa9b86c3bfe8e3c068dc"
   ];
-  let initialPowers = [ 9, 15, 9, 13, 19, 11, 16, 13, 11, 12 ];
+  let  initialPowers = [ 9, 15, 9, 13, 19, 11, 16, 13, 11, 12 ];
   let newValidators = [
     "0x669ef6f50d14490584e98d6c8a2b29e55842da97",
     "0x81f2a757e418b484950a3f2d3b15b56a218fbca1",
@@ -38,27 +39,34 @@ contract('Valset', function(accounts) {
     "0xfca7d6dba53c9c29d8b0acb951fe87245229d56d",
     "0x7e82bb8859b766f716128291299f28828430f6c7"
   ];
-  let initialPowers = [ 23, 11, 23, 13, 3, 6, 13, 12, 18, 17 ];
+
+  let newPowers = [ 23, 11, 23, 13, 3, 6, 13, 12, 18, 17 ];
 
   beforeEach('Setup contract', async function() {
     valSet = await Valset.new(initialValidators, initialPowers, {from: args._default});
   });
 
   describe('Constructor function', function() {
-    let addresses, powers, first_element, second_element, totalPower;
+
 
     // Proved by induction
     it("Saves initial validators' address in array", async function() {
-      first_element = await valSet.getValidator.call(0);
-      second_element = await valSet.getValidator.call(1);
-      assert.isTrue(Boolean(String(first_element) && String(second_element)), "Initial validators' addresses array should be equal as the saved one");
+      first_element = await valSet.getValidator(0);
+      second_element = await valSet.getValidator(1);
+      // returns the string Address of the elements and check if they exist
+      // console.log("First Validator: ",String(first_element));
+      // console.log("Second Validator: ",String(second_element));
+      assert.isTrue((String(first_element) == initialValidators[0]) &&
+       (String(second_element) == initialValidators[1])),
+       "Initial validators' addresses array should be equal as the saved one");
     });
 
     // Proved by induction
     it("Saves initial validators' powers in array", async function() {
-      first_element = await valSet.getPower.call(0);
-      second_element = await valSet.getPower.call(1);
-      assert.isTrue(Boolean(first_element.toNumber() && second_element.toNumber()), "Initial validators' powers array should be equal as the saved one");
+      first_element = await valSet.getPower(0);
+      second_element = await valSet.getPower(1);
+      assert.isTrue(Boolean(first_element.toNumber() && second_element.toNumber()),
+       "Initial validators' powers array should be equal as the saved one");
     });
 
     it("Checks that addresses and powers arrays have the same length", async function() {
@@ -68,20 +76,36 @@ contract('Valset', function(accounts) {
       assert.lengthOf(addresses, powersLength, "Both initial arrays must have the same length");
     });
 
-    it("Number of validator is below 100", async function() {
+    it("Number of validators is below 100", async function() {
       addresses = await valSet.addresses;
       let valLength = addresses.length;
       assert.isAtMost(valLength, 100, "Validator set should not be larger than 100")
     });
 
     it("Sums totalPower correctly", async function() {
-      totalPower = await valSet.getTotalPower.call();
+      totalPower = await valSet.getTotalPower();
       let accumulatedPower = initialPowers.reduce(sumArrayValues);
-      assert.strictEqual(totalPower.toNumber(), accumulatedPower, "totalSum should the sum of each individual validator's power")
+      assert.strictEqual(totalPower.toNumber(), accumulatedPower,
+       "totalSum should the sum of each individual validator's power")
+    });
+  });
+
+  describe('Update Validator set', function() {
+    let prevAddresses, prevPowers, newSavedAddresses, newSavedPowers, response;
+
+    beforeEach('Get previous validator data', async function() {
+      prevAddresses = await valSet.addresses;;
+      prevPowers = await valSet.powers;
+      // response = await valSet.update(newValidators, newPowers, )
     });
 
+    it("Updates a new validator set with their new respective powers", async function() {
 
-  })
+    });
+    // if valset is equal, powers must change
+
+
+  });
 
 
 

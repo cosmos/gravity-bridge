@@ -26,6 +26,16 @@ contract Valset {
       _;
     }
 
+    modifier valSetLargerThanIdxs(uint idxsLen, uint valLen) {
+      require(idxsLen <= valLen);
+      _;
+    }
+
+    modifier equalSignatureLen(uint idxsLen, uint vLen, uint rLen, uint sLen) {
+      require((idxsLen == vLen) && (vLen == rLen) && (rLen == sLen));
+      _;
+    }
+
     /* Functions */
 
     function getTotalPower() public constant returns (uint64) {
@@ -50,25 +60,35 @@ contract Valset {
       return powers[index];
     }
 
-    function verify(bytes32 hash, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s) public constant returns (bool) {
-        if (!(idxs.length <= addresses.length)) return false;
-        if (!(idxs.length == v.length &&
-              v.length == r.length &&
-              r.length == s.length)) {
-            return false;
-        }
 
-        uint64 signedPower = 0;
+    function verify(bytes32 hash, uint8 v, bytes32 r, bytes32 s, address valAddress)
+      internal
+      pure
+      returns(bool)
+    {
+      bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+      bytes32 prefixedHash = keccak256(prefix, hash);
+      return ecrecover(prefixedHash, v, r, s) == (valAddress);
+    }
 
-        for (uint i = 0; i < idxs.length; i++) {
-            if (i >= 1 && idxs[i] <= idxs[i-1]) return false;
-            if (ecrecover(hash, v[idxs[i]], r[idxs[i]], s[idxs[i]]) == addresses[idxs[i]])
-                signedPower += powers[idxs[i]];
-        }
-
-        if (signedPower * 3 <= totalPower * 2) return false;
-
-        return true;
+    function verifyValidators(bytes32 hash, uint16[] idxs, uint8[] v, bytes32[] r, bytes32[] s)
+      valSetLargerThanIdxs(idxs.length, addresses.length)
+      equalSignatureLen(idxs.length, v.length, r.length, s.length)
+      public
+      constant
+      returns (bool)
+    {
+      uint64 signedPower = 0;
+      uint64 currentIdx;
+      for (uint i = 0; i < idxs.length; i++) {
+          currentIdx = idxs[i];
+          if (i >= 1 && currentIdx <= idxs[i-1]) return false;
+          if (verify(hash, v[currentIdx], r[currentIdx], s[currentIdx], addresses[currentIdx])) {
+            signedPower += powers[idxs[i]];
+          }
+      }
+      if (signedPower * 3 <= totalPower * 2) return false;
+      return true;
     }
 
     event Update(address[] newAddresses, uint64[] newPowers, uint indexed seq);
@@ -108,7 +128,7 @@ contract Valset {
       public
       returns (bool)
     {
-        assert(verify(keccak256(newAddress, newPowers), idxs, v, r, s)); // hashing can be changed
+        assert(verifyValidators(keccak256(newAddress, newPowers), idxs, v, r, s)); // hashing can be changed
         if (updateInternal(newAddress, newPowers)) return true;
         else return false;
     }

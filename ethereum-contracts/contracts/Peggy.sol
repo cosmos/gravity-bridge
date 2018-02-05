@@ -17,7 +17,7 @@ contract Peggy is Valset {
     /*
      * @param to          bytes representation of destination address
      * @param value       value of transference
-     * @param token       token address in origin chain (0x0 if Ethereum, Cosmos for other values) 
+     * @param token       token address in origin chain (0x0 if Ethereum, Cosmos for other values)
      */
     function lock(bytes to, uint64 value, address token) external payable returns (bool) {
         if (token == address(0)) {
@@ -41,17 +41,17 @@ contract Peggy is Valset {
      * @param s           output of ECDSA signature
      */
     event Unlock(address to, uint64 value, address token);
-    
+
     function unlock(
-        address[2] addressArg, 
-        uint64 value, 
-        uint16[] idxs, 
-        uint8[] v, 
+        address[2] addressArg,
+        uint64 value,
+        uint16[] idxs,
+        uint8[] v,
         bytes32[] r,
-        bytes32[] s 
+        bytes32[] s
     ) external returns (bool) {
-        bytes32 hash = keccak256(byte(1), addressArg[0], value/*, chain.length, chain*/);
-        require(Valset.verify(hash, idxs, v, r, s));
+        bytes32 hash = keccak256(byte(1), addressArg[0], value); /*, chain.length, chain*/
+        require(Valset.verifyValidators(hash, idxs, v, r, s));
         if (addressArg[1] == address(0)) {
             assert(addressArg[0].send(value));
         } else {
