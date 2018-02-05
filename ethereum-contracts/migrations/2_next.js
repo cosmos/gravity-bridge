@@ -1,13 +1,14 @@
-var CosmosERC20.sol = artifacts.require("CosmosERC20")
-var ERC20.sol = artifacts.require("ERC20")
-var Peggy.sol = artifacts.require("Peggy")
-var Valset.sol = artifacts.require("Valset")
+var Peggy = artifacts.require("Peggy")
 
-
-module.exports = function(deployer) {
+module.exports = function(deployer, network, accounts) {
   // Use deployer to state migration tasks.
-  deployer.deploy(ERC20);
-  deployer.deploy(Valset);
-  deployer.deploy(Peggy);
-  deployer.deploy(CosmosERC20);
-};
+  var valset
+  switch (network) {
+    case "ganache":
+    default:
+      valset = [[accounts[0]], [100]]
+      break
+  }
+  
+  deployer.deploy(Peggy, valset[0], valset[1])
+}
