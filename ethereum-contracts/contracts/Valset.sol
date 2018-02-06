@@ -124,13 +124,20 @@ contract Valset {
      */
 
     function update(address[] newAddress, uint64[] newPowers, uint16[] signers, uint8[] v, bytes32[] r, bytes32[] s)
-      equalSizeArrays(newAddress.length, newPowers.length)
+      /* equalSizeArrays(newAddress.length, newPowers.length) */
+      valSetLargerThanSigners(signers.length, newAddress.length)
+      equalSignatureLen(signers.length, v.length, r.length, s.length)
       public
       returns (bool)
     {
-        assert(verifyValidators(keccak256(newAddress, newPowers), signers, v, r, s)); // hashing can be changed
-        if (updateInternal(newAddress, newPowers)) return true;
-        else return false;
+        if (newAddress.length == newPowers.length) return false;
+        bytes32 hashData = keccak256(newAddress, newPowers);
+        assert(verifyValidators(hashData, signers, v, r, s)); // hashing can be changed
+        if (updateInternal(newAddress, newPowers)) {
+          return true;
+        } else {
+          return false;
+        }
     }
 
     function Valset(address[] initAddress, uint64[] initPowers) public {

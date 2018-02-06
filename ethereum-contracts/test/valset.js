@@ -110,22 +110,24 @@ contract('Valset', function(accounts) {
           signers.push(i);
         }
       }
-      console.log('Test');
+      // console.log('Test');
+      // console.log(validators);
+      console.log("Val size: ", validators.addresses.length)
       prevAddresses = await valSet.addresses;
-      console.log('Test2');
       prevPowers = await valSet.powers;
-      console.log('Test3');
-      response = await valSet.update(validators.addresses, validators.powers, signers, vArray, rArray, sArray, {from: args._default, gas: "220000"});
+      response = await valSet.update(validators.addresses, validators.powers, signers, vArray, rArray, sArray);
     });
 
 
     /* TODO check signatures */
 
+    it("Returns a successful response on update", async function() {
+      assert.isTrue(Boolean(response.receipt.status), "Succesful update should return true");
+    });
+
     // Proved by induction
     it("Saves updated validators' address in array", async function() {
-      console.log('Testing');
       first_element = await valSet.getValidator(0);
-      console.log('Testing2');
       second_element = await valSet.getValidator(1);
       assert.isTrue(((String(first_element) == validators.addresses[0]) && (String(second_element) == validators.addresses[1])), "Initial validators' addresses array should be equal as the saved one");
     });
