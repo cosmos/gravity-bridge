@@ -10,6 +10,9 @@ contract CosmosERC20 is ERC20 {
 
     address public controller;
 
+    event Mint(address to, uint tokens);
+    event Burn(address from, uint tokens);
+
     function totalSupply() public constant returns (uint) {
         return _totalSupply;
     }
@@ -50,6 +53,7 @@ contract CosmosERC20 is ERC20 {
         if (msg.sender != controller) return false;
         balances[to] += tokens;
         _totalSupply += tokens;
+        Mint(to, tokens);
         return true;
     }
 
@@ -58,6 +62,7 @@ contract CosmosERC20 is ERC20 {
         if (!(balances[from] >= tokens)) return false;
         balances[from] -= tokens;
         _totalSupply -= tokens;
+        Burn(from, tokens);
         return true;
     }
 

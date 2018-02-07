@@ -2,13 +2,12 @@
 /* Add the dependencies you're testing */
 const web3 = global.web3;
 const CosmosERC20 = artifacts.require("./../contracts/CosmosERC20.sol");
-const Peggy = artifacts.require("./../contracts/Peggy.sol");
-// const Valset = artifacts.require("./../contracts/Valset.sol");
 
 contract('CosmosERC20', function(accounts) {
   const args = {
     _default: accounts[0],
-    _other: accounts[1],
+    _account_one: accounts[1],
+    _account_two: accounts[2],
     _zero: 0,
     _initialSupply: 0,
     _amount: 1000
@@ -16,8 +15,8 @@ contract('CosmosERC20', function(accounts) {
   let cosmosToken;
   /* Do something before every `describe` method */
 	beforeEach('Setup contract', async function() {
-    cosmosToken = await CosmosERC20.new(args._default, 'Cosmos', {from: accounts[0]});
-	});
+    cosmosToken = await CosmosERC20.new(args._default, 'Cosmos', {from: args._default});
+  });
 
   /* Functions */
 
@@ -28,7 +27,6 @@ contract('CosmosERC20', function(accounts) {
     });
 
     it("Initial Supply is Correct", async function() {
-			supply = await cosmosToken.totalSupply.call()
 			assert.strictEqual(supply.toNumber(), args._initialSupply, "Initial supply must be 0");
 		});
 
@@ -38,16 +36,18 @@ contract('CosmosERC20', function(accounts) {
   describe('', function() {
     let minted;
     beforeEach('Mint', async function() {
-      minted = await cosmosToken.mint(args._other, args._amount, {from: accounts[0]});
+      minted = await cosmosToken.mint(args._account_one, args._amount, {from: args._default});
     });
 
     /* mint(address to, uint tokens) */
 
     it("Can Mint Tokens", async function() {
-      assert.isTrue(Boolean(minted.receipt.status), "Successful mint should return true");
+      assert.strictEqual(minted.logs.length, 1, "Successful mint should have logged Mint event");
+      assert.strictEqual(minted.logs[0].args.to, args._account_one, "'to' address parameter from Mint event should be equal to account 1");
+      assert.strictEqual(minted.logs[0].args.tokens.toNumber(), args._amount, `'tokens' uint parameter from Mint event should be equal to ${args._amount}`);
 			let totalSupply2 = await cosmosToken.totalSupply.call();
 			assert.strictEqual(totalSupply2.toNumber(), args._amount, "Supply should increase in 1000");
-      let balanceAfter = await cosmosToken.balanceOf.call(args._other);
+      let balanceAfter = await cosmosToken.balanceOf.call(args._account_one);
       assert.strictEqual(balanceAfter.toNumber(), args._amount, "Controller's balance should increase in 1000");
 		});
 
@@ -55,22 +55,25 @@ contract('CosmosERC20', function(accounts) {
 
     it("Can Burn tokens from a user's balance", async function() {
       // initial supply and balance = 1000
-      let res = await cosmosToken.burn(args._other, 100, {from: accounts[0]});
-      assert.isTrue(Boolean(res.receipt.status), "Successful burning should return true");
+      let res = await cosmosToken.burn(args._account_one, 100, {from: args._default});
+      assert.strictEqual(res.logs.length, 1, "Successful burn should have logged Burn event");
+      assert.strictEqual(res.logs[0].args.from, args._account_one, "'from' address parameter from Burn event should be equal to account 1");
+      assert.strictEqual(res.logs[0].args.tokens.toNumber(), 100, "'tokens' uint parameter from Burn event should be equal to 100");
       let totalSupply3 = await cosmosToken.totalSupply.call();
       assert.strictEqual(totalSupply3.toNumber(), 900, "Supply should decrease in 100");
-      let balanceAfter = await cosmosToken.balanceOf.call(args._other);
+      let balanceAfter = await cosmosToken.balanceOf.call(args._account_one);
       assert.strictEqual(balanceAfter.toNumber(), 900, "Controller's balance should decrease by 100");
     });
 
     describe('', function() {
-      let approved
-
-
+      let approveEvent;
       it("Can Approve a certain amount to be spend by an user", async function() {
-        let res = await cosmosToken.approve(accounts[2], args._amount, {from: accounts[1]});
-        assert.isTrue(Boolean(res.receipt.status), "Successful approval should always return true");
-        let amountAllowed = await cosmosToken.allowance.call(accounts[1], accounts[2]);
+        let res = await cosmosToken.approve(args._account_two, args._amount, {from: args._account_one});
+        assert.strictEqual(res.logs.length, 1, "Successful approve should have logged Approval event");
+        assert.strictEqual(res.logs[0].args.tokenOwner, args._account_one, "'tokenOwner' address parameter from Approval event should be equal to account 1");
+        assert.strictEqual(res.logs[0].args.spender, args._account_two, "'spender' address parameter from Approval event should be equal to account 1");
+        assert.strictEqual(res.logs[0].args.tokens.toNumber(), args._amount, `'tokens' uint parameter from Burn event should be equal to ${args._amount}`);
+        let amountAllowed = await cosmosToken.allowance(args._account_one, args._account_two);
         assert.strictEqual(Number(amountAllowed.toNumber()), args._amount, "Approved amount should be the same as the user allowed balance");
       });
     });
@@ -78,10 +81,13 @@ contract('CosmosERC20', function(accounts) {
     /* transferFrom(address from, address to, uint tokens) */
 
     it("Can transfer tokens from one account to another", async function() {
-      await cosmosToken.approve(accounts[2], args._amount, {from: accounts[1]});
-      let res = await cosmosToken.transferFrom(accounts[1], args._default, 100, {from: accounts[2]});
-      assert.isTrue(Boolean(res.receipt.status), "Successful transfer should return true");
-      let balanceSender = await cosmosToken.balanceOf.call(args._other);
+      await cosmosToken.approve(args._account_two, args._amount, {from: args._account_one});
+      let res = await cosmosToken.transferFrom(args._account_one, args._default, 100, {from: args._account_two});
+      assert.strictEqual(res.logs.length, 1, "Successful transferFrom should have logged Transfer event");
+      assert.strictEqual(res.logs[0].args.from, args._account_one, "'from' address parameter from Approval event should be equal to account 1");
+      assert.strictEqual(res.logs[0].args.to, args._default, "'to' address parameter from Approval event should be equal to account 0");
+      assert.strictEqual(res.logs[0].args.tokens.toNumber(), 100, "'tokens' uint parameter from Burn event should be equal to 100");
+      let balanceSender = await cosmosToken.balanceOf.call(args._account_one);
       assert.strictEqual(balanceSender.toNumber(), 900, "Sender's balance should decrease by 100");
       let balanceRecipient = await cosmosToken.balanceOf.call(args._default);
       assert.strictEqual(balanceRecipient.toNumber(), 100, "Recipient's balance should increase by 100");
@@ -90,9 +96,12 @@ contract('CosmosERC20', function(accounts) {
     /* transfer(address to, uint tokens) */
 
     it("Can transfer tokens from caller to a recipient", async function() {
-      let res = await cosmosToken.transfer(args._default, 50, {from: accounts[1]});
-      assert.isTrue(Boolean(res.receipt.status), "Successful transfer should return true");
-      let balanceSender = await cosmosToken.balanceOf.call(args._other);
+      let res = await cosmosToken.transfer(args._default, 50, {from: args._account_one});
+      assert.strictEqual(res.logs.length, 1, "Successful transfer should have logged Transfer event");
+      assert.strictEqual(res.logs[0].args.from, args._account_one, "'from' address parameter from Approval event should be equal to account 1");
+      assert.strictEqual(res.logs[0].args.to, args._default, "'to' address parameter from Approval event should be equal to account 0");
+      assert.strictEqual(res.logs[0].args.tokens.toNumber(), 50, "'tokens' uint parameter from Burn event should be equal to 50");
+      let balanceSender = await cosmosToken.balanceOf.call(args._account_one);
       assert.strictEqual(balanceSender.toNumber(), 950, "Sender's balance should decrease by 50");
       let balanceRecipient = await cosmosToken.balanceOf.call(args._default);
       assert.strictEqual(balanceRecipient.toNumber(), 50, "Recipient's balance should increase by 50");
@@ -101,25 +110,3 @@ contract('CosmosERC20', function(accounts) {
   });
   });
 });
-
-// CosmosERC20.web3.eth.getGasPrice(async function(error, result){
-//   gasPrice = Number(result);
-//   console.log("CosmosERC20: Gas Price is " + gasPrice + " wei"); // "10000000000000"
-//
-//   await CosmosERC20.deployed().then(function(instance) {
-//     // Use the keyword 'estimateGas' after the function name to get the gas estimation for this particular function
-//     totalGas += instance.mint.estimateGas(1);
-//     totalGas += instance.transfer.estimateGas(1);
-//     totalGas += instance.approve.estimateGas(1);
-//     totalGas += instance.transferFrom.estimateGas(1);
-//     totalGas += instance.burn.estimateGas(1);
-//
-//     return totalGas;
-//   }).then(function(result) {
-//     var gas = Number(result);
-//
-//     console.log("gas estimation = " + gas + " units");
-//     console.log("gas cost estimation = " + (gas * gasPrice) + " wei");
-//     console.log("gas cost estimation = " + TestContract.web3.fromWei((gas * gasPrice), 'ether') + " ether");
-//   });
-// });

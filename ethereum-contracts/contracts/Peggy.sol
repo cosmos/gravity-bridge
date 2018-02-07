@@ -4,10 +4,33 @@ import "./CosmosERC20.sol";
 import "./Valset.sol";
 
 contract Peggy is Valset {
+
     mapping (bytes => CosmosERC20) cosmosTokenAddress;
 
     function getCosmosTokenAddress(bytes name) internal constant returns (address) {
-        return cosmosTokenAddress[name];
+      return cosmosTokenAddress[name];
+    }
+
+    /* Adapted from https://ethereum.stackexchange.com/questions/15350/how-to-convert-an-bytes-to-address-in-solidity */
+    function bytesToAddress (bytes b) internal pure returns (address) {
+      uint result = 0;
+      uint i = 0;
+      if (b[0] == 48 && b[1] == 120) {
+        i = 2; // if address starts with 'Ox' begin in index 2
+      }
+      for (i; i < b.length; i++) {
+          uint c = uint(b[i]);
+          if (c >= 48 && c <= 57) {
+              result = result * 16 + (c - 48);
+          }
+          if(c >= 65 && c<= 90) {
+              result = result * 16 + (c - 55);
+          }
+          if(c >= 97 && c<= 122) {
+              result = result * 16 + (c - 87);
+          }
+      }
+      return address(result);
     }
 
     event Lock(bytes to, uint64 value, address token);
@@ -21,9 +44,12 @@ contract Peggy is Valset {
      */
     function lock(bytes to, uint64 value, address token) external payable returns (bool) {
         if (token == address(0)) {
-            assert(msg.value == value);
+            require(msg.value == value);
+            assert(bytesToAddress(to).send(value));
+
         } else {
-            assert(ERC20(token).transferFrom(msg.sender, this, value));
+
+            assert(ERC20(token).transferFrom(msg.sender, this, value)); // 'this' is the Peggy contract address
         }
         Lock(to, value, token);
         return true;
@@ -43,24 +69,27 @@ contract Peggy is Valset {
     event Unlock(address to, uint64 value, address token);
 
     function unlock(
-        address[2] addressArg,
+        /* address[2] addressArg, // 0: token, 1: to */
+        address token,
+        address to,
         uint64 value,
         uint16[] idxs,
         uint8[] v,
         bytes32[] r,
         bytes32[] s
     ) external returns (bool) {
-        bytes32 hash = keccak256(byte(1), addressArg[0], value); /*, chain.length, chain*/
-        require(Valset.verifyValidators(hash, idxs, v, r, s));
-        if (addressArg[1] == address(0)) {
-            assert(addressArg[0].send(value));
+        bytes32 hashData = keccak256(byte(1), token, value); /*, chain.length, chain*/
+        require(Valset.verifyValidators(hashData, idxs, v, r, s));
+        if (token == address(0)) {
+            assert(to.send(value));
         } else {
-            assert(ERC20(addressArg[1]).transfer(addressArg[1], value));
+            assert(ERC20(token).transfer(to, value));
         }
-        Unlock(addressArg[0], value, addressArg[1]);
+        Unlock(to, value, token);
         return true;
     }
 
     function Peggy(address[] initAddress, uint64[] initPowers) public Valset(initAddress, initPowers) {
+
     }
 }
