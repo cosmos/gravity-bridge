@@ -7,6 +7,14 @@ contract Peggy is Valset {
 
     mapping (bytes => CosmosERC20) cosmosTokenAddress;
 
+    /* Events  */
+
+    event Unlock(address to, uint64 value, address token);
+    event Lock(bytes to, uint64 value, address token);
+
+
+    /* Functions */
+
     function getCosmosTokenAddress(bytes name) internal constant returns (address) {
       return cosmosTokenAddress[name];
     }
@@ -33,9 +41,6 @@ contract Peggy is Valset {
       return address(result);
     }
 
-    event Lock(bytes to, uint64 value, address token);
-
-
     /// Locks received funds to the consensus of the peg zone
     /*
      * @param to          bytes representation of destination address
@@ -61,25 +66,23 @@ contract Peggy is Valset {
      * @param value       value of transference
      * @param token       token address in origin chain (0x0 if Ethereum, Cosmos for other values)
      * @param chain       bytes respresentation of the destination chain (not used in MVP, for incentivization of relayers)
-     * @param idxs        indexes of each validator
-     * @param v           recovery id
-     * @param r           output of ECDSA signature
-     * @param s           output of ECDSA signature
+     * @param signers     indexes of each validator
+     * @param v           array of recoverys id
+     * @param r           array of outputs of ECDSA signature
+     * @param s           array of outputs of ECDSA signature
      */
-    event Unlock(address to, uint64 value, address token);
-
     function unlock(
         /* address[2] addressArg, // 0: token, 1: to */
         address token,
         address to,
         uint64 value,
-        uint16[] idxs,
+        uint16[] signers,
         uint8[] v,
         bytes32[] r,
         bytes32[] s
     ) external returns (bool) {
         bytes32 hashData = keccak256(byte(1), token, value); /*, chain.length, chain*/
-        require(Valset.verifyValidators(hashData, idxs, v, r, s));
+        require(Valset.verifyValidators(hashData, signers, v, r, s));
         if (token == address(0)) {
             assert(to.send(value));
         } else {
