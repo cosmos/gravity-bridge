@@ -52,17 +52,20 @@ fn sign_and_forward(log: Log) -> bool {
     true
 }
 
-fn extract(toy: &toy::SolidityToy, log: Log) -> Result<Invoked> {
+
+
+
+fn extract(log: Log, toy: &toy::SolidityToy) -> Invoked {
     let raw_log = RawLog {
         topics: log.topics.into_iter().map(|t| From::from(t.0)).collect(),
         data: log.data.0,
     };
 
-    match toy.events().invoked().parse_log(raw_log) {
-        Ok(v) => Ok(v),
-        Err(e) => Err(e.into()),
-    }
+    toy.events().invoked().parse_log(raw_log).expect("Extracting fields from a log")
 }
+
+
+
 
 fn main() {
     let args: Args = docopt::Docopt::new(USAGE)
@@ -72,8 +75,9 @@ fn main() {
     env_logger::init();
 
     // TODO store in db as ack is received from ABCI
-    let mut last_block: u64 = 0;
     let mut event_loop = Core::new().unwrap();
+    let delay = 2; // for testing purpose.
+    let mut last_block: u64 = delay;
 
     println!("making ipc event loop");
     let ipc = Ipc::with_event_loop(&*args.flag_ipc, &event_loop.handle())
@@ -84,36 +88,37 @@ fn main() {
     );
 
     let filter_builder = FilterBuilder::default()
-        .from_block(BlockNumber::Number(0))
-        .to_block(BlockNumber::Latest)
+        //.from_block(BlockNumber::Number(0))
+        //.to_block(BlockNumber::Latest)
         // .limit(1)
         .address(vec![address]);
 
     println!("creating transport");
     let transport = api::Eth::new(&ipc);
+    let web3 = web3::Web3::new();
 
     loop {
+        let latest = transport.block_number().wait().unwrap();
+       
+        println!("got block number {:?}", latest);
+
         let filter = filter_builder
             .clone()
             .from_block(BlockNumber::Number(last_block))
+            .to_block(BlockNumber::Number(latest.low_u64()-delay))
             .build();
 
-        trace!("querying logs with filter {:?}", filter);
+        println!("querying logs with filter {:?}", filter);
 
         let logs_fut = transport.logs(&filter);
         let logs = event_loop.run(logs_fut).unwrap();
-        
+
         for log in logs {
             let block = log.block_number;
             println!("got log {:?}", block);
-//            let success = sign_and_forward(log);
-            if true {
-                last_block = block.unwrap().low_u64() + 1;
-                match extract(&toy::SolidityToy::default(), log) {
-                    Ok(v) => println!("ok {:?} {:?} {:?}", v.seq, v.hash, v.data),
-                    Err(e) => println!("err {:?}", e),
-                }
-            }
+            let v = extract(log, &toy::SolidityToy::default());
+            println!("{:?} {:?} {:?}", v.seq, v.hash, v.data);
+            last_block = block.unwrap().low_u64()+1;
         }
     }
 }
