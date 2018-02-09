@@ -31,7 +31,7 @@ contract Valset {
       _;
     }
 
-    modifier equalSignatureLen(uint16 signersLen, uint16 vLen, uint16 rLen, uint16 sLen) {
+    modifier equalSignatureLen(uint signersLen, uint vLen, uint rLen, uint sLen) {
       require((signersLen == vLen) && (vLen == rLen) && (rLen == sLen));
       _;
     }
@@ -39,10 +39,10 @@ contract Valset {
     /* Events */
 
     event Update(address[] newAddresses, uint64[] newPowers, uint indexed seq);
-    event Verify(uint16[] signers);
+    event Verify(uint[] signers);
     event NoSupermajority();
-    event NoLen(uint16[] signers);
-    event InvalidSignature(uint16 validatorIdx, uint8 v, bytes32 r, bytes32 s);
+    event NoLen(uint[] signers);
+    event InvalidSignature(uint validatorIdx, uint8 v, bytes32 r, bytes32 s);
 
     /* Functions */
 
@@ -79,14 +79,14 @@ contract Valset {
       return ecrecover(prefixedHash, v, r, s) == (valAddress);
     }
 
-    function verifyValidators(bytes32 hash, uint16[] signers, uint8[] v, bytes32[] r, bytes32[] s)
+    function verifyValidators(bytes32 hash, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s)
       valSetLargerThanSigners(signers.length, addresses.length)
       /* equalSignatureLen(signers.length, v.length, r.length, s.length) */
       public
       returns (bool)
     {
       uint64 signedPower = 0;
-      uint16 currentIdx;
+      uint currentIdx;
       if (signers.length == 0) {
         NoLen(signers);
       }
@@ -138,7 +138,7 @@ contract Valset {
      * @param s           output of ECDSA signature.  Used to compute ecrecover
      */
 
-    function update(address[] newAddress, uint64[] newPowers, uint16[] signers, uint8[] v, bytes32[] r, bytes32[] s)
+    function update(address[] newAddress, uint64[] newPowers, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s)
       /* equalSizeArrays(newAddress.length, newPowers.length) */
       valSetLargerThanSigners(signers.length, newAddress.length)
       /* equalSignatureLen(signers.length, v.length, r.length, s.length) */

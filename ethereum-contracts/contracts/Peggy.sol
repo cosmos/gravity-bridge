@@ -76,7 +76,7 @@ contract Peggy is Valset {
         address token,
         address to,
         uint64 value,
-        uint16[] signers,
+        uint[] signers,
         uint8[] v,
         bytes32[] r,
         bytes32[] s

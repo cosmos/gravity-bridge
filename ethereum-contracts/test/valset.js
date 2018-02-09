@@ -59,6 +59,7 @@ contract('Valset', function(accounts) {
 
     let prevAddresses, prevPowers, newValidators, res, signs, signature, signedPower, totalPower, hashData;
     let vArray = [], rArray = [], sArray = [], signers = [];
+
     beforeEach('Create new validator set and get previous validator data', async function() {
       vArray = [], rArray = [], sArray = [], signers = [];
       totalPower = 0, signedPower = 0;
@@ -108,6 +109,7 @@ contract('Valset', function(accounts) {
     let rArray = [];
     let sArray = [];
     let signers = [];
+
     beforeEach('Create new validator set and get previous validator data', async function() {
       vArray = [];
       rArray = [];
@@ -125,9 +127,12 @@ contract('Valset', function(accounts) {
           signers.push(i);
         }
       }
-      prevAddresses = await valSet.addresses;
-      prevPowers = await valSet.powers;
       res = await valSet.update(validators.addresses, validators.powers, signers, vArray, rArray, sArray);
+    });
+
+    it("Get validator signature set", async function() {
+      assert.isAtMost(signers.length, validators.addresses.length, "Signers set can't be higher than validator set");
+      console.log(res.logs);
     });
 
     it('Should updated the validator set', async function () {
@@ -137,36 +142,22 @@ contract('Valset', function(accounts) {
       assert.isNumber(res.logs[0].args.seq.toNumber(), "Update event should return 'seq' param in the log");
     });
 
-    it("Get validator signature set", async function() {
-      assert.isAtMost(signers.length, validators.addresses.length, "Signers set can't be higher than validator set");
-    });
-
     // Proved by induction
     it("Saves updated validators' address in array", async function() {
       first_element = await valSet.getValidator(0);
       second_element = await valSet.getValidator(1);
+      console.log(first_element, second_element);
+      console.log(validators.addresses[0], validators.addresses[1]);
       assert.isTrue(((String(first_element) == validators.addresses[0]) && (String(second_element) == validators.addresses[1])), "Initial validators' addresses array should be equal as the saved one");
-    });
-
-    // Proved by induction
-    it("Changes the validators' addresses", async function() {
-      first_element = await valSet.getValidator(0);
-      second_element = await valSet.getValidator(1);
-      assert.isFalse(((String(first_element) == prevAddresses[0]) || (String(second_element) == prevAddresses[1])), "New validators' addresses should be disctinct as the previous validator set addresses");
     });
 
     // Proved by induction
     it("Saves updated validators' powers in array", async function() {
       first_element = await valSet.getPower(0);
       second_element = await valSet.getPower(1);
+      console.log(first_element, second_element);
+      console.log(validators.powers[0], validators.powers[1]);
       assert.isTrue(((first_element.toNumber() == validators.powers[0]) && (second_element.toNumber() == validators.powers[1])), "Initial validators' powers array should be equal as the saved one");
-    });
-
-    // Proved by induction
-    it("Changes the validators' powers", async function() {
-      first_element = await valSet.getPower(0);
-      second_element = await valSet.getPower(1);
-      assert.isFalse(((String(first_element) == prevPowers[0]) || (String(second_element) == prevPowers[1])), "New validators' powers should be disctinct as the previous validator set powers");
     });
   });
 
