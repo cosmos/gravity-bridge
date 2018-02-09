@@ -2,7 +2,7 @@
 /* Add the dependencies you're testing */
 const utils = require('./utils.js');
 const web3 = global.web3;
-// const CosmosERC20 = artifacts.require("./../contracts/CosmosERC20.sol");
+const CosmosERC20 = artifacts.require("./../contracts/CosmosERC20.sol");
 const Peggy = artifacts.require("./../contracts/Peggy.sol");
 const createKeccakHash = require('keccak');
 const ethUtils = require('ethereumjs-util');
