@@ -27,6 +27,7 @@ use futures::Future;
 use ethabi::RawLog;
 use errors::Result;
 use toy::logs::Invoked;
+use std::{thread, time};
 
 // makes the contract available as toy::Toy
 use_contract!(toy, "SolidityToy", "SolidityToy.abi");
@@ -48,13 +49,6 @@ struct Args {
     flag_contract: String,
 }
 
-fn sign_and_forward(log: Log) -> bool {
-    true
-}
-
-
-
-
 fn extract(log: Log, toy: &toy::SolidityToy) -> Invoked {
     let raw_log = RawLog {
         topics: log.topics.into_iter().map(|t| From::from(t.0)).collect(),
@@ -64,8 +58,18 @@ fn extract(log: Log, toy: &toy::SolidityToy) -> Invoked {
     toy.events().invoked().parse_log(raw_log).expect("Extracting fields from a log")
 }
 
+fn encode(log: Invoked) -> [u8] {
+    [0x00]
+}
 
+fn sign(data: [u8]) -> [u8; 65] {
+    
+}
 
+fn forward(data: [u8]) -> bool {
+    // write some abci code here
+    true
+}
 
 fn main() {
     let args: Args = docopt::Docopt::new(USAGE)
@@ -77,7 +81,7 @@ fn main() {
     // TODO store in db as ack is received from ABCI
     let mut event_loop = Core::new().unwrap();
     let delay = 2; // for testing purpose.
-    let mut last_block: u64 = delay;
+    let mut last_block: u64 = 0;
 
     println!("making ipc event loop");
     let ipc = Ipc::with_event_loop(&*args.flag_ipc, &event_loop.handle())
@@ -95,20 +99,26 @@ fn main() {
 
     println!("creating transport");
     let transport = api::Eth::new(&ipc);
-    let web3 = web3::Web3::new();
+
+    // searches over (last_block, block_number-delay]
 
     loop {
-        let latest = transport.block_number().wait().unwrap();
-       
-        println!("got block number {:?}", latest);
+        thread::sleep(time::Duration::from_millis(1000));
+
+        let block_number_fut = transport.block_number();
+        let block_number = event_loop.run(block_number_fut).unwrap().low_u64();
+
+        if block_number - delay <= last_block {
+            continue;
+        }
+
+        println!("New block detected: {}", block_number);
 
         let filter = filter_builder
             .clone()
-            .from_block(BlockNumber::Number(last_block))
-            .to_block(BlockNumber::Number(latest.low_u64()-delay))
+            .from_block(BlockNumber::Number(last_block+1))
+            .to_block(BlockNumber::Number(block_number-delay))
             .build();
-
-        println!("querying logs with filter {:?}", filter);
 
         let logs_fut = transport.logs(&filter);
         let logs = event_loop.run(logs_fut).unwrap();
@@ -117,8 +127,10 @@ fn main() {
             let block = log.block_number;
             println!("got log {:?}", block);
             let v = extract(log, &toy::SolidityToy::default());
-            println!("{:?} {:?} {:?}", v.seq, v.hash, v.data);
-            last_block = block.unwrap().low_u64()+1;
+            let s = sign(v);
+            let r = forward(s);
         }
+
+        last_block = block_number-delay;
     }
 }
