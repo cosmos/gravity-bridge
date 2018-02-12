@@ -15,8 +15,12 @@ extern crate ethabi_contract;
 extern crate futures;
 #[macro_use]
 extern crate error_chain;
+extern crate ed25519_dalek;
+extern crate protobuf;
+extern crate sha2;
 
 mod errors;
+mod tx;
 
 use web3::transports::ipc::Ipc;
 use web3::types::{Address, BlockNumber, FilterBuilder, Log, Bytes};
@@ -26,14 +30,19 @@ use tokio_core::reactor::Core;
 use futures::Future;
 use ethabi::RawLog;
 use errors::Result;
-use toy::logs::Invoked;
+use peggy::logs::Lock;
 use std::{thread, time};
+use tx::{WitnessTx, LockMsg};
+use ed25519_dalek::{Keypair, Signature, SECRET_KEY_LENGTH, SIGNATURE_LENGTH};
+use protobuf::Message;
+use std::iter::Iterator;
+use sha2::Sha512;
 
 // makes the contract available as toy::Toy
-use_contract!(toy, "SolidityToy", "SolidityToy.abi");
+use_contract!(peggy, "Peggy", "Peggy.abi");
 
 const USAGE: &'static str = "
-Usage: sfeature/eth_witnessigner [--contract=<address>] [--ipc=<path.ipc>]
+Usage: feature/eth_witnessigner [--contract=<address>] [--ipc=<path.ipc>]
 
 Options:
     --ipc=<path>                Path to unix socket. [default: /Users/adrianbrink/.peggy/jsonrpc.ipc]
@@ -49,25 +58,55 @@ struct Args {
     flag_contract: String,
 }
 
-fn extract(log: Log, toy: &toy::SolidityToy) -> Invoked {
-    let raw_log = RawLog {
+enum WitnessLog {
+    Lock(Lock)
+}
+
+impl From<Lock> for WitnessLog {
+    fn from(item: Lock) -> Self {
+        WitnessLog::Lock(item)
+    }
+}
+
+
+fn new_witness(rawlog: RawLog, peggy: &peggy::Peggy) -> WitnessLog {
+    let lock = peggy.events().lock().parse_log(rawlog).map(|x| WitnessLog::from(x));
+    Err(()).or(lock).expect("New witness")
+}
+
+fn sign_and_wrap_lock(log: Lock, keypair: Keypair, sequence: i64) -> WitnessTx {
+    let msg = LockMsg::new();
+    msg.set_dest(log.to);
+    msg.set_value(log.value.as_u64());
+    msg.set_token(log.token.to_vec());
+
+    let signbytes = msg.clone().write_to_bytes().unwrap();
+    let signature = keypair.sign::<Sha512>(&signbytes).to_bytes();
+
+    let tx = WitnessTx::new();
+    tx.set_lock(msg);
+    tx.set_signature(signature.to_vec());
+    tx.set_sequence(sequence);
+
+    tx
+}
+
+fn sign_and_wrap(log: WitnessLog, keypair: Keypair, sequence: i64) -> WitnessTx {
+    match log {
+        WitnessLog::Lock(l) => sign_and_wrap_lock(l, keypair, sequence)
+    }
+}
+
+fn gen_rawlog(log: Log) -> RawLog {
+    RawLog {
         topics: log.topics.into_iter().map(|t| From::from(t.0)).collect(),
         data: log.data.0,
-    };
-
-    toy.events().invoked().parse_log(raw_log).expect("Extracting fields from a log")
+    }
 }
 
-fn encode(log: Invoked) -> [u8] {
-    [0x00]
-}
 
-fn sign(data: [u8]) -> [u8; 65] {
-    
-}
 
-fn forward(data: [u8]) -> bool {
-    // write some abci code here
+fn sign_and_forward(tx: WitnessTx) -> bool {
     true
 }
 
@@ -126,9 +165,11 @@ fn main() {
         for log in logs {
             let block = log.block_number;
             println!("got log {:?}", block);
-            let v = extract(log, &toy::SolidityToy::default());
-            let s = sign(v);
-            let r = forward(s);
+            let log = new_witness(gen_rawlog(log), &peggy::Peggy::default());
+            let keypair = Keypair::from_bytes("test".as_bytes()).expect("frombytes keypair");
+            let seq = 0;
+
+            let tx = sign_and_wrap(log, keypair, seq);
         }
 
         last_block = block_number-delay;
