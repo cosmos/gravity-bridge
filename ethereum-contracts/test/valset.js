@@ -1,5 +1,4 @@
 'use strict';
-// var createValidators = require('./valset/createValidators');
 const web3 = global.web3;
 const Valset = artifacts.require("./../contracts/Valset.sol");
 const utils = require('./utils.js');
@@ -13,6 +12,7 @@ contract('Valset', function(accounts) {
   };
   let valSet, totalGas, gasPrice;
   let addresses, powers, first_element, second_element, totalPower, validators, totalValidators;
+
   before('Setup contract', async function() {
     totalValidators = utils.randomIntFromInterval(1, 100); // 1-100 validators
     validators = utils.createValidators(totalValidators);
@@ -57,27 +57,36 @@ contract('Valset', function(accounts) {
 
   describe("Verifies validators' signatures", function() {
 
-    let prevAddresses, prevPowers, newValidators, res, signs, signature, signedPower, totalPower, hashData;
+    let prevAddresses, prevPowers, newValidators, res, signs, signature, signature2, signedPower, totalPower, msg, prefix, prefixedMsg, hashData;
     let vArray = [], rArray = [], sArray = [], signers = [];
 
     beforeEach('Create new validator set and get previous validator data', async function() {
       vArray = [], rArray = [], sArray = [], signers = [];
       totalPower = 0, signedPower = 0;
-      totalValidators = utils.randomIntFromInterval(1, 100); // 1-100 validators
-      validators = utils.createValidators(totalValidators);
-      for (var i = 0; i < totalValidators; i++) {
+      validators = utils.assignPowersToAccounts(accounts);
+      msg = new Buffer(accounts.concat(validators.powers));
+      hashData = web3.sha3(accounts.concat(validators.powers));
+      prefix = new Buffer("\x19Ethereum Signed Message:\n");
+      prefixedMsg = ethUtils.sha3(
+        Buffer.concat([prefix, new Buffer(String(msg.length)), msg])
+      );
+      for (var i = 0; i < 10; i++) {
         signs = (Math.random() <= 0.95764); // two std
         totalPower += validators.powers[i];
         if (signs) {
-          signature = ethUtils.ecsign(ethUtils.hashPersonalMessage(ethUtils.toBuffer(validators.addresses, validators.powers)), ethUtils.toBuffer(validators.privateKeys[i]));
-          vArray.push(ethUtils.bufferToInt(signature.v));
-          rArray.push(web3.fromAscii(ethUtils.addHexPrefix(ethUtils.bufferToHex(signature.r)).substring(2)));
-          sArray.push(web3.fromAscii(ethUtils.addHexPrefix(ethUtils.bufferToHex(signature.s)).substring(2)));
+          signature = await web3.eth.sign(validators.addresses[i], '0x' + msg.toString('hex'));
+          let ethSignature = await web3.eth.sign(validators.addresses[i], hashData).slice(2);
+          const rpcSignature = ethUtils.fromRpcSig(signature);
+          const pubKey  = ethUtils.ecrecover(prefixedMsg, rpcSignature.v, rpcSignature.r, rpcSignature.s);
+          const addrBuf = ethUtils.pubToAddress(pubKey);
+          const addr    = ethUtils.bufferToHex(addrBuf);
+          vArray.push(web3.toDecimal(ethSignature.slice(128, 130)) + 27);
+          rArray.push('0x' + ethSignature.slice(0, 64));
+          sArray.push('0x' + ethSignature.slice(64, 128));
           signers.push(i);
           signedPower += validators.powers[i];
         }
       }
-      hashData = web3.fromAscii(ethUtils.addHexPrefix(ethUtils.bufferToHex(ethUtils.hashPersonalMessage(ethUtils.toBuffer(validators.addresses, validators.powers)))).substring(2));
     });
 
     it('Signature data arrays and signers array have the same size', function () {
@@ -85,7 +94,8 @@ contract('Valset', function(accounts) {
     });
 
     it('Expects to throw if super majority is not reached', async function() {
-      res = await valSet.verifyValidators(hashData, signers, vArray, rArray, sArray);
+      res = await valSet.verifyValidators(hashData, signers.length, signers, vArray, rArray, sArray);
+      console.log(res);
       assert.isAtLeast(res.logs.length, 1, "Successful call should have logged at least one event");
       if(signedPower * 3 < totalPower * 2) {
         assert.strictEqual(res.logs[0].event, "NoSupermajority", "Should have thrown the NoSupermajority event");
@@ -95,7 +105,8 @@ contract('Valset', function(accounts) {
     })
 
     it('Signatures are correct', async function () {
-      res = await valSet.verifyValidators(hashData, signers, vArray, rArray, sArray);
+      res = await valSet.verifyValidators(hashData, signers.length, signers, vArray, rArray, sArray);
+      console.log(res);
       assert.isAtLeast(res.logs.length, 1, "Successful verification should have logged at least one event (1 on success and more than 1 if it fails)");
       assert.strictEqual(res.logs[0].event, "Verify", "On success it should have thrown Verify event");
       assert.deepEqual(res.logs[0].args.signers, signers, "'signers' uint16[] parameter from Verify event should be equal to the signers from the validator set");
@@ -104,39 +115,45 @@ contract('Valset', function(accounts) {
   });
 
   describe('Updates the Validator set', function() {
-    let prevAddresses, prevPowers, newValidators, res, signs, signature;
-    let vArray = [];
-    let rArray = [];
-    let sArray = [];
-    let signers = [];
+    let prevAddresses, prevPowers, newValidators, res, signs, signature, signature2, signedPower, totalPower, msg, prefix, prefixedMsg, hashData;
+    let vArray = [], rArray = [], sArray = [], signers = [];
 
     beforeEach('Create new validator set and get previous validator data', async function() {
-      vArray = [];
-      rArray = [];
-      sArray = [];
-      signers = [];
-      totalValidators = utils.randomIntFromInterval(1, 100); // 1-100 validators
-      validators = utils.createValidators(totalValidators);
-      for (var i = 0; i < totalValidators; i++) {
+      vArray = [], rArray = [], sArray = [], signers = [];
+      totalPower = 0, signedPower = 0;
+      validators = utils.assignPowersToAccounts(accounts);
+      msg = new Buffer(accounts.concat(validators.powers));
+      hashData = web3.sha3(accounts.concat(validators.powers));
+      prefix = new Buffer("\x19Ethereum Signed Message:\n");
+      prefixedMsg = ethUtils.sha3(
+        Buffer.concat([prefix, new Buffer(String(msg.length)), msg])
+      );
+      for (var i = 0; i < 10; i++) {
         signs = (Math.random() <= 0.95764); // two std
+        totalPower += validators.powers[i];
         if (signs) {
-          signature = ethUtils.ecsign(ethUtils.hashPersonalMessage(ethUtils.toBuffer(validators.addresses, validators.powers)), ethUtils.toBuffer(validators.privateKeys[i]));
-          vArray.push(ethUtils.bufferToInt(signature.v));
-          rArray.push(web3.fromAscii(ethUtils.addHexPrefix(ethUtils.bufferToHex(signature.r)).substring(2)));
-          sArray.push(web3.fromAscii(ethUtils.addHexPrefix(ethUtils.bufferToHex(signature.s)).substring(2)));
+          signature = await web3.eth.sign(validators.addresses[i], '0x' + msg.toString('hex'));
+          let ethSignature = await web3.eth.sign(validators.addresses[i], hashData).slice(2);
+          const rpcSignature = ethUtils.fromRpcSig(signature);
+          const pubKey  = ethUtils.ecrecover(prefixedMsg, rpcSignature.v, rpcSignature.r, rpcSignature.s);
+          const addrBuf = ethUtils.pubToAddress(pubKey);
+          const addr    = ethUtils.bufferToHex(addrBuf);
+          vArray.push(web3.toDecimal(ethSignature.slice(128, 130)) + 27);
+          rArray.push('0x' + ethSignature.slice(0, 64));
+          sArray.push('0x' + ethSignature.slice(64, 128));
           signers.push(i);
+          signedPower += validators.powers[i];
         }
       }
-      res = await valSet.update(validators.addresses, validators.powers, signers, vArray, rArray, sArray);
     });
 
     it("Get validator signature set", async function() {
       assert.isAtMost(signers.length, validators.addresses.length, "Signers set can't be higher than validator set");
-      console.log(res.logs);
     });
 
     it('Should updated the validator set', async function () {
-      assert.strictEqual(res.logs.length, 1, "Successful update should have logged Update event");
+      res = await valSet.update(validators.addresses, validators.powers, signers, vArray, rArray, sArray);
+      assert.isAtLeast(res.logs.length, 1, "Successful update should have logged Update event");
       assert.deepEqual(res.logs[0].args.newAddresses, validators.addresses, "'newAddresses' address[] parameter from Update event should be equal to the generated validators addreses");
       assert.deepEqual(res.logs[0].args.newPowers, validators.powers, "'newPowers' uint64[] parameter from Update event should be equal to the generated validators addreses");
       assert.isNumber(res.logs[0].args.seq.toNumber(), "Update event should return 'seq' param in the log");
@@ -144,20 +161,20 @@ contract('Valset', function(accounts) {
 
     // Proved by induction
     it("Saves updated validators' address in array", async function() {
+      res = await valSet.update(validators.addresses, validators.powers, signers, vArray, rArray, sArray);
       first_element = await valSet.getValidator(0);
       second_element = await valSet.getValidator(1);
-      console.log(first_element, second_element);
-      console.log(validators.addresses[0], validators.addresses[1]);
-      assert.isTrue(((String(first_element) == validators.addresses[0]) && (String(second_element) == validators.addresses[1])), "Initial validators' addresses array should be equal as the saved one");
+      assert.strictEqual(String(first_element), validators.addresses[0], "Initial validators' addresses array should be equal as the saved one");
+      assert.strictEqual(String(second_element), validators.addresses[1],"Initial validators' addresses array should be equal as the saved one");
     });
 
     // Proved by induction
     it("Saves updated validators' powers in array", async function() {
+      res = await valSet.update(validators.addresses, validators.powers, signers, vArray, rArray, sArray);
       first_element = await valSet.getPower(0);
       second_element = await valSet.getPower(1);
-      console.log(first_element, second_element);
-      console.log(validators.powers[0], validators.powers[1]);
-      assert.isTrue(((first_element.toNumber() == validators.powers[0]) && (second_element.toNumber() == validators.powers[1])), "Initial validators' powers array should be equal as the saved one");
+      assert.strictEqual(first_element.toNumber(), validators.powers[0], "Initial validators' powers array should be equal as the saved one");
+      assert.strictEqual(second_element.toNumber(), validators.powers[1],"Initial validators' powers array should be equal as the saved one");
     });
   });
 

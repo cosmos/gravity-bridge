@@ -10,7 +10,7 @@ contract Peggy is Valset {
     /* Events  */
 
     event Unlock(address to, uint64 value, address token);
-    event Lock(bytes to, uint64 value, address token);
+    event Lock(address to, uint64 value, address token);
 
 
     /* Functions */
@@ -41,7 +41,7 @@ contract Peggy is Valset {
       return address(result);
     }
 
-    /// Locks received funds to the consensus of the peg zone
+    // Locks received funds to the consensus of the peg zone
     /*
      * @param to          bytes representation of destination address
      * @param value       value of transference
@@ -51,16 +51,14 @@ contract Peggy is Valset {
         if (token == address(0)) {
             require(msg.value == value);
             assert(bytesToAddress(to).send(value));
-
         } else {
-
             assert(ERC20(token).transferFrom(msg.sender, this, value)); // 'this' is the Peggy contract address
         }
-        Lock(to, value, token);
+        Lock(bytesToAddress(to), value, token);
         return true;
     }
 
-    /// Unlocks Ethereum tokens according to the information from the pegzone. Called by the relayers.
+    // Unlocks Ethereum tokens according to the information from the pegzone. Called by the relayers.
     /*
      * @param to          bytes representation of destination address
      * @param value       value of transference
@@ -82,7 +80,7 @@ contract Peggy is Valset {
         bytes32[] s
     ) external returns (bool) {
         bytes32 hashData = keccak256(byte(1), token, value); /*, chain.length, chain*/
-        require(Valset.verifyValidators(hashData, signers, v, r, s));
+        require(Valset.verifyValidators(hashData, signers.length, signers, v, r, s));
         if (token == address(0)) {
             assert(to.send(value));
         } else {

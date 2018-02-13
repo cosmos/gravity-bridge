@@ -40,9 +40,10 @@ contract Valset {
 
     event Update(address[] newAddresses, uint64[] newPowers, uint indexed seq);
     event Verify(uint[] signers);
-    event NoSupermajority();
+    event DoubleSign(address signer);
+    event NoSupermajority(uint signedPower, uint accumPower);
     event NoLen(uint[] signers);
-    event InvalidSignature(uint validatorIdx, uint8 v, bytes32 r, bytes32 s);
+    event InvalidSignature(address ercaddr, address signer, uint validatorIdx, uint8 v, bytes32 r, bytes32 s);
 
     /* Functions */
 
@@ -69,39 +70,38 @@ contract Valset {
     }
 
 
-    function verify(bytes32 hash, uint8 v, bytes32 r, bytes32 s, address valAddress)
+    function verify(bytes32 hash, uint8 v, bytes32 r, bytes32 s)
       internal
       pure
-      returns(bool)
+      returns(address)
     {
-      bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-      bytes32 prefixedHash = keccak256(prefix, hash);
-      return ecrecover(prefixedHash, v, r, s) == (valAddress);
+      /* bytes memory prefix = "\x19Ethereum Signed Message:\n32"; */
+      /* bytes32 prefixedHash = keccak256(prefix, hash); */
+      return ecrecover(hash, v, r, s);
     }
 
-    function verifyValidators(bytes32 hash, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s)
-      valSetLargerThanSigners(signers.length, addresses.length)
+    function verifyValidators(bytes32 hash, uint signersLen, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s)
+      /* valSetLargerThanSigners(len, addresses.length) */
       /* equalSignatureLen(signers.length, v.length, r.length, s.length) */
       public
       returns (bool)
     {
       uint64 signedPower = 0;
-      uint currentIdx;
-      if (signers.length == 0) {
-        NoLen(signers);
-      }
-      for (uint i = 0; i < signers.length; i++) {
-          currentIdx = signers[i];
-          if (i >= 1 && currentIdx <= signers[i-1]) return false; // validators can't sign more than once
-          if (verify(hash, v[currentIdx], r[currentIdx], s[currentIdx], getValidator(currentIdx))) {
+      for (uint i = 0; i < signersLen; i++) {
+          if (i > 0 && signers[i] <= signers[i-1]) {
+            DoubleSign(addresses[signers[i]]);
+            return false; // validators can't sign more than once
+          }
+          address addrErc = verify(hash, v[signers[i]], r[signers[i]], s[signers[i]]);
+          if (addrErc == addresses[signers[i]]) {
             signedPower += powers[signers[i]];
           } else {
-            InvalidSignature(currentIdx, v[currentIdx], r[currentIdx], s[currentIdx]);
+            InvalidSignature(addrErc, addresses[signers[i]], signers[i], v[signers[i]], r[signers[i]], s[signers[i]]);
             return false;
           }
       }
       if (signedPower * 3 < totalPower * 2) {
-        NoSupermajority();
+        NoSupermajority(signedPower, totalPower);
         return false;
       }
       Verify(signers);
@@ -146,7 +146,7 @@ contract Valset {
       returns (bool)
     {
         bytes32 hashData = keccak256(newAddress, newPowers);
-        assert(verifyValidators(hashData, signers, v, r, s)); // hashing can be changed
+        assert(verifyValidators(hashData, signers.length, signers, v, r, s)); // hashing can be changed
         if (updateInternal(newAddress, newPowers)) {
           return true;
         } else {
