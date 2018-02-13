@@ -12,7 +12,6 @@ contract Peggy is Valset {
     event Unlock(address to, uint64 value, address token);
     event Lock(address to, uint64 value, address token);
 
-
     /* Functions */
 
     function getCosmosTokenAddress(bytes name) internal constant returns (address) {
@@ -70,7 +69,6 @@ contract Peggy is Valset {
      * @param s           array of outputs of ECDSA signature
      */
     function unlock(
-        /* address[2] addressArg, // 0: token, 1: to */
         address token,
         address to,
         uint64 value,
@@ -90,7 +88,5 @@ contract Peggy is Valset {
         return true;
     }
 
-    function Peggy(address[] initAddress, uint64[] initPowers) public Valset(initAddress, initPowers) {
-
-    }
+    function Peggy(address[] initAddress, uint64[] initPowers) public Valset(initAddress, initPowers) {}
 }

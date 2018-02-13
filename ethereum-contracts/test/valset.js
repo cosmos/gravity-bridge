@@ -95,7 +95,6 @@ contract('Valset', function(accounts) {
 
     it('Expects to throw if super majority is not reached', async function() {
       res = await valSet.verifyValidators(hashData, signers.length, signers, vArray, rArray, sArray);
-      console.log(res);
       assert.isAtLeast(res.logs.length, 1, "Successful call should have logged at least one event");
       if(signedPower * 3 < totalPower * 2) {
         assert.strictEqual(res.logs[0].event, "NoSupermajority", "Should have thrown the NoSupermajority event");

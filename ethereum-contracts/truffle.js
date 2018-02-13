@@ -11,10 +11,16 @@ module.exports = {
     "Cosmos"
   ],
   networks: {
-     development: {
+    development: {
      host: "localhost",
      port: 8545,
-     network_id: "*" // Match any network id
+     network_id: "*", // Match any network id
+     solc: { optimizer: { enabled: true, runs: 200 } }
+    },
+    ganache: {
+      host: "127.0.0.1",
+      port: 7545,
+      network_id: "*"
     },
     ropsten:  {
      network_id: 3,
