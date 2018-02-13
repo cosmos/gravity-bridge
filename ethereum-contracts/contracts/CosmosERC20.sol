@@ -10,9 +10,12 @@ contract CosmosERC20 is ERC20 {
 
   address public controller;
 
-  function totalSupply() public constant returns (uint) {
-    return _totalSupply;
-  }
+    event Mint(address to, uint tokens);
+    event Burn(address from, uint tokens);
+
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply;
+    }
 
   function balanceOf(address tokenOwner) public constant returns (uint balance) {
     return balances[tokenOwner];
@@ -46,20 +49,22 @@ contract CosmosERC20 is ERC20 {
     return true;
   }
 
-  function mint(address to, uint tokens) public returns (bool success) {
-    if (msg.sender != controller) return false;
-    balances[to] += tokens;
-    _totalSupply += tokens;
-    return true;
-  }
+    function mint(address to, uint tokens) public returns (bool success) {
+        if (msg.sender != controller) return false;
+        balances[to] += tokens;
+        _totalSupply += tokens;
+        Mint(to, tokens);
+        return true;
+    }
 
-  function burn(address from, uint tokens) public returns (bool success) {
-    if (msg.sender != controller) return false;
-    if (!(balances[from] >= tokens)) return false;
-    balances[from] -= tokens;
-    _totalSupply -= tokens;
-    return true;
-  }
+    function burn(address from, uint tokens) public returns (bool success) {
+        if (msg.sender != controller) return false;
+        if (!(balances[from] >= tokens)) return false;
+        balances[from] -= tokens;
+        _totalSupply -= tokens;
+        Burn(from, tokens);
+        return true;
+    }
 
   function CosmosERC20(address _controller, bytes _name) public {
     _totalSupply = 0;
