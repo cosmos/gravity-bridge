@@ -2,7 +2,8 @@
 
 ## Installing dependencies
 
-  - Truffle: `npm install -g truffle` for Mac or go to the installat
+  - Truffle: `npm install -g truffle` for Mac or go to the install
+  - Testrpc: `npm i -g ethereumjs-testrpc`
   - Ganache: Download file [here](http://truffleframework.com/ganache/)
 
 ## Instructions

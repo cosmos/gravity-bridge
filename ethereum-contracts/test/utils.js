@@ -1,15 +1,63 @@
 var _ = require("lodash");
 var Promise = require("bluebird");
 const keythereum = require("keythereum");
+const BN = require('bn.js');
+const utf8 = require('utf8');
 const ethUtils = require('ethereumjs-util');
 const Hash = require("eth-lib/lib/hash");
 
 module.exports = {
+  isHexStrict: function (hex) {
+    return ((_.isString(hex) || _.isNumber(hex)) && /^(-)?0x[0-9a-f]*$/i.test(hex));
+  },
   randomIntFromInterval: function(min,max) {
       return Math.floor(Math.random()*(max-min+1)+min);
   },
   sumArrayValues: function(total, uint64) {
     return total + uint64;
+  },
+  utf8ToHex: function(str) {
+    str = utf8.encode(str);
+    var hex = "";
+
+    // remove \u0000 padding from either side
+    str = str.replace(/^(?:\u0000)*/,'');
+    str = str.split("").reverse().join("");
+    str = str.replace(/^(?:\u0000)*/,'');
+    str = str.split("").reverse().join("");
+
+    for(var i = 0; i < str.length; i++) {
+        var code = str.charCodeAt(i);
+        // if (code !== 0) {
+        var n = code.toString(16);
+        hex += n.length < 2 ? '0' + n : n;
+        // }
+    }
+
+    return "0x" + hex;
+  },
+  isBN: function (object) {
+    return object instanceof BN ||
+        (object && object.constructor && object.constructor.name === 'BN');
+  },
+  isBigNumber: function (object) {
+    return object && object.constructor && object.constructor.name === 'BigNumber';
+  },
+  leftPad: function (string, chars, sign) {
+    var hasPrefix = /^0x/i.test(string) || typeof string === 'number';
+    string = string.toString(16).replace(/^0x/i,'');
+
+    var padding = (chars - string.length + 1 >= 0) ? chars - string.length + 1 : 0;
+
+    return (hasPrefix ? '0x' : '') + new Array(padding).join(sign ? sign : "0") + string;
+  },
+  rightPad: function (string, chars, sign) {
+    var hasPrefix = /^0x/i.test(string) || typeof string === 'number';
+    string = string.toString(16).replace(/^0x/i,'');
+
+    var padding = (chars - string.length + 1 >= 0) ? chars - string.length + 1 : 0;
+
+    return (hasPrefix ? '0x' : '') + string + (new Array(padding).join(sign ? sign : "0"));
   },
   createValidators: function(size) {
     var newValidators = {

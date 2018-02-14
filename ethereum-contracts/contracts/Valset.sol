@@ -75,9 +75,9 @@ contract Valset {
       pure
       returns(address)
     {
-      /* bytes memory prefix = "\x19Ethereum Signed Message:\n32"; */
-      /* bytes32 prefixedHash = keccak256(prefix, hash); */
-      return ecrecover(hash, v, r, s);
+      bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+      bytes32 prefixedHash = keccak256(prefix, hash);
+      return ecrecover(prefixedHash, v, r, s);
     }
 
     function verifyValidators(bytes32 hash, uint signersLen, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s)

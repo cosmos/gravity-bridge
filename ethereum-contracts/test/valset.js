@@ -2,6 +2,7 @@
 const web3 = global.web3;
 const Valset = artifacts.require("./../contracts/Valset.sol");
 const utils = require('./utils.js');
+const soliditySha3 = require('./soliditySha3.js');
 const ethUtils = require('ethereumjs-util');
 
 contract('Valset', function(accounts) {
@@ -65,7 +66,7 @@ contract('Valset', function(accounts) {
       totalPower = 0, signedPower = 0;
       validators = utils.assignPowersToAccounts(accounts);
       msg = new Buffer(accounts.concat(validators.powers));
-      hashData = web3.sha3(accounts.concat(validators.powers));
+      hashData = soliditySha3({t: 'address', v: accounts}, {t: 'uint64', v: validators.powers});
       prefix = new Buffer("\x19Ethereum Signed Message:\n");
       prefixedMsg = ethUtils.sha3(
         Buffer.concat([prefix, new Buffer(String(msg.length)), msg])
@@ -74,15 +75,18 @@ contract('Valset', function(accounts) {
         signs = (Math.random() <= 0.95764); // two std
         totalPower += validators.powers[i];
         if (signs) {
-          signature = await web3.eth.sign(validators.addresses[i], '0x' + msg.toString('hex'));
+          signature = await web3.eth.sign(validators.addresses[i], hashData);
           let ethSignature = await web3.eth.sign(validators.addresses[i], hashData).slice(2);
           const rpcSignature = ethUtils.fromRpcSig(signature);
-          const pubKey  = ethUtils.ecrecover(prefixedMsg, rpcSignature.v, rpcSignature.r, rpcSignature.s);
-          const addrBuf = ethUtils.pubToAddress(pubKey);
-          const addr    = ethUtils.bufferToHex(addrBuf);
+          console.log(ethSignature, ethUtils.bufferToHex(rpcSignature.r).slice(2)+ ethUtils.bufferToHex(rpcSignature.s).slice(2)+  ethUtils.bufferToHex(ethUtils.toBuffer(ethUtils.bufferToInt(rpcSignature.v)-27)).slice(2));
+          // const pubKey  = ethUtils.ecrecover(prefixedMsg, rpcSignature.v, rpcSignature.r, rpcSignature.s);
+          // const addrBuf = ethUtils.pubToAddress(pubKey);
+          // const addr    = ethUtils.bufferToHex(addrBuf);
+          console.log(ethSignature.slice(0, 64), ethUtils.bufferToHex(rpcSignature.r).slice(2));
+          console.log(ethSignature.slice(64, 128), ethUtils.bufferToHex(rpcSignature.s).slice(2));
           vArray.push(web3.toDecimal(ethSignature.slice(128, 130)) + 27);
-          rArray.push('0x' + ethSignature.slice(0, 64));
-          sArray.push('0x' + ethSignature.slice(64, 128));
+          rArray.push(web3.toHex('0x'+ethSignature.slice(0, 64)));
+          sArray.push(web3.toHex('0x'+ethSignature.slice(64, 128)));
           signers.push(i);
           signedPower += validators.powers[i];
         }
@@ -122,7 +126,7 @@ contract('Valset', function(accounts) {
       totalPower = 0, signedPower = 0;
       validators = utils.assignPowersToAccounts(accounts);
       msg = new Buffer(accounts.concat(validators.powers));
-      hashData = web3.sha3(accounts.concat(validators.powers));
+      hashData = soliditySha3({t: 'address', v: accounts}, {t: 'uint64', v: validators.powers});
       prefix = new Buffer("\x19Ethereum Signed Message:\n");
       prefixedMsg = ethUtils.sha3(
         Buffer.concat([prefix, new Buffer(String(msg.length)), msg])
