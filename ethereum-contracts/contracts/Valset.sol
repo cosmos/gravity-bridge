@@ -75,9 +75,10 @@ contract Valset {
       pure
       returns(address)
     {
-      bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-      bytes32 prefixedHash = keccak256(prefix, hash);
-      return ecrecover(prefixedHash, v, r, s);
+      // bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+      // bytes32 prefixedHash = keccak256(prefix, hash);
+      // return ecrecover(prefixedHash, v, r, s);
+      return ecrecover(hash, v, r, s);
     }
 
     function verifyValidators(bytes32 hash, uint signersLen, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s)
@@ -92,11 +93,11 @@ contract Valset {
             DoubleSign(addresses[signers[i]]);
             return false; // validators can't sign more than once
           }
-          address addrErc = verify(hash, v[signers[i]], r[signers[i]], s[signers[i]]);
+          address addrErc = verify(hash, v[i], r[i], s[i]);
           if (addrErc == addresses[signers[i]]) {
             signedPower += powers[signers[i]];
           } else {
-            InvalidSignature(addrErc, addresses[signers[i]], signers[i], v[signers[i]], r[signers[i]], s[signers[i]]);
+            InvalidSignature(addrErc, addresses[signers[i]], signers[i], v[i], r[i], s[i]);
             return false;
           }
       }
@@ -110,13 +111,13 @@ contract Valset {
 
     function updateInternal(address[] newAddress, uint64[] newPowers)
       equalSizeArrays(newAddress.length, newPowers.length)
-      validatorSizeAtMost100(newAddress.length)
+      // validatorSizeAtMost100(newAddress.length)
       internal
       returns (bool)
       {
         addresses = new address[](newAddress.length);
         powers    = new uint64[](newPowers.length);
-        totalPower = 0;
+        totalPower = 0; 
         for (uint i = 0; i < newAddress.length; i++) {
             addresses[i] = newAddress[i];
             powers[i]    = newPowers[i];
@@ -146,7 +147,8 @@ contract Valset {
       returns (bool)
     {
         bytes32 hashData = keccak256(newAddress, newPowers);
-        assert(verifyValidators(hashData, signers.length, signers, v, r, s)); // hashing can be changed
+        verifyValidators(hashData, signers.length, signers, v, r, s); // hashing can be changed
+        //require(verifyValidators(hashData, signers.length, signers, v, r, s)); // hashing can be changed
         if (updateInternal(newAddress, newPowers)) {
           return true;
         } else {
