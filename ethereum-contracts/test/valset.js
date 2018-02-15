@@ -16,7 +16,8 @@ contract('Valset', function(accounts) {
 
   before('Setup contract', async function() {
     totalValidators = utils.randomIntFromInterval(1, 100); // 1-100 validators
-    validators = utils.createValidators(totalValidators);
+    validators = utils.assignPowersToAccounts(accounts);
+    //validators = utils.createValidators(totalValidators);
     valSet = await Valset.new(validators.addresses, validators.powers, {from: args._default});
   });
 
@@ -58,15 +59,16 @@ contract('Valset', function(accounts) {
 
   describe("Verifies validators' signatures", function() {
 
-    let prevAddresses, prevPowers, newValidators, res, signs, signature, signature2, signedPower, totalPower, msg, prefix, prefixedMsg, hashData;
-    let vArray = [], rArray = [], sArray = [], signers = [];
+    var prevAddresses, prevPowers, newValidators, res, signs, signature, signature2, signedPower, totalPower, msg, prefix, prefixedMsg, hashData;
+    var vArray = [], rArray = [], sArray = [], signers = [];
 
     beforeEach('Create new validator set and get previous validator data', async function() {
-      vArray = [], rArray = [], sArray = [], signers = [];
+/*      vArray = [], rArray = [], sArray = [], signers = [];
       totalPower = 0, signedPower = 0;
-      validators = utils.assignPowersToAccounts(accounts);
-      msg = new Buffer(accounts.concat(validators.powers));
-      hashData = soliditySha3({t: 'address', v: accounts}, {t: 'uint64', v: validators.powers});
+      totalValidators = utils.randomIntFromInterval(1, 100);
+      newValidators = utils.createValidators(totalValidators);
+      msg = new Buffer(accounts.concat(newValidators.powers));
+      hashData = soliditySha3({t: 'address', v: newValidators.accounts}, {t: 'uint64', v: newValidators.powers});
       prefix = new Buffer("\x19Ethereum Signed Message:\n");
       prefixedMsg = ethUtils.sha3(
         Buffer.concat([prefix, new Buffer(String(msg.length)), msg])
@@ -78,19 +80,28 @@ contract('Valset', function(accounts) {
           signature = await web3.eth.sign(validators.addresses[i], hashData);
           let ethSignature = await web3.eth.sign(validators.addresses[i], hashData).slice(2);
           const rpcSignature = ethUtils.fromRpcSig(signature);
-          console.log(ethSignature, ethUtils.bufferToHex(rpcSignature.r).slice(2)+ ethUtils.bufferToHex(rpcSignature.s).slice(2)+  ethUtils.bufferToHex(ethUtils.toBuffer(ethUtils.bufferToInt(rpcSignature.v)-27)).slice(2));
-          // const pubKey  = ethUtils.ecrecover(prefixedMsg, rpcSignature.v, rpcSignature.r, rpcSignature.s);
-          // const addrBuf = ethUtils.pubToAddress(pubKey);
-          // const addr    = ethUtils.bufferToHex(addrBuf);
-          console.log(ethSignature.slice(0, 64), ethUtils.bufferToHex(rpcSignature.r).slice(2));
-          console.log(ethSignature.slice(64, 128), ethUtils.bufferToHex(rpcSignature.s).slice(2));
+          //console.log(ethSignature, ethUtils.bufferToHex(rpcSignature.r).slice(2)+ ethUtils.bufferToHex(rpcSignature.s).slice(2)+  ethUtils.bufferToHex(ethUtils.toBuffer(ethUtils.bufferToInt(rpcSignature.v)-27)).slice(2));
+          const pubKey  = ethUtils.ecrecover(prefixedMsg, rpcSignature.v, rpcSignature.r, rpcSignature.s);
+          const addrBuf = ethUtils.pubToAddress(pubKey);
+          const addr    = ethUtils.bufferToHex(addrBuf);
+          //console.log(ethSignature.slice(0, 64), ethUtils.bufferToHex(rpcSignature.r).slice(2));
+          //console.log(ethSignature.slice(64, 128), ethUtils.bufferToHex(rpcSignature.s).slice(2));
           vArray.push(web3.toDecimal(ethSignature.slice(128, 130)) + 27);
           rArray.push(web3.toHex('0x'+ethSignature.slice(0, 64)));
           sArray.push(web3.toHex('0x'+ethSignature.slice(64, 128)));
           signers.push(i);
           signedPower += validators.powers[i];
         }
+      validators = newValidators;
       }
+      */
+      hashData = soliditySha3({t: 'address', v: validators.addresses}, {t: 'uint64', v: validators.powers});
+      let signs = await utils.createSigns(validators, hashData);
+      signers = signs.signers;
+      vArray = signs.vArray;
+      rArray = signs.rArray;
+      sArray = signs.sArray;
+      signedPower = signs.signedPower;
     });
 
     it('Signature data arrays and signers array have the same size', function () {
@@ -109,10 +120,10 @@ contract('Valset', function(accounts) {
 
     it('Signatures are correct', async function () {
       res = await valSet.verifyValidators(hashData, signers.length, signers, vArray, rArray, sArray);
-      console.log(res);
+      console.log("debug", res);
       assert.isAtLeast(res.logs.length, 1, "Successful verification should have logged at least one event (1 on success and more than 1 if it fails)");
       assert.strictEqual(res.logs[0].event, "Verify", "On success it should have thrown Verify event");
-      assert.deepEqual(res.logs[0].args.signers, signers, "'signers' uint16[] parameter from Verify event should be equal to the signers from the validator set");
+      assert.deepEqual(res.logs[0].args.signers.map(x => x.words[0]), signers, "'signers' uint16[] parameter from Verify event should be equal to the signers from the validator set");
     });
 
   });
@@ -122,7 +133,7 @@ contract('Valset', function(accounts) {
     let vArray = [], rArray = [], sArray = [], signers = [];
 
     beforeEach('Create new validator set and get previous validator data', async function() {
-      vArray = [], rArray = [], sArray = [], signers = [];
+/*      vArray = [], rArray = [], sArray = [], signers = [];
       totalPower = 0, signedPower = 0;
       validators = utils.assignPowersToAccounts(accounts);
       msg = new Buffer(accounts.concat(validators.powers));
@@ -148,6 +159,15 @@ contract('Valset', function(accounts) {
           signedPower += validators.powers[i];
         }
       }
+      */
+      hashData = soliditySha3({t: 'address', v: validators.addresses}, {t: 'uint64', v: validators.powers});
+      let signs = await utils.createSigns(validators, hashData);
+      signers = signs.signers;
+      vArray = signs.vArray;
+      rArray = signs.rArray;
+      sArray = signs.sArray;
+      signedPower = signs.signedPower;
+
     });
 
     it("Get validator signature set", async function() {

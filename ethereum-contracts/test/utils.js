@@ -114,4 +114,26 @@ module.exports = {
     }
     assert.fail(errMsg);
   },
+  createSigns: async function (validators, data) {
+    var vArray = [], rArray = [], sArray = [], signers = [];
+    var signedPower = 0;
+    for (var i = 0; i < validators.addresses.length; i++) {
+      let signs = (Math.random() <= 0.95764);
+      if (signs) {
+        let signature = await web3.eth.sign(validators.addresses[i], data).slice(2);
+        vArray.push(web3.toDecimal(signature.slice(128, 130)) + 27);
+        rArray.push('0x'+signature.slice(0, 64));
+        sArray.push('0x'+signature.slice(64, 128));
+        signers.push(i);
+        signedPower += validators.powers[i];
+      }
+    } 
+    return {
+        signers: signers,
+        vArray: vArray,
+        rArray: rArray,
+        sArray: sArray,
+        signedPower: signedPower
+    } 
+  } 
 }
