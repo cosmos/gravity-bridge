@@ -16,8 +16,8 @@ const (
 // WitnessTx
 
 type WitnessTx struct {
-	Amount  int64
-	Address crypto.Address
+	Amount      int64
+	Destination crypto.Address
 }
 
 var _ sdk.Msg = (*WitnessTx)(nil)
@@ -28,6 +28,13 @@ func (wtx WitnessTx) ValidateBasic() sdk.Error {
 
 func (wtx WitnessTx) Type() string {
 	return WitnessTx
+}
+
+type WitnessData struct {
+	WitnessTxs  []WitnessTx
+	Amount      int64
+	Destination crypto.Address
+	Credited    bool
 }
 
 // ------------------------------
@@ -55,6 +62,12 @@ func (sdx SendTx) Type() string {
 type WithdrawTx struct {
 	address crypto.Address
 	amount  int64
+}
+
+type WithdrawData struct {
+	Amount         int64
+	Destination    crypto.Address
+	SignedWithdraw []SignTx
 }
 
 // --------------------------------

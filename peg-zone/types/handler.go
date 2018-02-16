@@ -8,13 +8,17 @@ func RegisterRoutes(r baseapp.Router, accts sdk.AccountMapper) {
 }
 
 // Handle all peggy type messages.
-func NewHandler(ck CoinKeeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+func NewHandler() sdk.Handler {
+	return func(ctx sdk.Context, ck sdk.CoinKeeper, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case SendMsg:
-			return handleSendMsg(ctx, ck, msg)
-		case IssueMsg:
-			return handleIssueMsg(ctx, ck, msg)
+		case WitnessTx:
+			return handleWitnessTx(ctx, msg)
+		case SendTx:
+			return handleSendTx(ctx, ck, msg)
+		case WithdrawTx:
+			return handleWithdrawTx(ctx, msg)
+		case SignTx:
+			return handleSignTx(ctx, msg)
 		default:
 			errMsg := "Unrecognized bank Msg type: " + reflect.TypeOf(msg).Name()
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -23,7 +27,7 @@ func NewHandler(ck CoinKeeper) sdk.Handler {
 }
 
 // Handle SendMsg.
-func handleSendMsg(ctx sdk.Context, ck CoinKeeper, msg SendMsg) sdk.Result {
+func handleSendTx(ctx sdk.Context, ck CoinKeeper, msg SendMsg) sdk.Result {
 	// NOTE: totalIn == totalOut should already have been checked
 
 	for _, in := range msg.Inputs {
@@ -44,7 +48,17 @@ func handleSendMsg(ctx sdk.Context, ck CoinKeeper, msg SendMsg) sdk.Result {
 }
 
 // Handle IssueMsg.
-func handleIssueMsg(ctx sdk.Context, ck CoinKeeper, msg IssueMsg) sdk.Result {
+func handleWitnessTx(ctx sdk.Context, ck CoinKeeper, msg IssueMsg) sdk.Result {
+	panic("not implemented yet")
+}
+
+// Handle IssueMsg.
+func handleWithdrawTx(ctx sdk.Context, ck CoinKeeper, msg IssueMsg) sdk.Result {
+	panic("not implemented yet")
+}
+
+// Handle IssueMsg.
+func handleSignTx(ctx sdk.Context, ck CoinKeeper, msg IssueMsg) sdk.Result {
 	panic("not implemented yet")
 }
 

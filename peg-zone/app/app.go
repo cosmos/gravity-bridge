@@ -3,21 +3,42 @@ package app
 import (
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-)
 
-const appName = "Peggy"
+	"github.com/cosmos/peggy/peg-zone/types"
+)
 
 type PeggyApp struct {
 	*bam.BaseApp
-	router bam.Router
-	cdc    *wire.Codec
+	cdc *wire.Codec
 
-	// account -> balances
-	accountMapper sdk.AccountMapper
+	capKeyMainStore     *sdk.KVStoreKey
+	capKeyWitnessStore  *sdk.KVStoreKey
+	capKeyWithdrawStore *sdk.KVStoreKey
+
+	accountMapper    sdk.AccountMapper
+	witnessTxMapper  types.WitnessTxMapper
+	withdrawTxMapper types.WithdrawTxMapper
 }
 
 func NewPeggy() *PeggyApp {
-	mainKey := sdk.NewKVStoreKey("pg")
+	app := &PeggyApp{
+		BaseApp:             bam.NewBaseApp("Peggy"),
+		cdc:                 MakeTxCodec(),
+		capKeyMainStore:     sdk.NewKVStoreKey("main"),
+		capKeyWitnessStore:  sdk.NewKVStoreKey("witness"),
+		capKeyWithdrawStore: sdk.NewKVStoreKey("withdraw"),
+	}
+
+	app.accountMapper = auth.NewAccountMapperSealed(
+		app.capKeyMainStore, // target store
+		&types.AppAccount{}, // prototype
+	)
+
+	app.witnessTxMapper = types.NewWitnessTxMapper(app.capKeyWitnessStore)
+	app.withdrawTxMapper = types.NewWithdrawTxMapper(app.capKeyWithdrawStore)
+
+	// add handlers
+	app.Router().AddRoute("bank", bank.NewHandler(bank.NewCoinKeeper(app.accountMapper)))
 
 	bApp := bam.NewBaseApp(ppName)
 	mountMultiStore(bApp, mainKey)
