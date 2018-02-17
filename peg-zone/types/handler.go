@@ -1,6 +1,6 @@
 package types
 
-func RegisterRoutes(r baseapp.Router, accts sdk.AccountMapper) {
+func RegisterRoutes(r baseapp.Router, accts sdk.AccountMapper, wits WitnessTxMapper, witd WithdrawTxMapper) {
 	r.AddRoute(WitnessTx, DepositMsgHandler(accts))
 	r.AddRoute(SendTx, SettleMsgHandler(accts))
 	r.AddRoute(WithdrawTx, WithdrawMsgHandler(accts))

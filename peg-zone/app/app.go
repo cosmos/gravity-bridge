@@ -9,7 +9,6 @@ import (
 
 type PeggyApp struct {
 	*bam.BaseApp
-	cdc *wire.Codec
 
 	capKeyMainStore     *sdk.KVStoreKey
 	capKeyWitnessStore  *sdk.KVStoreKey
@@ -23,7 +22,6 @@ type PeggyApp struct {
 func NewPeggy() *PeggyApp {
 	app := &PeggyApp{
 		BaseApp:             bam.NewBaseApp("Peggy"),
-		cdc:                 MakeTxCodec(),
 		capKeyMainStore:     sdk.NewKVStoreKey("main"),
 		capKeyWitnessStore:  sdk.NewKVStoreKey("witness"),
 		capKeyWithdrawStore: sdk.NewKVStoreKey("withdraw"),
@@ -37,11 +35,8 @@ func NewPeggy() *PeggyApp {
 	app.witnessTxMapper = types.NewWitnessTxMapper(app.capKeyWitnessStore)
 	app.withdrawTxMapper = types.NewWithdrawTxMapper(app.capKeyWithdrawStore)
 
-	// add handlers
-	app.Router().AddRoute("bank", bank.NewHandler(bank.NewCoinKeeper(app.accountMapper)))
-
-	bApp := bam.NewBaseApp(ppName)
-	mountMultiStore(bApp, mainKey)
+	bApp := bam.NewBaseApp(appName)
+	mountMultiStore(bApp, app.capKeyMainStore, app.capKeyWithdrawStore, app.capKeyWitnessStore)
 	err := bApp.LoadLatestVersion(mainKey)
 	if err != nil {
 		panic(err)
@@ -49,6 +44,7 @@ func NewPeggy() *PeggyApp {
 
 	// register routes on new application
 	accts := types.AccountMapper(mainKey)
+	// TODO: Pass WithdrawTxMapper and WitnessTxMapper
 	types.RegisterRoutes(bApp.Router(), accts)
 
 	// set up ante and tx parsing
