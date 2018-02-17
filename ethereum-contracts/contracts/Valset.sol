@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.17;
 
 contract Valset {
 
@@ -9,115 +9,55 @@ contract Valset {
     uint64 public totalPower;
     uint internal updateSeq = 0;
 
-    /* modifiers */
-
-    modifier indexDoesntOverflow(uint index, uint length) {
-      require(index < length);
-      _;
-    }
-
-    modifier equalSizeArrays(uint validatorsLength, uint powersLenght) {
-      require(validatorsLength == powersLenght);
-      _;
-    }
-
-    modifier validatorSizeAtMost100(uint length) {
-      require(length <= 100);
-      _;
-    }
-
-    modifier valSetLargerThanSigners(uint signersLen, uint valLen) {
-      require((signersLen <= valLen) && (valLen <= 100));
-      _;
-    }
-
-    modifier equalSignatureLen(uint signersLen, uint vLen, uint rLen, uint sLen) {
-      require((signersLen == vLen) && (vLen == rLen) && (rLen == sLen));
-      _;
-    }
-
     /* Events */
 
     event Update(address[] newAddresses, uint64[] newPowers, uint indexed seq);
-    event Verify(uint[] signers);
-    event DoubleSign(address signer);
-    event NoSupermajority(uint signedPower, uint accumPower);
-    event NoLen(uint[] signers);
-    event InvalidSignature(address ercaddr, address signer, uint validatorIdx, uint8 v, bytes32 r, bytes32 s);
+    
+
+    /* Getters (These are supposed to be auto implemented by solidity but aren't ¯\_(ツ)_/¯) */
+
+    function getAddresses() public view returns (address[]) {
+      return addresses;
+    }
+
+    function getPowers() public view returns (uint64[]) {
+      return powers;
+    }
+
+    function getTotalPower() public view returns (uint64) {
+      return totalPower;
+    }
+    
 
     /* Functions */
 
-    function getTotalPower() public constant returns (uint64) {
-      return totalPower;
+    function hashValidatorArrays(address[] addressesArr, uint64[] powersArr) public pure returns (bytes32 hash) {
+      return keccak256(addressesArr, powersArr);
     }
 
-    function getValidator(uint index)
-      indexDoesntOverflow(index, addresses.length)
-      public
-      constant
-      returns (address)
-    {
-      return addresses[index];
-    }
-
-    function getPower(uint index)
-      indexDoesntOverflow(index, powers.length)
-      public
-      constant
-      returns (uint64)
-    {
-      return powers[index];
-    }
-
-
-    function verify(bytes32 hash, uint8 v, bytes32 r, bytes32 s)
-      internal
-      pure
-      returns(address)
-    {
-      // bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-      // bytes32 prefixedHash = keccak256(prefix, hash);
-      // return ecrecover(prefixedHash, v, r, s);
-      return ecrecover(hash, v, r, s);
-    }
-
-    function verifyValidators(bytes32 hash, uint signersLen, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s)
-      /* valSetLargerThanSigners(len, addresses.length) */
-      /* equalSignatureLen(signers.length, v.length, r.length, s.length) */
-      public
-      returns (bool)
-    {
+    function verifyValidators(bytes32 hash, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s) public constant returns (bool) {
       uint64 signedPower = 0;
-      for (uint i = 0; i < signersLen; i++) {
-          if (i > 0 && signers[i] <= signers[i-1]) {
-            DoubleSign(addresses[signers[i]]);
-            return false; // validators can't sign more than once
-          }
-          address addrErc = verify(hash, v[i], r[i], s[i]);
-          if (addrErc == addresses[signers[i]]) {
-            signedPower += powers[signers[i]];
-          } else {
-            InvalidSignature(addrErc, addresses[signers[i]], signers[i], v[i], r[i], s[i]);
-            return false;
-          }
+      
+      for (uint i = 0; i < signers.length; i++) {
+        if (i > 0) {
+          require(signers[i] > signers[i-1]);
+        }
+        address addrErc = ecrecover(hash, v[i], r[i], s[i]);
+        require (addrErc == addresses[signers[i]]);
+
+        signedPower += powers[signers[i]];
       }
-      if (signedPower * 3 < totalPower * 2) {
-        NoSupermajority(signedPower, totalPower);
-        return false;
-      }
-      Verify(signers);
+
+      require(signedPower * 3 > totalPower * 2);
+
       return true;
     }
 
-    function updateInternal(address[] newAddress, uint64[] newPowers)
-      equalSizeArrays(newAddress.length, newPowers.length)
-      // validatorSizeAtMost100(newAddress.length)
-      internal
-      returns (bool)
-      {
+
+    function updateInternal(address[] newAddress, uint64[] newPowers) internal returns (bool) {
         addresses = new address[](newAddress.length);
         powers    = new uint64[](newPowers.length);
-        totalPower = 0; 
+        totalPower = 0;
         for (uint i = 0; i < newAddress.length; i++) {
             addresses[i] = newAddress[i];
             powers[i]    = newPowers[i];
@@ -129,6 +69,7 @@ contract Valset {
         return true;
     }
 
+
     /// Updates validator set. Called by the relayers.
     /*
      * @param newAddress  new validators addresses
@@ -139,21 +80,10 @@ contract Valset {
      * @param s           output of ECDSA signature.  Used to compute ecrecover
      */
 
-    function update(address[] newAddress, uint64[] newPowers, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s)
-      /* equalSizeArrays(newAddress.length, newPowers.length) */
-      valSetLargerThanSigners(signers.length, newAddress.length)
-      /* equalSignatureLen(signers.length, v.length, r.length, s.length) */
-      public
-      returns (bool)
-    {
+    function update(address[] newAddress, uint64[] newPowers, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s) public {
         bytes32 hashData = keccak256(newAddress, newPowers);
-        verifyValidators(hashData, signers.length, signers, v, r, s); // hashing can be changed
-        //require(verifyValidators(hashData, signers.length, signers, v, r, s)); // hashing can be changed
-        if (updateInternal(newAddress, newPowers)) {
-          return true;
-        } else {
-          return false;
-        }
+        require(verifyValidators(hashData, signers, v, r, s)); // hashing can be changed
+        require(updateInternal(newAddress, newPowers));
     }
 
     function Valset(address[] initAddress, uint64[] initPowers) public {

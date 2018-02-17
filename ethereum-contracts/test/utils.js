@@ -10,8 +10,11 @@ module.exports = {
   isHexStrict: function (hex) {
     return ((_.isString(hex) || _.isNumber(hex)) && /^(-)?0x[0-9a-f]*$/i.test(hex));
   },
-  randomIntFromInterval: function(min,max) {
-      return Math.floor(Math.random()*(max-min+1)+min);
+  seededRandomInt: function(min, max, seed) {
+    seed = (seed * 9301 + 49297) % 233280;
+    var rnd = seed / 233280;
+ 
+    return Math.floor(min + rnd * (max - min));
   },
   sumArrayValues: function(total, uint64) {
     return total + uint64;
@@ -64,19 +67,26 @@ module.exports = {
       addresses: [],
       pubKeys: [],
       privateKeys: [],
-      powers: []
+      powers: [],
+      totalPower: 0
     };
-    let privateKey,hexPrivate, pubKey, address;
+
+    let privateKey,hexPrivate, pubKey, address, power;
+
     for (var i = 0; i < size; i++) {
       privateKey = keythereum.create().privateKey;
       hexPrivate = ethUtils.bufferToHex(privateKey);
-      address = ethUtils.addHexPrefix(ethUtils.bufferToHex(ethUtils.privateToAddress(privateKey)));
+      address = ethUtils.bufferToHex(ethUtils.privateToAddress(privateKey));
       pubKey = ethUtils.bufferToHex(ethUtils.privateToPublic(privateKey));
+      power = this.seededRandomInt(1, 50, i);
+
       newValidators.addresses.push(address);
       newValidators.privateKeys.push(hexPrivate);
       newValidators.pubKeys.push(pubKey);
-      newValidators.powers.push(this.randomIntFromInterval(1, 50)); // 1-50 power
-      }
+      newValidators.powers.push(power);
+      newValidators.totalPower += power;
+    }
+
     return newValidators;
   },
   assignPowersToAccounts: function(accounts) {
@@ -85,7 +95,7 @@ module.exports = {
       powers: []
     };
     for (var i = 0; i < accounts.length; i++) {
-      newValidators.powers.push(this.randomIntFromInterval(1, 50)); // 1-50 power
+      newValidators.powers.push(this.seededRandomInt(1, 50, i));
     }
     return newValidators;
   },
@@ -114,20 +124,25 @@ module.exports = {
     }
     assert.fail(errMsg);
   },
-  createSigns: async function (validators, data) {
+  createSigns: async function (validators, data, percentSign) {
     var vArray = [], rArray = [], sArray = [], signers = [];
     var signedPower = 0;
+    if (!percentSign) {
+      percentSign = 0.95
+    }
     for (var i = 0; i < validators.addresses.length; i++) {
-      let signs = (Math.random() <= 0.95764);
-      if (signs) {
-        let signature = await web3.eth.sign(validators.addresses[i], data).slice(2);
-        vArray.push(web3.toDecimal(signature.slice(128, 130)) + 27);
-        rArray.push('0x'+signature.slice(0, 64));
-        sArray.push('0x'+signature.slice(64, 128));
+      if (this.seededRandomInt(1, 100, i) <= percentSign * 100) {
+
+        let signature = await ethUtils.ecsign(ethUtils.toBuffer(data), ethUtils.toBuffer(validators.privateKeys[i]));
+
+        vArray.push(signature.v);
+        rArray.push(ethUtils.bufferToHex(signature.r));
+        sArray.push(ethUtils.bufferToHex(signature.s));
         signers.push(i);
         signedPower += validators.powers[i];
       }
     } 
+
     return {
         signers: signers,
         vArray: vArray,
@@ -135,5 +150,29 @@ module.exports = {
         sArray: sArray,
         signedPower: signedPower
     } 
-  } 
+  },
+  expectThrow: async function (promise) {
+    try {
+      await promise;
+    } catch (error) {
+      const revert = error.message.search('revert') >= 1;
+      const invalidOpcode = error.message.search('invalid opcode') >= 0;
+      const outOfGas = error.message.search('out of gas') >= 0;
+      assert(
+        invalidOpcode || outOfGas || revert,
+        'Expected throw, got \'' + error + '\' instead',
+      );
+      return;
+    }
+    assert.fail('Expected throw not received');
+  },
+  expectRevert: async function (promise) {
+    try {
+      assert.isFalse(await promise, "Should not execute properly.");
+    } catch (error) {
+      assert.isAtLeast(error.message.search('revert'), 1, 'Expected revert, got \'' + error + '\' instead');
+      return;
+    }
+  },
+
 }

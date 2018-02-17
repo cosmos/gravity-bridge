@@ -5,39 +5,30 @@ import "./Valset.sol";
 
 contract Peggy is Valset {
 
-    mapping (bytes => CosmosERC20) cosmosTokenAddress;
+    mapping (string => address) cosmosTokens;
+    mapping (address => bool) cosmosTokenAddresses;
 
     /* Events  */
-
-    event Unlock(address to, uint64 value, address token);
-    event Lock(address to, uint64 value, address token);
+    event NewCosmosERC20(string name, address tokenAddress);
+    event Lock(bytes to, address token, uint64 value);
 
     /* Functions */
 
-    function getCosmosTokenAddress(bytes name) internal constant returns (address) {
-      return cosmosTokenAddress[name];
+    function hashNewCosmosERC20(string name, uint decimals) public pure returns (bytes32 hash) {
+      return keccak256(name, decimals);
     }
 
-    /* Adapted from https://ethereum.stackexchange.com/questions/15350/how-to-convert-an-bytes-to-address-in-solidity */
-    function bytesToAddress (bytes b) internal pure returns (address) {
-      uint result = 0;
-      uint i = 0;
-      if (b[0] == 48 && b[1] == 120) {
-        i = 2; // if address starts with 'Ox' begin in index 2
-      }
-      for (i; i < b.length; i++) {
-          uint c = uint(b[i]);
-          if (c >= 48 && c <= 57) {
-              result = result * 16 + (c - 48);
-          }
-          if(c >= 65 && c<= 90) {
-              result = result * 16 + (c - 55);
-          }
-          if(c >= 97 && c<= 122) {
-              result = result * 16 + (c - 87);
-          }
-      }
-      return address(result);
+    function hashUnlock(address to, address token, uint64 amount) public pure returns (bytes32 hash) {
+      return keccak256(to, token, amount);
+    }
+
+    function getCosmosTokenAddress(string name) public constant returns (address addr) {
+      return cosmosTokens[name];
+    }
+
+
+    function isCosmosTokenAddress(address addr) public constant returns (bool isCosmosAddr) {
+      return cosmosTokenAddresses[addr];
     }
 
     // Locks received funds to the consensus of the peg zone
@@ -46,14 +37,16 @@ contract Peggy is Valset {
      * @param value       value of transference
      * @param token       token address in origin chain (0x0 if Ethereum, Cosmos for other values)
      */
-    function lock(bytes to, uint64 value, address token) external payable returns (bool) {
-        if (token == address(0)) {
-            require(msg.value == value);
-            assert(bytesToAddress(to).send(value));
+    function lock(bytes to, address token, uint64 amount) public payable returns (bool) {
+        if (msg.value != 0) {
+          require(token == address(0));
+          require(msg.value == amount);
+        } else if (cosmosTokenAddresses[token]) {
+          CosmosERC20(token).burn(msg.sender, amount);
         } else {
-            assert(ERC20(token).transferFrom(msg.sender, this, value)); // 'this' is the Peggy contract address
+          require(ERC20(token).transferFrom(msg.sender, this, amount));
         }
-        Lock(bytesToAddress(to), value, token);
+        Lock(to, token, amount);
         return true;
     }
 
@@ -69,23 +62,39 @@ contract Peggy is Valset {
      * @param s           array of outputs of ECDSA signature
      */
     function unlock(
-        address token,
         address to,
-        uint64 value,
+        address token,
+        uint64 amount,
         uint[] signers,
         uint8[] v,
         bytes32[] r,
         bytes32[] s
     ) external returns (bool) {
-        bytes32 hashData = keccak256(byte(1), token, value); /*, chain.length, chain*/
-        require(Valset.verifyValidators(hashData, signers.length, signers, v, r, s));
+        bytes32 hashData = keccak256(to, token, amount); /*, chain.length, chain*/
+        require(Valset.verifyValidators(hashData, signers, v, r, s));
         if (token == address(0)) {
-            assert(to.send(value));
+          to.transfer(amount);
+        } else if (cosmosTokenAddresses[token]) {
+          CosmosERC20(token).mint(to, amount);
         } else {
-            assert(ERC20(token).transfer(to, value));
+          require(ERC20(token).transfer(to, amount));
         }
-        Unlock(to, value, token);
         return true;
+    }
+
+    function newCosmosERC20(string name, uint decimals, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s) external returns (address addr) {
+        require(cosmosTokens[name] == address(0));
+
+        bytes32 hashData = keccak256(name, decimals);
+        require(Valset.verifyValidators(hashData, signers, v, r, s));
+
+        CosmosERC20 newToken = new CosmosERC20(this, name, decimals);
+        
+        cosmosTokens[name] = newToken;
+        cosmosTokenAddresses[newToken] = true;
+
+        NewCosmosERC20(name, newToken);
+        return newToken;
     }
 
     function Peggy(address[] initAddress, uint64[] initPowers) public Valset(initAddress, initPowers) {}

@@ -4,6 +4,7 @@ const utils = require('./utils.js');
 const web3 = global.web3;
 const CosmosERC20 = artifacts.require("./../contracts/CosmosERC20.sol");
 const Peggy = artifacts.require("./../contracts/Peggy.sol");
+const StandardTokenMock = artifacts.require("./../contracts/StandardTokenMock.sol");
 const createKeccakHash = require('keccak');
 const ethUtils = require('ethereumjs-util');
 
@@ -12,88 +13,197 @@ contract('Peggy', function(accounts) {
     _default: accounts[0],
     _account_one: accounts[1],
     _account_two: accounts[2],
-    _lock_amount: 1000,
-    _amount: 100000,
     _address0: "0x0000000000000000000000000000000000000000"
   };
-  let peggy, cosmosToken;
-  let valSet, totalGas, gasPrice;
-  let addresses, powers, first_element, second_element, totalPower, validators, totalValidators, res;
 
-	before('Setup contract', async function() {
-    totalValidators = 10;
-    validators = utils.assignPowersToAccounts(accounts);
-    cosmosToken = await CosmosERC20.new(args._default, web3.fromAscii("Cosmos"), {from: args._default});
-    peggy = await Peggy.new(validators.addresses, validators.powers, {from: args._default});
+  let validators, standardTokenMock;
+  let _account_one = accounts[1];
+  let _account_two = accounts[2];
+  let _address0 = "0x0000000000000000000000000000000000000000";
+
+
+	before('Setup Validators', async function() {
+
+    validators = utils.createValidators(20);
+
   });
 
-  describe('Locks tokens correctly', function () {
-    it('Locks tokens on Ethereum chain', async function() {
-      let bytesToParam = web3.fromAscii(args._account_one);
-      res = await peggy.lock(bytesToParam, args._lock_amount, args._address0, {from: args._default, value: args._lock_amount});
-      assert.isAtLeast(res.logs.length, 1, "Successful lock initialization should have logged Lock event");
-      assert.strictEqual(res.logs[0].event, "Lock", "On success it should have thrown Lock event");
-      assert.strictEqual(res.logs[0].args.to, args._account_one, "'to' bytes parameter from Lock event should be equal to the bytes representation of the destination address");
-      assert.strictEqual(res.logs[0].args.value.toNumber(), args._lock_amount, `'value' uint64 parameter from Lock event should be equal to the lock amount ${args._lock_amount}`);
-      assert.equal(res.logs[0].args.token, args._address0, `'token' address param from Lock event should be equal to ${args._address0}`);
+  describe('Peggy(address[],uint64[]', function () {
+
+    let res, peggy;
+
+    before ('Sets up Peggy contract', async function () {
+      peggy = await Peggy.new(validators.addresses, validators.powers, {from: args._default});
+     
     });
 
-    it('Locks tokens on Cosmos chain', async function() {
-      let bytesToParam = web3.fromAscii(args._account_one);
-      let minted = await cosmosToken.mint(args._account_one, args._amount, {from: args._default});
-      let approve = await cosmosToken.approve(peggy.address, args._lock_amount, {from: args._account_one});
-      res = await peggy.lock(bytesToParam, args._lock_amount, cosmosToken.address, {from: args._account_one, value: args._lock_amount});
-      assert.isAtLeast(res.logs.length, 1, "Successful lock initialization should have logged Lock event");
-      assert.strictEqual(res.logs[0].event, "Lock", "On success it should have thrown Lock event");
-      assert.strictEqual(res.logs[0].args.to, args._account_one, "'to' bytes parameter from Lock event should be equal to the bytes representation of the destination address");
-      assert.strictEqual(res.logs[0].args.value.toNumber(), args._lock_amount, `'value' uint64 parameter from Lock event should be equal to the lock amount ${args._lock_amount}`);
-      assert.equal(res.logs[0].args.token, cosmosToken.address, `'token' address param from Lock event should be equal to ${cosmosToken.address}`);
+    it ('Correctly verifies ValSet signatures', async function () {
+
+      let hashData = String(await peggy.hashValidatorArrays.call(validators.addresses, validators.powers));
+      let signatures = await utils.createSigns(validators, hashData);
+      
+      res = await peggy.verifyValidators.call(hashData, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
+      assert.isTrue(res, "Should have successfully verified signatures");
     });
 
   });
 
+  describe('newCosmosERC20(string,uint,uint[],uint8[],bytes32[],bytes32[]', function () {
+    let res, peggy, cosmosTokenAddress, cosmosToken;
 
-  describe('Unlocks tokens from locked account in sidechain', function () {
-    let prevAddresses, prevPowers, newValidators, res, signs, signature, signature2, signedPower, totalPower, msg, prefix, prefixedMsg, hashData;
-    let vArray = [], rArray = [], sArray = [], signers = [];
+    before ('Creates new Cosmos ERC20 token', async function () { 
+      peggy = await Peggy.new(validators.addresses, validators.powers, {from: args._default});
+      
+      let hashData = String(await peggy.hashNewCosmosERC20.call('ATOMS', 18));
+      let signatures = await utils.createSigns(validators, hashData);
 
-    beforeEach('Create new validator set and get previous validator data', async function() {
-      vArray = [], rArray = [], sArray = [], signers = [];
-      totalPower = 0, signedPower = 0;
-      validators = utils.assignPowersToAccounts(accounts);
-      msg = new Buffer(accounts.concat(validators.powers));
-      hashData = web3.sha3(accounts.concat(validators.powers));
-      prefix = new Buffer("\x19Ethereum Signed Message:\n");
-      prefixedMsg = ethUtils.sha3(
-        Buffer.concat([prefix, new Buffer(String(msg.length)), msg])
-      );
-      for (var i = 0; i < 10; i++) {
-        signs = (Math.random() <= 0.95764); // two std
-        totalPower += validators.powers[i];
-        if (signs) {
-          signature = await web3.eth.sign(validators.addresses[i], '0x' + msg.toString('hex'));
-          let ethSignature = await web3.eth.sign(validators.addresses[i], hashData).slice(2);
-          const rpcSignature = ethUtils.fromRpcSig(signature);
-          const pubKey  = ethUtils.ecrecover(prefixedMsg, rpcSignature.v, rpcSignature.r, rpcSignature.s);
-          const addrBuf = ethUtils.pubToAddress(pubKey);
-          const addr    = ethUtils.bufferToHex(addrBuf);
-          vArray.push(web3.toDecimal(ethSignature.slice(128, 130)) + 27);
-          rArray.push('0x' + ethSignature.slice(0, 64));
-          sArray.push('0x' + ethSignature.slice(64, 128));
-          signers.push(i);
-          signedPower += validators.powers[i];
-        }
-      }
+      cosmosTokenAddress = await peggy.newCosmosERC20.call('ATOMS', 18, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
+      res = await peggy.newCosmosERC20('ATOMS', 18, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
+
+      cosmosToken = await CosmosERC20.at(cosmosTokenAddress);
     });
 
-    it('Calls the Unlock event on success', async function() {
-      let res = await peggy.unlock(args._address0, args._account_one, args._lock_amount, signers, vArray, rArray, sArray, {from: args._default});
-      console.log(res);
-      assert.isAtLeast(res.logs.length, 1, "Successful lock initialization should have logged Unlock event");
-      assert.equal(res.logs[0].args.to, bytesToParam, "'to' address parameter from Unlock event should be equal to the generated validators addreses");
-      assert.strictEqual(res.logs[0].args.value.toNumber(), args._lock_amount, `'value' uint64 parameter from Unlock event should be equal to the unlock amount ${args._lock_amount}`);
-      assert.equal(res.logs[0].args.token, args._address0, `'token' address param from Unlock event should be equal to ${args._address0}`);
+    it('Adds new token to cosmosToken mapping', async function () {
+      assert.equal(await peggy.getCosmosTokenAddress('ATOMS'), cosmosTokenAddress);
     });
+
+    it('Adds address to cosmosTokensAddresses set', async function () {
+      assert.isTrue(await peggy.isCosmosTokenAddress(cosmosTokenAddress));
+    });
+
+    it('Emits NewCosmosERC20 event', async function () {
+      assert.strictEqual(res.logs.length, 1);
+      assert.strictEqual(res.logs[0].event, "NewCosmosERC20", "Successful execution should have logged the NewCosmosERC20 event");
+      assert.strictEqual(res.logs[0].args.name, 'ATOMS');
+      assert.strictEqual(res.logs[0].args.tokenAddress, cosmosTokenAddress);
+    });
+
+    it('Is controller of new CosmosERC20', async function () {
+      assert.equal(await cosmosToken.controller.call(), peggy.address);
+    });
+
+    it('Fails if same name is resubmitted', async function () {
+      let hashData = String(await peggy.hashNewCosmosERC20.call('ATOMS', 10));
+      let signatures = await utils.createSigns(validators, hashData);
+
+      await utils.expectRevert(peggy.newCosmosERC20('ATOMS', 10, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray));
+    });
+
+  });
+
+
+  describe('lock(bytes,address,uint64)', function () {
+    let res, peggy, cosmosTokenAddress, standardTokenMock;
+
+    beforeEach('Sets up peggy contract', async function () {
+      peggy = await Peggy.new(validators.addresses, validators.powers, {from: args._default});
+    });
+
+    it('Recieves Normal ERC20 and emits Lock event', async function () {
+      let standardTokenMock = await StandardTokenMock.new(_account_one, 10000, {from: args._default});
+      await standardTokenMock.approve(peggy.address, 1000, {from: args._account_one});
+      let res = await peggy.lock("0xdeadbeef", standardTokenMock.address, 1000, {from: args._account_one});
+
+      assert.equal((await standardTokenMock.balanceOf(peggy.address)).toNumber(), 1000);
+      assert.strictEqual(res.logs.length, 1);
+      assert.strictEqual(res.logs[0].event, "Lock");
+      assert.strictEqual(String(res.logs[0].args.to), '0xdeadbeef');
+      assert.strictEqual(res.logs[0].args.token, standardTokenMock.address);
+      assert.strictEqual(res.logs[0].args.value.toNumber(), 1000);
+    });
+
+
+    it('Burns CosmosERC20 and emits Lock event', async function () {
+
+      let hashData = String(await peggy.hashNewCosmosERC20.call('ATOMS', 18));
+      let signatures = await utils.createSigns(validators, hashData);
+      let cosmosTokenAddress = await peggy.newCosmosERC20.call('ATOMS', 18, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
+      await peggy.newCosmosERC20('ATOMS', 18, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
+      let cosmosToken = CosmosERC20.at(cosmosTokenAddress);
+      hashData = await peggy.hashUnlock(_account_one, cosmosTokenAddress, 1000);
+      signatures = await utils.createSigns(validators, hashData);
+      await peggy.unlock(_account_one, cosmosTokenAddress, 1000, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
+
+      let res = await peggy.lock("0xdeadbeef", cosmosTokenAddress, 500, {from: args._account_one});
+
+      assert.equal((await cosmosToken.balanceOf(_account_one)).toNumber(), 500);
+      assert.strictEqual(res.logs.length, 1);
+      assert.strictEqual(res.logs[0].event, "Lock");
+      assert.strictEqual(String(res.logs[0].args.to), '0xdeadbeef');
+      assert.strictEqual(res.logs[0].args.token, cosmosTokenAddress);
+      assert.strictEqual(res.logs[0].args.value.toNumber(), 500);
+
+    });
+
+    it('Sends Ether when token is 0 address and emits Lock event', async function () {
+
+      let res = await peggy.lock("0xdeadbeef", _address0, 1000, {from: args._account_one, value: 1000});
+
+      let ethBalance = await web3.eth.getBalance(peggy.address);
+
+      assert.equal(ethBalance.toNumber(), 1000);
+      assert.strictEqual(res.logs.length, 1);
+      assert.strictEqual(res.logs[0].event, "Lock");
+      assert.strictEqual(String(res.logs[0].args.to), '0xdeadbeef');
+      assert.strictEqual(res.logs[0].args.token, _address0);
+      assert.strictEqual(res.logs[0].args.value.toNumber(), 1000);
+
+    });
+
+  });
+
+
+  describe('unlock(address,address,uint64,uint[],uint8[],bytes32[],bytes32[])', function () {
+    let peggy;
+
+
+    beforeEach('Sets up peggy contract', async function () {
+      peggy = await Peggy.new(validators.addresses, validators.powers, {from: args._default});
+    });
+
+    it('Sends Normal ERC20', async function () {
+      let standardTokenMock = await StandardTokenMock.new(peggy.address, 10000, {from: args._default});
+
+      let hashData = await peggy.hashUnlock(_account_one, standardTokenMock.address, 1000);
+      let signatures = await utils.createSigns(validators, hashData);
+
+      await peggy.unlock(_account_one, standardTokenMock.address, 1000, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
+
+      assert.equal((await standardTokenMock.balanceOf(_account_one)).toNumber(), 1000);
+
+    });
+
+    it('Mints Cosmos ERC20', async function () {
+
+      let hashData = String(await peggy.hashNewCosmosERC20.call('ATOMS', 18));
+      let signatures = await utils.createSigns(validators, hashData);
+      let cosmosTokenAddress = await peggy.newCosmosERC20.call('ATOMS', 18, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
+      await peggy.newCosmosERC20('ATOMS', 18, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
+      let cosmosToken = CosmosERC20.at(cosmosTokenAddress);
+
+
+      hashData = await peggy.hashUnlock(_account_one, cosmosTokenAddress, 1000);
+      signatures = await utils.createSigns(validators, hashData);
+
+      await peggy.unlock(_account_one, cosmosTokenAddress, 1000, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
+      assert.equal((await cosmosToken.balanceOf(_account_one)).toNumber(), 1000);
+
+    });
+
+    it('Sends Ether when token is 0 address', async function () {
+      // fund the peggy contract with a little bit of ether
+      await peggy.lock("0xdeadbeef", _address0, 5000, {from: args._account_two, value: 5000});
+
+      let oldBalance = await web3.eth.getBalance(_account_one);
+
+      let hashData = await peggy.hashUnlock(_account_one, _address0, 1000);
+      let signatures = await utils.createSigns(validators, hashData);
+
+      let res = await peggy.unlock(_account_one, _address0, 1000, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
+
+      assert.equal(await web3.eth.getBalance(_account_one).toNumber(), oldBalance.toNumber() + 1000);
+    });
+
   });
 
 });

@@ -1,21 +1,50 @@
 pragma solidity ^0.4.17;
 
 import "./ERC20.sol";
+import "./SafeMath.sol";
 
 contract CosmosERC20 is ERC20 {
-  bytes public name;
+
+  using SafeMath for uint;
+
+  string public name;
+  uint public decimals;
   uint private _totalSupply;
+  
   mapping (address => uint) balances;
   mapping (address => mapping (address => uint)) allowed;
 
   address public controller;
 
-    event Mint(address to, uint tokens);
-    event Burn(address from, uint tokens);
+  event Mint(address _to, uint _amount);
+  event Burn(address _from, uint _amount);
 
-    function totalSupply() public constant returns (uint) {
-        return _totalSupply;
-    }
+
+  modifier onlyByController() {
+      require(msg.sender == controller);
+      _;
+  }
+
+
+  function name() public constant returns (string) {
+    return name;
+  }
+
+  function symbol() public constant returns (string) {
+    return name;
+  }
+
+  function decimals() public constant returns (uint) {
+    return decimals;
+  }
+
+  function controller() public constant returns (address) {
+    return controller;
+  }
+
+  function totalSupply() public constant returns (uint) {
+    return _totalSupply;
+  }
 
   function balanceOf(address tokenOwner) public constant returns (uint balance) {
     return balances[tokenOwner];
@@ -25,50 +54,48 @@ contract CosmosERC20 is ERC20 {
     return allowed[tokenOwner][spender];
   }
 
-  function transfer(address to, uint tokens) public returns (bool success) {
-    if (!(balances[msg.sender] >= tokens)) return false;
-    balances[msg.sender] -= tokens;
-    balances[to] += tokens;
-    Transfer(msg.sender, to, tokens);
+  function transfer(address to, uint amount) public returns (bool success) {
+    return transferFrom(msg.sender, to, amount);
+  }
+
+  function approve(address spender, uint amount) public returns (bool success) {
+    allowed[msg.sender][spender] = amount;
+    Approval(msg.sender, spender, amount);
     return true;
   }
 
-  function approve(address spender, uint tokens) public returns (bool success) {
-    allowed[msg.sender][spender] = tokens;
-    Approval(msg.sender, spender, tokens);
+  function transferFrom(address from, address to, uint amount) public returns (bool success) {
+    require(balances[from] >= amount);
+    require(from == msg.sender || allowed[from][msg.sender] >= amount);
+    require(to != controller);
+
+    balances[from] -= amount;
+    allowed[from][msg.sender] -= amount;
+    balances[to] = balances[to].add(amount);
+
+    Transfer(from, to, amount);
+    return true;
+  } 
+
+  function mint(address to, uint amount) public onlyByController() returns (bool success) {
+    balances[to] = balances[to].add(amount);
+    _totalSupply = _totalSupply.add(amount);
+    Mint(to, amount);
     return true;
   }
 
-  function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-    if (!(balances[from] >= tokens)) return false;
-    if (!(allowed[from][msg.sender] >= tokens)) return false;
-    balances[from] -= tokens;
-    allowed[from][msg.sender] -= tokens;
-    balances[to] += tokens;
-    Transfer(from, to, tokens);
+  function burn(address from, uint amount) public onlyByController() returns (bool success) {
+    require(balances[from] >= amount);
+    balances[from] = balances[from] - amount;
+    _totalSupply = _totalSupply.sub(amount);
+    Burn(from, amount);
     return true;
   }
 
-    function mint(address to, uint tokens) public returns (bool success) {
-        if (msg.sender != controller) return false;
-        balances[to] += tokens;
-        _totalSupply += tokens;
-        Mint(to, tokens);
-        return true;
-    }
-
-    function burn(address from, uint tokens) public returns (bool success) {
-        if (msg.sender != controller) return false;
-        if (!(balances[from] >= tokens)) return false;
-        balances[from] -= tokens;
-        _totalSupply -= tokens;
-        Burn(from, tokens);
-        return true;
-    }
-
-  function CosmosERC20(address _controller, bytes _name) public {
+  function CosmosERC20(address _controller, string _name, uint _decimals) public {
     _totalSupply = 0;
     controller = _controller;
     name = _name;
+    decimals = _decimals;
   }
 }
