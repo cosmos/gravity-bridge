@@ -11,6 +11,7 @@ contract Peggy is Valset {
     /* Events  */
     event NewCosmosERC20(string name, address tokenAddress);
     event Lock(bytes to, address token, uint64 value);
+    event Unlock(address to, address token, uint64 value);
 
     /* Functions */
 
@@ -71,6 +72,7 @@ contract Peggy is Valset {
         } else {
           require(ERC20(token).transfer(to, amount));
         }
+        Unlock(to, token, amount);
         return true;
     }
 
@@ -80,7 +82,7 @@ contract Peggy is Valset {
         bytes32 hashData = keccak256(name, decimals);
         require(Valset.verifyValidators(hashData, signers, v, r, s));
 
-        CosmosERC20 newToken = new CosmosERC20(this, name, decimals);
+        CosmosERC20 newToken = new CosmosERC20(address(this), name, decimals);
 
         cosmosTokens[name] = newToken;
         cosmosTokenAddresses[newToken] = true;

@@ -65,12 +65,12 @@ contract CosmosERC20 is ERC20 {
   }
 
   function transferFrom(address from, address to, uint amount) public returns (bool success) {
-    require(balances[from] >= amount);
-    require(from == msg.sender || allowed[from][msg.sender] >= amount);
     require(to != controller);
-
+    require(to != address(this));
     balances[from] = balances[from].sub(amount);
-    allowed[from][msg.sender] = allowed[from][msg.sender].sub(amount);
+    if (from != msg.sender) {
+      allowed[from][msg.sender] = allowed[from][msg.sender].sub(amount);
+    }
     balances[to] = balances[to].add(amount);
 
     Transfer(from, to, amount);

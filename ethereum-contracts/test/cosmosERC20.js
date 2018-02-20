@@ -61,11 +61,11 @@ contract('CosmosERC20', function(accounts) {
     before('Controller mints tokens', async function() {
       cosmosToken = await CosmosERC20.new(_controller, _name, _decimals, {from: args._default});
       res = await cosmosToken.mint(_account_one, 50, {from: _controller});
-      let bal = await cosmosToken.balanceOf(_account_one);
+      let bal = await cosmosToken.balanceOf(args._account_one);
     });
 
     it('Increases balance of minting recipient', async function () {
-      let bal = await cosmosToken.balanceOf(_account_one);
+      let bal = await cosmosToken.balanceOf(args._account_one);
     });
 
     it('Increases totalSupply', async function () {
@@ -76,12 +76,12 @@ contract('CosmosERC20', function(accounts) {
     it('Emits Mint event', async function () {
       assert.strictEqual(res.logs.length, 1, "Successful minting should have logged one event");
       assert.strictEqual(res.logs[0].event, "Mint", "Successful update should have logged the Mint event");
-      assert.strictEqual(res.logs[0].args._to, _account_one, "Mint event should have proper _to field");
+      assert.strictEqual(res.logs[0].args._to, args._account_one, "Mint event should have proper _to field");
       assert.strictEqual(res.logs[0].args._amount.toNumber(), 50, "Mint event should have proper _amount field");
     });
 
     it('Reverts if non-controller tries to mint', async function () {
-      await utils.expectRevert(cosmosToken.mint(_account_two, 50, {from: _account_two}));
+      await utils.expectRevert(cosmosToken.mint(args._account_two, 50, {from: args._account_two}));
     });
   });
 
@@ -90,12 +90,12 @@ contract('CosmosERC20', function(accounts) {
 
     before('Controller burns tokens', async function() {
       cosmosToken = await CosmosERC20.new(_controller, _name, _decimals, {from: args._default});
-      await cosmosToken.mint(_account_one, 50, {from: _controller});
-      res = await cosmosToken.burn(_account_one, 25, {from: _controller});
+      await cosmosToken.mint(args._account_one, 50, {from: _controller});
+      res = await cosmosToken.burn(args._account_one, 25, {from: _controller});
     });
 
     it('Decreases balance of minting recipient', async function () {
-      let bal = await cosmosToken.balanceOf(_account_one);
+      let bal = await cosmosToken.balanceOf(args._account_one);
       assert.strictEqual(bal.toNumber(), 25, "balance should be decreased");
     });
 
@@ -107,16 +107,16 @@ contract('CosmosERC20', function(accounts) {
     it('Emits Burn event', async function () {
       assert.strictEqual(res.logs.length, 1, "Successful burning should have logged one event");
       assert.strictEqual(res.logs[0].event, "Burn", "Successful update should have logged the Burn event");
-      assert.strictEqual(res.logs[0].args._from, _account_one, "Burn event should have proper _from field");
+      assert.strictEqual(res.logs[0].args._from, args._account_one, "Burn event should have proper _from field");
       assert.strictEqual(res.logs[0].args._amount.toNumber(), 25, "Burn event should have proper _amount field");
     });
 
     it('Reverts if tries to burn more than balance', async function () {
-      await utils.expectRevert(cosmosToken.burn(_account_one, 100, {from: _controller}));
+      await utils.expectRevert(cosmosToken.burn(args._account_one, 100, {from: _controller}));
     });
 
     it('Reverts if non-controller tries to mint', async function () {
-      await utils.expectRevert(cosmosToken.burn(_account_one, 10, {from: _account_two}));
+      await utils.expectRevert(cosmosToken.burn(args._account_one, 10, {from: _account_two}));
     });
   });
 
@@ -124,34 +124,34 @@ contract('CosmosERC20', function(accounts) {
   describe('transfer(address,uint)', function () {
     let cosmosToken, res;
 
-    before('Transfers tokens', async function() {
+    beforeEach('Transfers tokens', async function() {
       cosmosToken = await CosmosERC20.new(_controller, _name, _decimals, {from: args._default});
-      await cosmosToken.mint(_account_one, 50, {from: _controller});
-      res = await cosmosToken.transfer(_account_two, 25, {from: _account_one});
+      res = await cosmosToken.mint(args._account_one, 50, {from: _controller});
+      res = await cosmosToken.transfer(args._account_two, 25, {from: args._account_one});
     });
 
     it('Correctly modifies balances', async function () {
-      const senderBalance = await cosmosToken.balanceOf(_account_one);
+      const senderBalance = await cosmosToken.balanceOf(args._account_one);
       assert.equal(senderBalance, 25);
 
-      const recipientBalance = await cosmosToken.balanceOf(_account_two);
+      const recipientBalance = await cosmosToken.balanceOf(args._account_one);
       assert.equal(recipientBalance, 25);
     });
 
     it('Emits Transfer event', async function () {
       assert.equal(res.logs.length, 1);
       assert.equal(res.logs[0].event, 'Transfer');
-      assert.equal(res.logs[0].args._from, _account_one);
-      assert.equal(res.logs[0].args._to, _account_two);
+      assert.equal(res.logs[0].args._from, args._account_one);
+      assert.equal(res.logs[0].args._to, args._account_two);
       assert.equal(res.logs[0].args._value.toNumber(), 25);
     });
 
     it('Reverts if try to send more than balance', async function () {
-      await utils.expectRevert(cosmosToken.transfer(_account_one, 100, {from: _account_one}));
+      await utils.expectRevert(cosmosToken.transfer(args._account_one, 100, {from: args._account_one}));
     });
 
     it('Reverts if try to send to controller', async function () {
-      await utils.expectRevert(cosmosToken.transfer(_controller, 10, {from: _account_one}));
+      await utils.expectRevert(cosmosToken.transfer(_controller, 10, {from: args._account_one}));
     });
   });
 
@@ -161,19 +161,19 @@ contract('CosmosERC20', function(accounts) {
     before('Gives allowance', async function() {
       cosmosToken = await CosmosERC20.new(_controller, _name, _decimals, {from: args._default});
       await cosmosToken.mint(_account_one, 50, {from: _controller});
-      res = await cosmosToken.approve(_account_two, 25, {from: _account_one});
+      res = await cosmosToken.approve(_account_two, 25, {from: args._account_one});
     });
 
     it('Correctly increases allowance', async function () {
-      const allowance = await cosmosToken.allowance(_account_one, _account_two);
+      const allowance = await cosmosToken.allowance(args._account_one, args._account_two);
       assert.equal(allowance.toNumber(), 25);
     });
 
     it('Emits Approval event', async function () {
       assert.equal(res.logs.length, 1);
       assert.equal(res.logs[0].event, 'Approval');
-      assert.equal(res.logs[0].args._owner, _account_one);
-      assert.equal(res.logs[0].args._spender, _account_two);
+      assert.equal(res.logs[0].args._owner, args._account_one);
+      assert.equal(res.logs[0].args._spender, args._account_two);
       assert.equal(res.logs[0].args._value.toNumber(), 25);
     });
   });

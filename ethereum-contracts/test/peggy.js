@@ -18,9 +18,9 @@ contract('Peggy', function(accounts) {
   };
 
   let validators, standardTokenMock;
-  let _account_one = accounts[1];
-  let _account_two = accounts[2];
-  let _address0 = "0x0000000000000000000000000000000000000000";
+  let _account_one = args._account_one;
+  let _account_two = args._account_two;
+  let _address0 = args._address0;
 
 
 	before('Setup Validators', async function() {
@@ -54,7 +54,6 @@ contract('Peggy', function(accounts) {
 
       cosmosTokenAddress = await peggy.newCosmosERC20.call('ATOMS', 18, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
       res = await peggy.newCosmosERC20('ATOMS', 18, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
-
       cosmosToken = await CosmosERC20.at(cosmosTokenAddress);
     });
 
@@ -145,24 +144,28 @@ contract('Peggy', function(accounts) {
 
 
   describe('unlock(address,address,uint64,uint[],uint8[],bytes32[],bytes32[])', function () {
-    let peggy;
+    let peggy, res;
 
     beforeEach('Sets up peggy contract', async function () {
       peggy = await Peggy.new(validators.addresses, validators.powers, {from: args._default});
     });
 
-    it('Sends Normal ERC20', async function () {
+    it('Sends Normal ERC20 and emits Unlock event', async function () {
       let standardTokenMock = await MockERC20Token.new(peggy.address, 10000, {from: args._default});
-
       let hashData = await peggy.hashUnlock(_account_one, standardTokenMock.address, 1000);
       let signatures = await utils.createSigns(validators, hashData);
 
-      await peggy.unlock(_account_one, standardTokenMock.address, 1000, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
-
+      res = await peggy.unlock(args._account_one, standardTokenMock.address, 1000, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
       assert.equal((await standardTokenMock.balanceOf(_account_one)).toNumber(), 1000);
+
+      assert.strictEqual(res.logs.length, 1);
+      assert.strictEqual(res.logs[0].event, "Unlock");
+      assert.strictEqual(String(res.logs[0].args.to), args._account_one);
+      assert.strictEqual(res.logs[0].args.token, standardTokenMock.address);
+      assert.strictEqual(res.logs[0].args.value.toNumber(), 1000);
     });
 
-    it('Mints Cosmos ERC20', async function () {
+    it('Mints Cosmos ERC20 and emits Unlock event', async function () {
 
       let hashData = String(await peggy.hashNewCosmosERC20.call('ATOMS', 18));
       let signatures = await utils.createSigns(validators, hashData);
@@ -173,11 +176,17 @@ contract('Peggy', function(accounts) {
       hashData = await peggy.hashUnlock(_account_one, cosmosTokenAddress, 1000);
       signatures = await utils.createSigns(validators, hashData);
 
-      await peggy.unlock(_account_one, cosmosTokenAddress, 1000, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
+      res = await peggy.unlock(_account_one, cosmosTokenAddress, 1000, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
       assert.equal((await cosmosToken.balanceOf(_account_one)).toNumber(), 1000);
+
+      assert.strictEqual(res.logs.length, 1);
+      assert.strictEqual(res.logs[0].event, "Unlock");
+      assert.strictEqual(String(res.logs[0].args.to), args._account_one);
+      assert.strictEqual(res.logs[0].args.token, cosmosTokenAddress);
+      assert.strictEqual(res.logs[0].args.value.toNumber(), 1000);
     });
 
-    it('Sends Ether when token is 0 address', async function () {
+    it('Sends Ether when token is address 0x0 and emits Unlock event', async function () {
       // fund the peggy contract with a little bit of ether
       await peggy.lock("0xdeadbeef", _address0, 5000, {from: args._account_two, value: 5000});
 
@@ -185,10 +194,14 @@ contract('Peggy', function(accounts) {
 
       let hashData = await peggy.hashUnlock(_account_one, _address0, 1000);
       let signatures = await utils.createSigns(validators, hashData);
-
-      let res = await peggy.unlock(_account_one, _address0, 1000, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
-
+      res = await peggy.unlock(args._account_one, args._address0, 1000, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
       assert.equal(await web3.eth.getBalance(_account_one).toNumber(), oldBalance.toNumber() + 1000);
+
+      assert.strictEqual(res.logs.length, 1);
+      assert.strictEqual(res.logs[0].event, "Unlock");
+      assert.strictEqual(String(res.logs[0].args.to), args._account_one);
+      assert.strictEqual(res.logs[0].args.token, args._address0);
+      assert.strictEqual(res.logs[0].args.value.toNumber(), 1000);
     });
   });
 });
