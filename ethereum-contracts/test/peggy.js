@@ -1,10 +1,11 @@
 'use strict';
+
 /* Add the dependencies you're testing */
 const utils = require('./utils.js');
 const web3 = global.web3;
 const CosmosERC20 = artifacts.require("./../contracts/CosmosERC20.sol");
 const Peggy = artifacts.require("./../contracts/Peggy.sol");
-const StandardTokenMock = artifacts.require("./../contracts/StandardTokenMock.sol");
+const MockERC20Token = artifacts.require("./../contracts/MockERC20Token.sol");
 const createKeccakHash = require('keccak');
 const ethUtils = require('ethereumjs-util');
 
@@ -23,37 +24,31 @@ contract('Peggy', function(accounts) {
 
 
 	before('Setup Validators', async function() {
-
     validators = utils.createValidators(20);
-
   });
 
   describe('Peggy(address[],uint64[]', function () {
-
     let res, peggy;
 
     before ('Sets up Peggy contract', async function () {
       peggy = await Peggy.new(validators.addresses, validators.powers, {from: args._default});
-     
     });
 
     it ('Correctly verifies ValSet signatures', async function () {
-
       let hashData = String(await peggy.hashValidatorArrays.call(validators.addresses, validators.powers));
       let signatures = await utils.createSigns(validators, hashData);
-      
+
       res = await peggy.verifyValidators.call(hashData, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
       assert.isTrue(res, "Should have successfully verified signatures");
     });
-
   });
 
   describe('newCosmosERC20(string,uint,uint[],uint8[],bytes32[],bytes32[]', function () {
     let res, peggy, cosmosTokenAddress, cosmosToken;
 
-    before ('Creates new Cosmos ERC20 token', async function () { 
+    before ('Creates new Cosmos ERC20 token', async function () {
       peggy = await Peggy.new(validators.addresses, validators.powers, {from: args._default});
-      
+
       let hashData = String(await peggy.hashNewCosmosERC20.call('ATOMS', 18));
       let signatures = await utils.createSigns(validators, hashData);
 
@@ -88,7 +83,6 @@ contract('Peggy', function(accounts) {
 
       await utils.expectRevert(peggy.newCosmosERC20('ATOMS', 10, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray));
     });
-
   });
 
 
@@ -100,7 +94,7 @@ contract('Peggy', function(accounts) {
     });
 
     it('Recieves Normal ERC20 and emits Lock event', async function () {
-      let standardTokenMock = await StandardTokenMock.new(_account_one, 10000, {from: args._default});
+      let standardTokenMock = await MockERC20Token.new(_account_one, 10000, {from: args._default});
       await standardTokenMock.approve(peggy.address, 1000, {from: args._account_one});
       let res = await peggy.lock("0xdeadbeef", standardTokenMock.address, 1000, {from: args._account_one});
 
@@ -132,7 +126,6 @@ contract('Peggy', function(accounts) {
       assert.strictEqual(String(res.logs[0].args.to), '0xdeadbeef');
       assert.strictEqual(res.logs[0].args.token, cosmosTokenAddress);
       assert.strictEqual(res.logs[0].args.value.toNumber(), 500);
-
     });
 
     it('Sends Ether when token is 0 address and emits Lock event', async function () {
@@ -147,22 +140,19 @@ contract('Peggy', function(accounts) {
       assert.strictEqual(String(res.logs[0].args.to), '0xdeadbeef');
       assert.strictEqual(res.logs[0].args.token, _address0);
       assert.strictEqual(res.logs[0].args.value.toNumber(), 1000);
-
     });
-
   });
 
 
   describe('unlock(address,address,uint64,uint[],uint8[],bytes32[],bytes32[])', function () {
     let peggy;
 
-
     beforeEach('Sets up peggy contract', async function () {
       peggy = await Peggy.new(validators.addresses, validators.powers, {from: args._default});
     });
 
     it('Sends Normal ERC20', async function () {
-      let standardTokenMock = await StandardTokenMock.new(peggy.address, 10000, {from: args._default});
+      let standardTokenMock = await MockERC20Token.new(peggy.address, 10000, {from: args._default});
 
       let hashData = await peggy.hashUnlock(_account_one, standardTokenMock.address, 1000);
       let signatures = await utils.createSigns(validators, hashData);
@@ -170,7 +160,6 @@ contract('Peggy', function(accounts) {
       await peggy.unlock(_account_one, standardTokenMock.address, 1000, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
 
       assert.equal((await standardTokenMock.balanceOf(_account_one)).toNumber(), 1000);
-
     });
 
     it('Mints Cosmos ERC20', async function () {
@@ -181,13 +170,11 @@ contract('Peggy', function(accounts) {
       await peggy.newCosmosERC20('ATOMS', 18, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
       let cosmosToken = CosmosERC20.at(cosmosTokenAddress);
 
-
       hashData = await peggy.hashUnlock(_account_one, cosmosTokenAddress, 1000);
       signatures = await utils.createSigns(validators, hashData);
 
       await peggy.unlock(_account_one, cosmosTokenAddress, 1000, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
       assert.equal((await cosmosToken.balanceOf(_account_one)).toNumber(), 1000);
-
     });
 
     it('Sends Ether when token is 0 address', async function () {
@@ -203,7 +190,5 @@ contract('Peggy', function(accounts) {
 
       assert.equal(await web3.eth.getBalance(_account_one).toNumber(), oldBalance.toNumber() + 1000);
     });
-
   });
-
 });

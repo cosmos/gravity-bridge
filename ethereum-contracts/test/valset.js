@@ -1,4 +1,5 @@
 'use strict';
+
 const web3 = global.web3;
 const Valset = artifacts.require("./../contracts/Valset.sol");
 const utils = require('./utils.js');
@@ -17,7 +18,6 @@ contract('Valset', function(accounts) {
   });
 
   describe('ValSet(address[],uint64[])', function() {
-
     it("Saves initial validators' addresses and powers in array", async function() {
 
       let contractAddresses = await valSet.getAddresses.call();
@@ -33,12 +33,10 @@ contract('Valset', function(accounts) {
       }
 
       assert.strictEqual(contractTotalPower.toNumber(), validators.totalPower, "totalSum should the sum of each individual validator's power")
-
     });
   });
 
   describe("verifyValidators(bytes32,uint[],uint8[],bytes32[],bytes32[])", function() {
-
     let hashData;
 
     before('Hashes the data', async function() {
@@ -46,41 +44,32 @@ contract('Valset', function(accounts) {
     });
 
     it('Correctly verifies signatures', async function () {
-
       let signatures = await utils.createSigns(validators, hashData);
       assert.isAtLeast(signatures.signedPower * 3, validators.totalPower * 2, "Did not have supermajority. Try increasing signProbability threshhold.");
-      
+
       let res = await valSet.verifyValidators.call(hashData, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
       assert.isTrue(res, "Should have successfully verified signatures");
-
     });
 
-
     it('Throws if super majority is not reached', async function() {
-      
       let signatures = await utils.createSigns(validators, hashData, 0.25);
       assert.isBelow(signatures.signedPower * 3, validators.totalPower * 2, "Still had supermajority. Try lowering signProbability threshhold.");
 
       await utils.expectRevert(valSet.verifyValidators.call(hashData, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray));
-
     })
 
     it('Throws if invalid signature is included', async function() {
-
       let signatures = await utils.createSigns(validators, hashData);
       assert.isAtLeast(signatures.signedPower * 3, validators.totalPower * 2, "Did not have supermajority. Try increasing signProbability threshhold.");
       signatures.rArray[0] = signatures.rArray[1];
 
       await utils.expectRevert(valSet.verifyValidators.call(hashData, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray));
-
     })
-    
   });
 
 
   describe('update(address[],uint64[],uint[],uint8[],bytes32[],bytes32[])', function() {
     // let prevAddresses, prevPowers, newValidators, res, signs, signature, signature2, signedPower, totalPower, msg, prefix, prefixedMsg, hashData;
-
     let newValidators, hashData, signatures, res;
 
     before('Generates new validator set and signs it', async function() {
@@ -90,8 +79,6 @@ contract('Valset', function(accounts) {
     });
 
     it('Successfully updates the validator set', async function () {
-
-     
       res = await valSet.update(newValidators.addresses, newValidators.powers, signatures.signers, signatures.vArray, signatures.rArray, signatures.sArray);
 
       let contractAddresses = await valSet.getAddresses.call();
@@ -108,18 +95,14 @@ contract('Valset', function(accounts) {
       }
 
       assert.strictEqual(contractTotalPower.toNumber(), newValidators.totalPower, "totalSum should the sum of each individual validator's power")
-
     });
 
-
     it('Successfully logs the Update event', async function () {
-
       assert.strictEqual(res.logs.length, 1, "Successful update should have logged one event");
       assert.strictEqual(res.logs[0].event, "Update", "Successful update should have logged the Update event");
       assert.strictEqual(res.logs[0].args.newAddresses.length, res.logs[0].args.newPowers.length, "Both contract arrays must have the same length");
       assert.strictEqual(res.logs[0].args.newAddresses.length, newValidators.addresses.length, "Event addresses array length should be same as passed in addresses array");
       assert.strictEqual(res.logs[0].args.newPowers.length, newValidators.powers.length, "Event powers array length should be same as passed in power array");
-
 
       for (var i = 0; i < newValidators.addresses.length; i++) {
         assert.strictEqual(String(res.logs[0].args.newAddresses[i]), newValidators.addresses[i], "newAddresses' address[] parameter from Update event should be equal to the generated validators addreses");
@@ -127,9 +110,6 @@ contract('Valset', function(accounts) {
       }
 
       assert.isNumber(res.logs[0].args.seq.toNumber(), "Update event should return 'seq' param in the log");
-
     });
-
   });
-
 });

@@ -10,7 +10,7 @@ contract CosmosERC20 is ERC20 {
   string public name;
   uint public decimals;
   uint private _totalSupply;
-  
+
   mapping (address => uint) balances;
   mapping (address => mapping (address => uint)) allowed;
 
@@ -69,13 +69,13 @@ contract CosmosERC20 is ERC20 {
     require(from == msg.sender || allowed[from][msg.sender] >= amount);
     require(to != controller);
 
-    balances[from] -= amount;
-    allowed[from][msg.sender] -= amount;
+    balances[from] = balances[from].sub(amount);
+    allowed[from][msg.sender] = allowed[from][msg.sender].sub(amount);
     balances[to] = balances[to].add(amount);
 
     Transfer(from, to, amount);
     return true;
-  } 
+  }
 
   function mint(address to, uint amount) public onlyByController() returns (bool success) {
     balances[to] = balances[to].add(amount);
@@ -86,7 +86,7 @@ contract CosmosERC20 is ERC20 {
 
   function burn(address from, uint amount) public onlyByController() returns (bool success) {
     require(balances[from] >= amount);
-    balances[from] = balances[from] - amount;
+    balances[from] = balances[from].sub(amount);
     _totalSupply = _totalSupply.sub(amount);
     Burn(from, amount);
     return true;

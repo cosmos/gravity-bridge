@@ -3,12 +3,13 @@ pragma solidity ^0.4.17;
 import "./ERC20.sol";
 import "./SafeMath.sol";
 
-// mock class using StandardToken
-contract StandardTokenMock is ERC20 {
+// mock class using MockERC20Token
+contract MockERC20Token is ERC20 {
 
 	using SafeMath for uint256;
 
   mapping(address => uint256) balances;
+	mapping (address => mapping (address => uint256)) internal allowed;
 
   uint256 totalSupply_;
 
@@ -43,8 +44,6 @@ contract StandardTokenMock is ERC20 {
   function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
 	}
-
-	mapping (address => mapping (address => uint256)) internal allowed;
 
   /**
    * @dev Transfer tokens from one address to another
@@ -127,9 +126,8 @@ contract StandardTokenMock is ERC20 {
     return true;
 	}
 
-  function StandardTokenMock(address initialAccount, uint256 initialBalance) public {
+  function MockERC20Token(address initialAccount, uint256 initialBalance) public {
     balances[initialAccount] = initialBalance;
     totalSupply_ = initialBalance;
   }
-
 }

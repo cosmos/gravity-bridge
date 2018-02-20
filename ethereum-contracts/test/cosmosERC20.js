@@ -5,7 +5,6 @@ const utils = require('./utils.js');
 const CosmosERC20 = artifacts.require("./../contracts/CosmosERC20.sol");
 
 contract('CosmosERC20', function(accounts) {
-
   const args = {
     _default: accounts[0],
     _account_one: accounts[1],
@@ -56,7 +55,6 @@ contract('CosmosERC20', function(accounts) {
     });
   });
 
-
   describe('mint(address,uint)', function() {
     let cosmosToken, res;
 
@@ -85,7 +83,6 @@ contract('CosmosERC20', function(accounts) {
     it('Reverts if non-controller tries to mint', async function () {
       await utils.expectRevert(cosmosToken.mint(_account_two, 50, {from: _account_two}));
     });
-
   });
 
   describe('burn(address,uint)', function() {
@@ -121,12 +118,10 @@ contract('CosmosERC20', function(accounts) {
     it('Reverts if non-controller tries to mint', async function () {
       await utils.expectRevert(cosmosToken.burn(_account_one, 10, {from: _account_two}));
     });
-
   });
 
 
   describe('transfer(address,uint)', function () {
-
     let cosmosToken, res;
 
     before('Transfers tokens', async function() {
@@ -158,11 +153,9 @@ contract('CosmosERC20', function(accounts) {
     it('Reverts if try to send to controller', async function () {
       await utils.expectRevert(cosmosToken.transfer(_controller, 10, {from: _account_one}));
     });
-
   });
 
   describe('approve(address,uint)', function () {
-
     let cosmosToken, res;
 
     before('Gives allowance', async function() {
@@ -183,12 +176,9 @@ contract('CosmosERC20', function(accounts) {
       assert.equal(res.logs[0].args._spender, _account_two);
       assert.equal(res.logs[0].args._value.toNumber(), 25);
     });
-
   });
 
-
   describe('transferFrom(address,address,uint)', function () {
-
     let cosmosToken, res;
 
     before('Spends Allowance', async function() {
@@ -214,8 +204,5 @@ contract('CosmosERC20', function(accounts) {
     it('Reverts if spending more than allowance', async function () {
       await utils.expectRevert(cosmosToken.transfer(_account_one, 50, {from: _account_two}));
     });
-
   });
-
-
 });

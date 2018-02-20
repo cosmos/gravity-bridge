@@ -2,7 +2,7 @@
   "name": "ethereum-contracts",
   "version": "1.0.0",
   "description": "## Installing dependencies",
-  "main": "truffle-config.js",
+  "main": "truffle.js",
   "directories": {
     "test": "test"
   },

@@ -1,3 +1,5 @@
+'use strict';
+
 var _ = require("lodash");
 var Promise = require("bluebird");
 const keythereum = require("keythereum");
@@ -13,7 +15,7 @@ module.exports = {
   seededRandomInt: function(min, max, seed) {
     seed = (seed * 9301 + 49297) % 233280;
     var rnd = seed / 233280;
- 
+
     return Math.floor(min + rnd * (max - min));
   },
   sumArrayValues: function(total, uint64) {
@@ -141,7 +143,7 @@ module.exports = {
         signers.push(i);
         signedPower += validators.powers[i];
       }
-    } 
+    }
 
     return {
         signers: signers,
@@ -149,7 +151,7 @@ module.exports = {
         rArray: rArray,
         sArray: sArray,
         signedPower: signedPower
-    } 
+    }
   },
   expectThrow: async function (promise) {
     try {
@@ -174,5 +176,4 @@ module.exports = {
       return;
     }
   },
-
 }

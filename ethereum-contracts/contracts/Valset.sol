@@ -9,10 +9,11 @@ contract Valset {
     uint64 public totalPower;
     uint internal updateSeq = 0;
 
+
     /* Events */
 
     event Update(address[] newAddresses, uint64[] newPowers, uint indexed seq);
-    
+
 
     /* Getters (These are supposed to be auto implemented by solidity but aren't ¯\_(ツ)_/¯) */
 
@@ -27,7 +28,7 @@ contract Valset {
     function getTotalPower() public view returns (uint64) {
       return totalPower;
     }
-    
+
 
     /* Functions */
 
@@ -37,13 +38,13 @@ contract Valset {
 
     function verifyValidators(bytes32 hash, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s) public constant returns (bool) {
       uint64 signedPower = 0;
-      
+
       for (uint i = 0; i < signers.length; i++) {
         if (i > 0) {
           require(signers[i] > signers[i-1]);
         }
-        address addrErc = ecrecover(hash, v[i], r[i], s[i]);
-        require (addrErc == addresses[signers[i]]);
+        address recAddr = ecrecover(hash, v[i], r[i], s[i]);
+        require(recAddr == addresses[signers[i]]);
 
         signedPower += powers[signers[i]];
       }
@@ -79,7 +80,6 @@ contract Valset {
      * @param r           output of ECDSA signature. Used to compute ecrecover
      * @param s           output of ECDSA signature.  Used to compute ecrecover
      */
-
     function update(address[] newAddress, uint64[] newPowers, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s) public {
         bytes32 hashData = keccak256(newAddress, newPowers);
         require(verifyValidators(hashData, signers, v, r, s)); // hashing can be changed

@@ -37,16 +37,16 @@ contract Peggy is Valset {
      * @param value       value of transference
      * @param token       token address in origin chain (0x0 if Ethereum, Cosmos for other values)
      */
-    function lock(bytes to, address token, uint64 amount) public payable returns (bool) {
+    function lock(bytes to, address tokenAddr, uint64 amount) public payable returns (bool) {
         if (msg.value != 0) {
-          require(token == address(0));
+          require(tokenAddr == address(0));
           require(msg.value == amount);
-        } else if (cosmosTokenAddresses[token]) {
-          CosmosERC20(token).burn(msg.sender, amount);
+        } else if (cosmosTokenAddresses[tokenAddr]) {
+          CosmosERC20(tokenAddr).burn(msg.sender, amount);
         } else {
-          require(ERC20(token).transferFrom(msg.sender, this, amount));
+          require(ERC20(tokenAddr).transferFrom(msg.sender, this, amount));
         }
-        Lock(to, token, amount);
+        Lock(to, tokenAddr, amount);
         return true;
     }
 
@@ -61,16 +61,8 @@ contract Peggy is Valset {
      * @param r           array of outputs of ECDSA signature
      * @param s           array of outputs of ECDSA signature
      */
-    function unlock(
-        address to,
-        address token,
-        uint64 amount,
-        uint[] signers,
-        uint8[] v,
-        bytes32[] r,
-        bytes32[] s
-    ) external returns (bool) {
-        bytes32 hashData = keccak256(to, token, amount); /*, chain.length, chain*/
+    function unlock(address to, address token, uint64 amount, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s) external returns (bool) {
+        bytes32 hashData = keccak256(to, token, amount);
         require(Valset.verifyValidators(hashData, signers, v, r, s));
         if (token == address(0)) {
           to.transfer(amount);
@@ -89,7 +81,7 @@ contract Peggy is Valset {
         require(Valset.verifyValidators(hashData, signers, v, r, s));
 
         CosmosERC20 newToken = new CosmosERC20(this, name, decimals);
-        
+
         cosmosTokens[name] = newToken;
         cosmosTokenAddresses[newToken] = true;
 

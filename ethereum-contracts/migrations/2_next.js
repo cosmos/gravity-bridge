@@ -9,6 +9,5 @@ module.exports = function(deployer, network, accounts) {
       valset = [[accounts[0]], [100]]
       break
   }
-  
   deployer.deploy(Peggy, valset[0], valset[1])
 }
