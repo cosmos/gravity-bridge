@@ -168,11 +168,23 @@ module.exports = {
     }
     assert.fail('Expected throw not received');
   },
+  hexToBool: function (hexBool) {
+    if (hexBool == '0x01') {
+      return true;
+    } else if (hexBool == '0x00') {
+      return false;
+    } else throw `StatusException: ${hexBool} is not a valid transaction receipt status`;
+  },
   expectRevert: async function (promise) {
     try {
-      assert.isFalse(await promise, "Should not execute properly.");
+      let response = await promise;
+      if (typeof(response) == 'object') {
+        assert.isFalse(this.hexToBool(response.receipt.status), "Should not execute properly.");
+      } else {
+        assert.isFalse(response, "Should not execute properly.");
+      }
     } catch (error) {
-      assert.isAtLeast(error.message.search('revert'), 1, 'Expected revert, got \'' + error + '\' instead');
+      assert.isTrue(Boolean(error.message.search('revert')) || error.message.startsWith('Invalid JSON RPC response:'), 'Expected revert, got \'' + error + '\' instead');
       return;
     }
   },

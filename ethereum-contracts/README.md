@@ -12,16 +12,18 @@ You can test the contracts using Truffle Testrpc in the console or Ganache UI.
 
 1) **Testrpc**:
     - `$ cd ethereum-contracts`
-    - Delete *build* folder an type `$ truffle migrate --reset --compile-all`
+    - Delete *build* folder: `$ rm -r build/`
+    - `$ truffle migrate --reset --compile-all`
     - `$ testrpc`
     - `$ truffle test` on a separate tab
 
 
 2) **Ganache**:
     - `$ cd ethereum-contracts`
-    - Delete *build* folder an type `$ truffle migrate --reset --compile-all`
-    - Open Ganache app, open the *Settings* button and make sure it's running on port **_8545_**.
-    - `$ truffle test` on a separate tab
+    - Delete *build* folder: `$ rm -r build/`
+    - `$ truffle migrate --reset --compile-all`
+    - Open Ganache app, open the *Settings* button and make sure it's running on port **_7545_**.
+    - `$ truffle test --network ganache` on a separate tab
 
 
 ![alt text](./img/ganache_setup.png "Ganache Setup")
@@ -56,7 +58,7 @@ Once you run the contracts you will get the `TX HASH` number of each function ca
        blockHash: '0x0ae0afbd7d711871e9dde6740ea613bdb22cd9fc4f4c68bac46c22a8bf7e0b5e',
        blockNumber: 529,
        address: '0x1b5163d8309bc23c225ba666507efd036dc1c677',
-       type: 'mined',
+       type: 'someType',
        event: 'SomeEvent',
        args: [Object] } ] }
   ```
