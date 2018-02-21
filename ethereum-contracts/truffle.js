@@ -11,6 +11,7 @@ module.exports = {
       host: "localhost",
       port: 8545,
       network_id: "*", // Match any network id
+      gas: 4700000,
       solc: { optimizer: { enabled: true, runs: 200 } }
     },
     ganache: {
@@ -22,6 +23,7 @@ module.exports = {
       network_id: 3,
       host: "localhost",
       port: 8545,
+      gas: 4700000,
       solc: { optimizer: { enabled: true, runs: 200 } }
    }
   },
