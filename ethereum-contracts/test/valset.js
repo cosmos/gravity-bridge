@@ -4,6 +4,7 @@ const web3 = global.web3;
 const Valset = artifacts.require("./../contracts/Valset.sol");
 const utils = require('./utils.js');
 const ethUtils = require('ethereumjs-util');
+const soliditySha3 = require('./soliditySha3.js');
 
 contract('Valset', function(accounts) {
   const args = { _default: accounts[0] };
@@ -40,8 +41,13 @@ contract('Valset', function(accounts) {
     let hashData;
 
     before('Hashes the data', async function() {
-      hashData = String(await valSet.hashValidatorArrays.call(validators.addresses, validators.powers));
+      hashData = await valSet.hashValidatorArrays.call(validators.addresses, validators.powers);
     });
+
+    // it('Hashes validators array correctly', function () {
+    //   let hashObj = soliditySha3({t: 'address', v: validators.addresses}, {t: 'uint64', v: validators.powers});
+    //   assert.strictEqual(hashObj, hashData, "keccak256 hashes should be equal");
+    // });
 
     it('Correctly verifies signatures', async function () {
       let signatures = await utils.createSigns(validators, hashData);

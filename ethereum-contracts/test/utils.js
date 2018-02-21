@@ -187,5 +187,5 @@ module.exports = {
       assert.isTrue(Boolean(error.message.search('revert')) || error.message.startsWith('Invalid JSON RPC response:'), 'Expected revert, got \'' + error + '\' instead');
       return;
     }
-  },
+  }
 }

@@ -38,7 +38,6 @@ contract Valset {
 
     function verifyValidators(bytes32 hash, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s) public constant returns (bool) {
       uint64 signedPower = 0;
-
       for (uint i = 0; i < signers.length; i++) {
         if (i > 0) {
           require(signers[i] > signers[i-1]);
@@ -48,9 +47,7 @@ contract Valset {
 
         signedPower += powers[signers[i]];
       }
-
       require(signedPower * 3 > totalPower * 2);
-
       return true;
     }
 
