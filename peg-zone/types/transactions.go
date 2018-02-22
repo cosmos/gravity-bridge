@@ -32,8 +32,8 @@ func (wtx WitnessTx) Type() string {
 }
 
 type WitnessData struct {
-	WitnessTxs  []WitnessTx
-	Amount      int64
+    Witnesses   []crypto.Address
+    Amount      int64
 	Destination crypto.Address
 	Credited    bool
 }

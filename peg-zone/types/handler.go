@@ -1,5 +1,10 @@
 package types
 
+import (
+    "github.com/cosmos/cosmos-sdk/baseapp"
+    sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
 func RegisterRoutes(r baseapp.Router, accts sdk.AccountMapper, wits WitnessTxMapper, witd WithdrawTxMapper) {
 	r.AddRoute(WitnessTx, DepositMsgHandler(accts))
 	r.AddRoute(SendTx, SettleMsgHandler(accts))

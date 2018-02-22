@@ -5,12 +5,7 @@ message Tx {
     oneof tx {
         WitnessTx witness = 1;
         SignTx    sign    = 2;
-        RelayTx   relay   = 3;
     }
-}
-
-message RelayTx {
-    
 }
 
 message SignTx {

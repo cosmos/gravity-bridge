@@ -1,8 +1,8 @@
 package types
 
 import (
-	"fmt"
-	"reflect"
+//	"fmt"
+//	"reflect"
 
 	crypto "github.com/tendermint/go-crypto"
 	wire "github.com/tendermint/go-wire"
@@ -67,30 +67,6 @@ func (wtx WitnessTxMapper) SetAccount(ctx sdk.Context, acc sdk.Account) {
 	store.Set(addr, bz)
 }
 
-// ValidatorMapper : crypto.Address -> bool
-
-type ValidatorMapper struct {
+type WithdrawTxMapper struct {
     key sdk.StoreKey
-    am sdk.AccountMapper
-}
-
-func NewValidatorMapper(key sdk.StoreKey) ValidatorMapper {
-    return ValidatorMapper{
-		key: key,
-	}
-}
-
-func (val ValidatorMapper) GetValidators(ctx sdk.Context) []crypto.Address {
-    res := []crypto.Address{}
-    store := ctx.KVStore(val.key)
-    for iter := store.Iterator([]byte{}, []byte(nil)); iter.Valid(); iter.Next() {
-        res = append(res, iter.Key())
-    }
-    iter.Close()
-    return res
-}
-
-func (val ValidatorMapper) IsValidator(ctx sdk.Context, addr crypto.Address) bool {
-    store := ctx.KVStore(val.key)
-    return store.Get(addr)
 }
