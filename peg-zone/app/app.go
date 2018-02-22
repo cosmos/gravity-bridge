@@ -5,6 +5,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/peggy/peg-zone/types"
+
+    "github.com/golang/protobuf/proto"
 )
 
 type PeggyApp struct {
@@ -73,13 +75,46 @@ func setAnteHandler(bApp *baseapp.BaseApp, accts sdk.AccountMapper) {
 func initBaseAppTxDecoder(bApp *baseapp.BaseApp) {
 	cdc := types.MakeTxCodec()
 	bApp.SetTxDecoder(func(txBytes []byte) (sdk.Tx, sdk.Error) {
-		var tx = sdk.StdTx{}
+        var protoTx types.WitnessTx
+        if err := proto.Unmarshal(txBytes, &protoTx); err != nil {
+            return sdk.Tx{}, err
+        }
+
+        var tx sdk.Tx
+        tx.Signatures = []sdk.StdSignature {
+            Signature: protoTx.Signature,
+            Sequence:  protoTx.Sequence,
+        }
+        switch innerTx := protoTx.Tx.(type) {
+        case WitnessTx_Lock:
+            lock := innerTx.Lock
+            msg := types.WitnessTx {
+                Amount:      lock.Value,
+                Destination: lock.Dest,
+                Token:       lock.Token,
+            }
+            tx.Msg = msg 
+        default:
+            return sdk.Tx{}, errors.New("Not implemented")
+        }
+
 		// StdTx.Msg is an interface whose concrete
 		// types are registered in app/msgs.go.
-		err := cdc.UnmarshalBinary(txBytes, &tx)
-		if err != nil {
-			return nil, sdk.ErrTxParse("").TraceCause(err, "")
-		}
+//		err := cdc.UnmarshalBinary(txBytes, &tx)
+//		if err != nil {
+//			return nil, sdk.ErrTxParse("").TraceCause(err, "")
+//		}
 		return tx, nil
 	})
 }
+/*
+func initEndBlocker(bApp *baseapp.BaseApp) {
+    bApp.SetEndBlocker(func(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+        
+    })
+}*/
+
+
+
+
+

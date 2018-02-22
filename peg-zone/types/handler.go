@@ -8,11 +8,11 @@ func RegisterRoutes(r baseapp.Router, accts sdk.AccountMapper, wits WitnessTxMap
 }
 
 // Handle all peggy type messages.
-func NewHandler() sdk.Handler {
+func NewHandler(wtx WitnessTxMapper, val ValidatorMapper) sdk.Handler {
 	return func(ctx sdk.Context, ck sdk.CoinKeeper, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case WitnessTx:
-			return handleWitnessTx(ctx, msg)
+			return handleWitnessTx(ctx, wtx, val, msg)
 		case SendTx:
 			return handleSendTx(ctx, ck, msg)
 		case WithdrawTx:
@@ -48,8 +48,10 @@ func handleSendTx(ctx sdk.Context, ck CoinKeeper, msg SendMsg) sdk.Result {
 }
 
 // Handle IssueMsg.
-func handleWitnessTx(ctx sdk.Context, ck CoinKeeper, msg IssueMsg) sdk.Result {
-	panic("not implemented yet")
+func handleWitnessTx(ctx sdk.Context, wtx WitnessTxMapper, val ValidatorMapper, msg WitnessTx) sdk.Result {
+    data := wtx.GetWitnessData(ctx, msg)
+    for _, d := range data {
+    }
 }
 
 // Handle IssueMsg.

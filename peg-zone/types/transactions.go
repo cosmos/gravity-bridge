@@ -18,6 +18,7 @@ const (
 type WitnessTx struct {
 	Amount      int64
 	Destination crypto.Address
+    Token       crypto.Address
 }
 
 var _ sdk.Msg = (*WitnessTx)(nil)

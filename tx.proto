@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+/*
+message Tx {
+    oneof tx {
+        WitnessTx witness = 1;
+        SignTx    sign    = 2;
+        RelayTx   relay   = 3;
+    }
+}
+
+message RelayTx {
+    
+}
+
+message SignTx {
+
+}
+
+*/
+
+message WitnessTx {
+    bytes signature = 1;
+    uint64 sequence = 2;
+    oneof tx {
+        LockMsg lock = 3;
+    }
+}
+
+message LockMsg {
+    bytes dest = 1;
+    uint64 value = 2;
+    bytes token = 3;
+    uint64 nonce = 4;
+}
