@@ -1,4 +1,4 @@
-# 2-way permissionless pegzones
+# Implementation of a 2-way permissionless pegzones
 
 ## Introduction
 
@@ -10,14 +10,38 @@ achieved by implementing the "Inter Blockchain Communiciation Protocol" or IBC f
 short. Blockchain engines such as [Tendermint Core](https://github.com/tendermint/tendermint)
 support true finality due to the use of [Tendermint Consensus]().
 
+Definitions: 
+- _Pegzone_: general implementation of the zone and the communication between it and the contracts in Ethereum
+- _pegzone_: refers explicitly to the zone itself
+- _peggy_: communication between the pegzone and native Ethereum
+
+## Previous works 
+
+Blockstream SideChains
+
+## Cosmos Pegzone
+
+## Why a pegzone
+
+The Cosmos network needs a pegzone to connect t 
+
+
 The reason why pegzones are needed in the former case is that in order to
 separate the global state into two blockchains instead of just one we need a
 finality guarantee after which neither of the chains is allowed to revert any
 transactions. The pegzones main duty is to guarantee this finality even though
 the underlying chain does not offer it.
 
-Even though this document explains a general concept it choses to use Ethereum
-and Cosmos as practical examples and shows how to build a pegzone between them.
+**Finality**
+
+Cosmos uses Tendermint BFT algorithm. 
+
+CAP Theorem
+
+The main issue in building a bridge between native Ethereum and the Cosmos Hub is that PoW Ethereum doesn't have any finality guarantees (neither Bitcoin); rather, they have probabilistic finality. That means that after a certain amount of blocks can assure with a high level of confidence that the block is “final” and that the transaction made is on a block in the main chain. This is also known as _block confirmation time_. Ethereum's block confirmation time is [12 blocks](https://ethereum.stackexchange.com/questions/319/what-number-of-confirmations-is-considered-secure-in-ethereum) (~3 min), whereas Bitcoin has a confirmation time of 6 blocks (~1 hr). On the other hand, because Tendermint consensus algorithm prioritices consistency over availability, it offers block finality in a range between 1 and 3 seconds.
+
+IBC packets cannot be efficiently decoded in Ethereum, simply because the EVM isn’t designed to be IBC-compatible.
+
 
 In the following paragraphs we describe how to build a pegzone between Ethereum
 and Cosmos, which is a Tendermint-based chain. It provides pegged assets on
