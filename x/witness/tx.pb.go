@@ -11,7 +11,7 @@ It has these top-level messages:
 	WitnessTx
 	LockMsg
 */
-package types
+package witness
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"

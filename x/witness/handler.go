@@ -1,4 +1,4 @@
-package withdraw 
+package witness
 
 import (
     "reflect"
@@ -6,11 +6,11 @@ import (
     sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func NewHandler(with WitnessTxMapper) sdk.Handler {
+func NewHandler(wmap WitnessMsgMapper) sdk.Handler {
     return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
         switch msg := msg.(type) {
-        case WitnessTx:
-            return handleWitnessTx(ctx, with, msg)
+        case LockMsg:
+            return handleLockMsg(ctx, wmap, msg)
         default:
             errMsg := "Unrecognized withdraw Msg type: " + reflect.TypeOf(msg).Name()
             return sdk.ErrUnknownRequest(errMsg).Result()
@@ -18,6 +18,14 @@ func NewHandler(with WitnessTxMapper) sdk.Handler {
     }
 }
 
-func handleWitnessTx(ctx sdk.Context, with WithdrawTxMapper, msg sdk.Msg) sdk.Result {
-
+func handleLockMsg(ctx sdk.Context, wtx WitnessMsgMapper, msg LockMsg) sdk.Result {
+    data := wtx.GetWitnessData(ctx, msg)
+    for _, w := range data.Witnesses {
+        if w == msg.Signer {
+            return ErrWitnessReplay()
+        }
+    }
+    data.Witnesses = append(data.Witnesses, msg.Signer)
+    wtx.SetWitnessData(ctx, msg, data)
+    return sdk.Result{}
 }
