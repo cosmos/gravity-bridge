@@ -3,43 +3,16 @@ package witness
 import (
     sdk "github.com/cosmos/cosmos-sdk/types"
     crypto "github.com/tendermint/go-crypto"
+
+    wire "github.com/tendermint/go-wire"
 )
-/*
-type WitnessMsg struct {
-    amount      int64
-    destination crypto.Address
-    token       crypto.Address
-    signer      crypto.Address
+
+type LockMsg struct {
+    Destination crypto.Address
+    Amount      int64
+    Token       []byte
+    Signer      crypto.Address
 }
-
-var _ sdk.Msg = (*WitnessMsg)(nil)
-
-func (msg WitnessMsg) ValidateBasic() sdk.Error {
-    return nil
-}
-
-func (msg WitnessMsg) Type() string {
-    return "WitnessTx"
-}
-
-func (msg WitnessMsg) Get(key interface{}) interface{} {
-    return nil
-}
-
-func (msg WitnessMsg) GetSignBytes() []byte {
-    b, err := proto.Marshal(msg)
-}
-*/
-
-// Using LockMsg directly because of GetSignBytes
-
-type WitnessMsg interface {
-    isWitnessMsg()
-}
-
-var _ WitnessMsg = (*LockMsg)(nil)
-
-func (msg LockMsg) isWitnessMsg() {}
 
 var _ sdk.Msg = (*LockMsg)(nil)
 
@@ -55,12 +28,19 @@ func (msg LockMsg) Get(key interface{}) interface{} {
     return nil
 }
 
+func newCodec() *wire.Codec {
+    cdc := wire.NewCodec()
+    cdc.RegisterConcrete(LockMsg{}, "com.cosmos.peggy.LockMsg", nil)
+    return cdc
+}
+
 func (msg LockMsg) GetSignBytes() []byte {
-    data, err := proto.Marshal(msg)
+    cdc := newCodec()
+    bz, err := cdc.MarshalBinary(msg)
     if err != nil {
         panic(err)
     }
-    return data
+    return bz
 }
 
 func (msg LockMsg) GetSigners() []crypto.Address {

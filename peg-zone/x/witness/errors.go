@@ -7,17 +7,22 @@ import (
 type CodeType = sdk.CodeType
 
 const (
-    CodeWitnessReplay CodeType = 101
+    CodeAlreadyCredited CodeType = 101
+    CodeWitnessReplay   CodeType = 102
 )
 
-func codeToDefaultMsg(code CodeType) string (
+func codeToDefaultMsg(code CodeType) string {
     switch code {
     case CodeWitnessReplay:
         return "Witness tx replayed"
     default:
         return sdk.CodeToDefaultMsg(code)
     }
-)
+}
+
+func ErrAlreadyCredited() sdk.Error {
+    return newError(CodeAlreadyCredited, "")
+}
 
 func ErrWitnessReplay() sdk.Error {
     return newError(CodeWitnessReplay, "")
