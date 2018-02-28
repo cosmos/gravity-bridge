@@ -1,7 +1,6 @@
 package witness
 
 import (
-    sdk "github.com/cosmos/cosmos-sdk/types"
     wire "github.com/tendermint/go-wire"
 )
 

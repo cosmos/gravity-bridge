@@ -7,8 +7,10 @@ import (
 type CodeType = sdk.CodeType
 
 const (
-    CodeAlreadyCredited CodeType = 101
-    CodeWitnessReplay   CodeType = 102
+    CodeInvalidLockMsg  CodeType = 101
+    CodeAlreadyCredited CodeType = 201
+    CodeWitnessReplay   CodeType = 202
+    
 )
 
 func codeToDefaultMsg(code CodeType) string {
@@ -20,12 +22,24 @@ func codeToDefaultMsg(code CodeType) string {
     }
 }
 
+func ErrInvalidLockMsg() sdk.Error {
+    return newError(CodeInvalidLockMsg, "")
+}
+
 func ErrAlreadyCredited() sdk.Error {
     return newError(CodeAlreadyCredited, "")
 }
 
 func ErrWitnessReplay() sdk.Error {
     return newError(CodeWitnessReplay, "")
+}
+
+func msgOrDefaultMsg(msg string, code CodeType) string {
+    if msg != "" {
+        return msg
+    } else {
+        return codeToDefaultMsg(code)
+    }
 }
 
 func newError(code CodeType, msg string) sdk.Error {

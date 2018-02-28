@@ -7,34 +7,39 @@ import (
     wire "github.com/tendermint/go-wire"
 )
 
-type LockMsg struct {
-    Destination crypto.Address
-    Amount      int64
-    Token       []byte
-    Signer      crypto.Address
+type WitnessMsg struct {
+    Info   WitnessInfo
+    Signer crypto.Address
 }
 
-var _ sdk.Msg = (*LockMsg)(nil)
+var _ sdk.Msg = (*WitnessMsg)(nil)
 
-func (msg LockMsg) ValidateBasic() sdk.Error {
-    return nil
+func (msg WitnessMsg) ValidateBasic() sdk.Error {
+    return msg.Info.ValidateBasic()
+    if len(msg.Destination) != 20 ||
+       len(msg.Token)       != 20 ||
+       len(msg.Signer)      != 20 {
+        return ErrInvalidWitnessMsg()    
+    }
 }
 
-func (msg LockMsg) Type() string {
-    return "LockMsg"
+func (msg WitnessMsg) Type() string {
+    return "WitnessMsg"
 }
 
-func (msg LockMsg) Get(key interface{}) interface{} {
+func (msg WitnessMsg) Get(key interface{}) interface{} {
     return nil
 }
 
 func newCodec() *wire.Codec {
     cdc := wire.NewCodec()
-    cdc.RegisterConcrete(LockMsg{}, "com.cosmos.peggy.LockMsg", nil)
+    cdc.RegisterConcrete(WitnessMsg{}, "com.cosmos.peggy.WitnessMsg", nil)
+    cdc.RegisterInterface((*WitnessInfo)(nil), nil)
+    cdc.RegisterConcrete(LockInfo{}, "com.cosmos.peggy.LockInfo", nil)
     return cdc
 }
 
-func (msg LockMsg) GetSignBytes() []byte {
+func (msg WitnessMsg) GetSignBytes() []byte {
     cdc := newCodec()
     bz, err := cdc.MarshalBinary(msg)
     if err != nil {
@@ -43,14 +48,21 @@ func (msg LockMsg) GetSignBytes() []byte {
     return bz
 }
 
-func (msg LockMsg) GetSigners() []crypto.Address {
+func (msg WitnessMsg) GetSigners() []crypto.Address {
     return []crypto.Address{ msg.Signer }
 }
 
-type WitnessData struct {
-    Witnesses      []crypto.Address
-    Amount         int64
-    Destination    crypto.Address
-    credited       bool
+type WitnessInfo interface {
+    isWitnessInfo()
 }
+
+type LockInfo struct {
+    Destination crypto.Address
+    Amount      int64
+    Token       crypto.Address
+}
+
+var _ WitnessInfo = (LockInfo)(nil)
+
+func (info LockInfo) isWitnessInfo() {}
 

@@ -3,7 +3,14 @@ package witness
 import (
     sdk "github.com/cosmos/cosmos-sdk/types"
     wire "github.com/tendermint/go-wire"
+    crypto "github.com/tendermint/go-crypto"
 )
+
+type WitnessData struct {
+    Info      WitnessInfo
+    Witnesses []crypto.Address
+    credited  bool
+}
 
 type WitnessMsgMapper struct {
     cdc *wire.Codec
@@ -12,8 +19,8 @@ type WitnessMsgMapper struct {
 
 func NewWitnessMsgMapper(key sdk.StoreKey) WitnessMsgMapper {
     cdc := wire.NewCodec()
-    cdc.RegisterInterface((*WitnessMsg)(nil), nil)
-    cdc.RegisterConcrete(LockMsg{}, "com.cosmos.peggy.LockMsg", nil)
+    cdc.RegisterInterface((*WitnessInfo)(nil), nil)
+    cdc.RegisterConcrete(LockInfo{}, "com.cosmos.peggy.LockInfo", nil)
     cdc.RegisterConcrete(WitnessData{}, "com.cosmos.peggy.WitnessData", nil)
 
     return WitnessMsgMapper {
@@ -22,15 +29,19 @@ func NewWitnessMsgMapper(key sdk.StoreKey) WitnessMsgMapper {
     }
 }
 
-func (wmap WitnessMsgMapper) GetWitnessData(ctx sdk.Context, tx WitnessMsg) *WitnessData {
+func (wmap WitnessMsgMapper) GetWitnessData(ctx sdk.Context, info WitnessInfo) *WitnessData {
     store := ctx.KVStore(wmap.key)
-    key, err := wmap.cdc.MarshalBinary(tx)
+    key, err := wmap.cdc.MarshalBinary(info)
     if err != nil {
         panic(err)
     }
     bz := store.Get(key)
     if bz == nil {
-        return nil
+        return &WitnessData {
+            Info:      info,
+            Witnesses: []crypto.Address{},
+            credited:  false,
+        }
     }
     var data WitnessData
     if err := wmap.cdc.UnmarshalBinary(bz, &data); err != nil {
@@ -39,9 +50,9 @@ func (wmap WitnessMsgMapper) GetWitnessData(ctx sdk.Context, tx WitnessMsg) *Wit
     return &data
 }
 
-func (wmap WitnessMsgMapper) SetWitnessData(ctx sdk.Context, tx WitnessMsg, data WitnessData) {
+func (wmap WitnessMsgMapper) SetWitnessData(ctx sdk.Context, info WitnessInfo, data *WitnessData) {
     store := ctx.KVStore(wmap.key)
-    key, err := wmap.cdc.MarshalBinary(tx)
+    key, err := wmap.cdc.MarshalBinary(info)
     if err != nil {
         panic(err)
     }
