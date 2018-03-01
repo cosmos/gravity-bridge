@@ -1,6 +1,7 @@
 package witness 
 
-import (    
+import (  
+    "os"
     "testing"
     
     sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,6 +15,7 @@ import (
 
     dbm "github.com/tendermint/tmlibs/db"
     "github.com/tendermint/tmlibs/log"
+    "github.com/tendermint/tmlibs/common"
 
     "github.com/stretchr/testify/assert"
 )
@@ -55,7 +57,6 @@ func newTestApp(logger log.Logger, db dbm.DB) *TestApp {
         ),
     }
 
-    coinKeeper := bank.NewCoinKeeper(app.accountMapper)
     app.Router().AddRoute("witness", newHandler(app.accountMapper))
     
     app.SetTxDecoder(func(txBytes []byte) (sdk.Tx, sdk.Error) {
@@ -71,7 +72,7 @@ func newTestApp(logger log.Logger, db dbm.DB) *TestApp {
         return abci.ResponseInitChain{}
     })
 
-    app.MountStoreIAVL(app.capKeyMainStore, app.capKeyWmapStore)
+    app.MountStoresIAVL(app.capKeyMainStore, app.capKeyWmapStore)
     app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper))
     err := app.LoadLatestVersion(app.capKeyMainStore)
     if err != nil {
@@ -81,17 +82,19 @@ func newTestApp(logger log.Logger, db dbm.DB) *TestApp {
     return app
 }
 
-func newLockMsg(signer crypto.Address) {
+func newLockMsg(signer crypto.Address) WitnessMsg {
     var dest *common.HexBytes
-    dest.UnmarshalJSON("0x6ab9116baa66282b4dfed248f4cac595a41f4a19")
+    dest.UnmarshalJSON([]byte("0x6ab9116baa66282b4dfed248f4cac595a41f4a19"))
 
     var ether *common.HexBytes
-    ether.UnmarshalJSON("0x0000000000000000000000000000000000000000")
+    ether.UnmarshalJSON([]byte("0x0000000000000000000000000000000000000000"))
 
-    return LockMsg {
-        Destination: dest,
-        Amount:      1, //(wei)
-        Token:       ether,
+    return WitnessMsg {
+        Info: LockInfo {
+            Destination: *dest,
+            Amount:      1, //(wei)
+            Token:       *ether,
+        },
         Signer:      signer,
     }
 }
@@ -100,21 +103,17 @@ func newTx() sdk.StdTx {
     priv := crypto.GenPrivKeyEd25519()
     addr := priv.PubKey().Address()
     msg := newLockMsg(addr)
-    tx := sdk.NewStdTx(msg, []sdk.StdSignature{
+    return sdk.NewStdTx(msg, []sdk.StdSignature{
         sdk.StdSignature {
             PubKey: priv.PubKey(),
-            Signature: priv.Sign(msg),
+            Signature: priv.Sign(msg.GetSignBytes()),
         },
     })
-
 }
 
 func TestLockMsg(t *testing.T) {
-    logger := log.NewTMLoggr(log.NewSyncWriter(os.Stdout)).With("module, test")
-    db, err := dbm.NewMemDB()
-    if err != nil {
-        panic(err)
-    }
+    logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module, test")
+    db := dbm.NewMemDB() 
     app := newTestApp(logger, db)
 
     app.BeginBlock(abci.RequestBeginBlock{})

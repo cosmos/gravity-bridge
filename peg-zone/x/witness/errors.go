@@ -7,7 +7,7 @@ import (
 type CodeType = sdk.CodeType
 
 const (
-    CodeInvalidLockMsg  CodeType = 101
+    CodeInvalidWitnessMsg  CodeType = 101
     CodeAlreadyCredited CodeType = 201
     CodeWitnessReplay   CodeType = 202
     
@@ -22,8 +22,8 @@ func codeToDefaultMsg(code CodeType) string {
     }
 }
 
-func ErrInvalidLockMsg() sdk.Error {
-    return newError(CodeInvalidLockMsg, "")
+func ErrInvalidWitnessMsg() sdk.Error {
+    return newError(CodeInvalidWitnessMsg, "")
 }
 
 func ErrAlreadyCredited() sdk.Error {

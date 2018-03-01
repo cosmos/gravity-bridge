@@ -5,6 +5,6 @@ import (
 )
 
 func RegisterWire(cdc *wire.Codec) {
-    cdc.RegisterConcrete(LockMsg{},
-        "com.cosmos.peggy.LockMsg", nil)
+    cdc.RegisterConcrete(WitnessMsg{},
+        "com.cosmos.peggy.WitnessMsg", nil)
 }

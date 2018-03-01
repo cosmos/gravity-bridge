@@ -15,12 +15,10 @@ type WitnessMsg struct {
 var _ sdk.Msg = (*WitnessMsg)(nil)
 
 func (msg WitnessMsg) ValidateBasic() sdk.Error {
-    return msg.Info.ValidateBasic()
-    if len(msg.Destination) != 20 ||
-       len(msg.Token)       != 20 ||
-       len(msg.Signer)      != 20 {
-        return ErrInvalidWitnessMsg()    
+    if len(msg.Signer) != 20 {
+        return ErrInvalidWitnessMsg()
     }
+    return msg.Info.ValidateBasic()
 }
 
 func (msg WitnessMsg) Type() string {
@@ -54,6 +52,7 @@ func (msg WitnessMsg) GetSigners() []crypto.Address {
 
 type WitnessInfo interface {
     isWitnessInfo()
+    ValidateBasic() sdk.Error
 }
 
 type LockInfo struct {
@@ -62,7 +61,11 @@ type LockInfo struct {
     Token       crypto.Address
 }
 
-var _ WitnessInfo = (LockInfo)(nil)
-
 func (info LockInfo) isWitnessInfo() {}
 
+func (info LockInfo) ValidateBasic() sdk.Error {
+    if len(info.Destination) != 20 || len(info.Token) != 20 {
+        return ErrInvalidWitnessMsg()    
+    }
+    return sdk.NewError(0, "")
+}
