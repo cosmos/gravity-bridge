@@ -9,7 +9,7 @@ import (
 type WitnessData struct {
     Info      WitnessInfo
     Witnesses []crypto.Address
-    credited  bool
+    Credited  bool
 }
 
 type WitnessMsgMapper struct {
@@ -29,7 +29,7 @@ func NewWitnessMsgMapper(key sdk.StoreKey) WitnessMsgMapper {
     }
 }
 
-func (wmap WitnessMsgMapper) GetWitnessData(ctx sdk.Context, info WitnessInfo) *WitnessData {
+func (wmap WitnessMsgMapper) GetWitnessData(ctx sdk.Context, info WitnessInfo) WitnessData {
     store := ctx.KVStore(wmap.key)
     key, err := wmap.cdc.MarshalBinary(info)
     if err != nil {
@@ -37,20 +37,20 @@ func (wmap WitnessMsgMapper) GetWitnessData(ctx sdk.Context, info WitnessInfo) *
     }
     bz := store.Get(key)
     if bz == nil {
-        return &WitnessData {
+        return WitnessData {
             Info:      info,
             Witnesses: []crypto.Address{},
-            credited:  false,
+            Credited:  false,
         }
     }
     var data WitnessData
     if err := wmap.cdc.UnmarshalBinary(bz, &data); err != nil {
         panic(err)
     }
-    return &data
+    return data
 }
 
-func (wmap WitnessMsgMapper) SetWitnessData(ctx sdk.Context, info WitnessInfo, data *WitnessData) {
+func (wmap WitnessMsgMapper) SetWitnessData(ctx sdk.Context, info WitnessInfo, data WitnessData) {
     store := ctx.KVStore(wmap.key)
     key, err := wmap.cdc.MarshalBinary(info)
     if err != nil {

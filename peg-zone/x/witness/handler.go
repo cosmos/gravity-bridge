@@ -18,7 +18,7 @@ func NewHandler(wmap WitnessMsgMapper, ck bank.CoinKeeper) sdk.Handler {
         case WitnessMsg:
             return handleWitnessMsg(ctx, wmap, ck, msg)
         default:
-            errMsg := "Unrecognized withdraw Msg type: " + reflect.TypeOf(msg).Name()
+            errMsg := "Unrecognized Witness Msg type: " + reflect.TypeOf(msg).Name()
             return sdk.ErrUnknownRequest(errMsg).Result()
         }
     }
@@ -27,9 +27,14 @@ func NewHandler(wmap WitnessMsgMapper, ck bank.CoinKeeper) sdk.Handler {
 func handleWitnessMsg(ctx sdk.Context, wmsg WitnessMsgMapper, ck bank.CoinKeeper, msg WitnessMsg) sdk.Result {
     info := msg.Info
     data := wmsg.GetWitnessData(ctx, info)
-    if data.credited {
+    if data.Credited {
         return ErrAlreadyCredited().Result()
     }
+    /*
+    if !isValidator(msg.Signer) {
+        return ErrSignerIsNotAValidator().Result()
+    }
+    */
     for _, w := range data.Witnesses {
         if bytes.Equal(w, msg.Signer) {
             return ErrWitnessReplay().Result()
@@ -44,7 +49,7 @@ func handleWitnessMsg(ctx sdk.Context, wmsg WitnessMsgMapper, ck bank.CoinKeeper
                 Amount: info.Amount,
             }
             ck.AddCoins(ctx, info.Destination, []sdk.Coin{coin})
-            data.credited = true
+            data.Credited = true
         }
     }
     wmsg.SetWitnessData(ctx, info, data)

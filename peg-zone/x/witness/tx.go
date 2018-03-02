@@ -22,7 +22,7 @@ func (msg WitnessMsg) ValidateBasic() sdk.Error {
 }
 
 func (msg WitnessMsg) Type() string {
-    return "WitnessMsg"
+    return "witness"
 }
 
 func (msg WitnessMsg) Get(key interface{}) interface{} {
@@ -67,5 +67,5 @@ func (info LockInfo) ValidateBasic() sdk.Error {
     if len(info.Destination) != 20 || len(info.Token) != 20 {
         return ErrInvalidWitnessMsg()    
     }
-    return sdk.NewError(0, "")
+    return nil
 }
