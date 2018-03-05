@@ -8,9 +8,11 @@ contract Peggy is Valset {
     mapping (string => address) cosmosTokens;
     mapping (address => bool) cosmosTokenAddresses;
 
+    uint64 nonce = 0;
+
     /* Events  */
     event NewCosmosERC20(string name, address tokenAddress);
-    event Lock(bytes to, address token, uint64 value);
+    event Lock(bytes32 to, address token, uint64 value, uint64 nonce);
     event Unlock(address to, address token, uint64 value);
 
     /* Functions */
@@ -38,7 +40,7 @@ contract Peggy is Valset {
      * @param value       value of transference
      * @param token       token address in origin chain (0x0 if Ethereum, Cosmos for other values)
      */
-    function lock(bytes to, address tokenAddr, uint64 amount) public payable returns (bool) {
+    function lock(bytes32 to, address tokenAddr, uint64 amount) public payable returns (bool) {
         if (msg.value != 0) {
           require(tokenAddr == address(0));
           require(msg.value == amount);
@@ -47,7 +49,7 @@ contract Peggy is Valset {
         } else {
           require(ERC20(tokenAddr).transferFrom(msg.sender, this, amount));
         }
-        Lock(to, tokenAddr, amount);
+        Lock(to, tokenAddr, amount, nonce++);
         return true;
     }
 

@@ -323,7 +323,7 @@ Returns the indexes of the validators who signed on the witness.
 Locks Ethereum user's ethers/ERC20s in the contract and loggs an event. Called by the users.
 
 * `token` being `0x0` means ethereum; in this case `msg.value` must be same with `value`
-* `event Lock(bytes to, uint64 value, address token)` is logged, seen by the relayers
+* `event Lock(bytes to, uint64 value, address token, uint64 nonce)` is logged, seen by the relayers
 
 #### unlock(address[2] addressArg, uint64 value, bytes chain, uint16[] signers, uint8[] v, bytes32[] r, bytes32[] s) external returns (bool)
 

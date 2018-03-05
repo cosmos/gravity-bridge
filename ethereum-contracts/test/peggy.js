@@ -100,7 +100,7 @@ contract('Peggy', function(accounts) {
       assert.equal((await standardTokenMock.balanceOf(peggy.address)).toNumber(), 1000);
       assert.strictEqual(res.logs.length, 1);
       assert.strictEqual(res.logs[0].event, "Lock");
-      assert.strictEqual(String(res.logs[0].args.to), '0xdeadbeef');
+      assert.strictEqual(String(res.logs[0].args.to).replace(/[0]+$/g, ""), '0xdeadbeef');
       assert.strictEqual(res.logs[0].args.token, standardTokenMock.address);
       assert.strictEqual(res.logs[0].args.value.toNumber(), 1000);
     });
@@ -122,7 +122,7 @@ contract('Peggy', function(accounts) {
       assert.equal((await cosmosToken.balanceOf(_account_one)).toNumber(), 500);
       assert.strictEqual(res.logs.length, 1);
       assert.strictEqual(res.logs[0].event, "Lock");
-      assert.strictEqual(String(res.logs[0].args.to), '0xdeadbeef');
+      assert.strictEqual(String(res.logs[0].args.to).replace(/[0]+$/g, ""), '0xdeadbeef');
       assert.strictEqual(res.logs[0].args.token, cosmosTokenAddress);
       assert.strictEqual(res.logs[0].args.value.toNumber(), 500);
     });
@@ -136,7 +136,7 @@ contract('Peggy', function(accounts) {
       assert.equal(ethBalance.toNumber(), 1000);
       assert.strictEqual(res.logs.length, 1);
       assert.strictEqual(res.logs[0].event, "Lock");
-      assert.strictEqual(String(res.logs[0].args.to), '0xdeadbeef');
+      assert.strictEqual(String(res.logs[0].args.to).replace(/[0]+$/g, ""), '0xdeadbeef');
       assert.strictEqual(res.logs[0].args.token, _address0);
       assert.strictEqual(res.logs[0].args.value.toNumber(), 1000);
     });
