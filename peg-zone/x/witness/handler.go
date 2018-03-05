@@ -12,7 +12,7 @@ const (
     totalValidators = 2 // temp
 )
 
-func NewHandler(wmap WitnessMsgMapper, ck bank.CoinKeeper) sdk.Handler {
+func NewHandler(nonce sdk.StoreKey, wmap WitnessMsgMapper, ck bank.CoinKeeper) sdk.Handler {
     return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
         switch msg := msg.(type) {
         case WitnessMsg:
@@ -33,6 +33,9 @@ func handleWitnessMsg(ctx sdk.Context, wmsg WitnessMsgMapper, ck bank.CoinKeeper
     /*
     if !isValidator(msg.Signer) {
         return ErrSignerIsNotAValidator().Result()
+    }
+    if currentNonce()+1 != msg.GetNonce() {
+        return ErrNonceNotMatch().Result()
     }
     */
     for _, w := range data.Witnesses {

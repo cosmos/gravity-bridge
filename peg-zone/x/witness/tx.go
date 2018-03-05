@@ -53,12 +53,14 @@ func (msg WitnessMsg) GetSigners() []crypto.Address {
 type WitnessInfo interface {
     isWitnessInfo()
     ValidateBasic() sdk.Error
+    GetNonce()         uint64
 }
 
 type LockInfo struct {
     Destination crypto.Address
     Amount      int64
     Token       crypto.Address
+    Nonce       uint64
 }
 
 func (info LockInfo) isWitnessInfo() {}
@@ -68,4 +70,8 @@ func (info LockInfo) ValidateBasic() sdk.Error {
         return ErrInvalidWitnessMsg()    
     }
     return nil
+}
+
+func (info LockInfo) GetNonce() uint64 {
+    return info.Nonce;
 }

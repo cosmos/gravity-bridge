@@ -112,6 +112,7 @@ func newLockMsg(signer crypto.Address) WitnessMsg {
             Destination: dest,
             Amount:      1, //(wei)
             Token:       ether,
+            Nonce:       0,
         },
         Signer:      signer,
     }
