@@ -5,7 +5,7 @@ import "./Valset.sol";
 
 contract Peggy is Valset {
 
-    mapping (string => address) cosmosTokens;
+    mapping (bytes32 => address) cosmosTokens;
     mapping (address => bool) cosmosTokenAddresses;
 
     /* Events  */
@@ -24,7 +24,7 @@ contract Peggy is Valset {
     }
 
     function getCosmosTokenAddress(string name) public constant returns (address addr) {
-      return cosmosTokens[name];
+      return cosmosTokens[keccak256(name)];
     }
 
 
@@ -77,14 +77,14 @@ contract Peggy is Valset {
     }
 
     function newCosmosERC20(string name, uint decimals, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s) external returns (address addr) {
-        require(cosmosTokens[name] == address(0));
+        require(cosmosTokens[keccak256(name)] == address(0));
 
         bytes32 hashData = keccak256(name, decimals);
         require(Valset.verifyValidators(hashData, signers, v, r, s));
 
         CosmosERC20 newToken = new CosmosERC20(address(this), name, decimals);
 
-        cosmosTokens[name] = newToken;
+        cosmosTokens[keccak256(name)] = newToken;
         cosmosTokenAddresses[newToken] = true;
 
         NewCosmosERC20(name, newToken);
