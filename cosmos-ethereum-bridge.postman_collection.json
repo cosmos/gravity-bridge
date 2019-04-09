@@ -1,0 +1,163 @@
+{
+	"info": {
+		"_postman_id": "cf767109-8494-42c9-8867-4af935a7a0c0",
+		"name": "cosmos-ethereum-bridge",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "node: get endpoints",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:26657",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "26657"
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "node: get status",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"method\": \"status\",\n    \"jsonrpc\": \"2.0\",\n    \"params\": [],\n    \"id\": \"dontcare\"\n}\n"
+				},
+				"url": {
+					"raw": "http://localhost:26657",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "26657"
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "node: tx",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"method\": \"tx\",\n    \"jsonrpc\": \"2.0\",\n    \"params\": [\"2AHwYl3uCkwqLIf6CiIKFMA8lZPaMthrfi/G4AiYhKAfPlCMEgoKBXN0ZWFrEgE1EiIKFC3uRkBSAKp2OdiaNeHkLcAu3hsCEgoKBXN0ZWFrEgE1EgkKAxIBMBCAtRgaeQom61rphyECD9zxaA7fPdLhQNuQ9IY5Gu1mPikMPz4j4q9zcMKSoVISS3/EpJVGMEQCIE2ipVJJvjKgEla3un+AzkfescMelGsGDDUllNGzwA3kAiBdePhtB9ALyuVVPKuUnK6ymFgnu5HavyCrWScM374cpxgIIAQ=\",true],\n    \"id\": \"dontcare\"\n}\n"
+				},
+				"url": {
+					"raw": "broadcast_tx_sync",
+					"host": [
+						"broadcast_tx_sync"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "node: broadcast_tx_sync",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"method\": \"broadcast_tx_sync\",\n    \"jsonrpc\": \"2.0\",\n    \"params\": [\"issue:{asd:asd}\"],\n    \"id\": \"dontcare\"\n}\n"
+				},
+				"url": {
+					"raw": "http://localhost:26657/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "26657",
+					"path": [
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cli: version",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:1317/version",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1317",
+					"path": [
+						"version"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cli: get account",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:1317/auth/accounts/cosmos1qs58np5syg2hcpt9f84lp0u2qdkk0fk0quzqju",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1317",
+					"path": [
+						"auth",
+						"accounts",
+						"cosmos1qs58np5syg2hcpt9f84lp0u2qdkk0fk0quzqju"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cli: get account balances",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:1317/bank/balances/cosmos1qs58np5syg2hcpt9f84lp0u2qdkk0fk0quzqju",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1317",
+					"path": [
+						"bank",
+						"balances",
+						"cosmos1qs58np5syg2hcpt9f84lp0u2qdkk0fk0quzqju"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
