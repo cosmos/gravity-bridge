@@ -44,7 +44,7 @@ ebd add-genesis-account $(ebcli keys show validator -a) 1000000000stake,10000000
 # Now its safe to start `ebd`
 ebd start
 
-# Send 10 tok tokens from the validator to the testuser
+# Then, in another terminal window, send 10 tok tokens from the validator to the testuser
 ebcli tx send $(ebcli keys show testuser -a) 10tok --from=validator --chain-id=testing
 
 # Confirm token balances have changed appropriately
@@ -61,3 +61,4 @@ ebcli rest-server --trust-node
 ```
 
 An api collection for Postman (https://www.getpostman.com/) is provided [Postman Collection](./cosmos-ethereum-bridge.postman_collection.json) which documents some API endpoints and can be used to interact with it.
+Note: You will need to change the cosmos addresses in the URLs, params and body to match the addresses you generated that you want to check.
