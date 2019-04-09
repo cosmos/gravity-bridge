@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,7 +30,7 @@ type ethereumBridgeApp struct {
 
 	keyMain          *sdk.KVStoreKey
 	keyAccount       *sdk.KVStoreKey
-	keyNS            *sdk.KVStoreKey
+	keyOracle        *sdk.KVStoreKey
 	keyFeeCollection *sdk.KVStoreKey
 	keyParams        *sdk.KVStoreKey
 	tkeyParams       *sdk.TransientStoreKey
@@ -38,6 +39,7 @@ type ethereumBridgeApp struct {
 	bankKeeper          bank.Keeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
 	paramsKeeper        params.Keeper
+	oracleKeeper        oracle.Keeper
 }
 
 // NewEthereumBridgeApp is a constructor function for ethereumBridgeApp
@@ -56,7 +58,7 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 
 		keyMain:          sdk.NewKVStoreKey("main"),
 		keyAccount:       sdk.NewKVStoreKey("acc"),
-		keyNS:            sdk.NewKVStoreKey("ns"),
+		keyOracle:        sdk.NewKVStoreKey("oracle"),
 		keyFeeCollection: sdk.NewKVStoreKey("fee_collection"),
 		keyParams:        sdk.NewKVStoreKey("params"),
 		tkeyParams:       sdk.NewTransientStoreKey("transient_params"),
@@ -83,17 +85,27 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 	// The FeeCollectionKeeper collects transaction fees and renders them to the fee distribution module
 	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(cdc, app.keyFeeCollection)
 
+	// The OracleKeeper is the Keeper from the oracle module
+	// It handles interactions with the oracle store
+	app.oracleKeeper = oracle.NewKeeper(
+		app.bankKeeper,
+		app.keyOracle,
+		app.cdc,
+	)
+
 	// The AnteHandler handles signature verification and transaction pre-processing
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
 
 	// The app.Router is the main transaction router where each module registers its routes
 	// Register the bank route here
 	app.Router().
-		AddRoute("bank", bank.NewHandler(app.bankKeeper))
+		AddRoute("bank", bank.NewHandler(app.bankKeeper)).
+		AddRoute("oracle", oracle.NewHandler(app.oracleKeeper))
 
 	// The app.QueryRouter is the main query router where each module registers its routes
 	app.QueryRouter().
-		AddRoute("acc", auth.NewQuerier(app.accountKeeper))
+		AddRoute("acc", auth.NewQuerier(app.accountKeeper)).
+		AddRoute("oracle", oracle.NewQuerier(app.oracleKeeper))
 
 	// The initChainer handles translating the genesis.json file into initial state for the network
 	app.SetInitChainer(app.initChainer)
@@ -101,7 +113,7 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 	app.MountStores(
 		app.keyMain,
 		app.keyAccount,
-		app.keyNS,
+		app.keyOracle,
 		app.keyFeeCollection,
 		app.keyParams,
 		app.tkeyParams,
@@ -178,6 +190,7 @@ func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
 	auth.RegisterCodec(cdc)
 	bank.RegisterCodec(cdc)
+	oracle.RegisterCodec(cdc)
 	staking.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)

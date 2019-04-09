@@ -60,5 +60,5 @@ First, run the cli rest-server
 ebcli rest-server --trust-node
 ```
 
-An api collection for Postman (https://www.getpostman.com/) is provided [Postman Collection](./cosmos-ethereum-bridge.postman_collection.json) which documents some API endpoints and can be used to interact with it.
+An api collection for Postman (https://www.getpostman.com/) is provided [here](./cosmos-ethereum-bridge.postman_collection.json) which documents some API endpoints and can be used to interact with it.
 Note: You will need to change the cosmos addresses in the URLs, params and body to match the addresses you generated that you want to check.
