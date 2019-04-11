@@ -1,26 +1,38 @@
 package cli
 
-/*
-// GetCmdResolveName queries information about a name
-func GetCmdResolveName(queryRoute string, cdc *codec.Codec) *cobra.Command {
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
+
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/spf13/cobra"
+)
+
+// GetCmdGetProphecy queries information about a name
+func GetCmdGetProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "resolve [name]",
-		Short: "resolve name",
+		Use:   "get-prophecy nonce",
+		Short: "get prophecy",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			name := args[0]
+			nonce, stringError := strconv.Atoi(args[0])
+			if stringError != nil {
+				return stringError
+			}
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/resolve/%s", queryRoute, name), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/prophecy/%s", queryRoute, nonce), nil)
 			if err != nil {
-				fmt.Printf("could not resolve name - %s \n", string(name))
+				fmt.Printf("could not find with given nonce %s \n", string(nonce))
 				return nil
 			}
 
-			var out nameservice.QueryResResolve
+			var out oracle.BridgeProphecy
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},
 	}
 }
-*/

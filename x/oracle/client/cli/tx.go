@@ -1,12 +1,24 @@
 package cli
 
-/*
-// GetCmdBuyName is the CLI command for sending a BuyName transaction
-func GetCmdBuyName(cdc *codec.Codec) *cobra.Command {
+import (
+	"strconv"
+
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/utils"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/spf13/cobra"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
+)
+
+// GetCmdMakeBridgeClaim is the CLI command for making a claim on a prophecy
+func GetCmdMakeBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "buy-name [name] [amount]",
-		Short: "bid for existing name or claim new name",
-		Args:  cobra.ExactArgs(2),
+		Use:   "make-claim nonce ethereum-sender-address cosmos-receiver-address validator-address amount",
+		Short: "make a claim on a prophecy",
+		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc).WithAccountDecoder(cdc)
 
@@ -16,12 +28,21 @@ func GetCmdBuyName(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			coins, err := sdk.ParseCoins(args[1])
+			nonce, stringError := strconv.Atoi(args[0])
+			if stringError != nil {
+				return stringError
+			}
+
+			ethereumSender := args[1]
+			cosmosReceiver := sdk.AccAddress([]byte(args[2]))
+			validator := sdk.AccAddress([]byte(args[3]))
+
+			amount, err := sdk.ParseCoins(args[4])
 			if err != nil {
 				return err
 			}
 
-			msg := nameservice.NewMsgBuyName(args[0], coins, cliCtx.GetFromAddress())
+			msg := oracle.NewMsgMakeBridgeClaim(nonce, ethereumSender, cosmosReceiver, validator, amount)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -33,4 +54,3 @@ func GetCmdBuyName(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 }
-*/
