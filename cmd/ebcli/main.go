@@ -20,10 +20,13 @@ import (
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	app "github.com/swishlabsco/cosmos-ethereum-bridge"
+	oracleclient "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/client"
+	oraclerest "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/client/rest"
 )
 
 const (
-	storeAcc = "acc"
+	storeAcc    = "acc"
+	storeOracle = "oracle"
 )
 
 var defaultCLIHome = os.ExpandEnv("$HOME/.ebcli")
@@ -40,7 +43,9 @@ func main() {
 	config.SetBech32PrefixForConsensusNode(sdk.Bech32PrefixConsAddr, sdk.Bech32PrefixConsPub)
 	config.Seal()
 
-	mc := []sdk.ModuleClients{}
+	mc := []sdk.ModuleClients{
+		oracleclient.NewModuleClient(storeOracle, cdc),
+	}
 
 	rootCmd := &cobra.Command{
 		Use:   "ebcli",
@@ -79,6 +84,7 @@ func registerRoutes(rs *lcd.RestServer) {
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeAcc)
 	bank.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
+	oraclerest.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeOracle)
 }
 
 func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
