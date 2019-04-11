@@ -1,6 +1,8 @@
 package oracle
 
 import (
+	"strconv"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
@@ -25,25 +27,32 @@ func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) 
 	}
 }
 
-/*
-// Gets the entire Whois metadata struct for a name
-func (k Keeper) GetWhois(ctx sdk.Context, name string) Whois {
-	store := ctx.KVStore(k.storeKey)
-	if !store.Has([]byte(name)) {
-		return NewWhois()
+// Gets the entire prophecy data struct for a given nonce
+func (k Keeper) GetProphecy(ctx sdk.Context, nonce int) (BridgeProphecy, sdk.Error) {
+	if nonce <= 0 {
+		return NewEmptyBridgeProphecy(), ErrInvalidNonce(DefaultCodespace)
 	}
-	bz := store.Get([]byte(name))
-	var whois Whois
-	k.cdc.MustUnmarshalBinaryBare(bz, &whois)
-	return whois
+	nonceKey := strconv.Itoa(nonce)
+	store := ctx.KVStore(k.storeKey)
+	if !store.Has([]byte(nonceKey)) {
+		return NewEmptyBridgeProphecy(), ErrNotFound(DefaultCodespace)
+	}
+	bz := store.Get([]byte(nonceKey))
+	var prophecy BridgeProphecy
+	k.cdc.MustUnmarshalBinaryBare(bz, &prophecy)
+	return prophecy, nil
 }
 
-// Sets the entire Whois metadata struct for a name
-func (k Keeper) SetWhois(ctx sdk.Context, name string, whois Whois) {
-	if whois.Owner.Empty() {
-		return
+// Creates a new prophecy with an initial claim
+func (k Keeper) createProphecy(ctx sdk.Context, prophecy BridgeProphecy) sdk.Error {
+	if prophecy.Nonce <= 0 {
+		return ErrInvalidNonce(DefaultCodespace)
 	}
+	if prophecy.MinimumClaims < 2 {
+		return ErrMinimumTooLow(DefaultCodespace)
+	}
+	nonceKey := strconv.Itoa(prophecy.Nonce)
 	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte(name), k.cdc.MustMarshalBinaryBare(whois))
+	store.Set([]byte(nonceKey), k.cdc.MustMarshalBinaryBare(prophecy))
+	return nil
 }
-*/

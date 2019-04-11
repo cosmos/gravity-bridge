@@ -3,6 +3,7 @@ package client
 import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
+	oraclecmd "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/client/cli"
 	amino "github.com/tendermint/go-amino"
 )
 
@@ -24,7 +25,9 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 		Short: "Querying commands for the oracle module",
 	}
 
-	oracleQueryCmd.AddCommand(client.GetCommands()...)
+	oracleQueryCmd.AddCommand(client.GetCommands(
+		oraclecmd.GetCmdGetProphecy(mc.storeKey, mc.cdc),
+	)...)
 
 	return oracleQueryCmd
 }
@@ -36,7 +39,9 @@ func (mc ModuleClient) GetTxCmd() *cobra.Command {
 		Short: "Oracle transactions subcommands",
 	}
 
-	oracleTxCmd.AddCommand(client.PostCommands()...)
+	oracleTxCmd.AddCommand(client.PostCommands(
+		oraclecmd.GetCmdMakeBridgeClaim(mc.cdc),
+	)...)
 
 	return oracleTxCmd
 }

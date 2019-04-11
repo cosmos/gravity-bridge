@@ -2,6 +2,7 @@ package oracle
 
 import (
 	"fmt"
+	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -21,6 +22,39 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to make a bridge claim
 func handleMsgMakeBridgeClaim(ctx sdk.Context, keeper Keeper, msg MsgMakeBridgeClaim) sdk.Result {
-	//do it
-	return sdk.Result{} // return
+	//check if prophecy exists or not
+	//if exist
+	//	//get it and continue checks
+	//	//check if claim for this validator exists or not
+	//	//if does
+	//		//return error
+	//	//else
+	//		//add claim to list
+	//	//check if claimthreshold is passed
+	//	//if does
+	//		//check enough claims match and are valid
+	//		//update prophecy to be successful
+	//		//trigger minting
+	//		//save finalized prophecy to db
+	//		//return
+	//	//if doesnt
+	//		//save updated prophecy to db
+	//		//return
+	//else (if doesnt exist yet)
+	bridgeClaim := NewBridgeClaim(msg.Nonce, msg.EthereumSender, msg.CosmosReceiver, msg.Validator, msg.Amount)
+	bridgeClaims := []BridgeClaim{bridgeClaim}
+	newProphecy := NewBridgeProphecy(msg.Nonce, PendingStatus, getMinimumClaims(), bridgeClaims)
+	keeper.createProphecy(ctx, newProphecy)
+	return sdk.Result{}
+}
+
+func getMinimumClaims() int {
+	minimumClaims := float64(getTotalNumberValidators()) * DefaultConsensusNeeded
+	return int(math.Ceil(minimumClaims))
+
+}
+
+func getTotalNumberValidators() int {
+	//TODO: Get from Tendermint?
+	return 10
 }
