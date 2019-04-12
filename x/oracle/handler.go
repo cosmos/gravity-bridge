@@ -44,7 +44,10 @@ func handleMsgMakeBridgeClaim(ctx sdk.Context, keeper Keeper, msg MsgMakeBridgeC
 	bridgeClaim := NewBridgeClaim(msg.Nonce, msg.EthereumSender, msg.CosmosReceiver, msg.Validator, msg.Amount)
 	bridgeClaims := []BridgeClaim{bridgeClaim}
 	newProphecy := NewBridgeProphecy(msg.Nonce, PendingStatus, getMinimumClaims(), bridgeClaims)
-	keeper.createProphecy(ctx, newProphecy)
+	err := keeper.createProphecy(ctx, newProphecy)
+	if err != nil {
+		return err.Result()
+	}
 	return sdk.Result{}
 }
 
