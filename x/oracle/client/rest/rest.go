@@ -3,7 +3,6 @@ package rest
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
@@ -29,7 +28,7 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec, 
 
 type buyNameReq struct {
 	BaseReq        rest.BaseReq `json:"base_req"`
-	Nonce          string       `json:"nonce"`
+	Nonce          int          `json:"nonce"`
 	EthereumSender string       `json:"ethereum_sender"`
 	CosmosReceiver string       `json:"cosmos_receiver"`
 	Validator      string       `json:"validator"`
@@ -47,12 +46,6 @@ func makeClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerF
 
 		baseReq := req.BaseReq.Sanitize()
 		if !baseReq.ValidateBasic(w) {
-			return
-		}
-
-		nonce, stringError := strconv.Atoi(req.Amount)
-		if stringError != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, stringError.Error())
 			return
 		}
 
@@ -75,7 +68,7 @@ func makeClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerF
 		}
 
 		// create the message
-		msg := oracle.NewMsgMakeBridgeClaim(nonce, ethereumSender, cosmosReceiver, validator, amount)
+		msg := oracle.NewMsgMakeBridgeClaim(req.Nonce, ethereumSender, cosmosReceiver, validator, amount)
 		err5 := msg.ValidateBasic()
 		if err5 != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err5.Error())

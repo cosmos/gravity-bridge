@@ -34,8 +34,15 @@ func GetCmdMakeBridgeClaim(cdc *codec.Codec) *cobra.Command {
 			}
 
 			ethereumSender := args[1]
-			cosmosReceiver := sdk.AccAddress([]byte(args[2]))
-			validator := sdk.AccAddress([]byte(args[3]))
+			cosmosReceiver, err := sdk.AccAddressFromBech32(args[2])
+			if err != nil {
+				return err
+			}
+
+			validator, err := sdk.AccAddressFromBech32(args[3])
+			if err != nil {
+				return err
+			}
 
 			amount, err := sdk.ParseCoins(args[4])
 			if err != nil {

@@ -29,7 +29,7 @@ func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) 
 
 // Gets the entire prophecy data struct for a given nonce
 func (k Keeper) GetProphecy(ctx sdk.Context, nonce int) (BridgeProphecy, sdk.Error) {
-	if nonce <= 0 {
+	if nonce < 0 {
 		return NewEmptyBridgeProphecy(), ErrInvalidNonce(DefaultCodespace)
 	}
 	nonceKey := strconv.Itoa(nonce)
@@ -45,7 +45,7 @@ func (k Keeper) GetProphecy(ctx sdk.Context, nonce int) (BridgeProphecy, sdk.Err
 
 // Creates a new prophecy with an initial claim
 func (k Keeper) createProphecy(ctx sdk.Context, prophecy BridgeProphecy) sdk.Error {
-	if prophecy.Nonce <= 0 {
+	if prophecy.Nonce < 0 {
 		return ErrInvalidNonce(DefaultCodespace)
 	}
 	if prophecy.MinimumClaims < 2 {

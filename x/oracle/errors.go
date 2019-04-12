@@ -18,7 +18,7 @@ const (
 
 // ErrInvalidNonce if prophecy or claim is missing nonce
 func ErrInvalidNonce(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeInvalidNonce, "prophecy and claim must both have nonces >= 0")
+	return sdk.NewError(codespace, CodeInvalidNonce, "invalid nonce provided, must be an integer >= 0")
 }
 
 func ErrNotFound(codespace sdk.CodespaceType) sdk.Error {

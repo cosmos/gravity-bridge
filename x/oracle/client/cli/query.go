@@ -24,7 +24,7 @@ func GetCmdGetProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return stringError
 			}
 
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/prophecy/%s", queryRoute, nonce), nil)
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/prophecy/%d", queryRoute, nonce), nil)
 			if err != nil {
 				fmt.Printf("could not find with given nonce %s \n", string(nonce))
 				return nil
