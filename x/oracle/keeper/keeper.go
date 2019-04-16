@@ -54,8 +54,8 @@ func (k Keeper) CreateProphecy(ctx sdk.Context, prophecy types.BridgeProphecy) s
 	if prophecy.ID == "" {
 		return types.ErrInvalidIdentifier(k.Codespace())
 	}
-	if prophecy.MinimumClaims < 2 {
-		return types.ErrMinimumTooLow(k.Codespace())
+	if prophecy.MinimumPower < 2 {
+		return types.ErrMinimumPowerTooLow(k.Codespace())
 	}
 	store := ctx.KVStore(k.storeKey)
 	store.Set([]byte(prophecy.ID), k.cdc.MustMarshalBinaryBare(prophecy))

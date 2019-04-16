@@ -13,11 +13,11 @@ import (
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 )
 
-// GetCmdMakeBridgeClaim is the CLI command for making a claim on a prophecy
-func GetCmdMakeBridgeClaim(cdc *codec.Codec) *cobra.Command {
+// GetCmdMakeEthBridgeClaim is the CLI command for making a claim on an ethereum prophecy
+func GetCmdMakeEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "make-claim nonce ethereum-sender-address cosmos-receiver-address validator-address amount",
-		Short: "make a claim on a prophecy",
+		Short: "make a claim on an ethereum prophecy",
 		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc).WithAccountDecoder(cdc)

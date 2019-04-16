@@ -45,7 +45,7 @@ func handleMsgMakeBridgeEthClaim(ctx sdk.Context, keeper Keeper, msg MsgMakeBrid
 	id := strconv.Itoa(msg.Nonce) + msg.EthereumSender
 	bridgeClaim := NewBridgeClaim(id, msg.CosmosReceiver, msg.Validator, msg.Amount)
 	bridgeClaims := []BridgeClaim{bridgeClaim}
-	newProphecy := NewBridgeProphecy(id, PendingStatus, getMinimumClaims(), bridgeClaims)
+	newProphecy := NewBridgeProphecy(id, PendingStatus, getPowerThreshold(), bridgeClaims)
 	err := keeper.CreateProphecy(ctx, newProphecy)
 	if err != nil {
 		return err.Result()
@@ -53,13 +53,13 @@ func handleMsgMakeBridgeEthClaim(ctx sdk.Context, keeper Keeper, msg MsgMakeBrid
 	return sdk.Result{}
 }
 
-func getMinimumClaims() int {
-	minimumClaims := float64(getTotalNumberValidators()) * DefaultConsensusNeeded
-	return int(math.Ceil(minimumClaims))
+func getPowerThreshold() int {
+	minimumPower := float64(getTotalPower()) * DefaultConsensusNeeded
+	return int(math.Ceil(minimumPower))
 
 }
 
-func getTotalNumberValidators() int {
-	//TODO: Get from Tendermint/last block?
+func getTotalPower() int {
+	//TODO: Get from Tendermint/last block/staking module?
 	return 10
 }

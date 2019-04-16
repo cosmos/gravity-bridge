@@ -11,10 +11,10 @@ type CodeType = sdk.CodeType
 const (
 	DefaultCodespace sdk.CodespaceType = "oracle"
 
-	CodeInvalidNonce      CodeType = 1
-	CodeNotFound          CodeType = 2
-	CodeMinimumTooLow     CodeType = 3
-	CodeInvalidIdentifier CodeType = 4
+	CodeInvalidNonce       CodeType = 1
+	CodeNotFound           CodeType = 2
+	CodeMinimumPowerTooLow CodeType = 3
+	CodeInvalidIdentifier  CodeType = 4
 )
 
 func ErrInvalidNonce(codespace sdk.CodespaceType) sdk.Error {
@@ -25,8 +25,8 @@ func ErrNotFound(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeNotFound, "prophecy or claim with given nonce not found")
 }
 
-func ErrMinimumTooLow(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeMinimumTooLow, "minimum number of validators must be greater than 1")
+func ErrMinimumPowerTooLow(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeMinimumPowerTooLow, "minimum number for validator staking power must be greater than 1")
 }
 
 func ErrInvalidIdentifier(codespace sdk.CodespaceType) sdk.Error {

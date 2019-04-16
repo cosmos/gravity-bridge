@@ -33,10 +33,10 @@ func NewBridgeClaim(id string, cosmosReceiver sdk.AccAddress, validator sdk.AccA
 
 // BridgeProphecy is a struct that contains all the metadata of an oracle ritual
 type BridgeProphecy struct {
-	ID            string        `json:"id"`
-	Status        string        `json:"status"`
-	MinimumClaims int           `json:"minimum_claims"` //The minimum number of claims needed before completion logic is checked
-	BridgeClaims  []BridgeClaim `json:"bridge_claims"`
+	ID           string        `json:"id"`
+	Status       string        `json:"status"`
+	MinimumPower int           `json:"minimum_power"` //The minimum number of staked claiming power needed before completion logic is checked
+	BridgeClaims []BridgeClaim `json:"bridge_claims"`
 }
 
 func (prophecy BridgeProphecy) String() string {
@@ -49,12 +49,12 @@ func (prophecy BridgeProphecy) String() string {
 }
 
 // NewBridgeProphecy returns a new Prophecy, initialized in pending status with an initial claim
-func NewBridgeProphecy(id string, status string, minimumClaims int, bridgeClaims []BridgeClaim) BridgeProphecy {
+func NewBridgeProphecy(id string, status string, minimumPower int, bridgeClaims []BridgeClaim) BridgeProphecy {
 	return BridgeProphecy{
-		ID:            id,
-		Status:        status,
-		MinimumClaims: minimumClaims,
-		BridgeClaims:  bridgeClaims,
+		ID:           id,
+		Status:       status,
+		MinimumPower: minimumPower,
+		BridgeClaims: bridgeClaims,
 	}
 }
 

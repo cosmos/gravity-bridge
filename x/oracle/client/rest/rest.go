@@ -26,7 +26,7 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec, 
 	r.HandleFunc(fmt.Sprintf("/%s/prophecies/{%s}", queryRoute, restID), getProphecyHandler(cdc, cliCtx, queryRoute)).Methods("GET")
 }
 
-type buyNameReq struct {
+type makeEthClaimReq struct {
 	BaseReq        rest.BaseReq `json:"base_req"`
 	Nonce          int          `json:"nonce"`
 	EthereumSender string       `json:"ethereum_sender"`
@@ -37,7 +37,7 @@ type buyNameReq struct {
 
 func makeClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req buyNameReq
+		var req makeEthClaimReq
 
 		if !rest.ReadRESTReq(w, r, cdc, &req) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")

@@ -40,7 +40,7 @@ func (mc ModuleClient) GetTxCmd() *cobra.Command {
 	}
 
 	oracleTxCmd.AddCommand(client.PostCommands(
-		oraclecmd.GetCmdMakeBridgeClaim(mc.cdc),
+		oraclecmd.GetCmdMakeEthBridgeClaim(mc.cdc),
 	)...)
 
 	return oracleTxCmd

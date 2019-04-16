@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// MsgMakeBridgeEthClaim defines a SetName message
+// MsgMakeBridgeEthClaim defines a message for creating claims on the ethereum bridge
 type MsgMakeBridgeEthClaim struct {
 	Nonce          int
 	EthereumSender string
@@ -37,7 +37,7 @@ func (msg MsgMakeBridgeEthClaim) ValidateBasic() sdk.Error {
 	if msg.CosmosReceiver.Empty() {
 		return sdk.ErrInvalidAddress(msg.CosmosReceiver.String())
 	}
-	//TODO: must have nonce/identifier
+	//TODO: must have nonce >= 0
 	//TODO: amount should be nonzero
 	//TODO: investigate maybe the hacky mempool thing for offchain signature aggregation?
 	//TODO: Check signer is in fact a validator (also work out if this check should be done here or in getsigners or in the handler?)

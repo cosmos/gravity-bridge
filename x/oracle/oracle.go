@@ -42,8 +42,8 @@ const (
 )
 
 var (
-	ErrInvalidNonce      = types.ErrInvalidNonce
-	ErrNotFound          = types.ErrNotFound
-	ErrMinimumTooLow     = types.ErrMinimumTooLow
-	ErrInvalidIdentifier = types.ErrInvalidIdentifier
+	ErrInvalidNonce       = types.ErrInvalidNonce
+	ErrNotFound           = types.ErrNotFound
+	ErrMinimumPowerTooLow = types.ErrMinimumPowerTooLow
+	ErrInvalidIdentifier  = types.ErrInvalidIdentifier
 )

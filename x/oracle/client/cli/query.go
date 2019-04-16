@@ -9,10 +9,10 @@ import (
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 )
 
-// GetCmdGetProphecy queries information about a name
+// GetCmdGetProphecy queries information about a specific prophecy
 func GetCmdGetProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "get-prophecy nonce",
+		Use:   "get-prophecy identifier",
 		Short: "get prophecy",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
