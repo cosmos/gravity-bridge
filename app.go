@@ -56,12 +56,12 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 		BaseApp: bApp,
 		cdc:     cdc,
 
-		keyMain:          sdk.NewKVStoreKey("main"),
-		keyAccount:       sdk.NewKVStoreKey("acc"),
-		keyOracle:        sdk.NewKVStoreKey("oracle"),
-		keyFeeCollection: sdk.NewKVStoreKey("fee_collection"),
-		keyParams:        sdk.NewKVStoreKey("params"),
-		tkeyParams:       sdk.NewTransientStoreKey("transient_params"),
+		keyMain:          sdk.NewKVStoreKey(bam.MainStoreKey),
+		keyAccount:       sdk.NewKVStoreKey(auth.StoreKey),
+		keyOracle:        sdk.NewKVStoreKey(oracle.StoreKey),
+		keyFeeCollection: sdk.NewKVStoreKey(auth.FeeStoreKey),
+		keyParams:        sdk.NewKVStoreKey(params.StoreKey),
+		tkeyParams:       sdk.NewTransientStoreKey(params.TStoreKey),
 	}
 
 	// The ParamsKeeper handles parameter storage for the application
@@ -91,6 +91,7 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 		app.bankKeeper,
 		app.keyOracle,
 		app.cdc,
+		oracle.DefaultCodespace,
 	)
 
 	// The AnteHandler handles signature verification and transaction pre-processing
@@ -99,13 +100,13 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 	// The app.Router is the main transaction router where each module registers its routes
 	// Register the bank route here
 	app.Router().
-		AddRoute("bank", bank.NewHandler(app.bankKeeper)).
-		AddRoute("oracle", oracle.NewHandler(app.oracleKeeper))
+		AddRoute(bank.RouterKey, bank.NewHandler(app.bankKeeper)).
+		AddRoute(oracle.RouterKey, oracle.NewHandler(app.oracleKeeper))
 
 	// The app.QueryRouter is the main query router where each module registers its routes
 	app.QueryRouter().
-		AddRoute("acc", auth.NewQuerier(app.accountKeeper)).
-		AddRoute("oracle", oracle.NewQuerier(app.oracleKeeper))
+		AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
+		AddRoute(oracle.QuerierRoute, oracle.NewQuerier(app.oracleKeeper, app.cdc))
 
 	// The initChainer handles translating the genesis.json file into initial state for the network
 	app.SetInitChainer(app.initChainer)
