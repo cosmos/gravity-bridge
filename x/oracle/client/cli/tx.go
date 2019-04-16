@@ -49,7 +49,7 @@ func GetCmdMakeBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := oracle.NewMsgMakeBridgeClaim(nonce, ethereumSender, cosmosReceiver, validator, amount)
+			msg := oracle.NewMsgMakeEthBridgeClaim(nonce, ethereumSender, cosmosReceiver, validator, amount)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

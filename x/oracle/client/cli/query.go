@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 
@@ -19,12 +18,8 @@ func GetCmdGetProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			nonce, stringError := strconv.Atoi(args[0])
-			if stringError != nil {
-				return stringError
-			}
-
-			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/prophecy/%d", queryRoute, nonce), nil)
+			id := args[0]
+			res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/prophecy/%s", queryRoute, id), nil)
 			if err != nil {
 				fmt.Printf(err.Error())
 				return nil

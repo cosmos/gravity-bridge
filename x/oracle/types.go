@@ -15,18 +15,16 @@ var DefaultConsensusNeeded = 0.7
 
 // BridgeClaim is a struct that contains the details of a single validators claims about a single bridge transaction from ethereum to cosmos
 type BridgeClaim struct {
-	Nonce          int            `json:"nonce"`
-	EthereumSender string         `json:"ethereum_sender"`
+	ID             string         `json:"id"`
 	CosmosReceiver sdk.AccAddress `json:"cosmos_receiver"`
 	Validator      sdk.AccAddress `json:"validator"`
 	Amount         sdk.Coins      `json:"amount"`
 }
 
 // NewBridgeClaim returns a new BridgeClaim with the given data contained
-func NewBridgeClaim(nonce int, ethereumSender string, cosmosReceiver sdk.AccAddress, validator sdk.AccAddress, amount sdk.Coins) BridgeClaim {
+func NewBridgeClaim(id string, cosmosReceiver sdk.AccAddress, validator sdk.AccAddress, amount sdk.Coins) BridgeClaim {
 	return BridgeClaim{
-		Nonce:          nonce,
-		EthereumSender: ethereumSender,
+		ID:             id,
 		CosmosReceiver: cosmosReceiver,
 		Validator:      validator,
 		Amount:         amount,
@@ -35,7 +33,7 @@ func NewBridgeClaim(nonce int, ethereumSender string, cosmosReceiver sdk.AccAddr
 
 // BridgeProphecy is a struct that contains all the metadata of an oracle ritual
 type BridgeProphecy struct {
-	Nonce         int           `json:"nonce"`
+	ID            string        `json:"id"`
 	Status        string        `json:"status"`
 	MinimumClaims int           `json:"minimum_claims"` //The minimum number of claims needed before completion logic is checked
 	BridgeClaims  []BridgeClaim `json:"bridge_claims"`
@@ -51,9 +49,9 @@ func (prophecy BridgeProphecy) String() string {
 }
 
 // NewBridgeProphecy returns a new Prophecy, initialized in pending status with an initial claim
-func NewBridgeProphecy(nonce int, status string, minimumClaims int, bridgeClaims []BridgeClaim) BridgeProphecy {
+func NewBridgeProphecy(id string, status string, minimumClaims int, bridgeClaims []BridgeClaim) BridgeProphecy {
 	return BridgeProphecy{
-		Nonce:         nonce,
+		ID:            id,
 		Status:        status,
 		MinimumClaims: minimumClaims,
 		BridgeClaims:  bridgeClaims,
@@ -62,5 +60,5 @@ func NewBridgeProphecy(nonce int, status string, minimumClaims int, bridgeClaims
 
 // NewEmptyBridgeProphecy returns a blank prophecy, used with errors
 func NewEmptyBridgeProphecy() BridgeProphecy {
-	return NewBridgeProphecy(0, "", 0, nil)
+	return NewBridgeProphecy("", "", 0, nil)
 }
