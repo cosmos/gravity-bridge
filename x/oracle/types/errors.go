@@ -11,11 +11,13 @@ type CodeType = sdk.CodeType
 const (
 	DefaultCodespace sdk.CodespaceType = "oracle"
 
-	CodeInvalidNonce       CodeType = 1
-	CodeNotFound           CodeType = 2
-	CodeMinimumPowerTooLow CodeType = 3
-	CodeInvalidIdentifier  CodeType = 4
-	CodeNoClaims           CodeType = 5
+	CodeInvalidNonce           CodeType = 1
+	CodeNotFound               CodeType = 2
+	CodeMinimumPowerTooLow     CodeType = 3
+	CodeInvalidIdentifier      CodeType = 4
+	CodeNoClaims               CodeType = 5
+	CodeInvalidEthereumNonce   CodeType = 6
+	CodeInvalidEthereumAddress CodeType = 7
 )
 
 func ErrInvalidNonce(codespace sdk.CodespaceType) sdk.Error {
@@ -36,4 +38,12 @@ func ErrNoClaims(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrInvalidIdentifier(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidNonce, "invalid identifier provided, must be a nonempty string")
+}
+
+func ErrInvalidEthereumNonce(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidEthereumNonce, "invalid ethereum nonce provided, must be >= 0")
+}
+
+func ErrInvalidEthereumAddress(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidEthereumAddress, "invalid ethereum address provided, must be a valid hex-encoded Ethereum address")
 }

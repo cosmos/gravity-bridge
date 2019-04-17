@@ -6,6 +6,9 @@ import (
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
+
+	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 // NewHandler returns a handler for "oracle" type messages.
@@ -23,6 +26,12 @@ func NewHandler(keeper Keeper) sdk.Handler {
 
 // Handle a message to make a bridge claim
 func handleMsgMakeBridgeEthClaim(ctx sdk.Context, keeper Keeper, msg MsgMakeBridgeEthClaim) sdk.Result {
+	if msg.Nonce < 0 {
+		return types.ErrInvalidEthereumNonce(keeper.Codespace()).Result()
+	}
+	if !IsValidEthereumAddress(msg.EthereumSender) {
+		return types.ErrInvalidEthereumAddress(keeper.Codespace()).Result()
+	}
 	//check if prophecy exists or not
 	//if exist
 	//	//get it and continue checks
@@ -51,6 +60,11 @@ func handleMsgMakeBridgeEthClaim(ctx sdk.Context, keeper Keeper, msg MsgMakeBrid
 		return err.Result()
 	}
 	return sdk.Result{}
+}
+
+//IsValidEthereumAddress returns true if address is valid
+func IsValidEthereumAddress(s string) bool {
+	return gethCommon.IsHexAddress(s)
 }
 
 func getPowerThreshold() int {
