@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
@@ -49,7 +49,8 @@ func GetCmdMakeEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := oracle.NewMsgMakeEthBridgeClaim(nonce, ethereumSender, cosmosReceiver, validator, amount)
+			ethBridgeClaim := types.NewEthBridgeClaim(nonce, ethereumSender, cosmosReceiver, validator, amount)
+			msg := types.NewMsgMakeEthBridgeClaim(ethBridgeClaim)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

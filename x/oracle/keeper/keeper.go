@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"math"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
@@ -63,4 +65,50 @@ func (k Keeper) CreateProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Err
 	store := ctx.KVStore(k.storeKey)
 	store.Set([]byte(prophecy.ID), k.cdc.MustMarshalBinaryBare(prophecy))
 	return nil
+}
+
+func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.ProgressUpdate, sdk.Error) {
+	_, err := k.GetProphecy(ctx, claim.ID)
+	if err == nil {
+		//check if complete or not
+		return types.ProgressUpdate{}, sdk.ErrInternal("Not yet implemented")
+		//	//check if claim for this validator exists or not
+		//	//if does
+		//		//return error
+		//	//else
+		//		//add claim to list
+		//	//check if claimthreshold is passed
+		//	//if does
+		//		//check enough claims match and are valid
+		//		//update prophecy to be successful
+		//		//trigger minting
+		//		//save finalized prophecy to db
+		//		//return
+		//	//if doesnt
+		//		//save updated prophecy to db
+		//		//return
+	} else {
+		if err.Code() != types.CodeProphecyNotFound {
+			return types.ProgressUpdate{}, err
+		}
+		claims := []types.Claim{claim}
+		newProphecy := types.NewProphecy(claim.ID, types.PendingStatus, getPowerThreshold(), claims)
+		err := k.CreateProphecy(ctx, newProphecy)
+		if err != nil {
+			return types.ProgressUpdate{}, err
+		}
+		//return result
+		return types.NewProgressUpdate(types.PendingStatus, nil), nil
+	}
+}
+
+func getPowerThreshold() int {
+	minimumPower := float64(getTotalPower()) * types.DefaultConsensusNeeded
+	return int(math.Ceil(minimumPower))
+
+}
+
+func getTotalPower() int {
+	//TODO: Get from Tendermint/last block/staking module?
+	return 10
 }

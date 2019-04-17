@@ -2,7 +2,6 @@ package oracle
 
 import (
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/querier"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
 )
 
@@ -11,40 +10,35 @@ type (
 
 	Claim    = types.Claim
 	Prophecy = types.Prophecy
-
-	MsgMakeEthBridgeClaim = types.MsgMakeEthBridgeClaim
 )
 
 var (
 	NewKeeper = keeper.NewKeeper
 
-	NewMsgMakeEthBridgeClaim = types.NewMsgMakeEthBridgeClaim
-	NewClaim                 = types.NewClaim
-	NewProphecy              = types.NewProphecy
-
-	RegisterCodec = types.RegisterCodec
-
-	NewQuerier             = querier.NewQuerier
-	NewQueryProphecyParams = querier.NewQueryProphecyParams
+	NewClaim    = types.NewClaim
+	NewProphecy = types.NewProphecy
 )
 
 const (
-	QueryProphecy = querier.QueryProphecy
-	PendingStatus = types.PendingStatus
+	PendingStatus  = types.PendingStatus
+	CompleteStatus = types.CompleteStatus
+	FailedStatus   = types.FailedStatus
 )
 
 const (
-	StoreKey               = types.StoreKey
-	QuerierRoute           = types.QuerierRoute
-	RouterKey              = types.RouterKey
-	DefaultCodespace       = types.DefaultCodespace
+	StoreKey         = types.StoreKey
+	QuerierRoute     = types.QuerierRoute
+	RouterKey        = types.RouterKey
+	DefaultCodespace = types.DefaultCodespace
+
 	DefaultConsensusNeeded = types.DefaultConsensusNeeded
+
+	TestID           = types.TestID
+	TestMinimumPower = types.TestMinimumPower
 )
 
 var (
 	ErrProphecyNotFound   = types.ErrProphecyNotFound
 	ErrMinimumPowerTooLow = types.ErrMinimumPowerTooLow
 	ErrInvalidIdentifier  = types.ErrInvalidIdentifier
-
-	ErrInvalidEthereumNonce = types.ErrInvalidEthereumNonce
 )

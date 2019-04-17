@@ -1,25 +1,27 @@
-package oracle
+package ethbridge
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/require"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 	keeperLib "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
 )
 
 func TestBasicMsgs(t *testing.T) {
 	//Setup
-	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 0)
-	handler := NewHandler(keeper)
+	cdc := codec.New()
+	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 0, nil)
+	handler := NewHandler(keeper, cdc, types.DefaultCodespace)
 
 	//Unrecognized type
 	res := handler(ctx, sdk.NewTestMsg())
 	require.False(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, "Unrecognized oracle message type: "))
+	require.True(t, strings.Contains(res.Log, "Unrecognized ethbridge message type: "))
 
 	//Normal Creation
 	normalCreateMsg := types.CreateTestEthMsg(t)
@@ -42,11 +44,13 @@ func TestBasicMsgs(t *testing.T) {
 
 func TestDuplicateMsgs(t *testing.T) {
 	//Setup
-	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 0)
-	handler := NewHandler(keeper)
+	cdc := codec.New()
+	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 0, nil)
+	handler := NewHandler(keeper, cdc, types.DefaultCodespace)
 	normalCreateMsg := types.CreateTestEthMsg(t)
 	res := handler(ctx, normalCreateMsg)
 	require.True(t, res.IsOK())
+	require.Equal(t, res.Log, "pending")
 
 	//Duplicate message from same validator
 	res = handler(ctx, normalCreateMsg)

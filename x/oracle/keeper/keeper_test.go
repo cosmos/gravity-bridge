@@ -9,7 +9,7 @@ import (
 )
 
 func TestCreateGetProphecy(t *testing.T) {
-	ctx, _, keeper := CreateTestKeepers(t, false, 0)
+	ctx, _, keeper := CreateTestKeepers(t, false, 0, nil)
 	testProphecy := types.CreateTestProphecy(t)
 
 	//Test normal Creation
@@ -36,3 +36,5 @@ func TestCreateGetProphecy(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, reflect.DeepEqual(testProphecy, prophecy))
 }
+
+//TODO: Test with user that is not actually a validator

@@ -6,7 +6,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
@@ -14,6 +13,9 @@ import (
 
 	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/querier"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 )
 
 const (
@@ -68,7 +70,8 @@ func makeClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerF
 		}
 
 		// create the message
-		msg := oracle.NewMsgMakeEthBridgeClaim(req.Nonce, ethereumSender, cosmosReceiver, validator, amount)
+		ethBridgeClaim := types.NewEthBridgeClaim(req.Nonce, ethereumSender, cosmosReceiver, validator, amount)
+		msg := ethbridge.NewMsgMakeEthBridgeClaim(ethBridgeClaim)
 		err5 := msg.ValidateBasic()
 		if err5 != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err5.Error())
@@ -84,13 +87,13 @@ func getProphecyHandler(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute 
 		vars := mux.Vars(r)
 		id := vars[restID]
 
-		bz, err := cdc.MarshalJSON(oracle.NewQueryProphecyParams(id))
+		bz, err := cdc.MarshalJSON(ethbridge.NewQueryEthProphecyParams(id))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
-		route := fmt.Sprintf("custom/%s/%s", queryRoute, oracle.QueryProphecy)
+		route := fmt.Sprintf("custom/%s/%s", queryRoute, querier.QueryEthProphecy)
 		res, err := cliCtx.QueryWithData(route, bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())

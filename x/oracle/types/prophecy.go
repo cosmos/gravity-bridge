@@ -1,12 +1,8 @@
 package types
 
-import (
-	"encoding/json"
-	"fmt"
-)
-
 const PendingStatus = "pending"
 const CompleteStatus = "complete"
+const FailedStatus = "failed"
 
 // DefaultConsensusNeeded is the default fraction of validators needed to make claims on a prophecy in order for it to pass
 const DefaultConsensusNeeded = 0.7
@@ -17,15 +13,6 @@ type Prophecy struct {
 	Status       string  `json:"status"`
 	MinimumPower int     `json:"minimum_power"` //The minimum number of staked claiming power needed before completion logic is checked
 	Claims       []Claim `json:"claims"`
-}
-
-func (prophecy Prophecy) String() string {
-	prophecyJSON, err := json.Marshal(prophecy)
-	if err != nil {
-		return fmt.Sprintf("Error marshalling json: %v", err)
-	}
-
-	return string(prophecyJSON)
 }
 
 // NewProphecy returns a new Prophecy, initialized in pending status with an initial claim

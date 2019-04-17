@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -101,12 +102,12 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 	// Register the bank route here
 	app.Router().
 		AddRoute(bank.RouterKey, bank.NewHandler(app.bankKeeper)).
-		AddRoute(oracle.RouterKey, oracle.NewHandler(app.oracleKeeper))
+		AddRoute(ethbridge.RouterKey, ethbridge.NewHandler(app.oracleKeeper, app.cdc, ethbridge.DefaultCodespace))
 
 	// The app.QueryRouter is the main query router where each module registers its routes
 	app.QueryRouter().
 		AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
-		AddRoute(oracle.QuerierRoute, oracle.NewQuerier(app.oracleKeeper, app.cdc))
+		AddRoute(ethbridge.QuerierRoute, ethbridge.NewQuerier(app.oracleKeeper, app.cdc, ethbridge.DefaultCodespace))
 
 	// The initChainer handles translating the genesis.json file into initial state for the network
 	app.SetInitChainer(app.initChainer)
@@ -191,7 +192,7 @@ func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
 	auth.RegisterCodec(cdc)
 	bank.RegisterCodec(cdc)
-	oracle.RegisterCodec(cdc)
+	ethbridge.RegisterCodec(cdc)
 	staking.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)

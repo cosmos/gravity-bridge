@@ -19,7 +19,7 @@ import (
 )
 
 // CreateTestKeepers greates an OracleKeeper, AccountKeeper and Context to be used for test input
-func CreateTestKeepers(t *testing.T, isCheckTx bool, initPower int64) (sdk.Context, auth.AccountKeeper, Keeper) {
+func CreateTestKeepers(t *testing.T, isCheckTx bool, initPower int64, initialClaims []types.Claim) (sdk.Context, auth.AccountKeeper, Keeper) {
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
@@ -54,6 +54,13 @@ func CreateTestKeepers(t *testing.T, isCheckTx bool, initPower int64) (sdk.Conte
 
 	keeper := NewKeeper(ck, keyOracle, cdc, types.DefaultCodespace)
 
+	if len(initialClaims) != 0 {
+		for _, claim := range initialClaims {
+			_, err := keeper.ProcessClaim(ctx, claim)
+			require.NoError(t, err)
+		}
+	}
+
 	return ctx, accountKeeper, keeper
 }
 
@@ -63,7 +70,6 @@ func MakeTestCodec() *codec.Codec {
 	// Register Msgs
 	auth.RegisterCodec(cdc)
 	bank.RegisterCodec(cdc)
-	types.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	return cdc
