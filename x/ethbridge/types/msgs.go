@@ -9,7 +9,7 @@ import (
 
 // MsgMakeEthBridgeClaim defines a message for creating claims on the ethereum bridge
 type MsgMakeEthBridgeClaim struct {
-	EthBridgeClaim
+	EthBridgeClaim `json:"eth_bridge_claim"`
 }
 
 // NewMsgMakeEthBridgeClaim is a constructor function for MsgMakeBridgeClaim

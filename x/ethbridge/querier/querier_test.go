@@ -58,6 +58,9 @@ func TestQueryEthProphecy(t *testing.T) {
 	err4 := cdc.UnmarshalJSON(res, &ethProphecyResp)
 	require.Nil(t, err4)
 
+	//Not testing validator power yet, so making them the same before testing:
+	ethProphecyResp.MinimumPower = 10
+	testResponse.MinimumPower = 10
 	require.True(t, reflect.DeepEqual(ethProphecyResp, testResponse))
 
 	// Test error with bad request

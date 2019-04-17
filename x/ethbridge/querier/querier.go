@@ -1,6 +1,7 @@
 package querier
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -41,7 +42,7 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 		return []byte{}, oracletypes.ErrProphecyNotFound(codespace)
 	}
 
-	bridgeClaims, err2 := MapOracleClaimsToEthBridgeClaims(cdc, prophecy.Claims, ConvertOracleClaimToEthBridgeClaim)
+	bridgeClaims, err2 := MapOracleClaimsToEthBridgeClaims(prophecy.Claims, ConvertOracleClaimToEthBridgeClaim)
 	if err2 != nil {
 		return []byte{}, err2
 	}
@@ -56,10 +57,10 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 	return bz, nil
 }
 
-func MapOracleClaimsToEthBridgeClaims(cdc *codec.Codec, oracleClaims []oracletypes.Claim, f func(*codec.Codec, oracletypes.Claim) (types.EthBridgeClaim, sdk.Error)) ([]types.EthBridgeClaim, sdk.Error) {
+func MapOracleClaimsToEthBridgeClaims(oracleClaims []oracletypes.Claim, f func(oracletypes.Claim) (types.EthBridgeClaim, sdk.Error)) ([]types.EthBridgeClaim, sdk.Error) {
 	mappedClaims := make([]types.EthBridgeClaim, len(oracleClaims))
 	for i, oracleClaim := range oracleClaims {
-		mappedClaim, err := f(cdc, oracleClaim)
+		mappedClaim, err := f(oracleClaim)
 		if err != nil {
 			return []types.EthBridgeClaim{}, err
 		}
@@ -68,10 +69,10 @@ func MapOracleClaimsToEthBridgeClaims(cdc *codec.Codec, oracleClaims []oracletyp
 	return mappedClaims, nil
 }
 
-func ConvertOracleClaimToEthBridgeClaim(cdc *codec.Codec, oracleClaim oracletypes.Claim) (types.EthBridgeClaim, sdk.Error) {
+func ConvertOracleClaimToEthBridgeClaim(oracleClaim oracletypes.Claim) (types.EthBridgeClaim, sdk.Error) {
 	var ethBridgeClaim types.EthBridgeClaim
 
-	errRes := cdc.UnmarshalJSON(oracleClaim.ClaimBytes, &ethBridgeClaim)
+	errRes := json.Unmarshal(oracleClaim.ClaimBytes, &ethBridgeClaim)
 	if errRes != nil {
 		return types.EthBridgeClaim{}, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", errRes))
 	}

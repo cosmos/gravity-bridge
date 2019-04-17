@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -9,11 +10,11 @@ import (
 )
 
 type EthBridgeClaim struct {
-	Nonce          int
-	EthereumSender string
-	CosmosReceiver sdk.AccAddress
-	Validator      sdk.AccAddress
-	Amount         sdk.Coins
+	Nonce          int            `json:"nonce"`
+	EthereumSender string         `json:"ethereum_sender"`
+	CosmosReceiver sdk.AccAddress `json:"cosmos_receiver"`
+	Validator      sdk.AccAddress `json:"validator"`
+	Amount         sdk.Coins      `json:"amount"`
 }
 
 // NewEthBridgeClaim is a constructor function for NewEthBridgeClaim
@@ -29,7 +30,7 @@ func NewEthBridgeClaim(nonce int, ethereumSender string, cosmosReceiver sdk.AccA
 
 func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) oracle.Claim {
 	id := strconv.Itoa(ethClaim.Nonce) + ethClaim.EthereumSender
-	claimBytes := cdc.MustMarshalBinaryBare(ethClaim)
+	claimBytes, _ := json.Marshal(ethClaim)
 	claim := oracle.NewClaim(id, claimBytes)
 	return claim
 }
