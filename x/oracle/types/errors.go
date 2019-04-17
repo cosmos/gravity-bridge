@@ -12,7 +12,7 @@ const (
 	DefaultCodespace sdk.CodespaceType = "oracle"
 
 	CodeInvalidNonce           CodeType = 1
-	CodeNotFound               CodeType = 2
+	CodeProphecyNotFound       CodeType = 2
 	CodeMinimumPowerTooLow     CodeType = 3
 	CodeInvalidIdentifier      CodeType = 4
 	CodeNoClaims               CodeType = 5
@@ -20,12 +20,8 @@ const (
 	CodeInvalidEthereumAddress CodeType = 7
 )
 
-func ErrInvalidNonce(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeInvalidNonce, "invalid nonce provided, must be an integer >= 0")
-}
-
-func ErrNotFound(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeNotFound, "prophecy or claim with given nonce not found")
+func ErrProphecyNotFound(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeProphecyNotFound, "prophecy with given id not found")
 }
 
 func ErrMinimumPowerTooLow(codespace sdk.CodespaceType) sdk.Error {
@@ -39,6 +35,8 @@ func ErrNoClaims(codespace sdk.CodespaceType) sdk.Error {
 func ErrInvalidIdentifier(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidNonce, "invalid identifier provided, must be a nonempty string")
 }
+
+//Ethereum-specific stuff
 
 func ErrInvalidEthereumNonce(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidEthereumNonce, "invalid ethereum nonce provided, must be >= 0")

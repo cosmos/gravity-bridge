@@ -14,8 +14,8 @@ import (
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgMakeBridgeEthClaim:
-			return handleMsgMakeBridgeEthClaim(ctx, keeper, msg)
+		case MsgMakeEthBridgeClaim:
+			return handleMsgMakeEthBridgeClaim(ctx, keeper, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized oracle message type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -24,7 +24,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 }
 
 // Handle a message to make a bridge claim
-func handleMsgMakeBridgeEthClaim(ctx sdk.Context, keeper Keeper, msg MsgMakeBridgeEthClaim) sdk.Result {
+func handleMsgMakeEthBridgeClaim(ctx sdk.Context, keeper Keeper, msg MsgMakeEthBridgeClaim) sdk.Result {
 	if msg.CosmosReceiver.Empty() {
 		return sdk.ErrInvalidAddress(msg.CosmosReceiver.String()).Result()
 	}
@@ -37,10 +37,8 @@ func handleMsgMakeBridgeEthClaim(ctx sdk.Context, keeper Keeper, msg MsgMakeBrid
 	id := strconv.Itoa(msg.Nonce) + msg.EthereumSender
 	_, err := keeper.GetProphecy(ctx, id)
 	if err == nil {
+		//check if complete or not
 		return sdk.ErrInternal("Not yet implemented").Result()
-		//check if prophecy exists or not
-		//if exist
-		//	//get it and continue checks
 		//	//check if claim for this validator exists or not
 		//	//if does
 		//		//return error
@@ -57,12 +55,12 @@ func handleMsgMakeBridgeEthClaim(ctx sdk.Context, keeper Keeper, msg MsgMakeBrid
 		//		//save updated prophecy to db
 		//		//return
 	} else {
-		if err.Code() != types.CodeNotFound {
+		if err.Code() != types.CodeProphecyNotFound {
 			return err.Result()
 		}
-		bridgeClaim := NewBridgeClaim(id, msg.CosmosReceiver, msg.Validator, msg.Amount)
-		bridgeClaims := []BridgeClaim{bridgeClaim}
-		newProphecy := NewBridgeProphecy(id, PendingStatus, getPowerThreshold(), bridgeClaims)
+		claim := NewClaim(id, msg.CosmosReceiver, msg.Validator, msg.Amount)
+		claims := []Claim{claim}
+		newProphecy := NewProphecy(id, PendingStatus, getPowerThreshold(), claims)
 		err := keeper.CreateProphecy(ctx, newProphecy)
 		if err != nil {
 			return err.Result()

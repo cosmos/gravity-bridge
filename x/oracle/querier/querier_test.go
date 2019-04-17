@@ -54,7 +54,7 @@ func TestQueryDelegation(t *testing.T) {
 	res, err3 := queryProphecy(ctx, cdc, query, keeper)
 	require.Nil(t, err3)
 
-	var prophecyResp types.BridgeProphecy
+	var prophecyResp types.Prophecy
 	err4 := cdc.UnmarshalJSON(res, &prophecyResp)
 	require.Nil(t, err4)
 
@@ -68,7 +68,7 @@ func TestQueryDelegation(t *testing.T) {
 
 	// Test error with nonexistent request
 	query.Data = bz[:len(bz)-1]
-	bz2, err5 := cdc.MarshalJSON(NewQueryProphecyParams("wrongEthereumAddress0"))
+	bz2, err5 := cdc.MarshalJSON(NewQueryProphecyParams("wrongProphecyID"))
 	require.Nil(t, err5)
 
 	query2 := abci.RequestQuery{

@@ -27,7 +27,7 @@ func TestCreateGetProphecy(t *testing.T) {
 	require.Error(t, err)
 
 	badProphecy3 := types.CreateTestProphecy(t)
-	badProphecy3.BridgeClaims = []types.BridgeClaim{}
+	badProphecy3.Claims = []types.Claim{}
 	err = keeper.CreateProphecy(ctx, badProphecy3)
 	require.Error(t, err)
 

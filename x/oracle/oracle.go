@@ -9,18 +9,18 @@ import (
 type (
 	Keeper = keeper.Keeper
 
-	BridgeClaim    = types.BridgeClaim
-	BridgeProphecy = types.BridgeProphecy
+	Claim    = types.Claim
+	Prophecy = types.Prophecy
 
-	MsgMakeBridgeEthClaim = types.MsgMakeBridgeEthClaim
+	MsgMakeEthBridgeClaim = types.MsgMakeEthBridgeClaim
 )
 
 var (
 	NewKeeper = keeper.NewKeeper
 
 	NewMsgMakeEthBridgeClaim = types.NewMsgMakeEthBridgeClaim
-	NewBridgeClaim           = types.NewBridgeClaim
-	NewBridgeProphecy        = types.NewBridgeProphecy
+	NewClaim                 = types.NewClaim
+	NewProphecy              = types.NewProphecy
 
 	RegisterCodec = types.RegisterCodec
 
@@ -42,8 +42,9 @@ const (
 )
 
 var (
-	ErrInvalidNonce       = types.ErrInvalidNonce
-	ErrNotFound           = types.ErrNotFound
+	ErrProphecyNotFound   = types.ErrProphecyNotFound
 	ErrMinimumPowerTooLow = types.ErrMinimumPowerTooLow
 	ErrInvalidIdentifier  = types.ErrInvalidIdentifier
+
+	ErrInvalidEthereumNonce = types.ErrInvalidEthereumNonce
 )

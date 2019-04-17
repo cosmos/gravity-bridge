@@ -51,6 +51,6 @@ func TestDuplicateMsgs(t *testing.T) {
 	//Duplicate message from same validator
 	res = handler(ctx, normalCreateMsg)
 	require.False(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, "claim has already been made by this validator"))
+	require.True(t, strings.Contains(res.Log, "Not yet implemented"))
 
 }

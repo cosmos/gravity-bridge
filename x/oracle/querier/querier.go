@@ -49,7 +49,7 @@ func queryProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, kee
 
 	prophecy, err := keeper.GetProphecy(ctx, params.ID)
 	if err != nil {
-		return []byte{}, types.ErrNotFound(keeper.Codespace())
+		return []byte{}, types.ErrProphecyNotFound(keeper.Codespace())
 	}
 
 	bz, err2 := codec.MarshalJSONIndent(cdc, prophecy)

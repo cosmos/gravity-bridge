@@ -35,29 +35,29 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 }
 
 // GetProphecy gets the entire prophecy data struct for a given id
-func (k Keeper) GetProphecy(ctx sdk.Context, id string) (types.BridgeProphecy, sdk.Error) {
+func (k Keeper) GetProphecy(ctx sdk.Context, id string) (types.Prophecy, sdk.Error) {
 	if id == "" {
-		return types.NewEmptyBridgeProphecy(), types.ErrInvalidIdentifier(k.Codespace())
+		return types.NewEmptyProphecy(), types.ErrInvalidIdentifier(k.Codespace())
 	}
 	store := ctx.KVStore(k.storeKey)
 	if !store.Has([]byte(id)) {
-		return types.NewEmptyBridgeProphecy(), types.ErrNotFound(k.Codespace())
+		return types.NewEmptyProphecy(), types.ErrProphecyNotFound(k.Codespace())
 	}
 	bz := store.Get([]byte(id))
-	var prophecy types.BridgeProphecy
+	var prophecy types.Prophecy
 	k.cdc.MustUnmarshalBinaryBare(bz, &prophecy)
 	return prophecy, nil
 }
 
 // CreateProphecy creates a new prophecy with an initial claim
-func (k Keeper) CreateProphecy(ctx sdk.Context, prophecy types.BridgeProphecy) sdk.Error {
+func (k Keeper) CreateProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Error {
 	if prophecy.ID == "" {
 		return types.ErrInvalidIdentifier(k.Codespace())
 	}
 	if prophecy.MinimumPower < 2 {
 		return types.ErrMinimumPowerTooLow(k.Codespace())
 	}
-	if len(prophecy.BridgeClaims) <= 0 {
+	if len(prophecy.Claims) <= 0 {
 		return types.ErrNoClaims(k.Codespace())
 	}
 	store := ctx.KVStore(k.storeKey)

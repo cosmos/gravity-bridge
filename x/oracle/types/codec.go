@@ -6,5 +6,5 @@ import (
 
 // RegisterCodec registers concrete types on the Amino codec
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(MsgMakeBridgeEthClaim{}, "oracle/MsgMakeBridgeEthClaim", nil)
+	cdc.RegisterConcrete(MsgMakeEthBridgeClaim{}, "oracle/MsgMakeEthBridgeClaim", nil)
 }

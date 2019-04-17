@@ -31,7 +31,7 @@ func GetCmdGetProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return nil
 			}
 
-			var out oracle.BridgeProphecy
+			var out oracle.Prophecy
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},

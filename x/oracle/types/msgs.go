@@ -7,8 +7,8 @@ import (
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/common"
 )
 
-// MsgMakeBridgeEthClaim defines a message for creating claims on the ethereum bridge
-type MsgMakeBridgeEthClaim struct {
+// MsgMakeEthBridgeClaim defines a message for creating claims on the ethereum bridge
+type MsgMakeEthBridgeClaim struct {
 	Nonce          int
 	EthereumSender string
 	CosmosReceiver sdk.AccAddress
@@ -17,8 +17,8 @@ type MsgMakeBridgeEthClaim struct {
 }
 
 // NewMsgMakeEthBridgeClaim is a constructor function for MsgMakeBridgeClaim
-func NewMsgMakeEthBridgeClaim(nonce int, ethereumSender string, cosmosReceiver sdk.AccAddress, validator sdk.AccAddress, amount sdk.Coins) MsgMakeBridgeEthClaim {
-	return MsgMakeBridgeEthClaim{
+func NewMsgMakeEthBridgeClaim(nonce int, ethereumSender string, cosmosReceiver sdk.AccAddress, validator sdk.AccAddress, amount sdk.Coins) MsgMakeEthBridgeClaim {
+	return MsgMakeEthBridgeClaim{
 		Nonce:          nonce,
 		EthereumSender: ethereumSender,
 		CosmosReceiver: cosmosReceiver,
@@ -28,13 +28,13 @@ func NewMsgMakeEthBridgeClaim(nonce int, ethereumSender string, cosmosReceiver s
 }
 
 // Route should return the name of the module
-func (msg MsgMakeBridgeEthClaim) Route() string { return RouterKey }
+func (msg MsgMakeEthBridgeClaim) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgMakeBridgeEthClaim) Type() string { return "make_bridge_claim" }
+func (msg MsgMakeEthBridgeClaim) Type() string { return "make_bridge_claim" }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgMakeBridgeEthClaim) ValidateBasic() sdk.Error {
+func (msg MsgMakeEthBridgeClaim) ValidateBasic() sdk.Error {
 	if msg.CosmosReceiver.Empty() {
 		return sdk.ErrInvalidAddress(msg.CosmosReceiver.String())
 	}
@@ -50,7 +50,7 @@ func (msg MsgMakeBridgeEthClaim) ValidateBasic() sdk.Error {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgMakeBridgeEthClaim) GetSignBytes() []byte {
+func (msg MsgMakeEthBridgeClaim) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -59,6 +59,6 @@ func (msg MsgMakeBridgeEthClaim) GetSignBytes() []byte {
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgMakeBridgeEthClaim) GetSigners() []sdk.AccAddress {
+func (msg MsgMakeEthBridgeClaim) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Validator}
 }
