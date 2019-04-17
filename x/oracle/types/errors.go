@@ -15,6 +15,7 @@ const (
 	CodeNotFound           CodeType = 2
 	CodeMinimumPowerTooLow CodeType = 3
 	CodeInvalidIdentifier  CodeType = 4
+	CodeNoClaims           CodeType = 5
 )
 
 func ErrInvalidNonce(codespace sdk.CodespaceType) sdk.Error {
@@ -27,6 +28,10 @@ func ErrNotFound(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrMinimumPowerTooLow(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeMinimumPowerTooLow, "minimum number for validator staking power must be greater than 1")
+}
+
+func ErrNoClaims(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeNoClaims, "cannot create prophecy without initial claim")
 }
 
 func ErrInvalidIdentifier(codespace sdk.CodespaceType) sdk.Error {
