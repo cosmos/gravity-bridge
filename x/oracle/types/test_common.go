@@ -1,10 +1,9 @@
-package common
+package types
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -17,26 +16,26 @@ const (
 	TestID              = "ethereumAddress0"
 )
 
-func CreateTestProphecy(t *testing.T) types.BridgeProphecy {
+func CreateTestProphecy(t *testing.T) BridgeProphecy {
 	testAddress, err1 := sdk.AccAddressFromBech32(TestAddress)
 	testValidator, err2 := sdk.AccAddressFromBech32(TestValidator)
 	amount, err3 := sdk.ParseCoins("1test")
 	require.NoError(t, err1)
 	require.NoError(t, err2)
 	require.NoError(t, err3)
-	bridgeClaim := types.NewBridgeClaim(TestID, testAddress, testValidator, amount)
-	bridgeClaims := []types.BridgeClaim{bridgeClaim}
-	newProphecy := types.NewBridgeProphecy(TestID, types.PendingStatus, 5, bridgeClaims)
+	bridgeClaim := NewBridgeClaim(TestID, testAddress, testValidator, amount)
+	bridgeClaims := []BridgeClaim{bridgeClaim}
+	newProphecy := NewBridgeProphecy(TestID, PendingStatus, 5, bridgeClaims)
 	return newProphecy
 }
 
-func CreateTestEthMsg(t *testing.T) types.MsgMakeBridgeEthClaim {
+func CreateTestEthMsg(t *testing.T) MsgMakeBridgeEthClaim {
 	testAddress, err1 := sdk.AccAddressFromBech32(TestAddress)
 	testValidator, err2 := sdk.AccAddressFromBech32(TestValidator)
 	amount, err3 := sdk.ParseCoins("1test")
 	require.NoError(t, err1)
 	require.NoError(t, err2)
 	require.NoError(t, err3)
-	ethMsg := types.NewMsgMakeEthBridgeClaim(TestNonce, TestEthereumAddress, testAddress, testValidator, amount)
+	ethMsg := NewMsgMakeEthBridgeClaim(TestNonce, TestEthereumAddress, testAddress, testValidator, amount)
 	return ethMsg
 }

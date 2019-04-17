@@ -8,7 +8,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/common"
 	keeperLib "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
 )
@@ -39,11 +38,11 @@ func TestQueryDelegation(t *testing.T) {
 	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 10000)
 
 	//Initial setup
-	testProphecy := common.CreateTestProphecy(t)
+	testProphecy := types.CreateTestProphecy(t)
 	err := keeper.CreateProphecy(ctx, testProphecy)
 	require.NoError(t, err)
 
-	bz, err2 := cdc.MarshalJSON(NewQueryProphecyParams(common.TestID))
+	bz, err2 := cdc.MarshalJSON(NewQueryProphecyParams(types.TestID))
 	require.Nil(t, err2)
 
 	query := abci.RequestQuery{

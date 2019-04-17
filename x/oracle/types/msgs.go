@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/common"
 )
 
 // MsgMakeBridgeEthClaim defines a message for creating claims on the ethereum bridge
@@ -37,8 +38,12 @@ func (msg MsgMakeBridgeEthClaim) ValidateBasic() sdk.Error {
 	if msg.CosmosReceiver.Empty() {
 		return sdk.ErrInvalidAddress(msg.CosmosReceiver.String())
 	}
-	//TODO: must have nonce >= 0
-	//TODO: amount should be nonzero
+	if msg.Nonce < 0 {
+		return ErrInvalidEthereumNonce(DefaultCodespace)
+	}
+	if !common.IsValidEthereumAddress(msg.EthereumSender) {
+		return ErrInvalidEthereumAddress(DefaultCodespace)
+	}
 	//TODO: investigate maybe the hacky mempool thing for offchain signature aggregation?
 	//TODO: Check signer is in fact a validator (also work out if this check should be done here or in getsigners or in the handler?)
 	return nil

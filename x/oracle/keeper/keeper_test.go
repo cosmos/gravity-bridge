@@ -5,29 +5,28 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/common"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
 )
 
 func TestCreateGetProphecy(t *testing.T) {
 	ctx, _, keeper := CreateTestKeepers(t, false, 0)
-	testProphecy := common.CreateTestProphecy(t)
+	testProphecy := types.CreateTestProphecy(t)
 
 	//Test normal Creation
 	err := keeper.CreateProphecy(ctx, testProphecy)
 	require.NoError(t, err)
 
 	//Test bad Creation
-	badProphecy := common.CreateTestProphecy(t)
+	badProphecy := types.CreateTestProphecy(t)
 	badProphecy.MinimumPower = -1
 	err = keeper.CreateProphecy(ctx, badProphecy)
 
-	badProphecy2 := common.CreateTestProphecy(t)
+	badProphecy2 := types.CreateTestProphecy(t)
 	badProphecy2.ID = ""
 	err = keeper.CreateProphecy(ctx, badProphecy2)
 	require.Error(t, err)
 
-	badProphecy3 := common.CreateTestProphecy(t)
+	badProphecy3 := types.CreateTestProphecy(t)
 	badProphecy3.BridgeClaims = []types.BridgeClaim{}
 	err = keeper.CreateProphecy(ctx, badProphecy3)
 	require.Error(t, err)
