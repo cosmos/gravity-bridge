@@ -8,7 +8,8 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	keep "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/common"
+	keeperLib "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
 )
 
@@ -18,7 +19,7 @@ var (
 
 func TestNewQuerier(t *testing.T) {
 	cdc := codec.New()
-	ctx, _, keeper := keep.CreateTestKeepers(t, false, 1000)
+	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 1000)
 
 	query := abci.RequestQuery{
 		Path: "",
@@ -35,14 +36,14 @@ func TestNewQuerier(t *testing.T) {
 
 func TestQueryDelegation(t *testing.T) {
 	cdc := codec.New()
-	ctx, _, keeper := keep.CreateTestKeepers(t, false, 10000)
+	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 10000)
 
 	//Initial setup
-	testProphecy := keep.CreateTestProphecy(t)
+	testProphecy := common.CreateTestProphecy(t)
 	err := keeper.CreateProphecy(ctx, testProphecy)
 	require.NoError(t, err)
 
-	bz, err2 := cdc.MarshalJSON(NewQueryProphecyParams(keep.TestID))
+	bz, err2 := cdc.MarshalJSON(NewQueryProphecyParams(common.TestID))
 	require.Nil(t, err2)
 
 	query := abci.RequestQuery{

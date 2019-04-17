@@ -18,25 +18,6 @@ import (
 	dbm "github.com/tendermint/tendermint/libs/db"
 )
 
-const (
-	TestAddress   = "cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv"
-	TestValidator = "cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq"
-	TestID        = "ethereumAddress0"
-)
-
-func CreateTestProphecy(t *testing.T) types.BridgeProphecy {
-	testAddress, err1 := sdk.AccAddressFromBech32(TestAddress)
-	testValidator, err2 := sdk.AccAddressFromBech32(TestValidator)
-	amount, err3 := sdk.ParseCoins("1test")
-	require.NoError(t, err1)
-	require.NoError(t, err2)
-	require.NoError(t, err3)
-	bridgeClaim := types.NewBridgeClaim(TestID, testAddress, testValidator, amount)
-	bridgeClaims := []types.BridgeClaim{bridgeClaim}
-	newProphecy := types.NewBridgeProphecy(TestID, types.PendingStatus, 5, bridgeClaims)
-	return newProphecy
-}
-
 // CreateTestKeepers greates an OracleKeeper, AccountKeeper and Context to be used for test input
 func CreateTestKeepers(t *testing.T, isCheckTx bool, initPower int64) (sdk.Context, auth.AccountKeeper, Keeper) {
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
