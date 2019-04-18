@@ -15,7 +15,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		case MsgMakeBridgeEthClaim:
 			return handleMsgMakeBridgeEthClaim(ctx, keeper, msg)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized oracle message type: %v", msg.Type())
+			errMsg := fmt.Sprintf("Unrecognized nameservice Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
@@ -46,7 +46,7 @@ func handleMsgMakeBridgeEthClaim(ctx sdk.Context, keeper Keeper, msg MsgMakeBrid
 	bridgeClaim := NewBridgeClaim(id, msg.CosmosReceiver, msg.Validator, msg.Amount)
 	bridgeClaims := []BridgeClaim{bridgeClaim}
 	newProphecy := NewBridgeProphecy(id, PendingStatus, getMinimumClaims(), bridgeClaims)
-	err := keeper.CreateProphecy(ctx, newProphecy)
+	err := keeper.createProphecy(ctx, newProphecy)
 	if err != nil {
 		return err.Result()
 	}

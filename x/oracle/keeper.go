@@ -1,9 +1,8 @@
-package keeper
+package oracle
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -15,47 +14,39 @@ type Keeper struct {
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
 	cdc *codec.Codec // The wire codec for binary encoding/decoding.
-
-	codespace sdk.CodespaceType
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, codespace sdk.CodespaceType) Keeper {
+func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec) Keeper {
 	return Keeper{
 		coinKeeper: coinKeeper,
 		storeKey:   storeKey,
 		cdc:        cdc,
-		codespace:  codespace,
 	}
-}
-
-// Codespace returns the codespace
-func (k Keeper) Codespace() sdk.CodespaceType {
-	return k.codespace
 }
 
 // GetProphecy gets the entire prophecy data struct for a given id
-func (k Keeper) GetProphecy(ctx sdk.Context, id string) (types.BridgeProphecy, sdk.Error) {
+func (k Keeper) GetProphecy(ctx sdk.Context, id string) (BridgeProphecy, sdk.Error) {
 	if id == "" {
-		return types.NewEmptyBridgeProphecy(), types.ErrInvalidIdentifier(k.Codespace())
+		return NewEmptyBridgeProphecy(), ErrInvalidIdentifier(DefaultCodespace)
 	}
 	store := ctx.KVStore(k.storeKey)
 	if !store.Has([]byte(id)) {
-		return types.NewEmptyBridgeProphecy(), types.ErrNotFound(k.Codespace())
+		return NewEmptyBridgeProphecy(), ErrNotFound(DefaultCodespace)
 	}
 	bz := store.Get([]byte(id))
-	var prophecy types.BridgeProphecy
+	var prophecy BridgeProphecy
 	k.cdc.MustUnmarshalBinaryBare(bz, &prophecy)
 	return prophecy, nil
 }
 
-// CreateProphecy creates a new prophecy with an initial claim
-func (k Keeper) CreateProphecy(ctx sdk.Context, prophecy types.BridgeProphecy) sdk.Error {
+// Creates a new prophecy with an initial claim
+func (k Keeper) createProphecy(ctx sdk.Context, prophecy BridgeProphecy) sdk.Error {
 	if prophecy.ID == "" {
-		return types.ErrInvalidIdentifier(k.Codespace())
+		return ErrInvalidIdentifier(DefaultCodespace)
 	}
 	if prophecy.MinimumClaims < 2 {
-		return types.ErrMinimumTooLow(k.Codespace())
+		return ErrMinimumTooLow(DefaultCodespace)
 	}
 	store := ctx.KVStore(k.storeKey)
 	store.Set([]byte(prophecy.ID), k.cdc.MustMarshalBinaryBare(prophecy))

@@ -1,4 +1,4 @@
-package types
+package oracle
 
 import (
 	"encoding/json"
@@ -7,11 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-const PendingStatus = "pending"
-const CompleteStatus = "complete"
+var PendingStatus = "pending"
+var CompleteStatus = "complete"
 
 // DefaultConsensusNeeded is the default fraction of validators needed to make claims on a prophecy in order for it to pass
-const DefaultConsensusNeeded = 0.7
+var DefaultConsensusNeeded = 0.7
 
 // BridgeClaim is a struct that contains the details of a single validators claims about a single bridge transaction from ethereum to cosmos
 type BridgeClaim struct {

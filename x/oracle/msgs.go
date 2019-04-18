@@ -1,4 +1,4 @@
-package types
+package oracle
 
 import (
 	"encoding/json"
@@ -27,7 +27,7 @@ func NewMsgMakeEthBridgeClaim(nonce int, ethereumSender string, cosmosReceiver s
 }
 
 // Route should return the name of the module
-func (msg MsgMakeBridgeEthClaim) Route() string { return RouterKey }
+func (msg MsgMakeBridgeEthClaim) Route() string { return "oracle" }
 
 // Type should return the action
 func (msg MsgMakeBridgeEthClaim) Type() string { return "make_bridge_claim" }
