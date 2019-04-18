@@ -1,6 +1,8 @@
 package oracle
 
 import (
+	"strconv"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -24,8 +26,12 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 }
 
 func queryProphecy(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
-	id := path[0]
-	prophecy, err := keeper.GetProphecy(ctx, id)
+	nonce, stringError := strconv.Atoi(path[0])
+	if stringError != nil {
+		return []byte{}, ErrInvalidNonce(DefaultCodespace)
+	}
+
+	prophecy, err := keeper.GetProphecy(ctx, nonce)
 	if err != nil {
 		return []byte{}, ErrNotFound(DefaultCodespace)
 	}
@@ -37,3 +43,12 @@ func queryProphecy(ctx sdk.Context, path []string, req abci.RequestQuery, keeper
 
 	return bz, nil
 }
+
+// type QueryProphecy struct {
+// 	Value string `json:"value"`
+// }
+
+// // implement fmt.Stringer
+// func (r QueryResResolve) String() string {
+// 	return r.Value
+// }

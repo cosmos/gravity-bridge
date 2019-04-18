@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// MsgMakeBridgeEthClaim defines a SetName message
-type MsgMakeBridgeEthClaim struct {
+// MsgMakeBridgeClaim defines a SetName message
+type MsgMakeBridgeClaim struct {
 	Nonce          int
 	EthereumSender string
 	CosmosReceiver sdk.AccAddress
@@ -15,9 +15,9 @@ type MsgMakeBridgeEthClaim struct {
 	Amount         sdk.Coins
 }
 
-// NewMsgMakeEthBridgeClaim is a constructor function for MsgMakeBridgeClaim
-func NewMsgMakeEthBridgeClaim(nonce int, ethereumSender string, cosmosReceiver sdk.AccAddress, validator sdk.AccAddress, amount sdk.Coins) MsgMakeBridgeEthClaim {
-	return MsgMakeBridgeEthClaim{
+// NewMsgMakeBridgeClaim is a constructor function for MsgMakeBridgeClaim
+func NewMsgMakeBridgeClaim(nonce int, ethereumSender string, cosmosReceiver sdk.AccAddress, validator sdk.AccAddress, amount sdk.Coins) MsgMakeBridgeClaim {
+	return MsgMakeBridgeClaim{
 		Nonce:          nonce,
 		EthereumSender: ethereumSender,
 		CosmosReceiver: cosmosReceiver,
@@ -27,25 +27,24 @@ func NewMsgMakeEthBridgeClaim(nonce int, ethereumSender string, cosmosReceiver s
 }
 
 // Route should return the name of the module
-func (msg MsgMakeBridgeEthClaim) Route() string { return "oracle" }
+func (msg MsgMakeBridgeClaim) Route() string { return "oracle" }
 
 // Type should return the action
-func (msg MsgMakeBridgeEthClaim) Type() string { return "make_bridge_claim" }
+func (msg MsgMakeBridgeClaim) Type() string { return "make_bridge_claim" }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgMakeBridgeEthClaim) ValidateBasic() sdk.Error {
+func (msg MsgMakeBridgeClaim) ValidateBasic() sdk.Error {
 	if msg.CosmosReceiver.Empty() {
 		return sdk.ErrInvalidAddress(msg.CosmosReceiver.String())
 	}
-	//TODO: must have nonce/identifier
-	//TODO: amount should be nonzero
-	//TODO: investigate maybe the hacky mempool thing for offchain signature aggregation?
-	//TODO: Check signer is in fact a validator (also work out if this check should be done here or in getsigners or in the handler?)
+	//must have nonce
+	//amount should be nonzero
+	//maybe the hacky mempool thing?
 	return nil
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgMakeBridgeEthClaim) GetSignBytes() []byte {
+func (msg MsgMakeBridgeClaim) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -54,6 +53,6 @@ func (msg MsgMakeBridgeEthClaim) GetSignBytes() []byte {
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgMakeBridgeEthClaim) GetSigners() []sdk.AccAddress {
+func (msg MsgMakeBridgeClaim) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Validator}
 }
