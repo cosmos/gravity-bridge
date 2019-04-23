@@ -31,6 +31,7 @@ func NewEthBridgeClaim(nonce int, ethereumSender string, cosmosReceiver sdk.AccA
 func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) oracle.Claim {
 	id := strconv.Itoa(ethClaim.Nonce) + ethClaim.EthereumSender
 	claimBytes, _ := json.Marshal(ethClaim)
-	claim := oracle.NewClaim(id, claimBytes)
+	validator := ethClaim.Validator
+	claim := oracle.NewClaim(id, validator, claimBytes)
 	return claim
 }

@@ -1,11 +1,8 @@
 package types
 
 const PendingStatus = "pending"
-const CompleteStatus = "complete"
+const SuccessStatus = "success"
 const FailedStatus = "failed"
-
-// DefaultConsensusNeeded is the default fraction of validators needed to make claims on a prophecy in order for it to pass
-const DefaultConsensusNeeded = 0.7
 
 // Prophecy is a struct that contains all the metadata of an oracle ritual
 type Prophecy struct {

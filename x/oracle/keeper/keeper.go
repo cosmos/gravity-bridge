@@ -19,16 +19,19 @@ type Keeper struct {
 	cdc *codec.Codec // The wire codec for binary encoding/decoding.
 
 	codespace sdk.CodespaceType
+
+	consensusNeeded float64
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, codespace sdk.CodespaceType) Keeper {
+func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, codespace sdk.CodespaceType, consensusNeeded float64) (Keeper, sdk.Error) {
 	return Keeper{
-		coinKeeper: coinKeeper,
-		storeKey:   storeKey,
-		cdc:        cdc,
-		codespace:  codespace,
-	}
+		coinKeeper:      coinKeeper,
+		storeKey:        storeKey,
+		cdc:             cdc,
+		codespace:       codespace,
+		consensusNeeded: consensusNeeded,
+	}, nil
 }
 
 // Codespace returns the codespace
@@ -85,14 +88,15 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Progress
 		//		//save finalized prophecy to db
 		//		//return
 		//	//if doesnt
-		//		//save updated prophecy to db
-		//		//return
+		//		//check if failure threshold passed
+		//		//if does, fail and update and return
+		//		//else, save updated prophecy to db and return
 	} else {
 		if err.Code() != types.CodeProphecyNotFound {
 			return types.ProgressUpdate{}, err
 		}
 		claims := []types.Claim{claim}
-		newProphecy := types.NewProphecy(claim.ID, types.PendingStatus, getPowerThreshold(), claims)
+		newProphecy := types.NewProphecy(claim.ID, types.PendingStatus, k.getPowerThreshold(), claims)
 		err := k.CreateProphecy(ctx, newProphecy)
 		if err != nil {
 			return types.ProgressUpdate{}, err
@@ -102,8 +106,8 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Progress
 	}
 }
 
-func getPowerThreshold() int {
-	minimumPower := float64(getTotalPower()) * types.DefaultConsensusNeeded
+func (k Keeper) getPowerThreshold() int {
+	minimumPower := float64(getTotalPower()) * k.consensusNeeded
 	return int(math.Ceil(minimumPower))
 
 }

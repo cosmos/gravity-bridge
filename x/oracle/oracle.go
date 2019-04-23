@@ -5,6 +5,9 @@ import (
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
 )
 
+// DefaultConsensusNeeded is the default fraction of validators needed to make claims on a prophecy in order for it to pass
+const DefaultConsensusNeeded float64 = 0.7
+
 type (
 	Keeper = keeper.Keeper
 
@@ -20,9 +23,9 @@ var (
 )
 
 const (
-	PendingStatus  = types.PendingStatus
-	CompleteStatus = types.CompleteStatus
-	FailedStatus   = types.FailedStatus
+	PendingStatus = types.PendingStatus
+	SuccessStatus = types.SuccessStatus
+	FailedStatus  = types.FailedStatus
 )
 
 const (
@@ -30,8 +33,6 @@ const (
 	QuerierRoute     = types.QuerierRoute
 	RouterKey        = types.RouterKey
 	DefaultCodespace = types.DefaultCodespace
-
-	DefaultConsensusNeeded = types.DefaultConsensusNeeded
 
 	TestID           = types.TestID
 	TestMinimumPower = types.TestMinimumPower

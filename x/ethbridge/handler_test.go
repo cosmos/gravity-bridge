@@ -43,6 +43,7 @@ func TestBasicMsgs(t *testing.T) {
 }
 
 func TestDuplicateMsgs(t *testing.T) {
+	//TODO: This test should just test that 2x msgs with completion still is just 1x eth minted, current code should b a dup test for oracle
 	//Setup
 	cdc := codec.New()
 	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 0, nil)
@@ -58,3 +59,7 @@ func TestDuplicateMsgs(t *testing.T) {
 	require.True(t, strings.Contains(res.Log, "Not yet implemented"))
 
 }
+
+//TODO:Test happy path with 3/4
+//Test happy path with failed consensus
+//Test bad path with
