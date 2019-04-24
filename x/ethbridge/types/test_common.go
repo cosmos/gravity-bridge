@@ -40,6 +40,6 @@ func CreateTestQueryEthProphecyResponse(cdc *codec.Codec, t *testing.T) QueryEth
 	ethBridgeClaim := CreateTestEthClaim(t)
 	oracleClaim := CreateOracleClaimFromEthClaim(cdc, ethBridgeClaim)
 	ethBridgeClaims := []EthBridgeClaim{ethBridgeClaim}
-	resp := NewQueryEthProphecyResponse(oracleClaim.ID, oracle.PendingStatus, 10, ethBridgeClaims)
+	resp := NewQueryEthProphecyResponse(oracleClaim.ID, oracle.PendingStatus, ethBridgeClaims)
 	return resp
 }

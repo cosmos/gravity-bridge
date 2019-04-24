@@ -8,13 +8,12 @@ const (
 	TestID                  = "oracleID"
 	TestByteString          = "{value: 5}"
 	AlternateTestByteString = "{value: 7}"
-	TestMinimumPower        = 5
 )
 
 func CreateTestProphecy(validator sdk.AccAddress) Prophecy {
 	claim := CreateTestClaimForValidator(validator)
 	claims := []Claim{claim}
-	newProphecy := NewProphecy(TestID, PendingStatus, TestMinimumPower, claims)
+	newProphecy := NewProphecy(TestID, PendingStatus, claims)
 	return newProphecy
 }
 

@@ -19,10 +19,6 @@ func TestCreateGetProphecy(t *testing.T) {
 	require.NoError(t, err)
 
 	//Test bad Creation
-	badProphecy := types.CreateTestProphecy(validatorAddresses[0])
-	badProphecy.MinimumPower = -1
-	err = keeper.CreateProphecy(ctx, badProphecy)
-
 	badProphecy2 := types.CreateTestProphecy(validatorAddresses[0])
 	badProphecy2.ID = ""
 	err = keeper.CreateProphecy(ctx, badProphecy2)

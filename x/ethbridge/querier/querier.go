@@ -47,7 +47,7 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 		return []byte{}, err2
 	}
 
-	response := types.NewQueryEthProphecyResponse(prophecy.ID, prophecy.Status, prophecy.MinimumPower, bridgeClaims)
+	response := types.NewQueryEthProphecyResponse(prophecy.ID, prophecy.Status, bridgeClaims)
 
 	bz, err3 := codec.MarshalJSONIndent(cdc, response)
 	if err3 != nil {

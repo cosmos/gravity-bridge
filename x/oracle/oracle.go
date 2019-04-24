@@ -34,8 +34,7 @@ const (
 	RouterKey        = types.RouterKey
 	DefaultCodespace = types.DefaultCodespace
 
-	TestID           = types.TestID
-	TestMinimumPower = types.TestMinimumPower
+	TestID = types.TestID
 )
 
 var (

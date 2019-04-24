@@ -21,15 +21,13 @@ func NewQueryEthProphecyParams(id string) QueryEthProphecyParams {
 type QueryEthProphecyResponse struct {
 	ID              string           `json:"id"`
 	Status          string           `json:"status"`
-	MinimumPower    int              `json:"minimum_power"` //The minimum number of staked claiming power needed before completion logic is checked
 	EthBridgeClaims []EthBridgeClaim `json:"claims"`
 }
 
-func NewQueryEthProphecyResponse(id string, status string, minimimPower int, claims []EthBridgeClaim) QueryEthProphecyResponse {
+func NewQueryEthProphecyResponse(id string, status string, claims []EthBridgeClaim) QueryEthProphecyResponse {
 	return QueryEthProphecyResponse{
 		ID:              id,
 		Status:          status,
-		MinimumPower:    minimimPower,
 		EthBridgeClaims: claims,
 	}
 }

@@ -59,9 +59,6 @@ func (k Keeper) CreateProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Err
 	if prophecy.ID == "" {
 		return types.ErrInvalidIdentifier(k.Codespace())
 	}
-	if prophecy.MinimumPower < 2 {
-		return types.ErrMinimumPowerTooLow(k.Codespace())
-	}
 	if len(prophecy.Claims) <= 0 {
 		return types.ErrNoClaims(k.Codespace())
 	}
@@ -96,7 +93,7 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Progress
 			return types.ProgressUpdate{}, err
 		}
 		claims := []types.Claim{claim}
-		newProphecy := types.NewProphecy(claim.ID, types.PendingStatus, k.getPowerThreshold(), claims)
+		newProphecy := types.NewProphecy(claim.ID, types.PendingStatus, claims)
 		err := k.CreateProphecy(ctx, newProphecy)
 		if err != nil {
 			return types.ProgressUpdate{}, err
