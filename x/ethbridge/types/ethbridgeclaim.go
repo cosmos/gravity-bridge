@@ -51,13 +51,10 @@ func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (s
 	return oracleId, validator, claim
 }
 
-func CreateEthClaimFromOracleClaim(nonce int, ethereumSender string, validator sdk.ValAddress, oracleClaimString string) (EthBridgeClaim, sdk.Error) {
-	var oracleClaim OracleClaim
-
-	stringBytes := []byte(oracleClaimString)
-	errRes := json.Unmarshal(stringBytes, &oracleClaim)
-	if errRes != nil {
-		return EthBridgeClaim{}, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", errRes))
+func CreateEthClaimFromOracleString(nonce int, ethereumSender string, validator sdk.ValAddress, oracleClaimString string) (EthBridgeClaim, sdk.Error) {
+	oracleClaim, err := CreateOracleClaimFromOracleString(oracleClaimString)
+	if err != nil {
+		return EthBridgeClaim{}, err
 	}
 
 	valAccAddress := sdk.AccAddress(validator)
@@ -68,4 +65,16 @@ func CreateEthClaimFromOracleClaim(nonce int, ethereumSender string, validator s
 		valAccAddress,
 		oracleClaim.Amount,
 	), nil
+}
+
+func CreateOracleClaimFromOracleString(oracleClaimString string) (OracleClaim, sdk.Error) {
+	var oracleClaim OracleClaim
+
+	stringBytes := []byte(oracleClaimString)
+	errRes := json.Unmarshal(stringBytes, &oracleClaim)
+	if errRes != nil {
+		return OracleClaim{}, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", errRes))
+	}
+
+	return oracleClaim, nil
 }

@@ -102,7 +102,6 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 	// The OracleKeeper is the Keeper from the oracle module
 	// It handles interactions with the oracle store
 	oracleKeeper, oracleErr := oracle.NewKeeper(
-		app.bankKeeper,
 		app.stakingKeeper,
 		app.keyOracle,
 		app.cdc,
@@ -122,7 +121,7 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 	app.Router().
 		AddRoute(bank.RouterKey, bank.NewHandler(app.bankKeeper)).
 		AddRoute(staking.RouterKey, staking.NewHandler(app.stakingKeeper)).
-		AddRoute(ethbridge.RouterKey, ethbridge.NewHandler(app.oracleKeeper, app.cdc, ethbridge.DefaultCodespace))
+		AddRoute(ethbridge.RouterKey, ethbridge.NewHandler(app.oracleKeeper, app.bankKeeper, app.cdc, ethbridge.DefaultCodespace))
 
 	// The app.QueryRouter is the main query router where each module registers its routes
 	app.QueryRouter().

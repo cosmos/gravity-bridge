@@ -43,7 +43,7 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 		return []byte{}, oracletypes.ErrProphecyNotFound(codespace)
 	}
 
-	bridgeClaims, err2 := MapOracleClaimsToEthBridgeClaims(params.Nonce, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleClaim)
+	bridgeClaims, err2 := MapOracleClaimsToEthBridgeClaims(params.Nonce, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
 	if err2 != nil {
 		return []byte{}, err2
 	}

@@ -25,7 +25,7 @@ import (
 )
 
 // CreateTestKeepers greates an OracleKeeper, AccountKeeper and Context to be used for test input
-func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, validatorPowers []int64) (sdk.Context, auth.AccountKeeper, Keeper, []sdk.ValAddress, sdk.Error) {
+func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []int64) (sdk.Context, auth.AccountKeeper, Keeper, bank.Keeper, []sdk.ValAddress, sdk.Error) {
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
@@ -44,7 +44,7 @@ func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, va
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
 
-	ctx := sdk.NewContext(ms, abci.Header{ChainID: "testchainid"}, isCheckTx, log.NewNopLogger())
+	ctx := sdk.NewContext(ms, abci.Header{ChainID: "testchainid"}, false, log.NewNopLogger())
 	ctx = ctx.WithConsensusParams(
 		&abci.ConsensusParams{
 			Validator: &abci.ValidatorParams{
@@ -63,17 +63,17 @@ func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, va
 		auth.ProtoBaseAccount, // prototype
 	)
 
-	ck := bank.NewBaseKeeper(
+	bankKeeper := bank.NewBaseKeeper(
 		accountKeeper,
 		pk.Subspace(bank.DefaultParamspace),
 		bank.DefaultCodespace,
 	)
 
-	stakingKeeper := staking.NewKeeper(cdc, keyStaking, tkeyStaking, ck, pk.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
+	stakingKeeper := staking.NewKeeper(cdc, keyStaking, tkeyStaking, bankKeeper, pk.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
 	stakingKeeper.SetPool(ctx, staking.InitialPool())
 	stakingKeeper.SetParams(ctx, staking.DefaultParams())
 
-	keeper, keeperErr := NewKeeper(ck, stakingKeeper, keyOracle, cdc, types.DefaultCodespace, consensusNeeded)
+	keeper, keeperErr := NewKeeper(stakingKeeper, keyOracle, cdc, types.DefaultCodespace, consensusNeeded)
 
 	//construct the validators
 	numValidators := len(validatorPowers)
@@ -86,7 +86,7 @@ func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, va
 		coins := cmtypes.TokensFromTendermintPower(power)
 		pool := stakingKeeper.GetPool(ctx)
 		err := error(nil)
-		_, _, err = ck.AddCoins(ctx, accountAddresses[i], sdk.Coins{
+		_, _, err = bankKeeper.AddCoins(ctx, accountAddresses[i], sdk.Coins{
 			{stakingKeeper.BondDenom(ctx), coins},
 		})
 		require.Nil(t, err)
@@ -104,7 +104,7 @@ func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, va
 		stakingKeeperLib.TestingUpdateValidator(stakingKeeper, ctx, validators[i], true)
 	}
 
-	return ctx, accountKeeper, keeper, valAddresses, keeperErr
+	return ctx, accountKeeper, keeper, bankKeeper, valAddresses, keeperErr
 }
 
 // nolint: unparam

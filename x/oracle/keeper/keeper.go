@@ -24,12 +24,11 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(coinKeeper bank.Keeper, stakeKeeper staking.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, codespace sdk.CodespaceType, consensusNeeded float64) (Keeper, sdk.Error) {
+func NewKeeper(stakeKeeper staking.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, codespace sdk.CodespaceType, consensusNeeded float64) (Keeper, sdk.Error) {
 	if consensusNeeded <= 0 || consensusNeeded > 1 {
 		return Keeper{}, types.ErrMinimumConsensusNeededInvalid(codespace)
 	}
 	return Keeper{
-		coinKeeper:      coinKeeper,
 		stakeKeeper:     stakeKeeper,
 		storeKey:        storeKey,
 		cdc:             cdc,
@@ -134,7 +133,6 @@ func (k Keeper) processCompletion(ctx sdk.Context, prophecy types.Prophecy) type
 	if highestConsensusRatio >= k.consensusNeeded {
 		prophecy.Status.StatusText = types.SuccessStatusText
 		prophecy.Status.FinalClaim = highestClaim
-		//TODO: trigger minting
 	} else if highestPossibleConsensusRatio <= k.consensusNeeded {
 		prophecy.Status.StatusText = types.FailedStatusText
 	}
