@@ -42,16 +42,16 @@ func NewOracleClaim(cosmosReceiver sdk.AccAddress, amount sdk.Coins) OracleClaim
 	}
 }
 
-func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (string, sdk.AccAddress, string) {
+func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (string, sdk.ValAddress, string) {
 	oracleId := strconv.Itoa(ethClaim.Nonce) + ethClaim.EthereumSender
 	claimContent := NewOracleClaim(ethClaim.CosmosReceiver, ethClaim.Amount)
 	claimBytes, _ := json.Marshal(claimContent)
 	claim := string(claimBytes)
-	validator := ethClaim.Validator
+	validator := sdk.ValAddress(ethClaim.Validator)
 	return oracleId, validator, claim
 }
 
-func CreateEthClaimFromOracleClaim(nonce int, ethereumSender string, validator sdk.AccAddress, oracleClaimString string) (EthBridgeClaim, sdk.Error) {
+func CreateEthClaimFromOracleClaim(nonce int, ethereumSender string, validator sdk.ValAddress, oracleClaimString string) (EthBridgeClaim, sdk.Error) {
 	var oracleClaim OracleClaim
 
 	stringBytes := []byte(oracleClaimString)
@@ -60,11 +60,12 @@ func CreateEthClaimFromOracleClaim(nonce int, ethereumSender string, validator s
 		return EthBridgeClaim{}, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", errRes))
 	}
 
+	valAccAddress := sdk.AccAddress(validator)
 	return NewEthBridgeClaim(
 		nonce,
 		ethereumSender,
 		oracleClaim.CosmosReceiver,
-		validator,
+		valAccAddress,
 		oracleClaim.Amount,
 	), nil
 }

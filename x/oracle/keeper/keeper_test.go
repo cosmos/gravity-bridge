@@ -10,7 +10,7 @@ import (
 )
 
 func TestCreateGetProphecy(t *testing.T) {
-	ctx, _, keeper, validatorAddresses, _ := CreateTestKeepers(t, false, 0.7, []int64{10})
+	ctx, _, keeper, validatorAddresses, _ := CreateTestKeepers(t, false, 0.7, []int64{3, 7})
 
 	validator1Pow3 := validatorAddresses[0]
 

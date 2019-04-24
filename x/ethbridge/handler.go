@@ -35,9 +35,9 @@ func handleMsgMakeEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec, oracleKeeper
 		return types.ErrInvalidEthAddress(codespace).Result()
 	}
 	oracleId, validator, claimString := types.CreateOracleClaimFromEthClaim(cdc, msg.EthBridgeClaim)
-	status, err := oracleKeeper.ProcessClaim(ctx, oracleId, validator, claimString)
-	if err != nil {
-		return err.Result()
+	status, err2 := oracleKeeper.ProcessClaim(ctx, oracleId, validator, claimString)
+	if err2 != nil {
+		return err2.Result()
 	}
 	return sdk.Result{Log: status.StatusText}
 }

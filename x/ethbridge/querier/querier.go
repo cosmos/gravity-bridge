@@ -58,11 +58,11 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 	return bz, nil
 }
 
-func MapOracleClaimsToEthBridgeClaims(nonce int, ethereumSender string, oracleValidatorClaims map[string]string, f func(int, string, sdk.AccAddress, string) (types.EthBridgeClaim, sdk.Error)) ([]types.EthBridgeClaim, sdk.Error) {
+func MapOracleClaimsToEthBridgeClaims(nonce int, ethereumSender string, oracleValidatorClaims map[string]string, f func(int, string, sdk.ValAddress, string) (types.EthBridgeClaim, sdk.Error)) ([]types.EthBridgeClaim, sdk.Error) {
 	mappedClaims := make([]types.EthBridgeClaim, len(oracleValidatorClaims))
 	i := 0
 	for validatorBech32, validatorClaim := range oracleValidatorClaims {
-		validatorAddress, parseErr := sdk.AccAddressFromBech32(validatorBech32)
+		validatorAddress, parseErr := sdk.ValAddressFromBech32(validatorBech32)
 		if parseErr != nil {
 			return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", parseErr))
 		}

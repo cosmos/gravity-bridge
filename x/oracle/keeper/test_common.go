@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
+	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -17,14 +18,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingKeeperLib "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
-	tmtypes "github.com/tendermint/tendermint/types"
-
 	dbm "github.com/tendermint/tendermint/libs/db"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 // CreateTestKeepers greates an OracleKeeper, AccountKeeper and Context to be used for test input
-func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, validatorPowers []int64) (sdk.Context, auth.AccountKeeper, Keeper, []sdk.AccAddress, sdk.Error) {
+func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, validatorPowers []int64) (sdk.Context, auth.AccountKeeper, Keeper, []sdk.ValAddress, sdk.Error) {
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
@@ -72,29 +73,44 @@ func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, va
 	stakingKeeper.SetPool(ctx, staking.InitialPool())
 	stakingKeeper.SetParams(ctx, staking.DefaultParams())
 
-	keeper, keeperErr := NewKeeper(ck, keyOracle, cdc, types.DefaultCodespace, consensusNeeded)
+	keeper, keeperErr := NewKeeper(ck, stakingKeeper, keyOracle, cdc, types.DefaultCodespace, consensusNeeded)
 
-	// create the validators desired and fill them with the expected amount of coins
-	validatorAddresses := createTestAddrs(len(validatorPowers))
-	for index, address := range validatorAddresses {
-		power := validatorPowers[index]
+	//construct the validators
+	numValidators := len(validatorPowers)
+	validators := make([]staking.Validator, numValidators)
+	accountAddresses, valAddresses := createTestAddrs(len(validatorPowers))
+	publicKeys := createTestPubKeys(len(validatorPowers))
+
+	// create the validators addresses desired and fill them with the expected amount of coins
+	for i, power := range validatorPowers {
 		coins := cmtypes.TokensFromTendermintPower(power)
-
 		pool := stakingKeeper.GetPool(ctx)
-		_, _, err := ck.AddCoins(ctx, address, sdk.Coins{
+		err := error(nil)
+		_, _, err = ck.AddCoins(ctx, accountAddresses[i], sdk.Coins{
 			{stakingKeeper.BondDenom(ctx), coins},
 		})
 		require.Nil(t, err)
 		pool.NotBondedTokens = pool.NotBondedTokens.Add(coins)
 		stakingKeeper.SetPool(ctx, pool)
 	}
+	pool := stakingKeeper.GetPool(ctx)
+	for i, power := range validatorPowers {
+		validators[i] = staking.NewValidator(valAddresses[i], publicKeys[i], staking.Description{})
+		validators[i].Status = sdk.Bonded
+		validators[i].Tokens = sdk.ZeroInt()
+		tokens := sdk.TokensFromTendermintPower(power)
+		validators[i], pool, _ = validators[i].AddTokensFromDel(pool, tokens)
+		stakingKeeper.SetPool(ctx, pool)
+		stakingKeeperLib.TestingUpdateValidator(stakingKeeper, ctx, validators[i], true)
+	}
 
-	return ctx, accountKeeper, keeper, validatorAddresses, keeperErr
+	return ctx, accountKeeper, keeper, valAddresses, keeperErr
 }
 
 // nolint: unparam
-func createTestAddrs(numAddrs int) []sdk.AccAddress {
+func createTestAddrs(numAddrs int) ([]sdk.AccAddress, []sdk.ValAddress) {
 	var addresses []sdk.AccAddress
+	var valAddresses []sdk.ValAddress
 	var buffer bytes.Buffer
 
 	// start at 100 so we can make up to 999 test addresses with valid test addresses
@@ -105,32 +121,29 @@ func createTestAddrs(numAddrs int) []sdk.AccAddress {
 		buffer.WriteString(numString) //adding on final two digits to make addresses unique
 		res, _ := sdk.AccAddressFromHex(buffer.String())
 		bech := res.String()
-		addresses = append(addresses, TestAddr(buffer.String(), bech))
+		address := stakingKeeperLib.TestAddr(buffer.String(), bech)
+		valAddress := sdk.ValAddress(address)
+		addresses = append(addresses, address)
+		valAddresses = append(valAddresses, valAddress)
 		buffer.Reset()
 	}
-	return addresses
+	return addresses, valAddresses
 }
 
-func TestAddr(addr string, bech string) sdk.AccAddress {
+// nolint: unparam
+func createTestPubKeys(numPubKeys int) []crypto.PubKey {
+	var publicKeys []crypto.PubKey
+	var buffer bytes.Buffer
 
-	res, err := sdk.AccAddressFromHex(addr)
-	if err != nil {
-		panic(err)
+	//start at 10 to avoid changing 1 to 01, 2 to 02, etc
+	for i := 100; i < (numPubKeys + 100); i++ {
+		numString := strconv.Itoa(i)
+		buffer.WriteString("0B485CFC0EECC619440448436F8FC9DF40566F2369E72400281454CB552AF") //base pubkey string
+		buffer.WriteString(numString)                                                       //adding on final two digits to make pubkeys unique
+		publicKeys = append(publicKeys, stakingKeeperLib.NewPubKey(buffer.String()))
+		buffer.Reset()
 	}
-	bechexpected := res.String()
-	if bech != bechexpected {
-		panic("Bech encoding doesn't match reference")
-	}
-
-	bechres, err := sdk.AccAddressFromBech32(bech)
-	if err != nil {
-		panic(err)
-	}
-	if bytes.Compare(bechres, res) != 0 {
-		panic("Bech decode and hex decode don't match")
-	}
-
-	return res
+	return publicKeys
 }
 
 // MakeTestCodec creates a codec used only for testing

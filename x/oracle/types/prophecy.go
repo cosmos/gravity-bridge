@@ -3,6 +3,8 @@ package types
 import (
 	"encoding/json"
 
+	"github.com/cosmos/cosmos-sdk/x/staking"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -20,7 +22,7 @@ const FailedStatusText = "failed"
 type Prophecy struct {
 	ID              string                      `json:"id"`
 	Status          Status                      `json:"status"`
-	ClaimValidators map[string][]sdk.AccAddress `json:"claim_validators"` //This is a mapping from a claim to the list of validators that made that claim
+	ClaimValidators map[string][]sdk.ValAddress `json:"claim_validators"` //This is a mapping from a claim to the list of validators that made that claim
 	ValidatorClaims map[string]string           `json:"validator_claims"` //This is a mapping from a validator bech32 address to their claim
 }
 
@@ -57,7 +59,7 @@ func (prophecy Prophecy) SerializeForDB() (DBProphecy, error) {
 
 // DeserializeFromDB deserializes a DBProphecy into a prophecy
 func (dbProphecy DBProphecy) DeserializeFromDB() (Prophecy, error) {
-	var claimValidators map[string][]sdk.AccAddress
+	var claimValidators map[string][]sdk.ValAddress
 	err := json.Unmarshal(dbProphecy.ClaimValidators, &claimValidators)
 	if err != nil {
 		return Prophecy{}, err
@@ -78,7 +80,7 @@ func (dbProphecy DBProphecy) DeserializeFromDB() (Prophecy, error) {
 }
 
 // AddClaim adds a given claim to this prophecy
-func (prophecy Prophecy) AddClaim(validator sdk.AccAddress, claim string) {
+func (prophecy Prophecy) AddClaim(validator sdk.ValAddress, claim string) {
 	claimValidators := prophecy.ClaimValidators[claim]
 	prophecy.ClaimValidators[claim] = append(claimValidators, validator)
 
@@ -86,12 +88,38 @@ func (prophecy Prophecy) AddClaim(validator sdk.AccAddress, claim string) {
 	prophecy.ValidatorClaims[validatorBech32] = claim
 }
 
+func (prophecy Prophecy) FindHighestClaim(ctx sdk.Context, stakeKeeper staking.Keeper) (string, int64, int64) {
+	validators := stakeKeeper.GetBondedValidatorsByPower(ctx)
+	//Index the validators by address for looking when scanning through claims
+	validatorsByAddress := make(map[string]staking.Validator)
+	for _, validator := range validators {
+		validatorsByAddress[validator.OperatorAddress.String()] = validator
+	}
+
+	totalClaimsPower := int64(0)
+	highestClaimPower := int64(-1)
+	highestClaim := ""
+	for claim, validators := range prophecy.ClaimValidators {
+		claimPower := int64(0)
+		for _, validator := range validators {
+			validatorPower := validatorsByAddress[validator.String()].GetTendermintPower()
+			claimPower += validatorPower
+		}
+		totalClaimsPower += claimPower
+		if claimPower > highestClaimPower {
+			highestClaimPower = claimPower
+			highestClaim = claim
+		}
+	}
+	return highestClaim, highestClaimPower, totalClaimsPower
+}
+
 // NewProphecy returns a new Prophecy, initialized in pending status with an initial claim
 func NewProphecy(id string) Prophecy {
 	return Prophecy{
 		ID:              id,
 		Status:          NewStatus(PendingStatusText, ""),
-		ClaimValidators: make(map[string][]sdk.AccAddress),
+		ClaimValidators: make(map[string][]sdk.ValAddress),
 		ValidatorClaims: make(map[string]string),
 	}
 }

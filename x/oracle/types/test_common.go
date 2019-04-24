@@ -9,13 +9,3 @@ const (
 	AlternateTestString        = "{value: 7}"
 	AnotherAlternateTestString = "{value: 9}"
 )
-
-// func CreateTestClaimForValidator(validator sdk.AccAddress) Claim {
-// 	claim := NewClaim(TestID, validator, []byte(TestByteString))
-// 	return claim
-// }
-
-// func CreateAlternateTestClaimForValidator(validator sdk.AccAddress) Claim {
-// 	claim := NewClaim(TestID, validator, []byte(AlternateTestByteString))
-// 	return claim
-// }

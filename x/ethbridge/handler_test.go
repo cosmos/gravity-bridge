@@ -1,7 +1,6 @@
 package ethbridge
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -58,7 +57,6 @@ func TestDuplicateMsgs(t *testing.T) {
 	//Duplicate message from same validator
 	res = handler(ctx, normalCreateMsg)
 	require.False(t, res.IsOK())
-	fmt.Println(res.Log)
 	require.True(t, strings.Contains(res.Log, "Already processed message from validator for this id"))
 
 }
