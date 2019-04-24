@@ -31,7 +31,7 @@ func TestCreateGetProphecy(t *testing.T) {
 	prophecy, err := keeper.GetProphecy(ctx, types.TestID)
 	require.NoError(t, err)
 	require.Equal(t, prophecy.ID, types.TestID)
-	require.Equal(t, prophecy.Status, types.PendingStatusText)
+	require.Equal(t, prophecy.Status.StatusText, types.PendingStatusText)
 	require.Equal(t, prophecy.ClaimValidators[types.TestString][0], validator1Pow3)
 	require.Equal(t, prophecy.ValidatorClaims[validator1Pow3.String()], types.TestString)
 }
@@ -64,14 +64,11 @@ func TestBadMsgs(t *testing.T) {
 	//Test duplicate message
 	status, err = keeper.ProcessClaim(ctx, types.TestID, validator1Pow3, types.TestString)
 	require.Error(t, err)
-	require.Equal(t, status.StatusText, types.PendingStatusText)
-	require.Equal(t, status.FinalClaim, "")
 	require.True(t, strings.Contains(err.Error(), "Already processed message from validator for this id"))
 
 	//Test second but non duplicate message
 	status, err = keeper.ProcessClaim(ctx, types.TestID, validator1Pow3, types.AlternateTestString)
 	require.Error(t, err)
-	require.Equal(t, status.StatusText, types.PendingStatusText)
 	require.True(t, strings.Contains(err.Error(), "Already processed message from validator for this id"))
 
 }
