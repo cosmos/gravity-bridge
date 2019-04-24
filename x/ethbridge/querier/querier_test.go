@@ -8,6 +8,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 	keeperLib "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
 )
@@ -35,12 +36,14 @@ func TestNewQuerier(t *testing.T) {
 
 func TestQueryEthProphecy(t *testing.T) {
 	cdc := codec.New()
-	initialEthBridgeClaim := types.CreateTestEthClaim(t)
+	ctx, _, keeper, validatorAddresses, _ := keeperLib.CreateTestKeepers(t, false, 0.7, []int64{3, 7})
+	accAddress := sdk.AccAddress(validatorAddresses[0])
+	initialEthBridgeClaim := types.CreateTestEthClaim(t, accAddress)
 	oracleId, validator, claimText := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
-	ctx, _, keeper, _, _ := keeperLib.CreateTestKeepers(t, false, 0.7, []int64{3, 7})
-	keeper.ProcessClaim(ctx, oracleId, validator, claimText)
+	_, err := keeper.ProcessClaim(ctx, oracleId, validator, claimText)
+	require.Nil(t, err)
 
-	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t)
+	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t, accAddress)
 
 	bz, err2 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(types.TestNonce, types.TestEthereumAddress))
 	require.Nil(t, err2)

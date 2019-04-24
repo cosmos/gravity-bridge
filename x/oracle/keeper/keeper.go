@@ -81,6 +81,10 @@ func (k Keeper) saveProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Error
 }
 
 func (k Keeper) ProcessClaim(ctx sdk.Context, id string, validator sdk.ValAddress, claim string) (types.Status, sdk.Error) {
+	activeValidator := k.checkActiveValidator(ctx, validator)
+	if !activeValidator {
+		return types.Status{}, types.ErrInvalidValidator(k.Codespace())
+	}
 	if claim == "" {
 		return types.Status{}, types.ErrInvalidClaim(k.Codespace())
 	}
@@ -106,6 +110,18 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, id string, validator sdk.ValAddres
 		return types.Status{}, err
 	}
 	return prophecy.Status, nil
+}
+
+func (k Keeper) checkActiveValidator(ctx sdk.Context, validatorAddress sdk.ValAddress) bool {
+	validator, found := k.stakeKeeper.GetValidator(ctx, validatorAddress)
+	if !found {
+		return false
+	}
+	bondStatus := validator.GetStatus()
+	if bondStatus != sdk.Bonded {
+		return false
+	}
+	return true
 }
 
 func (k Keeper) processCompletion(ctx sdk.Context, prophecy types.Prophecy) types.Prophecy {

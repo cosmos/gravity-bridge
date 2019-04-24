@@ -19,25 +19,23 @@ const (
 )
 
 //Ethereum-bridge specific stuff
-func CreateTestEthMsg(t *testing.T) MsgMakeEthBridgeClaim {
-	ethClaim := CreateTestEthClaim(t)
+func CreateTestEthMsg(t *testing.T, validatorAddress sdk.AccAddress) MsgMakeEthBridgeClaim {
+	ethClaim := CreateTestEthClaim(t, validatorAddress)
 	ethMsg := NewMsgMakeEthBridgeClaim(ethClaim)
 	return ethMsg
 }
 
-func CreateTestEthClaim(t *testing.T) EthBridgeClaim {
+func CreateTestEthClaim(t *testing.T, validatorAddress sdk.AccAddress) EthBridgeClaim {
 	testAddress, err1 := sdk.AccAddressFromBech32(TestAddress)
-	testValidator, err2 := sdk.AccAddressFromBech32(TestValidator)
-	amount, err3 := sdk.ParseCoins("1test")
+	amount, err2 := sdk.ParseCoins("1test")
 	require.NoError(t, err1)
 	require.NoError(t, err2)
-	require.NoError(t, err3)
-	ethClaim := NewEthBridgeClaim(TestNonce, TestEthereumAddress, testAddress, testValidator, amount)
+	ethClaim := NewEthBridgeClaim(TestNonce, TestEthereumAddress, testAddress, validatorAddress, amount)
 	return ethClaim
 }
 
-func CreateTestQueryEthProphecyResponse(cdc *codec.Codec, t *testing.T) QueryEthProphecyResponse {
-	ethBridgeClaim := CreateTestEthClaim(t)
+func CreateTestQueryEthProphecyResponse(cdc *codec.Codec, t *testing.T, validatorAddress sdk.AccAddress) QueryEthProphecyResponse {
+	ethBridgeClaim := CreateTestEthClaim(t, validatorAddress)
 	id, _, _ := CreateOracleClaimFromEthClaim(cdc, ethBridgeClaim)
 	ethBridgeClaims := []EthBridgeClaim{ethBridgeClaim}
 	resp := NewQueryEthProphecyResponse(id, oracle.Status{oracle.PendingStatus, ""}, ethBridgeClaims)

@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"strings"
 	"testing"
 
@@ -219,7 +218,14 @@ func TestMultipleProphecies(t *testing.T) {
 }
 
 func TestNonValidator(t *testing.T) {
-	//TODO: anything from User that is not actually a validator fails
-	err := errors.New("not yet implemented")
-	require.NoError(t, err)
+	//Test multiple prophecies running in parallel work fine as expected
+	ctx, _, keeper, _, _ := CreateTestKeepers(t, false, 0.7, []int64{3, 7})
+	_, validatorAddresses := CreateTestAddrs(10)
+	inActiveValidatorAddress := validatorAddresses[9]
+
+	//Test claim on first id with first validator
+	status, err := keeper.ProcessClaim(ctx, types.TestID, inActiveValidatorAddress, types.TestString)
+	require.Error(t, err)
+	require.True(t, strings.Contains(err.Error(), "Claim must be made by actively bonded validator"))
+	require.Equal(t, status.StatusText, "")
 }

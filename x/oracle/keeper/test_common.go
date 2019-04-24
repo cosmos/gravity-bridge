@@ -78,7 +78,7 @@ func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, va
 	//construct the validators
 	numValidators := len(validatorPowers)
 	validators := make([]staking.Validator, numValidators)
-	accountAddresses, valAddresses := createTestAddrs(len(validatorPowers))
+	accountAddresses, valAddresses := CreateTestAddrs(len(validatorPowers))
 	publicKeys := createTestPubKeys(len(validatorPowers))
 
 	// create the validators addresses desired and fill them with the expected amount of coins
@@ -108,7 +108,7 @@ func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, va
 }
 
 // nolint: unparam
-func createTestAddrs(numAddrs int) ([]sdk.AccAddress, []sdk.ValAddress) {
+func CreateTestAddrs(numAddrs int) ([]sdk.AccAddress, []sdk.ValAddress) {
 	var addresses []sdk.AccAddress
 	var valAddresses []sdk.ValAddress
 	var buffer bytes.Buffer

@@ -20,7 +20,8 @@ const (
 	CodeProphecyFinalized             CodeType = 5
 	CodeDuplicateMessage              CodeType = 6
 	CodeInvalidClaim                  CodeType = 7
-	CodeInternalDB                    CodeType = 8
+	CodeInvalidValidator              CodeType = 8
+	CodeInternalDB                    CodeType = 9
 )
 
 func ErrProphecyNotFound(codespace sdk.CodespaceType) sdk.Error {
@@ -49,6 +50,10 @@ func ErrDuplicateMessage(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrInvalidClaim(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidClaim, "Claim cannot be empty string")
+}
+
+func ErrInvalidValidator(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidValidator, "Claim must be made by actively bonded validator")
 }
 
 func ErrInternalDB(codespace sdk.CodespaceType, err error) sdk.Error {
