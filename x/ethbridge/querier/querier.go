@@ -1,8 +1,8 @@
 package querier
 
 import (
-	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,12 +37,13 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 		return []byte{}, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
-	prophecy, err := keeper.GetProphecy(ctx, params.ID)
+	id := strconv.Itoa(params.Nonce) + params.EthereumSender
+	prophecy, err := keeper.GetProphecy(ctx, id)
 	if err != nil {
 		return []byte{}, oracletypes.ErrProphecyNotFound(codespace)
 	}
 
-	bridgeClaims, err2 := MapOracleClaimsToEthBridgeClaims(prophecy.Claims, ConvertOracleClaimToEthBridgeClaim)
+	bridgeClaims, err2 := MapOracleClaimsToEthBridgeClaims(params.Nonce, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleClaim)
 	if err2 != nil {
 		return []byte{}, err2
 	}
@@ -57,24 +58,20 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 	return bz, nil
 }
 
-func MapOracleClaimsToEthBridgeClaims(oracleClaims []oracletypes.Claim, f func(oracletypes.Claim) (types.EthBridgeClaim, sdk.Error)) ([]types.EthBridgeClaim, sdk.Error) {
-	mappedClaims := make([]types.EthBridgeClaim, len(oracleClaims))
-	for i, oracleClaim := range oracleClaims {
-		mappedClaim, err := f(oracleClaim)
+func MapOracleClaimsToEthBridgeClaims(nonce int, ethereumSender string, oracleValidatorClaims map[string]string, f func(int, string, sdk.AccAddress, string) (types.EthBridgeClaim, sdk.Error)) ([]types.EthBridgeClaim, sdk.Error) {
+	mappedClaims := make([]types.EthBridgeClaim, len(oracleValidatorClaims))
+	i := 0
+	for validatorBech32, validatorClaim := range oracleValidatorClaims {
+		validatorAddress, parseErr := sdk.AccAddressFromBech32(validatorBech32)
+		if parseErr != nil {
+			return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", parseErr))
+		}
+		mappedClaim, err := f(nonce, ethereumSender, validatorAddress, validatorClaim)
 		if err != nil {
-			return []types.EthBridgeClaim{}, err
+			return nil, err
 		}
 		mappedClaims[i] = mappedClaim
+		i++
 	}
 	return mappedClaims, nil
-}
-
-func ConvertOracleClaimToEthBridgeClaim(oracleClaim oracletypes.Claim) (types.EthBridgeClaim, sdk.Error) {
-	var ethBridgeClaim types.EthBridgeClaim
-
-	errRes := json.Unmarshal(oracleClaim.ClaimBytes, &ethBridgeClaim)
-	if errRes != nil {
-		return types.EthBridgeClaim{}, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", errRes))
-	}
-	return ethBridgeClaim, nil
 }

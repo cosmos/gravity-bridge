@@ -24,7 +24,7 @@ import (
 )
 
 // CreateTestKeepers greates an OracleKeeper, AccountKeeper and Context to be used for test input
-func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, initialClaims []types.Claim, validatorPowers []int64) (sdk.Context, auth.AccountKeeper, Keeper, []sdk.AccAddress, sdk.Error) {
+func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, validatorPowers []int64) (sdk.Context, auth.AccountKeeper, Keeper, []sdk.AccAddress, sdk.Error) {
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
@@ -87,13 +87,6 @@ func CreateTestKeepers(t *testing.T, isCheckTx bool, consensusNeeded float64, in
 		require.Nil(t, err)
 		pool.NotBondedTokens = pool.NotBondedTokens.Add(coins)
 		stakingKeeper.SetPool(ctx, pool)
-	}
-
-	if len(initialClaims) != 0 {
-		for _, claim := range initialClaims {
-			_, err := keeper.ProcessClaim(ctx, claim)
-			require.NoError(t, err)
-		}
 	}
 
 	return ctx, accountKeeper, keeper, validatorAddresses, keeperErr

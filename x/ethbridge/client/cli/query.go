@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -13,14 +14,20 @@ import (
 // GetCmdGetEthBridgeProphecy queries information about a specific prophecy
 func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "get-prophecy identifier",
+		Use:   "get-prophecy nonce ethereum-sender",
 		Short: "get prophecy",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			id := args[0]
+			nonce := args[0]
+			nonceString, err := strconv.Atoi(nonce)
+			if err == nil {
+				fmt.Printf(err.Error())
+				return nil
+			}
+			ethereumSender := args[1]
 
-			bz, err := cdc.MarshalJSON(ethbridge.NewQueryEthProphecyParams(id))
+			bz, err := cdc.MarshalJSON(ethbridge.NewQueryEthProphecyParams(nonceString, ethereumSender))
 			if err != nil {
 				return err
 			}

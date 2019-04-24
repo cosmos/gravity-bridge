@@ -9,7 +9,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
-	oracleLib "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 	keeperLib "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
 )
 
@@ -19,7 +18,7 @@ var (
 
 func TestNewQuerier(t *testing.T) {
 	cdc := codec.New()
-	ctx, _, keeper, _, _ := keeperLib.CreateTestKeepers(t, false, 0.7, nil, []int64{3, 3})
+	ctx, _, keeper, _, _ := keeperLib.CreateTestKeepers(t, false, 0.7, []int64{3, 3})
 
 	query := abci.RequestQuery{
 		Path: "",
@@ -37,12 +36,13 @@ func TestNewQuerier(t *testing.T) {
 func TestQueryEthProphecy(t *testing.T) {
 	cdc := codec.New()
 	initialEthBridgeClaim := types.CreateTestEthClaim(t)
-	initialClaim := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
-	ctx, _, keeper, _, _ := keeperLib.CreateTestKeepers(t, false, 0.7, []oracleLib.Claim{initialClaim}, []int64{3, 7})
+	oracleId, validator, claimText := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
+	ctx, _, keeper, _, _ := keeperLib.CreateTestKeepers(t, false, 0.7, []int64{3, 7})
+	keeper.ProcessClaim(ctx, oracleId, validator, claimText)
 
 	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t)
 
-	bz, err2 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(initialClaim.ID))
+	bz, err2 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(types.TestNonce, types.TestEthereumAddress))
 	require.Nil(t, err2)
 
 	query := abci.RequestQuery{
@@ -67,7 +67,7 @@ func TestQueryEthProphecy(t *testing.T) {
 
 	// Test error with nonexistent request
 	query.Data = bz[:len(bz)-1]
-	bz2, err6 := cdc.MarshalJSON(types.NewQueryEthProphecyParams("badProphecyID"))
+	bz2, err6 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(12, "badEthereumAddress"))
 	require.Nil(t, err6)
 
 	query2 := abci.RequestQuery{

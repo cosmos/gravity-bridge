@@ -11,21 +11,21 @@ const DefaultConsensusNeeded float64 = 0.7
 type (
 	Keeper = keeper.Keeper
 
-	Claim    = types.Claim
 	Prophecy = types.Prophecy
+
+	Status = types.Status
 )
 
 var (
 	NewKeeper = keeper.NewKeeper
 
-	NewClaim    = types.NewClaim
 	NewProphecy = types.NewProphecy
 )
 
 const (
-	PendingStatus = types.PendingStatus
-	SuccessStatus = types.SuccessStatus
-	FailedStatus  = types.FailedStatus
+	PendingStatus = types.PendingStatusText
+	SuccessStatus = types.SuccessStatusText
+	FailedStatus  = types.FailedStatusText
 )
 
 const (
@@ -38,7 +38,7 @@ const (
 )
 
 var (
-	ErrProphecyNotFound   = types.ErrProphecyNotFound
-	ErrMinimumPowerTooLow = types.ErrMinimumPowerTooLow
-	ErrInvalidIdentifier  = types.ErrInvalidIdentifier
+	ErrProphecyNotFound              = types.ErrProphecyNotFound
+	ErrMinimumConsensusNeededInvalid = types.ErrMinimumConsensusNeededInvalid
+	ErrInvalidIdentifier             = types.ErrInvalidIdentifier
 )

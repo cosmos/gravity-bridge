@@ -3,6 +3,7 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
@@ -19,13 +20,14 @@ import (
 )
 
 const (
-	restID = "id"
+	restNonce          = "nonce"
+	restEthereumSender = "ethereumSender"
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec, queryRoute string) {
 	r.HandleFunc(fmt.Sprintf("/%s/prophecies", queryRoute), makeClaimHandler(cdc, cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/%s/prophecies/{%s}", queryRoute, restID), getProphecyHandler(cdc, cliCtx, queryRoute)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/prophecies/{%s}/{%s}", queryRoute, restNonce, restEthereumSender), getProphecyHandler(cdc, cliCtx, queryRoute)).Methods("GET")
 }
 
 type makeEthClaimReq struct {
@@ -85,9 +87,15 @@ func makeClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerF
 func getProphecyHandler(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		id := vars[restID]
+		nonce := vars[restNonce]
+		nonceString, err := strconv.Atoi(nonce)
+		if err == nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		ethereumSender := vars[restEthereumSender]
 
-		bz, err := cdc.MarshalJSON(ethbridge.NewQueryEthProphecyParams(id))
+		bz, err := cdc.MarshalJSON(ethbridge.NewQueryEthProphecyParams(nonceString, ethereumSender))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
