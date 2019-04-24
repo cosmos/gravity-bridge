@@ -19,7 +19,7 @@ var (
 
 func TestNewQuerier(t *testing.T) {
 	cdc := codec.New()
-	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 1000, nil)
+	ctx, _, keeper, _, _ := keeperLib.CreateTestKeepers(t, false, 0.7, nil, []int64{3, 3})
 
 	query := abci.RequestQuery{
 		Path: "",
@@ -38,7 +38,7 @@ func TestQueryEthProphecy(t *testing.T) {
 	cdc := codec.New()
 	initialEthBridgeClaim := types.CreateTestEthClaim(t)
 	initialClaim := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
-	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 10000, []oracleLib.Claim{initialClaim})
+	ctx, _, keeper, _, _ := keeperLib.CreateTestKeepers(t, false, 0.7, []oracleLib.Claim{initialClaim}, []int64{3, 7})
 
 	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t)
 

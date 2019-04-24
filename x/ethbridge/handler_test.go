@@ -15,7 +15,7 @@ import (
 func TestBasicMsgs(t *testing.T) {
 	//Setup
 	cdc := codec.New()
-	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 0, nil)
+	ctx, _, keeper, _, _ := keeperLib.CreateTestKeepers(t, false, 0.7, nil, []int64{3, 7})
 	handler := NewHandler(keeper, cdc, types.DefaultCodespace)
 
 	//Unrecognized type
@@ -46,7 +46,8 @@ func TestDuplicateMsgs(t *testing.T) {
 	//TODO: This test should just test that 2x msgs with completion still is just 1x eth minted, current code should b a dup test for oracle
 	//Setup
 	cdc := codec.New()
-	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 0, nil)
+	ctx, _, keeper, _, _ := keeperLib.CreateTestKeepers(t, false, 0.7, nil, []int64{3, 7})
+
 	handler := NewHandler(keeper, cdc, types.DefaultCodespace)
 	normalCreateMsg := types.CreateTestEthMsg(t)
 	res := handler(ctx, normalCreateMsg)
@@ -62,4 +63,3 @@ func TestDuplicateMsgs(t *testing.T) {
 
 //TODO:Test happy path with 3/4
 //Test happy path with failed consensus
-//Test bad path with
