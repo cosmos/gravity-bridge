@@ -1,5 +1,7 @@
 # ETH Bridge Zone
 
+[![CircleCI](https://circleci.com/gh/swishlabsco/cosmos-ethereum-bridge/tree/master.svg?style=svg)](https://circleci.com/gh/swishlabsco/cosmos-ethereum-bridge/tree/master)
+
 This repository contains the source code of the ethereum bridge zone. 
 
 ## Installing and building the application

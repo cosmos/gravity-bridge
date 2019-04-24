@@ -2,17 +2,6 @@
 
 
 [[projects]]
-  digest = "1:f96ba6ecca7ba87b1dddd70ae38cfc4ce5ea844f58d1f728e121d2e29cdfb8a2"
-  name = "github.com/allegro/bigcache"
-  packages = [
-    ".",
-    "queue",
-  ]
-  pruneopts = "UT"
-  revision = "84a0ff3f153cbd7e280a19029a864bb04b504e62"
-  version = "v1.2.0"
-
-[[projects]]
   branch = "master"
   digest = "1:09a7f74eb6bb3c0f14d8926610c87f569c5cff68e978d30e9a3540aeb626fdf0"
   name = "github.com/bartekn/go-bip39"
@@ -155,23 +144,12 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:4b6c22168e042594f56f24fe598f8803ff58c87b3308eb7ce85b726b16d6cdef"
+  digest = "1:a465697d8851275a6f6687f0407b179d061064d2063613a3435ad8b7b473c17d"
   name = "github.com/ethereum/go-ethereum"
   packages = [
-    ".",
     "common",
     "common/hexutil",
-    "common/math",
-    "common/prque",
-    "core/types",
-    "crypto",
     "crypto/secp256k1",
-    "ethdb",
-    "log",
-    "metrics",
-    "params",
-    "rlp",
-    "trie",
   ]
   pruneopts = "UT"
   revision = "4bcc0a37ab70cb79b16893556cffdaad6974e7d8"
@@ -786,7 +764,7 @@
     "github.com/cosmos/cosmos-sdk/x/bank/client/rest",
     "github.com/cosmos/cosmos-sdk/x/params",
     "github.com/cosmos/cosmos-sdk/x/staking",
-    "github.com/ethereum/go-ethereum",
+    "github.com/ethereum/go-ethereum/common",
     "github.com/gorilla/mux",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
