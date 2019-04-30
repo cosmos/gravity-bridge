@@ -1,95 +1,266 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.5.0;
 
-import "./CosmosERC20.sol";
-import "./Valset.sol";
+import "./EscrowProcessor.sol";
 
-contract Peggy is Valset {
+  /*
+   *  @title: Peggy
+   *  @dev: Peg zone contract for testing one-way transfers from Ethereum
+   *        to Cosmos, facilitated by a trusted relayer. This contract is
+   *        NOT intended to be used in production and users are empowered
+   *        to withdraw their locked funds at any time.
+   */
+contract Peggy is EscrowProcessor {
 
-    mapping (string => address) cosmosTokens;
-    mapping (address => bool) cosmosTokenAddresses;
+    bool public active;
+    address public relayer;
+    mapping(bytes32 => bool) public ids;
 
-    /* Events  */
-    event NewCosmosERC20(string name, address tokenAddress);
-    event Lock(bytes to, address token, uint64 value);
-    event Unlock(address to, address token, uint64 value);
+    event LogLock(
+        bytes32 _id,
+        address _from,
+        bytes _to,
+        address _token,
+        uint256 _value,
+        uint256 _nonce
+    );
 
-    /* Functions */
+    event LogUnlock(
+        bytes32 _id,
+        address _to,
+        address _token,
+        uint256 _value,
+        uint256 _nonce
+    );
 
-    function hashNewCosmosERC20(string name, uint decimals) public pure returns (bytes32 hash) {
-      return keccak256(name, decimals);
-    }
+    event LogWithdraw(
+        bytes32 _id,
+        address _to,
+        address _token,
+        uint256 _value,
+        uint256 _nonce
+    );
 
-    function hashUnlock(address to, address token, uint64 amount) public pure returns (bytes32 hash) {
-      return keccak256(to, token, amount);
-    }
+    event LogLockingPaused(
+        uint256 _time
+    );
 
-    function getCosmosTokenAddress(string name) public constant returns (address addr) {
-      return cosmosTokens[name];
-    }
+    event LogLockingActivated(
+        uint256 _time
+    );
 
-
-    function isCosmosTokenAddress(address addr) public constant returns (bool isCosmosAddr) {
-      return cosmosTokenAddresses[addr];
-    }
-
-    // Locks received funds to the consensus of the peg zone
     /*
-     * @param to          bytes representation of destination address
-     * @param value       value of transference
-     * @param token       token address in origin chain (0x0 if Ethereum, Cosmos for other values)
+    * @dev: Modifier to restrict access to the relayer.
+    *
+    */
+    modifier onlyRelayer()
+    {
+        require(
+            msg.sender == relayer,
+            'Must be the specified relayer.'
+        );
+        _;
+    }
+
+    /*
+    * @dev: Modifier which restricts lock functionality when paused.
+    *
+    */
+    modifier whileActive()
+    {
+        require(
+            active == true,
+            'Lock functionality is currently paused.'
+        );
+        _;
+    }
+    /*
+    * @dev: Constructor, initalizes relayer and active status.
+    *
+    */
+    constructor()
+        public
+    {
+        relayer = msg.sender;
+        active = true;
+        emit LogLockingActivated(now);
+    }
+
+    /* 
+     * @dev: Locks received funds and creates new escrows.
+     *
+     * @param _recipient: bytes representation of destination address.
+     * @param _token: token address in origin chain (0x0 if ethereum)
+     * @param _amount: value of escrow
      */
-    function lock(bytes to, address tokenAddr, uint64 amount) public payable returns (bool) {
+    function lock(
+        bytes memory _recipient,
+        address _token,
+        uint256 _amount
+    )
+        public
+        payable
+        availableNonce()
+        whileActive()
+        returns(bytes32 _id)
+    {
+         //Actions based on token address type
         if (msg.value != 0) {
-          require(tokenAddr == address(0));
-          require(msg.value == amount);
-        } else if (cosmosTokenAddresses[tokenAddr]) {
-          CosmosERC20(tokenAddr).burn(msg.sender, amount);
+          require(_token == address(0));
+          require(msg.value == _amount);
         } else {
-          require(ERC20(tokenAddr).transferFrom(msg.sender, this, amount));
+          require(ERC20(_token).transferFrom(msg.sender, address(this), _amount));
         }
-        Lock(to, tokenAddr, amount);
-        return true;
+
+        //Create an escrow with a unique key.
+        bytes32 escrowKey = createEscrow(
+            msg.sender,
+            _recipient,
+            _token,
+            _amount
+        );
+
+        emit LogLock(
+            escrowKey,
+            msg.sender,
+            _recipient,
+            _token,
+            _amount,
+            getNonce()
+        );
+
+        return escrowKey;
     }
 
-    // Unlocks Ethereum tokens according to the information from the pegzone. Called by the relayers.
     /*
-     * @param to          bytes representation of destination address
-     * @param value       value of transference
-     * @param token       token address in origin chain (0x0 if Ethereum, Cosmos for other values)
-     * @param chain       bytes respresentation of the destination chain (not used in MVP, for incentivization of relayers)
-     * @param signers     indexes of each validator
-     * @param v           array of recoverys id
-     * @param r           array of outputs of ECDSA signature
-     * @param s           array of outputs of ECDSA signature
+     * @dev: Unlocks ethereum/erc20 tokens, called by relayer.
+     *
+     *       This is a shortcut utility method for testing purposes.
+     *       In the future bidirectional system, unlocking functionality
+     *       will be guarded by validator signatures.
+     *
+     * @param _escrowId: Unique key of the escrow.
      */
-    function unlock(address to, address token, uint64 amount, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s) external returns (bool) {
-        bytes32 hashData = keccak256(to, token, amount);
-        require(Valset.verifyValidators(hashData, signers, v, r, s));
-        if (token == address(0)) {
-          to.transfer(amount);
-        } else if (cosmosTokenAddresses[token]) {
-          CosmosERC20(token).mint(to, amount);
-        } else {
-          require(ERC20(token).transfer(to, amount));
-        }
-        Unlock(to, token, amount);
+    function unlock(
+        bytes32 _escrowId
+    )
+        onlyRelayer
+        canDeliver(_escrowId)
+        external
+        returns (bool)
+    {
+        require(isEscrow(_escrowId));
+
+        // Transfer escrow's funds and delete it from memory
+        (address payable sender,
+            address token,
+            uint256 amount,
+            uint256 escrowNonce) = completeEscrow(_escrowId);
+
+        //Emit unlock event
+        emit LogUnlock(
+            _escrowId,
+            sender,
+            token,
+            amount,
+            escrowNonce
+        );
         return true;
     }
 
-    function newCosmosERC20(string name, uint decimals, uint[] signers, uint8[] v, bytes32[] r, bytes32[] s) external returns (address addr) {
-        require(cosmosTokens[name] == address(0));
+    /*
+     * @dev: Withdraws ethereum/erc20 tokens, called original sender.
+     *
+     *       This is a backdoor utility method included for testing,
+     *       purposes, allowing users to withdraw their funds. This
+     *       functionality will be removed in production.
+     *
+     * @param _escrowId: Unique key of the escrow.
+     */
+    function withdraw(
+        bytes32 _escrowId
+    )
+        onlySender(_escrowId)
+        canDeliver(_escrowId)
+        external
+        returns (bool)
+    {
+        require(isEscrow(_escrowId));
 
-        bytes32 hashData = keccak256(name, decimals);
-        require(Valset.verifyValidators(hashData, signers, v, r, s));
+        // Transfer escrow's funds and delete it from memory
+        (address payable sender,
+            address token,
+            uint256 amount,
+            uint256 escrowNonce) = completeEscrow(_escrowId);
 
-        CosmosERC20 newToken = new CosmosERC20(address(this), name, decimals);
+        //Emit withdraw event
+        emit LogWithdraw(
+            _escrowId,
+            sender,
+            token,
+            amount,
+            escrowNonce
+        );
 
-        cosmosTokens[name] = newToken;
-        cosmosTokenAddresses[newToken] = true;
-
-        NewCosmosERC20(name, newToken);
-        return newToken;
+        return true;
     }
 
-    function Peggy(address[] initAddress, uint64[] initPowers) public Valset(initAddress, initPowers) {}
+    /*
+    * @dev: Exposes an escrow's current status.
+    *
+    * @param _escrowId: The escrow id in question.
+    * @return: Boolean indicating the lock status.
+    */
+    function isLocked(
+        bytes32 _escrowId
+    )
+        public 
+        view
+        returns(bool)
+    {
+        return isEscrow(_escrowId);
+    }
+
+    /*
+    * @dev: Allows access to an escrow's information via its unique identifier.
+    *
+    * @param _escrowId: The escrow to be viewed.
+    * @return: Original sender's address.
+    * @return: Intended receiver's address in bytes.
+    * @return: The token's address.
+    * @return: The amount locked in the escrow.
+    * @return: The escrow's unique nonce.
+    */
+    function viewEscrow(
+        bytes32 _escrowId
+    )
+        public 
+        view
+        returns(address, bytes memory, address, uint256, uint256)
+    {
+        return getEscrow(_escrowId);
+    }
+
+    /*
+    * @dev: Relayer can pause fund locking without impacting other functionality.
+    */
+    function pauseLocking()
+        public
+        onlyRelayer
+    {
+        require(active);
+        active = false;
+        emit LogLockingPaused(now);
+    }
+
+    /*
+    * @dev: Relayer can activate fund locking without impacting other functionality.
+    */
+    function activateLocking()
+        public
+        onlyRelayer
+    {
+        require(!active);
+        active = true;
+        emit LogLockingActivated(now);
+    }
 }
