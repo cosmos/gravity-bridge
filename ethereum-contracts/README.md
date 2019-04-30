@@ -9,15 +9,21 @@ These contracts are for testing purposes only and are NOT intended for productio
 
 ## Installation
 Install Truffle: `$ npm install -g truffle`
+
 Install dependencies: `$ npm install`
+
 
 This project currently uses solc@0.5.0, make sure that this version of the Solidity compiler is being used to compile the contracts and does not conflict with other verions that may be installed on your machine.
 
 ## Testing
 Run commands from the appropriate directory: `$ cd ethereum-contracts`
+
 Start the truffle environment: `$ truffle develop`
+
 In another tab, run tests: `$ truffle test`
+
 Run individual tests: `$ truffle test test/<test_name.js>`
+
 
 ## Future Work
 The related Cosmos modules are under active development. Once Ethereum -> Cosmos transfers have been successfully prototyped, Peggy functionality for bidirectional transfers (such as validator sets, signature validation, and secured token unlocking procedures) will be integrated into the contracts. Previous work in these areas is a valuable resource that will be leveraged once the complete system is ready for bidirectional transfers.
