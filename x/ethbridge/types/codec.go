@@ -1,4 +1,4 @@
-package oracle
+package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -6,5 +6,5 @@ import (
 
 // RegisterCodec registers concrete types on the Amino codec
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(MsgMakeBridgeClaim{}, "oracle/MakeBridgeClaim", nil)
+	cdc.RegisterConcrete(MsgMakeEthBridgeClaim{}, "oracle/MsgMakeEthBridgeClaim", nil)
 }

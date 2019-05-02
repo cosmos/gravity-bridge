@@ -1,5 +1,7 @@
 # ETH Bridge Zone
 
+[![CircleCI](https://circleci.com/gh/swishlabsco/cosmos-ethereum-bridge/tree/master.svg?style=svg)](https://circleci.com/gh/swishlabsco/cosmos-ethereum-bridge/tree/master)
+
 This repository contains the source code of the ethereum bridge zone. 
 
 ## Installing and building the application
@@ -44,18 +46,19 @@ ebd add-genesis-account $(ebcli keys show validator -a) 1000000000stake,10000000
 # Now its safe to start `ebd`
 ebd start
 
-# Then, in another terminal window, send 10 tok tokens from the validator to the testuser
+# Then, wait 10 seconds and in another terminal window, send 10 tok tokens from the validator to the testuser
 ebcli tx send $(ebcli keys show testuser -a) 10tok --from=validator --chain-id=testing --yes
 
 # Confirm token balances have changed appropriately
 ebcli query account $(ebcli keys show validator -a) --trust-node
 ebcli query account $(ebcli keys show testuser -a) --trust-node
 
-# Test out the oracle module by submitting a claim for a prophecy
+# Test out the oracle module by submitting a claim for an ethereum prophecy
+# (Ethereum prophecies are stored on the blockchain with an identifier created by concatenating the nonce and sender address)
 ebcli tx oracle make-claim 0 randomethaddress $(ebcli keys show testuser -a) $(ebcli keys show validator -a) 3eth --from validator --chain-id testing --yes
 
 # Then read the prophecy to confirm it was created with the claim added
-ebcli query oracle get-prophecy 0 --trust-node
+ebcli query oracle get-prophecy 0randomethaddress --trust-node
 ```
 
 ## Using the application from rest-server
@@ -67,4 +70,4 @@ ebcli rest-server --trust-node
 ```
 
 An api collection for Postman (https://www.getpostman.com/) is provided [here](./cosmos-ethereum-bridge.postman_collection.json) which documents some API endpoints and can be used to interact with it.
-Note: You will need to change the cosmos addresses in the URLs, params and body to match the addresses you generated that you want to check.
+Note: For checking account details/balance, you will need to change the cosmos addresses in the URLs, params and body to match the addresses you generated that you want to check.

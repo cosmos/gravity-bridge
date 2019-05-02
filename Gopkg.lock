@@ -10,12 +10,12 @@
   revision = "a05967ea095d81c8fe4833776774cfaff8e5036c"
 
 [[projects]]
-  branch = "master"
   digest = "1:d6afaeed1502aa28e80a4ed0981d570ad91b2579193404256ce672ed0a609e0d"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
   pruneopts = "UT"
-  revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
+  revision = "4b2b341e8d7715fae06375aa633dbb6e91b3fb46"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:1343a2963481a305ca4d051e84bc2abd16b601ee22ed324f8d605de1adb291b0"
@@ -144,12 +144,16 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:fed20bf7f0da387c96d4cfc140a95572e5aba4bb984beb7de910e090ae39849b"
+  digest = "1:a465697d8851275a6f6687f0407b179d061064d2063613a3435ad8b7b473c17d"
   name = "github.com/ethereum/go-ethereum"
-  packages = ["crypto/secp256k1"]
+  packages = [
+    "common",
+    "common/hexutil",
+    "crypto/secp256k1",
+  ]
   pruneopts = "UT"
-  revision = "14ae1246b789dd2a0a2bd22f0c7d3256daa26759"
-  version = "v1.8.25"
+  revision = "4bcc0a37ab70cb79b16893556cffdaad6974e7d8"
+  version = "v1.8.27"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -372,16 +376,16 @@
     "model",
   ]
   pruneopts = "UT"
-  revision = "cfeb6f9992ffa54aaa4f2170ade4067ee478b250"
-  version = "v0.2.0"
+  revision = "a82f4c12f983cc2649298185f296632953e50d3e"
+  version = "v0.3.0"
 
 [[projects]]
   branch = "master"
-  digest = "1:f806b417865e83457c3659232926203f5b0d39aa741b71d9e3e4c0c774e71a5c"
+  digest = "1:49b09905e781d7775c086604cc00083e1832d0783f1f421b79f42657c457d029"
   name = "github.com/prometheus/procfs"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ea9eea63887261e4d8ed8315f4078e88d540c725"
+  revision = "8368d24ba045f26503eb745b624d930cbe214c79"
 
 [[projects]]
   digest = "1:ea0700160aca4ef099f4e06686a665a87691f4248dddd40796925eda2e46bd64"
@@ -599,7 +603,7 @@
   version = "v0.8.0"
 
 [[projects]]
-  digest = "1:6f6dc6060c4e9ba73cf28aa88f12a69a030d3d19d518ef8e931879eaa099628d"
+  digest = "1:d066def5c440e778d443a0b98f5dbc6761b9992294621f5d578cec82b1deb9d3"
   name = "golang.org/x/crypto"
   packages = [
     "bcrypt",
@@ -619,6 +623,7 @@
     "poly1305",
     "ripemd160",
     "salsa20/salsa",
+    "sha3",
   ]
   pruneopts = "UT"
   revision = "3764759f34a542a3aef74d6b02e35be7ab893bba"
@@ -642,14 +647,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d78755393cc6ee9bd63b4debeed9be209517adc3296e61ecdf97590b15260f45"
+  digest = "1:38aa494d309ed1454312b7c19f869ce99edcc5a4ee61f599090a8d15b6c2d4e6"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
     "unix",
   ]
   pruneopts = "UT"
-  revision = "4b34438f7a67ee5f45cc6132e2bad873a20324e9"
+  revision = "12500544f89f9420afe9529ba8940bf72d294972"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -680,10 +685,10 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "UT"
-  revision = "64821d5d210748c883cd2b809589555ae4654203"
+  revision = "d1146b9035b912113a38af3b138eb2af567b2c67"
 
 [[projects]]
-  digest = "1:c00eb80d7b152379c3e94c38d82b29deca98b1d0f53e4e20362589b7fcbffa07"
+  digest = "1:31d87f39886fb38a2b6c097ff3b9f985d6960772170d64a68246f7790e955746"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -700,6 +705,7 @@
     "grpclog",
     "internal",
     "internal/backoff",
+    "internal/balancerload",
     "internal/binarylog",
     "internal/channelz",
     "internal/envconfig",
@@ -719,8 +725,8 @@
     "tap",
   ]
   pruneopts = "UT"
-  revision = "3507fb8e1a5ad030303c106fef3a47c9fdad16ad"
-  version = "v1.19.1"
+  revision = "236199dd5f8031d698fb64091194aecd1c3895b2"
+  version = "v1.20.0"
 
 [[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
@@ -736,24 +742,33 @@
   input-imports = [
     "github.com/cosmos/cosmos-sdk/baseapp",
     "github.com/cosmos/cosmos-sdk/client",
+    "github.com/cosmos/cosmos-sdk/client/context",
     "github.com/cosmos/cosmos-sdk/client/keys",
     "github.com/cosmos/cosmos-sdk/client/lcd",
+    "github.com/cosmos/cosmos-sdk/client/rest",
     "github.com/cosmos/cosmos-sdk/client/rpc",
     "github.com/cosmos/cosmos-sdk/client/tx",
+    "github.com/cosmos/cosmos-sdk/client/utils",
     "github.com/cosmos/cosmos-sdk/cmd/gaia/init",
     "github.com/cosmos/cosmos-sdk/codec",
     "github.com/cosmos/cosmos-sdk/server",
+    "github.com/cosmos/cosmos-sdk/store",
     "github.com/cosmos/cosmos-sdk/types",
+    "github.com/cosmos/cosmos-sdk/types/rest",
     "github.com/cosmos/cosmos-sdk/x/auth",
     "github.com/cosmos/cosmos-sdk/x/auth/client/cli",
     "github.com/cosmos/cosmos-sdk/x/auth/client/rest",
+    "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder",
     "github.com/cosmos/cosmos-sdk/x/bank",
     "github.com/cosmos/cosmos-sdk/x/bank/client/cli",
     "github.com/cosmos/cosmos-sdk/x/bank/client/rest",
     "github.com/cosmos/cosmos-sdk/x/params",
     "github.com/cosmos/cosmos-sdk/x/staking",
+    "github.com/ethereum/go-ethereum/common",
+    "github.com/gorilla/mux",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
+    "github.com/stretchr/testify/require",
     "github.com/tendermint/go-amino",
     "github.com/tendermint/tendermint/abci/types",
     "github.com/tendermint/tendermint/config",

@@ -6,7 +6,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
@@ -14,19 +13,22 @@ import (
 
 	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/querier"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 )
 
 const (
-	restNonce = "nonce"
+	restID = "id"
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec, storeName string) {
-	r.HandleFunc(fmt.Sprintf("/%s/prophecies", storeName), makeClaimHandler(cdc, cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/%s/prophecies/{%s}", storeName, restNonce), getProphecyHandler(cdc, cliCtx, storeName)).Methods("GET")
+func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec, queryRoute string) {
+	r.HandleFunc(fmt.Sprintf("/%s/prophecies", queryRoute), makeClaimHandler(cdc, cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/%s/prophecies/{%s}", queryRoute, restID), getProphecyHandler(cdc, cliCtx, queryRoute)).Methods("GET")
 }
 
-type buyNameReq struct {
+type makeEthClaimReq struct {
 	BaseReq        rest.BaseReq `json:"base_req"`
 	Nonce          int          `json:"nonce"`
 	EthereumSender string       `json:"ethereum_sender"`
@@ -37,7 +39,7 @@ type buyNameReq struct {
 
 func makeClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req buyNameReq
+		var req makeEthClaimReq
 
 		if !rest.ReadRESTReq(w, r, cdc, &req) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
@@ -68,7 +70,8 @@ func makeClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerF
 		}
 
 		// create the message
-		msg := oracle.NewMsgMakeBridgeClaim(req.Nonce, ethereumSender, cosmosReceiver, validator, amount)
+		ethBridgeClaim := types.NewEthBridgeClaim(req.Nonce, ethereumSender, cosmosReceiver, validator, amount)
+		msg := ethbridge.NewMsgMakeEthBridgeClaim(ethBridgeClaim)
 		err5 := msg.ValidateBasic()
 		if err5 != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err5.Error())
@@ -79,12 +82,19 @@ func makeClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerF
 	}
 }
 
-func getProphecyHandler(cdc *codec.Codec, cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+func getProphecyHandler(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		paramType := vars[restNonce]
+		id := vars[restID]
 
-		res, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/prophecy/%s", storeName, paramType), nil)
+		bz, err := cdc.MarshalJSON(ethbridge.NewQueryEthProphecyParams(id))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		route := fmt.Sprintf("custom/%s/%s", queryRoute, querier.QueryEthProphecy)
+		res, err := cliCtx.QueryWithData(route, bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return

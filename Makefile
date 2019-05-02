@@ -24,3 +24,6 @@ update_vendor_deps:
 install:
 	go install ./cmd/ebd
 	go install ./cmd/ebcli
+
+test: 
+	gotestsum
