@@ -16,12 +16,13 @@ func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Comm
 	return &cobra.Command{
 		Use:   "get-prophecy nonce ethereum-sender",
 		Short: "get prophecy",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			nonce := args[0]
+
 			nonceString, err := strconv.Atoi(nonce)
-			if err == nil {
+			if err != nil {
 				fmt.Printf(err.Error())
 				return nil
 			}

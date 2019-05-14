@@ -1,8 +1,6 @@
 package app
 
 import (
-	"encoding/json"
-
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -18,7 +16,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 const (
@@ -143,6 +140,8 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 		app.tkeyStaking,
 	)
 
+	app.SetEndBlocker(app.EndBlocker)
+
 	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
@@ -151,11 +150,44 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 	return app
 }
 
-// GenesisState represents chain state at the start of the chain. Any initial state (account balances) are stored here.
-type GenesisState struct {
-	AuthData auth.GenesisState   `json:"auth"`
-	BankData bank.GenesisState   `json:"bank"`
-	Accounts []*auth.BaseAccount `json:"accounts"`
+// initialize store from a genesis state
+func (app *ethereumBridgeApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
+
+	// // load the accounts
+	for _, gacc := range genesisState.Accounts {
+		acc := gacc.ToAccount()
+		acc = app.accountKeeper.NewAccount(ctx, acc) // set account number
+		app.accountKeeper.SetAccount(ctx, acc)
+	}
+
+	// load the initial staking information
+	validators, err := staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)
+	if err != nil {
+		panic(err)
+	}
+
+	// initialize module-specific stores
+	auth.InitGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper, genesisState.AuthData)
+	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
+
+	if len(genesisState.GenTxs) > 0 {
+		for _, genTx := range genesisState.GenTxs {
+			var tx auth.StdTx
+			err = app.cdc.UnmarshalJSON(genTx, &tx)
+			if err != nil {
+				panic(err)
+			}
+			bz := app.cdc.MustMarshalBinaryLengthPrefixed(tx)
+			res := app.BaseApp.DeliverTx(bz)
+			if !res.IsOK() {
+				panic(res.Log)
+			}
+		}
+		validators = app.stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+
+	}
+
+	return validators
 }
 
 func (app *ethereumBridgeApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
@@ -167,46 +199,11 @@ func (app *ethereumBridgeApp) initChainer(ctx sdk.Context, req abci.RequestInitC
 		panic(err)
 	}
 
-	for _, acc := range genesisState.Accounts {
-		acc.AccountNumber = app.accountKeeper.GetNextAccountNumber(ctx)
-		app.accountKeeper.SetAccount(ctx, acc)
+	validators := app.initFromGenesisState(ctx, *genesisState)
+
+	return abci.ResponseInitChain{
+		Validators: validators,
 	}
-
-	auth.InitGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper, genesisState.AuthData)
-	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
-
-	return abci.ResponseInitChain{}
-}
-
-// ExportAppStateAndValidators does the things
-func (app *ethereumBridgeApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
-	ctx := app.NewContext(true, abci.Header{})
-	accounts := []*auth.BaseAccount{}
-
-	appendAccountsFn := func(acc auth.Account) bool {
-		account := &auth.BaseAccount{
-			Address: acc.GetAddress(),
-			Coins:   acc.GetCoins(),
-		}
-
-		accounts = append(accounts, account)
-		return false
-	}
-
-	app.accountKeeper.IterateAccounts(ctx, appendAccountsFn)
-
-	genState := GenesisState{
-		Accounts: accounts,
-		AuthData: auth.DefaultGenesisState(),
-		BankData: bank.DefaultGenesisState(),
-	}
-
-	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return appState, validators, err
 }
 
 // MakeCodec generates the necessary codecs for Amino
@@ -229,4 +226,9 @@ func (app *ethereumBridgeApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlo
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
 	}
+}
+
+// load a particular height
+func (app *ethereumBridgeApp) LoadHeight(height int64) error {
+	return app.LoadVersion(height, app.keyMain)
 }

@@ -19,6 +19,11 @@ import (
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
+	stakingModule "github.com/cosmos/cosmos-sdk/x/staking"
+
+	stakingclient "github.com/cosmos/cosmos-sdk/x/staking/client"
+	stakingrest "github.com/cosmos/cosmos-sdk/x/staking/client/rest"
+
 	app "github.com/swishlabsco/cosmos-ethereum-bridge"
 	ethbridgeclient "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/client"
 	ethbridgerest "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/client/rest"
@@ -45,6 +50,7 @@ func main() {
 
 	mc := []sdk.ModuleClients{
 		ethbridgeclient.NewModuleClient(routeEthbridge, cdc),
+		stakingclient.NewModuleClient(stakingModule.StoreKey, cdc),
 	}
 
 	rootCmd := &cobra.Command{
@@ -84,6 +90,7 @@ func registerRoutes(rs *lcd.RestServer) {
 	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeAcc)
 	bank.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
+	stakingrest.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	ethbridgerest.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, routeEthbridge)
 }
 
@@ -104,7 +111,10 @@ func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	)
 
 	for _, m := range mc {
-		queryCmd.AddCommand(m.GetQueryCmd())
+		mQueryCmd := m.GetQueryCmd()
+		if mQueryCmd != nil {
+			queryCmd.AddCommand(mQueryCmd)
+		}
 	}
 
 	return queryCmd

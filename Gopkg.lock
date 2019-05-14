@@ -40,7 +40,7 @@
   revision = "d4cc87b860166d00d6b5b9e0d3b3d71d6088d4d4"
 
 [[projects]]
-  digest = "1:d32b417cabb66442ff5d72e47c0e35b5405248907538e22ca039da11b5414e4a"
+  digest = "1:d23232049e2e9cf931bcad134901eab12a0e95b5d5bc30f22ffee001a3fb19fe"
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
     "baseapp",
@@ -108,6 +108,7 @@
     "x/slashing/client/rest",
     "x/slashing/tags",
     "x/staking",
+    "x/staking/client",
     "x/staking/client/cli",
     "x/staking/client/rest",
     "x/staking/keeper",
@@ -764,6 +765,9 @@
     "github.com/cosmos/cosmos-sdk/x/bank/client/rest",
     "github.com/cosmos/cosmos-sdk/x/params",
     "github.com/cosmos/cosmos-sdk/x/staking",
+    "github.com/cosmos/cosmos-sdk/x/staking/client",
+    "github.com/cosmos/cosmos-sdk/x/staking/client/rest",
+    "github.com/cosmos/cosmos-sdk/x/staking/keeper",
     "github.com/ethereum/go-ethereum/common",
     "github.com/gorilla/mux",
     "github.com/spf13/cobra",

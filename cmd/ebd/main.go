@@ -10,10 +10,12 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -21,6 +23,7 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/types"
 
 	app "github.com/swishlabsco/cosmos-ethereum-bridge"
 
@@ -36,7 +39,11 @@ import (
 var DefaultNodeHome = os.ExpandEnv("$HOME/.ebd")
 
 const (
-	flagOverwrite = "overwrite"
+	flagOverwrite    = "overwrite"
+	flagClientHome   = "home-client"
+	flagVestingStart = "vesting-start-time"
+	flagVestingEnd   = "vesting-end-time"
+	flagVestingAmt   = "vesting-amount"
 )
 
 func main() {
@@ -53,7 +60,7 @@ func main() {
 
 	rootCmd.AddCommand(InitCmd(ctx, cdc))
 	rootCmd.AddCommand(AddGenesisAccountCmd(ctx, cdc))
-	server.AddCommands(ctx, cdc, rootCmd, newApp, appExporter())
+	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "EB", DefaultNodeHome)
@@ -68,12 +75,20 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 	return app.NewEthereumBridgeApp(logger, db)
 }
 
-func appExporter() server.AppExporter {
-	return func(logger log.Logger, db dbm.DB, _ io.Writer, _ int64, _ bool, _ []string) (
-		json.RawMessage, []tmtypes.GenesisValidator, error) {
-		dapp := app.NewEthereumBridgeApp(logger, db)
-		return dapp.ExportAppStateAndValidators()
+func exportAppStateAndTMValidators(
+	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailWhiteList []string,
+) (json.RawMessage, []tmtypes.GenesisValidator, error) {
+
+	if height != -1 {
+		ebApp := app.NewEthereumBridgeApp(logger, db)
+		err := ebApp.LoadHeight(height)
+		if err != nil {
+			return nil, nil, err
+		}
+		return ebApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
+	ebApp := app.NewEthereumBridgeApp(logger, db)
+	return ebApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
 
 // InitCmd initializes all files for tendermint and application
@@ -104,8 +119,9 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			genesis := app.GenesisState{
-				AuthData: auth.DefaultGenesisState(),
-				BankData: bank.DefaultGenesisState(),
+				AuthData:    auth.DefaultGenesisState(),
+				BankData:    bank.DefaultGenesisState(),
+				StakingData: staking.DefaultGenesisState(),
 			}
 
 			appState, err = codec.MarshalJSONIndent(cdc, genesis)
@@ -145,30 +161,51 @@ func AddGenesisAccountCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command 
 		Long: strings.TrimSpace(`
 Adds accounts to the genesis file so that you can start a chain with coins in the CLI:
 
-$ nsd add-genesis-account cosmos1tse7r2fadvlrrgau3pa0ss7cqh55wrv6y9alwh 1000STAKE,1000nametoken
+$ ebd add-genesis-account cosmos1tse7r2fadvlrrgau3pa0ss7cqh55wrv6y9alwh 1000STAKE,1000nametoken
 `),
 		RunE: func(_ *cobra.Command, args []string) error {
+			config := ctx.Config
+			config.SetRoot(viper.GetString(cli.HomeFlag))
+
 			addr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
-				return err
+				kb, err := keys.NewKeyBaseFromDir(viper.GetString(flagClientHome))
+				if err != nil {
+					return err
+				}
+
+				info, err := kb.Get(args[0])
+				if err != nil {
+					return err
+				}
+
+				addr = info.GetAddress()
 			}
+
 			coins, err := sdk.ParseCoins(args[1])
 			if err != nil {
 				return err
 			}
-			coins.Sort()
 
-			var genDoc tmtypes.GenesisDoc
-			config := ctx.Config
+			vestingStart := viper.GetInt64(flagVestingStart)
+			vestingEnd := viper.GetInt64(flagVestingEnd)
+			vestingAmt, err := sdk.ParseCoins(viper.GetString(flagVestingAmt))
+			if err != nil {
+				return err
+			}
+
 			genFile := config.GenesisFile()
 			if !common.FileExists(genFile) {
 				return fmt.Errorf("%s does not exist, run `gaiad init` first", genFile)
 			}
+
 			genContents, err := ioutil.ReadFile(genFile)
 			if err != nil {
+				return err
 			}
 
-			if err = cdc.UnmarshalJSON(genContents, &genDoc); err != nil {
+			var genDoc types.GenesisDoc
+			if err := cdc.UnmarshalJSON(genContents, &genDoc); err != nil {
 				return err
 			}
 
@@ -177,15 +214,11 @@ $ nsd add-genesis-account cosmos1tse7r2fadvlrrgau3pa0ss7cqh55wrv6y9alwh 1000STAK
 				return err
 			}
 
-			for _, stateAcc := range appState.Accounts {
-				if stateAcc.Address.Equals(addr) {
-					return fmt.Errorf("the application state already contains account %v", addr)
-				}
+			appState, err = addGenesisAccount(cdc, appState, addr, coins, vestingAmt, vestingStart, vestingEnd)
+			if err != nil {
+				return err
 			}
 
-			acc := auth.NewBaseAccountWithAddress(addr)
-			acc.Coins = coins
-			appState.Accounts = append(appState.Accounts, &acc)
 			appStateJSON, err := cdc.MarshalJSON(appState)
 			if err != nil {
 				return err
@@ -194,6 +227,9 @@ $ nsd add-genesis-account cosmos1tse7r2fadvlrrgau3pa0ss7cqh55wrv6y9alwh 1000STAK
 			return gaiaInit.ExportGenesisFile(genFile, genDoc.ChainID, genDoc.Validators, appStateJSON)
 		},
 	}
+	cmd.Flags().String(flagVestingAmt, "", "amount of coins for vesting accounts")
+	cmd.Flags().Uint64(flagVestingStart, 0, "schedule start time (unix epoch) for vesting accounts")
+	cmd.Flags().Uint64(flagVestingEnd, 0, "schedule end time (unix epoch) for vesting accounts")
 	return cmd
 }
 
@@ -228,4 +264,54 @@ func SimpleAppGenTx(cdc *codec.Codec, pk crypto.PubKey) (
 	}
 
 	return
+}
+
+func addGenesisAccount(
+	cdc *codec.Codec, appState app.GenesisState, addr sdk.AccAddress,
+	coins, vestingAmt sdk.Coins, vestingStart, vestingEnd int64,
+) (app.GenesisState, error) {
+
+	for _, stateAcc := range appState.Accounts {
+		if stateAcc.Address.Equals(addr) {
+			return appState, fmt.Errorf("the application state already contains account %v", addr)
+		}
+	}
+
+	acc := auth.NewBaseAccountWithAddress(addr)
+	acc.Coins = coins
+	appState.StakingData.Pool.NotBondedTokens = appState.StakingData.Pool.NotBondedTokens.Add(coins.AmountOf(appState.StakingData.Params.BondDenom))
+
+	if !vestingAmt.IsZero() {
+		var vacc auth.VestingAccount
+
+		bvacc := &auth.BaseVestingAccount{
+			BaseAccount:     &acc,
+			OriginalVesting: vestingAmt,
+			EndTime:         vestingEnd,
+		}
+
+		if bvacc.OriginalVesting.IsAllGT(acc.Coins) {
+			return appState, fmt.Errorf("vesting amount cannot be greater than total amount")
+		}
+		if vestingStart >= vestingEnd {
+			return appState, fmt.Errorf("vesting start time must before end time")
+		}
+
+		if vestingStart != 0 {
+			vacc = &auth.ContinuousVestingAccount{
+				BaseVestingAccount: bvacc,
+				StartTime:          vestingStart,
+			}
+		} else {
+			vacc = &auth.DelayedVestingAccount{
+				BaseVestingAccount: bvacc,
+			}
+		}
+
+		appState.Accounts = append(appState.Accounts, app.NewGenesisAccountI(vacc))
+	} else {
+		appState.Accounts = append(appState.Accounts, app.NewGenesisAccount(&acc))
+	}
+
+	return appState, nil
 }
