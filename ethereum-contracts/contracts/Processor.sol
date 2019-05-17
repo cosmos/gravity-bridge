@@ -5,7 +5,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
   /*
    *  @title: Processor
-   *  @dev: Processes requests for item creation and deletion by
+   *  @dev: Processes requests for item locking and unlocking by
    *        storing an item's information then relaying the funds
    *        the original sender.
    */
@@ -22,7 +22,7 @@ contract Processor {
         address token;
         uint256 amount;
         uint256 nonce;
-        bool isItem;
+        bool locked;
     }
 
     uint256 public nonce;
@@ -37,23 +37,23 @@ contract Processor {
         nonce = 0;
     }
 
-    modifier onlySender(bytes32 _itemId) {
+    modifier onlySender(bytes32 _id) {
         require(
-            msg.sender == items[_itemId].sender,
+            msg.sender == items[_id].sender,
             'Must be the original sender.'
         );
         _;
     }
 
-    modifier canDeliver(bytes32 _itemId) {
-        if(items[_itemId].token == address(0)) {
+    modifier canDeliver(bytes32 _id) {
+        if(items[_id].token == address(0)) {
             require(
-                address(this).balance >= items[_itemId].amount,
+                address(this).balance >= items[_id].amount,
                 'Insufficient ethereum balance for delivery.'
             );
         } else {
             require(
-                ERC20(items[_itemId].token).balanceOf(address(this)) >= items[_itemId].amount,
+                ERC20(items[_id].token).balanceOf(address(this)) >= items[_id].amount,
                 'Insufficient ERC20 token balance for delivery.'
             );            
         }
@@ -112,26 +112,27 @@ contract Processor {
 
     /*
     * @dev: Completes the item by sending the funds to the
-    *       original sender and deleting the item.
+    *       original sender and unlocking the item.
     *
     * @param _id: The item to be completed.
     */
     function complete(
-        bytes32 _itemId
+        bytes32 _id
     )
         internal
-        canDeliver(_itemId)
+        canDeliver(_id)
         returns(address payable, address, uint256, uint256)
     {
-        require(isItem(_itemId));
+        require(isLocked(_id));
 
-        address payable sender = items[_itemId].sender;
-        address token = items[_itemId].token;
-        uint256 amount = items[_itemId].amount;
-        uint256 uniqueNonce = items[_itemId].nonce;
-        
-        //Delete item
-        delete(items[_itemId]);
+        //Get locked item's attributes for return
+        address payable sender = items[_id].sender;
+        address token = items[_id].token;
+        uint256 amount = items[_id].amount;
+        uint256 uniqueNonce = items[_id].nonce;
+
+        //Update lock status
+        items[_id].locked = false;
 
         //Transfers based on token address type
         if (token == address(0)) {
@@ -162,14 +163,14 @@ contract Processor {
     * @param _id: The unique item's id.
     * @return: Boolean indicating if the item exists in memory.
     */
-    function isItem(
-        bytes32 _itemId
+    function isLocked(
+        bytes32 _id
     )
         internal 
         view
         returns(bool)
     {
-        return(items[_itemId].isItem);
+        return(items[_id].locked);
     }
 
     /*
@@ -183,13 +184,13 @@ contract Processor {
     * @return: Unique nonce of the item.
     */
     function getItem(
-        bytes32 _itemId
+        bytes32 _id
     )
         internal 
         view
         returns(address payable, bytes memory, address, uint256, uint256)
     {
-        Item memory item = items[_itemId];
+        Item memory item = items[_id];
 
         return(
             item.sender,

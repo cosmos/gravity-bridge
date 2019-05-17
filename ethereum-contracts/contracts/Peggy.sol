@@ -148,9 +148,9 @@ contract Peggy is Processor {
         external
         returns (bool)
     {
-        require(isItem(_id));
+        require(isLocked(_id));
 
-        // Transfer item's funds and delete it from memory
+        // Transfer item's funds and unlock it
         (address payable sender,
             address token,
             uint256 amount,
@@ -184,9 +184,9 @@ contract Peggy is Processor {
         external
         returns (bool)
     {
-        require(isItem(_id));
+        require(isLocked(_id));
 
-        // Transfer item's funds and delete it from memory
+        // Transfer item's funds and unlock it
         (address payable sender,
             address token,
             uint256 amount,
@@ -210,14 +210,14 @@ contract Peggy is Processor {
     * @param _id: The item in question.
     * @return: Boolean indicating the lock status.
     */
-    function isLocked(
+    function getStatus(
         bytes32 _id
     )
         public 
         view
         returns(bool)
     {
-        return isItem(_id);
+        return isLocked(_id);
     }
 
     /*

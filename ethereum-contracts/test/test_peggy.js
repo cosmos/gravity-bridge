@@ -222,14 +222,14 @@ contract('Peggy', function (accounts) {
       Number(event.args._nonce).should.be.bignumber.equal(1);
     });
 
-    it('should delete items from memory once they have been unlocked', async function () {
-      const startingitemStatus = await this.peggy.isLocked(this.itemId);
-      startingitemStatus.should.be.equal(true);
+    it('should update item lock statusit has been unlocked', async function () {
+      const startingLockStatus = await this.peggy.getStatus(this.itemId);
+      startingLockStatus.should.be.equal(true);
       
       await this.peggy.unlock(this.itemId, { from: relayer, gas: this.gasForLock });
 
-      const endingitemStatus = await this.peggy.isLocked(this.itemId);
-      endingitemStatus.should.be.equal(false);
+      const endingLockStatus = await this.peggy.getStatus(this.itemId);
+      endingLockStatus.should.be.equal(false);
 
     });
 

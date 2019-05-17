@@ -33,14 +33,14 @@ contract TestProcessor is Processor {
     }
 
     //Wrapper function to test internal method
-    function callIsItem(
+    function callIsLocked(
         bytes32 _id
     )
         public
         view
         returns(bool)
     {
-        return isItem(_id);
+        return isLocked(_id);
     }
 
     //Wrapper function to test internal method

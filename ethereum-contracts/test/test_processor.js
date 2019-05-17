@@ -75,9 +75,9 @@ contract('TestProcessor', function (accounts) {
       const id = await this.processor.callCreate.call(userOne, this.recipient, this.token.address, this.amount);
       await this.processor.callCreate(userOne, this.recipient, this.token.address, this.amount).should.be.fulfilled;
       
-      //Check if item has been created
-      const isItem = await this.processor.callIsItem(id);
-      isItem.should.be.equal(true);
+      //Check if item has been created and locked
+      const locked = await this.processor.callIsLocked(id);
+      locked.should.be.equal(true);
     });
 
     it('should store items with the correct parameters', async function () {
@@ -155,16 +155,16 @@ contract('TestProcessor', function (accounts) {
       await this.processor.callComplete(this.itemId).should.be.fulfilled;
     });
 
-    it('should delete items upon completion', async function () {
+    it('should update lock status of items upon completion', async function () {
       //Confirm that the item is active
-      const itemExists = await this.processor.callIsItem(this.itemId);
-      itemExists.should.be.equal(true);
+      const startingLockStatus = await this.processor.callIsLocked(this.itemId);
+      startingLockStatus.should.be.equal(true);
 
       //Complete the item
       await this.processor.callComplete(this.itemId).should.be.fulfilled;
 
       //Check if the item still exists
-      const completedItem = await this.processor.callIsItem(this.itemId);
+      const completedItem = await this.processor.callIsLocked(this.itemId);
       completedItem.should.be.equal(false);
     });
 
