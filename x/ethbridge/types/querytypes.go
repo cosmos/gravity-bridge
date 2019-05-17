@@ -3,33 +3,35 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 )
 
 // defines the params for the following queries:
 // - 'custom/ethbridge/prophecies/'
 type QueryEthProphecyParams struct {
-	ID string
+	Nonce          int
+	EthereumSender string
 }
 
-func NewQueryEthProphecyParams(id string) QueryEthProphecyParams {
+func NewQueryEthProphecyParams(nonce int, ethereumSender string) QueryEthProphecyParams {
 	return QueryEthProphecyParams{
-		ID: id,
+		Nonce:          nonce,
+		EthereumSender: ethereumSender,
 	}
 }
 
 // Query Result Payload for an eth prophecy query
 type QueryEthProphecyResponse struct {
 	ID              string           `json:"id"`
-	Status          string           `json:"status"`
-	MinimumPower    int              `json:"minimum_power"` //The minimum number of staked claiming power needed before completion logic is checked
+	Status          oracle.Status    `json:"status"`
 	EthBridgeClaims []EthBridgeClaim `json:"claims"`
 }
 
-func NewQueryEthProphecyResponse(id string, status string, minimimPower int, claims []EthBridgeClaim) QueryEthProphecyResponse {
+func NewQueryEthProphecyResponse(id string, status oracle.Status, claims []EthBridgeClaim) QueryEthProphecyResponse {
 	return QueryEthProphecyResponse{
 		ID:              id,
 		Status:          status,
-		MinimumPower:    minimimPower,
 		EthBridgeClaims: claims,
 	}
 }

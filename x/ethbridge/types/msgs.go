@@ -34,8 +34,6 @@ func (msg MsgMakeEthBridgeClaim) ValidateBasic() sdk.Error {
 	if !common.IsValidEthAddress(msg.EthBridgeClaim.EthereumSender) {
 		return ErrInvalidEthAddress(DefaultCodespace)
 	}
-	//TODO: investigate maybe the hacky mempool thing for offchain signature aggregation?
-	//TODO: Check signer is in fact a validator (also work out if this check should be done here or in getsigners or in the handler?)
 	return nil
 }
 

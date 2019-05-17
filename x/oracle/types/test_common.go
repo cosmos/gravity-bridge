@@ -1,18 +1,11 @@
 package types
 
-import (
-	"testing"
-)
+// sdk "github.com/cosmos/cosmos-sdk/types"
 
 const (
-	TestID           = "oracleID"
-	TestByteString   = "{value: 5}"
-	TestMinimumPower = 5
+	TestID                     = "oracleID"
+	AlternateTestID            = "altOracleID"
+	TestString                 = "{value: 5}"
+	AlternateTestString        = "{value: 7}"
+	AnotherAlternateTestString = "{value: 9}"
 )
-
-func CreateTestProphecy(t *testing.T) Prophecy {
-	claim := NewClaim(TestID, []byte(TestByteString))
-	claims := []Claim{claim}
-	newProphecy := NewProphecy(TestID, PendingStatus, TestMinimumPower, claims)
-	return newProphecy
-}

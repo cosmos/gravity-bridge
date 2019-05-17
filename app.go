@@ -31,6 +31,8 @@ type ethereumBridgeApp struct {
 
 	keyMain          *sdk.KVStoreKey
 	keyAccount       *sdk.KVStoreKey
+	keyStaking       *sdk.KVStoreKey
+	tkeyStaking      *sdk.TransientStoreKey
 	keyOracle        *sdk.KVStoreKey
 	keyFeeCollection *sdk.KVStoreKey
 	keyParams        *sdk.KVStoreKey
@@ -39,8 +41,10 @@ type ethereumBridgeApp struct {
 	accountKeeper       auth.AccountKeeper
 	bankKeeper          bank.Keeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
-	paramsKeeper        params.Keeper
-	oracleKeeper        oracle.Keeper
+	stakingKeeper       staking.Keeper
+
+	paramsKeeper params.Keeper
+	oracleKeeper oracle.Keeper
 }
 
 // NewEthereumBridgeApp is a constructor function for ethereumBridgeApp
@@ -59,6 +63,8 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 
 		keyMain:          sdk.NewKVStoreKey(bam.MainStoreKey),
 		keyAccount:       sdk.NewKVStoreKey(auth.StoreKey),
+		keyStaking:       sdk.NewKVStoreKey(staking.StoreKey),
+		tkeyStaking:      sdk.NewTransientStoreKey(staking.TStoreKey),
 		keyOracle:        sdk.NewKVStoreKey(oracle.StoreKey),
 		keyFeeCollection: sdk.NewKVStoreKey(auth.FeeStoreKey),
 		keyParams:        sdk.NewKVStoreKey(params.StoreKey),
@@ -86,14 +92,26 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 	// The FeeCollectionKeeper collects transaction fees and renders them to the fee distribution module
 	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(cdc, app.keyFeeCollection)
 
+	app.stakingKeeper = staking.NewKeeper(
+		app.cdc,
+		app.keyStaking, app.tkeyStaking,
+		app.bankKeeper, app.paramsKeeper.Subspace(staking.DefaultParamspace),
+		staking.DefaultCodespace,
+	)
+
 	// The OracleKeeper is the Keeper from the oracle module
 	// It handles interactions with the oracle store
-	app.oracleKeeper = oracle.NewKeeper(
-		app.bankKeeper,
+	oracleKeeper, oracleErr := oracle.NewKeeper(
+		app.stakingKeeper,
 		app.keyOracle,
 		app.cdc,
 		oracle.DefaultCodespace,
+		oracle.DefaultConsensusNeeded,
 	)
+	if oracleErr != nil {
+		cmn.Exit(oracleErr.Error())
+	}
+	app.oracleKeeper = oracleKeeper
 
 	// The AnteHandler handles signature verification and transaction pre-processing
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
@@ -102,11 +120,13 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 	// Register the bank route here
 	app.Router().
 		AddRoute(bank.RouterKey, bank.NewHandler(app.bankKeeper)).
-		AddRoute(ethbridge.RouterKey, ethbridge.NewHandler(app.oracleKeeper, app.cdc, ethbridge.DefaultCodespace))
+		AddRoute(staking.RouterKey, staking.NewHandler(app.stakingKeeper)).
+		AddRoute(ethbridge.RouterKey, ethbridge.NewHandler(app.oracleKeeper, app.bankKeeper, app.cdc, ethbridge.DefaultCodespace))
 
 	// The app.QueryRouter is the main query router where each module registers its routes
 	app.QueryRouter().
 		AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
+		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
 		AddRoute(ethbridge.QuerierRoute, ethbridge.NewQuerier(app.oracleKeeper, app.cdc, ethbridge.DefaultCodespace))
 
 	// The initChainer handles translating the genesis.json file into initial state for the network
@@ -115,10 +135,12 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 	app.MountStores(
 		app.keyMain,
 		app.keyAccount,
+		app.keyStaking,
 		app.keyOracle,
 		app.keyFeeCollection,
 		app.keyParams,
 		app.tkeyParams,
+		app.tkeyStaking,
 	)
 
 	err := app.LoadLatestVersion(app.keyMain)
@@ -192,9 +214,19 @@ func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
 	auth.RegisterCodec(cdc)
 	bank.RegisterCodec(cdc)
-	ethbridge.RegisterCodec(cdc)
 	staking.RegisterCodec(cdc)
+	ethbridge.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	return cdc
+}
+
+// application updates every end block
+// nolint: unparam
+func (app *ethereumBridgeApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+	validatorUpdates, _ := staking.EndBlocker(ctx, app.stakingKeeper)
+
+	return abci.ResponseEndBlock{
+		ValidatorUpdates: validatorUpdates,
+	}
 }

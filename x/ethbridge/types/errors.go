@@ -11,9 +11,8 @@ type CodeType = sdk.CodeType
 const (
 	DefaultCodespace sdk.CodespaceType = "ethbridge"
 
-	CodeInvalidIdentifier CodeType = 1
-	CodeInvalidEthNonce   CodeType = 2
-	CodeInvalidEthAddress CodeType = 3
+	CodeInvalidEthNonce   CodeType = 1
+	CodeInvalidEthAddress CodeType = 2
 )
 
 func ErrInvalidEthNonce(codespace sdk.CodespaceType) sdk.Error {

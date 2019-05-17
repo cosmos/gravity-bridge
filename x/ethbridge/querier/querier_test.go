@@ -8,8 +8,8 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
-	oracleLib "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 	keeperLib "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
 )
 
@@ -19,7 +19,7 @@ var (
 
 func TestNewQuerier(t *testing.T) {
 	cdc := codec.New()
-	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 1000, nil)
+	ctx, _, keeper, _, _, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 3})
 
 	query := abci.RequestQuery{
 		Path: "",
@@ -36,13 +36,16 @@ func TestNewQuerier(t *testing.T) {
 
 func TestQueryEthProphecy(t *testing.T) {
 	cdc := codec.New()
-	initialEthBridgeClaim := types.CreateTestEthClaim(t)
-	initialClaim := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
-	ctx, _, keeper := keeperLib.CreateTestKeepers(t, false, 10000, []oracleLib.Claim{initialClaim})
+	ctx, _, keeper, _, validatorAddresses, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
+	accAddress := sdk.AccAddress(validatorAddresses[0])
+	initialEthBridgeClaim := types.CreateTestEthClaim(t, accAddress, types.TestEthereumAddress, types.TestCoins)
+	oracleId, validator, claimText := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
+	_, err := keeper.ProcessClaim(ctx, oracleId, validator, claimText)
+	require.Nil(t, err)
 
-	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t)
+	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t, accAddress)
 
-	bz, err2 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(initialClaim.ID))
+	bz, err2 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(types.TestNonce, types.TestEthereumAddress))
 	require.Nil(t, err2)
 
 	query := abci.RequestQuery{
@@ -57,10 +60,6 @@ func TestQueryEthProphecy(t *testing.T) {
 	var ethProphecyResp types.QueryEthProphecyResponse
 	err4 := cdc.UnmarshalJSON(res, &ethProphecyResp)
 	require.Nil(t, err4)
-
-	//Not testing validator power yet, so making them the same before testing:
-	ethProphecyResp.MinimumPower = 10
-	testResponse.MinimumPower = 10
 	require.True(t, reflect.DeepEqual(ethProphecyResp, testResponse))
 
 	// Test error with bad request
@@ -71,7 +70,7 @@ func TestQueryEthProphecy(t *testing.T) {
 
 	// Test error with nonexistent request
 	query.Data = bz[:len(bz)-1]
-	bz2, err6 := cdc.MarshalJSON(types.NewQueryEthProphecyParams("badProphecyID"))
+	bz2, err6 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(12, "badEthereumAddress"))
 	require.Nil(t, err6)
 
 	query2 := abci.RequestQuery{

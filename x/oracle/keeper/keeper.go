@@ -1,10 +1,9 @@
 package keeper
 
 import (
-	"math"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,23 +11,30 @@ import (
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	coinKeeper bank.Keeper
+	coinKeeper  bank.Keeper
+	stakeKeeper staking.Keeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
 	cdc *codec.Codec // The wire codec for binary encoding/decoding.
 
 	codespace sdk.CodespaceType
+
+	consensusNeeded float64
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(coinKeeper bank.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, codespace sdk.CodespaceType) Keeper {
-	return Keeper{
-		coinKeeper: coinKeeper,
-		storeKey:   storeKey,
-		cdc:        cdc,
-		codespace:  codespace,
+func NewKeeper(stakeKeeper staking.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, codespace sdk.CodespaceType, consensusNeeded float64) (Keeper, sdk.Error) {
+	if consensusNeeded <= 0 || consensusNeeded > 1 {
+		return Keeper{}, types.ErrMinimumConsensusNeededInvalid(codespace)
 	}
+	return Keeper{
+		stakeKeeper:     stakeKeeper,
+		storeKey:        storeKey,
+		cdc:             cdc,
+		codespace:       codespace,
+		consensusNeeded: consensusNeeded,
+	}, nil
 }
 
 // Codespace returns the codespace
@@ -46,69 +52,89 @@ func (k Keeper) GetProphecy(ctx sdk.Context, id string) (types.Prophecy, sdk.Err
 		return types.NewEmptyProphecy(), types.ErrProphecyNotFound(k.Codespace())
 	}
 	bz := store.Get([]byte(id))
-	var prophecy types.Prophecy
-	k.cdc.MustUnmarshalBinaryBare(bz, &prophecy)
-	return prophecy, nil
+	var dbProphecy types.DBProphecy
+	k.cdc.MustUnmarshalBinaryBare(bz, &dbProphecy)
+
+	deSerializedProphecy, err := dbProphecy.DeserializeFromDB()
+	if err != nil {
+		return types.NewEmptyProphecy(), types.ErrInternalDB(k.Codespace(), err)
+	}
+	return deSerializedProphecy, nil
 }
 
-// CreateProphecy creates a new prophecy with an initial claim
-func (k Keeper) CreateProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Error {
+// saveProphecy saves a prophecy with an initial claim
+func (k Keeper) saveProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Error {
 	if prophecy.ID == "" {
 		return types.ErrInvalidIdentifier(k.Codespace())
 	}
-	if prophecy.MinimumPower < 2 {
-		return types.ErrMinimumPowerTooLow(k.Codespace())
-	}
-	if len(prophecy.Claims) <= 0 {
+	if len(prophecy.ClaimValidators) <= 0 {
 		return types.ErrNoClaims(k.Codespace())
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte(prophecy.ID), k.cdc.MustMarshalBinaryBare(prophecy))
+	serializedProphecy, err := prophecy.SerializeForDB()
+	if err != nil {
+		return types.ErrInternalDB(k.Codespace(), err)
+	}
+	store.Set([]byte(prophecy.ID), k.cdc.MustMarshalBinaryBare(serializedProphecy))
 	return nil
 }
 
-func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.ProgressUpdate, sdk.Error) {
-	_, err := k.GetProphecy(ctx, claim.ID)
+func (k Keeper) ProcessClaim(ctx sdk.Context, id string, validator sdk.ValAddress, claim string) (types.Status, sdk.Error) {
+	activeValidator := k.checkActiveValidator(ctx, validator)
+	if !activeValidator {
+		return types.Status{}, types.ErrInvalidValidator(k.Codespace())
+	}
+	if claim == "" {
+		return types.Status{}, types.ErrInvalidClaim(k.Codespace())
+	}
+	prophecy, err := k.GetProphecy(ctx, id)
 	if err == nil {
-		//check if complete or not
-		return types.ProgressUpdate{}, sdk.ErrInternal("Not yet implemented")
-		//	//check if claim for this validator exists or not
-		//	//if does
-		//		//return error
-		//	//else
-		//		//add claim to list
-		//	//check if claimthreshold is passed
-		//	//if does
-		//		//check enough claims match and are valid
-		//		//update prophecy to be successful
-		//		//trigger minting
-		//		//save finalized prophecy to db
-		//		//return
-		//	//if doesnt
-		//		//save updated prophecy to db
-		//		//return
+		if prophecy.Status.StatusText == types.SuccessStatusText || prophecy.Status.StatusText == types.FailedStatusText {
+			return types.Status{}, types.ErrProphecyFinalized(k.Codespace())
+		}
+		if prophecy.ValidatorClaims[validator.String()] != "" {
+			return types.Status{}, types.ErrDuplicateMessage(k.Codespace())
+		}
+		prophecy.AddClaim(validator, claim)
 	} else {
 		if err.Code() != types.CodeProphecyNotFound {
-			return types.ProgressUpdate{}, err
+			return types.Status{}, err
 		}
-		claims := []types.Claim{claim}
-		newProphecy := types.NewProphecy(claim.ID, types.PendingStatus, getPowerThreshold(), claims)
-		err := k.CreateProphecy(ctx, newProphecy)
-		if err != nil {
-			return types.ProgressUpdate{}, err
-		}
-		//return result
-		return types.NewProgressUpdate(types.PendingStatus, nil), nil
+		prophecy = types.NewProphecy(id)
+		prophecy.AddClaim(validator, claim)
 	}
+	prophecy = k.processCompletion(ctx, prophecy)
+	err = k.saveProphecy(ctx, prophecy)
+	if err != nil {
+		return types.Status{}, err
+	}
+	return prophecy.Status, nil
 }
 
-func getPowerThreshold() int {
-	minimumPower := float64(getTotalPower()) * types.DefaultConsensusNeeded
-	return int(math.Ceil(minimumPower))
-
+func (k Keeper) checkActiveValidator(ctx sdk.Context, validatorAddress sdk.ValAddress) bool {
+	validator, found := k.stakeKeeper.GetValidator(ctx, validatorAddress)
+	if !found {
+		return false
+	}
+	bondStatus := validator.GetStatus()
+	if bondStatus != sdk.Bonded {
+		return false
+	}
+	return true
 }
 
-func getTotalPower() int {
-	//TODO: Get from Tendermint/last block/staking module?
-	return 10
+func (k Keeper) processCompletion(ctx sdk.Context, prophecy types.Prophecy) types.Prophecy {
+	highestClaim, highestClaimPower, totalClaimsPower := prophecy.FindHighestClaim(ctx, k.stakeKeeper)
+	totalPower := k.stakeKeeper.GetLastTotalPower(ctx)
+	highestConsensusRatio := float64(highestClaimPower) / float64(totalPower.Int64())
+	remainingPossibleClaimPower := totalPower.Int64() - totalClaimsPower
+	highestPossibleClaimPower := highestClaimPower + remainingPossibleClaimPower
+	highestPossibleConsensusRatio := float64(highestPossibleClaimPower) / float64(totalPower.Int64())
+	if highestConsensusRatio >= k.consensusNeeded {
+		prophecy.Status.StatusText = types.SuccessStatusText
+		prophecy.Status.FinalClaim = highestClaim
+	} else if highestPossibleConsensusRatio <= k.consensusNeeded {
+		prophecy.Status.StatusText = types.FailedStatusText
+	}
+	return prophecy
 }
