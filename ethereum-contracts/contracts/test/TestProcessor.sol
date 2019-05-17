@@ -1,15 +1,15 @@
 pragma solidity ^0.5.0;
 
-import "../EscrowProcessor.sol";
+import "../Processor.sol";
 
-contract TestEscrowProcessor is EscrowProcessor {
+contract TestProcessor is Processor {
 
-    event LogEscrowCreated(bytes32 _id);
+    event LogItemCreated(bytes32 _id);
     
     function() external payable {}
 
     //Wrapper function to test internal method
-    function callCreateEscrow(
+    function callCreate(
         address payable _sender,
         bytes memory _recipient,
         address _token,
@@ -18,40 +18,40 @@ contract TestEscrowProcessor is EscrowProcessor {
         public
         returns(bytes32)
     {
-        bytes32 escrowId = createEscrow(_sender, _recipient, _token, _amount);
-        emit LogEscrowCreated(escrowId);
-        return escrowId;
+        bytes32 id = create(_sender, _recipient, _token, _amount);
+        emit LogItemCreated(id);
+        return id;
     }
 
     //Wrapper function to test internal method
-    function callCompleteEscrow(
-        bytes32 _escrowId
+    function callComplete(
+        bytes32 _id
     )
         public
     {
-        completeEscrow(_escrowId);
+        complete(_id);
     }
 
     //Wrapper function to test internal method
-    function callIsEscrow(
-        bytes32 _escrowId
+    function callIsItem(
+        bytes32 _id
     )
         public
         view
         returns(bool)
     {
-        return isEscrow(_escrowId);
+        return isItem(_id);
     }
 
     //Wrapper function to test internal method
-    function callGetEscrow(
-        bytes32 _escrowId
+    function callGetItem(
+        bytes32 _id
     )
         public 
         view
         returns(address, bytes memory, address, uint256, uint256)
     {
-        return getEscrow(_escrowId);
+        return getItem(_id);
     }
 
 }

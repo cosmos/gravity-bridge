@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "./EscrowProcessor.sol";
+import "./Processor.sol";
 
   /*
    *  @title: Peggy
@@ -9,7 +9,7 @@ import "./EscrowProcessor.sol";
    *        NOT intended to be used in production and users are empowered
    *        to withdraw their locked funds at any time.
    */
-contract Peggy is EscrowProcessor {
+contract Peggy is Processor {
 
     bool public active;
     address public relayer;
@@ -86,11 +86,11 @@ contract Peggy is EscrowProcessor {
     }
 
     /* 
-     * @dev: Locks received funds and creates new escrows.
+     * @dev: Locks received funds and creates new items.
      *
      * @param _recipient: bytes representation of destination address.
      * @param _token: token address in origin chain (0x0 if ethereum)
-     * @param _amount: value of escrow
+     * @param _amount: value of item
      */
     function lock(
         bytes memory _recipient,
@@ -111,8 +111,8 @@ contract Peggy is EscrowProcessor {
           require(ERC20(_token).transferFrom(msg.sender, address(this), _amount));
         }
 
-        //Create an escrow with a unique key.
-        bytes32 escrowKey = createEscrow(
+        //Create an item with a unique key.
+        bytes32 id = create(
             msg.sender,
             _recipient,
             _token,
@@ -120,7 +120,7 @@ contract Peggy is EscrowProcessor {
         );
 
         emit LogLock(
-            escrowKey,
+            id,
             msg.sender,
             _recipient,
             _token,
@@ -128,7 +128,7 @@ contract Peggy is EscrowProcessor {
             getNonce()
         );
 
-        return escrowKey;
+        return id;
     }
 
     /*
@@ -138,31 +138,31 @@ contract Peggy is EscrowProcessor {
      *       In the future bidirectional system, unlocking functionality
      *       will be guarded by validator signatures.
      *
-     * @param _escrowId: Unique key of the escrow.
+     * @param _id: Unique key of the item.
      */
     function unlock(
-        bytes32 _escrowId
+        bytes32 _id
     )
         onlyRelayer
-        canDeliver(_escrowId)
+        canDeliver(_id)
         external
         returns (bool)
     {
-        require(isEscrow(_escrowId));
+        require(isItem(_id));
 
-        // Transfer escrow's funds and delete it from memory
+        // Transfer item's funds and delete it from memory
         (address payable sender,
             address token,
             uint256 amount,
-            uint256 escrowNonce) = completeEscrow(_escrowId);
+            uint256 uniqueNonce) = complete(_id);
 
         //Emit unlock event
         emit LogUnlock(
-            _escrowId,
+            _id,
             sender,
             token,
             amount,
-            escrowNonce
+            uniqueNonce
         );
         return true;
     }
@@ -174,70 +174,70 @@ contract Peggy is EscrowProcessor {
      *       purposes, allowing users to withdraw their funds. This
      *       functionality will be removed in production.
      *
-     * @param _escrowId: Unique key of the escrow.
+     * @param _id: Unique key of the item.
      */
     function withdraw(
-        bytes32 _escrowId
+        bytes32 _id
     )
-        onlySender(_escrowId)
-        canDeliver(_escrowId)
+        onlySender(_id)
+        canDeliver(_id)
         external
         returns (bool)
     {
-        require(isEscrow(_escrowId));
+        require(isItem(_id));
 
-        // Transfer escrow's funds and delete it from memory
+        // Transfer item's funds and delete it from memory
         (address payable sender,
             address token,
             uint256 amount,
-            uint256 escrowNonce) = completeEscrow(_escrowId);
+            uint256 uniqueNonce) = complete(_id);
 
         //Emit withdraw event
         emit LogWithdraw(
-            _escrowId,
+            _id,
             sender,
             token,
             amount,
-            escrowNonce
+            uniqueNonce
         );
 
         return true;
     }
 
     /*
-    * @dev: Exposes an escrow's current status.
+    * @dev: Exposes an item's current status.
     *
-    * @param _escrowId: The escrow id in question.
+    * @param _id: The item in question.
     * @return: Boolean indicating the lock status.
     */
     function isLocked(
-        bytes32 _escrowId
+        bytes32 _id
     )
         public 
         view
         returns(bool)
     {
-        return isEscrow(_escrowId);
+        return isItem(_id);
     }
 
     /*
-    * @dev: Allows access to an escrow's information via its unique identifier.
+    * @dev: Allows access to an item's information via its unique identifier.
     *
-    * @param _escrowId: The escrow to be viewed.
+    * @param _id: The item to be viewed.
     * @return: Original sender's address.
     * @return: Intended receiver's address in bytes.
     * @return: The token's address.
-    * @return: The amount locked in the escrow.
-    * @return: The escrow's unique nonce.
+    * @return: The amount locked in the item.
+    * @return: The item's unique nonce.
     */
-    function viewEscrow(
-        bytes32 _escrowId
+    function viewItem(
+        bytes32 _id
     )
         public 
         view
         returns(address, bytes memory, address, uint256, uint256)
     {
-        return getEscrow(_escrowId);
+        return getItem(_id);
     }
 
     /*

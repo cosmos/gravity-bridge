@@ -4,32 +4,32 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
   /*
-   *  @title: EscrowProcessor
-   *  @dev: Processes requests for escrow creation and deletion by
-   *        storing an escrow's information then relaying the funds
+   *  @title: Processor
+   *  @dev: Processes requests for item creation and deletion by
+   *        storing an item's information then relaying the funds
    *        the original sender.
    */
-contract EscrowProcessor {
+contract Processor {
 
     using SafeMath for uint256;
 
     /*
-    * @dev: Escrow struct to store information.
+    * @dev: Item struct to store information.
     */    
-    struct Escrow {
+    struct Item {
         address payable sender;
         bytes recipient;
         address token;
         uint256 amount;
         uint256 nonce;
-        bool isEscrow;
+        bool isItem;
     }
 
     uint256 public nonce;
-    mapping(bytes32 => Escrow) private escrows;
+    mapping(bytes32 => Item) private items;
 
     /*
-    * @dev: Constructor, initalizes escrow count.
+    * @dev: Constructor, initalizes item count.
     */
     constructor() 
         public
@@ -37,23 +37,23 @@ contract EscrowProcessor {
         nonce = 0;
     }
 
-    modifier onlySender(bytes32 _escrowId) {
+    modifier onlySender(bytes32 _itemId) {
         require(
-            msg.sender == escrows[_escrowId].sender,
-            'Must be the original sender of the escrow.'
+            msg.sender == items[_itemId].sender,
+            'Must be the original sender.'
         );
         _;
     }
 
-    modifier canDeliver(bytes32 _escrowId) {
-        if(escrows[_escrowId].token == address(0)) {
+    modifier canDeliver(bytes32 _itemId) {
+        if(items[_itemId].token == address(0)) {
             require(
-                address(this).balance >= escrows[_escrowId].amount,
+                address(this).balance >= items[_itemId].amount,
                 'Insufficient ethereum balance for delivery.'
             );
         } else {
             require(
-                ERC20(escrows[_escrowId].token).balanceOf(address(this)) >= escrows[_escrowId].amount,
+                ERC20(items[_itemId].token).balanceOf(address(this)) >= items[_itemId].amount,
                 'Insufficient ERC20 token balance for delivery.'
             );            
         }
@@ -69,15 +69,15 @@ contract EscrowProcessor {
     }
 
     /*
-    * @dev: Creates an escrow with a unique id.
+    * @dev: Creates an item with a unique id.
     *
     * @param _sender: The sender's ethereum address.
     * @param _recipient: The intended recipient's cosmos address.
     * @param _token: The currency type, either erc20 or ethereum.
-    * @param _amount: The amount of erc20 tokens/ ethereum (in wei) to be escrowed.
-    * @return: The newly created escrow's unique id.
+    * @param _amount: The amount of erc20 tokens/ ethereum (in wei) to be itemized.
+    * @return: The newly created item's unique id.
     */
-    function createEscrow(
+    function create(
         address payable _sender,
         bytes memory _recipient,
         address _token,
@@ -88,7 +88,7 @@ contract EscrowProcessor {
     {
         nonce++;
 
-        bytes32 escrowKey = keccak256(
+        bytes32 itemKey = keccak256(
             abi.encodePacked(
                 _sender,
                 _recipient,
@@ -98,7 +98,7 @@ contract EscrowProcessor {
             )
         );
         
-        escrows[escrowKey] = Escrow(
+        items[itemKey] = Item(
             _sender,
             _recipient,
             _token,
@@ -107,31 +107,31 @@ contract EscrowProcessor {
             true
         );
 
-        return escrowKey;
+        return itemKey;
     }
 
     /*
-    * @dev: Completes the escrow by sending the funds to the
-    *       original sender and deleting the escrow.
+    * @dev: Completes the item by sending the funds to the
+    *       original sender and deleting the item.
     *
-    * @param _escrowId: The escrow to be completed.
+    * @param _id: The item to be completed.
     */
-    function completeEscrow(
-        bytes32 _escrowId
+    function complete(
+        bytes32 _itemId
     )
         internal
-        canDeliver(_escrowId)
+        canDeliver(_itemId)
         returns(address payable, address, uint256, uint256)
     {
-        require(isEscrow(_escrowId));
+        require(isItem(_itemId));
 
-        address payable sender = escrows[_escrowId].sender;
-        address token = escrows[_escrowId].token;
-        uint256 amount = escrows[_escrowId].amount;
-        uint256 escrowNonce = escrows[_escrowId].nonce;
+        address payable sender = items[_itemId].sender;
+        address token = items[_itemId].token;
+        uint256 amount = items[_itemId].amount;
+        uint256 uniqueNonce = items[_itemId].nonce;
         
-        //Delete escrow
-        delete(escrows[_escrowId]);
+        //Delete item
+        delete(items[_itemId]);
 
         //Transfers based on token address type
         if (token == address(0)) {
@@ -140,7 +140,7 @@ contract EscrowProcessor {
           require(ERC20(token).transfer(sender, amount));
         }       
 
-        return(sender, token, amount, escrowNonce);
+        return(sender, token, amount, uniqueNonce);
     }
 
     /*
@@ -157,46 +157,46 @@ contract EscrowProcessor {
     }
 
     /*
-    * @dev: Checks if an individual escrow exists.
+    * @dev: Checks if an individual item exists.
     *
-    * @param _escrowId: The unique escrow's id.
-    * @return: Boolean indicating if the escrow exists in memory.
+    * @param _id: The unique item's id.
+    * @return: Boolean indicating if the item exists in memory.
     */
-    function isEscrow(
-        bytes32 _escrowId
+    function isItem(
+        bytes32 _itemId
     )
         internal 
         view
         returns(bool)
     {
-        return(escrows[_escrowId].isEscrow);
+        return(items[_itemId].isItem);
     }
 
     /*
-    * @dev: Gets an escrow's information
+    * @dev: Gets an item's information
     *
-    * @param _escrowId: The escrow containing the desired information.
+    * @param _Id: The item containing the desired information.
     * @return: Sender's address.
     * @return: Recipient's address in bytes.
     * @return: Token address.
-    * @return: Amount of ethereum/erc20 in the escrow.
-    * @return: Unique nonce of the escrow.
+    * @return: Amount of ethereum/erc20 in the item.
+    * @return: Unique nonce of the item.
     */
-    function getEscrow(
-        bytes32 _escrowId
+    function getItem(
+        bytes32 _itemId
     )
         internal 
         view
         returns(address payable, bytes memory, address, uint256, uint256)
     {
-        Escrow memory escrow = escrows[_escrowId];
+        Item memory item = items[_itemId];
 
         return(
-            escrow.sender,
-            escrow.recipient,
-            escrow.token,
-            escrow.amount,
-            escrow.nonce
+            item.sender,
+            item.recipient,
+            item.token,
+            item.amount,
+            item.nonce
         );
     }
 }
