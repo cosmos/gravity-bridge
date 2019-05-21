@@ -355,3 +355,8 @@ The biggest changes we realized we would need.
 1. Secp256k1 signatures in Tendermint consensus.
 
 This design seems cleaner in some ways but more difficult to MVP.
+
+
+### Related Workd
+
+[Crossclaim](https://eprint.iacr.org/2018/643.pdf)
