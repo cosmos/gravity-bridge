@@ -11,4 +11,8 @@ If you are interested in this, please contact us through an issue :-)
 
 ## Unidirectional Peggy
 
-A prototype supporting Ethereum to Cosmos transfers is currently in development. The first draft of the unidirectional system's smart contracts is available in ethereum-contracts and will be leveraged by Cosmos based Relayer and Oracle modules to obtain information about transactions on the Ethereum network.
+The first draft of the unidirectional system's smart contracts is available in ethereum-contracts and will be leveraged by Cosmos based Relayer and Oracle modules to obtain information about transactions on the Ethereum network.
+
+
+## Unidirectional Project Specification
+The project's specification can be found in the 'README.md' of the `/ethereum-contracts` directory.

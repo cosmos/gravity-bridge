@@ -1,29 +1,60 @@
-# Unidirectional Peggy: Ethereum -> Cosmos
+# Unidirectional Peggy Project Specification
 
-Unidirectional Peggy does not currently include functionality related to Cosmos -> Ethereum transfers, instead focusing on core features for unidirectional transfers. Building towards the eventual goal of bidirectional transfers between Ethereum and Cosmos, Unidirectional Peggy exclusively includes functionality to safely lock and unlock Ethereum and ERC20 tokens, providing Cosmos based Relayer and Oracle modules with the information required for unidirectional operatinos. Validators witness lock events and submit proof in the form of signed hashes to the Cosmos based modules, which are responsible for aggregating and tallying the validator's signatures and their respective signing power. The system is managed by the contract's deployer, known as the relayer, and follows a straightforward process:
-1. Users lock Ethereum or ERC20 tokens on the contract, resulting in the emission of an event containing the created item's original sender's Ethereum address, the intended recipient's Cosmos address, the type of token, the amount locked, and the item's unique nonce.
-2. Validators witness these lock events and sign a hash containing the unique item's information, which is submitted to a Cosmos Relayer module and communicated to the Oracle.
+## Project Summary
+Unidirectional Peggy is the starting point for cross chain value transfers from Ethereum to Cosmos as part of the Ethereum Cosmos Bridge project. The smart contract system accepts incoming transfers of Ethereum and ERC20 tokens, locking them while the transaction is validated and equitable funds issued to the intended recipient on Cosmos.
+
+## Project Background
+We are hoping to create a closed system for intra network transfers of cryptocurrency between blockchains, spearheaded by a proof-of-concept which enables secured transactions between Ethereum and Cosmos.
+
+## Smart Contract Scope
+
+### Goals of the Smart Contracts
+1. Securely implement core functionality of the system such as asset locking and event emission without endangering any user funds. As such, this prototype does not permanently lock value and allows the original sender full access to their funds at any time.
+2. Interface with the Relayer service, which is used by validators to listen for contract events which are signed and submitted to the Cosmos network as proof of transaction.
+3. Successfully end-to-end test the Cosmos Ethereum Bridge, sending Ethereum and ERC20 tokens from Ethereum to Cosmos.
+
+### Non-Goals of the Smart Contracts
+1. Creating a production-grade system for cross-chain value transfers which enforces strict permissions and limits access to locked funds.
+2. Implementing a validator set which enables observers to submit proof of fund locking transactions on Cosmos to Peggy. These features are not required for unidirectional transfers from Ethereum to Cosmos and will be re-integrated during phase two of the project, which aims to send funds from Cosmos back to Ethereum.
+3. Fully gas optimize and streamline operational functionality; ease and clarity of testing has been favored over some gas management and architectural best practices.
+
+## Ethereum Cosmos Bridge Architecture
+Unidirectional Peggy focuses on core features for unidirectional transfers. This prototype includes functionality to safely lock and unlock Ethereum and ERC20 tokens, emitting associated events which provide the Cosmos based Relayer and Oracle modules with the information required to complete unidirectional transfers. Validators witness the events and submit proof in the form of signed hashes to the Cosmos based modules, which are responsible for aggregating and tallying the Validators’ signatures and their respective signing power. The system is managed by the contract's deployer, designated internally as the relayer, a trusted third-party which can unlock funds and return them their original sender. If the contract’s balances under threat, the relayer can pause the system, temporarily preventing users from depositing additional funds.
+
+The Peggy Smart Contract is deployed on the Ropsten testnet at address: 0x3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb
+
+### Architecture Diagram
+![peggyarchitecturediagram](https://user-images.githubusercontent.com/15370712/58388886-632c7700-7fd9-11e9-962e-4e5e9d92c275.png)
+
+### System Process:
+1. Users lock Ethereum or ERC20 tokens on the Peggy contract, resulting in the emission of an event containing the created item's original sender's Ethereum address, the intended recipient's Cosmos address, the type of token, the amount locked, and the item's unique nonce.
+2. Cosmos based Validators witness these lock events via a Relayer module and sign a hash containing the unique item's information, which is relayed from the Cosmos Relayer module to the Oracle module.
 3. Once the Oracle module has verified that the validators' aggregated signing power is greater than the specified threshold, it mints the appropriate amount of tokens and forwards them to the intended recipient.
 
-These contracts are for testing purposes only and are NOT intended for production. In order to prevent any loss of user funds, Ethereum and/or tokens locked in item can be withdrawn directly by the original sender at any time. Once the system's components are operational, these features will be removed (and others added) so that Unidirectional Peggy is production capable.
-
+The Relayer service and Oracle module are under development here: https://github.com/swishlabsco/cosmos-ethereum-bridge.
+ 
 ## Installation
 Install Truffle: `$ npm install -g truffle`
-
 Install dependencies: `$ npm install`
 
-
-This project currently uses solc@0.5.0, make sure that this version of the Solidity compiler is being used to compile the contracts and does not conflict with other verions that may be installed on your machine.
+Note: This project currently uses solc@0.5.0, make sure that this version of the Solidity compiler is being used to compile the contracts and does not conflict with other versions that may be installed on your machine.
 
 ## Testing
 Run commands from the appropriate directory: `$ cd ethereum-contracts`
-
 Start the truffle environment: `$ truffle develop`
-
 In another tab, run tests: `$ truffle test`
-
 Run individual tests: `$ truffle test test/<test_name.js>`
 
+Expected output of the test suite:
+![peggytestsuite](https://user-images.githubusercontent.com/15370712/58388940-34fb6700-7fda-11e9-9aef-6ae7b2442a55.png)
 
-## Future Work
-The related Cosmos modules are under active development. Once Ethereum -> Cosmos transfers have been successfully prototyped, Peggy functionality for bidirectional transfers (such as validator sets, signature validation, and secured token unlocking procedures) will be integrated into the contracts. Previous work in these areas is a valuable resource that will be leveraged once the complete system is ready for bidirectional transfers.
+## Security, Privacy, Risks
+Disclaimer: These contracts are for testing purposes only and are NOT intended for production. In order to prevent any loss of user funds, locked Ethereum and ERC20 tokens can be withdrawn directly by the original sender at any time. However, these contracts have not undergone external audits and should not be trusted with mainnet funds. Any use of Peggy is at the user’s own risk.
+
+## Other Considerations
+We decided to temporarily remove the validator set from this version of Peggy, our reasoning being that system transparency and clarity should take precedence over the inclusion of future project features.
+
+## Ongoing work
+The Ethereum Oracle and Oracle modules are completed, with the Relayer Cosmos module currently being actively integrated in order to interface between the smart contracts and Oracles. Once Ethereum -> Cosmos transfers have been successfully prototyped, functionality for bidirectional transfers (such as validator sets, signature validation, and secured token unlocking procedures) will be integrated into the contracts. Previous work in these areas is a valuable resource that will be leveraged once the complete system is ready for bidirectional transfers.
+
+Thanks to @adrianbrink, @mossid, and @sunnya97 for contributions to the original Peggy repository.
