@@ -34,16 +34,17 @@ The Peggy Smart Contract is deployed on the Ropsten testnet at address: 0x3de4ef
 The Relayer service and Oracle module are under development here: https://github.com/swishlabsco/cosmos-ethereum-bridge.
  
 ## Installation
-Install Truffle: `$ npm install -g truffle`
-Install dependencies: `$ npm install`
+Install Truffle: `$ npm install -g truffle`  
+Install dependencies: `$ npm install`  
+
 
 Note: This project currently uses solc@0.5.0, make sure that this version of the Solidity compiler is being used to compile the contracts and does not conflict with other versions that may be installed on your machine.
 
 ## Testing
-Run commands from the appropriate directory: `$ cd ethereum-contracts`
-Start the truffle environment: `$ truffle develop`
-In another tab, run tests: `$ truffle test`
-Run individual tests: `$ truffle test test/<test_name.js>`
+Run commands from the appropriate directory: `$ cd ethereum-contracts`  
+Start the truffle environment: `$ truffle develop`  
+In another tab, run tests: `$ truffle test`  
+Run individual tests: `$ truffle test test/<test_name.js>`  
 
 Expected output of the test suite:
 ![peggytestsuite](https://user-images.githubusercontent.com/15370712/58388940-34fb6700-7fda-11e9-9aef-6ae7b2442a55.png)
