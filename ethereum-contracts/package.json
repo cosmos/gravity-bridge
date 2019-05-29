@@ -1,15 +1,12 @@
 {
-  "name": "ethreum-contracts",
+  "name": "ethereum-contracts",
   "version": "1.0.0",
-  "description": "## Installing dependencies",
+  "description": "Starting point for cross chain value transfers between the Ethereum and Cosmos networks",
   "main": "truffle.js",
   "directories": {
     "test": "test"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
+  "author": "Denali Marsh",
   "license": "ISC",
   "dependencies": {
     "bignumber.js": "^6.0.0",
