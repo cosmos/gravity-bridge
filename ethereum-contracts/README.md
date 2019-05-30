@@ -1,7 +1,8 @@
 # Unidirectional Peggy Project Specification
+This project specification focuses on the role of 'Peggy', a Smart Contract system deployed to the Ethereum network as part of the Ethereum Cosmos Bridge project, and is meant to contextualize its role within the bridge. Specifications detailing structure and process of the non-Ethereum components (Relayer service, EthOracle module, Oracle module) will soon be available in the cosmos-ethereum-bridge repository linked below. 
 
 ## Project Summary
-Unidirectional Peggy is the starting point for cross chain value transfers from the Ethereum blockchain to Cosmos based blockchains as part of the Ethereum Cosmos Bridge project. The smart contract system accepts incoming transfers of Ethereum and ERC20 tokens, locking them while the transaction is validated and equitable funds issued to the intended recipient on the Cosmos bridge chain.
+Unidirectional Peggy is the starting point for cross chain value transfers from the Ethereum blockchain to Cosmos based blockchains as part of the Ethereum Cosmos Bridge project. The smart contract system accepts incoming transfers of Ethereum and ERC20 tokens, locking them while the transaction is validated and equitable funds issued to the intended recipient on the Cosmos bridge chain.  
 
 ## Project Background
 We are hoping to create a closed system for intra network transfers of cryptocurrency between blockchains, spearheaded by a proof-of-concept which enables secured transactions between Ethereum and Cosmos.
