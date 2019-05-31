@@ -26,6 +26,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
+  // "github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/crypto"
@@ -33,7 +34,7 @@ import (
 
 	app "github.com/swishlabsco/cosmos-ethereum-bridge"
 	relayer "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/relayer"
-	txs "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/txs"
+	// txs "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/txs"
 
 	ethbridgecmd "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/client"
 	ethbridge "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/client/rest"
@@ -109,7 +110,7 @@ var rawBytesCmd = &cobra.Command{
 func registerRoutes(rs *lcd.RestServer) {
 	rs.CliCtx = rs.CliCtx.WithAccountDecoder(rs.Cdc)
 	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
-	txs.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	// txs.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeAcc)
 	bank.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	ethbridge.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, routeEthbridge)
@@ -123,7 +124,7 @@ func initRelayerCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	}
 
 	initRelayerCmd.AddCommand(
-		txs.GetBroadcastCommand(cdc),
+		// txs.GetBroadcastCommand(cdc),
 		// TODO: add RelayCommand for validators
 		// txs.GetRelayCommand(cdc),
 		client.LineBreak,
@@ -136,13 +137,15 @@ func initRelayerCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	return initRelayerCmd
 }
 
+// ebrelayer init "testing" "wss://ropsten.infura.io/ws" "3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb" "LogLock(address,address,uint256)" "cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq"
+
 // -------------------------------------------------------------------------------------
 //  'init' command, initalizes the relayer service.
 //
 //    Testing parameters:
 //      1: chainId = "testing"
 //      2: ethereumProvider = "wss://ropsten.infura.io/ws"
-//      3: peggyContractAddress = "0xe56143b75f4eeac5fa80dc6ffd912d4a3ed21fdf"
+//      3: peggyContractAddress = "0x3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb"
 //      4: eventSignature = "LogLock(address,address,uint256)"
 //      5: validator = sdk.AccAddress("cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq")
 // -------------------------------------------------------------------------------------
@@ -184,7 +187,7 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	err := relayer.InitRelayer(
-		cdc,
+		// cdc,
 		chainId,
 		ethereumProvider,
 		peggyContractAddress,
@@ -192,7 +195,7 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 		validator)
 
 	if err != nil {
-		fmt.Printf("Relayer service closed.")
+		fmt.Printf("%s", err)
 	}
 
 	return nil

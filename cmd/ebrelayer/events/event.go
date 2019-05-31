@@ -154,15 +154,17 @@ func extractFieldsFromEvent(payload *EventPayload, eventData interface{}, eventT
 
 // AbiJSON returns parsed abi of this particular contract.
 func AbiJSON(contractName string) (abi.ABI, error) {
-	contractType, ok := NameToContractTypes.GetFromContractName(contractName)
-	if !ok {
-		return abi.ABI{}, errors.New("contract name does not exist")
-	}
-	contractSpecs, ok := ContractTypeToSpecs.Get(contractType)
-	if !ok {
-		return abi.ABI{}, errors.New("invalid contract type")
-	}
-	_abi, err := abi.JSON(strings.NewReader(contractSpecs.AbiStr()))
+	// contractType, ok := NameToContractTypes.GetFromContractName(contractName)
+	// if !ok {
+	// 	return abi.ABI{}, errors.New("contract name does not exist")
+	// }
+	// contractSpecs, ok := ContractTypeToSpecs.Get(contractType)
+	// if !ok {
+	// 	return abi.ABI{}, errors.New("invalid contract type")
+	// }
+
+	// TODO: PASS ABI
+	_abi, err := abi.JSON(strings.NewReader("{ ABI }")) //contractSpecs.AbiStr())
 	if err != nil {
 		return abi.ABI{}, errors.New("cannot parse abi string")
 	}
@@ -305,7 +307,7 @@ func (e *Event) LogPayloadToString() string {
 	)
 }
 
-// EventPayload represents the data from a  contract event
+// EventPayload represents the data from a contract event
 type EventPayload struct {
 
 	// data is a Struct from the structs package. Just makes it easier

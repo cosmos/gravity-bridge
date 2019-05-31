@@ -14,18 +14,20 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
-	"time"
+	// "time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"golang.org/x/crypto/sha3"
+	// "golang.org/x/crypto/sha3"
+	// "golang.org/x/crypto"
 
 	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
+	// "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/txs"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	// "github.com/cosmos/cosmos-sdk/codec"
 )
 
 type WitnessedLogLock struct {
@@ -41,7 +43,7 @@ type WitnessedLogLock struct {
 // -------------------------------------------------------------------------
 
 func InitRelayer(
-	cdc *codec.Codec,
+	// cdc *codec.Codec,
 	chainId string,
 	provider string,
 	peggyContractAddress string,
@@ -54,7 +56,7 @@ func InitRelayer(
 	fmt.Printf("provider: %s\n", provider)
 	fmt.Printf("peggyContractAddress: %s\n", peggyContractAddress)
 	fmt.Printf("eventSignature: %s\n", eventSignature)
-	fmt.Printf("validator: %s\n\n", validator)
+	fmt.Printf("validator: %s\n", validator)
 
 	// Start client with infura ropsten provider
 	client, err := SetupWebsocketEthClient(provider)
@@ -63,22 +65,20 @@ func InitRelayer(
 	}
 
 	// Deployed contract address and event signature
-	b, err := hex.DecodeString(peggyContractAddress)
+	bytesContractAddress, err := hex.DecodeString(peggyContractAddress)
 	if err != nil {
-		return fmt.Errorf("Error while decoding contract address")
+		return fmt.Errorf("%s", err)
 	}
 
-	contractAddress := common.HexToAddress(peggyContractAddress)
+	contractAddress := common.BytesToAddress(bytesContractAddress)
 	logLockSig := []byte(eventSignature)
-	logLockEvent := sha3.Keccak256Hash(logLockSig)
+	//logLockEvent := sha3.Keccak256Hash(logLockSig) //crypto
+	logLockEvent := "3e43256e124a7860d7fd775c424fb6eb9e1988b31b374011335beb396e201d90"
 
-	fmt.Printf("\n\nContract Address: %s\n Log Lock Signature: %s\n\n",
-		b, logLockSig)
+	fmt.Printf("\nContract Address: %s\n", contractAddress.Hex())
+	fmt.Printf("LogLockEvent Signature: %s\n", logLockSig)
+	fmt.Printf("LogLockEvent: %s\n", logLockEvent)
 
-	fmt.Printf("%s", logLockEvent)
-
-	// TODO: resolve type casting error between go-ethereum/common and swish/go-ethereum/common
-	// Filter currently captures all events from the contract
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{contractAddress},
 	}
@@ -86,10 +86,13 @@ func InitRelayer(
 	logs := make(chan types.Log)
 
 	// Subscribe to the client, filter based on query, write events to logs
+	fmt.Printf("\nStarting event listener on address: %s...\n", contractAddress.Hex())
 	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Printf("\nEvent listener started on address: %s!\n", contractAddress.Hex())
 
 	for {
 		select {
@@ -98,13 +101,22 @@ func InitRelayer(
 			log.Fatal(err)
 		// vLog is raw event data
 		case vLog := <-logs:
-			fmt.Println("\nBlock Number:", vLog.BlockNumber)
+			fmt.Println("\nEvent wittnessed at block number: %d", vLog.BlockNumber)
 
 			// Check if the event is a 'LogLock' event
-			if vLog.Topics[0].Hex() == logLockEvent.Hex() {
+			fmt.Printf("\nEvent topic HEX: %s", vLog.Topics[0].Hex())
+			fmt.Printf("\nEvent topic: %s", vLog.Topics[0])
+			fmt.Printf("\nLock event: %s", logLockEvent)
+			// if vLog.Topics[0].Hex() == logLockEvent.Hex() {
+			if vLog.Topics[0].Hex() == logLockEvent {
 
 				// Current time is in system time, will be updated to block time
-				currentTime := fmt.Println(time.Now().Format(time.RFC850))
+				//TODO:
+				var currentTime int64 = 1111;
+				// currentTime, errPrint := fmt.Printf(time.Now().Format(time.RFC850))
+				// if errPrint != nil {
+				// 	log.Fatal(errPrint)
+				// }
 
 				// Parse contract event data into package
 				event, eventErr := events.NewEventFromContractEvent(
@@ -119,19 +131,21 @@ func InitRelayer(
 				}
 
 				// Print event data to console
-				fmt.Printf(event.ToString())
+				// event.EventPayload().Keys()
 
-				// Add the witness
-				errWitness := events.ValidatorMakeClaim(event.payload.Value("_id"))
-				if errWitness != nil {
-					log.Fatal(errWitness)
+				eventId, exists := event.EventPayload()["_id"].(string)
+				if exists != true {
+					fmt.Printf("event _id does not exist in payload")
 				}
+
+				// Add the witnessing validator to the event
+				events.ValidatorMakeClaim(eventId, validator)
 
 				// Parse the event's payload into a golang struct and initiate the relay
-				result, txErr := txs.parsePayloadAndRelay(cdc, event.eventPayload)
-				if txErr != nil {
-					log.Fatal(txErr)
-				}
+				// result, txErr := txs.parsePayloadAndRelay(cdc, validator, event)
+				// if txErr != nil {
+				// 	log.Fatal(txErr)
+				// }
 			}
 		}
 	}
