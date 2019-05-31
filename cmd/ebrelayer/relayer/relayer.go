@@ -13,16 +13,17 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"io/ioutil"
+	"log"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/accounts/abi"
+
 	// "golang.org/x/crypto/sha3"
 	// "golang.org/x/crypto"
 
@@ -87,9 +88,9 @@ func InitRelayer(
 		log.Fatal(err)
 	}
 	fmt.Printf("Event listener started on address: %s.\n", contractAddress.Hex())
-	
+
 	// Open the file containing Peggy Contract's ABI
-	rawContractAbi, errorMsg := ioutil.ReadFile("/Users/denali/go/src/github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/contract/PeggyABI.json")
+	rawContractAbi, errorMsg := ioutil.ReadFile("cmd/ebrelayer/contract/PeggyABI.json")
 	if errorMsg != nil {
 		log.Fatal(errorMsg)
 	}
@@ -105,41 +106,41 @@ func InitRelayer(
 		// vLog is raw event data
 		case vLog := <-logs:
 			fmt.Println("\nNew event:")
-      fmt.Println("BlockHash: ", vLog.BlockHash.Hex())
-      fmt.Println("BlockNumber: ", vLog.BlockNumber)
-      fmt.Println("TxHash: ", vLog.TxHash.Hex())
+			fmt.Println("BlockHash: ", vLog.BlockHash.Hex())
+			fmt.Println("BlockNumber: ", vLog.BlockNumber)
+			fmt.Println("TxHash: ", vLog.TxHash.Hex())
 
 			// Check if the event is a 'LogLock' event
 			if vLog.Topics[0].Hex() == logLockEvent {
 
 				// Parse the event's attributes as Ethereum network variables
 				event := events.LockEvent{}
-        err := contractAbi.Unpack(&event, "LogLock", vLog.Data)
-        if err != nil {
-            log.Fatal("Unpacking: ", err)
-        }
+				err := contractAbi.Unpack(&event, "LogLock", vLog.Data)
+				if err != nil {
+					log.Fatal("Unpacking: ", err)
+				}
 
-        id := hex.EncodeToString(event.Id[:])
-        sender := event.From.Hex()
-        recipient := string(event.To[:])
-        token := event.Token.Hex()
-        value := event.Value
+				id := hex.EncodeToString(event.Id[:])
+				sender := event.From.Hex()
+				recipient := string(event.To[:])
+				token := event.Token.Hex()
+				value := event.Value
 				nonce := event.Nonce
 
 				fmt.Println("\nLogLock data:")
-        fmt.Println("Event ID: ", id)
-        fmt.Println("Token : ", token)
-        fmt.Println("Sender : ", sender)
-        fmt.Println("Recipient : ", recipient)
-        fmt.Println("Value : ", value)
-        fmt.Println("Nonce : ", nonce)
+				fmt.Println("Event ID: ", id)
+				fmt.Println("Token : ", token)
+				fmt.Println("Sender : ", sender)
+				fmt.Println("Recipient : ", recipient)
+				fmt.Println("Value : ", value)
+				fmt.Println("Nonce : ", nonce)
 
 				// Add the witnessing validator to the event
 				claimCount := events.ValidatorMakeClaim(id, validator)
 				fmt.Println("Total claims on this event: ", claimCount)
 
 				// Parse the event's payload into a struct and initiate the relay
-				txErr := txs.ParsePayloadAndRelay(validator, &event) //cdc, 
+				txErr := txs.ParsePayloadAndRelay(validator, &event) //cdc,
 				if txErr != "" {
 					fmt.Printf("txErr")
 				}
