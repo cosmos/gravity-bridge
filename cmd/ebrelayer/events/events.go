@@ -13,29 +13,34 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var OfficialClaims map[string][]sdk.AccAddress
-
-// Declare the official map:(EVENT_HASH => []ETH_CLAIM_ID)
-func main() {
-	officialClaims := map[string][]sdk.AccAddress{
-	    "first": {},
-	    // "second": []string{"one", "two", "three", "four", "five"},
-	    // "third": []string{"quarter", "half"},
-	}
-
-	OfficialClaims = officialClaims
-}
-
-// Adds a new event to the official mapping, allowing claims to be made upon it by validators
-// TODO: Replace the eventHash with the event's unique _id
-func AddEvent(eventHash string) {
-	OfficialClaims[eventHash] = []sdk.AccAddress{}
-}
+var OfficialClaims = make(map[string][]sdk.AccAddress)
 
 // Add a validator's address to the official claims list
-func ValidatorMakeClaim(eventHash string, validator sdk.AccAddress) {
+func ValidatorMakeClaim(eventHash string, validator sdk.AccAddress) int {
 	OfficialClaims[eventHash] = append(OfficialClaims[eventHash], validator)
-	fmt.Printf("Validator %s has witnessed event %s", validator, eventHash)
+
+	fmt.Printf("\nValidator \"%s\" has witnessed event \"%s\".\n", validator, eventHash)
+
+	return ClaimCount(eventHash)
+}
+
+
+// Returns all validators that have made claims on this event as []string
+func isStoredEvent(eventHash string) bool {
+	if OfficialClaims[eventHash] != nil {
+		return true
+	}
+	return false
+}
+
+// Submitted Claims returns the list of validators which have submitted
+// 	claims on an event.
+func SubmittedClaims(eventHash string) []sdk.AccAddress {
+		return OfficialClaims[eventHash]
+}
+
+func ClaimCount(eventHash string) int {
+	return len(OfficialClaims[eventHash])
 }
 
 // Prints all the claims made on this event
@@ -47,15 +52,4 @@ func PrintClaims(event string) {
   for i, claim := range ethClaimsSubmitted {
     fmt.Printf("Witness %d: %s", i, claim);
   }
-}
-
-// // Returns all validators that have made claims on this event as []string
-// func Claims(eventHash string) []string {
-//  	return OfficialClaims(eventHash)
-// }
-
-// ClaimingValidators returns a list of validators which have submitted
-// claims on the event.
-func Claims(event string) []sdk.AccAddress {
-	return OfficialClaims[event]
 }

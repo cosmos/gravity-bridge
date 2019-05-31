@@ -10,7 +10,6 @@ package main
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -124,7 +123,6 @@ func initRelayerCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	}
 
 	initRelayerCmd.AddCommand(
-		// txs.GetBroadcastCommand(cdc),
 		// TODO: add RelayCommand for validators
 		// txs.GetRelayCommand(cdc),
 		client.LineBreak,
@@ -137,17 +135,10 @@ func initRelayerCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	return initRelayerCmd
 }
 
-// ebrelayer init "testing" "wss://ropsten.infura.io/ws" "3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb" "LogLock(address,address,uint256)" "cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq"
-
 // -------------------------------------------------------------------------------------
 //  'init' command, initalizes the relayer service.
 //
-//    Testing parameters:
-//      1: chainId = "testing"
-//      2: ethereumProvider = "wss://ropsten.infura.io/ws"
-//      3: peggyContractAddress = "0x3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb"
-//      4: eventSignature = "LogLock(address,address,uint256)"
-//      5: validator = sdk.AccAddress("cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq")
+//  TEST with cli cmd: `ebrelayer init "testing" "wss://ropsten.infura.io/ws" "3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb" "LogLock(bytes32,address,bytes,address,uint256,uint256)" "cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq"`
 // -------------------------------------------------------------------------------------
 
 func RunRelayerCmd(cmd *cobra.Command, args []string) error {
@@ -179,7 +170,6 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Must specify event signature for subscription")
 	}
 
-	// TODO: Authenticate validator by their credentials
 	// Parse the validator running the relayer service
 	validator := sdk.AccAddress(args[4])
 	if validator == nil {
@@ -334,59 +324,6 @@ func runAddrCmd(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Bech32 Val: %s\n", valAddr)
 	return nil
 }
-
-// TODO: use these to authenticate validator before launching relayer
-
-// Files containing the validator's unique cerification key
-func validateCertKeyFiles(certFile, keyFile string) error {
-	if keyFile == "" {
-		return errors.New("a key file is required")
-	}
-	if _, err := os.Stat(certFile); err != nil {
-		return err
-	}
-	if _, err := os.Stat(keyFile); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Decode validator's certification key from file
-// func readCertKeyFile(certFile string) (string, error) {
-//   f, err := os.Open(certFile)
-//   if err != nil {
-//     return "", err
-//   }
-//   defer f.Close()
-//   data, err := ioutil.ReadAll(f)
-//   if err != nil {
-//     return "", err
-//   }
-//   block, _ := pem.Decode(data)
-//   if block == nil {
-//     return "", fmt.Errorf("couldn't find required data in %s", certFile)
-//   }
-//   return validatorCertKey(block.Bytes)
-// }
-
-// // Validator's unique certification key
-// func validatorCertKey(certBytes []byte) (string, error) {
-//   cert, err := x509.ParseCertificate(certBytes)
-//   if err != nil {
-//     return "", err
-//   }
-//   h := sha256.New()
-//   h.Write(cert.Raw)
-//   certKeyBytes := h.Sum(nil)
-//   var buf bytes.Buffer
-//   for i, b := range certKeyBytes {
-//     if i > 0 {
-//       fmt.Fprintf(&buf, ":")
-//     }
-//     fmt.Fprintf(&buf, "%02X", b)
-//   }
-//   return fmt.Sprintf("Hashed certification key:%s", buf.String()), nil
-// }
 
 func main() {
 	err := rootCmd.Execute()

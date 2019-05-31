@@ -10,14 +10,18 @@ package txs
 // --------------------------------------------------------
 
 import (
-  "log"
-  "fmt"
+  // "log"
+  // "encoding/hex"
+  // "fmt"
+  // "math/big"
 
+  // "github.com/ethereum/go-ethereum/common"
   "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
   sdk "github.com/cosmos/cosmos-sdk/types"
-  "github.com/cosmos/cosmos-sdk/codec"
+  // "github.com/cosmos/cosmos-sdk/codec"
 )
 
+// Witness claim builds a Cosmos transaction
 type WitnessClaim struct {
   Nonce          int            `json:"nonce"`
   EthereumSender string         `json:"ethereum_sender"`
@@ -26,73 +30,36 @@ type WitnessClaim struct {
   Amount         sdk.Coins      `json:"amount"`
 }
 
-func ParsePayloadAndRelay(cdc *codec.Codec, validator sdk.AccAddress, event *events.Event) {
-  // Set the witnessClaim's validator
+func ParsePayloadAndRelay(validator sdk.AccAddress, event *events.LockEvent) string { //cdc *codec.Codec, 
+  
   var witnessClaim WitnessClaim
+
+  witnessClaim.EthereumSender = event.From.Hex() // address.common to string
+
   witnessClaim.Validator = validator
 
-  // Get the keyset of the payload's fields
-  // payloadKeySet := event.EventPayload()["_id"].([]sdk.AccAddress)
-  payloadKeySet := event.EventPayload()["Keys"].([]string)
+  // witnessClaim.Nonce = (event.Nonce).Int64()
 
-  // Parse each key field individually
-  for _, field := range payloadKeySet {
-      switch(field) {
-          case "_id":
-              // Print the unique id of the event.
-              fmt.Print(field);
-          case "_from":
-              ethereumSender, ok := field.Address();
-              if !ok {
-                  return eventPayload, errors.New("Error while parsing transaction's ethereum sender");
-              }
-              witnessClaim.EthereumSender = ethereumSender;
-          case "_to":
-              cosmosReceiver, ok := field.Bytes32();
+  // recipient, err := sdk.AccAddressFromHex(string(event.To[:]).Hex())
+  // if err != nil {
+  //   log.Fatal(err)
+  // }
+  // witnessClaim.CosmosReceiver = recipient
 
-              bech32CosmosReceiver, err2 := sdk.AccAddressFromBech32(cosmosReceiver)
-              if err2 != nil {
-                  fmt.Errorf("%s", err2)
-              }
+  // // Correct for wei 10**18. Does not currently support erc20.
+  // weiAmount, err = sdk.ParseCoins(strings, Join(strconv.Itoa(amount/(Pow(10.0, 18))), "ethereum"))
+  // if err3 != nil {
+  //     fmt.Errorf("%s", err3)
+  // }
+  // witnessClaim.Amount = weiAmount
+ 
 
-              if !ok {
-                  return eventPayload, errors.New("Error while parsing transaction's Cosmos recipient");
-              }
-              witnessClaim.CosmosReceiver = bech32CosmosReceiver;
-          case "_token":
-              tokenType, ok := field.Bytes32();
-              if !ok {
-                  return eventPayload, errors.New("Error while parsing the token type");
-              }
-              witnessClaim.Token = tokenType;               
-          case "_value":
-              amount, ok := field.BigInt()
-              if !ok {
-                  return eventPayload, errors.New("Error while parsing transaction's value")
-              }
-              // Correct for wei 10**18. Does not currently support erc20.
-              weiAmount, err = sdk.ParseCoins(strings, Join(strconv.Itoa(amount/(Pow(10.0, 18))), "ethereum"))
-              if err3 != nil {
-                  fmt.Errorf("%s", err3)
-              }
-              witnessClaim.Amount = weiAmount
-          case "_nonce":
-              nonce, ok := field.BigInt()
-              if !ok {
-                  return eventPayload, errors.New("Error while parsing transaction's nonce")
-              }
-              witnessClaim.Nonce = nonce
-          }
-  }
+  // err := RelayEvent(cdc,
+  //                   witnessClaim.CosmosReceiver,
+  //                   witnessClaim.Validator,
+  //                   witnessClaim.Nonce,
+  //                   witnessClaim.EthereumSender,
+  //                   witnessClaim.Amount)
 
-  err := RelayEvent(cdc,
-        witnessClaim.CosmosReceiver,
-        witnessClaim.Validator,
-        witnessClaim.Nonce,
-        witnessClaim.EthereumSender,
-        witnessClaim.Amount)
-
-  if err != nil {
-    log.Fatal(err)
-  }
+  return "No error"
 }
