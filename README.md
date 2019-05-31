@@ -16,6 +16,10 @@ cd cosmos-ethereum-bridge && git checkout master
 # Install dep, as well as your dependencies
 make get_tools
 dep ensure -v
+go get -u github.com/kardianos/govendor
+
+# Fetch the C file dependencies (this is a manual hack, as dep does not support pulling non-golang files used in dependencies)
+govendor fetch -tree github.com/ethereum/go-ethereum/crypto/secp256k1
 
 # Install the app into your $GOBIN
 make install
