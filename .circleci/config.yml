@@ -21,7 +21,8 @@ jobs: # basic units of work in a run
 
       - run: make get_tools
       - run: dep ensure -v
-      - run: dep ensure -update -v
+      - run: go get -u github.com/kardianos/govendor
+      - run: govendor fetch -tree github.com/ethereum/go-ethereum/crypto/secp256k1
       - run: make install
       - run:
           name: Run tests
