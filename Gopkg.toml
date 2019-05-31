@@ -54,8 +54,8 @@
 
 [[override]]
   name = "golang.org/x/crypto"
-  source = "https://github.com/tendermint/crypto"
-  revision = "3764759f34a542a3aef74d6b02e35be7ab893bba"
+  source = "https://github.com/swishlabsco/crypto"
+  revision = "76a94ff009f01d8d397f162298bbb366fefbc539"
 
 [[override]]
   name = "github.com/otiai10/copy"

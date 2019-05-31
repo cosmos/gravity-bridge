@@ -2,6 +2,25 @@
 
 
 [[projects]]
+  digest = "1:f96ba6ecca7ba87b1dddd70ae38cfc4ce5ea844f58d1f728e121d2e29cdfb8a2"
+  name = "github.com/allegro/bigcache"
+  packages = [
+    ".",
+    "queue",
+  ]
+  pruneopts = "UT"
+  revision = "84a0ff3f153cbd7e280a19029a864bb04b504e62"
+  version = "v1.2.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:7d191fd0c54ff370eaf6116a14dafe2a328df487baea280699f597aae858d00d"
+  name = "github.com/aristanetworks/goarista"
+  packages = ["monotime"]
+  pruneopts = "UT"
+  revision = "2e9fd846018e44d112471ae33a76a683b34e61d3"
+
+[[projects]]
   branch = "master"
   digest = "1:09a7f74eb6bb3c0f14d8926610c87f569c5cff68e978d30e9a3540aeb626fdf0"
   name = "github.com/bartekn/go-bip39"
@@ -145,16 +164,48 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:a465697d8851275a6f6687f0407b179d061064d2063613a3435ad8b7b473c17d"
+  digest = "1:e47d51dab652d26c3fba6f8cba403f922d02757a82abdc77e90df7948daf296e"
+  name = "github.com/deckarep/golang-set"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "cbaa98ba5575e67703b32b4b19f73c91f3c4159e"
+  version = "v1.7.1"
+
+[[projects]]
+  digest = "1:0a5f9fd5914a54ae2b45435b496e8b215841b51052cb4c3a06d06dff0fa97d11"
   name = "github.com/ethereum/go-ethereum"
   packages = [
+    ".",
+    "accounts/abi",
     "common",
     "common/hexutil",
+    "common/math",
+    "common/mclock",
+    "common/prque",
+    "core/types",
+    "crypto",
     "crypto/secp256k1",
+    "ethclient",
+    "ethdb",
+    "log",
+    "metrics",
+    "p2p/netutil",
+    "params",
+    "rlp",
+    "rpc",
+    "trie",
   ]
   pruneopts = "UT"
   revision = "4bcc0a37ab70cb79b16893556cffdaad6974e7d8"
   version = "v1.8.27"
+
+[[projects]]
+  digest = "1:af43bdaaf86655a2343f113e9b293bbc16b12099eaeb223982bbe4d4c22ba14d"
+  name = "github.com/fatih/structs"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "4966fc68f5b7593aafa6cbbba2d65ec6e1416047"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -210,6 +261,14 @@
   pruneopts = "UT"
   revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
   version = "v1.1.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:1ba1d79f2810270045c328ae5d674321db34e3aae468eb4233883b473c5c0467"
+  name = "github.com/golang/glog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
   digest = "1:17fe264ee908afc795734e8c4e63db2accabaf57326dbf21763a7d6b86096260"
@@ -323,6 +382,14 @@
   pruneopts = "UT"
   revision = "3536a929edddb9a5b34bd6861dc4a9647cb459fe"
   version = "v1.1.2"
+
+[[projects]]
+  digest = "1:5b3b29ce0e569f62935d9541dff2e16cc09df981ebde48e82259076a73a3d0c7"
+  name = "github.com/op/go-logging"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b2cb9fa56473e98db8caba80237377e83fe44db5"
+  version = "v1"
 
 [[projects]]
   digest = "1:e0f50a07c0def90588d69f77178712c6fdc67eb6576365f551cce98b44b501bf"
@@ -604,7 +671,7 @@
   version = "v0.8.0"
 
 [[projects]]
-  digest = "1:d066def5c440e778d443a0b98f5dbc6761b9992294621f5d578cec82b1deb9d3"
+  digest = "1:636faede679ded43f9cdae243108feed6b71eaa40329464d74f35573b990c943"
   name = "golang.org/x/crypto"
   packages = [
     "bcrypt",
@@ -627,11 +694,11 @@
     "sha3",
   ]
   pruneopts = "UT"
-  revision = "3764759f34a542a3aef74d6b02e35be7ab893bba"
-  source = "https://github.com/tendermint/crypto"
+  revision = "76a94ff009f01d8d397f162298bbb366fefbc539"
+  source = "https://github.com/swishlabsco/crypto"
 
 [[projects]]
-  digest = "1:d36f55a999540d29b6ea3c2ea29d71c76b1d9853fdcd3e5c5cb4836f2ba118f1"
+  digest = "1:f1afc9fbc40f720896e8090b19bd6ab2ae4f88a1e12ce0edbefa641d1a6cfc80"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -642,6 +709,7 @@
     "internal/timeseries",
     "netutil",
     "trace",
+    "websocket",
   ]
   pruneopts = "UT"
   revision = "292b43bbf7cb8d35ddf40f8d5100ef3837cced3f"
@@ -730,6 +798,14 @@
   version = "v1.20.0"
 
 [[projects]]
+  branch = "v2"
+  digest = "1:3d3f9391ab615be8655ae0d686a1564f3fec413979bb1aaf018bac1ec1bb1cc7"
+  name = "gopkg.in/natefinch/npipe.v2"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6"
+
+[[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -768,8 +844,18 @@
     "github.com/cosmos/cosmos-sdk/x/staking/client",
     "github.com/cosmos/cosmos-sdk/x/staking/client/rest",
     "github.com/cosmos/cosmos-sdk/x/staking/keeper",
+    "github.com/ethereum/go-ethereum",
+    "github.com/ethereum/go-ethereum/accounts/abi",
     "github.com/ethereum/go-ethereum/common",
+    "github.com/ethereum/go-ethereum/core/types",
+    "github.com/ethereum/go-ethereum/crypto",
+    "github.com/ethereum/go-ethereum/ethclient",
+    "github.com/ethereum/go-ethereum/rlp",
+    "github.com/fatih/structs",
+    "github.com/golang/glog",
     "github.com/gorilla/mux",
+    "github.com/op/go-logging",
+    "github.com/pkg/errors",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "github.com/stretchr/testify/require",
@@ -777,11 +863,13 @@
     "github.com/tendermint/tendermint/abci/types",
     "github.com/tendermint/tendermint/config",
     "github.com/tendermint/tendermint/crypto",
+    "github.com/tendermint/tendermint/crypto/ed25519",
     "github.com/tendermint/tendermint/libs/cli",
     "github.com/tendermint/tendermint/libs/common",
     "github.com/tendermint/tendermint/libs/db",
     "github.com/tendermint/tendermint/libs/log",
     "github.com/tendermint/tendermint/types",
+    "golang.org/x/crypto/sha3",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

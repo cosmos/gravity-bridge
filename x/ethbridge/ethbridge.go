@@ -10,7 +10,9 @@ type (
 )
 
 var (
-	NewMsgMakeEthBridgeClaim  = types.NewMsgMakeEthBridgeClaim
+	NewMsgMakeEthBridgeClaim = types.NewMsgMakeEthBridgeClaim
+	NewEthBridgeClaim        = types.NewEthBridgeClaim
+
 	NewQueryEthProphecyParams = types.NewQueryEthProphecyParams
 
 	ErrInvalidEthNonce = types.ErrInvalidEthNonce

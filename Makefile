@@ -24,6 +24,7 @@ update_vendor_deps:
 install:
 	go install ./cmd/ebd
 	go install ./cmd/ebcli
+	go install ./cmd/ebrelayer
 
 test: 
 	gotestsum
