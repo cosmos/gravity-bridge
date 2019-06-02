@@ -10,15 +10,13 @@ package txs
 // --------------------------------------------------------
 
 import (
-  // "log"
-  // "encoding/hex"
-  // "fmt"
-  // "math/big"
+  "log"
+  "encoding/hex"
+  "strings"
+  "strconv"
 
-  // "github.com/ethereum/go-ethereum/common"
   "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
   sdk "github.com/cosmos/cosmos-sdk/types"
-  // "github.com/cosmos/cosmos-sdk/codec"
 )
 
 // Witness claim builds a Cosmos transaction
@@ -30,36 +28,37 @@ type WitnessClaim struct {
   Amount         sdk.Coins      `json:"amount"`
 }
 
-func ParsePayloadAndRelay(validator sdk.AccAddress, event *events.LockEvent) string { //cdc *codec.Codec, 
+func ParsePayload(validator sdk.AccAddress, event *events.LockEvent) (WitnessClaim, error) {
   
-  var witnessClaim WitnessClaim
+  witnessClaim := WitnessClaim{}
 
-  witnessClaim.EthereumSender = event.From.Hex() // address.common to string
+  // Nonce type casting (*big.Int -> int)
+  nonce, nonceErr := strconv.Atoi(event.Nonce.String())
+  if nonceErr != nil {
+    log.Fatal(nonceErr)
+  }
+  witnessClaim.Nonce = nonce
 
+  // EthereumSender type casting (address.common -> string)
+  witnessClaim.EthereumSender = event.From.Hex()
+
+  // CosmosReceiver type casting (bytes[] -> sdk.AccAddress)
+  recipient, recipientErr := sdk.AccAddressFromHex(hex.EncodeToString(event.Id[:]))
+  if recipientErr != nil {
+    log.Fatal(recipientErr)
+  }
+  witnessClaim.CosmosReceiver = recipient
+
+  // Validator is already the correct type (sdk.AccAddress)
   witnessClaim.Validator = validator
 
-  // witnessClaim.Nonce = (event.Nonce).Int64()
+  // Amount type casting (*big.Int -> sdk.Coins)
+  ethereumCoin := []string {event.Value.String(),"ethereum"}
+  weiAmount, coinErr := sdk.ParseCoins(strings.Join(ethereumCoin, ""))
+  if coinErr != nil {
+    log.Fatal(coinErr)
+  }
+  witnessClaim.Amount = weiAmount
 
-  // recipient, err := sdk.AccAddressFromHex(string(event.To[:]).Hex())
-  // if err != nil {
-  //   log.Fatal(err)
-  // }
-  // witnessClaim.CosmosReceiver = recipient
-
-  // // Correct for wei 10**18. Does not currently support erc20.
-  // weiAmount, err = sdk.ParseCoins(strings, Join(strconv.Itoa(amount/(Pow(10.0, 18))), "ethereum"))
-  // if err3 != nil {
-  //     fmt.Errorf("%s", err3)
-  // }
-  // witnessClaim.Amount = weiAmount
- 
-
-  // err := RelayEvent(cdc,
-  //                   witnessClaim.CosmosReceiver,
-  //                   witnessClaim.Validator,
-  //                   witnessClaim.Nonce,
-  //                   witnessClaim.EthereumSender,
-  //                   witnessClaim.Amount)
-
-  return "No error"
+  return witnessClaim, nil
 }

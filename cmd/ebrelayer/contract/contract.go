@@ -1,9 +1,10 @@
 package contract
 
-// -----------------------------------------------------
+// -------------------------------------------------------
 //    Contract
 //
-// -----------------------------------------------------
+//		Contains functionality related to the smart contract
+// -------------------------------------------------------
 
 import (
 	"io/ioutil"
@@ -11,11 +12,9 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	// TODO: Use package instead of direct path
-	// "ABI/PeggyABI"
 )
 
-func LoadAbi() abi.ABI {
+func LoadABI() abi.ABI {
 	// Open the file containing Peggy contract's ABI
 	rawContractAbi, errorMsg := ioutil.ReadFile("cmd/ebrelayer/contract/PeggyABI.json")
 	if errorMsg != nil {

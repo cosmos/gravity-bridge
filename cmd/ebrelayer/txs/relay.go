@@ -11,50 +11,32 @@ package txs
 // ------------------------------------------------------------
 
 import (
-	"fmt"
-
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/utils"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
-	ethbridge "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge"
-
-	"github.com/cosmos/cosmos-sdk/codec"
+	"log"
+	"os"
+	"os/exec"
+	"strconv"
 )
 
-func RelayEvent(
-	cdc *codec.Codec,
-	cosmosRecipient sdk.AccAddress,
-	validator sdk.AccAddress,
-	nonce int,
-	ethereumAddress string,
-	amount sdk.Coins) error {
+func RelayEvent(claim *WitnessClaim) error {
 
-	fmt.Printf("\relayEvent() received:\n")
-	fmt.Printf("\n Cosmos Recipient: %s, \n Nonce: %d,\n Ethereum Address: %s,\n Amount: %s\n\n",
-		cosmosRecipient, nonce, ethereumAddress, amount) //\n Validator: %s, validator
+	// Cast to string
+	nonce 				 := strconv.Itoa(claim.Nonce)
+	ethereumSender := claim.EthereumSender
+	cosmosReceiver := claim.CosmosReceiver.String()
+	validator 		 := claim.Validator.String()
+	amount 				 := claim.Amount.String()
 
-	cliCtx := context.NewCLIContext().
-		WithCodec(cdc).
-		WithAccountDecoder(cdc)
+	// Build the ebcli tx command
+	cmd := exec.Command("ebcli tx ethbridge make-claim",
+											nonce, ethereumSender, cosmosReceiver, validator, amount)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-	txBldr := authtxb.NewTxBuilderFromCLI().
-		WithTxEncoder(utils.GetTxEncoder(cdc))
-
-	err := cliCtx.EnsureAccountExists()
+	// Run the cmd
+	err := cmd.Run()
 	if err != nil {
-		return err
+		log.Fatalf("cmd.Run() failed with %s\n", err)
 	}
 
-	ethBridgeClaim := ethbridge.NewEthBridgeClaim(nonce, ethereumAddress, cosmosRecipient, validator, amount)
-	msg := ethbridge.NewMsgMakeEthBridgeClaim(ethBridgeClaim)
-
-	err1 := msg.ValidateBasic()
-	if err1 != nil {
-		return err1
-	}
-
-	return utils.CompleteAndBroadcastTxCLI(txBldr, cliCtx, []sdk.Msg{msg})
-
+	return nil
 }
