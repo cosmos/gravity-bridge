@@ -15,9 +15,11 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+
+  "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 )
 
-func RelayEvent(claim *WitnessClaim) error {
+func RelayEvent(claim *types.EthBridgeClaim) error {
 
 	// Cast to string
 	nonce 				 := strconv.Itoa(claim.Nonce)

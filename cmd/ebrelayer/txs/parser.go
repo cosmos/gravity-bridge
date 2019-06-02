@@ -15,22 +15,14 @@ import (
   "strings"
   "strconv"
 
-  "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
   sdk "github.com/cosmos/cosmos-sdk/types"
+  "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
+  "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 )
 
-// Witness claim builds a Cosmos transaction
-type WitnessClaim struct {
-  Nonce          int            `json:"nonce"`
-  EthereumSender string         `json:"ethereum_sender"`
-  CosmosReceiver sdk.AccAddress `json:"cosmos_receiver"`
-  Validator      sdk.AccAddress `json:"validator"`
-  Amount         sdk.Coins      `json:"amount"`
-}
-
-func ParsePayload(validator sdk.AccAddress, event *events.LockEvent) (WitnessClaim, error) {
+func ParsePayload(validator sdk.AccAddress, event *events.LockEvent) (types.EthBridgeClaim, error) {
   
-  witnessClaim := WitnessClaim{}
+  witnessClaim := types.EthBridgeClaim{}
 
   // Nonce type casting (*big.Int -> int)
   nonce, nonceErr := strconv.Atoi(event.Nonce.String())
