@@ -26,7 +26,7 @@ func ValidatorMakeClaim(eventHash string, validator sdk.AccAddress) int {
 
 
 // Returns all validators that have made claims on this event as []string
-func isStoredEvent(eventHash string) bool {
+func IsStoredEvent(eventHash string) bool {
 	if OfficialClaims[eventHash] != nil {
 		return true
 	}
@@ -44,12 +44,24 @@ func ClaimCount(eventHash string) int {
 }
 
 // Prints all the claims made on this event
-func PrintClaims(event string) {
- 	ethClaimsSubmitted := OfficialClaims[event]
+func PrintClaims(event string) error {
+	fmt.Println("\nEvent id: ", event)
+
+ 	ethClaims := OfficialClaims[event]
+
+ 	// Check to see if there are any claims to report
+ 	if ethClaims == nil {
+ 		fmt.Println("\nThis event has 0 claims")
+ 		return fmt.Errorf("\nThis event has 0 claims")
+ 	} else {
+ 		fmt.Println("\nClaim count: ", ClaimCount)
+
+ 	}
 
  	// For each claim, print the validator which submitted the claim
- 	fmt.Printf("Event Hash: %s", event)
-  for i, claim := range ethClaimsSubmitted {
-    fmt.Printf("Witness %d: %s", i, claim);
+  for i, claim := range ethClaims {
+    fmt.Printf("Witness %d: %s", i, claim)
   }
+
+  return nil
 }
