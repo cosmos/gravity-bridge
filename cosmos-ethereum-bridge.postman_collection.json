@@ -46,47 +46,6 @@
 			"response": []
 		},
 		{
-			"name": "node: tx",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"method\": \"tx\",\n    \"jsonrpc\": \"2.0\",\n    \"params\": [\"2AHwYl3uCkwqLIf6CiIKFMA8lZPaMthrfi/G4AiYhKAfPlCMEgoKBXN0ZWFrEgE1EiIKFC3uRkBSAKp2OdiaNeHkLcAu3hsCEgoKBXN0ZWFrEgE1EgkKAxIBMBCAtRgaeQom61rphyECD9zxaA7fPdLhQNuQ9IY5Gu1mPikMPz4j4q9zcMKSoVISS3/EpJVGMEQCIE2ipVJJvjKgEla3un+AzkfescMelGsGDDUllNGzwA3kAiBdePhtB9ALyuVVPKuUnK6ymFgnu5HavyCrWScM374cpxgIIAQ=\",true],\n    \"id\": \"dontcare\"\n}\n"
-				},
-				"url": {
-					"raw": "broadcast_tx_sync",
-					"host": [
-						"broadcast_tx_sync"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "node: broadcast_tx_sync",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"method\": \"broadcast_tx_sync\",\n    \"jsonrpc\": \"2.0\",\n    \"params\": [\"issue:{asd:asd}\"],\n    \"id\": \"dontcare\"\n}\n"
-				},
-				"url": {
-					"raw": "http://localhost:26657/",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "26657",
-					"path": [
-						""
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "cli: version",
 			"request": {
 				"method": "GET",
@@ -96,14 +55,14 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://localhost:1317/version",
+					"raw": "http://localhost:1317/node_info",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "1317",
 					"path": [
-						"version"
+						"node_info"
 					]
 				}
 			},
@@ -119,7 +78,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://localhost:1317/auth/accounts/cosmos1qs58np5syg2hcpt9f84lp0u2qdkk0fk0quzqju",
+					"raw": "http://localhost:1317/auth/accounts/cosmos19l0hyjpzm8xkwlu84my4f0npd2ranxt2yfztux",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -128,7 +87,7 @@
 					"path": [
 						"auth",
 						"accounts",
-						"cosmos1qs58np5syg2hcpt9f84lp0u2qdkk0fk0quzqju"
+						"cosmos19l0hyjpzm8xkwlu84my4f0npd2ranxt2yfztux"
 					]
 				}
 			},
@@ -144,7 +103,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://localhost:1317/bank/balances/cosmos1qs58np5syg2hcpt9f84lp0u2qdkk0fk0quzqju",
+					"raw": "http://localhost:1317/bank/balances/cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -153,7 +112,64 @@
 					"path": [
 						"bank",
 						"balances",
-						"cosmos1qs58np5syg2hcpt9f84lp0u2qdkk0fk0quzqju"
+						"cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cli: create eth prophecy",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"base_req\": {\n        \"chain_id\": \"testing\",\n        \"from\": \"cosmos18hf69vxn8a3tkladruxgxgv8tl8sl54gygdh29\"\n    },\n    \"nonce\": \"0\",\n    \"ethereum_sender\": \"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\n    \"amount\": \"4eth\",\n    \"cosmos_receiver\": \"cosmos19l0hyjpzm8xkwlu84my4f0npd2ranxt2yfztux\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:1317/ethbridge/prophecies",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1317",
+					"path": [
+						"ethbridge",
+						"prophecies"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cli: get prophecy",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:1317/ethbridge/prophecies/0/0x7B95B6EC7EbD73572298cEf32Bb54FA408207359",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1317",
+					"path": [
+						"ethbridge",
+						"prophecies",
+						"0",
+						"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359"
 					]
 				}
 			},
