@@ -14,16 +14,17 @@ import (
 	"fmt"
 	"log"
 
-  amino "github.com/tendermint/go-amino"
+	amino "github.com/tendermint/go-amino"
 
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/contract"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/txs"
 )
 
@@ -32,8 +33,13 @@ import (
 // -------------------------------------------------------------------------
 
 func InitRelayer(cdc *amino.Codec, chainId string, provider string,
-								 contractAddress common.Address, eventSig string,
-								 validator sdk.AccAddress) error {
+	contractAddress common.Address, eventSig string,
+	validator sdk.AccAddress) error {
+
+	passphrase, err := keys.GetPassphrase("validator")
+	if err != nil {
+		return err
+	}
 
 	// Start client with infura ropsten provider
 	client, err := SetupWebsocketEthClient(provider)
@@ -71,7 +77,7 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 			// Check if the event is a 'LogLock' event
 			if vLog.Topics[0].Hex() == eventSig {
 				fmt.Printf("\n\nNew Lock Transaction:\nTx hash: %v\nBlock number: %v",
-										vLog.TxHash.Hex(), vLog.BlockNumber)
+					vLog.TxHash.Hex(), vLog.BlockNumber)
 
 				// Parse the event data into a new LockEvent using the contract's ABI
 				event := events.NewLockEvent(contractABI, "LogLock", vLog.Data)
@@ -89,8 +95,8 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 				}
 
 				// Initiate the relay
-			  relayErr := txs.RelayEvent(chainId, cdc, &claim)
-			  if relayErr != nil {
+				relayErr := txs.RelayEvent(chainId, cdc, passphrase, &claim)
+				if relayErr != nil {
 					fmt.Errorf("Error: %s", relayErr)
 				}
 			}
