@@ -87,7 +87,7 @@ ebcli help
 ebrelayer help
 ```
 
-## Running and using the application
+## Running and testing the application
 
 First, initialize a chain and create accounts to test sending of a random token.
 
@@ -145,32 +145,6 @@ ebcli query ethbridge get-prophecy 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 
 # And finally, confirm that the prophecy was successfully processed and that new eth was minted to the testuser address
 ebcli query account $(ebcli keys show testuser -a) --trust-node
 
-# Check ebrelayer connection to ebd
-ebrelayer status
-
-# Initialize the Relayer service for automatic claim processing
-ebrelayer init testing wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb "LogLock(bytes32,address,bytes,address,uint256,uint256)" $(ebcli keys show validator -a)
-
-# Make a claim on the event in active ebrelayer by entering
-Y/n
-
-# Enter password associated with the active validator account
-password = [VALIDATOR_PASSWORD]
-
-# Depositing funds to Peggy using Remix.ethereum.org  
-1. Compile Peggy.sol with solc v0.5.0  
-2. Set the environment as Injected Web3 Ropsten  
-3. On 'Run' tab, select Peggy and enter "0x3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb" in 'At Address' field  
-4. Select 'At Address' to load the deployed contract  
-5. Enter the following for the variables under function lock():  
-  _recipient = [HASHED_COSMOS_RECIPIENT_ADDRESS] (for testuser cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh, enter "0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668")  
-  _token = [DEPLOYED_TOKEN_ADDRESS] (erc20 not currently supported, enter "0x0000000000000000000000000000000000000000" for ethereum)  
-  _amount = [WEI_AMOUNT]  
-6. Enter the same number from _amount as the transaction's value (in wei)  
-7. Select "transact" to send the lock() transaction  
-
-# Depositing funds to Peggy using CLI [coming soon]
-
 ```
 
 ## Using the application from rest-server
@@ -184,9 +158,43 @@ ebcli rest-server --trust-node
 An api collection for Postman (https://www.getpostman.com/) is provided [here](./cosmos-ethereum-bridge.postman_collection.json) which documents some API endpoints and can be used to interact with it.
 Note: For checking account details/balance, you will need to change the cosmos addresses in the URLs, params and body to match the addresses you generated that you want to check.
 
+## Running the relayer service
+
+For automated relaying, there is a relayer service that can be run that will automatically watch and relay events.
+
+```
+# Check ebrelayer connection to ebd
+ebrelayer status
+
+# Initialize the Relayer service for automatic claim processing
+ebrelayer init testing wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb "LogLock(bytes32,address,bytes,address,uint256,uint256)" $(ebcli keys show validator -a)
+```
+
+The relayer will now watch the contract on Ropsten and create a claim whenever it detects a lock event.
+
+## Using the bridge
+
+With the application set up and the relayer running, you can now use Peggy by sending a lock transaction to the smart contract. You can do this from any Ethereum wallet/client that supports smart contract transactions.
+
+The easiest way to do this for now, assuming you have Metamask setup for Ropsten in the browser is to use remix or mycrypto as the frontend, for example:
+ - 1. Go to remix.ethereum.org
+ - 2. Compile Peggy.sol with solc v0.5.0
+ - 3. Set the environment as Injected Web3 Ropsten
+ - 4. On 'Run' tab, select Peggy and enter "0x3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb" in 'At Address' field
+ - 5. Select 'At Address' to load the deployed contract
+ - 6. Enter the following for the variables under function lock():
+  _recipient = [HASHED_COSMOS_RECIPIENT_ADDRESS] *(for testuser cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh, enter "0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668")*
+  _token = [DEPLOYED_TOKEN_ADDRESS] *(erc20 not currently supported, enter "0x0000000000000000000000000000000000000000" for ethereum)*
+  _amount = [WEI_AMOUNT]
+ - 7. Enter the same number from _amount as the transaction's value (in wei)
+ - 8. Select "transact" to send the lock() transaction
+
 ## Using the modules in other projects
+
+The ethbridge and oracle modules can be used in other cosmos-sdk applications by copying them into your application's modules folders and including them in the same way as in the example application. Each module may be moved to its own repo or integrated into the core Cosmos-SDK in future, for easier usage.
+
 There are 2 nuances you need to be aware of when using these modules in other Cosmos-SDK projects.
- - A specific version of golang.org/x/crypto (ie tendermint/crypto) is needed for compatability with go-ethereum. See the Gopkg.toml for constraint details
- - The govendor steps in the hack as above are needed
+ - A specific version of golang.org/x/crypto (ie tendermint/crypto) is needed for compatability with go-ethereum. See the Gopkg.toml for constraint details. There is an open pull request to tendermint/crypto to add compatbility, but until that is merged you need to use the customized version (https://github.com/tendermint/crypto/pull/1)
+ - The govendor steps in the application as above are needed
 
  For instructions on building and deploying the smart contracts, see the README in their folder.
