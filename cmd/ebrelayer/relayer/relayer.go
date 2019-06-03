@@ -11,18 +11,16 @@ package relayer
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"log"
+
+  amino "github.com/tendermint/go-amino"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-
-	// "golang.org/x/crypto/sha3"
-	// "golang.org/x/crypto"
 
 	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/contract"
@@ -33,8 +31,9 @@ import (
 // Starts an event listener on a specific network, contract, and event
 // -------------------------------------------------------------------------
 
-func InitRelayer(chainId string, provider string, contractAddress common.Address,
-								 eventSig string, validator sdk.AccAddress) error {
+func InitRelayer(cdc *amino.Codec, chainId string, provider string,
+								 contractAddress common.Address, eventSig string,
+								 validator sdk.AccAddress) error {
 
 	fmt.Printf("\nchainId: %s", chainId)
 	fmt.Printf("\nprovider: %s", provider)
@@ -95,12 +94,8 @@ func InitRelayer(chainId string, provider string, contractAddress common.Address
 
 				fmt.Printf("\nClaim information:\n%+v\n", claim)
 
-				// Add the witnessing validator to the event
-				claimCount := events.ValidatorMakeClaim(hex.EncodeToString(event.Id[:]), validator)
-				fmt.Println("Total claims on this event: ", claimCount)
-
 				// Initiate the relay
-			  relayErr := txs.RelayEvent(&claim)
+			  relayErr := txs.RelayEvent(cdc, &claim)
 			  if relayErr != nil {
 					log.Fatal(relayErr)
 				}

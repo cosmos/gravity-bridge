@@ -13,13 +13,18 @@ import (
 	"encoding/hex"
 
 	"github.com/spf13/cobra"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/ethereum/go-ethereum/common"
+	// "golang.org/x/crypto"
+	"github.com/cosmos/cosmos-sdk/client/context"
 
+	app "github.com/swishlabsco/cosmos-ethereum-bridge"
 	relayer "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/relayer"
 	events "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
 )
@@ -30,14 +35,19 @@ const (
 )
 
 var defaultCLIHome = os.ExpandEnv("$HOME/.ebrelayer")
+var appCodec *amino.Codec
 
 func init() {
+
+	cdc := app.MakeCodec()
+	appCodec = cdc
 
 	// Construct Root Command
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
 		initRelayerCmd(),
 		getClaimsCmd(),
+		getAccountCmd(),
 		client.LineBreak,
 		keys.Commands(),
 		client.LineBreak,
@@ -66,6 +76,16 @@ func getClaimsCmd() *cobra.Command {
 	return getClaimsCmd
 }
 
+func getAccountCmd() *cobra.Command {
+	getAccountCmd := &cobra.Command{
+		Use:   "account unique-account",
+		Short: "Does this account exist?",
+		RunE:  RunAccountCmd,
+	}
+
+	return getAccountCmd
+}
+
 func initRelayerCmd() *cobra.Command {
 	initRelayerCmd := &cobra.Command{
 		Use:   "init chain-id web3-provider contract-address event-signature validator",
@@ -78,12 +98,12 @@ func initRelayerCmd() *cobra.Command {
 
 // -------------------------------------------------------------------------------------
 //  `ebrelayer init "testing" "wss://ropsten.infura.io/ws" "3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb"
-//	 "LogLock(bytes32,address,bytes,address,uint256,uint256)" "cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq"`
+//	 "LogLock(bytes32,address,bytes,address,uint256,uint256)" "cosmos13mztulrrz3leephsr6dhxker4t68qxew9m9nhn"`
 // -------------------------------------------------------------------------------------
 
 func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	if len(args) != 5 {
-		return fmt.Errorf("Expected 5 arguments, got ", len(args))
+		return fmt.Errorf("Expected 5 arguments, got %s", len(args))
 	}
 
 	// Parse chain's ID
@@ -106,22 +126,21 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	contractAddress := common.BytesToAddress(bytesContractAddress)
 
 	// Parse the event signature for the subscription
-
 	eventSig := "0xe154a56f2d306d5bbe4ac2379cb0cfc906b23685047a2bd2f5f0a0e810888f72"
-	// TODO: Generate eventSig hash using 'crypto' library instead of hard coding
-	// `eventSig := crypto.Keccak256Hash(args[3])`
+	// eventSig := crypto.Keccak256Hash([]byte(args[3]))
 	if eventSig == "" {
 		return fmt.Errorf("Invalid event-signature: %s", eventSig)
 	}
 
 	// Parse the validator running the relayer service
-	validator := sdk.AccAddress(args[4])
-	if validator == nil {
+	validator, valErr := sdk.AccAddressFromBech32(args[4])
+	if valErr != nil {
 		return fmt.Errorf("Invalid validator: %s", validator)
 	}
 
 	// Initialize the relayer
 	initErr := relayer.InitRelayer(
+		appCodec,
 		chainId,
 		ethereumProvider,
 		contractAddress,
@@ -150,6 +169,28 @@ func RunClaimCmd(cmd *cobra.Command, args []string) error {
 	events.PrintClaims(eventId)
 
 	return nil
+}
+
+func RunAccountCmd(cmd *cobra.Command, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("Expected account argument")
+	}
+
+	account, valErr := sdk.AccAddressFromBech32(args[0])
+	if valErr != nil {
+		return fmt.Errorf("Invalid account: %s", account)
+	}
+
+	cliCtx := context.NewCLIContext().
+					WithCodec(appCodec).
+					WithAccountDecoder(appCodec)
+
+	err := cliCtx.EnsureAccountExistsFromAddr(account)
+	if err != nil {
+		return err
+	}
+
+	return fmt.Errorf("Account exists!")
 }
 
 func main() {

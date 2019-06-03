@@ -376,14 +376,6 @@
   version = "v1.1.2"
 
 [[projects]]
-  digest = "1:5b3b29ce0e569f62935d9541dff2e16cc09df981ebde48e82259076a73a3d0c7"
-  name = "github.com/op/go-logging"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "b2cb9fa56473e98db8caba80237377e83fe44db5"
-  version = "v1"
-
-[[projects]]
   digest = "1:e0f50a07c0def90588d69f77178712c6fdc67eb6576365f551cce98b44b501bf"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
@@ -843,7 +835,6 @@
     "github.com/ethereum/go-ethereum/ethclient",
     "github.com/golang/glog",
     "github.com/gorilla/mux",
-    "github.com/op/go-logging",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "github.com/stretchr/testify/require",
@@ -851,7 +842,6 @@
     "github.com/tendermint/tendermint/abci/types",
     "github.com/tendermint/tendermint/config",
     "github.com/tendermint/tendermint/crypto",
-    "github.com/tendermint/tendermint/crypto/ed25519",
     "github.com/tendermint/tendermint/libs/cli",
     "github.com/tendermint/tendermint/libs/common",
     "github.com/tendermint/tendermint/libs/db",

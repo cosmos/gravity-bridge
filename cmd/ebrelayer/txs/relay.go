@@ -11,34 +11,52 @@ package txs
 // ------------------------------------------------------------
 
 import (
-	"log"
-	"os"
-	"os/exec"
-	"strconv"
+	"fmt"
+
+  amino "github.com/tendermint/go-amino"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/utils"
 
   "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
+  "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge"
 )
 
-func RelayEvent(claim *types.EthBridgeClaim) error {
+func RelayEvent(cdc *amino.Codec, claim *types.EthBridgeClaim) error {
 
-	// Cast to string
-	nonce 				 := strconv.Itoa(claim.Nonce)
-	ethereumSender := claim.EthereumSender
-	cosmosReceiver := claim.CosmosReceiver.String()
-	validator 		 := claim.Validator.String()
-	amount 				 := claim.Amount.String()
+	cliCtx := context.NewCLIContext().
+					WithCodec(cdc).
+					WithAccountDecoder(cdc)
 
-	// Build the ebcli tx command
-	cmd := exec.Command("ebcli tx ethbridge make-claim",
-											nonce, ethereumSender, cosmosReceiver, validator, amount)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	txBldr := authtxb.NewTxBuilderFromCLI().
+					WithTxEncoder(utils.GetTxEncoder(cdc))
 
-	// Run the cmd
-	err := cmd.Run()
+	fmt.Println("\nChecking validator account...")
+	err := cliCtx.EnsureAccountExistsFromAddr(claim.Validator)
 	if err != nil {
-		log.Fatalf("cmd.Run() failed with %s\n", err)
+		return err
 	}
 
-	return nil
+	fmt.Println("\nChecking recipient account...")
+	errRecipient := cliCtx.EnsureAccountExistsFromAddr(claim.CosmosReceiver)
+	if errRecipient != nil {
+		return errRecipient
+	}
+
+	msg := ethbridge.NewMsgMakeEthBridgeClaim(*claim)
+	fmt.Println("\nMsg successfully constructed!")
+	fmt.Printf("Msg information:\n%+v\n", msg)
+
+	err1 := msg.ValidateBasic()
+	if err1 != nil {
+		fmt.Println("ERROR validation")
+		return err1
+	}
+
+	// Add the witnessing validator to the event
+	// claimCount := events.ValidatorMakeClaim(hex.EncodeToString(event.Id[:]), validator)
+	// fmt.Println("Total claims on this event: ", claimCount)
+
+	return utils.CompleteAndBroadcastTxCLI(txBldr, cliCtx, []sdk.Msg{msg})
 }
