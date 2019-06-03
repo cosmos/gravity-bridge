@@ -41,6 +41,12 @@ func NewLockEvent(contractAbi abi.ABI, eventName string, eventData []byte) LockE
 	    log.Fatal("Unpacking: ", err)
 	}
 
+	PrintEvent(event)
+
+	return event
+}
+
+func PrintEvent(event LockEvent) {
 	// Convert the variables into a printable format
 	id := hex.EncodeToString(event.Id[:])
 	sender := event.From.Hex()
@@ -50,13 +56,6 @@ func NewLockEvent(contractAbi abi.ABI, eventName string, eventData []byte) LockE
 	nonce := event.Nonce
 
 	// Print the event's information
-	fmt.Println("\nEvent data:")
-	fmt.Println("Event ID: ", id)
-	fmt.Println("Token: ", token)
-	fmt.Println("Sender: ", sender)
-	fmt.Println("Recipient: ", recipient)
-	fmt.Println("Value: ", value)
-	fmt.Println("Nonce: ", nonce)
-
-	return event
+	fmt.Printf("\nEvent ID: %v\nToken: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
+							id, token, sender, recipient, value, nonce)
 }

@@ -84,6 +84,7 @@ make install
 # Now you should be able to run the following commands, confirming the build is successful:
 ebd help
 ebcli help
+ebrelayer help
 ```
 
 ## Running and using the application
@@ -129,7 +130,7 @@ ebcli tx staking create-validator \
   --from=validator
 
 # Then wait 10 seconds then confirm your validator was created correctly, and has become Bonded status
-ebcli query staking validators --trust-node 
+ebcli query staking validators --trust-node
 
 # See the help for the ethbridge make claim function
 ebcli tx ethbridge make-claim --help
@@ -142,7 +143,14 @@ ebcli tx ethbridge make-claim 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 $(ebc
 ebcli query ethbridge get-prophecy 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 --trust-node
 
 # And finally, confirm that the prophecy was successfully processed and that new eth was minted to the testuser address
-ebcli query account $(ebcli keys show testuser -a) --trust-node 
+ebcli query account $(ebcli keys show testuser -a) --trust-node
+
+# Check ebrelayer connection to ebd
+ebrelayer status
+
+# Initialize the Relayer service for automatic claim processing
+ebrelayer init testing wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb "LogLock(bytes32,address,bytes,address,uint256,uint256)" $(ebcli keys show validator -a)
+
 ```
 
 ## Using the application from rest-server

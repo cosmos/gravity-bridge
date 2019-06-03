@@ -40,7 +40,7 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 	if err != nil {
 		fmt.Errorf("%s", err)
 	}
-	fmt.Printf("\nStart ethereum websocket with provider: %s", provider)
+	fmt.Printf("\nStarted ethereum websocket with provider: %s", provider)
 
 	// We need the contract address in bytes[] for the query
 	query := ethereum.FilterQuery{
@@ -50,13 +50,12 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 	// We will check logs for new events
 	logs := make(chan types.Log)
 
-	// Subscribe to the web socket, filter by contract and event, write results to logs
-	fmt.Printf("\nStarting subscription filter on address: %s", contractAddress.Hex())
+	// Filter by contract and event, write results to logs
 	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)
 	if err != nil {
 		fmt.Errorf("%s", err)
 	} else {
-		fmt.Printf("\nSubscription filter initialized!\n")
+		fmt.Printf("\nSubscribed to contract events on address: %s\n", contractAddress.Hex())
 	}
 
 	// Load Peggy Contract's ABI
@@ -69,29 +68,30 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 			log.Fatal(err)
 		// vLog is raw event data
 		case vLog := <-logs:
-			fmt.Println("\nNew event:")
-			fmt.Println("BlockHash: ", vLog.BlockHash.Hex())
-			fmt.Println("BlockNumber: ", vLog.BlockNumber)
-			fmt.Println("TxHash: ", vLog.TxHash.Hex())
-
 			// Check if the event is a 'LogLock' event
 			if vLog.Topics[0].Hex() == eventSig {
+				fmt.Printf("\n\nNew Lock Transaction:\nTx hash: %v\nBlock number: %v",
+										vLog.TxHash.Hex(), vLog.BlockNumber)
 
 				// Parse the event data into a new LockEvent using the contract's ABI
 				event := events.NewLockEvent(contractABI, "LogLock", vLog.Data)
 
+				// Add the event to the record
+				successfulStore := events.NewEventWrite(vLog.TxHash.Hex(), event)
+				if successfulStore != true {
+					fmt.Errorf("Error: event not stored")
+				}
+
 				// Parse the event's payload into a struct
 				claim, claimErr := txs.ParsePayload(validator, &event)
 				if claimErr != nil {
-					log.Fatal(claimErr)
+					fmt.Errorf("Error: %s", claimErr)
 				}
-
-				fmt.Printf("\nClaim information:\n%+v\n", claim)
 
 				// Initiate the relay
 			  relayErr := txs.RelayEvent(chainId, cdc, &claim)
 			  if relayErr != nil {
-					log.Fatal(relayErr)
+					fmt.Errorf("Error: %s", relayErr)
 				}
 			}
 		}

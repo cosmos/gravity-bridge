@@ -53,8 +53,8 @@ func init() {
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
 		initRelayerCmd(),
-		getClaimsCmd(),
-		getAccountCmd(),
+		getCheckCmd(),
+		getPrintCmd(),
 		client.LineBreak,
 		keys.Commands(),
 		client.LineBreak,
@@ -73,26 +73,6 @@ var rootCmd = &cobra.Command{
 	SilenceUsage: true,
 }
 
-func getClaimsCmd() *cobra.Command {
-	getClaimsCmd := &cobra.Command{
-		Use:   "check event-id",
-		Short: "Prints historical claim information about the event",
-		RunE:  RunClaimCmd,
-	}
-
-	return getClaimsCmd
-}
-
-func getAccountCmd() *cobra.Command {
-	getAccountCmd := &cobra.Command{
-		Use:   "account unique-account",
-		Short: "Does this account exist?",
-		RunE:  RunAccountCmd,
-	}
-
-	return getAccountCmd
-}
-
 func initRelayerCmd() *cobra.Command {
 	initRelayerCmd := &cobra.Command{
 		Use:   "init chain-id web3-provider contract-address event-signature validator",
@@ -103,6 +83,26 @@ func initRelayerCmd() *cobra.Command {
 	return initRelayerCmd
 }
 
+func getPrintCmd() *cobra.Command {
+	getPrintCmd := &cobra.Command{
+		Use:   "print",
+		Short: "Print all stored events",
+		RunE:  RunPrintCmd,
+	}
+
+	return getPrintCmd
+}
+
+func getCheckCmd() *cobra.Command {
+	getCheckCmd := &cobra.Command{
+		Use:   "check tx-hash",
+		Short: "Check a transaction hash to see if it is available for claim submission",
+		RunE:  RunCheckCmd,
+	}
+
+	return getCheckCmd
+}
+
 // -------------------------------------------------------------------------------------
 //  `ebrelayer init "testing" "wss://ropsten.infura.io/ws" "3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb"
 //	 "LogLock(bytes32,address,bytes,address,uint256,uint256)" "cosmos13mztulrrz3leephsr6dhxker4t68qxew9m9nhn"`
@@ -110,25 +110,25 @@ func initRelayerCmd() *cobra.Command {
 
 func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	if len(args) != 5 {
-		return fmt.Errorf("Expected 5 arguments, got %s", len(args))
+		return fmt.Errorf("Expected 5 arguments, got %v", len(args))
 	}
 
 	// Parse chain's ID
 	chainId := args[0]
 	if chainId == "" {
-		return fmt.Errorf("Invalid chain-id: %s", chainId)
+		return fmt.Errorf("Invalid chain-id: %v", chainId)
 	}
 
 	// Parse ethereum provider
 	ethereumProvider := args[1]
 	if !relayer.IsWebsocketURL(ethereumProvider) {
-		return fmt.Errorf("Invalid web3-provider: %s", ethereumProvider)
+		return fmt.Errorf("Invalid web3-provider: %v", ethereumProvider)
 	}
 
 	// Parse the address of the deployed contract
 	bytesContractAddress, err := hex.DecodeString(args[2])
 	if err != nil {
-		return fmt.Errorf("Invalid contract-address: %s", bytesContractAddress, err)
+		return fmt.Errorf("Invalid contract-address: %v", bytesContractAddress, err)
 	}
 	contractAddress := common.BytesToAddress(bytesContractAddress)
 
@@ -136,13 +136,13 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	eventSig := "0xe154a56f2d306d5bbe4ac2379cb0cfc906b23685047a2bd2f5f0a0e810888f72"
 	// eventSig := crypto.Keccak256Hash([]byte(args[3]))
 	if eventSig == "" {
-		return fmt.Errorf("Invalid event-signature: %s", eventSig)
+		return fmt.Errorf("Invalid event-signature: %v", eventSig)
 	}
 
 	// Parse the validator running the relayer service
 	validator, valErr := sdk.AccAddressFromBech32(args[4])
 	if valErr != nil {
-		return fmt.Errorf("Invalid validator: %s", validator)
+		return fmt.Errorf("Invalid validator: %v", validator)
 	}
 
 	// Initialize the relayer
@@ -155,40 +155,28 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 		validator)
 
 	if initErr != nil {
-		fmt.Printf("%s", initErr)
+		fmt.Printf("%v", initErr)
 	}
 
 	return nil
 }
 
-func RunClaimCmd(cmd *cobra.Command, args []string) error {
+func RunCheckCmd(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
-		return fmt.Errorf("Expected event-id argument")
+		return fmt.Errorf("Expected tx-hash")
 	}
-
-	eventId := args[0]
-
-	// TODO: differentiate between an invalid event and an event with 0 claims
-	if !events.IsStoredEvent(eventId) {
-		return fmt.Errorf("Invalid event-id: %s", eventId)
-	}
-
-	events.PrintClaims(eventId)
+	txHash := args[0]
+	events.PrintEventByTx(txHash)
 
 	return nil
 }
 
-func RunAccountCmd(cmd *cobra.Command, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("Expected account argument")
+func RunPrintCmd(cmd *cobra.Command, args []string) error {
+	if len(args) != 0 {
+		return fmt.Errorf("Expected 0 args")
 	}
-
-	account, valErr := sdk.AccAddressFromBech32(args[0])
-	if valErr != nil {
-		return fmt.Errorf("Invalid account: %s", account)
-	}
-
-	return fmt.Errorf("Success!")
+	events.PrintEvents()
+	return nil
 }
 
 func main() {
