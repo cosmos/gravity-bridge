@@ -35,7 +35,6 @@ const (
 
 var defaultCLIHome = os.ExpandEnv("$HOME/.ebcli")
 var appCodec *amino.Codec
-// var keybase *keys.Keybase
 
 func init() {
 

@@ -151,6 +151,26 @@ ebrelayer status
 # Initialize the Relayer service for automatic claim processing
 ebrelayer init testing wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb "LogLock(bytes32,address,bytes,address,uint256,uint256)" $(ebcli keys show validator -a)
 
+# Make a claim on the event in active ebrelayer by entering
+Y/n
+
+# Enter password associated with the active validator account
+password = [VALIDATOR_PASSWORD]
+
+# Depositing funds to Peggy using Remix.ethereum.org  
+1. Compile Peggy.sol with solc v0.5.0  
+2. Set the environment as Injected Web3 Ropsten  
+3. On 'Run' tab, select Peggy and enter "0x3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb" in 'At Address' field  
+4. Select 'At Address' to load the deployed contract  
+5. Enter the following for the variables under function lock():  
+  _recipient = "0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668"  
+  _token = [DEPLOYED_TOKEN_ADDRESS] (erc20 not currently supported, enter "0x0000000000000000000000000000000000000000" for ethereum)  
+  _amount = 20  
+6. Enter the same number from _amount as the transaction's value (in wei)  
+7. Select "transact" to send the lock() transaction  
+
+# Depositing funds to Peggy using CLI [in development]
+
 ```
 
 ## Using the application from rest-server
