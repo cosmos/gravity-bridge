@@ -163,13 +163,13 @@ password = [VALIDATOR_PASSWORD]
 3. On 'Run' tab, select Peggy and enter "0x3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb" in 'At Address' field  
 4. Select 'At Address' to load the deployed contract  
 5. Enter the following for the variables under function lock():  
-  _recipient = "0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668"  
+  _recipient = [HASHED_COSMOS_RECIPIENT_ADDRESS] (for testuser cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh, enter "0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668")  
   _token = [DEPLOYED_TOKEN_ADDRESS] (erc20 not currently supported, enter "0x0000000000000000000000000000000000000000" for ethereum)  
-  _amount = 20  
+  _amount = [WEI_AMOUNT]  
 6. Enter the same number from _amount as the transaction's value (in wei)  
 7. Select "transact" to send the lock() transaction  
 
-# Depositing funds to Peggy using CLI [in development]
+# Depositing funds to Peggy using CLI [coming soon]
 
 ```
 
