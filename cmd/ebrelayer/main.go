@@ -23,6 +23,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	// "golang.org/x/crypto"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
+	"github.com/cosmos/cosmos-sdk/client/utils"
 
 	app "github.com/swishlabsco/cosmos-ethereum-bridge"
 	relayer "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/relayer"
@@ -34,10 +36,18 @@ const (
 	routeEthbridge = "ethbridge"
 )
 
-var defaultCLIHome = os.ExpandEnv("$HOME/.ebrelayer")
+var defaultCLIHome = os.ExpandEnv("$HOME/.ebcli")
 var appCodec *amino.Codec
+// var keybase *keys.Keybase
 
 func init() {
+
+	// Read in the configuration file for the sdk
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(sdk.Bech32PrefixAccAddr, sdk.Bech32PrefixAccPub)
+	config.SetBech32PrefixForValidator(sdk.Bech32PrefixValAddr, sdk.Bech32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(sdk.Bech32PrefixConsAddr, sdk.Bech32PrefixConsPub)
+	config.Seal()
 
 	cdc := app.MakeCodec()
 	appCodec = cdc
@@ -183,14 +193,15 @@ func RunAccountCmd(cmd *cobra.Command, args []string) error {
 
 	cliCtx := context.NewCLIContext().
 					WithCodec(appCodec).
-					WithAccountDecoder(appCodec)
+					WithAccountDecoder(appCodec).
+					WithFromAddress(account).
+					WithFromName("validator")
 
-	err := cliCtx.EnsureAccountExistsFromAddr(account)
-	if err != nil {
-		return err
-	}
+	txBldr := authtxb.NewTxBuilderFromCLI().
+					WithTxEncoder(utils.GetTxEncoder(appCodec)).
+					WithChainID("testing")
 
-	return fmt.Errorf("Account exists!")
+	return fmt.Errorf("Success!")
 }
 
 func main() {

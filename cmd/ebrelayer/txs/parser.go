@@ -10,9 +10,9 @@ package txs
 // --------------------------------------------------------
 
 import (
-  "log"
   "strings"
   "strconv"
+  "fmt"
 
   sdk "github.com/cosmos/cosmos-sdk/types"
   "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
@@ -26,7 +26,7 @@ func ParsePayload(validator sdk.AccAddress, event *events.LockEvent) (types.EthB
   // Nonce type casting (*big.Int -> int)
   nonce, nonceErr := strconv.Atoi(event.Nonce.String())
   if nonceErr != nil {
-    log.Fatal(nonceErr)
+    fmt.Errorf("%s", nonceErr)
   }
   witnessClaim.Nonce = nonce
 
@@ -36,7 +36,7 @@ func ParsePayload(validator sdk.AccAddress, event *events.LockEvent) (types.EthB
   // CosmosReceiver type casting (bytes[] -> sdk.AccAddress)
   recipient, recipientErr := sdk.AccAddressFromBech32(string(event.To[:]))
   if recipientErr != nil {
-    log.Fatal(recipientErr)
+    fmt.Errorf("%s", recipientErr)
   }
   witnessClaim.CosmosReceiver = recipient
 
@@ -47,7 +47,7 @@ func ParsePayload(validator sdk.AccAddress, event *events.LockEvent) (types.EthB
   ethereumCoin := []string {event.Value.String(),"ethereum"}
   weiAmount, coinErr := sdk.ParseCoins(strings.Join(ethereumCoin, ""))
   if coinErr != nil {
-    log.Fatal(coinErr)
+    fmt.Errorf("%s", coinErr)
   }
   witnessClaim.Amount = weiAmount
 

@@ -35,16 +35,10 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 								 contractAddress common.Address, eventSig string,
 								 validator sdk.AccAddress) error {
 
-	fmt.Printf("\nchainId: %s", chainId)
-	fmt.Printf("\nprovider: %s", provider)
-	fmt.Printf("\ncontractAddress: %s", contractAddress.Hex())
-	fmt.Printf("\neventSig: %s", eventSig)
-	fmt.Printf("\nvalidator: %s", validator)
-
 	// Start client with infura ropsten provider
 	client, err := SetupWebsocketEthClient(provider)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Errorf("%s", err)
 	}
 	fmt.Printf("\nStart ethereum websocket with provider: %s", provider)
 
@@ -60,7 +54,7 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 	fmt.Printf("\nStarting subscription filter on address: %s", contractAddress.Hex())
 	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Errorf("%s", err)
 	} else {
 		fmt.Printf("\nSubscription filter initialized!\n")
 	}
@@ -95,7 +89,7 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 				fmt.Printf("\nClaim information:\n%+v\n", claim)
 
 				// Initiate the relay
-			  relayErr := txs.RelayEvent(cdc, &claim)
+			  relayErr := txs.RelayEvent(chainId, cdc, &claim)
 			  if relayErr != nil {
 					log.Fatal(relayErr)
 				}
