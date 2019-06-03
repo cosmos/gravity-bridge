@@ -19,7 +19,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
-	crkeys "github.com/cosmos/cosmos-sdk/crypto/keys"
 
   "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
   "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge"

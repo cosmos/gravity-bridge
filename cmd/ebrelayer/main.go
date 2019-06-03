@@ -22,9 +22,6 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/ethereum/go-ethereum/common"
 	// "golang.org/x/crypto"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
-	"github.com/cosmos/cosmos-sdk/client/utils"
 
 	app "github.com/swishlabsco/cosmos-ethereum-bridge"
 	relayer "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/relayer"
@@ -190,16 +187,6 @@ func RunAccountCmd(cmd *cobra.Command, args []string) error {
 	if valErr != nil {
 		return fmt.Errorf("Invalid account: %s", account)
 	}
-
-	cliCtx := context.NewCLIContext().
-					WithCodec(appCodec).
-					WithAccountDecoder(appCodec).
-					WithFromAddress(account).
-					WithFromName("validator")
-
-	txBldr := authtxb.NewTxBuilderFromCLI().
-					WithTxEncoder(utils.GetTxEncoder(appCodec)).
-					WithChainID("testing")
 
 	return fmt.Errorf("Success!")
 }
