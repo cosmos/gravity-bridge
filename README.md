@@ -167,7 +167,10 @@ For automated relaying, there is a relayer service that can be run that will aut
 ebrelayer status
 
 # Initialize the Relayer service for automatic claim processing
-ebrelayer init testing wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb "LogLock(bytes32,address,bytes,address,uint256,uint256)" $(ebcli keys show validator -a)
+ebrelayer init testing wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb "LogLock(bytes32,address,bytes,address,uint256,uint256)" validator
+
+# Enter password and press enter
+# You should see a message like:  Started ethereum websocket... and Subscribed to contract events...
 ```
 
 The relayer will now watch the contract on Ropsten and create a claim whenever it detects a lock event.
