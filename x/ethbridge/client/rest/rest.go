@@ -88,8 +88,9 @@ func getProphecyHandler(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute 
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[restNonce]
+
 		nonceString, err := strconv.Atoi(nonce)
-		if err == nil {
+		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
