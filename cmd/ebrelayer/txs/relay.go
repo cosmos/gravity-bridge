@@ -24,13 +24,15 @@ import (
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 )
 
-func RelayEvent(chainId string, cdc *amino.Codec, passphrase string, claim *types.EthBridgeClaim) error {
+func RelayEvent(chainId string, cdc *amino.Codec, validatorAddress sdk.AccAddress, validatorName string, passphrase string, claim *types.EthBridgeClaim) error {
 
 	cliCtx := context.NewCLIContext().
 		WithCodec(cdc).
-		WithAccountDecoder(cdc).
-		WithFromAddress(claim.Validator).
-		WithFromName("validator")
+		WithAccountDecoder(cdc)
+
+	cliCtx = cliCtx.
+		WithFromAddress(validatorAddress).
+		WithFromName(validatorName)
 
 	cliCtx.SkipConfirm = true
 
@@ -40,14 +42,14 @@ func RelayEvent(chainId string, cdc *amino.Codec, passphrase string, claim *type
 
 	err := cliCtx.EnsureAccountExistsFromAddr(claim.Validator)
 	if err != nil {
-		fmt.Errorf("Validator account error: %s", err)
+		fmt.Printf("Validator account error: %s", err)
 	}
 
 	msg := ethbridge.NewMsgMakeEthBridgeClaim(*claim)
 
 	err1 := msg.ValidateBasic()
 	if err1 != nil {
-		fmt.Errorf("Msg validation error: %s", err1)
+		fmt.Printf("Msg validation error: %s", err1)
 	}
 
 	cliCtx.PrintResponse = true
@@ -55,17 +57,23 @@ func RelayEvent(chainId string, cdc *amino.Codec, passphrase string, claim *type
 	//prepare tx
 	txBldr, err = utils.PrepareTxBuilder(txBldr, cliCtx)
 	if err != nil {
+		fmt.Printf("Msg prepare error: %s", err)
 		return err
 	}
 
 	// build and sign the transaction
-	txBytes, err := txBldr.BuildAndSign("validator", passphrase, []sdk.Msg{msg})
+	txBytes, err := txBldr.BuildAndSign(validatorName, passphrase, []sdk.Msg{msg})
 	if err != nil {
+		fmt.Printf("Msg build/sign error: %s", err)
 		return err
 	}
 
 	// broadcast to a Tendermint node
 	res, err := cliCtx.BroadcastTx(txBytes)
+	if err != nil {
+		fmt.Printf("Msg broadcast error: %s", err)
+		return err
+	}
 	cliCtx.PrintOutput(res)
 	return err
 }

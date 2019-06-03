@@ -8,25 +8,25 @@ package main
 // -------------------------------------------------------------
 
 import (
+	"encoding/hex"
 	"fmt"
 	"os"
-	"encoding/hex"
 
 	"github.com/spf13/cobra"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
-	"github.com/ethereum/go-ethereum/common"
-	
+
 	// "golang.org/x/crypto"
 
 	app "github.com/swishlabsco/cosmos-ethereum-bridge"
-	relayer "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/relayer"
 	events "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
+	relayer "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/relayer"
 )
 
 const (
@@ -75,7 +75,7 @@ var rootCmd = &cobra.Command{
 
 func initRelayerCmd() *cobra.Command {
 	initRelayerCmd := &cobra.Command{
-		Use:   "init chain-id web3-provider contract-address event-signature validator",
+		Use:   "init chain-id web3-provider contract-address event-signature validatorFromName",
 		Short: "Initalizes a web socket which streams live events from a smart contract",
 		RunE:  RunRelayerCmd,
 	}
@@ -140,10 +140,7 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Parse the validator running the relayer service
-	validator, valErr := sdk.AccAddressFromBech32(args[4])
-	if valErr != nil {
-		return fmt.Errorf("Invalid validator: %v", validator)
-	}
+	validatorFrom := args[4]
 
 	// Initialize the relayer
 	initErr := relayer.InitRelayer(
@@ -152,10 +149,11 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 		ethereumProvider,
 		contractAddress,
 		eventSig,
-		validator)
+		validatorFrom)
 
 	if initErr != nil {
 		fmt.Printf("%v", initErr)
+		return initErr
 	}
 
 	return nil

@@ -16,8 +16,9 @@ import (
 
 	amino "github.com/tendermint/go-amino"
 
+	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -34,10 +35,23 @@ import (
 
 func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 	contractAddress common.Address, eventSig string,
-	validator sdk.AccAddress) error {
+	validatorFrom string) error {
 
-	passphrase, err := keys.GetPassphrase("validator")
+	validatorAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom)
 	if err != nil {
+		fmt.Printf("failed to get from fields: %v", err)
+		return err
+	}
+
+	passphrase, err := keys.GetPassphrase(validatorFrom)
+	if err != nil {
+		return err
+	}
+
+	//Test passhprase is correct
+	_, err = authtxb.MakeSignature(nil, validatorName, passphrase, authtxb.StdSignMsg{})
+	if err != nil {
+		fmt.Printf("passphrase error: %v", err)
 		return err
 	}
 
@@ -89,13 +103,13 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 				}
 
 				// Parse the event's payload into a struct
-				claim, claimErr := txs.ParsePayload(validator, &event)
+				claim, claimErr := txs.ParsePayload(validatorAddress, &event)
 				if claimErr != nil {
 					fmt.Errorf("Error: %s", claimErr)
 				}
 
 				// Initiate the relay
-				relayErr := txs.RelayEvent(chainId, cdc, passphrase, &claim)
+				relayErr := txs.RelayEvent(chainId, cdc, validatorAddress, validatorName, passphrase, &claim)
 				if relayErr != nil {
 					fmt.Errorf("Error: %s", relayErr)
 				}
