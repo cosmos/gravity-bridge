@@ -31,3 +31,37 @@ jobs: # basic units of work in a run
             gotestsum --junitfile ${TEST_RESULTS}/unit-tests.xml
       - store_test_results:
           path: /tmp/test-results
+  build:
+    # The primary container is an instance of the first image listed. The job's commands run in this container.
+    docker:
+      # specify the version you desire here
+      - image: circleci/node:9.11.1
+
+    working_directory: /go/src/github.com/swishlabsco/cosmos-ethereum-bridge/ethereum-contracts
+    
+    environment: # environment variables for the build itself
+      TEST_RESULTS: /tmp/contract-test-results # path to where test results will be saved
+   
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run: npm install
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+      - run: truffle develop # start server
+      - run: test # triggers truffle test
+      - store_test_results:
+          path: /tmp/contract-test-results
+      - run: exit
+
