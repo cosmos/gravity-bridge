@@ -29,6 +29,7 @@ type LockEvent struct {
 }
 
 func NewLockEvent(contractAbi abi.ABI, eventName string, eventData []byte) LockEvent {
+
 	// Load Peggy smart contract abi
 	if eventName != "LogLock" {
 		log.Fatal("Only LogLock events are currently supported.")

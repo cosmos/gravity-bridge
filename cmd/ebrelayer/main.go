@@ -128,7 +128,7 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Parse the address of the deployed contract
 	bytesContractAddress, err := hex.DecodeString(args[2])
 	if err != nil {
-		return fmt.Errorf("Invalid contract-address: %v", bytesContractAddress, err)
+		return fmt.Errorf("Invalid contract-address: %v", bytesContractAddress)
 	}
 	contractAddress := common.BytesToAddress(bytesContractAddress)
 
