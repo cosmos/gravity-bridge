@@ -14,8 +14,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -25,7 +23,6 @@ import (
 	// "golang.org/x/crypto"
 
 	app "github.com/swishlabsco/cosmos-ethereum-bridge"
-	events "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
 	relayer "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/relayer"
 )
 
@@ -53,11 +50,6 @@ func init() {
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
 		initRelayerCmd(),
-		getCheckCmd(),
-		getPrintCmd(),
-		client.LineBreak,
-		keys.Commands(),
-		client.LineBreak,
 	)
 
 	executor := cli.PrepareMainCmd(rootCmd, "EBRELAYER", defaultCLIHome)
@@ -82,31 +74,6 @@ func initRelayerCmd() *cobra.Command {
 
 	return initRelayerCmd
 }
-
-func getPrintCmd() *cobra.Command {
-	getPrintCmd := &cobra.Command{
-		Use:   "print",
-		Short: "Print all stored events",
-		RunE:  RunPrintCmd,
-	}
-
-	return getPrintCmd
-}
-
-func getCheckCmd() *cobra.Command {
-	getCheckCmd := &cobra.Command{
-		Use:   "check tx-hash",
-		Short: "Check a transaction hash to see if it is available for claim submission",
-		RunE:  RunCheckCmd,
-	}
-
-	return getCheckCmd
-}
-
-// -------------------------------------------------------------------------------------
-//  `ebrelayer init "testing" "wss://ropsten.infura.io/ws" "3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb"
-//	 "LogLock(bytes32,address,bytes,address,uint256,uint256)" "cosmos13mztulrrz3leephsr6dhxker4t68qxew9m9nhn"`
-// -------------------------------------------------------------------------------------
 
 func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	if len(args) != 5 {
@@ -156,24 +123,6 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 		return initErr
 	}
 
-	return nil
-}
-
-func RunCheckCmd(cmd *cobra.Command, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("Expected tx-hash")
-	}
-	txHash := args[0]
-	events.PrintEventByTx(txHash)
-
-	return nil
-}
-
-func RunPrintCmd(cmd *cobra.Command, args []string) error {
-	if len(args) != 0 {
-		return fmt.Errorf("Expected 0 args")
-	}
-	events.PrintEvents()
 	return nil
 }
 
