@@ -31,7 +31,7 @@ jobs: # basic units of work in a run
             gotestsum --junitfile ${TEST_RESULTS}/unit-tests.xml
       - store_test_results:
           path: /tmp/test-results
-  build:
+  contracts:
     # The primary container is an instance of the first image listed. The job's commands run in this container.
     docker:
       # specify the version you desire here
