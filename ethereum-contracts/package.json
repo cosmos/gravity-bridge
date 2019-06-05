@@ -1,0 +1,35 @@
+{
+  "name": "ethereum-contracts",
+  "version": "1.0.0",
+  "description": "Starting point for cross chain value transfers between the Ethereum and Cosmos networks",
+  "main": "truffle.js",
+  "directories": {
+    "test": "test"
+  },
+  "author": "Denali Marsh",
+  "license": "ISC",
+  "dependencies": {
+    "bignumber.js": "^6.0.0",
+    "bluebird": "^3.5.1",
+    "eth-lib": "^0.2.8",
+    "ethereumjs-util": "^5.2.0",
+    "keccak": "^1.4.0",
+    "keythereum": "^1.0.4",
+    "lodash": "^4.17.10",
+    "utf8": "^3.0.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "chai-bignumber": "^3.0.0",
+    "openzeppelin-solidity": "^2.1.3",
+    "solc": "^0.5.0",
+    "web3": "^1.0.0-beta.52",
+    "web3-utils": "^1.0.0-beta.52"
+  },
+  "scripts": {
+    "develop": "truffle develop",
+    "test": "truffle test",
+    "exit": ".exit"
+  }
+}
