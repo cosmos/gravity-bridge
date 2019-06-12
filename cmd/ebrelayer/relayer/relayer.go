@@ -99,10 +99,7 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 				event := events.NewLockEvent(contractABI, "LogLock", vLog.Data)
 
 				// Add the event to the record
-				successfulStore := events.NewEventWrite(vLog.TxHash.Hex(), event)
-				if successfulStore != true {
-					fmt.Errorf("Error: event not stored")
-				}
+				events.NewEventWrite(vLog.TxHash.Hex(), event)
 
 				// Parse the event's payload into a struct
 				claim, claimErr := txs.ParsePayload(validatorAddress, &event)

@@ -15,10 +15,8 @@ import (
 var EventRecords = make(map[string]LockEvent)
 
 // Add a validator's address to the official claims list
-func NewEventWrite(txHash string, event LockEvent) bool {
+func NewEventWrite(txHash string, event LockEvent) {
 	EventRecords[txHash] = event
-
-	return true
 }
 
 // Checks the sessions stored events for this transaction hash
