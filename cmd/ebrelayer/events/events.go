@@ -39,8 +39,8 @@ func PrintEventByTx(txHash string) {
 func PrintEvents() error {
 
  	// For each claim, print the validator which submitted the claim
-  for tx, event := range EventRecords {
-    fmt.Printf("\nTransaction: %v\n", tx)
+  for txHash, event := range EventRecords {
+    fmt.Printf("\nTransaction: %v\n", txHash)
     PrintEvent(event)
   }
 
