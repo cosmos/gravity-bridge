@@ -34,20 +34,12 @@ func init() {
 	TestEventData.Token = common.BytesToAddress([]byte("0x0000000000000000000000000000000000000000"))
 
 	value := new(big.Int)
-	value, okValue := value.SetString("7", 10)
-	if !okValue {
-		fmt.Println("SetString: error")
-	}
+	value, _ = value.SetString("7", 10)
 	TestEventData.Value = value
 
 	nonce := new(big.Int)
-	nonce, okNonce := nonce.SetString("39", 10)
-	if !okNonce {
-		fmt.Println("SetString: error")
-	}
+	nonce, _ = nonce.SetString("39", 10)
 	TestEventData.Nonce = nonce
-
-	fmt.Printf("%+v", TestEventData)
 
 }
 
