@@ -27,10 +27,7 @@ func ParsePayload(validator sdk.AccAddress, event *events.LockEvent) (types.EthB
   witnessClaim := types.EthBridgeClaim{}
 
   // Nonce type casting (*big.Int -> int)
-  nonce, nonceErr := strconv.Atoi(event.Nonce.String())
-  if nonceErr != nil {
-    fmt.Errorf("%s", nonceErr)
-  }
+  nonce := Int64(event.Nonce)
   witnessClaim.Nonce = nonce
 
   // EthereumSender type casting (address.common -> string)
