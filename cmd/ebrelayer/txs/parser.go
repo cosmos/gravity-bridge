@@ -23,32 +23,32 @@ const (
 )
 
 func ParsePayload(validator sdk.AccAddress, event *events.LockEvent) (types.EthBridgeClaim, error) {
+  
+  witnessClaim := types.EthBridgeClaim{}
 
-	witnessClaim := types.EthBridgeClaim{}
+  // Nonce type casting (*big.Int -> int)
+  nonce, nonceErr := strconv.Atoi(event.Nonce.String())
+  if nonceErr != nil {
+    fmt.Errorf("%s", nonceErr)
+  }
+  witnessClaim.Nonce = nonce
 
-	// Nonce type casting (*big.Int -> int)
-	nonce, nonceErr := strconv.Atoi(event.Nonce.String())
-	if nonceErr != nil {
-		fmt.Errorf("%s", nonceErr)
-	}
-	witnessClaim.Nonce = nonce
+  // EthereumSender type casting (address.common -> string)
+  witnessClaim.EthereumSender = event.From.Hex()
 
-	// EthereumSender type casting (address.common -> string)
-	witnessClaim.EthereumSender = event.From.Hex()
+  // CosmosReceiver type casting (bytes[] -> sdk.AccAddress)
+  recipient := sdk.AccAddress(event.To)
+  if recipient.Empty() { {
+    return
+  }
+  witnessClaim.CosmosReceiver = recipient
 
-	// CosmosReceiver type casting (bytes[] -> sdk.AccAddress)
-	recipient, recipientErr := sdk.AccAddressFromBech32(string(event.To[:]))
-	if recipientErr != nil {
-		fmt.Errorf("%s", recipientErr)
-	}
-	witnessClaim.CosmosReceiver = recipient
+  // Validator is already the correct type (sdk.AccAddress)
+  witnessClaim.ValidatorAddress = validator
 
-	// Validator is already the correct type (sdk.ValAddress)
-	witnessClaim.ValidatorAddress = validator
+  // Amount type casting (*big.Int -> sdk.Coins)
+  weiAmount := sdk.NewCoins(sdk.NewInt64Coin(ETH, event.Value.Int64))
+  witnessClaim.Amount = weiAmount
 
-	// Amount type casting (*big.Int -> sdk.Coins)
-	weiAmount := sdk.NewCoins(sdk.NewInt64Coin(ETH, event.Value.Int64))
-	witnessClaim.Amount = weiAmount
-
-	return witnessClaim, nil
+  return witnessClaim, nil
 }
