@@ -65,10 +65,17 @@ var rootCmd = &cobra.Command{
 	SilenceUsage: true,
 }
 
+// initRelayerCmd
+//
+// Initializes a relayer service run by individual validators which streams live events
+// 	from a smart contract. The service automatically signs messages containing the event
+//	data and relays them to tendermint for handling by the EthBridge module.
+//
 func initRelayerCmd() *cobra.Command {
 	initRelayerCmd := &cobra.Command{
 		Use:   "init chain-id web3-provider contract-address event-signature validatorFromName",
 		Short: "Initalizes a web socket which streams live events from a smart contract",
+		Example: "ebrelayer init testing wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb \"LogLock(bytes32,address,bytes,address,uint256,uint256)\" validator",
 		RunE:  RunRelayerCmd,
 	}
 
