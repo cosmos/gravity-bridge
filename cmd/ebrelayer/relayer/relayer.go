@@ -102,15 +102,15 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 				events.NewEventWrite(vLog.TxHash.Hex(), event)
 
 				// Parse the event's payload into a struct
-				claim, claimErr := txs.ParsePayload(validatorAddress, &event)
-				if claimErr != nil {
-					fmt.Errorf("Error: %s", claimErr)
+				claim, err := txs.ParsePayload(validatorAddress, &event)
+				if err != nil {
+					fmt.Errorf("Error: %s", err)
 				}
 
 				// Initiate the relay
-				relayErr := txs.RelayEvent(chainId, cdc, validatorAddress, validatorName, passphrase, &claim)
-				if relayErr != nil {
-					fmt.Errorf("Error: %s", relayErr)
+				err := txs.RelayEvent(chainId, cdc, validatorAddress, validatorName, passphrase, &claim)
+				if err != nil {
+					fmt.Errorf("Error: %s", err)
 				}
 			}
 		}
