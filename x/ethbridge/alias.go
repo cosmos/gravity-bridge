@@ -1,12 +1,14 @@
 package ethbridge
 
 import (
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/querier"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 )
 
 type (
 	MsgMakeEthBridgeClaim = types.MsgMakeEthBridgeClaim
+	EthereumAddress       = common.EthereumAddress
 )
 
 var (
