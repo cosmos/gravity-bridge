@@ -55,7 +55,7 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:   "ebcli",
-		Short: "ethereum bridge Client",
+		Short: "ethereum bridge client",
 	}
 
 	// Add --chain-id to persistent flags and mark it required
