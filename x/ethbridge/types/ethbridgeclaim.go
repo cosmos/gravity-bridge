@@ -7,18 +7,19 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 )
 
 type EthBridgeClaim struct {
-	Nonce          int            `json:"nonce"`
-	EthereumSender string         `json:"ethereum_sender"`
-	CosmosReceiver sdk.AccAddress `json:"cosmos_receiver"`
-	Validator      sdk.AccAddress `json:"validator"`
-	Amount         sdk.Coins      `json:"amount"`
+	Nonce          int                    `json:"nonce"`
+	EthereumSender common.EthereumAddress `json:"ethereum_sender"`
+	CosmosReceiver sdk.AccAddress         `json:"cosmos_receiver"`
+	Validator      sdk.AccAddress         `json:"validator"`
+	Amount         sdk.Coins              `json:"amount"`
 }
 
 // NewEthBridgeClaim is a constructor function for NewEthBridgeClaim
-func NewEthBridgeClaim(nonce int, ethereumSender string, cosmosReceiver sdk.AccAddress, validator sdk.AccAddress, amount sdk.Coins) EthBridgeClaim {
+func NewEthBridgeClaim(nonce int, ethereumSender common.EthereumAddress, cosmosReceiver sdk.AccAddress, validator sdk.AccAddress, amount sdk.Coins) EthBridgeClaim {
 	return EthBridgeClaim{
 		Nonce:          nonce,
 		EthereumSender: ethereumSender,
@@ -43,7 +44,7 @@ func NewOracleClaim(cosmosReceiver sdk.AccAddress, amount sdk.Coins) OracleClaim
 }
 
 func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (string, sdk.ValAddress, string) {
-	oracleId := strconv.Itoa(ethClaim.Nonce) + ethClaim.EthereumSender
+	oracleId := strconv.Itoa(ethClaim.Nonce) + string(ethClaim.EthereumSender)
 	claimContent := NewOracleClaim(ethClaim.CosmosReceiver, ethClaim.Amount)
 	claimBytes, _ := json.Marshal(claimContent)
 	claim := string(claimBytes)
@@ -60,7 +61,7 @@ func CreateEthClaimFromOracleString(nonce int, ethereumSender string, validator 
 	valAccAddress := sdk.AccAddress(validator)
 	return NewEthBridgeClaim(
 		nonce,
-		ethereumSender,
+		common.EthereumAddress(ethereumSender),
 		oracleClaim.CosmosReceiver,
 		valAccAddress,
 		oracleClaim.Amount,

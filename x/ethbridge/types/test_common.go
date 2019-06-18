@@ -3,6 +3,7 @@ package types
 import (
 	"testing"
 
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 
 	"github.com/stretchr/testify/require"
@@ -28,7 +29,7 @@ func CreateTestEthMsg(t *testing.T, validatorAddress sdk.AccAddress) MsgMakeEthB
 	return ethMsg
 }
 
-func CreateTestEthClaim(t *testing.T, validatorAddress sdk.AccAddress, testEthereumAddress string, coins string) EthBridgeClaim {
+func CreateTestEthClaim(t *testing.T, validatorAddress sdk.AccAddress, testEthereumAddress common.EthereumAddress, coins string) EthBridgeClaim {
 	testCosmosAddress, err1 := sdk.AccAddressFromBech32(TestAddress)
 	amount, err2 := sdk.ParseCoins(coins)
 	require.NoError(t, err1)

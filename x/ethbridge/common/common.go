@@ -1,8 +1,12 @@
 package common
 
-import gethCommon "github.com/ethereum/go-ethereum/common"
+import (
+	gethCommon "github.com/ethereum/go-ethereum/common"
+)
+
+type EthereumAddress string
 
 //IsValidEthereumAddress returns true if address is valid
-func IsValidEthAddress(s string) bool {
-	return gethCommon.IsHexAddress(s)
+func IsValidEthAddress(address EthereumAddress) bool {
+	return gethCommon.IsHexAddress(string(address))
 }

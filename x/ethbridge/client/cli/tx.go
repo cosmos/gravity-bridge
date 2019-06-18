@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,7 +34,7 @@ func GetCmdMakeEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return stringError
 			}
 
-			ethereumSender := args[1]
+			ethereumSender := common.EthereumAddress(args[1])
 			cosmosReceiver, err := sdk.AccAddressFromBech32(args[2])
 			if err != nil {
 				return err
