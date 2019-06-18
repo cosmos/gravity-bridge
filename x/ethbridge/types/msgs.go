@@ -48,5 +48,5 @@ func (msg MsgMakeEthBridgeClaim) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgMakeEthBridgeClaim) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.EthBridgeClaim.Validator}
+	return []sdk.AccAddress{msg.EthBridgeClaim.ValidatorAddress}
 }

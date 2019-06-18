@@ -40,7 +40,7 @@ func RelayEvent(chainId string, cdc *amino.Codec, validatorAddress sdk.AccAddres
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
 		WithChainID(chainId)
 
-	err := cliCtx.EnsureAccountExistsFromAddr(claim.Validator)
+	err := cliCtx.EnsureAccountExistsFromAddr(claim.ValidatorAddress)
 	if err != nil {
 		fmt.Printf("Validator account error: %s", err)
 	}

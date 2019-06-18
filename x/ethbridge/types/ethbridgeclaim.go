@@ -11,21 +11,21 @@ import (
 )
 
 type EthBridgeClaim struct {
-	Nonce          int                    `json:"nonce"`
-	EthereumSender common.EthereumAddress `json:"ethereum_sender"`
-	CosmosReceiver sdk.AccAddress         `json:"cosmos_receiver"`
-	Validator      sdk.AccAddress         `json:"validator"`
-	Amount         sdk.Coins              `json:"amount"`
+	Nonce            int                    `json:"nonce"`
+	EthereumSender   common.EthereumAddress `json:"ethereum_sender"`
+	CosmosReceiver   sdk.AccAddress         `json:"cosmos_receiver"`
+	ValidatorAddress sdk.AccAddress         `json:"validator_address"`
+	Amount           sdk.Coins              `json:"amount"`
 }
 
 // NewEthBridgeClaim is a constructor function for NewEthBridgeClaim
 func NewEthBridgeClaim(nonce int, ethereumSender common.EthereumAddress, cosmosReceiver sdk.AccAddress, validator sdk.AccAddress, amount sdk.Coins) EthBridgeClaim {
 	return EthBridgeClaim{
-		Nonce:          nonce,
-		EthereumSender: ethereumSender,
-		CosmosReceiver: cosmosReceiver,
-		Validator:      validator,
-		Amount:         amount,
+		Nonce:            nonce,
+		EthereumSender:   ethereumSender,
+		CosmosReceiver:   cosmosReceiver,
+		ValidatorAddress: validator,
+		Amount:           amount,
 	}
 }
 
@@ -48,7 +48,7 @@ func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (s
 	claimContent := NewOracleClaim(ethClaim.CosmosReceiver, ethClaim.Amount)
 	claimBytes, _ := json.Marshal(claimContent)
 	claim := string(claimBytes)
-	validator := sdk.ValAddress(ethClaim.Validator)
+	validator := sdk.ValAddress(ethClaim.ValidatorAddress)
 	return oracleId, validator, claim
 }
 

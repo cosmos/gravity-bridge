@@ -42,7 +42,7 @@ func ParsePayload(validator sdk.AccAddress, event *events.LockEvent) (types.EthB
 	witnessClaim.CosmosReceiver = recipient
 
 	// Validator is already the correct type (sdk.AccAddress)
-	witnessClaim.Validator = validator
+	witnessClaim.ValidatorAddress = validator
 
 	// Amount type casting (*big.Int -> sdk.Coins)
 	ethereumCoin := []string{event.Value.String(), "ethereum"}
