@@ -60,8 +60,8 @@ func (k Keeper) GetProphecy(ctx sdk.Context, id string) (types.Prophecy, sdk.Err
 	return deSerializedProphecy, nil
 }
 
-// saveProphecy saves a prophecy with an initial claim
-func (k Keeper) saveProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Error {
+// setProphecy saves a prophecy with an initial claim
+func (k Keeper) setProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Error {
 	if prophecy.ID == "" {
 		return types.ErrInvalidIdentifier(k.Codespace())
 	}
@@ -101,7 +101,7 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Status, 
 	}
 	prophecy.AddClaim(claim.ValidatorAddress, claim.Content)
 	prophecy = k.processCompletion(ctx, prophecy)
-	err = k.saveProphecy(ctx, prophecy)
+	err = k.setProphecy(ctx, prophecy)
 	if err != nil {
 		return types.Status{}, err
 	}
