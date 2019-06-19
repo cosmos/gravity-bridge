@@ -8,13 +8,11 @@ import (
 )
 
 // MsgMakeEthBridgeClaim defines a message for creating claims on the ethereum bridge
-type MsgMakeEthBridgeClaim struct {
-	EthBridgeClaim `json:"eth_bridge_claim"`
-}
+type MsgMakeEthBridgeClaim EthBridgeClaim
 
 // NewMsgMakeEthBridgeClaim is a constructor function for MsgMakeBridgeClaim
 func NewMsgMakeEthBridgeClaim(ethBridgeClaim EthBridgeClaim) MsgMakeEthBridgeClaim {
-	return MsgMakeEthBridgeClaim{ethBridgeClaim}
+	return MsgMakeEthBridgeClaim(ethBridgeClaim)
 }
 
 // Route should return the name of the module
@@ -25,13 +23,13 @@ func (msg MsgMakeEthBridgeClaim) Type() string { return "make_bridge_claim" }
 
 // ValidateBasic runs stateless checks on the message
 func (msg MsgMakeEthBridgeClaim) ValidateBasic() sdk.Error {
-	if msg.EthBridgeClaim.CosmosReceiver.Empty() {
+	if msg.CosmosReceiver.Empty() {
 		return sdk.ErrInvalidAddress(msg.CosmosReceiver.String())
 	}
-	if msg.EthBridgeClaim.Nonce < 0 {
+	if msg.Nonce < 0 {
 		return ErrInvalidEthNonce(DefaultCodespace)
 	}
-	if !common.IsValidEthAddress(msg.EthBridgeClaim.EthereumSender) {
+	if !common.IsValidEthAddress(msg.EthereumSender) {
 		return ErrInvalidEthAddress(DefaultCodespace)
 	}
 	return nil
@@ -48,6 +46,6 @@ func (msg MsgMakeEthBridgeClaim) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgMakeEthBridgeClaim) GetSigners() []sdk.AccAddress {
-	var validatorAddress sdk.AccAddress = sdk.AccAddress(msg.EthBridgeClaim.ValidatorAddress)
+	var validatorAddress sdk.AccAddress = sdk.AccAddress(msg.ValidatorAddress)
 	return []sdk.AccAddress{validatorAddress}
 }
