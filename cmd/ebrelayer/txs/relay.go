@@ -24,14 +24,14 @@ import (
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 )
 
-func RelayEvent(chainId string, cdc *amino.Codec, validatorAddress sdk.AccAddress, validatorName string, passphrase string, claim *types.EthBridgeClaim) error {
+func RelayEvent(chainId string, cdc *amino.Codec, validatorAddress sdk.ValAddress, validatorName string, passphrase string, claim *types.EthBridgeClaim) error {
 
 	cliCtx := context.NewCLIContext().
 		WithCodec(cdc).
 		WithAccountDecoder(cdc)
 
 	cliCtx = cliCtx.
-		WithFromAddress(validatorAddress).
+		WithFromAddress(sdk.AccAddress(validatorAddress)).
 		WithFromName(validatorName)
 
 	cliCtx.SkipConfirm = true
@@ -40,7 +40,7 @@ func RelayEvent(chainId string, cdc *amino.Codec, validatorAddress sdk.AccAddres
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
 		WithChainID(chainId)
 
-	err := cliCtx.EnsureAccountExistsFromAddr(claim.ValidatorAddress)
+	err := cliCtx.EnsureAccountExistsFromAddr(sdk.AccAddress(claim.ValidatorAddress))
 	if err != nil {
 		fmt.Printf("Validator account error: %s", err)
 	}

@@ -1,27 +1,27 @@
 package txs
 
 import (
-	"testing"
 	"fmt"
 	"math/big"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
-	"github.com/ethereum/go-ethereum/common"
 )
 
-var TestValidator sdk.AccAddress
+var TestValidator sdk.ValAddress
 var TestEventData events.LockEvent
 
 func init() {
 
 	// Set up testing parameters for the parser
-	testValidator, err := sdk.AccAddressFromBech32("cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq")
-  if err != nil {
-    fmt.Errorf("%s", err)
-  }
-  TestValidator = testValidator
+	testValidator, err := sdk.ValAddressFromBech32("cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq")
+	if err != nil {
+		fmt.Errorf("%s", err)
+	}
+	TestValidator = testValidator
 
 	// Mock expected data from the parser
 	TestEventData := events.LockEvent{}
@@ -36,19 +36,19 @@ func init() {
 	value := new(big.Int)
 	value, okValue := value.SetString("7", 10)
 	if !okValue {
-	  fmt.Println("SetString: error")
-  }
+		fmt.Println("SetString: error")
+	}
 	TestEventData.Value = value
 
 	nonce := new(big.Int)
 	nonce, okNonce := nonce.SetString("39", 10)
 	if !okNonce {
-	  fmt.Println("SetString: error")
-  }
+		fmt.Println("SetString: error")
+	}
 	TestEventData.Nonce = nonce
 
 	fmt.Printf("%+v", TestEventData)
-	
+
 }
 
 // Set up data for parameters and to compare against

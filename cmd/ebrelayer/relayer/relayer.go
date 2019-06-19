@@ -18,6 +18,7 @@ import (
 
 	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 
 	"github.com/ethereum/go-ethereum"
@@ -37,11 +38,12 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 	contractAddress common.Address, eventSig string,
 	validatorFrom string) error {
 
-	validatorAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom)
+	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom)
 	if err != nil {
 		fmt.Printf("failed to get from fields: %v", err)
 		return err
 	}
+	validatorAddress := sdk.ValAddress(validatorAccAddress)
 
 	passphrase, err := keys.GetPassphrase(validatorFrom)
 	if err != nil {

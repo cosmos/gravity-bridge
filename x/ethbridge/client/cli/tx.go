@@ -40,7 +40,7 @@ func GetCmdMakeEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			validator, err := sdk.AccAddressFromBech32(args[3])
+			validator, err := sdk.ValAddressFromBech32(args[3])
 			if err != nil {
 				return err
 			}

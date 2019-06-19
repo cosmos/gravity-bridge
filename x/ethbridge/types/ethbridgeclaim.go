@@ -15,12 +15,12 @@ type EthBridgeClaim struct {
 	Nonce            int                    `json:"nonce"`
 	EthereumSender   common.EthereumAddress `json:"ethereum_sender"`
 	CosmosReceiver   sdk.AccAddress         `json:"cosmos_receiver"`
-	ValidatorAddress sdk.AccAddress         `json:"validator_address"`
+	ValidatorAddress sdk.ValAddress         `json:"validator_address"`
 	Amount           sdk.Coins              `json:"amount"`
 }
 
 // NewEthBridgeClaim is a constructor function for NewEthBridgeClaim
-func NewEthBridgeClaim(nonce int, ethereumSender common.EthereumAddress, cosmosReceiver sdk.AccAddress, validator sdk.AccAddress, amount sdk.Coins) EthBridgeClaim {
+func NewEthBridgeClaim(nonce int, ethereumSender common.EthereumAddress, cosmosReceiver sdk.AccAddress, validator sdk.ValAddress, amount sdk.Coins) EthBridgeClaim {
 	return EthBridgeClaim{
 		Nonce:            nonce,
 		EthereumSender:   ethereumSender,
@@ -60,7 +60,7 @@ func CreateEthClaimFromOracleString(nonce int, ethereumSender string, validator 
 		return EthBridgeClaim{}, err
 	}
 
-	valAccAddress := sdk.AccAddress(validator)
+	valAccAddress := sdk.ValAddress(validator)
 	return NewEthBridgeClaim(
 		nonce,
 		common.EthereumAddress(ethereumSender),

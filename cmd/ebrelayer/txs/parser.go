@@ -20,7 +20,7 @@ import (
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 )
 
-func ParsePayload(validator sdk.AccAddress, event *events.LockEvent) (types.EthBridgeClaim, error) {
+func ParsePayload(validator sdk.ValAddress, event *events.LockEvent) (types.EthBridgeClaim, error) {
 
 	witnessClaim := types.EthBridgeClaim{}
 

@@ -18,7 +18,7 @@ func TestBasicMsgs(t *testing.T) {
 	//Setup
 	cdc := codec.New()
 	ctx, _, keeper, bankKeeper, validatorAddresses, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
-	accAddress := sdk.AccAddress(validatorAddresses[0])
+	valAddress := validatorAddresses[0]
 
 	handler := NewHandler(keeper, bankKeeper, cdc, types.DefaultCodespace)
 
@@ -28,18 +28,18 @@ func TestBasicMsgs(t *testing.T) {
 	require.True(t, strings.Contains(res.Log, "Unrecognized ethbridge message type: "))
 
 	//Normal Creation
-	normalCreateMsg := types.CreateTestEthMsg(t, accAddress)
+	normalCreateMsg := types.CreateTestEthMsg(t, valAddress)
 	res = handler(ctx, normalCreateMsg)
 	require.True(t, res.IsOK())
 
 	//Bad Creation
-	badCreateMsg := types.CreateTestEthMsg(t, accAddress)
+	badCreateMsg := types.CreateTestEthMsg(t, valAddress)
 	badCreateMsg.Nonce = -1
 	res = handler(ctx, badCreateMsg)
 	require.False(t, res.IsOK())
 	require.True(t, strings.Contains(res.Log, "invalid ethereum nonce provided"))
 
-	badCreateMsg = types.CreateTestEthMsg(t, accAddress)
+	badCreateMsg = types.CreateTestEthMsg(t, valAddress)
 	badCreateMsg.EthereumSender = "badAddress"
 	res = handler(ctx, badCreateMsg)
 	require.False(t, res.IsOK())
@@ -49,10 +49,10 @@ func TestBasicMsgs(t *testing.T) {
 func TestDuplicateMsgs(t *testing.T) {
 	cdc := codec.New()
 	ctx, _, keeper, bankKeeper, validatorAddresses, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
-	accAddress := sdk.AccAddress(validatorAddresses[0])
+	valAddress := validatorAddresses[0]
 
 	handler := NewHandler(keeper, bankKeeper, cdc, types.DefaultCodespace)
-	normalCreateMsg := types.CreateTestEthMsg(t, accAddress)
+	normalCreateMsg := types.CreateTestEthMsg(t, valAddress)
 	res := handler(ctx, normalCreateMsg)
 	require.True(t, res.IsOK())
 	require.Equal(t, res.Log, oracle.PendingStatus)
@@ -68,19 +68,19 @@ func TestMintSuccess(t *testing.T) {
 	//Setup
 	cdc := codec.New()
 	ctx, _, keeper, bankKeeper, validatorAddresses, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{2, 7, 1})
-	accAddressVal1Pow2 := sdk.AccAddress(validatorAddresses[0])
-	accAddressVal2Pow7 := sdk.AccAddress(validatorAddresses[1])
-	accAddressVal3Pow1 := sdk.AccAddress(validatorAddresses[2])
+	valAddressVal1Pow2 := validatorAddresses[0]
+	valAddressVal2Pow7 := validatorAddresses[1]
+	valAddressVal3Pow1 := validatorAddresses[2]
 
 	handler := NewHandler(keeper, bankKeeper, cdc, types.DefaultCodespace)
 
 	//Initial message
-	normalCreateMsg := types.CreateTestEthMsg(t, accAddressVal1Pow2)
+	normalCreateMsg := types.CreateTestEthMsg(t, valAddressVal1Pow2)
 	res := handler(ctx, normalCreateMsg)
 	require.True(t, res.IsOK())
 
 	//Message from second validator succeeds and mints new tokens
-	normalCreateMsg = types.CreateTestEthMsg(t, accAddressVal2Pow7)
+	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal2Pow7)
 	res = handler(ctx, normalCreateMsg)
 	require.True(t, res.IsOK())
 	receiverAddress, err := sdk.AccAddressFromBech32(types.TestAddress)
@@ -92,7 +92,7 @@ func TestMintSuccess(t *testing.T) {
 	require.Equal(t, res.Log, oracle.SuccessStatus)
 
 	//Additional message from third validator fails and does not mint
-	normalCreateMsg = types.CreateTestEthMsg(t, accAddressVal3Pow1)
+	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal3Pow1)
 	res = handler(ctx, normalCreateMsg)
 	require.False(t, res.IsOK())
 	require.True(t, strings.Contains(res.Log, "Prophecy already finalized"))
@@ -107,15 +107,15 @@ func TestNoMintFail(t *testing.T) {
 	//Setup
 	cdc := codec.New()
 	ctx, _, keeper, bankKeeper, validatorAddresses, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 4, 3})
-	accAddressVal1Pow3 := sdk.AccAddress(validatorAddresses[0])
-	accAddressVal2Pow4 := sdk.AccAddress(validatorAddresses[1])
-	accAddressVal3Pow3 := sdk.AccAddress(validatorAddresses[2])
+	valAddressVal1Pow3 := validatorAddresses[0]
+	valAddressVal2Pow4 := validatorAddresses[1]
+	valAddressVal3Pow3 := validatorAddresses[2]
 
-	ethClaim1 := types.CreateTestEthClaim(t, accAddressVal1Pow3, types.TestEthereumAddress, types.TestCoins)
+	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow3, types.TestEthereumAddress, types.TestCoins)
 	ethMsg1 := NewMsgMakeEthBridgeClaim(ethClaim1)
-	ethClaim2 := types.CreateTestEthClaim(t, accAddressVal2Pow4, types.AltTestEthereumAddress, types.TestCoins)
+	ethClaim2 := types.CreateTestEthClaim(t, valAddressVal2Pow4, types.AltTestEthereumAddress, types.TestCoins)
 	ethMsg2 := NewMsgMakeEthBridgeClaim(ethClaim2)
-	ethClaim3 := types.CreateTestEthClaim(t, accAddressVal3Pow3, types.TestEthereumAddress, types.AltTestCoins)
+	ethClaim3 := types.CreateTestEthClaim(t, valAddressVal3Pow3, types.TestEthereumAddress, types.AltTestCoins)
 	ethMsg3 := NewMsgMakeEthBridgeClaim(ethClaim3)
 
 	handler := NewHandler(keeper, bankKeeper, cdc, types.DefaultCodespace)

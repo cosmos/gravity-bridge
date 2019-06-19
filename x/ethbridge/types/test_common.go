@@ -23,13 +23,13 @@ const (
 )
 
 //Ethereum-bridge specific stuff
-func CreateTestEthMsg(t *testing.T, validatorAddress sdk.AccAddress) MsgMakeEthBridgeClaim {
+func CreateTestEthMsg(t *testing.T, validatorAddress sdk.ValAddress) MsgMakeEthBridgeClaim {
 	ethClaim := CreateTestEthClaim(t, validatorAddress, TestEthereumAddress, TestCoins)
 	ethMsg := NewMsgMakeEthBridgeClaim(ethClaim)
 	return ethMsg
 }
 
-func CreateTestEthClaim(t *testing.T, validatorAddress sdk.AccAddress, testEthereumAddress common.EthereumAddress, coins string) EthBridgeClaim {
+func CreateTestEthClaim(t *testing.T, validatorAddress sdk.ValAddress, testEthereumAddress common.EthereumAddress, coins string) EthBridgeClaim {
 	testCosmosAddress, err1 := sdk.AccAddressFromBech32(TestAddress)
 	amount, err2 := sdk.ParseCoins(coins)
 	require.NoError(t, err1)
@@ -38,7 +38,7 @@ func CreateTestEthClaim(t *testing.T, validatorAddress sdk.AccAddress, testEther
 	return ethClaim
 }
 
-func CreateTestQueryEthProphecyResponse(cdc *codec.Codec, t *testing.T, validatorAddress sdk.AccAddress) QueryEthProphecyResponse {
+func CreateTestQueryEthProphecyResponse(cdc *codec.Codec, t *testing.T, validatorAddress sdk.ValAddress) QueryEthProphecyResponse {
 	ethBridgeClaim := CreateTestEthClaim(t, validatorAddress, TestEthereumAddress, TestCoins)
 	oracleClaim := CreateOracleClaimFromEthClaim(cdc, ethBridgeClaim)
 	ethBridgeClaims := []EthBridgeClaim{ethBridgeClaim}

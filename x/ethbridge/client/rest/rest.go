@@ -60,7 +60,7 @@ func makeClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerF
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err2.Error())
 			return
 		}
-		validator, err3 := sdk.AccAddressFromBech32(req.Validator)
+		validator, err3 := sdk.ValAddressFromBech32(req.Validator)
 		if err3 != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err3.Error())
 			return
