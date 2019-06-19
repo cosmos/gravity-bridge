@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
 
@@ -11,7 +10,6 @@ import (
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	coinKeeper  bank.Keeper
 	stakeKeeper staking.Keeper
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
