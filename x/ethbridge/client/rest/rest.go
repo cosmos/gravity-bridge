@@ -55,29 +55,29 @@ func makeClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerF
 		}
 
 		ethereumSender := common.EthereumAddress(req.EthereumSender)
-		cosmosReceiver, err2 := sdk.AccAddressFromBech32(req.CosmosReceiver)
-		if err2 != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err2.Error())
+		cosmosReceiver, err := sdk.AccAddressFromBech32(req.CosmosReceiver)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		validator, err3 := sdk.ValAddressFromBech32(req.Validator)
-		if err3 != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err3.Error())
+		validator, err := sdk.ValAddressFromBech32(req.Validator)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		amount, err4 := sdk.ParseCoins(req.Amount)
-		if err4 != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err4.Error())
+		amount, err := sdk.ParseCoins(req.Amount)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		// create the message
 		ethBridgeClaim := types.NewEthBridgeClaim(req.Nonce, ethereumSender, cosmosReceiver, validator, amount)
 		msg := ethbridge.NewMsgMakeEthBridgeClaim(ethBridgeClaim)
-		err5 := msg.ValidateBasic()
-		if err5 != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err5.Error())
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
