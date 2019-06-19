@@ -18,7 +18,6 @@ const FailedStatusText = "failed"
 // Each transaction, pending potential results are also calculated, stored and indexed by their byte result
 // to allow discovery of consensus on any the result in constant time without having to sort or run
 // through the list of claims to find the one with highest consensus
-
 type Prophecy struct {
 	ID              string                      `json:"id"`
 	Status          Status                      `json:"status"`
