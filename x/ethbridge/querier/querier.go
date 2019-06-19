@@ -29,29 +29,29 @@ func NewQuerier(keeper keep.Keeper, cdc *codec.Codec, codespace sdk.CodespaceTyp
 	}
 }
 
-func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, keeper keep.Keeper, codespace sdk.CodespaceType) (res []byte, err sdk.Error) {
+func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, keeper keep.Keeper, codespace sdk.CodespaceType) (res []byte, errSdk sdk.Error) {
 	var params types.QueryEthProphecyParams
 
-	errRes := cdc.UnmarshalJSON(req.Data, &params)
-	if errRes != nil {
+	err := cdc.UnmarshalJSON(req.Data, &params)
+	if err != nil {
 		return []byte{}, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
 	id := strconv.Itoa(params.Nonce) + params.EthereumSender
-	prophecy, err := keeper.GetProphecy(ctx, id)
-	if err != nil {
+	prophecy, errSdk := keeper.GetProphecy(ctx, id)
+	if errSdk != nil {
 		return []byte{}, oracletypes.ErrProphecyNotFound(codespace)
 	}
 
-	bridgeClaims, err2 := MapOracleClaimsToEthBridgeClaims(params.Nonce, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
-	if err2 != nil {
-		return []byte{}, err2
+	bridgeClaims, errSdk := MapOracleClaimsToEthBridgeClaims(params.Nonce, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
+	if errSdk != nil {
+		return []byte{}, errSdk
 	}
 
 	response := types.NewQueryEthProphecyResponse(prophecy.ID, prophecy.Status, bridgeClaims)
 
-	bz, err3 := codec.MarshalJSONIndent(cdc, response)
-	if err3 != nil {
+	bz, err := codec.MarshalJSONIndent(cdc, response)
+	if err != nil {
 		panic("could not marshal result to JSON")
 	}
 
