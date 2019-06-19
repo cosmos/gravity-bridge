@@ -23,16 +23,16 @@ func NewQueryEthProphecyParams(nonce int, ethereumSender string) QueryEthProphec
 
 // Query Result Payload for an eth prophecy query
 type QueryEthProphecyResponse struct {
-	ID              string           `json:"id"`
-	Status          oracle.Status    `json:"status"`
-	EthBridgeClaims []EthBridgeClaim `json:"claims"`
+	ID     string           `json:"id"`
+	Status oracle.Status    `json:"status"`
+	Claims []EthBridgeClaim `json:"claims"`
 }
 
 func NewQueryEthProphecyResponse(id string, status oracle.Status, claims []EthBridgeClaim) QueryEthProphecyResponse {
 	return QueryEthProphecyResponse{
-		ID:              id,
-		Status:          status,
-		EthBridgeClaims: claims,
+		ID:     id,
+		Status: status,
+		Claims: claims,
 	}
 }
 
