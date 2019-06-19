@@ -87,7 +87,7 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Status, 
 	}
 	prophecy, err := k.GetProphecy(ctx, claim.ID)
 	if err == nil {
-		if prophecy.Status.StatusText == types.SuccessStatusText || prophecy.Status.StatusText == types.FailedStatusText {
+		if prophecy.Status.Text == types.SuccessStatusText || prophecy.Status.Text == types.FailedStatusText {
 			return types.Status{}, types.ErrProphecyFinalized(k.Codespace())
 		}
 		if prophecy.ValidatorClaims[claim.ValidatorAddress.String()] != "" {
@@ -129,10 +129,10 @@ func (k Keeper) processCompletion(ctx sdk.Context, prophecy types.Prophecy) type
 	highestPossibleClaimPower := highestClaimPower + remainingPossibleClaimPower
 	highestPossibleConsensusRatio := float64(highestPossibleClaimPower) / float64(totalPower.Int64())
 	if highestConsensusRatio >= k.consensusNeeded {
-		prophecy.Status.StatusText = types.SuccessStatusText
+		prophecy.Status.Text = types.SuccessStatusText
 		prophecy.Status.FinalClaim = highestClaim
 	} else if highestPossibleConsensusRatio <= k.consensusNeeded {
-		prophecy.Status.StatusText = types.FailedStatusText
+		prophecy.Status.Text = types.FailedStatusText
 	}
 	return prophecy
 }

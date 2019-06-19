@@ -130,14 +130,14 @@ func NewEmptyProphecy() Prophecy {
 
 // Status is a struct that contains the status of a given prophecy
 type Status struct {
-	StatusText string `json:"status_text"`
+	Text       string `json:"text"`
 	FinalClaim string `json:"final_claim"`
 }
 
 // NewStatus returns a new Status with the given data contained
-func NewStatus(status string, finalClaim string) Status {
+func NewStatus(text string, finalClaim string) Status {
 	return Status{
-		StatusText: status,
+		Text:       text,
 		FinalClaim: finalClaim,
 	}
 }

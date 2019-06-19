@@ -40,13 +40,13 @@ func handleMsgMakeEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec, oracleKeeper
 	if err != nil {
 		return err.Result()
 	}
-	if status.StatusText == oracle.SuccessStatus {
+	if status.Text == oracle.SuccessStatus {
 		err = processSuccessfulClaim(ctx, bankKeeper, status.FinalClaim)
 		if err != nil {
 			return err.Result()
 		}
 	}
-	return sdk.Result{Log: status.StatusText}
+	return sdk.Result{Log: status.Text}
 }
 
 func processSuccessfulClaim(ctx sdk.Context, bankKeeper bank.Keeper, claim string) sdk.Error {
