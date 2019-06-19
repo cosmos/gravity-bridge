@@ -79,29 +79,29 @@ func (k Keeper) saveProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Error
 	return nil
 }
 
-func (k Keeper) ProcessClaim(ctx sdk.Context, id string, validator sdk.ValAddress, claim string) (types.Status, sdk.Error) {
-	activeValidator := k.checkActiveValidator(ctx, validator)
+func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Status, sdk.Error) {
+	activeValidator := k.checkActiveValidator(ctx, claim.ValidatorAddress)
 	if !activeValidator {
 		return types.Status{}, types.ErrInvalidValidator(k.Codespace())
 	}
-	if claim == "" {
+	if claim.Content == "" {
 		return types.Status{}, types.ErrInvalidClaim(k.Codespace())
 	}
-	prophecy, err := k.GetProphecy(ctx, id)
+	prophecy, err := k.GetProphecy(ctx, claim.ID)
 	if err == nil {
 		if prophecy.Status.StatusText == types.SuccessStatusText || prophecy.Status.StatusText == types.FailedStatusText {
 			return types.Status{}, types.ErrProphecyFinalized(k.Codespace())
 		}
-		if prophecy.ValidatorClaims[validator.String()] != "" {
+		if prophecy.ValidatorClaims[claim.ValidatorAddress.String()] != "" {
 			return types.Status{}, types.ErrDuplicateMessage(k.Codespace())
 		}
-		prophecy.AddClaim(validator, claim)
+		prophecy.AddClaim(claim.ValidatorAddress, claim.Content)
 	} else {
 		if err.Code() != types.CodeProphecyNotFound {
 			return types.Status{}, err
 		}
-		prophecy = types.NewProphecy(id)
-		prophecy.AddClaim(validator, claim)
+		prophecy = types.NewProphecy(claim.ID)
+		prophecy.AddClaim(claim.ValidatorAddress, claim.Content)
 	}
 	prophecy = k.processCompletion(ctx, prophecy)
 	err = k.saveProphecy(ctx, prophecy)

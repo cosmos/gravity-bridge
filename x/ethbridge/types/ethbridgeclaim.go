@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 )
 
 type EthBridgeClaim struct {
@@ -29,27 +30,28 @@ func NewEthBridgeClaim(nonce int, ethereumSender common.EthereumAddress, cosmosR
 	}
 }
 
-//OracleClaim is the details of how the claim for each validator will be stored in the oracle
-type OracleClaim struct {
+//OracleClaimContent is the details of how the content of the claim for each validator will be stored in the oracle
+type OracleClaimContent struct {
 	CosmosReceiver sdk.AccAddress `json:"cosmos_receiver"`
 	Amount         sdk.Coins      `json:"amount"`
 }
 
 // NewOracleClaim is a constructor function for OracleClaim
-func NewOracleClaim(cosmosReceiver sdk.AccAddress, amount sdk.Coins) OracleClaim {
-	return OracleClaim{
+func NewOracleClaimContent(cosmosReceiver sdk.AccAddress, amount sdk.Coins) OracleClaimContent {
+	return OracleClaimContent{
 		CosmosReceiver: cosmosReceiver,
 		Amount:         amount,
 	}
 }
 
-func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (string, sdk.ValAddress, string) {
+func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) oracle.Claim {
 	oracleId := strconv.Itoa(ethClaim.Nonce) + string(ethClaim.EthereumSender)
-	claimContent := NewOracleClaim(ethClaim.CosmosReceiver, ethClaim.Amount)
+	claimContent := NewOracleClaimContent(ethClaim.CosmosReceiver, ethClaim.Amount)
 	claimBytes, _ := json.Marshal(claimContent)
-	claim := string(claimBytes)
+	claimString := string(claimBytes)
 	validator := sdk.ValAddress(ethClaim.ValidatorAddress)
-	return oracleId, validator, claim
+	claim := oracle.NewClaim(oracleId, validator, claimString)
+	return claim
 }
 
 func CreateEthClaimFromOracleString(nonce int, ethereumSender string, validator sdk.ValAddress, oracleClaimString string) (EthBridgeClaim, sdk.Error) {
@@ -68,14 +70,14 @@ func CreateEthClaimFromOracleString(nonce int, ethereumSender string, validator 
 	), nil
 }
 
-func CreateOracleClaimFromOracleString(oracleClaimString string) (OracleClaim, sdk.Error) {
-	var oracleClaim OracleClaim
+func CreateOracleClaimFromOracleString(oracleClaimString string) (OracleClaimContent, sdk.Error) {
+	var oracleClaimContent OracleClaimContent
 
 	stringBytes := []byte(oracleClaimString)
-	errRes := json.Unmarshal(stringBytes, &oracleClaim)
+	errRes := json.Unmarshal(stringBytes, &oracleClaimContent)
 	if errRes != nil {
-		return OracleClaim{}, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", errRes))
+		return OracleClaimContent{}, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", errRes))
 	}
 
-	return oracleClaim, nil
+	return oracleClaimContent, nil
 }

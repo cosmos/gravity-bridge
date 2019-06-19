@@ -35,8 +35,8 @@ func handleMsgMakeEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec, oracleKeeper
 	if !common.IsValidEthAddress(msg.EthereumSender) {
 		return types.ErrInvalidEthAddress(codespace).Result()
 	}
-	oracleId, validator, claimString := types.CreateOracleClaimFromEthClaim(cdc, msg.EthBridgeClaim)
-	status, err := oracleKeeper.ProcessClaim(ctx, oracleId, validator, claimString)
+	oracleClaim := types.CreateOracleClaimFromEthClaim(cdc, msg.EthBridgeClaim)
+	status, err := oracleKeeper.ProcessClaim(ctx, oracleClaim)
 	if err != nil {
 		return err.Result()
 	}

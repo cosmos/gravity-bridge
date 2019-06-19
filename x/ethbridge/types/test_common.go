@@ -40,8 +40,8 @@ func CreateTestEthClaim(t *testing.T, validatorAddress sdk.AccAddress, testEther
 
 func CreateTestQueryEthProphecyResponse(cdc *codec.Codec, t *testing.T, validatorAddress sdk.AccAddress) QueryEthProphecyResponse {
 	ethBridgeClaim := CreateTestEthClaim(t, validatorAddress, TestEthereumAddress, TestCoins)
-	id, _, _ := CreateOracleClaimFromEthClaim(cdc, ethBridgeClaim)
+	oracleClaim := CreateOracleClaimFromEthClaim(cdc, ethBridgeClaim)
 	ethBridgeClaims := []EthBridgeClaim{ethBridgeClaim}
-	resp := NewQueryEthProphecyResponse(id, oracle.Status{oracle.PendingStatus, ""}, ethBridgeClaims)
+	resp := NewQueryEthProphecyResponse(oracleClaim.ID, oracle.Status{oracle.PendingStatus, ""}, ethBridgeClaims)
 	return resp
 }

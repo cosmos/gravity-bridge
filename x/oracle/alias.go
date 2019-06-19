@@ -14,12 +14,16 @@ type (
 	Prophecy = types.Prophecy
 
 	Status = types.Status
+
+	Claim = types.Claim
 )
 
 var (
 	NewKeeper = keeper.NewKeeper
 
 	NewProphecy = types.NewProphecy
+
+	NewClaim = types.NewClaim
 )
 
 const (
