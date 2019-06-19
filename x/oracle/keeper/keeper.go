@@ -86,19 +86,20 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Status, 
 		return types.Status{}, types.ErrInvalidClaim(k.Codespace())
 	}
 	prophecy, err := k.GetProphecy(ctx, claim.ID)
-	if err == nil {
+	if err != nil {
+		if err.Code() != types.CodeProphecyNotFound {
+			return types.Status{}, err
+		}
+		prophecy = types.NewProphecy(claim.ID)
+		prophecy.AddClaim(claim.ValidatorAddress, claim.Content)
+
+	} else {
 		if prophecy.Status.Text == types.SuccessStatusText || prophecy.Status.Text == types.FailedStatusText {
 			return types.Status{}, types.ErrProphecyFinalized(k.Codespace())
 		}
 		if prophecy.ValidatorClaims[claim.ValidatorAddress.String()] != "" {
 			return types.Status{}, types.ErrDuplicateMessage(k.Codespace())
 		}
-		prophecy.AddClaim(claim.ValidatorAddress, claim.Content)
-	} else {
-		if err.Code() != types.CodeProphecyNotFound {
-			return types.Status{}, err
-		}
-		prophecy = types.NewProphecy(claim.ID)
 		prophecy.AddClaim(claim.ValidatorAddress, claim.Content)
 	}
 	prophecy = k.processCompletion(ctx, prophecy)
