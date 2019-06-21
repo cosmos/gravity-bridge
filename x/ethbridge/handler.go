@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
+	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 )
@@ -15,8 +15,8 @@ import (
 func NewHandler(oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, cdc *codec.Codec, codespace sdk.CodespaceType) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgMakeEthBridgeClaim:
-			return handleMsgMakeEthBridgeClaim(ctx, cdc, oracleKeeper, bankKeeper, msg, codespace)
+		case MsgCreateEthBridgeClaim:
+			return handleMsgCreateEthBridgeClaim(ctx, cdc, oracleKeeper, bankKeeper, msg, codespace)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized ethbridge message type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -24,8 +24,8 @@ func NewHandler(oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, cdc *codec.C
 	}
 }
 
-// Handle a message to make a bridge claim
-func handleMsgMakeEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec, oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, msg MsgMakeEthBridgeClaim, codespace sdk.CodespaceType) sdk.Result {
+// Handle a message to create a bridge claim
+func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec, oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, msg MsgCreateEthBridgeClaim, codespace sdk.CodespaceType) sdk.Result {
 	if msg.CosmosReceiver.Empty() {
 		return sdk.ErrInvalidAddress(msg.CosmosReceiver.String()).Result()
 	}

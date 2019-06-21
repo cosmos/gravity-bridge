@@ -40,7 +40,7 @@ func (mc ModuleClient) GetTxCmd() *cobra.Command {
 	}
 
 	ethBridgeTxCmd.AddCommand(client.PostCommands(
-		ethbridgecmd.GetCmdMakeEthBridgeClaim(mc.cdc),
+		ethbridgecmd.GetCmdCreateEthBridgeClaim(mc.cdc),
 	)...)
 
 	return ethBridgeTxCmd

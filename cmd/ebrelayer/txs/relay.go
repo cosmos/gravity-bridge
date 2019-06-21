@@ -52,7 +52,7 @@ func RelayEvent(chainId string, cdc *amino.Codec, validatorAddress sdk.ValAddres
 		fmt.Printf("Validator account error: %s", err)
 	}
 
-	msg := ethbridge.NewMsgMakeEthBridgeClaim(*claim)
+	msg := ethbridge.NewMsgCreateEthBridgeClaim(*claim)
 
 	err1 := msg.ValidateBasic()
 	if err1 != nil {

@@ -106,7 +106,7 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 		oracle.DefaultConsensusNeeded,
 	)
 	if oracleErr != nil {
-		cmn.Exit(oracleErr.Error())
+		panic(oracleErr.Error())
 	}
 	app.oracleKeeper = oracleKeeper
 

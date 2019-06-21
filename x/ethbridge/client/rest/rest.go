@@ -15,7 +15,7 @@ import (
 	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
+	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/querier"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 )
@@ -27,11 +27,11 @@ const (
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, cdc *codec.Codec, queryRoute string) {
-	r.HandleFunc(fmt.Sprintf("/%s/prophecies", queryRoute), makeClaimHandler(cdc, cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/%s/prophecies", queryRoute), createClaimHandler(cdc, cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/%s/prophecies/{%s}/{%s}", queryRoute, restNonce, restEthereumSender), getProphecyHandler(cdc, cliCtx, queryRoute)).Methods("GET")
 }
 
-type makeEthClaimReq struct {
+type createEthClaimReq struct {
 	BaseReq        rest.BaseReq `json:"base_req"`
 	Nonce          int          `json:"nonce"`
 	EthereumSender string       `json:"ethereum_sender"`
@@ -40,9 +40,9 @@ type makeEthClaimReq struct {
 	Amount         string       `json:"amount"`
 }
 
-func makeClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
+func createClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req makeEthClaimReq
+		var req createEthClaimReq
 
 		if !rest.ReadRESTReq(w, r, cdc, &req) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
@@ -74,7 +74,7 @@ func makeClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerF
 
 		// create the message
 		ethBridgeClaim := types.NewEthBridgeClaim(req.Nonce, ethereumSender, cosmosReceiver, validator, amount)
-		msg := ethbridge.NewMsgMakeEthBridgeClaim(ethBridgeClaim)
+		msg := ethbridge.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

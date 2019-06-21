@@ -1,4 +1,4 @@
-package common
+package ethbridge
 
 import (
 	gethCommon "github.com/ethereum/go-ethereum/common"

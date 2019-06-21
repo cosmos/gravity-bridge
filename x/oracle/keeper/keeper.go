@@ -46,10 +46,10 @@ func (k Keeper) GetProphecy(ctx sdk.Context, id string) (types.Prophecy, sdk.Err
 		return types.NewEmptyProphecy(), types.ErrInvalidIdentifier(k.Codespace())
 	}
 	store := ctx.KVStore(k.storeKey)
-	if !store.Has([]byte(id)) {
+	bz := store.Get([]byte(id))
+	if bz == nil {
 		return types.NewEmptyProphecy(), types.ErrProphecyNotFound(k.Codespace())
 	}
-	bz := store.Get([]byte(id))
 	var dbProphecy types.DBProphecy
 	k.cdc.MustUnmarshalBinaryBare(bz, &dbProphecy)
 

@@ -7,18 +7,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
+	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 )
 
-// GetCmdMakeEthBridgeClaim is the CLI command for making a claim on an ethereum prophecy
-func GetCmdMakeEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
+// GetCmdCreateEthBridgeClaim is the CLI command for creating a claim on an ethereum prophecy
+func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "make-claim nonce ethereum-sender-address cosmos-receiver-address validator-address amount",
-		Short: "make a claim on an ethereum prophecy",
+		Use:   "create-claim nonce ethereum-sender-address cosmos-receiver-address validator-address amount",
+		Short: "create a claim on an ethereum prophecy",
 		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc).WithAccountDecoder(cdc)
@@ -51,7 +51,7 @@ func GetCmdMakeEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 			}
 
 			ethBridgeClaim := types.NewEthBridgeClaim(nonce, ethereumSender, cosmosReceiver, validator, amount)
-			msg := types.NewMsgMakeEthBridgeClaim(ethBridgeClaim)
+			msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

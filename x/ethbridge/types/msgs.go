@@ -4,25 +4,25 @@ import (
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
+	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 )
 
-// MsgMakeEthBridgeClaim defines a message for creating claims on the ethereum bridge
-type MsgMakeEthBridgeClaim EthBridgeClaim
+// MsgCreateEthBridgeClaim defines a message for creating claims on the ethereum bridge
+type MsgCreateEthBridgeClaim EthBridgeClaim
 
-// NewMsgMakeEthBridgeClaim is a constructor function for MsgMakeBridgeClaim
-func NewMsgMakeEthBridgeClaim(ethBridgeClaim EthBridgeClaim) MsgMakeEthBridgeClaim {
-	return MsgMakeEthBridgeClaim(ethBridgeClaim)
+// NewMsgCreateEthBridgeClaim is a constructor function for MsgCreateBridgeClaim
+func NewMsgCreateEthBridgeClaim(ethBridgeClaim EthBridgeClaim) MsgCreateEthBridgeClaim {
+	return MsgCreateEthBridgeClaim(ethBridgeClaim)
 }
 
 // Route should return the name of the module
-func (msg MsgMakeEthBridgeClaim) Route() string { return RouterKey }
+func (msg MsgCreateEthBridgeClaim) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgMakeEthBridgeClaim) Type() string { return "make_bridge_claim" }
+func (msg MsgCreateEthBridgeClaim) Type() string { return "create_bridge_claim" }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgMakeEthBridgeClaim) ValidateBasic() sdk.Error {
+func (msg MsgCreateEthBridgeClaim) ValidateBasic() sdk.Error {
 	if msg.CosmosReceiver.Empty() {
 		return sdk.ErrInvalidAddress(msg.CosmosReceiver.String())
 	}
@@ -36,7 +36,7 @@ func (msg MsgMakeEthBridgeClaim) ValidateBasic() sdk.Error {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgMakeEthBridgeClaim) GetSignBytes() []byte {
+func (msg MsgCreateEthBridgeClaim) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -45,7 +45,7 @@ func (msg MsgMakeEthBridgeClaim) GetSignBytes() []byte {
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgMakeEthBridgeClaim) GetSigners() []sdk.AccAddress {
+func (msg MsgCreateEthBridgeClaim) GetSigners() []sdk.AccAddress {
 	var validatorAddress sdk.AccAddress = sdk.AccAddress(msg.ValidatorAddress)
 	return []sdk.AccAddress{validatorAddress}
 }

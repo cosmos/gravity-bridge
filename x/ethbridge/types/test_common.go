@@ -3,7 +3,7 @@ package types
 import (
 	"testing"
 
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
+	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 
 	"github.com/stretchr/testify/require"
@@ -23,9 +23,9 @@ const (
 )
 
 //Ethereum-bridge specific stuff
-func CreateTestEthMsg(t *testing.T, validatorAddress sdk.ValAddress) MsgMakeEthBridgeClaim {
+func CreateTestEthMsg(t *testing.T, validatorAddress sdk.ValAddress) MsgCreateEthBridgeClaim {
 	ethClaim := CreateTestEthClaim(t, validatorAddress, TestEthereumAddress, TestCoins)
-	ethMsg := NewMsgMakeEthBridgeClaim(ethClaim)
+	ethMsg := NewMsgCreateEthBridgeClaim(ethClaim)
 	return ethMsg
 }
 

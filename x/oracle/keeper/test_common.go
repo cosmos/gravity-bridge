@@ -24,6 +24,14 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+const (
+	TestID                     = "oracleID"
+	AlternateTestID            = "altOracleID"
+	TestString                 = "{value: 5}"
+	AlternateTestString        = "{value: 7}"
+	AnotherAlternateTestString = "{value: 9}"
+)
+
 // CreateTestKeepers greates an OracleKeeper, AccountKeeper and Context to be used for test input
 func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []int64) (sdk.Context, auth.AccountKeeper, Keeper, bank.Keeper, []sdk.ValAddress, sdk.Error) {
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)

@@ -112,11 +112,11 @@ func TestNoMintFail(t *testing.T) {
 	valAddressVal3Pow3 := validatorAddresses[2]
 
 	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow3, types.TestEthereumAddress, types.TestCoins)
-	ethMsg1 := NewMsgMakeEthBridgeClaim(ethClaim1)
+	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
 	ethClaim2 := types.CreateTestEthClaim(t, valAddressVal2Pow4, types.AltTestEthereumAddress, types.TestCoins)
-	ethMsg2 := NewMsgMakeEthBridgeClaim(ethClaim2)
+	ethMsg2 := NewMsgCreateEthBridgeClaim(ethClaim2)
 	ethClaim3 := types.CreateTestEthClaim(t, valAddressVal3Pow3, types.TestEthereumAddress, types.AltTestCoins)
-	ethMsg3 := NewMsgMakeEthBridgeClaim(ethClaim3)
+	ethMsg3 := NewMsgCreateEthBridgeClaim(ethClaim3)
 
 	handler := NewHandler(keeper, bankKeeper, cdc, types.DefaultCodespace)
 
