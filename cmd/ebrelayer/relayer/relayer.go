@@ -16,10 +16,10 @@ import (
 
 	amino "github.com/tendermint/go-amino"
 
-	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
+	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -35,8 +35,7 @@ import (
 // -------------------------------------------------------------------------
 
 func InitRelayer(cdc *amino.Codec, chainId string, provider string,
-	contractAddress common.Address, eventSig string,
-	validatorFrom string) error {
+	contractAddress common.Address, eventSig string, validatorFrom string) error {
 
 	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom)
 	if err != nil {
