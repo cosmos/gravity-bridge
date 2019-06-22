@@ -22,14 +22,14 @@ import (
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
-	// "golang.org/x/crypto"
+	// "github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	app "github.com/swishlabsco/cosmos-ethereum-bridge"
 	relayer "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/relayer"
 )
 
 const (
-	storeAcc       = "acc"
 	routeEthbridge = "ethbridge"
 )
 
@@ -84,7 +84,8 @@ func initRelayerCmd() *cobra.Command {
 		Use:   "init [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id",
 		Short: "Initalizes a web socket which streams live events from a smart contract",
 		Args: cobra.ExactArgs(4),
-		Example: "ebrelayer init wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb \"LogLock(bytes32,address,bytes,address,uint256,uint256)\" validator --chain-id=testing",
+		// NOTE: Preface both parentheses in the event signature with a '\'
+		Example: "ebrelayer init wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb LogLock(bytes32,address,bytes,address,uint256,uint256) validator --chain-id=testing",
 		RunE:  RunRelayerCmd,
 	}
 
@@ -111,12 +112,12 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 	contractAddress := common.BytesToAddress(bytesContractAddress)
 
-	// Parse the event signature for the subscription
-	eventSig := "0xe154a56f2d306d5bbe4ac2379cb0cfc906b23685047a2bd2f5f0a0e810888f72"
-	// eventSig := crypto.Keccak256Hash([]byte(args[3]))
-	if eventSig == "" {
-		return fmt.Errorf("Invalid event-signature: %v", eventSig)
-	}
+	// Convert arg[2] to []bytes and apply the Keccak256Hash
+	eventSigHash := crypto.Keccak256Hash([]byte(args[2]))
+
+	// Get the hex event signature from the hash
+	// eventSig should be "0xe154a56f2d306d5bbe4ac2379cb0cfc906b23685047a2bd2f5f0a0e810888f72"
+	eventSig := eventSigHash.Hex()
 
 	// Parse the validator running the relayer service
 	validatorFrom := args[3]
