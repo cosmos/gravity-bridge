@@ -24,8 +24,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 
-	app "github.com/swishlabsco/cosmos-ethereum-bridge"
-	relayer "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/relayer"
+	app "github.com/swishlabsco/peggy_fork"
+	relayer "github.com/swishlabsco/peggy_fork/cmd/ebrelayer/relayer"
 )
 
 const (

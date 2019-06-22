@@ -11,8 +11,8 @@ package txs
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
+	"github.com/swishlabsco/peggy_fork/cmd/ebrelayer/events"
+	"github.com/swishlabsco/peggy_fork/x/ethbridge/types"
 )
 
 const (

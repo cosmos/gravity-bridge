@@ -25,9 +25,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/contract"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/txs"
+	"github.com/swishlabsco/peggy_fork/cmd/ebrelayer/contract"
+	"github.com/swishlabsco/peggy_fork/cmd/ebrelayer/events"
+	"github.com/swishlabsco/peggy_fork/cmd/ebrelayer/txs"
 )
 
 // -------------------------------------------------------------------------
@@ -39,8 +39,7 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 
 	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom)
 	if err != nil {
-		fmt.Printf("failed to get from fields: %v", err)
-		return err
+		return ("Failed to get from fields: ", err)
 	}
 	validatorAddress := sdk.ValAddress(validatorAccAddress)
 
@@ -52,14 +51,13 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 	//Test passhprase is correct
 	_, err = authtxb.MakeSignature(nil, validatorName, passphrase, authtxb.StdSignMsg{})
 	if err != nil {
-		fmt.Printf("passphrase error: %v", err)
-		return err
+		return ("Passphrase error: ", err)
 	}
 
 	// Start client with infura ropsten provider
 	client, err := SetupWebsocketEthClient(provider)
 	if err != nil {
-		fmt.Errorf("%s", err)
+		return err
 	}
 	fmt.Printf("\nStarted ethereum websocket with provider: %s", provider)
 
@@ -74,10 +72,9 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 	// Filter by contract and event, write results to logs
 	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)
 	if err != nil {
-		fmt.Errorf("%s", err)
-	} else {
-		fmt.Printf("\nSubscribed to contract events on address: %s\n", contractAddress.Hex())
+		return err
 	}
+	fmt.Printf("\nSubscribed to contract events on address: %s\n", contractAddress.Hex())
 
 	// Load Peggy Contract's ABI
 	contractABI := contract.LoadABI()
@@ -103,13 +100,13 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 				// Parse the event's payload into a struct
 				claim, err := txs.ParsePayload(validatorAddress, &event)
 				if err != nil {
-					fmt.Errorf("Error: %s", err)
+					return err
 				}
 
 				// Initiate the relay
 				err := txs.RelayEvent(chainId, cdc, validatorAddress, validatorName, passphrase, &claim)
 				if err != nil {
-					fmt.Errorf("Error: %s", err)
+					return err
 				}
 			}
 		}

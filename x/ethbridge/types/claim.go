@@ -7,8 +7,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
+	common "github.com/swishlabsco/peggy_fork/x/ethbridge/common"
+	"github.com/swishlabsco/peggy_fork/x/oracle"
 )
 
 type EthBridgeClaim struct {

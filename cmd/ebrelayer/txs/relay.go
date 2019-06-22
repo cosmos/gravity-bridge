@@ -20,8 +20,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
 
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
+	"github.com/swishlabsco/peggy_fork/x/ethbridge"
+	"github.com/swishlabsco/peggy_fork/x/ethbridge/types"
 )
 
 // RelayEvent
