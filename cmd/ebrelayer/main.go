@@ -81,9 +81,9 @@ var rootCmd = &cobra.Command{
 //
 func initRelayerCmd() *cobra.Command {
 	initRelayerCmd := &cobra.Command{
-		Use:   "init chain-id web3-provider contract-address event-signature validatorFromName",
+		Use:   "init [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id",
 		Short: "Initalizes a web socket which streams live events from a smart contract",
-		Example: "ebrelayer init testing wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb \"LogLock(bytes32,address,bytes,address,uint256,uint256)\" validator",
+		Example: "ebrelayer init wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb \"LogLock(bytes32,address,bytes,address,uint256,uint256)\" validator --chain-id=testing",
 		RunE:  RunRelayerCmd,
 	}
 
