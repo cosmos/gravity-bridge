@@ -525,6 +525,30 @@
   version = "v1.2.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:eed4e3e91fc99503023e80d2ab2be01c9477c52bed2450870df36fe2ecb0799d"
+  name = "github.com/swishlabsco/cosmos-ethereum-bridge"
+  packages = [
+    ".",
+    "cmd/ebrelayer/contract",
+    "cmd/ebrelayer/events",
+    "cmd/ebrelayer/relayer",
+    "cmd/ebrelayer/txs",
+    "x/ethbridge",
+    "x/ethbridge/client",
+    "x/ethbridge/client/cli",
+    "x/ethbridge/client/rest",
+    "x/ethbridge/common",
+    "x/ethbridge/querier",
+    "x/ethbridge/types",
+    "x/oracle",
+    "x/oracle/keeper",
+    "x/oracle/types",
+  ]
+  pruneopts = "UT"
+  revision = "7131e0159cbe0669fdbf8011579407db74432ce6"
+
+[[projects]]
   digest = "1:5b180f17d5bc50b765f4dcf0d126c72979531cbbd7f7929bf3edd87fb801ea2d"
   name = "github.com/syndtr/goleveldb"
   packages = [
@@ -838,6 +862,21 @@
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "github.com/stretchr/testify/require",
+    "github.com/swishlabsco/cosmos-ethereum-bridge",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/contract",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/relayer",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/txs",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/client",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/client/cli",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/client/rest",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/querier",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper",
+    "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types",
     "github.com/tendermint/go-amino",
     "github.com/tendermint/tendermint/abci/types",
     "github.com/tendermint/tendermint/config",

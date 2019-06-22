@@ -13,7 +13,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -45,6 +47,12 @@ func init() {
 
 	cdc := app.MakeCodec()
 	appCodec = cdc
+
+	// Add --chain-id to persistent flags and mark it required
+	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
+	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
+		return initConfig(rootCmd)
+	}
 
 	// Construct Root Command
 	rootCmd.AddCommand(
@@ -83,24 +91,20 @@ func initRelayerCmd() *cobra.Command {
 }
 
 func RunRelayerCmd(cmd *cobra.Command, args []string) error {
-	if len(args) != 5 {
-		return fmt.Errorf("Expected 5 arguments, got %v", len(args))
-	}
-
 	// Parse chain's ID
-	chainId := args[0]
-	if chainId == "" {
-		return fmt.Errorf("Invalid chain-id: %v", chainId)
+	chainID := viper.GetString(client.FlagChainID)
+	if chainID == "" {
+		return fmt.Errorf("Must specify a 'chain-id'")
 	}
 
 	// Parse ethereum provider
-	ethereumProvider := args[1]
+	ethereumProvider := args[0]
 	if !relayer.IsWebsocketURL(ethereumProvider) {
 		return fmt.Errorf("Invalid web3-provider: %v", ethereumProvider)
 	}
 
 	// Parse the address of the deployed contract
-	bytesContractAddress, err := hex.DecodeString(args[2])
+	bytesContractAddress, err := hex.DecodeString(args[1])
 	if err != nil {
 		return fmt.Errorf("Invalid contract-address: %v", bytesContractAddress)
 	}
@@ -114,12 +118,12 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Parse the validator running the relayer service
-	validatorFrom := args[4]
+	validatorFrom := args[3]
 
 	// Initialize the relayer
 	initErr := relayer.InitRelayer(
 		appCodec,
-		chainId,
+		chainID,
 		ethereumProvider,
 		contractAddress,
 		eventSig,
@@ -132,6 +136,11 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
+
+func initConfig(cmd *cobra.Command) error {
+	return viper.BindPFlag(client.FlagChainID, cmd.PersistentFlags().Lookup(client.FlagChainID))
+}
+
 
 func main() {
 	err := rootCmd.Execute()
