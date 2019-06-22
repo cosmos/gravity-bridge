@@ -15,11 +15,7 @@ import (
 	"log"
 
 	amino "github.com/tendermint/go-amino"
-
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
-	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -35,24 +31,8 @@ import (
 // -------------------------------------------------------------------------
 
 func InitRelayer(cdc *amino.Codec, chainId string, provider string,
-	contractAddress common.Address, eventSig string, validatorFrom string) error {
-
-	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom)
-	if err != nil {
-		return ("Failed to get from fields: ", err)
-	}
-	validatorAddress := sdk.ValAddress(validatorAccAddress)
-
-	passphrase, err := keys.GetPassphrase(validatorFrom)
-	if err != nil {
-		return err
-	}
-
-	//Test passhprase is correct
-	_, err = authtxb.MakeSignature(nil, validatorName, passphrase, authtxb.StdSignMsg{})
-	if err != nil {
-		return ("Passphrase error: ", err)
-	}
+	contractAddress common.Address, eventSig string, validatorName string,
+	passphrase string, validatorAddress sdk.ValAddress) error {
 
 	// Start client with infura ropsten provider
 	client, err := SetupWebsocketEthClient(provider)
@@ -104,7 +84,7 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string,
 				}
 
 				// Initiate the relay
-				err := txs.RelayEvent(chainId, cdc, validatorAddress, validatorName, passphrase, &claim)
+				err = txs.RelayEvent(chainId, cdc, validatorAddress, validatorName, passphrase, &claim)
 				if err != nil {
 					return err
 				}

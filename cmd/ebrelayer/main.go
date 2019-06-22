@@ -14,15 +14,17 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 
+	amino "github.com/tendermint/go-amino"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
+	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
-	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
-
-	"github.com/ethereum/go-ethereum/crypto"
 
 	app "github.com/swishlabsco/peggy_fork"
 	relayer "github.com/swishlabsco/peggy_fork/cmd/ebrelayer/relayer"
@@ -114,12 +116,32 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Convert event signature to []bytes and apply the Keccak256Hash
 	eventSigHash := crypto.Keccak256Hash([]byte(args[2]))
 
-	// Get the hex event signature from the hash, should be:
-	// "0xe154a56f2d306d5bbe4ac2379cb0cfc906b23685047a2bd2f5f0a0e810888f72"
+	// Get the hex event signature from the hash.
+	// Expected value: "0xe154a56f2d306d5bbe4ac2379cb0cfc906b23685047a2bd2f5f0a0e810888f72"
 	eventSig := eventSigHash.Hex()
 
-	// Parse the validator running the relayer service
+	// Parse the validator's moniker
 	validatorFrom := args[3]
+
+	// Get the validator's name and account address using their moniker
+	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom)
+	if err != nil {
+		return err
+	}
+	// Convert the validator's account address into type ValAddress
+	validatorAddress := sdk.ValAddress(validatorAccAddress)
+
+	// Get the validator's passphrase using their moniker
+	passphrase, err := keys.GetPassphrase(validatorFrom)
+	if err != nil {
+		return err
+	}
+
+	//Test passhprase is correct
+	_, err = authtxb.MakeSignature(nil, validatorName, passphrase, authtxb.StdSignMsg{})
+	if err != nil {
+		return err
+	}
 
 	// Initialize the relayer
 	initErr := relayer.InitRelayer(
@@ -128,7 +150,9 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 		ethereumProvider,
 		contractAddress,
 		eventSig,
-		validatorFrom)
+		validatorName,
+		passphrase,
+		validatorAddress)
 
 	if initErr != nil {
 		fmt.Printf("%v", initErr)

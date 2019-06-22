@@ -10,6 +10,9 @@ package txs
 // --------------------------------------------------------
 
 import (
+	"errors"
+	// "math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/swishlabsco/peggy_fork/cmd/ebrelayer/events"
 	"github.com/swishlabsco/peggy_fork/x/ethbridge/types"
@@ -19,30 +22,30 @@ const (
 	ETH string = "eth"
 )
 
-func ParsePayload(validator sdk.AccAddress, event *events.LockEvent) (types.EthBridgeClaim, error) {
+func ParsePayload(validator sdk.ValAddress, event *events.LockEvent) (types.EthBridgeClaim, error) {
 
 	witnessClaim := types.EthBridgeClaim{}
 
 	// Nonce type casting (*big.Int -> int)
-	nonce := Int64(event.Nonce)
+	nonce := int(event.Nonce.Uint64())
 	witnessClaim.Nonce = nonce
 
 	// EthereumSender type casting (address.common -> string)
-	witnessClaim.EthereumSender = event.From.Hex()
+	// witnessClaim.EthereumSender = event.From // .Hex()
 
 	// CosmosReceiver type casting (bytes[] -> sdk.AccAddress)
 	recipient := sdk.AccAddress(event.To)
 	if recipient.Empty() {
-		return
+		return witnessClaim, errors.New("Invalid recipient address")
 	}
 	witnessClaim.CosmosReceiver = recipient
 
-	// Validator is already the correct type (sdk.AccAddress)
+	// Validator is correct type (sdk.ValAddress)
 	witnessClaim.ValidatorAddress = validator
 
 	// Amount type casting (*big.Int -> sdk.Coins)
-	weiAmount := sdk.NewCoins(sdk.NewInt64Coin(ETH, event.Value.Int64))
-	witnessClaim.Amount = weiAmount
+	// weiAmount := sdk.NewCoins(sdk.NewInt64Coin(ETH, event.Value.Int64()))
+	// witnessClaim.Amount = weiAmount
 
 	return witnessClaim, nil
 }
