@@ -22,7 +22,6 @@ import (
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
-	// "github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	app "github.com/swishlabsco/cosmos-ethereum-bridge"
@@ -112,11 +111,11 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 	contractAddress := common.BytesToAddress(bytesContractAddress)
 
-	// Convert arg[2] to []bytes and apply the Keccak256Hash
+	// Convert event signature to []bytes and apply the Keccak256Hash
 	eventSigHash := crypto.Keccak256Hash([]byte(args[2]))
 
-	// Get the hex event signature from the hash
-	// eventSig should be "0xe154a56f2d306d5bbe4ac2379cb0cfc906b23685047a2bd2f5f0a0e810888f72"
+	// Get the hex event signature from the hash, should be:
+	// "0xe154a56f2d306d5bbe4ac2379cb0cfc906b23685047a2bd2f5f0a0e810888f72"
 	eventSig := eventSigHash.Hex()
 
 	// Parse the validator running the relayer service
