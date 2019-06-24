@@ -14,9 +14,11 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
+const ABI_PATH = "cmd/ebrelayer/contract/PeggyABI.json"
+
 func LoadABI() abi.ABI {
 	// Open the file containing Peggy contract's ABI
-	rawContractAbi, errorMsg := ioutil.ReadFile("cmd/ebrelayer/contract/PeggyABI.json")
+	rawContractAbi, errorMsg := ioutil.ReadFile(ABI_PATH)
 	if errorMsg != nil {
 		log.Fatal(errorMsg)
 	}

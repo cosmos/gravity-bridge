@@ -30,9 +30,7 @@ import (
 // Starts an event listener on a specific network, contract, and event
 // -------------------------------------------------------------------------
 
-func InitRelayer(cdc *amino.Codec, chainId string, provider string,
-	contractAddress common.Address, eventSig string, validatorName string,
-	passphrase string, validatorAddress sdk.ValAddress) error {
+func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddress common.Address, eventSig string, validatorName string, passphrase string, validatorAddress sdk.ValAddress) error {
 
 	// Start client with infura ropsten provider
 	client, err := SetupWebsocketEthClient(provider)
