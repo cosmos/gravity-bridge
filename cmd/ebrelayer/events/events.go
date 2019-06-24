@@ -9,7 +9,6 @@ package events
 
 import (
 	"fmt"
-
 )
 
 var EventRecords = make(map[string]LockEvent)

@@ -8,7 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+
 	"github.com/swishlabsco/peggy_fork/cmd/ebrelayer/events"
+	"github.com/swishlabsco/peggy_fork/cmd/ebrelayer/txs"
 )
 
 var TestValidator sdk.ValAddress
@@ -19,7 +21,7 @@ func init() {
 	// Set up testing parameters for the parser
 	testValidator, err := sdk.ValAddressFromBech32("cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq")
 	if err != nil {
-		panic("%s", err)
+		panic(err)
 	}
 	TestValidator = testValidator
 
@@ -40,13 +42,13 @@ func init() {
 	nonce := new(big.Int)
 	nonce, _ = nonce.SetString("39", 10)
 	TestEventData.Nonce = nonce
-
 }
 
 // Set up data for parameters and to compare against
 func TestParsePayload(t *testing.T) {
-	result, err := ParsePayload(TestValidator, &TestEventData)
+	result, err := txs.ParsePayload(TestValidator, &TestEventData)
 	require.NoError(t, err)
+
 	fmt.Printf("%+v", result)
 
 	// TODO: check each individual argument
