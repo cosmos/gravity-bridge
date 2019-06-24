@@ -22,7 +22,7 @@ const (
 	ETH string = "eth"
 )
 
-func ParsePayload(validator sdk.ValAddress, event *events.LockEvent) (types.EthBridgeClaim, error) {
+func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (types.EthBridgeClaim, error) {
 
 	witnessClaim := types.EthBridgeClaim{}
 
@@ -40,8 +40,8 @@ func ParsePayload(validator sdk.ValAddress, event *events.LockEvent) (types.EthB
 	}
 	witnessClaim.CosmosReceiver = recipient
 
-	// Validator is correct type (sdk.ValAddress)
-	witnessClaim.ValidatorAddress = validator
+	// valAddr is correct type (sdk.ValAddress)
+	witnessClaim.ValidatorAddress = valAddr
 
 	// Amount type casting (*big.Int -> sdk.Coins)
 	// weiAmount := sdk.NewCoins(sdk.NewInt64Coin(ETH, event.Value.Int64()))

@@ -11,8 +11,6 @@ package txs
 // ------------------------------------------------------------
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 	amino "github.com/tendermint/go-amino"
@@ -33,6 +31,8 @@ import (
 //
 func RelayEvent(chainId string, cdc *amino.Codec, validatorAddress sdk.ValAddress, moniker string, passphrase string, claim *types.EthBridgeClaim) error {
 
+	var errs []string
+
 	cliCtx := context.NewCLIContext().
 		WithCodec(cdc).
 		WithAccountDecoder(cdc)
@@ -49,38 +49,40 @@ func RelayEvent(chainId string, cdc *amino.Codec, validatorAddress sdk.ValAddres
 
 	err := cliCtx.EnsureAccountExistsFromAddr(sdk.AccAddress(claim.ValidatorAddress))
 	if err != nil {
-		fmt.Printf("Validator account error: %s", err)
+		errs = append(errs, err.Error())
 	}
 
 	msg := ethbridge.NewMsgCreateEthBridgeClaim(*claim)
 
-	err1 := msg.ValidateBasic()
-	if err1 != nil {
-		fmt.Printf("Msg validation error: %s", err1)
+	err = msg.ValidateBasic()
+	if err != nil {
+		errs = append(errs, err.Error())
+		return err
 	}
 
 	cliCtx.PrintResponse = true
 
-	//prepare tx
+	// Prepare tx
 	txBldr, err = utils.PrepareTxBuilder(txBldr, cliCtx)
 	if err != nil {
-		fmt.Printf("Msg prepare error: %s", err)
+		errs = append(errs, err.Error())
 		return err
 	}
 
-	// build and sign the transaction
+	// Build and sign the transaction
 	txBytes, err := txBldr.BuildAndSign(moniker, passphrase, []sdk.Msg{msg})
 	if err != nil {
-		fmt.Printf("Msg build/sign error: %s", err)
+		errs = append(errs, err.Error())
 		return err
 	}
 
-	// broadcast to a Tendermint node
+	// Broadcast to a Tendermint node
 	res, err := cliCtx.BroadcastTx(txBytes)
 	if err != nil {
-		fmt.Printf("Msg broadcast error: %s", err)
+		errs = append(errs, err.Error())
 		return err
 	}
+
 	cliCtx.PrintOutput(res)
 	return err
 }

@@ -19,7 +19,7 @@ func init() {
 	// Set up testing parameters for the parser
 	testValidator, err := sdk.ValAddressFromBech32("cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq")
 	if err != nil {
-		fmt.Errorf("%s", err)
+		panic("%s", err)
 	}
 	TestValidator = testValidator
 
@@ -46,7 +46,6 @@ func init() {
 // Set up data for parameters and to compare against
 func TestParsePayload(t *testing.T) {
 	result, err := ParsePayload(TestValidator, &TestEventData)
-
 	require.NoError(t, err)
 	fmt.Printf("%+v", result)
 
