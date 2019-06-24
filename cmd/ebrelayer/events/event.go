@@ -15,7 +15,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-
 )
 
 // LockEvent represents a single smart contract event
@@ -29,10 +28,7 @@ type LockEvent struct {
 }
 
 func NewLockEvent(contractAbi abi.ABI, eventName string, eventData []byte) LockEvent {
-
-	fmt.Printf("EventData:\n%+v", eventData)
-
-	// Load Peggy smart contract abi
+	// Check event name
 	if eventName != "LogLock" {
 		log.Fatal("Only LogLock events are currently supported.")
 	}

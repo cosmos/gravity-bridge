@@ -11,27 +11,27 @@ package txs
 
 import (
 	"errors"
-	// "math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/swishlabsco/peggy_fork/cmd/ebrelayer/events"
-	"github.com/swishlabsco/peggy_fork/x/ethbridge/types"
+	ethbridgeCommon "github.com/swishlabsco/peggy_fork/x/ethbridge/common"
+	ethbridgeTypes "github.com/swishlabsco/peggy_fork/x/ethbridge/types"
 )
 
 const (
 	ETH string = "eth"
 )
 
-func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (types.EthBridgeClaim, error) {
+func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTypes.EthBridgeClaim, error) {
 
-	witnessClaim := types.EthBridgeClaim{}
+	witnessClaim := ethbridgeTypes.EthBridgeClaim{}
 
 	// Nonce type casting (*big.Int -> int)
 	nonce := int(event.Nonce.Uint64())
 	witnessClaim.Nonce = nonce
 
 	// EthereumSender type casting (address.common -> string)
-	// witnessClaim.EthereumSender = event.From // .Hex()
+	witnessClaim.EthereumSender = ethbridgeCommon.EthereumAddress(event.From.Hex())
 
 	// CosmosReceiver type casting (bytes[] -> sdk.AccAddress)
 	recipient := sdk.AccAddress(event.To)
@@ -44,8 +44,8 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (types.EthBri
 	witnessClaim.ValidatorAddress = valAddr
 
 	// Amount type casting (*big.Int -> sdk.Coins)
-	// weiAmount := sdk.NewCoins(sdk.NewInt64Coin(ETH, event.Value.Int64()))
-	// witnessClaim.Amount = weiAmount
+	coins := sdk.Coins{ sdk.NewInt64Coin(ETH, event.Value.Int64()) }
+	witnessClaim.Amount = coins
 
 	return witnessClaim, nil
 }
