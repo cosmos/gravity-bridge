@@ -3,8 +3,8 @@ package types
 import (
 	"testing"
 
-	common "github.com/swishlabsco/peggy_fork/x/ethbridge/common"
-	"github.com/swishlabsco/peggy_fork/x/oracle"
+	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 
 	"github.com/stretchr/testify/require"
 

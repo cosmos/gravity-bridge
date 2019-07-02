@@ -16,7 +16,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
-	app "github.com/swishlabsco/peggy_fork"
+	app "github.com/swishlabsco/cosmos-ethereum-bridge"
 )
 
 const (

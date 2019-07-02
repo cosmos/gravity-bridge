@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
-	common "github.com/swishlabsco/peggy_fork/x/ethbridge/common"
-	"github.com/swishlabsco/peggy_fork/x/ethbridge/types"
+	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"

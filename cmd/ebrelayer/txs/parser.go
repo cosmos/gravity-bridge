@@ -13,9 +13,9 @@ import (
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/swishlabsco/peggy_fork/cmd/ebrelayer/events"
-	ethbridgeCommon "github.com/swishlabsco/peggy_fork/x/ethbridge/common"
-	ethbridgeTypes "github.com/swishlabsco/peggy_fork/x/ethbridge/types"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
+	ethbridgeCommon "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
+	ethbridgeTypes "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 )
 
 const (

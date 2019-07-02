@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	common "github.com/swishlabsco/peggy_fork/x/ethbridge/common"
+	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 )
 
 // MsgCreateEthBridgeClaim defines a message for creating claims on the ethereum bridge

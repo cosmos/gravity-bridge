@@ -1,8 +1,8 @@
 package oracle
 
 import (
-	"github.com/swishlabsco/peggy_fork/x/oracle/keeper"
-	"github.com/swishlabsco/peggy_fork/x/oracle/types"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
 )
 
 // DefaultConsensusNeeded is the default fraction of validators needed to create claims on a prophecy in order for it to pass

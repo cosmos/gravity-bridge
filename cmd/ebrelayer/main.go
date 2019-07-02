@@ -26,8 +26,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/tendermint/tendermint/libs/cli"
 
-	app "github.com/swishlabsco/peggy_fork"
-	relayer "github.com/swishlabsco/peggy_fork/cmd/ebrelayer/relayer"
+	app "github.com/swishlabsco/cosmos-ethereum-bridge"
+	relayer "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/relayer"
 )
 
 const (

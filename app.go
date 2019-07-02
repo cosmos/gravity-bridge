@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/swishlabsco/peggy_fork/x/ethbridge"
-	"github.com/swishlabsco/peggy_fork/x/oracle"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge"
+	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
