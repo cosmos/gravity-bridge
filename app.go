@@ -98,17 +98,13 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 
 	// The OracleKeeper is the Keeper from the oracle module
 	// It handles interactions with the oracle store
-	oracleKeeper, oracleErr := oracle.NewKeeper(
+	app.oracleKeeper = oracle.NewKeeper(
 		app.stakingKeeper,
 		app.keyOracle,
 		app.cdc,
 		oracle.DefaultCodespace,
 		oracle.DefaultConsensusNeeded,
 	)
-	if oracleErr != nil {
-		panic(oracleErr.Error())
-	}
-	app.oracleKeeper = oracleKeeper
 
 	// The AnteHandler handles signature verification and transaction pre-processing
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))

@@ -19,9 +19,10 @@ const FailedStatusText = "failed"
 // to allow discovery of consensus on any the result in constant time without having to sort or run
 // through the list of claims to find the one with highest consensus
 type Prophecy struct {
-	ID              string                      `json:"id"`
-	Status          Status                      `json:"status"`
-	ClaimValidators map[string][]sdk.ValAddress `json:"claim_validators"` //This is a mapping from a claim to the list of validators that made that claim
+	ID     string `json:"id"`
+	Status Status `json:"status"`
+	//WARNING: Mappings are nondeterministic in Amino, an so iterating over them could result in consensus failure. New code should not iterate over the below 2 mappings.
+	ClaimValidators map[string][]sdk.ValAddress `json:"claim_validators"` //This is a mapping from a claim to the list of validators that made that claim.
 	ValidatorClaims map[string]string           `json:"validator_claims"` //This is a mapping from a validator bech32 address to their claim
 }
 

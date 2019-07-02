@@ -12,18 +12,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
-	amino "github.com/tendermint/go-amino"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
+	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
 	app "github.com/swishlabsco/cosmos-ethereum-bridge"
@@ -84,10 +84,10 @@ func initRelayerCmd() *cobra.Command {
 	initRelayerCmd := &cobra.Command{
 		Use:   "init [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id",
 		Short: "Initalizes a web socket which streams live events from a smart contract",
-		Args: cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(4),
 		// NOTE: Preface both parentheses in the event signature with a '\'
 		Example: "ebrelayer init wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb LogLock(bytes32,address,bytes,address,uint256,uint256) validator --chain-id=testing",
-		RunE:  RunRelayerCmd,
+		RunE:    RunRelayerCmd,
 	}
 
 	return initRelayerCmd
@@ -137,7 +137,7 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	//Test passhprase is correct
+	// Test passphrase is correct
 	_, err = authtxb.MakeSignature(nil, validatorName, passphrase, authtxb.StdSignMsg{})
 	if err != nil {
 		return err
@@ -165,7 +165,6 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 func initConfig(cmd *cobra.Command) error {
 	return viper.BindPFlag(client.FlagChainID, cmd.PersistentFlags().Lookup(client.FlagChainID))
 }
-
 
 func main() {
 	err := rootCmd.Execute()

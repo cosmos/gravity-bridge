@@ -33,7 +33,7 @@ const (
 )
 
 // CreateTestKeepers greates an OracleKeeper, AccountKeeper and Context to be used for test input
-func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []int64) (sdk.Context, auth.AccountKeeper, Keeper, bank.Keeper, []sdk.ValAddress, sdk.Error) {
+func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []int64) (sdk.Context, auth.AccountKeeper, Keeper, bank.Keeper, []sdk.ValAddress) {
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
@@ -81,7 +81,7 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []
 	stakingKeeper.SetPool(ctx, staking.InitialPool())
 	stakingKeeper.SetParams(ctx, staking.DefaultParams())
 
-	keeper, keeperErr := NewKeeper(stakingKeeper, keyOracle, cdc, types.DefaultCodespace, consensusNeeded)
+	keeper := NewKeeper(stakingKeeper, keyOracle, cdc, types.DefaultCodespace, consensusNeeded)
 
 	//construct the validators
 	numValidators := len(validatorPowers)
@@ -112,7 +112,7 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []
 		stakingKeeperLib.TestingUpdateValidator(stakingKeeper, ctx, validators[i], true)
 	}
 
-	return ctx, accountKeeper, keeper, bankKeeper, valAddresses, keeperErr
+	return ctx, accountKeeper, keeper, bankKeeper, valAddresses
 }
 
 // nolint: unparam

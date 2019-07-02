@@ -18,13 +18,13 @@ type Keeper struct {
 
 	codespace sdk.CodespaceType
 
-	consensusNeeded float64
+	consensusNeeded float64 // The minimum % of stake needed to sign claims in order for consensus to occur
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(stakeKeeper staking.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, codespace sdk.CodespaceType, consensusNeeded float64) (Keeper, sdk.Error) {
+func NewKeeper(stakeKeeper staking.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, codespace sdk.CodespaceType, consensusNeeded float64) Keeper {
 	if consensusNeeded <= 0 || consensusNeeded > 1 {
-		return Keeper{}, types.ErrMinimumConsensusNeededInvalid(codespace)
+		panic(types.ErrMinimumConsensusNeededInvalid(codespace).Error())
 	}
 	return Keeper{
 		stakeKeeper:     stakeKeeper,
@@ -32,7 +32,7 @@ func NewKeeper(stakeKeeper staking.Keeper, storeKey sdk.StoreKey, cdc *codec.Cod
 		cdc:             cdc,
 		codespace:       codespace,
 		consensusNeeded: consensusNeeded,
-	}, nil
+	}
 }
 
 // Codespace returns the codespace

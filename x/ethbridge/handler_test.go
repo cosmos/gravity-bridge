@@ -17,7 +17,7 @@ import (
 func TestBasicMsgs(t *testing.T) {
 	//Setup
 	cdc := codec.New()
-	ctx, _, keeper, bankKeeper, validatorAddresses, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
+	ctx, _, keeper, bankKeeper, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
 	valAddress := validatorAddresses[0]
 
 	handler := NewHandler(keeper, bankKeeper, cdc, types.DefaultCodespace)
@@ -48,7 +48,7 @@ func TestBasicMsgs(t *testing.T) {
 
 func TestDuplicateMsgs(t *testing.T) {
 	cdc := codec.New()
-	ctx, _, keeper, bankKeeper, validatorAddresses, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
+	ctx, _, keeper, bankKeeper, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
 	valAddress := validatorAddresses[0]
 
 	handler := NewHandler(keeper, bankKeeper, cdc, types.DefaultCodespace)
@@ -67,7 +67,7 @@ func TestDuplicateMsgs(t *testing.T) {
 func TestMintSuccess(t *testing.T) {
 	//Setup
 	cdc := codec.New()
-	ctx, _, keeper, bankKeeper, validatorAddresses, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{2, 7, 1})
+	ctx, _, keeper, bankKeeper, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.7, []int64{2, 7, 1})
 	valAddressVal1Pow2 := validatorAddresses[0]
 	valAddressVal2Pow7 := validatorAddresses[1]
 	valAddressVal3Pow1 := validatorAddresses[2]
@@ -106,7 +106,7 @@ func TestMintSuccess(t *testing.T) {
 func TestNoMintFail(t *testing.T) {
 	//Setup
 	cdc := codec.New()
-	ctx, _, keeper, bankKeeper, validatorAddresses, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 4, 3})
+	ctx, _, keeper, bankKeeper, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 4, 3})
 	valAddressVal1Pow3 := validatorAddresses[0]
 	valAddressVal2Pow4 := validatorAddresses[1]
 	valAddressVal3Pow3 := validatorAddresses[2]
