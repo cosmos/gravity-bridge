@@ -8,7 +8,6 @@ package main
 // -------------------------------------------------------------
 
 import (
-	"encoding/hex"
 	"fmt"
 	"os"
 
@@ -107,11 +106,10 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Parse the address of the deployed contract
-	bytesContractAddress, err := hex.DecodeString(args[1])
-	if err != nil {
-		return fmt.Errorf("Invalid contract-address: %v", bytesContractAddress)
+	if !common.IsHexAddress(args[1]) {
+    return fmt.Errorf("Invalid contract-address: %v", args[1])
 	}
-	contractAddress := common.BytesToAddress(bytesContractAddress)
+	contractAddress := common.HexToAddress(args[1])
 
 	// Convert event signature to []bytes and apply the Keccak256Hash
 	eventSigHash := crypto.Keccak256Hash([]byte(args[2]))
