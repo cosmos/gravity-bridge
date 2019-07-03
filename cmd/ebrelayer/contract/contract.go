@@ -7,17 +7,24 @@ package contract
 // -------------------------------------------------------
 
 import (
+	"go/build"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-const ABI_PATH = "cmd/ebrelayer/contract/PeggyABI.json"
+const ABI_PATH = "/src/github.com/cosmos/peggy/cmd/ebrelayer/contract/PeggyABI.json"
 
 func LoadABI() abi.ABI {
 	// Open the file containing Peggy contract's ABI
-	rawContractAbi, err := ioutil.ReadFile(ABI_PATH)
+	gopath := os.Getenv("GOPATH")
+	if gopath == "" {
+		gopath = build.Default.GOPATH
+	}
+
+	rawContractAbi, err := ioutil.ReadFile(gopath + ABI_PATH)
 	if err != nil {
 		panic(err)
 	}

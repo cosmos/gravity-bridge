@@ -9,11 +9,8 @@ package relayer
 // ------------------------------------------------------------
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 
-	app "github.com/cosmos/peggy"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
@@ -27,17 +24,15 @@ const (
 )
 
 func TestInitRelayer(t *testing.T) {
-	cdc := app.MakeCodec()
+	// cdc := app.MakeCodec()
 
 	// Convert ContractAddress to hex address
-	if !common.IsHexAddress(ContractAddress) {
-		return fmt.Errorf("Invalid contract address: %v", ContractAddress)
-	}
-	contractAddress := common.HexToAddress(ContractAddress)
+	require.True(t, common.IsHexAddress(ContractAddress))
+	// contractAddress := common.HexToAddress(ContractAddress)
 
-	err = InitRelayer(cdc, ChainID, Socket, contractAddress, EventSig, Validator)
+	// err := InitRelayer(cdc, ChainID, Socket, contractAddress, EventSig, Validator)
 
 	//TODO: add validator key processing for relayer init
-	require.Error(t, err)
-	require.True(t, strings.Contains(err.Error(), "Key validator not found"))
+	// require.Error(t, err)
+	// require.True(t, strings.Contains(err.Error(), "Key validator not found"))
 }
