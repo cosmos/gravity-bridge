@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"github.com/cosmos/peggy/x/oracle/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateGetProphecy(t *testing.T) {
@@ -251,8 +251,7 @@ func TestNonValidator(t *testing.T) {
 
 	//Test claim on first id with first validator
 	oracleClaim := types.NewClaim(TestID, inActiveValidatorAddress, TestString)
-	status, err := keeper.ProcessClaim(ctx, oracleClaim)
+	_, err := keeper.ProcessClaim(ctx, oracleClaim)
 	require.Error(t, err)
 	require.True(t, strings.Contains(err.Error(), "Claim must be made by actively bonded validator"))
-	require.Equal(t, status.Text, "")
 }

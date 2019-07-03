@@ -45,7 +45,7 @@ func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec, oracleKeep
 			return sdkErr.Result()
 		}
 	}
-	return sdk.Result{Log: status.Text}
+	return sdk.Result{Log: status.Text.String()}
 }
 
 func processSuccessfulClaim(ctx sdk.Context, bankKeeper bank.Keeper, claim string) sdk.Error {

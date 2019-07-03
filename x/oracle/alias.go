@@ -32,6 +32,8 @@ const (
 	FailedStatus  = types.FailedStatusText
 )
 
+var StatusTextToString = types.StatusTextToString
+
 const (
 	StoreKey         = types.StoreKey
 	QuerierRoute     = types.QuerierRoute

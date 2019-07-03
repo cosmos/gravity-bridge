@@ -8,10 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-const PendingStatusText = "pending"
-const SuccessStatusText = "success"
-const FailedStatusText = "failed"
-
 // Prophecy is a struct that contains all the metadata of an oracle ritual.
 // Claims are indexed by the claim's validator bech32 address and by the claim's json value to allow
 // for constant lookup times for any validation/verifiation checks of duplicate claims
@@ -131,12 +127,12 @@ func NewEmptyProphecy() Prophecy {
 
 // Status is a struct that contains the status of a given prophecy
 type Status struct {
-	Text       string `json:"text"`
-	FinalClaim string `json:"final_claim"`
+	Text       StatusText `json:"text"`
+	FinalClaim string     `json:"final_claim"`
 }
 
 // NewStatus returns a new Status with the given data contained
-func NewStatus(text string, finalClaim string) Status {
+func NewStatus(text StatusText, finalClaim string) Status {
 	return Status{
 		Text:       text,
 		FinalClaim: finalClaim,
