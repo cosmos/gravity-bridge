@@ -183,7 +183,7 @@ With the application set up and the relayer running, you can now use Peggy by se
 
 The easiest way to do this for now, assuming you have Metamask setup for Ropsten in the browser is to use remix or mycrypto as the frontend, for example:
  - 1. Go to remix.ethereum.org
- - 2. Compile Peggy.sol with solc v0.5.0
+ - 2. Compile [PeggyForRemix.sol](./docs/PeggyForRemix.sol) with solc v0.5.0
  - 3. Set the environment as Injected Web3 Ropsten
  - 4. On 'Run' tab, select Peggy and enter "0x3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb" in 'At Address' field
  - 5. Select 'At Address' to load the deployed contract
