@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "cf767109-8494-42c9-8867-4af935a7a0c0",
-		"name": "cosmos-ethereum-bridge",
+		"name": "peggy",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -10,10 +10,6 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
 					"raw": "http://localhost:26657",
 					"protocol": "http",
@@ -50,10 +46,6 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
 					"raw": "http://localhost:1317/node_info",
 					"protocol": "http",
@@ -73,10 +65,6 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
 					"raw": "http://localhost:1317/auth/accounts/cosmos19l0hyjpzm8xkwlu84my4f0npd2ranxt2yfztux",
 					"protocol": "http",
@@ -98,10 +86,6 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
 					"raw": "http://localhost:1317/bank/balances/cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh",
 					"protocol": "http",
@@ -154,10 +138,6 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
 					"raw": "http://localhost:1317/ethbridge/prophecies/0/0x7B95B6EC7EbD73572298cEf32Bb54FA408207359",
 					"protocol": "http",
