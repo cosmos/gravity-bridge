@@ -42,7 +42,7 @@ Install dependencies: `$ npm install`
 Note: This project currently uses solc@0.5.0, make sure that this version of the Solidity compiler is being used to compile the contracts and does not conflict with other versions that may be installed on your machine.
 
 ## Testing
-Run commands from the appropriate directory: `$ cd ethereum-contracts`  
+Run commands from the appropriate directory: `$ cd testnet-contracts`  
 Start the truffle environment: `$ truffle develop`  
 In another tab, run tests: `$ truffle test`  
 Run individual tests: `$ truffle test test/<test_name.js>`  

@@ -5,6 +5,9 @@
 ## Summary
 Unidirectional Peggy is the starting point for cross chain value transfers from the Ethereum blockchain to Cosmos-SDK based blockchains as part of the Ethereum Cosmos Bridge project. The system accepts incoming transfers of Ethereum tokens on an Ethereum smart contract, locking them while the transaction is validated and equitable funds issued to the intended recipient on the Cosmos bridge chain.
 
+## Disclaimer
+This codebase, including all smart contract components, have not been professionally audited and are not intended for use in a production environment. As such, users should NOT trust the system to securely hold mainnet funds. Any developers attempting to use Unidirectional Peggy on the mainnet at this time will need to develop their own smart contracts or find another implementation.
+
 ## Ethereum Cosmos Bridge Architecture
 Unidirectional Peggy focuses on core features for unidirectional transfers. This prototype includes functionality to safely lock and unlock Ethereum, and mint corresponding representative tokens on the Cosmos chain.
 
@@ -15,7 +18,9 @@ First, the smart contract is deployed to an Ethereum network. A user can then se
 
 In this prototype, the system is managed by the contract's deployer, designated internally as the relayer, a trusted third-party which can unlock funds and return them their original sender. If the contract’s balances under threat, the relayer can pause the system, temporarily preventing users from depositing additional funds.
 
-The Peggy Smart Contract is deployed on the Ropsten testnet at address: 0x3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb. More details on the smart contracts and usage can be found in the ethereum-contracts folder.
+It is not the goal of these contracts to create a production-grade system for cross-chain value transfers which enforces strict permissions and limits access to locked funds. The goal of the current smart contracts is to scurely implement core functionality of the system such as asset locking and event emission without endangering any user funds. As such, this prototype does not permanently lock value and allows the original sender full access to their funds at any time. As stated above, do NOT use unaudited smart contracts on the mainnet.
+
+The Peggy Smart Contract is deployed on the Ropsten testnet at address: 0x3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb. More details on the smart contracts and usage can be found in the testnet-contracts folder.
 
 ### The Relayer
 The Relayer is a service which interfaces with both blockchains, allowing validators to attest on the Cosmos blockchain that specific events on the Ethereum blockchain have occurred. Through the Relayer service, validators witness the events and submit proof in the form of signed hashes to the Cosmos based modules, which are responsible for aggregating and tallying the Validators’ signatures and their respective signing power.
