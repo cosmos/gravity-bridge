@@ -31,9 +31,9 @@ func init() {
 	var arr [32]byte
 	copy(arr[:], []byte("0xab85e2ceaa7d100af2f07cac01365f3777153a4e004342dca5db44e731b9d461"))
 	TestEventData.Id = arr
-	TestEventData.From = common.BytesToAddress([]byte("0xC8Ee928625908D90d4B60859052aD200CBe2792A"))
+	TestEventData.From = common.HexToAddress("0xC8Ee928625908D90d4B60859052aD200CBe2792A")
 	TestEventData.To = []byte("0x6e656f")
-	TestEventData.Token = common.BytesToAddress([]byte("0x0000000000000000000000000000000000000000"))
+	TestEventData.Token = common.HexToAddress("0xC8Ee928625908D90d4B60859052aD200CBe2792A")
 
 	value := new(big.Int)
 	value, _ = value.SetString("7", 10)
@@ -53,7 +53,7 @@ func TestParsePayload(t *testing.T) {
 
 	// TODO: check each individual argument
 	// require.Equal(t, "7", string(result.Nonce))
-	// require.Equal(t, common.BytesToAddress([]byte("0xC8Ee928625908D90d4B60859052aD200CBe2792A")), result.EthereumSender)
+	// require.Equal(t, common.HexToAddress("0xC8Ee928625908D90d4B60859052aD200CBe2792A"), result.EthereumSender)
 	// require.Equal(t, result.CosmosReceiver, "neo")
 	// require.Equal(t, result.Validator, TestValidator)
 	// require.Equal(t, result.Amount, 7)
