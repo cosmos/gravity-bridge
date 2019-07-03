@@ -18,7 +18,7 @@ var TestEventData events.LockEvent
 func init() {
 
 	// Set up testing parameters for the parser
-	testValidator, err := sdk.ValAddressFromBech32("cosmosvaloper1carzvgq3e6y3z5kz5y6gxp3wpy3qdrv928vyah")
+	testValidator, err := sdk.ValAddressFromBech32("cosmosvaloper18hf69vxn8a3tkladruxgxgv8tl8sl54gpuezxk")
 	if err != nil {
 		panic(err)
 	}
