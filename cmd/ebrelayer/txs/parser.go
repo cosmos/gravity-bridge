@@ -34,10 +34,12 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 	// EthereumSender type casting (address.common -> string)
 	witnessClaim.EthereumSender = gethCommon.HexToAddress(event.From.Hex())
 
-	// CosmosReceiver type casting (bytes[] -> sdk.AccAddress)
-	recipient := sdk.AccAddress(event.To)
+ 	recipient, err := sdk.AccAddressFromBech32(string(event.To[:]))
+ 	if err != nil {
+		return witnessClaim, err
+	}
 	if recipient.Empty() {
-		return witnessClaim, errors.New("Invalid recipient address")
+		return witnessClaim, errors.New("Null recipient address")
 	}
 	witnessClaim.CosmosReceiver = recipient
 
