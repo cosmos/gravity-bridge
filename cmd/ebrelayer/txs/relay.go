@@ -18,8 +18,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
 
-	"github.com/swishlabsco/peggy/x/ethbridge"
-	"github.com/swishlabsco/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/x/ethbridge"
+	"github.com/cosmos/peggy/x/ethbridge/types"
 )
 
 // RelayEvent

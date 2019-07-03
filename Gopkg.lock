@@ -679,7 +679,7 @@
   ]
   pruneopts = "UT"
   revision = "76a94ff009f01d8d397f162298bbb366fefbc539"
-  source = "https://github.com/swishlabsco/crypto"
+  source = "https://github.com/cosmos/crypto"
 
 [[projects]]
   digest = "1:f1afc9fbc40f720896e8090b19bd6ab2ae4f88a1e12ce0edbefa641d1a6cfc80"

@@ -32,7 +32,7 @@ The Peggy Smart Contract is deployed on the Ropsten testnet at address: 0x3de4ef
 2. Validators  on the Cosmos chain witness these lock events via a Relayer service and sign a hash containing the unique item's information, which is sent as a Cosmos transaction to Oracle module.
 3. Once the Oracle module has verified that the validators' aggregated signing power is greater than the specified threshold, it mints the appropriate amount of tokens and forwards them to the intended recipient.
 
-The Relayer service and Oracle module are under development here: https://github.com/swishlabsco/cosmos-ethereum-bridge.
+The Relayer service and Oracle module are under development here: https://github.com/cosmos/cosmos-ethereum-bridge.
  
 ## Installation
 Install Truffle: `$ npm install -g truffle`  

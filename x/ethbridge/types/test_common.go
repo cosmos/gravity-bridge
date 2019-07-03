@@ -3,7 +3,7 @@ package types
 import (
 	"testing"
 
-	"github.com/swishlabsco/peggy/x/oracle"
+	"github.com/cosmos/peggy/x/oracle"
 
 	"github.com/stretchr/testify/require"
 

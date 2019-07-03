@@ -4,14 +4,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/swishlabsco/peggy/x/oracle"
+	"github.com/cosmos/peggy/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/require"
-	"github.com/swishlabsco/peggy/x/ethbridge/types"
-	keeperLib "github.com/swishlabsco/peggy/x/oracle/keeper"
+	"github.com/cosmos/peggy/x/ethbridge/types"
+	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
 
 	gethCommon "github.com/ethereum/go-ethereum/common"
 )

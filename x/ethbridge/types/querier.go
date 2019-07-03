@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/swishlabsco/peggy/x/oracle"
+	"github.com/cosmos/peggy/x/oracle"
 )
 
 // defines the params for the following queries:

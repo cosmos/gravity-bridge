@@ -3,7 +3,7 @@ package client
 import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
-	ethbridgecmd "github.com/swishlabsco/peggy/x/ethbridge/client/cli"
+	ethbridgecmd "github.com/cosmos/peggy/x/ethbridge/client/cli"
 	amino "github.com/tendermint/go-amino"
 )
 

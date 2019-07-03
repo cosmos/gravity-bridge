@@ -1,8 +1,8 @@
 package ethbridge
 
 import (
-	"github.com/swishlabsco/peggy/x/ethbridge/querier"
-	"github.com/swishlabsco/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/x/ethbridge/querier"
+	"github.com/cosmos/peggy/x/ethbridge/types"
 )
 
 type (

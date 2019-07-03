@@ -24,9 +24,9 @@ import (
 	stakingclient "github.com/cosmos/cosmos-sdk/x/staking/client"
 	stakingrest "github.com/cosmos/cosmos-sdk/x/staking/client/rest"
 
-	app "github.com/swishlabsco/peggy"
-	ethbridgeclient "github.com/swishlabsco/peggy/x/ethbridge/client"
-	ethbridgerest "github.com/swishlabsco/peggy/x/ethbridge/client/rest"
+	app "github.com/cosmos/peggy"
+	ethbridgeclient "github.com/cosmos/peggy/x/ethbridge/client"
+	ethbridgerest "github.com/cosmos/peggy/x/ethbridge/client/rest"
 )
 
 const (

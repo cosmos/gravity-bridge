@@ -3,7 +3,7 @@ package keeper
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/swishlabsco/peggy/x/oracle/types"
+	"github.com/cosmos/peggy/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
