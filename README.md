@@ -169,7 +169,7 @@ For automated relaying, there is a relayer service that can be run that will aut
 ebrelayer status
 
 # Initialize the Relayer service for automatic claim processing
-ebrelayer init testing wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb "LogLock(bytes32,address,bytes,address,uint256,uint256)" validator
+ebrelayer init wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb "LogLock(bytes32,address,bytes,address,uint256,uint256)" validator --chain-id testing
 
 # Enter password and press enter
 # You should see a message like:  Started ethereum websocket... and Subscribed to contract events...
@@ -195,6 +195,11 @@ The easiest way to do this for now, assuming you have Metamask setup for Ropsten
 ```
  - 7. Enter the same number from _amount as the transaction's value (in wei)
  - 8. Select "transact" to send the lock() transaction
+
+Then, wait for the transaction to confirm and mine, and for the relayer to pick it up. You should see the successful output in the relayer console. You can also confirm the tokens have been minted by using the CLI again:
+```
+ebcli query account cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh --trust-node
+```
 
 ## Using the modules in other projects
 

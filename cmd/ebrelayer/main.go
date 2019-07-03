@@ -81,7 +81,7 @@ var rootCmd = &cobra.Command{
 //
 func initRelayerCmd() *cobra.Command {
 	initRelayerCmd := &cobra.Command{
-		Use:   "init [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id",
+		Use:   "init [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id [chain-id]",
 		Short: "Initalizes a web socket which streams live events from a smart contract",
 		Args:  cobra.ExactArgs(4),
 		// NOTE: Preface both parentheses in the event signature with a '\'
@@ -107,7 +107,7 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 
 	// Parse the address of the deployed contract
 	if !common.IsHexAddress(args[1]) {
-    return fmt.Errorf("Invalid contract-address: %v", args[1])
+		return fmt.Errorf("Invalid contract-address: %v", args[1])
 	}
 	contractAddress := common.HexToAddress(args[1])
 
