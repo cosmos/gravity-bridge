@@ -8,8 +8,8 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
-	keeperLib "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
+	"github.com/swishlabsco/peggy/x/ethbridge/types"
+	keeperLib "github.com/swishlabsco/peggy/x/oracle/keeper"
 
 	gethCommon "github.com/ethereum/go-ethereum/common"
 )

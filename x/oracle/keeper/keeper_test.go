@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
+	"github.com/swishlabsco/peggy/x/oracle/types"
 )
 
 func TestCreateGetProphecy(t *testing.T) {

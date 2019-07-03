@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
+	"github.com/swishlabsco/peggy/x/oracle/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
 

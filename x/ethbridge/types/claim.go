@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
+	"github.com/swishlabsco/peggy/x/oracle"
 
 	gethCommon "github.com/ethereum/go-ethereum/common"
 )

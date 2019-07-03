@@ -13,8 +13,8 @@ import (
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
-	ethbridgeTypes "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
+	"github.com/swishlabsco/peggy/cmd/ebrelayer/events"
+	ethbridgeTypes "github.com/swishlabsco/peggy/x/ethbridge/types"
 
 	gethCommon "github.com/ethereum/go-ethereum/common"
 )

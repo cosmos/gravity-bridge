@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
+	"github.com/swishlabsco/peggy/x/ethbridge"
+	"github.com/swishlabsco/peggy/x/ethbridge/types"
 )
 
 // GetCmdGetEthBridgeProphecy queries information about a specific prophecy

@@ -7,9 +7,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethCommon "github.com/ethereum/go-ethereum/common"
-	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
-	keep "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
-	oracletypes "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/types"
+	"github.com/swishlabsco/peggy/x/ethbridge/types"
+	keep "github.com/swishlabsco/peggy/x/oracle/keeper"
+	oracletypes "github.com/swishlabsco/peggy/x/oracle/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 

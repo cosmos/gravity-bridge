@@ -8,8 +8,8 @@ import (
   "github.com/ethereum/go-ethereum/common"
   "github.com/stretchr/testify/require"
 
-  "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/contract"
-  "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
+  "github.com/swishlabsco/peggy/cmd/ebrelayer/contract"
+  "github.com/swishlabsco/peggy/cmd/ebrelayer/events"
 )
 
 var TestEvent events.LockEvent

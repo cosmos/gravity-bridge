@@ -26,8 +26,8 @@ import (
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
-	app "github.com/swishlabsco/cosmos-ethereum-bridge"
-	relayer "github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/relayer"
+	app "github.com/swishlabsco/peggy"
+	relayer "github.com/swishlabsco/peggy/cmd/ebrelayer/relayer"
 )
 
 const (
