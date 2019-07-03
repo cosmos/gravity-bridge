@@ -12,7 +12,6 @@ import (
 	"testing"
 	"fmt"
 	"strings"
-	"encoding/hex"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -30,12 +29,11 @@ const (
 func TestInitRelayer(t *testing.T) {
 	cdc := app.MakeCodec()
 
-	// Parse the address of the deployed contract
-	bytesContractAddress, err := hex.DecodeString(ContractAddress)
-	if err != nil {
-		fmt.Printf("Invalid contract-address: %v", bytesContractAddress)
+	// Convert ContractAddress to hex address
+	if !common.IsHexAddress(ContractAddress) {
+    return fmt.Errorf("Invalid contract address: %v", ContractAddress)
 	}
-	contractAddress := common.BytesToAddress(bytesContractAddress)
+	contractAddress := common.HexToAddress(ContractAddress)
 
 	err = InitRelayer(cdc, ChainID, Socket, contractAddress, EventSig, Validator)
 
