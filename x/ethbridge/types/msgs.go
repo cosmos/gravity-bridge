@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 // MsgCreateEthBridgeClaim defines a message for creating claims on the ethereum bridge
@@ -27,6 +28,9 @@ func (msg MsgCreateEthBridgeClaim) ValidateBasic() sdk.Error {
 	}
 	if msg.Nonce < 0 {
 		return ErrInvalidEthNonce(DefaultCodespace)
+	}
+	if !gethCommon.IsHexAddress(msg.EthereumSender.String()) {
+		return ErrInvalidEthAddress(DefaultCodespace)
 	}
 	return nil
 }

@@ -12,8 +12,8 @@ import (
 	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
 )
 
-var (
-	prophecyID0 = "0"
+const (
+	TestResponseJSON = "{\"id\":\"00x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"status\":{\"text\":\"pending\",\"final_claim\":\"\"},\"claims\":[{\"nonce\":0,\"ethereum_sender\":\"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"cosmos_receiver\":\"cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv\",\"validator_address\":\"cosmosvaloper15ky9du8a2wlstz6fpx3p4mqpjyrm5cgqh6tjun\",\"amount\":[{\"denom\":\"ethereum\",\"amount\":\"10\"}]}]}"
 )
 
 func TestNewQuerier(t *testing.T) {
@@ -46,6 +46,9 @@ func TestQueryEthProphecy(t *testing.T) {
 	require.Nil(t, err)
 
 	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t, valAddress)
+
+	//Test query String()
+	require.Equal(t, testResponse.String(), TestResponseJSON)
 
 	bz, err2 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(types.TestNonce, testEthereumAddress))
 	require.Nil(t, err2)
