@@ -144,7 +144,7 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Initialize the relayer
-	initErr := relayer.InitRelayer(
+	err = relayer.InitRelayer(
 		appCodec,
 		chainID,
 		ethereumProvider,
@@ -154,9 +154,8 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 		passphrase,
 		validatorAddress)
 
-	if initErr != nil {
-		fmt.Printf("%v", initErr)
-		return initErr
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -171,5 +170,4 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-	os.Exit(0)
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 	keeperLib "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
+
+	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -37,8 +39,8 @@ func TestQueryEthProphecy(t *testing.T) {
 	cdc := codec.New()
 	ctx, _, keeper, _, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
 	valAddress := validatorAddresses[0]
-	initialEthBridgeClaim := types.CreateTestEthClaim(t, valAddress, types.TestEthereumAddress, types.TestCoins)
-	oracleClaim := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
+	initialEthBridgeClaim := types.CreateTestEthClaim(t, valAddress, gethCommon.HexToAddress(types.TestEthereumAddress), types.TestCoins)
+	oracleClaim, _ := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
 	_, err := keeper.ProcessClaim(ctx, oracleClaim)
 	require.Nil(t, err)
 

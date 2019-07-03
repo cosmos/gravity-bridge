@@ -6,7 +6,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
 )
@@ -18,7 +17,7 @@ func NewHandler(oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, cdc *codec.C
 		case MsgCreateEthBridgeClaim:
 			return handleMsgCreateEthBridgeClaim(ctx, cdc, oracleKeeper, bankKeeper, msg, codespace)
 		default:
-			errMsg := fmt.Sprintf("Unrecognized ethbridge message type: %v", msg.Type())
+			errMsg := fmt.Sprintf("unrecognized ethbridge message type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
@@ -32,18 +31,18 @@ func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec, oracleKeep
 	if msg.Nonce < 0 {
 		return types.ErrInvalidEthNonce(codespace).Result()
 	}
-	if !common.IsValidEthAddress(msg.EthereumSender) {
-		return types.ErrInvalidEthAddress(codespace).Result()
-	}
-	oracleClaim := types.CreateOracleClaimFromEthClaim(cdc, types.EthBridgeClaim(msg))
-	status, err := oracleKeeper.ProcessClaim(ctx, oracleClaim)
+	oracleClaim, err := types.CreateOracleClaimFromEthClaim(cdc, types.EthBridgeClaim(msg))
 	if err != nil {
-		return err.Result()
+		return types.ErrJSONMarshalling(codespace).Result()
+	}
+	status, sdkErr := oracleKeeper.ProcessClaim(ctx, oracleClaim)
+	if sdkErr != nil {
+		return sdkErr.Result()
 	}
 	if status.Text == oracle.SuccessStatus {
-		err = processSuccessfulClaim(ctx, bankKeeper, status.FinalClaim)
-		if err != nil {
-			return err.Result()
+		sdkErr = processSuccessfulClaim(ctx, bankKeeper, status.FinalClaim)
+		if sdkErr != nil {
+			return sdkErr.Result()
 		}
 	}
 	return sdk.Result{Log: status.Text}

@@ -130,7 +130,7 @@ func (k Keeper) processCompletion(ctx sdk.Context, prophecy types.Prophecy) type
 	if highestConsensusRatio >= k.consensusNeeded {
 		prophecy.Status.Text = types.SuccessStatusText
 		prophecy.Status.FinalClaim = highestClaim
-	} else if highestPossibleConsensusRatio <= k.consensusNeeded {
+	} else if highestPossibleConsensusRatio < k.consensusNeeded {
 		prophecy.Status.Text = types.FailedStatusText
 	}
 	return prophecy

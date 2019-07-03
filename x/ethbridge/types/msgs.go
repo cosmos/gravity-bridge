@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 )
 
 // MsgCreateEthBridgeClaim defines a message for creating claims on the ethereum bridge
@@ -29,9 +28,6 @@ func (msg MsgCreateEthBridgeClaim) ValidateBasic() sdk.Error {
 	if msg.Nonce < 0 {
 		return ErrInvalidEthNonce(DefaultCodespace)
 	}
-	if !common.IsValidEthAddress(msg.EthereumSender) {
-		return ErrInvalidEthAddress(DefaultCodespace)
-	}
 	return nil
 }
 
@@ -46,6 +42,5 @@ func (msg MsgCreateEthBridgeClaim) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgCreateEthBridgeClaim) GetSigners() []sdk.AccAddress {
-	var validatorAddress sdk.AccAddress = sdk.AccAddress(msg.ValidatorAddress)
-	return []sdk.AccAddress{validatorAddress}
+	return []sdk.AccAddress{sdk.AccAddress(msg.ValidatorAddress)}
 }

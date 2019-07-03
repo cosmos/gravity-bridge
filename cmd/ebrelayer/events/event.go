@@ -13,18 +13,18 @@ import (
 	"log"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // LockEvent represents a single smart contract event
 type LockEvent struct {
-	Id      [32]byte
-	From    common.Address
-	To      []byte
-	Token   common.Address
-	Value   *big.Int
-	Nonce   *big.Int
+	Id    [32]byte
+	From  common.Address
+	To    []byte
+	Token common.Address
+	Value *big.Int
+	Nonce *big.Int
 }
 
 func NewLockEvent(contractAbi abi.ABI, eventName string, eventData []byte) LockEvent {
@@ -37,7 +37,7 @@ func NewLockEvent(contractAbi abi.ABI, eventName string, eventData []byte) LockE
 	event := LockEvent{}
 	err := contractAbi.Unpack(&event, eventName, eventData)
 	if err != nil {
-	    log.Fatal("Unpacking: ", err)
+		log.Fatalf("Unpacking: %v", err)
 	}
 
 	PrintEvent(event)
@@ -56,5 +56,5 @@ func PrintEvent(event LockEvent) {
 
 	// Print the event's information
 	fmt.Printf("\nEvent ID: %v\nToken: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
-							id, token, sender, recipient, value, nonce)
+		id, token, sender, recipient, value, nonce)
 }

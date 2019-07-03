@@ -10,6 +10,7 @@ package relayer
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	log "github.com/golang/glog"
@@ -22,15 +23,12 @@ func IsWebsocketURL(rawurl string) bool {
 		log.Infof("Error while parsing URL: %v", err)
 		return false
 	}
-	if u.Scheme == "ws" || u.Scheme == "wss" {
-		return true
-	}
-	return false
+	return u.Scheme == "ws" || u.Scheme == "wss"
 }
 
 // SetupWebsocketEthClient returns an websocket ethclient if URL is valid.
 func SetupWebsocketEthClient(ethURL string) (*ethclient.Client, error) {
-	if ethURL == "" {
+	if strings.TrimSpace(ethURL) == "" {
 		return nil, nil
 	}
 
@@ -43,7 +41,7 @@ func SetupWebsocketEthClient(ethURL string) (*ethclient.Client, error) {
 
 	client, err := ethclient.Dial(ethURL)
 	if err != nil {
-		return nil, fmt.Errorf("error dialing websocket client")
+		return nil, fmt.Errorf("error dialing websocket client: %v", err)
 	}
 
 	return client, nil

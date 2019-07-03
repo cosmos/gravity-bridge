@@ -111,10 +111,7 @@ func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	)
 
 	for _, m := range mc {
-		mQueryCmd := m.GetQueryCmd()
-		if mQueryCmd != nil {
-			queryCmd.AddCommand(mQueryCmd)
-		}
+		queryCmd.AddCommand(m.GetQueryCmd())
 	}
 
 	return queryCmd

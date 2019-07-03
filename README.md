@@ -2,11 +2,8 @@
 
 [![CircleCI](https://circleci.com/gh/swishlabsco/cosmos-ethereum-bridge/tree/master.svg?style=svg)](https://circleci.com/gh/swishlabsco/cosmos-ethereum-bridge/tree/master)
 
-## Project Summary
+## Summary
 Unidirectional Peggy is the starting point for cross chain value transfers from the Ethereum blockchain to Cosmos-SDK based blockchains as part of the Ethereum Cosmos Bridge project. The system accepts incoming transfers of Ethereum tokens on an Ethereum smart contract, locking them while the transaction is validated and equitable funds issued to the intended recipient on the Cosmos bridge chain.
-
-## Project Background
-We are hoping to create a closed system for intra network transfers of cryptocurrency between blockchains, spearheaded by a proof-of-concept which enables secured transactions between Ethereum and Cosmos.
 
 ## Ethereum Cosmos Bridge Architecture
 Unidirectional Peggy focuses on core features for unidirectional transfers. This prototype includes functionality to safely lock and unlock Ethereum, and mint corresponding representative tokens on the Cosmos chain.
@@ -58,7 +55,7 @@ The process is as follows:
  - If the claim is successful, new tokens representing Ethereum are minted via the Bank module
 
 ### Architecture Diagram
-![peggyarchitecturediagram](./ethbridge.jpg)
+![peggyarchitecturediagram](./docs/ethbridge.jpg)
 
 ## Example application
 These modules can be added to any Cosmos-SDK based chain, but a demo application/blockchain is provided with example code for how to integrate them. It can be installed and built as follows:

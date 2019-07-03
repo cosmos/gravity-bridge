@@ -35,9 +35,7 @@ func RelayEvent(chainId string, cdc *amino.Codec, validatorAddress sdk.ValAddres
 
 	cliCtx := context.NewCLIContext().
 		WithCodec(cdc).
-		WithAccountDecoder(cdc)
-
-	cliCtx = cliCtx.
+		WithAccountDecoder(cdc).
 		WithFromAddress(sdk.AccAddress(validatorAddress)).
 		WithFromName(moniker)
 

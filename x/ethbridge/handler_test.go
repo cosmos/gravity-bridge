@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 	keeperLib "github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle/keeper"
+
+	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 func TestBasicMsgs(t *testing.T) {
@@ -25,7 +27,7 @@ func TestBasicMsgs(t *testing.T) {
 	//Unrecognized type
 	res := handler(ctx, sdk.NewTestMsg())
 	require.False(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, "Unrecognized ethbridge message type: "))
+	require.True(t, strings.Contains(res.Log, "unrecognized ethbridge message type: "))
 
 	//Normal Creation
 	normalCreateMsg := types.CreateTestEthMsg(t, valAddress)
@@ -38,12 +40,6 @@ func TestBasicMsgs(t *testing.T) {
 	res = handler(ctx, badCreateMsg)
 	require.False(t, res.IsOK())
 	require.True(t, strings.Contains(res.Log, "invalid ethereum nonce provided"))
-
-	badCreateMsg = types.CreateTestEthMsg(t, valAddress)
-	badCreateMsg.EthereumSender = "badAddress"
-	res = handler(ctx, badCreateMsg)
-	require.False(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, "invalid ethereum address provided"))
 }
 
 func TestDuplicateMsgs(t *testing.T) {
@@ -111,11 +107,11 @@ func TestNoMintFail(t *testing.T) {
 	valAddressVal2Pow4 := validatorAddresses[1]
 	valAddressVal3Pow3 := validatorAddresses[2]
 
-	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow3, types.TestEthereumAddress, types.TestCoins)
+	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow3, gethCommon.HexToAddress(types.TestEthereumAddress), types.TestCoins)
 	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
-	ethClaim2 := types.CreateTestEthClaim(t, valAddressVal2Pow4, types.AltTestEthereumAddress, types.TestCoins)
+	ethClaim2 := types.CreateTestEthClaim(t, valAddressVal2Pow4, gethCommon.HexToAddress(types.AltTestEthereumAddress), types.TestCoins)
 	ethMsg2 := NewMsgCreateEthBridgeClaim(ethClaim2)
-	ethClaim3 := types.CreateTestEthClaim(t, valAddressVal3Pow3, types.TestEthereumAddress, types.AltTestCoins)
+	ethClaim3 := types.CreateTestEthClaim(t, valAddressVal3Pow3, gethCommon.HexToAddress(types.TestEthereumAddress), types.AltTestCoins)
 	ethMsg3 := NewMsgCreateEthBridgeClaim(ethClaim3)
 
 	handler := NewHandler(keeper, bankKeeper, cdc, types.DefaultCodespace)
@@ -135,7 +131,7 @@ func TestNoMintFail(t *testing.T) {
 	//Different message from third validator succeeds but results in failed prophecy with no minting
 	res = handler(ctx, ethMsg3)
 	require.True(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, oracle.FailedStatus))
+	require.Equal(t, res.Log, oracle.FailedStatus)
 	receiverAddress, err := sdk.AccAddressFromBech32(types.TestAddress)
 	require.NoError(t, err)
 	receiver1Coins := bankKeeper.GetCoins(ctx, receiverAddress)

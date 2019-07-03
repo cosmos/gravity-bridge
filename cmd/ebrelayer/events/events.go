@@ -20,10 +20,7 @@ func NewEventWrite(txHash string, event LockEvent) {
 
 // Checks the sessions stored events for this transaction hash
 func IsEventRecorded(txHash string) bool {
-	if EventRecords[txHash].Nonce == nil  {
-		return false
-	}
-	return true
+	return EventRecords[txHash].Nonce != nil
 }
 
 func PrintEventByTx(txHash string) {
@@ -35,13 +32,11 @@ func PrintEventByTx(txHash string) {
 }
 
 // Prints all the claims made on this event
-func PrintEvents() error {
+func PrintEvents() {
 
- 	// For each claim, print the validator which submitted the claim
-  for txHash, event := range EventRecords {
-    fmt.Printf("\nTransaction: %v\n", txHash)
-    PrintEvent(event)
-  }
-
-  return nil
+	// For each claim, print the validator which submitted the claim
+	for txHash, event := range EventRecords {
+		fmt.Printf("\nTransaction: %v\n", txHash)
+		PrintEvent(event)
+	}
 }

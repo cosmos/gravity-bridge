@@ -15,9 +15,10 @@ import (
 	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge"
-	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/querier"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
+
+	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -54,7 +55,7 @@ func createClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.Handle
 			return
 		}
 
-		ethereumSender := common.EthereumAddress(req.EthereumSender)
+		ethereumSender := gethCommon.HexToAddress(req.EthereumSender)
 		cosmosReceiver, err := sdk.AccAddressFromBech32(req.CosmosReceiver)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

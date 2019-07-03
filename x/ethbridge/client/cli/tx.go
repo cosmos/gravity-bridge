@@ -7,11 +7,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
-	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
+	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 // GetCmdCreateEthBridgeClaim is the CLI command for creating a claim on an ethereum prophecy
@@ -34,7 +34,7 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return stringError
 			}
 
-			ethereumSender := common.EthereumAddress(args[1])
+			ethereumSender := gethCommon.HexToAddress(args[1])
 			cosmosReceiver, err := sdk.AccAddressFromBech32(args[2])
 			if err != nil {
 				return err

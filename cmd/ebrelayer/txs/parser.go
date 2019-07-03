@@ -14,8 +14,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/cmd/ebrelayer/events"
-	ethbridgeCommon "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 	ethbridgeTypes "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/types"
+
+	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -31,7 +32,7 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 	witnessClaim.Nonce = nonce
 
 	// EthereumSender type casting (address.common -> string)
-	witnessClaim.EthereumSender = ethbridgeCommon.EthereumAddress(event.From.Hex())
+	witnessClaim.EthereumSender = gethCommon.HexToAddress(event.From.Hex())
 
 	// CosmosReceiver type casting (bytes[] -> sdk.AccAddress)
 	recipient := sdk.AccAddress(event.To)
@@ -44,7 +45,7 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 	witnessClaim.ValidatorAddress = valAddr
 
 	// Amount type casting (*big.Int -> sdk.Coins)
-	coins := sdk.Coins{ sdk.NewInt64Coin(ETH, event.Value.Int64()) }
+	coins := sdk.Coins{sdk.NewInt64Coin(ETH, event.Value.Int64())}
 	witnessClaim.Amount = coins
 
 	return witnessClaim, nil

@@ -11,8 +11,9 @@ type CodeType = sdk.CodeType
 const (
 	DefaultCodespace sdk.CodespaceType = "ethbridge"
 
-	CodeInvalidEthNonce   CodeType = 1
-	CodeInvalidEthAddress CodeType = 2
+	CodeInvalidEthNonce    CodeType = 1
+	CodeInvalidEthAddress  CodeType = 2
+	CodeErrJSONMarshalling CodeType = 3
 )
 
 func ErrInvalidEthNonce(codespace sdk.CodespaceType) sdk.Error {
@@ -21,4 +22,8 @@ func ErrInvalidEthNonce(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrInvalidEthAddress(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidEthAddress, "invalid ethereum address provided, must be a valid hex-encoded Ethereum address")
+}
+
+func ErrJSONMarshalling(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeErrJSONMarshalling, "error marshalling JSON for this claim")
 }

@@ -7,20 +7,21 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	common "github.com/swishlabsco/cosmos-ethereum-bridge/x/ethbridge/common"
 	"github.com/swishlabsco/cosmos-ethereum-bridge/x/oracle"
+
+	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 type EthBridgeClaim struct {
-	Nonce            int                    `json:"nonce"`
-	EthereumSender   common.EthereumAddress `json:"ethereum_sender"`
-	CosmosReceiver   sdk.AccAddress         `json:"cosmos_receiver"`
-	ValidatorAddress sdk.ValAddress         `json:"validator_address"`
-	Amount           sdk.Coins              `json:"amount"`
+	Nonce            int                `json:"nonce"`
+	EthereumSender   gethCommon.Address `json:"ethereum_sender"`
+	CosmosReceiver   sdk.AccAddress     `json:"cosmos_receiver"`
+	ValidatorAddress sdk.ValAddress     `json:"validator_address"`
+	Amount           sdk.Coins          `json:"amount"`
 }
 
 // NewEthBridgeClaim is a constructor function for NewEthBridgeClaim
-func NewEthBridgeClaim(nonce int, ethereumSender common.EthereumAddress, cosmosReceiver sdk.AccAddress, validator sdk.ValAddress, amount sdk.Coins) EthBridgeClaim {
+func NewEthBridgeClaim(nonce int, ethereumSender gethCommon.Address, cosmosReceiver sdk.AccAddress, validator sdk.ValAddress, amount sdk.Coins) EthBridgeClaim {
 	return EthBridgeClaim{
 		Nonce:            nonce,
 		EthereumSender:   ethereumSender,
@@ -30,7 +31,7 @@ func NewEthBridgeClaim(nonce int, ethereumSender common.EthereumAddress, cosmosR
 	}
 }
 
-//OracleClaimContent is the details of how the content of the claim for each validator will be stored in the oracle
+// OracleClaimContent is the details of how the content of the claim for each validator will be stored in the oracle
 type OracleClaimContent struct {
 	CosmosReceiver sdk.AccAddress `json:"cosmos_receiver"`
 	Amount         sdk.Coins      `json:"amount"`
@@ -44,17 +45,20 @@ func NewOracleClaimContent(cosmosReceiver sdk.AccAddress, amount sdk.Coins) Orac
 	}
 }
 
-func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) oracle.Claim {
-	oracleId := strconv.Itoa(ethClaim.Nonce) + string(ethClaim.EthereumSender)
+func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (oracle.Claim, error) {
+	oracleId := strconv.Itoa(ethClaim.Nonce) + ethClaim.EthereumSender.String()
 	claimContent := NewOracleClaimContent(ethClaim.CosmosReceiver, ethClaim.Amount)
-	claimBytes, _ := json.Marshal(claimContent)
+	claimBytes, err := json.Marshal(claimContent)
+	if err != nil {
+		return oracle.Claim{}, err
+	}
 	claimString := string(claimBytes)
 	validator := sdk.ValAddress(ethClaim.ValidatorAddress)
 	claim := oracle.NewClaim(oracleId, validator, claimString)
-	return claim
+	return claim, nil
 }
 
-func CreateEthClaimFromOracleString(nonce int, ethereumSender string, validator sdk.ValAddress, oracleClaimString string) (EthBridgeClaim, sdk.Error) {
+func CreateEthClaimFromOracleString(nonce int, ethereumAddress gethCommon.Address, validator sdk.ValAddress, oracleClaimString string) (EthBridgeClaim, sdk.Error) {
 	oracleClaim, err := CreateOracleClaimFromOracleString(oracleClaimString)
 	if err != nil {
 		return EthBridgeClaim{}, err
@@ -63,7 +67,7 @@ func CreateEthClaimFromOracleString(nonce int, ethereumSender string, validator 
 	valAccAddress := sdk.ValAddress(validator)
 	return NewEthBridgeClaim(
 		nonce,
-		common.EthereumAddress(ethereumSender),
+		ethereumAddress,
 		oracleClaim.CosmosReceiver,
 		valAccAddress,
 		oracleClaim.Amount,

@@ -19,16 +19,14 @@ func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Comm
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			nonce := args[0]
 
-			nonceString, err := strconv.Atoi(nonce)
+			nonce, err := strconv.Atoi(args[0])
 			if err != nil {
-				fmt.Printf(err.Error())
-				return nil
+				return err
 			}
 			ethereumSender := args[1]
 
-			bz, err := cdc.MarshalJSON(ethbridge.NewQueryEthProphecyParams(nonceString, ethereumSender))
+			bz, err := cdc.MarshalJSON(ethbridge.NewQueryEthProphecyParams(nonce, ethereumSender))
 			if err != nil {
 				return err
 			}
@@ -36,8 +34,7 @@ func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Comm
 			route := fmt.Sprintf("custom/%s/%s", queryRoute, ethbridge.QueryEthProphecy)
 			res, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
-				fmt.Printf(err.Error())
-				return nil
+				return err
 			}
 
 			var out types.QueryEthProphecyResponse
