@@ -6,9 +6,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/spf13/cobra"
 	"github.com/cosmos/peggy/x/ethbridge"
 	"github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/spf13/cobra"
 )
 
 // GetCmdGetEthBridgeProphecy queries information about a specific prophecy
@@ -24,7 +24,7 @@ func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Comm
 			if err != nil {
 				return err
 			}
-			ethereumSender := args[1]
+			ethereumSender := types.NewEthereumAddress(args[1])
 
 			bz, err := cdc.MarshalJSON(ethbridge.NewQueryEthProphecyParams(nonce, ethereumSender))
 			if err != nil {

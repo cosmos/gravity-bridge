@@ -8,20 +8,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/peggy/x/oracle"
-
-	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 type EthBridgeClaim struct {
-	Nonce            int                `json:"nonce"`
-	EthereumSender   gethCommon.Address `json:"ethereum_sender"`
-	CosmosReceiver   sdk.AccAddress     `json:"cosmos_receiver"`
-	ValidatorAddress sdk.ValAddress     `json:"validator_address"`
-	Amount           sdk.Coins          `json:"amount"`
+	Nonce            int             `json:"nonce"`
+	EthereumSender   EthereumAddress `json:"ethereum_sender"`
+	CosmosReceiver   sdk.AccAddress  `json:"cosmos_receiver"`
+	ValidatorAddress sdk.ValAddress  `json:"validator_address"`
+	Amount           sdk.Coins       `json:"amount"`
 }
 
 // NewEthBridgeClaim is a constructor function for NewEthBridgeClaim
-func NewEthBridgeClaim(nonce int, ethereumSender gethCommon.Address, cosmosReceiver sdk.AccAddress, validator sdk.ValAddress, amount sdk.Coins) EthBridgeClaim {
+func NewEthBridgeClaim(nonce int, ethereumSender EthereumAddress, cosmosReceiver sdk.AccAddress, validator sdk.ValAddress, amount sdk.Coins) EthBridgeClaim {
 	return EthBridgeClaim{
 		Nonce:            nonce,
 		EthereumSender:   ethereumSender,
@@ -58,7 +56,7 @@ func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (o
 	return claim, nil
 }
 
-func CreateEthClaimFromOracleString(nonce int, ethereumAddress gethCommon.Address, validator sdk.ValAddress, oracleClaimString string) (EthBridgeClaim, sdk.Error) {
+func CreateEthClaimFromOracleString(nonce int, ethereumAddress EthereumAddress, validator sdk.ValAddress, oracleClaimString string) (EthBridgeClaim, sdk.Error) {
 	oracleClaim, err := CreateOracleClaimFromOracleString(oracleClaimString)
 	if err != nil {
 		return EthBridgeClaim{}, err

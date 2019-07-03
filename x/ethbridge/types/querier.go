@@ -10,11 +10,11 @@ import (
 // defines the params for the following queries:
 // - 'custom/ethbridge/prophecies/'
 type QueryEthProphecyParams struct {
-	Nonce          int
-	EthereumSender string
+	Nonce          int             `json:"nonce"`
+	EthereumSender EthereumAddress `json:"ethereum_sender"`
 }
 
-func NewQueryEthProphecyParams(nonce int, ethereumSender string) QueryEthProphecyParams {
+func NewQueryEthProphecyParams(nonce int, ethereumSender EthereumAddress) QueryEthProphecyParams {
 	return QueryEthProphecyParams{
 		Nonce:          nonce,
 		EthereumSender: ethereumSender,

@@ -15,8 +15,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	ethbridgeTypes "github.com/cosmos/peggy/x/ethbridge/types"
-
-	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -32,10 +30,10 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 	witnessClaim.Nonce = nonce
 
 	// EthereumSender type casting (address.common -> string)
-	witnessClaim.EthereumSender = gethCommon.HexToAddress(event.From.Hex())
+	witnessClaim.EthereumSender = ethbridgeTypes.NewEthereumAddress(event.From.Hex())
 
- 	recipient, err := sdk.AccAddressFromBech32(string(event.To[:]))
- 	if err != nil {
+	recipient, err := sdk.AccAddressFromBech32(string(event.To[:]))
+	if err != nil {
 		return witnessClaim, err
 	}
 	if recipient.Empty() {

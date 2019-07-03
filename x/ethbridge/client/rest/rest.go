@@ -17,8 +17,6 @@ import (
 	"github.com/cosmos/peggy/x/ethbridge"
 	"github.com/cosmos/peggy/x/ethbridge/querier"
 	"github.com/cosmos/peggy/x/ethbridge/types"
-
-	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -55,7 +53,8 @@ func createClaimHandler(cdc *codec.Codec, cliCtx context.CLIContext) http.Handle
 			return
 		}
 
-		ethereumSender := gethCommon.HexToAddress(req.EthereumSender)
+		ethereumSender := types.NewEthereumAddress(req.EthereumSender)
+
 		cosmosReceiver, err := sdk.AccAddressFromBech32(req.CosmosReceiver)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -96,7 +95,7 @@ func getProphecyHandler(cdc *codec.Codec, cliCtx context.CLIContext, queryRoute 
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		ethereumSender := vars[restEthereumSender]
+		ethereumSender := types.NewEthereumAddress(vars[restEthereumSender])
 
 		bz, err := cdc.MarshalJSON(ethbridge.NewQueryEthProphecyParams(nonceString, ethereumSender))
 		if err != nil {

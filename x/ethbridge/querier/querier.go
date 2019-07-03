@@ -6,7 +6,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	keep "github.com/cosmos/peggy/x/oracle/keeper"
 	oracletypes "github.com/cosmos/peggy/x/oracle/types"
@@ -37,8 +36,7 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 	if err != nil {
 		return []byte{}, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
-
-	id := strconv.Itoa(params.Nonce) + params.EthereumSender
+	id := strconv.Itoa(params.Nonce) + params.EthereumSender.String()
 	prophecy, errSdk := keeper.GetProphecy(ctx, id)
 	if errSdk != nil {
 		return []byte{}, oracletypes.ErrProphecyNotFound(codespace)
@@ -59,16 +57,15 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 	return bz, nil
 }
 
-func MapOracleClaimsToEthBridgeClaims(nonce int, ethereumSender string, oracleValidatorClaims map[string]string, f func(int, gethCommon.Address, sdk.ValAddress, string) (types.EthBridgeClaim, sdk.Error)) ([]types.EthBridgeClaim, sdk.Error) {
+func MapOracleClaimsToEthBridgeClaims(nonce int, ethereumSender types.EthereumAddress, oracleValidatorClaims map[string]string, f func(int, types.EthereumAddress, sdk.ValAddress, string) (types.EthBridgeClaim, sdk.Error)) ([]types.EthBridgeClaim, sdk.Error) {
 	mappedClaims := make([]types.EthBridgeClaim, len(oracleValidatorClaims))
 	i := 0
-	ethereumAddress := gethCommon.HexToAddress(ethereumSender)
 	for validatorBech32, validatorClaim := range oracleValidatorClaims {
 		validatorAddress, parseErr := sdk.ValAddressFromBech32(validatorBech32)
 		if parseErr != nil {
 			return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", parseErr))
 		}
-		mappedClaim, err := f(nonce, ethereumAddress, validatorAddress, validatorClaim)
+		mappedClaim, err := f(nonce, ethereumSender, validatorAddress, validatorClaim)
 		if err != nil {
 			return nil, err
 		}

@@ -14,8 +14,8 @@ import (
 	"fmt"
 	"log"
 
-	amino "github.com/tendermint/go-amino"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	amino "github.com/tendermint/go-amino"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"

@@ -10,8 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
-
-	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -36,17 +34,20 @@ func TestNewQuerier(t *testing.T) {
 }
 
 func TestQueryEthProphecy(t *testing.T) {
+
 	cdc := codec.New()
 	ctx, _, keeper, _, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
 	valAddress := validatorAddresses[0]
-	initialEthBridgeClaim := types.CreateTestEthClaim(t, valAddress, gethCommon.HexToAddress(types.TestEthereumAddress), types.TestCoins)
+	testEthereumAddress := types.NewEthereumAddress(types.TestEthereumAddress)
+
+	initialEthBridgeClaim := types.CreateTestEthClaim(t, valAddress, testEthereumAddress, types.TestCoins)
 	oracleClaim, _ := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
 	_, err := keeper.ProcessClaim(ctx, oracleClaim)
 	require.Nil(t, err)
 
 	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t, valAddress)
 
-	bz, err2 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(types.TestNonce, types.TestEthereumAddress))
+	bz, err2 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(types.TestNonce, testEthereumAddress))
 	require.Nil(t, err2)
 
 	query := abci.RequestQuery{
@@ -70,8 +71,9 @@ func TestQueryEthProphecy(t *testing.T) {
 	require.NotNil(t, err5)
 
 	// Test error with nonexistent request
-	query.Data = bz[:len(bz)-1]
-	bz2, err6 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(12, "badEthereumAddress"))
+	badEthereumAddress := types.NewEthereumAddress("badEthereumAddress")
+
+	bz2, err6 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(12, badEthereumAddress))
 	require.Nil(t, err6)
 
 	query2 := abci.RequestQuery{
@@ -81,4 +83,18 @@ func TestQueryEthProphecy(t *testing.T) {
 
 	_, err7 := queryEthProphecy(ctx, cdc, query2, keeper, types.DefaultCodespace)
 	require.NotNil(t, err7)
+
+	// Test error with empty address
+	emptyEthereumAddress := types.NewEthereumAddress("")
+
+	bz3, err8 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(12, emptyEthereumAddress))
+	require.Nil(t, err8)
+
+	query3 := abci.RequestQuery{
+		Path: "/custom/oracle/prophecies",
+		Data: bz3,
+	}
+
+	_, err9 := queryEthProphecy(ctx, cdc, query3, keeper, types.DefaultCodespace)
+	require.NotNil(t, err9)
 }

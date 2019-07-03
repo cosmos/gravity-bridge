@@ -9,7 +9,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -24,12 +23,13 @@ const (
 
 //Ethereum-bridge specific stuff
 func CreateTestEthMsg(t *testing.T, validatorAddress sdk.ValAddress) MsgCreateEthBridgeClaim {
-	ethClaim := CreateTestEthClaim(t, validatorAddress, gethCommon.HexToAddress(TestEthereumAddress), TestCoins)
+	testEthereumAddress := NewEthereumAddress(TestEthereumAddress)
+	ethClaim := CreateTestEthClaim(t, validatorAddress, testEthereumAddress, TestCoins)
 	ethMsg := NewMsgCreateEthBridgeClaim(ethClaim)
 	return ethMsg
 }
 
-func CreateTestEthClaim(t *testing.T, validatorAddress sdk.ValAddress, testEthereumAddress gethCommon.Address, coins string) EthBridgeClaim {
+func CreateTestEthClaim(t *testing.T, validatorAddress sdk.ValAddress, testEthereumAddress EthereumAddress, coins string) EthBridgeClaim {
 	testCosmosAddress, err1 := sdk.AccAddressFromBech32(TestAddress)
 	amount, err2 := sdk.ParseCoins(coins)
 	require.NoError(t, err1)
@@ -39,7 +39,8 @@ func CreateTestEthClaim(t *testing.T, validatorAddress sdk.ValAddress, testEther
 }
 
 func CreateTestQueryEthProphecyResponse(cdc *codec.Codec, t *testing.T, validatorAddress sdk.ValAddress) QueryEthProphecyResponse {
-	ethBridgeClaim := CreateTestEthClaim(t, validatorAddress, gethCommon.HexToAddress(TestEthereumAddress), TestCoins)
+	testEthereumAddress := NewEthereumAddress(TestEthereumAddress)
+	ethBridgeClaim := CreateTestEthClaim(t, validatorAddress, testEthereumAddress, TestCoins)
 	oracleClaim, _ := CreateOracleClaimFromEthClaim(cdc, ethBridgeClaim)
 	ethBridgeClaims := []EthBridgeClaim{ethBridgeClaim}
 	resp := NewQueryEthProphecyResponse(oracleClaim.ID, oracle.Status{oracle.PendingStatus, ""}, ethBridgeClaims)

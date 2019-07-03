@@ -9,11 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/stretchr/testify/require"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
-
-	gethCommon "github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBasicMsgs(t *testing.T) {
@@ -102,16 +100,16 @@ func TestMintSuccess(t *testing.T) {
 func TestNoMintFail(t *testing.T) {
 	//Setup
 	cdc := codec.New()
-	ctx, _, keeper, bankKeeper, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 4, 3})
+	ctx, _, keeper, bankKeeper, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.71, []int64{3, 4, 3})
 	valAddressVal1Pow3 := validatorAddresses[0]
 	valAddressVal2Pow4 := validatorAddresses[1]
 	valAddressVal3Pow3 := validatorAddresses[2]
 
-	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow3, gethCommon.HexToAddress(types.TestEthereumAddress), types.TestCoins)
+	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow3, types.NewEthereumAddress(types.TestEthereumAddress), types.TestCoins)
 	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
-	ethClaim2 := types.CreateTestEthClaim(t, valAddressVal2Pow4, gethCommon.HexToAddress(types.AltTestEthereumAddress), types.TestCoins)
+	ethClaim2 := types.CreateTestEthClaim(t, valAddressVal2Pow4, types.NewEthereumAddress(types.AltTestEthereumAddress), types.TestCoins)
 	ethMsg2 := NewMsgCreateEthBridgeClaim(ethClaim2)
-	ethClaim3 := types.CreateTestEthClaim(t, valAddressVal3Pow3, gethCommon.HexToAddress(types.TestEthereumAddress), types.AltTestCoins)
+	ethClaim3 := types.CreateTestEthClaim(t, valAddressVal3Pow3, types.NewEthereumAddress(types.TestEthereumAddress), types.AltTestCoins)
 	ethMsg3 := NewMsgCreateEthBridgeClaim(ethClaim3)
 
 	handler := NewHandler(keeper, bankKeeper, cdc, types.DefaultCodespace)
