@@ -22,14 +22,12 @@ import (
 	"github.com/cosmos/peggy/x/ethbridge/types"
 )
 
-// RelayEvent
-//
-// Applies validator's signature to an EthBridgeClaim message containing information
+// RelayEvent : Applies validator's signature to an EthBridgeClaim message containing information
 // 		about an event on the Ethereum blockchain before sending it to the Bridge
 //		blockchain. For this relay, the chain id (chainID) and codec (cdc) of the
 //		Bridge blockchain are required.
 //
-func RelayEvent(chainId string, cdc *amino.Codec, validatorAddress sdk.ValAddress, moniker string, passphrase string, claim *types.EthBridgeClaim) error {
+func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddress, moniker string, passphrase string, claim *types.EthBridgeClaim) error {
 
 	var errs []string
 
@@ -43,7 +41,7 @@ func RelayEvent(chainId string, cdc *amino.Codec, validatorAddress sdk.ValAddres
 
 	txBldr := authtxb.NewTxBuilderFromCLI().
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
-		WithChainID(chainId)
+		WithChainID(chainID)
 
 	err := cliCtx.EnsureAccountExistsFromAddr(sdk.AccAddress(claim.ValidatorAddress))
 	if err != nil {
