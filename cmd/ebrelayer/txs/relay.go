@@ -29,8 +29,6 @@ import (
 //
 func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddress, moniker string, passphrase string, claim *types.EthBridgeClaim) error {
 
-	var errs []string
-
 	cliCtx := context.NewCLIContext().
 		WithCodec(cdc).
 		WithAccountDecoder(cdc).
@@ -52,7 +50,6 @@ func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddres
 
 	err = msg.ValidateBasic()
 	if err != nil {
-		errs = append(errs, err.Error())
 		return err
 	}
 
@@ -61,24 +58,21 @@ func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddres
 	// Prepare tx
 	txBldr, err = utils.PrepareTxBuilder(txBldr, cliCtx)
 	if err != nil {
-		errs = append(errs, err.Error())
 		return err
 	}
 
 	// Build and sign the transaction
 	txBytes, err := txBldr.BuildAndSign(moniker, passphrase, []sdk.Msg{msg})
 	if err != nil {
-		errs = append(errs, err.Error())
 		return err
 	}
 
 	// Broadcast to a Tendermint node
 	res, err := cliCtx.BroadcastTx(txBytes)
 	if err != nil {
-		errs = append(errs, err.Error())
 		return err
 	}
 
 	cliCtx.PrintOutput(res)
-	return err
+	return nil
 }
