@@ -45,7 +45,7 @@ func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddres
 
 	err := cliCtx.EnsureAccountExistsFromAddr(sdk.AccAddress(claim.ValidatorAddress))
 	if err != nil {
-		errs = append(errs, err.Error())
+		return err
 	}
 
 	msg := ethbridge.NewMsgCreateEthBridgeClaim(*claim)
