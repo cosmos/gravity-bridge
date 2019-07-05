@@ -40,7 +40,7 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 		return witnessClaim, err
 	}
 	if recipient.Empty() {
-		return witnessClaim, errors.New("Null recipient address")
+		return witnessClaim, errors.New("empty recipient address")
 	}
 
 	// Amount type casting (*big.Int -> sdk.Coins)
