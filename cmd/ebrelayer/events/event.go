@@ -1,10 +1,8 @@
 package events
 
 // -----------------------------------------------------
-//    Event
-//
-// 		Creates LockEvents from new events on the ethereum
-//		Ethereum blockchain.
+//    Event : Creates LockEvents from new events on the ethereum
+//			  Ethereum blockchain.
 // -----------------------------------------------------
 
 import (
@@ -17,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// LockEvent represents a single smart contract event
+// LockEvent : struct which represents a single smart contract event
 type LockEvent struct {
 	Id    [32]byte
 	From  common.Address
@@ -27,6 +25,7 @@ type LockEvent struct {
 	Nonce *big.Int
 }
 
+// NewLockEvent : parses LogLock events using go-ethereum's accounts/abi library
 func NewLockEvent(contractAbi abi.ABI, eventName string, eventData []byte) LockEvent {
 	// Check event name
 	if eventName != "LogLock" {
@@ -45,6 +44,7 @@ func NewLockEvent(contractAbi abi.ABI, eventName string, eventData []byte) LockE
 	return event
 }
 
+// PrintEvent : prints a LockEvent struct's information
 func PrintEvent(event LockEvent) {
 	// Convert the variables into a printable format
 	id := hex.EncodeToString(event.Id[:])

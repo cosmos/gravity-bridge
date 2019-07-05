@@ -1,12 +1,5 @@
 package relayer
 
-// ------------------------------------------------------------
-//    Network_test
-//
-//    Tests network.go functionality.
-//
-// ------------------------------------------------------------
-
 import (
 	"testing"
 
@@ -17,11 +10,13 @@ const (
 	Client = "wss://ropsten.infura.io/ws"
 )
 
+// TestIsWebsocketURL : test identification of Ethereum websocket URLs
 func TestIsWebsocketURL(t *testing.T) {
 	result := IsWebsocketURL(Client)
 	require.True(t, result)
 }
 
+// TestSetupWebsocketEthClient : test initialization of Ethereum websocket
 func TestSetupWebsocketEthClient(t *testing.T) {
 	_, err := SetupWebsocketEthClient(Client)
 

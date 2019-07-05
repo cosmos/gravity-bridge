@@ -1,11 +1,7 @@
 package main
 
-// -------------------------------------------------------------
-//      Main (ebrelayer)
-//
-//      Implements CLI commands for the Relayer service, such as
-//      initalization and event relay.
-// -------------------------------------------------------------
+// 	Main (ebrelayer) : Implements CLI commands for the Relayer
+//		service, such as initalization and event relay.
 
 import (
 	"fmt"
@@ -73,11 +69,11 @@ var rootCmd = &cobra.Command{
 	SilenceUsage: true,
 }
 
-// initRelayerCmd
-//
-// Initializes a relayer service run by individual validators which streams live events
-// 	from a smart contract. The service automatically signs messages containing the event
-//	data and relays them to tendermint for handling by the EthBridge module.
+//	initRelayerCmd : Initializes a relayer service run by individual
+//		validators which streams live events from a smart contract.
+//		The service automatically signs messages containing the event
+//		data and relays them to tendermint for handling by the
+//		EthBridge module.
 //
 func initRelayerCmd() *cobra.Command {
 	initRelayerCmd := &cobra.Command{
@@ -92,6 +88,7 @@ func initRelayerCmd() *cobra.Command {
 	return initRelayerCmd
 }
 
+//	RunRelayerCmd : RunRelayerCmd executes the initRelayerCmd with the provided parameters
 func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Parse chain's ID
 	chainID := viper.GetString(client.FlagChainID)

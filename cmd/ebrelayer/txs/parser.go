@@ -17,13 +17,13 @@ import (
 	ethbridgeTypes "github.com/cosmos/peggy/x/ethbridge/types"
 )
 
-// ETH : specifies a token type of Ethereum
+// ETH : ETH constant specifies a token type of Ethereum
 const (
 	ETH string = "eth"
 )
 
-// ParsePayload : parses a LockEvent struct, packaging the information along with
-//				  a validator address in an EthBridgeClaim msg
+// ParsePayload : ParsePayload parses a LockEvent struct, packaging the information
+//				  along with a validator address in an EthBridgeClaim msg
 func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTypes.EthBridgeClaim, error) {
 
 	witnessClaim := ethbridgeTypes.EthBridgeClaim{}

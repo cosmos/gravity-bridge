@@ -1,9 +1,7 @@
 package events
 
 // -----------------------------------------------------
-//    Events
-//
-// 		Events maintains a mapping of events to an array
+// 	Events: Events maintains a mapping of events to an array
 //		of claims made by validators.
 // -----------------------------------------------------
 
@@ -11,18 +9,20 @@ import (
 	"fmt"
 )
 
+// EventRecords : map of transaction hashes to LockEvent structs
 var EventRecords = make(map[string]LockEvent)
 
-// Add a validator's address to the official claims list
+// NewEventWrite : add a validator's address to the official claims list
 func NewEventWrite(txHash string, event LockEvent) {
 	EventRecords[txHash] = event
 }
 
-// Checks the sessions stored events for this transaction hash
+// IsEventRecorded : checks the sessions stored events for this transaction hash
 func IsEventRecorded(txHash string) bool {
 	return EventRecords[txHash].Nonce != nil
 }
 
+// PrintEventByTx : prints any witnessed events associated with a given transaction hash
 func PrintEventByTx(txHash string) {
 	if IsEventRecorded(txHash) {
 		PrintEvent(EventRecords[txHash])
@@ -31,7 +31,7 @@ func PrintEventByTx(txHash string) {
 	}
 }
 
-// Prints all the claims made on this event
+// PrintEvents : prints all the claims made on this event
 func PrintEvents() {
 
 	// For each claim, print the validator which submitted the claim

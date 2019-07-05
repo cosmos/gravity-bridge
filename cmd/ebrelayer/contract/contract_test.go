@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestLoadABI: Set up data for parameters and to compare against
+// TestLoadABI : test that contract containing named event is successfully loaded
 func TestLoadABI(t *testing.T) {
 
 	//Get the ABI ready

@@ -1,10 +1,8 @@
 package txs
 
 // ------------------------------------------------------------
-//      Relay
-//
-//      Builds and encodes EthBridgeClaim Msgs with the
-//      specified variables, before presenting the unsigned
+//	Relay : Builds and encodes EthBridgeClaim Msgs with the
+//  	specified variables, before presenting the unsigned
 //      transaction to validators for optional signing.
 //      Once signed, the data packets are sent as transactions
 //      on the Cosmos Bridge.
@@ -22,10 +20,10 @@ import (
 	"github.com/cosmos/peggy/x/ethbridge/types"
 )
 
-// RelayEvent : Applies validator's signature to an EthBridgeClaim message containing information
-// 		about an event on the Ethereum blockchain before sending it to the Bridge
-//		blockchain. For this relay, the chain id (chainID) and codec (cdc) of the
-//		Bridge blockchain are required.
+// RelayEvent : RelayEvent applies validator's signature to an EthBridgeClaim message
+//		containing information about an event on the Ethereum blockchain before sending
+//		it to the Bridge blockchain. For this relay, the chain id (chainID) and codec
+//		(cdc) of the Bridge blockchain are required.
 //
 func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddress, moniker string, passphrase string, claim *types.EthBridgeClaim) error {
 

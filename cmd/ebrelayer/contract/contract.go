@@ -1,9 +1,8 @@
 package contract
 
 // -------------------------------------------------------
-//    Contract
-//
-//		Contains functionality related to the smart contract
+//    Contract : Contains functionality for loading the
+//				 smart contract
 // -------------------------------------------------------
 
 import (
@@ -15,8 +14,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-const ABI_PATH = "/src/github.com/cosmos/peggy/cmd/ebrelayer/contract/PeggyABI.json"
+// AbiPath : path to the file containing the smart contract's ABI
+const AbiPath = "cmd/ebrelayer/contract/PeggyABI.json"
 
+// LoadABI : loads a smart contract as an abi.ABI from a .json file
 func LoadABI() abi.ABI {
 	// Open the file containing Peggy contract's ABI
 	gopath := os.Getenv("GOPATH")
@@ -24,7 +25,7 @@ func LoadABI() abi.ABI {
 		gopath = build.Default.GOPATH
 	}
 
-	rawContractAbi, err := ioutil.ReadFile(gopath + ABI_PATH)
+	rawContractAbi, err := ioutil.ReadFile(gopath + AbiPath)
 	if err != nil {
 		panic(err)
 	}

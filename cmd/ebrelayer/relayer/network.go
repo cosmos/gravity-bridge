@@ -1,10 +1,7 @@
 package relayer
 
 // ------------------------------------------------------------
-//    Network
-//
-//    Validates input and initializes a websocket Ethereum
-//    client.
+//    Network: Validates input and initializes a websocket Ethereum client.
 // ------------------------------------------------------------
 
 import (
@@ -16,7 +13,7 @@ import (
 	log "github.com/golang/glog"
 )
 
-// IsWebsocketURL return true if the given URL is a websocket URL
+// IsWebsocketURL : returns true if the given URL is a websocket URL
 func IsWebsocketURL(rawurl string) bool {
 	u, err := url.Parse(rawurl)
 	if err != nil {
@@ -26,7 +23,7 @@ func IsWebsocketURL(rawurl string) bool {
 	return u.Scheme == "ws" || u.Scheme == "wss"
 }
 
-// SetupWebsocketEthClient returns an websocket ethclient if URL is valid.
+// SetupWebsocketEthClient : returns boolean indicating if a URL is valid websocket ethclient
 func SetupWebsocketEthClient(ethURL string) (*ethclient.Client, error) {
 	if strings.TrimSpace(ethURL) == "" {
 		return nil, nil
