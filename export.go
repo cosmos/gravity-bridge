@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -105,7 +106,7 @@ func (app *ethereumBridgeApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhit
 		addr := sdk.ValAddress(iter.Key()[1:])
 		validator, found := app.stakingKeeper.GetValidator(ctx, addr)
 		if !found {
-			panic("expected validator, not found")
+			panic(fmt.Sprintf("expected validator %s, not found", addr))
 		}
 
 		validator.UnbondingHeight = 0
