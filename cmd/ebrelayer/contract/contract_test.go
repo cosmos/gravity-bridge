@@ -1,15 +1,15 @@
 package contract
 
 import (
-  "testing"
-  "io/ioutil"
-  "strings"
-  "log"
+	"io/ioutil"
+	"log"
+	"strings"
+	"testing"
 
-  "github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
-// Set up data for parameters and to compare against
+// TestLoadABI: Set up data for parameters and to compare against
 func TestLoadABI(t *testing.T) {
 
 	//Get the ABI ready
