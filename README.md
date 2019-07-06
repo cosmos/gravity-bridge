@@ -3,66 +3,80 @@
 [![CircleCI](https://circleci.com/gh/cosmos/cosmos-ethereum-bridge/tree/master.svg?style=svg)](https://circleci.com/gh/cosmos/cosmos-ethereum-bridge/tree/master)
 
 ## Summary
+
 Unidirectional Peggy is the starting point for cross chain value transfers from the Ethereum blockchain to Cosmos-SDK based blockchains as part of the Ethereum Cosmos Bridge project. The system accepts incoming transfers of Ethereum tokens on an Ethereum smart contract, locking them while the transaction is validated and equitable funds issued to the intended recipient on the Cosmos bridge chain.
 
 ## Disclaimer
+
 This codebase, including all smart contract components, have not been professionally audited and are not intended for use in a production environment. As such, users should NOT trust the system to securely hold mainnet funds. Any developers attempting to use Unidirectional Peggy on the mainnet at this time will need to develop their own smart contracts or find another implementation.
 
 ## Ethereum Cosmos Bridge Architecture
+
 Unidirectional Peggy focuses on core features for unidirectional transfers. This prototype includes functionality to safely lock and unlock Ethereum, and mint corresponding representative tokens on the Cosmos chain.
 
 The architecture consists of 4 parts. Each part, and the logical flow of operations is described below.
 
 ### The smart contracts
+
 First, the smart contract is deployed to an Ethereum network. A user can then send Ethereum to that smart contract to lock up their Ethereum and trigger the transfer flow.
 
 In this prototype, the system is managed by the contract's deployer, designated internally as the relayer, a trusted third-party which can unlock funds and return them their original sender. If the contract’s balances under threat, the relayer can pause the system, temporarily preventing users from depositing additional funds.
 
 It is not the goal of these contracts to create a production-grade system for cross-chain value transfers which enforces strict permissions and limits access to locked funds. The goal of the current smart contracts is to scurely implement core functionality of the system such as asset locking and event emission without endangering any user funds. As such, this prototype does not permanently lock value and allows the original sender full access to their funds at any time. As stated above, do NOT use unaudited smart contracts on the mainnet.
 
-The Peggy Smart Contract is deployed on the Ropsten testnet at address: 0x3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb. More details on the smart contracts and usage can be found in the testnet-contracts folder.
+The Peggy Smart Contract is deployed on the Ropsten testnet at address: 0xec6df30846baab06fce9b1721608853193913c19. More details on the smart contracts and usage can be found in the testnet-contracts folder.
 
 ### The Relayer
+
 The Relayer is a service which interfaces with both blockchains, allowing validators to attest on the Cosmos blockchain that specific events on the Ethereum blockchain have occurred. Through the Relayer service, validators witness the events and submit proof in the form of signed hashes to the Cosmos based modules, which are responsible for aggregating and tallying the Validators’ signatures and their respective signing power.
 
 The Relayer process is as follows:
- - continually listen for a `LogLock` event
- - when an event is seen, parse information associated with the Ethereum transaction
- - uses this information to build an unsigned Cosmos transaction
- - signs and send this transaction to Tendermint.
+
+- continually listen for a `LogLock` event
+- when an event is seen, parse information associated with the Ethereum transaction
+- uses this information to build an unsigned Cosmos transaction
+- signs and send this transaction to Tendermint.
 
 ### The EthBridge Module
+
 The EthBridge module is a Cosmos-SDK module that is responsible for receiving and decoding transactions involving Ethereum Bridge claims and for processing the result of a successful claim.
 
 The process is as follows:
- - A transaction with a message for the EthBridge module is received
- - The message is decoded and transformed into a generic, non-Ethereum specific Oracle claim
- - The oracle claim is given a unique ID based on the nonce from the ethereum transaction
- - The generic claim is forwarded to the Oracle module.
+
+- A transaction with a message for the EthBridge module is received
+- The message is decoded and transformed into a generic, non-Ethereum specific Oracle claim
+- The oracle claim is given a unique ID based on the nonce from the ethereum transaction
+- The generic claim is forwarded to the Oracle module.
 
 The EthBridge module will resume later if the claim succeeds.
 
 ### The Oracle Module
+
 The Oracle module is intended to be a more generic oracle module that can take arbitrary claims from different validators, hold onto them and perform consensus on those claims once a certain threshold is reached. In this project it is used to find consensus on claims about activity on an Ethereum chain, but it is designed and intended to be able to be used for any other kinds of oracle-like functionality in future (eg: claims about the weather).
 
 The process is as follows:
- - A claim is received from another module (EthBridge in this case)
- - That claim is checked, along with other past claims from other validators with the same unique ID
- - Once a threshold of stake of the active Tendermint validator set is claiming the same thing, the claim is updated to be successful
- - If a threshold of stake of the active Tendermint validator set disagrees, the claim is updated to be a failure
- - The status of the claim is returned to the module that provided the claim.
+
+- A claim is received from another module (EthBridge in this case)
+- That claim is checked, along with other past claims from other validators with the same unique ID
+- Once a threshold of stake of the active Tendermint validator set is claiming the same thing, the claim is updated to be successful
+- If a threshold of stake of the active Tendermint validator set disagrees, the claim is updated to be a failure
+- The status of the claim is returned to the module that provided the claim.
 
 ### The EthBridge Module (Part 2)
+
 The EthBridge module also contains logic for how a result should be processed.
 
 The process is as follows:
- - Once a claim has been processed by the Oracle, the status is returned
- - If the claim is successful, new tokens representing Ethereum are minted via the Bank module
+
+- Once a claim has been processed by the Oracle, the status is returned
+- If the claim is successful, new tokens representing Ethereum are minted via the Bank module
 
 ### Architecture Diagram
+
 ![peggyarchitecturediagram](./docs/ethbridge.jpg)
 
 ## Example application
+
 These modules can be added to any Cosmos-SDK based chain, but a demo application/blockchain is provided with example code for how to integrate them. It can be installed and built as follows:
 
 ```
@@ -169,7 +183,7 @@ For automated relaying, there is a relayer service that can be run that will aut
 ebrelayer status
 
 # Initialize the Relayer service for automatic claim processing
-ebrelayer init wss://ropsten.infura.io/ws 3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb "LogLock(bytes32,address,bytes,address,uint256,uint256)" validator --chain-id testing
+ebrelayer init testing wss://ropsten.infura.io/ws ec6df30846baab06fce9b1721608853193913c19 "LogLock\(bytes32,address,bytes,address,uint256,uint256\)" validator
 
 # Enter password and press enter
 # You should see a message like:  Started ethereum websocket... and Subscribed to contract events...
@@ -182,21 +196,25 @@ The relayer will now watch the contract on Ropsten and create a claim whenever i
 With the application set up and the relayer running, you can now use Peggy by sending a lock transaction to the smart contract. You can do this from any Ethereum wallet/client that supports smart contract transactions.
 
 The easiest way to do this for now, assuming you have Metamask setup for Ropsten in the browser is to use remix or mycrypto as the frontend, for example:
- - 1. Go to remix.ethereum.org
- - 2. Compile [PeggyForRemix.sol](./docs/PeggyForRemix.sol) with solc v0.5.0
- - 3. Set the environment as Injected Web3 Ropsten
- - 4. On 'Run' tab, select Peggy and enter "0x3de4ef81Ba6243A60B0a32d3BCeD4173b6EA02bb" in 'At Address' field
- - 5. Select 'At Address' to load the deployed contract
- - 6. Enter the following for the variables under function lock():
- ```
-  _recipient = [HASHED_COSMOS_RECIPIENT_ADDRESS] *(for testuser cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh, enter "0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668")*
-  _token = [DEPLOYED_TOKEN_ADDRESS] *(erc20 not currently supported, enter "0x0000000000000000000000000000000000000000" for ethereum)*
-  _amount = [WEI_AMOUNT]
+
+- 1.  Go to remix.ethereum.org
+- 2.  Compile Peggy.sol with solc v0.5.0
+- 3.  Set the environment as Injected Web3 Ropsten
+- 4.  On 'Run' tab, select Peggy and enter "0xec6df30846baab06fce9b1721608853193913c19" in 'At Address' field
+- 5.  Select 'At Address' to load the deployed contract
+- 6.  Enter the following for the variables under function lock():
+
 ```
- - 7. Enter the same number from _amount as the transaction's value (in wei)
- - 8. Select "transact" to send the lock() transaction
+ _recipient = [HASHED_COSMOS_RECIPIENT_ADDRESS] *(for testuser cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh, enter "0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668")*
+ _token = [DEPLOYED_TOKEN_ADDRESS] *(erc20 not currently supported, enter "0x0000000000000000000000000000000000000000" for ethereum)*
+ _amount = [WEI_AMOUNT]
+```
+
+- 7.  Enter the same number from \_amount as the transaction's value (in wei)
+- 8.  Select "transact" to send the lock() transaction
 
 Then, wait for the transaction to confirm and mine, and for the relayer to pick it up. You should see the successful output in the relayer console. You can also confirm the tokens have been minted by using the CLI again:
+
 ```
 ebcli query account cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh --trust-node
 ```
@@ -206,7 +224,8 @@ ebcli query account cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh --trust-node
 The ethbridge and oracle modules can be used in other cosmos-sdk applications by copying them into your application's modules folders and including them in the same way as in the example application. Each module may be moved to its own repo or integrated into the core Cosmos-SDK in future, for easier usage.
 
 There are 2 nuances you need to be aware of when using these modules in other Cosmos-SDK projects.
- - A specific version of golang.org/x/crypto (ie tendermint/crypto) is needed for compatability with go-ethereum. See the Gopkg.toml for constraint details. There is an open pull request to tendermint/crypto to add compatbility, but until that is merged you need to use the customized version (https://github.com/tendermint/crypto/pull/1)
- - The govendor steps in the application as above are needed
 
- For instructions on building and deploying the smart contracts, see the README in their folder.
+- A specific version of golang.org/x/crypto (ie tendermint/crypto) is needed for compatability with go-ethereum. See the Gopkg.toml for constraint details. There is an open pull request to tendermint/crypto to add compatbility, but until that is merged you need to use the customized version (https://github.com/tendermint/crypto/pull/1)
+- The govendor steps in the application as above are needed
+
+For instructions on building and deploying the smart contracts, see the README in their folder.

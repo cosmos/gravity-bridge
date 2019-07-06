@@ -469,17 +469,17 @@ contract Processor {
     }
 }
 
-  /*
+   /*
    *  @title: Peggy
    *  @dev: Peg zone contract for testing one-way transfers from Ethereum
-   *        to Cosmos, facilitated by a trusted relayer. This contract is
+   *        to Cosmos, facilitated by a trusted provider. This contract is
    *        NOT intended to be used in production and users are empowered
    *        to withdraw their locked funds at any time.
    */
 contract Peggy is Processor {
 
     bool public active;
-    address public relayer;
+    address public provider;
     mapping(bytes32 => bool) public ids;
 
     event LogLock(
@@ -516,14 +516,14 @@ contract Peggy is Processor {
     );
 
     /*
-    * @dev: Modifier to restrict access to the relayer.
+    * @dev: Modifier to restrict access to the provider.
     *
     */
-    modifier onlyRelayer()
+    modifier onlyProvider()
     {
         require(
-            msg.sender == relayer,
-            'Must be the specified relayer.'
+            msg.sender == provider,
+            'Must be the specified provider.'
         );
         _;
     }
@@ -541,13 +541,13 @@ contract Peggy is Processor {
         _;
     }
     /*
-    * @dev: Constructor, initalizes relayer and active status.
+    * @dev: Constructor, initalizes provider and active status.
     *
     */
     constructor()
         public
     {
-        relayer = msg.sender;
+        provider = msg.sender;
         active = true;
         emit LogLockingActivated(now);
     }
@@ -599,7 +599,7 @@ contract Peggy is Processor {
     }
 
     /*
-     * @dev: Unlocks ethereum/erc20 tokens, called by relayer.
+     * @dev: Unlocks ethereum/erc20 tokens, called by provider.
      *
      *       This is a shortcut utility method for testing purposes.
      *       In the future bidirectional system, unlocking functionality
@@ -610,7 +610,7 @@ contract Peggy is Processor {
     function unlock(
         bytes32 _id
     )
-        onlyRelayer
+        onlyProvider
         canDeliver(_id)
         external
         returns (bool)
@@ -708,11 +708,11 @@ contract Peggy is Processor {
     }
 
     /*
-    * @dev: Relayer can pause fund locking without impacting other functionality.
+    * @dev: Provider can pause fund locking without impacting other functionality.
     */
     function pauseLocking()
         public
-        onlyRelayer
+        onlyProvider
     {
         require(active);
         active = false;
@@ -720,11 +720,11 @@ contract Peggy is Processor {
     }
 
     /*
-    * @dev: Relayer can activate fund locking without impacting other functionality.
+    * @dev: Provider can activate fund locking without impacting other functionality.
     */
     function activateLocking()
         public
-        onlyRelayer
+        onlyProvider
     {
         require(!active);
         active = true;
