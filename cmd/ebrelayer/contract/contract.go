@@ -15,7 +15,7 @@ import (
 )
 
 // AbiPath : path to the file containing the smart contract's ABI
-const AbiPath = "cmd/ebrelayer/contract/PeggyABI.json"
+const AbiPath = "/src/github.com/cosmos/peggy/cmd/ebrelayer/contract/PeggyABI.json"
 
 // LoadABI : loads a smart contract as an abi.ABI from a .json file
 func LoadABI() abi.ABI {
