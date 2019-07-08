@@ -1,4 +1,4 @@
-.PHONY: get_tools get_vendor_deps update_vendor_deps install test
+.PHONY: get_tools get_vendor_deps update_vendor_deps build clean install test
 
 DEP := $(shell command -v dep 2> /dev/null)
 

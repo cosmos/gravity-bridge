@@ -9,7 +9,7 @@ type CodeType = sdk.CodeType
 
 //Exported code type numbers
 const (
-	DefaultCodespace sdk.CodespaceType = "ethbridge"
+	DefaultCodespace sdk.CodespaceType = ModuleName
 
 	CodeInvalidEthNonce    CodeType = 1
 	CodeInvalidEthAddress  CodeType = 2

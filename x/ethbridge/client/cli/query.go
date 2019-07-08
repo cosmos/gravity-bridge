@@ -38,7 +38,10 @@ func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Comm
 			}
 
 			var out types.QueryEthProphecyResponse
-			cdc.MustUnmarshalJSON(res, &out)
+			err = cdc.UnmarshalJSON(res, &out)
+			if err != nil {
+				return err
+			}
 			return cliCtx.PrintOutput(out)
 		},
 	}

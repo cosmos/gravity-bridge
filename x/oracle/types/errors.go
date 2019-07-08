@@ -11,7 +11,7 @@ type CodeType = sdk.CodeType
 
 //Exported code type numbers
 const (
-	DefaultCodespace sdk.CodespaceType = "oracle"
+	DefaultCodespace sdk.CodespaceType = ModuleName
 
 	CodeProphecyNotFound              CodeType = 1
 	CodeMinimumConsensusNeededInvalid CodeType = 2

@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethCommon "github.com/ethereum/go-ethereum/common"
@@ -47,4 +48,23 @@ func (msg MsgCreateEthBridgeClaim) GetSignBytes() []byte {
 // GetSigners defines whose signature is required
 func (msg MsgCreateEthBridgeClaim) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.ValidatorAddress)}
+}
+
+// MapOracleClaimsToEthBridgeClaims maps a set of generic oracle claim data into EthBridgeClaim objects
+func MapOracleClaimsToEthBridgeClaims(nonce int, ethereumSender EthereumAddress, oracleValidatorClaims map[string]string, f func(int, EthereumAddress, sdk.ValAddress, string) (EthBridgeClaim, sdk.Error)) ([]EthBridgeClaim, sdk.Error) {
+	mappedClaims := make([]EthBridgeClaim, len(oracleValidatorClaims))
+	i := 0
+	for validatorBech32, validatorClaim := range oracleValidatorClaims {
+		validatorAddress, parseErr := sdk.ValAddressFromBech32(validatorBech32)
+		if parseErr != nil {
+			return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", parseErr))
+		}
+		mappedClaim, err := f(nonce, ethereumSender, validatorAddress, validatorClaim)
+		if err != nil {
+			return nil, err
+		}
+		mappedClaims[i] = mappedClaim
+		i++
+	}
+	return mappedClaims, nil
 }

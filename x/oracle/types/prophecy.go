@@ -84,6 +84,8 @@ func (prophecy Prophecy) AddClaim(validator sdk.ValAddress, claim string) {
 	prophecy.ValidatorClaims[validatorBech32] = claim
 }
 
+// FindHighestClaim looks through all the existing claims on a given prophecy. It adds up the total power across
+// all claims and returns the highest claim, power for that claim, and total power claimed on the prophecy overall. 
 func (prophecy Prophecy) FindHighestClaim(ctx sdk.Context, stakeKeeper staking.Keeper) (string, int64, int64) {
 	validators := stakeKeeper.GetBondedValidatorsByPower(ctx)
 	//Index the validators by address for looking when scanning through claims

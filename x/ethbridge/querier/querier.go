@@ -42,7 +42,7 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 		return []byte{}, oracletypes.ErrProphecyNotFound(codespace)
 	}
 
-	bridgeClaims, errSdk := MapOracleClaimsToEthBridgeClaims(params.Nonce, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
+	bridgeClaims, errSdk := types.MapOracleClaimsToEthBridgeClaims(params.Nonce, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
 	if errSdk != nil {
 		return []byte{}, errSdk
 	}
@@ -55,22 +55,4 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 	}
 
 	return bz, nil
-}
-
-func MapOracleClaimsToEthBridgeClaims(nonce int, ethereumSender types.EthereumAddress, oracleValidatorClaims map[string]string, f func(int, types.EthereumAddress, sdk.ValAddress, string) (types.EthBridgeClaim, sdk.Error)) ([]types.EthBridgeClaim, sdk.Error) {
-	mappedClaims := make([]types.EthBridgeClaim, len(oracleValidatorClaims))
-	i := 0
-	for validatorBech32, validatorClaim := range oracleValidatorClaims {
-		validatorAddress, parseErr := sdk.ValAddressFromBech32(validatorBech32)
-		if parseErr != nil {
-			return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", parseErr))
-		}
-		mappedClaim, err := f(nonce, ethereumSender, validatorAddress, validatorClaim)
-		if err != nil {
-			return nil, err
-		}
-		mappedClaims[i] = mappedClaim
-		i++
-	}
-	return mappedClaims, nil
 }

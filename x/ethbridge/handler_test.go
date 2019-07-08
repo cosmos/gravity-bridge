@@ -35,9 +35,8 @@ func TestBasicMsgs(t *testing.T) {
 	//Bad Creation
 	badCreateMsg := types.CreateTestEthMsg(t, valAddress)
 	badCreateMsg.Nonce = -1
-	res = handler(ctx, badCreateMsg)
-	require.False(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, "invalid ethereum nonce provided"))
+	err := badCreateMsg.ValidateBasic()
+	require.Error(t, err)
 }
 
 func TestDuplicateMsgs(t *testing.T) {
