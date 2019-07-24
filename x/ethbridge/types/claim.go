@@ -78,7 +78,7 @@ func CreateEthClaimFromOracleString(nonce int, ethereumAddress EthereumAddress, 
 }
 
 // CreateOracleClaimFromOracleString converts a JSON string into an OracleClaimContent struct used by this module. In general, it is
-// expecte that the oracle module will store claims in this JSON format and so this should be used to convert oracle claims.
+// expected that the oracle module will store claims in this JSON format and so this should be used to convert oracle claims.
 func CreateOracleClaimFromOracleString(oracleClaimString string) (OracleClaimContent, sdk.Error) {
 	var oracleClaimContent OracleClaimContent
 
