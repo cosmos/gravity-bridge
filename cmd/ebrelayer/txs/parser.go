@@ -28,7 +28,7 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 	witnessClaim := ethbridgeTypes.EthBridgeClaim{}
 
 	// Nonce type casting (*big.Int -> int)
-	nonce := int(event.Nonce.Uint64())
+	nonce := int(event.Nonce.Int64())
 
 	// Sender type casting (address.common -> string)
 	sender := ethbridgeTypes.NewEthereumAddress(event.From.Hex())
