@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"strings"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/peggy/x/oracle/types"
@@ -82,7 +84,7 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Status, 
 	if !activeValidator {
 		return types.Status{}, types.ErrInvalidValidator(k.Codespace())
 	}
-	if claim.Content == "" {
+	if strings.TrimSpace(claim.Content) == "" {
 		return types.Status{}, types.ErrInvalidClaim(k.Codespace())
 	}
 	prophecy, err := k.GetProphecy(ctx, claim.ID)
@@ -120,6 +122,9 @@ func (k Keeper) checkActiveValidator(ctx sdk.Context, validatorAddress sdk.ValAd
 	return true
 }
 
+// processCompletion looks at a given prophecy an assesses whether the claim with the highest power on that prophecy has enough
+// power to be considered successful, or alternatively, will never be able to become successful due to not enough validation power being
+// left to push it over the threshold required for consensus.
 func (k Keeper) processCompletion(ctx sdk.Context, prophecy types.Prophecy) types.Prophecy {
 	highestClaim, highestClaimPower, totalClaimsPower := prophecy.FindHighestClaim(ctx, k.stakeKeeper)
 	totalPower := k.stakeKeeper.GetLastTotalPower(ctx)

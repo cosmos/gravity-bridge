@@ -27,6 +27,9 @@ func (msg MsgCreateEthBridgeClaim) ValidateBasic() sdk.Error {
 	if msg.CosmosReceiver.Empty() {
 		return sdk.ErrInvalidAddress(msg.CosmosReceiver.String())
 	}
+	if msg.ValidatorAddress.Empty() {
+		return sdk.ErrInvalidAddress(msg.ValidatorAddress.String())
+	}
 	if msg.Nonce < 0 {
 		return ErrInvalidEthNonce(DefaultCodespace)
 	}

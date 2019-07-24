@@ -9,7 +9,7 @@ import (
 // Local code type
 type CodeType = sdk.CodeType
 
-//Exported code type numbers
+// Exported code type numbers
 const (
 	DefaultCodespace sdk.CodespaceType = ModuleName
 
@@ -41,21 +41,21 @@ func ErrInvalidIdentifier(codespace sdk.CodespaceType) sdk.Error {
 }
 
 func ErrProphecyFinalized(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeProphecyFinalized, "Prophecy already finalized")
+	return sdk.NewError(codespace, CodeProphecyFinalized, "prophecy already finalized")
 }
 
 func ErrDuplicateMessage(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeDuplicateMessage, "Already processed message from validator for this id")
+	return sdk.NewError(codespace, CodeDuplicateMessage, "already processed message from validator for this id")
 }
 
 func ErrInvalidClaim(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeInvalidClaim, "Claim cannot be empty string")
+	return sdk.NewError(codespace, CodeInvalidClaim, "claim cannot be empty string")
 }
 
 func ErrInvalidValidator(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeInvalidValidator, "Claim must be made by actively bonded validator")
+	return sdk.NewError(codespace, CodeInvalidValidator, "claim must be made by actively bonded validator")
 }
 
 func ErrInternalDB(codespace sdk.CodespaceType, err error) sdk.Error {
-	return sdk.NewError(codespace, CodeInternalDB, fmt.Sprintf("Internal error serializing/deserializing prophecy: %s", err.Error()))
+	return sdk.NewError(codespace, CodeInternalDB, fmt.Sprintf("internal error serializing/deserializing prophecy: %s", err.Error()))
 }

@@ -43,6 +43,10 @@ func NewOracleClaimContent(cosmosReceiver sdk.AccAddress, amount sdk.Coins) Orac
 	}
 }
 
+// CreateOracleClaimFromEthClaim converts a specific ethereum bridge claim to a general oracle claim to be used by
+// the oracle module. The oracle module expects every claim for a particular prophecy to have the same id, so this id
+// must be created in a deterministic way that all validators can follow. For this, we use the Nonce an Ethereum Sender provided,
+// as all validators will see this same data from the smart contract.
 func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (oracle.Claim, error) {
 	oracleId := strconv.Itoa(ethClaim.Nonce) + ethClaim.EthereumSender.String()
 	claimContent := NewOracleClaimContent(ethClaim.CosmosReceiver, ethClaim.Amount)
@@ -56,6 +60,7 @@ func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (o
 	return claim, nil
 }
 
+// CreateEthClaimFromOracleString converts a string from any generic claim from the oracle module into an ethereum bridge specific claim.
 func CreateEthClaimFromOracleString(nonce int, ethereumAddress EthereumAddress, validator sdk.ValAddress, oracleClaimString string) (EthBridgeClaim, sdk.Error) {
 	oracleClaim, err := CreateOracleClaimFromOracleString(oracleClaimString)
 	if err != nil {
@@ -72,6 +77,8 @@ func CreateEthClaimFromOracleString(nonce int, ethereumAddress EthereumAddress, 
 	), nil
 }
 
+// CreateOracleClaimFromOracleString converts a JSON string into an OracleClaimContent struct used by this module. In general, it is
+// expecte that the oracle module will store claims in this JSON format and so this should be used to convert oracle claims.
 func CreateOracleClaimFromOracleString(oracleClaimString string) (OracleClaimContent, sdk.Error) {
 	var oracleClaimContent OracleClaimContent
 

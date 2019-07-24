@@ -1,7 +1,6 @@
 package querier
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -12,7 +11,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-//query endpoints supported by the oracle Querier
+// query endpoints supported by the oracle Querier
 const (
 	QueryEthProphecy = "prophecies"
 )
@@ -34,7 +33,7 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 
 	err := cdc.UnmarshalJSON(req.Data, &params)
 	if err != nil {
-		return []byte{}, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+		return []byte{}, sdk.ErrInternal(sdk.AppendMsgToErr("failed to parse params: %s", err.Error()))
 	}
 	id := strconv.Itoa(params.Nonce) + params.EthereumSender.String()
 	prophecy, errSdk := keeper.GetProphecy(ctx, id)
@@ -49,7 +48,7 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 
 	response := types.NewQueryEthProphecyResponse(prophecy.ID, prophecy.Status, bridgeClaims)
 
-	bz, err := codec.MarshalJSONIndent(cdc, response)
+	bz, err := cdc.MarshalJSONIndent(response, "", "  ")
 	if err != nil {
 		panic("could not marshal result to JSON")
 	}

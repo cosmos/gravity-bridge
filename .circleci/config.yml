@@ -5,7 +5,7 @@ jobs: # basic units of work in a run
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
       - image: circleci/golang:1.12 #
     # directory where steps are run. Path must conform to the Go Workspace requirements
-    working_directory: /go/src/github.com/swishlabsco/cosmos-ethereum-bridge
+    working_directory: /go/src/github.com/cosmos/peggy
 
     environment: # environment variables for the build itself
       TEST_RESULTS: /tmp/test-results # path to where test results will be saved
@@ -37,7 +37,7 @@ jobs: # basic units of work in a run
       # specify the version you desire here
       - image: circleci/node:9.11.1
 
-    working_directory: /go/src/github.com/swishlabsco/cosmos-ethereum-bridge/ethereum-contracts
+    working_directory: /go/src/github.com/cosmos/peggy/ethereum-contracts
     
     environment: # environment variables for the build itself
       TEST_RESULTS: /tmp/contract-test-results # path to where test results will be saved

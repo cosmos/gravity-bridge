@@ -7,7 +7,7 @@ import (
 // Local code type
 type CodeType = sdk.CodeType
 
-//Exported code type numbers
+// Exported code type numbers
 const (
 	DefaultCodespace sdk.CodespaceType = ModuleName
 
