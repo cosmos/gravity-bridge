@@ -14,7 +14,7 @@ import (
 // GetCmdGetEthBridgeProphecy queries information about a specific prophecy
 func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "get-prophecy nonce ethereum-sender",
+		Use:   "get-prophecy [nonce] [ethereum-sender]",
 		Short: "get prophecy",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {

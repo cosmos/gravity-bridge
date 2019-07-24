@@ -16,7 +16,7 @@ import (
 // GetCmdCreateEthBridgeClaim is the CLI command for creating a claim on an ethereum prophecy
 func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "create-claim nonce ethereum-sender-address cosmos-receiver-address validator-address amount",
+		Use:   "create-claim [nonce] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount]",
 		Short: "create a claim on an ethereum prophecy",
 		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) error {
