@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -92,7 +93,7 @@ func initRelayerCmd() *cobra.Command {
 func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Parse chain's ID
 	chainID := viper.GetString(client.FlagChainID)
-	if chainID == "" {
+	if strings.TrimSpace(chainID) == "" {
 		return fmt.Errorf("Must specify a 'chain-id'")
 	}
 
