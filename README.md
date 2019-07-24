@@ -94,7 +94,7 @@ ebcli tx ethbridge create-claim --help
 ebcli tx ethbridge create-claim 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 3eth --from validator --chain-id testing --yes
 
 # Then read the prophecy to confirm it was created with the claim added
-ebcli query ethbridge get-prophecy 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 --trust-node
+ebcli query ethbridge prophecy 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 --trust-node
 
 # And finally, confirm that the prophecy was successfully processed and that new eth was minted to the testuser address
 ebcli query account $(ebcli keys show testuser -a) --trust-node
