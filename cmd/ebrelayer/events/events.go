@@ -27,7 +27,7 @@ func PrintEventByTx(txHash string) {
 	if IsEventRecorded(txHash) {
 		PrintEvent(EventRecords[txHash])
 	} else {
-		fmt.Printf("\nNo records from this sesson for tx: %v\n", txHash)
+		fmt.Printf("\nNo records from this session for tx: %v\n", txHash)
 	}
 }
 
