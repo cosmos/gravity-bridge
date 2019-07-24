@@ -116,7 +116,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"base_req\": {\n        \"chain_id\": \"testing\",\n        \"from\": \"cosmos18hf69vxn8a3tkladruxgxgv8tl8sl54gygdh29\"\n    },\n    \"nonce\": \"0\",\n    \"ethereum_sender\": \"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\n    \"amount\": \"4eth\",\n    \"cosmos_receiver\": \"cosmos19l0hyjpzm8xkwlu84my4f0npd2ranxt2yfztux\"\n}"
+					"raw": "{\n    \"base_req\": {\n        \"chain_id\": \"testing\",\n        \"from\": \"cosmos18hf69vxn8a3tkladruxgxgv8tl8sl54gygdh29\"\n    },\n    \"nonce\": \"0\",\n    \"ethereum_sender\": \"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\n    \"amount\": \"4eth\",\n    \"cosmos_receiver\": \"cosmos1l5h2x255pvdy9l4z0hf9tr8zw7k657s97wyz7y\",\n    \"validator\": \"cosmosvaloper1xu7qk6axf39wp6g2ncv3mwps6z4cc9f8kkddmm\"\n}"
 				},
 				"url": {
 					"raw": "http://localhost:1317/ethbridge/prophecies",
