@@ -28,9 +28,9 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			nonce, stringError := strconv.Atoi(args[0])
-			if stringError != nil {
-				return stringError
+			nonce, err := strconv.Atoi(args[0])
+			if err != nil {
+				return err
 			}
 
 			ethereumSender := types.NewEthereumAddress(args[1])
