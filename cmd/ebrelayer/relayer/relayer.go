@@ -1,10 +1,12 @@
 package relayer
 
 // -----------------------------------------------------
-//	Relayer : Initializes the relayer service, which parses,
-//		encodes, and packages named events on an Ethereum
-//  	Smart Contract for validator's to sign and send
-//  	to the Cosmos bridge.
+//      Relayer
+//
+//      Initializes the relayer service, which parses,
+//      encodes, and packages named events on an Ethereum
+//      Smart Contract for validator's to sign and send
+//      to the Cosmos bridge.
 // -----------------------------------------------------
 
 import (
@@ -24,7 +26,7 @@ import (
 	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
-// InitRelayer : Starts an event listener on a specific network, contract, and event
+//	InitRelayer : Starts an event listener on a specific network, contract, and event
 func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddress common.Address, eventSig string, validatorName string, passphrase string, validatorAddress sdk.ValAddress) error {
 
 	// Start client with infura ropsten provider
@@ -69,7 +71,6 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 
 				// Add the event to the record
 				events.NewEventWrite(vLog.TxHash.Hex(), event)
-
 				// Parse the event's payload into a struct
 				claim, err := txs.ParsePayload(validatorAddress, &event)
 				if err != nil {
@@ -81,6 +82,13 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 				if err != nil {
 					return err
 				}
+
+				// Initiate the relay
+				err = txs.RelayEvent(chainId, cdc, validatorAddress, validatorName, passphrase, &claim)
+				if err != nil {
+					return err
+				}
+				// }
 			}
 		}
 	}
