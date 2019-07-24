@@ -82,13 +82,6 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 				if err != nil {
 					return err
 				}
-
-				// Initiate the relay
-				err = txs.RelayEvent(chainId, cdc, validatorAddress, validatorName, passphrase, &claim)
-				if err != nil {
-					return err
-				}
-				// }
 			}
 		}
 	}
