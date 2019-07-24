@@ -22,8 +22,7 @@ const (
 	ETH string = "eth"
 )
 
-// ParsePayload : ParsePayload parses a LockEvent struct, packaging the information
-//				  along with a validator address in an EthBridgeClaim msg
+// ParsePayload : parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
 func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTypes.EthBridgeClaim, error) {
 
 	witnessClaim := ethbridgeTypes.EthBridgeClaim{}
