@@ -26,7 +26,7 @@ import (
 	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
-//	InitRelayer : Starts an event listener on a specific network, contract, and event
+// InitRelayer : Starts an event listener on a specific network, contract, and event
 func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddress common.Address, eventSig string, validatorName string, passphrase string, validatorAddress sdk.ValAddress) error {
 
 	// Start client with infura ropsten provider
@@ -92,5 +92,5 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 			}
 		}
 	}
-	return fmt.Errorf("Error: Relayer timed out.")
+	return fmt.Errorf("error: relayer timed out")
 }
