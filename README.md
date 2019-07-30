@@ -1,6 +1,6 @@
 # ETH Bridge Zone
 
-[![CircleCI](https://circleci.com/gh/cosmos/cosmos-ethereum-bridge/tree/master.svg?style=svg)](https://circleci.com/gh/cosmos/cosmos-ethereum-bridge/tree/master)
+[![CircleCI](https://circleci.com/gh/cosmos/peggy/tree/master.svg?style=svg)](https://circleci.com/gh/cosmos/peggy/tree/master)
 
 ## Summary
 
