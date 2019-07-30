@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 )
 
 type StatusText int
@@ -34,7 +35,12 @@ func (text *StatusText) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	// Note that if the string cannot be found then it will be set to the zero value, 'Created' in this case.
-	*text = StringToStatusText[string(b)]
+	stringKey, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+
+	// Note that if the string cannot be found then it will be set to the zero value, 'pending' in this case.
+	*text = StringToStatusText[stringKey]
 	return nil
 }
