@@ -1,1 +1,15 @@
-node_modules/
+# OS
+.DS_Store
+*.swp
+*.swo
+.vscode
+.idea
+
+# Build
+vendor
+.vendor-new
+build
+
+# IDE
+.idea/
+*.iml

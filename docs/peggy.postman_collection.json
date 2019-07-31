@@ -1,0 +1,159 @@
+{
+	"info": {
+		"_postman_id": "cf767109-8494-42c9-8867-4af935a7a0c0",
+		"name": "peggy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "node: get endpoints",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:26657",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "26657"
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "node: get status",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"method\": \"status\",\n    \"jsonrpc\": \"2.0\",\n    \"params\": [],\n    \"id\": \"dontcare\"\n}\n"
+				},
+				"url": {
+					"raw": "http://localhost:26657",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "26657"
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cli: version",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:1317/node_info",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1317",
+					"path": [
+						"node_info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cli: get account",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:1317/auth/accounts/cosmos19l0hyjpzm8xkwlu84my4f0npd2ranxt2yfztux",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1317",
+					"path": [
+						"auth",
+						"accounts",
+						"cosmos19l0hyjpzm8xkwlu84my4f0npd2ranxt2yfztux"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cli: get account balances",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:1317/bank/balances/cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1317",
+					"path": [
+						"bank",
+						"balances",
+						"cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cli: create eth prophecy",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"base_req\": {\n        \"chain_id\": \"testing\",\n        \"from\": \"cosmos18hf69vxn8a3tkladruxgxgv8tl8sl54gygdh29\"\n    },\n    \"nonce\": \"0\",\n    \"ethereum_sender\": \"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\n    \"amount\": \"4eth\",\n    \"cosmos_receiver\": \"cosmos1l5h2x255pvdy9l4z0hf9tr8zw7k657s97wyz7y\",\n    \"validator\": \"cosmosvaloper1xu7qk6axf39wp6g2ncv3mwps6z4cc9f8kkddmm\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:1317/ethbridge/prophecies",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1317",
+					"path": [
+						"ethbridge",
+						"prophecies"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cli: get prophecy",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:1317/ethbridge/prophecies/0/0x7B95B6EC7EbD73572298cEf32Bb54FA408207359",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1317",
+					"path": [
+						"ethbridge",
+						"prophecies",
+						"0",
+						"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
