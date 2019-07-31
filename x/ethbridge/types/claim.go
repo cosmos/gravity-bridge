@@ -48,15 +48,14 @@ func NewOracleClaimContent(cosmosReceiver sdk.AccAddress, amount sdk.Coins) Orac
 // must be created in a deterministic way that all validators can follow. For this, we use the Nonce an Ethereum Sender provided,
 // as all validators will see this same data from the smart contract.
 func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (oracle.Claim, error) {
-	oracleId := strconv.Itoa(ethClaim.Nonce) + ethClaim.EthereumSender.String()
+	oracleID := strconv.Itoa(ethClaim.Nonce) + ethClaim.EthereumSender.String()
 	claimContent := NewOracleClaimContent(ethClaim.CosmosReceiver, ethClaim.Amount)
 	claimBytes, err := json.Marshal(claimContent)
 	if err != nil {
 		return oracle.Claim{}, err
 	}
 	claimString := string(claimBytes)
-	validator := sdk.ValAddress(ethClaim.ValidatorAddress)
-	claim := oracle.NewClaim(oracleId, validator, claimString)
+	claim := oracle.NewClaim(oracleID, ethClaim.ValidatorAddress, claimString)
 	return claim, nil
 }
 
@@ -67,12 +66,11 @@ func CreateEthClaimFromOracleString(nonce int, ethereumAddress EthereumAddress, 
 		return EthBridgeClaim{}, err
 	}
 
-	valAccAddress := sdk.ValAddress(validator)
 	return NewEthBridgeClaim(
 		nonce,
 		ethereumAddress,
 		oracleClaim.CosmosReceiver,
-		valAccAddress,
+		validator,
 		oracleClaim.Amount,
 	), nil
 }
