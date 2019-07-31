@@ -53,7 +53,7 @@ func TestDuplicateMsgs(t *testing.T) {
 	//Duplicate message from same validator
 	res = handler(ctx, normalCreateMsg)
 	require.False(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, "Already processed message from validator for this id"))
+	require.True(t, strings.Contains(res.Log, "already processed message from validator for this id"))
 
 }
 
@@ -88,7 +88,7 @@ func TestMintSuccess(t *testing.T) {
 	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal3Pow1)
 	res = handler(ctx, normalCreateMsg)
 	require.False(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, "Prophecy already finalized"))
+	require.True(t, strings.Contains(res.Log, "prophecy already finalized"))
 	receiverCoins = bankKeeper.GetCoins(ctx, receiverAddress)
 	expectedCoins, err = sdk.ParseCoins(types.TestCoins)
 	require.NoError(t, err)

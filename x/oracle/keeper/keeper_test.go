@@ -57,7 +57,7 @@ func TestBadMsgs(t *testing.T) {
 	status, err := keeper.ProcessClaim(ctx, oracleClaim)
 	require.Error(t, err)
 	require.Equal(t, status.FinalClaim, "")
-	require.True(t, strings.Contains(err.Error(), "Claim cannot be empty string"))
+	require.True(t, strings.Contains(err.Error(), "claim cannot be empty string"))
 
 	//Test normal Creation
 	oracleClaim = types.NewClaim(TestID, validator1Pow3, TestString)
@@ -69,13 +69,13 @@ func TestBadMsgs(t *testing.T) {
 	oracleClaim = types.NewClaim(TestID, validator1Pow3, TestString)
 	status, err = keeper.ProcessClaim(ctx, oracleClaim)
 	require.Error(t, err)
-	require.True(t, strings.Contains(err.Error(), "Already processed message from validator for this id"))
+	require.True(t, strings.Contains(err.Error(), "already processed message from validator for this id"))
 
 	//Test second but non duplicate message
 	oracleClaim = types.NewClaim(TestID, validator1Pow3, AlternateTestString)
 	status, err = keeper.ProcessClaim(ctx, oracleClaim)
 	require.Error(t, err)
-	require.True(t, strings.Contains(err.Error(), "Already processed message from validator for this id"))
+	require.True(t, strings.Contains(err.Error(), "already processed message from validator for this id"))
 
 }
 
@@ -102,7 +102,7 @@ func TestSuccessfulProphecy(t *testing.T) {
 	oracleClaim = types.NewClaim(TestID, validator3Pow4, TestString)
 	status, err = keeper.ProcessClaim(ctx, oracleClaim)
 	require.Error(t, err)
-	require.True(t, strings.Contains(err.Error(), "Prophecy already finalized"))
+	require.True(t, strings.Contains(err.Error(), "prophecy already finalized"))
 }
 
 func TestSuccessfulProphecyWithDisagreement(t *testing.T) {
@@ -240,7 +240,7 @@ func TestMultipleProphecies(t *testing.T) {
 	oracleClaim = types.NewClaim(AlternateTestID, validator1Pow3, AlternateTestString)
 	status, err = keeper.ProcessClaim(ctx, oracleClaim)
 	require.Error(t, err)
-	require.True(t, strings.Contains(err.Error(), "Prophecy already finalized"))
+	require.True(t, strings.Contains(err.Error(), "prophecy already finalized"))
 }
 
 func TestNonValidator(t *testing.T) {
@@ -253,5 +253,5 @@ func TestNonValidator(t *testing.T) {
 	oracleClaim := types.NewClaim(TestID, inActiveValidatorAddress, TestString)
 	_, err := keeper.ProcessClaim(ctx, oracleClaim)
 	require.Error(t, err)
-	require.True(t, strings.Contains(err.Error(), "Claim must be made by actively bonded validator"))
+	require.True(t, strings.Contains(err.Error(), "claim must be made by actively bonded validator"))
 }
