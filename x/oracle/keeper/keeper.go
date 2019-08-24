@@ -14,11 +14,11 @@ import (
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	cdc *codec.Codec // The wire codec for binary encoding/decoding.
+	cdc      *codec.Codec // The wire codec for binary encoding/decoding.
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
 	stakeKeeper staking.Keeper
-	codespace sdk.CodespaceType
+	codespace   sdk.CodespaceType
 
 	// TODO: use this as param instead
 	consensusNeeded float64 // The minimum % of stake needed to sign claims in order for consensus to occur
@@ -42,7 +42,6 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakeKeeper staking.Keep
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
-
 
 // Codespace returns the codespace
 func (k Keeper) Codespace() sdk.CodespaceType {

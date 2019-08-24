@@ -6,10 +6,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/nft"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/peggy/x/ethbridge"
@@ -69,13 +69,13 @@ type EthereumBridgeApp struct {
 
 	// SDK keepers
 	// TODO: add governance keeper
-	AccountKeeper       auth.AccountKeeper
-	BankKeeper          bank.Keeper
-	StakingKeeper       staking.Keeper
-	SupplyKeeper 				supply.Keeper
-	CrisisKeeper  			crisis.Keeper
-	ParamsKeeper 				params.Keeper
-	NFTKeeper 					nft.Keeper
+	AccountKeeper auth.AccountKeeper
+	BankKeeper    bank.Keeper
+	StakingKeeper staking.Keeper
+	SupplyKeeper  supply.Keeper
+	CrisisKeeper  crisis.Keeper
+	ParamsKeeper  params.Keeper
+	NFTKeeper     nft.Keeper
 
 	// EthBridge keepers
 	OracleKeeper oracle.Keeper
@@ -105,8 +105,8 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB, invCheckPeriod uint,
 	var app = &EthereumBridgeApp{
 		BaseApp: bApp,
 		cdc:     cdc,
-		keys:           keys,
-		tkeys:          tkeys,
+		keys:    keys,
+		tkeys:   tkeys,
 	}
 
 	// init params keeper and subspaces
