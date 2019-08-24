@@ -73,13 +73,13 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		ebApp := app.NewEthereumBridgeApp(logger, db)
+		ebApp := app.NewEthereumBridgeApp(logger, db, 1)
 		err := ebApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
 		}
 		return ebApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
-	ebApp := app.NewEthereumBridgeApp(logger, db)
+	ebApp := app.NewEthereumBridgeApp(logger, db, 1)
 	return ebApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
