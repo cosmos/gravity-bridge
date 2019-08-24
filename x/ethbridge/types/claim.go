@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/cosmos/peggy/x/oracle"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/peggy/x/oracle"
 )
 
 // EthBridgeClaim defines a claim for an ERC20 token

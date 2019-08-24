@@ -7,9 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
+
+	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 const (

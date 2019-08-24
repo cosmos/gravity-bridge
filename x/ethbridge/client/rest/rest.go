@@ -12,11 +12,12 @@ import (
 
 	"github.com/gorilla/mux"
 
-	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/peggy/x/ethbridge"
 	"github.com/cosmos/peggy/x/ethbridge/querier"
 	"github.com/cosmos/peggy/x/ethbridge/types"
+
+	clientrest "github.com/cosmos/cosmos-sdk/client/rest"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (

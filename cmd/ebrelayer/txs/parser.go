@@ -12,9 +12,10 @@ package txs
 import (
 	"errors"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	ethbridgeTypes "github.com/cosmos/peggy/x/ethbridge/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // ETH : ETH constant specifies a token type of Ethereum

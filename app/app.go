@@ -1,7 +1,11 @@
 package app
 
 import (
+	"os"
+
 	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/cosmos/peggy/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -12,15 +16,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/peggy/x/ethbridge"
-	"github.com/cosmos/peggy/x/oracle"
+
+	abci "github.com/tendermint/tendermint/abci/types"
+	cmn "github.com/tendermint/tendermint/libs/common"
+	dbm "github.com/tendermint/tendermint/libs/db"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
-	dbm "github.com/tendermint/tendermint/libs/db"
 )
 
 const (

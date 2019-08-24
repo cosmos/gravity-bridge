@@ -1,32 +1,27 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	amino "github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/libs/cli"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
-	stakingModule "github.com/cosmos/cosmos-sdk/x/staking"
-
-	stakingclient "github.com/cosmos/cosmos-sdk/x/staking/client"
-	stakingrest "github.com/cosmos/cosmos-sdk/x/staking/client/rest"
 
 	"github.com/cosmos/peggy/app"
-	ethbridgeclient "github.com/cosmos/peggy/x/ethbridge/client"
-	ethbridgerest "github.com/cosmos/peggy/x/ethbridge/client/rest"
 )
 
 func main() {

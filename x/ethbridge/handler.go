@@ -3,11 +3,12 @@ package ethbridge
 import (
 	"fmt"
 
+	"github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/x/oracle"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/peggy/x/ethbridge/types"
-	"github.com/cosmos/peggy/x/oracle"
 )
 
 // NewHandler returns a handler for "ethbridge" type messages.
