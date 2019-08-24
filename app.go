@@ -1,0 +1,184 @@
+package app
+
+import (
+	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/genaccounts"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	"github.com/cosmos/cosmos-sdk/x/nft"
+	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/cosmos/peggy/x/ethbridge"
+	"github.com/cosmos/peggy/x/oracle"
+
+	bam "github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	abci "github.com/tendermint/tendermint/abci/types"
+	cmn "github.com/tendermint/tendermint/libs/common"
+	dbm "github.com/tendermint/tendermint/libs/db"
+)
+
+const (
+	appName = "ethereum-bridge"
+)
+
+var (
+	// ModuleBasics the module BasicManager is in charge of setting up basic,
+	// non-dependant module elements, such as codec registration
+	// and genesis verification.
+	ModuleBasics = module.NewBasicManager(
+		genaccounts.AppModuleBasic{},
+		genutil.AppModuleBasic{},
+		auth.AppModuleBasic{},
+		bank.AppModuleBasic{},
+		staking.AppModuleBasic{},
+		params.AppModuleBasic{},
+		nft.AppModuleBasic{},
+		supply.AppModuleBasic{},
+	)
+
+	// module account permissions
+	maccPerms = map[string][]string{
+		auth.FeeCollectorName:     nil,
+		staking.BondedPoolName:    {supply.Burner, supply.Staking},
+		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
+	}
+)
+
+type EthereumBridgeApp struct {
+	*bam.BaseApp
+	cdc *codec.Codec
+
+	// keys to access the substores
+	keys  map[string]*sdk.KVStoreKey
+	tkeys map[string]*sdk.TransientStoreKey
+
+
+	// the module manager
+	mm *module.Manager
+
+	// SDK keepers
+	// TODO: add governance keeper
+	AccountKeeper       auth.AccountKeeper
+	BankKeeper          bank.Keeper
+	StakingKeeper       staking.Keeper
+	SupplyKeeper supply.Keeper
+	NFTKeeper nft.Keeper
+	ParamsKeeper params.Keeper
+
+	// EthBridge keepers
+	OracleKeeper oracle.Keeper
+}
+
+// NewEthereumBridgeApp is a constructor function for ethereumBridgeApp
+func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
+
+	// First define the top level codec that will be shared by the different modules
+	cdc := MakeCodec()
+
+	// BaseApp handles interactions with Tendermint through the ABCI protocol
+	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc))
+
+	keys := sdk.NewKVStoreKeys(bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
+		supply.StoreKey, oracle.StoreKey, params.StoreKey, nft.StoreKey)
+	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
+
+	// Here you initialize your application with the store keys it requires
+	var app = &EthereumBridgeApp{
+		BaseApp: bApp,
+		cdc:     cdc,
+		keys:           keys,
+		tkeys:          tkeys,
+	}
+
+	// The ParamsKeeper handles parameter storage for the application
+	app.paramsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey], params.DefaultCodespace)
+	authSubspace := app.ParamsKeeper.Subspace(auth.DefaultParamspace)
+	bankSubspace := app.ParamsKeeper.Subspace(bank.DefaultParamspace)
+	stakingSubspace := app.ParamsKeeper.Subspace(staking.DefaultParamspace)
+
+	// The AccountKeeper handles address -> account lookups
+	app.AccountKeeper = auth.NewAccountKeeper(app.cdc, keys[auth.StoreKey], authSubspace, auth.ProtoBaseAccount)
+	app.BankKeeper = bank.NewBaseKeeper(app.AccountKeeper, bankSubspace, bank.DefaultCodespace, app.ModuleAccountAddrs())
+	app.SupplyKeeper = supply.NewKeeper(app.cdc, keys[supply.StoreKey], app.AccountKeeper, app.BankKeeper, maccPerms)
+	app.StakingKeeper = staking.NewKeeper(app.cdc, keys[staking.StoreKey], tkeys[staking.TStoreKey],
+		app.SupplyKeeper, stakingSubspace, staking.DefaultCodespace)
+	app.NFTKeeper = nft.NewKeeper(app.cdc, keys[nft.StoreKey])
+	app.OracleKeeper = oracle.NewKeeper(app.cdc, keys[oracle.StoreKey], app.StakingKeeper, oracle.DefaultCodespace, oracle.DefaultConsensusNeeded)
+
+	// initialize stores
+	app.MountKVStores(keys)
+	app.MountTransientStores(tkeys)
+
+// initialize BaseApp
+app.SetInitChainer(app.InitChainer)
+app.SetBeginBlocker(app.BeginBlocker)
+app.SetAnteHandler(auth.NewAnteHandler(app.AccountKeeper, app.SupplyKeeper, auth.DefaultSigVerificationGasConsumer))
+app.SetEndBlocker(app.EndBlocker)
+
+	err := app.LoadLatestVersion(app.keyMain)
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
+
+	return app
+}
+
+// MakeCodec generates the necessary codecs for Amino
+func MakeCodec() *codec.Codec {
+	var cdc = codec.New()
+	ModuleBasics.RegisterCodec(cdc)
+	sdk.RegisterCodec(cdc)
+	codec.RegisterCrypto(cdc)
+	return cdc
+}
+
+// BeginBlocker application updates every begin block
+func (app *SimApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	return app.mm.BeginBlock(ctx, req)
+}
+
+// EndBlocker application updates every end block
+func (app *SimApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+	return app.mm.EndBlock(ctx, req)
+}
+
+// InitChainer application update at chain initialization
+func (app *SimApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	var genesisState GenesisState
+	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
+	return app.mm.InitGenesis(ctx, genesisState)
+}
+
+// LoadHeight loads a particular height
+func (app *ethereumBridgeApp) LoadHeight(height int64) error {
+	return app.LoadVersion(height, app.keyMain)
+}
+
+// Codec returns simapp's codec
+func (app *SimApp) Codec() *codec.Codec {
+	return app.cdc
+}
+
+// GetKey returns the KVStoreKey for the provided store key
+func (app *SimApp) GetKey(storeKey string) *sdk.KVStoreKey {
+	return app.keys[storeKey]
+}
+
+// GetTKey returns the TransientStoreKey for the provided store key
+func (app *SimApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
+	return app.tkeys[storeKey]
+}
+
+// GetMaccPerms returns a copy of the module account permissions
+func GetMaccPerms() map[string][]string {
+	dupMaccPerms := make(map[string][]string)
+	for k, v := range maccPerms {
+		dupMaccPerms[k] = v
+	}
+	return dupMaccPerms
+}
