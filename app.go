@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/nft"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/peggy/x/ethbridge"
@@ -27,6 +28,12 @@ const (
 )
 
 var (
+	// DefaultCLIHome default home directories for ebcli
+	DefaultCLIHome = os.ExpandEnv("$HOME/.ebcli")
+
+	// DefaultNodeHome sets the folder where the application data and configuration will be stored
+	DefaultNodeHome = os.ExpandEnv("$HOME/.ebd")
+
 	// ModuleBasics the module BasicManager is in charge of setting up basic,
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
@@ -49,33 +56,40 @@ var (
 	}
 )
 
+// EthereumBridgeApp defines the Ethereum-Cosmos peg-zone application
 type EthereumBridgeApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
+	invCheckPeriod uint
+
 	// keys to access the substores
 	keys  map[string]*sdk.KVStoreKey
 	tkeys map[string]*sdk.TransientStoreKey
-
-
-	// the module manager
-	mm *module.Manager
 
 	// SDK keepers
 	// TODO: add governance keeper
 	AccountKeeper       auth.AccountKeeper
 	BankKeeper          bank.Keeper
 	StakingKeeper       staking.Keeper
-	SupplyKeeper supply.Keeper
-	NFTKeeper nft.Keeper
-	ParamsKeeper params.Keeper
+	SupplyKeeper 				supply.Keeper
+	CrisisKeeper  			crisis.Keeper
+	ParamsKeeper 				params.Keeper
+	NFTKeeper 					nft.Keeper
 
 	// EthBridge keepers
 	OracleKeeper oracle.Keeper
+
+	// the module manager
+	mm *module.Manager
+
+	// simulation manager
+	sm *module.SimulationManager
 }
 
-// NewEthereumBridgeApp is a constructor function for ethereumBridgeApp
-func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
+// NewEthereumBridgeApp is a constructor function for EthereumBridgeApp
+func NewEthereumBridgeApp(logger log.Logger, db dbm.DB, invCheckPeriod uint,
+	baseAppOptions ...func(*bam.BaseApp)) *EthereumBridgeApp {
 
 	// First define the top level codec that will be shared by the different modules
 	cdc := MakeCodec()
@@ -95,30 +109,62 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 		tkeys:          tkeys,
 	}
 
-	// The ParamsKeeper handles parameter storage for the application
+	// init params keeper and subspaces
 	app.paramsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey], params.DefaultCodespace)
 	authSubspace := app.ParamsKeeper.Subspace(auth.DefaultParamspace)
 	bankSubspace := app.ParamsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.ParamsKeeper.Subspace(staking.DefaultParamspace)
 
-	// The AccountKeeper handles address -> account lookups
+	// add keepers
 	app.AccountKeeper = auth.NewAccountKeeper(app.cdc, keys[auth.StoreKey], authSubspace, auth.ProtoBaseAccount)
 	app.BankKeeper = bank.NewBaseKeeper(app.AccountKeeper, bankSubspace, bank.DefaultCodespace, app.ModuleAccountAddrs())
 	app.SupplyKeeper = supply.NewKeeper(app.cdc, keys[supply.StoreKey], app.AccountKeeper, app.BankKeeper, maccPerms)
 	app.StakingKeeper = staking.NewKeeper(app.cdc, keys[staking.StoreKey], tkeys[staking.TStoreKey],
 		app.SupplyKeeper, stakingSubspace, staking.DefaultCodespace)
+	app.CrisisKeeper = crisis.NewKeeper(crisisSubspace, invCheckPeriod, app.SupplyKeeper, auth.FeeCollectorName)
 	app.NFTKeeper = nft.NewKeeper(app.cdc, keys[nft.StoreKey])
 	app.OracleKeeper = oracle.NewKeeper(app.cdc, keys[oracle.StoreKey], app.StakingKeeper, oracle.DefaultCodespace, oracle.DefaultConsensusNeeded)
+
+	// NOTE: Any module instantiated in the module manager that is later modified
+	// must be passed by reference here.
+	app.mm = module.NewManager(
+		genaccounts.NewAppModule(app.AccountKeeper),
+		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx),
+		auth.NewAppModule(app.AccountKeeper),
+		bank.NewAppModule(app.BankKeeper, app.AccountKeeper),
+		supply.NewAppModule(app.SupplyKeeper, app.AccountKeeper),
+		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
+		nft.NewAppModule(app.NFTKeeper),
+		// TODO: Oracle/Ethrelayer module
+	)
+
+	app.mm.SetOrderEndBlockers(staking.ModuleName)
+
+	// NOTE: The genutils moodule must occur after staking so that pools are
+	// properly initialized with tokens from genesis accounts.
+	app.mm.SetOrderInitGenesis(
+		genaccounts.ModuleName, staking.ModuleName, auth.ModuleName, bank.ModuleName,
+		supply.ModuleName, crisis.ModuleName, genutil.ModuleName,
+	)
+
+	// NOTE: this doesn't do anything at the moment because peggy does not implement
+	// the simulator.
+	// TODO: add simulator support
+	app.sm = module.NewSimulationManager(app.mm.Modules)
+	app.sm.RegisterStoreDecoders()
+
+	app.mm.RegisterInvariants(&app.CrisisKeeper)
+	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
 
 	// initialize stores
 	app.MountKVStores(keys)
 	app.MountTransientStores(tkeys)
 
-// initialize BaseApp
-app.SetInitChainer(app.InitChainer)
-app.SetBeginBlocker(app.BeginBlocker)
-app.SetAnteHandler(auth.NewAnteHandler(app.AccountKeeper, app.SupplyKeeper, auth.DefaultSigVerificationGasConsumer))
-app.SetEndBlocker(app.EndBlocker)
+	// initialize BaseApp
+	app.SetInitChainer(app.InitChainer)
+	app.SetBeginBlocker(app.BeginBlocker)
+	app.SetAnteHandler(auth.NewAnteHandler(app.AccountKeeper, app.SupplyKeeper, auth.DefaultSigVerificationGasConsumer))
+	app.SetEndBlocker(app.EndBlocker)
 
 	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
