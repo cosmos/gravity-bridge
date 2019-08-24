@@ -6,6 +6,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/genaccounts"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/peggy/x/ethbridge"
@@ -13,6 +16,7 @@ import (
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
@@ -22,26 +26,52 @@ const (
 	appName = "ethereum-bridge"
 )
 
-type ethereumBridgeApp struct {
+var (
+	// ModuleBasics the module BasicManager is in charge of setting up basic,
+	// non-dependant module elements, such as codec registration
+	// and genesis verification.
+	ModuleBasics = module.NewBasicManager(
+		genaccounts.AppModuleBasic{},
+		genutil.AppModuleBasic{},
+		auth.AppModuleBasic{},
+		bank.AppModuleBasic{},
+		staking.AppModuleBasic{},
+		params.AppModuleBasic{},
+		nft.AppModuleBasic{},
+		supply.AppModuleBasic{},
+	)
+
+	// module account permissions
+	maccPerms = map[string][]string{
+		auth.FeeCollectorName:     nil,
+		staking.BondedPoolName:    {supply.Burner, supply.Staking},
+		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
+	}
+)
+
+type EthereumBridgeApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
-	keyMain          *sdk.KVStoreKey
-	keyAccount       *sdk.KVStoreKey
-	keyStaking       *sdk.KVStoreKey
-	tkeyStaking      *sdk.TransientStoreKey
-	keyOracle        *sdk.KVStoreKey
-	keyFeeCollection *sdk.KVStoreKey
-	keyParams        *sdk.KVStoreKey
-	tkeyParams       *sdk.TransientStoreKey
+	// keys to access the substores
+	keys  map[string]*sdk.KVStoreKey
+	tkeys map[string]*sdk.TransientStoreKey
 
-	accountKeeper       auth.AccountKeeper
-	bankKeeper          bank.Keeper
-	feeCollectionKeeper auth.FeeCollectionKeeper
-	stakingKeeper       staking.Keeper
 
-	paramsKeeper params.Keeper
-	oracleKeeper oracle.Keeper
+	// the module manager
+	mm *module.Manager
+
+	// SDK keepers
+	// TODO: add governance keeper
+	AccountKeeper       auth.AccountKeeper
+	BankKeeper          bank.Keeper
+	StakingKeeper       staking.Keeper
+	SupplyKeeper supply.Keeper
+	NFTKeeper nft.Keeper
+	ParamsKeeper params.Keeper
+
+	// EthBridge keepers
+	OracleKeeper oracle.Keeper
 }
 
 // NewEthereumBridgeApp is a constructor function for ethereumBridgeApp
@@ -53,90 +83,42 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 	// BaseApp handles interactions with Tendermint through the ABCI protocol
 	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc))
 
+	keys := sdk.NewKVStoreKeys(bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
+		supply.StoreKey, oracle.StoreKey, params.StoreKey, nft.StoreKey)
+	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
+
 	// Here you initialize your application with the store keys it requires
-	var app = &ethereumBridgeApp{
+	var app = &EthereumBridgeApp{
 		BaseApp: bApp,
 		cdc:     cdc,
-
-		keyMain:          sdk.NewKVStoreKey(bam.MainStoreKey),
-		keyAccount:       sdk.NewKVStoreKey(auth.StoreKey),
-		keyStaking:       sdk.NewKVStoreKey(staking.StoreKey),
-		tkeyStaking:      sdk.NewTransientStoreKey(staking.TStoreKey),
-		keyOracle:        sdk.NewKVStoreKey(oracle.StoreKey),
-		keyFeeCollection: sdk.NewKVStoreKey(auth.FeeStoreKey),
-		keyParams:        sdk.NewKVStoreKey(params.StoreKey),
-		tkeyParams:       sdk.NewTransientStoreKey(params.TStoreKey),
+		keys:           keys,
+		tkeys:          tkeys,
 	}
 
 	// The ParamsKeeper handles parameter storage for the application
-	app.paramsKeeper = params.NewKeeper(app.cdc, app.keyParams, app.tkeyParams)
+	app.paramsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey], params.DefaultCodespace)
+	authSubspace := app.ParamsKeeper.Subspace(auth.DefaultParamspace)
+	bankSubspace := app.ParamsKeeper.Subspace(bank.DefaultParamspace)
+	stakingSubspace := app.ParamsKeeper.Subspace(staking.DefaultParamspace)
 
 	// The AccountKeeper handles address -> account lookups
-	app.accountKeeper = auth.NewAccountKeeper(
-		app.cdc,
-		app.keyAccount,
-		app.paramsKeeper.Subspace(auth.DefaultParamspace),
-		auth.ProtoBaseAccount,
-	)
+	app.AccountKeeper = auth.NewAccountKeeper(app.cdc, keys[auth.StoreKey], authSubspace, auth.ProtoBaseAccount)
+	app.BankKeeper = bank.NewBaseKeeper(app.AccountKeeper, bankSubspace, bank.DefaultCodespace, app.ModuleAccountAddrs())
+	app.SupplyKeeper = supply.NewKeeper(app.cdc, keys[supply.StoreKey], app.AccountKeeper, app.BankKeeper, maccPerms)
+	app.StakingKeeper = staking.NewKeeper(app.cdc, keys[staking.StoreKey], tkeys[staking.TStoreKey],
+		app.SupplyKeeper, stakingSubspace, staking.DefaultCodespace)
+	app.NFTKeeper = nft.NewKeeper(app.cdc, keys[nft.StoreKey])
+	app.OracleKeeper = oracle.NewKeeper(app.cdc, keys[oracle.StoreKey], app.StakingKeeper, oracle.DefaultCodespace, oracle.DefaultConsensusNeeded)
 
-	// The BankKeeper allows you perform sdk.Coins interactions
-	app.bankKeeper = bank.NewBaseKeeper(
-		app.accountKeeper,
-		app.paramsKeeper.Subspace(bank.DefaultParamspace),
-		bank.DefaultCodespace,
-	)
+	// initialize stores
+	app.MountKVStores(keys)
+	app.MountTransientStores(tkeys)
 
-	// The FeeCollectionKeeper collects transaction fees and renders them to the fee distribution module
-	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(cdc, app.keyFeeCollection)
-
-	app.stakingKeeper = staking.NewKeeper(
-		app.cdc,
-		app.keyStaking, app.tkeyStaking,
-		app.bankKeeper, app.paramsKeeper.Subspace(staking.DefaultParamspace),
-		staking.DefaultCodespace,
-	)
-
-	// The OracleKeeper is the Keeper from the oracle module
-	// It handles interactions with the oracle store
-	app.oracleKeeper = oracle.NewKeeper(
-		app.stakingKeeper,
-		app.keyOracle,
-		app.cdc,
-		oracle.DefaultCodespace,
-		oracle.DefaultConsensusNeeded,
-	)
-
-	// The AnteHandler handles signature verification and transaction pre-processing
-	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.feeCollectionKeeper))
-
-	// The app.Router is the main transaction router where each module registers its routes
-	// Register the bank route here
-	app.Router().
-		AddRoute(bank.RouterKey, bank.NewHandler(app.bankKeeper)).
-		AddRoute(staking.RouterKey, staking.NewHandler(app.stakingKeeper)).
-		AddRoute(ethbridge.RouterKey, ethbridge.NewHandler(app.oracleKeeper, app.bankKeeper, app.cdc, ethbridge.DefaultCodespace))
-
-	// The app.QueryRouter is the main query router where each module registers its routes
-	app.QueryRouter().
-		AddRoute(auth.QuerierRoute, auth.NewQuerier(app.accountKeeper)).
-		AddRoute(staking.QuerierRoute, staking.NewQuerier(app.stakingKeeper, app.cdc)).
-		AddRoute(ethbridge.QuerierRoute, ethbridge.NewQuerier(app.oracleKeeper, app.cdc, ethbridge.DefaultCodespace))
-
-	// The initChainer handles translating the genesis.json file into initial state for the network
-	app.SetInitChainer(app.initChainer)
-
-	app.MountStores(
-		app.keyMain,
-		app.keyAccount,
-		app.keyStaking,
-		app.keyOracle,
-		app.keyFeeCollection,
-		app.keyParams,
-		app.tkeyParams,
-		app.tkeyStaking,
-	)
-
-	app.SetEndBlocker(app.EndBlocker)
+// initialize BaseApp
+app.SetInitChainer(app.InitChainer)
+app.SetBeginBlocker(app.BeginBlocker)
+app.SetAnteHandler(auth.NewAnteHandler(app.AccountKeeper, app.SupplyKeeper, auth.DefaultSigVerificationGasConsumer))
+app.SetEndBlocker(app.EndBlocker)
 
 	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
@@ -146,85 +128,57 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB) *ethereumBridgeApp {
 	return app
 }
 
-// initialize store from a genesis state
-func (app *ethereumBridgeApp) initFromGenesisState(ctx sdk.Context, genesisState GenesisState) []abci.ValidatorUpdate {
-
-	// // load the accounts
-	for _, gacc := range genesisState.Accounts {
-		acc := gacc.ToAccount()
-		acc = app.accountKeeper.NewAccount(ctx, acc) // set account number
-		app.accountKeeper.SetAccount(ctx, acc)
-	}
-
-	// load the initial staking information
-	validators, err := staking.InitGenesis(ctx, app.stakingKeeper, genesisState.StakingData)
-	if err != nil {
-		panic(err)
-	}
-
-	// initialize module-specific stores
-	auth.InitGenesis(ctx, app.accountKeeper, app.feeCollectionKeeper, genesisState.AuthData)
-	bank.InitGenesis(ctx, app.bankKeeper, genesisState.BankData)
-
-	if len(genesisState.GenTxs) > 0 {
-		for _, genTx := range genesisState.GenTxs {
-			var tx auth.StdTx
-			err = app.cdc.UnmarshalJSON(genTx, &tx)
-			if err != nil {
-				panic(err)
-			}
-			bz := app.cdc.MustMarshalBinaryLengthPrefixed(tx)
-			res := app.BaseApp.DeliverTx(bz)
-			if !res.IsOK() {
-				panic(res.Log)
-			}
-		}
-		validators = app.stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
-
-	}
-
-	return validators
-}
-
-func (app *ethereumBridgeApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	stateJSON := req.AppStateBytes
-
-	genesisState := new(GenesisState)
-	err := app.cdc.UnmarshalJSON(stateJSON, genesisState)
-	if err != nil {
-		panic(err)
-	}
-
-	validators := app.initFromGenesisState(ctx, *genesisState)
-
-	return abci.ResponseInitChain{
-		Validators: validators,
-	}
-}
-
 // MakeCodec generates the necessary codecs for Amino
 func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
-	auth.RegisterCodec(cdc)
-	bank.RegisterCodec(cdc)
-	staking.RegisterCodec(cdc)
-	ethbridge.RegisterCodec(cdc)
+	ModuleBasics.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	return cdc
 }
 
-// application updates every end block
-// nolint: unparam
-func (app *ethereumBridgeApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	validatorUpdates, _ := staking.EndBlocker(ctx, app.stakingKeeper)
-
-	return abci.ResponseEndBlock{
-		ValidatorUpdates: validatorUpdates,
-	}
+// BeginBlocker application updates every begin block
+func (app *SimApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	return app.mm.BeginBlock(ctx, req)
 }
 
-// load a particular height
+// EndBlocker application updates every end block
+func (app *SimApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+	return app.mm.EndBlock(ctx, req)
+}
+
+// InitChainer application update at chain initialization
+func (app *SimApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	var genesisState GenesisState
+	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
+	return app.mm.InitGenesis(ctx, genesisState)
+}
+
+// LoadHeight loads a particular height
 func (app *ethereumBridgeApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keyMain)
+}
+
+// Codec returns simapp's codec
+func (app *SimApp) Codec() *codec.Codec {
+	return app.cdc
+}
+
+// GetKey returns the KVStoreKey for the provided store key
+func (app *SimApp) GetKey(storeKey string) *sdk.KVStoreKey {
+	return app.keys[storeKey]
+}
+
+// GetTKey returns the TransientStoreKey for the provided store key
+func (app *SimApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
+	return app.tkeys[storeKey]
+}
+
+// GetMaccPerms returns a copy of the module account permissions
+func GetMaccPerms() map[string][]string {
+	dupMaccPerms := make(map[string][]string)
+	for k, v := range maccPerms {
+		dupMaccPerms[k] = v
+	}
+	return dupMaccPerms
 }
