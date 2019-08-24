@@ -18,7 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	stakingKeeperLib "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -109,7 +109,7 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []
 		tokens := sdk.TokensFromTendermintPower(power)
 		validators[i], pool, _ = validators[i].AddTokensFromDel(pool, tokens)
 		stakingKeeper.SetPool(ctx, pool)
-		stakingKeeperLib.TestingUpdateValidator(stakingKeeper, ctx, validators[i], true)
+		stakingkeeper.TestingUpdateValidator(stakingKeeper, ctx, validators[i], true)
 	}
 
 	return ctx, accountKeeper, keeper, bankKeeper, valAddresses
@@ -129,7 +129,7 @@ func CreateTestAddrs(numAddrs int) ([]sdk.AccAddress, []sdk.ValAddress) {
 		buffer.WriteString(numString) //adding on final two digits to make addresses unique
 		res, _ := sdk.AccAddressFromHex(buffer.String())
 		bech := res.String()
-		address := stakingKeeperLib.TestAddr(buffer.String(), bech)
+		address := stakingkeeper.TestAddr(buffer.String(), bech)
 		valAddress := sdk.ValAddress(address)
 		addresses = append(addresses, address)
 		valAddresses = append(valAddresses, valAddress)
@@ -148,7 +148,7 @@ func createTestPubKeys(numPubKeys int) []crypto.PubKey {
 		numString := strconv.Itoa(i)
 		buffer.WriteString("0B485CFC0EECC619440448436F8FC9DF40566F2369E72400281454CB552AF") //base pubkey string
 		buffer.WriteString(numString)                                                       //adding on final two digits to make pubkeys unique
-		publicKeys = append(publicKeys, stakingKeeperLib.NewPubKey(buffer.String()))
+		publicKeys = append(publicKeys, stakingkeeper.NewPubKey(buffer.String()))
 		buffer.Reset()
 	}
 	return publicKeys
