@@ -3,6 +3,8 @@ package keeper
 import (
 	"strings"
 
+	"github.com/tendermint/tendermint/libs/log"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/peggy/x/oracle/types"
@@ -12,30 +14,35 @@ import (
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	stakeKeeper staking.Keeper
-
+	cdc *codec.Codec // The wire codec for binary encoding/decoding.
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
-	cdc *codec.Codec // The wire codec for binary encoding/decoding.
-
+	stakeKeeper staking.Keeper
 	codespace sdk.CodespaceType
 
+	// TODO: use this as param instead
 	consensusNeeded float64 // The minimum % of stake needed to sign claims in order for consensus to occur
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(stakeKeeper staking.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, codespace sdk.CodespaceType, consensusNeeded float64) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakeKeeper staking.Keeper, codespace sdk.CodespaceType, consensusNeeded float64) Keeper {
 	if consensusNeeded <= 0 || consensusNeeded > 1 {
 		panic(types.ErrMinimumConsensusNeededInvalid(codespace).Error())
 	}
 	return Keeper{
-		stakeKeeper:     stakeKeeper,
-		storeKey:        storeKey,
 		cdc:             cdc,
+		storeKey:        storeKey,
+		stakeKeeper:     stakeKeeper,
 		codespace:       codespace,
 		consensusNeeded: consensusNeeded,
 	}
 }
+
+// Logger returns a module-specific logger.
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
 
 // Codespace returns the codespace
 func (k Keeper) Codespace() sdk.CodespaceType {
@@ -79,6 +86,7 @@ func (k Keeper) setProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Error 
 	return nil
 }
 
+// ProcessClaim TODO: write description
 func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Status, sdk.Error) {
 	activeValidator := k.checkActiveValidator(ctx, claim.ValidatorAddress)
 	if !activeValidator {

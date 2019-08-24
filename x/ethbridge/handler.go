@@ -24,21 +24,26 @@ func NewHandler(oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, cdc *codec.C
 }
 
 // Handle a message to create a bridge claim
-func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec, oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, msg MsgCreateEthBridgeClaim, codespace sdk.CodespaceType) sdk.Result {
+func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec, 
+	oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, msg MsgCreateEthBridgeClaim, 
+	codespace sdk.CodespaceType) sdk.Result {
 	oracleClaim, err := types.CreateOracleClaimFromEthClaim(cdc, types.EthBridgeClaim(msg))
 	if err != nil {
 		return types.ErrJSONMarshalling(codespace).Result()
 	}
+	
 	status, sdkErr := oracleKeeper.ProcessClaim(ctx, oracleClaim)
 	if sdkErr != nil {
 		return sdkErr.Result()
 	}
+
 	if status.Text == oracle.SuccessStatus {
 		sdkErr = processSuccessfulClaim(ctx, bankKeeper, status.FinalClaim)
 		if sdkErr != nil {
 			return sdkErr.Result()
 		}
 	}
+
 	return sdk.Result{Log: status.Text.String()}
 }
 
@@ -47,10 +52,12 @@ func processSuccessfulClaim(ctx sdk.Context, bankKeeper bank.Keeper, claim strin
 	if err != nil {
 		return err
 	}
+
 	receiverAddress := oracleClaim.CosmosReceiver
 	_, _, err = bankKeeper.AddCoins(ctx, receiverAddress, oracleClaim.Amount)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
