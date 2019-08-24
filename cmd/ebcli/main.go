@@ -34,8 +34,6 @@ const (
 	routeEthbridge = "ethbridge"
 )
 
-var defaultCLIHome = os.ExpandEnv("$HOME/.ebcli")
-
 func main() {
 	cobra.EnableCommandSorting = false
 
@@ -67,7 +65,7 @@ func main() {
 	// Construct Root Command
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
-		client.ConfigCmd(defaultCLIHome),
+		client.ConfigCmd(app.DefaultCLIHome),
 		queryCmd(cdc, mc),
 		txCmd(cdc, mc),
 		client.LineBreak,
@@ -77,7 +75,7 @@ func main() {
 		client.LineBreak,
 	)
 
-	executor := cli.PrepareMainCmd(rootCmd, "EB", defaultCLIHome)
+	executor := cli.PrepareMainCmd(rootCmd, "EB", app.DefaultCLIHome)
 	err := executor.Execute()
 	if err != nil {
 		panic(err)
