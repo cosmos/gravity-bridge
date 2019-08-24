@@ -12,6 +12,10 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	dbm "github.com/tendermint/tm-db"
 
+	abci "github.com/tendermint/tendermint/abci/types"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	tmtypes "github.com/tendermint/tendermint/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"

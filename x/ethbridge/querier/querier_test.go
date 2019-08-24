@@ -9,6 +9,8 @@ import (
 
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
+
+	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 const (

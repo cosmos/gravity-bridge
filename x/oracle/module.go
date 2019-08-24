@@ -3,6 +3,7 @@ package oracle
 import (
 	"encoding/json"
 
+	"github.com/fedekunze/cosmos-sdk/x/gov/client/rest"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
