@@ -45,6 +45,10 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> cleanup
 // Codespace returns the codespace
 func (k Keeper) Codespace() sdk.CodespaceType {
 	return k.codespace
