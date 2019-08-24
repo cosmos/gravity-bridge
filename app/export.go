@@ -57,8 +57,6 @@ func (app *GaiaApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []st
 	// Just to be safe, assert the invariants on current state
 	app.crisisKeeper.AssertInvariants(ctx)
 
-
-
 	// set context height to zero
 	height := ctx.BlockHeight()
 	ctx = ctx.WithBlockHeight(height)

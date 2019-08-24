@@ -51,7 +51,7 @@ func NewOracleClaimContent(cosmosReceiver sdk.AccAddress, amount sdk.Coins) Orac
 func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (oracle.Claim, error) {
 	oracleID := strconv.Itoa(ethClaim.Nonce) + ethClaim.EthereumSender.String()
 	claimContent := NewOracleClaimContent(ethClaim.CosmosReceiver, ethClaim.Amount)
-	
+
 	claimBytes, err := json.Marshal(claimContent)
 	if err != nil {
 		return oracle.Claim{}, err

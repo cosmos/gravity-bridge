@@ -24,14 +24,14 @@ func NewHandler(oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, cdc *codec.C
 }
 
 // Handle a message to create a bridge claim
-func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec, 
-	oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, msg MsgCreateEthBridgeClaim, 
+func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
+	oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, msg MsgCreateEthBridgeClaim,
 	codespace sdk.CodespaceType) sdk.Result {
 	oracleClaim, err := types.CreateOracleClaimFromEthClaim(cdc, types.EthBridgeClaim(msg))
 	if err != nil {
 		return types.ErrJSONMarshalling(codespace).Result()
 	}
-	
+
 	status, sdkErr := oracleKeeper.ProcessClaim(ctx, oracleClaim)
 	if sdkErr != nil {
 		return sdkErr.Result()

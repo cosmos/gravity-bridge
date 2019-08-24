@@ -30,7 +30,7 @@ import (
 )
 
 func main() {
-		// Configure cobra to sort commands
+	// Configure cobra to sort commands
 	cobra.EnableCommandSorting = false
 
 	cdc := app.MakeCodec()

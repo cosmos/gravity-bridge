@@ -24,21 +24,21 @@ const (
 
 var (
 	// functions aliases
-	NewQuerier                         = querier.NewQuerier
-	NewEthBridgeClaim                  = types.NewEthBridgeClaim
-	NewOracleClaimContent              = types.NewOracleClaimContent
-	CreateOracleClaimFromEthClaim      = types.CreateOracleClaimFromEthClaim
-	CreateEthClaimFromOracleString     = types.CreateEthClaimFromOracleString
-	CreateOracleClaimFromOracleString  = types.CreateOracleClaimFromOracleString
-	RegisterCodec                      = types.RegisterCodec
-	ErrInvalidEthNonce                 = types.ErrInvalidEthNonce
-	ErrInvalidEthAddress               = types.ErrInvalidEthAddress
-	ErrJSONMarshalling                 = types.ErrJSONMarshalling
-	NewEthereumAddress                 = types.NewEthereumAddress
-	NewMsgCreateEthBridgeClaim         = types.NewMsgCreateEthBridgeClaim
-	MapOracleClaimsToEthBridgeClaims   = types.MapOracleClaimsToEthBridgeClaims
-	NewQueryEthProphecyParams          = types.NewQueryEthProphecyParams
-	NewQueryEthProphecyResponse        = types.NewQueryEthProphecyResponse
+	NewQuerier                        = querier.NewQuerier
+	NewEthBridgeClaim                 = types.NewEthBridgeClaim
+	NewOracleClaimContent             = types.NewOracleClaimContent
+	CreateOracleClaimFromEthClaim     = types.CreateOracleClaimFromEthClaim
+	CreateEthClaimFromOracleString    = types.CreateEthClaimFromOracleString
+	CreateOracleClaimFromOracleString = types.CreateOracleClaimFromOracleString
+	RegisterCodec                     = types.RegisterCodec
+	ErrInvalidEthNonce                = types.ErrInvalidEthNonce
+	ErrInvalidEthAddress              = types.ErrInvalidEthAddress
+	ErrJSONMarshalling                = types.ErrJSONMarshalling
+	NewEthereumAddress                = types.NewEthereumAddress
+	NewMsgCreateEthBridgeClaim        = types.NewMsgCreateEthBridgeClaim
+	MapOracleClaimsToEthBridgeClaims  = types.MapOracleClaimsToEthBridgeClaims
+	NewQueryEthProphecyParams         = types.NewQueryEthProphecyParams
+	NewQueryEthProphecyResponse       = types.NewQueryEthProphecyResponse
 )
 
 type (
