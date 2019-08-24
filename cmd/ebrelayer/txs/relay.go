@@ -9,9 +9,10 @@ package txs
 // ------------------------------------------------------------
 
 import (
+	amino "github.com/tendermint/go-amino"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
-	amino "github.com/tendermint/go-amino"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"

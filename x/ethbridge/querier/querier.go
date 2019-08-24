@@ -3,12 +3,13 @@ package querier
 import (
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	keep "github.com/cosmos/peggy/x/oracle/keeper"
 	oracletypes "github.com/cosmos/peggy/x/oracle/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // query endpoints supported by the oracle Querier

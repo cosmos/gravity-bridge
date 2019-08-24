@@ -3,20 +3,16 @@ package oracle
 import (
 	"encoding/json"
 
+	"github.com/fedekunze/cosmos-sdk/x/gov/client/rest"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	cfg "github.com/tendermint/tendermint/config"
-	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/oracle/keeper"
-	"github.com/cosmos/cosmos-sdk/x/oracle/types"
 )
 
 var (
@@ -79,7 +75,7 @@ type AppModule struct {
 	AppModuleBasic
 	AppModuleSimulation
 
-	keeper       Keeper
+	keeper Keeper
 }
 
 // NewAppModule creates a new AppModule object
@@ -108,7 +104,7 @@ func (AppModule) Route() string {
 
 // NewHandler returns an sdk.Handler for the oracle module.
 func (am AppModule) NewHandler() sdk.Handler {
-	return return nil
+	return nil
 }
 
 // QuerierRoute returns the oracle module's querier route name.

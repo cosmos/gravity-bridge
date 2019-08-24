@@ -1,13 +1,15 @@
 package keeper
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/cosmos/peggy/x/oracle/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/peggy/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
