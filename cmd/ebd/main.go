@@ -35,9 +35,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-// DefaultNodeHome sets the folder where the applcation data and configuration will be stored
-var DefaultNodeHome = os.ExpandEnv("$HOME/.ebd")
-
 const (
 	flagOverwrite    = "overwrite"
 	flagClientHome   = "home-client"
@@ -63,7 +60,7 @@ func main() {
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 
 	// prepare and add flags
-	executor := cli.PrepareBaseCmd(rootCmd, "EB", DefaultNodeHome)
+	executor := cli.PrepareBaseCmd(rootCmd, "EB", app.DefaultNodeHome)
 	err := executor.Execute()
 	if err != nil {
 		// handle with #870
@@ -145,7 +142,7 @@ func InitCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(cli.HomeFlag, DefaultNodeHome, "node's home directory")
+	cmd.Flags().String(cli.HomeFlag, app.DefaultNodeHome, "node's home directory")
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().BoolP(flagOverwrite, "o", false, "overwrite the genesis.json file")
 

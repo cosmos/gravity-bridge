@@ -30,7 +30,6 @@ const (
 	routeEthbridge = "ethbridge"
 )
 
-var defaultCLIHome = os.ExpandEnv("$HOME/.ebcli")
 var appCodec *amino.Codec
 
 func init() {
@@ -42,8 +41,7 @@ func init() {
 	config.SetBech32PrefixForConsensusNode(sdk.Bech32PrefixConsAddr, sdk.Bech32PrefixConsPub)
 	config.Seal()
 
-	cdc := app.MakeCodec()
-	appCodec = cdc
+	appCodec = app.MakeCodec()
 
 	// Add --chain-id to persistent flags and mark it required
 	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
@@ -89,7 +87,7 @@ func initRelayerCmd() *cobra.Command {
 	return initRelayerCmd
 }
 
-//	RunRelayerCmd : RunRelayerCmd executes the initRelayerCmd with the provided parameters
+// RunRelayerCmd executes the initRelayerCmd with the provided parameters
 func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Parse chain's ID
 	chainID := viper.GetString(client.FlagChainID)
