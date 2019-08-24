@@ -24,32 +24,24 @@ import (
 	stakingclient "github.com/cosmos/cosmos-sdk/x/staking/client"
 	stakingrest "github.com/cosmos/cosmos-sdk/x/staking/client/rest"
 
-	app "github.com/cosmos/peggy"
+	"github.com/cosmos/peggy/app"
 	ethbridgeclient "github.com/cosmos/peggy/x/ethbridge/client"
 	ethbridgerest "github.com/cosmos/peggy/x/ethbridge/client/rest"
 )
 
-const (
-	storeAcc       = "acc"
-	routeEthbridge = "ethbridge"
-)
-
 func main() {
+		// Configure cobra to sort commands
 	cobra.EnableCommandSorting = false
 
 	cdc := app.MakeCodec()
 
 	// Read in the configuration file for the sdk
+	// TODO: set custom bech32 prefixes for peggy
 	config := sdk.GetConfig()
 	config.SetBech32PrefixForAccount(sdk.Bech32PrefixAccAddr, sdk.Bech32PrefixAccPub)
 	config.SetBech32PrefixForValidator(sdk.Bech32PrefixValAddr, sdk.Bech32PrefixValPub)
 	config.SetBech32PrefixForConsensusNode(sdk.Bech32PrefixConsAddr, sdk.Bech32PrefixConsPub)
 	config.Seal()
-
-	mc := []sdk.ModuleClients{
-		ethbridgeclient.NewModuleClient(routeEthbridge, cdc),
-		stakingclient.NewModuleClient(stakingModule.StoreKey, cdc),
-	}
 
 	rootCmd := &cobra.Command{
 		Use:   "ebcli",
@@ -66,33 +58,35 @@ func main() {
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
 		client.ConfigCmd(app.DefaultCLIHome),
-		queryCmd(cdc, mc),
-		txCmd(cdc, mc),
+		queryCmd(cdc),
+		txCmd(cdc),
 		client.LineBreak,
 		lcd.ServeCommand(cdc, registerRoutes),
 		client.LineBreak,
 		keys.Commands(),
 		client.LineBreak,
+		version.Cmd,
+		client.NewCompletionCmd(rootCmd, true),
 	)
 
 	executor := cli.PrepareMainCmd(rootCmd, "EB", app.DefaultCLIHome)
 	err := executor.Execute()
 	if err != nil {
-		panic(err)
+		fmt.Printf("Failed executing CLI command: %s, exiting...\n", err)
+		os.Exit(1)
 	}
 }
 
+// registerRoutes registers the routes from the different modules for the LCD.
+// NOTE: details on the routes added for each module are in the module documentation
+// NOTE: If making updates here you also need to update the test helper in client/lcd/test_helper.go
 func registerRoutes(rs *lcd.RestServer) {
-	rs.CliCtx = rs.CliCtx.WithAccountDecoder(rs.Cdc)
-	rpc.RegisterRoutes(rs.CliCtx, rs.Mux)
-	tx.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
-	auth.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, storeAcc)
-	bank.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	stakingrest.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
-	ethbridgerest.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, routeEthbridge)
+	client.RegisterRoutes(rs.CliCtx, rs.Mux)
+	authrest.RegisterTxRoutes(rs.CliCtx, rs.Mux)
+	app.ModuleBasics.RegisterRESTRoutes(rs.CliCtx, rs.Mux)
 }
 
-func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
+func queryCmd(cdc *amino.Codec) *cobra.Command {
 	queryCmd := &cobra.Command{
 		Use:     "query",
 		Aliases: []string{"q"},
@@ -100,22 +94,22 @@ func queryCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 	}
 
 	queryCmd.AddCommand(
+		authcmd.GetAccountCmd(cdc),
+		client.LineBreak,
 		rpc.ValidatorCommand(cdc),
 		rpc.BlockCommand(),
-		tx.SearchTxCmd(cdc),
-		tx.QueryTxCmd(cdc),
+		authcmd.QueryTxsByEventsCmd(cdc),
+		authcmd.QueryTxCmd(cdc),
 		client.LineBreak,
-		authcmd.GetAccountCmd(storeAcc, cdc),
 	)
 
-	for _, m := range mc {
-		queryCmd.AddCommand(m.GetQueryCmd())
-	}
+	// add modules' query commands
+	app.ModuleBasics.AddQueryCommands(queryCmd, cdc)
 
 	return queryCmd
 }
 
-func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
+func txCmd(cdc *amino.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:   "tx",
 		Short: "Transactions subcommands",
@@ -125,13 +119,26 @@ func txCmd(cdc *amino.Codec, mc []sdk.ModuleClients) *cobra.Command {
 		bankcmd.SendTxCmd(cdc),
 		client.LineBreak,
 		authcmd.GetSignCommand(cdc),
-		tx.GetBroadcastCommand(cdc),
+		authcmd.GetMultiSignCommand(cdc),
+		client.LineBreak,
+		authcmd.GetBroadcastCommand(cdc),
+		authcmd.GetEncodeCommand(cdc),
 		client.LineBreak,
 	)
 
-	for _, m := range mc {
-		txCmd.AddCommand(m.GetTxCmd())
+	// add modules' tx commands
+	app.ModuleBasics.AddTxCommands(txCmd, cdc)
+
+	// remove auth and bank commands as they're mounted under the root tx command
+	var cmdsToRemove []*cobra.Command
+
+	for _, cmd := range txCmd.Commands() {
+		if cmd.Use == auth.ModuleName || cmd.Use == bank.ModuleName {
+			cmdsToRemove = append(cmdsToRemove, cmd)
+		}
 	}
+
+	txCmd.RemoveCommand(cmdsToRemove...)
 
 	return txCmd
 }
