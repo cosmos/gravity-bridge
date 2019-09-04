@@ -13,13 +13,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
-	"github.com/cosmos/cosmos-sdk/x/nft"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
-	dbm "github.com/tendermint/tendermint/libs/db"
+	dbm "github.com/tendermint/tm-db"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -47,7 +46,6 @@ var (
 		bank.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
-		nft.AppModuleBasic{},
 		supply.AppModuleBasic{},
 	)
 
@@ -78,7 +76,6 @@ type EthereumBridgeApp struct {
 	SupplyKeeper  supply.Keeper
 	CrisisKeeper  crisis.Keeper
 	ParamsKeeper  params.Keeper
-	NFTKeeper     nft.Keeper
 
 	// EthBridge keepers
 	OracleKeeper oracle.Keeper
@@ -101,7 +98,7 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB, invCheckPeriod uint,
 	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc))
 
 	keys := sdk.NewKVStoreKeys(bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
-		supply.StoreKey, oracle.StoreKey, params.StoreKey, nft.StoreKey)
+		supply.StoreKey, oracle.StoreKey, params.StoreKey)
 	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
 	// Here you initialize your application with the store keys it requires
@@ -125,7 +122,6 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB, invCheckPeriod uint,
 	app.StakingKeeper = staking.NewKeeper(app.cdc, keys[staking.StoreKey], tkeys[staking.TStoreKey],
 		app.SupplyKeeper, stakingSubspace, staking.DefaultCodespace)
 	app.CrisisKeeper = crisis.NewKeeper(crisisSubspace, invCheckPeriod, app.SupplyKeeper, auth.FeeCollectorName)
-	app.NFTKeeper = nft.NewKeeper(app.cdc, keys[nft.StoreKey])
 	app.OracleKeeper = oracle.NewKeeper(app.cdc, keys[oracle.StoreKey], app.StakingKeeper, oracle.DefaultCodespace, oracle.DefaultConsensusNeeded)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
@@ -137,7 +133,6 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB, invCheckPeriod uint,
 		bank.NewAppModule(app.BankKeeper, app.AccountKeeper),
 		supply.NewAppModule(app.SupplyKeeper, app.AccountKeeper),
 		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
-		nft.NewAppModule(app.NFTKeeper),
 		// TODO: Oracle/Ethrelayer module
 	)
 
