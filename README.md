@@ -11,6 +11,7 @@ Unidirectional Peggy is the starting point for cross chain value transfers from 
 This codebase, including all smart contract components, have not been professionally audited and are not intended for use in a production environment. As such, users should NOT trust the system to securely hold mainnet funds. Any developers attempting to use Unidirectional Peggy on the mainnet at this time will need to develop their own smart contracts or find another implementation.
 
 ## Architecture
+
 See [here](./docs/architecture.md)
 
 ## Example application
@@ -121,7 +122,7 @@ For automated relaying, there is a relayer service that can be run that will aut
 ebrelayer status
 
 # Initialize the Relayer service for automatic claim processing
-ebrelayer init testing wss://ropsten.infura.io/ws ec6df30846baab06fce9b1721608853193913c19 "LogLock\(bytes32,address,bytes,address,uint256,uint256\)" validator
+ebrelayer init testing wss://ropsten.infura.io/ws ec6df30846baab06fce9b1721608853193913c19 "LogLock\(bytes32,address,bytes,address,string,uint256,uint256\)" validator
 
 # Enter password and press enter
 # You should see a message like:  Started ethereum websocket... and Subscribed to contract events...

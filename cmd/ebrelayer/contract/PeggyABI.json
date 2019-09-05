@@ -2,44 +2,11 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "active",
+    "name": "name",
     "outputs": [
       {
         "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "provider",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "_id",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getStatus",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
+        "type": "string"
       }
     ],
     "payable": false,
@@ -48,72 +15,31 @@
   },
   {
     "constant": false,
-    "inputs": [],
-    "name": "activateLocking",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [],
-    "name": "pauseLocking",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
     "inputs": [
       {
-        "name": "_id",
-        "type": "bytes32"
-      }
-    ],
-    "name": "withdraw",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_recipient",
-        "type": "bytes"
-      },
-      {
-        "name": "_token",
+        "name": "spender",
         "type": "address"
       },
       {
-        "name": "_amount",
+        "name": "value",
         "type": "uint256"
       }
     ],
-    "name": "lock",
+    "name": "approve",
     "outputs": [
       {
-        "name": "_id",
-        "type": "bytes32"
+        "name": "",
+        "type": "bool"
       }
     ],
-    "payable": true,
-    "stateMutability": "payable",
+    "payable": false,
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "constant": true,
     "inputs": [],
-    "name": "nonce",
+    "name": "totalSupply",
     "outputs": [
       {
         "name": "",
@@ -125,53 +51,40 @@
     "type": "function"
   },
   {
-    "constant": true,
+    "constant": false,
     "inputs": [
       {
-        "name": "_id",
-        "type": "bytes32"
-      }
-    ],
-    "name": "viewItem",
-    "outputs": [
-      {
-        "name": "",
+        "name": "from",
         "type": "address"
       },
       {
-        "name": "",
-        "type": "bytes"
-      },
-      {
-        "name": "",
+        "name": "to",
         "type": "address"
       },
       {
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "name": "",
+        "name": "value",
         "type": "uint256"
       }
     ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "ids",
+    "name": "transferFrom",
     "outputs": [
       {
         "name": "",
         "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8"
       }
     ],
     "payable": false,
@@ -182,11 +95,15 @@
     "constant": false,
     "inputs": [
       {
-        "name": "_id",
-        "type": "bytes32"
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "name": "addedValue",
+        "type": "uint256"
       }
     ],
-    "name": "unlock",
+    "name": "increaseAllowance",
     "outputs": [
       {
         "name": "",
@@ -198,134 +115,149 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
     "inputs": [],
+    "name": "symbol",
+    "outputs": [
+      {
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "name": "subtractedValue",
+        "type": "uint256"
+      }
+    ],
+    "name": "decreaseAllowance",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "constructor"
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "transfer",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "name": "spender",
+        "type": "address"
+      }
+    ],
+    "name": "allowance",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "name": "_id",
-        "type": "bytes32"
+        "indexed": true,
+        "name": "from",
+        "type": "address"
       },
       {
-        "indexed": false,
-        "name": "_from",
+        "indexed": true,
+        "name": "to",
         "type": "address"
       },
       {
         "indexed": false,
-        "name": "_to",
-        "type": "bytes"
-      },
-      {
-        "indexed": false,
-        "name": "_token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "_value",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "_nonce",
+        "name": "value",
         "type": "uint256"
       }
     ],
-    "name": "LogLock",
+    "name": "Transfer",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "name": "_id",
-        "type": "bytes32"
+        "indexed": true,
+        "name": "owner",
+        "type": "address"
       },
       {
-        "indexed": false,
-        "name": "_to",
+        "indexed": true,
+        "name": "spender",
         "type": "address"
       },
       {
         "indexed": false,
-        "name": "_token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "_value",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "_nonce",
+        "name": "value",
         "type": "uint256"
       }
     ],
-    "name": "LogUnlock",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "_id",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "_to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "_token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "_value",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "_nonce",
-        "type": "uint256"
-      }
-    ],
-    "name": "LogWithdraw",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "_time",
-        "type": "uint256"
-      }
-    ],
-    "name": "LogLockingPaused",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "_time",
-        "type": "uint256"
-      }
-    ],
-    "name": "LogLockingActivated",
+    "name": "Approval",
     "type": "event"
   }
 ]
