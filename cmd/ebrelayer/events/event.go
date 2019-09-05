@@ -16,6 +16,7 @@ import (
 )
 
 // LockEvent : struct which represents a single smart contract event
+// TODO: Update LockEvent struct with 'TokenSymbol'
 type LockEvent struct {
 	Id    [32]byte
 	From  common.Address

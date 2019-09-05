@@ -21,6 +21,8 @@ import (
 // ETH : ETH constant specifies a token type of Ethereum
 const (
 	ETH string = "eth"
+	// TODO: Get ERC20 token symbol from witnessClaim struct
+	ERC string = "erc"
 )
 
 // ParsePayload : parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
@@ -43,8 +45,16 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 		return witnessClaim, errors.New("empty recipient address")
 	}
 
+	// TODO: Replace conditional with 'event.TokenSymbol'
+	var symbol string
+	if event.Token == common.HexToAddress("0x0000000000000000000000000000000000000000") {
+		symbol = ETH
+	} else {
+		symbol = ERC
+	}
+
 	// Amount type casting (*big.Int -> sdk.Coins)
-	coins := sdk.Coins{sdk.NewInt64Coin(ETH, event.Value.Int64())}
+	coins := sdk.Coins{sdk.NewInt64Coin(symbol, event.Value.Int64())}
 
 	// Package the information in a unique EthBridgeClaim
 	witnessClaim.Nonce = nonce
