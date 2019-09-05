@@ -12,7 +12,7 @@ In this prototype, the system is managed by the contract's deployer, designated 
 
 It is not the goal of these contracts to create a production-grade system for cross-chain value transfers which enforces strict permissions and limits access to locked funds. The goal of the current smart contracts is to securely implement core functionality of the system such as asset locking and event emission without endangering any user funds. As such, this prototype does not permanently lock value and allows the original sender full access to their funds at any time. As stated above, do NOT use unaudited smart contracts on the mainnet.
 
-The Peggy Smart Contract is deployed on the Ropsten testnet at address: 0xec6df30846baab06fce9b1721608853193913c19. More details on the smart contracts and usage can be found in the testnet-contracts folder.
+The Peggy Smart Contract is deployed on the Ropsten testnet at address: 0x05d9758cb6b9d9761ecb8b2b48be7873efae15c0. More details on the smart contracts and usage can be found in the testnet-contracts folder.
 
 ## The Relayer
 

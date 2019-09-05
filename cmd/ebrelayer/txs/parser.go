@@ -11,18 +11,12 @@ package txs
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	ethbridgeTypes "github.com/cosmos/peggy/x/ethbridge/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-)
-
-// ETH : ETH constant specifies a token type of Ethereum
-const (
-	ETH string = "eth"
-	// TODO: Get ERC20 token symbol from witnessClaim struct
-	ERC string = "erc"
 )
 
 // ParsePayload : parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
@@ -45,12 +39,14 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 		return witnessClaim, errors.New("empty recipient address")
 	}
 
-	// TODO: Replace conditional with 'event.TokenSymbol'
-	var symbol string
-	if event.Token == common.HexToAddress("0x0000000000000000000000000000000000000000") {
-		symbol = ETH
-	} else {
-		symbol = ERC
+	// Symbol formatting (to lowercase)
+	symbol := strings.ToLower(event.Symbol)
+	if symbol == "eth" && event.Token != common.HexToAddress("0x0000000000000000000000000000000000000000") {
+		return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
+	}
+
+	if err != nil {
+		return witnessClaim, err
 	}
 
 	// Amount type casting (*big.Int -> sdk.Coins)

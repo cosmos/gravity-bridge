@@ -28,7 +28,7 @@ We are hoping to create a closed system for intra network transfers of cryptocur
 
 Unidirectional Peggy focuses on core features for unidirectional transfers. This prototype includes functionality to safely lock and unlock Ethereum and ERC20 tokens, emitting associated events which are witnessed by validators using the Relayer service. The Relayer is a service which interfaces with both blockchains, allowing validators to attest on the Cosmos blockchain that specific events on the Ethereum blockchain have occurred. The Relayer listens for `LogLock` events, parses information associated with the Ethereum transaction, uses it to build unsigned Cosmos transactions, and enables validators to sign and send the transactions to the Oracle module on Cosmos. Through the Relayer service, validators witness the events and submit proof in the form of signed hashes to the Cosmos based modules, which are responsible for aggregating and tallying the Validators’ signatures and their respective signing power. The system is managed by the contract's deployer, designated internally as the provider, a trusted third-party which can unlock funds and return them their original sender. If the contract’s balances under threat, the provider can pause the system, temporarily preventing users from depositing additional funds.
 
-The Peggy Smart Contract is deployed on the Ropsten testnet at address: 0xec6df30846baab06fce9b1721608853193913c19
+The Peggy Smart Contract is deployed on the Ropsten testnet at address: 0x05d9758cb6b9d9761ecb8b2b48be7873efae15c0
 
 ### Architecture Diagram
 

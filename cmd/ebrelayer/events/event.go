@@ -16,14 +16,14 @@ import (
 )
 
 // LockEvent : struct which represents a single smart contract event
-// TODO: Update LockEvent struct with 'TokenSymbol'
 type LockEvent struct {
-	Id    [32]byte
-	From  common.Address
-	To    []byte
-	Token common.Address
-	Value *big.Int
-	Nonce *big.Int
+	Id     [32]byte
+	From   common.Address
+	To     []byte
+	Token  common.Address
+	Symbol string
+	Value  *big.Int
+	Nonce  *big.Int
 }
 
 // NewLockEvent : parses LogLock events using go-ethereum's accounts/abi library
@@ -52,10 +52,11 @@ func PrintEvent(event LockEvent) {
 	sender := event.From.Hex()
 	recipient := string(event.To)
 	token := event.Token.Hex()
+	symbol := event.Symbol
 	value := event.Value
 	nonce := event.Nonce
 
 	// Print the event's information
-	fmt.Printf("\nEvent ID: %v\nToken: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
-		id, token, sender, recipient, value, nonce)
+	fmt.Printf("\nEvent ID: %v\nToken Symbol: %v\nToken Address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
+		id, symbol, token, sender, recipient, value, nonce)
 }
