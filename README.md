@@ -122,7 +122,7 @@ For automated relaying, there is a relayer service that can be run that will aut
 ebrelayer status
 
 # Initialize the Relayer service for automatic claim processing
-ebrelayer init testing wss://ropsten.infura.io/ws ec6df30846baab06fce9b1721608853193913c19 "LogLock\(bytes32,address,bytes,address,string,uint256,uint256\)" validator
+ebrelayer init testing wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 "LogLock\(bytes32,address,bytes,address,string,uint256,uint256\)" validator
 
 # Enter password and press enter
 # You should see a message like:  Started ethereum websocket... and Subscribed to contract events...
@@ -139,7 +139,7 @@ The easiest way to do this for now, assuming you have Metamask setup for Ropsten
 - 1.  Go to remix.ethereum.org
 - 2.  Compile Peggy.sol with solc v0.5.0
 - 3.  Set the environment as Injected Web3 Ropsten
-- 4.  On 'Run' tab, select Peggy and enter "0xec6df30846baab06fce9b1721608853193913c19" in 'At Address' field
+- 4.  On 'Run' tab, select Peggy and enter "0x05d9758cb6b9d9761ecb8b2b48be7873efae15c0" in 'At Address' field
 - 5.  Select 'At Address' to load the deployed contract
 - 6.  Enter the following for the variables under function lock():
 
