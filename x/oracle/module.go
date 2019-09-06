@@ -3,7 +3,6 @@ package oracle
 import (
 	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/x/gov/client/rest"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
@@ -66,7 +65,6 @@ type AppModuleSimulation struct{}
 // AppModule implements an application module for the oracle module.
 type AppModule struct {
 	AppModuleBasic
-	AppModuleSimulation
 
 	keeper Keeper
 }

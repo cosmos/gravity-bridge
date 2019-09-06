@@ -82,9 +82,6 @@ type EthereumBridgeApp struct {
 
 	// the module manager
 	mm *module.Manager
-
-	// simulation manager
-	sm *module.SimulationManager
 }
 
 // NewEthereumBridgeApp is a constructor function for EthereumBridgeApp
