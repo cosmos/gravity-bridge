@@ -63,7 +63,7 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []
 	)
 	cdc := MakeTestCodec()
 
-	pk := params.NewKeeper(cdc, keyParams, tkeyParams)
+	pk := params.NewKeeper(cdc, keyParams, tkeyParams, params.DefaultCodespace)
 
 	accountKeeper := auth.NewAccountKeeper(
 		cdc,    // amino codec
