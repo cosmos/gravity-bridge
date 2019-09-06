@@ -38,7 +38,7 @@ func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
 		return sdkErr.Result()
 	}
 
-	if status.Text == oracle.SuccessStatus {
+	if status.Text == oracle.SuccessStatusText {
 		sdkErr = processSuccessfulClaim(ctx, bankKeeper, status.FinalClaim)
 		if sdkErr != nil {
 			return sdkErr.Result()
@@ -55,7 +55,7 @@ func processSuccessfulClaim(ctx sdk.Context, bankKeeper bank.Keeper, claim strin
 	}
 
 	receiverAddress := oracleClaim.CosmosReceiver
-	_, _, err = bankKeeper.AddCoins(ctx, receiverAddress, oracleClaim.Amount)
+	_, err = bankKeeper.AddCoins(ctx, receiverAddress, oracleClaim.Amount)
 	if err != nil {
 		return err
 	}

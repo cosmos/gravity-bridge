@@ -36,7 +36,7 @@ func (app *EthereumBridgeApp) ExportAppStateAndValidators(forZeroHeight bool, ja
 // prepare for fresh start at zero height
 // NOTE zero height genesis is a temporary feature which will be deprecated
 //      in favour of export at a block height
-func (app *GaiaApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []string) {
+func (app *EthereumBridgeApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []string) {
 	applyWhiteList := false
 
 	//Check if there is a whitelist
@@ -55,7 +55,7 @@ func (app *GaiaApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []st
 	}
 
 	// Just to be safe, assert the invariants on current state
-	app.crisisKeeper.AssertInvariants(ctx)
+	app.CrisisKeeper.AssertInvariants(ctx)
 
 	// set context height to zero
 	height := ctx.BlockHeight()

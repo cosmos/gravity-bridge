@@ -11,8 +11,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	dbm "github.com/tendermint/tm-db"
 	tmtypes "github.com/tendermint/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -92,7 +92,7 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []
 
 	// create the validators addresses desired and fill them with the expected amount of coins
 	for i, power := range validatorPowers {
-		coins := cmtypes.TokensFromTendermintPower(power)
+		coins := cmtypes.TokensFromConsensusPower(power)
 		pool := stakingKeeper.GetPool(ctx)
 		err := error(nil)
 		_, _, err = bankKeeper.AddCoins(ctx, accountAddresses[i], sdk.Coins{
@@ -107,7 +107,7 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []
 		validators[i] = staking.NewValidator(valAddresses[i], publicKeys[i], staking.Description{})
 		validators[i].Status = sdk.Bonded
 		validators[i].Tokens = sdk.ZeroInt()
-		tokens := sdk.TokensFromTendermintPower(power)
+		tokens := sdk.TokensFromConsensusPower(power)
 		validators[i], pool, _ = validators[i].AddTokensFromDel(pool, tokens)
 		stakingKeeper.SetPool(ctx, pool)
 		stakingkeeper.TestingUpdateValidator(stakingKeeper, ctx, validators[i], true)
