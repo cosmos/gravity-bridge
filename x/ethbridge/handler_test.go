@@ -48,7 +48,7 @@ func TestDuplicateMsgs(t *testing.T) {
 	normalCreateMsg := types.CreateTestEthMsg(t, valAddress)
 	res := handler(ctx, normalCreateMsg)
 	require.True(t, res.IsOK())
-	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.PendingStatus])
+	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.PendingStatusText])
 
 	//Duplicate message from same validator
 	res = handler(ctx, normalCreateMsg)
@@ -82,7 +82,7 @@ func TestMintSuccess(t *testing.T) {
 	expectedCoins, err := sdk.ParseCoins(types.TestCoins)
 	require.NoError(t, err)
 	require.True(t, receiverCoins.IsEqual(expectedCoins))
-	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.SuccessStatus])
+	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.SuccessStatusText])
 
 	//Additional message from third validator fails and does not mint
 	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal3Pow1)
@@ -116,19 +116,19 @@ func TestNoMintFail(t *testing.T) {
 	//Initial message
 	res := handler(ctx, ethMsg1)
 	require.True(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, oracle.StatusTextToString[oracle.PendingStatus]))
-	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.PendingStatus])
+	require.True(t, strings.Contains(res.Log, oracle.StatusTextToString[oracle.PendingStatusText]))
+	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.PendingStatusText])
 
 	//Different message from second validator succeeds
 	res = handler(ctx, ethMsg2)
 	require.True(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, oracle.StatusTextToString[oracle.PendingStatus]))
-	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.PendingStatus])
+	require.True(t, strings.Contains(res.Log, oracle.StatusTextToString[oracle.PendingStatusText]))
+	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.PendingStatusText])
 
 	//Different message from third validator succeeds but results in failed prophecy with no minting
 	res = handler(ctx, ethMsg3)
 	require.True(t, res.IsOK())
-	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.FailedStatus])
+	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.FailedStatusText])
 	receiverAddress, err := sdk.AccAddressFromBech32(types.TestAddress)
 	require.NoError(t, err)
 	receiver1Coins := bankKeeper.GetCoins(ctx, receiverAddress)
