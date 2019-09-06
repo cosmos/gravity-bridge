@@ -20,7 +20,6 @@ require (
 	github.com/onsi/gomega v1.6.0 // indirect
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
-	github.com/rakyll/statik v0.1.6 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20190706150252-9beb055b7962 // indirect
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
