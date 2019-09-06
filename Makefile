@@ -2,7 +2,7 @@
 
 export GO111MODULE = on
 
-all: format clean test_app install
+all: format clean test_app install lint
 
 # The below include contains the tools and runsim targets.
 include contrib/devtools/Makefile
@@ -28,6 +28,10 @@ install: build
 	go install ./cmd/ebcli
 	go install ./cmd/ebrelayer
 
+lint:
+	@echo "--> Running linter"
+	@golangci-lint run
+
 test_app:
 	go test ./...
 
@@ -36,4 +40,4 @@ format: tools
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs misspell -w
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs goimports -w -local github.com/cosmos/cosmos-sdk
 
-.PHONY: build clean install test format
+.PHONY: build clean install test format lint

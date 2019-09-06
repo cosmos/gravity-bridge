@@ -100,7 +100,7 @@ func (prophecy Prophecy) FindHighestClaim(ctx sdk.Context, stakeKeeper staking.K
 	for claim, validators := range prophecy.ClaimValidators {
 		claimPower := int64(0)
 		for _, validator := range validators {
-			validatorPower := validatorsByAddress[validator.String()].GetTendermintPower()
+			validatorPower := validatorsByAddress[validator.String()].GetConsensusPower()
 			claimPower += validatorPower
 		}
 		totalClaimsPower += claimPower

@@ -18,7 +18,6 @@ import (
 var (
 	_ module.AppModule           = AppModule{}
 	_ module.AppModuleBasic      = AppModuleBasic{}
-	_ module.AppModuleSimulation = AppModuleSimulation{}
 )
 
 // AppModuleBasic defines the basic application module used by the oracle module.
@@ -46,7 +45,7 @@ func (AppModuleBasic) ValidateGenesis(_ json.RawMessage) error {
 }
 
 // RegisterRESTRoutes registers the REST routes for the oracle module.
-func (AppModuleBasic) RegisterRESTRoutes(_ context.CLIContext, _ *mux.Router) {
+func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
 	rest.RegisterRoutes(ctx, rtr)
 }
 
@@ -62,18 +61,9 @@ func (AppModuleBasic) GetQueryCmd(_ *codec.Codec) *cobra.Command {
 
 //____________________________________________________________________________
 
-// AppModuleSimulation defines the module simulation functions used by the oracle module.
-type AppModuleSimulation struct{}
-
-// RegisterStoreDecoder registers a decoder for oracle module's types
-func (AppModuleSimulation) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
-
-//____________________________________________________________________________
-
 // AppModule implements an application module for the oracle module.
 type AppModule struct {
 	AppModuleBasic
-	AppModuleSimulation
 
 	keeper Keeper
 }
