@@ -37,14 +37,15 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 	}
 
 	id := strconv.Itoa(params.Nonce) + params.EthereumSender.String()
-	prophecy, err := keeper.GetProphecy(ctx, id)
-	if err != nil {
+
+	prophecy, errSdk := keeper.GetProphecy(ctx, id)
+	if errSdk != nil {
 		return []byte{}, oracletypes.ErrProphecyNotFound(codespace)
 	}
 
-	bridgeClaims, err := types.MapOracleClaimsToEthBridgeClaims(params.Nonce, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
-	if err != nil {
-		return []byte{}, err
+	bridgeClaims, errSdk := types.MapOracleClaimsToEthBridgeClaims(params.Nonce, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
+	if errSdk != nil {
+		return []byte{}, errSdk
 	}
 
 	response := types.NewQueryEthProphecyResponse(prophecy.ID, prophecy.Status, bridgeClaims)

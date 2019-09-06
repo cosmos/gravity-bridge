@@ -85,7 +85,7 @@ func CreateOracleClaimFromOracleString(oracleClaimString string) (OracleClaimCon
 	var oracleClaimContent OracleClaimContent
 
 	bz := []byte(oracleClaimString)
-	if err := json.Unmarshal(stringBytes, &oracleClaimContent); err != nil {
+	if err := json.Unmarshal(bz, &oracleClaimContent); err != nil {
 		return OracleClaimContent{}, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", err.Error()))
 	}
 

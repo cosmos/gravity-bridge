@@ -2,11 +2,16 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// DefaultConsensusNeeded defines the default consensus value required for a
+// prophecy to be finalized
+const DefaultConsensusNeeded float64 = 0.7
 
 // Prophecy is a struct that contains all the metadata of an oracle ritual.
 // Claims are indexed by the claim's validator bech32 address and by the claim's json value to allow
@@ -97,11 +102,14 @@ func (prophecy Prophecy) FindHighestClaim(ctx sdk.Context, stakeKeeper staking.K
 	totalClaimsPower := int64(0)
 	highestClaimPower := int64(-1)
 	highestClaim := ""
-	for claim, validators := range prophecy.ClaimValidators {
+	for claim, validatorAddrs := range prophecy.ClaimValidators {
 		claimPower := int64(0)
-		for _, validator := range validators {
-			validatorPower := validatorsByAddress[validator.String()].GetConsensusPower()
-			claimPower += validatorPower
+		for _, validatorAddr := range validatorAddrs {
+			validator, found := validatorsByAddress[validatorAddr.String()]
+			if !found {
+				panic(fmt.Sprintf("%s not found", validatorAddr))
+			}
+			claimPower += validator.GetConsensusPower()
 		}
 		totalClaimsPower += claimPower
 		if claimPower > highestClaimPower {

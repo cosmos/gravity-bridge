@@ -12,6 +12,7 @@ import (
 
 const (
 	DefaultCodespace                  = types.DefaultCodespace
+	DefaultConsensusNeeded            = types.DefaultConsensusNeeded
 	CodeProphecyNotFound              = types.CodeProphecyNotFound
 	CodeMinimumConsensusNeededInvalid = types.CodeMinimumConsensusNeededInvalid
 	CodeNoClaims                      = types.CodeNoClaims
