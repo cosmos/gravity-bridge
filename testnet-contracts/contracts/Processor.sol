@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "./TokenERC20.sol";
 
   /*
    *  @title: Processor
@@ -53,7 +53,7 @@ contract Processor {
             );
         } else {
             require(
-                ERC20(items[_id].token).balanceOf(address(this)) >= items[_id].amount,
+                TokenERC20(items[_id].token).balanceOf(address(this)) >= items[_id].amount,
                 'Insufficient ERC20 token balance for delivery.'
             );
         }
@@ -141,7 +141,7 @@ contract Processor {
           sender.transfer(amount);
         } else {
           require(
-              ERC20(token).transfer(sender, amount),
+              TokenERC20(token).transfer(sender, amount),
               "Token transfer failed, check contract token allowances and try again."
             );
         }
