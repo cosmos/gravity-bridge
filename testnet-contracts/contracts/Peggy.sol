@@ -20,7 +20,7 @@ contract Peggy is Processor {
         address _from,
         bytes _to,
         address _token,
-        string symbol,
+        string _symbol,
         uint256 _value,
         uint256 _nonce
     );
