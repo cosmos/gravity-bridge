@@ -112,8 +112,8 @@ contract Peggy is Processor {
           require(msg.value == _amount);
           symbol = "ETH";
         } else {
-          require(ERC20(_token).transferFrom(msg.sender, address(this), _amount));
-          symbol = ERC20(_token).symbol();
+          require(TokenERC20(_token).transferFrom(msg.sender, address(this), _amount));
+          symbol = TokenERC20(_token).symbol();
         }
 
         //Create an item with a unique key.
