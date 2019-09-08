@@ -39,14 +39,10 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 		return witnessClaim, errors.New("empty recipient address")
 	}
 
-	// Symbol formatting (to lowercase)
+	// Symbol formatted to lowercase
 	symbol := strings.ToLower(event.Symbol)
 	if symbol == "eth" && event.Token != common.HexToAddress("0x0000000000000000000000000000000000000000") {
 		return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
-	}
-
-	if err != nil {
-		return witnessClaim, err
 	}
 
 	// Amount type casting (*big.Int -> sdk.Coins)
