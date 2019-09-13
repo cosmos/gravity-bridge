@@ -11,6 +11,7 @@ Unidirectional Peggy is the starting point for cross chain value transfers from 
 This codebase, including all smart contract components, have not been professionally audited and are not intended for use in a production environment. As such, users should NOT trust the system to securely hold mainnet funds. Any developers attempting to use Unidirectional Peggy on the mainnet at this time will need to develop their own smart contracts or find another implementation.
 
 ## Architecture
+
 See [here](./docs/architecture.md)
 
 ## Requirements
@@ -122,28 +123,123 @@ The relayer will now watch the contract on Ropsten and create a claim whenever i
 
 With the application set up and the relayer running, you can now use Peggy by sending a lock transaction to the smart contract. You can do this from any Ethereum wallet/client that supports smart contract transactions.
 
-The easiest way to do this for now, assuming you have Metamask setup for Ropsten in the browser is to use remix or mycrypto as the frontend, for example:
+### Set up
 
-- 1.  Go to remix.ethereum.org
-- 2.  Compile Peggy.sol with solc v0.5.0
-- 3.  Set the environment as Injected Web3 Ropsten
-- 4.  On 'Run' tab, select Peggy and enter "0xec6df30846baab06fce9b1721608853193913c19" in 'At Address' field
-- 5.  Select 'At Address' to load the deployed contract
-- 6.  Enter the following for the variables under function lock():
+Create a .env file with variables MNEMONIC, INFURA_PROJECT_ID and LOCAL_PROVIDER. An example configuration can be found in .env.example. For running the bridge locally, you'll only need the LOCAL_PROVIDER. For running the bridge on ropsten testnet, you'll need the MNEMONIC from MetaMask and the INFURA_PROJECT_ID from Infura.
+
+### Terminal 1: Start local blockchain
+
+Navigate to directory
 
 ```
- _recipient = [HASHED_COSMOS_RECIPIENT_ADDRESS] *(for testuser cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh, enter "0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668")*
- _token = [DEPLOYED_TOKEN_ADDRESS] *(erc20 not currently supported, enter "0x0000000000000000000000000000000000000000" for ethereum)*
- _amount = [WEI_AMOUNT]
+$ cd testnet-contracts/
 ```
 
-- 7.  Enter the same number from \_amount as the transaction's value (in wei)
-- 8.  Select "transact" to send the lock() transaction
+Start a local blockchain
 
-Then, wait for the transaction to confirm and mine, and for the relayer to pick it up. You should see the successful output in the relayer console. You can also confirm the tokens have been minted by using the CLI again:
+```
+$ yarn develop
+```
+
+### Terminal 2: Compile, deploy, check contract's deployed address
+
+Navigate to directory
+
+```
+$ cd testnet-contracts/
+```
+
+Copy contract ABI to go modules:
+
+```
+$ yarn peggy:abi
+```
+
+Deploy contract to local blockchain:
+
+```
+$ yarn migrate
+```
+
+View locally deployed peggy's address (will be logged to console):
+
+```
+$ yarn peggy:address
+```
+
+### Terminal 3: Build Ethereum Bridge and start
+
+Build the Ethereum Bridge application
+
+```
+$ make install
+```
+
+Start the Bridge's blockchain
+
+```
+$ ebd start
+```
+
+### Terminal 4: Begin the relayer service
+
+Start ebrelayer on a local web socket with peggy's deployed address from the earlier step.
+
+- Example [LOCAL_WEB_SOCKET] : ws://127.0.0.1:8545/
+- Example [PEGGY_DEPLOYED_ADDRESS] = 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
+
+```
+$ ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=testing
+```
+
+### Using Terminal 2: Send lock transaction to peggy
+
+The lock transaction has default parameters:
+
+- [HASHED_COSMOS_RECIPIENT_ADDRESS] = 0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668
+- [DEPLOYED_TOKEN_ADDRESS] = 0x0000000000000000000000000000000000000000
+- [WEI_AMOUNT] = 10
+
+```
+$ yarn peggy:lock
+```
+
+Expected successful output in the relayer console:
+
+```
+New Lock Transaction:
+Tx hash: 0x83e6ee88c20178616e68fee2477d21e84f16dcf6bac892b18b52c000345864c0
+Block number: 5
+Event ID: cc10955295e555130c865949fb1fd48dba592d607ae582b43a2f3f0addce83f2
+Token: 0x0000000000000000000000000000000000000000
+Sender: 0xc230f38FF05860753840e0d7cbC66128ad308B67
+Recipient: cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
+Value: 10
+Nonce: 1
+```
+
+You can also confirm the tokens have been minted by using the CLI again:
 
 ```
 ebcli query account cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh --trust-node
+```
+
+### Running on the testnet
+
+To run the Ethereum Bridge on the testnet, ebrelayer must be initalized with websocket provider: wss://ropsten.infura.io/ws. You'll need to specify the ropsten network via a --network flag for the following commands:
+
+```
+yarn migrate --network ropsten
+```
+
+```
+yarn peggy:address --network ropsten
+
+```
+
+```
+yarn peggy:lock --network ropsten
+
 ```
 
 ## Using the modules in other projects
@@ -151,3 +247,7 @@ ebcli query account cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh --trust-node
 The ethbridge and oracle modules can be used in other cosmos-sdk applications by copying them into your application's modules folders and including them in the same way as in the example application. Each module may be moved to its own repo or integrated into the core Cosmos-SDK in future, for easier usage.
 
 For instructions on building and deploying the smart contracts, see the README in their folder.
+
+```
+
+```

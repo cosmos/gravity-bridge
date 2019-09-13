@@ -1,6 +1,6 @@
 {
-  "name": "ethereum-contracts",
-  "version": "1.0.0",
+  "name": "testnet-contracts",
+  "version": "1.1.0",
   "description": "Starting point for cross chain value transfers between the Ethereum and Cosmos networks",
   "main": "truffle.js",
   "directories": {
@@ -9,13 +9,17 @@
   "author": "Denali Marsh",
   "license": "ISC",
   "dependencies": {
+    "@truffle/hdwallet-provider": "^1.0.18",
     "bignumber.js": "^6.0.0",
     "bluebird": "^3.5.1",
+    "dotenv": "^8.1.0",
     "eth-lib": "^0.2.8",
     "ethereumjs-util": "^5.2.0",
     "keccak": "^1.4.0",
     "keythereum": "^1.0.4",
     "lodash": "^4.17.10",
+    "truffle-contract": "^4.0.31",
+    "truffle-hdwallet-provider": "^1.0.17",
     "utf8": "^3.0.0"
   },
   "devDependencies": {
@@ -24,12 +28,14 @@
     "chai-bignumber": "^3.0.0",
     "openzeppelin-solidity": "^2.1.3",
     "solc": "^0.5.0",
-    "web3": "^1.0.0-beta.52",
+    "web3": "^1.2.1",
     "web3-utils": "^1.0.0-beta.52"
   },
   "scripts": {
     "develop": "truffle develop",
-    "test": "truffle test",
-    "exit": ".exit"
+    "migrate": "truffle compile && truffle migrate --reset --all",
+    "peggy:address": "truffle exec scripts/getDeployedAddress.js",
+    "peggy:lock": "truffle exec scripts/sendLockTx.js",
+    "peggy:abi": "solc --abi ./contracts/Peggy.sol -o ../cmd/ebrelayer/contract/abis --overwrite"
   }
 }
