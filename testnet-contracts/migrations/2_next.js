@@ -1,13 +1,5 @@
-var Peggy = artifacts.require("Peggy")
+var Peggy = artifacts.require("Peggy");
 
 module.exports = function(deployer, network, accounts) {
-  // Use deployer to state migration tasks.
-  var valset
-  switch (network) {
-    case "ganache":
-    default:
-      valset = [[accounts[0]], [100]]
-      break
-  }
-  deployer.deploy(Peggy)
-}
+  deployer.deploy(Peggy, { gas: 4612388, from: accounts[0] });
+};

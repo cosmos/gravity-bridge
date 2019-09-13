@@ -110,7 +110,6 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	eventSigHash := crypto.Keccak256Hash([]byte(args[2]))
 
 	// Get the hex event signature from the hash.
-	// Expected value: "0xe154a56f2d306d5bbe4ac2379cb0cfc906b23685047a2bd2f5f0a0e810888f72"
 	eventSig := eventSigHash.Hex()
 
 	// Parse the validator's moniker
