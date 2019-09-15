@@ -221,13 +221,11 @@ GasWanted: 200000
 GasUsed: 42112
 Tags: - action = create_bridge_claim
 
-```
-
 ## Running the bridge on the Ropsten testnet
 
 To run the Ethereum Bridge on the Ropsten testnet, repeat the steps for running locally with the following changes:
 
-```
+```bash
 
 # Add environment variable MNEMONIC from your MetaMask account
 
@@ -248,25 +246,6 @@ yarn peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS][token_contra
 
 ```
 
-### Running on the testnet
-
-To run the Ethereum Bridge on the testnet, repeat the steps for running locally except for the following changes:
-
-```
-
-# Specify the ropsten network via a --network flag for the following commands...
-
-$ yarn migrate --network ropsten
-$ yarn peggy:address --network ropsten
-\$ yarn peggy:lock --network ropsten
-
-# Start ebrelayer with ropsten network websocket
-
-\$ ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=testing
-
-```
-
 ## Using the modules in other projects
 
 The ethbridge and oracle modules can be used in other cosmos-sdk applications by copying them into your application's modules folders and including them in the same way as in the example application. Each module may be moved to its own repo or integrated into the core Cosmos-SDK in future, for easier usage.
-```
