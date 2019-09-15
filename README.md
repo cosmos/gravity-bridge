@@ -203,7 +203,6 @@ yarn peggy:lock [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_
 
 `yarn peggy:lock --default` expected output in ebrelayer console:
 
-```
 New Lock Transaction:
 Tx hash: 0x83e6ee88c20178616e68fee2477d21e84f16dcf6bac892b18b52c000345864c0
 Block number: 5
@@ -215,13 +214,13 @@ Value: 10
 Nonce: 1
 
 Response:
-  Height: 48
-  TxHash: AD842C51B4347F0F610CB524529C2D8A875DACF12C8FE4B308931D266FEAD067
-  Logs: [{"msg_index":0,"success":true,"log":"success"}]
-  GasWanted: 200000
-  GasUsed: 42112
-  Tags:
-    - action = create_bridge_claim
+Height: 48
+TxHash: AD842C51B4347F0F610CB524529C2D8A875DACF12C8FE4B308931D266FEAD067
+Logs: [{"msg_index":0,"success":true,"log":"success"}]
+GasWanted: 200000
+GasUsed: 42112
+Tags: - action = create_bridge_claim
+
 ```
 
 ## Running the bridge on the Ropsten testnet
@@ -229,38 +228,45 @@ Response:
 To run the Ethereum Bridge on the Ropsten testnet, repeat the steps for running locally with the following changes:
 
 ```
+
 # Add environment variable MNEMONIC from your MetaMask account
+
 # Add environment variable INFURA_PROJECT_ID from your Infura account.
 
 # Specify the Ropsten network via a --network flag for the following commands...
+
 yarn migrate --network ropsten
 yarn peggy:address --network ropsten
 
 # Make sure to start ebrelayer with Ropsten network websocket
+
 ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=peggy
 
 # Send lock transaction on Ropsten testnet
-yarn peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
+
+yarn peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS][token_contract_address] [WEI_AMOUNT]
+
 ```
 
 ### Running on the testnet
 
-To run the Ethereum Bridge on the testnet, ebrelayer must be initalized with websocket provider: wss://ropsten.infura.io/ws. You'll need to specify the ropsten network via a --network flag for the following commands:
-
-```
-yarn migrate --network ropsten
-```
-
-```
-yarn peggy:address --network ropsten
+To run the Ethereum Bridge on the testnet, repeat the steps for running locally except for the following changes:
 
 ```
 
-```
-yarn peggy:lock --network ropsten
+# Specify the ropsten network via a --network flag for the following commands...
+
+$ yarn migrate --network ropsten
+$ yarn peggy:address --network ropsten
+\$ yarn peggy:lock --network ropsten
+
+# Start ebrelayer with ropsten network websocket
+
+\$ ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=testing
 
 ```
 
 ## Using the modules in other projects
 
 The ethbridge and oracle modules can be used in other cosmos-sdk applications by copying them into your application's modules folders and including them in the same way as in the example application. Each module may be moved to its own repo or integrated into the core Cosmos-SDK in future, for easier usage.
+```
