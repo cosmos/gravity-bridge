@@ -108,7 +108,7 @@ With the application set up, you can now use Peggy by sending a lock transaction
 
 ### Set up
 
-Create a .env file with environment variable LOCAL_PROVIDER (an example configuration can be found in .env.example). For running the bridge locally, you'll only need the LOCAL_PROVIDER. Environment variables MNEMONIC, INFURA_PROJECT_ID are only required for using the Ropsten testnet (see below).
+Create a .env file with environment variable LOCAL_PROVIDER, an example configuration can be found in .env.example. For running the bridge locally, you'll only need the LOCAL_PROVIDER. Environment variables MNEMONIC, INFURA_PROJECT_ID are only required for using the Ropsten testnet (see below).
 
 ### Terminal 1: Start local blockchain
 
@@ -117,7 +117,7 @@ $ cd testnet-contracts/
 $ yarn develop
 ```
 
-### Terminal 2: Compile, deploy, check contract's deployed address
+### Terminal 2: Compile and deploy Peggy contract
 
 ```
 $ cd testnet-contracts/
@@ -142,12 +142,12 @@ $ make install
 $ ebd start
 ```
 
-### Terminal 4: Start the relayer service
+### Terminal 4: Start the Relayer service
 
-For automated relaying, there is a relayer service that can be run that will automatically watch and relay events (local web socket and deployed address parameters may vary)
+For automated relaying, there is a relayer service that can be run that will automatically watch and relay events (local web socket and deployed address parameters may vary).
 
-- example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:8545/
-- example [PEGGY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
+- Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:8545/
+- Example [PEGGY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
 
 ```
 # Check ebrelayer connection to ebd
