@@ -135,72 +135,52 @@ Create a .env file with variables MNEMONIC, INFURA_PROJECT_ID and LOCAL_PROVIDER
 
 ### Terminal 1: Start local blockchain
 
-Navigate to directory
-
 ```
 $ cd testnet-contracts/
-```
-
-Start a local blockchain
-
-```
 $ yarn develop
 ```
 
 ### Terminal 2: Compile, deploy, check contract's deployed address
 
-Navigate to directory
-
 ```
 $ cd testnet-contracts/
-```
 
-Copy contract ABI to go modules:
-
-```
+# Copy contract ABI to go modules:
 $ yarn peggy:abi
-```
 
-Deploy contract to local blockchain:
-
-```
+# Deploy contract to local blockchain
 $ yarn migrate
-```
 
-View locally deployed peggy's address (will be logged to console):
-
-```
+# Get contract's address
 $ yarn peggy:address
 ```
 
-### Terminal 3: Build Ethereum Bridge and start
-
-Build the Ethereum Bridge application
+### Terminal 3: Build and start Ethereum Bridge
 
 ```
+# Build the Ethereum Bridge application
 $ make install
-```
 
-Start the Bridge's blockchain
-
-```
+# Start the Bridge's blockchain
 $ ebd start
 ```
 
-### Terminal 4: Begin the relayer service
+### Terminal 4: Start the relayer service
 
-Start ebrelayer on a local web socket with peggy's deployed address from the earlier step.
-
-- Example [LOCAL_WEB_SOCKET] : ws://127.0.0.1:8545/
-- Example [PEGGY_DEPLOYED_ADDRESS] = 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
+Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:8545/
+Example [PEGGY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
 
 ```
+# Start ebrelayer on the contract's deployed address
 $ ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=testing
+
+# Enter password and press enter
+# You should see a message like: Started ethereum websocket with provider: [LOCAL_WEB_SOCKET] \ Subscribed to contract events on address: [PEGGY_DEPLOYED_ADDRESS]
 ```
 
-### Using Terminal 2: Send lock transaction to peggy
+### Using Terminal 2: Send lock transaction to contract
 
-The lock transaction has default parameters:
+The lock transaction uses the default parameters:
 
 - [HASHED_COSMOS_RECIPIENT_ADDRESS] = 0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668
 - [DEPLOYED_TOKEN_ADDRESS] = 0x0000000000000000000000000000000000000000
@@ -208,11 +188,9 @@ The lock transaction has default parameters:
 
 ```
 $ yarn peggy:lock
-```
 
-Expected successful output in the relayer console:
+# Expected successful output in the relayer console:
 
-```
 New Lock Transaction:
 Tx hash: 0x83e6ee88c20178616e68fee2477d21e84f16dcf6bac892b18b52c000345864c0
 Block number: 5
@@ -222,30 +200,23 @@ Sender: 0xc230f38FF05860753840e0d7cbC66128ad308B67
 Recipient: cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
 Value: 10
 Nonce: 1
-```
 
-You can also confirm the tokens have been minted by using the CLI again:
-
-```bash
-ebcli query account cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh --trust-node
+# You can also confirm the tokens have been minted by using the CLI again:
+$ ebcli query account cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh --trust-node
 ```
 
 ### Running on the testnet
 
-To run the Ethereum Bridge on the testnet, ebrelayer must be initalized with websocket provider: wss://ropsten.infura.io/ws. You'll need to specify the ropsten network via a --network flag for the following commands:
+To run the Ethereum Bridge on the testnet, repeat the steps for running locally except for the following changes:
 
 ```
-yarn migrate --network ropsten
-```
+# Specify the ropsten network via a --network flag for the following commands...
+$ yarn migrate --network ropsten
+$ yarn peggy:address --network ropsten
+$ yarn peggy:lock --network ropsten
 
-```
-yarn peggy:address --network ropsten
-
-```
-
-```
-yarn peggy:lock --network ropsten
-
+# Start ebrelayer with ropsten network websocket
+$ ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=testing
 ```
 
 ## Using the modules in other projects
@@ -253,7 +224,3 @@ yarn peggy:lock --network ropsten
 The ethbridge and oracle modules can be used in other cosmos-sdk applications by copying them into your application's modules folders and including them in the same way as in the example application. Each module may be moved to its own repo or integrated into the core Cosmos-SDK in future, for easier usage.
 
 For instructions on building and deploying the smart contracts, see the README in their folder.
-
-```
-
-```
