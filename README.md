@@ -102,30 +102,13 @@ ebcli rest-server --trust-node
 An api collection for Postman (https://www.getpostman.com/) is provided [here](./docs/peggy.postman_collection.json) which documents some API endpoints and can be used to interact with it.
 Note: For checking account details/balance, you will need to change the cosmos addresses in the URLs, params and body to match the addresses you generated that you want to check.
 
-## Running the relayer service
+## Running the bridge locally
 
-For automated relaying, there is a relayer service that can be run that will automatically watch and relay events.
-
-```bash
-# Check ebrelayer connection to ebd
-ebrelayer status
-
-# Initialize the Relayer service for automatic claim processing
-ebrelayer init wss://ropsten.infura.io/ws ec6df30846baab06fce9b1721608853193913c19 "LogLock\(bytes32,address,bytes,address,uint256,uint256\)" validator --chain-id=peggy
-
-# Enter password and press enter
-# You should see a message like:  Started ethereum websocket... and Subscribed to contract events...
-```
-
-The relayer will now watch the contract on Ropsten and create a claim whenever it detects a lock event.
-
-## Using the bridge
-
-With the application set up and the relayer running, you can now use Peggy by sending a lock transaction to the smart contract. You can do this from any Ethereum wallet/client that supports smart contract transactions.
+With the application set up, you can now use Peggy by sending a lock transaction to the smart contract.
 
 ### Set up
 
-Create a .env file with variables MNEMONIC, INFURA_PROJECT_ID and LOCAL_PROVIDER. An example configuration can be found in .env.example. For running the bridge locally, you'll only need the LOCAL_PROVIDER. For running the bridge on ropsten testnet, you'll need the MNEMONIC from MetaMask and the INFURA_PROJECT_ID from Infura.
+Create a .env file with environment variable LOCAL_PROVIDER (an example configuration can be found in .env.example). For running the bridge locally, you'll only need the LOCAL_PROVIDER. Environment variables MNEMONIC, INFURA_PROJECT_ID are only required for using the Ropsten testnet (see below).
 
 ### Terminal 1: Start local blockchain
 
@@ -161,15 +144,23 @@ $ ebd start
 
 ### Terminal 4: Start the relayer service
 
-Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:8545/
-Example [PEGGY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
+For automated relaying, there is a relayer service that can be run that will automatically watch and relay events (local web socket and deployed address parameters may vary)
+
+- example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:8545/
+- example [PEGGY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
 
 ```
+# Check ebrelayer connection to ebd
+ebrelayer status
+
 # Start ebrelayer on the contract's deployed address
 $ ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=testing
 
 # Enter password and press enter
 # You should see a message like: Started ethereum websocket with provider: [LOCAL_WEB_SOCKET] \ Subscribed to contract events on address: [PEGGY_DEPLOYED_ADDRESS]
+
+# The relayer will now watch the contract on Ropsten and create a claim whenever it detects a lock event.
+
 ```
 
 ### Using Terminal 2: Send lock transaction to contract
@@ -199,17 +190,22 @@ Nonce: 1
 $ ebcli query account cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh --trust-node
 ```
 
-### Running on the testnet
+We are working on implementing custom parameters to the 'yarn peggy:lock' command. Currently, you can add custom parameters to the lock transaction using an online service such as Remix.
 
-To run the Ethereum Bridge on the testnet, repeat the steps for running locally except for the following changes:
+## Running the bridge on the Ropsten testnet
+
+To run the Ethereum Bridge on the Ropsten testnet, repeat the steps for running locally with the following changes:
 
 ```
-# Specify the ropsten network via a --network flag for the following commands...
+# Add environment variable MNEMONIC from your MetaMask account
+# Add environment variable INFURA_PROJECT_ID from your Infura account.
+
+# Specify the Ropsten network via a --network flag for the following commands...
 $ yarn migrate --network ropsten
 $ yarn peggy:address --network ropsten
 $ yarn peggy:lock --network ropsten
 
-# Start ebrelayer with ropsten network websocket
+# Start ebrelayer with Ropsten network websocket
 $ ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=testing
 ```
 
