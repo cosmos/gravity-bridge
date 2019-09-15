@@ -106,9 +106,9 @@ Note: For checking account details/balance, you will need to change the cosmos a
 
 With the application set up, you can now use Peggy by sending a lock transaction to the smart contract.
 
-### Set up
+### Set-up
 
-Create a .env file with environment variable LOCAL_PROVIDER, an example configuration can be found in .env.example. For running the bridge locally, you'll only need the LOCAL_PROVIDER. Environment variables MNEMONIC, INFURA_PROJECT_ID are only required for using the Ropsten testnet (see below).
+Create a .env file with environment variable LOCAL_PROVIDER - an example configuration can be found in .env.example. For running the bridge locally, you'll only need the LOCAL_PROVIDER. Environment variables MNEMONIC and INFURA_PROJECT_ID are only required for using the Ropsten testnet (see below).
 
 ### Terminal 1: Start local blockchain
 
@@ -146,14 +146,14 @@ $ ebd start
 
 For automated relaying, there is a relayer service that can be run that will automatically watch and relay events (local web socket and deployed address parameters may vary).
 
-- Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:8545/
-- Example [PEGGY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
-
 ```
 # Check ebrelayer connection to ebd
 ebrelayer status
 
-# Start ebrelayer on the contract's deployed address
+# Start ebrelayer on the contract's deployed address with [LOCAL_WEB_SOCKET] and [PEGGY_DEPLOYED_ADDRESS]
+# Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:8545/
+# Example [PEGGY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
+
 $ ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=testing
 
 # Enter password and press enter
@@ -165,13 +165,12 @@ $ ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,ad
 
 ### Using Terminal 2: Send lock transaction to contract
 
-The lock transaction uses the default parameters:
-
-- [HASHED_COSMOS_RECIPIENT_ADDRESS] = 0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668
-- [DEPLOYED_TOKEN_ADDRESS] = 0x0000000000000000000000000000000000000000
-- [WEI_AMOUNT] = 10
-
 ```
+# The lock transaction uses the default parameters:
+# [HASHED_COSMOS_RECIPIENT_ADDRESS] = 0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668
+# [DEPLOYED_TOKEN_ADDRESS] = 0x0000000000000000000000000000000000000000
+# [WEI_AMOUNT] = 10
+
 $ yarn peggy:lock
 
 # Expected successful output in the relayer console:
