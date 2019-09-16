@@ -7,7 +7,6 @@ all: format clean test_app install lint
 # The below include contains the tools and runsim targets.
 include contrib/devtools/Makefile
 
-
 DEP := $(shell command -v dep 2> /dev/null)
 
 ldflags = -X github.com/cosmos/sdk-application-tutorial/version.Version=$(VERSION) \
