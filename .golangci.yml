@@ -18,3 +18,4 @@ linters:
     - gochecknoinits
     - scopelint
     - stylecheck
+    - funlen
