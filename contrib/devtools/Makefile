@@ -17,8 +17,8 @@ endif
 
 GOPATH ?= $(shell $(GO) env GOPATH)
 GITHUBDIR := $(GOPATH)$(FS)src$(FS)github.com
-GOLANGCI_LINT_VERSION := v1.17.1
-GOLANGCI_LINT_HASHSUM := f5fa647a12f658924d9f7d6b9628d505ab118e8e049e43272de6526053ebe08d
+GOLANGCI_LINT_VERSION := v1.18.0
+GOLANGCI_LINT_HASHSUM := 8d21cc95da8d3daf8321ac40091456fc26123c964d7c2281d339d431f2f4c840
 
 ###
 # Functions
@@ -43,23 +43,17 @@ mkfile_dir := $(shell cd $(shell dirname $(mkfile_path)); pwd)
 TOOLS_DESTDIR  ?= $(GOPATH)/bin
 
 GOLANGCI_LINT = $(TOOLS_DESTDIR)/golangci-lint
-GOIMPORTS     = $(TOOLS_DESTDIR)/goimports
 
 all: tools
 
-tools: goimports golangci-lint
+tools: golangci-lint
 
 golangci-lint: $(GOLANGCI_LINT)
 $(GOLANGCI_LINT): $(mkfile_dir)/install-golangci-lint.sh
 	bash $(mkfile_dir)/install-golangci-lint.sh $(TOOLS_DESTDIR) $(GOLANGCI_LINT_VERSION) $(GOLANGCI_LINT_HASHSUM)
 
-goimports: $(GOIMPORTS)
-$(GOIMPORTS):
-	@echo "Get goimports@v0.0.0-20190628034336-212fb13d595e"
-	@go get golang.org/x/tools/cmd/goimports@v0.0.0-20190628034336-212fb13d595e
-
 tools-clean:
 	rm -f $(GOIMPORTS) $(GOLANGCI_LINT)
 	rm -f tools-stamp
 
-.PHONY: all tools tools-clean
+.PHONY: all tools golangci-lint tools-clean
