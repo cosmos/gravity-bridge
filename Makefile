@@ -2,15 +2,10 @@
 
 export GO111MODULE = on
 
-all: format clean test_app install lint
+all: lint test_app clean install
 
 # The below include contains the tools and runsim targets.
 include contrib/devtools/Makefile
-
-DEP := $(shell command -v dep 2> /dev/null)
-
-ldflags = -X github.com/cosmos/sdk-application-tutorial/version.Version=$(VERSION) \
-	-X github.com/cosmos/sdk-application-tutorial/version.Commit=$(COMMIT)
 
 build:
 	go build ./cmd/ebd
@@ -34,9 +29,4 @@ lint:
 test_app:
 	go test ./...
 
-format: tools
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -w -s
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs misspell -w
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs goimports -w -local github.com/cosmos/cosmos-sdk
-
-.PHONY: build clean install test format lint
+.PHONY: all build clean install test_app lint all
