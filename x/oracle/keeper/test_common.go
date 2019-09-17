@@ -35,6 +35,7 @@ const (
 // CreateTestKeepers greates an Mock App, OracleKeeper, BankKeeper and ValidatorAddresses to be used for test input
 func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []int64) (*mock.App, Keeper, bank.Keeper, []sdk.ValAddress) {
 	mApp := mock.NewApp()
+	RegisterTestCodecs(mApp.Cdc)
 
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
@@ -135,16 +136,10 @@ func createTestPubKeys(numPubKeys int) []crypto.PubKey {
 	return publicKeys
 }
 
-// MakeTestCodec creates a codec used only for testing
-func MakeTestCodec() *codec.Codec {
-	var cdc = codec.New()
-	// Register Msgs
-	auth.RegisterCodec(cdc)
+// RegisterTestCodecs registers codecs used only for testing
+func RegisterTestCodecs(cdc *codec.Codec) {
 	bank.RegisterCodec(cdc)
-	sdk.RegisterCodec(cdc)
 	staking.RegisterCodec(cdc)
-	codec.RegisterCrypto(cdc)
-	return cdc
 }
 
 // getEndBlocker returns a staking endblocker.

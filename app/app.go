@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"os"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -8,16 +9,16 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/peggy/x/ethbridge"
 	"github.com/cosmos/peggy/x/oracle"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -55,6 +56,8 @@ var (
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
 		supply.AppModuleBasic{},
+		oracle.AppModuleBasic{},
+		ethbridge.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -64,6 +67,15 @@ var (
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
 	}
 )
+
+// MakeCodec generates the necessary codecs for Amino
+func MakeCodec() *codec.Codec {
+	var cdc = codec.New()
+	ModuleBasics.RegisterCodec(cdc)
+	sdk.RegisterCodec(cdc)
+	codec.RegisterCrypto(cdc)
+	return cdc
+}
 
 // EthereumBridgeApp defines the Ethereum-Cosmos peg-zone application
 type EthereumBridgeApp struct {
@@ -80,7 +92,6 @@ type EthereumBridgeApp struct {
 	BankKeeper    bank.Keeper
 	StakingKeeper staking.Keeper
 	SupplyKeeper  supply.Keeper
-	CrisisKeeper  crisis.Keeper
 	ParamsKeeper  params.Keeper
 
 	// EthBridge keepers
@@ -100,20 +111,23 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB,
 	// BaseApp handles interactions with Tendermint through the ABCI protocol
 	bApp := bam.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc))
 
+	bApp.SetAppVersion(version.Version)
+
 	keys := sdk.NewKVStoreKeys(bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, oracle.StoreKey, params.StoreKey)
 	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
 	// Here you initialize your application with the store keys it requires
 	app := &EthereumBridgeApp{
-		BaseApp:        bApp,
-		cdc:            cdc,
-		keys:           keys,
-		tkeys:          tkeys,
+		BaseApp: bApp,
+		cdc:     cdc,
+		keys:    keys,
+		tkeys:   tkeys,
 	}
 
 	// init params keeper and subspaces
 	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey], params.DefaultCodespace)
+
 	authSubspace := app.ParamsKeeper.Subspace(auth.DefaultParamspace)
 	bankSubspace := app.ParamsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.ParamsKeeper.Subspace(staking.DefaultParamspace)
@@ -136,32 +150,32 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB,
 		bank.NewAppModule(app.BankKeeper, app.AccountKeeper),
 		supply.NewAppModule(app.SupplyKeeper, app.AccountKeeper),
 		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
-		// TODO: Oracle/Ethrelayer module
+		oracle.NewAppModule(app.OracleKeeper),
+		ethbridge.NewAppModule(app.OracleKeeper, app.BankKeeper, ethbridge.DefaultCodespace, app.cdc),
 	)
 
 	app.mm.SetOrderEndBlockers(staking.ModuleName)
 
-	// NOTE: The genutils moodule must occur after staking so that pools are
+	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
 		genaccounts.ModuleName, staking.ModuleName, auth.ModuleName, bank.ModuleName,
-		supply.ModuleName, crisis.ModuleName, genutil.ModuleName,
+		supply.ModuleName, genutil.ModuleName,
 	)
 
 	// TODO: add simulator support
 
-	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
-
-	// initialize stores
-	app.MountKVStores(keys)
-	app.MountTransientStores(tkeys)
 
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(auth.NewAnteHandler(app.AccountKeeper, app.SupplyKeeper, auth.DefaultSigVerificationGasConsumer))
 	app.SetEndBlocker(app.EndBlocker)
+
+	// initialize stores
+	app.MountKVStores(keys)
+	app.MountTransientStores(tkeys)
 
 	err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
 	if err != nil {
@@ -171,13 +185,22 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB,
 	return app
 }
 
-// MakeCodec generates the necessary codecs for Amino
-func MakeCodec() *codec.Codec {
-	var cdc = codec.New()
-	ModuleBasics.RegisterCodec(cdc)
-	sdk.RegisterCodec(cdc)
-	codec.RegisterCrypto(cdc)
-	return cdc
+// GenesisState represents chain state at the start of the chain. Any initial state (account balances) are stored here.
+type GenesisState map[string]json.RawMessage
+
+func NewDefaultGenesisState() GenesisState {
+	return ModuleBasics.DefaultGenesis()
+}
+
+// InitChainer application update at chain initialization
+func (app *EthereumBridgeApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	var genesisState GenesisState
+	err := app.cdc.UnmarshalJSON(req.AppStateBytes, &genesisState)
+	if err != nil {
+		panic(err)
+	}
+
+	return app.mm.InitGenesis(ctx, genesisState)
 }
 
 // BeginBlocker application updates every begin block
@@ -188,13 +211,6 @@ func (app *EthereumBridgeApp) BeginBlocker(ctx sdk.Context, req abci.RequestBegi
 // EndBlocker application updates every end block
 func (app *EthereumBridgeApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
-}
-
-// InitChainer application update at chain initialization
-func (app *EthereumBridgeApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	var genesisState simapp.GenesisState
-	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
-	return app.mm.InitGenesis(ctx, genesisState)
 }
 
 // LoadHeight loads a particular height

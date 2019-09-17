@@ -17,7 +17,7 @@ clean:
 	rm -f ebcli
 	rm -f ebrelayer
 
-install: build
+install:
 	go install ./cmd/ebd
 	go install ./cmd/ebcli
 	go install ./cmd/ebrelayer
