@@ -115,12 +115,12 @@ func (am AppModule) NewHandler() sdk.Handler {
 
 // QuerierRoute returns the ethbridge module's querier route name.
 func (AppModule) QuerierRoute() string {
-	return ""
+	return QuerierRoute
 }
 
 // NewQuerierHandler returns the ethbridge module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return nil
+	return NewQuerier(am.OracleKeeper, am.Codec, am.Codespace)
 }
 
 // InitGenesis performs genesis initialization for the ethbridge module. It returns
