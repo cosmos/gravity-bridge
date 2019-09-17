@@ -2,7 +2,7 @@
 
 export GO111MODULE = on
 
-all: lint test_app clean install
+all: test_app clean install lint
 
 # The below include contains the tools and runsim targets.
 include contrib/devtools/Makefile

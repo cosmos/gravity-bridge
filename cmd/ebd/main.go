@@ -20,6 +20,13 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	"github.com/cosmos/cosmos-sdk/x/genaccounts"
+	genaccscli "github.com/cosmos/cosmos-sdk/x/genaccounts/client/cli"
+
+
+
 )
 
 const (
@@ -69,7 +76,7 @@ func main() {
 }
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
-	return app.NewEthereumBridgeApp(logger, db, invCheckPeriod,
+	return app.NewEthereumBridgeApp(logger, db,
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
 		baseapp.SetHaltHeight(uint64(viper.GetInt(server.FlagHaltHeight))))
 }
@@ -79,13 +86,13 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		ebApp := app.NewEthereumBridgeApp(logger, db, 1)
+		ebApp := app.NewEthereumBridgeApp(logger, db)
 		err := ebApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
 		}
 		return ebApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
-	ebApp := app.NewEthereumBridgeApp(logger, db, 1)
+	ebApp := app.NewEthereumBridgeApp(logger, db)
 	return ebApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }

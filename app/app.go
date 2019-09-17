@@ -70,8 +70,6 @@ type EthereumBridgeApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
-	invCheckPeriod uint
-
 	// keys to access the substores
 	keys  map[string]*sdk.KVStoreKey
 	tkeys map[string]*sdk.TransientStoreKey
@@ -93,8 +91,8 @@ type EthereumBridgeApp struct {
 }
 
 // NewEthereumBridgeApp is a constructor function for EthereumBridgeApp
-func NewEthereumBridgeApp(logger log.Logger, db dbm.DB, invCheckPeriod uint,
-	loadLatest bool, baseAppOptions ...func(*bam.BaseApp)) *EthereumBridgeApp {
+func NewEthereumBridgeApp(logger log.Logger, db dbm.DB,
+	baseAppOptions ...func(*bam.BaseApp)) *EthereumBridgeApp {
 
 	// First define the top level codec that will be shared by the different modules
 	cdc := MakeCodec()
@@ -110,7 +108,6 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB, invCheckPeriod uint,
 	app := &EthereumBridgeApp{
 		BaseApp:        bApp,
 		cdc:            cdc,
-		invCheckPeriod: invCheckPeriod,
 		keys:           keys,
 		tkeys:          tkeys,
 	}
@@ -166,11 +163,9 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB, invCheckPeriod uint,
 	app.SetAnteHandler(auth.NewAnteHandler(app.AccountKeeper, app.SupplyKeeper, auth.DefaultSigVerificationGasConsumer))
 	app.SetEndBlocker(app.EndBlocker)
 
-	if loadLatest {
-		err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
-		if err != nil {
-			cmn.Exit(err.Error())
-		}
+	err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
+	if err != nil {
+		cmn.Exit(err.Error())
 	}
 
 	return app
