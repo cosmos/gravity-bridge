@@ -17,13 +17,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/mock"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/supply"
-	supplyexported "github.com/cosmos/cosmos-sdk/x/supply/exported"
 	"github.com/cosmos/peggy/x/oracle/types"
 	"github.com/tendermint/tendermint/crypto"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -203,35 +201,4 @@ func MakeTestCodec() *codec.Codec {
 	bank.RegisterCodec(cdc)
 
 	return cdc
-}
-
-// getEndBlocker returns a staking endblocker.
-func getEndBlocker(keeper staking.Keeper) sdk.EndBlocker {
-	return func(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-		validatorUpdates := staking.EndBlocker(ctx, keeper)
-
-		return abci.ResponseEndBlock{
-			ValidatorUpdates: validatorUpdates,
-		}
-	}
-}
-
-// getInitChainer initializes the chainer of the mock app and sets the genesis
-// state. It returns an empty ResponseInitChain.
-func getInitChainer(mapp *mock.App, keeper staking.Keeper, accountKeeper stakingtypes.AccountKeeper, supplyKeeper stakingtypes.SupplyKeeper,
-	blacklistedAddrs []supplyexported.ModuleAccountI) sdk.InitChainer {
-	return func(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-		mapp.InitChainer(ctx, req)
-
-		// set module accounts
-		for _, macc := range blacklistedAddrs {
-			supplyKeeper.SetModuleAccount(ctx, macc)
-		}
-
-		stakingGenesis := staking.DefaultGenesisState()
-		validators := staking.InitGenesis(ctx, keeper, accountKeeper, supplyKeeper, stakingGenesis)
-		return abci.ResponseInitChain{
-			Validators: validators,
-		}
-	}
 }
