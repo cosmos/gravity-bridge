@@ -35,7 +35,7 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 	sender := ethbridgeTypes.NewEthereumAddress(event.From.Hex())
 
 	// Recipient type casting ([]bytes -> sdk.AccAddress)
-	recipient, err := sdk.AccAddressFromBech32(string(event.To[:]))
+	recipient, err := sdk.AccAddressFromBech32(string(event.To))
 	if err != nil {
 		return witnessClaim, err
 	}

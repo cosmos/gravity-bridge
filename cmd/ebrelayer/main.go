@@ -27,10 +27,6 @@ import (
 	relayer "github.com/cosmos/peggy/cmd/ebrelayer/relayer"
 )
 
-const (
-	routeEthbridge = "ethbridge"
-)
-
 var appCodec *amino.Codec
 
 func init() {

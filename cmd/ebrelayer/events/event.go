@@ -49,7 +49,7 @@ func PrintEvent(event LockEvent) {
 	// Convert the variables into a printable format
 	id := hex.EncodeToString(event.Id[:])
 	sender := event.From.Hex()
-	recipient := string(event.To[:])
+	recipient := string(event.To)
 	token := event.Token.Hex()
 	value := event.Value
 	nonce := event.Nonce
