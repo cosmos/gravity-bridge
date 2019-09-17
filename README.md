@@ -157,9 +157,4 @@ ebcli query account cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh --trust-node
 
 The ethbridge and oracle modules can be used in other cosmos-sdk applications by copying them into your application's modules folders and including them in the same way as in the example application. Each module may be moved to its own repo or integrated into the core Cosmos-SDK in future, for easier usage.
 
-There are 2 nuances you need to be aware of when using these modules in other Cosmos-SDK projects.
-
-- A specific version of golang.org/x/crypto (ie tendermint/crypto) is needed for compatability with go-ethereum. See the Gopkg.toml for constraint details. There is an open pull request to tendermint/crypto to add compatbility, but until that is merged you need to use the [customized version](https://github.com/tendermint/crypto/pull/1)
-- The govendor steps in the application as above are needed
-
 For instructions on building and deploying the smart contracts, see the README in their folder.
