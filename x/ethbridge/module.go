@@ -1,8 +1,9 @@
-package oracle
+package ethbridge
 
 import (
 	"encoding/json"
 
+	"github.com/cosmos/peggy/x/ethbridge/client/rest"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
@@ -45,6 +46,7 @@ func (AppModuleBasic) ValidateGenesis(_ json.RawMessage) error {
 
 // RegisterRESTRoutes registers the REST routes for the oracle module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
+	rest.RegisterRoutes(ctx, rtr, StoreKey)
 }
 
 // GetTxCmd returns the root tx command for the oracle module.
@@ -66,17 +68,14 @@ type AppModuleSimulation struct{}
 type AppModule struct {
 	AppModuleBasic
 	AppModuleSimulation
-
-	keeper Keeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper) AppModule {
+func NewAppModule() AppModule {
 
 	return AppModule{
 		AppModuleBasic:      AppModuleBasic{},
 		AppModuleSimulation: AppModuleSimulation{},
-		keeper:              keeper,
 	}
 }
 

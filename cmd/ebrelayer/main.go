@@ -44,6 +44,8 @@ func init() {
 
 	appCodec = app.MakeCodec()
 
+	DefaultRelayerHome := os.ExpandEnv("$HOME/.ebrelayer")
+
 	// Add --chain-id to persistent flags and mark it required
 	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
@@ -56,7 +58,7 @@ func init() {
 		initRelayerCmd(),
 	)
 
-	executor := cli.PrepareMainCmd(rootCmd, "EBRELAYER", defaultCLIHome)
+	executor := cli.PrepareMainCmd(rootCmd, "EBRELAYER", DefaultRelayerHome)
 	err := executor.Execute()
 	if err != nil {
 		panic(err)
@@ -119,7 +121,7 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	validatorFrom := args[3]
 
 	// Get the validator's name and account address using their moniker
-	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom)
+	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom, false)
 	if err != nil {
 		return err
 	}

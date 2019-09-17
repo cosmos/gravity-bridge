@@ -27,6 +27,8 @@ const (
 	QuerierRoute                      = types.QuerierRoute
 	RouterKey                         = types.RouterKey
 	PendingStatusText                 = types.PendingStatusText
+	SuccessStatusText                 = types.SuccessStatusText
+	FailedStatusText                  = types.FailedStatusText
 )
 
 var (

@@ -8,21 +8,20 @@ import (
 	"github.com/cosmos/peggy/x/oracle/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/libs/log"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store"
-	cmtypes "github.com/cosmos/cosmos-sdk/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/cosmos/cosmos-sdk/x/mock"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/cosmos-sdk/x/supply"
+	supplyexported "github.com/cosmos/cosmos-sdk/x/supply/exported"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 const (
@@ -33,87 +32,68 @@ const (
 	AnotherAlternateTestString = "{value: 9}"
 )
 
-// CreateTestKeepers greates an OracleKeeper, AccountKeeper and Context to be used for test input
-func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []int64) (sdk.Context, auth.AccountKeeper, Keeper, bank.Keeper, []sdk.ValAddress) {
+// CreateTestKeepers greates an Mock App, OracleKeeper, BankKeeper and ValidatorAddresses to be used for test input
+func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorPowers []int64) (*mock.App, Keeper, bank.Keeper, []sdk.ValAddress) {
+	mApp := mock.NewApp()
+
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
-	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
-	keyParams := sdk.NewKVStoreKey(params.StoreKey)
-	tkeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	tkeyStaking := sdk.NewTransientStoreKey(staking.TStoreKey)
+	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
 
-	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(tkeyStaking, sdk.StoreTypeTransient, nil)
-	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
-	err := ms.LoadLatestVersion()
-	require.Nil(t, err)
+	feeCollector := supply.NewEmptyModuleAccount(auth.FeeCollectorName)
+	notBondedPool := supply.NewEmptyModuleAccount(stakingtypes.NotBondedPoolName, supply.Burner, supply.Staking)
+	bondPool := supply.NewEmptyModuleAccount(stakingtypes.BondedPoolName, supply.Burner, supply.Staking)
 
-	ctx := sdk.NewContext(ms, abci.Header{ChainID: "testchainid"}, false, log.NewNopLogger())
-	ctx = ctx.WithConsensusParams(
-		&abci.ConsensusParams{
-			Validator: &abci.ValidatorParams{
-				PubKeyTypes: []string{tmtypes.ABCIPubKeyTypeEd25519},
-			},
-		},
-	)
-	cdc := MakeTestCodec()
+	blacklistedAddrs := make(map[string]bool)
+	blacklistedAddrs[feeCollector.GetAddress().String()] = true
+	blacklistedAddrs[notBondedPool.GetAddress().String()] = true
+	blacklistedAddrs[bondPool.GetAddress().String()] = true
 
-	pk := params.NewKeeper(cdc, keyParams, tkeyParams, params.DefaultCodespace)
+	bankKeeper := bank.NewBaseKeeper(mApp.AccountKeeper, mApp.ParamsKeeper.Subspace(bank.DefaultParamspace), bank.DefaultCodespace, blacklistedAddrs)
 
-	accountKeeper := auth.NewAccountKeeper(
-		cdc,    // amino codec
-		keyAcc, // target store
-		pk.Subspace(auth.DefaultParamspace),
-		auth.ProtoBaseAccount, // prototype
-	)
+	maccPerms := map[string][]string{
+		auth.FeeCollectorName:          nil,
+		stakingtypes.NotBondedPoolName: {supply.Burner, supply.Staking},
+		stakingtypes.BondedPoolName:    {supply.Burner, supply.Staking},
+	}
+	supplyKeeper := supply.NewKeeper(mApp.Cdc, keySupply, mApp.AccountKeeper, bankKeeper, maccPerms)
+	stakingKeeper := staking.NewKeeper(mApp.Cdc, keyStaking, tkeyStaking, supplyKeeper, mApp.ParamsKeeper.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
+	keeper := NewKeeper(mApp.Cdc, keyOracle, stakingKeeper, types.DefaultCodespace, consensusNeeded)
 
-	bankKeeper := bank.NewBaseKeeper(
-		accountKeeper,
-		pk.Subspace(bank.DefaultParamspace),
-		bank.DefaultCodespace,
-	)
+	mApp.Router().AddRoute(staking.RouterKey, staking.NewHandler(stakingKeeper))
+	mApp.SetEndBlocker(getEndBlocker(stakingKeeper))
+	mApp.SetInitChainer(getInitChainer(mApp, stakingKeeper, mApp.AccountKeeper, supplyKeeper,
+		[]supplyexported.ModuleAccountI{feeCollector, notBondedPool, bondPool}))
 
-	stakingKeeper := staking.NewKeeper(cdc, keyStaking, tkeyStaking, bankKeeper, pk.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
-	stakingKeeper.SetPool(ctx, staking.InitialPool())
-	stakingKeeper.SetParams(ctx, staking.DefaultParams())
-
-	keeper := NewKeeper(stakingKeeper, keyOracle, cdc, types.DefaultCodespace, consensusNeeded)
-
-	//construct the validators
-	numValidators := len(validatorPowers)
-	validators := make([]staking.Validator, numValidators)
-	accountAddresses, valAddresses := CreateTestAddrs(len(validatorPowers))
-	publicKeys := createTestPubKeys(len(validatorPowers))
+	require.NoError(t, mApp.CompleteSetup(keyStaking, tkeyStaking, keySupply))
 
 	// create the validators addresses desired and fill them with the expected amount of coins
-	for i, power := range validatorPowers {
-		coins := cmtypes.TokensFromConsensusPower(power)
-		pool := stakingKeeper.GetPool(ctx)
-		err := error(nil)
-		_, _, err = bankKeeper.AddCoins(ctx, accountAddresses[i], sdk.Coins{
-			{stakingKeeper.BondDenom(ctx), coins},
-		})
-		require.Nil(t, err)
-		pool.NotBondedTokens = pool.NotBondedTokens.Add(coins)
-		stakingKeeper.SetPool(ctx, pool)
-	}
-	pool := stakingKeeper.GetPool(ctx)
-	for i, power := range validatorPowers {
-		validators[i] = staking.NewValidator(valAddresses[i], publicKeys[i], staking.Description{})
-		validators[i].Status = sdk.Bonded
-		validators[i].Tokens = sdk.ZeroInt()
-		tokens := sdk.TokensFromConsensusPower(power)
-		validators[i], pool, _ = validators[i].AddTokensFromDel(pool, tokens)
-		stakingKeeper.SetPool(ctx, pool)
-		stakingkeeper.TestingUpdateValidator(stakingKeeper, ctx, validators[i], true)
-	}
+	commissionRates := staking.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
+	accounts := []*auth.BaseAccount{}
+	addresses := []sdk.ValAddress{}
+	for _, power := range validatorPowers {
+		coinAmount := sdk.TokensFromConsensusPower(power)
+		coin := sdk.Coin{"stake", coinAmount}
+		coins := sdk.Coins{coin}
+		priv := secp256k1.GenPrivKey()
+		addr := sdk.AccAddress(priv.PubKey().Address())
 
-	return ctx, accountKeeper, keeper, bankKeeper, valAddresses
+		account := &auth.BaseAccount{
+			Address: addr,
+			Coins:   coins,
+		}
+		accounts = append(accounts, account)
+		addresses = append(addresses, sdk.ValAddress(addr))
+		description := staking.NewDescription("foo_moniker", "", "", "", "")
+		createValidatorMsg := staking.NewMsgCreateValidator(
+			sdk.ValAddress(addr), priv.PubKey(), coin, description, commissionRates, sdk.OneInt(),
+		)
+		header := abci.Header{Height: mApp.LastBlockHeight() + 1}
+		mock.SignCheckDeliver(t, mApp.Cdc, mApp.BaseApp, header, []sdk.Msg{createValidatorMsg}, []uint64{0}, []uint64{0}, true, true, priv)
+	}
+	return mApp, keeper, bankKeeper, addresses
+
 }
 
 // nolint: unparam
@@ -165,4 +145,35 @@ func MakeTestCodec() *codec.Codec {
 	staking.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	return cdc
+}
+
+// getEndBlocker returns a staking endblocker.
+func getEndBlocker(keeper staking.Keeper) sdk.EndBlocker {
+	return func(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+		validatorUpdates := staking.EndBlocker(ctx, keeper)
+
+		return abci.ResponseEndBlock{
+			ValidatorUpdates: validatorUpdates,
+		}
+	}
+}
+
+// getInitChainer initializes the chainer of the mock app and sets the genesis
+// state. It returns an empty ResponseInitChain.
+func getInitChainer(mapp *mock.App, keeper staking.Keeper, accountKeeper stakingtypes.AccountKeeper, supplyKeeper stakingtypes.SupplyKeeper,
+	blacklistedAddrs []supplyexported.ModuleAccountI) sdk.InitChainer {
+	return func(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+		mapp.InitChainer(ctx, req)
+
+		// set module accounts
+		for _, macc := range blacklistedAddrs {
+			supplyKeeper.SetModuleAccount(ctx, macc)
+		}
+
+		stakingGenesis := staking.DefaultGenesisState()
+		validators := staking.InitGenesis(ctx, keeper, accountKeeper, supplyKeeper, stakingGenesis)
+		return abci.ResponseInitChain{
+			Validators: validators,
+		}
+	}
 }
