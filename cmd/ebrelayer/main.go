@@ -44,7 +44,7 @@ func init() {
 
 	appCodec = app.MakeCodec()
 
-	DefaultRelayerHome := os.ExpandEnv("$HOME/.ebrelayer")
+	DefaultCLIHome := os.ExpandEnv("$HOME/.ebcli")
 
 	// Add --chain-id to persistent flags and mark it required
 	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
@@ -58,7 +58,7 @@ func init() {
 		initRelayerCmd(),
 	)
 
-	executor := cli.PrepareMainCmd(rootCmd, "EBRELAYER", DefaultRelayerHome)
+	executor := cli.PrepareMainCmd(rootCmd, "EBRELAYER", DefaultCLIHome)
 	err := executor.Execute()
 	if err != nil {
 		panic(err)

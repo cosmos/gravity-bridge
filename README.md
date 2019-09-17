@@ -82,9 +82,6 @@ ebcli tx send validator $(ebcli keys show testuser -a) 10stake --chain-id=peggy 
 ebcli query account $(ebcli keys show validator -a) --trust-node
 ebcli query account $(ebcli keys show testuser -a) --trust-node
 
-# Then wait 10 seconds then confirm your validator was created correctly, and has become Bonded status
-ebcli query staking validators --trust-node
-
 # See the help for the ethbridge create claim function
 ebcli tx ethbridge create-claim --help
 
@@ -120,7 +117,7 @@ For automated relaying, there is a relayer service that can be run that will aut
 ebrelayer status
 
 # Initialize the Relayer service for automatic claim processing
-ebrelayer init peggy wss://ropsten.infura.io/ws ec6df30846baab06fce9b1721608853193913c19 "LogLock\(bytes32,address,bytes,address,uint256,uint256\)" validator
+ebrelayer init wss://ropsten.infura.io/ws ec6df30846baab06fce9b1721608853193913c19 "LogLock\(bytes32,address,bytes,address,uint256,uint256\)" validator --chain-id=peggy
 
 # Enter password and press enter
 # You should see a message like:  Started ethereum websocket... and Subscribed to contract events...
