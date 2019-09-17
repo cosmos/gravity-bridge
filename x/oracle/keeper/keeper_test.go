@@ -9,7 +9,7 @@ import (
 )
 
 func TestCreateGetProphecy(t *testing.T) {
-	ctx, _, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.7, []int64{3, 7})
+	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.7, []int64{3, 7})
 
 	validator1Pow3 := validatorAddresses[0]
 
@@ -44,12 +44,13 @@ func TestBadConsensusForOracle(t *testing.T) {
 			t.Errorf("The code did not panic")
 		}
 	}()
-	_, _, _, _, _ = CreateTestKeepers(t, 0, []int64{10})
-	_, _, _, _, _ = CreateTestKeepers(t, 1.2, []int64{10})
+	_, _, _, _ = CreateTestKeepers(t, 0, []int64{10})
+	_, _, _, _ = CreateTestKeepers(t, 1.2, []int64{10})
 }
 
 func TestBadMsgs(t *testing.T) {
-	ctx, _, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3})
+	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3})
+
 	validator1Pow3 := validatorAddresses[0]
 
 	//Test empty claim
@@ -76,11 +77,11 @@ func TestBadMsgs(t *testing.T) {
 	status, err = keeper.ProcessClaim(ctx, oracleClaim)
 	require.Error(t, err)
 	require.True(t, strings.Contains(err.Error(), "already processed message from validator for this id"))
-
 }
 
 func TestSuccessfulProphecy(t *testing.T) {
-	ctx, _, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3, 4})
+	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3, 4})
+
 	validator1Pow3 := validatorAddresses[0]
 	validator2Pow3 := validatorAddresses[1]
 	validator3Pow4 := validatorAddresses[2]
@@ -106,7 +107,8 @@ func TestSuccessfulProphecy(t *testing.T) {
 }
 
 func TestSuccessfulProphecyWithDisagreement(t *testing.T) {
-	ctx, _, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3, 4})
+	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3, 4})
+
 	validator1Pow3 := validatorAddresses[0]
 	validator2Pow3 := validatorAddresses[1]
 	validator3Pow4 := validatorAddresses[2]
@@ -132,7 +134,8 @@ func TestSuccessfulProphecyWithDisagreement(t *testing.T) {
 }
 
 func TestFailedProphecy(t *testing.T) {
-	ctx, _, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3, 4})
+	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3, 4})
+
 	validator1Pow3 := validatorAddresses[0]
 	validator2Pow3 := validatorAddresses[1]
 	validator3Pow4 := validatorAddresses[2]
@@ -158,9 +161,10 @@ func TestFailedProphecy(t *testing.T) {
 	require.Equal(t, status.FinalClaim, "")
 }
 
-func TestPower(t *testing.T) {
+func TestPowerOverrule(t *testing.T) {
 	//Testing with 2 validators but one has high enough power to overrule
-	ctx, _, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.7, []int64{3, 7})
+	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.7, []int64{3, 7})
+
 	validator1Pow3 := validatorAddresses[0]
 	validator2Pow7 := validatorAddresses[1]
 
@@ -176,17 +180,19 @@ func TestPower(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, status.Text, types.SuccessStatusText)
 	require.Equal(t, status.FinalClaim, AlternateTestString)
-
+}
+func TestPowerAternate(t *testing.T) {
 	//Test alternate power setup with validators of 5/4/3/9 and total power 22 and 12/21 required
-	ctx, _, keeper, _, validatorAddresses = CreateTestKeepers(t, 0.571, []int64{5, 4, 3, 9})
+	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.571, []int64{5, 4, 3, 9})
+
 	validator1Pow5 := validatorAddresses[0]
 	validator2Pow4 := validatorAddresses[1]
 	validator3Pow3 := validatorAddresses[2]
 	validator4Pow9 := validatorAddresses[3]
 
 	//Test claim by v1
-	oracleClaim = types.NewClaim(TestID, validator1Pow5, TestString)
-	status, err = keeper.ProcessClaim(ctx, oracleClaim)
+	oracleClaim := types.NewClaim(TestID, validator1Pow5, TestString)
+	status, err := keeper.ProcessClaim(ctx, oracleClaim)
 	require.NoError(t, err)
 	require.Equal(t, status.Text, types.PendingStatusText)
 
@@ -212,7 +218,8 @@ func TestPower(t *testing.T) {
 
 func TestMultipleProphecies(t *testing.T) {
 	//Test multiple prophecies running in parallel work fine as expected
-	ctx, _, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.7, []int64{3, 7})
+	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.7, []int64{3, 7})
+
 	validator1Pow3 := validatorAddresses[0]
 	validator2Pow7 := validatorAddresses[1]
 
@@ -245,9 +252,10 @@ func TestMultipleProphecies(t *testing.T) {
 
 func TestNonValidator(t *testing.T) {
 	//Test multiple prophecies running in parallel work fine as expected
-	ctx, _, keeper, _, _ := CreateTestKeepers(t, 0.7, []int64{3, 7})
-	_, validatorAddresses := CreateTestAddrs(10)
-	inActiveValidatorAddress := validatorAddresses[9]
+	ctx, keeper, _, _ := CreateTestKeepers(t, 0.7, []int64{3, 7})
+
+	_, testValidatorAddresses := CreateTestAddrs(10)
+	inActiveValidatorAddress := testValidatorAddresses[9]
 
 	//Test claim on first id with first validator
 	oracleClaim := types.NewClaim(TestID, inActiveValidatorAddress, TestString)

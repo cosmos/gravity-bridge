@@ -9,18 +9,15 @@ import (
 
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
-
-	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 const (
-	TestResponseJSON = "{\"id\":\"00x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"status\":{\"text\":\"pending\",\"final_claim\":\"\"},\"claims\":[{\"nonce\":0,\"ethereum_sender\":\"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"cosmos_receiver\":\"cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv\",\"validator_address\":\"cosmosvaloper15ky9du8a2wlstz6fpx3p4mqpjyrm5cgqh6tjun\",\"amount\":[{\"denom\":\"ethereum\",\"amount\":\"10\"}]}]}"
+	TestResponseJSON = "{\"id\":\"00x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"status\":{\"text\":\"pending\",\"final_claim\":\"\"},\"claims\":[{\"nonce\":0,\"ethereum_sender\":\"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"cosmos_receiver\":\"cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv\",\"validator_address\":\"cosmosvaloper1mnfm9c7cdgqnkk66sganp78m0ydmcr4pn7fqfk\",\"amount\":[{\"denom\":\"ethereum\",\"amount\":\"10\"}]}]}"
 )
 
 func TestNewQuerier(t *testing.T) {
-	cdc := codec.New()
-	mApp, keeper, _, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 3})
-	ctx := mApp.NewContext(false, abci.Header{})
+	ctx, keeper, _, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 3})
+	cdc := keeperLib.MakeTestCodec()
 
 	query := abci.RequestQuery{
 		Path: "",
@@ -36,10 +33,8 @@ func TestNewQuerier(t *testing.T) {
 }
 
 func TestQueryEthProphecy(t *testing.T) {
-
-	cdc := codec.New()
-	mApp, keeper, _, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
-	ctx := mApp.NewContext(false, abci.Header{})
+	ctx, keeper, _, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
+	cdc := keeperLib.MakeTestCodec()
 
 	valAddress := validatorAddresses[0]
 	testEthereumAddress := types.NewEthereumAddress(types.TestEthereumAddress)
