@@ -11,10 +11,8 @@ require (
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/ethereum/go-ethereum v1.8.27
 	github.com/go-kit/kit v0.9.0 // indirect
-	github.com/gogo/protobuf v1.3.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/mock v1.3.1 // indirect
-	github.com/golangci/golangci-lint v1.18.0 // indirect
 	github.com/gorilla/mux v1.7.3
 	github.com/libp2p/go-buffer-pool v0.0.2 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
