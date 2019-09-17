@@ -22,7 +22,11 @@ See [here](./docs/architecture.md)
 
 ## Requirements
 
+<<<<<<< HEAD
+
+- # Go 1.13
 - Go 1.13
+  > > > > > > > Get basic functionality+cli working again
 
 ## Example application
 
@@ -83,6 +87,12 @@ ebcli tx send validator $(ebcli keys show testuser -a) 10stake --chain-id=peggy 
 ebcli query account $(ebcli keys show validator -a) --trust-node
 ebcli query account $(ebcli keys show testuser -a) --trust-node
 
+<<<<<<< HEAD
+=======
+# Then wait 10 seconds then confirm your validator was created correctly, and has become Bonded status
+ebcli query staking validators --trust-node
+
+>>>>>>> Get basic functionality+cli working again
 # See the help for the ethbridge create claim function
 ebcli tx ethbridge create-claim --help
 
