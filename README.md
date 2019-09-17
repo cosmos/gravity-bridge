@@ -239,6 +239,7 @@ yarn peggy:address --network ropsten
 # Make sure to start ebrelayer with Ropsten network websocket
 ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=peggy
 
+<<<<<<< HEAD
 # Send lock transaction on Ropsten testnet
 yarn peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 ```
@@ -246,3 +247,6 @@ yarn peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTR
 ## Using the modules in other projects
 
 The ethbridge and oracle modules can be used in other cosmos-sdk applications by copying them into your application's modules folders and including them in the same way as in the example application. Each module may be moved to its own repo or integrated into the core Cosmos-SDK in future, for easier usage.
+=======
+For instructions on building and deploying the smart contracts, see the README in their folder.
+>>>>>>> Lint fixes
