@@ -65,6 +65,7 @@ type AppModuleSimulation struct{}
 // AppModule implements an application module for the oracle module.
 type AppModule struct {
 	AppModuleBasic
+	AppModuleSimulation
 
 	keeper Keeper
 }
