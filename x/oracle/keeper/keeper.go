@@ -75,7 +75,7 @@ func (k Keeper) setProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Error 
 	if prophecy.ID == "" {
 		return types.ErrInvalidIdentifier(k.Codespace())
 	}
-	if len(prophecy.ClaimValidators) <= 0 {
+	if len(prophecy.ClaimValidators) == 0 {
 		return types.ErrNoClaims(k.Codespace())
 	}
 	store := ctx.KVStore(k.storeKey)
@@ -125,10 +125,7 @@ func (k Keeper) checkActiveValidator(ctx sdk.Context, validatorAddress sdk.ValAd
 		return false
 	}
 	bondStatus := validator.GetStatus()
-	if bondStatus != sdk.Bonded {
-		return false
-	}
-	return true
+	return bondStatus == sdk.Bonded
 }
 
 // processCompletion looks at a given prophecy an assesses whether the claim with the highest power on that prophecy has enough

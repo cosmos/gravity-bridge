@@ -86,5 +86,4 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 			}
 		}
 	}
-	return fmt.Errorf("error: relayer timed out")
 }
