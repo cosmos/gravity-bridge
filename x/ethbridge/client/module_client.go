@@ -1,25 +1,18 @@
 package client
 
 import (
-	ethbridgecmd "github.com/cosmos/peggy/x/ethbridge/client/cli"
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/peggy/x/ethbridge/client/cli"
+	"github.com/cosmos/peggy/x/ethbridge/client/rest"
+	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
-	amino "github.com/tendermint/go-amino"
 
 	"github.com/cosmos/cosmos-sdk/client"
 )
 
-// ModuleClient exports all client functionality from this module
-type ModuleClient struct {
-	queryRoute string
-	cdc        *amino.Codec
-}
-
-func NewModuleClient(queryRoute string, cdc *amino.Codec) ModuleClient {
-	return ModuleClient{queryRoute, cdc}
-}
-
 // GetQueryCmd returns the cli query commands for this module
-func (mc ModuleClient) GetQueryCmd() *cobra.Command {
+func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	// Group ethbridge queries under a subcommand
 	ethBBridgeQueryCmd := &cobra.Command{
 		Use:   "ethbridge",
@@ -27,22 +20,27 @@ func (mc ModuleClient) GetQueryCmd() *cobra.Command {
 	}
 
 	ethBBridgeQueryCmd.AddCommand(client.GetCommands(
-		ethbridgecmd.GetCmdGetEthBridgeProphecy(mc.queryRoute, mc.cdc),
+		cli.GetCmdGetEthBridgeProphecy(storeKey, cdc),
 	)...)
 
 	return ethBBridgeQueryCmd
 }
 
 // GetTxCmd returns the transaction commands for this module
-func (mc ModuleClient) GetTxCmd() *cobra.Command {
+func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	ethBridgeTxCmd := &cobra.Command{
 		Use:   "ethbridge",
 		Short: "EthBridge transactions subcommands",
 	}
 
 	ethBridgeTxCmd.AddCommand(client.PostCommands(
-		ethbridgecmd.GetCmdCreateEthBridgeClaim(mc.cdc),
+		cli.GetCmdCreateEthBridgeClaim(cdc),
 	)...)
 
 	return ethBridgeTxCmd
+}
+
+// RegisterRESTRoutes - Central function to define routes that get registered by the main application
+func RegisterRESTRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) {
+	rest.RegisterRESTRoutes(cliCtx, r, storeName)
 }

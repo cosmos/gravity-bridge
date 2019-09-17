@@ -21,23 +21,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/genaccounts"
 	genaccscli "github.com/cosmos/cosmos-sdk/x/genaccounts/client/cli"
-
-
-
+	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 )
-
-const (
-	flagOverwrite    = "overwrite"
-	flagClientHome   = "home-client"
-	flagVestingStart = "vesting-start-time"
-	flagVestingEnd   = "vesting-end-time"
-	flagVestingAmt   = "vesting-amount"
-)
-
-var invCheckPeriod uint
 
 func main() {
 	cdc := app.MakeCodec()

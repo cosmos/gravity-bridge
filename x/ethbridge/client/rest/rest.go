@@ -22,12 +22,6 @@ const (
 	restEthereumSender = "ethereumSender"
 )
 
-// RegisterRoutes - Central function to define routes that get registered by the main application
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) {
-	r.HandleFunc(fmt.Sprintf("/%s/prophecies", storeName), createClaimHandler(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/%s/prophecies/{%s}/{%s}", storeName, restNonce, restEthereumSender), getProphecyHandler(cliCtx, storeName)).Methods("GET")
-}
-
 type createEthClaimReq struct {
 	BaseReq        rest.BaseReq `json:"base_req"`
 	Nonce          int          `json:"nonce"`
@@ -35,6 +29,12 @@ type createEthClaimReq struct {
 	CosmosReceiver string       `json:"cosmos_receiver"`
 	Validator      string       `json:"validator"`
 	Amount         string       `json:"amount"`
+}
+
+// RegisterRoutes - Central function to define routes that get registered by the main application
+func RegisterRESTRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) {
+	r.HandleFunc(fmt.Sprintf("/%s/prophecies", storeName), createClaimHandler(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/%s/prophecies/{%s}/{%s}", storeName, restNonce, restEthereumSender), getProphecyHandler(cliCtx, storeName)).Methods("GET")
 }
 
 func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {

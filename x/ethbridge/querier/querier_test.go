@@ -19,7 +19,8 @@ const (
 
 func TestNewQuerier(t *testing.T) {
 	cdc := codec.New()
-	ctx, _, keeper, _, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 3})
+	mApp, keeper, _, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 3})
+	ctx := mApp.NewContext(false, abci.Header{})
 
 	query := abci.RequestQuery{
 		Path: "",
@@ -37,7 +38,9 @@ func TestNewQuerier(t *testing.T) {
 func TestQueryEthProphecy(t *testing.T) {
 
 	cdc := codec.New()
-	ctx, _, keeper, _, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
+	mApp, keeper, _, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
+	ctx := mApp.NewContext(false, abci.Header{})
+
 	valAddress := validatorAddresses[0]
 	testEthereumAddress := types.NewEthereumAddress(types.TestEthereumAddress)
 
