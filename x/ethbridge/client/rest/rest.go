@@ -25,6 +25,8 @@ const (
 type createEthClaimReq struct {
 	BaseReq        rest.BaseReq `json:"base_req"`
 	Nonce          int          `json:"nonce"`
+	Chain          int          `json:"chain"`
+	Contract       int          `json:"contract_address"`
 	EthereumSender string       `json:"ethereum_sender"`
 	CosmosReceiver string       `json:"cosmos_receiver"`
 	Validator      string       `json:"validator"`
@@ -51,6 +53,8 @@ func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		contractAddress := types.NewEthereumAddress(req.Contract)
+
 		ethereumSender := types.NewEthereumAddress(req.EthereumSender)
 
 		cosmosReceiver, err := sdk.AccAddressFromBech32(req.CosmosReceiver)
@@ -71,7 +75,7 @@ func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create the message
-		ethBridgeClaim := types.NewEthBridgeClaim(req.Nonce, ethereumSender, cosmosReceiver, validator, amount)
+		ethBridgeClaim := types.NewEthBridgeClaim(req.Chain, contractAddress, req.Nonce, ethereumSender, cosmosReceiver, validator, amount)
 		msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
 		err = msg.ValidateBasic()
 		if err != nil {

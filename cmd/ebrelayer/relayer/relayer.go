@@ -68,7 +68,7 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 					vLog.TxHash.Hex(), vLog.BlockNumber)
 
 				// Parse the event data into a new LockEvent using the contract's ABI
-				event := events.NewLockEvent(contractABI, "LogLock", vLog.Data)
+				event := events.NewLockEvent(contractABI, contractAddress.Hex(), "LogLock", vLog.Data)
 
 				// Add the event to the record
 				events.NewEventWrite(vLog.TxHash.Hex(), event)
