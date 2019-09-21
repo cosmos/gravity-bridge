@@ -66,15 +66,3 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 
 	return witnessClaim, nil
 }
-
-// type LockEvent struct {
-// 	ChainID               string
-// 	BridgeContractAddress common.Address
-// 	Id                    [32]byte
-// 	From                  common.Address
-// 	To                    []byte
-// 	TokenContractAddress  common.Address
-// 	Symbol                string
-// 	Value                 *big.Int
-// 	Nonce                 *big.Int
-// }
