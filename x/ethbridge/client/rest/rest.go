@@ -93,6 +93,9 @@ func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
+
+		chainID := vars[ChainId]
+
 		nonce := vars[restNonce]
 
 		nonceString, err := strconv.Atoi(nonce)
@@ -102,7 +105,7 @@ func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.Handle
 		}
 		ethereumSender := types.NewEthereumAddress(vars[restEthereumSender])
 
-		bz, err := cliCtx.Codec.MarshalJSON(types.NewQueryEthProphecyParams(nonceString, ethereumSender))
+		bz, err := cliCtx.Codec.MarshalJSON(types.NewQueryEthProphecyParams(chainID, nonceString, ethereumSender))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return

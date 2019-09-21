@@ -24,6 +24,8 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 
 	witnessClaim := ethbridgeTypes.EthBridgeClaim{}
 
+	bridgeContractAddress := ethbridgeTypes.NewEthereumAddress(event.BridgeContractAddress.Hex())
+
 	// Nonce type casting (*big.Int -> int)
 	nonce := int(event.Nonce.Int64())
 
@@ -39,9 +41,12 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 		return witnessClaim, errors.New("empty recipient address")
 	}
 
+	// Sender type casting (address.common -> string)
+	tokenContractAddress := ethbridgeTypes.NewEthereumAddress(event.TokenContractAddress.Hex())
+
 	// Symbol formatted to lowercase
 	symbol := strings.ToLower(event.Symbol)
-	if symbol == "eth" && event.Token != common.HexToAddress("0x0000000000000000000000000000000000000000") {
+	if symbol == "eth" && event.TokenContractAddress != common.HexToAddress("0x0000000000000000000000000000000000000000") {
 		return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
 	}
 
@@ -49,7 +54,11 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 	coins := sdk.Coins{sdk.NewInt64Coin(symbol, event.Value.Int64())}
 
 	// Package the information in a unique EthBridgeClaim
+	witnessClaim.ChainID = event.ChainId
+	witnessClaim.BridgeContractAddress = bridgeContractAddress
 	witnessClaim.Nonce = nonce
+	witnessClaim.TokenContractAddress = tokenContractAddress
+	witnessClaim.Symbol = symbol
 	witnessClaim.EthereumSender = sender
 	witnessClaim.ValidatorAddress = valAddr
 	witnessClaim.CosmosReceiver = recipient
@@ -57,3 +66,15 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 
 	return witnessClaim, nil
 }
+
+// type LockEvent struct {
+// 	ChainID               string
+// 	BridgeContractAddress common.Address
+// 	Id                    [32]byte
+// 	From                  common.Address
+// 	To                    []byte
+// 	TokenContractAddress  common.Address
+// 	Symbol                string
+// 	Value                 *big.Int
+// 	Nonce                 *big.Int
+// }
