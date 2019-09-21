@@ -55,6 +55,11 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 	// Load Peggy Contract's ABI
 	contractABI := contract.LoadABI()
 
+	clientChainID, err := client.NetworkID(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	for {
 		select {
 		// Handle any errors
@@ -68,7 +73,7 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 					vLog.TxHash.Hex(), vLog.BlockNumber)
 
 				// Parse the event data into a new LockEvent using the contract's ABI
-				event := events.NewLockEvent(contractABI, contractAddress.Hex(), "LogLock", vLog.Data)
+				event := events.NewLockEvent(contractABI, clientChainID, contractAddress.Hex(), "LogLock", vLog.Data)
 
 				// Add the event to the record
 				events.NewEventWrite(vLog.TxHash.Hex(), event)
