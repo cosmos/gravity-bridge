@@ -113,28 +113,25 @@ Create a .env file with environment variable LOCAL_PROVIDER - an example configu
 ### Terminal 1: Start local blockchain
 
 ```
-cd testnet-contracts/
-
 # Download dependencies
 yarn
 
 # Start local blockchain
-yarn develop
+yarn workspace testnet-contracts develop
 ```
 
 ### Terminal 2: Compile and deploy Peggy contract
 
 ```
-cd testnet-contracts/
 
 # Copy contract ABI to go modules:
-yarn peggy:abi
+yarn workspace testnet-contracts peggy:abi
 
 # Deploy contract to local blockchain
-yarn migrate
+yarn workspace testnet-contracts migrate
 
 # Get contract's address
-yarn peggy:address
+yarn workspace testnet-contracts peggy:address
 ```
 
 ### Terminal 3: Build and start Ethereum Bridge
@@ -177,14 +174,14 @@ ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,addr
 # [WEI_AMOUNT] = 10
 
 # Send lock transaction with default parameters
-yarn peggy:lock --default
+yarn workspace testnet-contracts peggy:lock --default
 
 # Send lock transaction with custom parameters
-yarn peggy:lock [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
+yarn workspace testnet-contracts peggy:lock [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 
 ```
 
-`yarn peggy:lock --default` expected output in ebrelayer console:
+`yarn workspace testnet-contracts peggy:lock --default` expected output in ebrelayer console:
 
 ```
 New Lock Transaction:
@@ -216,14 +213,14 @@ To run the Ethereum Bridge on the Ropsten testnet, repeat the steps for running 
 # Add environment variable INFURA_PROJECT_ID from your Infura account.
 
 # Specify the Ropsten network via a --network flag for the following commands...
-yarn migrate --network ropsten
-yarn peggy:address --network ropsten
+yarn workspace testnet-contracts migrate --network ropsten
+yarn workspace testnet-contracts peggy:address --network ropsten
 
 # Make sure to start ebrelayer with Ropsten network websocket
 ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=testing
 
 # Send lock transaction on Ropsten testnet
-yarn peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
+yarn workspace testnet-contracts peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 ```
 
 ## Using the modules in other projects
