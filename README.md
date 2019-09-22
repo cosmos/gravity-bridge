@@ -171,15 +171,20 @@ ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,addr
 ### Using Terminal 2: Send lock transaction to contract
 
 ```
-# The lock transaction uses the default parameters:
+# Default parameter values:
 # [HASHED_COSMOS_RECIPIENT_ADDRESS] = 0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668
-# [DEPLOYED_TOKEN_ADDRESS] = 0x0000000000000000000000000000000000000000
+# [TOKEN_CONTRACT_ADDRESS] = 0x0000000000000000000000000000000000000000
 # [WEI_AMOUNT] = 10
 
-yarn peggy:lock
+# Send lock transaction with default parameters
+yarn peggy:lock --default
+
+# Send lock transaction with custom parameters
+yarn peggy:lock [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
+
 ```
 
-The expected successful output in the ebrelayer console should be similar to:
+`yarn peggy:lock --default` expected output in ebrelayer console:
 
 ```
 New Lock Transaction:
@@ -202,8 +207,6 @@ Response:
     - action = create_bridge_claim
 ```
 
-We are working on implementing custom parameters to the 'yarn peggy:lock' command. Currently, you can add custom parameters to the lock transaction using an online service such as Remix.
-
 ## Running the bridge on the Ropsten testnet
 
 To run the Ethereum Bridge on the Ropsten testnet, repeat the steps for running locally with the following changes:
@@ -220,7 +223,7 @@ yarn peggy:address --network ropsten
 ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=testing
 
 # Send lock transaction on Ropsten testnet
-yarn peggy:lock --network ropsten
+yarn peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 ```
 
 ## Using the modules in other projects
