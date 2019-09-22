@@ -1,7 +1,7 @@
 {
   "name": "testnet-contracts",
   "version": "1.1.0",
-  "description": "Starting point for cross chain value transfers between the Ethereum and Cosmos networks",
+  "description": "Dependencies and scripts for Peggy smart contracts",
   "main": "truffle.js",
   "directories": {
     "test": "test"
@@ -9,6 +9,7 @@
   "author": "Denali Marsh",
   "license": "ISC",
   "dependencies": {
+    "cross-env": "5.0.5",
     "@truffle/hdwallet-provider": "^1.0.18",
     "bignumber.js": "^6.0.0",
     "bluebird": "^3.5.1",
