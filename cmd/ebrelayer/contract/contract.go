@@ -15,9 +15,9 @@ import (
 )
 
 // AbiPath : path to the file containing the smart contract's ABI
-const AbiPath = "/src/github.com/cosmos/peggy/cmd/ebrelayer/contract/abis/Peggy.abi"
+const AbiPath = "/src/github.com/cosmos/peggy/cmd/ebrelayer/contract/abi/Peggy.abi"
 
-// LoadABI : loads a smart contract as an abi.ABI from a .json file
+// LoadABI : loads a smart contract as an abi.ABI
 func LoadABI() abi.ABI {
 	// Open the file containing Peggy contract's ABI
 	gopath := os.Getenv("GOPATH")
@@ -25,13 +25,13 @@ func LoadABI() abi.ABI {
 		gopath = build.Default.GOPATH
 	}
 
-	peggyABI, err := ioutil.ReadFile(gopath + AbiPath)
+	rawContractAbi, err := ioutil.ReadFile(gopath + AbiPath)
 	if err != nil {
 		panic(err)
 	}
 
 	// Convert the raw abi into a usable format
-	contractAbi, err := abi.JSON(strings.NewReader(string(peggyABI)))
+	contractAbi, err := abi.JSON(strings.NewReader(string(rawContractAbi)))
 	if err != nil {
 		panic(err)
 	}

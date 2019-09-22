@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
-import "./SafeMath.sol";
-import "./ERC20.sol";
+import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
   /*
    *  @title: Processor
