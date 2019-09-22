@@ -120,6 +120,11 @@ Create a .env file with environment variable LOCAL_PROVIDER - an example configu
 
 ```
 cd testnet-contracts/
+
+# Download dependencies
+yarn
+
+# Start local blockchain
 yarn develop
 ```
 
@@ -157,7 +162,7 @@ For automated relaying, there is a relayer service that can be run that will aut
 ebrelayer status
 
 # Start ebrelayer on the contract's deployed address with [LOCAL_WEB_SOCKET] and [PEGGY_DEPLOYED_ADDRESS]
-# Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:8545/
+# Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:7545/
 # Example [PEGGY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
 
 ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=testing

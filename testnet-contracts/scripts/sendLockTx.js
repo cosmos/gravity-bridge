@@ -63,5 +63,7 @@ module.exports = async () => {
     nonce: Number(event.args._nonce)
   };
 
-  return console.log(lockEvent);
+  console.log(lockEvent);
+
+  return;
 };
