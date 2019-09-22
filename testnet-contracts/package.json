@@ -16,7 +16,6 @@
     "eth-lib": "^0.2.8",
     "ethereumjs-util": "^5.2.0",
     "keccak": "^1.4.0",
-    "keythereum": "^1.0.4",
     "lodash": "^4.17.10",
     "truffle-contract": "^4.0.31",
     "truffle-hdwallet-provider": "^1.0.17",
@@ -32,7 +31,7 @@
   },
   "scripts": {
     "develop": "truffle develop",
-    "migrate": "truffle compile && truffle migrate --reset",
+    "migrate": "truffle migrate --reset",
     "peggy:address": "truffle exec scripts/getDeployedAddress.js",
     "peggy:lock": "truffle exec scripts/sendLockTx.js",
     "peggy:abi": "node scripts/formatAbi.js"
