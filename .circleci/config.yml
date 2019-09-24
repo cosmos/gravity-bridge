@@ -21,7 +21,6 @@ jobs: # basic units of work in a run
 
       - run: make tools
       - run: make install
-      - run: make lint
       - run:
           name: Run tests
           # Store the results of our tests in the $TEST_RESULTS directory
