@@ -1,6 +1,7 @@
 package ethbridge
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -31,6 +32,27 @@ func TestBasicMsgs(t *testing.T) {
 	normalCreateMsg := types.CreateTestEthMsg(t, valAddress)
 	res = handler(ctx, normalCreateMsg)
 	require.True(t, res.IsOK())
+	for _, event := range res.Events {
+		for _, attribute := range event.Attributes {
+			value := string(attribute.Value)
+			switch key := string(attribute.Key); key {
+			case "module":
+				require.Equal(t, value, types.ModuleName)
+			case "sender":
+				require.Equal(t, value, valAddress.String())
+			case "ethereum_sender":
+				require.Equal(t, value, types.TestEthereumAddress)
+			case "cosmos_receiver":
+				require.Equal(t, value, types.TestAddress)
+			case "amount":
+				require.Equal(t, value, types.TestCoins)
+			case "status":
+				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
+			default:
+				require.Fail(t, fmt.Sprintf("unrecognized event %s", key))
+			}
+		}
+	}
 
 	//Bad Creation
 	badCreateMsg := types.CreateTestEthMsg(t, valAddress)
@@ -49,13 +71,19 @@ func TestDuplicateMsgs(t *testing.T) {
 	normalCreateMsg := types.CreateTestEthMsg(t, valAddress)
 	res := handler(ctx, normalCreateMsg)
 	require.True(t, res.IsOK())
-	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.PendingStatusText])
+	for _, event := range res.Events {
+		for _, attribute := range event.Attributes {
+			value := string(attribute.Value)
+			if string(attribute.Key) == "status" {
+				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
+			}
+		}
+	}
 
 	//Duplicate message from same validator
 	res = handler(ctx, normalCreateMsg)
 	require.False(t, res.IsOK())
 	require.True(t, strings.Contains(res.Log, "already processed message from validator for this id"))
-
 }
 
 func TestMintSuccess(t *testing.T) {
@@ -84,7 +112,14 @@ func TestMintSuccess(t *testing.T) {
 	expectedCoins, err := sdk.ParseCoins(types.TestCoins)
 	require.NoError(t, err)
 	require.True(t, receiverCoins.IsEqual(expectedCoins))
-	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.SuccessStatusText])
+	for _, event := range res.Events {
+		for _, attribute := range event.Attributes {
+			value := string(attribute.Value)
+			if string(attribute.Key) == "status" {
+				require.Equal(t, value, oracle.StatusTextToString[oracle.SuccessStatusText])
+			}
+		}
+	}
 
 	//Additional message from third validator fails and does not mint
 	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal3Pow1)
@@ -119,19 +154,38 @@ func TestNoMintFail(t *testing.T) {
 	//Initial message
 	res := handler(ctx, ethMsg1)
 	require.True(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, oracle.StatusTextToString[oracle.PendingStatusText]))
-	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.PendingStatusText])
+	for _, event := range res.Events {
+		for _, attribute := range event.Attributes {
+			value := string(attribute.Value)
+			if string(attribute.Key) == "status" {
+				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
+			}
+		}
+	}
 
 	//Different message from second validator succeeds
 	res = handler(ctx, ethMsg2)
 	require.True(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, oracle.StatusTextToString[oracle.PendingStatusText]))
-	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.PendingStatusText])
+	for _, event := range res.Events {
+		for _, attribute := range event.Attributes {
+			value := string(attribute.Value)
+			if string(attribute.Key) == "status" {
+				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
+			}
+		}
+	}
 
 	//Different message from third validator succeeds but results in failed prophecy with no minting
 	res = handler(ctx, ethMsg3)
 	require.True(t, res.IsOK())
-	require.Equal(t, res.Log, oracle.StatusTextToString[oracle.FailedStatusText])
+	for _, event := range res.Events {
+		for _, attribute := range event.Attributes {
+			value := string(attribute.Value)
+			if string(attribute.Key) == "status" {
+				require.Equal(t, value, oracle.StatusTextToString[oracle.FailedStatusText])
+			}
+		}
+	}
 	receiverAddress, err := sdk.AccAddressFromBech32(types.TestAddress)
 	require.NoError(t, err)
 	receiver1Coins := bankKeeper.GetCoins(ctx, receiverAddress)
