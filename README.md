@@ -108,7 +108,18 @@ With the application set up, you can now use Peggy by sending a lock transaction
 
 ### Set-up
 
-Create a .env file with environment variable LOCAL_PROVIDER - an example configuration can be found in .env.example. For running the bridge locally, you'll only need the LOCAL_PROVIDER. Environment variables MNEMONIC and INFURA_PROJECT_ID are only required for using the Ropsten testnet (see below).
+```
+cd testnet-contracts/
+
+# Create .env with sample environment variables
+cp .env.example .env
+```
+
+For running the bridge locally, you'll only need the LOCAL_PROVIDER environment variables. Environment variables MNEMONIC and INFURA_PROJECT_ID are required for using the Ropsten testnet.
+
+Further reading:
+[MetaMask Mnemonic](https://metamask.zendesk.com/hc/en-us/articles/360015290032-How-to-Reveal-Your-Seed-Phrase)
+[Infura Project ID](https://blog.infura.io/introducing-the-infura-dashboard-8969b7ab94e7)
 
 ### Terminal 1: Start local blockchain
 
