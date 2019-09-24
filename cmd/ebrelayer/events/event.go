@@ -17,7 +17,7 @@ import (
 
 // LockEvent : struct which represents a single smart contract event
 type LockEvent struct {
-	ChainID               string
+	ChainID               *big.Int
 	BridgeContractAddress common.Address
 	Id                    [32]byte
 	From                  common.Address
@@ -29,7 +29,7 @@ type LockEvent struct {
 }
 
 // NewLockEvent : parses LogLock events using go-ethereum's accounts/abi library
-func NewLockEvent(contractAbi abi.ABI, clientChainID string, contractAddress string, eventName string, eventData []byte) LockEvent {
+func NewLockEvent(contractAbi abi.ABI, clientChainID *big.Int, contractAddress string, eventName string, eventData []byte) LockEvent {
 	// Check event name
 	if eventName != "LogLock" {
 		log.Fatal("Only LogLock events are currently supported.")

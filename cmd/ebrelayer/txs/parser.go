@@ -24,6 +24,9 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 
 	witnessClaim := ethbridgeTypes.EthBridgeClaim{}
 
+	// chainID type casting (*big.Int -> int)
+	chainID := int(event.ChainID.Int64())
+
 	bridgeContractAddress := ethbridgeTypes.NewEthereumAddress(event.BridgeContractAddress.Hex())
 
 	// Nonce type casting (*big.Int -> int)
@@ -54,7 +57,7 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 	coins := sdk.Coins{sdk.NewInt64Coin(symbol, event.Value.Int64())}
 
 	// Package the information in a unique EthBridgeClaim
-	witnessClaim.ChainID = event.ChainId
+	witnessClaim.ChainID = chainID
 	witnessClaim.BridgeContractAddress = bridgeContractAddress
 	witnessClaim.Nonce = nonce
 	witnessClaim.TokenContractAddress = tokenContractAddress
