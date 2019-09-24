@@ -88,10 +88,11 @@ ebcli tx ethbridge create-claim --help
 
 # Now you can test out the ethbridge module by submitting a claim for an ethereum prophecy
 # Create a bridge claim (Ethereum prophecies are stored on the blockchain with an identifier created by concatenating the nonce and sender address)
-ebcli tx ethbridge create-claim 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 3eth --from=validator --chain-id=peggy --yes
+# ebcli tx ethbrdige create-claim [chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount]",
+ebcli tx ethbridge create-claim 3 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 2 eth 0x0000000000000000000000000000000000000000 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 3eth --from validator --chain-id=peggy --yes
 
 # Then read the prophecy to confirm it was created with the claim added
-ebcli query ethbridge prophecy 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 --trust-node
+ebcli query ethbridge prophecy 3 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 2 eth 0x0000000000000000000000000000000000000000 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB --trust-node
 
 # And finally, confirm that the prophecy was successfully processed and that new eth was minted to the testuser address
 ebcli query account $(ebcli keys show testuser -a) --trust-node
