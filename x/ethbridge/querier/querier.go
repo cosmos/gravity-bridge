@@ -35,9 +35,7 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 	if err := cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return []byte{}, sdk.ErrInternal(sdk.AppendMsgToErr("failed to parse params: %s", err.Error()))
 	}
-
-	id := strconv.Itoa(params.Nonce) + params.EthereumSender.String()
-
+	id := strconv.Itoa(params.ChainID) + strconv.Itoa(params.Nonce) + params.EthereumSender.String()
 	prophecy, errSdk := keeper.GetProphecy(ctx, id)
 	if errSdk != nil {
 		return []byte{}, oracletypes.ErrProphecyNotFound(codespace)
