@@ -67,7 +67,7 @@ func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddres
 	}
 
 	// Broadcast to a Tendermint node
-	res, err := cliCtx.BroadcastTx(txBytes)
+	res, err := cliCtx.BroadcastTxSync(txBytes)
 	if err != nil {
 		return err
 	}
