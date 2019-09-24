@@ -40,10 +40,8 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 	if errSdk != nil {
 		return []byte{}, oracletypes.ErrProphecyNotFound(codespace)
 	}
-	// TODO: Pass these values as real values
-	bridgeAdress := types.NewEthereumAddress("0x0000000000000000000000000000000000000000")
-	tokenContract := types.NewEthereumAddress("0x0000000000000000000000000000000000000000")
-	bridgeClaims, errSdk := types.MapOracleClaimsToEthBridgeClaims(3, bridgeAdress, params.Nonce, "eth", tokenContract, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
+
+	bridgeClaims, errSdk := types.MapOracleClaimsToEthBridgeClaims(params.ChainID, params.BridgeContractAddress, params.Nonce, params.Symbol, params.TokenContractAddress, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
 	if errSdk != nil {
 		return []byte{}, errSdk
 	}

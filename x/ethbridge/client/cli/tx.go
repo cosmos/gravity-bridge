@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/spf13/cobra"
@@ -17,9 +19,9 @@ import (
 // GetCmdCreateEthBridgeClaim is the CLI command for creating a claim on an ethereum prophecy
 func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "create-claim [chain-id] [nonce] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount]",
+		Use:   "create-claim [chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount]",
 		Short: "create a claim on an ethereum prophecy",
-		Args:  cobra.ExactArgs(6),
+		Args:  cobra.ExactArgs(9),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -31,29 +33,38 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			nonce, err := strconv.Atoi(args[1])
+			bridgeContract := types.NewEthereumAddress(args[1])
+
+			nonce, err := strconv.Atoi(args[2])
 			if err != nil {
 				return err
 			}
 
-			ethereumSender := types.NewEthereumAddress(args[2])
+			symbol := args[3]
+			if strings.TrimSpace(symbol) == "" {
+				return errors.New("Error: must specify a token symbol, including 'eth' for Ethereum")
+			}
 
-			cosmosReceiver, err := sdk.AccAddressFromBech32(args[3])
+			tokenContract := types.NewEthereumAddress(args[4])
+
+			ethereumSender := types.NewEthereumAddress(args[5])
+
+			cosmosReceiver, err := sdk.AccAddressFromBech32(args[6])
 			if err != nil {
 				return err
 			}
 
-			validator, err := sdk.ValAddressFromBech32(args[4])
+			validator, err := sdk.ValAddressFromBech32(args[7])
 			if err != nil {
 				return err
 			}
 
-			amount, err := sdk.ParseCoins(args[5])
+			amount, err := sdk.ParseCoins(args[8])
 			if err != nil {
 				return err
 			}
 
-			ethBridgeClaim := types.NewEthBridgeClaim(chainID, ethereumSender, nonce, "eth", ethereumSender, ethereumSender, cosmosReceiver, validator, amount)
+			ethBridgeClaim := types.NewEthBridgeClaim(chainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender, cosmosReceiver, validator, amount)
 			msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
 
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
