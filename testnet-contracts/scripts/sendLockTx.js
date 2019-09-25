@@ -2,12 +2,12 @@ module.exports = async () => {
   /*******************************************
    *** Set up
    ******************************************/
-  let Web3 = require("web3");
-  var HDWalletProvider = require("@truffle/hdwallet-provider");
+  const Web3 = require("web3");
+  const HDWalletProvider = require("@truffle/hdwallet-provider");
 
   // Contract abstraction
   const truffleContract = require("truffle-contract");
-  let contract = truffleContract(require("../build/contracts/Peggy.json"));
+  const contract = truffleContract(require("../build/contracts/Peggy.json"));
 
   /*******************************************
    *** Constants
@@ -90,7 +90,7 @@ module.exports = async () => {
     provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
   }
 
-  var web3 = new Web3(provider);
+  const web3 = new Web3(provider);
   contract.setProvider(web3.currentProvider);
 
   /*******************************************
