@@ -21,7 +21,8 @@ This codebase, including all smart contract components, have not been profession
 See [here](./docs/architecture.md)
 
 ## Requirements
- - Go 1.13
+
+- Go 1.13
 
 ## Example application
 
@@ -136,21 +137,20 @@ Further reading:
 yarn
 
 # Start local blockchain
-yarn workspace testnet-contracts develop
+yarn develop
 ```
 
 ### Terminal 2: Compile and deploy Peggy contract
 
 ```
+# Deploy contract to local blockchain
+yarn migrate
 
 # Copy contract ABI to go modules:
-yarn workspace testnet-contracts peggy:abi
-
-# Deploy contract to local blockchain
-yarn workspace testnet-contracts migrate
+yarn peggy:abi
 
 # Get contract's address
-yarn workspace testnet-contracts peggy:address
+yarn peggy:address
 ```
 
 ### Terminal 3: Build and start Ethereum Bridge
@@ -193,14 +193,14 @@ ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,addr
 # [WEI_AMOUNT] = 10
 
 # Send lock transaction with default parameters
-yarn workspace testnet-contracts peggy:lock --default
+yarn peggy:lock --default
 
 # Send lock transaction with custom parameters
-yarn workspace testnet-contracts peggy:lock [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
+yarn peggy:lock [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 
 ```
 
-`yarn workspace testnet-contracts peggy:lock --default` expected output in ebrelayer console:
+`yarn peggy:lock --default` expected output in ebrelayer console:
 
 ```
 New Lock Transaction:
@@ -232,18 +232,16 @@ To run the Ethereum Bridge on the Ropsten testnet, repeat the steps for running 
 # Add environment variable INFURA_PROJECT_ID from your Infura account.
 
 # Specify the Ropsten network via a --network flag for the following commands...
-yarn workspace testnet-contracts migrate --network ropsten
-yarn workspace testnet-contracts peggy:address --network ropsten
+yarn migrate --network ropsten
+yarn peggy:address --network ropsten
 
 # Make sure to start ebrelayer with Ropsten network websocket
-ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=testing
+ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=peggy
 
 # Send lock transaction on Ropsten testnet
-yarn workspace testnet-contracts peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
+yarn peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 ```
 
 ## Using the modules in other projects
 
 The ethbridge and oracle modules can be used in other cosmos-sdk applications by copying them into your application's modules folders and including them in the same way as in the example application. Each module may be moved to its own repo or integrated into the core Cosmos-SDK in future, for easier usage.
-
-For instructions on building and deploying the smart contracts, see the README in their folder.
