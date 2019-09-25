@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// StatusText is an enum used to represent the status of the prophecy
 type StatusText int
 
 const (

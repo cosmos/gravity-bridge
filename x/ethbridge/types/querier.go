@@ -7,13 +7,14 @@ import (
 	"github.com/cosmos/peggy/x/oracle"
 )
 
-// defines the params for the following queries:
+// QueryEthProphecyParams defines the params for the following queries:
 // - 'custom/ethbridge/prophecies/'
 type QueryEthProphecyParams struct {
 	Nonce          int             `json:"nonce"`
 	EthereumSender EthereumAddress `json:"ethereum_sender"`
 }
 
+// QueryEthProphecyParams creates a new QueryEthProphecyParams
 func NewQueryEthProphecyParams(nonce int, ethereumSender EthereumAddress) QueryEthProphecyParams {
 	return QueryEthProphecyParams{
 		Nonce:          nonce,
