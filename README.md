@@ -109,24 +109,23 @@ With the application set up, you can now use Peggy by sending a lock transaction
 
 ### Set-up
 
-```
+```bash
 cd testnet-contracts/
 
 # Create .env with sample environment variables
 cp .env.example .env
 ```
 
-For running the bridge locally, you'll only need the LOCAL_PROVIDER environment variables. Environment variables MNEMONIC and INFURA_PROJECT_ID are required for using the Ropsten testnet.
+For running the bridge locally, you'll only need the `LOCAL_PROVIDER` environment variables. Environment variables `MNEMONIC` and `INFURA_PROJECT_ID` are required for using the Ropsten testnet.
 
 Further reading:
 
-[MetaMask Mnemonic](https://metamask.zendesk.com/hc/en-us/articles/360015290032-How-to-Reveal-Your-Seed-Phrase)
-
-[Infura Project ID](https://blog.infura.io/introducing-the-infura-dashboard-8969b7ab94e7)
+- [MetaMask Mnemonic](https://metamask.zendesk.com/hc/en-us/articles/360015290032-How-to-Reveal-Your-Seed-Phrase)
+- [Infura Project ID](https://blog.infura.io/introducing-the-infura-dashboard-8969b7ab94e7)
 
 ### Terminal 1: Start local blockchain
 
-```
+```bash
 # Download dependencies
 yarn
 
@@ -136,7 +135,7 @@ yarn develop
 
 ### Terminal 2: Compile and deploy Peggy contract
 
-```
+```bash
 # Deploy contract to local blockchain
 yarn migrate
 
@@ -149,7 +148,7 @@ yarn peggy:address
 
 ### Terminal 3: Build and start Ethereum Bridge
 
-```
+```bash
 # Build the Ethereum Bridge application
 make install
 
@@ -161,7 +160,7 @@ ebd start
 
 For automated relaying, there is a relayer service that can be run that will automatically watch and relay events (local web socket and deployed address parameters may vary).
 
-```
+```bash
 # Check ebrelayer connection to ebd
 ebrelayer status
 
@@ -175,12 +174,11 @@ ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,addr
 # You should see a message like: Started ethereum websocket with provider: [LOCAL_WEB_SOCKET] \ Subscribed to contract events on address: [PEGGY_DEPLOYED_ADDRESS]
 
 # The relayer will now watch the contract on Ropsten and create a claim whenever it detects a lock event.
-
 ```
 
 ### Using Terminal 2: Send lock transaction to contract
 
-```
+```bash
 # Default parameter values:
 # [HASHED_COSMOS_RECIPIENT_ADDRESS] = 0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668
 # [TOKEN_CONTRACT_ADDRESS] = 0x0000000000000000000000000000000000000000
