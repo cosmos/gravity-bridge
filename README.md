@@ -164,16 +164,11 @@ For automated relaying, there is a relayer service that can be run that will aut
 # Check ebrelayer connection to ebd
 ebrelayer status
 
-<<<<<<< HEAD
 # Start ebrelayer on the contract's deployed address with [LOCAL_WEB_SOCKET] and [PEGGY_DEPLOYED_ADDRESS]
 # Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:7545/
 # Example [PEGGY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
 
-ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=peggy
-=======
-# Initialize the Relayer service for automatic claim processing
-ebrelayer init testing wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 "LogLock\(bytes32,address,bytes,address,string,uint256,uint256\)" validator
->>>>>>> feat/erc20-support
+ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,string,uint256,uint256\) validator --chain-id=peggy
 
 # Enter password and press enter
 # You should see a message like: Started ethereum websocket with provider: [LOCAL_WEB_SOCKET] \ Subscribed to contract events on address: [PEGGY_DEPLOYED_ADDRESS]
@@ -195,18 +190,9 @@ yarn peggy:lock --default
 # Send lock transaction with custom parameters
 yarn peggy:lock [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 
-<<<<<<< HEAD
 ```
 
 `yarn peggy:lock --default` expected output in ebrelayer console:
-=======
-- 1.  Go to remix.ethereum.org
-- 2.  Compile Peggy.sol with solc v0.5.0
-- 3.  Set the environment as Injected Web3 Ropsten
-- 4.  On 'Run' tab, select Peggy and enter "0x05d9758cb6b9d9761ecb8b2b48be7873efae15c0" in 'At Address' field
-- 5.  Select 'At Address' to load the deployed contract
-- 6.  Enter the following for the variables under function lock():
->>>>>>> feat/erc20-support
 
 ```
 New Lock Transaction:

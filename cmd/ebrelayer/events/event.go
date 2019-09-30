@@ -33,14 +33,11 @@ func NewLockEvent(contractAbi abi.ABI, eventName string, eventData []byte) LockE
 		log.Fatal("Only LogLock events are currently supported.")
 	}
 
-	fmt.Printf("\nDATA: %v", eventData)
-	fmt.Printf("\nABI: %v", contractAbi)
-
 	// Parse the event's attributes as Ethereum network variables
 	event := LockEvent{}
 	err := contractAbi.Unpack(&event, eventName, eventData)
 	if err != nil {
-		log.Fatalf("Unpacking: %v", err)
+		log.Fatalf("Error unpacking: %v", err)
 	}
 
 	PrintEvent(event)
