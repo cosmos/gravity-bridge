@@ -20,6 +20,7 @@ contract Peggy is Processor {
         address _from,
         bytes _to,
         address _token,
+        string _symbol,
         uint256 _value,
         uint256 _nonce
     );
@@ -85,7 +86,7 @@ contract Peggy is Processor {
         emit LogLockingActivated(now);
     }
 
-    /* 
+    /*
      * @dev: Locks received funds and creates new items.
      *
      * @param _recipient: bytes representation of destination address.
@@ -103,12 +104,16 @@ contract Peggy is Processor {
         whileActive()
         returns(bytes32 _id)
     {
-         //Actions based on token address type
+        string memory symbol;
+
+        //Actions based on token address type
         if (msg.value != 0) {
           require(_token == address(0));
           require(msg.value == _amount);
+          symbol = "ETH";
         } else {
-          require(ERC20(_token).transferFrom(msg.sender, address(this), _amount));
+          require(TokenERC20(_token).transferFrom(msg.sender, address(this), _amount));
+          symbol = TokenERC20(_token).symbol();
         }
 
         //Create an item with a unique key.
@@ -124,6 +129,7 @@ contract Peggy is Processor {
             msg.sender,
             _recipient,
             _token,
+            symbol,
             _amount,
             getNonce()
         );
@@ -143,9 +149,9 @@ contract Peggy is Processor {
     function unlock(
         bytes32 _id
     )
+        external
         onlyProvider
         canDeliver(_id)
-        external
         returns (bool)
     {
         require(isLocked(_id));
@@ -179,9 +185,9 @@ contract Peggy is Processor {
     function withdraw(
         bytes32 _id
     )
+        external
         onlySender(_id)
         canDeliver(_id)
-        external
         returns (bool)
     {
         require(isLocked(_id));
@@ -213,7 +219,7 @@ contract Peggy is Processor {
     function getStatus(
         bytes32 _id
     )
-        public 
+        public
         view
         returns(bool)
     {

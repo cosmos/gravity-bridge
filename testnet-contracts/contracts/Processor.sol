@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "./TokenERC20.sol";
 
   /*
    *  @title: Processor
@@ -15,7 +16,7 @@ contract Processor {
 
     /*
     * @dev: Item struct to store information.
-    */    
+    */
     struct Item {
         address payable sender;
         bytes recipient;
@@ -31,7 +32,7 @@ contract Processor {
     /*
     * @dev: Constructor, initalizes item count.
     */
-    constructor() 
+    constructor()
         public
     {
         nonce = 0;
@@ -53,13 +54,13 @@ contract Processor {
             );
         } else {
             require(
-                ERC20(items[_id].token).balanceOf(address(this)) >= items[_id].amount,
+                TokenERC20(items[_id].token).balanceOf(address(this)) >= items[_id].amount,
                 'Insufficient ERC20 token balance for delivery.'
-            );            
+            );
         }
         _;
     }
-  
+
     modifier availableNonce() {
         require(
             nonce + 1 > nonce,
@@ -97,7 +98,6 @@ contract Processor {
                 nonce
             )
         );
-        
         items[itemKey] = Item(
             _sender,
             _recipient,
@@ -123,7 +123,10 @@ contract Processor {
         canDeliver(_id)
         returns(address payable, address, uint256, uint256)
     {
-        require(isLocked(_id));
+        require(
+            isLocked(_id),
+            "The funds must currently be locked."
+        );
 
         //Get locked item's attributes for return
         address payable sender = items[_id].sender;
@@ -138,8 +141,11 @@ contract Processor {
         if (token == address(0)) {
           sender.transfer(amount);
         } else {
-          require(ERC20(token).transfer(sender, amount));
-        }       
+          require(
+              TokenERC20(token).transfer(sender, amount),
+              "Token transfer failed, check contract token allowances and try again."
+            );
+        }
 
         return(sender, token, amount, uniqueNonce);
     }
@@ -166,7 +172,7 @@ contract Processor {
     function isLocked(
         bytes32 _id
     )
-        internal 
+        internal
         view
         returns(bool)
     {
@@ -186,7 +192,7 @@ contract Processor {
     function getItem(
         bytes32 _id
     )
-        internal 
+        internal
         view
         returns(address payable, bytes memory, address, uint256, uint256)
     {

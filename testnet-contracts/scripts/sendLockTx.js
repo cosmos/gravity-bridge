@@ -116,6 +116,7 @@ module.exports = async () => {
     id: event.args._id,
     to: event.args._to,
     token: event.args._token,
+    symbol: event.args._symbol,
     value: Number(event.args._value),
     nonce: Number(event.args._nonce)
   };
