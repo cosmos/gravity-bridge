@@ -40,5 +40,5 @@ module.exports = async () => {
     return instance.address;
   });
 
-  return console.log("Deployed contract address: ", address);
+  return console.log("Bridge contract address: ", address);
 };

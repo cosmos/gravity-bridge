@@ -37,7 +37,7 @@ func NewLockEvent(contractAbi abi.ABI, eventName string, eventData []byte) LockE
 	event := LockEvent{}
 	err := contractAbi.Unpack(&event, eventName, eventData)
 	if err != nil {
-		log.Fatalf("Unpacking: %v", err)
+		log.Fatalf("Error unpacking: %v", err)
 	}
 
 	PrintEvent(event)
