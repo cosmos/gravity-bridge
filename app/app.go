@@ -24,14 +24,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
-
-	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
-	dbm "github.com/tendermint/tm-db"
-
-	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
 const (

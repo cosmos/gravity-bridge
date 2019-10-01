@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
@@ -106,10 +105,11 @@ func (prophecy Prophecy) FindHighestClaim(ctx sdk.Context, stakeKeeper staking.K
 		claimPower := int64(0)
 		for _, validatorAddr := range validatorAddrs {
 			validator, found := validatorsByAddress[validatorAddr.String()]
-			if !found {
-				panic(fmt.Sprintf("%s not found", validatorAddr))
+			if found {
+				// Note: If claim validator is not found in the current validator set, we assume it is no longer
+				// an active validator and so can silently ignore it's claim and no longer count it towards total power.
+				claimPower += validator.GetConsensusPower()
 			}
-			claimPower += validator.GetConsensusPower()
 		}
 		totalClaimsPower += claimPower
 		if claimPower > highestClaimPower {
