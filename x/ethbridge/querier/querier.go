@@ -3,12 +3,13 @@ package querier
 import (
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	keep "github.com/cosmos/peggy/x/oracle/keeper"
 	oracletypes "github.com/cosmos/peggy/x/oracle/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // query endpoints supported by the oracle Querier
@@ -31,11 +32,12 @@ func NewQuerier(keeper keep.Keeper, cdc *codec.Codec, codespace sdk.CodespaceTyp
 func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, keeper keep.Keeper, codespace sdk.CodespaceType) (res []byte, errSdk sdk.Error) {
 	var params types.QueryEthProphecyParams
 
-	err := cdc.UnmarshalJSON(req.Data, &params)
-	if err != nil {
+	if err := cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return []byte{}, sdk.ErrInternal(sdk.AppendMsgToErr("failed to parse params: %s", err.Error()))
 	}
+
 	id := strconv.Itoa(params.Nonce) + params.EthereumSender.String()
+
 	prophecy, errSdk := keeper.GetProphecy(ctx, id)
 	if errSdk != nil {
 		return []byte{}, oracletypes.ErrProphecyNotFound(codespace)
@@ -50,7 +52,7 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 
 	bz, err := cdc.MarshalJSONIndent(response, "", "  ")
 	if err != nil {
-		panic("could not marshal result to JSON")
+		panic(err)
 	}
 
 	return bz, nil

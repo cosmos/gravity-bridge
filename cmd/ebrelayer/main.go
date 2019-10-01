@@ -1,7 +1,7 @@
 package main
 
 // 	Main (ebrelayer) : Implements CLI commands for the Relayer
-//		service, such as initalization and event relay.
+//		service, such as initialization and event relay.
 
 import (
 	"fmt"
@@ -13,24 +13,20 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/libs/cli"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
-	amino "github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/libs/cli"
+	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	app "github.com/cosmos/peggy"
+	app "github.com/cosmos/peggy/app"
 	relayer "github.com/cosmos/peggy/cmd/ebrelayer/relayer"
 )
 
-const (
-	routeEthbridge = "ethbridge"
-)
-
-var defaultCLIHome = os.ExpandEnv("$HOME/.ebcli")
 var appCodec *amino.Codec
 
 func init() {
@@ -42,8 +38,9 @@ func init() {
 	config.SetBech32PrefixForConsensusNode(sdk.Bech32PrefixConsAddr, sdk.Bech32PrefixConsPub)
 	config.Seal()
 
-	cdc := app.MakeCodec()
-	appCodec = cdc
+	appCodec = app.MakeCodec()
+
+	DefaultCLIHome := os.ExpandEnv("$HOME/.ebcli")
 
 	// Add --chain-id to persistent flags and mark it required
 	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
@@ -57,7 +54,7 @@ func init() {
 		initRelayerCmd(),
 	)
 
-	executor := cli.PrepareMainCmd(rootCmd, "EBRELAYER", defaultCLIHome)
+	executor := cli.PrepareMainCmd(rootCmd, "EBRELAYER", DefaultCLIHome)
 	err := executor.Execute()
 	if err != nil {
 		panic(err)
@@ -79,7 +76,7 @@ var rootCmd = &cobra.Command{
 func initRelayerCmd() *cobra.Command {
 	initRelayerCmd := &cobra.Command{
 		Use:   "init [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id [chain-id]",
-		Short: "Initalizes a web socket which streams live events from a smart contract",
+		Short: "Initializes a web socket which streams live events from a smart contract",
 		Args:  cobra.ExactArgs(4),
 		// NOTE: Preface both parentheses in the event signature with a '\'
 		Example: "ebrelayer init wss://ropsten.infura.io/ws ec6df30846baab06fce9b1721608853193913c19 LogLock(bytes32,address,bytes,address,uint256,uint256) validator --chain-id=testing",
@@ -89,7 +86,7 @@ func initRelayerCmd() *cobra.Command {
 	return initRelayerCmd
 }
 
-//	RunRelayerCmd : RunRelayerCmd executes the initRelayerCmd with the provided parameters
+// RunRelayerCmd executes the initRelayerCmd with the provided parameters
 func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Parse chain's ID
 	chainID := viper.GetString(client.FlagChainID)
@@ -120,7 +117,7 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	validatorFrom := args[3]
 
 	// Get the validator's name and account address using their moniker
-	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom)
+	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom, false)
 	if err != nil {
 		return err
 	}

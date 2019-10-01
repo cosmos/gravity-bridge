@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/peggy/x/ethbridge"
+	"github.com/cosmos/peggy/x/ethbridge/querier"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/spf13/cobra"
+
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 // GetCmdGetEthBridgeProphecy queries information about a specific prophecy
@@ -26,13 +27,13 @@ func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Comm
 			}
 			ethereumSender := types.NewEthereumAddress(args[1])
 
-			bz, err := cdc.MarshalJSON(ethbridge.NewQueryEthProphecyParams(nonce, ethereumSender))
+			bz, err := cdc.MarshalJSON(types.NewQueryEthProphecyParams(nonce, ethereumSender))
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, ethbridge.QueryEthProphecy)
-			res, err := cliCtx.QueryWithData(route, bz)
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, querier.QueryEthProphecy)
+			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
 			}

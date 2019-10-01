@@ -9,13 +9,15 @@ package txs
 // ------------------------------------------------------------
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 	amino "github.com/tendermint/go-amino"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/utils"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
 
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/peggy/x/ethbridge"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 )
@@ -29,7 +31,6 @@ func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddres
 
 	cliCtx := context.NewCLIContext().
 		WithCodec(cdc).
-		WithAccountDecoder(cdc).
 		WithFromAddress(sdk.AccAddress(validatorAddress)).
 		WithFromName(moniker)
 
@@ -39,7 +40,9 @@ func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddres
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
 		WithChainID(chainID)
 
-	err := cliCtx.EnsureAccountExistsFromAddr(sdk.AccAddress(claim.ValidatorAddress))
+	accountRetriever := authtypes.NewAccountRetriever(cliCtx)
+
+	err := accountRetriever.EnsureExists((sdk.AccAddress(claim.ValidatorAddress)))
 	if err != nil {
 		return err
 	}
@@ -50,8 +53,6 @@ func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddres
 	if err != nil {
 		return err
 	}
-
-	cliCtx.PrintResponse = true
 
 	// Prepare tx
 	txBldr, err = utils.PrepareTxBuilder(txBldr, cliCtx)
@@ -66,7 +67,7 @@ func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddres
 	}
 
 	// Broadcast to a Tendermint node
-	res, err := cliCtx.BroadcastTx(txBytes)
+	res, err := cliCtx.BroadcastTxSync(txBytes)
 	if err != nil {
 		return err
 	}

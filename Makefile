@@ -1,27 +1,9 @@
-.PHONY: get_tools get_vendor_deps update_vendor_deps build clean install test
+#!/usr/bin/make -f
 
-DEP := $(shell command -v dep 2> /dev/null)
+all: test clean install lint
 
-ldflags = -X github.com/cosmos/sdk-application-tutorial/version.Version=$(VERSION) \
-	-X github.com/cosmos/sdk-application-tutorial/version.Commit=$(COMMIT)
-
-get_tools:
-ifndef DEP
-	@echo "Installing dep"
-	go get -u -v github.com/golang/dep/cmd/dep
-else
-	@echo "Dep is already installed..."
-endif
-
-get_vendor_deps:
-	@echo "--> Generating vendor directory via dep ensure"
-	@rm -rf .vendor-new
-	@dep ensure -v -vendor-only
-
-update_vendor_deps:
-	@echo "--> Running dep ensure"
-	@rm -rf .vendor-new
-	@dep ensure -v -update
+# The below include contains the tools and runsim targets.
+include contrib/devtools/Makefile
 
 build:
 	go build ./cmd/ebd
@@ -38,5 +20,13 @@ install:
 	go install ./cmd/ebcli
 	go install ./cmd/ebrelayer
 
+lint:
+	@echo "--> Running linter"
+	golangci-lint run
+	@find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
+	go mod verify
+
 test:
-	gotestsum
+	go test ./...
+
+.PHONY: all build clean install test lint all

@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
+// EthereumAddress defines a standard ethereum address
 type EthereumAddress gethCommon.Address
 
 // NewEthereumAddress is a constructor function for EthereumAddress
@@ -16,15 +17,16 @@ func NewEthereumAddress(address string) EthereumAddress {
 }
 
 // Route should return the name of the module
-func (ethereumAddress EthereumAddress) String() string {
-	return gethCommon.Address(ethereumAddress).String()
+func (ethAddr EthereumAddress) String() string {
+	return gethCommon.Address(ethAddr).String()
 }
 
-// Route should return the name of the module
-func (ethereumAddress EthereumAddress) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%v\"", ethereumAddress.String())), nil
+// MarshalJSON marshals the etherum address to JSON
+func (ethAddr EthereumAddress) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%v\"", ethAddr.String())), nil
 }
 
-func (a *EthereumAddress) UnmarshalJSON(input []byte) error {
-	return hexutil.UnmarshalFixedJSON(reflect.TypeOf(gethCommon.Address{}), input, a[:])
+// UnmarshalJSON unmarshals an ethereum address
+func (ethAddr *EthereumAddress) UnmarshalJSON(input []byte) error {
+	return hexutil.UnmarshalFixedJSON(reflect.TypeOf(gethCommon.Address{}), input, ethAddr[:])
 }

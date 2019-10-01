@@ -12,9 +12,10 @@ package txs
 import (
 	"errors"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	ethbridgeTypes "github.com/cosmos/peggy/x/ethbridge/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // ETH : ETH constant specifies a token type of Ethereum
@@ -34,7 +35,7 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 	sender := ethbridgeTypes.NewEthereumAddress(event.From.Hex())
 
 	// Recipient type casting ([]bytes -> sdk.AccAddress)
-	recipient, err := sdk.AccAddressFromBech32(string(event.To[:]))
+	recipient, err := sdk.AccAddressFromBech32(string(event.To))
 	if err != nil {
 		return witnessClaim, err
 	}

@@ -1,40 +1,48 @@
 package keeper
 
 import (
+	"fmt"
 	"strings"
+
+	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/cosmos/peggy/x/oracle/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/peggy/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	stakeKeeper staking.Keeper
-
+	cdc      *codec.Codec // The wire codec for binary encoding/decoding.
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
-	cdc *codec.Codec // The wire codec for binary encoding/decoding.
+	stakeKeeper staking.Keeper
+	codespace   sdk.CodespaceType
 
-	codespace sdk.CodespaceType
-
+	// TODO: use this as param instead
 	consensusNeeded float64 // The minimum % of stake needed to sign claims in order for consensus to occur
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(stakeKeeper staking.Keeper, storeKey sdk.StoreKey, cdc *codec.Codec, codespace sdk.CodespaceType, consensusNeeded float64) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakeKeeper staking.Keeper, codespace sdk.CodespaceType, consensusNeeded float64) Keeper {
 	if consensusNeeded <= 0 || consensusNeeded > 1 {
 		panic(types.ErrMinimumConsensusNeededInvalid(codespace).Error())
 	}
 	return Keeper{
-		stakeKeeper:     stakeKeeper,
-		storeKey:        storeKey,
 		cdc:             cdc,
+		storeKey:        storeKey,
+		stakeKeeper:     stakeKeeper,
 		codespace:       codespace,
 		consensusNeeded: consensusNeeded,
 	}
+}
+
+// Logger returns a module-specific logger.
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
 // Codespace returns the codespace
@@ -67,7 +75,7 @@ func (k Keeper) setProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Error 
 	if prophecy.ID == "" {
 		return types.ErrInvalidIdentifier(k.Codespace())
 	}
-	if len(prophecy.ClaimValidators) <= 0 {
+	if len(prophecy.ClaimValidators) == 0 {
 		return types.ErrNoClaims(k.Codespace())
 	}
 	store := ctx.KVStore(k.storeKey)
@@ -79,6 +87,7 @@ func (k Keeper) setProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Error 
 	return nil
 }
 
+// ProcessClaim TODO: write description
 func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Status, sdk.Error) {
 	activeValidator := k.checkActiveValidator(ctx, claim.ValidatorAddress)
 	if !activeValidator {
@@ -116,10 +125,7 @@ func (k Keeper) checkActiveValidator(ctx sdk.Context, validatorAddress sdk.ValAd
 		return false
 	}
 	bondStatus := validator.GetStatus()
-	if bondStatus != sdk.Bonded {
-		return false
-	}
-	return true
+	return bondStatus == sdk.Bonded
 }
 
 // processCompletion looks at a given prophecy an assesses whether the claim with the highest power on that prophecy has enough

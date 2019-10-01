@@ -1,0 +1,24 @@
+run:
+  deadline: 1m
+
+linters:
+  enable-all: true
+  disable:
+    - gocyclo
+    - golint
+    - maligned
+    - errcheck
+    - interfacer
+    - unconvert
+    - goconst
+    - unparam
+    - nakedret
+    - lll
+    - gochecknoglobals
+    - gochecknoinits
+    - scopelint
+    - stylecheck
+    - funlen
+    - whitespace
+    - dogsled
+    - godox

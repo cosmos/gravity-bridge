@@ -2,6 +2,7 @@ package types
 
 import sdk "github.com/cosmos/cosmos-sdk/types"
 
+// Claim contrains an arbitrary claim with arbitrary content made by a given validator
 type Claim struct {
 	ID               string         `json:"id"`
 	ValidatorAddress sdk.ValAddress `json:"validator_address"`

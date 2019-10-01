@@ -8,6 +8,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// DefaultConsensusNeeded defines the default consensus value required for a
+// prophecy to be finalized
+const DefaultConsensusNeeded float64 = 0.7
+
 // Prophecy is a struct that contains all the metadata of an oracle ritual.
 // Claims are indexed by the claim's validator bech32 address and by the claim's json value to allow
 // for constant lookup times for any validation/verifiation checks of duplicate claims
@@ -85,7 +89,7 @@ func (prophecy Prophecy) AddClaim(validator sdk.ValAddress, claim string) {
 }
 
 // FindHighestClaim looks through all the existing claims on a given prophecy. It adds up the total power across
-// all claims and returns the highest claim, power for that claim, and total power claimed on the prophecy overall. 
+// all claims and returns the highest claim, power for that claim, and total power claimed on the prophecy overall.
 func (prophecy Prophecy) FindHighestClaim(ctx sdk.Context, stakeKeeper staking.Keeper) (string, int64, int64) {
 	validators := stakeKeeper.GetBondedValidatorsByPower(ctx)
 	//Index the validators by address for looking when scanning through claims
@@ -97,11 +101,15 @@ func (prophecy Prophecy) FindHighestClaim(ctx sdk.Context, stakeKeeper staking.K
 	totalClaimsPower := int64(0)
 	highestClaimPower := int64(-1)
 	highestClaim := ""
-	for claim, validators := range prophecy.ClaimValidators {
+	for claim, validatorAddrs := range prophecy.ClaimValidators {
 		claimPower := int64(0)
-		for _, validator := range validators {
-			validatorPower := validatorsByAddress[validator.String()].GetTendermintPower()
-			claimPower += validatorPower
+		for _, validatorAddr := range validatorAddrs {
+			validator, found := validatorsByAddress[validatorAddr.String()]
+			if found {
+				// Note: If claim validator is not found in the current validator set, we assume it is no longer
+				// an active validator and so can silently ignore it's claim and no longer count it towards total power.
+				claimPower += validator.GetConsensusPower()
+			}
 		}
 		totalClaimsPower += claimPower
 		if claimPower > highestClaimPower {

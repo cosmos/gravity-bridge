@@ -20,6 +20,9 @@ This codebase, including all smart contract components, have not been profession
 
 See [here](./docs/architecture.md)
 
+## Requirements
+ - Go 1.13
+
 ## Example application
 
 These modules can be added to any Cosmos-SDK based chain, but a demo application/blockchain is provided with example code for how to integrate them. It can be installed and built as follows:
@@ -28,16 +31,12 @@ These modules can be added to any Cosmos-SDK based chain, but a demo application
 # Clone the repository
 mkdir -p $GOPATH/src/github.com/cosmos
 cd $GOPATH/src/github.com/cosmos
-git clone https://github.com/cosmos/cosmos-ethereum-bridge
-cd cosmos-ethereum-bridge && git checkout master
+git clone https://github.com/cosmos/peggy
+cd peggy && git checkout master
 
-# Install dep, as well as your dependencies
-make get_tools
-dep ensure -v
-go get -u github.com/kardianos/govendor
-
-# Fetch the C file dependencies (this is a manual hack, as dep does not support pulling non-golang files used in dependencies)
-govendor fetch -tree github.com/ethereum/go-ethereum/crypto/secp256k1
+# Install tools (golangci-lint v1.18)
+make tools-clean
+make tools
 
 # Install the app into your $GOBIN
 make install
@@ -54,7 +53,7 @@ First, initialize a chain and create accounts to test sending of a random token.
 
 ```bash
 # Initialize the genesis.json file that will help you to bootstrap the network
-ebd init --chain-id=testing
+ebd init local --chain-id=peggy
 
 # Create a key to hold your validator account and for another test account
 ebcli keys add validator
@@ -63,42 +62,32 @@ ebcli keys add validator
 ebcli keys add testuser
 # Enter password
 
+# Initialize the genesis account and transaction
 ebd add-genesis-account $(ebcli keys show validator -a) 1000000000stake,1000000000atom
+
+# Create genesis transaction
+ebd gentx --name validator
+# Enter password
+
+# Collect genesis transaction
+ebd collect-gentxs
 
 # Now its safe to start `ebd`
 ebd start
 
 # Then, wait 10 seconds and in another terminal window, test things are ok by sending 10 tok tokens from the validator to the testuser
-ebcli tx send $(ebcli keys show testuser -a) 10stake --from=validator --chain-id=testing --yes
+ebcli tx send validator $(ebcli keys show testuser -a) 10stake --chain-id=peggy --yes
 
-# Confirm token balances have changed appropriately
+# Wait a few seconds for confirmation, then confirm token balances have changed appropriately
 ebcli query account $(ebcli keys show validator -a) --trust-node
 ebcli query account $(ebcli keys show testuser -a) --trust-node
-
-# Next, setup the staking module prerequisites
-# First, create a validator and stake
-ebcli tx staking create-validator \
-  --amount=100000000stake \
-  --pubkey=$(ebd tendermint show-validator) \
-  --moniker="test_moniker" \
-  --chain-id=testing \
-  --commission-rate="0.10" \
-  --commission-max-rate="0.20" \
-  --commission-max-change-rate="0.01" \
-  --min-self-delegation="1" \
-  --gas=200000 \
-  --gas-prices="0.001stake" \
-  --from=validator
-
-# Then wait 10 seconds then confirm your validator was created correctly, and has become Bonded status
-ebcli query staking validators --trust-node
 
 # See the help for the ethbridge create claim function
 ebcli tx ethbridge create-claim --help
 
 # Now you can test out the ethbridge module by submitting a claim for an ethereum prophecy
 # Create a bridge claim (Ethereum prophecies are stored on the blockchain with an identifier created by concatenating the nonce and sender address)
-ebcli tx ethbridge create-claim 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 3eth --from validator --chain-id testing --yes
+ebcli tx ethbridge create-claim 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 3eth --from=validator --chain-id=peggy --yes
 
 # Then read the prophecy to confirm it was created with the claim added
 ebcli query ethbridge prophecy 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 --trust-node
@@ -128,7 +117,7 @@ For automated relaying, there is a relayer service that can be run that will aut
 ebrelayer status
 
 # Initialize the Relayer service for automatic claim processing
-ebrelayer init testing wss://ropsten.infura.io/ws ec6df30846baab06fce9b1721608853193913c19 "LogLock\(bytes32,address,bytes,address,uint256,uint256\)" validator
+ebrelayer init wss://ropsten.infura.io/ws ec6df30846baab06fce9b1721608853193913c19 "LogLock\(bytes32,address,bytes,address,uint256,uint256\)" validator --chain-id=peggy
 
 # Enter password and press enter
 # You should see a message like:  Started ethereum websocket... and Subscribed to contract events...
@@ -167,10 +156,5 @@ ebcli query account cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh --trust-node
 ## Using the modules in other projects
 
 The ethbridge and oracle modules can be used in other cosmos-sdk applications by copying them into your application's modules folders and including them in the same way as in the example application. Each module may be moved to its own repo or integrated into the core Cosmos-SDK in future, for easier usage.
-
-There are 2 nuances you need to be aware of when using these modules in other Cosmos-SDK projects.
-
-- A specific version of golang.org/x/crypto (ie tendermint/crypto) is needed for compatability with go-ethereum. See the Gopkg.toml for constraint details. There is an open pull request to tendermint/crypto to add compatbility, but until that is merged you need to use the [customized version](https://github.com/tendermint/crypto/pull/1)
-- The govendor steps in the application as above are needed
 
 For instructions on building and deploying the smart contracts, see the README in their folder.

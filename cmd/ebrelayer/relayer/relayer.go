@@ -14,10 +14,11 @@ import (
 	"fmt"
 	"log"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	amino "github.com/tendermint/go-amino"
 
-	"github.com/ethereum/go-ethereum"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
@@ -85,5 +86,4 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 			}
 		}
 	}
-	return fmt.Errorf("error: relayer timed out")
 }
