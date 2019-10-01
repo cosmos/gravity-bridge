@@ -203,6 +203,7 @@ yarn peggy:lock [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_
 
 `yarn peggy:lock --default` expected output in ebrelayer console:
 
+````bash
 New Lock Transaction:
 Tx hash: 0x83e6ee88c20178616e68fee2477d21e84f16dcf6bac892b18b52c000345864c0
 Block number: 5
@@ -226,7 +227,6 @@ Tags: - action = create_bridge_claim
 To run the Ethereum Bridge on the Ropsten testnet, repeat the steps for running locally with the following changes:
 
 ```bash
-
 # Add environment variable MNEMONIC from your MetaMask account
 
 # Add environment variable INFURA_PROJECT_ID from your Infura account.
@@ -237,13 +237,61 @@ yarn migrate --network ropsten
 yarn peggy:address --network ropsten
 
 # Make sure to start ebrelayer with Ropsten network websocket
-
-ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,uint256,uint256\) validator --chain-id=peggy
+ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,string,uint256,uint256\) validator --chain-id=peggy
 
 # Send lock transaction on Ropsten testnet
 
 yarn peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS][token_contract_address] [WEI_AMOUNT]
 
+````
+
+## Testing ERC20 token support
+
+The bridge supports the transfer of ERC20 token assets. A sample TEST token is deployed upon migration and can be used to locally test the feature.
+
+### Local
+
+```bash
+# Mint 1,000 TEST tokens to your account for local use
+yarn token:mint
+
+# Approve 100 TEST tokens to the Bridge contract
+yarn token:approve --default
+
+# You can also approve a custom amount of TEST tokens to the Bridge contract:
+yarn token:approve 3
+
+# Get deployed TEST token contract address
+yarn token:address
+
+# Lock TEST tokens on the Bridge contract
+yarn peggy:lock [HASHED_COSMOS_RECIPIENT_ADDRESS] [TEST_TOKEN_CONTRACT_ADDRESS] [TOKEN_AMOUNT]
+
+```
+
+`yarn peggy:lock` ERC20 expected output in ebrelayer console (with a TOKEN_AMOUNT of 3):
+
+```bash
+New Lock Transaction:
+Tx hash: 0xce7b219427c613c8927f7cafe123af4145016a490cd9fef6e3796d468f72e09f
+Event ID: bb1c4798aaf4a1236f4f0235495f54a135733446f6c401c1bb86b690f3f35e60
+Token Symbol: TEST
+Token Address: 0x5040BA3Cf968de7273201d7C119bB8D8F03BDcBc
+Sender: 0xc230f38FF05860753840e0d7cbC66128ad308B67
+Recipient: cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
+Value: 3
+Nonce: 2
+
+Response:
+  height: 0
+  txhash: DF1F55D2B8F4277671772D9A72188D0E4E15097AD28272E31116FF4B5D832B08
+  code: 0
+  data: ""
+  rawlog: '[{"msg_index":0,"success":true,"log":""}]'
+  logs:
+  - msgindex: 0
+    success: true
+    log: ""
 ```
 
 ## Using the modules in other projects
