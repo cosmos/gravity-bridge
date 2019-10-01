@@ -19,3 +19,6 @@ linters:
     - scopelint
     - stylecheck
     - funlen
+    - whitespace
+    - dogsled
+    - godox
