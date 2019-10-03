@@ -47,3 +47,5 @@ Ref: https://keepachangelog.com/en/1.0.0/
 # Changelog
 
 ## [Unreleased]
+
+* (ethbridge) [\#67](https://github.com/cosmos/peggy/pull/67) Add events to handler
