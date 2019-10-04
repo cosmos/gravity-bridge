@@ -19,17 +19,17 @@ import (
 )
 
 const (
-	restChainID        = "chainID"
-	restBridgeContract = "bridgeContract"
-	restNonce          = "nonce"
-	restSymbol         = "symbol"
-	restTokenContract  = "tokenContract"
-	restEthereumSender = "ethereumSender"
+	restEthereumChainID = "ethereumChainID"
+	restBridgeContract  = "bridgeContract"
+	restNonce           = "nonce"
+	restSymbol          = "symbol"
+	restTokenContract   = "tokenContract"
+	restEthereumSender  = "ethereumSender"
 )
 
 type createEthClaimReq struct {
 	BaseReq               rest.BaseReq `json:"base_req"`
-	ChainID               int          `json:"chain_id"`
+	EthereumChainID       int          `json:"ethereum_chain_id"`
 	BridgeContractAddress string       `json:"bridge_contract_address"`
 	Nonce                 int          `json:"nonce"`
 	Symbol                string       `json:"symbol"`
@@ -43,7 +43,7 @@ type createEthClaimReq struct {
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRESTRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) {
 	r.HandleFunc(fmt.Sprintf("/%s/prophecies", storeName), createClaimHandler(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/%s/prophecies/{%s}/{%s}/{%s}/{%s}/{%s}/{%s}", queryRoute, restChainID, restBridgeContract, restNonce, restSymbol, restTokenContract, restEthereumSender), getProphecyHandler(cliCtx, storeName)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/prophecies/{%s}/{%s}/{%s}/{%s}/{%s}/{%s}", queryRoute, restEthereumChainID, restBridgeContract, restNonce, restSymbol, restTokenContract, restEthereumSender), getProphecyHandler(cliCtx, storeName)).Methods("GET")
 }
 
 func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -84,7 +84,7 @@ func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create the message
-		ethBridgeClaim := types.NewEthBridgeClaim(req.ChainID, bridgeContractAddress, req.Nonce, req.Symbol, tokenContractAddress, ethereumSender, cosmosReceiver, validator, amount)
+		ethBridgeClaim := types.NewEthBridgeClaim(req.EthereumChainID, bridgeContractAddress, req.Nonce, req.Symbol, tokenContractAddress, ethereumSender, cosmosReceiver, validator, amount)
 		msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
 		err = msg.ValidateBasic()
 		if err != nil {
@@ -100,8 +100,8 @@ func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.Handle
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		chainID := vars[restChainID]
-		chainIDString, err := strconv.Atoi(chainID)
+		ethereumChainID := vars[restEthereumChainID]
+		ethereumChainIDString, err := strconv.Atoi(ethereumChainID)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -126,7 +126,7 @@ func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.Handle
 
 		ethereumSender := types.NewEthereumAddress(vars[restEthereumSender])
 
-		bz, err := cliCtx.Codec.MarshalJSON(types.NewQueryEthProphecyParams(chainIDString, bridgeContract, nonceString, symbol, tokenContract, ethereumSender))
+		bz, err := cliCtx.Codec.MarshalJSON(types.NewQueryEthProphecyParams(ethereumChainIDString, bridgeContract, nonceString, symbol, tokenContract, ethereumSender))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return

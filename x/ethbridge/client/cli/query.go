@@ -17,13 +17,13 @@ import (
 // GetCmdGetEthBridgeProphecy queries information about a specific prophecy
 func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "prophecy [chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender]",
+		Use:   "prophecy [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender]",
 		Short: "Query prophecy",
 		Args:  cobra.ExactArgs(6),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			chainID, err := strconv.Atoi(args[0])
+			ethereumChainID, err := strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
@@ -44,7 +44,7 @@ func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Comm
 
 			ethereumSender := types.NewEthereumAddress(args[5])
 
-			bz, err := cdc.MarshalJSON(types.NewQueryEthProphecyParams(chainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender))
+			bz, err := cdc.MarshalJSON(types.NewQueryEthProphecyParams(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender))
 			if err != nil {
 				return err
 			}

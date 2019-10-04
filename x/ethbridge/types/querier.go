@@ -61,7 +61,7 @@ import (
 // defines the params for the following queries:
 // - 'custom/ethbridge/prophecies/'
 type QueryEthProphecyParams struct {
-	ChainID               int             `json:"chain_id"`
+	EthereumChainID       int             `json:"ethereum_chain_id"`
 	BridgeContractAddress EthereumAddress `json:"bridge_contract_address"`
 	Nonce                 int             `json:"nonce"`
 	Symbol                string          `json:"symbol"`
@@ -69,9 +69,9 @@ type QueryEthProphecyParams struct {
 	EthereumSender        EthereumAddress `json:"ethereum_sender"`
 }
 
-func NewQueryEthProphecyParams(chainID int, bridgeContractAddress EthereumAddress, nonce int, symbol string, tokenContractAddress EthereumAddress, ethereumSender EthereumAddress) QueryEthProphecyParams {
+func NewQueryEthProphecyParams(ethereumChainID int, bridgeContractAddress EthereumAddress, nonce int, symbol string, tokenContractAddress EthereumAddress, ethereumSender EthereumAddress) QueryEthProphecyParams {
 	return QueryEthProphecyParams{
-		ChainID:               chainID,
+		EthereumChainID:       ethereumChainID,
 		BridgeContractAddress: bridgeContractAddress,
 		Nonce:                 nonce,
 		Symbol:                symbol,

@@ -17,7 +17,7 @@ import (
 
 // LockEvent : struct which represents a single smart contract event
 type LockEvent struct {
-	ChainID               *big.Int
+	EthereumChainID       *big.Int
 	BridgeContractAddress common.Address
 	Id                    [32]byte
 	From                  common.Address
@@ -42,7 +42,7 @@ func NewLockEvent(contractAbi abi.ABI, clientChainID *big.Int, contractAddress s
 		log.Fatalf("Only Ethereum contracts are currently supported. Invalid address: %v", contractAddress)
 	}
 
-	event.ChainID = clientChainID
+	event.EthereumChainID = clientChainID
 	event.BridgeContractAddress = common.HexToAddress(contractAddress)
 
 	err := contractAbi.Unpack(&event, eventName, eventData)
@@ -58,7 +58,7 @@ func NewLockEvent(contractAbi abi.ABI, clientChainID *big.Int, contractAddress s
 // PrintEvent : prints a LockEvent struct's information
 func PrintEvent(event LockEvent) {
 	// Convert the variables into a printable format
-	chainID := event.ChainID
+	chainID := event.EthereumChainID
 	bridgeContractAddress := event.BridgeContractAddress
 	id := hex.EncodeToString(event.Id[:])
 	sender := event.From.Hex()
