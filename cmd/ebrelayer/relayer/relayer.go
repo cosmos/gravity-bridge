@@ -28,7 +28,7 @@ import (
 )
 
 // InitRelayer : Starts an event listener on a specific network, contract, and event
-func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddress common.Address, eventSig string, validatorName string, passphrase string, validatorAddress sdk.ValAddress) error {
+func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddress common.Address, eventSig string, validatorName string, passphrase string, validatorAddress sdk.ValAddress, rpcURL string) error {
 
 	// Start client with infura ropsten provider
 	client, err := SetupWebsocketEthClient(provider)
@@ -84,7 +84,7 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 				}
 
 				// Initiate the relay
-				err = txs.RelayEvent(chainId, cdc, validatorAddress, validatorName, passphrase, &claim)
+				err = txs.RelayEvent(chainId, cdc, validatorAddress, validatorName, passphrase, &claim, rpcURL)
 				if err != nil {
 					return err
 				}

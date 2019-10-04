@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 
@@ -77,7 +78,7 @@ func initRelayerCmd() *cobra.Command {
 	initRelayerCmd := &cobra.Command{
 		Use:   "init [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id [chain-id]",
 		Short: "Initializes a web socket which streams live events from a smart contract",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.MinimumNArgs(4),
 		// NOTE: Preface both parentheses in the event signature with a '\'
 		Example: "ebrelayer init wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 LogLock(address,bytes,address,string,uint256,uint256) validator --chain-id=testing",
 		RunE:    RunRelayerCmd,
@@ -115,6 +116,16 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Parse the validator's moniker
 	validatorFrom := args[3]
 
+	// Parse Tendermint RPC URL
+	rpcURL := ""
+	if len(args) >= 5 {
+		rpcURL = args[4]
+		_, err := url.Parse(rpcURL)
+		if rpcURL != "" && err != nil {
+			return fmt.Errorf("Invalid RPC URL: %v", rpcURL)
+		}
+	}
+
 	// Get the validator's name and account address using their moniker
 	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom, false)
 	if err != nil {
@@ -144,7 +155,8 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 		eventSig,
 		validatorName,
 		passphrase,
-		validatorAddress)
+		validatorAddress,
+		rpcURL)
 
 	if err != nil {
 		return err
