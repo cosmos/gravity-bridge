@@ -8,7 +8,17 @@ services:
   validator:
     ports:
       - "26657:26657"
+      - "26658:26658"
+      - "26656:26656"
     entrypoint:
       - ebd
       - start
+      - --rpc.laddr
+      - tcp://0.0.0.0:26657
     image: peggy
+  relayer:
+    image: peggy
+    entrypoint:
+      - sh
+      - -c
+      - "echo password | ebrelayer init wss://ropsten.infura.io/ws 0xE147f184886eC70527e8A10723dfE18faE14c4a7 LogLock\\(bytes32,address,bytes,address,uint256,uint256\\) validator --chain-id=peggy tcp://validator:26657"
