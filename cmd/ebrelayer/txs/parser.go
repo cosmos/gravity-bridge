@@ -50,7 +50,7 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 
 	// Symbol formatted to lowercase
 	symbol := strings.ToLower(event.Symbol)
-	if symbol == "eth" && !utils.IsAddressZero(event.TokenContractAddress) {
+	if symbol == "eth" && !utils.IsZeroAddress(event.TokenContractAddress) {
 		return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
 	}
 

@@ -14,7 +14,7 @@ const (
 	nullAddress = "0x0000000000000000000000000000000000000000"
 )
 
-// IsAddressZero : checks an Ethereum address and returns a bool which indicates if it is the null address
-func IsAddressZero(address common.Address) bool {
+// IsZeroAddress : checks an Ethereum address and returns a bool which indicates if it is the null address
+func IsZeroAddress(address common.Address) bool {
 	return address == common.HexToAddress(nullAddress)
 }
