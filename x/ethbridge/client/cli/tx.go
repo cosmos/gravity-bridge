@@ -42,7 +42,7 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 
 			symbol := args[3]
 			if strings.TrimSpace(symbol) == "" {
-				return errors.New("Error: must specify a token symbol, including 'eth' for Ethereum")
+				return errors.New("must specify a token symbol/denomination, including 'eth' for Ethereum")
 			}
 
 			tokenContract := types.NewEthereumAddress(args[4])
