@@ -1,0 +1,14 @@
+version: '3.7'
+services:
+  peggy:
+    build:
+      context: .
+      dockerfile: ./deploy/test/Dockerfile
+    image: peggy
+  validator:
+    ports:
+      - "26657:26657"
+    entrypoint:
+      - ebd
+      - start
+    image: peggy

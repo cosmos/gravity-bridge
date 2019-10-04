@@ -10,6 +10,12 @@ build:
 	go build ./cmd/ebcli
 	go build ./cmd/ebrelayer
 
+build_test_container:
+	docker-compose -f ./deploy/test/docker-compose.yml --project-directory . build
+
+start_test_containers:
+	docker-compose -f ./deploy/test/docker-compose.yml --project-directory . up
+
 clean:
 	rm -f ebd
 	rm -f ebcli
@@ -29,4 +35,4 @@ lint:
 test:
 	go test ./...
 
-.PHONY: all build clean install test lint all
+.PHONY: all build build_test_container start_test_containers clean install lint test
