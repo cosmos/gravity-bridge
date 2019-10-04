@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
+	"github.com/cosmos/peggy/cmd/ebrelayer/utils"
 	ethbridgeTypes "github.com/cosmos/peggy/x/ethbridge/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -49,7 +50,7 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 
 	// Symbol formatted to lowercase
 	symbol := strings.ToLower(event.Symbol)
-	if symbol == "eth" && event.TokenContractAddress != common.HexToAddress("0x0000000000000000000000000000000000000000") {
+	if symbol == "eth" && !utils.IsAddressZero(event.TokenContractAddress) {
 		return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
 	}
 
