@@ -203,7 +203,7 @@ yarn peggy:lock [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_
 
 `yarn peggy:lock --default` expected output in ebrelayer console:
 
-````bash
+```bash
 New Lock Transaction:
 Tx hash: 0x83e6ee88c20178616e68fee2477d21e84f16dcf6bac892b18b52c000345864c0
 Block number: 5
@@ -221,6 +221,7 @@ Logs: [{"msg_index":0,"success":true,"log":"success"}]
 GasWanted: 200000
 GasUsed: 42112
 Tags: - action = create_bridge_claim
+```
 
 ## Running the bridge on the Ropsten testnet
 
@@ -241,9 +242,9 @@ ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes3
 
 # Send lock transaction on Ropsten testnet
 
-yarn peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS][token_contract_address] [WEI_AMOUNT]
+yarn peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 
-````
+```
 
 ## Testing ERC20 token support
 
