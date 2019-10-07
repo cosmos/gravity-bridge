@@ -9,13 +9,13 @@ contract Valset {
     using SafeMath for uint256;
     using ECDSA for address;
 
-    address[] public addresses;
+    address[] public validators;
     uint256[] public powers;
     uint256 public totalPower;
     uint256 public seqCounter = 0;
 
     event Update(
-        address[] newAddresses,
+        address[] newValidators,
         uint256[] newPowers,
         uint256 seqCounter
     );
@@ -40,12 +40,12 @@ contract Valset {
         internal
         returns (bool)
     {
-        addresses = new address[](newAddress.length);
+        validators = new address[](newAddress.length);
         powers = new uint256[](newPowers.length);
         totalPower = 0;
 
         for (uint256 i = 0; i < newAddress.length; i++) {
-            addresses[i] = newAddress[i];
+            validators[i] = newAddress[i];
             powers[i] = newPowers[i];
             totalPower = totalPower.add(newPowers[i]);
         }
@@ -55,7 +55,7 @@ contract Valset {
         uint256 updateCount = seqCounter;
 
         emit Update(
-            addresses,
+            validators,
             powers,
             updateCount
         );
@@ -84,7 +84,7 @@ contract Valset {
             );
 
             // Only add valid validators' powers
-            if(signerAddr == addresses[signers[i]]) {
+            if(signerAddr == validators[signers[i]]) {
                 signedPower = signedPower.add(powers[signers[i]]);
             }
         }
@@ -98,12 +98,12 @@ contract Valset {
     }
 
     // TODO: These getter methods should be available automatically and are likely redundant
-    function getAddresses()
+    function getValidators()
         public
         view
         returns (address[] memory)
     {
-        return addresses;
+        return validators;
     }
 
     function getPowers()
