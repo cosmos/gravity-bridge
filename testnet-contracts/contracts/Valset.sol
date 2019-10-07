@@ -1,10 +1,13 @@
 pragma solidity ^0.5.0;
+pragma experimental ABIEncoderV2;
 
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../node_modules/openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 
 contract Valset {
 
     using SafeMath for uint256;
+    using ECDSA for address;
 
     address[] public addresses;
     uint256[] public powers;
@@ -60,12 +63,11 @@ contract Valset {
         return true;
     }
 
+    // TODO: signed hash must include nonce to prevent replay attack
     function verifyValidators(
-        bytes32 hash, // TODO: This hash must include nonce to prevent replay attack
+        bytes32 signedHash,
         uint[] memory signers,
-        uint8[] memory v,
-        bytes32[] memory r,
-        bytes32[] memory s
+        bytes[] memory signatures
     )
         public
         view
@@ -73,17 +75,16 @@ contract Valset {
     {
         uint256 signedPower = 0;
 
-        // TODO: This requires the validator signatures to be in exact order
-        for (uint i = 0; i < signers.length; i++) {
-            if (i > 0) {
-                require(signers[i] > signers[i-1]);
-            }
-
-            // TODO: Use OpenZeppelin ECSDA library to counter act security vunerability
-            address recAddr = ecrecover(hash, v[i], r[i], s[i]);
+        // Iterate over the signers array
+        for (uint i = 0; i < signers.length; i = i.add(1)) {
+            // Recover the original signature's signing address
+            address signerAddr = ECDSA.recover(
+                signedHash,
+                signatures[i]
+            );
 
             // Only add valid validators' powers
-            if(recAddr == addresses[signers[i]]) {
+            if(signerAddr == addresses[signers[i]]) {
                 signedPower = signedPower.add(powers[signers[i]]);
             }
         }
