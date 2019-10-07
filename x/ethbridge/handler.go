@@ -14,6 +14,7 @@ import (
 // NewHandler returns a handler for "ethbridge" type messages.
 func NewHandler(oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, codespace sdk.CodespaceType, cdc *codec.Codec) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case MsgCreateEthBridgeClaim:
 			return handleMsgCreateEthBridgeClaim(ctx, cdc, oracleKeeper, bankKeeper, msg, codespace)
@@ -45,7 +46,25 @@ func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
 		}
 	}
 
-	return sdk.Result{Log: status.Text.String()}
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.ValidatorAddress.String()),
+		),
+		sdk.NewEvent(
+			types.EventTypeCreateClaim,
+			sdk.NewAttribute(types.AttributeKeyEthereumSender, msg.EthereumSender.String()),
+			sdk.NewAttribute(types.AttributeKeyCosmosReceiver, msg.CosmosReceiver.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
+		),
+		sdk.NewEvent(
+			types.EventTypeProphecyStatus,
+			sdk.NewAttribute(types.AttributeKeyStatus, status.Text.String()),
+		),
+	})
+
+	return sdk.Result{Events: ctx.EventManager().Events()}
 }
 
 func processSuccessfulClaim(ctx sdk.Context, bankKeeper bank.Keeper, claim string) sdk.Error {
