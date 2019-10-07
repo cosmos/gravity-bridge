@@ -79,8 +79,15 @@ contract Peggy is Processor, CosmosBridge {
     * @dev: Constructor, initalizes provider and active status.
     *
     */
-    constructor()
+    constructor(
+        address[] memory initValidatorAddresses,
+        uint256[] memory initValidatorPowers
+    )
         public
+        Oracle(
+            initValidatorAddresses,
+            initValidatorPowers
+        )
     {
         provider = msg.sender;
         active = true;
@@ -138,6 +145,7 @@ contract Peggy is Processor, CosmosBridge {
         return id;
     }
 
+     // TODO: Refactor unlock() to be conditional upon validator signatures
     /*
      * @dev: Unlocks ethereum/erc20 tokens, called by provider.
      *
@@ -174,6 +182,7 @@ contract Peggy is Processor, CosmosBridge {
         return true;
     }
 
+    // TODO: Remove withdraw() function and delete any test suite references
     /*
      * @dev: Withdraws ethereum/erc20 tokens, called original sender.
      *

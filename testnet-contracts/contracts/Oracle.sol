@@ -1,6 +1,8 @@
 pragma solidity ^0.5.0;
 
-contract Oracle {
+import "./Valset.sol";
+
+contract Oracle is Valset{
 
     struct Claim {
         bytes32 cosmosClaimID;
@@ -19,6 +21,19 @@ contract Oracle {
         address _ethereumRecipient,
         uint256 _amount
     );
+
+    constructor(
+        address[] memory initValidatorAddresses,
+        uint256[] memory initValidatorPowers
+    )
+        public
+        Valset(
+            initValidatorAddresses,
+            initValidatorPowers
+        )
+    {
+        // Intentionally left blank
+    }
 
     function newClaim(
         bytes32 _cosmosClaimID,
