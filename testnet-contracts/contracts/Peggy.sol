@@ -1,6 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "./Processor.sol";
+import "./CosmosBridge.sol";
 
   /*
    *  @title: Peggy
@@ -9,7 +10,7 @@ import "./Processor.sol";
    *        NOT intended to be used in production and users are empowered
    *        to withdraw their locked funds at any time.
    */
-contract Peggy is Processor {
+contract Peggy is Processor, CosmosBridge {
 
     bool public active;
     address public provider;
