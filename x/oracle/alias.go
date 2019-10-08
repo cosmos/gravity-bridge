@@ -33,7 +33,11 @@ const (
 
 var (
 	// functions aliases
-	NewKeeper                        = keeper.NewKeeper
+	NewKeeper         = keeper.NewKeeper
+	CreateTestAddrs   = keeper.CreateTestAddrs
+	CreateTestPubKeys = keeper.CreateTestPubKeys
+	CreateTestKeepers = keeper.CreateTestKeepers
+
 	NewClaim                         = types.NewClaim
 	ErrProphecyNotFound              = types.ErrProphecyNotFound
 	ErrMinimumConsensusNeededInvalid = types.ErrMinimumConsensusNeededInvalid

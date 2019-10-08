@@ -57,6 +57,7 @@ var (
 		auth.FeeCollectorName:     nil,
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
+		ethbridge.ModuleName:      {supply.Burner, supply.Minter},
 	}
 )
 
@@ -143,7 +144,7 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB,
 		supply.NewAppModule(app.SupplyKeeper, app.AccountKeeper),
 		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
 		oracle.NewAppModule(app.OracleKeeper),
-		ethbridge.NewAppModule(app.OracleKeeper, app.BankKeeper, ethbridge.DefaultCodespace, app.cdc),
+		ethbridge.NewAppModule(app.OracleKeeper, app.SupplyKeeper, ethbridge.DefaultCodespace, app.cdc),
 	)
 
 	app.mm.SetOrderEndBlockers(staking.ModuleName)
@@ -152,7 +153,7 @@ func NewEthereumBridgeApp(logger log.Logger, db dbm.DB,
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
 		genaccounts.ModuleName, staking.ModuleName, auth.ModuleName, bank.ModuleName,
-		supply.ModuleName, genutil.ModuleName,
+		supply.ModuleName, genutil.ModuleName, ethbridge.ModuleName,
 	)
 
 	// TODO: add simulator support
