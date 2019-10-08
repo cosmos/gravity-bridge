@@ -50,3 +50,4 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 * (ethbridge) [\#67](https://github.com/cosmos/peggy/pull/67) Add events to handler
 * (ethbridge) [\#74](https://github.com/cosmos/peggy/pull/74) Change to use new supply module
+* (ethbridge) [\#75](https://github.com/cosmos/peggy/pull/75) Add burn message and functionality for burning tokens and trigerring events.
