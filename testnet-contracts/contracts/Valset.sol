@@ -13,22 +13,24 @@ contract Valset {
     uint256 public totalPower;
     uint256 public seqCounter = 0;
 
-    mapping(address => bool) public activeValidators;
     address[] public validators;
-    uint256[] public powers;
+    mapping(address => bool) public activeValidators;
+    mapping(address => uint256) public powers;
+    // uint256[] public powers;
 
-    event Update(
-        address[] newValidators,
-        uint256[] newPowers,
-        uint256 seqCounter
+    event LogUpdateValidatorSet(
+        address[] _newValidators,
+        uint256 _totalPower,
+        uint256 _seqCounter
     );
 
-    modifier isActiveValidator(
+    modifier isValidator(
         address _potentialValidator
-    ) {
+    )
+    {
         require(
             activeValidators[_potentialValidator],
-            "Must be a validator to make a claim"
+            "Must be an active validator"
         );
         _;
     }
@@ -42,17 +44,17 @@ contract Valset {
     {
         numbValidators = 0;
 
-        setValidatorsPower(
+        updateValidatorsPower(
             initValidatorAddresses,
             initValidatorPowers
         );
     }
 
-    function setValidatorsPower(
+    function updateValidatorsPower(
         address[] memory newValidators,
         uint256[] memory newPowers
     )
-        internal
+        public
         returns (bool)
     {
         require(
@@ -60,75 +62,69 @@ contract Valset {
             "Each validator must have a corresponding power"
         );
 
-        // Reset active validators mapping
+        // Reset active validators mapping and powers mapping
          for (uint256 i = 0; i < numbValidators; i++) {
              address priorValidator = validators[i];
              delete(validators[i]);
              activeValidators[priorValidator] = false;
+             powers[priorValidator] = 0;
          }
 
         // Reset validator count, validators array, powers array, and total power
         numbValidators = newValidators.length;
         validators = new address[](numbValidators);
-        powers = new uint256[](newPowers.length);
         totalPower = 0;
 
+        // Iterate over the proposed validators
         for (uint256 i = 0; i < numbValidators; i++) {
-            // Set each new validator and their power
-            validators[i] = newValidators[i];
-            powers[i] = newPowers[i];
-            activeValidators[newValidators[i]] = true;
+            // Validators must have power greater than 0
+            if(newPowers[i] > 0) {
+                 // Set each new validator and their power
+                validators[i] = newValidators[i];
+                activeValidators[newValidators[i]] = true;
+                powers[newValidators[i]] = newPowers[i];
 
-            // Increment validator count and total power
-            numbValidators = numbValidators.add(1);
-            totalPower = totalPower.add(newPowers[i]);
+                // Increment validator count and total power
+                numbValidators = numbValidators.add(1);
+                totalPower = totalPower.add(newPowers[i]);
+            }
         }
 
         // Increment the sequence counter
         seqCounter = seqCounter.add(1);
 
-        emit Update(
+        emit LogUpdateValidatorSet(
             validators,
-            powers,
+            totalPower,
             seqCounter
         );
 
         return true;
     }
 
-    // TODO: signed hash must include nonce to prevent replay attack
-    function verifyValidators(
-        bytes32 signedHash,
-        uint[] memory signers,
-        bytes[] memory signatures
+    // NOTE: _contentHash must include cosmosBridgeNonce to prevent replay attack
+    function getPowerOfSignatory(
+        bytes32 _contentHash,
+        bytes memory _signature
     )
-        public
+        internal
         view
-        returns (bool)
+        returns (uint256)
     {
-        uint256 signedPower = 0;
-
-        // Iterate over the signers array
-        for (uint i = 0; i < signers.length; i = i.add(1)) {
-            // Recover the original signature's signing address
-            address signerAddr = ECDSA.recover(
-                signedHash,
-                signatures[i]
-            );
-
-            // Only add active validators' powers
-            if(activeValidators[signerAddr] && signerAddr == validators[signers[i]]) {
-                signedPower = signedPower.add(powers[signers[i]]);
-            }
-        }
-
-        require(
-            signedPower.mul(3) > totalPower.mul(2),
-            "The cumulative power of signatory validators does not meet the threshold"
+        // Recover the address which originally signed this message
+        address recoveredAddr = ECDSA.recover(
+            _contentHash,
+            _signature
         );
 
-        return true;
+        // Only return the power of active validators
+        if(activeValidators[recoveredAddr]) {
+            return powers[recoveredAddr];
+        } else {
+            return 0;
+        }
     }
+
 
     // TODO: These getter methods should be available automatically and are likely redundant
     function getValidators()
@@ -139,12 +135,24 @@ contract Valset {
         return validators;
     }
 
-    function getPowers()
+    function isActiveValidator(
+        address _validator
+    )
         public
         view
-        returns (uint256[] memory)
+        returns(bool)
     {
-        return powers;
+        return activeValidators[_validator];
+    }
+
+    function getValidatorPower(
+        address _validator
+    )
+        public
+        view
+        returns(uint256)
+    {
+        return powers[_validator];
     }
 
     function getTotalPower()
