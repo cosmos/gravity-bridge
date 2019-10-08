@@ -14,7 +14,6 @@ contract TestBank is Bank {
         address _beneficiary
     )
         public
-        returns(bool)
     {
         return deliver(_token, _symbol, _amount, _beneficiary);
     }
@@ -28,5 +27,4 @@ contract TestBank is Bank {
     {
         return deployBankToken(_symbol);
     }
-
 }

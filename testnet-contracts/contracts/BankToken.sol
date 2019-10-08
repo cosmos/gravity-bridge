@@ -15,7 +15,11 @@ contract BankToken is ERC20Mintable {
 
     string public symbol;
 
-    constructor(string memory _symbol) public {
+    constructor(
+        string memory _symbol
+    )
+        public
+    {
         symbol = _symbol;
     }
 }

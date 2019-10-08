@@ -8,7 +8,7 @@ module.exports = {
       host: "localhost",
       port: 7545, // Match default network 'ganache'
       network_id: "*",
-      gas: 6721975, // Truffle default development block gas limit
+      gas: 6721975, // 6,721,975 is truffle's default development block gas limit
       gasPrice: 200000000000,
       solc: {
         version: "0.5.0",

@@ -1,19 +1,20 @@
 pragma solidity ^0.5.0;
+pragma experimental ABIEncoderV2;
 
 import "./Processor.sol";
 import "./CosmosBridge.sol";
+import "./Oracle.sol";
+import "./Bank.sol";
 
   /*
    *  @title: Peggy
-   *  @dev: Peg zone contract for testing one-way transfers from Ethereum
-   *        to Cosmos, facilitated by a trusted provider. This contract is
-   *        NOT intended to be used in production and users are empowered
-   *        to withdraw their locked funds at any time.
+   *  @dev: Peg zone contract two-way asset transfers between Ethereum and
+   *        to Cosmos, facilitated by a set of validators. This contract is
+   *        NOT intended to be used in production (yet).
    */
-contract Peggy is Processor, CosmosBridge {
+contract Peggy is CosmosBridge, Oracle, Bank, Processor {
 
     bool public active;
-    address public provider;
     mapping(bytes32 => bool) public ids;
 
     event LogLock(
@@ -51,19 +52,6 @@ contract Peggy is Processor, CosmosBridge {
     );
 
     /*
-    * @dev: Modifier to restrict access to the provider.
-    *
-    */
-    modifier onlyProvider()
-    {
-        require(
-            msg.sender == provider,
-            'Must be the specified provider.'
-        );
-        _;
-    }
-
-    /*
     * @dev: Modifier which restricts lock functionality when paused.
     *
     */
@@ -84,6 +72,8 @@ contract Peggy is Processor, CosmosBridge {
         uint256[] memory initValidatorPowers
     )
         public
+        Bank()
+        CosmosBridge()
         Oracle(
             initValidatorAddresses,
             initValidatorPowers
@@ -145,7 +135,77 @@ contract Peggy is Processor, CosmosBridge {
         return id;
     }
 
-     // TODO: Refactor unlock() to be conditional upon validator signatures
+    // Processes a validator's claim on an existing CosmosBridgeClaim
+    function makeOracleClaimOnCosmosBridgeClaim(
+        uint256 _cosmosBridgeNonce,
+        bytes32 contentHash
+    )
+        public
+        onlyValidator()
+        isProcessing(
+            _cosmosBridgeNonce
+        )
+        returns(bool)
+    {
+
+        // Create a new oracle claim
+        newOracleClaim(
+            _cosmosBridgeNonce,
+            msg.sender,
+            contentHash
+        );
+    }
+
+   function processProphecyOnCosmosBridgeClaim(
+        uint256 _cosmosBridgeNonce,
+        address[] memory signers,
+        bytes[] memory signatures
+    )
+        public
+    {
+        require(
+            cosmosBridgeClaims[_cosmosBridgeNonce].status == Status.Completed,
+            "Cannot process an prophecy on an already completed CosmosBridgeClaim"
+        );
+
+        // Pull the CosmosBridgeClaim from storage
+        CosmosBridgeClaim memory cosmosBridgeClaim = cosmosBridgeClaims[_cosmosBridgeNonce];
+
+        // Recreate the hash validators have signed
+        bytes32 contentHash = keccak256(
+            abi.encodePacked(
+                _cosmosBridgeNonce,
+                cosmosBridgeClaim.cosmosSender,
+                cosmosBridgeClaim.nonce
+            )
+        );
+
+        // Attempt to process the prophecy claim (throws if unsuccessful)
+        uint256 signedPower = processProphecyClaim(
+            contentHash,
+            signers,
+            signatures
+        );
+
+        // Update the CosmosBridgeClaim's status to completed
+        cosmosBridgeClaim.status = Status.Completed;
+
+        deliver(
+            cosmosBridgeClaim.tokenAddress,
+            cosmosBridgeClaim.symbol,
+            cosmosBridgeClaim.amount,
+            cosmosBridgeClaim.ethereumReceiver
+        );
+
+        emit LogProphecyProcessed(
+            _cosmosBridgeNonce,
+            signedPower,
+            totalPower,
+            msg.sender
+        );
+    }
+
+    // TODO: Rework Processor and unlocking system to be compatible with prophecy processing
     /*
      * @dev: Unlocks ethereum/erc20 tokens, called by provider.
      *
@@ -179,44 +239,6 @@ contract Peggy is Processor, CosmosBridge {
             amount,
             uniqueNonce
         );
-        return true;
-    }
-
-    // TODO: Remove withdraw() function and delete any test suite references
-    /*
-     * @dev: Withdraws ethereum/erc20 tokens, called original sender.
-     *
-     *       This is a backdoor utility method included for testing,
-     *       purposes, allowing users to withdraw their funds. This
-     *       functionality will be removed in production.
-     *
-     * @param _id: Unique key of the item.
-     */
-    function withdraw(
-        bytes32 _id
-    )
-        external
-        onlySender(_id)
-        canDeliver(_id)
-        returns (bool)
-    {
-        require(isLocked(_id));
-
-        // Transfer item's funds and unlock it
-        (address payable sender,
-            address token,
-            uint256 amount,
-            uint256 uniqueNonce) = complete(_id);
-
-        //Emit withdraw event
-        emit LogWithdraw(
-            _id,
-            sender,
-            token,
-            amount,
-            uniqueNonce
-        );
-
         return true;
     }
 

@@ -15,9 +15,9 @@ contract Bank {
     mapping(address => bool) public bankTokens;
     uint256 public numbTokens;
 
-    event LogTokenDeploy(address _token);
+    event LogBankTokenDeploy(address _token);
 
-     event LogTokenMint(
+    event LogBankTokenMint(
         address _token,
         string _symbol,
         uint256 _amount,
@@ -43,17 +43,16 @@ contract Bank {
         address _beneficiary
     )
         internal
-        returns(bool)
     {
         // If no token address, deploy a new bank token
-        address bankToken;
+        address bankToken = _token;
         if(address(_token) == address(0)) {
             bankToken = deployBankToken(_symbol);
         } else {
             bankToken = _token;
         }
 
-        // Token must be controlled by the bank
+        // Must be bank token controlled by the bank
         require(
             bankTokens[bankToken],
             "Invalid bank token address"
@@ -65,8 +64,7 @@ contract Bank {
             "Failed to mint bank token"
         );
 
-        emit LogTokenMint(bankToken, _symbol, _amount, _beneficiary);
-        return true;
+        emit LogBankTokenMint(bankToken, _symbol, _amount, _beneficiary);
     }
 
     /*
@@ -74,20 +72,24 @@ contract Bank {
      *
      * @param _symbol: bank token symbol
      */
-    function deployBankToken(string memory _symbol)
+    function deployBankToken(
+        string memory _symbol
+    )
         internal
         returns(address)
     {
         numbTokens = numbTokens.add(1);
 
+        // TODO: BankToken contract deployment puts Peggy over gas limit, causing deployment to fail
         // Deploy new token contract
-        BankToken newToken = (new BankToken)(_symbol);
+        // BankToken newToken = (new BankToken)(_symbol);
 
         // Set address in tokens mapping
-        address newTokenAddress = address(newToken);
+        // address newTokenAddress = address(newToken);
+        address newTokenAddress = address(0);
         bankTokens[newTokenAddress] = true;
 
-        emit LogTokenDeploy(newTokenAddress);
+        emit LogBankTokenDeploy(newTokenAddress);
 
         return newTokenAddress;
     }

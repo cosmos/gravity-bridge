@@ -64,7 +64,7 @@ contract("Bank", function(accounts) {
         }
       );
 
-      const event = logs.find(e => e.event === "LogTokenDeploy");
+      const event = logs.find(e => e.event === "LogBankTokenDeploy");
       event.args._token.should.be.equal(expectedTokenAddress);
     });
   });
@@ -84,7 +84,7 @@ contract("Bank", function(accounts) {
       }).should.be.fulfilled;
     });
 
-    it("should emit event LogTokenMint upon successful minting of bank tokens", async function() {
+    it("should emit event LogBankTokenMint upon successful minting of bank tokens", async function() {
       await this.bank.callDeliver(
         this.token,
         this.symbol,
@@ -95,7 +95,7 @@ contract("Bank", function(accounts) {
         }
       );
 
-      const event = logs.find(e => e.event === "LogTokenMint");
+      const event = logs.find(e => e.event === "LogBankTokenMint");
       event.args._token.should.be.equal(this.token);
       event.args._symbol.should.be.equal(this.symbol);
       Number(event.args._amount).should.be.bignumber.equal(this.amount);

@@ -1,10 +1,8 @@
 pragma solidity ^0.5.0;
-pragma experimental ABIEncoderV2;
 
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./Oracle.sol";
 
-contract CosmosBridge is Oracle {
+contract CosmosBridge {
 
     using SafeMath for uint256;
 
@@ -12,7 +10,7 @@ contract CosmosBridge is Oracle {
     mapping(uint256 => CosmosBridgeClaim) public cosmosBridgeClaims;
 
     enum Status {
-        Processing,
+        Active,
         Completed
     }
 
@@ -21,10 +19,9 @@ contract CosmosBridge is Oracle {
         bytes cosmosSender;
         address payable ethereumReceiver;
         address originalValidator;
-        bytes tokenAddress;
+        address tokenAddress;
         string symbol;
         uint256 amount;
-        bool isClaim;
         Status status;
     }
 
@@ -34,7 +31,7 @@ contract CosmosBridge is Oracle {
         bytes _cosmosSender,
         address payable _ethereumReceiver,
         address _validatorAddress,
-        bytes _tokenAddress,
+        address _tokenAddress,
         string _symbol,
         uint256 _amount
     );
@@ -46,29 +43,40 @@ contract CosmosBridge is Oracle {
         address _submitter
     );
 
+    modifier isProcessing(
+        uint256 _cosmosBridgeNonce
+    )
+    {
+        require(
+            cosmosBridgeClaims[_cosmosBridgeNonce].status == Status.Active,
+            "Cannot make an OracleClaim on an already completed CosmosBridgeClaim"
+        );
+        _;
+    }
+
     constructor()
         public
     {
         cosmosBridgeNonce = 0;
     }
 
+    // TODO: Peggy public function protected by onlyValidator()
     // Creates a new cosmos bridge claim, adding it to the cosmosBridgeClaims mapping
     function newCosmosBridgeClaim(
         uint256 _nonce,
         bytes memory _cosmosSender,
         address payable _ethereumReceiver,
-        bytes memory _tokenAddress,
+        address _tokenAddress,
         string memory _symbol,
         uint256 _amount
     )
-        public
-        isValidator(msg.sender)
+        internal
         returns(bool)
     {
-        address originalValidator = msg.sender;
-
         // Increment the CosmosBridge nonce
         cosmosBridgeNonce = cosmosBridgeNonce.add(1);
+
+        address originalValidator = msg.sender;
 
         // Create the new CosmosBridgeClaim
         CosmosBridgeClaim memory cosmosBridgeClaim = CosmosBridgeClaim(
@@ -79,8 +87,7 @@ contract CosmosBridge is Oracle {
             _tokenAddress,
             _symbol,
             _amount,
-            true,
-            Status.Processing
+            Status.Active
         );
 
         // Add the new CosmosBridgeClaim to the mapping
@@ -100,72 +107,15 @@ contract CosmosBridge is Oracle {
         return true;
     }
 
-    // Processes a validator's claim on an existing CosmosBridgeClaim
-    function processOracleClaimOnCosmosBridgeClaim(
-        uint256 _cosmosBridgeNonce,
-        bytes memory contentHash
-    )
-        public
-        isValidator(msg.sender)
-        returns(bool)
-    {
-        require(
-            cosmosBridgeClaims[_cosmosBridgeNonce].isClaim,
-            "Cannot make an Oracle Claim on an empty Cosmos Bridge Claim"
-        );
-
-        // Create a new oracle claim
-        newOracleClaim(
-            _cosmosBridgeNonce,
-            msg.sender,
-            contentHash
-        );
-    }
-
-    function processProphecyOnCosmosBridgeClaim(
-        bytes32 _cosmosBridgeNonce,
-        address[] memory signers,
-        bytes[] memory signatures
-    )
-        public
-    {
-        // Pull the CosmosBridgeClaim from storage
-        CosmosBridgeClaim memory cosmosBridgeClaim = cosmosBridgeClaims[_cosmosBridgeNonce];
-
-        // Recreate the hash validators have signed
-        bytes32 contentHash = keccak256(
-            abi.encodePacked(
-                _cosmosBridgeNonce,
-                cosmosBridgeClaim.cosmosSender,
-                cosmosBridgeClaim.nonce
-            )
-        );
-
-        // Attempt to process the prophecy claim (throws if unsuccessful)
-        uint256 signedPower = processProphecyClaim(
-            contentHash,
-            signers,
-            signatures
-        );
-
-        // Update the CosmosBridgeClaim's status to completed
-        cosmosBridgeClaims[_cosmosBridgeNonce].status = Status.Completed;
-
-        emit LogProphecyProcessed(
-            _cosmosBridgeNonce,
-            signedPower,
-            totalPower,
-            msg.sender
-        );
-    }
 
     function getCosmosBridgeClaimStatus(
         uint256 _cosmosBridgeNonce
     )
         public
-        returns(uint256 status)
+        view
+        returns(Status status)
     {
-        return cosmosBridgeClaims[_cosmosBridgeNonce.status];
+        return cosmosBridgeClaims[_cosmosBridgeNonce].status;
     }
 
 }
