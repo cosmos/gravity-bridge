@@ -8,6 +8,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/x/oracle"
 	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
 )
 
@@ -16,7 +17,7 @@ const (
 )
 
 func TestNewQuerier(t *testing.T) {
-	ctx, keeper, _, _ := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 3})
+	ctx, oracleKeeper, _, _, _ := oracle.CreateTestKeepers(t, 0.7, []int64{3, 3}, "")
 	cdc := keeperLib.MakeTestCodec()
 
 	query := abci.RequestQuery{
@@ -24,7 +25,7 @@ func TestNewQuerier(t *testing.T) {
 		Data: []byte{},
 	}
 
-	querier := NewQuerier(keeper, cdc, types.DefaultCodespace)
+	querier := NewQuerier(oracleKeeper, cdc, types.DefaultCodespace)
 
 	//Test wrong paths
 	bz, err := querier(ctx, []string{"other"}, query)
@@ -33,7 +34,7 @@ func TestNewQuerier(t *testing.T) {
 }
 
 func TestQueryEthProphecy(t *testing.T) {
-	ctx, keeper, _, validatorAddresses := keeperLib.CreateTestKeepers(t, 0.7, []int64{3, 7})
+	ctx, oracleKeeper, _, _, validatorAddresses := oracle.CreateTestKeepers(t, 0.7, []int64{3, 7}, "")
 	cdc := keeperLib.MakeTestCodec()
 
 	valAddress := validatorAddresses[0]
@@ -43,7 +44,7 @@ func TestQueryEthProphecy(t *testing.T) {
 
 	initialEthBridgeClaim := types.CreateTestEthClaim(t, testBridgeContractAddress, testTokenContractAddress, valAddress, testEthereumAddress, types.TestCoins)
 	oracleClaim, _ := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
-	_, err := keeper.ProcessClaim(ctx, oracleClaim)
+	_, err := oracleKeeper.ProcessClaim(ctx, oracleClaim)
 	require.Nil(t, err)
 
 	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t, valAddress)
@@ -60,7 +61,7 @@ func TestQueryEthProphecy(t *testing.T) {
 	}
 
 	//Test query
-	res, err3 := queryEthProphecy(ctx, cdc, query, keeper, types.DefaultCodespace)
+	res, err3 := queryEthProphecy(ctx, cdc, query, oracleKeeper, types.DefaultCodespace)
 	require.Nil(t, err3)
 
 	var ethProphecyResp types.QueryEthProphecyResponse
@@ -71,7 +72,7 @@ func TestQueryEthProphecy(t *testing.T) {
 	// Test error with bad request
 	query.Data = bz[:len(bz)-1]
 
-	_, err5 := queryEthProphecy(ctx, cdc, query, keeper, types.DefaultCodespace)
+	_, err5 := queryEthProphecy(ctx, cdc, query, oracleKeeper, types.DefaultCodespace)
 	require.NotNil(t, err5)
 
 	// Test error with nonexistent request
@@ -85,7 +86,7 @@ func TestQueryEthProphecy(t *testing.T) {
 		Data: bz2,
 	}
 
-	_, err7 := queryEthProphecy(ctx, cdc, query2, keeper, types.DefaultCodespace)
+	_, err7 := queryEthProphecy(ctx, cdc, query2, oracleKeeper, types.DefaultCodespace)
 	require.NotNil(t, err7)
 
 	// Test error with empty address
@@ -99,6 +100,6 @@ func TestQueryEthProphecy(t *testing.T) {
 		Data: bz3,
 	}
 
-	_, err9 := queryEthProphecy(ctx, cdc, query3, keeper, types.DefaultCodespace)
+	_, err9 := queryEthProphecy(ctx, cdc, query3, oracleKeeper, types.DefaultCodespace)
 	require.NotNil(t, err9)
 }
