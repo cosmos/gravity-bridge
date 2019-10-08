@@ -9,16 +9,29 @@ contract Valset {
     using SafeMath for uint256;
     using ECDSA for address;
 
-    address[] public validators;
-    uint256[] public powers;
+    uint256 public numbValidators;
     uint256 public totalPower;
     uint256 public seqCounter = 0;
+
+    mapping(address => bool) public activeValidators;
+    address[] public validators;
+    uint256[] public powers;
 
     event Update(
         address[] newValidators,
         uint256[] newPowers,
         uint256 seqCounter
     );
+
+    modifier isActiveValidator(
+        address _potentialValidator
+    ) {
+        require(
+            activeValidators[_potentialValidator],
+            "Must be a validator to make a claim"
+        );
+        _;
+    }
 
     // Constructor which takes initial validator addresses and their powers
     constructor(
@@ -27,6 +40,8 @@ contract Valset {
     )
         public
     {
+        numbValidators = 0;
+
         setValidatorsPower(
             initValidatorAddresses,
             initValidatorPowers
@@ -34,30 +49,48 @@ contract Valset {
     }
 
     function setValidatorsPower(
-        address[] memory newAddress,
+        address[] memory newValidators,
         uint256[] memory newPowers
     )
         internal
         returns (bool)
     {
-        validators = new address[](newAddress.length);
+        require(
+            newValidators.length == newPowers.length,
+            "Each validator must have a corresponding power"
+        );
+
+        // Reset active validators mapping
+         for (uint256 i = 0; i < numbValidators; i++) {
+             address priorValidator = validators[i];
+             delete(validators[i]);
+             activeValidators[priorValidator] = false;
+         }
+
+        // Reset validator count, validators array, powers array, and total power
+        numbValidators = newValidators.length;
+        validators = new address[](numbValidators);
         powers = new uint256[](newPowers.length);
         totalPower = 0;
 
-        for (uint256 i = 0; i < newAddress.length; i++) {
-            validators[i] = newAddress[i];
+        for (uint256 i = 0; i < numbValidators; i++) {
+            // Set each new validator and their power
+            validators[i] = newValidators[i];
             powers[i] = newPowers[i];
+            activeValidators[newValidators[i]] = true;
+
+            // Increment validator count and total power
+            numbValidators = numbValidators.add(1);
             totalPower = totalPower.add(newPowers[i]);
         }
 
-        // Increment and set the sequence counter
+        // Increment the sequence counter
         seqCounter = seqCounter.add(1);
-        uint256 updateCount = seqCounter;
 
         emit Update(
             validators,
             powers,
-            updateCount
+            seqCounter
         );
 
         return true;
@@ -83,8 +116,8 @@ contract Valset {
                 signatures[i]
             );
 
-            // Only add valid validators' powers
-            if(signerAddr == validators[signers[i]]) {
+            // Only add active validators' powers
+            if(activeValidators[signerAddr] && signerAddr == validators[signers[i]]) {
                 signedPower = signedPower.add(powers[signers[i]]);
             }
         }

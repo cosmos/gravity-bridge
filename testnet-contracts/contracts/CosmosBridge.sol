@@ -49,20 +49,19 @@ contract CosmosBridge is Oracle {
         uint256 _amount
     )
         public
+        isActiveValidator(msg.sender)
         returns(bool)
     {
+        address validatorAddress = msg.sender;
+
         // Increment the CosmosBridge nonce
         cosmosBridgeNonce = cosmosBridgeNonce.add(1);
-
-        // Parse validator's address
-        address validatorAddress = msg.sender;
 
         // Create the new CosmosBridgeClaim
         CosmosBridgeClaim memory cosmosBridgeClaim = CosmosBridgeClaim(
             _nonce,
             _cosmosSender,
             _ethereumReceiver,
-            validatorAddress,
             _tokenAddress,
             _symbol,
             _amount,
@@ -77,7 +76,6 @@ contract CosmosBridge is Oracle {
             _nonce,
             _cosmosSender,
             _ethereumReceiver,
-            validatorAddress,
             _tokenAddress,
             _symbol,
             _amount
@@ -88,10 +86,10 @@ contract CosmosBridge is Oracle {
 
     // Processes a validator's claim on an existing CosmosBridgeClaim
     function processOracleClaimOnCosmosBridgeClaim(
-        uint256 _cosmosBridgeNonce,
-        CosmosBridgeClaim memory cosmosClaim
+        uint256 _cosmosBridgeNonce
     )
-        internal
+        public
+        isActiveValidator(msg.sender)
         returns(bool)
     {
         require(
@@ -99,23 +97,31 @@ contract CosmosBridge is Oracle {
             "Cannot make an Oracle Claim on an empty Cosmos Bridge Claim"
         );
 
+        CosmosBridgeClaim memory cosmosBridgeClaim = cosmosBridgeClaims[_cosmosBridgeNonce];
+
+        // Parse validator's address
+        address validatorAddress = msg.sender;
+
         // Create unique id by hashing sender and nonce
         bytes32 oracleID = keccak256(
             abi.encodePacked(
-                cosmosClaim.cosmosSender,
-                cosmosClaim.nonce
+                cosmosBridgeClaim.cosmosSender,
+                cosmosBridgeClaim.nonce
             )
         );
 
         // Create a new claim
-        Claim memory claim = newClaim(
+        Claim memory oracleClaim = newOracleClaim(
             oracleID,
-            cosmosClaim.validatorAddress,
-            cosmosClaim.ethereumReceiver,
-            cosmosClaim.amount
+            cosmosBridgeClaim.ethereumReceiver,
+            cosmosBridgeClaim.amount,
+            validatorAddress
         );
 
-        return addOracleClaim(claim);
+        return addOracleClaim(
+            oracleClaim,
+            _cosmosBridgeNonce
+        );
     }
 
 }

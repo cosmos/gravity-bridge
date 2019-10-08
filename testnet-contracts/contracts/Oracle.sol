@@ -1,4 +1,5 @@
 pragma solidity ^0.5.0;
+pragma experimental ABIEncoderV2;
 
 import "./Valset.sol";
 
@@ -12,8 +13,10 @@ contract Oracle is Valset{
         bool isClaim;
     }
 
-    mapping(bytes32 => Claim[]) public cosmosBridgeClaims;
-    mapping(address => Claim[]) public validatorClaims;
+    // Maps CosmosBridgeClaim id to OracleClaims made on it by validators
+    mapping(uint256 => Claim[]) public oracleClaims;
+    // Maps validator's address to each CosmosBridgeClaim they've made
+    mapping(address => uint256[]) public validatorClaims;
 
     event LogNewOracleClaim(
         bytes32 _cosmosClaimID,
@@ -35,11 +38,11 @@ contract Oracle is Valset{
         // Intentionally left blank
     }
 
-    function newClaim(
+    function newOracleClaim(
         bytes32 _cosmosClaimID,
-        address _validatorAddress,
         address payable _ethereumRecipient,
-        uint256 _amount
+        uint256 _amount,
+        address _validatorAddress
     )
         internal
         returns(Claim memory)
@@ -66,18 +69,23 @@ contract Oracle is Valset{
     // Adds an oracle claim to the CosmosBridgeClaim's claims mapping,
     // as well as this validator's claims mapping
     function addOracleClaim(
-        Claim memory _claim
+        Claim memory _claim,
+        uint256 _cosmosBridgeNonce
     )
         internal
         returns(bool)
     {
-        bytes32 cosmosClaimID = _claim.cosmosClaimID;
-        address validator = _claim.validatorAddress;
+        address validator = msg.sender;
+
+        require(
+            activeValidators[validator],
+            "Must be a validator to make a claim"
+        );
 
         // Add the oracle claim to this transaction's claims
-        cosmosBridgeClaims[cosmosClaimID].push(_claim);
+        oracleClaims[_cosmosBridgeNonce].push(_claim);
         // Add the oracle claim to this validator's claims
-        validatorClaims[validator].push(_claim);
+        validatorClaims[validator].push(_cosmosBridgeNonce);
 
         return true;
     }
