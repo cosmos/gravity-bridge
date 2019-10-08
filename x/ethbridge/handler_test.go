@@ -192,7 +192,7 @@ func TestBurnEthSuccess(t *testing.T) {
 	moduleAccountAddress := moduleAccount.GetAddress()
 
 	// Initial message to mint some eth
-	coinsToMint := "10ethereum"
+	coinsToMint := "7ethereum"
 	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow5, types.NewEthereumAddress(types.TestEthereumAddress), coinsToMint)
 	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
 
@@ -221,7 +221,7 @@ func TestBurnEthSuccess(t *testing.T) {
 	senderCoins := bankKeeper.GetCoins(ctx, senderAddress)
 	require.NoError(t, err)
 	require.True(t, senderCoins.IsEqual(remainingCoins))
-	eventNonce := ""
+	// eventNonce := ""
 	eventCosmosSender := ""
 	eventEthereumReceiver := ""
 	eventAmount := ""
@@ -236,7 +236,7 @@ func TestBurnEthSuccess(t *testing.T) {
 			case "module":
 				require.Equal(t, value, ModuleName)
 			case "nonce":
-				eventNonce = value
+				// eventNonce = value
 			case "cosmos_sender":
 				eventCosmosSender = value
 			case "ethereum_receiver":
@@ -248,20 +248,20 @@ func TestBurnEthSuccess(t *testing.T) {
 			}
 		}
 	}
-	require.Equal(t, eventNonce, "0")
+	// require.Equal(t, eventNonce, "0")
 	require.Equal(t, eventCosmosSender, senderAddress.String())
 	require.Equal(t, eventEthereumReceiver, ethereumReceiver.String())
 	require.Equal(t, eventAmount, coinsToBurn)
 
-	// Third message succeeds, burns eth and fires correct event
-	res = handler(ctx, burnEth)
+	// Third message succeeds, burns more eth and fires correct event
+	res = handler(ctx, burnMsg)
 	require.True(t, res.IsOK())
 	require.NoError(t, err)
 	remainingCoins = remainingCoins.Sub(burnedCoins)
 	senderCoins = bankKeeper.GetCoins(ctx, senderAddress)
 	require.NoError(t, err)
 	require.True(t, senderCoins.IsEqual(remainingCoins))
-	eventNonce = ""
+	// eventNonce = ""
 	eventCosmosSender = ""
 	eventEthereumReceiver = ""
 	eventAmount = ""
@@ -276,7 +276,7 @@ func TestBurnEthSuccess(t *testing.T) {
 			case "module":
 				require.Equal(t, value, ModuleName)
 			case "nonce":
-				eventNonce = value
+			// 	eventNonce = value
 			case "cosmos_sender":
 				eventCosmosSender = value
 			case "ethereum_receiver":
@@ -288,8 +288,16 @@ func TestBurnEthSuccess(t *testing.T) {
 			}
 		}
 	}
-	require.Equal(t, eventNonce, "1")
+	// require.Equal(t, eventNonce, "1")
 	require.Equal(t, eventCosmosSender, senderAddress.String())
 	require.Equal(t, eventEthereumReceiver, ethereumReceiver.String())
 	require.Equal(t, eventAmount, coinsToBurn)
+
+	// Fourth message fails, not enough eth
+	res = handler(ctx, burnMsg)
+	require.False(t, res.IsOK())
+	require.NoError(t, err)
+	senderCoins = bankKeeper.GetCoins(ctx, senderAddress)
+	require.NoError(t, err)
+	require.True(t, senderCoins.IsEqual(remainingCoins))
 }
