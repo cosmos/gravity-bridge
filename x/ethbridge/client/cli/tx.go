@@ -75,3 +75,34 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 }
+
+// GetCmdBurnEth is the CLI command for burning some of your eth and triggering an event
+func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount]",
+		Short: "burn some coins!",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			ethereumReceiver := types.NewEthereumAddress(args[1])
+
+			amount, err := sdk.ParseCoins(args[2])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgBurn(cosmosSender, ethereumReceiver, amount)
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}

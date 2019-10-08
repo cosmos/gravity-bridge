@@ -15,7 +15,7 @@ import (
 
 func TestBasicMsgs(t *testing.T) {
 	//Setup
-	ctx, _, _, _, validatorAddresses, handler := CreateTestHandler(t, 0.7, []int64{3, 7})
+	ctx, _, _, _, _, validatorAddresses, handler := CreateTestHandler(t, 0.7, []int64{3, 7})
 
 	valAddress := validatorAddresses[0]
 
@@ -58,7 +58,7 @@ func TestBasicMsgs(t *testing.T) {
 }
 
 func TestDuplicateMsgs(t *testing.T) {
-	ctx, _, _, _, validatorAddresses, handler := CreateTestHandler(t, 0.7, []int64{3, 7})
+	ctx, _, _, _, _, validatorAddresses, handler := CreateTestHandler(t, 0.7, []int64{3, 7})
 
 	valAddress := validatorAddresses[0]
 
@@ -82,7 +82,7 @@ func TestDuplicateMsgs(t *testing.T) {
 
 func TestMintSuccess(t *testing.T) {
 	//Setup
-	ctx, _, bankKeeper, _, validatorAddresses, handler := CreateTestHandler(t, 0.7, []int64{2, 7, 1})
+	ctx, _, bankKeeper, _, _, validatorAddresses, handler := CreateTestHandler(t, 0.7, []int64{2, 7, 1})
 
 	valAddressVal1Pow2 := validatorAddresses[0]
 	valAddressVal2Pow7 := validatorAddresses[1]
@@ -126,7 +126,7 @@ func TestMintSuccess(t *testing.T) {
 
 func TestNoMintFail(t *testing.T) {
 	//Setup
-	ctx, _, bankKeeper, _, validatorAddresses, handler := CreateTestHandler(t, 0.71, []int64{3, 4, 3})
+	ctx, _, bankKeeper, _, _, validatorAddresses, handler := CreateTestHandler(t, 0.71, []int64{3, 4, 3})
 
 	valAddressVal1Pow3 := validatorAddresses[0]
 	valAddressVal2Pow4 := validatorAddresses[1]
@@ -178,4 +178,118 @@ func TestNoMintFail(t *testing.T) {
 	require.NoError(t, err)
 	receiver1Coins := bankKeeper.GetCoins(ctx, receiverAddress)
 	require.True(t, receiver1Coins.IsZero())
+}
+
+func TestBurnEthFail(t *testing.T) {
+
+}
+
+func TestBurnEthSuccess(t *testing.T) {
+	ctx, _, bankKeeper, supplyKeeper, _, validatorAddresses, handler := CreateTestHandler(t, 0.5, []int64{5})
+	valAddressVal1Pow5 := validatorAddresses[0]
+
+	moduleAccount := supplyKeeper.GetModuleAccount(ctx, ModuleName)
+	moduleAccountAddress := moduleAccount.GetAddress()
+
+	// Initial message to mint some eth
+	coinsToMint := "10ethereum"
+	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow5, types.NewEthereumAddress(types.TestEthereumAddress), coinsToMint)
+	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
+
+	// Initial message succeeds and mints eth
+	res := handler(ctx, ethMsg1)
+	require.True(t, res.IsOK())
+	receiverAddress, err := sdk.AccAddressFromBech32(types.TestAddress)
+	require.NoError(t, err)
+	receiverCoins := bankKeeper.GetCoins(ctx, receiverAddress)
+	mintedCoins, err := sdk.ParseCoins(coinsToMint)
+	require.NoError(t, err)
+	require.True(t, receiverCoins.IsEqual(mintedCoins))
+
+	coinsToBurn := "3ethereum"
+	ethereumReceiver := types.NewEthereumAddress(types.AltTestEthereumAddress)
+
+	// Second message succeeds, burns eth and fires correct event
+	burnMsg := types.CreateTestBurnMsg(t, types.TestAddress, ethereumReceiver, coinsToBurn)
+	res = handler(ctx, burnMsg)
+	require.True(t, res.IsOK())
+	senderAddress := receiverAddress
+	require.NoError(t, err)
+	burnedCoins, err := sdk.ParseCoins(coinsToBurn)
+	require.NoError(t, err)
+	remainingCoins := mintedCoins.Sub(burnedCoins)
+	senderCoins := bankKeeper.GetCoins(ctx, senderAddress)
+	require.NoError(t, err)
+	require.True(t, senderCoins.IsEqual(remainingCoins))
+	eventNonce := ""
+	eventCosmosSender := ""
+	eventEthereumReceiver := ""
+	eventAmount := ""
+	for _, event := range res.Events {
+		for _, attribute := range event.Attributes {
+			value := string(attribute.Value)
+			switch key := string(attribute.Key); key {
+			case "sender":
+				require.Equal(t, value, senderAddress.String())
+			case "recipient":
+				require.Equal(t, value, moduleAccountAddress.String())
+			case "module":
+				require.Equal(t, value, ModuleName)
+			case "nonce":
+				eventNonce = value
+			case "cosmos_sender":
+				eventCosmosSender = value
+			case "ethereum_receiver":
+				eventEthereumReceiver = value
+			case "amount":
+				eventAmount = value
+			default:
+				require.Fail(t, fmt.Sprintf("unrecognized event %s", key))
+			}
+		}
+	}
+	require.Equal(t, eventNonce, "0")
+	require.Equal(t, eventCosmosSender, senderAddress.String())
+	require.Equal(t, eventEthereumReceiver, ethereumReceiver.String())
+	require.Equal(t, eventAmount, coinsToBurn)
+
+	// Third message succeeds, burns eth and fires correct event
+	res = handler(ctx, burnEth)
+	require.True(t, res.IsOK())
+	require.NoError(t, err)
+	remainingCoins = remainingCoins.Sub(burnedCoins)
+	senderCoins = bankKeeper.GetCoins(ctx, senderAddress)
+	require.NoError(t, err)
+	require.True(t, senderCoins.IsEqual(remainingCoins))
+	eventNonce = ""
+	eventCosmosSender = ""
+	eventEthereumReceiver = ""
+	eventAmount = ""
+	for _, event := range res.Events {
+		for _, attribute := range event.Attributes {
+			value := string(attribute.Value)
+			switch key := string(attribute.Key); key {
+			case "sender":
+				require.Equal(t, value, senderAddress.String())
+			case "recipient":
+				require.Equal(t, value, moduleAccountAddress.String())
+			case "module":
+				require.Equal(t, value, ModuleName)
+			case "nonce":
+				eventNonce = value
+			case "cosmos_sender":
+				eventCosmosSender = value
+			case "ethereum_receiver":
+				eventEthereumReceiver = value
+			case "amount":
+				eventAmount = value
+			default:
+				require.Fail(t, fmt.Sprintf("unrecognized event %s", key))
+			}
+		}
+	}
+	require.Equal(t, eventNonce, "1")
+	require.Equal(t, eventCosmosSender, senderAddress.String())
+	require.Equal(t, eventEthereumReceiver, ethereumReceiver.String())
+	require.Equal(t, eventAmount, coinsToBurn)
 }

@@ -2,22 +2,26 @@ package ethbridge
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/cosmos/peggy/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 )
 
 // NewHandler returns a handler for "ethbridge" type messages.
-func NewHandler(oracleKeeper oracle.Keeper, supplyKeeper supply.Keeper, codespace sdk.CodespaceType, cdc *codec.Codec) sdk.Handler {
+func NewHandler(oracleKeeper oracle.Keeper, supplyKeeper supply.Keeper, accountKeeper auth.AccountKeeper, codespace sdk.CodespaceType, cdc *codec.Codec) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case MsgCreateEthBridgeClaim:
 			return handleMsgCreateEthBridgeClaim(ctx, cdc, oracleKeeper, supplyKeeper, msg, codespace)
+		case MsgBurn:
+			return handleMsgBurn(ctx, cdc, supplyKeeper, accountKeeper, msg, codespace)
 		default:
 			errMsg := fmt.Sprintf("unrecognized ethbridge message type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -83,4 +87,40 @@ func processSuccessfulClaim(ctx sdk.Context, supplyKeeper supply.Keeper, claim s
 	}
 
 	return nil
+}
+
+func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
+	supplyKeeper supply.Keeper, accountKeeper auth.AccountKeeper, msg MsgBurn,
+	codespace sdk.CodespaceType) sdk.Result {
+	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
+	if account == nil {
+		return sdk.ErrInvalidAddress(msg.CosmosSender.String()).Result()
+	}
+	sequenceNumber := account.GetSequence()
+	err := supplyKeeper.SendCoinsFromAccountToModule(ctx, msg.CosmosSender, ModuleName, msg.Amount)
+	if err != nil {
+		return err.Result()
+	}
+	err = supplyKeeper.BurnCoins(ctx, ModuleName, msg.Amount)
+	if err != nil {
+		panic(err)
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.CosmosSender.String()),
+		),
+		sdk.NewEvent(
+			types.EventTypeBurn,
+			sdk.NewAttribute(types.AttributeKeyCosmosSender, msg.CosmosSender.String()),
+			sdk.NewAttribute(types.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
+			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(sequenceNumber, 10)),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
+		),
+	})
+
+	return sdk.Result{Events: ctx.EventManager().Events()}
+
 }
