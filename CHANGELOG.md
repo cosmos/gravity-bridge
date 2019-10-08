@@ -54,3 +54,4 @@ All notable changes to this project will be documented in this file.
 - (ethbridge) [\#74](https://github.com/cosmos/peggy/pull/74) Change to use new supply module
 - (testnet-contracts) [\#82](https://github.com/cosmos/peggy/pull/82) Update contracts
 - (testnet-contracts) [\#89](https://github.com/cosmos/peggy/pull/89) Dynamic validator set
+* (ethbridge) [\#75](https://github.com/cosmos/peggy/pull/75) Add burn message and functionality for burning tokens and trigerring events.
