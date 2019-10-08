@@ -51,6 +51,7 @@ type (
 	CodeType                 = types.CodeType
 	EthereumAddress          = types.EthereumAddress
 	MsgCreateEthBridgeClaim  = types.MsgCreateEthBridgeClaim
+	MsgBurn                  = types.MsgBurn
 	QueryEthProphecyParams   = types.QueryEthProphecyParams
 	QueryEthProphecyResponse = types.QueryEthProphecyResponse
 )

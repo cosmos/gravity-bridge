@@ -38,6 +38,15 @@ func CreateTestEthClaim(t *testing.T, validatorAddress sdk.ValAddress, testEther
 	return ethClaim
 }
 
+func CreateTestBurnMsg(t *testing.T, testCosmosSender string, ethereumReceiver EthereumAddress, coins string) MsgBurn {
+	testCosmosAddress, err := sdk.AccAddressFromBech32(TestAddress)
+	require.NoError(t, err)
+	amount, err := sdk.ParseCoins(coins)
+	require.NoError(t, err)
+	burnEth := NewMsgBurn(testCosmosAddress, ethereumReceiver, amount)
+	return burnEth
+}
+
 func CreateTestQueryEthProphecyResponse(cdc *codec.Codec, t *testing.T, validatorAddress sdk.ValAddress) QueryEthProphecyResponse {
 	testEthereumAddress := NewEthereumAddress(TestEthereumAddress)
 	ethBridgeClaim := CreateTestEthClaim(t, validatorAddress, testEthereumAddress, TestCoins)

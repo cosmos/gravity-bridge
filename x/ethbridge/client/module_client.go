@@ -14,16 +14,16 @@ import (
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	// Group ethbridge queries under a subcommand
-	ethBBridgeQueryCmd := &cobra.Command{
+	ethBridgeQueryCmd := &cobra.Command{
 		Use:   "ethbridge",
 		Short: "Querying commands for the ethbridge module",
 	}
 
-	ethBBridgeQueryCmd.AddCommand(client.GetCommands(
+	ethBridgeQueryCmd.AddCommand(client.GetCommands(
 		cli.GetCmdGetEthBridgeProphecy(storeKey, cdc),
 	)...)
 
-	return ethBBridgeQueryCmd
+	return ethBridgeQueryCmd
 }
 
 // GetTxCmd returns the transaction commands for this module
@@ -35,6 +35,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 
 	ethBridgeTxCmd.AddCommand(client.PostCommands(
 		cli.GetCmdCreateEthBridgeClaim(cdc),
+		cli.GetCmdBurn(cdc),
 	)...)
 
 	return ethBridgeTxCmd
