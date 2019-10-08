@@ -135,10 +135,14 @@ contract Peggy is CosmosBridge, Oracle, Bank, Processor {
         return id;
     }
 
-    // Processes a validator's claim on an existing CosmosBridgeClaim
+    /*
+    * @dev: makeOracleClaimOnCosmosBridgeClaim
+    *       Processes a validator's claim on an existing CosmosBridgeClaim
+    */
     function makeOracleClaimOnCosmosBridgeClaim(
         uint256 _cosmosBridgeNonce,
-        bytes32 contentHash
+        bytes32 _contentHash,
+        bytes memory _signature
     )
         public
         onlyValidator()
@@ -152,14 +156,22 @@ contract Peggy is CosmosBridge, Oracle, Bank, Processor {
         newOracleClaim(
             _cosmosBridgeNonce,
             msg.sender,
-            contentHash
+            _contentHash,
+            _signature
         );
     }
 
-   function processProphecyOnCosmosBridgeClaim(
+    /*
+    * @dev: makeOracleClaimOnCosmosBridgeClaim
+    *       Processes an attempted prophecy on a CosmosBridgeClaim's OracleClaims
+    */
+   function processProphecyOnOracleClaims(
         uint256 _cosmosBridgeNonce,
-        address[] memory signers,
-        bytes[] memory signatures
+        bytes32 _hash,
+        address[] memory _signers,
+        uint8[] memory _v,
+        bytes32[] memory _r,
+        bytes32[] memory _s
     )
         public
     {
@@ -171,41 +183,28 @@ contract Peggy is CosmosBridge, Oracle, Bank, Processor {
         // Pull the CosmosBridgeClaim from storage
         CosmosBridgeClaim memory cosmosBridgeClaim = cosmosBridgeClaims[_cosmosBridgeNonce];
 
-        // Recreate the hash validators have signed
-        bytes32 contentHash = keccak256(
-            abi.encodePacked(
-                _cosmosBridgeNonce,
-                cosmosBridgeClaim.cosmosSender,
-                cosmosBridgeClaim.nonce
-            )
-        );
-
         // Attempt to process the prophecy claim (throws if unsuccessful)
-        uint256 signedPower = processProphecyClaim(
-            contentHash,
-            signers,
-            signatures
+        processProphecyClaim(
+            _cosmosBridgeNonce,
+            msg.sender,
+            _hash,
+            _signers,
+            _v,
+            _r,
+            _s
         );
 
         // Update the CosmosBridgeClaim's status to completed
         cosmosBridgeClaim.status = Status.Completed;
-
+        
         deliver(
             cosmosBridgeClaim.tokenAddress,
             cosmosBridgeClaim.symbol,
             cosmosBridgeClaim.amount,
             cosmosBridgeClaim.ethereumReceiver
         );
-
-        emit LogProphecyProcessed(
-            _cosmosBridgeNonce,
-            signedPower,
-            totalPower,
-            msg.sender
-        );
     }
 
-    // TODO: Rework Processor and unlocking system to be compatible with prophecy processing
     /*
      * @dev: Unlocks ethereum/erc20 tokens, called by provider.
      *
@@ -215,6 +214,7 @@ contract Peggy is CosmosBridge, Oracle, Bank, Processor {
      *
      * @param _id: Unique key of the item.
      */
+    // TODO: Rework Processor and unlocking system to be compatible with prophecy processing
     function unlock(
         bytes32 _id
     )

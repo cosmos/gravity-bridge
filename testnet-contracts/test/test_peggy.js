@@ -19,7 +19,10 @@ contract("Peggy", function(accounts) {
 
   describe("Peggy smart contract deployment", function() {
     beforeEach(async function() {
-      this.peggy = await Peggy.new();
+      this.initialValidators = [userOne, userTwo, userThree];
+      this.initialPowers = [5, 8, 12];
+
+      this.peggy = await Peggy.new(this.initialValidators, this.initialPowers);
     });
 
     it("should deploy the peggy contract with the correct parameters", async function() {
@@ -30,9 +33,13 @@ contract("Peggy", function(accounts) {
     });
   });
 
-  describe("Locking funds", function() {
+  describe("Locking of Ethereum assets", function() {
     beforeEach(async function() {
-      this.peggy = await Peggy.new();
+      this.initialValidators = [userOne, userTwo, userThree];
+      this.initialPowers = [5, 8, 12];
+
+      this.peggy = await Peggy.new(this.initialValidators, this.initialPowers);
+
       this.ethereumToken = "0x0000000000000000000000000000000000000000";
       this.weiAmount = web3.utils.toWei("0.25", "ether");
       this.recipient = web3.utils.utf8ToHex(
@@ -151,7 +158,11 @@ contract("Peggy", function(accounts) {
     const cosmosAddr = "77m5cfkop78sruko3ud4wjp83kuc9rmw15rqtzlp";
 
     beforeEach(async function() {
-      this.peggy = await Peggy.new();
+      this.initialValidators = [userOne, userTwo, userThree];
+      this.initialPowers = [5, 8, 12];
+
+      this.peggy = await Peggy.new(this.initialValidators, this.initialPowers);
+
       this.ethereumToken = "0x0000000000000000000000000000000000000000";
       this.weiAmount = web3.utils.toWei("0.25", "ether");
       this.recipient = web3.utils.utf8ToHex(cosmosAddr);
@@ -213,7 +224,11 @@ contract("Peggy", function(accounts) {
 
   describe("Unlocking of itemized ethereum", function() {
     beforeEach(async function() {
-      this.peggy = await Peggy.new();
+      this.initialValidators = [userOne, userTwo, userThree];
+      this.initialPowers = [5, 8, 12];
+
+      this.peggy = await Peggy.new(this.initialValidators, this.initialPowers);
+
       this.ethereumToken = "0x0000000000000000000000000000000000000000";
       this.weiAmount = web3.utils.toWei("0.25", "ether");
       this.recipient = web3.utils.utf8ToHex(
@@ -307,7 +322,7 @@ contract("Peggy", function(accounts) {
       Number(event.args._nonce).should.be.bignumber.equal(1);
     });
 
-    it("should update item lock statusit has been unlocked", async function() {
+    it("should update item lock status upon unlock", async function() {
       const startingLockStatus = await this.peggy.getStatus(this.itemId);
       startingLockStatus.should.be.equal(true);
 
@@ -318,154 +333,6 @@ contract("Peggy", function(accounts) {
 
       const endingLockStatus = await this.peggy.getStatus(this.itemId);
       endingLockStatus.should.be.equal(false);
-    });
-  });
-
-  describe("Withdrawal of items by sender", function() {
-    beforeEach(async function() {
-      this.peggy = await Peggy.new();
-      this.zeroxToken = "0xE41d2489571d322189246DaFA5ebDe1F4699F498";
-      this.ethereumToken = "0x0000000000000000000000000000000000000000";
-      this.weiAmount = web3.utils.toWei("0.25", "ether");
-      this.recipient = web3.utils.utf8ToHex(
-        "cosmosaccaddr985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
-      );
-      this.gasForLock = 300000; // 300,000 Gwei
-
-      // Load user account with tokens for testing
-      this.token = await TestToken.new();
-      await this.token.mint(userOne, 100, {
-        from: provider
-      }).should.be.fulfilled;
-
-      await this.token.approve(this.peggy.address, 100, {
-        from: userOne
-      }).should.be.fulfilled;
-      this.itemId = await this.peggy.lock.call(
-        this.recipient,
-        this.token.address,
-        100,
-        { from: userOne, gas: this.gasForLock }
-      ).should.be.fulfilled;
-      await this.peggy.lock(this.recipient, this.token.address, 100, {
-        from: userOne,
-        gas: this.gasForLock
-      }).should.be.fulfilled;
-
-      //Lower and upper bound to allow results in range of 0.01%
-      this.lowerBound = 0.9999;
-      this.upperBound = 1.0001;
-
-      //Set up gas constants
-      this.gasForLock = 500000; //500,000 Gwei
-      this.gasForWithdraw = 200000; //200,000 Gwei
-      this.gasPrice = 200000000000; //From truffle config
-    });
-
-    it("should not allow non-senders to withdraw other's items", async function() {
-      await this.peggy
-        .withdraw(this.itemId, { from: userThree, gas: this.gasForLock })
-        .should.be.rejectedWith(EVMRevert);
-    });
-
-    it("should allow senders to withdraw their own items", async function() {
-      await this.peggy.withdraw(this.itemId, {
-        from: userOne,
-        gas: this.gasForLock
-      }).should.be.fulfilled;
-    });
-
-    it("should return erc20 to user upon withdrawal of itemized funds", async function() {
-      //Confirm that the tokens are locked on the contract
-      const beforePeggyBalance = Number(
-        await this.token.balanceOf(this.peggy.address)
-      );
-      const beforeUserBalance = Number(await this.token.balanceOf(userOne));
-
-      beforePeggyBalance.should.be.bignumber.equal(100);
-      beforeUserBalance.should.be.bignumber.equal(0);
-
-      await this.peggy.withdraw(this.itemId, {
-        from: userOne,
-        gas: this.gasForWithdraw
-      }).should.be.fulfilled;
-
-      //Confirm that the tokens have been unlocked and transfered
-      const afterPeggyBalance = Number(
-        await this.token.balanceOf(this.peggy.address)
-      );
-      const afterUserBalance = Number(await this.token.balanceOf(userOne));
-
-      afterPeggyBalance.should.be.bignumber.equal(0);
-      afterUserBalance.should.be.bignumber.equal(100);
-    });
-
-    it("should return ethereum to user upon withdrawal of itemized funds", async function() {
-      const id = await this.peggy.lock.call(
-        this.recipient,
-        this.ethereumToken,
-        this.weiAmount,
-        { from: userTwo, value: this.weiAmount, gas: this.gasForLock }
-      ).should.be.fulfilled;
-      await this.peggy.lock(
-        this.recipient,
-        this.ethereumToken,
-        this.weiAmount,
-        { from: userTwo, value: this.weiAmount, gas: this.gasForLock }
-      ).should.be.fulfilled;
-
-      //Set up accepted withdrawal balance bounds
-      const lowestAcceptedBalance = this.weiAmount * this.lowerBound;
-      const highestAcceptedBalance = this.weiAmount * this.upperBound;
-
-      //Get prior balances of user and peggy contract
-      const beforeUserBalance = Number(await web3.eth.getBalance(userTwo));
-      const beforeContractBalance = Number(
-        await web3.eth.getBalance(this.peggy.address)
-      );
-
-      //Send withdrawal transaction and save gas expenditure
-      const txHash = await this.peggy.withdraw(id, {
-        from: userTwo,
-        gas: this.gasForWithdraw
-      }).should.be.fulfilled;
-      const gasCost = this.gasPrice * txHash.receipt.gasUsed;
-
-      //Get balances after withdrawal
-      const afterUserBalance = Number(await web3.eth.getBalance(userTwo));
-      const afterContractBalance = Number(
-        await web3.eth.getBalance(this.peggy.address)
-      );
-
-      //Check user's balances to confirm withdrawal
-      const userDifference = afterUserBalance - beforeUserBalance + gasCost;
-      userDifference.should.be.bignumber.within(
-        lowestAcceptedBalance,
-        highestAcceptedBalance
-      );
-
-      //Check contracts's balances to confirm withdrawal
-      const contractDifference = beforeContractBalance - afterContractBalance;
-      contractDifference.should.be.bignumber.within(
-        lowestAcceptedBalance,
-        highestAcceptedBalance
-      );
-    });
-
-    it("should emit an event upon user withdrawal containing the item's id", async function() {
-      //Get the event logs of a token withdrawl
-      const { logs } = await this.peggy.withdraw(this.itemId, {
-        from: userOne,
-        gas: this.gasForLock
-      }).should.be.fulfilled;
-      const event = logs.find(e => e.event === "LogWithdraw");
-
-      //Check the event's parameters
-      event.args._id.should.be.bignumber.equal(this.itemId);
-      event.args._to.should.be.equal(userOne);
-      event.args._token.should.be.equal(this.token.address);
-      Number(event.args._value).should.be.bignumber.equal(100);
-      Number(event.args._nonce).should.be.bignumber.equal(1);
     });
   });
 });

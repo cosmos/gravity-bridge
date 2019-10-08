@@ -6,6 +6,9 @@ contract CosmosBridge {
 
     using SafeMath for uint256;
 
+    /*
+    * @dev: Public variable declarations
+    */
     uint256 public cosmosBridgeNonce;
     mapping(uint256 => CosmosBridgeClaim) public cosmosBridgeClaims;
 
@@ -25,6 +28,9 @@ contract CosmosBridge {
         Status status;
     }
 
+    /*
+    * @dev: Event declarations
+    */
     event LogNewCosmosBridgeClaim(
         uint256 _cosmosBridgeNonce,
         uint256 _nonce,
@@ -36,13 +42,9 @@ contract CosmosBridge {
         uint256 _amount
     );
 
-    event LogProphecyProcessed(
-        uint256 _cosmosBridgeNonce,
-        uint256 _signedPower,
-        uint256 _totalPower,
-        address _submitter
-    );
-
+    /*
+    * @dev: Modifier to restrict access to completed CosmosBridgeClaims
+    */
     modifier isProcessing(
         uint256 _cosmosBridgeNonce
     )
@@ -54,14 +56,19 @@ contract CosmosBridge {
         _;
     }
 
+    /*
+    * @dev: Constructor
+    */
     constructor()
         public
     {
         cosmosBridgeNonce = 0;
     }
 
-    // TODO: Peggy public function protected by onlyValidator()
-    // Creates a new cosmos bridge claim, adding it to the cosmosBridgeClaims mapping
+    /*
+    * @dev: newCosmosBridgeClaim
+    *       Creates a new cosmos bridge claim, adding it to the cosmosBridgeClaims mapping
+    */
     function newCosmosBridgeClaim(
         uint256 _nonce,
         bytes memory _cosmosSender,
@@ -107,7 +114,10 @@ contract CosmosBridge {
         return true;
     }
 
-
+    /*
+    * @dev: getCosmosBridgeClaimStatus
+    *       Returns the current status of a CosmosBridgeClaim
+    */
     function getCosmosBridgeClaimStatus(
         uint256 _cosmosBridgeNonce
     )
