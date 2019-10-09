@@ -162,7 +162,7 @@ contract Peggy is CosmosBridge, Oracle, Bank, Processor {
     }
 
     /*
-    * @dev: makeOracleClaimOnCosmosBridgeClaim
+    * @dev: processProphecyOnOracleClaims
     *       Processes an attempted prophecy on a CosmosBridgeClaim's OracleClaims
     */
    function processProphecyOnOracleClaims(
