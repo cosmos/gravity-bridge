@@ -10,6 +10,8 @@ import (
 	tmLog "github.com/tendermint/tendermint/libs/log"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
 // InitCosmosRelayer : initializes a relayer which witnesses events on the Cosmos network and relays them to Ethereum
@@ -49,16 +51,23 @@ func InitCosmosRelayer(provider string, peggyContractAddress common.Address, raw
 				case "burn":
 					logger.Info("\tMsgBurn")
 					// TODO: Parse event attributes and pass them to txs.relayToEthereum
-					// err = txs.relayToEthereum(provider, peggyContractAddress, rawPrivateKey)
-					// if err != nil {
-					// 	return err
-					// }
+					err = txs.RelayToEthereum(provider, peggyContractAddress, rawPrivateKey)
+					if err != nil {
+						return err
+					}
 				case "create_claim":
 					logger.Info("\tMsgCreateClaim")
+					err = txs.RelayToEthereum(provider, peggyContractAddress, rawPrivateKey)
+					if err != nil {
+						return err
+					}
 				case "create_prophecy":
 					logger.Info("\tMsgCreateProphecy")
+					err = txs.RelayToEthereum(provider, peggyContractAddress, rawPrivateKey)
+					if err != nil {
+						return err
+					}
 				default:
-					logger.Info("")
 					// do nothing
 				}
 			}

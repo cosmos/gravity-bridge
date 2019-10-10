@@ -29,8 +29,8 @@ const (
 	ItemID = "2064e17083eed31b4a77fc929bedb9e97a1508b484b3a60185413ba58fd36b6d"
 )
 
-// relayToEthereum : relays the provided transaction data to a peggy smart contract deployed on Ethereum
-func relayToEthereum(provider string, peggyContractAddress common.Address, rawPrivateKey string) error {
+// RelayToEthereum : relays the provided transaction data to a peggy smart contract deployed on Ethereum
+func RelayToEthereum(provider string, peggyContractAddress common.Address, rawPrivateKey string) error {
 
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)
@@ -104,8 +104,9 @@ func relayToEthereum(provider string, peggyContractAddress common.Address, rawPr
 		log.Fatal(err)
 	}
 
+	fmt.Println("\nTx relayed to Ethereum\n")
 	fmt.Println("Tx hash:", tx.Hash().Hex())
-	fmt.Println("Status:", receipt.Status, "\n")
+	fmt.Println("Status:", receipt.Status)
 
 	return nil
 }
