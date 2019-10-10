@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,6 +15,8 @@ import (
 
 	// TODO: Refactor solc generation of Peggy.go
 	peggy "github.com/cosmos/peggy/cmd/ebrelayer/peggy"
+
+	"github.com/tendermint/tendermint/types"
 )
 
 const (
@@ -27,8 +30,45 @@ const (
 	ItemID = "2064e17083eed31b4a77fc929bedb9e97a1508b484b3a60185413ba58fd36b6d"
 )
 
+func initCosmosWebsocket() error {
+	client := client.NewHTTP("tcp:0.0.0.0:26657", "/websocket")
+	err := client.Start()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Cosmos Websocket started")
+
+	defer client.Stop()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	query := "tm.event = 'Tx'"
+	// query := "tm.event = 'Burn'"
+
+	txs, err := client.Subscribe(ctx, "test-client", query)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Cosmos Websocket subscribed to event")
+
+	go func() {
+		for e := range txs {
+			fmt.Println("got ", e.Data.(types.EventDataTx))
+		}
+	}()
+
+	return nil
+}
+
 // InitCosmosRelayer : initalizes a relayer which witnesses events on the Cosmos network and relays them to Ethereum
 func InitCosmosRelayer(peggyContractAddress common.Address, rawPrivateKey string) error {
+
+	err := initCosmosWebsocket()
+	if err != nil {
+		return err
+	}
 
 	// TODO: Parameterize the provider
 	provider := "http://localhost:7545"
