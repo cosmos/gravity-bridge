@@ -22,12 +22,12 @@ import (
 	"github.com/cosmos/peggy/x/ethbridge/types"
 )
 
-// RelayEvent : RelayEvent applies validator's signature to an EthBridgeClaim message
+// RelayToCosmos : RelayToCosmos applies validator's signature to an EthBridgeClaim message
 //		containing information about an event on the Ethereum blockchain before sending
 //		it to the Bridge blockchain. For this relay, the chain id (chainID) and codec
 //		(cdc) of the Bridge blockchain are required.
 //
-func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddress, moniker string, passphrase string, claim *types.EthBridgeClaim) error {
+func RelayToCosmos(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddress, moniker string, passphrase string, claim *types.EthBridgeClaim) error {
 
 	cliCtx := context.NewCLIContext().
 		WithCodec(cdc).

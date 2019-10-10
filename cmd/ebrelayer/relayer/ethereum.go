@@ -27,8 +27,8 @@ import (
 	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
-// InitRelayer : Starts an event listener on a specific network, contract, and event
-func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddress common.Address, eventSig string, validatorName string, passphrase string, validatorAddress sdk.ValAddress) error {
+// InitEthereumRelayer : Starts an event listener on a specific Ethereum network, contract, and event
+func InitEthereumRelayer(cdc *amino.Codec, chainId string, provider string, contractAddress common.Address, eventSig string, validatorName string, passphrase string, validatorAddress sdk.ValAddress) error {
 
 	// Start client with infura ropsten provider
 	client, err := SetupWebsocketEthClient(provider)
@@ -79,7 +79,7 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 				}
 
 				// Initiate the relay
-				err = txs.RelayEvent(chainId, cdc, validatorAddress, validatorName, passphrase, &claim)
+				err = txs.RelayToCosmos(chainId, cdc, validatorAddress, validatorName, passphrase, &claim)
 				if err != nil {
 					return err
 				}

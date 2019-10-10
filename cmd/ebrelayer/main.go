@@ -51,7 +51,7 @@ func init() {
 	// Construct Root Command
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
-		initRelayerCmd(),
+		initEthereumRelayerCmd(),
 		client.LineBreak,
 		initCosmosRelayerCmd(),
 	)
@@ -70,23 +70,23 @@ var rootCmd = &cobra.Command{
 	SilenceUsage: true,
 }
 
-//	initRelayerCmd : Initializes a relayer service run by individual
-//		validators which streams live events from a smart contract.
+//	initEthereumRelayerCmd : Initializes a relayer service run by individual
+//		validators which streams live events from an Ethereum smart contract.
 //		The service automatically signs messages containing the event
 //		data and relays them to tendermint for handling by the
 //		EthBridge module.
 //
-func initRelayerCmd() *cobra.Command {
-	initRelayerCmd := &cobra.Command{
-		Use:   "init [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id [chain-id]",
-		Short: "Initializes a web socket which streams live events from a smart contract",
+func initEthereumRelayerCmd() *cobra.Command {
+	initEthereumRelayerCmd := &cobra.Command{
+		Use:   "initEth [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id [chain-id]",
+		Short: "Initializes a web socket which streams live events from a smart contract and relays them to the Cosmos network",
 		Args:  cobra.ExactArgs(4),
 		// NOTE: Preface both parentheses in the event signature with a '\'
-		Example: "ebrelayer init wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 LogLock(bytes32,address,bytes,address,string,uint256,uint256) validator --chain-id=testing",
-		RunE:    RunRelayerCmd,
+		Example: "ebrelayer initEth wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 LogLock(bytes32,address,bytes,address,string,uint256,uint256) validator --chain-id=testing",
+		RunE:    RunEthereumRelayerCmd,
 	}
 
-	return initRelayerCmd
+	return initEthereumRelayerCmd
 }
 
 //	initCosmosRelayerCmd : Initializes a Cosmos relayer service run by individual
@@ -95,18 +95,18 @@ func initRelayerCmd() *cobra.Command {
 //
 func initCosmosRelayerCmd() *cobra.Command {
 	initCosmosRelayerCmd := &cobra.Command{
-		Use:     "start [contractAddress] [privateKey]",
-		Short:   "Initializes a web socket which streams live events from the Cosmos network",
-		Args:    cobra.ExactArgs(2),
-		Example: "ebrelayer start 0x0e8049380b9A686629f0Ae60E7248ba2252d7eB8 794e8f209245ae5136fb13c88aa287b4e12a2ba03f73023564857071d8f0e3d8",
+		Use:     "initCos [provider] [contractAddress] [privateKey]",
+		Short:   "Initializes a web socket which streams live events from the Cosmos network and relays them to the Ethereum network",
+		Args:    cobra.ExactArgs(3),
+		Example: "ebrelayer initCos http://localhost:8545 0x0e8049380b9A686629f0Ae60E7248ba2252d7eB8 794e8f209245ae5136fb13c88aa287b4e12a2ba03f73023564857071d8f0e3d8", // PK taken from truffle accounts[0]
 		RunE:    RunCosmosRelayerCmd,
 	}
 
 	return initCosmosRelayerCmd
 }
 
-// RunRelayerCmd executes the initRelayerCmd with the provided parameters
-func RunRelayerCmd(cmd *cobra.Command, args []string) error {
+// RunEthereumRelayerCmd executes the initEthereumRelayerCmd with the provided parameters
+func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Parse chain's ID
 	chainID := viper.GetString(client.FlagChainID)
 	if strings.TrimSpace(chainID) == "" {
@@ -155,7 +155,7 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Initialize the relayer
-	err = relayer.InitRelayer(
+	err = relayer.InitEthereumRelayer(
 		appCodec,
 		chainID,
 		ethereumProvider,
@@ -175,15 +175,18 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 // RunCosmosRelayerCmd executes the initCosmosRelayerCmd with the provided parameters
 func RunCosmosRelayerCmd(cmd *cobra.Command, args []string) error {
 
-	if !common.IsHexAddress(args[0]) {
-		return fmt.Errorf("Invalid contract-address: %v", args[0])
-	}
-	contractAddress := common.HexToAddress(args[0])
+	provider := args[0]
 
-	privateKey := args[1]
+	if !common.IsHexAddress(args[1]) {
+		return fmt.Errorf("Invalid contract-address: %v", args[1])
+	}
+	contractAddress := common.HexToAddress(args[1])
+
+	privateKey := args[2]
 
 	// Initialize the relayer
 	err := relayer.InitCosmosRelayer(
+		provider,
 		contractAddress,
 		privateKey)
 

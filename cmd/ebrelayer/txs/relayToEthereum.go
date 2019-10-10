@@ -1,24 +1,23 @@
-package relayer
+package txs
 
 import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+
 	"log"
 	"math/big"
-	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	// TODO: Refactor solc generation of Peggy.go
+	// TODO: Refactor solc generation of Peggy.go for compatibility with Truffle
 	peggy "github.com/cosmos/peggy/cmd/ebrelayer/peggy"
-
-	"github.com/tendermint/tendermint/types"
 )
 
+// TODO: Remove these test constants once event data is passed in params
 const (
 	// CosmosSender : hashed address "cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv"
 	CosmosSender = "0x636F736D6F7331676E38343039717139686E7278646533376B75787778356872787066707638343236737A7576"
@@ -30,48 +29,8 @@ const (
 	ItemID = "2064e17083eed31b4a77fc929bedb9e97a1508b484b3a60185413ba58fd36b6d"
 )
 
-func initCosmosWebsocket() error {
-	client := client.NewHTTP("tcp:0.0.0.0:26657", "/websocket")
-	err := client.Start()
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Cosmos Websocket started")
-
-	defer client.Stop()
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-
-	query := "tm.event = 'Tx'"
-	// query := "tm.event = 'Burn'"
-
-	txs, err := client.Subscribe(ctx, "test-client", query)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Cosmos Websocket subscribed to event")
-
-	go func() {
-		for e := range txs {
-			fmt.Println("got ", e.Data.(types.EventDataTx))
-		}
-	}()
-
-	return nil
-}
-
-// InitCosmosRelayer : initalizes a relayer which witnesses events on the Cosmos network and relays them to Ethereum
-func InitCosmosRelayer(peggyContractAddress common.Address, rawPrivateKey string) error {
-
-	err := initCosmosWebsocket()
-	if err != nil {
-		return err
-	}
-
-	// TODO: Parameterize the provider
-	provider := "http://localhost:7545"
+// relayToEthereum : relays the provided transaction data to a peggy smart contract deployed on Ethereum
+func relayToEthereum(provider string, peggyContractAddress common.Address, rawPrivateKey string) error {
 
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)
@@ -107,7 +66,6 @@ func InitCosmosRelayer(peggyContractAddress common.Address, rawPrivateKey string
 	// Set up tx signature authorization
 	auth := bind.NewKeyedTransactor(privateKey)
 	auth.Nonce = big.NewInt(int64(nonce))
-	// auth.Value = big.NewInt(WeiAmount) // in wei
 	auth.Value = big.NewInt(0)     // in wei
 	auth.GasLimit = uint64(300000) // 300,000 Gwei in units
 	auth.GasPrice = gasPrice
@@ -122,6 +80,7 @@ func InitCosmosRelayer(peggyContractAddress common.Address, rawPrivateKey string
 	itemID := [32]byte{}
 	copy(itemID[:], []byte(ItemID))
 
+	// TODO: Refactor unlock() on smart contract to accept (cosmosSender, ethereumRecipient, amount) instead of itemID
 	// cosmosSender := []byte{}
 	// copy(cosmosSender[:], []byte(CosmosSender))
 
@@ -134,7 +93,6 @@ func InitCosmosRelayer(peggyContractAddress common.Address, rawPrivateKey string
 	// amount := big.NewInt(WeiAmount)
 
 	// Send transaction to the instance's specified method
-	// TODO: Will be rejected unless already made
 	tx, err := instance.Unlock(auth, itemID) // cosmosSender, ethereumReceiver, amount
 	if err != nil {
 		log.Fatal(err)
