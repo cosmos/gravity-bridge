@@ -2,6 +2,7 @@ package relayer
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -42,15 +43,24 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, peggyCont
 		select {
 		case result := <-out:
 			tx := result.Data.(tmtypes.EventDataTx)
-			txIndex := result.Data.(tmtypes.EventDataTx).Index
+			// txIndex := result.Data.(tmtypes.EventDataTx).Index
 			logger.Info("\t New transaction witnessed")
-			logger.Info("\t Index:", txIndex)
+
+			// fmt.Println(tx)
+
+			runes := "[99] [111] [115] [109] [111] [115]" // 95 115 101 110 100 101 114]
+			outString := ""
+			for _, v := range runes {
+				outString += string(v)
+			}
+			fmt.Println(outString)
 
 			txRes := tx.Result
 			for i := 1; i < len(txRes.Events); i++ {
 				switch txRes.Events[i].Type {
 				case "burn":
 					logger.Info("\tMsgBurn")
+					fmt.Printf("%v", txRes.Events[i])
 					// TODO: Parse event attributes and pass them to txs.relayToEthereum
 					err = txs.RelayToEthereum(web3Provider, peggyContractAddress, rawPrivateKey)
 					if err != nil {
