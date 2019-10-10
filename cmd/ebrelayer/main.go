@@ -95,10 +95,10 @@ func initEthereumRelayerCmd() *cobra.Command {
 //
 func initCosmosRelayerCmd() *cobra.Command {
 	initCosmosRelayerCmd := &cobra.Command{
-		Use:     "initCos [provider] [contractAddress] [privateKey]",
+		Use:     "initCos [tendermintProvider] [web3Provider] [contractAddress] [privateKey]",
 		Short:   "Initializes a web socket which streams live events from the Cosmos network and relays them to the Ethereum network",
-		Args:    cobra.ExactArgs(3),
-		Example: "ebrelayer initCos http://localhost:8545 0x0e8049380b9A686629f0Ae60E7248ba2252d7eB8 794e8f209245ae5136fb13c88aa287b4e12a2ba03f73023564857071d8f0e3d8", // PK taken from truffle accounts[0]
+		Args:    cobra.ExactArgs(4),
+		Example: "ebrelayer initCos tcp://localhost:26657 http://localhost:8545 0x0e8049380b9A686629f0Ae60E7248ba2252d7eB8 794e8f209245ae5136fb13c88aa287b4e12a2ba03f73023564857071d8f0e3d8", // PK taken from truffle accounts[0]
 		RunE:    RunCosmosRelayerCmd,
 	}
 
@@ -175,18 +175,21 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 // RunCosmosRelayerCmd executes the initCosmosRelayerCmd with the provided parameters
 func RunCosmosRelayerCmd(cmd *cobra.Command, args []string) error {
 
-	provider := args[0]
+	tendermintProvider := args[0]
 
-	if !common.IsHexAddress(args[1]) {
-		return fmt.Errorf("Invalid contract-address: %v", args[1])
+	web3Provider := args[1]
+
+	if !common.IsHexAddress(args[2]) {
+		return fmt.Errorf("Invalid contract-address: %v", args[2])
 	}
-	contractAddress := common.HexToAddress(args[1])
+	contractAddress := common.HexToAddress(args[2])
 
-	privateKey := args[2]
+	privateKey := args[3]
 
 	// Initialize the relayer
 	err := relayer.InitCosmosRelayer(
-		provider,
+		tendermintProvider,
+		web3Provider,
 		contractAddress,
 		privateKey)
 

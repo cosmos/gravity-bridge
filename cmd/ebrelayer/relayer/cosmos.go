@@ -15,12 +15,11 @@ import (
 )
 
 // InitCosmosRelayer : initializes a relayer which witnesses events on the Cosmos network and relays them to Ethereum
-func InitCosmosRelayer(provider string, peggyContractAddress common.Address, rawPrivateKey string) error {
+func InitCosmosRelayer(tendermintProvider string, web3Provider string, peggyContractAddress common.Address, rawPrivateKey string) error {
 
 	logger := tmLog.NewTMLogger(tmLog.NewSyncWriter(os.Stdout))
 
-	// TODO: Parameterize tmclient provider
-	client := tmclient.NewHTTP("tcp://localhost:26657", "/websocket")
+	client := tmclient.NewHTTP(tendermintProvider, "/websocket")
 	client.SetLogger(logger)
 	err := client.Start()
 	if err != nil {
@@ -43,27 +42,29 @@ func InitCosmosRelayer(provider string, peggyContractAddress common.Address, raw
 		select {
 		case result := <-out:
 			tx := result.Data.(tmtypes.EventDataTx)
-			logger.Info("Tx witnessed:")
+			txIndex := result.Data.(tmtypes.EventDataTx).Index
+			logger.Info("\t New transaction witnessed")
+			logger.Info("\t Index:", txIndex)
 
-			txEvents := tx.Result.Events
-			for i := 1; i < len(txEvents); i++ {
-				switch txEvents[i].Type {
+			txRes := tx.Result
+			for i := 1; i < len(txRes.Events); i++ {
+				switch txRes.Events[i].Type {
 				case "burn":
 					logger.Info("\tMsgBurn")
 					// TODO: Parse event attributes and pass them to txs.relayToEthereum
-					err = txs.RelayToEthereum(provider, peggyContractAddress, rawPrivateKey)
+					err = txs.RelayToEthereum(web3Provider, peggyContractAddress, rawPrivateKey)
 					if err != nil {
 						return err
 					}
 				case "create_claim":
 					logger.Info("\tMsgCreateClaim")
-					err = txs.RelayToEthereum(provider, peggyContractAddress, rawPrivateKey)
+					err = txs.RelayToEthereum(web3Provider, peggyContractAddress, rawPrivateKey)
 					if err != nil {
 						return err
 					}
 				case "create_prophecy":
 					logger.Info("\tMsgCreateProphecy")
-					err = txs.RelayToEthereum(provider, peggyContractAddress, rawPrivateKey)
+					err = txs.RelayToEthereum(web3Provider, peggyContractAddress, rawPrivateKey)
 					if err != nil {
 						return err
 					}

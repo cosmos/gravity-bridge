@@ -104,7 +104,7 @@ func RelayToEthereum(provider string, peggyContractAddress common.Address, rawPr
 		log.Fatal(err)
 	}
 
-	fmt.Println("\nTx relayed to Ethereum\n")
+	fmt.Println("\nTx relayed to Ethereum")
 	fmt.Println("Tx hash:", tx.Hash().Hex())
 	fmt.Println("Status:", receipt.Status)
 
