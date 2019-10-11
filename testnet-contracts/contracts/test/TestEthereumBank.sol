@@ -1,15 +1,17 @@
 pragma solidity ^0.5.0;
 
-import "../Processor.sol";
+import "../EthereumBank.sol";
 
-contract TestProcessor is Processor {
+contract TestEthereumBank is EthereumBank {
 
-    event LogItemCreated(bytes32 _id);
-    
+    event LogNewEthereumDeposit(
+        bytes32 _id
+    );
+
     function() external payable {}
 
     //Wrapper function to test internal method
-    function callCreate(
+    function callNewEthereumDeposit(
         address payable _sender,
         bytes memory _recipient,
         address _token,
@@ -18,40 +20,40 @@ contract TestProcessor is Processor {
         public
         returns(bytes32)
     {
-        bytes32 id = create(_sender, _recipient, _token, _amount);
-        emit LogItemCreated(id);
+        bytes32 id = newEthereumDeposit(_sender, _recipient, _token, _amount);
+        emit LogNewEthereumDeposit(id);
         return id;
     }
 
     //Wrapper function to test internal method
-    function callComplete(
+    function callUnlockEthereumDeposit(
         bytes32 _id
     )
         public
     {
-        complete(_id);
+        unlockEthereumDeposit(_id);(_id);
     }
 
     //Wrapper function to test internal method
-    function callIsLocked(
+    function callIsLockedEthereumDeposit(
         bytes32 _id
     )
         public
         view
         returns(bool)
     {
-        return isLocked(_id);
+        return isLockedEthereumDeposit(_id);
     }
 
     //Wrapper function to test internal method
-    function callGetItem(
+    function callGetEthereumDeposit(
         bytes32 _id
     )
-        public 
+        public
         view
         returns(address, bytes memory, address, uint256, uint256)
     {
-        return getItem(_id);
+        return getEthereumDeposit(_id);
     }
 
 }

@@ -1,4 +1,4 @@
-const TestProcessor = artifacts.require("TestProcessor");
+const EthereumBank = artifacts.require("TestEthereumBank");
 const TestToken = artifacts.require("TestToken");
 
 const Web3Utils = require("web3-utils");
@@ -10,27 +10,27 @@ require("chai")
   .use(require("chai-bignumber")(BigNumber))
   .should();
 
-contract("TestProcessor", function(accounts) {
+contract("EthereumBank", function(accounts) {
   const userOne = accounts[1];
   const userTwo = accounts[2];
   const userThree = accounts[3];
 
-  describe("Processor contract deployment", function() {
+  describe("EthereumBank contract deployment", function() {
     beforeEach(async function() {
-      this.processor = await TestProcessor.new();
+      this.ethereumBank = await EthereumBank.new();
     });
 
-    it("should deploy the processor with the correct parameters", async function() {
-      this.processor.should.exist;
+    it("should deploy the EthereumBank with the correct parameters", async function() {
+      this.ethereumBank.should.exist;
 
-      const nonce = Number(await this.processor.nonce());
+      const nonce = Number(await this.ethereumBank.nonce());
       nonce.should.be.bignumber.equal(0);
     });
   });
 
-  describe("Item creation", function() {
+  describe("Locking of Ethereum deposits", function() {
     beforeEach(async function() {
-      this.processor = await TestProcessor.new();
+      this.ethereumBank = await EthereumBank.new();
       this.recipient = web3.utils.bytesToHex(["20bytestring"]);
       this.amount = 250;
 
@@ -41,8 +41,8 @@ contract("TestProcessor", function(accounts) {
       }).should.be.fulfilled;
     });
 
-    it("should allow for the creation of items", async function() {
-      await this.processor.callCreate(
+    it("should allow for the creation of Ethereum deposits", async function() {
+      await this.ethereumBank.callNewEthereumDeposit(
         userOne,
         this.recipient,
         this.token.address,
@@ -50,8 +50,8 @@ contract("TestProcessor", function(accounts) {
       ).should.be.fulfilled;
     });
 
-    it("should generate unique item id's for a created item", async function() {
-      //Simulate sha3 hash to get item's expected id
+    it("should generate unique deposit id's for a created deposit", async function() {
+      //Simulate sha3 hash to get deposit's expected id
       const expectedId = Web3Utils.soliditySha3(
         { t: "address payable", v: userOne },
         { t: "bytes", v: this.recipient },
@@ -60,8 +60,8 @@ contract("TestProcessor", function(accounts) {
         { t: "int256", v: 1 }
       );
 
-      //Get the item's id if it were to be created
-      const id = await this.processor.callCreate.call(
+      //Get the deposit's id if it were to be created
+      const id = await this.ethereumBank.callNewEthereumDeposit.call(
         userOne,
         this.recipient,
         this.token.address,
@@ -70,68 +70,68 @@ contract("TestProcessor", function(accounts) {
       id.should.be.equal(expectedId);
     });
 
-    it("should allow access to an item's information given it's unique id", async function() {
-      const id = await this.processor.callCreate.call(
+    it("should allow access to an Ethereum depoit's information given it's unique id", async function() {
+      const id = await this.ethereumBank.callNewEthereumDeposit.call(
         userOne,
         this.recipient,
         this.token.address,
         this.amount
       );
-      await this.processor.callCreate(
+      await this.ethereumBank.callNewEthereumDeposit(
         userOne,
         this.recipient,
         this.token.address,
         this.amount
       );
 
-      //Attempt to get an item's information
-      await this.processor.callGetItem(id).should.be.fulfilled;
+      //Attempt to get an deposit's information
+      await this.ethereumBank.callGetEthereumDeposit(id).should.be.fulfilled;
     });
 
     it("should correctly identify the existence of items in memory", async function() {
-      //Get the item's expected id then lock funds
-      const id = await this.processor.callCreate.call(
+      //Get the deposit's expected id then lock funds
+      const id = await this.ethereumBank.callNewEthereumDeposit.call(
         userOne,
         this.recipient,
         this.token.address,
         this.amount
       );
-      await this.processor.callCreate(
+      await this.ethereumBank.callNewEthereumDeposit(
         userOne,
         this.recipient,
         this.token.address,
         this.amount
       ).should.be.fulfilled;
 
-      //Check if item has been created and locked
-      const locked = await this.processor.callIsLocked(id);
+      //Check if a deposit has been created and locked
+      const locked = await this.ethereumBank.callIsLockedEthereumDeposit(id);
       locked.should.be.equal(true);
     });
 
     it("should store items with the correct parameters", async function() {
-      //Create the item and store its id
-      const id = await this.processor.callCreate.call(
+      //Create the deposit and store its id
+      const id = await this.ethereumBank.callNewEthereumDeposit.call(
         userOne,
         this.recipient,
         this.token.address,
         this.amount
       );
-      await this.processor.callCreate(
+      await this.ethereumBank.callNewEthereumDeposit(
         userOne,
         this.recipient,
         this.token.address,
         this.amount
       );
 
-      //Get the item's information
-      const itemInfo = await this.processor.callGetItem(id);
+      //Get the deposit's information
+      const depositData = await this.ethereumBank.callGetEthereumDeposit(id);
 
       //Parse each attribute
-      const sender = itemInfo[0];
-      const receiver = itemInfo[1];
-      const token = itemInfo[2];
-      const amount = Number(itemInfo[3]);
-      const nonce = Number(itemInfo[4]);
+      const sender = depositData[0];
+      const receiver = depositData[1];
+      const token = depositData[2];
+      const amount = Number(depositData[3]);
+      const nonce = Number(depositData[4]);
 
       //Confirm that each attribute is correct
       sender.should.be.equal(userOne);
@@ -142,25 +142,25 @@ contract("TestProcessor", function(accounts) {
     });
   });
 
-  describe("Item completion", function() {
+  describe("Unlocking of Ethereum deposits", function() {
     beforeEach(async function() {
-      this.processor = await TestProcessor.new();
+      this.ethereumBank = await EthereumBank.new();
       this.weiAmount = web3.utils.toWei("0.25", "ether");
       this.recipient = web3.utils.bytesToHex(["20bytestring"]);
       this.ethereumToken = "0x0000000000000000000000000000000000000000";
 
       //Load contract with ethereum so it can complete items
-      await this.processor.send(web3.utils.toWei("1", "ether"), {
+      await this.ethereumBank.send(web3.utils.toWei("1", "ether"), {
         from: accounts[0]
       }).should.be.fulfilled;
 
-      this.itemId = await this.processor.callCreate.call(
+      this.ethereumDepositID = await this.ethereumBank.callNewEthereumDeposit.call(
         userOne,
         this.recipient,
         this.ethereumToken,
         this.weiAmount
       );
-      await this.processor.callCreate(
+      await this.ethereumBank.callNewEthereumDeposit(
         userOne,
         this.recipient,
         this.ethereumToken,
@@ -169,27 +169,29 @@ contract("TestProcessor", function(accounts) {
     });
 
     it("should not allow for the completion of items whose value exceeds the contract's balance", async function() {
-      //Create an item with an overlimit amount
+      //Create an deposit with an overlimit amount
       const overlimitAmount = web3.utils.toWei("1.25", "ether");
-      const id = await this.processor.callCreate.call(
+      const id = await this.ethereumBank.callNewEthereumDeposit.call(
         userOne,
         this.recipient,
         this.ethereumToken,
         overlimitAmount
       );
-      await this.processor.callCreate(
+      await this.ethereumBank.callNewEthereumDeposit(
         userOne,
         this.recipient,
         this.ethereumToken,
         overlimitAmount
       );
 
-      //Attempt to complete the item
-      await this.processor.callComplete(id).should.be.rejectedWith(EVMRevert);
+      //Attempt to complete the deposit
+      await this.ethereumBank
+        .callUnlockEthereumDeposit(id)
+        .should.be.rejectedWith(EVMRevert);
     });
 
-    it("should not allow for the completion of non-items", async function() {
-      //Generate a false item id
+    it("should not allow for the unlocking of non-existant Ethereum deposits", async function() {
+      //Generate a fake Ethereum deposit id
       const fakeId = Web3Utils.soliditySha3(
         { t: "address payable", v: userOne },
         { t: "bytes", v: this.recipient },
@@ -198,51 +200,63 @@ contract("TestProcessor", function(accounts) {
         { t: "int256", v: 1 }
       );
 
-      await this.processor
+      await this.ethereumBank
         .callComplete(fakeId)
         .should.be.rejectedWith(EVMRevert);
     });
 
-    it("should not allow for the completion of an item that has already been completed", async function() {
-      //Complete the item
-      await this.processor.callComplete(this.itemId).should.be.fulfilled;
+    it("should not allow an Ethereum deposit that has already been unlocked to be unlocked", async function() {
+      //Complete the deposit
+      await this.ethereumBank.callUnlockEthereumDeposit(
+        this.ethereumDepositID
+      ).should.be.fulfilled;
 
-      //Attempt to complete the item again
-      await this.processor
-        .callComplete(this.itemId)
+      //Attempt to complete the deposit again
+      await this.ethereumBank
+        .callComplete(this.ethereumDepositID)
         .should.be.rejectedWith(EVMRevert);
     });
 
-    it("should allow for an item to be completed", async function() {
-      await this.processor.callComplete(this.itemId).should.be.fulfilled;
+    it("should allow for an Ethereum deposit to be unlocked", async function() {
+      await this.ethereumBank.callUnlockEthereumDeposit(
+        this.ethereumDepositID
+      ).should.be.fulfilled;
     });
 
-    it("should update lock status of items upon completion", async function() {
-      //Confirm that the item is active
-      const startingLockStatus = await this.processor.callIsLocked(this.itemId);
+    it("should update lock status of Ethereum deposits upon completion", async function() {
+      //Confirm that the deposit is active
+      const startingLockStatus = await this.ethereumBank.callIsLockedEthereumDeposit(
+        this.ethereumDepositID
+      );
       startingLockStatus.should.be.equal(true);
 
-      //Complete the item
-      await this.processor.callComplete(this.itemId).should.be.fulfilled;
+      //Complete the deposit
+      await this.ethereumBank.callUnlockEthereumDeposit(
+        this.ethereumDepositID
+      ).should.be.fulfilled;
 
-      //Check if the item still exists
-      const completedItem = await this.processor.callIsLocked(this.itemId);
-      completedItem.should.be.equal(false);
+      //Check if the deposit still exists
+      const completedDeposit = await this.ethereumBank.callIsLockedEthereumDeposit(
+        this.ethereumDepositID
+      );
+      completedDeposit.should.be.equal(false);
     });
 
-    it("should correctly transfer itemized funds to the original sender", async function() {
+    it("should correctly transfer locked funds to the original sender", async function() {
       //Get prior balances of user and peggy contract
       const beforeUserBalance = Number(await web3.eth.getBalance(userOne));
       const beforeContractBalance = Number(
-        await web3.eth.getBalance(this.processor.address)
+        await web3.eth.getBalance(this.ethereumBank.address)
       );
 
-      await this.processor.callComplete(this.itemId).should.be.fulfilled;
+      await this.ethereumBank.callUnlockEthereumDeposit(
+        this.ethereumDepositID
+      ).should.be.fulfilled;
 
       //Get balances after completion
       const afterUserBalance = Number(await web3.eth.getBalance(userOne));
       const afterContractBalance = Number(
-        await web3.eth.getBalance(this.processor.address)
+        await web3.eth.getBalance(this.ethereumBank.address)
       );
 
       //Expected balances

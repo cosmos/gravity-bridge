@@ -1,5 +1,5 @@
-const Bank = artifacts.require("TestBank");
-const BankToken = artifacts.require("BankToken");
+const CosmosBank = artifacts.require("TestCosmosBank");
+const CosmosToken = artifacts.require("CosmosToken");
 
 const EVMRevert = "revert";
 const BigNumber = web3.BigNumber;
@@ -16,38 +16,38 @@ contract("Bank", function(accounts) {
   const userTwo = accounts[2];
   const userThree = accounts[3];
 
-  describe("Bank smart contract deployment", function() {
-    it("should deploy the bank", async function() {
-      this.bank = await Bank.new();
-      this.bank.should.exist;
+  describe("CosmosBank smart contract deployment", function() {
+    it("should deploy the CosmosBank", async function() {
+      this.cosmosBank = await CosmosBank.new();
+      this.cosmosBank.should.exist;
     });
   });
 
-  describe("Bank token deployment", function() {
+  describe("Cosmos token deployment", function() {
     beforeEach(async function() {
-      this.bank = await Bank.new();
+      this.cosmosBank = await CosmosBank.new();
       this.symbol = "ABC";
     });
 
     it("should deploy new bank tokens", async function() {
-      await this.bank.callDeployBankToken(this.symbol, {
+      await this.cosmosBank.callDeployNewCosmosToken(this.symbol, {
         from: provider
       }).should.be.fulfilled;
     });
 
     // TODO: Once Peggy gas deployment issues are resolved, uncomment this test
     // it("should increase the token count upon new bank token deployment", async function() {
-    //   const priorTokenCount = await this.bank.numbTokens();
+    //   const priorTokenCount = await this.cosmosBank.numbTokens();
     //   priorTokenCount.should.be.equal(0);
 
-    //   await this.bank.callDeployBankToken(this.symbol, { from: provider });
+    //   await this.cosmosBank.callDeployBankToken(this.symbol, { from: provider });
 
-    //   const afterTokenCount = await this.bank.numbTokens();
+    //   const afterTokenCount = await this.cosmosBank.numbTokens();
     //   afterTokenCount.should.be.equal(1);
     // });
 
-    it("should return the new bank token's address", async function() {
-      const newBankTokenAddress = await this.bank.callDeployBankToken(
+    it("should return the new Cosmos token's address", async function() {
+      const newCosmosTokenAddress = await this.cosmosBank.calldeployNewCosmosToken(
         this.symbol,
         {
           from: provider
@@ -59,7 +59,7 @@ contract("Bank", function(accounts) {
 
     // TODO: Once Peggy gas deployment issues are resolved, uncomment this test
     // it("should emit event LogTokenDeployed containing the new bank token's address", async function() {
-    //   const expectedTokenAddress = await this.bank.callDeployBankToken(
+    //   const expectedTokenAddress = await this.cosmosBank.callDeployBankToken(
     //     this.symbol,
     //     {
     //       from: provider
@@ -71,9 +71,9 @@ contract("Bank", function(accounts) {
     // });
   });
 
-  describe("Bank token minting", function() {
+  describe("Cosmos token minting", function() {
     beforeEach(async function() {
-      this.bank = await Bank.new();
+      this.cosmosBank = await CosmosBank.new();
 
       this.token = "0x0000000000000000000000000000000000000000";
       this.symbol = "ABC";
@@ -82,14 +82,14 @@ contract("Bank", function(accounts) {
 
     // TODO: Once Peggy gas deployment issues are resolved, uncomment this test
     // it("should mint new bank tokens", async function() {
-    //   await this.bank.callDeliver(this.token, this.symbol, 100, userOne, {
+    //   await this.cosmosBank.callDeliver(this.token, this.symbol, 100, userOne, {
     //     from: provider
     //   }).should.be.fulfilled;
     // });
 
     // TODO: Once Peggy gas deployment issues are resolved, uncomment this test
     // it("should emit event LogBankTokenMint upon successful minting of bank tokens", async function() {
-    //   await this.bank.callDeliver(
+    //   await this.cosmosBank.callDeliver(
     //     this.token,
     //     this.symbol,
     //     this.amount,

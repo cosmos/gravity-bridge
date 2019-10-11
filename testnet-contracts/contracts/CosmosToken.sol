@@ -3,11 +3,11 @@ pragma solidity ^0.5.0;
 import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
 
 /**
- * @title BankToken
- * @dev Mintable ERC20 token controlled by bank contract
+ * @title CosmosToken
+ * @dev Mintable ERC20 token controlled by CosmosBank
  **/
 
-contract BankToken is ERC20Mintable {
+contract CosmosToken is ERC20Mintable {
 
     using SafeMath for uint256;
 
