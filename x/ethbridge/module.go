@@ -82,7 +82,6 @@ type AppModule struct {
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, codespace sdk.CodespaceType, cdc *codec.Codec) AppModule {
-
 	return AppModule{
 		AppModuleBasic:      AppModuleBasic{},
 		AppModuleSimulation: AppModuleSimulation{},
