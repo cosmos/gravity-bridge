@@ -1,7 +1,7 @@
 package relayer
 
 // -----------------------------------------------------
-//      Relayer
+//      Ethereum relayer
 //
 //      Initializes the relayer service, which parses,
 //      encodes, and packages named events on an Ethereum

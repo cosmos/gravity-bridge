@@ -48,7 +48,7 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, peggyCont
 
 			// fmt.Println(tx)
 
-			runes := "[99] [111] [115] [109] [111] [115]" // 95 115 101 110 100 101 114]
+			runes := [99, 111, 115,109, 111, 115, 95, 115, 101, 110, 100, 101, 114]
 			outString := ""
 			for _, v := range runes {
 				outString += string(v)
