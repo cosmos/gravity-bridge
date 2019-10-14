@@ -17,27 +17,27 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
     bool public active;
     mapping(bytes32 => bool) public ids;
 
-    event LogLock(
-        bytes32 _id,
-        address _from,
-        bytes _to,
-        address _token,
-        string _symbol,
-        uint256 _value,
-        uint256 _nonce
-    );
+    // event LogLock(
+    //     bytes32 _id,
+    //     address _from,
+    //     bytes _to,
+    //     address _token,
+    //     string _symbol,
+    //     uint256 _value,
+    //     uint256 _nonce
+    // );
 
     /*
     * @dev: Event declarations
     *
     */
-    event LogUnlock(
-        bytes32 _id,
-        address _to,
-        address _token,
-        uint256 _value,
-        uint256 _nonce
-    );
+    // event LogUnlock(
+    //     bytes32 _id,
+    //     address _to,
+    //     address _token,
+    //     uint256 _value,
+    //     uint256 _nonce
+    // );
 
     event LogWithdraw(
         bytes32 _id,
@@ -90,68 +90,69 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
     }
 
     /*
-     * @dev: Locks received funds and creates new items.
+     * @dev: Locks received Ethereum funds.
      *
      * @param _recipient: bytes representation of destination address.
      * @param _token: token address in origin chain (0x0 if ethereum)
-     * @param _amount: value of item
+     * @param _amount: value of deposit
      */
-    function lock(
-        bytes memory _recipient,
-        address _token,
-        uint256 _amount
-    )
-        public
-        payable
-        availableNonce()
-        whileActive()
-        returns(bytes32 _id)
-    {
-        string memory symbol;
+    // function lock(
+    //     bytes memory _recipient,
+    //     address _token,
+    //     uint256 _amount
+    // )
+    //     public
+    //     payable
+    //     availableNonce()
+    //     whileActive()
+    //     returns(bytes32 _id)
+    // {
+    //     string memory symbol;
 
-        // Ethereum deposit
-        if (msg.value != 0) {
-          require(
-              _token == address(0),
-              "Ethereum deposits require the 'token' address to be the null address"
-            );
-          require(
-              msg.value == _amount,
-              "The transactions value must be equal the specified amount (in wei)"
-            );
+    //     // Ethereum deposit
+    //     if (msg.value != 0) {
+    //       require(
+    //           _token == address(0),
+    //           "Ethereum deposits require the 'token' address to be the null address"
+    //         );
+    //       require(
+    //           msg.value == _amount,
+    //           "The transactions value must be equal the specified amount (in wei)"
+    //         );
 
-          // Set the the symbol to ETH
-          symbol = "ETH";
-          // ERC20 deposit
-        } else {
-          require(
-              TokenERC20(_token).transferFrom(msg.sender, address(this), _amount),
-              "Contract token allowances insufficient to complete this lock request"
-          );
-          // Set symbol to the ERC20 token's symbol
-          symbol = TokenERC20(_token).symbol();
-        }
+    //       // Set the the symbol to ETH
+    //       symbol = "ETH";
+    //       // ERC20 deposit
+    //     } else {
+    //       require(
+    //           TokenERC20(_token).transferFrom(msg.sender, address(this), _amount),
+    //           "Contract token allowances insufficient to complete this lock request"
+    //       );
+    //       // Set symbol to the ERC20 token's symbol
+    //       symbol = TokenERC20(_token).symbol();
+    //     }
 
         //Create a deposit with a unique key.
-        bytes32 id = newEthereumDeposit(
-            msg.sender,
-            _recipient,
-            _token,
-            _amount
-        );
+    //     bytes32 id = lockEthereumDeposit(
+    //         msg.sender,
+    //         _recipient,
+    //         _token,
+    //         symbol,
+    //         _amount
+    //     );
 
-        emit LogLock(
-            id,
-            msg.sender,
-            _recipient,
-            _token,
-            symbol,
-            _amount,
-            getNonce()
-        );
+    //     // emit LogLock(
+    //     //     id,
+    //     //     msg.sender,
+    //     //     _recipient,
+    //     //     _token,
+    //     //     symbol,
+    //     //     _amount,
+    //     //     getNonce()
+    //     // );
 
-        return id;
-    }
+    //     return id;
+    // }
 
     /*
      * @dev: Unlocks Cosmos deposits.
@@ -160,33 +161,33 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
      *
      * @param _id: Unique key of the CosmosDeposit.
      */
-    function unlock(
-        bytes32 _id
-    )
-        public
-        onlyProvider
-        canDeliver(_id)
-        returns (bool)
-    {
-        // TODO: Refactor this refundant check
-        require(isLockedEthereumDeposit(_id), "Must be locked");
+    // function unlock(
+    //     bytes32 _id
+    // )
+    //     public
+    //     onlyProvider
+    //     canDeliver(_id)
+    //     returns (bool)
+    // {
+    //     // TODO: Refactor this refundant check
+    //     require(isLockedEthereumDeposit(_id), "Must be locked");
 
-        // Unlock the deposit and transfer funds
-        (address payable sender,
-            address token,
-            uint256 amount,
-            uint256 uniqueNonce) = unlockEthereumDeposit(_id);
+    //     // Unlock the deposit and transfer funds
+    //     (address payable sender,
+    //         address token,
+    //         uint256 amount,
+    //         uint256 uniqueNonce) = unlockEthereumDeposit(_id);
 
         //Emit unlock event
-        emit LogUnlock(
-            _id,
-            sender,
-            token,
-            amount,
-            uniqueNonce
-        );
-        return true;
-    }
+        // emit LogUnlock(
+        //     _id,
+        //     sender,
+        //     token,
+        //     amount,
+        //     uniqueNonce
+        // );
+    //     return true;
+    // }
 
     /*
     * @dev: makeOracleClaimOnCosmosBridgeClaim
@@ -251,86 +252,86 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
         // Update the CosmosBridgeClaim's status to completed
         cosmosBridgeClaim.status = Status.Completed;
 
-        mintCosmosToken(
-            cosmosBridgeClaim.cosmosSender,
-            cosmosBridgeClaim.ethereumReceiver,
-            cosmosBridgeClaim.tokenAddress,
-            cosmosBridgeClaim.symbol,
-            cosmosBridgeClaim.amount
-        );
+        // BridgeBank.mintCosmosToken(
+        //     cosmosBridgeClaim.cosmosSender,
+        //     cosmosBridgeClaim.ethereumReceiver,
+        //     cosmosBridgeClaim.tokenAddress,
+        //     cosmosBridgeClaim.symbol,
+        //     cosmosBridgeClaim.amount
+        // );
     }
 
-    /*
-    * @dev: Exposes an item's current status.
-    *
-    * @param _id: The item in question.
-    * @return: Boolean indicating the lock status.
-    */
-    function getEthereumDepositStatus(
-        bytes32 _id
-    )
-        public
-        view
-        returns(bool)
-    {
-        return isLockedEthereumDeposit(_id);
-    }
+    // /*
+    // * @dev: Exposes an item's current status.
+    // *
+    // * @param _id: The item in question.
+    // * @return: Boolean indicating the lock status.
+    // */
+    // function getEthereumDepositStatus(
+    //     bytes32 _id
+    // )
+    //     public
+    //     view
+    //     returns(bool)
+    // {
+    //     return isLockedEthereumDeposit(_id);
+    // }
 
-    /*
-    * @dev: Exposes an item's current status.
-    *
-    * @param _id: The item in question.
-    * @return: Boolean indicating the lock status.
-    */
-    function getCosmosDepositStatus(
-        bytes32 _id
-    )
-        public
-        view
-        returns(bool)
-    {
-        return isLockedCosmosDeposit(_id);
-    }
+    // /*
+    // * @dev: Exposes an item's current status.
+    // *
+    // * @param _id: The item in question.
+    // * @return: Boolean indicating the lock status.
+    // */
+    // function getCosmosDepositStatus(
+    //     bytes32 _id
+    // )
+    //     public
+    //     view
+    //     returns(bool)
+    // {
+    //     return isLockedCosmosDeposit(_id);
+    // }
 
-    /*
-    * @dev: Allows access to an Ethereum deposit's information via its unique identifier.
-    *
-    * @param _id: The deposit to be viewed.
-    * @return: Original sender's Ethereum address.
-    * @return: Intended Cosmos recipient's address in bytes.
-    * @return: The lock deposit's currency, denoted by a token address.
-    * @return: The amount locked in the deposit.
-    * @return: The deposit's unique nonce.
-    */
-    function viewEthereumDeposit(
-        bytes32 _id
-    )
-        public
-        view
-        returns(address, bytes memory, address, uint256, uint256)
-    {
-        return getEthereumDeposit(_id);
-    }
+    // /*
+    // * @dev: Allows access to an Ethereum deposit's information via its unique identifier.
+    // *
+    // * @param _id: The deposit to be viewed.
+    // * @return: Original sender's Ethereum address.
+    // * @return: Intended Cosmos recipient's address in bytes.
+    // * @return: The lock deposit's currency, denoted by a token address.
+    // * @return: The amount locked in the deposit.
+    // * @return: The deposit's unique nonce.
+    // */
+    // function viewEthereumDeposit(
+    //     bytes32 _id
+    // )
+    //     public
+    //     view
+    //     returns(address, bytes memory, address, uint256, uint256)
+    // {
+    //     return getEthereumDeposit(_id);
+    // }
 
-    /*
-    * @dev: Allows access to a Cosmos deposit's information via its unique identifier.
-    *
-    * @param _id: The deposit to be viewed.
-    * @return: Original sender's Ethereum address.
-    * @return: Intended Cosmos recipient's address in bytes.
-    * @return: The lock deposit's currency, denoted by a token address.
-    * @return: The amount locked in the deposit.
-    * @return: The deposit's unique nonce.
-    */
-    function viewCosmosDeposit(
-        bytes32 _id
-    )
-        public
-        view
-        returns(bytes memory, address payable, address, uint256)
-    {
-        return getCosmosDeposit(_id);
-    }
+    // /*
+    // * @dev: Allows access to a Cosmos deposit's information via its unique identifier.
+    // *
+    // * @param _id: The deposit to be viewed.
+    // * @return: Original sender's Ethereum address.
+    // * @return: Intended Cosmos recipient's address in bytes.
+    // * @return: The lock deposit's currency, denoted by a token address.
+    // * @return: The amount locked in the deposit.
+    // * @return: The deposit's unique nonce.
+    // */
+    // function viewCosmosDeposit(
+    //     bytes32 _id
+    // )
+    //     public
+    //     view
+    //     returns(bytes memory, address payable, address, uint256)
+    // {
+    //     return getCosmosDeposit(_id);
+    // }
 
     /*
     * @dev: Provider can pause fund locking without impacting other functionality.

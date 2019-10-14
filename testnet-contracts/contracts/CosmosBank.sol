@@ -5,15 +5,16 @@ import "./CosmosToken.sol";
 
 /**
  * @title CosmosBank
- * @dev Manages the deployment and minting of ERC20 compatible CosmosTokens
+ * @dev Manages the deployment and minting of ERC20 compatible tokens which
+ *      represent assets based on the Cosmos blockchain.
  **/
 
 contract CosmosBank {
 
     using SafeMath for uint256;
 
-    mapping(address => bool) public cosmosTokens;
     uint256 public cosmosTokenCount;
+    mapping(address => bool) public bankTokenWhitelist;
     mapping(bytes32 => CosmosDeposit) cosmosDeposits;
 
     struct CosmosDeposit {
@@ -28,12 +29,12 @@ contract CosmosBank {
     /*
     * @dev: Event declarations
     */
-    event LogCosmosTokenDeploy(
+    event LogNewBankToken(
         address _token,
         string _symbol
     );
 
-    event LogCosmosTokenMint(
+    event LogBankTokenMint(
         address _token,
         string _symbol,
         uint256 _amount,
@@ -56,6 +57,7 @@ contract CosmosBank {
     * @param _amount: The amount in the deposit.
     * @return: The newly created CosmosDeposit's unique id.
     */
+    // TODO: Only called by validators
     function newCosmosDeposit(
         bytes memory _cosmosSender,
         address payable _ethereumRecipient,
@@ -91,54 +93,6 @@ contract CosmosBank {
     }
 
     /*
-     * @dev: Mints new cosmos tokens
-     *
-     * @param _cosmosSender: The sender's Cosmos address in bytes.
-     * @param _ethereumRecipient: The intended recipient's Ethereum address.
-     * @param _cosmosTokenAddress: The currency type
-     * @param _symbol: comsos token symbol
-     * @param _amount: number of comsos tokens to be minted
-\    d*/
-     function mintCosmosToken(
-        bytes memory _cosmosSender,
-        address payable _intendedRecipient,
-        address _cosmosTokenAddress,
-        string memory _symbol,
-        uint256 _amount
-    )
-        internal
-    {
-        // If no comsos token address, deploy a new comsos token
-        address cosmosTokenAddress = _cosmosTokenAddress;
-        if(!cosmosTokens[cosmosTokenAddress]) {
-            cosmosTokenAddress = deployNewCosmosToken(_symbol);
-        } else {
-            cosmosTokenAddress = _cosmosTokenAddress;
-        }
-
-        // Must be cosmos token controlled by the CosmosBank
-        require(
-            cosmosTokens[cosmosTokenAddress],
-            "Invalid cosmos token address"
-        );
-
-        // Mint bank tokens
-        require(
-            CosmosToken(cosmosTokenAddress).mint(address(this), _amount),
-            "Attempted mint of cosmos tokens failed"
-        );
-
-        newCosmosDeposit(
-            _cosmosSender,
-            _intendedRecipient,
-            cosmosTokenAddress,
-            _amount
-        );
-
-        emit LogCosmosTokenMint(cosmosTokenAddress, _symbol, _amount, _intendedRecipient);
-    }
-
-    /*
      * @dev: Deploys a new cosmos token contract
      *
      * @param _symbol: cosmos token symbol
@@ -151,21 +105,68 @@ contract CosmosBank {
     {
         cosmosTokenCount = cosmosTokenCount.add(1);
 
-        // TODO: cosmosToken contract deployment puts Peggy over gas limit, causing deployment to fail
         // Deploy new cosmos token contract
-        // CosmosToken newCosmosToken = (new CosmosToken)(_symbol);
+        CosmosToken newCosmosToken = (new CosmosToken)(_symbol);
 
         // Set address in tokens mapping
-        // address newCosmosTokenAddress = address(newCosmosToken);
-        address newCosmosTokenAddress = address(0);
-        cosmosTokens[newCosmosTokenAddress] = true;
+        address newCosmosTokenAddress = address(newCosmosToken);
+        bankTokenWhitelist[newCosmosTokenAddress] = true;
 
-        emit LogCosmosTokenDeploy(
+        emit LogNewBankToken(
             newCosmosTokenAddress,
             _symbol
         );
 
         return newCosmosTokenAddress;
+    }
+
+    // TODO: Only called by validators
+    /*
+     * @dev: Mints new cosmos tokens
+     *
+     * @param _cosmosSender: The sender's Cosmos address in bytes.
+     * @param _ethereumRecipient: The intended recipient's Ethereum address.
+     * @param _cosmosTokenAddress: The currency type
+     * @param _symbol: comsos token symbol
+     * @param _amount: number of comsos tokens to be minted
+\    */
+     function mintNewBankTokens(
+        bytes memory _cosmosSender,
+        address payable _intendedRecipient,
+        address _cosmosTokenAddress,
+        string memory _symbol,
+        uint256 _amount
+    )
+        internal
+    {
+        // Must be whitelisted token
+        require(
+            bankTokenWhitelist[_cosmosTokenAddress],
+            "Token must be on CosmosBank's whitelist"
+        );
+
+        // Mint bank tokens
+        require(
+            CosmosToken(_cosmosTokenAddress).mint(
+                address(this),
+                _amount
+            ),
+            "Attempted mint of cosmos tokens failed"
+        );
+
+        newCosmosDeposit(
+            _cosmosSender,
+            _intendedRecipient,
+            _cosmosTokenAddress,
+            _amount
+        );
+
+        emit LogBankTokenMint(
+            _cosmosTokenAddress,
+            _symbol,
+            _amount,
+            _intendedRecipient
+        );
     }
 
     /*
@@ -199,7 +200,7 @@ contract CosmosBank {
     )
         internal
         view
-        returns(bytes memory, address payable, address, uint256) //, uint256)
+        returns(bytes memory, address payable, address, uint256)
     {
         CosmosDeposit memory deposit = cosmosDeposits[_id];
 
@@ -210,6 +211,4 @@ contract CosmosBank {
             deposit.amount
         ); // deposit.nonce
     }
-
-
 }

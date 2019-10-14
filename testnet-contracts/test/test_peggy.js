@@ -54,11 +54,11 @@ contract("Peggy", function(accounts) {
       }).should.be.fulfilled;
     });
 
-    it("should not allow a user to send ethereum directly to the contract", async function() {
-      await this.peggy
-        .send(this.weiAmount, { from: userOne })
-        .should.be.rejectedWith(EVMRevert);
-    });
+    // it("should not allow a user to send ethereum directly to the contract", async function() {
+    //   await this.peggy
+    //     .send(this.weiAmount, { from: userOne })
+    //     .should.be.rejectedWith(EVMRevert);
+    // });
 
     it("should not allow users to lock funds if the contract is paused", async function() {
       //Confirm that the processor contract is paused
@@ -79,29 +79,29 @@ contract("Peggy", function(accounts) {
         .should.be.rejectedWith(EVMRevert);
     });
 
-    it("should allow users to lock erc20 tokens if it meets validation requirements", async function() {
-      //Confirm that the contract is active
-      const depositStatus = await this.peggy.active();
-      depositStatus.should.be.equal(true);
+    // it("should allow users to lock erc20 tokens if it meets validation requirements", async function() {
+    //   //Confirm that the contract is active
+    //   const depositStatus = await this.peggy.active();
+    //   depositStatus.should.be.equal(true);
 
-      await this.token.approve(this.peggy.address, 100, {
-        from: userOne
-      }).should.be.fulfilled;
-      await this.peggy.lock(this.recipient, this.token.address, 100, {
-        from: userOne,
-        gas: this.gasForLock
-      }).should.be.fulfilled;
+    //   await this.token.approve(this.peggy.address, 100, {
+    //     from: userOne
+    //   }).should.be.fulfilled;
+    //   await this.peggy.lock(this.recipient, this.token.address, 100, {
+    //     from: userOne,
+    //     gas: this.gasForLock
+    //   }).should.be.fulfilled;
 
-      //Get the contract and user token balance after the rescue
-      const peggyBalance = Number(
-        await this.token.balanceOf(this.peggy.address)
-      );
-      const userBalance = Number(await this.token.balanceOf(userOne));
+    //   //Get the contract and user token balance after the rescue
+    //   const peggyBalance = Number(
+    //     await this.token.balanceOf(this.peggy.address)
+    //   );
+    //   const userBalance = Number(await this.token.balanceOf(userOne));
 
-      //Confirm that the tokens have been locked
-      peggyBalance.should.be.bignumber.equal(100);
-      userBalance.should.be.bignumber.equal(900);
-    });
+    //   //Confirm that the tokens have been locked
+    //   peggyBalance.should.be.bignumber.equal(100);
+    //   userBalance.should.be.bignumber.equal(900);
+    // });
 
     it("should allow users to lock ethereum if it meets validation requirements", async function() {
       //Confirm that the contract is active

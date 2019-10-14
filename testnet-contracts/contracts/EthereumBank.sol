@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+// import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "./TokenERC20.sol";
 
   /*
@@ -28,6 +28,27 @@ contract EthereumBank {
 
     uint256 public nonce;
     mapping(bytes32 => EthereumDeposit) private ethereumDeposits;
+
+    /*
+    * @dev: Event declarations
+    */
+    event LogLock(
+        bytes32 _id,
+        address _from,
+        bytes _to,
+        address _token,
+        string _symbol,
+        uint256 _value,
+        uint256 _nonce
+    );
+
+    event LogUnlock(
+        bytes32 _id,
+        address _to,
+        address _token,
+        uint256 _value,
+        uint256 _nonce
+    );
 
     /*
     * @dev: Constructor, initalizes item count.
@@ -70,7 +91,7 @@ contract EthereumBank {
     }
 
     /*
-    * @dev: Creates an item with a unique id.
+    * @dev: Creates a new Ethereum deposit with a unique id.
     *
     * @param _sender: The sender's ethereum address.
     * @param _recipient: The intended recipient's cosmos address.
@@ -82,12 +103,13 @@ contract EthereumBank {
         address payable _sender,
         bytes memory _recipient,
         address _token,
+        string memory _symbol,
         uint256 _amount
     )
         internal
         returns(bytes32)
     {
-        nonce++;
+        nonce = nonce.add(1);
 
         bytes32 depositID = keccak256(
             abi.encodePacked(
@@ -108,6 +130,16 @@ contract EthereumBank {
             true
         );
 
+         emit LogLock(
+            depositID,
+            _sender,
+            _recipient,
+            _token,
+            _symbol,
+            _amount,
+            nonce
+        );
+
         return depositID;
     }
 
@@ -122,7 +154,7 @@ contract EthereumBank {
     )
         internal
         canDeliver(_id)
-        returns(address payable, address, uint256, uint256)
+        returns(bool)
     {
         require(
             isLockedEthereumDeposit(_id),
@@ -148,20 +180,16 @@ contract EthereumBank {
             );
         }
 
-        return(sender, token, amount, uniqueNonce);
-    }
+        //Emit unlock event
+        emit LogUnlock(
+            _id,
+            sender,
+            token,
+            amount,
+            uniqueNonce
+        );
 
-    /*
-    * @dev: Checks the current nonce.
-    *
-    * @return: The current nonce.
-    */
-    function getNonce()
-        internal
-        view
-        returns(uint256)
-    {
-        return nonce;
+        return true;
     }
 
     /*
