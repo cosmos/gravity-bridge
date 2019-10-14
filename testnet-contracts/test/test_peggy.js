@@ -177,7 +177,7 @@ contract("Peggy", function(accounts) {
       await this.token.approve(this.peggy.address, 100, {
         from: userOne
       }).should.be.fulfilled;
-      this.itemId = await this.peggy.lock.call(
+      this.depositId = await this.peggy.lock.call(
         this.recipient,
         this.token.address,
         100,
@@ -189,18 +189,18 @@ contract("Peggy", function(accounts) {
       }).should.be.fulfilled;
     });
 
-    it("should allow for public viewing of a locked item's information", async function() {
-      //Get the item struct's information
-      const itemInfo = await this.peggy.viewItem(this.itemId, {
+    it("should allow for public viewing of a locked ethereum deposit's information", async function() {
+      //Get the ethereum deposit struct's information
+      const depositInfo = await this.peggy.viewEthereumDeposit(this.depositId, {
         from: provider
       }).should.be.fulfilled;
 
       //Parse each attribute
-      const sender = itemInfo[0];
-      const receiver = itemInfo[1];
-      const token = itemInfo[2];
-      const amount = Number(itemInfo[3]);
-      const nonce = Number(itemInfo[4]);
+      const sender = depositInfo[0];
+      const receiver = depositInfo[1];
+      const token = depositInfo[2];
+      const amount = Number(depositInfo[3]);
+      const nonce = Number(depositInfo[4]);
 
       //Confirm that each attribute is correct
       sender.should.be.equal(userOne);
@@ -211,13 +211,13 @@ contract("Peggy", function(accounts) {
     });
 
     it("should correctly encode and decode the intended recipient's address", async function() {
-      //Get the item struct's information
-      const itemInfo = await this.peggy.viewItem(this.itemId, {
+      //Get the ethereum deposit struct's information
+      const depositInfo = await this.peggy.viewEthereumDeposit(this.depositId, {
         from: provider
       }).should.be.fulfilled;
 
       //Decode the stored recipient's address and compare it the original
-      const receiver = web3.utils.hexToUtf8(itemInfo[1]);
+      const receiver = web3.utils.hexToUtf8(depositInfo[1]);
       receiver.should.be.equal(cosmosAddr);
     });
   });
@@ -245,7 +245,7 @@ contract("Peggy", function(accounts) {
       await this.token.approve(this.peggy.address, 100, {
         from: userOne
       }).should.be.fulfilled;
-      this.itemId = await this.peggy.lock.call(
+      this.depositId = await this.peggy.lock.call(
         this.recipient,
         this.token.address,
         100,
@@ -277,7 +277,7 @@ contract("Peggy", function(accounts) {
     });
 
     it("should allow the provider to unlock itemized erc20 tokens", async function() {
-      await this.peggy.unlock(this.itemId, {
+      await this.peggy.unlock(this.depositId, {
         from: provider,
         gas: this.gasForLock
       }).should.be.fulfilled;
@@ -293,7 +293,7 @@ contract("Peggy", function(accounts) {
       beforePeggyBalance.should.be.bignumber.equal(100);
       beforeUserBalance.should.be.bignumber.equal(0);
 
-      await this.peggy.unlock(this.itemId, {
+      await this.peggy.unlock(this.depositId, {
         from: provider,
         gas: this.gasForLock
       });
@@ -310,7 +310,7 @@ contract("Peggy", function(accounts) {
 
     it("should emit an event upon unlock containing the ecrow's recipient, token, amount, and nonce", async function() {
       //Get the event logs of an unlock
-      const { logs } = await this.peggy.unlock(this.itemId, {
+      const { logs } = await this.peggy.unlock(this.depositId, {
         from: provider,
         gas: this.gasForLock
       });
@@ -322,16 +322,20 @@ contract("Peggy", function(accounts) {
       Number(event.args._nonce).should.be.bignumber.equal(1);
     });
 
-    it("should update item lock status upon unlock", async function() {
-      const startingLockStatus = await this.peggy.getStatus(this.itemId);
+    it("should update deposit lock status upon unlock", async function() {
+      const startingLockStatus = await this.peggy.getEthereumDepositStatus(
+        this.depositId
+      );
       startingLockStatus.should.be.equal(true);
 
-      await this.peggy.unlock(this.itemId, {
+      await this.peggy.unlock(this.depositId, {
         from: provider,
         gas: this.gasForLock
       });
 
-      const endingLockStatus = await this.peggy.getStatus(this.itemId);
+      const endingLockStatus = await this.peggy.getEthereumDepositStatus(
+        this.depositId
+      );
       endingLockStatus.should.be.equal(false);
     });
   });

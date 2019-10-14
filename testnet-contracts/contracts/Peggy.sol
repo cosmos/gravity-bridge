@@ -122,11 +122,11 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
 
           // Set the the symbol to ETH
           symbol = "ETH";
-          // ERC@) deposit
+          // ERC20 deposit
         } else {
           require(
               TokenERC20(_token).transferFrom(msg.sender, address(this), _amount),
-              "Peggy does not have sufficient token allowaneces to complete this lock request"
+              "Contract token allowances insufficient to complete this lock request"
           );
           // Set symbol to the ERC20 token's symbol
           symbol = TokenERC20(_token).symbol();
@@ -154,7 +154,7 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
     }
 
     /*
-     * @dev: Unlocks Csomos deposits.
+     * @dev: Unlocks Cosmos deposits.
      *
      *       Replicate _id hash off-chain with sha3(cosmosSender, ethereumRecipient, amount) + nonce
      *
@@ -250,7 +250,7 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
 
         // Update the CosmosBridgeClaim's status to completed
         cosmosBridgeClaim.status = Status.Completed;
-        
+
         mintCosmosToken(
             cosmosBridgeClaim.cosmosSender,
             cosmosBridgeClaim.ethereumReceiver,
@@ -266,7 +266,7 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
     * @param _id: The item in question.
     * @return: Boolean indicating the lock status.
     */
-    function getEtheruemDepositStatus(
+    function getEthereumDepositStatus(
         bytes32 _id
     )
         public

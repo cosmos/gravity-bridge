@@ -1,7 +1,6 @@
 const Oracle = artifacts.require("TestOracle");
 
 const Web3Utils = require("web3-utils");
-const EthUtil = require("ethereumjs-util");
 const EVMRevert = "revert";
 const BigNumber = web3.BigNumber;
 

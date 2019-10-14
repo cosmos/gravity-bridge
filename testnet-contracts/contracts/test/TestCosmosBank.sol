@@ -44,7 +44,7 @@ contract TestCosmosBank is CosmosBank {
     }
 
     //Wrapper function to test internal method
-    function callDeployBankToken(
+    function callDeployNewCosmosToken(
         string memory _symbol
     )
         public

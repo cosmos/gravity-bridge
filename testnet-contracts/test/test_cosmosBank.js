@@ -9,7 +9,7 @@ require("chai")
   .use(require("chai-bignumber")(BigNumber))
   .should();
 
-contract("Bank", function(accounts) {
+contract("CosmosBank", function(accounts) {
   const provider = accounts[0];
 
   const userOne = accounts[1];
@@ -47,7 +47,7 @@ contract("Bank", function(accounts) {
     // });
 
     it("should return the new Cosmos token's address", async function() {
-      const newCosmosTokenAddress = await this.cosmosBank.calldeployNewCosmosToken(
+      const newCosmosTokenAddress = await this.cosmosBank.callDeployNewCosmosToken(
         this.symbol,
         {
           from: provider

@@ -201,7 +201,7 @@ contract("EthereumBank", function(accounts) {
       );
 
       await this.ethereumBank
-        .callComplete(fakeId)
+        .callUnlockEthereumDeposit(fakeId)
         .should.be.rejectedWith(EVMRevert);
     });
 
@@ -213,7 +213,7 @@ contract("EthereumBank", function(accounts) {
 
       //Attempt to complete the deposit again
       await this.ethereumBank
-        .callComplete(this.ethereumDepositID)
+        .callUnlockEthereumDeposit(this.ethereumDepositID)
         .should.be.rejectedWith(EVMRevert);
     });
 
