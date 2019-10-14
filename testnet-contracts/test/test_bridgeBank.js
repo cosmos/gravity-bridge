@@ -1,5 +1,6 @@
 const BridgeBank = artifacts.require("BridgeBank");
-const TestToken = artifacts.require("TestToken");
+const CosmosToken = artifacts.require("CosmosToken");
+// const Valset = artifacts.require("Valset");
 
 const Web3Utils = require("web3-utils");
 const EVMRevert = "revert";
@@ -44,7 +45,7 @@ contract("BridgeBank", function(accounts) {
     });
   });
 
-  describe("BridgeToken creation", function() {
+  describe("BridgeToken creation (Cosmos assets)", function() {
     beforeEach(async function() {
       this.bridgeBank = await BridgeBank.new(operator);
       this.symbol = "ABC";
@@ -161,7 +162,7 @@ contract("BridgeBank", function(accounts) {
     });
   });
 
-  describe("BankToken minting", function() {
+  describe("BankToken minting (Cosmos assets)", function() {
     beforeEach(async function() {
       this.bridgeBank = await BridgeBank.new(operator);
 
@@ -219,61 +220,33 @@ contract("BridgeBank", function(accounts) {
     });
   });
 
-  describe("Ethereum/ERC20 token locking", function() {
+  describe("BankToken deposit locking (Ethereum/ERC20 assets)", function() {
     beforeEach(async function() {
       this.bridgeBank = await BridgeBank.new(operator);
+
       this.recipient = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       );
-      this.amount = 250;
-      this.weiAmount = web3.utils.toWei("0.25", "ether");
-      // TODO: Need to set symbol correctly (use bank token?)
-      this.symbol = "";
+      // This is for Ethereum deposits
       this.ethereumToken = "0x0000000000000000000000000000000000000000";
-
-      this.token = await TestToken.new();
-      // this.gasForLock = 300000; // 300,000 Gwei
+      this.weiAmount = web3.utils.toWei("0.25", "ether");
+      // This is for ERC20 deposits
+      this.symbol = "TEST";
+      this.token = await CosmosToken.new(this.symbol);
+      this.amount = 100;
 
       //Load user account with ERC20 tokens for testing
       await this.token.mint(userOne, 1000, {
         from: operator
       }).should.be.fulfilled;
-    });
-
-    it("Testing ERC20 token minting", async function() {
-      const bridgeBankTokenBalance = Number(
-        await this.token.balanceOf(this.bridgeBank.address)
-      );
-      const userBalance = Number(await this.token.balanceOf(userOne));
-
-      console.log(bridgeBankTokenBalance);
-      console.log(userBalance);
 
       // Approve tokens to contract
-      await this.token.approve(this.bridgeBank.address, 100, {
+      await this.token.approve(this.bridgeBank.address, this.amount, {
         from: userOne
       }).should.be.fulfilled;
-
-      const bridgeBankTokenAllowance = Number(
-        await this.token.allowance(userOne, this.bridgeBank.address)
-      );
-
-      console.log(bridgeBankTokenAllowance);
-
-      await this.token.transferFrom(userOne, this.bridgeBank.address, 33, {
-        from: userOne
-      }).should.be.fulfilled;
-
-      // console.log(bridgeBankTokenBalance);
-      // console.log(userBalance);
     });
 
     it("should allow users to lock ERC20 tokens", async function() {
-      // Approve tokens to contract
-      await this.token.approve(this.bridgeBank.address, 100, {
-        from: userOne
-      }).should.be.fulfilled;
-
       // Attempt to lock tokens
       await this.bridgeBank.lock(
         this.recipient,
@@ -314,232 +287,300 @@ contract("BridgeBank", function(accounts) {
       );
     });
 
-    it("should allow users to lock ERC20 assets", async function() {
+    it("should generate unique deposit ID for a new deposit", async function() {
+      //Simulate sha3 hash to get deposit's expected id
+      const expectedID = Web3Utils.soliditySha3(
+        { t: "address payable", v: userOne },
+        { t: "bytes", v: this.recipient },
+        { t: "address", v: this.token.address },
+        { t: "int256", v: this.amount },
+        { t: "int256", v: 1 }
+      );
+
+      //Get the deposit's id if it were to be created
+      const depositID = await this.bridgeBank.lock.call(
+        this.recipient,
+        this.token.address,
+        this.amount,
+        {
+          from: userOne,
+          value: 0
+        }
+      );
+
+      depositID.should.be.equal(expectedID);
+    });
+
+    it("should correctly mark new deposits as locked", async function() {
+      //Get the deposit's expected id, then lock funds
+      const depositID = await this.bridgeBank.lock.call(
+        this.recipient,
+        this.token.address,
+        this.amount,
+        {
+          from: userOne,
+          value: 0
+        }
+      );
+
       await this.bridgeBank.lock(
         this.recipient,
         this.token.address,
         this.amount,
         {
-          from: userOne
+          from: userOne,
+          value: 0
         }
-      ).should.be.fulfilled;
+      );
+
+      //Check if a deposit has been created and locked
+      const locked = await this.bridgeBank.getEthereumDepositStatus(depositID);
+      locked.should.be.equal(true);
     });
 
-    // it("should generate unique deposit id's for a created deposit", async function() {
-    //   //Simulate sha3 hash to get deposit's expected id
-    //   const expectedID = Web3Utils.soliditySha3(
-    //     { t: "address payable", v: userOne },
-    //     { t: "bytes", v: this.recipient },
-    //     { t: "address", v: this.token.address },
-    //     { t: "int256", v: this.amount },
-    //     { t: "int256", v: 1 }
-    //   );
+    it("should be able to access the deposit's information by its ID", async function() {
+      //Get the deposit's expected id, then lock funds
+      const depositID = await this.bridgeBank.lock.call(
+        this.recipient,
+        this.token.address,
+        this.amount,
+        {
+          from: userOne,
+          value: 0
+        }
+      );
 
-    //   //Get the deposit's id if it were to be created
-    //   const depositID = await this.bridgeBank.lock.call(
-    //     userOne,
-    //     this.recipient,
-    //     this.token.address,
-    //     this.amount
-    //   );
+      await this.bridgeBank.lock(
+        this.recipient,
+        this.token.address,
+        this.amount,
+        {
+          from: userOne,
+          value: 0
+        }
+      );
 
-    //   depositID.should.be.equal(expectedID);
-    // });
+      //Attempt to get an deposit's information
+      await this.bridgeBank.viewEthereumDeposit(depositID).should.be.fulfilled;
+    });
 
-    // it("should correctly mark deposits as locked", async function() {
-    //   //Get the deposit's expected id, then lock funds
-    //   const depositID = await this.bridgeBank.lock.call(
-    //     userOne,
-    //     this.recipient,
-    //     this.token.address,
-    //     this.amount
-    //   );
+    it("should correctly store deposit information", async function() {
+      //Get the deposit's expected id, then lock funds
+      const depositID = await this.bridgeBank.lock.call(
+        this.recipient,
+        this.token.address,
+        this.amount,
+        {
+          from: userOne,
+          value: 0
+        }
+      );
 
-    //   await this.bridgeBank.lock(
-    //     userOne,
-    //     this.recipient,
-    //     this.token.address,
-    //     this.amount
-    //   );
+      await this.bridgeBank.lock(
+        this.recipient,
+        this.token.address,
+        this.amount,
+        {
+          from: userOne,
+          value: 0
+        }
+      );
 
-    //   //Check if a deposit has been created and locked
-    //   const locked = await this.bridgeBank.getEthereumDepositStatus(depositID);
-    //   locked.should.be.equal(true);
-    // });
+      //Get the deposit's information
+      const depositData = await this.bridgeBank.viewEthereumDeposit(depositID);
 
-    // it("should be able to access the deposit's information by its ID", async function() {
-    //   const depositID = await this.bridgeBank.lock.call(
-    //     userOne,
-    //     this.recipient,
-    //     this.token.address,
-    //     this.amount
-    //   );
+      //Parse each attribute
+      const sender = depositData[0];
+      const receiver = depositData[1];
+      const token = depositData[2];
+      const amount = Number(depositData[3]);
+      const nonce = Number(depositData[4]);
 
-    //   await this.bridgeBank.lock(
-    //     userOne,
-    //     this.recipient,
-    //     this.token.address,
-    //     this.amount
-    //   );
-
-    //   //Attempt to get an deposit's information
-    //   await this.bridgeBank.viewEthereumDeposit(depositID).should.be.fulfilled;
-    // });
-
-    // it("should correctly store deposit information", async function() {
-    //   //Get the deposit's expected id, then lock funds
-    //   const depositID = await this.bridgeBank.lock.call(
-    //     userOne,
-    //     this.recipient,
-    //     this.token.address,
-    //     this.amount
-    //   );
-
-    //   await this.bridgeBank.lock(
-    //     userOne,
-    //     this.recipient,
-    //     this.token.address,
-    //     this.amount
-    //   );
-
-    //   //Get the deposit's information
-    //   const depositData = await this.bridgeBank.viewEthereumDeposit(depositID);
-
-    //   //Parse each attribute
-    //   const sender = depositData[0];
-    //   const receiver = depositData[1];
-    //   const token = depositData[2];
-    //   const amount = Number(depositData[3]);
-    //   const nonce = Number(depositData[4]);
-
-    //   //Confirm that each attribute is correct
-    //   sender.should.be.equal(userOne);
-    //   receiver.should.be.equal(this.recipient);
-    //   token.should.be.equal(this.token.address);
-    //   amount.should.be.bignumber.equal(this.amount);
-    //   nonce.should.be.bignumber.equal(1);
-    // });
+      //Confirm that each attribute is correct
+      sender.should.be.equal(userOne);
+      receiver.should.be.equal(this.recipient);
+      token.should.be.equal(this.token.address);
+      amount.should.be.bignumber.equal(this.amount);
+      nonce.should.be.bignumber.equal(1);
+    });
   });
 
-  // describe("Unlocking of Ethereum deposits", function() {
-  //   beforeEach(async function() {
-  //     this.bridgeBank = await BridgeBank.new(operator);
-  //     this.recipient = web3.utils.bytesToHex([
-  //       "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
-  //     ]);
-  //     this.ethereumToken = "0x0000000000000000000000000000000000000000";
-  //     this.symbol = "eth";
-  //     this.weiAmount = web3.utils.toWei("0.25", "ether");
+  describe("BankToken deposit unlocking (Ethereum/ERC20 assets)", function() {
+    beforeEach(async function() {
+      this.bridgeBank = await BridgeBank.new(operator);
+      this.recipient = web3.utils.bytesToHex([
+        "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
+      ]);
+      // This is for Ethereum deposits
+      this.ethereumToken = "0x0000000000000000000000000000000000000000";
+      this.weiAmount = web3.utils.toWei("0.25", "ether");
+      // This is for ERC20 deposits
+      this.symbol = "TEST";
+      this.token = await CosmosToken.new(this.symbol);
+      this.amount = 100;
 
-  //     this.depositID = await this.bridgeBank.lock.call(
-  //       userOne,
-  //       this.recipient,
-  //       this.ethereumToken,
-  //       this.weiAmount
-  //     );
+      //Load contract with ethereum so it can complete items
+      await this.bridgeBank.send(web3.utils.toWei("1", "ether"), {
+        from: operator
+      }).should.be.fulfilled;
 
-  //     await this.bridgeBank.lock(
-  //       userOne,
-  //       this.recipient,
-  //       this.ethereumToken,
-  //       this.weiAmount
-  //     );
+      //Get the Ethereum deposit's expected id, then lock funds
+      this.depositID = await this.bridgeBank.lock.call(
+        this.recipient,
+        this.ethereumToken,
+        this.weiAmount,
+        {
+          from: userOne,
+          value: this.weiAmount
+        }
+      );
 
-  //     //Load contract with ethereum so it can complete items
-  //     await this.bridgeBank.send(web3.utils.toWei("1", "ether"), {
-  //       from: operator
-  //     }).should.be.fulfilled;
-  //   });
+      await this.bridgeBank.lock(
+        this.recipient,
+        this.ethereumToken,
+        this.weiAmount,
+        {
+          from: userOne,
+          value: this.weiAmount
+        }
+      );
 
-  //   // it("should not allow for the completion of items whose value exceeds the contract's balance", async function() {
-  //   //   //Create an deposit with an overlimit amount
-  //   //   const overlimitAmount = web3.utils.toWei("1.25", "ether");
-  //   //   const id = await this.ethereumBank.callNewEthereumDeposit.call(
-  //   //     userOne,
-  //   //     this.recipient,
-  //   //     this.ethereumToken,
-  //   //     overlimitAmount
-  //   //   );
-  //   //   await this.ethereumBank.callNewEthereumDeposit(
-  //   //     userOne,
-  //   //     this.recipient,
-  //   //     this.ethereumToken,
-  //   //     overlimitAmount
-  //   //   );
+      //Load user account with ERC20 tokens for testing
+      await this.token.mint(userOne, 1000, {
+        from: operator
+      }).should.be.fulfilled;
 
-  //   //   //Attempt to complete the deposit
-  //   //   await this.ethereumBank
-  //   //     .callUnlockEthereumDeposit(id)
-  //   //     .should.be.rejectedWith(EVMRevert);
-  //   // });
+      // Approve tokens to contract
+      await this.token.approve(this.bridgeBank.address, this.amount, {
+        from: userOne
+      }).should.be.fulfilled;
 
-  //   it("should not allow for the unlocking of non-existant Ethereum deposits", async function() {
-  //     //Generate a fake Ethereum deposit id
-  //     const fakeId = Web3Utils.soliditySha3(
-  //       { t: "address payable", v: userOne },
-  //       { t: "bytes", v: this.recipient },
-  //       { t: "address", v: this.ethereumToken },
-  //       { t: "int256", v: 12 },
-  //       { t: "int256", v: 1 }
-  //     );
+      //Get the deposit's expected id, then lock funds
+      this.erc20DepositID = await this.bridgeBank.lock.call(
+        this.recipient,
+        this.token.address,
+        this.amount,
+        {
+          from: userOne,
+          value: 0
+        }
+      );
 
-  //     await this.bridgeBank.unlock(fakeId).should.be.rejectedWith(EVMRevert);
-  //   });
+      await this.bridgeBank.lock(
+        this.recipient,
+        this.token.address,
+        this.amount,
+        {
+          from: userOne,
+          value: 0
+        }
+      );
+    });
 
-  //   it("should not allow an Ethereum deposit that has already been unlocked to be unlocked", async function() {
-  //     //Unlock the deposit
-  //     await this.bridgeBank.unlock(this.depositID).should.be.fulfilled;
+    it("should allow for an Ethereum deposit to be unlocked", async function() {
+      await this.bridgeBank.unlock(this.depositID).should.be.fulfilled;
+    });
 
-  //     //Attempt to Unlock the deposit again
-  //     await this.bridgeBank
-  //       .unlock(this.depositID)
-  //       .should.be.rejectedWith(EVMRevert);
-  //   });
+    it("should allow for an ERC20 deposit to be unlocked", async function() {
+      await this.bridgeBank.unlock(this.erc20DepositID).should.be.fulfilled;
+    });
 
-  //   it("should allow for an Ethereum deposit to be unlocked", async function() {
-  //     await this.bridgeBank.unlock(this.depositID).should.be.fulfilled;
-  //   });
+    it("should not allow for the unlocking of non-existant deposits", async function() {
+      //Generate a fake Ethereum deposit id
+      const fakeId = Web3Utils.soliditySha3(
+        { t: "address payable", v: userOne },
+        { t: "bytes", v: this.recipient },
+        { t: "address", v: this.ethereumToken },
+        { t: "int256", v: 12 },
+        { t: "int256", v: 1 }
+      );
 
-  //   it("should update lock status of Ethereum deposits upon completion", async function() {
-  //     //Confirm that the deposit is locked
-  //     const firstLockStatus = await this.bridgeBank.getEthereumDepositStatus(
-  //       this.depositID
-  //     );
-  //     firstLockStatus.should.be.equal(true);
+      await this.bridgeBank.unlock(fakeId).should.be.rejectedWith(EVMRevert);
+    });
 
-  //     //Unlock the deposit
-  //     await this.bridgeBank.unlock(this.depositID).should.be.fulfilled;
+    it("should not allow an unlocked deposit to be unlocked again", async function() {
+      //Unlock the deposit
+      await this.bridgeBank.unlock(this.depositID).should.be.fulfilled;
 
-  //     //Check that the deposit is unlocked
-  //     const secondLockStatus = await this.bridgeBank.getEthereumDepositStatus(
-  //       this.depositID
-  //     );
-  //     secondLockStatus.should.be.equal(false);
-  //   });
+      //Attempt to Unlock the deposit again
+      await this.bridgeBank
+        .unlock(this.depositID)
+        .should.be.rejectedWith(EVMRevert);
+    });
 
-  //   // TODO: Original sender VS. intended recipient
-  //   it("should correctly transfer unlocked funds to the original sender", async function() {
-  //     //Get prior balances of user and BridgeBank contract
-  //     const beforeUserBalance = Number(await web3.eth.getBalance(userOne));
-  //     const beforeContractBalance = Number(
-  //       await web3.eth.getBalance(this.bridgeBank.address)
-  //     );
+    it("should update lock status of deposits upon completion", async function() {
+      //Confirm that the deposit is locked
+      const firstLockStatus = await this.bridgeBank.getEthereumDepositStatus(
+        this.depositID
+      );
+      firstLockStatus.should.be.equal(true);
 
-  //     await this.bridgeBank.unlock(this.depositID).should.be.fulfilled;
+      //Unlock the deposit
+      await this.bridgeBank.unlock(this.depositID).should.be.fulfilled;
 
-  //     //Get balances after completion
-  //     const afterUserBalance = Number(await web3.eth.getBalance(userOne));
-  //     const afterContractBalance = Number(
-  //       await web3.eth.getBalance(this.bridgeBank.address)
-  //     );
+      //Check that the deposit is unlocked
+      const secondLockStatus = await this.bridgeBank.getEthereumDepositStatus(
+        this.depositID
+      );
+      secondLockStatus.should.be.equal(false);
+    });
 
-  //     //Expected balances
-  //     afterUserBalance.should.be.bignumber.equal(
-  //       beforeUserBalance + Number(this.weiAmount)
-  //     );
-  //     afterContractBalance.should.be.bignumber.equal(
-  //       beforeContractBalance - Number(this.weiAmount)
-  //     );
-  //   });
-  // });
+    it("should emit an event upon unlock with the correct deposit information", async function() {
+      //Get the event logs of an unlock
+      const { logs } = await this.bridgeBank.unlock(this.erc20DepositID);
+      const event = logs.find(e => e.event === "LogUnlock");
+
+      event.args._to.should.be.equal(userOne);
+      event.args._token.should.be.equal(this.token.address);
+      Number(event.args._value).should.be.bignumber.equal(this.amount);
+      Number(event.args._nonce).should.be.bignumber.equal(2);
+    });
+
+    // TODO: Original sender VS. intended recipient
+    it("should correctly transfer unlocked Ethereum", async function() {
+      //Get prior balances of user and BridgeBank contract
+      const beforeUserBalance = Number(await web3.eth.getBalance(userOne));
+      const beforeContractBalance = Number(
+        await web3.eth.getBalance(this.bridgeBank.address)
+      );
+
+      await this.bridgeBank.unlock(this.depositID).should.be.fulfilled;
+
+      //Get balances after completion
+      const afterUserBalance = Number(await web3.eth.getBalance(userOne));
+      const afterContractBalance = Number(
+        await web3.eth.getBalance(this.bridgeBank.address)
+      );
+
+      //Expected balances
+      afterUserBalance.should.be.bignumber.equal(
+        beforeUserBalance + Number(this.weiAmount)
+      );
+      afterContractBalance.should.be.bignumber.equal(
+        beforeContractBalance - Number(this.weiAmount)
+      );
+    });
+
+    it("should correctly transfer unlocked ERC20 tokens", async function() {
+      //Confirm that the tokens are locked on the contract
+      const beforeBridgeBankBalance = Number(
+        await this.token.balanceOf(this.bridgeBank.address)
+      );
+      const beforeUserBalance = Number(await this.token.balanceOf(userOne));
+
+      beforeBridgeBankBalance.should.be.bignumber.equal(this.amount);
+      beforeUserBalance.should.be.bignumber.equal(900);
+
+      await this.bridgeBank.unlock(this.erc20DepositID);
+
+      //Confirm that the tokens have been unlocked and transfered
+      const afterBridgeBankBalance = Number(
+        await this.token.balanceOf(this.bridgeBank.address)
+      );
+      const afterUserBalance = Number(await this.token.balanceOf(userOne));
+
+      afterBridgeBankBalance.should.be.bignumber.equal(0);
+      afterUserBalance.should.be.bignumber.equal(1000);
+    });
+  });
 });

@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "./CosmosBank.sol";
 import "./EthereumBank.sol";
+import "./Valset.sol";
 
 /**
  * @title BridgeBank
@@ -17,20 +18,19 @@ contract BridgeBank is CosmosBank, EthereumBank {
     using SafeMath for uint256;
     
     address public operator;
-    // Valset public valset;
+    Valset public valset;
 
     /*
     * @dev: Constructor, sets operator
     */
     constructor (
-        address _operatorAddress
-        // address _valsetAddress
+        address _operatorAddress,
+        address _valsetAddress
     )
         public
     {
         operator = _operatorAddress;
-        // TODO: Add _valsetAddress
-        // valset = Valset(_valsetAddress)
+        valset = Valset(_valsetAddress);
     }
 
     modifier onlyOperator() {
@@ -126,11 +126,11 @@ contract BridgeBank is CosmosBank, EthereumBank {
           // ERC20 deposit
         } else {
           require(
-              TokenERC20(_token).transferFrom(msg.sender, address(this), _amount),
+              CosmosToken(_token).transferFrom(msg.sender, address(this), _amount),
               "Contract token allowances insufficient to complete this lock request"
           );
           // Set symbol to the ERC20 token's symbol
-          symbol = TokenERC20(_token).symbol();
+          symbol = CosmosToken(_token).symbol();
         }
 
         return newEthereumDeposit(

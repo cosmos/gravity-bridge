@@ -14,7 +14,7 @@ module.exports = function(deployer, network, accounts) {
 
   // Deploy Peggy contract
   // Gas deployment cost: 5,183,260 (without BankToken contract deployment in Bank's deployBankToken() method)
-  deployer.deploy(Peggy, initialValidators, initialPowers, {
+  deployer.deploy(Peggy, {
     gas: 6721975,
     from: accounts[0]
   });

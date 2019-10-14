@@ -1,8 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
-// import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "./TokenERC20.sol";
+import "./CosmosToken.sol";
 
   /*
    *  @title: EthereumBank
@@ -75,7 +74,7 @@ contract EthereumBank {
             );
         } else {
             require(
-                TokenERC20(ethereumDeposits[_id].token).balanceOf(address(this)) >= ethereumDeposits[_id].amount,
+                CosmosToken(ethereumDeposits[_id].token).balanceOf(address(this)) >= ethereumDeposits[_id].amount,
                 'Insufficient ERC20 token balance for delivery.'
             );
         }
@@ -175,7 +174,7 @@ contract EthereumBank {
           sender.transfer(amount);
         } else {
           require(
-              TokenERC20(token).transfer(sender, amount),
+              CosmosToken(token).transfer(sender, amount),
               "Token transfer failed, check contract token allowances and try again."
             );
         }

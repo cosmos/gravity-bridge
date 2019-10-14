@@ -1,10 +1,10 @@
 pragma solidity ^0.5.0;
 pragma experimental ABIEncoderV2;
 
-import "./CosmosBridge.sol";
-import "./Oracle.sol";
-import "./EthereumBank.sol";
-import "./CosmosBank.sol";
+// import "./CosmosBridge.sol";
+// import "./Oracle.sol";
+// import "./EthereumBank.sol";
+// import "./CosmosBank.sol";
 
   /*
    *  @title: Peggy
@@ -12,41 +12,12 @@ import "./CosmosBank.sol";
    *        to Cosmos, facilitated by a set of validators. This contract is
    *        NOT intended to be used in production (yet).
    */
-contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
+contract Peggy {
 
     bool public active;
     mapping(bytes32 => bool) public ids;
-
-    // event LogLock(
-    //     bytes32 _id,
-    //     address _from,
-    //     bytes _to,
-    //     address _token,
-    //     string _symbol,
-    //     uint256 _value,
-    //     uint256 _nonce
-    // );
-
-    /*
-    * @dev: Event declarations
-    *
-    */
-    // event LogUnlock(
-    //     bytes32 _id,
-    //     address _to,
-    //     address _token,
-    //     uint256 _value,
-    //     uint256 _nonce
-    // );
-
-    event LogWithdraw(
-        bytes32 _id,
-        address _to,
-        address _token,
-        uint256 _value,
-        uint256 _nonce
-    );
-
+    address public operator;
+   
     event LogLockingPaused(
         uint256 _time
     );
@@ -71,20 +42,10 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
     * @dev: Constructor, initalizes provider and active status.
     *
     */
-    constructor(
-        address[] memory initValidatorAddresses,
-        uint256[] memory initValidatorPowers
-    )
+    constructor()
         public
-        CosmosBridge()
-        Oracle(
-            initValidatorAddresses,
-            initValidatorPowers
-        )
-        EthereumBank()
-        CosmosBank()
     {
-        provider = msg.sender;
+        operator = msg.sender;
         active = true;
         emit LogLockingActivated(now);
     }
@@ -193,64 +154,64 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
     * @dev: makeOracleClaimOnCosmosBridgeClaim
     *       Processes a validator's claim on an existing CosmosBridgeClaim
     */
-    function makeOracleClaimOnCosmosBridgeClaim(
-        uint256 _cosmosBridgeNonce,
-        bytes32 _contentHash,
-        bytes memory _signature
-    )
-        public
-        onlyValidator()
-        isProcessing(
-            _cosmosBridgeNonce
-        )
-        returns(bool)
-    {
+    // function makeOracleClaimOnCosmosBridgeClaim(
+    //     uint256 _cosmosBridgeNonce,
+    //     bytes32 _contentHash,
+    //     bytes memory _signature
+    // )
+    //     public
+    //     onlyValidator()
+    //     isProcessing(
+    //         _cosmosBridgeNonce
+    //     )
+    //     returns(bool)
+    // {
 
-        // Create a new oracle claim
-        newOracleClaim(
-            _cosmosBridgeNonce,
-            msg.sender,
-            _contentHash,
-            _signature
-        );
-    }
+    //     // Create a new oracle claim
+    //     newOracleClaim(
+    //         _cosmosBridgeNonce,
+    //         msg.sender,
+    //         _contentHash,
+    //         _signature
+    //     );
+    // }
 
     /*
     * @dev: processProphecyOnOracleClaims
     *       Processes an attempted prophecy on a CosmosBridgeClaim's OracleClaims
     */
-   function processProphecyOnOracleClaims(
-        uint256 _cosmosBridgeNonce,
-        // TODO: Replace _hash with its individual components
-        bytes32 _hash,
-        address[] memory _signers,
-        uint8[] memory _v,
-        bytes32[] memory _r,
-        bytes32[] memory _s
-    )
-        public
-    {
-        require(
-            cosmosBridgeClaims[_cosmosBridgeNonce].status == Status.Completed,
-            "Cannot process an prophecy on an already completed CosmosBridgeClaim"
-        );
+//    function processProphecyOnOracleClaims(
+//         uint256 _cosmosBridgeNonce,
+//         // TODO: Replace _hash with its individual components
+//         // bytes32 _hash,
+//         // address[] memory _signers,
+//         // uint8[] memory _v,
+//         // bytes32[] memory _r,
+//         // bytes32[] memory _s
+//     )
+//         public
+//     {
+//         require(
+//             cosmosBridgeClaims[_cosmosBridgeNonce].status == Status.Completed,
+//             "Cannot process an prophecy on an already completed CosmosBridgeClaim"
+//         );
 
         // Pull the CosmosBridgeClaim from storage
-        CosmosBridgeClaim memory cosmosBridgeClaim = cosmosBridgeClaims[_cosmosBridgeNonce];
+        // CosmosBridgeClaim memory cosmosBridgeClaim = cosmosBridgeClaims[_cosmosBridgeNonce];
 
         // Attempt to process the prophecy claim (throws if unsuccessful)
-        processProphecyClaim(
-            _cosmosBridgeNonce,
-            msg.sender,
-            _hash,
-            _signers,
-            _v,
-            _r,
-            _s
-        );
+        // processProphecyClaim(
+        //     _cosmosBridgeNonce,
+        //     msg.sender,
+        //     _hash,
+        //     _signers,
+        //     _v,
+        //     _r,
+        //     _s
+        // );
 
         // Update the CosmosBridgeClaim's status to completed
-        cosmosBridgeClaim.status = Status.Completed;
+        // cosmosBridgeClaim.status = Status.Completed;
 
         // BridgeBank.mintCosmosToken(
         //     cosmosBridgeClaim.cosmosSender,
@@ -259,7 +220,7 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
         //     cosmosBridgeClaim.symbol,
         //     cosmosBridgeClaim.amount
         // );
-    }
+    // }
 
     // /*
     // * @dev: Exposes an item's current status.
@@ -338,7 +299,7 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
     */
     function pauseLocking()
         public
-        onlyProvider
+        // onlyOperator
     {
         require(active);
         active = false;
@@ -350,7 +311,7 @@ contract Peggy is CosmosBridge, Oracle, EthereumBank, CosmosBank {
     */
     function activateLocking()
         public
-        onlyProvider
+        // onlyOperator
     {
         require(!active);
         active = true;
