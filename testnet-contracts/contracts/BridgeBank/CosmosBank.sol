@@ -113,7 +113,6 @@ contract CosmosBank {
         return newBridgeTokenAddress;
     }
 
-    // TODO: Only called by validators
     /*
      * @dev: Mints new cosmos tokens
      *
@@ -202,6 +201,6 @@ contract CosmosBank {
             deposit.ethereumRecipient,
             deposit.bridgeTokenAddress,
             deposit.amount
-        ); // deposit.nonce
+        );
     }
 }

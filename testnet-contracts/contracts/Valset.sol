@@ -69,16 +69,29 @@ contract Valset {
             // validators[i] = initValidatorAddresses[i];
         }
     }
-
-    function validateSignature(
-        bytes32 hash,
+    /*
+    * @dev: ECDSA methods for accessibliity
+    *
+    */
+    function recover(
+        bytes32 h,
         bytes memory signature
     )
         public
         pure
-        returns(address)
+        returns (address)
     {
-       return recover(hash, signature);
+        return h.recover(signature);
+    }
+
+    function toEthSignedMessageHash(
+        bytes32 h
+    )
+        public
+        pure
+        returns (bytes32)
+    {
+        return h.toEthSignedMessageHash();
     }
 
     // TODO: Implement individudal validator removal
@@ -150,31 +163,6 @@ contract Valset {
         );
 
         return true;
-    }
-
-    /*
-    * @dev: ECDSA methods for accessibliity
-    *
-    */
-    function recover(
-        bytes32 h,
-        bytes memory signature
-    )
-        public
-        pure
-        returns (address)
-    {
-        return h.recover(signature);
-    }
-
-    function toEthSignedMessageHash(
-        bytes32 h
-    )
-        public
-        pure
-        returns (bytes32)
-    {
-        return h.toEthSignedMessageHash();
     }
 
     /*

@@ -8,35 +8,35 @@ module.exports = function(deployer, network, accounts) {
   const initialValidators = [accounts[1], accounts[2], accounts[3]];
   const initialPowers = [5, 8, 12];
 
-  // Deploy Valset contract
+  // 1. Deploy Valset contract
   deployer
     .deploy(Valset, operator, initialValidators, initialPowers, {
-      gas: 6721975, // Cost: 1529823
+      gas: 6721975, // Cost: 1,529,823
       from: operator
     })
     .then(function() {
-      // Deploy CosmosBridge contract
+      // 2. Deploy CosmosBridge contract
       return deployer
         .deploy(CosmosBridge, Valset.address, {
-          gas: 6721975, // Cost: 1201274
+          gas: 6721975, // Cost: 1,201,274
           from: operator
         })
         .then(function() {
-          // Deploy Oracle contract
+          // 3. Deploy Oracle contract
           return deployer
             .deploy(Oracle, operator, Valset.address, CosmosBridge.address, {
-              gas: 6721975, // Cost: 1455275
+              gas: 6721975, // Cost: 1,455,275
               from: operator
             })
             .then(function() {
-              // Deploy BridgeBank contract
+              // 4. Deploy BridgeBank contract
               return deployer.deploy(
                 BridgeBank,
                 operator,
                 Oracle.address,
                 CosmosBridge.address,
                 {
-                  gas: 6721975, // Cost: 5257988
+                  gas: 6721975, // Cost: 5,257,988
                   from: operator
                 }
               );
