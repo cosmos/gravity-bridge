@@ -148,7 +148,7 @@ contract CosmosBank {
         // Mint bank tokens
         require(
             BankToken(_cosmosTokenAddress).mint(
-                address(this),
+                _intendedRecipient,
                 _amount
             ),
             "Attempted mint of cosmos tokens failed"
