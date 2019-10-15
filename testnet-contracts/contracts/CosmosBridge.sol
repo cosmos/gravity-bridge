@@ -15,8 +15,9 @@ contract CosmosBridge {
     mapping(uint256 => BridgeClaim) public bridgeClaims;
 
     enum Status {
-        Inactive,
-        Active
+        Empty,
+        Pending,
+        Completed
     }
 
     struct BridgeClaim {
@@ -47,7 +48,7 @@ contract CosmosBridge {
     /*
     * @dev: Modifier to restrict access to completed BridgeClaims
     */
-    modifier isProcessing(
+    modifier isPending(
         uint256 _bridgeClaimID
     )
     {
@@ -111,7 +112,7 @@ contract CosmosBridge {
             _tokenAddress,
             _symbol,
             _amount,
-            Status.Active
+            Status.Pending
         );
 
         // Add the new BridgeClaim to the mapping
@@ -142,7 +143,7 @@ contract CosmosBridge {
         view
         returns(bool)
     {
-        return bridgeClaims[_bridgeClaimID].status == Status.Active;
+        return bridgeClaims[_bridgeClaimID].status == Status.Pending;
     }
 
     /*
