@@ -55,3 +55,4 @@ All notable changes to this project will be documented in this file.
 - (testnet-contracts) [\#82](https://github.com/cosmos/peggy/pull/82) Update contracts
 - (testnet-contracts) [\#89](https://github.com/cosmos/peggy/pull/89) Dynamic validator set
 - (ethbridge) [\#75](https://github.com/cosmos/peggy/pull/75) Add burn message and functionality for burning tokens and trigerring events.
+- (ethbridge) [\#81](https://github.com/cosmos/peggy/pull/81) Add functionality for locking up cosmos coins and detecting burned coins from ethereum
