@@ -13,7 +13,6 @@ var (
 
 	AttributeKeyCosmosSender     = "cosmos_sender"
 	AttributeKeyEthereumReceiver = "ethereum_receiver"
-	AttributeKeyNonce            = "nonce"
 
 	AttributeValueCategory = ModuleName
 )
