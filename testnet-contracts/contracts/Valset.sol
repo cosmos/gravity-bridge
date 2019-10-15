@@ -15,6 +15,7 @@ contract Valset {
     uint256 public validatorCount;
     uint256 public totalPower;
     uint256 public seqCounter = 0;
+
     address[] public validators;
     mapping(address => bool) public activeValidators;
     mapping(address => uint256) public powers;
@@ -80,6 +81,20 @@ contract Valset {
        return recover(hash, signature);
     }
 
+    // TODO: Implement individudal validator removal
+    // function removeValidator(
+    //     address _validator
+    // )
+    //     public
+    //     onlyOperator
+    // {
+    //     require(
+    //         isActiveValidator(_validator),
+    //         "Can only remove active valdiators"
+    //     );
+    //     // ....
+    // }
+
     /*
     * @dev: updateValidatorsPower
     *       Allows the provider to update both the validators and powers
@@ -141,18 +156,25 @@ contract Valset {
     * @dev: ECDSA methods for accessibliity
     *
     */
-    function recover(bytes32 hash, bytes memory signature) public pure returns (address) {
-        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-        bytes32 prefixedHash = keccak256(
-            abi.encodePacked(
-                prefix,
-                hash)
-            );
-        return prefixedHash.recover(signature);
+    function recover(
+        bytes32 h,
+        bytes memory signature
+    )
+        public
+        pure
+        returns (address)
+    {
+        return h.recover(signature);
     }
 
-    function toEthSignedMessageHash(bytes32 hash) public pure returns (bytes32) {
-        return hash.toEthSignedMessageHash();
+    function toEthSignedMessageHash(
+        bytes32 h
+    )
+        public
+        pure
+        returns (bytes32)
+    {
+        return h.toEthSignedMessageHash();
     }
 
     /*

@@ -1,7 +1,5 @@
 const Valset = artifacts.require("Valset");
 
-const Web3Utils = require("web3-utils");
-const EVMRevert = "revert";
 const BigNumber = web3.BigNumber;
 
 require("chai")
@@ -15,6 +13,8 @@ contract("Valset", function(accounts) {
   const userOne = accounts[1];
   const userTwo = accounts[2];
   const userThree = accounts[3];
+
+  const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
   describe("Valset contract deployment", function() {
     beforeEach(async function() {
@@ -75,7 +75,7 @@ contract("Valset", function(accounts) {
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       );
       this.nonce = 17;
-      this.hash = Web3Utils.soliditySha3(
+      this.message = web3.utils.soliditySha3(
         { t: "uint256", v: this.cosmosBridgeNonce },
         { t: "bytes", v: this.cosmosSender },
         { t: "uint256", v: this.nonce }
@@ -91,44 +91,74 @@ contract("Valset", function(accounts) {
       );
     });
 
-    it("should validate signatures", async function() {
-      const prefix = "\x19Ethereum Signed Message:\n" + this.hash.length;
-      const prefixedMessageHash = web3.utils.sha3(prefix + this.hash);
+    it("should correctly validate signatures", async function() {
+      // Create the signature
+      const signature = fixSignature(
+        await web3.eth.sign(this.message, userOne)
+      );
 
-      // Generate signature from active validator userOne
-      const signature = await web3.eth.sign(prefixedMessageHash, userOne);
-
-      let originalSigner = await web3.eth.accounts.recover(
-        prefixedMessageHash,
+      // Recover the signer address from the generated message and signature.
+      const signer = await this.valset.recover(
+        toEthSignedMessageHash(this.message),
         signature
       );
 
-      //   const r1 = "0x" + sig.slice(2, 64 + 2);
-      //   const s1 = "0x" + sig.slice(64 + 2, 128 + 2);
-      //   const v1 = "0x" + sig.slice(128 + 2, 130 + 2);
+      signer.should.be.equal(userOne);
+    });
 
-      // Validate userOne's signature
-      // const originalSigner = await this.valset.testRecovery(
-      //   prefixedMessageHash,
-      //   signature
-      // );
+    it("should not validate signatures on a different hashed message", async function() {
+      // Create the signature
+      const signature = await web3.eth.sign(this.message, userOne);
 
-      originalSigner.should.be.equal(userOne);
+      // Set up a different message (has increased nonce)
+      const differentMessage = web3.utils.soliditySha3(
+        { t: "uint256", v: this.cosmosBridgeNonce },
+        { t: "bytes", v: this.cosmosSender },
+        { t: "uint256", v: this.nonce + 1 }
+      );
+
+      // Recover the signer address from a different message
+      const signer = await this.valset.recover(differentMessage, signature);
+
+      signer.should.be.equal(ZERO_ADDRESS);
+    });
+
+    it("should not validate signatures from a different address", async function() {
+      // Create the signature
+      const signature = fixSignature(
+        await web3.eth.sign(this.message, userTwo)
+      );
+
+      // Recover the signer address from the generated message and signature.
+      const signer = await this.valset.recover(
+        toEthSignedMessageHash(this.message),
+        signature
+      );
+
+      signer.should.not.be.equal(userOne);
     });
   });
 });
 
+// TODO: Put these in a helper file
+
 // Helpers
-const parseSignature = signature => {
-  const signatureText = signature.substr(2, signature.length);
+function fixSignature(signature) {
+  // in geth its always 27/28, in ganache its 0/1. Change to 27/28 to prevent
+  // signature malleability if version is 0/1
+  // see https://github.com/ethereum/go-ethereum/blob/v1.8.23/internal/ethapi/api.go#L465
+  let v = parseInt(signature.slice(130, 132), 16);
+  if (v < 27) {
+    v += 27;
+  }
+  const vHex = v.toString(16);
+  return signature.slice(0, 130) + vHex;
+}
 
-  const r = "0x" + signatureText.substr(0, 64);
-  const s = "0x" + signatureText.substr(64, 64);
-  const v = web3.utils.hexToNumber(signatureText.substr(128, 2)) + 27;
-
-  return {
-    v,
-    r,
-    s
-  };
-};
+function toEthSignedMessageHash(messageHex) {
+  const messageBuffer = Buffer.from(messageHex.substring(2), "hex");
+  const prefix = Buffer.from(
+    `\u0019Ethereum Signed Message:\n${messageBuffer.length}`
+  );
+  return web3.utils.sha3(Buffer.concat([prefix, messageBuffer]));
+}

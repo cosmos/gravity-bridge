@@ -2,7 +2,8 @@ pragma solidity ^0.5.0;
 
 import "./CosmosBank.sol";
 import "./EthereumBank.sol";
-import "./Valset.sol";
+import "./Oracle.sol";
+import "./CosmosBridge.sol";
 
 /**
  * @title BridgeBank
@@ -18,25 +19,55 @@ contract BridgeBank is CosmosBank, EthereumBank {
     using SafeMath for uint256;
     
     address public operator;
-    Valset public valset;
+    Oracle public oracle;
+    CosmosBridge public cosmosBridge;
 
     /*
     * @dev: Constructor, sets operator
     */
     constructor (
         address _operatorAddress,
-        address _valsetAddress
+        address _oracleAddress,
+        address _cosmosBridgeAddress
     )
         public
     {
         operator = _operatorAddress;
-        valset = Valset(_valsetAddress);
+        oracle = Oracle(_oracleAddress);
+        cosmosBridge = CosmosBridge(_cosmosBridgeAddress);
     }
 
+    /*
+    * @dev: Modifier to restrict access to operator
+    */
     modifier onlyOperator() {
         require(
             msg.sender == operator,
             'Must be BridgeBank operator.'
+        );
+        _;
+    }
+
+    /*
+    * @dev: Modifier to restrict access to the oracle
+    */
+    modifier onlyOracle()
+    {
+        require(
+            msg.sender == address(oracle),
+            "Access restricted to the oracle"
+        );
+        _;
+    }
+
+    /*
+    * @dev: Modifier to restrict access to the cosmos bridge
+    */
+    modifier onlyCosmosBridge()
+    {
+        require(
+            msg.sender == address(cosmosBridge),
+            "Access restricted to the cosmos bridge"
         );
         _;
     }
@@ -58,12 +89,12 @@ contract BridgeBank is CosmosBank, EthereumBank {
     )
         public
         onlyOperator
+        // TODO: onlyCosmosBridge
         returns(address)
     {
         return deployNewCosmosToken(_symbol);
     }
 
-    // TODO: Restrict to validators
     /*
      * @dev: Mints new BankTokens
      *
@@ -81,6 +112,8 @@ contract BridgeBank is CosmosBank, EthereumBank {
         uint256 _amount
     )
         public
+        onlyOperator
+        // TODO: onlyOracle
     {
         return mintNewBankTokens(
             _cosmosSender,
@@ -126,11 +159,11 @@ contract BridgeBank is CosmosBank, EthereumBank {
           // ERC20 deposit
         } else {
           require(
-              CosmosToken(_token).transferFrom(msg.sender, address(this), _amount),
+              BankToken(_token).transferFrom(msg.sender, address(this), _amount),
               "Contract token allowances insufficient to complete this lock request"
           );
           // Set symbol to the ERC20 token's symbol
-          symbol = CosmosToken(_token).symbol();
+          symbol = BankToken(_token).symbol();
         }
 
         return newEthereumDeposit(
@@ -142,7 +175,6 @@ contract BridgeBank is CosmosBank, EthereumBank {
         );
     }
 
-    // TODO: Restrict this to operator (for now)
     /*
      * @dev: Unlocks Ethereum deposits.
      *
@@ -154,6 +186,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
         bytes32 _id
     )
         public
+        onlyOperator
         canDeliver(_id)
         returns (bool)
     {

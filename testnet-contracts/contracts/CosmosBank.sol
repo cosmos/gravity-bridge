@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./CosmosToken.sol";
+import "./BankToken.sol";
 
 /**
  * @title CosmosBank
@@ -106,7 +106,7 @@ contract CosmosBank {
         cosmosTokenCount = cosmosTokenCount.add(1);
 
         // Deploy new cosmos token contract
-        CosmosToken newCosmosToken = (new CosmosToken)(_symbol);
+        BankToken newCosmosToken = (new BankToken)(_symbol);
 
         // Set address in tokens mapping
         address newCosmosTokenAddress = address(newCosmosToken);
@@ -147,7 +147,7 @@ contract CosmosBank {
 
         // Mint bank tokens
         require(
-            CosmosToken(_cosmosTokenAddress).mint(
+            BankToken(_cosmosTokenAddress).mint(
                 address(this),
                 _amount
             ),

@@ -1,8 +1,8 @@
 pragma solidity ^0.5.0;
-pragma experimental ABIEncoderV2;
 
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Valset.sol";
+import "./CosmosBridge.sol";
 
 contract Oracle {
 
@@ -11,34 +11,21 @@ contract Oracle {
     /*
     * @dev: Public variable declarations
     */
+    CosmosBridge public cosmosBridge;
     Valset public valset;
     address public operator;
 
-    // Maps CosmosBridgeClaim id to OracleClaims made on it by validators
-    mapping(uint256 => OracleClaim[]) public oracleClaims;
-    // Maps validator's address to each CosmosBridgeClaim they've made
-    mapping(address => uint256[]) public validatorOracleClaims;
-
-    /*
-    * @dev: Temporary buffer which records address use in a processProphecyClaim attempt,
-    *       since the Solidity compiler does not yet implement memory (local) mappings
-    */
-    mapping(address => bool) internal usedAddresses;
-
-    struct OracleClaim {
-        address validatorAddress;
-        bytes32 contentHash;
-        bytes signature; // TODO: break into components (or just validate when submitted...)
-        bool isClaim;
-    }
+    // Tracks the number of OracleClaims made on an individual BridgeClaim
+    mapping(uint256 => address[]) public oracleClaimValidators;
+    mapping(uint256 => mapping(address => bool)) public hasMadeClaim;
 
     /*
     * @dev: Event declarations
     */
     event LogNewOracleClaim(
-        uint256 _cosmosBridgeClaimId,
+        uint256 _bridgeClaimID,
         address _validatorAddress,
-        bytes32 _contentHash,
+        bytes32 _message,
         bytes _signature
     );
 
@@ -78,107 +65,109 @@ contract Oracle {
     */
     constructor(
         address _operator,
-        address _valset
+        address _valset,
+        address _cosmosBridge
     )
         public
     {
         operator = _operator;
+        cosmosBridge = CosmosBridge(_cosmosBridge);
         valset = Valset(_valset);
     }
 
     /*
     * @dev: newOracleClaim
-    *       Make a new OracleClaim on an existing CosmosBridgeClaim
+    *       Allows validators to make new OracleClaims on an existing BridgeClaim
     */
     function newOracleClaim(
-        uint256 _cosmosBridgeNonce,
-        address _validatorAddress,
-        bytes32 _contentHash,
+        uint256 _bridgeClaimID,
+        bytes32 _message,
         bytes memory _signature
     )
-        internal
+        public
+        onlyValidator
     {
-        // Create a new claim
-        OracleClaim memory oracleClaim = OracleClaim(
-            _validatorAddress,
-            _contentHash,
-            _signature,
-            true
+        address validatorAddress = msg.sender;
+
+        require(
+            cosmosBridge.isBridgeClaimActive(
+                _bridgeClaimID
+            ) == true,
+            "Can only make oracle claims upon active bridge claims"
         );
 
-        // Add the oracle claim to this CosmosBridgeClaim's OracleClaims
-        oracleClaims[_cosmosBridgeNonce].push(oracleClaim);
-        // Add the oracle claim to this validator's OracleClaims
-        validatorOracleClaims[_validatorAddress].push(_cosmosBridgeNonce);
+        // Validate the msg.sender's signature
+        require(
+            validatorAddress == valset.recover(
+                _message,
+                _signature
+            ),
+            "Invalid message signature."
+        );
+
+        // Confirm that this address has not already made a claim
+        require(
+            !hasMadeClaim[_bridgeClaimID][validatorAddress],
+            "Cannot make duplicate oracle claims from the same address."
+        );
+
+        hasMadeClaim[_bridgeClaimID][validatorAddress] = true;
+        oracleClaimValidators[_bridgeClaimID].push(validatorAddress);
 
         emit LogNewOracleClaim(
-            _cosmosBridgeNonce,
-            _validatorAddress,
-            _contentHash,
+            _bridgeClaimID,
+            validatorAddress,
+            _message,
             _signature
         );
     }
 
     /*
     * @dev: processProphecyClaim
-    *       Attempts to process a prophecy claim submission by reaching
-    *       validator consensus
+    *       Attempts to process a prophecy claim using validated validator powers
     */
-    // function processProphecyClaim(
-    //     uint256 _cosmosBridgeClaimId,
-    //     address _submitter,
-    //     bytes32 _hash,
-    //     address[] memory _signers,
-    //     uint8[] memory _v,
-    //     bytes32[] memory _r,
-    //     bytes32[] memory _s
-    // )
-    //     internal
-    // {
-    //     uint256 signedPower = 0;
+    function processProphecyClaim(
+        uint256 _bridgeClaimID
+    )
+        public
+    {
+        require(
+            cosmosBridge.isBridgeClaimActive(
+                _bridgeClaimID
+            ) == true,
+            "Can only attempt to process active bridge claims"
+        );
 
-    //     // Iterate over the signatory addresses
-    //     for (uint256 i = 0; i < _signers.length; i = i.add(1)) {
-    //         address signer = _signers[i];
+        uint256 signedPower = 0;
+        uint256 totalPower = valset.totalPower();
 
-    //         // Only consider this signer if it's an unused address
-    //         if(!usedAddresses[signer]) {
-    //             // Mark this signer's address as used
-    //             usedAddresses[signer] = true;
+        // Iterate over the signatory addresses
+        for (uint256 i = 0; i < oracleClaimValidators[_bridgeClaimID].length; i = i.add(1)) {
+            address signer = oracleClaimValidators[_bridgeClaimID][i];
 
-    //             // Validate the signature
-    //             bool valid = isValidSignature(
-    //                 signer,
-    //                 _hash,
-    //                 _v[i],
-    //                 _r[i],
-    //                 _s[i]
-    //             );
+                // Only add the power of active validators
+                if(valset.isActiveValidator(signer)) {
+                    signedPower = signedPower.add(
+                        valset.getValidatorPower(
+                            signer
+                        )
+                    );
+                }
+        }
 
-    //             // Only add the power of active validators
-    //             if(valid && activeValidators[signer]) {
-    //                 signedPower = signedPower.add(powers[signer]);
-    //             }
-    //         }
-    //     }
+        require(
+            signedPower.mul(3) > totalPower.mul(2),
+            "The cumulative power of signatory validators does not meet the threshold"
+        );
 
-    //     // Reset usedAddresses mapping
-    //     for (uint256 i = 0; i < _signers.length; i = i.add(1)) {
-    //         if(usedAddresses[_signers[i]]) {
-    //             usedAddresses[_signers[i]] = false;
-    //         }
-    //     }
+        emit LogProphecyProcessed(
+            _bridgeClaimID,
+            signedPower.mul(3),
+            totalPower.mul(2),
+            msg.sender
+        );
+    }
+    
+    // TODO: add internal function which updates a BrigeClaim's status to inactive
 
-    //     require(
-    //         signedPower.mul(3) > totalPower.mul(2),
-    //         "The cumulative power of signatory validators does not meet the threshold"
-    //     );
-
-    //     emit LogProphecyProcessed(
-    //         _cosmosBridgeClaimId,
-    //         signedPower,
-    //         totalPower,
-    //         _submitter
-    //     );
-    // }
 }

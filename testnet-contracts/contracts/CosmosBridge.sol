@@ -1,23 +1,25 @@
 pragma solidity ^0.5.0;
 
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "./Valset.sol";
 
 contract CosmosBridge {
 
     using SafeMath for uint256;
+    Valset public valset;
 
     /*
     * @dev: Public variable declarations
     */
-    uint256 public cosmosBridgeNonce;
-    mapping(uint256 => CosmosBridgeClaim) public cosmosBridgeClaims;
+    uint256 public bridgeClaimCount;
+    mapping(uint256 => BridgeClaim) public bridgeClaims;
 
     enum Status {
-        Active,
-        Completed
+        Inactive,
+        Active
     }
 
-    struct CosmosBridgeClaim {
+    struct BridgeClaim {
         uint256 nonce;
         bytes cosmosSender;
         address payable ethereumReceiver;
@@ -31,8 +33,8 @@ contract CosmosBridge {
     /*
     * @dev: Event declarations
     */
-    event LogNewCosmosBridgeClaim(
-        uint256 _cosmosBridgeNonce,
+    event LogNewBridgeClaim(
+        uint256 _bridgeClaimCount,
         uint256 _nonce,
         bytes _cosmosSender,
         address payable _ethereumReceiver,
@@ -43,15 +45,27 @@ contract CosmosBridge {
     );
 
     /*
-    * @dev: Modifier to restrict access to completed CosmosBridgeClaims
+    * @dev: Modifier to restrict access to completed BridgeClaims
     */
     modifier isProcessing(
-        uint256 _cosmosBridgeNonce
+        uint256 _bridgeClaimID
     )
     {
         require(
-            cosmosBridgeClaims[_cosmosBridgeNonce].status == Status.Active,
-            "Cannot make an OracleClaim on an already completed CosmosBridgeClaim"
+            isBridgeClaimActive(_bridgeClaimID),
+            "Bridge claim is not active"
+        );
+        _;
+    }
+
+    /*
+    * @dev: Modifier to restrict access to current ValSet validators
+    */
+    modifier onlyValidator()
+    {
+        require(
+            valset.isActiveValidator(msg.sender),
+            "Must be an active validator"
         );
         _;
     }
@@ -59,17 +73,20 @@ contract CosmosBridge {
     /*
     * @dev: Constructor
     */
-    constructor()
+    constructor(
+        address _valset
+    )
         public
     {
-        cosmosBridgeNonce = 0;
+        bridgeClaimCount = 0;
+        valset = Valset(_valset);
     }
 
     /*
-    * @dev: newCosmosBridgeClaim
-    *       Creates a new cosmos bridge claim, adding it to the cosmosBridgeClaims mapping
+    * @dev: newBridgeClaim
+    *       Creates a new bridge claim, adding it to the bridgeClaims mapping
     */
-    function newCosmosBridgeClaim(
+    function newBridgeClaim(
         uint256 _nonce,
         bytes memory _cosmosSender,
         address payable _ethereumReceiver,
@@ -77,16 +94,16 @@ contract CosmosBridge {
         string memory _symbol,
         uint256 _amount
     )
-        internal
-        returns(bool)
+        public
+        onlyValidator
     {
-        // Increment the CosmosBridge nonce
-        cosmosBridgeNonce = cosmosBridgeNonce.add(1);
+        // Increment the bridge claim count
+        bridgeClaimCount = bridgeClaimCount.add(1);
 
         address originalValidator = msg.sender;
 
-        // Create the new CosmosBridgeClaim
-        CosmosBridgeClaim memory cosmosBridgeClaim = CosmosBridgeClaim(
+        // Create the new BridgeClaim
+        BridgeClaim memory bridgeClaim = BridgeClaim(
             _nonce,
             _cosmosSender,
             _ethereumReceiver,
@@ -97,11 +114,11 @@ contract CosmosBridge {
             Status.Active
         );
 
-        // Add the new CosmosBridgeClaim to the mapping
-        cosmosBridgeClaims[cosmosBridgeNonce] = cosmosBridgeClaim;
+        // Add the new BridgeClaim to the mapping
+        bridgeClaims[bridgeClaimCount] = bridgeClaim;
 
-        emit LogNewCosmosBridgeClaim(
-            cosmosBridgeNonce,
+        emit LogNewBridgeClaim(
+            bridgeClaimCount,
             _nonce,
             _cosmosSender,
             _ethereumReceiver,
@@ -110,22 +127,38 @@ contract CosmosBridge {
             _symbol,
             _amount
         );
-
-        return true;
     }
 
+    // TODO: add an internal function which mints new BankTokens via BridgeBank
+
     /*
-    * @dev: getCosmosBridgeClaimStatus
-    *       Returns the current status of a CosmosBridgeClaim
+    * @dev: isBridgeClaimActive
+    *       Returns boolean indicating if the BridgeClaim is active
     */
-    function getCosmosBridgeClaimStatus(
-        uint256 _cosmosBridgeNonce
+    function isBridgeClaimActive(
+        uint256 _bridgeClaimID
     )
         public
         view
-        returns(Status status)
+        returns(bool)
     {
-        return cosmosBridgeClaims[_cosmosBridgeNonce].status;
+        return bridgeClaims[_bridgeClaimID].status == Status.Active;
     }
 
+    /*
+    * @dev: isBridgeClaimValidatorActive
+    *       Returns boolean indicating if the validator that originally
+    *       submitted the BridgeClaim is still an active validator
+    */
+    function isBridgeClaimValidatorActive(
+        uint256 _bridgeClaimID
+    )
+        public
+        view
+        returns(bool)
+    {
+        return valset.isActiveValidator(
+            bridgeClaims[_bridgeClaimID].originalValidator
+        );
+    }
 }

@@ -1,6 +1,8 @@
+const Valset = artifacts.require("Valset");
+const CosmosBridge = artifacts.require("CosmosBridge");
+const Oracle = artifacts.require("Oracle");
+const BankToken = artifacts.require("BankToken");
 const BridgeBank = artifacts.require("BridgeBank");
-const CosmosToken = artifacts.require("CosmosToken");
-// const Valset = artifacts.require("Valset");
 
 const Web3Utils = require("web3-utils");
 const EVMRevert = "revert";
@@ -15,17 +17,46 @@ contract("BridgeBank", function(accounts) {
   const operator = accounts[0];
 
   const userOne = accounts[1];
+  const userTwo = accounts[2];
+  const userThree = accounts[3];
 
   describe("BridgeBank deployment and basics", function() {
     beforeEach(async function() {
-      this.bridgeBank = await BridgeBank.new(operator);
+      // Deploy Valset contract
+      this.initialValidators = [userOne, userTwo, userThree];
+      this.initialPowers = [5, 8, 12];
+      this.valset = await Valset.new(
+        operator,
+        this.initialValidators,
+        this.initialPowers
+      );
+
+      // Deploy CosmosBridge contract
+      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+
+      // Deploy Oracle contract
+      this.oracle = await Oracle.new(
+        operator,
+        this.valset.address,
+        this.cosmosBridge.address
+      );
+
+      // Deploy BridgeBank contract
+      this.bridgeBank = await BridgeBank.new(
+        operator,
+        this.oracle.address,
+        this.cosmosBridge.address
+      );
     });
 
-    it("should deploy the BridgeBank and set the operator", async function() {
+    it("should deploy the BridgeBank, correctly setting the operator and valset", async function() {
       this.bridgeBank.should.exist;
 
       const bridgeBankOperator = await this.bridgeBank.operator();
       bridgeBankOperator.should.be.equal(operator);
+
+      const bridgeBankOracle = await this.bridgeBank.oracle();
+      bridgeBankOracle.should.be.equal(this.oracle.address);
     });
 
     it("should correctly set initial values of CosmosBank and EthereumBank", async function() {
@@ -47,7 +78,31 @@ contract("BridgeBank", function(accounts) {
 
   describe("BridgeToken creation (Cosmos assets)", function() {
     beforeEach(async function() {
-      this.bridgeBank = await BridgeBank.new(operator);
+      // Deploy Valset contract
+      this.initialValidators = [userOne, userTwo, userThree];
+      this.initialPowers = [5, 8, 12];
+      this.valset = await Valset.new(
+        operator,
+        this.initialValidators,
+        this.initialPowers
+      );
+
+      // Deploy CosmosBridge contract
+      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+
+      // Deploy Oracle contract
+      this.oracle = await Oracle.new(
+        operator,
+        this.valset.address,
+        this.cosmosBridge.address
+      );
+
+      // Deploy BridgeBank contract
+      this.bridgeBank = await BridgeBank.new(
+        operator,
+        this.oracle.address,
+        this.cosmosBridge.address
+      );
       this.symbol = "ABC";
     });
 
@@ -164,7 +219,31 @@ contract("BridgeBank", function(accounts) {
 
   describe("BankToken minting (Cosmos assets)", function() {
     beforeEach(async function() {
-      this.bridgeBank = await BridgeBank.new(operator);
+      // Deploy Valset contract
+      this.initialValidators = [userOne, userTwo, userThree];
+      this.initialPowers = [5, 8, 12];
+      this.valset = await Valset.new(
+        operator,
+        this.initialValidators,
+        this.initialPowers
+      );
+
+      // Deploy CosmosBridge contract
+      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+
+      // Deploy Oracle contract
+      this.oracle = await Oracle.new(
+        operator,
+        this.valset.address,
+        this.cosmosBridge.address
+      );
+
+      // Deploy BridgeBank contract
+      this.bridgeBank = await BridgeBank.new(
+        operator,
+        this.oracle.address,
+        this.cosmosBridge.address
+      );
 
       // Set up our variables
       this.amount = 100;
@@ -222,7 +301,31 @@ contract("BridgeBank", function(accounts) {
 
   describe("BankToken deposit locking (Ethereum/ERC20 assets)", function() {
     beforeEach(async function() {
-      this.bridgeBank = await BridgeBank.new(operator);
+      // Deploy Valset contract
+      this.initialValidators = [userOne, userTwo, userThree];
+      this.initialPowers = [5, 8, 12];
+      this.valset = await Valset.new(
+        operator,
+        this.initialValidators,
+        this.initialPowers
+      );
+
+      // Deploy CosmosBridge contract
+      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+
+      // Deploy Oracle contract
+      this.oracle = await Oracle.new(
+        operator,
+        this.valset.address,
+        this.cosmosBridge.address
+      );
+
+      // Deploy BridgeBank contract
+      this.bridgeBank = await BridgeBank.new(
+        operator,
+        this.oracle.address,
+        this.cosmosBridge.address
+      );
 
       this.recipient = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
@@ -232,7 +335,7 @@ contract("BridgeBank", function(accounts) {
       this.weiAmount = web3.utils.toWei("0.25", "ether");
       // This is for ERC20 deposits
       this.symbol = "TEST";
-      this.token = await CosmosToken.new(this.symbol);
+      this.token = await BankToken.new(this.symbol);
       this.amount = 100;
 
       //Load user account with ERC20 tokens for testing
@@ -407,7 +510,32 @@ contract("BridgeBank", function(accounts) {
 
   describe("BankToken deposit unlocking (Ethereum/ERC20 assets)", function() {
     beforeEach(async function() {
-      this.bridgeBank = await BridgeBank.new(operator);
+      // Deploy Valset contract
+      this.initialValidators = [userOne, userTwo, userThree];
+      this.initialPowers = [5, 8, 12];
+      this.valset = await Valset.new(
+        operator,
+        this.initialValidators,
+        this.initialPowers
+      );
+
+      // Deploy CosmosBridge contract
+      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+
+      // Deploy Oracle contract
+      this.oracle = await Oracle.new(
+        operator,
+        this.valset.address,
+        this.cosmosBridge.address
+      );
+
+      // Deploy BridgeBank contract
+      this.bridgeBank = await BridgeBank.new(
+        operator,
+        this.oracle.address,
+        this.cosmosBridge.address
+      );
+
       this.recipient = web3.utils.bytesToHex([
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       ]);
@@ -416,7 +544,7 @@ contract("BridgeBank", function(accounts) {
       this.weiAmount = web3.utils.toWei("0.25", "ether");
       // This is for ERC20 deposits
       this.symbol = "TEST";
-      this.token = await CosmosToken.new(this.symbol);
+      this.token = await BankToken.new(this.symbol);
       this.amount = 100;
 
       //Load contract with ethereum so it can complete items
