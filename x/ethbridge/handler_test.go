@@ -25,7 +25,7 @@ func TestBasicMsgs(t *testing.T) {
 	require.True(t, strings.Contains(res.Log, "unrecognized ethbridge message type: "))
 
 	//Normal Creation
-	normalCreateMsg := types.CreateTestEthMsg(t, valAddress)
+	normalCreateMsg := types.CreateTestEthMsg(t, valAddress, types.LockText)
 	res = handler(ctx, normalCreateMsg)
 	require.True(t, res.IsOK())
 	for _, event := range res.Events {
@@ -44,6 +44,8 @@ func TestBasicMsgs(t *testing.T) {
 				require.Equal(t, value, types.TestCoins)
 			case "status":
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
+			case "claim_type":
+				require.Equal(t, value, types.ClaimTypeToString[types.LockText])
 			default:
 				require.Fail(t, fmt.Sprintf("unrecognized event %s", key))
 			}
@@ -51,7 +53,7 @@ func TestBasicMsgs(t *testing.T) {
 	}
 
 	//Bad Creation
-	badCreateMsg := types.CreateTestEthMsg(t, valAddress)
+	badCreateMsg := types.CreateTestEthMsg(t, valAddress, types.LockText)
 	badCreateMsg.Nonce = -1
 	err := badCreateMsg.ValidateBasic()
 	require.Error(t, err)
@@ -62,7 +64,7 @@ func TestDuplicateMsgs(t *testing.T) {
 
 	valAddress := validatorAddresses[0]
 
-	normalCreateMsg := types.CreateTestEthMsg(t, valAddress)
+	normalCreateMsg := types.CreateTestEthMsg(t, valAddress, types.LockText)
 	res := handler(ctx, normalCreateMsg)
 	require.True(t, res.IsOK())
 	for _, event := range res.Events {
@@ -89,12 +91,12 @@ func TestMintSuccess(t *testing.T) {
 	valAddressVal3Pow1 := validatorAddresses[2]
 
 	//Initial message
-	normalCreateMsg := types.CreateTestEthMsg(t, valAddressVal1Pow2)
+	normalCreateMsg := types.CreateTestEthMsg(t, valAddressVal1Pow2, types.LockText)
 	res := handler(ctx, normalCreateMsg)
 	require.True(t, res.IsOK())
 
 	//Message from second validator succeeds and mints new tokens
-	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal2Pow7)
+	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal2Pow7, types.LockText)
 	res = handler(ctx, normalCreateMsg)
 	require.True(t, res.IsOK())
 	receiverAddress, err := sdk.AccAddressFromBech32(types.TestAddress)
@@ -113,7 +115,7 @@ func TestMintSuccess(t *testing.T) {
 	}
 
 	//Additional message from third validator fails and does not mint
-	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal3Pow1)
+	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal3Pow1, types.LockText)
 	res = handler(ctx, normalCreateMsg)
 	require.False(t, res.IsOK())
 	require.True(t, strings.Contains(res.Log, "prophecy already finalized"))
@@ -132,11 +134,11 @@ func TestNoMintFail(t *testing.T) {
 	valAddressVal2Pow4 := validatorAddresses[1]
 	valAddressVal3Pow3 := validatorAddresses[2]
 
-	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow3, types.NewEthereumAddress(types.TestEthereumAddress), types.TestCoins)
+	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow3, types.NewEthereumAddress(types.TestEthereumAddress), types.TestCoins, types.LockText)
 	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
-	ethClaim2 := types.CreateTestEthClaim(t, valAddressVal2Pow4, types.NewEthereumAddress(types.AltTestEthereumAddress), types.TestCoins)
+	ethClaim2 := types.CreateTestEthClaim(t, valAddressVal2Pow4, types.NewEthereumAddress(types.AltTestEthereumAddress), types.TestCoins, types.LockText)
 	ethMsg2 := NewMsgCreateEthBridgeClaim(ethClaim2)
-	ethClaim3 := types.CreateTestEthClaim(t, valAddressVal3Pow3, types.NewEthereumAddress(types.TestEthereumAddress), types.AltTestCoins)
+	ethClaim3 := types.CreateTestEthClaim(t, valAddressVal3Pow3, types.NewEthereumAddress(types.TestEthereumAddress), types.AltTestCoins, types.LockText)
 	ethMsg3 := NewMsgCreateEthBridgeClaim(ethClaim3)
 
 	//Initial message
@@ -193,7 +195,7 @@ func TestBurnEthSuccess(t *testing.T) {
 
 	// Initial message to mint some eth
 	coinsToMint := "7ethereum"
-	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow5, types.NewEthereumAddress(types.TestEthereumAddress), coinsToMint)
+	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow5, types.NewEthereumAddress(types.TestEthereumAddress), coinsToMint, types.LockText)
 	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
 
 	// Initial message succeeds and mints eth
@@ -221,7 +223,6 @@ func TestBurnEthSuccess(t *testing.T) {
 	senderCoins := bankKeeper.GetCoins(ctx, senderAddress)
 	require.NoError(t, err)
 	require.True(t, senderCoins.IsEqual(remainingCoins))
-	// eventNonce := ""
 	eventCosmosSender := ""
 	eventEthereumReceiver := ""
 	eventAmount := ""
@@ -235,8 +236,6 @@ func TestBurnEthSuccess(t *testing.T) {
 				require.Equal(t, value, moduleAccountAddress.String())
 			case "module":
 				require.Equal(t, value, ModuleName)
-			case "nonce":
-				// eventNonce = value
 			case "cosmos_sender":
 				eventCosmosSender = value
 			case "ethereum_receiver":
@@ -248,7 +247,6 @@ func TestBurnEthSuccess(t *testing.T) {
 			}
 		}
 	}
-	// require.Equal(t, eventNonce, "0")
 	require.Equal(t, eventCosmosSender, senderAddress.String())
 	require.Equal(t, eventEthereumReceiver, ethereumReceiver.String())
 	require.Equal(t, eventAmount, coinsToBurn)
@@ -261,7 +259,6 @@ func TestBurnEthSuccess(t *testing.T) {
 	senderCoins = bankKeeper.GetCoins(ctx, senderAddress)
 	require.NoError(t, err)
 	require.True(t, senderCoins.IsEqual(remainingCoins))
-	// eventNonce = ""
 	eventCosmosSender = ""
 	eventEthereumReceiver = ""
 	eventAmount = ""
@@ -275,8 +272,6 @@ func TestBurnEthSuccess(t *testing.T) {
 				require.Equal(t, value, moduleAccountAddress.String())
 			case "module":
 				require.Equal(t, value, ModuleName)
-			case "nonce":
-			// 	eventNonce = value
 			case "cosmos_sender":
 				eventCosmosSender = value
 			case "ethereum_receiver":
@@ -288,7 +283,6 @@ func TestBurnEthSuccess(t *testing.T) {
 			}
 		}
 	}
-	// require.Equal(t, eventNonce, "1")
 	require.Equal(t, eventCosmosSender, senderAddress.String())
 	require.Equal(t, eventEthereumReceiver, ethereumReceiver.String())
 	require.Equal(t, eventAmount, coinsToBurn)

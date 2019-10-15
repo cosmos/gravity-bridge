@@ -29,6 +29,7 @@ type createEthClaimReq struct {
 	CosmosReceiver string       `json:"cosmos_receiver"`
 	Validator      string       `json:"validator"`
 	Amount         string       `json:"amount"`
+	ClaimType      string       `json:"claim_type"`
 }
 
 type burnEthReq struct {
@@ -78,8 +79,16 @@ func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var claimType types.ClaimType
+		if value, ok := types.StringToClaimType[req.ClaimType]; ok {
+			claimType = value
+		} else {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, types.ErrInvalidClaimType().Error())
+			return
+		}
+
 		// create the message
-		ethBridgeClaim := types.NewEthBridgeClaim(req.Nonce, ethereumSender, cosmosReceiver, validator, amount)
+		ethBridgeClaim := types.NewEthBridgeClaim(req.Nonce, ethereumSender, cosmosReceiver, validator, amount, claimType)
 		msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
 		err = msg.ValidateBasic()
 		if err != nil {

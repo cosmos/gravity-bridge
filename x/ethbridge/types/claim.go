@@ -18,16 +18,18 @@ type EthBridgeClaim struct {
 	CosmosReceiver   sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
 	ValidatorAddress sdk.ValAddress  `json:"validator_address" yaml:"validator_address"`
 	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
+	ClaimType        ClaimType       `json:"claim_type" yaml:"claim_type"`
 }
 
 // NewEthBridgeClaim is a constructor function for NewEthBridgeClaim
-func NewEthBridgeClaim(nonce int, ethereumSender EthereumAddress, cosmosReceiver sdk.AccAddress, validator sdk.ValAddress, amount sdk.Coins) EthBridgeClaim {
+func NewEthBridgeClaim(nonce int, ethereumSender EthereumAddress, cosmosReceiver sdk.AccAddress, validator sdk.ValAddress, amount sdk.Coins, claimType ClaimType) EthBridgeClaim {
 	return EthBridgeClaim{
 		Nonce:            nonce,
 		EthereumSender:   ethereumSender,
 		CosmosReceiver:   cosmosReceiver,
 		ValidatorAddress: validator,
 		Amount:           amount,
+		ClaimType:        claimType,
 	}
 }
 
@@ -35,13 +37,15 @@ func NewEthBridgeClaim(nonce int, ethereumSender EthereumAddress, cosmosReceiver
 type OracleClaimContent struct {
 	CosmosReceiver sdk.AccAddress `json:"cosmos_receiver"`
 	Amount         sdk.Coins      `json:"amount"`
+	ClaimType      ClaimType      `json:"claim_type" yaml:"claim_type"`
 }
 
 // NewOracleClaimContent is a constructor function for OracleClaimContent
-func NewOracleClaimContent(cosmosReceiver sdk.AccAddress, amount sdk.Coins) OracleClaimContent {
+func NewOracleClaimContent(cosmosReceiver sdk.AccAddress, amount sdk.Coins, claimType ClaimType) OracleClaimContent {
 	return OracleClaimContent{
 		CosmosReceiver: cosmosReceiver,
 		Amount:         amount,
+		ClaimType:      claimType,
 	}
 }
 
@@ -51,7 +55,7 @@ func NewOracleClaimContent(cosmosReceiver sdk.AccAddress, amount sdk.Coins) Orac
 // as all validators will see this same data from the smart contract.
 func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (oracle.Claim, error) {
 	oracleID := strconv.Itoa(ethClaim.Nonce) + ethClaim.EthereumSender.String()
-	claimContent := NewOracleClaimContent(ethClaim.CosmosReceiver, ethClaim.Amount)
+	claimContent := NewOracleClaimContent(ethClaim.CosmosReceiver, ethClaim.Amount, ethClaim.ClaimType)
 
 	claimBytes, err := json.Marshal(claimContent)
 	if err != nil {
@@ -76,6 +80,7 @@ func CreateEthClaimFromOracleString(nonce int, ethereumAddress EthereumAddress, 
 		oracleClaim.CosmosReceiver,
 		validator,
 		oracleClaim.Amount,
+		oracleClaim.ClaimType,
 	), nil
 }
 

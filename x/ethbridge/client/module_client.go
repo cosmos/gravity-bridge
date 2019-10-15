@@ -36,6 +36,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	ethBridgeTxCmd.AddCommand(client.PostCommands(
 		cli.GetCmdCreateEthBridgeClaim(cdc),
 		cli.GetCmdBurn(cdc),
+		cli.GetCmdLock(cdc),
 	)...)
 
 	return ethBridgeTxCmd
