@@ -1,7 +1,7 @@
 const Valset = artifacts.require("Valset");
 const CosmosBridge = artifacts.require("CosmosBridge");
 const Oracle = artifacts.require("Oracle");
-const BankToken = artifacts.require("BankToken");
+const BridgeToken = artifacts.require("BridgeToken");
 const BridgeBank = artifacts.require("BridgeBank");
 
 const Web3Utils = require("web3-utils");
@@ -65,8 +65,8 @@ contract("BridgeBank", function(accounts) {
       nonce.should.be.bignumber.equal(0);
 
       // CosmosBank initial values
-      const cosmosTokenCount = Number(await this.bridgeBank.cosmosTokenCount());
-      cosmosTokenCount.should.be.bignumber.equal(0);
+      const bridgeTokenCount = Number(await this.bridgeBank.bridgeTokenCount());
+      bridgeTokenCount.should.be.bignumber.equal(0);
     });
 
     it("should not allow a user to send ethereum directly to the contract", async function() {
@@ -106,7 +106,7 @@ contract("BridgeBank", function(accounts) {
       this.symbol = "ABC";
     });
 
-    it("should not allow non-operators to create new BankTokens", async function() {
+    it("should not allow non-operators to create new bridge tokens", async function() {
       await this.bridgeBank
         .createNewBridgeToken(this.symbol, {
           from: userOne
@@ -114,102 +114,102 @@ contract("BridgeBank", function(accounts) {
         .should.be.rejectedWith(EVMRevert);
     });
 
-    it("should allow the operator to create new BankTokens", async function() {
+    it("should allow the operator to create new bridge token", async function() {
       await this.bridgeBank.createNewBridgeToken(this.symbol, {
         from: operator
       }).should.be.fulfilled;
     });
 
-    it("should emit event LogNewBankToken containing the new BankToken's address and symbol", async function() {
-      //Get the BankToken's address if it were to be created
-      const expectedBankTokenAddress = await this.bridgeBank.createNewBridgeToken.call(
+    it("should emit event LogNewBridgeToken containing the new bridge token's address and symbol", async function() {
+      //Get the bridge token's address if it were to be created
+      const expectedBridgeTokenAddress = await this.bridgeBank.createNewBridgeToken.call(
         this.symbol,
         {
           from: operator
         }
       );
 
-      // Actually create the BankToken
+      // Actually create the bridge token
       const { logs } = await this.bridgeBank.createNewBridgeToken(this.symbol, {
         from: operator
       });
 
-      // Get the event logs and compare to expected BankToken address and symbol
-      const event = logs.find(e => e.event === "LogNewBankToken");
-      event.args._token.should.be.equal(expectedBankTokenAddress);
+      // Get the event logs and compare to expected bridge token address and symbol
+      const event = logs.find(e => e.event === "LogNewBridgeToken");
+      event.args._token.should.be.equal(expectedBridgeTokenAddress);
       event.args._symbol.should.be.equal(this.symbol);
     });
 
-    it("should increase the BankToken count upon creation", async function() {
-      const priorTokenCount = await this.bridgeBank.cosmosTokenCount();
+    it("should increase the bridge token count upon creation", async function() {
+      const priorTokenCount = await this.bridgeBank.bridgeTokenCount();
       Number(priorTokenCount).should.be.bignumber.equal(0);
 
       await this.bridgeBank.createNewBridgeToken(this.symbol, {
         from: operator
       });
 
-      const afterTokenCount = await this.bridgeBank.cosmosTokenCount();
+      const afterTokenCount = await this.bridgeBank.bridgeTokenCount();
       Number(afterTokenCount).should.be.bignumber.equal(1);
     });
 
-    it("should add new BankTokens to the whitelist", async function() {
-      // Get the BankToken's address if it were to be created
-      const bankTokenAddress = await this.bridgeBank.createNewBridgeToken.call(
+    it("should add the new bridge token to the whitelist", async function() {
+      // Get the bridge token's address if it were to be created
+      const bridgeTokenAddress = await this.bridgeBank.createNewBridgeToken.call(
         this.symbol,
         {
           from: operator
         }
       );
 
-      // Create the BridgeToken
+      // Create the bridge token
       await this.bridgeBank.createNewBridgeToken(this.symbol, {
         from: operator
       });
 
-      // Check BankToken whitelist
-      const isOnWhitelist = await this.bridgeBank.bankTokenWhitelist(
-        bankTokenAddress
+      // Check bridge token whitelist
+      const isOnWhitelist = await this.bridgeBank.bridgeTokenWhitelist(
+        bridgeTokenAddress
       );
       isOnWhitelist.should.be.equal(true);
     });
 
-    it("should allow the creation of BankTokens with the same symbol", async function() {
-      // Get the first BankToken's address if it were to be created
-      const firstBankTokenAddress = await this.bridgeBank.createNewBridgeToken.call(
+    it("should allow the creation of bridge tokens with the same symbol", async function() {
+      // Get the first BridgeToken's address if it were to be created
+      const firstBridgeTokenAddress = await this.bridgeBank.createNewBridgeToken.call(
         this.symbol,
         {
           from: operator
         }
       );
 
-      // Create the first BankToken
+      // Create the first bridge token
       await this.bridgeBank.createNewBridgeToken(this.symbol, {
         from: operator
       });
 
-      // Get the second BankToken's address if it were to be created
-      const secondBankTokenAddress = await this.bridgeBank.createNewBridgeToken.call(
+      // Get the second BridgeToken's address if it were to be created
+      const secondBridgeTokenAddress = await this.bridgeBank.createNewBridgeToken.call(
         this.symbol,
         {
           from: operator
         }
       );
 
-      // Create the second BankToken
+      // Create the second bridge token
       await this.bridgeBank.createNewBridgeToken(this.symbol, {
         from: operator
       });
 
-      // Check BankToken whitelist for both tokens
-      const firstTokenOnWhitelist = await this.bridgeBank.bankTokenWhitelist.call(
-        firstBankTokenAddress
+      // Check bridge token whitelist for both tokens
+      const firstTokenOnWhitelist = await this.bridgeBank.bridgeTokenWhitelist.call(
+        firstBridgeTokenAddress
       );
-      const secondTokenOnWhitelist = await this.bridgeBank.bankTokenWhitelist.call(
-        secondBankTokenAddress
+      const secondTokenOnWhitelist = await this.bridgeBank.bridgeTokenWhitelist.call(
+        secondBridgeTokenAddress
       );
 
       // Should be different addresses
-      firstBankTokenAddress.should.not.be.equal(secondBankTokenAddress);
+      firstBridgeTokenAddress.should.not.be.equal(secondBridgeTokenAddress);
 
       // Confirm whitelist status
       firstTokenOnWhitelist.should.be.equal(true);
@@ -217,7 +217,7 @@ contract("BridgeBank", function(accounts) {
     });
   });
 
-  describe("BankToken minting (Cosmos assets)", function() {
+  describe("Bridge token minting (Cosmos assets)", function() {
     beforeEach(async function() {
       // Deploy Valset contract
       this.initialValidators = [userOne, userTwo, userThree];
@@ -252,25 +252,25 @@ contract("BridgeBank", function(accounts) {
       ]);
       this.recipient = userOne;
       this.symbol = "ETH";
-      this.bankToken = await this.bridgeBank.createNewBridgeToken.call(
+      this.bridgeToken = await this.bridgeBank.createNewBridgeToken.call(
         this.symbol,
         {
           from: operator
         }
       );
 
-      // Create the BankToken, adding it to the whitelist
+      // Create the bridge token, adding it to the whitelist
       await this.bridgeBank.createNewBridgeToken(this.symbol, {
         from: operator
       }).should.be.fulfilled;
     });
 
-    // TODO: should be VALIDATORS
-    it("should allow the operator to mint new BankTokens", async function() {
-      await this.bridgeBank.mintBankTokens(
+    // TODO: should be the Oracle
+    it("should allow the operator to mint new bridge tokens", async function() {
+      await this.bridgeBank.mintBridgeTokens(
         this.sender,
         this.recipient,
-        this.bankToken,
+        this.bridgeToken,
         this.symbol,
         this.amount,
         {
@@ -279,11 +279,11 @@ contract("BridgeBank", function(accounts) {
       ).should.be.fulfilled;
     });
 
-    it("should emit event LogBankTokenMint with correct values upon successful minting", async function() {
-      const { logs } = await this.bridgeBank.mintBankTokens(
+    it("should emit event LogBridgeTokenMint with correct values upon successful minting", async function() {
+      const { logs } = await this.bridgeBank.mintBridgeTokens(
         this.sender,
         this.recipient,
-        this.bankToken,
+        this.bridgeToken,
         this.symbol,
         this.amount,
         {
@@ -291,15 +291,15 @@ contract("BridgeBank", function(accounts) {
         }
       );
 
-      const event = logs.find(e => e.event === "LogBankTokenMint");
-      event.args._token.should.be.equal(this.bankToken);
+      const event = logs.find(e => e.event === "LogBridgeTokenMint");
+      event.args._token.should.be.equal(this.bridgeToken);
       event.args._symbol.should.be.equal(this.symbol);
       Number(event.args._amount).should.be.bignumber.equal(this.amount);
       event.args._beneficiary.should.be.equal(this.recipient);
     });
   });
 
-  describe("BankToken deposit locking (Ethereum/ERC20 assets)", function() {
+  describe("Bridge token deposit locking (Ethereum/ERC20 assets)", function() {
     beforeEach(async function() {
       // Deploy Valset contract
       this.initialValidators = [userOne, userTwo, userThree];
@@ -335,7 +335,7 @@ contract("BridgeBank", function(accounts) {
       this.weiAmount = web3.utils.toWei("0.25", "ether");
       // This is for ERC20 deposits
       this.symbol = "TEST";
-      this.token = await BankToken.new(this.symbol);
+      this.token = await BridgeToken.new(this.symbol);
       this.amount = 100;
 
       //Load user account with ERC20 tokens for testing
@@ -508,7 +508,7 @@ contract("BridgeBank", function(accounts) {
     });
   });
 
-  describe("BankToken deposit unlocking (Ethereum/ERC20 assets)", function() {
+  describe("Bridge token deposit unlocking (Ethereum/ERC20 assets)", function() {
     beforeEach(async function() {
       // Deploy Valset contract
       this.initialValidators = [userOne, userTwo, userThree];
@@ -544,7 +544,7 @@ contract("BridgeBank", function(accounts) {
       this.weiAmount = web3.utils.toWei("0.25", "ether");
       // This is for ERC20 deposits
       this.symbol = "TEST";
-      this.token = await BankToken.new(this.symbol);
+      this.token = await BridgeToken.new(this.symbol);
       this.amount = 100;
 
       //Load contract with ethereum so it can complete items

@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
-import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./BankToken.sol";
+import "../../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "./BridgeToken.sol";
 
   /*
    *  @title: EthereumBank
@@ -74,7 +74,7 @@ contract EthereumBank {
             );
         } else {
             require(
-                BankToken(ethereumDeposits[_id].token).balanceOf(address(this)) >= ethereumDeposits[_id].amount,
+                BridgeToken(ethereumDeposits[_id].token).balanceOf(address(this)) >= ethereumDeposits[_id].amount,
                 'Insufficient ERC20 token balance for delivery.'
             );
         }
@@ -174,7 +174,7 @@ contract EthereumBank {
           sender.transfer(amount);
         } else {
           require(
-              BankToken(token).transfer(sender, amount),
+              BridgeToken(token).transfer(sender, amount),
               "Token transfer failed, check contract token allowances and try again."
             );
         }

@@ -2,8 +2,8 @@ pragma solidity ^0.5.0;
 
 import "./CosmosBank.sol";
 import "./EthereumBank.sol";
-import "./Oracle.sol";
-import "./CosmosBridge.sol";
+import "../Oracle.sol";
+import "../CosmosBridge.sol";
 
 /**
  * @title BridgeBank
@@ -92,7 +92,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
         // TODO: onlyCosmosBridge
         returns(address)
     {
-        return deployNewCosmosToken(_symbol);
+        return deployNewBridgeToken(_symbol);
     }
 
     /*
@@ -104,10 +104,10 @@ contract BridgeBank is CosmosBank, EthereumBank {
      * @param _symbol: comsos token symbol
      * @param _amount: number of comsos tokens to be minted
 \    */
-     function mintBankTokens(
+     function mintBridgeTokens(
         bytes memory _cosmosSender,
         address payable _intendedRecipient,
-        address _cosmosTokenAddress,
+        address _bridgeTokenAddress,
         string memory _symbol,
         uint256 _amount
     )
@@ -115,10 +115,10 @@ contract BridgeBank is CosmosBank, EthereumBank {
         onlyOperator
         // TODO: onlyOracle
     {
-        return mintNewBankTokens(
+        return mintNewBridgeTokens(
             _cosmosSender,
             _intendedRecipient,
-            _cosmosTokenAddress,
+            _bridgeTokenAddress,
             _symbol,
             _amount
         );
@@ -159,11 +159,11 @@ contract BridgeBank is CosmosBank, EthereumBank {
           // ERC20 deposit
         } else {
           require(
-              BankToken(_token).transferFrom(msg.sender, address(this), _amount),
+              BridgeToken(_token).transferFrom(msg.sender, address(this), _amount),
               "Contract token allowances insufficient to complete this lock request"
           );
           // Set symbol to the ERC20 token's symbol
-          symbol = BankToken(_token).symbol();
+          symbol = BridgeToken(_token).symbol();
         }
 
         return newEthereumDeposit(

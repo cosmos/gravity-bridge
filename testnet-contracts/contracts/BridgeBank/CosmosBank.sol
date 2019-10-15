@@ -1,40 +1,39 @@
 pragma solidity ^0.5.0;
 
-import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./BankToken.sol";
+import "../../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "./BridgeToken.sol";
 
 /**
  * @title CosmosBank
- * @dev Manages the deployment and minting of ERC20 compatible tokens which
- *      represent assets based on the Cosmos blockchain.
+ * @dev Manages the deployment and minting of ERC20 compatible BridgeTokens
+ *      which represent assets based on the Cosmos blockchain.
  **/
 
 contract CosmosBank {
 
     using SafeMath for uint256;
 
-    uint256 public cosmosTokenCount;
-    mapping(address => bool) public bankTokenWhitelist;
+    uint256 public bridgeTokenCount;
+    mapping(address => bool) public bridgeTokenWhitelist;
     mapping(bytes32 => CosmosDeposit) cosmosDeposits;
 
     struct CosmosDeposit {
         bytes cosmosSender;
         address payable ethereumRecipient;
-        address cosmosTokenAddress;
+        address bridgeTokenAddress;
         uint256 amount;
-        // uint256 nonce;
         bool locked;
     }
 
     /*
     * @dev: Event declarations
     */
-    event LogNewBankToken(
+    event LogNewBridgeToken(
         address _token,
         string _symbol
     );
 
-    event LogBankTokenMint(
+    event LogBridgeTokenMint(
         address _token,
         string _symbol,
         uint256 _amount,
@@ -42,10 +41,10 @@ contract CosmosBank {
     );
 
     /*
-    * @dev: Constructor, sets cosmosTokenCount
+    * @dev: Constructor, sets bridgeTokenCount
     */
     constructor () public {
-        cosmosTokenCount = 0;
+        bridgeTokenCount = 0;
     }
 
     /*
@@ -57,26 +56,21 @@ contract CosmosBank {
     * @param _amount: The amount in the deposit.
     * @return: The newly created CosmosDeposit's unique id.
     */
-    // TODO: Only called by validators
     function newCosmosDeposit(
         bytes memory _cosmosSender,
         address payable _ethereumRecipient,
         address _token,
         uint256 _amount
-        // uint256 _nonce
     )
         internal
         returns(bytes32)
     {
-        // cosmosDepositNonce++;
-
         bytes32 depositID = keccak256(
             abi.encodePacked(
                 _cosmosSender,
                 _ethereumRecipient,
                 _token,
                 _amount
-                // _nonce
             )
         );
 
@@ -85,7 +79,6 @@ contract CosmosBank {
             _ethereumRecipient,
             _token,
             _amount,
-            // _nonce,
             true
         );
 
@@ -93,31 +86,31 @@ contract CosmosBank {
     }
 
     /*
-     * @dev: Deploys a new cosmos token contract
+     * @dev: Deploys a new BridgeToken contract
      *
-     * @param _symbol: cosmos token symbol
+     * @param _symbol: The BridgeToken's symbol
      */
-    function deployNewCosmosToken(
+    function deployNewBridgeToken(
         string memory _symbol
     )
         internal
         returns(address)
     {
-        cosmosTokenCount = cosmosTokenCount.add(1);
+        bridgeTokenCount = bridgeTokenCount.add(1);
 
-        // Deploy new cosmos token contract
-        BankToken newCosmosToken = (new BankToken)(_symbol);
+        // Deploy new bridge token contract
+        BridgeToken newBridgeToken = (new BridgeToken)(_symbol);
 
         // Set address in tokens mapping
-        address newCosmosTokenAddress = address(newCosmosToken);
-        bankTokenWhitelist[newCosmosTokenAddress] = true;
+        address newBridgeTokenAddress = address(newBridgeToken);
+        bridgeTokenWhitelist[newBridgeTokenAddress] = true;
 
-        emit LogNewBankToken(
-            newCosmosTokenAddress,
+        emit LogNewBridgeToken(
+            newBridgeTokenAddress,
             _symbol
         );
 
-        return newCosmosTokenAddress;
+        return newBridgeTokenAddress;
     }
 
     // TODO: Only called by validators
@@ -130,39 +123,39 @@ contract CosmosBank {
      * @param _symbol: comsos token symbol
      * @param _amount: number of comsos tokens to be minted
 \    */
-     function mintNewBankTokens(
+     function mintNewBridgeTokens(
         bytes memory _cosmosSender,
         address payable _intendedRecipient,
-        address _cosmosTokenAddress,
+        address _bridgeTokenAddress,
         string memory _symbol,
         uint256 _amount
     )
         internal
     {
-        // Must be whitelisted token
+        // Must be whitelisted bridge token
         require(
-            bankTokenWhitelist[_cosmosTokenAddress],
-            "Token must be on CosmosBank's whitelist"
+            bridgeTokenWhitelist[_bridgeTokenAddress],
+            "Token must be a whitelisted bridge token"
         );
 
-        // Mint bank tokens
+        // Mint bridge tokens
         require(
-            BankToken(_cosmosTokenAddress).mint(
+            BridgeToken(_bridgeTokenAddress).mint(
                 _intendedRecipient,
                 _amount
             ),
-            "Attempted mint of cosmos tokens failed"
+            "Attempted mint of bridge tokens failed"
         );
 
         newCosmosDeposit(
             _cosmosSender,
             _intendedRecipient,
-            _cosmosTokenAddress,
+            _bridgeTokenAddress,
             _amount
         );
 
-        emit LogBankTokenMint(
-            _cosmosTokenAddress,
+        emit LogBridgeTokenMint(
+            _bridgeTokenAddress,
             _symbol,
             _amount,
             _intendedRecipient
@@ -207,7 +200,7 @@ contract CosmosBank {
         return(
             deposit.cosmosSender,
             deposit.ethereumRecipient,
-            deposit.cosmosTokenAddress,
+            deposit.bridgeTokenAddress,
             deposit.amount
         ); // deposit.nonce
     }

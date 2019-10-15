@@ -1,14 +1,14 @@
 pragma solidity ^0.5.0;
 
-import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
-import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
+import "../../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
+import "../../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 
 /**
- * @title BankToken
+ * @title BridgeToken
  * @dev Mintable, ERC20 compatible BankToken for use by BridgeBank
  **/
 
-contract BankToken is ERC20Mintable, ERC20Detailed {
+contract BridgeToken is ERC20Mintable, ERC20Detailed {
 
     constructor(
         string memory _symbol
