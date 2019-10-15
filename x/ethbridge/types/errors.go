@@ -11,10 +11,11 @@ type CodeType = sdk.CodeType
 const (
 	DefaultCodespace sdk.CodespaceType = ModuleName
 
-	CodeInvalidEthNonce    CodeType = 1
-	CodeInvalidEthAddress  CodeType = 2
-	CodeErrJSONMarshalling CodeType = 3
-	CodeInvalidEthSymbol   CodeType = 4
+	CodeInvalidEthNonce     CodeType = 1
+	CodeInvalidEthAddress   CodeType = 2
+	CodeErrJSONMarshalling  CodeType = 3
+	CodeInvalidEthSymbol    CodeType = 4
+	CodeErrInvalidClaimType CodeType = 5
 )
 
 // ErrInvalidEthNonce implements sdk.Error.
@@ -35,4 +36,9 @@ func ErrJSONMarshalling(codespace sdk.CodespaceType) sdk.Error {
 // ErrInvalidEthSymbol implements sdk.Error.
 func ErrInvalidEthSymbol(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidEthSymbol, "invalid symbol provided, symbol \"eth\" must have null address set as token contract address")
+}
+
+// ErrInvalidClaimType implements sdk.Error.
+func ErrInvalidClaimType() sdk.Error {
+	return sdk.NewError(DefaultCodespace, CodeErrInvalidClaimType, "invalid claim type provided")
 }

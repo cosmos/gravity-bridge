@@ -19,9 +19,9 @@ import (
 // GetCmdCreateEthBridgeClaim is the CLI command for creating a claim on an ethereum prophecy
 func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "create-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount]",
+		Use:   "create-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount] [claim_type]",
 		Short: "create a claim on an ethereum prophecy",
-		Args:  cobra.ExactArgs(9),
+		Args:  cobra.ExactArgs(10),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -64,7 +64,15 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			ethBridgeClaim := types.NewEthBridgeClaim(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender, cosmosReceiver, validator, amount)
+			var claimType types.ClaimType
+			if value, ok := types.StringToClaimType[args[5]]; ok {
+				claimType = value
+			} else {
+				return types.ErrInvalidClaimType()
+			}
+
+			ethBridgeClaim := types.NewEthBridgeClaim(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender, cosmosReceiver, validator, amount, claimType)
+
 			msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
 			err = msg.ValidateBasic()
 			if err != nil {
@@ -76,7 +84,7 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-// GetCmdBurnEth is the CLI command for burning some of your eth and triggering an event
+// GetCmdBurn is the CLI command for burning some of your coins and triggering an event
 func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount]",
@@ -105,6 +113,37 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}
+
+// GetCmdLock is the CLI command for locking some of your coins and triggering an event
+func GetCmdLock(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "lock [cosmos-sender-address] [ethereum-receiver-address] [amount]",
+		Short: "lock some coins!",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			ethereumReceiver := types.NewEthereumAddress(args[1])
+
+			amount, err := sdk.ParseCoins(args[2])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgLock(cosmosSender, ethereumReceiver, amount)
 
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
