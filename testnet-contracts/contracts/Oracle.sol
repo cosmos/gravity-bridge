@@ -31,8 +31,8 @@ contract Oracle {
 
     event LogProphecyProcessed(
         uint256 _cosmosBridgeClaimId,
-        uint256 _signedPower,
-        uint256 _totalPower,
+        uint256 _weightedSignedPower,
+        uint256 _weightedTotalPower,
         address _submitter
     );
 
@@ -124,7 +124,7 @@ contract Oracle {
 
     /*
     * @dev: processProphecyClaim
-    *       Attempts to process a prophecy claim using validated validator powers
+    *       Pubically available method which attempts to process a prophecy claim
     */
     function processProphecyClaim(
         uint256 _bridgeClaimID
@@ -138,6 +138,66 @@ contract Oracle {
             "Can only attempt to process active bridge claims"
         );
 
+        // Process the claim
+        (bool valid,
+            uint256 weightedSignedPower,
+            uint256 weightedTotalPower
+        ) = processClaim(_bridgeClaimID);
+
+        require(
+            valid,
+            "The cumulative power of signatory validators does not meet the threshold"
+        );
+
+        // Update the BridgeClaim's status
+        completeCosmosBridgeClaim(
+            _bridgeClaimID
+        );
+
+        emit LogProphecyProcessed(
+            _bridgeClaimID,
+            weightedSignedPower,
+            weightedTotalPower,
+            msg.sender
+        );
+    }
+
+    /*
+    * @dev: processProphecyClaim
+    *       Operator accessor method which checks if a prophecy claim has passed
+    *       the validity threshold without actually completing the claim
+    */
+    function checkProphecyClaim(
+        uint256 _bridgeClaimID
+    )
+        public
+        view
+        onlyOperator
+        returns(bool, uint256, uint256)
+    {
+        require(
+            cosmosBridge.isBridgeClaimActive(
+                _bridgeClaimID
+            ) == true,
+            "Can only check active bridge claims"
+        );
+        return processClaim(
+            _bridgeClaimID
+        );
+    }
+
+    /*
+    * @dev: processClaim
+    *       Attempts to process a prophecy claim. The claim is considered valid if
+    *       all active signatory validator powers pass the validation threshold
+    */
+    function processClaim(
+        uint256 _bridgeClaimID
+    )
+        internal
+        view
+        returns(bool, uint256, uint256)
+    {
         uint256 signedPower = 0;
         uint256 totalPower = valset.totalPower();
 
@@ -155,21 +215,15 @@ contract Oracle {
                 }
         }
 
-        require(
-            signedPower.mul(3) > totalPower.mul(2),
-            "The cumulative power of signatory validators does not meet the threshold"
-        );
+        // Calculate if weighted signed power has reached threshold of weighted total power
+        uint256 weightedSignedPower = signedPower.mul(3);
+        uint256 weightedTotalPower = totalPower.mul(2);
+        bool hasReachedThreshold = weightedSignedPower >= weightedTotalPower;
 
-        // Update the BridgeClaim's status
-        updateBridgeClaimStatus(
-            _bridgeClaimID
-        );
-
-        emit LogProphecyProcessed(
-            _bridgeClaimID,
-            signedPower.mul(3),
-            totalPower.mul(2),
-            msg.sender
+        return(
+            hasReachedThreshold,
+            weightedSignedPower,
+            weightedTotalPower
         );
     }
 
@@ -177,7 +231,7 @@ contract Oracle {
     * @dev: updateBridgeClaimStatus
     *       Completes a BridgeClaim on the CosmosBridge
     */
-    function updateBridgeClaimStatus(
+    function completeCosmosBridgeClaim(
         uint256 _bridgeClaimID
     )
         internal

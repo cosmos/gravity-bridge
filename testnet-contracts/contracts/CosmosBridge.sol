@@ -22,9 +22,10 @@ contract CosmosBridge {
     mapping(uint256 => BridgeClaim) public bridgeClaims;
 
     enum Status {
-        Empty,
+        Null,
         Pending,
-        Completed
+        Success,
+        Failed
     }
 
     struct BridgeClaim {
@@ -232,7 +233,7 @@ contract CosmosBridge {
             "Only the Oracle may complete bridge claims"
         );
 
-        bridgeClaims[_bridgeClaimID].status = Status.Completed;
+        bridgeClaims[_bridgeClaimID].status = Status.Success;
 
         issueBridgeTokens(_bridgeClaimID);
 

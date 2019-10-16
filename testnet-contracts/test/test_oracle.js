@@ -531,10 +531,10 @@ contract("Oracle", function(accounts) {
       Number(event.args._cosmosBridgeClaimId).should.be.bignumber.equal(
         this.bridgeClaimID
       );
-      Number(event.args._signedPower).should.be.bignumber.equal(
+      Number(event.args._weightedSignedPower).should.be.bignumber.equal(
         this.totalPower * 3
       );
-      Number(event.args._totalPower).should.be.bignumber.equal(
+      Number(event.args._weightedTotalPower).should.be.bignumber.equal(
         this.totalPower * 2
       );
       event.args._submitter.should.be.equal(submitter);
