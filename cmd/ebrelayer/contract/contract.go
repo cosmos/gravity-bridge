@@ -15,11 +15,11 @@ import (
 )
 
 // AbiPath : path to the file containing the smart contract's ABI
-const AbiPath = "/src/github.com/cosmos/peggy/cmd/ebrelayer/contract/abi/Peggy.abi"
+const AbiPath = "/src/github.com/cosmos/peggy/cmd/ebrelayer/contract/abi/BridgeBank.abi"
 
 // LoadABI : loads a smart contract as an abi.ABI
 func LoadABI() abi.ABI {
-	// Open the file containing Peggy contract's ABI
+	// Open the file containing BridgeBank contract's ABI
 	gopath := os.Getenv("GOPATH")
 	if gopath == "" {
 		gopath = build.Default.GOPATH

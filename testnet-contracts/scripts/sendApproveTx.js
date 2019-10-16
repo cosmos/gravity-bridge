@@ -8,10 +8,10 @@ module.exports = async () => {
   // Contract abstraction
   const truffleContract = require("truffle-contract");
   const bridgeContract = truffleContract(
-    require("../build/contracts/Peggy.json")
+    require("../build/contracts/BridgeBank.json")
   );
   const tokenContract = truffleContract(
-    require("../build/contracts/TestToken.json")
+    require("../build/contracts/BridgeToken.json")
   );
 
   /*******************************************

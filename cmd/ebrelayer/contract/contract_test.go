@@ -9,7 +9,7 @@ import (
 // TestLoadABI : test that contract containing named event is successfully loaded
 func TestLoadABI(t *testing.T) {
 
-	const AbiPath = "/src/github.com/cosmos/peggy/cmd/ebrelayer/contract/abi/Peggy.abi"
+	const AbiPath = "/src/github.com/cosmos/peggy/cmd/ebrelayer/contract/abi/BridgeBank.abi"
 
 	//Get the ABI ready
 	abi := LoadABI()

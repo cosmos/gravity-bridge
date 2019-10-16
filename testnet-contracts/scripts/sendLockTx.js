@@ -7,7 +7,9 @@ module.exports = async () => {
 
   // Contract abstraction
   const truffleContract = require("truffle-contract");
-  const contract = truffleContract(require("../build/contracts/Peggy.json"));
+  const contract = truffleContract(
+    require("../build/contracts/BridgeBank.json")
+  );
 
   /*******************************************
    *** Constants
