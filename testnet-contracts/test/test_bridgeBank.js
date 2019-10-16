@@ -4,6 +4,8 @@ const Oracle = artifacts.require("Oracle");
 const BridgeToken = artifacts.require("BridgeToken");
 const BridgeBank = artifacts.require("BridgeBank");
 
+const { toEthSignedMessageHash, fixSignature } = require("./helpers");
+
 const Web3Utils = require("web3-utils");
 const EVMRevert = "revert";
 const BigNumber = web3.BigNumber;
@@ -32,7 +34,7 @@ contract("BridgeBank", function(accounts) {
       );
 
       // Deploy CosmosBridge contract
-      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+      this.cosmosBridge = await CosmosBridge.new(operator, this.valset.address);
 
       // Deploy Oracle contract
       this.oracle = await Oracle.new(
@@ -88,7 +90,7 @@ contract("BridgeBank", function(accounts) {
       );
 
       // Deploy CosmosBridge contract
-      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+      this.cosmosBridge = await CosmosBridge.new(operator, this.valset.address);
 
       // Deploy Oracle contract
       this.oracle = await Oracle.new(
@@ -221,7 +223,7 @@ contract("BridgeBank", function(accounts) {
     beforeEach(async function() {
       // Deploy Valset contract
       this.initialValidators = [userOne, userTwo, userThree];
-      this.initialPowers = [5, 8, 12];
+      this.initialPowers = [50, 1, 1];
       this.valset = await Valset.new(
         operator,
         this.initialValidators,
@@ -229,7 +231,7 @@ contract("BridgeBank", function(accounts) {
       );
 
       // Deploy CosmosBridge contract
-      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+      this.cosmosBridge = await CosmosBridge.new(operator, this.valset.address);
 
       // Deploy Oracle contract
       this.oracle = await Oracle.new(
@@ -250,52 +252,95 @@ contract("BridgeBank", function(accounts) {
       this.sender = web3.utils.bytesToHex([
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       ]);
-      this.recipient = userOne;
-      this.symbol = "ETH";
-      this.bridgeToken = await this.bridgeBank.createNewBridgeToken.call(
-        this.symbol,
-        {
-          from: operator
-        }
-      );
+      this.recipient = userThree;
+      this.symbol = "TEST";
+      this.nonce = 17;
 
       // Create the bridge token, adding it to the whitelist
-      await this.bridgeBank.createNewBridgeToken(this.symbol, {
-        from: operator
-      }).should.be.fulfilled;
-    });
-
-    // TODO: should be the Oracle
-    it("should allow the operator to mint new bridge tokens", async function() {
-      await this.bridgeBank.mintBridgeTokens(
-        this.sender,
-        this.recipient,
-        this.bridgeToken,
+      const { logs: firstLogs } = await this.bridgeBank.createNewBridgeToken(
         this.symbol,
-        this.amount,
-        {
-          from: operator
-        }
-      ).should.be.fulfilled;
-    });
-
-    it("should emit event LogBridgeTokenMint with correct values upon successful minting", async function() {
-      const { logs } = await this.bridgeBank.mintBridgeTokens(
-        this.sender,
-        this.recipient,
-        this.bridgeToken,
-        this.symbol,
-        this.amount,
         {
           from: operator
         }
       );
 
-      const event = logs.find(e => e.event === "LogBridgeTokenMint");
-      event.args._token.should.be.equal(this.bridgeToken);
-      event.args._symbol.should.be.equal(this.symbol);
-      Number(event.args._amount).should.be.bignumber.equal(this.amount);
-      event.args._beneficiary.should.be.equal(this.recipient);
+      // Get the event logs and compare to expected bridge token address and symbol
+      const eventLogNewBridgeToken = firstLogs.find(
+        e => e.event === "LogNewBridgeToken"
+      );
+      this.bridgeToken = eventLogNewBridgeToken.args._token;
+
+      // Operator sets Oracle
+      await this.cosmosBridge.setOracle(this.oracle.address, {
+        from: operator
+      });
+
+      // Operator sets Bridge Bank
+      await this.cosmosBridge.setBridgeBank(this.bridgeBank.address, {
+        from: operator
+      });
+
+      // Submit a new bridge claim to the CosmosBridge to make oracle claims upon
+      const { logs: secondLogs } = await this.cosmosBridge.newBridgeClaim(
+        this.nonce,
+        this.sender,
+        this.recipient,
+        this.bridgeToken,
+        this.symbol,
+        this.amount,
+        {
+          from: userOne
+        }
+      ).should.be.fulfilled;
+
+      // Get the new BridgeClaim's id
+      const eventLogNewBridgeClaim = secondLogs.find(
+        e => e.event === "LogNewBridgeClaim"
+      );
+      this.bridgeClaimID = eventLogNewBridgeClaim.args._bridgeClaimCount;
+
+      // Create hash using Solidity's Sha3 hashing function
+      this.message = web3.utils.soliditySha3(
+        { t: "uint256", v: this.bridgeClaimID },
+        { t: "bytes", v: this.sender },
+        { t: "uint256", v: this.nonce }
+      );
+
+      // Generate signatures from active validators userOne, userTwo, userThree
+      this.userOneSignature = fixSignature(
+        await web3.eth.sign(this.message, userOne)
+      );
+
+      // Validator userOne makes a valid OracleClaim
+      await this.oracle.newOracleClaim(
+        this.bridgeClaimID,
+        toEthSignedMessageHash(this.message),
+        this.userOneSignature,
+        {
+          from: userOne
+        }
+      );
+    });
+
+    it("should mint bridge tokens upon the successful processing of a prophecy claim", async function() {
+      const bridgeTokenInstance = await BridgeToken.at(this.bridgeToken);
+
+      // Confirm that the user does not hold any bridge tokens of this type
+      const priorUserBalance = Number(
+        await bridgeTokenInstance.balanceOf(this.recipient)
+      );
+      priorUserBalance.should.be.bignumber.equal(0);
+
+      // Process the prophecy claim
+      await this.oracle.processProphecyClaim(
+        this.bridgeClaimID
+      ).should.be.fulfilled;
+
+      // Confirm that the user has been minted the correct token
+      const afterUserBalance = Number(
+        await bridgeTokenInstance.balanceOf(this.recipient)
+      );
+      afterUserBalance.should.be.bignumber.equal(this.amount);
     });
   });
 
@@ -311,7 +356,7 @@ contract("BridgeBank", function(accounts) {
       );
 
       // Deploy CosmosBridge contract
-      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+      this.cosmosBridge = await CosmosBridge.new(operator, this.valset.address);
 
       // Deploy Oracle contract
       this.oracle = await Oracle.new(
@@ -520,7 +565,7 @@ contract("BridgeBank", function(accounts) {
       );
 
       // Deploy CosmosBridge contract
-      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+      this.cosmosBridge = await CosmosBridge.new(operator, this.valset.address);
 
       // Deploy Oracle contract
       this.oracle = await Oracle.new(

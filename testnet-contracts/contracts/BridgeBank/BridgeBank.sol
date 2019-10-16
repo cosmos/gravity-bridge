@@ -89,7 +89,6 @@ contract BridgeBank is CosmosBank, EthereumBank {
     )
         public
         onlyOperator
-        // TODO: onlyCosmosBridge
         returns(address)
     {
         return deployNewBridgeToken(_symbol);
@@ -112,8 +111,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
         uint256 _amount
     )
         public
-        onlyOperator
-        // TODO: onlyOracle
+        onlyCosmosBridge
     {
         return mintNewBridgeTokens(
             _cosmosSender,
@@ -178,8 +176,6 @@ contract BridgeBank is CosmosBank, EthereumBank {
     /*
      * @dev: Unlocks Ethereum deposits.
      *
-     *       Replicate _id hash off-chain with sha3(cosmosSender, ethereumRecipient, amount) + nonce
-     *
      * @param _id: Unique key of the CosmosDeposit.
      */
     function unlock(
@@ -190,8 +186,10 @@ contract BridgeBank is CosmosBank, EthereumBank {
         canDeliver(_id)
         returns (bool)
     {
-        // TODO: Refactor this refundant check
-        require(isLockedEthereumDeposit(_id), "Must be locked");
+        require(
+            isLockedEthereumDeposit(_id),
+            "The deposit must be locked in order to be unlocked"
+        );
 
         // Unlock the deposit and transfer funds
         return unlockEthereumDeposit(_id);

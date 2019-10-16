@@ -17,7 +17,7 @@ module.exports = function(deployer, network, accounts) {
     .then(function() {
       // 2. Deploy CosmosBridge contract
       return deployer
-        .deploy(CosmosBridge, Valset.address, {
+        .deploy(CosmosBridge, operator, Valset.address, {
           gas: 6721975, // Cost: 1,201,274
           from: operator
         })

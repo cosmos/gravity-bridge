@@ -9,10 +9,10 @@
   "author": "Denali Marsh",
   "license": "ISC",
   "dependencies": {
-    "cross-env": "5.0.5",
     "@truffle/hdwallet-provider": "^1.0.18",
     "bignumber.js": "^6.0.0",
     "bluebird": "^3.5.1",
+    "cross-env": "5.0.5",
     "dotenv": "^8.1.0",
     "eth-lib": "^0.2.8",
     "ethereumjs-util": "^5.2.0",

@@ -1,5 +1,7 @@
 const Valset = artifacts.require("Valset");
 const CosmosBridge = artifacts.require("CosmosBridge");
+const Oracle = artifacts.require("Oracle");
+const BridgeBank = artifacts.require("BridgeBank");
 
 const EVMRevert = "revert";
 const BigNumber = web3.BigNumber;
@@ -28,7 +30,21 @@ contract("CosmosBridge", function(accounts) {
       );
 
       // Deploy CosmosBridge contract
-      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+      this.cosmosBridge = await CosmosBridge.new(operator, this.valset.address);
+
+      // Deploy Oracle contract
+      this.oracle = await Oracle.new(
+        operator,
+        this.valset.address,
+        this.cosmosBridge.address
+      );
+
+      // Deploy BridgeBank contract
+      this.bridgeBank = await BridgeBank.new(
+        operator,
+        this.oracle.address,
+        this.cosmosBridge.address
+      );
     });
 
     it("should deploy the CosmosBridge with the correct parameters", async function() {
@@ -40,11 +56,57 @@ contract("CosmosBridge", function(accounts) {
       const cosmosBridgeValset = await this.cosmosBridge.valset();
       cosmosBridgeValset.should.be.equal(this.valset.address);
     });
+
+    it("should allow the operator to set the Oracle", async function() {
+      this.oracle.should.exist;
+
+      await this.cosmosBridge.setOracle(this.oracle.address, {
+        from: operator
+      }).should.be.fulfilled;
+
+      const bridgeOracle = await this.cosmosBridge.oracle();
+      bridgeOracle.should.be.equal(this.oracle.address);
+    });
+
+    it("should not allow the operater to update the Oracle once it has been set", async function() {
+      await this.cosmosBridge.setOracle(this.oracle.address, {
+        from: operator
+      }).should.be.fulfilled;
+
+      await this.cosmosBridge
+        .setOracle(this.oracle.address, {
+          from: operator
+        })
+        .should.be.rejectedWith(EVMRevert);
+    });
+
+    it("should allow the operator to set the Bridge Bank", async function() {
+      this.bridgeBank.should.exist;
+
+      await this.cosmosBridge.setBridgeBank(this.bridgeBank.address, {
+        from: operator
+      }).should.be.fulfilled;
+
+      const bridgeBank = await this.cosmosBridge.bridgeBank();
+      bridgeBank.should.be.equal(this.bridgeBank.address);
+    });
+
+    it("should not allow the operater to update the Bridge Bank once it has been set", async function() {
+      await this.cosmosBridge.setBridgeBank(this.oracle.address, {
+        from: operator
+      }).should.be.fulfilled;
+
+      await this.cosmosBridge
+        .setBridgeBank(this.oracle.address, {
+          from: operator
+        })
+        .should.be.rejectedWith(EVMRevert);
+    });
   });
 
   describe("Creation of bridge claims", function() {
     beforeEach(async function() {
-      // Set up CosmosBridgeClaim values
+      // Set up BridgeClaim values
       this.nonce = 4;
       this.cosmosSender = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
@@ -64,7 +126,31 @@ contract("CosmosBridge", function(accounts) {
       );
 
       // Deploy CosmosBridge contract
-      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+      this.cosmosBridge = await CosmosBridge.new(operator, this.valset.address);
+
+      // Deploy Oracle contract
+      this.oracle = await Oracle.new(
+        operator,
+        this.valset.address,
+        this.cosmosBridge.address
+      );
+
+      // Deploy BridgeBank contract
+      this.bridgeBank = await BridgeBank.new(
+        operator,
+        this.oracle.address,
+        this.cosmosBridge.address
+      );
+
+      // Operator sets Oracle
+      await this.cosmosBridge.setOracle(this.oracle.address, {
+        from: operator
+      });
+
+      // Operator sets Bridge Bank
+      await this.cosmosBridge.setBridgeBank(this.bridgeBank.address, {
+        from: operator
+      });
     });
 
     it("should allow for the creation of new bridge claims", async function() {
@@ -149,8 +235,33 @@ contract("CosmosBridge", function(accounts) {
       );
 
       // Deploy CosmosBridge contract
-      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+      this.cosmosBridge = await CosmosBridge.new(operator, this.valset.address);
+
+      // Deploy Oracle contract
+      this.oracle = await Oracle.new(
+        operator,
+        this.valset.address,
+        this.cosmosBridge.address
+      );
+
+      // Deploy BridgeBank contract
+      this.bridgeBank = await BridgeBank.new(
+        operator,
+        this.oracle.address,
+        this.cosmosBridge.address
+      );
+
+      // Operator sets Oracle
+      await this.cosmosBridge.setOracle(this.oracle.address, {
+        from: operator
+      });
+
+      // Operator sets Bridge Bank
+      await this.cosmosBridge.setBridgeBank(this.bridgeBank.address, {
+        from: operator
+      });
     });
+
     it("should not show fake bridge claims as active", async function() {
       const bridgeClaimCount = 4;
 

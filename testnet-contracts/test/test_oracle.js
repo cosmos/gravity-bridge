@@ -1,8 +1,9 @@
 const Valset = artifacts.require("Valset");
 const CosmosBridge = artifacts.require("CosmosBridge");
 const Oracle = artifacts.require("Oracle");
+const BridgeBank = artifacts.require("BridgeBank");
 
-const Web3Utils = require("web3-utils");
+const { toEthSignedMessageHash, fixSignature } = require("./helpers");
 const EVMRevert = "revert";
 const BigNumber = web3.BigNumber;
 
@@ -30,7 +31,7 @@ contract("Oracle", function(accounts) {
       );
 
       // Deploy CosmosBridge contract
-      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+      this.cosmosBridge = await CosmosBridge.new(operator, this.valset.address);
 
       // Deploy Oracle contract
       this.oracle = await Oracle.new(
@@ -80,7 +81,7 @@ contract("Oracle", function(accounts) {
       );
 
       // Deploy CosmosBridge contract
-      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+      this.cosmosBridge = await CosmosBridge.new(operator, this.valset.address);
 
       // Deploy Oracle contract
       this.oracle = await Oracle.new(
@@ -88,6 +89,23 @@ contract("Oracle", function(accounts) {
         this.valset.address,
         this.cosmosBridge.address
       );
+
+      // Deploy BridgeBank contract
+      this.bridgeBank = await BridgeBank.new(
+        operator,
+        this.oracle.address,
+        this.cosmosBridge.address
+      );
+
+      // Operator sets Oracle
+      await this.cosmosBridge.setOracle(this.oracle.address, {
+        from: operator
+      });
+
+      // Operator sets Bridge Bank
+      await this.cosmosBridge.setBridgeBank(this.bridgeBank.address, {
+        from: operator
+      });
 
       // Submit a new bridge claim to the CosmosBridge to make oracle claims upon
       await this.cosmosBridge.newBridgeClaim(
@@ -205,6 +223,35 @@ contract("Oracle", function(accounts) {
       ).should.be.fulfilled;
     });
 
+    it("should not allow validators to make duplicate OracleClaims", async function() {
+      // Generate signature from userOne (validator)
+      const signature = fixSignature(
+        await web3.eth.sign(this.message, userOne)
+      );
+
+      // Validator makes the first oracle claim
+      await this.oracle.newOracleClaim(
+        this.bridgeClaimID,
+        toEthSignedMessageHash(this.message),
+        signature,
+        {
+          from: userOne
+        }
+      ).should.be.fulfilled;
+
+      // Validator attempts to make a second oracle claim on the same bridge claim
+      await this.oracle
+        .newOracleClaim(
+          this.bridgeClaimID,
+          toEthSignedMessageHash(this.message),
+          signature,
+          {
+            from: userOne
+          }
+        )
+        .should.be.rejectedWith(EVMRevert);
+    });
+
     it("should emit an event containing the new OracleClaim's information", async function() {
       // Generate signature from userOne (validator)
       const signature = fixSignature(
@@ -240,7 +287,6 @@ contract("Oracle", function(accounts) {
       );
       this.nonce = 17;
       this.ethereumReceiver = userOne;
-      this.tokenAddress = "0x0000000000000000000000000000000000000000";
       this.symbol = "TEST";
       this.amount = 100;
 
@@ -265,7 +311,7 @@ contract("Oracle", function(accounts) {
         this.initialPowers[0] + this.initialPowers[1] + this.initialPowers[2];
 
       // Deploy CosmosBridge contract
-      this.cosmosBridge = await CosmosBridge.new(this.valset.address);
+      this.cosmosBridge = await CosmosBridge.new(operator, this.valset.address);
 
       // Deploy Oracle contract
       this.oracle = await Oracle.new(
@@ -273,6 +319,32 @@ contract("Oracle", function(accounts) {
         this.valset.address,
         this.cosmosBridge.address
       );
+
+      // Deploy BridgeBank contract
+      this.bridgeBank = await BridgeBank.new(
+        operator,
+        this.oracle.address,
+        this.cosmosBridge.address
+      );
+
+      // Operator sets Oracle
+      await this.cosmosBridge.setOracle(this.oracle.address, {
+        from: operator
+      });
+
+      // Operator sets Bridge Bank
+      await this.cosmosBridge.setBridgeBank(this.bridgeBank.address, {
+        from: operator
+      });
+
+      // Add the token to the BridgeBank's whitelist
+      const { logs } = await this.bridgeBank.createNewBridgeToken(this.symbol, {
+        from: operator
+      }).should.be.fulfilled;
+
+      // Get the whitelisted token's address for claim submission
+      const event = logs.find(e => e.event === "LogNewBridgeToken");
+      this.tokenAddress = event.args._token;
 
       // Submit a new bridge claim to the CosmosBridge to make oracle claims upon
       await this.cosmosBridge.newBridgeClaim(
@@ -297,6 +369,22 @@ contract("Oracle", function(accounts) {
       this.userThreeSignature = fixSignature(
         await web3.eth.sign(this.message, userThree)
       );
+    });
+
+    it("should not process the prophecy if signed power does not pass the required threshold power", async function() {
+      // Validator userOne makes a valid OracleClaim
+      await this.oracle.newOracleClaim(
+        this.bridgeClaimID,
+        toEthSignedMessageHash(this.message),
+        this.userOneSignature,
+        {
+          from: userOne
+        }
+      );
+
+      await this.oracle
+        .processProphecyClaim(this.bridgeClaimID)
+        .should.be.rejectedWith(EVMRevert);
     });
 
     it("should allow for the processing of prophecies", async function() {
@@ -366,6 +454,41 @@ contract("Oracle", function(accounts) {
       ).should.be.fulfilled;
     });
 
+    it("should not allow a prophecy to be processed twice", async function() {
+      // Validator userOne makes a valid OracleClaim
+      await this.oracle.newOracleClaim(
+        this.bridgeClaimID,
+        toEthSignedMessageHash(this.message),
+        this.userOneSignature,
+        {
+          from: userOne
+        }
+      );
+      // Validator userThree makes a valid OracleClaim
+      await this.oracle.newOracleClaim(
+        this.bridgeClaimID,
+        toEthSignedMessageHash(this.message),
+        this.userThreeSignature,
+        {
+          from: userThree
+        }
+      );
+
+      // Process prophecy should be fulfilled
+      await this.oracle.processProphecyClaim(
+        this.bridgeClaimID
+      ).should.be.fulfilled;
+
+      // Attempt to process the same prophecy should be rejected
+      await this.oracle
+        .processProphecyClaim(this.bridgeClaimID)
+        .should.be.rejectedWith(EVMRevert);
+    });
+
+    // TODO: Add these tests once Valset has been with dynamic validator set:
+    // 1. Should not include the signatures of non-active validators
+    // 2. Should not allow for the processing of bridge claims whose original validator is no longer active
+
     it("should emit an event upon successful prophecy processing", async function() {
       // Validator userOne makes a valid OracleClaim
       await this.oracle.newOracleClaim(
@@ -416,30 +539,5 @@ contract("Oracle", function(accounts) {
       );
       event.args._submitter.should.be.equal(submitter);
     });
-
-    // TODO: should not include the signatures of non-active validators
-    // TODO: should not allow for the processing of bridge claims whose original validator is no longer active
-    // TODO: should not allow bridge claims to be processed twice (e.g. update BridgeClaim status to inactive)
   });
 });
-
-// Helpers
-function fixSignature(signature) {
-  // in geth its always 27/28, in ganache its 0/1. Change to 27/28 to prevent
-  // signature malleability if version is 0/1
-  // see https://github.com/ethereum/go-ethereum/blob/v1.8.23/internal/ethapi/api.go#L465
-  let v = parseInt(signature.slice(130, 132), 16);
-  if (v < 27) {
-    v += 27;
-  }
-  const vHex = v.toString(16);
-  return signature.slice(0, 130) + vHex;
-}
-
-function toEthSignedMessageHash(messageHex) {
-  const messageBuffer = Buffer.from(messageHex.substring(2), "hex");
-  const prefix = Buffer.from(
-    `\u0019Ethereum Signed Message:\n${messageBuffer.length}`
-  );
-  return web3.utils.sha3(Buffer.concat([prefix, messageBuffer]));
-}

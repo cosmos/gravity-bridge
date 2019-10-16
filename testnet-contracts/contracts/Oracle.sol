@@ -160,6 +160,11 @@ contract Oracle {
             "The cumulative power of signatory validators does not meet the threshold"
         );
 
+        // Update the BridgeClaim's status
+        updateBridgeClaimStatus(
+            _bridgeClaimID
+        );
+
         emit LogProphecyProcessed(
             _bridgeClaimID,
             signedPower.mul(3),
@@ -167,7 +172,18 @@ contract Oracle {
             msg.sender
         );
     }
-    
-    // TODO: add internal function which updates a BrigeClaim's status to inactive
 
+    /*
+    * @dev: updateBridgeClaimStatus
+    *       Completes a BridgeClaim on the CosmosBridge
+    */
+    function updateBridgeClaimStatus(
+        uint256 _bridgeClaimID
+    )
+        internal
+    {
+        cosmosBridge.completeBridgeClaim(
+            _bridgeClaimID
+        );
+    }
 }
