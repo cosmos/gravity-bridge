@@ -3,7 +3,7 @@ const CosmosBridge = artifacts.require("CosmosBridge");
 const Oracle = artifacts.require("Oracle");
 const BridgeBank = artifacts.require("BridgeBank");
 
-const { toEthSignedMessageHash, fixSignature } = require("./helpers");
+const { toEthSignedMessageHash, fixSignature } = require("./helpers/helpers");
 const EVMRevert = "revert";
 const BigNumber = web3.BigNumber;
 

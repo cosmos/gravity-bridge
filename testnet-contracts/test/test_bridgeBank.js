@@ -4,7 +4,7 @@ const Oracle = artifacts.require("Oracle");
 const BridgeToken = artifacts.require("BridgeToken");
 const BridgeBank = artifacts.require("BridgeBank");
 
-const { toEthSignedMessageHash, fixSignature } = require("./helpers");
+const { toEthSignedMessageHash, fixSignature } = require("./helpers/helpers");
 
 const Web3Utils = require("web3-utils");
 const EVMRevert = "revert";

@@ -1,6 +1,6 @@
 const Valset = artifacts.require("Valset");
 
-const { toEthSignedMessageHash, fixSignature } = require("./helpers");
+const { toEthSignedMessageHash, fixSignature } = require("./helpers/helpers");
 
 const BigNumber = web3.BigNumber;
 
