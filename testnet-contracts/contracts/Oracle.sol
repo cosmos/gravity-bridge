@@ -23,14 +23,14 @@ contract Oracle {
     * @dev: Event declarations
     */
     event LogNewOracleClaim(
-        uint256 _bridgeClaimID,
+        uint256 _prophecyID,
         address _validatorAddress,
         bytes32 _message,
         bytes _signature
     );
 
     event LogProphecyProcessed(
-        uint256 _cosmosBridgeClaimId,
+        uint256 _prophecyID,
         uint256 _weightedSignedPower,
         uint256 _weightedTotalPower,
         address _submitter
@@ -77,10 +77,10 @@ contract Oracle {
 
     /*
     * @dev: newOracleClaim
-    *       Allows validators to make new OracleClaims on an existing BridgeClaim
+    *       Allows validators to make new OracleClaims on an existing Prophecy
     */
     function newOracleClaim(
-        uint256 _bridgeClaimID,
+        uint256 _prophecyID,
         bytes32 _message,
         bytes memory _signature
     )
@@ -91,9 +91,9 @@ contract Oracle {
 
         require(
             cosmosBridge.isBridgeClaimActive(
-                _bridgeClaimID
+                _prophecyID
             ) == true,
-            "Can only make oracle claims upon active bridge claims"
+            "Can only make oracle claims upon active prophecies"
         );
 
         // Validate the msg.sender's signature
@@ -105,17 +105,17 @@ contract Oracle {
             "Invalid message signature."
         );
 
-        // Confirm that this address has not already made a claim
+        // Confirm that this address has not already made an oracle claim on this prophecy
         require(
-            !hasMadeClaim[_bridgeClaimID][validatorAddress],
+            !hasMadeClaim[_prophecyID][validatorAddress],
             "Cannot make duplicate oracle claims from the same address."
         );
 
-        hasMadeClaim[_bridgeClaimID][validatorAddress] = true;
-        oracleClaimValidators[_bridgeClaimID].push(validatorAddress);
+        hasMadeClaim[_prophecyID][validatorAddress] = true;
+        oracleClaimValidators[_prophecyID].push(validatorAddress);
 
         emit LogNewOracleClaim(
-            _bridgeClaimID,
+            _prophecyID,
             validatorAddress,
             _message,
             _signature
@@ -123,26 +123,26 @@ contract Oracle {
     }
 
     /*
-    * @dev: processProphecyClaim
-    *       Pubically available method which attempts to process a prophecy claim
+    * @dev: processBridgeProphecy
+    *       Pubically available method which attempts to process a bridge prophecy
     */
-    function processProphecyClaim(
-        uint256 _bridgeClaimID
+    function processBridgeProphecy(
+        uint256 _prophecyID
     )
         public
     {
         require(
             cosmosBridge.isBridgeClaimActive(
-                _bridgeClaimID
+                _prophecyID
             ) == true,
-            "Can only attempt to process active bridge claims"
+            "Can only attempt to process active prophecies"
         );
 
-        // Process the claim
+        // Process the prophecy
         (bool valid,
             uint256 weightedSignedPower,
             uint256 weightedTotalPower
-        ) = processClaim(_bridgeClaimID);
+        ) = getProphecyThreshold(_prophecyID);
 
         require(
             valid,
@@ -150,12 +150,12 @@ contract Oracle {
         );
 
         // Update the BridgeClaim's status
-        completeCosmosBridgeClaim(
-            _bridgeClaimID
+        completeProphecy(
+            _prophecyID
         );
 
         emit LogProphecyProcessed(
-            _bridgeClaimID,
+            _prophecyID,
             weightedSignedPower,
             weightedTotalPower,
             msg.sender
@@ -163,12 +163,12 @@ contract Oracle {
     }
 
     /*
-    * @dev: processProphecyClaim
-    *       Operator accessor method which checks if a prophecy claim has passed
-    *       the validity threshold without actually completing the claim
+    * @dev: checkBridgeProphecy
+    *       Operator accessor method which checks if a prophecy has passed
+    *       the validity threshold, without actually completing the prophecy.
     */
-    function checkProphecyClaim(
-        uint256 _bridgeClaimID
+    function checkBridgeProphecy(
+        uint256 _prophecyID
     )
         public
         view
@@ -177,22 +177,23 @@ contract Oracle {
     {
         require(
             cosmosBridge.isBridgeClaimActive(
-                _bridgeClaimID
+                _prophecyID
             ) == true,
-            "Can only check active bridge claims"
+            "Can only check active prophecies"
         );
-        return processClaim(
-            _bridgeClaimID
+        return getProphecyThreshold(
+            _prophecyID
         );
     }
 
     /*
-    * @dev: processClaim
-    *       Attempts to process a prophecy claim. The claim is considered valid if
-    *       all active signatory validator powers pass the validation threshold
+    * @dev: processProphecy
+    *       Calculates the status of a prophecy. The claim is considered valid if the
+    *       combined active signatory validator powers pass the validation threshold.
+    *       The hardcoded threshold is (Combined signed power * 2) >= (Total power * 3).
     */
-    function processClaim(
-        uint256 _bridgeClaimID
+    function getProphecyThreshold(
+        uint256 _prophecyID
     )
         internal
         view
@@ -202,8 +203,8 @@ contract Oracle {
         uint256 totalPower = valset.totalPower();
 
         // Iterate over the signatory addresses
-        for (uint256 i = 0; i < oracleClaimValidators[_bridgeClaimID].length; i = i.add(1)) {
-            address signer = oracleClaimValidators[_bridgeClaimID][i];
+        for (uint256 i = 0; i < oracleClaimValidators[_prophecyID].length; i = i.add(1)) {
+            address signer = oracleClaimValidators[_prophecyID][i];
 
                 // Only add the power of active validators
                 if(valset.isActiveValidator(signer)) {
@@ -228,16 +229,17 @@ contract Oracle {
     }
 
     /*
-    * @dev: updateBridgeClaimStatus
-    *       Completes a BridgeClaim on the CosmosBridge
+    * @dev: completeProphecy
+    *       Completes a prophecy by completing the corresponding BridgeClaim
+    *       on the CosmosBridge.
     */
-    function completeCosmosBridgeClaim(
-        uint256 _bridgeClaimID
+    function completeProphecy(
+        uint256 _prophecyID
     )
         internal
     {
         cosmosBridge.completeBridgeClaim(
-            _bridgeClaimID
+            _prophecyID
         );
     }
 }
