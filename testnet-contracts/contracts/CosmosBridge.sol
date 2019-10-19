@@ -162,13 +162,13 @@ contract CosmosBridge {
             address(bridgeBank)
         );
     }
-
-    // TODO: BridgeClaims can only be created for BridgeTokens on BridgeBank's whitelist.
-    //       If the operator is responsible for adding them, then the automatic relay will
-    //       of BridgeClaims will fail until operator has called BrideBank.createNewBridgeToken()
+    
     /*
     * @dev: newBridgeClaim
-    *       Creates a new bridge claim, adding it to the bridgeClaims mapping
+    *       Creates a new bridge claim, adding it to the bridgeClaims mapping.
+    *       BridgeClaims can only be created for BridgeTokens on BridgeBank's whitelist.
+    *        If the operator is responsible for adding them, then the automatic relay will
+    *       of BridgeClaims will fail until operator has called BrideBank.createNewBridgeToken().
     */
     function newBridgeClaim(
         uint256 _nonce,
