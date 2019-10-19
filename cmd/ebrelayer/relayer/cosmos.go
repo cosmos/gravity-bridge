@@ -43,24 +43,28 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, peggyCont
 		select {
 		case result := <-out:
 			tx := result.Data.(tmtypes.EventDataTx)
-			// txIndex := result.Data.(tmtypes.EventDataTx).Index
 			logger.Info("\t New transaction witnessed")
 
 			// fmt.Println(tx)
 
-			runes := [99, 111, 115,109, 111, 115, 95, 115, 101, 110, 100, 101, 114]
-			outString := ""
-			for _, v := range runes {
-				outString += string(v)
-			}
-			fmt.Println(outString)
+			// runes := [99, 111, 115, 109, 111, 115, 95, 115, 101, 110, 100, 101, 114]
+			// outString := ""
+			// for _, v := range runes {
+			// 	outString += string(v)
+			// }
+			// fmt.Println(outString)
 
 			txRes := tx.Result
 			for i := 1; i < len(txRes.Events); i++ {
-				switch txRes.Events[i].Type {
+				event := txRes.Events[i].String()
+				switch txRes.Events[i].Type { // TODO: Switch on event.type
 				case "burn":
 					logger.Info("\tMsgBurn")
-					fmt.Printf("%v", txRes.Events[i])
+					fmt.Printf("%v", event)
+					// fmt.Printf("%v", event[0])
+					// fmt.Printf("%v", event[1])
+					// fmt.Printf("%v", event[1].String())
+
 					// TODO: Parse event attributes and pass them to txs.relayToEthereum
 					err = txs.RelayToEthereum(web3Provider, peggyContractAddress, rawPrivateKey)
 					if err != nil {
