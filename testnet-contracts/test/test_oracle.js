@@ -107,8 +107,8 @@ contract("Oracle", function(accounts) {
         from: operator
       });
 
-      // Submit a new bridge claim to the CosmosBridge to make oracle claims upon
-      await this.cosmosBridge.newBridgeClaim(
+      // Submit a new prophecy claim to the CosmosBridge to make oracle claims upon
+      await this.cosmosBridge.newProphecyClaim(
         this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
@@ -121,7 +121,7 @@ contract("Oracle", function(accounts) {
       ).should.be.fulfilled;
     });
 
-    it("should not allow oracle claims upon inactive bridge claims", async function() {
+    it("should not allow oracle claims upon inactive prophecy claims", async function() {
       const inactiveBridgeClaimID = this.prophecyID + 5;
 
       // Create hash using Solidity's Sha3 hashing function
@@ -344,8 +344,8 @@ contract("Oracle", function(accounts) {
       const event = logs.find(e => e.event === "LogNewBridgeToken");
       this.tokenAddress = event.args._token;
 
-      // Submit a new bridge claim to the CosmosBridge to make oracle claims upon
-      await this.cosmosBridge.newBridgeClaim(
+      // Submit a new prophecy claim to the CosmosBridge to make oracle claims upon
+      await this.cosmosBridge.newProphecyClaim(
         this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,

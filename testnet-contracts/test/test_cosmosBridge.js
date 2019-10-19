@@ -50,7 +50,7 @@ contract("CosmosBridge", function(accounts) {
     it("should deploy the CosmosBridge with the correct parameters", async function() {
       this.cosmosBridge.should.exist;
 
-      const claimCount = await this.cosmosBridge.bridgeClaimCount();
+      const claimCount = await this.cosmosBridge.prophecyClaimCount();
       Number(claimCount).should.be.bignumber.equal(0);
 
       const cosmosBridgeValset = await this.cosmosBridge.valset();
@@ -104,9 +104,9 @@ contract("CosmosBridge", function(accounts) {
     });
   });
 
-  describe("Creation of bridge claims", function() {
+  describe("Creation of prophecy claims", function() {
     beforeEach(async function() {
-      // Set up BridgeClaim values
+      // Set up ProphecyClaim values
       this.nonce = 4;
       this.cosmosSender = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
@@ -153,8 +153,8 @@ contract("CosmosBridge", function(accounts) {
       });
     });
 
-    it("should allow for the creation of new bridge claims", async function() {
-      await this.cosmosBridge.newBridgeClaim(
+    it("should allow for the creation of new prophecy claims", async function() {
+      await this.cosmosBridge.newProphecyClaim(
         this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
@@ -167,8 +167,8 @@ contract("CosmosBridge", function(accounts) {
       ).should.be.fulfilled;
     });
 
-    it("should log an event containing the new bridge claim's information", async function() {
-      const { logs } = await this.cosmosBridge.newBridgeClaim(
+    it("should log an event containing the new prophecy claim's information", async function() {
+      const { logs } = await this.cosmosBridge.newProphecyClaim(
         this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
@@ -180,9 +180,9 @@ contract("CosmosBridge", function(accounts) {
         }
       );
 
-      const event = logs.find(e => e.event === "LogNewBridgeClaim");
+      const event = logs.find(e => e.event === "LogNewProphecyClaim");
 
-      Number(event.args._bridgeClaimCount).should.be.bignumber.equal(1);
+      Number(event.args._prophecyID).should.be.bignumber.equal(1);
       Number(event.args._nonce).should.be.bignumber.equal(this.nonce);
       event.args._cosmosSender.should.be.equal(this.cosmosSender);
       event.args._ethereumReceiver.should.be.equal(this.ethereumReceiver);
@@ -192,11 +192,11 @@ contract("CosmosBridge", function(accounts) {
       Number(event.args._amount).should.be.bignumber.equal(this.amount);
     });
 
-    it("should increase the bridge claim count upon the creation of new a bridge claim", async function() {
-      const priorBridgeClaimCount = await this.cosmosBridge.bridgeClaimCount();
-      Number(priorBridgeClaimCount).should.be.bignumber.equal(0);
+    it("should increase the prophecy claim count upon the creation of new a prophecy claim", async function() {
+      const priorProphecyClaimCount = await this.cosmosBridge.prophecyClaimCount();
+      Number(priorProphecyClaimCount).should.be.bignumber.equal(0);
 
-      await this.cosmosBridge.newBridgeClaim(
+      await this.cosmosBridge.newProphecyClaim(
         this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
@@ -208,14 +208,14 @@ contract("CosmosBridge", function(accounts) {
         }
       );
 
-      const postBridgeClaimCount = await this.cosmosBridge.bridgeClaimCount();
-      Number(postBridgeClaimCount).should.be.bignumber.equal(1);
+      const postProphecyClaimCount = await this.cosmosBridge.prophecyClaimCount();
+      Number(postProphecyClaimCount).should.be.bignumber.equal(1);
     });
   });
 
   describe("Bridge claim status", function() {
     beforeEach(async function() {
-      // Set up BridgeClaim values
+      // Set up ProphecyClaim values
       this.nonce = 4;
       this.cosmosSender = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
@@ -262,12 +262,12 @@ contract("CosmosBridge", function(accounts) {
       });
     });
 
-    it("should not show fake bridge claims as active", async function() {
-      const bridgeClaimCount = 4;
+    it("should not show fake prophecy claims as active", async function() {
+      const prophecyClaimCount = 4;
 
-      // Get a BridgeClaim's status
-      const status = await this.cosmosBridge.isBridgeClaimActive(
-        bridgeClaimCount,
+      // Get a prophecy claim's status
+      const status = await this.cosmosBridge.isProphecyClaimActive(
+        prophecyClaimCount,
         {
           from: accounts[7]
         }
@@ -277,9 +277,9 @@ contract("CosmosBridge", function(accounts) {
       status.should.be.equal(false);
     });
 
-    it("should allow users to check if a bridge claim is currently active", async function() {
-      // Create the BridgeClaim
-      const { logs } = await this.cosmosBridge.newBridgeClaim(
+    it("should allow users to check if a prophecy claim is currently active", async function() {
+      // Create the prophecy claim
+      const { logs } = await this.cosmosBridge.newProphecyClaim(
         this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
@@ -291,12 +291,12 @@ contract("CosmosBridge", function(accounts) {
         }
       );
 
-      const event = logs.find(e => e.event === "LogNewBridgeClaim");
-      const bridgeClaimCount = event.args._bridgeClaimCount;
+      const event = logs.find(e => e.event === "LogNewProphecyClaim");
+      const prophecyClaimCount = event.args._prophecyID;
 
-      // Get the BridgeClaim's status
-      const status = await this.cosmosBridge.isBridgeClaimActive(
-        bridgeClaimCount,
+      // Get the ProphecyClaim's status
+      const status = await this.cosmosBridge.isProphecyClaimActive(
+        prophecyClaimCount,
         {
           from: accounts[7]
         }
@@ -306,9 +306,9 @@ contract("CosmosBridge", function(accounts) {
       status.should.be.equal(true);
     });
 
-    it("should allow users to check if a bridge claim's original validator is currently an active validator", async function() {
-      // Create the BridgeClaim
-      const { logs } = await this.cosmosBridge.newBridgeClaim(
+    it("should allow users to check if a prophecy claim's original validator is currently an active validator", async function() {
+      // Create the ProphecyClaim
+      const { logs } = await this.cosmosBridge.newProphecyClaim(
         this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
@@ -320,12 +320,12 @@ contract("CosmosBridge", function(accounts) {
         }
       );
 
-      const event = logs.find(e => e.event === "LogNewBridgeClaim");
-      const bridgeClaimCount = event.args._bridgeClaimCount;
+      const event = logs.find(e => e.event === "LogNewProphecyClaim");
+      const prophecyClaimCount = event.args._prophecyID;
 
-      // Get the BridgeClaim's status
-      const status = await this.cosmosBridge.isBridgeClaimValidatorActive(
-        bridgeClaimCount,
+      // Get the ProphecyClaim's status
+      const status = await this.cosmosBridge.isProphecyClaimValidatorActive(
+        prophecyClaimCount,
         {
           from: accounts[7]
         }

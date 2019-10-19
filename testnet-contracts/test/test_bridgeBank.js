@@ -280,8 +280,8 @@ contract("BridgeBank", function(accounts) {
         from: operator
       });
 
-      // Submit a new bridge claim to the CosmosBridge to make oracle claims upon
-      const { logs: secondLogs } = await this.cosmosBridge.newBridgeClaim(
+      // Submit a new prophecy claim to the CosmosBridge to make oracle claims upon
+      const { logs: secondLogs } = await this.cosmosBridge.newProphecyClaim(
         this.nonce,
         this.sender,
         this.recipient,
@@ -293,15 +293,15 @@ contract("BridgeBank", function(accounts) {
         }
       ).should.be.fulfilled;
 
-      // Get the new BridgeClaim's id
-      const eventLogNewBridgeClaim = secondLogs.find(
-        e => e.event === "LogNewBridgeClaim"
+      // Get the new ProphecyClaim's id
+      const eventLogNewProphecyClaim = secondLogs.find(
+        e => e.event === "LogNewProphecyClaim"
       );
-      this.bridgeClaimID = eventLogNewBridgeClaim.args._bridgeClaimCount;
+      this.prophecyID = eventLogNewProphecyClaim.args._prophecyID;
 
       // Create hash using Solidity's Sha3 hashing function
       this.message = web3.utils.soliditySha3(
-        { t: "uint256", v: this.bridgeClaimID },
+        { t: "uint256", v: this.prophecyID },
         { t: "bytes", v: this.sender },
         { t: "uint256", v: this.nonce }
       );
@@ -313,7 +313,7 @@ contract("BridgeBank", function(accounts) {
 
       // Validator userOne makes a valid OracleClaim
       await this.oracle.newOracleClaim(
-        this.bridgeClaimID,
+        this.prophecyID,
         toEthSignedMessageHash(this.message),
         this.userOneSignature,
         {
@@ -332,8 +332,8 @@ contract("BridgeBank", function(accounts) {
       priorUserBalance.should.be.bignumber.equal(0);
 
       // Process the prophecy claim
-      await this.oracle.processProphecyClaim(
-        this.bridgeClaimID
+      await this.oracle.processBridgeProphecy(
+        this.prophecyID
       ).should.be.fulfilled;
 
       // Confirm that the user has been minted the correct token

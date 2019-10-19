@@ -18,8 +18,8 @@ contract CosmosBridge {
     BridgeBank public bridgeBank;
     bool public hasBridgeBank;
 
-    uint256 public bridgeClaimCount;
-    mapping(uint256 => BridgeClaim) public bridgeClaims;
+    uint256 public prophecyClaimCount;
+    mapping(uint256 => ProphecyClaim) public prophecyClaims;
 
     enum Status {
         Null,
@@ -28,7 +28,7 @@ contract CosmosBridge {
         Failed
     }
 
-    struct BridgeClaim {
+    struct ProphecyClaim {
         uint256 nonce;
         bytes cosmosSender;
         address payable ethereumReceiver;
@@ -50,8 +50,8 @@ contract CosmosBridge {
         address _bridgeBank
     );
 
-    event LogNewBridgeClaim(
-        uint256 _bridgeClaimCount,
+    event LogNewProphecyClaim(
+        uint256 _prophecyID,
         uint256 _nonce,
         bytes _cosmosSender,
         address payable _ethereumReceiver,
@@ -61,20 +61,20 @@ contract CosmosBridge {
         uint256 _amount
     );
 
-    event LogBridgeClaimCompleted(
-        uint256 _bridgeClaimID
+    event LogProphecyCompleted(
+        uint256 _prophecyID
     );
 
     /*
-    * @dev: Modifier to restrict access to completed BridgeClaims
+    * @dev: Modifier which only allows access to currently pending prophecies
     */
     modifier isPending(
-        uint256 _bridgeClaimID
+        uint256 _prophecyID
     )
     {
         require(
-            isBridgeClaimActive(_bridgeClaimID),
-            "Bridge claim is not active"
+            isProphecyClaimActive(_prophecyID),
+            "Prophecy claim is not active"
         );
         _;
     }
@@ -112,7 +112,7 @@ contract CosmosBridge {
     )
         public
     {
-        bridgeClaimCount = 0;
+        prophecyClaimCount = 0;
         operator = _operator;
         valset = Valset(_valset);
         hasOracle = false;
@@ -162,15 +162,15 @@ contract CosmosBridge {
             address(bridgeBank)
         );
     }
-    
+
     /*
-    * @dev: newBridgeClaim
-    *       Creates a new bridge claim, adding it to the bridgeClaims mapping.
-    *       BridgeClaims can only be created for BridgeTokens on BridgeBank's whitelist.
+    * @dev: newProphecyClaim
+    *       Creates a new prophecy claim, adding it to the prophecyClaims mapping.
+    *       ProphecyClaims can only be created for BridgeTokens on BridgeBank's whitelist.
     *        If the operator is responsible for adding them, then the automatic relay will
-    *       of BridgeClaims will fail until operator has called BrideBank.createNewBridgeToken().
+    *       of ProphecyClaim will fail until operator has called BridgeBank.createNewBridgeToken().
     */
-    function newBridgeClaim(
+    function newProphecyClaim(
         uint256 _nonce,
         bytes memory _cosmosSender,
         address payable _ethereumReceiver,
@@ -186,13 +186,13 @@ contract CosmosBridge {
             "Must be an active validator"
         );
 
-        // Increment the bridge claim count
-        bridgeClaimCount = bridgeClaimCount.add(1);
+        // Increment the prophecy claim count
+        prophecyClaimCount = prophecyClaimCount.add(1);
 
         address originalValidator = msg.sender;
 
-        // Create the new BridgeClaim
-        BridgeClaim memory bridgeClaim = BridgeClaim(
+        // Create the new ProphecyClaim
+        ProphecyClaim memory prophecyClaim = ProphecyClaim(
             _nonce,
             _cosmosSender,
             _ethereumReceiver,
@@ -203,11 +203,11 @@ contract CosmosBridge {
             Status.Pending
         );
 
-        // Add the new BridgeClaim to the mapping
-        bridgeClaims[bridgeClaimCount] = bridgeClaim;
+        // Add the new ProphecyClaim to the mapping
+        prophecyClaims[prophecyClaimCount] = prophecyClaim;
 
-        emit LogNewBridgeClaim(
-            bridgeClaimCount,
+        emit LogNewProphecyClaim(
+            prophecyClaimCount,
             _nonce,
             _cosmosSender,
             _ethereumReceiver,
@@ -219,26 +219,26 @@ contract CosmosBridge {
     }
 
     /*
-    * @dev: completeBridgeClaim
-    *       Allows for the completion of bridge claims once processed by the Oracle
+    * @dev: completeProphecyClaim
+    *       Allows for the completion of ProphecyClaims once processed by the Oracle
     */
-    function completeBridgeClaim(
-        uint256 _bridgeClaimID
+    function completeProphecyClaim(
+        uint256 _prophecyID
     )
         public
-        isPending(_bridgeClaimID)
+        isPending(_prophecyID)
     {
         require(
             msg.sender == oracle,
-            "Only the Oracle may complete bridge claims"
+            "Only the Oracle may complete prophecies"
         );
 
-        bridgeClaims[_bridgeClaimID].status = Status.Success;
+        prophecyClaims[_prophecyID].status = Status.Success;
 
-        issueBridgeTokens(_bridgeClaimID);
+        issueBridgeTokens(_prophecyID);
 
-        emit LogBridgeClaimCompleted(
-            _bridgeClaimID
+        emit LogProphecyCompleted(
+            _prophecyID
         );
     }
 
@@ -247,49 +247,49 @@ contract CosmosBridge {
     *       Issues a request for the BridgeBank to mint new BridgeTokens
     */
     function issueBridgeTokens(
-        uint256 _bridgeClaimID
+        uint256 _prophecyID
     )
         internal
     {
-        BridgeClaim memory bridgeClaim = bridgeClaims[_bridgeClaimID];
+        ProphecyClaim memory prophecyClaim = prophecyClaims[_prophecyID];
 
         bridgeBank.mintBridgeTokens(
-            bridgeClaim.cosmosSender,
-            bridgeClaim.ethereumReceiver,
-            bridgeClaim.tokenAddress,
-            bridgeClaim.symbol,
-            bridgeClaim.amount
+            prophecyClaim.cosmosSender,
+            prophecyClaim.ethereumReceiver,
+            prophecyClaim.tokenAddress,
+            prophecyClaim.symbol,
+            prophecyClaim.amount
         );
     }
 
     /*
-    * @dev: isBridgeClaimActive
-    *       Returns boolean indicating if the BridgeClaim is active
+    * @dev: isProphecyClaimActive
+    *       Returns boolean indicating if the ProphecyClaim is active
     */
-    function isBridgeClaimActive(
-        uint256 _bridgeClaimID
+    function isProphecyClaimActive(
+        uint256 _prophecyID
     )
         public
         view
         returns(bool)
     {
-        return bridgeClaims[_bridgeClaimID].status == Status.Pending;
+        return prophecyClaims[_prophecyID].status == Status.Pending;
     }
 
     /*
-    * @dev: isBridgeClaimValidatorActive
+    * @dev: isProphecyValidatorActive
     *       Returns boolean indicating if the validator that originally
-    *       submitted the BridgeClaim is still an active validator
+    *       submitted the ProphecyClaim is still an active validator
     */
-    function isBridgeClaimValidatorActive(
-        uint256 _bridgeClaimID
+    function isProphecyClaimValidatorActive(
+        uint256 _prophecyID
     )
         public
         view
         returns(bool)
     {
         return valset.isActiveValidator(
-            bridgeClaims[_bridgeClaimID].originalValidator
+            prophecyClaims[_prophecyID].originalValidator
         );
     }
 }

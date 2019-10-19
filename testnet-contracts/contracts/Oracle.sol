@@ -61,6 +61,22 @@ contract Oracle {
     }
 
     /*
+    * @dev: Modifier to restrict access to current ValSet validators
+    */
+    modifier isPending(
+        uint256 _prophecyID
+    )
+    {
+        require(
+            cosmosBridge.isProphecyClaimActive(
+                _prophecyID
+            ) == true,
+            "The prophecy must be pending for this operation"
+        );
+        _;
+    }
+
+    /*
     * @dev: Constructor
     */
     constructor(
@@ -86,15 +102,9 @@ contract Oracle {
     )
         public
         onlyValidator
+        isPending(_prophecyID)
     {
         address validatorAddress = msg.sender;
-
-        require(
-            cosmosBridge.isBridgeClaimActive(
-                _prophecyID
-            ) == true,
-            "Can only make oracle claims upon active prophecies"
-        );
 
         // Validate the msg.sender's signature
         require(
@@ -130,14 +140,8 @@ contract Oracle {
         uint256 _prophecyID
     )
         public
+        isPending(_prophecyID)
     {
-        require(
-            cosmosBridge.isBridgeClaimActive(
-                _prophecyID
-            ) == true,
-            "Can only attempt to process active prophecies"
-        );
-
         // Process the prophecy
         (bool valid,
             uint256 weightedSignedPower,
@@ -173,10 +177,11 @@ contract Oracle {
         public
         view
         onlyOperator
+        isPending(_prophecyID)
         returns(bool, uint256, uint256)
     {
         require(
-            cosmosBridge.isBridgeClaimActive(
+            cosmosBridge.isProphecyClaimActive(
                 _prophecyID
             ) == true,
             "Can only check active prophecies"
@@ -238,7 +243,7 @@ contract Oracle {
     )
         internal
     {
-        cosmosBridge.completeBridgeClaim(
+        cosmosBridge.completeProphecyClaim(
             _prophecyID
         );
     }
