@@ -1,9 +1,6 @@
 package contract
 
 import (
-	"io/ioutil"
-	"log"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -13,10 +10,7 @@ import (
 func TestLoadABI(t *testing.T) {
 
 	//Get the ABI ready
-	rawContractAbi, errorMsg := ioutil.ReadFile("./PeggyABI.json")
-	if errorMsg != nil {
-		log.Fatal(errorMsg)
-	}
+	abi := LoadABI()
 
-	require.True(t, strings.Contains(string(rawContractAbi), "LogLock"))
+	require.NotNil(t, abi.Events["LogLock"])
 }

@@ -70,6 +70,7 @@ library SafeMath {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 interface IERC20 {
+    
     function transfer(address to, uint256 value) external returns (bool);
 
     function approve(address spender, uint256 value) external returns (bool);
@@ -101,6 +102,10 @@ interface IERC20 {
  */
 contract ERC20 is IERC20 {
     using SafeMath for uint256;
+
+    string public name;
+    string public symbol;
+    uint8 public decimals;
 
     mapping (address => uint256) private _balances;
 
@@ -487,6 +492,7 @@ contract Peggy is Processor {
         address _from,
         bytes _to,
         address _token,
+        string _symbol,
         uint256 _value,
         uint256 _nonce
     );
@@ -570,12 +576,16 @@ contract Peggy is Processor {
         whileActive()
         returns(bytes32 _id)
     {
-         //Actions based on token address type
+        string memory symbol;
+        
+        //Actions based on token address type
         if (msg.value != 0) {
           require(_token == address(0));
           require(msg.value == _amount);
+          symbol = "ETH";
         } else {
           require(ERC20(_token).transferFrom(msg.sender, address(this), _amount));
+          symbol = ERC20(_token).symbol();
         }
 
         //Create an item with a unique key.
@@ -591,6 +601,7 @@ contract Peggy is Processor {
             msg.sender,
             _recipient,
             _token,
+            symbol,
             _amount,
             getNonce()
         );

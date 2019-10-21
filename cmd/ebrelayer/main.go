@@ -79,7 +79,7 @@ func initRelayerCmd() *cobra.Command {
 		Short: "Initializes a web socket which streams live events from a smart contract",
 		Args:  cobra.ExactArgs(4),
 		// NOTE: Preface both parentheses in the event signature with a '\'
-		Example: "ebrelayer init wss://ropsten.infura.io/ws ec6df30846baab06fce9b1721608853193913c19 LogLock(bytes32,address,bytes,address,uint256,uint256) validator --chain-id=testing",
+		Example: "ebrelayer init wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 LogLock(bytes32,address,bytes,address,string,uint256,uint256) validator --chain-id=testing",
 		RunE:    RunRelayerCmd,
 	}
 
@@ -110,7 +110,6 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	eventSigHash := crypto.Keccak256Hash([]byte(args[2]))
 
 	// Get the hex event signature from the hash.
-	// Expected value: "0xe154a56f2d306d5bbe4ac2379cb0cfc906b23685047a2bd2f5f0a0e810888f72"
 	eventSig := eventSigHash.Hex()
 
 	// Parse the validator's moniker
