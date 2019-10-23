@@ -1,7 +1,7 @@
 package events
 
 // -----------------------------------------------------
-//    Event : Creates LockEvents from new events on the ethereum
+//    ethereumEvent : Creates LockEvents from new events on the
 //			  Ethereum blockchain.
 // -----------------------------------------------------
 
@@ -39,13 +39,13 @@ func NewLockEvent(contractAbi abi.ABI, eventName string, eventData []byte) LockE
 		log.Fatalf("Unpacking: %v", err)
 	}
 
-	PrintEvent(event)
+	PrintLockEvent(event)
 
 	return event
 }
 
-// PrintEvent : prints a LockEvent struct's information
-func PrintEvent(event LockEvent) {
+// PrintLockEvent : prints a LockEvent struct's information
+func PrintLockEvent(event LockEvent) {
 	// Convert the variables into a printable format
 	id := hex.EncodeToString(event.Id[:])
 	sender := event.From.Hex()

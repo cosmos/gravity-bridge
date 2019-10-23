@@ -11,11 +11,12 @@ import (
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
 // InitCosmosRelayer : initializes a relayer which witnesses events on the Cosmos network and relays them to Ethereum
-func InitCosmosRelayer(tendermintProvider string, web3Provider string, peggyContractAddress common.Address, rawPrivateKey string) error {
+func InitCosmosRelayer(tendermintProvider string, web3Provider string, cosmosBridgeContractAddress common.Address, rawPrivateKey string) error {
 
 	logger := tmLog.NewTMLogger(tmLog.NewSyncWriter(os.Stdout))
 
@@ -47,30 +48,20 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, peggyCont
 			txRes := tx.Result
 			for i := 1; i < len(txRes.Events); i++ {
 				event := txRes.Events[i]
-				switch txRes.Events[i].Type { // TODO: Switch on event.type
-				case "burn":
-					logger.Info("\tMsgBurn")
-					eventName := "burn"
+				eventName := string(txRes.Events[i].Type)
+				switch eventName {
+				case "burn", "lock":
+					// Package the data into an array for proper parsing
+					cosmosSender := string(event.Attributes[0].Value)
+					ethereumReceiver := string(event.Attributes[1].Value)
+					coin := string(event.Attributes[3].Value)
+					eventData := [3]string{cosmosSender, ethereumReceiver, coin}
 
-					// TODO: Make a unique MsgBurn struct to hold this data
-					cosmosSender := event.Attributes[0].Value
-					ethereumReceiver := event.Attributes[1].Value
-					coin := event.Attributes[3].Value
-					eventData = [cosmosSender, ethereumReceiver, coin]
+					// Parse the eventData into a new MsgEvent
+					msgEvent := events.NewMsgEvent(eventName, eventData)
 
-					err = txs.RelayToEthereum(web3Provider, peggyContractAddress, rawPrivateKey, eventName, eventData)
-					if err != nil {
-						return err
-					}
-				case "create_claim":
-					logger.Info("\tMsgCreateClaim")
-					err = txs.RelayToEthereum(web3Provider, peggyContractAddress, rawPrivateKey)
-					if err != nil {
-						return err
-					}
-				case "create_prophecy":
-					logger.Info("\tMsgCreateProphecy")
-					err = txs.RelayToEthereum(web3Provider, peggyContractAddress, rawPrivateKey)
+					// Relay the MsgEvent to the Ethereum network
+					err = txs.RelayToEthereum(web3Provider, cosmosBridgeContractAddress, rawPrivateKey, &msgEvent)
 					if err != nil {
 						return err
 					}

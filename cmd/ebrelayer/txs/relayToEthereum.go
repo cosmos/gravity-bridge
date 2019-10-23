@@ -3,7 +3,6 @@ package txs
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/hex"
 	"fmt"
 
 	"log"
@@ -14,24 +13,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	// TODO: Refactor solc generation of Peggy.go for compatibility with Truffle
-	peggy "github.com/cosmos/peggy/cmd/ebrelayer/peggy"
+	// TODO: Add a contract abigen generator via solc to testnet-contracts/scripts
+	cosmosBridge "github.com/cosmos/peggy/cmd/ebrelayer/cosmosbridge"
+	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 )
 
-// TODO: Remove these test constants once event data is passed in params
-const (
-	// CosmosSender : hashed address "cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv"
-	CosmosSender = "0x636F736D6F7331676E38343039717139686E7278646533376B75787778356872787066707638343236737A7576"
-	// EthereumRecipient : intended recipient of token transfer
-	EthereumRecipient = "0x115f6e2004d7b4ccd6b9d5ab34e30909e0f612cd"
-	// WeiAmount : transfer amount in wei
-	WeiAmount = 100
-	// ItemID : unique identifier of the tokens stored on the bridge contract
-	ItemID = "2064e17083eed31b4a77fc929bedb9e97a1508b484b3a60185413ba58fd36b6d"
-)
-
-// RelayToEthereum : relays the provided transaction data to a peggy smart contract deployed on Ethereum
-func RelayToEthereum(provider string, peggyContractAddress common.Address, rawPrivateKey string, eventName string, eventData []string) error {
+// RelayToEthereum : relays the provided transaction data to a smart contract deployed on Ethereum
+func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address, rawPrivateKey string, eventData *events.MsgEvent) error {
 
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)
@@ -71,82 +59,39 @@ func RelayToEthereum(provider string, peggyContractAddress common.Address, rawPr
 	auth.GasLimit = uint64(300000) // 300,000 Gwei in units
 	auth.GasPrice = gasPrice
 
-	// Initialize Peggy contract instance
-	// TODO: Update this to 'CosmosBridge'
-	instance, err := peggy.NewPeggy(peggyContractAddress, client)
+	// Initialize CosmosBridge contract instance
+	instance, err := cosmosBridge.NewCosmosBridge(cosmosBridgeContractAddress, client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Tokens get locked on Cosmos ->
-	// 	Tokens get minted on Ethereum ->
-	// 		Validators reach consensus about the state ->
-	// 			Tokens get burned on Cosmos ->
-	// 				Tokens get unlocked on Ethereum
-
-	// Send transaction to the instance's specified method
-	switch eventName {
+	var txHash common.Hash
+	switch eventData.EventName {
 	case "burn":
-		// Parse Cosmos sender
-		cosmosSender := [32]byte{}
-		copy(cosmosSender[:], []byte(eventData[0]))
-
-		// Parse Ethereum receiver
-		if !common.IsHexAddress(eventData[1]) {
-			return fmt.Errorf("Invalid recipient address: %v", eventData[1])
-		}
-		ethereumReceiver := common.HexToAddress(eventData[1])
-
-		// TODO: Parse symbol, amount from sdk.Coin coin
-		// coin := eventData[2]
-		symbol := "eth"
-		amount := 3
-
-		// TODO: Get token address from chain
-		tokenAddressString := "0x0000000000000000000000000000000000000000"
-		// Parse Ethereum receiver
-		if !common.IsHexAddress(tokenAddressString) {
-			return fmt.Errorf("Invalid token address: %v", tokenAddressString)
-		}
-		tokenAddress := common.HexToAddress(tokenAddressString)
-
-		// TODO: REMOVE THIS PRINT
-		noncePrint := nonce
-		cosmosSenderPrint := hex.EncodeToString(cosmosSender[:])
-		ethereumReceiverPrint := ethereumReceiver.Hex()
-		tokenAddressPrint := tokenAddress.Hex()
-		symbolPrint := symbol
-		amountPrint := amount
-		// id := hex.EncodeToString(event.Id[:])
-
-		fmt.Printf("\nNonce: %v\nCosmos Sender: %v\nEthereum Recipient: %v\nToken Address: %v\nSymbol: %v\nAmount: %v\n\n",
-			noncePrint, cosmosSenderPrint, ethereumReceiverPrint, tokenAddressPrint, symbolPrint, amountPrint)
-
-		// TODO: Remove nonce from function on contract
-		tx, err := instance.newProphecyClaim(auth, nonce, cosmosSender, ethereumReceiver, tokenAddress, symbol, amount)
+		// TODO: Delete nonce (2nd param) once it is removed from NewProphecyClaim() params
+		tx, err := instance.NewProphecyClaim(auth, big.NewInt(2), eventData.CosmosSender, eventData.EthereumReceiver, eventData.TokenContractAddress, eventData.Symbol, eventData.Amount)
 		if err != nil {
 			log.Fatal(err)
 		}
+		txHash = tx.Hash()
+		fmt.Println("\nNewProphecyClaim tx:", txHash.Hex())
 
-		// TODO: Deal with this
-		// case "create_claim":
-		// case "create_prophecy":
-
-		// tx, err := instance.Unlock(auth, itemID)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
+	case "lock":
+		// TODO: Integrate with MsgLock feature
 	}
 
 	// Get the transaction receipt
-	// receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	receipt, err := client.TransactionReceipt(context.Background(), txHash)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	fmt.Println("\nTx relayed to Ethereum")
-	// fmt.Println("Tx hash:", tx.Hash().Hex())
-	// fmt.Println("Status:", receipt.Status)
+	switch receipt.Status {
+	case 0:
+		fmt.Println("Status: 0 - Failed")
+	case 1:
+		fmt.Println("Status: 1 - Successful")
+	}
 
 	return nil
 }
