@@ -2,7 +2,6 @@ package relayer
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -47,14 +46,19 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, peggyCont
 
 			txRes := tx.Result
 			for i := 1; i < len(txRes.Events); i++ {
-				event := txRes.Events[i].String()
+				event := txRes.Events[i]
 				switch txRes.Events[i].Type { // TODO: Switch on event.type
 				case "burn":
 					logger.Info("\tMsgBurn")
-					fmt.Printf("%v", event)
+					eventName := "burn"
 
-					// TODO: Parse event attributes and pass them to txs.relayToEthereum
-					err = txs.RelayToEthereum(web3Provider, peggyContractAddress, rawPrivateKey)
+					// TODO: Make a unique MsgBurn struct to hold this data
+					cosmosSender := event.Attributes[0].Value
+					ethereumReceiver := event.Attributes[1].Value
+					coin := event.Attributes[3].Value
+					eventData = [cosmosSender, ethereumReceiver, coin]
+
+					err = txs.RelayToEthereum(web3Provider, peggyContractAddress, rawPrivateKey, eventName, eventData)
 					if err != nil {
 						return err
 					}

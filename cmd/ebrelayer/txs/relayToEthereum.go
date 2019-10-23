@@ -3,6 +3,7 @@ package txs
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
 
 	"log"
@@ -30,7 +31,7 @@ const (
 )
 
 // RelayToEthereum : relays the provided transaction data to a peggy smart contract deployed on Ethereum
-func RelayToEthereum(provider string, peggyContractAddress common.Address, rawPrivateKey string) error {
+func RelayToEthereum(provider string, peggyContractAddress common.Address, rawPrivateKey string, eventName string, eventData []string) error {
 
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)
@@ -71,42 +72,81 @@ func RelayToEthereum(provider string, peggyContractAddress common.Address, rawPr
 	auth.GasPrice = gasPrice
 
 	// Initialize Peggy contract instance
+	// TODO: Update this to 'CosmosBridge'
 	instance, err := peggy.NewPeggy(peggyContractAddress, client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Event parameters
-	itemID := [32]byte{}
-	copy(itemID[:], []byte(ItemID))
-
-	// TODO: Refactor unlock() on smart contract to accept (cosmosSender, ethereumRecipient, amount) instead of itemID
-	// cosmosSender := []byte{}
-	// copy(cosmosSender[:], []byte(CosmosSender))
-
-	// ethereumRecipientString := EthereumTokenAddress
-	// if !common.IsHexAddress(ethereumRecipientString) {
-	// 	return fmt.Errorf("Invalid contract-address: %v", ethereumRecipientString)
-	// }
-	// ethereumRecipient := common.HexToAddress(ethereumRecipientString)
-
-	// amount := big.NewInt(WeiAmount)
+	// Tokens get locked on Cosmos ->
+	// 	Tokens get minted on Ethereum ->
+	// 		Validators reach consensus about the state ->
+	// 			Tokens get burned on Cosmos ->
+	// 				Tokens get unlocked on Ethereum
 
 	// Send transaction to the instance's specified method
-	tx, err := instance.Unlock(auth, itemID) // cosmosSender, ethereumReceiver, amount
-	if err != nil {
-		log.Fatal(err)
+	switch eventName {
+	case "burn":
+		// Parse Cosmos sender
+		cosmosSender := [32]byte{}
+		copy(cosmosSender[:], []byte(eventData[0]))
+
+		// Parse Ethereum receiver
+		if !common.IsHexAddress(eventData[1]) {
+			return fmt.Errorf("Invalid recipient address: %v", eventData[1])
+		}
+		ethereumReceiver := common.HexToAddress(eventData[1])
+
+		// TODO: Parse symbol, amount from sdk.Coin coin
+		// coin := eventData[2]
+		symbol := "eth"
+		amount := 3
+
+		// TODO: Get token address from chain
+		tokenAddressString := "0x0000000000000000000000000000000000000000"
+		// Parse Ethereum receiver
+		if !common.IsHexAddress(tokenAddressString) {
+			return fmt.Errorf("Invalid token address: %v", tokenAddressString)
+		}
+		tokenAddress := common.HexToAddress(tokenAddressString)
+
+		// TODO: REMOVE THIS PRINT
+		noncePrint := nonce
+		cosmosSenderPrint := hex.EncodeToString(cosmosSender[:])
+		ethereumReceiverPrint := ethereumReceiver.Hex()
+		tokenAddressPrint := tokenAddress.Hex()
+		symbolPrint := symbol
+		amountPrint := amount
+		// id := hex.EncodeToString(event.Id[:])
+
+		fmt.Printf("\nNonce: %v\nCosmos Sender: %v\nEthereum Recipient: %v\nToken Address: %v\nSymbol: %v\nAmount: %v\n\n",
+			noncePrint, cosmosSenderPrint, ethereumReceiverPrint, tokenAddressPrint, symbolPrint, amountPrint)
+
+		// TODO: Remove nonce from function on contract
+		tx, err := instance.newProphecyClaim(auth, nonce, cosmosSender, ethereumReceiver, tokenAddress, symbol, amount)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// TODO: Deal with this
+		// case "create_claim":
+		// case "create_prophecy":
+
+		// tx, err := instance.Unlock(auth, itemID)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
 	}
 
 	// Get the transaction receipt
-	receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
-	if err != nil {
-		log.Fatal(err)
-	}
+	// receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	fmt.Println("\nTx relayed to Ethereum")
-	fmt.Println("Tx hash:", tx.Hash().Hex())
-	fmt.Println("Status:", receipt.Status)
+	// fmt.Println("Tx hash:", tx.Hash().Hex())
+	// fmt.Println("Status:", receipt.Status)
 
 	return nil
 }
