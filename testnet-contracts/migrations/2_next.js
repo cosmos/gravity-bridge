@@ -1,9 +1,15 @@
 require("dotenv").config();
 
+// Deployment Summary
+// ====================================
+// Total deployments:   6
+// Final cost:          0.17950626 ETH
+
 const Valset = artifacts.require("Valset");
 const CosmosBridge = artifacts.require("CosmosBridge");
 const Oracle = artifacts.require("Oracle");
 const BridgeBank = artifacts.require("BridgeBank");
+const BridgeRegistry = artifacts.require("BridgeRegistry");
 
 module.exports = function(deployer, network, accounts) {
   // Required initial paramater variables
@@ -95,7 +101,21 @@ module.exports = function(deployer, network, accounts) {
                 Oracle.address,
                 CosmosBridge.address,
                 {
-                  gas: 6721975, // Cost: 5,257,988
+                  gas: 6721975, // Cost: 5,383,098
+                  from: operator
+                }
+              );
+            })
+            .then(function() {
+              // 5. Deploy BridgeRegistry contract
+              return deployer.deploy(
+                BridgeRegistry,
+                CosmosBridge.address,
+                BridgeBank.address,
+                Oracle.address,
+                Valset.address,
+                {
+                  gas: 6721975, // Cost: 363,370
                   from: operator
                 }
               );

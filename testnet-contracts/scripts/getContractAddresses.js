@@ -5,11 +5,10 @@ module.exports = async () => {
   require("dotenv").config();
   const Web3 = require("web3");
   const HDWalletProvider = require("@truffle/hdwallet-provider");
-
   // Contract abstraction
   const truffleContract = require("truffle-contract");
   const contract = truffleContract(
-    require("../build/contracts/BridgeBank.json")
+    require("../build/contracts/BridgeRegistry.json")
   );
 
   /*******************************************
@@ -26,7 +25,7 @@ module.exports = async () => {
   if (NETWORK_ROPSTEN) {
     provider = new HDWalletProvider(
       process.env.MNEMONIC,
-      "https://ropsten.infura.io/".concat(process.env.INFURA_PROJECT_ID)
+      "https://ropsten.infura.io/v3/".concat(process.env.INFURA_PROJECT_ID)
     );
   } else {
     provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
@@ -38,9 +37,42 @@ module.exports = async () => {
   /*******************************************
    *** Contract interaction
    ******************************************/
-  const address = await contract.deployed().then(function(instance) {
-    return instance.address;
+  const cosmosBridgeAddress = await contract
+    .deployed()
+    .then(function(instance) {
+      return instance.cosmosBridge({
+        from: accounts[0],
+        value: 0,
+        gas: 300000 // 300,000 Gwei;
+      });
+    });
+
+  const bridgeBankAddress = await contract.deployed().then(function(instance) {
+    return instance.bridgeBank({
+      from: accounts[0],
+      value: 0,
+      gas: 300000 // 300,000 Gwei;
+    });
   });
 
-  return console.log("Bridge contract address: ", address);
+  const oracleAddress = await contract.deployed().then(function(instance) {
+    return instance.oracle({
+      from: accounts[0],
+      value: 0,
+      gas: 300000 // 300,000 Gwei;
+    });
+  });
+
+  const valsetAddress = await contract.deployed().then(function(instance) {
+    return instance.valset({
+      from: accounts[0],
+      value: 0,
+      gas: 300000 // 300,000 Gwei;
+    });
+  });
+
+  console.log("CosmosBridge:", cosmosBridgeAddress);
+  console.log("BridgeBank:", bridgeBankAddress);
+  console.log("Oracle:", oracleAddress);
+  console.log("Valset:", valsetAddress);
 };

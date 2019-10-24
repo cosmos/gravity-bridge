@@ -9,7 +9,7 @@ module.exports = async () => {
   // Contract abstraction
   const truffleContract = require("truffle-contract");
   const contract = truffleContract(
-    require("../build/contracts/BridgeToken.json")
+    require("../build/contracts/BridgeRegistry.json")
   );
 
   /*******************************************
@@ -42,5 +42,5 @@ module.exports = async () => {
     return instance.address;
   });
 
-  return console.log("Token contract address: ", address);
+  return console.log("BridgeRegistry deployed contract address: ", address);
 };
