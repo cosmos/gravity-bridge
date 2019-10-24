@@ -35,6 +35,7 @@
     "migrate": "truffle migrate --reset",
     "peggy:address": "truffle exec scripts/getBridgeRegistryAddress.js",
     "peggy:addresses": "truffle exec scripts/getContractAddresses.js",
+    "peggy:setOracleAndBank": "truffle exec scripts/setOracleAndBridgeBank.js",
     "peggy:lock": "truffle exec scripts/sendLockTx.js",
     "peggy:abi": "node scripts/formatAbi.js",
     "token:address": "truffle exec scripts/getTokenContractAddress.js",

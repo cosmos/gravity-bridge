@@ -18,7 +18,7 @@ module.exports = function(deployer, network, accounts) {
   let initialPowers = [];
 
   // Development network deployment param parsing/setting
-  if (network === "develop") {
+  if (network === "ganache") {
     // Operator
     operator = accounts[0];
     // Initial validators

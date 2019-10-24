@@ -59,6 +59,13 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 	auth.GasLimit = uint64(300000) // 300,000 Gwei in units
 	auth.GasPrice = gasPrice
 
+	// // Initialize BridgeRegistry instance
+	// instance, err := cosmosBridge.NewBridgeRegistry(cosmosBridgeContractAddress, client)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// TODO: Get cosmosBridgeAddress from BridgeRegistry
 	// Initialize CosmosBridge contract instance
 	instance, err := cosmosBridge.NewCosmosBridge(cosmosBridgeContractAddress, client)
 	if err != nil {

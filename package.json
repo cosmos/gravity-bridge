@@ -14,6 +14,7 @@
     "peggy:address": "yarn workspace testnet-contracts peggy:address",
     "peggy:addresses": "yarn workspace testnet-contracts peggy:addresses",
     "peggy:lock": "yarn workspace testnet-contracts peggy:lock",
+    "peggy:setOracleAndBank": "yarn workspace testnet-contracts peggy:setOracleAndBank",
     "peggy:abi": "yarn workspace testnet-contracts peggy:abi",
     "token:address": "yarn workspace testnet-contracts token:address",
     "token:mint": "yarn workspace testnet-contracts token:mint",
