@@ -50,6 +50,10 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 
 			ethBridgeClaim := types.NewEthBridgeClaim(nonce, ethereumSender, cosmosReceiver, validator, amount)
 			msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
+			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
 
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},

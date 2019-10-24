@@ -37,7 +37,6 @@ func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
 	if err != nil {
 		return types.ErrJSONMarshalling(codespace).Result()
 	}
-
 	status, sdkErr := oracleKeeper.ProcessClaim(ctx, oracleClaim)
 	if sdkErr != nil {
 		return sdkErr.Result()
