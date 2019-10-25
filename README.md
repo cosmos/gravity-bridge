@@ -112,11 +112,7 @@ ebcli rest-server --trust-node
 An api collection for [Postman](https://www.getpostman.com/) is provided [here](./docs/peggy.postman_collection.json) which documents some API endpoints and can be used to interact with it.
 Note: For checking account details/balance, you will need to change the cosmos addresses in the URLs, params and body to match the addresses you generated that you want to check.
 
-## Running the bridge locally
-
-With the application set up, you can now use Peggy by sending a lock transaction to the smart contract.
-
-### Set-up
+## Set up
 
 ```bash
 cd testnet-contracts/
@@ -131,6 +127,10 @@ Further reading:
 
 - [MetaMask Mnemonic](https://metamask.zendesk.com/hc/en-us/articles/360015290032-How-to-Reveal-Your-Seed-Phrase)
 - [Infura Project ID](https://blog.infura.io/introducing-the-infura-dashboard-8969b7ab94e7)
+
+## Ethereum -> Cosmos asset transfers using the Bridge
+
+With the application set up, you can now use Peggy by sending a lock transaction to the smart contract.
 
 ### Terminal 1: Start local blockchain
 
@@ -177,7 +177,7 @@ ebrelayer status
 # Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:7545/
 # Example [PEGGY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
 
-ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,string,uint256,uint256\) validator --chain-id=peggy
+ebrelayer initEth [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,string,uint256,uint256\) validator --chain-id=peggy
 
 # Enter password and press enter
 # You should see a message like: Started ethereum websocket with provider: [LOCAL_WEB_SOCKET] \ Subscribed to contract events on address: [PEGGY_DEPLOYED_ADDRESS]
@@ -293,6 +293,61 @@ Response:
   - msgindex: 0
     success: true
     log: ""
+```
+
+## Ethereum -> Cosmos asset transfers using the Bridge
+
+### Terminal 1: Start local blockchain
+
+```bash
+# Download dependencies
+yarn
+
+# Start local blockchain
+yarn develop
+
+```
+
+### Terminal 2: Deploy Bridge contracts
+
+```bash
+# Deploy contract to local blockchain
+yarn migrate
+
+# 1. Get the Oracle and BridgeBank contract addresses from the deployment logs above
+# 2. Set the CosmosBridge's Oracle and BridgeBank contracts
+yarn peggy:setOracleAndBank [ORACLE_ADDRESS] [BRIDGEBANK_ADDRESS]
+
+```
+
+### Terminal 3: Build and start Bridge
+
+```bash
+# Build the Bridge application
+make install
+
+# Start the Bridge's blockchain
+ebd start
+```
+
+### Terminal 4: Start the Relayer service
+
+```bash
+# Check ebrelayer connection to ebd
+ebrelayer status
+
+# Start ebrelayer
+# Example [tendermintProvider]: tcp://localhost:26657
+# Example [web3Provider]: http://localhost:8545
+
+# Get the BridgeRegistry contract's address
+yarn peggy:address
+
+# Get the private key of a validator from terminal 1. Initial validators = accounts[1], accounts[2], accounts[3]
+# Use the validator's private key for [privateKey]
+ebrelayer initCos initCos [tendermintProvider] [web3Provider] [bridgeRegistryContractAddress] [privateKey]
+
+# The relayer will now watch the Cosmos network and create a claim whenever it detects a burn or lock event.
 ```
 
 ## Using the modules in other projects

@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
+	bridgeBank "github.com/cosmos/peggy/cmd/ebrelayer/generated/bridgebank"
 	bridgeRegistry "github.com/cosmos/peggy/cmd/ebrelayer/generated/bridgeregistry"
 	cosmosBridge "github.com/cosmos/peggy/cmd/ebrelayer/generated/cosmosbridge"
 )
@@ -107,7 +108,15 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 		fmt.Println("\nNewProphecyClaim tx hash:", txHash.Hex())
 
 	case "lock":
-		// TODO: Integrate with MsgLock feature
+		fmt.Println("\nFetching BridgeBank contract...")
+		// Initialize BridgeBank instance
+		bridgeBankInstance, err := bridgeBank.NewBridgeBank(address, client)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// TODO: Send lock related transaction to appropriate contract method
+		fmt.Println(bridgeBankInstance)
 	}
 
 	// Get the transaction receipt
