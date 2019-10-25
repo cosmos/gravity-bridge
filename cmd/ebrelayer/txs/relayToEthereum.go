@@ -13,9 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	// TODO: Add a contract abigen generator via solc to testnet-contracts/scripts
-	cosmosBridge "github.com/cosmos/peggy/cmd/ebrelayer/cosmosbridge"
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
+	cosmosBridge "github.com/cosmos/peggy/cmd/ebrelayer/generated/cosmosbridge"
 )
 
 // RelayToEthereum : relays the provided transaction data to a smart contract deployed on Ethereum
