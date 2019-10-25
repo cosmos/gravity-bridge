@@ -314,7 +314,9 @@ yarn develop
 # Deploy contract to local blockchain
 yarn migrate
 
-# 1. Get the Oracle and BridgeBank contract addresses from the deployment logs above
+# Get the Oracle and BridgeBank contract addresses from the deployment logs above
+# TODO: Add user friendly script for this operation
+
 # 2. Set the CosmosBridge's Oracle and BridgeBank contracts
 yarn peggy:setOracleAndBank [ORACLE_ADDRESS] [BRIDGEBANK_ADDRESS]
 
@@ -338,16 +340,57 @@ ebrelayer status
 
 # Start ebrelayer
 # Example [tendermintProvider]: tcp://localhost:26657
-# Example [web3Provider]: http://localhost:8545
+# Example [web3Provider]: http://localhost:7545
 
 # Get the BridgeRegistry contract's address
 yarn peggy:address
 
-# Get the private key of a validator from terminal 1. Initial validators = accounts[1], accounts[2], accounts[3]
+# TODO: Add user friendly script for local testing. Add env variable for public network testing.
+# Get a private key from terminal 1. Initial validators = accounts[1], accounts[2], or accounts[3].
 # Use the validator's private key for [privateKey]
-ebrelayer initCos initCos [tendermintProvider] [web3Provider] [bridgeRegistryContractAddress] [privateKey]
+
+ebrelayer initCos [tendermintProvider] [web3Provider] [bridgeRegistryContractAddress] [privateKey]
+
+# You should see a message like:
+# [2019-10-24|19:02:21.888] Starting WSEvents         impl=WSEvents
 
 # The relayer will now watch the Cosmos network and create a claim whenever it detects a burn or lock event.
+```
+
+### Using Terminal 2: Send burn transaction on Cosmos
+
+```bash
+# Default parameter values:
+# Send some tokens to the testuser using the process described in section "Running and testing the application"
+
+# Send burn transaction
+ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 1stake --from testuser --chain-id peggy
+
+# Enter 'y' to confirm the transaction
+# Enter testuser's password
+
+# You should see the transaction output in the console with 'success:true' in the 'rawlog' field:
+# rawlog: '[{"msg_index":0,"success":true,"log":""}]'
+
+```
+
+`ebcli tx ethbridge burn` expected output in ebrelayer console:
+
+```bash
+[2019-10-24|19:07:01.714]       New transaction witnessed
+
+Msg Type: burn
+Cosmos Sender: cosmos1qwnw2r9ak79536c4dqtrtk2pl2nlzpqh763rls
+Ethereum Recipient: 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359
+Token Address: 0xbEDdB076fa4dF04859098A9873591dcE3E9C404d
+Symbol: stake
+Amount: 1
+
+Fetching CosmosBridge contract...
+Sending tx to CosmosBridge...
+
+NewProphecyClaim tx hash: 0x5544bdb31b90da102c0b7fd959b3106b823805871ddcbe972a7877ad15164631
+Status: 1 - Successful
 ```
 
 ## Using the modules in other projects
