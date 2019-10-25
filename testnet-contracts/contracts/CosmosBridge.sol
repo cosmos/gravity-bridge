@@ -29,7 +29,6 @@ contract CosmosBridge {
     }
 
     struct ProphecyClaim {
-        uint256 nonce;
         bytes cosmosSender;
         address payable ethereumReceiver;
         address originalValidator;
@@ -52,7 +51,6 @@ contract CosmosBridge {
 
     event LogNewProphecyClaim(
         uint256 _prophecyID,
-        uint256 _nonce,
         bytes _cosmosSender,
         address payable _ethereumReceiver,
         address _validatorAddress,
@@ -171,7 +169,6 @@ contract CosmosBridge {
     *       of ProphecyClaim will fail until operator has called BridgeBank.createNewBridgeToken().
     */
     function newProphecyClaim(
-        uint256 _nonce,
         bytes memory _cosmosSender,
         address payable _ethereumReceiver,
         address _tokenAddress,
@@ -193,7 +190,6 @@ contract CosmosBridge {
 
         // Create the new ProphecyClaim
         ProphecyClaim memory prophecyClaim = ProphecyClaim(
-            _nonce,
             _cosmosSender,
             _ethereumReceiver,
             originalValidator,
@@ -208,7 +204,6 @@ contract CosmosBridge {
 
         emit LogNewProphecyClaim(
             prophecyClaimCount,
-            _nonce,
             _cosmosSender,
             _ethereumReceiver,
             originalValidator,

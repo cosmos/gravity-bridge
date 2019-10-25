@@ -58,7 +58,6 @@ contract("Oracle", function(accounts) {
       this.cosmosSender = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       );
-      this.nonce = 17;
       this.ethereumReceiver = userOne;
       this.tokenAddress = "0x0000000000000000000000000000000000000000";
       this.symbol = "TEST";
@@ -67,8 +66,7 @@ contract("Oracle", function(accounts) {
       // Create hash using Solidity's Sha3 hashing function
       this.message = web3.utils.soliditySha3(
         { t: "uint256", v: this.prophecyID },
-        { t: "bytes", v: this.cosmosSender },
-        { t: "uint256", v: this.nonce }
+        { t: "bytes", v: this.cosmosSender }
       );
 
       // Deploy Valset contract
@@ -109,7 +107,6 @@ contract("Oracle", function(accounts) {
 
       // Submit a new prophecy claim to the CosmosBridge to make oracle claims upon
       await this.cosmosBridge.newProphecyClaim(
-        this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
@@ -127,8 +124,7 @@ contract("Oracle", function(accounts) {
       // Create hash using Solidity's Sha3 hashing function
       const inactiveBridgeClaimMessage = web3.utils.soliditySha3(
         { t: "uint256", v: inactiveBridgeClaimID },
-        { t: "bytes", v: this.cosmosSender },
-        { t: "uint256", v: this.nonce }
+        { t: "bytes", v: this.cosmosSender }
       );
       // Generate signature from userOne (validator)
       const signature = fixSignature(
@@ -168,8 +164,7 @@ contract("Oracle", function(accounts) {
     it("should not allow validators to make OracleClaims with invalid signatures", async function() {
       const badMessage = web3.utils.soliditySha3(
         { t: "uint256", v: 20 },
-        { t: "bytes", v: this.cosmosSender },
-        { t: "uint256", v: this.nonce }
+        { t: "bytes", v: this.cosmosSender }
       );
 
       // Generate signature from userTwo (validator) on bad message
@@ -283,7 +278,6 @@ contract("Oracle", function(accounts) {
       this.cosmosSender = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       );
-      this.nonce = 17;
       this.ethereumReceiver = userOne;
       this.symbol = "TEST";
       this.amount = 100;
@@ -291,8 +285,7 @@ contract("Oracle", function(accounts) {
       // Create hash using Solidity's Sha3 hashing function
       this.message = web3.utils.soliditySha3(
         { t: "uint256", v: this.prophecyID },
-        { t: "bytes", v: this.cosmosSender },
-        { t: "uint256", v: this.nonce }
+        { t: "bytes", v: this.cosmosSender }
       );
 
       // Deploy Valset contract
@@ -346,7 +339,6 @@ contract("Oracle", function(accounts) {
 
       // Submit a new prophecy claim to the CosmosBridge to make oracle claims upon
       await this.cosmosBridge.newProphecyClaim(
-        this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,

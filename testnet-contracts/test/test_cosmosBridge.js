@@ -107,7 +107,6 @@ contract("CosmosBridge", function(accounts) {
   describe("Creation of prophecy claims", function() {
     beforeEach(async function() {
       // Set up ProphecyClaim values
-      this.nonce = 4;
       this.cosmosSender = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       );
@@ -155,7 +154,6 @@ contract("CosmosBridge", function(accounts) {
 
     it("should allow for the creation of new prophecy claims", async function() {
       await this.cosmosBridge.newProphecyClaim(
-        this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
@@ -169,7 +167,6 @@ contract("CosmosBridge", function(accounts) {
 
     it("should log an event containing the new prophecy claim's information", async function() {
       const { logs } = await this.cosmosBridge.newProphecyClaim(
-        this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
@@ -183,7 +180,6 @@ contract("CosmosBridge", function(accounts) {
       const event = logs.find(e => e.event === "LogNewProphecyClaim");
 
       Number(event.args._prophecyID).should.be.bignumber.equal(1);
-      Number(event.args._nonce).should.be.bignumber.equal(this.nonce);
       event.args._cosmosSender.should.be.equal(this.cosmosSender);
       event.args._ethereumReceiver.should.be.equal(this.ethereumReceiver);
       event.args._validatorAddress.should.be.equal(userOne);
@@ -197,7 +193,6 @@ contract("CosmosBridge", function(accounts) {
       Number(priorProphecyClaimCount).should.be.bignumber.equal(0);
 
       await this.cosmosBridge.newProphecyClaim(
-        this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
@@ -216,7 +211,6 @@ contract("CosmosBridge", function(accounts) {
   describe("Bridge claim status", function() {
     beforeEach(async function() {
       // Set up ProphecyClaim values
-      this.nonce = 4;
       this.cosmosSender = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       );
@@ -280,7 +274,6 @@ contract("CosmosBridge", function(accounts) {
     it("should allow users to check if a prophecy claim is currently active", async function() {
       // Create the prophecy claim
       const { logs } = await this.cosmosBridge.newProphecyClaim(
-        this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
@@ -309,7 +302,6 @@ contract("CosmosBridge", function(accounts) {
     it("should allow users to check if a prophecy claim's original validator is currently an active validator", async function() {
       // Create the ProphecyClaim
       const { logs } = await this.cosmosBridge.newProphecyClaim(
-        this.nonce,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,

@@ -254,7 +254,6 @@ contract("BridgeBank", function(accounts) {
       ]);
       this.recipient = userThree;
       this.symbol = "TEST";
-      this.nonce = 17;
 
       // Create the bridge token, adding it to the whitelist
       const { logs: firstLogs } = await this.bridgeBank.createNewBridgeToken(
@@ -282,7 +281,6 @@ contract("BridgeBank", function(accounts) {
 
       // Submit a new prophecy claim to the CosmosBridge to make oracle claims upon
       const { logs: secondLogs } = await this.cosmosBridge.newProphecyClaim(
-        this.nonce,
         this.sender,
         this.recipient,
         this.bridgeToken,
@@ -302,8 +300,7 @@ contract("BridgeBank", function(accounts) {
       // Create hash using Solidity's Sha3 hashing function
       this.message = web3.utils.soliditySha3(
         { t: "uint256", v: this.prophecyID },
-        { t: "bytes", v: this.sender },
-        { t: "uint256", v: this.nonce }
+        { t: "bytes", v: this.sender }
       );
 
       // Generate signatures from active validators userOne, userTwo, userThree
