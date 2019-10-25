@@ -97,8 +97,7 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 		}
 
 		fmt.Println("Sending tx to CosmosBridge...")
-		// TODO: Delete nonce (2nd param) once it is removed from NewProphecyClaim() params
-		tx, err := cosmosBridgeInstance.NewProphecyClaim(transactOptsAuth, big.NewInt(2), eventData.CosmosSender, eventData.EthereumReceiver, eventData.TokenContractAddress, eventData.Symbol, eventData.Amount)
+		tx, err := cosmosBridgeInstance.NewProphecyClaim(transactOptsAuth, eventData.CosmosSender, eventData.EthereumReceiver, eventData.TokenContractAddress, eventData.Symbol, eventData.Amount)
 		if err != nil {
 			log.Fatal(err)
 		}
