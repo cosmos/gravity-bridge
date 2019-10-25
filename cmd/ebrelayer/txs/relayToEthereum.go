@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
+	bridgeRegistry "github.com/cosmos/peggy/cmd/ebrelayer/generated/bridgeregistry"
 	cosmosBridge "github.com/cosmos/peggy/cmd/ebrelayer/generated/cosmosbridge"
 )
 
@@ -39,6 +40,11 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
 	}
 
+	header, err := client.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
@@ -51,36 +57,55 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 		log.Fatal(err)
 	}
 
-	// Set up tx signature authorization
-	auth := bind.NewKeyedTransactor(privateKey)
-	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0)     // in wei
-	auth.GasLimit = uint64(300000) // 300,000 Gwei in units
-	auth.GasPrice = gasPrice
+	// Set up CallOpts auth
+	callOptsAuth := bind.CallOpts{
+		Pending:     true,
+		From:        fromAddress,
+		BlockNumber: header.Number,
+		Context:     context.Background(),
+	}
 
-	// // Initialize BridgeRegistry instance
-	// instance, err := cosmosBridge.NewBridgeRegistry(cosmosBridgeContractAddress, client)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	// Set up TransactOpts auth's tx signature authorization
+	transactOptsAuth := bind.NewKeyedTransactor(privateKey)
+	transactOptsAuth.Nonce = big.NewInt(int64(nonce))
+	transactOptsAuth.Value = big.NewInt(0)     // in wei
+	transactOptsAuth.GasLimit = uint64(300000) // 300,000 Gwei in units
+	transactOptsAuth.GasPrice = gasPrice
 
-	// TODO: Get cosmosBridgeAddress from BridgeRegistry
-	// Initialize CosmosBridge contract instance
-	instance, err := cosmosBridge.NewCosmosBridge(cosmosBridgeContractAddress, client)
+	// Initialize BridgeRegistry instance
+	bridgeRegistryInstance, err := bridgeRegistry.NewBridgeRegistry(cosmosBridgeContractAddress, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Get the specific contract's address (Valset, Oracle, CosmosBridge, or BridgeBank) based on EventName
+	address, err := getAddressFromBridgeRegistry(bridgeRegistryInstance, &callOptsAuth, eventData.EventName)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var txHash common.Hash
+
+	// Relay tx to appropriate contract depending on the event type
 	switch eventData.EventName {
 	case "burn":
-		// TODO: Delete nonce (2nd param) once it is removed from NewProphecyClaim() params
-		tx, err := instance.NewProphecyClaim(auth, big.NewInt(2), eventData.CosmosSender, eventData.EthereumReceiver, eventData.TokenContractAddress, eventData.Symbol, eventData.Amount)
+		fmt.Println("\nFetching CosmosBridge contract...")
+		// Initialize CosmosBridge instance
+		cosmosBridgeInstance, err := cosmosBridge.NewCosmosBridge(address, client)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		fmt.Println("Sending tx to CosmosBridge...")
+		// TODO: Delete nonce (2nd param) once it is removed from NewProphecyClaim() params
+		tx, err := cosmosBridgeInstance.NewProphecyClaim(transactOptsAuth, big.NewInt(2), eventData.CosmosSender, eventData.EthereumReceiver, eventData.TokenContractAddress, eventData.Symbol, eventData.Amount)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Set tx hash
 		txHash = tx.Hash()
-		fmt.Println("\nNewProphecyClaim tx:", txHash.Hex())
+		fmt.Println("\nNewProphecyClaim tx hash:", txHash.Hex())
 
 	case "lock":
 		// TODO: Integrate with MsgLock feature
@@ -92,6 +117,7 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 		log.Fatal(err)
 	}
 
+	// Report tx status
 	switch receipt.Status {
 	case 0:
 		fmt.Println("Status: 0 - Failed")
@@ -100,4 +126,26 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 	}
 
 	return nil
+}
+
+func getAddressFromBridgeRegistry(instance *bridgeRegistry.BridgeRegistry, auth *bind.CallOpts, eventName string) (common.Address, error) {
+
+	var contractAddress common.Address
+
+	switch eventName {
+	case "burn":
+		cosmosBridgeAddress, err := instance.CosmosBridge(auth)
+		if err != nil {
+			log.Fatal(err)
+		}
+		contractAddress = cosmosBridgeAddress
+	case "lock":
+		bridgeBankAddress, err := instance.BridgeBank(auth)
+		if err != nil {
+			log.Fatal(err)
+		}
+		contractAddress = bridgeBankAddress
+	}
+
+	return contractAddress, nil
 }

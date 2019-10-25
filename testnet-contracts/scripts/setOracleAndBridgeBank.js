@@ -78,29 +78,35 @@ module.exports = async () => {
   const accounts = await web3.eth.getAccounts();
 
   // Set Oracle
-  const { logs } = await contract.deployed().then(function(instance) {
-    return instance.setOracle(oracleContractAddress, {
-      from: accounts[0],
-      value: 0,
-      gas: 300000 // 300,000 Gwei
+  const { logs: setOracleLogs } = await contract
+    .deployed()
+    .then(function(instance) {
+      return instance.setOracle(oracleContractAddress, {
+        from: accounts[0],
+        value: 0,
+        gas: 300000 // 300,000 Gwei
+      });
     });
-  });
 
   // Get event logs
-  const setOracleEvent = logs.find(e => e.event === "LogOracleSet");
+  const setOracleEvent = setOracleLogs.find(e => e.event === "LogOracleSet");
   console.log("CosmosBridge's Oracle set:", setOracleEvent.args._oracle);
 
   // Set BridgeBank
-  const { logs } = await contract.deployed().then(function(instance) {
-    return instance.setBridgeBank(bridgeBankContractAddress, {
-      from: accounts[0],
-      value: 0,
-      gas: 300000 // 300,000 Gwei
+  const { logs: setBridgeBankLogs } = await contract
+    .deployed()
+    .then(function(instance) {
+      return instance.setBridgeBank(bridgeBankContractAddress, {
+        from: accounts[0],
+        value: 0,
+        gas: 300000 // 300,000 Gwei
+      });
     });
-  });
 
   // Get event logs
-  const setBridgeBankEvent = logs.find(e => e.event === "LogBridgeBankSet");
+  const setBridgeBankEvent = setBridgeBankLogs.find(
+    e => e.event === "LogBridgeBankSet"
+  );
   console.log(
     "CosmosBridge's BridgeBank set:",
     setBridgeBankEvent.args._bridgeBank
