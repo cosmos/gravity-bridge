@@ -17,19 +17,22 @@ import (
 
 // InitCosmosRelayer : initializes a relayer which witnesses events on the Cosmos network and relays them to Ethereum
 func InitCosmosRelayer(tendermintProvider string, web3Provider string, cosmosBridgeContractAddress common.Address, rawPrivateKey string) error {
-
 	logger := tmLog.NewTMLogger(tmLog.NewSyncWriter(os.Stdout))
-
 	client := tmclient.NewHTTP(tendermintProvider, "/websocket")
+
 	client.SetLogger(logger)
+
 	err := client.Start()
 	if err != nil {
 		logger.Error("Failed to start a client", "err", err)
 		os.Exit(1)
 	}
+
 	defer client.Stop()
 
+	// Subscribe to all tendermint transactions
 	query := "tm.event = 'Tx'"
+
 	out, err := client.Subscribe(context.Background(), "test", query, 1000)
 	if err != nil {
 		logger.Error("Failed to subscribe to query", "err", err, "query", query)
@@ -43,12 +46,14 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, cosmosBri
 		select {
 		case result := <-out:
 			tx := result.Data.(tmtypes.EventDataTx)
+
 			logger.Info("\t New transaction witnessed")
 
 			txRes := tx.Result
 			for i := 1; i < len(txRes.Events); i++ {
 				event := txRes.Events[i]
 				eventName := string(txRes.Events[i].Type)
+
 				switch eventName {
 				case "burn", "lock":
 					// Package the data into an array for proper parsing
@@ -66,7 +71,6 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, cosmosBri
 						return err
 					}
 				default:
-					// do nothing
 				}
 			}
 		case <-quit:

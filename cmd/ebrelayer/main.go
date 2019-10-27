@@ -95,10 +95,10 @@ func initEthereumRelayerCmd() *cobra.Command {
 //
 func initCosmosRelayerCmd() *cobra.Command {
 	initCosmosRelayerCmd := &cobra.Command{
-		Use:     "initCos [tendermintProvider] [web3Provider] [contractAddress] [privateKey]",
+		Use:     "initCos [tendermintProvider] [web3Provider] [bridgeContractAddress] [privateKey]",
 		Short:   "Initializes a web socket which streams live events from the Cosmos network and relays them to the Ethereum network",
 		Args:    cobra.ExactArgs(4),
-		Example: "ebrelayer initCos tcp://localhost:26657 http://localhost:8545 0x0e8049380b9A686629f0Ae60E7248ba2252d7eB8 794e8f209245ae5136fb13c88aa287b4e12a2ba03f73023564857071d8f0e3d8", // PK taken from truffle accounts[0]
+		Example: "ebrelayer initCos tcp://localhost:26657 http://localhost:7545 0xd88159878c50e4B2b03BB701DD436e4A98D6fBe2 c9b403bc37903e4480b8e1706df7142b8b4fe0fa2249d341ab4e228904127604", // PK = truffle console accounts[1]
 		RunE:    RunCosmosRelayerCmd,
 	}
 

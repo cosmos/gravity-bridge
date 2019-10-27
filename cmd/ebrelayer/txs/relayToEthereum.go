@@ -21,7 +21,6 @@ import (
 
 // RelayToEthereum : relays the provided transaction data to a smart contract deployed on Ethereum
 func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address, rawPrivateKey string, eventData *events.MsgEvent) error {
-
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)
 	if err != nil {
@@ -37,6 +36,7 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 	// Parse public key
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+
 	if !ok {
 		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
 	}
@@ -105,8 +105,8 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 
 		// Set tx hash
 		txHash = tx.Hash()
-		fmt.Println("\nNewProphecyClaim tx hash:", txHash.Hex())
 
+		fmt.Println("\nNewProphecyClaim tx hash:", txHash.Hex())
 	case "lock":
 		fmt.Println("\nFetching BridgeBank contract...")
 		// Initialize BridgeBank instance

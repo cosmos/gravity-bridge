@@ -33,7 +33,6 @@ func PrintLockEventByTx(txHash string) {
 
 // PrintLockEvents : prints all the claims made on this event
 func PrintLockEvents() {
-
 	// For each claim, print the validator which submitted the claim
 	for txHash, event := range EventRecords {
 		fmt.Printf("\nTransaction: %v\n", txHash)

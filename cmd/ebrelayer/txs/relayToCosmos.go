@@ -28,7 +28,6 @@ import (
 //		(cdc) of the Bridge blockchain are required.
 //
 func RelayToCosmos(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddress, moniker string, passphrase string, claim *types.EthBridgeClaim) error {
-
 	cliCtx := context.NewCLIContext().
 		WithCodec(cdc).
 		WithFromAddress(sdk.AccAddress(validatorAddress)).

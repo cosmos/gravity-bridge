@@ -21,7 +21,6 @@ type MsgEvent struct {
 
 // NewMsgEvent : parses MsgEvent data
 func NewMsgEvent(eventName string, eventData [3]string) MsgEvent {
-
 	// Check event name
 	if eventName != "burn" && eventName != "lock" {
 		log.Fatal("Only burn/lock events are supported.")
@@ -35,25 +34,33 @@ func NewMsgEvent(eventName string, eventData [3]string) MsgEvent {
 
 	// Parse Ethereum receiver
 	if !common.IsHexAddress(eventData[1]) {
-		log.Fatal("Invalid recipient address: %v", eventData[1])
+		log.Fatal("Invalid recipient address:", eventData[1])
 	}
+
 	ethereumReceiver := common.HexToAddress(eventData[1])
 
 	// Parse symbol, amount from coin
 	coinRune := []rune(eventData[2])
 	amount := new(big.Int)
+
 	var symbol string
+
+	// Set up regex
+	isLetter, err := regexp.Compile(`[a-z]`)
+	if err != nil {
+		log.Fatal("Regex compilation error:", err)
+	}
+
 	// Iterate over each rune in the coin string
 	for i, char := range coinRune {
 		// Regex will match first letter [a-z] (lowercase)
-		matched, err := regexp.MatchString(`[a-z]`, string(char))
-		if err != nil {
-			log.Fatal("Coin symbol/amount parsing error: %v", err)
-		}
+		matched := isLetter.MatchString(string(char))
+
 		// On first match, split the coin into (amount, symbol)
 		if matched {
 			amount, _ = amount.SetString(string(coinRune[0:i]), 10)
-			symbol = string(coinRune[i:len(coinRune)])
+			symbol = string(coinRune[i:])
+
 			break
 		}
 	}
@@ -62,8 +69,9 @@ func NewMsgEvent(eventName string, eventData [3]string) MsgEvent {
 	// TODO: Add tokenContractAddress to MsgBurn event
 	tokenContractAddressString := "0xbeddb076fa4df04859098a9873591dce3e9c404d"
 	if !common.IsHexAddress(tokenContractAddressString) {
-		log.Fatal("Invalid token address: %v", tokenContractAddressString)
+		log.Fatal("Invalid token address:", tokenContractAddressString)
 	}
+
 	tokenContractAddress := common.HexToAddress(tokenContractAddressString)
 
 	// Package the information in a MsgEvent struct
