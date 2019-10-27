@@ -17,11 +17,13 @@ const (
 	Burn EventType = iota
 	// Lock : represents named event 'MsgLock'
 	Lock
+	// Unsupported : represents unsupported named events
+	Unsupported
 )
 
 // String : returns the event type as a string
 func (d EventType) String() string {
-	return [...]string{"burn", "lock"}[d]
+	return [...]string{"burn", "lock", "unsupported"}[d]
 }
 
 // MsgEvent : contains data from MsgBurn and MsgLock events
@@ -35,20 +37,9 @@ type MsgEvent struct {
 }
 
 // NewMsgEvent : parses MsgEvent data
-func NewMsgEvent(eventName string, eventData [3]string) MsgEvent {
+func NewMsgEvent(eventType EventType, eventData [3]string) MsgEvent {
 	// Declare a new MsgEvent
 	msgEvent := MsgEvent{}
-
-	var eventType EventType
-
-	// Parse event type from event name
-	if eventName == "burn" {
-		eventType = Burn
-	} else if eventName == "lock" {
-		eventType = Lock
-	} else {
-		log.Fatal("Only burn/lock events are supported.")
-	}
 
 	// Parse Cosmos sender
 	cosmosSender := []byte(eventData[0])

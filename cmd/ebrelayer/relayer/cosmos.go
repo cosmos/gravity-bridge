@@ -52,10 +52,20 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, cosmosBri
 			txRes := tx.Result
 			for i := 1; i < len(txRes.Events); i++ {
 				event := txRes.Events[i]
-				eventName := string(txRes.Events[i].Type)
 
-				switch eventName {
-				case "burn", "lock":
+				var eventType events.EventType
+
+				// Parse event type from event name
+				if string(event.Type) == "burn" {
+					eventType = events.Burn
+				} else if string(event.Type) == "lock" {
+					eventType = events.Lock
+				} else {
+					eventType = events.Unsupported
+				}
+
+				switch eventType {
+				case events.Burn, events.Lock:
 					// Package the data into an array for proper parsing
 					cosmosSender := string(event.Attributes[0].Value)
 					ethereumReceiver := string(event.Attributes[1].Value)
@@ -63,14 +73,14 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, cosmosBri
 					eventData := [3]string{cosmosSender, ethereumReceiver, coin}
 
 					// Parse the eventData into a new MsgEvent
-					msgEvent := events.NewMsgEvent(eventName, eventData)
+					msgEvent := events.NewMsgEvent(eventType, eventData)
 
 					// Relay the MsgEvent to the Ethereum network
 					err = txs.RelayToEthereum(web3Provider, cosmosBridgeContractAddress, rawPrivateKey, &msgEvent)
 					if err != nil {
 						return err
 					}
-				default:
+				case events.Unsupported:
 				}
 			}
 		case <-quit:

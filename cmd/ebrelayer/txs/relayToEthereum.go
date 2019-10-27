@@ -19,6 +19,11 @@ import (
 	cosmosBridge "github.com/cosmos/peggy/cmd/ebrelayer/generated/cosmosbridge"
 )
 
+const (
+	// GasLimit : the gas limit in Gwei used for transactions sent with TransactOpts
+	GasLimit = uint64(300000)
+)
+
 // RelayToEthereum : relays the provided transaction data to a smart contract deployed on Ethereum
 func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address, rawPrivateKey string, eventData *events.MsgEvent) error {
 	// Start Ethereum client
@@ -69,8 +74,8 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 	// Set up TransactOpts auth's tx signature authorization
 	transactOptsAuth := bind.NewKeyedTransactor(privateKey)
 	transactOptsAuth.Nonce = big.NewInt(int64(nonce))
-	transactOptsAuth.Value = big.NewInt(0)     // in wei
-	transactOptsAuth.GasLimit = uint64(300000) // 300,000 Gwei in units
+	transactOptsAuth.Value = big.NewInt(0) // in wei
+	transactOptsAuth.GasLimit = GasLimit
 	transactOptsAuth.GasPrice = gasPrice
 
 	// Initialize BridgeRegistry instance
