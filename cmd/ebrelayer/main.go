@@ -80,7 +80,7 @@ var initCmd = &cobra.Command{
 	Short: "Initialization subcommands",
 }
 
-//	initEthereumRelayerCmd : Initializes a relayer service run by individual
+//	ethereumRelayerCmd : Initializes a relayer service run by individual
 //		validators which streams live events from an Ethereum smart contract.
 //		The service automatically signs messages containing the event
 //		data and relays them to tendermint for handling by the
