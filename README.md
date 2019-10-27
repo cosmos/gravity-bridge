@@ -177,7 +177,7 @@ ebrelayer status
 # Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:7545/
 # Example [PEGGY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
 
-ebrelayer initEth [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,string,uint256,uint256\) validator --chain-id=peggy
+ebrelayer init ethereum [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,string,uint256,uint256\) validator --chain-id=peggy
 
 # Enter password and press enter
 # You should see a message like: Started ethereum websocket with provider: [LOCAL_WEB_SOCKET] \ Subscribed to contract events on address: [PEGGY_DEPLOYED_ADDRESS]
@@ -349,7 +349,7 @@ yarn peggy:address
 # Get a private key from terminal 1. Initial validators = accounts[1], accounts[2], or accounts[3].
 # Use the validator's private key for [privateKey]
 
-ebrelayer initCos [tendermintProvider] [web3Provider] [bridgeRegistryContractAddress] [privateKey]
+ebrelayer init cosmos [tendermintProvider] [web3Provider] [bridgeRegistryContractAddress] [privateKey]
 
 # You should see a message like:
 # [2019-10-24|19:02:21.888] Starting WSEvents         impl=WSEvents

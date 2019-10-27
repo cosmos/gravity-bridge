@@ -48,12 +48,17 @@ func init() {
 		return initConfig(rootCmd)
 	}
 
+	// Construct Initialization Commands
+	initCmd.AddCommand(
+		ethereumRelayerCmd(),
+		client.LineBreak,
+		cosmosRelayerCmd(),
+	)
+
 	// Construct Root Command
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
-		initEthereumRelayerCmd(),
-		client.LineBreak,
-		initCosmosRelayerCmd(),
+		initCmd,
 	)
 
 	executor := cli.PrepareMainCmd(rootCmd, "EBRELAYER", DefaultCLIHome)
@@ -70,39 +75,44 @@ var rootCmd = &cobra.Command{
 	SilenceUsage: true,
 }
 
+var initCmd = &cobra.Command{
+	Use:   "init",
+	Short: "Initialization subcommands",
+}
+
 //	initEthereumRelayerCmd : Initializes a relayer service run by individual
 //		validators which streams live events from an Ethereum smart contract.
 //		The service automatically signs messages containing the event
 //		data and relays them to tendermint for handling by the
 //		EthBridge module.
 //
-func initEthereumRelayerCmd() *cobra.Command {
-	initEthereumRelayerCmd := &cobra.Command{
-		Use:   "initEth [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id [chain-id]",
+func ethereumRelayerCmd() *cobra.Command {
+	ethereumRelayerCmd := &cobra.Command{
+		Use:   "ethereum [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id [chain-id]",
 		Short: "Initializes a web socket which streams live events from a smart contract and relays them to the Cosmos network",
 		Args:  cobra.ExactArgs(4),
 		// NOTE: Preface both parentheses in the event signature with a '\'
-		Example: "ebrelayer initEth wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 LogLock(bytes32,address,bytes,address,string,uint256,uint256) validator --chain-id=testing",
+		Example: "ebrelayer init ethereum wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 LogLock(bytes32,address,bytes,address,string,uint256,uint256) validator --chain-id=testing",
 		RunE:    RunEthereumRelayerCmd,
 	}
 
-	return initEthereumRelayerCmd
+	return ethereumRelayerCmd
 }
 
-//	initCosmosRelayerCmd : Initializes a Cosmos relayer service run by individual
+//	cosmosRelayerCmd : Initializes a Cosmos relayer service run by individual
 //		validators which streams live events from the Cosmos network and then
 //		relaying them to an Ethereum smart contract
 //
-func initCosmosRelayerCmd() *cobra.Command {
-	initCosmosRelayerCmd := &cobra.Command{
-		Use:     "initCos [tendermintProvider] [web3Provider] [bridgeContractAddress] [privateKey]",
+func cosmosRelayerCmd() *cobra.Command {
+	cosmosRelayerCmd := &cobra.Command{
+		Use:     "cosmos [tendermintNode] [web3Provider] [bridgeContractAddress] [privateKey]",
 		Short:   "Initializes a web socket which streams live events from the Cosmos network and relays them to the Ethereum network",
 		Args:    cobra.ExactArgs(4),
-		Example: "ebrelayer initCos tcp://localhost:26657 http://localhost:7545 0xd88159878c50e4B2b03BB701DD436e4A98D6fBe2 c9b403bc37903e4480b8e1706df7142b8b4fe0fa2249d341ab4e228904127604", // PK = truffle console accounts[1]
+		Example: "ebrelayer init cosmos tcp://localhost:26657 http://localhost:7545 0xd88159878c50e4B2b03BB701DD436e4A98D6fBe2 c9b403bc37903e4480b8e1706df7142b8b4fe0fa2249d341ab4e228904127604", // PK = truffle console accounts[1]
 		RunE:    RunCosmosRelayerCmd,
 	}
 
-	return initCosmosRelayerCmd
+	return cosmosRelayerCmd
 }
 
 // RunEthereumRelayerCmd executes the initEthereumRelayerCmd with the provided parameters
