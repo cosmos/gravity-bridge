@@ -10,7 +10,6 @@ vendor
 .vendor-new
 node_modules/ 
 build
-node_modules
 
 # IDE
 .idea/

@@ -83,9 +83,6 @@ ebcli tx send validator $(ebcli keys show testuser -a) 10stake --chain-id=peggy 
 ebcli query account $(ebcli keys show validator -a) --trust-node
 ebcli query account $(ebcli keys show testuser -a) --trust-node
 
-# Then wait 10 seconds then confirm your validator was created correctly, and has become Bonded status
-ebcli query staking validators --trust-node
-
 # See the help for the ethbridge create claim function
 ebcli tx ethbridge create-claim --help
 
@@ -96,8 +93,11 @@ ebcli tx ethbridge create-claim 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 $(e
 # Then read the prophecy to confirm it was created with the claim added
 ebcli query ethbridge prophecy 0 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 --trust-node
 
-# And finally, confirm that the prophecy was successfully processed and that new eth was minted to the testuser address
+# Confirm that the prophecy was successfully processed and that new eth was minted to the testuser address
 ebcli query account $(ebcli keys show testuser -a) --trust-node
+
+# Test out burning the eth for the return trip
+ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 1eth --from=testuser --chain-id=peggy --yes
 
 ```
 
