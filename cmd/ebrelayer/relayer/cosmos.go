@@ -45,7 +45,10 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, cosmosBri
 	for {
 		select {
 		case result := <-out:
-			tx := result.Data.(tmtypes.EventDataTx)
+			tx, ok := result.Data.(tmtypes.EventDataTx)
+			if !ok {
+				logger.Error("Type casting failed while extracting event data from new tx")
+			}
 
 			logger.Info("\t New transaction witnessed")
 
