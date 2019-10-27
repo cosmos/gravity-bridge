@@ -9,9 +9,24 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// EventType : enum containing supported event types
+type EventType int
+
+const (
+	// Burn : represents named event 'MsgBurn'
+	Burn EventType = iota
+	// Lock : represents named event 'MsgLock'
+	Lock
+)
+
+// String : returns the event type as a string
+func (d EventType) String() string {
+	return [...]string{"burn", "lock"}[d]
+}
+
 // MsgEvent : contains data from MsgBurn and MsgLock events
 type MsgEvent struct {
-	EventName            string // TODO: enum
+	EventName            EventType
 	CosmosSender         []byte
 	EthereumReceiver     common.Address
 	Symbol               string
@@ -21,13 +36,19 @@ type MsgEvent struct {
 
 // NewMsgEvent : parses MsgEvent data
 func NewMsgEvent(eventName string, eventData [3]string) MsgEvent {
-	// Check event name
-	if eventName != "burn" && eventName != "lock" {
-		log.Fatal("Only burn/lock events are supported.")
-	}
-
 	// Declare a new MsgEvent
 	msgEvent := MsgEvent{}
+
+	var eventType EventType
+
+	// Parse event type from event name
+	if eventName == "burn" {
+		eventType = Burn
+	} else if eventName == "lock" {
+		eventType = Lock
+	} else {
+		log.Fatal("Only burn/lock events are supported.")
+	}
 
 	// Parse Cosmos sender
 	cosmosSender := []byte(eventData[0])
@@ -75,7 +96,7 @@ func NewMsgEvent(eventName string, eventData [3]string) MsgEvent {
 	tokenContractAddress := common.HexToAddress(tokenContractAddressString)
 
 	// Package the information in a MsgEvent struct
-	msgEvent.EventName = eventName
+	msgEvent.EventName = eventType
 	msgEvent.CosmosSender = cosmosSender
 	msgEvent.EthereumReceiver = ethereumReceiver
 	msgEvent.Symbol = symbol
@@ -89,7 +110,7 @@ func NewMsgEvent(eventName string, eventData [3]string) MsgEvent {
 
 // PrintMsgEvent : prints a MsgEvent struct's information
 func PrintMsgEvent(event MsgEvent) {
-	eventName := event.EventName
+	eventName := event.EventName.String()
 	cosmosSender := string(event.CosmosSender)
 	ethereumReceiver := event.EthereumReceiver.Hex()
 	tokenContractAddress := event.TokenContractAddress.Hex()

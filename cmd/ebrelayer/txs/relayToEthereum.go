@@ -89,7 +89,7 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 
 	// Relay tx to appropriate contract depending on the event type
 	switch eventData.EventName {
-	case "burn":
+	case events.Burn:
 		fmt.Println("\nFetching CosmosBridge contract...")
 		// Initialize CosmosBridge instance
 		cosmosBridgeInstance, err := cosmosBridge.NewCosmosBridge(address, client)
@@ -107,7 +107,7 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 		txHash = tx.Hash()
 
 		fmt.Println("\nNewProphecyClaim tx hash:", txHash.Hex())
-	case "lock":
+	case events.Lock:
 		fmt.Println("\nFetching BridgeBank contract...")
 		// Initialize BridgeBank instance
 		bridgeBankInstance, err := bridgeBank.NewBridgeBank(address, client)
@@ -136,18 +136,18 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 	return nil
 }
 
-func getAddressFromBridgeRegistry(instance *bridgeRegistry.BridgeRegistry, auth *bind.CallOpts, eventName string) (common.Address, error) {
+func getAddressFromBridgeRegistry(instance *bridgeRegistry.BridgeRegistry, auth *bind.CallOpts, eventName events.EventType) (common.Address, error) {
 
 	var contractAddress common.Address
 
 	switch eventName {
-	case "burn":
+	case events.Burn:
 		cosmosBridgeAddress, err := instance.CosmosBridge(auth)
 		if err != nil {
 			log.Fatal(err)
 		}
 		contractAddress = cosmosBridgeAddress
-	case "lock":
+	case events.Lock:
 		bridgeBankAddress, err := instance.BridgeBank(auth)
 		if err != nil {
 			log.Fatal(err)
