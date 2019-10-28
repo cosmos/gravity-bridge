@@ -12,13 +12,15 @@ import (
 )
 
 const (
-	TestAddress            = "cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv"
-	TestValidator          = "cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq"
-	TestNonce              = 0
-	TestEthereumAddress    = "0x7B95B6EC7EbD73572298cEf32Bb54FA408207359"
-	AltTestEthereumAddress = "0x7B95B6EC7EbD73572298cEf32Bb54FA408207344"
-	TestCoins              = "10ethereum"
-	AltTestCoins           = "12ethereum"
+	TestEthereumChainID      = 3
+	TestAddress              = "cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv"
+	TestValidator            = "cosmos1xdp5tvt7lxh8rf9xx07wy2xlagzhq24ha48xtq"
+	TestNonce                = 0
+	TestTokenContractAddress = "0x0000000000000000000000000000000000000000"
+	TestEthereumAddress      = "0x7B95B6EC7EbD73572298cEf32Bb54FA408207359"
+	AltTestEthereumAddress   = "0x7B95B6EC7EbD73572298cEf32Bb54FA408207344"
+	TestCoins                = "10ethereum"
+	AltTestCoins             = "12ethereum"
 )
 
 //Ethereum-bridge specific stuff
@@ -39,11 +41,12 @@ func CreateTestEthClaim(t *testing.T, validatorAddress sdk.ValAddress, testEther
 }
 
 func CreateTestBurnMsg(t *testing.T, testCosmosSender string, ethereumReceiver EthereumAddress, coins string) MsgBurn {
+	testTokenContractAddress := NewEthereumAddress(TestTokenContractAddress)
 	testCosmosAddress, err := sdk.AccAddressFromBech32(TestAddress)
 	require.NoError(t, err)
 	amount, err := sdk.ParseCoins(coins)
 	require.NoError(t, err)
-	burnEth := NewMsgBurn(testCosmosAddress, ethereumReceiver, amount)
+	burnEth := NewMsgBurn(TestEthereumChainID, testTokenContractAddress, testCosmosAddress, ethereumReceiver, amount)
 	return burnEth
 }
 

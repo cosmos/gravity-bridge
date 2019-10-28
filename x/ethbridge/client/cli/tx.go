@@ -66,28 +66,35 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 // GetCmdBurn is the CLI command for burning some of your coins and triggering an event
 func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount]",
+		Use:   "burn [ethereum-chain-id] [token-contract-address] [cosmos-sender-address] [ethereum-receiver-address] [amount]",
 		Short: "burn some coins!",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
+			ethereumChainID, err := strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
 
-			ethereumReceiver := types.NewEthereumAddress(args[1])
+			token := types.NewEthereumAddress(args[1])
 
-			amount, err := sdk.ParseCoins(args[2])
+			cosmosSender, err := sdk.AccAddressFromBech32(args[2])
 			if err != nil {
 				return err
 			}
 
-			msg := types.NewMsgBurn(cosmosSender, ethereumReceiver, amount)
+			ethereumReceiver := types.NewEthereumAddress(args[3])
+
+			amount, err := sdk.ParseCoins(args[4])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgBurn(ethereumChainID, token, cosmosSender, ethereumReceiver, amount)
 
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},

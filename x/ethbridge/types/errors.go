@@ -15,6 +15,7 @@ const (
 	CodeInvalidEthAddress   CodeType = 2
 	CodeErrJSONMarshalling  CodeType = 3
 	CodeErrInvalidClaimType CodeType = 4
+	CodeErrInvalidChainID   CodeType = 5
 )
 
 // ErrInvalidEthNonce implements sdk.Error.
@@ -25,6 +26,11 @@ func ErrInvalidEthNonce(codespace sdk.CodespaceType) sdk.Error {
 // ErrInvalidEthAddress implements sdk.Error.
 func ErrInvalidEthAddress(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidEthAddress, "invalid ethereum address provided, must be a valid hex-encoded Ethereum address")
+}
+
+// ErrInvalidChainID implements sdk.Error.
+func ErrInvalidChainID(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeErrInvalidChainID, "invalid ethereum chain id provided")
 }
 
 // ErrJSONMarshalling implements sdk.Error.

@@ -2,6 +2,7 @@ package ethbridge
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/cosmos/peggy/x/oracle"
@@ -119,6 +120,8 @@ func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
 		),
 		sdk.NewEvent(
 			types.EventTypeBurn,
+			sdk.NewAttribute(types.AttributeKeyEthereumChainID, strconv.Itoa(msg.EthereumChainID)),
+			sdk.NewAttribute(types.AttributeKeyToken, msg.Token.String()),
 			sdk.NewAttribute(types.AttributeKeyCosmosSender, msg.CosmosSender.String()),
 			sdk.NewAttribute(types.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),

@@ -7,11 +7,13 @@ var (
 	EventTypeBurn           = "burn"
 	EventTypeLock           = "lock"
 
-	AttributeKeyEthereumSender = "ethereum_sender"
-	AttributeKeyCosmosReceiver = "cosmos_receiver"
-	AttributeKeyAmount         = "amount"
-	AttributeKeyStatus         = "status"
-	AttributeKeyClaimType      = "claim_type"
+	AttributeKeyEthereumChainID = "ethereum_chain_id"
+	AttributeKeyToken           = "token"
+	AttributeKeyEthereumSender  = "ethereum_sender"
+	AttributeKeyCosmosReceiver  = "cosmos_receiver"
+	AttributeKeyAmount          = "amount"
+	AttributeKeyStatus          = "status"
+	AttributeKeyClaimType       = "claim_type"
 
 	AttributeKeyCosmosSender     = "cosmos_sender"
 	AttributeKeyEthereumReceiver = "ethereum_receiver"
