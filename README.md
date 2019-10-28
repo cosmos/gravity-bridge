@@ -115,13 +115,16 @@ Note: For checking account details/balance, you will need to change the cosmos a
 ## Set up
 
 ```bash
+# Create .env with sample environment variables for the Cosmos relayer
+cp .env.example .env
+
 cd testnet-contracts/
 
-# Create .env with sample environment variables
+# Create .env with sample environment variables for the Ethereum relayer
 cp .env.example .env
 ```
 
-For running the bridge locally, you'll only need the `LOCAL_PROVIDER` environment variables. Environment variables `MNEMONIC` and `INFURA_PROJECT_ID` are required for using the Ropsten testnet.
+For running the Ethereum relayer locally, you'll only need the `LOCAL_PROVIDER` environment variables. Environment variables `MNEMONIC` and `INFURA_PROJECT_ID` are required for using the Ropsten testnet.
 
 Further reading:
 
@@ -314,12 +317,11 @@ yarn develop
 # Deploy contract to local blockchain
 yarn migrate
 
-# Get the Oracle and BridgeBank contract addresses from the deployment logs above
-# TODO: Add user friendly script for this operation
+# Activate peggy by setting CosmosBridge's Oracle and BridgeBank
+yarn peggy:setup
 
-# 2. Set the CosmosBridge's Oracle and BridgeBank contracts
-yarn peggy:setOracleAndBank [ORACLE_ADDRESS] [BRIDGEBANK_ADDRESS]
-
+# Get the address of Peggy's registry service (required to start Cosmos relayer)
+yarn peggy:address
 ```
 
 ### Terminal 3: Build and start Bridge
@@ -334,22 +336,16 @@ ebd start
 
 ### Terminal 4: Start the Relayer service
 
+In order to send transactions to the contracts, the Cosmos Relayer requires the private key of an active validator. The private key must be set as an environment variable named `ETHEREUM_PRIVATE_KEY` and located in the .env file at the root of the project. If testing locally, can use the private key of accounts[1], which can be found in the truffle console running in terminal 1. If testing on a live network, you'll need to use the private key of your Ethereum address.
+
 ```bash
 # Check ebrelayer connection to ebd
 ebrelayer status
 
-# Start ebrelayer
-# Example [tendermintProvider]: tcp://localhost:26657
+# Start Cosmos relayer
+# Example [tendermintNode]: tcp://localhost:26657
 # Example [web3Provider]: http://localhost:7545
-
-# Get the BridgeRegistry contract's address
-yarn peggy:address
-
-# TODO: Add user friendly script for local testing. Add env variable for public network testing.
-# Get a private key from terminal 1. Initial validators = accounts[1], accounts[2], or accounts[3].
-# Use the validator's private key for [privateKey]
-
-ebrelayer init cosmos [tendermintProvider] [web3Provider] [bridgeRegistryContractAddress] [privateKey]
+ebrelayer init cosmos [tendermintNode] [web3Provider] [peggyContractAddress]
 
 # You should see a message like:
 # [2019-10-24|19:02:21.888] Starting WSEvents         impl=WSEvents

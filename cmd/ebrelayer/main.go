@@ -8,10 +8,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
@@ -105,10 +107,10 @@ func ethereumRelayerCmd() *cobra.Command {
 //
 func cosmosRelayerCmd() *cobra.Command {
 	cosmosRelayerCmd := &cobra.Command{
-		Use:     "cosmos [tendermintNode] [web3Provider] [bridgeContractAddress] [privateKey]",
+		Use:     "cosmos [tendermintNode] [web3Provider] [bridgeContractAddress]",
 		Short:   "Initializes a web socket which streams live events from the Cosmos network and relays them to the Ethereum network",
-		Args:    cobra.ExactArgs(4),
-		Example: "ebrelayer init cosmos tcp://localhost:26657 http://localhost:7545 0xd88159878c50e4B2b03BB701DD436e4A98D6fBe2 c9b403bc37903e4480b8e1706df7142b8b4fe0fa2249d341ab4e228904127604", // PK = truffle console accounts[1]
+		Args:    cobra.ExactArgs(3),
+		Example: "ebrelayer init cosmos tcp://localhost:26657 http://localhost:7545 0xd88159878c50e4B2b03BB701DD436e4A98D6fBe2",
 		RunE:    RunCosmosRelayerCmd,
 	}
 
@@ -184,22 +186,34 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 
 // RunCosmosRelayerCmd executes the initCosmosRelayerCmd with the provided parameters
 func RunCosmosRelayerCmd(cmd *cobra.Command, args []string) error {
+	// Load config file containing environment variables
+	err := godotenv.Load()
+	if err != nil {
+		return fmt.Errorf("Error loading .env file")
+	}
 
-	tendermintProvider := args[0]
+	// Private key for validator's Ethereum address must be set as an environment variable
+	privateKey := os.Getenv("ETHEREUM_PRIVATE_KEY")
+	if strings.TrimSpace(privateKey) == "" {
+		return fmt.Errorf("Error loading validator's private key from .env file")
+	}
 
-	web3Provider := args[1]
+	// Tendermint node
+	tendermintNode := args[0]
 
+	// Ethereum websocket provider
+	ethereumProvider := args[1]
+
+	// Deployed contract address
 	if !common.IsHexAddress(args[2]) {
-		return fmt.Errorf("Invalid contract-address: %v", args[2])
+		return fmt.Errorf("Invalid contract address: %v", args[2])
 	}
 	contractAddress := common.HexToAddress(args[2])
 
-	privateKey := args[3]
-
 	// Initialize the relayer
-	err := relayer.InitCosmosRelayer(
-		tendermintProvider,
-		web3Provider,
+	err = relayer.InitCosmosRelayer(
+		tendermintNode,
+		ethereumProvider,
 		contractAddress,
 		privateKey)
 
