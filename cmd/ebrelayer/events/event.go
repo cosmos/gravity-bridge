@@ -22,7 +22,7 @@ type LockEvent struct {
 	Id                    [32]byte
 	From                  common.Address
 	To                    []byte
-	TokenContractAddress  common.Address
+	Token                 common.Address
 	Symbol                string
 	Value                 *big.Int
 	Nonce                 *big.Int
@@ -47,7 +47,7 @@ func NewLockEvent(contractAbi abi.ABI, clientChainID *big.Int, contractAddress s
 
 	err := contractAbi.Unpack(&event, eventName, eventData)
 	if err != nil {
-		log.Fatalf("Unpacking: %v", err)
+		log.Fatalf("Error unpacking: %v", err)
 	}
 
 	PrintEvent(event)
@@ -62,13 +62,13 @@ func PrintEvent(event LockEvent) {
 	bridgeContractAddress := event.BridgeContractAddress
 	id := hex.EncodeToString(event.Id[:])
 	sender := event.From.Hex()
-	recipient := string(event.To[:])
-	tokenContractAddress := event.TokenContractAddress.Hex()
+	token := event.Token.Hex()
+	recipient := string(event.To)
 	symbol := event.Symbol
 	value := event.Value
 	nonce := event.Nonce
 
 	// Print the event's information
 	fmt.Printf("\nChain ID: %v\nBridge contract address: %v\nEvent ID: %v\nToken symbol: %v\nToken contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
-		chainID, bridgeContractAddress, id, symbol, tokenContractAddress, sender, recipient, value, nonce)
+		chainID, bridgeContractAddress, id, symbol, token, sender, recipient, value, nonce)
 }

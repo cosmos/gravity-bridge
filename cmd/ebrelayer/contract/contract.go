@@ -25,13 +25,13 @@ func LoadABI() abi.ABI {
 		gopath = build.Default.GOPATH
 	}
 
-	rawContractAbi, err := ioutil.ReadFile(gopath + AbiPath)
+	peggyABI, err := ioutil.ReadFile(gopath + AbiPath)
 	if err != nil {
 		panic(err)
 	}
 
 	// Convert the raw abi into a usable format
-	contractAbi, err := abi.JSON(strings.NewReader(string(rawContractAbi)))
+	contractAbi, err := abi.JSON(strings.NewReader(string(peggyABI)))
 	if err != nil {
 		panic(err)
 	}

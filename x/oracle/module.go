@@ -72,7 +72,6 @@ type AppModule struct {
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(keeper Keeper) AppModule {
-
 	return AppModule{
 		AppModuleBasic:      AppModuleBasic{},
 		AppModuleSimulation: AppModuleSimulation{},

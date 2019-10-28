@@ -96,7 +96,6 @@ type EthereumBridgeApp struct {
 // NewEthereumBridgeApp is a constructor function for EthereumBridgeApp
 func NewEthereumBridgeApp(logger log.Logger, db dbm.DB,
 	baseAppOptions ...func(*bam.BaseApp)) *EthereumBridgeApp {
-
 	// First define the top level codec that will be shared by the different modules
 	cdc := MakeCodec()
 

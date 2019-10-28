@@ -46,11 +46,11 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 	}
 
 	// Sender type casting (address.common -> string)
-	tokenContractAddress := ethbridgeTypes.NewEthereumAddress(event.TokenContractAddress.Hex())
+	tokenContractAddress := ethbridgeTypes.NewEthereumAddress(event.Token.Hex())
 
 	// Symbol formatted to lowercase
 	symbol := strings.ToLower(event.Symbol)
-	if symbol == "eth" && !utils.IsZeroAddress(event.TokenContractAddress) {
+	if symbol == "eth" && !utils.IsZeroAddress(event.Token) {
 		return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
 	}
 

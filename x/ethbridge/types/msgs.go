@@ -56,7 +56,6 @@ func (msg MsgCreateEthBridgeClaim) GetSignBytes() []byte {
 	if err != nil {
 		panic(err)
 	}
-
 	return sdk.MustSortJSON(b)
 }
 
