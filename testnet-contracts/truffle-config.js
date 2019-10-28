@@ -22,7 +22,7 @@ module.exports = {
       provider: function() {
         return new HDWalletProvider(
           process.env.MNEMONIC,
-          "https://ropsten.infura.io/".concat(process.env.INFURA_PROJECT_ID)
+          "https://ropsten.infura.io/v3/".concat(process.env.INFURA_PROJECT_ID)
         );
       },
       network_id: 3,
