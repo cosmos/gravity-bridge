@@ -38,8 +38,10 @@ func TestQueryEthProphecy(t *testing.T) {
 
 	valAddress := validatorAddresses[0]
 	testEthereumAddress := types.NewEthereumAddress(types.TestEthereumAddress)
+	testBridgeContractAddress := types.NewEthereumAddress(types.TestBridgeContractAddress)
+	testTokenContractAddress := types.NewEthereumAddress(types.TestTokenContractAddress)
 
-	initialEthBridgeClaim := types.CreateTestEthClaim(t, valAddress, testEthereumAddress, types.TestCoins)
+	initialEthBridgeClaim := types.CreateTestEthClaim(t, testBridgeContractAddress, testTokenContractAddress, valAddress, testEthereumAddress, types.TestCoins)
 	oracleClaim, _ := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
 	_, err := keeper.ProcessClaim(ctx, oracleClaim)
 	require.Nil(t, err)

@@ -55,6 +55,11 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 	// Load Peggy Contract's ABI
 	contractABI := contract.LoadABI()
 
+	clientChainID, err := client.NetworkID(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	for {
 		select {
 		// Handle any errors
@@ -64,11 +69,11 @@ func InitRelayer(cdc *amino.Codec, chainId string, provider string, contractAddr
 		case vLog := <-logs:
 			// Check if the event is a 'LogLock' event
 			if vLog.Topics[0].Hex() == eventSig {
-				fmt.Printf("\n\nNew Lock Transaction:\nTx hash: %v\nBlock number: %v",
+				fmt.Printf("\n\nNew Lock Transaction:\nTx hash: %v\nBlock number: %v\n",
 					vLog.TxHash.Hex(), vLog.BlockNumber)
 
 				// Parse the event data into a new LockEvent using the contract's ABI
-				event := events.NewLockEvent(contractABI, "LogLock", vLog.Data)
+				event := events.NewLockEvent(contractABI, clientChainID, contractAddress.Hex(), "LogLock", vLog.Data)
 
 				// Add the event to the record
 				events.NewEventWrite(vLog.TxHash.Hex(), event)
