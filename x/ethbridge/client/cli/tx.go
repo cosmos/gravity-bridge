@@ -80,7 +80,7 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			token := types.NewEthereumAddress(args[1])
+			tokenContract := types.NewEthereumAddress(args[1])
 
 			cosmosSender, err := sdk.AccAddressFromBech32(args[2])
 			if err != nil {
@@ -94,7 +94,7 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgBurn(ethereumChainID, token, cosmosSender, ethereumReceiver, amount)
+			msg := types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
 
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
@@ -104,28 +104,35 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 // GetCmdLock is the CLI command for locking some of your coins and triggering an event
 func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "lock [cosmos-sender-address] [ethereum-receiver-address] [amount]",
+		Use:   "lock [ethereum-chain-id] [token-contract-address] [cosmos-sender-address] [ethereum-receiver-address] [amount]",
 		Short: "lock some coins!",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
+			ethereumChainID, err := strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
 
-			ethereumReceiver := types.NewEthereumAddress(args[1])
+			tokenContract := types.NewEthereumAddress(args[1])
 
-			amount, err := sdk.ParseCoins(args[2])
+			cosmosSender, err := sdk.AccAddressFromBech32(args[2])
 			if err != nil {
 				return err
 			}
 
-			msg := types.NewMsgLock(cosmosSender, ethereumReceiver, amount)
+			ethereumReceiver := types.NewEthereumAddress(args[3])
+
+			amount, err := sdk.ParseCoins(args[4])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgLock(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
 
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},

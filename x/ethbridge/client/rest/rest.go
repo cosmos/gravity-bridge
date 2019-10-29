@@ -35,7 +35,7 @@ type createEthClaimReq struct {
 type burnEthReq struct {
 	BaseReq          rest.BaseReq `json:"base_req"`
 	EthereumChainID  string       `json:"ethereum_chain_id"`
-	Token            string       `json:"token"`
+	TokenContract    string       `json:"token_contract"`
 	CosmosSender     string       `json:"cosmos_sender"`
 	EthereumReceiver string       `json:"ethereum_receiver"`
 	Amount           string       `json:"amount"`
@@ -151,7 +151,7 @@ func burnHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		token := types.NewEthereumAddress(req.Token)
+		tokenContract := types.NewEthereumAddress(req.TokenContract)
 
 		cosmosSender, err := sdk.AccAddressFromBech32(req.CosmosSender)
 		if err != nil {
@@ -168,7 +168,7 @@ func burnHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create the message
-		msg := types.NewMsgBurn(ethereumChainID, token, cosmosSender, ethereumReceiver, amount)
+		msg := types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

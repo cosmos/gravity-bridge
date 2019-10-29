@@ -12,18 +12,18 @@ import (
 
 // MsgBurn defines a message for burning coins and triggering a related event
 type MsgBurn struct {
-	EthereumChainID  int             `json:"ethereum_chain_id"`
-	Token            EthereumAddress `json:"token"`
+	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
+	TokenContract    EthereumAddress `json:"token_contract" yaml:"token_contract"`
 	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
 	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
 }
 
 // NewMsgBurn is a constructor function for MsgBurn
-func NewMsgBurn(ethereumChainID int, token EthereumAddress, cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, amount sdk.Coins) MsgBurn {
+func NewMsgBurn(ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, amount sdk.Coins) MsgBurn {
 	return MsgBurn{
 		EthereumChainID:  ethereumChainID,
-		Token:            token,
+		TokenContract:    tokenContract,
 		CosmosSender:     cosmosSender,
 		EthereumReceiver: ethereumReceiver,
 		Amount:           amount,
@@ -42,11 +42,11 @@ func (msg MsgBurn) ValidateBasic() sdk.Error {
 		return ErrInvalidChainID(DefaultCodespace)
 	}
 
-	if msg.Token.String() == "" {
+	if msg.TokenContract.String() == "" {
 		return ErrInvalidEthAddress(DefaultCodespace)
 	}
 
-	if !gethCommon.IsHexAddress(msg.Token.String()) {
+	if !gethCommon.IsHexAddress(msg.TokenContract.String()) {
 		return ErrInvalidEthAddress(DefaultCodespace)
 	}
 

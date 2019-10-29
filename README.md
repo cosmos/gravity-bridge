@@ -103,7 +103,7 @@ ebcli tx ethbridge burn 3 0x682c2ae4053eac64cf1baaa04c739703dc043f0a $(ebcli key
 ebcli query account $(ebcli keys show testuser -a) --trust-node
 
 # Test out locking up a cosmos stake coin for relaying over to ethereum
-ebcli tx ethbridge lock $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 1stake --from=testuser --chain-id=peggy --yes
+ebcli tx ethbridge lock 3 0x682c2ae4053eac64cf1baaa04c739703dc043f0a $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 1stake --from=testuser --chain-id=peggy --yes
 
 # Confirm that the token was successfully locked
 ebcli query account $(ebcli keys show testuser -a) --trust-node
