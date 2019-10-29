@@ -16,11 +16,17 @@ require("chai")
   .should();
 
 contract("BridgeBank", function(accounts) {
+  // System operator
   const operator = accounts[0];
 
+  // Initial validator accounts
   const userOne = accounts[1];
   const userTwo = accounts[2];
   const userThree = accounts[3];
+
+  // Contract's enum ClaimType can be represented a sequence of integers
+  const CLAIM_TYPE_BURN = 0;
+  const CLAIM_TYPE_LOCK = 1;
 
   describe("BridgeBank deployment and basics", function() {
     beforeEach(async function() {
@@ -61,11 +67,7 @@ contract("BridgeBank", function(accounts) {
       bridgeBankOracle.should.be.equal(this.oracle.address);
     });
 
-    it("should correctly set initial values of CosmosBank and EthereumBank", async function() {
-      // EthereumBank initial values
-      const nonce = Number(await this.bridgeBank.nonce());
-      nonce.should.be.bignumber.equal(0);
-
+    it("should correctly set initial values", async function() {
       // CosmosBank initial values
       const bridgeTokenCount = Number(await this.bridgeBank.bridgeTokenCount());
       bridgeTokenCount.should.be.bignumber.equal(0);
@@ -219,7 +221,7 @@ contract("BridgeBank", function(accounts) {
     });
   });
 
-  describe("Bridge token minting (Cosmos assets)", function() {
+  describe("Bridge token minting (for locked Cosmos assets)", function() {
     beforeEach(async function() {
       // Deploy Valset contract
       this.initialValidators = [userOne, userTwo, userThree];
@@ -247,6 +249,16 @@ contract("BridgeBank", function(accounts) {
         this.cosmosBridge.address
       );
 
+      // Operator sets Oracle
+      await this.cosmosBridge.setOracle(this.oracle.address, {
+        from: operator
+      });
+
+      // Operator sets Bridge Bank
+      await this.cosmosBridge.setBridgeBank(this.bridgeBank.address, {
+        from: operator
+      });
+
       // Set up our variables
       this.amount = 100;
       this.sender = web3.utils.bytesToHex([
@@ -269,18 +281,9 @@ contract("BridgeBank", function(accounts) {
       );
       this.bridgeToken = eventLogNewBridgeToken.args._token;
 
-      // Operator sets Oracle
-      await this.cosmosBridge.setOracle(this.oracle.address, {
-        from: operator
-      });
-
-      // Operator sets Bridge Bank
-      await this.cosmosBridge.setBridgeBank(this.bridgeBank.address, {
-        from: operator
-      });
-
       // Submit a new prophecy claim to the CosmosBridge to make oracle claims upon
       const { logs: secondLogs } = await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_LOCK,
         this.sender,
         this.recipient,
         this.bridgeToken,
@@ -303,7 +306,7 @@ contract("BridgeBank", function(accounts) {
         { t: "bytes", v: this.sender }
       );
 
-      // Generate signatures from active validators userOne, userTwo, userThree
+      // Generate signatures from active validator userOne
       this.userOneSignature = fixSignature(
         await web3.eth.sign(this.message, userOne)
       );
@@ -319,7 +322,7 @@ contract("BridgeBank", function(accounts) {
       );
     });
 
-    it("should mint bridge tokens upon the successful processing of a prophecy claim", async function() {
+    it("should mint bridge tokens upon the successful processing of a burn prophecy claim", async function() {
       const bridgeTokenInstance = await BridgeToken.at(this.bridgeToken);
 
       // Confirm that the user does not hold any bridge tokens of this type
@@ -370,7 +373,7 @@ contract("BridgeBank", function(accounts) {
       );
 
       this.recipient = web3.utils.utf8ToHex(
-        "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
+        "cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh"
       );
       // This is for Ethereum deposits
       this.ethereumToken = "0x0000000000000000000000000000000000000000";
@@ -432,42 +435,14 @@ contract("BridgeBank", function(accounts) {
       );
     });
 
-    it("should generate unique deposit ID for a new deposit", async function() {
-      //Simulate sha3 hash to get deposit's expected id
-      const expectedID = Web3Utils.soliditySha3(
-        { t: "address payable", v: userOne },
-        { t: "bytes", v: this.recipient },
-        { t: "address", v: this.token.address },
-        { t: "int256", v: this.amount },
-        { t: "int256", v: 1 }
+    it("should increment the token amount in the contract's locked funds mapping", async function() {
+      // Confirm locked balances prior to lock
+      const priorLockedTokenBalance = await this.bridgeBank.lockedFunds(
+        this.token.address
       );
+      Number(priorLockedTokenBalance).should.be.bignumber.equal(0);
 
-      //Get the deposit's id if it were to be created
-      const depositID = await this.bridgeBank.lock.call(
-        this.recipient,
-        this.token.address,
-        this.amount,
-        {
-          from: userOne,
-          value: 0
-        }
-      );
-
-      depositID.should.be.equal(expectedID);
-    });
-
-    it("should correctly mark new deposits as locked", async function() {
-      //Get the deposit's expected id, then lock funds
-      const depositID = await this.bridgeBank.lock.call(
-        this.recipient,
-        this.token.address,
-        this.amount,
-        {
-          from: userOne,
-          value: 0
-        }
-      );
-
+      // Lock the tokens
       await this.bridgeBank.lock(
         this.recipient,
         this.token.address,
@@ -478,83 +453,19 @@ contract("BridgeBank", function(accounts) {
         }
       );
 
-      //Check if a deposit has been created and locked
-      const locked = await this.bridgeBank.getEthereumDepositStatus(depositID);
-      locked.should.be.equal(true);
-    });
-
-    it("should be able to access the deposit's information by its ID", async function() {
-      //Get the deposit's expected id, then lock funds
-      const depositID = await this.bridgeBank.lock.call(
-        this.recipient,
-        this.token.address,
-        this.amount,
-        {
-          from: userOne,
-          value: 0
-        }
+      // Confirm deposit balances after lock
+      const postLockedTokenBalance = await this.bridgeBank.lockedFunds(
+        this.token.address
       );
-
-      await this.bridgeBank.lock(
-        this.recipient,
-        this.token.address,
-        this.amount,
-        {
-          from: userOne,
-          value: 0
-        }
-      );
-
-      //Attempt to get an deposit's information
-      await this.bridgeBank.viewEthereumDeposit(depositID).should.be.fulfilled;
-    });
-
-    it("should correctly store deposit information", async function() {
-      //Get the deposit's expected id, then lock funds
-      const depositID = await this.bridgeBank.lock.call(
-        this.recipient,
-        this.token.address,
-        this.amount,
-        {
-          from: userOne,
-          value: 0
-        }
-      );
-
-      await this.bridgeBank.lock(
-        this.recipient,
-        this.token.address,
-        this.amount,
-        {
-          from: userOne,
-          value: 0
-        }
-      );
-
-      //Get the deposit's information
-      const depositData = await this.bridgeBank.viewEthereumDeposit(depositID);
-
-      //Parse each attribute
-      const sender = depositData[0];
-      const receiver = depositData[1];
-      const token = depositData[2];
-      const amount = Number(depositData[3]);
-      const nonce = Number(depositData[4]);
-
-      //Confirm that each attribute is correct
-      sender.should.be.equal(userOne);
-      receiver.should.be.equal(this.recipient);
-      token.should.be.equal(this.token.address);
-      amount.should.be.bignumber.equal(this.amount);
-      nonce.should.be.bignumber.equal(1);
+      Number(postLockedTokenBalance).should.be.bignumber.equal(this.amount);
     });
   });
 
-  describe("Bridge token deposit unlocking (Ethereum/ERC20 assets)", function() {
+  describe("Ethereum/ERC20 token unlocking (for burned Cosmos assets)", function() {
     beforeEach(async function() {
       // Deploy Valset contract
       this.initialValidators = [userOne, userTwo, userThree];
-      this.initialPowers = [5, 8, 12];
+      this.initialPowers = [50, 1, 1];
       this.valset = await Valset.new(
         operator,
         this.initialValidators,
@@ -578,33 +489,31 @@ contract("BridgeBank", function(accounts) {
         this.cosmosBridge.address
       );
 
-      this.recipient = web3.utils.bytesToHex([
-        "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
-      ]);
-      // This is for Ethereum deposits
+      // Operator sets Oracle
+      await this.cosmosBridge.setOracle(this.oracle.address, {
+        from: operator
+      });
+
+      // Operator sets Bridge Bank
+      await this.cosmosBridge.setBridgeBank(this.bridgeBank.address, {
+        from: operator
+      });
+
+      // Lock an Ethereum deposit
+      this.sender = web3.utils.utf8ToHex(
+        "cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh"
+      );
+      this.recipient = accounts[4];
       this.ethereumToken = "0x0000000000000000000000000000000000000000";
       this.weiAmount = web3.utils.toWei("0.25", "ether");
-      // This is for ERC20 deposits
-      this.symbol = "TEST";
-      this.token = await BridgeToken.new(this.symbol);
-      this.amount = 100;
+      this.halfWeiAmount = web3.utils.toWei("0.125", "ether");
 
       //Load contract with ethereum so it can complete items
       await this.bridgeBank.send(web3.utils.toWei("1", "ether"), {
         from: operator
       }).should.be.fulfilled;
 
-      //Get the Ethereum deposit's expected id, then lock funds
-      this.depositID = await this.bridgeBank.lock.call(
-        this.recipient,
-        this.ethereumToken,
-        this.weiAmount,
-        {
-          from: userOne,
-          value: this.weiAmount
-        }
-      );
-
+      // Lock Ethereum (this is to increase contract's balances and locked funds mapping)
       await this.bridgeBank.lock(
         this.recipient,
         this.ethereumToken,
@@ -614,6 +523,11 @@ contract("BridgeBank", function(accounts) {
           value: this.weiAmount
         }
       );
+
+      // Lock an ERC20 deposit
+      this.symbol = "TEST";
+      this.token = await BridgeToken.new(this.symbol);
+      this.amount = 100;
 
       //Load user account with ERC20 tokens for testing
       await this.token.mint(userOne, 1000, {
@@ -625,17 +539,7 @@ contract("BridgeBank", function(accounts) {
         from: userOne
       }).should.be.fulfilled;
 
-      //Get the deposit's expected id, then lock funds
-      this.erc20DepositID = await this.bridgeBank.lock.call(
-        this.recipient,
-        this.token.address,
-        this.amount,
-        {
-          from: userOne,
-          value: 0
-        }
-      );
-
+      // Lock ERC20 tokens (this is to increase contract's balances and locked funds mapping)
       await this.bridgeBank.lock(
         this.recipient,
         this.token.address,
@@ -647,82 +551,67 @@ contract("BridgeBank", function(accounts) {
       );
     });
 
-    it("should allow for an Ethereum deposit to be unlocked", async function() {
-      await this.bridgeBank.unlock(this.depositID).should.be.fulfilled;
-    });
+    // TODO: Here userOne creates a newProphecyClaim() then creates a newOracleClaim()
+    //       on top of his own ProphecyClaim. This flow should be modified
+    it("should unlock Ethereum upon the processing of a burn prophecy", async function() {
+      // Submit a new prophecy claim to the CosmosBridge for the Ethereum deposit
+      const { logs } = await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_BURN,
+        this.sender,
+        this.recipient,
+        this.ethereumToken,
+        this.symbol,
+        this.weiAmount,
+        {
+          from: userOne
+        }
+      ).should.be.fulfilled;
 
-    it("should allow for an ERC20 deposit to be unlocked", async function() {
-      await this.bridgeBank.unlock(this.erc20DepositID).should.be.fulfilled;
-    });
+      // Get the new ProphecyClaim's id
+      const eventLogNewProphecyClaim = logs.find(
+        e => e.event === "LogNewProphecyClaim"
+      );
+      const prophecyID = eventLogNewProphecyClaim.args._prophecyID;
 
-    it("should not allow for the unlocking of non-existant deposits", async function() {
-      //Generate a fake Ethereum deposit id
-      const fakeId = Web3Utils.soliditySha3(
-        { t: "address payable", v: userOne },
-        { t: "bytes", v: this.recipient },
+      // Create hash using Solidity's Sha3 hashing function
+      const message = web3.utils.soliditySha3(
+        { t: "uint256", v: prophecyID },
+        { t: "address payable", v: this.recipient },
         { t: "address", v: this.ethereumToken },
-        { t: "int256", v: 12 },
-        { t: "int256", v: 1 }
+        { t: "uint256", v: this.weiAmount }
       );
 
-      await this.bridgeBank.unlock(fakeId).should.be.rejectedWith(EVMRevert);
-    });
-
-    it("should not allow an unlocked deposit to be unlocked again", async function() {
-      //Unlock the deposit
-      await this.bridgeBank.unlock(this.depositID).should.be.fulfilled;
-
-      //Attempt to Unlock the deposit again
-      await this.bridgeBank
-        .unlock(this.depositID)
-        .should.be.rejectedWith(EVMRevert);
-    });
-
-    it("should update lock status of deposits upon completion", async function() {
-      //Confirm that the deposit is locked
-      const firstLockStatus = await this.bridgeBank.getEthereumDepositStatus(
-        this.depositID
+      // Generate signatures from active validator userOne
+      const userOneSignature = fixSignature(
+        await web3.eth.sign(message, userOne)
       );
-      firstLockStatus.should.be.equal(true);
 
-      //Unlock the deposit
-      await this.bridgeBank.unlock(this.depositID).should.be.fulfilled;
-
-      //Check that the deposit is unlocked
-      const secondLockStatus = await this.bridgeBank.getEthereumDepositStatus(
-        this.depositID
+      // Validator userOne makes a valid OracleClaim
+      await this.oracle.newOracleClaim(
+        prophecyID,
+        toEthSignedMessageHash(message),
+        userOneSignature,
+        {
+          from: userOne
+        }
       );
-      secondLockStatus.should.be.equal(false);
-    });
 
-    it("should emit an event upon unlock with the correct deposit information", async function() {
-      //Get the event logs of an unlock
-      const { logs } = await this.bridgeBank.unlock(this.erc20DepositID);
-      const event = logs.find(e => e.event === "LogUnlock");
-
-      event.args._to.should.be.equal(userOne);
-      event.args._token.should.be.equal(this.token.address);
-      Number(event.args._value).should.be.bignumber.equal(this.amount);
-      Number(event.args._nonce).should.be.bignumber.equal(2);
-    });
-
-    // TODO: Original sender VS. intended recipient
-    it("should correctly transfer unlocked Ethereum", async function() {
-      //Get prior balances of user and BridgeBank contract
-      const beforeUserBalance = Number(await web3.eth.getBalance(userOne));
+      // Get prior balances of user and BridgeBank contract
+      const beforeUserBalance = Number(await web3.eth.getBalance(accounts[4]));
       const beforeContractBalance = Number(
         await web3.eth.getBalance(this.bridgeBank.address)
       );
 
-      await this.bridgeBank.unlock(this.depositID).should.be.fulfilled;
+      // Process the prophecy claim
+      await this.oracle.processBridgeProphecy(prophecyID).should.be.fulfilled;
 
-      //Get balances after completion
-      const afterUserBalance = Number(await web3.eth.getBalance(userOne));
+      // Get balances after prophecy processing
+      const afterUserBalance = Number(await web3.eth.getBalance(accounts[4]));
       const afterContractBalance = Number(
         await web3.eth.getBalance(this.bridgeBank.address)
       );
 
-      //Expected balances
+      // Calculate and check expected balances
       afterUserBalance.should.be.bignumber.equal(
         beforeUserBalance + Number(this.weiAmount)
       );
@@ -731,26 +620,319 @@ contract("BridgeBank", function(accounts) {
       );
     });
 
-    it("should correctly transfer unlocked ERC20 tokens", async function() {
-      //Confirm that the tokens are locked on the contract
+    it("should unlock and transfer ERC20 tokens upon the processing of a burn prophecy", async function() {
+      // Submit a new prophecy claim to the CosmosBridge for the Ethereum deposit
+      const { logs } = await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_BURN,
+        this.sender,
+        this.recipient,
+        this.token.address,
+        this.symbol,
+        this.amount,
+        {
+          from: userOne
+        }
+      ).should.be.fulfilled;
+
+      // Get the new ProphecyClaim's id
+      const eventLogNewProphecyClaim = logs.find(
+        e => e.event === "LogNewProphecyClaim"
+      );
+      const prophecyID = eventLogNewProphecyClaim.args._prophecyID;
+
+      // Create hash using Solidity's Sha3 hashing function
+      const message = web3.utils.soliditySha3(
+        { t: "uint256", v: prophecyID },
+        { t: "address payable", v: this.recipient },
+        { t: "address", v: this.token.address },
+        { t: "uint256", v: this.amount }
+      );
+
+      // Generate signatures from active validator userOne
+      const userOneSignature = fixSignature(
+        await web3.eth.sign(message, userOne)
+      );
+
+      // Validator userOne makes a valid OracleClaim
+      await this.oracle.newOracleClaim(
+        prophecyID,
+        toEthSignedMessageHash(message),
+        userOneSignature,
+        {
+          from: userOne
+        }
+      );
+
+      // Get Bridge and user's token balance prior to unlocking
       const beforeBridgeBankBalance = Number(
         await this.token.balanceOf(this.bridgeBank.address)
       );
-      const beforeUserBalance = Number(await this.token.balanceOf(userOne));
-
+      const beforeUserBalance = Number(await this.token.balanceOf(accounts[4]));
       beforeBridgeBankBalance.should.be.bignumber.equal(this.amount);
-      beforeUserBalance.should.be.bignumber.equal(900);
+      beforeUserBalance.should.be.bignumber.equal(0);
 
-      await this.bridgeBank.unlock(this.erc20DepositID);
+      // Process the prophecy claim
+      await this.oracle.processBridgeProphecy(prophecyID).should.be.fulfilled;
 
       //Confirm that the tokens have been unlocked and transfered
       const afterBridgeBankBalance = Number(
         await this.token.balanceOf(this.bridgeBank.address)
       );
-      const afterUserBalance = Number(await this.token.balanceOf(userOne));
-
+      const afterUserBalance = Number(await this.token.balanceOf(accounts[4]));
       afterBridgeBankBalance.should.be.bignumber.equal(0);
-      afterUserBalance.should.be.bignumber.equal(1000);
+      afterUserBalance.should.be.bignumber.equal(this.amount);
+    });
+
+    it("should allow locked funds to be unlocked incrementally by successive burn prophecies", async function() {
+      // -------------------------------------------------------
+      // First burn prophecy
+      // -------------------------------------------------------
+      // Submit a new prophecy claim to the CosmosBridge for the Ethereum deposit
+      const { logs: claimLogs1 } = await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_BURN,
+        this.sender,
+        this.recipient,
+        this.ethereumToken,
+        this.symbol,
+        this.halfWeiAmount,
+        {
+          from: userOne
+        }
+      ).should.be.fulfilled;
+
+      // Get the new ProphecyClaim's id
+      const eventLogNewProphecyClaim1 = claimLogs1.find(
+        e => e.event === "LogNewProphecyClaim"
+      );
+
+      const prophecyID1 = eventLogNewProphecyClaim1.args._prophecyID;
+
+      // Create hash using Solidity's Sha3 hashing function
+      const message1 = web3.utils.soliditySha3(
+        { t: "uint256", v: prophecyID1 },
+        { t: "address payable", v: this.recipient },
+        { t: "address", v: this.ethereumToken },
+        { t: "uint256", v: this.halfWeiAmount }
+      );
+
+      // Generate signatures from active validator userOne
+      const userOneSignature1 = fixSignature(
+        await web3.eth.sign(message1, userOne)
+      );
+
+      // Validator userOne makes a valid OracleClaim
+      await this.oracle.newOracleClaim(
+        prophecyID1,
+        toEthSignedMessageHash(message1),
+        userOneSignature1,
+        {
+          from: userOne
+        }
+      );
+
+      // Get pre-claim processed balances of user and BridgeBank contract
+      const beforeContractBalance1 = Number(
+        await web3.eth.getBalance(this.bridgeBank.address)
+      );
+      const beforeUserBalance1 = Number(await web3.eth.getBalance(accounts[4]));
+
+      // Process the prophecy claim
+      await this.oracle.processBridgeProphecy(prophecyID1).should.be.fulfilled;
+
+      // Get post-claim processed balances of user and BridgeBank contract
+      const afterBridgeBankBalance1 = Number(
+        await web3.eth.getBalance(this.bridgeBank.address)
+      );
+      const afterUserBalance1 = Number(await web3.eth.getBalance(accounts[4]));
+
+      //Confirm that HALF the amount has been unlocked and transfered
+      afterBridgeBankBalance1.should.be.bignumber.equal(
+        Number(beforeContractBalance1) - Number(this.halfWeiAmount)
+      );
+      afterUserBalance1.should.be.bignumber.equal(
+        Number(beforeUserBalance1) + Number(this.halfWeiAmount)
+      );
+
+      // -------------------------------------------------------
+      // Second burn prophecy
+      // -------------------------------------------------------
+      // Submit a new prophecy claim to the CosmosBridge for the Ethereum deposit
+      const { logs: claimLogs2 } = await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_BURN,
+        this.sender,
+        this.recipient,
+        this.ethereumToken,
+        this.symbol,
+        this.halfWeiAmount,
+        {
+          from: userOne
+        }
+      ).should.be.fulfilled;
+
+      // Get the new ProphecyClaim's id
+      const eventLogNewProphecyClaim2 = claimLogs2.find(
+        e => e.event === "LogNewProphecyClaim"
+      );
+
+      const prophecyID2 = eventLogNewProphecyClaim2.args._prophecyID;
+
+      // Create hash using Solidity's Sha3 hashing function
+      const message2 = web3.utils.soliditySha3(
+        { t: "uint256", v: prophecyID2 },
+        { t: "address payable", v: this.recipient },
+        { t: "address", v: this.ethereumToken },
+        { t: "uint256", v: this.halfWeiAmount }
+      );
+
+      // Generate signatures from active validator userOne
+      const userOneSignature2 = fixSignature(
+        await web3.eth.sign(message2, userOne)
+      );
+
+      // Validator userOne makes a valid OracleClaim
+      await this.oracle.newOracleClaim(
+        prophecyID2,
+        toEthSignedMessageHash(message2),
+        userOneSignature2,
+        {
+          from: userOne
+        }
+      );
+
+      // Get pre-claim processed balances of user and BridgeBank contract
+      const beforeContractBalance2 = Number(
+        await web3.eth.getBalance(this.bridgeBank.address)
+      );
+      const beforeUserBalance2 = Number(await web3.eth.getBalance(accounts[4]));
+
+      // Process the prophecy claim
+      await this.oracle.processBridgeProphecy(prophecyID2).should.be.fulfilled;
+
+      // Get post-claim processed balances of user and BridgeBank contract
+      const afterBridgeBankBalance2 = Number(
+        await web3.eth.getBalance(this.bridgeBank.address)
+      );
+      const afterUserBalance2 = Number(await web3.eth.getBalance(accounts[4]));
+
+      //Confirm that HALF the amount has been unlocked and transfered
+      afterBridgeBankBalance2.should.be.bignumber.equal(
+        Number(beforeContractBalance2) - Number(this.halfWeiAmount)
+      );
+      afterUserBalance2.should.be.bignumber.equal(
+        Number(beforeUserBalance2) + Number(this.halfWeiAmount)
+      );
+
+      // Now confirm that the total wei amount has been unlocked and transfered
+      afterBridgeBankBalance2.should.be.bignumber.equal(
+        Number(beforeContractBalance1) - Number(this.weiAmount)
+      );
+      afterUserBalance2.should.be.bignumber.equal(
+        Number(beforeUserBalance1) + Number(this.weiAmount)
+      );
+    });
+
+    it("should not allow burn prophecies to be processed twice", async function() {
+      // Submit a new prophecy claim to the CosmosBridge for the Ethereum deposit
+      const { logs } = await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_BURN,
+        this.sender,
+        this.recipient,
+        this.token.address,
+        this.symbol,
+        this.amount,
+        {
+          from: userOne
+        }
+      ).should.be.fulfilled;
+
+      // Get the new ProphecyClaim's id
+      const eventLogNewProphecyClaim = logs.find(
+        e => e.event === "LogNewProphecyClaim"
+      );
+      const prophecyID = eventLogNewProphecyClaim.args._prophecyID;
+
+      // Create hash using Solidity's Sha3 hashing function
+      const message = web3.utils.soliditySha3(
+        { t: "uint256", v: prophecyID },
+        { t: "address payable", v: this.recipient },
+        { t: "address", v: this.token.address },
+        { t: "uint256", v: this.amount }
+      );
+
+      // Generate signatures from active validator userOne
+      const userOneSignature = fixSignature(
+        await web3.eth.sign(message, userOne)
+      );
+
+      // Validator userOne makes a valid OracleClaim
+      await this.oracle.newOracleClaim(
+        prophecyID,
+        toEthSignedMessageHash(message),
+        userOneSignature,
+        {
+          from: userOne
+        }
+      );
+
+      // Process the prophecy claim
+      await this.oracle.processBridgeProphecy(prophecyID).should.be.fulfilled;
+
+      // Attempt to process the same prophecy should be rejected
+      await this.oracle
+        .processBridgeProphecy(prophecyID)
+        .should.be.rejectedWith(EVMRevert);
+    });
+
+    it("should only allow locked funds to be unlocked, even if the contract holds surplus funds", async function() {
+      // There are 1,000 TEST tokens approved to the contract, but only 100 have been locked
+      const OVERLIMIT_TOKEN_AMOUNT = 500;
+
+      // Submit a new prophecy claim to the CosmosBridge for the Ethereum deposit
+      const { logs } = await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_BURN,
+        this.sender,
+        this.recipient,
+        this.token.address,
+        this.symbol,
+        OVERLIMIT_TOKEN_AMOUNT,
+        {
+          from: userOne
+        }
+      ).should.be.fulfilled;
+
+      // Get the new ProphecyClaim's id
+      const eventLogNewProphecyClaim = logs.find(
+        e => e.event === "LogNewProphecyClaim"
+      );
+      const prophecyID = eventLogNewProphecyClaim.args._prophecyID;
+
+      // Create hash using Solidity's Sha3 hashing function
+      const message = web3.utils.soliditySha3(
+        { t: "uint256", v: prophecyID },
+        { t: "address payable", v: this.recipient },
+        { t: "address", v: this.token.address },
+        { t: "uint256", v: OVERLIMIT_TOKEN_AMOUNT }
+      );
+
+      // Generate signatures from active validator userOne
+      const userOneSignature = fixSignature(
+        await web3.eth.sign(message, userOne)
+      );
+
+      // Validator userOne makes a valid OracleClaim
+      await this.oracle.newOracleClaim(
+        prophecyID,
+        toEthSignedMessageHash(message),
+        userOneSignature,
+        {
+          from: userOne
+        }
+      );
+
+      // Attempts to process the prophecy with overlimit token amount should be rejected
+      await this.oracle
+        .processBridgeProphecy(prophecyID)
+        .should.be.rejectedWith(EVMRevert);
     });
   });
 });

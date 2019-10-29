@@ -5,87 +5,64 @@ import "./BridgeToken.sol";
 
   /*
    *  @title: EthereumBank
-   *  @dev: EthereumBank requests for deposit locking and unlocking by
-   *        storing an item's information then relaying the funds
-   *        the original sender.
+   *  @dev: Ethereum bank which locks Ethereum/ERC20 token deposits, and unlocks
+   *        Ethereum/ERC20 tokens once the prophecy has been successfully processed.
    */
 contract EthereumBank {
 
     using SafeMath for uint256;
 
-    /*
-    * @dev: EthereumDeposit struct to store information.
-    */
-    struct EthereumDeposit {
-        address payable sender;
-        bytes recipient;
-        address token;
-        uint256 amount;
-        uint256 nonce;
-        bool locked;
-    }
-
-    uint256 public nonce;
-    mapping(bytes32 => EthereumDeposit) private ethereumDeposits;
+    mapping(address => uint256) public lockedFunds;
 
     /*
     * @dev: Event declarations
     */
     event LogLock(
-        bytes32 _id,
         address _from,
         bytes _to,
         address _token,
         string _symbol,
-        uint256 _value,
-        uint256 _nonce
+        uint256 _value
     );
 
     event LogUnlock(
-        bytes32 _id,
         address _to,
         address _token,
-        uint256 _value,
-        uint256 _nonce
+        string _symbol,
+        uint256 _value
     );
 
     /*
-    * @dev: Constructor, initalizes item count.
+    * @dev: Modifier declarations
     */
-    constructor()
-        public
-    {
-        nonce = 0;
-    }
 
-    modifier onlySender(bytes32 _id) {
+    modifier hasLockedFunds(
+        address _token,
+        uint256 _amount
+    ) {
         require(
-            msg.sender == ethereumDeposits[_id].sender,
-            'Must be the original sender.'
+            lockedFunds[_token] >= _amount,
+            "The Bank does not hold enough locked tokens to fulfill this request."
         );
         _;
     }
 
-    modifier canDeliver(bytes32 _id) {
-        if(ethereumDeposits[_id].token == address(0)) {
+    modifier canDeliver(
+        address _token,
+        uint256 _amount
+    )
+    {
+        if(_token == address(0)) {
             require(
-                address(this).balance >= ethereumDeposits[_id].amount,
+                address(this).balance >= _amount,
                 'Insufficient ethereum balance for delivery.'
             );
         } else {
             require(
-                BridgeToken(ethereumDeposits[_id].token).balanceOf(address(this)) >= ethereumDeposits[_id].amount,
+                BridgeToken(_token).balanceOf(address(this)) >= _amount,
                 'Insufficient ERC20 token balance for delivery.'
             );
         }
-        _;
-    }
-
-    modifier availableNonce() {
-        require(
-            nonce + 1 > nonce,
-            'No available nonces.'
-        );
         _;
     }
 
@@ -96,9 +73,8 @@ contract EthereumBank {
     * @param _recipient: The intended recipient's cosmos address.
     * @param _token: The currency type, either erc20 or ethereum.
     * @param _amount: The amount of erc20 tokens/ ethereum (in wei) to be itemized.
-    * @return: The newly created item's unique id.
     */
-    function newEthereumDeposit(
+    function lockFunds(
         address payable _sender,
         bytes memory _recipient,
         address _token,
@@ -106,132 +82,54 @@ contract EthereumBank {
         uint256 _amount
     )
         internal
-        returns(bytes32)
     {
-        nonce = nonce.add(1);
-
-        bytes32 depositID = keccak256(
-            abi.encodePacked(
-                _sender,
-                _recipient,
-                _token,
-                _amount,
-                nonce
-            )
-        );
-
-        ethereumDeposits[depositID] = EthereumDeposit(
-            _sender,
-            _recipient,
-            _token,
-            _amount,
-            nonce,
-            true
-        );
+        // Increment locked funds by the amount of tokens to be locked
+        lockedFunds[_token] = lockedFunds[_token].add(_amount);
 
          emit LogLock(
-            depositID,
             _sender,
             _recipient,
             _token,
             _symbol,
-            _amount,
-            nonce
+            _amount
         );
-
-        return depositID;
     }
 
     /*
-    * @dev: Completes the deposit by sending the funds to the
-    *       original sender and unlocking the item.
+    * @dev: Unlocks funds held on contract and sends them to the
+    *       intended recipient
     *
-    * @param _id: The item to be completed.
+    * @param _recipient: recipient's Ethereum address
+    * @param _token: token contract address
+    * @param _symbol: token symbol
+    * @param _amount: wei amount or ERC20 token count
     */
-    function unlockEthereumDeposit(
-        bytes32 _id
+    function unlockFunds(
+        address payable _recipient,
+        address _token,
+        string memory _symbol,
+        uint256 _amount
     )
         internal
-        canDeliver(_id)
-        returns(bool)
     {
-        require(
-            isLockedEthereumDeposit(_id),
-            "The funds must currently be locked."
-        );
+        // Decrement locked funds mapping by the amount of tokens to be unlocked
+        lockedFunds[_token] = lockedFunds[_token].sub(_amount);
 
-        //Get locked deposit's attributes for return
-        address payable sender = ethereumDeposits[_id].sender;
-        address token = ethereumDeposits[_id].token;
-        uint256 amount = ethereumDeposits[_id].amount;
-        uint256 uniqueNonce = ethereumDeposits[_id].nonce;
-
-        //Update lock status
-        ethereumDeposits[_id].locked = false;
-
-        //Transfers based on token address type
-        if (token == address(0)) {
-          sender.transfer(amount);
+        // Transfer funds to intended recipient
+        if (_token == address(0)) {
+          _recipient.transfer(_amount);
         } else {
-          require(
-              BridgeToken(token).transfer(sender, amount),
-              "Token transfer failed, check contract token allowances and try again."
+            require(
+                BridgeToken(_token).transfer(_recipient, _amount),
+                "Token transfer failed"
             );
         }
 
-        //Emit unlock event
         emit LogUnlock(
-            _id,
-            sender,
-            token,
-            amount,
-            uniqueNonce
-        );
-
-        return true;
-    }
-
-    /*
-    * @dev: Checks if an individual item exists.
-    *
-    * @param _id: The unique item's id.
-    * @return: Boolean indicating if the item exists in memory.
-    */
-    function isLockedEthereumDeposit(
-        bytes32 _id
-    )
-        internal
-        view
-        returns(bool)
-    {
-        return(ethereumDeposits[_id].locked);
-    }
-
-    /*
-    * @dev: Gets an item's information
-    *
-    * @param _Id: The item containing the desired information.
-    * @return: Sender's address.
-    * @return: Recipient's address in bytes.
-    * @return: Token address.
-    * @return: Amount of ethereum/erc20 in the item.
-    * @return: Unique nonce of the item.
-    */
-    function getEthereumDeposit(
-        bytes32 _id
-    )
-        internal
-        view
-        returns(address payable, bytes memory, address, uint256, uint256)
-    {
-        EthereumDeposit memory deposit = ethereumDeposits[_id];
-
-        return(
-            deposit.sender,
-            deposit.recipient,
-            deposit.token,
-            deposit.amount,
-            deposit.nonce
+            _recipient,
+            _token,
+            _symbol,
+            _amount
         );
     }
 }

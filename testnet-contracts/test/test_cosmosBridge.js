@@ -12,11 +12,17 @@ require("chai")
   .should();
 
 contract("CosmosBridge", function(accounts) {
+  // System operator
   const operator = accounts[0];
 
+  // Initial validator accounts
   const userOne = accounts[1];
   const userTwo = accounts[2];
   const userThree = accounts[3];
+
+  // Contract's enum ClaimType can be represented a sequence of integers
+  const CLAIM_TYPE_BURN = 0;
+  const CLAIM_TYPE_LOCK = 1;
 
   describe("CosmosBridge smart contract deployment", function() {
     beforeEach(async function() {
@@ -152,8 +158,23 @@ contract("CosmosBridge", function(accounts) {
       });
     });
 
-    it("should allow for the creation of new prophecy claims", async function() {
+    it("should allow for the creation of new burn prophecy claims", async function() {
       await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_BURN,
+        this.cosmosSender,
+        this.ethereumReceiver,
+        this.tokenAddress,
+        this.symbol,
+        this.amount,
+        {
+          from: userOne
+        }
+      ).should.be.fulfilled;
+    });
+
+    it("should allow for the creation of new lock prophecy claims", async function() {
+      await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
@@ -167,6 +188,7 @@ contract("CosmosBridge", function(accounts) {
 
     it("should log an event containing the new prophecy claim's information", async function() {
       const { logs } = await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
@@ -180,6 +202,7 @@ contract("CosmosBridge", function(accounts) {
       const event = logs.find(e => e.event === "LogNewProphecyClaim");
 
       Number(event.args._prophecyID).should.be.bignumber.equal(1);
+      Number(event.args._claimType).should.be.bignumber.equal(CLAIM_TYPE_LOCK);
       event.args._cosmosSender.should.be.equal(this.cosmosSender);
       event.args._ethereumReceiver.should.be.equal(this.ethereumReceiver);
       event.args._validatorAddress.should.be.equal(userOne);
@@ -193,6 +216,7 @@ contract("CosmosBridge", function(accounts) {
       Number(priorProphecyClaimCount).should.be.bignumber.equal(0);
 
       await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_BURN,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
@@ -274,6 +298,7 @@ contract("CosmosBridge", function(accounts) {
     it("should allow users to check if a prophecy claim is currently active", async function() {
       // Create the prophecy claim
       const { logs } = await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_BURN,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
@@ -302,6 +327,7 @@ contract("CosmosBridge", function(accounts) {
     it("should allow users to check if a prophecy claim's original validator is currently an active validator", async function() {
       // Create the ProphecyClaim
       const { logs } = await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_BURN,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,

@@ -102,7 +102,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
      * @param _cosmosTokenAddress: The currency type
      * @param _symbol: comsos token symbol
      * @param _amount: number of comsos tokens to be minted
-\    */
+     */
      function mintBridgeTokens(
         bytes memory _cosmosSender,
         address payable _intendedRecipient,
@@ -123,12 +123,12 @@ contract BridgeBank is CosmosBank, EthereumBank {
     }
 
     /*
-     * @dev: Locks received Ethereum funds.
-     *
-     * @param _recipient: bytes representation of destination address.
-     * @param _token: token address in origin chain (0x0 if ethereum)
-     * @param _amount: value of deposit
-     */
+    * @dev: Locks received Ethereum funds.
+    *
+    * @param _recipient: bytes representation of destination address.
+    * @param _token: token address in origin chain (0x0 if ethereum)
+    * @param _amount: value of deposit
+    */
     function lock(
         bytes memory _recipient,
         address _token,
@@ -136,8 +136,6 @@ contract BridgeBank is CosmosBank, EthereumBank {
     )
         public
         payable
-        availableNonce
-        returns(bytes32 _id)
     {
         string memory symbol;
 
@@ -164,7 +162,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
           symbol = BridgeToken(_token).symbol();
         }
 
-        return newEthereumDeposit(
+        lockFunds(
             msg.sender,
             _recipient,
             _token,
@@ -173,43 +171,37 @@ contract BridgeBank is CosmosBank, EthereumBank {
         );
     }
 
-    /*
-     * @dev: Unlocks Ethereum deposits.
-     *
-     * @param _id: Unique key of the CosmosDeposit.
-     */
-    function unlock(
-        bytes32 _id
-    )
-        public
-        onlyOperator
-        canDeliver(_id)
-        returns (bool)
-    {
-        require(
-            isLockedEthereumDeposit(_id),
-            "The deposit must be locked in order to be unlocked"
-        );
-
-        // Unlock the deposit and transfer funds
-        return unlockEthereumDeposit(_id);
-
-    }
-
-    /*
-    * @dev: Exposes an item's current status.
+   /*
+    * @dev: Unlocks Ethereum and ERC20 tokens held on the contract.
     *
-    * @param _id: The item in question.
-    * @return: Boolean indicating the lock status.
-    */
-    function getEthereumDepositStatus(
-        bytes32 _id
+    * @param _recipient: recipient's Ethereum address
+    * @param _token: token contract address
+    * @param _symbol: token symbol
+    * @param _amount: wei amount or ERC20 token count
+\   */
+     function unlock(
+        address payable _recipient,
+        address _token,
+        string memory _symbol,
+        uint256 _amount
     )
         public
-        view
-        returns(bool)
+        onlyCosmosBridge
+        hasLockedFunds(
+            _token,
+            _amount
+        )
+        canDeliver(
+            _token,
+            _amount
+        )
     {
-        return isLockedEthereumDeposit(_id);
+        unlockFunds(
+            _recipient,
+            _token,
+            _symbol,
+            _amount
+        );
     }
 
     /*
@@ -226,26 +218,6 @@ contract BridgeBank is CosmosBank, EthereumBank {
         returns(bool)
     {
         return isLockedCosmosDeposit(_id);
-    }
-
-    /*
-    * @dev: Allows access to an Ethereum deposit's information via its unique identifier.
-    *
-    * @param _id: The deposit to be viewed.
-    * @return: Original sender's Ethereum address.
-    * @return: Intended Cosmos recipient's address in bytes.
-    * @return: The lock deposit's currency, denoted by a token address.
-    * @return: The amount locked in the deposit.
-    * @return: The deposit's unique nonce.
-    */
-    function viewEthereumDeposit(
-        bytes32 _id
-    )
-        public
-        view
-        returns(address, bytes memory, address, uint256, uint256)
-    {
-        return getEthereumDeposit(_id);
     }
 
     /*
