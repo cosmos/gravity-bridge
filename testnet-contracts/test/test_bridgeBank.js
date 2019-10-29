@@ -551,8 +551,6 @@ contract("BridgeBank", function(accounts) {
       );
     });
 
-    // TODO: Here userOne creates a newProphecyClaim() then creates a newOracleClaim()
-    //       on top of his own ProphecyClaim. This flow should be modified
     it("should unlock Ethereum upon the processing of a burn prophecy", async function() {
       // Submit a new prophecy claim to the CosmosBridge for the Ethereum deposit
       const { logs } = await this.cosmosBridge.newProphecyClaim(
