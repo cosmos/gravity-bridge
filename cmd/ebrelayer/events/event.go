@@ -23,6 +23,7 @@ type LockEvent struct {
 	Token                 common.Address
 	Symbol                string
 	Value                 *big.Int
+	Nonce                 *big.Int
 }
 
 // NewLockEvent : parses LogLock events using go-ethereum's accounts/abi library
@@ -62,8 +63,9 @@ func PrintEvent(event LockEvent) {
 	recipient := string(event.To)
 	symbol := event.Symbol
 	value := event.Value
+	nonce := event.Nonce
 
 	// Print the event's information
-	fmt.Printf("\nChain ID: %v\nBridge contract address: %v\nToken symbol: %v\nToken contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\n\n",
-		chainID, bridgeContractAddress, symbol, token, sender, recipient, value)
+	fmt.Printf("\nChain ID: %v\nBridge contract address: %v\nToken symbol: %v\nToken contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
+		chainID, bridgeContractAddress, symbol, token, sender, recipient, value, nonce)
 }

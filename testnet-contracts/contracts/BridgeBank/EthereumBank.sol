@@ -12,6 +12,7 @@ contract EthereumBank {
 
     using SafeMath for uint256;
 
+    uint256 public lockNonce;
     mapping(address => uint256) public lockedFunds;
 
     /*
@@ -22,7 +23,8 @@ contract EthereumBank {
         bytes _to,
         address _token,
         string _symbol,
-        uint256 _value
+        uint256 _value,
+        uint256 _nonce
     );
 
     event LogUnlock(
@@ -66,6 +68,23 @@ contract EthereumBank {
         _;
     }
 
+    modifier availableNonce() {
+        require(
+            lockNonce + 1 > lockNonce,
+            'No available nonces.'
+        );
+        _;
+    }
+
+    /*
+    * @dev: Constructor which sets the lock nonce
+    */
+    constructor()
+        public
+    {
+        lockNonce = 0;
+    }
+
     /*
     * @dev: Creates a new Ethereum deposit with a unique id.
     *
@@ -83,6 +102,9 @@ contract EthereumBank {
     )
         internal
     {
+        // Incerment the lock nonce
+        lockNonce = lockNonce.add(1);
+        
         // Increment locked funds by the amount of tokens to be locked
         lockedFunds[_token] = lockedFunds[_token].add(_amount);
 
@@ -91,7 +113,8 @@ contract EthereumBank {
             _recipient,
             _token,
             _symbol,
-            _amount
+            _amount,
+            lockNonce
         );
     }
 

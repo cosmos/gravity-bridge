@@ -19,7 +19,7 @@ module.exports = function(deployer, network, accounts) {
   let initialPowers = [];
 
   // Development network deployment param parsing/setting
-  if (network === "ganache") {
+  if (network === "develop" || network === "ganache") {
     // Operator
     operator = accounts[0];
     // Initial validators
@@ -75,7 +75,7 @@ module.exports = function(deployer, network, accounts) {
   }
 
   // 0. Deploy BridgeToken for testing purposes
-  deployer.deploy(BridgeToken, "TEST", { gas: 4612388, from: accounts[0] });
+  deployer.deploy(BridgeToken, "TEST", { gas: 4612388, from: operator });
 
   // 1. Deploy Valset contract
   deployer

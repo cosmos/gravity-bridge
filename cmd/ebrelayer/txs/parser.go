@@ -20,12 +20,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// TODO: Nonce can be depreciated now that locks are guarded by ProphecyClaim's nonce.
-//		 Until nonce is removed from EthBridgeClaims, the structure requires a nonce.
-const (
-	HolderNonce = 100
-)
-
 // ParsePayload : parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
 func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTypes.EthBridgeClaim, error) {
 
@@ -60,10 +54,13 @@ func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTyp
 	// Amount type casting (*big.Int -> sdk.Coins)
 	coins := sdk.Coins{sdk.NewInt64Coin(symbol, event.Value.Int64())}
 
+	// Nonce type casting (*big.Int -> int)
+	nonce := int(event.Nonce.Int64())
+
 	// Package the information in a unique EthBridgeClaim
 	witnessClaim.EthereumChainID = chainID
 	witnessClaim.BridgeContractAddress = bridgeContractAddress
-	witnessClaim.Nonce = HolderNonce
+	witnessClaim.Nonce = nonce
 	witnessClaim.TokenContractAddress = tokenContractAddress
 	witnessClaim.Symbol = symbol
 	witnessClaim.EthereumSender = sender

@@ -135,6 +135,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
         uint256 _amount
     )
         public
+        availableNonce()
         payable
     {
         string memory symbol;
