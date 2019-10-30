@@ -9,26 +9,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// EventType : enum containing supported event types
-type EventType int
-
-const (
-	// Burn : represents named event 'MsgBurn'
-	Burn EventType = iota
-	// Lock : represents named event 'MsgLock'
-	Lock
-	// Unsupported : represents unsupported named events
-	Unsupported
-)
-
-// String : returns the event type as a string
-func (d EventType) String() string {
-	return [...]string{"burn", "lock", "unsupported"}[d]
-}
-
-// MsgEvent : contains data from MsgBurn and MsgLock events
-type MsgEvent struct {
-	ClaimType            EventType
+// CosmosMsg : contains data from MsgBurn and MsgLock events
+type CosmosMsg struct {
+	ClaimType            Event
 	CosmosSender         []byte
 	EthereumReceiver     common.Address
 	Symbol               string
@@ -36,10 +19,10 @@ type MsgEvent struct {
 	TokenContractAddress common.Address
 }
 
-// NewMsgEvent : parses MsgEvent data
-func NewMsgEvent(claimType EventType, eventData [3]string) MsgEvent {
-	// Declare a new MsgEvent
-	msgEvent := MsgEvent{}
+// NewCosmosMsg : parses CosmosMsg data
+func NewCosmosMsg(claimType Event, eventData [3]string) CosmosMsg {
+	// Declare a new CosmosEvent
+	cosmosMsg := CosmosMsg{}
 
 	// Parse Cosmos sender
 	cosmosSender := []byte(eventData[0])
@@ -87,20 +70,20 @@ func NewMsgEvent(claimType EventType, eventData [3]string) MsgEvent {
 	tokenContractAddress := common.HexToAddress(tokenContractAddressString)
 
 	// Package the information in a MsgEvent struct
-	msgEvent.ClaimType = claimType
-	msgEvent.CosmosSender = cosmosSender
-	msgEvent.EthereumReceiver = ethereumReceiver
-	msgEvent.Symbol = symbol
-	msgEvent.Amount = amount
-	msgEvent.TokenContractAddress = tokenContractAddress
+	cosmosMsg.ClaimType = claimType
+	cosmosMsg.CosmosSender = cosmosSender
+	cosmosMsg.EthereumReceiver = ethereumReceiver
+	cosmosMsg.Symbol = symbol
+	cosmosMsg.Amount = amount
+	cosmosMsg.TokenContractAddress = tokenContractAddress
 
-	PrintMsgEvent(msgEvent)
+	PrintCosmosMsg(cosmosMsg)
 
-	return msgEvent
+	return cosmosMsg
 }
 
-// PrintMsgEvent : prints a MsgEvent struct's information
-func PrintMsgEvent(event MsgEvent) {
+// PrintCosmosMsg : prints a CosmosMsg struct's information
+func PrintCosmosMsg(event CosmosMsg) {
 	claimType := event.ClaimType.String()
 	cosmosSender := string(event.CosmosSender)
 	ethereumReceiver := event.EthereumReceiver.Hex()

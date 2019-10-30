@@ -20,8 +20,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// ParsePayload : parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
-func ParsePayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTypes.EthBridgeClaim, error) {
+// ParseLogLockPayload : parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
+func ParseLogLockPayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTypes.EthBridgeClaim, error) {
 
 	witnessClaim := ethbridgeTypes.EthBridgeClaim{}
 

@@ -28,8 +28,7 @@ import (
 )
 
 // InitEthereumRelayer : Starts an event listener on a specific Ethereum network, contract, and event
-func InitEthereumRelayer(cdc *amino.Codec, chainId string, provider string, contractAddress common.Address, eventSig string, validatorName string, passphrase string, validatorAddress sdk.ValAddress) error {
-
+func InitEthereumRelayer(cdc *amino.Codec, chainID string, provider string, contractAddress common.Address, cosmosSupport bool, validatorName string, passphrase string, validatorAddress sdk.ValAddress) error {
 	// Start client with infura ropsten provider
 	client, err := SetupWebsocketEthClient(provider)
 	if err != nil {
@@ -37,9 +36,33 @@ func InitEthereumRelayer(cdc *amino.Codec, chainId string, provider string, cont
 	}
 	fmt.Printf("\nStarted ethereum websocket with provider: %s", provider)
 
-	// We need the contract address in bytes[] for the query
+	// Load our contract's ABI
+	contractABI := contract.LoadABI(cosmosSupport)
+
+	var targetContract txs.ContractRegistry
+	var eventName string
+	var eventSignature string
+
+	switch cosmosSupport {
+	case true:
+		targetContract = txs.CosmosBridge
+		eventName = "LogNewProphecyClaim"
+		eventSignature = contractABI.Events["LogNewProphecyClaim"].Id().String()
+	case false:
+		targetContract = txs.BridgeBank
+		eventName = "LogLock"
+		eventSignature = contractABI.Events["LogLock"].Id().Hex()
+	}
+
+	// Get the specific contract's address (Valset, Oracle, CosmosBridge, or BridgeBank)
+	targetAddress, err := txs.GetAddressFromBridgeRegistry(client, contractAddress, targetContract)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// We need the target address in bytes[] for the query
 	query := ethereum.FilterQuery{
-		Addresses: []common.Address{contractAddress},
+		Addresses: []common.Address{targetAddress},
 	}
 
 	// We will check logs for new events
@@ -50,10 +73,7 @@ func InitEthereumRelayer(cdc *amino.Codec, chainId string, provider string, cont
 	if err != nil {
 		return err
 	}
-	fmt.Printf("\nSubscribed to contract events on address: %s\n", contractAddress.Hex())
-
-	// Load Peggy Contract's ABI
-	contractABI := contract.LoadABI()
+	fmt.Printf("\nSubscribed to %v contract at address: %s\n", targetContract, targetAddress.Hex())
 
 	for {
 		select {
@@ -62,26 +82,39 @@ func InitEthereumRelayer(cdc *amino.Codec, chainId string, provider string, cont
 			log.Fatal(err)
 		// vLog is raw event data
 		case vLog := <-logs:
+			// TODO: Remove this log
+			fmt.Printf("\n\nTx hash: %v\nTopics: %v",
+				vLog.TxHash.Hex(), vLog.Topics[0].Hex())
 			// Check if the event is a 'LogLock' event
-			if vLog.Topics[0].Hex() == eventSig {
-				fmt.Printf("\n\nNew Lock Transaction:\nTx hash: %v\nBlock number: %v",
-					vLog.TxHash.Hex(), vLog.BlockNumber)
+			if vLog.Topics[0].Hex() == eventSignature {
+				fmt.Printf("\n\nNew \"%v\":\nTx hash: %v\nBlock number: %v",
+					eventName, vLog.TxHash.Hex(), vLog.BlockNumber)
 
-				// Parse the event data into a new LockEvent using the contract's ABI
-				event := events.NewLockEvent(contractABI, "LogLock", vLog.Data)
+				switch eventName {
+				case events.LogLock.String():
+					event := events.UnpackLogLock(contractABI, eventName, vLog.Data)
 
-				// Add the event to the record
-				events.NewEventWrite(vLog.TxHash.Hex(), event)
-				// Parse the event's payload into a struct
-				claim, err := txs.ParsePayload(validatorAddress, &event)
-				if err != nil {
-					return err
-				}
+					// Add the event to the record
+					events.NewEventWrite(vLog.TxHash.Hex(), event)
 
-				// Initiate the relay
-				err = txs.RelayToCosmos(chainId, cdc, validatorAddress, validatorName, passphrase, &claim)
-				if err != nil {
-					return err
+					// Parse the LogLock event's payload into a struct
+					claim, err := txs.ParseLogLockPayload(validatorAddress, &event)
+					if err != nil {
+						return err
+					}
+
+					// Initiate the relay
+					err = txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, passphrase, &claim)
+					if err != nil {
+						return err
+					}
+				case events.LogNewProphecyClaim.String():
+					event := events.UnpackLogNewProphecyClaim(contractABI, eventName, vLog.Data)
+
+					err = txs.RelayOracleClaimToEthereum(provider, contractAddress, events.LogNewProphecyClaim, event)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}

@@ -115,8 +115,9 @@ module.exports = async () => {
 
   // Parse event fields
   const lockEvent = {
-    id: event.args._id,
     to: event.args._to,
+    from: event.args._from,
+    symbol: event.args._symbol,
     token: event.args._token,
     value: Number(event.args._value),
     nonce: Number(event.args._nonce)

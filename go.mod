@@ -9,6 +9,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.34.4-0.20190904173332-f010d2c6f109
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d // indirect
 	github.com/deckarep/golang-set v1.7.1 // indirect
+	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/ethereum/go-ethereum v1.8.27
 	github.com/go-kit/kit v0.9.0 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b

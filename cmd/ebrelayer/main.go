@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -13,7 +14,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
@@ -89,12 +89,12 @@ var initCmd = &cobra.Command{
 //		EthBridge module.
 //
 func ethereumRelayerCmd() *cobra.Command {
-	ethereumRelayerCmd := &cobra.Command{
-		Use:   "ethereum [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id [chain-id]",
+	ethereumRelayerCmd := &cobra.Command{ // TODO: Refactor [support] into a flag
+		Use:   "ethereum [web3Provider] [contractAddress] [validatorFromName] [support] --chain-id [chain-id]",
 		Short: "Initializes a web socket which streams live events from a smart contract and relays them to the Cosmos network",
 		Args:  cobra.ExactArgs(4),
 		// NOTE: Preface both parentheses in the event signature with a '\'
-		Example: "ebrelayer init ethereum wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 LogLock(bytes32,address,bytes,address,string,uint256,uint256) validator --chain-id=testing",
+		Example: "ebrelayer init ethereum wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 validator false --chain-id=testing",
 		RunE:    RunEthereumRelayerCmd,
 	}
 
@@ -137,11 +137,10 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 	contractAddress := common.HexToAddress(args[1])
 
-	// Convert event signature to []bytes and apply the Keccak256Hash
-	eventSigHash := crypto.Keccak256Hash([]byte(args[2]))
-
-	// Get the hex event signature from the hash.
-	eventSig := eventSigHash.Hex()
+	supportCosmos, err := strconv.ParseBool(args[2])
+	if err != nil {
+		return err
+	}
 
 	// Parse the validator's moniker
 	validatorFrom := args[3]
@@ -172,7 +171,7 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 		chainID,
 		ethereumProvider,
 		contractAddress,
-		eventSig,
+		supportCosmos,
 		validatorName,
 		passphrase,
 		validatorAddress)
