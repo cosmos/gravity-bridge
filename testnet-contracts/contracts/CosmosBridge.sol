@@ -28,7 +28,13 @@ contract CosmosBridge {
         Failed
     }
 
+    enum ClaimType {
+        Burn,
+        Lock
+    }
+
     struct ProphecyClaim {
+        ClaimType claimType;
         bytes cosmosSender;
         address payable ethereumReceiver;
         address originalValidator;
@@ -51,6 +57,7 @@ contract CosmosBridge {
 
     event LogNewProphecyClaim(
         uint256 _prophecyID,
+        ClaimType _claimType,
         bytes _cosmosSender,
         address payable _ethereumReceiver,
         address _validatorAddress,
@@ -60,7 +67,8 @@ contract CosmosBridge {
     );
 
     event LogProphecyCompleted(
-        uint256 _prophecyID
+        uint256 _prophecyID,
+        ClaimType _claimType
     );
 
     /*
@@ -163,12 +171,12 @@ contract CosmosBridge {
 
     /*
     * @dev: newProphecyClaim
-    *       Creates a new prophecy claim, adding it to the prophecyClaims mapping.
-    *       ProphecyClaims can only be created for BridgeTokens on BridgeBank's whitelist.
-    *        If the operator is responsible for adding them, then the automatic relay will
-    *       of ProphecyClaim will fail until operator has called BridgeBank.createNewBridgeToken().
+    *       Creates a new burn or lock prophecy claim, adding it to the prophecyClaims mapping.
+    *       Lock claims can only be created for BridgeTokens on BridgeBank's whitelist. The operator
+    *       is responsible for adding them, and lock claims will fail until the operator has done so.
     */
     function newProphecyClaim(
+        ClaimType _claimType,
         bytes memory _cosmosSender,
         address payable _ethereumReceiver,
         address _tokenAddress,
@@ -188,8 +196,16 @@ contract CosmosBridge {
 
         address originalValidator = msg.sender;
 
+        ClaimType claimType;
+        if(_claimType == ClaimType.Burn){
+            claimType = ClaimType.Burn;
+        } else {
+            claimType = ClaimType.Lock;
+        }
+
         // Create the new ProphecyClaim
         ProphecyClaim memory prophecyClaim = ProphecyClaim(
+            claimType,
             _cosmosSender,
             _ethereumReceiver,
             originalValidator,
@@ -204,6 +220,7 @@ contract CosmosBridge {
 
         emit LogNewProphecyClaim(
             prophecyClaimCount,
+            claimType,
             _cosmosSender,
             _ethereumReceiver,
             originalValidator,
@@ -215,7 +232,9 @@ contract CosmosBridge {
 
     /*
     * @dev: completeProphecyClaim
-    *       Allows for the completion of ProphecyClaims once processed by the Oracle
+    *       Allows for the completion of ProphecyClaims once processed by the Oracle.
+    *       Burn claims unlock tokens stored by BridgeBank.
+    *       Lock claims mint BridgeTokens on BridgeBank's token whitelist.
     */
     function completeProphecyClaim(
         uint256 _prophecyID
@@ -230,10 +249,16 @@ contract CosmosBridge {
 
         prophecyClaims[_prophecyID].status = Status.Success;
 
-        issueBridgeTokens(_prophecyID);
+        ClaimType claimType = prophecyClaims[_prophecyID].claimType;
+        if(claimType == ClaimType.Burn) {
+            unlockTokens(_prophecyID);
+        } else {
+            issueBridgeTokens(_prophecyID);
+        }
 
         emit LogProphecyCompleted(
-            _prophecyID
+            _prophecyID,
+            claimType
         );
     }
 
@@ -250,6 +275,25 @@ contract CosmosBridge {
 
         bridgeBank.mintBridgeTokens(
             prophecyClaim.cosmosSender,
+            prophecyClaim.ethereumReceiver,
+            prophecyClaim.tokenAddress,
+            prophecyClaim.symbol,
+            prophecyClaim.amount
+        );
+    }
+
+    /*
+    * @dev: unlockTokens
+    *       Issues a request for the BridgeBank to unlock funds held on contract
+    */
+    function unlockTokens(
+        uint256 _prophecyID
+    )
+        internal
+    {
+        ProphecyClaim memory prophecyClaim = prophecyClaims[_prophecyID];
+
+        bridgeBank.unlock(
             prophecyClaim.ethereumReceiver,
             prophecyClaim.tokenAddress,
             prophecyClaim.symbol,

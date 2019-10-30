@@ -13,11 +13,17 @@ require("chai")
   .should();
 
 contract("Oracle", function(accounts) {
+  // System operator
   const operator = accounts[0];
 
+  // Initial validator accounts
   const userOne = accounts[1];
   const userTwo = accounts[2];
   const userThree = accounts[3];
+
+  // Contract's enum ClaimType can be represented a sequence of integers
+  const CLAIM_TYPE_BURN = 0;
+  const CLAIM_TYPE_LOCK = 1;
 
   describe("Oracle smart contract deployment", function() {
     beforeEach(async function() {
@@ -66,7 +72,10 @@ contract("Oracle", function(accounts) {
       // Create hash using Solidity's Sha3 hashing function
       this.message = web3.utils.soliditySha3(
         { t: "uint256", v: this.prophecyID },
-        { t: "bytes", v: this.cosmosSender }
+        { t: "bytes", v: this.cosmosSender },
+        { t: "address payable", v: this.ethereumReceiver },
+        { t: "address", v: this.tokenAddress },
+        { t: "uint256", v: this.amount }
       );
 
       // Deploy Valset contract
@@ -107,6 +116,7 @@ contract("Oracle", function(accounts) {
 
       // Submit a new prophecy claim to the CosmosBridge to make oracle claims upon
       await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
@@ -119,13 +129,17 @@ contract("Oracle", function(accounts) {
     });
 
     it("should not allow oracle claims upon inactive prophecy claims", async function() {
-      const inactiveBridgeClaimID = this.prophecyID + 5;
+      const inactiveBridgeClaimID = this.prophecyID + 50;
 
       // Create hash using Solidity's Sha3 hashing function
       const inactiveBridgeClaimMessage = web3.utils.soliditySha3(
         { t: "uint256", v: inactiveBridgeClaimID },
-        { t: "bytes", v: this.cosmosSender }
+        { t: "bytes", v: this.cosmosSender },
+        { t: "address payable", v: this.ethereumReceiver },
+        { t: "address", v: this.tokenAddress },
+        { t: "uint256", v: this.amount }
       );
+
       // Generate signature from userOne (validator)
       const signature = fixSignature(
         await web3.eth.sign(inactiveBridgeClaimMessage, userOne)
@@ -164,7 +178,10 @@ contract("Oracle", function(accounts) {
     it("should not allow validators to make OracleClaims with invalid signatures", async function() {
       const badMessage = web3.utils.soliditySha3(
         { t: "uint256", v: 20 },
-        { t: "bytes", v: this.cosmosSender }
+        { t: "bytes", v: this.cosmosSender },
+        { t: "address payable", v: this.ethereumReceiver },
+        { t: "address", v: this.tokenAddress },
+        { t: "uint256", v: this.amount }
       );
 
       // Generate signature from userTwo (validator) on bad message
@@ -208,6 +225,7 @@ contract("Oracle", function(accounts) {
         await web3.eth.sign(this.message, userOne)
       );
 
+      // Validator makes an oracle claim with their signature
       await this.oracle.newOracleClaim(
         this.prophecyID,
         toEthSignedMessageHash(this.message),
@@ -279,13 +297,17 @@ contract("Oracle", function(accounts) {
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       );
       this.ethereumReceiver = userOne;
+      this.tokenAddress = "0xbeddb076fa4df04859098a9873591dce3e9c404d";
       this.symbol = "TEST";
       this.amount = 100;
 
       // Create hash using Solidity's Sha3 hashing function
       this.message = web3.utils.soliditySha3(
         { t: "uint256", v: this.prophecyID },
-        { t: "bytes", v: this.cosmosSender }
+        { t: "bytes", v: this.cosmosSender },
+        { t: "address payable", v: this.ethereumReceiver },
+        { t: "address", v: this.tokenAddress },
+        { t: "uint256", v: this.amount }
       );
 
       // Deploy Valset contract
@@ -339,6 +361,7 @@ contract("Oracle", function(accounts) {
 
       // Submit a new prophecy claim to the CosmosBridge to make oracle claims upon
       await this.cosmosBridge.newProphecyClaim(
+        CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,

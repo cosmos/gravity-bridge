@@ -103,7 +103,7 @@ func RelayToEthereum(provider string, cosmosBridgeContractAddress common.Address
 		}
 
 		fmt.Println("Sending tx to CosmosBridge...")
-		tx, err := cosmosBridgeInstance.NewProphecyClaim(transactOptsAuth, eventData.CosmosSender, eventData.EthereumReceiver, eventData.TokenContractAddress, eventData.Symbol, eventData.Amount)
+		tx, err := cosmosBridgeInstance.NewProphecyClaim(transactOptsAuth, 0, eventData.CosmosSender, eventData.EthereumReceiver, eventData.TokenContractAddress, eventData.Symbol, eventData.Amount)
 		if err != nil {
 			log.Fatal(err)
 		}
