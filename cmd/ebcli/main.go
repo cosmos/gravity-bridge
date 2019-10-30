@@ -110,6 +110,9 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 		Short: "Transactions subcommands",
 	}
 
+	txCmd.PersistentFlags().String("ethereum-chain-id", "", "Ethereum chain ID")
+	txCmd.PersistentFlags().String("token-contract-address", "", "Token address representing a unique asset type")
+
 	txCmd.AddCommand(
 		bankcmd.SendTxCmd(cdc),
 		client.LineBreak,

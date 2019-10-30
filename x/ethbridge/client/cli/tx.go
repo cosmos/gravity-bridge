@@ -1,10 +1,13 @@
 package cli
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -66,30 +69,34 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 // GetCmdBurn is the CLI command for burning some of your coins and triggering an event
 func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "burn [ethereum-chain-id] [token-contract-address] [cosmos-sender-address] [ethereum-receiver-address] [amount]",
+		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "burn some coins!",
-		Args:  cobra.ExactArgs(5),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			ethereumChainID, err := strconv.Atoi(args[0])
+			ethereumChainID, err := strconv.Atoi(viper.GetString("ethereum-chain-id"))
 			if err != nil {
 				return err
 			}
 
-			tokenContract := types.NewEthereumAddress(args[1])
+			tokenContractString := viper.GetString("token-contract-address")
+			if strings.TrimSpace(tokenContractString) == "" {
+				return fmt.Errorf("Error: flag --token-contract-address invalid value")
+			}
+			tokenContract := types.NewEthereumAddress(tokenContractString)
 
-			cosmosSender, err := sdk.AccAddressFromBech32(args[2])
+			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
 
-			ethereumReceiver := types.NewEthereumAddress(args[3])
+			ethereumReceiver := types.NewEthereumAddress(args[1])
 
-			amount, err := sdk.ParseCoins(args[4])
+			amount, err := sdk.ParseCoins(args[2])
 			if err != nil {
 				return err
 			}
@@ -104,30 +111,34 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 // GetCmdLock is the CLI command for locking some of your coins and triggering an event
 func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "lock [ethereum-chain-id] [token-contract-address] [cosmos-sender-address] [ethereum-receiver-address] [amount]",
+		Use:   "lock [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "lock some coins!",
-		Args:  cobra.ExactArgs(5),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			ethereumChainID, err := strconv.Atoi(args[0])
+			ethereumChainID, err := strconv.Atoi(viper.GetString("ethereum-chain-id"))
 			if err != nil {
 				return err
 			}
 
-			tokenContract := types.NewEthereumAddress(args[1])
+			tokenContractString := viper.GetString("token-contract-address")
+			if strings.TrimSpace(tokenContractString) == "" {
+				return fmt.Errorf("Error: flag --token-contract-address invalid value")
+			}
+			tokenContract := types.NewEthereumAddress(tokenContractString)
 
-			cosmosSender, err := sdk.AccAddressFromBech32(args[2])
+			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
 
-			ethereumReceiver := types.NewEthereumAddress(args[3])
+			ethereumReceiver := types.NewEthereumAddress(args[1])
 
-			amount, err := sdk.ParseCoins(args[4])
+			amount, err := sdk.ParseCoins(args[2])
 			if err != nil {
 				return err
 			}
