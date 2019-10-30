@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/cosmos/peggy/x/ethbridge/querier"
 	"github.com/cosmos/peggy/x/ethbridge/types"
@@ -15,19 +17,34 @@ import (
 // GetCmdGetEthBridgeProphecy queries information about a specific prophecy
 func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "prophecy [nonce] [ethereum-sender]",
+		Use:   "prophecy [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender]",
 		Short: "Query prophecy",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(6),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			nonce, err := strconv.Atoi(args[0])
+			ethereumChainID, err := strconv.Atoi(args[0])
 			if err != nil {
 				return err
 			}
-			ethereumSender := types.NewEthereumAddress(args[1])
 
-			bz, err := cdc.MarshalJSON(types.NewQueryEthProphecyParams(nonce, ethereumSender))
+			bridgeContract := types.NewEthereumAddress(args[1])
+
+			nonce, err := strconv.Atoi(args[2])
+			if err != nil {
+				return err
+			}
+
+			symbol := args[3]
+			if strings.TrimSpace(symbol) == "" {
+				return errors.New("Error: must specify a token symbol, including 'eth' for Ethereum")
+			}
+
+			tokenContract := types.NewEthereumAddress(args[4])
+
+			ethereumSender := types.NewEthereumAddress(args[5])
+
+			bz, err := cdc.MarshalJSON(types.NewQueryEthProphecyParams(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender))
 			if err != nil {
 				return err
 			}

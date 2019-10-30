@@ -19,7 +19,7 @@ func NewEventWrite(txHash string, event LockEvent) {
 
 // IsEventRecorded : checks the sessions stored events for this transaction hash
 func IsEventRecorded(txHash string) bool {
-	return EventRecords[txHash].Nonce != nil
+	return EventRecords[txHash].Value != nil
 }
 
 // PrintEventByTx : prints any witnessed events associated with a given transaction hash

@@ -10,6 +10,7 @@ const CosmosBridge = artifacts.require("CosmosBridge");
 const Oracle = artifacts.require("Oracle");
 const BridgeBank = artifacts.require("BridgeBank");
 const BridgeRegistry = artifacts.require("BridgeRegistry");
+const BridgeToken = artifacts.require("BridgeToken");
 
 module.exports = function(deployer, network, accounts) {
   // Required initial paramater variables
@@ -18,7 +19,7 @@ module.exports = function(deployer, network, accounts) {
   let initialPowers = [];
 
   // Development network deployment param parsing/setting
-  if (network === "develop") {
+  if (network === "ganache") {
     // Operator
     operator = accounts[0];
     // Initial validators
@@ -72,6 +73,9 @@ module.exports = function(deployer, network, accounts) {
       "Each initial validator must have a corresponding power specified."
     );
   }
+
+  // 0. Deploy BridgeToken for testing purposes
+  deployer.deploy(BridgeToken, "TEST", { gas: 4612388, from: accounts[0] });
 
   // 1. Deploy Valset contract
   deployer
