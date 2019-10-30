@@ -28,7 +28,7 @@ func (d EventType) String() string {
 
 // MsgEvent : contains data from MsgBurn and MsgLock events
 type MsgEvent struct {
-	EventName            EventType
+	ClaimType            EventType
 	CosmosSender         []byte
 	EthereumReceiver     common.Address
 	Symbol               string
@@ -37,7 +37,7 @@ type MsgEvent struct {
 }
 
 // NewMsgEvent : parses MsgEvent data
-func NewMsgEvent(eventType EventType, eventData [3]string) MsgEvent {
+func NewMsgEvent(claimType EventType, eventData [3]string) MsgEvent {
 	// Declare a new MsgEvent
 	msgEvent := MsgEvent{}
 
@@ -87,7 +87,7 @@ func NewMsgEvent(eventType EventType, eventData [3]string) MsgEvent {
 	tokenContractAddress := common.HexToAddress(tokenContractAddressString)
 
 	// Package the information in a MsgEvent struct
-	msgEvent.EventName = eventType
+	msgEvent.ClaimType = claimType
 	msgEvent.CosmosSender = cosmosSender
 	msgEvent.EthereumReceiver = ethereumReceiver
 	msgEvent.Symbol = symbol
@@ -101,13 +101,13 @@ func NewMsgEvent(eventType EventType, eventData [3]string) MsgEvent {
 
 // PrintMsgEvent : prints a MsgEvent struct's information
 func PrintMsgEvent(event MsgEvent) {
-	eventName := event.EventName.String()
+	claimType := event.ClaimType.String()
 	cosmosSender := string(event.CosmosSender)
 	ethereumReceiver := event.EthereumReceiver.Hex()
 	tokenContractAddress := event.TokenContractAddress.Hex()
 	symbol := event.Symbol
 	amount := event.Amount
 
-	fmt.Printf("\nMsg Type: %v\nCosmos Sender: %v\nEthereum Recipient: %v\nToken Address: %v\nSymbol: %v\nAmount: %v\n",
-		eventName, cosmosSender, ethereumReceiver, tokenContractAddress, symbol, amount)
+	fmt.Printf("\nClaim Type: %v\nCosmos Sender: %v\nEthereum Recipient: %v\nToken Address: %v\nSymbol: %v\nAmount: %v\n",
+		claimType, cosmosSender, ethereumReceiver, tokenContractAddress, symbol, amount)
 }

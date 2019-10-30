@@ -345,7 +345,7 @@ ebrelayer status
 # Start Cosmos relayer
 # Example [tendermintNode]: tcp://localhost:26657
 # Example [web3Provider]: http://localhost:7545
-ebrelayer init cosmos [tendermintNode] [web3Provider] [peggyContractAddress]
+ebrelayer init cosmos [tendermintNode] [web3Provider] [bridgeRegistryContractAddress]
 
 # You should see a message like:
 # [2019-10-24|19:02:21.888] Starting WSEvents         impl=WSEvents

@@ -16,7 +16,7 @@ import (
 )
 
 // InitCosmosRelayer : initializes a relayer which witnesses events on the Cosmos network and relays them to Ethereum
-func InitCosmosRelayer(tendermintProvider string, web3Provider string, cosmosBridgeContractAddress common.Address, rawPrivateKey string) error {
+func InitCosmosRelayer(tendermintProvider string, web3Provider string, bridgeContractAddress common.Address, rawPrivateKey string) error {
 	logger := tmLog.NewTMLogger(tmLog.NewSyncWriter(os.Stdout))
 	client := tmclient.NewHTTP(tendermintProvider, "/websocket")
 
@@ -56,18 +56,18 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, cosmosBri
 			for i := 1; i < len(txRes.Events); i++ {
 				event := txRes.Events[i]
 
-				var eventType events.EventType
+				var claimType events.EventType
 
 				// Parse event type from event name
 				if string(event.Type) == "burn" {
-					eventType = events.Burn
+					claimType = events.Burn
 				} else if string(event.Type) == "lock" {
-					eventType = events.Lock
+					claimType = events.Lock
 				} else {
-					eventType = events.Unsupported
+					claimType = events.Unsupported
 				}
 
-				switch eventType {
+				switch claimType {
 				case events.Burn, events.Lock:
 					// Package the data into an array for proper parsing
 					cosmosSender := string(event.Attributes[0].Value)
@@ -76,10 +76,10 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, cosmosBri
 					eventData := [3]string{cosmosSender, ethereumReceiver, coin}
 
 					// Parse the eventData into a new MsgEvent
-					msgEvent := events.NewMsgEvent(eventType, eventData)
+					msgEvent := events.NewMsgEvent(claimType, eventData)
 
 					// Relay the MsgEvent to the Ethereum network
-					err = txs.RelayToEthereum(web3Provider, cosmosBridgeContractAddress, rawPrivateKey, &msgEvent)
+					err = txs.RelayToEthereum(web3Provider, bridgeContractAddress, rawPrivateKey, &msgEvent)
 					if err != nil {
 						return err
 					}
