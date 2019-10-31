@@ -62,18 +62,22 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *events.LockEvent) (e
 // ProphecyClaimToSignedOracleClaim : packages and signs a prophecy claim's data, returning a new oracle claim
 func ProphecyClaimToSignedOracleClaim(event events.NewProphecyClaimEvent) OracleClaim {
 	// Parse relevant data into type byte[]
-	prophecyID := event.ProphecyID.Bytes()
-	sender := event.CosmosSender
-	recipient := []byte(event.EthereumReceiver.Hex())
-	token := []byte(event.TokenAddress.Hex())
-	amount := event.Amount.Bytes()
-	validator := []byte(event.ValidatorAddress.Hex())
+	// prophecyID := event.ProphecyID.Bytes()
+	// sender := event.CosmosSender
+	// recipient := []byte(event.EthereumReceiver.Hex())
+	// token := []byte(event.TokenAddress.Hex())
+	// amount := event.Amount.Bytes()
+	// validator := []byte(event.ValidatorAddress.Hex())
 
 	// Generate hash using ProphecyClaim data
-	claimHash := GenerateClaimHash(prophecyID, sender, recipient, token, amount, validator)
+	// claimHash := GenerateClaimHash(prophecyID, sender, recipient, token, amount, validator)
 
 	// Sign the hash using the active validator's private key
-	hash, v, r, s := SignHash(claimHash)
+	// hash, v, r, s := SignHash(claimHash)
+	hash, r, s, v := Sign("hello")
+
+	data := []byte("hello")
+	SignFull(data)
 
 	// Convert claimHash to [32]byte for packaging in OracleClaim
 	// var byteHash [32]byte

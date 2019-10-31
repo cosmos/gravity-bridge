@@ -87,17 +87,17 @@ func GenerateClaimHash(prophecyID []byte, sender []byte, recipient []byte, token
 }
 
 // SignHash : signs a specified hash using the validator's private key
-func SignHash(hash common.Hash) ([32]byte, uint8, [32]byte, [32]byte) {
+func SignHash(hash []byte) ([32]byte, uint8, [32]byte, [32]byte) {
 	// Load the validator's private key
 	privateKey, err := LoadPrivateKey()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Signing hash:", hash.Hex())
+	fmt.Println("Signing hash:", hash)
 
 	// Sign the hash using the validator's private key
-	rawSignature, err := crypto.Sign(hash.Bytes(), privateKey)
+	rawSignature, err := crypto.Sign(hash, privateKey)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -110,7 +110,8 @@ func SignHash(hash common.Hash) ([32]byte, uint8, [32]byte, [32]byte) {
 	fmt.Println("s:", hexutil.Encode(s[:])[2:])
 
 	var byteHash [32]byte
-	copy(byteHash[:], hash.Bytes())
+	copy(byteHash[:], hash)
+	// byteHash := [32]byte{hash}
 
 	fmt.Println("Verifying raw signature...")
 	verifySig(byteHash, rawSignature)
@@ -132,7 +133,6 @@ func verifySig(hash common.Hash, signature []byte) {
 		log.Fatal("error casting public key to ECDSA")
 	}
 	publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
-	hash.Bytes()
 
 	// public key which signed this message
 	sigPublicKeyECDSA, err := crypto.SigToPub(hash.Bytes(), signature)
@@ -170,35 +170,82 @@ func SigRSV(isig interface{}) ([32]byte, [32]byte, uint8) {
 	return R, S, V
 }
 
-// type Sig struct {
-// 	Raw  []byte
-// 	Hash [32]byte
-// 	R    [32]byte
-// 	S    [32]byte
-// 	V    uint8
-// }
+func SignFull(data []byte) {
 
-// func Sign(message string) Sig {
+	privateKey, err := LoadPrivateKey()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// 	privateKey, err := LoadPrivateKey()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
+	// SignFull :
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		log.Fatal("error casting public key to ECDSA")
+	}
 
-// 	hashRaw := crypto.Keccak256([]byte(message))
-// 	signature, err := crypto.Sign(hashRaw, privateKey)
+	publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
 
-// 	// Convert hash to [32]byte
-// 	var hashRaw32 [32]byte
-// 	copy(hashRaw32[:], hashRaw)
+	hash := crypto.Keccak256Hash(data)
+	fmt.Println(hash.Hex()) // 0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8
 
-// 	// s := string(byteArray[:n])
+	signature, err := crypto.Sign(hash.Bytes(), privateKey)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// 	// return Sig{
-// 	// 	signature,
-// 	// 	hashRaw32,
-// 	// 	[32]byte(signature[:32]),
-// 	// 	p.bytes32(signature[32:64]),
-// 	// 	uint8(int(signature[65])) + 27, // Yes add 27, weird Ethereum quirk
-// 	// }
-// }
+	fmt.Println(hexutil.Encode(signature)) // 0x789a80053e4927d0a898db8e065e948f5cf086e32f9ccaa54c1908e22ac430c62621578113ddbb62d509bf6049b8fb544ab06d36f916685a2eb8e57ffadde02301
+
+	sigPublicKey, err := crypto.Ecrecover(hash.Bytes(), signature)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	matches := bytes.Equal(sigPublicKey, publicKeyBytes)
+	fmt.Println(matches) // true
+
+	sigPublicKeyECDSA, err := crypto.SigToPub(hash.Bytes(), signature)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sigPublicKeyBytes := crypto.FromECDSAPub(sigPublicKeyECDSA)
+	matches = bytes.Equal(sigPublicKeyBytes, publicKeyBytes)
+	fmt.Println(matches) // true
+
+	signatureNoRecoverID := signature[:len(signature)-1] // remove recovery id
+	verified := crypto.VerifySignature(publicKeyBytes, hash.Bytes(), signatureNoRecoverID)
+	fmt.Println(verified) // true
+}
+
+// Sign :
+func Sign(message string) ([32]byte, [32]byte, [32]byte, uint8) {
+	// Load the validator's private key
+	privateKey, err := LoadPrivateKey()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	hashRaw := crypto.Keccak256([]byte(message))
+	signature, err := crypto.Sign(hashRaw, privateKey)
+
+	var hash [32]byte
+	copy(hash[:], hashRaw)
+
+	var r [32]byte
+	copy(r[:], signature[:32])
+
+	var s [32]byte
+	copy(s[:], signature[32:64])
+
+	// v := uint8(int(signature[65])) + 27
+	var v uint8
+	rawV := int(signature[64])
+	if rawV < 27 {
+		v = uint8(rawV + 27)
+	} else {
+		v = uint8(rawV)
+	}
+
+	return hash, r, s, v
+}

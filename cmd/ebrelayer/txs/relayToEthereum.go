@@ -186,7 +186,7 @@ func RelayOracleClaimToEthereum(provider string, contractAddress common.Address,
 	fmt.Println("R:", claim.R)
 	fmt.Println("R:", reflect.TypeOf(claim.R))
 
-	fmt.Println("S:", claim.S)
+	fmt.Println("S:", string(claim.S[:]))
 	fmt.Println("S:", reflect.TypeOf(claim.S))
 
 	fmt.Println("Sending new OracleClaim to Oracle...")
