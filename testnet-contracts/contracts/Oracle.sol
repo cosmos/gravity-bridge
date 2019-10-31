@@ -112,10 +112,18 @@ contract Oracle {
     {
         address validatorAddress = msg.sender;
 
+        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+        bytes32 prefixedHash = keccak256(
+            abi.encode(
+                prefix,
+                _message
+            )
+        );
+
         // Validate the msg.sender's signature
         require(
             validatorAddress == ecrecover(
-                _message,
+                prefixedHash,
                 _v,
                 _r,
                 _s
