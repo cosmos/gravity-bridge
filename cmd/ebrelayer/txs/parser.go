@@ -20,8 +20,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// ParseLogLockPayload : parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
-func ParseLogLockPayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTypes.EthBridgeClaim, error) {
+// LogLockToEthBridgeClaim : parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
+func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTypes.EthBridgeClaim, error) {
 
 	witnessClaim := ethbridgeTypes.EthBridgeClaim{}
 
@@ -57,4 +57,55 @@ func ParseLogLockPayload(valAddr sdk.ValAddress, event *events.LockEvent) (ethbr
 	witnessClaim.Amount = coins
 
 	return witnessClaim, nil
+}
+
+// ProphecyClaimToSignedOracleClaim : packages and signs a prophecy claim's data, returning a new oracle claim
+func ProphecyClaimToSignedOracleClaim(event events.NewProphecyClaimEvent) OracleClaim {
+	// Parse relevant data into type byte[]
+	prophecyID := event.ProphecyID.Bytes()
+	sender := event.CosmosSender
+	recipient := []byte(event.EthereumReceiver.Hex())
+	token := []byte(event.TokenAddress.Hex())
+	amount := event.Amount.Bytes()
+	validator := []byte(event.ValidatorAddress.Hex())
+
+	// Generate hash using ProphecyClaim data
+	claimHash := GenerateClaimHash(prophecyID, sender, recipient, token, amount, validator)
+
+	// Sign the hash using the active validator's private key
+	signature := SignHash(claimHash)
+
+	// Convert claimHash to [32]byte for packaging in OracleClaim
+	var byteClaimHash [32]byte
+	copy(byteClaimHash[:], claimHash.Hex())
+
+	// Package the ProphecyID, Message, and Signature into an OracleClaim
+	oracleClaim := OracleClaim{
+		ProphecyID: event.ProphecyID,
+		Message:    byteClaimHash,
+		Signature:  signature,
+	}
+
+	return oracleClaim
+}
+
+// CosmosMsgToProphecyClaim : parses event data from a CosmosMsg, packaging it as a ProphecyClaim
+func CosmosMsgToProphecyClaim(event events.CosmosMsg) ProphecyClaim {
+	claimType := event.ClaimType
+	cosmosSender := event.CosmosSender
+	ethereumReceiver := event.EthereumReceiver
+	tokenContractAddress := event.TokenContractAddress
+	symbol := strings.ToLower(event.Symbol)
+	amount := event.Amount
+
+	prophecyClaim := ProphecyClaim{
+		ClaimType:            claimType,
+		CosmosSender:         cosmosSender,
+		EthereumReceiver:     ethereumReceiver,
+		TokenContractAddress: tokenContractAddress,
+		Symbol:               symbol,
+		Amount:               amount,
+	}
+
+	return prophecyClaim
 }

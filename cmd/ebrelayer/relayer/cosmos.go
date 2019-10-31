@@ -78,9 +78,12 @@ func InitCosmosRelayer(tendermintProvider string, web3Provider string, bridgeCon
 					// Parse the eventData into a new CosmosMsg
 					cosmosMsg := events.NewCosmosMsg(claimType, eventData)
 
+					// TODO: Data mapping
+					prophecyClaim := txs.CosmosMsgToProphecyClaim(cosmosMsg)
+
 					// TODO: Need some sort of delay on this so validators aren't all submitting at the same time
 					// Relay the CosmosMsg to the Ethereum network
-					err = txs.RelayProphecyClaimToEthereum(web3Provider, bridgeContractAddress, claimType, cosmosMsg)
+					err = txs.RelayProphecyClaimToEthereum(web3Provider, bridgeContractAddress, claimType, prophecyClaim)
 					if err != nil {
 						return err
 					}

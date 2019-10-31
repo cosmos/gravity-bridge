@@ -22,8 +22,60 @@ const (
 )
 
 // RelayProphecyClaimToEthereum :
-func RelayProphecyClaimToEthereum(provider string, contractAddress common.Address, event events.Event, msgData events.CosmosMsg) error {
-	client, auth, target := getRelayConfig(provider, contractAddress, event)
+func RelayProphecyClaimToEthereum(provider string, contractAddress common.Address, event events.Event, claim ProphecyClaim) error {
+	// Get tx config variables
+	// client, auth, target := getRelayConfig(provider, contractAddress, event)
+
+	// Start Ethereum client
+	client, err := ethclient.Dial(provider)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Load the validator's private key
+	key, err := LoadPrivateKey()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Load the validator's address
+	sender, err := LoadSender()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	nonce, err := client.PendingNonceAt(context.Background(), sender)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Set up TransactOpts auth's tx signature authorization
+	transactOptsAuth := bind.NewKeyedTransactor(key)
+	transactOptsAuth.Nonce = big.NewInt(int64(nonce))
+	transactOptsAuth.Value = big.NewInt(0) // in wei
+	transactOptsAuth.GasLimit = GasLimit
+	transactOptsAuth.GasPrice = gasPrice
+
+	// All ProphecyClaims are made to the CosmosBridge contract
+	var targetContract ContractRegistry
+
+	switch event {
+	case events.MsgBurn, events.MsgLock:
+		targetContract = CosmosBridge
+	case events.LogNewProphecyClaim:
+		targetContract = Oracle
+	}
+
+	// Get the specific contract's address
+	target, err := GetAddressFromBridgeRegistry(client, contractAddress, targetContract)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Println("\nFetching CosmosBridge contract...")
 
@@ -33,12 +85,8 @@ func RelayProphecyClaimToEthereum(provider string, contractAddress common.Addres
 		log.Fatal(err)
 	}
 
-	fmt.Println("ClaimType:", uint8(msgData.ClaimType))
-
-	fmt.Println("\nmsgData:", msgData)
-
 	fmt.Println("Sending new ProphecyClaim to CosmosBridge...")
-	tx, err := cosmosBridgeInstance.NewProphecyClaim(auth, uint8(msgData.ClaimType), msgData.CosmosSender, msgData.EthereumReceiver, msgData.TokenContractAddress, msgData.Symbol, msgData.Amount)
+	tx, err := cosmosBridgeInstance.NewProphecyClaim(transactOptsAuth, uint8(claim.ClaimType), claim.CosmosSender, claim.EthereumReceiver, claim.TokenContractAddress, claim.Symbol, claim.Amount)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -63,22 +111,69 @@ func RelayProphecyClaimToEthereum(provider string, contractAddress common.Addres
 }
 
 // RelayOracleClaimToEthereum :
-func RelayOracleClaimToEthereum(provider string, contractAddress common.Address, event events.Event, prophecyClaim events.NewProphecyClaimEvent) error {
-	oracleClaim := ProphecyClaimToOracleClaim(prophecyClaim)
+func RelayOracleClaimToEthereum(provider string, contractAddress common.Address, event events.Event, claim OracleClaim) error {
+	// Get tx config variables
+	// client, auth, target := getRelayConfig(provider, contractAddress, event)
+	// Start Ethereum client
+	client, err := ethclient.Dial(provider)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	client, auth, target := getRelayConfig(provider, contractAddress, event)
+	// Load the validator's private key
+	key, err := LoadPrivateKey()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	fmt.Println("\nFetching Oracle contract...")
+	// Load the validator's address
+	sender, err := LoadSender()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	nonce, err := client.PendingNonceAt(context.Background(), sender)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Set up TransactOpts auth's tx signature authorization
+	transactOptsAuth := bind.NewKeyedTransactor(key)
+	transactOptsAuth.Nonce = big.NewInt(int64(nonce))
+	transactOptsAuth.Value = big.NewInt(0) // in wei
+	transactOptsAuth.GasLimit = GasLimit
+	transactOptsAuth.GasPrice = gasPrice
+
+	// All ProphecyClaims are made to the CosmosBridge contract
+	var targetContract ContractRegistry
+
+	switch event {
+	case events.MsgBurn, events.MsgLock:
+		targetContract = CosmosBridge
+	case events.LogNewProphecyClaim:
+		targetContract = Oracle
+	}
+
+	// Get the specific contract's address
+	target, err := GetAddressFromBridgeRegistry(client, contractAddress, targetContract)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Initialize Oracle instance
+	fmt.Println("\nFetching Oracle contract...")
 	oracleInstance, err := oracle.NewOracle(target, client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println("Sending new OracleClaim to Oracle...")
-
-	tx, err := oracleInstance.NewOracleClaim(auth, oracleClaim.ProphecyID, oracleClaim.Message, oracleClaim.Signature)
+	tx, err := oracleInstance.NewOracleClaim(transactOptsAuth, claim.ProphecyID, claim.Message, claim.Signature)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -101,6 +196,7 @@ func RelayOracleClaimToEthereum(provider string, contractAddress common.Address,
 	return nil
 }
 
+// TODO: Refactor getRelayConfig so it's used by relay functions
 func getRelayConfig(provider string, registry common.Address, event events.Event) (client *ethclient.Client, auth *bind.TransactOpts, target common.Address) {
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)

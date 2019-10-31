@@ -54,7 +54,7 @@ func InitEthereumRelayer(cdc *amino.Codec, chainID string, provider string, cont
 		eventSignature = contractABI.Events["LogLock"].Id().Hex()
 	}
 
-	// Get the specific contract's address (Valset, Oracle, CosmosBridge, or BridgeBank)
+	// Get the specific contract's address (CosmosBridge or BridgeBank)
 	targetAddress, err := txs.GetAddressFromBridgeRegistry(client, contractAddress, targetContract)
 	if err != nil {
 		log.Fatal(err)
@@ -82,9 +82,6 @@ func InitEthereumRelayer(cdc *amino.Codec, chainID string, provider string, cont
 			log.Fatal(err)
 		// vLog is raw event data
 		case vLog := <-logs:
-			// TODO: Remove this log
-			fmt.Printf("\n\nTx hash: %v\nTopics: %v",
-				vLog.TxHash.Hex(), vLog.Topics[0].Hex())
 			// Check if the event is a 'LogLock' event
 			if vLog.Topics[0].Hex() == eventSignature {
 				fmt.Printf("\n\nNew \"%v\":\nTx hash: %v\nBlock number: %v",
@@ -98,20 +95,23 @@ func InitEthereumRelayer(cdc *amino.Codec, chainID string, provider string, cont
 					events.NewEventWrite(vLog.TxHash.Hex(), event)
 
 					// Parse the LogLock event's payload into a struct
-					claim, err := txs.ParseLogLockPayload(validatorAddress, &event)
+					prophecyClaim, err := txs.LogLockToEthBridgeClaim(validatorAddress, &event)
 					if err != nil {
 						return err
 					}
 
 					// Initiate the relay
-					err = txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, passphrase, &claim)
+					err = txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, passphrase, &prophecyClaim)
 					if err != nil {
 						return err
 					}
 				case events.LogNewProphecyClaim.String():
 					event := events.UnpackLogNewProphecyClaim(contractABI, eventName, vLog.Data)
 
-					err = txs.RelayOracleClaimToEthereum(provider, contractAddress, events.LogNewProphecyClaim, event)
+					// Parse ProphecyClaim's data into an OracleClaim
+					oracleClaim := txs.ProphecyClaimToSignedOracleClaim(event)
+
+					err = txs.RelayOracleClaimToEthereum(provider, contractAddress, events.LogNewProphecyClaim, oracleClaim)
 					if err != nil {
 						return err
 					}

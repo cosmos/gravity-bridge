@@ -14,9 +14,9 @@ type CosmosMsg struct {
 	ClaimType            Event
 	CosmosSender         []byte
 	EthereumReceiver     common.Address
+	TokenContractAddress common.Address
 	Symbol               string
 	Amount               *big.Int
-	TokenContractAddress common.Address
 }
 
 // NewCosmosMsg : parses CosmosMsg data

@@ -65,7 +65,6 @@ module.exports = async () => {
   let coinDenom = DEFAULT_ETH_DENOM;
   let amount = DEFAULT_AMOUNT;
 
-  // TODO: Input validation
   if (!DEFAULT_PARAMS) {
     if (NETWORK_ROPSTEN) {
       cosmosRecipient = process.argv[6];

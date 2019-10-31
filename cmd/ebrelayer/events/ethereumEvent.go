@@ -28,14 +28,14 @@ type LockEvent struct {
 
 // NewProphecyClaimEvent : struct which represents a LogNewProphecyClaim event
 type NewProphecyClaimEvent struct {
-	ProphecyID *big.Int
-	ClaimType  Event
-	From       []byte
-	To         common.Address
-	Validator  common.Address
-	Token      common.Address
-	Symbol     string
-	Amount     *big.Int
+	ProphecyID       *big.Int
+	ClaimType        uint8
+	CosmosSender     []byte
+	EthereumReceiver common.Address
+	ValidatorAddress common.Address
+	TokenAddress     common.Address
+	Symbol           string
+	Amount           *big.Int
 }
 
 // UnpackLogLock : Handles new LogLock events
@@ -89,12 +89,12 @@ func PrintProphecyClaimEvent(event NewProphecyClaimEvent) {
 	// Convert the variables into a printable format
 	id := event.ProphecyID
 	claimType := event.ClaimType
-	sender := string(event.From)
-	recipient := event.To.Hex()
+	sender := string(event.CosmosSender)
+	recipient := event.EthereumReceiver.Hex()
 	symbol := event.Symbol
-	token := event.Token.Hex()
+	token := event.TokenAddress.Hex()
 	amount := event.Amount
-	validator := event.Validator.Hex()
+	validator := event.ValidatorAddress.Hex()
 
 	// Print the event's information
 	fmt.Printf("\nProphecy ID: %v\nClaim Type: %v\nSender: %v\nRecipient %v\nSymbol %v\nToken %v\nAmount: %v\nValidator: %v\n\n",
