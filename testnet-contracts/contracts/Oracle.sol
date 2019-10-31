@@ -114,7 +114,7 @@ contract Oracle {
 
         // Validate the msg.sender's signature
         require(
-            validatorAddress == valset.recover(
+            validatorAddress == ecrecover(
                 _message,
                 _v,
                 _r,

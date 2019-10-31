@@ -23,7 +23,9 @@ import (
 type OracleClaim struct {
 	ProphecyID *big.Int
 	Message    [32]byte
-	Signature  []byte
+	V          uint8
+	R          [32]byte
+	S          [32]byte
 }
 
 // ProphecyClaim :
@@ -85,7 +87,7 @@ func GenerateClaimHash(prophecyID []byte, sender []byte, recipient []byte, token
 }
 
 // SignHash : signs a specified hash using the validator's private key
-func SignHash(hash common.Hash) []byte {
+func SignHash(hash common.Hash) ([32]byte, uint8, [32]byte, [32]byte) {
 	// Load the validator's private key
 	privateKey, err := LoadPrivateKey()
 	if err != nil {
@@ -100,16 +102,21 @@ func SignHash(hash common.Hash) []byte {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Verifying raw signature...")
-	verifySig(hash, rawSignature)
-
 	fmt.Println("\nRecovering signature components...")
 	r, s, v := SigRSV(rawSignature)
+
+	fmt.Println("v:", v)
 	fmt.Println("r:", hexutil.Encode(r[:])[2:])
 	fmt.Println("s:", hexutil.Encode(s[:])[2:])
-	fmt.Println("v:", v)
 
-	return rawSignature
+	var byteHash [32]byte
+	copy(byteHash[:], hash.Bytes())
+
+	fmt.Println("Verifying raw signature...")
+	verifySig(byteHash, rawSignature)
+
+	// return rawSignature
+	return byteHash, v, r, s
 }
 
 func verifySig(hash common.Hash, signature []byte) {

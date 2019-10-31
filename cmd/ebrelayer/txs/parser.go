@@ -73,17 +73,20 @@ func ProphecyClaimToSignedOracleClaim(event events.NewProphecyClaimEvent) Oracle
 	claimHash := GenerateClaimHash(prophecyID, sender, recipient, token, amount, validator)
 
 	// Sign the hash using the active validator's private key
-	signature := SignHash(claimHash)
+	hash, v, r, s := SignHash(claimHash)
 
 	// Convert claimHash to [32]byte for packaging in OracleClaim
-	var byteClaimHash [32]byte
-	copy(byteClaimHash[:], claimHash.Hex())
+	// var byteHash [32]byte
+	// copy(byteHash[:], hash)
 
 	// Package the ProphecyID, Message, and Signature into an OracleClaim
 	oracleClaim := OracleClaim{
 		ProphecyID: event.ProphecyID,
-		Message:    byteClaimHash,
-		Signature:  signature,
+		Message:    hash,
+		V:          v,
+		R:          r,
+		S:          s,
+		// Signature:  signature,
 	}
 
 	return oracleClaim
