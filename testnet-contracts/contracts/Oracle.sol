@@ -26,7 +26,10 @@ contract Oracle {
         uint256 _prophecyID,
         address _validatorAddress,
         bytes32 _message,
-        bytes _signature
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+        // bytes _signature
     );
 
     event LogProphecyProcessed(
@@ -98,7 +101,10 @@ contract Oracle {
     function newOracleClaim(
         uint256 _prophecyID,
         bytes32 _message,
-        bytes memory _signature
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+        // bytes memory _signature
     )
         public
         onlyValidator
@@ -110,7 +116,9 @@ contract Oracle {
         require(
             validatorAddress == valset.recover(
                 _message,
-                _signature
+                _v,
+                _r,
+                _s
             ),
             "Invalid message signature."
         );
@@ -128,7 +136,9 @@ contract Oracle {
             _prophecyID,
             validatorAddress,
             _message,
-            _signature
+            _v,
+            _r,
+            _s
         );
     }
 
