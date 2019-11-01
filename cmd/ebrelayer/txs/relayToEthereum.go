@@ -3,7 +3,6 @@ package txs
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	"log"
 	"math/big"
@@ -19,14 +18,11 @@ import (
 
 const (
 	// GasLimit : the gas limit in Gwei used for transactions sent with TransactOpts
-	// GasLimit = uint64(300000)
 	GasLimit = uint64(600000)
 )
 
-// RelayProphecyClaimToEthereum :
+// RelayProphecyClaimToEthereum : relays the provided ProphecyClaim to the Ethereum network
 func RelayProphecyClaimToEthereum(provider string, contractAddress common.Address, event events.Event, claim ProphecyClaim) error {
-	// Get tx config variables
-	// client, auth, target := getRelayConfig(provider, contractAddress, event)
 
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)
@@ -112,11 +108,9 @@ func RelayProphecyClaimToEthereum(provider string, contractAddress common.Addres
 	return nil
 }
 
-// RelayOracleClaimToEthereum :
+// RelayOracleClaimToEthereum : relays the provided OracleClaim to the Ethereum network
 func RelayOracleClaimToEthereum(provider string, contractAddress common.Address, event events.Event, claim OracleClaim) error {
-	// Get tx config variables
-	// client, auth, target := getRelayConfig(provider, contractAddress, event)
-	// Start Ethereum client
+
 	client, err := ethclient.Dial(provider)
 	if err != nil {
 		log.Fatal(err)
@@ -174,22 +168,8 @@ func RelayOracleClaimToEthereum(provider string, contractAddress common.Address,
 		log.Fatal(err)
 	}
 
-	fmt.Println("ProphecyID:", claim.ProphecyID)
-	fmt.Println("ProphecyID:", reflect.TypeOf(claim.ProphecyID))
-
-	fmt.Println("Message:", claim.Message)
-	fmt.Println("Message:", reflect.TypeOf(claim.Message))
-
-	var byteMessage [32]byte
-	copy(byteMessage[:], claim.Message)
-	fmt.Println("byteMessage:", byteMessage)
-	fmt.Println("byteMessage:", reflect.TypeOf(byteMessage))
-
-	fmt.Println("Signature:", claim.Signature)
-	fmt.Println("Signature:", reflect.TypeOf(claim.Signature))
-
 	fmt.Println("Sending new OracleClaim to Oracle...")
-	tx, err := oracleInstance.NewOracleClaim(transactOptsAuth, claim.ProphecyID, byteMessage, claim.Signature)
+	tx, err := oracleInstance.NewOracleClaim(transactOptsAuth, claim.ProphecyID, claim.Message, claim.Signature)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -212,7 +192,7 @@ func RelayOracleClaimToEthereum(provider string, contractAddress common.Address,
 	return nil
 }
 
-// TODO: Refactor getRelayConfig so it's used by relay functions
+// TODO: Refactor relay functions to use getRelayConfig()
 func getRelayConfig(provider string, registry common.Address, event events.Event) (client *ethclient.Client, auth *bind.TransactOpts, target common.Address) {
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)

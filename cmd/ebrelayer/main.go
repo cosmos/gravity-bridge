@@ -6,7 +6,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -50,6 +49,8 @@ func init() {
 		return initConfig(rootCmd)
 	}
 
+	initCmd.PersistentFlags().String("make-claims", "", "Make oracle claims everytime a prophecy claim is witnessed")
+
 	// Construct Initialization Commands
 	initCmd.AddCommand(
 		ethereumRelayerCmd(),
@@ -89,12 +90,12 @@ var initCmd = &cobra.Command{
 //		EthBridge module.
 //
 func ethereumRelayerCmd() *cobra.Command {
-	ethereumRelayerCmd := &cobra.Command{ // TODO: Refactor [support] into a flag
-		Use:   "ethereum [web3Provider] [contractAddress] [validatorFromName] [support] --chain-id [chain-id]",
+	ethereumRelayerCmd := &cobra.Command{
+		Use:   "ethereum [web3Provider] [contractAddress] [validatorFromName] --make-claims [make-claims] --chain-id [chain-id]",
 		Short: "Initializes a web socket which streams live events from a smart contract and relays them to the Cosmos network",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(3),
 		// NOTE: Preface both parentheses in the event signature with a '\'
-		Example: "ebrelayer init ethereum wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 validator false --chain-id=testing",
+		Example: "ebrelayer init ethereum wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 validator --make-claims=false --chain-id=testing",
 		RunE:    RunEthereumRelayerCmd,
 	}
 
@@ -125,6 +126,16 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Must specify a 'chain-id'")
 	}
 
+	// Parse make claims boolean
+	var makeClaims bool
+
+	makeClaimsString := viper.GetString("make-claims")
+	if strings.TrimSpace(makeClaimsString) == "true" {
+		makeClaims = true
+	} else {
+		makeClaims = false
+	}
+
 	// Parse ethereum provider
 	ethereumProvider := args[0]
 	if !relayer.IsWebsocketURL(ethereumProvider) {
@@ -137,13 +148,8 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 	contractAddress := common.HexToAddress(args[1])
 
-	supportCosmos, err := strconv.ParseBool(args[2])
-	if err != nil {
-		return err
-	}
-
 	// Parse the validator's moniker
-	validatorFrom := args[3]
+	validatorFrom := args[2]
 
 	// Get the validator's name and account address using their moniker
 	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom, false)
@@ -171,7 +177,7 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 		chainID,
 		ethereumProvider,
 		contractAddress,
-		supportCosmos,
+		makeClaims,
 		validatorName,
 		passphrase,
 		validatorAddress)

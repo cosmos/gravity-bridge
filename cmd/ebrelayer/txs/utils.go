@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
-	"math/big"
 	"os"
 	"strconv"
 	"strings"
@@ -19,45 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-
-	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 )
-
-// OracleClaim :
-type OracleClaim struct {
-	ProphecyID *big.Int
-	Message    string
-	Signature  []byte
-}
-
-// ProphecyClaim :
-type ProphecyClaim struct {
-	ClaimType            events.Event
-	CosmosSender         []byte
-	EthereumReceiver     common.Address
-	TokenContractAddress common.Address
-	Symbol               string
-	Amount               *big.Int
-}
-
-// LoadSender : uses the validator's private key to load the validator's address
-func LoadSender() (address common.Address, err error) {
-	key, err := LoadPrivateKey()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Parse public key
-	publicKey := key.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
-	}
-
-	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-
-	return fromAddress, nil
-}
 
 // LoadPrivateKey : loads the validator's private key from environment variables
 func LoadPrivateKey() (key *ecdsa.PrivateKey, err error) {
@@ -91,24 +52,21 @@ func GenerateClaimHash(prophecyID []byte, sender []byte, recipient []byte, token
 	return rawHash.Hex()
 }
 
-// SignClaim :
+// SignClaim : Signs hashed message with validator's private key
 func SignClaim(hash string) []byte {
 	key, err := LoadPrivateKey()
 	if err != nil {
 		log.Fatal(err)
 	}
+	signer := hex.EncodeToString(crypto.PubkeyToAddress(key.PublicKey).Bytes())
+	fmt.Printf("\nAttempting to sign message \"%v\" with account \"%v\"...\n", hash, signer)
 
-	sig, _ := prefixMessage(hash, key)
+	rawSignature, _ := prefixMessage(hash, key)
 
-	signer := "0x" + hex.EncodeToString(crypto.PubkeyToAddress(key.PublicKey).Bytes())
-	signature := "0x" + hex.EncodeToString(sig)
+	signature := hexutil.Bytes(rawSignature)
+	fmt.Println("Success! Signature:", signature)
 
-	fmt.Println("message:", hash)
-	fmt.Println("signer:", signer)
-	fmt.Println("signature:", signature)
-	fmt.Println("byteSignature:", []byte(signature))
-
-	return []byte(signature)
+	return signature
 }
 
 func prefixMessage(message string, key *ecdsa.PrivateKey) ([]byte, []byte) {
@@ -125,41 +83,27 @@ func prefixMessage(message string, key *ecdsa.PrivateKey) ([]byte, []byte) {
 	return sig, prefixed
 }
 
-// // SignHash : signs a specified hash using the validator's private key
-// func SignHash(hash []byte) ([32]byte, uint8, [32]byte, [32]byte) {
-// 	// Load the validator's private key
-// 	privateKey, err := LoadPrivateKey()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
+// LoadSender : uses the validator's private key to load the validator's address
+func LoadSender() (address common.Address, err error) {
+	key, err := LoadPrivateKey()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// 	fmt.Println("Signing hash:", hash)
+	// Parse public key
+	publicKey := key.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+	}
 
-// 	// Sign the hash using the validator's private key
-// 	rawSignature, err := crypto.Sign(hash, privateKey)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
-// 	fmt.Println("\nRecovering signature components...")
-// 	r, s, v := SigRSV(rawSignature)
+	return fromAddress, nil
+}
 
-// 	fmt.Println("v:", v)
-// 	fmt.Println("r:", hexutil.Encode(r[:])[2:])
-// 	fmt.Println("s:", hexutil.Encode(s[:])[2:])
-
-// 	var byteHash [32]byte
-// 	copy(byteHash[:], hash)
-// 	// byteHash := [32]byte{hash}
-
-// 	fmt.Println("Verifying raw signature...")
-// 	verifySig(byteHash, rawSignature)
-
-// 	// return rawSignature
-// 	return byteHash, v, r, s
-// }
-
-func verifySig(hash common.Hash, signature []byte) {
+// verifySignature: utility function for signature verification
+func verifySignature(hash common.Hash, signature []byte) {
 	privateKey, err := LoadPrivateKey()
 	if err != nil {
 		log.Fatal(err)
@@ -185,7 +129,7 @@ func verifySig(hash common.Hash, signature []byte) {
 	fmt.Println(matches) // true
 }
 
-// SigRSV signatures R S V returned as arrays
+// SigRSV : utility function which breaks a signature down into [R, S, V] components
 func SigRSV(isig interface{}) ([32]byte, [32]byte, uint8) {
 	var sig []byte
 	switch v := isig.(type) {

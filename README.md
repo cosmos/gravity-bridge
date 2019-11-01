@@ -124,6 +124,8 @@ cd testnet-contracts/
 cp .env.example .env
 ```
 
+### Set environment variables in testnet-contracts/.env
+
 For running the Ethereum relayer locally, you'll only need the `LOCAL_PROVIDER` environment variables. Environment variables `MNEMONIC` and `INFURA_PROJECT_ID` are required for using the Ropsten testnet.
 
 Further reading:
@@ -179,9 +181,8 @@ ebrelayer status
 # Start ebrelayer on the contract's deployed address with [LOCAL_WEB_SOCKET] and [REGISTRY_DEPLOYED_ADDRESS]
 # Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:7545/
 # Example [REGISTRY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
-# Example [SUPPORT]: false
 
-ebrelayer init ethereum [LOCAL_WEB_SOCKET] [REGISTRY_DEPLOYED_ADDRESS] [SUPPORT] validator --chain-id=peggy
+ebrelayer init ethereum [LOCAL_WEB_SOCKET] [REGISTRY_DEPLOYED_ADDRESS] validator --chain-id=peggy
 
 # Enter password and press enter
 # You should see a message like: Started ethereum websocket with provider: [LOCAL_WEB_SOCKET] \ Subscribed to contract events on address: [PEGGY_DEPLOYED_ADDRESS]
@@ -312,6 +313,10 @@ yarn develop
 
 ```
 
+### Set environment variables in .env
+
+You'll need your Ethereum private key as an environment variable in order to sign Oracle Claims. If running the bridge locally, use one of the validator's private keys listed in Terminal 1. Default validators are: accounts[1], accounts[2], and accounts[3]. For testnet use, enter the private key to your Ethereum account.
+
 ### Terminal 2: Deploy Bridge contracts
 
 ```bash
@@ -351,7 +356,20 @@ ebrelayer init cosmos [tendermintNode] [web3Provider] [bridgeRegistryContractAdd
 # You should see a message like:
 # [2019-10-24|19:02:21.888] Starting WSEvents         impl=WSEvents
 
-# The relayer will now watch the Cosmos network and create a claim whenever it detects a burn or lock event.
+# The relayer will now watch the Cosmos network and create a prophecy claim whenever it detects a burn or lock event.
+```
+
+### Terminal 5: Start the Oracle Claim Relayer
+
+To make an Oracle Claim on every Prophecy Claim witnessed, start an Ethereum relayer with flag `--make-claims=true`
+
+```bash
+# Start ebrelayer on the contract's deployed address with [LOCAL_WEB_SOCKET] and [REGISTRY_DEPLOYED_ADDRESS]
+ebrelayer init ethereum [LOCAL_WEB_SOCKET] [REGISTRY_DEPLOYED_ADDRESS] validator --make-claims=true --chain-id=peggy
+
+# Enter password and press enter
+
+# The relayer will now watch the contract on Ropsten and create a new oracle claim whenever it detects a new prophecy claim event.
 ```
 
 ### Using Terminal 2: Send burn transaction on Cosmos
@@ -361,7 +379,7 @@ ebrelayer init cosmos [tendermintNode] [web3Provider] [bridgeRegistryContractAdd
 # Send some tokens to the testuser using the process described in section "Running and testing the application"
 
 # Send burn transaction
-ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 1stake --from testuser --chain-id peggy
+ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 1eth --from testuser --chain-id peggy
 
 # Enter 'y' to confirm the transaction
 # Enter testuser's password
@@ -371,7 +389,7 @@ ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf
 
 ```
 
-`ebcli tx ethbridge burn` expected output in ebrelayer console:
+`ebcli tx ethbridge burn` expected output in cosmos Relayer console:
 
 ```bash
 [2019-10-24|19:07:01.714]       New transaction witnessed
@@ -388,6 +406,49 @@ Sending tx to CosmosBridge...
 
 NewProphecyClaim tx hash: 0x5544bdb31b90da102c0b7fd959b3106b823805871ddcbe972a7877ad15164631
 Status: 1 - Successful
+```
+
+Expected output in Oracle Claim Relayer console
+
+```bash
+
+New "LogNewProphecyClaim":
+Tx hash: 0xb14695d7ca229c713c89ab2e78c41549cfac11daed6d09ab4b9755b12b46f17c
+Block number: 18
+Prophecy ID: 2
+Claim Type: 0
+Sender: cosmos1qwnw2r9ak79536c4dqtrtk2pl2nlzpqh763rls
+Recipient 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359
+Symbol eth
+Token 0xbEDdB076fa4dF04859098A9873591dcE3E9C404d
+Amount: 1
+Validator: 0xc230f38FF05860753840e0d7cbC66128ad308B67
+
+
+Attempting to sign message "0xb8b701ef59944e115d6ecfd4aa1bd03025d85338d771b0099d4061923bd0a1ed" with account "c230f38ff05860753840e0d7cbc66128ad308b67"...
+Success! Signature: 0x919ca03752269c87c5df9f4af99ba49be84cb2bbc77921db581719379e95c548164b55822e89294b8066f77812695d9575b4827c04592d4daa41dd087ba1ba7f01
+```
+
+Now, you'll be able to check the status of the ProphecyClaim.
+
+```bash
+# Check ProphecyClaim status
+yarn peggy:check [PROPHECY_CLAIM_ID]
+```
+
+Expected output:
+
+```bash
+
+Fetching Oracle contract...
+Attempting to send checkBridgeProphecy() tx...
+
+        Prophecy 2 status:
+----------------------------------------
+Weighted total power:    104
+Weighted signed power:   150
+Reached threshold:       true
+----------------------------------------
 ```
 
 ## Using the modules in other projects

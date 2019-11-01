@@ -15,6 +15,9 @@
     "peggy:address": "yarn workspace testnet-contracts peggy:address",
     "peggy:setup": "yarn workspace testnet-contracts peggy:setup",
     "peggy:lock": "yarn workspace testnet-contracts peggy:lock",
+    "peggy:check": "yarn workspace testnet-contracts peggy:check",
+    "peggy:process": "yarn workspace testnet-contracts peggy:process",
+    "peggy:addBridgeToken": "yarn workspace testnet-contracts peggy:addBridgeToken",
     "token:address": "yarn workspace testnet-contracts token:address",
     "token:mint": "yarn workspace testnet-contracts token:mint",
     "token:approve": "yarn workspace testnet-contracts token:approve"
