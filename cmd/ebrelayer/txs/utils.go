@@ -3,6 +3,7 @@ package txs
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"math/big"
@@ -11,10 +12,13 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	solsha3 "github.com/miguelmota/go-solidity-sha3"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 )
@@ -22,10 +26,8 @@ import (
 // OracleClaim :
 type OracleClaim struct {
 	ProphecyID *big.Int
-	Message    [32]byte
-	V          uint8
-	R          [32]byte
-	S          [32]byte
+	Message    string
+	Signature  []byte
 }
 
 // ProphecyClaim :
@@ -81,44 +83,81 @@ func LoadPrivateKey() (key *ecdsa.PrivateKey, err error) {
 }
 
 // GenerateClaimHash : Generates an OracleClaim hash from a ProphecyClaim's event data
-func GenerateClaimHash(prophecyID []byte, sender []byte, recipient []byte, token []byte, amount []byte, validator []byte) common.Hash {
-	hash := crypto.Keccak256Hash(prophecyID, sender, recipient, token, amount, validator)
-	return hash
+func GenerateClaimHash(prophecyID []byte, sender []byte, recipient []byte, token []byte, amount []byte, validator []byte) string {
+	// Generate a hash containing the information
+	rawHash := crypto.Keccak256Hash(prophecyID, sender, recipient, token, amount, validator)
+
+	// Cast hash to hex encoded string
+	return rawHash.Hex()
 }
 
-// SignHash : signs a specified hash using the validator's private key
-func SignHash(hash []byte) ([32]byte, uint8, [32]byte, [32]byte) {
-	// Load the validator's private key
-	privateKey, err := LoadPrivateKey()
+// SignClaim :
+func SignClaim(hash string) []byte {
+	key, err := LoadPrivateKey()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Signing hash:", hash)
+	sig, _ := prefixMessage(hash, key)
 
-	// Sign the hash using the validator's private key
-	rawSignature, err := crypto.Sign(hash, privateKey)
+	signer := "0x" + hex.EncodeToString(crypto.PubkeyToAddress(key.PublicKey).Bytes())
+	signature := "0x" + hex.EncodeToString(sig)
+
+	fmt.Println("message:", hash)
+	fmt.Println("signer:", signer)
+	fmt.Println("signature:", signature)
+	fmt.Println("byteSignature:", []byte(signature))
+
+	return []byte(signature)
+}
+
+func prefixMessage(message string, key *ecdsa.PrivateKey) ([]byte, []byte) {
+	// Turn the message into a 32-byte hash
+	hash := solsha3.SoliditySHA3(solsha3.String(message))
+	// Prefix and then hash to mimic behavior of eth_sign
+	prefixed := solsha3.SoliditySHA3(solsha3.String("\x19Ethereum Signed Message:\n32"), solsha3.Bytes32(hash))
+	sig, err := secp256k1.Sign(prefixed, math.PaddedBigBytes(key.D, 32))
+
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	fmt.Println("\nRecovering signature components...")
-	r, s, v := SigRSV(rawSignature)
-
-	fmt.Println("v:", v)
-	fmt.Println("r:", hexutil.Encode(r[:])[2:])
-	fmt.Println("s:", hexutil.Encode(s[:])[2:])
-
-	var byteHash [32]byte
-	copy(byteHash[:], hash)
-	// byteHash := [32]byte{hash}
-
-	fmt.Println("Verifying raw signature...")
-	verifySig(byteHash, rawSignature)
-
-	// return rawSignature
-	return byteHash, v, r, s
+	return sig, prefixed
 }
+
+// // SignHash : signs a specified hash using the validator's private key
+// func SignHash(hash []byte) ([32]byte, uint8, [32]byte, [32]byte) {
+// 	// Load the validator's private key
+// 	privateKey, err := LoadPrivateKey()
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	fmt.Println("Signing hash:", hash)
+
+// 	// Sign the hash using the validator's private key
+// 	rawSignature, err := crypto.Sign(hash, privateKey)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	fmt.Println("\nRecovering signature components...")
+// 	r, s, v := SigRSV(rawSignature)
+
+// 	fmt.Println("v:", v)
+// 	fmt.Println("r:", hexutil.Encode(r[:])[2:])
+// 	fmt.Println("s:", hexutil.Encode(s[:])[2:])
+
+// 	var byteHash [32]byte
+// 	copy(byteHash[:], hash)
+// 	// byteHash := [32]byte{hash}
+
+// 	fmt.Println("Verifying raw signature...")
+// 	verifySig(byteHash, rawSignature)
+
+// 	// return rawSignature
+// 	return byteHash, v, r, s
+// }
 
 func verifySig(hash common.Hash, signature []byte) {
 	privateKey, err := LoadPrivateKey()
@@ -168,84 +207,4 @@ func SigRSV(isig interface{}) ([32]byte, [32]byte, uint8) {
 	V := uint8(vI + 27)
 
 	return R, S, V
-}
-
-func SignFull(data []byte) {
-
-	privateKey, err := LoadPrivateKey()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// SignFull :
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		log.Fatal("error casting public key to ECDSA")
-	}
-
-	publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
-
-	hash := crypto.Keccak256Hash(data)
-	fmt.Println(hash.Hex()) // 0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8
-
-	signature, err := crypto.Sign(hash.Bytes(), privateKey)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(hexutil.Encode(signature)) // 0x789a80053e4927d0a898db8e065e948f5cf086e32f9ccaa54c1908e22ac430c62621578113ddbb62d509bf6049b8fb544ab06d36f916685a2eb8e57ffadde02301
-
-	sigPublicKey, err := crypto.Ecrecover(hash.Bytes(), signature)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	matches := bytes.Equal(sigPublicKey, publicKeyBytes)
-	fmt.Println(matches) // true
-
-	sigPublicKeyECDSA, err := crypto.SigToPub(hash.Bytes(), signature)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	sigPublicKeyBytes := crypto.FromECDSAPub(sigPublicKeyECDSA)
-	matches = bytes.Equal(sigPublicKeyBytes, publicKeyBytes)
-	fmt.Println(matches) // true
-
-	signatureNoRecoverID := signature[:len(signature)-1] // remove recovery id
-	verified := crypto.VerifySignature(publicKeyBytes, hash.Bytes(), signatureNoRecoverID)
-	fmt.Println(verified) // true
-}
-
-// Sign :
-func Sign(message string) ([32]byte, [32]byte, [32]byte, uint8) {
-	// Load the validator's private key
-	privateKey, err := LoadPrivateKey()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	hashRaw := crypto.Keccak256([]byte(message))
-	signature, err := crypto.Sign(hashRaw, privateKey)
-
-	var hash [32]byte
-	copy(hash[:], hashRaw)
-
-	var r [32]byte
-	copy(r[:], signature[:32])
-
-	var s [32]byte
-	copy(s[:], signature[32:64])
-
-	// v := uint8(int(signature[65])) + 27
-	var v uint8
-	rawV := int(signature[64])
-	if rawV < 27 {
-		v = uint8(rawV + 27)
-	} else {
-		v = uint8(rawV)
-	}
-
-	return hash, r, s, v
 }

@@ -180,17 +180,16 @@ func RelayOracleClaimToEthereum(provider string, contractAddress common.Address,
 	fmt.Println("Message:", claim.Message)
 	fmt.Println("Message:", reflect.TypeOf(claim.Message))
 
-	fmt.Println("V:", claim.V)
-	fmt.Println("V:", reflect.TypeOf(claim.V))
+	var byteMessage [32]byte
+	copy(byteMessage[:], claim.Message)
+	fmt.Println("byteMessage:", byteMessage)
+	fmt.Println("byteMessage:", reflect.TypeOf(byteMessage))
 
-	fmt.Println("R:", claim.R)
-	fmt.Println("R:", reflect.TypeOf(claim.R))
-
-	fmt.Println("S:", string(claim.S[:]))
-	fmt.Println("S:", reflect.TypeOf(claim.S))
+	fmt.Println("Signature:", claim.Signature)
+	fmt.Println("Signature:", reflect.TypeOf(claim.Signature))
 
 	fmt.Println("Sending new OracleClaim to Oracle...")
-	tx, err := oracleInstance.NewOracleClaim(transactOptsAuth, claim.ProphecyID, claim.Message, claim.V, claim.R, claim.S)
+	tx, err := oracleInstance.NewOracleClaim(transactOptsAuth, claim.ProphecyID, byteMessage, claim.Signature)
 	if err != nil {
 		log.Fatal(err)
 	}

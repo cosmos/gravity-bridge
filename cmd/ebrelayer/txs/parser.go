@@ -62,22 +62,28 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *events.LockEvent) (e
 // ProphecyClaimToSignedOracleClaim : packages and signs a prophecy claim's data, returning a new oracle claim
 func ProphecyClaimToSignedOracleClaim(event events.NewProphecyClaimEvent) OracleClaim {
 	// Parse relevant data into type byte[]
+	prophecyID := []byte(string(2))
 	// prophecyID := event.ProphecyID.Bytes()
+	sender := []byte("0x3f5dab653144958ff6d309647baf1abde8da204d")
 	// sender := event.CosmosSender
+	recipient := []byte("0xbeddb076fa4df04859098a9873591dce3e9c404d")
 	// recipient := []byte(event.EthereumReceiver.Hex())
+	token := []byte("0x682c2ae4053eac64cf1baaa04c739703dc043f0a")
 	// token := []byte(event.TokenAddress.Hex())
+	amount := []byte(string(4))
 	// amount := event.Amount.Bytes()
+	validator := []byte("0x35e0668bd5f3149fb748c258ee48b41cc959e89b")
 	// validator := []byte(event.ValidatorAddress.Hex())
 
-	// Generate hash using ProphecyClaim data
-	// claimHash := GenerateClaimHash(prophecyID, sender, recipient, token, amount, validator)
+	// Generate rawHash using ProphecyClaim data
+	hash := GenerateClaimHash(prophecyID, sender, recipient, token, amount, validator)
 
 	// Sign the hash using the active validator's private key
 	// hash, v, r, s := SignHash(claimHash)
-	hash, r, s, v := Sign("hello")
+	signature := SignClaim(hash)
 
-	data := []byte("hello")
-	SignFull(data)
+	// data := []byte("hello")
+	// SignFull(data)
 
 	// Convert claimHash to [32]byte for packaging in OracleClaim
 	// var byteHash [32]byte
@@ -87,10 +93,7 @@ func ProphecyClaimToSignedOracleClaim(event events.NewProphecyClaimEvent) Oracle
 	oracleClaim := OracleClaim{
 		ProphecyID: event.ProphecyID,
 		Message:    hash,
-		V:          v,
-		R:          r,
-		S:          s,
-		// Signature:  signature,
+		Signature:  signature,
 	}
 
 	return oracleClaim

@@ -26,10 +26,7 @@ contract Oracle {
         uint256 _prophecyID,
         address _validatorAddress,
         bytes32 _message,
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s
-        // bytes _signature
+        bytes _signature
     );
 
     event LogProphecyProcessed(
@@ -101,10 +98,7 @@ contract Oracle {
     function newOracleClaim(
         uint256 _prophecyID,
         bytes32 _message,
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s
-        // bytes memory _signature
+        bytes memory _signature
     )
         public
         onlyValidator
@@ -112,21 +106,11 @@ contract Oracle {
     {
         address validatorAddress = msg.sender;
 
-        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-        bytes32 prefixedHash = keccak256(
-            abi.encode(
-                prefix,
-                _message
-            )
-        );
-
         // Validate the msg.sender's signature
         require(
-            validatorAddress == ecrecover(
-                prefixedHash,
-                _v,
-                _r,
-                _s
+            validatorAddress == valset.recover(
+                _message,
+                _signature
             ),
             "Invalid message signature."
         );
@@ -144,9 +128,7 @@ contract Oracle {
             _prophecyID,
             validatorAddress,
             _message,
-            _v,
-            _r,
-            _s
+            _signature
         );
     }
 
