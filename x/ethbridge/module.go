@@ -15,7 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/supply"
 )
 
 var (
@@ -75,19 +75,20 @@ type AppModule struct {
 	AppModuleSimulation
 
 	OracleKeeper oracle.Keeper
-	BankKeeper   bank.Keeper
+	SupplyKeeper supply.Keeper
 	Codespace    sdk.CodespaceType
 	Codec        *codec.Codec
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(oracleKeeper oracle.Keeper, bankKeeper bank.Keeper, codespace sdk.CodespaceType, cdc *codec.Codec) AppModule {
+func NewAppModule(oracleKeeper oracle.Keeper, supplyKeeper supply.Keeper, codespace sdk.CodespaceType, cdc *codec.Codec) AppModule {
+
 	return AppModule{
 		AppModuleBasic:      AppModuleBasic{},
 		AppModuleSimulation: AppModuleSimulation{},
 
 		OracleKeeper: oracleKeeper,
-		BankKeeper:   bankKeeper,
+		SupplyKeeper: supplyKeeper,
 		Codespace:    codespace,
 		Codec:        cdc,
 	}
@@ -109,7 +110,7 @@ func (AppModule) Route() string {
 
 // NewHandler returns an sdk.Handler for the ethbridge module.
 func (am AppModule) NewHandler() sdk.Handler {
-	return NewHandler(am.OracleKeeper, am.BankKeeper, am.Codespace, am.Codec)
+	return NewHandler(am.OracleKeeper, am.SupplyKeeper, am.Codespace, am.Codec)
 }
 
 // QuerierRoute returns the ethbridge module's querier route name.
@@ -124,7 +125,9 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 
 // InitGenesis performs genesis initialization for the ethbridge module. It returns
 // no validator updates.
-func (am AppModule) InitGenesis(_ sdk.Context, _ json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, _ json.RawMessage) []abci.ValidatorUpdate {
+	bridgeAccount := supply.NewEmptyModuleAccount(ModuleName, supply.Burner, supply.Minter)
+	am.SupplyKeeper.SetModuleAccount(ctx, bridgeAccount)
 	return nil
 }
 

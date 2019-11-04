@@ -39,6 +39,10 @@ var (
 	MapOracleClaimsToEthBridgeClaims  = types.MapOracleClaimsToEthBridgeClaims
 	NewQueryEthProphecyParams         = types.NewQueryEthProphecyParams
 	NewQueryEthProphecyResponse       = types.NewQueryEthProphecyResponse
+
+	CreateTestEthMsg                   = types.CreateTestEthMsg
+	CreateTestEthClaim                 = types.CreateTestEthClaim
+	CreateTestQueryEthProphecyResponse = types.CreateTestQueryEthProphecyResponse
 )
 
 type (
