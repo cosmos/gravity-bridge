@@ -20,29 +20,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
-// LoadPrivateKey : loads the validator's private key from environment variables
-func LoadPrivateKey() (key *ecdsa.PrivateKey, err error) {
-	// Load config file containing environment variables
-	err = godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
-	// Private key for validator's Ethereum address must be set as an environment variable
-	rawPrivateKey := os.Getenv("ETHEREUM_PRIVATE_KEY")
-	if strings.TrimSpace(rawPrivateKey) == "" {
-		log.Fatal("Error loading ETHEREUM_PRIVATE_KEY from .env file")
-	}
-
-	// Parse private key
-	privateKey, err := crypto.HexToECDSA(rawPrivateKey)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return privateKey, nil
-}
-
 // GenerateClaimHash : Generates an OracleClaim hash from a ProphecyClaim's event data
 func GenerateClaimHash(prophecyID []byte, sender []byte, recipient []byte, token []byte, amount []byte, validator []byte) string {
 	// Generate a hash containing the information
@@ -83,25 +60,6 @@ func prefixMessage(message string, key *ecdsa.PrivateKey) ([]byte, []byte) {
 	return sig, prefixed
 }
 
-// LoadSender : uses the validator's private key to load the validator's address
-func LoadSender() (address common.Address, err error) {
-	key, err := LoadPrivateKey()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Parse public key
-	publicKey := key.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
-	}
-
-	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-
-	return fromAddress, nil
-}
-
 // verifySignature: utility function for signature verification
 func verifySignature(hash common.Hash, signature []byte) {
 	privateKey, err := LoadPrivateKey()
@@ -127,6 +85,48 @@ func verifySignature(hash common.Hash, signature []byte) {
 	// compare
 	matches := bytes.Equal(sigPublicKeyBytes, publicKeyBytes)
 	fmt.Println(matches) // true
+}
+
+// LoadPrivateKey : loads the validator's private key from environment variables
+func LoadPrivateKey() (key *ecdsa.PrivateKey, err error) {
+	// Load config file containing environment variables
+	err = godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	// Private key for validator's Ethereum address must be set as an environment variable
+	rawPrivateKey := os.Getenv("ETHEREUM_PRIVATE_KEY")
+	if strings.TrimSpace(rawPrivateKey) == "" {
+		log.Fatal("Error loading ETHEREUM_PRIVATE_KEY from .env file")
+	}
+
+	// Parse private key
+	privateKey, err := crypto.HexToECDSA(rawPrivateKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return privateKey, nil
+}
+
+// LoadSender : uses the validator's private key to load the validator's address
+func LoadSender() (address common.Address, err error) {
+	key, err := LoadPrivateKey()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Parse public key
+	publicKey := key.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+	}
+
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+
+	return fromAddress, nil
 }
 
 // SigRSV : utility function which breaks a signature down into [R, S, V] components

@@ -429,7 +429,7 @@ Attempting to sign message "0xb8b701ef59944e115d6ecfd4aa1bd03025d85338d771b0099d
 Success! Signature: 0x919ca03752269c87c5df9f4af99ba49be84cb2bbc77921db581719379e95c548164b55822e89294b8066f77812695d9575b4827c04592d4daa41dd087ba1ba7f01
 ```
 
-Now, you'll be able to check the status of the ProphecyClaim.
+Now, you'll be able to check the status of the ProphecyClaim
 
 ```bash
 # Check ProphecyClaim status
