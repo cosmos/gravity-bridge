@@ -78,12 +78,12 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			ethereumChainID, err := strconv.Atoi(viper.GetString("ethereum-chain-id"))
+			ethereumChainID, err := strconv.Atoi(viper.GetString(types.FlagEthereumChainID))
 			if err != nil {
 				return err
 			}
 
-			tokenContractString := viper.GetString("token-contract-address")
+			tokenContractString := viper.GetString(types.FlagTokenContractAddr)
 			if strings.TrimSpace(tokenContractString) == "" {
 				return fmt.Errorf("Error: flag --token-contract-address invalid value")
 			}
@@ -120,12 +120,12 @@ func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			ethereumChainID, err := strconv.Atoi(viper.GetString("ethereum-chain-id"))
+			ethereumChainID, err := strconv.Atoi(viper.GetString(types.FlagEthereumChainID))
 			if err != nil {
 				return err
 			}
 
-			tokenContractString := viper.GetString("token-contract-address")
+			tokenContractString := viper.GetString(types.FlagTokenContractAddr)
 			if strings.TrimSpace(tokenContractString) == "" {
 				return fmt.Errorf("Error: flag --token-contract-address invalid value")
 			}
