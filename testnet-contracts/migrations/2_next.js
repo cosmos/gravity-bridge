@@ -18,53 +18,52 @@ module.exports = function(deployer, network, accounts) {
   let initialValidators = [];
   let initialPowers = [];
 
-  // Development network deployment param parsing/setting
+  // Input validation for local usage (develop, ganache)
   if (network === "develop" || network === "ganache") {
-    // Operator
-    operator = accounts[0];
     // Initial validators
     const localValidatorCount = Number(process.env.LOCAL_VALIDATOR_COUNT);
     if (localValidatorCount <= 0 || localValidatorCount > 9) {
       return console.error(
         "Must provide an initial validator count between 1-8 for local deployment."
       );
-    } else {
-      initialValidators = accounts.slice(1, localValidatorCount + 1);
     }
     // Initial validator power
     if (process.env.LOCAL_INITIAL_VALIDATOR_POWERS.length === 0) {
       return console.error(
         "Must provide initial local validator powers as environment variable."
       );
-    } else {
-      initialPowers = process.env.LOCAL_INITIAL_VALIDATOR_POWERS.split(",");
     }
-    // Testnet/mainnet network deployment param parsing/setting
+
+    // Assign validated local input params
+    operator = accounts[0];
+    initialValidators = accounts.slice(1, localValidatorCount + 1);
+    initialPowers = process.env.LOCAL_INITIAL_VALIDATOR_POWERS.split(",");
+
+    // Input validation for testnet/mainnet (ropsten, rinkeby, etc.)
   } else {
     // Operator
     if (process.env.OPERATOR.length === 0) {
       return console.error(
         "Must provide operator address as environment variable."
       );
-    } else {
-      operator = process.env.OPERATOR;
     }
     // Initial validators
     if (process.env.INITIAL_VALIDATOR_ADDRESSES.length === 0) {
       return console.error(
         "Must provide initial validator addresses as environment variable."
       );
-    } else {
-      initialValidators = process.env.INITIAL_VALIDATOR_ADDRESSES.split(",");
     }
     // Initial validator powers
     if (process.env.INITIAL_VALIDATOR_POWERS.length === 0) {
       return console.error(
         "Must provide initial validator powers as environment variable."
       );
-    } else {
-      initialPowers = process.env.INITIAL_VALIDATOR_POWERS.split(",");
     }
+
+    // Assign validated testnet/mainnet input params
+    operator = process.env.OPERATOR;
+    initialValidators = process.env.INITIAL_VALIDATOR_ADDRESSES.split(",");
+    initialPowers = process.env.INITIAL_VALIDATOR_POWERS.split(",");
   }
 
   // Check that each initial validator has a power
