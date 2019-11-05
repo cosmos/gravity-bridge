@@ -9,7 +9,7 @@ module.exports = async () => {
   const truffleContract = require("truffle-contract");
 
   const tokenContract = truffleContract(
-    require("../build/contracts/TestToken.json")
+    require("../build/contracts/BridgeToken.json")
   );
 
   /*******************************************
@@ -56,7 +56,7 @@ module.exports = async () => {
 
   // Send mint transaction
   const { logs } = await tokenContract.deployed().then(function(instance) {
-    return instance.mint(accounts[1], TOKEN_AMOUNT, {
+    return instance.mint(accounts[0], TOKEN_AMOUNT, {
       from: accounts[0],
       value: 0,
       gas: 300000 // 300,000 Gwei

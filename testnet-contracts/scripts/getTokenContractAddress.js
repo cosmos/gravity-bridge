@@ -9,7 +9,7 @@ module.exports = async () => {
   // Contract abstraction
   const truffleContract = require("truffle-contract");
   const contract = truffleContract(
-    require("../build/contracts/TestToken.json")
+    require("../build/contracts/BridgeToken.json")
   );
 
   /*******************************************

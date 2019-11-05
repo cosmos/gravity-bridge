@@ -8,7 +8,9 @@ module.exports = async () => {
 
   // Contract abstraction
   const truffleContract = require("truffle-contract");
-  const contract = truffleContract(require("../build/contracts/Peggy.json"));
+  const contract = truffleContract(
+    require("../build/contracts/BridgeBank.json")
+  );
 
   /*******************************************
    *** Constants
@@ -24,7 +26,7 @@ module.exports = async () => {
   if (NETWORK_ROPSTEN) {
     provider = new HDWalletProvider(
       process.env.MNEMONIC,
-      "https://ropsten.infura.io/".concat(process.env.INFURA_PROJECT_ID)
+      "https://ropsten.infura.io/v3/".concat(process.env.INFURA_PROJECT_ID)
     );
   } else {
     provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
@@ -40,5 +42,5 @@ module.exports = async () => {
     return instance.address;
   });
 
-  return console.log("Deployed contract address: ", address);
+  return console.log("BridgeBank deployed contract address: ", address);
 };

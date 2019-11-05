@@ -8,7 +8,9 @@ module.exports = async () => {
 
   // Contract abstraction
   const truffleContract = require("truffle-contract");
-  const contract = truffleContract(require("../build/contracts/Peggy.json"));
+  const contract = truffleContract(
+    require("../build/contracts/BridgeRegistry.json")
+  );
 
   /*******************************************
    *** Constants
@@ -40,5 +42,5 @@ module.exports = async () => {
     return instance.address;
   });
 
-  return console.log("Bridge contract address: ", address);
+  return console.log("BridgeRegistry deployed contract address: ", address);
 };

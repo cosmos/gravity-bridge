@@ -6,7 +6,6 @@ package events
 // -----------------------------------------------------
 
 import (
-	"encoding/hex"
 	"fmt"
 	"log"
 	"math/big"
@@ -19,7 +18,6 @@ import (
 type LockEvent struct {
 	EthereumChainID       *big.Int
 	BridgeContractAddress common.Address
-	Id                    [32]byte
 	From                  common.Address
 	To                    []byte
 	Token                 common.Address
@@ -59,8 +57,7 @@ func NewLockEvent(contractAbi abi.ABI, clientChainID *big.Int, contractAddress s
 func PrintEvent(event LockEvent) {
 	// Convert the variables into a printable format
 	chainID := event.EthereumChainID
-	bridgeContractAddress := event.BridgeContractAddress
-	id := hex.EncodeToString(event.Id[:])
+	bridgeContractAddress := event.BridgeContractAddress.Hex()
 	sender := event.From.Hex()
 	token := event.Token.Hex()
 	recipient := string(event.To)
@@ -69,6 +66,6 @@ func PrintEvent(event LockEvent) {
 	nonce := event.Nonce
 
 	// Print the event's information
-	fmt.Printf("\nChain ID: %v\nBridge contract address: %v\nEvent ID: %v\nToken symbol: %v\nToken contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
-		chainID, bridgeContractAddress, id, symbol, token, sender, recipient, value, nonce)
+	fmt.Printf("\nChain ID: %v\nBridge contract address: %v\nToken symbol: %v\nToken contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
+		chainID, bridgeContractAddress, symbol, token, sender, recipient, value, nonce)
 }

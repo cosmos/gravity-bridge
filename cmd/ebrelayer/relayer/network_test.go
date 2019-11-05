@@ -18,7 +18,7 @@ func TestIsWebsocketURL(t *testing.T) {
 
 // TestSetupWebsocketEthClient : test initialization of Ethereum websocket
 func TestSetupWebsocketEthClient(t *testing.T) {
-	_, err := SetupWebsocketEthClient(Client)
+	_, err := SetupWebsocketEthClient(Client, "testing")
 
 	require.NoError(t, err)
 }
