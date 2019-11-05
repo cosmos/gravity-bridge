@@ -74,7 +74,7 @@ contract("CosmosBridge", function(accounts) {
       bridgeOracle.should.be.equal(this.oracle.address);
     });
 
-    it("should not allow the operater to update the Oracle once it has been set", async function() {
+    it("should not allow the operator to update the Oracle once it has been set", async function() {
       await this.cosmosBridge.setOracle(this.oracle.address, {
         from: operator
       }).should.be.fulfilled;
@@ -97,7 +97,7 @@ contract("CosmosBridge", function(accounts) {
       bridgeBank.should.be.equal(this.bridgeBank.address);
     });
 
-    it("should not allow the operater to update the Bridge Bank once it has been set", async function() {
+    it("should not allow the operator to update the Bridge Bank once it has been set", async function() {
       await this.cosmosBridge.setBridgeBank(this.oracle.address, {
         from: operator
       }).should.be.fulfilled;

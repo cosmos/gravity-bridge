@@ -1,10 +1,5 @@
 require("dotenv").config();
 
-// Deployment Summary
-// ====================================
-// Total deployments:   6
-// Final cost:          0.17950626 ETH
-
 const Valset = artifacts.require("Valset");
 const CosmosBridge = artifacts.require("CosmosBridge");
 const Oracle = artifacts.require("Oracle");
@@ -13,7 +8,9 @@ const BridgeRegistry = artifacts.require("BridgeRegistry");
 const BridgeToken = artifacts.require("BridgeToken");
 
 module.exports = function(deployer, network, accounts) {
-  // Required initial paramater variables
+  /*******************************************
+   *** Input validation of contract params
+   ******************************************/
   let operator;
   let initialValidators = [];
   let initialPowers = [];
@@ -73,56 +70,79 @@ module.exports = function(deployer, network, accounts) {
     );
   }
 
-  // 0. Deploy BridgeToken for testing purposes
-  deployer.deploy(BridgeToken, "TEST", { gas: 4612388, from: operator });
-
-  // 1. Deploy Valset contract
-  deployer
-    .deploy(Valset, operator, initialValidators, initialPowers, {
-      gas: 6721975, // Cost: 1,529,823
+  /*******************************************************
+   *** Contract deployment summary
+   ***
+   *** Total deployments:       7 (includes Migrations.sol)
+   *** Gas price (default):                       20.0 Gwei
+   *** Final cost:                         0.25369878 Ether
+   *******************************************************/
+  deployer.then(async () => {
+    // 1. Deploy BridgeToken contract
+    //    Gas used:        1,884,394 Gwei
+    //    Total cost:    0.03768788 Ether
+    await deployer.deploy(BridgeToken, "TEST", {
+      gas: 4612388,
       from: operator
-    })
-    .then(function() {
-      // 2. Deploy CosmosBridge contract
-      return deployer
-        .deploy(CosmosBridge, operator, Valset.address, {
-          gas: 6721975, // Cost: 1,201,274
-          from: operator
-        })
-        .then(function() {
-          // 3. Deploy Oracle contract
-          return deployer
-            .deploy(Oracle, operator, Valset.address, CosmosBridge.address, {
-              gas: 6721975, // Cost: 1,455,275
-              from: operator
-            })
-            .then(function() {
-              // 4. Deploy BridgeBank contract
-              return deployer.deploy(
-                BridgeBank,
-                operator,
-                Oracle.address,
-                CosmosBridge.address,
-                {
-                  gas: 6721975, // Cost: 5,383,098
-                  from: operator
-                }
-              );
-            })
-            .then(function() {
-              // 5. Deploy BridgeRegistry contract
-              return deployer.deploy(
-                BridgeRegistry,
-                CosmosBridge.address,
-                BridgeBank.address,
-                Oracle.address,
-                Valset.address,
-                {
-                  gas: 6721975, // Cost: 363,370
-                  from: operator
-                }
-              );
-            });
-        });
     });
+
+    // 2. Deploy Valset contract:
+    //    Gas used:          909,879 Gwei
+    //    Total cost:    0.01819758 Ether
+    await deployer.deploy(Valset, operator, initialValidators, initialPowers, {
+      gas: 6721975,
+      from: operator
+    });
+
+    // 3. Deploy CosmosBridge contract:
+    //    Gas used:       2,649,300 Gwei
+    //    Total cost:     0.052986 Ether
+    await deployer.deploy(CosmosBridge, operator, Valset.address, {
+      gas: 6721975,
+      from: operator
+    });
+
+    // 4. Deploy Oracle contract:
+    //    Gas used:        1,769,740 Gwei
+    //    Total cost:     0.0353948 Ether
+    await deployer.deploy(
+      Oracle,
+      operator,
+      Valset.address,
+      CosmosBridge.address,
+      {
+        gas: 6721975,
+        from: operator
+      }
+    );
+
+    // 5. Deploy BridgeBank contract:
+    //    Gas used:        4,823,348 Gwei
+    //    Total cost:    0.09646696 Ether
+    await deployer.deploy(
+      BridgeBank,
+      operator,
+      Oracle.address,
+      CosmosBridge.address,
+      {
+        gas: 6721975,
+        from: operator
+      }
+    );
+
+    // 6. Deploy BridgeRegistry contract:
+    //    Gas used:          363,370 Gwei
+    //    Total cost:     0.0072674 Ether
+    return deployer.deploy(
+      BridgeRegistry,
+      CosmosBridge.address,
+      BridgeBank.address,
+      Oracle.address,
+      Valset.address,
+      {
+        gas: 6721975,
+        from: operator
+      }
+    );
+  });
 };
