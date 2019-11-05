@@ -46,6 +46,9 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
 ## [Unreleased]
 
-* (ethbridge) [\#67](https://github.com/cosmos/peggy/pull/67) Add events to handler
+- (ethbridge) [\#67](https://github.com/cosmos/peggy/pull/67) Add events to handler
+- (testnet-contracts) [\#82](https://github.com/cosmos/peggy/pull/82) Bridge contracts
