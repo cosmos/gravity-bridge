@@ -9,25 +9,27 @@ package txs
 // ------------------------------------------------------------
 
 import (
-	amino "github.com/tendermint/go-amino"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
-
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-
+	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/cosmos/peggy/x/ethbridge"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 )
 
 // RelayLockToCosmos : RelayLockToCosmos applies validator's signature to an EthBridgeClaim message
-//		containing information about an event on the Ethereum blockchain before sending
-//		it to the Bridge blockchain. For this relay, the chain id (chainID) and codec
-//		(cdc) of the Bridge blockchain are required.
-//
-func RelayLockToCosmos(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddress, moniker string, passphrase string, claim *types.EthBridgeClaim) error {
+//		containing information about an event on the Ethereum blockchain before relaying to the Bridge
+func RelayLockToCosmos(
+	chainID string,
+	cdc *codec.Codec,
+	validatorAddress sdk.ValAddress,
+	moniker string,
+	passphrase string,
+	claim *types.EthBridgeClaim,
+) error {
 	cliCtx := context.NewCLIContext().
 		WithCodec(cdc).
 		WithFromAddress(sdk.AccAddress(validatorAddress)).

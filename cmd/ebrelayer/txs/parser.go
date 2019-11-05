@@ -11,18 +11,21 @@ package txs
 
 import (
 	"errors"
+	"log"
+	"math/big"
+	"regexp"
 	"strings"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
+	tmCommon "github.com/tendermint/tendermint/libs/common"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	ethbridgeTypes "github.com/cosmos/peggy/x/ethbridge/types"
-	"github.com/ethereum/go-ethereum/common"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // LogLockToEthBridgeClaim : parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
 func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTypes.EthBridgeClaim, error) {
-
 	witnessClaim := ethbridgeTypes.EthBridgeClaim{}
 
 	// Nonce type casting (*big.Int -> int)
@@ -57,6 +60,49 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *events.LockEvent) (e
 	witnessClaim.Amount = coins
 
 	return witnessClaim, nil
+}
+
+// BurnLockEventToCosmosMsg : parses data from a Burn/Lock event witnessed on Cosmos into a CosmosMsg struct
+func BurnLockEventToCosmosMsg(claimType events.Event, attributes []tmCommon.KVPair) events.CosmosMsg {
+	// Set up variables
+	var cosmosSender []byte
+	var ethereumReceiver, tokenContractAddress common.Address
+	var symbol string
+	var amount *big.Int
+
+	// Iterate over attributes
+	for _, attribute := range attributes {
+		// Get (key, value) for each attribute
+		key := string(attribute.GetKey())
+		val := string(attribute.GetValue())
+
+		// Set variable based on value of CosmosMsgAttributeKey
+		switch key {
+		case events.CosmosSender.String():
+			// Parse sender's Cosmos address
+			cosmosSender = []byte(val)
+		case events.EthereumReceiver.String():
+			// Confirm recipient is valid Ethereum address
+			if !common.IsHexAddress(val) {
+				log.Fatal("Invalid recipient address:", val)
+			}
+			// Parse recipient's Ethereum address
+			ethereumReceiver = common.HexToAddress(val)
+		case events.Coin.String():
+			// Parse symbol and amount from coin string
+			symbol, amount = getSymbolAmountFromCoin(val)
+		case events.TokenContractAddress.String():
+			// Confirm token contract address is valid Ethereum address
+			if !common.IsHexAddress(val) {
+				log.Fatal("Invalid token address:", val)
+			}
+			// Parse token contract address
+			tokenContractAddress = common.HexToAddress(val)
+		}
+	}
+
+	// Package the event data into a CosmosMsg
+	return events.NewCosmosMsg(claimType, cosmosSender, ethereumReceiver, symbol, amount, tokenContractAddress)
 }
 
 // ProphecyClaimToSignedOracleClaim : packages and signs a prophecy claim's data, returning a new oracle claim
@@ -104,4 +150,34 @@ func CosmosMsgToProphecyClaim(event events.CosmosMsg) ProphecyClaim {
 	}
 
 	return prophecyClaim
+}
+
+// getSymbolAmountFromCoin : Parse (symbol, amount) from coin string
+func getSymbolAmountFromCoin(coin string) (string, *big.Int) {
+	coinRune := []rune(coin)
+	amount := new(big.Int)
+
+	var symbol string
+
+	// Set up regex
+	isLetter, err := regexp.Compile(`[a-z]`)
+	if err != nil {
+		log.Fatal("Regex compilation error:", err)
+	}
+
+	// Iterate over each rune in the coin string
+	for i, char := range coinRune {
+		// Regex will match first letter [a-z] (lowercase)
+		matched := isLetter.MatchString(string(char))
+
+		// On first match, split the coin into (amount, symbol)
+		if matched {
+			amount, _ = amount.SetString(string(coinRune[0:i]), 10)
+			symbol = string(coinRune[i:])
+
+			break
+		}
+	}
+
+	return symbol, amount
 }

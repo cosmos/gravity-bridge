@@ -70,14 +70,14 @@ module.exports = async () => {
   const totalPower = Number(result[2]);
 
   if (result) {
-    console.log("\n\tProphecy " + prophecyID + " status:");
+    console.log(`\n\tProphecy ${prophecyID} status: ${status}`);
     console.log("----------------------------------------");
-    console.log("Weighted total power:\t", totalPower);
-    console.log("Weighted signed power:\t", signedPower);
-    console.log("Reached threshold:\t", valid);
+    console.log(`Weighted total power:\t ${totalPower}`);
+    console.log(`Weighted signed power:\t ${signedPower}`);
+    console.log(`Reached threshold:\t ${valid}`);
     console.log("----------------------------------------");
   } else {
-    console.log("Error: no result from transaction!");
+    console.error("Error: no result from transaction!");
   }
 
   return;

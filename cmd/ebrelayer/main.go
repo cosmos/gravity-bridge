@@ -4,7 +4,8 @@ package main
 //		service, such as initialization and event relay.
 
 import (
-	"fmt"
+	"errors"
+	"log"
 	"os"
 	"strings"
 
@@ -30,6 +31,9 @@ import (
 
 var appCodec *amino.Codec
 
+// FlagMakeClaims : optional flag for the ethereum relayer to automatically make OracleClaims upon every ProphecyClaim
+const FlagMakeClaims string = "make-claims"
+
 func init() {
 
 	// Read in the configuration file for the sdk
@@ -49,7 +53,8 @@ func init() {
 		return initConfig(rootCmd)
 	}
 
-	initCmd.PersistentFlags().String("make-claims", "", "Make oracle claims everytime a prophecy claim is witnessed")
+	// Add --make-claims to init cmd as optional flag
+	initCmd.PersistentFlags().String(FlagMakeClaims, "", "Make oracle claims everytime a prophecy claim is witnessed")
 
 	// Construct Initialization Commands
 	initCmd.AddCommand(
@@ -67,8 +72,7 @@ func init() {
 	executor := cli.PrepareMainCmd(rootCmd, "EBRELAYER", DefaultCLIHome)
 	err := executor.Execute()
 	if err != nil {
-		fmt.Printf("Failed executing CLI command: %s, exiting...\n", err)
-		os.Exit(1)
+		log.Fatal("Failed executing CLI command: %s, exiting...\n", err)
 	}
 }
 
@@ -91,7 +95,7 @@ var initCmd = &cobra.Command{
 //
 func ethereumRelayerCmd() *cobra.Command {
 	ethereumRelayerCmd := &cobra.Command{
-		Use:   "ethereum [web3Provider] [contractAddress] [validatorFromName] --make-claims [make-claims] --chain-id [chain-id]",
+		Use:   "ethereum [web3Provider] [bridgeContractAddress] [validatorFromName] --make-claims [make-claims] --chain-id [chain-id]",
 		Short: "Initializes a web socket which streams live events from a smart contract and relays them to the Cosmos network",
 		Args:  cobra.ExactArgs(3),
 		// NOTE: Preface both parentheses in the event signature with a '\'
@@ -123,13 +127,13 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Parse chain's ID
 	chainID := viper.GetString(client.FlagChainID)
 	if strings.TrimSpace(chainID) == "" {
-		return fmt.Errorf("Must specify a 'chain-id'")
+		return errors.New("Must specify a 'chain-id'")
 	}
 
 	// Parse make claims boolean
 	var makeClaims bool
 
-	makeClaimsString := viper.GetString("make-claims")
+	makeClaimsString := viper.GetString(FlagMakeClaims)
 	if strings.TrimSpace(makeClaimsString) == "true" {
 		makeClaims = true
 	} else {
@@ -139,12 +143,12 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Parse ethereum provider
 	ethereumProvider := args[0]
 	if !relayer.IsWebsocketURL(ethereumProvider) {
-		return fmt.Errorf("Invalid web3-provider: %v", ethereumProvider)
+		return errors.New("Invalid [web3-provider]")
 	}
 
 	// Parse the address of the deployed contract
 	if !common.IsHexAddress(args[1]) {
-		return fmt.Errorf("Invalid contract-address: %v", args[1])
+		return errors.New("Invalid [bridge-contract-address]")
 	}
 	contractAddress := common.HexToAddress(args[1])
 
@@ -172,7 +176,7 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Initialize the relayer
-	err = relayer.InitEthereumRelayer(
+	return relayer.InitEthereumRelayer(
 		appCodec,
 		chainID,
 		ethereumProvider,
@@ -180,13 +184,8 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 		makeClaims,
 		validatorName,
 		passphrase,
-		validatorAddress)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+		validatorAddress,
+	)
 }
 
 // RunCosmosRelayerCmd executes the initCosmosRelayerCmd with the provided parameters
@@ -194,13 +193,13 @@ func RunCosmosRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Load config file containing environment variables
 	err := godotenv.Load()
 	if err != nil {
-		return fmt.Errorf("Error loading .env file")
+		return errors.New("Error loading .env file")
 	}
 
 	// Private key for validator's Ethereum address must be set as an environment variable
 	privateKey := os.Getenv("ETHEREUM_PRIVATE_KEY")
 	if strings.TrimSpace(privateKey) == "" {
-		return fmt.Errorf("Error loading validator's private key from .env file")
+		return errors.New("Error loading validator's private key from .env file")
 	}
 
 	// Tendermint node
@@ -211,7 +210,7 @@ func RunCosmosRelayerCmd(cmd *cobra.Command, args []string) error {
 
 	// Deployed contract address
 	if !common.IsHexAddress(args[2]) {
-		return fmt.Errorf("Invalid contract address: %v", args[2])
+		return errors.New("Invalid [bridge-contract-address")
 	}
 	contractAddress := common.HexToAddress(args[2])
 

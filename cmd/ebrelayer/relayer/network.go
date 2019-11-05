@@ -5,7 +5,7 @@ package relayer
 // ------------------------------------------------------------
 
 import (
-	"fmt"
+	"errors"
 	"net/url"
 	"strings"
 
@@ -30,15 +30,12 @@ func SetupWebsocketEthClient(ethURL string) (*ethclient.Client, error) {
 	}
 
 	if !IsWebsocketURL(ethURL) {
-		return nil, fmt.Errorf(
-			"invalid websocket eth client URL: %v",
-			ethURL,
-		)
+		return nil, errors.New("invalid websocket eth client URL")
 	}
 
 	client, err := ethclient.Dial(ethURL)
 	if err != nil {
-		return nil, fmt.Errorf("error dialing websocket client: %v", err)
+		return nil, errors.New("error dialing websocket client")
 	}
 
 	return client, nil

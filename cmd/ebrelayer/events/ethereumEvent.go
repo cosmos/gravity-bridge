@@ -6,7 +6,6 @@ package events
 // -----------------------------------------------------
 
 import (
-	"encoding/hex"
 	"fmt"
 	"log"
 	"math/big"
@@ -71,17 +70,16 @@ func UnpackLogNewProphecyClaim(contractAbi abi.ABI, eventName string, eventData 
 // PrintLockEvent : prints a LockEvent struct's information
 func PrintLockEvent(event LockEvent) {
 	// Convert the variables into a printable format
-	id := hex.EncodeToString(event.Id[:])
+	value := event.Value
+	symbol := event.Symbol
+	token := event.Token.Hex()
 	sender := event.From.Hex()
 	recipient := string(event.To)
-	token := event.Token.Hex()
-	symbol := event.Symbol
-	value := event.Value
 	nonce := event.Nonce
 
 	// Print the event's information
-	fmt.Printf("\nEvent ID: %v\nToken Symbol: %v\nToken Address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
-		id, symbol, token, sender, recipient, value, nonce)
+	fmt.Printf("\nValue: %v\nToken Symbol: %v\nToken Address: %v\nSender: %v\nRecipient: %v\nNonce: %v\n\n",
+		value, symbol, token, sender, recipient, nonce)
 }
 
 // PrintProphecyClaimEvent : prints a NewProphecyClaimEvent struct's information

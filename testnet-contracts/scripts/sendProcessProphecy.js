@@ -67,15 +67,16 @@ module.exports = async () => {
 
   // Get event logs
   const event = logs.find(e => e.event === "LogProphecyProcessed");
+
   if (event) {
-    console.log("\n\tProphecy " + event.args._prophecyID + " processed");
+    console.log(`\n\tProphecy ${event.args._prophecyID} processed`);
     console.log("-------------------------------------------");
-    console.log("Submitter:\t", event.args._submitter);
-    console.log("Weighted total power:\t", event.args._weightedTotalPower);
-    console.log("Weighted signed power:\t", event.args._weightedSignedPower);
+    console.log(`Submitter:\t ${event.args._submitter}`);
+    console.log(`Weighted total power:\t ${event.args._weightedTotalPower}`);
+    console.log(`Weighted signed power:\t ${event.args._weightedSignedPower}`);
     console.log("-------------------------------------------");
   } else {
-    console.log("Error: no result from transaction!");
+    console.error("Error: no result from transaction!");
   }
 
   return;

@@ -36,7 +36,8 @@ func SignClaim(hash string) []byte {
 		log.Fatal(err)
 	}
 	signer := hex.EncodeToString(crypto.PubkeyToAddress(key.PublicKey).Bytes())
-	fmt.Printf("\nAttempting to sign message \"%v\" with account \"%v\"...\n", hash, signer)
+	fmt.Println("Using validator account:", signer)
+	fmt.Println("Attempting to sign message:", hash)
 
 	rawSignature, _ := prefixMessage(hash, key)
 
@@ -62,12 +63,13 @@ func prefixMessage(message string, key *ecdsa.PrivateKey) ([]byte, []byte) {
 
 // verifySignature: utility function for signature verification
 func verifySignature(hash common.Hash, signature []byte) {
+	// Load private key
 	privateKey, err := LoadPrivateKey()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// public key
+	// Validator's public key
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
@@ -75,16 +77,16 @@ func verifySignature(hash common.Hash, signature []byte) {
 	}
 	publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
 
-	// public key which signed this message
+	// Public key of validator which signed this message
 	sigPublicKeyECDSA, err := crypto.SigToPub(hash.Bytes(), signature)
 	if err != nil {
 		log.Fatal(err)
 	}
 	sigPublicKeyBytes := crypto.FromECDSAPub(sigPublicKeyECDSA)
 
-	// compare
+	// Compare
 	matches := bytes.Equal(sigPublicKeyBytes, publicKeyBytes)
-	fmt.Println(matches) // true
+	log.Println(matches)
 }
 
 // LoadPrivateKey : loads the validator's private key from environment variables

@@ -8,14 +8,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// MsgBurnEth defines a message for burning ethereum and triggering a related event
+// MsgBurn defines a message for burning an ERC20 token on Ethereum and triggering a related event
 type MsgBurn struct {
 	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
 	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
 }
 
-// NewMsgBurnEth is a constructor function for MsgBurnEth
+// NewMsgBurn is a constructor function for MsgBurn
 func NewMsgBurn(cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, amount sdk.Coins) MsgBurn {
 	return MsgBurn{
 		CosmosSender:     cosmosSender,

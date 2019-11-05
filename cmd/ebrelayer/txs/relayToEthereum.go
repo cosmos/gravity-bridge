@@ -95,8 +95,15 @@ func RelayOracleClaimToEthereum(provider string, contractAddress common.Address,
 	return nil
 }
 
-// initRelayConfig : set up Ethereum client, vvalidator's transaction auth, and the target contract's address
-func initRelayConfig(provider string, registry common.Address, event events.Event) (*ethclient.Client, *bind.TransactOpts, common.Address) {
+// initRelayConfig : set up Ethereum client, validator's transaction auth, and the target contract's address
+func initRelayConfig(
+	provider string,
+	registry common.Address,
+	event events.Event,
+) (*ethclient.Client,
+	*bind.TransactOpts,
+	common.Address,
+) {
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)
 	if err != nil {
@@ -141,6 +148,8 @@ func initRelayConfig(provider string, registry common.Address, event events.Even
 	// OracleClaims are sent to the Oracle contract
 	case events.LogNewProphecyClaim:
 		targetContract = Oracle
+	default:
+		panic("Invalid target contract address")
 	}
 
 	// Get the specific contract's address

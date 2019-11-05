@@ -12,11 +12,11 @@ import (
 )
 
 // ContractRegistry :
-type ContractRegistry int
+type ContractRegistry byte
 
 const (
 	// Valset : valset contract
-	Valset ContractRegistry = iota
+	Valset ContractRegistry = iota + 1
 	// Oracle : oracle contract
 	Oracle
 	// BridgeBank : bridgeBank contract
@@ -27,7 +27,7 @@ const (
 
 // String : returns the event type as a string
 func (d ContractRegistry) String() string {
-	return [...]string{"valset", "oracle", "bridgebank", "cosmosbridge"}[d]
+	return [...]string{"valset", "oracle", "bridgebank", "cosmosbridge"}[d-1]
 }
 
 // GetAddressFromBridgeRegistry : utility method which queries the requested contract address from the BridgeRegistry
@@ -82,7 +82,7 @@ func GetAddressFromBridgeRegistry(client *ethclient.Client, registry common.Addr
 			log.Fatal(err)
 		}
 		return cosmosBridgeAddress, nil
+	default:
+		panic("Invalid target contract address")
 	}
-
-	return
 }
