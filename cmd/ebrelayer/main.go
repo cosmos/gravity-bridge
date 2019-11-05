@@ -215,17 +215,12 @@ func RunCosmosRelayerCmd(cmd *cobra.Command, args []string) error {
 	contractAddress := common.HexToAddress(args[2])
 
 	// Initialize the relayer
-	err = relayer.InitCosmosRelayer(
+	return relayer.InitCosmosRelayer(
 		tendermintNode,
 		ethereumProvider,
 		contractAddress,
-		privateKey)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+		privateKey,
+	)
 }
 
 func initConfig(cmd *cobra.Command) error {
