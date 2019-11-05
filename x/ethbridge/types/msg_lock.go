@@ -39,7 +39,7 @@ func (msg MsgLock) Type() string { return "lock" }
 // ValidateBasic runs stateless checks on the message
 func (msg MsgLock) ValidateBasic() sdk.Error {
 	if strconv.Itoa(msg.EthereumChainID) == "" {
-		return ErrInvalidChainID(DefaultCodespace)
+		return ErrInvalidChainID(DefaultCodespace, strconv.Itoa(msg.EthereumChainID))
 	}
 
 	if msg.TokenContract.String() == "" {

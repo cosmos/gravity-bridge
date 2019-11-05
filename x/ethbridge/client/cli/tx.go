@@ -78,7 +78,12 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			ethereumChainID, err := strconv.Atoi(viper.GetString(types.FlagEthereumChainID))
+			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
+			if strings.TrimSpace(ethereumChainIDString) == "" {
+				return fmt.Errorf("Error: flag --ethereum-chain-id invalid value")
+			}
+
+			ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
 			if err != nil {
 				return err
 			}
@@ -120,7 +125,12 @@ func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			ethereumChainID, err := strconv.Atoi(viper.GetString(types.FlagEthereumChainID))
+			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
+			if strings.TrimSpace(ethereumChainIDString) == "" {
+				return fmt.Errorf("Error: flag --ethereum-chain-id invalid value")
+			}
+
+			ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
 			if err != nil {
 				return err
 			}

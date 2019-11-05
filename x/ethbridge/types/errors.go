@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -29,8 +31,8 @@ func ErrInvalidEthAddress(codespace sdk.CodespaceType) sdk.Error {
 }
 
 // ErrInvalidChainID implements sdk.Error.
-func ErrInvalidChainID(codespace sdk.CodespaceType) sdk.Error {
-	return sdk.NewError(codespace, CodeErrInvalidChainID, "invalid ethereum chain id provided")
+func ErrInvalidChainID(codespace sdk.CodespaceType, chainID string) sdk.Error {
+	return sdk.NewError(codespace, CodeErrInvalidChainID, fmt.Sprintf("invalid ethereum chain id '%s'", chainID))
 }
 
 // ErrJSONMarshalling implements sdk.Error.

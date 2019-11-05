@@ -39,7 +39,7 @@ func (msg MsgBurn) Type() string { return "burn" }
 // ValidateBasic runs stateless checks on the message
 func (msg MsgBurn) ValidateBasic() sdk.Error {
 	if strconv.Itoa(msg.EthereumChainID) == "" {
-		return ErrInvalidChainID(DefaultCodespace)
+		return ErrInvalidChainID(DefaultCodespace, strconv.Itoa(msg.EthereumChainID))
 	}
 
 	if msg.TokenContract.String() == "" {
