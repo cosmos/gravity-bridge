@@ -3,6 +3,7 @@ package types
 
 import (
 	"encoding/json"
+	"strconv"
 
 	gethCommon "github.com/ethereum/go-ethereum/common"
 
@@ -11,14 +12,18 @@ import (
 
 // MsgLock defines a message for locking coins and triggering a related event
 type MsgLock struct {
+	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
+	TokenContract    EthereumAddress `json:"token_contract" yaml:"token_contract"`
 	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
 	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
 }
 
 // NewMsgLock is a constructor function for MsgLock
-func NewMsgLock(cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, amount sdk.Coins) MsgLock {
+func NewMsgLock(ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, amount sdk.Coins) MsgLock {
 	return MsgLock{
+		EthereumChainID:  ethereumChainID,
+		TokenContract:    tokenContract,
 		CosmosSender:     cosmosSender,
 		EthereumReceiver: ethereumReceiver,
 		Amount:           amount,
@@ -33,6 +38,17 @@ func (msg MsgLock) Type() string { return "lock" }
 
 // ValidateBasic runs stateless checks on the message
 func (msg MsgLock) ValidateBasic() sdk.Error {
+	if strconv.Itoa(msg.EthereumChainID) == "" {
+		return ErrInvalidChainID(DefaultCodespace, strconv.Itoa(msg.EthereumChainID))
+	}
+
+	if msg.TokenContract.String() == "" {
+		return ErrInvalidEthAddress(DefaultCodespace)
+	}
+
+	if !gethCommon.IsHexAddress(msg.TokenContract.String()) {
+		return ErrInvalidEthAddress(DefaultCodespace)
+	}
 
 	if msg.CosmosSender.Empty() {
 		return sdk.ErrInvalidAddress(msg.CosmosSender.String())

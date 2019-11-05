@@ -45,11 +45,12 @@ func CreateTestEthClaim(t *testing.T, testContractAddress EthereumAddress, testT
 }
 
 func CreateTestBurnMsg(t *testing.T, testCosmosSender string, ethereumReceiver EthereumAddress, coins string) MsgBurn {
+	testTokenContractAddress := NewEthereumAddress(TestTokenContractAddress)
 	testCosmosAddress, err := sdk.AccAddressFromBech32(TestAddress)
 	require.NoError(t, err)
 	amount, err := sdk.ParseCoins(coins)
 	require.NoError(t, err)
-	burnEth := NewMsgBurn(testCosmosAddress, ethereumReceiver, amount)
+	burnEth := NewMsgBurn(TestEthereumChainID, testTokenContractAddress, testCosmosAddress, ethereumReceiver, amount)
 	return burnEth
 }
 

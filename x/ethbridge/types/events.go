@@ -13,6 +13,8 @@ var (
 	AttributeKeyStatus         = "status"
 	AttributeKeyClaimType      = "claim_type"
 
+	AttributeKeyEthereumChainID  = "ethereum_chain_id"
+	AttributeKeyTokenContract    = "token_contract"
 	AttributeKeyCosmosSender     = "cosmos_sender"
 	AttributeKeyEthereumReceiver = "ethereum_receiver"
 

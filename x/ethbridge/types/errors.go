@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -16,6 +18,7 @@ const (
 	CodeErrJSONMarshalling  CodeType = 3
 	CodeInvalidEthSymbol    CodeType = 4
 	CodeErrInvalidClaimType CodeType = 5
+	CodeErrInvalidChainID   CodeType = 6
 )
 
 // ErrInvalidEthNonce implements sdk.Error.
@@ -26,6 +29,11 @@ func ErrInvalidEthNonce(codespace sdk.CodespaceType) sdk.Error {
 // ErrInvalidEthAddress implements sdk.Error.
 func ErrInvalidEthAddress(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidEthAddress, "invalid ethereum address provided, must be a valid hex-encoded Ethereum address")
+}
+
+// ErrInvalidChainID implements sdk.Error.
+func ErrInvalidChainID(codespace sdk.CodespaceType, chainID string) sdk.Error {
+	return sdk.NewError(codespace, CodeErrInvalidChainID, fmt.Sprintf("invalid ethereum chain id '%s'", chainID))
 }
 
 // ErrJSONMarshalling implements sdk.Error.

@@ -2,6 +2,7 @@ package ethbridge
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -223,6 +224,8 @@ func TestBurnEthSuccess(t *testing.T) {
 	senderCoins := bankKeeper.GetCoins(ctx, senderAddress)
 	require.NoError(t, err)
 	require.True(t, senderCoins.IsEqual(remainingCoins))
+	eventEthereumChainID := ""
+	eventTokenContract := ""
 	eventCosmosSender := ""
 	eventEthereumReceiver := ""
 	eventAmount := ""
@@ -236,6 +239,10 @@ func TestBurnEthSuccess(t *testing.T) {
 				require.Equal(t, value, moduleAccountAddress.String())
 			case "module":
 				require.Equal(t, value, ModuleName)
+			case "ethereum_chain_id":
+				eventEthereumChainID = value
+			case "token_contract":
+				eventTokenContract = value
 			case "cosmos_sender":
 				eventCosmosSender = value
 			case "ethereum_receiver":
@@ -247,6 +254,8 @@ func TestBurnEthSuccess(t *testing.T) {
 			}
 		}
 	}
+	require.Equal(t, eventEthereumChainID, strconv.Itoa(types.TestEthereumChainID))
+	require.Equal(t, eventTokenContract, types.TestTokenContractAddress)
 	require.Equal(t, eventCosmosSender, senderAddress.String())
 	require.Equal(t, eventEthereumReceiver, ethereumReceiver.String())
 	require.Equal(t, eventAmount, coinsToBurn)
@@ -259,6 +268,8 @@ func TestBurnEthSuccess(t *testing.T) {
 	senderCoins = bankKeeper.GetCoins(ctx, senderAddress)
 	require.NoError(t, err)
 	require.True(t, senderCoins.IsEqual(remainingCoins))
+	eventEthereumChainID = ""
+	eventTokenContract = ""
 	eventCosmosSender = ""
 	eventEthereumReceiver = ""
 	eventAmount = ""
@@ -272,6 +283,10 @@ func TestBurnEthSuccess(t *testing.T) {
 				require.Equal(t, value, moduleAccountAddress.String())
 			case "module":
 				require.Equal(t, value, ModuleName)
+			case "ethereum_chain_id":
+				eventEthereumChainID = value
+			case "token_contract":
+				eventTokenContract = value
 			case "cosmos_sender":
 				eventCosmosSender = value
 			case "ethereum_receiver":
@@ -283,6 +298,8 @@ func TestBurnEthSuccess(t *testing.T) {
 			}
 		}
 	}
+	require.Equal(t, eventEthereumChainID, strconv.Itoa(types.TestEthereumChainID))
+	require.Equal(t, eventTokenContract, types.TestTokenContractAddress)
 	require.Equal(t, eventCosmosSender, senderAddress.String())
 	require.Equal(t, eventEthereumReceiver, ethereumReceiver.String())
 	require.Equal(t, eventAmount, coinsToBurn)

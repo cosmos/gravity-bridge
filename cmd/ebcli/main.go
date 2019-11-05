@@ -23,6 +23,7 @@ import (
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 
 	"github.com/cosmos/peggy/app"
+	"github.com/cosmos/peggy/x/ethbridge/types"
 )
 
 func main() {
@@ -109,6 +110,9 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 		Use:   "tx",
 		Short: "Transactions subcommands",
 	}
+
+	txCmd.PersistentFlags().String(types.FlagEthereumChainID, "", "Ethereum chain ID")
+	txCmd.PersistentFlags().String(types.FlagTokenContractAddr, "", "Token address representing a unique asset type")
 
 	txCmd.AddCommand(
 		bankcmd.SendTxCmd(cdc),

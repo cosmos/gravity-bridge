@@ -3,6 +3,7 @@ package types
 
 import (
 	"encoding/json"
+	"strconv"
 
 	gethCommon "github.com/ethereum/go-ethereum/common"
 
@@ -11,14 +12,18 @@ import (
 
 // MsgBurn defines a message for burning coins and triggering a related event
 type MsgBurn struct {
+	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
+	TokenContract    EthereumAddress `json:"token_contract" yaml:"token_contract"`
 	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
 	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
 }
 
 // NewMsgBurn is a constructor function for MsgBurn
-func NewMsgBurn(cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, amount sdk.Coins) MsgBurn {
+func NewMsgBurn(ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, amount sdk.Coins) MsgBurn {
 	return MsgBurn{
+		EthereumChainID:  ethereumChainID,
+		TokenContract:    tokenContract,
 		CosmosSender:     cosmosSender,
 		EthereumReceiver: ethereumReceiver,
 		Amount:           amount,
@@ -33,6 +38,17 @@ func (msg MsgBurn) Type() string { return "burn" }
 
 // ValidateBasic runs stateless checks on the message
 func (msg MsgBurn) ValidateBasic() sdk.Error {
+	if strconv.Itoa(msg.EthereumChainID) == "" {
+		return ErrInvalidChainID(DefaultCodespace, strconv.Itoa(msg.EthereumChainID))
+	}
+
+	if msg.TokenContract.String() == "" {
+		return ErrInvalidEthAddress(DefaultCodespace)
+	}
+
+	if !gethCommon.IsHexAddress(msg.TokenContract.String()) {
+		return ErrInvalidEthAddress(DefaultCodespace)
+	}
 
 	if msg.CosmosSender.Empty() {
 		return sdk.ErrInvalidAddress(msg.CosmosSender.String())
