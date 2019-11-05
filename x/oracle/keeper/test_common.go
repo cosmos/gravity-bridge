@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/libs/log"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/ed25519"
@@ -36,7 +37,7 @@ const (
 )
 
 // CreateTestKeepers greates an Mock App, OracleKeeper, BankKeeper and ValidatorAddresses to be used for test input
-func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts []int64) (sdk.Context, Keeper, bank.Keeper, []sdk.ValAddress) {
+func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts []int64, extraMaccPerm string) (sdk.Context, Keeper, bank.Keeper, supply.Keeper, []sdk.ValAddress) {
 	PKs := CreateTestPubKeys(500)
 	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
 	tkeyStaking := sdk.NewTransientStoreKey(stakingtypes.TStoreKey)
@@ -66,6 +67,7 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts [
 			},
 		},
 	)
+	ctx = ctx.WithLogger(log.NewNopLogger())
 	cdc := MakeTestCodec()
 
 	feeCollectorAcc := supply.NewEmptyModuleAccount(auth.FeeCollectorName)
@@ -98,6 +100,11 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts [
 		stakingtypes.NotBondedPoolName: {supply.Burner, supply.Staking},
 		stakingtypes.BondedPoolName:    {supply.Burner, supply.Staking},
 	}
+
+	if extraMaccPerm != "" {
+		maccPerms[extraMaccPerm] = []string{supply.Burner, supply.Minter}
+	}
+
 	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
 
 	initTokens := sdk.TokensFromConsensusPower(10000)
@@ -132,7 +139,7 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts [
 		stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
 	}
 
-	return ctx, oracleKeeper, bankKeeper, valAddrs
+	return ctx, oracleKeeper, bankKeeper, supplyKeeper, valAddrs
 }
 
 // nolint: unparam

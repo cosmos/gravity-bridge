@@ -9,7 +9,7 @@ import (
 )
 
 func TestCreateGetProphecy(t *testing.T) {
-	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.7, []int64{3, 7})
+	ctx, keeper, _, _, validatorAddresses := CreateTestKeepers(t, 0.7, []int64{3, 7}, "")
 
 	validator1Pow3 := validatorAddresses[0]
 
@@ -44,12 +44,12 @@ func TestBadConsensusForOracle(t *testing.T) {
 			t.Errorf("The code did not panic")
 		}
 	}()
-	_, _, _, _ = CreateTestKeepers(t, 0, []int64{10})
-	_, _, _, _ = CreateTestKeepers(t, 1.2, []int64{10})
+	_, _, _, _, _ = CreateTestKeepers(t, 0, []int64{10}, "")
+	_, _, _, _, _ = CreateTestKeepers(t, 1.2, []int64{10}, "")
 }
 
 func TestBadMsgs(t *testing.T) {
-	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3})
+	ctx, keeper, _, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3}, "")
 
 	validator1Pow3 := validatorAddresses[0]
 
@@ -80,7 +80,7 @@ func TestBadMsgs(t *testing.T) {
 }
 
 func TestSuccessfulProphecy(t *testing.T) {
-	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3, 4})
+	ctx, keeper, _, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3, 4}, "")
 
 	validator1Pow3 := validatorAddresses[0]
 	validator2Pow3 := validatorAddresses[1]
@@ -107,7 +107,7 @@ func TestSuccessfulProphecy(t *testing.T) {
 }
 
 func TestSuccessfulProphecyWithDisagreement(t *testing.T) {
-	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3, 4})
+	ctx, keeper, _, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3, 4}, "")
 
 	validator1Pow3 := validatorAddresses[0]
 	validator2Pow3 := validatorAddresses[1]
@@ -134,7 +134,7 @@ func TestSuccessfulProphecyWithDisagreement(t *testing.T) {
 }
 
 func TestFailedProphecy(t *testing.T) {
-	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3, 4})
+	ctx, keeper, _, _, validatorAddresses := CreateTestKeepers(t, 0.6, []int64{3, 3, 4}, "")
 
 	validator1Pow3 := validatorAddresses[0]
 	validator2Pow3 := validatorAddresses[1]
@@ -163,7 +163,7 @@ func TestFailedProphecy(t *testing.T) {
 
 func TestPowerOverrule(t *testing.T) {
 	//Testing with 2 validators but one has high enough power to overrule
-	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.7, []int64{3, 7})
+	ctx, keeper, _, _, validatorAddresses := CreateTestKeepers(t, 0.7, []int64{3, 7}, "")
 
 	validator1Pow3 := validatorAddresses[0]
 	validator2Pow7 := validatorAddresses[1]
@@ -183,7 +183,7 @@ func TestPowerOverrule(t *testing.T) {
 }
 func TestPowerAternate(t *testing.T) {
 	//Test alternate power setup with validators of 5/4/3/9 and total power 22 and 12/21 required
-	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.571, []int64{5, 4, 3, 9})
+	ctx, keeper, _, _, validatorAddresses := CreateTestKeepers(t, 0.571, []int64{5, 4, 3, 9}, "")
 
 	validator1Pow5 := validatorAddresses[0]
 	validator2Pow4 := validatorAddresses[1]
@@ -218,7 +218,7 @@ func TestPowerAternate(t *testing.T) {
 
 func TestMultipleProphecies(t *testing.T) {
 	//Test multiple prophecies running in parallel work fine as expected
-	ctx, keeper, _, validatorAddresses := CreateTestKeepers(t, 0.7, []int64{3, 7})
+	ctx, keeper, _, _, validatorAddresses := CreateTestKeepers(t, 0.7, []int64{3, 7}, "")
 
 	validator1Pow3 := validatorAddresses[0]
 	validator2Pow7 := validatorAddresses[1]
@@ -252,7 +252,7 @@ func TestMultipleProphecies(t *testing.T) {
 
 func TestNonValidator(t *testing.T) {
 	//Test multiple prophecies running in parallel work fine as expected
-	ctx, keeper, _, _ := CreateTestKeepers(t, 0.7, []int64{3, 7})
+	ctx, keeper, _, _, _ := CreateTestKeepers(t, 0.7, []int64{3, 7}, "")
 
 	_, testValidatorAddresses := CreateTestAddrs(10)
 	inActiveValidatorAddress := testValidatorAddresses[9]
