@@ -101,6 +101,10 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 			}
 
 			msg := types.NewMsgBurn(cosmosSender, ethereumReceiver, amount)
+			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
 
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
