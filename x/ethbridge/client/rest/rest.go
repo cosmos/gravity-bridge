@@ -40,10 +40,18 @@ type createEthClaimReq struct {
 	Amount                string       `json:"amount"`
 }
 
+type burnEthReq struct {
+	BaseReq          rest.BaseReq `json:"base_req"`
+	CosmosSender     string       `json:"cosmos_sender"`
+	EthereumReceiver string       `json:"ethereum_receiver"`
+	Amount           string       `json:"amount"`
+}
+
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRESTRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) {
 	r.HandleFunc(fmt.Sprintf("/%s/prophecies", storeName), createClaimHandler(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/%s/prophecies/{%s}/{%s}/{%s}/{%s}/{%s}/{%s}", storeName, restEthereumChainID, restBridgeContract, restNonce, restSymbol, restTokenContract, restEthereumSender), getProphecyHandler(cliCtx, storeName)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/burn", storeName), burnHandler(cliCtx)).Methods("POST")
 }
 
 func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -140,5 +148,45 @@ func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.Handle
 		}
 
 		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func burnHandler(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req burnEthReq
+
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
+			return
+		}
+
+		baseReq := req.BaseReq.Sanitize()
+		if !baseReq.ValidateBasic(w) {
+			return
+		}
+
+		cosmosSender, err := sdk.AccAddressFromBech32(req.CosmosSender)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		ethereumReceiver := types.NewEthereumAddress(req.EthereumReceiver)
+
+		amount, err := sdk.ParseCoins(req.Amount)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// create the message
+		msg := types.NewMsgBurn(cosmosSender, ethereumReceiver, amount)
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
 }

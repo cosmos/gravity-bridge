@@ -97,8 +97,11 @@ ebcli tx ethbridge create-claim 3 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB 2 e
 # Then read the prophecy to confirm it was created with the claim added
 ebcli query ethbridge prophecy 3 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB 2 eth 0x0000000000000000000000000000000000000000 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 --trust-node
 
-# And finally, confirm that the prophecy was successfully processed and that new eth was minted to the testuser address
+# Confirm that the prophecy was successfully processed and that new eth was minted to the testuser address
 ebcli query account $(ebcli keys show testuser -a) --trust-node
+
+# Test out burning the eth for the return trip
+ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 1eth --from=testuser --chain-id=peggy --yes
 
 ```
 
