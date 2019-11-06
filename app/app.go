@@ -22,7 +22,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 )
@@ -47,7 +46,6 @@ var (
 		bank.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
-		gov.NewAppModuleBasic(paramsclient.ProposalHandler),
 		supply.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		ethbridge.AppModuleBasic{},
@@ -58,7 +56,6 @@ var (
 		auth.FeeCollectorName:     nil,
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
-		gov.ModuleName:            {supply.Burner},
 		ethbridge.ModuleName:      {supply.Burner, supply.Minter},
 	}
 )
@@ -111,7 +108,7 @@ func NewEthereumBridgeApp(
 
 	keys := sdk.NewKVStoreKeys(
 		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
-		supply.StoreKey, oracle.StoreKey, gov.StoreKey, params.StoreKey,
+		supply.StoreKey, oracle.StoreKey, params.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -157,7 +154,7 @@ func NewEthereumBridgeApp(
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
-		auth.ModuleName, staking.ModuleName, bank.ModuleName, gov.ModuleName,
+		auth.ModuleName, staking.ModuleName, bank.ModuleName,
 		supply.ModuleName, genutil.ModuleName, ethbridge.ModuleName,
 	)
 
