@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 
@@ -29,6 +30,8 @@ import (
 
 var appCodec *amino.Codec
 
+const FlagRPCURL = "rpc-url"
+
 func init() {
 
 	// Read in the configuration file for the sdk
@@ -44,6 +47,7 @@ func init() {
 
 	// Add --chain-id to persistent flags and mark it required
 	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
+	rootCmd.PersistentFlags().String(FlagRPCURL, "", "RPC URL of tendermint node")
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
 		return initConfig(rootCmd)
 	}
@@ -75,12 +79,15 @@ var rootCmd = &cobra.Command{
 //
 func initRelayerCmd() *cobra.Command {
 	initRelayerCmd := &cobra.Command{
-		Use:   "init [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id [chain-id]",
-		Short: "Initializes a web socket which streams live events from a smart contract",
-		Args:  cobra.ExactArgs(4),
+		Use:   "init [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id=[chain-id] --rpc-url=[rpc-url]",
+		Short: "Initializes a web socket which streams live events from a smart contract and makes claims on those events to the given RPC",
+		Long: `Initializes a web socket which streams live events from a smart contract and makes claims on those events to the given RPC.
+This will use rpc endpoint given in the --rpc-url flag, or the default tendermint rpc if no flag is given`,
+		Args: cobra.ExactArgs(4),
 		// NOTE: Preface both parentheses in the event signature with a '\'
-		Example: "ebrelayer init wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 LogLock(address,bytes,address,string,uint256,uint256) validator --chain-id=testing",
-		RunE:    RunRelayerCmd,
+		Example: `Default RPC: ebrelayer init wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 LogLock(address,bytes,address,string,uint256,uint256) validator --chain-id=testing
+Specific RPC: ebrelayer init wss://ropsten.infura.io/ws 0xE147f184886eC70527e8A10723dfE18faE14c4a7 LogLock\\(bytes32,address,bytes,address,uint256,uint256\\) validator --chain-id=peggy --rpc-url=tcp://validator:26657`,
+		RunE: RunRelayerCmd,
 	}
 
 	return initRelayerCmd
@@ -115,6 +122,16 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Parse the validator's moniker
 	validatorFrom := args[3]
 
+	// Parse Tendermint RPC URL
+	rpcURL := viper.GetString(FlagRPCURL)
+
+	if rpcURL != "" {
+		_, err := url.Parse(rpcURL)
+		if rpcURL != "" && err != nil {
+			return fmt.Errorf("Invalid RPC URL: %v", rpcURL)
+		}
+	}
+
 	// Get the validator's name and account address using their moniker
 	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom, false)
 	if err != nil {
@@ -144,7 +161,8 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 		eventSig,
 		validatorName,
 		passphrase,
-		validatorAddress)
+		validatorAddress,
+		rpcURL)
 
 	if err != nil {
 		return err
