@@ -118,6 +118,9 @@ ebcli tx ethbridge create-claim 1 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 $(e
 # Confirm that the prophecy was successfully processed and that stake coin was returned to the testuser address
 ebcli query account $(ebcli keys show testuser -a) --trust-node
 
+# Test out burning the eth for the return trip
+ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 1eth --from=testuser --chain-id=peggy --yes
+
 ```
 
 ## Using the application from rest-server

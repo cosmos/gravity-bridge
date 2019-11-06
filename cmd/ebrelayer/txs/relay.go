@@ -27,12 +27,16 @@ import (
 //		it to the Bridge blockchain. For this relay, the chain id (chainID) and codec
 //		(cdc) of the Bridge blockchain are required.
 //
-func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddress, moniker string, passphrase string, claim *types.EthBridgeClaim) error {
+func RelayEvent(chainID string, cdc *amino.Codec, validatorAddress sdk.ValAddress, moniker string, passphrase string, claim *types.EthBridgeClaim, rpcUrl string) error {
 
 	cliCtx := context.NewCLIContext().
 		WithCodec(cdc).
 		WithFromAddress(sdk.AccAddress(validatorAddress)).
 		WithFromName(moniker)
+
+	if rpcUrl != "" {
+		cliCtx = cliCtx.WithNodeURI(rpcUrl)
+	}
 
 	cliCtx.SkipConfirm = true
 
