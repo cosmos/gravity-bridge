@@ -21,7 +21,7 @@ import (
 // GetCmdCreateEthBridgeClaim is the CLI command for creating a claim on an ethereum prophecy
 func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "create-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount] [claim_type]",
+		Use:   "create-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount] [claim-type]",
 		Short: "create a claim on an ethereum prophecy",
 		Args:  cobra.ExactArgs(10),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -66,10 +66,8 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			var claimType types.ClaimType
-			if value, ok := types.StringToClaimType[args[5]]; ok {
-				claimType = value
-			} else {
+			claimType, ok := types.StringToClaimType[args[5]]
+			if !ok {
 				return types.ErrInvalidClaimType()
 			}
 
@@ -141,7 +139,7 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "lock [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
-		Short: "lock some coins!",
+		Short: "This should be used to lock Cosmos-originating coins (eg: ATOM). It will lock up your coins in the supply module, removing them from your account. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the minting of the pegged token on Etherum to you!",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -178,6 +176,10 @@ func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 			}
 
 			msg := types.NewMsgLock(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
+			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
 
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
