@@ -80,7 +80,8 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount]",
-		Short: "This should be used to burn cETH or cERC20. It will burn your coins on the Cosmos Chain, removing them from your account and deducting them from the supply. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the withdrawal of the original ETH/ERC20 to you from the Ethereum contract!",
+		Short: "burn cETH or cERC20 on the Cosmos chain",
+		Long: "This should be used to burn cETH or cERC20. It will burn your coins on the Cosmos Chain, removing them from your account and deducting them from the supply. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the withdrawal of the original ETH/ERC20 to you from the Ethereum contract!",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
