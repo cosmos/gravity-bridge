@@ -21,4 +21,4 @@ services:
     entrypoint:
       - sh
       - -c
-      - "echo password | ebrelayer init wss://ropsten.infura.io/ws 0xE147f184886eC70527e8A10723dfE18faE14c4a7 LogLock\\(bytes32,address,bytes,address,uint256,uint256\\) validator --chain-id=peggy tcp://validator:26657"
+      - "echo password | ebrelayer init wss://ropsten.infura.io/ws 0xE147f184886eC70527e8A10723dfE18faE14c4a7 LogLock\\(bytes32,address,bytes,address,uint256,uint256\\) validator --chain-id=peggy --rpc-url=tcp://validator:26657"
