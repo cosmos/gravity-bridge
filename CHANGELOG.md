@@ -53,7 +53,6 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 - (ethbridge) [\#75](https://github.com/cosmos/peggy/pull/75) Add burn message and functionality for burning tokens and trigerring events.
-- (ethbridge) [\#75](https://github.com/cosmos/peggy/pull/90) Add governance module.
 
 ### Improvements
 

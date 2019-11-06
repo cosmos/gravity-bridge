@@ -21,7 +21,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
-	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -89,7 +88,6 @@ type EthereumBridgeApp struct {
 	BankKeeper    bank.Keeper
 	StakingKeeper staking.Keeper
 	SupplyKeeper  supply.Keeper
-	GovKeeper     gov.Keeper
 	ParamsKeeper  params.Keeper
 
 	// EthBridge keepers
@@ -131,7 +129,6 @@ func NewEthereumBridgeApp(
 	authSubspace := app.ParamsKeeper.Subspace(auth.DefaultParamspace)
 	bankSubspace := app.ParamsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.ParamsKeeper.Subspace(staking.DefaultParamspace)
-	govSubspace := app.ParamsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 
 	// add keepers
 	app.AccountKeeper = auth.NewAccountKeeper(app.cdc, keys[auth.StoreKey], authSubspace, auth.ProtoBaseAccount)
@@ -142,13 +139,6 @@ func NewEthereumBridgeApp(
 	app.OracleKeeper = oracle.NewKeeper(app.cdc, keys[oracle.StoreKey],
 		app.StakingKeeper, oracle.DefaultCodespace, oracle.DefaultConsensusNeeded,
 	)
-
-	// register the proposal types
-	govRouter := gov.NewRouter()
-	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
-		AddRoute(params.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper))
-	app.GovKeeper = gov.NewKeeper(app.cdc, keys[gov.StoreKey], govSubspace,
-		app.SupplyKeeper, &app.StakingKeeper, gov.DefaultCodespace, govRouter)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
