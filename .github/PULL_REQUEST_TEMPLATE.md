@@ -8,7 +8,7 @@ v    If a checkbox is n/a - please still include it but + a little note why
 
 ______
 
-- Targeted PR against correct branch
+- [ ] Targeted PR against correct branch
 - [ ] Linked to github-issue with discussion and accepted design OR link to spec that describes this work.
 - [ ] Wrote tests
 - [ ] Updated relevant documentation (`docs/`)
