@@ -1,14 +1,28 @@
 #!/usr/bin/make -f
 
-all: test clean install lint
+all: clean test build install lint
 
 # The below include contains the tools and runsim targets.
 include contrib/devtools/Makefile
 
-build:
-	go build ./cmd/ebd
-	go build ./cmd/ebcli
-	go build ./cmd/ebrelayer
+########################################
+### Build
+
+build:  go.sum
+	@go build -mod=readonly ./...
+
+########################################
+### Tools & dependencies
+
+go-mod-cache: go.sum
+	@echo "--> Download go modules to local cache"
+	@go mod download
+.PHONY: go-mod-cache
+
+go.sum: go.mod
+	@echo "--> Ensure dependencies have not been modified"
+	@go mod verify
+	@go mod tidy
 
 build_test_container:
 	docker-compose -f ./deploy/test/docker-compose.yml --project-directory . build
@@ -25,9 +39,9 @@ clean:
 	rm -f ebrelayer
 
 install:
-	go install ./cmd/ebd
-	go install ./cmd/ebcli
-	go install ./cmd/ebrelayer
+	go install -mod=readonly ./cmd/ebd
+	go install -mod=readonly ./cmd/ebcli
+	go install -mod=readonly ./cmd/ebrelayer
 
 lint:
 	@echo "--> Running linter"
@@ -38,4 +52,4 @@ lint:
 test:
 	go test ./...
 
-.PHONY: all build build_test_container start_test_containers stop_test_containers clean install test lint all
+.PHONY: all build go-mod-cache build_test_container start_test_containers stop_test_containers clean install test lint all
