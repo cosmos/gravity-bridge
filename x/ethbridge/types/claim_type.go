@@ -15,9 +15,16 @@ const (
 )
 
 var ClaimTypeToString = [...]string{"lock", "burn"}
-var StringToClaimType = map[string]ClaimType{
-	"lock": LockText,
-	"burn": BurnText,
+
+func StringToClaimType(text string) (ClaimType, error) {
+	switch text {
+	case "lock":
+		return LockText, nil
+	case "burn":
+		return BurnText, nil
+	default:
+		return 0, ErrInvalidClaimType()
+	}
 }
 
 func (text ClaimType) String() string {
@@ -39,10 +46,9 @@ func (text *ClaimType) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if value, ok := StringToClaimType[stringKey]; ok {
+	if value, err := StringToClaimType(stringKey); err != nil {
 		*text = value
 		return nil
-	} else {
-		return ErrInvalidClaimType()
 	}
+	return err
 }

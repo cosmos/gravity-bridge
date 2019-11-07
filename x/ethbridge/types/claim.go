@@ -10,16 +10,17 @@ import (
 	"github.com/cosmos/peggy/x/oracle"
 )
 
+// EthBridgeClaim is a structure that contains all the data for a particular bridge claim
 type EthBridgeClaim struct {
-	EthereumChainID       int             `json:"ethereum_chain_id"`
-	BridgeContractAddress EthereumAddress `json:"bridge_contract_address"`
-	Nonce                 int             `json:"nonce"`
-	Symbol                string          `json:"symbol"`
-	TokenContractAddress  EthereumAddress `json:"token_contract_address"`
-	EthereumSender        EthereumAddress `json:"ethereum_sender"`
-	CosmosReceiver        sdk.AccAddress  `json:"cosmos_receiver"`
-	ValidatorAddress      sdk.ValAddress  `json:"validator_address"`
-	Amount                sdk.Coins       `json:"amount"`
+	EthereumChainID       int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
+	BridgeContractAddress EthereumAddress `json:"bridge_contract_address" yaml:"bridge_contract_address"`
+	Nonce                 int             `json:"nonce" yaml:"nonce"`
+	Symbol                string          `json:"symbol" yaml:"symbol"`
+	TokenContractAddress  EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
+	EthereumSender        EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
+	CosmosReceiver        sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
+	ValidatorAddress      sdk.ValAddress  `json:"validator_address" yaml:"validator_address"`
+	Amount                sdk.Coins       `json:"amount" yaml:"amount"`
 	ClaimType             ClaimType       `json:"claim_type" yaml:"claim_type"`
 }
 
@@ -41,8 +42,8 @@ func NewEthBridgeClaim(ethereumChainID int, bridgeContract EthereumAddress, nonc
 
 // OracleClaimContent is the details of how the content of the claim for each validator will be stored in the oracle
 type OracleClaimContent struct {
-	CosmosReceiver sdk.AccAddress `json:"cosmos_receiver"`
-	Amount         sdk.Coins      `json:"amount"`
+	CosmosReceiver sdk.AccAddress `json:"cosmos_receiver" yaml:"cosmos_receiver"`
+	Amount         sdk.Coins      `json:"amount" yaml:"amount"`
 	ClaimType      ClaimType      `json:"claim_type" yaml:"claim_type"`
 }
 

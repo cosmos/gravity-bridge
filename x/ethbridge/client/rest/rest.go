@@ -95,10 +95,8 @@ func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		var claimType types.ClaimType
-		if value, ok := types.StringToClaimType[req.ClaimType]; ok {
-			claimType = value
-		} else {
+		claimType, err := types.StringToClaimType(req.ClaimType)
+		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, types.ErrInvalidClaimType().Error())
 			return
 		}
@@ -201,10 +199,10 @@ func burnOrLockHandler(cliCtx context.CLIContext, lockOrBurn string) http.Handle
 
 		// create the message
 		var msg sdk.Msg
-		if lockOrBurn == "lock" {
+		switch lockOrBurn {
+		case "lock":
 			msg = types.NewMsgLock(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
-
-		} else if lockOrBurn == "burn" {
+		case "burn":
 			msg = types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
 		}
 		err = msg.ValidateBasic()
