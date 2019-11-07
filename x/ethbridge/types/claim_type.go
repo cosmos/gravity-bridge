@@ -46,9 +46,10 @@ func (text *ClaimType) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if value, err := StringToClaimType(stringKey); err != nil {
-		*text = value
-		return nil
+	value, err := StringToClaimType(stringKey)
+	if err != nil {
+		return err
 	}
-	return err
+	*text = value
+	return nil
 }
