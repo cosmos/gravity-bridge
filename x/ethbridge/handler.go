@@ -2,6 +2,7 @@ package ethbridge
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/cosmos/peggy/x/oracle"
@@ -21,6 +22,8 @@ func NewHandler(oracleKeeper oracle.Keeper, supplyKeeper supply.Keeper, accountK
 			return handleMsgCreateEthBridgeClaim(ctx, cdc, oracleKeeper, supplyKeeper, msg, codespace)
 		case MsgBurn:
 			return handleMsgBurn(ctx, cdc, supplyKeeper, accountKeeper, msg, codespace)
+		case MsgLock:
+			return handleMsgLock(ctx, cdc, supplyKeeper, accountKeeper, msg, codespace)
 		default:
 			errMsg := fmt.Sprintf("unrecognized ethbridge message type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -59,6 +62,7 @@ func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
 			sdk.NewAttribute(types.AttributeKeyEthereumSender, msg.EthereumSender.String()),
 			sdk.NewAttribute(types.AttributeKeyCosmosReceiver, msg.CosmosReceiver.String()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeyClaimType, msg.ClaimType.String()),
 		),
 		sdk.NewEvent(
 			types.EventTypeProphecyStatus,
@@ -76,9 +80,12 @@ func processSuccessfulClaim(ctx sdk.Context, supplyKeeper supply.Keeper, claim s
 	}
 
 	receiverAddress := oracleClaim.CosmosReceiver
-	err = supplyKeeper.MintCoins(ctx, ModuleName, oracleClaim.Amount)
-	if err != nil {
-		return err
+
+	if oracleClaim.ClaimType == types.LockText {
+		err = supplyKeeper.MintCoins(ctx, ModuleName, oracleClaim.Amount)
+		if err != nil {
+			return err
+		}
 	}
 	err = supplyKeeper.SendCoinsFromModuleToAccount(ctx, ModuleName, receiverAddress, oracleClaim.Amount)
 	if err != nil {
@@ -112,6 +119,40 @@ func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
 		),
 		sdk.NewEvent(
 			types.EventTypeBurn,
+			sdk.NewAttribute(types.AttributeKeyEthereumChainID, strconv.Itoa(msg.EthereumChainID)),
+			sdk.NewAttribute(types.AttributeKeyTokenContract, msg.TokenContract.String()),
+			sdk.NewAttribute(types.AttributeKeyCosmosSender, msg.CosmosSender.String()),
+			sdk.NewAttribute(types.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
+		),
+	})
+
+	return sdk.Result{Events: ctx.EventManager().Events()}
+
+}
+
+func handleMsgLock(ctx sdk.Context, cdc *codec.Codec,
+	supplyKeeper supply.Keeper, accountKeeper auth.AccountKeeper, msg MsgLock,
+	codespace sdk.CodespaceType) sdk.Result {
+	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
+	if account == nil {
+		return sdk.ErrInvalidAddress(msg.CosmosSender.String()).Result()
+	}
+	err := supplyKeeper.SendCoinsFromAccountToModule(ctx, msg.CosmosSender, ModuleName, msg.Amount)
+	if err != nil {
+		return err.Result()
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.CosmosSender.String()),
+		),
+		sdk.NewEvent(
+			types.EventTypeLock,
+			sdk.NewAttribute(types.AttributeKeyEthereumChainID, strconv.Itoa(msg.EthereumChainID)),
+			sdk.NewAttribute(types.AttributeKeyTokenContract, msg.TokenContract.String()),
 			sdk.NewAttribute(types.AttributeKeyCosmosSender, msg.CosmosSender.String()),
 			sdk.NewAttribute(types.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),

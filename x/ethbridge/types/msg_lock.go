@@ -10,8 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// MsgBurn defines a message for burning coins and triggering a related event
-type MsgBurn struct {
+// MsgLock defines a message for locking coins and triggering a related event
+type MsgLock struct {
 	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
 	TokenContract    EthereumAddress `json:"token_contract" yaml:"token_contract"`
 	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
@@ -19,9 +19,9 @@ type MsgBurn struct {
 	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
 }
 
-// NewMsgBurn is a constructor function for MsgBurn
-func NewMsgBurn(ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, amount sdk.Coins) MsgBurn {
-	return MsgBurn{
+// NewMsgLock is a constructor function for MsgLock
+func NewMsgLock(ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, amount sdk.Coins) MsgLock {
+	return MsgLock{
 		EthereumChainID:  ethereumChainID,
 		TokenContract:    tokenContract,
 		CosmosSender:     cosmosSender,
@@ -31,13 +31,13 @@ func NewMsgBurn(ethereumChainID int, tokenContract EthereumAddress, cosmosSender
 }
 
 // Route should return the name of the module
-func (msg MsgBurn) Route() string { return RouterKey }
+func (msg MsgLock) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgBurn) Type() string { return "burn" }
+func (msg MsgLock) Type() string { return "lock" }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgBurn) ValidateBasic() sdk.Error {
+func (msg MsgLock) ValidateBasic() sdk.Error {
 	if strconv.Itoa(msg.EthereumChainID) == "" {
 		return ErrInvalidChainID(DefaultCodespace, strconv.Itoa(msg.EthereumChainID))
 	}
@@ -66,7 +66,7 @@ func (msg MsgBurn) ValidateBasic() sdk.Error {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgBurn) GetSignBytes() []byte {
+func (msg MsgLock) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -76,6 +76,6 @@ func (msg MsgBurn) GetSignBytes() []byte {
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgBurn) GetSigners() []sdk.AccAddress {
+func (msg MsgLock) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.CosmosSender)}
 }

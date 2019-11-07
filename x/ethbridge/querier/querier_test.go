@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	TestResponseJSON = "{\"id\":\"00x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"status\":{\"text\":\"pending\",\"final_claim\":\"\"},\"claims\":[{\"nonce\":0,\"ethereum_sender\":\"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"cosmos_receiver\":\"cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv\",\"validator_address\":\"cosmosvaloper1mnfm9c7cdgqnkk66sganp78m0ydmcr4pn7fqfk\",\"amount\":[{\"denom\":\"ethereum\",\"amount\":\"10\"}]}]}"
+	TestResponseJSON = "{\"id\":\"00x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"status\":{\"text\":\"pending\",\"final_claim\":\"\"},\"claims\":[{\"nonce\":0,\"ethereum_sender\":\"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"cosmos_receiver\":\"cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv\",\"validator_address\":\"cosmosvaloper1mnfm9c7cdgqnkk66sganp78m0ydmcr4pn7fqfk\",\"amount\":[{\"denom\":\"ethereum\",\"amount\":\"10\"}],\"claim_type\":\"lock\"}]}"
 )
 
 func TestNewQuerier(t *testing.T) {
@@ -42,12 +42,12 @@ func TestQueryEthProphecy(t *testing.T) {
 	testBridgeContractAddress := types.NewEthereumAddress(types.TestBridgeContractAddress)
 	testTokenContractAddress := types.NewEthereumAddress(types.TestTokenContractAddress)
 
-	initialEthBridgeClaim := types.CreateTestEthClaim(t, testBridgeContractAddress, testTokenContractAddress, valAddress, testEthereumAddress, types.TestCoins)
+	initialEthBridgeClaim := types.CreateTestEthClaim(t, testBridgeContractAddress, testTokenContractAddress, valAddress, testEthereumAddress, types.TestCoins, types.LockText)
 	oracleClaim, _ := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
 	_, err := oracleKeeper.ProcessClaim(ctx, oracleClaim)
 	require.Nil(t, err)
 
-	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t, valAddress)
+	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t, valAddress, types.LockText)
 
 	//Test query String()
 	require.Equal(t, testResponse.String(), TestResponseJSON)

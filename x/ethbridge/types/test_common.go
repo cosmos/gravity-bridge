@@ -26,38 +26,39 @@ const (
 )
 
 //Ethereum-bridge specific stuff
-func CreateTestEthMsg(t *testing.T, validatorAddress sdk.ValAddress) MsgCreateEthBridgeClaim {
+func CreateTestEthMsg(t *testing.T, validatorAddress sdk.ValAddress, claimType ClaimType) MsgCreateEthBridgeClaim {
 	testEthereumAddress := NewEthereumAddress(TestEthereumAddress)
 	testContractAddress := NewEthereumAddress(TestBridgeContractAddress)
 	testTokenAddress := NewEthereumAddress(TestTokenContractAddress)
-	ethClaim := CreateTestEthClaim(t, testContractAddress, testTokenAddress, validatorAddress, testEthereumAddress, TestCoins)
+	ethClaim := CreateTestEthClaim(t, testContractAddress, testTokenAddress, validatorAddress, testEthereumAddress, TestCoins, claimType)
 	ethMsg := NewMsgCreateEthBridgeClaim(ethClaim)
 	return ethMsg
 }
 
-func CreateTestEthClaim(t *testing.T, testContractAddress EthereumAddress, testTokenAddress EthereumAddress, validatorAddress sdk.ValAddress, testEthereumAddress EthereumAddress, coins string) EthBridgeClaim {
+func CreateTestEthClaim(t *testing.T, testContractAddress EthereumAddress, testTokenAddress EthereumAddress, validatorAddress sdk.ValAddress, testEthereumAddress EthereumAddress, coins string, claimType ClaimType) EthBridgeClaim {
 	testCosmosAddress, err1 := sdk.AccAddressFromBech32(TestAddress)
 	amount, err2 := sdk.ParseCoins(coins)
 	require.NoError(t, err1)
 	require.NoError(t, err2)
-	ethClaim := NewEthBridgeClaim(TestEthereumChainID, testContractAddress, TestNonce, TestSymbol, testTokenAddress, testEthereumAddress, testCosmosAddress, validatorAddress, amount)
+	ethClaim := NewEthBridgeClaim(TestEthereumChainID, testContractAddress, TestNonce, TestSymbol, testTokenAddress, testEthereumAddress, testCosmosAddress, validatorAddress, amount, claimType)
 	return ethClaim
 }
 
 func CreateTestBurnMsg(t *testing.T, testCosmosSender string, ethereumReceiver EthereumAddress, coins string) MsgBurn {
+	testTokenContractAddress := NewEthereumAddress(TestTokenContractAddress)
 	testCosmosAddress, err := sdk.AccAddressFromBech32(TestAddress)
 	require.NoError(t, err)
 	amount, err := sdk.ParseCoins(coins)
 	require.NoError(t, err)
-	burnEth := NewMsgBurn(testCosmosAddress, ethereumReceiver, amount)
+	burnEth := NewMsgBurn(TestEthereumChainID, testTokenContractAddress, testCosmosAddress, ethereumReceiver, amount)
 	return burnEth
 }
 
-func CreateTestQueryEthProphecyResponse(cdc *codec.Codec, t *testing.T, validatorAddress sdk.ValAddress) QueryEthProphecyResponse {
+func CreateTestQueryEthProphecyResponse(cdc *codec.Codec, t *testing.T, validatorAddress sdk.ValAddress, claimType ClaimType) QueryEthProphecyResponse {
 	testEthereumAddress := NewEthereumAddress(TestEthereumAddress)
 	testContractAddress := NewEthereumAddress(TestBridgeContractAddress)
 	testTokenAddress := NewEthereumAddress(TestTokenContractAddress)
-	ethBridgeClaim := CreateTestEthClaim(t, testContractAddress, testTokenAddress, validatorAddress, testEthereumAddress, TestCoins)
+	ethBridgeClaim := CreateTestEthClaim(t, testContractAddress, testTokenAddress, validatorAddress, testEthereumAddress, TestCoins, claimType)
 	oracleClaim, _ := CreateOracleClaimFromEthClaim(cdc, ethBridgeClaim)
 	ethBridgeClaims := []EthBridgeClaim{ethBridgeClaim}
 

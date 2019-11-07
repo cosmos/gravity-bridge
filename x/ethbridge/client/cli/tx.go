@@ -1,12 +1,15 @@
+//nolint:dupl
 package cli
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -19,9 +22,9 @@ import (
 // GetCmdCreateEthBridgeClaim is the CLI command for creating a claim on an ethereum prophecy
 func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "create-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount]",
+		Use:   "create-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount] [claim-type]",
 		Short: "create a claim on an ethereum prophecy",
-		Args:  cobra.ExactArgs(9),
+		Args:  cobra.ExactArgs(10),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -64,7 +67,13 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			ethBridgeClaim := types.NewEthBridgeClaim(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender, cosmosReceiver, validator, amount)
+			claimType, err := types.StringToClaimType(args[5])
+			if err != nil {
+				return types.ErrInvalidClaimType()
+			}
+
+			ethBridgeClaim := types.NewEthBridgeClaim(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender, cosmosReceiver, validator, amount, claimType)
+
 			msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
 			err = msg.ValidateBasic()
 			if err != nil {
@@ -79,15 +88,31 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 // GetCmdBurnEth is the CLI command for burning some of your eth and triggering an event
 func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount]",
+		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "burn cETH or cERC20 on the Cosmos chain",
-		Long: "This should be used to burn cETH or cERC20. It will burn your coins on the Cosmos Chain, removing them from your account and deducting them from the supply. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the withdrawal of the original ETH/ERC20 to you from the Ethereum contract!",
+		Long:  "This should be used to burn cETH or cERC20. It will burn your coins on the Cosmos Chain, removing them from your account and deducting them from the supply. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the withdrawal of the original ETH/ERC20 to you from the Ethereum contract!",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
+			if strings.TrimSpace(ethereumChainIDString) == "" {
+				return fmt.Errorf("Error: flag --ethereum-chain-id invalid value")
+			}
+
+			ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
+			if err != nil {
+				return err
+			}
+
+			tokenContractString := viper.GetString(types.FlagTokenContractAddr)
+			if strings.TrimSpace(tokenContractString) == "" {
+				return fmt.Errorf("Error: flag --token-contract-address invalid value")
+			}
+			tokenContract := types.NewEthereumAddress(tokenContractString)
 
 			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -101,7 +126,58 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgBurn(cosmosSender, ethereumReceiver, amount)
+			msg := types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
+			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}
+
+// GetCmdLock is the CLI command for locking some of your coins and triggering an event
+func GetCmdLock(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "lock [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
+		Short: "This should be used to lock Cosmos-originating coins (eg: ATOM). It will lock up your coins in the supply module, removing them from your account. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the minting of the pegged token on Etherum to you!",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
+			if strings.TrimSpace(ethereumChainIDString) == "" {
+				return fmt.Errorf("Error: flag --ethereum-chain-id invalid value")
+			}
+
+			ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
+			if err != nil {
+				return err
+			}
+
+			tokenContractString := viper.GetString(types.FlagTokenContractAddr)
+			if strings.TrimSpace(tokenContractString) == "" {
+				return fmt.Errorf("Error: flag --token-contract-address invalid value")
+			}
+			tokenContract := types.NewEthereumAddress(tokenContractString)
+
+			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			ethereumReceiver := types.NewEthereumAddress(args[1])
+
+			amount, err := sdk.ParseCoins(args[2])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgLock(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

@@ -38,10 +38,13 @@ type createEthClaimReq struct {
 	CosmosReceiver        string       `json:"cosmos_receiver"`
 	Validator             string       `json:"validator"`
 	Amount                string       `json:"amount"`
+	ClaimType             string       `json:"claim_type"`
 }
 
-type burnEthReq struct {
+type burnOrLockEthReq struct {
 	BaseReq          rest.BaseReq `json:"base_req"`
+	EthereumChainID  string       `json:"ethereum_chain_id"`
+	TokenContract    string       `json:"token_contract"`
 	CosmosSender     string       `json:"cosmos_sender"`
 	EthereumReceiver string       `json:"ethereum_receiver"`
 	Amount           string       `json:"amount"`
@@ -51,7 +54,8 @@ type burnEthReq struct {
 func RegisterRESTRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) {
 	r.HandleFunc(fmt.Sprintf("/%s/prophecies", storeName), createClaimHandler(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/%s/prophecies/{%s}/{%s}/{%s}/{%s}/{%s}/{%s}", storeName, restEthereumChainID, restBridgeContract, restNonce, restSymbol, restTokenContract, restEthereumSender), getProphecyHandler(cliCtx, storeName)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/%s/burn", storeName), burnHandler(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/%s/burn", storeName), burnOrLockHandler(cliCtx, "burn")).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/%s/lock", storeName), burnOrLockHandler(cliCtx, "lock")).Methods("POST")
 }
 
 func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -91,8 +95,14 @@ func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		claimType, err := types.StringToClaimType(req.ClaimType)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, types.ErrInvalidClaimType().Error())
+			return
+		}
+
 		// create the message
-		ethBridgeClaim := types.NewEthBridgeClaim(req.EthereumChainID, bridgeContractAddress, req.Nonce, req.Symbol, tokenContractAddress, ethereumSender, cosmosReceiver, validator, amount)
+		ethBridgeClaim := types.NewEthBridgeClaim(req.EthereumChainID, bridgeContractAddress, req.Nonce, req.Symbol, tokenContractAddress, ethereumSender, cosmosReceiver, validator, amount, claimType)
 		msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
 		err = msg.ValidateBasic()
 		if err != nil {
@@ -151,9 +161,9 @@ func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.Handle
 	}
 }
 
-func burnHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func burnOrLockHandler(cliCtx context.CLIContext, lockOrBurn string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req burnEthReq
+		var req burnOrLockEthReq
 
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
@@ -164,6 +174,14 @@ func burnHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		if !baseReq.ValidateBasic(w) {
 			return
 		}
+
+		ethereumChainID, err := strconv.Atoi(req.EthereumChainID)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		tokenContract := types.NewEthereumAddress(req.TokenContract)
 
 		cosmosSender, err := sdk.AccAddressFromBech32(req.CosmosSender)
 		if err != nil {
@@ -180,7 +198,13 @@ func burnHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// create the message
-		msg := types.NewMsgBurn(cosmosSender, ethereumReceiver, amount)
+		var msg sdk.Msg
+		switch lockOrBurn {
+		case "lock":
+			msg = types.NewMsgLock(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
+		case "burn":
+			msg = types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
+		}
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
