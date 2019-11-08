@@ -24,8 +24,8 @@ contract Oracle {
     */
     event LogNewOracleClaim(
         uint256 _prophecyID,
+        string _message,
         address _validatorAddress,
-        bytes32 _message,
         bytes _signature
     );
 
@@ -97,7 +97,7 @@ contract Oracle {
     */
     function newOracleClaim(
         uint256 _prophecyID,
-        bytes32 _message,
+        string memory _message,
         bytes memory _signature
     )
         public
@@ -126,8 +126,8 @@ contract Oracle {
 
         emit LogNewOracleClaim(
             _prophecyID,
-            validatorAddress,
             _message,
+            validatorAddress,
             _signature
         );
     }

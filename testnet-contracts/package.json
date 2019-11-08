@@ -9,10 +9,10 @@
   "author": "Denali Marsh",
   "license": "ISC",
   "dependencies": {
-    "cross-env": "5.0.5",
     "@truffle/hdwallet-provider": "^1.0.18",
     "bignumber.js": "^6.0.0",
     "bluebird": "^3.5.1",
+    "cross-env": "5.0.5",
     "dotenv": "^8.1.0",
     "eth-lib": "^0.2.8",
     "ethereumjs-util": "^5.2.0",
@@ -33,9 +33,13 @@
   "scripts": {
     "develop": "truffle develop",
     "migrate": "truffle migrate --reset",
-    "peggy:address": "truffle exec scripts/getBridgeAddress.js",
-    "peggy:lock": "truffle exec scripts/sendLockTx.js",
     "peggy:abi": "node scripts/formatAbi.js",
+    "peggy:address": "truffle exec scripts/getBridgeRegistryAddress.js",
+    "peggy:setup": "truffle exec scripts/setOracleAndBridgeBank.js",
+    "peggy:lock": "truffle exec scripts/sendLockTx.js",
+    "peggy:check": "truffle exec scripts/sendCheckProphecy.js",
+    "peggy:process": "truffle exec scripts/sendProcessProphecy.js",
+    "peggy:addBridgeToken": "truffle exec scripts/sendAddBridgeToken.js",
     "token:address": "truffle exec scripts/getTokenContractAddress.js",
     "token:mint": "truffle exec scripts/mintTestTokens.js",
     "token:approve": "truffle exec scripts/sendApproveTx.js"
