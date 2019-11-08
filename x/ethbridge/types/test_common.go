@@ -21,7 +21,7 @@ const (
 	TestTokenContractAddress  = "0x0000000000000000000000000000000000000000"
 	TestEthereumAddress       = "0x7B95B6EC7EbD73572298cEf32Bb54FA408207359"
 	AltTestEthereumAddress    = "0x7B95B6EC7EbD73572298cEf32Bb54FA408207344"
-	TestCoins                 = "10stake"
+	TestCoins                 = "10ethereum"
 	AltTestCoins              = "12ethereum"
 )
 
