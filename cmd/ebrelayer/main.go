@@ -5,6 +5,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -72,7 +73,7 @@ func init() {
 	executor := cli.PrepareMainCmd(rootCmd, "EBRELAYER", DefaultCLIHome)
 	err := executor.Execute()
 	if err != nil {
-		log.Fatal("Failed executing CLI command: %s, exiting...\n", err)
+		log.Fatal("failed executing CLI command: %s, exiting...\n", err)
 	}
 }
 
@@ -143,12 +144,12 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Parse ethereum provider
 	ethereumProvider := args[0]
 	if !relayer.IsWebsocketURL(ethereumProvider) {
-		return errors.New("Invalid [web3-provider]")
+		return fmt.Errorf("invalid [web3-provider]: %s", ethereumProvider)
 	}
 
 	// Parse the address of the deployed contract
 	if !common.IsHexAddress(args[1]) {
-		return errors.New("Invalid [bridge-contract-address]")
+		return fmt.Errorf("invalid [bridge-contract-address]: %s", args[1])
 	}
 	contractAddress := common.HexToAddress(args[1])
 

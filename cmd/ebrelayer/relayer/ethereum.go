@@ -139,12 +139,7 @@ func handleLogLockEvent(
 	}
 
 	// Initiate the relay
-	err = txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, passphrase, &prophecyClaim)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, passphrase, &prophecyClaim)
 }
 
 // handleLogNewProphecyClaimEvent : unpacks a LogNewProphecyClaim event, converts it to a OracleClaim, and relays a tx to Ethereum
@@ -162,10 +157,5 @@ func handleLogNewProphecyClaimEvent(
 	oracleClaim := txs.ProphecyClaimToSignedOracleClaim(event)
 
 	// Initiate the relay
-	err := txs.RelayOracleClaimToEthereum(provider, contractAddress, events.LogNewProphecyClaim, oracleClaim)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return txs.RelayOracleClaimToEthereum(provider, contractAddress, events.LogNewProphecyClaim, oracleClaim)
 }

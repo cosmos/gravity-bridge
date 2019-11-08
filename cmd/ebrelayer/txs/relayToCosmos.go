@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/cosmos/peggy/x/ethbridge"
@@ -37,7 +36,7 @@ func RelayLockToCosmos(
 
 	cliCtx.SkipConfirm = true
 
-	txBldr := authtxb.NewTxBuilderFromCLI().
+	txBldr := authtypes.NewTxBuilderFromCLI().
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
 		WithChainID(chainID)
 

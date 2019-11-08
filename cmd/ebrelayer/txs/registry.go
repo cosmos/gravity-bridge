@@ -83,6 +83,6 @@ func GetAddressFromBridgeRegistry(client *ethclient.Client, registry common.Addr
 		}
 		return cosmosBridgeAddress, nil
 	default:
-		panic("Invalid target contract address")
+		panic("invalid target contract address")
 	}
 }

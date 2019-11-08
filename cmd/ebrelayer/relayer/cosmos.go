@@ -71,7 +71,6 @@ func InitCosmosRelayer(
 					if err != nil {
 						return err
 					}
-				case events.Unsupported:
 				}
 			}
 		case <-quit:
@@ -111,10 +110,5 @@ func handleBurnLockMsg(
 
 	// TODO: Need some sort of delay on this so validators aren't all submitting at the same time
 	// Relay the CosmosMsg to the Ethereum network
-	err := txs.RelayProphecyClaimToEthereum(web3Provider, contractAddress, claimType, prophecyClaim)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return txs.RelayProphecyClaimToEthereum(web3Provider, contractAddress, claimType, prophecyClaim)
 }
