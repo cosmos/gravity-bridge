@@ -1,10 +1,5 @@
 version: 2.1
 
-executors:
-  golang:
-    docker:
-      - image: circleci/golang:1.13
-
 jobs: # basic units of work in a run
   build: # runs not using Workflows must have a `build` job as entry point
     docker: # run the steps with Docker
@@ -69,19 +64,22 @@ jobs: # basic units of work in a run
       - run: exit
 
   upload-coverage:
-    executor: golang
+    docker: # run the steps with Docker
+      # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
+      - image: circleci/golang:1.13 #
+    # directory where steps are run. Path must conform to the Go Workspace requirements
+    working_directory: /go/src/github.com/cosmos/peggy
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - run:
           name: gather
           command: |
-            echo "--> Concatenating profiles:"
-            ls /tmp/workspace/profiles/
-            echo "mode: atomic" > coverage.txt
-            for prof in $(ls /tmp/workspace/profiles/); do
-              tail -n +2 /tmp/workspace/profiles/"$prof" >> coverage.txt
+            for d in $(go list ./... | grep -v vendor); do
+                go test -race -coverprofile=profile.out -covermode=atomic "$d"
+                if [ -f profile.out ]; then
+                    cat profile.out >> coverage.txt
+                    rm profile.out
+                fi
             done
       - run:
           name: upload
