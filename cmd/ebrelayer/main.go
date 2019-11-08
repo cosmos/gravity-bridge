@@ -77,7 +77,7 @@ func init() {
 	executor := cli.PrepareMainCmd(rootCmd, "EBRELAYER", DefaultCLIHome)
 	err := executor.Execute()
 	if err != nil {
-		log.Fatal("failed executing CLI command: %s, exiting...\n", err)
+		log.Fatal("failed executing CLI command", err)
 	}
 }
 
@@ -166,7 +166,7 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	if rpcURL != "" {
 		_, err := url.Parse(rpcURL)
 		if rpcURL != "" && err != nil {
-			return fmt.Errorf("Invalid RPC URL: %v", rpcURL)
+			return fmt.Errorf("invalid RPC URL: %v", rpcURL)
 		}
 	}
 
@@ -226,7 +226,7 @@ func RunCosmosRelayerCmd(cmd *cobra.Command, args []string) error {
 
 	// Deployed contract address
 	if !common.IsHexAddress(args[2]) {
-		return errors.New("Invalid [bridge-contract-address")
+		return fmt.Errorf("invalid [bridge-contract-address]: %s", args[2])
 	}
 	contractAddress := common.HexToAddress(args[2])
 
