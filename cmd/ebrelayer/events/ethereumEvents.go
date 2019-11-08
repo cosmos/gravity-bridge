@@ -1,13 +1,11 @@
 package events
 
+import "log"
+
 // -----------------------------------------------------
 // 	Events: Events maintains a mapping of events to an array
 //		of claims made by validators.
 // -----------------------------------------------------
-
-import (
-	"fmt"
-)
 
 // EventRecords : map of transaction hashes to LockEvent structs
 var EventRecords = make(map[string]LockEvent)
@@ -22,21 +20,20 @@ func IsEventRecorded(txHash string) bool {
 	return EventRecords[txHash].Nonce != nil
 }
 
-// PrintEventByTx : prints any witnessed events associated with a given transaction hash
-func PrintEventByTx(txHash string) {
+// PrintLockEventByTx : prints any witnessed events associated with a given transaction hash
+func PrintLockEventByTx(txHash string) {
 	if IsEventRecorded(txHash) {
-		PrintEvent(EventRecords[txHash])
+		PrintLockEvent(EventRecords[txHash])
 	} else {
-		fmt.Printf("\nNo records from this session for tx: %v\n", txHash)
+		log.Printf("\nNo records from this session for tx: %v\n", txHash)
 	}
 }
 
-// PrintEvents : prints all the claims made on this event
-func PrintEvents() {
-
+// PrintLockEvents : prints all the claims made on this event
+func PrintLockEvents() {
 	// For each claim, print the validator which submitted the claim
 	for txHash, event := range EventRecords {
-		fmt.Printf("\nTransaction: %v\n", txHash)
-		PrintEvent(event)
+		log.Printf("\nTransaction: %v\n", txHash)
+		PrintLockEvent(event)
 	}
 }

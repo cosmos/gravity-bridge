@@ -124,7 +124,6 @@ func TestMintSuccess(t *testing.T) {
 	expectedCoins, err = sdk.ParseCoins(types.TestCoins)
 	require.NoError(t, err)
 	require.True(t, receiverCoins.IsEqual(expectedCoins))
-
 }
 
 func TestNoMintFail(t *testing.T) {
@@ -135,11 +134,14 @@ func TestNoMintFail(t *testing.T) {
 	valAddressVal2Pow4 := validatorAddresses[1]
 	valAddressVal3Pow3 := validatorAddresses[2]
 
-	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow3, types.NewEthereumAddress(types.TestEthereumAddress), types.TestCoins, types.LockText)
+	testTokenContractAddress := types.NewEthereumAddress(types.TestTokenContractAddress)
+	testEthereumAddress := types.NewEthereumAddress(types.TestEthereumAddress)
+
+	ethClaim1 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal1Pow3, testEthereumAddress, types.TestCoins, types.LockText)
 	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
-	ethClaim2 := types.CreateTestEthClaim(t, valAddressVal2Pow4, types.NewEthereumAddress(types.AltTestEthereumAddress), types.TestCoins, types.LockText)
+	ethClaim2 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal2Pow4, testEthereumAddress, types.TestCoins, types.LockText)
 	ethMsg2 := NewMsgCreateEthBridgeClaim(ethClaim2)
-	ethClaim3 := types.CreateTestEthClaim(t, valAddressVal3Pow3, types.NewEthereumAddress(types.TestEthereumAddress), types.AltTestCoins, types.LockText)
+	ethClaim3 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal3Pow3, testEthereumAddress, types.TestCoins, types.LockText)
 	ethMsg3 := NewMsgCreateEthBridgeClaim(ethClaim3)
 
 	//Initial message
@@ -196,7 +198,11 @@ func TestBurnEthSuccess(t *testing.T) {
 
 	// Initial message to mint some eth
 	coinsToMint := "7ethereum"
-	ethClaim1 := types.CreateTestEthClaim(t, valAddressVal1Pow5, types.NewEthereumAddress(types.TestEthereumAddress), coinsToMint, types.LockText)
+
+	testTokenContractAddress := types.NewEthereumAddress(types.TestTokenContractAddress)
+	testEthereumAddress := types.NewEthereumAddress(types.TestEthereumAddress)
+
+	ethClaim1 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal1Pow5, testEthereumAddress, coinsToMint, types.LockText)
 	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
 
 	// Initial message succeeds and mints eth

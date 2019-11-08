@@ -85,7 +85,7 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-// GetCmdBurnEth is the CLI command for burning some of your eth and triggering an event
+// GetCmdBurn is the CLI command for burning some of your eth and triggering an event
 func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
