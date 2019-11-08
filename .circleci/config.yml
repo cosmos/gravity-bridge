@@ -1,4 +1,10 @@
-version: 2 # use CircleCI 2.0
+version: 2.1
+
+executors:
+  golang:
+    docker:
+      - image: circleci/golang:1.13
+
 jobs: # basic units of work in a run
   build: # runs not using Workflows must have a `build` job as entry point
     docker: # run the steps with Docker
@@ -15,7 +21,7 @@ jobs: # basic units of work in a run
       - run: mkdir -p $TEST_RESULTS # create the test results directory
 
       - restore_cache: # restores saved cache if no changes are detected since last run
-      # Read about caching dependencies: https://circleci.com/docs/2.0/caching/
+          # Read about caching dependencies: https://circleci.com/docs/2.0/caching/
           keys:
             - v1-pkg-cache
 
@@ -35,19 +41,19 @@ jobs: # basic units of work in a run
       - image: circleci/node:9.11.1
 
     working_directory: /go/src/github.com/cosmos/peggy/ethereum-contracts
-    
+
     environment: # environment variables for the build itself
       TEST_RESULTS: /tmp/contract-test-results # path to where test results will be saved
-   
+
     steps:
       - checkout
 
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+            - v1-dependencies-{{ checksum "package.json" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
 
       - run: npm install
 
@@ -62,3 +68,21 @@ jobs: # basic units of work in a run
           path: /tmp/contract-test-results
       - run: exit
 
+  upload-coverage:
+    executor: golang
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: gather
+          command: |
+            echo "--> Concatenating profiles:"
+            ls /tmp/workspace/profiles/
+            echo "mode: atomic" > coverage.txt
+            for prof in $(ls /tmp/workspace/profiles/); do
+              tail -n +2 /tmp/workspace/profiles/"$prof" >> coverage.txt
+            done
+      - run:
+          name: upload
+          command: bash <(curl -s https://codecov.io/bash) -f coverage.txt
