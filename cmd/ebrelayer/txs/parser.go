@@ -160,10 +160,7 @@ func getSymbolAmountFromCoin(coin string) (string, *big.Int) {
 	var symbol string
 
 	// Set up regex
-	isLetter, err := regexp.Compile(`[a-z]`)
-	if err != nil {
-		log.Fatal("Regex compilation error:", err)
-	}
+	isLetter := regexp.MustCompile(`[a-z]`)
 
 	// Iterate over each rune in the coin string
 	for i, char := range coinRune {

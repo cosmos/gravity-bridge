@@ -1,13 +1,11 @@
 package txs
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -61,34 +59,6 @@ func prefixMessage(message string, key *ecdsa.PrivateKey) ([]byte, []byte) {
 	return sig, prefixed
 }
 
-// verifySignature: utility function for signature verification
-func verifySignature(hash common.Hash, signature []byte) {
-	// Load private key
-	privateKey, err := LoadPrivateKey()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Validator's public key
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		log.Fatal("error casting public key to ECDSA")
-	}
-	publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
-
-	// Public key of validator which signed this message
-	sigPublicKeyECDSA, err := crypto.SigToPub(hash.Bytes(), signature)
-	if err != nil {
-		log.Fatal(err)
-	}
-	sigPublicKeyBytes := crypto.FromECDSAPub(sigPublicKeyECDSA)
-
-	// Compare
-	matches := bytes.Equal(sigPublicKeyBytes, publicKeyBytes)
-	log.Println(matches)
-}
-
 // LoadPrivateKey : loads the validator's private key from environment variables
 func LoadPrivateKey() (key *ecdsa.PrivateKey, err error) {
 	// Load config file containing environment variables
@@ -129,28 +99,4 @@ func LoadSender() (address common.Address, err error) {
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
 	return fromAddress, nil
-}
-
-// SigRSV : utility function which breaks a signature down into [R, S, V] components
-func SigRSV(isig interface{}) ([32]byte, [32]byte, uint8) {
-	var sig []byte
-	switch v := isig.(type) {
-	case []byte:
-		sig = v
-	case string:
-		sig, _ = hexutil.Decode(v)
-	}
-
-	sigstr := common.Bytes2Hex(sig)
-	rS := sigstr[0:64]
-	sS := sigstr[64:128]
-	R := [32]byte{}
-	S := [32]byte{}
-	copy(R[:], common.FromHex(rS))
-	copy(S[:], common.FromHex(sS))
-	vStr := sigstr[128:130]
-	vI, _ := strconv.Atoi(vStr)
-	V := uint8(vI + 27)
-
-	return R, S, V
 }

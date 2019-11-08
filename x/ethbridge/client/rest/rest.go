@@ -50,13 +50,6 @@ type burnOrLockEthReq struct {
 	Amount           string       `json:"amount"`
 }
 
-type burnEthReq struct {
-	BaseReq          rest.BaseReq `json:"base_req"`
-	CosmosSender     string       `json:"cosmos_sender"`
-	EthereumReceiver string       `json:"ethereum_receiver"`
-	Amount           string       `json:"amount"`
-}
-
 // RegisterRESTRoutes - Central function to define routes that get registered by the main application
 func RegisterRESTRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) {
 	r.HandleFunc(fmt.Sprintf("/%s/prophecies", storeName), createClaimHandler(cliCtx)).Methods("POST")
