@@ -141,7 +141,7 @@ func TestNoMintFail(t *testing.T) {
 	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
 	ethClaim2 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal2Pow4, testEthereumAddress, types.TestCoins, types.LockText)
 	ethMsg2 := NewMsgCreateEthBridgeClaim(ethClaim2)
-	ethClaim3 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal3Pow3, testEthereumAddress, types.TestCoins, types.LockText)
+	ethClaim3 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal3Pow3, testEthereumAddress, types.AltTestCoins, types.LockText)
 	ethMsg3 := NewMsgCreateEthBridgeClaim(ethClaim3)
 
 	//Initial message

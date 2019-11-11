@@ -91,11 +91,6 @@ func processSuccessfulClaim(ctx sdk.Context, supplyKeeper supply.Keeper, claim s
 	if err != nil {
 		panic(err)
 	}
-	err = supplyKeeper.SendCoinsFromModuleToAccount(ctx, ModuleName, receiverAddress, oracleClaim.Amount)
-	if err != nil {
-		panic(err)
-	}
-
 	return nil
 }
 
