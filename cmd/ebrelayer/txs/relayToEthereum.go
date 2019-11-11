@@ -2,6 +2,7 @@ package txs
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 
 	"log"
@@ -22,9 +23,15 @@ const (
 )
 
 // RelayProphecyClaimToEthereum : relays the provided ProphecyClaim to CosmosBridge contract on the Ethereum network
-func RelayProphecyClaimToEthereum(provider string, contractAddress common.Address, event events.Event, claim ProphecyClaim) error {
+func RelayProphecyClaimToEthereum(
+	provider string,
+	contractAddress common.Address,
+	event events.Event,
+	claim ProphecyClaim,
+	key *ecdsa.PrivateKey,
+) error {
 	// Initialize client service, validator's tx auth, and target contract address
-	client, auth, target := initRelayConfig(provider, contractAddress, event)
+	client, auth, target := initRelayConfig(provider, contractAddress, event, key)
 
 	// Initialize CosmosBridge instance
 	fmt.Println("\nFetching CosmosBridge contract...")
@@ -59,9 +66,15 @@ func RelayProphecyClaimToEthereum(provider string, contractAddress common.Addres
 }
 
 // RelayOracleClaimToEthereum : relays the provided OracleClaim to Oracle contract on the Ethereum network
-func RelayOracleClaimToEthereum(provider string, contractAddress common.Address, event events.Event, claim OracleClaim) error {
+func RelayOracleClaimToEthereum(
+	provider string,
+	contractAddress common.Address,
+	event events.Event,
+	claim OracleClaim,
+	key *ecdsa.PrivateKey,
+) error {
 	// Initialize client service, validator's tx auth, and target contract address
-	client, auth, target := initRelayConfig(provider, contractAddress, event)
+	client, auth, target := initRelayConfig(provider, contractAddress, event, key)
 
 	// Initialize Oracle instance
 	fmt.Println("\nFetching Oracle contract...")
@@ -100,18 +113,13 @@ func initRelayConfig(
 	provider string,
 	registry common.Address,
 	event events.Event,
+	key *ecdsa.PrivateKey,
 ) (*ethclient.Client,
 	*bind.TransactOpts,
 	common.Address,
 ) {
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Load the validator's private key
-	key, err := LoadPrivateKey()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -149,7 +157,7 @@ func initRelayConfig(
 	case events.LogNewProphecyClaim:
 		targetContract = Oracle
 	default:
-		panic("invalid target contract address")
+		panic("Invalid target contract address")
 	}
 
 	// Get the specific contract's address

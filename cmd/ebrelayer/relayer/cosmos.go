@@ -2,6 +2,7 @@ package relayer
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"os"
 	"os/signal"
 	"syscall"
@@ -22,7 +23,7 @@ func InitCosmosRelayer(
 	tendermintProvider string,
 	web3Provider string,
 	contractAddress common.Address,
-	rawPrivateKey string,
+	key *ecdsa.PrivateKey,
 ) error {
 	logger := tmLog.NewTMLogger(tmLog.NewSyncWriter(os.Stdout))
 	client := tmClient.NewHTTP(tendermintProvider, "/websocket")
@@ -67,10 +68,11 @@ func InitCosmosRelayer(
 				switch claimType {
 				case events.MsgBurn, events.MsgLock:
 					// Parse event data, then package it as a ProphecyClaim and relay to the Ethereum Network
-					err := handleBurnLockMsg(event.GetAttributes(), claimType, web3Provider, contractAddress)
+					err := handleBurnLockMsg(event.GetAttributes(), claimType, web3Provider, contractAddress, key)
 					if err != nil {
 						return err
 					}
+				case events.Unsupported:
 				}
 			}
 		case <-quit:
@@ -101,6 +103,7 @@ func handleBurnLockMsg(
 	claimType events.Event,
 	web3Provider string,
 	contractAddress common.Address,
+	key *ecdsa.PrivateKey,
 ) error {
 	// Parse the witnessed event's data into a new CosmosMsg
 	cosmosMsg := txs.BurnLockEventToCosmosMsg(claimType, attributes)
@@ -110,5 +113,10 @@ func handleBurnLockMsg(
 
 	// TODO: Need some sort of delay on this so validators aren't all submitting at the same time
 	// Relay the CosmosMsg to the Ethereum network
-	return txs.RelayProphecyClaimToEthereum(web3Provider, contractAddress, claimType, prophecyClaim)
+	err := txs.RelayProphecyClaimToEthereum(web3Provider, contractAddress, claimType, prophecyClaim, key)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
