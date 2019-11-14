@@ -67,7 +67,7 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			claimType, err := types.StringToClaimType(args[5])
+			claimType, err := types.StringToClaimType(args[9])
 			if err != nil {
 				return types.ErrInvalidClaimType()
 			}
