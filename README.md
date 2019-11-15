@@ -112,11 +112,14 @@ ebcli tx ethbridge lock $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf
 # Confirm that the token was successfully locked
 ebcli query account $(ebcli keys show testuser -a) --trust-node
 
-# Test out burning the eth for the return trip
-ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 1eth --from=testuser --token-contract-address=0x0000000000000000000000000000000000000000 --ethereum-chain-id=3 --chain-id=peggy --yes
+# Test out creating a bridge burn claim for the return trip back
+ebcli tx ethbridge create-claim 1 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB 0 stake 0x3f5dab653144958ff6d309647baf1abde8da204d 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 1stake burn --from=validator --chain-id=peggy --yes
 
 # Confirm that the prophecy was successfully processed and that stake coin was returned to the testuser address
 ebcli query account $(ebcli keys show testuser -a) --trust-node
+
+# Test out burning the eth for the return trip
+ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 1eth --from=testuser --token-contract-address=0x0000000000000000000000000000000000000000 --ethereum-chain-id=3 --chain-id=peggy --yes
 
 ```
 
