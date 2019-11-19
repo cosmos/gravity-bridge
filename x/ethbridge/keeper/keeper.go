@@ -43,8 +43,13 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 	return k.codespace
 }
 
-func (k Keeper) ProcessClaim(ctx sdk.Context, claim oracle.Claim) (oracle.Status, sdk.Error) {
-	status, sdkErr := k.oracleKeeper.ProcessClaim(ctx, claim)
+func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.EthBridgeClaim) (oracle.Status, sdk.Error) {
+	oracleClaim, err := types.CreateOracleClaimFromEthClaim(k.cdc, claim)
+	if err != nil {
+		return oracle.Status{}, types.ErrJSONMarshalling(k.Codespace())
+	}
+
+	status, sdkErr := k.oracleKeeper.ProcessClaim(ctx, oracleClaim)
 	if sdkErr != nil {
 		return oracle.Status{}, sdkErr
 	}
