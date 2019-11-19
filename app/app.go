@@ -137,7 +137,7 @@ func NewEthereumBridgeApp(
 	app.OracleKeeper = oracle.NewKeeper(app.cdc, keys[oracle.StoreKey],
 		app.StakingKeeper, oracle.DefaultCodespace, oracle.DefaultConsensusNeeded,
 	)
-	app.BridgeKeeper = ethbridge.NewKeeper(app.cdc, app.SupplyKeeper, ethbridge.DefaultCodespace)
+	app.BridgeKeeper = ethbridge.NewKeeper(app.cdc, app.SupplyKeeper, app.OracleKeeper, ethbridge.DefaultCodespace)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

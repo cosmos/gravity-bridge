@@ -6,6 +6,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/x/supply"
@@ -18,14 +19,16 @@ type Keeper struct {
 	cdc *codec.Codec // The wire codec for binary encoding/decoding.
 
 	supplyKeeper supply.Keeper
+	oracleKeeper oracle.Keeper
 	codespace    sdk.CodespaceType
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(cdc *codec.Codec, supplyKeeper supply.Keeper, codespace sdk.CodespaceType) Keeper {
+func NewKeeper(cdc *codec.Codec, supplyKeeper supply.Keeper, oracleKeeper oracle.Keeper, codespace sdk.CodespaceType) Keeper {
 	return Keeper{
 		cdc:          cdc,
 		supplyKeeper: supplyKeeper,
+		oracleKeeper: oracleKeeper,
 		codespace:    codespace,
 	}
 }
@@ -38,6 +41,14 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // Codespace returns the codespace
 func (k Keeper) Codespace() sdk.CodespaceType {
 	return k.codespace
+}
+
+func (k Keeper) ProcessClaim(ctx sdk.Context, claim oracle.Claim) (oracle.Status, sdk.Error) {
+	status, sdkErr := k.oracleKeeper.ProcessClaim(ctx, claim)
+	if sdkErr != nil {
+		return oracle.Status{}, sdkErr
+	}
+	return status, nil
 }
 
 func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) sdk.Error {
