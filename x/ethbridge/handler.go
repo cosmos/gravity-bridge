@@ -10,12 +10,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
 )
 
 // NewHandler returns a handler for "ethbridge" type messages.
 func NewHandler(
-	accountKeeper auth.AccountKeeper, bridgeKeeper Keeper,
+	accountKeeper types.AccountKeeper, bridgeKeeper Keeper,
 	cdc *codec.Codec) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
@@ -73,7 +72,7 @@ func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
 }
 
 func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
-	accountKeeper auth.AccountKeeper, bridgeKeeper Keeper, msg MsgBurn) sdk.Result {
+	accountKeeper types.AccountKeeper, bridgeKeeper Keeper, msg MsgBurn) sdk.Result {
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
 	if account == nil {
 		return sdk.ErrInvalidAddress(msg.CosmosSender.String()).Result()
@@ -105,7 +104,7 @@ func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
 }
 
 func handleMsgLock(ctx sdk.Context, cdc *codec.Codec,
-	accountKeeper auth.AccountKeeper, bridgeKeeper Keeper, msg MsgLock) sdk.Result {
+	accountKeeper types.AccountKeeper, bridgeKeeper Keeper, msg MsgLock) sdk.Result {
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
 	if account == nil {
 		return sdk.ErrInvalidAddress(msg.CosmosSender.String()).Result()

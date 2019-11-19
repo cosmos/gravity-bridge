@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/peggy/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/x/supply"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -18,13 +17,13 @@ import (
 type Keeper struct {
 	cdc *codec.Codec // The wire codec for binary encoding/decoding.
 
-	supplyKeeper supply.Keeper
-	oracleKeeper oracle.Keeper
+	supplyKeeper types.SupplyKeeper
+	oracleKeeper types.OracleKeeper
 	codespace    sdk.CodespaceType
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(cdc *codec.Codec, supplyKeeper supply.Keeper, oracleKeeper oracle.Keeper, codespace sdk.CodespaceType) Keeper {
+func NewKeeper(cdc *codec.Codec, supplyKeeper types.SupplyKeeper, oracleKeeper types.OracleKeeper, codespace sdk.CodespaceType) Keeper {
 	return Keeper{
 		cdc:          cdc,
 		supplyKeeper: supplyKeeper,

@@ -5,7 +5,6 @@ import (
 
 	"github.com/cosmos/peggy/x/ethbridge/client"
 	"github.com/cosmos/peggy/x/ethbridge/types"
-	"github.com/cosmos/peggy/x/oracle"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 )
 
@@ -75,9 +73,9 @@ type AppModule struct {
 	AppModuleBasic
 	AppModuleSimulation
 
-	OracleKeeper  oracle.Keeper
-	SupplyKeeper  supply.Keeper
-	AccountKeeper auth.AccountKeeper
+	OracleKeeper  types.OracleKeeper
+	SupplyKeeper  types.SupplyKeeper
+	AccountKeeper types.AccountKeeper
 	BridgeKeeper  Keeper
 	Codespace     sdk.CodespaceType
 	Codec         *codec.Codec
@@ -85,7 +83,7 @@ type AppModule struct {
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(
-	oracleKeeper oracle.Keeper, supplyKeeper supply.Keeper, accountKeeper auth.AccountKeeper, bridgeKeeper Keeper,
+	oracleKeeper types.OracleKeeper, supplyKeeper types.SupplyKeeper, accountKeeper types.AccountKeeper, bridgeKeeper Keeper,
 	codespace sdk.CodespaceType, cdc *codec.Codec) AppModule {
 
 	return AppModule{
