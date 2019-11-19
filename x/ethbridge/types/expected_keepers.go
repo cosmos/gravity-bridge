@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/peggy/x/oracle"
 )
 
-// AccountKeeper defines the expected staking keeper
+// AccountKeeper defines the expected account keeper
 type AccountKeeper interface {
 	GetAccount(sdk.Context, sdk.AccAddress) authexported.Account
 }
@@ -22,7 +22,7 @@ type SupplyKeeper interface {
 	SetModuleAccount(sdk.Context, supplyexported.ModuleAccountI)
 }
 
-// OracleKeeper defines the expected supply keeper
+// OracleKeeper defines the expected oracle keeper
 type OracleKeeper interface {
 	ProcessClaim(ctx sdk.Context, claim oracle.Claim) (oracle.Status, sdk.Error)
 	GetProphecy(ctx sdk.Context, id string) (oracle.Prophecy, sdk.Error)
