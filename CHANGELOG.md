@@ -64,3 +64,4 @@ All notable changes to this project will be documented in this file.
 - (testnet-contracts) [\#89](https://github.com/cosmos/peggy/pull/89) Dynamic validator set
 - (misc) [\#71](https://github.com/cosmos/peggy/pull/71) Dockerize validator and relayer for simple testing purposes
 - (sdk) Update SDK version to v0.37.4
+- (ethbridge) [\#100](https://github.com/cosmos/peggy/pull/100) Add Keeper to EthBridge module and move appropriate handler logic into it
