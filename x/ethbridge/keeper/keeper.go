@@ -42,6 +42,7 @@ func (k Keeper) Codespace() sdk.CodespaceType {
 	return k.codespace
 }
 
+// ProcessClaim processes a new claim coming in from a validator
 func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.EthBridgeClaim) (oracle.Status, sdk.Error) {
 	oracleClaim, err := types.CreateOracleClaimFromEthClaim(k.cdc, claim)
 	if err != nil {
@@ -55,6 +56,7 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.EthBridgeClaim) (oracl
 	return status, nil
 }
 
+// ProcessSuccessfulClaim processes a claim that has just completed successfully with consensus
 func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) sdk.Error {
 	oracleClaim, err := types.CreateOracleClaimFromOracleString(claim)
 	if err != nil {
@@ -76,6 +78,7 @@ func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) sdk.Error 
 	return nil
 }
 
+// ProcessBurn processes the burn of bridged coins from the given sender
 func (k Keeper) ProcessBurn(ctx sdk.Context, cosmosSender sdk.AccAddress, amount sdk.Coins) sdk.Error {
 	err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, cosmosSender, types.ModuleName, amount)
 	if err != nil {
@@ -88,6 +91,7 @@ func (k Keeper) ProcessBurn(ctx sdk.Context, cosmosSender sdk.AccAddress, amount
 	return nil
 }
 
+// ProcessLock processes the lockup of cosmos coins from the given sender
 func (k Keeper) ProcessLock(ctx sdk.Context, cosmosSender sdk.AccAddress, amount sdk.Coins) sdk.Error {
 	err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, cosmosSender, types.ModuleName, amount)
 	if err != nil {
