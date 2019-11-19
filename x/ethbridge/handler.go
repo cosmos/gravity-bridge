@@ -10,22 +10,21 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/supply"
 )
 
 // NewHandler returns a handler for "ethbridge" type messages.
 func NewHandler(
-	oracleKeeper oracle.Keeper, supplyKeeper supply.Keeper, accountKeeper auth.AccountKeeper, bridgeKeeper Keeper,
+	oracleKeeper oracle.Keeper, accountKeeper auth.AccountKeeper, bridgeKeeper Keeper,
 	codespace sdk.CodespaceType, cdc *codec.Codec) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case MsgCreateEthBridgeClaim:
-			return handleMsgCreateEthBridgeClaim(ctx, cdc, oracleKeeper, supplyKeeper, bridgeKeeper, msg, codespace)
+			return handleMsgCreateEthBridgeClaim(ctx, cdc, oracleKeeper, bridgeKeeper, msg, codespace)
 		case MsgBurn:
-			return handleMsgBurn(ctx, cdc, supplyKeeper, accountKeeper, msg, codespace)
+			return handleMsgBurn(ctx, cdc, accountKeeper, bridgeKeeper, msg, codespace)
 		case MsgLock:
-			return handleMsgLock(ctx, cdc, supplyKeeper, accountKeeper, msg, codespace)
+			return handleMsgLock(ctx, cdc, accountKeeper, bridgeKeeper, msg, codespace)
 		default:
 			errMsg := fmt.Sprintf("unrecognized ethbridge message type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -35,7 +34,7 @@ func NewHandler(
 
 // Handle a message to create a bridge claim
 func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
-	oracleKeeper oracle.Keeper, supplyKeeper supply.Keeper, bridgeKeeper Keeper,
+	oracleKeeper oracle.Keeper, bridgeKeeper Keeper,
 	msg MsgCreateEthBridgeClaim, codespace sdk.CodespaceType) sdk.Result {
 	oracleClaim, err := types.CreateOracleClaimFromEthClaim(cdc, types.EthBridgeClaim(msg))
 	if err != nil {
@@ -76,19 +75,16 @@ func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
 }
 
 func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
-	supplyKeeper supply.Keeper, accountKeeper auth.AccountKeeper, msg MsgBurn,
+	accountKeeper auth.AccountKeeper, bridgeKeeper Keeper, msg MsgBurn,
 	codespace sdk.CodespaceType) sdk.Result {
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
 	if account == nil {
 		return sdk.ErrInvalidAddress(msg.CosmosSender.String()).Result()
 	}
-	err := supplyKeeper.SendCoinsFromAccountToModule(ctx, msg.CosmosSender, ModuleName, msg.Amount)
+
+	err := bridgeKeeper.ProcessBurn(ctx, msg.CosmosSender, msg.Amount)
 	if err != nil {
 		return err.Result()
-	}
-	err = supplyKeeper.BurnCoins(ctx, ModuleName, msg.Amount)
-	if err != nil {
-		panic(err)
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -112,13 +108,14 @@ func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
 }
 
 func handleMsgLock(ctx sdk.Context, cdc *codec.Codec,
-	supplyKeeper supply.Keeper, accountKeeper auth.AccountKeeper, msg MsgLock,
+	accountKeeper auth.AccountKeeper, bridgeKeeper Keeper, msg MsgLock,
 	codespace sdk.CodespaceType) sdk.Result {
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
 	if account == nil {
 		return sdk.ErrInvalidAddress(msg.CosmosSender.String()).Result()
 	}
-	err := supplyKeeper.SendCoinsFromAccountToModule(ctx, msg.CosmosSender, ModuleName, msg.Amount)
+
+	err := bridgeKeeper.ProcessLock(ctx, msg.CosmosSender, msg.Amount)
 	if err != nil {
 		return err.Result()
 	}

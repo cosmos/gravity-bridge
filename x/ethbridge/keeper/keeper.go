@@ -60,3 +60,23 @@ func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) sdk.Error 
 	}
 	return nil
 }
+
+func (k Keeper) ProcessBurn(ctx sdk.Context, cosmosSender sdk.AccAddress, amount sdk.Coins) sdk.Error {
+	err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, cosmosSender, types.ModuleName, amount)
+	if err != nil {
+		return err
+	}
+	err = k.supplyKeeper.BurnCoins(ctx, types.ModuleName, amount)
+	if err != nil {
+		panic(err)
+	}
+	return nil
+}
+
+func (k Keeper) ProcessLock(ctx sdk.Context, cosmosSender sdk.AccAddress, amount sdk.Coins) sdk.Error {
+	err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, cosmosSender, types.ModuleName, amount)
+	if err != nil {
+		return err
+	}
+	return nil
+}
