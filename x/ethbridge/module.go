@@ -78,12 +78,15 @@ type AppModule struct {
 	OracleKeeper  oracle.Keeper
 	SupplyKeeper  supply.Keeper
 	AccountKeeper auth.AccountKeeper
+	BridgeKeeper  Keeper
 	Codespace     sdk.CodespaceType
 	Codec         *codec.Codec
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(oracleKeeper oracle.Keeper, supplyKeeper supply.Keeper, accountKeeper auth.AccountKeeper, codespace sdk.CodespaceType, cdc *codec.Codec) AppModule {
+func NewAppModule(
+	oracleKeeper oracle.Keeper, supplyKeeper supply.Keeper, accountKeeper auth.AccountKeeper, bridgeKeeper Keeper,
+	codespace sdk.CodespaceType, cdc *codec.Codec) AppModule {
 
 	return AppModule{
 		AppModuleBasic:      AppModuleBasic{},
@@ -92,6 +95,7 @@ func NewAppModule(oracleKeeper oracle.Keeper, supplyKeeper supply.Keeper, accoun
 		OracleKeeper:  oracleKeeper,
 		SupplyKeeper:  supplyKeeper,
 		AccountKeeper: accountKeeper,
+		BridgeKeeper:  bridgeKeeper,
 		Codespace:     codespace,
 		Codec:         cdc,
 	}
@@ -113,7 +117,7 @@ func (AppModule) Route() string {
 
 // NewHandler returns an sdk.Handler for the ethbridge module.
 func (am AppModule) NewHandler() sdk.Handler {
-	return NewHandler(am.OracleKeeper, am.SupplyKeeper, am.AccountKeeper, am.Codespace, am.Codec)
+	return NewHandler(am.OracleKeeper, am.SupplyKeeper, am.AccountKeeper, am.BridgeKeeper, am.Codespace, am.Codec)
 }
 
 // QuerierRoute returns the ethbridge module's querier route name.

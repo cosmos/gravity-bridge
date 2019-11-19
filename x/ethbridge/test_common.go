@@ -19,7 +19,8 @@ func CreateTestHandler(t *testing.T, consensusNeeded float64, validatorAmounts [
 	supplyKeeper.SetModuleAccount(ctx, bridgeAccount)
 
 	cdc := keeperLib.MakeTestCodec()
-	handler := NewHandler(oracleKeeper, supplyKeeper, accountKeeper, types.DefaultCodespace, cdc)
+	bridgeKeeper := NewKeeper(cdc, supplyKeeper, types.DefaultCodespace)
+	handler := NewHandler(oracleKeeper, supplyKeeper, accountKeeper, bridgeKeeper, types.DefaultCodespace, cdc)
 
 	return ctx, oracleKeeper, bankKeeper, supplyKeeper, accountKeeper, validatorAddresses, handler
 }

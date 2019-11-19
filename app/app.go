@@ -88,6 +88,7 @@ type EthereumBridgeApp struct {
 	ParamsKeeper  params.Keeper
 
 	// EthBridge keepers
+	BridgeKeeper ethbridge.Keeper
 	OracleKeeper oracle.Keeper
 
 	// the module manager
@@ -136,6 +137,7 @@ func NewEthereumBridgeApp(
 	app.OracleKeeper = oracle.NewKeeper(app.cdc, keys[oracle.StoreKey],
 		app.StakingKeeper, oracle.DefaultCodespace, oracle.DefaultConsensusNeeded,
 	)
+	app.BridgeKeeper = ethbridge.NewKeeper(app.cdc, app.SupplyKeeper, ethbridge.DefaultCodespace)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -146,7 +148,7 @@ func NewEthereumBridgeApp(
 		supply.NewAppModule(app.SupplyKeeper, app.AccountKeeper),
 		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
 		oracle.NewAppModule(app.OracleKeeper),
-		ethbridge.NewAppModule(app.OracleKeeper, app.SupplyKeeper, app.AccountKeeper, ethbridge.DefaultCodespace, app.cdc),
+		ethbridge.NewAppModule(app.OracleKeeper, app.SupplyKeeper, app.AccountKeeper, app.BridgeKeeper, ethbridge.DefaultCodespace, app.cdc),
 	)
 
 	app.mm.SetOrderEndBlockers(staking.ModuleName)
