@@ -24,12 +24,14 @@ yarn migrate
 # Activate the contracts (required)
 yarn peggy:setup
 
-# Get the address of Peggy's registry service (required to start Cosmos relayer)
+# Generate contract ABI (required to start the Relayer)
+yarn peggy:abi
+
+# Get the address of Peggy's registry contract (required to start the Relayer)
 yarn peggy:address
 ```
 
 ### Start Bridge blockchain (terminal 3)
-TODO: Add generation step
 
 ```bash
 # Build the Bridge application
@@ -69,7 +71,7 @@ ebrelayer init ethereum [LOCAL_WEB_SOCKET] [REGISTRY_DEPLOYED_ADDRESS] validator
 # The relayer will now watch the contract on Ropsten and create a new oracle claim whenever it detects a new prophecy claim event
 ```
 
-### Send burn transaction on Cosmos
+### Send burn transaction on Cosmos (terminal 2)
 
 ```bash
 # Send some tokens to the testuser using the process described in section "Running and testing the application"
@@ -128,15 +130,16 @@ Success! Signature: 0x919ca03752269c87c5df9f4af99ba49be84cb2bbc77921db581719379e
 
 Congratulations, you've automatically relayed information from the burn transaction on Tendermint to the contracts deployed on the Ethereum network as a new prophecy claim, witnessed the new prophecy claim, and signed its information to create an oracle claim. When enough validators submit oracle claims for the prophecy claim, it will be processed. When a prophecy claim is successfully processed, the funds are unlocked on the deployed contracts and sent to the intended recipient on the Ethereum network.   
 
+## Prophecy claim processing
 
-You'll be able to check the status of an active prophecy claim
+You are able to check the status of active prophecy claims. Prophecy claims reach the signed power threshold when the weighted signed power surpasses the weighted total power, where *weighted total power* = (total power * 2) and *weighted signed power* = (signed power * 3).
 
 ```bash
 # Check prophecy claim status
 yarn peggy:check [PROPHECY_CLAIM_ID]
 ```
 
-Expected output:
+Expected output (for a prophecy claim with an ID of 2)
 
 ```bash
 
@@ -149,4 +152,13 @@ Weighted total power:    104
 Weighted signed power:   150
 Reached threshold:       true
 ----------------------------------------
+```   
+
+
+Once the prophecy claim has reached the signed power threshold, anyone may initiate its processing. Any attempts to process prophecy claims under the signed power threshold will be rejected by the contracts.   
+
+
+```bash
+# Process the prophecy claim
+yarn peggy:process [PROPHECY_CLAIM_ID]
 ```

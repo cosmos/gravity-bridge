@@ -27,13 +27,14 @@ yarn migrate
 # Activate the contracts (required)
 yarn peggy:setup
 
-# Get contract's address
+# Generate contract ABI (required to start the Relayer)
+yarn peggy:abi
+
+# Get the address of Peggy's registry contract (required to start the Relayer)
 yarn peggy:address
 ```
 
 ### Start Bridge blockchain (terminal 3)
-
-TODO: Add generation step
 
 If you've already started the Bridge blockchain, you can skip this step.
 
@@ -112,6 +113,11 @@ Tags: - action = create_bridge_claim
 ### Setup
 
 Before you can use the Bridge with the Ropsten testnet, you'll need to add two environment variables to the configuration file at `testnet-contracts/.env`. Add MNEMONIC from your MetaMask account, this will allow you to deploy the contracts to the Ropsten testnet. Add INFURA_PROJECT_ID from your Infura account, this will allow you to start a Relayer service which listens for events on the Ropsten testnet.
+
+Further reading:
+
+- [MetaMask Mnemonic](https://metamask.zendesk.com/hc/en-us/articles/360015290032-How-to-Reveal-Your-Seed-Phrase)
+- [Infura Project ID](https://blog.infura.io/introducing-the-infura-dashboard-8969b7ab94e7)
 
 
 ### Usage
