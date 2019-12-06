@@ -27,13 +27,10 @@ func RelayLockToCosmos(
 	validatorAddress sdk.ValAddress,
 	moniker string,
 	passphrase string,
+	cliCtx context.CLIContext,
 	claim *types.EthBridgeClaim,
 	rpcUrl string,
 ) error {
-	cliCtx := context.NewCLIContext().
-		WithCodec(cdc).
-		WithFromAddress(sdk.AccAddress(validatorAddress)).
-		WithFromName(moniker)
 
 	if rpcUrl != "" {
 		cliCtx = cliCtx.WithNodeURI(rpcUrl)

@@ -190,6 +190,12 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Set up our CLIContext
+	cliCtx := sdkContext.NewCLIContext().
+		WithCodec(appCodec).
+		WithFromAddress(sdk.AccAddress(validatorAddress)).
+		WithFromName(validatorName)
+
 	// Initialize the relayer
 	return relayer.InitEthereumRelayer(
 		appCodec,
@@ -200,6 +206,7 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 		validatorName,
 		passphrase,
 		validatorAddress,
+		cliCtx,
 		rpcURL,
 	)
 }
