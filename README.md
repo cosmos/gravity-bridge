@@ -290,33 +290,32 @@ yarn token:approve 3
 yarn token:address
 
 # Lock TEST tokens on the Bridge contract
+# ERC20 token locking requires 3 custom params and does not support the --default flag
 yarn peggy:lock [COSMOS_RECIPIENT_ADDRESS] [TEST_TOKEN_CONTRACT_ADDRESS] [TOKEN_AMOUNT]
 
 ```
 
-`yarn peggy:lock` ERC20 expected output in ebrelayer console (with a TOKEN_AMOUNT of 3):
+`yarn peggy:lock` ERC20 expected output in ebrelayer console (with a TOKEN_AMOUNT of 11):
 
 ```bash
-New Lock Transaction:
-Tx hash: 0xce7b219427c613c8927f7cafe123af4145016a490cd9fef6e3796d468f72e09f
-Event ID: bb1c4798aaf4a1236f4f0235495f54a135733446f6c401c1bb86b690f3f35e60
-Token Symbol: TEST
-Token Address: 0x5040BA3Cf968de7273201d7C119bB8D8F03BDcBc
-Sender: 0xc230f38FF05860753840e0d7cbC66128ad308B67
-Recipient: cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
-Value: 3
-Nonce: 2
+Witnessed new event: LogLock
+Block number: 28
+Tx hash: 0xab84de6d2f6bde3f2249cc1c31e23901432fa75b83a5b5b52c19e99479a797f1
 
-Response:
-  height: 0
-  txhash: DF1F55D2B8F4277671772D9A72188D0E4E15097AD28272E31116FF4B5D832B08
-  code: 0
-  data: ""
-  rawlog: '[{"msg_index":0,"success":true,"log":""}]'
-  logs:
-  - msgindex: 0
-    success: true
-    log: ""
+Chain ID: 5777
+Bridge contract address: 0x0823eFE0D0c6bd134a48cBd562fE4460aBE6e92c
+Token symbol: TEST
+Token contract address: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
+Sender: 0x115F6e2004D7b4ccd6b9D5ab34e30909e0F612CD
+Recipient: cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
+Value: 11
+Nonce: 12
+
+height: 0
+txhash: 013B79C59828872BA477FC8C2B98C155A0F8D520C42693363B7156F56B6C0A32
+code: 0
+data: ""
+rawlog: '[{"msg_index":0,"success":true,"log":"","events":[{"type":"message","attributes":[{"key":"action","value":"create_bridge_claim"}]}]}]'
 ```
 
 ## Ethereum -> Cosmos asset transfers using the Bridge
