@@ -29,9 +29,6 @@ func TestSetupWebsocketEthClient(t *testing.T) {
 	_, err := SetupWebsocketEthClient(ValidTestnetWebSocket)
 	require.NoError(t, err)
 
-	_, err = SetupWebsocketEthClient(ValidLocalWebSocket)
-	require.NoError(t, err)
-
 	_, err = SetupWebsocketEthClient(InvalidWebSocket)
 	require.Error(t, err, "invalid websocket eth client URL: "+InvalidWebSocket)
 }
