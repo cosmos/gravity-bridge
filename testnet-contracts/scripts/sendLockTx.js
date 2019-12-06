@@ -83,7 +83,7 @@ module.exports = async () => {
 
   // Convert default 'eth' coin denom into null address
   if(coinDenom == "eth") {
-    coinDenom = "0x0000000000000000000000000000000000000000";
+    coinDenom = NULL_ADDRESS;
   }
 
   /*******************************************
