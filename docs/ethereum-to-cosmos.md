@@ -1,59 +1,20 @@
 ## Ethereum to Cosmos asset transfers
 
-With the application set up, you can now use Peggy by sending a lock transaction to the smart contract.
+Before starting the Ethereum relayer, you must set up the application ([steps](./initialization.md)) and deploy the Peggy contracts to an Ethereum blockchain ([steps](./local-ethereum-usage.md)). You must have both the application and Ethereum blockchain running before you'll be able to relay assets between the two.
 
-### Start local Ethereum blockchain (terminal 1)
-
-```bash
-# Open a new terminal window, this will be terminal 1
-
-# Download dependencies
-yarn
-
-# Start local blockchain
-yarn develop
-```
-
-### Deploy Peggy contracts (terminal 2)
-
-Next, compile and deploy Peggy's contracts to the local Ethereum blockchain.
+### Setup
 
 ```bash
-# Open a new terminal window, this will be terminal 2
-
-# Deploy contract to local blockchain
-yarn migrate
-
-# Activate the contracts
-yarn peggy:setup
-
-# Copy contract ABI to Relayer it can subscribe to deployed contracts
-yarn peggy:abi
-
-# Get the address of Peggy's registry contract
-yarn peggy:address
+# Create .env with sample environment variables for the Cosmos relayer
+cp .env.example .env
 ```
 
-### Start Bridge blockchain (terminal 3)
-
-If you've already started the Bridge blockchain, you can skip this step.
-
-```bash
-# Open a new terminal window, this will be terminal 3
-
-# Build the Ethereum Bridge application
-make install
-
-# Start the Bridge's blockchain
-ebd start
-```
-
-### Start the Relayer service which watches Ethereum (terminal 4)
+### Start the Relayer service on local Ethereum blockchain
 
 For automated relaying, validators can run a relayer service which will automatically watch for relevant events on the Ethereum network and relay them to the Bridge. Note that your local web socket and registry contract address may vary.
 
 ```bash
-# Open a new terminal window, this will be terminal 4
+# Open a new terminal window
 
 # Check ebrelayer connection to ebd
 ebrelayer status
@@ -72,9 +33,11 @@ ebrelayer init ethereum ws://127.0.0.1:7545/ [PEGGY_DEPLOYED_ADDRESS] validator 
 # The Relayer will now listen to the deployed contracts and create a claim whenever it detects a new lock event
 ```
 
-### Lock Ethereum assets on contracts (use terminal 2)
+### Lock Ethereum assets on contracts
 
 ```bash
+# Open a new terminal window
+
 # Default parameter values:
 # [COSMOS_RECIPIENT_ADDRESS] = cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
 # [TOKEN_CONTRACT_ADDRESS] = eth (Ethereum has no token contract and is denoted by 'eth')
@@ -111,42 +74,9 @@ data: ""
 rawlog: '[{"msg_index":0,"success":true,"log":"","events":[{"type":"message","attributes":[{"key":"action","value":"create_bridge_claim"}]}]}]'
 ```
 
-## Using the Bridge with the Ropsten testnet
-
-### Setup
-
-Before you can use the Bridge with the Ropsten testnet, you'll need to add two environment variables to the configuration file at `testnet-contracts/.env`. Add MNEMONIC from your MetaMask account, this will allow you to deploy the contracts to the Ropsten testnet. Add INFURA_PROJECT_ID from your Infura account, this will allow you to start a Relayer service which listens for events on the Ropsten testnet.
-
-Further reading:
-
-- [MetaMask Mnemonic](https://metamask.zendesk.com/hc/en-us/articles/360015290032-How-to-Reveal-Your-Seed-Phrase)
-- [Infura Project ID](https://blog.infura.io/introducing-the-infura-dashboard-8969b7ab94e7)
-
-
-### Usage
-
-```bash
-
-# Deploy the contracts to the Ropsten network with the --network flag
-yarn migrate --network ropsten
-
-# Get the Registry contract's address on the Ropsten network with the --network flag
-yarn peggy:address --network ropsten
-
-# Restart Relayer with Infura's Ropsten network websocket
-ebrelayer init ethereum wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] validator --chain-id=peggy
-
-# Send funds to the deployed contracts on the Ropsten testnet
-# Note: [TOKEN_CONTRACT_ADDRESS] is 'eth' for Ethereum
-yarn peggy:lock --network ropsten [COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
-
-```
-
-## Testing ERC20 token support
+### Testing ERC20 token support
 
 The bridge supports the transfer of ERC20 token assets. A sample TEST token is deployed upon migration and can be used to locally test the feature.
-
-### Local
 
 ```bash
 # Mint 1,000 TEST tokens to your account for local use
@@ -190,4 +120,5 @@ txhash: 013B79C59828872BA477FC8C2B98C155A0F8D520C42693363B7156F56B6C0A32
 code: 0
 data: ""
 rawlog: '[{"msg_index":0,"success":true,"log":"","events":[{"type":"message","attributes":[{"key":"action","value":"create_bridge_claim"}]}]}]'
+
 ```

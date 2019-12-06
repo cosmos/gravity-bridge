@@ -1,6 +1,39 @@
+## Initialization
+
+First, initialize a chain and create accounts:
+
+```bash
+# Initialize the genesis.json file that will help you to bootstrap the network
+ebd init local --chain-id=peggy
+
+# Create a key to hold your validator account and for another test account
+ebcli keys add validator
+# Enter password
+
+ebcli keys add testuser
+# Enter password
+
+# Initialize the genesis account and transaction
+ebd add-genesis-account $(ebcli keys show validator -a) 1000000000stake,1000000000atom
+
+# Create genesis transaction
+ebd gentx --name validator
+# Enter password
+
+# Collect genesis transaction
+ebd collect-gentxs
+
+# Now its safe to start `ebd`
+ebd start
+
+```
+
 ## Testing the application
 
-Once you've initialized the application and started the Bridge blockchain with `ebd start`, you can test sending a random token in another terminal window.    
+Once you've initialized the application and started the Bridge blockchain with `ebd start`, you can test the available cli commands. They include sending tokens between accounts, querying accounts, claim creation, token burning, and token locking. Once the Relayer is running, you'll be able to submit new burning/locking txs to the chain using these commands.   
+
+First, we'll test sending a random token in another terminal window.   
+
 ```bash
 # Wait 10 seconds and in another terminal window, send 10 stake tokens from the validator to the testuser
 ebcli tx send validator $(ebcli keys show testuser -a) 10stake --chain-id=peggy --yes

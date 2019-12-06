@@ -1,55 +1,20 @@
 ## Cosmos to Ethereum asset transfers
 
-### Start local Ethereum blockchain (terminal 1)
+### Start local Ethereum blockchain and application
 
-```bash
-# Download dependencies
-yarn
+Before you can transfer Cosmos assets to Ethereum, you'll need to have a local Ethereum blockchain with the Peggy contracts deployed to it as described [here](./local-ethereum-usage.md). If you've already started a local blockchain and deployed the contracts, you can skip this step.
 
-# Start local blockchain
-yarn develop
+You'll also need to start the Bridge blockchain if it's not already running. To do so, follow these ([steps](./initialization.md)).
 
-```
-
-### Set up
+### Setup
 
 In order to send transactions to the contracts, the Cosmos Relayer requires the private key of an active validator. The private key must be set as an environment variable named `ETHEREUM_PRIVATE_KEY` and located in the .env file at the root of the project. If testing locally, can use the private key of accounts[1], which can be found in the truffle console running in terminal 1. If testing on a live network, you'll need to use the private key of your Ethereum address.
 
-### Deploy Peggy contracts (terminal 2)
-
-Next, compile and deploy Peggy's contracts to the local Ethereum blockchain.   
-
-Note: If you've already deployed the contracts, skip this section. If you redeploy the contracts, you'll need to close any running Ethereum Relayer processes and restart them with the new contract address.
+### Start the Relayer service
 
 ```bash
-# Open a new terminal window, this will be terminal 2
+# Open a new terminal window
 
-# Deploy contract to local blockchain
-yarn migrate
-
-# Activate the contracts
-yarn peggy:setup
-
-# Copy contract ABI to Relayer it can interface with deployed contracts
-yarn peggy:abi
-
-# Get the address of Peggy's registry contract
-yarn peggy:address
-```
-
-### Start Bridge blockchain (terminal 3)
-
-```bash
-# Build the Bridge application
-make install
-
-# Start the Bridge's blockchain
-ebd start
-```
-
-### Start the Relayer service which watches Tendermint (terminal 4)
-
-```bash
 # Check ebrelayer connection to ebd
 ebrelayer status
 
@@ -65,13 +30,16 @@ ebrelayer init cosmos [tendermintNode] [web3Provider] [bridgeRegistryContractAdd
 # The relayer will now watch the Cosmos network and create a prophecy claim whenever it detects a burn or lock event
 ```
 
-### Start the Oracle Claim Relayer (terminal 5)
+### Start the Oracle Claim Relayer
 
 To make an Oracle Claim on every Prophecy Claim witnessed, start an Ethereum relayer with flag `--make-claims=true`
 
+Note: For now, close any active Ethereum Relayers currently running.
+
 ```bash
+# Open a new terminal window
+
 # Start ebrelayer on the contract's deployed address with [PEGGY_DEPLOYED_ADDRESS]
-# Note: Terminate any active Ethereum Relayers before initializing the Oracle Claim Relayer
 ebrelayer init ethereum ws://127.0.0.1:7545/ [PEGGY_DEPLOYED_ADDRESS] validator --make-claims=true --chain-id=peggy
 
 # Enter password and press enter
@@ -79,9 +47,11 @@ ebrelayer init ethereum ws://127.0.0.1:7545/ [PEGGY_DEPLOYED_ADDRESS] validator 
 # The relayer will now watch the contract on Ropsten and create a new oracle claim whenever it detects a new prophecy claim event
 ```
 
-### Send burn transaction on Cosmos (terminal 2)
+### Send burn transaction on Cosmos
 
 ```bash
+# Open a new terminal window
+
 # Send tokens to the testuser (10stake tokens)
 ebcli tx send validator $(ebcli keys show testuser -a) 10stake --chain-id=peggy --yes
 
@@ -98,7 +68,7 @@ ebcli tx ethbridge burn $(ebcli keys show testuser -a) [RECIPIENT_ETHEREUM_ADDRE
 
 ```
 
-Expected output in the Cosmos Relayer console (terminal 4)
+Expected output in the Cosmos Relayer console
 
 ```bash
 [2019-10-24|19:07:01.714]       New transaction witnessed

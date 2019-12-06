@@ -6,9 +6,9 @@
 [![LoC](https://tokei.rs/b1/github/cosmos/peggy)](https://github.com/cosmos/peggy)
 [![API Reference](https://godoc.org/github.com/cosmos/peggy?status.svg)](https://godoc.org/github.com/cosmos/peggy)
 
-## Summary
+## Introduction
 
-Peggy is the starting point for cross chain value transfers from the Ethereum blockchain to Cosmos-SDK based blockchains as part of the Ethereum Cosmos Bridge project. The system accepts incoming transfers of Ethereum tokens on an Ethereum smart contract, locking them while the transaction is validated and equitable funds issued to the intended recipient on the Cosmos bridge chain.
+Peggy is the starting point for cross chain value transfers from the Ethereum blockchain to Cosmos-SDK based blockchains as part of the Ethereum Cosmos Bridge project. The system accepts incoming transfers of Ethereum tokens on an Ethereum smart contract, locking them while the transaction is validated and equitable funds issued to the intended recipient on the Cosmos bridge chain. The system supports value transferrs from Cosmos-SDK based blockchains to the Ethereum blockchain as well through a reverse process.
 
 **Note**: Requires [Go 1.13+](https://golang.org/dl/)
 
@@ -16,15 +16,7 @@ Peggy is the starting point for cross chain value transfers from the Ethereum bl
 
 This codebase, including all smart contract components, has not been professionally audited and are not intended for use in a production environment. As such, users should NOT trust the system to securely hold mainnet funds. Any developers attempting to use Peggy on the mainnet at this time will need to develop their own smart contracts or find another implementation.
 
-## Architecture
-
-A diagram of the protocol's architecture can be found [here](./docs/architecture.md).
-
-## Requirements
-
-- Go 1.13
-
-## Building the application
+## Installation
 
 These modules can be added to any Cosmos-SDK based chain, but a demo application/blockchain is provided with example code for how to integrate them. It can be installed and built as follows:
 
@@ -48,37 +40,29 @@ ebcli help
 ebrelayer help
 ```
 
-## Initializing the application
+## Usage Steps
 
-First, initialize a chain and create accounts.
+- **Initialization**: setup the Bridge chain, add accounts, start the Bridge chain, and test available commands
+- **Setting up Peggy locally**: start local Ethereum blockchain, compile and deploy contracts, activate the contracts, and get the registry contract's deployed address 
+- **Ethereum to Cosmos asset transfers**: start the Relayer service, send lock transaction containing local assets to the contracts, and test ERC20 support
+- **Using the Ropsten testnet**: setup interfacting with the Ropsten testnet, deploy contracts to Ropsten testnet, start the Relayer service on the Ropsten testnet, and send lock transaction containing Ropsten testnet assets to the contracts
+- **Cosmos to Ethereum asset transfers**: setup interfacing with tendermint, start the Relayer service, start the Oracle Claim Relayer service, burn assets on tendermint, create prophecy and oracle claims on Ethereum, and process prophecy claims 
 
-```bash
-# Initialize the genesis.json file that will help you to bootstrap the network
-ebd init local --chain-id=peggy
+## Initialization
 
-# Create a key to hold your validator account and for another test account
-ebcli keys add validator
-# Enter password
+In order to facilitate cross chain transfers, the Bridge blockchain must be set up by following these [steps](./docs/initialization.md).
 
-ebcli keys add testuser
-# Enter password
+## Setting up Peggy locally
+To testing the transfer of Ethereum based assets, set up and start a local Ethereum chain by following these [steps](./docs/local-ethereum-usage.md).
 
-# Initialize the genesis account and transaction
-ebd add-genesis-account $(ebcli keys show validator -a) 1000000000stake,1000000000atom
+## Ethereum to Cosmos asset transfers
+With a local Ethereum blockchain running, you can participate in Ethereum -> Cosmos asset transfers by starting the Relayer service and acting as a validator. Validators witness the locking of Ethereum/ERC20 assets and sign a data package containing information about the lock, which is then relayed to tendermint and witnessed by the EthBridge module. Once other validators have confirmed that the transaction's information is valid, the funds released by the Oracle module and transferred to the intended recipient's address. In this way, Ethereum assets can be transferred to Cosmos-SDK based blockchains. The process is described [here](./docs/ethereum-to-cosmos.md).
 
-# Create genesis transaction
-ebd gentx --name validator
-# Enter password
+## Using the Ropsten testnet
+Instead of transferring local Ethereum assets to Cosmos-SDK based blockchains, you can test out transferring rEth from the Ropsten testnet by following these [steps](./docs/ropsten-testnet-usage.md).
 
-# Collect genesis transaction
-ebd collect-gentxs
-
-# Now its safe to start `ebd`
-ebd start
-
-```
-
-To test the initialized application, follow the steps [here](./docs/running.md). It includes sending tokens between accounts, querying accounts, claim creation, token burning, and token locking. Once the Relayer is running, you can submit new burning/locking txs to the chain using these commands.
+## Cosmos to Ethereum asset transfers
+Cosmos -> Ethereum asset transfers are facilitated by a reverse process where validators witness transactions on tendermint and sign a data package containing the information. Cosmos assets can be locked, resulting in the release of funds held on Ethereum, or burned, resulting in the minting of new ERC20 tokens on Ethereum which represent the burned assets. The data package containing the validator's signature is then relayed to the contracts deployed on the Ethereum blockchain. Once enough other validators have confirmed that the transaction's information is valid, the funds are released/minted to the intended recipient's Ethereum address. In this way, assets on  Cosmos-SDK based blockchains can be transferred to Ethereum. The process is described [here](./docs/cosmos-to-ethereum.md). 
 
 ## Using the application from rest-server
 
@@ -89,30 +73,14 @@ ebcli rest-server --trust-node
 ```
 
 An api collection for [Postman](https://www.getpostman.com/) is provided [here](./docs/peggy.postman_collection.json) which documents some API endpoints and can be used to interact with it.
+
 Note: For checking account details/balance, you will need to change the cosmos addresses in the URLs, params and body to match the addresses you generated that you want to check.
 
-## Relayer set up
-
-In order for Peggy to process cross-chain asset transfers, the Relayer service must be run by a set of validators. Before validators participate in asset transfers, they must set up the appropriate configuration files with the following commands.
-
-```bash
-# Create .env with sample environment variables for the Cosmos relayer
-cp .env.example .env
-
-cd testnet-contracts/
-
-# Create .env with sample environment variables for the Ethereum relayer
-cp .env.example .env
-```
-
-## Ethereum to Cosmos asset transfers
-
-Validators can participate in Ethereum -> Cosmos asset transfers by following the process described [here](./docs/ethereum-relayer.md).
-
-## Cosmos to Ethereum asset transfers
-
-Validators can participate in Cosmos -> Ethereum asset transfers by following the process described [here](./docs/cosmos-relayer.md).
 
 ## Using the modules in other projects
 
 The ethbridge and oracle modules can be used in other cosmos-sdk applications by copying them into your application's modules folders and including them in the same way as in the example application. Each module may be moved to its own repo or integrated into the core Cosmos-SDK in future, for easier usage.
+
+## Architecture
+
+A diagram of the protocol's architecture can be found [here](./docs/architecture.md).
