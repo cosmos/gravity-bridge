@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/cosmos/peggy/x/ethbridge/types"
-	keep "github.com/cosmos/peggy/x/oracle/keeper"
 	oracletypes "github.com/cosmos/peggy/x/oracle/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -18,7 +17,7 @@ const (
 )
 
 // NewQuerier is the module level router for state queries
-func NewQuerier(keeper keep.Keeper, cdc *codec.Codec, codespace sdk.CodespaceType) sdk.Querier {
+func NewQuerier(keeper types.OracleKeeper, cdc *codec.Codec, codespace sdk.CodespaceType) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
 		case QueryEthProphecy:
@@ -29,7 +28,7 @@ func NewQuerier(keeper keep.Keeper, cdc *codec.Codec, codespace sdk.CodespaceTyp
 	}
 }
 
-func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, keeper keep.Keeper, codespace sdk.CodespaceType) (res []byte, errSdk sdk.Error) {
+func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, keeper types.OracleKeeper, codespace sdk.CodespaceType) (res []byte, errSdk sdk.Error) {
 	var params types.QueryEthProphecyParams
 
 	if err := cdc.UnmarshalJSON(req.Data, &params); err != nil {

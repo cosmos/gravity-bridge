@@ -6,6 +6,7 @@
 package ethbridge
 
 import (
+	"github.com/cosmos/peggy/x/ethbridge/keeper"
 	"github.com/cosmos/peggy/x/ethbridge/querier"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 )
@@ -24,6 +25,7 @@ const (
 
 var (
 	// functions aliases
+	NewKeeper                         = keeper.NewKeeper
 	NewQuerier                        = querier.NewQuerier
 	NewEthBridgeClaim                 = types.NewEthBridgeClaim
 	NewOracleClaimContent             = types.NewOracleClaimContent
@@ -46,6 +48,7 @@ var (
 )
 
 type (
+	Keeper                   = keeper.Keeper
 	EthBridgeClaim           = types.EthBridgeClaim
 	OracleClaimContent       = types.OracleClaimContent
 	CodeType                 = types.CodeType
