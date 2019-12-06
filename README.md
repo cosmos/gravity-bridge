@@ -197,11 +197,10 @@ For automated relaying, there is a relayer service that can be run that will aut
 # Check ebrelayer connection to ebd
 ebrelayer status
 
-# Start ebrelayer on the contract's deployed address with [LOCAL_WEB_SOCKET] and [REGISTRY_DEPLOYED_ADDRESS]
-# Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:7545/
-# Example [REGISTRY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
-
-ebrelayer init ethereum [LOCAL_WEB_SOCKET] [REGISTRY_DEPLOYED_ADDRESS] validator --chain-id=peggy
+# Start ebrelayer
+# Use the contract address returned by `yarn peggy:address` for [PEGGY_DEPLOYED_ADDRESS]
+# Note that you may need to update your websocket's localhost/port
+ebrelayer init ethereum ws://127.0.0.1:7545/ [PEGGY_DEPLOYED_ADDRESS] validator --chain-id=peggy
 
 # Enter password and press enter
 # You should see a message like: Started ethereum websocket with provider: [LOCAL_WEB_SOCKET] \ Subscribed to contract events on address: [PEGGY_DEPLOYED_ADDRESS]
@@ -263,7 +262,7 @@ yarn migrate --network ropsten
 yarn peggy:address --network ropsten
 
 # Make sure to start ebrelayer with Ropsten network websocket
-ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes32,address,bytes,address,string,uint256,uint256\) validator --chain-id=peggy
+ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] validator --chain-id=peggy
 
 # Send lock transaction on Ropsten testnet
 
@@ -371,6 +370,7 @@ ebrelayer status
 # Start Cosmos relayer
 # Example [tendermintNode]: tcp://localhost:26657
 # Example [web3Provider]: http://localhost:7545
+# Use returned address from 'yarn peggy:address` for [bridgeRegistryContractAddress]
 ebrelayer init cosmos [tendermintNode] [web3Provider] [bridgeRegistryContractAddress]
 
 # You should see a message like:
@@ -384,8 +384,8 @@ ebrelayer init cosmos [tendermintNode] [web3Provider] [bridgeRegistryContractAdd
 To make an Oracle Claim on every Prophecy Claim witnessed, start an Ethereum relayer with flag `--make-claims=true`
 
 ```bash
-# Start ebrelayer on the contract's deployed address with [LOCAL_WEB_SOCKET] and [REGISTRY_DEPLOYED_ADDRESS]
-ebrelayer init ethereum [LOCAL_WEB_SOCKET] [REGISTRY_DEPLOYED_ADDRESS] validator --make-claims=true --chain-id=peggy
+# Start ebrelayer on the contract's deployed address with [PEGGY_DEPLOYED_ADDRESS]
+ebrelayer init ethereum ws://127.0.0.1:7545/ [PEGGY_DEPLOYED_ADDRESS] validator --make-claims=true --chain-id=peggy
 
 # Enter password and press enter
 
