@@ -19,10 +19,9 @@ In order to send transactions to the contracts, the Cosmos Relayer requires the 
 ebrelayer status
 
 # Start Cosmos relayer
-# Example [tendermintNode]: tcp://localhost:26657
-# Example [web3Provider]: http://localhost:7545
-# Use returned address from 'yarn peggy:address` for [bridgeRegistryContractAddress]
-ebrelayer init cosmos [tendermintNode] [web3Provider] [bridgeRegistryContractAddress]
+# Note: ports for the tendermint node (tcp://localhost:) and web3 provider (http://localhost:) may vary
+# Note: Use the address from 'yarn peggy:address` for [PEGGY_CONTRACT_ADDRESS]
+ebrelayer init cosmos tcp://localhost:26657 http://localhost:7545 [PEGGY_CONTRACT_ADDRESS]
 
 # You should see a message like:
 # [2019-10-24|19:02:21.888] Starting WSEvents         impl=WSEvents
@@ -34,7 +33,7 @@ ebrelayer init cosmos [tendermintNode] [web3Provider] [bridgeRegistryContractAdd
 
 To make an Oracle Claim on every Prophecy Claim witnessed, start an Ethereum relayer with flag `--make-claims=true`
 
-Note: For now, close any active Ethereum Relayers currently running.
+Note: For now, close any other active Ethereum Relayers currently running.
 
 ```bash
 # Open a new terminal window

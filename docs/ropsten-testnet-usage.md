@@ -30,15 +30,15 @@ yarn peggy:address --network ropsten
 ### Start the Relayer service on Ropsten testnet
 
 ```bash
-# Start Relayer with Infura's Ropsten network websocket
 ebrelayer init ethereum wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] validator --chain-id=peggy
 
 ```
 
 ### Lock rEth on contracts
 
+Send funds to the deployed contracts on the Ropsten testnet:   
+
 ```bash
-# Send funds to the deployed contracts on the Ropsten testnet
 yarn peggy:lock --network ropsten [COSMOS_RECIPIENT_ADDRESS] eth [RWEI_AMOUNT]
 
 ```

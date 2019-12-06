@@ -4,8 +4,9 @@ Before starting the Ethereum relayer, you must set up the application ([steps](.
 
 ### Setup
 
+Create .env with sample environment variables for the Cosmos relayer:   
+
 ```bash
-# Create .env with sample environment variables for the Cosmos relayer
 cp .env.example .env
 ```
 
@@ -35,13 +36,15 @@ ebrelayer init ethereum ws://127.0.0.1:7545/ [PEGGY_DEPLOYED_ADDRESS] validator 
 
 ### Lock Ethereum assets on contracts
 
+Now we can lock our funds on the contracts by sending a lock transaction containing Eth/ERC20 assets.   
+
+Default parameter values for lock transactions:
+- [COSMOS_RECIPIENT_ADDRESS] = `cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh`
+- [TOKEN_CONTRACT_ADDRESS] = `eth` (Ethereum has no token contract and is denoted by 'eth')
+- [WEI_AMOUNT] = `10`
+
 ```bash
 # Open a new terminal window
-
-# Default parameter values:
-# [COSMOS_RECIPIENT_ADDRESS] = cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
-# [TOKEN_CONTRACT_ADDRESS] = eth (Ethereum has no token contract and is denoted by 'eth')
-# [WEI_AMOUNT] = 10
 
 # Send lock transaction with default parameters
 yarn peggy:lock --default
@@ -86,7 +89,7 @@ yarn token:mint
 yarn token:approve --default
 
 # You can also approve a custom amount of TEST tokens to the Bridge contract:
-yarn token:approve 3
+yarn token:approve 11
 
 # Get deployed TEST token contract address
 yarn token:address
@@ -96,8 +99,6 @@ yarn token:address
 yarn peggy:lock [COSMOS_RECIPIENT_ADDRESS] [TEST_TOKEN_CONTRACT_ADDRESS] [TOKEN_AMOUNT]
 
 ```
-
-`yarn peggy:lock` ERC20 expected output in ebrelayer console (with a TOKEN_AMOUNT of 3):
 
 `yarn peggy:lock` ERC20 expected output in ebrelayer console (with a TOKEN_AMOUNT of 11):
 
