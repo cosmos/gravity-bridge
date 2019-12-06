@@ -8,13 +8,13 @@
 
 ## Introduction
 
-Peggy is the starting point for cross chain value transfers from the Ethereum blockchain to Cosmos-SDK based blockchains as part of the Ethereum Cosmos Bridge project. The system accepts incoming transfers of Ethereum tokens on an Ethereum smart contract, locking them while the transaction is validated and equitable funds issued to the intended recipient on the Cosmos bridge chain. The system supports value transferrs from Cosmos-SDK based blockchains to the Ethereum blockchain as well through a reverse process.
+Peggy is the starting point for cross chain value transfers from the Ethereum blockchain to Cosmos-SDK based blockchains as part of the Ethereum Cosmos Bridge project. The system accepts incoming transfers of Ethereum tokens on an Ethereum smart contract, locking them while the transaction is validated and equitable funds issued to the intended recipient on the Cosmos bridge chain. The system supports value transfers from Cosmos-SDK based blockchains to the Ethereum blockchain as well through a reverse process.
 
 **Note**: Requires [Go 1.13+](https://golang.org/dl/)
 
 ## Disclaimer
 
-This codebase, including all smart contract components, has not been professionally audited and are not intended for use in a production environment. As such, users should NOT trust the system to securely hold mainnet funds. Any developers attempting to use Peggy on the mainnet at this time will need to develop their own smart contracts or find another implementation.
+This codebase, including all smart contract components, has **not** been professionally audited and is not intended for use in a production environment. As such, users should **NOT** trust the system to securely hold mainnet funds. Any developers attempting to use Peggy on the mainnet at this time will need to develop their own smart contracts or find another implementation.
 
 ## Installation
 
@@ -53,15 +53,19 @@ ebrelayer help
 In order to facilitate cross chain transfers, the Bridge blockchain must be set up by following these [steps](./docs/initialization.md).
 
 ## Setup Peggy locally
+
 To testing the transfer of Ethereum based assets, set up and start a local Ethereum chain by following these [steps](./docs/local-ethereum-usage.md).
 
 ## Ethereum to Cosmos asset transfers
+
 With a local Ethereum blockchain running, you can participate in Ethereum -> Cosmos asset transfers by starting the Relayer service and acting as a validator. Validators witness the locking of Ethereum/ERC20 assets and sign a data package containing information about the lock, which is then relayed to tendermint and witnessed by the EthBridge module. Once other validators have confirmed that the transaction's information is valid, the funds released by the Oracle module and transferred to the intended recipient's address. In this way, Ethereum assets can be transferred to Cosmos-SDK based blockchains. The process is described [here](./docs/ethereum-to-cosmos.md).
 
 ## Using Peggy with the Ropsten testnet
+
 Instead of transferring local Ethereum assets to Cosmos-SDK based blockchains, you can test out transferring rEth from the Ropsten testnet by following these [steps](./docs/ropsten-testnet-usage.md).
 
 ## Cosmos to Ethereum asset transfers
+
 Cosmos -> Ethereum asset transfers are facilitated by a reverse process where validators witness transactions on tendermint and sign a data package containing the information. Cosmos assets can be locked, resulting in the release of funds held on Ethereum, or burned, resulting in the minting of new ERC20 tokens on Ethereum which represent the burned assets. The data package containing the validator's signature is then relayed to the contracts deployed on the Ethereum blockchain. Once enough other validators have confirmed that the transaction's information is valid, the funds are released/minted to the intended recipient's Ethereum address. In this way, assets on  Cosmos-SDK based blockchains can be transferred to Ethereum. The process is described [here](./docs/cosmos-to-ethereum.md). 
 
 ## Using the application from rest-server

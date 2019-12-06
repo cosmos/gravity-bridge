@@ -64,7 +64,6 @@ ebcli tx ethbridge burn $(ebcli keys show testuser -a) [RECIPIENT_ETHEREUM_ADDRE
 
 # You should see the transaction output in this terminal with 'success:true' in the 'rawlog' field:
 # rawlog: '[{"msg_index":0,"success":true,"log":""}]'
-
 ```
 
 Expected output in the Cosmos Relayer console
@@ -86,10 +85,9 @@ NewProphecyClaim tx hash: 0x5544bdb31b90da102c0b7fd959b3106b823805871ddcbe972a78
 Status: 1 - Successful
 ```
 
-Expected output in Oracle Claim Relayer console (terminal 5)
+Expected output in Oracle Claim Relayer console
 
 ```bash
-
 New "LogNewProphecyClaim":
 Tx hash: 0xb14695d7ca229c713c89ab2e78c41549cfac11daed6d09ab4b9755b12b46f17c
 Block number: 18
@@ -101,7 +99,6 @@ Symbol eth
 Token 0xbEDdB076fa4dF04859098A9873591dcE3E9C404d
 Amount: 1
 Validator: 0xc230f38FF05860753840e0d7cbC66128ad308B67
-
 
 Attempting to sign message "0xb8b701ef59944e115d6ecfd4aa1bd03025d85338d771b0099d4061923bd0a1ed" with account "c230f38ff05860753840e0d7cbc66128ad308b67"...
 Success! Signature: 0x919ca03752269c87c5df9f4af99ba49be84cb2bbc77921db581719379e95c548164b55822e89294b8066f77812695d9575b4827c04592d4daa41dd087ba1ba7f01
@@ -121,7 +118,6 @@ yarn peggy:check [PROPHECY_CLAIM_ID]
 Expected output (for a prophecy claim with an ID of 2)
 
 ```bash
-
 Fetching Oracle contract...
 Attempting to send checkBridgeProphecy() tx...
 

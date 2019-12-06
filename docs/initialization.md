@@ -25,7 +25,6 @@ ebd collect-gentxs
 
 # Now its safe to start `ebd`
 ebd start
-
 ```
 
 ## Testing the application
@@ -76,5 +75,4 @@ ebcli tx ethbridge create-claim 1 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB 0 s
 
 # Confirm that the prophecy was successfully processed and that stake coin was returned to the testuser address
 ebcli query account $(ebcli keys show testuser -a) --trust-node
-
 ```

@@ -4,7 +4,7 @@ Before starting the Ethereum relayer, you must set up the application ([steps](.
 
 ### Setup
 
-Create .env with sample environment variables for the Cosmos relayer:   
+Create `.env` with sample environment variables for the Cosmos relayer:   
 
 ```bash
 cp .env.example .env
@@ -39,6 +39,7 @@ ebrelayer init ethereum ws://127.0.0.1:7545/ [PEGGY_DEPLOYED_ADDRESS] validator 
 Now we can lock our funds on the contracts by sending a lock transaction containing Eth/ERC20 assets.   
 
 Default parameter values for lock transactions:
+
 - [COSMOS_RECIPIENT_ADDRESS] = `cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh`
 - [TOKEN_CONTRACT_ADDRESS] = `eth` (Ethereum has no token contract and is denoted by 'eth')
 - [WEI_AMOUNT] = `10`
@@ -51,7 +52,6 @@ yarn peggy:lock --default
 
 # Send lock transaction with custom parameters
 yarn peggy:lock [COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
-
 ```
 
 `yarn peggy:lock --default` expected output in Relayer console (terminal 4):
@@ -97,10 +97,9 @@ yarn token:address
 # Lock TEST tokens on the Bridge contract
 # Note: ERC20 token locking requires 3 custom params and does not support the --default flag
 yarn peggy:lock [COSMOS_RECIPIENT_ADDRESS] [TEST_TOKEN_CONTRACT_ADDRESS] [TOKEN_AMOUNT]
-
 ```
 
-`yarn peggy:lock` ERC20 expected output in ebrelayer console (with a TOKEN_AMOUNT of 11):
+`yarn peggy:lock` ERC20 expected output in ebrelayer console (with a `TOKEN_AMOUNT` of 11):
 
 ```bash
 Witnessed new event: LogLock
@@ -121,5 +120,4 @@ txhash: 013B79C59828872BA477FC8C2B98C155A0F8D520C42693363B7156F56B6C0A32
 code: 0
 data: ""
 rawlog: '[{"msg_index":0,"success":true,"log":"","events":[{"type":"message","attributes":[{"key":"action","value":"create_bridge_claim"}]}]}]'
-
 ```

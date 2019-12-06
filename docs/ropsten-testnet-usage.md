@@ -3,7 +3,7 @@
 
 ### Setup
 
-Before you can use the Bridge with the Ropsten testnet, you'll need to add two environment variables to the configuration file at `testnet-contracts/.env`. Add MNEMONIC from your MetaMask account, this will allow you to deploy the contracts to the Ropsten testnet. Add INFURA_PROJECT_ID from your Infura account, this will allow you to start a Relayer service which listens for events on the Ropsten testnet.
+Before you can use the Bridge with the Ropsten testnet, you'll need to add two environment variables to the configuration file at `testnet-contracts/.env`. Add `MNEMONIC` from your MetaMask account, this will allow you to deploy the contracts to the Ropsten testnet. Add `INFURA_PROJECT_ID` from your Infura account, this will allow you to start a Relayer service that listens for events on the Ropsten testnet.
 
 Further reading:
 
@@ -24,14 +24,12 @@ yarn peggy:abi
 
 # Get the Registry contract's address on the Ropsten network with the --network flag
 yarn peggy:address --network ropsten
-
 ```
 
 ### Start the Relayer service on Ropsten testnet
 
 ```bash
 ebrelayer init ethereum wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] validator --chain-id=peggy
-
 ```
 
 ### Lock rEth on contracts
@@ -40,5 +38,4 @@ Send funds to the deployed contracts on the Ropsten testnet:
 
 ```bash
 yarn peggy:lock --network ropsten [COSMOS_RECIPIENT_ADDRESS] eth [RWEI_AMOUNT]
-
 ```
