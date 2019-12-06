@@ -1,4 +1,4 @@
-## Running Ethereum Testnet
+## Setup Peggy locally
 
 Peggy uses Truffle for running a local Ethereum blockchain which you can deploy the contracts to for testing.
 
