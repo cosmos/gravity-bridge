@@ -71,7 +71,7 @@ To make an Oracle Claim on every Prophecy Claim witnessed, start an Ethereum rel
 
 ```bash
 # Start ebrelayer on the contract's deployed address with [PEGGY_DEPLOYED_ADDRESS]
-TODO: fix
+# Note: Terminate any active Ethereum Relayers before initializing the Oracle Claim Relayer
 ebrelayer init ethereum ws://127.0.0.1:7545/ [PEGGY_DEPLOYED_ADDRESS] validator --make-claims=true --chain-id=peggy
 
 # Enter password and press enter
