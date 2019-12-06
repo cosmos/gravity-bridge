@@ -213,7 +213,7 @@ ebrelayer init ethereum [LOCAL_WEB_SOCKET] [REGISTRY_DEPLOYED_ADDRESS] validator
 
 ```bash
 # Default parameter values:
-# [HASHED_COSMOS_RECIPIENT_ADDRESS] = 0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668
+# [COSMOS_RECIPIENT_ADDRESS] = cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
 # [TOKEN_CONTRACT_ADDRESS] = 0x0000000000000000000000000000000000000000
 # [WEI_AMOUNT] = 10
 
@@ -221,7 +221,7 @@ ebrelayer init ethereum [LOCAL_WEB_SOCKET] [REGISTRY_DEPLOYED_ADDRESS] validator
 yarn peggy:lock --default
 
 # Send lock transaction with custom parameters
-yarn peggy:lock [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
+yarn peggy:lock [COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 
 ```
 
@@ -266,7 +266,7 @@ ebrelayer init wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] LogLock\(bytes3
 
 # Send lock transaction on Ropsten testnet
 
-yarn peggy:lock --network ropsten [HASHED_COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
+yarn peggy:lock --network ropsten [COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 
 ```
 
@@ -290,7 +290,7 @@ yarn token:approve 3
 yarn token:address
 
 # Lock TEST tokens on the Bridge contract
-yarn peggy:lock [HASHED_COSMOS_RECIPIENT_ADDRESS] [TEST_TOKEN_CONTRACT_ADDRESS] [TOKEN_AMOUNT]
+yarn peggy:lock [COSMOS_RECIPIENT_ADDRESS] [TEST_TOKEN_CONTRACT_ADDRESS] [TOKEN_AMOUNT]
 
 ```
 
