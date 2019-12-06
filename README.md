@@ -214,7 +214,7 @@ ebrelayer init ethereum [LOCAL_WEB_SOCKET] [REGISTRY_DEPLOYED_ADDRESS] validator
 ```bash
 # Default parameter values:
 # [COSMOS_RECIPIENT_ADDRESS] = cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
-# [TOKEN_CONTRACT_ADDRESS] = 0x0000000000000000000000000000000000000000
+# [TOKEN_CONTRACT_ADDRESS] = eth (Ethereum has no token contract and is denoted by 'eth')
 # [WEI_AMOUNT] = 10
 
 # Send lock transaction with default parameters
@@ -228,23 +228,24 @@ yarn peggy:lock [COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 `yarn peggy:lock --default` expected output in ebrelayer console:
 
 ```bash
-New Lock Transaction:
-Tx hash: 0x83e6ee88c20178616e68fee2477d21e84f16dcf6bac892b18b52c000345864c0
-Block number: 5
-Event ID: cc10955295e555130c865949fb1fd48dba592d607ae582b43a2f3f0addce83f2
-Token: 0x0000000000000000000000000000000000000000
-Sender: 0xc230f38FF05860753840e0d7cbC66128ad308B67
+Witnessed new event: LogLock
+Block number: 19
+Tx hash: 0xd90225d86aa59ff8fc3b59eb61b622c040c7f81a4f75dde32bcedb95494ccf12
+
+Chain ID: 5777
+Bridge contract address: 0x0823eFE0D0c6bd134a48cBd562fE4460aBE6e92c
+Token symbol: ETH
+Token contract address: 0x0000000000000000000000000000000000000000
+Sender: 0x115F6e2004D7b4ccd6b9D5ab34e30909e0F612CD
 Recipient: cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
 Value: 10
-Nonce: 1
+Nonce: 5
 
-Response:
-Height: 48
-TxHash: AD842C51B4347F0F610CB524529C2D8A875DACF12C8FE4B308931D266FEAD067
-Logs: [{"msg_index":0,"success":true,"log":"success"}]
-GasWanted: 200000
-GasUsed: 42112
-Tags: - action = create_bridge_claim
+height: 0
+txhash: C1835DA4533BB9F9CD69DB80049CE8BF1576A6480D26D161FF04851CAAF305F6
+code: 0
+data: ""
+rawlog: '[{"msg_index":0,"success":true,"log":"","events":[{"type":"message","attributes":[{"key":"action","value":"create_bridge_claim"}]}]}]'
 ```
 
 ## Running the bridge on the Ropsten testnet
