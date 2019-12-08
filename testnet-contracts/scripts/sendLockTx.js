@@ -67,7 +67,6 @@ module.exports = async () => {
   let coinDenom = DEFAULT_ETH_DENOM;
   let amount = DEFAULT_AMOUNT;
 
-  // TODO: Input validation
   if (!DEFAULT_PARAMS) {
     if (NETWORK_ROPSTEN) {
       cosmosRecipient = process.argv[6];
@@ -121,10 +120,10 @@ module.exports = async () => {
 
   // Parse event fields
   const lockEvent = {
-    from: event.args._from,
     to: event.args._to,
-    token: event.args._token,
+    from: event.args._from,
     symbol: event.args._symbol,
+    token: event.args._token,
     value: Number(event.args._value),
     nonce: Number(event.args._nonce)
   };

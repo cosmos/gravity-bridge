@@ -1,4 +1,4 @@
-# ETH Bridge Zone
+# Peggy
 
 [![version](https://img.shields.io/github/tag/cosmos/peggy.svg)](https://github.com/cosmos/peggy/releases/latest)
 [![CircleCI](https://circleci.com/gh/cosmos/peggy/tree/master.svg?style=svg)](https://circleci.com/gh/cosmos/peggy/tree/master)
@@ -8,13 +8,13 @@
 
 ## Summary
 
-Unidirectional Peggy is the starting point for cross chain value transfers from the Ethereum blockchain to Cosmos-SDK based blockchains as part of the Ethereum Cosmos Bridge project. The system accepts incoming transfers of Ethereum tokens on an Ethereum smart contract, locking them while the transaction is validated and equitable funds issued to the intended recipient on the Cosmos bridge chain.
+Peggy is the starting point for cross chain value transfers from the Ethereum blockchain to Cosmos-SDK based blockchains as part of the Ethereum Cosmos Bridge project. The system accepts incoming transfers of Ethereum tokens on an Ethereum smart contract, locking them while the transaction is validated and equitable funds issued to the intended recipient on the Cosmos bridge chain.
 
 **Note**: Requires [Go 1.13+](https://golang.org/dl/)
 
 ## Disclaimer
 
-This codebase, including all smart contract components, have not been professionally audited and are not intended for use in a production environment. As such, users should NOT trust the system to securely hold mainnet funds. Any developers attempting to use Unidirectional Peggy on the mainnet at this time will need to develop their own smart contracts or find another implementation.
+This codebase, including all smart contract components, have not been professionally audited and are not intended for use in a production environment. As such, users should NOT trust the system to securely hold mainnet funds. Any developers attempting to use Peggy on the mainnet at this time will need to develop their own smart contracts or find another implementation.
 
 ## Architecture
 
@@ -113,13 +113,10 @@ ebcli tx ethbridge lock $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf
 ebcli query account $(ebcli keys show testuser -a) --trust-node
 
 # Test out creating a bridge burn claim for the return trip back
-ebcli tx ethbridge create-claim 1 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 1stake burn --from=validator --chain-id=peggy --yes
+ebcli tx ethbridge create-claim 1 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB 0 stake 0x3f5dab653144958ff6d309647baf1abde8da204d 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 1stake burn --from=validator --chain-id=peggy --yes
 
 # Confirm that the prophecy was successfully processed and that stake coin was returned to the testuser address
 ebcli query account $(ebcli keys show testuser -a) --trust-node
-
-# Test out burning the eth for the return trip
-ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 1eth --from=testuser --chain-id=peggy --yes
 
 ```
 
@@ -134,25 +131,30 @@ ebcli rest-server --trust-node
 An api collection for [Postman](https://www.getpostman.com/) is provided [here](./docs/peggy.postman_collection.json) which documents some API endpoints and can be used to interact with it.
 Note: For checking account details/balance, you will need to change the cosmos addresses in the URLs, params and body to match the addresses you generated that you want to check.
 
-## Running the bridge locally
-
-With the application set up, you can now use Peggy by sending a lock transaction to the smart contract.
-
-### Set-up
+## Set up
 
 ```bash
+# Create .env with sample environment variables for the Cosmos relayer
+cp .env.example .env
+
 cd testnet-contracts/
 
-# Create .env with sample environment variables
+# Create .env with sample environment variables for the Ethereum relayer
 cp .env.example .env
 ```
 
-For running the bridge locally, you'll only need the `LOCAL_PROVIDER` environment variables. Environment variables `MNEMONIC` and `INFURA_PROJECT_ID` are required for using the Ropsten testnet.
+### Set environment variables in testnet-contracts/.env
+
+For running the Ethereum relayer locally, you'll only need the `LOCAL_PROVIDER` environment variables. Environment variables `MNEMONIC` and `INFURA_PROJECT_ID` are required for using the Ropsten testnet.
 
 Further reading:
 
 - [MetaMask Mnemonic](https://metamask.zendesk.com/hc/en-us/articles/360015290032-How-to-Reveal-Your-Seed-Phrase)
 - [Infura Project ID](https://blog.infura.io/introducing-the-infura-dashboard-8969b7ab94e7)
+
+## Ethereum -> Cosmos asset transfers using the Bridge
+
+With the application set up, you can now use Peggy by sending a lock transaction to the smart contract.
 
 ### Terminal 1: Start local blockchain
 
@@ -195,11 +197,11 @@ For automated relaying, there is a relayer service that can be run that will aut
 # Check ebrelayer connection to ebd
 ebrelayer status
 
-# Start ebrelayer on the contract's deployed address with [LOCAL_WEB_SOCKET] and [PEGGY_DEPLOYED_ADDRESS]
+# Start ebrelayer on the contract's deployed address with [LOCAL_WEB_SOCKET] and [REGISTRY_DEPLOYED_ADDRESS]
 # Example [LOCAL_WEB_SOCKET]: ws://127.0.0.1:7545/
-# Example [PEGGY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
+# Example [REGISTRY_DEPLOYED_ADDRESS]: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
 
-ebrelayer init [LOCAL_WEB_SOCKET] [PEGGY_DEPLOYED_ADDRESS] LogLock\(address,bytes,address,string,uint256,uint256\) validator --chain-id=peggy
+ebrelayer init ethereum [LOCAL_WEB_SOCKET] [REGISTRY_DEPLOYED_ADDRESS] validator --chain-id=peggy
 
 # Enter password and press enter
 # You should see a message like: Started ethereum websocket with provider: [LOCAL_WEB_SOCKET] \ Subscribed to contract events on address: [PEGGY_DEPLOYED_ADDRESS]
@@ -315,6 +317,157 @@ Response:
   - msgindex: 0
     success: true
     log: ""
+```
+
+## Ethereum -> Cosmos asset transfers using the Bridge
+
+### Terminal 1: Start local blockchain
+
+```bash
+# Download dependencies
+yarn
+
+# Start local blockchain
+yarn develop
+
+```
+
+### Set environment variables in .env
+
+You'll need your Ethereum private key as an environment variable in order to sign Oracle Claims. If running the bridge locally, use one of the validator's private keys listed in Terminal 1. Default validators are: accounts[1], accounts[2], and accounts[3]. For testnet use, enter the private key to your Ethereum account.
+
+### Terminal 2: Deploy Bridge contracts
+
+```bash
+# Deploy contract to local blockchain
+yarn migrate
+
+# Activate peggy by setting CosmosBridge's Oracle and BridgeBank
+yarn peggy:setup
+
+# Get the address of Peggy's registry service (required to start Cosmos relayer)
+yarn peggy:address
+```
+
+### Terminal 3: Build and start Bridge
+
+```bash
+# Build the Bridge application
+make install
+
+# Start the Bridge's blockchain
+ebd start
+```
+
+### Terminal 4: Start the Relayer service
+
+In order to send transactions to the contracts, the Cosmos Relayer requires the private key of an active validator. The private key must be set as an environment variable named `ETHEREUM_PRIVATE_KEY` and located in the .env file at the root of the project. If testing locally, can use the private key of accounts[1], which can be found in the truffle console running in terminal 1. If testing on a live network, you'll need to use the private key of your Ethereum address.
+
+```bash
+# Check ebrelayer connection to ebd
+ebrelayer status
+
+# Start Cosmos relayer
+# Example [tendermintNode]: tcp://localhost:26657
+# Example [web3Provider]: http://localhost:7545
+ebrelayer init cosmos [tendermintNode] [web3Provider] [bridgeRegistryContractAddress]
+
+# You should see a message like:
+# [2019-10-24|19:02:21.888] Starting WSEvents         impl=WSEvents
+
+# The relayer will now watch the Cosmos network and create a prophecy claim whenever it detects a burn or lock event.
+```
+
+### Terminal 5: Start the Oracle Claim Relayer
+
+To make an Oracle Claim on every Prophecy Claim witnessed, start an Ethereum relayer with flag `--make-claims=true`
+
+```bash
+# Start ebrelayer on the contract's deployed address with [LOCAL_WEB_SOCKET] and [REGISTRY_DEPLOYED_ADDRESS]
+ebrelayer init ethereum [LOCAL_WEB_SOCKET] [REGISTRY_DEPLOYED_ADDRESS] validator --make-claims=true --chain-id=peggy
+
+# Enter password and press enter
+
+# The relayer will now watch the contract on Ropsten and create a new oracle claim whenever it detects a new prophecy claim event.
+```
+
+### Using Terminal 2: Send burn transaction on Cosmos
+
+```bash
+# Default parameter values:
+# Send some tokens to the testuser using the process described in section "Running and testing the application"
+
+# Send burn transaction
+ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 1eth --from testuser --chain-id peggy
+
+# Enter 'y' to confirm the transaction
+# Enter testuser's password
+
+# You should see the transaction output in the console with 'success:true' in the 'rawlog' field:
+# rawlog: '[{"msg_index":0,"success":true,"log":""}]'
+
+```
+
+`ebcli tx ethbridge burn` expected output in cosmos Relayer console:
+
+```bash
+[2019-10-24|19:07:01.714]       New transaction witnessed
+
+Msg Type: burn
+Cosmos Sender: cosmos1qwnw2r9ak79536c4dqtrtk2pl2nlzpqh763rls
+Ethereum Recipient: 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359
+Token Address: 0xbEDdB076fa4dF04859098A9873591dcE3E9C404d
+Symbol: stake
+Amount: 1
+
+Fetching CosmosBridge contract...
+Sending tx to CosmosBridge...
+
+NewProphecyClaim tx hash: 0x5544bdb31b90da102c0b7fd959b3106b823805871ddcbe972a7877ad15164631
+Status: 1 - Successful
+```
+
+Expected output in Oracle Claim Relayer console
+
+```bash
+
+New "LogNewProphecyClaim":
+Tx hash: 0xb14695d7ca229c713c89ab2e78c41549cfac11daed6d09ab4b9755b12b46f17c
+Block number: 18
+Prophecy ID: 2
+Claim Type: 0
+Sender: cosmos1qwnw2r9ak79536c4dqtrtk2pl2nlzpqh763rls
+Recipient 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359
+Symbol eth
+Token 0xbEDdB076fa4dF04859098A9873591dcE3E9C404d
+Amount: 1
+Validator: 0xc230f38FF05860753840e0d7cbC66128ad308B67
+
+
+Attempting to sign message "0xb8b701ef59944e115d6ecfd4aa1bd03025d85338d771b0099d4061923bd0a1ed" with account "c230f38ff05860753840e0d7cbc66128ad308b67"...
+Success! Signature: 0x919ca03752269c87c5df9f4af99ba49be84cb2bbc77921db581719379e95c548164b55822e89294b8066f77812695d9575b4827c04592d4daa41dd087ba1ba7f01
+```
+
+Now, you'll be able to check the status of the ProphecyClaim
+
+```bash
+# Check ProphecyClaim status
+yarn peggy:check [PROPHECY_CLAIM_ID]
+```
+
+Expected output:
+
+```bash
+
+Fetching Oracle contract...
+Attempting to send checkBridgeProphecy() tx...
+
+        Prophecy 2 status:
+----------------------------------------
+Weighted total power:    104
+Weighted signed power:   150
+Reached threshold:       true
+----------------------------------------
 ```
 
 ## Using the modules in other projects

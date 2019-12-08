@@ -572,6 +572,7 @@ contract("Valset", function(accounts) {
     });
 
     it("should not validate signatures on a different hashed message", async function() {
+      // TODO: Prefix this signature
       // Create the signature
       const signature = await web3.eth.sign(this.message, userOne);
 

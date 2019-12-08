@@ -12,7 +12,7 @@ func TestLoadABI(t *testing.T) {
 	const AbiPath = "/src/github.com/cosmos/peggy/cmd/ebrelayer/contract/abi/BridgeBank.abi"
 
 	//Get the ABI ready
-	abi := LoadABI()
+	abi := LoadABI(true)
 
 	require.NotNil(t, abi.Events["LogLock"])
 }

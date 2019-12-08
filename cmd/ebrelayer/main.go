@@ -4,15 +4,18 @@ package main
 //		service, such as initialization and event relay.
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
@@ -31,6 +34,9 @@ import (
 var appCodec *amino.Codec
 
 const FlagRPCURL = "rpc-url"
+
+// FlagMakeClaims : optional flag for the ethereum relayer to automatically make OracleClaims upon every ProphecyClaim
+const FlagMakeClaims = "make-claims"
 
 func init() {
 
@@ -52,16 +58,26 @@ func init() {
 		return initConfig(rootCmd)
 	}
 
+	// Add --make-claims to init cmd as optional flag
+	initCmd.PersistentFlags().String(FlagMakeClaims, "", "Make oracle claims everytime a prophecy claim is witnessed")
+
+	// Construct Initialization Commands
+	initCmd.AddCommand(
+		ethereumRelayerCmd(),
+		client.LineBreak,
+		cosmosRelayerCmd(),
+	)
+
 	// Construct Root Command
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
-		initRelayerCmd(),
+		initCmd,
 	)
 
 	executor := cli.PrepareMainCmd(rootCmd, "EBRELAYER", DefaultCLIHome)
 	err := executor.Execute()
 	if err != nil {
-		panic(err)
+		log.Fatal("failed executing CLI command", err)
 	}
 }
 
@@ -71,56 +87,78 @@ var rootCmd = &cobra.Command{
 	SilenceUsage: true,
 }
 
-//	initRelayerCmd : Initializes a relayer service run by individual
-//		validators which streams live events from a smart contract.
+var initCmd = &cobra.Command{
+	Use:   "init",
+	Short: "Initialization subcommands",
+}
+
+//	ethereumRelayerCmd : Initializes a relayer service run by individual
+//		validators which streams live events from an Ethereum smart contract.
 //		The service automatically signs messages containing the event
 //		data and relays them to tendermint for handling by the
 //		EthBridge module.
 //
-func initRelayerCmd() *cobra.Command {
-	initRelayerCmd := &cobra.Command{
-		Use:   "init [web3Provider] [contractAddress] [eventSignature] [validatorFromName] --chain-id=[chain-id] --rpc-url=[rpc-url]",
-		Short: "Initializes a web socket which streams live events from a smart contract and makes claims on those events to the given RPC",
-		Long: `Initializes a web socket which streams live events from a smart contract and makes claims on those events to the given RPC.
-This will use rpc endpoint given in the --rpc-url flag, or the default tendermint rpc if no flag is given`,
-		Args: cobra.ExactArgs(4),
+func ethereumRelayerCmd() *cobra.Command {
+	ethereumRelayerCmd := &cobra.Command{
+		Use:   "ethereum [web3Provider] [bridgeContractAddress] [validatorFromName] --make-claims [make-claims] --chain-id [chain-id]",
+		Short: "Initializes a web socket which streams live events from a smart contract and relays them to the Cosmos network",
+		Args:  cobra.ExactArgs(3),
 		// NOTE: Preface both parentheses in the event signature with a '\'
-		Example: `Default RPC: ebrelayer init wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 LogLock(address,bytes,address,string,uint256,uint256) validator --chain-id=testing
-Specific RPC: ebrelayer init wss://ropsten.infura.io/ws 0xE147f184886eC70527e8A10723dfE18faE14c4a7 LogLock\\(bytes32,address,bytes,address,uint256,uint256\\) validator --chain-id=peggy --rpc-url=tcp://validator:26657`,
-		RunE: RunRelayerCmd,
+		Example: "ebrelayer init ethereum wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 validator --make-claims=false --chain-id=testing",
+		RunE:    RunEthereumRelayerCmd,
 	}
 
-	return initRelayerCmd
+	return ethereumRelayerCmd
 }
 
-// RunRelayerCmd executes the initRelayerCmd with the provided parameters
-func RunRelayerCmd(cmd *cobra.Command, args []string) error {
+//	cosmosRelayerCmd : Initializes a Cosmos relayer service run by individual
+//		validators which streams live events from the Cosmos network and then
+//		relaying them to an Ethereum smart contract
+//
+func cosmosRelayerCmd() *cobra.Command {
+	cosmosRelayerCmd := &cobra.Command{
+		Use:     "cosmos [tendermintNode] [web3Provider] [bridgeContractAddress]",
+		Short:   "Initializes a web socket which streams live events from the Cosmos network and relays them to the Ethereum network",
+		Args:    cobra.ExactArgs(3),
+		Example: "ebrelayer init cosmos tcp://localhost:26657 http://localhost:7545 0xd88159878c50e4B2b03BB701DD436e4A98D6fBe2",
+		RunE:    RunCosmosRelayerCmd,
+	}
+
+	return cosmosRelayerCmd
+}
+
+// RunEthereumRelayerCmd executes the initEthereumRelayerCmd with the provided parameters
+func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	// Parse chain's ID
 	chainID := viper.GetString(client.FlagChainID)
 	if strings.TrimSpace(chainID) == "" {
-		return fmt.Errorf("Must specify a 'chain-id'")
+		return errors.New("Must specify a 'chain-id'")
+	}
+
+	// Parse make claims boolean
+	var makeClaims bool
+
+	makeClaimsString := viper.GetString(FlagMakeClaims)
+	if strings.TrimSpace(makeClaimsString) == "true" {
+		makeClaims = true
+	} else {
+		makeClaims = false
 	}
 
 	// Parse ethereum provider
 	ethereumProvider := args[0]
 	if !relayer.IsWebsocketURL(ethereumProvider) {
-		return fmt.Errorf("Invalid web3-provider: %v", ethereumProvider)
+		return fmt.Errorf("invalid [web3-provider]: %s", ethereumProvider)
 	}
 
 	// Parse the address of the deployed contract
 	if !common.IsHexAddress(args[1]) {
-		return fmt.Errorf("Invalid contract-address: %v", args[1])
+		return fmt.Errorf("invalid [bridge-contract-address]: %s", args[1])
 	}
 	contractAddress := common.HexToAddress(args[1])
 
-	// Convert event signature to []bytes and apply the Keccak256Hash
-	eventSigHash := crypto.Keccak256Hash([]byte(args[2]))
-
-	// Get the hex event signature from the hash.
-	eventSig := eventSigHash.Hex()
-
 	// Parse the validator's moniker
-	validatorFrom := args[3]
+	validatorFrom := args[2]
 
 	// Parse Tendermint RPC URL
 	rpcURL := viper.GetString(FlagRPCURL)
@@ -128,7 +166,7 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	if rpcURL != "" {
 		_, err := url.Parse(rpcURL)
 		if rpcURL != "" && err != nil {
-			return fmt.Errorf("Invalid RPC URL: %v", rpcURL)
+			return fmt.Errorf("invalid RPC URL: %v", rpcURL)
 		}
 	}
 
@@ -153,22 +191,52 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Initialize the relayer
-	err = relayer.InitRelayer(
+	return relayer.InitEthereumRelayer(
 		appCodec,
 		chainID,
 		ethereumProvider,
 		contractAddress,
-		eventSig,
+		makeClaims,
 		validatorName,
 		passphrase,
 		validatorAddress,
-		rpcURL)
+		rpcURL,
+	)
+}
 
+// RunCosmosRelayerCmd executes the initCosmosRelayerCmd with the provided parameters
+func RunCosmosRelayerCmd(cmd *cobra.Command, args []string) error {
+	// Load config file containing environment variables
+	err := godotenv.Load()
 	if err != nil {
-		return err
+		return errors.New("Error loading .env file")
 	}
 
-	return nil
+	// Private key for validator's Ethereum address must be set as an environment variable
+	privateKey := os.Getenv("ETHEREUM_PRIVATE_KEY")
+	if strings.TrimSpace(privateKey) == "" {
+		return errors.New("Error loading validator's private key from .env file")
+	}
+
+	// Tendermint node
+	tendermintNode := args[0]
+
+	// Ethereum websocket provider
+	ethereumProvider := args[1]
+
+	// Deployed contract address
+	if !common.IsHexAddress(args[2]) {
+		return fmt.Errorf("invalid [bridge-contract-address]: %s", args[2])
+	}
+	contractAddress := common.HexToAddress(args[2])
+
+	// Initialize the relayer
+	return relayer.InitCosmosRelayer(
+		tendermintNode,
+		ethereumProvider,
+		contractAddress,
+		privateKey,
+	)
 }
 
 func initConfig(cmd *cobra.Command) error {

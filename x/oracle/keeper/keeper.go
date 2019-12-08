@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/peggy/x/oracle/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -19,7 +18,7 @@ type Keeper struct {
 	cdc      *codec.Codec // The wire codec for binary encoding/decoding.
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
-	stakeKeeper staking.Keeper
+	stakeKeeper types.StakingKeeper
 	codespace   sdk.CodespaceType
 
 	// TODO: use this as param instead
@@ -27,7 +26,7 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakeKeeper staking.Keeper, codespace sdk.CodespaceType, consensusNeeded float64) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakeKeeper types.StakingKeeper, codespace sdk.CodespaceType, consensusNeeded float64) Keeper {
 	if consensusNeeded <= 0 || consensusNeeded > 1 {
 		panic(types.ErrMinimumConsensusNeededInvalid(codespace).Error())
 	}
