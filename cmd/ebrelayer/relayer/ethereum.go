@@ -16,8 +16,10 @@ import (
 	"log"
 	"math/big"
 
+	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -33,13 +35,13 @@ import (
 // InitEthereumRelayer : Subscribes to events emitted by the deployed contracts
 func InitEthereumRelayer(
 	cdc *codec.Codec,
-	chainID string,
 	provider string,
 	registryContractAddress common.Address,
-	validatorName string,
+	moniker string,
 	passphrase string,
 	validatorAddress sdk.ValAddress,
-	rpcURL string,
+	cliCtx sdkContext.CLIContext,
+	txBldr authtypes.TxBuilder,
 	privateKey *ecdsa.PrivateKey,
 ) error {
 	// Start client with infura ropsten provider
@@ -84,7 +86,7 @@ func InitEthereumRelayer(
 			fmt.Println("Tx hash:", vLog.TxHash.Hex())
 			switch vLog.Topics[0].Hex() {
 			case eventLogLockSignature:
-				err := handleLogLockEvent(clientChainID, bridgeBankAddress, bridgeBankContractABI, events.LogLock.String(), vLog, chainID, cdc, validatorAddress, validatorName, passphrase, rpcURL)
+				err := handleLogLockEvent(clientChainID, bridgeBankAddress, bridgeBankContractABI, events.LogLock.String(), vLog, cdc, validatorAddress, moniker, passphrase, cliCtx, txBldr)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -133,12 +135,12 @@ func handleLogLockEvent(
 	contractABI abi.ABI,
 	eventName string,
 	log types.Log,
-	chainID string,
 	cdc *codec.Codec,
 	validatorAddress sdk.ValAddress,
-	validatorName string,
+	moniker string,
 	passphrase string,
-	rpcURL string,
+	cliCtx sdkContext.CLIContext,
+	txBldr authtypes.TxBuilder,
 ) error {
 	// Unpack the LogLock event using its unique event signature from the contract's ABI
 	event := events.UnpackLogLock(clientChainID, contractAddress.Hex(), contractABI, eventName, log.Data)
@@ -153,7 +155,7 @@ func handleLogLockEvent(
 	}
 
 	// Initiate the relay
-	err = txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, passphrase, &prophecyClaim, rpcURL)
+	err = txs.RelayLockToCosmos(cdc, moniker, passphrase, &prophecyClaim, cliCtx, txBldr)
 	if err != nil {
 		return err
 	}

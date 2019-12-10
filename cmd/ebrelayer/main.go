@@ -18,15 +18,15 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
+	sdkUtils "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	app "github.com/cosmos/peggy/app"
 	relayer "github.com/cosmos/peggy/cmd/ebrelayer/relayer"
 	txs "github.com/cosmos/peggy/cmd/ebrelayer/txs"
+	utils "github.com/cosmos/peggy/cmd/ebrelayer/utils"
 )
 
 var appCodec *amino.Codec
@@ -131,36 +131,27 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	// Get the validator's name and account address using their moniker
-	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom, false)
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Convert the validator's account address into type ValAddress
-	validatorAddress := sdk.ValAddress(validatorAccAddress)
+	// Load validator details
+	validatorAddress, moniker, passphrase := utils.LoadValidatorCredentials(validatorFrom)
 
-	// Get the validator's passphrase using their moniker
-	passphrase, err := keys.GetPassphrase(validatorFrom)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Load CLI context
+	cliCtx := utils.LoadTendermintCLIContext(appCodec, validatorAddress, moniker, rpcURL, chainID)
 
-	// Test passphrase is correct
-	_, err = authtxb.MakeSignature(nil, validatorName, passphrase, authtxb.StdSignMsg{})
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Load Tx builder
+	txBldr := authtypes.NewTxBuilderFromCLI().
+		WithTxEncoder(sdkUtils.GetTxEncoder(appCodec)).
+		WithChainID(chainID)
 
 	// Start an Ethereum websocket
 	go relayer.InitEthereumRelayer(
 		appCodec,
-		chainID,
 		ethereumProvider,
 		contractAddress,
-		validatorName,
+		moniker,
 		passphrase,
 		validatorAddress,
-		rpcURL,
+		cliCtx,
+		txBldr,
 		privateKey,
 	)
 

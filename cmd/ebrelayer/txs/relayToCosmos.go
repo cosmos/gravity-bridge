@@ -22,45 +22,23 @@ import (
 // RelayLockToCosmos : RelayLockToCosmos applies validator's signature to an EthBridgeClaim message
 //		containing information about an event on the Ethereum blockchain before relaying to the Bridge
 func RelayLockToCosmos(
-	chainID string,
 	cdc *codec.Codec,
-	validatorAddress sdk.ValAddress,
 	moniker string,
 	passphrase string,
 	claim *types.EthBridgeClaim,
-	rpcUrl string,
+	cliCtx context.CLIContext,
+	txBldr authtypes.TxBuilder,
 ) error {
-	cliCtx := context.NewCLIContext().
-		WithCodec(cdc).
-		WithFromAddress(sdk.AccAddress(validatorAddress)).
-		WithFromName(moniker)
-
-	if rpcUrl != "" {
-		cliCtx = cliCtx.WithNodeURI(rpcUrl)
-	}
-
-	cliCtx.SkipConfirm = true
-
-	txBldr := authtypes.NewTxBuilderFromCLI().
-		WithTxEncoder(utils.GetTxEncoder(cdc)).
-		WithChainID(chainID)
-
-	accountRetriever := authtypes.NewAccountRetriever(cliCtx)
-
-	err := accountRetriever.EnsureExists((sdk.AccAddress(claim.ValidatorAddress)))
-	if err != nil {
-		return err
-	}
-
+	// Packages the claim as a Tendermint message
 	msg := ethbridge.NewMsgCreateEthBridgeClaim(*claim)
 
-	err = msg.ValidateBasic()
-	if err != nil {
-		return err
+	errValBasic := msg.ValidateBasic()
+	if errValBasic != nil {
+		return errValBasic
 	}
 
 	// Prepare tx
-	txBldr, err = utils.PrepareTxBuilder(txBldr, cliCtx)
+	txBldr, err := utils.PrepareTxBuilder(txBldr, cliCtx)
 	if err != nil {
 		return err
 	}
