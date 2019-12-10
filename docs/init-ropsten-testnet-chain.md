@@ -29,7 +29,7 @@ yarn peggy:address --network ropsten
 ### Start the Relayer service on Ropsten testnet
 
 ```bash
-ebrelayer init ethereum wss://ropsten.infura.io/ [PEGGY_DEPLOYED_ADDRESS] validator --chain-id=peggy
+ebrelayer init tcp://localhost:26657 wss://ropsten.infura.io/ [PEGGY_CONTRACT_ADDRESS] validator --chain-id=peggy
 ```
 
 ### Lock rEth on contracts
