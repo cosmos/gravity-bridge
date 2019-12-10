@@ -11,13 +11,15 @@ module.exports = async () => {
     require("../build/contracts/BridgeBank.json")
   );
 
+  const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
+
   /*******************************************
    *** Constants
    ******************************************/
   // Lock transaction default params
   const DEFAULT_COSMOS_RECIPIENT =
-    "0x636f736d6f7331706a74677530766175326d35326e72796b64707a74727438383761796b756530687137646668";
-  const DEFAULT_ETH_DENOM = "0x0000000000000000000000000000000000000000";
+    Web3.utils.utf8ToHex("cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh");
+  const DEFAULT_ETH_DENOM = "eth";
   const DEFAULT_AMOUNT = 10;
 
   // Config values
@@ -69,14 +71,19 @@ module.exports = async () => {
 
   if (!DEFAULT_PARAMS) {
     if (NETWORK_ROPSTEN) {
-      cosmosRecipient = process.argv[6];
+      cosmosRecipient = Web3.utils.utf8ToHex(process.argv[6]);
       coinDenom = process.argv[7];
       amount = parseInt(process.argv[8], 10);
     } else {
-      cosmosRecipient = process.argv[4];
+      cosmosRecipient = Web3.utils.utf8ToHex(process.argv[4]);
       coinDenom = process.argv[5];
       amount = parseInt(process.argv[6], 10);
     }
+  }
+
+  // Convert default 'eth' coin denom into null address
+  if(coinDenom == "eth") {
+    coinDenom = NULL_ADDRESS;
   }
 
   /*******************************************
@@ -108,7 +115,7 @@ module.exports = async () => {
     console.log("Connected to contract, sending lock...");
     return instance.lock(cosmosRecipient, coinDenom, amount, {
       from: accounts[0],
-      value: coinDenom === DEFAULT_ETH_DENOM ? amount : 0,
+      value: coinDenom === NULL_ADDRESS ? amount : 0,
       gas: 300000 // 300,000 Gwei
     });
   });

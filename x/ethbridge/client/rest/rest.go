@@ -44,7 +44,7 @@ type createEthClaimReq struct {
 type burnOrLockEthReq struct {
 	BaseReq          rest.BaseReq `json:"base_req"`
 	EthereumChainID  string       `json:"ethereum_chain_id"`
-	TokenContract    string       `json:"token_contract"`
+	TokenContract    string       `json:"token_contract_address"`
 	CosmosSender     string       `json:"cosmos_sender"`
 	EthereumReceiver string       `json:"ethereum_receiver"`
 	Amount           string       `json:"amount"`
