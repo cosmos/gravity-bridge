@@ -29,6 +29,7 @@ contract CosmosBridge {
     }
 
     enum ClaimType {
+        Unsupported,
         Burn,
         Lock
     }
@@ -199,7 +200,7 @@ contract CosmosBridge {
         ClaimType claimType;
         if(_claimType == ClaimType.Burn){
             claimType = ClaimType.Burn;
-        } else {
+        } else if(_claimType == ClaimType.Lock){
             claimType = ClaimType.Lock;
         }
 
