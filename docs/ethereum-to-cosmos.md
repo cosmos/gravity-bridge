@@ -36,7 +36,7 @@ ebrelayer init ethereum ws://127.0.0.1:7545/ [PEGGY_DEPLOYED_ADDRESS] validator 
 
 ### Lock Ethereum assets on contracts
 
-Now we can lock our funds on the contracts by sending a lock transaction containing Eth/ERC20 assets.   
+Now we can lock our funds on the contracts by sending a lock transaction containing Eth/ERC20 assets. First, we'll use default parameters to lock Eth assets.  
 
 Default parameter values for lock transactions:
 
@@ -79,7 +79,7 @@ rawlog: '[{"msg_index":0,"success":true,"log":"","events":[{"type":"message","at
 
 ### Testing ERC20 token support
 
-The bridge supports the transfer of ERC20 token assets. A sample TEST token is deployed upon migration and can be used to locally test the feature.
+The bridge supports the transfer of ERC20 token assets. First, we'll deploy a sample TEST token to the network and then use it to test the feature.
 
 ```bash
 # Mint 1,000 TEST tokens to your account for local use

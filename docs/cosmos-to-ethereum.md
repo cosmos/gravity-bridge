@@ -56,7 +56,7 @@ ebcli tx send validator $(ebcli keys show testuser -a) 10stake --chain-id=peggy 
 
 # Send burn transaction (1stake token)
 ebcli tx ethbridge burn $(ebcli keys show testuser -a) [RECIPIENT_ETHEREUM_ADDRESS] 1stake --from testuser --chain-id peggy --ethereum-chain-id 3 --token-contract-address [TOKEN_CONTRACT_ADDRESS]
-# Note: --token-contract-address will be '0x0x0000000000000000000000000000000000000000' for Ethereum
+# Note: --token-contract-address will be '0x0000000000000000000000000000000000000000' for Ethereum
 
 # Enter 'y' to confirm the transaction
 

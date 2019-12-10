@@ -43,5 +43,4 @@ yarn peggy:abi
 
 # Get the address of Peggy's registry contract
 yarn peggy:address
-
 ```

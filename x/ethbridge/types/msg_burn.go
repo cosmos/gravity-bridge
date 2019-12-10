@@ -13,7 +13,7 @@ import (
 // MsgBurn defines a message for burning coins and triggering a related event
 type MsgBurn struct {
 	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
-	TokenContract    EthereumAddress `json:"token_contract" yaml:"token_contract"`
+	TokenContract    EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
 	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
 	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
