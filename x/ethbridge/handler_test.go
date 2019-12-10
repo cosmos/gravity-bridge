@@ -247,7 +247,7 @@ func TestBurnEthSuccess(t *testing.T) {
 				require.Equal(t, value, ModuleName)
 			case "ethereum_chain_id":
 				eventEthereumChainID = value
-			case "token_contract":
+			case "token_contract_address":
 				eventTokenContract = value
 			case "cosmos_sender":
 				eventCosmosSender = value
@@ -291,7 +291,7 @@ func TestBurnEthSuccess(t *testing.T) {
 				require.Equal(t, value, ModuleName)
 			case "ethereum_chain_id":
 				eventEthereumChainID = value
-			case "token_contract":
+			case "token_contract_address":
 				eventTokenContract = value
 			case "cosmos_sender":
 				eventCosmosSender = value

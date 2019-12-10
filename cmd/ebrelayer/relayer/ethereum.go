@@ -15,6 +15,7 @@ import (
 	"log"
 	"math/big"
 
+	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -38,6 +39,7 @@ func InitEthereumRelayer(
 	validatorName string,
 	passphrase string,
 	validatorAddress sdk.ValAddress,
+	cliContext sdkContext.CLIContext,
 	rpcURL string,
 ) error {
 	// Start client with infura ropsten provider
@@ -108,7 +110,7 @@ func InitEthereumRelayer(
 
 				switch eventName {
 				case events.LogLock.String():
-					err := handleLogLockEvent(clientChainID, contractAddress.Hex(), contractABI, eventName, vLog, chainID, cdc, validatorAddress, validatorName, passphrase, rpcURL)
+					err := handleLogLockEvent(clientChainID, contractAddress.Hex(), contractABI, eventName, vLog, chainID, cdc, validatorAddress, validatorName, passphrase, cliContext, rpcURL)
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -135,6 +137,7 @@ func handleLogLockEvent(
 	validatorAddress sdk.ValAddress,
 	validatorName string,
 	passphrase string,
+	cliContext sdkContext.CLIContext,
 	rpcURL string,
 ) error {
 	// Unpack the LogLock event using its unique event signature from the contract's ABI
@@ -150,7 +153,7 @@ func handleLogLockEvent(
 	}
 
 	// Initiate the relay
-	return txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, passphrase, &prophecyClaim, rpcURL)
+	return txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, passphrase, cliContext, &prophecyClaim, rpcURL)
 }
 
 // handleLogNewProphecyClaimEvent : unpacks a LogNewProphecyClaim event, converts it to a OracleClaim, and relays a tx to Ethereum

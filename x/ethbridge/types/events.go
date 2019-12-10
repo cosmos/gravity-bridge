@@ -14,7 +14,7 @@ var (
 	AttributeKeyClaimType      = "claim_type"
 
 	AttributeKeyEthereumChainID  = "ethereum_chain_id"
-	AttributeKeyTokenContract    = "token_contract"
+	AttributeKeyTokenContract    = "token_contract_address"
 	AttributeKeyCosmosSender     = "cosmos_sender"
 	AttributeKeyEthereumReceiver = "ethereum_receiver"
 
