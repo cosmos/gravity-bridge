@@ -29,16 +29,15 @@ func RelayLockToCosmos(
 	passphrase string,
 	cliCtx context.CLIContext,
 	claim *types.EthBridgeClaim,
-	rpcUrl string,
+	rpcURL string,
 ) error {
-
-	if rpcUrl != "" {
-		cliCtx = cliCtx.WithNodeURI(rpcUrl)
+	if rpcURL != "" {
+		cliCtx = cliCtx.WithNodeURI(rpcURL)
 	}
 
 	cliCtx.SkipConfirm = true
 
-	txBldr := authtypes.NewTxBuilderFromCLI().
+	txBldr := authtypes.NewTxBuilderFromCLI(cliCtx.Input).
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
 		WithChainID(chainID)
 

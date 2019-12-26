@@ -4,6 +4,7 @@ package main
 //		service, such as initialization and event relay.
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"log"
@@ -20,12 +21,10 @@ import (
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	app "github.com/cosmos/peggy/app"
 	relayer "github.com/cosmos/peggy/cmd/ebrelayer/relayer"
@@ -33,10 +32,13 @@ import (
 
 var appCodec *amino.Codec
 
-const FlagRPCURL = "rpc-url"
+const (
+	// FlagRPCURL sets the RPC for the tendermint node
+	FlagRPCURL = "rpc-url"
 
-// FlagMakeClaims : optional flag for the ethereum relayer to automatically make OracleClaims upon every ProphecyClaim
-const FlagMakeClaims = "make-claims"
+	// FlagMakeClaims is an optional flag for the ethereum relayer to automatically make OracleClaims upon every ProphecyClaim
+	FlagMakeClaims = "make-claims"
+)
 
 func init() {
 
@@ -52,7 +54,7 @@ func init() {
 	DefaultCLIHome := os.ExpandEnv("$HOME/.ebcli")
 
 	// Add --chain-id to persistent flags and mark it required
-	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
+	rootCmd.PersistentFlags().String(flags.FlagChainID, "", "Chain ID of tendermint node")
 	rootCmd.PersistentFlags().String(FlagRPCURL, "", "RPC URL of tendermint node")
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
 		return initConfig(rootCmd)
@@ -64,7 +66,7 @@ func init() {
 	// Construct Initialization Commands
 	initCmd.AddCommand(
 		ethereumRelayerCmd(),
-		client.LineBreak,
+		flags.LineBreak,
 		cosmosRelayerCmd(),
 	)
 
@@ -129,8 +131,10 @@ func cosmosRelayerCmd() *cobra.Command {
 
 // RunEthereumRelayerCmd executes the initEthereumRelayerCmd with the provided parameters
 func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
+	inBuf := bufio.NewReader(cmd.InOrStdin())
+
 	// Parse chain's ID
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 	if strings.TrimSpace(chainID) == "" {
 		return errors.New("Must specify a 'chain-id'")
 	}
@@ -171,27 +175,30 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get the validator's name and account address using their moniker
-	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom, false)
+	validatorAccAddress, validatorName, err := context.GetFromFields(inBuf, validatorFrom, false)
 	if err != nil {
 		return err
 	}
 	// Convert the validator's account address into type ValAddress
 	validatorAddress := sdk.ValAddress(validatorAccAddress)
 
-	// Get the validator's passphrase using their moniker
-	passphrase, err := keys.GetPassphrase(validatorFrom)
-	if err != nil {
-		return err
-	}
+	passphrase := ""
+	// FIXME: use keyring
+	// // Get the validator's passphrase using their moniker
+	// passphrase, err := keys.GetPassphrase(validatorFrom)
+	// if err != nil {
+	// 	return err
+	// }
 
-	// Test passphrase is correct
-	_, err = authtxb.MakeSignature(nil, validatorName, passphrase, authtxb.StdSignMsg{})
-	if err != nil {
-		return err
-	}
+	// // Test passphrase is correct
+	// _, err = authtypes.MakeSignature(nil, validatorName, passphrase, authtypes.StdSignMsg{})
+	// if err != nil {
+	// 	return err
+	// }
 
 	// Set up our CLIContext
-	cliCtx := sdkContext.NewCLIContext().
+
+	cliCtx := context.NewCLIContextWithInput(inBuf).
 		WithCodec(appCodec).
 		WithFromAddress(sdk.AccAddress(validatorAddress)).
 		WithFromName(validatorName)
@@ -247,7 +254,7 @@ func RunCosmosRelayerCmd(cmd *cobra.Command, args []string) error {
 }
 
 func initConfig(cmd *cobra.Command) error {
-	return viper.BindPFlag(client.FlagChainID, cmd.PersistentFlags().Lookup(client.FlagChainID))
+	return viper.BindPFlag(flags.FlagChainID, cmd.PersistentFlags().Lookup(flags.FlagChainID))
 }
 
 func main() {

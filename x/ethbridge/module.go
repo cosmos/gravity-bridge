@@ -3,8 +3,6 @@ package ethbridge
 import (
 	"encoding/json"
 
-	"github.com/cosmos/peggy/x/ethbridge/client"
-	"github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
@@ -15,6 +13,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/supply"
+	"github.com/cosmos/peggy/x/ethbridge/client/cli"
+	"github.com/cosmos/peggy/x/ethbridge/client/rest"
+	"github.com/cosmos/peggy/x/ethbridge/types"
 )
 
 var (
@@ -50,17 +51,17 @@ func (AppModuleBasic) ValidateGenesis(_ json.RawMessage) error {
 
 // RegisterRESTRoutes registers the REST routes for the ethbridge module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	client.RegisterRESTRoutes(ctx, rtr, StoreKey)
+	rest.RegisterRESTRoutes(ctx, rtr, StoreKey)
 }
 
 // GetTxCmd returns the root tx command for the ethbridge module.
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return client.GetTxCmd(StoreKey, cdc)
+	return cli.GetTxCmd(StoreKey, cdc)
 }
 
 // GetQueryCmd returns no root query command for the ethbridge module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return client.GetQueryCmd(StoreKey, cdc)
+	return cli.GetQueryCmd(StoreKey, cdc)
 }
 
 //____________________________________________________________________________

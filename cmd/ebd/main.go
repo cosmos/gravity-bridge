@@ -23,6 +23,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
+const flagInvCheckPeriod = "inv-check-period"
+
+var invCheckPeriod uint
+
 func main() {
 	cdc := app.MakeCodec()
 
@@ -31,6 +35,7 @@ func main() {
 	config.SetBech32PrefixForAccount(sdk.Bech32PrefixAccAddr, sdk.Bech32PrefixAccPub)
 	config.SetBech32PrefixForValidator(sdk.Bech32PrefixValAddr, sdk.Bech32PrefixValPub)
 	config.SetBech32PrefixForConsensusNode(sdk.Bech32PrefixConsAddr, sdk.Bech32PrefixConsPub)
+	config.SetKeyringServiceName(app.AppName)
 	config.Seal()
 
 	ctx := server.NewDefaultContext()
@@ -53,6 +58,8 @@ func main() {
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "EB", app.DefaultNodeHome)
+	rootCmd.PersistentFlags().UintVar(&invCheckPeriod, flagInvCheckPeriod,
+		0, "Assert registered invariants every N blocks")
 	err := executor.Execute()
 	if err != nil {
 		panic(err)
@@ -61,7 +68,7 @@ func main() {
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
 	return app.NewEthereumBridgeApp(
-		logger, db, true,
+		logger, db, true, traceStore, invCheckPeriod,
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
 		baseapp.SetHaltHeight(uint64(viper.GetInt(server.FlagHaltHeight))),
 	)
@@ -72,13 +79,13 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		ebApp := app.NewEthereumBridgeApp(logger, db, false)
+		ebApp := app.NewEthereumBridgeApp(logger, db, false, traceStore, 1)
 		err := ebApp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
 		}
 		return ebApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
-	ebApp := app.NewEthereumBridgeApp(logger, db, true)
+	ebApp := app.NewEthereumBridgeApp(logger, db, true, traceStore, 1)
 	return ebApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
