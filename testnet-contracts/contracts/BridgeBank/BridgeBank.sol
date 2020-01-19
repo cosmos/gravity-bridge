@@ -19,7 +19,6 @@ contract BridgeBank is CosmosBank, EthereumBank {
     using SafeMath for uint256;
     
     address public operator;
-    Oracle public oracle;
     CosmosBridge public cosmosBridge;
 
     /*
@@ -27,13 +26,11 @@ contract BridgeBank is CosmosBank, EthereumBank {
     */
     constructor (
         address _operatorAddress,
-        address _oracleAddress,
         address _cosmosBridgeAddress
     )
         public
     {
         operator = _operatorAddress;
-        oracle = Oracle(_oracleAddress);
         cosmosBridge = CosmosBridge(_cosmosBridgeAddress);
     }
 
@@ -48,17 +45,6 @@ contract BridgeBank is CosmosBank, EthereumBank {
         _;
     }
 
-    /*
-    * @dev: Modifier to restrict access to the oracle
-    */
-    modifier onlyOracle()
-    {
-        require(
-            msg.sender == address(oracle),
-            "Access restricted to the oracle"
-        );
-        _;
-    }
 
     /*
     * @dev: Modifier to restrict access to the cosmos bridge
