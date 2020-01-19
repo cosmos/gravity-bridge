@@ -252,9 +252,9 @@ contract CosmosBridge {
 
         ClaimType claimType = prophecyClaims[_prophecyID].claimType;
         if(claimType == ClaimType.Burn) {
-            unlockTokens(_prophecyID);
-        } else {
             issueBridgeTokens(_prophecyID);
+        } else {
+            unlockTokens(_prophecyID);
         }
 
         emit LogProphecyCompleted(
