@@ -2,62 +2,19 @@ package txs
 
 import (
 	"crypto/ecdsa"
-	"encoding/hex"
-	"fmt"
 	"log"
 	"os"
 	"strings"
 
+	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	"github.com/joho/godotenv"
 	solsha3 "github.com/miguelmota/go-solidity-sha3"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
-
-// GenerateClaimHash : Generates an OracleClaim hash from a ProphecyClaim's event data
-func GenerateClaimHash(prophecyID []byte, sender []byte, recipient []byte, token []byte, amount []byte, validator []byte) string {
-	// Generate a hash containing the information
-	rawHash := crypto.Keccak256Hash(prophecyID, sender, recipient, token, amount, validator)
-
-	// Cast hash to hex encoded string
-	return rawHash.Hex()
-}
-
-// SignClaim : Signs hashed message with validator's private key
-func SignClaim(hash string) []byte {
-	key, err := LoadPrivateKey()
-	if err != nil {
-		log.Fatal(err)
-	}
-	signer := hex.EncodeToString(crypto.PubkeyToAddress(key.PublicKey).Bytes())
-	fmt.Println("Using validator account:", signer)
-	fmt.Println("Attempting to sign message:", hash)
-
-	rawSignature, _ := prefixMessage(hash, key)
-
-	signature := hexutil.Bytes(rawSignature)
-	fmt.Println("Success! Signature:", signature)
-
-	return signature
-}
-
-func prefixMessage(message string, key *ecdsa.PrivateKey) ([]byte, []byte) {
-	// Turn the message into a 32-byte hash
-	hash := solsha3.SoliditySHA3(solsha3.String(message))
-	// Prefix and then hash to mimic behavior of eth_sign
-	prefixed := solsha3.SoliditySHA3(solsha3.String("\x19Ethereum Signed Message:\n32"), solsha3.Bytes32(hash))
-	sig, err := secp256k1.Sign(prefixed, math.PaddedBigBytes(key.D, 32))
-
-	if err != nil {
-		panic(err)
-	}
-
-	return sig, prefixed
-}
 
 // LoadPrivateKey : loads the validator's private key from environment variables
 func LoadPrivateKey() (key *ecdsa.PrivateKey, err error) {
@@ -99,4 +56,38 @@ func LoadSender() (address common.Address, err error) {
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
 	return fromAddress, nil
+}
+
+// GenerateClaimMessage : Generates a hased message containing a ProphecyClaim event's data
+func GenerateClaimMessage(event events.NewProphecyClaimEvent) common.Hash {
+	// Cast event field values to byte[]
+	prophecyID := event.ProphecyID.Bytes()
+	sender := event.CosmosSender
+	recipient := []byte(event.EthereumReceiver.Hex())
+	token := []byte(event.TokenAddress.Hex())
+	amount := event.Amount.Bytes()
+	validator := []byte(event.ValidatorAddress.Hex())
+
+	// Generate claim message using ProphecyClaim data
+	return crypto.Keccak256Hash(prophecyID, sender, recipient, token, amount, validator)
+}
+
+// PrepareMsgForSigning : prefixes a message for verification by a Smart Contract
+func PrepareMsgForSigning(msg string) []byte {
+	// Turn the message into a 32-byte hash
+	hashedMsg := solsha3.SoliditySHA3(solsha3.String(msg))
+
+	// Prefix and then hash to mimic behavior of eth_sign
+	return solsha3.SoliditySHA3(solsha3.String("\x19Ethereum Signed Message:\n32"), solsha3.Bytes32(hashedMsg))
+}
+
+// SignClaim : Signs the prepared message with validator's private key
+func SignClaim(msg []byte, key *ecdsa.PrivateKey) ([]byte, error) {
+	// Sign the message
+	sig, err := secp256k1.Sign(msg, math.PaddedBigBytes(key.D, 32))
+	if err != nil {
+		panic(err)
+	}
+
+	return sig, nil
 }

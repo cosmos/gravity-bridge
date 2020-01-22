@@ -11,7 +11,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -29,6 +28,7 @@ import (
 
 	app "github.com/cosmos/peggy/app"
 	relayer "github.com/cosmos/peggy/cmd/ebrelayer/relayer"
+	txs "github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
 var appCodec *amino.Codec
@@ -129,6 +129,12 @@ func cosmosRelayerCmd() *cobra.Command {
 
 // RunEthereumRelayerCmd executes the initEthereumRelayerCmd with the provided parameters
 func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
+	// Load the validator's Ethereum private key
+	privateKey, err := txs.LoadPrivateKey()
+	if err != nil {
+		return fmt.Errorf("invalid [ETHEREUM_PRIVATE_KEY] from .env")
+	}
+
 	// Parse chain's ID
 	chainID := viper.GetString(client.FlagChainID)
 	if strings.TrimSpace(chainID) == "" {
@@ -208,21 +214,16 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 		validatorAddress,
 		cliCtx,
 		rpcURL,
+		privateKey,
 	)
 }
 
 // RunCosmosRelayerCmd executes the initCosmosRelayerCmd with the provided parameters
 func RunCosmosRelayerCmd(cmd *cobra.Command, args []string) error {
-	// Load config file containing environment variables
-	err := godotenv.Load()
+	// Load the validator's Ethereum private key
+	privateKey, err := txs.LoadPrivateKey()
 	if err != nil {
-		return errors.New("Error loading .env file")
-	}
-
-	// Private key for validator's Ethereum address must be set as an environment variable
-	privateKey := os.Getenv("ETHEREUM_PRIVATE_KEY")
-	if strings.TrimSpace(privateKey) == "" {
-		return errors.New("Error loading validator's private key from .env file")
+		return fmt.Errorf("invalid [ETHEREUM_PRIVATE_KEY] from .env")
 	}
 
 	// Tendermint node
