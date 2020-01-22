@@ -68,19 +68,3 @@ func TestSignClaim(t *testing.T) {
 	// Confirm that the recovered address is correct
 	require.Equal(t, recoveredAddr, signerAddr)
 }
-
-// TODO: Error loading .env file from *_test.go
-// func TestLoadPrivateKey(t *testing.T) {
-// 	// Set env variable "ETHEREUM_PRIVATE_KEY"
-// 	os.Setenv(EthereumPrivateKey, TestPrivHex)
-
-// 	// Load the validators private key from config
-// 	key, err := LoadPrivateKey()
-// 	require.NoError(t, err)
-
-// 	// Get env variable "ETHEREUM_PRIVATE_KEY"
-// 	testKey := os.Getenv(EthereumPrivateKey)
-
-// 	// Confirm that the key matches the testKey
-// 	require.Equal(t, key, testKey)
-// }

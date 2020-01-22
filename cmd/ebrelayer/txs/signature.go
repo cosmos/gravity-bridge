@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
@@ -12,7 +11,6 @@ import (
 	solsha3 "github.com/miguelmota/go-solidity-sha3"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
@@ -92,28 +90,4 @@ func SignClaim(msg []byte, key *ecdsa.PrivateKey) ([]byte, error) {
 	}
 
 	return sig, nil
-}
-
-// SigRSV : utility function which breaks a signature down into [R, S, V] components
-func SigRSV(isig interface{}) ([32]byte, [32]byte, uint8) {
-	var sig []byte
-	switch v := isig.(type) {
-	case []byte:
-		sig = v
-	case string:
-		sig, _ = hexutil.Decode(v)
-	}
-
-	sigstr := common.Bytes2Hex(sig)
-	rS := sigstr[0:64]
-	sS := sigstr[64:128]
-	R := [32]byte{}
-	S := [32]byte{}
-	copy(R[:], common.FromHex(rS))
-	copy(S[:], common.FromHex(sS))
-	vStr := sigstr[128:130]
-	vI, _ := strconv.Atoi(vStr)
-	V := uint8(vI + 27)
-
-	return R, S, V
 }
