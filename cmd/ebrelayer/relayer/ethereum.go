@@ -16,6 +16,7 @@ import (
 	"log"
 	"math/big"
 
+	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -39,6 +40,7 @@ func InitEthereumRelayer(
 	validatorName string,
 	passphrase string,
 	validatorAddress sdk.ValAddress,
+	cliContext sdkContext.CLIContext,
 	rpcURL string,
 	privateKey *ecdsa.PrivateKey,
 ) error {
@@ -136,6 +138,7 @@ func handleLogLockEvent(
 	validatorAddress sdk.ValAddress,
 	validatorName string,
 	passphrase string,
+	cliContext sdkContext.CLIContext,
 	rpcURL string,
 ) error {
 	// Unpack the LogLock event using its unique event signature from the contract's ABI
