@@ -73,6 +73,7 @@ func InitCosmosRelayer(
 					if err != nil {
 						log.Fatal(err)
 					}
+				case events.Unsupported:
 				}
 			}
 		case <-quit:
