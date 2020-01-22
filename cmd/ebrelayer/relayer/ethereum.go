@@ -111,7 +111,7 @@ func InitEthereumRelayer(
 
 				switch eventName {
 				case events.LogLock.String():
-					err := handleLogLockEvent(clientChainID, contractAddress, contractABI, eventName, vLog, chainID, cdc, validatorAddress, validatorName, passphrase, rpcURL)
+					err := handleLogLockEvent(clientChainID, contractAddress, contractABI, eventName, vLog, chainID, cdc, validatorAddress, validatorName, passphrase, cliContext, rpcURL)
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -154,7 +154,7 @@ func handleLogLockEvent(
 	}
 
 	// Initiate the relay
-	err = txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, passphrase, &prophecyClaim, rpcURL)
+	err = txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, passphrase, cliContext, &prophecyClaim, rpcURL)
 	if err != nil {
 		return err
 	}
