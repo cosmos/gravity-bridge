@@ -33,7 +33,7 @@ var appCodec *amino.Codec
 
 const FlagRPCURL = "rpc-url"
 
-func init() {
+func main() {
 
 	// Read in the configuration file for the sdk
 	config := sdk.GetConfig()
@@ -166,11 +166,4 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) {
 
 func initConfig(cmd *cobra.Command) error {
 	return viper.BindPFlag(client.FlagChainID, cmd.PersistentFlags().Lookup(client.FlagChainID))
-}
-
-func main() {
-	err := rootCmd.Execute()
-	if err != nil {
-		os.Exit(1)
-	}
 }
