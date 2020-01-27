@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strconv"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethCommon "github.com/ethereum/go-ethereum/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,29 +38,29 @@ func (msg MsgLock) Route() string { return RouterKey }
 func (msg MsgLock) Type() string { return "lock" }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgLock) ValidateBasic() sdk.Error {
+func (msg MsgLock) ValidateBasic() error {
 	if strconv.Itoa(msg.EthereumChainID) == "" {
-		return ErrInvalidChainID(DefaultCodespace, strconv.Itoa(msg.EthereumChainID))
+		return ErrInvalidChainID(strconv.Itoa(msg.EthereumChainID))
 	}
 
 	if msg.TokenContract.String() == "" {
-		return ErrInvalidEthAddress(DefaultCodespace)
+		return ErrInvalidEthAddress
 	}
 
 	if !gethCommon.IsHexAddress(msg.TokenContract.String()) {
-		return ErrInvalidEthAddress(DefaultCodespace)
+		return ErrInvalidEthAddress
 	}
 
 	if msg.CosmosSender.Empty() {
-		return sdk.ErrInvalidAddress(msg.CosmosSender.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String())
 	}
 
 	if msg.EthereumReceiver.String() == "" {
-		return ErrInvalidEthAddress(DefaultCodespace)
+		return ErrInvalidEthAddress
 	}
 
 	if !gethCommon.IsHexAddress(msg.EthereumReceiver.String()) {
-		return ErrInvalidEthAddress(DefaultCodespace)
+		return ErrInvalidEthAddress
 	}
 
 	return nil

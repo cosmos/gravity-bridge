@@ -8,6 +8,7 @@ import (
 	gethCommon "github.com/ethereum/go-ethereum/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // MsgCreateEthBridgeClaim defines a message for creating claims on the ethereum bridge
@@ -25,27 +26,27 @@ func (msg MsgCreateEthBridgeClaim) Route() string { return RouterKey }
 func (msg MsgCreateEthBridgeClaim) Type() string { return "create_bridge_claim" }
 
 // ValidateBasic runs stateless checks on the message
-func (msg MsgCreateEthBridgeClaim) ValidateBasic() sdk.Error {
+func (msg MsgCreateEthBridgeClaim) ValidateBasic() error {
 	if msg.CosmosReceiver.Empty() {
-		return sdk.ErrInvalidAddress(msg.CosmosReceiver.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosReceiver.String())
 	}
 
 	if msg.ValidatorAddress.Empty() {
-		return sdk.ErrInvalidAddress(msg.ValidatorAddress.String())
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.ValidatorAddress.String())
 	}
 
 	if msg.Nonce < 0 {
-		return ErrInvalidEthNonce(DefaultCodespace)
+		return ErrInvalidEthNonce
 	}
 
 	if !gethCommon.IsHexAddress(msg.EthereumSender.String()) {
-		return ErrInvalidEthAddress(DefaultCodespace)
+		return ErrInvalidEthAddress
 	}
 	if !gethCommon.IsHexAddress(msg.BridgeContractAddress.String()) {
-		return ErrInvalidEthAddress(DefaultCodespace)
+		return ErrInvalidEthAddress
 	}
 	if strings.ToLower(msg.Symbol) == "eth" && msg.TokenContractAddress != NewEthereumAddress("0x0000000000000000000000000000000000000000") {
-		return ErrInvalidEthSymbol(DefaultCodespace)
+		return ErrInvalidEthSymbol
 	}
 	return nil
 }
@@ -65,13 +66,13 @@ func (msg MsgCreateEthBridgeClaim) GetSigners() []sdk.AccAddress {
 }
 
 // MapOracleClaimsToEthBridgeClaims maps a set of generic oracle claim data into EthBridgeClaim objects
-func MapOracleClaimsToEthBridgeClaims(ethereumChainID int, bridgeContract EthereumAddress, nonce int, symbol string, tokenContract EthereumAddress, ethereumSender EthereumAddress, oracleValidatorClaims map[string]string, f func(int, EthereumAddress, int, string, EthereumAddress, EthereumAddress, sdk.ValAddress, string) (EthBridgeClaim, sdk.Error)) ([]EthBridgeClaim, sdk.Error) {
+func MapOracleClaimsToEthBridgeClaims(ethereumChainID int, bridgeContract EthereumAddress, nonce int, symbol string, tokenContract EthereumAddress, ethereumSender EthereumAddress, oracleValidatorClaims map[string]string, f func(int, EthereumAddress, int, string, EthereumAddress, EthereumAddress, sdk.ValAddress, string) (EthBridgeClaim, error)) ([]EthBridgeClaim, error) {
 	mappedClaims := make([]EthBridgeClaim, len(oracleValidatorClaims))
 	i := 0
 	for validatorBech32, validatorClaim := range oracleValidatorClaims {
 		validatorAddress, parseErr := sdk.ValAddressFromBech32(validatorBech32)
 		if parseErr != nil {
-			return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", parseErr))
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("failed to parse claim: %s", parseErr))
 		}
 		mappedClaim, err := f(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender, validatorAddress, validatorClaim)
 		if err != nil {

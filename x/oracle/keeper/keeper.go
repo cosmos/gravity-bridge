@@ -19,22 +19,20 @@ type Keeper struct {
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
 	stakeKeeper types.StakingKeeper
-	codespace   sdk.CodespaceType
 
 	// TODO: use this as param instead
 	consensusNeeded float64 // The minimum % of stake needed to sign claims in order for consensus to occur
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakeKeeper types.StakingKeeper, codespace sdk.CodespaceType, consensusNeeded float64) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakeKeeper types.StakingKeeper, consensusNeeded float64) Keeper {
 	if consensusNeeded <= 0 || consensusNeeded > 1 {
-		panic(types.ErrMinimumConsensusNeededInvalid(codespace).Error())
+		panic(types.ErrMinimumConsensusNeededInvalid.Error())
 	}
 	return Keeper{
 		cdc:             cdc,
 		storeKey:        storeKey,
 		stakeKeeper:     stakeKeeper,
-		codespace:       codespace,
 		consensusNeeded: consensusNeeded,
 	}
 }
@@ -44,69 +42,64 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// Codespace returns the codespace
-func (k Keeper) Codespace() sdk.CodespaceType {
-	return k.codespace
-}
-
 // GetProphecy gets the entire prophecy data struct for a given id
-func (k Keeper) GetProphecy(ctx sdk.Context, id string) (types.Prophecy, sdk.Error) {
+func (k Keeper) GetProphecy(ctx sdk.Context, id string) (types.Prophecy, error) {
 	if id == "" {
-		return types.NewEmptyProphecy(), types.ErrInvalidIdentifier(k.Codespace())
+		return types.NewEmptyProphecy(), types.ErrInvalidIdentifier
 	}
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get([]byte(id))
 	if bz == nil {
-		return types.NewEmptyProphecy(), types.ErrProphecyNotFound(k.Codespace())
+		return types.NewEmptyProphecy(), types.ErrProphecyNotFound
 	}
 	var dbProphecy types.DBProphecy
 	k.cdc.MustUnmarshalBinaryBare(bz, &dbProphecy)
 
 	deSerializedProphecy, err := dbProphecy.DeserializeFromDB()
 	if err != nil {
-		return types.NewEmptyProphecy(), types.ErrInternalDB(k.Codespace(), err)
+		return types.NewEmptyProphecy(), types.ErrInternalDB(err)
 	}
 	return deSerializedProphecy, nil
 }
 
 // setProphecy saves a prophecy with an initial claim
-func (k Keeper) setProphecy(ctx sdk.Context, prophecy types.Prophecy) sdk.Error {
+func (k Keeper) setProphecy(ctx sdk.Context, prophecy types.Prophecy) error {
 	if prophecy.ID == "" {
-		return types.ErrInvalidIdentifier(k.Codespace())
+		return types.ErrInvalidIdentifier
 	}
 	if len(prophecy.ClaimValidators) == 0 {
-		return types.ErrNoClaims(k.Codespace())
+		return types.ErrNoClaims
 	}
 	store := ctx.KVStore(k.storeKey)
 	serializedProphecy, err := prophecy.SerializeForDB()
 	if err != nil {
-		return types.ErrInternalDB(k.Codespace(), err)
+		return types.ErrInternalDB(err)
 	}
 	store.Set([]byte(prophecy.ID), k.cdc.MustMarshalBinaryBare(serializedProphecy))
 	return nil
 }
 
 // ProcessClaim TODO: write description
-func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Status, sdk.Error) {
+func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Status, error) {
 	activeValidator := k.checkActiveValidator(ctx, claim.ValidatorAddress)
 	if !activeValidator {
-		return types.Status{}, types.ErrInvalidValidator(k.Codespace())
+		return types.Status{}, types.ErrInvalidValidator
 	}
 	if strings.TrimSpace(claim.Content) == "" {
-		return types.Status{}, types.ErrInvalidClaim(k.Codespace())
+		return types.Status{}, types.ErrInvalidClaim
 	}
 	prophecy, err := k.GetProphecy(ctx, claim.ID)
 	if err != nil {
-		if err.Code() != types.CodeProphecyNotFound {
+		if err == types.ErrProphecyNotFound {
 			return types.Status{}, err
 		}
 		prophecy = types.NewProphecy(claim.ID)
 	} else {
 		if prophecy.Status.Text == types.SuccessStatusText || prophecy.Status.Text == types.FailedStatusText {
-			return types.Status{}, types.ErrProphecyFinalized(k.Codespace())
+			return types.Status{}, types.ErrProphecyFinalized
 		}
 		if prophecy.ValidatorClaims[claim.ValidatorAddress.String()] != "" {
-			return types.Status{}, types.ErrDuplicateMessage(k.Codespace())
+			return types.Status{}, types.ErrDuplicateMessage
 		}
 	}
 	prophecy.AddClaim(claim.ValidatorAddress, claim.Content)

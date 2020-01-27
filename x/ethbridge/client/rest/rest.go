@@ -97,7 +97,7 @@ func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		claimType, err := types.StringToClaimType(req.ClaimType)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, types.ErrInvalidClaimType().Error())
+			rest.WriteErrorResponse(w, http.StatusBadRequest, types.ErrInvalidClaimType.Error())
 			return
 		}
 

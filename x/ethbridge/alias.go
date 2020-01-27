@@ -12,15 +12,11 @@ import (
 )
 
 const (
-	QueryEthProphecy       = querier.QueryEthProphecy
-	DefaultCodespace       = types.DefaultCodespace
-	CodeInvalidEthNonce    = types.CodeInvalidEthNonce
-	CodeInvalidEthAddress  = types.CodeInvalidEthAddress
-	CodeErrJSONMarshalling = types.CodeErrJSONMarshalling
-	ModuleName             = types.ModuleName
-	StoreKey               = types.StoreKey
-	QuerierRoute           = types.QuerierRoute
-	RouterKey              = types.RouterKey
+	QueryEthProphecy = querier.QueryEthProphecy
+	ModuleName       = types.ModuleName
+	StoreKey         = types.StoreKey
+	QuerierRoute     = types.QuerierRoute
+	RouterKey        = types.RouterKey
 )
 
 var (
@@ -51,7 +47,6 @@ type (
 	Keeper                   = keeper.Keeper
 	EthBridgeClaim           = types.EthBridgeClaim
 	OracleClaimContent       = types.OracleClaimContent
-	CodeType                 = types.CodeType
 	EthereumAddress          = types.EthereumAddress
 	MsgCreateEthBridgeClaim  = types.MsgCreateEthBridgeClaim
 	MsgBurn                  = types.MsgBurn

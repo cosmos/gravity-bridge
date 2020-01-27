@@ -2,6 +2,7 @@
 package cli
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"strconv"
@@ -28,8 +29,8 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := authtxb.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			ethereumChainID, err := strconv.Atoi(args[0])
 			if err != nil {
@@ -69,7 +70,7 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 
 			claimType, err := types.StringToClaimType(args[9])
 			if err != nil {
-				return types.ErrInvalidClaimType()
+				return types.ErrInvalidClaimType
 			}
 
 			ethBridgeClaim := types.NewEthBridgeClaim(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender, cosmosReceiver, validator, amount, claimType)
@@ -95,8 +96,9 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			inBuf := bufio.NewReader(cmd.InOrStdin())
 
-			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			txBldr := authtxb.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
 			if strings.TrimSpace(ethereumChainIDString) == "" {
@@ -146,8 +148,9 @@ func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			inBuf := bufio.NewReader(cmd.InOrStdin())
 
-			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			txBldr := authtxb.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
 			if strings.TrimSpace(ethereumChainIDString) == "" {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // NewHandler returns a handler for "ethbridge" type messages.
@@ -27,7 +28,7 @@ func NewHandler(
 			return handleMsgLock(ctx, cdc, accountKeeper, bridgeKeeper, msg)
 		default:
 			errMsg := fmt.Sprintf("unrecognized ethbridge message type: %v", msg.Type())
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg).Result()
 		}
 	}
 }
@@ -75,7 +76,7 @@ func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
 	accountKeeper types.AccountKeeper, bridgeKeeper Keeper, msg MsgBurn) sdk.Result {
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
 	if account == nil {
-		return sdk.ErrInvalidAddress(msg.CosmosSender.String()).Result()
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String()).Result()
 	}
 
 	err := bridgeKeeper.ProcessBurn(ctx, msg.CosmosSender, msg.Amount)
@@ -107,7 +108,7 @@ func handleMsgLock(ctx sdk.Context, cdc *codec.Codec,
 	accountKeeper types.AccountKeeper, bridgeKeeper Keeper, msg MsgLock) sdk.Result {
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
 	if account == nil {
-		return sdk.ErrInvalidAddress(msg.CosmosSender.String()).Result()
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String()).Result()
 	}
 
 	err := bridgeKeeper.ProcessLock(ctx, msg.CosmosSender, msg.Amount)

@@ -25,7 +25,7 @@ func TestNewQuerier(t *testing.T) {
 		Data: []byte{},
 	}
 
-	querier := NewQuerier(oracleKeeper, cdc, types.DefaultCodespace)
+	querier := NewQuerier(oracleKeeper, cdc)
 
 	//Test wrong paths
 	bz, err := querier(ctx, []string{"other"}, query)
@@ -61,7 +61,7 @@ func TestQueryEthProphecy(t *testing.T) {
 	}
 
 	//Test query
-	res, err3 := queryEthProphecy(ctx, cdc, query, oracleKeeper, types.DefaultCodespace)
+	res, err3 := queryEthProphecy(ctx, cdc, query, oracleKeeper)
 	require.Nil(t, err3)
 
 	var ethProphecyResp types.QueryEthProphecyResponse
@@ -72,7 +72,7 @@ func TestQueryEthProphecy(t *testing.T) {
 	// Test error with bad request
 	query.Data = bz[:len(bz)-1]
 
-	_, err5 := queryEthProphecy(ctx, cdc, query, oracleKeeper, types.DefaultCodespace)
+	_, err5 := queryEthProphecy(ctx, cdc, query, oracleKeeper)
 	require.NotNil(t, err5)
 
 	// Test error with nonexistent request
@@ -86,7 +86,7 @@ func TestQueryEthProphecy(t *testing.T) {
 		Data: bz2,
 	}
 
-	_, err7 := queryEthProphecy(ctx, cdc, query2, oracleKeeper, types.DefaultCodespace)
+	_, err7 := queryEthProphecy(ctx, cdc, query2, oracleKeeper)
 	require.NotNil(t, err7)
 
 	// Test error with empty address
@@ -101,6 +101,6 @@ func TestQueryEthProphecy(t *testing.T) {
 		Data: bz3,
 	}
 
-	_, err9 := queryEthProphecy(ctx, cdc, query3, oracleKeeper, types.DefaultCodespace)
+	_, err9 := queryEthProphecy(ctx, cdc, query3, oracleKeeper)
 	require.NotNil(t, err9)
 }

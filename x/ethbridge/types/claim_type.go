@@ -23,7 +23,7 @@ func StringToClaimType(text string) (ClaimType, error) {
 	case "burn":
 		return BurnText, nil
 	default:
-		return 0, ErrInvalidClaimType()
+		return 0, ErrInvalidClaimType
 	}
 }
 
