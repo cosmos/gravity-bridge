@@ -10,11 +10,11 @@ package txs
 
 import (
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
 	"github.com/cosmos/peggy/x/ethbridge"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 )
@@ -26,7 +26,6 @@ func RelayLockToCosmos(
 	cdc *codec.Codec,
 	validatorAddress sdk.ValAddress,
 	moniker string,
-	passphrase string,
 	cliCtx context.CLIContext,
 	claim *types.EthBridgeClaim,
 	rpcUrl string,
@@ -38,7 +37,7 @@ func RelayLockToCosmos(
 
 	cliCtx.SkipConfirm = true
 
-	txBldr := authtypes.NewTxBuilderFromCLI().
+	txBldr := authtypes.NewTxBuilderFromCLI(nil).
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
 		WithChainID(chainID)
 
@@ -63,7 +62,7 @@ func RelayLockToCosmos(
 	}
 
 	// Build and sign the transaction
-	txBytes, err := txBldr.BuildAndSign(moniker, passphrase, []sdk.Msg{msg})
+	txBytes, err := txBldr.BuildAndSign(moniker, keys.DefaultKeyPass, []sdk.Msg{msg})
 	if err != nil {
 		return err
 	}

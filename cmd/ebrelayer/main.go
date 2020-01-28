@@ -4,6 +4,7 @@ package main
 //		service, such as initialization and event relay.
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"log"
@@ -19,8 +20,8 @@ import (
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -52,7 +53,7 @@ func init() {
 	DefaultCLIHome := os.ExpandEnv("$HOME/.ebcli")
 
 	// Add --chain-id to persistent flags and mark it required
-	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
+	rootCmd.PersistentFlags().String(flags.FlagChainID, "", "Chain ID of tendermint node")
 	rootCmd.PersistentFlags().String(FlagRPCURL, "", "RPC URL of tendermint node")
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
 		return initConfig(rootCmd)
@@ -64,7 +65,7 @@ func init() {
 	// Construct Initialization Commands
 	initCmd.AddCommand(
 		ethereumRelayerCmd(),
-		client.LineBreak,
+		flags.LineBreak,
 		cosmosRelayerCmd(),
 	)
 
@@ -129,6 +130,9 @@ func cosmosRelayerCmd() *cobra.Command {
 
 // RunEthereumRelayerCmd executes the initEthereumRelayerCmd with the provided parameters
 func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
+
+	inBuf := bufio.NewReader(cmd.InOrStdin())
+
 	// Load the validator's Ethereum private key
 	privateKey, err := txs.LoadPrivateKey()
 	if err != nil {
@@ -136,7 +140,7 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Parse chain's ID
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 	if strings.TrimSpace(chainID) == "" {
 		return errors.New("Must specify a 'chain-id'")
 	}
@@ -177,21 +181,15 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get the validator's name and account address using their moniker
-	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(validatorFrom, false)
+	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(inBuf, validatorFrom, false)
 	if err != nil {
 		return err
 	}
 	// Convert the validator's account address into type ValAddress
 	validatorAddress := sdk.ValAddress(validatorAccAddress)
 
-	// Get the validator's passphrase using their moniker
-	passphrase, err := keys.GetPassphrase(validatorFrom)
-	if err != nil {
-		return err
-	}
-
-	// Test passphrase is correct
-	_, err = authtxb.MakeSignature(nil, validatorName, passphrase, authtxb.StdSignMsg{})
+	// Test keys.DefaultKeyPass is correct
+	_, err = authtxb.MakeSignature(nil, validatorName, keys.DefaultKeyPass, authtxb.StdSignMsg{})
 	if err != nil {
 		return err
 	}
@@ -210,7 +208,6 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 		contractAddress,
 		makeClaims,
 		validatorName,
-		passphrase,
 		validatorAddress,
 		cliCtx,
 		rpcURL,
@@ -248,7 +245,7 @@ func RunCosmosRelayerCmd(cmd *cobra.Command, args []string) error {
 }
 
 func initConfig(cmd *cobra.Command) error {
-	return viper.BindPFlag(client.FlagChainID, cmd.PersistentFlags().Lookup(client.FlagChainID))
+	return viper.BindPFlag(flags.FlagChainID, cmd.PersistentFlags().Lookup(flags.FlagChainID))
 }
 
 func main() {

@@ -17,7 +17,7 @@ import (
 func NewHandler(
 	accountKeeper types.AccountKeeper, bridgeKeeper Keeper,
 	cdc *codec.Codec) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case MsgCreateEthBridgeClaim:
@@ -28,7 +28,7 @@ func NewHandler(
 			return handleMsgLock(ctx, cdc, accountKeeper, bridgeKeeper, msg)
 		default:
 			errMsg := fmt.Sprintf("unrecognized ethbridge message type: %v", msg.Type())
-			return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg).Result()
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 		}
 	}
 }
@@ -36,17 +36,17 @@ func NewHandler(
 // Handle a message to create a bridge claim
 func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
 	bridgeKeeper Keeper,
-	msg MsgCreateEthBridgeClaim) sdk.Result {
+	msg MsgCreateEthBridgeClaim) (*sdk.Result, error) {
 
-	status, sdkErr := bridgeKeeper.ProcessClaim(ctx, types.EthBridgeClaim(msg))
-	if sdkErr != nil {
-		return sdkErr.Result()
+	status, err := bridgeKeeper.ProcessClaim(ctx, types.EthBridgeClaim(msg))
+	if err != nil {
+		return nil, err
 	}
 
 	if status.Text == oracle.SuccessStatusText {
-		sdkErr = bridgeKeeper.ProcessSuccessfulClaim(ctx, status.FinalClaim)
-		if sdkErr != nil {
-			return sdkErr.Result()
+		err = bridgeKeeper.ProcessSuccessfulClaim(ctx, status.FinalClaim)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -69,19 +69,19 @@ func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
 		),
 	})
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
 func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
-	accountKeeper types.AccountKeeper, bridgeKeeper Keeper, msg MsgBurn) sdk.Result {
+	accountKeeper types.AccountKeeper, bridgeKeeper Keeper, msg MsgBurn) (*sdk.Result, error) {
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
 	if account == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String()).Result()
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String())
 	}
 
 	err := bridgeKeeper.ProcessBurn(ctx, msg.CosmosSender, msg.Amount)
 	if err != nil {
-		return err.Result()
+		return nil, err
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -100,20 +100,20 @@ func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
 		),
 	})
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 
 }
 
 func handleMsgLock(ctx sdk.Context, cdc *codec.Codec,
-	accountKeeper types.AccountKeeper, bridgeKeeper Keeper, msg MsgLock) sdk.Result {
+	accountKeeper types.AccountKeeper, bridgeKeeper Keeper, msg MsgLock) (*sdk.Result, error) {
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
 	if account == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String()).Result()
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String())
 	}
 
 	err := bridgeKeeper.ProcessLock(ctx, msg.CosmosSender, msg.Amount)
 	if err != nil {
-		return err.Result()
+		return nil, err
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -132,6 +132,6 @@ func handleMsgLock(ctx sdk.Context, cdc *codec.Codec,
 		),
 	})
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 
 }

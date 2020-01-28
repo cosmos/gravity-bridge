@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	tmCommon "github.com/tendermint/tendermint/libs/common"
+	tmKv "github.com/tendermint/tendermint/libs/kv"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -95,29 +95,29 @@ func CreateTestCosmosMsg(t *testing.T, claimType events.Event) events.CosmosMsg 
 }
 
 // CreateCosmosMsgAttributes : creates expected attributes for a MsgBurn/MsgLock for testing purposes
-func CreateCosmosMsgAttributes(t *testing.T) []tmCommon.KVPair {
-	attributes := [4]tmCommon.KVPair{}
+func CreateCosmosMsgAttributes(t *testing.T) []tmKv.Pair {
+	attributes := [4]tmKv.Pair{}
 
 	// (key, value) pairing for "cosmos_sender" key
-	pairCosmosSender := tmCommon.KVPair{
+	pairCosmosSender := tmKv.Pair{
 		Key:   []byte("cosmos_sender"),
 		Value: []byte(TestCosmosAddress1),
 	}
 
 	// (key, value) pairing for "ethereum_receiver" key
-	pairEthereumReceiver := tmCommon.KVPair{
+	pairEthereumReceiver := tmKv.Pair{
 		Key:   []byte("ethereum_receiver"),
 		Value: []byte(common.HexToAddress(TestEthereumAddress1).Hex()), // .Bytes() doesn't seem to work here
 	}
 
 	// (key, value) pairing for "amount" key
-	pairAmount := tmCommon.KVPair{
+	pairAmount := tmKv.Pair{
 		Key:   []byte("amount"),
 		Value: []byte(strconv.Itoa(TestAmount) + TestSymbol),
 	}
 
 	// (key, value) pairing for "token_contract_address" key
-	pairTokenContract := tmCommon.KVPair{
+	pairTokenContract := tmKv.Pair{
 		Key:   []byte("token_contract_address"),
 		Value: []byte(common.HexToAddress(TestTokenAddress).Hex()),
 	}

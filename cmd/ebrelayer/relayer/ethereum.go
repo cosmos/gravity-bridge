@@ -38,7 +38,6 @@ func InitEthereumRelayer(
 	contractAddress common.Address,
 	makeClaims bool,
 	validatorName string,
-	passphrase string,
 	validatorAddress sdk.ValAddress,
 	cliContext sdkContext.CLIContext,
 	rpcURL string,
@@ -111,7 +110,7 @@ func InitEthereumRelayer(
 
 				switch eventName {
 				case events.LogLock.String():
-					err := handleLogLockEvent(clientChainID, contractAddress, contractABI, eventName, vLog, chainID, cdc, validatorAddress, validatorName, passphrase, cliContext, rpcURL)
+					err := handleLogLockEvent(clientChainID, contractAddress, contractABI, eventName, vLog, chainID, cdc, validatorAddress, validatorName, cliContext, rpcURL)
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -137,7 +136,6 @@ func handleLogLockEvent(
 	cdc *codec.Codec,
 	validatorAddress sdk.ValAddress,
 	validatorName string,
-	passphrase string,
 	cliContext sdkContext.CLIContext,
 	rpcURL string,
 ) error {
@@ -154,7 +152,7 @@ func handleLogLockEvent(
 	}
 
 	// Initiate the relay
-	err = txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, passphrase, cliContext, &prophecyClaim, rpcURL)
+	err = txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, cliContext, &prophecyClaim, rpcURL)
 	if err != nil {
 		return err
 	}
