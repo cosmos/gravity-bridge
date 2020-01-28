@@ -108,6 +108,7 @@ func ethereumRelayerCmd() *cobra.Command {
 		Example: "ebrelayer init ethereum wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 validator --make-claims=false --chain-id=testing",
 		RunE:    RunEthereumRelayerCmd,
 	}
+	fmt.Println("0")
 
 	return ethereumRelayerCmd
 }
@@ -130,20 +131,24 @@ func cosmosRelayerCmd() *cobra.Command {
 
 // RunEthereumRelayerCmd executes the initEthereumRelayerCmd with the provided parameters
 func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
+	fmt.Println("00")
 
 	inBuf := bufio.NewReader(cmd.InOrStdin())
+	fmt.Println("000")
 
 	// Load the validator's Ethereum private key
 	privateKey, err := txs.LoadPrivateKey()
 	if err != nil {
 		return fmt.Errorf("invalid [ETHEREUM_PRIVATE_KEY] from .env")
 	}
+	fmt.Println("1")
 
 	// Parse chain's ID
 	chainID := viper.GetString(flags.FlagChainID)
 	if strings.TrimSpace(chainID) == "" {
 		return errors.New("Must specify a 'chain-id'")
 	}
+	fmt.Println("2")
 
 	// Parse make claims boolean
 	var makeClaims bool
@@ -154,24 +159,29 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	} else {
 		makeClaims = false
 	}
+	fmt.Println("3")
 
 	// Parse ethereum provider
 	ethereumProvider := args[0]
 	if !relayer.IsWebsocketURL(ethereumProvider) {
 		return fmt.Errorf("invalid [web3-provider]: %s", ethereumProvider)
 	}
+	fmt.Println("4")
 
 	// Parse the address of the deployed contract
 	if !common.IsHexAddress(args[1]) {
 		return fmt.Errorf("invalid [bridge-contract-address]: %s", args[1])
 	}
+	fmt.Println("5")
 	contractAddress := common.HexToAddress(args[1])
+	fmt.Println("6")
 
 	// Parse the validator's moniker
 	validatorFrom := args[2]
 
 	// Parse Tendermint RPC URL
 	rpcURL := viper.GetString(FlagRPCURL)
+	fmt.Println("7")
 
 	if rpcURL != "" {
 		_, err := url.Parse(rpcURL)
@@ -179,26 +189,32 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("invalid RPC URL: %v", rpcURL)
 		}
 	}
+	fmt.Println("8")
 
 	// Get the validator's name and account address using their moniker
 	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(inBuf, validatorFrom, false)
 	if err != nil {
 		return err
 	}
+	fmt.Println("9")
+
 	// Convert the validator's account address into type ValAddress
 	validatorAddress := sdk.ValAddress(validatorAccAddress)
+	fmt.Println("10")
 
 	// Test keys.DefaultKeyPass is correct
 	_, err = authtxb.MakeSignature(nil, validatorName, keys.DefaultKeyPass, authtxb.StdSignMsg{})
 	if err != nil {
 		return err
 	}
+	fmt.Println("11")
 
 	// Set up our CLIContext
 	cliCtx := sdkContext.NewCLIContext().
 		WithCodec(appCodec).
 		WithFromAddress(sdk.AccAddress(validatorAddress)).
 		WithFromName(validatorName)
+	fmt.Println("12")
 
 	// Initialize the relayer
 	return relayer.InitEthereumRelayer(
