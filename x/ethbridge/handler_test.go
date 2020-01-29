@@ -27,7 +27,6 @@ func TestBasicMsgs(t *testing.T) {
 	require.True(t, strings.Contains(err.Error(), "unrecognized ethbridge message type: "))
 
 	//Normal Creation
-	fmt.Println("types.LockText", types.LockText)
 	normalCreateMsg := types.CreateTestEthMsg(t, valAddress, types.LockText)
 	res, err = handler(ctx, normalCreateMsg)
 	require.Nil(t, err)

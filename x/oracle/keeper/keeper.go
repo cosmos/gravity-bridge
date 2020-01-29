@@ -90,7 +90,7 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Status, 
 	}
 	prophecy, err := k.GetProphecy(ctx, claim.ID)
 	if err != nil {
-		if err == types.ErrProphecyNotFound {
+		if err != types.ErrProphecyNotFound {
 			return types.Status{}, err
 		}
 		prophecy = types.NewProphecy(claim.ID)

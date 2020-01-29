@@ -37,8 +37,6 @@ func NewHandler(
 func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
 	bridgeKeeper Keeper,
 	msg MsgCreateEthBridgeClaim) (*sdk.Result, error) {
-	fmt.Println("handleMsgCreateEthBridgeClaim")
-
 	status, err := bridgeKeeper.ProcessClaim(ctx, types.EthBridgeClaim(msg))
 	if err != nil {
 		return nil, err
@@ -75,7 +73,6 @@ func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
 
 func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
 	accountKeeper types.AccountKeeper, bridgeKeeper Keeper, msg MsgBurn) (*sdk.Result, error) {
-	fmt.Println("handleMsgBurn")
 
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
 	if account == nil {
@@ -109,7 +106,6 @@ func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
 
 func handleMsgLock(ctx sdk.Context, cdc *codec.Codec,
 	accountKeeper types.AccountKeeper, bridgeKeeper Keeper, msg MsgLock) (*sdk.Result, error) {
-	fmt.Println("handleMsgLock")
 
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
 	if account == nil {
