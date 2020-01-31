@@ -58,7 +58,7 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts [
 	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
 	err := ms.LoadLatestVersion()
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ctx := sdk.NewContext(ms, abci.Header{ChainID: "foochainid"}, false, nil)
 	ctx = ctx.WithConsensusParams(
