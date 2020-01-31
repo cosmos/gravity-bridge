@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/peggy/x/ethbridge/querier"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -150,7 +149,7 @@ func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.Handle
 			return
 		}
 
-		route := fmt.Sprintf("custom/%s/%s", storeName, querier.QueryEthProphecy)
+		route := fmt.Sprintf("custom/%s/%s", storeName, types.QueryEthProphecy)
 		res, _, err := cliCtx.QueryWithData(route, bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())

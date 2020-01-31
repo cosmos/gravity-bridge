@@ -39,14 +39,10 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.EthBridgeClaim) (oracle.Status, error) {
 	oracleClaim, err := types.CreateOracleClaimFromEthClaim(k.cdc, claim)
 	if err != nil {
-		return oracle.Status{}, types.ErrJSONMarshalling
+		return oracle.Status{}, err
 	}
 
-	status, sdkErr := k.oracleKeeper.ProcessClaim(ctx, oracleClaim)
-	if sdkErr != nil {
-		return oracle.Status{}, sdkErr
-	}
-	return status, nil
+	return k.oracleKeeper.ProcessClaim(ctx, oracleClaim)
 }
 
 // ProcessSuccessfulClaim processes a claim that has just completed successfully with consensus
@@ -58,37 +54,42 @@ func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) error {
 
 	receiverAddress := oracleClaim.CosmosReceiver
 
-	if oracleClaim.ClaimType == types.LockText {
+	switch oracleClaim.ClaimType {
+	case types.LockText:
 		err = k.supplyKeeper.MintCoins(ctx, types.ModuleName, oracleClaim.Amount)
-		if err != nil {
-			return err
-		}
+	default:
+		err = types.ErrInvalidClaimType
 	}
-	err = k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, receiverAddress, oracleClaim.Amount)
+
 	if err != nil {
+		return err
+	}
+
+	if err := k.supplyKeeper.SendCoinsFromModuleToAccount(
+		ctx, types.ModuleName, receiverAddress, oracleClaim.Amount,
+	); err != nil {
 		panic(err)
 	}
+
 	return nil
 }
 
 // ProcessBurn processes the burn of bridged coins from the given sender
 func (k Keeper) ProcessBurn(ctx sdk.Context, cosmosSender sdk.AccAddress, amount sdk.Coins) error {
-	err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, cosmosSender, types.ModuleName, amount)
-	if err != nil {
+	if err := k.supplyKeeper.SendCoinsFromAccountToModule(
+		ctx, cosmosSender, types.ModuleName, amount,
+	); err != nil {
 		return err
 	}
-	err = k.supplyKeeper.BurnCoins(ctx, types.ModuleName, amount)
-	if err != nil {
+
+	if err := k.supplyKeeper.BurnCoins(ctx, types.ModuleName, amount); err != nil {
 		panic(err)
 	}
+
 	return nil
 }
 
 // ProcessLock processes the lockup of cosmos coins from the given sender
 func (k Keeper) ProcessLock(ctx sdk.Context, cosmosSender sdk.AccAddress, amount sdk.Coins) error {
-	err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, cosmosSender, types.ModuleName, amount)
-	if err != nil {
-		return err
-	}
-	return nil
+	return k.supplyKeeper.SendCoinsFromAccountToModule(ctx, cosmosSender, types.ModuleName, amount)
 }
