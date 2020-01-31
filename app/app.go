@@ -175,8 +175,7 @@ func NewEthereumBridgeApp(
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
-		err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
-		if err != nil {
+		if err := app.LoadLatestVersion(app.keys[bam.MainStoreKey]); err != nil {
 			tmOs.Exit(err.Error())
 		}
 	}
@@ -186,8 +185,7 @@ func NewEthereumBridgeApp(
 // InitChainer application update at chain initialization
 func (app *EthereumBridgeApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
-	err := app.cdc.UnmarshalJSON(req.AppStateBytes, &genesisState)
-	if err != nil {
+	if err := app.cdc.UnmarshalJSON(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
 

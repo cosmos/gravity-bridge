@@ -34,17 +34,17 @@ func NewHandler(
 }
 
 // Handle a message to create a bridge claim
-func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
-	bridgeKeeper Keeper,
-	msg MsgCreateEthBridgeClaim) (*sdk.Result, error) {
+func handleMsgCreateEthBridgeClaim(
+	ctx sdk.Context, cdc *codec.Codec, bridgeKeeper Keeper, msg MsgCreateEthBridgeClaim,
+) (*sdk.Result, error) {
 	status, err := bridgeKeeper.ProcessClaim(ctx, types.EthBridgeClaim(msg))
 	if err != nil {
 		return nil, err
 	}
 
-	if status.Text == oracle.SuccessStatusText {
-		err = bridgeKeeper.ProcessSuccessfulClaim(ctx, status.FinalClaim)
-		if err != nil {
+	switch status.Text {
+	case oracle.SuccessStatusText:
+		if err := bridgeKeeper.ProcessSuccessfulClaim(ctx, status.FinalClaim); err != nil {
 			return nil, err
 		}
 	}
@@ -71,16 +71,17 @@ func handleMsgCreateEthBridgeClaim(ctx sdk.Context, cdc *codec.Codec,
 	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
-func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
-	accountKeeper types.AccountKeeper, bridgeKeeper Keeper, msg MsgBurn) (*sdk.Result, error) {
+func handleMsgBurn(
+	ctx sdk.Context, cdc *codec.Codec, accountKeeper types.AccountKeeper,
+	bridgeKeeper Keeper, msg MsgBurn,
+) (*sdk.Result, error) {
 
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
 	if account == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String())
 	}
 
-	err := bridgeKeeper.ProcessBurn(ctx, msg.CosmosSender, msg.Amount)
-	if err != nil {
+	if err := bridgeKeeper.ProcessBurn(ctx, msg.CosmosSender, msg.Amount); err != nil {
 		return nil, err
 	}
 
@@ -104,16 +105,17 @@ func handleMsgBurn(ctx sdk.Context, cdc *codec.Codec,
 
 }
 
-func handleMsgLock(ctx sdk.Context, cdc *codec.Codec,
-	accountKeeper types.AccountKeeper, bridgeKeeper Keeper, msg MsgLock) (*sdk.Result, error) {
+func handleMsgLock(
+	ctx sdk.Context, cdc *codec.Codec, accountKeeper types.AccountKeeper,
+	bridgeKeeper Keeper, msg MsgLock,
+) (*sdk.Result, error) {
 
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
 	if account == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String())
 	}
 
-	err := bridgeKeeper.ProcessLock(ctx, msg.CosmosSender, msg.Amount)
-	if err != nil {
+	if err := bridgeKeeper.ProcessLock(ctx, msg.CosmosSender, msg.Amount); err != nil {
 		return nil, err
 	}
 

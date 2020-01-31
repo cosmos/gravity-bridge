@@ -15,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/cosmos/peggy/x/ethbridge"
 	"github.com/cosmos/peggy/x/ethbridge/types"
 )
@@ -28,11 +29,11 @@ func RelayLockToCosmos(
 	moniker string,
 	cliCtx context.CLIContext,
 	claim *types.EthBridgeClaim,
-	rpcUrl string,
+	rpcURL string,
 ) error {
 
-	if rpcUrl != "" {
-		cliCtx = cliCtx.WithNodeURI(rpcUrl)
+	if rpcURL != "" {
+		cliCtx = cliCtx.WithNodeURI(rpcURL)
 	}
 
 	cliCtx.SkipConfirm = true

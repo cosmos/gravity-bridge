@@ -27,14 +27,13 @@ func InitCosmosRelayer(
 ) error {
 	logger := tmLog.NewTMLogger(tmLog.NewSyncWriter(os.Stdout))
 	client, err := tmClient.NewHTTP(tendermintProvider, "/websocket")
-
 	if err != nil {
 		return err
 	}
+
 	client.SetLogger(logger)
 
-	err = client.Start()
-	if err != nil {
+	if err := client.Start(); err != nil {
 		logger.Error("Failed to start a client", "err", err)
 		os.Exit(1)
 	}

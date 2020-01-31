@@ -157,7 +157,7 @@ func initRelayConfig(
 	case events.LogNewProphecyClaim:
 		targetContract = Oracle
 	default:
-		panic("Invalid target contract address")
+		panic("invalid target contract address")
 	}
 
 	// Get the specific contract's address

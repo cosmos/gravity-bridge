@@ -108,17 +108,21 @@ func InitEthereumRelayer(
 				fmt.Println("Block number:", vLog.BlockNumber)
 				fmt.Println("Tx hash:", vLog.TxHash.Hex())
 
+				var err error
 				switch eventName {
 				case events.LogLock.String():
-					err := handleLogLockEvent(clientChainID, contractAddress, contractABI, eventName, vLog, chainID, cdc, validatorAddress, validatorName, cliContext, rpcURL)
-					if err != nil {
-						log.Fatal(err)
-					}
+					err = handleLogLockEvent(
+						clientChainID, contractAddress, contractABI, eventName, vLog, chainID,
+						cdc, validatorAddress, validatorName, cliContext, rpcURL,
+					)
 				case events.LogNewProphecyClaim.String():
-					err := handleLogNewProphecyClaimEvent(contractABI, eventName, vLog, provider, contractAddress, privateKey)
-					if err != nil {
-						log.Fatal(err)
-					}
+					err = handleLogNewProphecyClaimEvent(
+						contractABI, eventName, vLog, provider, contractAddress, privateKey,
+					)
+				}
+
+				if err != nil {
+					log.Fatal(err)
 				}
 			}
 		}
@@ -152,12 +156,9 @@ func handleLogLockEvent(
 	}
 
 	// Initiate the relay
-	err = txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, cliContext, &prophecyClaim, rpcURL)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return txs.RelayLockToCosmos(
+		chainID, cdc, validatorAddress, validatorName, cliContext, &prophecyClaim, rpcURL,
+	)
 }
 
 // handleLogNewProphecyClaimEvent unpacks a LogNewProphecyClaim event, converts it to a OracleClaim, and relays a tx to Ethereum
