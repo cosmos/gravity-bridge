@@ -1,8 +1,6 @@
 package types
 
 import (
-	"fmt"
-
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
@@ -16,8 +14,5 @@ var (
 	ErrDuplicateMessage              = sdkerrors.Register(ModuleName, 6, "already processed message from validator for this id")
 	ErrInvalidClaim                  = sdkerrors.Register(ModuleName, 7, "claim cannot be empty string")
 	ErrInvalidValidator              = sdkerrors.Register(ModuleName, 8, "claim must be made by actively bonded validator")
+	ErrInternalDB                    = sdkerrors.Register(ModuleName, 9, " failed prophecy serialization/deserialization")
 )
-
-func ErrInternalDB(err error) error {
-	return sdkerrors.Register(ModuleName, 9, fmt.Sprintf("internal error serializing/deserializing prophecy: %s", err.Error()))
-}

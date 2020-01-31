@@ -130,11 +130,6 @@ func NewProphecy(id string) Prophecy {
 	}
 }
 
-// NewEmptyProphecy returns a blank prophecy, used with errors
-func NewEmptyProphecy() Prophecy {
-	return NewProphecy("")
-}
-
 // Status is a struct that contains the status of a given prophecy
 type Status struct {
 	Text       StatusText `json:"text"`

@@ -2,15 +2,12 @@ package keeper
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/cosmos/peggy/x/oracle/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/peggy/x/oracle/types"
 )
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
@@ -43,71 +40,62 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // GetProphecy gets the entire prophecy data struct for a given id
-func (k Keeper) GetProphecy(ctx sdk.Context, id string) (types.Prophecy, error) {
-	if id == "" {
-		return types.NewEmptyProphecy(), types.ErrInvalidIdentifier
-	}
+func (k Keeper) GetProphecy(ctx sdk.Context, id string) (types.Prophecy, bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get([]byte(id))
 	if bz == nil {
-		return types.NewEmptyProphecy(), types.ErrProphecyNotFound
+		return types.Prophecy{}, false
 	}
+
 	var dbProphecy types.DBProphecy
 	k.cdc.MustUnmarshalBinaryBare(bz, &dbProphecy)
 
 	deSerializedProphecy, err := dbProphecy.DeserializeFromDB()
 	if err != nil {
-		return types.NewEmptyProphecy(), types.ErrInternalDB(err)
+		return types.Prophecy{}, false
 	}
-	return deSerializedProphecy, nil
+
+	return deSerializedProphecy, true
 }
 
 // setProphecy saves a prophecy with an initial claim
-func (k Keeper) setProphecy(ctx sdk.Context, prophecy types.Prophecy) error {
-	if prophecy.ID == "" {
-		return types.ErrInvalidIdentifier
-	}
-	if len(prophecy.ClaimValidators) == 0 {
-		return types.ErrNoClaims
-	}
+func (k Keeper) setProphecy(ctx sdk.Context, prophecy types.Prophecy) {
 	store := ctx.KVStore(k.storeKey)
 	serializedProphecy, err := prophecy.SerializeForDB()
 	if err != nil {
-		return types.ErrInternalDB(err)
+		panic(err)
 	}
+
 	store.Set([]byte(prophecy.ID), k.cdc.MustMarshalBinaryBare(serializedProphecy))
-	return nil
 }
 
-// ProcessClaim TODO: write description
+// ProcessClaim ...
 func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Status, error) {
 	activeValidator := k.checkActiveValidator(ctx, claim.ValidatorAddress)
 	if !activeValidator {
 		return types.Status{}, types.ErrInvalidValidator
 	}
-	if strings.TrimSpace(claim.Content) == "" {
-		return types.Status{}, types.ErrInvalidClaim
-	}
-	prophecy, err := k.GetProphecy(ctx, claim.ID)
-	if err != nil {
-		if err != types.ErrProphecyNotFound {
-			return types.Status{}, err
-		}
+
+	prophecy, found := k.GetProphecy(ctx, claim.ID)
+	if !found {
 		prophecy = types.NewProphecy(claim.ID)
-	} else {
-		if prophecy.Status.Text == types.SuccessStatusText || prophecy.Status.Text == types.FailedStatusText {
-			return types.Status{}, types.ErrProphecyFinalized
-		}
-		if prophecy.ValidatorClaims[claim.ValidatorAddress.String()] != "" {
-			return types.Status{}, types.ErrDuplicateMessage
-		}
 	}
+
+	switch prophecy.Status.Text {
+	case types.PendingStatusText:
+		// continue processing
+	default:
+		return types.Status{}, types.ErrProphecyFinalized
+	}
+
+	if prophecy.ValidatorClaims[claim.ValidatorAddress.String()] != "" {
+		return types.Status{}, types.ErrDuplicateMessage
+	}
+
 	prophecy.AddClaim(claim.ValidatorAddress, claim.Content)
 	prophecy = k.processCompletion(ctx, prophecy)
-	err = k.setProphecy(ctx, prophecy)
-	if err != nil {
-		return types.Status{}, err
-	}
+
+	k.setProphecy(ctx, prophecy)
 	return prophecy.Status, nil
 }
 
@@ -116,8 +104,8 @@ func (k Keeper) checkActiveValidator(ctx sdk.Context, validatorAddress sdk.ValAd
 	if !found {
 		return false
 	}
-	bondStatus := validator.GetStatus()
-	return bondStatus == sdk.Bonded
+
+	return validator.IsBonded()
 }
 
 // processCompletion looks at a given prophecy an assesses whether the claim with the highest power on that prophecy has enough

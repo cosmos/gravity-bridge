@@ -1,4 +1,4 @@
-package types // noalias
+package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,5 +25,5 @@ type SupplyKeeper interface {
 // OracleKeeper defines the expected oracle keeper
 type OracleKeeper interface {
 	ProcessClaim(ctx sdk.Context, claim oracle.Claim) (oracle.Status, error)
-	GetProphecy(ctx sdk.Context, id string) (oracle.Prophecy, error)
+	GetProphecy(ctx sdk.Context, id string) (oracle.Prophecy, bool)
 }

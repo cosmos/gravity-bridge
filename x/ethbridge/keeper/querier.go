@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cosmos/peggy/x/ethbridge/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/cosmos/peggy/x/ethbridge/types"
+	oracletypes "github.com/cosmos/peggy/x/oracle/types"
 )
 
 // TODO: move to x/oracle
@@ -26,22 +28,22 @@ func NewQuerier(keeper types.OracleKeeper, cdc *codec.Codec) sdk.Querier {
 	}
 }
 
-func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, keeper types.OracleKeeper) (res []byte, errSdk error) {
+func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, keeper types.OracleKeeper) ([]byte, error) {
 	var params types.QueryEthProphecyParams
 
 	if err := cdc.UnmarshalJSON(req.Data, &params); err != nil {
-		return []byte{}, sdkerrors.Wrap(types.ErrJSONMarshalling, fmt.Sprintf("failed to parse params: %s", err.Error()))
+		return nil, sdkerrors.Wrap(types.ErrJSONMarshalling, fmt.Sprintf("failed to parse params: %s", err.Error()))
 	}
 
 	id := strconv.Itoa(params.EthereumChainID) + strconv.Itoa(params.Nonce) + params.EthereumSender.String()
-	prophecy, err := keeper.GetProphecy(ctx, id)
-	if err != nil {
-		return []byte{}, err
+	prophecy, found := keeper.GetProphecy(ctx, id)
+	if !found {
+		return nil, sdkerrors.Wrap(oracletypes.ErrProphecyNotFound, id)
 	}
 
 	bridgeClaims, err := types.MapOracleClaimsToEthBridgeClaims(params.EthereumChainID, params.BridgeContractAddress, params.Nonce, params.Symbol, params.TokenContractAddress, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 
 	response := types.NewQueryEthProphecyResponse(prophecy.ID, prophecy.Status, bridgeClaims)
