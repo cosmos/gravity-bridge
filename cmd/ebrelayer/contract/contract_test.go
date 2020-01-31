@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestLoadABI : test that contract containing named event is successfully loaded
+// TestLoadABI test that contract containing named event is successfully loaded
 func TestLoadABI(t *testing.T) {
 
 	const AbiPath = "/cmd/ebrelayer/contract/abi/BridgeBank.abi"

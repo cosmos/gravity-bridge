@@ -18,7 +18,7 @@ import (
 	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
-// InitCosmosRelayer : initializes a relayer which witnesses events on the Cosmos network and relays them to Ethereum
+// InitCosmosRelayer initializes a relayer which witnesses events on the Cosmos network and relays them to Ethereum
 func InitCosmosRelayer(
 	tendermintProvider string,
 	web3Provider string,
@@ -84,7 +84,7 @@ func InitCosmosRelayer(
 	}
 }
 
-// getOracleClaimType : sets the OracleClaim's claim type based upon the witnessed event type
+// getOracleClaimType sets the OracleClaim's claim type based upon the witnessed event type
 func getOracleClaimType(eventType string) events.Event {
 	var claimType events.Event
 
@@ -100,7 +100,7 @@ func getOracleClaimType(eventType string) events.Event {
 	return claimType
 }
 
-// handleBurnLockMsg : parse event data as a CosmosMsg, package it into a ProphecyClaim, then relay tx to the Ethereum Network
+// handleBurnLockMsg parse event data as a CosmosMsg, package it into a ProphecyClaim, then relay tx to the Ethereum Network
 func handleBurnLockMsg(
 	attributes []tmKv.Pair,
 	claimType events.Event,

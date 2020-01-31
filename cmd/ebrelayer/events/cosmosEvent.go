@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// CosmosMsg : contains data from MsgBurn and MsgLock events
+// CosmosMsg contains data from MsgBurn and MsgLock events
 type CosmosMsg struct {
 	ClaimType            Event
 	CosmosSender         []byte
@@ -17,7 +17,7 @@ type CosmosMsg struct {
 	Amount               *big.Int
 }
 
-// NewCosmosMsg : creates a new CosmosMsg
+// NewCosmosMsg creates a new CosmosMsg
 func NewCosmosMsg(
 	claimType Event,
 	cosmosSender []byte,
@@ -41,7 +41,7 @@ func NewCosmosMsg(
 	return cosmosMsg
 }
 
-// PrintCosmosMsg : prints a CosmosMsg struct's information
+// PrintCosmosMsg prints a CosmosMsg struct's information
 func PrintCosmosMsg(event CosmosMsg) {
 	claimType := event.ClaimType.String()
 	cosmosSender := string(event.CosmosSender)

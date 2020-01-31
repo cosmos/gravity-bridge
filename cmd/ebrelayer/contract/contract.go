@@ -1,7 +1,7 @@
 package contract
 
 // -------------------------------------------------------
-//    Contract : Contains functionality for loading the
+//    Contract Contains functionality for loading the
 //				 smart contract
 // -------------------------------------------------------
 
@@ -14,13 +14,13 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-// BridgeBankABI : path to file containing BridgeBank smart contract ABI
+// BridgeBankABI path to file containing BridgeBank smart contract ABI
 const BridgeBankABI = "/abi/BridgeBank.abi"
 
-// CosmosBridgeABI : path to file containing CosmosBridge smart contract ABI
+// CosmosBridgeABI path to file containing CosmosBridge smart contract ABI
 const CosmosBridgeABI = "/abi/CosmosBridge.abi"
 
-// LoadABI : loads a smart contract as an abi.ABI
+// LoadABI loads a smart contract as an abi.ABI
 func LoadABI(cosmosSupport bool) abi.ABI {
 
 	dir, err := os.Getwd()

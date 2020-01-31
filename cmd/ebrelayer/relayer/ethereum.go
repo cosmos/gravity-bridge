@@ -30,7 +30,7 @@ import (
 	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
-// InitEthereumRelayer : Starts an event listener on a specific Ethereum network, contract, and event
+// InitEthereumRelayer Starts an event listener on a specific Ethereum network, contract, and event
 func InitEthereumRelayer(
 	cdc *codec.Codec,
 	chainID string,
@@ -125,7 +125,7 @@ func InitEthereumRelayer(
 	}
 }
 
-// handleLogLockEvent : unpacks a LogLock event, converts it to a ProphecyClaim, and relays a tx to Cosmos
+// handleLogLockEvent unpacks a LogLock event, converts it to a ProphecyClaim, and relays a tx to Cosmos
 func handleLogLockEvent(
 	clientChainID *big.Int,
 	contractAddress common.Address,
@@ -160,7 +160,7 @@ func handleLogLockEvent(
 	return nil
 }
 
-// handleLogNewProphecyClaimEvent : unpacks a LogNewProphecyClaim event, converts it to a OracleClaim, and relays a tx to Ethereum
+// handleLogNewProphecyClaimEvent unpacks a LogNewProphecyClaim event, converts it to a OracleClaim, and relays a tx to Ethereum
 func handleLogNewProphecyClaimEvent(
 	contractABI abi.ABI,
 	eventName string,

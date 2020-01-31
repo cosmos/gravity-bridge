@@ -1,7 +1,7 @@
 package txs
 
 // ------------------------------------------------------------
-//	Relay : Builds and encodes EthBridgeClaim Msgs with the
+//	Relay Builds and encodes EthBridgeClaim Msgs with the
 //  	specified variables, before presenting the unsigned
 //      transaction to validators for optional signing.
 //      Once signed, the data packets are sent as transactions
@@ -19,7 +19,7 @@ import (
 	"github.com/cosmos/peggy/x/ethbridge/types"
 )
 
-// RelayLockToCosmos : RelayLockToCosmos applies validator's signature to an EthBridgeClaim message
+// RelayLockToCosmos RelayLockToCosmos applies validator's signature to an EthBridgeClaim message
 //		containing information about an event on the Ethereum blockchain before relaying to the Bridge
 func RelayLockToCosmos(
 	chainID string,

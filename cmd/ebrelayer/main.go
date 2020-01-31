@@ -1,29 +1,30 @@
 package main
 
-// 	Main (ebrelayer) : Implements CLI commands for the Relayer
+// 	Main (ebrelayer) Implements CLI commands for the Relayer
 //		service, such as initialization and event relay.
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"log"
 	"net/url"
 	"os"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/ethereum/go-ethereum/common"
 
-	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
 	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
 
@@ -32,12 +33,16 @@ import (
 	txs "github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
-var appCodec *amino.Codec
+var cdc *codec.Codec
 
-const FlagRPCURL = "rpc-url"
+const (
+	// FlagRPCURL defines the URL for the tendermint RPC connection
+	FlagRPCURL = "rpc-url"
 
-// FlagMakeClaims : optional flag for the ethereum relayer to automatically make OracleClaims upon every ProphecyClaim
-const FlagMakeClaims = "make-claims"
+	// FlagMakeClaims is an optional flag for the ethereum relayer to automatically
+	// make OracleClaims upon every ProphecyClaim.
+	FlagMakeClaims = "make-claims"
+)
 
 func init() {
 
@@ -48,7 +53,7 @@ func init() {
 	config.SetBech32PrefixForConsensusNode(sdk.Bech32PrefixConsAddr, sdk.Bech32PrefixConsPub)
 	config.Seal()
 
-	appCodec = app.MakeCodec()
+	cdc = app.MakeCodec()
 
 	DefaultCLIHome := os.ExpandEnv("$HOME/.ebcli")
 
@@ -93,7 +98,7 @@ var initCmd = &cobra.Command{
 	Short: "Initialization subcommands",
 }
 
-//	ethereumRelayerCmd : Initializes a relayer service run by individual
+//	ethereumRelayerCmd Initializes a relayer service run by individual
 //		validators which streams live events from an Ethereum smart contract.
 //		The service automatically signs messages containing the event
 //		data and relays them to tendermint for handling by the
@@ -108,12 +113,10 @@ func ethereumRelayerCmd() *cobra.Command {
 		Example: "ebrelayer init ethereum wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 validator --make-claims=false --chain-id=testing",
 		RunE:    RunEthereumRelayerCmd,
 	}
-	fmt.Println("0")
-
 	return ethereumRelayerCmd
 }
 
-//	cosmosRelayerCmd : Initializes a Cosmos relayer service run by individual
+//	cosmosRelayerCmd Initializes a Cosmos relayer service run by individual
 //		validators which streams live events from the Cosmos network and then
 //		relaying them to an Ethereum smart contract
 //
@@ -131,94 +134,72 @@ func cosmosRelayerCmd() *cobra.Command {
 
 // RunEthereumRelayerCmd executes the initEthereumRelayerCmd with the provided parameters
 func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
-	fmt.Println("00")
-
 	inBuf := bufio.NewReader(cmd.InOrStdin())
-	fmt.Println("000")
 
 	// Load the validator's Ethereum private key
 	privateKey, err := txs.LoadPrivateKey()
 	if err != nil {
-		return fmt.Errorf("invalid [ETHEREUM_PRIVATE_KEY] from .env")
+		return errors.Wrap(err, "invalid [ETHEREUM_PRIVATE_KEY] from .env")
 	}
-	fmt.Println("1")
 
 	// Parse chain's ID
 	chainID := viper.GetString(flags.FlagChainID)
 	if strings.TrimSpace(chainID) == "" {
 		return errors.New("Must specify a 'chain-id'")
 	}
-	fmt.Println("2")
 
-	// Parse make claims boolean
-	var makeClaims bool
-
+	makeClaims := false
 	makeClaimsString := viper.GetString(FlagMakeClaims)
 	if strings.TrimSpace(makeClaimsString) == "true" {
 		makeClaims = true
-	} else {
-		makeClaims = false
 	}
-	fmt.Println("3")
 
-	// Parse ethereum provider
 	ethereumProvider := args[0]
 	if !relayer.IsWebsocketURL(ethereumProvider) {
 		return fmt.Errorf("invalid [web3-provider]: %s", ethereumProvider)
 	}
-	fmt.Println("4")
 
 	// Parse the address of the deployed contract
 	if !common.IsHexAddress(args[1]) {
 		return fmt.Errorf("invalid [bridge-contract-address]: %s", args[1])
 	}
-	fmt.Println("5")
+
 	contractAddress := common.HexToAddress(args[1])
-	fmt.Println("6")
 
-	// Parse the validator's moniker
 	validatorFrom := args[2]
-
-	// Parse Tendermint RPC URL
 	rpcURL := viper.GetString(FlagRPCURL)
-	fmt.Println("7")
 
 	if rpcURL != "" {
 		_, err := url.Parse(rpcURL)
 		if rpcURL != "" && err != nil {
-			return fmt.Errorf("invalid RPC URL: %v", rpcURL)
+			return errors.Wrapf(err, "invalid RPC URL: %v", rpcURL)
 		}
 	}
-	fmt.Println("8")
 
 	// Get the validator's name and account address using their moniker
 	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(inBuf, validatorFrom, false)
 	if err != nil {
 		return err
 	}
-	fmt.Println("9")
 
 	// Convert the validator's account address into type ValAddress
 	validatorAddress := sdk.ValAddress(validatorAccAddress)
-	fmt.Println("10")
 
 	// Test keys.DefaultKeyPass is correct
 	_, err = authtxb.MakeSignature(nil, validatorName, keys.DefaultKeyPass, authtxb.StdSignMsg{})
 	if err != nil {
 		return err
 	}
-	fmt.Println("11")
 
 	// Set up our CLIContext
 	cliCtx := sdkContext.NewCLIContext().
-		WithCodec(appCodec).
+		WithCodec(cdc).
 		WithFromAddress(sdk.AccAddress(validatorAddress)).
 		WithFromName(validatorName)
-	fmt.Println("12")
 
 	// Initialize the relayer
 	return relayer.InitEthereumRelayer(
-		appCodec,
+		cdc,
 		chainID,
 		ethereumProvider,
 		contractAddress,
@@ -239,19 +220,14 @@ func RunCosmosRelayerCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid [ETHEREUM_PRIVATE_KEY] from .env")
 	}
 
-	// Tendermint node
 	tendermintNode := args[0]
-
-	// Ethereum websocket provider
 	ethereumProvider := args[1]
-
-	// Deployed contract address
 	if !common.IsHexAddress(args[2]) {
 		return fmt.Errorf("invalid [bridge-contract-address]: %s", args[2])
 	}
+
 	contractAddress := common.HexToAddress(args[2])
 
-	// Initialize the relayer
 	return relayer.InitCosmosRelayer(
 		tendermintNode,
 		ethereumProvider,

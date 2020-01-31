@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	// EthereumPrivateKey : config field which holds the user's private key
+	// EthereumPrivateKey config field which holds the user's private key
 	EthereumPrivateKey        = "ETHEREUM_PRIVATE_KEY"
 	TestEthereumChainID       = 3
 	TestBridgeContractAddress = "0xd88159878c50e4B2b03BB701DD436e4A98D6fBe2"
@@ -34,7 +34,7 @@ const (
 	TestPrivHex               = "289c2857d4598e37fb9647507e47a309d6133539bf21a8b9cb6df88fd5232032"
 )
 
-// CreateTestLogLockEvent : creates a sample LockEvent event for testing purposes
+// CreateTestLogLockEvent creates a sample LockEvent event for testing purposes
 func CreateTestLogLockEvent(t *testing.T) events.LockEvent {
 	testEthereumChainID := big.NewInt(int64(TestEthereumChainID))
 	testBridgeContractAddress := common.HexToAddress(TestBridgeContractAddress)
@@ -59,7 +59,7 @@ func CreateTestLogLockEvent(t *testing.T) events.LockEvent {
 	return lockEvent
 }
 
-// CreateTestProphecyClaimEvent : creates a sample ProphecyClaimEvent for testing purposes
+// CreateTestProphecyClaimEvent creates a sample ProphecyClaimEvent for testing purposes
 func CreateTestProphecyClaimEvent(t *testing.T) events.NewProphecyClaimEvent {
 	testProphecyID := big.NewInt(int64(TestProphecyID))
 	testEthereumReceiver := common.HexToAddress(TestEthereumAddress1)
@@ -81,7 +81,7 @@ func CreateTestProphecyClaimEvent(t *testing.T) events.NewProphecyClaimEvent {
 	return prophecyClaimEvent
 }
 
-// CreateTestCosmosMsg : creates a sample Cosmos Msg for testing purposes
+// CreateTestCosmosMsg creates a sample Cosmos Msg for testing purposes
 func CreateTestCosmosMsg(t *testing.T, claimType events.Event) events.CosmosMsg {
 	testCosmosSender := []byte(TestCosmosAddress1)
 	testEthereumReceiver := common.HexToAddress(TestEthereumAddress1)
@@ -94,7 +94,7 @@ func CreateTestCosmosMsg(t *testing.T, claimType events.Event) events.CosmosMsg 
 	return cosmosMsg
 }
 
-// CreateCosmosMsgAttributes : creates expected attributes for a MsgBurn/MsgLock for testing purposes
+// CreateCosmosMsgAttributes creates expected attributes for a MsgBurn/MsgLock for testing purposes
 func CreateCosmosMsgAttributes(t *testing.T) []tmKv.Pair {
 	attributes := [4]tmKv.Pair{}
 
