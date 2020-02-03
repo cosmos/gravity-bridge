@@ -155,10 +155,11 @@ func NewEthereumBridgeApp(
 
 	// Here you initialize your application with the store keys it requires
 	app := &EthereumBridgeApp{
-		BaseApp: bApp,
-		cdc:     cdc,
-		keys:    keys,
-		tkeys:   tkeys,
+		BaseApp:   bApp,
+		cdc:       cdc,
+		keys:      keys,
+		tkeys:     tkeys,
+		subspaces: make(map[string]params.Subspace),
 	}
 
 	// init params keeper and subspaces
@@ -172,6 +173,8 @@ func NewEthereumBridgeApp(
 	app.subspaces[gov.ModuleName] = app.ParamsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 	app.subspaces[crisis.ModuleName] = app.ParamsKeeper.Subspace(crisis.DefaultParamspace)
 	app.subspaces[evidence.ModuleName] = app.ParamsKeeper.Subspace(evidence.DefaultParamspace)
+	app.subspaces[oracle.ModuleName] = app.ParamsKeeper.Subspace(oracle.DefaultParamspace)
+	app.subspaces[ethbridge.ModuleName] = app.ParamsKeeper.Subspace(ethbridge.DefaultParamspace)
 
 	// add keepers
 	app.AccountKeeper = auth.NewAccountKeeper(
