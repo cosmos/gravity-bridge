@@ -2,6 +2,7 @@ package txs
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 
 	"log"
@@ -17,14 +18,20 @@ import (
 )
 
 const (
-	// GasLimit : the gas limit in Gwei used for transactions sent with TransactOpts
+	// GasLimit the gas limit in Gwei used for transactions sent with TransactOpts
 	GasLimit = uint64(600000)
 )
 
-// RelayProphecyClaimToEthereum : relays the provided ProphecyClaim to CosmosBridge contract on the Ethereum network
-func RelayProphecyClaimToEthereum(provider string, contractAddress common.Address, event events.Event, claim ProphecyClaim) error {
+// RelayProphecyClaimToEthereum relays the provided ProphecyClaim to CosmosBridge contract on the Ethereum network
+func RelayProphecyClaimToEthereum(
+	provider string,
+	contractAddress common.Address,
+	event events.Event,
+	claim ProphecyClaim,
+	key *ecdsa.PrivateKey,
+) error {
 	// Initialize client service, validator's tx auth, and target contract address
-	client, auth, target := initRelayConfig(provider, contractAddress, event)
+	client, auth, target := initRelayConfig(provider, contractAddress, event, key)
 
 	// Initialize CosmosBridge instance
 	fmt.Println("\nFetching CosmosBridge contract...")
@@ -58,10 +65,16 @@ func RelayProphecyClaimToEthereum(provider string, contractAddress common.Addres
 	return nil
 }
 
-// RelayOracleClaimToEthereum : relays the provided OracleClaim to Oracle contract on the Ethereum network
-func RelayOracleClaimToEthereum(provider string, contractAddress common.Address, event events.Event, claim OracleClaim) error {
+// RelayOracleClaimToEthereum relays the provided OracleClaim to Oracle contract on the Ethereum network
+func RelayOracleClaimToEthereum(
+	provider string,
+	contractAddress common.Address,
+	event events.Event,
+	claim OracleClaim,
+	key *ecdsa.PrivateKey,
+) error {
 	// Initialize client service, validator's tx auth, and target contract address
-	client, auth, target := initRelayConfig(provider, contractAddress, event)
+	client, auth, target := initRelayConfig(provider, contractAddress, event, key)
 
 	// Initialize Oracle instance
 	fmt.Println("\nFetching Oracle contract...")
@@ -95,23 +108,18 @@ func RelayOracleClaimToEthereum(provider string, contractAddress common.Address,
 	return nil
 }
 
-// initRelayConfig : set up Ethereum client, validator's transaction auth, and the target contract's address
+// initRelayConfig set up Ethereum client, validator's transaction auth, and the target contract's address
 func initRelayConfig(
 	provider string,
 	registry common.Address,
 	event events.Event,
+	key *ecdsa.PrivateKey,
 ) (*ethclient.Client,
 	*bind.TransactOpts,
 	common.Address,
 ) {
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Load the validator's private key
-	key, err := LoadPrivateKey()
 	if err != nil {
 		log.Fatal(err)
 	}

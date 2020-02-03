@@ -10,6 +10,7 @@ import (
 
 	"github.com/tendermint/tendermint/libs/cli"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -48,8 +49,13 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 
 			addr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
-				// attempt to lookup address from Keyring if no address was provided
-				kb, err := keys.NewKeyringFromDir(viper.GetString(flagClientHome), inBuf)
+				// attempt to lookup address from Keybase if no address was provided
+				kb, err := keys.NewKeyring(
+					sdk.KeyringServiceName(),
+					viper.GetString(flags.FlagKeyringBackend),
+					viper.GetString(flagClientHome),
+					inBuf,
+				)
 				if err != nil {
 					return err
 				}

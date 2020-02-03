@@ -7,18 +7,25 @@ import (
 )
 
 const (
-	Client = "wss://ropsten.infura.io/ws"
+	ValidTestnetWebSocket = "wss://ropsten.infura.io/ws"
+	ValidLocalWebSocket   = "ws://127.0.0.1:7545/"
+	InvalidWebSocket      = "http://localhost:7545"
 )
 
-// TestIsWebsocketURL : test identification of Ethereum websocket URLs
+// TestIsWebsocketURL test identification of Ethereum websocket URLs
 func TestIsWebsocketURL(t *testing.T) {
-	result := IsWebsocketURL(Client)
-	require.True(t, result)
+	validTestnetRes := IsWebsocketURL(ValidTestnetWebSocket)
+	require.True(t, validTestnetRes)
+
+	validLocalRes := IsWebsocketURL(ValidLocalWebSocket)
+	require.True(t, validLocalRes)
+
+	invalidRes := IsWebsocketURL(InvalidWebSocket)
+	require.False(t, invalidRes)
 }
 
-// TestSetupWebsocketEthClient : test initialization of Ethereum websocket
+// TestSetupWebsocketEthClient test initialization of Ethereum websocket
 func TestSetupWebsocketEthClient(t *testing.T) {
-	_, err := SetupWebsocketEthClient(Client)
-
-	require.NoError(t, err)
+	_, err := SetupWebsocketEthClient(InvalidWebSocket)
+	require.Error(t, err, "invalid websocket eth client URL: "+InvalidWebSocket)
 }

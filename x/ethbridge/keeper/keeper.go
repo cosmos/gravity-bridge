@@ -19,16 +19,14 @@ type Keeper struct {
 
 	supplyKeeper types.SupplyKeeper
 	oracleKeeper types.OracleKeeper
-	codespace    sdk.CodespaceType
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(cdc *codec.Codec, supplyKeeper types.SupplyKeeper, oracleKeeper types.OracleKeeper, codespace sdk.CodespaceType) Keeper {
+func NewKeeper(cdc *codec.Codec, supplyKeeper types.SupplyKeeper, oracleKeeper types.OracleKeeper) Keeper {
 	return Keeper{
 		cdc:          cdc,
 		supplyKeeper: supplyKeeper,
 		oracleKeeper: oracleKeeper,
-		codespace:    codespace,
 	}
 }
 
@@ -37,27 +35,18 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// Codespace returns the codespace
-func (k Keeper) Codespace() sdk.CodespaceType {
-	return k.codespace
-}
-
 // ProcessClaim processes a new claim coming in from a validator
-func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.EthBridgeClaim) (oracle.Status, sdk.Error) {
+func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.EthBridgeClaim) (oracle.Status, error) {
 	oracleClaim, err := types.CreateOracleClaimFromEthClaim(k.cdc, claim)
 	if err != nil {
-		return oracle.Status{}, types.ErrJSONMarshalling(k.Codespace())
+		return oracle.Status{}, err
 	}
 
-	status, sdkErr := k.oracleKeeper.ProcessClaim(ctx, oracleClaim)
-	if sdkErr != nil {
-		return oracle.Status{}, sdkErr
-	}
-	return status, nil
+	return k.oracleKeeper.ProcessClaim(ctx, oracleClaim)
 }
 
 // ProcessSuccessfulClaim processes a claim that has just completed successfully with consensus
-func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) sdk.Error {
+func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) error {
 	oracleClaim, err := types.CreateOracleClaimFromOracleString(claim)
 	if err != nil {
 		return err
@@ -65,37 +54,42 @@ func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) sdk.Error 
 
 	receiverAddress := oracleClaim.CosmosReceiver
 
-	if oracleClaim.ClaimType == types.LockText {
+	switch oracleClaim.ClaimType {
+	case types.LockText:
 		err = k.supplyKeeper.MintCoins(ctx, types.ModuleName, oracleClaim.Amount)
-		if err != nil {
-			return err
-		}
+	default:
+		err = types.ErrInvalidClaimType
 	}
-	err = k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, receiverAddress, oracleClaim.Amount)
+
 	if err != nil {
+		return err
+	}
+
+	if err := k.supplyKeeper.SendCoinsFromModuleToAccount(
+		ctx, types.ModuleName, receiverAddress, oracleClaim.Amount,
+	); err != nil {
 		panic(err)
 	}
+
 	return nil
 }
 
 // ProcessBurn processes the burn of bridged coins from the given sender
-func (k Keeper) ProcessBurn(ctx sdk.Context, cosmosSender sdk.AccAddress, amount sdk.Coins) sdk.Error {
-	err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, cosmosSender, types.ModuleName, amount)
-	if err != nil {
+func (k Keeper) ProcessBurn(ctx sdk.Context, cosmosSender sdk.AccAddress, amount sdk.Coins) error {
+	if err := k.supplyKeeper.SendCoinsFromAccountToModule(
+		ctx, cosmosSender, types.ModuleName, amount,
+	); err != nil {
 		return err
 	}
-	err = k.supplyKeeper.BurnCoins(ctx, types.ModuleName, amount)
-	if err != nil {
+
+	if err := k.supplyKeeper.BurnCoins(ctx, types.ModuleName, amount); err != nil {
 		panic(err)
 	}
+
 	return nil
 }
 
 // ProcessLock processes the lockup of cosmos coins from the given sender
-func (k Keeper) ProcessLock(ctx sdk.Context, cosmosSender sdk.AccAddress, amount sdk.Coins) sdk.Error {
-	err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, cosmosSender, types.ModuleName, amount)
-	if err != nil {
-		return err
-	}
-	return nil
+func (k Keeper) ProcessLock(ctx sdk.Context, cosmosSender sdk.AccAddress, amount sdk.Coins) error {
+	return k.supplyKeeper.SendCoinsFromAccountToModule(ctx, cosmosSender, types.ModuleName, amount)
 }

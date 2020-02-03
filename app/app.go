@@ -5,9 +5,12 @@ import (
 	"os"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
+	tmOs "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
+
+	"github.com/cosmos/peggy/x/ethbridge"
+	"github.com/cosmos/peggy/x/oracle"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -31,8 +34,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	"github.com/cosmos/peggy/x/ethbridge"
-	"github.com/cosmos/peggy/x/oracle"
 )
 
 const (
@@ -135,8 +136,8 @@ type EthereumBridgeApp struct {
 
 // NewEthereumBridgeApp is a constructor function for EthereumBridgeApp
 func NewEthereumBridgeApp(
-	logger log.Logger, db dbm.DB, loadLatest bool, traceStore io.Writer,
-	invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp),
+	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, invCheckPeriod uint,
+	skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp),
 ) *EthereumBridgeApp {
 	// First define the top level codec that will be shared by the different modules
 	cdc := MakeCodec()
@@ -161,7 +162,7 @@ func NewEthereumBridgeApp(
 	}
 
 	// init params keeper and subspaces
-	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey], params.DefaultCodespace)
+	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey])
 	app.subspaces[auth.ModuleName] = app.ParamsKeeper.Subspace(auth.DefaultParamspace)
 	app.subspaces[bank.ModuleName] = app.ParamsKeeper.Subspace(bank.DefaultParamspace)
 	app.subspaces[staking.ModuleName] = app.ParamsKeeper.Subspace(staking.DefaultParamspace)
@@ -177,34 +178,33 @@ func NewEthereumBridgeApp(
 		app.cdc, keys[auth.StoreKey], app.subspaces[auth.ModuleName], auth.ProtoBaseAccount,
 	)
 	app.BankKeeper = bank.NewBaseKeeper(
-		app.AccountKeeper, app.subspaces[bank.ModuleName], bank.DefaultCodespace,
-		app.BlacklistedAccAddrs(),
+		app.AccountKeeper, app.subspaces[bank.ModuleName], app.BlacklistedAccAddrs(),
 	)
 	app.SupplyKeeper = supply.NewKeeper(
 		app.cdc, keys[supply.StoreKey], app.AccountKeeper, app.BankKeeper, maccPerms,
 	)
 	stakingKeeper := staking.NewKeeper(
 		app.cdc, keys[staking.StoreKey], app.SupplyKeeper, app.subspaces[staking.ModuleName],
-		staking.DefaultCodespace)
+	)
 	app.MintKeeper = mint.NewKeeper(
 		app.cdc, keys[mint.StoreKey], app.subspaces[mint.ModuleName], &stakingKeeper,
 		app.SupplyKeeper, auth.FeeCollectorName,
 	)
 	app.DistrKeeper = distr.NewKeeper(
 		app.cdc, keys[distr.StoreKey], app.subspaces[distr.ModuleName], &stakingKeeper,
-		app.SupplyKeeper, distr.DefaultCodespace, auth.FeeCollectorName, app.ModuleAccountAddrs(),
+		app.SupplyKeeper, auth.FeeCollectorName, app.ModuleAccountAddrs(),
 	)
 	app.SlashingKeeper = slashing.NewKeeper(
-		app.cdc, keys[slashing.StoreKey], &stakingKeeper, app.subspaces[slashing.ModuleName], slashing.DefaultCodespace,
+		app.cdc, keys[slashing.StoreKey], &stakingKeeper, app.subspaces[slashing.ModuleName],
 	)
 	app.CrisisKeeper = crisis.NewKeeper(
 		app.subspaces[crisis.ModuleName], invCheckPeriod, app.SupplyKeeper, auth.FeeCollectorName,
 	)
-	app.UpgradeKeeper = upgrade.NewKeeper(keys[upgrade.StoreKey], app.cdc)
+	app.UpgradeKeeper = upgrade.NewKeeper(skipUpgradeHeights, keys[upgrade.StoreKey], app.cdc)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidence.NewKeeper(
-		app.cdc, keys[evidence.StoreKey], app.subspaces[evidence.ModuleName], evidence.DefaultCodespace,
+		app.cdc, keys[evidence.StoreKey], app.subspaces[evidence.ModuleName],
 		&app.StakingKeeper, app.SlashingKeeper,
 	)
 	evidenceRouter := evidence.NewRouter()
@@ -220,7 +220,7 @@ func NewEthereumBridgeApp(
 		AddRoute(upgrade.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper))
 	app.GovKeeper = gov.NewKeeper(
 		app.cdc, keys[gov.StoreKey], app.subspaces[gov.ModuleName], app.SupplyKeeper,
-		&stakingKeeper, gov.DefaultCodespace, govRouter,
+		&stakingKeeper, govRouter,
 	)
 
 	// register the staking hooks
@@ -229,9 +229,9 @@ func NewEthereumBridgeApp(
 		staking.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 	app.OracleKeeper = oracle.NewKeeper(app.cdc, keys[oracle.StoreKey],
-		app.StakingKeeper, oracle.DefaultCodespace, oracle.DefaultConsensusNeeded,
+		app.StakingKeeper, oracle.DefaultConsensusNeeded,
 	)
-	app.BridgeKeeper = ethbridge.NewKeeper(app.cdc, app.SupplyKeeper, app.OracleKeeper, ethbridge.DefaultCodespace)
+	app.BridgeKeeper = ethbridge.NewKeeper(app.cdc, app.SupplyKeeper, app.OracleKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -249,7 +249,7 @@ func NewEthereumBridgeApp(
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		oracle.NewAppModule(app.OracleKeeper),
-		ethbridge.NewAppModule(app.OracleKeeper, app.SupplyKeeper, app.AccountKeeper, app.BridgeKeeper, ethbridge.DefaultCodespace, app.cdc),
+		ethbridge.NewAppModule(app.OracleKeeper, app.SupplyKeeper, app.AccountKeeper, app.BridgeKeeper, app.cdc),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -282,9 +282,8 @@ func NewEthereumBridgeApp(
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
-		err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
-		if err != nil {
-			cmn.Exit(err.Error())
+		if err := app.LoadLatestVersion(app.keys[bam.MainStoreKey]); err != nil {
+			tmOs.Exit(err.Error())
 		}
 	}
 	return app
@@ -293,8 +292,7 @@ func NewEthereumBridgeApp(
 // InitChainer application update at chain initialization
 func (app *EthereumBridgeApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
-	err := app.cdc.UnmarshalJSON(req.AppStateBytes, &genesisState)
-	if err != nil {
+	if err := app.cdc.UnmarshalJSON(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
 

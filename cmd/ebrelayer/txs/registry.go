@@ -15,23 +15,25 @@ import (
 type ContractRegistry byte
 
 const (
-	// Valset : valset contract
+	// Valset valset contract
 	Valset ContractRegistry = iota + 1
-	// Oracle : oracle contract
+	// Oracle oracle contract
 	Oracle
-	// BridgeBank : bridgeBank contract
+	// BridgeBank bridgeBank contract
 	BridgeBank
-	// CosmosBridge : cosmosBridge contract
+	// CosmosBridge cosmosBridge contract
 	CosmosBridge
 )
 
-// String : returns the event type as a string
+// String returns the event type as a string
 func (d ContractRegistry) String() string {
 	return [...]string{"valset", "oracle", "bridgebank", "cosmosbridge"}[d-1]
 }
 
-// GetAddressFromBridgeRegistry : utility method which queries the requested contract address from the BridgeRegistry
-func GetAddressFromBridgeRegistry(client *ethclient.Client, registry common.Address, target ContractRegistry) (address common.Address, err error) {
+// GetAddressFromBridgeRegistry utility method which queries the requested contract address from the BridgeRegistry
+func GetAddressFromBridgeRegistry(
+	client *ethclient.Client, registry common.Address, target ContractRegistry,
+) (common.Address, error) {
 	// Load the sender's address
 	sender, err := LoadSender()
 	if err != nil {
@@ -57,32 +59,23 @@ func GetAddressFromBridgeRegistry(client *ethclient.Client, registry common.Addr
 		log.Fatal(err)
 	}
 
+	var address common.Address
 	switch target {
 	case Valset:
-		valsetAddress, err := registryInstance.Valset(&auth)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return valsetAddress, nil
+		address, err = registryInstance.Valset(&auth)
 	case Oracle:
-		oracleAddress, err := registryInstance.Oracle(&auth)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return oracleAddress, nil
+		address, err = registryInstance.Oracle(&auth)
 	case BridgeBank:
-		bridgeBankAddress, err := registryInstance.BridgeBank(&auth)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return bridgeBankAddress, nil
+		address, err = registryInstance.BridgeBank(&auth)
 	case CosmosBridge:
-		cosmosBridgeAddress, err := registryInstance.CosmosBridge(&auth)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return cosmosBridgeAddress, nil
+		address, err = registryInstance.CosmosBridge(&auth)
 	default:
 		panic("invalid target contract address")
 	}
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return address, nil
 }

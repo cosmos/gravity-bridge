@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/peggy/x/oracle"
 )
 
@@ -73,7 +74,7 @@ func CreateOracleClaimFromEthClaim(cdc *codec.Codec, ethClaim EthBridgeClaim) (o
 }
 
 // CreateEthClaimFromOracleString converts a string from any generic claim from the oracle module into an ethereum bridge specific claim.
-func CreateEthClaimFromOracleString(ethereumChainID int, bridgeContract EthereumAddress, nonce int, symbol string, tokenContract EthereumAddress, ethereumAddress EthereumAddress, validator sdk.ValAddress, oracleClaimString string) (EthBridgeClaim, sdk.Error) {
+func CreateEthClaimFromOracleString(ethereumChainID int, bridgeContract EthereumAddress, nonce int, symbol string, tokenContract EthereumAddress, ethereumAddress EthereumAddress, validator sdk.ValAddress, oracleClaimString string) (EthBridgeClaim, error) {
 	oracleClaim, err := CreateOracleClaimFromOracleString(oracleClaimString)
 	if err != nil {
 		return EthBridgeClaim{}, err
@@ -95,12 +96,12 @@ func CreateEthClaimFromOracleString(ethereumChainID int, bridgeContract Ethereum
 
 // CreateOracleClaimFromOracleString converts a JSON string into an OracleClaimContent struct used by this module. In general, it is
 // expected that the oracle module will store claims in this JSON format and so this should be used to convert oracle claims.
-func CreateOracleClaimFromOracleString(oracleClaimString string) (OracleClaimContent, sdk.Error) {
+func CreateOracleClaimFromOracleString(oracleClaimString string) (OracleClaimContent, error) {
 	var oracleClaimContent OracleClaimContent
 
 	bz := []byte(oracleClaimString)
 	if err := json.Unmarshal(bz, &oracleClaimContent); err != nil {
-		return OracleClaimContent{}, sdk.ErrInternal(fmt.Sprintf("failed to parse claim: %s", err.Error()))
+		return OracleClaimContent{}, sdkerrors.Wrap(ErrJSONMarshalling, fmt.Sprintf("failed to parse claim: %s", err.Error()))
 	}
 
 	return oracleClaimContent, nil

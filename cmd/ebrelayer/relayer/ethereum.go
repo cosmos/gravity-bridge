@@ -11,6 +11,7 @@ package relayer
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"log"
 	"math/big"
@@ -29,7 +30,7 @@ import (
 	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
-// InitEthereumRelayer : Starts an event listener on a specific Ethereum network, contract, and event
+// InitEthereumRelayer Starts an event listener on a specific Ethereum network, contract, and event
 func InitEthereumRelayer(
 	cdc *codec.Codec,
 	chainID string,
@@ -37,10 +38,10 @@ func InitEthereumRelayer(
 	contractAddress common.Address,
 	makeClaims bool,
 	validatorName string,
-	passphrase string,
 	validatorAddress sdk.ValAddress,
 	cliContext sdkContext.CLIContext,
 	rpcURL string,
+	privateKey *ecdsa.PrivateKey,
 ) error {
 	// Start client with infura ropsten provider
 	client, err := SetupWebsocketEthClient(provider)
@@ -62,17 +63,16 @@ func InitEthereumRelayer(
 		targetContract = txs.BridgeBank
 		eventName = events.LogLock.String()
 	}
-
-	clientChainID, err := client.NetworkID(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// Load our contract's ABI
 	contractABI := contract.LoadABI(makeClaims)
 
 	// Load unique event signature from the named event contained within the contract's ABI
 	eventSignature := contractABI.Events[eventName].Id().Hex()
+
+	clientChainID, err := client.NetworkID(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Get the specific contract's address (CosmosBridge or BridgeBank)
 	targetAddress, err := txs.GetAddressFromBridgeRegistry(client, contractAddress, targetContract)
@@ -108,27 +108,31 @@ func InitEthereumRelayer(
 				fmt.Println("Block number:", vLog.BlockNumber)
 				fmt.Println("Tx hash:", vLog.TxHash.Hex())
 
+				var err error
 				switch eventName {
 				case events.LogLock.String():
-					err := handleLogLockEvent(clientChainID, contractAddress.Hex(), contractABI, eventName, vLog, chainID, cdc, validatorAddress, validatorName, passphrase, cliContext, rpcURL)
-					if err != nil {
-						log.Fatal(err)
-					}
+					err = handleLogLockEvent(
+						clientChainID, contractAddress, contractABI, eventName, vLog, chainID,
+						cdc, validatorAddress, validatorName, cliContext, rpcURL,
+					)
 				case events.LogNewProphecyClaim.String():
-					err := handleLogNewProphecyClaimEvent(contractABI, eventName, vLog, provider, contractAddress)
-					if err != nil {
-						log.Fatal(err)
-					}
+					err = handleLogNewProphecyClaimEvent(
+						contractABI, eventName, vLog, provider, contractAddress, privateKey,
+					)
+				}
+
+				if err != nil {
+					log.Fatal(err)
 				}
 			}
 		}
 	}
 }
 
-// handleLogLockEvent : unpacks a LogLock event, converts it to a ProphecyClaim, and relays a tx to Cosmos
+// handleLogLockEvent unpacks a LogLock event, converts it to a ProphecyClaim, and relays a tx to Cosmos
 func handleLogLockEvent(
 	clientChainID *big.Int,
-	contractAddress string,
+	contractAddress common.Address,
 	contractABI abi.ABI,
 	eventName string,
 	log types.Log,
@@ -136,12 +140,11 @@ func handleLogLockEvent(
 	cdc *codec.Codec,
 	validatorAddress sdk.ValAddress,
 	validatorName string,
-	passphrase string,
 	cliContext sdkContext.CLIContext,
 	rpcURL string,
 ) error {
 	// Unpack the LogLock event using its unique event signature from the contract's ABI
-	event := events.UnpackLogLock(clientChainID, contractAddress, contractABI, eventName, log.Data)
+	event := events.UnpackLogLock(clientChainID, contractAddress.Hex(), contractABI, eventName, log.Data)
 
 	// Add the event to the record
 	events.NewEventWrite(log.TxHash.Hex(), event)
@@ -153,23 +156,29 @@ func handleLogLockEvent(
 	}
 
 	// Initiate the relay
-	return txs.RelayLockToCosmos(chainID, cdc, validatorAddress, validatorName, passphrase, cliContext, &prophecyClaim, rpcURL)
+	return txs.RelayLockToCosmos(
+		chainID, cdc, validatorAddress, validatorName, cliContext, &prophecyClaim, rpcURL,
+	)
 }
 
-// handleLogNewProphecyClaimEvent : unpacks a LogNewProphecyClaim event, converts it to a OracleClaim, and relays a tx to Ethereum
+// handleLogNewProphecyClaimEvent unpacks a LogNewProphecyClaim event, converts it to a OracleClaim, and relays a tx to Ethereum
 func handleLogNewProphecyClaimEvent(
 	contractABI abi.ABI,
 	eventName string,
 	log types.Log,
 	provider string,
 	contractAddress common.Address,
+	privateKey *ecdsa.PrivateKey,
 ) error {
 	// Unpack the LogNewProphecyClaim event using its unique event signature from the contract's ABI
 	event := events.UnpackLogNewProphecyClaim(contractABI, eventName, log.Data)
 
 	// Parse ProphecyClaim's data into an OracleClaim
-	oracleClaim := txs.ProphecyClaimToSignedOracleClaim(event)
+	oracleClaim, err := txs.ProphecyClaimToSignedOracleClaim(event, privateKey)
+	if err != nil {
+		return err
+	}
 
 	// Initiate the relay
-	return txs.RelayOracleClaimToEthereum(provider, contractAddress, events.LogNewProphecyClaim, oracleClaim)
+	return txs.RelayOracleClaimToEthereum(provider, contractAddress, events.LogNewProphecyClaim, oracleClaim, privateKey)
 }
