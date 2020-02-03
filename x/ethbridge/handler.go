@@ -41,9 +41,7 @@ func handleMsgCreateEthBridgeClaim(
 	if err != nil {
 		return nil, err
 	}
-
-	switch status.Text {
-	case oracle.SuccessStatusText:
+	if status.Text == oracle.SuccessStatusText {
 		if err := bridgeKeeper.ProcessSuccessfulClaim(ctx, status.FinalClaim); err != nil {
 			return nil, err
 		}
