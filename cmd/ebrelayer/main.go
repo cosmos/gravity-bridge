@@ -20,13 +20,13 @@ import (
 
 	"github.com/tendermint/tendermint/libs/cli"
 
-	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	app "github.com/cosmos/peggy/app"
 	relayer "github.com/cosmos/peggy/cmd/ebrelayer/relayer"
@@ -177,7 +177,7 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get the validator's name and account address using their moniker
-	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(inBuf, validatorFrom, false)
+	validatorAccAddress, validatorName, err := context.GetFromFields(inBuf, validatorFrom, false)
 	if err != nil {
 		return err
 	}
@@ -186,13 +186,13 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	validatorAddress := sdk.ValAddress(validatorAccAddress)
 
 	// Test keys.DefaultKeyPass is correct
-	_, err = authtxb.MakeSignature(nil, validatorName, keys.DefaultKeyPass, authtxb.StdSignMsg{})
+	_, err = authtypes.MakeSignature(nil, validatorName, keys.DefaultKeyPass, authtypes.StdSignMsg{})
 	if err != nil {
 		return err
 	}
 
 	// Set up our CLIContext
-	cliCtx := sdkContext.NewCLIContext().
+	cliCtx := context.NewCLIContextWithInput(inBuf).
 		WithCodec(cdc).
 		WithFromAddress(sdk.AccAddress(validatorAddress)).
 		WithFromName(validatorName)
