@@ -76,6 +76,14 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.Claim) (types.Status, 
 		return types.Status{}, types.ErrInvalidValidator
 	}
 
+	if claim.ID == "" {
+		return types.Status{}, types.ErrInvalidIdentifier
+	}
+
+	if claim.Content == "" {
+		return types.Status{}, types.ErrInvalidClaim
+	}
+
 	prophecy, found := k.GetProphecy(ctx, claim.ID)
 	if !found {
 		prophecy = types.NewProphecy(claim.ID)
