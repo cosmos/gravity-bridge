@@ -1,10 +1,14 @@
-package cli
+package client
 
 import (
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/peggy/x/ethbridge/client/cli"
+	"github.com/cosmos/peggy/x/ethbridge/client/rest"
+	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -16,7 +20,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	ethBridgeQueryCmd.AddCommand(flags.GetCommands(
-		GetCmdGetEthBridgeProphecy(storeKey, cdc),
+		cli.GetCmdGetEthBridgeProphecy(storeKey, cdc),
 	)...)
 
 	return ethBridgeQueryCmd
@@ -30,10 +34,15 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	ethBridgeTxCmd.AddCommand(flags.PostCommands(
-		GetCmdCreateEthBridgeClaim(cdc),
-		GetCmdBurn(cdc),
-		GetCmdLock(cdc),
+		cli.GetCmdCreateEthBridgeClaim(cdc),
+		cli.GetCmdBurn(cdc),
+		cli.GetCmdLock(cdc),
 	)...)
 
 	return ethBridgeTxCmd
+}
+
+// RegisterRESTRoutes - Central function to define routes that get registered by the main application
+func RegisterRESTRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) {
+	rest.RegisterRESTRoutes(cliCtx, r, storeName)
 }
