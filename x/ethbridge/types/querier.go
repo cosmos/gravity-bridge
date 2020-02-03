@@ -7,6 +7,11 @@ import (
 	"github.com/cosmos/peggy/x/oracle"
 )
 
+// query endpoints supported by the oracle Querier
+const (
+	QueryEthProphecy = "prophecies"
+)
+
 // QueryEthProphecyParams defines the params for the following queries:
 // - 'custom/ethbridge/prophecies/'
 type QueryEthProphecyParams struct {
@@ -18,8 +23,11 @@ type QueryEthProphecyParams struct {
 	EthereumSender        EthereumAddress `json:"ethereum_sender"`
 }
 
-// QueryEthProphecyParams creates a new QueryEthProphecyParams
-func NewQueryEthProphecyParams(ethereumChainID int, bridgeContractAddress EthereumAddress, nonce int, symbol string, tokenContractAddress EthereumAddress, ethereumSender EthereumAddress) QueryEthProphecyParams {
+// NewQueryEthProphecyParams creates a new QueryEthProphecyParams
+func NewQueryEthProphecyParams(
+	ethereumChainID int, bridgeContractAddress EthereumAddress, nonce int, symbol string,
+	tokenContractAddress EthereumAddress, ethereumSender EthereumAddress,
+) QueryEthProphecyParams {
 	return QueryEthProphecyParams{
 		EthereumChainID:       ethereumChainID,
 		BridgeContractAddress: bridgeContractAddress,
@@ -30,14 +38,17 @@ func NewQueryEthProphecyParams(ethereumChainID int, bridgeContractAddress Ethere
 	}
 }
 
-// Query Result Payload for an eth prophecy query
+// QueryEthProphecyResponse defines the result payload for an eth prophecy query
 type QueryEthProphecyResponse struct {
 	ID     string           `json:"id"`
 	Status oracle.Status    `json:"status"`
 	Claims []EthBridgeClaim `json:"claims"`
 }
 
-func NewQueryEthProphecyResponse(id string, status oracle.Status, claims []EthBridgeClaim) QueryEthProphecyResponse {
+// NewQueryEthProphecyResponse creates a new QueryEthProphecyResponse instance
+func NewQueryEthProphecyResponse(
+	id string, status oracle.Status, claims []EthBridgeClaim,
+) QueryEthProphecyResponse {
 	return QueryEthProphecyResponse{
 		ID:     id,
 		Status: status,
@@ -45,6 +56,7 @@ func NewQueryEthProphecyResponse(id string, status oracle.Status, claims []EthBr
 	}
 }
 
+// String implements fmt.Stringer interface
 func (response QueryEthProphecyResponse) String() string {
 	prophecyJSON, err := json.Marshal(response)
 	if err != nil {

@@ -1,11 +1,8 @@
-//nolint:dupl
 package cli
 
 import (
-	"errors"
-	"fmt"
+	"bufio"
 	"strconv"
-	"strings"
 
 	"github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/spf13/cobra"
@@ -16,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // GetCmdCreateEthBridgeClaim is the CLI command for creating a claim on an ethereum prophecy
@@ -28,8 +25,8 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			ethereumChainID, err := strconv.Atoi(args[0])
 			if err != nil {
@@ -44,14 +41,8 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 			}
 
 			symbol := args[3]
-			if strings.TrimSpace(symbol) == "" {
-				return errors.New("must specify a token symbol/denomination, including 'eth' for Ethereum")
-			}
-
 			tokenContract := types.NewEthereumAddress(args[4])
-
 			ethereumSender := types.NewEthereumAddress(args[5])
-
 			cosmosReceiver, err := sdk.AccAddressFromBech32(args[6])
 			if err != nil {
 				return err
@@ -69,14 +60,13 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 
 			claimType, err := types.StringToClaimType(args[9])
 			if err != nil {
-				return types.ErrInvalidClaimType()
+				return err
 			}
 
 			ethBridgeClaim := types.NewEthBridgeClaim(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender, cosmosReceiver, validator, amount, claimType)
 
 			msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
-			err = msg.ValidateBasic()
-			if err != nil {
+			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 
@@ -95,23 +85,16 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
-			if strings.TrimSpace(ethereumChainIDString) == "" {
-				return fmt.Errorf("Error: flag --ethereum-chain-id invalid value")
-			}
-
 			ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
 			if err != nil {
 				return err
 			}
 
 			tokenContractString := viper.GetString(types.FlagTokenContractAddr)
-			if strings.TrimSpace(tokenContractString) == "" {
-				return fmt.Errorf("Error: flag --token-contract-address invalid value")
-			}
 			tokenContract := types.NewEthereumAddress(tokenContractString)
 
 			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
@@ -120,15 +103,13 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 			}
 
 			ethereumReceiver := types.NewEthereumAddress(args[1])
-
 			amount, err := sdk.ParseCoins(args[2])
 			if err != nil {
 				return err
 			}
 
 			msg := types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
-			err = msg.ValidateBasic()
-			if err != nil {
+			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 
@@ -146,23 +127,16 @@ func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
-			if strings.TrimSpace(ethereumChainIDString) == "" {
-				return fmt.Errorf("Error: flag --ethereum-chain-id invalid value")
-			}
-
 			ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
 			if err != nil {
 				return err
 			}
 
 			tokenContractString := viper.GetString(types.FlagTokenContractAddr)
-			if strings.TrimSpace(tokenContractString) == "" {
-				return fmt.Errorf("Error: flag --token-contract-address invalid value")
-			}
 			tokenContract := types.NewEthereumAddress(tokenContractString)
 
 			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
@@ -171,15 +145,13 @@ func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 			}
 
 			ethereumReceiver := types.NewEthereumAddress(args[1])
-
 			amount, err := sdk.ParseCoins(args[2])
 			if err != nil {
 				return err
 			}
 
 			msg := types.NewMsgLock(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
-			err = msg.ValidateBasic()
-			if err != nil {
+			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 

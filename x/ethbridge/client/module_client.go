@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -19,7 +19,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		Short: "Querying commands for the ethbridge module",
 	}
 
-	ethBridgeQueryCmd.AddCommand(client.GetCommands(
+	ethBridgeQueryCmd.AddCommand(flags.GetCommands(
 		cli.GetCmdGetEthBridgeProphecy(storeKey, cdc),
 	)...)
 
@@ -33,7 +33,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		Short: "EthBridge transactions subcommands",
 	}
 
-	ethBridgeTxCmd.AddCommand(client.PostCommands(
+	ethBridgeTxCmd.AddCommand(flags.PostCommands(
 		cli.GetCmdCreateEthBridgeClaim(cdc),
 		cli.GetCmdBurn(cdc),
 		cli.GetCmdLock(cdc),

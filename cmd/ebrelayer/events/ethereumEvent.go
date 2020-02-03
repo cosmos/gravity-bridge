@@ -1,7 +1,7 @@
 package events
 
 // -----------------------------------------------------
-//    ethereumEvent : Creates LockEvents from new events on the
+//    ethereumEvent Creates LockEvents from new events on the
 //			  Ethereum blockchain.
 // -----------------------------------------------------
 
@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// LockEvent : struct which represents a LogLock event
+// LockEvent struct which represents a LogLock event
 type LockEvent struct {
 	EthereumChainID       *big.Int
 	BridgeContractAddress common.Address
@@ -27,7 +27,7 @@ type LockEvent struct {
 	Nonce                 *big.Int
 }
 
-// NewProphecyClaimEvent : struct which represents a LogNewProphecyClaim event
+// NewProphecyClaimEvent struct which represents a LogNewProphecyClaim event
 type NewProphecyClaimEvent struct {
 	ProphecyID       *big.Int
 	ClaimType        uint8
@@ -39,7 +39,7 @@ type NewProphecyClaimEvent struct {
 	Amount           *big.Int
 }
 
-// UnpackLogLock : Handles new LogLock events
+// UnpackLogLock Handles new LogLock events
 func UnpackLogLock(clientChainID *big.Int, contractAddress string, contractAbi abi.ABI, eventName string, eventData []byte) (lockEvent LockEvent) {
 	event := LockEvent{}
 
@@ -63,7 +63,7 @@ func UnpackLogLock(clientChainID *big.Int, contractAddress string, contractAbi a
 	return event
 }
 
-// UnpackLogNewProphecyClaim : Handles new LogNewProphecyClaim events
+// UnpackLogNewProphecyClaim Handles new LogNewProphecyClaim events
 func UnpackLogNewProphecyClaim(contractAbi abi.ABI, eventName string, eventData []byte) (newProphecyClaimEvent NewProphecyClaimEvent) {
 	event := NewProphecyClaimEvent{}
 
@@ -78,7 +78,7 @@ func UnpackLogNewProphecyClaim(contractAbi abi.ABI, eventName string, eventData 
 	return event
 }
 
-// PrintLockEvent : prints a LockEvent struct's information
+// PrintLockEvent prints a LockEvent struct's information
 func PrintLockEvent(event LockEvent) {
 	// Convert the variables into a printable format
 	chainID := event.EthereumChainID
@@ -95,7 +95,7 @@ func PrintLockEvent(event LockEvent) {
 		chainID, bridgeContractAddress, symbol, token, sender, recipient, value, nonce)
 }
 
-// PrintProphecyClaimEvent : prints a NewProphecyClaimEvent struct's information
+// PrintProphecyClaimEvent prints a NewProphecyClaimEvent struct's information
 func PrintProphecyClaimEvent(event NewProphecyClaimEvent) {
 	// Convert the variables into a printable format
 	id := event.ProphecyID

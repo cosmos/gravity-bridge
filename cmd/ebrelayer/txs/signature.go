@@ -16,11 +16,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
-// LoadPrivateKey : loads the validator's private key from environment variables
+// LoadPrivateKey loads the validator's private key from environment variables
 func LoadPrivateKey() (key *ecdsa.PrivateKey, err error) {
 	// Load config file containing environment variables
-	err = godotenv.Load()
-	if err != nil {
+	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
@@ -39,7 +38,7 @@ func LoadPrivateKey() (key *ecdsa.PrivateKey, err error) {
 	return privateKey, nil
 }
 
-// LoadSender : uses the validator's private key to load the validator's address
+// LoadSender uses the validator's private key to load the validator's address
 func LoadSender() (address common.Address, err error) {
 	key, err := LoadPrivateKey()
 	if err != nil {
@@ -58,7 +57,7 @@ func LoadSender() (address common.Address, err error) {
 	return fromAddress, nil
 }
 
-// GenerateClaimMessage : Generates a hased message containing a ProphecyClaim event's data
+// GenerateClaimMessage Generates a hased message containing a ProphecyClaim event's data
 func GenerateClaimMessage(event events.NewProphecyClaimEvent) common.Hash {
 	// Cast event field values to byte[]
 	prophecyID := event.ProphecyID.Bytes()
@@ -72,7 +71,7 @@ func GenerateClaimMessage(event events.NewProphecyClaimEvent) common.Hash {
 	return crypto.Keccak256Hash(prophecyID, sender, recipient, token, amount, validator)
 }
 
-// PrepareMsgForSigning : prefixes a message for verification by a Smart Contract
+// PrepareMsgForSigning prefixes a message for verification by a Smart Contract
 func PrepareMsgForSigning(msg string) []byte {
 	// Turn the message into a 32-byte hash
 	hashedMsg := solsha3.SoliditySHA3(solsha3.String(msg))
@@ -81,7 +80,7 @@ func PrepareMsgForSigning(msg string) []byte {
 	return solsha3.SoliditySHA3(solsha3.String("\x19Ethereum Signed Message:\n32"), solsha3.Bytes32(hashedMsg))
 }
 
-// SignClaim : Signs the prepared message with validator's private key
+// SignClaim Signs the prepared message with validator's private key
 func SignClaim(msg []byte, key *ecdsa.PrivateKey) ([]byte, error) {
 	// Sign the message
 	sig, err := secp256k1.Sign(msg, math.PaddedBigBytes(key.D, 32))

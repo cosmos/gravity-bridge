@@ -60,14 +60,12 @@ func (prophecy Prophecy) SerializeForDB() (DBProphecy, error) {
 // DeserializeFromDB deserializes a DBProphecy into a prophecy
 func (dbProphecy DBProphecy) DeserializeFromDB() (Prophecy, error) {
 	var claimValidators map[string][]sdk.ValAddress
-	err := json.Unmarshal(dbProphecy.ClaimValidators, &claimValidators)
-	if err != nil {
+	if err := json.Unmarshal(dbProphecy.ClaimValidators, &claimValidators); err != nil {
 		return Prophecy{}, err
 	}
 
 	var validatorClaims map[string]string
-	err = json.Unmarshal(dbProphecy.ValidatorClaims, &validatorClaims)
-	if err != nil {
+	if err := json.Unmarshal(dbProphecy.ValidatorClaims, &validatorClaims); err != nil {
 		return Prophecy{}, err
 	}
 
@@ -128,11 +126,6 @@ func NewProphecy(id string) Prophecy {
 		ClaimValidators: make(map[string][]sdk.ValAddress),
 		ValidatorClaims: make(map[string]string),
 	}
-}
-
-// NewEmptyProphecy returns a blank prophecy, used with errors
-func NewEmptyProphecy() Prophecy {
-	return NewProphecy("")
 }
 
 // Status is a struct that contains the status of a given prophecy
