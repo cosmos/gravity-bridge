@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 
@@ -10,9 +9,8 @@ import (
 
 	"github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -42,27 +40,21 @@ the address will be looked up in the local Keybase. The list of initial tokens m
 contain valid denominations. Accounts may optionally be supplied with vesting parameters.
 `,
 		Args: cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, args []string) error {
 			config := ctx.Config
-			inBuf := bufio.NewReader(cmd.InOrStdin())
 			config.SetRoot(viper.GetString(cli.HomeFlag))
 
 			addr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				// attempt to lookup address from Keybase if no address was provided
-				kb, err := keys.NewKeyring(
-					sdk.KeyringServiceName(),
-					viper.GetString(flags.FlagKeyringBackend),
-					viper.GetString(flagClientHome),
-					inBuf,
-				)
+				kb, err := keys.NewKeyBaseFromDir(viper.GetString(flagClientHome))
 				if err != nil {
 					return err
 				}
 
 				info, err := kb.Get(args[0])
 				if err != nil {
-					return fmt.Errorf("failed to get address from Keyring: %w", err)
+					return fmt.Errorf("failed to get address from Keybase: %w", err)
 				}
 
 				addr = info.GetAddress()

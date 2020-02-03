@@ -4,16 +4,16 @@ import (
 	"bufio"
 	"strconv"
 
+	"github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/cosmos/peggy/x/ethbridge/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // GetCmdCreateEthBridgeClaim is the CLI command for creating a claim on an ethereum prophecy
@@ -24,9 +24,9 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 		Args:  cobra.ExactArgs(10),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
 
 			ethereumChainID, err := strconv.Atoi(args[0])
 			if err != nil {
@@ -83,9 +83,10 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 		Long:  "This should be used to burn cETH or cERC20. It will burn your coins on the Cosmos Chain, removing them from your account and deducting them from the supply. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the withdrawal of the original ETH/ERC20 to you from the Ethereum contract!",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
+
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
 
 			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
 			ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
@@ -124,9 +125,10 @@ func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 		Short: "This should be used to lock Cosmos-originating coins (eg: ATOM). It will lock up your coins in the supply module, removing them from your account. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the minting of the pegged token on Etherum to you!",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
+
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
 
 			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
 			ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
