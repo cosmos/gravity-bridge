@@ -155,11 +155,12 @@ func NewEthereumBridgeApp(
 
 	// Here you initialize your application with the store keys it requires
 	app := &EthereumBridgeApp{
-		BaseApp:   bApp,
-		cdc:       cdc,
-		keys:      keys,
-		tkeys:     tkeys,
-		subspaces: make(map[string]params.Subspace),
+		BaseApp:        bApp,
+		cdc:            cdc,
+		invCheckPeriod: invCheckPeriod,
+		keys:           keys,
+		tkeys:          tkeys,
+		subspaces:      make(map[string]params.Subspace),
 	}
 
 	// init params keeper and subspaces
