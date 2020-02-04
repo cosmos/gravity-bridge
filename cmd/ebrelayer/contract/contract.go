@@ -7,8 +7,7 @@ package contract
 
 import (
 	"io/ioutil"
-	"log"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -23,11 +22,11 @@ const CosmosBridgeABI = "/abi/CosmosBridge.abi"
 
 // LoadABI loads a smart contract as an abi.ABI
 func LoadABI(cosmosSupport bool) abi.ABI {
-	_, filename, _, ok := runtime.Caller(1)
-	if !ok {
-		log.Fatal("could not find filename")
-	}
-	dir := path.Dir(filename)
+
+	var (
+		_, b, _, _ = runtime.Caller(0)
+		dir        = filepath.Dir(b)
+	)
 
 	var contractRaw []byte
 	var err error
