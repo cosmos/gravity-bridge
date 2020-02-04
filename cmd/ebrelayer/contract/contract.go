@@ -15,10 +15,10 @@ import (
 )
 
 // BridgeBankABI path to file containing BridgeBank smart contract ABI
-const BridgeBankABI = "/abi/BridgeBank.abi"
+const BridgeBankABI = "/cmd/ebrelayer/contract/abi/BridgeBank.abi"
 
 // CosmosBridgeABI path to file containing CosmosBridge smart contract ABI
-const CosmosBridgeABI = "/abi/CosmosBridge.abi"
+const CosmosBridgeABI = "/cmd/ebrelayer/contract/abi/CosmosBridge.abi"
 
 // LoadABI loads a smart contract as an abi.ABI
 func LoadABI(cosmosSupport bool) abi.ABI {
