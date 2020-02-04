@@ -31,13 +31,14 @@ func RelayLockToCosmos(
 	claim *types.EthBridgeClaim,
 	rpcURL string,
 ) error {
+
 	if rpcURL != "" {
 		cliCtx = cliCtx.WithNodeURI(rpcURL)
 	}
 
 	cliCtx.SkipConfirm = true
 
-	txBldr := authtypes.NewTxBuilderFromCLI(cliCtx.Input).
+	txBldr := authtypes.NewTxBuilderFromCLI(nil).
 		WithTxEncoder(utils.GetTxEncoder(cdc)).
 		WithChainID(chainID)
 
