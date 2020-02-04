@@ -38,7 +38,7 @@ func InitCosmosRelayer(
 		os.Exit(1)
 	}
 
-	defer client.Stop()
+	defer client.Stop() //nolint:errcheck
 
 	// Subscribe to all tendermint transactions
 	query := "tm.event = 'Tx'"
@@ -99,7 +99,8 @@ func getOracleClaimType(eventType string) events.Event {
 	return claimType
 }
 
-// handleBurnLockMsg parse event data as a CosmosMsg, package it into a ProphecyClaim, then relay tx to the Ethereum Network
+// handleBurnLockMsg parse event data as a CosmosMsg,
+// package it into a ProphecyClaim, then relay tx to the Ethereum Network
 func handleBurnLockMsg(
 	attributes []tmKv.Pair,
 	claimType events.Event,

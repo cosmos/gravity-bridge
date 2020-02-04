@@ -83,7 +83,8 @@ type AppModule struct {
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(
-	oracleKeeper types.OracleKeeper, supplyKeeper types.SupplyKeeper, accountKeeper types.AccountKeeper, bridgeKeeper Keeper,
+	oracleKeeper types.OracleKeeper, supplyKeeper types.SupplyKeeper,
+	accountKeeper types.AccountKeeper, bridgeKeeper Keeper,
 	cdc *codec.Codec) AppModule {
 
 	return AppModule{

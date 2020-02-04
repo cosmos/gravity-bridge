@@ -161,7 +161,8 @@ func handleLogLockEvent(
 	)
 }
 
-// handleLogNewProphecyClaimEvent unpacks a LogNewProphecyClaim event, converts it to a OracleClaim, and relays a tx to Ethereum
+// handleLogNewProphecyClaimEvent unpacks a LogNewProphecyClaim event,
+// converts it to a OracleClaim, and relays a tx to Ethereum
 func handleLogNewProphecyClaimEvent(
 	contractABI abi.ABI,
 	eventName string,
