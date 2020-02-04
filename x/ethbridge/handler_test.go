@@ -22,14 +22,14 @@ func TestBasicMsgs(t *testing.T) {
 
 	//Unrecognized type
 	res, err := handler(ctx, sdk.NewTestMsg())
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.Nil(t, res)
 	require.True(t, strings.Contains(err.Error(), "unrecognized ethbridge message type: "))
 
 	//Normal Creation
 	normalCreateMsg := types.CreateTestEthMsg(t, valAddress, types.LockText)
 	res, err = handler(ctx, normalCreateMsg)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, res)
 
 	for _, event := range res.Events {
@@ -70,7 +70,7 @@ func TestDuplicateMsgs(t *testing.T) {
 
 	normalCreateMsg := types.CreateTestEthMsg(t, valAddress, types.LockText)
 	res, err := handler(ctx, normalCreateMsg)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, res)
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
@@ -83,7 +83,7 @@ func TestDuplicateMsgs(t *testing.T) {
 
 	//Duplicate message from same validator
 	res, err = handler(ctx, normalCreateMsg)
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.Nil(t, res)
 	require.True(t, strings.Contains(err.Error(), "already processed message from validator for this id"))
 }
@@ -99,13 +99,13 @@ func TestMintSuccess(t *testing.T) {
 	//Initial message
 	normalCreateMsg := types.CreateTestEthMsg(t, valAddressVal1Pow2, types.LockText)
 	res, err := handler(ctx, normalCreateMsg)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, res)
 
 	//Message from second validator succeeds and mints new tokens
 	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal2Pow7, types.LockText)
 	res, err = handler(ctx, normalCreateMsg)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, res)
 	receiverAddress, err := sdk.AccAddressFromBech32(types.TestAddress)
 	require.NoError(t, err)
@@ -125,7 +125,7 @@ func TestMintSuccess(t *testing.T) {
 	//Additional message from third validator fails and does not mint
 	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal3Pow1, types.LockText)
 	res, err = handler(ctx, normalCreateMsg)
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.Nil(t, res)
 	require.True(t, strings.Contains(err.Error(), "prophecy already finalized"))
 	receiverCoins = bankKeeper.GetCoins(ctx, receiverAddress)
@@ -154,7 +154,7 @@ func TestNoMintFail(t *testing.T) {
 
 	//Initial message
 	res, err := handler(ctx, ethMsg1)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, res)
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
@@ -167,7 +167,7 @@ func TestNoMintFail(t *testing.T) {
 
 	//Different message from second validator succeeds
 	res, err = handler(ctx, ethMsg2)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, res)
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
@@ -180,7 +180,7 @@ func TestNoMintFail(t *testing.T) {
 
 	//Different message from third validator succeeds but results in failed prophecy with no minting
 	res, err = handler(ctx, ethMsg3)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, res)
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
@@ -218,7 +218,7 @@ func TestBurnEthSuccess(t *testing.T) {
 
 	// Initial message succeeds and mints eth
 	res, err := handler(ctx, ethMsg1)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, res)
 	receiverAddress, err := sdk.AccAddressFromBech32(types.TestAddress)
 	require.NoError(t, err)
@@ -233,7 +233,7 @@ func TestBurnEthSuccess(t *testing.T) {
 	// Second message succeeds, burns eth and fires correct event
 	burnMsg := types.CreateTestBurnMsg(t, types.TestAddress, ethereumReceiver, coinsToBurn)
 	res, err = handler(ctx, burnMsg)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, res)
 	senderAddress := receiverAddress
 	burnedCoins, err := sdk.ParseCoins(coinsToBurn)
@@ -279,7 +279,7 @@ func TestBurnEthSuccess(t *testing.T) {
 
 	// Third message succeeds, burns more eth and fires correct event
 	res, err = handler(ctx, burnMsg)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, res)
 	remainingCoins = remainingCoins.Sub(burnedCoins)
 	senderCoins = bankKeeper.GetCoins(ctx, senderAddress)
@@ -322,7 +322,7 @@ func TestBurnEthSuccess(t *testing.T) {
 
 	// Fourth message fails, not enough eth
 	res, err = handler(ctx, burnMsg)
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.Nil(t, res)
 	senderCoins = bankKeeper.GetCoins(ctx, senderAddress)
 	require.True(t, senderCoins.IsEqual(remainingCoins))

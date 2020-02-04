@@ -29,7 +29,7 @@ func TestNewQuerier(t *testing.T) {
 
 	//Test wrong paths
 	bz, err := querier(ctx, []string{"other"}, query)
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.Nil(t, bz)
 }
 
@@ -45,7 +45,7 @@ func TestQueryEthProphecy(t *testing.T) {
 	initialEthBridgeClaim := types.CreateTestEthClaim(t, testBridgeContractAddress, testTokenContractAddress, valAddress, testEthereumAddress, types.TestCoins, types.LockText)
 	oracleClaim, _ := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
 	_, err := oracleKeeper.ProcessClaim(ctx, oracleClaim)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t, valAddress, types.LockText)
 

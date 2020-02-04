@@ -10,7 +10,7 @@ import (
 type StatusText int
 
 const (
-	PendingStatusText StatusText = iota + 1
+	PendingStatusText StatusText = iota
 	SuccessStatusText
 	FailedStatusText
 )
