@@ -20,7 +20,7 @@ import (
 func LoadPrivateKey() (key *ecdsa.PrivateKey, err error) {
 	// Load config file containing environment variables
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env file", err)
 	}
 
 	// Private key for validator's Ethereum address must be set as an environment variable
