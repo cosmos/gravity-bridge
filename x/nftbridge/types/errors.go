@@ -13,4 +13,6 @@ var (
 	ErrInvalidEthereumChainID = sdkerrors.Register(ModuleName, 6, "invalid ethereum chain id")
 	ErrInvalidAmount          = sdkerrors.Register(ModuleName, 7, "invalid token amount")
 	ErrInvalidID              = sdkerrors.Register(ModuleName, 8, "invalid NFT ID")
+	ErrInvalidDenom           = sdkerrors.Register(ModuleName, 9, "invalid NFT denom")
+	ErrInvalidTokenAddress    = sdkerrors.Register(ModuleName, 10, "invalid NFT address")
 )
