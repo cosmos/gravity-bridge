@@ -59,6 +59,8 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts [
 	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyOracle, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyNFT, sdk.StoreTypeIAVL, db)
+
 	err := ms.LoadLatestVersion()
 	require.NoError(t, err)
 
@@ -213,6 +215,7 @@ func MakeTestCodec() *codec.Codec {
 	codec.RegisterCrypto(cdc)
 	staking.RegisterCodec(cdc)
 	bank.RegisterCodec(cdc)
+	nft.RegisterCodec(cdc)
 
 	return cdc
 }

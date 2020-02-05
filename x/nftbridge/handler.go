@@ -1,5 +1,5 @@
 //nolint:dupl
-package ethbridge
+package nftbridge
 
 import (
 	"fmt"

@@ -17,7 +17,7 @@ const (
 )
 
 func TestNewQuerier(t *testing.T) {
-	ctx, oracleKeeper, _, _, _, _ := oracle.CreateTestKeepers(t, 0.7, []int64{3, 3}, "")
+	ctx, oracleKeeper, _, _, _, _, _ := oracle.CreateTestKeepers(t, 0.7, []int64{3, 3}, "")
 	cdc := keeperLib.MakeTestCodec()
 
 	query := abci.RequestQuery{
@@ -34,7 +34,7 @@ func TestNewQuerier(t *testing.T) {
 }
 
 func TestQueryEthProphecy(t *testing.T) {
-	ctx, oracleKeeper, _, _, _, validatorAddresses := oracle.CreateTestKeepers(t, 0.7, []int64{3, 7}, "")
+	ctx, oracleKeeper, _, _, _, _, validatorAddresses := oracle.CreateTestKeepers(t, 0.7, []int64{3, 7}, "")
 	cdc := keeperLib.MakeTestCodec()
 
 	valAddress := validatorAddresses[0]

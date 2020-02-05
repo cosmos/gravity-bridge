@@ -3,8 +3,8 @@ package client
 import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/peggy/x/ethbridge/client/cli"
-	"github.com/cosmos/peggy/x/ethbridge/client/rest"
+	"github.com/cosmos/peggy/x/nftbridge/client/cli"
+	"github.com/cosmos/peggy/x/nftbridge/client/rest"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
@@ -13,33 +13,33 @@ import (
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
-	// Group ethbridge queries under a subcommand
-	ethBridgeQueryCmd := &cobra.Command{
-		Use:   "ethbridge",
-		Short: "Querying commands for the ethbridge module",
+	// Group nftbridge queries under a subcommand
+	nftBridgeQueryCmd := &cobra.Command{
+		Use:   "nftbridge",
+		Short: "Querying commands for the nftbridge module",
 	}
 
-	ethBridgeQueryCmd.AddCommand(flags.GetCommands(
-		cli.GetCmdGetEthBridgeProphecy(storeKey, cdc),
+	nftBridgeQueryCmd.AddCommand(flags.GetCommands(
+		cli.GetCmdGetNFTBridgeProphecy(storeKey, cdc),
 	)...)
 
-	return ethBridgeQueryCmd
+	return nftBridgeQueryCmd
 }
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
-	ethBridgeTxCmd := &cobra.Command{
-		Use:   "ethbridge",
-		Short: "EthBridge transactions subcommands",
+	nftBridgeTxCmd := &cobra.Command{
+		Use:   "nftbridge",
+		Short: "NFTBridge transactions subcommands",
 	}
 
-	ethBridgeTxCmd.AddCommand(flags.PostCommands(
-		cli.GetCmdCreateEthBridgeClaim(cdc),
-		cli.GetCmdBurn(cdc),
-		cli.GetCmdLock(cdc),
+	nftBridgeTxCmd.AddCommand(flags.PostCommands(
+		cli.GetCmdCreateNFTBridgeClaim(cdc),
+		cli.GetCmdBurnNFT(cdc),
+		cli.GetCmdLockNFT(cdc),
 	)...)
 
-	return ethBridgeTxCmd
+	return nftBridgeTxCmd
 }
 
 // RegisterRESTRoutes - Central function to define routes that get registered by the main application

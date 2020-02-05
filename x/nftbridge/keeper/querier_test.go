@@ -14,11 +14,12 @@ import (
 )
 
 const (
-	TestResponseJSON = "{\"id\":\"300x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"status\":{\"text\":\"pending\",\"final_claim\":\"\"},\"claims\":[{\"ethereum_chain_id\":3,\"bridge_contract_address\":\"0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB\",\"nonce\":0,\"symbol\":\"eth\",\"token_contract_address\":\"0x0000000000000000000000000000000000000000\",\"ethereum_sender\":\"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"cosmos_receiver\":\"cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv\",\"validator_address\":\"cosmosvaloper1mnfm9c7cdgqnkk66sganp78m0ydmcr4pn7fqfk\",\"amount\":[{\"denom\":\"ethereum\",\"amount\":\"10\"}],\"claim_type\":\"lock\"}]}"
+	// TestResponseJSON = "{\"id\":\"300x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"status\":{\"text\":\"pending\",\"final_claim\":\"\"},\"claims\":[{\"ethereum_chain_id\":3,\"bridge_contract_address\":\"0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB\",\"nonce\":0,\"symbol\":\"eth\",\"token_contract_address\":\"0x0000000000000000000000000000000000000000\",\"ethereum_sender\":\"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"cosmos_receiver\":\"cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv\",\"validator_address\":\"cosmosvaloper1mnfm9c7cdgqnkk66sganp78m0ydmcr4pn7fqfk\",\"amount\":[{\"denom\":\"ethereum\",\"amount\":\"10\"}],\"claim_type\":\"lock\"}]}"
+	TestResponseJSON = "{\"id\":\"300x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"status\":{\"text\":\"pending\",\"final_claim\":\"\"},\"claims\":[{\"ethereum_chain_id\":3,\"bridge_contract_address\":\"0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB\",\"nonce\":0,\"symbol\":\"eth\",\"token_contract_address\":\"0x0000000000000000000000000000000000000000\",\"ethereum_sender\":\"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"cosmos_receiver\":\"cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv\",\"validator_address\":\"cosmosvaloper1mnfm9c7cdgqnkk66sganp78m0ydmcr4pn7fqfk\",\"denom\":\"denom\",\"id\":\"id1\",\"claim_type\":\"lock\"}]}"
 )
 
 func TestNewQuerier(t *testing.T) {
-	ctx, oracleKeeper, _, _, _, _ := oracle.CreateTestKeepers(t, 0.7, []int64{3, 3}, "")
+	ctx, oracleKeeper, _, _, _, _, _ := oracle.CreateTestKeepers(t, 0.7, []int64{3, 3}, "")
 	cdc := keeperLib.MakeTestCodec()
 
 	query := abci.RequestQuery{
@@ -35,7 +36,7 @@ func TestNewQuerier(t *testing.T) {
 }
 
 func TestQueryNFTProphecy(t *testing.T) {
-	ctx, oracleKeeper, _, _, _, validatorAddresses := oracle.CreateTestKeepers(t, 0.7, []int64{3, 7}, "")
+	ctx, oracleKeeper, _, _, _, _, validatorAddresses := oracle.CreateTestKeepers(t, 0.7, []int64{3, 7}, "")
 	cdc := keeperLib.MakeTestCodec()
 
 	valAddress := validatorAddresses[0]
@@ -51,7 +52,7 @@ func TestQueryNFTProphecy(t *testing.T) {
 	testResponse := types.CreateTestQueryNFTProphecyResponse(cdc, t, valAddress, ethbridge.LockText)
 
 	//Test query String()
-	require.Equal(t, testResponse.String(), TestResponseJSON)
+	require.Equal(t, TestResponseJSON, testResponse.String())
 
 	bz, err2 := cdc.MarshalJSON(types.NewQueryNFTProphecyParams(types.TestEthereumChainID, testBridgeContractAddress, types.TestNonce, types.TestSymbol, testTokenContractAddress, testEthereumAddress))
 	require.Nil(t, err2)

@@ -12,8 +12,8 @@ import (
 
 	"github.com/gorilla/mux"
 
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/cosmos/peggy/x/nftbridge/types"
-	// ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -27,7 +27,7 @@ const (
 	restEthereumSender  = "ethereumSender"
 )
 
-type createEthClaimReq struct {
+type createNFTClaimReq struct {
 	BaseReq               rest.BaseReq `json:"base_req"`
 	EthereumChainID       int          `json:"ethereum_chain_id"`
 	BridgeContractAddress string       `json:"bridge_contract_address"`
@@ -37,17 +37,19 @@ type createEthClaimReq struct {
 	EthereumSender        string       `json:"ethereum_sender"`
 	CosmosReceiver        string       `json:"cosmos_receiver"`
 	Validator             string       `json:"validator"`
-	Amount                string       `json:"amount"`
+	Denom                 string       `json:"denom"`
+	ID                    string       `json:"id"`
 	ClaimType             string       `json:"claim_type"`
 }
 
-type burnOrLockEthReq struct {
+type burnOrLockNFTReq struct {
 	BaseReq          rest.BaseReq `json:"base_req"`
 	EthereumChainID  string       `json:"ethereum_chain_id"`
 	TokenContract    string       `json:"token_contract_address"`
 	CosmosSender     string       `json:"cosmos_sender"`
 	EthereumReceiver string       `json:"ethereum_receiver"`
-	Amount           string       `json:"amount"`
+	Denom            string       `json:"denom"`
+	ID               string       `json:"id"`
 }
 
 // RegisterRESTRoutes - Central function to define routes that get registered by the main application
@@ -60,7 +62,7 @@ func RegisterRESTRoutes(cliCtx context.CLIContext, r *mux.Router, storeName stri
 
 func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req createEthClaimReq
+		var req createNFTClaimReq
 
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
@@ -72,11 +74,11 @@ func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		bridgeContractAddress := types.NewEthereumAddress(req.BridgeContractAddress)
+		bridgeContractAddress := ethbridge.NewEthereumAddress(req.BridgeContractAddress)
 
-		tokenContractAddress := types.NewEthereumAddress(req.TokenContractAddress)
+		tokenContractAddress := ethbridge.NewEthereumAddress(req.TokenContractAddress)
 
-		ethereumSender := types.NewEthereumAddress(req.EthereumSender)
+		ethereumSender := ethbridge.NewEthereumAddress(req.EthereumSender)
 
 		cosmosReceiver, err := sdk.AccAddressFromBech32(req.CosmosReceiver)
 		if err != nil {
@@ -88,22 +90,18 @@ func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		denom := req.Denom
+		id := req.ID
 
-		amount, err := sdk.ParseCoins(req.Amount)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		claimType, err := types.StringToClaimType(req.ClaimType)
+		claimType, err := ethbridge.StringToClaimType(req.ClaimType)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, types.ErrInvalidClaimType.Error())
 			return
 		}
 
 		// create the message
-		ethBridgeClaim := types.NewEthBridgeClaim(req.EthereumChainID, bridgeContractAddress, req.Nonce, req.Symbol, tokenContractAddress, ethereumSender, cosmosReceiver, validator, amount, claimType)
-		msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
+		nftBridgeClaim := types.NewNFTBridgeClaim(req.EthereumChainID, bridgeContractAddress, req.Nonce, req.Symbol, tokenContractAddress, ethereumSender, cosmosReceiver, validator, denom, id, claimType)
+		msg := types.NewMsgCreateNFTBridgeClaim(nftBridgeClaim)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -125,7 +123,7 @@ func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.Handle
 			return
 		}
 
-		bridgeContract := types.NewEthereumAddress(vars[restBridgeContract])
+		bridgeContract := ethbridge.NewEthereumAddress(vars[restBridgeContract])
 
 		nonce := vars[restNonce]
 		nonceString, err := strconv.Atoi(nonce)
@@ -134,7 +132,7 @@ func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.Handle
 			return
 		}
 
-		tokenContract := types.NewEthereumAddress(vars[restTokenContract])
+		tokenContract := ethbridge.NewEthereumAddress(vars[restTokenContract])
 
 		symbol := vars[restSymbol]
 		if strings.TrimSpace(symbol) == "" {
@@ -142,7 +140,7 @@ func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.Handle
 			return
 		}
 
-		ethereumSender := types.NewEthereumAddress(vars[restEthereumSender])
+		ethereumSender := ethbridge.NewEthereumAddress(vars[restEthereumSender])
 
 		bz, err := cliCtx.Codec.MarshalJSON(types.NewQueryNFTProphecyParams(ethereumChainIDString, bridgeContract, nonceString, symbol, tokenContract, ethereumSender))
 		if err != nil {
@@ -150,7 +148,7 @@ func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.Handle
 			return
 		}
 
-		route := fmt.Sprintf("custom/%s/%s", storeName, types.QueryEthProphecy)
+		route := fmt.Sprintf("custom/%s/%s", storeName, types.QueryNFTProphecy)
 		res, _, err := cliCtx.QueryWithData(route, bz)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
@@ -163,7 +161,7 @@ func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.Handle
 
 func burnOrLockHandler(cliCtx context.CLIContext, lockOrBurn string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req burnOrLockEthReq
+		var req burnOrLockNFTReq
 
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
@@ -181,7 +179,7 @@ func burnOrLockHandler(cliCtx context.CLIContext, lockOrBurn string) http.Handle
 			return
 		}
 
-		tokenContract := types.NewEthereumAddress(req.TokenContract)
+		tokenContract := ethbridge.NewEthereumAddress(req.TokenContract)
 
 		cosmosSender, err := sdk.AccAddressFromBech32(req.CosmosSender)
 		if err != nil {
@@ -189,21 +187,18 @@ func burnOrLockHandler(cliCtx context.CLIContext, lockOrBurn string) http.Handle
 			return
 		}
 
-		ethereumReceiver := types.NewEthereumAddress(req.EthereumReceiver)
+		ethereumReceiver := ethbridge.NewEthereumAddress(req.EthereumReceiver)
 
-		amount, err := sdk.ParseCoins(req.Amount)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
+		denom := req.Denom
+		id := req.ID
 
 		// create the message
 		var msg sdk.Msg
 		switch lockOrBurn {
 		case "lock":
-			msg = types.NewMsgLock(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
+			msg = types.NewMsgLockNFT(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, denom, id)
 		case "burn":
-			msg = types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
+			msg = types.NewMsgBurnNFT(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, denom, id)
 		}
 		err = msg.ValidateBasic()
 		if err != nil {

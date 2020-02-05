@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/modules/incubator/nft"
 	"github.com/cosmos/modules/incubator/nft/exported"
 )
 
@@ -12,6 +13,7 @@ type NFTKeeper interface {
 	// MintNFT(ctx sdk.Context, name string, denom, id string) error
 	// BurnNFT(ctx sdk.Context, name string, denom, id string) error
 	// SetModuleAccount(sdk.Context, supplyexported.ModuleAccountI)
+	GetOwnerByDenom(ctx sdk.Context, owner sdk.AccAddress, denom string) (idCollection nft.IDCollection, found bool)
 
 	GetNFT(ctx sdk.Context, denom, id string) (nft exported.NFT, err error)
 	UpdateNFT(ctx sdk.Context, denom string, nft exported.NFT) (err error)

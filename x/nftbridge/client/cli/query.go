@@ -12,8 +12,8 @@ import (
 	"github.com/cosmos/peggy/x/nftbridge/types"
 )
 
-// GetCmdGetEthBridgeProphecy queries information about a specific prophecy
-func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
+// GetCmdGetNFTBridgeProphecy queries information about a specific prophecy
+func GetCmdGetNFTBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "prophecy [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender]",
 		Short: "Query prophecy",
@@ -42,13 +42,13 @@ func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Comm
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryEthProphecy)
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryNFTProphecy)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
 			}
 
-			var out types.QueryEthProphecyResponse
+			var out types.QueryNFTProphecyResponse
 			err = cdc.UnmarshalJSON(res, &out)
 			if err != nil {
 				return err

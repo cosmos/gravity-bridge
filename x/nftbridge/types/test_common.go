@@ -24,6 +24,8 @@ const (
 	AltTestEthereumAddress    = "0x7B95B6EC7EbD73572298cEf32Bb54FA408207344"
 	TestDenom                 = "denom"
 	TestID                    = "id1"
+	AltTestID                 = "id2"
+	AltTestDenom              = "denom2"
 )
 
 //Ethereum-bridge specific stuff

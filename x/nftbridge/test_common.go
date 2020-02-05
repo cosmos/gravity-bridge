@@ -1,4 +1,4 @@
-package ethbridge
+package nftbridge
 
 import (
 	"testing"
