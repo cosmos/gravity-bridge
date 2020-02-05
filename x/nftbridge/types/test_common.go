@@ -52,7 +52,7 @@ func CreateTestBurnMsg(t *testing.T, testCosmosSender string, ethereumReceiver e
 	return burnEth
 }
 
-func CreateTestQueryEthProphecyResponse(cdc *codec.Codec, t *testing.T, validatorAddress sdk.ValAddress, claimType ethbridge.ClaimType) QueryEthProphecyResponse {
+func CreateTestQueryNFTProphecyResponse(cdc *codec.Codec, t *testing.T, validatorAddress sdk.ValAddress, claimType ethbridge.ClaimType) QueryNFTProphecyResponse {
 	testEthereumAddress := ethbridge.NewEthereumAddress(TestEthereumAddress)
 	testContractAddress := ethbridge.NewEthereumAddress(TestBridgeContractAddress)
 	testTokenAddress := ethbridge.NewEthereumAddress(TestTokenContractAddress)

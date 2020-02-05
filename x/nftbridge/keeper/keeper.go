@@ -5,7 +5,8 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/cosmos/peggy/x/ethbridge/types"
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/x/nftbridge/types"
 	"github.com/cosmos/peggy/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -36,8 +37,8 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // ProcessClaim processes a new claim coming in from a validator
-func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.EthBridgeClaim) (oracle.Status, error) {
-	oracleClaim, err := types.CreateOracleClaimFromEthClaim(k.cdc, claim)
+func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.NFTBridgeClaim) (oracle.Status, error) {
+	oracleClaim, err := types.CreateOracleClaimFromNFTClaim(k.cdc, claim)
 	if err != nil {
 		return oracle.Status{}, err
 	}
@@ -47,7 +48,7 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.EthBridgeClaim) (oracl
 
 // ProcessSuccessfulClaim processes a claim that has just completed successfully with consensus
 func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) error {
-	oracleClaim, err := types.CreateOracleClaimFromOracleString(claim)
+	oracleClaim, err := ethbridge.CreateOracleClaimFromOracleString(claim)
 	if err != nil {
 		return err
 	}
@@ -55,8 +56,8 @@ func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) error {
 	receiverAddress := oracleClaim.CosmosReceiver
 
 	switch oracleClaim.ClaimType {
-	case types.LockText:
-		err = k.supplyKeeper.MintCoins(ctx, types.ModuleName, oracleClaim.Amount)
+	case ethbridge.LockText:
+		err = k.supplyKeeper.MintNFT(ctx, types.ModuleName, oracleClaim.Denom, oracleClaim.ID)
 	default:
 		err = types.ErrInvalidClaimType
 	}
@@ -65,7 +66,7 @@ func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) error {
 		return err
 	}
 
-	if err := k.supplyKeeper.SendCoinsFromModuleToAccount(
+	if err := k.supplyKeeper.SendNFTFromModuleToAccount(
 		ctx, types.ModuleName, receiverAddress, oracleClaim.Amount,
 	); err != nil {
 		panic(err)

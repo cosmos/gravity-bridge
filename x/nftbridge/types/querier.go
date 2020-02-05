@@ -24,8 +24,8 @@ type QueryEthProphecyParams struct {
 	EthereumSender        ethbridge.EthereumAddress `json:"ethereum_sender"`
 }
 
-// NewQueryEthProphecyParams creates a new QueryEthProphecyParams
-func NewQueryEthProphecyParams(
+// NewQueryNFTProphecyParams creates a new QueryEthProphecyParams
+func NewQueryNFTProphecyParams(
 	ethereumChainID int, bridgeContractAddress ethbridge.EthereumAddress, nonce int, symbol string,
 	tokenContractAddress ethbridge.EthereumAddress, ethereumSender ethbridge.EthereumAddress,
 ) QueryEthProphecyParams {
@@ -39,18 +39,18 @@ func NewQueryEthProphecyParams(
 	}
 }
 
-// QueryEthProphecyResponse defines the result payload for an eth prophecy query
-type QueryEthProphecyResponse struct {
+// QueryNFTProphecyResponse defines the result payload for an nft prophecy query
+type QueryNFTProphecyResponse struct {
 	ID     string           `json:"id"`
 	Status oracle.Status    `json:"status"`
 	Claims []NFTBridgeClaim `json:"claims"`
 }
 
-// NewQueryEthProphecyResponse creates a new QueryEthProphecyResponse instance
+// NewQueryEthProphecyResponse creates a new QueryNFTProphecyResponse instance
 func NewQueryEthProphecyResponse(
 	id string, status oracle.Status, claims []NFTBridgeClaim,
-) QueryEthProphecyResponse {
-	return QueryEthProphecyResponse{
+) QueryNFTProphecyResponse {
+	return QueryNFTProphecyResponse{
 		ID:     id,
 		Status: status,
 		Claims: claims,
@@ -58,7 +58,7 @@ func NewQueryEthProphecyResponse(
 }
 
 // String implements fmt.Stringer interface
-func (response QueryEthProphecyResponse) String() string {
+func (response QueryNFTProphecyResponse) String() string {
 	prophecyJSON, err := json.Marshal(response)
 	if err != nil {
 		return fmt.Sprintf("Error marshalling json: %v", err)

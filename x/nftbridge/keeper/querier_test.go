@@ -52,7 +52,7 @@ func TestQueryEthProphecy(t *testing.T) {
 	//Test query String()
 	require.Equal(t, testResponse.String(), TestResponseJSON)
 
-	bz, err2 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(types.TestEthereumChainID, testBridgeContractAddress, types.TestNonce, types.TestSymbol, testTokenContractAddress, testEthereumAddress))
+	bz, err2 := cdc.MarshalJSON(types.NewQueryNFTProphecyParams(types.TestEthereumChainID, testBridgeContractAddress, types.TestNonce, types.TestSymbol, testTokenContractAddress, testEthereumAddress))
 	require.Nil(t, err2)
 
 	query := abci.RequestQuery{
@@ -78,7 +78,7 @@ func TestQueryEthProphecy(t *testing.T) {
 	// Test error with nonexistent request
 	badEthereumAddress := types.NewEthereumAddress("badEthereumAddress")
 
-	bz2, err6 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(types.TestEthereumChainID, testBridgeContractAddress, 12, types.TestSymbol, testTokenContractAddress, badEthereumAddress))
+	bz2, err6 := cdc.MarshalJSON(types.NewQueryNFTProphecyParams(types.TestEthereumChainID, testBridgeContractAddress, 12, types.TestSymbol, testTokenContractAddress, badEthereumAddress))
 	require.Nil(t, err6)
 
 	query2 := abci.RequestQuery{
@@ -92,7 +92,7 @@ func TestQueryEthProphecy(t *testing.T) {
 	// Test error with empty address
 	emptyEthereumAddress := types.NewEthereumAddress("")
 
-	bz3, err8 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(types.TestEthereumChainID, testBridgeContractAddress, 12, types.TestSymbol, testTokenContractAddress, emptyEthereumAddress))
+	bz3, err8 := cdc.MarshalJSON(types.NewQueryNFTProphecyParams(types.TestEthereumChainID, testBridgeContractAddress, 12, types.TestSymbol, testTokenContractAddress, emptyEthereumAddress))
 
 	require.Nil(t, err8)
 

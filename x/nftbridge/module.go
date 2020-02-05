@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 
 	"github.com/cosmos/peggy/x/ethbridge/client"
-	"github.com/cosmos/peggy/x/ethbridge/types"
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/x/nftbridge/types"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
@@ -75,14 +76,14 @@ type AppModule struct {
 
 	OracleKeeper  types.OracleKeeper
 	SupplyKeeper  types.SupplyKeeper
-	AccountKeeper types.AccountKeeper
+	AccountKeeper ethbridge.AccountKeeper
 	BridgeKeeper  Keeper
 	Codec         *codec.Codec
 }
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(
-	oracleKeeper types.OracleKeeper, supplyKeeper types.SupplyKeeper, accountKeeper types.AccountKeeper, bridgeKeeper Keeper,
+	oracleKeeper types.OracleKeeper, supplyKeeper types.SupplyKeeper, accountKeeper ethbridge.AccountKeeper, bridgeKeeper Keeper,
 	cdc *codec.Codec) AppModule {
 
 	return AppModule{

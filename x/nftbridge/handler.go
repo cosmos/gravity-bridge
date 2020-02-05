@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cosmos/peggy/x/ethbridge/types"
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/x/nftbridge/types"
 	"github.com/cosmos/peggy/x/oracle"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,16 +16,16 @@ import (
 
 // NewHandler returns a handler for "ethbridge" type messages.
 func NewHandler(
-	accountKeeper types.AccountKeeper, bridgeKeeper Keeper,
+	accountKeeper ethbridge.AccountKeeper, bridgeKeeper Keeper,
 	cdc *codec.Codec) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
-		case MsgCreateEthBridgeClaim:
+		case MsgCreateNFTBridgeClaim:
 			return handleMsgCreateEthBridgeClaim(ctx, cdc, bridgeKeeper, msg)
-		case MsgBurn:
+		case MsgBurnNFT:
 			return handleMsgBurn(ctx, cdc, accountKeeper, bridgeKeeper, msg)
-		case MsgLock:
+		case MsgLockNFT:
 			return handleMsgLock(ctx, cdc, accountKeeper, bridgeKeeper, msg)
 		default:
 			errMsg := fmt.Sprintf("unrecognized ethbridge message type: %v", msg.Type())
@@ -35,7 +36,7 @@ func NewHandler(
 
 // Handle a message to create a bridge claim
 func handleMsgCreateEthBridgeClaim(
-	ctx sdk.Context, cdc *codec.Codec, bridgeKeeper Keeper, msg MsgCreateEthBridgeClaim,
+	ctx sdk.Context, cdc *codec.Codec, bridgeKeeper Keeper, msg MsgCreateNFTBridgeClaim,
 ) (*sdk.Result, error) {
 	status, err := bridgeKeeper.ProcessClaim(ctx, types.EthBridgeClaim(msg))
 	if err != nil {
@@ -70,8 +71,8 @@ func handleMsgCreateEthBridgeClaim(
 }
 
 func handleMsgBurn(
-	ctx sdk.Context, cdc *codec.Codec, accountKeeper types.AccountKeeper,
-	bridgeKeeper Keeper, msg MsgBurn,
+	ctx sdk.Context, cdc *codec.Codec, accountKeeper ethbridge.AccountKeeper,
+	bridgeKeeper Keeper, msg MsgBurnNFT,
 ) (*sdk.Result, error) {
 
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
@@ -104,8 +105,8 @@ func handleMsgBurn(
 }
 
 func handleMsgLock(
-	ctx sdk.Context, cdc *codec.Codec, accountKeeper types.AccountKeeper,
-	bridgeKeeper Keeper, msg MsgLock,
+	ctx sdk.Context, cdc *codec.Codec, accountKeeper ethbridge.AccountKeeper,
+	bridgeKeeper Keeper, msg MsgLockNFT,
 ) (*sdk.Result, error) {
 
 	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)

@@ -25,10 +25,10 @@ var (
 	NewKeeper                         = keeper.NewKeeper
 	NewQuerier                        = keeper.NewQuerier
 	NewNFTBridgeClaim                 = types.NewNFTBridgeClaim
-	NewOracleClaimContent             = types.NewOracleClaimContent
+	NewOracleClaimContent             = ethbridge.NewOracleClaimContent
 	CreateOracleClaimFromNFTClaim     = types.CreateOracleClaimFromNFTClaim
 	CreateNFTClaimFromOracleString    = types.CreateNFTClaimFromOracleString
-	CreateOracleClaimFromOracleString = types.CreateOracleClaimFromOracleString
+	CreateOracleClaimFromOracleString = ethbridge.CreateOracleClaimFromOracleString
 	RegisterCodec                     = types.RegisterCodec
 	ErrInvalidEthNonce                = types.ErrInvalidEthNonce
 	ErrInvalidEthAddress              = types.ErrInvalidEthAddress
