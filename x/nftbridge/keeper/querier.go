@@ -10,26 +10,27 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/cosmos/peggy/x/ethbridge/types"
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/x/nftbridge/types"
 	oracletypes "github.com/cosmos/peggy/x/oracle/types"
 )
 
 // TODO: move to x/oracle
 
 // NewQuerier is the module level router for state queries
-func NewQuerier(keeper types.OracleKeeper, cdc *codec.Codec) sdk.Querier {
+func NewQuerier(keeper ethbridge.OracleKeeper, cdc *codec.Codec) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
 		switch path[0] {
-		case types.QueryEthProphecy:
-			return queryEthProphecy(ctx, cdc, req, keeper)
+		case types.QueryNFTProphecy:
+			return queryNFTProphecy(ctx, cdc, req, keeper)
 		default:
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown ethbridge query endpoint")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown nftbridge query endpoint")
 		}
 	}
 }
 
-func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, keeper types.OracleKeeper) ([]byte, error) {
-	var params types.QueryEthProphecyParams
+func queryNFTProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, keeper ethbridge.OracleKeeper) ([]byte, error) {
+	var params types.QueryNFTProphecyParams
 
 	if err := cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrap(types.ErrJSONMarshalling, fmt.Sprintf("failed to parse params: %s", err.Error()))
@@ -41,12 +42,12 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 		return nil, sdkerrors.Wrap(oracletypes.ErrProphecyNotFound, id)
 	}
 
-	bridgeClaims, err := types.MapOracleClaimsToEthBridgeClaims(params.EthereumChainID, params.BridgeContractAddress, params.Nonce, params.Symbol, params.TokenContractAddress, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
+	bridgeClaims, err := types.MapOracleClaimsToNFTBridgeClaims(params.EthereumChainID, params.BridgeContractAddress, params.Nonce, params.Symbol, params.TokenContractAddress, params.EthereumSender, prophecy.ValidatorClaims, types.CreateNFTClaimFromOracleString)
 	if err != nil {
 		return nil, err
 	}
 
-	response := types.NewQueryEthProphecyResponse(prophecy.ID, prophecy.Status, bridgeClaims)
+	response := types.NewQueryNFTProphecyResponse(prophecy.ID, prophecy.Status, bridgeClaims)
 
 	return cdc.MarshalJSONIndent(response, "", "  ")
 }

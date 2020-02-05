@@ -140,6 +140,13 @@ func (msg MsgBurnNFT) ValidateBasic() error {
 	if !gethCommon.IsHexAddress(msg.EthereumReceiver.String()) {
 		return ErrInvalidEthAddress
 	}
+	if msg.Denom == "" {
+		return ErrInvalidDenom
+	}
+
+	if msg.ID == "" {
+		return ErrInvalidID
+	}
 	return nil
 }
 

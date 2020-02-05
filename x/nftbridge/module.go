@@ -15,7 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/supply"
 )
 
 var (
@@ -74,27 +73,25 @@ type AppModule struct {
 	AppModuleBasic
 	AppModuleSimulation
 
-	OracleKeeper  types.OracleKeeper
-	SupplyKeeper  types.SupplyKeeper
-	AccountKeeper ethbridge.AccountKeeper
-	BridgeKeeper  Keeper
-	Codec         *codec.Codec
+	OracleKeeper ethbridge.OracleKeeper
+	NFTKeeper    types.NFTKeeper
+	BridgeKeeper Keeper
+	Codec        *codec.Codec
 }
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(
-	oracleKeeper types.OracleKeeper, supplyKeeper types.SupplyKeeper, accountKeeper ethbridge.AccountKeeper, bridgeKeeper Keeper,
+	oracleKeeper ethbridge.OracleKeeper, nftKeeper types.NFTKeeper, bridgeKeeper Keeper,
 	cdc *codec.Codec) AppModule {
 
 	return AppModule{
 		AppModuleBasic:      AppModuleBasic{},
 		AppModuleSimulation: AppModuleSimulation{},
 
-		OracleKeeper:  oracleKeeper,
-		SupplyKeeper:  supplyKeeper,
-		AccountKeeper: accountKeeper,
-		BridgeKeeper:  bridgeKeeper,
-		Codec:         cdc,
+		OracleKeeper: oracleKeeper,
+		NFTKeeper:    nftKeeper,
+		BridgeKeeper: bridgeKeeper,
+		Codec:        cdc,
 	}
 }
 
@@ -114,7 +111,7 @@ func (AppModule) Route() string {
 
 // NewHandler returns an sdk.Handler for the ethbridge module.
 func (am AppModule) NewHandler() sdk.Handler {
-	return NewHandler(am.AccountKeeper, am.BridgeKeeper, am.Codec)
+	return NewHandler(am.NFTKeeper, am.BridgeKeeper, am.Codec)
 }
 
 // QuerierRoute returns the ethbridge module's querier route name.
@@ -130,8 +127,6 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 // InitGenesis performs genesis initialization for the ethbridge module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, _ json.RawMessage) []abci.ValidatorUpdate {
-	bridgeAccount := supply.NewEmptyModuleAccount(ModuleName, supply.Burner, supply.Minter)
-	am.SupplyKeeper.SetModuleAccount(ctx, bridgeAccount)
 	return nil
 }
 

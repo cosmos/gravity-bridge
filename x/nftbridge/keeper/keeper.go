@@ -3,30 +3,30 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/modules/incubator/nft"
 	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/cosmos/peggy/x/nftbridge/types"
 	"github.com/cosmos/peggy/x/oracle"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	cdc *codec.Codec // The wire codec for binary encoding/decoding.
 
-	supplyKeeper types.SupplyKeeper
-	oracleKeeper types.OracleKeeper
+	nftKeeper    types.NFTKeeper
+	oracleKeeper ethbridge.OracleKeeper
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(cdc *codec.Codec, supplyKeeper types.SupplyKeeper, oracleKeeper types.OracleKeeper) Keeper {
+func NewKeeper(cdc *codec.Codec, nftKeeper types.NFTKeeper, oracleKeeper ethbridge.OracleKeeper) Keeper {
 	return Keeper{
 		cdc:          cdc,
-		supplyKeeper: supplyKeeper,
+		nftKeeper:    nftKeeper,
 		oracleKeeper: oracleKeeper,
 	}
 }
@@ -48,16 +48,17 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.NFTBridgeClaim) (oracl
 
 // ProcessSuccessfulClaim processes a claim that has just completed successfully with consensus
 func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) error {
-	oracleClaim, err := ethbridge.CreateOracleClaimFromOracleString(claim)
+	oracleClaim, err := types.CreateOracleNFTClaimFromOracleString(claim)
 	if err != nil {
 		return err
 	}
 
+	// moduleAcct := sdk.AccAddress(crypto.AddressHash([]byte(types.ModuleName)))
 	receiverAddress := oracleClaim.CosmosReceiver
-
+	newNFT := nft.NewBaseNFT(oracleClaim.ID, receiverAddress, "")
 	switch oracleClaim.ClaimType {
 	case ethbridge.LockText:
-		err = k.supplyKeeper.MintNFT(ctx, types.ModuleName, oracleClaim.Denom, oracleClaim.ID)
+		err = k.nftKeeper.MintNFT(ctx, oracleClaim.Denom, &newNFT)
 	default:
 		err = types.ErrInvalidClaimType
 	}
@@ -66,31 +67,36 @@ func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) error {
 		return err
 	}
 
-	if err := k.supplyKeeper.SendNFTFromModuleToAccount(
-		ctx, types.ModuleName, receiverAddress, oracleClaim.Amount,
-	); err != nil {
-		panic(err)
-	}
-
 	return nil
 }
 
-// ProcessBurn processes the burn of bridged coins from the given sender
-func (k Keeper) ProcessBurn(ctx sdk.Context, cosmosSender sdk.AccAddress, amount sdk.Coins) error {
-	if err := k.supplyKeeper.SendCoinsFromAccountToModule(
-		ctx, cosmosSender, types.ModuleName, amount,
-	); err != nil {
+// ProcessBurn processes the burn of bridged NFT from the given sender
+func (k Keeper) ProcessBurn(ctx sdk.Context, cosmosSender sdk.AccAddress, denom, id string) error {
+	cosmosNFT, err := k.nftKeeper.GetNFT(ctx, denom, id)
+	if err != nil {
+		return err
+	}
+	if !cosmosNFT.GetOwner().Equals(cosmosSender) {
+		return types.ErrInvalidTokenAddress
+	}
+	if err := k.nftKeeper.DeleteNFT(ctx, denom, id); err != nil {
 		return err
 	}
 
-	if err := k.supplyKeeper.BurnCoins(ctx, types.ModuleName, amount); err != nil {
-		panic(err)
-	}
-
 	return nil
 }
 
-// ProcessLock processes the lockup of cosmos coins from the given sender
-func (k Keeper) ProcessLock(ctx sdk.Context, cosmosSender sdk.AccAddress, amount sdk.Coins) error {
-	return k.supplyKeeper.SendCoinsFromAccountToModule(ctx, cosmosSender, types.ModuleName, amount)
+// ProcessLock processes the lockup of cosmos nft from the given sender
+func (k Keeper) ProcessLock(ctx sdk.Context, cosmosSender sdk.AccAddress, denom, id string) error {
+	cosmosNFT, err := k.nftKeeper.GetNFT(ctx, denom, id)
+	if err != nil {
+		return err
+	}
+	if !cosmosNFT.GetOwner().Equals(cosmosSender) {
+		return types.ErrInvalidTokenAddress
+	}
+	moduleAcct := sdk.AccAddress(crypto.AddressHash([]byte(types.ModuleName)))
+	cosmosNFT.SetOwner(moduleAcct)
+
+	return k.nftKeeper.UpdateNFT(ctx, denom, cosmosNFT)
 }

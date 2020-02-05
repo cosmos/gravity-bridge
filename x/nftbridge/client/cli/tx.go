@@ -20,7 +20,7 @@ import (
 // GetCmdCreateEthBridgeClaim is the CLI command for creating a claim on an ethereum prophecy
 func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "create-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [denom] [id] [claim-type]",
+		Use:   "create-nft-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [denom] [id] [claim-type]",
 		Short: "create a claim on an ethereum prophecy",
 		Args:  cobra.ExactArgs(11),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -77,7 +77,7 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 // GetCmdBurn is the CLI command for burning some of your eth and triggering an event
 func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [denom] [id] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
+		Use:   "burnNFT [cosmos-sender-address] [ethereum-receiver-address] [denom] [id] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "burn cETH or cERC20 on the Cosmos chain",
 		Long:  "This should be used to burn cETH or cERC20. It will burn your coins on the Cosmos Chain, removing them from your account and deducting them from the supply. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the withdrawal of the original ETH/ERC20 to you from the Ethereum contract!",
 		Args:  cobra.ExactArgs(4),
@@ -118,7 +118,7 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 // GetCmdLock is the CLI command for locking some of your coins and triggering an event
 func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "lock [cosmos-sender-address] [ethereum-receiver-address] [denom] [id] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
+		Use:   "lockNFT [cosmos-sender-address] [ethereum-receiver-address] [denom] [id] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "This should be used to lock Cosmos-originating coins (eg: ATOM). It will lock up your coins in the supply module, removing them from your account. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the minting of the pegged token on Etherum to you!",
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {

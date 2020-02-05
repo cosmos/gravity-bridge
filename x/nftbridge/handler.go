@@ -14,31 +14,31 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// NewHandler returns a handler for "ethbridge" type messages.
+// NewHandler returns a handler for "nftbridge" type messages.
 func NewHandler(
-	accountKeeper ethbridge.AccountKeeper, bridgeKeeper Keeper,
+	nftKeeper types.NFTKeeper, bridgeKeeper Keeper,
 	cdc *codec.Codec) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case MsgCreateNFTBridgeClaim:
-			return handleMsgCreateEthBridgeClaim(ctx, cdc, bridgeKeeper, msg)
+			return handleMsgCreateNFTBridgeClaim(ctx, cdc, bridgeKeeper, msg)
 		case MsgBurnNFT:
-			return handleMsgBurn(ctx, cdc, accountKeeper, bridgeKeeper, msg)
+			return handleMsgBurn(ctx, cdc, nftKeeper, bridgeKeeper, msg)
 		case MsgLockNFT:
-			return handleMsgLock(ctx, cdc, accountKeeper, bridgeKeeper, msg)
+			return handleMsgLock(ctx, cdc, nftKeeper, bridgeKeeper, msg)
 		default:
-			errMsg := fmt.Sprintf("unrecognized ethbridge message type: %v", msg.Type())
+			errMsg := fmt.Sprintf("unrecognized nftbridge message type: %v", msg.Type())
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 		}
 	}
 }
 
 // Handle a message to create a bridge claim
-func handleMsgCreateEthBridgeClaim(
+func handleMsgCreateNFTBridgeClaim(
 	ctx sdk.Context, cdc *codec.Codec, bridgeKeeper Keeper, msg MsgCreateNFTBridgeClaim,
 ) (*sdk.Result, error) {
-	status, err := bridgeKeeper.ProcessClaim(ctx, types.EthBridgeClaim(msg))
+	status, err := bridgeKeeper.ProcessClaim(ctx, types.NFTBridgeClaim(msg))
 	if err != nil {
 		return nil, err
 	}
@@ -55,15 +55,16 @@ func handleMsgCreateEthBridgeClaim(
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.ValidatorAddress.String()),
 		),
 		sdk.NewEvent(
-			types.EventTypeCreateClaim,
-			sdk.NewAttribute(types.AttributeKeyEthereumSender, msg.EthereumSender.String()),
-			sdk.NewAttribute(types.AttributeKeyCosmosReceiver, msg.CosmosReceiver.String()),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyClaimType, msg.ClaimType.String()),
+			ethbridge.EventTypeCreateClaim,
+			sdk.NewAttribute(ethbridge.AttributeKeyEthereumSender, msg.EthereumSender.String()),
+			sdk.NewAttribute(ethbridge.AttributeKeyCosmosReceiver, msg.CosmosReceiver.String()),
+			sdk.NewAttribute(types.AttributeKeyDenom, msg.Denom),
+			sdk.NewAttribute(types.AttributeKeyID, msg.ID),
+			sdk.NewAttribute(ethbridge.AttributeKeyClaimType, msg.ClaimType.String()),
 		),
 		sdk.NewEvent(
-			types.EventTypeProphecyStatus,
-			sdk.NewAttribute(types.AttributeKeyStatus, status.Text.String()),
+			ethbridge.EventTypeProphecyStatus,
+			sdk.NewAttribute(ethbridge.AttributeKeyStatus, status.Text.String()),
 		),
 	})
 
@@ -71,16 +72,11 @@ func handleMsgCreateEthBridgeClaim(
 }
 
 func handleMsgBurn(
-	ctx sdk.Context, cdc *codec.Codec, accountKeeper ethbridge.AccountKeeper,
+	ctx sdk.Context, cdc *codec.Codec, nftKeeper types.NFTKeeper,
 	bridgeKeeper Keeper, msg MsgBurnNFT,
 ) (*sdk.Result, error) {
 
-	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
-	if account == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String())
-	}
-
-	if err := bridgeKeeper.ProcessBurn(ctx, msg.CosmosSender, msg.Amount); err != nil {
+	if err := bridgeKeeper.ProcessBurn(ctx, msg.CosmosSender, msg.Denom, msg.ID); err != nil {
 		return nil, err
 	}
 
@@ -91,12 +87,13 @@ func handleMsgBurn(
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.CosmosSender.String()),
 		),
 		sdk.NewEvent(
-			types.EventTypeBurn,
-			sdk.NewAttribute(types.AttributeKeyEthereumChainID, strconv.Itoa(msg.EthereumChainID)),
-			sdk.NewAttribute(types.AttributeKeyTokenContract, msg.TokenContract.String()),
-			sdk.NewAttribute(types.AttributeKeyCosmosSender, msg.CosmosSender.String()),
-			sdk.NewAttribute(types.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
+			ethbridge.EventTypeBurn,
+			sdk.NewAttribute(ethbridge.AttributeKeyEthereumChainID, strconv.Itoa(msg.EthereumChainID)),
+			sdk.NewAttribute(ethbridge.AttributeKeyTokenContract, msg.TokenContract.String()),
+			sdk.NewAttribute(ethbridge.AttributeKeyCosmosSender, msg.CosmosSender.String()),
+			sdk.NewAttribute(ethbridge.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
+			sdk.NewAttribute(types.AttributeKeyDenom, msg.Denom),
+			sdk.NewAttribute(types.AttributeKeyID, msg.ID),
 		),
 	})
 
@@ -105,16 +102,11 @@ func handleMsgBurn(
 }
 
 func handleMsgLock(
-	ctx sdk.Context, cdc *codec.Codec, accountKeeper ethbridge.AccountKeeper,
+	ctx sdk.Context, cdc *codec.Codec, nftKeeper types.NFTKeeper,
 	bridgeKeeper Keeper, msg MsgLockNFT,
 ) (*sdk.Result, error) {
 
-	account := accountKeeper.GetAccount(ctx, msg.CosmosSender)
-	if account == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String())
-	}
-
-	if err := bridgeKeeper.ProcessLock(ctx, msg.CosmosSender, msg.Amount); err != nil {
+	if err := bridgeKeeper.ProcessLock(ctx, msg.CosmosSender, msg.Denom, msg.ID); err != nil {
 		return nil, err
 	}
 
@@ -125,12 +117,13 @@ func handleMsgLock(
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.CosmosSender.String()),
 		),
 		sdk.NewEvent(
-			types.EventTypeLock,
-			sdk.NewAttribute(types.AttributeKeyEthereumChainID, strconv.Itoa(msg.EthereumChainID)),
-			sdk.NewAttribute(types.AttributeKeyTokenContract, msg.TokenContract.String()),
-			sdk.NewAttribute(types.AttributeKeyCosmosSender, msg.CosmosSender.String()),
-			sdk.NewAttribute(types.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
+			ethbridge.EventTypeLock,
+			sdk.NewAttribute(ethbridge.AttributeKeyEthereumChainID, strconv.Itoa(msg.EthereumChainID)),
+			sdk.NewAttribute(ethbridge.AttributeKeyTokenContract, msg.TokenContract.String()),
+			sdk.NewAttribute(ethbridge.AttributeKeyCosmosSender, msg.CosmosSender.String()),
+			sdk.NewAttribute(ethbridge.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
+			sdk.NewAttribute(types.AttributeKeyDenom, msg.Denom),
+			sdk.NewAttribute(types.AttributeKeyID, msg.ID),
 		),
 	})
 

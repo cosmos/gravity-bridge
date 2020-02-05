@@ -24,6 +24,7 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/supply"
+	"github.com/cosmos/modules/incubator/nft"
 	"github.com/cosmos/peggy/x/oracle/types"
 	"github.com/tendermint/tendermint/crypto"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -38,7 +39,7 @@ const (
 )
 
 // CreateTestKeepers greates an Mock App, OracleKeeper, BankKeeper and ValidatorAddresses to be used for test input
-func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts []int64, extraMaccPerm string) (sdk.Context, Keeper, bank.Keeper, supply.Keeper, auth.AccountKeeper, []sdk.ValAddress) {
+func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts []int64, extraMaccPerm string) (sdk.Context, Keeper, bank.Keeper, supply.Keeper, nft.Keeper, auth.AccountKeeper, []sdk.ValAddress) {
 	PKs := CreateTestPubKeys(500)
 	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
 	tkeyStaking := sdk.NewTransientStoreKey(stakingtypes.TStoreKey)
@@ -47,6 +48,7 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts [
 	tkeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
+	keyNFT := sdk.NewKVStoreKey(nft.StoreKey)
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -81,6 +83,11 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts [
 	blacklistedAddrs[bondPool.GetAddress().String()] = true
 
 	paramsKeeper := params.NewKeeper(cdc, keyParams, tkeyParams)
+
+	nftKeeper := nft.NewKeeper(
+		cdc, // amino codec
+		keyNFT,
+	)
 
 	accountKeeper := auth.NewAccountKeeper(
 		cdc,    // amino codec
@@ -139,7 +146,7 @@ func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts [
 		stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
 	}
 
-	return ctx, oracleKeeper, bankKeeper, supplyKeeper, accountKeeper, valAddrs
+	return ctx, oracleKeeper, bankKeeper, supplyKeeper, nftKeeper, accountKeeper, valAddrs
 }
 
 // nolint: unparam

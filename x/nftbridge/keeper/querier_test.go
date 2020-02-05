@@ -7,7 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/cosmos/peggy/x/ethbridge/types"
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/x/nftbridge/types"
 	"github.com/cosmos/peggy/x/oracle"
 	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
 )
@@ -33,21 +34,21 @@ func TestNewQuerier(t *testing.T) {
 	require.Nil(t, bz)
 }
 
-func TestQueryEthProphecy(t *testing.T) {
+func TestQueryNFTProphecy(t *testing.T) {
 	ctx, oracleKeeper, _, _, _, validatorAddresses := oracle.CreateTestKeepers(t, 0.7, []int64{3, 7}, "")
 	cdc := keeperLib.MakeTestCodec()
 
 	valAddress := validatorAddresses[0]
-	testEthereumAddress := types.NewEthereumAddress(types.TestEthereumAddress)
-	testBridgeContractAddress := types.NewEthereumAddress(types.TestBridgeContractAddress)
-	testTokenContractAddress := types.NewEthereumAddress(types.TestTokenContractAddress)
+	testEthereumAddress := ethbridge.NewEthereumAddress(types.TestEthereumAddress)
+	testBridgeContractAddress := ethbridge.NewEthereumAddress(types.TestBridgeContractAddress)
+	testTokenContractAddress := ethbridge.NewEthereumAddress(types.TestTokenContractAddress)
 
-	initialEthBridgeClaim := types.CreateTestEthClaim(t, testBridgeContractAddress, testTokenContractAddress, valAddress, testEthereumAddress, types.TestCoins, types.LockText)
-	oracleClaim, _ := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
+	initialNFTBridgeClaim := types.CreateTestNFTClaim(t, testBridgeContractAddress, testTokenContractAddress, valAddress, testEthereumAddress, types.TestDenom, types.TestID, ethbridge.LockText)
+	oracleClaim, _ := types.CreateOracleClaimFromNFTClaim(cdc, initialNFTBridgeClaim)
 	_, err := oracleKeeper.ProcessClaim(ctx, oracleClaim)
 	require.NoError(t, err)
 
-	testResponse := types.CreateTestQueryEthProphecyResponse(cdc, t, valAddress, types.LockText)
+	testResponse := types.CreateTestQueryNFTProphecyResponse(cdc, t, valAddress, ethbridge.LockText)
 
 	//Test query String()
 	require.Equal(t, testResponse.String(), TestResponseJSON)
@@ -56,15 +57,15 @@ func TestQueryEthProphecy(t *testing.T) {
 	require.Nil(t, err2)
 
 	query := abci.RequestQuery{
-		Path: "/custom/ethbridge/prophecies",
+		Path: "/custom/nftbridge/prophecies",
 		Data: bz,
 	}
 
 	//Test query
-	res, err3 := queryEthProphecy(ctx, cdc, query, oracleKeeper)
+	res, err3 := queryNFTProphecy(ctx, cdc, query, oracleKeeper)
 	require.Nil(t, err3)
 
-	var ethProphecyResp types.QueryEthProphecyResponse
+	var ethProphecyResp types.QueryNFTProphecyResponse
 	err4 := cdc.UnmarshalJSON(res, &ethProphecyResp)
 	require.Nil(t, err4)
 	require.True(t, reflect.DeepEqual(ethProphecyResp, testResponse))
@@ -72,11 +73,11 @@ func TestQueryEthProphecy(t *testing.T) {
 	// Test error with bad request
 	query.Data = bz[:len(bz)-1]
 
-	_, err5 := queryEthProphecy(ctx, cdc, query, oracleKeeper)
+	_, err5 := queryNFTProphecy(ctx, cdc, query, oracleKeeper)
 	require.NotNil(t, err5)
 
 	// Test error with nonexistent request
-	badEthereumAddress := types.NewEthereumAddress("badEthereumAddress")
+	badEthereumAddress := ethbridge.NewEthereumAddress("badEthereumAddress")
 
 	bz2, err6 := cdc.MarshalJSON(types.NewQueryNFTProphecyParams(types.TestEthereumChainID, testBridgeContractAddress, 12, types.TestSymbol, testTokenContractAddress, badEthereumAddress))
 	require.Nil(t, err6)
@@ -86,11 +87,11 @@ func TestQueryEthProphecy(t *testing.T) {
 		Data: bz2,
 	}
 
-	_, err7 := queryEthProphecy(ctx, cdc, query2, oracleKeeper)
+	_, err7 := queryNFTProphecy(ctx, cdc, query2, oracleKeeper)
 	require.NotNil(t, err7)
 
 	// Test error with empty address
-	emptyEthereumAddress := types.NewEthereumAddress("")
+	emptyEthereumAddress := ethbridge.NewEthereumAddress("")
 
 	bz3, err8 := cdc.MarshalJSON(types.NewQueryNFTProphecyParams(types.TestEthereumChainID, testBridgeContractAddress, 12, types.TestSymbol, testTokenContractAddress, emptyEthereumAddress))
 
@@ -101,6 +102,6 @@ func TestQueryEthProphecy(t *testing.T) {
 		Data: bz3,
 	}
 
-	_, err9 := queryEthProphecy(ctx, cdc, query3, oracleKeeper)
+	_, err9 := queryNFTProphecy(ctx, cdc, query3, oracleKeeper)
 	require.NotNil(t, err9)
 }

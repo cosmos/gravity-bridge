@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	QueryEthProphecy = types.QueryEthProphecy
+	QueryNFTProphecy = types.QueryNFTProphecy
 	ModuleName       = types.ModuleName
 	StoreKey         = types.StoreKey
 	QuerierRoute     = types.QuerierRoute
@@ -22,22 +22,22 @@ const (
 
 var (
 	// functions aliases
-	NewKeeper                         = keeper.NewKeeper
-	NewQuerier                        = keeper.NewQuerier
-	NewNFTBridgeClaim                 = types.NewNFTBridgeClaim
-	NewOracleClaimContent             = ethbridge.NewOracleClaimContent
-	CreateOracleClaimFromNFTClaim     = types.CreateOracleClaimFromNFTClaim
-	CreateNFTClaimFromOracleString    = types.CreateNFTClaimFromOracleString
-	CreateOracleClaimFromOracleString = ethbridge.CreateOracleClaimFromOracleString
-	RegisterCodec                     = types.RegisterCodec
-	ErrInvalidEthNonce                = types.ErrInvalidEthNonce
-	ErrInvalidEthAddress              = types.ErrInvalidEthAddress
-	ErrJSONMarshalling                = types.ErrJSONMarshalling
-	NewEthereumAddress                = ethbridge.NewEthereumAddress
-	NewMsgCreateNFTBridgeClaim        = types.NewMsgCreateNFTBridgeClaim
-	MapOracleClaimsToNFTBridgeClaims  = types.MapOracleClaimsToNFTBridgeClaims
-	NewQueryNFTProphecyParams         = types.NewQueryNFTProphecyParams
-	NewQueryNFTProphecyResponse       = types.NewQueryNFTProphecyResponse
+	NewKeeper                            = keeper.NewKeeper
+	NewQuerier                           = keeper.NewQuerier
+	NewNFTBridgeClaim                    = types.NewNFTBridgeClaim
+	NewOracleClaimContent                = ethbridge.NewOracleClaimContent
+	CreateOracleClaimFromNFTClaim        = types.CreateOracleClaimFromNFTClaim
+	CreateNFTClaimFromOracleString       = types.CreateNFTClaimFromOracleString
+	CreateOracleNFTClaimFromOracleString = types.CreateOracleNFTClaimFromOracleString
+	RegisterCodec                        = types.RegisterCodec
+	ErrInvalidEthNonce                   = types.ErrInvalidEthNonce
+	ErrInvalidEthAddress                 = types.ErrInvalidEthAddress
+	ErrJSONMarshalling                   = types.ErrJSONMarshalling
+	NewEthereumAddress                   = ethbridge.NewEthereumAddress
+	NewMsgCreateNFTBridgeClaim           = types.NewMsgCreateNFTBridgeClaim
+	MapOracleClaimsToNFTBridgeClaims     = types.MapOracleClaimsToNFTBridgeClaims
+	NewQueryNFTProphecyParams            = types.NewQueryNFTProphecyParams
+	NewQueryNFTProphecyResponse          = types.NewQueryNFTProphecyResponse
 
 	CreateTestNFTMsg                   = types.CreateTestNFTMsg
 	CreateTestNFTClaim                 = types.CreateTestNFTClaim
@@ -47,11 +47,11 @@ var (
 type (
 	Keeper                   = keeper.Keeper
 	NFTBridgeClaim           = types.NFTBridgeClaim
-	OracleClaimContent       = types.OracleClaimContent
+	OracleNFTClaimContent    = types.OracleNFTClaimContent
 	EthereumAddress          = ethbridge.EthereumAddress
 	MsgCreateNFTBridgeClaim  = types.MsgCreateNFTBridgeClaim
 	MsgBurnNFT               = types.MsgBurnNFT
 	MsgLockNFT               = types.MsgLockNFT
-	QueryEthProphecyParams   = types.QueryEthProphecyParams
-	QueryEthProphecyResponse = types.QueryEthProphecyResponse
+	QueryNFTProphecyParams   = types.QueryNFTProphecyParams
+	QueryNFTProphecyResponse = types.QueryNFTProphecyResponse
 )

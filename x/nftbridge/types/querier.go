@@ -10,12 +10,12 @@ import (
 
 // query endpoints supported by the oracle Querier
 const (
-	QueryEthProphecy = "prophecies"
+	QueryNFTProphecy = "prophecies"
 )
 
-// QueryEthProphecyParams defines the params for the following queries:
-// - 'custom/ethbridge/prophecies/'
-type QueryEthProphecyParams struct {
+// QueryNFTProphecyParams defines the params for the following queries:
+// - 'custom/nftbridge/prophecies/'
+type QueryNFTProphecyParams struct {
 	EthereumChainID       int                       `json:"ethereum_chain_id"`
 	BridgeContractAddress ethbridge.EthereumAddress `json:"bridge_contract_address"`
 	Nonce                 int                       `json:"nonce"`
@@ -24,12 +24,12 @@ type QueryEthProphecyParams struct {
 	EthereumSender        ethbridge.EthereumAddress `json:"ethereum_sender"`
 }
 
-// NewQueryNFTProphecyParams creates a new QueryEthProphecyParams
+// NewQueryNFTProphecyParams creates a new QueryNFTProphecyParams
 func NewQueryNFTProphecyParams(
 	ethereumChainID int, bridgeContractAddress ethbridge.EthereumAddress, nonce int, symbol string,
 	tokenContractAddress ethbridge.EthereumAddress, ethereumSender ethbridge.EthereumAddress,
-) QueryEthProphecyParams {
-	return QueryEthProphecyParams{
+) QueryNFTProphecyParams {
+	return QueryNFTProphecyParams{
 		EthereumChainID:       ethereumChainID,
 		BridgeContractAddress: bridgeContractAddress,
 		Nonce:                 nonce,
@@ -46,8 +46,8 @@ type QueryNFTProphecyResponse struct {
 	Claims []NFTBridgeClaim `json:"claims"`
 }
 
-// NewQueryEthProphecyResponse creates a new QueryNFTProphecyResponse instance
-func NewQueryEthProphecyResponse(
+// NewQueryNFTProphecyResponse creates a new QueryNFTProphecyResponse instance
+func NewQueryNFTProphecyResponse(
 	id string, status oracle.Status, claims []NFTBridgeClaim,
 ) QueryNFTProphecyResponse {
 	return QueryNFTProphecyResponse{

@@ -7,19 +7,19 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/supply"
+	"github.com/cosmos/modules/incubator/nft"
 	oracle "github.com/cosmos/peggy/x/oracle"
 	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
 )
 
-func CreateTestHandler(t *testing.T, consensusNeeded float64, validatorAmounts []int64) (sdk.Context, oracle.Keeper, bank.Keeper, supply.Keeper, auth.AccountKeeper, []sdk.ValAddress, sdk.Handler) {
-	ctx, oracleKeeper, bankKeeper, supplyKeeper, accountKeeper, validatorAddresses := oracle.CreateTestKeepers(t, consensusNeeded, validatorAmounts, ModuleName)
-	bridgeAccount := supply.NewEmptyModuleAccount(ModuleName, supply.Burner, supply.Minter)
-	supplyKeeper.SetModuleAccount(ctx, bridgeAccount)
+func CreateTestHandler(t *testing.T, consensusNeeded float64, validatorAmounts []int64) (sdk.Context, oracle.Keeper, bank.Keeper, nft.Keeper, auth.AccountKeeper, []sdk.ValAddress, sdk.Handler) {
+	ctx, oracleKeeper, bankKeeper, _, nftKeeper, accountKeeper, validatorAddresses := oracle.CreateTestKeepers(t, consensusNeeded, validatorAmounts, ModuleName)
+	// bridgeAccount := supply.NewEmptyModuleAccount(ModuleName, supply.Burner, supply.Minter)
+	// nftKeeper.SetModuleAccount(ctx, bridgeAccount)
 
 	cdc := keeperLib.MakeTestCodec()
-	bridgeKeeper := NewKeeper(cdc, supplyKeeper, oracleKeeper)
-	handler := NewHandler(accountKeeper, bridgeKeeper, cdc)
+	bridgeKeeper := NewKeeper(cdc, nftKeeper, oracleKeeper)
+	handler := NewHandler(nftKeeper, bridgeKeeper, cdc)
 
-	return ctx, oracleKeeper, bankKeeper, supplyKeeper, accountKeeper, validatorAddresses, handler
+	return ctx, oracleKeeper, bankKeeper, nftKeeper, accountKeeper, validatorAddresses, handler
 }

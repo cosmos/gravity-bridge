@@ -201,10 +201,10 @@ func TestBurnEthFail(t *testing.T) {
 }
 
 func TestBurnEthSuccess(t *testing.T) {
-	ctx, _, bankKeeper, supplyKeeper, _, validatorAddresses, handler := CreateTestHandler(t, 0.5, []int64{5})
+	ctx, _, bankKeeper, nftKeeper, _, validatorAddresses, handler := CreateTestHandler(t, 0.5, []int64{5})
 	valAddressVal1Pow5 := validatorAddresses[0]
 
-	moduleAccount := supplyKeeper.GetModuleAccount(ctx, ModuleName)
+	moduleAccount := nftKeeper.GetModuleAccount(ctx, ModuleName)
 	moduleAccountAddress := moduleAccount.GetAddress()
 
 	// Initial message to mint some eth

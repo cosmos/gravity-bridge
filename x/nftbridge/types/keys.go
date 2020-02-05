@@ -2,7 +2,7 @@ package types
 
 const (
 	// ModuleName is the name of the ethereum bridge module
-	ModuleName = "ethbridge"
+	ModuleName = "nftbridge"
 
 	// StoreKey is the string store representation
 	StoreKey = ModuleName

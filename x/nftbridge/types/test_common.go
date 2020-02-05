@@ -3,6 +3,7 @@ package types
 import (
 	"testing"
 
+	// "github.com/cosmos/peggy/x/nftbridge/types"
 	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/cosmos/peggy/x/oracle"
 	"github.com/stretchr/testify/require"
@@ -21,8 +22,6 @@ const (
 	TestTokenContractAddress  = "0x0000000000000000000000000000000000000000"
 	TestEthereumAddress       = "0x7B95B6EC7EbD73572298cEf32Bb54FA408207359"
 	AltTestEthereumAddress    = "0x7B95B6EC7EbD73572298cEf32Bb54FA408207344"
-	TestCoins                 = "10ethereum"
-	AltTestCoins              = "12ethereum"
 	TestDenom                 = "denom"
 	TestID                    = "id1"
 )
@@ -32,16 +31,16 @@ func CreateTestNFTMsg(t *testing.T, validatorAddress sdk.ValAddress, claimType e
 	testEthereumAddress := ethbridge.NewEthereumAddress(TestEthereumAddress)
 	testContractAddress := ethbridge.NewEthereumAddress(TestBridgeContractAddress)
 	testTokenAddress := ethbridge.NewEthereumAddress(TestTokenContractAddress)
-	ethClaim := CreateTestNFTClaim(t, testContractAddress, testTokenAddress, validatorAddress, testEthereumAddress, TestDenom, TestID, claimType)
-	ethMsg := NewMsgCreateNFTBridgeClaim(ethClaim)
-	return ethMsg
+	nftClaim := CreateTestNFTClaim(t, testContractAddress, testTokenAddress, validatorAddress, testEthereumAddress, TestDenom, TestID, claimType)
+	nftMsg := NewMsgCreateNFTBridgeClaim(nftClaim)
+	return nftMsg
 }
 
 func CreateTestNFTClaim(t *testing.T, testContractAddress ethbridge.EthereumAddress, testTokenAddress ethbridge.EthereumAddress, validatorAddress sdk.ValAddress, testEthereumAddress ethbridge.EthereumAddress, denom, id string, claimType ethbridge.ClaimType) NFTBridgeClaim {
 	testCosmosAddress, err1 := sdk.AccAddressFromBech32(TestAddress)
 	require.NoError(t, err1)
-	ethClaim := NewNFTBridgeClaim(TestEthereumChainID, testContractAddress, TestNonce, TestSymbol, testTokenAddress, testEthereumAddress, testCosmosAddress, validatorAddress, denom, id, claimType)
-	return ethClaim
+	nftClaim := NewNFTBridgeClaim(TestEthereumChainID, testContractAddress, TestNonce, TestSymbol, testTokenAddress, testEthereumAddress, testCosmosAddress, validatorAddress, denom, id, claimType)
+	return nftClaim
 }
 
 func CreateTestBurnMsg(t *testing.T, testCosmosSender string, ethereumReceiver ethbridge.EthereumAddress, denom, id string) MsgBurnNFT {
@@ -60,7 +59,7 @@ func CreateTestQueryNFTProphecyResponse(cdc *codec.Codec, t *testing.T, validato
 	oracleClaim, _ := CreateOracleClaimFromNFTClaim(cdc, nftBridgeClaim)
 	nftBridgeClaims := []NFTBridgeClaim{nftBridgeClaim}
 
-	return NewQueryEthProphecyResponse(
+	return NewQueryNFTProphecyResponse(
 		oracleClaim.ID,
 		oracle.NewStatus(oracle.PendingStatusText, ""),
 		nftBridgeClaims,
