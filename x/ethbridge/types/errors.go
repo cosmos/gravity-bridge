@@ -12,5 +12,4 @@ var (
 	ErrInvalidClaimType       = sdkerrors.Register(ModuleName, 5, "invalid claim type provided")
 	ErrInvalidEthereumChainID = sdkerrors.Register(ModuleName, 6, "invalid ethereum chain id")
 	ErrInvalidAmount          = sdkerrors.Register(ModuleName, 7, "invalid token amount")
-	ErrInvalidID              = sdkerrors.Register(ModuleName, 8, "invalid NFT ID")
 )

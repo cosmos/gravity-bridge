@@ -9,20 +9,21 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
 )
 
 // MsgLock defines a message for locking coins and triggering a related event
 type MsgLockNFT struct {
-	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
-	TokenContract    EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
-	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
-	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
-	Denom            string          `json:"denom" yaml:"denom"`
-	ID               string          `json:"id" yaml:"id"`
+	EthereumChainID  int                       `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
+	TokenContract    ethbridge.EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
+	CosmosSender     sdk.AccAddress            `json:"cosmos_sender" yaml:"cosmos_sender"`
+	EthereumReceiver ethbridge.EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
+	Denom            string                    `json:"denom" yaml:"denom"`
+	ID               string                    `json:"id" yaml:"id"`
 }
 
 // NewMsgLock is a constructor function for MsgLock
-func NewMsgLockNFT(ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, denom, id string) MsgLockNFT {
+func NewMsgLockNFT(ethereumChainID int, tokenContract ethbridge.EthereumAddress, cosmosSender sdk.AccAddress, ethereumReceiver ethbridge.EthereumAddress, denom, id string) MsgLockNFT {
 	return MsgLockNFT{
 		EthereumChainID:  ethereumChainID,
 		TokenContract:    tokenContract,
@@ -93,16 +94,16 @@ func (msg MsgLockNFT) GetSigners() []sdk.AccAddress {
 
 // MsgBurnNFT defines a message for burning coins and triggering a related event
 type MsgBurnNFT struct {
-	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
-	TokenContract    EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
-	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
-	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
-	Denom            string          `json:"denom" yaml:"denom"`
-	ID               string          `json:"id" yaml:"id"`
+	EthereumChainID  int                       `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
+	TokenContract    ethbridge.EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
+	CosmosSender     sdk.AccAddress            `json:"cosmos_sender" yaml:"cosmos_sender"`
+	EthereumReceiver ethbridge.EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
+	Denom            string                    `json:"denom" yaml:"denom"`
+	ID               string                    `json:"id" yaml:"id"`
 }
 
 // NewMsgBurnNFT is a constructor function for MsgBurnNFT
-func NewMsgBurnNFT(ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, denom, id string) MsgBurnNFT {
+func NewMsgBurnNFT(ethereumChainID int, tokenContract ethbridge.EthereumAddress, cosmosSender sdk.AccAddress, ethereumReceiver ethbridge.EthereumAddress, denom, id string) MsgBurnNFT {
 	return MsgBurnNFT{
 		EthereumChainID:  ethereumChainID,
 		TokenContract:    tokenContract,
@@ -191,7 +192,7 @@ func (msg MsgCreateNFTBridgeClaim) ValidateBasic() error {
 	if !gethCommon.IsHexAddress(msg.BridgeContractAddress.String()) {
 		return ErrInvalidEthAddress
 	}
-	if msg.TokenContractAddress == NewEthereumAddress("0x0000000000000000000000000000000000000000") {
+	if msg.TokenContractAddress == ethbridge.NewEthereumAddress("0x0000000000000000000000000000000000000000") {
 		return ErrInvalidTokenAddress
 	}
 	return nil
@@ -212,7 +213,7 @@ func (msg MsgCreateNFTBridgeClaim) GetSigners() []sdk.AccAddress {
 }
 
 // MapOracleClaimsToNFTBridgeClaims maps a set of generic oracle claim data into NFTBridgeClaim objects
-func MapOracleClaimsToNFTBridgeClaims(ethereumChainID int, bridgeContract EthereumAddress, nonce int, symbol string, tokenContract EthereumAddress, ethereumSender EthereumAddress, oracleValidatorClaims map[string]string, f func(int, EthereumAddress, int, string, EthereumAddress, EthereumAddress, sdk.ValAddress, string) (NFTBridgeClaim, error)) ([]NFTBridgeClaim, error) {
+func MapOracleClaimsToNFTBridgeClaims(ethereumChainID int, bridgeContract ethbridge.EthereumAddress, nonce int, symbol string, tokenContract ethbridge.EthereumAddress, ethereumSender ethbridge.EthereumAddress, oracleValidatorClaims map[string]string, f func(int, ethbridge.EthereumAddress, int, string, ethbridge.EthereumAddress, ethbridge.EthereumAddress, sdk.ValAddress, string) (NFTBridgeClaim, error)) ([]NFTBridgeClaim, error) {
 	mappedClaims := make([]NFTBridgeClaim, len(oracleValidatorClaims))
 	i := 0
 	for validatorBech32, validatorClaim := range oracleValidatorClaims {

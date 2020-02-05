@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/cosmos/peggy/x/oracle"
 )
 
@@ -15,18 +16,18 @@ const (
 // QueryEthProphecyParams defines the params for the following queries:
 // - 'custom/ethbridge/prophecies/'
 type QueryEthProphecyParams struct {
-	EthereumChainID       int             `json:"ethereum_chain_id"`
-	BridgeContractAddress EthereumAddress `json:"bridge_contract_address"`
-	Nonce                 int             `json:"nonce"`
-	Symbol                string          `json:"symbol"`
-	TokenContractAddress  EthereumAddress `json:"token_contract_address"`
-	EthereumSender        EthereumAddress `json:"ethereum_sender"`
+	EthereumChainID       int                       `json:"ethereum_chain_id"`
+	BridgeContractAddress ethbridge.EthereumAddress `json:"bridge_contract_address"`
+	Nonce                 int                       `json:"nonce"`
+	Symbol                string                    `json:"symbol"`
+	TokenContractAddress  ethbridge.EthereumAddress `json:"token_contract_address"`
+	EthereumSender        ethbridge.EthereumAddress `json:"ethereum_sender"`
 }
 
 // NewQueryEthProphecyParams creates a new QueryEthProphecyParams
 func NewQueryEthProphecyParams(
-	ethereumChainID int, bridgeContractAddress EthereumAddress, nonce int, symbol string,
-	tokenContractAddress EthereumAddress, ethereumSender EthereumAddress,
+	ethereumChainID int, bridgeContractAddress ethbridge.EthereumAddress, nonce int, symbol string,
+	tokenContractAddress ethbridge.EthereumAddress, ethereumSender ethbridge.EthereumAddress,
 ) QueryEthProphecyParams {
 	return QueryEthProphecyParams{
 		EthereumChainID:       ethereumChainID,
@@ -42,12 +43,12 @@ func NewQueryEthProphecyParams(
 type QueryEthProphecyResponse struct {
 	ID     string           `json:"id"`
 	Status oracle.Status    `json:"status"`
-	Claims []EthBridgeClaim `json:"claims"`
+	Claims []NFTBridgeClaim `json:"claims"`
 }
 
 // NewQueryEthProphecyResponse creates a new QueryEthProphecyResponse instance
 func NewQueryEthProphecyResponse(
-	id string, status oracle.Status, claims []EthBridgeClaim,
+	id string, status oracle.Status, claims []NFTBridgeClaim,
 ) QueryEthProphecyResponse {
 	return QueryEthProphecyResponse{
 		ID:     id,

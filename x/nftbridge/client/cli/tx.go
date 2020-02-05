@@ -4,7 +4,8 @@ import (
 	"bufio"
 	"strconv"
 
-	"github.com/cosmos/peggy/x/ethbridge/types"
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/x/nftbridge/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -19,9 +20,9 @@ import (
 // GetCmdCreateEthBridgeClaim is the CLI command for creating a claim on an ethereum prophecy
 func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "create-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount] [claim-type]",
+		Use:   "create-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [denom] [id] [claim-type]",
 		Short: "create a claim on an ethereum prophecy",
-		Args:  cobra.ExactArgs(10),
+		Args:  cobra.ExactArgs(11),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -33,7 +34,7 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			bridgeContract := types.NewEthereumAddress(args[1])
+			bridgeContract := ethbridge.NewEthereumAddress(args[1])
 
 			nonce, err := strconv.Atoi(args[2])
 			if err != nil {
@@ -41,8 +42,8 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 			}
 
 			symbol := args[3]
-			tokenContract := types.NewEthereumAddress(args[4])
-			ethereumSender := types.NewEthereumAddress(args[5])
+			tokenContract := ethbridge.NewEthereumAddress(args[4])
+			ethereumSender := ethbridge.NewEthereumAddress(args[5])
 			cosmosReceiver, err := sdk.AccAddressFromBech32(args[6])
 			if err != nil {
 				return err
@@ -53,19 +54,17 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			amount, err := sdk.ParseCoins(args[8])
+			denom := args[8]
+			id := args[9]
+
+			claimType, err := ethbridge.StringToClaimType(args[10])
 			if err != nil {
 				return err
 			}
 
-			claimType, err := types.StringToClaimType(args[9])
-			if err != nil {
-				return err
-			}
+			nftBridgeClaim := types.NewNFTBridgeClaim(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender, cosmosReceiver, validator, denom, id, claimType)
 
-			ethBridgeClaim := types.NewEthBridgeClaim(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender, cosmosReceiver, validator, amount, claimType)
-
-			msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
+			msg := types.NewMsgCreateNFTBridgeClaim(nftBridgeClaim)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -78,10 +77,10 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 // GetCmdBurn is the CLI command for burning some of your eth and triggering an event
 func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
+		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [denom] [id] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "burn cETH or cERC20 on the Cosmos chain",
 		Long:  "This should be used to burn cETH or cERC20. It will burn your coins on the Cosmos Chain, removing them from your account and deducting them from the supply. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the withdrawal of the original ETH/ERC20 to you from the Ethereum contract!",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -95,20 +94,18 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 			}
 
 			tokenContractString := viper.GetString(types.FlagTokenContractAddr)
-			tokenContract := types.NewEthereumAddress(tokenContractString)
+			tokenContract := ethbridge.NewEthereumAddress(tokenContractString)
 
 			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
 
-			ethereumReceiver := types.NewEthereumAddress(args[1])
-			amount, err := sdk.ParseCoins(args[2])
-			if err != nil {
-				return err
-			}
+			ethereumReceiver := ethbridge.NewEthereumAddress(args[1])
+			denom := args[2]
+			id := args[3]
 
-			msg := types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
+			msg := types.NewMsgBurnNFT(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, denom, id)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -121,9 +118,9 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 // GetCmdLock is the CLI command for locking some of your coins and triggering an event
 func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "lock [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
+		Use:   "lock [cosmos-sender-address] [ethereum-receiver-address] [denom] [id] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "This should be used to lock Cosmos-originating coins (eg: ATOM). It will lock up your coins in the supply module, removing them from your account. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the minting of the pegged token on Etherum to you!",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -137,20 +134,18 @@ func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 			}
 
 			tokenContractString := viper.GetString(types.FlagTokenContractAddr)
-			tokenContract := types.NewEthereumAddress(tokenContractString)
+			tokenContract := ethbridge.NewEthereumAddress(tokenContractString)
 
 			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
 
-			ethereumReceiver := types.NewEthereumAddress(args[1])
-			amount, err := sdk.ParseCoins(args[2])
-			if err != nil {
-				return err
-			}
+			ethereumReceiver := ethbridge.NewEthereumAddress(args[1])
+			denom := args[2]
+			id := args[3]
 
-			msg := types.NewMsgLock(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
+			msg := types.NewMsgLockNFT(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, denom, id)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

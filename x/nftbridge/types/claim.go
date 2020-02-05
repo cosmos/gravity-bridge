@@ -8,27 +8,28 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/cosmos/peggy/x/oracle"
 )
 
 // NFTBridgeClaim is a structure that contains all the data for a particular bridge claim
 type NFTBridgeClaim struct {
-	EthereumChainID       int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
-	BridgeContractAddress EthereumAddress `json:"bridge_contract_address" yaml:"bridge_contract_address"`
-	Nonce                 int             `json:"nonce" yaml:"nonce"`
-	Symbol                string          `json:"symbol" yaml:"symbol"`
-	TokenContractAddress  EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
-	EthereumSender        EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
-	CosmosReceiver        sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
-	ValidatorAddress      sdk.ValAddress  `json:"validator_address" yaml:"validator_address"`
-	Denom                 string          `json:"denom" yaml:"denom"`
-	ID                    string          `json:"id" yaml:"id"`
-	ClaimType             ClaimType       `json:"claim_type" yaml:"claim_type"`
+	EthereumChainID       int                       `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
+	BridgeContractAddress ethbridge.EthereumAddress `json:"bridge_contract_address" yaml:"bridge_contract_address"`
+	Nonce                 int                       `json:"nonce" yaml:"nonce"`
+	Symbol                string                    `json:"symbol" yaml:"symbol"`
+	TokenContractAddress  ethbridge.EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
+	EthereumSender        ethbridge.EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
+	CosmosReceiver        sdk.AccAddress            `json:"cosmos_receiver" yaml:"cosmos_receiver"`
+	ValidatorAddress      sdk.ValAddress            `json:"validator_address" yaml:"validator_address"`
+	Denom                 string                    `json:"denom" yaml:"denom"`
+	ID                    string                    `json:"id" yaml:"id"`
+	ClaimType             ethbridge.ClaimType       `json:"claim_type" yaml:"claim_type"`
 }
 
 // NewNFTBridgeClaim is a constructor function for NewNFTBridgeClaim
-func NewNFTBridgeClaim(ethereumChainID int, bridgeContract EthereumAddress, nonce int, symbol string, tokenContact EthereumAddress, ethereumSender EthereumAddress, cosmosReceiver sdk.AccAddress, validator sdk.ValAddress, denom, id string, claimType ClaimType) NFTBridgeClaim {
-	return EthBridgeNFTClaim{
+func NewNFTBridgeClaim(ethereumChainID int, bridgeContract ethbridge.EthereumAddress, nonce int, symbol string, tokenContact ethbridge.EthereumAddress, ethereumSender ethbridge.EthereumAddress, cosmosReceiver sdk.AccAddress, validator sdk.ValAddress, denom, id string, claimType ethbridge.ClaimType) NFTBridgeClaim {
+	return NFTBridgeClaim{
 		EthereumChainID:       ethereumChainID,
 		BridgeContractAddress: bridgeContract,
 		Nonce:                 nonce,
@@ -45,14 +46,14 @@ func NewNFTBridgeClaim(ethereumChainID int, bridgeContract EthereumAddress, nonc
 
 // OracleNFTClaimContent is the details of how the content of the claim for each validator will be stored in the oracle
 type OracleNFTClaimContent struct {
-	CosmosReceiver sdk.AccAddress `json:"cosmos_receiver" yaml:"cosmos_receiver"`
-	Denom          string         `json:"string" yaml:"string"`
-	ID             string         `json:"id" yaml:"id"`
-	ClaimType      ClaimType      `json:"claim_type" yaml:"claim_type"`
+	CosmosReceiver sdk.AccAddress      `json:"cosmos_receiver" yaml:"cosmos_receiver"`
+	Denom          string              `json:"string" yaml:"string"`
+	ID             string              `json:"id" yaml:"id"`
+	ClaimType      ethbridge.ClaimType `json:"claim_type" yaml:"claim_type"`
 }
 
 // NewOracleNFTClaimContent is a constructor function for OracleClaim
-func NewOracleNFTClaimContent(cosmosReceiver sdk.AccAddress, denom, id string, claimType ClaimType) OracleNFTClaimContent {
+func NewOracleNFTClaimContent(cosmosReceiver sdk.AccAddress, denom, id string, claimType ethbridge.ClaimType) OracleNFTClaimContent {
 	return OracleNFTClaimContent{
 		CosmosReceiver: cosmosReceiver,
 		Denom:          denom,
@@ -78,7 +79,7 @@ func CreateOracleClaimFromNFTClaim(cdc *codec.Codec, nftClaim NFTBridgeClaim) (o
 }
 
 // CreateNFTClaimFromOracleString converts a string from any generic claim from the oracle module into an ethereum bridge specific claim.
-func CreateNFTClaimFromOracleString(ethereumChainID int, bridgeContract EthereumAddress, nonce int, symbol string, tokenContract EthereumAddress, ethereumAddress EthereumAddress, validator sdk.ValAddress, oracleClaimString string) (NFTBridgeClaim, error) {
+func CreateNFTClaimFromOracleString(ethereumChainID int, bridgeContract ethbridge.EthereumAddress, nonce int, symbol string, tokenContract ethbridge.EthereumAddress, ethereumAddress ethbridge.EthereumAddress, validator sdk.ValAddress, oracleClaimString string) (NFTBridgeClaim, error) {
 	oracleClaim, err := CreateOracleNFTClaimFromOracleString(oracleClaimString)
 	if err != nil {
 		return NFTBridgeClaim{}, err

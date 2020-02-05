@@ -8,7 +8,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/peggy/x/ethbridge/types"
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/x/nftbridge/types"
 )
 
 // GetCmdGetEthBridgeProphecy queries information about a specific prophecy
@@ -25,7 +26,7 @@ func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Comm
 				return err
 			}
 
-			bridgeContract := types.NewEthereumAddress(args[1])
+			bridgeContract := ethbridge.NewEthereumAddress(args[1])
 
 			nonce, err := strconv.Atoi(args[2])
 			if err != nil {
@@ -33,8 +34,8 @@ func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Comm
 			}
 
 			symbol := args[3]
-			tokenContract := types.NewEthereumAddress(args[4])
-			ethereumSender := types.NewEthereumAddress(args[5])
+			tokenContract := ethbridge.NewEthereumAddress(args[4])
+			ethereumSender := ethbridge.NewEthereumAddress(args[5])
 
 			bz, err := cdc.MarshalJSON(types.NewQueryEthProphecyParams(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender))
 			if err != nil {
