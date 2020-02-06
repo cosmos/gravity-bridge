@@ -89,7 +89,7 @@ func (msg MsgLockNFT) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgLockNFT) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.CosmosSender)}
+	return []sdk.AccAddress{msg.CosmosSender}
 }
 
 // MsgBurnNFT defines a message for burning coins and triggering a related event
