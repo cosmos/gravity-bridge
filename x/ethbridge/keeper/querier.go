@@ -28,7 +28,9 @@ func NewQuerier(keeper types.OracleKeeper, cdc *codec.Codec) sdk.Querier {
 	}
 }
 
-func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, keeper types.OracleKeeper) ([]byte, error) {
+func queryEthProphecy(
+	ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, keeper types.OracleKeeper,
+) ([]byte, error) {
 	var params types.QueryEthProphecyParams
 
 	if err := cdc.UnmarshalJSON(req.Data, &params); err != nil {
@@ -41,7 +43,9 @@ func queryEthProphecy(ctx sdk.Context, cdc *codec.Codec, req abci.RequestQuery, 
 		return nil, sdkerrors.Wrap(oracletypes.ErrProphecyNotFound, id)
 	}
 
-	bridgeClaims, err := types.MapOracleClaimsToEthBridgeClaims(params.EthereumChainID, params.BridgeContractAddress, params.Nonce, params.Symbol, params.TokenContractAddress, params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
+	bridgeClaims, err := types.MapOracleClaimsToEthBridgeClaims(
+		params.EthereumChainID, params.BridgeContractAddress, params.Nonce, params.Symbol, params.TokenContractAddress,
+		params.EthereumSender, prophecy.ValidatorClaims, types.CreateEthClaimFromOracleString)
 	if err != nil {
 		return nil, err
 	}

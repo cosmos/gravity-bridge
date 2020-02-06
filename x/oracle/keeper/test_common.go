@@ -39,7 +39,8 @@ const (
 )
 
 // CreateTestKeepers greates an Mock App, OracleKeeper, BankKeeper and ValidatorAddresses to be used for test input
-func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts []int64, extraMaccPerm string) (sdk.Context, Keeper, bank.Keeper, supply.Keeper, nft.Keeper, auth.AccountKeeper, []sdk.ValAddress) {
+func CreateTestKeepers(t *testing.T, consensusNeeded float64, validatorAmounts []int64, extraMaccPerm string) (
+	sdk.Context, Keeper, bank.Keeper, supply.Keeper, nft.Keeper, auth.AccountKeeper, []sdk.ValAddress) {
 	PKs := CreateTestPubKeys(500)
 	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
 	tkeyStaking := sdk.NewTransientStoreKey(stakingtypes.TStoreKey)
@@ -182,8 +183,10 @@ func CreateTestPubKeys(numPubKeys int) []crypto.PubKey {
 	//start at 10 to avoid changing 1 to 01, 2 to 02, etc
 	for i := 100; i < (numPubKeys + 100); i++ {
 		numString := strconv.Itoa(i)
-		buffer.WriteString("0B485CFC0EECC619440448436F8FC9DF40566F2369E72400281454CB552AF") //base pubkey string
-		buffer.WriteString(numString)                                                       //adding on final two digits to make pubkeys unique
+		buffer.WriteString(
+			"0B485CFC0EECC619440448436F8FC9DF40566F2369E72400281454CB552AF",
+		) //base pubkey string
+		buffer.WriteString(numString) //adding on final two digits to make pubkeys unique
 		publicKeys = append(publicKeys, NewPubKey(buffer.String()))
 		buffer.Reset()
 	}

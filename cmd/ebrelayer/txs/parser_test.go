@@ -34,7 +34,9 @@ func TestLogLockToEthBridgeClaim(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set up expected EthBridgeClaim
-	expectedEthBridgeClaim := types.NewEthBridgeClaim(TestEthereumChainID, testBridgeContractAddress, TestNonce, TestSymbol, testTokenContractAddress, testEthereumAddress, testCosmosAddress, testCosmosValidatorBech32Address, testCoins, TestLockClaimType)
+	expectedEthBridgeClaim := types.NewEthBridgeClaim(
+		TestEthereumChainID, testBridgeContractAddress, TestNonce, TestSymbol, testTokenContractAddress,
+		testEthereumAddress, testCosmosAddress, testCosmosValidatorBech32Address, testCoins, TestLockClaimType)
 
 	// Create test LogLockEvent
 	logLockEvent := CreateTestLogLockEvent(t)

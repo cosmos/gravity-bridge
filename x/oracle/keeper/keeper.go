@@ -10,7 +10,8 @@ import (
 	"github.com/cosmos/peggy/x/oracle/types"
 )
 
-// Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
+// Keeper maintains the link to data storage and
+// exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	cdc      *codec.Codec // The wire codec for binary encoding/decoding.
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
@@ -22,7 +23,9 @@ type Keeper struct {
 }
 
 // NewKeeper creates new instances of the oracle Keeper
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakeKeeper types.StakingKeeper, consensusNeeded float64) Keeper {
+func NewKeeper(
+	cdc *codec.Codec, storeKey sdk.StoreKey, stakeKeeper types.StakingKeeper, consensusNeeded float64,
+) Keeper {
 	if consensusNeeded <= 0 || consensusNeeded > 1 {
 		panic(types.ErrMinimumConsensusNeededInvalid.Error())
 	}
@@ -116,8 +119,10 @@ func (k Keeper) checkActiveValidator(ctx sdk.Context, validatorAddress sdk.ValAd
 	return validator.IsBonded()
 }
 
-// processCompletion looks at a given prophecy an assesses whether the claim with the highest power on that prophecy has enough
-// power to be considered successful, or alternatively, will never be able to become successful due to not enough validation power being
+// processCompletion looks at a given prophecy
+// an assesses whether the claim with the highest power on that prophecy has enough
+// power to be considered successful, or alternatively,
+// will never be able to become successful due to not enough validation power being
 // left to push it over the threshold required for consensus.
 func (k Keeper) processCompletion(ctx sdk.Context, prophecy types.Prophecy) types.Prophecy {
 	highestClaim, highestClaimPower, totalClaimsPower := prophecy.FindHighestClaim(ctx, k.stakeKeeper)

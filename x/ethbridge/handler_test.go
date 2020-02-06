@@ -14,6 +14,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	moduleString = "module"
+	amountString = "amount"
+	statusString = "status"
+	senderString = "sender"
+)
+
 func TestBasicMsgs(t *testing.T) {
 	//Setup
 	ctx, _, _, _, _, validatorAddresses, handler := CreateTestHandler(t, 0.7, []int64{3, 7})
@@ -38,15 +45,15 @@ func TestBasicMsgs(t *testing.T) {
 			switch key := string(attribute.Key); key {
 			case "module":
 				require.Equal(t, value, types.ModuleName)
-			case "sender":
+			case senderString:
 				require.Equal(t, value, valAddress.String())
 			case "ethereum_sender":
 				require.Equal(t, value, types.TestEthereumAddress)
 			case "cosmos_receiver":
 				require.Equal(t, value, types.TestAddress)
-			case "amount":
+			case amountString:
 				require.Equal(t, value, types.TestCoins)
-			case "status":
+			case statusString:
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
 			case "claim_type":
 				require.Equal(t, value, types.ClaimTypeToString[types.LockText])
@@ -75,7 +82,7 @@ func TestDuplicateMsgs(t *testing.T) {
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == statusString {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
 			}
 		}
@@ -116,7 +123,7 @@ func TestMintSuccess(t *testing.T) {
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == statusString {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.SuccessStatusText])
 			}
 		}
@@ -145,11 +152,17 @@ func TestNoMintFail(t *testing.T) {
 	testTokenContractAddress := types.NewEthereumAddress(types.TestTokenContractAddress)
 	testEthereumAddress := types.NewEthereumAddress(types.TestEthereumAddress)
 
-	ethClaim1 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal1Pow3, testEthereumAddress, types.TestCoins, types.LockText)
+	ethClaim1 := types.CreateTestEthClaim(
+		t, testEthereumAddress, testTokenContractAddress,
+		valAddressVal1Pow3, testEthereumAddress, types.TestCoins, types.LockText)
 	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
-	ethClaim2 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal2Pow4, testEthereumAddress, types.TestCoins, types.LockText)
+	ethClaim2 := types.CreateTestEthClaim(
+		t, testEthereumAddress, testTokenContractAddress,
+		valAddressVal2Pow4, testEthereumAddress, types.TestCoins, types.LockText)
 	ethMsg2 := NewMsgCreateEthBridgeClaim(ethClaim2)
-	ethClaim3 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal3Pow3, testEthereumAddress, types.AltTestCoins, types.LockText)
+	ethClaim3 := types.CreateTestEthClaim(
+		t, testEthereumAddress, testTokenContractAddress,
+		valAddressVal3Pow3, testEthereumAddress, types.AltTestCoins, types.LockText)
 	ethMsg3 := NewMsgCreateEthBridgeClaim(ethClaim3)
 
 	//Initial message
@@ -159,7 +172,7 @@ func TestNoMintFail(t *testing.T) {
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == statusString {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
 			}
 		}
@@ -172,7 +185,7 @@ func TestNoMintFail(t *testing.T) {
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == statusString {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
 			}
 		}
@@ -185,7 +198,7 @@ func TestNoMintFail(t *testing.T) {
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == statusString {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.FailedStatusText])
 			}
 		}
@@ -213,7 +226,9 @@ func TestBurnEthSuccess(t *testing.T) {
 	testTokenContractAddress := types.NewEthereumAddress(types.TestTokenContractAddress)
 	testEthereumAddress := types.NewEthereumAddress(types.TestEthereumAddress)
 
-	ethClaim1 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal1Pow5, testEthereumAddress, coinsToMint, types.LockText)
+	ethClaim1 := types.CreateTestEthClaim(
+		t, testEthereumAddress, testTokenContractAddress,
+		valAddressVal1Pow5, testEthereumAddress, coinsToMint, types.LockText)
 	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
 
 	// Initial message succeeds and mints eth
@@ -250,11 +265,11 @@ func TestBurnEthSuccess(t *testing.T) {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
 			switch key := string(attribute.Key); key {
-			case "sender":
+			case senderString:
 				require.Equal(t, value, senderAddress.String())
 			case "recipient":
 				require.Equal(t, value, moduleAccountAddress.String())
-			case "module":
+			case moduleString:
 				require.Equal(t, value, ModuleName)
 			case "ethereum_chain_id":
 				eventEthereumChainID = value
@@ -264,7 +279,7 @@ func TestBurnEthSuccess(t *testing.T) {
 				eventCosmosSender = value
 			case "ethereum_receiver":
 				eventEthereumReceiver = value
-			case "amount":
+			case amountString:
 				eventAmount = value
 			default:
 				require.Fail(t, fmt.Sprintf("unrecognized event %s", key))
@@ -293,11 +308,11 @@ func TestBurnEthSuccess(t *testing.T) {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
 			switch key := string(attribute.Key); key {
-			case "sender":
+			case senderString:
 				require.Equal(t, value, senderAddress.String())
 			case "recipient":
 				require.Equal(t, value, moduleAccountAddress.String())
-			case "module":
+			case moduleString:
 				require.Equal(t, value, ModuleName)
 			case "ethereum_chain_id":
 				eventEthereumChainID = value
@@ -307,7 +322,7 @@ func TestBurnEthSuccess(t *testing.T) {
 				eventCosmosSender = value
 			case "ethereum_receiver":
 				eventEthereumReceiver = value
-			case "amount":
+			case amountString:
 				eventAmount = value
 			default:
 				require.Fail(t, fmt.Sprintf("unrecognized event %s", key))

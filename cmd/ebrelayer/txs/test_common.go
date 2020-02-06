@@ -29,7 +29,7 @@ const (
 	TestCosmosAddress1        = "cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv"
 	TestCosmosAddress2        = "cosmos1l5h2x255pvdy9l4z0hf9tr8zw7k657s97wyz7y"
 	TestExpectedMessage       = "0xfc3c746e966d5f48af553b166b0870b0fa6b6921b353fba67de4e2230392f48b"
-	TestExpectedSignature     = "0xac349f2452d50d14e11f72de8fc7acde0b47f280a47792470198dcff59358e42425315c0db810dc5d2a7ba5eda7d9cf35cea4f13d550bfa03484df739249c4d401"
+	TestExpectedSignature     = "0xac349f2452d50d14e11f72de8fc7acde0b47f280a47792470198dcff59358e42425315c0db810dc5d2a7ba5eda7d9cf35cea4f13d550bfa03484df739249c4d401" //nolint:lll
 	TestAddrHex               = "970e8128ab834e8eac17ab8e3812f010678cf791"
 	TestPrivHex               = "289c2857d4598e37fb9647507e47a309d6133539bf21a8b9cb6df88fd5232032"
 )
@@ -89,7 +89,8 @@ func CreateTestCosmosMsg(t *testing.T, claimType events.Event) events.CosmosMsg 
 	testTokenAddress := common.HexToAddress(TestTokenAddress)
 
 	// Create new Cosmos Msg
-	cosmosMsg := events.NewCosmosMsg(claimType, testCosmosSender, testEthereumReceiver, TestSymbol, testAmount, testTokenAddress)
+	cosmosMsg := events.NewCosmosMsg(
+		claimType, testCosmosSender, testEthereumReceiver, TestSymbol, testAmount, testTokenAddress)
 
 	return cosmosMsg
 }

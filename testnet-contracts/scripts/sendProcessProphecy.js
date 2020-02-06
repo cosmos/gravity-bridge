@@ -56,14 +56,18 @@ module.exports = async () => {
   const accounts = await web3.eth.getAccounts();
 
   console.log("Attempting to send processBridgeProphecy() tx...");
-
-  const { logs } = await oracleContract.deployed().then(function(instance) {
-    return instance.processBridgeProphecy(prophecyID, {
-      from: accounts[0],
-      value: 0,
-      gas: 300000 // 300,000 Gwei
+  try {
+    var { logs } = await oracleContract.deployed().then(function(instance) {
+      return instance.processBridgeProphecy(prophecyID, {
+        from: accounts[0],
+        value: 0,
+        gas: 300000 // 300,000 Gwei
+      });
     });
-  });
+  } catch (error) {
+    console.log(error.message)
+    return
+  }
 
   // Get event logs
   const event = logs.find(e => e.event === "LogProphecyProcessed");

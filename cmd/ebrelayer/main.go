@@ -58,6 +58,7 @@ func init() {
 	DefaultCLIHome := os.ExpandEnv("$HOME/.ebcli")
 
 	// Add --chain-id to persistent flags and mark it required
+	rootCmd.PersistentFlags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|test)")
 	rootCmd.PersistentFlags().String(flags.FlagChainID, "", "Chain ID of tendermint node")
 	rootCmd.PersistentFlags().String(FlagRPCURL, "", "RPC URL of tendermint node")
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
@@ -103,7 +104,7 @@ var initCmd = &cobra.Command{
 //		The service automatically signs messages containing the event
 //		data and relays them to tendermint for handling by the
 //		EthBridge module.
-//
+//nolint:lll
 func ethereumRelayerCmd() *cobra.Command {
 	ethereumRelayerCmd := &cobra.Command{
 		Use:   "ethereum [web3Provider] [bridgeContractAddress] [validatorFromName] --make-claims [make-claims] --chain-id [chain-id]",
@@ -121,6 +122,7 @@ func ethereumRelayerCmd() *cobra.Command {
 //		relaying them to an Ethereum smart contract
 //
 func cosmosRelayerCmd() *cobra.Command {
+	//nolint:lll
 	cosmosRelayerCmd := &cobra.Command{
 		Use:     "cosmos [tendermintNode] [web3Provider] [bridgeContractAddress]",
 		Short:   "Initializes a web socket which streams live events from the Cosmos network and relays them to the Ethereum network",

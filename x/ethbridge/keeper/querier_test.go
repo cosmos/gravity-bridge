@@ -12,6 +12,7 @@ import (
 	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
 )
 
+//nolint:lll
 const (
 	TestResponseJSON = "{\"id\":\"300x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"status\":{\"text\":\"pending\",\"final_claim\":\"\"},\"claims\":[{\"ethereum_chain_id\":3,\"bridge_contract_address\":\"0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB\",\"nonce\":0,\"symbol\":\"eth\",\"token_contract_address\":\"0x0000000000000000000000000000000000000000\",\"ethereum_sender\":\"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"cosmos_receiver\":\"cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv\",\"validator_address\":\"cosmosvaloper1mnfm9c7cdgqnkk66sganp78m0ydmcr4pn7fqfk\",\"amount\":[{\"denom\":\"ethereum\",\"amount\":\"10\"}],\"claim_type\":\"lock\"}]}"
 )
@@ -42,7 +43,9 @@ func TestQueryEthProphecy(t *testing.T) {
 	testBridgeContractAddress := types.NewEthereumAddress(types.TestBridgeContractAddress)
 	testTokenContractAddress := types.NewEthereumAddress(types.TestTokenContractAddress)
 
-	initialEthBridgeClaim := types.CreateTestEthClaim(t, testBridgeContractAddress, testTokenContractAddress, valAddress, testEthereumAddress, types.TestCoins, types.LockText)
+	initialEthBridgeClaim := types.CreateTestEthClaim(
+		t, testBridgeContractAddress, testTokenContractAddress, valAddress,
+		testEthereumAddress, types.TestCoins, types.LockText)
 	oracleClaim, _ := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
 	_, err := oracleKeeper.ProcessClaim(ctx, oracleClaim)
 	require.NoError(t, err)
@@ -52,7 +55,9 @@ func TestQueryEthProphecy(t *testing.T) {
 	//Test query String()
 	require.Equal(t, testResponse.String(), TestResponseJSON)
 
-	bz, err2 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(types.TestEthereumChainID, testBridgeContractAddress, types.TestNonce, types.TestSymbol, testTokenContractAddress, testEthereumAddress))
+	bz, err2 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(
+		types.TestEthereumChainID, testBridgeContractAddress, types.TestNonce,
+		types.TestSymbol, testTokenContractAddress, testEthereumAddress))
 	require.Nil(t, err2)
 
 	query := abci.RequestQuery{
@@ -78,7 +83,9 @@ func TestQueryEthProphecy(t *testing.T) {
 	// Test error with nonexistent request
 	badEthereumAddress := types.NewEthereumAddress("badEthereumAddress")
 
-	bz2, err6 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(types.TestEthereumChainID, testBridgeContractAddress, 12, types.TestSymbol, testTokenContractAddress, badEthereumAddress))
+	bz2, err6 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(
+		types.TestEthereumChainID, testBridgeContractAddress, 12,
+		types.TestSymbol, testTokenContractAddress, badEthereumAddress))
 	require.Nil(t, err6)
 
 	query2 := abci.RequestQuery{
@@ -92,7 +99,10 @@ func TestQueryEthProphecy(t *testing.T) {
 	// Test error with empty address
 	emptyEthereumAddress := types.NewEthereumAddress("")
 
-	bz3, err8 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(types.TestEthereumChainID, testBridgeContractAddress, 12, types.TestSymbol, testTokenContractAddress, emptyEthereumAddress))
+	bz3, err8 := cdc.MarshalJSON(
+		types.NewQueryEthProphecyParams(
+			types.TestEthereumChainID, testBridgeContractAddress, 12,
+			types.TestSymbol, testTokenContractAddress, emptyEthereumAddress))
 
 	require.Nil(t, err8)
 
