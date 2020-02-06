@@ -14,10 +14,11 @@ import (
 
 // GetCmdGetNFTBridgeProphecy queries information about a specific prophecy
 func GetCmdGetNFTBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	var ARGS = 6
 	return &cobra.Command{
 		Use:   "prophecy [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender]",
 		Short: "Query prophecy",
-		Args:  cobra.ExactArgs(6),
+		Args:  cobra.ExactArgs(ARGS),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 

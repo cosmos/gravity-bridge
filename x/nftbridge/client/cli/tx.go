@@ -19,10 +19,12 @@ import (
 
 // GetCmdCreateNFTBridgeClaim is the CLI command for creating a claim on an nft prophecy
 func GetCmdCreateNFTBridgeClaim(cdc *codec.Codec) *cobra.Command {
+	var ARGS = 11
+
 	return &cobra.Command{
 		Use:   "create-nft-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [denom] [id] [claim-type]",
 		Short: "create a claim on an ethereum prophecy",
-		Args:  cobra.ExactArgs(11),
+		Args:  cobra.ExactArgs(ARGS),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -74,83 +76,68 @@ func GetCmdCreateNFTBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	}
 }
 
+func cmdBurnNFTLockNFT(cdc *codec.Codec, cmd *cobra.Command, args []string, isBurn bool) error {
+	cliCtx := context.NewCLIContext().WithCodec(cdc)
+	inBuf := bufio.NewReader(cmd.InOrStdin())
+	txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+
+	ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
+	ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
+	if err != nil {
+		return err
+	}
+
+	tokenContractString := viper.GetString(types.FlagTokenContractAddr)
+	tokenContract := ethbridge.NewEthereumAddress(tokenContractString)
+
+	cosmosSender, err := sdk.AccAddressFromBech32(args[0])
+	if err != nil {
+		return err
+	}
+
+	ethereumReceiver := ethbridge.NewEthereumAddress(args[1])
+	denom := args[2]
+	id := args[3]
+
+	if isBurn {
+		msg := types.NewMsgBurnNFT(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, denom, id)
+		if err := msg.ValidateBasic(); err != nil {
+			return err
+		}
+		return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+	}
+
+	msg := types.NewMsgLockNFT(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, denom, id)
+	if err := msg.ValidateBasic(); err != nil {
+		return err
+	}
+	return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+
+}
+
 // GetCmdBurnNFT is the CLI command for burning some of your eth and triggering an event
 func GetCmdBurnNFT(cdc *codec.Codec) *cobra.Command {
+	var ARGS = 4
 	return &cobra.Command{
 		Use:   "burnNFT [cosmos-sender-address] [ethereum-receiver-address] [denom] [id] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "burn cNFT on the Cosmos chain",
 		Long:  "This should be used to burn cNFT. It will burn your NFT on the Cosmos Chain, removing them from your account and deducting them from the supply. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the withdrawal of the original NFT to you from the Ethereum contract!",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(ARGS),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-
-			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
-			ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
-			if err != nil {
-				return err
-			}
-
-			tokenContractString := viper.GetString(types.FlagTokenContractAddr)
-			tokenContract := ethbridge.NewEthereumAddress(tokenContractString)
-
-			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return err
-			}
-
-			ethereumReceiver := ethbridge.NewEthereumAddress(args[1])
-			denom := args[2]
-			id := args[3]
-
-			msg := types.NewMsgBurnNFT(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, denom, id)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return cmdBurnNFTLockNFT(cdc, cmd, args, true)
 		},
 	}
 }
 
 // GetCmdLockNFT is the CLI command for locking some of your coins and triggering an event
 func GetCmdLockNFT(cdc *codec.Codec) *cobra.Command {
+	var ARGS = 4
 	return &cobra.Command{
 		Use:   "lockNFT [cosmos-sender-address] [ethereum-receiver-address] [denom] [id] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "This should be used to lock Cosmos-originating NFT. It will lock up your NFT in the bridge module, removing them from your account. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the minting of the pegged NFT on Etherum to you!",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(ARGS),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-
-			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
-			ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
-			if err != nil {
-				return err
-			}
-
-			tokenContractString := viper.GetString(types.FlagTokenContractAddr)
-			tokenContract := ethbridge.NewEthereumAddress(tokenContractString)
-
-			cosmosSender, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return err
-			}
-
-			ethereumReceiver := ethbridge.NewEthereumAddress(args[1])
-			denom := args[2]
-			id := args[3]
-
-			msg := types.NewMsgLockNFT(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, denom, id)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return cmdBurnNFTLockNFT(cdc, cmd, args, false)
 		},
 	}
 }
