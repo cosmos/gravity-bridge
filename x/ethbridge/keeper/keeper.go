@@ -13,7 +13,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Keeper maintains the link to data storage and exposes getter/setter methods for the various parts of the state machine
+// Keeper maintains the link to data storage and
+// exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	cdc *codec.Codec // The wire codec for binary encoding/decoding.
 

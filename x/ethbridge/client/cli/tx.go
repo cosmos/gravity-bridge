@@ -17,6 +17,7 @@ import (
 )
 
 // GetCmdCreateEthBridgeClaim is the CLI command for creating a claim on an ethereum prophecy
+//nolint:lll
 func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "create-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount] [claim-type]",
@@ -76,6 +77,7 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetCmdBurn is the CLI command for burning some of your eth and triggering an event
+//nolint:lll
 func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
@@ -120,6 +122,7 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 
 // GetCmdLock is the CLI command for locking some of your coins and triggering an event
 func GetCmdLock(cdc *codec.Codec) *cobra.Command {
+	//nolint:lll
 	return &cobra.Command{
 		Use:   "lock [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "This should be used to lock Cosmos-originating coins (eg: ATOM). It will lock up your coins in the supply module, removing them from your account. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the minting of the pegged token on Etherum to you!",

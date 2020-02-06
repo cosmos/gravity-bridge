@@ -74,6 +74,8 @@ func RelayLockToCosmos(
 		return err
 	}
 
-	cliCtx.PrintOutput(res)
+	if err = cliCtx.PrintOutput(res); err != nil {
+		return err
+	}
 	return nil
 }

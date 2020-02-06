@@ -24,6 +24,7 @@ const (
 
 var (
 	// functions aliases
+
 	NewKeeper         = keeper.NewKeeper
 	CreateTestAddrs   = keeper.CreateTestAddrs
 	CreateTestPubKeys = keeper.CreateTestPubKeys
@@ -43,6 +44,7 @@ var (
 	NewStatus                        = types.NewStatus
 
 	// variable aliases
+
 	StatusTextToString = types.StatusTextToString
 	StringToStatusText = types.StringToStatusText
 )

@@ -14,15 +14,17 @@ import (
 
 // MsgLock defines a message for locking coins and triggering a related event
 type MsgLock struct {
+	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
+	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
 	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
 	TokenContract    EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
-	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
 	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
-	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
 }
 
 // NewMsgLock is a constructor function for MsgLock
-func NewMsgLock(ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, amount sdk.Coins) MsgLock {
+func NewMsgLock(
+	ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress,
+	ethereumReceiver EthereumAddress, amount sdk.Coins) MsgLock {
 	return MsgLock{
 		EthereumChainID:  ethereumChainID,
 		TokenContract:    tokenContract,
@@ -79,20 +81,22 @@ func (msg MsgLock) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgLock) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.CosmosSender)}
+	return []sdk.AccAddress{msg.CosmosSender}
 }
 
 // MsgBurn defines a message for burning coins and triggering a related event
 type MsgBurn struct {
+	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
+	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
 	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
 	TokenContract    EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
-	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
 	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
-	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
 }
 
 // NewMsgBurn is a constructor function for MsgBurn
-func NewMsgBurn(ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress, ethereumReceiver EthereumAddress, amount sdk.Coins) MsgBurn {
+func NewMsgBurn(
+	ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress,
+	ethereumReceiver EthereumAddress, amount sdk.Coins) MsgBurn {
 	return MsgBurn{
 		EthereumChainID:  ethereumChainID,
 		TokenContract:    tokenContract,
@@ -143,7 +147,7 @@ func (msg MsgBurn) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgBurn) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.CosmosSender)}
+	return []sdk.AccAddress{msg.CosmosSender}
 }
 
 // MsgCreateEthBridgeClaim defines a message for creating claims on the ethereum bridge
@@ -180,7 +184,8 @@ func (msg MsgCreateEthBridgeClaim) ValidateBasic() error {
 	if !gethCommon.IsHexAddress(msg.BridgeContractAddress.String()) {
 		return ErrInvalidEthAddress
 	}
-	if strings.ToLower(msg.Symbol) == "eth" && msg.TokenContractAddress != NewEthereumAddress("0x0000000000000000000000000000000000000000") {
+	if strings.ToLower(msg.Symbol) == "eth" &&
+		msg.TokenContractAddress != NewEthereumAddress("0x0000000000000000000000000000000000000000") {
 		return ErrInvalidEthSymbol
 	}
 	return nil
@@ -201,7 +206,13 @@ func (msg MsgCreateEthBridgeClaim) GetSigners() []sdk.AccAddress {
 }
 
 // MapOracleClaimsToEthBridgeClaims maps a set of generic oracle claim data into EthBridgeClaim objects
-func MapOracleClaimsToEthBridgeClaims(ethereumChainID int, bridgeContract EthereumAddress, nonce int, symbol string, tokenContract EthereumAddress, ethereumSender EthereumAddress, oracleValidatorClaims map[string]string, f func(int, EthereumAddress, int, string, EthereumAddress, EthereumAddress, sdk.ValAddress, string) (EthBridgeClaim, error)) ([]EthBridgeClaim, error) {
+func MapOracleClaimsToEthBridgeClaims(
+	ethereumChainID int, bridgeContract EthereumAddress, nonce int, symbol string,
+	tokenContract EthereumAddress, ethereumSender EthereumAddress,
+	oracleValidatorClaims map[string]string,
+	f func(int, EthereumAddress, int, string, EthereumAddress, EthereumAddress, sdk.ValAddress, string,
+	) (EthBridgeClaim, error),
+) ([]EthBridgeClaim, error) {
 	mappedClaims := make([]EthBridgeClaim, len(oracleValidatorClaims))
 	i := 0
 	for validatorBech32, validatorClaim := range oracleValidatorClaims {
@@ -209,7 +220,9 @@ func MapOracleClaimsToEthBridgeClaims(ethereumChainID int, bridgeContract Ethere
 		if parseErr != nil {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("failed to parse claim: %s", parseErr))
 		}
-		mappedClaim, err := f(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender, validatorAddress, validatorClaim)
+		mappedClaim, err := f(
+			ethereumChainID, bridgeContract, nonce, symbol,
+			tokenContract, ethereumSender, validatorAddress, validatorClaim)
 		if err != nil {
 			return nil, err
 		}
