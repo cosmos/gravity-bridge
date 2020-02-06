@@ -22,17 +22,17 @@ linters:
     - govet
     - ineffassign
     - interfacer
-    - lll
+    # - lll
     - misspell
     - maligned
     - nakedret
     - prealloc
     # - scopelint
     - staticcheck
-    - structcheck
+    # - structcheck
     - stylecheck
     - typecheck
-    - unconvert
+    # - unconvert
     # - unparam
     - unused
     - varcheck
@@ -44,7 +44,7 @@ linters-settings:
   dogsled:
     # checks assignments with too many blank identifiers; default is 2
     # TODO: bring this down to at least 4
-    max-blank-identifiers: 6
+    max-blank-identifiers: 7
   maligned:
     # print struct with more effective memory layout or not, false by default
     suggest-new: true

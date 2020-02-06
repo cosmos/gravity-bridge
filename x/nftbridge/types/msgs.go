@@ -14,12 +14,12 @@ import (
 
 // MsgLock defines a message for locking coins and triggering a related event
 type MsgLockNFT struct {
-	EthereumChainID  int                       `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
-	TokenContract    ethbridge.EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
 	CosmosSender     sdk.AccAddress            `json:"cosmos_sender" yaml:"cosmos_sender"`
-	EthereumReceiver ethbridge.EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 	Denom            string                    `json:"denom" yaml:"denom"`
 	ID               string                    `json:"id" yaml:"id"`
+	EthereumChainID  int                       `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
+	TokenContract    ethbridge.EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
+	EthereumReceiver ethbridge.EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 }
 
 // NewMsgLock is a constructor function for MsgLock
@@ -94,12 +94,12 @@ func (msg MsgLockNFT) GetSigners() []sdk.AccAddress {
 
 // MsgBurnNFT defines a message for burning coins and triggering a related event
 type MsgBurnNFT struct {
-	EthereumChainID  int                       `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
-	TokenContract    ethbridge.EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
 	CosmosSender     sdk.AccAddress            `json:"cosmos_sender" yaml:"cosmos_sender"`
-	EthereumReceiver ethbridge.EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 	Denom            string                    `json:"denom" yaml:"denom"`
 	ID               string                    `json:"id" yaml:"id"`
+	EthereumChainID  int                       `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
+	TokenContract    ethbridge.EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
+	EthereumReceiver ethbridge.EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 }
 
 // NewMsgBurnNFT is a constructor function for MsgBurnNFT
@@ -166,10 +166,10 @@ func (msg MsgBurnNFT) GetSigners() []sdk.AccAddress {
 }
 
 // MsgCreateNFTBridgeClaim defines a message for creating claims on the ethereum bridge
-type MsgCreateNFTBridgeClaim NFTBridgeClaim
+type MsgCreateNFTBridgeClaim BridgeClaim
 
 // NewMsgCreateNFTBridgeClaim is a constructor function for MsgCreateBridgeClaim
-func NewMsgCreateNFTBridgeClaim(nftBridgeClaim NFTBridgeClaim) MsgCreateNFTBridgeClaim {
+func NewMsgCreateNFTBridgeClaim(nftBridgeClaim BridgeClaim) MsgCreateNFTBridgeClaim {
 	return MsgCreateNFTBridgeClaim(nftBridgeClaim)
 }
 
@@ -219,9 +219,9 @@ func (msg MsgCreateNFTBridgeClaim) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.ValidatorAddress)}
 }
 
-// MapOracleClaimsToNFTBridgeClaims maps a set of generic oracle claim data into NFTBridgeClaim objects
-func MapOracleClaimsToNFTBridgeClaims(ethereumChainID int, bridgeContract ethbridge.EthereumAddress, nonce int, symbol string, tokenContract ethbridge.EthereumAddress, ethereumSender ethbridge.EthereumAddress, oracleValidatorClaims map[string]string, f func(int, ethbridge.EthereumAddress, int, string, ethbridge.EthereumAddress, ethbridge.EthereumAddress, sdk.ValAddress, string) (NFTBridgeClaim, error)) ([]NFTBridgeClaim, error) {
-	mappedClaims := make([]NFTBridgeClaim, len(oracleValidatorClaims))
+// MapOracleClaimsToNFTBridgeClaims maps a set of generic oracle claim data into BridgeClaim objects
+func MapOracleClaimsToNFTBridgeClaims(ethereumChainID int, bridgeContract ethbridge.EthereumAddress, nonce int, symbol string, tokenContract ethbridge.EthereumAddress, ethereumSender ethbridge.EthereumAddress, oracleValidatorClaims map[string]string, f func(int, ethbridge.EthereumAddress, int, string, ethbridge.EthereumAddress, ethbridge.EthereumAddress, sdk.ValAddress, string) (BridgeClaim, error)) ([]BridgeClaim, error) {
+	mappedClaims := make([]BridgeClaim, len(oracleValidatorClaims))
 	i := 0
 	for validatorBech32, validatorClaim := range oracleValidatorClaims {
 		validatorAddress, parseErr := sdk.ValAddressFromBech32(validatorBech32)

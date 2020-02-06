@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const STATUS = "status"
+
 func TestBasicMsgs(t *testing.T) {
 	//Setup
 	ctx, _, _, _, _, validatorAddresses, handler := CreateTestHandler(t, 0.7, []int64{3, 7})
@@ -49,7 +51,7 @@ func TestBasicMsgs(t *testing.T) {
 				require.Equal(t, value, types.TestDenom)
 			case "id":
 				require.Equal(t, value, types.TestID)
-			case "status":
+			case STATUS:
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
 			case "claim_type":
 				require.Equal(t, value, ethbridge.ClaimTypeToString[ethbridge.LockText])
@@ -78,7 +80,7 @@ func TestDuplicateMsgs(t *testing.T) {
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == STATUS {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
 			}
 		}
@@ -120,7 +122,7 @@ func TestMintSuccess(t *testing.T) {
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == STATUS {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.SuccessStatusText])
 			}
 		}
@@ -165,7 +167,7 @@ func TestNoMintFail(t *testing.T) {
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == STATUS {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
 			}
 		}
@@ -178,7 +180,7 @@ func TestNoMintFail(t *testing.T) {
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == STATUS {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
 			}
 		}
@@ -191,7 +193,7 @@ func TestNoMintFail(t *testing.T) {
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == STATUS {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.FailedStatusText])
 			}
 		}

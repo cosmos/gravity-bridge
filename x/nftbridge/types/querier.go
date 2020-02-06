@@ -41,14 +41,14 @@ func NewQueryNFTProphecyParams(
 
 // QueryNFTProphecyResponse defines the result payload for an nft prophecy query
 type QueryNFTProphecyResponse struct {
-	ID     string           `json:"id"`
-	Status oracle.Status    `json:"status"`
-	Claims []NFTBridgeClaim `json:"claims"`
+	ID     string        `json:"id"`
+	Status oracle.Status `json:"status"`
+	Claims []BridgeClaim `json:"claims"`
 }
 
 // NewQueryNFTProphecyResponse creates a new QueryNFTProphecyResponse instance
 func NewQueryNFTProphecyResponse(
-	id string, status oracle.Status, claims []NFTBridgeClaim,
+	id string, status oracle.Status, claims []BridgeClaim,
 ) QueryNFTProphecyResponse {
 	return QueryNFTProphecyResponse{
 		ID:     id,

@@ -37,7 +37,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // ProcessClaim processes a new claim coming in from a validator
-func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.NFTBridgeClaim) (oracle.Status, error) {
+func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.BridgeClaim) (oracle.Status, error) {
 	oracleClaim, err := types.CreateOracleClaimFromNFTClaim(k.cdc, claim)
 	if err != nil {
 		return oracle.Status{}, err
@@ -71,7 +71,7 @@ func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) error {
 }
 
 // ProcessBurn processes the burn of bridged NFT from the given sender
-func (k Keeper) ProcessBurn(ctx sdk.Context, cosmosSender sdk.AccAddress, denom, id string) error {
+func (k Keeper) ProcessBurn(ctx sdk.Context, cosmosSender sdk.Address, denom, id string) error {
 	cosmosNFT, err := k.nftKeeper.GetNFT(ctx, denom, id)
 	if err != nil {
 		return err
@@ -87,7 +87,7 @@ func (k Keeper) ProcessBurn(ctx sdk.Context, cosmosSender sdk.AccAddress, denom,
 }
 
 // ProcessLock processes the lockup of cosmos nft from the given sender
-func (k Keeper) ProcessLock(ctx sdk.Context, cosmosSender sdk.AccAddress, denom, id string) error {
+func (k Keeper) ProcessLock(ctx sdk.Context, cosmosSender sdk.Address, denom, id string) error {
 	cosmosNFT, err := k.nftKeeper.GetNFT(ctx, denom, id)
 	if err != nil {
 		return err

@@ -12,8 +12,8 @@ import (
 	"github.com/cosmos/peggy/x/oracle"
 )
 
-// NFTBridgeClaim is a structure that contains all the data for a particular bridge claim
-type NFTBridgeClaim struct {
+// BridgeClaim is a structure that contains all the data for a particular bridge claim
+type BridgeClaim struct {
 	EthereumChainID       int                       `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
 	BridgeContractAddress ethbridge.EthereumAddress `json:"bridge_contract_address" yaml:"bridge_contract_address"`
 	Nonce                 int                       `json:"nonce" yaml:"nonce"`
@@ -28,8 +28,8 @@ type NFTBridgeClaim struct {
 }
 
 // NewNFTBridgeClaim is a constructor function for NewNFTBridgeClaim
-func NewNFTBridgeClaim(ethereumChainID int, bridgeContract ethbridge.EthereumAddress, nonce int, symbol string, tokenContact ethbridge.EthereumAddress, ethereumSender ethbridge.EthereumAddress, cosmosReceiver sdk.AccAddress, validator sdk.ValAddress, denom, id string, claimType ethbridge.ClaimType) NFTBridgeClaim {
-	return NFTBridgeClaim{
+func NewNFTBridgeClaim(ethereumChainID int, bridgeContract ethbridge.EthereumAddress, nonce int, symbol string, tokenContact ethbridge.EthereumAddress, ethereumSender ethbridge.EthereumAddress, cosmosReceiver sdk.AccAddress, validator sdk.ValAddress, denom, id string, claimType ethbridge.ClaimType) BridgeClaim {
+	return BridgeClaim{
 		EthereumChainID:       ethereumChainID,
 		BridgeContractAddress: bridgeContract,
 		Nonce:                 nonce,
@@ -66,7 +66,7 @@ func NewOracleNFTClaimContent(cosmosReceiver sdk.AccAddress, denom, id string, c
 // the oracle module. The oracle module expects every claim for a particular prophecy to have the same id, so this id
 // must be created in a deterministic way that all validators can follow. For this, we use the Nonce an Ethereum Sender provided,
 // as all validators will see this same data from the smart contract.
-func CreateOracleClaimFromNFTClaim(cdc *codec.Codec, nftClaim NFTBridgeClaim) (oracle.Claim, error) {
+func CreateOracleClaimFromNFTClaim(cdc *codec.Codec, nftClaim BridgeClaim) (oracle.Claim, error) {
 	oracleID := strconv.Itoa(nftClaim.EthereumChainID) + strconv.Itoa(nftClaim.Nonce) + nftClaim.EthereumSender.String()
 	claimContent := NewOracleNFTClaimContent(nftClaim.CosmosReceiver, nftClaim.Denom, nftClaim.ID, nftClaim.ClaimType)
 	claimBytes, err := json.Marshal(claimContent)
@@ -79,10 +79,10 @@ func CreateOracleClaimFromNFTClaim(cdc *codec.Codec, nftClaim NFTBridgeClaim) (o
 }
 
 // CreateNFTClaimFromOracleString converts a string from any generic claim from the oracle module into an ethereum bridge specific claim.
-func CreateNFTClaimFromOracleString(ethereumChainID int, bridgeContract ethbridge.EthereumAddress, nonce int, symbol string, tokenContract ethbridge.EthereumAddress, ethereumAddress ethbridge.EthereumAddress, validator sdk.ValAddress, oracleClaimString string) (NFTBridgeClaim, error) {
+func CreateNFTClaimFromOracleString(ethereumChainID int, bridgeContract ethbridge.EthereumAddress, nonce int, symbol string, tokenContract ethbridge.EthereumAddress, ethereumAddress ethbridge.EthereumAddress, validator sdk.ValAddress, oracleClaimString string) (BridgeClaim, error) {
 	oracleClaim, err := CreateOracleNFTClaimFromOracleString(oracleClaimString)
 	if err != nil {
-		return NFTBridgeClaim{}, err
+		return BridgeClaim{}, err
 	}
 
 	return NewNFTBridgeClaim(

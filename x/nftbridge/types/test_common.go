@@ -38,7 +38,7 @@ func CreateTestNFTMsg(t *testing.T, validatorAddress sdk.ValAddress, claimType e
 	return nftMsg
 }
 
-func CreateTestNFTClaim(t *testing.T, testContractAddress ethbridge.EthereumAddress, testTokenAddress ethbridge.EthereumAddress, validatorAddress sdk.ValAddress, testEthereumAddress ethbridge.EthereumAddress, denom, id string, claimType ethbridge.ClaimType) NFTBridgeClaim {
+func CreateTestNFTClaim(t *testing.T, testContractAddress ethbridge.EthereumAddress, testTokenAddress ethbridge.EthereumAddress, validatorAddress sdk.ValAddress, testEthereumAddress ethbridge.EthereumAddress, denom, id string, claimType ethbridge.ClaimType) BridgeClaim {
 	testCosmosAddress, err1 := sdk.AccAddressFromBech32(TestAddress)
 	require.NoError(t, err1)
 	nftClaim := NewNFTBridgeClaim(TestEthereumChainID, testContractAddress, TestNonce, TestSymbol, testTokenAddress, testEthereumAddress, testCosmosAddress, validatorAddress, denom, id, claimType)
@@ -59,7 +59,7 @@ func CreateTestQueryNFTProphecyResponse(cdc *codec.Codec, t *testing.T, validato
 	testTokenAddress := ethbridge.NewEthereumAddress(TestTokenContractAddress)
 	nftBridgeClaim := CreateTestNFTClaim(t, testContractAddress, testTokenAddress, validatorAddress, testEthereumAddress, TestDenom, TestID, claimType)
 	oracleClaim, _ := CreateOracleClaimFromNFTClaim(cdc, nftBridgeClaim)
-	nftBridgeClaims := []NFTBridgeClaim{nftBridgeClaim}
+	nftBridgeClaims := []BridgeClaim{nftBridgeClaim}
 
 	return NewQueryNFTProphecyResponse(
 		oracleClaim.ID,
