@@ -21,7 +21,6 @@ const (
 )
 
 var (
-	// functions aliases
 	NewKeeper                            = keeper.NewKeeper
 	NewQuerier                           = keeper.NewQuerier
 	NewNFTBridgeClaim                    = types.NewNFTBridgeClaim
@@ -46,7 +45,7 @@ var (
 
 type (
 	Keeper                   = keeper.Keeper
-	NFTBridgeClaim           = types.NFTBridgeClaim
+	BridgeClaim              = types.BridgeClaim
 	OracleNFTClaimContent    = types.OracleNFTClaimContent
 	EthereumAddress          = ethbridge.EthereumAddress
 	MsgCreateNFTBridgeClaim  = types.MsgCreateNFTBridgeClaim

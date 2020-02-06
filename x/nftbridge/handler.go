@@ -38,7 +38,7 @@ func NewHandler(
 func handleMsgCreateNFTBridgeClaim(
 	ctx sdk.Context, cdc *codec.Codec, bridgeKeeper Keeper, msg MsgCreateNFTBridgeClaim,
 ) (*sdk.Result, error) {
-	status, err := bridgeKeeper.ProcessClaim(ctx, types.NFTBridgeClaim(msg))
+	status, err := bridgeKeeper.ProcessClaim(ctx, types.BridgeClaim(msg))
 	if err != nil {
 		return nil, err
 	}
