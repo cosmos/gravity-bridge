@@ -53,8 +53,7 @@ func main() {
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "EB", app.DefaultNodeHome)
-	err := executor.Execute()
-	if err != nil {
+	if err := executor.Execute(); err != nil {
 		panic(err)
 	}
 }
@@ -73,8 +72,7 @@ func exportAppStateAndTMValidators(
 
 	if height != -1 {
 		ebApp := app.NewEthereumBridgeApp(logger, db, false)
-		err := ebApp.LoadHeight(height)
-		if err != nil {
+		if err := ebApp.LoadHeight(height); err != nil {
 			return nil, nil, err
 		}
 		return ebApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)

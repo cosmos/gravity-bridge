@@ -7,20 +7,20 @@ import "log"
 //		of claims made by validators.
 // -----------------------------------------------------
 
-// EventRecords : map of transaction hashes to LockEvent structs
+// EventRecords map of transaction hashes to LockEvent structs
 var EventRecords = make(map[string]LockEvent)
 
-// NewEventWrite : add a validator's address to the official claims list
+// NewEventWrite add a validator's address to the official claims list
 func NewEventWrite(txHash string, event LockEvent) {
 	EventRecords[txHash] = event
 }
 
-// IsEventRecorded : checks the sessions stored events for this transaction hash
+// IsEventRecorded checks the sessions stored events for this transaction hash
 func IsEventRecorded(txHash string) bool {
 	return EventRecords[txHash].Nonce != nil
 }
 
-// PrintLockEventByTx : prints any witnessed events associated with a given transaction hash
+// PrintLockEventByTx prints any witnessed events associated with a given transaction hash
 func PrintLockEventByTx(txHash string) {
 	if IsEventRecorded(txHash) {
 		PrintLockEvent(EventRecords[txHash])
@@ -29,7 +29,7 @@ func PrintLockEventByTx(txHash string) {
 	}
 }
 
-// PrintLockEvents : prints all the claims made on this event
+// PrintLockEvents prints all the claims made on this event
 func PrintLockEvents() {
 	// For each claim, print the validator which submitted the claim
 	for txHash, event := range EventRecords {

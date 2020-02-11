@@ -4,11 +4,10 @@ import (
 	"os"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
+	tmOs "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/peggy/x/ethbridge"
 	"github.com/cosmos/peggy/x/oracle"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
@@ -122,7 +122,7 @@ func NewEthereumBridgeApp(
 	}
 
 	// init params keeper and subspaces
-	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey], params.DefaultCodespace)
+	app.ParamsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tkeys[params.TStoreKey])
 
 	authSubspace := app.ParamsKeeper.Subspace(auth.DefaultParamspace)
 	bankSubspace := app.ParamsKeeper.Subspace(bank.DefaultParamspace)
@@ -130,14 +130,14 @@ func NewEthereumBridgeApp(
 
 	// add keepers
 	app.AccountKeeper = auth.NewAccountKeeper(app.cdc, keys[auth.StoreKey], authSubspace, auth.ProtoBaseAccount)
-	app.BankKeeper = bank.NewBaseKeeper(app.AccountKeeper, bankSubspace, bank.DefaultCodespace, app.ModuleAccountAddrs())
+	app.BankKeeper = bank.NewBaseKeeper(app.AccountKeeper, bankSubspace, app.ModuleAccountAddrs())
 	app.SupplyKeeper = supply.NewKeeper(app.cdc, keys[supply.StoreKey], app.AccountKeeper, app.BankKeeper, maccPerms)
 	app.StakingKeeper = staking.NewKeeper(app.cdc, keys[staking.StoreKey],
-		app.SupplyKeeper, stakingSubspace, staking.DefaultCodespace)
+		app.SupplyKeeper, stakingSubspace)
 	app.OracleKeeper = oracle.NewKeeper(app.cdc, keys[oracle.StoreKey],
-		app.StakingKeeper, oracle.DefaultCodespace, oracle.DefaultConsensusNeeded,
+		app.StakingKeeper, oracle.DefaultConsensusNeeded,
 	)
-	app.BridgeKeeper = ethbridge.NewKeeper(app.cdc, app.SupplyKeeper, app.OracleKeeper, ethbridge.DefaultCodespace)
+	app.BridgeKeeper = ethbridge.NewKeeper(app.cdc, app.SupplyKeeper, app.OracleKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -148,7 +148,7 @@ func NewEthereumBridgeApp(
 		supply.NewAppModule(app.SupplyKeeper, app.AccountKeeper),
 		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
 		oracle.NewAppModule(app.OracleKeeper),
-		ethbridge.NewAppModule(app.OracleKeeper, app.SupplyKeeper, app.AccountKeeper, app.BridgeKeeper, ethbridge.DefaultCodespace, app.cdc),
+		ethbridge.NewAppModule(app.OracleKeeper, app.SupplyKeeper, app.AccountKeeper, app.BridgeKeeper, app.cdc),
 	)
 
 	app.mm.SetOrderEndBlockers(staking.ModuleName)
@@ -175,9 +175,8 @@ func NewEthereumBridgeApp(
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
-		err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
-		if err != nil {
-			cmn.Exit(err.Error())
+		if err := app.LoadLatestVersion(app.keys[bam.MainStoreKey]); err != nil {
+			tmOs.Exit(err.Error())
 		}
 	}
 	return app
@@ -186,8 +185,7 @@ func NewEthereumBridgeApp(
 // InitChainer application update at chain initialization
 func (app *EthereumBridgeApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
-	err := app.cdc.UnmarshalJSON(req.AppStateBytes, &genesisState)
-	if err != nil {
+	if err := app.cdc.UnmarshalJSON(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
 

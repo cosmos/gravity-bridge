@@ -21,15 +21,14 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	tmCommon "github.com/tendermint/tendermint/libs/common"
+	tmKv "github.com/tendermint/tendermint/libs/kv"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	"github.com/cosmos/peggy/cmd/ebrelayer/utils"
 	ethbridgeTypes "github.com/cosmos/peggy/x/ethbridge/types"
 )
 
-// LogLockToEthBridgeClaim : parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
+// LogLockToEthBridgeClaim parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
 func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *events.LockEvent) (ethbridgeTypes.EthBridgeClaim, error) {
 	witnessClaim := ethbridgeTypes.EthBridgeClaim{}
 
@@ -79,7 +78,7 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *events.LockEvent) (e
 	return witnessClaim, nil
 }
 
-// ProphecyClaimToSignedOracleClaim : packages and signs a prophecy claim's data, returning a new oracle claim
+// ProphecyClaimToSignedOracleClaim packages and signs a prophecy claim's data, returning a new oracle claim
 func ProphecyClaimToSignedOracleClaim(
 	event events.NewProphecyClaimEvent,
 	key *ecdsa.PrivateKey,
@@ -110,7 +109,7 @@ func ProphecyClaimToSignedOracleClaim(
 	return oracleClaim, nil
 }
 
-// CosmosMsgToProphecyClaim : parses event data from a CosmosMsg, packaging it as a ProphecyClaim
+// CosmosMsgToProphecyClaim parses event data from a CosmosMsg, packaging it as a ProphecyClaim
 func CosmosMsgToProphecyClaim(event events.CosmosMsg) ProphecyClaim {
 	claimType := event.ClaimType
 	cosmosSender := event.CosmosSender
@@ -131,8 +130,8 @@ func CosmosMsgToProphecyClaim(event events.CosmosMsg) ProphecyClaim {
 	return prophecyClaim
 }
 
-// BurnLockEventToCosmosMsg : parses data from a Burn/Lock event witnessed on Cosmos into a CosmosMsg struct
-func BurnLockEventToCosmosMsg(claimType events.Event, attributes []tmCommon.KVPair) events.CosmosMsg {
+// BurnLockEventToCosmosMsg parses data from a Burn/Lock event witnessed on Cosmos into a CosmosMsg struct
+func BurnLockEventToCosmosMsg(claimType events.Event, attributes []tmKv.Pair) events.CosmosMsg {
 	// Set up variables
 	var cosmosSender []byte
 	var ethereumReceiver, tokenContractAddress common.Address

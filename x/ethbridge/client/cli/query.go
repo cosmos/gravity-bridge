@@ -1,17 +1,14 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
-	"github.com/cosmos/peggy/x/ethbridge/querier"
-	"github.com/cosmos/peggy/x/ethbridge/types"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/peggy/x/ethbridge/types"
 )
 
 // GetCmdGetEthBridgeProphecy queries information about a specific prophecy
@@ -36,20 +33,16 @@ func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Comm
 			}
 
 			symbol := args[3]
-			if strings.TrimSpace(symbol) == "" {
-				return errors.New("Error: must specify a token symbol, including 'eth' for Ethereum")
-			}
-
 			tokenContract := types.NewEthereumAddress(args[4])
-
 			ethereumSender := types.NewEthereumAddress(args[5])
 
-			bz, err := cdc.MarshalJSON(types.NewQueryEthProphecyParams(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender))
+			bz, err := cdc.MarshalJSON(types.NewQueryEthProphecyParams(
+				ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender))
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", queryRoute, querier.QueryEthProphecy)
+			route := fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryEthProphecy)
 			res, _, err := cliCtx.QueryWithData(route, bz)
 			if err != nil {
 				return err
@@ -60,6 +53,7 @@ func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Comm
 			if err != nil {
 				return err
 			}
+
 			return cliCtx.PrintOutput(out)
 		},
 	}

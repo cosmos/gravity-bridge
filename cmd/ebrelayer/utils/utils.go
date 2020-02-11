@@ -7,6 +7,7 @@ package utils
 // --------------------------------------------------------
 
 import (
+	"io"
 	"log"
 	"math/big"
 	"regexp"
@@ -24,12 +25,12 @@ const (
 	nullAddress = "0x0000000000000000000000000000000000000000"
 )
 
-// IsZeroAddress : checks an Ethereum address and returns a bool which indicates if it is the null address
+// IsZeroAddress checks an Ethereum address and returns a bool which indicates if it is the null address
 func IsZeroAddress(address common.Address) bool {
 	return address == common.HexToAddress(nullAddress)
 }
 
-// GetSymbolAmountFromCoin : Parse (symbol, amount) from coin string
+// GetSymbolAmountFromCoin Parse (symbol, amount) from coin string
 func GetSymbolAmountFromCoin(coin string) (string, *big.Int) {
 	coinRune := []rune(coin)
 	amount := new(big.Int)
@@ -57,27 +58,23 @@ func GetSymbolAmountFromCoin(coin string) (string, *big.Int) {
 }
 
 // LoadValidatorCredentials : loads validator's credentials (address, moniker, and passphrase)
-func LoadValidatorCredentials(validatorFrom string) (sdk.ValAddress, string, string) {
-	validatorAccAddress, moniker, err := sdkContext.GetFromFields(validatorFrom, false)
+func LoadValidatorCredentials(validatorFrom string, inBuf io.Reader) (sdk.ValAddress, string, error) {
+	// Get the validator's name and account address using their moniker
+	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(inBuf, validatorFrom, false)
 	if err != nil {
-		log.Fatal(err)
+		return sdk.ValAddress{}, "", err
 	}
+
 	// Convert the validator's account address into type ValAddress
 	validatorAddress := sdk.ValAddress(validatorAccAddress)
 
-	// Get the validator's passphrase using their moniker
-	passphrase, err := keys.GetPassphrase(validatorFrom)
+	// Test keys.DefaultKeyPass is correct-
+	_, err = authtxb.MakeSignature(nil, validatorName, keys.DefaultKeyPass, authtxb.StdSignMsg{})
 	if err != nil {
-		log.Fatal(err)
+		return sdk.ValAddress{}, "", err
 	}
 
-	// Test passphrase is correct
-	_, err = authtxb.MakeSignature(nil, moniker, passphrase, authtxb.StdSignMsg{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return validatorAddress, moniker, passphrase
+	return validatorAddress, validatorName, nil
 }
 
 // LoadTendermintCLIContext : loads CLI context for tendermint txs

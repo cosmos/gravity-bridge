@@ -10,7 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	tmCommon "github.com/tendermint/tendermint/libs/common"
+	tmKv "github.com/tendermint/tendermint/libs/kv"
 	tmLog "github.com/tendermint/tendermint/libs/log"
 	tmClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -19,7 +19,7 @@ import (
 	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
-// InitCosmosRelayer : initializes a relayer which witnesses events on the Cosmos network and relays them to Ethereum
+// InitCosmosRelayer initializes a relayer which witnesses events on the Cosmos network and relays them to Ethereum
 func InitCosmosRelayer(
 	tendermintProvider string,
 	web3Provider string,
@@ -27,17 +27,19 @@ func InitCosmosRelayer(
 	key *ecdsa.PrivateKey,
 ) error {
 	logger := tmLog.NewTMLogger(tmLog.NewSyncWriter(os.Stdout))
-	client := tmClient.NewHTTP(tendermintProvider, "/websocket")
+	client, err := tmClient.NewHTTP(tendermintProvider, "/websocket")
+	if err != nil {
+		return err
+	}
 
 	client.SetLogger(logger)
 
-	err := client.Start()
-	if err != nil {
+	if err := client.Start(); err != nil {
 		logger.Error("Failed to start a client", "err", err)
 		os.Exit(1)
 	}
 
-	defer client.Stop()
+	defer client.Stop() //nolint:errcheck
 
 	// Subscribe to all tendermint transactions
 	query := "tm.event = 'Tx'"
@@ -82,7 +84,7 @@ func InitCosmosRelayer(
 	}
 }
 
-// getOracleClaimType : sets the OracleClaim's claim type based upon the witnessed event type
+// getOracleClaimType sets the OracleClaim's claim type based upon the witnessed event type
 func getOracleClaimType(eventType string) events.Event {
 	var claimType events.Event
 
@@ -98,9 +100,10 @@ func getOracleClaimType(eventType string) events.Event {
 	return claimType
 }
 
-// handleBurnLockMsg : parse event data as a CosmosMsg, package it into a ProphecyClaim, then relay tx to the Ethereum Network
+// handleBurnLockMsg parse event data as a CosmosMsg,
+// package it into a ProphecyClaim, then relay tx to the Ethereum Network
 func handleBurnLockMsg(
-	attributes []tmCommon.KVPair,
+	attributes []tmKv.Pair,
 	claimType events.Event,
 	web3Provider string,
 	contractAddress common.Address,

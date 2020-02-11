@@ -37,8 +37,7 @@ func InitEthereumRelayer(
 	cdc *codec.Codec,
 	provider string,
 	registryContractAddress common.Address,
-	moniker string,
-	passphrase string,
+	validatorName string,
 	validatorAddress sdk.ValAddress,
 	cliCtx sdkContext.CLIContext,
 	txBldr authtypes.TxBuilder,
@@ -84,17 +83,22 @@ func InitEthereumRelayer(
 			fmt.Println("\nWitnessed new Tx...")
 			fmt.Println("Block number:", vLog.BlockNumber)
 			fmt.Println("Tx hash:", vLog.TxHash.Hex())
+
+			var err error
 			switch vLog.Topics[0].Hex() {
 			case eventLogLockSignature:
-				err := handleLogLockEvent(clientChainID, bridgeBankAddress, bridgeBankContractABI, events.LogLock.String(), vLog, cdc, validatorAddress, moniker, passphrase, cliCtx, txBldr)
-				if err != nil {
-					log.Fatal(err)
-				}
+				err = handleLogLockEvent(
+					clientChainID, bridgeBankAddress, bridgeBankContractABI, events.LogLock.String(),
+					vLog, cdc, validatorAddress, validatorName, cliCtx, txBldr,
+				)
 			case eventLogNewProphecyClaimSignature:
-				err := handleLogNewProphecyClaimEvent(cosmosBridgeContractABI, events.LogNewProphecyClaim.String(), vLog, provider, cosmosBridgeAddress, privateKey)
-				if err != nil {
-					log.Fatal(err)
-				}
+				err = handleLogNewProphecyClaimEvent(
+					cosmosBridgeContractABI, events.LogNewProphecyClaim.String(), vLog, provider, cosmosBridgeAddress, privateKey,
+				)
+			}
+
+			if err != nil {
+				log.Fatal(err)
 			}
 		}
 	}
@@ -137,9 +141,8 @@ func handleLogLockEvent(
 	log types.Log,
 	cdc *codec.Codec,
 	validatorAddress sdk.ValAddress,
-	moniker string,
-	passphrase string,
-	cliCtx sdkContext.CLIContext,
+	validatorName string,
+	cliContext sdkContext.CLIContext,
 	txBldr authtypes.TxBuilder,
 ) error {
 	// Unpack the LogLock event using its unique event signature from the contract's ABI
@@ -155,15 +158,13 @@ func handleLogLockEvent(
 	}
 
 	// Initiate the relay
-	err = txs.RelayLockToCosmos(cdc, moniker, passphrase, &prophecyClaim, cliCtx, txBldr)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return txs.RelayLockToCosmos(
+		cdc, validatorName, &prophecyClaim, cliContext, txBldr,
+	)
 }
 
-// handleLogNewProphecyClaimEvent : unpacks a LogNewProphecyClaim event, converts it to a OracleClaim, and relays a tx to Ethereum
+// handleLogNewProphecyClaimEvent unpacks a LogNewProphecyClaim event,
+// converts it to a OracleClaim, and relays a tx to Ethereum
 func handleLogNewProphecyClaimEvent(
 	contractABI abi.ABI,
 	eventName string,

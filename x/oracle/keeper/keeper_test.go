@@ -30,8 +30,8 @@ func TestCreateGetProphecy(t *testing.T) {
 	require.Error(t, err)
 
 	//Test retrieval
-	prophecy, err := keeper.GetProphecy(ctx, TestID)
-	require.NoError(t, err)
+	prophecy, found := keeper.GetProphecy(ctx, TestID)
+	require.True(t, found)
 	require.Equal(t, prophecy.ID, TestID)
 	require.Equal(t, prophecy.Status.Text, types.PendingStatusText)
 	require.Equal(t, prophecy.ClaimValidators[TestString][0], validator1Pow3)

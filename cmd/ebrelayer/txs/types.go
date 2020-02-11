@@ -7,14 +7,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// OracleClaim : contains data required to make an OracleClaim
+// OracleClaim contains data required to make an OracleClaim
 type OracleClaim struct {
 	ProphecyID *big.Int
 	Message    string
 	Signature  []byte
 }
 
-// ProphecyClaim : contains data required to make an ProphecyClaim
+// ProphecyClaim contains data required to make an ProphecyClaim
 type ProphecyClaim struct {
 	ClaimType            events.Event
 	CosmosSender         []byte

@@ -18,11 +18,11 @@ import (
 )
 
 const (
-	// GasLimit : the gas limit in Gwei used for transactions sent with TransactOpts
+	// GasLimit the gas limit in Gwei used for transactions sent with TransactOpts
 	GasLimit = uint64(600000)
 )
 
-// RelayProphecyClaimToEthereum : relays the provided ProphecyClaim to CosmosBridge contract on the Ethereum network
+// RelayProphecyClaimToEthereum relays the provided ProphecyClaim to CosmosBridge contract on the Ethereum network
 func RelayProphecyClaimToEthereum(
 	provider string,
 	contractAddress common.Address,
@@ -42,7 +42,10 @@ func RelayProphecyClaimToEthereum(
 
 	// Send transaction
 	fmt.Println("Sending new ProphecyClaim to CosmosBridge...")
-	tx, err := cosmosBridgeInstance.NewProphecyClaim(auth, uint8(claim.ClaimType), claim.CosmosSender, claim.EthereumReceiver, claim.TokenContractAddress, claim.Symbol, claim.Amount)
+	tx, err := cosmosBridgeInstance.NewProphecyClaim(
+		auth, uint8(claim.ClaimType),
+		claim.CosmosSender, claim.EthereumReceiver, claim.TokenContractAddress,
+		claim.Symbol, claim.Amount)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,7 +68,7 @@ func RelayProphecyClaimToEthereum(
 	return nil
 }
 
-// RelayOracleClaimToEthereum : relays the provided OracleClaim to Oracle contract on the Ethereum network
+// RelayOracleClaimToEthereum relays the provided OracleClaim to Oracle contract on the Ethereum network
 func RelayOracleClaimToEthereum(
 	provider string,
 	contractAddress common.Address,
@@ -108,7 +111,7 @@ func RelayOracleClaimToEthereum(
 	return nil
 }
 
-// initRelayConfig : set up Ethereum client, validator's transaction auth, and the target contract's address
+// initRelayConfig set up Ethereum client, validator's transaction auth, and the target contract's address
 func initRelayConfig(
 	provider string,
 	registry common.Address,
@@ -157,7 +160,7 @@ func initRelayConfig(
 	case events.LogNewProphecyClaim:
 		targetContract = Oracle
 	default:
-		panic("Invalid target contract address")
+		panic("invalid target contract address")
 	}
 
 	// Get the specific contract's address

@@ -21,22 +21,29 @@ const DefaultConsensusNeeded float64 = 0.7
 type Prophecy struct {
 	ID     string `json:"id"`
 	Status Status `json:"status"`
-	//WARNING: Mappings are nondeterministic in Amino, an so iterating over them could result in consensus failure. New code should not iterate over the below 2 mappings.
-	ClaimValidators map[string][]sdk.ValAddress `json:"claim_validators"` //This is a mapping from a claim to the list of validators that made that claim.
-	ValidatorClaims map[string]string           `json:"validator_claims"` //This is a mapping from a validator bech32 address to their claim
+
+	//WARNING: Mappings are nondeterministic in Amino,
+	// an so iterating over them could result in consensus failure. New code should not iterate over the below 2 mappings.
+
+	//This is a mapping from a claim to the list of validators that made that claim.
+	ClaimValidators map[string][]sdk.ValAddress `json:"claim_validators"`
+	//This is a mapping from a validator bech32 address to their claim
+	ValidatorClaims map[string]string `json:"validator_claims"`
 }
 
-// DBProphecy is what the prophecy becomes when being saved to the database. Tendermint/Amino does not support maps so we must serialize those variables into bytes.
+// DBProphecy is what the prophecy becomes when being saved to the database.
+//  Tendermint/Amino does not support maps so we must serialize those variables into bytes.
 type DBProphecy struct {
 	ID              string `json:"id"`
 	Status          Status `json:"status"`
-	ClaimValidators []byte `json:"claim_validators"` //This is a mapping from a claim to the list of validators that made that claim
-	ValidatorClaims []byte `json:"validator_claims"` //This is a mapping from a validator bech32 address to their claim
+	ClaimValidators []byte `json:"claim_validators"`
+	ValidatorClaims []byte `json:"validator_claims"`
 }
 
 // SerializeForDB serializes a prophecy into a DBProphecy
 // TODO: Using gob here may mean that different tendermint clients in different languages may serialize/store
-// prophecies in their db in different ways - check with @codereviewer if this is ok or if it introduces a risk of creating forks.
+// prophecies in their db in different ways -
+// check with @codereviewer if this is ok or if it introduces a risk of creating forks.
 // Or maybe using a slower json serializer or Amino:JSON would be ok
 func (prophecy Prophecy) SerializeForDB() (DBProphecy, error) {
 	claimValidators, err := json.Marshal(prophecy.ClaimValidators)
@@ -60,14 +67,12 @@ func (prophecy Prophecy) SerializeForDB() (DBProphecy, error) {
 // DeserializeFromDB deserializes a DBProphecy into a prophecy
 func (dbProphecy DBProphecy) DeserializeFromDB() (Prophecy, error) {
 	var claimValidators map[string][]sdk.ValAddress
-	err := json.Unmarshal(dbProphecy.ClaimValidators, &claimValidators)
-	if err != nil {
+	if err := json.Unmarshal(dbProphecy.ClaimValidators, &claimValidators); err != nil {
 		return Prophecy{}, err
 	}
 
 	var validatorClaims map[string]string
-	err = json.Unmarshal(dbProphecy.ValidatorClaims, &validatorClaims)
-	if err != nil {
+	if err := json.Unmarshal(dbProphecy.ValidatorClaims, &validatorClaims); err != nil {
 		return Prophecy{}, err
 	}
 
@@ -128,11 +133,6 @@ func NewProphecy(id string) Prophecy {
 		ClaimValidators: make(map[string][]sdk.ValAddress),
 		ValidatorClaims: make(map[string]string),
 	}
-}
-
-// NewEmptyProphecy returns a blank prophecy, used with errors
-func NewEmptyProphecy() Prophecy {
-	return NewProphecy("")
 }
 
 // Status is a struct that contains the status of a given prophecy

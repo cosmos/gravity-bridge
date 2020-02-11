@@ -1,7 +1,7 @@
 package events
 
 // -----------------------------------------------------
-//    ethereumEvent : Creates LockEvents from new events on the
+//    ethereumEvent Creates LockEvents from new events on the
 //			  Ethereum blockchain.
 // -----------------------------------------------------
 
@@ -14,11 +14,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// LockEvent : struct which represents a LogLock event
+// LockEvent struct which represents a LogLock event
 type LockEvent struct {
 	EthereumChainID       *big.Int
 	BridgeContractAddress common.Address
-	Id                    [32]byte
+	ID                    [32]byte
 	From                  common.Address
 	To                    []byte
 	Token                 common.Address
@@ -27,20 +27,22 @@ type LockEvent struct {
 	Nonce                 *big.Int
 }
 
-// NewProphecyClaimEvent : struct which represents a LogNewProphecyClaim event
+// NewProphecyClaimEvent struct which represents a LogNewProphecyClaim event
 type NewProphecyClaimEvent struct {
-	ProphecyID       *big.Int
-	ClaimType        uint8
 	CosmosSender     []byte
+	Symbol           string
+	ProphecyID       *big.Int
+	Amount           *big.Int
 	EthereumReceiver common.Address
 	ValidatorAddress common.Address
 	TokenAddress     common.Address
-	Symbol           string
-	Amount           *big.Int
+	ClaimType        uint8
 }
 
-// UnpackLogLock : Handles new LogLock events
-func UnpackLogLock(clientChainID *big.Int, contractAddress string, contractAbi abi.ABI, eventName string, eventData []byte) (lockEvent LockEvent) {
+// UnpackLogLock Handles new LogLock events
+func UnpackLogLock(
+	clientChainID *big.Int, contractAddress string, contractAbi abi.ABI, eventName string, eventData []byte,
+) (lockEvent LockEvent) {
 	event := LockEvent{}
 
 	// Bridge contract address
@@ -63,8 +65,10 @@ func UnpackLogLock(clientChainID *big.Int, contractAddress string, contractAbi a
 	return event
 }
 
-// UnpackLogNewProphecyClaim : Handles new LogNewProphecyClaim events
-func UnpackLogNewProphecyClaim(contractAbi abi.ABI, eventName string, eventData []byte) (newProphecyClaimEvent NewProphecyClaimEvent) {
+// UnpackLogNewProphecyClaim Handles new LogNewProphecyClaim events
+func UnpackLogNewProphecyClaim(
+	contractAbi abi.ABI, eventName string, eventData []byte,
+) (newProphecyClaimEvent NewProphecyClaimEvent) {
 	event := NewProphecyClaimEvent{}
 
 	// Parse the event's attributes as Ethereum network variables
@@ -78,7 +82,7 @@ func UnpackLogNewProphecyClaim(contractAbi abi.ABI, eventName string, eventData 
 	return event
 }
 
-// PrintLockEvent : prints a LockEvent struct's information
+// PrintLockEvent prints a LockEvent struct's information
 func PrintLockEvent(event LockEvent) {
 	// Convert the variables into a printable format
 	chainID := event.EthereumChainID
@@ -91,11 +95,12 @@ func PrintLockEvent(event LockEvent) {
 	nonce := event.Nonce
 
 	// Print the event's information
-	fmt.Printf("\nChain ID: %v\nBridge contract address: %v\nToken symbol: %v\nToken contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
+	fmt.Printf(`\nChain ID: %v\nBridge contract address: %v\nToken symbol: %v\nToken 
+		contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n`,
 		chainID, bridgeContractAddress, symbol, token, sender, recipient, value, nonce)
 }
 
-// PrintProphecyClaimEvent : prints a NewProphecyClaimEvent struct's information
+// PrintProphecyClaimEvent prints a NewProphecyClaimEvent struct's information
 func PrintProphecyClaimEvent(event NewProphecyClaimEvent) {
 	// Convert the variables into a printable format
 	id := event.ProphecyID
@@ -108,6 +113,7 @@ func PrintProphecyClaimEvent(event NewProphecyClaimEvent) {
 	validator := event.ValidatorAddress.Hex()
 
 	// Print the event's information
-	fmt.Printf("\nProphecy ID: %v\nClaim Type: %v\nSender: %v\nRecipient %v\nSymbol %v\nToken %v\nAmount: %v\nValidator: %v\n\n",
+	fmt.Printf(`\nProphecy ID: %v\nClaim Type: %v\nSender: 
+	%v\nRecipient %v\nSymbol %v\nToken %v\nAmount: %v\nValidator: %v\n\n`,
 		id, claimType, sender, recipient, symbol, token, amount, validator)
 }

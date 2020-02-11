@@ -14,6 +14,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	moduleString = "module"
+	amountString = "amount"
+	statusString = "status"
+	senderString = "sender"
+)
+
 func TestBasicMsgs(t *testing.T) {
 	//Setup
 	ctx, _, _, _, _, validatorAddresses, handler := CreateTestHandler(t, 0.7, []int64{3, 7})
@@ -21,29 +28,32 @@ func TestBasicMsgs(t *testing.T) {
 	valAddress := validatorAddresses[0]
 
 	//Unrecognized type
-	res := handler(ctx, sdk.NewTestMsg())
-	require.False(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, "unrecognized ethbridge message type: "))
+	res, err := handler(ctx, sdk.NewTestMsg())
+	require.Error(t, err)
+	require.Nil(t, res)
+	require.True(t, strings.Contains(err.Error(), "unrecognized ethbridge message type: "))
 
 	//Normal Creation
 	normalCreateMsg := types.CreateTestEthMsg(t, valAddress, types.LockText)
-	res = handler(ctx, normalCreateMsg)
-	require.True(t, res.IsOK())
+	res, err = handler(ctx, normalCreateMsg)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
 			switch key := string(attribute.Key); key {
 			case "module":
 				require.Equal(t, value, types.ModuleName)
-			case "sender":
+			case senderString:
 				require.Equal(t, value, valAddress.String())
 			case "ethereum_sender":
 				require.Equal(t, value, types.TestEthereumAddress)
 			case "cosmos_receiver":
 				require.Equal(t, value, types.TestAddress)
-			case "amount":
+			case amountString:
 				require.Equal(t, value, types.TestCoins)
-			case "status":
+			case statusString:
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
 			case "claim_type":
 				require.Equal(t, value, types.ClaimTypeToString[types.LockText])
@@ -56,7 +66,7 @@ func TestBasicMsgs(t *testing.T) {
 	//Bad Creation
 	badCreateMsg := types.CreateTestEthMsg(t, valAddress, types.LockText)
 	badCreateMsg.Nonce = -1
-	err := badCreateMsg.ValidateBasic()
+	err = badCreateMsg.ValidateBasic()
 	require.Error(t, err)
 }
 
@@ -66,21 +76,23 @@ func TestDuplicateMsgs(t *testing.T) {
 	valAddress := validatorAddresses[0]
 
 	normalCreateMsg := types.CreateTestEthMsg(t, valAddress, types.LockText)
-	res := handler(ctx, normalCreateMsg)
-	require.True(t, res.IsOK())
+	res, err := handler(ctx, normalCreateMsg)
+	require.NoError(t, err)
+	require.NotNil(t, res)
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == statusString {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
 			}
 		}
 	}
 
 	//Duplicate message from same validator
-	res = handler(ctx, normalCreateMsg)
-	require.False(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, "already processed message from validator for this id"))
+	res, err = handler(ctx, normalCreateMsg)
+	require.Error(t, err)
+	require.Nil(t, res)
+	require.True(t, strings.Contains(err.Error(), "already processed message from validator for this id"))
 }
 
 func TestMintSuccess(t *testing.T) {
@@ -93,13 +105,15 @@ func TestMintSuccess(t *testing.T) {
 
 	//Initial message
 	normalCreateMsg := types.CreateTestEthMsg(t, valAddressVal1Pow2, types.LockText)
-	res := handler(ctx, normalCreateMsg)
-	require.True(t, res.IsOK())
+	res, err := handler(ctx, normalCreateMsg)
+	require.NoError(t, err)
+	require.NotNil(t, res)
 
 	//Message from second validator succeeds and mints new tokens
 	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal2Pow7, types.LockText)
-	res = handler(ctx, normalCreateMsg)
-	require.True(t, res.IsOK())
+	res, err = handler(ctx, normalCreateMsg)
+	require.NoError(t, err)
+	require.NotNil(t, res)
 	receiverAddress, err := sdk.AccAddressFromBech32(types.TestAddress)
 	require.NoError(t, err)
 	receiverCoins := bankKeeper.GetCoins(ctx, receiverAddress)
@@ -109,7 +123,7 @@ func TestMintSuccess(t *testing.T) {
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == statusString {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.SuccessStatusText])
 			}
 		}
@@ -117,9 +131,10 @@ func TestMintSuccess(t *testing.T) {
 
 	//Additional message from third validator fails and does not mint
 	normalCreateMsg = types.CreateTestEthMsg(t, valAddressVal3Pow1, types.LockText)
-	res = handler(ctx, normalCreateMsg)
-	require.False(t, res.IsOK())
-	require.True(t, strings.Contains(res.Log, "prophecy already finalized"))
+	res, err = handler(ctx, normalCreateMsg)
+	require.Error(t, err)
+	require.Nil(t, res)
+	require.True(t, strings.Contains(err.Error(), "prophecy already finalized"))
 	receiverCoins = bankKeeper.GetCoins(ctx, receiverAddress)
 	expectedCoins, err = sdk.ParseCoins(types.TestCoins)
 	require.NoError(t, err)
@@ -137,44 +152,53 @@ func TestNoMintFail(t *testing.T) {
 	testTokenContractAddress := types.NewEthereumAddress(types.TestTokenContractAddress)
 	testEthereumAddress := types.NewEthereumAddress(types.TestEthereumAddress)
 
-	ethClaim1 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal1Pow3, testEthereumAddress, types.TestCoins, types.LockText)
+	ethClaim1 := types.CreateTestEthClaim(
+		t, testEthereumAddress, testTokenContractAddress,
+		valAddressVal1Pow3, testEthereumAddress, types.TestCoins, types.LockText)
 	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
-	ethClaim2 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal2Pow4, testEthereumAddress, types.TestCoins, types.LockText)
+	ethClaim2 := types.CreateTestEthClaim(
+		t, testEthereumAddress, testTokenContractAddress,
+		valAddressVal2Pow4, testEthereumAddress, types.TestCoins, types.LockText)
 	ethMsg2 := NewMsgCreateEthBridgeClaim(ethClaim2)
-	ethClaim3 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal3Pow3, testEthereumAddress, types.AltTestCoins, types.LockText)
+	ethClaim3 := types.CreateTestEthClaim(
+		t, testEthereumAddress, testTokenContractAddress,
+		valAddressVal3Pow3, testEthereumAddress, types.AltTestCoins, types.LockText)
 	ethMsg3 := NewMsgCreateEthBridgeClaim(ethClaim3)
 
 	//Initial message
-	res := handler(ctx, ethMsg1)
-	require.True(t, res.IsOK())
+	res, err := handler(ctx, ethMsg1)
+	require.NoError(t, err)
+	require.NotNil(t, res)
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == statusString {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
 			}
 		}
 	}
 
 	//Different message from second validator succeeds
-	res = handler(ctx, ethMsg2)
-	require.True(t, res.IsOK())
+	res, err = handler(ctx, ethMsg2)
+	require.NoError(t, err)
+	require.NotNil(t, res)
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == statusString {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.PendingStatusText])
 			}
 		}
 	}
 
 	//Different message from third validator succeeds but results in failed prophecy with no minting
-	res = handler(ctx, ethMsg3)
-	require.True(t, res.IsOK())
+	res, err = handler(ctx, ethMsg3)
+	require.NoError(t, err)
+	require.NotNil(t, res)
 	for _, event := range res.Events {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
-			if string(attribute.Key) == "status" {
+			if string(attribute.Key) == statusString {
 				require.Equal(t, value, oracle.StatusTextToString[oracle.FailedStatusText])
 			}
 		}
@@ -202,12 +226,15 @@ func TestBurnEthSuccess(t *testing.T) {
 	testTokenContractAddress := types.NewEthereumAddress(types.TestTokenContractAddress)
 	testEthereumAddress := types.NewEthereumAddress(types.TestEthereumAddress)
 
-	ethClaim1 := types.CreateTestEthClaim(t, testEthereumAddress, testTokenContractAddress, valAddressVal1Pow5, testEthereumAddress, coinsToMint, types.LockText)
+	ethClaim1 := types.CreateTestEthClaim(
+		t, testEthereumAddress, testTokenContractAddress,
+		valAddressVal1Pow5, testEthereumAddress, coinsToMint, types.LockText)
 	ethMsg1 := NewMsgCreateEthBridgeClaim(ethClaim1)
 
 	// Initial message succeeds and mints eth
-	res := handler(ctx, ethMsg1)
-	require.True(t, res.IsOK())
+	res, err := handler(ctx, ethMsg1)
+	require.NoError(t, err)
+	require.NotNil(t, res)
 	receiverAddress, err := sdk.AccAddressFromBech32(types.TestAddress)
 	require.NoError(t, err)
 	receiverCoins := bankKeeper.GetCoins(ctx, receiverAddress)
@@ -220,15 +247,14 @@ func TestBurnEthSuccess(t *testing.T) {
 
 	// Second message succeeds, burns eth and fires correct event
 	burnMsg := types.CreateTestBurnMsg(t, types.TestAddress, ethereumReceiver, coinsToBurn)
-	res = handler(ctx, burnMsg)
-	require.True(t, res.IsOK())
-	senderAddress := receiverAddress
+	res, err = handler(ctx, burnMsg)
 	require.NoError(t, err)
+	require.NotNil(t, res)
+	senderAddress := receiverAddress
 	burnedCoins, err := sdk.ParseCoins(coinsToBurn)
 	require.NoError(t, err)
 	remainingCoins := mintedCoins.Sub(burnedCoins)
 	senderCoins := bankKeeper.GetCoins(ctx, senderAddress)
-	require.NoError(t, err)
 	require.True(t, senderCoins.IsEqual(remainingCoins))
 	eventEthereumChainID := ""
 	eventTokenContract := ""
@@ -239,11 +265,11 @@ func TestBurnEthSuccess(t *testing.T) {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
 			switch key := string(attribute.Key); key {
-			case "sender":
+			case senderString:
 				require.Equal(t, value, senderAddress.String())
 			case "recipient":
 				require.Equal(t, value, moduleAccountAddress.String())
-			case "module":
+			case moduleString:
 				require.Equal(t, value, ModuleName)
 			case "ethereum_chain_id":
 				eventEthereumChainID = value
@@ -253,7 +279,7 @@ func TestBurnEthSuccess(t *testing.T) {
 				eventCosmosSender = value
 			case "ethereum_receiver":
 				eventEthereumReceiver = value
-			case "amount":
+			case amountString:
 				eventAmount = value
 			default:
 				require.Fail(t, fmt.Sprintf("unrecognized event %s", key))
@@ -267,12 +293,11 @@ func TestBurnEthSuccess(t *testing.T) {
 	require.Equal(t, eventAmount, coinsToBurn)
 
 	// Third message succeeds, burns more eth and fires correct event
-	res = handler(ctx, burnMsg)
-	require.True(t, res.IsOK())
+	res, err = handler(ctx, burnMsg)
 	require.NoError(t, err)
+	require.NotNil(t, res)
 	remainingCoins = remainingCoins.Sub(burnedCoins)
 	senderCoins = bankKeeper.GetCoins(ctx, senderAddress)
-	require.NoError(t, err)
 	require.True(t, senderCoins.IsEqual(remainingCoins))
 	eventEthereumChainID = ""
 	eventTokenContract = ""
@@ -283,11 +308,11 @@ func TestBurnEthSuccess(t *testing.T) {
 		for _, attribute := range event.Attributes {
 			value := string(attribute.Value)
 			switch key := string(attribute.Key); key {
-			case "sender":
+			case senderString:
 				require.Equal(t, value, senderAddress.String())
 			case "recipient":
 				require.Equal(t, value, moduleAccountAddress.String())
-			case "module":
+			case moduleString:
 				require.Equal(t, value, ModuleName)
 			case "ethereum_chain_id":
 				eventEthereumChainID = value
@@ -297,7 +322,7 @@ func TestBurnEthSuccess(t *testing.T) {
 				eventCosmosSender = value
 			case "ethereum_receiver":
 				eventEthereumReceiver = value
-			case "amount":
+			case amountString:
 				eventAmount = value
 			default:
 				require.Fail(t, fmt.Sprintf("unrecognized event %s", key))
@@ -311,10 +336,9 @@ func TestBurnEthSuccess(t *testing.T) {
 	require.Equal(t, eventAmount, coinsToBurn)
 
 	// Fourth message fails, not enough eth
-	res = handler(ctx, burnMsg)
-	require.False(t, res.IsOK())
-	require.NoError(t, err)
+	res, err = handler(ctx, burnMsg)
+	require.Error(t, err)
+	require.Nil(t, res)
 	senderCoins = bankKeeper.GetCoins(ctx, senderAddress)
-	require.NoError(t, err)
 	require.True(t, senderCoins.IsEqual(remainingCoins))
 }

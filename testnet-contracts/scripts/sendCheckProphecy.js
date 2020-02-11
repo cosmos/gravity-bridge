@@ -57,20 +57,24 @@ module.exports = async () => {
 
   console.log("Attempting to send checkBridgeProphecy() tx...");
 
-  const result = await oracleContract.deployed().then(function(instance) {
-    return instance.checkBridgeProphecy(prophecyID, {
+  const instance = await oracleContract.deployed()
+  let result
+  try {
+    result = await instance.checkBridgeProphecy(prophecyID, {
       from: accounts[0],
       value: 0,
       gas: 300000 // 300,000 Gwei
     });
-  });
+  } catch (error) {
+    console.log(error.message)
+    return
+  }
 
   const valid = result[0];
   const signedPower = Number(result[1]);
   const totalPower = Number(result[2]);
-
   if (result) {
-    console.log(`\n\tProphecy ${prophecyID} status: ${status}`);
+    console.log(`\n\tProphecy ${prophecyID}`);
     console.log("----------------------------------------");
     console.log(`Weighted total power:\t ${totalPower}`);
     console.log(`Weighted signed power:\t ${signedPower}`);
@@ -79,6 +83,7 @@ module.exports = async () => {
   } else {
     console.error("Error: no result from transaction!");
   }
+
 
   return;
 };

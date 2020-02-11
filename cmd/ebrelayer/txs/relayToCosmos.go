@@ -1,7 +1,7 @@
 package txs
 
 // ------------------------------------------------------------
-//	Relay : Builds and encodes EthBridgeClaim Msgs with the
+//	Relay Builds and encodes EthBridgeClaim Msgs with the
 //  	specified variables, before presenting the unsigned
 //      transaction to validators for optional signing.
 //      Once signed, the data packets are sent as transactions
@@ -10,6 +10,7 @@ package txs
 
 import (
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
@@ -19,12 +20,11 @@ import (
 	"github.com/cosmos/peggy/x/ethbridge/types"
 )
 
-// RelayLockToCosmos : RelayLockToCosmos applies validator's signature to an EthBridgeClaim message
+// RelayLockToCosmos RelayLockToCosmos applies validator's signature to an EthBridgeClaim message
 //		containing information about an event on the Ethereum blockchain before relaying to the Bridge
 func RelayLockToCosmos(
 	cdc *codec.Codec,
 	moniker string,
-	passphrase string,
 	claim *types.EthBridgeClaim,
 	cliCtx context.CLIContext,
 	txBldr authtypes.TxBuilder,
@@ -44,7 +44,7 @@ func RelayLockToCosmos(
 	}
 
 	// Build and sign the transaction
-	txBytes, err := txBldr.BuildAndSign(moniker, passphrase, []sdk.Msg{msg})
+	txBytes, err := txBldr.BuildAndSign(moniker, keys.DefaultKeyPass, []sdk.Msg{msg})
 	if err != nil {
 		return err
 	}
@@ -55,6 +55,8 @@ func RelayLockToCosmos(
 		return err
 	}
 
-	cliCtx.PrintOutput(res)
+	if err = cliCtx.PrintOutput(res); err != nil {
+		return err
+	}
 	return nil
 }
