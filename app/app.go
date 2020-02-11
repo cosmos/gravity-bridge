@@ -9,6 +9,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/peggy/x/ethbridge"
+	"github.com/cosmos/peggy/x/nftbridge"
 	"github.com/cosmos/peggy/x/oracle"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -24,6 +25,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
+	"github.com/cosmos/modules/incubator/nft"
 	"github.com/cosmos/sdk-tutorials/scavenge/x/scavenge"
 )
 
@@ -49,7 +51,9 @@ var (
 		params.AppModuleBasic{},
 		supply.AppModuleBasic{},
 		oracle.AppModuleBasic{},
+		nftbridge.AppModuleBasic{},
 		ethbridge.AppModuleBasic{},
+		nft.AppModuleBasic{},
 		scavenge.AppModuleBasic{},
 	)
 
@@ -89,10 +93,12 @@ type EthereumBridgeApp struct {
 	SupplyKeeper   supply.Keeper
 	ParamsKeeper   params.Keeper
 	ScavengeKeeper scavenge.Keeper
+	NFTKeeper      nft.Keeper
 
 	// EthBridge keepers
-	BridgeKeeper ethbridge.Keeper
-	OracleKeeper oracle.Keeper
+	NFTBridgeKeeper nftbridge.Keeper
+	EthBridgeKeeper ethbridge.Keeper
+	OracleKeeper    oracle.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -113,7 +119,7 @@ func NewEthereumBridgeApp(
 	keys := sdk.NewKVStoreKeys(
 		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, oracle.StoreKey, params.StoreKey,
-		scavenge.StoreKey,
+		nft.StoreKey, scavenge.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -141,13 +147,22 @@ func NewEthereumBridgeApp(
 	app.OracleKeeper = oracle.NewKeeper(app.cdc, keys[oracle.StoreKey],
 		app.StakingKeeper, oracle.DefaultConsensusNeeded,
 	)
-	app.BridgeKeeper = ethbridge.NewKeeper(app.cdc, app.SupplyKeeper, app.OracleKeeper)
+	app.NFTBridgeKeeper = nftbridge.NewKeeper(app.cdc, app.NFTKeeper, app.OracleKeeper)
+	app.EthBridgeKeeper = ethbridge.NewKeeper(app.cdc, app.SupplyKeeper, app.OracleKeeper)
 
+	app.NFTKeeper = nft.NewKeeper(
+		app.cdc,
+		keys[nft.StoreKey],
+	)
 	app.ScavengeKeeper = scavenge.NewKeeper(
+		app.NFTKeeper,
 		app.BankKeeper,
 		app.cdc,
 		keys[scavenge.StoreKey],
 	)
+
+	nftModule := nft.NewAppModule(app.NFTKeeper, app.AccountKeeper)
+	overriddenNFTModule := NewOverrideNFTModule(nftModule, app.NFTKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -158,8 +173,10 @@ func NewEthereumBridgeApp(
 		supply.NewAppModule(app.SupplyKeeper, app.AccountKeeper),
 		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
 		oracle.NewAppModule(app.OracleKeeper),
-		ethbridge.NewAppModule(app.OracleKeeper, app.SupplyKeeper, app.AccountKeeper, app.BridgeKeeper, app.cdc),
-		scavenge.NewAppModule(app.ScavengeKeeper, app.BankKeeper),
+		overriddenNFTModule,
+		nftbridge.NewAppModule(app.OracleKeeper, app.NFTKeeper, app.NFTBridgeKeeper, app.cdc),
+		ethbridge.NewAppModule(app.OracleKeeper, app.SupplyKeeper, app.AccountKeeper, app.EthBridgeKeeper, app.cdc),
+		scavenge.NewAppModule(app.ScavengeKeeper, app.NFTKeeper, app.BankKeeper),
 	)
 
 	app.mm.SetOrderEndBlockers(staking.ModuleName)
@@ -168,8 +185,8 @@ func NewEthereumBridgeApp(
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
 		auth.ModuleName, staking.ModuleName, bank.ModuleName,
-		supply.ModuleName, genutil.ModuleName, ethbridge.ModuleName,
-		scavenge.ModuleName,
+		supply.ModuleName, genutil.ModuleName, nftbridge.ModuleName, ethbridge.ModuleName,
+		nft.ModuleName, scavenge.ModuleName,
 	)
 
 	// TODO: add simulator support
