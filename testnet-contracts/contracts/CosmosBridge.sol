@@ -31,7 +31,9 @@ contract CosmosBridge {
     enum ClaimType {
         Unsupported,
         Burn,
-        Lock
+        Lock,
+        BurnNFT,
+        LockNFT
     }
 
     struct ProphecyClaim {
@@ -126,6 +128,8 @@ contract CosmosBridge {
         hasBridgeBank = false;
     }
 
+
+    // TODO: check oracle address is not zero?
     /*
     * @dev: setOracle
     */
@@ -148,6 +152,7 @@ contract CosmosBridge {
         );
     }
 
+    // TODO: check bridgeBank address is not zero?
     /*
     * @dev: setBridgeBank
     */
@@ -170,6 +175,7 @@ contract CosmosBridge {
         );
     }
 
+    // TODO: Why is claimType declared twice?
     /*
     * @dev: newProphecyClaim
     *       Creates a new burn or lock prophecy claim, adding it to the prophecyClaims mapping.
@@ -202,6 +208,10 @@ contract CosmosBridge {
             claimType = ClaimType.Burn;
         } else if(_claimType == ClaimType.Lock){
             claimType = ClaimType.Lock;
+        } else if (_claimType == ClaimType.BurnNFT) {
+            claimType = ClaimType.BurnNFT;
+        } else if(_claimType == ClaimType.LockNFT) {
+            claimType = ClaimType.LockNFT;
         }
 
         // Create the new ProphecyClaim
@@ -253,8 +263,14 @@ contract CosmosBridge {
         ClaimType claimType = prophecyClaims[_prophecyID].claimType;
         if(claimType == ClaimType.Burn) {
             unlockTokens(_prophecyID);
-        } else {
+        } else if (claimType == ClaimType.Lock) {
             issueBridgeTokens(_prophecyID);
+        } else if (claimType == ClaimType.BurnNFT) {
+            unlockNFT(_prophecyID);
+        } else if (claimType == ClaimType.LockNFT) {
+            issueBridgeNFTs(_prophecyID);
+        } else {
+            require(false, "Unknown Claim Type");
         }
 
         emit LogProphecyCompleted(
@@ -295,6 +311,45 @@ contract CosmosBridge {
         ProphecyClaim memory prophecyClaim = prophecyClaims[_prophecyID];
 
         bridgeBank.unlock(
+            prophecyClaim.ethereumReceiver,
+            prophecyClaim.tokenAddress,
+            prophecyClaim.symbol,
+            prophecyClaim.amount
+        );
+    }
+
+    /*
+    * @dev: unlockNFT
+    *       Issues a request for the BridgeBank to unluck the NFT held on contract
+    */
+    function unlockNFT(
+        uint256 _prophecyID
+    )
+        internal
+    {
+        ProphecyClaim memory prophecyClaim = prophecyClaims[_prophecyID];
+
+        bridgebank.unlockNFT(
+            prophecyClaim.ethereumReceiver,
+            prophecyClaim.tokenAddress,
+            prophecyClaim.symbol,
+            prophecyClaim.amount
+        )
+    }
+
+    /*
+    * @dev: issueBridgeNFTs
+    *       Issues a request for the BridgeBank to mint new BridgeTokens
+    */
+    function issueBridgeNFTs(
+        uint256 _prophecyID
+    )
+        internal
+    {
+        ProphecyClaim memory prophecyClaim = prophecyClaims[_prophecyID];
+
+        bridgeBank.mintBridgeNFT(
+            prophecyClaim.cosmosSender,
             prophecyClaim.ethereumReceiver,
             prophecyClaim.tokenAddress,
             prophecyClaim.symbol,

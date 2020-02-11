@@ -34,6 +34,22 @@ contract EthereumBank {
         uint256 _value
     );
 
+    event LogLockNFT(
+        address _from,
+        bytes _to,
+        address _token,
+        string _symbol,
+        uint256 _id,
+        uint256 _nonce
+    );
+
+    event LogUnlockNFT(
+        address _to,
+        address _token,
+        string _symbol,
+        uint256 _id
+    );
+
     /*
     * @dev: Modifier declarations
     */
@@ -85,6 +101,7 @@ contract EthereumBank {
         lockNonce = 0;
     }
 
+
     /*
     * @dev: Creates a new Ethereum deposit with a unique id.
     *
@@ -118,6 +135,7 @@ contract EthereumBank {
         );
     }
 
+
     /*
     * @dev: Unlocks funds held on contract and sends them to the
     *       intended recipient
@@ -149,6 +167,73 @@ contract EthereumBank {
         }
 
         emit LogUnlock(
+            _recipient,
+            _token,
+            _symbol,
+            _amount
+        );
+    }
+
+
+    /*
+    * @dev: Creates a new Ethereum deposit with a unique id.
+    *
+    * @param _sender: The sender's ethereum address.
+    * @param _recipient: The intended recipient's cosmos address.
+    * @param _token: The NFT address.
+    * @param _amount: The id of the NFT.
+    */
+    function lockFundsNFT(
+        address payable _sender,
+        bytes memory _recipient,
+        address _token,
+        string memory _symbol,
+        uint256 _amount
+    )
+        internal
+    {
+        // Incerment the lock nonce
+        lockNonce = lockNonce.add(1);
+
+        require(!lockedFunds[_token][_amount], "NFT already locked");
+        // Increment locked funds by the amount of tokens to be locked
+        lockedFunds[_token][_amount] = true;
+
+         emit LogLockNFT(
+            _sender,
+            _recipient,
+            _token,
+            _symbol,
+            _amount,
+            lockNonce
+        );
+    }
+
+    /*
+    * @dev: Unlocks NFT held on contract and sends it to the
+    *       intended recipient
+    *
+    * @param _recipient: recipient's Ethereum address
+    * @param _token: token contract address
+    * @param _symbol: token symbol
+    * @param _amount: NFT ID
+    */
+    function unlockNFT(
+        address payable _recipient,
+        address _token,
+        string memory _symbol,
+        uint256 _amount
+    )
+        internal
+    {
+        // Confirm NFT is in lockedNFTs mapping then remove it
+        require(lockedNFTs[_token][_amount], "This NFT not owned by contract");
+        lockedNFTs[_token][_amount] = false;
+
+        // Transfer NFT to intended recipient (reverts on failure)
+        BridgeNFT(_token).transferFrom(address(this), _recipient, _amount);
+
+        emit LogUnlockNFT(
             _recipient,
             _token,
             _symbol,

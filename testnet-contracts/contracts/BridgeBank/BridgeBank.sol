@@ -135,7 +135,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
         uint256 _amount
     )
         public
-        availableNonce()
+        availableNonce() // TODO: walk through this later and make sure it's really preventing re-entrancy
         payable
     {
         string memory symbol;
@@ -156,7 +156,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
           // ERC20 deposit
         } else {
           require(
-              BridgeToken(_token).transferFrom(msg.sender, address(this), _amount),
+              BridgeToken(_token).transferFrom(msg.sender, address(this), _amount), // TODO: safe transfer for malformed ERC20s?
               "Contract token allowances insufficient to complete this lock request"
           );
           // Set symbol to the ERC20 token's symbol

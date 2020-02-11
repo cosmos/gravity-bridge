@@ -60,6 +60,7 @@ contract Oracle {
         _;
     }
 
+    // TODO: Why bool == true instead of just bool?
     /*
     * @dev: Modifier to restrict access to current ValSet validators
     */
@@ -107,6 +108,7 @@ contract Oracle {
         address validatorAddress = msg.sender;
 
         // Validate the msg.sender's signature
+        // The msg sender is the same one who signed the message
         require(
             validatorAddress == valset.recover(
                 _message,
@@ -134,7 +136,7 @@ contract Oracle {
 
     /*
     * @dev: processBridgeProphecy
-    *       Pubically available method which attempts to process a bridge prophecy
+    *       publicly available method which attempts to process a bridge prophecy
     */
     function processBridgeProphecy(
         uint256 _prophecyID
@@ -166,6 +168,8 @@ contract Oracle {
         );
     }
 
+    // TODO: Why is a public function restricted to onlyOperator?
+    // TODO: Why is bool checked for == true?
     /*
     * @dev: checkBridgeProphecy
     *       Operator accessor method which checks if a prophecy has passed
@@ -222,8 +226,8 @@ contract Oracle {
         }
 
         // Calculate if weighted signed power has reached threshold of weighted total power
-        uint256 weightedSignedPower = signedPower.mul(3);
-        uint256 weightedTotalPower = totalPower.mul(2);
+        uint256 weightedSignedPower = signedPower.mul(3); // TODO: The description says signer power should be multiplied by 2, not 3
+        uint256 weightedTotalPower = totalPower.mul(2); // TODO: The description says total power should be multiplied by 3, not 2
         bool hasReachedThreshold = weightedSignedPower >= weightedTotalPower;
 
         return(
