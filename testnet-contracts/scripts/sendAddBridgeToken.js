@@ -95,5 +95,45 @@ module.exports = async () => {
     );
   }
 
+
+  // Get the bridge token's address if it were to be created
+  const bridgeNFTAddress = await contract.deployed().then(function(instance) {
+    return instance.createNewBridgeNFT.call(symbol, {
+      from: accounts[0],
+      value: 0,
+      gas: 300000 // 300,000 Gwei
+    });
+  });
+
+  //  Create the bridge token
+  await contract.deployed().then(function(instance) {
+    return instance.createNewBridgeNFT(symbol, {
+      from: accounts[0],
+      value: 0,
+      gas: 300000 // 300,000 Gwei
+    });
+  });
+
+  // Check bridge token whitelist
+  const isOnNFTWhiteList = await contract.deployed().then(function(instance) {
+    return instance.bridgeTokenWhitelist(bridgeNFTAddress, {
+      from: accounts[0],
+      value: 0,
+      gas: 300000 // 300,000 Gwei
+    });
+  });
+
+
+  if (isOnNFTWhiteList) {
+    console.log(
+      'Bridge NFT"' + symbol + '" created at address:',
+      bridgeNFTAddress
+    );
+  } else {
+    console.log(
+      "Error: Bridge NFT creation and whitelisting was not successful"
+    );
+  }
+
   return;
 };

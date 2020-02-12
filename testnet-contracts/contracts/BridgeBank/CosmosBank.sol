@@ -134,7 +134,9 @@ contract CosmosBank {
         returns(address)
     {
         bridgeTokenCount = bridgeTokenCount.add(1);
-        bytes memory _data = bytes(_symbol);
+        // bytes memory _data = bytes("");
+
+        bytes memory _data = abi.encodeWithSelector(BridgeNFT(0).init.selector, _symbol);
         address newBridgeNFTAddress = nftFactory.createProxy(_data);
 
         // Set address in tokens mapping

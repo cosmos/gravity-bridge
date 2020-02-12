@@ -11,6 +11,11 @@ module.exports = async () => {
   const tokenContract = truffleContract(
     require("../build/contracts/BridgeToken.json")
   );
+  const nftContract = truffleContract(
+    require("../build/contracts/BridgeNFT.json")
+  );
+
+  
 
   /*******************************************
    *** Constants
@@ -47,6 +52,7 @@ module.exports = async () => {
   const provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
   const web3 = new Web3(provider);
   tokenContract.setProvider(web3.currentProvider);
+  nftContract.setProvider(web3.currentProvider);
 
   /*******************************************
    *** Contract interaction
@@ -55,7 +61,7 @@ module.exports = async () => {
   const accounts = await web3.eth.getAccounts();
 
   // Send mint transaction
-  const { logs } = await tokenContract.deployed().then(function(instance) {
+  var { logs } = await tokenContract.deployed().then(function(instance) {
     return instance.mint(accounts[0], TOKEN_AMOUNT, {
       from: accounts[0],
       value: 0,
@@ -64,16 +70,38 @@ module.exports = async () => {
   });
 
   // Get event logs
-  const event = logs.find(e => e.event === "Transfer");
+  var event = logs.find(e => e.event === "Transfer");
 
   // Parse event fields
-  const transferEvent = {
+  var transferEvent = {
     from: event.args.from,
     to: event.args.to,
     value: Number(event.args.value)
   };
 
   console.log(transferEvent);
+
+
+  // Send mint transaction
+  var { logs } = await nftContract.deployed().then(function(instance) {
+    return instance.mint(accounts[0], TOKEN_AMOUNT, {
+      from: accounts[0],
+      value: 0,
+      gas: 300000 // 300,000 Gwei
+    });
+  });
+
+  // Get event logs
+  var event = logs.find(e => e.event === "Transfer");
+
+  // Parse event fields
+  var nftTransferEvent = {
+    from: event.args.from,
+    to: event.args.to,
+    value: Number(event.args.value)
+  };
+
+  console.log(nftTransferEvent);
 
   return;
 };

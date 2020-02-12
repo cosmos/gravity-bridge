@@ -13,6 +13,9 @@ module.exports = async () => {
   const tokenContract = truffleContract(
     require("../build/contracts/BridgeToken.json")
   );
+  const nftContract = truffleContract(
+    require("../build/contracts/BridgeNFT.json")
+  );
 
   /*******************************************
    *** Constants
@@ -79,6 +82,7 @@ module.exports = async () => {
 
   bridgeContract.setProvider(web3.currentProvider);
   tokenContract.setProvider(web3.currentProvider);
+  nftContract.setProvider(web3.currentProvider);
 
   /*******************************************
    *** Contract interaction

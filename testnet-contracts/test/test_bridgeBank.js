@@ -2,6 +2,8 @@ const Valset = artifacts.require("Valset");
 const CosmosBridge = artifacts.require("CosmosBridge");
 const Oracle = artifacts.require("Oracle");
 const BridgeToken = artifacts.require("BridgeToken");
+const BridgeNFT = artifacts.require("BridgeNFT");
+const NFTFactory = artifacts.require("NFTFactory");
 const BridgeBank = artifacts.require("BridgeBank");
 
 const { toEthSignedMessageHash, fixSignature } = require("./helpers/helpers");
@@ -49,11 +51,23 @@ contract("BridgeBank", function(accounts) {
         this.cosmosBridge.address
       );
 
+
+      this.bridgeNFT = await BridgeNFT.new("TEST", {
+        // gas: 4612388,
+        from: operator
+      });
+
+      this.nftFactory = await NFTFactory.new(this.bridgeNFT.address, {
+        // gas: 4612388,
+        from: operator
+      });
+
       // Deploy BridgeBank contract
       this.bridgeBank = await BridgeBank.new(
         operator,
         this.oracle.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        this.nftFactory.address
       );
     });
 
@@ -82,6 +96,14 @@ contract("BridgeBank", function(accounts) {
         .send(Web3Utils.toWei("0.25", "ether"), { from: userOne })
         .should.be.rejectedWith(EVMRevert);
     });
+
+    it("should have the correct BridgeNFT master and NFTFactory addresses", async function() {
+      proxyMaster = await this.nftFactory.target()
+      proxyMaster.should.be.equal(this.bridgeNFT.address);
+
+      factoryAddress = await this.bridgeBank.nftFactory()
+      factoryAddress.should.be.equal(this.nftFactory.address);
+    })
   });
 
   describe("BridgeToken creation (Cosmos assets)", function() {
@@ -105,11 +127,22 @@ contract("BridgeBank", function(accounts) {
         this.cosmosBridge.address
       );
 
+      this.bridgeNFT = await BridgeNFT.new("TEST", {
+        // gas: 4612388,
+        from: operator
+      });
+
+      this.nftFactory = await NFTFactory.new(this.bridgeNFT.address, {
+        // gas: 4612388,
+        from: operator
+      });
+
       // Deploy BridgeBank contract
       this.bridgeBank = await BridgeBank.new(
         operator,
         this.oracle.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        this.nftFactory.address
       );
       this.symbol = "ABC";
     });
@@ -148,6 +181,7 @@ contract("BridgeBank", function(accounts) {
       event.args._symbol.should.be.equal(this.symbol);
     });
 
+
     it("should increase the bridge token count upon creation", async function() {
       const priorTokenCount = await this.bridgeBank.bridgeTokenCount();
       Number(priorTokenCount).should.be.bignumber.equal(0);
@@ -159,6 +193,7 @@ contract("BridgeBank", function(accounts) {
       const afterTokenCount = await this.bridgeBank.bridgeTokenCount();
       Number(afterTokenCount).should.be.bignumber.equal(1);
     });
+
 
     it("should add the new bridge token to the whitelist", async function() {
       // Get the bridge token's address if it were to be created
@@ -180,6 +215,7 @@ contract("BridgeBank", function(accounts) {
       );
       isOnWhitelist.should.be.equal(true);
     });
+
 
     it("should allow the creation of bridge tokens with the same symbol", async function() {
       // Get the first BridgeToken's address if it were to be created
@@ -223,6 +259,162 @@ contract("BridgeBank", function(accounts) {
       firstTokenOnWhitelist.should.be.equal(true);
       secondTokenOnWhitelist.should.be.equal(true);
     });
+
+  });
+  describe("BridgeToken creation (Cosmos assets)", function() {
+    beforeEach(async function() {
+      // Deploy Valset contract
+      this.initialValidators = [userOne, userTwo, userThree];
+      this.initialPowers = [5, 8, 12];
+      this.valset = await Valset.new(
+        operator,
+        this.initialValidators,
+        this.initialPowers
+      );
+
+      // Deploy CosmosBridge contract
+      this.cosmosBridge = await CosmosBridge.new(operator, this.valset.address);
+
+      // Deploy Oracle contract
+      this.oracle = await Oracle.new(
+        operator,
+        this.valset.address,
+        this.cosmosBridge.address
+      );
+
+      this.bridgeNFT = await BridgeNFT.new("TEST", {
+        // gas: 4612388,
+        from: operator
+      });
+
+      this.nftFactory = await NFTFactory.new(this.bridgeNFT.address, {
+        // gas: 4612388,
+        from: operator
+      });
+
+      // Deploy BridgeBank contract
+      this.bridgeBank = await BridgeBank.new(
+        operator,
+        this.oracle.address,
+        this.cosmosBridge.address,
+        this.nftFactory.address
+      );
+      this.symbol = "ABC";
+    });
+
+    it("should not allow non-operators to create new bridge NFT", async function() {
+      await this.bridgeBank
+        .createNewBridgeNFT(this.symbol, {
+          from: userOne
+        })
+        .should.be.rejectedWith(EVMRevert);
+    });
+
+    it("should allow the operator to create new bridge NFT", async function() {
+      await this.bridgeBank.createNewBridgeNFT(this.symbol, {
+        from: operator
+      }).should.be.fulfilled;
+    });
+
+
+    it("should emit event LogNewBridgeNFT containing the new bridge NFT's address and symbol", async function() {
+      //Get the bridge token's address if it were to be created
+      const expectedBridgeNFTAddress = await this.bridgeBank.createNewBridgeNFT.call(
+        this.symbol,
+        {
+          from: operator
+        }
+      );
+
+      // Actually create the bridge token
+      const { logs } = await this.bridgeBank.createNewBridgeNFT(this.symbol, {
+        from: operator
+      });
+
+      // Get the event logs and compare to expected bridge nft address and symbol
+      const event = logs.find(e => e.event === "LogNewBridgeNFT");
+      event.args._token.should.be.equal(expectedBridgeNFTAddress);
+      event.args._symbol.should.be.equal(this.symbol);
+    });
+
+
+
+    it("should increase the bridge token count upon creation of NFT", async function() {
+      const priorTokenCount = await this.bridgeBank.bridgeTokenCount();
+      Number(priorTokenCount).should.be.bignumber.equal(0);
+
+      await this.bridgeBank.createNewBridgeNFT(this.symbol, {
+        from: operator
+      });
+
+      const afterTokenCount = await this.bridgeBank.bridgeTokenCount();
+      Number(afterTokenCount).should.be.bignumber.equal(1);
+    });
+
+    it("should add the new bridge NFT to the whitelist", async function() {
+      // Get the bridge NFT's address if it were to be created
+      const bridgeNFTAddress = await this.bridgeBank.createNewBridgeNFT.call(
+        this.symbol,
+        {
+          from: operator
+        }
+      );
+
+      // Create the bridge token
+      await this.bridgeBank.createNewBridgeNFT(this.symbol, {
+        from: operator
+      });
+
+      // Check bridge token whitelist
+      const isOnWhitelist = await this.bridgeBank.bridgeTokenWhitelist(
+        bridgeNFTAddress
+      );
+      isOnWhitelist.should.be.equal(true);
+    });
+
+
+    it("should allow the creation of bridge NFTs with the same symbol", async function() {
+      // Get the first BridgeToken's address if it were to be created
+      const firstBridgeNFTAddress = await this.bridgeBank.createNewBridgeNFT.call(
+        this.symbol,
+        {
+          from: operator
+        }
+      );
+
+      // Create the first bridge token
+      await this.bridgeBank.createNewBridgeNFT(this.symbol, {
+        from: operator
+      });
+
+      // Get the second BridgeToken's address if it were to be created
+      const secondBridgeNFTAddress = await this.bridgeBank.createNewBridgeNFT.call(
+        this.symbol,
+        {
+          from: operator
+        }
+      );
+
+      // Create the second bridge token
+      await this.bridgeBank.createNewBridgeNFT(this.symbol, {
+        from: operator
+      });
+
+      // Check bridge token whitelist for both tokens
+      const firstTokenOnWhitelist = await this.bridgeBank.bridgeTokenWhitelist.call(
+        firstBridgeNFTAddress
+      );
+      const secondTokenOnWhitelist = await this.bridgeBank.bridgeTokenWhitelist.call(
+        secondBridgeNFTAddress
+      );
+
+      // Should be different addresses
+      firstBridgeNFTAddress.should.not.be.equal(secondBridgeNFTAddress);
+
+      // Confirm whitelist status
+      firstTokenOnWhitelist.should.be.equal(true);
+      secondTokenOnWhitelist.should.be.equal(true);
+    });
   });
 
   describe("Bridge token minting (for locked Cosmos assets)", function() {
@@ -246,11 +438,24 @@ contract("BridgeBank", function(accounts) {
         this.cosmosBridge.address
       );
 
+
+
+      this.bridgeNFT = await BridgeNFT.new("TEST", {
+        // gas: 4612388,
+        from: operator
+      });
+
+      this.nftFactory = await NFTFactory.new(this.bridgeNFT.address, {
+        // gas: 4612388,
+        from: operator
+      });
+
       // Deploy BridgeBank contract
       this.bridgeBank = await BridgeBank.new(
         operator,
         this.oracle.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        this.nftFactory.address
       );
 
       // Operator sets Oracle
@@ -369,11 +574,23 @@ contract("BridgeBank", function(accounts) {
         this.cosmosBridge.address
       );
 
+      this.bridgeNFT = await BridgeNFT.new("TEST", {
+        // gas: 4612388,
+        from: operator
+      });
+
+      this.nftFactory = await NFTFactory.new(this.bridgeNFT.address, {
+        // gas: 4612388,
+        from: operator
+      });
+
+
       // Deploy BridgeBank contract
       this.bridgeBank = await BridgeBank.new(
         operator,
         this.oracle.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        this.nftFactory.address
       );
 
       this.recipient = web3.utils.utf8ToHex(
@@ -486,11 +703,23 @@ contract("BridgeBank", function(accounts) {
         this.cosmosBridge.address
       );
 
+      this.bridgeNFT = await BridgeNFT.new("TEST", {
+        // gas: 4612388,
+        from: operator
+      });
+
+      this.nftFactory = await NFTFactory.new(this.bridgeNFT.address, {
+        // gas: 4612388,
+        from: operator
+      });
+
+
       // Deploy BridgeBank contract
       this.bridgeBank = await BridgeBank.new(
         operator,
         this.oracle.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        this.nftFactory.address
       );
 
       // Operator sets Oracle

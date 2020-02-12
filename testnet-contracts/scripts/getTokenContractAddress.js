@@ -12,6 +12,10 @@ module.exports = async () => {
     require("../build/contracts/BridgeToken.json")
   );
 
+  const contractNFT = truffleContract(
+    require("../build/contracts/BridgeNFT.json")
+  );
+
   /*******************************************
    *** Constants
    ******************************************/
@@ -34,6 +38,7 @@ module.exports = async () => {
 
   const web3 = new Web3(provider);
   contract.setProvider(web3.currentProvider);
+  nftContract.setProvider(web3.currentProvider);
 
   /*******************************************
    *** Contract interaction
@@ -42,5 +47,9 @@ module.exports = async () => {
     return instance.address;
   });
 
+  const nftAddress = await contractNFT.deployed().then(function(instance) {
+    return instance.address
+  })
+  console.log("NFT Token contract address: ", nftAddress);
   return console.log("Token contract address: ", address);
 };

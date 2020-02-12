@@ -29,15 +29,17 @@
     "ganache-cli": "^6.8.2",
     "openzeppelin-solidity": "^2.1.3",
     "web3": "^1.2.1",
+    "web3-eth-abi": "^1.2.6",
     "web3-utils": "^1.0.0-beta.52"
   },
   "scripts": {
-    "develop": "ganache-cli -i 5777 -p 7545 -m 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'",
+    "develop": "ganache-cli -e 1000 -i 5777 -p 7545 -m 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'",
     "migrate": "truffle migrate --reset",
     "peggy:abi": "node scripts/formatAbi.js",
     "peggy:address": "truffle exec scripts/getBridgeRegistryAddress.js",
     "peggy:setup": "truffle exec scripts/setOracleAndBridgeBank.js",
     "peggy:lock": "truffle exec scripts/sendLockTx.js",
+    "peggy:lockNFT": "truffle exec scripts/sendLockNFTTx.js",
     "peggy:check": "truffle exec scripts/sendCheckProphecy.js",
     "peggy:process": "truffle exec scripts/sendProcessProphecy.js",
     "peggy:addBridgeToken": "truffle exec scripts/sendAddBridgeToken.js",
