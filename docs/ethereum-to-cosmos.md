@@ -1,40 +1,6 @@
-## Ethereum to Cosmos asset transfers
+## Ethereum -> Cosmos asset transfers
 
-Before starting the Ethereum relayer, you must set up the application ([steps](./initialization.md)) and deploy the Peggy contracts to an Ethereum blockchain ([steps](./local-ethereum-usage.md)). You must have both the application and Ethereum blockchain running before you'll be able to relay assets between the two.
-
-### Setup
-
-Create `.env` with sample environment variables for the Cosmos relayer:   
-
-```bash
-cp .env.example .env
-```
-
-### Start the Relayer service on local Ethereum blockchain
-
-For automated relaying, validators can run a relayer service which will automatically watch for relevant events on the Ethereum network and relay them to the Bridge. Note that your local web socket and registry contract address may vary.
-
-```bash
-# Open a new terminal window
-
-# Check ebrelayer connection to ebd
-ebrelayer status
-
-# Start ebrelayer
-# Use the contract address returned by `yarn peggy:address` for [PEGGY_DEPLOYED_ADDRESS]
-# Note that you may need to update your websocket's localhost/port
-ebrelayer init ethereum ws://127.0.0.1:7545/ [PEGGY_DEPLOYED_ADDRESS] validator --chain-id=peggy
-
-# Enter password and press enter
-
-# You should see a message like:
-#   Started Ethereum websocket with provider: ws://127.0.0.1:7545/
-#   Subscribed to bridgebank contract at address: 0xd88159878c50e4B2b03BB701DD436e4A98D6fBe2
-
-# The Relayer will now listen to the deployed contracts and create a claim whenever it detects a new lock event
-```
-
-### Lock Ethereum assets on contracts
+### Sending Ethereum assets to Cosmos via Lock
 
 Now we can lock our funds on the contracts by sending a lock transaction containing Eth/ERC20 assets. First, we'll use default parameters to lock Eth assets.  
 

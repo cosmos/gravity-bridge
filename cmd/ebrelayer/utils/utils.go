@@ -7,10 +7,18 @@ package utils
 // --------------------------------------------------------
 
 import (
+	"io"
+	"log"
 	"math/big"
 	"regexp"
 
+	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/keys"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
+	amino "github.com/tendermint/go-amino"
 )
 
 const (
@@ -47,4 +55,55 @@ func GetSymbolAmountFromCoin(coin string) (string, *big.Int) {
 	}
 
 	return symbol, amount
+}
+
+// LoadValidatorCredentials : loads validator's credentials (address, moniker, and passphrase)
+func LoadValidatorCredentials(validatorFrom string, inBuf io.Reader) (sdk.ValAddress, string, error) {
+	// Get the validator's name and account address using their moniker
+	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(inBuf, validatorFrom, false)
+	if err != nil {
+		return sdk.ValAddress{}, "", err
+	}
+
+	// Convert the validator's account address into type ValAddress
+	validatorAddress := sdk.ValAddress(validatorAccAddress)
+
+	// Test keys.DefaultKeyPass is correct-
+	_, err = authtxb.MakeSignature(nil, validatorName, keys.DefaultKeyPass, authtxb.StdSignMsg{})
+	if err != nil {
+		return sdk.ValAddress{}, "", err
+	}
+
+	return validatorAddress, validatorName, nil
+}
+
+// LoadTendermintCLIContext : loads CLI context for tendermint txs
+func LoadTendermintCLIContext(
+	appCodec *amino.Codec,
+	validatorAddress sdk.ValAddress,
+	validatorName string,
+	rpcURL string,
+	chainID string,
+) sdkContext.CLIContext {
+	// Create the new CLI context
+	cliCtx := sdkContext.NewCLIContext().
+		WithCodec(appCodec).
+		WithFromAddress(sdk.AccAddress(validatorAddress)).
+		WithFromName(validatorName)
+
+	if rpcURL != "" {
+		cliCtx = cliCtx.WithNodeURI(rpcURL)
+	}
+
+	cliCtx.SkipConfirm = true
+
+	accountRetriever := authtypes.NewAccountRetriever(cliCtx)
+
+	// Ensure that the validator's address exists
+	err := accountRetriever.EnsureExists((sdk.AccAddress(validatorAddress)))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return cliCtx
 }

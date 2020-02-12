@@ -1,8 +1,9 @@
 package relayer
 
 import (
-	"context"
+	"context" //TODO: check this import
 	"crypto/ecdsa"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -72,7 +73,7 @@ func InitCosmosRelayer(
 					// Parse event data, then package it as a ProphecyClaim and relay to the Ethereum Network
 					err := handleBurnLockMsg(event.GetAttributes(), claimType, web3Provider, contractAddress, key)
 					if err != nil {
-						return err
+						log.Fatal(err)
 					}
 				case events.Unsupported:
 				}
