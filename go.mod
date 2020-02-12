@@ -9,7 +9,8 @@ require (
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/cosmos/cosmos-sdk v0.38.0
 	github.com/cosmos/modules/incubator/nft v0.0.0-20200205154032-a00840ed53b1
-	github.com/cosmos/sdk-tutorials/scavenge v0.0.0-20200212035935-7cabb5ebd952
+	github.com/cosmos/sdk-tutorials/scavenge v0.0.0-20200212200352-d1d772d62a1b
+	// github.com/cosmos/sdk-tutorials/scavenge v0.0.0-20200212035935-7cabb5ebd952
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/ethereum/go-ethereum v1.8.27
