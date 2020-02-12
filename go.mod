@@ -9,7 +9,7 @@ require (
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/cosmos/cosmos-sdk v0.38.0
 	github.com/cosmos/modules/incubator/nft v0.0.0-20200205154032-a00840ed53b1
-	github.com/cosmos/sdk-tutorials/scavenge v0.0.0-20200203213425-75fffecbec94
+	github.com/cosmos/sdk-tutorials/scavenge v0.0.0-20200212035935-7cabb5ebd952
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/ethereum/go-ethereum v1.8.27
@@ -21,7 +21,6 @@ require (
 	github.com/karalabe/hid v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/miguelmota/go-solidity-sha3 v0.1.0
-	github.com/okwme/scavenge v0.0.0-20200118180520-34659d08fa7c // indirect
 	github.com/onsi/ginkgo v1.9.0 // indirect
 	github.com/onsi/gomega v1.6.0 // indirect
 	github.com/pborman/uuid v1.2.0 // indirect
@@ -40,4 +39,4 @@ require (
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 )
 
-replace github.com/cosmos/sdk-tutorials/scavenge v0.0.0-20200203213425-75fffecbec94 => /home/billy/GitHub.com/cosmos/sdk-tutorials/scavenge
+// replace github.com/cosmos/sdk-tutorials/scavenge v0.0.0-20200203213425-75fffecbec94 => /home/billy/GitHub.com/cosmos/sdk-tutorials/scavenge

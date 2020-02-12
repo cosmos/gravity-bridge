@@ -85,6 +85,10 @@ github.com/cosmos/modules/incubator/nft v0.0.0-20200205153350-6a2302ae1fc4 h1:P6
 github.com/cosmos/modules/incubator/nft v0.0.0-20200205153350-6a2302ae1fc4/go.mod h1:yOMggCVvmJsCWpJmhexqbCTZW4IbaUEPI8vHDknwUfc=
 github.com/cosmos/modules/incubator/nft v0.0.0-20200205154032-a00840ed53b1 h1:unjJ97TM5hljg6gRluwu7LRnkMLq05VnxdcaNMsqINk=
 github.com/cosmos/modules/incubator/nft v0.0.0-20200205154032-a00840ed53b1/go.mod h1:yOMggCVvmJsCWpJmhexqbCTZW4IbaUEPI8vHDknwUfc=
+github.com/cosmos/sdk-tutorials v0.37.1-0.20200212035935-7cabb5ebd952 h1:Lv4jreAQpRs39C6NSJStCtGM4ZEENMRYDcwInlvjAro=
+github.com/cosmos/sdk-tutorials v0.37.1-0.20200212035935-7cabb5ebd952/go.mod h1:ksc+QSTfk6VFxPJnYBe6V+Z30qDqniAgQM52BzUuI8c=
+github.com/cosmos/sdk-tutorials/scavenge v0.0.0-20200212035935-7cabb5ebd952 h1:KFukknDQx/ZkkohKwbimFiyJnCe3N7jd8l8zefKROv4=
+github.com/cosmos/sdk-tutorials/scavenge v0.0.0-20200212035935-7cabb5ebd952/go.mod h1:NA6TTh6ZDju71INa0XjYAjUluUBOrdgbOsErSa+ebnw=
 github.com/cosmos/tools/cmd/runsim v1.0.0/go.mod h1:OkifjSTACSQGtwh7k5Tp/IQe9/ZXqsovqlYzRKxEPKM=
 github.com/cosmos/tools/lib/runsimaws v1.0.0/go.mod h1:asuuzE1jU1M5jO8QGlgB4kUexLDlxkUwEU5z8NgbkdE=
 github.com/cosmos/tools/lib/runsimgh v1.0.0/go.mod h1:Th32ntR4b9UB7g1MoqmXqZmcbBz01xBjISxRJJpnv1c=
@@ -271,8 +275,6 @@ github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3Rllmb
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/nlopes/slack v0.6.0/go.mod h1:JzQ9m3PMAqcpeCam7UaHSuBuupz7CmpjehYMayT6YOk=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
-github.com/okwme/scavenge v0.0.0-20200118180520-34659d08fa7c h1:SC9g8xHrcUQjjzfxL+NYJZLVtwrkucdiLyvnB2QRwIQ=
-github.com/okwme/scavenge v0.0.0-20200118180520-34659d08fa7c/go.mod h1:+56M3pWinKEkA9SKprsI70rAbSrYcwnVVKYpIEwxOEQ=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
 github.com/onsi/ginkgo v1.7.0 h1:WSHQ+IS43OoUrWtD1/bbclrwK8TTH5hzp+umCiuxHgs=
 github.com/onsi/ginkgo v1.7.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
