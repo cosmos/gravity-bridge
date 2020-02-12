@@ -12,6 +12,7 @@ import (
 	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
 )
 
+// CreateTestHandler creates a test handler
 func CreateTestHandler(t *testing.T, consensusNeeded float64, validatorAmounts []int64) (sdk.Context, oracle.Keeper, bank.Keeper, nft.Keeper, auth.AccountKeeper, []sdk.ValAddress, sdk.Handler) {
 	ctx, oracleKeeper, bankKeeper, _, nftKeeper, accountKeeper, validatorAddresses := oracle.CreateTestKeepers(t, consensusNeeded, validatorAmounts, ModuleName)
 	// bridgeAccount := supply.NewEmptyModuleAccount(ModuleName, supply.Burner, supply.Minter)

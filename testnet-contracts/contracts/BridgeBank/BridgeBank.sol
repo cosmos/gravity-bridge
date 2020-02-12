@@ -17,7 +17,7 @@ import "../CosmosBridge.sol";
 contract BridgeBank is CosmosBank, EthereumBank {
 
     using SafeMath for uint256;
-    
+
     address public operator;
     Oracle public oracle;
     CosmosBridge public cosmosBridge;
@@ -28,9 +28,11 @@ contract BridgeBank is CosmosBank, EthereumBank {
     constructor (
         address _operatorAddress,
         address _oracleAddress,
-        address _cosmosBridgeAddress
+        address _cosmosBridgeAddress,
+        address _nftFactory
     )
         public
+        CosmosBank(_nftFactory)
     {
         operator = _operatorAddress;
         oracle = Oracle(_oracleAddress);
@@ -94,6 +96,49 @@ contract BridgeBank is CosmosBank, EthereumBank {
         return deployNewBridgeToken(_symbol);
     }
 
+        /*
+    * @dev: Creates a new BridgeNFT
+    *
+    * @param _symbol: The new BridgeNFT's symbol
+    * @return: The new BridgeNFT contract's address
+    */
+    function createNewBridgeNFT(
+        string memory _symbol
+    )
+        public
+        onlyOperator
+        returns(address)
+    {
+        return deployNewBridgeNFT(_symbol);
+    }
+
+    /*
+     * @dev: Mints new BankNFTs
+     *
+     * @param _cosmosSender: The sender's Cosmos address in bytes.
+     * @param _ethereumRecipient: The intended recipient's Ethereum address.
+     * @param _cosmosTokenAddress: The currency type
+     * @param _symbol: comsos token symbol
+     * @param _amount: number of comsos tokens to be minted
+     */
+     function mintBridgeNFT(
+        bytes memory _cosmosSender,
+        address payable _intendedRecipient,
+        address _bridgeTokenAddress,
+        string memory _symbol,
+        uint256 _amount
+    )
+        public
+        onlyCosmosBridge
+    {
+        return mintNewBridgeNFT(
+            _cosmosSender,
+            _intendedRecipient,
+            _bridgeTokenAddress,
+            _symbol,
+            _amount
+        );
+    }
     /*
      * @dev: Mints new BankTokens
      *
@@ -198,6 +243,71 @@ contract BridgeBank is CosmosBank, EthereumBank {
         )
     {
         unlockFunds(
+            _recipient,
+            _token,
+            _symbol,
+            _amount
+        );
+    }
+    /*
+    * @dev: Locks received Ethereum funds.
+    *
+    * @param _recipient: bytes representation of destination address.
+    * @param _token: token address in origin chain (0x0 if ethereum)
+    * @param _amount: value of deposit
+    */
+    function lockNFT(
+        bytes memory _recipient,
+        address _token,
+        uint256 _amount
+    )
+        public
+        availableNonce() // TODO: walk through this later and make sure it's really preventing re-entrancy
+        payable
+    {
+        string memory symbol;
+
+        // NFTs throw with invalid transfer
+        BridgeNFT(_token).transferFrom(msg.sender, address(this), _amount);
+        // Set symbol to the ERC20 token's symbol
+        symbol = BridgeNFT(_token).symbol();
+
+
+        lockFundsNFT(
+            msg.sender,
+            _recipient,
+            _token,
+            symbol,
+            _amount
+        );
+    }
+
+   /*
+    * @dev: Unlocks Ethereum and ERC20 tokens held on the contract.
+    *
+    * @param _recipient: recipient's Ethereum address
+    * @param _token: token contract address
+    * @param _symbol: token symbol
+    * @param _amount: wei amount or ERC20 token count
+\   */
+     function unlockNFT(
+        address payable _recipient,
+        address _token,
+        string memory _symbol,
+        uint256 _amount
+    )
+        public
+        onlyCosmosBridge
+        hasLockedNFT(
+            _token,
+            _amount
+        )
+        canDeliverNFT(
+            _token,
+            _amount
+        )
+    {
+        unlockFundsNFT(
             _recipient,
             _token,
             _symbol,

@@ -21,6 +21,7 @@ require (
 	github.com/karalabe/hid v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/miguelmota/go-solidity-sha3 v0.1.0
+	github.com/okwme/scavenge v0.0.0-20200118180520-34659d08fa7c // indirect
 	github.com/onsi/ginkgo v1.9.0 // indirect
 	github.com/onsi/gomega v1.6.0 // indirect
 	github.com/pborman/uuid v1.2.0 // indirect

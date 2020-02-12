@@ -6,6 +6,8 @@ const Oracle = artifacts.require("Oracle");
 const BridgeBank = artifacts.require("BridgeBank");
 const BridgeRegistry = artifacts.require("BridgeRegistry");
 const BridgeToken = artifacts.require("BridgeToken");
+const BridgeNFT = artifacts.require("BridgeNFT");
+const NFTFactory = artifacts.require("NFTFactory");
 
 module.exports = function(deployer, network, accounts) {
   /*******************************************
@@ -82,7 +84,23 @@ module.exports = function(deployer, network, accounts) {
     //    Gas used:        1,884,394 Gwei
     //    Total cost:    0.03768788 Ether
     await deployer.deploy(BridgeToken, "TEST", {
-      gas: 4612388,
+      // gas: 4612388,
+      from: operator
+    });
+
+    // 1.5 Deploy BridgeNFT contract
+    //    Gas used:        1,884,394 Gwei
+    //    Total cost:    0.03768788 Ether
+    await deployer.deploy(BridgeNFT, "TEST", {
+      // gas: 4612388,
+      from: operator
+    });
+
+    // 1.6 Deploy NFTFactory contract
+    //    Gas used:        1,884,394 Gwei
+    //    Total cost:    0.03768788 Ether
+    await deployer.deploy(NFTFactory, BridgeNFT.address, {
+      // gas: 4612388,
       from: operator
     });
 
@@ -90,7 +108,7 @@ module.exports = function(deployer, network, accounts) {
     //    Gas used:          909,879 Gwei
     //    Total cost:    0.01819758 Ether
     await deployer.deploy(Valset, operator, initialValidators, initialPowers, {
-      gas: 6721975,
+      // gas: 6721975,
       from: operator
     });
 
@@ -98,7 +116,7 @@ module.exports = function(deployer, network, accounts) {
     //    Gas used:       2,649,300 Gwei
     //    Total cost:     0.052986 Ether
     await deployer.deploy(CosmosBridge, operator, Valset.address, {
-      gas: 6721975,
+      // gas: 6721975,
       from: operator
     });
 
@@ -111,7 +129,7 @@ module.exports = function(deployer, network, accounts) {
       Valset.address,
       CosmosBridge.address,
       {
-        gas: 6721975,
+        // gas: 6721975,
         from: operator
       }
     );
@@ -124,6 +142,7 @@ module.exports = function(deployer, network, accounts) {
       operator,
       Oracle.address,
       CosmosBridge.address,
+      NFTFactory.address,
       {
         gas: 6721975,
         from: operator
@@ -140,7 +159,7 @@ module.exports = function(deployer, network, accounts) {
       Oracle.address,
       Valset.address,
       {
-        gas: 6721975,
+        // gas: 6721975,
         from: operator
       }
     );

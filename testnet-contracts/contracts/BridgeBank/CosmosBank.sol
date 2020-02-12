@@ -2,6 +2,8 @@ pragma solidity ^0.5.0;
 
 import "../../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./BridgeToken.sol";
+import "./BridgeNFT.sol";
+import "./NFTFactory.sol";
 
 /**
  * @title CosmosBank
@@ -13,6 +15,7 @@ contract CosmosBank {
 
     using SafeMath for uint256;
 
+    NFTFactory public nftFactory;
     uint256 public bridgeTokenCount;
     mapping(address => bool) public bridgeTokenWhitelist;
     mapping(bytes32 => CosmosDeposit) cosmosDeposits;
@@ -32,6 +35,10 @@ contract CosmosBank {
         address _token,
         string _symbol
     );
+    event LogNewBridgeNFT(
+        address _token,
+        string _symbol
+    );
 
     event LogBridgeTokenMint(
         address _token,
@@ -43,8 +50,9 @@ contract CosmosBank {
     /*
     * @dev: Constructor, sets bridgeTokenCount
     */
-    constructor () public {
+    constructor (address _nftFactory) public {
         bridgeTokenCount = 0;
+        nftFactory = NFTFactory(_nftFactory);
     }
 
     /*
@@ -113,6 +121,34 @@ contract CosmosBank {
         return newBridgeTokenAddress;
     }
 
+
+    /*
+     * @dev: Deploys a new BridgeNFT contract
+     *
+     * @param _symbol: The BridgeNFT's symbol
+     */
+    function deployNewBridgeNFT(
+        string memory _symbol
+    )
+        internal
+        returns(address)
+    {
+        bridgeTokenCount = bridgeTokenCount.add(1);
+        bytes memory _data = bytes(_symbol);
+        address newBridgeNFTAddress = nftFactory.createProxy(_data);
+
+        // Set address in tokens mapping
+        // address newBridgeNFTAddress = address(newBridgeNFT);
+        bridgeTokenWhitelist[newBridgeNFTAddress] = true;
+
+        emit LogNewBridgeNFT(
+            newBridgeNFTAddress,
+            _symbol
+        );
+
+        return newBridgeNFTAddress;
+    }
+
     /*
      * @dev: Mints new cosmos tokens
      *
@@ -139,11 +175,58 @@ contract CosmosBank {
 
         // Mint bridge tokens
         require(
-            BridgeToken(_bridgeTokenAddress).mint(
+            BridgeNFT(_bridgeTokenAddress).mint(
                 _intendedRecipient,
                 _amount
             ),
             "Attempted mint of bridge tokens failed"
+        );
+
+        newCosmosDeposit(
+            _cosmosSender,
+            _intendedRecipient,
+            _bridgeTokenAddress,
+            _amount
+        );
+
+        emit LogBridgeTokenMint(
+            _bridgeTokenAddress,
+            _symbol,
+            _amount,
+            _intendedRecipient
+        );
+    }
+    /*
+     * @dev: Mints new cosmos NFTs
+     *
+     * @param _cosmosSender: The sender's Cosmos address in bytes.
+     * @param _ethereumRecipient: The intended recipient's Ethereum address.
+     * @param _cosmosTokenAddress: The currency type
+     * @param _symbol: comsos token symbol
+     * @param _amount: nft id
+\    */
+     function mintNewBridgeNFT(
+        bytes memory _cosmosSender,
+        address payable _intendedRecipient,
+        address _bridgeTokenAddress,
+        string memory _symbol,
+        uint256 _amount
+    )
+        internal
+    {
+        // Must be whitelisted bridge token
+        require(
+            bridgeTokenWhitelist[_bridgeTokenAddress],
+            "Token must be a whitelisted bridge token"
+        );
+
+        // Mint bridge tokens
+        require(
+            BridgeToken(_bridgeTokenAddress).mint(
+                _intendedRecipient,
+                _amount
+            ),
+            "Attempted mint of bridge nft failed"
         );
 
         newCosmosDeposit(

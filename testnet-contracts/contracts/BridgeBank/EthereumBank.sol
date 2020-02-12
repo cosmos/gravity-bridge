@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./BridgeToken.sol";
+import "./BridgeNFT.sol";
 
   /*
    *  @title: EthereumBank
@@ -14,6 +15,7 @@ contract EthereumBank {
 
     uint256 public lockNonce;
     mapping(address => uint256) public lockedFunds;
+    mapping(address => mapping(uint256 => bool)) public lockedNFTs;
 
     /*
     * @dev: Event declarations
@@ -65,6 +67,18 @@ contract EthereumBank {
         _;
     }
 
+
+    modifier hasLockedNFT(
+        address _token,
+        uint256 _amount
+    ) {
+        require(
+            lockedNFTs[_token][_amount],
+            "The Bank does not hold this NFT."
+        );
+        _;
+    }
+
     modifier canDeliver(
         address _token,
         uint256 _amount
@@ -81,6 +95,19 @@ contract EthereumBank {
                 'Insufficient ERC20 token balance for delivery.'
             );
         }
+        _;
+    }
+
+
+    modifier canDeliverNFT(
+        address _token,
+        uint256 _amount
+    )
+    {
+            require(
+                BridgeNFT(_token).ownerOf(_amount) == address(this),
+                'Insufficient ERC20 token balance for delivery.'
+            );
         _;
     }
 
@@ -121,7 +148,7 @@ contract EthereumBank {
     {
         // Incerment the lock nonce
         lockNonce = lockNonce.add(1);
-        
+
         // Increment locked funds by the amount of tokens to be locked
         lockedFunds[_token] = lockedFunds[_token].add(_amount);
 
@@ -136,6 +163,7 @@ contract EthereumBank {
     }
 
 
+    // TODO: Why does lock take place inside of Bridgebank but unlock takes place inside of EthereumBank?
     /*
     * @dev: Unlocks funds held on contract and sends them to the
     *       intended recipient
@@ -195,9 +223,9 @@ contract EthereumBank {
         // Incerment the lock nonce
         lockNonce = lockNonce.add(1);
 
-        require(!lockedFunds[_token][_amount], "NFT already locked");
+        require(!lockedNFTs[_token][_amount], "NFT already locked");
         // Increment locked funds by the amount of tokens to be locked
-        lockedFunds[_token][_amount] = true;
+        lockedNFTs[_token][_amount] = true;
 
          emit LogLockNFT(
             _sender,
@@ -218,7 +246,7 @@ contract EthereumBank {
     * @param _symbol: token symbol
     * @param _amount: NFT ID
     */
-    function unlockNFT(
+    function unlockFundsNFT(
         address payable _recipient,
         address _token,
         string memory _symbol,

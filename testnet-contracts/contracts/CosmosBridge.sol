@@ -329,12 +329,12 @@ contract CosmosBridge {
     {
         ProphecyClaim memory prophecyClaim = prophecyClaims[_prophecyID];
 
-        bridgebank.unlockNFT(
+        bridgeBank.unlockNFT(
             prophecyClaim.ethereumReceiver,
             prophecyClaim.tokenAddress,
             prophecyClaim.symbol,
             prophecyClaim.amount
-        )
+        );
     }
 
     /*
