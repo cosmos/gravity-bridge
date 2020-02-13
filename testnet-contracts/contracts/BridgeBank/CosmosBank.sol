@@ -96,6 +96,7 @@ contract CosmosBank {
         internal
         returns(address)
     {
+        // return address(0);
         bridgeTokenCount = bridgeTokenCount.add(1);
 
         // Deploy new bridge token contract
