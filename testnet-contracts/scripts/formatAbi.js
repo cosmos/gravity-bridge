@@ -68,6 +68,12 @@ const contracts = [
   CosmosBridgeContract,
   BridgeBankContract
 ];
-
+try {
 // Write contracts to relayer
 writeABIs(contracts);
+} catch (error) {
+  console.log(error)
+  return
+}
+console.log("SUCCESS")
+return

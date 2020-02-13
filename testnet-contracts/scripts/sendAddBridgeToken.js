@@ -55,23 +55,25 @@ module.exports = async () => {
     // Get current accounts
     const accounts = await web3.eth.getAccounts();
 
-    console.log("Attempting to send createNewBridgeToken() tx...");
+    console.log("Attempting to send createNewBridgeToken() tx with symbol: '" + symbol + "'...");
 
     // Get the bridge token's address if it were to be created
     const bridgeTokenAddress = await contract.deployed().then(function(instance) {
       return instance.createNewBridgeToken.call(symbol, {
         from: accounts[0],
         value: 0,
-        gas: 300000 // 300,000 Gwei
+        gas: 3000000 // 300,000 Gwei
       });
     });
+    console.log(`from ${accounts[0]}`)
+    console.log('Should deploy to ' + bridgeTokenAddress)
 
     //  Create the bridge token
     await contract.deployed().then(function(instance) {
       return instance.createNewBridgeToken(symbol, {
         from: accounts[0],
         value: 0,
-        gas: 300000 // 300,000 Gwei
+        gas: 3000000 // 300,000 Gwei
       });
     });
 
@@ -80,14 +82,14 @@ module.exports = async () => {
       return instance.bridgeTokenWhitelist(bridgeTokenAddress, {
         from: accounts[0],
         value: 0,
-        gas: 300000 // 300,000 Gwei
+        gas: 3000000 // 300,000 Gwei
       });
     });
 
     if (isOnWhiteList) {
       console.log(
         'Bridge Token"' + symbol + '" created at address:',
-        bridgetokenAddress
+        bridgeTokenAddress
       );
     } else {
       console.log(

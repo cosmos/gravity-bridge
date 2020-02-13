@@ -158,494 +158,6 @@ library SafeMath {
     }
 }
 
-// File: openzeppelin-solidity/contracts/cryptography/ECDSA.sol
-
-pragma solidity ^0.5.0;
-
-/**
- * @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
- *
- * These functions can be used to verify that a message was signed by the holder
- * of the private keys of a given address.
- */
-library ECDSA {
-    /**
-     * @dev Returns the address that signed a hashed message (`hash`) with
-     * `signature`. This address can then be used for verification purposes.
-     *
-     * The `ecrecover` EVM opcode allows for malleable (non-unique) signatures:
-     * this function rejects them by requiring the `s` value to be in the lower
-     * half order, and the `v` value to be either 27 or 28.
-     *
-     * NOTE: This call _does not revert_ if the signature is invalid, or
-     * if the signer is otherwise unable to be retrieved. In those scenarios,
-     * the zero address is returned.
-     *
-     * IMPORTANT: `hash` _must_ be the result of a hash operation for the
-     * verification to be secure: it is possible to craft signatures that
-     * recover to arbitrary addresses for non-hashed data. A safe way to ensure
-     * this is by receiving a hash of the original message (which may otherwise
-     * be too long), and then calling {toEthSignedMessageHash} on it.
-     */
-    function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
-        // Check the signature length
-        if (signature.length != 65) {
-            return (address(0));
-        }
-
-        // Divide the signature in r, s and v variables
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-
-        // ecrecover takes the signature parameters, and the only way to get them
-        // currently is to use assembly.
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            r := mload(add(signature, 0x20))
-            s := mload(add(signature, 0x40))
-            v := byte(0, mload(add(signature, 0x60)))
-        }
-
-        // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
-        // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
-        // the valid range for s in (281): 0 < s < secp256k1n ÷ 2 + 1, and for v in (282): v ∈ {27, 28}. Most
-        // signatures from current libraries generate a unique signature with an s-value in the lower half order.
-        //
-        // If your library generates malleable signatures, such as s-values in the upper range, calculate a new s-value
-        // with 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 - s1 and flip v from 27 to 28 or
-        // vice versa. If your library also generates signatures with 0/1 for v instead 27/28, add 27 to v to accept
-        // these malleable signatures as well.
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            return address(0);
-        }
-
-        if (v != 27 && v != 28) {
-            return address(0);
-        }
-
-        // If the signature is valid (and not malleable), return the signer address
-        return ecrecover(hash, v, r, s);
-    }
-
-    /**
-     * @dev Returns an Ethereum Signed Message, created from a `hash`. This
-     * replicates the behavior of the
-     * https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign[`eth_sign`]
-     * JSON-RPC method.
-     *
-     * See {recover}.
-     */
-    function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32) {
-        // 32 is the length in bytes of hash,
-        // enforced by the type signature above
-        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
-    }
-}
-
-// File: contracts/Valset.sol
-
-pragma solidity ^0.5.0;
-
-
-
-contract Valset {
-
-    using SafeMath for uint256;
-    using ECDSA for bytes32;
-
-    /*
-    * @dev: Variable declarations
-    */
-    address public operator;
-    uint256 public totalPower;
-    uint256 public currentValsetVersion;
-    uint256 public validatorCount;
-    mapping (bytes32 => bool) public validators;
-    mapping(bytes32 => uint256) public powers;
-
-    /*
-    * @dev: Event declarations
-    */
-    event LogValidatorAdded(
-        address _validator,
-        uint256 _power,
-        uint256 _currentValsetVersion,
-        uint256 _validatorCount,
-        uint256 _totalPower
-    );
-
-    event LogValidatorPowerUpdated(
-        address _validator,
-        uint256 _power,
-        uint256 _currentValsetVersion,
-        uint256 _validatorCount,
-        uint256 _totalPower
-    );
-
-    event LogValidatorRemoved(
-        address _validator,
-        uint256 _power,
-        uint256 _currentValsetVersion,
-        uint256 _validatorCount,
-        uint256 _totalPower
-    );
-
-    event LogValsetReset(
-        uint256 _newValsetVersion,
-        uint256 _validatorCount,
-        uint256 _totalPower
-    );
-
-    event LogValsetUpdated(
-        uint256 _newValsetVersion,
-        uint256 _validatorCount,
-        uint256 _totalPower
-    );
-
-    /*
-    * @dev: Modifier which restricts access to the operator.
-    */
-    modifier onlyOperator()
-    {
-        require(
-            msg.sender == operator,
-            'Must be the operator.'
-        );
-        _;
-    }
-
-    /*
-    * @dev: Constructor
-    */
-    constructor(
-        address _operator,
-        address[] memory _initValidators,
-        uint256[] memory _initPowers
-    )
-        public
-    {
-        operator = _operator;
-        currentValsetVersion = 0;
-
-        updateValset(
-            _initValidators,
-            _initPowers
-        );
-    }
-
-    function recover(
-        string memory _message,
-        bytes memory _signature
-    )
-        public
-        pure
-        returns (address)
-    {
-        bytes32 message = ethMessageHash(_message);
-        return verify(message, _signature);
-    }
-
-    /*
-    * @dev: addValidator
-    */
-    function addValidator(
-        address _validatorAddress,
-        uint256 _validatorPower
-    )
-        public
-        onlyOperator
-    {
-        addValidatorInternal(
-            _validatorAddress,
-            _validatorPower
-        );
-    }
-
-    /*
-    * @dev: updateValidatorPower
-    */
-    function updateValidatorPower(
-        address _validatorAddress,
-        uint256 _newValidatorPower
-    )
-        public
-        onlyOperator
-    {
-        // Create a unique key which for this validator's position in the current version of the mapping
-        bytes32 key = keccak256(
-            abi.encodePacked(
-                currentValsetVersion,
-                _validatorAddress
-            )
-        );
-
-        require(
-            validators[key],
-            "Can only update the power of active valdiators"
-        );
-
-
-        // Adjust total power by new validator power
-        uint256 priorPower = powers[key];
-        totalPower = totalPower.sub(priorPower);
-        totalPower = totalPower.add(_newValidatorPower);
-
-        // Set validator's new power
-        powers[key] = _newValidatorPower;
-
-        emit LogValidatorPowerUpdated(
-            _validatorAddress,
-            _newValidatorPower,
-            currentValsetVersion,
-            validatorCount,
-            totalPower
-        );
-    }
-
-    /*
-    * @dev: removeValidator
-    */
-    function removeValidator(
-        address _validatorAddress
-    )
-        public
-        onlyOperator
-    {
-        // Create a unique key which for this validator's position in the current version of the mapping
-        bytes32 key = keccak256(
-            abi.encodePacked(
-                currentValsetVersion,
-                _validatorAddress
-            )
-        );
-
-        require(
-            validators[key],
-            "Can only remove active valdiators"
-        );
-
-        // Update validator count and total power
-        validatorCount = validatorCount.sub(1);
-        totalPower = totalPower.sub(powers[key]);
-
-        // Delete validator and power
-        delete validators[key];
-        delete powers[key];
-
-        emit LogValidatorRemoved(
-            _validatorAddress,
-            0,
-            currentValsetVersion,
-            validatorCount,
-            totalPower
-        );
-    }
-
-    /*
-    * @dev: updateValset
-    */
-    function updateValset(
-        address[] memory _validators,
-        uint256[] memory _powers
-    )
-        public
-        onlyOperator
-    {
-       require(
-           _validators.length == _powers.length,
-           "Every validator must have a corresponding power"
-       );
-
-       resetValset();
-
-       for(uint256 i = 0; i < _validators.length; i = i.add(1)) {
-           addValidatorInternal(_validators[i], _powers[i]);
-       }
-
-        emit LogValsetUpdated(
-            currentValsetVersion,
-            validatorCount,
-            totalPower
-        );
-    }
-
-    /*
-    * @dev: isActiveValidator
-    */
-    function isActiveValidator(
-        address _validatorAddress
-    )
-        public
-        view
-        returns(bool)
-    {
-        // Recreate the unique key for this address given the current mapping version
-        bytes32 key = keccak256(
-            abi.encodePacked(
-                currentValsetVersion,
-                _validatorAddress
-            )
-        );
-
-        // Return bool indicating if this address is an active validator
-        return validators[key];
-    }
-
-    /*
-    * @dev: getValidatorPower
-    */
-    function getValidatorPower(
-        address _validatorAddress
-    )
-        external
-        view
-        returns(uint256)
-    {
-        // Recreate the unique key for this address given the current mapping version
-        bytes32 key = keccak256(
-            abi.encodePacked(
-                currentValsetVersion,
-                _validatorAddress
-            )
-        );
-
-        return powers[key];
-    }
-
-    /*
-    * @dev: recoverGas
-    */
-    function recoverGas(
-        uint256 _valsetVersion,
-        address _validatorAddress
-    )
-        external
-        onlyOperator
-    {
-        require(
-            _valsetVersion < currentValsetVersion,
-            "Gas recovery only allowed for previous validator sets"
-        );
-
-        // Recreate the unique key used to identify this validator in the given version
-        bytes32 key = keccak256(
-            abi.encodePacked(
-                _valsetVersion,
-                _validatorAddress
-            )
-        );
-
-        // Delete from mappings and recover gas
-        delete(validators[key]);
-        delete(powers[key]);
-    }
-
-    /*
-    * @dev: addValidatorInternal
-    */
-    function addValidatorInternal(
-        address _validatorAddress,
-        uint256 _validatorPower
-    )
-        internal
-    {
-        // Create a unique key which for this validator's position in the current version of the mapping
-        bytes32 key = keccak256(
-            abi.encodePacked(
-                currentValsetVersion,
-                _validatorAddress
-            )
-        );
-
-        validatorCount = validatorCount.add(1);
-        totalPower = totalPower.add(_validatorPower);
-
-        // Set validator as active and set their power
-        validators[key] = true;
-        powers[key] = _validatorPower;
-
-        emit LogValidatorAdded(
-            _validatorAddress,
-            _validatorPower,
-            currentValsetVersion,
-            validatorCount,
-            totalPower
-        );
-    }
-
-    /*
-    * @dev: resetValset
-    */
-    function resetValset()
-        internal
-    {
-        currentValsetVersion = currentValsetVersion.add(1);
-        validatorCount = 0;
-        totalPower = 0;
-
-        emit LogValsetReset(
-            currentValsetVersion,
-            validatorCount,
-            totalPower
-        );
-    }
-
-  /*
-    * @dev: Verify
-    *
-    */
-    function verify(
-        bytes32 h,
-        bytes memory signature
-    )
-        internal
-        pure
-        returns (address)
-    {
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-
-        // Check the signature length
-        if (signature.length != 65) {
-            return (address(0));
-        }
-
-        // Divide the signature in r, s and v variables
-        // ecrecover takes the signature parameters, and the only way to get them
-        // currently is to use assembly.
-        // solium-disable-next-line security/no-inline-assembly
-        assembly {
-            r := mload(add(signature, 32))
-            s := mload(add(signature, 64))
-            v := byte(0, mload(add(signature, 96)))
-        }
-
-        // Version of signature should be 27 or 28, but 0 and 1 are also possible versions
-        if (v < 27) {
-            v += 27;
-        }
-
-        // If the version is correct return the signer address
-        if (v != 27 && v != 28) {
-            return (address(0));
-        } else {
-            // solium-disable-next-line arg-overflow
-            return ecrecover(h, v, r, s);
-        }
-    }
-
-    /**
-    * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:" and hash the result
-    */
-    function ethMessageHash(string memory message) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
-            "\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(message)))
-        );
-    }
-}
-
 // File: openzeppelin-solidity/contracts/GSN/Context.sol
 
 pragma solidity ^0.5.0;
@@ -1550,250 +1062,492 @@ contract EthereumBank {
     }
 }
 
-// File: contracts/BridgeBank/BridgeBank.sol
+// File: openzeppelin-solidity/contracts/cryptography/ECDSA.sol
+
+pragma solidity ^0.5.0;
+
+/**
+ * @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
+ *
+ * These functions can be used to verify that a message was signed by the holder
+ * of the private keys of a given address.
+ */
+library ECDSA {
+    /**
+     * @dev Returns the address that signed a hashed message (`hash`) with
+     * `signature`. This address can then be used for verification purposes.
+     *
+     * The `ecrecover` EVM opcode allows for malleable (non-unique) signatures:
+     * this function rejects them by requiring the `s` value to be in the lower
+     * half order, and the `v` value to be either 27 or 28.
+     *
+     * NOTE: This call _does not revert_ if the signature is invalid, or
+     * if the signer is otherwise unable to be retrieved. In those scenarios,
+     * the zero address is returned.
+     *
+     * IMPORTANT: `hash` _must_ be the result of a hash operation for the
+     * verification to be secure: it is possible to craft signatures that
+     * recover to arbitrary addresses for non-hashed data. A safe way to ensure
+     * this is by receiving a hash of the original message (which may otherwise
+     * be too long), and then calling {toEthSignedMessageHash} on it.
+     */
+    function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
+        // Check the signature length
+        if (signature.length != 65) {
+            return (address(0));
+        }
+
+        // Divide the signature in r, s and v variables
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+
+        // ecrecover takes the signature parameters, and the only way to get them
+        // currently is to use assembly.
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            r := mload(add(signature, 0x20))
+            s := mload(add(signature, 0x40))
+            v := byte(0, mload(add(signature, 0x60)))
+        }
+
+        // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
+        // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
+        // the valid range for s in (281): 0 < s < secp256k1n ÷ 2 + 1, and for v in (282): v ∈ {27, 28}. Most
+        // signatures from current libraries generate a unique signature with an s-value in the lower half order.
+        //
+        // If your library generates malleable signatures, such as s-values in the upper range, calculate a new s-value
+        // with 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 - s1 and flip v from 27 to 28 or
+        // vice versa. If your library also generates signatures with 0/1 for v instead 27/28, add 27 to v to accept
+        // these malleable signatures as well.
+        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
+            return address(0);
+        }
+
+        if (v != 27 && v != 28) {
+            return address(0);
+        }
+
+        // If the signature is valid (and not malleable), return the signer address
+        return ecrecover(hash, v, r, s);
+    }
+
+    /**
+     * @dev Returns an Ethereum Signed Message, created from a `hash`. This
+     * replicates the behavior of the
+     * https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign[`eth_sign`]
+     * JSON-RPC method.
+     *
+     * See {recover}.
+     */
+    function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32) {
+        // 32 is the length in bytes of hash,
+        // enforced by the type signature above
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+    }
+}
+
+// File: contracts/Valset.sol
 
 pragma solidity ^0.5.0;
 
 
-// import "../Oracle.sol";
-// import "../CosmosBridge.sol";
 
-/**
- * @title BridgeBank
- * @dev Bank contract which coordinates asset-related functionality.
- *      CosmosBank manages the minting and burning of tokens which
- *      represent Cosmos based assets, while EthereumBank manages
- *      the locking and unlocking of Ethereum and ERC20 token assets
- *      based on Ethereum.
- **/
-
-contract BridgeBank is CosmosBank, EthereumBank {
+contract Valset {
 
     using SafeMath for uint256;
-    
-    address public operator;
-    Oracle public oracle;
-    CosmosBridge public cosmosBridge;
+    using ECDSA for bytes32;
 
     /*
-    * @dev: Constructor, sets operator
+    * @dev: Variable declarations
     */
-    constructor (
-        address _operatorAddress,
-        address _oracleAddress,
-        address _cosmosBridgeAddress
+    address public operator;
+    uint256 public totalPower;
+    uint256 public currentValsetVersion;
+    uint256 public validatorCount;
+    mapping (bytes32 => bool) public validators;
+    mapping(bytes32 => uint256) public powers;
+
+    /*
+    * @dev: Event declarations
+    */
+    event LogValidatorAdded(
+        address _validator,
+        uint256 _power,
+        uint256 _currentValsetVersion,
+        uint256 _validatorCount,
+        uint256 _totalPower
+    );
+
+    event LogValidatorPowerUpdated(
+        address _validator,
+        uint256 _power,
+        uint256 _currentValsetVersion,
+        uint256 _validatorCount,
+        uint256 _totalPower
+    );
+
+    event LogValidatorRemoved(
+        address _validator,
+        uint256 _power,
+        uint256 _currentValsetVersion,
+        uint256 _validatorCount,
+        uint256 _totalPower
+    );
+
+    event LogValsetReset(
+        uint256 _newValsetVersion,
+        uint256 _validatorCount,
+        uint256 _totalPower
+    );
+
+    event LogValsetUpdated(
+        uint256 _newValsetVersion,
+        uint256 _validatorCount,
+        uint256 _totalPower
+    );
+
+    /*
+    * @dev: Modifier which restricts access to the operator.
+    */
+    modifier onlyOperator()
+    {
+        require(
+            msg.sender == operator,
+            'Must be the operator.'
+        );
+        _;
+    }
+
+    /*
+    * @dev: Constructor
+    */
+    constructor(
+        address _operator,
+        address[] memory _initValidators,
+        uint256[] memory _initPowers
     )
         public
     {
-        operator = _operatorAddress;
-        oracle = Oracle(_oracleAddress);
-        cosmosBridge = CosmosBridge(_cosmosBridgeAddress);
-    }
+        operator = _operator;
+        currentValsetVersion = 0;
 
-    /*
-    * @dev: Modifier to restrict access to operator
-    */
-    modifier onlyOperator() {
-        require(
-            msg.sender == operator,
-            'Must be BridgeBank operator.'
+        updateValset(
+            _initValidators,
+            _initPowers
         );
-        _;
     }
 
-    /*
-    * @dev: Modifier to restrict access to the oracle
-    */
-    modifier onlyOracle()
+    function recover(
+        string memory _message,
+        bytes memory _signature
+    )
+        public
+        pure
+        returns (address)
     {
-        require(
-            msg.sender == address(oracle),
-            "Access restricted to the oracle"
-        );
-        _;
+        bytes32 message = ethMessageHash(_message);
+        return verify(message, _signature);
     }
 
     /*
-    * @dev: Modifier to restrict access to the cosmos bridge
+    * @dev: addValidator
     */
-    modifier onlyCosmosBridge()
-    {
-        require(
-            msg.sender == address(cosmosBridge) || msg.sender == operator, // TODO: remove this after EthDenver
-            "Access restricted to the cosmos bridge"
-        );
-        _;
-    }
-
-   /*
-    * @dev: Fallback function allows operator to send funds to the bank directly
-    *       This feature is used for testing and is available at the operator's own risk.
-    */
-    function() external payable onlyOperator {}
-
-    /*
-    * @dev: Creates a new BridgeToken
-    *
-    * @param _symbol: The new BridgeToken's symbol
-    * @return: The new BridgeToken contract's address
-    */
-    function createNewBridgeToken(
-        string memory _symbol
+    function addValidator(
+        address _validatorAddress,
+        uint256 _validatorPower
     )
         public
         onlyOperator
-        returns(address)
     {
-        return deployNewBridgeToken(_symbol);
-    }
-
-    /*
-     * @dev: Mints new BankTokens
-     *
-     * @param _cosmosSender: The sender's Cosmos address in bytes.
-     * @param _ethereumRecipient: The intended recipient's Ethereum address.
-     * @param _cosmosTokenAddress: The currency type
-     * @param _symbol: comsos token symbol
-     * @param _amount: number of comsos tokens to be minted
-     */
-     function mintBridgeTokens(
-        bytes memory _cosmosSender,
-        address payable _intendedRecipient,
-        address _bridgeTokenAddress,
-        string memory _symbol,
-        uint256 _amount
-    )
-        public
-        onlyCosmosBridge
-    {
-        return mintNewBridgeTokens(
-            _cosmosSender,
-            _intendedRecipient,
-            _bridgeTokenAddress,
-            _symbol,
-            _amount
+        addValidatorInternal(
+            _validatorAddress,
+            _validatorPower
         );
     }
 
     /*
-    * @dev: Locks received Ethereum funds.
-    *
-    * @param _recipient: bytes representation of destination address.
-    * @param _token: token address in origin chain (0x0 if ethereum)
-    * @param _amount: value of deposit
+    * @dev: updateValidatorPower
     */
-    function lock(
-        bytes memory _recipient,
-        address _token,
-        uint256 _amount
+    function updateValidatorPower(
+        address _validatorAddress,
+        uint256 _newValidatorPower
     )
         public
-        availableNonce()
-        payable
+        onlyOperator
     {
-        string memory symbol;
-
-        // Ethereum deposit
-        if (msg.value > 0) {
-          require(
-              _token == address(0),
-              "Ethereum deposits require the 'token' address to be the null address"
-            );
-          require(
-              msg.value == _amount,
-              "The transactions value must be equal the specified amount (in wei)"
-            );
-
-          // Set the the symbol to ETH
-          symbol = "ETH";
-          // ERC20 deposit
-        } else {
-          require(
-              BridgeToken(_token).transferFrom(msg.sender, address(this), _amount),
-              "Contract token allowances insufficient to complete this lock request"
-          );
-          // Set symbol to the ERC20 token's symbol
-          symbol = BridgeToken(_token).symbol();
-        }
-
-        lockFunds(
-            msg.sender,
-            _recipient,
-            _token,
-            symbol,
-            _amount
+        // Create a unique key which for this validator's position in the current version of the mapping
+        bytes32 key = keccak256(
+            abi.encodePacked(
+                currentValsetVersion,
+                _validatorAddress
+            )
         );
-    }
 
-   /*
-    * @dev: Unlocks Ethereum and ERC20 tokens held on the contract.
-    *
-    * @param _recipient: recipient's Ethereum address
-    * @param _token: token contract address
-    * @param _symbol: token symbol
-    * @param _amount: wei amount or ERC20 token count
-\   */
-     function unlock(
-        address payable _recipient,
-        address _token,
-        string memory _symbol,
-        uint256 _amount
-    )
-        public
-        onlyCosmosBridge
-        hasLockedFunds(
-            _token,
-            _amount
-        )
-        canDeliver(
-            _token,
-            _amount
-        )
-    {
-        unlockFunds(
-            _recipient,
-            _token,
-            _symbol,
-            _amount
+        require(
+            validators[key],
+            "Can only update the power of active valdiators"
+        );
+
+
+        // Adjust total power by new validator power
+        uint256 priorPower = powers[key];
+        totalPower = totalPower.sub(priorPower);
+        totalPower = totalPower.add(_newValidatorPower);
+
+        // Set validator's new power
+        powers[key] = _newValidatorPower;
+
+        emit LogValidatorPowerUpdated(
+            _validatorAddress,
+            _newValidatorPower,
+            currentValsetVersion,
+            validatorCount,
+            totalPower
         );
     }
 
     /*
-    * @dev: Exposes an item's current status.
-    *
-    * @param _id: The item in question.
-    * @return: Boolean indicating the lock status.
+    * @dev: removeValidator
     */
-    function getCosmosDepositStatus(
-        bytes32 _id
+    function removeValidator(
+        address _validatorAddress
+    )
+        public
+        onlyOperator
+    {
+        // Create a unique key which for this validator's position in the current version of the mapping
+        bytes32 key = keccak256(
+            abi.encodePacked(
+                currentValsetVersion,
+                _validatorAddress
+            )
+        );
+
+        require(
+            validators[key],
+            "Can only remove active valdiators"
+        );
+
+        // Update validator count and total power
+        validatorCount = validatorCount.sub(1);
+        totalPower = totalPower.sub(powers[key]);
+
+        // Delete validator and power
+        delete validators[key];
+        delete powers[key];
+
+        emit LogValidatorRemoved(
+            _validatorAddress,
+            0,
+            currentValsetVersion,
+            validatorCount,
+            totalPower
+        );
+    }
+
+    /*
+    * @dev: updateValset
+    */
+    function updateValset(
+        address[] memory _validators,
+        uint256[] memory _powers
+    )
+        public
+        onlyOperator
+    {
+       require(
+           _validators.length == _powers.length,
+           "Every validator must have a corresponding power"
+       );
+
+       resetValset();
+
+       for(uint256 i = 0; i < _validators.length; i = i.add(1)) {
+           addValidatorInternal(_validators[i], _powers[i]);
+       }
+
+        emit LogValsetUpdated(
+            currentValsetVersion,
+            validatorCount,
+            totalPower
+        );
+    }
+
+    /*
+    * @dev: isActiveValidator
+    */
+    function isActiveValidator(
+        address _validatorAddress
     )
         public
         view
         returns(bool)
     {
-        return isLockedCosmosDeposit(_id);
+        // Recreate the unique key for this address given the current mapping version
+        bytes32 key = keccak256(
+            abi.encodePacked(
+                currentValsetVersion,
+                _validatorAddress
+            )
+        );
+
+        // Return bool indicating if this address is an active validator
+        return validators[key];
     }
 
     /*
-    * @dev: Allows access to a Cosmos deposit's information via its unique identifier.
-    *
-    * @param _id: The deposit to be viewed.
-    * @return: Original sender's Ethereum address.
-    * @return: Intended Cosmos recipient's address in bytes.
-    * @return: The lock deposit's currency, denoted by a token address.
-    * @return: The amount locked in the deposit.
-    * @return: The deposit's unique nonce.
+    * @dev: getValidatorPower
     */
-    function viewCosmosDeposit(
-        bytes32 _id
+    function getValidatorPower(
+        address _validatorAddress
     )
-        public
+        external
         view
-        returns(bytes memory, address payable, address, uint256)
+        returns(uint256)
     {
-        return getCosmosDeposit(_id);
+        // Recreate the unique key for this address given the current mapping version
+        bytes32 key = keccak256(
+            abi.encodePacked(
+                currentValsetVersion,
+                _validatorAddress
+            )
+        );
+
+        return powers[key];
     }
 
+    /*
+    * @dev: recoverGas
+    */
+    function recoverGas(
+        uint256 _valsetVersion,
+        address _validatorAddress
+    )
+        external
+        onlyOperator
+    {
+        require(
+            _valsetVersion < currentValsetVersion,
+            "Gas recovery only allowed for previous validator sets"
+        );
+
+        // Recreate the unique key used to identify this validator in the given version
+        bytes32 key = keccak256(
+            abi.encodePacked(
+                _valsetVersion,
+                _validatorAddress
+            )
+        );
+
+        // Delete from mappings and recover gas
+        delete(validators[key]);
+        delete(powers[key]);
+    }
+
+    /*
+    * @dev: addValidatorInternal
+    */
+    function addValidatorInternal(
+        address _validatorAddress,
+        uint256 _validatorPower
+    )
+        internal
+    {
+        // Create a unique key which for this validator's position in the current version of the mapping
+        bytes32 key = keccak256(
+            abi.encodePacked(
+                currentValsetVersion,
+                _validatorAddress
+            )
+        );
+
+        validatorCount = validatorCount.add(1);
+        totalPower = totalPower.add(_validatorPower);
+
+        // Set validator as active and set their power
+        validators[key] = true;
+        powers[key] = _validatorPower;
+
+        emit LogValidatorAdded(
+            _validatorAddress,
+            _validatorPower,
+            currentValsetVersion,
+            validatorCount,
+            totalPower
+        );
+    }
+
+    /*
+    * @dev: resetValset
+    */
+    function resetValset()
+        internal
+    {
+        currentValsetVersion = currentValsetVersion.add(1);
+        validatorCount = 0;
+        totalPower = 0;
+
+        emit LogValsetReset(
+            currentValsetVersion,
+            validatorCount,
+            totalPower
+        );
+    }
+
+  /*
+    * @dev: Verify
+    *
+    */
+    function verify(
+        bytes32 h,
+        bytes memory signature
+    )
+        internal
+        pure
+        returns (address)
+    {
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+
+        // Check the signature length
+        if (signature.length != 65) {
+            return (address(0));
+        }
+
+        // Divide the signature in r, s and v variables
+        // ecrecover takes the signature parameters, and the only way to get them
+        // currently is to use assembly.
+        // solium-disable-next-line security/no-inline-assembly
+        assembly {
+            r := mload(add(signature, 32))
+            s := mload(add(signature, 64))
+            v := byte(0, mload(add(signature, 96)))
+        }
+
+        // Version of signature should be 27 or 28, but 0 and 1 are also possible versions
+        if (v < 27) {
+            v += 27;
+        }
+
+        // If the version is correct return the signer address
+        if (v != 27 && v != 28) {
+            return (address(0));
+        } else {
+            // solium-disable-next-line arg-overflow
+            return ecrecover(h, v, r, s);
+        }
+    }
+
+    /**
+    * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:" and hash the result
+    */
+    function ethMessageHash(string memory message) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(
+            "\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(message)))
+        );
+    }
 }
 
 // File: contracts/CosmosBridge.sol
@@ -1801,7 +1555,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
 pragma solidity ^0.5.0;
 
 
-
+// import "./BridgeBank/BridgeBank.sol";
 
 contract CosmosBridge {
 
@@ -2403,4 +2157,250 @@ contract Oracle {
             _prophecyID
         );
     }
+}
+
+// File: contracts/BridgeBank/BridgeBank.sol
+
+pragma solidity ^0.5.0;
+
+
+
+
+
+/**
+ * @title BridgeBank
+ * @dev Bank contract which coordinates asset-related functionality.
+ *      CosmosBank manages the minting and burning of tokens which
+ *      represent Cosmos based assets, while EthereumBank manages
+ *      the locking and unlocking of Ethereum and ERC20 token assets
+ *      based on Ethereum.
+ **/
+
+contract BridgeBank is CosmosBank, EthereumBank {
+
+    using SafeMath for uint256;
+    
+    address public operator;
+    Oracle public oracle;
+    CosmosBridge public cosmosBridge;
+
+    /*
+    * @dev: Constructor, sets operator
+    */
+    constructor (
+        address _operatorAddress,
+        address _oracleAddress,
+        address _cosmosBridgeAddress
+    )
+        public
+    {
+        operator = _operatorAddress;
+        oracle = Oracle(_oracleAddress);
+        cosmosBridge = CosmosBridge(_cosmosBridgeAddress);
+    }
+
+    /*
+    * @dev: Modifier to restrict access to operator
+    */
+    modifier onlyOperator() {
+        require(
+            msg.sender == operator,
+            'Must be BridgeBank operator.'
+        );
+        _;
+    }
+
+    /*
+    * @dev: Modifier to restrict access to the oracle
+    */
+    modifier onlyOracle()
+    {
+        require(
+            msg.sender == address(oracle),
+            "Access restricted to the oracle"
+        );
+        _;
+    }
+
+    /*
+    * @dev: Modifier to restrict access to the cosmos bridge
+    */
+    modifier onlyCosmosBridge()
+    {
+        require(
+            msg.sender == address(cosmosBridge) || msg.sender == operator, // TODO: remove this after EthDenver
+            "Access restricted to the cosmos bridge"
+        );
+        _;
+    }
+
+   /*
+    * @dev: Fallback function allows operator to send funds to the bank directly
+    *       This feature is used for testing and is available at the operator's own risk.
+    */
+    function() external payable onlyOperator {}
+
+    /*
+    * @dev: Creates a new BridgeToken
+    *
+    * @param _symbol: The new BridgeToken's symbol
+    * @return: The new BridgeToken contract's address
+    */
+    function createNewBridgeToken(
+        string memory _symbol
+    )
+        public
+        onlyOperator
+        returns(address)
+    {
+        return deployNewBridgeToken(_symbol);
+    }
+
+    /*
+     * @dev: Mints new BankTokens
+     *
+     * @param _cosmosSender: The sender's Cosmos address in bytes.
+     * @param _ethereumRecipient: The intended recipient's Ethereum address.
+     * @param _cosmosTokenAddress: The currency type
+     * @param _symbol: comsos token symbol
+     * @param _amount: number of comsos tokens to be minted
+     */
+     function mintBridgeTokens(
+        bytes memory _cosmosSender,
+        address payable _intendedRecipient,
+        address _bridgeTokenAddress,
+        string memory _symbol,
+        uint256 _amount
+    )
+        public
+        onlyCosmosBridge
+    {
+        return mintNewBridgeTokens(
+            _cosmosSender,
+            _intendedRecipient,
+            _bridgeTokenAddress,
+            _symbol,
+            _amount
+        );
+    }
+
+    /*
+    * @dev: Locks received Ethereum funds.
+    *
+    * @param _recipient: bytes representation of destination address.
+    * @param _token: token address in origin chain (0x0 if ethereum)
+    * @param _amount: value of deposit
+    */
+    function lock(
+        bytes memory _recipient,
+        address _token,
+        uint256 _amount
+    )
+        public
+        availableNonce()
+        payable
+    {
+        string memory symbol;
+
+        // Ethereum deposit
+        if (msg.value > 0) {
+          require(
+              _token == address(0),
+              "Ethereum deposits require the 'token' address to be the null address"
+            );
+          require(
+              msg.value == _amount,
+              "The transactions value must be equal the specified amount (in wei)"
+            );
+
+          // Set the the symbol to ETH
+          symbol = "ETH";
+          // ERC20 deposit
+        } else {
+          require(
+              BridgeToken(_token).transferFrom(msg.sender, address(this), _amount),
+              "Contract token allowances insufficient to complete this lock request"
+          );
+          // Set symbol to the ERC20 token's symbol
+          symbol = BridgeToken(_token).symbol();
+        }
+
+        lockFunds(
+            msg.sender,
+            _recipient,
+            _token,
+            symbol,
+            _amount
+        );
+    }
+
+   /*
+    * @dev: Unlocks Ethereum and ERC20 tokens held on the contract.
+    *
+    * @param _recipient: recipient's Ethereum address
+    * @param _token: token contract address
+    * @param _symbol: token symbol
+    * @param _amount: wei amount or ERC20 token count
+\   */
+     function unlock(
+        address payable _recipient,
+        address _token,
+        string memory _symbol,
+        uint256 _amount
+    )
+        public
+        onlyCosmosBridge
+        hasLockedFunds(
+            _token,
+            _amount
+        )
+        canDeliver(
+            _token,
+            _amount
+        )
+    {
+        unlockFunds(
+            _recipient,
+            _token,
+            _symbol,
+            _amount
+        );
+    }
+
+    /*
+    * @dev: Exposes an item's current status.
+    *
+    * @param _id: The item in question.
+    * @return: Boolean indicating the lock status.
+    */
+    function getCosmosDepositStatus(
+        bytes32 _id
+    )
+        public
+        view
+        returns(bool)
+    {
+        return isLockedCosmosDeposit(_id);
+    }
+
+    /*
+    * @dev: Allows access to a Cosmos deposit's information via its unique identifier.
+    *
+    * @param _id: The deposit to be viewed.
+    * @return: Original sender's Ethereum address.
+    * @return: Intended Cosmos recipient's address in bytes.
+    * @return: The lock deposit's currency, denoted by a token address.
+    * @return: The amount locked in the deposit.
+    * @return: The deposit's unique nonce.
+    */
+    function viewCosmosDeposit(
+        bytes32 _id
+    )
+        public
+        view
+        returns(bytes memory, address payable, address, uint256)
+    {
+        return getCosmosDeposit(_id);
+    }
+
 }
