@@ -66,6 +66,7 @@ func InitEthereumRelayer(
 	// Load BridgeBank contract ABI and LogLock event signature
 	bridgeBankContractABI := contract.LoadABI(txs.BridgeBank)
 	eventLogLockSignature := bridgeBankContractABI.Events[events.LogLock.String()].Id().Hex()
+	eventLogLockNFTSignature := bridgeBankContractABI.Events[events.LogLockNFT.String()].Id().Hex()
 
 	// Load CosmosBridge contract ABI and LogNewProphecyClaim event signature
 	cosmosBridgeContractABI := contract.LoadABI(txs.CosmosBridge)
@@ -89,6 +90,11 @@ func InitEthereumRelayer(
 			case eventLogLockSignature:
 				err = handleLogLockEvent(
 					clientChainID, bridgeBankAddress, bridgeBankContractABI, events.LogLock.String(),
+					vLog, cdc, validatorAddress, validatorName, cliCtx, txBldr,
+				)
+			case eventLogLockNFTSignature:
+				err = handleLogLockNFTEvent(
+					clientChainID, bridgeBankAddress, bridgeBankContractABI, events.LogLockNFT.String(),
 					vLog, cdc, validatorAddress, validatorName, cliCtx, txBldr,
 				)
 			case eventLogNewProphecyClaimSignature:
@@ -147,6 +153,37 @@ func handleLogLockEvent(
 ) error {
 	// Unpack the LogLock event using its unique event signature from the contract's ABI
 	event := events.UnpackLogLock(clientChainID, contractAddress.Hex(), contractABI, eventName, log.Data)
+
+	// Add the event to the record
+	events.NewEventWrite(log.TxHash.Hex(), event)
+
+	// Parse the LogLock event's payload into a struct
+	prophecyClaim, err := txs.LogLockToEthBridgeClaim(validatorAddress, &event)
+	if err != nil {
+		return err
+	}
+
+	// Initiate the relay
+	return txs.RelayLockToCosmos(
+		cdc, validatorName, &prophecyClaim, cliContext, txBldr,
+	)
+}
+
+// handleLogLockNFTEvent : unpacks a LogLock event, converts it to a ProphecyClaim, and relays a tx to Cosmos
+func handleLogLockNFTEvent(
+	clientChainID *big.Int,
+	contractAddress common.Address,
+	contractABI abi.ABI,
+	eventName string,
+	log types.Log,
+	cdc *codec.Codec,
+	validatorAddress sdk.ValAddress,
+	validatorName string,
+	cliContext sdkContext.CLIContext,
+	txBldr authtypes.TxBuilder,
+) error {
+	// Unpack the LogLock event using its unique event signature from the contract's ABI
+	event := events.UnpackLogLockNFT(clientChainID, contractAddress.Hex(), contractABI, eventName, log.Data)
 
 	// Add the event to the record
 	events.NewEventWrite(log.TxHash.Hex(), event)

@@ -39,6 +39,32 @@ type NewProphecyClaimEvent struct {
 	ClaimType        uint8
 }
 
+// UnpackLogLockNFT Handles new LogLock events
+func UnpackLogLockNFT(
+	clientChainID *big.Int, contractAddress string, contractAbi abi.ABI, eventName string, eventData []byte,
+) (lockEvent LockEvent) {
+	event := LockEvent{}
+
+	// Bridge contract address
+	if !common.IsHexAddress(contractAddress) {
+		log.Fatalf("Only Ethereum contracts are currently supported. Invalid address: %v", contractAddress)
+	}
+	event.BridgeContractAddress = common.HexToAddress(contractAddress)
+
+	// Ethereum chain ID
+	event.EthereumChainID = clientChainID
+
+	// Parse the event's attributes as Ethereum network variables
+	err := contractAbi.Unpack(&event, eventName, eventData)
+	if err != nil {
+		log.Fatalf("Error unpacking: %v", err)
+	}
+
+	PrintLockNFTEvent(event)
+
+	return event
+}
+
 // UnpackLogLock Handles new LogLock events
 func UnpackLogLock(
 	clientChainID *big.Int, contractAddress string, contractAbi abi.ABI, eventName string, eventData []byte,
@@ -96,6 +122,24 @@ func PrintLockEvent(event LockEvent) {
 
 	// Print the event's information
 	fmt.Printf(`\nChain ID: %v\nBridge contract address: %v\nToken symbol: %v\nToken 
+		contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n`,
+		chainID, bridgeContractAddress, symbol, token, sender, recipient, value, nonce)
+}
+
+// PrintLockNFTEvent prints a LockEvent struct's information
+func PrintLockNFTEvent(event LockEvent) {
+	// Convert the variables into a printable format
+	chainID := event.EthereumChainID
+	bridgeContractAddress := event.BridgeContractAddress.Hex()
+	value := event.Value
+	symbol := event.Symbol
+	token := event.Token.Hex()
+	sender := event.From.Hex()
+	recipient := string(event.To)
+	nonce := event.Nonce
+
+	// Print the event's information
+	fmt.Printf(`\nChain ID: %v\nBridge contract address: %v\nNFT symbol: %v\nToken 
 		contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n`,
 		chainID, bridgeContractAddress, symbol, token, sender, recipient, value, nonce)
 }

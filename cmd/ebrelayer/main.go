@@ -144,6 +144,9 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 
 	// Load validator details
 	validatorAddress, validatorName, err := utils.LoadValidatorCredentials(validatorFrom, inBuf)
+	if err != nil {
+		return err
+	}
 
 	// Load CLI context
 	cliCtx := utils.LoadTendermintCLIContext(cdc, validatorAddress, validatorName, rpcURL, chainID)
@@ -154,24 +157,53 @@ func RunRelayerCmd(cmd *cobra.Command, args []string) error {
 		WithChainID(chainID)
 
 	// Start an Ethereum websocket
-	go relayer.InitEthereumRelayer(
-		cdc,
-		ethereumProvider,
-		contractAddress,
-		validatorName,
-		validatorAddress,
-		cliCtx,
-		txBldr,
-		privateKey,
-	)
+	go func() {
+		err := relayer.InitEthereumRelayer(
+			cdc,
+			ethereumProvider,
+			contractAddress,
+			validatorName,
+			validatorAddress,
+			cliCtx,
+			txBldr,
+			privateKey,
+		)
+		if err != nil {
+			log.Printf("Ethereum relayer failed: %v", err)
+		}
+	}()
+	// Start an Ethereum websocket
+	// go relayer.InitEthereumRelayer(
+	// 	cdc,
+	// 	ethereumProvider,
+	// 	contractAddress,
+	// 	validatorName,
+	// 	validatorAddress,
+	// 	cliCtx,
+	// 	txBldr,
+	// 	privateKey,
+	// )
 
 	// Start a Tendermint websocket
-	go relayer.InitCosmosRelayer(
-		tendermintNode,
-		ethereumProvider,
-		contractAddress,
-		privateKey,
-	)
+	go func() {
+		err := relayer.InitCosmosRelayer(
+			tendermintNode,
+			ethereumProvider,
+			contractAddress,
+			privateKey,
+		)
+		if err != nil {
+			log.Printf("Cosmos relayer failed: %v", err)
+		}
+	}()
+
+	// // Start a Tendermint websocket
+	// go relayer.InitCosmosRelayer(
+	// 	tendermintNode,
+	// 	ethereumProvider,
+	// 	contractAddress,
+	// 	privateKey,
+	// )
 
 	return nil
 }

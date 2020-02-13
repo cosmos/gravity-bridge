@@ -12,13 +12,15 @@ const (
 	MsgLock
 	// LogLock Ethereum event 'LockEvent'
 	LogLock
+	// LogLockNFT Ethereum event 'LockNFTEvent'
+	LogLockNFT
 	// LogNewProphecyClaim Ethereum event 'NewProphecyClaimEvent'
 	LogNewProphecyClaim
 )
 
 // String returns the event type as a string
 func (d Event) String() string {
-	return [...]string{"unsupported", "burn", "lock", "LogLock", "LogNewProphecyClaim"}[d]
+	return [...]string{"unsupported", "burn", "lock", "LogLock", "LogLockNFT", "LogNewProphecyClaim"}[d]
 }
 
 // CosmosMsgAttributeKey enum containing supported attribute keys
