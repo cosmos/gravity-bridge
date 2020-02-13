@@ -24,11 +24,15 @@ module.exports = async () => {
 
   // Config values
   const NETWORK_ROPSTEN =
-    process.argv[4] === "--network" && process.argv[5] === "ropsten";
+    process.argv[4] === "--network" && process.argv[5] === "xdai";
   const DEFAULT_PARAMS =
     process.argv[4] === "--default" ||
     (NETWORK_ROPSTEN && process.argv[6] === "--default");
   const NUM_ARGS = process.argv.length - 4;
+
+  console.log({NUM_ARGS})
+  console.log({NETWORK_ROPSTEN})
+  console.log(process.argv)
 
   /*******************************************
    *** Command line argument error checking
@@ -94,7 +98,7 @@ module.exports = async () => {
   if (NETWORK_ROPSTEN) {
     provider = new HDWalletProvider(
       process.env.MNEMONIC,
-      "https://ropsten.infura.io/v3/".concat(process.env.INFURA_PROJECT_ID)
+      "https://dai.poa.network"
     );
   } else {
     provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);

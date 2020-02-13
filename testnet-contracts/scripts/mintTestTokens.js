@@ -17,7 +17,7 @@ module.exports = async () => {
    ******************************************/
   // Config values
   const NETWORK_ROPSTEN =
-    process.argv[4] === "--network" && process.argv[5] === "ropsten";
+    process.argv[4] === "--network" && process.argv[5] === "xdai";
   const NUM_ARGS = process.argv.length - 4;
 
   // Mint transaction parameters
@@ -29,22 +29,31 @@ module.exports = async () => {
    *** truffle exec lacks support for dynamic command line arguments:
    *** https://github.com/trufflesuite/truffle/issues/889#issuecomment-522581580
    ******************************************/
-  if (NETWORK_ROPSTEN) {
-    return console.error(
-      "Error: token minting on Ropsten network is not supported at this time"
-    );
-  } else {
-    if (NUM_ARGS !== 0) {
-      return console.error(
-        "Error: custom parameters for token minting are not supported at this time."
-      );
-    }
-  }
+  // if (NETWORK_ROPSTEN) {
+  //   return console.error(
+  //     "Error: token minting on Ropsten network is not supported at this time"
+  //   );
+  // } else {
+  //   if (NUM_ARGS !== 0) {
+  //     return console.error(
+  //       "Error: custom parameters for token minting are not supported at this time."
+  //     );
+  //   }
+  // }
 
   /*******************************************
    *** Web3 provider
    ******************************************/
-  const provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
+  let provider;
+  if (NETWORK_ROPSTEN) {
+    provider = new HDWalletProvider(
+      process.env.MNEMONIC,
+      "https://dai.poa.network"
+    );
+  } else {
+    provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
+  }
+  // const provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
   const web3 = new Web3(provider);
   tokenContract.setProvider(web3.currentProvider);
   try {
