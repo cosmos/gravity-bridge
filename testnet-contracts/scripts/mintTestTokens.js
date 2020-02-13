@@ -22,7 +22,7 @@ module.exports = async () => {
    ******************************************/
   // Config values
   const NETWORK_ROPSTEN =
-    process.argv[4] === "--network" && process.argv[5] === "ropsten";
+    process.argv[4] === "--network" && process.argv[5] === "xdai";
   const NUM_ARGS = process.argv.length - 4;
 
   // Mint transaction parameters

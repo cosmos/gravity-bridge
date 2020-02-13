@@ -27,6 +27,16 @@ module.exports = {
       },
       network_id: 3,
       gas: 6000000
+    },
+    xdai: {
+      provider: function() {
+        return new HDWalletProvider(
+          process.env.MNEMONIC,
+          "https://dai.poa.network"
+        );
+      },
+      network_id: 100,
+      gas: 6000000
     }
   },
   rpc: {
