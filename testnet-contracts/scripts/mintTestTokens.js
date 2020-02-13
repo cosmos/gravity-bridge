@@ -21,8 +21,8 @@ module.exports = async () => {
   const NUM_ARGS = process.argv.length - 4;
 
   // Mint transaction parameters
-  const TOKEN_AMOUNT = 1000;
-
+  const TOKEN_AMOUNT = (1).toString().padEnd(20, "0")
+    console.log({TOKEN_AMOUNT})
   /*******************************************
    *** Command line argument error checking
    ***
@@ -47,7 +47,7 @@ module.exports = async () => {
   const provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
   const web3 = new Web3(provider);
   tokenContract.setProvider(web3.currentProvider);
-
+  try {
   /*******************************************
    *** Contract interaction
    ******************************************/
@@ -74,6 +74,8 @@ module.exports = async () => {
   };
 
   console.log(transferEvent);
-
+} catch (error) {
+  console.log({error})
+}
   return;
 };

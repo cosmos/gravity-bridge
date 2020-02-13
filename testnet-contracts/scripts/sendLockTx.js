@@ -102,7 +102,7 @@ module.exports = async () => {
 
   const web3 = new Web3(provider);
   contract.setProvider(web3.currentProvider);
-
+try {
   /*******************************************
    *** Contract interaction
    ******************************************/
@@ -136,6 +136,8 @@ module.exports = async () => {
   };
 
   console.log(lockEvent);
-
+} catch (error) {
+  console.log({error})
+}
   return;
 };

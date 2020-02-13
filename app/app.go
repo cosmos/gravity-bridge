@@ -24,6 +24,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
+	"github.com/cosmos/sdk-tutorials/scavenge/x/scavenge"
 )
 
 const (
@@ -49,6 +50,7 @@ var (
 		supply.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		ethbridge.AppModuleBasic{},
+		scavenge.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -87,6 +89,8 @@ type EthereumBridgeApp struct {
 	SupplyKeeper  supply.Keeper
 	ParamsKeeper  params.Keeper
 
+	ScavengeKeeper scavenge.Keeper
+
 	// EthBridge keepers
 	BridgeKeeper ethbridge.Keeper
 	OracleKeeper oracle.Keeper
@@ -110,6 +114,7 @@ func NewEthereumBridgeApp(
 	keys := sdk.NewKVStoreKeys(
 		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, oracle.StoreKey, params.StoreKey,
+		scavenge.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -139,6 +144,12 @@ func NewEthereumBridgeApp(
 	)
 	app.BridgeKeeper = ethbridge.NewKeeper(app.cdc, app.SupplyKeeper, app.OracleKeeper)
 
+	app.ScavengeKeeper = scavenge.NewKeeper(
+		app.BankKeeper,
+		app.cdc,
+		keys[scavenge.StoreKey],
+	)
+
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(
@@ -149,6 +160,7 @@ func NewEthereumBridgeApp(
 		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
 		oracle.NewAppModule(app.OracleKeeper),
 		ethbridge.NewAppModule(app.OracleKeeper, app.SupplyKeeper, app.AccountKeeper, app.BridgeKeeper, app.cdc),
+		scavenge.NewAppModule(app.ScavengeKeeper, app.BankKeeper),
 	)
 
 	app.mm.SetOrderEndBlockers(staking.ModuleName)
@@ -158,6 +170,7 @@ func NewEthereumBridgeApp(
 	app.mm.SetOrderInitGenesis(
 		auth.ModuleName, staking.ModuleName, bank.ModuleName,
 		supply.ModuleName, genutil.ModuleName, ethbridge.ModuleName,
+		scavenge.ModuleName,
 	)
 
 	// TODO: add simulator support

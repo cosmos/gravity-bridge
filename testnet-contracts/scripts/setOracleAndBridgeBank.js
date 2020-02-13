@@ -43,6 +43,7 @@ module.exports = async () => {
   cosmosBridgeContract.setProvider(web3.currentProvider);
   oracleContract.setProvider(web3.currentProvider);
   bridgeBankContract.setProvider(web3.currentProvider);
+  try {
 
   /*******************************************
    *** Contract interaction
@@ -67,7 +68,6 @@ module.exports = async () => {
         gas: 300000 // 300,000 Gwei
       });
     });
-
   // Get event logs
   const setOracleEvent = setOracleLogs.find(e => e.event === "LogOracleSet");
   console.log("CosmosBridge's Oracle set:", setOracleEvent.args._oracle);
@@ -100,4 +100,7 @@ module.exports = async () => {
   );
 
   return;
+} catch (error) {
+  console.log({error})
+}
 };
