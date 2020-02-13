@@ -130,6 +130,26 @@ contract Oracle {
             validatorAddress,
             _signature
         );
+
+        // Process the prophecy
+        (bool valid,
+            uint256 weightedSignedPower,
+            uint256 weightedTotalPower
+        ) = getProphecyThreshold(_prophecyID);
+
+        if (valid) {
+            completeProphecy(
+                _prophecyID
+            );
+
+            emit LogProphecyProcessed(
+                _prophecyID,
+                weightedSignedPower,
+                weightedTotalPower,
+                msg.sender
+            );
+        }
+
     }
 
     /*
