@@ -106,6 +106,7 @@ contract Oracle {
     {
         address validatorAddress = msg.sender;
 
+        // TODO: Why is the signature necessary on top of the transaction (which contains a signature already)
         // Validate the msg.sender's signature
         require(
             validatorAddress == valset.recover(
@@ -186,6 +187,7 @@ contract Oracle {
         );
     }
 
+    // TODO: Why does this need to have onlyOperator modifier? probably oracle is not needed in this contract.
     /*
     * @dev: checkBridgeProphecy
     *       Operator accessor method which checks if a prophecy has passed

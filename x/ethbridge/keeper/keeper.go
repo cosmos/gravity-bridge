@@ -46,6 +46,8 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, claim types.EthBridgeClaim) (oracl
 	return k.oracleKeeper.ProcessClaim(ctx, oracleClaim)
 }
 
+// TODO: this seems totally unsafe to allow the token symbol to designate the denom of the token on the chain
+
 // ProcessSuccessfulClaim processes a claim that has just completed successfully with consensus
 func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) error {
 	oracleClaim, err := types.CreateOracleClaimFromOracleString(claim)
