@@ -42,9 +42,9 @@ linters:
 
 linters-settings:
   dogsled:
-   # checks assignments with too many blank identifiers; default is 2
-   # TODO: bring this down to at least 4
-   max-blank-identifiers: 6
+    # checks assignments with too many blank identifiers; default is 2
+    # TODO: bring this down to at least 4
+    max-blank-identifiers: 6
   maligned:
     # print struct with more effective memory layout or not, false by default
     suggest-new: true
