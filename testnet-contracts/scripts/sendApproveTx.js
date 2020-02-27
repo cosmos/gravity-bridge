@@ -111,7 +111,7 @@ module.exports = async () => {
     let instance
     if (tokenAddress) {
       instance = await tokenContract.at(tokenAddress)
-    }else {
+    } else {
       instance = await tokenContract.deployed()
     }
 
