@@ -44,6 +44,6 @@ module.exports = async () => {
 
   return console.log("BridgeRegistry deployed contract address: ", address);
 } catch (error) {
-  console.log({error})
+  console.error({error})
 }
 };
