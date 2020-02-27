@@ -22,7 +22,7 @@ module.exports = async () => {
    ******************************************/
   // Config values
   const NETWORK_ROPSTEN =
-    process.argv[4] === "--network" && process.argv[5] === "xdai";
+    process.argv[4] === "--network" && process.argv[5] === "ropsten";
 
   /*******************************************
    *** Web3 provider
@@ -32,7 +32,7 @@ module.exports = async () => {
   if (NETWORK_ROPSTEN) {
     provider = new HDWalletProvider(
       process.env.MNEMONIC,
-      "https://dai.poa.network"
+     "https://ropsten.infura.io/v3/".concat(process.env.INFURA_PROJECT_ID)
     );
   } else {
     provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);

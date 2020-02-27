@@ -41,7 +41,7 @@ linters:
     # - gocognit
 
 linters-settings:
-  dogsled: # TODO: add back once reason for error is known
+  dogsled:
    # checks assignments with too many blank identifiers; default is 2
    # TODO: bring this down to at least 4
    max-blank-identifiers: 6
