@@ -84,7 +84,7 @@ module.exports = async () => {
 
   console.log(transferEvent);
 } catch (error) {
-  console.log({error})
+  console.error({error})
 }
   return;
 };
