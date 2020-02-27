@@ -134,7 +134,7 @@ module.exports = async () => {
 
     console.log(approvalEvent);
   }catch (error) {
-    console.log({error})
+    console.error({error})
   }
   return;
 };
