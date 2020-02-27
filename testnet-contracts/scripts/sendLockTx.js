@@ -137,7 +137,7 @@ try {
 
   console.log(lockEvent);
 } catch (error) {
-  console.log({error})
+  console.error({error})
 }
   return;
 };
