@@ -142,7 +142,7 @@ func getProphecyHandler(cliCtx context.CLIContext, storeName string) http.Handle
 
 		symbol := vars[restSymbol]
 		if strings.TrimSpace(symbol) == "" {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, "symbol is empty")
 			return
 		}
 
