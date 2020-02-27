@@ -133,7 +133,7 @@ module.exports = async () => {
     };
 
     console.log(approvalEvent);
-  }catch (error) {
+  } catch (error) {
     console.error({error})
   }
   return;
