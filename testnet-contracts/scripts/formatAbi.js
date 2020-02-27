@@ -72,7 +72,7 @@ try {
 // Write contracts to relayer
 writeABIs(contracts);
 } catch (error) {
-  console.log(error)
+  console.error(error)
   return
 }
 console.log("SUCCESS")
