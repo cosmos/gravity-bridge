@@ -34,7 +34,7 @@ module.exports = async () => {
 
   const web3 = new Web3(provider);
   contract.setProvider(web3.currentProvider);
-
+  try {
   /*******************************************
    *** Contract interaction
    ******************************************/
@@ -43,4 +43,7 @@ module.exports = async () => {
   });
 
   return console.log("BridgeRegistry deployed contract address: ", address);
+} catch (error) {
+  console.error({error})
+}
 };

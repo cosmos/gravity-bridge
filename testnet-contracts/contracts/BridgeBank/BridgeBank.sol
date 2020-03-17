@@ -66,7 +66,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
     modifier onlyCosmosBridge()
     {
         require(
-            msg.sender == address(cosmosBridge),
+            msg.sender == address(cosmosBridge),  // TODO: Consider method for recovering funds
             "Access restricted to the cosmos bridge"
         );
         _;

@@ -35,7 +35,7 @@ module.exports = async () => {
    *** https://github.com/trufflesuite/truffle/issues/889#issuecomment-522581580
    ******************************************/
   if (NETWORK_ROPSTEN) {
-    if (NUM_ARGS !== 3) {
+    if (NUM_ARGS !== 3 && NUM_ARGS !== 4) {
       return console.error(
         "Error: Must specify token amount if using the Ropsten network."
       );
@@ -61,6 +61,22 @@ module.exports = async () => {
     }
   }
 
+
+  /*******************************************
+   *** Approve transaction parameters
+   ******************************************/
+  let tokenAddress;
+
+  if (NETWORK_ROPSTEN) {
+    tokenAddress = process.argv[7];
+  } else {
+    if (!DEFAULT_PARAMS) {
+      tokenAddress = process.argv[5];
+    } else {
+      tokenAddress = false;
+    }
+  }
+
   /*******************************************
    *** Web3 provider
    *** Set contract provider based on --network flag
@@ -79,39 +95,46 @@ module.exports = async () => {
 
   bridgeContract.setProvider(web3.currentProvider);
   tokenContract.setProvider(web3.currentProvider);
+  try {
+    /*******************************************
+     *** Contract interaction
+    ******************************************/
+    // Get current accounts
+    const accounts = await web3.eth.getAccounts();
 
-  /*******************************************
-   *** Contract interaction
-   ******************************************/
-  // Get current accounts
-  const accounts = await web3.eth.getAccounts();
+    const bridgeContractAddress = await bridgeContract
+      .deployed()
+      .then(function(instance) {
+        return instance.address;
+      });
+    
+    let instance
+    if (tokenAddress) {
+      instance = await tokenContract.at(tokenAddress)
+    } else {
+      instance = await tokenContract.deployed()
+    }
 
-  const bridgeContractAddress = await bridgeContract
-    .deployed()
-    .then(function(instance) {
-      return instance.address;
-    });
-
-  // Send lock transaction
-  const { logs } = await tokenContract.deployed().then(function(instance) {
-    return instance.approve(bridgeContractAddress, tokenAmount, {
+    // Send lock transaction
+    const { logs } = await instance.approve(bridgeContractAddress, tokenAmount, {
       from: accounts[0],
       value: 0,
       gas: 300000 // 300,000 Gwei
     });
-  });
 
-  // Get event logs
-  const event = logs.find(e => e.event === "Approval");
+    // Get event logs
+    const event = logs.find(e => e.event === "Approval");
 
-  // Parse event fields
-  const approvalEvent = {
-    owner: event.args.owner,
-    spender: event.args.spender,
-    value: Number(event.args.value)
-  };
+    // Parse event fields
+    const approvalEvent = {
+      owner: event.args.owner,
+      spender: event.args.spender,
+      value: Number(event.args.value)
+    };
 
-  console.log(approvalEvent);
-
+    console.log(approvalEvent);
+  } catch (error) {
+    console.error({error})
+  }
   return;
 };

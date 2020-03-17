@@ -48,51 +48,56 @@ module.exports = async () => {
 
   console.log("Fetching BridgeBank contract...");
   contract.setProvider(web3.currentProvider);
+  try {
+    /*******************************************
+     *** Contract interaction
+    ******************************************/
+    // Get current accounts
+    const accounts = await web3.eth.getAccounts();
 
-  /*******************************************
-   *** Contract interaction
-   ******************************************/
-  // Get current accounts
-  const accounts = await web3.eth.getAccounts();
+    console.log("Attempting to send createNewBridgeToken() tx with symbol: '" + symbol + "'...");
 
-  console.log("Attempting to send createNewBridgeToken() tx...");
-
-  // Get the bridge token's address if it were to be created
-  const bridgeTokenAddress = await contract.deployed().then(function(instance) {
-    return instance.createNewBridgeToken.call(symbol, {
-      from: accounts[0],
-      value: 0,
-      gas: 300000 // 300,000 Gwei
+    // Get the bridge token's address if it were to be created
+    const bridgeTokenAddress = await contract.deployed().then(function(instance) {
+      return instance.createNewBridgeToken.call(symbol, {
+        from: accounts[0],
+        value: 0,
+        gas: 3000000 // 300,000 Gwei
+      });
     });
-  });
+    console.log(`from ${accounts[0]}`)
+    console.log('Should deploy to ' + bridgeTokenAddress)
 
-  //  Create the bridge token
-  await contract.deployed().then(function(instance) {
-    return instance.createNewBridgeToken(symbol, {
-      from: accounts[0],
-      value: 0,
-      gas: 300000 // 300,000 Gwei
+    //  Create the bridge token
+    await contract.deployed().then(function(instance) {
+      return instance.createNewBridgeToken(symbol, {
+        from: accounts[0],
+        value: 0,
+        gas: 3000000 // 300,000 Gwei
+      });
     });
-  });
 
-  // Check bridge token whitelist
-  const isOnWhiteList = await contract.deployed().then(function(instance) {
-    return instance.bridgeTokenWhitelist(bridgeTokenAddress, {
-      from: accounts[0],
-      value: 0,
-      gas: 300000 // 300,000 Gwei
+    // Check bridge token whitelist
+    const isOnWhiteList = await contract.deployed().then(function(instance) {
+      return instance.bridgeTokenWhitelist(bridgeTokenAddress, {
+        from: accounts[0],
+        value: 0,
+        gas: 3000000 // 300,000 Gwei
+      });
     });
-  });
 
-  if (isOnWhiteList) {
-    console.log(
-      'Bridge Token"' + symbol + '" created at address:',
-      bridgetokenAddress
-    );
-  } else {
-    console.log(
-      "Error: Bridge Token creation and whitelisting was not successful"
-    );
+    if (isOnWhiteList) {
+      console.log(
+        'Bridge Token"' + symbol + '" created at address:',
+        bridgeTokenAddress
+      );
+    } else {
+      console.log(
+        "Error: Bridge Token creation and whitelisting was not successful"
+      );
+    }
+  } catch (error) {
+    console.error({error})
   }
 
   return;

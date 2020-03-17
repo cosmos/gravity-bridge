@@ -3,11 +3,12 @@ require("dotenv").config();
 var HDWalletProvider = require("@truffle/hdwallet-provider");
 
 module.exports = {
+  contracts_directory: "./flat",
   networks: {
     develop: {
       host: "localhost",
       port: 7545, // Match default network 'ganache'
-      network_id: "*",
+      network_id: 5777,
       gas: 6721975, // Truffle default development block gas limit
       gasPrice: 200000000000,
       solc: {
@@ -26,6 +27,16 @@ module.exports = {
         );
       },
       network_id: 3,
+      gas: 6000000
+    },
+    xdai: {
+      provider: function() {
+        return new HDWalletProvider(
+          process.env.MNEMONIC,
+          "https://dai.poa.network"
+        );
+      },
+      network_id: 100,
       gas: 6000000
     }
   },

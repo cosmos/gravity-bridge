@@ -5,6 +5,7 @@ module.exports = async () => {
   require("dotenv").config();
   const Web3 = require("web3");
   const HDWalletProvider = require("@truffle/hdwallet-provider");
+  try {
 
   // Contract abstraction
   const truffleContract = require("truffle-contract");
@@ -34,7 +35,6 @@ module.exports = async () => {
 
   const web3 = new Web3(provider);
   contract.setProvider(web3.currentProvider);
-
   /*******************************************
    *** Contract interaction
    ******************************************/
@@ -43,4 +43,7 @@ module.exports = async () => {
   });
 
   return console.log("BridgeBank deployed contract address: ", address);
+} catch (error) {
+  console.error({error})
+}
 };
