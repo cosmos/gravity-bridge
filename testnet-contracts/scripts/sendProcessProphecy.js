@@ -76,8 +76,8 @@ module.exports = async () => {
     console.log(`\n\tProphecy ${event.args._prophecyID} processed`);
     console.log("-------------------------------------------");
     console.log(`Submitter:\t ${event.args._submitter}`);
-    console.log(`Weighted total power:\t ${event.args._weightedTotalPower}`);
-    console.log(`Weighted signed power:\t ${event.args._weightedSignedPower}`);
+    console.log(`Current prophecy power:\t ${event.args._prophecyPowerCurrent}`);
+    console.log(`Prophecy power threshold:\t ${event.args._prophecyPowerThreshold}`);
     console.log("-------------------------------------------");
   } else {
     console.error("Error: no result from transaction!");

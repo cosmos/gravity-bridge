@@ -126,7 +126,7 @@ ebcli tx ethbridge burn $(ebcli keys show testuser -a) [RECIPIENT_ETHEREUM_ADDRE
 
 ## Prophecy claim processing
 
-You are able to check the status of active prophecy claims. Prophecy claims reach the signed power threshold when the weighted signed power surpasses the weighted total power, where *weighted total power* = (total power * 2) and *weighted signed power* = (signed power * 3).
+You are able to check the status of active prophecy claims. Prophecy claims can be processed once current signed power >= x% of total power, where x is the Oracle contract's consensus threshold parameter.
 
 ```bash
 # Check prophecy claim status

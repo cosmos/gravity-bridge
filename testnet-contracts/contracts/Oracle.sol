@@ -14,6 +14,7 @@ contract Oracle {
     CosmosBridge public cosmosBridge;
     Valset public valset;
     address public operator;
+    uint256 public consensusThreshold; // e.g. 75 = 75%
 
     // Tracks the number of OracleClaims made on an individual BridgeClaim
     mapping(uint256 => address[]) public oracleClaimValidators;
@@ -31,8 +32,8 @@ contract Oracle {
 
     event LogProphecyProcessed(
         uint256 _prophecyID,
-        uint256 _weightedSignedPower,
-        uint256 _weightedTotalPower,
+        uint256 _prophecyPowerCurrent,
+        uint256 _prophecyPowerThreshold,
         address _submitter
     );
 
@@ -82,13 +83,19 @@ contract Oracle {
     constructor(
         address _operator,
         address _valset,
-        address _cosmosBridge
+        address _cosmosBridge,
+        uint256 _consensusThreshold
     )
         public
     {
+        require(
+            _consensusThreshold > 0,
+            "Consensus threshold must be positive."
+        );
         operator = _operator;
         cosmosBridge = CosmosBridge(_cosmosBridge);
         valset = Valset(_valset);
+        consensusThreshold = _consensusThreshold;
     }
 
     /*
@@ -133,8 +140,8 @@ contract Oracle {
 
         // Process the prophecy
         (bool valid,
-            uint256 weightedSignedPower,
-            uint256 weightedTotalPower
+            uint256 prophecyPowerCurrent,
+            uint256 prophecyPowerThreshold
         ) = getProphecyThreshold(_prophecyID);
 
         if (valid) {
@@ -144,8 +151,8 @@ contract Oracle {
 
             emit LogProphecyProcessed(
                 _prophecyID,
-                weightedSignedPower,
-                weightedTotalPower,
+                prophecyPowerCurrent,
+                prophecyPowerThreshold,
                 msg.sender
             );
         }
@@ -164,8 +171,8 @@ contract Oracle {
     {
         // Process the prophecy
         (bool valid,
-            uint256 weightedSignedPower,
-            uint256 weightedTotalPower
+            uint256 prophecyPowerCurrent,
+            uint256 prophecyPowerThreshold
         ) = getProphecyThreshold(_prophecyID);
 
         require(
@@ -180,8 +187,8 @@ contract Oracle {
 
         emit LogProphecyProcessed(
             _prophecyID,
-            weightedSignedPower,
-            weightedTotalPower,
+            prophecyPowerCurrent,
+            prophecyPowerThreshold,
             msg.sender
         );
     }
@@ -214,8 +221,8 @@ contract Oracle {
     /*
     * @dev: processProphecy
     *       Calculates the status of a prophecy. The claim is considered valid if the
-    *       combined active signatory validator powers pass the validation threshold.
-    *       The hardcoded threshold is (Combined signed power * 2) >= (Total power * 3).
+    *       combined active signatory validator powers pass the consensus threshold.
+    *       The threshold is x% of Total power, where x is the consensusThreshold param.
     */
     function getProphecyThreshold(
         uint256 _prophecyID
@@ -241,15 +248,15 @@ contract Oracle {
                 }
         }
 
-        // Calculate if weighted signed power has reached threshold of weighted total power
-        uint256 weightedSignedPower = signedPower.mul(3);
-        uint256 weightedTotalPower = totalPower.mul(2);
-        bool hasReachedThreshold = weightedSignedPower >= weightedTotalPower;
+        // Prophecy must reach total signed power % threshold in order to pass consensus
+        uint256 prophecyPowerThreshold = totalPower.mul(consensusThreshold);
+        uint256 prophecyPowerCurrent = signedPower.mul(100);
+        bool hasReachedThreshold = prophecyPowerCurrent >= prophecyPowerThreshold;
 
         return(
             hasReachedThreshold,
-            weightedSignedPower,
-            weightedTotalPower
+            prophecyPowerCurrent,
+            prophecyPowerThreshold
         );
     }
 

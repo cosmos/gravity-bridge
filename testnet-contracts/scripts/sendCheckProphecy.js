@@ -71,19 +71,18 @@ module.exports = async () => {
   }
 
   const valid = result[0];
-  const signedPower = Number(result[1]);
-  const totalPower = Number(result[2]);
+  const prophecyPowerCurrent = Number(result[1]);
+  const prophecyPowerThreshold = Number(result[2]);
   if (result) {
     console.log(`\n\tProphecy ${prophecyID}`);
     console.log("----------------------------------------");
-    console.log(`Weighted total power:\t ${totalPower}`);
-    console.log(`Weighted signed power:\t ${signedPower}`);
+    console.log(`Current prophecy power:\t ${prophecyPowerCurrent}`);
+    console.log(`Prophecy power threshold:\t ${prophecyPowerThreshold}`);
     console.log(`Reached threshold:\t ${valid}`);
     console.log("----------------------------------------");
   } else {
     console.error("Error: no result from transaction!");
   }
-
 
   return;
 };
