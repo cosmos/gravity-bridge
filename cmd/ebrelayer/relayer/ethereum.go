@@ -13,34 +13,87 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"io"
 	"log"
 	"math/big"
 
 	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	amino "github.com/tendermint/go-amino"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/contract"
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
-// InitEthereumRelayer Starts an event listener on a specific Ethereum network, contract, and event
+// LoadValidatorCredentials : loads validator's credentials (address, moniker, and passphrase)
+func LoadValidatorCredentials(validatorFrom string, inBuf io.Reader) (sdk.ValAddress, string, error) {
+	// Get the validator's name and account address using their moniker
+	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(inBuf, validatorFrom, false)
+	if err != nil {
+		return sdk.ValAddress{}, "", err
+	}
+
+	// Convert the validator's account address into type ValAddress
+	validatorAddress := sdk.ValAddress(validatorAccAddress)
+
+	// Test keys.DefaultKeyPass is correct-
+	_, err = authtxb.MakeSignature(nil, validatorName, keys.DefaultKeyPass, authtxb.StdSignMsg{})
+	if err != nil {
+		return sdk.ValAddress{}, "", err
+	}
+
+	return validatorAddress, validatorName, nil
+}
+
+// LoadTendermintCLIContext : loads CLI context for tendermint txs
+func LoadTendermintCLIContext(
+	appCodec *amino.Codec,
+	validatorAddress sdk.ValAddress,
+	validatorName string,
+	rpcURL string,
+	chainID string,
+) sdkContext.CLIContext {
+	// Create the new CLI context
+	cliCtx := sdkContext.NewCLIContext().
+		WithCodec(appCodec).
+		WithFromAddress(sdk.AccAddress(validatorAddress)).
+		WithFromName(validatorName)
+
+	if rpcURL != "" {
+		cliCtx = cliCtx.WithNodeURI(rpcURL)
+	}
+
+	cliCtx.SkipConfirm = true
+
+	accountRetriever := authtypes.NewAccountRetriever(cliCtx)
+
+	// Ensure that the validator's address exists
+	err := accountRetriever.EnsureExists((sdk.AccAddress(validatorAddress)))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return cliCtx
+}
+
+// InitEthereumRelayer : Subscribes to events emitted by the deployed contracts
 func InitEthereumRelayer(
 	cdc *codec.Codec,
-	chainID string,
 	provider string,
-	contractAddress common.Address,
-	makeClaims bool,
+	registryContractAddress common.Address,
 	validatorName string,
 	validatorAddress sdk.ValAddress,
-	cliContext sdkContext.CLIContext,
-	rpcURL string,
+	cliCtx sdkContext.CLIContext,
+	txBldr authtypes.TxBuilder,
 	privateKey *ecdsa.PrivateKey,
 ) error {
 	// Start client with infura ropsten provider
@@ -54,17 +107,10 @@ func InitEthereumRelayer(
 	var targetContract txs.ContractRegistry
 	var eventName string
 
-	// Load target contract and event name
-	switch makeClaims {
-	case true:
-		targetContract = txs.CosmosBridge
-		eventName = events.LogNewProphecyClaim.String()
-	case false:
-		targetContract = txs.BridgeBank
-		eventName = events.LogLock.String()
-	}
-	// Load our contract's ABI
-	contractABI := contract.LoadABI(makeClaims)
+	// TODO: load (targetContract, eventName, contractABI) for both CosmosBridge, BridgeBank
+	targetContract = txs.BridgeBank     // TODO: txs.CosmosBridge
+	eventName = events.LogLock.String() // TODO: events.LogNewProphecyClaim.String()
+	contractABI := contract.LoadABI(false)
 
 	// Load unique event signature from the named event contained within the contract's ABI
 	eventSignature := contractABI.Events[eventName].Id().Hex()
@@ -75,7 +121,7 @@ func InitEthereumRelayer(
 	}
 
 	// Get the specific contract's address (CosmosBridge or BridgeBank)
-	targetAddress, err := txs.GetAddressFromBridgeRegistry(client, contractAddress, targetContract)
+	targetAddress, err := txs.GetAddressFromBridgeRegistry(client, registryContractAddress, targetContract)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -112,12 +158,12 @@ func InitEthereumRelayer(
 				switch eventName {
 				case events.LogLock.String():
 					err = handleLogLockEvent(
-						clientChainID, contractAddress, contractABI, eventName, vLog, chainID,
-						cdc, validatorAddress, validatorName, cliContext, rpcURL,
+						clientChainID, registryContractAddress, contractABI, eventName,
+						vLog, cdc, validatorAddress, validatorName, cliCtx, txBldr,
 					)
 				case events.LogNewProphecyClaim.String():
 					err = handleLogNewProphecyClaimEvent(
-						contractABI, eventName, vLog, provider, contractAddress, privateKey,
+						contractABI, eventName, vLog, provider, registryContractAddress, privateKey,
 					)
 				}
 
@@ -136,12 +182,11 @@ func handleLogLockEvent(
 	contractABI abi.ABI,
 	eventName string,
 	log types.Log,
-	chainID string,
 	cdc *codec.Codec,
 	validatorAddress sdk.ValAddress,
 	validatorName string,
-	cliContext sdkContext.CLIContext,
-	rpcURL string,
+	cliCtx sdkContext.CLIContext,
+	txBldr authtypes.TxBuilder,
 ) error {
 	// Unpack the LogLock event using its unique event signature from the contract's ABI
 	event := events.UnpackLogLock(clientChainID, contractAddress.Hex(), contractABI, eventName, log.Data)
@@ -156,9 +201,7 @@ func handleLogLockEvent(
 	}
 
 	// Initiate the relay
-	return txs.RelayLockToCosmos(
-		chainID, cdc, validatorAddress, validatorName, cliContext, &prophecyClaim, rpcURL,
-	)
+	return txs.RelayLockToCosmos(cdc, validatorName, &prophecyClaim, cliCtx, txBldr)
 }
 
 // handleLogNewProphecyClaimEvent unpacks a LogNewProphecyClaim event,

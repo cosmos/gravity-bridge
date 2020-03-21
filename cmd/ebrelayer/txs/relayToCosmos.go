@@ -23,35 +23,17 @@ import (
 // RelayLockToCosmos RelayLockToCosmos applies validator's signature to an EthBridgeClaim message
 //		containing information about an event on the Ethereum blockchain before relaying to the Bridge
 func RelayLockToCosmos(
-	chainID string,
 	cdc *codec.Codec,
-	validatorAddress sdk.ValAddress,
 	moniker string,
-	cliCtx context.CLIContext,
 	claim *types.EthBridgeClaim,
-	rpcURL string,
+	cliCtx context.CLIContext,
+	txBldr authtypes.TxBuilder,
 ) error {
 
-	if rpcURL != "" {
-		cliCtx = cliCtx.WithNodeURI(rpcURL)
-	}
-
-	cliCtx.SkipConfirm = true
-
-	txBldr := authtypes.NewTxBuilderFromCLI(nil).
-		WithTxEncoder(utils.GetTxEncoder(cdc)).
-		WithChainID(chainID)
-
-	accountRetriever := authtypes.NewAccountRetriever(cliCtx)
-
-	err := accountRetriever.EnsureExists((sdk.AccAddress(claim.ValidatorAddress)))
-	if err != nil {
-		return err
-	}
-
+	// Packages the claim as a Tendermint message
 	msg := ethbridge.NewMsgCreateEthBridgeClaim(*claim)
 
-	err = msg.ValidateBasic()
+	err := msg.ValidateBasic()
 	if err != nil {
 		return err
 	}

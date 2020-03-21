@@ -8,7 +8,6 @@ import (
 	"syscall"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	tmKv "github.com/tendermint/tendermint/libs/kv"
 	tmLog "github.com/tendermint/tendermint/libs/log"
 	tmClient "github.com/tendermint/tendermint/rpc/client"

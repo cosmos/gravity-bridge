@@ -11,22 +11,17 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pkg/errors"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
-	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/tendermint/tendermint/libs/cli"
-
-	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtxb "github.com/cosmos/cosmos-sdk/x/auth/types"
+	sdkUtils "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/libs/cli"
 
 	app "github.com/cosmos/peggy/app"
 	relayer "github.com/cosmos/peggy/cmd/ebrelayer/relayer"
@@ -38,10 +33,6 @@ var cdc *codec.Codec
 const (
 	// FlagRPCURL defines the URL for the tendermint RPC connection
 	FlagRPCURL = "rpc-url"
-
-	// FlagMakeClaims is an optional flag for the ethereum relayer to automatically
-	// make OracleClaims upon every ProphecyClaim.
-	FlagMakeClaims = "make-claims"
 )
 
 func init() {
@@ -65,9 +56,6 @@ func init() {
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
 		return initConfig(rootCmd)
 	}
-
-	// Add --make-claims to init cmd as optional flag
-	initCmd.PersistentFlags().String(FlagMakeClaims, "", "Make oracle claims everytime a prophecy claim is witnessed")
 
 	// Construct Initialization Commands
 	initCmd.AddCommand(
@@ -151,12 +139,6 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 		return errors.New("Must specify a 'chain-id'")
 	}
 
-	makeClaims := false
-	makeClaimsString := viper.GetString(FlagMakeClaims)
-	if strings.TrimSpace(makeClaimsString) == "true" {
-		makeClaims = true
-	}
-
 	ethereumProvider := args[0]
 	if !relayer.IsWebsocketURL(ethereumProvider) {
 		return fmt.Errorf("invalid [web3-provider]: %s", ethereumProvider)
@@ -179,38 +161,26 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Get the validator's name and account address using their moniker
-	validatorAccAddress, validatorName, err := sdkContext.GetFromFields(inBuf, validatorFrom, false)
-	if err != nil {
-		return err
-	}
+	// Load validator details
+	validatorAddress, validatorName, err := relayer.LoadValidatorCredentials(validatorFrom, inBuf)
 
-	// Convert the validator's account address into type ValAddress
-	validatorAddress := sdk.ValAddress(validatorAccAddress)
+	// Load CLI context
+	cliCtx := relayer.LoadTendermintCLIContext(cdc, validatorAddress, validatorName, rpcURL, chainID)
 
-	// Test keys.DefaultKeyPass is correct
-	_, err = authtxb.MakeSignature(nil, validatorName, keys.DefaultKeyPass, authtxb.StdSignMsg{})
-	if err != nil {
-		return err
-	}
-
-	// Set up our CLIContext
-	cliCtx := sdkContext.NewCLIContext().
-		WithCodec(cdc).
-		WithFromAddress(sdk.AccAddress(validatorAddress)).
-		WithFromName(validatorName)
+	// Load Tx builder
+	txBldr := authtypes.NewTxBuilderFromCLI(nil).
+		WithTxEncoder(sdkUtils.GetTxEncoder(cdc)).
+		WithChainID(chainID)
 
 	// Initialize the relayer
 	return relayer.InitEthereumRelayer(
 		cdc,
-		chainID,
 		ethereumProvider,
 		contractAddress,
-		makeClaims,
 		validatorName,
 		validatorAddress,
 		cliCtx,
-		rpcURL,
+		txBldr,
 		privateKey,
 	)
 }
