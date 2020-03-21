@@ -24,8 +24,11 @@ import (
 	tmKv "github.com/tendermint/tendermint/libs/kv"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
-	"github.com/cosmos/peggy/cmd/ebrelayer/utils"
 	ethbridgeTypes "github.com/cosmos/peggy/x/ethbridge/types"
+)
+
+const (
+	nullAddress = "0x0000000000000000000000000000000000000000"
 )
 
 // LogLockToEthBridgeClaim parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
@@ -54,7 +57,7 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *events.LockEvent) (e
 
 	// Symbol formatted to lowercase
 	symbol := strings.ToLower(event.Symbol)
-	if symbol == "eth" && !utils.IsZeroAddress(event.Token) {
+	if symbol == "eth" && !isZeroAddress(event.Token) {
 		return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
 	}
 
@@ -157,8 +160,9 @@ func BurnLockEventToCosmosMsg(claimType events.Event, attributes []tmKv.Pair) ev
 			// Parse recipient's Ethereum address
 			ethereumReceiver = common.HexToAddress(val)
 		case events.Coin.String():
-			// Parse symbol and amount from coin string
-			symbol, amount = utils.GetSymbolAmountFromCoin(val)
+			coins, _ := sdk.ParseCoins(val)
+			symbol = coins[0].Denom
+			amount = coins[0].Amount.BigInt()
 		case events.TokenContractAddress.String():
 			// Confirm token contract address is valid Ethereum address
 			if !common.IsHexAddress(val) {
@@ -171,4 +175,9 @@ func BurnLockEventToCosmosMsg(claimType events.Event, attributes []tmKv.Pair) ev
 
 	// Package the event data into a CosmosMsg
 	return events.NewCosmosMsg(claimType, cosmosSender, ethereumReceiver, symbol, amount, tokenContractAddress)
+}
+
+// isZeroAddress checks an Ethereum address and returns a bool which indicates if it is the null address
+func isZeroAddress(address common.Address) bool {
+	return address == common.HexToAddress(nullAddress)
 }

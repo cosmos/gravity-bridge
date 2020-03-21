@@ -19,7 +19,7 @@ import (
 func TestLogLockToEthBridgeClaim(t *testing.T) {
 	// Set up testing variables
 	testBridgeContractAddress := types.NewEthereumAddress(TestBridgeContractAddress)
-	testTokenContractAddress := types.NewEthereumAddress(TestTokenAddress)
+	testTokenContractAddress := types.NewEthereumAddress(TestEthTokenAddress)
 	testEthereumAddress := types.NewEthereumAddress(TestEthereumAddress1)
 	// Cosmos account address
 	testCosmosAddress, err := sdk.AccAddressFromBech32(TestCosmosAddress1)
@@ -107,7 +107,7 @@ func TestMsgBurnToProphecyClaim(t *testing.T) {
 		ClaimType:            events.MsgBurn,
 		CosmosSender:         []byte(TestCosmosAddress1),
 		EthereumReceiver:     common.HexToAddress(TestEthereumAddress1),
-		TokenContractAddress: common.HexToAddress(TestTokenAddress),
+		TokenContractAddress: common.HexToAddress(TestEthTokenAddress),
 		Symbol:               TestSymbol,
 		Amount:               big.NewInt(int64(TestAmount)),
 	}
@@ -125,7 +125,7 @@ func TestMsgLockToProphecyClaim(t *testing.T) {
 		ClaimType:            events.MsgLock,
 		CosmosSender:         []byte(TestCosmosAddress1),
 		EthereumReceiver:     common.HexToAddress(TestEthereumAddress1),
-		TokenContractAddress: common.HexToAddress(TestTokenAddress),
+		TokenContractAddress: common.HexToAddress(TestEthTokenAddress),
 		Symbol:               TestSymbol,
 		Amount:               big.NewInt(int64(TestAmount)),
 	}
@@ -135,4 +135,12 @@ func TestMsgLockToProphecyClaim(t *testing.T) {
 	prophecyClaim := CosmosMsgToProphecyClaim(testCosmosMsgLock)
 
 	require.Equal(t, expectedProphecyClaim, prophecyClaim)
+}
+
+func TestIsZeroAddress(t *testing.T) {
+	falseRes := isZeroAddress(common.HexToAddress(TestOtherAddress))
+	require.False(t, falseRes)
+
+	trueRes := isZeroAddress(common.HexToAddress(TestNullAddress))
+	require.True(t, trueRes)
 }
