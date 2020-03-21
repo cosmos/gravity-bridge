@@ -96,11 +96,10 @@ var initCmd = &cobra.Command{
 //nolint:lll
 func ethereumRelayerCmd() *cobra.Command {
 	ethereumRelayerCmd := &cobra.Command{
-		Use:   "ethereum [web3Provider] [bridgeContractAddress] [validatorFromName] --make-claims [make-claims] --chain-id [chain-id]",
-		Short: "Initializes a web socket which streams live events from a smart contract and relays them to the Cosmos network",
-		Args:  cobra.ExactArgs(3),
-		// NOTE: Preface both parentheses in the event signature with a '\'
-		Example: "ebrelayer init ethereum wss://ropsten.infura.io/ws 05d9758cb6b9d9761ecb8b2b48be7873efae15c0 validator --make-claims=false --chain-id=testing",
+		Use:     "ethereum [web3Provider] [bridgeContractAddress] [validatorName] --chain-id [chain-id]",
+		Short:   "Initializes a web socket which streams live events from a smart contract and relays them to the Cosmos network",
+		Args:    cobra.ExactArgs(3),
+		Example: "ebrelayer init ethereum ws://127.0.0.1:7545/ 0x30753E4A8aad7F8597332E813735Def5dD395028 validator --chain-id=peggy",
 		RunE:    RunEthereumRelayerCmd,
 	}
 	return ethereumRelayerCmd
@@ -125,18 +124,25 @@ func cosmosRelayerCmd() *cobra.Command {
 
 // RunEthereumRelayerCmd executes the initEthereumRelayerCmd with the provided parameters
 func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
-	inBuf := bufio.NewReader(cmd.InOrStdin())
-
 	// Load the validator's Ethereum private key
 	privateKey, err := txs.LoadPrivateKey()
 	if err != nil {
 		return errors.Wrap(err, "invalid [ETHEREUM_PRIVATE_KEY] from .env")
 	}
 
-	// Parse chain's ID
+	// Parse flag --chain-id
 	chainID := viper.GetString(flags.FlagChainID)
 	if strings.TrimSpace(chainID) == "" {
 		return errors.New("Must specify a 'chain-id'")
+	}
+
+	// Parse flag --rpc-url
+	rpcURL := viper.GetString(FlagRPCURL)
+	if rpcURL != "" {
+		_, err := url.Parse(rpcURL)
+		if rpcURL != "" && err != nil {
+			return errors.Wrapf(err, "invalid RPC URL: %v", rpcURL)
+		}
 	}
 
 	ethereumProvider := args[0]
@@ -148,21 +154,11 @@ func RunEthereumRelayerCmd(cmd *cobra.Command, args []string) error {
 	if !common.IsHexAddress(args[1]) {
 		return fmt.Errorf("invalid [bridge-contract-address]: %s", args[1])
 	}
-
 	contractAddress := common.HexToAddress(args[1])
 
-	validatorFrom := args[2]
-	rpcURL := viper.GetString(FlagRPCURL)
-
-	if rpcURL != "" {
-		_, err := url.Parse(rpcURL)
-		if rpcURL != "" && err != nil {
-			return errors.Wrapf(err, "invalid RPC URL: %v", rpcURL)
-		}
-	}
-
 	// Load validator details
-	validatorAddress, validatorName, err := relayer.LoadValidatorCredentials(validatorFrom, inBuf)
+	inBuf := bufio.NewReader(cmd.InOrStdin())
+	validatorAddress, validatorName, err := relayer.LoadValidatorCredentials(args[2], inBuf)
 
 	// Load CLI context
 	cliCtx := relayer.LoadTendermintCLIContext(cdc, validatorAddress, validatorName, rpcURL, chainID)

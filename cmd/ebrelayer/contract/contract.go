@@ -11,18 +11,19 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-// BridgeBankABI path to file containing BridgeBank smart contract ABI
-const BridgeBankABI = "/abi/BridgeBank.abi"
-
-// CosmosBridgeABI path to file containing CosmosBridge smart contract ABI
-const CosmosBridgeABI = "/abi/CosmosBridge.abi"
+// File paths to Peggy smart contract ABIs
+const (
+	BridgeBankABI   = "/abi/BridgeBank.abi"
+	CosmosBridgeABI = "/abi/CosmosBridge.abi"
+)
 
 // LoadABI loads a smart contract as an abi.ABI
-func LoadABI(cosmosSupport bool) abi.ABI {
-
+func LoadABI(contractType txs.ContractRegistry) abi.ABI {
+	// Open the file containing BridgeBank contract's ABI
 	var (
 		_, b, _, _ = runtime.Caller(0)
 		dir        = filepath.Dir(b)
@@ -30,13 +31,13 @@ func LoadABI(cosmosSupport bool) abi.ABI {
 
 	var contractRaw []byte
 	var err error
-	switch cosmosSupport {
-	case true:
+	switch contractType {
+	case txs.CosmosBridge:
 		contractRaw, err = ioutil.ReadFile(dir + CosmosBridgeABI)
 		if err != nil {
 			panic(err)
 		}
-	case false:
+	case txs.BridgeBank:
 		contractRaw, err = ioutil.ReadFile(dir + BridgeBankABI)
 		if err != nil {
 			panic(err)
@@ -48,6 +49,5 @@ func LoadABI(cosmosSupport bool) abi.ABI {
 	if err != nil {
 		panic(err)
 	}
-
 	return contractABI
 }
