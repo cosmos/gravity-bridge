@@ -95,8 +95,8 @@ func PrintLockEvent(event LockEvent) {
 	nonce := event.Nonce
 
 	// Print the event's information
-	fmt.Printf(`\nChain ID: %v\nBridge contract address: %v\nToken symbol: %v\nToken 
-		contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n`,
+	fmt.Printf("\nChain ID: %v\nBridge contract address: %v\nToken symbol: %v\nToken"+
+		"contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
 		chainID, bridgeContractAddress, symbol, token, sender, recipient, value, nonce)
 }
 
@@ -113,7 +113,7 @@ func PrintProphecyClaimEvent(event NewProphecyClaimEvent) {
 	validator := event.ValidatorAddress.Hex()
 
 	// Print the event's information
-	fmt.Printf(`\nProphecy ID: %v\nClaim Type: %v\nSender: 
-	%v\nRecipient %v\nSymbol %v\nToken %v\nAmount: %v\nValidator: %v\n\n`,
+	fmt.Printf("\nProphecy ID: %v\nClaim Type: %v\nSender: %v\n"+
+		"Recipient: %v\nSymbol %v\nToken %v\nAmount: %v\nValidator: %v\n\n",
 		id, claimType, sender, recipient, symbol, token, amount, validator)
 }
