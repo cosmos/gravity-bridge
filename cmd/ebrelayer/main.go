@@ -13,13 +13,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkUtils "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/cli"
+	tmLog "github.com/tendermint/tendermint/libs/log"
 
 	app "github.com/cosmos/peggy/app"
 	relayer "github.com/cosmos/peggy/cmd/ebrelayer/relayer"
@@ -79,7 +78,7 @@ var rootCmd = &cobra.Command{
 func initRelayerCmd() *cobra.Command {
 	//nolint:lll
 	initRelayerCmd := &cobra.Command{
-		Use:     "init [tendermintNode] [web3Provider] [bridgeContractAddress] [validatorName]",
+		Use:     "init [tendermintNode] [web3Provider] [bridgeContractAddress] [validatorMoniker]",
 		Short:   "Validate credentials and initialize subscriptions to both chains",
 		Args:    cobra.ExactArgs(4),
 		Example: "ebrelayer init tcp://localhost:26657 ws://localhost:7545/ 0x30753E4A8aad7F8597332E813735Def5dD395028 validator --chain-id=peggy",
@@ -128,25 +127,26 @@ func RunInitRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 	contractAddress := common.HexToAddress(args[2])
 
-	// Load validator details from [validator-name]
+	if len(strings.Trim(args[3], "")) == 0 {
+		return errors.Errorf("invalid [validator-moniker]: %s", args[3])
+	}
+	validatorMoniker := args[3]
+
+	// Initialize universal logger
+	logger := tmLog.NewTMLogger(tmLog.NewSyncWriter(os.Stdout))
+
+	// Initialize new EthSub and start subscription
 	inBuf := bufio.NewReader(cmd.InOrStdin())
-	validatorAddress, validatorName, err := relayer.LoadValidatorCredentials(args[3], inBuf)
+	ethsub, err := relayer.NewEthereumSub(inBuf, rpcURL, cdc, validatorMoniker, chainID, web3Provider,
+		contractAddress, privateKey, logger)
 	if err != nil {
 		return err
 	}
+	go ethsub.Start()
 
-	// Load CLI context and Tx builder
-	cliCtx := relayer.LoadTendermintCLIContext(cdc, validatorAddress, validatorName, rpcURL, chainID)
-	txBldr := authtypes.NewTxBuilderFromCLI(nil).
-		WithTxEncoder(sdkUtils.GetTxEncoder(cdc)).
-		WithChainID(chainID)
-
-	// Start an Ethereum websocket
-	go relayer.InitEthereumRelayer(cdc, web3Provider, contractAddress, validatorName,
-		validatorAddress, cliCtx, txBldr, privateKey)
-
-	// Start a Tendermint websocket
-	go relayer.InitCosmosRelayer(tendermintNode, web3Provider, contractAddress, privateKey)
+	// Initialize new CosmosSub and start subscription
+	cosmosSub := relayer.NewCosmosSub(tendermintNode, web3Provider, contractAddress, privateKey, logger)
+	go cosmosSub.Start()
 
 	// Exit signal enables graceful shutdown
 	exitSignal := make(chan os.Signal)
