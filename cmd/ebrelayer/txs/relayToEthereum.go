@@ -11,9 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	cosmosBridge "github.com/cosmos/peggy/cmd/ebrelayer/generated/cosmosbridge"
 	oracle "github.com/cosmos/peggy/cmd/ebrelayer/generated/oracle"
+	"github.com/cosmos/peggy/cmd/ebrelayer/types"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 )
 
 // RelayProphecyClaimToEthereum relays the provided ProphecyClaim to CosmosBridge contract on the Ethereum network
-func RelayProphecyClaimToEthereum(provider string, contractAddress common.Address, event events.Event,
+func RelayProphecyClaimToEthereum(provider string, contractAddress common.Address, event types.Event,
 	claim ProphecyClaim, key *ecdsa.PrivateKey) error {
 	// Initialize client service, validator's tx auth, and target contract address
 	client, auth, target := initRelayConfig(provider, contractAddress, event, key)
@@ -61,7 +61,7 @@ func RelayProphecyClaimToEthereum(provider string, contractAddress common.Addres
 }
 
 // RelayOracleClaimToEthereum relays the provided OracleClaim to Oracle contract on the Ethereum network
-func RelayOracleClaimToEthereum(provider string, contractAddress common.Address, event events.Event,
+func RelayOracleClaimToEthereum(provider string, contractAddress common.Address, event types.Event,
 	claim OracleClaim, key *ecdsa.PrivateKey) error {
 	// Initialize client service, validator's tx auth, and target contract address
 	client, auth, target := initRelayConfig(provider, contractAddress, event, key)
@@ -98,7 +98,7 @@ func RelayOracleClaimToEthereum(provider string, contractAddress common.Address,
 }
 
 // initRelayConfig set up Ethereum client, validator's transaction auth, and the target contract's address
-func initRelayConfig(provider string, registry common.Address, event events.Event, key *ecdsa.PrivateKey,
+func initRelayConfig(provider string, registry common.Address, event types.Event, key *ecdsa.PrivateKey,
 ) (*ethclient.Client, *bind.TransactOpts, common.Address) {
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)
@@ -132,10 +132,10 @@ func initRelayConfig(provider string, registry common.Address, event events.Even
 	var targetContract ContractRegistry
 	switch event {
 	// ProphecyClaims are sent to the CosmosBridge contract
-	case events.MsgBurn, events.MsgLock:
+	case types.MsgBurn, types.MsgLock:
 		targetContract = CosmosBridge
 	// OracleClaims are sent to the Oracle contract
-	case events.LogNewProphecyClaim:
+	case types.LogNewProphecyClaim:
 		targetContract = Oracle
 	default:
 		panic("invalid target contract address")

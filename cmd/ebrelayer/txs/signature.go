@@ -6,13 +6,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/joho/godotenv"
 	solsha3 "github.com/miguelmota/go-solidity-sha3"
+
+	"github.com/cosmos/peggy/cmd/ebrelayer/types"
 )
 
 // LoadPrivateKey loads the validator's private key from environment variables
@@ -55,7 +56,7 @@ func LoadSender() (address common.Address, err error) {
 }
 
 // GenerateClaimMessage Generates a hased message containing a ProphecyClaim event's data
-func GenerateClaimMessage(event events.NewProphecyClaimEvent) common.Hash {
+func GenerateClaimMessage(event types.ProphecyClaimEvent) common.Hash {
 	// Cast event field values to byte[]
 	prophecyID := event.ProphecyID.Bytes()
 	sender := event.CosmosSender
