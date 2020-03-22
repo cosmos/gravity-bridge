@@ -18,15 +18,8 @@ type CosmosMsg struct {
 }
 
 // NewCosmosMsg creates a new CosmosMsg
-func NewCosmosMsg(
-	claimType Event,
-	cosmosSender []byte,
-	ethereumReceiver common.Address,
-	symbol string,
-	amount *big.Int,
-	tokenContractAddress common.Address,
-) CosmosMsg {
-	// Package data into a CosmosMsg
+func NewCosmosMsg(claimType Event, cosmosSender []byte, ethereumReceiver common.Address, symbol string,
+	amount *big.Int, tokenContractAddress common.Address) CosmosMsg {
 	cosmosMsg := CosmosMsg{
 		ClaimType:            claimType,
 		CosmosSender:         cosmosSender,
@@ -35,9 +28,7 @@ func NewCosmosMsg(
 		Amount:               amount,
 		TokenContractAddress: tokenContractAddress,
 	}
-
 	PrintCosmosMsg(cosmosMsg)
-
 	return cosmosMsg
 }
 

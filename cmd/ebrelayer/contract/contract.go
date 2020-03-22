@@ -23,25 +23,23 @@ const (
 
 // LoadABI loads a smart contract as an abi.ABI
 func LoadABI(contractType txs.ContractRegistry) abi.ABI {
-	// Open the file containing BridgeBank contract's ABI
 	var (
 		_, b, _, _ = runtime.Caller(0)
 		dir        = filepath.Dir(b)
 	)
 
-	var contractRaw []byte
-	var err error
+	var filePath string
 	switch contractType {
 	case txs.CosmosBridge:
-		contractRaw, err = ioutil.ReadFile(dir + CosmosBridgeABI)
-		if err != nil {
-			panic(err)
-		}
+		filePath = CosmosBridgeABI
 	case txs.BridgeBank:
-		contractRaw, err = ioutil.ReadFile(dir + BridgeBankABI)
-		if err != nil {
-			panic(err)
-		}
+		filePath = BridgeBankABI
+	}
+
+	// Read the file containing the contract's ABI
+	contractRaw, err := ioutil.ReadFile(dir + filePath)
+	if err != nil {
+		panic(err)
 	}
 
 	// Convert the raw abi into a usable format

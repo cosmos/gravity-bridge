@@ -40,9 +40,8 @@ type NewProphecyClaimEvent struct {
 }
 
 // UnpackLogLock Handles new LogLock events
-func UnpackLogLock(
-	clientChainID *big.Int, contractAddress string, contractAbi abi.ABI, eventName string, eventData []byte,
-) (lockEvent LockEvent) {
+func UnpackLogLock(clientChainID *big.Int, contractAddress string, contractAbi abi.ABI, eventName string,
+	eventData []byte) (lockEvent LockEvent) {
 	event := LockEvent{}
 
 	// Bridge contract address
@@ -66,9 +65,7 @@ func UnpackLogLock(
 }
 
 // UnpackLogNewProphecyClaim Handles new LogNewProphecyClaim events
-func UnpackLogNewProphecyClaim(
-	contractAbi abi.ABI, eventName string, eventData []byte,
-) (newProphecyClaimEvent NewProphecyClaimEvent) {
+func UnpackLogNewProphecyClaim(contractAbi abi.ABI, eventName string, eventData []byte) NewProphecyClaimEvent {
 	event := NewProphecyClaimEvent{}
 
 	// Parse the event's attributes as Ethereum network variables

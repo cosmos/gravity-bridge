@@ -17,10 +17,9 @@ import (
 	"math/big"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmKv "github.com/tendermint/tendermint/libs/kv"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
@@ -79,11 +78,7 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *events.LockEvent) (e
 }
 
 // ProphecyClaimToSignedOracleClaim packages and signs a prophecy claim's data, returning a new oracle claim
-func ProphecyClaimToSignedOracleClaim(
-	event events.NewProphecyClaimEvent,
-	key *ecdsa.PrivateKey,
-) (OracleClaim, error) {
-	// Set up new OracleClaim struct
+func ProphecyClaimToSignedOracleClaim(event events.NewProphecyClaimEvent, key *ecdsa.PrivateKey) (OracleClaim, error) {
 	oracleClaim := OracleClaim{}
 
 	// Generate a hashed claim message which contains ProphecyClaim's data
@@ -101,11 +96,9 @@ func ProphecyClaimToSignedOracleClaim(
 	}
 	fmt.Println("Signature generated:", hexutil.Encode(signature))
 
-	// Package the ProphecyID, Message, and Signature into an OracleClaim
 	oracleClaim.ProphecyID = event.ProphecyID
 	oracleClaim.Message = message.Hex()
 	oracleClaim.Signature = signature
-
 	return oracleClaim, nil
 }
 
@@ -126,49 +119,37 @@ func CosmosMsgToProphecyClaim(event events.CosmosMsg) ProphecyClaim {
 		Symbol:               symbol,
 		Amount:               amount,
 	}
-
 	return prophecyClaim
 }
 
 // BurnLockEventToCosmosMsg parses data from a Burn/Lock event witnessed on Cosmos into a CosmosMsg struct
 func BurnLockEventToCosmosMsg(claimType events.Event, attributes []tmKv.Pair) events.CosmosMsg {
-	// Set up variables
 	var cosmosSender []byte
 	var ethereumReceiver, tokenContractAddress common.Address
 	var symbol string
 	var amount *big.Int
 
-	// Iterate over attributes
 	for _, attribute := range attributes {
-		// Get (key, value) for each attribute
 		key := string(attribute.GetKey())
 		val := string(attribute.GetValue())
 
-		// Set variable based on value of CosmosMsgAttributeKey
+		// Set variable based on the attribute's key
 		switch key {
 		case events.CosmosSender.String():
-			// Parse sender's Cosmos address
 			cosmosSender = []byte(val)
 		case events.EthereumReceiver.String():
-			// Confirm recipient is valid Ethereum address
 			if !common.IsHexAddress(val) {
 				log.Fatal("Invalid recipient address:", val)
 			}
-			// Parse recipient's Ethereum address
 			ethereumReceiver = common.HexToAddress(val)
 		case events.Coin.String():
-			// Parse symbol and amount from coin string
 			symbol, amount = utils.GetSymbolAmountFromCoin(val)
 		case events.TokenContractAddress.String():
-			// Confirm token contract address is valid Ethereum address
 			if !common.IsHexAddress(val) {
 				log.Fatal("Invalid token address:", val)
 			}
-			// Parse token contract address
 			tokenContractAddress = common.HexToAddress(val)
 		}
 	}
-
-	// Package the event data into a CosmosMsg
 	return events.NewCosmosMsg(claimType, cosmosSender, ethereumReceiver, symbol, amount, tokenContractAddress)
 }

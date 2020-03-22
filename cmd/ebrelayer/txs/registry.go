@@ -30,11 +30,9 @@ func (d ContractRegistry) String() string {
 	return [...]string{"valset", "oracle", "bridgebank", "cosmosbridge"}[d-1]
 }
 
-// GetAddressFromBridgeRegistry utility method which queries the requested contract address from the BridgeRegistry
-func GetAddressFromBridgeRegistry(
-	client *ethclient.Client, registry common.Address, target ContractRegistry,
+// GetAddressFromBridgeRegistry queries the requested contract address from the BridgeRegistry contract
+func GetAddressFromBridgeRegistry(client *ethclient.Client, registry common.Address, target ContractRegistry,
 ) (common.Address, error) {
-	// Load the sender's address
 	sender, err := LoadSender()
 	if err != nil {
 		log.Fatal(err)

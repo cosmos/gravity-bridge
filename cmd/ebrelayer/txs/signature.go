@@ -7,13 +7,12 @@ import (
 	"strings"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/events"
-	"github.com/joho/godotenv"
-	solsha3 "github.com/miguelmota/go-solidity-sha3"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/joho/godotenv"
+	solsha3 "github.com/miguelmota/go-solidity-sha3"
 )
 
 // LoadPrivateKey loads the validator's private key from environment variables
@@ -45,7 +44,6 @@ func LoadSender() (address common.Address, err error) {
 		log.Fatal(err)
 	}
 
-	// Parse public key
 	publicKey := key.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
@@ -53,7 +51,6 @@ func LoadSender() (address common.Address, err error) {
 	}
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-
 	return fromAddress, nil
 }
 
@@ -75,7 +72,6 @@ func GenerateClaimMessage(event events.NewProphecyClaimEvent) common.Hash {
 func PrepareMsgForSigning(msg string) []byte {
 	// Turn the message into a 32-byte hash
 	hashedMsg := solsha3.SoliditySHA3(solsha3.String(msg))
-
 	// Prefix and then hash to mimic behavior of eth_sign
 	return solsha3.SoliditySHA3(solsha3.String("\x19Ethereum Signed Message:\n32"), solsha3.Bytes32(hashedMsg))
 }
@@ -87,6 +83,5 @@ func SignClaim(msg []byte, key *ecdsa.PrivateKey) ([]byte, error) {
 	if err != nil {
 		panic(err)
 	}
-
 	return sig, nil
 }

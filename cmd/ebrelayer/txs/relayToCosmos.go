@@ -1,13 +1,5 @@
 package txs
 
-// ------------------------------------------------------------
-//	Relay Builds and encodes EthBridgeClaim Msgs with the
-//  	specified variables, before presenting the unsigned
-//      transaction to validators for optional signing.
-//      Once signed, the data packets are sent as transactions
-//      on the Cosmos Bridge.
-// ------------------------------------------------------------
-
 import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -22,14 +14,8 @@ import (
 
 // RelayLockToCosmos RelayLockToCosmos applies validator's signature to an EthBridgeClaim message
 //		containing information about an event on the Ethereum blockchain before relaying to the Bridge
-func RelayLockToCosmos(
-	cdc *codec.Codec,
-	moniker string,
-	claim *types.EthBridgeClaim,
-	cliCtx context.CLIContext,
-	txBldr authtypes.TxBuilder,
-) error {
-
+func RelayLockToCosmos(cdc *codec.Codec, moniker string, claim *types.EthBridgeClaim, cliCtx context.CLIContext,
+	txBldr authtypes.TxBuilder) error {
 	// Packages the claim as a Tendermint message
 	msg := ethbridge.NewMsgCreateEthBridgeClaim(*claim)
 

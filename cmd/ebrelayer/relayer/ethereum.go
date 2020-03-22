@@ -1,14 +1,5 @@
 package relayer
 
-// -----------------------------------------------------
-//      Ethereum relayer
-//
-//      Initializes the relayer service, which parses,
-//      encodes, and packages named events on an Ethereum
-//      Smart Contract for validator's to sign and send
-//      to the Cosmos bridge.
-// -----------------------------------------------------
-
 import (
 	"context"
 	"crypto/ecdsa"
@@ -41,11 +32,9 @@ func LoadValidatorCredentials(validatorFrom string, inBuf io.Reader) (sdk.ValAdd
 	if err != nil {
 		return sdk.ValAddress{}, "", err
 	}
-
-	// Convert the validator's account address into type ValAddress
 	validatorAddress := sdk.ValAddress(validatorAccAddress)
 
-	// Test keys.DefaultKeyPass is correct-
+	// Confirm that the key is valid
 	_, err = authtxb.MakeSignature(nil, validatorName, keys.DefaultKeyPass, authtxb.StdSignMsg{})
 	if err != nil {
 		return sdk.ValAddress{}, "", err
@@ -55,13 +44,8 @@ func LoadValidatorCredentials(validatorFrom string, inBuf io.Reader) (sdk.ValAdd
 }
 
 // LoadTendermintCLIContext : loads CLI context for tendermint txs
-func LoadTendermintCLIContext(
-	appCodec *amino.Codec,
-	validatorAddress sdk.ValAddress,
-	validatorName string,
-	rpcURL string,
-	chainID string,
-) sdkContext.CLIContext {
+func LoadTendermintCLIContext(appCodec *amino.Codec, validatorAddress sdk.ValAddress, validatorName string,
+	rpcURL string, chainID string) sdkContext.CLIContext {
 	// Create the new CLI context
 	cliCtx := sdkContext.NewCLIContext().
 		WithCodec(appCodec).
@@ -71,37 +55,25 @@ func LoadTendermintCLIContext(
 	if rpcURL != "" {
 		cliCtx = cliCtx.WithNodeURI(rpcURL)
 	}
-
 	cliCtx.SkipConfirm = true
 
+	// Confirm that the validator's address exists
 	accountRetriever := authtypes.NewAccountRetriever(cliCtx)
-
-	// Ensure that the validator's address exists
 	err := accountRetriever.EnsureExists((sdk.AccAddress(validatorAddress)))
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	return cliCtx
 }
 
 // InitEthereumRelayer : Subscribes to events emitted by the deployed contracts
-func InitEthereumRelayer(
-	cdc *codec.Codec,
-	provider string,
-	registryContractAddress common.Address,
-	validatorName string,
-	validatorAddress sdk.ValAddress,
-	cliCtx sdkContext.CLIContext,
-	txBldr authtypes.TxBuilder,
-	privateKey *ecdsa.PrivateKey,
-) error {
-	// Start client with infura ropsten provider
+func InitEthereumRelayer(cdc *codec.Codec, provider string, registryContractAddress common.Address,
+	validatorName string, validatorAddress sdk.ValAddress, cliCtx sdkContext.CLIContext,
+	txBldr authtypes.TxBuilder, privateKey *ecdsa.PrivateKey) error {
 	client, err := SetupWebsocketEthClient(provider)
 	if err != nil {
 		return err
 	}
-
 	log.Println("Started Ethereum websocket with provider:", provider)
 
 	clientChainID, err := client.NetworkID(context.Background())
@@ -112,12 +84,12 @@ func InitEthereumRelayer(
 	// We will check logs for new events
 	logs := make(chan types.Log)
 
-	// Start BridgeBank subscription + load contract ABI and parse LockLog event signature
+	// Start BridgeBank subscription, prepare contract ABI and LockLog event signature
 	bridgeBankAddress, subBridgeBank := startContractEventSub(logs, client, registryContractAddress, txs.BridgeBank)
 	bridgeBankContractABI := contract.LoadABI(txs.BridgeBank)
 	eventLogLockSignature := bridgeBankContractABI.Events[events.LogLock.String()].Id().Hex()
 
-	// Start CosmosBridge subscription + load contract ABI and parse LogNewProphecyClaim event signature
+	// Start CosmosBridge subscription, prepare contract ABI and LogNewProphecyClaim event signature
 	cosmosBridgeAddress, subCosmosBridge := startContractEventSub(logs, client, registryContractAddress, txs.CosmosBridge)
 	cosmosBridgeContractABI := contract.LoadABI(txs.CosmosBridge)
 	eventLogNewProphecyClaimSignature := cosmosBridgeContractABI.Events[events.LogNewProphecyClaim.String()].Id().Hex()
@@ -151,12 +123,8 @@ func InitEthereumRelayer(
 }
 
 // startContractEventSub : starts an event subscription on the specified Peggy contract
-func startContractEventSub(
-	logs chan types.Log,
-	client *ethclient.Client,
-	registryAddress common.Address,
-	contractName txs.ContractRegistry,
-) (common.Address, ethereum.Subscription) {
+func startContractEventSub(logs chan types.Log, client *ethclient.Client, registryAddress common.Address,
+	contractName txs.ContractRegistry) (common.Address, ethereum.Subscription) {
 	// Get the contract address for this subscription
 	subContractAddress, err := txs.GetAddressFromBridgeRegistry(client, registryAddress, contractName)
 	if err != nil {
@@ -174,59 +142,33 @@ func startContractEventSub(
 		log.Fatal(err)
 	}
 	log.Printf("Subscribed to %v contract at address: %s\n", contractName, subContractAddress.Hex())
-
 	return subContractAddress, sub
 }
 
-// TODO: Add handler.go
 // handleLogLockEvent unpacks a LogLock event, converts it to a ProphecyClaim, and relays a tx to Cosmos
-func handleLogLockEvent(
-	clientChainID *big.Int,
-	contractAddress common.Address,
-	contractABI abi.ABI,
-	eventName string,
-	log types.Log,
-	cdc *codec.Codec,
-	validatorAddress sdk.ValAddress,
-	validatorName string,
-	cliCtx sdkContext.CLIContext,
-	txBldr authtypes.TxBuilder,
-) error {
-	// Unpack the LogLock event using its unique event signature from the contract's ABI
+func handleLogLockEvent(clientChainID *big.Int, contractAddress common.Address, contractABI abi.ABI,
+	eventName string, log types.Log, cdc *codec.Codec, validatorAddress sdk.ValAddress, validatorName string,
+	cliCtx sdkContext.CLIContext, txBldr authtypes.TxBuilder) error {
 	event := events.UnpackLogLock(clientChainID, contractAddress.Hex(), contractABI, eventName, log.Data)
 
 	// Add the event to the record
-	events.NewEventWrite(log.TxHash.Hex(), event)
+	events.NewEventWrite(log.TxHash.Hex(), event) // TODO: is this at all useful?
 
-	// Parse the LogLock event's payload into a struct
 	prophecyClaim, err := txs.LogLockToEthBridgeClaim(validatorAddress, &event)
 	if err != nil {
 		return err
 	}
-
-	// Initiate the relay
 	return txs.RelayLockToCosmos(cdc, validatorName, &prophecyClaim, cliCtx, txBldr)
 }
 
-// handleLogNewProphecyClaimEvent unpacks a LogNewProphecyClaim event,
-// converts it to a OracleClaim, and relays a tx to Ethereum
-func handleLogNewProphecyClaimEvent(
-	contractABI abi.ABI,
-	eventName string,
-	log types.Log,
-	provider string,
-	contractAddress common.Address,
-	privateKey *ecdsa.PrivateKey,
-) error {
-	// Unpack the LogNewProphecyClaim event using its unique event signature from the contract's ABI
+// Unpacks a LogNewProphecyClaim event, builds a new OracleClaim, and relays it to Ethereum
+func handleLogNewProphecyClaimEvent(contractABI abi.ABI, eventName string, log types.Log,
+	provider string, contractAddress common.Address, privateKey *ecdsa.PrivateKey) error {
 	event := events.UnpackLogNewProphecyClaim(contractABI, eventName, log.Data)
 
-	// Parse ProphecyClaim's data into an OracleClaim
 	oracleClaim, err := txs.ProphecyClaimToSignedOracleClaim(event, privateKey)
 	if err != nil {
 		return err
 	}
-
-	// Initiate the relay
 	return txs.RelayOracleClaimToEthereum(provider, contractAddress, events.LogNewProphecyClaim, oracleClaim, privateKey)
 }
