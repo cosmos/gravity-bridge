@@ -1,13 +1,13 @@
 package relayer
 
 import (
-	"bufio"
 	"context"
 	"crypto/ecdsa"
 	"fmt"
 	"io"
 	"log"
 	"math/big"
+	"os"
 
 	sdkContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -45,7 +45,7 @@ type EthereumSub struct {
 }
 
 // NewEthereumSub initializes a new EthereumSub
-func NewEthereumSub(inBuf *bufio.Reader, rpcURL string, cdc *codec.Codec, validatorMoniker, chainID,
+func NewEthereumSub(inBuf io.Reader, rpcURL string, cdc *codec.Codec, validatorMoniker, chainID,
 	ethProvider string, registryContractAddress common.Address, privateKey *ecdsa.PrivateKey,
 	logger tmLog.Logger) (EthereumSub, error) {
 	// Load validator details
@@ -115,18 +115,18 @@ func LoadTendermintCLIContext(appCodec *amino.Codec, validatorAddress sdk.ValAdd
 }
 
 // Start an Ethereum chain subscription
-func (sub EthereumSub) Start() error {
-	// logger := tmLog.NewTMLogger(tmLog.NewSyncWriter(os.Stdout))
-
+func (sub EthereumSub) Start() {
 	client, err := SetupWebsocketEthClient(sub.EthProvider)
 	if err != nil {
-		return err
+		sub.Logger.Error(err.Error())
+		os.Exit(1)
 	}
 	sub.Logger.Info("Started Ethereum websocket with provider:", sub.EthProvider)
 
 	clientChainID, err := client.NetworkID(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		sub.Logger.Error(err.Error())
+		os.Exit(1)
 	}
 
 	// We will check logs for new events
@@ -146,12 +146,12 @@ func (sub EthereumSub) Start() error {
 		select {
 		// Handle any errors
 		case err := <-subBridgeBank.Err():
-			log.Fatal(err)
+			sub.Logger.Error(err.Error())
 		case err := <-subCosmosBridge.Err():
-			log.Fatal(err)
+			sub.Logger.Error(err.Error())
 		// vLog is raw event data
 		case vLog := <-logs:
-			log.Printf("Witnessed tx %s on block %d\n", vLog.TxHash.Hex(), vLog.BlockNumber)
+			sub.Logger.Info("Witnessed tx %s on block %d\n", vLog.TxHash.Hex(), vLog.BlockNumber)
 			var err error
 			switch vLog.Topics[0].Hex() {
 			case eventLogLockSignature:
@@ -163,7 +163,7 @@ func (sub EthereumSub) Start() error {
 			}
 			// TODO: Check local events store for status, if retryable, attempt relay again
 			if err != nil {
-				log.Fatal(err)
+				sub.Logger.Error(err.Error())
 			}
 		}
 	}
@@ -199,11 +199,11 @@ func (sub EthereumSub) handleLogLock(clientChainID *big.Int, contractAddress com
 	event := types.LockEvent{}
 	err := contractABI.Unpack(&event, eventName, cLog.Data)
 	if err != nil {
-		log.Fatalf("error unpacking: %v", err)
+		sub.Logger.Error("error unpacking: %v", err)
 	}
 	event.BridgeContractAddress = contractAddress
 	event.EthereumChainID = clientChainID
-	log.Println(event.String())
+	sub.Logger.Info(event.String())
 
 	// Add the event to the record
 	types.NewEventWrite(cLog.TxHash.Hex(), event)
@@ -222,9 +222,9 @@ func (sub EthereumSub) handleLogNewProphecyClaim(contractAddress common.Address,
 	event := types.ProphecyClaimEvent{}
 	err := contractABI.Unpack(&event, eventName, cLog.Data)
 	if err != nil {
-		log.Fatalf("error unpacking: %v", err)
+		sub.Logger.Error("error unpacking: %v", err)
 	}
-	log.Println(event.String())
+	sub.Logger.Info(event.String())
 
 	oracleClaim, err := txs.ProphecyClaimToSignedOracleClaim(event, sub.PrivateKey)
 	if err != nil {

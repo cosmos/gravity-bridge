@@ -149,7 +149,7 @@ func RunInitRelayerCmd(cmd *cobra.Command, args []string) error {
 	go cosmosSub.Start()
 
 	// Exit signal enables graceful shutdown
-	exitSignal := make(chan os.Signal)
+	exitSignal := make(chan os.Signal, 1)
 	signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
 	<-exitSignal
 

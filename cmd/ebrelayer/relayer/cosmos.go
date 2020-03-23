@@ -41,15 +41,16 @@ func NewCosmosSub(tmProvider, ethProvider string, registryContractAddress common
 }
 
 // Start a Cosmos chain subscription
-func (sub CosmosSub) Start() error {
+func (sub CosmosSub) Start() {
 	client, err := tmClient.NewHTTP(sub.TmProvider, "/websocket")
 	if err != nil {
-		return err
+		sub.Logger.Error("failed to initialize a client", "err", err)
+		os.Exit(1)
 	}
 	client.SetLogger(sub.Logger)
 
 	if err := client.Start(); err != nil {
-		sub.Logger.Error("Failed to start a client", "err", err)
+		sub.Logger.Error("failed to start a client", "err", err)
 		os.Exit(1)
 	}
 
@@ -59,7 +60,7 @@ func (sub CosmosSub) Start() error {
 	query := "tm.event = 'Tx'"
 	out, err := client.Subscribe(context.Background(), "test", query, 1000)
 	if err != nil {
-		sub.Logger.Error("Failed to subscribe to query", "err", err, "query", query)
+		sub.Logger.Error("failed to subscribe to query", "err", err, "query", query)
 		os.Exit(1)
 	}
 
@@ -71,7 +72,7 @@ func (sub CosmosSub) Start() error {
 		case result := <-out:
 			tx, ok := result.Data.(tmTypes.EventDataTx)
 			if !ok {
-				sub.Logger.Error("Type casting failed while extracting event data from new tx")
+				sub.Logger.Error("new tx: error while extracting event data from new tx")
 			}
 			sub.Logger.Info("New transaction witnessed")
 
@@ -84,9 +85,8 @@ func (sub CosmosSub) Start() error {
 					// Parse event data, then package it as a ProphecyClaim and relay to the Ethereum Network
 					err := sub.handleBurnLockMsg(event.GetAttributes(), claimType)
 					if err != nil {
-						return err
+						sub.Logger.Error(err.Error())
 					}
-				case types.Unsupported:
 				}
 			}
 		case <-quit:
