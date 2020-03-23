@@ -55,7 +55,7 @@ All notable changes to this project will be documented in this file.
 - (ethbridge) [\#75](https://github.com/cosmos/peggy/pull/75) Add burn message and functionality for burning tokens and trigerring
   events.
 - (ethbridge) [\#81](https://github.com/cosmos/peggy/pull/81) Add functionality for locking up cosmos coins and detecting burned coins from ethereum
-- (relayer) [\#162](https://github.com/cosmos/peggy/pull/162) Unified Relayer for chain subscription and event relay
+- (relayer) [\#163](https://github.com/cosmos/peggy/pull/163) Unified Relayer for chain subscription and event relay
 
 ### Improvements
 
