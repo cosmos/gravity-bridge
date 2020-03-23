@@ -29,7 +29,8 @@ import (
 	"github.com/cosmos/peggy/cmd/ebrelayer/types"
 )
 
-// TODO: Move relay functionality out of EthereumSub into parent object Relayer
+// TODO: Move relay functionality out of EthereumSub into a new Relayer parent struct
+
 // EthereumSub is an Ethereum listener that can relay txs to Cosmos and Ethereum
 type EthereumSub struct {
 	Cdc                     *codec.Codec
@@ -160,7 +161,7 @@ func (sub EthereumSub) Start() error {
 				err = sub.handleLogNewProphecyClaim(cosmosBridgeAddress, cosmosBridgeContractABI,
 					types.LogNewProphecyClaim.String(), vLog)
 			}
-			// TODO: Should this be a Fatal err?
+			// TODO: Check local events store for status, if retryable, attempt relay again
 			if err != nil {
 				log.Fatal(err)
 			}

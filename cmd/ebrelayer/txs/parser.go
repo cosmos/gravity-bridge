@@ -1,14 +1,5 @@
 package txs
 
-// --------------------------------------------------------
-//      Parser
-//
-//      Parses structs containing event information into
-//      unsigned transactions for validators to sign, then
-//      relays the data packets as transactions on the
-//      Cosmos Bridge.
-// --------------------------------------------------------
-
 import (
 	"crypto/ecdsa"
 	"errors"

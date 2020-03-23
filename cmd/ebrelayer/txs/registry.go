@@ -11,7 +11,11 @@ import (
 	bridgeRegistry "github.com/cosmos/peggy/cmd/ebrelayer/generated/bridgeregistry"
 )
 
-// ContractRegistry :
+// TODO: Update BridgeRegistry contract so that all bridge contract addresses can be queried
+//		in one transaction. Then refactor ContractRegistry to a map and store it under new
+//		Relayer struct.
+
+// ContractRegistry is an enum for the bridge contract types
 type ContractRegistry byte
 
 const (

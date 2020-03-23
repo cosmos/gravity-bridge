@@ -132,20 +132,20 @@ func RunInitRelayerCmd(cmd *cobra.Command, args []string) error {
 	}
 	validatorMoniker := args[3]
 
-	// Initialize universal logger
+	// Universal logger
 	logger := tmLog.NewTMLogger(tmLog.NewSyncWriter(os.Stdout))
 
-	// Initialize new EthSub and start subscription
+	// Initialize new Ethereum event listener
 	inBuf := bufio.NewReader(cmd.InOrStdin())
-	ethsub, err := relayer.NewEthereumSub(inBuf, rpcURL, cdc, validatorMoniker, chainID, web3Provider,
+	ethSub, err := relayer.NewEthereumSub(inBuf, rpcURL, cdc, validatorMoniker, chainID, web3Provider,
 		contractAddress, privateKey, logger)
 	if err != nil {
 		return err
 	}
-	go ethsub.Start()
-
-	// Initialize new CosmosSub and start subscription
+	// Initialize new Cosmos event listener
 	cosmosSub := relayer.NewCosmosSub(tendermintNode, web3Provider, contractAddress, privateKey, logger)
+
+	go ethSub.Start()
 	go cosmosSub.Start()
 
 	// Exit signal enables graceful shutdown

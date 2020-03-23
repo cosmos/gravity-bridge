@@ -17,7 +17,8 @@ import (
 	"github.com/cosmos/peggy/cmd/ebrelayer/types"
 )
 
-// TODO: Move relay functionality out of CosmosSub into parent object Relayer
+// TODO: Move relay functionality out of CosmosSub into a new Relayer parent struct
+
 // CosmosSub defines a Cosmos listener that relays events to Ethereum and Cosmos
 type CosmosSub struct {
 	TmProvider              string
