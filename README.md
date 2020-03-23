@@ -50,11 +50,11 @@ ebrelayer help
 
 ## Initialization
 
-In order to facilitate cross chain transfers, the Bridge blockchain must be set up by following these [steps](./docs/initialization.md).
+In order to facilitate cross chain transfers, the Bridge blockchain must be set up by following these [steps](./docs/setup-bridge-chain.md).
 
 ## Setup Peggy locally
 
-To testing the transfer of Ethereum based assets, set up and start a local Ethereum chain by following these [steps](./docs/local-ethereum-usage.md).
+To test the transfer of Ethereum based assets, set up and start a local Ethereum chain by following these [steps](./docs/setup-eth-local.md).
 
 ## Ethereum to Cosmos asset transfers
 
@@ -62,7 +62,7 @@ With a local Ethereum blockchain running, you can participate in Ethereum -> Cos
 
 ## Using Peggy with the Ropsten testnet
 
-Instead of transferring local Ethereum assets to Cosmos-SDK based blockchains, you can test out transferring rEth from the Ropsten testnet by following these [steps](./docs/ropsten-testnet-usage.md).
+Instead of transferring local Ethereum assets to Cosmos-SDK based blockchains, you can test out transferring rEth from the Ropsten testnet by following these [steps](./docs/setup-eth-ropsten.md).
 
 ## Cosmos to Ethereum asset transfers
 

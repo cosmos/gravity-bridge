@@ -55,6 +55,7 @@ All notable changes to this project will be documented in this file.
 - (ethbridge) [\#75](https://github.com/cosmos/peggy/pull/75) Add burn message and functionality for burning tokens and trigerring
   events.
 - (ethbridge) [\#81](https://github.com/cosmos/peggy/pull/81) Add functionality for locking up cosmos coins and detecting burned coins from ethereum
+- (relayer) [\#162](https://github.com/cosmos/peggy/pull/162) Unified Relayer for chain subscription and event relay
 
 ### Improvements
 
@@ -65,3 +66,4 @@ All notable changes to this project will be documented in this file.
 - (misc) [\#71](https://github.com/cosmos/peggy/pull/71) Dockerize validator and relayer for simple testing purposes
 - (sdk) Update SDK version to v0.37.4
 - (ethbridge) [\#100](https://github.com/cosmos/peggy/pull/100) Add Keeper to EthBridge module and use expected keepers abstraction
+
