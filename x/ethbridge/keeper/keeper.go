@@ -56,7 +56,7 @@ func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) error {
 	receiverAddress := oracleClaim.CosmosReceiver
 
 	switch oracleClaim.ClaimType {
-	case types.LockText:
+	case types.LockText, types.BurnText:
 		err = k.supplyKeeper.MintCoins(ctx, types.ModuleName, oracleClaim.Amount)
 	default:
 		err = types.ErrInvalidClaimType
