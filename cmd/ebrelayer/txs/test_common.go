@@ -21,7 +21,7 @@ const (
 	TestBurnClaimType         = 1
 	TestProphecyID            = 20
 	TestNonce                 = 19
-	TestTokenAddress          = "0x0000000000000000000000000000000000000000"
+	TestEthTokenAddress       = "0x0000000000000000000000000000000000000000"
 	TestSymbol                = "eth"
 	TestAmount                = 5
 	TestEthereumAddress1      = "0x7B95B6EC7EbD73572298cEf32Bb54FA408207359"
@@ -32,6 +32,8 @@ const (
 	TestExpectedSignature     = "0x2952d5757ea8d7d810e4c8ae5a4897a1e76a0d4741ee1468d0ce1d6e0ccf4d414512391a09952c4b1d26995f532e38f289256d35bd882e00a62c3ac9e8e9ef9601" //nolint:lll
 	TestAddrHex               = "970e8128ab834e8eac17ab8e3812f010678cf791"
 	TestPrivHex               = "289c2857d4598e37fb9647507e47a309d6133539bf21a8b9cb6df88fd5232032"
+	TestNullAddress           = "0x0000000000000000000000000000000000000000"
+	TestOtherAddress          = "0x1000000000000000000000000000000000000000"
 )
 
 // CreateTestLogLockEvent creates a sample LockEvent event for testing purposes
@@ -46,7 +48,7 @@ func CreateTestLogLockEvent(t *testing.T) types.LockEvent {
 	copy(testProphecyID32[:], testProphecyID)
 	testEthereumSender := common.HexToAddress(TestEthereumAddress1)
 	testCosmosRecipient := []byte(TestCosmosAddress1)
-	testTokenAddress := common.HexToAddress(TestTokenAddress)
+	testTokenAddress := common.HexToAddress(TestEthTokenAddress)
 	testAmount := big.NewInt(int64(TestAmount))
 	testNonce := big.NewInt(int64(TestNonce))
 
@@ -60,7 +62,7 @@ func CreateTestProphecyClaimEvent(t *testing.T) types.ProphecyClaimEvent {
 	testProphecyID := big.NewInt(int64(TestProphecyID))
 	testEthereumReceiver := common.HexToAddress(TestEthereumAddress1)
 	testValidatorAddress := common.HexToAddress(TestEthereumAddress2)
-	testTokenAddress := common.HexToAddress(TestTokenAddress)
+	testTokenAddress := common.HexToAddress(TestEthTokenAddress)
 	testAmount := big.NewInt(int64(TestAmount))
 
 	return types.NewProphecyClaimEvent([]byte(TestCosmosAddress1), TestSymbol,
@@ -73,7 +75,7 @@ func CreateTestCosmosMsg(t *testing.T, claimType types.Event) types.CosmosMsg {
 	testCosmosSender := []byte(TestCosmosAddress1)
 	testEthereumReceiver := common.HexToAddress(TestEthereumAddress1)
 	testAmount := big.NewInt(int64(TestAmount))
-	testTokenAddress := common.HexToAddress(TestTokenAddress)
+	testTokenAddress := common.HexToAddress(TestEthTokenAddress)
 
 	// Create new Cosmos Msg
 	cosmosMsg := types.NewCosmosMsg(claimType, testCosmosSender,
@@ -107,7 +109,7 @@ func CreateCosmosMsgAttributes(t *testing.T) []tmKv.Pair {
 	// (key, value) pairing for "token_contract_address" key
 	pairTokenContract := tmKv.Pair{
 		Key:   []byte("token_contract_address"),
-		Value: []byte(common.HexToAddress(TestTokenAddress).Hex()),
+		Value: []byte(common.HexToAddress(TestEthTokenAddress).Hex()),
 	}
 
 	// Assign pairs to attributes array

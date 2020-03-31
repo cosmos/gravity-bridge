@@ -13,9 +13,12 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	tmKv "github.com/tendermint/tendermint/libs/kv"
 
-	"github.com/cosmos/peggy/cmd/ebrelayer/types"
-	"github.com/cosmos/peggy/cmd/ebrelayer/utils"
-	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/cmd/ebrelayer/events"
+	ethbridgeTypes "github.com/cosmos/peggy/x/ethbridge/types"
+)
+
+const (
+	nullAddress = "0x0000000000000000000000000000000000000000"
 )
 
 // LogLockToEthBridgeClaim parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
@@ -44,7 +47,7 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *types.LockEvent) (et
 
 	// Symbol formatted to lowercase
 	symbol := strings.ToLower(event.Symbol)
-	if symbol == "eth" && !utils.IsZeroAddress(event.Token) {
+	if symbol == "eth" && !isZeroAddress(event.Token) {
 		return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
 	}
 
@@ -133,9 +136,12 @@ func BurnLockEventToCosmosMsg(claimType types.Event, attributes []tmKv.Pair) typ
 				log.Fatal("Invalid recipient address:", val)
 			}
 			ethereumReceiver = common.HexToAddress(val)
-		case types.Coin.String():
-			symbol, amount = utils.GetSymbolAmountFromCoin(val)
-		case types.TokenContractAddress.String():
+		case events.Coin.String():
+			coins, _ := sdk.ParseCoins(val)
+			symbol = coins[0].Denom
+			amount = coins[0].Amount.BigInt()
+		case events.TokenContractAddress.String():
+			// Confirm token contract address is valid Ethereum address
 			if !common.IsHexAddress(val) {
 				log.Fatal("Invalid token address:", val)
 			}
@@ -143,4 +149,9 @@ func BurnLockEventToCosmosMsg(claimType types.Event, attributes []tmKv.Pair) typ
 		}
 	}
 	return types.NewCosmosMsg(claimType, cosmosSender, ethereumReceiver, symbol, amount, tokenContractAddress)
+}
+
+// isZeroAddress checks an Ethereum address and returns a bool which indicates if it is the null address
+func isZeroAddress(address common.Address) bool {
+	return address == common.HexToAddress(nullAddress)
 }
