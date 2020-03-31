@@ -14,7 +14,7 @@ import (
 // EthBridgeClaim is a structure that contains all the data for a particular bridge claim
 type EthBridgeClaim struct {
 	EthereumChainID       int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
-	BridgeContractAddress EthereumAddress `json:"bridge_contract_address" yaml:"bridge_contract_address"`
+	BridgeContractAddress EthereumAddress `json:"bridge_registry_contract_address" yaml:"bridge_registry_contract_address"`
 	Nonce                 int             `json:"nonce" yaml:"nonce"`
 	Symbol                string          `json:"symbol" yaml:"symbol"`
 	TokenContractAddress  EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`

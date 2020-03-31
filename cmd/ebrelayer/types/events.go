@@ -1,11 +1,9 @@
-package events
+package types
 
 import "log"
 
-// -----------------------------------------------------
-// 	Events: Events maintains a mapping of events to an array
-//		of claims made by validators.
-// -----------------------------------------------------
+// TODO: This should be moved to new 'events' directory and expanded so that it can
+// serve as a local store of witnessed events and allow for re-trying failed relays.
 
 // EventRecords map of transaction hashes to LockEvent structs
 var EventRecords = make(map[string]LockEvent)
@@ -23,7 +21,7 @@ func IsEventRecorded(txHash string) bool {
 // PrintLockEventByTx prints any witnessed events associated with a given transaction hash
 func PrintLockEventByTx(txHash string) {
 	if IsEventRecorded(txHash) {
-		PrintLockEvent(EventRecords[txHash])
+		log.Println(EventRecords[txHash].String())
 	} else {
 		log.Printf("\nNo records from this session for tx: %v\n", txHash)
 	}
@@ -34,6 +32,6 @@ func PrintLockEvents() {
 	// For each claim, print the validator which submitted the claim
 	for txHash, event := range EventRecords {
 		log.Printf("\nTransaction: %v\n", txHash)
-		PrintLockEvent(event)
+		log.Println(event.String())
 	}
 }

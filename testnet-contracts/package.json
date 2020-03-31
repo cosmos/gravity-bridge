@@ -28,6 +28,7 @@
     "chai-bignumber": "^3.0.0",
     "ganache-cli": "^6.8.2",
     "openzeppelin-solidity": "^2.1.3",
+    "truffle": "^5.1.19",
     "web3": "^1.2.1",
     "web3-utils": "^1.0.0-beta.52"
   },
@@ -41,6 +42,7 @@
     "peggy:check": "truffle exec scripts/sendCheckProphecy.js",
     "peggy:process": "truffle exec scripts/sendProcessProphecy.js",
     "peggy:addBridgeToken": "truffle exec scripts/sendAddBridgeToken.js",
+    "peggy:getTokenBalance": "truffle exec scripts/getTokenBalance.js",
     "token:address": "truffle exec scripts/getTokenContractAddress.js",
     "token:mint": "truffle exec scripts/mintTestTokens.js",
     "token:approve": "truffle exec scripts/sendApproveTx.js"

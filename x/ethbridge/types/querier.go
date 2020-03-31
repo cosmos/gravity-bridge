@@ -16,7 +16,7 @@ const (
 // - 'custom/ethbridge/prophecies/'
 type QueryEthProphecyParams struct {
 	EthereumChainID       int             `json:"ethereum_chain_id"`
-	BridgeContractAddress EthereumAddress `json:"bridge_contract_address"`
+	BridgeContractAddress EthereumAddress `json:"bridge_registry_contract_address"`
 	Nonce                 int             `json:"nonce"`
 	Symbol                string          `json:"symbol"`
 	TokenContractAddress  EthereumAddress `json:"token_contract_address"`

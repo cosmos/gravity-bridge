@@ -8,33 +8,49 @@ import (
 	"syscall"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	tmKv "github.com/tendermint/tendermint/libs/kv"
 	tmLog "github.com/tendermint/tendermint/libs/log"
 	tmClient "github.com/tendermint/tendermint/rpc/client"
 	tmTypes "github.com/tendermint/tendermint/types"
 
-	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
+	"github.com/cosmos/peggy/cmd/ebrelayer/types"
 )
 
-// InitCosmosRelayer initializes a relayer which witnesses events on the Cosmos network and relays them to Ethereum
-func InitCosmosRelayer(
-	tendermintProvider string,
-	web3Provider string,
-	contractAddress common.Address,
-	key *ecdsa.PrivateKey,
-) error {
-	logger := tmLog.NewTMLogger(tmLog.NewSyncWriter(os.Stdout))
-	client, err := tmClient.NewHTTP(tendermintProvider, "/websocket")
-	if err != nil {
-		return err
-	}
+// TODO: Move relay functionality out of CosmosSub into a new Relayer parent struct
 
-	client.SetLogger(logger)
+// CosmosSub defines a Cosmos listener that relays events to Ethereum and Cosmos
+type CosmosSub struct {
+	TmProvider              string
+	EthProvider             string
+	RegistryContractAddress common.Address
+	PrivateKey              *ecdsa.PrivateKey
+	Logger                  tmLog.Logger
+}
+
+// NewCosmosSub initializes a new CosmosSub
+func NewCosmosSub(tmProvider, ethProvider string, registryContractAddress common.Address,
+	privateKey *ecdsa.PrivateKey, logger tmLog.Logger) CosmosSub {
+	return CosmosSub{
+		TmProvider:              tmProvider,
+		EthProvider:             ethProvider,
+		RegistryContractAddress: registryContractAddress,
+		PrivateKey:              privateKey,
+		Logger:                  logger,
+	}
+}
+
+// Start a Cosmos chain subscription
+func (sub CosmosSub) Start() {
+	client, err := tmClient.NewHTTP(sub.TmProvider, "/websocket")
+	if err != nil {
+		sub.Logger.Error("failed to initialize a client", "err", err)
+		os.Exit(1)
+	}
+	client.SetLogger(sub.Logger)
 
 	if err := client.Start(); err != nil {
-		logger.Error("Failed to start a client", "err", err)
+		sub.Logger.Error("failed to start a client", "err", err)
 		os.Exit(1)
 	}
 
@@ -42,10 +58,9 @@ func InitCosmosRelayer(
 
 	// Subscribe to all tendermint transactions
 	query := "tm.event = 'Tx'"
-
 	out, err := client.Subscribe(context.Background(), "test", query, 1000)
 	if err != nil {
-		logger.Error("Failed to subscribe to query", "err", err, "query", query)
+		sub.Logger.Error("failed to subscribe to query", "err", err, "query", query)
 		os.Exit(1)
 	}
 
@@ -57,24 +72,21 @@ func InitCosmosRelayer(
 		case result := <-out:
 			tx, ok := result.Data.(tmTypes.EventDataTx)
 			if !ok {
-				logger.Error("Type casting failed while extracting event data from new tx")
+				sub.Logger.Error("new tx: error while extracting event data from new tx")
 			}
+			sub.Logger.Info("New transaction witnessed")
 
-			logger.Info("New transaction witnessed")
-
-			// Iterate over each event inside of the transaction
+			// Iterate over each event in the transaction
 			for _, event := range tx.Result.Events {
-				// Get type of OracleClaim based on the event's type
 				claimType := getOracleClaimType(event.GetType())
 
 				switch claimType {
-				case events.MsgBurn, events.MsgLock:
+				case types.MsgBurn, types.MsgLock:
 					// Parse event data, then package it as a ProphecyClaim and relay to the Ethereum Network
-					err := handleBurnLockMsg(event.GetAttributes(), claimType, web3Provider, contractAddress, key)
+					err := sub.handleBurnLockMsg(event.GetAttributes(), claimType)
 					if err != nil {
-						return err
+						sub.Logger.Error(err.Error())
 					}
-				case events.Unsupported:
 				}
 			}
 		case <-quit:
@@ -84,42 +96,30 @@ func InitCosmosRelayer(
 }
 
 // getOracleClaimType sets the OracleClaim's claim type based upon the witnessed event type
-func getOracleClaimType(eventType string) events.Event {
-	var claimType events.Event
-
+func getOracleClaimType(eventType string) types.Event {
+	var claimType types.Event
 	switch eventType {
-	case events.MsgBurn.String():
-		claimType = events.MsgBurn
-	case events.MsgLock.String():
-		claimType = events.MsgLock
+	case types.MsgBurn.String():
+		claimType = types.MsgBurn
+	case types.MsgLock.String():
+		claimType = types.MsgLock
 	default:
-		claimType = events.Unsupported
+		claimType = types.Unsupported
 	}
-
 	return claimType
 }
 
-// handleBurnLockMsg parse event data as a CosmosMsg,
-// package it into a ProphecyClaim, then relay tx to the Ethereum Network
-func handleBurnLockMsg(
-	attributes []tmKv.Pair,
-	claimType events.Event,
-	web3Provider string,
-	contractAddress common.Address,
-	key *ecdsa.PrivateKey,
-) error {
-	// Parse the witnessed event's data into a new CosmosMsg
+// Parses event data from the msg, event, builds a new ProphecyClaim, and relays it to Ethereum
+func (sub CosmosSub) handleBurnLockMsg(attributes []tmKv.Pair, claimType types.Event) error {
 	cosmosMsg := txs.BurnLockEventToCosmosMsg(claimType, attributes)
+	sub.Logger.Info(cosmosMsg.String())
 
-	// Parse the CosmosMsg into a ProphecyClaim for relay to Ethereum
+	// TODO: Ideally one validator should relay the prophecy and other validators make oracle claims upon that prophecy
 	prophecyClaim := txs.CosmosMsgToProphecyClaim(cosmosMsg)
-
-	// TODO: Need some sort of delay on this so validators aren't all submitting at the same time
-	// Relay the CosmosMsg to the Ethereum network
-	err := txs.RelayProphecyClaimToEthereum(web3Provider, contractAddress, claimType, prophecyClaim, key)
+	err := txs.RelayProphecyClaimToEthereum(sub.EthProvider, sub.RegistryContractAddress,
+		claimType, prophecyClaim, sub.PrivateKey)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }

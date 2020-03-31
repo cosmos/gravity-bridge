@@ -11,7 +11,11 @@ import (
 	bridgeRegistry "github.com/cosmos/peggy/cmd/ebrelayer/generated/bridgeregistry"
 )
 
-// ContractRegistry :
+// TODO: Update BridgeRegistry contract so that all bridge contract addresses can be queried
+//		in one transaction. Then refactor ContractRegistry to a map and store it under new
+//		Relayer struct.
+
+// ContractRegistry is an enum for the bridge contract types
 type ContractRegistry byte
 
 const (
@@ -30,11 +34,9 @@ func (d ContractRegistry) String() string {
 	return [...]string{"valset", "oracle", "bridgebank", "cosmosbridge"}[d-1]
 }
 
-// GetAddressFromBridgeRegistry utility method which queries the requested contract address from the BridgeRegistry
-func GetAddressFromBridgeRegistry(
-	client *ethclient.Client, registry common.Address, target ContractRegistry,
+// GetAddressFromBridgeRegistry queries the requested contract address from the BridgeRegistry contract
+func GetAddressFromBridgeRegistry(client *ethclient.Client, registry common.Address, target ContractRegistry,
 ) (common.Address, error) {
-	// Load the sender's address
 	sender, err := LoadSender()
 	if err != nil {
 		log.Fatal(err)
