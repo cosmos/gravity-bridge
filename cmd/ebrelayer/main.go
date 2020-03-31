@@ -78,7 +78,7 @@ var rootCmd = &cobra.Command{
 func initRelayerCmd() *cobra.Command {
 	//nolint:lll
 	initRelayerCmd := &cobra.Command{
-		Use:     "init [tendermintNode] [web3Provider] [bridgeContractAddress] [validatorMoniker]",
+		Use:     "init [tendermintNode] [web3Provider] [bridgeRegistryContractAddress] [validatorMoniker]",
 		Short:   "Validate credentials and initialize subscriptions to both chains",
 		Args:    cobra.ExactArgs(4),
 		Example: "ebrelayer init tcp://localhost:26657 ws://localhost:7545/ 0x30753E4A8aad7F8597332E813735Def5dD395028 validator --chain-id=peggy",
@@ -123,7 +123,7 @@ func RunInitRelayerCmd(cmd *cobra.Command, args []string) error {
 	web3Provider := args[1]
 
 	if !common.IsHexAddress(args[2]) {
-		return errors.Errorf("invalid [bridge-contract-address]: %s", args[2])
+		return errors.Errorf("invalid [bridge-registry-contract-address]: %s", args[2])
 	}
 	contractAddress := common.HexToAddress(args[2])
 

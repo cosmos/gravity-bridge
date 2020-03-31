@@ -19,10 +19,10 @@ cp .env.example .env
 # Open a new terminal window
 
 # Download dependencies
-yarn
+yarn # or npm i
 
 # Start local blockchain
-yarn develop
+yarn develop # or npm run develop
 ```
 
 ### Deploy Peggy contracts to local blockchain
@@ -41,6 +41,8 @@ yarn peggy:setup
 # Copy contract ABI to Relayer it can subscribe to deployed contracts
 yarn peggy:abi
 
-# Get the address of Peggy's registry contract
+# Get the address of Peggy's BridgeRegistry contract
 yarn peggy:address
 ```
+
+To set up the relayer, go to [the next step](./setup-relayer.md).

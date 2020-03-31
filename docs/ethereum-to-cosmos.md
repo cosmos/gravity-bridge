@@ -2,9 +2,11 @@
 
 ### Sending Ethereum assets to Cosmos via Lock
 
-Now we can lock our funds on the contracts by sending a lock transaction containing Eth/ERC20 assets. First, we'll use default parameters to lock Eth assets.  
+At this point you should have a running Cosmos SDK application, a running EVM chain and a running relayer. If any of those are missing from your setup please go back to the [README](../README.md) and setup whatever is missing.
 
-Default parameter values for lock transactions:
+With those three operations running we can lock our funds on the EVM chain contracts by sending a lock transaction containing Eth/ERC20 assets. First, we'll use default parameters to lock Eth assets.  
+
+The EVM peggy commands come with the option of using a set of default parameter which are set in [sendLockTx.js](../testnet-contracts/scripts/sendLockTx.js) values which look as follows:
 
 - [COSMOS_RECIPIENT_ADDRESS] = `cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh`
 - [TOKEN_CONTRACT_ADDRESS] = `eth` (Ethereum has no token contract and is denoted by 'eth')
@@ -16,7 +18,7 @@ Default parameter values for lock transactions:
 # Send lock transaction with default parameters
 yarn peggy:lock --default
 
-# Send lock transaction with custom parameters
+# Send a lock transaction with custom parameters
 yarn peggy:lock [COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 ```
 
@@ -36,9 +38,17 @@ Nonce: 3
 
 {
   "height": "0",
-  "txhash": "37C20C533345FC0A187A706E957BF509D56529F1B0FEA19AFC4278B23B2724A1",
+  "txhash": "20AE2A64A2B8CBB796F721CEEED197472367236BC7200E58D90197D4EEF21455",
   "raw_log": "[]"
 }
+I[2020-03-30|13:01:40.800] got response                                 id=0 result=7B0A20202020...
+...a lot more hexadecimals here
+```
+
+To make sure the event was relayed you can query the receiving cosmos account as follows:
+
+```sh
+ebcli q account cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
 ```
 
 ### Testing ERC20 token support
@@ -49,11 +59,24 @@ The bridge supports the transfer of ERC20 token assets. First, we'll deploy a sa
 # Mint 1,000 TEST tokens to your account for local use
 yarn token:mint
 
+# { TOKEN_AMOUNT: '10000000000000000000' }
+# {
+#   from: '0x0000000000000000000000000000000000000000',
+#   to: '0x627306090abaB3A6e1400e9345bC60c78a8BEf57',
+#   value: 10000000000000000000
+# }
+
 # Approve 100 TEST tokens to the Bridge contract
 yarn token:approve --default
 
 # You can also approve a custom amount of TEST tokens to the Bridge contract:
-yarn token:approve 11
+yarn token:approve 10000000000000000000
+
+# {
+#   owner: '0x627306090abaB3A6e1400e9345bC60c78a8BEf57',
+#   spender: '0x2C2B9C9a4a25e24B174f26114e8926a9f2128FE4',
+#   value: 10000000000000000000
+# }
 
 # Get deployed TEST token contract address
 yarn token:address
@@ -72,10 +95,10 @@ Chain ID: 5777
 Bridge contract address: 0x2C2B9C9a4a25e24B174f26114e8926a9f2128FE4
 Token symbol: TEST
 Token contract address: 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB
-Sender: 0x115F6e2004D7b4ccd6b9D5ab34e30909e0F612CD
+Sender: 0x627306090abaB3A6e1400e9345bC60c78a8BEf57
 Recipient: cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
 Value: 11
-Nonce: 12
+Nonce: 2
 
 {
   "height": "0",
@@ -83,3 +106,5 @@ Nonce: 12
   "raw_log": "[]"
 }
 ```
+
+To see how to move assets from the Cosmos SDK application to the EVM chain read more [here](./cosmos-to-ethereum.md).

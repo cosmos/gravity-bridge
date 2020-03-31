@@ -44,6 +44,7 @@ ebrelayer help
 
 - **Initialization**: setup the Bridge chain, add accounts, start the Bridge chain, and test available commands
 - **Setup Peggy locally**: start local Ethereum blockchain, compile and deploy contracts, activate the contracts, and get the registry contract's deployed address 
+- **Run the Relayer**: start the relayer with a validator account in order to relay lock and burn events between the EVM blockchain and the Cosmos SDK blockchain.
 - **Ethereum to Cosmos asset transfers**: start the Relayer service, send lock transaction containing local assets to the contracts, and test ERC20 support
 - **Using Peggy with the Ropsten testnet**: setup interfacting with the Ropsten testnet, deploy contracts to Ropsten testnet, start the Relayer service on the Ropsten testnet, and send lock transaction containing Ropsten testnet assets to the contracts
 - **Cosmos to Ethereum asset transfers**: setup interfacing with tendermint, start the Relayer service, start the Oracle Claim Relayer service, burn assets on tendermint, create prophecy and oracle claims on Ethereum, and process prophecy claims 
@@ -56,9 +57,12 @@ In order to facilitate cross chain transfers, the Bridge blockchain must be set 
 
 To test the transfer of Ethereum based assets, set up and start a local Ethereum chain by following these [steps](./docs/setup-eth-local.md).
 
+## Run the Relayer
+To set up and operate the relayer, follow the instructions [here](./setup-relayer.md).
+
 ## Ethereum to Cosmos asset transfers
 
-With a local Ethereum blockchain running, you can participate in Ethereum -> Cosmos asset transfers by starting the Relayer service and acting as a validator. Validators witness the locking of Ethereum/ERC20 assets and sign a data package containing information about the lock, which is then relayed to tendermint and witnessed by the EthBridge module. Once other validators have confirmed that the transaction's information is valid, the funds released by the Oracle module and transferred to the intended recipient's address. In this way, Ethereum assets can be transferred to Cosmos-SDK based blockchains. The process is described [here](./docs/ethereum-to-cosmos.md).
+With a local Ethereum blockchain running, you can participate in Ethereum -> Cosmos asset transfers by starting the Relayer service and acting as a validator. Validators witness the locking of Ethereum/ERC20 assets and sign a data package containing information about the lock, which is then relayed to the Cosmos chain and witnessed by the EthBridge module. Once a quorum of validators have confirmed that the transaction's information is valid, the funds are released by the Oracle module and transferred to the intended recipient's address. In this way, Ethereum assets can be transferred to Cosmos-SDK based blockchains. Instructions for trying out the process yourself are [here](./docs/ethereum-to-cosmos.md).
 
 ## Using Peggy with the Ropsten testnet
 
