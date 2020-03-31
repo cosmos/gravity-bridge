@@ -3,7 +3,7 @@ package txs
 import (
 	"math/big"
 
-	"github.com/cosmos/peggy/cmd/ebrelayer/events"
+	"github.com/cosmos/peggy/cmd/ebrelayer/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -16,7 +16,7 @@ type OracleClaim struct {
 
 // ProphecyClaim contains data required to make an ProphecyClaim
 type ProphecyClaim struct {
-	ClaimType            events.Event
+	ClaimType            types.Event
 	CosmosSender         []byte
 	EthereumReceiver     common.Address
 	TokenContractAddress common.Address

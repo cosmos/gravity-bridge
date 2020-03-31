@@ -29,7 +29,7 @@ const (
 type createEthClaimReq struct {
 	BaseReq               rest.BaseReq `json:"base_req"`
 	EthereumChainID       int          `json:"ethereum_chain_id"`
-	BridgeContractAddress string       `json:"bridge_contract_address"`
+	BridgeContractAddress string       `json:"bridge_registry_contract_address"`
 	Nonce                 int          `json:"nonce"`
 	Symbol                string       `json:"symbol"`
 	TokenContractAddress  string       `json:"token_contract_address"`

@@ -7,29 +7,31 @@ module.exports = async () => {
 
   // Contract abstraction
   const truffleContract = require("truffle-contract");
-
   const contract = truffleContract(
     require("../build/contracts/BridgeBank.json")
   );
-
   /*******************************************
    *** Constants
    ******************************************/
   // Config values
-  const NETWORK_ROPSTEN =
-    process.argv[4] === "--network" && process.argv[5] === "ropsten";
-
-  /*******************************************
-   *** checkBridgeProphecy transaction parameters
-   ******************************************/
   let symbol;
+  let NETWORK_ROPSTEN
+  try {
+    NETWORK_ROPSTEN =
+      process.argv[4] === "--network" && process.argv[5] === "ropsten";
 
-  if (NETWORK_ROPSTEN) {
-    symbol = process.argv[6].toString();
-  } else {
-    symbol = process.argv[4].toString();
+    /*******************************************
+     *** checkBridgeProphecy transaction parameters
+    ******************************************/
+    if (NETWORK_ROPSTEN) {
+      symbol = process.argv[6].toString();
+    } else {
+      symbol = process.argv[4].toString();
+    }
+  }catch (error) {
+    console.log({error})
+    return
   }
-
   /*******************************************
    *** Web3 provider
    *** Set contract provider based on --network flag
@@ -43,7 +45,6 @@ module.exports = async () => {
   } else {
     provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
   }
-
   const web3 = new Web3(provider);
 
   console.log("Fetching BridgeBank contract...");
@@ -77,6 +78,7 @@ module.exports = async () => {
       });
     });
 
+    console.log("")
     // Check bridge token whitelist
     const isOnWhiteList = await contract.deployed().then(function(instance) {
       return instance.bridgeTokenWhitelist(bridgeTokenAddress, {
@@ -88,8 +90,7 @@ module.exports = async () => {
 
     if (isOnWhiteList) {
       console.log(
-        'Bridge Token"' + symbol + '" created at address:',
-        bridgeTokenAddress
+        'Bridge Token "' + symbol + '" created at address ' + bridgeTokenAddress + ' and added to whitelist'
       );
     } else {
       console.log(

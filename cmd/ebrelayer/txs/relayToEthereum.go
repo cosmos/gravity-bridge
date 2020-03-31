@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-
 	"log"
 	"math/big"
 
@@ -12,9 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/cosmos/peggy/cmd/ebrelayer/events"
 	cosmosBridge "github.com/cosmos/peggy/cmd/ebrelayer/generated/cosmosbridge"
 	oracle "github.com/cosmos/peggy/cmd/ebrelayer/generated/oracle"
+	"github.com/cosmos/peggy/cmd/ebrelayer/types"
 )
 
 const (
@@ -23,13 +22,8 @@ const (
 )
 
 // RelayProphecyClaimToEthereum relays the provided ProphecyClaim to CosmosBridge contract on the Ethereum network
-func RelayProphecyClaimToEthereum(
-	provider string,
-	contractAddress common.Address,
-	event events.Event,
-	claim ProphecyClaim,
-	key *ecdsa.PrivateKey,
-) error {
+func RelayProphecyClaimToEthereum(provider string, contractAddress common.Address, event types.Event,
+	claim ProphecyClaim, key *ecdsa.PrivateKey) error {
 	// Initialize client service, validator's tx auth, and target contract address
 	client, auth, target := initRelayConfig(provider, contractAddress, event, key)
 
@@ -49,33 +43,26 @@ func RelayProphecyClaimToEthereum(
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("NewProphecyClaim tx hash:", tx.Hash().Hex())
 
 	// Get the transaction receipt
-	fmt.Println("NewProphecyClaim tx hash:", tx.Hash().Hex())
 	receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Report tx status
 	switch receipt.Status {
 	case 0:
 		fmt.Println("Tx Status: 0 - Failed")
 	case 1:
 		fmt.Println("Tx Status: 1 - Successful")
 	}
-
 	return nil
 }
 
 // RelayOracleClaimToEthereum relays the provided OracleClaim to Oracle contract on the Ethereum network
-func RelayOracleClaimToEthereum(
-	provider string,
-	contractAddress common.Address,
-	event events.Event,
-	claim OracleClaim,
-	key *ecdsa.PrivateKey,
-) error {
+func RelayOracleClaimToEthereum(provider string, contractAddress common.Address, event types.Event,
+	claim OracleClaim, key *ecdsa.PrivateKey) error {
 	// Initialize client service, validator's tx auth, and target contract address
 	client, auth, target := initRelayConfig(provider, contractAddress, event, key)
 
@@ -92,15 +79,14 @@ func RelayOracleClaimToEthereum(
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("NewOracleClaim tx hash:", tx.Hash().Hex())
 
 	// Get the transaction receipt
-	fmt.Println("NewOracleClaim tx hash:", tx.Hash().Hex())
 	receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Report tx status
 	switch receipt.Status {
 	case 0:
 		fmt.Println("Tx Status: 0 - Failed")
@@ -112,15 +98,8 @@ func RelayOracleClaimToEthereum(
 }
 
 // initRelayConfig set up Ethereum client, validator's transaction auth, and the target contract's address
-func initRelayConfig(
-	provider string,
-	registry common.Address,
-	event events.Event,
-	key *ecdsa.PrivateKey,
-) (*ethclient.Client,
-	*bind.TransactOpts,
-	common.Address,
-) {
+func initRelayConfig(provider string, registry common.Address, event types.Event, key *ecdsa.PrivateKey,
+) (*ethclient.Client, *bind.TransactOpts, common.Address) {
 	// Start Ethereum client
 	client, err := ethclient.Dial(provider)
 	if err != nil {
@@ -151,13 +130,12 @@ func initRelayConfig(
 	transactOptsAuth.GasPrice = gasPrice
 
 	var targetContract ContractRegistry
-
 	switch event {
 	// ProphecyClaims are sent to the CosmosBridge contract
-	case events.MsgBurn, events.MsgLock:
+	case types.MsgBurn, types.MsgLock:
 		targetContract = CosmosBridge
 	// OracleClaims are sent to the Oracle contract
-	case events.LogNewProphecyClaim:
+	case types.LogNewProphecyClaim:
 		targetContract = Oracle
 	default:
 		panic("invalid target contract address")
@@ -168,6 +146,5 @@ func initRelayConfig(
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	return client, transactOptsAuth, target
 }

@@ -1,9 +1,5 @@
 package relayer
 
-// ------------------------------------------------------------
-//    Network: Validates input and initializes a websocket Ethereum client.
-// ------------------------------------------------------------
-
 import (
 	"fmt"
 	"net/url"

@@ -3,7 +3,7 @@ require("dotenv").config();
 var HDWalletProvider = require("@truffle/hdwallet-provider");
 
 module.exports = {
-  // contracts_directory: "./flat", // can be uncommented if generated flat contracts need to be tested
+  // contracts_directory: "./flat",
   networks: {
     develop: {
       host: "localhost",
