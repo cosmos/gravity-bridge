@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "../../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./BridgeToken.sol";
 
+
 /**
  * @title CosmosBank
  * @dev Manages the deployment and minting of ERC20 compatible BridgeTokens
@@ -10,7 +11,6 @@ import "./BridgeToken.sol";
  **/
 
 contract CosmosBank {
-
     using SafeMath for uint256;
 
     uint256 public bridgeTokenCount;
@@ -26,12 +26,9 @@ contract CosmosBank {
     }
 
     /*
-    * @dev: Event declarations
-    */
-    event LogNewBridgeToken(
-        address _token,
-        string _symbol
-    );
+     * @dev: Event declarations
+     */
+    event LogNewBridgeToken(address _token, string _symbol);
 
     event LogBridgeTokenMint(
         address _token,
@@ -41,37 +38,29 @@ contract CosmosBank {
     );
 
     /*
-    * @dev: Constructor, sets bridgeTokenCount
-    */
-    constructor () public {
+     * @dev: Constructor, sets bridgeTokenCount
+     */
+    constructor() public {
         bridgeTokenCount = 0;
     }
 
     /*
-    * @dev: Creates a new CosmosDeposit with a unique ID
-    *
-    * @param _cosmosSender: The sender's Cosmos address in bytes.
-    * @param _ethereumRecipient: The intended recipient's Ethereum address.
-    * @param _token: The currency type
-    * @param _amount: The amount in the deposit.
-    * @return: The newly created CosmosDeposit's unique id.
-    */
+     * @dev: Creates a new CosmosDeposit with a unique ID
+     *
+     * @param _cosmosSender: The sender's Cosmos address in bytes.
+     * @param _ethereumRecipient: The intended recipient's Ethereum address.
+     * @param _token: The currency type
+     * @param _amount: The amount in the deposit.
+     * @return: The newly created CosmosDeposit's unique id.
+     */
     function newCosmosDeposit(
         bytes memory _cosmosSender,
         address payable _ethereumRecipient,
         address _token,
         uint256 _amount
-    )
-        internal
-        returns(bytes32)
-    {
+    ) internal returns (bytes32) {
         bytes32 depositID = keccak256(
-            abi.encodePacked(
-                _cosmosSender,
-                _ethereumRecipient,
-                _token,
-                _amount
-            )
+            abi.encodePacked(_cosmosSender, _ethereumRecipient, _token, _amount)
         );
 
         cosmosDeposits[depositID] = CosmosDeposit(
@@ -90,11 +79,9 @@ contract CosmosBank {
      *
      * @param _symbol: The BridgeToken's symbol
      */
-    function deployNewBridgeToken(
-        string memory _symbol
-    )
+    function deployNewBridgeToken(string memory _symbol)
         internal
-        returns(address)
+        returns (address)
     {
         bridgeTokenCount = bridgeTokenCount.add(1);
 
@@ -105,10 +92,7 @@ contract CosmosBank {
         address newBridgeTokenAddress = address(newBridgeToken);
         bridgeTokenWhitelist[newBridgeTokenAddress] = true;
 
-        emit LogNewBridgeToken(
-            newBridgeTokenAddress,
-            _symbol
-        );
+        emit LogNewBridgeToken(newBridgeTokenAddress, _symbol);
 
         return newBridgeTokenAddress;
     }
@@ -122,15 +106,13 @@ contract CosmosBank {
      * @param _symbol: comsos token symbol
      * @param _amount: number of comsos tokens to be minted
 \    */
-     function mintNewBridgeTokens(
+    function mintNewBridgeTokens(
         bytes memory _cosmosSender,
         address payable _intendedRecipient,
         address _bridgeTokenAddress,
         string memory _symbol,
         uint256 _amount
-    )
-        internal
-    {
+    ) internal {
         // Must be whitelisted bridge token
         require(
             bridgeTokenWhitelist[_bridgeTokenAddress],
@@ -139,10 +121,7 @@ contract CosmosBank {
 
         // Mint bridge tokens
         require(
-            BridgeToken(_bridgeTokenAddress).mint(
-                _intendedRecipient,
-                _amount
-            ),
+            BridgeToken(_bridgeTokenAddress).mint(_intendedRecipient, _amount),
             "Attempted mint of bridge tokens failed"
         );
 
@@ -162,41 +141,33 @@ contract CosmosBank {
     }
 
     /*
-    * @dev: Checks if an individual CosmosDeposit exists.
-    *
-    * @param _id: The unique CosmosDeposit's id.
-    * @return: Boolean indicating if the CosmosDeposit exists in memory.
-    */
-    function isLockedCosmosDeposit(
-        bytes32 _id
-    )
-        internal
-        view
-        returns(bool)
-    {
-        return(cosmosDeposits[_id].locked);
+     * @dev: Checks if an individual CosmosDeposit exists.
+     *
+     * @param _id: The unique CosmosDeposit's id.
+     * @return: Boolean indicating if the CosmosDeposit exists in memory.
+     */
+    function isLockedCosmosDeposit(bytes32 _id) internal view returns (bool) {
+        return (cosmosDeposits[_id].locked);
     }
 
-  /*
-    * @dev: Gets an item's information
-    *
-    * @param _Id: The item containing the desired information.
-    * @return: Sender's address.
-    * @return: Recipient's address in bytes.
-    * @return: Token address.
-    * @return: Amount of ethereum/erc20 in the item.
-    * @return: Unique nonce of the item.
-    */
-    function getCosmosDeposit(
-        bytes32 _id
-    )
+    /*
+     * @dev: Gets an item's information
+     *
+     * @param _Id: The item containing the desired information.
+     * @return: Sender's address.
+     * @return: Recipient's address in bytes.
+     * @return: Token address.
+     * @return: Amount of ethereum/erc20 in the item.
+     * @return: Unique nonce of the item.
+     */
+    function getCosmosDeposit(bytes32 _id)
         internal
         view
-        returns(bytes memory, address payable, address, uint256)
+        returns (bytes memory, address payable, address, uint256)
     {
         CosmosDeposit memory deposit = cosmosDeposits[_id];
 
-        return(
+        return (
             deposit.cosmosSender,
             deposit.ethereumRecipient,
             deposit.bridgeTokenAddress,

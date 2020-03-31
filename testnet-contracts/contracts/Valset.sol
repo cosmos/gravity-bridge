@@ -3,24 +3,24 @@ pragma solidity ^0.5.0;
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../node_modules/openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 
-contract Valset {
 
+contract Valset {
     using SafeMath for uint256;
     using ECDSA for bytes32;
 
     /*
-    * @dev: Variable declarations
-    */
+     * @dev: Variable declarations
+     */
     address public operator;
     uint256 public totalPower;
     uint256 public currentValsetVersion;
     uint256 public validatorCount;
-    mapping (bytes32 => bool) public validators;
+    mapping(bytes32 => bool) public validators;
     mapping(bytes32 => uint256) public powers;
 
     /*
-    * @dev: Event declarations
-    */
+     * @dev: Event declarations
+     */
     event LogValidatorAdded(
         address _validator,
         uint256 _power,
@@ -58,40 +58,28 @@ contract Valset {
     );
 
     /*
-    * @dev: Modifier which restricts access to the operator.
-    */
-    modifier onlyOperator()
-    {
-        require(
-            msg.sender == operator,
-            'Must be the operator.'
-        );
+     * @dev: Modifier which restricts access to the operator.
+     */
+    modifier onlyOperator() {
+        require(msg.sender == operator, "Must be the operator.");
         _;
     }
 
     /*
-    * @dev: Constructor
-    */
+     * @dev: Constructor
+     */
     constructor(
         address _operator,
         address[] memory _initValidators,
         uint256[] memory _initPowers
-    )
-        public
-    {
+    ) public {
         operator = _operator;
         currentValsetVersion = 0;
 
-        updateValset(
-            _initValidators,
-            _initPowers
-        );
+        updateValset(_initValidators, _initPowers);
     }
 
-    function recover(
-        string memory _message,
-        bytes memory _signature
-    )
+    function recover(string memory _message, bytes memory _signature)
         public
         pure
         returns (address)
@@ -101,44 +89,31 @@ contract Valset {
     }
 
     /*
-    * @dev: addValidator
-    */
-    function addValidator(
-        address _validatorAddress,
-        uint256 _validatorPower
-    )
+     * @dev: addValidator
+     */
+    function addValidator(address _validatorAddress, uint256 _validatorPower)
         public
         onlyOperator
     {
-        addValidatorInternal(
-            _validatorAddress,
-            _validatorPower
-        );
+        addValidatorInternal(_validatorAddress, _validatorPower);
     }
 
     /*
-    * @dev: updateValidatorPower
-    */
+     * @dev: updateValidatorPower
+     */
     function updateValidatorPower(
         address _validatorAddress,
         uint256 _newValidatorPower
-    )
-        public
-        onlyOperator
-    {
+    ) public onlyOperator {
         // Create a unique key which for this validator's position in the current version of the mapping
         bytes32 key = keccak256(
-            abi.encodePacked(
-                currentValsetVersion,
-                _validatorAddress
-            )
+            abi.encodePacked(currentValsetVersion, _validatorAddress)
         );
 
         require(
             validators[key],
             "Can only update the power of active valdiators"
         );
-
 
         // Adjust total power by new validator power
         uint256 priorPower = powers[key];
@@ -158,26 +133,15 @@ contract Valset {
     }
 
     /*
-    * @dev: removeValidator
-    */
-    function removeValidator(
-        address _validatorAddress
-    )
-        public
-        onlyOperator
-    {
+     * @dev: removeValidator
+     */
+    function removeValidator(address _validatorAddress) public onlyOperator {
         // Create a unique key which for this validator's position in the current version of the mapping
         bytes32 key = keccak256(
-            abi.encodePacked(
-                currentValsetVersion,
-                _validatorAddress
-            )
+            abi.encodePacked(currentValsetVersion, _validatorAddress)
         );
 
-        require(
-            validators[key],
-            "Can only remove active valdiators"
-        );
+        require(validators[key], "Can only remove active valdiators");
 
         // Update validator count and total power
         validatorCount = validatorCount.sub(1);
@@ -197,49 +161,37 @@ contract Valset {
     }
 
     /*
-    * @dev: updateValset
-    */
+     * @dev: updateValset
+     */
     function updateValset(
         address[] memory _validators,
         uint256[] memory _powers
-    )
-        public
-        onlyOperator
-    {
-       require(
-           _validators.length == _powers.length,
-           "Every validator must have a corresponding power"
-       );
-
-       resetValset();
-
-       for(uint256 i = 0; i < _validators.length; i = i.add(1)) {
-           addValidatorInternal(_validators[i], _powers[i]);
-       }
-
-        emit LogValsetUpdated(
-            currentValsetVersion,
-            validatorCount,
-            totalPower
+    ) public onlyOperator {
+        require(
+            _validators.length == _powers.length,
+            "Every validator must have a corresponding power"
         );
+
+        resetValset();
+
+        for (uint256 i = 0; i < _validators.length; i = i.add(1)) {
+            addValidatorInternal(_validators[i], _powers[i]);
+        }
+
+        emit LogValsetUpdated(currentValsetVersion, validatorCount, totalPower);
     }
 
     /*
-    * @dev: isActiveValidator
-    */
-    function isActiveValidator(
-        address _validatorAddress
-    )
+     * @dev: isActiveValidator
+     */
+    function isActiveValidator(address _validatorAddress)
         public
         view
-        returns(bool)
+        returns (bool)
     {
         // Recreate the unique key for this address given the current mapping version
         bytes32 key = keccak256(
-            abi.encodePacked(
-                currentValsetVersion,
-                _validatorAddress
-            )
+            abi.encodePacked(currentValsetVersion, _validatorAddress)
         );
 
         // Return bool indicating if this address is an active validator
@@ -247,33 +199,25 @@ contract Valset {
     }
 
     /*
-    * @dev: getValidatorPower
-    */
-    function getValidatorPower(
-        address _validatorAddress
-    )
+     * @dev: getValidatorPower
+     */
+    function getValidatorPower(address _validatorAddress)
         external
         view
-        returns(uint256)
+        returns (uint256)
     {
         // Recreate the unique key for this address given the current mapping version
         bytes32 key = keccak256(
-            abi.encodePacked(
-                currentValsetVersion,
-                _validatorAddress
-            )
+            abi.encodePacked(currentValsetVersion, _validatorAddress)
         );
 
         return powers[key];
     }
 
     /*
-    * @dev: recoverGas
-    */
-    function recoverGas(
-        uint256 _valsetVersion,
-        address _validatorAddress
-    )
+     * @dev: recoverGas
+     */
+    function recoverGas(uint256 _valsetVersion, address _validatorAddress)
         external
         onlyOperator
     {
@@ -284,32 +228,24 @@ contract Valset {
 
         // Recreate the unique key used to identify this validator in the given version
         bytes32 key = keccak256(
-            abi.encodePacked(
-                _valsetVersion,
-                _validatorAddress
-            )
+            abi.encodePacked(_valsetVersion, _validatorAddress)
         );
 
         // Delete from mappings and recover gas
-        delete(validators[key]);
-        delete(powers[key]);
+        delete (validators[key]);
+        delete (powers[key]);
     }
 
     /*
-    * @dev: addValidatorInternal
-    */
+     * @dev: addValidatorInternal
+     */
     function addValidatorInternal(
         address _validatorAddress,
         uint256 _validatorPower
-    )
-        internal
-    {
+    ) internal {
         // Create a unique key which for this validator's position in the current version of the mapping
         bytes32 key = keccak256(
-            abi.encodePacked(
-                currentValsetVersion,
-                _validatorAddress
-            )
+            abi.encodePacked(currentValsetVersion, _validatorAddress)
         );
 
         validatorCount = validatorCount.add(1);
@@ -329,30 +265,21 @@ contract Valset {
     }
 
     /*
-    * @dev: resetValset
-    */
-    function resetValset()
-        internal
-    {
+     * @dev: resetValset
+     */
+    function resetValset() internal {
         currentValsetVersion = currentValsetVersion.add(1);
         validatorCount = 0;
         totalPower = 0;
 
-        emit LogValsetReset(
-            currentValsetVersion,
-            validatorCount,
-            totalPower
-        );
+        emit LogValsetReset(currentValsetVersion, validatorCount, totalPower);
     }
 
-  /*
-    * @dev: Verify
-    *
-    */
-    function verify(
-        bytes32 h,
-        bytes memory signature
-    )
+    /*
+     * @dev: Verify
+     *
+     */
+    function verify(bytes32 h, bytes memory signature)
         internal
         pure
         returns (address)
@@ -391,11 +318,19 @@ contract Valset {
     }
 
     /**
-    * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:" and hash the result
-    */
-    function ethMessageHash(string memory message) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
-            "\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(message)))
-        );
+     * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:" and hash the result
+     */
+    function ethMessageHash(string memory message)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return
+            keccak256(
+                abi.encodePacked(
+                    "\x19Ethereum Signed Message:\n32",
+                    keccak256(abi.encodePacked(message))
+                )
+            );
     }
 }
