@@ -4,6 +4,7 @@ module.exports = async () => {
    ******************************************/
   const Web3 = require("web3");
   const HDWalletProvider = require("@truffle/hdwallet-provider");
+  const BigNumber = require("bignumber.js");
 
   // Contract abstraction
   const truffleContract = require("truffle-contract");
@@ -17,8 +18,9 @@ module.exports = async () => {
    *** Constants
    ******************************************/
   // Lock transaction default params
-  const DEFAULT_COSMOS_RECIPIENT =
-    Web3.utils.utf8ToHex("cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh");
+  const DEFAULT_COSMOS_RECIPIENT = Web3.utils.utf8ToHex(
+    "cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh"
+  );
   const DEFAULT_ETH_DENOM = "eth";
   const DEFAULT_AMOUNT = 10;
 
@@ -73,16 +75,16 @@ module.exports = async () => {
     if (NETWORK_ROPSTEN) {
       cosmosRecipient = Web3.utils.utf8ToHex(process.argv[6]);
       coinDenom = process.argv[7];
-      amount = parseInt(process.argv[8], 10);
+      amount = new BigNumber(process.argv[8]);
     } else {
       cosmosRecipient = Web3.utils.utf8ToHex(process.argv[4]);
       coinDenom = process.argv[5];
-      amount = parseInt(process.argv[6], 10);
+      amount = new BigNumber(process.argv[6]);
     }
   }
 
   // Convert default 'eth' coin denom into null address
-  if(coinDenom == "eth") {
+  if (coinDenom == "eth") {
     coinDenom = NULL_ADDRESS;
   }
 
@@ -102,42 +104,42 @@ module.exports = async () => {
 
   const web3 = new Web3(provider);
   contract.setProvider(web3.currentProvider);
-try {
-  /*******************************************
-   *** Contract interaction
-   ******************************************/
-  // Get current accounts
-  const accounts = await web3.eth.getAccounts();
+  try {
+    /*******************************************
+     *** Contract interaction
+     ******************************************/
+    // Get current accounts
+    const accounts = await web3.eth.getAccounts();
 
-  // Send lock transaction
-  console.log("Connecting to contract....");
-  const { logs } = await contract.deployed().then(function(instance) {
-    console.log("Connected to contract, sending lock...");
-    return instance.lock(cosmosRecipient, coinDenom, amount, {
-      from: accounts[0],
-      value: coinDenom === NULL_ADDRESS ? amount : 0,
-      gas: 300000 // 300,000 Gwei
+    // Send lock transaction
+    console.log("Connecting to contract....");
+    const { logs } = await contract.deployed().then(function(instance) {
+      console.log("Connected to contract, sending lock...");
+      return instance.lock(cosmosRecipient, coinDenom, amount, {
+        from: accounts[0],
+        value: coinDenom === NULL_ADDRESS ? amount : 0,
+        gas: 300000 // 300,000 Gwei
+      });
     });
-  });
 
-  console.log("Sent lock...");
+    console.log("Sent lock...");
 
-  // Get event logs
-  const event = logs.find(e => e.event === "LogLock");
+    // Get event logs
+    const event = logs.find(e => e.event === "LogLock");
 
-  // Parse event fields
-  const lockEvent = {
-    to: event.args._to,
-    from: event.args._from,
-    symbol: event.args._symbol,
-    token: event.args._token,
-    value: Number(event.args._value),
-    nonce: Number(event.args._nonce)
-  };
+    // Parse event fields
+    const lockEvent = {
+      to: event.args._to,
+      from: event.args._from,
+      symbol: event.args._symbol,
+      token: event.args._token,
+      value: Number(event.args._value),
+      nonce: Number(event.args._nonce)
+    };
 
-  console.log(lockEvent);
-} catch (error) {
-  console.error({error})
-}
+    console.log(lockEvent);
+  } catch (error) {
+    console.error({ error });
+  }
   return;
 };
