@@ -151,7 +151,7 @@ func (sub EthereumSub) Start() {
 			sub.Logger.Error(err.Error())
 		// vLog is raw event data
 		case vLog := <-logs:
-			sub.Logger.Info("Witnessed tx %s on block %d\n", vLog.TxHash.Hex(), vLog.BlockNumber)
+			sub.Logger.Info(fmt.Sprintf("Witnessed tx %s on block %d\n", vLog.TxHash.Hex(), vLog.BlockNumber))
 			var err error
 			switch vLog.Topics[0].Hex() {
 			case eventLogLockSignature:
