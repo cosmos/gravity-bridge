@@ -82,6 +82,9 @@ func queryCmd(cdc *amino.Codec) *cobra.Command {
 		Short:   "Querying subcommands",
 	}
 
+	queryCmd.PersistentFlags().String(types.FlagEthereumChainID, "", "Ethereum chain ID")
+	queryCmd.PersistentFlags().String(types.FlagTokenContractAddr, "", "Token address representing a unique asset type")
+
 	queryCmd.AddCommand(
 		authcmd.GetAccountCmd(cdc),
 		flags.LineBreak,
