@@ -17,9 +17,9 @@ import (
 
 func TestLogLockToEthBridgeClaim(t *testing.T) {
 	// Set up testing variables
-	testBridgeContractAddress := types.NewEthereumAddress(TestBridgeContractAddress)
-	testTokenContractAddress := types.NewEthereumAddress(TestEthTokenAddress)
-	testEthereumAddress := types.NewEthereumAddress(TestEthereumAddress1)
+	testBridgeContractAddress := ethbridge.NewEthereumAddress(TestBridgeContractAddress)
+	testTokenContractAddress := ethbridge.NewEthereumAddress(TestEthTokenAddress)
+	testEthereumAddress := ethbridge.NewEthereumAddress(TestEthereumAddress1)
 	// Cosmos account address
 	testCosmosAddress, err := sdk.AccAddressFromBech32(TestCosmosAddress1)
 	require.NoError(t, err)

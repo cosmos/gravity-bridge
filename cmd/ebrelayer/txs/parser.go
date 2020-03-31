@@ -13,8 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	tmKv "github.com/tendermint/tendermint/libs/kv"
 
-	"github.com/cosmos/peggy/cmd/ebrelayer/events"
-	ethbridgeTypes "github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/cosmos/peggy/cmd/ebrelayer/types"
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
 )
 
 const (
@@ -136,12 +136,11 @@ func BurnLockEventToCosmosMsg(claimType types.Event, attributes []tmKv.Pair) typ
 				log.Fatal("Invalid recipient address:", val)
 			}
 			ethereumReceiver = common.HexToAddress(val)
-		case events.Coin.String():
+		case types.Coin.String():
 			coins, _ := sdk.ParseCoins(val)
 			symbol = coins[0].Denom
 			amount = coins[0].Amount.BigInt()
-		case events.TokenContractAddress.String():
-			// Confirm token contract address is valid Ethereum address
+		case types.TokenContractAddress.String():
 			if !common.IsHexAddress(val) {
 				log.Fatal("Invalid token address:", val)
 			}
