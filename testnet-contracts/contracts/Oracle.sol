@@ -218,6 +218,7 @@ contract Oracle {
 
         // Prophecy must reach total signed power % threshold in order to pass consensus
         uint256 prophecyPowerThreshold = totalPower.mul(consensusThreshold);
+        // consensusThreshold is a decimal multiplied by 100, so signedPower must also be multiplied by 100
         uint256 prophecyPowerCurrent = signedPower.mul(100);
         bool hasReachedThreshold = prophecyPowerCurrent >=
             prophecyPowerThreshold;
