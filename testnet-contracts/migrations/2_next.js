@@ -17,12 +17,12 @@ module.exports = function(deployer, network, accounts) {
   let consensusThreshold;
 
   // Input validation for general env variables
-    if (process.env.CONSENSUS_THRESHOLD.length === 0) {
-      return console.error(
-        "Must provide consensus threshold as environment variable."
-      );
-    }
-    consensusThreshold = process.env.CONSENSUS_THRESHOLD;
+  if (process.env.CONSENSUS_THRESHOLD.length === 0) {
+    return console.error(
+      "Must provide consensus threshold as environment variable."
+    );
+  }
+  consensusThreshold = process.env.CONSENSUS_THRESHOLD;
 
   // Input validation for local usage (develop, ganache)
   if (network === "develop" || network === "ganache") {
@@ -90,7 +90,7 @@ module.exports = function(deployer, network, accounts) {
     // 1. Deploy BridgeToken contract
     //    Gas used:        1,884,394 Gwei
     //    Total cost:    0.03768788 Ether
-    await deployer.deploy(BridgeToken, "stake", {
+    await deployer.deploy(BridgeToken, "TEST", {
       gas: 4612388,
       from: operator
     });
