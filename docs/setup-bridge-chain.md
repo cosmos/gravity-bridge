@@ -77,7 +77,6 @@ ebcli tx ethbridge create-claim 0x30753E4A8aad7F8597332E813735Def5dD395028 0 eth
 # that was just generated using the following command
 ebcli q tx TXHASH
 
-// TODO: update
 # Then read the prophecy to confirm it was created with the claim added
 # ebcli query ethbridge prophecy [bridge-contract] [nonce] [symbol] [ethereum-sender] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address] [flags]
 ebcli query ethbridge prophecy 0x30753E4A8aad7F8597332E813735Def5dD395028 0 eth 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 --ethereum-chain-id=3 --token-contract-address=0x0000000000000000000000000000000000000000
