@@ -46,10 +46,10 @@ ebcli query staking validators --trust-node
 
 # See the help for the ethbridge create claim function
 ebcli tx ethbridge create-claim --help
+# ebcli tx ethbridge create-claim [bridge-contract] [nonce] [symbol] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount] [claim-type] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address] [flags]
 
 # Now you can test out the ethbridge module by submitting a claim for an ethereum prophecy
 # Create a bridge lock claim (Ethereum prophecies are stored on the blockchain with an identifier created by concatenating the nonce and sender address)
-# ebcli tx ethbridge create-claim [ethereum-chain-id] [bridge-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount]",
 ebcli tx ethbridge create-claim 0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB 0 eth 0x7B95B6EC7EbD73572298cEf32Bb54FA408207359 $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 3eth lock --token-contract-address=0x0000000000000000000000000000000000000000 --ethereum-chain-id=3 --from=validator --chain-id=peggy --yes
 
 # Then read the prophecy to confirm it was created with the claim added
