@@ -4,13 +4,13 @@ import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Valset.sol";
 import "./BridgeBank/BridgeBank.sol";
 
-contract CosmosBridge {
 
+contract CosmosBridge {
     using SafeMath for uint256;
 
     /*
-    * @dev: Public variable declarations
-    */
+     * @dev: Public variable declarations
+     */
     address public operator;
     Valset public valset;
     address public oracle;
@@ -21,18 +21,9 @@ contract CosmosBridge {
     uint256 public prophecyClaimCount;
     mapping(uint256 => ProphecyClaim) public prophecyClaims;
 
-    enum Status {
-        Null,
-        Pending,
-        Success,
-        Failed
-    }
+    enum Status {Null, Pending, Success, Failed}
 
-    enum ClaimType {
-        Unsupported,
-        Burn,
-        Lock
-    }
+    enum ClaimType {Unsupported, Burn, Lock}
 
     struct ProphecyClaim {
         ClaimType claimType;
@@ -46,15 +37,11 @@ contract CosmosBridge {
     }
 
     /*
-    * @dev: Event declarations
-    */
-    event LogOracleSet(
-        address _oracle
-    );
+     * @dev: Event declarations
+     */
+    event LogOracleSet(address _oracle);
 
-    event LogBridgeBankSet(
-        address _bridgeBank
-    );
+    event LogBridgeBankSet(address _bridgeBank);
 
     event LogNewProphecyClaim(
         uint256 _prophecyID,
@@ -67,18 +54,12 @@ contract CosmosBridge {
         uint256 _amount
     );
 
-    event LogProphecyCompleted(
-        uint256 _prophecyID,
-        ClaimType _claimType
-    );
+    event LogProphecyCompleted(uint256 _prophecyID, ClaimType _claimType);
 
     /*
-    * @dev: Modifier which only allows access to currently pending prophecies
-    */
-    modifier isPending(
-        uint256 _prophecyID
-    )
-    {
+     * @dev: Modifier which only allows access to currently pending prophecies
+     */
+    modifier isPending(uint256 _prophecyID) {
         require(
             isProphecyClaimActive(_prophecyID),
             "Prophecy claim is not active"
@@ -87,22 +68,17 @@ contract CosmosBridge {
     }
 
     /*
-    * @dev: Modifier to restrict access to the operator.
-    */
-    modifier onlyOperator()
-    {
-        require(
-            msg.sender == operator,
-            'Must be the operator.'
-        );
+     * @dev: Modifier to restrict access to the operator.
+     */
+    modifier onlyOperator() {
+        require(msg.sender == operator, "Must be the operator.");
         _;
     }
 
-      /*
-    * @dev: The bridge is not active until oracle and bridge bank are set
-    */
-    modifier isActive()
-    {
+    /*
+     * @dev: The bridge is not active until oracle and bridge bank are set
+     */
+    modifier isActive() {
         require(
             hasOracle == true && hasBridgeBank == true,
             "The Operator must set the oracle and bridge bank for bridge activation"
@@ -111,14 +87,9 @@ contract CosmosBridge {
     }
 
     /*
-    * @dev: Constructor
-    */
-    constructor(
-        address _operator,
-        address _valset
-    )
-        public
-    {
+     * @dev: Constructor
+     */
+    constructor(address _operator, address _valset) public {
         prophecyClaimCount = 0;
         operator = _operator;
         valset = Valset(_valset);
@@ -127,14 +98,9 @@ contract CosmosBridge {
     }
 
     /*
-    * @dev: setOracle
-    */
-    function setOracle(
-        address _oracle
-    )
-        public
-        onlyOperator
-    {
+     * @dev: setOracle
+     */
+    function setOracle(address _oracle) public onlyOperator {
         require(
             !hasOracle,
             "The Oracle cannot be updated once it has been set"
@@ -143,20 +109,13 @@ contract CosmosBridge {
         hasOracle = true;
         oracle = _oracle;
 
-        emit LogOracleSet(
-            oracle
-        );
+        emit LogOracleSet(oracle);
     }
 
     /*
-    * @dev: setBridgeBank
-    */
-    function setBridgeBank(
-        address payable _bridgeBank
-    )
-        public
-        onlyOperator
-    {
+     * @dev: setBridgeBank
+     */
+    function setBridgeBank(address payable _bridgeBank) public onlyOperator {
         require(
             !hasBridgeBank,
             "The Bridge Bank cannot be updated once it has been set"
@@ -165,17 +124,15 @@ contract CosmosBridge {
         hasBridgeBank = true;
         bridgeBank = BridgeBank(_bridgeBank);
 
-        emit LogBridgeBankSet(
-            address(bridgeBank)
-        );
+        emit LogBridgeBankSet(address(bridgeBank));
     }
 
     /*
-    * @dev: newProphecyClaim
-    *       Creates a new burn or lock prophecy claim, adding it to the prophecyClaims mapping.
-    *       Lock claims can only be created for BridgeTokens on BridgeBank's whitelist. The operator
-    *       is responsible for adding them, and lock claims will fail until the operator has done so.
-    */
+     * @dev: newProphecyClaim
+     *       Creates a new burn or lock prophecy claim, adding it to the prophecyClaims mapping.
+     *       Lock claims can only be created for BridgeTokens on BridgeBank's whitelist. The operator
+     *       is responsible for adding them, and lock claims will fail until the operator has done so.
+     */
     function newProphecyClaim(
         ClaimType _claimType,
         bytes memory _cosmosSender,
@@ -183,10 +140,7 @@ contract CosmosBridge {
         address _tokenAddress,
         string memory _symbol,
         uint256 _amount
-    )
-        public
-        isActive
-    {
+    ) public isActive {
         require(
             valset.isActiveValidator(msg.sender),
             "Must be an active validator"
@@ -198,9 +152,9 @@ contract CosmosBridge {
         address originalValidator = msg.sender;
 
         ClaimType claimType;
-        if(_claimType == ClaimType.Burn){
+        if (_claimType == ClaimType.Burn) {
             claimType = ClaimType.Burn;
-        } else if(_claimType == ClaimType.Lock){
+        } else if (_claimType == ClaimType.Lock) {
             claimType = ClaimType.Lock;
         }
 
@@ -232,14 +186,12 @@ contract CosmosBridge {
     }
 
     /*
-    * @dev: completeProphecyClaim
-    *       Allows for the completion of ProphecyClaims once processed by the Oracle.
-    *       Burn claims unlock tokens stored by BridgeBank.
-    *       Lock claims mint BridgeTokens on BridgeBank's token whitelist.
-    */
-    function completeProphecyClaim(
-        uint256 _prophecyID
-    )
+     * @dev: completeProphecyClaim
+     *       Allows for the completion of ProphecyClaims once processed by the Oracle.
+     *       Burn claims unlock tokens stored by BridgeBank.
+     *       Lock claims mint BridgeTokens on BridgeBank's token whitelist.
+     */
+    function completeProphecyClaim(uint256 _prophecyID)
         public
         isPending(_prophecyID)
     {
@@ -251,27 +203,20 @@ contract CosmosBridge {
         prophecyClaims[_prophecyID].status = Status.Success;
 
         ClaimType claimType = prophecyClaims[_prophecyID].claimType;
-        if(claimType == ClaimType.Burn) {
+        if (claimType == ClaimType.Burn) {
             unlockTokens(_prophecyID);
         } else {
             issueBridgeTokens(_prophecyID);
         }
 
-        emit LogProphecyCompleted(
-            _prophecyID,
-            claimType
-        );
+        emit LogProphecyCompleted(_prophecyID, claimType);
     }
 
     /*
-    * @dev: issueBridgeTokens
-    *       Issues a request for the BridgeBank to mint new BridgeTokens
-    */
-    function issueBridgeTokens(
-        uint256 _prophecyID
-    )
-        internal
-    {
+     * @dev: issueBridgeTokens
+     *       Issues a request for the BridgeBank to mint new BridgeTokens
+     */
+    function issueBridgeTokens(uint256 _prophecyID) internal {
         ProphecyClaim memory prophecyClaim = prophecyClaims[_prophecyID];
 
         bridgeBank.mintBridgeTokens(
@@ -284,14 +229,10 @@ contract CosmosBridge {
     }
 
     /*
-    * @dev: unlockTokens
-    *       Issues a request for the BridgeBank to unlock funds held on contract
-    */
-    function unlockTokens(
-        uint256 _prophecyID
-    )
-        internal
-    {
+     * @dev: unlockTokens
+     *       Issues a request for the BridgeBank to unlock funds held on contract
+     */
+    function unlockTokens(uint256 _prophecyID) internal {
         ProphecyClaim memory prophecyClaim = prophecyClaims[_prophecyID];
 
         bridgeBank.unlock(
@@ -303,33 +244,30 @@ contract CosmosBridge {
     }
 
     /*
-    * @dev: isProphecyClaimActive
-    *       Returns boolean indicating if the ProphecyClaim is active
-    */
-    function isProphecyClaimActive(
-        uint256 _prophecyID
-    )
+     * @dev: isProphecyClaimActive
+     *       Returns boolean indicating if the ProphecyClaim is active
+     */
+    function isProphecyClaimActive(uint256 _prophecyID)
         public
         view
-        returns(bool)
+        returns (bool)
     {
         return prophecyClaims[_prophecyID].status == Status.Pending;
     }
 
     /*
-    * @dev: isProphecyValidatorActive
-    *       Returns boolean indicating if the validator that originally
-    *       submitted the ProphecyClaim is still an active validator
-    */
-    function isProphecyClaimValidatorActive(
-        uint256 _prophecyID
-    )
+     * @dev: isProphecyValidatorActive
+     *       Returns boolean indicating if the validator that originally
+     *       submitted the ProphecyClaim is still an active validator
+     */
+    function isProphecyClaimValidatorActive(uint256 _prophecyID)
         public
         view
-        returns(bool)
+        returns (bool)
     {
-        return valset.isActiveValidator(
-            prophecyClaims[_prophecyID].originalValidator
-        );
+        return
+            valset.isActiveValidator(
+                prophecyClaims[_prophecyID].originalValidator
+            );
     }
 }

@@ -14,6 +14,15 @@ module.exports = function(deployer, network, accounts) {
   let operator;
   let initialValidators = [];
   let initialPowers = [];
+  let consensusThreshold;
+
+  // Input validation for general env variables
+  if (process.env.CONSENSUS_THRESHOLD.length === 0) {
+    return console.error(
+      "Must provide consensus threshold as environment variable."
+    );
+  }
+  consensusThreshold = process.env.CONSENSUS_THRESHOLD;
 
   // Input validation for local usage (develop, ganache)
   if (network === "develop" || network === "ganache") {
@@ -110,6 +119,7 @@ module.exports = function(deployer, network, accounts) {
       operator,
       Valset.address,
       CosmosBridge.address,
+      consensusThreshold,
       {
         gas: 6721975,
         from: operator

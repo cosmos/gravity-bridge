@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
-contract BridgeRegistry {
 
+contract BridgeRegistry {
     address public cosmosBridge;
     address public bridgeBank;
     address public oracle;
@@ -13,25 +13,18 @@ contract BridgeRegistry {
         address _oracle,
         address _valset
     );
-    
+
     constructor(
         address _cosmosBridge,
         address _bridgeBank,
         address _oracle,
         address _valset
-    )
-        public
-    {
+    ) public {
         cosmosBridge = _cosmosBridge;
         bridgeBank = _bridgeBank;
         oracle = _oracle;
         valset = _valset;
 
-        emit LogContractsRegistered(
-            cosmosBridge,
-            bridgeBank,
-            oracle,
-            valset
-        );
+        emit LogContractsRegistered(cosmosBridge, bridgeBank, oracle, valset);
     }
 }

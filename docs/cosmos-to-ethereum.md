@@ -136,7 +136,7 @@ yarn peggy:burn [COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 
 ### Prophecy claim processing
 
-You are able to check the status of active prophecy claims. Prophecy claims reach the signed power threshold when the signed power surpasses the total power threshold. This command is only for pending prophecy claims and will fail if the prophecy has already been confirmed.
+You are able to check the status of active prophecy claims. Prophecy claims can be processed once current signed power >= x% of total power, where x is the Oracle contract's consensus threshold parameter. This command is only for pending prophecy claims and will fail if the prophecy has already been confirmed.
 
 ```bash
 # Check prophecy claim status
