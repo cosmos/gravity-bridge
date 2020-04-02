@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -14,27 +15,31 @@ import (
 // GetCmdGetEthBridgeProphecy queries information about a specific prophecy
 func GetCmdGetEthBridgeProphecy(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "prophecy [ethereum-chain-id] [bridge-registry-contract] [nonce] [symbol] [token-contract] [ethereum-sender]",
+		Use: `prophecy [bridge-registry-contract] [nonce] [symbol] [ethereum-sender]
+		--ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]`,
 		Short: "Query prophecy",
-		Args:  cobra.ExactArgs(6),
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			ethereumChainID, err := strconv.Atoi(args[0])
+			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
+			ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
 			if err != nil {
 				return err
 			}
 
-			bridgeContract := types.NewEthereumAddress(args[1])
+			tokenContractString := viper.GetString(types.FlagTokenContractAddr)
+			tokenContract := types.NewEthereumAddress(tokenContractString)
 
-			nonce, err := strconv.Atoi(args[2])
+			bridgeContract := types.NewEthereumAddress(args[0])
+
+			nonce, err := strconv.Atoi(args[1])
 			if err != nil {
 				return err
 			}
 
-			symbol := args[3]
-			tokenContract := types.NewEthereumAddress(args[4])
-			ethereumSender := types.NewEthereumAddress(args[5])
+			symbol := args[2]
+			ethereumSender := types.NewEthereumAddress(args[3])
 
 			bz, err := cdc.MarshalJSON(types.NewQueryEthProphecyParams(
 				ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender))

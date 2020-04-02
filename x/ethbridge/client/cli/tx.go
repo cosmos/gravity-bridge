@@ -20,46 +20,49 @@ import (
 //nolint:lll
 func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "create-claim [ethereum-chain-id] [bridge-registry-contract] [nonce] [symbol] [token-contract] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount] [claim-type]",
+		Use:   "create-claim [bridge-registry-contract] [nonce] [symbol] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount] [claim-type] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "create a claim on an ethereum prophecy",
-		Args:  cobra.ExactArgs(10),
+		Args:  cobra.ExactArgs(8),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := authtypes.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			ethereumChainID, err := strconv.Atoi(args[0])
+			ethereumChainIDString := viper.GetString(types.FlagEthereumChainID)
+			ethereumChainID, err := strconv.Atoi(ethereumChainIDString)
 			if err != nil {
 				return err
 			}
 
-			bridgeContract := types.NewEthereumAddress(args[1])
+			tokenContractString := viper.GetString(types.FlagTokenContractAddr)
+			tokenContract := types.NewEthereumAddress(tokenContractString)
 
-			nonce, err := strconv.Atoi(args[2])
+			bridgeContract := types.NewEthereumAddress(args[0])
+
+			nonce, err := strconv.Atoi(args[1])
 			if err != nil {
 				return err
 			}
 
-			symbol := args[3]
-			tokenContract := types.NewEthereumAddress(args[4])
-			ethereumSender := types.NewEthereumAddress(args[5])
-			cosmosReceiver, err := sdk.AccAddressFromBech32(args[6])
+			symbol := args[2]
+			ethereumSender := types.NewEthereumAddress(args[3])
+			cosmosReceiver, err := sdk.AccAddressFromBech32(args[4])
 			if err != nil {
 				return err
 			}
 
-			validator, err := sdk.ValAddressFromBech32(args[7])
+			validator, err := sdk.ValAddressFromBech32(args[5])
 			if err != nil {
 				return err
 			}
 
-			amount, err := sdk.ParseCoins(args[8])
+			amount, err := sdk.ParseCoins(args[6])
 			if err != nil {
 				return err
 			}
 
-			claimType, err := types.StringToClaimType(args[9])
+			claimType, err := types.StringToClaimType(args[7])
 			if err != nil {
 				return err
 			}
@@ -82,8 +85,9 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "burn cETH or cERC20 on the Cosmos chain",
-		Long:  "This should be used to burn cETH or cERC20. It will burn your coins on the Cosmos Chain, removing them from your account and deducting them from the supply. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the withdrawal of the original ETH/ERC20 to you from the Ethereum contract!",
-		Args:  cobra.ExactArgs(3),
+		Long: `This should be used to burn cETH or cERC20. It will burn your coins on the Cosmos Chain, removing them from your account and deducting them from the supply.
+		It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the withdrawal of the original ETH/ERC20 to you from the Ethereum contract!`,
+		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
