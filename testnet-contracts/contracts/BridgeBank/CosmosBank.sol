@@ -14,7 +14,8 @@ contract CosmosBank {
     using SafeMath for uint256;
 
     uint256 public bridgeTokenCount;
-    mapping(address => bool) public bridgeTokenWhitelist;
+
+    mapping(string => address) controlledBridgeTokens;
     mapping(bytes32 => CosmosDeposit) cosmosDeposits;
 
     struct CosmosDeposit {
@@ -42,6 +43,20 @@ contract CosmosBank {
      */
     constructor() public {
         bridgeTokenCount = 0;
+    }
+
+    /*
+     * @dev: Get a token symbol's corresponding bridge token address.
+     *
+     * @param _symbol: The token's symbol/denom.
+     * @return: Address associated with the given symbol. Returns address(0) if none is found.
+     */
+    function getControlledBridgeToken(string memory _symbol)
+        public
+        view
+        returns (address)
+    {
+        return (controlledBridgeTokens[_symbol]);
     }
 
     /*
@@ -90,7 +105,7 @@ contract CosmosBank {
 
         // Set address in tokens mapping
         address newBridgeTokenAddress = address(newBridgeToken);
-        bridgeTokenWhitelist[newBridgeTokenAddress] = true;
+        controlledBridgeTokens[_symbol] = newBridgeTokenAddress;
 
         emit LogNewBridgeToken(newBridgeTokenAddress, _symbol);
 
@@ -113,10 +128,9 @@ contract CosmosBank {
         string memory _symbol,
         uint256 _amount
     ) internal {
-        // Must be whitelisted bridge token
         require(
-            bridgeTokenWhitelist[_bridgeTokenAddress],
-            "Token must be a whitelisted bridge token"
+            controlledBridgeTokens[_symbol] != _bridgeTokenAddress,
+            "Token must be a controlled bridge token"
         );
 
         // Mint bridge tokens

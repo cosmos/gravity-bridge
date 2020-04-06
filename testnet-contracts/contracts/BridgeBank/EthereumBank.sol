@@ -38,14 +38,6 @@ contract EthereumBank {
      * @dev: Modifier declarations
      */
 
-    modifier hasLockedFunds(address _token, uint256 _amount) {
-        require(
-            lockedFunds[_token] >= _amount,
-            "The Bank does not hold enough locked tokens to fulfill this request."
-        );
-        _;
-    }
-
     modifier canDeliver(address _token, uint256 _amount) {
         if (_token == address(0)) {
             require(
@@ -71,6 +63,23 @@ contract EthereumBank {
      */
     constructor() public {
         lockNonce = 0;
+    }
+
+    /*
+     * @dev: Validates that the lockedFunds mapping holds an amount of an asset.
+     *
+     * @param _token: The asset's address, either erc20 or ethereum.
+     * @param _amount: The amount of erc20 tokens/ethereum (in wei).
+     */
+    function hasLockedFunds(address _token, uint256 _amount)
+        public
+        view
+        returns (bool)
+    {
+        if (lockedFunds[_token] >= _amount) {
+            return true;
+        }
+        return false;
     }
 
     /*
