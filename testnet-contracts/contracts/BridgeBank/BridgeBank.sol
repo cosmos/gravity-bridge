@@ -79,7 +79,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
      */
     function createNewBridgeToken(string memory _symbol)
         public
-        onlyOperator
+        onlyCosmosBridge
         returns (address)
     {
         return deployNewBridgeToken(_symbol);
@@ -168,12 +168,11 @@ contract BridgeBank is CosmosBank, EthereumBank {
         address _token,
         string memory _symbol,
         uint256 _amount
-    )
-        public
-        onlyCosmosBridge
-        hasLockedFunds(_token, _amount)
-        canDeliver(_token, _amount)
-    {
+    ) public onlyCosmosBridge canDeliver(_token, _amount) {
+        require(
+            hasLockedFunds(_token, _amount),
+            "The Bank does not hold enough locked tokens to fulfill this request."
+        );
         unlockFunds(_recipient, _token, _symbol, _amount);
     }
 

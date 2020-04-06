@@ -130,8 +130,8 @@ contract CosmosBridge {
     /*
      * @dev: newProphecyClaim
      *       Creates a new burn or lock prophecy claim, adding it to the prophecyClaims mapping.
-     *       Lock claims can only be created for BridgeTokens on BridgeBank's whitelist. The operator
-     *       is responsible for adding them, and lock claims will fail until the operator has done so.
+     *       Burn claims require that there are enough locked Ethereum assets to complete the prophecy.
+     *       Lock claims have a new token contract deployed or use an existing contract based on symbol.
      */
     function newProphecyClaim(
         ClaimType _claimType,
@@ -149,13 +149,28 @@ contract CosmosBridge {
         // Increment the prophecy claim count
         prophecyClaimCount = prophecyClaimCount.add(1);
 
-        address originalValidator = msg.sender;
-
         ClaimType claimType;
+        address tokenAddress;
         if (_claimType == ClaimType.Burn) {
+            require(
+                bridgeBank.hasLockedFunds(_tokenAddress, _amount),
+                "Not enough locked Ethereum assets to complete the proposed prophecy"
+            );
             claimType = ClaimType.Burn;
+            tokenAddress = _tokenAddress;
         } else if (_claimType == ClaimType.Lock) {
+            address recoveredBridgeTokenContract = bridgeBank
+                .getControlledBridgeToken(_symbol);
+            if (recoveredBridgeTokenContract != address(0)) {
+                // This is not the first lock for the asset, set token address to existing contract
+                tokenAddress = recoveredBridgeTokenContract;
+            } else {
+                // This is the first lock for the asset, deploy new contract and set as token address
+                tokenAddress = bridgeBank.createNewBridgeToken(_symbol);
+            }
             claimType = ClaimType.Lock;
+        } else {
+            revert("Invalid claim type, only burn and lock are supported.");
         }
 
         // Create the new ProphecyClaim
@@ -163,7 +178,7 @@ contract CosmosBridge {
             claimType,
             _cosmosSender,
             _ethereumReceiver,
-            originalValidator,
+            msg.sender,
             _tokenAddress,
             _symbol,
             _amount,
@@ -178,7 +193,7 @@ contract CosmosBridge {
             claimType,
             _cosmosSender,
             _ethereumReceiver,
-            originalValidator,
+            msg.sender,
             _tokenAddress,
             _symbol,
             _amount
