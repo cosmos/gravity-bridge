@@ -4,7 +4,7 @@ First, initialize a chain and create accounts:
 
 ```bash
 # Initialize the genesis.json file that will help you to bootstrap the network
-ebd init local
+ebd init local --chain-id=peggy
 
 # Configure your cli to use the keyring-backend test so that you don't need to enter a password
 # **_NOTE_** Don't use the test backend on production
