@@ -1,24 +1,24 @@
 require("dotenv").config();
 
-var HDWalletProvider = require("@truffle/hdwallet-provider");
+const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 module.exports = {
   // contracts_directory: "./flat",
   networks: {
-    //   develop: {
-    //     host: "localhost",
-    //     port: 7545, // Match default network 'ganache'
-    //     network_id: "*",
-    //     gas: 6721975, // Truffle default development block gas limit
-    //     gasPrice: 200000000000,
-    //     solc: {
-    //       version: "0.5.0",
-    //       optimizer: {
-    //         enabled: true,
-    //         runs: 200
-    //       }
-    //     }
-    //   },
+    develop: {
+      host: "localhost",
+      port: 7545, // Match default network 'ganache'
+      network_id: "*",
+      gas: 6721975, // Truffle default development block gas limit
+      gasPrice: 200000000000,
+      solc: {
+        version: "0.5.0",
+        optimizer: {
+          enabled: true,
+          runs: 200
+        }
+      }
+    }
     //   ropsten: {
     //     provider: function() {
     //       return new HDWalletProvider(

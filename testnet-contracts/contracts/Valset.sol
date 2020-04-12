@@ -1,12 +1,10 @@
 pragma solidity ^0.5.0;
 
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "../../node_modules/openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 
 
 contract Valset {
     using SafeMath for uint256;
-    using ECDSA for bytes32;
 
     /*
      * @dev: Variable declarations
@@ -79,13 +77,12 @@ contract Valset {
         updateValset(_initValidators, _initPowers);
     }
 
-    function recover(string memory _message, bytes memory _signature)
+    function recover(bytes32 _message, bytes memory _signature)
         public
         pure
         returns (address)
     {
-        bytes32 message = ethMessageHash(_message);
-        return verify(message, _signature);
+        return verify(toEthSignedMessageHash(_message), _signature);
     }
 
     /*
@@ -275,9 +272,10 @@ contract Valset {
         emit LogValsetReset(currentValsetVersion, validatorCount, totalPower);
     }
 
-    /*
-     * @dev: Verify
-     *
+    /**
+     * @dev Recover signer address from a message by using their signature
+     * @param h bytes32 message, the hash is the signed message. What is recovered is the signer address.
+     * @param signature bytes signature, the signature is generated using web3.eth.sign()
      */
     function verify(bytes32 h, bytes memory signature)
         internal
@@ -318,19 +316,14 @@ contract Valset {
     }
 
     /**
-     * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:" and hash the result
+     * toEthSignedMessageHash
+     * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:"
+     * and hash the result
      */
-    function ethMessageHash(string memory message)
-        internal
-        pure
-        returns (bytes32)
-    {
+    function toEthSignedMessageHash(bytes32 h) internal pure returns (bytes32) {
+        // 32 is the length in bytes of hash,
+        // enforced by the type signature above
         return
-            keccak256(
-                abi.encodePacked(
-                    "\x19Ethereum Signed Message:\n32",
-                    keccak256(abi.encodePacked(message))
-                )
-            );
+            keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", h));
     }
 }

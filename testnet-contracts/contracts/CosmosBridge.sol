@@ -179,7 +179,7 @@ contract CosmosBridge {
             _cosmosSender,
             _ethereumReceiver,
             msg.sender,
-            _tokenAddress,
+            tokenAddress,
             _symbol,
             _amount,
             Status.Pending
@@ -194,7 +194,7 @@ contract CosmosBridge {
             _cosmosSender,
             _ethereumReceiver,
             msg.sender,
-            _tokenAddress,
+            tokenAddress,
             _symbol,
             _amount
         );
