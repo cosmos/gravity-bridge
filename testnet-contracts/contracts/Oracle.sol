@@ -25,7 +25,7 @@ contract Oracle {
      */
     event LogNewOracleClaim(
         uint256 _prophecyID,
-        string _message,
+        bytes32 _message,
         address _validatorAddress,
         bytes _signature
     );
@@ -92,7 +92,7 @@ contract Oracle {
      */
     function newOracleClaim(
         uint256 _prophecyID,
-        string memory _message,
+        bytes32 _message,
         bytes memory _signature
     ) public onlyValidator isPending(_prophecyID) {
         address validatorAddress = msg.sender;

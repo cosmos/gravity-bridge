@@ -120,7 +120,7 @@ contract CosmosBank {
      * @param _cosmosTokenAddress: The currency type
      * @param _symbol: comsos token symbol
      * @param _amount: number of comsos tokens to be minted
-\    */
+     */
     function mintNewBridgeTokens(
         bytes memory _cosmosSender,
         address payable _intendedRecipient,
@@ -129,7 +129,7 @@ contract CosmosBank {
         uint256 _amount
     ) internal {
         require(
-            controlledBridgeTokens[_symbol] != _bridgeTokenAddress,
+            controlledBridgeTokens[_symbol] == _bridgeTokenAddress,
             "Token must be a controlled bridge token"
         );
 
