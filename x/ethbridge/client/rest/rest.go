@@ -182,8 +182,6 @@ func burnOrLockHandler(cliCtx context.CLIContext, lockOrBurn string) http.Handle
 			return
 		}
 
-		tokenContract := types.NewEthereumAddress(req.TokenContract)
-
 		cosmosSender, err := sdk.AccAddressFromBech32(req.CosmosSender)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -198,7 +196,7 @@ func burnOrLockHandler(cliCtx context.CLIContext, lockOrBurn string) http.Handle
 		case "lock":
 			msg = types.NewMsgLock(ethereumChainID, cosmosSender, ethereumReceiver, req.Amount, req.Symbol)
 		case "burn":
-			msg = types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, req.Amount, req.Symbol)
+			msg = types.NewMsgBurn(ethereumChainID, cosmosSender, ethereumReceiver, req.Amount, req.Symbol)
 		}
 		err = msg.ValidateBasic()
 		if err != nil {

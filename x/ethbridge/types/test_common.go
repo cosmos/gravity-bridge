@@ -53,10 +53,9 @@ func CreateTestEthClaim(
 
 func CreateTestBurnMsg(t *testing.T, testCosmosSender string, ethereumReceiver EthereumAddress,
 	coinsAmount int64, coinsSymbol string) MsgBurn {
-	testTokenContractAddress := NewEthereumAddress(TestTokenContractAddress)
 	testCosmosAddress, err := sdk.AccAddressFromBech32(TestAddress)
 	require.NoError(t, err)
-	burnEth := NewMsgBurn(TestEthereumChainID, testTokenContractAddress, testCosmosAddress, ethereumReceiver, coinsAmount, coinsSymbol)
+	burnEth := NewMsgBurn(TestEthereumChainID, testCosmosAddress, ethereumReceiver, coinsAmount, coinsSymbol)
 	return burnEth
 }
 
@@ -66,8 +65,8 @@ func CreateTestQueryEthProphecyResponse(
 	testEthereumAddress := NewEthereumAddress(TestEthereumAddress)
 	testContractAddress := NewEthereumAddress(TestBridgeContractAddress)
 	testTokenAddress := NewEthereumAddress(TestTokenContractAddress)
-	ethBridgeClaim := CreateTestEthClaim(
-		t, testContractAddress, testTokenAddress, validatorAddress, testEthereumAddress, TestCoinsAmount, TestCoinsSymbol, claimType)
+	ethBridgeClaim := CreateTestEthClaim(t, testContractAddress, testTokenAddress, validatorAddress,
+		testEthereumAddress, TestCoinsAmount, TestCoinsSymbol, claimType)
 	oracleClaim, _ := CreateOracleClaimFromEthClaim(cdc, ethBridgeClaim)
 	ethBridgeClaims := []EthBridgeClaim{ethBridgeClaim}
 

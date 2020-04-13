@@ -62,7 +62,7 @@ func (msg MsgLock) ValidateBasic() error {
 		return ErrInvalidAmount
 	}
 
-	if len(msg.Symbol) <= 0 {
+	if len(msg.Symbol) == 0 {
 		return ErrInvalidSymbol
 	}
 
@@ -96,11 +96,10 @@ type MsgBurn struct {
 
 // NewMsgBurn is a constructor function for MsgBurn
 func NewMsgBurn(
-	ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress,
+	ethereumChainID int, cosmosSender sdk.AccAddress,
 	ethereumReceiver EthereumAddress, amount int64, symbol string) MsgBurn {
 	return MsgBurn{
 		EthereumChainID:  ethereumChainID,
-		TokenContract:    tokenContract,
 		CosmosSender:     cosmosSender,
 		EthereumReceiver: ethereumReceiver,
 		Amount:           amount,
@@ -137,16 +136,17 @@ func (msg MsgBurn) ValidateBasic() error {
 	if msg.Amount <= 0 {
 		return ErrInvalidAmount
 	}
-	if len(msg.Symbol) <= 0 {
-		return ErrInvalidSymbol
+	prefixLength := len(PeggedCoinPrefix)
+	if len(msg.Symbol) <= prefixLength+1 {
+		return ErrInvalidBurnSymbol
 	}
-	symbolPrefix := msg.Symbol[:8]
+	symbolPrefix := msg.Symbol[:prefixLength]
 	if symbolPrefix != PeggedCoinPrefix {
 		return ErrInvalidBurnSymbol
 	}
-	symbolSuffix := msg.Symbol[8:]
-	if len(symbolSuffix) <= 0 {
-		return ErrInvalidSymbol
+	symbolSuffix := msg.Symbol[prefixLength:]
+	if len(symbolSuffix) == 0 {
+		return ErrInvalidBurnSymbol
 	}
 	return nil
 }
