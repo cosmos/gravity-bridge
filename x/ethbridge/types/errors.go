@@ -13,4 +13,7 @@ var (
 		"invalid symbol provided, symbol 'eth' must have null address set as token contract address")
 	ErrInvalidClaimType       = sdkerrors.Register(ModuleName, 5, "invalid claim type provided")
 	ErrInvalidEthereumChainID = sdkerrors.Register(ModuleName, 6, "invalid ethereum chain id")
+	ErrInvalidAmount          = sdkerrors.Register(ModuleName, 7, "amount must be > 0")
+	ErrInvalidSymbol          = sdkerrors.Register(ModuleName, 8, "symbol must be 1 character or more")
+	ErrInvalidBurnSymbol      = sdkerrors.Register(ModuleName, 8, "symbol of token to burn must be in the form peg::ethereumTokenContractAddress::ethereumSymbol")
 )
