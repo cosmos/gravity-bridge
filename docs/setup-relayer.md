@@ -3,6 +3,7 @@
 ### Start local Ethereum blockchain and application
 
 You must have both the Comsos SDK application and the Ethereum blockchain running before you'll be able to relay assets between the two. If you've already started the application + started a local Ethereum blockchain and deployed the contracts, move to the next section. If not follow these two sets of instructions:
+
 - To start the Cosmos SDK application, follow these ([steps](./setup-bridge-chain.md))
 - To start a local Ethereum blockchain and deploy the contrats, follow these [steps](./setup-eth-local.md)
 
@@ -12,10 +13,16 @@ In order to send transactions to the contracts, the Relayer requires the ethereu
 
 ### Setup
 
-1. Copy root `.env.example` file:  
+1. Copy root `.env.example` file:
 
 ```bash
 cp .env.example .env
+```
+
+2. Generate contract bindings
+
+```bash
+ebrelayer generate
 ```
 
 ### Start the Relayer service
@@ -38,7 +45,7 @@ I[2020-03-22|11:23:33.920] Starting WSClient                            impl="WS
 I[2020-03-22|11:23:33.922] sent a request                               req="RPCRequest{0 subscribe/7B227175657279223A22746D2E6576656E74203D2027547827227D}"
 I[2020-03-22|11:23:33.922] got response                                 id=0 result=7B7D
 I[2020-03-22|11:23:33.922] Started Ethereum websocket with provider:    ws://localhost:7545/=(MISSING)
-I[2020-03-22|11:23:33.955] Subscribed to bridgebank contract at address: 0x2C2B9C9a4a25e24B174f26114e8926a9f2128FE4 
+I[2020-03-22|11:23:33.955] Subscribed to bridgebank contract at address: 0x2C2B9C9a4a25e24B174f26114e8926a9f2128FE4
 I[2020-03-22|11:23:33.980] Subscribed to cosmosbridge contract at address: 0x8f0483125FCb9aaAEFA9209D8E9d7b9C8B9Fb90F
 ```
 
