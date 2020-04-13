@@ -43,6 +43,7 @@ contract CosmosBank {
      */
     constructor() public {
         bridgeTokenCount = 0;
+        controlledBridgeTokens["eth"] = address(0);
     }
 
     /*

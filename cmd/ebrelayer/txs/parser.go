@@ -51,9 +51,6 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *types.LockEvent) (et
 		return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
 	}
 
-	// Amount type casting (*big.Int -> sdk.Coins)
-	coins := sdk.Coins{sdk.NewInt64Coin(symbol, event.Value.Int64())}
-
 	// Nonce type casting (*big.Int -> int)
 	nonce := int(event.Nonce.Int64())
 
@@ -66,7 +63,7 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *types.LockEvent) (et
 	witnessClaim.EthereumSender = sender
 	witnessClaim.ValidatorAddress = valAddr
 	witnessClaim.CosmosReceiver = recipient
-	witnessClaim.Amount = coins
+	witnessClaim.Amount = event.Value.Int64()
 
 	return witnessClaim, nil
 }

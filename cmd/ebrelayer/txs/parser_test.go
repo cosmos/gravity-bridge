@@ -3,7 +3,6 @@ package txs
 import (
 	"math/big"
 	"os"
-	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,15 +26,11 @@ func TestLogLockToEthBridgeClaim(t *testing.T) {
 	testRawCosmosValidatorAddress, err := sdk.AccAddressFromBech32(TestCosmosAddress2)
 	require.NoError(t, err)
 	testCosmosValidatorBech32Address := sdk.ValAddress(testRawCosmosValidatorAddress)
-	// Construct coins from TestAmount and TestSymbol
-	coins := strconv.Itoa(TestAmount) + TestSymbol
-	testCoins, err := sdk.ParseCoins(coins)
-	require.NoError(t, err)
 
 	// Set up expected EthBridgeClaim
 	expectedEthBridgeClaim := ethbridge.NewEthBridgeClaim(
 		TestEthereumChainID, testBridgeContractAddress, TestNonce, TestSymbol, testTokenContractAddress,
-		testEthereumAddress, testCosmosAddress, testCosmosValidatorBech32Address, testCoins, TestLockClaimType)
+		testEthereumAddress, testCosmosAddress, testCosmosValidatorBech32Address, TestAmount, TestLockClaimType)
 
 	// Create test LogLockEvent
 	logLockEvent := CreateTestLogLockEvent(t)
@@ -103,12 +98,11 @@ func TestLockEventToCosmosMsg(t *testing.T) {
 func TestMsgBurnToProphecyClaim(t *testing.T) {
 	// Set up expected ProphecyClaim
 	expectedProphecyClaim := ProphecyClaim{
-		ClaimType:            types.MsgBurn,
-		CosmosSender:         []byte(TestCosmosAddress1),
-		EthereumReceiver:     common.HexToAddress(TestEthereumAddress1),
-		TokenContractAddress: common.HexToAddress(TestEthTokenAddress),
-		Symbol:               TestSymbol,
-		Amount:               big.NewInt(int64(TestAmount)),
+		ClaimType:        types.MsgBurn,
+		CosmosSender:     []byte(TestCosmosAddress1),
+		EthereumReceiver: common.HexToAddress(TestEthereumAddress1),
+		Symbol:           TestSymbol,
+		Amount:           big.NewInt(int64(TestAmount)),
 	}
 
 	// Create a MsgBurn as input parameter
@@ -121,12 +115,11 @@ func TestMsgBurnToProphecyClaim(t *testing.T) {
 func TestMsgLockToProphecyClaim(t *testing.T) {
 	// Set up expected ProphecyClaim
 	expectedProphecyClaim := ProphecyClaim{
-		ClaimType:            types.MsgLock,
-		CosmosSender:         []byte(TestCosmosAddress1),
-		EthereumReceiver:     common.HexToAddress(TestEthereumAddress1),
-		TokenContractAddress: common.HexToAddress(TestEthTokenAddress),
-		Symbol:               TestSymbol,
-		Amount:               big.NewInt(int64(TestAmount)),
+		ClaimType:        types.MsgLock,
+		CosmosSender:     []byte(TestCosmosAddress1),
+		EthereumReceiver: common.HexToAddress(TestEthereumAddress1),
+		Symbol:           TestSymbol,
+		Amount:           big.NewInt(int64(TestAmount)),
 	}
 
 	// Create a MsgLock as input parameter

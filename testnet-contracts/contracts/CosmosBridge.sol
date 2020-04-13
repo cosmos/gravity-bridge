@@ -137,7 +137,6 @@ contract CosmosBridge {
         ClaimType _claimType,
         bytes memory _cosmosSender,
         address payable _ethereumReceiver,
-        address _tokenAddress,
         string memory _symbol,
         uint256 _amount
     ) public isActive {
@@ -150,17 +149,20 @@ contract CosmosBridge {
         prophecyClaimCount = prophecyClaimCount.add(1);
 
         ClaimType claimType;
-        address tokenAddress;
+        address recoveredBridgeTokenContract = bridgeBank
+            .getControlledBridgeToken(_symbol);
         if (_claimType == ClaimType.Burn) {
             require(
-                bridgeBank.hasLockedFunds(_tokenAddress, _amount),
+                (recoveredBridgeTokenContract == address(0) && _symbol=="eth") || (recoveredBridgeTokenContract != address(0)),
+                "Burn claim needs to come from an existing token contract, or be eth"
+            )
+            tokenAddress = recoveredBridgeTokenContract;
+            require(
+                bridgeBank.hasLockedFunds(tokenAddress, _amount),
                 "Not enough locked Ethereum assets to complete the proposed prophecy"
             );
             claimType = ClaimType.Burn;
-            tokenAddress = _tokenAddress;
         } else if (_claimType == ClaimType.Lock) {
-            address recoveredBridgeTokenContract = bridgeBank
-                .getControlledBridgeToken(_symbol);
             if (recoveredBridgeTokenContract != address(0)) {
                 // This is not the first lock for the asset, set token address to existing contract
                 tokenAddress = recoveredBridgeTokenContract;
