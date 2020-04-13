@@ -11,8 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	cosmosbridge "github.com/cosmos/peggy/cmd/ebrelayer/generated/bindings/cosmosbridge"
-	oracle "github.com/cosmos/peggy/cmd/ebrelayer/generated/bindings/oracle"
+	cosmosbridge "github.com/cosmos/peggy/cmd/ebrelayer/contract/generated/bindings/cosmosbridge"
+	oracle "github.com/cosmos/peggy/cmd/ebrelayer/contract/generated/bindings/oracle"
 	"github.com/cosmos/peggy/cmd/ebrelayer/types"
 )
 
