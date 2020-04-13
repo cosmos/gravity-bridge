@@ -56,6 +56,7 @@ All notable changes to this project will be documented in this file.
   events.
 - (ethbridge) [\#81](https://github.com/cosmos/peggy/pull/81) Add functionality for locking up cosmos coins and detecting burned coins from ethereum
 - (relayer) [\#163](https://github.com/cosmos/peggy/pull/163) Unified Relayer for chain subscription and event relay
+- (ethbridge) [\#182](https://github.com/cosmos/peggy/pull/182) Remove whitelisting and prefix Eth-tokens and change API/CLI
 
 ### Improvements
 
