@@ -140,15 +140,13 @@ func (msg MsgBurn) ValidateBasic() error {
 	if len(msg.Symbol) <= 0 {
 		return ErrInvalidSymbol
 	}
-	symbolSplit := strings.Split(msg.Symbol, "::")
-	if len(symbolSplit) != 3 {
+	symbolPrefix := msg.Symbol[:8]
+	if symbolPrefix != PeggedCoinPrefix {
 		return ErrInvalidBurnSymbol
 	}
-	if symbolSplit[0] != "peg" {
-		return ErrInvalidBurnSymbol
-	}
-	if !gethCommon.IsHexAddress(symbolSplit[1]) {
-		return ErrInvalidBurnSymbol
+	symbolSuffix := msg.Symbol[8:]
+	if len(symbolSuffix) <= 0 {
+		return ErrInvalidSymbol
 	}
 	return nil
 }

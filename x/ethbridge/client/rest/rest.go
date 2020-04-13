@@ -36,7 +36,7 @@ type createEthClaimReq struct {
 	EthereumSender        string       `json:"ethereum_sender"`
 	CosmosReceiver        string       `json:"cosmos_receiver"`
 	Validator             string       `json:"validator"`
-	Amount                string       `json:"amount"`
+	Amount                int64        `json:"amount"`
 	ClaimType             string       `json:"claim_type"`
 }
 
@@ -46,7 +46,8 @@ type burnOrLockEthReq struct {
 	TokenContract    string       `json:"token_contract_address"`
 	CosmosSender     string       `json:"cosmos_sender"`
 	EthereumReceiver string       `json:"ethereum_receiver"`
-	Amount           string       `json:"amount"`
+	Amount           int64        `json:"amount"`
+	Symbol           string       `json:"symbol"`
 }
 
 // RegisterRESTRoutes - Central function to define routes that get registered by the main application
@@ -91,12 +92,6 @@ func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		amount, err := sdk.ParseCoins(req.Amount)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		claimType, err := types.StringToClaimType(req.ClaimType)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, types.ErrInvalidClaimType.Error())
@@ -106,7 +101,7 @@ func createClaimHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		// create the message
 		ethBridgeClaim := types.NewEthBridgeClaim(
 			req.EthereumChainID, bridgeContractAddress, req.Nonce, req.Symbol,
-			tokenContractAddress, ethereumSender, cosmosReceiver, validator, amount, claimType)
+			tokenContractAddress, ethereumSender, cosmosReceiver, validator, req.Amount, claimType)
 		msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
 		err = msg.ValidateBasic()
 		if err != nil {
@@ -197,19 +192,13 @@ func burnOrLockHandler(cliCtx context.CLIContext, lockOrBurn string) http.Handle
 
 		ethereumReceiver := types.NewEthereumAddress(req.EthereumReceiver)
 
-		amount, err := sdk.ParseCoins(req.Amount)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		// create the message
 		var msg sdk.Msg
 		switch lockOrBurn {
 		case "lock":
-			msg = types.NewMsgLock(ethereumChainID, cosmosSender, ethereumReceiver, amount)
+			msg = types.NewMsgLock(ethereumChainID, cosmosSender, ethereumReceiver, req.Amount, req.Symbol)
 		case "burn":
-			msg = types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
+			msg = types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, req.Amount, req.Symbol)
 		}
 		err = msg.ValidateBasic()
 		if err != nil {

@@ -8,6 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
+const PeggedCoinPrefix = "peggy"
+
 // EthereumAddress defines a standard ethereum address
 type EthereumAddress gethCommon.Address
 
