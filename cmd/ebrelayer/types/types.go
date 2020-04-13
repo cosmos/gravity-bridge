@@ -103,57 +103,28 @@ func (p ProphecyClaimEvent) String() string {
 
 // CosmosMsg contains data from MsgBurn and MsgLock events
 type CosmosMsg struct {
-	ClaimType            Event
-	CosmosSender         []byte
-	EthereumReceiver     common.Address
-	TokenContractAddress common.Address
-	Symbol               string
-	Amount               *big.Int
+	ClaimType        Event
+	CosmosSender     []byte
+	EthereumReceiver common.Address
+	Symbol           string
+	Amount           *big.Int
 }
 
 // NewCosmosMsg creates a new CosmosMsg
 func NewCosmosMsg(claimType Event, cosmosSender []byte, ethereumReceiver common.Address, symbol string,
-	amount *big.Int, tokenContractAddress common.Address) CosmosMsg {
+	amount *big.Int) CosmosMsg {
 	return CosmosMsg{
-		ClaimType:            claimType,
-		CosmosSender:         cosmosSender,
-		EthereumReceiver:     ethereumReceiver,
-		Symbol:               symbol,
-		Amount:               amount,
-		TokenContractAddress: tokenContractAddress,
+		ClaimType:        claimType,
+		CosmosSender:     cosmosSender,
+		EthereumReceiver: ethereumReceiver,
+		Symbol:           symbol,
+		Amount:           amount,
 	}
 }
 
 // String implements fmt.Stringer
 func (c CosmosMsg) String() string {
-	if c.ClaimType == MsgLock {
-		return fmt.Sprintf("\nClaim Type: %v\nCosmos Sender: %v\nEthereum Recipient: %v"+
-			"\nSymbol: %v\nAmount: %v\n",
-			c.ClaimType.String(), string(c.CosmosSender), c.EthereumReceiver.Hex(), c.Symbol, c.Amount)
-	}
 	return fmt.Sprintf("\nClaim Type: %v\nCosmos Sender: %v\nEthereum Recipient: %v"+
-		"\nToken Address: %v\nSymbol: %v\nAmount: %v\n",
-		c.ClaimType.String(), string(c.CosmosSender), c.EthereumReceiver.Hex(),
-		c.TokenContractAddress.Hex(), c.Symbol, c.Amount)
-}
-
-// CosmosMsgAttributeKey enum containing supported attribute keys
-type CosmosMsgAttributeKey int
-
-const (
-	// UnsupportedAttributeKey unsupported attribute key
-	UnsupportedAttributeKey CosmosMsgAttributeKey = iota
-	// CosmosSender sender's address on Cosmos network
-	CosmosSender
-	// EthereumReceiver receiver's address on Ethereum network
-	EthereumReceiver
-	// Coin is the coin type
-	Coin
-	// TokenContractAddress coin's corresponding contract address deployed on the Ethereum network
-	TokenContractAddress
-)
-
-// String returns the event type as a string
-func (d CosmosMsgAttributeKey) String() string {
-	return [...]string{"unsupported", "cosmos_sender", "ethereum_receiver", "amount", "token_contract_address"}[d]
+		"\nSymbol: %v\nAmount: %v\n",
+		c.ClaimType.String(), string(c.CosmosSender), c.EthereumReceiver.Hex(), c.Symbol, c.Amount)
 }
