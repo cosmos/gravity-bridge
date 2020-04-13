@@ -280,8 +280,6 @@ func TestBurnEthSuccess(t *testing.T) {
 				require.Equal(t, value, ModuleName)
 			case "ethereum_chain_id":
 				eventEthereumChainID = value
-			case "token_contract_address":
-				eventTokenContract = value
 			case "cosmos_sender":
 				eventCosmosSender = value
 			case "ethereum_receiver":
@@ -298,7 +296,6 @@ func TestBurnEthSuccess(t *testing.T) {
 		}
 	}
 	require.Equal(t, eventEthereumChainID, strconv.Itoa(types.TestEthereumChainID))
-	require.Equal(t, eventTokenContract, types.TestTokenContractAddress)
 	require.Equal(t, eventCosmosSender, senderAddress.String())
 	require.Equal(t, eventEthereumReceiver, ethereumReceiver.String())
 	require.Equal(t, eventAmount, strconv.FormatInt(coinsToBurnAmount, 10))
@@ -331,8 +328,7 @@ func TestBurnEthSuccess(t *testing.T) {
 				require.Equal(t, value, ModuleName)
 			case "ethereum_chain_id":
 				eventEthereumChainID = value
-			case "token_contract_address":
-				eventTokenContract = value
+
 			case "cosmos_sender":
 				eventCosmosSender = value
 			case "ethereum_receiver":
@@ -349,7 +345,6 @@ func TestBurnEthSuccess(t *testing.T) {
 		}
 	}
 	require.Equal(t, eventEthereumChainID, strconv.Itoa(types.TestEthereumChainID))
-	require.Equal(t, eventTokenContract, types.TestTokenContractAddress)
 	require.Equal(t, eventCosmosSender, senderAddress.String())
 	require.Equal(t, eventEthereumReceiver, ethereumReceiver.String())
 	require.Equal(t, eventAmount, strconv.FormatInt(coinsToBurnAmount, 10))
