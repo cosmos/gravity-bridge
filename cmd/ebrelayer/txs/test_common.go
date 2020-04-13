@@ -103,7 +103,7 @@ func CreateCosmosMsgAttributes(t *testing.T) []tmKv.Pair {
 	// (key, value) pairing for "amount" key
 	pairAmount := tmKv.Pair{
 		Key:   []byte("amount"),
-		Value: []byte(strconv.Itoa(TestAmount) + TestSymbol),
+		Value: []byte(strconv.FormatInt(TestAmount, 10) + TestSymbol),
 	}
 
 	// (key, value) pairing for "token_contract_address" key
