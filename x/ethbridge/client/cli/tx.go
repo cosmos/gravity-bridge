@@ -57,8 +57,8 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			amount, err := sdk.ParseCoins(args[6])
-			if err != nil {
+			amount, err := strconv.ParseInt(args[6], 10, 64)
+			if err == nil {
 				return err
 			}
 
@@ -67,7 +67,8 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			ethBridgeClaim := types.NewEthBridgeClaim(ethereumChainID, bridgeContract, nonce, symbol, tokenContract, ethereumSender, cosmosReceiver, validator, amount, claimType)
+			ethBridgeClaim := types.NewEthBridgeClaim(ethereumChainID, bridgeContract, nonce, symbol, tokenContract,
+				ethereumSender, cosmosReceiver, validator, amount, claimType)
 
 			msg := types.NewMsgCreateEthBridgeClaim(ethBridgeClaim)
 			if err := msg.ValidateBasic(); err != nil {
@@ -83,7 +84,7 @@ func GetCmdCreateEthBridgeClaim(cdc *codec.Codec) *cobra.Command {
 //nolint:lll
 func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
+		Use:   "burn [cosmos-sender-address] [ethereum-receiver-address] [amount] [symbol] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address]",
 		Short: "burn cETH or cERC20 on the Cosmos chain",
 		Long: `This should be used to burn cETH or cERC20. It will burn your coins on the Cosmos Chain, removing them from your account and deducting them from the supply.
 		It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the withdrawal of the original ETH/ERC20 to you from the Ethereum contract!`,
@@ -109,12 +110,13 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 			}
 
 			ethereumReceiver := types.NewEthereumAddress(args[1])
-			amount, err := sdk.ParseCoins(args[2])
-			if err != nil {
+			amount, err := strconv.ParseInt(args[2], 10, 64)
+			if err == nil {
 				return err
 			}
+			symbol := args[3]
 
-			msg := types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
+			msg := types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount, symbol)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -128,7 +130,7 @@ func GetCmdBurn(cdc *codec.Codec) *cobra.Command {
 func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 	//nolint:lll
 	return &cobra.Command{
-		Use:   "lock [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id]",
+		Use:   "lock [cosmos-sender-address] [ethereum-receiver-address] [amount] [symbol] --ethereum-chain-id [ethereum-chain-id]",
 		Short: "This should be used to lock Cosmos-originating coins (eg: ATOM). It will lock up your coins in the supply module, removing them from your account. It will also trigger an event on the Cosmos Chain for relayers to watch so that they can trigger the minting of the pegged token on Etherum to you!",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -149,12 +151,13 @@ func GetCmdLock(cdc *codec.Codec) *cobra.Command {
 			}
 
 			ethereumReceiver := types.NewEthereumAddress(args[1])
-			amount, err := sdk.ParseCoins(args[2])
-			if err != nil {
+			amount, err := strconv.ParseInt(args[2], 10, 64)
+			if err == nil {
 				return err
 			}
+			symbol := args[3]
 
-			msg := types.NewMsgLock(ethereumChainID, cosmosSender, ethereumReceiver, amount)
+			msg := types.NewMsgLock(ethereumChainID, cosmosSender, ethereumReceiver, amount, symbol)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

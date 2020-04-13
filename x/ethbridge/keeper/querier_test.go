@@ -14,7 +14,7 @@ import (
 
 //nolint:lll
 const (
-	TestResponseJSON = "{\"id\":\"300x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"status\":{\"text\":\"pending\",\"final_claim\":\"\"},\"claims\":[{\"ethereum_chain_id\":3,\"bridge_registry_contract_address\":\"0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB\",\"nonce\":0,\"symbol\":\"eth\",\"token_contract_address\":\"0x0000000000000000000000000000000000000000\",\"ethereum_sender\":\"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"cosmos_receiver\":\"cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv\",\"validator_address\":\"cosmosvaloper1mnfm9c7cdgqnkk66sganp78m0ydmcr4pn7fqfk\",\"amount\":[{\"denom\":\"ethereum\",\"amount\":\"10\"}],\"claim_type\":\"lock\"}]}"
+	TestResponseJSON = "{\"id\":\"300x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"status\":{\"text\":\"pending\",\"final_claim\":\"\"},\"claims\":[{\"ethereum_chain_id\":3,\"bridge_registry_contract_address\":\"0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB\",\"nonce\":0,\"symbol\":\"eth\",\"token_contract_address\":\"0x0000000000000000000000000000000000000000\",\"ethereum_sender\":\"0x7B95B6EC7EbD73572298cEf32Bb54FA408207359\",\"cosmos_receiver\":\"cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv\",\"validator_address\":\"cosmosvaloper1mnfm9c7cdgqnkk66sganp78m0ydmcr4pn7fqfk\",\"amount\":10,\"claim_type\":\"lock\"}]}"
 )
 
 func TestNewQuerier(t *testing.T) {
@@ -45,7 +45,7 @@ func TestQueryEthProphecy(t *testing.T) {
 
 	initialEthBridgeClaim := types.CreateTestEthClaim(
 		t, testBridgeContractAddress, testTokenContractAddress, valAddress,
-		testEthereumAddress, types.TestCoins, types.LockText)
+		testEthereumAddress, types.TestCoinsAmount, types.TestCoinsSymbol, types.LockText)
 	oracleClaim, _ := types.CreateOracleClaimFromEthClaim(cdc, initialEthBridgeClaim)
 	_, err := oracleKeeper.ProcessClaim(ctx, oracleClaim)
 	require.NoError(t, err)
@@ -57,7 +57,7 @@ func TestQueryEthProphecy(t *testing.T) {
 
 	bz, err2 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(
 		types.TestEthereumChainID, testBridgeContractAddress, types.TestNonce,
-		types.TestSymbol, testTokenContractAddress, testEthereumAddress))
+		types.TestCoinsSymbol, testTokenContractAddress, testEthereumAddress))
 	require.Nil(t, err2)
 
 	query := abci.RequestQuery{
@@ -85,7 +85,7 @@ func TestQueryEthProphecy(t *testing.T) {
 
 	bz2, err6 := cdc.MarshalJSON(types.NewQueryEthProphecyParams(
 		types.TestEthereumChainID, testBridgeContractAddress, 12,
-		types.TestSymbol, testTokenContractAddress, badEthereumAddress))
+		types.TestCoinsSymbol, testTokenContractAddress, badEthereumAddress))
 	require.Nil(t, err6)
 
 	query2 := abci.RequestQuery{
@@ -102,7 +102,7 @@ func TestQueryEthProphecy(t *testing.T) {
 	bz3, err8 := cdc.MarshalJSON(
 		types.NewQueryEthProphecyParams(
 			types.TestEthereumChainID, testBridgeContractAddress, 12,
-			types.TestSymbol, testTokenContractAddress, emptyEthereumAddress))
+			types.TestCoinsSymbol, testTokenContractAddress, emptyEthereumAddress))
 
 	require.Nil(t, err8)
 
