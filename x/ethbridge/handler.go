@@ -95,7 +95,6 @@ func handleMsgBurn(
 		sdk.NewEvent(
 			types.EventTypeBurn,
 			sdk.NewAttribute(types.AttributeKeyEthereumChainID, strconv.Itoa(msg.EthereumChainID)),
-			sdk.NewAttribute(types.AttributeKeyTokenContract, msg.TokenContract.String()),
 			sdk.NewAttribute(types.AttributeKeyCosmosSender, msg.CosmosSender.String()),
 			sdk.NewAttribute(types.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, strconv.FormatInt(msg.Amount, 10)),

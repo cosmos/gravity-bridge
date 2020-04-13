@@ -71,7 +71,7 @@ ebcli tx ethbridge COMMAND --help
 # See the help for the ethbridge create claim function
 ebcli tx ethbridge create-claim --help
 # ebcli tx ethbridge create-claim [bridge-registry-contract] [nonce] [symbol] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount] [claim-type] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address] [flags]
-ebcli tx ethbridge create-claim 0x30753E4A8aad7F8597332E813735Def5dD395028 0 eth 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 3eth lock --token-contract-address=0x0000000000000000000000000000000000000000 --ethereum-chain-id=3 --from=validator --yes
+ebcli tx ethbridge create-claim 0x30753E4A8aad7F8597332E813735Def5dD395028 0 eth 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 3 lock --token-contract-address=0x0000000000000000000000000000000000000000 --ethereum-chain-id=3 --from=validator --yes
 
 # You can check the transaction and message were proccessed successfully by querying the transaction hash
 # that was just generated using the following command
@@ -86,20 +86,18 @@ ebcli query account $(ebcli keys show testuser -a)
 
 # Test out burning 1 of the eth for the return trip. We'll use "0x0000000000000000000000000000000000000000" for the token-contract-address, because we're dealing with the original EVM native token (eth).
 
-# ebcli tx ethbridge burn [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address] [flags]
-ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 1eth --ethereum-chain-id=3 --token-contract-address=0x0000000000000000000000000000000000000000 --from=testuser --yes
+# ebcli tx ethbridge burn [cosmos-sender-address] [ethereum-receiver-address] [amount] [symbol] --ethereum-chain-id [ethereum-chain-id] [flags]
+ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 1 peggyeth --ethereum-chain-id=3 --token-contract-address=0x0000000000000000000000000000000000000000 --from=testuser --yes
 
 # Confirm that the token was successfully burned
 ebcli query account $(ebcli keys show testuser -a)
 
-# Test out locking up a cosmos stake coin for relaying over to the EVM chain. We'll use
-# "0x345cA3e014Aaf5dcA488057592ee47305D9B3e10" for the token-contract-address because this is the addresses
-# generated for the BridgeToken when following ./setup-eth-local.md.
+# Test out locking up a cosmos stake coin for relaying over to the EVM chain.
 
 # **_NOTE_** Make sure that you transferred some stake to the testuser from the validator account like described in one of the first instructions above, otherwise testuser will have insufficient funds to complete the transaction.
 
-# ebcli tx ethbridge lock [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address] [flags]
-ebcli tx ethbridge lock $(ebcli keys show testuser -a) 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 1stake  --ethereum-chain-id=3 --token-contract-address=0x345cA3e014Aaf5dcA488057592ee47305D9B3e10 --from=testuser --yes
+# ebcli tx ethbridge lock [cosmos-sender-address] [ethereum-receiver-address] [amount] [symbol] --ethereum-chain-id [ethereum-chain-id] [flags]
+ebcli tx ethbridge lock $(ebcli keys show testuser -a) 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 1 stake  --ethereum-chain-id=3 --from=testuser --yes
 
 # Confirm that the token was successfully locked
 ebcli query account $(ebcli keys show testuser -a)
@@ -107,7 +105,7 @@ ebcli query account $(ebcli keys show testuser -a)
 # Test out creating a bridge burn claim for the return trip back. This is similar to the create-claim we did earlier except for the asset being locked on the eth side, it was burned because the asset originated on the cosmos chain. Make sure you increment the nonce by one, since the first create-claim used nonce 0 this one should use nonce 1.
 
 # ebcli tx ethbridge create-claim [bridge-registry-contract] [nonce] [symbol] [ethereum-sender-address] [cosmos-receiver-address] [validator-address] [amount] [claim-type] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address] [flags]
-ebcli tx ethbridge create-claim 0x30753E4A8aad7F8597332E813735Def5dD395028 1 stake 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 1stake burn --ethereum-chain-id=3 --token-contract-address=0x345cA3e014Aaf5dcA488057592ee47305D9B3e10 --from=validator --yes
+ebcli tx ethbridge create-claim 0x30753E4A8aad7F8597332E813735Def5dD395028 1 stake 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 $(ebcli keys show testuser -a) $(ebcli keys show validator -a --bech val) 1 burn --ethereum-chain-id=3 --token-contract-address=0x345cA3e014Aaf5dcA488057592ee47305D9B3e10 --from=validator --yes
 
 # Then read the prophecy to confirm it was created with the claim added
 # ebcli query ethbridge prophecy [bridge-registry-contract] [nonce] [symbol] [ethereum-sender] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address] [flags]
