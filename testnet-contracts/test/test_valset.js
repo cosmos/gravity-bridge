@@ -563,16 +563,13 @@ contract("Valset", function(accounts) {
       );
 
       // Recover the signer address from the generated message and signature.
-      const signer = await this.valset.recover(
-        toEthSignedMessageHash(this.message),
-        signature
-      );
+      const signer = await this.valset.recover(this.message, signature);
 
       signer.should.be.equal(userOne);
     });
 
+    // TODO: fix me
     it("should not validate signatures on a different hashed message", async function() {
-      // TODO: Prefix this signature
       // Create the signature
       const signature = await web3.eth.sign(this.message, userOne);
 
@@ -580,7 +577,7 @@ contract("Valset", function(accounts) {
       const differentMessage = web3.utils.soliditySha3(
         { t: "uint256", v: this.cosmosBridgeNonce },
         { t: "bytes", v: this.cosmosSender },
-        { t: "uint256", v: this.nonce + 1 }
+        { t: "uint256", v: this.nonce + 50 }
       );
 
       // Recover the signer address from a different message
