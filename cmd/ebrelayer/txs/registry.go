@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	bridgeRegistry "github.com/cosmos/peggy/cmd/ebrelayer/generated/bridgeregistry"
+	bridgeregistry "github.com/cosmos/peggy/cmd/ebrelayer/generated/bindings/bridgeregistry"
 )
 
 // TODO: Update BridgeRegistry contract so that all bridge contract addresses can be queried
@@ -56,7 +56,7 @@ func GetAddressFromBridgeRegistry(client *ethclient.Client, registry common.Addr
 	}
 
 	// Initialize BridgeRegistry instance
-	registryInstance, err := bridgeRegistry.NewBridgeRegistry(registry, client)
+	registryInstance, err := bridgeregistry.NewBridgeRegistry(registry, client)
 	if err != nil {
 		log.Fatal(err)
 	}
