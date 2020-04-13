@@ -207,7 +207,7 @@ func burnOrLockHandler(cliCtx context.CLIContext, lockOrBurn string) http.Handle
 		var msg sdk.Msg
 		switch lockOrBurn {
 		case "lock":
-			msg = types.NewMsgLock(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
+			msg = types.NewMsgLock(ethereumChainID, cosmosSender, ethereumReceiver, amount)
 		case "burn":
 			msg = types.NewMsgBurn(ethereumChainID, tokenContract, cosmosSender, ethereumReceiver, amount)
 		}

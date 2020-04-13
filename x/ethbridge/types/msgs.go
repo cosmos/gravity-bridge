@@ -17,17 +17,15 @@ type MsgLock struct {
 	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
 	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
 	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
-	TokenContract    EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
 	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 }
 
 // NewMsgLock is a constructor function for MsgLock
 func NewMsgLock(
-	ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress,
+	ethereumChainID int, cosmosSender sdk.AccAddress,
 	ethereumReceiver EthereumAddress, amount sdk.Coins) MsgLock {
 	return MsgLock{
 		EthereumChainID:  ethereumChainID,
-		TokenContract:    tokenContract,
 		CosmosSender:     cosmosSender,
 		EthereumReceiver: ethereumReceiver,
 		Amount:           amount,
@@ -44,14 +42,6 @@ func (msg MsgLock) Type() string { return "lock" }
 func (msg MsgLock) ValidateBasic() error {
 	if strconv.Itoa(msg.EthereumChainID) == "" {
 		return sdkerrors.Wrapf(ErrInvalidEthereumChainID, "%d", msg.EthereumChainID)
-	}
-
-	if msg.TokenContract.String() == "" {
-		return ErrInvalidEthAddress
-	}
-
-	if !gethCommon.IsHexAddress(msg.TokenContract.String()) {
-		return ErrInvalidEthAddress
 	}
 
 	if msg.CosmosSender.Empty() {
