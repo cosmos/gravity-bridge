@@ -79,19 +79,18 @@ func ProphecyClaimToSignedOracleClaim(event types.ProphecyClaimEvent, key *ecdsa
 	fmt.Println("Generating unique message for ProphecyClaim", event.ProphecyID)
 	message := GenerateClaimMessage(event)
 
-	// Prepare the message (required for signature verification on contract)
-	prefixedHashedMsg := PrepareMsgForSigning(message.Hex())
-
 	// Sign the message using the validator's private key
 	fmt.Println("Signing message...")
-	signature, err := SignClaim(prefixedHashedMsg, key)
+	signature, err := SignClaim(PrefixMsg(message), key)
 	if err != nil {
 		return oracleClaim, err
 	}
 	fmt.Println("Signature generated:", hexutil.Encode(signature))
 
 	oracleClaim.ProphecyID = event.ProphecyID
-	oracleClaim.Message = message.Hex()
+	var message32 [32]byte
+	copy(message32[:], message)
+	oracleClaim.Message = message32
 	oracleClaim.Signature = signature
 	return oracleClaim, nil
 }

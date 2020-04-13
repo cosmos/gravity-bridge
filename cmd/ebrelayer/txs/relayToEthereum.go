@@ -11,14 +11,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	cosmosBridge "github.com/cosmos/peggy/cmd/ebrelayer/generated/cosmosbridge"
-	oracle "github.com/cosmos/peggy/cmd/ebrelayer/generated/oracle"
+	cosmosBridge "github.com/cosmos/peggy/cmd/ebrelayer/generated/bindings/cosmosbridge"
+	oracle "github.com/cosmos/peggy/cmd/ebrelayer/generated/bindings/oracle"
 	"github.com/cosmos/peggy/cmd/ebrelayer/types"
 )
 
 const (
 	// GasLimit the gas limit in Gwei used for transactions sent with TransactOpts
-	GasLimit = uint64(600000)
+	GasLimit = uint64(3000000)
 )
 
 // RelayProphecyClaimToEthereum relays the provided ProphecyClaim to CosmosBridge contract on the Ethereum network
