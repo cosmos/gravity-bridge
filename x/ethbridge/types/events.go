@@ -10,6 +10,8 @@ var (
 	AttributeKeyEthereumSender = "ethereum_sender"
 	AttributeKeyCosmosReceiver = "cosmos_receiver"
 	AttributeKeyAmount         = "amount"
+	AttributeKeySymbol         = "symbol"
+	AttributeKeyCoins          = "coins"
 	AttributeKeyStatus         = "status"
 	AttributeKeyClaimType      = "claim_type"
 

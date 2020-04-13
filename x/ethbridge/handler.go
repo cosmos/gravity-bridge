@@ -42,7 +42,7 @@ func handleMsgCreateEthBridgeClaim(
 		return nil, err
 	}
 	if status.Text == oracle.SuccessStatusText {
-		if err := bridgeKeeper.ProcessSuccessfulClaim(ctx, status.FinalClaim); err != nil {
+		if err = bridgeKeeper.ProcessSuccessfulClaim(ctx, status.FinalClaim); err != nil {
 			return nil, err
 		}
 	}
@@ -57,7 +57,9 @@ func handleMsgCreateEthBridgeClaim(
 			types.EventTypeCreateClaim,
 			sdk.NewAttribute(types.AttributeKeyEthereumSender, msg.EthereumSender.String()),
 			sdk.NewAttribute(types.AttributeKeyCosmosReceiver, msg.CosmosReceiver.String()),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeyAmount, strconv.FormatInt(msg.Amount, 10)),
+			sdk.NewAttribute(types.AttributeKeySymbol, msg.Symbol),
+			sdk.NewAttribute(types.AttributeKeyTokenContract, msg.TokenContractAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyClaimType, msg.ClaimType.String()),
 		),
 		sdk.NewEvent(
@@ -79,7 +81,8 @@ func handleMsgBurn(
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String())
 	}
 
-	if err := bridgeKeeper.ProcessBurn(ctx, msg.CosmosSender, msg.Amount); err != nil {
+	coins := sdk.NewCoins(sdk.NewInt64Coin(msg.Symbol, msg.Amount))
+	if err := bridgeKeeper.ProcessBurn(ctx, msg.CosmosSender, coins); err != nil {
 		return nil, err
 	}
 
@@ -95,7 +98,10 @@ func handleMsgBurn(
 			sdk.NewAttribute(types.AttributeKeyTokenContract, msg.TokenContract.String()),
 			sdk.NewAttribute(types.AttributeKeyCosmosSender, msg.CosmosSender.String()),
 			sdk.NewAttribute(types.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeyAmount, strconv.FormatInt(msg.Amount, 10)),
+			sdk.NewAttribute(types.AttributeKeySymbol, msg.Symbol),
+			sdk.NewAttribute(types.AttributeKeyTokenContract, msg.TokenContract.String()),
+			sdk.NewAttribute(types.AttributeKeyCoins, coins.String()),
 		),
 	})
 
@@ -113,7 +119,8 @@ func handleMsgLock(
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String())
 	}
 
-	if err := bridgeKeeper.ProcessLock(ctx, msg.CosmosSender, msg.Amount); err != nil {
+	coins := sdk.NewCoins(sdk.NewInt64Coin(msg.Symbol, msg.Amount))
+	if err := bridgeKeeper.ProcessLock(ctx, msg.CosmosSender, coins); err != nil {
 		return nil, err
 	}
 
@@ -128,7 +135,9 @@ func handleMsgLock(
 			sdk.NewAttribute(types.AttributeKeyEthereumChainID, strconv.Itoa(msg.EthereumChainID)),
 			sdk.NewAttribute(types.AttributeKeyCosmosSender, msg.CosmosSender.String()),
 			sdk.NewAttribute(types.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeyAmount, strconv.FormatInt(msg.Amount, 10)),
+			sdk.NewAttribute(types.AttributeKeySymbol, msg.Symbol),
+			sdk.NewAttribute(types.AttributeKeyCoins, coins.String()),
 		),
 	})
 
