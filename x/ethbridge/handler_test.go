@@ -262,7 +262,6 @@ func TestBurnEthSuccess(t *testing.T) {
 	senderCoins := bankKeeper.GetCoins(ctx, senderAddress)
 	require.True(t, senderCoins.IsEqual(remainingCoins))
 	eventEthereumChainID := ""
-	eventTokenContract := ""
 	eventCosmosSender := ""
 	eventEthereumReceiver := ""
 	eventAmount := ""
@@ -310,7 +309,6 @@ func TestBurnEthSuccess(t *testing.T) {
 	senderCoins = bankKeeper.GetCoins(ctx, senderAddress)
 	require.True(t, senderCoins.IsEqual(remainingCoins))
 	eventEthereumChainID = ""
-	eventTokenContract = ""
 	eventCosmosSender = ""
 	eventEthereumReceiver = ""
 	eventAmount = ""
