@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	bridgeRegistry "github.com/cosmos/peggy/cmd/ebrelayer/generated/bridgeregistry"
+	bridgeRegistry "github.com/cosmos/peggy/cmd/ebrelayer/generated/bindings/bridgeregistry"
 )
 
 // TODO: Update BridgeRegistry contract so that all bridge contract addresses can be queried

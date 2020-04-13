@@ -7,9 +7,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/joho/godotenv"
 	solsha3 "github.com/miguelmota/go-solidity-sha3"
 
@@ -56,31 +54,26 @@ func LoadSender() (address common.Address, err error) {
 }
 
 // GenerateClaimMessage Generates a hased message containing a ProphecyClaim event's data
-func GenerateClaimMessage(event types.ProphecyClaimEvent) common.Hash {
-	// Cast event field values to byte[]
-	prophecyID := event.ProphecyID.Bytes()
-	sender := event.CosmosSender
-	recipient := []byte(event.EthereumReceiver.Hex())
-	token := []byte(event.TokenAddress.Hex())
-	amount := event.Amount.Bytes()
-	validator := []byte(event.ValidatorAddress.Hex())
+func GenerateClaimMessage(event types.ProphecyClaimEvent) []byte {
+	prophecyID := solsha3.Int256(event.ProphecyID)
+	sender := solsha3.String(event.CosmosSender)
+	recipient := solsha3.Int256(event.EthereumReceiver.Hex())
+	token := solsha3.String(event.TokenAddress.Hex())
+	amount := solsha3.Int256(event.Amount)
 
 	// Generate claim message using ProphecyClaim data
-	return crypto.Keccak256Hash(prophecyID, sender, recipient, token, amount, validator)
+	return solsha3.SoliditySHA3(prophecyID, sender, recipient, token, amount)
 }
 
-// PrepareMsgForSigning prefixes a message for verification by a Smart Contract
-func PrepareMsgForSigning(msg string) []byte {
-	// Turn the message into a 32-byte hash
-	hashedMsg := solsha3.SoliditySHA3(solsha3.String(msg))
-	// Prefix and then hash to mimic behavior of eth_sign
-	return solsha3.SoliditySHA3(solsha3.String("\x19Ethereum Signed Message:\n32"), solsha3.Bytes32(hashedMsg))
+// PrefixMsg prefixes a message for verification, mimics behavior of web3.eth.sign
+func PrefixMsg(msg []byte) []byte {
+	return solsha3.SoliditySHA3(solsha3.String("\x19Ethereum Signed Message:\n32"), msg)
 }
 
 // SignClaim Signs the prepared message with validator's private key
 func SignClaim(msg []byte, key *ecdsa.PrivateKey) ([]byte, error) {
 	// Sign the message
-	sig, err := secp256k1.Sign(msg, math.PaddedBigBytes(key.D, 32))
+	sig, err := crypto.Sign(msg, key)
 	if err != nil {
 		panic(err)
 	}
