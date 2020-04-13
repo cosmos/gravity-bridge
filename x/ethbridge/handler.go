@@ -126,7 +126,6 @@ func handleMsgLock(
 		sdk.NewEvent(
 			types.EventTypeLock,
 			sdk.NewAttribute(types.AttributeKeyEthereumChainID, strconv.Itoa(msg.EthereumChainID)),
-			sdk.NewAttribute(types.AttributeKeyTokenContract, msg.TokenContract.String()),
 			sdk.NewAttribute(types.AttributeKeyCosmosSender, msg.CosmosSender.String()),
 			sdk.NewAttribute(types.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
