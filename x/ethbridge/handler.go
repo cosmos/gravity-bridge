@@ -99,7 +99,6 @@ func handleMsgBurn(
 			sdk.NewAttribute(types.AttributeKeyEthereumReceiver, msg.EthereumReceiver.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, strconv.FormatInt(msg.Amount, 10)),
 			sdk.NewAttribute(types.AttributeKeySymbol, msg.Symbol),
-			sdk.NewAttribute(types.AttributeKeyTokenContract, msg.TokenContract.String()),
 			sdk.NewAttribute(types.AttributeKeyCoins, coins.String()),
 		),
 	})

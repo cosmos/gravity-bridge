@@ -90,7 +90,6 @@ type MsgBurn struct {
 	Amount           int64           `json:"amount" yaml:"amount"`
 	Symbol           string          `json:"symbol" yaml:"symbol"`
 	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
-	TokenContract    EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
 	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 }
 
@@ -117,12 +116,6 @@ func (msg MsgBurn) Type() string { return "burn" }
 func (msg MsgBurn) ValidateBasic() error {
 	if strconv.Itoa(msg.EthereumChainID) == "" {
 		return sdkerrors.Wrapf(ErrInvalidEthereumChainID, "%d", msg.EthereumChainID)
-	}
-	if msg.TokenContract.String() == "" {
-		return ErrInvalidEthAddress
-	}
-	if !gethCommon.IsHexAddress(msg.TokenContract.String()) {
-		return ErrInvalidEthAddress
 	}
 	if msg.CosmosSender.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String())
@@ -198,6 +191,9 @@ func (msg MsgCreateEthBridgeClaim) ValidateBasic() error {
 		return ErrInvalidEthAddress
 	}
 	if !gethCommon.IsHexAddress(msg.BridgeContractAddress.String()) {
+		return ErrInvalidEthAddress
+	}
+	if !gethCommon.IsHexAddress(msg.TokenContractAddress.String()) {
 		return ErrInvalidEthAddress
 	}
 	if strings.ToLower(msg.Symbol) == "eth" &&
