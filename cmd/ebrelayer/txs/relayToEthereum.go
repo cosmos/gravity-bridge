@@ -18,7 +18,7 @@ import (
 
 const (
 	// GasLimit the gas limit in Gwei used for transactions sent with TransactOpts
-	GasLimit = uint64(600000)
+	GasLimit = uint64(3000000)
 )
 
 // RelayProphecyClaimToEthereum relays the provided ProphecyClaim to CosmosBridge contract on the Ethereum network
