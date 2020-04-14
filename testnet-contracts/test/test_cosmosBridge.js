@@ -21,9 +21,6 @@ contract("CosmosBridge", function(accounts) {
   const userThree = accounts[3];
   const userFour = accounts[4];
 
-  // User account
-  const userSeven = accounts[7];
-
   // Contract's enum ClaimType can be represented a sequence of integers
   const CLAIM_TYPE_BURN = 1;
   const CLAIM_TYPE_LOCK = 2;

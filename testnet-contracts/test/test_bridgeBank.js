@@ -21,10 +21,6 @@ contract("BridgeBank", function(accounts) {
   const userOne = accounts[1];
   const userTwo = accounts[2];
   const userThree = accounts[3];
-  const userFour = accounts[4];
-
-  // User account
-  const userSeven = accounts[7];
 
   // Contract's enum ClaimType can be represented a sequence of integers
   const CLAIM_TYPE_BURN = 1;
