@@ -4,8 +4,6 @@ const Oracle = artifacts.require("Oracle");
 const BridgeToken = artifacts.require("BridgeToken");
 const BridgeBank = artifacts.require("BridgeBank");
 
-const { toEthSignedMessageHash, fixSignature } = require("./helpers/helpers");
-
 const Web3Utils = require("web3-utils");
 const EVMRevert = "revert";
 const BigNumber = web3.BigNumber;
@@ -23,10 +21,17 @@ contract("BridgeBank", function(accounts) {
   const userOne = accounts[1];
   const userTwo = accounts[2];
   const userThree = accounts[3];
+  const userFour = accounts[4];
+
+  // User account
+  const userSeven = accounts[7];
 
   // Contract's enum ClaimType can be represented a sequence of integers
-  const CLAIM_TYPE_BURN = 0;
-  const CLAIM_TYPE_LOCK = 1;
+  const CLAIM_TYPE_BURN = 1;
+  const CLAIM_TYPE_LOCK = 2;
+
+  // Consensus threshold of 70%
+  const consensusThreshold = 70;
 
   describe("BridgeBank deployment and basics", function() {
     beforeEach(async function() {
@@ -46,7 +51,8 @@ contract("BridgeBank", function(accounts) {
       this.oracle = await Oracle.new(
         operator,
         this.valset.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        consensusThreshold
       );
 
       // Deploy BridgeBank contract
@@ -102,7 +108,8 @@ contract("BridgeBank", function(accounts) {
       this.oracle = await Oracle.new(
         operator,
         this.valset.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        consensusThreshold
       );
 
       // Deploy BridgeBank contract
@@ -243,7 +250,8 @@ contract("BridgeBank", function(accounts) {
       this.oracle = await Oracle.new(
         operator,
         this.valset.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        consensusThreshold
       );
 
       // Deploy BridgeBank contract
@@ -271,26 +279,25 @@ contract("BridgeBank", function(accounts) {
       this.recipient = userThree;
       this.symbol = "TEST";
 
-      // Create the bridge token, adding it to the whitelist
-      const { logs: firstLogs } = await this.bridgeBank.createNewBridgeToken(
+      // Get the bridge token's address if it were to be created
+      this.bridgeTokenAddress = await this.bridgeBank.createNewBridgeToken.call(
         this.symbol,
         {
           from: operator
         }
       );
 
-      // Get the event logs and compare to expected bridge token address and symbol
-      const eventLogNewBridgeToken = firstLogs.find(
-        e => e.event === "LogNewBridgeToken"
-      );
-      this.bridgeToken = eventLogNewBridgeToken.args._token;
+      // Create the bridge token
+      await this.bridgeBank.createNewBridgeToken(this.symbol, {
+        from: operator
+      });
 
       // Submit a new prophecy claim to the CosmosBridge to make oracle claims upon
       const { logs: secondLogs } = await this.cosmosBridge.newProphecyClaim(
         CLAIM_TYPE_LOCK,
         this.sender,
         this.recipient,
-        this.bridgeToken,
+        this.bridgeTokenAddress,
         this.symbol,
         this.amount,
         {
@@ -311,14 +318,12 @@ contract("BridgeBank", function(accounts) {
       );
 
       // Generate signatures from active validator userOne
-      this.userOneSignature = fixSignature(
-        await web3.eth.sign(this.message, userOne)
-      );
+      this.userOneSignature = await web3.eth.sign(this.message, userOne);
 
       // Validator userOne makes a valid OracleClaim
       await this.oracle.newOracleClaim(
         this.prophecyID,
-        toEthSignedMessageHash(this.message),
+        this.message,
         this.userOneSignature,
         {
           from: userOne
@@ -327,18 +332,7 @@ contract("BridgeBank", function(accounts) {
     });
 
     it("should mint bridge tokens upon the successful processing of a burn prophecy claim", async function() {
-      const bridgeTokenInstance = await BridgeToken.at(this.bridgeToken);
-
-      // Confirm that the user does not hold any bridge tokens of this type
-      const priorUserBalance = Number(
-        await bridgeTokenInstance.balanceOf(this.recipient)
-      );
-      priorUserBalance.should.be.bignumber.equal(0);
-
-      // Process the prophecy claim
-      await this.oracle.processBridgeProphecy(
-        this.prophecyID
-      ).should.be.fulfilled;
+      const bridgeTokenInstance = await BridgeToken.at(this.bridgeTokenAddress);
 
       // Confirm that the user has been minted the correct token
       const afterUserBalance = Number(
@@ -366,7 +360,8 @@ contract("BridgeBank", function(accounts) {
       this.oracle = await Oracle.new(
         operator,
         this.valset.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        consensusThreshold
       );
 
       // Deploy BridgeBank contract
@@ -483,7 +478,8 @@ contract("BridgeBank", function(accounts) {
       this.oracle = await Oracle.new(
         operator,
         this.valset.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        consensusThreshold
       );
 
       // Deploy BridgeBank contract
@@ -584,19 +580,7 @@ contract("BridgeBank", function(accounts) {
       );
 
       // Generate signatures from active validator userOne
-      const userOneSignature = fixSignature(
-        await web3.eth.sign(message, userOne)
-      );
-
-      // Validator userOne makes a valid OracleClaim
-      await this.oracle.newOracleClaim(
-        prophecyID,
-        toEthSignedMessageHash(message),
-        userOneSignature,
-        {
-          from: userOne
-        }
-      );
+      const userOneSignature = await web3.eth.sign(message, userOne);
 
       // Get prior balances of user and BridgeBank contract
       const beforeUserBalance = Number(await web3.eth.getBalance(accounts[4]));
@@ -604,8 +588,10 @@ contract("BridgeBank", function(accounts) {
         await web3.eth.getBalance(this.bridgeBank.address)
       );
 
-      // Process the prophecy claim
-      await this.oracle.processBridgeProphecy(prophecyID).should.be.fulfilled;
+      // Validator userOne makes a valid OracleClaim
+      await this.oracle.newOracleClaim(prophecyID, message, userOneSignature, {
+        from: userOne
+      });
 
       // Get balances after prophecy processing
       const afterUserBalance = Number(await web3.eth.getBalance(accounts[4]));
@@ -636,51 +622,48 @@ contract("BridgeBank", function(accounts) {
         }
       ).should.be.fulfilled;
 
-      // Get the new ProphecyClaim's id
+      // Get the new ProphecyClaim's information
       const eventLogNewProphecyClaim = logs.find(
         e => e.event === "LogNewProphecyClaim"
       );
       const prophecyID = eventLogNewProphecyClaim.args._prophecyID;
+      const ethereumReceiver = eventLogNewProphecyClaim.args._ethereumReceiver;
+      const tokenAddress = eventLogNewProphecyClaim.args._tokenAddress;
+      const amount = Number(eventLogNewProphecyClaim.args._amount);
 
       // Create hash using Solidity's Sha3 hashing function
       const message = web3.utils.soliditySha3(
         { t: "uint256", v: prophecyID },
-        { t: "address payable", v: this.recipient },
-        { t: "address", v: this.token.address },
-        { t: "uint256", v: this.amount }
+        { t: "address payable", v: ethereumReceiver },
+        { t: "address", v: tokenAddress },
+        { t: "uint256", v: amount }
       );
 
       // Generate signatures from active validator userOne
-      const userOneSignature = fixSignature(
-        await web3.eth.sign(message, userOne)
-      );
-
-      // Validator userOne makes a valid OracleClaim
-      await this.oracle.newOracleClaim(
-        prophecyID,
-        toEthSignedMessageHash(message),
-        userOneSignature,
-        {
-          from: userOne
-        }
-      );
+      const userOneSignature = await web3.eth.sign(message, userOne);
 
       // Get Bridge and user's token balance prior to unlocking
       const beforeBridgeBankBalance = Number(
         await this.token.balanceOf(this.bridgeBank.address)
       );
-      const beforeUserBalance = Number(await this.token.balanceOf(accounts[4]));
+      const beforeUserBalance = Number(
+        await this.token.balanceOf(this.recipient)
+      );
       beforeBridgeBankBalance.should.be.bignumber.equal(this.amount);
       beforeUserBalance.should.be.bignumber.equal(0);
 
-      // Process the prophecy claim
-      await this.oracle.processBridgeProphecy(prophecyID).should.be.fulfilled;
+      // Validator userOne makes a valid oracle claim, processing the prophecy claim
+      await this.oracle.newOracleClaim(prophecyID, message, userOneSignature, {
+        from: userOne
+      });
 
       //Confirm that the tokens have been unlocked and transfered
       const afterBridgeBankBalance = Number(
         await this.token.balanceOf(this.bridgeBank.address)
       );
-      const afterUserBalance = Number(await this.token.balanceOf(accounts[4]));
+      const afterUserBalance = Number(
+        await this.token.balanceOf(this.recipient)
+      );
       afterBridgeBankBalance.should.be.bignumber.equal(0);
       afterUserBalance.should.be.bignumber.equal(this.amount);
     });
@@ -718,34 +701,33 @@ contract("BridgeBank", function(accounts) {
       );
 
       // Generate signatures from active validator userOne
-      const userOneSignature1 = fixSignature(
-        await web3.eth.sign(message1, userOne)
-      );
-
-      // Validator userOne makes a valid OracleClaim
-      await this.oracle.newOracleClaim(
-        prophecyID1,
-        toEthSignedMessageHash(message1),
-        userOneSignature1,
-        {
-          from: userOne
-        }
-      );
+      const userOneSignature1 = await web3.eth.sign(message1, userOne);
 
       // Get pre-claim processed balances of user and BridgeBank contract
       const beforeContractBalance1 = Number(
         await web3.eth.getBalance(this.bridgeBank.address)
       );
-      const beforeUserBalance1 = Number(await web3.eth.getBalance(accounts[4]));
+      const beforeUserBalance1 = Number(
+        await web3.eth.getBalance(this.recipient)
+      );
 
-      // Process the prophecy claim
-      await this.oracle.processBridgeProphecy(prophecyID1).should.be.fulfilled;
+      // Validator userOne makes a valid OracleClaim
+      await this.oracle.newOracleClaim(
+        prophecyID1,
+        message1,
+        userOneSignature1,
+        {
+          from: userOne
+        }
+      ).should.be.fulfilled;
 
       // Get post-claim processed balances of user and BridgeBank contract
       const afterBridgeBankBalance1 = Number(
         await web3.eth.getBalance(this.bridgeBank.address)
       );
-      const afterUserBalance1 = Number(await web3.eth.getBalance(accounts[4]));
+      const afterUserBalance1 = Number(
+        await web3.eth.getBalance(this.recipient)
+      );
 
       //Confirm that HALF the amount has been unlocked and transfered
       afterBridgeBankBalance1.should.be.bignumber.equal(
@@ -787,34 +769,33 @@ contract("BridgeBank", function(accounts) {
       );
 
       // Generate signatures from active validator userOne
-      const userOneSignature2 = fixSignature(
-        await web3.eth.sign(message2, userOne)
+      const userOneSignature2 = await web3.eth.sign(message2, userOne);
+
+      // Get pre-claim processed balances of user and BridgeBank contract
+      const beforeContractBalance2 = Number(
+        await web3.eth.getBalance(this.bridgeBank.address)
+      );
+      const beforeUserBalance2 = Number(
+        await web3.eth.getBalance(this.recipient)
       );
 
       // Validator userOne makes a valid OracleClaim
       await this.oracle.newOracleClaim(
         prophecyID2,
-        toEthSignedMessageHash(message2),
+        message2,
         userOneSignature2,
         {
           from: userOne
         }
       );
 
-      // Get pre-claim processed balances of user and BridgeBank contract
-      const beforeContractBalance2 = Number(
-        await web3.eth.getBalance(this.bridgeBank.address)
-      );
-      const beforeUserBalance2 = Number(await web3.eth.getBalance(accounts[4]));
-
-      // Process the prophecy claim
-      await this.oracle.processBridgeProphecy(prophecyID2).should.be.fulfilled;
-
       // Get post-claim processed balances of user and BridgeBank contract
       const afterBridgeBankBalance2 = Number(
         await web3.eth.getBalance(this.bridgeBank.address)
       );
-      const afterUserBalance2 = Number(await web3.eth.getBalance(accounts[4]));
+      const afterUserBalance2 = Number(
+        await web3.eth.getBalance(this.recipient)
+      );
 
       //Confirm that HALF the amount has been unlocked and transfered
       afterBridgeBankBalance2.should.be.bignumber.equal(
@@ -861,23 +842,13 @@ contract("BridgeBank", function(accounts) {
         { t: "uint256", v: this.amount }
       );
 
-      // Generate signatures from active validator userOne
-      const userOneSignature = fixSignature(
-        await web3.eth.sign(message, userOne)
-      );
+      // Generate signatures from active validator
+      const userOneSignature = await web3.eth.sign(message, userOne);
 
       // Validator userOne makes a valid OracleClaim
-      await this.oracle.newOracleClaim(
-        prophecyID,
-        toEthSignedMessageHash(message),
-        userOneSignature,
-        {
-          from: userOne
-        }
-      );
-
-      // Process the prophecy claim
-      await this.oracle.processBridgeProphecy(prophecyID).should.be.fulfilled;
+      await this.oracle.newOracleClaim(prophecyID, message, userOneSignature, {
+        from: userOne
+      }).should.be.fulfilled;
 
       // Attempt to process the same prophecy should be rejected
       await this.oracle
@@ -917,23 +888,14 @@ contract("BridgeBank", function(accounts) {
       );
 
       // Generate signatures from active validator userOne
-      const userOneSignature = fixSignature(
-        await web3.eth.sign(message, userOne)
-      );
+      const userOneSignature = await web3.eth.sign(message, userOne);
 
-      // Validator userOne makes a valid OracleClaim
-      await this.oracle.newOracleClaim(
-        prophecyID,
-        toEthSignedMessageHash(message),
-        userOneSignature,
-        {
-          from: userOne
-        }
-      );
-
-      // Attempts to process the prophecy with overlimit token amount should be rejected
+      // Validator userOne makes a valid OracleClaim but prophecy processing is
+      // rejected due to overlimit amount
       await this.oracle
-        .processBridgeProphecy(prophecyID)
+        .newOracleClaim(prophecyID, message, userOneSignature, {
+          from: userOne
+        })
         .should.be.rejectedWith(EVMRevert);
     });
   });
