@@ -3,7 +3,6 @@ package txs
 import (
 	"math/big"
 	"os"
-	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,15 +26,11 @@ func TestLogLockToEthBridgeClaim(t *testing.T) {
 	testRawCosmosValidatorAddress, err := sdk.AccAddressFromBech32(TestCosmosAddress2)
 	require.NoError(t, err)
 	testCosmosValidatorBech32Address := sdk.ValAddress(testRawCosmosValidatorAddress)
-	// Construct coins from TestAmount and TestSymbol
-	coins := strconv.Itoa(TestAmount) + TestSymbol
-	testCoins, err := sdk.ParseCoins(coins)
-	require.NoError(t, err)
 
 	// Set up expected EthBridgeClaim
 	expectedEthBridgeClaim := ethbridge.NewEthBridgeClaim(
 		TestEthereumChainID, testBridgeContractAddress, TestNonce, TestSymbol, testTokenContractAddress,
-		testEthereumAddress, testCosmosAddress, testCosmosValidatorBech32Address, testCoins, TestLockClaimType)
+		testEthereumAddress, testCosmosAddress, testCosmosValidatorBech32Address, TestAmount, TestLockClaimType)
 
 	// Create test LogLockEvent
 	logLockEvent := CreateTestLogLockEvent(t)
@@ -58,16 +53,19 @@ func TestProphecyClaimToSignedOracleClaim(t *testing.T) {
 	// Generate claim message from ProphecyClaim
 	message := GenerateClaimMessage(prophecyClaimEvent)
 	// Prepare the message (required for signature verification on contract)
-	prefixedHashedMsg := PrepareMsgForSigning(message.Hex())
+	prefixedHashedMsg := PrefixMsg(message)
 
 	// Sign the message using the validator's private key
 	signature, err := SignClaim(prefixedHashedMsg, privateKey)
 	require.NoError(t, err)
 
+	var message32 [32]byte
+	copy(message32[:], message)
+
 	// Set up expected OracleClaim
 	expectedOracleClaim := OracleClaim{
 		ProphecyID: big.NewInt(int64(TestProphecyID)),
-		Message:    message.Hex(),
+		Message:    message32,
 		Signature:  signature,
 	}
 

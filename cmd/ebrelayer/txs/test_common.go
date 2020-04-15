@@ -28,8 +28,8 @@ const (
 	TestEthereumAddress2      = "0xc230f38FF05860753840e0d7cbC66128ad308B67"
 	TestCosmosAddress1        = "cosmos1gn8409qq9hnrxde37kuxwx5hrxpfpv8426szuv"
 	TestCosmosAddress2        = "cosmos1l5h2x255pvdy9l4z0hf9tr8zw7k657s97wyz7y"
-	TestExpectedMessage       = "0x34669ae046add4b9b45863caf90f623dcda0a869ad6163087fe7f9fc41f93355"
-	TestExpectedSignature     = "0x2952d5757ea8d7d810e4c8ae5a4897a1e76a0d4741ee1468d0ce1d6e0ccf4d414512391a09952c4b1d26995f532e38f289256d35bd882e00a62c3ac9e8e9ef9601" //nolint:lll
+	TestExpectedMessage       = "d39d3a837b322ea6355a4de856bb88e0a1a33a1a9655767df2fa947f42ebcda6"
+	TestExpectedSignature     = "0xf3b43b87b8b3729d6b380a640954d14e425acd603bc98f5da8437cba9e492e7805c437f977900cf9cfbeb9e0e2e6fc5b189723b0979efff1fc2796a2daf4fd3a01" //nolint:lll
 	TestAddrHex               = "970e8128ab834e8eac17ab8e3812f010678cf791"
 	TestPrivHex               = "289c2857d4598e37fb9647507e47a309d6133539bf21a8b9cb6df88fd5232032"
 	TestNullAddress           = "0x0000000000000000000000000000000000000000"
@@ -86,7 +86,7 @@ func CreateTestCosmosMsg(t *testing.T, claimType types.Event) types.CosmosMsg {
 
 // CreateCosmosMsgAttributes creates expected attributes for a MsgBurn/MsgLock for testing purposes
 func CreateCosmosMsgAttributes(t *testing.T) []tmKv.Pair {
-	attributes := [4]tmKv.Pair{}
+	attributes := [5]tmKv.Pair{}
 
 	// (key, value) pairing for "cosmos_sender" key
 	pairCosmosSender := tmKv.Pair{
@@ -101,9 +101,15 @@ func CreateCosmosMsgAttributes(t *testing.T) []tmKv.Pair {
 	}
 
 	// (key, value) pairing for "amount" key
+	pairSymbol := tmKv.Pair{
+		Key:   []byte("symbol"),
+		Value: []byte(TestSymbol),
+	}
+
+	// (key, value) pairing for "amount" key
 	pairAmount := tmKv.Pair{
 		Key:   []byte("amount"),
-		Value: []byte(strconv.Itoa(TestAmount) + TestSymbol),
+		Value: []byte(strconv.Itoa(TestAmount)),
 	}
 
 	// (key, value) pairing for "token_contract_address" key
@@ -116,7 +122,8 @@ func CreateCosmosMsgAttributes(t *testing.T) []tmKv.Pair {
 	attributes[0] = pairCosmosSender
 	attributes[1] = pairEthereumReceiver
 	attributes[2] = pairTokenContract
-	attributes[3] = pairAmount
+	attributes[3] = pairSymbol
+	attributes[4] = pairAmount
 
 	return attributes[:]
 }
