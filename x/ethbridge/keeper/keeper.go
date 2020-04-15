@@ -55,9 +55,15 @@ func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) error {
 
 	receiverAddress := oracleClaim.CosmosReceiver
 
+	var coins sdk.Coins
 	switch oracleClaim.ClaimType {
-	case types.LockText, types.BurnText:
-		err = k.supplyKeeper.MintCoins(ctx, types.ModuleName, oracleClaim.Amount)
+	case types.LockText:
+		symbol := fmt.Sprintf("%v%v", types.PeggedCoinPrefix, oracleClaim.Symbol)
+		coins = sdk.Coins{sdk.NewInt64Coin(symbol, oracleClaim.Amount)}
+		err = k.supplyKeeper.MintCoins(ctx, types.ModuleName, coins)
+	case types.BurnText:
+		coins = sdk.Coins{sdk.NewInt64Coin(oracleClaim.Symbol, oracleClaim.Amount)}
+		err = k.supplyKeeper.MintCoins(ctx, types.ModuleName, coins)
 	default:
 		err = types.ErrInvalidClaimType
 	}
@@ -67,7 +73,7 @@ func (k Keeper) ProcessSuccessfulClaim(ctx sdk.Context, claim string) error {
 	}
 
 	if err := k.supplyKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.ModuleName, receiverAddress, oracleClaim.Amount,
+		ctx, types.ModuleName, receiverAddress, coins,
 	); err != nil {
 		panic(err)
 	}

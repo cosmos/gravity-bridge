@@ -15,22 +15,22 @@ import (
 // MsgLock defines a message for locking coins and triggering a related event
 type MsgLock struct {
 	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
-	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
+	Amount           int64           `json:"amount" yaml:"amount"`
+	Symbol           string          `json:"symbol" yaml:"symbol"`
 	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
-	TokenContract    EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
 	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 }
 
 // NewMsgLock is a constructor function for MsgLock
 func NewMsgLock(
-	ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress,
-	ethereumReceiver EthereumAddress, amount sdk.Coins) MsgLock {
+	ethereumChainID int, cosmosSender sdk.AccAddress,
+	ethereumReceiver EthereumAddress, amount int64, symbol string) MsgLock {
 	return MsgLock{
 		EthereumChainID:  ethereumChainID,
-		TokenContract:    tokenContract,
 		CosmosSender:     cosmosSender,
 		EthereumReceiver: ethereumReceiver,
 		Amount:           amount,
+		Symbol:           symbol,
 	}
 }
 
@@ -46,14 +46,6 @@ func (msg MsgLock) ValidateBasic() error {
 		return sdkerrors.Wrapf(ErrInvalidEthereumChainID, "%d", msg.EthereumChainID)
 	}
 
-	if msg.TokenContract.String() == "" {
-		return ErrInvalidEthAddress
-	}
-
-	if !gethCommon.IsHexAddress(msg.TokenContract.String()) {
-		return ErrInvalidEthAddress
-	}
-
 	if msg.CosmosSender.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String())
 	}
@@ -64,6 +56,14 @@ func (msg MsgLock) ValidateBasic() error {
 
 	if !gethCommon.IsHexAddress(msg.EthereumReceiver.String()) {
 		return ErrInvalidEthAddress
+	}
+
+	if msg.Amount <= 0 {
+		return ErrInvalidAmount
+	}
+
+	if len(msg.Symbol) == 0 {
+		return ErrInvalidSymbol
 	}
 
 	return nil
@@ -87,22 +87,22 @@ func (msg MsgLock) GetSigners() []sdk.AccAddress {
 // MsgBurn defines a message for burning coins and triggering a related event
 type MsgBurn struct {
 	CosmosSender     sdk.AccAddress  `json:"cosmos_sender" yaml:"cosmos_sender"`
-	Amount           sdk.Coins       `json:"amount" yaml:"amount"`
+	Amount           int64           `json:"amount" yaml:"amount"`
+	Symbol           string          `json:"symbol" yaml:"symbol"`
 	EthereumChainID  int             `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
-	TokenContract    EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
 	EthereumReceiver EthereumAddress `json:"ethereum_receiver" yaml:"ethereum_receiver"`
 }
 
 // NewMsgBurn is a constructor function for MsgBurn
 func NewMsgBurn(
-	ethereumChainID int, tokenContract EthereumAddress, cosmosSender sdk.AccAddress,
-	ethereumReceiver EthereumAddress, amount sdk.Coins) MsgBurn {
+	ethereumChainID int, cosmosSender sdk.AccAddress,
+	ethereumReceiver EthereumAddress, amount int64, symbol string) MsgBurn {
 	return MsgBurn{
 		EthereumChainID:  ethereumChainID,
-		TokenContract:    tokenContract,
 		CosmosSender:     cosmosSender,
 		EthereumReceiver: ethereumReceiver,
 		Amount:           amount,
+		Symbol:           symbol,
 	}
 }
 
@@ -117,12 +117,6 @@ func (msg MsgBurn) ValidateBasic() error {
 	if strconv.Itoa(msg.EthereumChainID) == "" {
 		return sdkerrors.Wrapf(ErrInvalidEthereumChainID, "%d", msg.EthereumChainID)
 	}
-	if msg.TokenContract.String() == "" {
-		return ErrInvalidEthAddress
-	}
-	if !gethCommon.IsHexAddress(msg.TokenContract.String()) {
-		return ErrInvalidEthAddress
-	}
 	if msg.CosmosSender.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosSender.String())
 	}
@@ -131,6 +125,21 @@ func (msg MsgBurn) ValidateBasic() error {
 	}
 	if !gethCommon.IsHexAddress(msg.EthereumReceiver.String()) {
 		return ErrInvalidEthAddress
+	}
+	if msg.Amount <= 0 {
+		return ErrInvalidAmount
+	}
+	prefixLength := len(PeggedCoinPrefix)
+	if len(msg.Symbol) <= prefixLength+1 {
+		return ErrInvalidBurnSymbol
+	}
+	symbolPrefix := msg.Symbol[:prefixLength]
+	if symbolPrefix != PeggedCoinPrefix {
+		return ErrInvalidBurnSymbol
+	}
+	symbolSuffix := msg.Symbol[prefixLength:]
+	if len(symbolSuffix) == 0 {
+		return ErrInvalidBurnSymbol
 	}
 	return nil
 }
@@ -184,6 +193,9 @@ func (msg MsgCreateEthBridgeClaim) ValidateBasic() error {
 	if !gethCommon.IsHexAddress(msg.BridgeContractAddress.String()) {
 		return ErrInvalidEthAddress
 	}
+	if !gethCommon.IsHexAddress(msg.TokenContractAddress.String()) {
+		return ErrInvalidEthAddress
+	}
 	if strings.ToLower(msg.Symbol) == "eth" &&
 		msg.TokenContractAddress != NewEthereumAddress("0x0000000000000000000000000000000000000000") {
 		return ErrInvalidEthSymbol
@@ -210,7 +222,7 @@ func MapOracleClaimsToEthBridgeClaims(
 	ethereumChainID int, bridgeContract EthereumAddress, nonce int, symbol string,
 	tokenContract EthereumAddress, ethereumSender EthereumAddress,
 	oracleValidatorClaims map[string]string,
-	f func(int, EthereumAddress, int, string, EthereumAddress, EthereumAddress, sdk.ValAddress, string,
+	f func(int, EthereumAddress, int, EthereumAddress, sdk.ValAddress, string,
 	) (EthBridgeClaim, error),
 ) ([]EthBridgeClaim, error) {
 	mappedClaims := make([]EthBridgeClaim, len(oracleValidatorClaims))
@@ -221,8 +233,7 @@ func MapOracleClaimsToEthBridgeClaims(
 			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("failed to parse claim: %s", parseErr))
 		}
 		mappedClaim, err := f(
-			ethereumChainID, bridgeContract, nonce, symbol,
-			tokenContract, ethereumSender, validatorAddress, validatorClaim)
+			ethereumChainID, bridgeContract, nonce, ethereumSender, validatorAddress, validatorClaim)
 		if err != nil {
 			return nil, err
 		}

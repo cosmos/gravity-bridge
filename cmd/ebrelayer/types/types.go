@@ -126,6 +126,11 @@ func NewCosmosMsg(claimType Event, cosmosSender []byte, ethereumReceiver common.
 
 // String implements fmt.Stringer
 func (c CosmosMsg) String() string {
+	if c.ClaimType == MsgLock {
+		return fmt.Sprintf("\nClaim Type: %v\nCosmos Sender: %v\nEthereum Recipient: %v"+
+			"\nSymbol: %v\nAmount: %v\n",
+			c.ClaimType.String(), string(c.CosmosSender), c.EthereumReceiver.Hex(), c.Symbol, c.Amount)
+	}
 	return fmt.Sprintf("\nClaim Type: %v\nCosmos Sender: %v\nEthereum Recipient: %v"+
 		"\nToken Address: %v\nSymbol: %v\nAmount: %v\n",
 		c.ClaimType.String(), string(c.CosmosSender), c.EthereumReceiver.Hex(),

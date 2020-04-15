@@ -40,8 +40,8 @@ Done in 30.87s.
 Now we can send the lock transaction for 1stake token to EVM chain address `0x627306090abaB3A6e1400e9345bC60c78a8BEf57`, which is the accounts[0] address of the truffle devlop local EVM chain. We also use the newly created `BridgeToken` address from the previous step for `token-contract-address`.
 
 ```bash
-# ebcli tx ethbridge lock [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address] [flags]
-ebcli tx ethbridge lock $(ebcli keys show testuser -a) 0x627306090abaB3A6e1400e9345bC60c78a8BEf57 1stake --ethereum-chain-id 3 --token-contract-address 0x409Ba3dd291bb5D48D5B4404F5EFa207441F6CbA --from testuser --yes
+# ebcli tx ethbridge lock [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] [flags]
+ebcli tx ethbridge lock $(ebcli keys show testuser -a) 0x627306090abaB3A6e1400e9345bC60c78a8BEf57 1stake --ethereum-chain-id 3 --from testuser --yes
 ```
 
 Expected terminal output:
@@ -52,7 +52,6 @@ I[2020-03-22|18:07:01.417]
 Claim Type: lock
 Cosmos Sender: cosmos1vnt63c0wtag5jnr6e9c7jz857amxrxcel0eucl
 Ethereum Recipient: 0x627306090abaB3A6e1400e9345bC60c78a8BEf57
-Token Address: 0x409Ba3dd291bb5D48D5B4404F5EFa207441F6CbA
 Symbol: stake
 Amount: 1
 
@@ -72,7 +71,7 @@ Validator: 0xf17f52151EbEF6C7334FAD080c5704D77216b732
 
 Generating unique message for ProphecyClaim 1
 Signing message...
-Signature generated: 0xc7ccfa125f92b5ec7780ce20948c4f5a174457bc3bfe025554507003fd42dcb67be0ea6e48c9a5493d2e63ea048f40ba81abd02945ac9ae8c69cc74409b2a14000
+Signature generated: 0xae9b9ee377d85945d6516afc39c4d1f8efc1ead78ba03851d8e25cbf3227e3166a655c5cd280af9ff1a4f81ad501d754ae23b694ca834c45e0206d80504cd47b01
 Tx Status: 1 - Successful
 
 Fetching Oracle contract...
