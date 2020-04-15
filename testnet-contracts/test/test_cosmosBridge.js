@@ -11,7 +11,7 @@ require("chai")
   .use(require("chai-bignumber")(BigNumber))
   .should();
 
-contract("CosmosBridge", function(accounts) {
+contract("CosmosBridge", function (accounts) {
   // System operator
   const operator = accounts[0];
 
@@ -19,16 +19,20 @@ contract("CosmosBridge", function(accounts) {
   const userOne = accounts[1];
   const userTwo = accounts[2];
   const userThree = accounts[3];
+  const userFour = accounts[4];
 
   // Contract's enum ClaimType can be represented a sequence of integers
-  const CLAIM_TYPE_BURN = 0;
-  const CLAIM_TYPE_LOCK = 1;
+  const CLAIM_TYPE_BURN = 1;
+  const CLAIM_TYPE_LOCK = 2;
 
-  describe("CosmosBridge smart contract deployment", function() {
-    beforeEach(async function() {
+  // Consensus threshold of 70%
+  const consensusThreshold = 70;
+
+  describe("CosmosBridge smart contract deployment", function () {
+    beforeEach(async function () {
       // Deploy Valset contract
-      this.initialValidators = [userOne, userTwo, userThree];
-      this.initialPowers = [5, 8, 12];
+      this.initialValidators = [userOne, userTwo, userThree, userFour];
+      this.initialPowers = [30, 20, 21, 29];
       this.valset = await Valset.new(
         operator,
         this.initialValidators,
@@ -42,7 +46,8 @@ contract("CosmosBridge", function(accounts) {
       this.oracle = await Oracle.new(
         operator,
         this.valset.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        consensusThreshold
       );
 
       // Deploy BridgeBank contract
@@ -53,7 +58,7 @@ contract("CosmosBridge", function(accounts) {
       );
     });
 
-    it("should deploy the CosmosBridge with the correct parameters", async function() {
+    it("should deploy the CosmosBridge with the correct parameters", async function () {
       this.cosmosBridge.should.exist;
 
       const claimCount = await this.cosmosBridge.prophecyClaimCount();
@@ -63,7 +68,7 @@ contract("CosmosBridge", function(accounts) {
       cosmosBridgeValset.should.be.equal(this.valset.address);
     });
 
-    it("should allow the operator to set the Oracle", async function() {
+    it("should allow the operator to set the Oracle", async function () {
       this.oracle.should.exist;
 
       await this.cosmosBridge.setOracle(this.oracle.address, {
@@ -74,7 +79,7 @@ contract("CosmosBridge", function(accounts) {
       bridgeOracle.should.be.equal(this.oracle.address);
     });
 
-    it("should not allow the operator to update the Oracle once it has been set", async function() {
+    it("should not allow the operator to update the Oracle once it has been set", async function () {
       await this.cosmosBridge.setOracle(this.oracle.address, {
         from: operator
       }).should.be.fulfilled;
@@ -86,7 +91,7 @@ contract("CosmosBridge", function(accounts) {
         .should.be.rejectedWith(EVMRevert);
     });
 
-    it("should allow the operator to set the Bridge Bank", async function() {
+    it("should allow the operator to set the Bridge Bank", async function () {
       this.bridgeBank.should.exist;
 
       await this.cosmosBridge.setBridgeBank(this.bridgeBank.address, {
@@ -97,7 +102,7 @@ contract("CosmosBridge", function(accounts) {
       bridgeBank.should.be.equal(this.bridgeBank.address);
     });
 
-    it("should not allow the operator to update the Bridge Bank once it has been set", async function() {
+    it("should not allow the operator to update the Bridge Bank once it has been set", async function () {
       await this.cosmosBridge.setBridgeBank(this.oracle.address, {
         from: operator
       }).should.be.fulfilled;
@@ -110,8 +115,8 @@ contract("CosmosBridge", function(accounts) {
     });
   });
 
-  describe("Creation of prophecy claims", function() {
-    beforeEach(async function() {
+  describe("Creation of prophecy claims", function () {
+    beforeEach(async function () {
       // Set up ProphecyClaim values
       this.cosmosSender = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
@@ -120,10 +125,11 @@ contract("CosmosBridge", function(accounts) {
       this.tokenAddress = "0x0000000000000000000000000000000000000000";
       this.symbol = "TEST";
       this.amount = 100;
+      this.weiAmount = web3.utils.toWei("0.25", "ether");
 
       // Deploy Valset contract
-      this.initialValidators = [userOne, userTwo, userThree];
-      this.initialPowers = [5, 8, 12];
+      this.initialValidators = [userOne, userTwo, userThree, userFour];
+      this.initialPowers = [30, 20, 21, 29];
       this.valset = await Valset.new(
         operator,
         this.initialValidators,
@@ -137,7 +143,8 @@ contract("CosmosBridge", function(accounts) {
       this.oracle = await Oracle.new(
         operator,
         this.valset.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        consensusThreshold
       );
 
       // Deploy BridgeBank contract
@@ -158,7 +165,14 @@ contract("CosmosBridge", function(accounts) {
       });
     });
 
-    it("should allow for the creation of new burn prophecy claims", async function() {
+    it("should allow for the creation of new burn prophecy claims", async function () {
+      await this.bridgeBank.lock(
+        this.ethereumReceiver,
+        this.tokenAddress,
+        this.weiAmount,
+        { from: userOne, value: this.weiAmount }
+      ).should.be.fulfilled;
+
       await this.cosmosBridge.newProphecyClaim(
         CLAIM_TYPE_BURN,
         this.cosmosSender,
@@ -172,7 +186,7 @@ contract("CosmosBridge", function(accounts) {
       ).should.be.fulfilled;
     });
 
-    it("should allow for the creation of new lock prophecy claims", async function() {
+    it("should allow for the creation of new lock prophecy claims", async function () {
       await this.cosmosBridge.newProphecyClaim(
         CLAIM_TYPE_LOCK,
         this.cosmosSender,
@@ -186,7 +200,7 @@ contract("CosmosBridge", function(accounts) {
       ).should.be.fulfilled;
     });
 
-    it("should log an event containing the new prophecy claim's information", async function() {
+    it("should log an event containing the new prophecy claim's information", async function () {
       const { logs } = await this.cosmosBridge.newProphecyClaim(
         CLAIM_TYPE_LOCK,
         this.cosmosSender,
@@ -206,17 +220,17 @@ contract("CosmosBridge", function(accounts) {
       event.args._cosmosSender.should.be.equal(this.cosmosSender);
       event.args._ethereumReceiver.should.be.equal(this.ethereumReceiver);
       event.args._validatorAddress.should.be.equal(userOne);
-      event.args._tokenAddress.should.be.equal(this.tokenAddress);
+      event.args._tokenAddress.should.not.be.equal(this.tokenAddress); // New bridge token deployed
       event.args._symbol.should.be.equal(this.symbol);
       Number(event.args._amount).should.be.bignumber.equal(this.amount);
     });
 
-    it("should increase the prophecy claim count upon the creation of new a prophecy claim", async function() {
+    it("should increase the prophecy claim count upon the creation of new a prophecy claim", async function () {
       const priorProphecyClaimCount = await this.cosmosBridge.prophecyClaimCount();
       Number(priorProphecyClaimCount).should.be.bignumber.equal(0);
 
       await this.cosmosBridge.newProphecyClaim(
-        CLAIM_TYPE_BURN,
+        CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
@@ -232,8 +246,8 @@ contract("CosmosBridge", function(accounts) {
     });
   });
 
-  describe("Bridge claim status", function() {
-    beforeEach(async function() {
+  describe("Bridge claim status", function () {
+    beforeEach(async function () {
       // Set up ProphecyClaim values
       this.cosmosSender = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
@@ -244,8 +258,8 @@ contract("CosmosBridge", function(accounts) {
       this.amount = 100;
 
       // Deploy Valset contract
-      this.initialValidators = [userOne, userTwo, userThree];
-      this.initialPowers = [5, 8, 12];
+      this.initialValidators = [userOne, userTwo, userThree, userFour];
+      this.initialPowers = [30, 20, 21, 29];
       this.valset = await Valset.new(
         operator,
         this.initialValidators,
@@ -259,7 +273,8 @@ contract("CosmosBridge", function(accounts) {
       this.oracle = await Oracle.new(
         operator,
         this.valset.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        consensusThreshold
       );
 
       // Deploy BridgeBank contract
@@ -280,7 +295,7 @@ contract("CosmosBridge", function(accounts) {
       });
     });
 
-    it("should not show fake prophecy claims as active", async function() {
+    it("should not show fake prophecy claims as active", async function () {
       const prophecyClaimCount = 4;
 
       // Get a prophecy claim's status
@@ -295,10 +310,10 @@ contract("CosmosBridge", function(accounts) {
       status.should.be.equal(false);
     });
 
-    it("should allow users to check if a prophecy claim is currently active", async function() {
+    it("should allow users to check if a prophecy claim is currently active", async function () {
       // Create the prophecy claim
       const { logs } = await this.cosmosBridge.newProphecyClaim(
-        CLAIM_TYPE_BURN,
+        CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
@@ -324,10 +339,10 @@ contract("CosmosBridge", function(accounts) {
       status.should.be.equal(true);
     });
 
-    it("should allow users to check if a prophecy claim's original validator is currently an active validator", async function() {
+    it("should allow users to check if a prophecy claim's original validator is currently an active validator", async function () {
       // Create the ProphecyClaim
       const { logs } = await this.cosmosBridge.newProphecyClaim(
-        CLAIM_TYPE_BURN,
+        CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
         this.tokenAddress,
