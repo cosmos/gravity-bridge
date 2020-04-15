@@ -11,7 +11,7 @@ require("chai")
   .use(require("chai-bignumber")(web3.BigNumber))
   .should();
 
-contract("CosmosBridge", function(accounts) {
+contract("CosmosBridge", function (accounts) {
   // System operator
   const operator = accounts[0];
 
@@ -31,8 +31,8 @@ contract("CosmosBridge", function(accounts) {
   // Consensus threshold
   const consensusThreshold = 70;
 
-  describe("CosmosBridge smart contract deployment", function() {
-    beforeEach(async function() {
+  describe("CosmosBridge smart contract deployment", function () {
+    beforeEach(async function () {
       // Deploy Valset contract
       this.initialValidators = [userOne, userTwo, userThree, userFour];
       this.initialPowers = [30, 20, 21, 29];
@@ -61,7 +61,7 @@ contract("CosmosBridge", function(accounts) {
       );
     });
 
-    it("should deploy the CosmosBridge with the correct parameters", async function() {
+    it("should deploy the CosmosBridge with the correct parameters", async function () {
       this.cosmosBridge.should.exist;
 
       const claimCount = await this.cosmosBridge.prophecyClaimCount();
@@ -72,8 +72,8 @@ contract("CosmosBridge", function(accounts) {
     });
   });
 
-  describe("Claim flow", function() {
-    beforeEach(async function() {
+  describe("Claim flow", function () {
+    beforeEach(async function () {
       // Set up ProphecyClaim values
       this.cosmosSender = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
@@ -123,7 +123,7 @@ contract("CosmosBridge", function(accounts) {
       });
     });
 
-    it("Burn prophecy claim flow", async function() {
+    it("Burn prophecy claim flow", async function () {
       console.log("\t[Attempt burn -> unlock]");
 
       // --------------------------------------------------------
@@ -256,7 +256,7 @@ contract("CosmosBridge", function(accounts) {
       receivedFunds.should.be.equal(true);
     });
 
-    it("Lock prophecy claim flow", async function() {
+    it("Lock prophecy claim flow", async function () {
       console.log("\t[Attempt lock -> mint] (new)");
       const priorRecipientBalance = 0;
 
@@ -460,7 +460,7 @@ contract("CosmosBridge", function(accounts) {
         signature2_4,
         {
           from: userFour,
-          gas: 3000000 // TODO: check gas
+          gas: 3000000
         }
       ).should.be.fulfilled;
 
