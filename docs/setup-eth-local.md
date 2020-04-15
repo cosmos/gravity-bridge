@@ -38,9 +38,6 @@ yarn migrate
 # Activate the contracts
 yarn peggy:setup
 
-# Copy contract ABI to Relayer it can subscribe to deployed contracts
-yarn peggy:abi
-
 # Get the address of Peggy's BridgeRegistry contract
 yarn peggy:address
 ```

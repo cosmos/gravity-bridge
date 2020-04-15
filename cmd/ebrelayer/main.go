@@ -20,9 +20,10 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 	tmLog "github.com/tendermint/tendermint/libs/log"
 
-	app "github.com/cosmos/peggy/app"
-	relayer "github.com/cosmos/peggy/cmd/ebrelayer/relayer"
-	txs "github.com/cosmos/peggy/cmd/ebrelayer/txs"
+	"github.com/cosmos/peggy/app"
+	"github.com/cosmos/peggy/cmd/ebrelayer/contract"
+	"github.com/cosmos/peggy/cmd/ebrelayer/relayer"
+	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 )
 
 var cdc *codec.Codec
@@ -58,6 +59,7 @@ func init() {
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
 		initRelayerCmd(),
+		generateBindingsCmd(),
 	)
 
 	DefaultCLIHome := os.ExpandEnv("$HOME/.ebcli")
@@ -86,6 +88,19 @@ func initRelayerCmd() *cobra.Command {
 	}
 
 	return initRelayerCmd
+}
+
+//	generateBindingsCmd : Generates ABIs and bindings for Bridge smart contracts which facilitate contract interaction
+func generateBindingsCmd() *cobra.Command {
+	generateBindingsCmd := &cobra.Command{
+		Use:     "generate",
+		Short:   "Generates Bridge smart contracts ABIs and bindings",
+		Args:    cobra.ExactArgs(0),
+		Example: "generate",
+		RunE:    RunGenerateBindingsCmd,
+	}
+
+	return generateBindingsCmd
 }
 
 // RunInitRelayerCmd executes initRelayerCmd
@@ -154,6 +169,20 @@ func RunInitRelayerCmd(cmd *cobra.Command, args []string) error {
 	<-exitSignal
 
 	return nil
+}
+
+// RunGenerateBindingsCmd : executes the generateBindingsCmd
+func RunGenerateBindingsCmd(cmd *cobra.Command, args []string) error {
+	contracts := contract.LoadBridgeContracts()
+
+	// Compile contracts, generating contract bins and abis
+	err := contract.CompileContracts(contracts)
+	if err != nil {
+		return err
+	}
+
+	// Generate contract bindings from bins and abis
+	return contract.GenerateBindings(contracts)
 }
 
 func initConfig(cmd *cobra.Command) error {
