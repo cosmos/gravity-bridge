@@ -147,13 +147,15 @@ const (
 	CosmosSender
 	// EthereumReceiver receiver's address on Ethereum network
 	EthereumReceiver
-	// Coin is the coin type
-	Coin
+	// Amount is coin's value
+	Amount
+	// Symbol is the coin type
+	Symbol
 	// TokenContractAddress coin's corresponding contract address deployed on the Ethereum network
 	TokenContractAddress
 )
 
 // String returns the event type as a string
 func (d CosmosMsgAttributeKey) String() string {
-	return [...]string{"unsupported", "cosmos_sender", "ethereum_receiver", "amount", "token_contract_address"}[d]
+	return [...]string{"unsupported", "cosmos_sender", "ethereum_receiver", "amount", "symbol", "token_contract_address"}[d]
 }

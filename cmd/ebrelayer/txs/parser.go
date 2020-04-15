@@ -51,8 +51,7 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *types.LockEvent) (et
 		return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
 	}
 
-	// Amount type casting (*big.Int -> sdk.Coins)
-	coins := sdk.Coins{sdk.NewInt64Coin(symbol, event.Value.Int64())}
+	amount := event.Value.Int64()
 
 	// Nonce type casting (*big.Int -> int)
 	nonce := int(event.Nonce.Int64())
@@ -66,7 +65,7 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *types.LockEvent) (et
 	witnessClaim.EthereumSender = sender
 	witnessClaim.ValidatorAddress = valAddr
 	witnessClaim.CosmosReceiver = recipient
-	witnessClaim.Amount = coins
+	witnessClaim.Amount = amount
 
 	return witnessClaim, nil
 }
@@ -135,10 +134,16 @@ func BurnLockEventToCosmosMsg(claimType types.Event, attributes []tmKv.Pair) typ
 				log.Fatal("Invalid recipient address:", val)
 			}
 			ethereumReceiver = common.HexToAddress(val)
-		case types.Coin.String():
-			coins, _ := sdk.ParseCoins(val)
-			symbol = coins[0].Denom
-			amount = coins[0].Amount.BigInt()
+		case types.Symbol.String():
+			symbol = val
+			fmt.Println(symbol)
+		case types.Amount.String():
+			tempAmount := new(big.Int)
+			tempAmount, ok := tempAmount.SetString(val, 10)
+			if !ok {
+				log.Fatal("Invalid amount:", val)
+			}
+			amount = tempAmount
 		case types.TokenContractAddress.String():
 			if !common.IsHexAddress(val) {
 				log.Fatal("Invalid token address:", val)
