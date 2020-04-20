@@ -1,4 +1,3 @@
-
 ## Using Peggy with the Ropsten testnet
 
 ### Setup
@@ -19,9 +18,6 @@ yarn migrate --network ropsten
 # Activate the contracts
 yarn peggy:setup
 
-# Copy contract ABI to Relayer it can subscribe to deployed contracts
-yarn peggy:abi
-
 # Get the Registry contract's address on the Ropsten network with the --network flag
 yarn peggy:address --network ropsten
 ```
@@ -29,12 +25,15 @@ yarn peggy:address --network ropsten
 ### Start the Relayer service on Ropsten testnet
 
 ```bash
+# Generate contract bindings
+ebrelayer generate
+# Start relayer
 ebrelayer init tcp://localhost:26657 wss://ropsten.infura.io/ [REGISTRY_CONTRACT_ADDRESS] validator --chain-id=peggy
 ```
 
 ### Lock rEth on contracts
 
-Send funds to the deployed contracts on the Ropsten testnet:   
+Send funds to the deployed contracts on the Ropsten testnet:
 
 ```bash
 yarn peggy:lock --network ropsten [COSMOS_RECIPIENT_ADDRESS] eth [RWEI_AMOUNT]

@@ -17,8 +17,8 @@ import (
 
 // File paths to Peggy smart contract ABIs
 const (
-	BridgeBankABI   = "/abi/BridgeBank.abi"
-	CosmosBridgeABI = "/abi/CosmosBridge.abi"
+	BridgeBankABI   = "/generated/abi/BridgeBank/BridgeBank.abi"
+	CosmosBridgeABI = "/generated/abi/CosmosBridge/CosmosBridge.abi"
 )
 
 // LoadABI loads a smart contract as an abi.ABI
