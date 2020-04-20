@@ -137,7 +137,7 @@ func BurnLockEventToCosmosMsg(claimType types.Event, attributes []tmKv.Pair) typ
 			ethereumReceiver = common.HexToAddress(val)
 		case types.Symbol.String():
 			res := strings.SplitAfter(val, "peggy")
-			symbol = strings.Join(res[1:], "")
+			symbol = strings.ToUpper(strings.Join(res[1:], ""))
 		case types.Amount.String():
 			tempAmount := new(big.Int)
 			tempAmount, ok := tempAmount.SetString(val, 10)
