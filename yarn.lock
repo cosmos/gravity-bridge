@@ -793,7 +793,7 @@ bignumber.js@^7.2.1:
   resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-7.2.1.tgz#80c048759d826800807c4bfd521e50edbba57a5f"
   integrity sha512-S4XzBk5sMB+Rcb/LNcpzXr57VRTxgAvaAEDAl1AwRx27j00hT84O6OkteE7u8UB3NuaaygCRrEpqox4uDOrbdQ==
 
-bindings@^1.2.1, bindings@^1.3.1, bindings@^1.5.0:
+bindings@^1.2.1, bindings@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/bindings/-/bindings-1.5.0.tgz#10353c9e945334bc0511a6d90b38fbc7c9c504df"
   integrity sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==
@@ -4225,16 +4225,6 @@ truffle-contract@^4.0.31:
     web3-eth-abi "1.2.1"
     web3-utils "1.2.1"
 
-truffle-hdwallet-provider@^1.0.17:
-  version "1.0.17"
-  resolved "https://registry.yarnpkg.com/truffle-hdwallet-provider/-/truffle-hdwallet-provider-1.0.17.tgz#fe8edd0d6974eeb31af9959e41525fb19abd74ca"
-  integrity sha512-s6DvSP83jiIAc6TUcpr7Uqnja1+sLGJ8og3X7n41vfyC4OCaKmBtXL5HOHf+SsU3iblOvnbFDgmN6Y1VBL/fsg==
-  dependencies:
-    any-promise "^1.3.0"
-    bindings "^1.3.1"
-    web3 "1.2.1"
-    websocket "^1.0.28"
-
 truffle-interface-adapter@^0.2.5:
   version "0.2.5"
   resolved "https://registry.yarnpkg.com/truffle-interface-adapter/-/truffle-interface-adapter-0.2.5.tgz#aa0bee635517b4a8e06adcdc99eacb993e68c243"
@@ -4245,10 +4235,10 @@ truffle-interface-adapter@^0.2.5:
     lodash "^4.17.13"
     web3 "1.2.1"
 
-truffle@^5.1.19:
-  version "5.1.19"
-  resolved "https://registry.yarnpkg.com/truffle/-/truffle-5.1.19.tgz#daf0aca071b9e2cdd88f456f10c1a81e840794aa"
-  integrity sha512-H4S7GbKCN56eW5ftLo+l160c+SLyF8C205hUF9VRfulxFBdXvmTIeHdRO/zcnBWiKfEbXzuHWSI9gyFkPtkvmw==
+truffle@^5.1.21:
+  version "5.1.22"
+  resolved "https://registry.yarnpkg.com/truffle/-/truffle-5.1.22.tgz#564e3e245b9b5ceb53ad1075e00ec68682bd3509"
+  integrity sha512-E1Kz7b2y1ApxytKmEDL04Xdmz+zEjTqWNTbp0DLFh928yzxL47xzDmuZyinx4pPNrt9vnnhoHMHqeh36IFkK1Q==
   dependencies:
     app-module-path "^2.2.0"
     mocha "5.2.0"
@@ -4888,7 +4878,7 @@ web3@1.2.1:
     web3-shh "1.2.1"
     web3-utils "1.2.1"
 
-web3@^1.2.1:
+web3@^1.2.6:
   version "1.2.6"
   resolved "https://registry.yarnpkg.com/web3/-/web3-1.2.6.tgz#c497dcb14cdd8d6d9fb6b445b3b68ff83f8ccf68"
   integrity sha512-tpu9fLIComgxGrFsD8LUtA4s4aCZk7px8UfcdEy6kS2uDi/ZfR07KJqpXZMij7Jvlq+cQrTAhsPSiBVvoMaivA==
@@ -4901,17 +4891,6 @@ web3@^1.2.1:
     web3-net "1.2.6"
     web3-shh "1.2.6"
     web3-utils "1.2.6"
-
-websocket@^1.0.28:
-  version "1.0.31"
-  resolved "https://registry.yarnpkg.com/websocket/-/websocket-1.0.31.tgz#e5d0f16c3340ed87670e489ecae6144c79358730"
-  integrity sha512-VAouplvGKPiKFDTeCCO65vYHsyay8DqoBSlzIO3fayrfOgU94lQN5a1uWVnFrMLceTJw/+fQXR5PGbUVRaHshQ==
-  dependencies:
-    debug "^2.2.0"
-    es5-ext "^0.10.50"
-    nan "^2.14.0"
-    typedarray-to-buffer "^3.1.5"
-    yaeti "^0.0.6"
 
 "websocket@github:web3-js/WebSocket-Node#polyfill/globalThis":
   version "1.0.29"

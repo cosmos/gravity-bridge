@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 contract Valset {
@@ -82,7 +82,7 @@ contract Valset {
         pure
         returns (address)
     {
-        return verify(toEthSignedMessageHash(_message), _signature);
+        return verify(ethMessageHash(_message), _signature);
     }
 
     /*
@@ -320,10 +320,10 @@ contract Valset {
      * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:"
      * and hash the result
      */
-    function toEthSignedMessageHash(bytes32 h) internal pure returns (bytes32) {
-        // 32 is the length in bytes of hash,
-        // enforced by the type signature above
+    function ethMessageHash(bytes32 message) internal pure returns (bytes32) {
         return
-            keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", h));
+            keccak256(
+                abi.encodePacked("\x19Ethereum Signed Message:\n32", message)
+            );
     }
 }

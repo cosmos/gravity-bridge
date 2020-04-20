@@ -9,8 +9,6 @@
   "author": "Denali Marsh",
   "license": "ISC",
   "dependencies": {
-    "@truffle/hdwallet-provider": "^1.0.18",
-    "big-integer": "^1.6.48",
     "bignumber.js": "^6.0.0",
     "bluebird": "^3.5.1",
     "cross-env": "5.0.5",
@@ -20,10 +18,10 @@
     "keccak": "^1.4.0",
     "lodash": "^4.17.13",
     "truffle-contract": "^4.0.31",
-    "truffle-hdwallet-provider": "^1.0.17",
     "utf8": "^3.0.0"
   },
   "devDependencies": {
+    "@truffle/hdwallet-provider": "^1.0.18",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "chai-bignumber": "^3.0.0",
@@ -35,16 +33,17 @@
   },
   "scripts": {
     "develop": "ganache-cli -i 5777 -p 7545 -m 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'",
-    "migrate": "truffle migrate --reset",
-    "peggy:address": "truffle exec scripts/getBridgeRegistryAddress.js",
-    "peggy:setup": "truffle exec scripts/setOracleAndBridgeBank.js",
-    "peggy:lock": "truffle exec scripts/sendLockTx.js",
-    "peggy:check": "truffle exec scripts/sendCheckProphecy.js",
-    "peggy:process": "truffle exec scripts/sendProcessProphecy.js",
-    "peggy:addBridgeToken": "truffle exec scripts/sendAddBridgeToken.js",
-    "peggy:getTokenBalance": "truffle exec scripts/getTokenBalance.js",
-    "token:address": "truffle exec scripts/getTokenContractAddress.js",
-    "token:mint": "truffle exec scripts/mintTestTokens.js",
-    "token:approve": "truffle exec scripts/sendApproveTx.js"
+    "migrate": "npx truffle migrate --reset",
+    "peggy:abi": "node scripts/formatAbi.js",
+    "peggy:address": "npx truffle exec scripts/getBridgeRegistryAddress.js",
+    "peggy:setup": "npx truffle exec scripts/setOracleAndBridgeBank.js",
+    "peggy:lock": "npx truffle exec scripts/sendLockTx.js",
+    "peggy:check": "npx truffle exec scripts/sendCheckProphecy.js",
+    "peggy:process": "npx truffle exec scripts/sendProcessProphecy.js",
+    "peggy:addBridgeToken": "npx truffle exec scripts/sendAddBridgeToken.js",
+    "peggy:getTokenBalance": "npx truffle exec scripts/getTokenBalance.js",
+    "token:address": "npx truffle exec scripts/getTokenContractAddress.js",
+    "token:mint": "npx truffle exec scripts/mintTestTokens.js",
+    "token:approve": "npx truffle exec scripts/sendApproveTx.js"
   }
 }

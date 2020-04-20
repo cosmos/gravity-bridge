@@ -732,8 +732,8 @@ contract("BridgeBank", function (accounts) {
       // There are 1,000 TEST tokens approved to the contract, but only 100 have been locked
       const OVERLIMIT_TOKEN_AMOUNT = 500;
 
-      // Submit a new prophecy claim to the CosmosBridge for the Ethereum deposit
-      const { logs } = await this.cosmosBridge.newProphecyClaim(
+      // Attempt to submit a new prophecy claim with overlimit amount is rejected
+      await this.cosmosBridge.newProphecyClaim(
         CLAIM_TYPE_BURN,
         this.sender,
         this.recipient,
@@ -744,31 +744,6 @@ contract("BridgeBank", function (accounts) {
           from: userOne
         }
       ).should.be.rejectedWith(EVMRevert);
-
-      // Get the new ProphecyClaim's id
-      //   const eventLogNewProphecyClaim = logs.find(
-      //     e => e.event === "LogNewProphecyClaim"
-      //   );
-      //   const prophecyID = eventLogNewProphecyClaim.args._prophecyID;
-
-      //   // Create hash using Solidity's Sha3 hashing function
-      //   const message = web3.utils.soliditySha3(
-      //     { t: "uint256", v: prophecyID },
-      //     { t: "address payable", v: this.recipient },
-      //     { t: "address", v: this.token.address },
-      //     { t: "uint256", v: OVERLIMIT_TOKEN_AMOUNT }
-      //   );
-
-      //   // Generate signatures from active validator userOne
-      //   const userOneSignature = await web3.eth.sign(message, userOne);
-
-      //   // Validator userOne makes a valid OracleClaim but prophecy processing is
-      //   // rejected due to overlimit amount
-      //   await this.oracle
-      //     .newOracleClaim(prophecyID, message, userOneSignature, {
-      //       from: userOne
-      //     })
-      //     .should.be.rejectedWith(EVMRevert);
     });
   });
 });
