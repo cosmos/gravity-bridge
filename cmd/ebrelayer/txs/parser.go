@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	nullAddress = "0x0000000000000000000000000000000000000000"
+	nullAddress   = "0x0000000000000000000000000000000000000000"
+	defaultPrefix = "peggy"
 )
 
 // LogLockToEthBridgeClaim parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
@@ -135,8 +136,8 @@ func BurnLockEventToCosmosMsg(claimType types.Event, attributes []tmKv.Pair) typ
 			}
 			ethereumReceiver = common.HexToAddress(val)
 		case types.Symbol.String():
-			symbol = val
-			fmt.Println(symbol)
+			res := strings.SplitAfter(val, "peggy")
+			symbol = strings.Join(res[1:], "")
 		case types.Amount.String():
 			tempAmount := new(big.Int)
 			tempAmount, ok := tempAmount.SetString(val, 10)
