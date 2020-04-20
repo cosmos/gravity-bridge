@@ -19,16 +19,20 @@ contract("CosmosBridge", function(accounts) {
   const userOne = accounts[1];
   const userTwo = accounts[2];
   const userThree = accounts[3];
+  const userFour = accounts[4];
 
   // Contract's enum ClaimType can be represented a sequence of integers
-  const CLAIM_TYPE_BURN = 0;
-  const CLAIM_TYPE_LOCK = 1;
+  const CLAIM_TYPE_BURN = 1;
+  const CLAIM_TYPE_LOCK = 2;
+
+  // Consensus threshold of 70%
+  const consensusThreshold = 70;
 
   describe("CosmosBridge smart contract deployment", function() {
     beforeEach(async function() {
       // Deploy Valset contract
-      this.initialValidators = [userOne, userTwo, userThree];
-      this.initialPowers = [5, 8, 12];
+      this.initialValidators = [userOne, userTwo, userThree, userFour];
+      this.initialPowers = [30, 20, 21, 29];
       this.valset = await Valset.new(
         operator,
         this.initialValidators,
@@ -42,7 +46,8 @@ contract("CosmosBridge", function(accounts) {
       this.oracle = await Oracle.new(
         operator,
         this.valset.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        consensusThreshold
       );
 
       // Deploy BridgeBank contract
@@ -122,8 +127,8 @@ contract("CosmosBridge", function(accounts) {
       this.amount = 100;
 
       // Deploy Valset contract
-      this.initialValidators = [userOne, userTwo, userThree];
-      this.initialPowers = [5, 8, 12];
+      this.initialValidators = [userOne, userTwo, userThree, userFour];
+      this.initialPowers = [30, 20, 21, 29];
       this.valset = await Valset.new(
         operator,
         this.initialValidators,
@@ -137,7 +142,8 @@ contract("CosmosBridge", function(accounts) {
       this.oracle = await Oracle.new(
         operator,
         this.valset.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        consensusThreshold
       );
 
       // Deploy BridgeBank contract
@@ -244,8 +250,8 @@ contract("CosmosBridge", function(accounts) {
       this.amount = 100;
 
       // Deploy Valset contract
-      this.initialValidators = [userOne, userTwo, userThree];
-      this.initialPowers = [5, 8, 12];
+      this.initialValidators = [userOne, userTwo, userThree, userFour];
+      this.initialPowers = [30, 20, 21, 29];
       this.valset = await Valset.new(
         operator,
         this.initialValidators,
@@ -259,7 +265,8 @@ contract("CosmosBridge", function(accounts) {
       this.oracle = await Oracle.new(
         operator,
         this.valset.address,
-        this.cosmosBridge.address
+        this.cosmosBridge.address,
+        consensusThreshold
       );
 
       // Deploy BridgeBank contract

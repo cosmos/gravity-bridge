@@ -1,12 +1,10 @@
 pragma solidity ^0.5.0;
 
-import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "../../node_modules/openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 contract Valset {
     using SafeMath for uint256;
-    using ECDSA for bytes32;
 
     /*
      * @dev: Variable declarations
@@ -79,13 +77,12 @@ contract Valset {
         updateValset(_initValidators, _initPowers);
     }
 
-    function recover(string memory _message, bytes memory _signature)
+    function recover(bytes32 _message, bytes memory _signature)
         public
         pure
         returns (address)
     {
-        bytes32 message = ethMessageHash(_message);
-        return verify(message, _signature);
+        return verify(ethMessageHash(_message), _signature);
     }
 
     /*
@@ -320,17 +317,10 @@ contract Valset {
     /**
      * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:" and hash the result
      */
-    function ethMessageHash(string memory message)
-        internal
-        pure
-        returns (bytes32)
-    {
+    function ethMessageHash(bytes32 message) internal pure returns (bytes32) {
         return
             keccak256(
-                abi.encodePacked(
-                    "\x19Ethereum Signed Message:\n32",
-                    keccak256(abi.encodePacked(message))
-                )
+                abi.encodePacked("\x19Ethereum Signed Message:\n32", message)
             );
     }
 }
