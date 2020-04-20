@@ -9,6 +9,7 @@
   "author": "Denali Marsh",
   "license": "ISC",
   "dependencies": {
+    "big-integer": "^1.6.48",
     "bignumber.js": "^6.0.0",
     "bluebird": "^3.5.1",
     "cross-env": "5.0.5",
