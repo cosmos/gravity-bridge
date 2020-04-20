@@ -153,8 +153,8 @@ contract CosmosBridge {
         address tokenAddress;
         if (_claimType == ClaimType.Burn) {
             require(
-                bridgeBank.hasLockedFunds(_tokenAddress, _amount),
-                "Not enough locked Ethereum assets to complete the proposed prophecy"
+                bridgeBank.hasLockedFunds(_symbol, _amount),
+                "Not enough locked assets to complete the proposed prophecy"
             );
             claimType = ClaimType.Burn;
             tokenAddress = _tokenAddress;
@@ -252,7 +252,6 @@ contract CosmosBridge {
 
         bridgeBank.unlock(
             prophecyClaim.ethereumReceiver,
-            prophecyClaim.tokenAddress,
             prophecyClaim.symbol,
             prophecyClaim.amount
         );

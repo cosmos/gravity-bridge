@@ -156,24 +156,38 @@ contract BridgeBank is CosmosBank, EthereumBank {
     }
 
     /*
-    * @dev: Unlocks Ethereum and ERC20 tokens held on the contract.
-    *
-    * @param _recipient: recipient's Ethereum address
-    * @param _token: token contract address
-    * @param _symbol: token symbol
-    * @param _amount: wei amount or ERC20 token count
-\   */
+     * @dev: Unlocks Ethereum and ERC20 tokens held on the contract.
+     *
+     * @param _recipient: recipient's Ethereum address
+     * @param _token: token contract address
+     * @param _symbol: token symbol
+     * @param _amount: wei amount or ERC20 token count
+     */
     function unlock(
         address payable _recipient,
-        address _token,
         string memory _symbol,
         uint256 _amount
-    ) public onlyCosmosBridge canDeliver(_token, _amount) {
+    ) public onlyCosmosBridge {
+        // Confirm that the bank has sufficient locked balances of this token type
         require(
-            hasLockedFunds(_token, _amount),
+            hasLockedFunds(_symbol, _amount),
             "The Bank does not hold enough locked tokens to fulfill this request."
         );
-        unlockFunds(_recipient, _token, _symbol, _amount);
+
+        // Confirm that the bank holds sufficient balances to complete the unlock
+        address tokenAddress = lockedTokenList[_symbol];
+        if (tokenAddress == address(0)) {
+            require(
+                address(this).balance >= _amount,
+                "Insufficient ethereum balance for delivery."
+            );
+        } else {
+            require(
+                BridgeToken(tokenAddress).balanceOf(address(this)) >= _amount,
+                "Insufficient ERC20 token balance for delivery."
+            );
+        }
+        unlockFunds(_recipient, tokenAddress, _symbol, _amount);
     }
 
     /*

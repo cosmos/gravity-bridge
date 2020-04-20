@@ -14,6 +14,7 @@ contract EthereumBank {
 
     uint256 public lockNonce;
     mapping(address => uint256) public lockedFunds;
+    mapping(string => address) public lockedTokenList;
 
     /*
      * @dev: Event declarations
@@ -38,21 +39,6 @@ contract EthereumBank {
      * @dev: Modifier declarations
      */
 
-    modifier canDeliver(address _token, uint256 _amount) {
-        if (_token == address(0)) {
-            require(
-                address(this).balance >= _amount,
-                "Insufficient ethereum balance for delivery."
-            );
-        } else {
-            require(
-                BridgeToken(_token).balanceOf(address(this)) >= _amount,
-                "Insufficient ERC20 token balance for delivery."
-            );
-        }
-        _;
-    }
-
     modifier availableNonce() {
         require(lockNonce + 1 > lockNonce, "No available nonces.");
         _;
@@ -68,15 +54,16 @@ contract EthereumBank {
     /*
      * @dev: Validates that the lockedFunds mapping holds an amount of an asset.
      *
-     * @param _token: The asset's address, either erc20 or ethereum.
+     * @param _symbol: The asset's symbol.
      * @param _amount: The amount of erc20 tokens/ethereum (in wei).
      */
-    function hasLockedFunds(address _token, uint256 _amount)
+    function hasLockedFunds(string memory _symbol, uint256 _amount)
         public
         view
         returns (bool)
     {
-        if (lockedFunds[_token] >= _amount) {
+        _token = lockedTokenList[_symbol] = _token;
+        if (lockedFunds[lockedTokenList[_symbol]] >= _amount) {
             return true;
         }
         return false;
@@ -101,6 +88,7 @@ contract EthereumBank {
         lockNonce = lockNonce.add(1);
 
         // Increment locked funds by the amount of tokens to be locked
+        lockedTokenList[_symbol] = _token;
         lockedFunds[_token] = lockedFunds[_token].add(_amount);
 
         emit LogLock(_sender, _recipient, _token, _symbol, _amount, lockNonce);
