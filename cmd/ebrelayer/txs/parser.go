@@ -101,7 +101,7 @@ func CosmosMsgToProphecyClaim(event types.CosmosMsg) ProphecyClaim {
 	cosmosSender := event.CosmosSender
 	ethereumReceiver := event.EthereumReceiver
 	tokenContractAddress := event.TokenContractAddress
-	symbol := strings.ToLower(event.Symbol)
+	symbol := strings.ToUpper(event.Symbol)
 	amount := event.Amount
 
 	prophecyClaim := ProphecyClaim{
@@ -136,8 +136,15 @@ func BurnLockEventToCosmosMsg(claimType types.Event, attributes []tmKv.Pair) typ
 			}
 			ethereumReceiver = common.HexToAddress(val)
 		case types.Symbol.String():
-			res := strings.SplitAfter(val, "peggy")
-			symbol = strings.ToUpper(strings.Join(res[1:], ""))
+			if claimType == types.MsgBurn {
+				if !strings.Contains(val, defaultPrefix) {
+					log.Fatal("Can only relay burns of 'peggy' prefixed coins")
+				}
+				res := strings.SplitAfter(val, defaultPrefix)
+				symbol = strings.ToUpper(strings.Join(res[1:], ""))
+			} else {
+				symbol = strings.ToUpper(val)
+			}
 		case types.Amount.String():
 			tempAmount := new(big.Int)
 			tempAmount, ok := tempAmount.SetString(val, 10)
