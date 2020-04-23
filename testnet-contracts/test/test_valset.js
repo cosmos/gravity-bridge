@@ -17,8 +17,6 @@ contract("Valset", function (accounts) {
   const userTwo = accounts[2];
   const userThree = accounts[3];
 
-  const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
   describe("Valset contract deployment", function () {
     beforeEach(async function () {
       this.initialValidators = [userOne, userTwo, userThree];

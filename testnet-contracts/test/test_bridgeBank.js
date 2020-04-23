@@ -163,7 +163,6 @@ contract("BridgeBank", function (accounts) {
         CLAIM_TYPE_BURN,
         this.sender,
         this.recipient,
-        this.token.address, // This is ignored
         this.symbol,
         this.amount,
         {
@@ -178,7 +177,6 @@ contract("BridgeBank", function (accounts) {
       const prophecyID = event.args._prophecyID;
       const cosmosSender = event.args._cosmosSender;
       const ethereumReceiver = event.args._ethereumReceiver;
-      const tokenAddress = event.args._tokenAddress;
       const amount = event.args._amount;
 
       // Create hash using Solidity's Sha3 hashing function
@@ -189,7 +187,6 @@ contract("BridgeBank", function (accounts) {
           t: "address payable",
           v: ethereumReceiver
         },
-        { t: "address", v: tokenAddress },
         { t: "uint256", v: amount }
       );
 
@@ -376,6 +373,7 @@ contract("BridgeBank", function (accounts) {
         "cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh"
       );
       this.recipient = accounts[4];
+      this.ethereumSymbol = "PEGGYETH";
       this.ethereumToken = "0x0000000000000000000000000000000000000000";
       this.weiAmount = web3.utils.toWei("0.25", "ether");
       this.halfWeiAmount = web3.utils.toWei("0.125", "ether");
@@ -429,8 +427,7 @@ contract("BridgeBank", function (accounts) {
         CLAIM_TYPE_BURN,
         this.sender,
         this.recipient,
-        this.ethereumToken,
-        this.symbol,
+        this.ethereumSymbol,
         this.weiAmount,
         {
           from: userOne
@@ -447,7 +444,6 @@ contract("BridgeBank", function (accounts) {
       const message = web3.utils.soliditySha3(
         { t: "uint256", v: prophecyID },
         { t: "address payable", v: this.recipient },
-        { t: "address", v: this.ethereumToken },
         { t: "uint256", v: this.weiAmount }
       );
 
@@ -486,7 +482,6 @@ contract("BridgeBank", function (accounts) {
         CLAIM_TYPE_BURN,
         this.sender,
         this.recipient,
-        this.token.address,
         this.symbol,
         this.amount,
         {
@@ -500,14 +495,12 @@ contract("BridgeBank", function (accounts) {
       );
       const prophecyID = eventLogNewProphecyClaim.args._prophecyID;
       const ethereumReceiver = eventLogNewProphecyClaim.args._ethereumReceiver;
-      const tokenAddress = eventLogNewProphecyClaim.args._tokenAddress;
       const amount = Number(eventLogNewProphecyClaim.args._amount);
 
       // Create hash using Solidity's Sha3 hashing function
       const message = web3.utils.soliditySha3(
         { t: "uint256", v: prophecyID },
         { t: "address payable", v: ethereumReceiver },
-        { t: "address", v: tokenAddress },
         { t: "uint256", v: amount }
       );
 
@@ -549,8 +542,7 @@ contract("BridgeBank", function (accounts) {
         CLAIM_TYPE_BURN,
         this.sender,
         this.recipient,
-        this.ethereumToken,
-        this.symbol,
+        this.ethereumSymbol,
         this.halfWeiAmount,
         {
           from: userOne
@@ -568,7 +560,6 @@ contract("BridgeBank", function (accounts) {
       const message1 = web3.utils.soliditySha3(
         { t: "uint256", v: prophecyID1 },
         { t: "address payable", v: this.recipient },
-        { t: "address", v: this.ethereumToken },
         { t: "uint256", v: this.halfWeiAmount }
       );
 
@@ -617,8 +608,7 @@ contract("BridgeBank", function (accounts) {
         CLAIM_TYPE_BURN,
         this.sender,
         this.recipient,
-        this.ethereumToken,
-        this.symbol,
+        this.ethereumSymbol,
         this.halfWeiAmount,
         {
           from: userOne
@@ -636,7 +626,6 @@ contract("BridgeBank", function (accounts) {
       const message2 = web3.utils.soliditySha3(
         { t: "uint256", v: prophecyID2 },
         { t: "address payable", v: this.recipient },
-        { t: "address", v: this.ethereumToken },
         { t: "uint256", v: this.halfWeiAmount }
       );
 
@@ -692,7 +681,6 @@ contract("BridgeBank", function (accounts) {
         CLAIM_TYPE_BURN,
         this.sender,
         this.recipient,
-        this.token.address,
         this.symbol,
         this.amount,
         {
@@ -710,7 +698,6 @@ contract("BridgeBank", function (accounts) {
       const message = web3.utils.soliditySha3(
         { t: "uint256", v: prophecyID },
         { t: "address payable", v: this.recipient },
-        { t: "address", v: this.token.address },
         { t: "uint256", v: this.amount }
       );
 
@@ -737,7 +724,6 @@ contract("BridgeBank", function (accounts) {
         CLAIM_TYPE_BURN,
         this.sender,
         this.recipient,
-        this.token.address,
         this.symbol,
         OVERLIMIT_TOKEN_AMOUNT,
         {

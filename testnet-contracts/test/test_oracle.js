@@ -72,7 +72,6 @@ contract("Oracle", function (accounts) {
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       );
       this.ethereumReceiver = userOne;
-      this.tokenAddress = "0x0000000000000000000000000000000000000000";
       this.symbol = "TEST";
       this.amount = 100;
 
@@ -84,7 +83,6 @@ contract("Oracle", function (accounts) {
           t: "address payable",
           v: this.ethereumReceiver
         },
-        { t: "address", v: this.tokenAddress },
         { t: "uint256", v: this.amount }
       );
 
@@ -130,7 +128,6 @@ contract("Oracle", function (accounts) {
         CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
-        this.tokenAddress,
         this.symbol,
         this.amount,
         {
@@ -178,10 +175,6 @@ contract("Oracle", function (accounts) {
         {
           t: "address payable",
           v: this.ethereumReceiver
-        },
-        {
-          t: "address",
-          v: this.tokenAddress
         },
         {
           t: "uint256",
@@ -279,7 +272,6 @@ contract("Oracle", function (accounts) {
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       );
       this.ethereumReceiver = userOne;
-      this.tokenAddress = "0xbeddb076fa4df04859098a9873591dce3e9c404d";
       this.symbol = "TEST";
       this.amount = 100;
 
@@ -291,7 +283,6 @@ contract("Oracle", function (accounts) {
           t: "address payable",
           v: this.ethereumReceiver
         },
-        { t: "address", v: this.tokenAddress },
         { t: "uint256", v: this.amount }
       );
 
@@ -342,7 +333,6 @@ contract("Oracle", function (accounts) {
         CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
-        this.tokenAddress,
         this.symbol,
         this.amount,
         {
