@@ -96,7 +96,7 @@ func NewProphecyClaimEvent(cosmosSender []byte, symbol string, prophecyID, amoun
 // String implements fmt.Stringer
 func (p ProphecyClaimEvent) String() string {
 	return fmt.Sprintf("\nProphecy ID: %v\nClaim Type: %v\nSender: %v\n"+
-		"Recipient: %v\nSymbol %v\nToken %v\nAmount: %v\nValidator: %v\n\n",
+		"Recipient: %v\nSymbol: %v\nToken: %v\nAmount: %v\nValidator: %v\n\n",
 		p.ProphecyID, p.ClaimType, string(p.CosmosSender), p.EthereumReceiver.Hex(),
 		p.Symbol, p.TokenAddress.Hex(), p.Amount, p.ValidatorAddress.Hex())
 }
@@ -106,21 +106,19 @@ type CosmosMsg struct {
 	ClaimType            Event
 	CosmosSender         []byte
 	EthereumReceiver     common.Address
-	TokenContractAddress common.Address
 	Symbol               string
 	Amount               *big.Int
 }
 
 // NewCosmosMsg creates a new CosmosMsg
 func NewCosmosMsg(claimType Event, cosmosSender []byte, ethereumReceiver common.Address, symbol string,
-	amount *big.Int, tokenContractAddress common.Address) CosmosMsg {
+	amount *big.Int) CosmosMsg {
 	return CosmosMsg{
 		ClaimType:            claimType,
 		CosmosSender:         cosmosSender,
 		EthereumReceiver:     ethereumReceiver,
 		Symbol:               symbol,
 		Amount:               amount,
-		TokenContractAddress: tokenContractAddress,
 	}
 }
 
@@ -132,9 +130,8 @@ func (c CosmosMsg) String() string {
 			c.ClaimType.String(), string(c.CosmosSender), c.EthereumReceiver.Hex(), c.Symbol, c.Amount)
 	}
 	return fmt.Sprintf("\nClaim Type: %v\nCosmos Sender: %v\nEthereum Recipient: %v"+
-		"\nToken Address: %v\nSymbol: %v\nAmount: %v\n",
-		c.ClaimType.String(), string(c.CosmosSender), c.EthereumReceiver.Hex(),
-		c.TokenContractAddress.Hex(), c.Symbol, c.Amount)
+		"\nSymbol: %v\nAmount: %v\n",
+		c.ClaimType.String(), string(c.CosmosSender), c.EthereumReceiver.Hex(), c.Symbol, c.Amount)
 }
 
 // CosmosMsgAttributeKey enum containing supported attribute keys
@@ -151,11 +148,9 @@ const (
 	Amount
 	// Symbol is the coin type
 	Symbol
-	// TokenContractAddress coin's corresponding contract address deployed on the Ethereum network
-	TokenContractAddress
 )
 
 // String returns the event type as a string
 func (d CosmosMsgAttributeKey) String() string {
-	return [...]string{"unsupported", "cosmos_sender", "ethereum_receiver", "amount", "symbol", "token_contract_address"}[d]
+	return [...]string{"unsupported", "cosmos_sender", "ethereum_receiver", "amount", "symbol"}[d]
 }

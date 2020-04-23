@@ -19,7 +19,6 @@ type ProphecyClaim struct {
 	ClaimType            types.Event
 	CosmosSender         []byte
 	EthereumReceiver     common.Address
-	TokenContractAddress common.Address
 	Symbol               string
 	Amount               *big.Int
 }

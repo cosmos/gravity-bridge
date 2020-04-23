@@ -52,6 +52,19 @@ contract EthereumBank {
     }
 
     /*
+     * @dev: Gets the contract address of locked tokens by symbol.
+     *
+     * @param _symbol: The asset's symbol.
+     */
+    function getLockedTokenAddress(string memory _symbol)
+        public
+        view
+        returns (address)
+    {
+        return lockedTokenList[_symbol];
+    }
+
+    /*
      * @dev: Gets the amount of locked tokens by symbol.
      *
      * @param _symbol: The asset's symbol.
@@ -61,8 +74,7 @@ contract EthereumBank {
         view
         returns (uint256)
     {
-        address tokenAddress = lockedTokenList[_symbol];
-        return lockedFunds[tokenAddress];
+        return lockedFunds[lockedTokenList[_symbol]];
     }
 
     /*

@@ -36,10 +36,8 @@ func RelayProphecyClaimToEthereum(provider string, contractAddress common.Addres
 
 	// Send transaction
 	fmt.Println("Sending new ProphecyClaim to CosmosBridge...")
-	tx, err := cosmosBridgeInstance.NewProphecyClaim(
-		auth, uint8(claim.ClaimType),
-		claim.CosmosSender, claim.EthereumReceiver, claim.TokenContractAddress,
-		claim.Symbol, claim.Amount)
+	tx, err := cosmosBridgeInstance.NewProphecyClaim(auth, uint8(claim.ClaimType),
+	claim.CosmosSender, claim.EthereumReceiver, claim.Symbol, claim.Amount)
 	if err != nil {
 		log.Fatal(err)
 	}

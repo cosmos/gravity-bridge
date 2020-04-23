@@ -53,7 +53,7 @@ func LoadSender() (address common.Address, err error) {
 	return fromAddress, nil
 }
 
-// GenerateClaimMessage Generates a hased message containing a ProphecyClaim event's data
+// GenerateClaimMessage Generates a hashed message containing a ProphecyClaim event's data
 func GenerateClaimMessage(event types.ProphecyClaimEvent) []byte {
 	prophecyID := solsha3.Int256(event.ProphecyID)
 	sender := solsha3.String(event.CosmosSender)

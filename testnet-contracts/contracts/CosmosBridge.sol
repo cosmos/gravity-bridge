@@ -138,7 +138,6 @@ contract CosmosBridge {
         ClaimType _claimType,
         bytes memory _cosmosSender,
         address payable _ethereumReceiver,
-        address _tokenAddress, // TODO: Delete from here AND Relayer
         string memory _symbol,
         uint256 _amount
     ) public isActive {
@@ -146,6 +145,7 @@ contract CosmosBridge {
             valset.isActiveValidator(msg.sender),
             "Must be an active validator"
         );
+
         address tokenAddress;
         string memory symbol;
         if (_claimType == ClaimType.Burn) {
@@ -154,17 +154,18 @@ contract CosmosBridge {
                 "Not enough locked assets to complete the proposed prophecy"
             );
             symbol = _symbol;
+            tokenAddress = bridgeBank.getLockedTokenAddress(_symbol);
         } else if (_claimType == ClaimType.Lock) {
             address bridgeTokenAddress = bridgeBank.getUnprefixedBridgeToken(
                 _symbol
             );
             if (bridgeTokenAddress == address(0)) {
-                // This is the first lock for the asset, deploy new contract and set as token address
+                // First lock of this asset, deploy new contract and get new symbol/token address
                 (symbol, tokenAddress) = bridgeBank.createNewBridgeToken(
                     _symbol
                 );
             } else {
-                // This is not the first lock for the asset, set token address to existing contract
+                // Not the first lock of this asset, get existing symbol/token address
                 tokenAddress = bridgeTokenAddress;
                 symbol = _symbol;
             }
