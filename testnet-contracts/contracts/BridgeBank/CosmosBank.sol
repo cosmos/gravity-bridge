@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./BridgeToken.sol";
 
 
@@ -13,8 +13,9 @@ import "./BridgeToken.sol";
 contract CosmosBank {
     using SafeMath for uint256;
 
-    uint256 public bridgeTokenCount;
+    string COSMOS_NATIVE_ASSET_PREFIX = "PEGGY";
 
+    uint256 public bridgeTokenCount;
     mapping(string => address) controlledBridgeTokens;
     mapping(bytes32 => CosmosDeposit) cosmosDeposits;
 
@@ -48,15 +49,17 @@ contract CosmosBank {
     /*
      * @dev: Get a token symbol's corresponding bridge token address.
      *
-     * @param _symbol: The token's symbol/denom.
+     * @param _symbol: The token's symbol/denom without 'PEGGY' prefix.
      * @return: Address associated with the given symbol. Returns address(0) if none is found.
      */
-    function getControlledBridgeToken(string memory _symbol)
+    function getUnprefixedBridgeToken(string memory _symbol)
         public
         view
         returns (address)
     {
-        return (controlledBridgeTokens[_symbol]);
+        return (
+            controlledBridgeTokens[concat(COSMOS_NATIVE_ASSET_PREFIX, _symbol)]
+        );
     }
 
     /*
@@ -96,20 +99,24 @@ contract CosmosBank {
      */
     function deployNewBridgeToken(string memory _symbol)
         internal
-        returns (address)
+        returns (string memory, address)
     {
         bridgeTokenCount = bridgeTokenCount.add(1);
 
         // Deploy new bridge token contract
-        BridgeToken newBridgeToken = (new BridgeToken)(_symbol);
+        string memory prefixedSymbol = concat(
+            COSMOS_NATIVE_ASSET_PREFIX,
+            _symbol
+        );
+        BridgeToken newBridgeToken = (new BridgeToken)(prefixedSymbol);
 
         // Set address in tokens mapping
         address newBridgeTokenAddress = address(newBridgeToken);
-        controlledBridgeTokens[_symbol] = newBridgeTokenAddress;
+        controlledBridgeTokens[prefixedSymbol] = newBridgeTokenAddress;
 
-        emit LogNewBridgeToken(newBridgeTokenAddress, _symbol);
+        emit LogNewBridgeToken(newBridgeTokenAddress, prefixedSymbol);
 
-        return newBridgeTokenAddress;
+        return (prefixedSymbol, newBridgeTokenAddress);
     }
 
     /*
@@ -187,5 +194,19 @@ contract CosmosBank {
             deposit.bridgeTokenAddress,
             deposit.amount
         );
+    }
+
+    /*
+     * @dev: Performs low gas-comsuption string concatenation
+     *
+     * @param _prefix: start of the string
+     * @param _suffix: end of the string
+     */
+    function concat(string memory _prefix, string memory _suffix)
+        internal
+        pure
+        returns (string memory)
+    {
+        return string(abi.encodePacked(_prefix, _suffix));
     }
 }

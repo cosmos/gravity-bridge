@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Valset.sol";
 import "./BridgeBank/BridgeBank.sol";
 
@@ -39,6 +39,7 @@ contract CosmosBridge {
     /*
      * @dev: Event declarations
      */
+
     event LogOracleSet(address _oracle);
 
     event LogBridgeBankSet(address _bridgeBank);
@@ -137,7 +138,7 @@ contract CosmosBridge {
         ClaimType _claimType,
         bytes memory _cosmosSender,
         address payable _ethereumReceiver,
-        address _tokenAddress,
+        address _tokenAddress, // TODO: Delete from here AND Relayer
         string memory _symbol,
         uint256 _amount
     ) public isActive {
@@ -145,57 +146,56 @@ contract CosmosBridge {
             valset.isActiveValidator(msg.sender),
             "Must be an active validator"
         );
-
-        // Increment the prophecy claim count
-        prophecyClaimCount = prophecyClaimCount.add(1);
-
-        ClaimType claimType;
         address tokenAddress;
+        string memory symbol;
         if (_claimType == ClaimType.Burn) {
             require(
-                bridgeBank.hasLockedFunds(_symbol, _amount),
+                bridgeBank.getLockedFunds(_symbol) >= _amount,
                 "Not enough locked assets to complete the proposed prophecy"
             );
-            claimType = ClaimType.Burn;
-            tokenAddress = _tokenAddress;
+            symbol = _symbol;
         } else if (_claimType == ClaimType.Lock) {
-            address recoveredBridgeTokenContract = bridgeBank
-                .getControlledBridgeToken(_symbol);
-            if (recoveredBridgeTokenContract != address(0)) {
-                // This is not the first lock for the asset, set token address to existing contract
-                tokenAddress = recoveredBridgeTokenContract;
-            } else {
+            address bridgeTokenAddress = bridgeBank.getUnprefixedBridgeToken(
+                _symbol
+            );
+            if (bridgeTokenAddress == address(0)) {
                 // This is the first lock for the asset, deploy new contract and set as token address
-                tokenAddress = bridgeBank.createNewBridgeToken(_symbol);
+                (symbol, tokenAddress) = bridgeBank.createNewBridgeToken(
+                    _symbol
+                );
+            } else {
+                // This is not the first lock for the asset, set token address to existing contract
+                tokenAddress = bridgeTokenAddress;
+                symbol = _symbol;
             }
-            claimType = ClaimType.Lock;
         } else {
             revert("Invalid claim type, only burn and lock are supported.");
         }
 
         // Create the new ProphecyClaim
         ProphecyClaim memory prophecyClaim = ProphecyClaim(
-            claimType,
+            _claimType,
             _cosmosSender,
             _ethereumReceiver,
             msg.sender,
             tokenAddress,
-            _symbol,
+            symbol,
             _amount,
             Status.Pending
         );
 
-        // Add the new ProphecyClaim to the mapping
+        // Increment count and add the new ProphecyClaim to the mapping
+        prophecyClaimCount = prophecyClaimCount.add(1);
         prophecyClaims[prophecyClaimCount] = prophecyClaim;
 
         emit LogNewProphecyClaim(
             prophecyClaimCount,
-            claimType,
+            _claimType,
             _cosmosSender,
             _ethereumReceiver,
             msg.sender,
             tokenAddress,
-            _symbol,
+            symbol,
             _amount
         );
     }

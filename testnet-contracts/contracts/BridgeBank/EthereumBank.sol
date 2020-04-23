@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./BridgeToken.sol";
 
 
@@ -52,21 +52,17 @@ contract EthereumBank {
     }
 
     /*
-     * @dev: Validates that the lockedFunds mapping holds an amount of an asset.
+     * @dev: Gets the amount of locked tokens by symbol.
      *
      * @param _symbol: The asset's symbol.
-     * @param _amount: The amount of erc20 tokens/ethereum (in wei).
      */
-    function hasLockedFunds(string memory _symbol, uint256 _amount)
+    function getLockedFunds(string memory _symbol)
         public
         view
-        returns (bool)
+        returns (uint256)
     {
-        _token = lockedTokenList[_symbol] = _token;
-        if (lockedFunds[lockedTokenList[_symbol]] >= _amount) {
-            return true;
-        }
-        return false;
+        address tokenAddress = lockedTokenList[_symbol];
+        return lockedFunds[tokenAddress];
     }
 
     /*

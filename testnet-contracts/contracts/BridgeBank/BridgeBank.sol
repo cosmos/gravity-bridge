@@ -59,7 +59,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
      */
     modifier onlyCosmosBridge() {
         require(
-            msg.sender == address(cosmosBridge), // TODO: Consider method for recovering funds
+            msg.sender == address(cosmosBridge),
             "Access restricted to the cosmos bridge"
         );
         _;
@@ -80,7 +80,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
     function createNewBridgeToken(string memory _symbol)
         public
         onlyCosmosBridge
-        returns (address)
+        returns (string memory, address)
     {
         return deployNewBridgeToken(_symbol);
     }
@@ -170,7 +170,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
     ) public onlyCosmosBridge {
         // Confirm that the bank has sufficient locked balances of this token type
         require(
-            hasLockedFunds(_symbol, _amount),
+            getLockedFunds(_symbol) >= _amount,
             "The Bank does not hold enough locked tokens to fulfill this request."
         );
 
