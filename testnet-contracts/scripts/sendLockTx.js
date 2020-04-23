@@ -113,7 +113,7 @@ module.exports = async () => {
 
     // Send lock transaction
     console.log("Connecting to contract....");
-    const { logs } = await contract.deployed().then(function(instance) {
+    const { logs } = await contract.deployed().then(function (instance) {
       console.log("Connected to contract, sending lock...");
       return instance.lock(cosmosRecipient, coinDenom, amount, {
         from: accounts[0],

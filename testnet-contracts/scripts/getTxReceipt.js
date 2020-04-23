@@ -27,6 +27,7 @@ module.exports = async () => {
     eventTopics.set("0x802cd873de701272ec903860b690986bd460b5bcd57e30ac1fdfdeece10528ac", "LogUnlock")
     eventTopics.set("0x79e7c1c0bd54f11809c3bf6023c242783602d61ceff272c6bba6f8559c24ad0d", "LogProphecyCompleted")
     eventTopics.set("0x1d8e3fbd601d9d92db7022fb97f75e132841b94db732dcecb0c93cb31852fcbc", "LogProphecyProcessed")
+    eventTopics.set("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", "Transfer")
 
     try {
         // TODO: add as argument
