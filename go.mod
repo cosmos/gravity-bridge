@@ -41,7 +41,7 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/tendermint/go-amino v0.15.1
 	github.com/tendermint/iavl v0.13.3 // indirect
-	github.com/tendermint/tendermint v0.33.4
+	github.com/tendermint/tendermint v0.33.3
 	github.com/tendermint/tm-db v0.5.1
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	go.etcd.io/bbolt v1.3.4 // indirect
