@@ -25,21 +25,18 @@ yarn # or npm i
 yarn develop # or npm run develop
 ```
 
-### Deploy Peggy contracts to local blockchain
+### Set up Peggy contracts
 
 Next, compile and deploy Peggy's contracts to the Ethereum blockchain:
 
 ```bash
 # Open a new terminal window
 
-# Deploy contracts to local blockchain
-yarn migrate
+# Deploy and set up contracts, then mint ERC20 TEST tokens and approve some to bank contract
+yarn peggy:all
 
-# Activate the contracts
-yarn peggy:setup
-
-# Get the address of Peggy's BridgeRegistry contract
-yarn peggy:address
+# Take note of Peggy's BridgeRegistry contract address and the ERC20 TEST contract address,
+# you'll need them in the next step.
 ```
 
 To set up the relayer, go to [the next step](./setup-relayer.md).

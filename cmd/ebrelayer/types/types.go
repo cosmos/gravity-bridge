@@ -60,7 +60,7 @@ func NewLockEvent(ethereumChainID *big.Int, bridgeContractAddress common.Address
 
 // String implements fmt.Stringer
 func (l LockEvent) String() string {
-	return fmt.Sprintf("\nChain ID: %v\nBridge contract address: %v\nToken symbol: %v\nToken"+
+	return fmt.Sprintf("\nChain ID: %v\nBridge contract address: %v\nToken symbol: %v\nToken "+
 		"contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
 		l.EthereumChainID, l.BridgeContractAddress.Hex(), l.Symbol, l.Token.Hex(), l.From.Hex(),
 		string(l.To), l.Value, l.Nonce)

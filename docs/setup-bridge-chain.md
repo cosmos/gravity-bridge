@@ -87,7 +87,7 @@ ebcli query account $(ebcli keys show testuser -a)
 # Test out burning 1 of the eth for the return trip. We'll use "0x0000000000000000000000000000000000000000" for the token-contract-address, because we're dealing with the original EVM native token (eth).
 
 # ebcli tx ethbridge burn [cosmos-sender-address] [ethereum-receiver-address] [amount] [symbol] --ethereum-chain-id [ethereum-chain-id] [flags]
-ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 1 peggyeth --ethereum-chain-id=3 --token-contract-address=0x0000000000000000000000000000000000000000 --from=testuser --yes
+ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 1 peggyeth --ethereum-chain-id=3 --from=testuser --yes
 
 # Confirm that the token was successfully burned
 ebcli query account $(ebcli keys show testuser -a)
