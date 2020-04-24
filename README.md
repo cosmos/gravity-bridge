@@ -2,6 +2,7 @@
 
 [![version](https://img.shields.io/github/tag/cosmos/peggy.svg)](https://github.com/cosmos/peggy/releases/latest)
 [![CircleCI](https://circleci.com/gh/cosmos/peggy/tree/master.svg?style=svg)](https://circleci.com/gh/cosmos/peggy/tree/master)
+![Go Tests](https://github.com/cosmos/peggy/workflows/test%20coverage/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/cosmos/peggy)](https://goreportcard.com/report/github.com/cosmos/peggy)
 [![LoC](https://tokei.rs/b1/github/cosmos/peggy)](https://github.com/cosmos/peggy)
 [![API Reference](https://godoc.org/github.com/cosmos/peggy?status.svg)](https://godoc.org/github.com/cosmos/peggy)
@@ -43,11 +44,11 @@ ebrelayer help
 ## Usage Steps
 
 - **Initialization**: setup the Bridge chain, add accounts, start the Bridge chain, and test available commands
-- **Setup Peggy locally**: start local Ethereum blockchain, compile and deploy contracts, activate the contracts, and get the registry contract's deployed address 
+- **Setup Peggy locally**: start local Ethereum blockchain, compile and deploy contracts, activate the contracts, and get the registry contract's deployed address
 - **Run the Relayer**: start the relayer with a validator account in order to relay lock and burn events between the EVM blockchain and the Cosmos SDK blockchain.
 - **Ethereum to Cosmos asset transfers**: start the Relayer service, send lock transaction containing local assets to the contracts, and test ERC20 support
 - **Using Peggy with the Ropsten testnet**: setup interfacting with the Ropsten testnet, deploy contracts to Ropsten testnet, start the Relayer service on the Ropsten testnet, and send lock transaction containing Ropsten testnet assets to the contracts
-- **Cosmos to Ethereum asset transfers**: setup interfacing with tendermint, start the Relayer service, start the Oracle Claim Relayer service, burn assets on tendermint, create prophecy and oracle claims on Ethereum, and process prophecy claims 
+- **Cosmos to Ethereum asset transfers**: setup interfacing with tendermint, start the Relayer service, start the Oracle Claim Relayer service, burn assets on tendermint, create prophecy and oracle claims on Ethereum, and process prophecy claims
 
 ## Initialization
 
@@ -58,6 +59,7 @@ In order to facilitate cross chain transfers, the Bridge blockchain must be set 
 To test the transfer of Ethereum based assets, set up and start a local Ethereum chain by following these [steps](./docs/setup-eth-local.md).
 
 ## Run the Relayer
+
 To set up and operate the relayer, follow the instructions [here](./setup-relayer.md).
 
 ## Ethereum to Cosmos asset transfers
@@ -70,7 +72,7 @@ Instead of transferring local Ethereum assets to Cosmos-SDK based blockchains, y
 
 ## Cosmos to Ethereum asset transfers
 
-Cosmos -> Ethereum asset transfers are facilitated by a reverse process where validators witness transactions on tendermint and sign a data package containing the information. Cosmos assets can be locked, resulting in the release of funds held on Ethereum, or burned, resulting in the minting of new ERC20 tokens on Ethereum which represent the burned assets. The data package containing the validator's signature is then relayed to the contracts deployed on the Ethereum blockchain. Once enough other validators have confirmed that the transaction's information is valid, the funds are released/minted to the intended recipient's Ethereum address. In this way, assets on  Cosmos-SDK based blockchains can be transferred to Ethereum. The process is described [here](./docs/cosmos-to-ethereum.md). 
+Cosmos -> Ethereum asset transfers are facilitated by a reverse process where validators witness transactions on tendermint and sign a data package containing the information. Cosmos assets can be locked, resulting in the release of funds held on Ethereum, or burned, resulting in the minting of new ERC20 tokens on Ethereum which represent the burned assets. The data package containing the validator's signature is then relayed to the contracts deployed on the Ethereum blockchain. Once enough other validators have confirmed that the transaction's information is valid, the funds are released/minted to the intended recipient's Ethereum address. In this way, assets on Cosmos-SDK based blockchains can be transferred to Ethereum. The process is described [here](./docs/cosmos-to-ethereum.md).
 
 ## Using the application from rest-server
 
@@ -83,7 +85,6 @@ ebcli rest-server --trust-node
 An api collection for [Postman](https://www.getpostman.com/) is provided [here](./docs/peggy.postman_collection.json) which documents some API endpoints and can be used to interact with it.
 
 Note: For checking account details/balance, you will need to change the cosmos addresses in the URLs, params and body to match the addresses you generated that you want to check.
-
 
 ## Using the modules in other projects
 

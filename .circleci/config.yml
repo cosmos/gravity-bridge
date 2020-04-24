@@ -29,6 +29,7 @@ jobs: # basic units of work in a run
             gotestsum --junitfile ${TEST_RESULTS}/unit-tests.xml
       - store_test_results:
           path: /tmp/test-results
+
   contracts:
     # The primary container is an instance of the first image listed. The job's commands run in this container.
     docker:
@@ -62,25 +63,3 @@ jobs: # basic units of work in a run
       - store_test_results:
           path: /tmp/contract-test-results
       - run: exit
-
-  upload-coverage:
-    docker: # run the steps with Docker
-      # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
-      - image: circleci/golang:1.13 #
-    # directory where steps are run. Path must conform to the Go Workspace requirements
-    working_directory: /go/src/github.com/cosmos/peggy
-    steps:
-      - checkout
-      - run:
-          name: gather
-          command: |
-            for d in $(go list ./... | grep -v vendor); do
-                go test -race -coverprofile=profile.out -covermode=atomic "$d"
-                if [ -f profile.out ]; then
-                    cat profile.out >> coverage.txt
-                    rm profile.out
-                fi
-            done
-      - run:
-          name: upload
-          command: bash <(curl -s https://codecov.io/bash) -f coverage.txt
