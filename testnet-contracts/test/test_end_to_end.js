@@ -80,8 +80,9 @@ contract("CosmosBridge", function (accounts) {
       );
       this.ethereumReceiver = userSeven;
       this.ethTokenAddress = "0x0000000000000000000000000000000000000000";
-      this.symbol = "eth";
-      this.nativeCosmosAssetDenom = "atom";
+      this.symbol = "ETH";
+      this.nativeCosmosAssetDenom = "ATOM";
+      this.prefixedNativeCosmosAssetDenom = "PEGGYATOM";
       this.amountWei = 100;
       this.amountNativeCosmos = 815;
 
@@ -158,7 +159,6 @@ contract("CosmosBridge", function (accounts) {
         CLAIM_TYPE_BURN,
         this.cosmosSender,
         this.ethereumReceiver,
-        this.ethTokenAddress,
         this.symbol,
         this.amountWei,
         {
@@ -267,7 +267,6 @@ contract("CosmosBridge", function (accounts) {
         CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
-        this.ethTokenAddress,
         this.nativeCosmosAssetDenom,
         this.amountNativeCosmos,
         {
@@ -281,10 +280,9 @@ contract("CosmosBridge", function (accounts) {
       const claimEthereumReceiver = event.args._ethereumReceiver;
       const claimTokenAddress = event.args._tokenAddress;
       const claimAmount = Number(event.args._amount);
-
       // Check that the bridge token is a controlled bridge token
-      const bridgeTokenAddr = await this.bridgeBank.getControlledBridgeToken(
-        "atom"
+      const bridgeTokenAddr = await this.bridgeBank.getBridgeToken(
+        this.prefixedNativeCosmosAssetDenom
       );
       claimTokenAddress.should.be.equal(bridgeTokenAddr);
 
@@ -379,18 +377,17 @@ contract("CosmosBridge", function (accounts) {
       //  Now we'll do a 2nd lock prophecy claim of the native cosmos asset
       // --------------------------------------------------------
       console.log("\t[Attempt lock -> mint] (existing)");
-
       const { logs: logs2 } = await this.cosmosBridge.newProphecyClaim(
         CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
-        this.ethTokenAddress,
         this.nativeCosmosAssetDenom,
         this.amountNativeCosmos,
         {
           from: userOne
         }
       ).should.be.fulfilled;
+
 
       const event2 = logs2.find(e => e.event === "LogNewProphecyClaim");
       const claimProphecyId2 = Number(event2.args._prophecyID);

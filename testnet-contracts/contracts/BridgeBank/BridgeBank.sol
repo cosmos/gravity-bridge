@@ -80,7 +80,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
     function createNewBridgeToken(string memory _symbol)
         public
         onlyCosmosBridge
-        returns (string memory, address)
+        returns (address)
     {
         return deployNewBridgeToken(_symbol);
     }

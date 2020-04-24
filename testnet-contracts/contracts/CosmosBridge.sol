@@ -8,6 +8,8 @@ import "./BridgeBank/BridgeBank.sol";
 contract CosmosBridge {
     using SafeMath for uint256;
 
+    string COSMOS_NATIVE_ASSET_PREFIX = "PEGGY";
+
     /*
      * @dev: Public variable declarations
      */
@@ -156,18 +158,14 @@ contract CosmosBridge {
             symbol = _symbol;
             tokenAddress = bridgeBank.getLockedTokenAddress(_symbol);
         } else if (_claimType == ClaimType.Lock) {
-            address bridgeTokenAddress = bridgeBank.getUnprefixedBridgeToken(
-                _symbol
-            );
+            symbol = concat(COSMOS_NATIVE_ASSET_PREFIX, _symbol); // Add 'PEGGY' symbol prefix
+            address bridgeTokenAddress = bridgeBank.getBridgeToken(symbol);
             if (bridgeTokenAddress == address(0)) {
                 // First lock of this asset, deploy new contract and get new symbol/token address
-                (symbol, tokenAddress) = bridgeBank.createNewBridgeToken(
-                    _symbol
-                );
+                tokenAddress = bridgeBank.createNewBridgeToken(symbol);
             } else {
                 // Not the first lock of this asset, get existing symbol/token address
                 tokenAddress = bridgeTokenAddress;
-                symbol = _symbol;
             }
         } else {
             revert("Invalid claim type, only burn and lock are supported.");
@@ -284,5 +282,19 @@ contract CosmosBridge {
             valset.isActiveValidator(
                 prophecyClaims[_prophecyID].originalValidator
             );
+    }
+
+    /*
+     * @dev: Performs low gas-comsuption string concatenation
+     *
+     * @param _prefix: start of the string
+     * @param _suffix: end of the string
+     */
+    function concat(string memory _prefix, string memory _suffix)
+        internal
+        pure
+        returns (string memory)
+    {
+        return string(abi.encodePacked(_prefix, _suffix));
     }
 }

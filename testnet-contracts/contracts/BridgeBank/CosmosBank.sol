@@ -13,8 +13,6 @@ import "./BridgeToken.sol";
 contract CosmosBank {
     using SafeMath for uint256;
 
-    string COSMOS_NATIVE_ASSET_PREFIX = "PEGGY";
-
     uint256 public bridgeTokenCount;
     mapping(string => address) controlledBridgeTokens;
     mapping(bytes32 => CosmosDeposit) cosmosDeposits;
@@ -52,14 +50,12 @@ contract CosmosBank {
      * @param _symbol: The token's symbol/denom without 'PEGGY' prefix.
      * @return: Address associated with the given symbol. Returns address(0) if none is found.
      */
-    function getUnprefixedBridgeToken(string memory _symbol)
+    function getBridgeToken(string memory _symbol)
         public
         view
         returns (address)
     {
-        return (
-            controlledBridgeTokens[concat(COSMOS_NATIVE_ASSET_PREFIX, _symbol)]
-        );
+        return (controlledBridgeTokens[_symbol]);
     }
 
     /*
@@ -99,24 +95,19 @@ contract CosmosBank {
      */
     function deployNewBridgeToken(string memory _symbol)
         internal
-        returns (string memory, address)
+        returns (address)
     {
         bridgeTokenCount = bridgeTokenCount.add(1);
 
         // Deploy new bridge token contract
-        string memory prefixedSymbol = concat(
-            COSMOS_NATIVE_ASSET_PREFIX,
-            _symbol
-        );
-        BridgeToken newBridgeToken = (new BridgeToken)(prefixedSymbol);
+        BridgeToken newBridgeToken = (new BridgeToken)(_symbol);
 
         // Set address in tokens mapping
         address newBridgeTokenAddress = address(newBridgeToken);
-        controlledBridgeTokens[prefixedSymbol] = newBridgeTokenAddress;
+        controlledBridgeTokens[_symbol] = newBridgeTokenAddress;
 
-        emit LogNewBridgeToken(newBridgeTokenAddress, prefixedSymbol);
-
-        return (prefixedSymbol, newBridgeTokenAddress);
+        emit LogNewBridgeToken(newBridgeTokenAddress, _symbol);
+        return newBridgeTokenAddress;
     }
 
     /*
@@ -194,19 +185,5 @@ contract CosmosBank {
             deposit.bridgeTokenAddress,
             deposit.amount
         );
-    }
-
-    /*
-     * @dev: Performs low gas-comsuption string concatenation
-     *
-     * @param _prefix: start of the string
-     * @param _suffix: end of the string
-     */
-    function concat(string memory _prefix, string memory _suffix)
-        internal
-        pure
-        returns (string memory)
-    {
-        return string(abi.encodePacked(_prefix, _suffix));
     }
 }
