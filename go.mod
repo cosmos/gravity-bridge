@@ -3,10 +3,10 @@ module github.com/cosmos/peggy
 go 1.13
 
 require (
-	github.com/99designs/keyring v1.1.4 // indirect
+	github.com/99designs/keyring v1.1.5 // indirect
 	github.com/VictoriaMetrics/fastcache v1.5.7 // indirect
 	github.com/allegro/bigcache v1.2.1 // indirect
-	github.com/aristanetworks/goarista v0.0.0-20200410125653-0a3087568c00 // indirect
+	github.com/aristanetworks/goarista v0.0.0-20200423211322-0b5ff220aee9 // indirect
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/cosmos/cosmos-sdk v0.38.3
 	github.com/deckarep/golang-set v1.7.1 // indirect
@@ -45,10 +45,10 @@ require (
 	github.com/tendermint/tm-db v0.5.1
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	go.etcd.io/bbolt v1.3.4 // indirect
-	golang.org/x/crypto v0.0.0-20200422194213-44a606286825 // indirect
+	golang.org/x/crypto v0.0.0-20200423211502-4bdfaf469ed5 // indirect
 	golang.org/x/net v0.0.0-20200421231249-e086a090c8fd // indirect
 	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
-	google.golang.org/genproto v0.0.0-20200420144010-e5e8543f8aeb // indirect
-	google.golang.org/grpc v1.29.0 // indirect
+	google.golang.org/genproto v0.0.0-20200423170343-7949de9c1215 // indirect
+	google.golang.org/grpc v1.29.1 // indirect
 	gopkg.in/ini.v1 v1.55.0 // indirect
 )
