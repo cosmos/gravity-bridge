@@ -112,7 +112,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
     }
 
     /*
-     * @dev: Locks received Ethereum funds.
+     * @dev: Burns received Ethereum funds.
      *
      * @param _recipient: bytes representation of destination address.
      * @param _token: token address in origin chain (0x0 if ethereum)
