@@ -58,6 +58,7 @@ All notable changes to this project will be documented in this file.
 - (relayer) [\#163](https://github.com/cosmos/peggy/pull/163) Unified Relayer for chain subscription and event relay
 - (ethbridge) [\#182](https://github.com/cosmos/peggy/pull/182) Remove whitelisting and prefix Eth-tokens and change API/CLI
 - (relayer) [\#183](https://github.com/cosmos/peggy/pull/183) Add integrated generator for contract go bindings
+- (relayer) [\#190](https://github.com/cosmos/peggy/pull/190) Support burns of native cosmos assets on Ethereum
 
 ### Improvements
 
