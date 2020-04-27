@@ -56,7 +56,7 @@ func CreateTestLogEthereumEvent(t *testing.T) types.EthereumEvent {
 
 	return types.EthereumEvent{testEthereumChainID, testBridgeContractAddress,
 		testProphecyID32, testEthereumSender, testCosmosRecipient, testTokenAddress,
-		TestSymbol, testAmount, testNonce, ethbridge.BurnText}
+		TestSymbol, testAmount, testNonce, ethbridge.LockText}
 }
 
 // CreateTestProphecyClaimEvent creates a sample ProphecyClaimEvent for testing purposes
