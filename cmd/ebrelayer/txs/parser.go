@@ -58,7 +58,7 @@ func EthereumEventToEthBridgeClaim(valAddr sdk.ValAddress, event *types.Ethereum
 			log.Fatal("Can only relay burns of 'PEGGY' prefixed tokens")
 		}
 		res := strings.SplitAfter(symbol, defaultPrefix)
-		symbol = strings.ToUpper(strings.Join(res[1:], ""))
+		symbol = strings.Join(res[1:], "")
 	}
 
 	amount := event.Value.Int64()
