@@ -22,8 +22,8 @@ const (
 	defaultPrefix = "peggy"
 )
 
-// LogLockToEthBridgeClaim parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
-func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *types.LockEvent) (ethbridge.EthBridgeClaim, error) {
+// EthereumEventToEthBridgeClaim parses and packages an Ethereum event struct with a validator address in an EthBridgeClaim msg
+func EthereumEventToEthBridgeClaim(valAddr sdk.ValAddress, event *types.EthereumEvent) (ethbridge.EthBridgeClaim, error) {
 	witnessClaim := ethbridge.EthBridgeClaim{}
 
 	// chainID type casting (*big.Int -> int)
@@ -48,8 +48,17 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *types.LockEvent) (et
 
 	// Symbol formatted to lowercase
 	symbol := strings.ToLower(event.Symbol)
-	if symbol == "eth" && !isZeroAddress(event.Token) {
-		return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
+	switch event.ClaimType {
+	case ethbridge.LockText:
+		if symbol == "eth" && !isZeroAddress(event.Token) {
+			return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
+		}
+	case ethbridge.BurnText:
+		if !strings.Contains(symbol, defaultPrefix) {
+			log.Fatal("Can only relay burns of 'PEGGY' prefixed tokens")
+		}
+		res := strings.SplitAfter(symbol, defaultPrefix)
+		symbol = strings.ToUpper(strings.Join(res[1:], ""))
 	}
 
 	amount := event.Value.Int64()
@@ -67,6 +76,7 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *types.LockEvent) (et
 	witnessClaim.ValidatorAddress = valAddr
 	witnessClaim.CosmosReceiver = recipient
 	witnessClaim.Amount = amount
+	witnessClaim.ClaimType = event.ClaimType
 
 	return witnessClaim, nil
 }
@@ -104,11 +114,11 @@ func CosmosMsgToProphecyClaim(event types.CosmosMsg) ProphecyClaim {
 	amount := event.Amount
 
 	prophecyClaim := ProphecyClaim{
-		ClaimType:            claimType,
-		CosmosSender:         cosmosSender,
-		EthereumReceiver:     ethereumReceiver,
-		Symbol:               symbol,
-		Amount:               amount,
+		ClaimType:        claimType,
+		CosmosSender:     cosmosSender,
+		EthereumReceiver: ethereumReceiver,
+		Symbol:           symbol,
+		Amount:           amount,
 	}
 	return prophecyClaim
 }

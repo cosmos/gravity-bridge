@@ -42,6 +42,7 @@
     "peggy:getTx": "npx truffle exec scripts/getTxReceipt.js",
     "peggy:setup": "npx truffle exec scripts/setOracleAndBridgeBank.js",
     "peggy:lock": "npx truffle exec scripts/sendLockTx.js",
+    "peggy:burn": "npx truffle exec scripts/sendBurnTx.js",
     "peggy:check": "npx truffle exec scripts/sendCheckProphecy.js",
     "peggy:process": "npx truffle exec scripts/sendProcessProphecy.js",
     "peggy:addBridgeToken": "npx truffle exec scripts/sendAddBridgeToken.js",

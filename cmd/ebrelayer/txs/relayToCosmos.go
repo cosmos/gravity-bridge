@@ -12,9 +12,9 @@ import (
 	"github.com/cosmos/peggy/x/ethbridge/types"
 )
 
-// RelayLockToCosmos RelayLockToCosmos applies validator's signature to an EthBridgeClaim message
-//		containing information about an event on the Ethereum blockchain before relaying to the Bridge
-func RelayLockToCosmos(cdc *codec.Codec, moniker string, claim *types.EthBridgeClaim, cliCtx context.CLIContext,
+// RelayToCosmos applies validator's signature to an EthBridgeClaim message containing
+// information about an event on the Ethereum blockchain before relaying to the Bridge
+func RelayToCosmos(cdc *codec.Codec, moniker string, claim *types.EthBridgeClaim, cliCtx context.CLIContext,
 	txBldr authtypes.TxBuilder) error {
 	// Packages the claim as a Tendermint message
 	msg := ethbridge.NewMsgCreateEthBridgeClaim(*claim)

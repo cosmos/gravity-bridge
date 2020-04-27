@@ -118,6 +118,49 @@ contract BridgeBank is CosmosBank, EthereumBank {
      * @param _token: token address in origin chain (0x0 if ethereum)
      * @param _amount: value of deposit
      */
+    function burn(bytes memory _recipient, address _token, uint256 _amount)
+        public
+        payable
+        availableNonce()
+    {
+        string memory symbol;
+
+        if (msg.value > 0) {
+            require(
+                _token == address(0),
+                "Ethereum burns require the 'token' address to be the null address"
+            );
+            require(
+                msg.value == _amount,
+                "The transactions value must be equal the specified amount (in wei)"
+            );
+            // Burn Ethereum and set symbol
+            address(this).transfer(_amount);
+            symbol = "ETH";
+        } else {
+            require(
+                // Burn ERC20 tokens
+                BridgeToken(_token).transferFrom(
+                    msg.sender,
+                     address(this),
+                    _amount
+                ),
+                "Contract token allowances insufficient to complete this burn request"
+            );
+            // Set symbol to the ERC20 token's symbol
+            symbol = BridgeToken(_token).symbol();
+        }
+
+        burnFunds(msg.sender, _recipient, _token, symbol, _amount);
+    }
+
+    /*
+     * @dev: Locks received Ethereum funds.
+     *
+     * @param _recipient: bytes representation of destination address.
+     * @param _token: token address in origin chain (0x0 if ethereum)
+     * @param _amount: value of deposit
+     */
     function lock(bytes memory _recipient, address _token, uint256 _amount)
         public
         payable

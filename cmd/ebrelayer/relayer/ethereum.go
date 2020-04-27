@@ -27,6 +27,7 @@ import (
 	"github.com/cosmos/peggy/cmd/ebrelayer/contract"
 	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
 	"github.com/cosmos/peggy/cmd/ebrelayer/types"
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
 )
 
 // TODO: Move relay functionality out of EthereumSub into a new Relayer parent struct
@@ -136,6 +137,7 @@ func (sub EthereumSub) Start() {
 	bridgeBankAddress, subBridgeBank := sub.startContractEventSub(logs, client, txs.BridgeBank)
 	bridgeBankContractABI := contract.LoadABI(txs.BridgeBank)
 	eventLogLockSignature := bridgeBankContractABI.Events[types.LogLock.String()].Id().Hex()
+	eventLogBurnSignature := bridgeBankContractABI.Events[types.LogBurn.String()].Id().Hex()
 
 	// Start CosmosBridge subscription, prepare contract ABI and LogNewProphecyClaim event signature
 	cosmosBridgeAddress, subCosmosBridge := sub.startContractEventSub(logs, client, txs.CosmosBridge)
@@ -154,8 +156,11 @@ func (sub EthereumSub) Start() {
 			sub.Logger.Info(fmt.Sprintf("Witnessed tx %s on block %d\n", vLog.TxHash.Hex(), vLog.BlockNumber))
 			var err error
 			switch vLog.Topics[0].Hex() {
+			case eventLogBurnSignature:
+				err = sub.handleEthereumEvent(clientChainID, bridgeBankAddress, bridgeBankContractABI,
+					types.LogBurn.String(), vLog)
 			case eventLogLockSignature:
-				err = sub.handleLogLock(clientChainID, bridgeBankAddress, bridgeBankContractABI,
+				err = sub.handleEthereumEvent(clientChainID, bridgeBankAddress, bridgeBankContractABI,
 					types.LogLock.String(), vLog)
 			case eventLogNewProphecyClaimSignature:
 				err = sub.handleLogNewProphecyClaim(cosmosBridgeAddress, cosmosBridgeContractABI,
@@ -192,27 +197,32 @@ func (sub EthereumSub) startContractEventSub(logs chan ctypes.Log, client *ethcl
 	return subContractAddress, contractSub
 }
 
-// handleLogLock unpacks a LogLock event, converts it to a ProphecyClaim, and relays a tx to Cosmos
-func (sub EthereumSub) handleLogLock(clientChainID *big.Int, contractAddress common.Address,
+// handleLogBurn unpacks an Ethereum event, converts it to a ProphecyClaim, and relays a tx to Cosmos
+func (sub EthereumSub) handleEthereumEvent(clientChainID *big.Int, contractAddress common.Address,
 	contractABI abi.ABI, eventName string, cLog ctypes.Log) error {
 	// Parse the event's attributes via contract ABI
-	event := types.LockEvent{}
+	event := types.EthereumEvent{}
 	err := contractABI.Unpack(&event, eventName, cLog.Data)
 	if err != nil {
 		sub.Logger.Error("error unpacking: %v", err)
 	}
 	event.BridgeContractAddress = contractAddress
 	event.EthereumChainID = clientChainID
+	if eventName == types.LogBurn.String() {
+		event.ClaimType = ethbridge.BurnText
+	} else {
+		event.ClaimType = ethbridge.LockText
+	}
 	sub.Logger.Info(event.String())
 
 	// Add the event to the record
 	types.NewEventWrite(cLog.TxHash.Hex(), event)
 
-	prophecyClaim, err := txs.LogLockToEthBridgeClaim(sub.ValidatorAddress, &event)
+	prophecyClaim, err := txs.EthereumEventToEthBridgeClaim(sub.ValidatorAddress, &event)
 	if err != nil {
 		return err
 	}
-	return txs.RelayLockToCosmos(sub.Cdc, sub.ValidatorName, &prophecyClaim, sub.CliCtx, sub.TxBldr)
+	return txs.RelayToCosmos(sub.Cdc, sub.ValidatorName, &prophecyClaim, sub.CliCtx, sub.TxBldr)
 }
 
 // Unpacks a handleLogNewProphecyClaim event, builds a new OracleClaim, and relays it to Ethereum

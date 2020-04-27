@@ -21,6 +21,7 @@
     "peggy:getTx": "yarn workspace testnet-contracts peggy:getTx",
     "peggy:setup": "yarn workspace testnet-contracts peggy:setup",
     "peggy:lock": "yarn workspace testnet-contracts peggy:lock",
+    "peggy:burn": "yarn workspace testnet-contracts peggy:burn",
     "peggy:check": "yarn workspace testnet-contracts peggy:check",
     "peggy:process": "yarn workspace testnet-contracts peggy:process",
     "peggy:addBridgeToken": "yarn workspace testnet-contracts peggy:addBridgeToken",
