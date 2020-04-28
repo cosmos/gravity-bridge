@@ -197,7 +197,7 @@ func (sub EthereumSub) startContractEventSub(logs chan ctypes.Log, client *ethcl
 	return subContractAddress, contractSub
 }
 
-// handleLogBurn unpacks an Ethereum event, converts it to a ProphecyClaim, and relays a tx to Cosmos
+// handleEthereumEvent unpacks an Ethereum event, converts it to a ProphecyClaim, and relays a tx to Cosmos
 func (sub EthereumSub) handleEthereumEvent(clientChainID *big.Int, contractAddress common.Address,
 	contractABI abi.ABI, eventName string, cLog ctypes.Log) error {
 	// Parse the event's attributes via contract ABI

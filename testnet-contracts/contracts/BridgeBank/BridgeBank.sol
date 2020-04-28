@@ -112,7 +112,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
     }
 
     /*
-     * @dev: Burns received Ethereum funds.
+     * @dev: Burns BridgeTokens representing native Cosmos assets.
      *
      * @param _recipient: bytes representation of destination address.
      * @param _token: token address in origin chain (0x0 if ethereum)
@@ -135,18 +135,10 @@ contract BridgeBank is CosmosBank, EthereumBank {
                 "The transactions value must be equal the specified amount (in wei)"
             );
             // Burn Ethereum and set symbol
-            address(this).transfer(_amount);
             symbol = "ETH";
         } else {
-            require(
-                // Burn ERC20 tokens
-                BridgeToken(_token).transferFrom(
-                    msg.sender,
-                     address(this),
-                    _amount
-                ),
-                "Contract token allowances insufficient to complete this burn request"
-            );
+            // Burn ERC20 tokens
+            BridgeToken(_token).burnFrom(msg.sender, _amount);
             // Set symbol to the ERC20 token's symbol
             symbol = BridgeToken(_token).symbol();
         }
