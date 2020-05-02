@@ -6,7 +6,7 @@ require (
 	github.com/99designs/keyring v1.1.5 // indirect
 	github.com/VictoriaMetrics/fastcache v1.5.7 // indirect
 	github.com/allegro/bigcache v1.2.1 // indirect
-	github.com/aristanetworks/goarista v0.0.0-20200423211322-0b5ff220aee9 // indirect
+	github.com/aristanetworks/goarista v0.0.0-20200429182514-19402535e24e // indirect
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/cosmos/cosmos-sdk v0.38.3
 	github.com/deckarep/golang-set v1.7.1 // indirect
@@ -21,15 +21,15 @@ require (
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/joho/godotenv v1.3.0
 	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
-	github.com/keybase/go-keychain v0.0.0-20200325143049-65d7292bc904 // indirect
+	github.com/keybase/go-keychain v0.0.0-20200502122510-cda31fe0c86d // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/miguelmota/go-solidity-sha3 v0.1.0
-	github.com/mitchellh/mapstructure v1.2.2 // indirect
+	github.com/mitchellh/mapstructure v1.3.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pelletier/go-toml v1.7.0 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/procfs v0.0.11 // indirect
+	github.com/prometheus/client_golang v1.6.0 // indirect
 	github.com/prometheus/tsdb v0.10.0 // indirect
 	github.com/rakyll/statik v0.1.7 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
@@ -41,14 +41,14 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/tendermint/go-amino v0.15.1
 	github.com/tendermint/iavl v0.13.3 // indirect
-	github.com/tendermint/tendermint v0.33.3
+	github.com/tendermint/tendermint v0.33.4
 	github.com/tendermint/tm-db v0.5.1
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	go.etcd.io/bbolt v1.3.4 // indirect
-	golang.org/x/crypto v0.0.0-20200423211502-4bdfaf469ed5 // indirect
-	golang.org/x/net v0.0.0-20200421231249-e086a090c8fd // indirect
-	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
-	google.golang.org/genproto v0.0.0-20200423170343-7949de9c1215 // indirect
+	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79 // indirect
+	golang.org/x/net v0.0.0-20200501053045-e0ff5e5a1de5 // indirect
+	golang.org/x/sys v0.0.0-20200501145240-bc7a7d42d5c3 // indirect
+	google.golang.org/genproto v0.0.0-20200430143042-b979b6f78d84 // indirect
 	google.golang.org/grpc v1.29.1 // indirect
 	gopkg.in/ini.v1 v1.55.0 // indirect
 )

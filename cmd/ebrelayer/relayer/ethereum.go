@@ -135,12 +135,12 @@ func (sub EthereumSub) Start() {
 	// Start BridgeBank subscription, prepare contract ABI and LockLog event signature
 	bridgeBankAddress, subBridgeBank := sub.startContractEventSub(logs, client, txs.BridgeBank)
 	bridgeBankContractABI := contract.LoadABI(txs.BridgeBank)
-	eventLogLockSignature := bridgeBankContractABI.Events[types.LogLock.String()].Id().Hex()
+	eventLogLockSignature := bridgeBankContractABI.Events[types.LogLock.String()].ID().Hex()
 
 	// Start CosmosBridge subscription, prepare contract ABI and LogNewProphecyClaim event signature
 	cosmosBridgeAddress, subCosmosBridge := sub.startContractEventSub(logs, client, txs.CosmosBridge)
 	cosmosBridgeContractABI := contract.LoadABI(txs.CosmosBridge)
-	eventLogNewProphecyClaimSignature := cosmosBridgeContractABI.Events[types.LogNewProphecyClaim.String()].Id().Hex()
+	eventLogNewProphecyClaimSignature := cosmosBridgeContractABI.Events[types.LogNewProphecyClaim.String()].ID().Hex()
 
 	for {
 		select {
