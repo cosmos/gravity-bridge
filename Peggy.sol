@@ -1,5 +1,6 @@
 pragma solidity ^0.6.4;
 import "./SafeMath.sol";
+import "./IERC20.sol";
 
 
 // TODO gas optimization: break loops early
@@ -7,155 +8,70 @@ import "./SafeMath.sol";
 // multiple times
 contract Peggy {
     using SafeMath for uint256;
-    bytes32 public checkpoint;
-    uint256 public txNonce;
-    // TODO do we need a separate nonce??????? <-- We think this is purely a gas optimization
+    bytes32 public storedCheckpoint;
+    uint256 public storedNonce;
+    // TODO do we need a separate nonce or can it be stored in the checkpointed data?
+    address public tokenContract;
+
+    uint256 constant ENOUGH_POWER = 66666;
 
     event LogValsetUpdated(address[] _validators, uint256[] _powers);
-    event LogCheckpoint(bytes32 _hash);
-    event LogIndex(uint256 _val);
-    event LogAddress(address _val);
 
-    // constructor(bytes32 _checkpoint) public {
-    //     checkpoint = _checkpoint;
-    // }
-
-    // This function checks that the caller supplied data is consistent with the checkpoint
-    // This lets the contract "store" data offchain.
+    // - Check that the supplied current validator set matches the saved checkpoint
     function checkCheckpoint(
-        address[] memory _validators,
-        uint256[] memory _powers,
-        bytes32 _checkpoint
-    ) private pure {
-        // Loop accumulates a hash of oldValidators and oldPowers
-        bytes32 validatorHash = 0;
-        for (uint256 i = 0; i < _validators.length; i = i.add(1)) {
-            validatorHash = keccak256(
-                abi.encodePacked(validatorHash, _validators[i], _powers[i])
-            );
-        }
-
-        // Checks it against the checkpoint
-        require(
-            validatorHash == _checkpoint,
-            "Supplied validators and powers do not match checkpoint."
-        );
-    }
-
-    // TODO: We need to make it so that you can't submit newValidators in a
-    // non-descending order of power
-    // (if this was possible, you could screw over the next guy)
-    function hashValidators(
-        address[] memory _validators,
-        uint256[] memory _powers
-    ) public pure returns (bytes32) {
-        uint256 valsetLength = _validators.length;
-        require(valsetLength == _powers.length, "Malformed validator set");
-
-        // Generate hash of validators:
-        // Loop accumulates a hash of validators and powers
-        // assigns to validatorsHash
-        bytes32 validatorsHash = 0;
-        for (uint256 i = 0; i < valsetLength; i = i.add(1)) {
-            validatorsHash = keccak256(
-                abi.encodePacked(validatorsHash, _validators[i], _powers[i])
-            );
-        }
-
-        return validatorsHash;
-    }
-
-    // Make sure that validator powers are equal or decreasing. This prevents someone
-    // forcing the next caller to waste gas iterating all the validators
-    function checkValidatorPowerOrder(uint256[] memory _powers) public pure {
-        for (uint256 i = 0; i < _powers.length; i = i.add(1)) {
-            if (i != 0) {
-                require(
-                    _powers[i] <= _powers[i - 1],
-                    "Validator power must not be higher than previous validator in batch"
-                );
-            }
-        }
-    }
-
-    function hashTransactions(
-        uint256[] memory _amounts,
-        address[] memory _destinations,
-        uint256[] memory _fees,
-        uint256[] memory _nonces
-    ) public pure returns (bytes32) {
-        // Check that all components of batch have same length
-        uint256 batchLength = _amounts.length;
-        require(
-            batchLength == _destinations.length &&
-                batchLength == _fees.length &&
-                batchLength == _nonces.length,
-            "Malformed batch of transactions"
-        );
-
-        // Loop accumulates a hash of _amounts, _destinations, _fees, and _nonces
-        bytes32 batchHash = 0;
-        for (uint256 i = 0; i < batchLength; i = i.add(1)) {
-            batchHash = keccak256(
+        address[] memory _currentValidators,
+        uint256[] memory _currentPowers
+    ) public view {
+        bytes32 currentValidatorsHash = 0;
+        for (uint256 i = 0; i < _currentValidators.length; i = i.add(1)) {
+            currentValidatorsHash = keccak256(
                 abi.encodePacked(
-                    batchHash,
-                    _amounts[i],
-                    _destinations[i],
-                    _fees[i],
-                    _nonces[i]
+                    currentValidatorsHash,
+                    _currentValidators[i],
+                    _currentPowers[i]
                 )
             );
         }
 
-        return batchHash;
+        require(
+            currentValidatorsHash == storedCheckpoint,
+            "Supplied validators and powers do not match checkpoint."
+        );
     }
 
-    function checkTxNonces(uint256[] memory _nonces) public view {
-        uint256 lastNonce = txNonce;
-        for (uint256 i = 0; i < _nonces.length; i = i.add(1)) {
-            require(
-                _nonces[i] > lastNonce,
-                "Transaction nonces in batch must be strictly increasing"
-            );
-            lastNonce = _nonces[i];
-        }
-    }
-
-    // This checks that enough old validators have signed the given hash
-    // Will error if any signature is incorrect
-    function checkSignatures(
-        // These are the validators and their powers
-        address[] memory _validators,
-        // These are arrays of the parts of the validators signatures
+    function checkValidatorSignatures(
+        // The current validator set and their powers
+        address[] memory _currentValidators,
+        uint256[] memory _currentPowers,
+        // The current validator's signatures
         uint8[] memory _v,
         bytes32[] memory _r,
         bytes32[] memory _s,
-        // This is the hash that we are checking signatures over
-        bytes32 _hash
+        // This is what we are checking they have signed
+        bytes32 theHash
     ) public pure {
-        // Loop checks signatures (v, r, s) against _validators and hash
-        for (uint256 k = 0; k < _validators.length; k = k.add(1)) {
-            // Validate signature of each old validator over the newValidatorsHash
+        uint256 cumulativePower = 0;
+
+        for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
+            // Check that the current validator has signed off on the hash
             require(
-                _validators[k] == ecrecover(_hash, _v[k], _r[k], _s[k]),
-                "Old validator signature does not match."
+                _currentValidators[k] ==
+                    ecrecover(theHash, _v[k], _r[k], _s[k]),
+                "Current validator signature does not match."
             );
-        }
-    }
 
-    // Checks if submitted powers are enough to approve this action
-    function checkPowers(uint256[] memory _powers) public pure {
-        uint256 sumPower = 0;
-        for (uint256 k = 0; k < _powers.length; k = k.add(1)) {
             // Sum up cumulative power
-            sumPower = sumPower + _powers[k];
+            cumulativePower = cumulativePower + _currentPowers[k];
+
+            // Break early to avoid wasting gas
+            if (cumulativePower > ENOUGH_POWER) {
+                break;
+            }
         }
 
-        // If the cumulative power is greater than 66.666% of total
-        // (we are arbitrarily choosing the maximum power to be 100,000, this should be enough for a PoC)
-        // TODO: make percentage configurable
+        // Check that there was enough power
         require(
-            sumPower > 66666,
+            cumulativePower > ENOUGH_POWER,
             "Submitted validator set does not have enough power."
         );
     }
@@ -164,45 +80,160 @@ contract Peggy {
         // The new version of the validator set
         address[] memory _newValidators,
         uint256[] memory _newPowers,
-        // The old validators that approve the change
-        address[] memory _oldValidators,
-        uint256[] memory _oldPowers,
-        // These are arrays of the parts of the oldValidators signatures
+        // The current validators that approve the change
+        address[] memory _currentValidators,
+        uint256[] memory _currentPowers,
+        // These are arrays of the parts of the current validator's signatures
         uint8[] memory _v,
         bytes32[] memory _r,
         bytes32[] memory _s
     ) public {
-        // Get hash of submitted new validator set
-        bytes32 newValidatorsHash = hashValidators(_newValidators, _newPowers);
+        // CHECKS
 
-        // Check that old validator set matches the checkpoint
-        checkCheckpoint(_oldValidators, _oldPowers, checkpoint);
+        // Check that new validators and powers set is well-formed
+        require(
+            _newValidators.length == _newPowers.length,
+            "Malformed new validator set"
+        );
 
-        // Check that enough old validators have signed the new validator set
-        checkSignatures(_oldValidators, _v, _r, _s, newValidatorsHash);
+        // Check that current validators, powers, and signatures (v,r,s) set is well-formed
+        require(
+            _currentValidators.length == _currentPowers.length &&
+                _currentValidators.length == _v.length &&
+                _currentValidators.length == _r.length &&
+                _currentValidators.length == _s.length,
+            "Malformed current validator set"
+        );
 
-        // Save the new validator set
-        checkpoint = newValidatorsHash;
+        // - Check that the supplied current validator set matches the saved checkpoint
+        checkCheckpoint(_currentValidators, _currentPowers);
+
+        // - Get hash of new validator set
+        // - Check that validator powers are decreasing or equal (this prevents the
+        // next caller from wasting gas)
+        bytes32 newValidatorsHash = 0;
+        {
+            for (uint256 i = 0; i < _newValidators.length; i = i.add(1)) {
+                if (i != 0) {
+                    require(
+                        !(_newPowers[i] > _newPowers[i - 1]),
+                        "Validator power must not be higher than previous validator in batch"
+                    );
+                }
+                newValidatorsHash = keccak256(
+                    abi.encodePacked(
+                        newValidatorsHash,
+                        _newValidators[i],
+                        _newPowers[i]
+                    )
+                );
+            }
+        }
+
+        // - Check that enough current validators have signed off on the new validator
+        // set hash
+        checkValidatorSignatures(
+            _currentValidators,
+            _currentPowers,
+            _v,
+            _r,
+            _s,
+            newValidatorsHash
+        );
+
+        // ACTIONS
+
+        storedCheckpoint = newValidatorsHash;
+
+        // LOGS
+
         emit LogValsetUpdated(_newValidators, _newPowers);
     }
 
     function submitBatch(
         // The validators that approve the batch
-        address[] memory _validators,
-        uint256[] memory _powers,
+        address[] memory _currentValidators,
+        uint256[] memory _currentPowers,
         // These are arrays of the parts of the validators signatures
         uint8[] memory _v,
         bytes32[] memory _r,
         bytes32[] memory _s,
         // The batch of transactions
-        uint256[] memory _amount,
-        address[] memory _destination,
-        uint256[] memory _fee,
-        uint256[] memory _nonce // TODO: multi-erc20 support (input contract address). // Will be done once we get the basic version working
+        uint256[] memory _amounts,
+        address[] memory _destinations,
+        uint256[] memory _fees,
+        uint256[] memory _nonces // TODO: multi-erc20 support (input contract address). // Will be done once we get the basic version working
     ) public {
-        // Iterate over batch and make sure than nonce is strictly increasing (can have gaps)
-        // And that it is higher than the stored
-        // As long as these are fulfilled, it's valid and you can do the stuff in the txs
+        // CHECKS
+
+        // - Check that current validators, powers, and signatures (v,r,s) set is well-formed
+        require(
+            _currentValidators.length == _currentPowers.length &&
+                _currentValidators.length == _v.length &&
+                _currentValidators.length == _r.length &&
+                _currentValidators.length == _s.length,
+            "Malformed current validator set"
+        );
+
+        // - Check that the transaction batch is well-formed
+        require(
+            _amounts.length == _destinations.length &&
+                _amounts.length == _fees.length &&
+                _amounts.length == _nonces.length,
+            "Malformed batch of transactions"
+        );
+
+        // - Check that the supplied current validator set matches the saved checkpoint
+        checkCheckpoint(_currentValidators, _currentPowers);
+
+        // - Get hash of the transaction batch
+        // - Check that the tx nonces are higher than the stored nonce and are
+        // strictly increasing (can have gaps)
+        bytes32 transactionsHash = 0; // TODO: figure out if this is the best way to initialize the hash
+        uint256 lastNonce = storedNonce;
+        {
+            for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
+                require(
+                    _nonces[i] > lastNonce,
+                    "Transaction nonces in batch must be strictly increasing"
+                );
+                lastNonce = _nonces[i];
+
+                transactionsHash = keccak256(
+                    abi.encodePacked(
+                        transactionsHash,
+                        _amounts[i],
+                        _destinations[i],
+                        _fees[i],
+                        _nonces[i]
+                    )
+                );
+            }
+        }
+
+        // - Check that enough current validators have signed off on the transaction batch
+        checkValidatorSignatures(
+            _currentValidators,
+            _currentPowers,
+            _v,
+            _r,
+            _s,
+            transactionsHash
+        );
+
+        // ACTIONS
+
+        // Store nonce
+        storedNonce = lastNonce;
+
+        // - Send transaction amounts to destinations
+        // - Send transaction fees to msg.sender
+        {
+            for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
+                IERC20(tokenContract).transfer(_destinations[i], _amounts[i]);
+                IERC20(tokenContract).transfer(msg.sender, _fees[i]);
+            }
+        }
     }
 
     constructor(
