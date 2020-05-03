@@ -120,13 +120,8 @@ contract BridgeBank is CosmosBank, EthereumBank {
      */
     function burn(bytes memory _recipient, address _token, uint256 _amount)
         public
-        payable
         availableNonce()
     {
-         require(
-            msg.value == 0,
-            "Only pegged BridgeTokens representing native Cosmos assets can be burned."
-        );
         BridgeToken(_token).burnFrom(msg.sender, _amount);
         string memory symbol = BridgeToken(_token).symbol();
         burnFunds(msg.sender, _recipient, _token, symbol, _amount);
