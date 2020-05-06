@@ -91,7 +91,7 @@ Now you can move the EVM native asset back to that vanity address (`0x1111111126
 
 ```bash
 # ebcli tx ethbridge burn [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id [flags]
-ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 1eth  --ethereum-chain-id 3 --from testuser --yes
+ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 1 peggyeth  --ethereum-chain-id 3 --from testuser --yes
 ```
 
 You should now be able to see that address has received the ether:
