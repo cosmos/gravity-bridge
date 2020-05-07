@@ -1,9 +1,9 @@
-pragma solidity ^0.5.1;
+pragma solidity ^0.6.6;
 
 import "@nomiclabs/buidler/console.sol";
 
-contract Greeter {
 
+contract Greeter {
     string greeting;
 
     constructor(string memory _greeting) public {
@@ -19,5 +19,4 @@ contract Greeter {
         console.log("Changing greeting from '%s' to '%s'", greeting, _greeting);
         greeting = _greeting;
     }
-
 }
