@@ -1,0 +1,35 @@
+{
+  "name": "biddler-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "evm": "buidler node",
+    "test": "buidler test --network localhost",
+    "typechain": "npx buidler typechain"
+  },
+  "author": "",
+  "license": "None",
+  "devDependencies": {
+    "@nomiclabs/buidler": "^1.3.2",
+    "@nomiclabs/buidler-ethers": "^1.3.2",
+    "@nomiclabs/buidler-waffle": "^1.3.2",
+    "@types/chai": "^4.2.11",
+    "@types/mocha": "^7.0.2",
+    "@types/node": "^13.13.5",
+    "buidler-gas-reporter": "^0.1.3",
+    "chai": "^4.2.0",
+    "ethereum-waffle": "^2.5.0",
+    "ethers": "^4.0.47",
+    "ts-node": "^8.10.1",
+    "typechain": "^1.0.5",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "buidler-typechain": "0.0.5",
+    "ts-generator": "0.0.8",
+    "typechain-target-ethers": "^1.0.4",
+    "typechain-target-truffle": "^1.0.2",
+    "typechain-target-web3-v1": "^1.0.4"
+  }
+}
