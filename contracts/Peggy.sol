@@ -1,6 +1,6 @@
-pragma solidity ^0.6.4;
-import "./SafeMath.sol";
-import "./IERC20.sol";
+pragma solidity ^0.6.6;
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 
 contract Peggy {

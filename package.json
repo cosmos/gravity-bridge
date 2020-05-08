@@ -26,6 +26,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^3.0.1",
     "buidler-typechain": "0.0.5",
     "ts-generator": "0.0.8",
     "typechain-target-ethers": "^1.0.4",
