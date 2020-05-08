@@ -21,6 +21,10 @@ cp .env.example .env
 
 2. Generate contract bindings
 
+Binding generation requires `solc` and `abigen` to be globally available.
+- Install abigen via geth or standalone [here](https://github.com/ethereum/go-ethereum/wiki/Installing-Geth).
+- Install `solc` v0.5.0 [here](https://solidity.readthedocs.io/en/v0.5.3/installing-solidity.html) or [here](https://github.com/ethereum/solc-js).
+
 ```bash
 ebrelayer generate
 ```
