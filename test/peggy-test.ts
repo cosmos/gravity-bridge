@@ -6,6 +6,7 @@ import { Greeter } from "../typechain/Greeter";
 import { Peggy } from "../typechain/Peggy";
 import { BitcoinMAX } from "../typechain/BitcoinMAX";
 import { BigNumberish } from "ethers/utils";
+import { Signer } from "ethers";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -98,6 +99,32 @@ describe("Test", function() {
 // }
 
 // return newCheckpoint;
+
+async function signHash(signers: Signer[], hash: string) {
+  // for (let i = 0; i < signers.length; i = i + 1) {
+  //   checkpoint = ethers.utils.solidityKeccak256(
+  //     ["bytes32", "address", "uint256"],
+  //     [checkpoint, newValidators[i], newPowers[i]]
+  //   );
+  // }
+  const flatSigs = await Promise.all(
+    signers.map(signer => signer.signMessage(ethers.utils.arrayify(hash)))
+  );
+
+  let acc: {
+    v: number[];
+    r: string[];
+    s: string[];
+  } = { v: [], r: [], s: [] };
+
+  return flatSigs.reduce((acc, sig) => {
+    const splitSig = ethers.utils.splitSignature(sig);
+    acc.v.push(splitSig.v!);
+    acc.r.push(splitSig.r);
+    acc.s.push(splitSig.s);
+    return acc;
+  }, acc);
+}
 
 function makeCheckpoint(
   newValidators: string[],

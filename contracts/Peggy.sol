@@ -47,6 +47,7 @@ contract Peggy {
 	}
 
 	// - Check that the supplied current validator set matches the saved checkpoint
+	// TODO: can probably eliminate this and just use makeCheckpoint
 	function checkCheckpoint(
 		address[] memory _suppliedValidators,
 		uint256[] memory _suppliedPowers,
