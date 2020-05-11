@@ -71,8 +71,8 @@ contract("BridgeBank", function (accounts) {
 
     it("should correctly set initial values", async function () {
       // EthereumBank initial values
-      const bridgeLockNonce = Number(await this.bridgeBank.lockNonce());
-      bridgeLockNonce.should.be.bignumber.equal(0);
+      const bridgeLockBurnNonce = Number(await this.bridgeBank.lockBurnNonce());
+      bridgeLockBurnNonce.should.be.bignumber.equal(0);
 
       // CosmosBank initial values
       const bridgeTokenCount = Number(await this.bridgeBank.bridgeTokenCount());

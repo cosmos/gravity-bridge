@@ -12,13 +12,22 @@ import "./BridgeToken.sol";
 contract EthereumBank {
     using SafeMath for uint256;
 
-    uint256 public lockNonce;
+    uint256 public lockBurnNonce;
     mapping(address => uint256) public lockedFunds;
     mapping(string => address) public lockedTokenList;
 
     /*
      * @dev: Event declarations
      */
+    event LogBurn(
+        address _from,
+        bytes _to,
+        address _token,
+        string _symbol,
+        uint256 _value,
+        uint256 _nonce
+    );
+
     event LogLock(
         address _from,
         bytes _to,
@@ -40,7 +49,7 @@ contract EthereumBank {
      */
 
     modifier availableNonce() {
-        require(lockNonce + 1 > lockNonce, "No available nonces.");
+        require(lockBurnNonce + 1 > lockBurnNonce, "No available nonces.");
         _;
     }
 
@@ -48,7 +57,7 @@ contract EthereumBank {
      * @dev: Constructor which sets the lock nonce
      */
     constructor() public {
-        lockNonce = 0;
+        lockBurnNonce = 0;
     }
 
     /*
@@ -85,6 +94,25 @@ contract EthereumBank {
      * @param _token: The currency type, either erc20 or ethereum.
      * @param _amount: The amount of erc20 tokens/ ethereum (in wei) to be itemized.
      */
+    function burnFunds(
+        address payable _sender,
+        bytes memory _recipient,
+        address _token,
+        string memory _symbol,
+        uint256 _amount
+    ) internal {
+        lockBurnNonce = lockBurnNonce.add(1);
+        emit LogBurn(_sender, _recipient, _token, _symbol, _amount, lockBurnNonce);
+    }
+
+    /*
+     * @dev: Creates a new Ethereum deposit with a unique id.
+     *
+     * @param _sender: The sender's ethereum address.
+     * @param _recipient: The intended recipient's cosmos address.
+     * @param _token: The currency type, either erc20 or ethereum.
+     * @param _amount: The amount of erc20 tokens/ ethereum (in wei) to be itemized.
+     */
     function lockFunds(
         address payable _sender,
         bytes memory _recipient,
@@ -92,14 +120,13 @@ contract EthereumBank {
         string memory _symbol,
         uint256 _amount
     ) internal {
-        // Incerment the lock nonce
-        lockNonce = lockNonce.add(1);
+        lockBurnNonce = lockBurnNonce.add(1);
 
         // Increment locked funds by the amount of tokens to be locked
         lockedTokenList[_symbol] = _token;
         lockedFunds[_token] = lockedFunds[_token].add(_amount);
 
-        emit LogLock(_sender, _recipient, _token, _symbol, _amount, lockNonce);
+        emit LogLock(_sender, _recipient, _token, _symbol, _amount, lockBurnNonce);
     }
 
     /*

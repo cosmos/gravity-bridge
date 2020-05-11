@@ -4,13 +4,14 @@ import (
 	"encoding/binary"
 	"math/big"
 	"strconv"
-	"testing"
 	"strings"
+	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	tmKv "github.com/tendermint/tendermint/libs/kv"
 
 	"github.com/cosmos/peggy/cmd/ebrelayer/types"
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
 )
 
 const (
@@ -37,8 +38,8 @@ const (
 	TestOtherAddress          = "0x1000000000000000000000000000000000000000"
 )
 
-// CreateTestLogLockEvent creates a sample LockEvent event for testing purposes
-func CreateTestLogLockEvent(t *testing.T) types.LockEvent {
+// CreateTestLogEthereumEvent creates a sample EthereumEvent event for testing purposes
+func CreateTestLogEthereumEvent(t *testing.T) types.EthereumEvent {
 	testEthereumChainID := big.NewInt(int64(TestEthereumChainID))
 	testBridgeContractAddress := common.HexToAddress(TestBridgeContractAddress)
 	// Convert int to [32]byte
@@ -53,9 +54,9 @@ func CreateTestLogLockEvent(t *testing.T) types.LockEvent {
 	testAmount := big.NewInt(int64(TestAmount))
 	testNonce := big.NewInt(int64(TestNonce))
 
-	return types.NewLockEvent(testEthereumChainID, testBridgeContractAddress,
+	return types.EthereumEvent{testEthereumChainID, testBridgeContractAddress,
 		testProphecyID32, testEthereumSender, testCosmosRecipient, testTokenAddress,
-		TestSymbol, testAmount, testNonce)
+		TestSymbol, testAmount, testNonce, ethbridge.LockText}
 }
 
 // CreateTestProphecyClaimEvent creates a sample ProphecyClaimEvent for testing purposes
@@ -76,7 +77,6 @@ func CreateTestCosmosMsg(t *testing.T, claimType types.Event) types.CosmosMsg {
 	testCosmosSender := []byte(TestCosmosAddress1)
 	testEthereumReceiver := common.HexToAddress(TestEthereumAddress1)
 	testAmount := big.NewInt(int64(TestAmount))
-
 
 	var symbol string
 	if claimType == types.MsgBurn {

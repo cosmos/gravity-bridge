@@ -5,6 +5,8 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+
+	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
 )
 
 // Event enum containing supported chain events
@@ -17,19 +19,21 @@ const (
 	MsgBurn
 	// MsgLock is a Cosmos msg of type MsgLock
 	MsgLock
-	// LogLock is an Ethereum event named 'LockEvent'
+	// LogLock is for Ethereum event LogLock
 	LogLock
+	// LogBurn is for Ethereum event LogBurn
+	LogBurn
 	// LogNewProphecyClaim is an Ethereum event named 'LogNewProphecyClaim'
 	LogNewProphecyClaim
 )
 
 // String returns the event type as a string
 func (d Event) String() string {
-	return [...]string{"unsupported", "burn", "lock", "LogLock", "LogNewProphecyClaim"}[d]
+	return [...]string{"unsupported", "burn", "lock", "LogLock", "LogBurn", "LogNewProphecyClaim"}[d]
 }
 
-// LockEvent struct which represents a LogLock event
-type LockEvent struct {
+// EthereumEvent struct is used by LogLock and LogBurn
+type EthereumEvent struct {
 	EthereumChainID       *big.Int
 	BridgeContractAddress common.Address
 	ID                    [32]byte
@@ -39,31 +43,15 @@ type LockEvent struct {
 	Symbol                string
 	Value                 *big.Int
 	Nonce                 *big.Int
-}
-
-// NewLockEvent creates a new LockEvent
-func NewLockEvent(ethereumChainID *big.Int, bridgeContractAddress common.Address,
-	id [32]byte, from common.Address, to []byte, token common.Address, symbol string,
-	value *big.Int, nonce *big.Int) LockEvent {
-	return LockEvent{
-		EthereumChainID:       ethereumChainID,
-		BridgeContractAddress: bridgeContractAddress,
-		ID:                    id,
-		From:                  from,
-		To:                    to,
-		Token:                 token,
-		Symbol:                symbol,
-		Value:                 value,
-		Nonce:                 nonce,
-	}
+	ClaimType             ethbridge.ClaimType
 }
 
 // String implements fmt.Stringer
-func (l LockEvent) String() string {
+func (e EthereumEvent) String() string {
 	return fmt.Sprintf("\nChain ID: %v\nBridge contract address: %v\nToken symbol: %v\nToken "+
-		"contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\n\n",
-		l.EthereumChainID, l.BridgeContractAddress.Hex(), l.Symbol, l.Token.Hex(), l.From.Hex(),
-		string(l.To), l.Value, l.Nonce)
+		"contract address: %v\nSender: %v\nRecipient: %v\nValue: %v\nNonce: %v\nClaim type: %v",
+		e.EthereumChainID, e.BridgeContractAddress.Hex(), e.Symbol, e.Token.Hex(), e.From.Hex(),
+		string(e.To), e.Value, e.Nonce, e.ClaimType.String())
 }
 
 // ProphecyClaimEvent struct which represents a LogNewProphecyClaim event
@@ -103,22 +91,22 @@ func (p ProphecyClaimEvent) String() string {
 
 // CosmosMsg contains data from MsgBurn and MsgLock events
 type CosmosMsg struct {
-	ClaimType            Event
-	CosmosSender         []byte
-	EthereumReceiver     common.Address
-	Symbol               string
-	Amount               *big.Int
+	ClaimType        Event
+	CosmosSender     []byte
+	EthereumReceiver common.Address
+	Symbol           string
+	Amount           *big.Int
 }
 
 // NewCosmosMsg creates a new CosmosMsg
 func NewCosmosMsg(claimType Event, cosmosSender []byte, ethereumReceiver common.Address, symbol string,
 	amount *big.Int) CosmosMsg {
 	return CosmosMsg{
-		ClaimType:            claimType,
-		CosmosSender:         cosmosSender,
-		EthereumReceiver:     ethereumReceiver,
-		Symbol:               symbol,
-		Amount:               amount,
+		ClaimType:        claimType,
+		CosmosSender:     cosmosSender,
+		EthereumReceiver: ethereumReceiver,
+		Symbol:           symbol,
+		Amount:           amount,
 	}
 }
 
