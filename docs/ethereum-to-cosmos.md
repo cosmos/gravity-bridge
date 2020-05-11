@@ -17,12 +17,9 @@ The EVM peggy commands come with the option of using a set of default parameter 
 
 # Send lock transaction with default parameters
 yarn peggy:lock --default
-
-# Send a lock transaction with custom parameters
-yarn peggy:lock [COSMOS_RECIPIENT_ADDRESS] [TOKEN_CONTRACT_ADDRESS] [WEI_AMOUNT]
 ```
 
-`yarn peggy:lock --default` expected output in Relayer console (terminal 4):
+`yarn peggy:lock --default` expected output in Relayer console:
 
 ```bash
 2020/03/22 11:46:08 Witnessed tx 0xb799b5ed8df5f66c355b34fbcdbd132d0a0927c320c9b9c5ff7ea058ca55033c on block 16
@@ -53,7 +50,11 @@ ebcli q account cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh
 
 ### Testing ERC20 token support
 
-The bridge supports the transfer of ERC20 token assets. First, we'll deploy a sample TEST token to the network and then use it to test the feature.
+The bridge supports the transfer of ERC20 token assets. We'll deploy a sample TEST token to the network and then use it to test the feature.
+
+#### ERC20 token setup
+
+If you've already deployed TEST tokens in the previous step with `yarn peggy:all`, skip the ERC20 token setup section.
 
 ```bash
 # Mint 1,000 TEST tokens to your account for local use
@@ -80,7 +81,11 @@ yarn token:approve 10000000000000000000
 
 # Get deployed TEST token contract address
 yarn token:address
+```
 
+#### Sending ERC20 assets to Cosmos via Lock
+
+```
 # Lock TEST tokens on the Bridge contract
 # Note: ERC20 token locking requires 3 custom params and does not support the --default flag
 yarn peggy:lock [COSMOS_RECIPIENT_ADDRESS] [TEST_TOKEN_CONTRACT_ADDRESS] [TOKEN_AMOUNT]

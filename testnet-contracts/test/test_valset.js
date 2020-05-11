@@ -10,17 +10,15 @@ require("chai")
   .use(require("chai-bignumber")(BigNumber))
   .should();
 
-contract("Valset", function(accounts) {
+contract("Valset", function (accounts) {
   const operator = accounts[0];
 
   const userOne = accounts[1];
   const userTwo = accounts[2];
   const userThree = accounts[3];
 
-  const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-  describe("Valset contract deployment", function() {
-    beforeEach(async function() {
+  describe("Valset contract deployment", function () {
+    beforeEach(async function () {
       this.initialValidators = [userOne, userTwo, userThree];
       this.initialPowers = [5, 8, 12];
 
@@ -31,14 +29,14 @@ contract("Valset", function(accounts) {
       );
     });
 
-    it("should deploy the Valset and correctly set the current valset version", async function() {
+    it("should deploy the Valset and correctly set the current valset version", async function () {
       this.valset.should.exist;
 
       const valsetValsetVersion = await this.valset.currentValsetVersion();
       Number(valsetValsetVersion).should.be.bignumber.equal(1);
     });
 
-    it("should correctly set initial validators and initial validator count", async function() {
+    it("should correctly set initial validators and initial validator count", async function () {
       const userOneValidator = await this.valset.isActiveValidator.call(
         userOne
       );
@@ -58,7 +56,7 @@ contract("Valset", function(accounts) {
       );
     });
 
-    it("should correctly set initial validator powers ", async function() {
+    it("should correctly set initial validator powers ", async function () {
       const userOnePower = await this.valset.getValidatorPower.call(userOne);
       const userTwoPower = await this.valset.getValidatorPower.call(userTwo);
       const userThreePower = await this.valset.getValidatorPower.call(
@@ -70,7 +68,7 @@ contract("Valset", function(accounts) {
       Number(userThreePower).should.be.bignumber.equal(this.initialPowers[2]);
     });
 
-    it("should correctly set the initial total power", async function() {
+    it("should correctly set the initial total power", async function () {
       const valsetTotalPower = await this.valset.totalPower();
 
       Number(valsetTotalPower).should.be.bignumber.equal(
@@ -79,9 +77,9 @@ contract("Valset", function(accounts) {
     });
   });
 
-  describe("Dynamic validator set", function() {
-    describe("Adding validators", function() {
-      beforeEach(async function() {
+  describe("Dynamic validator set", function () {
+    describe("Adding validators", function () {
+      beforeEach(async function () {
         this.initialValidators = [userOne];
         this.initialPowers = [5];
 
@@ -95,7 +93,7 @@ contract("Valset", function(accounts) {
         );
       });
 
-      it("should correctly update the valset when the operator adds a new validator", async function() {
+      it("should correctly update the valset when the operator adds a new validator", async function () {
         // Confirm initial validator count
         const priorValsetValidatorCount = await this.valset.validatorCount();
         Number(priorValsetValidatorCount).should.be.bignumber.equal(1);
@@ -134,7 +132,7 @@ contract("Valset", function(accounts) {
         );
       });
 
-      it("should emit a LogValidatorAdded event upon the addition of a new validator", async function() {
+      it("should emit a LogValidatorAdded event upon the addition of a new validator", async function () {
         // Get the event logs from the addition of a new validator
         const { logs } = await this.valset.addValidator(
           userTwo,
@@ -155,7 +153,7 @@ contract("Valset", function(accounts) {
         );
       });
 
-      it("should allow the operator to add multiple new validators", async function() {
+      it("should allow the operator to add multiple new validators", async function () {
         await this.valset.addValidator(userTwo, this.userTwoPower, {
           from: operator
         }).should.be.fulfilled;
@@ -181,8 +179,8 @@ contract("Valset", function(accounts) {
       });
     });
 
-    describe("Updating validator's power", function() {
-      beforeEach(async function() {
+    describe("Updating validator's power", function () {
+      beforeEach(async function () {
         this.initialValidators = [userOne];
         this.initialPowers = [5];
 
@@ -196,7 +194,7 @@ contract("Valset", function(accounts) {
         );
       });
 
-      it("should allow the operator to update a validator's power", async function() {
+      it("should allow the operator to update a validator's power", async function () {
         const NEW_POWER = 515;
 
         // Confirm userOne's initial power
@@ -229,7 +227,7 @@ contract("Valset", function(accounts) {
         Number(postTotalPower).should.be.bignumber.equal(NEW_POWER);
       });
 
-      it("should emit a LogValidatorPowerUpdated event upon the update of a validator's power", async function() {
+      it("should emit a LogValidatorPowerUpdated event upon the update of a validator's power", async function () {
         const NEW_POWER = 111;
 
         // Get the event logs from the update of a validator's power
@@ -251,8 +249,8 @@ contract("Valset", function(accounts) {
       });
     });
 
-    describe("Removing validators", function() {
-      beforeEach(async function() {
+    describe("Removing validators", function () {
+      beforeEach(async function () {
         this.initialValidators = [userOne, userTwo];
         this.initialPowers = [33, 21];
 
@@ -263,7 +261,7 @@ contract("Valset", function(accounts) {
         );
       });
 
-      it("should correctly update the valset when the operator removes a validator", async function() {
+      it("should correctly update the valset when the operator removes a validator", async function () {
         // Confirm initial validator count
         const priorValsetValidatorCount = await this.valset.validatorCount();
         Number(priorValsetValidatorCount).should.be.bignumber.equal(
@@ -300,7 +298,7 @@ contract("Valset", function(accounts) {
         Number(postTotalPower).should.be.bignumber.equal(this.initialPowers[0]);
       });
 
-      it("should emit a LogValidatorRemoved event upon the removal of a validator", async function() {
+      it("should emit a LogValidatorRemoved event upon the removal of a validator", async function () {
         // Get the event logs from the update of a validator's power
         const { logs } = await this.valset.removeValidator(userTwo, {
           from: operator
@@ -318,8 +316,8 @@ contract("Valset", function(accounts) {
       });
     });
 
-    describe("Updating the entire valset", function() {
-      beforeEach(async function() {
+    describe("Updating the entire valset", function () {
+      beforeEach(async function () {
         this.initialValidators = [userOne, userTwo];
         this.initialPowers = [33, 21];
 
@@ -333,7 +331,7 @@ contract("Valset", function(accounts) {
         );
       });
 
-      it("should correctly update the valset", async function() {
+      it("should correctly update the valset", async function () {
         // Confirm current valset version number
         const priorValsetVersion = await this.valset.currentValsetVersion();
         Number(priorValsetVersion).should.be.bignumber.equal(1);
@@ -400,7 +398,7 @@ contract("Valset", function(accounts) {
         );
       });
 
-      it("should allow active validators to remain active if they are included in the new valset", async function() {
+      it("should allow active validators to remain active if they are included in the new valset", async function () {
         // Confirm that both initial validators are no longer an active validators
         const isUserOneValidatorFirstValsetVersion = await this.valset.isActiveValidator.call(
           userOne
@@ -423,7 +421,7 @@ contract("Valset", function(accounts) {
         isUserOneValidatorSecondValsetVersion.should.be.equal(true);
       });
 
-      it("should emit LogValsetReset and LogValsetUpdated events upon the update of the valset", async function() {
+      it("should emit LogValsetReset and LogValsetUpdated events upon the update of the valset", async function () {
         // Get the event logs from the valset update
         const { logs } = await this.valset.updateValset(
           this.secondValidators,
@@ -470,8 +468,8 @@ contract("Valset", function(accounts) {
     });
   });
 
-  describe("Gas recovery", function() {
-    beforeEach(async function() {
+  describe("Gas recovery", function () {
+    beforeEach(async function () {
       this.initialValidators = [userOne, userTwo];
       this.initialPowers = [50, 60];
 
@@ -485,7 +483,7 @@ contract("Valset", function(accounts) {
       );
     });
 
-    it("should not allow the gas recovery of storage in use by active validators", async function() {
+    it("should not allow the gas recovery of storage in use by active validators", async function () {
       // Operator attempts to recover gas from userOne's storage slot
       await this.valset
         .recoverGas(1, userOne, {
@@ -494,7 +492,7 @@ contract("Valset", function(accounts) {
         .should.be.rejectedWith(EVMRevert);
     });
 
-    it("should allow the gas recovery of inactive validator storage", async function() {
+    it("should allow the gas recovery of inactive validator storage", async function () {
       // Confirm that both initial validators are active validators
       const isUserOneValidatorPrior = await this.valset.isActiveValidator.call(
         userOne
@@ -532,8 +530,8 @@ contract("Valset", function(accounts) {
     });
   });
 
-  describe("Signature verification", function() {
-    beforeEach(async function() {
+  describe("Signature verification", function () {
+    beforeEach(async function () {
       // Create hash using Solidity's Sha3 hashing function
       this.cosmosBridgeNonce = 3;
       this.cosmosSender = web3.utils.utf8ToHex(
@@ -556,7 +554,7 @@ contract("Valset", function(accounts) {
       );
     });
 
-    it("should correctly validate signatures", async function() {
+    it("should correctly validate signatures", async function () {
       // Create the signature
       const signature = await web3.eth.sign(this.message, userOne);
 
@@ -565,7 +563,7 @@ contract("Valset", function(accounts) {
       signer.should.be.equal(userOne);
     });
 
-    it("should not validate signatures on a different hashed message", async function() {
+    it("should not validate signatures on a different hashed message", async function () {
       // Create the signature
       const signature = await web3.eth.sign(this.message, userOne);
 
@@ -581,7 +579,7 @@ contract("Valset", function(accounts) {
       signer.should.not.be.equal(userOne);
     });
 
-    it("should not validate signatures from a different address", async function() {
+    it("should not validate signatures from a different address", async function () {
       // Create the signature
       const signature = await web3.eth.sign(this.message, userTwo);
 

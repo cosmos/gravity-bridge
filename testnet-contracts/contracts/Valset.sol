@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 contract Valset {
@@ -272,9 +272,10 @@ contract Valset {
         emit LogValsetReset(currentValsetVersion, validatorCount, totalPower);
     }
 
-    /*
-     * @dev: Verify
-     *
+    /**
+     * @dev Recover signer address from a message by using their signature
+     * @param h bytes32 message, the hash is the signed message. What is recovered is the signer address.
+     * @param signature bytes signature, the signature is generated using web3.eth.sign()
      */
     function verify(bytes32 h, bytes memory signature)
         internal
@@ -315,7 +316,9 @@ contract Valset {
     }
 
     /**
-     * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:" and hash the result
+     * toEthSignedMessageHash
+     * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:"
+     * and hash the result
      */
     function ethMessageHash(bytes32 message) internal pure returns (bytes32) {
         return

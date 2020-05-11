@@ -3,8 +3,8 @@ package txs
 import (
 	"math/big"
 	"os"
-	"strconv"
 	"testing"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -27,15 +27,11 @@ func TestLogLockToEthBridgeClaim(t *testing.T) {
 	testRawCosmosValidatorAddress, err := sdk.AccAddressFromBech32(TestCosmosAddress2)
 	require.NoError(t, err)
 	testCosmosValidatorBech32Address := sdk.ValAddress(testRawCosmosValidatorAddress)
-	// Construct coins from TestAmount and TestSymbol
-	coins := strconv.Itoa(TestAmount) + TestSymbol
-	testCoins, err := sdk.ParseCoins(coins)
-	require.NoError(t, err)
 
 	// Set up expected EthBridgeClaim
 	expectedEthBridgeClaim := ethbridge.NewEthBridgeClaim(
-		TestEthereumChainID, testBridgeContractAddress, TestNonce, TestSymbol, testTokenContractAddress,
-		testEthereumAddress, testCosmosAddress, testCosmosValidatorBech32Address, testCoins, TestLockClaimType)
+		TestEthereumChainID, testBridgeContractAddress, TestNonce, strings.ToLower(TestSymbol), testTokenContractAddress,
+		testEthereumAddress, testCosmosAddress, testCosmosValidatorBech32Address, TestAmount, TestLockClaimType)
 
 	// Create test LogLockEvent
 	logLockEvent := CreateTestLogLockEvent(t)
@@ -57,17 +53,21 @@ func TestProphecyClaimToSignedOracleClaim(t *testing.T) {
 	prophecyClaimEvent := CreateTestProphecyClaimEvent(t)
 	// Generate claim message from ProphecyClaim
 	message := GenerateClaimMessage(prophecyClaimEvent)
+
 	// Prepare the message (required for signature verification on contract)
-	prefixedHashedMsg := PrepareMsgForSigning(message.Hex())
+	prefixedHashedMsg := PrefixMsg(message)
 
 	// Sign the message using the validator's private key
 	signature, err := SignClaim(prefixedHashedMsg, privateKey)
 	require.NoError(t, err)
 
+	var message32 [32]byte
+	copy(message32[:], message)
+
 	// Set up expected OracleClaim
 	expectedOracleClaim := OracleClaim{
 		ProphecyID: big.NewInt(int64(TestProphecyID)),
-		Message:    message.Hex(),
+		Message:    message32,
 		Signature:  signature,
 	}
 
@@ -83,10 +83,10 @@ func TestBurnEventToCosmosMsg(t *testing.T) {
 	expectedMsgBurn := CreateTestCosmosMsg(t, types.MsgBurn)
 
 	// Create MsgBurn attributes as input parameter
-	cosmosMsgAttributes := CreateCosmosMsgAttributes(t)
+	cosmosMsgAttributes := CreateCosmosMsgAttributes(t, types.MsgBurn)
 	msgBurn := BurnLockEventToCosmosMsg(types.MsgBurn, cosmosMsgAttributes)
 
-	require.Equal(t, msgBurn, expectedMsgBurn)
+	require.Equal(t, expectedMsgBurn, msgBurn)
 }
 
 func TestLockEventToCosmosMsg(t *testing.T) {
@@ -94,20 +94,23 @@ func TestLockEventToCosmosMsg(t *testing.T) {
 	expectedMsgLock := CreateTestCosmosMsg(t, types.MsgLock)
 
 	// Create MsgLock attributes as input parameter
-	cosmosMsgAttributes := CreateCosmosMsgAttributes(t)
+	cosmosMsgAttributes := CreateCosmosMsgAttributes(t, types.MsgLock)
 	msgLock := BurnLockEventToCosmosMsg(types.MsgLock, cosmosMsgAttributes)
 
 	require.Equal(t, expectedMsgLock, msgLock)
 }
 
 func TestMsgBurnToProphecyClaim(t *testing.T) {
+	// Parse expected symbol
+	res := strings.SplitAfter(TestSymbol, "PEGGY")
+	symbol := strings.Join(res[1:], "")
+
 	// Set up expected ProphecyClaim
 	expectedProphecyClaim := ProphecyClaim{
 		ClaimType:            types.MsgBurn,
 		CosmosSender:         []byte(TestCosmosAddress1),
 		EthereumReceiver:     common.HexToAddress(TestEthereumAddress1),
-		TokenContractAddress: common.HexToAddress(TestEthTokenAddress),
-		Symbol:               TestSymbol,
+		Symbol:               symbol,
 		Amount:               big.NewInt(int64(TestAmount)),
 	}
 
@@ -124,7 +127,6 @@ func TestMsgLockToProphecyClaim(t *testing.T) {
 		ClaimType:            types.MsgLock,
 		CosmosSender:         []byte(TestCosmosAddress1),
 		EthereumReceiver:     common.HexToAddress(TestEthereumAddress1),
-		TokenContractAddress: common.HexToAddress(TestEthTokenAddress),
 		Symbol:               TestSymbol,
 		Amount:               big.NewInt(int64(TestAmount)),
 	}

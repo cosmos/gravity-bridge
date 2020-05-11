@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./BridgeToken.sol";
 
 
@@ -14,7 +14,7 @@ contract CosmosBank {
     using SafeMath for uint256;
 
     uint256 public bridgeTokenCount;
-    mapping(address => bool) public bridgeTokenWhitelist;
+    mapping(string => address) controlledBridgeTokens;
     mapping(bytes32 => CosmosDeposit) cosmosDeposits;
 
     struct CosmosDeposit {
@@ -42,6 +42,20 @@ contract CosmosBank {
      */
     constructor() public {
         bridgeTokenCount = 0;
+    }
+
+    /*
+     * @dev: Get a token symbol's corresponding bridge token address.
+     *
+     * @param _symbol: The token's symbol/denom without 'PEGGY' prefix.
+     * @return: Address associated with the given symbol. Returns address(0) if none is found.
+     */
+    function getBridgeToken(string memory _symbol)
+        public
+        view
+        returns (address)
+    {
+        return (controlledBridgeTokens[_symbol]);
     }
 
     /*
@@ -90,10 +104,9 @@ contract CosmosBank {
 
         // Set address in tokens mapping
         address newBridgeTokenAddress = address(newBridgeToken);
-        bridgeTokenWhitelist[newBridgeTokenAddress] = true;
+        controlledBridgeTokens[_symbol] = newBridgeTokenAddress;
 
         emit LogNewBridgeToken(newBridgeTokenAddress, _symbol);
-
         return newBridgeTokenAddress;
     }
 
@@ -105,7 +118,7 @@ contract CosmosBank {
      * @param _cosmosTokenAddress: The currency type
      * @param _symbol: comsos token symbol
      * @param _amount: number of comsos tokens to be minted
-\    */
+     */
     function mintNewBridgeTokens(
         bytes memory _cosmosSender,
         address payable _intendedRecipient,
@@ -113,10 +126,9 @@ contract CosmosBank {
         string memory _symbol,
         uint256 _amount
     ) internal {
-        // Must be whitelisted bridge token
         require(
-            bridgeTokenWhitelist[_bridgeTokenAddress],
-            "Token must be a whitelisted bridge token"
+            controlledBridgeTokens[_symbol] == _bridgeTokenAddress,
+            "Token must be a controlled bridge token"
         );
 
         // Mint bridge tokens

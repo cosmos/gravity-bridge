@@ -20,7 +20,7 @@ module.exports = {
       }
     },
     ropsten: {
-      provider: function() {
+      provider: function () {
         return new HDWalletProvider(
           process.env.MNEMONIC,
           "https://ropsten.infura.io/v3/".concat(process.env.INFURA_PROJECT_ID)
@@ -30,7 +30,7 @@ module.exports = {
       gas: 6000000
     },
     xdai: {
-      provider: function() {
+      provider: function () {
         return new HDWalletProvider(
           process.env.MNEMONIC,
           "https://dai.poa.network"

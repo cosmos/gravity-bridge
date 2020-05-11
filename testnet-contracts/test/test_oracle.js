@@ -11,7 +11,7 @@ require("chai")
   .use(require("chai-bignumber")(BigNumber))
   .should();
 
-contract("Oracle", function(accounts) {
+contract("Oracle", function (accounts) {
   // System operator
   const operator = accounts[0];
 
@@ -31,8 +31,8 @@ contract("Oracle", function(accounts) {
   // Consensus threshold of 70%
   const consensusThreshold = 70;
 
-  describe("Oracle smart contract deployment", function() {
-    beforeEach(async function() {
+  describe("Oracle smart contract deployment", function () {
+    beforeEach(async function () {
       // Deploy Valset contract
       this.initialValidators = [userOne, userTwo, userThree, userFour];
       this.initialPowers = [30, 20, 21, 29];
@@ -54,7 +54,7 @@ contract("Oracle", function(accounts) {
       );
     });
 
-    it("should deploy the Oracle, correctly setting the operator and valset", async function() {
+    it("should deploy the Oracle, correctly setting the operator and valset", async function () {
       this.oracle.should.exist;
 
       const oracleOperator = await this.oracle.operator();
@@ -65,14 +65,13 @@ contract("Oracle", function(accounts) {
     });
   });
 
-  describe("Creation of oracle claims", function() {
-    beforeEach(async function() {
+  describe("Creation of oracle claims", function () {
+    beforeEach(async function () {
       this.prophecyID = 1;
       this.cosmosSender = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       );
       this.ethereumReceiver = userOne;
-      this.tokenAddress = "0x0000000000000000000000000000000000000000";
       this.symbol = "TEST";
       this.amount = 100;
 
@@ -84,7 +83,6 @@ contract("Oracle", function(accounts) {
           t: "address payable",
           v: this.ethereumReceiver
         },
-        { t: "address", v: this.tokenAddress },
         { t: "uint256", v: this.amount }
       );
 
@@ -130,7 +128,6 @@ contract("Oracle", function(accounts) {
         CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
-        this.tokenAddress,
         this.symbol,
         this.amount,
         {
@@ -139,7 +136,7 @@ contract("Oracle", function(accounts) {
       ).should.be.fulfilled;
     });
 
-    it("should not allow oracle claims upon inactive prophecy claims", async function() {
+    it("should not allow oracle claims upon inactive prophecy claims", async function () {
       const inactiveBridgeClaimID = this.prophecyID + 50;
 
       // Generate signature from userOne (validator)
@@ -153,7 +150,7 @@ contract("Oracle", function(accounts) {
         .should.be.rejectedWith(EVMRevert);
     });
 
-    it("should not allow non-validators to make oracle claims", async function() {
+    it("should not allow non-validators to make oracle claims", async function () {
       // Generate signature from userOne (validator)
       const signature = await web3.eth.sign(this.message, userOne);
 
@@ -165,7 +162,7 @@ contract("Oracle", function(accounts) {
         .should.be.rejectedWith(EVMRevert);
     });
 
-    it("should not allow validators to make OracleClaims with invalid signatures", async function() {
+    it("should not allow validators to make OracleClaims with invalid signatures", async function () {
       const badMessage = web3.utils.soliditySha3(
         {
           t: "uint256",
@@ -178,10 +175,6 @@ contract("Oracle", function(accounts) {
         {
           t: "address payable",
           v: this.ethereumReceiver
-        },
-        {
-          t: "address",
-          v: this.tokenAddress
         },
         {
           t: "uint256",
@@ -200,7 +193,7 @@ contract("Oracle", function(accounts) {
         .should.be.rejectedWith(EVMRevert);
     });
 
-    it("should not allow validators to make OracleClaims with another validator's signature", async function() {
+    it("should not allow validators to make OracleClaims with another validator's signature", async function () {
       // Generate signature from userOne (validator)
       const signature = await web3.eth.sign(this.message, userOne);
 
@@ -212,7 +205,7 @@ contract("Oracle", function(accounts) {
         .should.be.rejectedWith(EVMRevert);
     });
 
-    it("should allow valid OracleClaims", async function() {
+    it("should allow valid OracleClaims", async function () {
       // Generate signature from userOne (validator)
       const signature = await web3.eth.sign(this.message, userOne);
 
@@ -227,7 +220,7 @@ contract("Oracle", function(accounts) {
       ).should.be.fulfilled;
     });
 
-    it("should not allow validators to make duplicate OracleClaims", async function() {
+    it("should not allow validators to make duplicate OracleClaims", async function () {
       // Generate signature from userOne (validator)
       const signature = await web3.eth.sign(this.message, userOne);
 
@@ -249,7 +242,7 @@ contract("Oracle", function(accounts) {
         .should.be.rejectedWith(EVMRevert);
     });
 
-    it("should emit an event containing the new OracleClaim's information", async function() {
+    it("should emit an event containing the new OracleClaim's information", async function () {
       // Generate signature from userOne (validator)
       const signature = await web3.eth.sign(this.message, userOne);
 
@@ -272,14 +265,13 @@ contract("Oracle", function(accounts) {
     });
   });
 
-  describe("Prophecy processing", function() {
-    beforeEach(async function() {
+  describe("Prophecy processing", function () {
+    beforeEach(async function () {
       this.prophecyID = 1;
       this.cosmosSender = web3.utils.utf8ToHex(
         "985cfkop78sru7gfud4wce83kuc9rmw89rqtzmy"
       );
       this.ethereumReceiver = userOne;
-      this.tokenAddress = "0xbeddb076fa4df04859098a9873591dce3e9c404d";
       this.symbol = "TEST";
       this.amount = 100;
 
@@ -291,7 +283,6 @@ contract("Oracle", function(accounts) {
           t: "address payable",
           v: this.ethereumReceiver
         },
-        { t: "address", v: this.tokenAddress },
         { t: "uint256", v: this.amount }
       );
 
@@ -305,7 +296,7 @@ contract("Oracle", function(accounts) {
       );
 
       // Set up total power
-      this.totalPower = this.initialPowers.reduce(function(a, b) {
+      this.totalPower = this.initialPowers.reduce(function (a, b) {
         return a + b;
       }, 0);
 
@@ -337,21 +328,11 @@ contract("Oracle", function(accounts) {
         from: operator
       });
 
-      // Add the token to the BridgeBank's whitelist
-      const { logs } = await this.bridgeBank.createNewBridgeToken(this.symbol, {
-        from: operator
-      }).should.be.fulfilled;
-
-      // Get the whitelisted token's address for claim submission
-      const event = logs.find(e => e.event === "LogNewBridgeToken");
-      this.tokenAddress = event.args._token;
-
       // Submit a new prophecy claim to the CosmosBridge to make oracle claims upon
       await this.cosmosBridge.newProphecyClaim(
         CLAIM_TYPE_LOCK,
         this.cosmosSender,
         this.ethereumReceiver,
-        this.tokenAddress,
         this.symbol,
         this.amount,
         {
@@ -365,7 +346,7 @@ contract("Oracle", function(accounts) {
       this.userThreeSignature = await web3.eth.sign(this.message, userThree);
     });
 
-    it("should not process the prophecy if signed power does not pass the required threshold power", async function() {
+    it("should not process the prophecy if signed power does not pass the required threshold power", async function () {
       // Validator userOne makes a valid OracleClaim
       await this.oracle.newOracleClaim(
         this.prophecyID,
@@ -376,12 +357,13 @@ contract("Oracle", function(accounts) {
         }
       );
 
-      await this.oracle
-        .processBridgeProphecy(this.prophecyID)
-        .should.be.rejectedWith(EVMRevert);
+      const isActive = await this.cosmosBridge.isProphecyClaimActive(
+        this.prophecyID
+      );
+      isActive.should.be.equal(true);
     });
 
-    it("should allow for the processing of prophecies", async function() {
+    it("should allow for the processing of prophecies", async function () {
       // Validator userOne makes a valid OracleClaim
       await this.oracle.newOracleClaim(
         this.prophecyID,
@@ -420,7 +402,7 @@ contract("Oracle", function(accounts) {
       isActive.should.be.equal(false);
     });
 
-    it("should process prophecies if signed power passes threshold", async function() {
+    it("should process prophecies if signed power passes threshold", async function () {
       // Validator userOne makes a valid OracleClaim
       await this.oracle.newOracleClaim(
         this.prophecyID,
@@ -474,7 +456,7 @@ contract("Oracle", function(accounts) {
       );
     });
 
-    it("should not allow a prophecy to be processed twice", async function() {
+    it("should not allow a prophecy to be processed twice", async function () {
       // Validator userOne makes a valid OracleClaim
       await this.oracle.newOracleClaim(
         this.prophecyID,
@@ -514,7 +496,7 @@ contract("Oracle", function(accounts) {
     // 1. Should not include the signatures of non-active validators
     // 2. Should not allow for the processing of bridge claims whose original validator is no longer active
 
-    it("should emit an event upon successful prophecy processing", async function() {
+    it("should emit an event upon successful prophecy processing", async function () {
       // Validator userOne makes a valid OracleClaim
       await this.oracle.newOracleClaim(
         this.prophecyID,

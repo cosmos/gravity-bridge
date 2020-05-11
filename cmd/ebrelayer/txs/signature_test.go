@@ -1,6 +1,7 @@
 package txs
 
 import (
+	"encoding/hex"
 	"os"
 	"testing"
 
@@ -17,7 +18,7 @@ func TestGenerateClaimMessage(t *testing.T) {
 	message := GenerateClaimMessage(prophecyClaimEvent)
 
 	// Confirm that the generated message matches the expected generated message
-	require.Equal(t, TestExpectedMessage, message.Hex())
+	require.Equal(t, TestExpectedMessage, hex.EncodeToString(message))
 }
 
 func TestPrepareMessageForSigning(t *testing.T) {
@@ -27,11 +28,10 @@ func TestPrepareMessageForSigning(t *testing.T) {
 	message := GenerateClaimMessage(prophecyClaimEvent)
 
 	// Simulate message hashing, prefixing
-	hashedMsg := solsha3.SoliditySHA3(solsha3.String(message.Hex()))
-	prefixedMessage := solsha3.SoliditySHA3(solsha3.String("\x19Ethereum Signed Message:\n32"), solsha3.Bytes32(hashedMsg))
+	prefixedMessage := solsha3.SoliditySHA3(solsha3.String("\x19Ethereum Signed Message:\n32"), solsha3.Bytes32(message))
 
 	// Prepare the message for signing
-	preparedMessage := PrepareMsgForSigning(message.Hex())
+	preparedMessage := PrefixMsg(message)
 
 	// Confirm that the prefixed message matches the prepared message
 	require.Equal(t, preparedMessage, prefixedMessage)
@@ -53,7 +53,7 @@ func TestSignClaim(t *testing.T) {
 	message := GenerateClaimMessage(prophecyClaimEvent)
 
 	// Prepare the message (required for signature verification on contract)
-	prefixedHashedMsg := PrepareMsgForSigning(message.Hex())
+	prefixedHashedMsg := PrefixMsg(message)
 
 	// Sign the message using the validator's private key
 	signature, err := SignClaim(prefixedHashedMsg, key)

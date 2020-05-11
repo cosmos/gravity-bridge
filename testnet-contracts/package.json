@@ -9,6 +9,7 @@
   "author": "Denali Marsh",
   "license": "ISC",
   "dependencies": {
+    "big-integer": "^1.6.48",
     "bignumber.js": "^6.0.0",
     "bluebird": "^3.5.1",
     "cross-env": "5.0.5",
@@ -27,8 +28,8 @@
     "chai-bignumber": "^3.0.0",
     "ganache-cli": "^6.8.2",
     "openzeppelin-solidity": "^2.1.3",
-    "truffle": "^5.1.19",
-    "web3": "^1.2.1",
+    "truffle": "^5.1.21",
+    "web3": "^1.2.6",
     "web3-utils": "^1.0.0-beta.52"
   },
   "scripts": {
@@ -36,6 +37,9 @@
     "migrate": "npx truffle migrate --reset",
     "peggy:abi": "node scripts/formatAbi.js",
     "peggy:address": "npx truffle exec scripts/getBridgeRegistryAddress.js",
+    "peggy:validators": "npx truffle exec scripts/getValidators.js",
+    "peggy:hasLocked": "npx truffle exec scripts/hasLockedTokens.js",
+    "peggy:getTx": "npx truffle exec scripts/getTxReceipt.js",
     "peggy:setup": "npx truffle exec scripts/setOracleAndBridgeBank.js",
     "peggy:lock": "npx truffle exec scripts/sendLockTx.js",
     "peggy:check": "npx truffle exec scripts/sendCheckProphecy.js",

@@ -59,7 +59,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
      */
     modifier onlyCosmosBridge() {
         require(
-            msg.sender == address(cosmosBridge), // TODO: Consider method for recovering funds
+            msg.sender == address(cosmosBridge),
             "Access restricted to the cosmos bridge"
         );
         _;
@@ -79,7 +79,7 @@ contract BridgeBank is CosmosBank, EthereumBank {
      */
     function createNewBridgeToken(string memory _symbol)
         public
-        onlyOperator
+        onlyCosmosBridge
         returns (address)
     {
         return deployNewBridgeToken(_symbol);
@@ -156,25 +156,38 @@ contract BridgeBank is CosmosBank, EthereumBank {
     }
 
     /*
-    * @dev: Unlocks Ethereum and ERC20 tokens held on the contract.
-    *
-    * @param _recipient: recipient's Ethereum address
-    * @param _token: token contract address
-    * @param _symbol: token symbol
-    * @param _amount: wei amount or ERC20 token count
-\   */
+     * @dev: Unlocks Ethereum and ERC20 tokens held on the contract.
+     *
+     * @param _recipient: recipient's Ethereum address
+     * @param _token: token contract address
+     * @param _symbol: token symbol
+     * @param _amount: wei amount or ERC20 token count
+     */
     function unlock(
         address payable _recipient,
-        address _token,
         string memory _symbol,
         uint256 _amount
-    )
-        public
-        onlyCosmosBridge
-        hasLockedFunds(_token, _amount)
-        canDeliver(_token, _amount)
-    {
-        unlockFunds(_recipient, _token, _symbol, _amount);
+    ) public onlyCosmosBridge {
+        // Confirm that the bank has sufficient locked balances of this token type
+        require(
+            getLockedFunds(_symbol) >= _amount,
+            "The Bank does not hold enough locked tokens to fulfill this request."
+        );
+
+        // Confirm that the bank holds sufficient balances to complete the unlock
+        address tokenAddress = lockedTokenList[_symbol];
+        if (tokenAddress == address(0)) {
+            require(
+                address(this).balance >= _amount,
+                "Insufficient ethereum balance for delivery."
+            );
+        } else {
+            require(
+                BridgeToken(tokenAddress).balanceOf(address(this)) >= _amount,
+                "Insufficient ERC20 token balance for delivery."
+            );
+        }
+        unlockFunds(_recipient, tokenAddress, _symbol, _amount);
     }
 
     /*

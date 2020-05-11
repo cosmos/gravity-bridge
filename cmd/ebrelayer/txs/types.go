@@ -10,7 +10,7 @@ import (
 // OracleClaim contains data required to make an OracleClaim
 type OracleClaim struct {
 	ProphecyID *big.Int
-	Message    string
+	Message    [32]byte
 	Signature  []byte
 }
 
@@ -19,7 +19,6 @@ type ProphecyClaim struct {
 	ClaimType            types.Event
 	CosmosSender         []byte
 	EthereumReceiver     common.Address
-	TokenContractAddress common.Address
 	Symbol               string
 	Amount               *big.Int
 }

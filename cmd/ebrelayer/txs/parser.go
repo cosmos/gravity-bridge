@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	nullAddress = "0x0000000000000000000000000000000000000000"
+	nullAddress   = "0x0000000000000000000000000000000000000000"
+	defaultPrefix = "peggy"
 )
 
 // LogLockToEthBridgeClaim parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
@@ -51,8 +52,7 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *types.LockEvent) (et
 		return witnessClaim, errors.New("symbol \"eth\" must have null address set as token address")
 	}
 
-	// Amount type casting (*big.Int -> sdk.Coins)
-	coins := sdk.Coins{sdk.NewInt64Coin(symbol, event.Value.Int64())}
+	amount := event.Value.Int64()
 
 	// Nonce type casting (*big.Int -> int)
 	nonce := int(event.Nonce.Int64())
@@ -66,7 +66,7 @@ func LogLockToEthBridgeClaim(valAddr sdk.ValAddress, event *types.LockEvent) (et
 	witnessClaim.EthereumSender = sender
 	witnessClaim.ValidatorAddress = valAddr
 	witnessClaim.CosmosReceiver = recipient
-	witnessClaim.Amount = coins
+	witnessClaim.Amount = amount
 
 	return witnessClaim, nil
 }
@@ -79,19 +79,18 @@ func ProphecyClaimToSignedOracleClaim(event types.ProphecyClaimEvent, key *ecdsa
 	fmt.Println("Generating unique message for ProphecyClaim", event.ProphecyID)
 	message := GenerateClaimMessage(event)
 
-	// Prepare the message (required for signature verification on contract)
-	prefixedHashedMsg := PrepareMsgForSigning(message.Hex())
-
 	// Sign the message using the validator's private key
 	fmt.Println("Signing message...")
-	signature, err := SignClaim(prefixedHashedMsg, key)
+	signature, err := SignClaim(PrefixMsg(message), key)
 	if err != nil {
 		return oracleClaim, err
 	}
 	fmt.Println("Signature generated:", hexutil.Encode(signature))
 
 	oracleClaim.ProphecyID = event.ProphecyID
-	oracleClaim.Message = message.Hex()
+	var message32 [32]byte
+	copy(message32[:], message)
+	oracleClaim.Message = message32
 	oracleClaim.Signature = signature
 	return oracleClaim, nil
 }
@@ -101,15 +100,13 @@ func CosmosMsgToProphecyClaim(event types.CosmosMsg) ProphecyClaim {
 	claimType := event.ClaimType
 	cosmosSender := event.CosmosSender
 	ethereumReceiver := event.EthereumReceiver
-	tokenContractAddress := event.TokenContractAddress
-	symbol := strings.ToLower(event.Symbol)
+	symbol := strings.ToUpper(event.Symbol)
 	amount := event.Amount
 
 	prophecyClaim := ProphecyClaim{
 		ClaimType:            claimType,
 		CosmosSender:         cosmosSender,
 		EthereumReceiver:     ethereumReceiver,
-		TokenContractAddress: tokenContractAddress,
 		Symbol:               symbol,
 		Amount:               amount,
 	}
@@ -119,7 +116,7 @@ func CosmosMsgToProphecyClaim(event types.CosmosMsg) ProphecyClaim {
 // BurnLockEventToCosmosMsg parses data from a Burn/Lock event witnessed on Cosmos into a CosmosMsg struct
 func BurnLockEventToCosmosMsg(claimType types.Event, attributes []tmKv.Pair) types.CosmosMsg {
 	var cosmosSender []byte
-	var ethereumReceiver, tokenContractAddress common.Address
+	var ethereumReceiver common.Address
 	var symbol string
 	var amount *big.Int
 
@@ -136,18 +133,26 @@ func BurnLockEventToCosmosMsg(claimType types.Event, attributes []tmKv.Pair) typ
 				log.Fatal("Invalid recipient address:", val)
 			}
 			ethereumReceiver = common.HexToAddress(val)
-		case types.Coin.String():
-			coins, _ := sdk.ParseCoins(val)
-			symbol = coins[0].Denom
-			amount = coins[0].Amount.BigInt()
-		case types.TokenContractAddress.String():
-			if !common.IsHexAddress(val) {
-				log.Fatal("Invalid token address:", val)
+		case types.Symbol.String():
+			if claimType == types.MsgBurn {
+				if !strings.Contains(val, defaultPrefix) {
+					log.Fatal("Can only relay burns of 'peggy' prefixed coins")
+				}
+				res := strings.SplitAfter(val, defaultPrefix)
+				symbol = strings.ToUpper(strings.Join(res[1:], ""))
+			} else {
+				symbol = strings.ToUpper(val)
 			}
-			tokenContractAddress = common.HexToAddress(val)
+		case types.Amount.String():
+			tempAmount := new(big.Int)
+			tempAmount, ok := tempAmount.SetString(val, 10)
+			if !ok {
+				log.Fatal("Invalid amount:", val)
+			}
+			amount = tempAmount
 		}
 	}
-	return types.NewCosmosMsg(claimType, cosmosSender, ethereumReceiver, symbol, amount, tokenContractAddress)
+	return types.NewCosmosMsg(claimType, cosmosSender, ethereumReceiver, symbol, amount)
 }
 
 // isZeroAddress checks an Ethereum address and returns a bool which indicates if it is the null address

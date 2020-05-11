@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./BridgeToken.sol";
 
 
@@ -14,6 +14,7 @@ contract EthereumBank {
 
     uint256 public lockNonce;
     mapping(address => uint256) public lockedFunds;
+    mapping(string => address) public lockedTokenList;
 
     /*
      * @dev: Event declarations
@@ -38,29 +39,6 @@ contract EthereumBank {
      * @dev: Modifier declarations
      */
 
-    modifier hasLockedFunds(address _token, uint256 _amount) {
-        require(
-            lockedFunds[_token] >= _amount,
-            "The Bank does not hold enough locked tokens to fulfill this request."
-        );
-        _;
-    }
-
-    modifier canDeliver(address _token, uint256 _amount) {
-        if (_token == address(0)) {
-            require(
-                address(this).balance >= _amount,
-                "Insufficient ethereum balance for delivery."
-            );
-        } else {
-            require(
-                BridgeToken(_token).balanceOf(address(this)) >= _amount,
-                "Insufficient ERC20 token balance for delivery."
-            );
-        }
-        _;
-    }
-
     modifier availableNonce() {
         require(lockNonce + 1 > lockNonce, "No available nonces.");
         _;
@@ -71,6 +49,32 @@ contract EthereumBank {
      */
     constructor() public {
         lockNonce = 0;
+    }
+
+    /*
+     * @dev: Gets the contract address of locked tokens by symbol.
+     *
+     * @param _symbol: The asset's symbol.
+     */
+    function getLockedTokenAddress(string memory _symbol)
+        public
+        view
+        returns (address)
+    {
+        return lockedTokenList[_symbol];
+    }
+
+    /*
+     * @dev: Gets the amount of locked tokens by symbol.
+     *
+     * @param _symbol: The asset's symbol.
+     */
+    function getLockedFunds(string memory _symbol)
+        public
+        view
+        returns (uint256)
+    {
+        return lockedFunds[lockedTokenList[_symbol]];
     }
 
     /*
@@ -92,6 +96,7 @@ contract EthereumBank {
         lockNonce = lockNonce.add(1);
 
         // Increment locked funds by the amount of tokens to be locked
+        lockedTokenList[_symbol] = _token;
         lockedFunds[_token] = lockedFunds[_token].add(_amount);
 
         emit LogLock(_sender, _recipient, _token, _symbol, _amount, lockNonce);

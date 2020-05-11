@@ -12,76 +12,54 @@ ebcli tx send validator $(ebcli keys show testuser -a) 10stake --yes
 
 # You can confirm they were received by querying the account
 ebcli q account $(ebcli keys show testuser -a)
-
-# Before locking an asset on the Cosmos SDK application side, we need to also deploy a token on the EVM chain 
-# that will represent the cosmos asset. To do this we use the following EVM command with the token name we'd like 
-# to use (in this case "stake"):
-
-yarn peggy:addBridgeToken stake
-
-```
-This should result in the following logs that contains the newly deployed `BridgeToken` contract address and adds it to the EVM token whitelist.
-
-```bash
-yarn peggy:addBridgeToken stake
-yarn run v1.22.4
-$ yarn workspace testnet-contracts peggy:addBridgeToken stake
-$ truffle exec scripts/sendAddBridgeToken.js stake
-Using network 'ganache'.
-
-Fetching BridgeBank contract...
-Attempting to send createNewBridgeToken() tx with symbol: 'stake'...
-from 0x627306090abaB3A6e1400e9345bC60c78a8BEf57
-Should deploy to 0x409Ba3dd291bb5D48D5B4404F5EFa207441F6CbA
-Bridge Token "stake" created at address: 0x409Ba3dd291bb5D48D5B4404F5EFa207441F6CbA
-Done in 30.87s.
 ```
 
-Now we can send the lock transaction for 1stake token to EVM chain address `0x627306090abaB3A6e1400e9345bC60c78a8BEf57`, which is the accounts[0] address of the truffle devlop local EVM chain. We also use the newly created `BridgeToken` address from the previous step for `token-contract-address`.
+Now we can send the lock transaction for 1stake token to EVM chain address `0x5AEDA56215b167893e80B4fE645BA6d5Bab767DE`, which is the accounts[9] address of the truffle devlop local EVM chain.
 
 ```bash
-# ebcli tx ethbridge lock [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address] [flags]
-ebcli tx ethbridge lock $(ebcli keys show testuser -a) 0x627306090abaB3A6e1400e9345bC60c78a8BEf57 1stake --ethereum-chain-id 3 --token-contract-address 0x409Ba3dd291bb5D48D5B4404F5EFa207441F6CbA --from testuser --yes
+# ebcli tx ethbridge lock [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] [flags]
+ebcli tx ethbridge lock $(ebcli keys show testuser -a) 0x5AEDA56215b167893e80B4fE645BA6d5Bab767DE 1 stake --ethereum-chain-id=3 --from=testuser --yes
+
 ```
 
 Expected terminal output:
 
 ```bash
-I[2020-03-22|18:07:01.417] New transaction witnessed                    
-I[2020-03-22|18:07:01.417] 
+I[2020-04-23|23:33:13.092] New transaction witnessed                    
+I[2020-04-23|23:33:13.092] 
 Claim Type: lock
 Cosmos Sender: cosmos1vnt63c0wtag5jnr6e9c7jz857amxrxcel0eucl
-Ethereum Recipient: 0x627306090abaB3A6e1400e9345bC60c78a8BEf57
-Token Address: 0x409Ba3dd291bb5D48D5B4404F5EFa207441F6CbA
-Symbol: stake
+Ethereum Recipient: 0x5AEDA56215b167893e80B4fE645BA6d5Bab767DE
+Symbol: STAKE
 Amount: 1
 
 Fetching CosmosBridge contract...
 Sending new ProphecyClaim to CosmosBridge...
-NewProphecyClaim tx hash: 0xd3ac2fb95e58e704c9c51bd171bb1b53623ae9505958105c86c09681bef46ec0
-2020/03/22 18:07:01 Witnessed tx 0xd3ac2fb95e58e704c9c51bd171bb1b53623ae9505958105c86c09681bef46ec0 on block 17
-2020/03/22 18:07:01 
-Prophecy ID: 1
+NewProphecyClaim tx hash: 0xe68c1fd54536e89bc28fd1803651e7184839ee3b8793a1cafe27f92212303e68
+I[2020-04-23|23:33:13.198] Witnessed tx 0xe68c1fd54536e89bc28fd1803651e7184839ee3b8793a1cafe27f92212303e68 on block 21
+ 
+I[2020-04-23|23:33:13.198] 
+Prophecy ID: 4
 Claim Type: 2
 Sender: cosmos1vnt63c0wtag5jnr6e9c7jz857amxrxcel0eucl
-Recipient: 0x627306090abaB3A6e1400e9345bC60c78a8BEf57
-Symbol stake
-Token 0x409Ba3dd291bb5D48D5B4404F5EFa207441F6CbA
+Recipient: 0x5AEDA56215b167893e80B4fE645BA6d5Bab767DE
+Symbol: PEGGYSTAKE
+Token: 0x409Ba3dd291bb5D48D5B4404F5EFa207441F6CbA
 Amount: 1
-Validator: 0xf17f52151EbEF6C7334FAD080c5704D77216b732
-
-Generating unique message for ProphecyClaim 1
+Validator: 0xC5fdf4076b8F3A5357c5E395ab970B5B54098Fef
+ 
+Generating unique message for ProphecyClaim 4
 Signing message...
-Signature generated: 0xc7ccfa125f92b5ec7780ce20948c4f5a174457bc3bfe025554507003fd42dcb67be0ea6e48c9a5493d2e63ea048f40ba81abd02945ac9ae8c69cc74409b2a14000
+Signature generated: 0x646a7eb97d5cfc5171f5358c96c3b8e30e274f1ebbb604f50bc6b6d8f32bc60c6163e47555f7e48e4f3574b1358d81fe20fe7d2d6fbd47c635e5433b5ea2ed3b01
 Tx Status: 1 - Successful
 
 Fetching Oracle contract...
 Sending new OracleClaim to Oracle...
-NewOracleClaim tx hash: 0x89c1c905f65170e799fc17b16406aad61e07c857f3379190829f5fd5f9a157d9
+NewOracleClaim tx hash: 0x5e53916ac1a8ce50564f97377c137417b49722183e4358ac6dee72b03c3af00d
 Tx Status: 1 - Successful
 ```
 
-To check the EVM chain balance of the account that just received the stake token you can use the following command. In our case we'd want to use the user address `0x627306090abaB3A6e1400e9345bC60c78a8BEf57` and the token address `0x409Ba3dd291bb5D48D5B4404F5EFa207441F6CbA` which were just used in the last step. To check the EVM chain native asset balance just leave the token address blank.
+To check the EVM chain balance of the account that just received the stake token you can use the following command. In our case we'd want to use the user address `0x5AEDA56215b167893e80B4fE645BA6d5Bab767DE` and the token address `0x409Ba3dd291bb5D48D5B4404F5EFa207441F6CbA` which were just used in the last step. To check the EVM chain native asset balance just leave the token address blank.
 ```bash
 yarn peggy:getTokenBalance [ACCOUNT_ADDRESS] [TOKEN_ADDRESS]
 ```
@@ -95,7 +73,7 @@ In the [Ethereum -> Cosmos asset transfers](./ethereum-to-cosmos.md) section, yo
 To make sure you have EVM native eth on a cosmos account you can use first move some from the EVM chain with the following command:
 
 ```bash
-yarn peggy:lock $(ebcli keys show testuser -a) eth 100000000000                                       
+yarn peggy:lock $(ebcli keys show testuser -a) eth 10
 ```
 You can confirm this was successful using the following command:
 ```bash
@@ -109,11 +87,11 @@ yarn peggy:getTokenBalance 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 eth
 ```
 You should see this is a balance of 0: `Eth balance for 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 is 0 Eth (0 Wei)`
 
-Now you can move the EVM native asset back to that vanity address (`0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9`) on the EVM chain. Note we'll use token-contract-address `0x0000000000000000000000000000000000000000` since we're not actually transferring back a token but the EVM chain native asset (eth).
+Now you can move the EVM native asset back to that vanity address (`0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9`) on the EVM chain.
 
 ```bash
-# ebcli tx ethbridge burn [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id] --token-contract-address [token-contract-address] [flags]
-ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 1eth  --ethereum-chain-id 3 --token-contract-address 0x0000000000000000000000000000000000000000 --from testuser --yes
+# ebcli tx ethbridge burn [cosmos-sender-address] [ethereum-receiver-address] [amount] --ethereum-chain-id [ethereum-chain-id [flags]
+ebcli tx ethbridge burn $(ebcli keys show testuser -a) 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 1 peggyeth  --ethereum-chain-id 3 --from testuser --yes
 ```
 
 You should now be able to see that address has received the ether:
@@ -153,13 +131,8 @@ Attempting to send checkBridgeProphecy() tx...
 ----------------------------------------
 Weighted total power:    104
 Weighted signed power:   150
-Reached threshold:       true
+Reached threshold:       false
 ----------------------------------------
 ```   
 
-Once the prophecy claim has reached the signed power threshold, anyone may initiate its processing. Any attempts to process prophecy claims under the signed power threshold will be rejected by the contracts.   
-
-```bash
-# Process the prophecy claim
-yarn peggy:process [PROPHECY_CLAIM_ID]
-```
+Once the prophecy claim has reached the signed power threshold, it will be automatically processed and funds will be delivered to the intended Ethereum recipient.

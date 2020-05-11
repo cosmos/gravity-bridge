@@ -1,12 +1,14 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Valset.sol";
 import "./BridgeBank/BridgeBank.sol";
 
 
 contract CosmosBridge {
     using SafeMath for uint256;
+
+    string COSMOS_NATIVE_ASSET_PREFIX = "PEGGY";
 
     /*
      * @dev: Public variable declarations
@@ -39,6 +41,7 @@ contract CosmosBridge {
     /*
      * @dev: Event declarations
      */
+
     event LogOracleSet(address _oracle);
 
     event LogBridgeBankSet(address _bridgeBank);
@@ -130,14 +133,13 @@ contract CosmosBridge {
     /*
      * @dev: newProphecyClaim
      *       Creates a new burn or lock prophecy claim, adding it to the prophecyClaims mapping.
-     *       Lock claims can only be created for BridgeTokens on BridgeBank's whitelist. The operator
-     *       is responsible for adding them, and lock claims will fail until the operator has done so.
+     *       Burn claims require that there are enough locked Ethereum assets to complete the prophecy.
+     *       Lock claims have a new token contract deployed or use an existing contract based on symbol.
      */
     function newProphecyClaim(
         ClaimType _claimType,
         bytes memory _cosmosSender,
         address payable _ethereumReceiver,
-        address _tokenAddress,
         string memory _symbol,
         uint256 _amount
     ) public isActive {
@@ -146,41 +148,53 @@ contract CosmosBridge {
             "Must be an active validator"
         );
 
-        // Increment the prophecy claim count
-        prophecyClaimCount = prophecyClaimCount.add(1);
-
-        address originalValidator = msg.sender;
-
-        ClaimType claimType;
+        address tokenAddress;
+        string memory symbol;
         if (_claimType == ClaimType.Burn) {
-            claimType = ClaimType.Burn;
+            require(
+                bridgeBank.getLockedFunds(_symbol) >= _amount,
+                "Not enough locked assets to complete the proposed prophecy"
+            );
+            symbol = _symbol;
+            tokenAddress = bridgeBank.getLockedTokenAddress(_symbol);
         } else if (_claimType == ClaimType.Lock) {
-            claimType = ClaimType.Lock;
+            symbol = concat(COSMOS_NATIVE_ASSET_PREFIX, _symbol); // Add 'PEGGY' symbol prefix
+            address bridgeTokenAddress = bridgeBank.getBridgeToken(symbol);
+            if (bridgeTokenAddress == address(0)) {
+                // First lock of this asset, deploy new contract and get new symbol/token address
+                tokenAddress = bridgeBank.createNewBridgeToken(symbol);
+            } else {
+                // Not the first lock of this asset, get existing symbol/token address
+                tokenAddress = bridgeTokenAddress;
+            }
+        } else {
+            revert("Invalid claim type, only burn and lock are supported.");
         }
 
         // Create the new ProphecyClaim
         ProphecyClaim memory prophecyClaim = ProphecyClaim(
-            claimType,
+            _claimType,
             _cosmosSender,
             _ethereumReceiver,
-            originalValidator,
-            _tokenAddress,
-            _symbol,
+            msg.sender,
+            tokenAddress,
+            symbol,
             _amount,
             Status.Pending
         );
 
-        // Add the new ProphecyClaim to the mapping
+        // Increment count and add the new ProphecyClaim to the mapping
+        prophecyClaimCount = prophecyClaimCount.add(1);
         prophecyClaims[prophecyClaimCount] = prophecyClaim;
 
         emit LogNewProphecyClaim(
             prophecyClaimCount,
-            claimType,
+            _claimType,
             _cosmosSender,
             _ethereumReceiver,
-            originalValidator,
-            _tokenAddress,
-            _symbol,
+            msg.sender,
+            tokenAddress,
+            symbol,
             _amount
         );
     }
@@ -237,7 +251,6 @@ contract CosmosBridge {
 
         bridgeBank.unlock(
             prophecyClaim.ethereumReceiver,
-            prophecyClaim.tokenAddress,
             prophecyClaim.symbol,
             prophecyClaim.amount
         );
@@ -269,5 +282,19 @@ contract CosmosBridge {
             valset.isActiveValidator(
                 prophecyClaims[_prophecyID].originalValidator
             );
+    }
+
+    /*
+     * @dev: Performs low gas-comsuption string concatenation
+     *
+     * @param _prefix: start of the string
+     * @param _suffix: end of the string
+     */
+    function concat(string memory _prefix, string memory _suffix)
+        internal
+        pure
+        returns (string memory)
+    {
+        return string(abi.encodePacked(_prefix, _suffix));
     }
 }
