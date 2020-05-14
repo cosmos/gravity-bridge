@@ -3,48 +3,50 @@
 The following document describe all relevant actors and pieces of software within the Peggy (v2) suite. Generally it is divided between the Cosmos SDK modules, the EVM based smart contracts, and the Golang relayer client operated by validators that watch both chains and relay information according to events which are heard on either chain.
 
 ## EVM Contracts, Actors & Data
-- Claim
+- **Claim**
     - A data type that represents a Claim that some event happened on an SDK chain. The Claim is submitted as a transaction from one or more SDK chain validators with reference to a “Prophecy” that includes possible events of “Lock” or “Burn”. Claims could be made about other events but “Lock” and “Burn” are the only two relevant to the transfer of fungible tokens.
-- Prophecy
+- **Prophecy**
     - A data type that represents the first Claim made on the contract about an event coming from an SDK chain. This Claim generates a new Prophecy that has a unique ID used as a reference for subsequent Claims made to support the initial Prophecy.
-- Valset
+- **Valset**
     - A contract that keeps track of a set of SDK chain validators and their corresponding token weights.
-- Valset Operator
+- **Valset Operator**
     - An actor with the permission to update the validator set within the `Valset` contract.
     - This is a point of centralization that is addressed in Peggy v3.
-- CosmosBridge
+- **CosmosBridge**
     - A contract which receives new Prophecies from validators, concludes Prophecies after a threshold of Claims have been made against them within the `Oracle` contract and issues wrapped tokens on behalf of the `BridgeBank` or unlocks tokens previously in escrow.
-- CosmosBridge Operator
+- **CosmosBridge Operator**
     - An actor with the ability to update the `CosmosBridge` references to the `BridgeBank` and `Oracle` contracts.
     - This is a point of centralization that is addressed in Peggy v3.
-- Oracle
+- **Oracle**
     - A contract which receives Claims from validators against specific Prophecies until a threshold is reached whereupon the Prophecy is concluded within the `CosmosBridge`.
-- BridgeBank
+- **BridgeBank**
     - A group of contracts comprised of `BridgeBank`, `CosmosBank` and `EthereumBank` which manages locked EVM assets as well as newly minted SDK based assets.
-- BridgeBank Operator
+- **BridgeBank Operator**
     - Actor who is able to deploy new token denominations used to represent SDK chain assets as well as make ETH deposits on the contract directly.
     - This is a point of centralization that is addressed in Peggy v3.
-- BridgeToken
+- **BridgeToken**
     - Contract template for standard ERC-20 token that is managed by the `BridgeBank` in order to represent SDK chain assets.
-- BridgeRegistry
+- **BridgeRegistry**
     - Contract which records the values of as well as executes an event containing the contract addresses of `Valset`, `CosmosBridge`, `Oracle` and `BridgeBank`.
-SDK Chain Modules and Messages
-- x/oracle
+
+## SDK Chain Modules and Messages
+- **x/oracle**
     - Manages storage of Prophecies, regardless of their content, and manages subsequent Claims and validators contained within Prophecies. 
-- x/ethbridge
+- **x/ethbridge**
     - References the oracle module in order to process Claims and subsequent successful and unsuccessful Prophecies by minting, burning and locking Coins.
-- MsgLock
+- **MsgLock**
     - A message that denotes a SDK chain asset should be locked and minted on the EVM chain as a `BridgeToken`.
-- MsgBurn
+- **MsgBurn**
     - A message that denotes an EVM chain asset which exists on the SDK chain should be burned and subsequently unlocked on the EVM chain.
-- MsgCreateEthBridgeClaim
+- **MsgCreateEthBridgeClaim**
     - A message that creates a Claim on behalf of a validator for some event that occurred on the EVM chain. This message creates a new Prophecy if one does not previously exist and adds a Claim to that Prophecy or another that was previously registered.
-Relayer Events
-- Cosmos Event MsgBurn/MsgLock
+
+## Relayer Events
+- **Cosmos Event MsgBurn/MsgLock**
     - When the Cosmos Listener hears this event, it handles it by executing the `NewProphecyClaim()` function within the `CosmosBridge` using the current validator key.
-- Ethereum Event LogLock
+- **Ethereum Event LogLock**
     - When `LogLock` event is heard by the relayer it converts it to a `ProphecyClaim`, and relays a tx to Cosmos.
-- Ethereum Event LogNewProphecyClaim
+- **Ethereum Event LogNewProphecyClaim**
     - When `LogNewProphecyClaim` is heard by the Relayer it creates subsequent Claims to push the Prophecy to completion.
 
 ## User Flows
