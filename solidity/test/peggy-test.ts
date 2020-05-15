@@ -13,7 +13,8 @@ import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
   makeCheckpoint,
-  signHash
+  signHash,
+  makeTxBatchHash
 } from "../test-utils/pure";
 
 chai.use(solidity);
@@ -27,7 +28,7 @@ describe("Peggy happy path", function() {
     const powers = [60000, 20000, 20000];
     const powerThreshold = 66666;
 
-    const { peggy, max } = await deployContracts(
+    const { peggy, max, checkpoint: deployCheckpoint } = await deployContracts(
       peggyId,
       validators,
       powers,
@@ -37,6 +38,7 @@ describe("Peggy happy path", function() {
     expect(await peggy.functions.peggyId()).to.equal(peggyId);
     expect(await peggy.functions.powerThreshold()).to.equal(powerThreshold);
     expect(await peggy.functions.tokenContract()).to.equal(max.address);
+    expect(await peggy.functions.lastCheckpoint()).to.equal(deployCheckpoint);
 
     const newValidators = [signers[1], signers[2], signers[3], signers[4]];
     const newPowers = [50000, 20000, 20000, 10000];
@@ -44,13 +46,15 @@ describe("Peggy happy path", function() {
     const newValsetNonce = 1;
 
     const checkpoint = makeCheckpoint(
-      await getSignerAddresses(validators),
-      powers,
-      0,
+      await getSignerAddresses(newValidators),
+      newPowers,
+      newValsetNonce,
       peggyId
     );
 
-    const { v, r, s } = await signHash(validators, checkpoint);
+    console.log("checkpoint calling updateValset", checkpoint);
+
+    let sigs = await signHash(validators, checkpoint);
 
     await peggy.updateValset(
       await getSignerAddresses(newValidators),
@@ -59,9 +63,43 @@ describe("Peggy happy path", function() {
       await getSignerAddresses(validators),
       powers,
       currentValsetNonce,
-      v,
-      r,
-      s
+      sigs.v,
+      sigs.r,
+      sigs.s
     );
+
+    expect(await peggy.functions.lastCheckpoint()).to.equal(checkpoint);
+
+    const txAmounts = [10, 20, 30];
+    const txDestinations = await getSignerAddresses([
+      signers[6],
+      signers[7],
+      signers[8]
+    ]);
+    const txFees = [1, 1, 1];
+    const txNonces = [0, 1, 2];
+
+    let txHash = makeTxBatchHash(
+      txAmounts,
+      txDestinations,
+      txFees,
+      txNonces,
+      peggyId
+    );
+
+    sigs = await signHash(newValidators, txHash);
+
+    // await peggy.submitBatch(
+    //   await getSignerAddresses(newValidators),
+    //   newPowers,
+    //   currentValsetNonce,
+    //   sigs.v,
+    //   sigs.r,
+    //   sigs.s,
+    //   txAmounts,
+    //   txDestinations,
+    //   txFees,
+    //   txNonces
+    // );
   });
 });

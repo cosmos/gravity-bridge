@@ -39,7 +39,17 @@ contract Peggy {
 		// bytes32 encoding of "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
+		console.log("newCheckpoint _peggyId");
+		console.logBytes32(_peggyId);
+		console.log("newCheckpoint methodName");
+		console.logBytes32(methodName);
+		console.log("newCheckpoint _newValsetNonce");
+		console.logUint(_newValsetNonce);
+
 		bytes32 newCheckpoint = keccak256(abi.encodePacked(_peggyId, methodName, _newValsetNonce));
+
+		console.log("newCheckpoint before iteration");
+		console.logBytes32(newCheckpoint);
 
 		{
 			for (uint256 i = 0; i < _newValidators.length; i = i.add(1)) {
@@ -54,6 +64,8 @@ contract Peggy {
 				newCheckpoint = keccak256(
 					abi.encodePacked(newCheckpoint, _newValidators[i], _newPowers[i])
 				);
+				console.log("newCheckpoint iteration ", i);
+				console.logBytes32(newCheckpoint);
 			}
 		}
 
@@ -73,11 +85,22 @@ contract Peggy {
 			abi.encodePacked(peggyId, methodName, _suppliedValsetNonce)
 		);
 
+		console.log("checkCheckpoint before iteration");
+		console.logBytes32(suppliedCheckpoint);
+
 		for (uint256 i = 0; i < _suppliedValidators.length; i = i.add(1)) {
 			suppliedCheckpoint = keccak256(
 				abi.encodePacked(suppliedCheckpoint, _suppliedValidators[i], _suppliedPowers[i])
 			);
+
+			console.log("checkCheckpoint iteration ", i);
+			console.logBytes32(suppliedCheckpoint);
 		}
+
+		console.log("checkCheckpoint suppliedCheckpoint");
+		console.logBytes32(suppliedCheckpoint);
+		console.log("checkCheckpoint lastCheckpoint");
+		console.logBytes32(lastCheckpoint);
 
 		require(
 			suppliedCheckpoint == lastCheckpoint,
@@ -174,6 +197,9 @@ contract Peggy {
 			_newValsetNonce,
 			peggyId
 		);
+
+		console.log("newCheckoint in updateValset");
+		console.logBytes32(newCheckpoint);
 
 		// - Check that enough current validators have signed off on the new validator set
 		checkValidatorSignatures(
@@ -334,5 +360,7 @@ contract Peggy {
 		tokenContract = _tokenContract;
 		peggyId = _peggyId;
 		powerThreshold = _powerThreshold;
+		lastCheckpoint = newCheckpoint;
+		console.log("constructor successful");
 	}
 }

@@ -40,5 +40,5 @@ export async function deployContracts(
 
   await peggy.deployed();
 
-  return { peggy, max };
+  return { peggy, max, checkpoint };
 }
