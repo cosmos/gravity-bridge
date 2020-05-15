@@ -1,6 +1,7 @@
 pragma solidity ^0.6.6;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@nomiclabs/buidler/console.sol";
 
 
 contract Peggy {
@@ -17,15 +18,28 @@ contract Peggy {
 
 	event LogValsetUpdated(address[] _validators, uint256[] _powers);
 
+	function verifySig(address _signer, bytes32 _theHash, uint8 _v, bytes32 _r, bytes32 _s)
+		private
+		pure
+		returns (bool)
+	{
+		bytes32 messageDigest = keccak256(
+			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
+		);
+		return _signer == ecrecover(messageDigest, _v, _r, _s);
+	}
+
 	// - Make a new checkpoint from the supplied validator set
 	function makeCheckpoint(
 		address[] memory _newValidators,
 		uint256[] memory _newPowers,
-		uint256 _newValsetNonce
+		uint256 _newValsetNonce,
+		bytes32 _peggyId
 	) public view returns (bytes32) {
 		// bytes32 encoding of "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
-		bytes32 newCheckpoint = keccak256(abi.encodePacked(peggyId, methodName, _newValsetNonce));
+
+		bytes32 newCheckpoint = keccak256(abi.encodePacked(_peggyId, methodName, _newValsetNonce));
 
 		{
 			for (uint256 i = 0; i < _newValidators.length; i = i.add(1)) {
@@ -80,22 +94,28 @@ contract Peggy {
 		bytes32[] memory _r,
 		bytes32[] memory _s,
 		// This is what we are checking they have signed
-		bytes32 theHash
+		bytes32 _theHash,
+		uint256 _powerThreshold
 	) public view {
 		uint256 cumulativePower = 0;
 
 		for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
+			console.log("signing iteration: ", k);
 			// Check that the current validator has signed off on the hash
 			require(
-				_currentValidators[k] == ecrecover(theHash, _v[k], _r[k], _s[k]),
-				"Current validator signature does not match."
+				verifySig(_currentValidators[k], _theHash, _v[k], _r[k], _s[k]),
+				// _currentValidators[k] == ecrecover(theHash, _v[k], _r[k], _s[k]),
+				"Validator signature does not match."
 			);
+			console.log("successful");
 
 			// Sum up cumulative power
 			cumulativePower = cumulativePower + _currentPowers[k];
+			console.log("cumulativePower", cumulativePower, "powerThreshold", _powerThreshold);
 
 			// Break early to avoid wasting gas
-			if (cumulativePower > powerThreshold) {
+			if (cumulativePower > _powerThreshold) {
+				console.log("breaking");
 				break;
 			}
 		}
@@ -148,10 +168,23 @@ contract Peggy {
 		//   is used to check that the current validator set approves of the new one. Second,
 		//   it is stored as the checkpoint and used next time to validate the valset supplied by
 		//   the caller. This allows us to avoid storing all validators and saves gas.
-		bytes32 newCheckpoint = makeCheckpoint(_newValidators, _newPowers, _newValsetNonce);
+		bytes32 newCheckpoint = makeCheckpoint(
+			_newValidators,
+			_newPowers,
+			_newValsetNonce,
+			peggyId
+		);
 
 		// - Check that enough current validators have signed off on the new validator set
-		checkValidatorSignatures(_currentValidators, _currentPowers, _v, _r, _s, newCheckpoint);
+		checkValidatorSignatures(
+			_currentValidators,
+			_currentPowers,
+			_v,
+			_r,
+			_s,
+			newCheckpoint,
+			powerThreshold
+		);
 
 		// ACTIONS
 
@@ -231,7 +264,15 @@ contract Peggy {
 		}
 
 		// - Check that enough current validators have signed off on the transaction batch
-		checkValidatorSignatures(_currentValidators, _currentPowers, _v, _r, _s, transactionsHash);
+		checkValidatorSignatures(
+			_currentValidators,
+			_currentPowers,
+			_v,
+			_r,
+			_s,
+			transactionsHash,
+			powerThreshold
+		);
 
 		// ACTIONS
 
@@ -253,15 +294,15 @@ contract Peggy {
 		// The token that this bridge bridges
 		address _tokenContract,
 		// A unique identifier for this peggy instance to use in signatures
-		bytes32 _peggyId,
+		bytes32 _peggyId, // TODO: is peggyId enough or do we need to use the contract address?
 		// How much voting power is needed to approve operations
 		uint256 _powerThreshold,
 		// The validator set
 		address[] memory _validators,
 		uint256[] memory _powers,
 		// These are arrays of the parts of the validators signatures
-		bytes32[] memory _r,
 		uint8[] memory _v,
+		bytes32[] memory _r,
 		bytes32[] memory _s
 	) public {
 		// CHECKS
@@ -275,7 +316,7 @@ contract Peggy {
 			"Malformed current validator set"
 		);
 
-		bytes32 newCheckpoint = makeCheckpoint(_validators, _powers, 0);
+		bytes32 newCheckpoint = makeCheckpoint(_validators, _powers, 0, _peggyId);
 
 		checkValidatorSignatures(
 			_validators,
@@ -284,7 +325,8 @@ contract Peggy {
 			_r,
 			_s,
 			// TODO: we need to think carefully about what they sign here
-			keccak256(abi.encodePacked(newCheckpoint, _tokenContract, _peggyId, _powerThreshold))
+			keccak256(abi.encodePacked(newCheckpoint, _tokenContract, _peggyId, _powerThreshold)),
+			_powerThreshold
 		);
 
 		// ACTIONS
