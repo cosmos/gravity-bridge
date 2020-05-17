@@ -22,10 +22,11 @@ LISTEN_ADDRESS="--address tcp://7.7.7.$i:26655"
 RPC_ADDRESS="--rpc.laddr tcp://7.7.7.$i:26657"
 P2P_ADDRESS="--p2p.laddr tcp://7.7.7.$i:26656"
 ARGS="$GAIA_HOME $LISTEN_ADDRESS $RPC_ADDRESS $P2P_ADDRESS"
-if [ $i -le $NODES ]; then
 $BIN $ARGS start &
-fi
-if [ $i -gt $(($NODES - 1)) ]; then
-$BIN $ARGS start
-fi
 done
+
+# let the cosmos chain settle before starting eth as it
+# consumes a lot of processing power
+sleep 30
+
+bash /peggy/tests/run-eth.sh
