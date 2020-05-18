@@ -1,7 +1,7 @@
 pragma solidity ^0.6.6;
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@nomiclabs/buidler/console.sol";
+import "solidity/node_modules/@openzeppelin/contracts/math/SafeMath.sol";
+import "solidity/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "solidity/node_modules/@nomiclabs/buidler/console.sol";
 
 
 contract Peggy {
@@ -16,7 +16,8 @@ contract Peggy {
 	bytes32 public peggyId;
 	uint256 public powerThreshold;
 
-	event LogValsetUpdated(address[] _validators, uint256[] _powers);
+	event ValsetUpdatedEvent(address[] _validators, uint256[] _powers);
+	event TransferOutEvent(bytes32 _destination, uint256 _amount);
 
 	function verifySig(address _signer, bytes32 _theHash, uint8 _v, bytes32 _r, bytes32 _s)
 		private
@@ -220,7 +221,7 @@ contract Peggy {
 
 		// LOGS
 
-		emit LogValsetUpdated(_newValidators, _newPowers);
+		emit ValsetUpdatedEvent(_newValidators, _newPowers);
 	}
 
 	function submitBatch(
@@ -271,10 +272,12 @@ contract Peggy {
 		uint256 lastTxNonceTemp = lastTxNonce;
 		{
 			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
+				console.log("nonces[i]: ", _nonces[i], "lastTxNonceTemp: ", lastTxNonceTemp);
 				require(
 					_nonces[i] > lastTxNonceTemp,
 					"Transaction nonces in batch must be strictly increasing"
 				);
+
 				lastTxNonceTemp = _nonces[i];
 
 				transactionsHash = keccak256(
@@ -313,6 +316,11 @@ contract Peggy {
 				IERC20(tokenContract).transfer(msg.sender, _fees[i]);
 			}
 		}
+	}
+
+	function transferOut(bytes32 _destination, uint256 _amount) public {
+		IERC20(tokenContract).transferFrom(msg.sender, address(this), _amount);
+		emit TransferOutEvent(_destination, _amount);
 	}
 
 	// TODO: we need to think this through a bit more. What needs to be in here and signed?
