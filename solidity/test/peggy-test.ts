@@ -70,14 +70,30 @@ describe("Peggy happy path", function() {
 
     expect(await peggy.functions.lastCheckpoint()).to.equal(checkpoint);
 
-    const txAmounts = [10, 20, 30];
+    // Transferring out to Cosmos
+
+    await max.functions.approve(peggy.address, 100);
+
+    await peggy.functions.transferOut(
+      ethers.utils.formatBytes32String("myCosmosAddress"),
+      100
+    );
+
+    // Transferring into ERC20 from Cosmos
+    console.log(
+      "testing submitBatch",
+      await (
+        await max.functions.balanceOf(await signers[6].getAddress())
+      ).toString()
+    );
+    const txAmounts = [11, 22, 33];
     const txDestinations = await getSignerAddresses([
       signers[6],
       signers[7],
       signers[8]
     ]);
     const txFees = [1, 1, 1];
-    const txNonces = [0, 1, 2];
+    const txNonces = [1, 2, 3];
 
     let txHash = makeTxBatchHash(
       txAmounts,
@@ -89,17 +105,23 @@ describe("Peggy happy path", function() {
 
     sigs = await signHash(newValidators, txHash);
 
-    // await peggy.submitBatch(
-    //   await getSignerAddresses(newValidators),
-    //   newPowers,
-    //   currentValsetNonce,
-    //   sigs.v,
-    //   sigs.r,
-    //   sigs.s,
-    //   txAmounts,
-    //   txDestinations,
-    //   txFees,
-    //   txNonces
-    // );
+    await peggy.submitBatch(
+      await getSignerAddresses(newValidators),
+      newPowers,
+      newValsetNonce,
+      sigs.v,
+      sigs.r,
+      sigs.s,
+      txAmounts,
+      txDestinations,
+      txFees,
+      txNonces
+    );
+
+    expect(
+      await (
+        await max.functions.balanceOf(await signers[6].getAddress())
+      ).toNumber()
+    ).to.equal(11);
   });
 });

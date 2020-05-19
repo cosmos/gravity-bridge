@@ -1,7 +1,7 @@
 pragma solidity ^0.6.6;
-import "solidity/node_modules/@openzeppelin/contracts/math/SafeMath.sol";
-import "solidity/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "solidity/node_modules/@nomiclabs/buidler/console.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@nomiclabs/buidler/console.sol";
 
 
 contract Peggy {

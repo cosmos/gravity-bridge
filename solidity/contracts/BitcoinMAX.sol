@@ -2,6 +2,7 @@ pragma solidity ^0.6.6;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 
+// This is the coin we test with- the REAL Bitcoin
 contract BitcoinMAX is ERC20 {
 	constructor() public ERC20("Bitcoin MAX", "MAX") {
 		_mint(0xc783df8a850f42e7F7e57013759C285caa701eB6, 10000);
