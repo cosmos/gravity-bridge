@@ -2,7 +2,6 @@ import chai from "chai";
 import { ethers } from "@nomiclabs/buidler";
 import { solidity } from "ethereum-waffle";
 
-import { Greeter } from "../typechain/Greeter";
 import { Peggy } from "../typechain/Peggy";
 import { BitcoinMAX } from "../typechain/BitcoinMAX";
 import { SigningTest } from "../typechain/SigningTest";
@@ -13,25 +12,6 @@ chai.use(solidity);
 const { expect } = chai;
 
 describe("Peggy", function() {
-  it("Smoke test", async function() {
-    const Greeter = await ethers.getContractFactory("Greeter");
-    const greeter = (await Greeter.deploy("Hello, world!")) as Greeter;
-
-    const signers = await ethers.getSigners();
-
-    await greeter.deployed();
-
-    await greeter.setGreeting("one");
-
-    await greeter.setGreeting("two");
-
-    await greeter.connect(signers[0]).setGreeting("three");
-
-    await greeter.connect(signers[1]).setGreeting("four");
-
-    expect(await greeter.greet()).to.equal("four");
-  });
-
   it("Coin test", async function() {
     const BitcoinMAX = await ethers.getContractFactory("BitcoinMAX");
     const max = (await BitcoinMAX.deploy()) as BitcoinMAX;

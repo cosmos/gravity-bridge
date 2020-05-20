@@ -2,7 +2,6 @@ import chai from "chai";
 import { ethers } from "@nomiclabs/buidler";
 import { solidity } from "ethereum-waffle";
 
-import { Greeter } from "../typechain/Greeter";
 import { Peggy } from "../typechain/Peggy";
 import { BitcoinMAX } from "../typechain/BitcoinMAX";
 import { SigningTest } from "../typechain/SigningTest";
