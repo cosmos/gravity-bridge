@@ -2,12 +2,6 @@ import chai from "chai";
 import { ethers } from "@nomiclabs/buidler";
 import { solidity } from "ethereum-waffle";
 
-import { Peggy } from "../typechain/Peggy";
-import { BitcoinMAX } from "../typechain/BitcoinMAX";
-import { SigningTest } from "../typechain/SigningTest";
-import { BigNumberish } from "ethers/utils";
-import { Signer } from "ethers";
-
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,

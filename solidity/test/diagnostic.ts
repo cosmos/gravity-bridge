@@ -2,16 +2,14 @@ import chai from "chai";
 import { ethers } from "@nomiclabs/buidler";
 import { solidity } from "ethereum-waffle";
 
-import { Peggy } from "../typechain/Peggy";
 import { BitcoinMAX } from "../typechain/BitcoinMAX";
 import { SigningTest } from "../typechain/SigningTest";
-import { BigNumberish } from "ethers/utils";
 import { Signer } from "ethers";
 
 chai.use(solidity);
 const { expect } = chai;
 
-describe("Peggy", function() {
+describe("Diagnostic tests", function() {
   it("Coin test", async function() {
     const BitcoinMAX = await ethers.getContractFactory("BitcoinMAX");
     const max = (await BitcoinMAX.deploy()) as BitcoinMAX;

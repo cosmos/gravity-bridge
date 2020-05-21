@@ -19,11 +19,13 @@ contract Peggy {
 	event ValsetUpdatedEvent(address[] _validators, uint256[] _powers);
 	event TransferOutEvent(bytes32 _destination, uint256 _amount);
 
-	function verifySig(address _signer, bytes32 _theHash, uint8 _v, bytes32 _r, bytes32 _s)
-		private
-		pure
-		returns (bool)
-	{
+	function verifySig(
+		address _signer,
+		bytes32 _theHash,
+		uint8 _v,
+		bytes32 _r,
+		bytes32 _s
+	) private pure returns (bool) {
 		bytes32 messageDigest = keccak256(
 			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
 		);
@@ -36,21 +38,11 @@ contract Peggy {
 		uint256[] memory _newPowers,
 		uint256 _newValsetNonce,
 		bytes32 _peggyId
-	) public view returns (bytes32) {
+	) public pure returns (bytes32) {
 		// bytes32 encoding of "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		console.log("newCheckpoint _peggyId");
-		console.logBytes32(_peggyId);
-		console.log("newCheckpoint methodName");
-		console.logBytes32(methodName);
-		console.log("newCheckpoint _newValsetNonce");
-		console.logUint(_newValsetNonce);
-
 		bytes32 newCheckpoint = keccak256(abi.encodePacked(_peggyId, methodName, _newValsetNonce));
-
-		console.log("newCheckpoint before iteration");
-		console.logBytes32(newCheckpoint);
 
 		{
 			for (uint256 i = 0; i < _newValidators.length; i = i.add(1)) {
@@ -65,8 +57,6 @@ contract Peggy {
 				newCheckpoint = keccak256(
 					abi.encodePacked(newCheckpoint, _newValidators[i], _newPowers[i])
 				);
-				console.log("newCheckpoint iteration ", i);
-				console.logBytes32(newCheckpoint);
 			}
 		}
 
@@ -86,22 +76,11 @@ contract Peggy {
 			abi.encodePacked(peggyId, methodName, _suppliedValsetNonce)
 		);
 
-		console.log("checkCheckpoint before iteration");
-		console.logBytes32(suppliedCheckpoint);
-
 		for (uint256 i = 0; i < _suppliedValidators.length; i = i.add(1)) {
 			suppliedCheckpoint = keccak256(
 				abi.encodePacked(suppliedCheckpoint, _suppliedValidators[i], _suppliedPowers[i])
 			);
-
-			console.log("checkCheckpoint iteration ", i);
-			console.logBytes32(suppliedCheckpoint);
 		}
-
-		console.log("checkCheckpoint suppliedCheckpoint");
-		console.logBytes32(suppliedCheckpoint);
-		console.log("checkCheckpoint lastCheckpoint");
-		console.logBytes32(lastCheckpoint);
 
 		require(
 			suppliedCheckpoint == lastCheckpoint,
@@ -124,22 +103,18 @@ contract Peggy {
 		uint256 cumulativePower = 0;
 
 		for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
-			console.log("signing iteration: ", k);
 			// Check that the current validator has signed off on the hash
 			require(
 				verifySig(_currentValidators[k], _theHash, _v[k], _r[k], _s[k]),
 				// _currentValidators[k] == ecrecover(theHash, _v[k], _r[k], _s[k]),
 				"Validator signature does not match."
 			);
-			console.log("successful");
 
 			// Sum up cumulative power
 			cumulativePower = cumulativePower + _currentPowers[k];
-			console.log("cumulativePower", cumulativePower, "powerThreshold", _powerThreshold);
 
 			// Break early to avoid wasting gas
 			if (cumulativePower > _powerThreshold) {
-				console.log("breaking");
 				break;
 			}
 		}
@@ -198,9 +173,6 @@ contract Peggy {
 			_newValsetNonce,
 			peggyId
 		);
-
-		console.log("newCheckoint in updateValset");
-		console.logBytes32(newCheckpoint);
 
 		// - Check that enough current validators have signed off on the new validator set
 		checkValidatorSignatures(
@@ -272,7 +244,6 @@ contract Peggy {
 		uint256 lastTxNonceTemp = lastTxNonce;
 		{
 			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
-				console.log("nonces[i]: ", _nonces[i], "lastTxNonceTemp: ", lastTxNonceTemp);
 				require(
 					_nonces[i] > lastTxNonceTemp,
 					"Transaction nonces in batch must be strictly increasing"
@@ -369,6 +340,5 @@ contract Peggy {
 		peggyId = _peggyId;
 		powerThreshold = _powerThreshold;
 		lastCheckpoint = newCheckpoint;
-		console.log("constructor successful");
 	}
 }
