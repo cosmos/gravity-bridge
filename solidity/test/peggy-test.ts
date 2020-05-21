@@ -45,8 +45,6 @@ describe("Peggy happy path", function() {
       peggyId
     );
 
-    console.log("checkpoint calling updateValset", checkpoint);
-
     let sigs = await signHash(validators, checkpoint);
 
     await peggy.updateValset(
@@ -73,12 +71,6 @@ describe("Peggy happy path", function() {
     );
 
     // Transferring into ERC20 from Cosmos
-    console.log(
-      "testing submitBatch",
-      await (
-        await max.functions.balanceOf(await signers[6].getAddress())
-      ).toString()
-    );
     const txAmounts = [11, 22, 33];
     const txDestinations = await getSignerAddresses([
       signers[6],

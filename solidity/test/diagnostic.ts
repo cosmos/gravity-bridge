@@ -20,14 +20,6 @@ describe("Diagnostic tests", function() {
 
     await max.connect(signers[1]).transfer(await signers[2].getAddress(), 99);
 
-    console.log(
-      (await max.balanceOf(await signers[2].getAddress())).toString()
-    );
-
-    console.log(
-      (await max.balanceOf(await signers[1].getAddress())).toString()
-    );
-
     await max
       .connect(signers[1])
       .transfer(await signers[2].getAddress(), 9999999999);
@@ -89,13 +81,6 @@ async function signHash(signers: Signer[], hash: string) {
     v.push(splitSig.v!);
     r.push(splitSig.r);
     s.push(splitSig.s);
-
-    console.log("signing iteration");
-    console.log("v", splitSig.v!);
-    console.log("r", splitSig.r);
-    console.log("s", splitSig.s);
-    console.log("address", address);
-    console.log("-------");
   }
   return { v, r, s };
 }
