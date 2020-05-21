@@ -14,10 +14,6 @@ export function makeCheckpoint(
 ) {
   const methodName = ethers.utils.formatBytes32String("checkpoint");
 
-  console.log("makeCheckpoint peggyId", peggyId);
-  console.log("makeCheckpoint methodName", methodName);
-  console.log("makeCheckpoint newValsetNonce", newValsetNonce);
-
   let checkpoint = ethers.utils.solidityKeccak256(
     ["bytes32", "bytes32", "uint256"],
     [peggyId, methodName, newValsetNonce]

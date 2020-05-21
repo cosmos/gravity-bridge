@@ -14,7 +14,7 @@ chai.use(solidity);
 const { expect } = chai;
 
 describe("Peggy happy path", function() {
-  it.only("Happy path", async function() {
+  it("Happy path", async function() {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
     const validators = [signers[1], signers[2], signers[3]];
