@@ -76,7 +76,8 @@ Should the user desire to move their EVM based SDK asset back to the EVM setting
 
 In order to move an SDK based Coin to the EVM chain a user would need to sign and execute a `MsgLock` on the `ethbridge` module. This module will move the coins into escrow controlled by that module and event an event called `MsgLock`.
 
-The relayer that is configured to listen for events on the SDK chain will hear the `MsgLock` event and creat a `ProphecyClaim` containing the Lock event destined for the EVM chain. The event would contain the token address of a `BridgeToken` which was created with the same `symbol` as the Coin `denom`. Without a corresponding `BridgeToken` the `ProphecyClaim` will eventually fail.
+The relayer that is configured to listen for events on the SDK chain will hear the `MsgLock` event and create a `ProphecyClaim` containing the Lock event destined for the EVM chain. The event would contain the token address of a `BridgeToken` which was created with the same `symbol` as the Coin `denom`. Without a corresponding `BridgeToken` the `ProphecyClaim` will eventually fail.
+
 
 If a `BridgeToken` exists with the correct `denom` / `symbol` and a threshold of validators relayers have made `ProphecyClaim`s then `processBridgeProphecy` can be executed on the `Oracle` contract, which in turn executes `completeProphecy` on the `CosmosBridge` contract. The `completeProphecy` may also be executed automatically within the `Oracle` contract upon a threshold complete `newOracleClaim` execution.
 
