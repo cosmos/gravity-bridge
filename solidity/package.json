@@ -27,7 +27,9 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^3.0.1",
+    "@types/command-line-args": "^5.0.0",
     "buidler-typechain": "0.0.5",
+    "command-line-args": "^5.1.1",
     "ts-generator": "0.0.8",
     "typechain-target-ethers": "^1.0.4",
     "typechain-target-truffle": "^1.0.2",
