@@ -13,7 +13,8 @@ The following document describe all relevant actors and pieces of software withi
     - An actor with the permission to update the validator set within the `Valset` contract.
     - This is a point of centralization that is addressed in Peggy v3.
 - **CosmosBridge**
-    - A contract which receives new Prophecies from validators, concludes Prophecies after a threshold of Claims have been made against them within the `Oracle` contract and issues wrapped tokens on behalf of the `BridgeBank` or unlocks tokens previously in escrow.
+    - A contract which receives new Prophecies from validators, concludes Prophecies after a threshold of Claims have been made against them within the `Oracle` contract and issues pegged tokens on behalf of the `BridgeBank` or unlocks tokens previously in escrow.
+
 - **CosmosBridge Operator**
     - An actor with the ability to update the `CosmosBridge` references to the `BridgeBank` and `Oracle` contracts.
     - This is a point of centralization that is addressed in Peggy v3.
