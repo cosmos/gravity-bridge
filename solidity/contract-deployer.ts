@@ -1,32 +1,78 @@
-// this is a command line utility for deploying the peggy solidity contract
-// to a 'real' blockchain. It needs an erc20 address (or in integraiton test mode
-// it will deploy bitcoinMAXXXX), a eth full node address, and a cosmos full node
-// address. And finally an eth private key containing enough funds to deploy the
-// contracts.
-// The utility will then go and request the full validator set from the cosmos chain
-// format it, sign it, then deploy to ethereum using the provided full node and provided
-// eth private key funds.
-
-// example call contract-deployer --eth-node=eth.althea.net --cosmos-node=cosmos.althea.net --integration-test --eth-privkey=0xw34234
+import { Peggy } from "./typechain/Peggy";
+import { ethers } from "ethers";
+import fs from "fs";
 import commandLineArgs from "command-line-args";
 
-const options = commandLineArgs([
+const args = commandLineArgs([
   { name: "eth-node", type: String },
   { name: "cosmos-node", type: String },
   { name: "eth-privkey", type: String },
-  { name: "erc20", type: Boolean }
+  { name: "contract", type: String },
+  { name: "peggy-id", type: String }
 ]) as {
-  "eth-node": string;
-  "cosmos-node": string;
-  "eth-privkey": string;
-  erc20: string;
+  ethNode: string;
+  cosmosNode: string;
+  ethPrivkey: string;
+  peggyId: string;
+  contract: string;
 };
 
-// - Get the validator and powers list from the predetermined height, by hitting
-//   the cosmos full node api.
-// - We now need a signature from every validator on the list, over the list
-// - Those signatures will have been committed to the cosmos chain in the consensus
-//   state by the validators.
-// - We hit the cosmos full node and access the peggy api to get the signatures
+// 4. Now, the deployer script hits a full node api, gets the Eth signatures of the valset from the latest block, and deploys the Ethereum contract.
+//     - We will consider the scenario that many deployers deploy many valid peggy eth contracts.
+// 5. The deployer submits the address of the peggy contract that it deployed to Ethereum.
+//     - The peggy module checks the Ethereum chain for each submitted address, and makes sure that the peggy contract at that address is using the correct source code, and has the correct validator set.
 
-console.log(options);
+type Valset = {
+  addresses: string[];
+  powers: string[];
+  currentValsetNonce: number;
+  r: string[];
+  s: string[];
+  v: number[];
+  erc20: string;
+  powerThreshold: number;
+};
+async function deploy() {
+  const provider = await new ethers.providers.JsonRpcProvider(args.ethNode);
+  let wallet = new ethers.Wallet(args.ethPrivkey, provider);
+
+  const { abi, bytecode } = getContractArtifacts();
+  const factory = new ethers.ContractFactory(abi, bytecode, wallet);
+
+  const latestValset = await getLatestValset(args.peggyId);
+
+  const peggy = (await factory.deploy(
+    latestValset.erc20,
+    args.peggyId,
+    latestValset.powerThreshold,
+    latestValset.addresses,
+    latestValset.powers,
+    latestValset.v,
+    latestValset.r,
+    latestValset.s
+  )) as Peggy;
+
+  await peggy.deployed();
+  await submitPeggyAddress(peggy.address);
+}
+
+function getContractArtifacts(): { bytecode: string; abi: string } {
+  var { bytecode, abi } = JSON.parse(
+    fs.readFileSync(args.contract, "utf8").toString()
+  );
+  return { bytecode, abi };
+}
+async function getLatestValset(peggyId: string): Promise<Valset> {
+  return {
+    addresses: [],
+    powers: [],
+    currentValsetNonce: 0,
+    r: [],
+    s: [],
+    v: [],
+    erc20: "0xERC20...",
+    powerThreshold: 66666
+  };
+}
+
+async function submitPeggyAddress(address: string) {}
