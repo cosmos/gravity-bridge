@@ -37,12 +37,9 @@ import (
 const appName = "app"
 
 var (
-	// TODO: rename your cli
 
 	// DefaultCLIHome default home directories for the application CLI
 	DefaultCLIHome = os.ExpandEnv("$HOME/.peggycli")
-
-	// TODO: rename your daemon
 
 	// DefaultNodeHome sets the folder where the applcation data and configuration will be stored
 	DefaultNodeHome = os.ExpandEnv("$HOME/.peggyd")
@@ -68,9 +65,11 @@ var (
 		// NOTE: I think this may have been intended to be the universal
 		// initialization code that one would expect, but for whatever reason you need a
 		// ton of other stuff too.
+		// NOTE: We still need to figure out the different uses of REST routes and query commands
 	)
 
 	// module account permissions
+	// NOTE: We believe that this is giving various modules access to functions of the supply module?
 	maccPerms = map[string][]string{
 		auth.FeeCollectorName:     nil,
 		distr.ModuleName:          nil,
@@ -87,8 +86,10 @@ func MakeCodec() *codec.Codec {
 	var cdc = codec.New()
 
 	ModuleBasics.RegisterCodec(cdc)
+	// NOTE: Why are these special cases??????
 	vesting.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
+	// NOTE: I think this is to let amino to do crypto for you, and this lets you tell it what crypto you want????
 	codec.RegisterCrypto(cdc)
 
 	return cdc.Seal()
@@ -252,6 +253,7 @@ func NewInitApp(
 	evidenceRouter := evidence.NewRouter()
 
 	// TODO: register evidence routes
+	// NOTES: This is probably where the slashing conditions need to occur
 	evidenceKeeper.SetRouter(evidenceRouter)
 
 	app.evidenceKeeper = *evidenceKeeper
