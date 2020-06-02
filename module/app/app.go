@@ -10,6 +10,7 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/althea-net/peggy/module/x/peggy"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -61,6 +62,7 @@ var (
 		supply.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
+		peggy.AppModuleBasic{},
 		// TODO: Add your module(s) AppModuleBasic
 		// NOTE: I think this may have been intended to be the universal
 		// initialization code that one would expect, but for whatever reason you need a
@@ -69,7 +71,7 @@ var (
 	)
 
 	// module account permissions
-	// NOTE: We believe that this is giving various modules access to functions of the supply module?
+	// NOTE: We believe that this is giving various modules access to functions of the supply module? We will probably need to use this.
 	maccPerms = map[string][]string{
 		auth.FeeCollectorName:     nil,
 		distr.ModuleName:          nil,
@@ -122,6 +124,7 @@ type NewApp struct {
 	paramsKeeper   params.Keeper
 	upgradeKeeper  upgrade.Keeper
 	evidenceKeeper evidence.Keeper
+	peggyKeeper    peggy.Keeper
 	// TODO: Add your module(s)
 	// NOTE: I think this code is basically all about the lack of generics.
 	// You need something to pass all these references around in, and you need the
@@ -154,7 +157,7 @@ func NewInitApp(
 	keys := sdk.NewKVStoreKeys(
 		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, mint.StoreKey, distr.StoreKey, slashing.StoreKey,
-		gov.StoreKey, params.StoreKey, evidence.StoreKey, upgrade.StoreKey,
+		gov.StoreKey, params.StoreKey, evidence.StoreKey, upgrade.StoreKey, peggy.StoreKey,
 	)
 	tKeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -181,6 +184,7 @@ func NewInitApp(
 	app.subspaces[gov.ModuleName] = app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 	app.subspaces[crisis.ModuleName] = app.paramsKeeper.Subspace(crisis.DefaultParamspace)
 	app.subspaces[evidence.ModuleName] = app.paramsKeeper.Subspace(evidence.DefaultParamspace)
+	app.subspaces[peggy.ModuleName] = app.paramsKeeper.Subspace(peggy.DefaultParamspace)
 
 	// The AccountKeeper handles address -> account lookups
 	app.accountKeeper = auth.NewAccountKeeper(
@@ -258,6 +262,8 @@ func NewInitApp(
 
 	app.evidenceKeeper = *evidenceKeeper
 
+	app.peggyKeeper = peggy.NewKeeper(app.cdc, keys[peggy.StoreKey], app.subspaces[peggy.ModuleName])
+
 	// register the proposal types
 	govRouter := gov.NewRouter()
 	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
@@ -293,6 +299,7 @@ func NewInitApp(
 		slashing.NewAppModule(app.slashingKeeper, app.accountKeeper, app.stakingKeeper),
 		distr.NewAppModule(app.distrKeeper, app.accountKeeper, app.supplyKeeper, app.stakingKeeper),
 		// TODO: Add your module(s)
+		peggy.NewAppModule(app.peggyKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
@@ -316,6 +323,7 @@ func NewInitApp(
 		gov.ModuleName,
 		mint.ModuleName,
 		// TODO: Add your module(s)
+		peggy.ModuleName,
 		supply.ModuleName,
 		crisis.ModuleName,
 		genutil.ModuleName,
