@@ -9,5 +9,5 @@ ARG NODES
 ENV NODES=$NODES
 ADD $REPOFOLDER /peggy
 RUN pushd /peggy/module/ && make && make install
-RUN pushd /peggy/ && tests/setup-validators.sh 20
-CMD pushd /peggy/ && tests/run-testnet.sh 20
+RUN pushd /peggy/ && tests/setup-validators.sh 3
+CMD pushd /peggy/ && tests/run-testnet.sh 3

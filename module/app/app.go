@@ -5,12 +5,12 @@ import (
 	"io"
 	"os"
 
+	"github.com/althea-net/peggy/module/x/nameservice"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/althea-net/peggy/module/x/peggy"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -62,7 +62,7 @@ var (
 		supply.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
-		peggy.AppModuleBasic{},
+		nameservice.AppModuleBasic{},
 		// TODO: Add your module(s) AppModuleBasic
 		// NOTE: I think this may have been intended to be the universal
 		// initialization code that one would expect, but for whatever reason you need a
@@ -112,19 +112,19 @@ type NewApp struct {
 	subspaces map[string]params.Subspace
 
 	// keepers
-	accountKeeper  auth.AccountKeeper
-	bankKeeper     bank.Keeper
-	supplyKeeper   supply.Keeper
-	stakingKeeper  staking.Keeper
-	slashingKeeper slashing.Keeper
-	mintKeeper     mint.Keeper
-	distrKeeper    distr.Keeper
-	govKeeper      gov.Keeper
-	crisisKeeper   crisis.Keeper
-	paramsKeeper   params.Keeper
-	upgradeKeeper  upgrade.Keeper
-	evidenceKeeper evidence.Keeper
-	peggyKeeper    peggy.Keeper
+	accountKeeper     auth.AccountKeeper
+	bankKeeper        bank.Keeper
+	supplyKeeper      supply.Keeper
+	stakingKeeper     staking.Keeper
+	slashingKeeper    slashing.Keeper
+	mintKeeper        mint.Keeper
+	distrKeeper       distr.Keeper
+	govKeeper         gov.Keeper
+	crisisKeeper      crisis.Keeper
+	paramsKeeper      params.Keeper
+	upgradeKeeper     upgrade.Keeper
+	evidenceKeeper    evidence.Keeper
+	nameserviceKeeper nameservice.Keeper
 	// TODO: Add your module(s)
 	// NOTE: I think this code is basically all about the lack of generics.
 	// You need something to pass all these references around in, and you need the
@@ -140,7 +140,7 @@ type NewApp struct {
 // verify app interface at compile time
 var _ simapp.App = (*NewApp)(nil)
 
-// NewpeggyApp is a constructor function for peggyApp
+// NewnameserviceApp is a constructor function for nameserviceApp
 func NewInitApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
 	invCheckPeriod uint, skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp),
@@ -157,7 +157,7 @@ func NewInitApp(
 	keys := sdk.NewKVStoreKeys(
 		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, mint.StoreKey, distr.StoreKey, slashing.StoreKey,
-		gov.StoreKey, params.StoreKey, evidence.StoreKey, upgrade.StoreKey, peggy.StoreKey,
+		gov.StoreKey, params.StoreKey, evidence.StoreKey, upgrade.StoreKey, nameservice.StoreKey,
 	)
 	tKeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -184,7 +184,7 @@ func NewInitApp(
 	app.subspaces[gov.ModuleName] = app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 	app.subspaces[crisis.ModuleName] = app.paramsKeeper.Subspace(crisis.DefaultParamspace)
 	app.subspaces[evidence.ModuleName] = app.paramsKeeper.Subspace(evidence.DefaultParamspace)
-	app.subspaces[peggy.ModuleName] = app.paramsKeeper.Subspace(peggy.DefaultParamspace)
+	app.subspaces[nameservice.ModuleName] = app.paramsKeeper.Subspace(nameservice.DefaultParamspace)
 
 	// The AccountKeeper handles address -> account lookups
 	app.accountKeeper = auth.NewAccountKeeper(
@@ -262,7 +262,7 @@ func NewInitApp(
 
 	app.evidenceKeeper = *evidenceKeeper
 
-	app.peggyKeeper = peggy.NewKeeper(app.cdc, keys[peggy.StoreKey], app.subspaces[peggy.ModuleName])
+	app.nameserviceKeeper = nameservice.NewKeeper(app.cdc, keys[nameservice.StoreKey], app.bankKeeper)
 
 	// register the proposal types
 	govRouter := gov.NewRouter()
@@ -299,7 +299,7 @@ func NewInitApp(
 		slashing.NewAppModule(app.slashingKeeper, app.accountKeeper, app.stakingKeeper),
 		distr.NewAppModule(app.distrKeeper, app.accountKeeper, app.supplyKeeper, app.stakingKeeper),
 		// TODO: Add your module(s)
-		peggy.NewAppModule(app.peggyKeeper),
+		nameservice.NewAppModule(app.nameserviceKeeper, app.bankKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
@@ -323,7 +323,7 @@ func NewInitApp(
 		gov.ModuleName,
 		mint.ModuleName,
 		// TODO: Add your module(s)
-		peggy.ModuleName,
+		nameservice.ModuleName,
 		supply.ModuleName,
 		crisis.ModuleName,
 		genutil.ModuleName,
