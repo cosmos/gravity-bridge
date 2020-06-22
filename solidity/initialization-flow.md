@@ -1,8 +1,13 @@
 0. There is a governance resolution accepting the peggy code into the full node codebase
     - Once peggy starts running on a validator, it generates an Ethereum keypair.
+        - We may get this from config temporarily
     - Peggy publishes a validator's Ethereum address every single block.
+        - This is most likely just going to mean putting it in the peggy keeper, but maybe there needs to be some kind of greater tie in with the rest of the validator set information
+            - see staking/keeper/keeper.go for an example of getting individual and all validators
     - A peggyId is chosen at this step.
+        - This may be hardcoded for now
     - The source code hash of the peggy Ethereum contract is saved here.
+        - This may be hardcoded as well
 1. There is a governance resolution that says "we are going to start peggy at block x"
     - This is a parameter-changing resolution that the peggy module looks for
 2. Right after block x, the peggy module looks at the validator set at block x, and signs over it using its Ethereum keypair.

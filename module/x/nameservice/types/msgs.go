@@ -5,6 +5,18 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+type MsgSetEthAddress struct {
+	Address   string         `json:"address"`
+	Validator sdk.AccAddress `json:"validator"`
+}
+
+func NewMsgSetEthAddress(address string, validator sdk.AccAddress) MsgSetEthAddress {
+	return MsgSetEthAddress{
+		Address:   address,
+		Validator: validator,
+	}
+}
+
 // MsgSetName defines a SetName message
 type MsgSetName struct {
 	Name  string         `json:"name"`
