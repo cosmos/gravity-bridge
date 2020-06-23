@@ -1,20 +1,71 @@
 package types
 
 import (
+	"regexp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 type MsgSetEthAddress struct {
 	Address   string         `json:"address"`
 	Validator sdk.AccAddress `json:"validator"`
+	Signature []byte         `json:"signature"`
 }
 
-func NewMsgSetEthAddress(address string, validator sdk.AccAddress) MsgSetEthAddress {
+func NewMsgSetEthAddress(address string, validator sdk.AccAddress, signature []byte) MsgSetEthAddress {
 	return MsgSetEthAddress{
 		Address:   address,
 		Validator: validator,
+		Signature: signature,
 	}
+}
+
+// Route should return the name of the module
+func (msg MsgSetEthAddress) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgSetEthAddress) Type() string { return "set_eth_address" }
+
+// ValidateBasic runs stateless checks on the message
+// Checks if the Eth address is valid, and whether the Eth address has signed the validator address
+// (proving control of the Eth address)
+func (msg MsgSetEthAddress) ValidateBasic() error {
+	if msg.Validator.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator.String())
+	}
+	valdiateEthAddr := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
+
+	if !valdiateEthAddr.MatchString(msg.Address) {
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "This is not a valid Ethereum address") // TODO: what error type to use here?
+	}
+
+	// To verify signature
+	// - use crypto.SigToPub to get the public key
+	// - use crypto.PubkeyToAddress to get the address
+	// - compare this to the address given.
+	pubkey, err := crypto.SigToPub(msg.Signature, crypto.Keccak256(msg.Validator))
+	if err != nil {
+		return err //TODO: Is this the right way to do errors?
+	}
+
+	addr := crypto.PubkeyToAddress(*pubkey)
+
+	if addr.Hex() != msg.Address {
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "This Ethereum address has not signed the validator address") // TODO: what error type to use here?
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgSetEthAddress) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgSetEthAddress) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Validator}
 }
 
 // MsgSetName defines a SetName message
