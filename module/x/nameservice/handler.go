@@ -19,19 +19,17 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgBuyName(ctx, keeper, msg)
 		case MsgDeleteName:
 			return handleMsgDeleteName(ctx, keeper, msg)
+		case MsgSetEthAddress:
+			return handleMsgSetEthAddress(ctx, keeper, msg)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unrecognized nameservice Msg type: %v", msg.Type()))
 		}
 	}
 }
 
-// Handle a message to set a validator's ethereum address
-func handleMsgSetEthAddress(ctx sdk.Context, keeper Keeper, msg MsgSetName) (*sdk.Result, error) {
-	if !msg.Owner.Equals(keeper.GetOwner(ctx, msg.Name)) { // Checks if the the msg sender is the same as the current owner
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "Incorrect Owner") // If not, throw an error
-	}
-	keeper.SetName(ctx, msg.Name, msg.Value) // If so, set the name to the value specified in the msg.
-	return &sdk.Result{}, nil                // return
+func handleMsgSetEthAddress(ctx sdk.Context, keeper Keeper, msg MsgSetEthAddress) (*sdk.Result, error) {
+	keeper.SetEthAddress(ctx, msg.Validator, msg.Address)
+	return &sdk.Result{}, nil
 }
 
 // Handle a message to set name

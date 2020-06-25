@@ -29,6 +29,11 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, coinKeeper types.BankKee
 	}
 }
 
+func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(validator, []byte(ethAddr))
+}
+
 // Gets the entire Whois metadata struct for a name
 func (k Keeper) GetWhois(ctx sdk.Context, name string) types.Whois {
 	store := ctx.KVStore(k.storeKey)
@@ -74,6 +79,13 @@ func (k Keeper) SetName(ctx sdk.Context, name string, value string) {
 	whois.Value = value
 	k.SetWhois(ctx, name, whois)
 }
+
+// // SetName - sets the value string that a name resolves to
+// func (k Keeper) SetEthAddress(ctx sdk.Context, name string, value string) {
+// 	whois := k.GetWhois(ctx, name)
+// 	whois.Value = value
+// 	k.SetWhois(ctx, name, whois)
+// }
 
 // HasOwner - returns whether or not the name already has an owner
 func (k Keeper) HasOwner(ctx sdk.Context, name string) bool {

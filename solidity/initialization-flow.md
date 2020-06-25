@@ -8,6 +8,7 @@
         - This may be hardcoded for now
     - The source code hash of the peggy Ethereum contract is saved here.
         - This may be hardcoded as well
+    - At some later step, we will need to check that all validators have their eth address in there
 1. There is a governance resolution that says "we are going to start peggy at block x"
     - This is a parameter-changing resolution that the peggy module looks for
 2. Right after block x, the peggy module looks at the validator set at block x, and signs over it using its Ethereum keypair.

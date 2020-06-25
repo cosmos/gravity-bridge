@@ -2,8 +2,12 @@ package cli
 
 import (
 	"bufio"
+	"crypto/ecdsa"
+	"log"
 
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/althea-net/peggy/module/x/nameservice/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -28,9 +32,58 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdBuyName(cdc),
 		GetCmdSetName(cdc),
 		GetCmdDeleteName(cdc),
+		GetCmdUpdateEthAddress(cdc),
 	)...)
 
 	return nameserviceTxCmd
+}
+
+// GetCmdUpdateEthAddress updates the network about the eth address that you have on record. It reads the eth private key from the config.
+// You must add an eth private key before calling this method.
+// (TODO: read the eth private key from somewhere more secure than the config, probably keybase)
+func GetCmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "update-eth-addr",
+		Short: "update your eth address which will be used for peggy if you are a validator",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			cosmosAddr := cliCtx.GetFromAddress()
+
+			// Make Eth Signature over validator address
+			privateKeyString := viper.GetString("eth-privkey")
+			privateKey, err := ethCrypto.HexToECDSA(privateKeyString)
+			if err != nil {
+				log.Fatal(err)
+			}
+			hash := ethCrypto.Keccak256Hash(cosmosAddr)
+			signature, err := ethCrypto.Sign(hash.Bytes(), privateKey)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// You've got to do all this to get an Eth address from the private key
+			publicKey := privateKey.Public()
+			publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+			if !ok {
+				log.Fatal("error casting public key to ECDSA")
+			}
+			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+
+			// Make the message
+			msg := types.NewMsgSetEthAddress(ethAddress, cosmosAddr, signature)
+			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			// Send it
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
 }
 
 // GetCmdBuyName is the CLI command for sending a BuyName transaction
