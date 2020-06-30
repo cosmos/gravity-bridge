@@ -14,6 +14,7 @@ const (
 	QueryResolve = "resolve"
 	QueryWhois   = "whois"
 	QueryNames   = "names"
+	QueryValset  = "valset"
 )
 
 // NewQuerier is the module level router for state queries
@@ -26,10 +27,23 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryWhois(ctx, path[1:], req, keeper)
 		case QueryNames:
 			return queryNames(ctx, req, keeper)
+		case QueryValset:
+			return queryValset(ctx, keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown nameservice query endpoint")
 		}
 	}
+}
+
+func queryValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	valset := keeper.GetValset(ctx)
+
+	res, err := codec.MarshalJSONIndent(keeper.cdc, valset)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return res, nil
 }
 
 // nolint: unparam

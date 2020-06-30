@@ -13,6 +13,8 @@ import (
 type Keeper struct {
 	CoinKeeper types.BankKeeper
 
+	StakingKeeper types.StakingKeeper
+
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
 	cdc *codec.Codec // The wire codec for binary encoding/decoding.
@@ -32,6 +34,27 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, coinKeeper types.BankKee
 func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(validator, []byte(ethAddr))
+}
+
+func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) string {
+	store := ctx.KVStore(k.storeKey)
+	return string(store.Get(validator))
+}
+
+func (k Keeper) GetValset(ctx sdk.Context) types.Valset {
+	// TODO: we probably need to use something other than int for the validator powers array, like 256bit uint
+	// Or... do we need to do checks in the contract to stop anything greater than 64 bits getting in?
+	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
+
+	ethAddrs := []string{}
+	powers := []int{}
+	for i, validator := range validators {
+		validatorAddress := validator.GetOperator()
+		powers[i] = int(k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress))
+		ethAddrs[i] = k.GetEthAddress(ctx, sdk.AccAddress(validatorAddress))
+	}
+
+	return types.Valset{EthAdresses: ethAddrs, Powers: powers}
 }
 
 // Gets the entire Whois metadata struct for a name

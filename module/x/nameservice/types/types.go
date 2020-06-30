@@ -7,6 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+type Valset struct {
+	Powers      []int
+	EthAdresses []string
+}
+
 // MinNamePrice is Initial Starting Price for a name that was never previously owned
 var MinNamePrice = sdk.Coins{sdk.NewInt64Coin("nametoken", 1)}
 
