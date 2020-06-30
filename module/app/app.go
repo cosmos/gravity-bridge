@@ -262,7 +262,7 @@ func NewInitApp(
 
 	app.evidenceKeeper = *evidenceKeeper
 
-	app.nameserviceKeeper = nameservice.NewKeeper(app.cdc, keys[nameservice.StoreKey], app.bankKeeper)
+	app.nameserviceKeeper = nameservice.NewKeeper(app.cdc, keys[nameservice.StoreKey], app.bankKeeper, app.stakingKeeper)
 
 	// register the proposal types
 	govRouter := gov.NewRouter()

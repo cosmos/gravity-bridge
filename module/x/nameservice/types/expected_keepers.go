@@ -2,7 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingexported "github.com/cosmos/cosmos-sdk/x/staking/exported"
+	staking "github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 // When a module wishes to interact with an otehr module it is good practice to define what it will use
@@ -13,6 +13,6 @@ type BankKeeper interface {
 }
 
 type StakingKeeper interface {
-	GetBondedValidatorsByPower(ctx sdk.Context) []stakingexported.ValidatorI
+	GetBondedValidatorsByPower(ctx sdk.Context) []staking.Validator
 	GetLastValidatorPower(ctx sdk.Context, operator sdk.ValAddress) int64
 }
