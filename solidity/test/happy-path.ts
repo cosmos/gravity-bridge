@@ -13,7 +13,7 @@ import {
 chai.use(solidity);
 const { expect } = chai;
 
-describe.only("Peggy happy path", function() {
+describe("Peggy happy path", function() {
   it("Happy path", async function() {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
