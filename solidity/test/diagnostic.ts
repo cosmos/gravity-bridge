@@ -2,7 +2,7 @@ import chai from "chai";
 import { ethers } from "@nomiclabs/buidler";
 import { solidity } from "ethereum-waffle";
 
-import { BitcoinMAX } from "../typechain/BitcoinMAX";
+import { TestERC20 } from "../typechain/TestERC20";
 import { SigningTest } from "../typechain/SigningTest";
 import { Signer } from "ethers";
 
@@ -11,16 +11,16 @@ const { expect } = chai;
 
 describe("Diagnostic tests", function() {
   it("Coin test", async function() {
-    const BitcoinMAX = await ethers.getContractFactory("BitcoinMAX");
-    const max = (await BitcoinMAX.deploy()) as BitcoinMAX;
+    const TestERC20 = await ethers.getContractFactory("TestERC20");
+    const testERC20 = (await TestERC20.deploy()) as TestERC20;
 
     const signers = await ethers.getSigners();
 
-    await max.deployed();
+    await testERC20.deployed();
 
-    await max.connect(signers[1]).transfer(await signers[2].getAddress(), 99);
+    await testERC20.connect(signers[1]).transfer(await signers[2].getAddress(), 99);
 
-    await max
+    await testERC20
       .connect(signers[1])
       .transfer(await signers[2].getAddress(), 9999999999);
   });

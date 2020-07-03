@@ -1,5 +1,5 @@
 import { Peggy } from "../typechain/Peggy";
-import { BitcoinMAX } from "../typechain/BitcoinMAX";
+import { TestERC20 } from "../typechain/TestERC20";
 import { ethers } from "@nomiclabs/buidler";
 import { makeCheckpoint, signHash, getSignerAddresses } from "./pure";
 import { BigNumberish } from "ethers/utils";
@@ -11,8 +11,8 @@ export async function deployContracts(
   powers: number[],
   powerThreshold: number
 ) {
-  const BitcoinMAX = await ethers.getContractFactory("BitcoinMAX");
-  const max = (await BitcoinMAX.deploy()) as BitcoinMAX;
+  const TestERC20 = await ethers.getContractFactory("TestERC20");
+  const testERC20 = (await TestERC20.deploy()) as TestERC20;
 
   const Peggy = await ethers.getContractFactory("Peggy");
 
@@ -22,13 +22,13 @@ export async function deployContracts(
 
   const theHash = ethers.utils.solidityKeccak256(
     ["bytes32", "address", "bytes32", "uint256"],
-    [checkpoint, max.address, peggyId, powerThreshold]
+    [checkpoint, testERC20.address, peggyId, powerThreshold]
   );
 
   const { v, r, s } = await signHash(validators, theHash);
 
   const peggy = (await Peggy.deploy(
-    max.address,
+    testERC20.address,
     peggyId,
     powerThreshold,
     valAddresses,
@@ -40,5 +40,5 @@ export async function deployContracts(
 
   await peggy.deployed();
 
-  return { peggy, max, checkpoint };
+  return { peggy, testERC20, checkpoint };
 }

@@ -3,7 +3,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 
 // This is the coin we test with- the REAL Bitcoin
-contract BitcoinMAX is ERC20 {
+contract TestERC20 is ERC20 {
 	constructor() public ERC20("Bitcoin MAX", "MAX") {
 		_mint(0xc783df8a850f42e7F7e57013759C285caa701eB6, 10000);
 		_mint(0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4, 10000);

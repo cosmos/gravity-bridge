@@ -26,7 +26,7 @@ import { Peggy } from "../typechain/Peggy";
 chai.use(solidity);
 const { expect } = chai;
 
-describe.only("Peggy gas tests", function() {
+describe("Peggy gas tests", function() {
   it("updateValset fixed overhead", async function() {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
@@ -34,7 +34,7 @@ describe.only("Peggy gas tests", function() {
     const powers = [60000, 20000, 20000];
     const powerThreshold = 66666;
 
-    const { peggy, max, checkpoint: deployCheckpoint } = await deployContracts(
+    const { peggy, testERC20, checkpoint: deployCheckpoint } = await deployContracts(
       peggyId,
       validators,
       powers,
