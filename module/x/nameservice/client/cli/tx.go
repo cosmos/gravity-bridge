@@ -7,7 +7,6 @@ import (
 
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/althea-net/peggy/module/x/nameservice/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -40,12 +39,13 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 
 // GetCmdUpdateEthAddress updates the network about the eth address that you have on record. It reads the eth private key from the config.
 // You must add an eth private key before calling this method.
+// (Temporarily, we are autogenerating a key, but this will not be permanent)
 // (TODO: read the eth private key from somewhere more secure than the config, probably keybase)
 func GetCmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "update-eth-addr",
+		Use:   "update-eth-addr [eth private key]",
 		Short: "update your eth address which will be used for peggy if you are a validator",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			inBuf := bufio.NewReader(cmd.InOrStdin())
@@ -54,8 +54,7 @@ func GetCmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 			cosmosAddr := cliCtx.GetFromAddress()
 
 			// Make Eth Signature over validator address
-			privateKeyString := viper.GetString("eth-privkey")
-			privateKey, err := ethCrypto.HexToECDSA(privateKeyString)
+			privateKey, err := ethCrypto.HexToECDSA(args[0][2:])
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -75,6 +74,7 @@ func GetCmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 
 			// Make the message
 			msg := types.NewMsgSetEthAddress(ethAddress, cosmosAddr, signature)
+			println("validate basic")
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

@@ -1,12 +1,9 @@
 package keeper
 
 import (
-	"fmt"
-
 	"github.com/althea-net/peggy/module/x/nameservice/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/viper"
 )
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
@@ -22,8 +19,6 @@ type Keeper struct {
 
 // NewKeeper creates new instances of the nameservice Keeper
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, coinKeeper types.BankKeeper, stakingKeeper types.StakingKeeper) Keeper {
-	fmt.Printf("%+v\n", viper.AllSettings())
-	println("HEEEELLLLLLLLOOOOOOOOOOO<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 	return Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
