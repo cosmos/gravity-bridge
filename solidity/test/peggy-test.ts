@@ -13,7 +13,7 @@ import {
 chai.use(solidity);
 const { expect } = chai;
 
-describe("Peggy happy path", function() {
+describe.only("Peggy happy path", function() {
   it("Happy path", async function() {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
@@ -21,7 +21,7 @@ describe("Peggy happy path", function() {
     const powers = [60000, 20000, 20000];
     const powerThreshold = 66666;
 
-    const { peggy, max, checkpoint: deployCheckpoint } = await deployContracts(
+    const { peggy, testERC20, checkpoint: deployCheckpoint } = await deployContracts(
       peggyId,
       validators,
       powers,
@@ -30,7 +30,7 @@ describe("Peggy happy path", function() {
 
     expect(await peggy.functions.peggyId()).to.equal(peggyId);
     expect(await peggy.functions.powerThreshold()).to.equal(powerThreshold);
-    expect(await peggy.functions.tokenContract()).to.equal(max.address);
+    expect(await peggy.functions.tokenContract()).to.equal(testERC20.address);
     expect(await peggy.functions.lastCheckpoint()).to.equal(deployCheckpoint);
 
     const newValidators = [signers[1], signers[2], signers[3], signers[4]];
@@ -63,7 +63,7 @@ describe("Peggy happy path", function() {
 
     // Transferring out to Cosmos
 
-    await max.functions.approve(peggy.address, 100);
+    await testERC20.functions.approve(peggy.address, 100);
 
     await peggy.functions.transferOut(
       ethers.utils.formatBytes32String("myCosmosAddress"),
@@ -105,7 +105,7 @@ describe("Peggy happy path", function() {
 
     expect(
       await (
-        await max.functions.balanceOf(await signers[6].getAddress())
+        await testERC20.functions.balanceOf(await signers[6].getAddress())
       ).toNumber()
     ).to.equal(11);
   });
