@@ -10,4 +10,4 @@ ETH_PRIVKEY_1="0x41b6fe18ea396208ab7dc526ca1cc59942b24df2d6436b6970fbe3a5d0c947a
 
 peggycli config node http://$NODE_1_IP:26657
 # Do node 1 crap
-peggycli tx nameservice update-eth-addr ETH_PRIVKEY_1
+peggycli tx nameservice update-eth-addr $ETH_PRIVKEY_1

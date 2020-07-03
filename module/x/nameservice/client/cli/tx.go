@@ -53,11 +53,14 @@ func GetCmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 
 			cosmosAddr := cliCtx.GetFromAddress()
 
+			privKeyString := args[0][2:]
+			println("hello", privKeyString)
 			// Make Eth Signature over validator address
-			privateKey, err := ethCrypto.HexToECDSA(args[0][2:])
+			privateKey, err := ethCrypto.HexToECDSA(privKeyString)
 			if err != nil {
 				log.Fatal(err)
 			}
+
 			hash := ethCrypto.Keccak256Hash(cosmosAddr)
 			signature, err := ethCrypto.Sign(hash.Bytes(), privateKey)
 			if err != nil {
