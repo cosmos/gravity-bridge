@@ -45,7 +45,7 @@ func (msg MsgSetEthAddress) ValidateBasic() error {
 	// - use crypto.SigToPub to get the public key
 	// - use crypto.PubkeyToAddress to get the address
 	// - compare this to the address given.
-	pubkey, err := crypto.SigToPub(msg.Signature, crypto.Keccak256(msg.Validator))
+	pubkey, err := crypto.SigToPub(crypto.Keccak256(msg.Validator), msg.Signature)
 	if err != nil {
 		return err //TODO: Is this the right way to do errors?
 	}

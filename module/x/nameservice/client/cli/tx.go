@@ -75,6 +75,7 @@ func GetCmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 			}
 			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA).Hex()
 
+			println("cosmos address", cosmosAddr)
 			// Make the message
 			msg := types.NewMsgSetEthAddress(ethAddress, cosmosAddr, signature)
 			println("validate basic")
