@@ -23,6 +23,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetCmdResolveName(storeKey, cdc),
 		GetCmdWhois(storeKey, cdc),
 		GetCmdNames(storeKey, cdc),
+		GetCmdValset(storeKey, cdc),
 	)...)
 
 	return nameserviceQueryCmd
@@ -74,27 +75,25 @@ func GetCmdWhois(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-// func GetCmdValset(queryRoute string, cdc *codec.Codec) *cobra.Command {
-// 	return &cobra.Command{
-// 		Use:   "valset",
-// 		Short: "Query current valset",
-// 		// Args:  cobra.ExactArgs(1),
-// 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-// 			// name := args[0]
+func GetCmdValset(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "valset",
+		Short: "Query current valset",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-// 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/whois/%s", queryRoute, name), nil)
-// 			if err != nil {
-// 				fmt.Printf("could not resolve whois - %s \n", name)
-// 				return nil
-// 			}
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valset", queryRoute), nil)
+			if err != nil {
+				fmt.Printf("could not get valset")
+				return nil
+			}
 
-// 			var out types.Whois
-// 			cdc.MustUnmarshalJSON(res, &out)
-// 			return cliCtx.PrintOutput(out)
-// 		},
-// 	}
-// }
+			var out types.Valset
+			cdc.MustUnmarshalJSON(res, &out)
+			return cliCtx.PrintOutput(out)
+		},
+	}
+}
 
 // GetCmdNames queries a list of all names
 func GetCmdNames(queryRoute string, cdc *codec.Codec) *cobra.Command {

@@ -54,7 +54,7 @@ func GetCmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 			cosmosAddr := cliCtx.GetFromAddress()
 
 			privKeyString := args[0][2:]
-			println("hello", privKeyString)
+
 			// Make Eth Signature over validator address
 			privateKey, err := ethCrypto.HexToECDSA(privKeyString)
 			if err != nil {
@@ -75,10 +75,8 @@ func GetCmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 			}
 			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA).Hex()
 
-			println("cosmos address", cosmosAddr)
 			// Make the message
 			msg := types.NewMsgSetEthAddress(ethAddress, cosmosAddr, signature)
-			println("validate basic")
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
