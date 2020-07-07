@@ -9,7 +9,7 @@ NODES=$1
 for i in $(seq 1 $NODES);
 do
 # add this ip for loopback dialing
-ip addr add 7.7.7.$i/32 dev eth0
+ip addr add 7.7.7.$i/32 dev eth0 || true # allowed to fail
 
 GAIA_HOME="--home /validator$i"
 # this implicitly caps us at ~6000 nodes for this sim

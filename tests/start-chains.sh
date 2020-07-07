@@ -10,4 +10,4 @@ docker rm -f peggy_test_instance
 set -e
 
 # Run new test container instance
-docker run --name peggy_test_instance --cap-add=NET_ADMIN -it peggy-test
+docker run --name peggy_test_instance --mount type=bind,source="$(pwd)"/,target=/peggy --cap-add=NET_ADMIN -it peggy-test
