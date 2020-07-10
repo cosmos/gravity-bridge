@@ -21,12 +21,11 @@ describe("Peggy happy path", function() {
     const powers = [60000, 20000, 20000];
     const powerThreshold = 66666;
 
-    const { peggy, testERC20, checkpoint: deployCheckpoint } = await deployContracts(
-      peggyId,
-      validators,
-      powers,
-      powerThreshold
-    );
+    const {
+      peggy,
+      testERC20,
+      checkpoint: deployCheckpoint
+    } = await deployContracts(peggyId, validators, powers, powerThreshold);
 
     expect(await peggy.functions.peggyId()).to.equal(peggyId);
     expect(await peggy.functions.powerThreshold()).to.equal(powerThreshold);
@@ -108,5 +107,61 @@ describe("Peggy happy path", function() {
         await testERC20.functions.balanceOf(await signers[6].getAddress())
       ).toNumber()
     ).to.equal(11);
+  });
+});
+
+describe("Peggy 100 validator valset update", function() {
+  it("Peggy 100 validator valset update", async function() {
+    const signers = await ethers.getSigners();
+    const peggyId = ethers.utils.formatBytes32String("foo");
+    let validators = [];
+    let powers = [];
+    // to increase this see this page https://buidler.dev/buidler-evm/#buidler-evm-initial-state
+    for (let i = 0; i < 20; i++) {
+      validators.push(signers[i]);
+      powers.push(60000);
+    }
+    const powerThreshold = 66666;
+
+    const {
+      peggy,
+      testERC20,
+      checkpoint: deployCheckpoint
+    } = await deployContracts(peggyId, validators, powers, powerThreshold);
+
+    expect(await peggy.functions.peggyId()).to.equal(peggyId);
+    expect(await peggy.functions.powerThreshold()).to.equal(powerThreshold);
+    expect(await peggy.functions.tokenContract()).to.equal(testERC20.address);
+    expect(await peggy.functions.lastCheckpoint()).to.equal(deployCheckpoint);
+
+    let newValidators = [];
+    let newPowers = [];
+    for (let i = 0; i < 10; i++) {
+      newValidators.push(signers[i]);
+      newPowers.push(60000);
+    }
+    const currentValsetNonce = 0;
+    const newValsetNonce = 1;
+
+    const checkpoint = makeCheckpoint(
+      await getSignerAddresses(newValidators),
+      newPowers,
+      newValsetNonce,
+      peggyId
+    );
+
+    let sigs = await signHash(validators, checkpoint);
+
+    await peggy.updateValset(
+      await getSignerAddresses(newValidators),
+      newPowers,
+      newValsetNonce,
+      await getSignerAddresses(validators),
+      powers,
+      currentValsetNonce,
+      sigs.v,
+      sigs.r,
+      sigs.s
+    );
   });
 });
