@@ -170,8 +170,6 @@ contract Peggy {
 	// The caller must supply the current validator set, along with their signatures over the batch.
 	// The contract checks that this validator set matches the saved checkpoint, then verifies their
 	// signatures over a hash of the tx batch.
-	// The tx batch hash is calculated recursively, like the checkpoint:
-	// h( ... h(h(peggyId, "transactionBatch"), amount1, destination1, fee1, txNonce1), amount2, destination2, fee2, txNonce2), ... amount<n>, destination<n>, fee<n>, txNonce<n>)
 	function submitBatch(
 		// The validators that approve the batch
 		address[] memory _currentValidators,
@@ -213,35 +211,26 @@ contract Peggy {
 			"Supplied current validators and powers do not match checkpoint."
 		);
 
-		// - Get hash of the transaction batch
-		// - Check that the tx nonces are higher than the stored nonce and are
+		// Check that the tx nonces are higher than the stored nonce and are
 		// strictly increasing (can have gaps)
-
-		// bytes32 encoding of "transactionBatch"
-		bytes32 methodName = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
-		bytes32 transactionsHash = keccak256(abi.encodePacked(peggyId, methodName));
-
 		uint256 lastTxNonceTemp = lastTxNonce;
 		{
-			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
+			for (uint256 i = 0; i < _nonces.length; i = i.add(1)) {
 				require(
 					_nonces[i] > lastTxNonceTemp,
 					"Transaction nonces in batch must be strictly increasing"
 				);
 
 				lastTxNonceTemp = _nonces[i];
-
-				transactionsHash = keccak256(
-					abi.encodePacked(
-						transactionsHash,
-						_amounts[i],
-						_destinations[i],
-						_fees[i],
-						_nonces[i]
-					)
-				);
 			}
 		}
+
+		// bytes32 encoding of "transactionBatch"
+		bytes32 methodName = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
+		// Get hash of the transaction batch
+		bytes32 transactionsHash = keccak256(
+			abi.encodePacked(peggyId, methodName, _amounts, _destinations, _fees, _nonces)
+		);
 
 		// Check that enough current validators have signed off on the transaction batch
 		checkValidatorSignatures(

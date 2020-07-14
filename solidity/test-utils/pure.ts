@@ -40,30 +40,10 @@ export async function signHash(signers: Signer[], hash: string) {
   return { v, r, s };
 }
 
-// // bytes32 encoding of "transactionBatch"
 // bytes32 methodName = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
-// bytes32 transactionsHash = keccak256(abi.encodePacked(peggyId, methodName));
-
-// uint256 lastTxNonceTemp = lastTxNonce;
-// {
-// 	for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
-// 		require(
-// 			_nonces[i] > lastTxNonceTemp,
-// 			"Transaction nonces in batch must be strictly increasing"
-// 		);
-// 		lastTxNonceTemp = _nonces[i];
-
-// 		transactionsHash = keccak256(
-// 			abi.encodePacked(
-// 				transactionsHash,
-// 				_amounts[i],
-// 				_destinations[i],
-// 				_fees[i],
-// 				_nonces[i]
-// 			)
-// 		);
-// 	}
-// }
+// bytes32 transactionsHash = keccak256(
+//   abi.encodePacked(peggyId, methodName, _amounts, _destinations, _fees, _nonces)
+// );
 export function makeTxBatchHash(
   amounts: number[],
   destinations: string[],
@@ -74,16 +54,9 @@ export function makeTxBatchHash(
   const methodName = ethers.utils.formatBytes32String("transactionBatch");
 
   let txHash = ethers.utils.solidityKeccak256(
-    ["bytes32", "bytes32"],
-    [peggyId, methodName]
+    ["bytes32", "bytes32", "uint256[]", "address[]", "uint256[]", "uint256[]"],
+    [peggyId, methodName, amounts, destinations, fees, nonces]
   );
-
-  for (let i = 0; i < amounts.length; i = i + 1) {
-    txHash = ethers.utils.solidityKeccak256(
-      ["bytes32", "uint256", "address", "uint256", "uint256"],
-      [txHash, amounts[i], destinations[i], fees[i], nonces[i]]
-    );
-  }
 
   return txHash;
 }
