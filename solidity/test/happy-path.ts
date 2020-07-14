@@ -114,12 +114,13 @@ describe("Peggy 100 validator valset update", function() {
   it("Peggy 100 validator valset update", async function() {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
+    const totalPower = 100000;
     let validators = [];
     let powers = [];
-    // to increase this see this page https://buidler.dev/buidler-evm/#buidler-evm-initial-state
-    for (let i = 0; i < 20; i++) {
+
+    for (let i = 0; i < 100; i++) {
       validators.push(signers[i]);
-      powers.push(60000);
+      powers.push(5000);
     }
     const powerThreshold = 66666;
 
@@ -136,9 +137,9 @@ describe("Peggy 100 validator valset update", function() {
 
     let newValidators = [];
     let newPowers = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 99; i++) {
       newValidators.push(signers[i]);
-      newPowers.push(60000);
+      newPowers.push(10000);
     }
     const currentValsetNonce = 0;
     const newValsetNonce = 1;

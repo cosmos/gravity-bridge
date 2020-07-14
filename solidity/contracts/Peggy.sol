@@ -3,7 +3,6 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@nomiclabs/buidler/console.sol";
 
-
 contract Peggy {
 	using SafeMath for uint256;
 
@@ -19,6 +18,7 @@ contract Peggy {
 	event ValsetUpdatedEvent(address[] _validators, uint256[] _powers);
 	event TransferOutEvent(bytes32 _destination, uint256 _amount);
 
+	// Utility function to verify geth style signatures
 	function verifySig(
 		address _signer,
 		bytes32 _theHash,
@@ -32,60 +32,43 @@ contract Peggy {
 		return _signer == ecrecover(messageDigest, _v, _r, _s);
 	}
 
-	// - Make a new checkpoint from the supplied validator set
+	// Make a new checkpoint from the supplied validator set
+	// A checkpoint is a hash of all relevant information about the valset. This is stored by the contract,
+	// instead of storing the information directly. This saves on storage and gas.
+	// The format of the checkpoint is:
+	// h( ... h(h(peggyId, "checkpoint", valsetNonce), validator1, power1), validator2, power2), ... validator<n>, power<n>)
+	// Where h is the keccak256 hash function. h is applied recursively to the list of validators and powers.
+	// For example, this is a hypothetical valset of 3 validators:
+	// h(h(h(h("myPeggyId", "checkpoint", 12), 0x7032521a461954bc6bcadb6948133020032786c3, 50000), 0x16ea0484a11cf4a691787b3667f93bd6420dd611, 20000), 0xe50b46f6d3d74c9b59710270bffb25fa99a10ba1, 30000)
+	// The validator powers must be decreasing or equal. This is important for checking the signatures on the
+	// next valset, since it allows the caller to stop verifying signatures once a quorum of signatures have been verified.
 	function makeCheckpoint(
-		address[] memory _newValidators,
-		uint256[] memory _newPowers,
-		uint256 _newValsetNonce,
+		address[] memory _validators,
+		uint256[] memory _powers,
+		uint256 _valsetNonce,
 		bytes32 _peggyId
 	) public pure returns (bytes32) {
-		// bytes32 encoding of "checkpoint"
+		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes32 newCheckpoint = keccak256(abi.encodePacked(_peggyId, methodName, _newValsetNonce));
+		bytes32 checkpoint = keccak256(abi.encodePacked(_peggyId, methodName, _valsetNonce));
 
+		// Iterative hashing of valset
 		{
-			for (uint256 i = 0; i < _newValidators.length; i = i.add(1)) {
-				// - Check that validator powers are decreasing or equal (this allows the next
-				//   caller to break out of signature evaluation ASAP to save more gas)
+			for (uint256 i = 0; i < _validators.length; i = i.add(1)) {
+				// Check that validator powers are decreasing or equal (this allows the next
+				// caller to break out of signature evaluation ASAP to save more gas)
 				if (i != 0) {
 					require(
-						!(_newPowers[i] > _newPowers[i - 1]),
+						!(_powers[i] > _powers[i - 1]),
 						"Validator power must not be higher than previous validator in batch"
 					);
 				}
-				newCheckpoint = keccak256(
-					abi.encodePacked(newCheckpoint, _newValidators[i], _newPowers[i])
-				);
+				checkpoint = keccak256(abi.encodePacked(checkpoint, _validators[i], _powers[i]));
 			}
 		}
 
-		return newCheckpoint;
-	}
-
-	// - Check that the supplied current validator set matches the saved checkpoint
-	// TODO: can probably eliminate this and just use makeCheckpoint
-	function checkCheckpoint(
-		address[] memory _suppliedValidators,
-		uint256[] memory _suppliedPowers,
-		uint256 _suppliedValsetNonce
-	) public view {
-		// bytes32 encoding of "checkpoint"
-		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
-		bytes32 suppliedCheckpoint = keccak256(
-			abi.encodePacked(peggyId, methodName, _suppliedValsetNonce)
-		);
-
-		for (uint256 i = 0; i < _suppliedValidators.length; i = i.add(1)) {
-			suppliedCheckpoint = keccak256(
-				abi.encodePacked(suppliedCheckpoint, _suppliedValidators[i], _suppliedPowers[i])
-			);
-		}
-
-		require(
-			suppliedCheckpoint == lastCheckpoint,
-			"Supplied validators and powers do not match checkpoint."
-		);
+		return checkpoint;
 	}
 
 	function checkValidatorSignatures(
@@ -106,7 +89,6 @@ contract Peggy {
 			// Check that the current validator has signed off on the hash
 			require(
 				verifySig(_currentValidators[k], _theHash, _v[k], _r[k], _s[k]),
-				// _currentValidators[k] == ecrecover(theHash, _v[k], _r[k], _s[k]),
 				"Validator signature does not match."
 			);
 
@@ -126,6 +108,9 @@ contract Peggy {
 		);
 	}
 
+	// This updates the valset by checking that the validators in the current valset have signed off on the
+	// new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
+	// generated from the new valset.
 	function updateValset(
 		// The new version of the validator set
 		address[] memory _newValidators,
@@ -154,19 +139,20 @@ contract Peggy {
 			"Malformed current validator set"
 		);
 
-		// - Check that the supplied current validator set matches the saved checkpoint
-		checkCheckpoint(_currentValidators, _currentPowers, _currentValsetNonce);
+		// Check that the supplied current validator set matches the saved checkpoint
+		require(
+			makeCheckpoint(_currentValidators, _currentPowers, _currentValsetNonce, peggyId) ==
+				lastCheckpoint,
+			"Supplied current validators and powers do not match checkpoint."
+		);
 
-		// - Check that the valset nonce is incremented by one
+		// Check that the valset nonce is incremented by one
 		require(
 			_newValsetNonce == _currentValsetNonce.add(1),
 			"Valset nonce must be incremented by one"
 		);
 
-		// - Get hash (checkpoint) of new validator set. This hash is used for two purposes. First, it
-		//   is used to check that the current validator set approves of the new one. Second,
-		//   it is stored as the checkpoint and used next time to validate the valset supplied by
-		//   the caller. This allows us to avoid storing all validators and saves gas.
+		// Check that enough current validators have signed off on the new validator set
 		bytes32 newCheckpoint = makeCheckpoint(
 			_newValidators,
 			_newPowers,
@@ -174,7 +160,6 @@ contract Peggy {
 			peggyId
 		);
 
-		// - Check that enough current validators have signed off on the new validator set
 		checkValidatorSignatures(
 			_currentValidators,
 			_currentPowers,
@@ -196,6 +181,12 @@ contract Peggy {
 		emit ValsetUpdatedEvent(_newValidators, _newPowers);
 	}
 
+	// This function submits a batch of transactions to be executed on Ethereum.
+	// The caller must supply the current validator set, along with their signatures over the batch.
+	// The contract checks that this validator set matches the saved checkpoint, then verifies their
+	// signatures over a hash of the tx batch.
+	// The tx batch hash is calculated recursively, like the checkpoint:
+	// h( ... h(h(peggyId, "transactionBatch"), amount1, destination1, fee1, txNonce1), amount2, destination2, fee2, txNonce2), ... amount<n>, destination<n>, fee<n>, txNonce<n>)
 	function submitBatch(
 		// The validators that approve the batch
 		address[] memory _currentValidators,
@@ -213,7 +204,7 @@ contract Peggy {
 	) public {
 		// CHECKS
 
-		// - Check that current validators, powers, and signatures (v,r,s) set is well-formed
+		// Check that current validators, powers, and signatures (v,r,s) set is well-formed
 		require(
 			_currentValidators.length == _currentPowers.length &&
 				_currentValidators.length == _v.length &&
@@ -222,7 +213,7 @@ contract Peggy {
 			"Malformed current validator set"
 		);
 
-		// - Check that the transaction batch is well-formed
+		// Check that the transaction batch is well-formed
 		require(
 			_amounts.length == _destinations.length &&
 				_amounts.length == _fees.length &&
@@ -230,12 +221,16 @@ contract Peggy {
 			"Malformed batch of transactions"
 		);
 
-		// - Check that the supplied current validator set matches the saved checkpoint
-		checkCheckpoint(_currentValidators, _currentPowers, _currentValsetNonce);
+		// Check that the supplied current validator set matches the saved checkpoint
+		require(
+			makeCheckpoint(_currentValidators, _currentPowers, _currentValsetNonce, peggyId) ==
+				lastCheckpoint,
+			"Supplied current validators and powers do not match checkpoint."
+		);
 
 		// - Get hash of the transaction batch
 		// - Check that the tx nonces are higher than the stored nonce and are
-		// strictly increasing (can have gaps) TODO: Why not increasing by 1?
+		// strictly increasing (can have gaps)
 
 		// bytes32 encoding of "transactionBatch"
 		bytes32 methodName = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
@@ -263,7 +258,7 @@ contract Peggy {
 			}
 		}
 
-		// - Check that enough current validators have signed off on the transaction batch
+		// Check that enough current validators have signed off on the transaction batch
 		checkValidatorSignatures(
 			_currentValidators,
 			_currentPowers,
@@ -279,8 +274,8 @@ contract Peggy {
 		// Store nonce
 		lastTxNonce = lastTxNonceTemp;
 
-		// - Send transaction amounts to destinations
-		// - Send transaction fees to msg.sender
+		// Send transaction amounts to destinations
+		// Send transaction fees to msg.sender
 		{
 			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
 				IERC20(tokenContract).transfer(_destinations[i], _amounts[i]);
@@ -294,12 +289,11 @@ contract Peggy {
 		emit TransferOutEvent(_destination, _amount);
 	}
 
-	// TODO: we need to think this through a bit more. What needs to be in here and signed?
 	constructor(
 		// The token that this bridge bridges
 		address _tokenContract,
 		// A unique identifier for this peggy instance to use in signatures
-		bytes32 _peggyId, // TODO: is peggyId enough or do we need to use the contract address?
+		bytes32 _peggyId,
 		// How much voting power is needed to approve operations
 		uint256 _powerThreshold,
 		// The validator set
@@ -329,7 +323,6 @@ contract Peggy {
 			_v,
 			_r,
 			_s,
-			// TODO: we need to think carefully about what they sign here
 			keccak256(abi.encodePacked(newCheckpoint, _tokenContract, _peggyId, _powerThreshold)),
 			_powerThreshold
 		);
