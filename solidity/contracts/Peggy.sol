@@ -36,10 +36,8 @@ contract Peggy {
 	// A checkpoint is a hash of all relevant information about the valset. This is stored by the contract,
 	// instead of storing the information directly. This saves on storage and gas.
 	// The format of the checkpoint is:
-	// h( ... h(h(peggyId, "checkpoint", valsetNonce), validator1, power1), validator2, power2), ... validator<n>, power<n>)
-	// Where h is the keccak256 hash function. h is applied recursively to the list of validators and powers.
-	// For example, this is a hypothetical valset of 3 validators:
-	// h(h(h(h("myPeggyId", "checkpoint", 12), 0x7032521a461954bc6bcadb6948133020032786c3, 50000), 0x16ea0484a11cf4a691787b3667f93bd6420dd611, 20000), 0xe50b46f6d3d74c9b59710270bffb25fa99a10ba1, 30000)
+	// h(peggyId, "checkpoint", valsetNonce, validators[], powers[])
+	// Where h is the keccak256 hash function.
 	// The validator powers must be decreasing or equal. This is important for checking the signatures on the
 	// next valset, since it allows the caller to stop verifying signatures once a quorum of signatures have been verified.
 	function makeCheckpoint(
@@ -51,22 +49,9 @@ contract Peggy {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes32 checkpoint = keccak256(abi.encodePacked(_peggyId, methodName, _valsetNonce));
-
-		// Iterative hashing of valset
-		{
-			for (uint256 i = 0; i < _validators.length; i = i.add(1)) {
-				// Check that validator powers are decreasing or equal (this allows the next
-				// caller to break out of signature evaluation ASAP to save more gas)
-				if (i != 0) {
-					require(
-						!(_powers[i] > _powers[i - 1]),
-						"Validator power must not be higher than previous validator in batch"
-					);
-				}
-				checkpoint = keccak256(abi.encodePacked(checkpoint, _validators[i], _powers[i]));
-			}
-		}
+		bytes32 checkpoint = keccak256(
+			abi.encodePacked(_peggyId, methodName, _valsetNonce, _validators, _powers)
+		);
 
 		return checkpoint;
 	}

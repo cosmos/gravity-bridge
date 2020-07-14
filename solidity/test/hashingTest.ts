@@ -2,19 +2,15 @@ import chai from "chai";
 import { ethers } from "@nomiclabs/buidler";
 import { solidity } from "ethereum-waffle";
 import { HashingTest } from "../typechain/HashingTest";
+import { BigNumberish } from "ethers/utils";
 
 import { deployContracts } from "../test-utils";
-import {
-  getSignerAddresses,
-  makeCheckpoint,
-  signHash,
-  makeTxBatchHash
-} from "../test-utils/pure";
+import { getSignerAddresses } from "../test-utils/pure";
 
 chai.use(solidity);
 const { expect } = chai;
 
-describe.only("Hashing test", function() {
+describe("Hashing test", function() {
   it("Hashing test", async function() {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
@@ -53,5 +49,31 @@ describe.only("Hashing test", function() {
       1,
       peggyId
     );
+
+    const contractCheckpoint = await hashingContract.lastCheckpoint();
+    const externalCheckpoint = makeCheckpoint(
+      await getSignerAddresses(validators),
+      powers,
+      1,
+      peggyId
+    );
+
+    expect(contractCheckpoint === externalCheckpoint);
   });
 });
+
+export function makeCheckpoint(
+  validators: string[],
+  powers: BigNumberish[],
+  valsetNonce: BigNumberish,
+  peggyId: string
+) {
+  const methodName = ethers.utils.formatBytes32String("checkpoint");
+
+  let checkpoint = ethers.utils.solidityKeccak256(
+    ["bytes32", "bytes32", "uint256", "address[]", "uint256[]"],
+    [peggyId, methodName, valsetNonce, validators, powers]
+  );
+
+  return checkpoint;
+}

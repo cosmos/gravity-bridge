@@ -7,24 +7,17 @@ export async function getSignerAddresses(signers: Signer[]) {
 }
 
 export function makeCheckpoint(
-  newValidators: string[],
-  newPowers: BigNumberish[],
-  newValsetNonce: BigNumberish,
+  validators: string[],
+  powers: BigNumberish[],
+  valsetNonce: BigNumberish,
   peggyId: string
 ) {
   const methodName = ethers.utils.formatBytes32String("checkpoint");
 
   let checkpoint = ethers.utils.solidityKeccak256(
-    ["bytes32", "bytes32", "uint256"],
-    [peggyId, methodName, newValsetNonce]
+    ["bytes32", "bytes32", "uint256", "address[]", "uint256[]"],
+    [peggyId, methodName, valsetNonce, validators, powers]
   );
-
-  for (let i = 0; i < newValidators.length; i = i + 1) {
-    checkpoint = ethers.utils.solidityKeccak256(
-      ["bytes32", "address", "uint256"],
-      [checkpoint, newValidators[i], newPowers[i]]
-    );
-  }
 
   return checkpoint;
 }
