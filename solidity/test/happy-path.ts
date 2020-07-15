@@ -7,7 +7,8 @@ import {
   getSignerAddresses,
   makeCheckpoint,
   signHash,
-  makeTxBatchHash
+  makeTxBatchHash,
+  examplePowers
 } from "../test-utils/pure";
 
 chai.use(solidity);
@@ -17,9 +18,12 @@ describe("Peggy happy path", function() {
   it("Happy path", async function() {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
-    const validators = [signers[1], signers[2], signers[3]];
-    const powers = [60000, 20000, 20000];
-    const powerThreshold = 66666;
+
+    // This is the power distribution on the Cosmos hub as of 7/14/2020
+    let powers = examplePowers();
+    let validators = signers.slice(0, powers.length);
+
+    const powerThreshold = 6666;
 
     const {
       peggy,
@@ -32,8 +36,11 @@ describe("Peggy happy path", function() {
     expect(await peggy.functions.tokenContract()).to.equal(testERC20.address);
     expect(await peggy.functions.lastCheckpoint()).to.equal(deployCheckpoint);
 
-    const newValidators = [signers[1], signers[2], signers[3], signers[4]];
-    const newPowers = [50000, 20000, 20000, 10000];
+    let newPowers = examplePowers();
+    newPowers[0] -= 3;
+    newPowers[1] += 3;
+    let newValidators = signers.slice(0, newPowers.length);
+
     const currentValsetNonce = 0;
     const newValsetNonce = 1;
 
@@ -110,19 +117,16 @@ describe("Peggy happy path", function() {
   });
 });
 
-describe("Peggy 100 validator valset update", function() {
-  it("Peggy 100 validator valset update", async function() {
+describe("Gas tests", function() {
+  it("makeCheckpoint in isolation", async function() {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
-    const totalPower = 100000;
-    let validators = [];
-    let powers = [];
 
-    for (let i = 0; i < 100; i++) {
-      validators.push(signers[i]);
-      powers.push(5000);
-    }
-    const powerThreshold = 66666;
+    // This is the power distribution on the Cosmos hub as of 7/14/2020
+    let powers = examplePowers();
+    let validators = signers.slice(0, powers.length);
+
+    const powerThreshold = 6666;
 
     const {
       peggy,
@@ -130,39 +134,43 @@ describe("Peggy 100 validator valset update", function() {
       checkpoint: deployCheckpoint
     } = await deployContracts(peggyId, validators, powers, powerThreshold);
 
-    expect(await peggy.functions.peggyId()).to.equal(peggyId);
-    expect(await peggy.functions.powerThreshold()).to.equal(powerThreshold);
-    expect(await peggy.functions.tokenContract()).to.equal(testERC20.address);
-    expect(await peggy.functions.lastCheckpoint()).to.equal(deployCheckpoint);
-
-    let newValidators = [];
-    let newPowers = [];
-    for (let i = 0; i < 99; i++) {
-      newValidators.push(signers[i]);
-      newPowers.push(10000);
-    }
-    const currentValsetNonce = 0;
-    const newValsetNonce = 1;
-
-    const checkpoint = makeCheckpoint(
-      await getSignerAddresses(newValidators),
-      newPowers,
-      newValsetNonce,
-      peggyId
-    );
-
-    let sigs = await signHash(validators, checkpoint);
-
-    await peggy.updateValset(
-      await getSignerAddresses(newValidators),
-      newPowers,
-      newValsetNonce,
+    await peggy.testMakeCheckpoint(
       await getSignerAddresses(validators),
       powers,
-      currentValsetNonce,
+      0,
+      peggyId
+    );
+  });
+
+  it("checkValidatorSignatures in isolation", async function() {
+    const signers = await ethers.getSigners();
+    const peggyId = ethers.utils.formatBytes32String("foo");
+
+    // This is the power distribution on the Cosmos hub as of 7/14/2020
+    let powers = examplePowers();
+    let validators = signers.slice(0, powers.length);
+
+    const powerThreshold = 6666;
+
+    const {
+      peggy,
+      testERC20,
+      checkpoint: deployCheckpoint
+    } = await deployContracts(peggyId, validators, powers, powerThreshold);
+
+    let sigs = await signHash(
+      validators,
+      "0x7bc422a00c175cae98cf2f4c36f2f8b63ec51ab8c57fecda9bccf0987ae2d67d"
+    );
+
+    await peggy.testCheckValidatorSignatures(
+      await getSignerAddresses(validators),
+      powers,
       sigs.v,
       sigs.r,
-      sigs.s
+      sigs.s,
+      "0x7bc422a00c175cae98cf2f4c36f2f8b63ec51ab8c57fecda9bccf0987ae2d67d",
+      6666
     );
   });
 });

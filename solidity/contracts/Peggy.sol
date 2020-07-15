@@ -18,6 +18,39 @@ contract Peggy {
 	event ValsetUpdatedEvent(address[] _validators, uint256[] _powers);
 	event TransferOutEvent(bytes32 _destination, uint256 _amount);
 
+	// TEST FIXTURES
+	// These are here to make it easier to measure gas usage. They should be removed before production
+	function testMakeCheckpoint(
+		address[] memory _validators,
+		uint256[] memory _powers,
+		uint256 _valsetNonce,
+		bytes32 _peggyId
+	) public {
+		makeCheckpoint(_validators, _powers, _valsetNonce, _peggyId);
+	}
+
+	function testCheckValidatorSignatures(
+		address[] memory _currentValidators,
+		uint256[] memory _currentPowers,
+		uint8[] memory _v,
+		bytes32[] memory _r,
+		bytes32[] memory _s,
+		bytes32 _theHash,
+		uint256 _powerThreshold
+	) public {
+		checkValidatorSignatures(
+			_currentValidators,
+			_currentPowers,
+			_v,
+			_r,
+			_s,
+			_theHash,
+			_powerThreshold
+		);
+	}
+
+	// END TEST FIXTURES
+
 	// Utility function to verify geth style signatures
 	function verifySig(
 		address _signer,
@@ -71,6 +104,8 @@ contract Peggy {
 		uint256 cumulativePower = 0;
 
 		for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
+			console.log("verifying validator: ", k);
+			console.log("with power: ", _currentPowers[k]);
 			// Check that the current validator has signed off on the hash
 			require(
 				verifySig(_currentValidators[k], _theHash, _v[k], _r[k], _s[k]),
@@ -82,6 +117,7 @@ contract Peggy {
 
 			// Break early to avoid wasting gas
 			if (cumulativePower > _powerThreshold) {
+				console.log("number of validator sigs verified:", k + 1);
 				break;
 			}
 		}
@@ -145,6 +181,7 @@ contract Peggy {
 			peggyId
 		);
 
+		console.log("calling checkValidatorSignatures from updateValset");
 		checkValidatorSignatures(
 			_currentValidators,
 			_currentPowers,
@@ -157,7 +194,7 @@ contract Peggy {
 
 		// ACTIONS
 
-		// Stored to be used next time by checkCheckpoint to validate that the valset
+		// Stored to be used next time to validate that the valset
 		// supplied by the caller is correct.
 		lastCheckpoint = newCheckpoint;
 
