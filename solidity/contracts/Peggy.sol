@@ -104,8 +104,8 @@ contract Peggy {
 		uint256 cumulativePower = 0;
 
 		for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
-			console.log("verifying validator: ", k);
-			console.log("with power: ", _currentPowers[k]);
+			// console.log("verifying validator: ", k);
+			// console.log("with power: ", _currentPowers[k]);
 			// Check that the current validator has signed off on the hash
 			require(
 				verifySig(_currentValidators[k], _theHash, _v[k], _r[k], _s[k]),
@@ -117,7 +117,7 @@ contract Peggy {
 
 			// Break early to avoid wasting gas
 			if (cumulativePower > _powerThreshold) {
-				console.log("number of validator sigs verified:", k + 1);
+				// console.log("number of validator sigs verified:", k + 1);
 				break;
 			}
 		}
