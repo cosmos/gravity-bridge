@@ -75,3 +75,5 @@ Change the code, and when you want to test it again, restart `./tests/start-chai
 It can be useful to modify, recompile, and restart the testnet without restarting the container, for example if you are running a text editor in the container and would not like it to exit, or if you are editing dependencies stored in the container's `/go/` folder.
 
 In this workflow, you can use `./tests/reload-code.sh` to recompile and restart the testnet without restarting the container.
+
+For example, you can use VS Code's "Remote-Container" extension to attach to the running container started with `./tests/start-chains.sh`, then edit the code inside the container, restart the testnet with `./tests/reload-code.sh`, and run the tests with `./tests/integration-tests.sh`.
