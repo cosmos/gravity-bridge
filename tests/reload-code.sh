@@ -15,10 +15,10 @@ do
 done
 
 
-pushd /peggy/module/
+cd /peggy/module/
 make
 make install
-popd
+cd /peggy/
 tests/setup-validators.sh $NODES
 tests/run-testnet.sh $NODES
 
