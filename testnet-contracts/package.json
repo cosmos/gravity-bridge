@@ -17,7 +17,7 @@
     "eth-lib": "^0.2.8",
     "ethereumjs-util": "^5.2.0",
     "keccak": "^1.4.0",
-    "lodash": "^4.17.13",
+    "lodash": "^4.17.19",
     "truffle-contract": "^4.0.31",
     "utf8": "^3.0.0"
   },
