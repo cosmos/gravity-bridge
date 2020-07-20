@@ -63,7 +63,7 @@ To test the transfer of Ethereum based assets, set up and start a local Ethereum
 
 ## Run the Relayer
 
-To set up and operate the relayer, follow the instructions [here](./setup-relayer.md).
+To set up and operate the relayer, follow the instructions [here](./docs/setup-relayer.md).
 
 ## Ethereum to Cosmos asset transfers
 
