@@ -14,7 +14,7 @@ An expansion of this feature set is expected, but will only be performed once ba
 
 ## Key Components you can run today
 
-- A highly efficient way of mirroring Cosmos validator voting onto Ethereum. The Althea-Peggy solidity contract has validator set updates costing ~60,000 gas ($0.75 @ 50gwei) and transaction batches costing ~200,000 gas (~$2.5 @ 50gwei). These numbers are of course subject to change but we hope to stay in the ballpark. Batches may contain arbitrary numbers of transactions within the limits of ERC20 sends per block. Allowing for costs to be heavily amortized on high volume bridges. This code will likely be re-used in any iteration of Peggy.
+- A highly efficient way of mirroring Cosmos validator voting onto Ethereum. The Althea-Peggy solidity contract has validator set updates costing ~500,000 gas ($2 @ 20gwei) and transaction batches have a base cost of ~500,000 gas ($2 @ 20gwei). This is tested using a snapshot of the Cosmos Hub validator set, with 100+ unique validators. We hope to further reduce these gas costs, see `solidity/possible_optimizations.md` for more details. Batches may contain arbitrary numbers of transactions within the limits of ERC20 sends per block. Allowing for costs to be heavily amortized on high volume bridges. This code will likely be re-used in any iteration of Peggy.
 - All up integration tests, we provide a one button integration test that deploys a full arbitrary validator Cosmos chain and testnet Geth chain for both development and integration test validation. We believe having a in depth test environment reflecting the full deployment and production-like use of the code is essential to productive development.
 
 ## Running the all up tests
