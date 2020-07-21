@@ -56,7 +56,7 @@
 - The Peggy Daemons on the validators observe this, and they submit a "BatchSubmittedTx". This TX goes into a Batch SubmittedStore. The cosmos state machine discards the batch permanently once it sees that over 66% of the validators have submitted a BatchSubmittedTx.
   - If there are any older batches in the BatchConfirmStore, they are removed because they can now never be submitted. The Eth Tx's in the old batches are released back into the mempool.
 
-# CosmosSDK / Tendermint problems
+# CosmosSDK / Tendermint considerations
 
 ## Signing
 
@@ -73,6 +73,8 @@ This obviously isn't a show stopper, but if it's easy _and_ maintainable we shou
 
 ## Peggy Consensus
 
-Performing our signing at the CosmosSDK level rather than the Tendermint level has other implications. Mainly it changes the nature of the slashing and halting conditions. At the Tendermint level if signing the ValSetUpdate was part of processing the message failing to do so would result in downtime or insufficient numbers a chain halt. On the other hand submitting a ValSetUpdate signature in a CosmosSDK module is just another message, having no consensus impact other than slashing conditions we may add.
+Performing our signing at the CosmosSDK level rather than the Tendermint level has other implications. Mainly it changes the nature of the slashing and halting conditions. At the Tendermint level if signing the ValSetUpdate was part of processing the message failing to do so would result in downtime for that validator on that block. On the other hand submitting a ValSetUpdate signature in a CosmosSDK module is just another message, having no consensus impact other than slashing conditions we may add. Since slashing conditions are slow this produces the following potential vulnerability.
 
-This is mostly a change in timing. Anything done at the CosmosSDK level has to account for network latency to and from the external signer. Leading to operations that could take a single block at the tendermint level taking a few blocks at the CosmosSDK level. I don't believe this is an issue given that any operation performed on Ethereum could easily take longer than that just to get into a block.
+If a validator failing to produce ValSetUpdates and the process is implemented in Tendermint they are simply racking up downtime and have no capabilities as a validator. But if the process is implemented at the CosmosSDK level they will continue to operate normally as a validator.
+
+My intuition about vulnerabilities here is that they could only be used to halt the bridge using 1/3rd of the stake. Since that's roughly the same as halting the chain using 1/3rd of the active stake I don't think it's an issue.
