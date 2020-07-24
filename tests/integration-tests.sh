@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eux
 # WIP 
-NODES=3
+NODES=$1
 for i in $(seq 1 $NODES);
 do
 NODE_IP="7.7.7.$i"
