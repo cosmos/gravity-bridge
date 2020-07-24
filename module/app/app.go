@@ -262,8 +262,6 @@ func NewInitApp(
 
 	app.evidenceKeeper = *evidenceKeeper
 
-	app.nameserviceKeeper = nameservice.NewKeeper(app.cdc, keys[nameservice.StoreKey], app.bankKeeper, app.stakingKeeper)
-
 	// register the proposal types
 	govRouter := gov.NewRouter()
 	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
@@ -285,6 +283,7 @@ func NewInitApp(
 	)
 
 	// TODO: Add your module(s) keepers
+	app.nameserviceKeeper = nameservice.NewKeeper(app.cdc, keys[nameservice.StoreKey], app.bankKeeper, &stakingKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -299,8 +298,8 @@ func NewInitApp(
 		slashing.NewAppModule(app.slashingKeeper, app.accountKeeper, app.stakingKeeper),
 		distr.NewAppModule(app.distrKeeper, app.accountKeeper, app.supplyKeeper, app.stakingKeeper),
 		// TODO: Add your module(s)
-		nameservice.NewAppModule(app.nameserviceKeeper, app.bankKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
+		nameservice.NewAppModule(app.nameserviceKeeper, app.bankKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
 	)
