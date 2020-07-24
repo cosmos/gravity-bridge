@@ -14,6 +14,8 @@ done
 
 QUERY_FLAGS="--home /validator1 --trace --node=http://7.7.7.1:26657 --chain-id=peggy-test"
 
+sleep 10 # Wait for a block to mine (there must be a better way)
+
 peggycli query nameservice valset $QUERY_FLAGS
 
 # This worked in the terminal
