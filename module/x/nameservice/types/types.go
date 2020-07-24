@@ -8,7 +8,7 @@ import (
 )
 
 type Valset struct {
-	Powers      []int
+	Powers      []int64
 	EthAdresses []string
 }
 
