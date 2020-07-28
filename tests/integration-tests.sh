@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 # WIP 
-NODES=$1
+NODES=3 # Permanently set to 3 for now!
 for i in $(seq 1 $NODES);
 do
 NODE_IP="7.7.7.$i"
@@ -16,7 +16,7 @@ QUERY_FLAGS="--home /validator1 --trace --node=http://7.7.7.1:26657 --chain-id=p
 sleep 5 # Wait for a block to mine (there must be a better way)
 
 RES=$(peggycli query nameservice valset $QUERY_FLAGS -o=json)
-GOAL='{"Powers":["100","130","100"],"EthAdresses":["0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255","0xa34F8827225c7FA6565C618b01de86549e07d667","0xE987c5D2CFA68CD803e720FDD40ae10cE959c47B"]}'
+GOAL='{"Powers":["100","100","100"],"EthAdresses":["0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255","0xa34F8827225c7FA6565C618b01de86549e07d667","0xE987c5D2CFA68CD803e720FDD40ae10cE959c47B"]}'
 
 if [ $RES != $GOAL ]; then
     echo "valset test failed"
