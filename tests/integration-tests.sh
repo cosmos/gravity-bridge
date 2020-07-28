@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eux
+set -eu
 # WIP 
 NODES=$1
 for i in $(seq 1 $NODES);
@@ -7,16 +7,23 @@ do
 NODE_IP="7.7.7.$i"
 TX_FLAGS="--home /validator$i --keyring-backend test --from validator$i --trace --node=http://$NODE_IP:26657 --chain-id=peggy-test -y"
 
-ETH_PRIVKEY=$(gen_eth_key)
-echo "$ETH_PRIVKEY"
-peggycli tx nameservice update-eth-addr "$ETH_PRIVKEY" $TX_FLAGS
+ETH_PRIVKEY=$(jq .[$i] ./tests/eth_keys.json -r)
+peggycli tx nameservice update-eth-addr $ETH_PRIVKEY $TX_FLAGS > /dev/null
 done
 
 QUERY_FLAGS="--home /validator1 --trace --node=http://7.7.7.1:26657 --chain-id=peggy-test"
 
-sleep 10 # Wait for a block to mine (there must be a better way)
+sleep 5 # Wait for a block to mine (there must be a better way)
 
-peggycli query nameservice valset $QUERY_FLAGS
+RES=$(peggycli query nameservice valset $QUERY_FLAGS -o=json)
+GOAL='{"Powers":["100","130","100"],"EthAdresses":["0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255","0xa34F8827225c7FA6565C618b01de86549e07d667","0xE987c5D2CFA68CD803e720FDD40ae10cE959c47B"]}'
 
-# This worked in the terminal
-# peggycli tx nameservice update-eth-addr 0x6f4cf6911b895d058cea5f9d0a9d65f60c5f212da16a3d4e180f902b277dc59a --home /validator2 --keyring-backend test --from validator2 --trace --node=http://7.7.7.2:26657 --chain-id=peggy-test
+if [ $RES != $GOAL ]; then
+    echo "valset test failed"
+    echo $RES
+    echo "is NOT equal to"
+    echo $GOAL
+    exit
+else
+    echo "valset test successful"
+fi
