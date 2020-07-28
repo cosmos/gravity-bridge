@@ -27,14 +27,20 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, coinKeeper types.BankKee
 	}
 }
 
+func (k Keeper) MakeValsetRequest(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	valset := k.GetValset(ctx)
+	store.Set(types.GetValsetRequestKey(ctx.BlockHeight()), k.cdc.MustMarshalBinaryBare(valset))
+}
+
 func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(validator, []byte(ethAddr))
+	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
 }
 
 func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) string {
 	store := ctx.KVStore(k.storeKey)
-	return string(store.Get(validator))
+	return string(store.Get(types.GetEthAddressKey(validator)))
 }
 
 func (k Keeper) GetValset(ctx sdk.Context) types.Valset {

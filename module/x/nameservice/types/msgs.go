@@ -8,6 +8,35 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+// SetValsetRequest
+// -------------
+type MsgValsetRequest struct {
+}
+
+func NewMsgValsetRequest() MsgValsetRequest {
+	return MsgValsetRequest{}
+}
+
+// Route should return the name of the module
+func (msg MsgValsetRequest) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgValsetRequest) Type() string { return "valset_request" }
+
+func (msg MsgValsetRequest) ValidateBasic() error { return nil }
+
+// GetSignBytes encodes the message for signing
+func (msg MsgValsetRequest) GetSignBytes() []byte {
+	return []byte{} // Does this work?
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgValsetRequest) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{} // Does this work?
+}
+
+// SetEthAddress
+// -------------
 type MsgSetEthAddress struct {
 	Address   string         `json:"address"`
 	Validator sdk.AccAddress `json:"validator"`
