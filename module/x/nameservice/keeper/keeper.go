@@ -46,6 +46,7 @@ func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) string 
 func (k Keeper) GetValset(ctx sdk.Context) types.Valset {
 	// TODO: we probably need to use something other than int for the validator powers array, like 256bit uint
 	// Or... do we need to do checks in the contract to stop anything greater than 64 bits getting in?
+	// TODO: Implement secondary sort on Eth addresses in case several validators have the same power
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 	ethAddrs := make([]string, len(validators))
 	powers := make([]int64, len(validators))
