@@ -77,3 +77,7 @@ It can be useful to modify, recompile, and restart the testnet without restartin
 In this workflow, you can use `./tests/reload-code.sh` to recompile and restart the testnet without restarting the container.
 
 For example, you can use VS Code's "Remote-Container" extension to attach to the running container started with `./tests/start-chains.sh`, then edit the code inside the container, restart the testnet with `./tests/reload-code.sh`, and run the tests with `./tests/integration-tests.sh`.
+
+## Debugger
+
+To use a stepping debugger in VS Code, follow the "Working inside the container" instructions above, but set up a one node testnet using `./tests/reload-code.sh 1`. Now kill the node with `pkill peggyd`. Start the debugger from within VS Code, and you will have a 1 node debuggable testnet.

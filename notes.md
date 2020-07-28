@@ -47,9 +47,11 @@
 
 - User submits Cosmos TX with requested Eth TX "EthTx"
 - This goes into everyone's stores by consensus
-- Relayer chooses a TX batch from the tx's in the store
-- Relayer submits "BatchReqTx" to Cosmos, it goes into a BatchReq store by consensus after being validated, all Eth Tx's appearing in the requested batch are removed from the mempool.
-- Peggy Daemon on each validator sees BatchReqTx in the store, signs over the batch, sends a "BatchConfirmTx" containing an id for the batch, and the eth signature.
+<!-- - Relayer chooses a TX batch from the tx's in the store
+- Relayer submits "BatchReqTx" to Cosmos, it goes into a BatchReq store by consensus after being validated, all Eth Tx's appearing in the requested batch are removed from the mempool. -->
+- --> Peggy module sorts TXs into batches, and puts the batches into the "BatchStore", and all Eth TXs in a batch are removed from the mempool.
+
+- Peggy Daemon on each validator sees all batches in the BatchStore, signs over the batches, sends a "BatchConfirmTx" containing all eth signatures for all the batches.
 - The BatchConfirmTx goes into a BatchConfirmStore, now the relayer can relay the batch once there's 66%
 
 - Now the batch is processed by the Eth contract.
@@ -99,3 +101,13 @@ Ethereum to Cosmos transfers
 
 - Function in contract takes a destination Cosmos address and transfer amount
 - Does the transfer and logs a EthToCosmosTransfer event with the amount and destination
+
+Alternate batch assembly by validators
+
+- Allowing anyone to request batches as we have envisioned previously opens up an attack vector where someone assembles unprofitable batches to stop the bridge.
+- Instead, why not just have the validators assemble batches?
+- In the cosmos state machine, they look at all transactions, sort them from lowest to highest fee, and chop that list into batches.
+- Now relayers can try to submit the batches.
+- Batches are submitted to Eth, and transactions build up in the pool, in parallel.
+- At some point the validators make new batches sorted in the same way.
+- Relayers may choose to submit new batches which invalidate older low fee batches.
