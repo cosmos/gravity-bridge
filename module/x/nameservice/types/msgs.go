@@ -3,29 +3,11 @@ package types
 import (
 	"regexp"
 
+	"github.com/althea-net/peggy/module/x/nameservice/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
 )
-
-func validateEthSig(hash []byte, signature []byte, ethAddress string) (bool, error) {
-	// To verify signature
-	// - use crypto.SigToPub to get the public key
-	// - use crypto.PubkeyToAddress to get the address
-	// - compare this to the address given.
-	pubkey, err := crypto.SigToPub(hash, signature)
-	if err != nil {
-		return false, err //TODO: Is this the right way to do errors?
-	}
-
-	addr := crypto.PubkeyToAddress(*pubkey)
-
-	if addr.Hex() != ethAddress {
-		return false, nil
-	}
-
-	return true, nil
-}
 
 // ValsetConfirm
 // -------------
@@ -130,7 +112,7 @@ func (msg MsgSetEthAddress) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "This is not a valid Ethereum address") // TODO: what error type to use here?
 	}
 
-	valid, err := validateEthSig(crypto.Keccak256(msg.Validator), msg.Signature, msg.Address)
+	valid, err := utils.ValidateEthSig(crypto.Keccak256(msg.Validator), msg.Signature, msg.Address)
 
 	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error()) //TODO: Is this the right way to do errors?
