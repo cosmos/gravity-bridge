@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"sort"
+
 	"github.com/althea-net/peggy/module/x/nameservice/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -57,9 +59,22 @@ func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) string 
 	return string(store.Get(types.GetEthAddressKey(validator)))
 }
 
+type valsetSort types.Valset
+
+func (a valsetSort) Len() int { return len(a.EthAdresses) }
+func (a valsetSort) Swap(i, j int) {
+	a.EthAdresses[i], a.EthAdresses[j] = a.EthAdresses[j], a.EthAdresses[i]
+	a.Powers[i], a.Powers[j] = a.Powers[j], a.Powers[i]
+}
+func (a valsetSort) Less(i, j int) bool {
+	// Secondary sort on eth address in case powers are equal
+	if a.Powers[i] == a.Powers[j] {
+		return a.EthAdresses[i] < a.EthAdresses[j]
+	}
+	return a.Powers[i] < a.Powers[j]
+}
+
 func (k Keeper) GetValset(ctx sdk.Context) types.Valset {
-	// TODO: we probably need to use something other than int for the validator powers array, like 256bit uint
-	// Or... do we need to do checks in the contract to stop anything greater than 64 bits getting in?
 	// TODO: Implement secondary sort on Eth addresses in case several validators have the same power
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 	ethAddrs := make([]string, len(validators))
@@ -70,7 +85,9 @@ func (k Keeper) GetValset(ctx sdk.Context) types.Valset {
 		powers[i] = p
 		ethAddrs[i] = k.GetEthAddress(ctx, sdk.AccAddress(validatorAddress))
 	}
-	return types.Valset{EthAdresses: ethAddrs, Powers: powers}
+	valset := types.Valset{EthAdresses: ethAddrs, Powers: powers}
+	sort.Sort(valsetSort(valset))
+	return valset
 }
 
 // Gets the entire Whois metadata struct for a name
