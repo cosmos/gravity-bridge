@@ -75,7 +75,6 @@ func (a valsetSort) Less(i, j int) bool {
 }
 
 func (k Keeper) GetValset(ctx sdk.Context) types.Valset {
-	// TODO: Implement secondary sort on Eth addresses in case several validators have the same power
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 	ethAddrs := make([]string, len(validators))
 	powers := make([]int64, len(validators))
