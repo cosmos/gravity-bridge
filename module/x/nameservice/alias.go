@@ -31,6 +31,7 @@ type (
 	MsgBuyName       = types.MsgBuyName
 	MsgDeleteName    = types.MsgDeleteName
 	MsgSetEthAddress = types.MsgSetEthAddress
+	MsgValsetConfirm = types.MsgValsetConfirm
 	QueryResResolve  = types.QueryResResolve
 	QueryResNames    = types.QueryResNames
 	Whois            = types.Whois

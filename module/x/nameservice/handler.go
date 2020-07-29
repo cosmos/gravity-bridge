@@ -21,10 +21,16 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgDeleteName(ctx, keeper, msg)
 		case MsgSetEthAddress:
 			return handleMsgSetEthAddress(ctx, keeper, msg)
+		case MsgValsetConfirm:
+			return handleMsgValsetConfirm(ctx, keeper, msg)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unrecognized nameservice Msg type: %v", msg.Type()))
 		}
 	}
+}
+
+func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm) (*sdk.Result, error) {
+	return &sdk.Result{}, nil
 }
 
 func handleMsgSetEthAddress(ctx sdk.Context, keeper Keeper, msg MsgSetEthAddress) (*sdk.Result, error) {

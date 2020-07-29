@@ -8,7 +8,67 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// SetValsetRequest
+func validateEthSig(hash []byte, signature []byte, ethAddress string) (bool, error) {
+	// To verify signature
+	// - use crypto.SigToPub to get the public key
+	// - use crypto.PubkeyToAddress to get the address
+	// - compare this to the address given.
+	pubkey, err := crypto.SigToPub(hash, signature)
+	if err != nil {
+		return false, err //TODO: Is this the right way to do errors?
+	}
+
+	addr := crypto.PubkeyToAddress(*pubkey)
+
+	if addr.Hex() != ethAddress {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// ValsetConfirm
+// -------------
+type MsgValsetConfirm struct {
+	BlockHeight uint64         `json:"blockHeight"`
+	Validator   sdk.AccAddress `json:"validator"`
+	Signature   []byte         `json:"signature"`
+}
+
+func NewMsgValsetConfirm(blockHeight uint64, validator sdk.AccAddress, signature []byte) MsgValsetConfirm {
+	return MsgValsetConfirm{
+		BlockHeight: blockHeight,
+		Validator:   validator,
+		Signature:   signature,
+	}
+}
+
+// Route should return the name of the module
+func (msg MsgValsetConfirm) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgValsetConfirm) Type() string { return "valset_confirm" }
+
+// Stateless checks
+func (msg MsgValsetConfirm) ValidateBasic() error {
+	if msg.Validator.Empty() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator.String())
+	}
+
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgValsetConfirm) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgValsetConfirm) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Validator}
+}
+
+// ValsetRequest
 // -------------
 type MsgValsetRequest struct {
 }
@@ -70,20 +130,16 @@ func (msg MsgSetEthAddress) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "This is not a valid Ethereum address") // TODO: what error type to use here?
 	}
 
-	// To verify signature
-	// - use crypto.SigToPub to get the public key
-	// - use crypto.PubkeyToAddress to get the address
-	// - compare this to the address given.
-	pubkey, err := crypto.SigToPub(crypto.Keccak256(msg.Validator), msg.Signature)
+	valid, err := validateEthSig(crypto.Keccak256(msg.Validator), msg.Signature, msg.Address)
+
 	if err != nil {
-		return err //TODO: Is this the right way to do errors?
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error()) //TODO: Is this the right way to do errors?
 	}
 
-	addr := crypto.PubkeyToAddress(*pubkey)
-
-	if addr.Hex() != msg.Address {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "This Ethereum address has not signed the validator address") // TODO: what error type to use here?
+	if !valid {
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Eth signature over cosmos validator address is not valid")
 	}
+
 	return nil
 }
 

@@ -33,6 +33,22 @@ func (k Keeper) MakeValsetRequest(ctx sdk.Context) {
 	store.Set(types.GetValsetRequestKey(ctx.BlockHeight()), k.cdc.MustMarshalBinaryBare(valset))
 }
 
+func (k Keeper) GetValsetRequest(ctx sdk.Context, blockHeight int64) types.Valset {
+	store := ctx.KVStore(k.storeKey)
+
+	valset := types.Valset{}
+	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetValsetRequestKey(blockHeight)), valset)
+	return valset
+}
+
+// func (k Keeper) SetValsetConfirm(ctx sdk.Context, validator sdk.AccAddress, ethAddr string, blockHeight int64) {
+// 	store := ctx.KVStore(k.storeKey)
+// 	// Check that it is a valid signature over the valset
+// 	valset := k.GetValsetRequest(ctx, blockHeight)
+
+// 	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
+// }
+
 func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
