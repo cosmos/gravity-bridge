@@ -12,16 +12,16 @@ import (
 // ValsetConfirm
 // -------------
 type MsgValsetConfirm struct {
-	BlockHeight uint64         `json:"blockHeight"`
-	Validator   sdk.AccAddress `json:"validator"`
-	Signature   []byte         `json:"signature"`
+	Nonce     int64          `json:"nonce"`
+	Validator sdk.AccAddress `json:"validator"`
+	Signature []byte         `json:"signature"`
 }
 
-func NewMsgValsetConfirm(blockHeight uint64, validator sdk.AccAddress, signature []byte) MsgValsetConfirm {
+func NewMsgValsetConfirm(nonce int64, validator sdk.AccAddress, signature []byte) MsgValsetConfirm {
 	return MsgValsetConfirm{
-		BlockHeight: blockHeight,
-		Validator:   validator,
-		Signature:   signature,
+		Nonce:     nonce,
+		Validator: validator,
+		Signature: signature,
 	}
 }
 
@@ -112,14 +112,10 @@ func (msg MsgSetEthAddress) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "This is not a valid Ethereum address") // TODO: what error type to use here?
 	}
 
-	valid, err := utils.ValidateEthSig(crypto.Keccak256(msg.Validator), msg.Signature, msg.Address)
+	err := utils.ValidateEthSig(crypto.Keccak256(msg.Validator), msg.Signature, msg.Address)
 
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error()) //TODO: Is this the right way to do errors?
-	}
-
-	if !valid {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Eth signature over cosmos validator address is not valid")
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
 
 	return nil

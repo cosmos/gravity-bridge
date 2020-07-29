@@ -30,24 +30,22 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, coinKeeper types.BankKee
 func (k Keeper) MakeValsetRequest(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	valset := k.GetValset(ctx)
-	store.Set(types.GetValsetRequestKey(ctx.BlockHeight()), k.cdc.MustMarshalBinaryBare(valset))
+	nonce := ctx.BlockHeight()
+	store.Set(types.GetValsetRequestKey(nonce), k.cdc.MustMarshalBinaryBare(valset))
 }
 
-func (k Keeper) GetValsetRequest(ctx sdk.Context, blockHeight int64) types.Valset {
+func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce int64) types.Valset {
 	store := ctx.KVStore(k.storeKey)
 
 	valset := types.Valset{}
-	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetValsetRequestKey(blockHeight)), valset)
+	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetValsetRequestKey(nonce)), valset)
 	return valset
 }
 
-// func (k Keeper) SetValsetConfirm(ctx sdk.Context, validator sdk.AccAddress, ethAddr string, blockHeight int64) {
-// 	store := ctx.KVStore(k.storeKey)
-// 	// Check that it is a valid signature over the valset
-// 	valset := k.GetValsetRequest(ctx, blockHeight)
-
-// 	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
-// }
+func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator), k.cdc.MustMarshalBinaryBare(valsetConf))
+}
 
 func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr string) {
 	store := ctx.KVStore(k.storeKey)

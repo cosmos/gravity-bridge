@@ -40,7 +40,10 @@
 - This adds the Eth addresss to the Eth Adddress store, all validation happens here
 - A relayer submits a "ValsetRequest" for the valset of the block in which it is accepted.
 - This goes into the ValsetRequestStore, along with the valset that was requested.
-- When the peggy daemons see a valset in the ValsetRequestStore, they sign over it with their eth keys, and submit a "ValsetConfirmTx". This goes into the "ValsetConfirmStore".
+  - The valset's Nonce is set as the block that the valset is from
+  - The valset is stored using the nonce/blockheight as the key
+- When the peggy daemons see a valset in the ValsetRequestStore, they sign over it with their eth keys, and submit a "ValsetConfirmTx". This goes into the "ValsetConfirmStore", after validation.
+  - The valset confirm is stored using the nonce as the key, like the valset request
 - Once 66% of the peggy daemons have signatures in the ValsetConfirmStore, for a particular valset, a relayer can submit the valset.
 
 ## TX Batch process

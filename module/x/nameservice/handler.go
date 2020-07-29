@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/althea-net/peggy/module/x/nameservice/types"
-
+	"github.com/althea-net/peggy/module/x/nameservice/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -30,6 +30,19 @@ func NewHandler(keeper Keeper) sdk.Handler {
 }
 
 func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm) (*sdk.Result, error) {
+	// Check that the signature is valid for the valset at the blockheight and the validator
+	valset := keeper.GetValsetRequest(ctx, msg.Nonce)
+
+	checkpoint := valset.GetCheckpoint()
+	ethAddress := keeper.GetEthAddress(ctx, msg.Validator)
+
+	err := utils.ValidateEthSig(checkpoint, msg.Signature, ethAddress)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
+	}
+
+	// Save valset confirmation
+	keeper.SetValsetConfirm(ctx, msg)
 	return &sdk.Result{}, nil
 }
 
