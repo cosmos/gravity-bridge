@@ -1,5 +1,6 @@
 node_modules
 typechain
+target
 
 #Buidler files
 cache
