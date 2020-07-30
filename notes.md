@@ -36,15 +36,16 @@
 
 ## Valset Process
 
-- Peggy Daemon on each val submits a "EthAddressTx"
-- This adds the Eth addresss to the Eth Adddress store, all validation happens here
-- A relayer submits a "ValsetRequest" for the valset of the block in which it is accepted.
-- This goes into the ValsetRequestStore, along with the valset that was requested.
-  - The valset's Nonce is set as the block that the valset is from
+- Peggy Daemon on each val submits a "MsgSetEthAddress" with an eth address and its signature over their Cosmos address
+- This validates the signature and adds the Eth addresss to the store under the EthAddressKey prefix.
+- Somebody submits a "MsgValsetRequest".
+- The valset from the current block goes into the store under the ValsetRequestKey prefix
+  - The valset's nonce is set as the current blockheight
   - The valset is stored using the nonce/blockheight as the key
-- When the peggy daemons see a valset in the ValsetRequestStore, they sign over it with their eth keys, and submit a "ValsetConfirmTx". This goes into the "ValsetConfirmStore", after validation.
+- When the peggy daemons see a valset in the store, they sign over it with their eth key, and submit a MsgValsetConfirm. This goes into the store, after validation.
+  - Peggy daemons sign every valset that shows up in the store automatically, since they implicitly endorse it by having participated in the consensus which put it in the store.
   - The valset confirm is stored using the nonce as the key, like the valset request
-- Once 66% of the peggy daemons have signatures in the ValsetConfirmStore, for a particular valset, a relayer can submit the valset.
+- Once 66% of the peggy daemons have submitted signatures for a particular valset, a relayer can submit the valset, by accessing the valset and the signatures from the store. Maybe we will make a method to do this easily.
 
 ## TX Batch process
 
