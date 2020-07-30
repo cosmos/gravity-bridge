@@ -23,7 +23,9 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		// GetCmdResolveName(storeKey, cdc),
 		// GetCmdWhois(storeKey, cdc),
 		// GetCmdNames(storeKey, cdc),
-		GetCmdValset(storeKey, cdc),
+		CmdGetCurrentValset(storeKey, cdc),
+		CmdGetValsetByNonce(storeKey, cdc),
+		CmdGetConfirmationsByNonce(storeKey, cdc)
 	)...)
 
 	return nameserviceQueryCmd
@@ -75,9 +77,9 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 // 	}
 // }
 
-func GetCmdValset(storeKey string, cdc *codec.Codec) *cobra.Command {
+func CmdGetCurrentValset(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "valset",
+		Use:   "current-valset",
 		Short: "Query current valset",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -89,6 +91,50 @@ func GetCmdValset(storeKey string, cdc *codec.Codec) *cobra.Command {
 			}
 
 			var out types.Valset
+			cdc.MustUnmarshalJSON(res, &out)
+			return cliCtx.PrintOutput(out)
+		},
+	}
+}
+
+func CmdGetValsetByNonce(storeKey string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "valset-by-nonce [nonce]",
+		Short: "Get valset with a particular nonce",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			nonce := args[0]
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetByNonce/%s", storeKey, nonce), nil)
+			if err != nil {
+				fmt.Printf("could not get valset")
+				return nil
+			}
+
+			var out types.Valset
+			cdc.MustUnmarshalJSON(res, &out)
+			return cliCtx.PrintOutput(out)
+		},
+	}
+}
+
+func CmdGetConfirmationsByNonce(storeKey string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "confirmations-by-nonce [nonce]",
+		Short: "Get valset confirmations with a particular nonce",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			nonce := args[0]
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/confirmationsByNonce", storeKey, nonce), nil)
+			if err != nil {
+				fmt.Printf("could not get valset")
+				return nil
+			}
+
+			var out []types.MsgValsetConfirm
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},
