@@ -283,7 +283,7 @@ func NewInitApp(
 	)
 
 	// TODO: Add your module(s) keepers
-	app.nameserviceKeeper = nameservice.NewKeeper(app.cdc, keys[nameservice.StoreKey], app.bankKeeper, &stakingKeeper)
+	app.nameserviceKeeper = nameservice.NewKeeper(app.cdc, keys[nameservice.StoreKey], &stakingKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

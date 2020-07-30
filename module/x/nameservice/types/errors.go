@@ -5,5 +5,5 @@ import (
 )
 
 var (
-	ErrNameDoesNotExist = sdkerrors.Register(ModuleName, 1, "name does not exist")
+	ErrMyCustomError = sdkerrors.Register(ModuleName, 1, "leaving this here as a reference for when we do our errors better")
 )

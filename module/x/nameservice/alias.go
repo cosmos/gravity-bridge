@@ -14,25 +14,25 @@ const (
 )
 
 var (
-	NewKeeper           = keeper.NewKeeper
-	NewQuerier          = keeper.NewQuerier
-	NewMsgBuyName       = types.NewMsgBuyName
-	NewMsgSetName       = types.NewMsgSetName
-	NewMsgDeleteName    = types.NewMsgDeleteName
+	NewKeeper  = keeper.NewKeeper
+	NewQuerier = keeper.NewQuerier
+	// NewMsgBuyName       = types.NewMsgBuyName
+	// NewMsgSetName       = types.NewMsgSetName
+	// NewMsgDeleteName    = types.NewMsgDeleteName
 	NewMsgSetEthAddress = types.NewMsgSetEthAddress
-	NewWhois            = types.NewWhois
-	ModuleCdc           = types.ModuleCdc
-	RegisterCodec       = types.RegisterCodec
+	// NewWhois            = types.NewWhois
+	ModuleCdc     = types.ModuleCdc
+	RegisterCodec = types.RegisterCodec
 )
 
 type (
-	Keeper           = keeper.Keeper
-	MsgSetName       = types.MsgSetName
-	MsgBuyName       = types.MsgBuyName
-	MsgDeleteName    = types.MsgDeleteName
+	Keeper = keeper.Keeper
+	// MsgSetName       = types.MsgSetName
+	// MsgBuyName       = types.MsgBuyName
+	// MsgDeleteName    = types.MsgDeleteName
 	MsgSetEthAddress = types.MsgSetEthAddress
 	MsgValsetConfirm = types.MsgValsetConfirm
-	QueryResResolve  = types.QueryResResolve
-	QueryResNames    = types.QueryResNames
-	Whois            = types.Whois
+	// QueryResResolve  = types.QueryResResolve
+	// QueryResNames    = types.QueryResNames
+	// Whois            = types.Whois
 )

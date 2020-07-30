@@ -13,14 +13,6 @@ import (
 const DefaultParamspace = ModuleName
 
 // TODO: Defaults don't make sense for any of our params. Should we still have them?
-// Default parameter values
-// const (
-// 	DefaultMaxMemoCharacters      uint64 = 256
-// 	DefaultTxSigLimit             uint64 = 7
-// 	DefaultTxSizeCostPerByte      uint64 = 10
-// 	DefaultSigVerifyCostED25519   uint64 = 590
-// 	DefaultSigVerifyCostSecp256k1 uint64 = 1000
-// )
 
 // Parameter keys
 var (
@@ -31,7 +23,6 @@ var (
 
 var _ subspace.ParamSet = &Params{}
 
-// Params defines the parameters for the auth module.
 type Params struct {
 	PeggyID      []byte `json:"peggy_id" yaml:"peggy_id"`
 	ContractHash []byte `json:"contract_source_hash" yaml:"contract_source_hash"`
@@ -71,6 +62,7 @@ func (p Params) Equal(p2 Params) bool {
 }
 
 // DefaultParams returns a default set of parameters.
+// TODO: defaults don't make any sense for us. What should we do here?
 // func DefaultParams() Params {
 // 	return Params{
 // 		MaxMemoCharacters:      DefaultMaxMemoCharacters,
