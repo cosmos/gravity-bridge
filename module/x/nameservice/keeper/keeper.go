@@ -26,9 +26,9 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakingKeeper types.Stak
 	}
 }
 
-func (k Keeper) MakeValsetRequest(ctx sdk.Context) {
+func (k Keeper) SetValsetRequest(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
-	valset := k.GetValset(ctx)
+	valset := k.GetCurrentValset(ctx)
 	nonce := ctx.BlockHeight()
 	store.Set(types.GetValsetRequestKey(nonce), k.cdc.MustMarshalBinaryBare(valset))
 }
@@ -71,7 +71,7 @@ func (a valsetSort) Less(i, j int) bool {
 	return a.Powers[i] < a.Powers[j]
 }
 
-func (k Keeper) GetValset(ctx sdk.Context) types.Valset {
+func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 	ethAddrs := make([]string, len(validators))
 	powers := make([]int64, len(validators))

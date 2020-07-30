@@ -26,15 +26,15 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		// case QueryNames:
 		// 	return queryNames(ctx, req, keeper)
 		case QueryValset:
-			return queryValset(ctx, keeper)
+			return queryCurrentValset(ctx, keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown nameservice query endpoint")
 		}
 	}
 }
 
-func queryValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	valset := keeper.GetValset(ctx)
+func queryCurrentValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	valset := keeper.GetCurrentValset(ctx)
 	res, err := codec.MarshalJSONIndent(keeper.cdc, valset)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
