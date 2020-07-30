@@ -8,6 +8,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.38.4
 	github.com/cosmos/sdk-tutorials/nameservice v0.0.0-20200526080225-be54b366b342
 	github.com/cpuguy83/go-md2man v1.0.10 // indirect
+	github.com/ethereum/go-ethereum v1.9.18
 	github.com/golang/mock v1.3.1 // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/onsi/ginkgo v1.8.0 // indirect
@@ -21,5 +22,4 @@ require (
 	github.com/tendermint/tendermint v0.33.3
 	github.com/tendermint/tm-db v0.5.1
 	github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8 // indirect
-	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
 )
