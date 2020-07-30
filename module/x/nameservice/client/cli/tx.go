@@ -3,6 +3,7 @@ package cli
 import (
 	"bufio"
 	"crypto/ecdsa"
+	"fmt"
 	"log"
 
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
@@ -31,16 +32,14 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		// GetCmdBuyName(cdc),
 		// GetCmdSetName(cdc),
 		// GetCmdDeleteName(cdc),
-		GetCmdUpdateEthAddress(cdc),
+		CmdUpdateEthAddress(cdc),
 	)...)
 
 	return nameserviceTxCmd
 }
 
-// GetCmdUpdateEthAddress updates the network about the eth address that you have on record. It reads the eth private key from the config.
-// You must add an eth private key before calling this method.
-// (TODO: read the eth private key from somewhere more secure than the config, probably keybase)
-func GetCmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
+// GetCmdUpdateEthAddress updates the network about the eth address that you have on record.
+func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "update-eth-addr [eth private key]",
 		Short: "update your eth address which will be used for peggy if you are a validator",
@@ -60,7 +59,7 @@ func GetCmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 				log.Fatal(err)
 			}
 
-			hash := ethCrypto.Keccak256Hash(cosmosAddr)
+			hash := ethCrypto.Keccak256Hash(cosmosAddr) // TODO: Can probably skip the "Hash" struct and use ethCrypto.Keccak256
 			signature, err := ethCrypto.Sign(hash.Bytes(), privateKey)
 			if err != nil {
 				log.Fatal(err)
@@ -76,6 +75,71 @@ func GetCmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 
 			// Make the message
 			msg := types.NewMsgSetEthAddress(ethAddress, cosmosAddr, signature)
+			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+
+			// Send it
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}
+
+func CmdValsetRequest(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "valset-request",
+		Short: "request that the validators sign over the current valset",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			// Make the message
+			msg := types.NewMsgValsetRequest()
+
+			// Send it
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}
+
+func CmdValsetConfirmation(storeKey string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "valset-request",
+		Short: "request that the validators sign over the current valset",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			// Get current valset
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valset", storeKey), nil)
+			if err != nil {
+				fmt.Printf("could not get valset")
+				return nil
+			}
+			var valset types.Valset
+			cdc.MustUnmarshalJSON(res, &valset)
+			checkpoint := valset.GetCheckpoint()
+
+			// Make Eth Signature over valset
+			privKeyString := args[0][2:]
+			privateKey, err := ethCrypto.HexToECDSA(privKeyString)
+			if err != nil {
+				log.Fatal(err)
+			}
+			signature, err := ethCrypto.Sign(checkpoint, privateKey)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			cosmosAddr := cliCtx.GetFromAddress()
+
+			// Make the message
+			msg := types.NewMsgValsetConfirm(valset.Nonce, cosmosAddr, signature)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
