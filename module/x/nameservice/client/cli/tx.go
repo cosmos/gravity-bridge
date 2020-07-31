@@ -107,8 +107,8 @@ func CmdValsetRequest(cdc *codec.Codec) *cobra.Command {
 
 func CmdValsetConfirmation(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "valset-request",
-		Short: "request that the validators sign over the current valset",
+		Use:   "valset-confirm [nonce] [eth private key]",
+		Short: "this is used by validators to sign a valset with a particular nonce if it exists",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)

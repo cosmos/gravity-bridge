@@ -24,8 +24,8 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		// GetCmdWhois(storeKey, cdc),
 		// GetCmdNames(storeKey, cdc),
 		CmdGetCurrentValset(storeKey, cdc),
-		CmdGetValsetByNonce(storeKey, cdc),
-		CmdGetConfirmationsByNonce(storeKey, cdc)
+		CmdGetValsetRequest(storeKey, cdc),
+		CmdGetValsetConfirm(storeKey, cdc),
 	)...)
 
 	return nameserviceQueryCmd
@@ -97,16 +97,16 @@ func CmdGetCurrentValset(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-func CmdGetValsetByNonce(storeKey string, cdc *codec.Codec) *cobra.Command {
+func CmdGetValsetRequest(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "valset-by-nonce [nonce]",
-		Short: "Get valset with a particular nonce",
+		Use:   "valset-request [nonce]",
+		Short: "Get requested valset with a particular nonce",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			nonce := args[0]
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetByNonce/%s", storeKey, nonce), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, nonce), nil)
 			if err != nil {
 				fmt.Printf("could not get valset")
 				return nil
@@ -119,16 +119,15 @@ func CmdGetValsetByNonce(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-func CmdGetConfirmationsByNonce(storeKey string, cdc *codec.Codec) *cobra.Command {
+func CmdGetValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "confirmations-by-nonce [nonce]",
-		Short: "Get valset confirmations with a particular nonce",
+		Use:   "valset-confirm [nonce] [bech32 validator address]",
+		Short: "Get valset confirmation with a particular nonce from a particular validator",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			nonce := args[0]
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/confirmationsByNonce", storeKey, nonce), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetConfirm/%s/%s", storeKey, args[0], args[1]), nil)
 			if err != nil {
 				fmt.Printf("could not get valset")
 				return nil

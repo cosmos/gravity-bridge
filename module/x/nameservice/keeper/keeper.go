@@ -46,6 +46,14 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 	store.Set(types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator), k.cdc.MustMarshalBinaryBare(valsetConf))
 }
 
+func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce int64, validator sdk.AccAddress) types.Valset {
+	store := ctx.KVStore(k.storeKey)
+
+	valset := types.Valset{}
+	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetValsetConfirmKey(nonce, validator)), valset)
+	return valset
+}
+
 func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
