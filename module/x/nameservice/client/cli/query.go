@@ -84,7 +84,7 @@ func CmdGetCurrentValset(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valset", storeKey), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/currentValset", storeKey), nil)
 			if err != nil {
 				fmt.Printf("could not get valset")
 				return nil
