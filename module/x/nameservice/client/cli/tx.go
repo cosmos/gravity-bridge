@@ -105,7 +105,7 @@ func CmdValsetRequest(cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-func CmdValsetConfirmation(storeKey string, cdc *codec.Codec) *cobra.Command {
+func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "valset-confirm [nonce] [eth private key]",
 		Short: "this is used by validators to sign a valset with a particular nonce if it exists",
@@ -115,12 +115,14 @@ func CmdValsetConfirmation(storeKey string, cdc *codec.Codec) *cobra.Command {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			// Get current valset
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valset", storeKey), nil)
+			nonce := args[0]
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, nonce), nil)
 			if err != nil {
 				fmt.Printf("could not get valset")
 				return nil
 			}
+
 			var valset types.Valset
 			cdc.MustUnmarshalJSON(res, &valset)
 			checkpoint := valset.GetCheckpoint()
