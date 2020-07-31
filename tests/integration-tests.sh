@@ -8,7 +8,7 @@ NODE_IP="7.7.7.$i"
 TX_FLAGS="--home /validator$i --keyring-backend test --from validator$i --trace --node=http://$NODE_IP:26657 --chain-id=peggy-test -y"
 
 ETH_PRIVKEY=$(jq .[$i] ./tests/eth_keys.json -r)
-peggycli tx nameservice update-eth-addr $ETH_PRIVKEY $TX_FLAGS > /dev/null
+peggycli tx nameservice update-eth-addr $ETH_PRIVKEY $TX_FLAGS
 done
 
 QUERY_FLAGS="--home /validator1 --trace --node=http://7.7.7.1:26657 --chain-id=peggy-test"
@@ -27,3 +27,5 @@ if [ $RES != $GOAL ]; then
 else
     echo "valset test successful"
 fi
+
+peggycli tx nameservice valset-request $TX_FLAGS

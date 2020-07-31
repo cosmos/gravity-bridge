@@ -33,6 +33,8 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		// GetCmdSetName(cdc),
 		// GetCmdDeleteName(cdc),
 		CmdUpdateEthAddress(cdc),
+		CmdValsetRequest(cdc),
+		CmdValsetConfirm(storeKey, cdc),
 	)...)
 
 	return nameserviceTxCmd
@@ -90,7 +92,6 @@ func CmdValsetRequest(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "valset-request",
 		Short: "request that the validators sign over the current valset",
-		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			inBuf := bufio.NewReader(cmd.InOrStdin())
