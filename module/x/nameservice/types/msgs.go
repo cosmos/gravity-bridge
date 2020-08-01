@@ -53,10 +53,13 @@ func (msg MsgValsetConfirm) GetSigners() []sdk.AccAddress {
 // ValsetRequest
 // -------------
 type MsgValsetRequest struct {
+	Requester sdk.AccAddress `json:"requester"`
 }
 
-func NewMsgValsetRequest() MsgValsetRequest {
-	return MsgValsetRequest{}
+func NewMsgValsetRequest(requester sdk.AccAddress) MsgValsetRequest {
+	return MsgValsetRequest{
+		Requester: requester,
+	}
 }
 
 // Route should return the name of the module
@@ -69,12 +72,12 @@ func (msg MsgValsetRequest) ValidateBasic() error { return nil }
 
 // GetSignBytes encodes the message for signing
 func (msg MsgValsetRequest) GetSignBytes() []byte {
-	return []byte{} // Does this work?
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
 func (msg MsgValsetRequest) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{} // Does this work?
+	return []sdk.AccAddress{msg.Requester}
 }
 
 // SetEthAddress

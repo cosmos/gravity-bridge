@@ -96,9 +96,10 @@ func CmdValsetRequest(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			cosmosAddr := cliCtx.GetFromAddress()
 
 			// Make the message
-			msg := types.NewMsgValsetRequest()
+			msg := types.NewMsgValsetRequest(cosmosAddr)
 
 			// Send it
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})

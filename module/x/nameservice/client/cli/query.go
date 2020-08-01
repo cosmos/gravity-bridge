@@ -108,8 +108,7 @@ func CmdGetValsetRequest(storeKey string, cdc *codec.Codec) *cobra.Command {
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, nonce), nil)
 			if err != nil {
-				fmt.Printf("could not get valset")
-				return nil
+				return err
 			}
 
 			var out types.Valset

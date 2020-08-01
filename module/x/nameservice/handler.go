@@ -3,6 +3,7 @@ package nameservice
 import (
 	"fmt"
 
+	"github.com/althea-net/peggy/module/x/nameservice/types"
 	"github.com/althea-net/peggy/module/x/nameservice/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -22,10 +23,17 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgSetEthAddress(ctx, keeper, msg)
 		case MsgValsetConfirm:
 			return handleMsgValsetConfirm(ctx, keeper, msg)
+		case MsgValsetRequest:
+			return handleMsgValsetRequest(ctx, keeper, msg)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unrecognized nameservice Msg type: %v", msg.Type()))
 		}
 	}
+}
+
+func handleMsgValsetRequest(ctx sdk.Context, keeper Keeper, msg types.MsgValsetRequest) (*sdk.Result, error) {
+	keeper.SetValsetRequest(ctx)
+	return &sdk.Result{}, nil
 }
 
 func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm) (*sdk.Result, error) {
