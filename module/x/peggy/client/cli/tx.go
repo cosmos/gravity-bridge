@@ -20,15 +20,15 @@ import (
 )
 
 func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
-	nameserviceTxCmd := &cobra.Command{
+	peggyTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      "Nameservice transaction subcommands",
+		Short:                      "Peggy transaction subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
 
-	nameserviceTxCmd.AddCommand(flags.PostCommands(
+	peggyTxCmd.AddCommand(flags.PostCommands(
 		// GetCmdBuyName(cdc),
 		// GetCmdSetName(cdc),
 		// GetCmdDeleteName(cdc),
@@ -37,7 +37,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		CmdValsetConfirm(storeKey, cdc),
 	)...)
 
-	return nameserviceTxCmd
+	return peggyTxCmd
 }
 
 // GetCmdUpdateEthAddress updates the network about the eth address that you have on record.

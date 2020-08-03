@@ -12,14 +12,14 @@ import (
 )
 
 func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
-	nameserviceQueryCmd := &cobra.Command{
+	peggyQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      "Querying commands for the nameservice module",
+		Short:                      "Querying commands for the peggy module",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	nameserviceQueryCmd.AddCommand(flags.GetCommands(
+	peggyQueryCmd.AddCommand(flags.GetCommands(
 		// GetCmdResolveName(storeKey, cdc),
 		// GetCmdWhois(storeKey, cdc),
 		// GetCmdNames(storeKey, cdc),
@@ -28,7 +28,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		CmdGetValsetConfirm(storeKey, cdc),
 	)...)
 
-	return nameserviceQueryCmd
+	return peggyQueryCmd
 }
 
 // // GetCmdResolveName queries information about a name
