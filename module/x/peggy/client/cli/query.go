@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/althea-net/peggy/module/x/nameservice/types"
+	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"

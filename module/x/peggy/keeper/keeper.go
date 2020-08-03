@@ -3,7 +3,7 @@ package keeper
 import (
 	"sort"
 
-	"github.com/althea-net/peggy/module/x/nameservice/types"
+	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

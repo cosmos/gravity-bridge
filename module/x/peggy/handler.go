@@ -1,10 +1,10 @@
-package nameservice
+package peggy
 
 import (
 	"fmt"
 
-	"github.com/althea-net/peggy/module/x/nameservice/types"
-	"github.com/althea-net/peggy/module/x/nameservice/utils"
+	"github.com/althea-net/peggy/module/x/peggy/types"
+	"github.com/althea-net/peggy/module/x/peggy/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )

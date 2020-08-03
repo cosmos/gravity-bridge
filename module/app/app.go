@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/althea-net/peggy/module/x/nameservice"
+	"github.com/althea-net/peggy/module/x/peggy"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
@@ -62,7 +62,7 @@ var (
 		supply.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
-		nameservice.AppModuleBasic{},
+		peggy.AppModuleBasic{},
 		// TODO: Add your module(s) AppModuleBasic
 		// NOTE: I think this may have been intended to be the universal
 		// initialization code that one would expect, but for whatever reason you need a
@@ -112,19 +112,19 @@ type NewApp struct {
 	subspaces map[string]params.Subspace
 
 	// keepers
-	accountKeeper     auth.AccountKeeper
-	bankKeeper        bank.Keeper
-	supplyKeeper      supply.Keeper
-	stakingKeeper     staking.Keeper
-	slashingKeeper    slashing.Keeper
-	mintKeeper        mint.Keeper
-	distrKeeper       distr.Keeper
-	govKeeper         gov.Keeper
-	crisisKeeper      crisis.Keeper
-	paramsKeeper      params.Keeper
-	upgradeKeeper     upgrade.Keeper
-	evidenceKeeper    evidence.Keeper
-	nameserviceKeeper nameservice.Keeper
+	accountKeeper  auth.AccountKeeper
+	bankKeeper     bank.Keeper
+	supplyKeeper   supply.Keeper
+	stakingKeeper  staking.Keeper
+	slashingKeeper slashing.Keeper
+	mintKeeper     mint.Keeper
+	distrKeeper    distr.Keeper
+	govKeeper      gov.Keeper
+	crisisKeeper   crisis.Keeper
+	paramsKeeper   params.Keeper
+	upgradeKeeper  upgrade.Keeper
+	evidenceKeeper evidence.Keeper
+	peggyKeeper    peggy.Keeper
 	// TODO: Add your module(s)
 	// NOTE: I think this code is basically all about the lack of generics.
 	// You need something to pass all these references around in, and you need the
@@ -157,7 +157,7 @@ func NewInitApp(
 	keys := sdk.NewKVStoreKeys(
 		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, mint.StoreKey, distr.StoreKey, slashing.StoreKey,
-		gov.StoreKey, params.StoreKey, evidence.StoreKey, upgrade.StoreKey, nameservice.StoreKey,
+		gov.StoreKey, params.StoreKey, evidence.StoreKey, upgrade.StoreKey, peggy.StoreKey,
 	)
 	tKeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -184,7 +184,7 @@ func NewInitApp(
 	app.subspaces[gov.ModuleName] = app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 	app.subspaces[crisis.ModuleName] = app.paramsKeeper.Subspace(crisis.DefaultParamspace)
 	app.subspaces[evidence.ModuleName] = app.paramsKeeper.Subspace(evidence.DefaultParamspace)
-	app.subspaces[nameservice.ModuleName] = app.paramsKeeper.Subspace(nameservice.DefaultParamspace)
+	app.subspaces[peggy.ModuleName] = app.paramsKeeper.Subspace(peggy.DefaultParamspace)
 
 	// The AccountKeeper handles address -> account lookups
 	app.accountKeeper = auth.NewAccountKeeper(
@@ -283,7 +283,7 @@ func NewInitApp(
 	)
 
 	// TODO: Add your module(s) keepers
-	app.nameserviceKeeper = nameservice.NewKeeper(app.cdc, keys[nameservice.StoreKey], &stakingKeeper)
+	app.peggyKeeper = peggy.NewKeeper(app.cdc, keys[peggy.StoreKey], &stakingKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -299,7 +299,7 @@ func NewInitApp(
 		distr.NewAppModule(app.distrKeeper, app.accountKeeper, app.supplyKeeper, app.stakingKeeper),
 		// TODO: Add your module(s)
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
-		nameservice.NewAppModule(app.nameserviceKeeper, app.bankKeeper),
+		peggy.NewAppModule(app.peggyKeeper, app.bankKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
 	)
@@ -322,7 +322,7 @@ func NewInitApp(
 		gov.ModuleName,
 		mint.ModuleName,
 		// TODO: Add your module(s)
-		nameservice.ModuleName,
+		peggy.ModuleName,
 		supply.ModuleName,
 		crisis.ModuleName,
 		genutil.ModuleName,

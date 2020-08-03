@@ -1,4 +1,4 @@
-package nameservice
+package peggy
 
 import (
 	"encoding/json"
@@ -6,8 +6,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
-	"github.com/althea-net/peggy/module/x/nameservice/client/cli"
-	"github.com/althea-net/peggy/module/x/nameservice/client/rest"
+	"github.com/althea-net/peggy/module/x/peggy/client/cli"
+	"github.com/althea-net/peggy/module/x/peggy/client/rest"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/bank"

@@ -1,8 +1,8 @@
-package nameservice
+package peggy
 
 import (
-	"github.com/althea-net/peggy/module/x/nameservice/keeper"
-	"github.com/althea-net/peggy/module/x/nameservice/types"
+	"github.com/althea-net/peggy/module/x/peggy/keeper"
+	"github.com/althea-net/peggy/module/x/peggy/types"
 )
 
 const (
