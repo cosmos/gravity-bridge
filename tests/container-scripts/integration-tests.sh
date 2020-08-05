@@ -10,7 +10,7 @@ do
     NODE_IP="7.7.7.$i"
     TX_FLAGS="--home /validator$i --keyring-backend test --from validator$i --trace --node=http://$NODE_IP:26657 --chain-id=peggy-test -y"
 
-    ETH_PRIVKEY=$(jq .[$i] /peggy/tests/eth_keys.json -r)
+    ETH_PRIVKEY=$(jq .[$i] /peggy/tests/assets/eth_keys.json -r)
     peggycli tx peggy update-eth-addr $ETH_PRIVKEY $TX_FLAGS > /dev/null
 done
 BLOCK=$(peggycli status $QUERY_FLAGS | jq .sync_info.latest_block_height -r)

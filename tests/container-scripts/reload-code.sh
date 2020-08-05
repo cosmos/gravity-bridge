@@ -19,8 +19,8 @@ cd /peggy/module/
 make
 make install
 cd /peggy/
-tests/setup-validators.sh $NODES
-tests/run-testnet.sh $NODES
+tests/container-scripts/setup-validators.sh $NODES
+tests/container-scripts/run-testnet.sh $NODES
 
 # This keeps the script open to prevent Docker from stopping the container
 # immediately if the nodes are killed by a different process

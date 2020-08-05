@@ -30,4 +30,4 @@ done
 # consumes a lot of processing power
 sleep 30
 
-bash /peggy/tests/run-eth.sh
+bash /peggy/tests/container-scripts/run-eth.sh

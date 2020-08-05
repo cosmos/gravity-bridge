@@ -4,7 +4,7 @@
 # init the genesis block
 geth --identity "PeggyTestnet" \
 --nodiscover \
---networkid 15 init /peggy/tests/ETHGenesis.json 
+--networkid 15 init /peggy/tests/assets/ETHGenesis.json 
 
 # etherbase is where rewards get sent
 geth --identity "PeggyTestnet" --nodiscover \
