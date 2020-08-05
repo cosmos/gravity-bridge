@@ -28,6 +28,7 @@ done
 
 # let the cosmos chain settle before starting eth as it
 # consumes a lot of processing power
-sleep 30
+sleep 10
 
-bash /peggy/tests/container-scripts/run-eth.sh
+bash /peggy/tests/container-scripts/run-eth.sh &
+sleep 10
