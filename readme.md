@@ -31,7 +31,7 @@ To run the test simply have docker installed and run.
 
 in the `solidity` folder
 
-Run `npm install`, then `npm run typechain`.
+Run `HUSKY_SKIP_INSTALL=1 npm install`, then `npm run typechain`.
 
 Run `npm run evm` in a separate terminal and then
 

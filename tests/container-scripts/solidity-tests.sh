@@ -3,7 +3,7 @@
 
 pushd /peggy/solidity/
 rm -rf node_modules
-npm install
+HUSKY_SKIP_INSTALL=1 npm install
 npm run typechain
 npm run evm &
 npm run test
