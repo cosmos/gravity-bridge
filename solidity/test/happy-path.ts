@@ -69,22 +69,25 @@ describe("Peggy happy path", function() {
 
     // Transferring out to Cosmos
 
-    await testERC20.functions.approve(peggy.address, 100);
+    await testERC20.functions.approve(peggy.address, 1000);
 
     await peggy.functions.transferOut(
       ethers.utils.formatBytes32String("myCosmosAddress"),
-      100
+      1000
     );
 
+    const txDestinationsInt = new Array(100);
+    const txFees = new Array(100);
+    const txNonces = new Array(100);
+    const txAmounts = new Array(100);
+    for (let i = 0; i < 100; i++) {
+      txNonces[i] = i + 1;
+      txFees[i] = 1;
+      txAmounts[i] = 1;
+      txDestinationsInt[i] = signers[i + 5];
+    }
     // Transferring into ERC20 from Cosmos
-    const txAmounts = [11, 22, 33];
-    const txDestinations = await getSignerAddresses([
-      signers[6],
-      signers[7],
-      signers[8]
-    ]);
-    const txFees = [1, 1, 1];
-    const txNonces = [1, 2, 3];
+    const txDestinations = await getSignerAddresses(txDestinationsInt);
 
     let txHash = makeTxBatchHash(
       txAmounts,
@@ -113,7 +116,7 @@ describe("Peggy happy path", function() {
       await (
         await testERC20.functions.balanceOf(await signers[6].getAddress())
       ).toNumber()
-    ).to.equal(11);
+    ).to.equal(1);
   });
 });
 
