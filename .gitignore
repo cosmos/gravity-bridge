@@ -1,6 +1,7 @@
 node_modules
 typechain
 target
+tests/test-runner/Cargo.lock
 
 #Buidler files
 cache

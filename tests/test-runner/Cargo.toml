@@ -1,0 +1,21 @@
+[package]
+name = "test-runner"
+version = "0.1.0"
+authors = ["Justin Kilpatrick <justin@althea.net>"]
+edition = "2018"
+
+[dependencies]
+contact = {git = "https://github.com/althea-net/contact", rev = "3d42773eb46b718426f0bd05ed9bcdd9eeb6150f"}
+# deep_space = {path = "../../deep_space"}
+# contact = {path = "../../contact"}
+serde_derive = "1.0"
+clarity = "0.1"
+docopt = "1"
+serde = "1.0"
+actix-web = {version = "2.0", features=["openssl"]}
+actix-rt = "1"
+lazy_static = "1"
+url = "2"
+web30 = {git = "https://github.com/althea-net/web30"}
+num256 = "0.2"
+rand = "0.7"
