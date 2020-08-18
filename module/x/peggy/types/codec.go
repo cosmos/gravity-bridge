@@ -16,7 +16,7 @@ func RegisterCodec(cdc *codec.Codec) {
 	// cdc.RegisterConcrete(MsgSetName{}, "nameservice/SetName", nil)
 	// cdc.RegisterConcrete(MsgBuyName{}, "nameservice/BuyName", nil)
 	// cdc.RegisterConcrete(MsgDeleteName{}, "nameservice/DeleteName", nil)
-	cdc.RegisterConcrete(MsgSetEthAddress{}, "nameservice/SetEthAddress", nil)
-	cdc.RegisterConcrete(MsgValsetRequest{}, "nameservice/ValsetRequest", nil)
-	cdc.RegisterConcrete(MsgValsetConfirm{}, "nameservice/ValsetConfirm", nil)
+	cdc.RegisterConcrete(MsgSetEthAddress{}, "peggy/SetEthAddress", nil)
+	cdc.RegisterConcrete(MsgValsetRequest{}, "peggy/ValsetRequest", nil)
+	cdc.RegisterConcrete(MsgValsetConfirm{}, "peggy/ValsetConfirm", nil)
 }

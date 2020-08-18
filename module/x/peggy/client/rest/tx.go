@@ -15,16 +15,6 @@ import (
 	hexUtil "github.com/ethereum/go-ethereum/common/hexutil"
 )
 
-// import (
-// 	"net/http"
-
-// 	"github.com/althea-net/peggy/module/x/nameservice/types"
-// 	"github.com/cosmos/cosmos-sdk/client/context"
-
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	"github.com/cosmos/cosmos-sdk/types/rest"
-// )
-
 type updateEthAddressReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
 	EthSig  string       `json:"ethSig"`
@@ -82,9 +72,13 @@ func updateEthAddressHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+type createValsetReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+}
+
 func createValsetRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req updateEthAddressReq
+		var req createValsetReq
 
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
