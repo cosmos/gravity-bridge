@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"regexp"
 
 	"github.com/althea-net/peggy/module/x/peggy/utils"
@@ -112,13 +113,13 @@ func (msg MsgSetEthAddress) ValidateBasic() error {
 	valdiateEthAddr := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
 
 	if !valdiateEthAddr.MatchString(msg.Address) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "This is not a valid Ethereum address") // TODO: what error type to use here?
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "This is not a valid Ethereum address")
 	}
 
-	err := utils.ValidateEthSig(crypto.Keccak256(msg.Validator), msg.Signature, msg.Address)
+	err := utils.ValidateEthSig(crypto.Keccak256(msg.Validator.Bytes()), msg.Signature, msg.Address)
 
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("digest: %x sig: %x address %s error: %s", crypto.Keccak256(msg.Validator.Bytes()), msg.Signature, msg.Address, err.Error()))
 	}
 
 	return nil
