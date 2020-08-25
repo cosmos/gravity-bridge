@@ -4,6 +4,10 @@ set -eu
 NODES=3 # Permanently set to 3 for now!
 QUERY_FLAGS="--home /validator1 --trace --node=http://7.7.7.1:26657 --chain-id=peggy-test -o=json"
 
+pushd /peggy/tests/test-runner
+RUST_BACKTRACE=full RUST_LOG=trace PATH=$PATH:$HOME/.cargo/bin cargo run
+popd
+
 #### valset creation test
 for i in $(seq 1 $NODES);
 do
@@ -37,6 +41,33 @@ fi
 #### valset-request test
 # This is called by anyone to request that the validators save a valset for the next block
 peggycli tx peggy valset-request $TX_FLAGS > /dev/null
+BLOCK=$(peggycli status $QUERY_FLAGS | jq .sync_info.latest_block_height -r)
+
+# Wait for a block to mine
+while [ $(peggycli status $QUERY_FLAGS | jq .sync_info.latest_block_height -r) -eq $BLOCK ]
+do
+sleep 0.2
+done
+
+let "NONCE = $BLOCK + 1"
+# This is called by the peggy daemons to see if a valset has been saved for a block
+RES=$(peggycli query peggy valset-request $NONCE $QUERY_FLAGS)
+GOAL="{\"Nonce\":\"$NONCE\",\"Powers\":[\"100\",\"100\",\"100\"],\"EthAdresses\":[\"0xE987c5D2CFA68CD803e720FDD40ae10cE959c47B\",\"0xa34F8827225c7FA6565C618b01de86549e07d667\",\"0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255\"]}"
+
+
+if [ $RES != $GOAL ]; then
+    echo "valset-request test failed"
+    echo $RES
+    echo "is NOT equal to"
+    echo $GOAL
+else
+    echo "valset-request test successful"
+fi
+
+#### valset-confirm test
+# This is called by anyone to submit a signed validator set for a specific nonce that has
+# previously been valset-requested
+peggycli tx peggy valset-confirm $TX_FLAGS > /dev/null
 BLOCK=$(peggycli status $QUERY_FLAGS | jq .sync_info.latest_block_height -r)
 
 # Wait for a block to mine

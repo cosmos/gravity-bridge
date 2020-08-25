@@ -23,7 +23,7 @@ do
 GAIA_HOME="--home /validator$i"
 GENTX_HOME="--home-client /validator$i"
 ARGS="$GAIA_HOME --keyring-backend test"
-$CLI keys add $ARGS validator$i
+$CLI keys add $ARGS validator$i 2>> /validator-phrases
 KEY=$($CLI keys show validator$i -a $ARGS)
 # move the genesis in
 mkdir -p /validator$i/config/

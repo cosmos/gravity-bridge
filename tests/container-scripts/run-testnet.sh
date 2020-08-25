@@ -26,6 +26,10 @@ ARGS="$GAIA_HOME $LISTEN_ADDRESS $RPC_ADDRESS $P2P_ADDRESS $LOG_LEVEL"
 $BIN $ARGS start &
 done
 
+# start the peggycli REST server this runs on port 1317 against localhost.
+# it will be passed outside of the container for easy debugging/development
+peggycli rest-server --laddr tcp://0.0.0.0:1317 --trust-node --node tcp://7.7.7.1:26657 &
+
 # let the cosmos chain settle before starting eth as it
 # consumes a lot of processing power
 sleep 10
