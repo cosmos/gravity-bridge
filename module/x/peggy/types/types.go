@@ -1,9 +1,9 @@
 package types
 
 type Valset struct {
-	Nonce       int64
-	Powers      []int64
-	EthAdresses []string
+	Nonce        int64
+	Powers       []int64
+	EthAddresses []string
 }
 
 func (v Valset) GetCheckpoint() []byte {

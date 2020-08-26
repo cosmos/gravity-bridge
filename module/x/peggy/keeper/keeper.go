@@ -67,15 +67,15 @@ func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) string 
 
 type valsetSort types.Valset
 
-func (a valsetSort) Len() int { return len(a.EthAdresses) }
+func (a valsetSort) Len() int { return len(a.EthAddresses) }
 func (a valsetSort) Swap(i, j int) {
-	a.EthAdresses[i], a.EthAdresses[j] = a.EthAdresses[j], a.EthAdresses[i]
+	a.EthAddresses[i], a.EthAddresses[j] = a.EthAddresses[j], a.EthAddresses[i]
 	a.Powers[i], a.Powers[j] = a.Powers[j], a.Powers[i]
 }
 func (a valsetSort) Less(i, j int) bool {
 	// Secondary sort on eth address in case powers are equal
 	if a.Powers[i] == a.Powers[j] {
-		return a.EthAdresses[i] < a.EthAdresses[j]
+		return a.EthAddresses[i] < a.EthAddresses[j]
 	}
 	return a.Powers[i] < a.Powers[j]
 }
@@ -90,7 +90,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 		powers[i] = p
 		ethAddrs[i] = k.GetEthAddress(ctx, sdk.AccAddress(validatorAddress))
 	}
-	valset := types.Valset{EthAdresses: ethAddrs, Powers: powers}
+	valset := types.Valset{EthAddresses: ethAddrs, Powers: powers}
 	sort.Sort(valsetSort(valset))
 	return valset
 }
