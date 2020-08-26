@@ -287,11 +287,13 @@ contract Peggy {
 
 		// Send transaction amounts to destinations
 		// Send transaction fees to msg.sender
+		uint256 totalFee;
 		{
 			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
 				IERC20(tokenContract).transfer(_destinations[i], _amounts[i]);
-				IERC20(tokenContract).transfer(msg.sender, _fees[i]);
+				totalFee = totalFee.add(_fees[i]);
 			}
+			IERC20(tokenContract).transfer(msg.sender, totalFee);
 		}
 	}
 
