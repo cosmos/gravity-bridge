@@ -3,6 +3,7 @@ package cli
 import (
 	"bufio"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
 	"log"
 
@@ -76,7 +77,7 @@ func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA).Hex()
 
 			// Make the message
-			msg := types.NewMsgSetEthAddress(ethAddress, cosmosAddr, signature)
+			msg := types.NewMsgSetEthAddress(ethAddress, cosmosAddr, hex.EncodeToString(signature))
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

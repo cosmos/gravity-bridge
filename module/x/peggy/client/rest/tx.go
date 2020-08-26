@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/hex"
 	"fmt"
 	"net/http"
 
@@ -61,7 +62,7 @@ func updateEthAddressHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		// Make the message, we convert the recovered address into a string
 		// so at this point we have verified that this address signed this
 		// cosmos address
-		msg := types.NewMsgSetEthAddress(ethAddr.String(), cosmosAddr, ethSig)
+		msg := types.NewMsgSetEthAddress(ethAddr.String(), cosmosAddr, hex.EncodeToString(ethSig))
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
 	"regexp"
 
@@ -86,10 +87,10 @@ func (msg MsgValsetRequest) GetSigners() []sdk.AccAddress {
 type MsgSetEthAddress struct {
 	Address   string         `json:"address"`
 	Validator sdk.AccAddress `json:"validator"`
-	Signature []byte         `json:"signature"`
+	Signature string         `json:"signature"`
 }
 
-func NewMsgSetEthAddress(address string, validator sdk.AccAddress, signature []byte) MsgSetEthAddress {
+func NewMsgSetEthAddress(address string, validator sdk.AccAddress, signature string) MsgSetEthAddress {
 	return MsgSetEthAddress{
 		Address:   address,
 		Validator: validator,
@@ -115,8 +116,12 @@ func (msg MsgSetEthAddress) ValidateBasic() error {
 	if !valdiateEthAddr.MatchString(msg.Address) {
 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "This is not a valid Ethereum address")
 	}
+	sigBytes, hexErr := hex.DecodeString(msg.Signature)
+	if hexErr != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Could not decode hex string %s", msg.Signature))
+	}
 
-	err := utils.ValidateEthSig(crypto.Keccak256(msg.Validator.Bytes()), msg.Signature, msg.Address)
+	err := utils.ValidateEthSig(crypto.Keccak256(msg.Validator.Bytes()), sigBytes, msg.Address)
 
 	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("digest: %x sig: %x address %s error: %s", crypto.Keccak256(msg.Validator.Bytes()), msg.Signature, msg.Address, err.Error()))
