@@ -38,7 +38,9 @@ func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce int64) types.Valset {
 	store := ctx.KVStore(k.storeKey)
 
 	valset := types.Valset{}
-	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetValsetRequestKey(nonce)), &valset)
+	store_bytes := store.Get(types.GetValsetRequestKey(nonce))
+	println("Store bytes %v", store_bytes)
+	k.cdc.MustUnmarshalBinaryBare(store_bytes, &valset)
 	return valset
 }
 
@@ -62,7 +64,8 @@ func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr
 
 func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) string {
 	store := ctx.KVStore(k.storeKey)
-	return string(store.Get(types.GetEthAddressKey(validator)))
+	val := store.Get(types.GetEthAddressKey(validator))
+	return string(val)
 }
 
 type valsetSort types.Valset

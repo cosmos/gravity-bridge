@@ -53,6 +53,7 @@ func queryCurrentValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 
 func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
 	nonce, err := strconv.ParseInt(path[0], 10, 64)
+	println("Query for ", path[0], nonce)
 	if err != nil {
 		return nil, err
 	}
