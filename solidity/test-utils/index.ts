@@ -5,11 +5,16 @@ import { makeCheckpoint, signHash, getSignerAddresses } from "./pure";
 import { BigNumberish } from "ethers/utils";
 import { Signer } from "ethers";
 
+type DeployContractsOptions = {
+  corruptSig?: boolean;
+};
+
 export async function deployContracts(
   peggyId: string = "foo",
   validators: Signer[],
   powers: number[],
-  powerThreshold: number
+  powerThreshold: number,
+  opts?: DeployContractsOptions
 ) {
   const TestERC20 = await ethers.getContractFactory("TestERC20");
   const testERC20 = (await TestERC20.deploy()) as TestERC20;
@@ -26,6 +31,13 @@ export async function deployContracts(
   );
 
   const { v, r, s } = await signHash(validators, theHash);
+
+  if (opts && opts.corruptSig) {
+    // We overwrite the second signature with the first just to mess things up
+    v[1] = v[0];
+    r[1] = r[0];
+    s[1] = s[0];
+  }
 
   const peggy = (await Peggy.deploy(
     testERC20.address,
