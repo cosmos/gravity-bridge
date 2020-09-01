@@ -124,7 +124,7 @@ contract Peggy {
 
 		// Check that there was enough power
 		require(
-			cumulativePower > powerThreshold,
+			cumulativePower > _powerThreshold,
 			"Submitted validator set does not have enough power."
 		);
 	}
