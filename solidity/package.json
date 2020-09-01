@@ -23,7 +23,8 @@
     "ethers": "^4.0.47",
     "ts-node": "^8.10.1",
     "typechain": "^1.0.5",
-    "typescript": "^3.8.3"
+    "typescript": "^3.8.3",
+    "axios": "0.20.0"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^3.0.1",

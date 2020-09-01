@@ -8,12 +8,14 @@ use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::process::Command;
 use std::time::Duration;
+use web30::client;
 
 #[macro_use]
 extern crate log;
 
-const TIMEOUT: Duration = Duration::from_secs(1);
+const TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Ethereum keys are generated for every validator inside
 /// of this testing application and submitted to the blockchain
@@ -44,7 +46,6 @@ fn parse_validator_keys() -> Vec<CosmosPrivateKey> {
         {
             continue;
         }
-        println!("the phrase is {}", phrase);
         let key = CosmosPrivateKey::from_phrase(&phrase, "").expect("Bad phrase!");
         ret.push(key);
     }
@@ -63,22 +64,73 @@ fn get_keys() -> Vec<(CosmosPrivateKey, EthPrivateKey)> {
 #[actix_rt::main]
 async fn main() {
     println!("Staring Peggy test-runner");
-    let contact = Contact::new("http:://localhost:1317/", TIMEOUT);
+    const COSMOS_NODE: &str = "http://localhost:1317";
+    const ETH_NODE: &str = "http://localhost:8545";
+    // this key is the private key for the public key defined in tests/assets/ETHGenesis.json
+    // where the full node / miner sends its rewards. Therefore it's always going
+    // to have a lot of ETH to pay for things like contract deployments
+    let miner_private_key: EthPrivateKey =
+        "0xb1bab011e03a9862664706fc3bbaa1b16651528e5f0e7fbfcbfdd8be302a13e7"
+            .parse()
+            .unwrap();
+
+    let contact = Contact::new(COSMOS_NODE, TIMEOUT);
+    let web30 = web30::client::Web3::new(ETH_NODE, TIMEOUT);
     let keys = get_keys();
+    let test_token_name = "footoken".to_string();
+
+    let fee = Coin {
+        denom: test_token_name.clone(),
+        amount: 1u32.into(),
+    };
 
     // runs through a full set of rpc tests for each validator, this includes the basics like
     // sending and querying transactions and creating, getting, and setting validator set info
     // this is a little big overkill for a *Peggy* test as opposed to testing the Contact library
     // but it's pretty much free to run.
-    for (c_key, e_key) in keys {
-        test_rpc_calls(contact.clone(), c_key, e_key)
+    // for (c_key, e_key) in keys {
+    //     test_rpc_calls(contact.clone(), c_key, e_key, "footoken")
+    //         .await
+    //         .expect("Failed to test endpoints")
+    // }
+    for (c_key, e_key) in keys.iter() {
+        // set the eth address for all the validators
+        contact
+            .update_peggy_eth_address(*e_key, *c_key, fee.clone(), None, None, None)
             .await
-            .expect("Failed to test endpoints")
+            .expect("Failed to update eth address!");
     }
+    // get the first validator and have them send a valset request
+    let (c_key, _e_key) = keys[0];
+    contact
+        .send_valset_request(c_key, fee, None, None, None)
+        .await
+        .expect("Failed to send valset request!");
+
+    /// TODO valset confirm goes here
+    // now we can deploy the test peggy contract, this must come after the
+    // first valset is created because the constructor requires this first
+    // valset to be submitted.
+    let output = Command::new("npx")
+        .args(&[
+            "ts-node",
+            "/peggy/solidity/contract-deployer.ts",
+            &format!("--cosmos-node={}", COSMOS_NODE),
+            &format!("--eth-node={}", ETH_NODE),
+            &format!("--eth-privkey={:#x}", miner_private_key),
+            "--contract=/peggy/solidity/artifacts/Peggy.json",
+            "--erc20-contract=/peggy/solidity/artifacts/TestERC20.json",
+            "--test-mode=true",
+        ])
+        .current_dir("/peggy/solidity/")
+        .output()
+        .expect("Failed to deploy contracts!");
+    println!("status: {}", output.status);
+    println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     // TODO
-    // update-eth-addr
-    // valset-request
+    // valset-request-confirm
     // submit-valset
     // get current valset / specific valset
 }
