@@ -43,11 +43,11 @@ install:
 	go install -mod=readonly ./cmd/ebcli
 	go install -mod=readonly ./cmd/ebrelayer
 
-lint:
-	@echo "--> Running linter"
-	golangci-lint run
-	@find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
-	go mod verify
+# lint:
+# 	@echo "--> Running linter"
+# 	golangci-lint run
+# 	@find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
+# 	go mod verify
 
 test:
 	go test ./...

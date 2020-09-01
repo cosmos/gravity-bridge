@@ -2,34 +2,30 @@ module.exports = async () => {
   /*******************************************
    *** Set up
    ******************************************/
-  const Web3 = require("web3");
-  const HDWalletProvider = require("@truffle/hdwallet-provider");
-  const BigNumber = require("bignumber.js");
+  const Web3 = require('web3');
+  const HDWalletProvider = require('@truffle/hdwallet-provider');
+  const BigNumber = require('bignumber.js');
 
   // Contract abstraction
-  const truffleContract = require("truffle-contract");
-  const contract = truffleContract(
-    require("../build/contracts/BridgeBank.json")
-  );
+  const truffleContract = require('truffle-contract');
+  const contract = truffleContract(require('../build/contracts/BridgeBank.json'));
 
-  const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
+  const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
   /*******************************************
    *** Constants
    ******************************************/
   // Lock transaction default params
   const DEFAULT_COSMOS_RECIPIENT = Web3.utils.utf8ToHex(
-    "cosmos1pjtgu0vau2m52nrykdpztrt887aykue0hq7dfh"
+    'cosmos19z8phehr09ur026ks4zrauv0kfdzjt9n79zy8m'
   );
-  const DEFAULT_ETH_DENOM = "eth";
-  const DEFAULT_AMOUNT = 10;
+  const DEFAULT_ETH_DENOM = 'eth';
+  const DEFAULT_AMOUNT = '500000000000000000';
 
   // Config values
-  const NETWORK_ROPSTEN =
-    process.argv[4] === "--network" && process.argv[5] === "ropsten";
+  const NETWORK_ROPSTEN = process.argv[4] === '--network' && process.argv[5] === 'ropsten';
   const DEFAULT_PARAMS =
-    process.argv[4] === "--default" ||
-    (NETWORK_ROPSTEN && process.argv[6] === "--default");
+    process.argv[4] === '--default' || (NETWORK_ROPSTEN && process.argv[6] === '--default');
   const NUM_ARGS = process.argv.length - 4;
 
   /*******************************************
@@ -40,27 +36,19 @@ module.exports = async () => {
    ******************************************/
   if (NETWORK_ROPSTEN && DEFAULT_PARAMS) {
     if (NUM_ARGS !== 3) {
-      return console.error(
-        "Error: custom parameters are invalid on --default."
-      );
+      return console.error('Error: custom parameters are invalid on --default.');
     }
   } else if (NETWORK_ROPSTEN) {
     if (NUM_ARGS !== 2 && NUM_ARGS !== 5) {
-      return console.error(
-        "Error: invalid number of parameters, please try again."
-      );
+      return console.error('Error: invalid number of parameters, please try again.');
     }
   } else if (DEFAULT_PARAMS) {
     if (NUM_ARGS !== 1) {
-      return console.error(
-        "Error: custom parameters are invalid on --default."
-      );
+      return console.error('Error: custom parameters are invalid on --default.');
     }
   } else {
     if (NUM_ARGS !== 3) {
-      return console.error(
-        "Error: must specify recipient address, token address, and amount."
-      );
+      return console.error('Error: must specify recipient address, token address, and amount.');
     }
   }
 
@@ -84,7 +72,7 @@ module.exports = async () => {
   }
 
   // Convert default 'eth' coin denom into null address
-  if (coinDenom == "eth") {
+  if (coinDenom == 'eth') {
     coinDenom = NULL_ADDRESS;
   }
 
@@ -96,7 +84,7 @@ module.exports = async () => {
   if (NETWORK_ROPSTEN) {
     provider = new HDWalletProvider(
       process.env.MNEMONIC,
-      "https://ropsten.infura.io/v3/".concat(process.env.INFURA_PROJECT_ID)
+      'https://ropsten.infura.io/v3/'.concat(process.env.INFURA_PROJECT_ID)
     );
   } else {
     provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
@@ -112,20 +100,20 @@ module.exports = async () => {
     const accounts = await web3.eth.getAccounts();
 
     // Send lock transaction
-    console.log("Connecting to contract....");
+    console.log('Connecting to contract....');
     const { logs } = await contract.deployed().then(function (instance) {
-      console.log("Connected to contract, sending lock...");
+      console.log('Connected to contract, sending lock...');
       return instance.lock(cosmosRecipient, coinDenom, amount, {
-        from: accounts[0],
+        from: '0x8f287eA4DAD62A3A626942d149509D6457c2516C',
         value: coinDenom === NULL_ADDRESS ? amount : 0,
         gas: 300000 // 300,000 Gwei
       });
     });
 
-    console.log("Sent lock...");
+    console.log('Sent lock...');
 
     // Get event logs
-    const event = logs.find(e => e.event === "LogLock");
+    const event = logs.find(e => e.event === 'LogLock');
 
     // Parse event fields
     const lockEvent = {

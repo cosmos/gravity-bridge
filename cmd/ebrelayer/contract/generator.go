@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -68,9 +69,21 @@ func GenerateBindings(contracts BridgeContracts) error {
 	}
 	return nil
 }
-
-// execCmd executes a bash cmd
 func execCmd(cmd string) error {
-	_, err := exec.Command("sh", "-c", cmd).Output()
+	//_, err := exec.Command("sh", "-c", cmd).Output()
+	fmt.Println(cmd)
+	// _, err := exec.Command("sh", "-c", cmd).Output()
+	cmd2 := exec.Command("sh", "-c", cmd)
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd2.Stdout = &out
+	cmd2.Stderr = &stderr
+	err := cmd2.Run()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		return err
+	}
+	fmt.Println("Result: " + out.String())
+	// fmt.Printf("-----ZCz-------%s", err)
 	return err
 }
