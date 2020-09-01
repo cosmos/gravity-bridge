@@ -97,7 +97,7 @@ Ethereum event feed
 Alternate experimental ethereum input
 
 - Let's say that accounts have to send a ClaimTokens message to get their tokens that have been transferred over from Eth (just for sake of argument)
-- Each validator connects directly to Geth (instead of the peggy daemon handling it)
+<!-- - Each validator connects directly to Geth (instead of the peggy daemon handling it) -->
 - When a ClaimTokens message comes in, each validator in the state machine, checks it's own eth block DB (this is seperate from the Cosmos KV stores, and is access only by the peggy module. The peggy daemon fills it up with block data from a different process) to see if the tokens have been transferred to that account.
 - Validators with a different opinion on the state of Eth will arrive at different conclusions, and produce different blocks. Validators that disagree will have downtime, according to Tendermint. This allows Tendermint to handle all consensus, and we don't think about it.
 
