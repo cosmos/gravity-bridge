@@ -62,6 +62,12 @@
 - The Peggy Daemons on the validators observe this, and they submit a "BatchSubmittedTx". This TX goes into a Batch SubmittedStore. The cosmos state machine discards the batch permanently once it sees that over 66% of the validators have submitted a BatchSubmittedTx.
   - If there are any older batches in the BatchConfirmStore, they are removed because they can now never be submitted. The Eth Tx's in the old batches are released back into the mempool.
 
+## Deposit oracle process
+
+- Peggy Daemons constantly observe the Ethereum blockchain. Specifically the Peggy Ethereum contract
+- When a deposit is observed each validator sends a DepositTX after 50 blocks have elapsed (to resolve forks)
+- When more than 66% of the validator shave signed off on a DepositTX the message handler itself calls out to the bank and generates tokens
+
 # CosmosSDK / Tendermint considerations
 
 ## Signing
@@ -86,7 +92,7 @@ If a validator failing to produce ValSetUpdates and the process is implemented i
 My intuition about vulnerabilities here is that they could only be used to halt the bridge using 1/3rd of the stake. Since that's roughly the same as halting the chain using 1/3rd of the active stake I don't think it's an issue.
 Ethereum event feed
 
-- There is a governance parameter calle EthBlockDelay, for example 50 blocks
+- There is a governance parameter called EthBlockDelay, for example 50 blocks
 - Peggy Daemons get the current block number from their Geth, then get the events from the block EthBlockDelay lower than the current one
 - They send an EthBlockData message
 - These messages go in an EthBlockDataStore, indexed by the block number and the validator that sent them.
