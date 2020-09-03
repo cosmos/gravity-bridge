@@ -31,10 +31,16 @@ describe("Peggy happy path", function() {
       checkpoint: deployCheckpoint
     } = await deployContracts(peggyId, validators, powers, powerThreshold);
 
-    expect(await peggy.functions.peggyId()).to.equal(peggyId);
-    expect(await peggy.functions.powerThreshold()).to.equal(powerThreshold);
-    expect(await peggy.functions.tokenContract()).to.equal(testERC20.address);
-    expect(await peggy.functions.lastCheckpoint()).to.equal(deployCheckpoint);
+    expect(await peggy.functions.state_peggyId()).to.equal(peggyId);
+    expect(await peggy.functions.state_powerThreshold()).to.equal(
+      powerThreshold
+    );
+    expect(await peggy.functions.state_tokenContract()).to.equal(
+      testERC20.address
+    );
+    expect(await peggy.functions.state_lastCheckpoint()).to.equal(
+      deployCheckpoint
+    );
 
     let newPowers = examplePowers();
     newPowers[0] -= 3;
@@ -65,7 +71,7 @@ describe("Peggy happy path", function() {
       sigs.s
     );
 
-    expect(await peggy.functions.lastCheckpoint()).to.equal(checkpoint);
+    expect(await peggy.functions.state_lastCheckpoint()).to.equal(checkpoint);
 
     // Transferring out to Cosmos
 

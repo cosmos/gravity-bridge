@@ -7,13 +7,13 @@ contract Peggy {
 	using SafeMath for uint256;
 
 	// These are updated often
-	bytes32 public lastCheckpoint;
-	uint256 public lastTxNonce = 0;
+	bytes32 public state_lastCheckpoint;
+	uint256 public state_lastTxNonce = 0;
 
 	// These are set once at initialization
-	address public tokenContract;
-	bytes32 public peggyId;
-	uint256 public powerThreshold;
+	address public state_tokenContract;
+	bytes32 public state_peggyId;
+	uint256 public state_powerThreshold;
 
 	event ValsetUpdatedEvent(address[] _validators, uint256[] _powers);
 	event TransferOutEvent(bytes32 _destination, uint256 _amount);
@@ -162,8 +162,12 @@ contract Peggy {
 
 		// Check that the supplied current validator set matches the saved checkpoint
 		require(
-			makeCheckpoint(_currentValidators, _currentPowers, _currentValsetNonce, peggyId) ==
-				lastCheckpoint,
+			makeCheckpoint(
+				_currentValidators,
+				_currentPowers,
+				_currentValsetNonce,
+				state_peggyId
+			) == state_lastCheckpoint,
 			"Supplied current validators and powers do not match checkpoint."
 		);
 
@@ -178,7 +182,7 @@ contract Peggy {
 			_newValidators,
 			_newPowers,
 			_newValsetNonce,
-			peggyId
+			state_peggyId
 		);
 
 		console.log("calling checkValidatorSignatures from updateValset");
@@ -189,14 +193,14 @@ contract Peggy {
 			_r,
 			_s,
 			newCheckpoint,
-			powerThreshold
+			state_powerThreshold
 		);
 
 		// ACTIONS
 
 		// Stored to be used next time to validate that the valset
 		// supplied by the caller is correct.
-		lastCheckpoint = newCheckpoint;
+		state_lastCheckpoint = newCheckpoint;
 
 		// LOGS
 
@@ -243,14 +247,18 @@ contract Peggy {
 
 		// Check that the supplied current validator set matches the saved checkpoint
 		require(
-			makeCheckpoint(_currentValidators, _currentPowers, _currentValsetNonce, peggyId) ==
-				lastCheckpoint,
+			makeCheckpoint(
+				_currentValidators,
+				_currentPowers,
+				_currentValsetNonce,
+				state_peggyId
+			) == state_lastCheckpoint,
 			"Supplied current validators and powers do not match checkpoint."
 		);
 
 		// Check that the tx nonces are higher than the stored nonce and are
 		// strictly increasing (can have gaps)
-		uint256 lastTxNonceTemp = lastTxNonce;
+		uint256 lastTxNonceTemp = state_lastTxNonce;
 		{
 			for (uint256 i = 0; i < _nonces.length; i = i.add(1)) {
 				require(
@@ -266,7 +274,7 @@ contract Peggy {
 		bytes32 methodName = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
 		// Get hash of the transaction batch
 		bytes32 transactionsHash = keccak256(
-			abi.encodePacked(peggyId, methodName, _amounts, _destinations, _fees, _nonces)
+			abi.encodePacked(state_peggyId, methodName, _amounts, _destinations, _fees, _nonces)
 		);
 
 		// Check that enough current validators have signed off on the transaction batch
@@ -277,28 +285,28 @@ contract Peggy {
 			_r,
 			_s,
 			transactionsHash,
-			powerThreshold
+			state_powerThreshold
 		);
 
 		// ACTIONS
 
 		// Store nonce
-		lastTxNonce = lastTxNonceTemp;
+		state_lastTxNonce = lastTxNonceTemp;
 
 		// Send transaction amounts to destinations
 		// Send transaction fees to msg.sender
 		uint256 totalFee;
 		{
 			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
-				IERC20(tokenContract).transfer(_destinations[i], _amounts[i]);
+				IERC20(state_tokenContract).transfer(_destinations[i], _amounts[i]);
 				totalFee = totalFee.add(_fees[i]);
 			}
-			IERC20(tokenContract).transfer(msg.sender, totalFee);
+			IERC20(state_tokenContract).transfer(msg.sender, totalFee);
 		}
 	}
 
 	function transferOut(bytes32 _destination, uint256 _amount) public {
-		IERC20(tokenContract).transferFrom(msg.sender, address(this), _amount);
+		IERC20(state_tokenContract).transferFrom(msg.sender, address(this), _amount);
 		emit TransferOutEvent(_destination, _amount);
 	}
 
@@ -342,9 +350,9 @@ contract Peggy {
 
 		// ACTIONS
 
-		tokenContract = _tokenContract;
-		peggyId = _peggyId;
-		powerThreshold = _powerThreshold;
-		lastCheckpoint = newCheckpoint;
+		state_tokenContract = _tokenContract;
+		state_peggyId = _peggyId;
+		state_powerThreshold = _powerThreshold;
+		state_lastCheckpoint = newCheckpoint;
 	}
 }
