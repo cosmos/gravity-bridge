@@ -82,17 +82,9 @@ contract Peggy {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes memory abiEncoded = abi.encode(
-			_peggyId,
-			methodName,
-			_valsetNonce,
-			_validators,
-			_powers
+		bytes32 checkpoint = keccak256(
+			abi.encode(_peggyId, methodName, _valsetNonce, _validators, _powers)
 		);
-
-		// console.logBytes(abiEncoded);
-
-		bytes32 checkpoint = keccak256(abiEncoded);
 
 		return checkpoint;
 	}
@@ -112,8 +104,6 @@ contract Peggy {
 		uint256 cumulativePower = 0;
 
 		for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
-			// console.log("verifying validator: ", k);
-			// console.log("with power: ", _currentPowers[k]);
 			// Check that the current validator has signed off on the hash
 			require(
 				verifySig(_currentValidators[k], _theHash, _v[k], _r[k], _s[k]),
@@ -125,7 +115,6 @@ contract Peggy {
 
 			// Break early to avoid wasting gas
 			if (cumulativePower > _powerThreshold) {
-				// console.log("number of validator sigs verified:", k + 1);
 				break;
 			}
 		}
@@ -193,7 +182,6 @@ contract Peggy {
 			state_peggyId
 		);
 
-		// console.log("calling checkValidatorSignatures from updateValset");
 		checkValidatorSignatures(
 			_currentValidators,
 			_currentPowers,
@@ -289,7 +277,6 @@ contract Peggy {
 			_nonces
 		);
 
-		// console.logBytes(abiEncoded);
 		// Get hash of the transaction batch
 		bytes32 transactionsHash = keccak256(abiEncoded);
 

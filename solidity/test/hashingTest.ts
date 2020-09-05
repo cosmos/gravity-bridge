@@ -75,8 +75,6 @@ export function makeCheckpoint(
     [peggyId, methodName, valsetNonce, validators, powers]
   );
 
-  // console.log("abiEncoded", abiEncoded);
-
   let checkpoint = ethers.utils.keccak256(abiEncoded);
 
   return checkpoint;

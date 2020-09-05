@@ -74,8 +74,6 @@ contract HashingTest {
 			_powers
 		);
 
-		// console.logBytes(abiEncoded);
-
 		bytes32 checkpoint = keccak256(abiEncoded);
 
 		lastCheckpoint = checkpoint;
