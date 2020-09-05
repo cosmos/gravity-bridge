@@ -25,9 +25,18 @@ export async function deployContracts(
 
   const checkpoint = makeCheckpoint(valAddresses, powers, 0, peggyId);
 
-  const theHash = ethers.utils.solidityKeccak256(
-    ["bytes32", "address", "bytes32", "uint256"],
-    [checkpoint, testERC20.address, peggyId, powerThreshold]
+  // const theHash = ethers.utils.keccak256(
+  //   ethers.utils.defaultAbiCoder.encode(
+  //     ["bytes32", "address", "bytes32", "uint256"],
+  //     [checkpoint, testERC20.address, peggyId, powerThreshold]
+  //   )
+  // );
+
+  let theHash = ethers.utils.keccak256(
+    ethers.utils.defaultAbiCoder.encode(
+      ["bytes32", "address", "bytes32", "uint256"],
+      [checkpoint, testERC20.address, peggyId, powerThreshold]
+    )
   );
 
   const { v, r, s } = await signHash(validators, theHash);

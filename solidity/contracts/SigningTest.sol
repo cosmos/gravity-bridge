@@ -2,15 +2,15 @@ pragma solidity ^0.6.6;
 
 import "@nomiclabs/buidler/console.sol";
 
-
 contract SigningTest {
-	function checkSignature(address _signer, bytes32 _theHash, uint8 _v, bytes32 _r, bytes32 _s)
-		public
-		view
-	{
-		bytes32 messageDigest = keccak256(
-			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
-		);
+	function checkSignature(
+		address _signer,
+		bytes32 _theHash,
+		uint8 _v,
+		bytes32 _r,
+		bytes32 _s
+	) public view {
+		bytes32 messageDigest = keccak256(abi.encode("\x19Ethereum Signed Message:\n32", _theHash));
 
 		console.log("signer");
 		console.logAddress(_signer);

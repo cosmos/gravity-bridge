@@ -14,10 +14,21 @@ export function makeCheckpoint(
 ) {
   const methodName = ethers.utils.formatBytes32String("checkpoint");
 
-  let checkpoint = ethers.utils.solidityKeccak256(
+  // let checkpoint = ethers.utils.keccak256(
+  //   ethers.utils.defaultAbiCoder.encode(
+  //     ["bytes32", "bytes32", "uint256", "address[]", "uint256[]"],
+  //     [peggyId, methodName, valsetNonce, validators, powers]
+  //   )
+  // );
+
+  let abiEncoded = ethers.utils.defaultAbiCoder.encode(
     ["bytes32", "bytes32", "uint256", "address[]", "uint256[]"],
     [peggyId, methodName, valsetNonce, validators, powers]
   );
+
+  // console.log("checkpoint abiEncoded", abiEncoded);
+
+  let checkpoint = ethers.utils.keccak256(abiEncoded);
 
   return checkpoint;
 }
@@ -42,7 +53,7 @@ export async function signHash(signers: Signer[], hash: string) {
 
 // bytes32 methodName = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
 // bytes32 transactionsHash = keccak256(
-//   abi.encodePacked(peggyId, methodName, _amounts, _destinations, _fees, _nonces)
+//   abi.encode(peggyId, methodName, _amounts, _destinations, _fees, _nonces)
 // );
 export function makeTxBatchHash(
   amounts: number[],
@@ -53,10 +64,30 @@ export function makeTxBatchHash(
 ) {
   const methodName = ethers.utils.formatBytes32String("transactionBatch");
 
-  let txHash = ethers.utils.solidityKeccak256(
+  // let txHash = ethers.utils.keccak256(
+  //   ethers.utils.defaultAbiCoder.encode(
+  //     [
+  //       "bytes32",
+  //       "bytes32",
+  //       "uint256[]",
+  //       "address[]",
+  //       "uint256[]",
+  //       "uint256[]"
+  //     ],
+  //     [peggyId, methodName, amounts, destinations, fees, nonces]
+  //   )
+  // );
+
+  // "tuple(bytes32 peggyId, bytes32 methodName, uint256[] amounts, address[] destinations, uint256[] fees, uint256[] nonces)"
+
+  let abiEncoded = ethers.utils.defaultAbiCoder.encode(
     ["bytes32", "bytes32", "uint256[]", "address[]", "uint256[]", "uint256[]"],
     [peggyId, methodName, amounts, destinations, fees, nonces]
   );
+
+  // console.log(abiEncoded);
+
+  let txHash = ethers.utils.keccak256(abiEncoded);
 
   return txHash;
 }

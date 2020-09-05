@@ -78,13 +78,21 @@ contract Peggy {
 		uint256[] memory _powers,
 		uint256 _valsetNonce,
 		bytes32 _peggyId
-	) public pure returns (bytes32) {
+	) public view returns (bytes32) {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes32 checkpoint = keccak256(
-			abi.encodePacked(_peggyId, methodName, _valsetNonce, _validators, _powers)
+		bytes memory abiEncoded = abi.encode(
+			_peggyId,
+			methodName,
+			_valsetNonce,
+			_validators,
+			_powers
 		);
+
+		// console.logBytes(abiEncoded);
+
+		bytes32 checkpoint = keccak256(abiEncoded);
 
 		return checkpoint;
 	}
@@ -185,7 +193,7 @@ contract Peggy {
 			state_peggyId
 		);
 
-		console.log("calling checkValidatorSignatures from updateValset");
+		// console.log("calling checkValidatorSignatures from updateValset");
 		checkValidatorSignatures(
 			_currentValidators,
 			_currentPowers,
@@ -272,10 +280,18 @@ contract Peggy {
 
 		// bytes32 encoding of "transactionBatch"
 		bytes32 methodName = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
-		// Get hash of the transaction batch
-		bytes32 transactionsHash = keccak256(
-			abi.encodePacked(state_peggyId, methodName, _amounts, _destinations, _fees, _nonces)
+		bytes memory abiEncoded = abi.encode(
+			state_peggyId,
+			methodName,
+			_amounts,
+			_destinations,
+			_fees,
+			_nonces
 		);
+
+		// console.logBytes(abiEncoded);
+		// Get hash of the transaction batch
+		bytes32 transactionsHash = keccak256(abiEncoded);
 
 		// Check that enough current validators have signed off on the transaction batch
 		checkValidatorSignatures(
@@ -344,7 +360,7 @@ contract Peggy {
 			_v,
 			_r,
 			_s,
-			keccak256(abi.encodePacked(newCheckpoint, _tokenContract, _peggyId, _powerThreshold)),
+			keccak256(abi.encode(newCheckpoint, _tokenContract, _peggyId, _powerThreshold)),
 			_powerThreshold
 		);
 

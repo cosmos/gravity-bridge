@@ -17,7 +17,7 @@ contract HashingTest {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes32 checkpoint = keccak256(abi.encodePacked(_peggyId, methodName, _valsetNonce));
+		bytes32 checkpoint = keccak256(abi.encode(_peggyId, methodName, _valsetNonce));
 
 		// Iterative hashing of valset
 		{
@@ -30,7 +30,7 @@ contract HashingTest {
 						"Validator power must not be higher than previous validator in batch"
 					);
 				}
-				checkpoint = keccak256(abi.encodePacked(checkpoint, _validators[i], _powers[i]));
+				checkpoint = keccak256(abi.encode(checkpoint, _validators[i], _powers[i]));
 			}
 		}
 
@@ -46,13 +46,13 @@ contract HashingTest {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes32 idHash = keccak256(abi.encodePacked(_peggyId, methodName, _valsetNonce));
+		bytes32 idHash = keccak256(abi.encode(_peggyId, methodName, _valsetNonce));
 
-		bytes32 validatorHash = keccak256(abi.encodePacked(_validators));
+		bytes32 validatorHash = keccak256(abi.encode(_validators));
 
-		bytes32 powersHash = keccak256(abi.encodePacked(_powers));
+		bytes32 powersHash = keccak256(abi.encode(_powers));
 
-		bytes32 checkpoint = keccak256(abi.encodePacked(idHash, validatorHash, powersHash));
+		bytes32 checkpoint = keccak256(abi.encode(idHash, validatorHash, powersHash));
 
 		lastCheckpoint = checkpoint;
 	}
@@ -66,9 +66,17 @@ contract HashingTest {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes32 checkpoint = keccak256(
-			abi.encodePacked(_peggyId, methodName, _valsetNonce, _validators, _powers)
+		bytes memory abiEncoded = abi.encode(
+			_peggyId,
+			methodName,
+			_valsetNonce,
+			_validators,
+			_powers
 		);
+
+		// console.logBytes(abiEncoded);
+
+		bytes32 checkpoint = keccak256(abiEncoded);
 
 		lastCheckpoint = checkpoint;
 	}

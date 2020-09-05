@@ -70,10 +70,14 @@ export function makeCheckpoint(
 ) {
   const methodName = ethers.utils.formatBytes32String("checkpoint");
 
-  let checkpoint = ethers.utils.solidityKeccak256(
+  let abiEncoded = ethers.utils.defaultAbiCoder.encode(
     ["bytes32", "bytes32", "uint256", "address[]", "uint256[]"],
     [peggyId, methodName, valsetNonce, validators, powers]
   );
+
+  // console.log("abiEncoded", abiEncoded);
+
+  let checkpoint = ethers.utils.keccak256(abiEncoded);
 
   return checkpoint;
 }
