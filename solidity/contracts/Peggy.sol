@@ -78,7 +78,7 @@ contract Peggy {
 		uint256[] memory _powers,
 		uint256 _valsetNonce,
 		bytes32 _peggyId
-	) public view returns (bytes32) {
+	) public pure returns (bytes32) {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
@@ -100,7 +100,7 @@ contract Peggy {
 		// This is what we are checking they have signed
 		bytes32 _theHash,
 		uint256 _powerThreshold
-	) public view {
+	) public pure {
 		uint256 cumulativePower = 0;
 
 		for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
