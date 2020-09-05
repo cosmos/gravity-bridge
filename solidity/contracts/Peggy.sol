@@ -268,17 +268,11 @@ contract Peggy {
 
 		// bytes32 encoding of "transactionBatch"
 		bytes32 methodName = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
-		bytes memory abiEncoded = abi.encode(
-			state_peggyId,
-			methodName,
-			_amounts,
-			_destinations,
-			_fees,
-			_nonces
-		);
 
 		// Get hash of the transaction batch
-		bytes32 transactionsHash = keccak256(abiEncoded);
+		bytes32 transactionsHash = keccak256(
+			abi.encode(state_peggyId, methodName, _amounts, _destinations, _fees, _nonces)
+		);
 
 		// Check that enough current validators have signed off on the transaction batch
 		checkValidatorSignatures(

@@ -66,15 +66,9 @@ contract HashingTest {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes memory abiEncoded = abi.encode(
-			_peggyId,
-			methodName,
-			_valsetNonce,
-			_validators,
-			_powers
+		bytes32 checkpoint = keccak256(
+			abi.encode(_peggyId, methodName, _valsetNonce, _validators, _powers)
 		);
-
-		bytes32 checkpoint = keccak256(abiEncoded);
 
 		lastCheckpoint = checkpoint;
 	}
