@@ -7,6 +7,9 @@ contract HashingTest {
 	using SafeMath for uint256;
 
 	bytes32 public lastCheckpoint;
+	address[] public state_validators;
+	uint256[] public state_powers;
+	uint256 public state_nonce;
 
 	function IterativeHash(
 		address[] memory _validators,
@@ -71,5 +74,25 @@ contract HashingTest {
 		);
 
 		lastCheckpoint = checkpoint;
+	}
+
+	function JustSaveEverything(
+		address[] memory _validators,
+		uint256[] memory _powers,
+		uint256 _valsetNonce
+	) public {
+		state_validators = _validators;
+		state_powers = _powers;
+		state_nonce = _valsetNonce;
+	}
+
+	function JustSaveEverythingAgain(
+		address[] memory _validators,
+		uint256[] memory _powers,
+		uint256 _valsetNonce
+	) public {
+		state_validators = _validators;
+		state_powers = _powers;
+		state_nonce = _valsetNonce;
 	}
 }

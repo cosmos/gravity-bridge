@@ -10,7 +10,7 @@ import { getSignerAddresses } from "../test-utils/pure";
 chai.use(solidity);
 const { expect } = chai;
 
-describe("Hashing test", function() {
+describe.only("Hashing test", function() {
   it("Hashing test", async function() {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
@@ -59,6 +59,18 @@ describe("Hashing test", function() {
     );
 
     expect(contractCheckpoint === externalCheckpoint);
+
+    await hashingContract.JustSaveEverything(
+      await getSignerAddresses(validators),
+      powers,
+      1
+    );
+
+    await hashingContract.JustSaveEverythingAgain(
+      await getSignerAddresses(validators),
+      powers,
+      1
+    );
   });
 });
 
