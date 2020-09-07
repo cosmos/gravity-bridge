@@ -100,29 +100,33 @@ contract Peggy {
 		// This is what we are checking they have signed
 		bytes32 _theHash,
 		uint256 _powerThreshold
-	) public pure {
+	) public view {
 		uint256 cumulativePower = 0;
 
 		for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
-			// Check that the current validator has signed off on the hash
-			require(
-				verifySig(_currentValidators[k], _theHash, _v[k], _r[k], _s[k]),
-				"Validator signature does not match."
-			);
+			// If v is set to 0, this signifies that it was not possible to get a signature from this validator and we skip evaluation
+			// (In a valid signature, it is either 27 or 28)
+			if (_v[k] != 0) {
+				// Check that the current validator has signed off on the hash
+				require(
+					verifySig(_currentValidators[k], _theHash, _v[k], _r[k], _s[k]),
+					"Validator signature does not match."
+				);
 
-			// Sum up cumulative power
-			cumulativePower = cumulativePower + _currentPowers[k];
+				// Sum up cumulative power
+				cumulativePower = cumulativePower + _currentPowers[k];
 
-			// Break early to avoid wasting gas
-			if (cumulativePower > _powerThreshold) {
-				break;
+				// Break early to avoid wasting gas
+				if (cumulativePower > _powerThreshold) {
+					break;
+				}
 			}
 		}
 
 		// Check that there was enough power
 		require(
 			cumulativePower > _powerThreshold,
-			"Submitted validator set does not have enough power."
+			"Submitted validator set signatures do not have enough power."
 		);
 	}
 
@@ -168,10 +172,10 @@ contract Peggy {
 			"Supplied current validators and powers do not match checkpoint."
 		);
 
-		// Check that the valset nonce is incremented by one
+		// Check that the valset nonce is greater than the old one
 		require(
-			_newValsetNonce == _currentValsetNonce.add(1),
-			"Valset nonce must be incremented by one"
+			_newValsetNonce > _currentValsetNonce,
+			"New valset nonce must be greater than the current nonce"
 		);
 
 		// Check that enough current validators have signed off on the new validator set
