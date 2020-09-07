@@ -32,4 +32,14 @@ At this point, all of the checks are complete, and it's time to update the valse
 
 ### SubmitBatch
 
+This is how the bridge transfers tokens from addresses on the Tendermint chain to addresses on the Ethereum chain. The Cosmos validators sign batches of transactions that are submitted to the contract. Each transaction has a destination address, an amount, a nonce, and a fee for whoever submitted the batch.
+
+We start with some of the same checks that are done in UpdateValset- checking that the lengths of the arrays match up, and checking the supplied current valset against the checkpoint. We then iterate over the transactions in the batch and check that their nonces are strictly increasing, and are higher than the nonces of the last batch submitted. This is done so that old batches cannot be resubmitted.
+
+We check the current validator's signatures over the hash of the transaction batch, using the same method used above to check their signatures over a new valset.
+
+Now we are ready to make the transfers. We first store the highest nonce in the batch to use next time. We then iterate over all the transactions in the batch and do the transfers. We also add up the fees and transfer them to msg.sender.
+
 ### TransferOut
+
+This is used to transfer tokens from an Ethereum address to a Tendermint address. It is extremely simple, because everything really happens on the Tendermint side. The transferred tokens are locked in the contract, then an event is emitted. The Tendermint validators see this event and mint tokens on the Tendermint side.
