@@ -354,6 +354,49 @@ func (msg MsgBatchInChain) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Validator}
 }
 
+// MsgEthDeposit
+// this message essentially acts as the oracle between Ethereum and Cosmos, when a validator sees
+// that some funds have been sent to the bridge on the Ethereum side they send this message
+// which acts as their oracle attestation. When more than 66% of the active validator set has
+// claimed to have seen the transaction batch enter the ethereum blockchain coins are issued
+// to the Cosmos address in question
+// -------------
+type MsgEthDeposit struct {
+	Validator   sdk.AccAddress `json:"validator"`
+	Destination sdk.AccAddress `json:"Destination"`
+	Amount      sdk.Coin       `json:"Amount"`
+}
+
+func NewMsgEthDeposit(validator sdk.AccAddress, destination sdk.AccAddress, amount sdk.Coin) MsgEthDeposit {
+	return MsgEthDeposit{
+		Validator:   validator,
+		Destination: destination,
+		Amount:      amount,
+	}
+}
+
+// Route should return the name of the module
+func (msg MsgEthDeposit) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgEthDeposit) Type() string { return "eth_deposit" }
+
+func (msg MsgEthDeposit) ValidateBasic() error {
+	// TODO ensure that this is an allowed demon for september goal
+	// TODO slashing conditions for false deposit attestation eventually
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgEthDeposit) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgEthDeposit) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Validator}
+}
+
 // // MsgSetName defines a SetName message
 // type MsgSetName struct {
 // 	Name  string         `json:"name"`
