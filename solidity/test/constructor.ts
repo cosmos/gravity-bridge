@@ -59,6 +59,8 @@ describe("constructor tests", function() {
 
     await expect(
       deployContracts(peggyId, validators, powers, powerThreshold)
-    ).to.be.revertedWith("Submitted validator set does not have enough power");
+    ).to.be.revertedWith(
+      "Submitted validator set signatures do not have enough power"
+    );
   });
 });

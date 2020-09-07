@@ -20,6 +20,8 @@ async function runTest(opts: {
   nonMatchingCurrentValset?: boolean;
   nonceNotIncremented?: boolean;
   badValidatorSig?: boolean;
+  zeroedValidatorSig?: boolean;
+  notEnoughPower?: boolean;
 }) {
   const signers = await ethers.getSigners();
   const peggyId = ethers.utils.formatBytes32String("foo");
@@ -52,7 +54,7 @@ async function runTest(opts: {
   }
   let newValsetNonce = 1;
   if (opts.nonceNotIncremented) {
-    newValsetNonce = 420;
+    newValsetNonce = 0;
   }
 
   const checkpoint = makeCheckpoint(
@@ -70,12 +72,34 @@ async function runTest(opts: {
     sigs.s[1] = sigs.s[0];
   }
 
+  if (opts.zeroedValidatorSig) {
+    // Switch the first sig for the second sig to screw things up
+    sigs.v[1] = sigs.v[0];
+    sigs.r[1] = sigs.r[0];
+    sigs.s[1] = sigs.s[0];
+    // Then zero it out to skip evaluation
+    sigs.v[1] = 0;
+  }
+
+  if (opts.notEnoughPower) {
+    // zero out enough signatures that we dip below the threshold
+    sigs.v[1] = 0;
+    sigs.v[2] = 0;
+    sigs.v[3] = 0;
+    sigs.v[5] = 0;
+    sigs.v[6] = 0;
+    sigs.v[7] = 0;
+    sigs.v[9] = 0;
+    sigs.v[11] = 0;
+    sigs.v[13] = 0;
+  }
+
   if (opts.malformedCurrentValset) {
     // Remove one of the powers to make the length not match
     powers.pop();
   }
 
-  return peggy.updateValset(
+  await peggy.updateValset(
     await getSignerAddresses(newValidators),
     newPowers,
     newValsetNonce,
@@ -86,6 +110,8 @@ async function runTest(opts: {
     sigs.r,
     sigs.s
   );
+
+  return { peggy, checkpoint };
 }
 
 describe("updateValset tests", function() {
@@ -111,7 +137,7 @@ describe("updateValset tests", function() {
 
   it("throws on new valset nonce not incremented", async function() {
     await expect(runTest({ nonceNotIncremented: true })).to.be.revertedWith(
-      "Valset nonce must be incremented by one"
+      "New valset nonce must be greater than the current nonce"
     );
   });
 
@@ -119,5 +145,20 @@ describe("updateValset tests", function() {
     await expect(runTest({ badValidatorSig: true })).to.be.revertedWith(
       "Validator signature does not match"
     );
+  });
+
+  it("allows zeroed sig", async function() {
+    await runTest({ zeroedValidatorSig: true });
+  });
+
+  it("throws on not enough signatures", async function() {
+    await expect(runTest({ notEnoughPower: true })).to.be.revertedWith(
+      "Submitted validator set signatures do not have enough power"
+    );
+  });
+
+  it("happy path", async function() {
+    let { peggy, checkpoint } = await runTest({});
+    expect(await peggy.functions.state_lastCheckpoint()).to.equal(checkpoint);
   });
 });
