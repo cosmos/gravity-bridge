@@ -100,7 +100,7 @@ contract Peggy {
 		// This is what we are checking they have signed
 		bytes32 _theHash,
 		uint256 _powerThreshold
-	) public view {
+	) public pure {
 		uint256 cumulativePower = 0;
 
 		for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
@@ -263,7 +263,7 @@ contract Peggy {
 			for (uint256 i = 0; i < _nonces.length; i = i.add(1)) {
 				require(
 					_nonces[i] > lastTxNonceTemp,
-					"Transaction nonces in batch must be strictly increasing"
+					"Transaction nonces in batch must be higher than last transaction nonce and strictly increasing"
 				);
 
 				lastTxNonceTemp = _nonces[i];
