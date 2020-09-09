@@ -336,17 +336,6 @@ contract Peggy {
 			"Malformed current validator set"
 		);
 
-		// Check that the supplied current validator set matches the saved checkpoint
-		require(
-			makeCheckpoint(
-				_currentValidators,
-				_currentPowers,
-				_currentValsetNonce,
-				state_peggyId
-			) == state_lastCheckpoint,
-			"Supplied current validators and powers do not match checkpoint."
-		);
-
 		// Check that new validators and powers set is well-formed
 		require(_newValidators.length == _newPowers.length, "Malformed new validator set");
 
@@ -364,6 +353,17 @@ contract Peggy {
 			"Malformed batch of transactions"
 		);
 
+		// Check that the supplied current validator set matches the saved checkpoint
+		require(
+			makeCheckpoint(
+				_currentValidators,
+				_currentPowers,
+				_currentValsetNonce,
+				state_peggyId
+			) == state_lastCheckpoint,
+			"Supplied current validators and powers do not match checkpoint."
+		);
+
 		// Check that the tx nonces are higher than the stored nonce and are
 		// strictly increasing (can have gaps)
 		uint256 lastTxNonceTemp = state_lastTxNonce;
@@ -378,27 +378,11 @@ contract Peggy {
 			}
 		}
 
-		// bytes32 encoding of "valsetAndTransactionBatch"
-		bytes32 methodName = 0x0000000000000000000000000000000000000000000000000000000000000000;
-
 		bytes32 newCheckpoint = makeCheckpoint(
 			_newValidators,
 			_newPowers,
 			_newValsetNonce,
 			state_peggyId
-		);
-
-		// Get hash of the transaction batch and checkpoint
-		bytes32 digest = keccak256(
-			abi.encode(
-				state_peggyId,
-				methodName,
-				_amounts,
-				_destinations,
-				_fees,
-				_nonces,
-				newCheckpoint
-			)
 		);
 
 		// Check that enough current validators have signed off on the transaction batch and valset
@@ -408,7 +392,19 @@ contract Peggy {
 			_v,
 			_r,
 			_s,
-			digest,
+			// Get hash of the transaction batch and checkpoint
+			keccak256(
+				abi.encode(
+					state_peggyId,
+					// bytes32 encoding of "valsetAndTransactionBatch"
+					0x0000000000000000000000000000000000000000000000000000000000000000,
+					_amounts,
+					_destinations,
+					_fees,
+					_nonces,
+					newCheckpoint
+				)
+			),
 			state_powerThreshold
 		);
 
@@ -423,8 +419,8 @@ contract Peggy {
 
 		// Send transaction amounts to destinations
 		// Send transaction fees to msg.sender
-		uint256 totalFee;
 		{
+			uint256 totalFee;
 			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
 				IERC20(state_tokenContract).transfer(_destinations[i], _amounts[i]);
 				totalFee = totalFee.add(_fees[i]);
