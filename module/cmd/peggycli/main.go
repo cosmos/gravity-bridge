@@ -25,7 +25,6 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/althea-net/peggy/module/app"
-
 )
 
 func main() {

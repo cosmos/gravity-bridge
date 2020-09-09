@@ -61,18 +61,6 @@ func (p Params) Equal(p2 Params) bool {
 	return bytes.Equal(bz1, bz2)
 }
 
-// DefaultParams returns a default set of parameters.
-// TODO: defaults don't make any sense for us. What should we do here?
-// func DefaultParams() Params {
-// 	return Params{
-// 		MaxMemoCharacters:      DefaultMaxMemoCharacters,
-// 		TxSigLimit:             DefaultTxSigLimit,
-// 		TxSizeCostPerByte:      DefaultTxSizeCostPerByte,
-// 		SigVerifyCostED25519:   DefaultSigVerifyCostED25519,
-// 		SigVerifyCostSecp256k1: DefaultSigVerifyCostSecp256k1,
-// 	}
-// }
-
 // String implements the stringer interface.
 func (p Params) String() string {
 	var sb strings.Builder
