@@ -306,6 +306,137 @@ contract Peggy {
 		}
 	}
 
+	function updateValsetAndSubmitBatch(
+		// The validators that approve the batch and new valset
+		address[] memory _currentValidators,
+		uint256[] memory _currentPowers,
+		uint256 _currentValsetNonce,
+		// These are arrays of the parts of the validators signatures
+		uint8[] memory _v,
+		bytes32[] memory _r,
+		bytes32[] memory _s,
+		// The new version of the validator set
+		address[] memory _newValidators,
+		uint256[] memory _newPowers,
+		uint256 _newValsetNonce,
+		// The batch of transactions
+		uint256[] memory _amounts,
+		address[] memory _destinations,
+		uint256[] memory _fees,
+		uint256[] memory _nonces // TODO: multi-erc20 support (input contract address).)
+	) public {
+		// CHECKS
+
+		// Check that current validators, powers, and signatures (v,r,s) set is well-formed
+		require(
+			_currentValidators.length == _currentPowers.length &&
+				_currentValidators.length == _v.length &&
+				_currentValidators.length == _r.length &&
+				_currentValidators.length == _s.length,
+			"Malformed current validator set"
+		);
+
+		// Check that the supplied current validator set matches the saved checkpoint
+		require(
+			makeCheckpoint(
+				_currentValidators,
+				_currentPowers,
+				_currentValsetNonce,
+				state_peggyId
+			) == state_lastCheckpoint,
+			"Supplied current validators and powers do not match checkpoint."
+		);
+
+		// Check that new validators and powers set is well-formed
+		require(_newValidators.length == _newPowers.length, "Malformed new validator set");
+
+		// Check that the valset nonce is greater than the old one
+		require(
+			_newValsetNonce > _currentValsetNonce,
+			"New valset nonce must be greater than the current nonce"
+		);
+
+		// Check that the transaction batch is well-formed
+		require(
+			_amounts.length == _destinations.length &&
+				_amounts.length == _fees.length &&
+				_amounts.length == _nonces.length,
+			"Malformed batch of transactions"
+		);
+
+		// Check that the tx nonces are higher than the stored nonce and are
+		// strictly increasing (can have gaps)
+		uint256 lastTxNonceTemp = state_lastTxNonce;
+		{
+			for (uint256 i = 0; i < _nonces.length; i = i.add(1)) {
+				require(
+					_nonces[i] > lastTxNonceTemp,
+					"Transaction nonces in batch must be higher than last transaction nonce and strictly increasing"
+				);
+
+				lastTxNonceTemp = _nonces[i];
+			}
+		}
+
+		// bytes32 encoding of "valsetAndTransactionBatch"
+		bytes32 methodName = 0x0000000000000000000000000000000000000000000000000000000000000000;
+
+		bytes32 newCheckpoint = makeCheckpoint(
+			_newValidators,
+			_newPowers,
+			_newValsetNonce,
+			state_peggyId
+		);
+
+		// Get hash of the transaction batch and checkpoint
+		bytes32 digest = keccak256(
+			abi.encode(
+				state_peggyId,
+				methodName,
+				_amounts,
+				_destinations,
+				_fees,
+				_nonces,
+				newCheckpoint
+			)
+		);
+
+		// Check that enough current validators have signed off on the transaction batch and valset
+		checkValidatorSignatures(
+			_currentValidators,
+			_currentPowers,
+			_v,
+			_r,
+			_s,
+			digest,
+			state_powerThreshold
+		);
+
+		// ACTIONS
+
+		// Store nonce
+		state_lastTxNonce = lastTxNonceTemp;
+
+		// Stored to be used next time to validate that the valset
+		// supplied by the caller is correct.
+		state_lastCheckpoint = newCheckpoint;
+
+		// Send transaction amounts to destinations
+		// Send transaction fees to msg.sender
+		uint256 totalFee;
+		{
+			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
+				IERC20(state_tokenContract).transfer(_destinations[i], _amounts[i]);
+				totalFee = totalFee.add(_fees[i]);
+			}
+			IERC20(state_tokenContract).transfer(msg.sender, totalFee);
+		}
+
+		// LOGS
+
+		emit ValsetUpdatedEvent(_newValidators, _newPowers);
+	}
+
 	function transferOut(bytes32 _destination, uint256 _amount) public {
 		IERC20(state_tokenContract).transferFrom(msg.sender, address(this), _amount);
 		emit TransferOutEvent(_destination, _amount);
