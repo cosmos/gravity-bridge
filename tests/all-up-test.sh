@@ -19,7 +19,7 @@ set -e
 # to see if the contracts compile and test basic functionality. The
 # contract is later deployed in the run-tests stage of the module tests
 # and is subjected to actual operation within that container
-docker run --name peggy_all_up_test_instance -it peggy-base /bin/bash /peggy/tests/container-scripts/solidity-tests.sh
+docker run --name peggy_all_up_test_instance -t peggy-base /bin/bash /peggy/tests/container-scripts/solidity-tests.sh
 
 # Module tests
 
@@ -31,4 +31,4 @@ set -e
 NODES=3
 
 # Run new test container instance
-docker run --name peggy_all_up_test_instance --cap-add=NET_ADMIN -it peggy-base /bin/bash /peggy/tests/container-scripts/all-up-test-internal.sh $NODES
+docker run --name peggy_all_up_test_instance --cap-add=NET_ADMIN -t peggy-base /bin/bash /peggy/tests/container-scripts/all-up-test-internal.sh $NODES
