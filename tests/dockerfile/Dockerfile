@@ -16,5 +16,5 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ADD peggy.tar.gz /
 # build steps for all codebases in this repo, must be below the add statement
 RUN pushd /peggy/tests/test-runner && PATH=$PATH:$HOME/.cargo/bin cargo build
-RUN pushd /peggy/module/ && make && make install
+RUN pushd /peggy/module/ && GOPROXY=https://proxy.golang.org make && make install
 RUN pushd /peggy/solidity/ && npm install
