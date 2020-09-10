@@ -1,4 +1,4 @@
-//! Validator-daemon is a sort of specialized relayer for Althea-Peggy that runs on every validator.
+//! Orchestrator is a sort of specialized relayer for Althea-Peggy that runs on every validator.
 //! Things this binary is responsible for
 //!   * Performing all the Ethereum signing required to submit updates and generate batches
 //!   * Progressing the validator set update generation process.

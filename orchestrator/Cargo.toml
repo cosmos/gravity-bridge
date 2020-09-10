@@ -1,5 +1,5 @@
 [package]
-name = "validator-daemon"
+name = "orcestrator"
 version = "0.1.0"
 authors = ["Justin Kilpatrick <justin@althea.net>"]
 edition = "2018"
