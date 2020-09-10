@@ -35,6 +35,11 @@ Key concepts that we mention below will be defined here:
 * `Validator Set` - The set of validators on the Cosmos SDK chain, along with their respective voting power. These are ed25519 public keys used to sign tendermint blocks.
 * `Orchestrator Set` - The validator set mapped over to Cosmos SDK Orchestrator keys. This is used on the Cosmos SDK chain to authorize messages from Ethereum. Note that we can use the current validator set, but we use Orchestrator keys (not tendermint consensus keys)
 * `MultiSig Set` - The set of Ethereum keys along with respective voting power. This is based on the validator set and mapped over the registered keys. However, as this is a different chain, this is mirrored with a delay.
+* `Peggy Bridge Tx pool` - Is a transaction pool that exists in the chain store of Cosmos -> Ethereum transactions waiting to be placed into a transaction batch
+* `Transaction batch` - A transaction batch is a set of Ethereum transactions to be sent from the Peggy Ethereum contract at the same time. This helps reduce the costs of submitting a batch. Batches have a maximum size (currently around 100 transactions) and are only involved in the Cosmos -> Ethereum flow
+* `Peggy Bridge Batch pool` - Is a transaction pool like strucutre that exists in the chains to store, seperate from the `Peggy Bridge Tx pool` it stores transactions that have been placed in batches that are in the process of being signed or being submitted by the `Orchestrator Set`
+* `EthBlockDelay` - Is a agreed upon number of Ethereum blocks all oracle attestations are delayed by. No `Orchestrator` will attest to have seen an event occur on Ethereum until this number of blocks has elapsed as denoted by their trusted Ethereum full node. This should prevent short forks form causing disagreements on the Cosmos side. The current value being consdiered is 50 blocks.
+
 
 The *Operator* is the key unit of trust here. Each operator is responsible for maintaining 3 secure processes:
 
@@ -102,4 +107,14 @@ Note: X% is some security factor for bootstrapping. 67% is sufficient to release
 
 ## Relaying Cosmos to ETH
 
-**TODO**
+* Someone (permissionlessly) sends MsgSendToEth this creates an entry in the 'peggy bridge tx pool' this pool is in the Cosmos chain store and contains all transactions not yet bridged. Funds of the specified demon are then burned from the users account if that demon is valid to bridge, otherwise the tx is rejected. 
+* Someone (permissionlessly) sends a MsgRequestBatch, this produces a new `Transaction batch` in the `Peggy Bridge Tx pool`. The creation of this batch occurs in ComsosSDK and is entierly deterministic, ordering transactions from highest to lowest fee and including them in the `Transaction batch` until there are no more transactions or the batch size limit is reached.
+* The `Orchestrator Set` observes the `Peggy Bridge Tx pool` via REST endpoints. When a new batch appears they sign the batch and submit a MsgConfirmBatch containing their Ethereum signature over the batch.
+* Once enough signatures are collected (66% of voting power) any `Orcestrator` can collect these signatures from the REST endpoint, assemble an Ethereum transaction and submit the batch.  
+* The `Orchestrator Set` observes the Ethereum blockchain via their trusted Ethereum node. Once the batch has entered the blockchain and `EthBlockDelay` has elapsed an `Orchestrator` will send MsgBatchInChain. Containing a signed attestation that the block has entered the Ethereum chain, once 66% of all voting power has confirmed the batch the batch is marked as complete. The batch is removed from the `Peggy Bridge Tx pool` and the MsgSendToEth flow is now fully complete.
+* It may be possible for a `TransactionBatch` to be created that is not profitible to submit. This can occur when gas prices are high or the average fee in the bridge is low. In this case the batch will either wait long enough for the gas situation to change or a new MsgRequestBatch will be greated. Exact behavior here will have to take into account a few questions 'can the previous batch be submitted? (check existing signatures in the chain)', 'is the fee to transaction ratio in the new block higher than the old block?' and 'Was the previous batch full or partially empty?'
+  * If the previous batch has no MsgBatchInChain messages it's probably not profitible to submit. Using this as an orcale we can decide if we should make a new batch at all. If the new batch would have a higher profit margin (computed as total fees to number of transactions) it should be produced. Otherwise nothing happens.
+  * If there is more than one batch in the `Peggy Bridge Batch pool` and a later one is successfully submitted earlier batches should have their transactions returned to the `Peggy Bridge Tx pool` for inclusion in later batches. This is safe becuase no earlier batch can be submitted after a later batch.
+  * After some number of blocks transactions the`Peggy Bridge Tx pool` should be removed from the pool and refunded. To be re-submitted with a higher fee. 
+  * TODO: consider a gas price oracle which would allow us to better estimate profitible batches 
+  * TODO: consider allowing users to remove their MsgSendToEth transactions from the `Peggy Bridge Tx pool` at their own request, without waiting for the timeout, this should always be safe because only transactions in the `Peggy Bridge Batch pool` are even possible to submit.
