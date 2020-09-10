@@ -1,0 +1,26 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build Orchestrator
+      run: cd validator-daemon && cargo build --verbose
+    - name: Run Orchestrator tests
+      run: cd validator-daemon && cargo test --verbose
+    - name: Build test script
+      run: cd tests/test-runner && cargo build --verbose
+    - name: Run test script tests
+      run: cd tests/test-runner && cargo test --verbose
