@@ -82,11 +82,12 @@ describe("Peggy happy path", function() {
       1000
     );
 
-    const txDestinationsInt = new Array(100);
-    const txFees = new Array(100);
-    const txNonces = new Array(100);
-    const txAmounts = new Array(100);
-    for (let i = 0; i < 100; i++) {
+    const numTxs = 100;
+    const txDestinationsInt = new Array(numTxs);
+    const txFees = new Array(numTxs);
+    const txNonces = new Array(numTxs);
+    const txAmounts = new Array(numTxs);
+    for (let i = 0; i < numTxs; i++) {
       txNonces[i] = i + 1;
       txFees[i] = 1;
       txAmounts[i] = 1;
@@ -117,6 +118,116 @@ describe("Peggy happy path", function() {
       txFees,
       txNonces
     );
+
+    expect(
+      await (
+        await testERC20.functions.balanceOf(await signers[6].getAddress())
+      ).toNumber()
+    ).to.equal(1);
+  });
+});
+
+describe("Peggy happy path with combination method", function() {
+  it("Happy path", async function() {
+    const signers = await ethers.getSigners();
+    const peggyId = ethers.utils.formatBytes32String("foo");
+
+    // This is the power distribution on the Cosmos hub as of 7/14/2020
+    let powers = examplePowers();
+    let validators = signers.slice(0, powers.length);
+
+    const powerThreshold = 6666;
+
+    const {
+      peggy,
+      testERC20,
+      checkpoint: deployCheckpoint
+    } = await deployContracts(peggyId, validators, powers, powerThreshold);
+
+    // Make new valset
+    let newPowers = examplePowers();
+    newPowers[0] -= 3;
+    newPowers[1] += 3;
+    let newValidators = signers.slice(0, newPowers.length);
+
+    const currentValsetNonce = 0;
+    const newValsetNonce = 1;
+
+    const checkpoint = makeCheckpoint(
+      await getSignerAddresses(newValidators),
+      newPowers,
+      newValsetNonce,
+      peggyId
+    );
+
+    // Transfer out to Cosmos, locking coins
+    await testERC20.functions.approve(peggy.address, 1000);
+    await peggy.functions.transferOut(
+      ethers.utils.formatBytes32String("myCosmosAddress"),
+      1000
+    );
+
+    // Transferring into ERC20 from Cosmos
+    const numTxs = 100;
+    const txDestinationsInt = new Array(numTxs);
+    const txFees = new Array(numTxs);
+    const txNonces = new Array(numTxs);
+    const txAmounts = new Array(numTxs);
+    for (let i = 0; i < numTxs; i++) {
+      txNonces[i] = i + 1;
+      txFees[i] = 1;
+      txAmounts[i] = 1;
+      txDestinationsInt[i] = signers[i + 5];
+    }
+
+    const txDestinations = await getSignerAddresses(txDestinationsInt);
+
+    const methodName = ethers.utils.formatBytes32String(
+      "valsetAndTransactionBatch"
+    );
+
+    let abiEncoded = ethers.utils.defaultAbiCoder.encode(
+      [
+        "bytes32",
+        "bytes32",
+        "uint256[]",
+        "address[]",
+        "uint256[]",
+        "uint256[]",
+        "bytes32"
+      ],
+      [
+        peggyId,
+        methodName,
+        txAmounts,
+        txDestinations,
+        txFees,
+        txNonces,
+        checkpoint
+      ]
+    );
+
+    let digest = ethers.utils.keccak256(abiEncoded);
+
+    let sigs = await signHash(validators, digest);
+
+    await peggy.updateValsetAndSubmitBatch(
+      await getSignerAddresses(validators),
+      powers,
+      currentValsetNonce,
+      sigs.v,
+      sigs.r,
+      sigs.s,
+      await getSignerAddresses(newValidators),
+      newPowers,
+      newValsetNonce,
+      txAmounts,
+      txDestinations,
+      txFees,
+      txNonces
+    );
+
+    expect(await peggy.functions.state_lastCheckpoint()).to.equal(checkpoint);
 
     expect(
       await (
