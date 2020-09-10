@@ -42,6 +42,35 @@ The *Operator* is the key unit of trust here. Each operator is responsible for m
 1. Fully synced Ethereum Full Node
 1. Orchestrator, which connects to the above as a client
 
+## Security Concerns
+
+The **Validator Set** is the actual set of keys with stake behind them, which are slashed for double-signs or other 
+misbehavior. We typically consider the security of a chain to be the security of a *Validator Set*. This varies on
+each chain, but is our gold standard. Even IBC offers no more security than the minimum of both involved Validator Sets.
+
+The **Orchestrator Set** is another Cosmos SDK client key associated with the same validator set. We can add slashing
+conditions to any mis-signed message by the Orchestrator Set and be able to provide the same security as the
+*Valiator Set*, just a different module detecting evidence of malice and deciding how much to slash. If we can prove a
+transaction signed by any member of the *Orchestrator Set* was illegal or malicious, then we can slash on the Cosmos chain
+side an potentially provide 100% of the security of the Validator Set. Note that this also has access to the 3 week unbonding
+period to allow evidence to slash even if they immediately unbond.
+
+The **MultiSig Set** is a (possibly aged) mirror of the *Validator Set* but with Ethereum keys, and stored on the Ethereum
+contract. If we ensure the *MultiSig Set* is updated much more often than the unbonding period (eg at least once per week),
+then we can guarantee that all members of the *MultiSig Set* have slashable atoms for misbehavior. However, in some extreme
+cases of stake shifting, the *MultiSig Set* and *Validator/Orchestrator Set* could get quite far apart, meaning there is
+many of the members in the *MultiSig Set* are no longer active validators and may not bother to transfer Eth messages. 
+Thus, to avoid censorship attacks/inactivity, we should also update this everytime there is a significant change
+in the Validator Set (eg. > 3-5%). If we maintain those two conditions, the MultiSig Set should offer a similar level of
+security as the Validator Set.
+
+There are now 3 conditions that can be slashed for any validator: Double-signing a block with the tendermint key from the
+**Validator Set**, signing an invalid/malicious message with the Cosmos SDK key from the **Orchestrator Set**, or
+signing an invalid/malicious Ethereum message with the key from the **MultiSig Set**. If all conditions of misbehavior can
+be attributed to a signature from one of these sets, and proven **on the Cosmos chain**, then we can argue that Peggy offers
+a security level equal to the minimum of the Peg-Zone Validator Set, or reorganizing the Ethereum Chain 50 blocks.
+And provide a security equivalent to or greater than IBC.
+
 ## Bootstraping
 
 This is based on [Installing Peggy on a live cosmos chain](notes.md#installing-peggy-on-a-live-cosmos-chain).
