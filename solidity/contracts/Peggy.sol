@@ -397,7 +397,7 @@ contract Peggy {
 				abi.encode(
 					state_peggyId,
 					// bytes32 encoding of "valsetAndTransactionBatch"
-					0x0000000000000000000000000000000000000000000000000000000000000000,
+					0x76616c736574416e645472616e73616374696f6e426174636800000000000000,
 					_amounts,
 					_destinations,
 					_fees,
