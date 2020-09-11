@@ -65,7 +65,7 @@ func getValsetConfirmHandler(cliCtx context.CLIContext, storeName string) http.H
 			return
 		}
 
-		var out []types.MsgValsetConfirm
+		var out types.MsgValsetConfirm
 		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
