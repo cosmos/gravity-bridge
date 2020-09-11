@@ -70,6 +70,9 @@ func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 	}
 
 	valset := keeper.GetValsetConfirm(ctx, nonce, accAddress)
+	if valset == nil {
+		return nil, nil
+	}
 	res, err := codec.MarshalJSONIndent(keeper.cdc, valset)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
