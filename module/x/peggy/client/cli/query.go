@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -39,6 +40,9 @@ func CmdGetCurrentValset(storeKey string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if len(res) == 0 {
+				return errors.New("empty response")
+			}
 
 			var out types.Valset
 			cdc.MustUnmarshalJSON(res, &out)
@@ -60,6 +64,9 @@ func CmdGetValsetRequest(storeKey string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if len(res) == 0 {
+				return fmt.Errorf("no valset request found for nonce %s", nonce)
+			}
 
 			var out types.Valset
 			cdc.MustUnmarshalJSON(res, &out)
@@ -79,6 +86,9 @@ func CmdGetValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetConfirm/%s/%s", storeKey, args[0], args[1]), nil)
 			if err != nil {
 				return err
+			}
+			if len(res) == 0 {
+				return fmt.Errorf("no valset confirmation found for nonce %s and address %s", args[0], args[1])
 			}
 
 			var out types.MsgValsetConfirm

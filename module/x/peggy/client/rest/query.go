@@ -12,9 +12,9 @@ import (
 
 func currentValsetHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/currentValset", storeName), nil)
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/currentValset", storeName))
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		var out types.Valset
@@ -28,9 +28,13 @@ func getValsetRequestHandler(cliCtx context.CLIContext, storeName string) http.H
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
 
-		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeName, nonce), nil)
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/valsetRequest/%s", storeName, nonce))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "valset not found")
 			return
 		}
 
