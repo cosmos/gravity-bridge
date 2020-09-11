@@ -50,7 +50,7 @@ func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 	}
 
 	valset := keeper.GetValsetRequest(ctx, nonce)
-	res, err := codec.MarshalJSONIndent(keeper.cdc, valset)
+	res, err := codec.MarshalJSONIndent(keeper.cdc, *valset)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -73,7 +73,7 @@ func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 	if valset == nil {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, valset)
+	res, err := codec.MarshalJSONIndent(keeper.cdc, *valset)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
