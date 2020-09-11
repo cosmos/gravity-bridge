@@ -26,4 +26,9 @@ type (
 	MsgSetEthAddress = types.MsgSetEthAddress
 	MsgValsetConfirm = types.MsgValsetConfirm
 	MsgValsetRequest = types.MsgValsetRequest
+	MsgSendToEth     = types.MsgSendToEth
+	MsgRequestBatch  = types.MsgRequestBatch
+	MsgConfirmBatch  = types.MsgConfirmBatch
+	MsgBatchInChain  = types.MsgBatchInChain
+	MsgEthDeposit    = types.MsgEthDeposit
 )

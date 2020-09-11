@@ -9,7 +9,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// NewHandler returns a handler for "nameservice" type messages.
+// NewHandler returns a handler for "Peggy" type messages.
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		switch msg := msg.(type) {
@@ -19,8 +19,18 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgValsetConfirm(ctx, keeper, msg)
 		case MsgValsetRequest:
 			return handleMsgValsetRequest(ctx, keeper, msg)
+		case MsgSendToEth:
+			return handleMsgSendToEth(ctx, keeper, msg)
+		case MsgRequestBatch:
+			return handleMsgRequestBatch(ctx, keeper, msg)
+		case MsgConfirmBatch:
+			return handleMsgConfirmBatch(ctx, keeper, msg)
+		case MsgBatchInChain:
+			return handleMsgBatchInChain(ctx, keeper, msg)
+		case MsgEthDeposit:
+			return handleMsgEthDeposit(ctx, keeper, msg)
 		default:
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unrecognized nameservice Msg type: %v", msg.Type()))
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unrecognized Peggy Msg type: %v", msg.Type()))
 		}
 	}
 }
@@ -55,5 +65,35 @@ func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm
 
 func handleMsgSetEthAddress(ctx sdk.Context, keeper Keeper, msg MsgSetEthAddress) (*sdk.Result, error) {
 	keeper.SetEthAddress(ctx, msg.Validator, msg.Address)
+	return &sdk.Result{}, nil
+}
+
+func handleMsgSendToEth(ctx sdk.Context, keeper Keeper, msg MsgSendToEth) (*sdk.Result, error) {
+	// TODO add this transcation to the Peggy Tx Pool
+	return &sdk.Result{}, nil
+}
+
+func handleMsgRequestBatch(ctx sdk.Context, keeper Keeper, msg MsgRequestBatch) (*sdk.Result, error) {
+	// TODO perform the batch creation process here, including pulling transactions out of
+	// the Peggy Tx Pool and bundling them into transactions
+	return &sdk.Result{}, nil
+}
+
+func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) (*sdk.Result, error) {
+	// TODO add batch confirmation to the store, and if this confirmation means the batch counts as
+	// `observed` (confirmations from 66% of the active voting power exist as of this block) then consider
+	// the batch completed.
+	return &sdk.Result{}, nil
+}
+
+func handleMsgBatchInChain(ctx sdk.Context, keeper Keeper, msg MsgBatchInChain) (*sdk.Result, error) {
+	// TODO add batch confirmation to the store, and if this confirmation means the batch counts as
+	// `observed` (confirmations from 66% of the active voting power exist as of this block) then consider
+	// the batch completed.
+	return &sdk.Result{}, nil
+}
+
+func handleMsgEthDeposit(ctx sdk.Context, keeper Keeper, msg MsgEthDeposit) (*sdk.Result, error) {
+	// TODO issue tokens from the store of the appropriate denom once this deposit counts as `observed`
 	return &sdk.Result{}, nil
 }
