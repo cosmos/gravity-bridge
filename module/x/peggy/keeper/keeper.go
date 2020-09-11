@@ -34,14 +34,16 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) {
 	store.Set(types.GetValsetRequestKey(nonce), k.cdc.MustMarshalBinaryBare(valset))
 }
 
-func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce int64) types.Valset {
+func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce int64) *types.Valset {
 	store := ctx.KVStore(k.storeKey)
 
-	valset := types.Valset{}
 	store_bytes := store.Get(types.GetValsetRequestKey(nonce))
-	println("Store bytes %v", store_bytes)
+	if store_bytes == nil {
+		return nil
+	}
+	var valset types.Valset
 	k.cdc.MustUnmarshalBinaryBare(store_bytes, &valset)
-	return valset
+	return &valset
 }
 
 func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) {

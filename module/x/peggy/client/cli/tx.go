@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 
@@ -33,9 +34,27 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		CmdUpdateEthAddress(cdc),
 		CmdValsetRequest(cdc),
 		CmdValsetConfirm(storeKey, cdc),
+		GetUnsafeTestingCmd(storeKey, cdc),
 	)...)
 
 	return peggyTxCmd
+}
+
+// GetUnsafeTestingCmd
+func GetUnsafeTestingCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
+	testingTxCmd := &cobra.Command{
+		Use:                        "unsafe_testing",
+		Short:                      "helpers for testing. not going into production",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
+	}
+	testingTxCmd.AddCommand(flags.PostCommands(
+		CmdUnsafeETHPrivKey(),
+		CmdUnsafeETHAddr(),
+	)...)
+
+	return testingTxCmd
 }
 
 // GetCmdUpdateEthAddress updates the network about the eth address that you have on record.
@@ -109,14 +128,20 @@ func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "valset-confirm [nonce] [eth private key]",
 		Short: "this is used by validators to sign a valset with a particular nonce if it exists",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			nonce := args[0]
+			// Make Eth Signature over valset
+			privKeyString := args[1][2:]
+			privateKey, err := ethCrypto.HexToECDSA(privKeyString)
+			if err != nil {
+				log.Fatal(err)
+			}
 
+			nonce := args[0]
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, nonce), nil)
 			if err != nil {
 				fmt.Printf("could not get valset")
@@ -127,28 +152,61 @@ func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 			cdc.MustUnmarshalJSON(res, &valset)
 			checkpoint := valset.GetCheckpoint()
 
+			signature, err := ethCrypto.Sign(checkpoint, privateKey)
+			if err != nil {
+				log.Fatal(err)
+			}
+			cosmosAddr := cliCtx.GetFromAddress()
+			// Make the message
+			msg := types.NewMsgValsetConfirm(valset.Nonce, cosmosAddr, signature)
+
+			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+			// Send it
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}
+
+func CmdUnsafeETHPrivKey() *cobra.Command {
+	return &cobra.Command{
+		Use:   "gen_eth_key",
+		Short: "UNSAFE - generate and print a new ecdsa key",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			key, err := ethCrypto.GenerateKey()
+			if err != nil {
+				return errors.Wrap(err, "can not generate key")
+			}
+			k := "0x" + hex.EncodeToString(ethCrypto.FromECDSA(key))
+			println(k)
+			return nil
+		},
+	}
+}
+
+func CmdUnsafeETHAddr() *cobra.Command {
+	return &cobra.Command{
+		Use:   "eth_address",
+		Short: "UNSAFE - print address for an ECDSA eth key",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
 			// Make Eth Signature over valset
 			privKeyString := args[0][2:]
 			privateKey, err := ethCrypto.HexToECDSA(privKeyString)
 			if err != nil {
 				log.Fatal(err)
 			}
-			signature, err := ethCrypto.Sign(checkpoint, privateKey)
-			if err != nil {
-				log.Fatal(err)
+			// You've got to do all this to get an Eth address from the private key
+			publicKey := privateKey.Public()
+			publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+			if !ok {
+				log.Fatal("error casting public key to ECDSA")
 			}
-
-			cosmosAddr := cliCtx.GetFromAddress()
-
-			// Make the message
-			msg := types.NewMsgValsetConfirm(valset.Nonce, cosmosAddr, signature)
-			err = msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
-
-			// Send it
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+			println(ethAddress)
+			return nil
 		},
 	}
 }
