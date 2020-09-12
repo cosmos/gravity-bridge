@@ -27,10 +27,10 @@ import (
 type MsgValsetConfirm struct {
 	Nonce     int64          `json:"nonce"`
 	Validator sdk.AccAddress `json:"validator"`
-	Signature []byte         `json:"signature"`
+	Signature string         `json:"signature"`
 }
 
-func NewMsgValsetConfirm(nonce int64, validator sdk.AccAddress, signature []byte) MsgValsetConfirm {
+func NewMsgValsetConfirm(nonce int64, validator sdk.AccAddress, signature string) MsgValsetConfirm {
 	return MsgValsetConfirm{
 		Nonce:     nonce,
 		Validator: validator,

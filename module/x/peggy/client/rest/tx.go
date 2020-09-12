@@ -154,7 +154,7 @@ func createValsetConfirmHandler(cliCtx context.CLIContext, storeKey string) http
 		}
 
 		cosmosAddr := cliCtx.GetFromAddress()
-		msg := types.NewMsgValsetConfirm(valset.Nonce, cosmosAddr, ethSig)
+		msg := types.NewMsgValsetConfirm(valset.Nonce, cosmosAddr, req.EthSig)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")

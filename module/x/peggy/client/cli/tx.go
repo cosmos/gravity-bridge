@@ -158,7 +158,7 @@ func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 			}
 			cosmosAddr := cliCtx.GetFromAddress()
 			// Make the message
-			msg := types.NewMsgValsetConfirm(valset.Nonce, cosmosAddr, signature)
+			msg := types.NewMsgValsetConfirm(valset.Nonce, cosmosAddr, hex.EncodeToString(signature))
 
 			err = msg.ValidateBasic()
 			if err != nil {

@@ -1,6 +1,7 @@
 package peggy
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -53,9 +54,13 @@ func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty eth address")
 	}
 
-	err := utils.ValidateEthSig(checkpoint, msg.Signature, ethAddress)
+	sigBytes, hexErr := hex.DecodeString(msg.Signature)
+	if hexErr != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Signature hex decoding error")
+	}
+	err := utils.ValidateEthSig(checkpoint, sigBytes, ethAddress)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Failed to validate Checkpoint Sig")
 	}
 
 	// Save valset confirmation
