@@ -84,15 +84,6 @@ async fn main() {
         amount: 1u32.into(),
     };
 
-    // runs through a full set of rpc tests for each validator, this includes the basics like
-    // sending and querying transactions and creating, getting, and setting validator set info
-    // this is a little big overkill for a *Peggy* test as opposed to testing the Contact library
-    // but it's pretty much free to run.
-    // for (c_key, e_key) in keys {
-    //     test_rpc_calls(contact.clone(), c_key, e_key, "footoken")
-    //         .await
-    //         .expect("Failed to test endpoints")
-    // }
     for (c_key, e_key) in keys.iter() {
         // set the eth address for all the validators
         contact
@@ -102,10 +93,33 @@ async fn main() {
     }
     // get the first validator and have them send a valset request
     let (c_key, _e_key) = keys[0];
-    contact
-        .send_valset_request(c_key, fee, None, None, None)
+    let request_block = contact
+        .send_valset_request(c_key, fee.clone(), None, None, None)
         .await
-        .expect("Failed to send valset request!");
+        .expect("Failed to send valset request!")
+        .height;
+
+    let valset = contact
+        .get_peggy_valset_request(request_block)
+        .await
+        .expect("Failed to get valset!");
+
+    for (c_key, e_key) in keys.iter() {
+        // send in valset confirmation for all validators
+        let res = contact
+            .send_valset_confirm(
+                *e_key,
+                fee.clone(),
+                valset.result.clone(),
+                *c_key,
+                "foo".to_string(),
+                None,
+                None,
+                None,
+            )
+            .await;
+        res.expect("Failed to send valset confirm!");
+    }
 
     /// TODO valset confirm goes here
     // now we can deploy the test peggy contract, this must come after the

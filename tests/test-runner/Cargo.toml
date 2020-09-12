@@ -5,8 +5,8 @@ authors = ["Justin Kilpatrick <justin@althea.net>"]
 edition = "2018"
 
 [dependencies]
-contact = {git = "https://github.com/althea-net/contact", rev = "c91e3b360f948baeb6845f4b0b84ed4ae2127c9d"}
-deep_space = {git = "https://github.com/althea-net/deep_space/", rev = "c12fb87f00b944ddf643834b390350db070b39f2", features = ["peggy", "key_import"]}
+contact = {git = "https://github.com/althea-net/contact", rev = "21335a4a0ab17bf42f44479621ef455ee360bf9a"}
+deep_space = {git = "https://github.com/althea-net/deep_space/", rev = "2a925e483c05a2d9a52d12327528b9e0a54c8f81", features = ["peggy", "key_import"]}
 # deep_space = {path = "../../deep_space"}
 # contact = {path = "../../contact"}
 serde_derive = "1.0"
