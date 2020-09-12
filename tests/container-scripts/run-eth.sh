@@ -12,6 +12,7 @@ geth --identity "PeggyTestnet" --nodiscover \
 --networkid 15 \
 --mine \
 --rpc \
+--http \
 --minerthreads=1 \
 --verbosity "0" \
 --etherbase=0xBf660843528035a5A4921534E156a27e64B231fE
