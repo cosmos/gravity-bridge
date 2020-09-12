@@ -1,9 +1,12 @@
 package types
 
 import (
+	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -86,15 +89,26 @@ func (v Valset) GetCheckpoint() []byte {
 	var checkpoint [32]uint8
 	copy(checkpoint[:], checkpointBytes[:])
 
+	var convertedPowers []*big.Int
+	var convertedAddresses []common.Address
+	for _, power := range v.Powers {
+		convertedPowers = append(convertedPowers, big.NewInt(int64(power)))
+	}
+	for _, ethAddress := range v.EthAddresses {
+		if !strings.HasPrefix(ethAddress, "0x") {
+			panic(fmt.Sprintf("Eth Address in store %s does not have 0x prefix!", ethAddress))
+		}
+		convertedAddresses = append(convertedAddresses, common.HexToAddress(ethAddress))
+	}
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, packErr := contractAbi.Pack("checkpoint", peggyID, checkpoint, v.Nonce, v.EthAddresses, v.Powers)
+	bytes, packErr := contractAbi.Pack("checkpoint", peggyID, checkpoint, big.NewInt(int64(v.Nonce)), convertedAddresses, convertedPowers)
 
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if packErr != nil {
-		panic("Error packing checkpoint!")
+		panic(fmt.Sprintf("Error packing checkpoint! %s/n", packErr))
 	}
 
 	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
