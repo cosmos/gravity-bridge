@@ -42,6 +42,7 @@
     "peggy:getTx": "npx truffle exec scripts/getTxReceipt.js",
     "peggy:setup": "npx truffle exec scripts/setOracleAndBridgeBank.js --network ropsten",
     "peggy:lock": "npx truffle exec scripts/sendLockTx.js --network ropsten",
+    "peggy:lockdai": "npx truffle exec scripts/daitoken/sendLockDaiTx.js --network ropsten",
     "peggy:burn": "npx truffle exec scripts/sendBurnTx.js --network ropsten",
     "peggy:check": "npx truffle exec scripts/sendCheckProphecy.js --network ropsten",
     "peggy:process": "npx truffle exec scripts/sendProcessProphecy.js --network ropsten",

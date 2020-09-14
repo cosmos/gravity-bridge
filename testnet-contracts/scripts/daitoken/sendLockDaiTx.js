@@ -6,11 +6,11 @@ module.exports = async () => {
   const HDWalletProvider = require('@truffle/hdwallet-provider');
   const BigNumber = require('bignumber.js');
 
-  // Contract abstraction
   const truffleContract = require('truffle-contract');
-  const contract = truffleContract(require('../build/contracts/BridgeBank.json'));
+  const contract = truffleContract(require('../../build/contracts/BridgeBank.json'));
+  const daiJSON = require('./dai.json');
 
-  const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
+  const DAI_ADDRESS = '0xad6d458402f60fd3bd25163575031acdce07538d';
 
   /*******************************************
    *** Constants
@@ -19,7 +19,7 @@ module.exports = async () => {
   const DEFAULT_COSMOS_RECIPIENT = Web3.utils.utf8ToHex(
     'cosmos1pgkwvwezfy3qkh99hjnf35ek3znzs79mwqf48y'
   );
-  const DEFAULT_ETH_DENOM = 'eth';
+  const DEFAULT_DAI_DENOM = 'dai';
   const DEFAULT_AMOUNT = '1000000000000000000';
 
   // Config values
@@ -56,7 +56,7 @@ module.exports = async () => {
    *** Lock transaction parameters
    ******************************************/
   let cosmosRecipient = DEFAULT_COSMOS_RECIPIENT;
-  let coinDenom = DEFAULT_ETH_DENOM;
+  let coinDenom = DEFAULT_DAI_DENOM;
   let amount = DEFAULT_AMOUNT;
 
   if (!DEFAULT_PARAMS) {
@@ -71,9 +71,9 @@ module.exports = async () => {
     }
   }
 
-  // Convert default 'eth' coin denom into null address
-  if (coinDenom == 'eth') {
-    coinDenom = NULL_ADDRESS;
+  // Convert default 'dai' coin denom into dai address
+  if (coinDenom == 'dai') {
+    coinDenom = DAI_ADDRESS;
   }
 
   /*******************************************
@@ -89,15 +89,28 @@ module.exports = async () => {
   } else {
     provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
   }
+  console.log(process.env.INFURA_PROJECT_ID);
 
   const web3 = new Web3(provider);
   contract.setProvider(web3.currentProvider);
+
+  const daiContract = new web3.eth.Contract(daiJSON, DAI_ADDRESS);
+
   try {
     /*******************************************
      *** Contract interaction
      ******************************************/
     // Get current accounts
-    const accounts = await web3.eth.getAccounts();
+
+    // sender approve Bridge Bank use DAI
+    console.log('Aprove for Bridge Bank');
+    await daiContract.methods.approve(contract.networks['3'].address, amount).send({
+      from: '0x8f287eA4DAD62A3A626942d149509D6457c2516C',
+      value: 0,
+      gas: 300000 // 300,000 Gwei
+    });
+
+    console.log(approveLogs);
 
     // Send lock transaction
     console.log('Connecting to contract....');
@@ -105,7 +118,7 @@ module.exports = async () => {
       console.log('Connected to contract, sending lock...');
       return instance.lock(cosmosRecipient, coinDenom, amount, {
         from: '0x8f287eA4DAD62A3A626942d149509D6457c2516C',
-        value: coinDenom === NULL_ADDRESS ? amount : 0,
+        value: 0,
         gas: 300000 // 300,000 Gwei
       });
     });
@@ -115,6 +128,7 @@ module.exports = async () => {
     // Get event logs
     const event = logs.find(e => e.event === 'LogLock');
     console.log(event);
+
     // Parse event fields
     const lockEvent = {
       to: event.args._to,

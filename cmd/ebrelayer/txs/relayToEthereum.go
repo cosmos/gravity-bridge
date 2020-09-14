@@ -37,24 +37,24 @@ func RelayProphecyClaimToEthereum(provider string, contractAddress common.Addres
 	// Send transaction
 	fmt.Println("Sending new ProphecyClaim to CosmosBridge...")
 	tx, err := cosmosBridgeInstance.NewProphecyClaim(auth, uint8(claim.ClaimType),
-	claim.CosmosSender, claim.EthereumReceiver, claim.Symbol, claim.Amount)
+		claim.CosmosSender, claim.EthereumReceiver, claim.Symbol, claim.Amount)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("NewProphecyClaim tx hash:", tx.Hash().Hex())
 
 	// Get the transaction receipt
-	receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
-	if err != nil {
-		log.Fatal(err)
-	}
+	// receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	switch receipt.Status {
-	case 0:
-		fmt.Println("Tx Status: 0 - Failed")
-	case 1:
-		fmt.Println("Tx Status: 1 - Successful")
-	}
+	// switch receipt.Status {
+	// case 0:
+	// 	fmt.Println("Tx Status: 0 - Failed")
+	// case 1:
+	// 	fmt.Println("Tx Status: 1 - Successful")
+	// }
 	return nil
 }
 
@@ -80,17 +80,17 @@ func RelayOracleClaimToEthereum(provider string, contractAddress common.Address,
 	fmt.Println("NewOracleClaim tx hash:", tx.Hash().Hex())
 
 	// Get the transaction receipt
-	receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
-	if err != nil {
-		log.Fatal(err)
-	}
+	// receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	switch receipt.Status {
-	case 0:
-		fmt.Println("Tx Status: 0 - Failed")
-	case 1:
-		fmt.Println("Tx Status: 1 - Successful")
-	}
+	// switch receipt.Status {
+	// case 0:
+	// 	fmt.Println("Tx Status: 0 - Failed")
+	// case 1:
+	// 	fmt.Println("Tx Status: 1 - Successful")
+	// }
 
 	return nil
 }

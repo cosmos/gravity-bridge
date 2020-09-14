@@ -129,7 +129,7 @@ func (sub EthereumSub) Start() {
 		sub.Logger.Error(err.Error())
 		os.Exit(1)
 	}
-
+	sub.Logger.Info("Client chain id: ", clientChainID)
 	// We will check logs for new events
 	logs := make(chan ctypes.Log)
 
