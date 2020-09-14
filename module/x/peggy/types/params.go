@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/params/subspace"
@@ -11,6 +12,17 @@ import (
 
 // DefaultParamspace defines the default auth module parameter subspace
 const DefaultParamspace = ModuleName
+
+// todo: implement oracle constants as params
+
+const AttestationPeriod = 24 * time.Hour // TODO: value????
+// voting: threshold >2/3 of validator power AND > 1/2 of validator count?
+var (
+	AttestationVotesCountThreshold = Fraction{1, 2}
+	AttestationVotesPowerThreshold = Fraction{2, 3}
+	BridgeContractAddress          = NewEthereumAddress("")
+	BridgeContractChainID          = "0" // todo: revisit
+)
 
 // TODO: Defaults don't make sense for any of our params. Should we still have them?
 

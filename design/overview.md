@@ -47,6 +47,8 @@ Key concepts that we mention below will be defined here:
 - `Peggy ID` - This is a random 32 byte value required to be included in all Peggy signatures for a particular contract instance. It is passed into the contract constructor on Ethereum and used to prevent signature reuse when contracts may share a validator set or subsets of a validator set. This is also set by a governance vote _before_ MsgProposePeggyContract can be sent.
 - `Peggy contract code hash` - This is the code hash of a known good version of the Peggy contract solidity code. It will be used to verify exactly which version of the bridge will be deployed.
 - `Start Threshold` - This is the percentage of total voting power that must be online and participating in Peggy operations before a bridge can start operating.
+- `Claim` - an Ethereum event signed and submitted to cosmos by a single `Orchestrator` instance 
+- `Attestation` - aggregate of claims that eventually becomes `observed` by all orchestrators
 
 The _Operator_ is the key unit of trust here. Each operator is responsible for maintaining 3 secure processes:
 

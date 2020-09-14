@@ -22,13 +22,18 @@ var (
 )
 
 type (
-	Keeper           = keeper.Keeper
-	MsgSetEthAddress = types.MsgSetEthAddress
-	MsgValsetConfirm = types.MsgValsetConfirm
-	MsgValsetRequest = types.MsgValsetRequest
-	MsgSendToEth     = types.MsgSendToEth
-	MsgRequestBatch  = types.MsgRequestBatch
-	MsgConfirmBatch  = types.MsgConfirmBatch
-	MsgBatchInChain  = types.MsgBatchInChain
-	MsgEthDeposit    = types.MsgEthDeposit
+	MsgSendToEth                       = types.MsgSendToEth
+	MsgRequestBatch                    = types.MsgRequestBatch
+	MsgConfirmBatch                    = types.MsgConfirmBatch
+	MsgBatchInChain                    = types.MsgBatchInChain
+	MsgEthDeposit                      = types.MsgEthDeposit
+	Keeper                             = keeper.Keeper
+	MsgSetEthAddress                   = types.MsgSetEthAddress
+	MsgValsetConfirm                   = types.MsgValsetConfirm
+	MsgValsetRequest                   = types.MsgValsetRequest
+	MsgCreateEthereumClaims            = types.MsgCreateEthereumClaims
+	EthereumClaim                      = types.EthereumClaim
+	EthereumBridgeDepositClaim         = types.EthereumBridgeDepositClaim
+	EthereumBridgeWithdrawalBatchClaim = types.EthereumBridgeWithdrawalBatchClaim
+	EthereumBridgeMultiSigUpdateClaim  = types.EthereumBridgeMultiSigUpdateClaim
 )

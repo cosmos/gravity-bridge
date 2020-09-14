@@ -396,3 +396,127 @@ func (msg MsgEthDeposit) GetSignBytes() []byte {
 func (msg MsgEthDeposit) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Validator}
 }
+
+type ClaimType byte
+
+const ( // fix size constants
+	ClaimTypeEthereumBridgeDeposit         ClaimType = 0x1
+	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = 0x2
+	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = 0x3
+)
+const ClaimTypeLen = 1
+
+func (c ClaimType) Bytes() []byte {
+	return []byte{byte(c)}
+}
+
+type EthereumClaim interface {
+	GetNonce() Nonce
+	GetType() ClaimType
+	ValidateBasic() error
+}
+
+var (
+	_ EthereumClaim = EthereumBridgeDepositClaim{}
+	_ EthereumClaim = EthereumBridgeWithdrawalBatchClaim{}
+	_ EthereumClaim = EthereumBridgeMultiSigUpdateClaim{}
+)
+
+type EthereumBridgeDepositClaim struct {
+	Nonce          []byte `json:"nonce" yaml:"nonce"`
+	ERC20Token     ERC20Token
+	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
+	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
+}
+
+func (e EthereumBridgeDepositClaim) GetType() ClaimType {
+	return ClaimTypeEthereumBridgeDeposit
+}
+
+func (e EthereumBridgeDepositClaim) GetNonce() Nonce {
+	return e.Nonce
+}
+
+func (e EthereumBridgeDepositClaim) ValidateBasic() error {
+	// todo: implement me
+	return nil
+}
+
+// todo: This is not needed with the batch withdrawal
+//type EthereumBridgeWithdrawalClaim struct {
+//	Nonce            int `json:"nonce" yaml:"nonce"`
+//	ERC20Token       ERC20Token
+//	EthereumReceiver EthereumAddress
+//	CosmosSender     sdk.AccAddress
+//}
+
+type EthereumBridgeWithdrawalBatchClaim struct {
+	Nonce []byte `json:"nonce" yaml:"nonce"`
+}
+
+func (e EthereumBridgeWithdrawalBatchClaim) GetType() ClaimType {
+	return ClaimTypeEthereumBridgeWithdrawalBatch
+}
+
+func (e EthereumBridgeWithdrawalBatchClaim) GetNonce() Nonce {
+	return e.Nonce
+}
+
+func (e EthereumBridgeWithdrawalBatchClaim) ValidateBasic() error {
+	// todo: implement me
+	return nil
+}
+
+type EthereumBridgeMultiSigUpdateClaim struct {
+	Nonce []byte `json:"nonce" yaml:"nonce"`
+}
+
+func (e EthereumBridgeMultiSigUpdateClaim) GetType() ClaimType {
+	return ClaimTypeEthereumBridgeMultiSigUpdate
+}
+
+func (e EthereumBridgeMultiSigUpdateClaim) GetNonce() Nonce {
+	return e.Nonce
+}
+
+func (e EthereumBridgeMultiSigUpdateClaim) ValidateBasic() error {
+	// todo: implement me
+	return nil
+}
+
+const (
+	TypeMsgCreateEthereumClaims = "create_eth_claims"
+)
+
+var (
+	_ sdk.Msg = &MsgCreateEthereumClaims{}
+)
+
+type MsgCreateEthereumClaims struct {
+	EthereumChainID       string // todo: revisit type. can be int/ string/ ?
+	BridgeContractAddress EthereumAddress
+	Orchestrator          sdk.AccAddress
+	Claims                []EthereumClaim
+}
+
+func (m MsgCreateEthereumClaims) Route() string {
+	return RouterKey
+}
+
+func (m MsgCreateEthereumClaims) Type() string {
+	return TypeMsgCreateEthereumClaims
+}
+
+func (m MsgCreateEthereumClaims) ValidateBasic() error {
+	// todo: implement proper
+	return nil
+}
+
+func (m MsgCreateEthereumClaims) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(m)
+	return sdk.MustSortJSON(bz)
+}
+
+func (m MsgCreateEthereumClaims) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{m.Orchestrator}
+}

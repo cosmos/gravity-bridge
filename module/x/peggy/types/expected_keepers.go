@@ -8,4 +8,5 @@ import (
 type StakingKeeper interface {
 	GetBondedValidatorsByPower(ctx sdk.Context) []staking.Validator
 	GetLastValidatorPower(ctx sdk.Context, operator sdk.ValAddress) int64
+	GetLastTotalPower(ctx sdk.Context) (power sdk.Int)
 }

@@ -18,4 +18,10 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgValsetConfirm{}, "peggy/MsgValsetConfirm", nil)
 
 	cdc.RegisterConcrete(Valset{}, "peggy/Valset", nil)
+
+	cdc.RegisterConcrete(MsgCreateEthereumClaims{}, "peggy/MsgCreateEthereumClaims", nil)
+	cdc.RegisterInterface((*EthereumClaim)(nil), nil)
+	cdc.RegisterConcrete(EthereumBridgeDepositClaim{}, "peggy/EthereumBridgeDepositClaim", nil)
+	cdc.RegisterConcrete(EthereumBridgeWithdrawalBatchClaim{}, "peggy/EthereumBridgeWithdrawalBatchClaim", nil)
+	cdc.RegisterConcrete(EthereumBridgeMultiSigUpdateClaim{}, "peggy/EthereumBridgeMultiSigUpdateClaim", nil)
 }

@@ -1,6 +1,7 @@
 package peggy
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 
@@ -30,10 +31,35 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgBatchInChain(ctx, keeper, msg)
 		case MsgEthDeposit:
 			return handleMsgEthDeposit(ctx, keeper, msg)
+		case MsgCreateEthereumClaims:
+			return handleCreateEthereumClaims(ctx, keeper, msg)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unrecognized Peggy Msg type: %v", msg.Type()))
 		}
 	}
+}
+
+func handleCreateEthereumClaims(ctx sdk.Context, keeper Keeper, msg MsgCreateEthereumClaims) (*sdk.Result, error) {
+	// TODO:
+	// auth EthereumChainID whitelisted
+	// auth bridge contract address whitelisted
+	if !bytes.Equal(msg.BridgeContractAddress[:], types.BridgeContractAddress[:]) {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid bridge contract address")
+	}
+	// auth sender in current validator set
+
+	for _, c := range msg.Claims {
+		// todo: use contract as context (and prefix store) if we support multiple contracts
+		var (
+			validator sdk.ValAddress = sdk.ValAddress(msg.Orchestrator) // TODO: impl find validator key for orchestrator
+		)
+		if err := keeper.AddClaim(ctx, c.GetType(), c.GetNonce(), validator); err != nil {
+			return nil, sdkerrors.Wrap(err, "create attestation")
+		}
+	}
+	// todo: expose events
+
+	return &sdk.Result{}, nil
 }
 
 func handleMsgValsetRequest(ctx sdk.Context, keeper Keeper, msg types.MsgValsetRequest) (*sdk.Result, error) {

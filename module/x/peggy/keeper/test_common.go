@@ -99,6 +99,10 @@ func (s *StakingKeeperMock) GetLastTotalPower(ctx sdk.Context) (power sdk.Int) {
 
 type AlwaysPanicStakingMock struct{}
 
+func (s AlwaysPanicStakingMock) GetLastTotalPower(ctx sdk.Context) (power sdk.Int) {
+	panic("unexpected call")
+}
+
 func (s AlwaysPanicStakingMock) GetBondedValidatorsByPower(ctx sdk.Context) []staking.Validator {
 	panic("unexpected call")
 }

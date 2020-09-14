@@ -17,15 +17,21 @@ type Keeper struct {
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
 	cdc *codec.Codec // The wire codec for binary encoding/decoding.
+
+	AttestationHandler interface {
+		Handle(sdk.Context, types.Attestation) error
+	}
 }
 
 // NewKeeper creates new instances of the nameservice Keeper
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakingKeeper types.StakingKeeper) Keeper {
-	return Keeper{
+	k := Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
 		StakingKeeper: stakingKeeper,
 	}
+	k.AttestationHandler = AttestationHandler{keeper: k}
+	return k
 }
 
 func (k Keeper) SetValsetRequest(ctx sdk.Context) {
