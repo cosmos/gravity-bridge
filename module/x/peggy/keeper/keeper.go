@@ -1,10 +1,12 @@
 package keeper
 
 import (
+	"encoding/binary"
 	"sort"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -62,6 +64,22 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce int64, validator sdk.Acc
 	return &confirm
 }
 
+func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce int64, cb func([]byte, types.MsgValsetConfirm) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
+
+	nonceBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(nonceBytes, uint64(nonce))
+	iter := prefixStore.Iterator(prefixRange(nonceBytes))
+	for ; iter.Valid(); iter.Next() {
+		confirm := types.MsgValsetConfirm{}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
+		// cb returns true to stop early
+		if cb(iter.Key(), confirm) {
+			break
+		}
+	}
+}
+
 func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
@@ -101,4 +119,40 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 	valset := types.Valset{EthAddresses: ethAddrs, Powers: powers}
 	sort.Sort(valsetSort(valset))
 	return valset
+}
+
+// prefixRange turns a prefix into a (start, end) range. The start is the given prefix value and
+// the end is calculated by adding 1 bit to the start value. Nil is not allowed as prefix.
+// 		Example: []byte{1, 3, 4} becomes []byte{1, 3, 5}
+// 				 []byte{15, 42, 255, 255} becomes []byte{15, 43, 0, 0}
+//
+// In case of an overflow the end is set to nil.
+//		Example: []byte{255, 255, 255, 255} becomes nil
+//
+func prefixRange(prefix []byte) ([]byte, []byte) {
+	if prefix == nil {
+		panic("nil key not allowed")
+	}
+	// special case: no prefix is whole range
+	if len(prefix) == 0 {
+		return nil, nil
+	}
+
+	// copy the prefix and update last byte
+	end := make([]byte, len(prefix))
+	copy(end, prefix)
+	l := len(end) - 1
+	end[l]++
+
+	// wait, what if that overflowed?....
+	for end[l] == 0 && l > 0 {
+		l--
+		end[l]++
+	}
+
+	// okay, funny guy, you gave us FFF, no end to this range...
+	if l == 0 && end[0] == 0 {
+		end = nil
+	}
+	return prefix, end
 }

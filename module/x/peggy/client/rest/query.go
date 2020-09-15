@@ -74,3 +74,24 @@ func getValsetConfirmHandler(cliCtx context.CLIContext, storeName string) http.H
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
+
+func allValsetConfirmsHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		nonce := vars[nonce]
+
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/valsetConfirms/%s", storeName, nonce))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "valset confirms not found")
+			return
+		}
+
+		var out []types.MsgValsetConfirm
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}

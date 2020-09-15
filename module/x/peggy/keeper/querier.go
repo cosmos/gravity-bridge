@@ -3,17 +3,18 @@ package keeper
 import (
 	"strconv"
 
+	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-// query endpoints supported by the nameservice Querier
 const (
-	QueryCurrentValset = "currentValset"
-	QueryValsetRequest = "valsetRequest"
-	QueryValsetConfirm = "valsetConfirm"
+	QueryCurrentValset         = "currentValset"
+	QueryValsetRequest         = "valsetRequest"
+	QueryValsetConfirm         = "valsetConfirm"
+	QueryValsetConfirmsByNonce = "valsetConfirms"
 )
 
 // NewQuerier is the module level router for state queries
@@ -26,6 +27,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryValsetRequest(ctx, path[1:], keeper)
 		case QueryValsetConfirm:
 			return queryValsetConfirm(ctx, path[1:], keeper)
+		case QueryValsetConfirmsByNonce:
+			return allValsetConfirmsByNonce(ctx, path[1], keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown nameservice query endpoint")
 		}
@@ -61,6 +64,8 @@ func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 	return res, nil
 }
 
+// queryValsetConfirm returns the confirm msg for single orchestrator address and nonce
+// When nothing found a nil value is returned
 func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
 	nonce, err := strconv.ParseInt(path[0], 10, 64)
 	if err != nil {
@@ -77,6 +82,30 @@ func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 		return nil, nil
 	}
 	res, err := codec.MarshalJSONIndent(keeper.cdc, *valset)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
+	return res, nil
+}
+
+// allValsetConfirmsByNonce returns all the confirm messages for a given nonce
+// When nothing found an empty json array is returned. No pagination.
+func allValsetConfirmsByNonce(ctx sdk.Context, nonceStr string, keeper Keeper) ([]byte, error) {
+	nonce, err := strconv.ParseInt(nonceStr, 10, 64)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+	}
+
+	var confirms []types.MsgValsetConfirm
+	keeper.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
+		confirms = append(confirms, c)
+		return false
+	})
+	if len(confirms) == 0 {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, confirms)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
