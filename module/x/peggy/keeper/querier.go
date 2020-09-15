@@ -15,6 +15,7 @@ const (
 	QueryValsetRequest         = "valsetRequest"
 	QueryValsetConfirm         = "valsetConfirm"
 	QueryValsetConfirmsByNonce = "valsetConfirms"
+	QueryLastValsetRequests    = "lastValsetRequests"
 )
 
 // NewQuerier is the module level router for state queries
@@ -29,6 +30,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryValsetConfirm(ctx, path[1:], keeper)
 		case QueryValsetConfirmsByNonce:
 			return allValsetConfirmsByNonce(ctx, path[1], keeper)
+		case QueryLastValsetRequests:
+			return lastValsetRequests(ctx, keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown nameservice query endpoint")
 		}
@@ -110,5 +113,25 @@ func allValsetConfirmsByNonce(ctx sdk.Context, nonceStr string, keeper Keeper) (
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
+	return res, nil
+}
+
+const maxValsetRequestsReturned = 5
+
+func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	var counter int
+	var valReq []types.Valset
+	keeper.IterateValsetRequest(ctx, func(key []byte, val types.Valset) bool {
+		valReq = append(valReq, val)
+		counter++
+		return counter >= maxValsetRequestsReturned
+	})
+	if len(valReq) == 0 {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, valReq)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
 	return res, nil
 }

@@ -95,3 +95,21 @@ func allValsetConfirmsHandler(cliCtx context.CLIContext, storeName string) http.
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
+
+func lastValsetRequestsHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastValsetRequests", storeName))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "valset requests not found")
+			return
+		}
+
+		var out []types.Valset
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}

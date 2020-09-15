@@ -119,3 +119,112 @@ func TestAllValsetConfirmsByNonce(t *testing.T) {
 		})
 	}
 }
+
+func TestLastValsetRequestNonces(t *testing.T) {
+	k, ctx := CreateTestEnv(t)
+	// seed with requests
+	for i := 0; i < 6; i++ {
+		var validators []sdk.ValAddress
+		for j := 0; j <= i; j++ {
+			// add an validator each block
+			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
+			ethAddr := fmt.Sprintf("my eth addr %d", j+1)
+			k.SetEthAddress(ctx, valAddr, ethAddr)
+			validators = append(validators, valAddr)
+		}
+		k.StakingKeeper = NewStakingKeeperMock(validators...)
+		ctx = ctx.WithBlockHeight(int64(100 + i))
+		k.SetValsetRequest(ctx)
+	}
+
+	specs := map[string]struct {
+		expResp []byte
+	}{
+		"limit at 5": {
+			expResp: []byte(`[
+  {
+	"Nonce": "105",
+	"Powers": [
+	  "100",
+	  "100",
+	  "100",
+	  "100",
+	  "100",
+	  "100"
+	],
+	"EthAddresses": [
+	  "my eth addr 1",
+	  "my eth addr 2",
+	  "my eth addr 3",
+	  "my eth addr 4",
+	  "my eth addr 5",
+	  "my eth addr 6"
+	]
+  },
+  {
+	"Nonce": "104",
+	"Powers": [
+	  "100",
+	  "100",
+	  "100",
+	  "100",
+	  "100"
+	],
+	"EthAddresses": [
+	  "my eth addr 1",
+	  "my eth addr 2",
+	  "my eth addr 3",
+	  "my eth addr 4",
+	  "my eth addr 5"
+	]
+  },
+  {
+	"Nonce": "103",
+	"Powers": [
+	  "100",
+	  "100",
+	  "100",
+	  "100"
+	],
+	"EthAddresses": [
+	  "my eth addr 1",
+	  "my eth addr 2",
+	  "my eth addr 3",
+	  "my eth addr 4"
+	]
+  },
+  {
+	"Nonce": "102",
+	"Powers": [
+	  "100",
+	  "100",
+	  "100"
+	],
+	"EthAddresses": [
+	  "my eth addr 1",
+	  "my eth addr 2",
+	  "my eth addr 3"
+	]
+  },
+  {
+	"Nonce": "101",
+	"Powers": [
+	  "100",
+	  "100"
+	],
+	"EthAddresses": [
+	  "my eth addr 1",
+	  "my eth addr 2"
+	]
+  }
+]`),
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, err := lastValsetRequests(ctx, k)
+			require.NoError(t, err)
+			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
+		})
+	}
+}

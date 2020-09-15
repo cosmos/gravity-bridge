@@ -48,6 +48,20 @@ func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce int64) *types.Valset {
 	return &valset
 }
 
+// Iterate through all valset set requests in DESC order.
+func (k Keeper) IterateValsetRequest(ctx sdk.Context, cb func(key []byte, val types.Valset) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetRequestKey)
+	iter := prefixStore.ReverseIterator(nil, nil)
+	for ; iter.Valid(); iter.Next() {
+		var valset types.Valset
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &valset)
+		// cb returns true to stop early
+		if cb(iter.Key(), valset) {
+			break
+		}
+	}
+}
+
 func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator), k.cdc.MustMarshalBinaryBare(valsetConf))
@@ -64,6 +78,7 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce int64, validator sdk.Acc
 	return &confirm
 }
 
+// Iterate through all valset confirms for a nonce in ASC order
 func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce int64, cb func([]byte, types.MsgValsetConfirm) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
 

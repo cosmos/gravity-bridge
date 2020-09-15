@@ -18,5 +18,4 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgValsetConfirm{}, "peggy/MsgValsetConfirm", nil)
 
 	cdc.RegisterConcrete(Valset{}, "peggy/Valset", nil)
-
 }
