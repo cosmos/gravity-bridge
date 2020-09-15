@@ -447,34 +447,28 @@ contract Peggy {
 		uint256 _powerThreshold,
 		// The validator set
 		address[] memory _validators,
-		uint256[] memory _powers,
-		// These are arrays of the parts of the validators signatures
-		uint8[] memory _v,
-		bytes32[] memory _r,
-		bytes32[] memory _s
+		uint256[] memory _powers
 	) public {
 		// CHECKS
 
 		// Check that validators, powers, and signatures (v,r,s) set is well-formed
+		require(_validators.length == _powers.length, "Malformed current validator set");
+
+		// Check cumulative power to ensure the contract has sufficient power to actually
+		// pass a vote
+		uint256 cumulativePower = 0;
+		for (uint256 k = 0; k < _powers.length; k = k.add(1)) {
+			cumulativePower = cumulativePower + _powers[k];
+			if (cumulativePower > _powerThreshold) {
+				break;
+			}
+		}
 		require(
-			_validators.length == _powers.length &&
-				_validators.length == _v.length &&
-				_validators.length == _r.length &&
-				_validators.length == _s.length,
-			"Malformed current validator set"
+			cumulativePower > _powerThreshold,
+			"Submitted validator set signatures do not have enough power."
 		);
 
 		bytes32 newCheckpoint = makeCheckpoint(_validators, _powers, 0, _peggyId);
-
-		checkValidatorSignatures(
-			_validators,
-			_powers,
-			_v,
-			_r,
-			_s,
-			keccak256(abi.encode(newCheckpoint, _tokenContract, _peggyId, _powerThreshold)),
-			_powerThreshold
-		);
 
 		// ACTIONS
 

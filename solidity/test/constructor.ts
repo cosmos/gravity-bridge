@@ -30,23 +30,6 @@ describe("constructor tests", function() {
     ).to.be.revertedWith("Malformed current validator set");
   });
 
-  it("throws on bad validator sig", async function() {
-    const signers = await ethers.getSigners();
-    const peggyId = ethers.utils.formatBytes32String("foo");
-
-    // This is the power distribution on the Cosmos hub as of 7/14/2020
-    let powers = examplePowers();
-    let validators = signers.slice(0, powers.length);
-
-    const powerThreshold = 6666;
-
-    await expect(
-      deployContracts(peggyId, validators, powers, powerThreshold, {
-        corruptSig: true
-      })
-    ).to.be.revertedWith("Validator signature does not match");
-  });
-
   it("throws on insufficient power", async function() {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");

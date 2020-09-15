@@ -25,31 +25,12 @@ export async function deployContracts(
 
   const checkpoint = makeCheckpoint(valAddresses, powers, 0, peggyId);
 
-  let theHash = ethers.utils.keccak256(
-    ethers.utils.defaultAbiCoder.encode(
-      ["bytes32", "address", "bytes32", "uint256"],
-      [checkpoint, testERC20.address, peggyId, powerThreshold]
-    )
-  );
-
-  const { v, r, s } = await signHash(validators, theHash);
-
-  if (opts && opts.corruptSig) {
-    // We overwrite the second signature with the first just to mess things up
-    v[1] = v[0];
-    r[1] = r[0];
-    s[1] = s[0];
-  }
-
   const peggy = (await Peggy.deploy(
     testERC20.address,
     peggyId,
     powerThreshold,
     valAddresses,
-    powers,
-    v,
-    r,
-    s
+    powers
   )) as Peggy;
 
   await peggy.deployed();
