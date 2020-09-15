@@ -67,6 +67,12 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 	store.Set(types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator), k.cdc.MustMarshalBinaryBare(valsetConf))
 }
 
+func (k Keeper) HasValsetConfirm(ctx sdk.Context, nonce int64, validatorAddr sdk.AccAddress) bool {
+	// todo: param should be sdk.ValAddress instead
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetValsetConfirmKey(nonce, validatorAddr))
+}
+
 func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce int64, validator sdk.AccAddress) *types.MsgValsetConfirm {
 	store := ctx.KVStore(k.storeKey)
 	entity := store.Get(types.GetValsetConfirmKey(nonce, validator))

@@ -113,3 +113,24 @@ func lastValsetRequestsHandler(cliCtx context.CLIContext, storeName string) http
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
+
+func lastValsetRequestsByAddressHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		operatorAddr := vars[bech32ValidatorAddress]
+
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingValsetRequest/%s", storeName, operatorAddr))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "no pending valset requests found")
+			return
+		}
+
+		var out types.Valset
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}

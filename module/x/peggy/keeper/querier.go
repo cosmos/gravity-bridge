@@ -11,11 +11,12 @@ import (
 )
 
 const (
-	QueryCurrentValset         = "currentValset"
-	QueryValsetRequest         = "valsetRequest"
-	QueryValsetConfirm         = "valsetConfirm"
-	QueryValsetConfirmsByNonce = "valsetConfirms"
-	QueryLastValsetRequests    = "lastValsetRequests"
+	QueryCurrentValset                  = "currentValset"
+	QueryValsetRequest                  = "valsetRequest"
+	QueryValsetConfirm                  = "valsetConfirm"
+	QueryValsetConfirmsByNonce          = "valsetConfirms"
+	QueryLastValsetRequests             = "lastValsetRequests"
+	QueryLastPendingValsetRequestByAddr = "lastPendingValsetRequest"
 )
 
 // NewQuerier is the module level router for state queries
@@ -32,6 +33,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return allValsetConfirmsByNonce(ctx, path[1], keeper)
 		case QueryLastValsetRequests:
 			return lastValsetRequests(ctx, keeper)
+		case QueryLastPendingValsetRequestByAddr:
+			return lastPendingValsetRequest(ctx, path[1], keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown nameservice query endpoint")
 		}
@@ -130,6 +133,33 @@ func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 		return nil, nil
 	}
 	res, err := codec.MarshalJSONIndent(keeper.cdc, valReq)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
+}
+
+func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
+	addr, err := sdk.AccAddressFromBech32(operatorAddr)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
+	}
+
+	// todo: find validator address by operator key
+	validatorAddr := addr
+
+	var pendingValsetReq *types.Valset
+	keeper.IterateValsetRequest(ctx, func(key []byte, val types.Valset) bool {
+		found := keeper.HasValsetConfirm(ctx, val.Nonce, validatorAddr)
+		if !found {
+			pendingValsetReq = &val
+		}
+		return true
+	})
+	if pendingValsetReq == nil {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, pendingValsetReq)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

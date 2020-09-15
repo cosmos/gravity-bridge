@@ -228,3 +228,82 @@ func TestLastValsetRequestNonces(t *testing.T) {
 		})
 	}
 }
+func TestLastPendingValsetRequest(t *testing.T) {
+	k, ctx := CreateTestEnv(t)
+	var (
+		aValidatorCosmosAddr       = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		otherValidatorCosmosAddr   = bytes.Repeat([]byte{2}, sdk.AddrLen)
+		unknownValidatorCosmosAddr = bytes.Repeat([]byte{3}, sdk.AddrLen)
+	)
+	k.StakingKeeper = NewStakingKeeperMock(aValidatorCosmosAddr, otherValidatorCosmosAddr)
+	// seed with requests
+	ctx = ctx.WithBlockHeight(200)
+	k.SetValsetRequest(ctx)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{Nonce: ctx.BlockHeight(), Validator: otherValidatorCosmosAddr})
+	k.SetValsetRequest(ctx)
+
+	specs := map[string]struct {
+		srcAddr string
+		expErr  bool
+		expResp []byte
+	}{
+		"last req when unsigned": {
+			srcAddr: sdk.AccAddress(aValidatorCosmosAddr).String(),
+			expResp: []byte(`
+{
+  "type": "peggy/Valset",
+  "value": {
+	"Nonce": "201",
+	"Powers": [
+	  "100",
+	  "100"
+	],
+	"EthAddresses": [
+	  "",
+	  ""
+	]
+  }
+}
+`),
+		},
+		"empty when last req was signed": {
+			srcAddr: sdk.AccAddress(otherValidatorCosmosAddr).String(),
+			expResp: nil,
+		},
+		"not empty unknown address": {
+			srcAddr: sdk.AccAddress(unknownValidatorCosmosAddr).String(),
+			expResp: []byte(`
+{
+  "type": "peggy/Valset",
+  "value": {
+	"Nonce": "201",
+	"Powers": [
+	  "100",
+	  "100"
+	],
+	"EthAddresses": [
+	  "",
+	  ""
+	]
+  }
+}
+`),
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, err := lastPendingValsetRequest(ctx, spec.srcAddr, k)
+			if spec.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if spec.expResp == nil {
+				assert.Nil(t, got)
+				return
+			}
+			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
+		})
+	}
+}
