@@ -61,6 +61,7 @@ func CompileContracts(contracts BridgeContracts) error {
 func GenerateBindings(contracts BridgeContracts) error {
 	for _, contract := range contracts {
 		genBindingCmd := strings.Replace(BaseBindingGenCmd, ContractText, contract.String(), -1)
+		// genBindingCmd = strings.Replace(genBindingCmd, Dir, strings.ToLower(contract.String()), -1)
 		err := execCmd(genBindingCmd)
 		if err != nil {
 			return err

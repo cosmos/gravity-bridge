@@ -48,9 +48,9 @@ all: tools
 
 tools: golangci-lint
 
-golangci-lint: $(GOLANGCI_LINT)
-$(GOLANGCI_LINT): $(mkfile_dir)/install-golangci-lint.sh
-	bash $(mkfile_dir)/install-golangci-lint.sh $(TOOLS_DESTDIR) $(GOLANGCI_LINT_VERSION) $(GOLANGCI_LINT_HASHSUM)
+# golangci-lint: $(GOLANGCI_LINT)
+# $(GOLANGCI_LINT): $(mkfile_dir)/install-golangci-lint.sh
+# 	bash $(mkfile_dir)/install-golangci-lint.sh $(TOOLS_DESTDIR) $(GOLANGCI_LINT_VERSION) $(GOLANGCI_LINT_HASHSUM)
 
 tools-clean:
 	rm -f $(GOIMPORTS) $(GOLANGCI_LINT)

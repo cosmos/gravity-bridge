@@ -3,7 +3,7 @@ package txs
 import (
 	"math/big"
 
-	"github.com/cosmos/peggy/cmd/ebrelayer/types"
+	"github.com/trinhtan/peggy/cmd/ebrelayer/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 

@@ -1,6 +1,6 @@
 FROM golang:1.13
 
-WORKDIR /go/src/github.com/cosmos/peggy
+WORKDIR /go/src/github.com/trinhtan/peggy
 
 COPY go.mod .
 COPY go.sum .

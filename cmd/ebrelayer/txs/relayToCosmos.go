@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/cosmos/peggy/x/ethbridge"
-	"github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/trinhtan/peggy/x/ethbridge"
+	"github.com/trinhtan/peggy/x/ethbridge/types"
 )
 
 // RelayToCosmos applies validator's signature to an EthBridgeClaim message containing

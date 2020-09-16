@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/cosmos/peggy/x/ethbridge/types"
-	"github.com/cosmos/peggy/x/oracle"
-	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
+	"github.com/trinhtan/peggy/x/ethbridge/types"
+	"github.com/trinhtan/peggy/x/oracle"
+	keeperLib "github.com/trinhtan/peggy/x/oracle/keeper"
 )
 
 //nolint:lll

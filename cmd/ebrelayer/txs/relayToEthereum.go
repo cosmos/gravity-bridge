@@ -11,9 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	cosmosbridge "github.com/cosmos/peggy/cmd/ebrelayer/contract/generated/bindings/cosmosbridge"
-	oracle "github.com/cosmos/peggy/cmd/ebrelayer/contract/generated/bindings/oracle"
-	"github.com/cosmos/peggy/cmd/ebrelayer/types"
+	cosmosbridge "github.com/trinhtan/peggy/cmd/ebrelayer/contract/generated/bindings/cosmosbridge"
+	oracle "github.com/trinhtan/peggy/cmd/ebrelayer/contract/generated/bindings/oracle"
+	"github.com/trinhtan/peggy/cmd/ebrelayer/types"
 )
 
 const (
@@ -44,17 +44,17 @@ func RelayProphecyClaimToEthereum(provider string, contractAddress common.Addres
 	fmt.Println("NewProphecyClaim tx hash:", tx.Hash().Hex())
 
 	// Get the transaction receipt
-	receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
-	if err != nil {
-		log.Fatal(err)
-	}
+	// receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	switch receipt.Status {
-	case 0:
-		fmt.Println("Tx Status: 0 - Failed")
-	case 1:
-		fmt.Println("Tx Status: 1 - Successful")
-	}
+	// switch receipt.Status {
+	// case 0:
+	// 	fmt.Println("Tx Status: 0 - Failed")
+	// case 1:
+	// 	fmt.Println("Tx Status: 1 - Successful")
+	// }
 	return nil
 }
 
@@ -80,17 +80,17 @@ func RelayOracleClaimToEthereum(provider string, contractAddress common.Address,
 	fmt.Println("NewOracleClaim tx hash:", tx.Hash().Hex())
 
 	// Get the transaction receipt
-	receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
-	if err != nil {
-		log.Fatal(err)
-	}
+	// receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	switch receipt.Status {
-	case 0:
-		fmt.Println("Tx Status: 0 - Failed")
-	case 1:
-		fmt.Println("Tx Status: 1 - Successful")
-	}
+	// switch receipt.Status {
+	// case 0:
+	// 	fmt.Println("Tx Status: 0 - Failed")
+	// case 1:
+	// 	fmt.Println("Tx Status: 1 - Successful")
+	// }
 
 	return nil
 }

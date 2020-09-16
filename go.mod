@@ -1,4 +1,4 @@
-module github.com/cosmos/peggy
+module github.com/trinhtan/peggy
 
 go 1.13
 

@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/supply"
-	oracle "github.com/cosmos/peggy/x/oracle"
-	keeperLib "github.com/cosmos/peggy/x/oracle/keeper"
+	oracle "github.com/trinhtan/peggy/x/oracle"
+	keeperLib "github.com/trinhtan/peggy/x/oracle/keeper"
 )
 
 func CreateTestHandler(
