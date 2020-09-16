@@ -160,13 +160,34 @@ func (a valsetSort) Less(i, j int) bool {
 	return a.Powers[i] < a.Powers[j]
 }
 
+// GetCurrentValset gets powers from the store and normalizes them
+// into an integer percentage with a resolution of uint32 Max meaning
+// a given validators 'Peggy power' is computed as
+// Cosmos power / total cosmos power = x / uint32 Max
+// where x is the voting power on the Peggy contract. This allows us
+// to only use integer division which produces a known rounding error
+// from truncation equal to the ratio of the validators
+// Cosmos power / total cosmos power ratio, leaving us at uint32 Max - 1
+// total voting power. This is an acceptable rounding error since floating
+// point may cause consensus problems if different floating point unit
+// implementations are involved.
 func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 	ethAddrs := make([]string, len(validators))
 	powers := make([]int64, len(validators))
+	totalPower := int64(0)
+	maxUint32 := int64(1 << 32)
+	// TODO someone with in depth info on Cosmos staking should determine
+	// if this is doing what I think it's doing
+	for _, validator := range validators {
+		validatorAddress := validator.GetOperator()
+		p := k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress)
+		totalPower += p
+	}
 	for i, validator := range validators {
 		validatorAddress := validator.GetOperator()
 		p := k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress)
+		p = maxUint32 * p / totalPower
 		powers[i] = p
 		ethAddr := k.GetEthAddress(ctx, validatorAddress)
 		if ethAddr != nil {
