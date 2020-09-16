@@ -10,6 +10,7 @@ const (
 	SolcCmdText   = "[SOLC_CMD]"
 	DirectoryText = "[DIRECTORY]"
 	ContractText  = "[CONTRACT]"
+	Dir           = "[Dir]"
 )
 
 var (
@@ -26,7 +27,7 @@ var (
 		fmt.Sprintf("--abi ./cmd/ebrelayer/contract/generated/abi/%s/%s.abi ", ContractText, ContractText),
 		fmt.Sprintf("--pkg %s ", ContractText),
 		fmt.Sprintf("--type %s ", ContractText),
-		fmt.Sprintf("--out ./cmd/ebrelayer/contract/generated/bindings/%s/%s.go", ContractText, ContractText)},
+		fmt.Sprintf("--out ./cmd/ebrelayer/contract/generated/bindings/%s/%s.go", Dir, ContractText)},
 		"")
 )
 
@@ -61,6 +62,7 @@ func CompileContracts(contracts BridgeContracts) error {
 func GenerateBindings(contracts BridgeContracts) error {
 	for _, contract := range contracts {
 		genBindingCmd := strings.Replace(BaseBindingGenCmd, ContractText, contract.String(), -1)
+		genBindingCmd = strings.Replace(genBindingCmd, Dir, strings.ToLower(contract.String()), -1)
 		err := execCmd(genBindingCmd)
 		if err != nil {
 			return err
