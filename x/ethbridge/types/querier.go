@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/cosmos/peggy/x/oracle"
+	"github.com/trinhtan/peggy/x/oracle"
 )
 
 // query endpoints supported by the oracle Querier

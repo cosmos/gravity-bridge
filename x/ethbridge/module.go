@@ -3,8 +3,8 @@ package ethbridge
 import (
 	"encoding/json"
 
-	"github.com/cosmos/peggy/x/ethbridge/client"
-	"github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/trinhtan/peggy/x/ethbridge/client"
+	"github.com/trinhtan/peggy/x/ethbridge/types"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 

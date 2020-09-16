@@ -3,8 +3,8 @@ package client
 import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/peggy/x/ethbridge/client/cli"
-	"github.com/cosmos/peggy/x/ethbridge/client/rest"
+	"github.com/trinhtan/peggy/x/ethbridge/client/cli"
+	"github.com/trinhtan/peggy/x/ethbridge/client/rest"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 

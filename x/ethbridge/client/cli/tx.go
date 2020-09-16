@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/trinhtan/peggy/x/ethbridge/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"

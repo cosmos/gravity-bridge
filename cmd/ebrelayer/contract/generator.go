@@ -1,7 +1,6 @@
 package contract
 
 import (
-	"bytes"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -11,7 +10,6 @@ const (
 	SolcCmdText   = "[SOLC_CMD]"
 	DirectoryText = "[DIRECTORY]"
 	ContractText  = "[CONTRACT]"
-	Dir           = "[DIR]"
 )
 
 var (
@@ -22,14 +20,13 @@ var (
 		"--overwrite ",
 		"--allow-paths *,"},
 		"")
-
 	// BaseBindingGenCmd is the base command for contract binding generation
 	BaseBindingGenCmd = strings.Join([]string{"abigen ",
 		fmt.Sprintf("--bin ./cmd/ebrelayer/contract/generated/bin/%s/%s.bin ", ContractText, ContractText),
 		fmt.Sprintf("--abi ./cmd/ebrelayer/contract/generated/abi/%s/%s.abi ", ContractText, ContractText),
 		fmt.Sprintf("--pkg %s ", ContractText),
 		fmt.Sprintf("--type %s ", ContractText),
-		fmt.Sprintf("--out ./cmd/ebrelayer/contract/generated/bindings/%s/%s.go", Dir, ContractText)},
+		fmt.Sprintf("--out ./cmd/ebrelayer/contract/generated/bindings/%s/%s.go", ContractText, ContractText)},
 		"")
 )
 
@@ -64,7 +61,7 @@ func CompileContracts(contracts BridgeContracts) error {
 func GenerateBindings(contracts BridgeContracts) error {
 	for _, contract := range contracts {
 		genBindingCmd := strings.Replace(BaseBindingGenCmd, ContractText, contract.String(), -1)
-		genBindingCmd = strings.Replace(genBindingCmd, Dir, strings.ToLower(contract.String()), -1)
+		// genBindingCmd = strings.Replace(genBindingCmd, Dir, strings.ToLower(contract.String()), -1)
 		err := execCmd(genBindingCmd)
 		if err != nil {
 			return err
@@ -72,21 +69,9 @@ func GenerateBindings(contracts BridgeContracts) error {
 	}
 	return nil
 }
+
+// execCmd executes a bash cmd
 func execCmd(cmd string) error {
-	//_, err := exec.Command("sh", "-c", cmd).Output()
-	fmt.Println(cmd)
-	// _, err := exec.Command("sh", "-c", cmd).Output()
-	cmd2 := exec.Command("sh", "-c", cmd)
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-	cmd2.Stdout = &out
-	cmd2.Stderr = &stderr
-	err := cmd2.Run()
-	if err != nil {
-		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
-		return err
-	}
-	fmt.Println("Result: " + out.String())
-	// fmt.Printf("-----ZCz-------%s", err)
+	_, err := exec.Command("sh", "-c", cmd).Output()
 	return err
 }

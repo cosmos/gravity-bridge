@@ -5,7 +5,7 @@ import (
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	supplyexported "github.com/cosmos/cosmos-sdk/x/supply/exported"
 
-	"github.com/cosmos/peggy/x/oracle"
+	"github.com/trinhtan/peggy/x/oracle"
 )
 
 // AccountKeeper defines the expected account keeper

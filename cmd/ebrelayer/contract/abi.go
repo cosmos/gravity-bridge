@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/cosmos/peggy/cmd/ebrelayer/txs"
+	"github.com/trinhtan/peggy/cmd/ebrelayer/txs"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 

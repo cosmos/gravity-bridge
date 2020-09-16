@@ -13,8 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	tmKv "github.com/tendermint/tendermint/libs/kv"
 
-	"github.com/cosmos/peggy/cmd/ebrelayer/types"
-	ethbridge "github.com/cosmos/peggy/x/ethbridge/types"
+	"github.com/trinhtan/peggy/cmd/ebrelayer/types"
+	ethbridge "github.com/trinhtan/peggy/x/ethbridge/types"
 )
 
 const (

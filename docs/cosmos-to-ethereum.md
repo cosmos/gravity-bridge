@@ -102,7 +102,7 @@ Eth balance for 0x11111111262b236c9ac9a9a8c8e4276b5cf6b2c9 is 0.0000000000000000
 ```
 
 <!-->
-TODO: This isn't yet possible on the Ethereum contract side. Open issue https://github.com/cosmos/peggy/issues/123
+TODO: This isn't yet possible on the Ethereum contract side. Open issue https://github.com/trinhtan/peggy/issues/123
 ### Returning EVM assets originally based on Cosmos via Burn
 
 Similarly to the last step, it is possible to move Cosmos SDK application native assets which were previoulsy transferred to the eVM chain back to the Cosmos SDK application. Instead of locking the EVM based asset, as seen in the [Ethereum -> Cosmos](./ethereum-to-cosmos.md) document, we use the burn action instead. If you moved over some `stake` as described earlier in this document from the Cosmos SDK application to the EVM chain we can now move it back with a burn.

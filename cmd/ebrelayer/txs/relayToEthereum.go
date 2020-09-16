@@ -11,9 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	cosmosbridge "github.com/cosmos/peggy/cmd/ebrelayer/contract/generated/bindings/cosmosbridge"
-	oracle "github.com/cosmos/peggy/cmd/ebrelayer/contract/generated/bindings/oracle"
-	"github.com/cosmos/peggy/cmd/ebrelayer/types"
+	cosmosbridge "github.com/trinhtan/peggy/cmd/ebrelayer/contract/generated/bindings/cosmosbridge"
+	oracle "github.com/trinhtan/peggy/cmd/ebrelayer/contract/generated/bindings/oracle"
+	"github.com/trinhtan/peggy/cmd/ebrelayer/types"
 )
 
 const (
@@ -37,7 +37,7 @@ func RelayProphecyClaimToEthereum(provider string, contractAddress common.Addres
 	// Send transaction
 	fmt.Println("Sending new ProphecyClaim to CosmosBridge...")
 	tx, err := cosmosBridgeInstance.NewProphecyClaim(auth, uint8(claim.ClaimType),
-		claim.CosmosSender, claim.EthereumReceiver, claim.Symbol, claim.Amount)
+	claim.CosmosSender, claim.EthereumReceiver, claim.Symbol, claim.Amount)
 	if err != nil {
 		log.Fatal(err)
 	}
