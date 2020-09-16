@@ -28,10 +28,17 @@ const args = commandLineArgs([
 //     - We will consider the scenario that many deployers deploy many valid peggy eth contracts.
 // 5. The deployer submits the address of the peggy contract that it deployed to Ethereum.
 //     - The peggy module checks the Ethereum chain for each submitted address, and makes sure that the peggy contract at that address is using the correct source code, and has the correct validator set.
-
+type ValsetResult = {
+  type: string;
+  value: Valset;
+};
+type ValsetResponse = {
+  height: number;
+  result: ValsetResult;
+};
 type Valset = {
   EthAddresses: string[];
-  Powers: string[];
+  Powers: number[];
   Nonce: number;
 };
 async function deploy() {
@@ -62,14 +69,15 @@ async function deploy() {
   const latestValset = await getLatestValset(args.peggyId);
 
   console.log("Deploying peggy contract using valset ", latestValset);
+  console.log(latestValset.result.value.Powers);
   const peggy = (await factory.deploy(
     contract,
     // todo generate this randomly at deployment time that way we can avoid
     // anything but intentional conflicts
     "0x6c00000000000000000000000000000000000000000000000000000000000000",
-    "6666",
-    latestValset.EthAddresses,
-    latestValset.Powers
+    6666,
+    latestValset.result.value.EthAddresses,
+    latestValset.result.value.Powers
   )) as Peggy;
 
   await peggy.deployed();
@@ -81,7 +89,7 @@ function getContractArtifacts(path: string): { bytecode: string; abi: string } {
   var { bytecode, abi } = JSON.parse(fs.readFileSync(path, "utf8").toString());
   return { bytecode, abi };
 }
-async function getLatestValset(peggyId: string): Promise<Valset> {
+async function getLatestValset(peggyId: string): Promise<ValsetResponse> {
   let request_string = args["cosmos-node"] + "/peggy/current_valset";
   let response = await axios.get(request_string);
   return response.data;
