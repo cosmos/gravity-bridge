@@ -21,11 +21,17 @@ const (
 )
 
 var (
-	EthAddressKey        = []byte{0x1}
-	ValsetRequestKey     = []byte{0x2}
-	ValsetConfirmKey     = []byte{0x3}
-	OracleClaimKey       = []byte{0x4}
-	OracleAttestationKey = []byte{0x5}
+	EthAddressKey               = []byte{0x1}
+	ValsetRequestKey            = []byte{0x2}
+	ValsetConfirmKey            = []byte{0x3}
+	OracleClaimKey              = []byte{0x4}
+	OracleAttestationKey        = []byte{0x5}
+	OutgoingTXPoolKey           = []byte{0x6}
+	SequenceKeyPrefix           = []byte{0x7}
+	DenomiatorPrefix            = []byte{0x8}
+	SecondIndexOutgoingTXFeeKey = []byte{0x9}
+
+	KeyLastTXPoolID = append(SequenceKeyPrefix, []byte("lastCodeId")...)
 )
 
 func GetEthAddressKey(validator sdk.AccAddress) []byte {
@@ -44,6 +50,24 @@ func GetValsetConfirmKey(nonce int64, validator sdk.AccAddress) []byte {
 	binary.BigEndian.PutUint64(nonceBytes, uint64(nonce))
 
 	return append(ValsetConfirmKey, append(nonceBytes, []byte(validator)...)...)
+}
+
+func GetOutgoingTxPoolKey(id uint64) []byte {
+	return append(OutgoingTXPoolKey, sdk.Uint64ToBigEndian(id)...)
+}
+
+func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
+	assertPeggyVoucher(fee)
+
+	r := make([]byte, 1+VoucherDenomLen+8)
+	copy(r[0:], SecondIndexOutgoingTXFeeKey)
+	copy(r[len(SecondIndexOutgoingTXFeeKey):], fee.Denom)
+	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(fee.Denom):], sdk.Uint64ToBigEndian(fee.Amount.Uint64()))
+	return r
+}
+
+func GetDenominatorKey(voucherDenominator string) []byte {
+	return append(DenomiatorPrefix, []byte(voucherDenominator)...)
 }
 
 // GetClaimKey creates a key with claim type and address first as they have a fix length.

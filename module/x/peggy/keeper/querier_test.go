@@ -16,7 +16,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 		nonce                 int64          = 1
 		myValidatorCosmosAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
 	)
-	k, ctx := CreateTestEnv(t)
+	k, ctx, _ := CreateTestEnv(t)
 	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{
 		Nonce:     nonce,
 		Validator: myValidatorCosmosAddr,
@@ -69,7 +69,7 @@ func TestAllValsetConfirmsByNonce(t *testing.T) {
 	var (
 		nonce int64 = 1
 	)
-	k, ctx := CreateTestEnv(t)
+	k, ctx, _ := CreateTestEnv(t)
 
 	// seed confirmations
 	for i := 0; i < 3; i++ {
@@ -121,7 +121,7 @@ func TestAllValsetConfirmsByNonce(t *testing.T) {
 }
 
 func TestLastValsetRequestNonces(t *testing.T) {
-	k, ctx := CreateTestEnv(t)
+	k, ctx, _ := CreateTestEnv(t)
 	// seed with requests
 	for i := 0; i < 6; i++ {
 		var validators []sdk.ValAddress
@@ -229,7 +229,7 @@ func TestLastValsetRequestNonces(t *testing.T) {
 	}
 }
 func TestLastPendingValsetRequest(t *testing.T) {
-	k, ctx := CreateTestEnv(t)
+	k, ctx, _ := CreateTestEnv(t)
 	var (
 		aValidatorCosmosAddr       = bytes.Repeat([]byte{1}, sdk.AddrLen)
 		otherValidatorCosmosAddr   = bytes.Repeat([]byte{2}, sdk.AddrLen)

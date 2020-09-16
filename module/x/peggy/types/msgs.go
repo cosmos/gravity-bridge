@@ -179,7 +179,7 @@ type MsgSendToEth struct {
 	DestAddress string `json:"dest_address"`
 	// the coin to send across the bridge, note the restriction that this is a
 	// single coin not a set of coins that is normal in other Cosmos messages
-	Send sdk.Coin `json:"send"`
+	Amount sdk.Coin `json:"send"`
 	// the fee paid for the bridge, distinct from the fee paid to the chain to
 	// actually send this message in the first place. So a successful send has
 	// two layers of fees for the user
@@ -190,7 +190,7 @@ func NewMsgSendToEth(sender sdk.AccAddress, destAddress string, send sdk.Coin, b
 	return MsgSendToEth{
 		Sender:      sender,
 		DestAddress: destAddress,
-		Send:        send,
+		Amount:      send,
 		BridgeFee:   bridgeFee,
 	}
 }
@@ -205,8 +205,8 @@ func (msg MsgSendToEth) Type() string { return "send_to_eth" }
 // Checks if the Eth address is valid
 func (msg MsgSendToEth) ValidateBasic() error {
 	// fee and send must be of the same denom
-	if msg.Send.Denom != msg.BridgeFee.Denom {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("Fee and Send must be the same type!"))
+	if msg.Amount.Denom != msg.BridgeFee.Denom {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("Fee and Amount must be the same type!"))
 	}
 	// TODO validate eth address
 	// TODO for demo get single allowed demon from the store
@@ -228,7 +228,7 @@ func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
 // MsgRequestBatch
 // this is a message anyone can send that requests a batch of transactions to send across
 // the bridge be created for whatever block height this message is included in. This acts as
-// a coordination point, the handler for this message looks at the SendToEth tx's in the store
+// a coordination point, the handler for this message looks at the AddToOutgoingPool tx's in the store
 // and generates a batch, also available in the store tied to this message. The validators then
 // grab this batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer can
 // finally submit the batch

@@ -79,6 +79,7 @@ var (
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
 		gov.ModuleName:            {supply.Burner},
+		peggy.ModuleName:          {supply.Minter, supply.Burner},
 	}
 )
 
@@ -282,8 +283,7 @@ func NewInitApp(
 		),
 	)
 
-	// TODO: Add your module(s) keepers
-	app.peggyKeeper = peggy.NewKeeper(app.cdc, keys[peggy.StoreKey], &stakingKeeper)
+	app.peggyKeeper = peggy.NewKeeper(app.cdc, keys[peggy.StoreKey], stakingKeeper, app.supplyKeeper, app.accountKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

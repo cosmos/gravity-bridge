@@ -98,8 +98,13 @@ func handleMsgSetEthAddress(ctx sdk.Context, keeper Keeper, msg MsgSetEthAddress
 }
 
 func handleMsgSendToEth(ctx sdk.Context, keeper Keeper, msg MsgSendToEth) (*sdk.Result, error) {
-	// TODO add this transcation to the Peggy Tx Pool
-	return &sdk.Result{}, nil
+	txID, err := keeper.AddToOutgoingPool(ctx, msg.Sender, msg.DestAddress, msg.Amount, msg.BridgeFee)
+	if err != nil {
+		return nil, err
+	}
+	return &sdk.Result{
+		Data: sdk.Uint64ToBigEndian(txID),
+	}, nil
 }
 
 func handleMsgRequestBatch(ctx sdk.Context, keeper Keeper, msg MsgRequestBatch) (*sdk.Result, error) {
