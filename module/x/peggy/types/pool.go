@@ -1,16 +1,20 @@
 package types
 
 import (
+	"fmt"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/tendermint/tendermint/crypto/tmhash"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 type OutgoingTx struct {
 	Sender      sdk.AccAddress `json:"sender"`
 	DestAddress string         `json:"dest_address"`
-	Amount      TransferCoin   `json:"send"`
-	BridgeFee   TransferCoin   `json:"bridge_fee"`
+	Amount      sdk.Coin       `json:"send"`
+	BridgeFee   sdk.Coin       `json:"bridge_fee"`
 	//BridgeContractAddress string         `json:"bridge_contract_address"` // todo: do we need this?
 }
 
@@ -20,26 +24,13 @@ type BridgedDenominator struct {
 	TokenID               string
 }
 
-// TransferCoin is an outgoing token
-type TransferCoin struct {
-	Denom  string
-	Amount uint64
-}
-
-func NewTransferCoin(denom string, amount uint64) TransferCoin {
-	return TransferCoin{Denom: denom, Amount: amount}
-}
-
-func AsTransferCoin(denominator BridgedDenominator, voucher sdk.Coin) TransferCoin {
-	assertPeggyVoucher(voucher)
-	return NewTransferCoin(denominator.TokenID, voucher.Amount.Uint64())
-}
-
 const (
 	VoucherDenomPrefix = "peggy"
 	DenomSeparator     = "" // todo: only a-z0-9 supported
 	//DenomSeparator     = "/"  // todo: not allowed in this versions sdk coin demon
-	VoucherDenomLen = 15 // todo: cut to 15 to match this versions sdk coin demon
+	VoucherDenomLen  = 15 // todo: cut to 15 to match this versions sdk coin demon
+	voucherPrefixLen = len(VoucherDenomPrefix + DenomSeparator)
+
 	//hashLen            = 64
 	//separatorLen       = len(DenomSeparator)
 	//prefixLen          = len(VoucherDenomPrefix)
@@ -47,12 +38,36 @@ const (
 )
 
 func assertPeggyVoucher(s sdk.Coin) {
-	if len(s.Denom) != VoucherDenomLen || !strings.HasPrefix(s.Denom, VoucherDenomPrefix) {
+	if !IsVoucherDenom(s.Denom) {
 		panic("invalid denom type")
 	}
 	if s.Amount.IsNegative() || !s.Amount.IsUint64() {
 		panic("invalid amount type")
 	}
+}
+
+type VoucherDenom string
+
+func NewVoucherDenom(contractAddr, token string) VoucherDenom {
+	denomTrace := fmt.Sprintf("%s/%s/", contractAddr, token)
+	var hash tmbytes.HexBytes = tmhash.Sum([]byte(denomTrace))
+	simpleVoucherDenom := VoucherDenomPrefix + DenomSeparator + hash.String()
+	sdkVersionHackDenom := strings.ToLower(simpleVoucherDenom[0:15]) // todo: up to 15 chars (lowercase) allowed in this sdk version only
+	return VoucherDenom(sdkVersionHackDenom)
+}
+
+func AsVoucherDenom(s string) (VoucherDenom, error) {
+	if !IsVoucherDenom(s) {
+		return "", sdkerrors.Wrap(ErrInvalid, "not a voucher denom")
+	}
+	return VoucherDenom(s), nil
+}
+func (d VoucherDenom) Unprefixed() string {
+	return string(d[voucherPrefixLen:])
+}
+
+func IsVoucherDenom(denom string) bool {
+	return len(denom) == VoucherDenomLen && strings.HasPrefix(denom, VoucherDenomPrefix)
 }
 
 // IDSet is a collection of DB keys

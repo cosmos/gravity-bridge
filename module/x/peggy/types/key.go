@@ -31,7 +31,9 @@ var (
 	DenomiatorPrefix            = []byte{0x8}
 	SecondIndexOutgoingTXFeeKey = []byte{0x9}
 
-	KeyLastTXPoolID = append(SequenceKeyPrefix, []byte("lastCodeId")...)
+	// sequence keys
+	KeyLastTXPoolID        = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
+	KeyLastOutgoingBatchID = append(SequenceKeyPrefix, []byte("lastBatchId")...)
 )
 
 func GetEthAddressKey(validator sdk.AccAddress) []byte {
@@ -61,8 +63,9 @@ func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
 
 	r := make([]byte, 1+VoucherDenomLen+8)
 	copy(r[0:], SecondIndexOutgoingTXFeeKey)
-	copy(r[len(SecondIndexOutgoingTXFeeKey):], fee.Denom)
-	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(fee.Denom):], sdk.Uint64ToBigEndian(fee.Amount.Uint64()))
+	voucherDenom, _ := AsVoucherDenom(fee.Denom)
+	copy(r[len(SecondIndexOutgoingTXFeeKey):], voucherDenom.Unprefixed())
+	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(voucherDenom.Unprefixed()):], sdk.Uint64ToBigEndian(fee.Amount.Uint64()))
 	return r
 }
 

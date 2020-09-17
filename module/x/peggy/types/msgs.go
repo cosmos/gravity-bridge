@@ -235,7 +235,7 @@ func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
 // -------------
 type MsgRequestBatch struct {
 	Requester sdk.AccAddress `json:"requester"`
-	Denom     string         `json:"denom"`
+	Denom     VoucherDenom   `json:"denom"`
 }
 
 func NewMsgRequestBatch(requester sdk.AccAddress) MsgRequestBatch {

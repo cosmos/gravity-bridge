@@ -81,7 +81,7 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 		auth.ProtoBaseAccount, // prototype
 	)
 
-	// this is also used to initialize module accounts (so nil is meaningful here)
+	// this is also used to initialize module accounts for all the map keys
 	maccPerms := map[string][]string{
 		auth.FeeCollectorName:     nil,
 		distribution.ModuleName:   nil,

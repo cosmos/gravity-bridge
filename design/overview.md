@@ -47,6 +47,8 @@ Key concepts that we mention below will be defined here:
 - `Peggy ID` - This is a random 32 byte value required to be included in all Peggy signatures for a particular contract instance. It is passed into the contract constructor on Ethereum and used to prevent signature reuse when contracts may share a validator set or subsets of a validator set. This is also set by a governance vote _before_ MsgProposePeggyContract can be sent.
 - `Peggy contract code hash` - This is the code hash of a known good version of the Peggy contract solidity code. It will be used to verify exactly which version of the bridge will be deployed.
 - `Start Threshold` - This is the percentage of total voting power that must be online and participating in Peggy operations before a bridge can start operating.
+- `Voucher` - represent a bridged ETH token on the Cosmos side. Their denom is has a `peggy` prefix and a hash that is build from contract address and contract token. The denom is considered unique within the system.
+- `Counterpart` - to a `Voucher` is the locked ETH token in the contract
 - `Claim` - an Ethereum event signed and submitted to cosmos by a single `Orchestrator` instance 
 - `Attestation` - aggregate of claims that eventually becomes `observed` by all orchestrators
 

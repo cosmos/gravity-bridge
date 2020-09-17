@@ -110,7 +110,13 @@ func handleMsgSendToEth(ctx sdk.Context, keeper Keeper, msg MsgSendToEth) (*sdk.
 func handleMsgRequestBatch(ctx sdk.Context, keeper Keeper, msg MsgRequestBatch) (*sdk.Result, error) {
 	// TODO perform the batch creation process here, including pulling transactions out of
 	// the Peggy Tx Pool and bundling them into transactions
-	return &sdk.Result{}, nil
+	batchID, err := keeper.BuildOutgoingTXBatch(ctx, msg.Denom, OutgoingTxBatchSize)
+	if err != nil {
+		return nil, err
+	}
+	return &sdk.Result{
+		Data: sdk.Uint64ToBigEndian(batchID),
+	}, nil
 }
 
 func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) (*sdk.Result, error) {
