@@ -21,7 +21,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 		anyETHAddr                        = types.NewEthereumAddress("any-address")
 		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
 	)
-	k, ctx := keeper.CreateTestEnv(t)
+	k, ctx, _ := keeper.CreateTestEnv(t)
 	k.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
 	h := NewHandler(k)
 

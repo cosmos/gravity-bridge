@@ -32,7 +32,7 @@ func TestBatches(t *testing.T) {
 	require.NoError(t, err)
 
 	// store counterpart
-	k.SetCounterpartDenominator(ctx, myBridgeContractAddr, myETHToken)
+	k.StoreCounterpartDenominator(ctx, myBridgeContractAddr, myETHToken)
 
 	// add some TX to the pool
 	for i, v := range []int64{2, 3, 2, 1} {
@@ -48,8 +48,8 @@ func TestBatches(t *testing.T) {
 	t.Logf("___ response: %#v", batchID)
 
 	// then batch is persisted
-	gotBatch, err := k.GetOutgoingTXBatch(ctx, batchID)
-	require.NoError(t, err)
+	gotBatch := k.GetOutgoingTXBatch(ctx, batchID)
+	require.NotNil(t, gotBatch)
 
 	expBatch := types.OutgoingTxBatch{
 		Elements: []types.OutgoingTransferTx{
@@ -77,7 +77,7 @@ func TestBatches(t *testing.T) {
 	}
 	assert.Equal(t, expBatch, *gotBatch)
 
-	// and verify remaining unbatched Tx in the pool
+	// and verify remaining available Tx in the pool
 	var gotUnbatchedTx []types.OutgoingTx
 	err = k.IterateOutgoingPoolByFee(ctx, voucherDenom, func(_ uint64, tx types.OutgoingTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
@@ -106,8 +106,8 @@ func TestBatches(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	gotBatch, err = k.GetOutgoingTXBatch(ctx, batchID)
-	require.NoError(t, err)
+	gotBatch = k.GetOutgoingTXBatch(ctx, batchID)
+	require.NotNil(t, gotBatch)
 	assert.Equal(t, types.BatchStatusCancelled, gotBatch.BatchStatus)
 
 	// and all TX added back to unbatched pool

@@ -24,11 +24,10 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(EthereumBridgeDepositClaim{}, "peggy/EthereumBridgeDepositClaim", nil)
 	cdc.RegisterConcrete(EthereumBridgeWithdrawalBatchClaim{}, "peggy/EthereumBridgeWithdrawalBatchClaim", nil)
 	cdc.RegisterConcrete(EthereumBridgeMultiSigUpdateClaim{}, "peggy/EthereumBridgeMultiSigUpdateClaim", nil)
-
-	cdc.RegisterConcrete(OutgoingTx{}, "peggy/OutgoingTx", nil)
-	cdc.RegisterConcrete(BridgedDenominator{}, "peggy/BridgedDenominator", nil)
-	cdc.RegisterConcrete(IDSet{}, "peggy/IDSet", nil)
 	cdc.RegisterConcrete(OutgoingTxBatch{}, "peggy/OutgoingTxBatch", nil)
 	cdc.RegisterConcrete(OutgoingTransferTx{}, "peggy/OutgoingTransferTx", nil)
 	cdc.RegisterConcrete(TransferCoin{}, "peggy/TransferCoin", nil)
+
+	cdc.RegisterConcrete(BridgedDenominator{}, "peggy/BridgedDenominator", nil)
+	cdc.RegisterConcrete(IDSet{}, "peggy/IDSet", nil)
 }

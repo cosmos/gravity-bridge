@@ -5,10 +5,19 @@ import (
 	"math/big"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 type Nonce []byte
+
+func NonceFromUint64(s uint64) Nonce {
+	return sdk.Uint64ToBigEndian(s)
+}
+
+func (n Nonce) String() string {
+	return string(n)
+}
 
 type AttestationCertainty uint8
 
@@ -68,7 +77,7 @@ func (t AttestationTally) ThresholdsReached() bool {
 
 func (a *Attestation) AddVote(now time.Time, power uint64) error {
 	if a.Status != ProcessStatusInit {
-		return sdkerrors.Wrapf(ErrInvalidState, "%d", a.Status) // no status to string impl, yet
+		return sdkerrors.Wrapf(ErrInvalid, "%d", a.Status) // no status to string impl, yet
 	}
 	if now.After(a.ConfirmationEndTime) {
 		return ErrTimeout

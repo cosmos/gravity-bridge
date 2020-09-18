@@ -165,7 +165,7 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 		GovKeeper:     govKeeper,
 		BankKeeper:    bankKeeper,
 	}
-	return NewKeeper(cdc, peggyKey, stakingKeeper, supplyKeeper, accountKeeper), ctx, keepers
+	return NewKeeper(cdc, peggyKey, stakingKeeper, supplyKeeper), ctx, keepers
 }
 
 func MakeTestCodec() *codec.Codec {

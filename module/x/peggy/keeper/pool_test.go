@@ -30,7 +30,7 @@ func TestAddToOutgoingPool(t *testing.T) {
 	require.NoError(t, err)
 
 	// store counterpart
-	k.SetCounterpartDenominator(ctx, myBridgeContractAddr, myETHToken)
+	k.StoreCounterpartDenominator(ctx, myBridgeContractAddr, myETHToken)
 
 	// when
 	for i, v := range []int64{2, 3, 2, 1} {

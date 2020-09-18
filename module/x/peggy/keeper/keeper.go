@@ -16,9 +16,8 @@ type Keeper struct {
 
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
-	cdc           *codec.Codec // The wire codec for binary encoding/decoding.
-	supplyKeeper  SupplyKeeper
-	accountKeeper AccountKeeper
+	cdc          *codec.Codec // The wire codec for binary encoding/decoding.
+	supplyKeeper SupplyKeeper
 
 	AttestationHandler interface {
 		Handle(sdk.Context, types.Attestation) error
@@ -27,13 +26,12 @@ type Keeper struct {
 
 // NewKeeper
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakingKeeper types.StakingKeeper,
-	supplyKeeper SupplyKeeper, accountKeeper AccountKeeper) Keeper {
+	supplyKeeper SupplyKeeper) Keeper {
 	k := Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
 		StakingKeeper: stakingKeeper,
 		supplyKeeper:  supplyKeeper,
-		accountKeeper: accountKeeper,
 	}
 	k.AttestationHandler = AttestationHandler{keeper: k}
 	return k

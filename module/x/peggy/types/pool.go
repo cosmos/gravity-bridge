@@ -10,6 +10,7 @@ import (
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
+// OutgoingTx is a withdrawal on the bridged contract
 type OutgoingTx struct {
 	Sender      sdk.AccAddress `json:"sender"`
 	DestAddress string         `json:"dest_address"`
@@ -18,6 +19,7 @@ type OutgoingTx struct {
 	//BridgeContractAddress string         `json:"bridge_contract_address"` // todo: do we need this?
 }
 
+// BridgedDenominator contains bridged token details
 type BridgedDenominator struct {
 	//ChainID         string
 	BridgeContractAddress string
@@ -46,6 +48,7 @@ func assertPeggyVoucher(s sdk.Coin) {
 	}
 }
 
+// VoucherDenom is a unique denominator and identifier for a bridged token.
 type VoucherDenom string
 
 func NewVoucherDenom(contractAddr, token string) VoucherDenom {
@@ -56,6 +59,7 @@ func NewVoucherDenom(contractAddr, token string) VoucherDenom {
 	return VoucherDenom(sdkVersionHackDenom)
 }
 
+// AsVoucherDenom type conversion with `IsVoucherDenom` check.
 func AsVoucherDenom(s string) (VoucherDenom, error) {
 	if !IsVoucherDenom(s) {
 		return "", sdkerrors.Wrap(ErrInvalid, "not a voucher denom")
@@ -66,6 +70,7 @@ func (d VoucherDenom) Unprefixed() string {
 	return string(d[voucherPrefixLen:])
 }
 
+// IsVoucherDenom verifies the given string matches the peggy voucher conditions
 func IsVoucherDenom(denom string) bool {
 	return len(denom) == VoucherDenomLen && strings.HasPrefix(denom, VoucherDenomPrefix)
 }

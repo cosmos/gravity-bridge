@@ -206,12 +206,23 @@ func (msg MsgSendToEth) Type() string { return "send_to_eth" }
 func (msg MsgSendToEth) ValidateBasic() error {
 	// fee and send must be of the same denom
 	if msg.Amount.Denom != msg.BridgeFee.Denom {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("Fee and Amount must be the same type!"))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee and amount must be the same type")
+	}
+	if !IsVoucherDenom(msg.Amount.Denom) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "amount is not a voucher type")
+	}
+	if !IsVoucherDenom(msg.BridgeFee.Denom) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee is not a voucher type")
+	}
+	if !msg.Amount.IsValid() || msg.Amount.IsZero() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "amount")
+	}
+	if !msg.BridgeFee.IsValid() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee")
 	}
 	// TODO validate eth address
 	// TODO for demo get single allowed demon from the store
 	// TODO validate fee is sufficient, fixed fee to start
-
 	return nil
 }
 

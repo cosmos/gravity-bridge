@@ -14,8 +14,28 @@ Happy path implementations
 
 A good start to follow the process would be the `x/peggy/handler_test.go` file
 
+### Outgoing TX Pool
+#### Features
+* Unique denominator for peggy vouchers in cosmos (🚧  cut to 15 chars and without a separator due to sdk limitations in v0.38.4)
+* Voucher burning 🔥 (minting in test ⛏️ )
+* Store/ resolve bridged ETH denominator and contract
+* Persistent transaction pool
+* Transactions sorted by fees (on a second index)
+* Extended test setup
 
-### Not covered/ implemented
+#### Assumptions
+* We have only 1 chainID and 1 ETH contract
+
+### Bundle Outgoing TX into Batches
+#### Features
+* `OutgoingTxBatch` type with `OutgoingTransferTx` and `TransferCoin`
+* Logic to build batch from pending TXs based on fee desc order
+* Logic to cancel a batch and revert TXs back to pending pool
+* Incremental and unique IDs for batches to be used for `nonces`
+* `VoucherDenom` as first class type 
+
+
+## Not covered/ implemented
 - [ ] unhappy cases
 - [ ] proper unit + integration tests
 - [ ] message validation

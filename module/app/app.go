@@ -141,7 +141,6 @@ type NewApp struct {
 // verify app interface at compile time
 var _ simapp.App = (*NewApp)(nil)
 
-// NewnameserviceApp is a constructor function for nameserviceApp
 func NewInitApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
 	invCheckPeriod uint, skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp),
@@ -283,7 +282,7 @@ func NewInitApp(
 		),
 	)
 
-	app.peggyKeeper = peggy.NewKeeper(app.cdc, keys[peggy.StoreKey], stakingKeeper, app.supplyKeeper, app.accountKeeper)
+	app.peggyKeeper = peggy.NewKeeper(app.cdc, keys[peggy.StoreKey], stakingKeeper, app.supplyKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

@@ -6,15 +6,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const (
-	EventTypeObservation        = "observation"
-	AttributeKeyAttestationID   = "attestation_id"
-	AttributeKeyAttestationType = "attestation_type"
-	AttributeKeyContract        = "bridge_contract"
-	AttributeKeyNonce           = "nonce"
-	AttributeKeyBridgeChainID   = "bridge_chain_id"
-)
-
 // AddClaim starts the following process chain:
 //  - persists the claim
 //  - find or opens an attestation
@@ -45,14 +36,13 @@ func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types
 	k.storeAttestation(ctx, att)
 
 	observationEvent := sdk.NewEvent(
-		EventTypeObservation,
+		types.EventTypeObservation,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(AttributeKeyAttestationType, string(att.ClaimType)),
-		sdk.NewAttribute(AttributeKeyContract, types.BridgeContractAddress.String()),
-		sdk.NewAttribute(AttributeKeyBridgeChainID, types.BridgeContractChainID),
-		sdk.NewAttribute(AttributeKeyAttestationID, string(att.ID())), // todo: serialize with hex/ base64 ?
-		sdk.NewAttribute(AttributeKeyNonce, string(nonce)),            // todo: serialize with hex/ base64 ?
-
+		sdk.NewAttribute(types.AttributeKeyAttestationType, string(att.ClaimType)),
+		sdk.NewAttribute(types.AttributeKeyContract, types.BridgeContractAddress.String()),
+		sdk.NewAttribute(types.AttributeKeyBridgeChainID, types.BridgeContractChainID),
+		sdk.NewAttribute(types.AttributeKeyAttestationID, string(att.ID())), // todo: serialize with hex/ base64 ?
+		sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
 	)
 	ctx.EventManager().EmitEvent(observationEvent)
 	return att, nil
@@ -121,7 +111,7 @@ func (k Keeper) GetAttestation(ctx sdk.Context, claimType types.ClaimType, nonce
 	store := ctx.KVStore(k.storeKey)
 	aKey := types.GetAttestationKey(claimType, nonce)
 	bz := store.Get(aKey)
-	if bz == nil {
+	if len(bz) == 0 {
 		return nil
 	}
 	var att types.Attestation
