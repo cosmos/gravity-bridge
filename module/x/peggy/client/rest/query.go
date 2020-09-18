@@ -39,8 +39,6 @@ func getValsetRequestHandler(cliCtx context.CLIContext, storeName string) http.H
 			return
 		}
 
-		// why doesn't this cliCtx update it's height on it's own?
-		// looks like the sdk uses client context TODO investigate
 		var out types.Valset
 		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
