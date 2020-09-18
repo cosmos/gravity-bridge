@@ -43,22 +43,20 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper Keeper, msg MsgCreateEth
 	// TODO:
 	// auth EthereumChainID whitelisted
 	// auth bridge contract address whitelisted
+	ctx.Logger().Info("+++ TODO: implement chain id + contract address authorization")
 	if !bytes.Equal(msg.BridgeContractAddress[:], types.BridgeContractAddress[:]) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid bridge contract address")
 	}
-	// auth sender in current validator set
 
+	// auth sender in current validator set
 	for _, c := range msg.Claims {
-		// todo: use contract as context (and prefix store) if we support multiple contracts
 		var (
-			validator sdk.ValAddress = sdk.ValAddress(msg.Orchestrator) // TODO: impl find validator key for orchestrator
+			validator = sdk.ValAddress(msg.Orchestrator) // TODO: impl find validator key for orchestrator
 		)
-		if err := keeper.AddClaim(ctx, c.GetType(), c.GetNonce(), validator); err != nil {
+		if _, err := keeper.AddClaim(ctx, c.GetType(), c.GetNonce(), validator); err != nil {
 			return nil, sdkerrors.Wrap(err, "create attestation")
 		}
 	}
-	// todo: expose events
-
 	return &sdk.Result{}, nil
 }
 

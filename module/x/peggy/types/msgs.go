@@ -397,17 +397,17 @@ func (msg MsgEthDeposit) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Validator}
 }
 
-type ClaimType byte
+// ClaimType is the cosmos type of an event from the counterpart chain that can be handled
+type ClaimType string
 
-const ( // fix size constants
-	ClaimTypeEthereumBridgeDeposit         ClaimType = 0x1
-	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = 0x2
-	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = 0x3
+const (
+	ClaimTypeEthereumBridgeDeposit         ClaimType = "BridgeDeposit"
+	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = "BridgeWithdrawalBatch"
+	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = "BridgeMultiSigUpdate"
 )
-const ClaimTypeLen = 1
 
 func (c ClaimType) Bytes() []byte {
-	return []byte{byte(c)}
+	return []byte(c)
 }
 
 type EthereumClaim interface {
@@ -422,6 +422,7 @@ var (
 	_ EthereumClaim = EthereumBridgeMultiSigUpdateClaim{}
 )
 
+// EthereumBridgeDepositClaim claims that a token was deposited on the bridge contract.
 type EthereumBridgeDepositClaim struct {
 	Nonce          []byte `json:"nonce" yaml:"nonce"`
 	ERC20Token     ERC20Token
@@ -442,14 +443,7 @@ func (e EthereumBridgeDepositClaim) ValidateBasic() error {
 	return nil
 }
 
-// todo: This is not needed with the batch withdrawal
-//type EthereumBridgeWithdrawalClaim struct {
-//	Nonce            int `json:"nonce" yaml:"nonce"`
-//	ERC20Token       ERC20Token
-//	EthereumReceiver EthereumAddress
-//	CosmosSender     sdk.AccAddress
-//}
-
+// EthereumBridgeWithdrawalBatchClaim claims that a batch of withdrawal operations on the bridge contract was executed.
 type EthereumBridgeWithdrawalBatchClaim struct {
 	Nonce []byte `json:"nonce" yaml:"nonce"`
 }
@@ -467,6 +461,7 @@ func (e EthereumBridgeWithdrawalBatchClaim) ValidateBasic() error {
 	return nil
 }
 
+// EthereumBridgeMultiSigUpdateClaim claims that the multisig set was updated on the bridge contract.
 type EthereumBridgeMultiSigUpdateClaim struct {
 	Nonce []byte `json:"nonce" yaml:"nonce"`
 }
@@ -492,6 +487,7 @@ var (
 	_ sdk.Msg = &MsgCreateEthereumClaims{}
 )
 
+// MsgCreateEthereumClaims submits claims to the cosmos side. No duplicates allowed within the set.
 type MsgCreateEthereumClaims struct {
 	EthereumChainID       string // todo: revisit type. can be int/ string/ ?
 	BridgeContractAddress EthereumAddress

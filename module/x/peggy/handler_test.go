@@ -43,12 +43,13 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	_, err := h(ctx, msg)
 	// then
 	require.NoError(t, err)
-	// and no
+	// and claim persisted
 	claimFound := k.HasClaim(ctx, types.ClaimTypeEthereumBridgeDeposit, myNonce, myValAddr)
 	assert.True(t, claimFound)
 	// and attestation persisted
 	a := k.GetAttestation(ctx, types.ClaimTypeEthereumBridgeDeposit, myNonce)
 	require.NotNil(t, a)
+
 	exp := types.Attestation{
 		ClaimType:     types.ClaimTypeEthereumBridgeDeposit,
 		Nonce:         myNonce,
