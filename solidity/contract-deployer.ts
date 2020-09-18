@@ -75,7 +75,7 @@ async function deploy() {
     // todo generate this randomly at deployment time that way we can avoid
     // anything but intentional conflicts
     "0x6c00000000000000000000000000000000000000000000000000000000000000",
-    6666,
+    2834678415,
     latestValset.result.value.eth_addresses,
     latestValset.result.value.powers
   )) as Peggy;
