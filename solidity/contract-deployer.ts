@@ -37,9 +37,9 @@ type ValsetResponse = {
   result: ValsetResult;
 };
 type Valset = {
-  EthAddresses: string[];
-  Powers: number[];
-  Nonce: number;
+  eth_addresses: string[];
+  powers: number[];
+  nonce: number;
 };
 async function deploy() {
   const provider = await new ethers.providers.JsonRpcProvider(args["eth-node"]);
@@ -69,15 +69,15 @@ async function deploy() {
   const latestValset = await getLatestValset(args.peggyId);
 
   console.log("Deploying peggy contract using valset ", latestValset);
-  console.log(latestValset.result.value.Powers);
+  console.log(latestValset.result.value.powers);
   const peggy = (await factory.deploy(
     contract,
     // todo generate this randomly at deployment time that way we can avoid
     // anything but intentional conflicts
     "0x6c00000000000000000000000000000000000000000000000000000000000000",
     6666,
-    latestValset.result.value.EthAddresses,
-    latestValset.result.value.Powers
+    latestValset.result.value.eth_addresses,
+    latestValset.result.value.powers
   )) as Peggy;
 
   await peggy.deployed();
@@ -92,6 +92,8 @@ function getContractArtifacts(path: string): { bytecode: string; abi: string } {
 async function getLatestValset(peggyId: string): Promise<ValsetResponse> {
   let request_string = args["cosmos-node"] + "/peggy/current_valset";
   let response = await axios.get(request_string);
+  let string_response: string = await axios.get(request_string);
+  console.log(string_response);
   return response.data;
 }
 

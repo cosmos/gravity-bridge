@@ -99,18 +99,17 @@ async fn main() {
         .expect("Failed to send valset request!")
         .height;
 
-    let valset = contact
-        .get_peggy_valset_request(request_block)
-        .await
-        .expect("Failed to get valset!");
-
     for (c_key, e_key) in keys.iter() {
+        let valset = contact
+            .oldest_unsigned_valset(c_key.to_public_key().unwrap().to_address())
+            .await
+            .expect("Failed to get valset!");
         // send in valset confirmation for all validators
         let res = contact
             .send_valset_confirm(
                 *e_key,
                 fee.clone(),
-                valset.result.clone(),
+                valset.result,
                 *c_key,
                 "foo".to_string(),
                 None,
@@ -121,10 +120,6 @@ async fn main() {
         res.expect("Failed to send valset confirm!");
     }
 
-    /// TODO valset confirm goes here
-    // now we can deploy the test peggy contract, this must come after the
-    // first valset is created because the constructor requires this first
-    // valset to be submitted.
     let output = Command::new("npx")
         .args(&[
             "ts-node",
@@ -144,7 +139,5 @@ async fn main() {
     println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     // TODO
-    // valset-request-confirm
-    // submit-valset
-    // get current valset / specific valset
+    // relay valset
 }

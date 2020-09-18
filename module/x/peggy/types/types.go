@@ -11,9 +11,9 @@ import (
 )
 
 type Valset struct {
-	Nonce        int64 // todo (alex): should be of type Nonce
-	Powers       []int64
-	EthAddresses []string
+	Nonce        int64    `json:"nonce"` // todo (alex): should be of type Nonce
+	Powers       []int64  `json:"powers"`
+	EthAddresses []string `json:"eth_addresses"`
 }
 
 func (v Valset) GetCheckpoint() []byte {

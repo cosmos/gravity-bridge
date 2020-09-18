@@ -5,12 +5,12 @@ authors = ["Justin Kilpatrick <justin@althea.net>"]
 edition = "2018"
 
 [dependencies]
-contact = {git = "https://github.com/althea-net/contact", rev = "f711eed7268abeee85d3656fabc4d66244ba769c"}
-deep_space = {git = "https://github.com/althea-net/deep_space/", rev = "2a925e483c05a2d9a52d12327528b9e0a54c8f81", features = ["peggy", "key_import"]}
+contact = {git = "https://github.com/althea-net/contact", rev = "0e7945126d20e7fa2988c2e9da5e296168d72312"}
+deep_space = {git = "https://github.com/althea-net/deep_space/", rev = "6cd076c1adaf13ff74c4e1dc0fcea2b402cf4d09", features = ["peggy", "key_import"]}
 # deep_space = {path = "../../deep_space"}
 # contact = {path = "../../contact"}
 serde_derive = "1.0"
-clarity = "0.1"
+clarity = "0.1.27"
 docopt = "1"
 serde = "1.0"
 actix-web = {version = "2.0", features=["openssl"]}
