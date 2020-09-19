@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 )
@@ -18,8 +19,8 @@ const DefaultParamspace = ModuleName
 const AttestationPeriod = 24 * time.Hour // TODO: value????
 // voting: threshold >2/3 of validator power AND > 1/2 of validator count?
 var (
-	AttestationVotesCountThreshold = Fraction{1, 2}
-	AttestationVotesPowerThreshold = Fraction{2, 3}
+	AttestationVotesCountThreshold = sdk.NewUint(50)
+	AttestationVotesPowerThreshold = sdk.NewUint(66)
 	BridgeContractAddress          = NewEthereumAddress("")
 	BridgeContractChainID          = "0" // todo: revisit
 )

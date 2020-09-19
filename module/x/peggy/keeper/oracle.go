@@ -72,6 +72,11 @@ func (k Keeper) storeClaim(ctx sdk.Context, claimType types.ClaimType, nonce typ
 	return nil
 }
 
+var (
+	hundred = sdk.NewUint(100)
+	zero    = sdk.NewUint(0)
+)
+
 // tryAttestation loads an existing attestation for the given claim type and nonce and adds a vote.
 // When none exists yet, a new attestation is instantiated (but not persisted here)
 func (k Keeper) tryAttestation(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, power uint64) (*types.Attestation, error) {
@@ -87,8 +92,9 @@ func (k Keeper) tryAttestation(ctx sdk.Context, claimType types.ClaimType, nonce
 			Status:        types.ProcessStatusInit,
 			ProcessResult: types.ProcessResultUnknown,
 			Tally: types.AttestationTally{
-				RequiredVotesPower: types.AttestationVotesPowerThreshold.Mul(power.Uint64()),
-				RequiredVotesCount: types.AttestationVotesCountThreshold.Mul(uint64(count)),
+				TotalVotesPower:    zero,
+				RequiredVotesPower: types.AttestationVotesPowerThreshold.MulUint64(power.Uint64()).Quo(hundred),
+				RequiredVotesCount: types.AttestationVotesCountThreshold.MulUint64(uint64(count)).Quo(hundred).Uint64(),
 			},
 			SubmitTime:          now,
 			ConfirmationEndTime: now.Add(types.AttestationPeriod),
@@ -106,7 +112,7 @@ func (k Keeper) storeAttestation(ctx sdk.Context, att *types.Attestation) {
 	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
 }
 
-// GetAttestation loads an attestion for the given claim type and nonce. Returns nil when none exists
+// GetAttestation loads an attestation for the given claim type and nonce. Returns nil when none exists
 func (k Keeper) GetAttestation(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce) *types.Attestation {
 	store := ctx.KVStore(k.storeKey)
 	aKey := types.GetAttestationKey(claimType, nonce)
@@ -123,15 +129,3 @@ func (k Keeper) HasClaim(ctx sdk.Context, claimType types.ClaimType, nonce types
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(types.GetClaimKey(claimType, nonce, validator))
 }
-
-//func (k Keeper) IterateClaims(ctx sdk.Context, cb func(key []byte, claimType types.ClaimType, nonce types.Nonce, validator sdk.ValAddress) bool) {
-//	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OracleClaimKey)
-//	iter := prefixStore.Iterator(nil, nil)
-//	for ; iter.Valid(); iter.Next() {
-//		rawKey := iter.Key()
-//		claimType, validator, nonce := types.SplitClaimKey(rawKey)
-//		if cb(rawKey, claimType, nonce, validator) {
-//			break
-//		}
-//	}
-//}

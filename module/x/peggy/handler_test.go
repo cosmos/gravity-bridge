@@ -57,9 +57,9 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 		Status:        types.ProcessStatusProcessed,
 		ProcessResult: types.ProcessResultSuccess,
 		Tally: types.AttestationTally{
-			TotalVotesPower:    100,
+			TotalVotesPower:    sdk.NewUint(100),
 			TotalVotesCount:    1,
-			RequiredVotesPower: 66,
+			RequiredVotesPower: sdk.NewUint(66),
 			RequiredVotesCount: 0,
 		},
 		SubmitTime:          myBlockTime,

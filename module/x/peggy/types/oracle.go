@@ -1,8 +1,6 @@
 package types
 
 import (
-	"fmt"
-	"math/big"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -58,20 +56,20 @@ type Attestation struct {
 }
 
 type AttestationTally struct {
-	TotalVotesPower    uint64 // can this overflow?
+	TotalVotesPower    sdk.Uint
 	TotalVotesCount    uint64
-	RequiredVotesPower uint64 // todo: revisit if the assumption is true that we can use the values from first claim timestamp
-	RequiredVotesCount uint64 // todo: revisit
+	RequiredVotesPower sdk.Uint // todo: revisit if the assumption is true that we can use the values from first claim timestamp
+	RequiredVotesCount uint64   // todo: revisit as above
 }
 
 func (t *AttestationTally) addVote(power uint64) {
 	t.TotalVotesCount += 1
-	t.TotalVotesPower += power
+	t.TotalVotesPower = t.TotalVotesPower.AddUint64(power)
 }
 
 // ThresholdsReached returns true when votes power > 66% of the validators AND total votes > 50% of the validator count
 func (t AttestationTally) ThresholdsReached() bool {
-	return t.TotalVotesPower > t.RequiredVotesPower &&
+	return t.TotalVotesPower.GT(t.RequiredVotesPower) &&
 		t.TotalVotesCount > t.RequiredVotesCount
 }
 
@@ -92,25 +90,4 @@ func (a *Attestation) AddVote(now time.Time, power uint64) error {
 // ID is the unique identifiert used in DB
 func (a *Attestation) ID() []byte {
 	return GetAttestationKey(a.ClaimType, a.Nonce)
-}
-
-// The Fraction type represents a numerator and denominator to enable higher precision thresholds in
-// the election rules. For example:
-// numerator: 1, denominator: 2 => > 50%
-// numerator: 2, denominator: 3 => > 66.666..%
-// numerator: 6273, denominator: 10000 => > 62.73%
-// Valid range of the fraction is 0.5 to 1.
-type Fraction struct {
-	// The top number in a fraction.
-	Numerator uint32
-	// The bottom number
-	Denominator uint32
-}
-
-// mul multiply
-func (f Fraction) Mul(factor uint64) uint64 {
-	a := new(big.Int).Mul(big.NewInt(int64(factor)), big.NewInt(int64(f.Numerator)))
-	r := new(big.Int).Div(a, big.NewInt(int64(f.Denominator)))
-	fmt.Printf("%d *%d / %d = %d \n", f.Numerator, factor, f.Denominator, r.Uint64())
-	return r.Uint64() // this is where rounding happens
 }
