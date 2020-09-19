@@ -1,3 +1,5 @@
+<!-- @format -->
+
 ### 1. Make tool
 
 ở thư mục gốc của project chạy
@@ -5,6 +7,14 @@
 ```
 make
 ```
+
+sau đó tạo các thêm các thư mục sau trong `cmd/ebrelayer/contract/generated/bindings/`:
+
+- BridgeBank
+- BridgeRegistry
+- CosmosBridge
+- Oracle
+- Valset
 
 ### 2. Setup cosmos chain
 
