@@ -4,7 +4,6 @@ import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Valset.sol";
 import "./CosmosBridge.sol";
 
-
 contract Oracle {
     using SafeMath for uint256;
 
@@ -126,16 +125,16 @@ contract Oracle {
             uint256 prophecyPowerThreshold
         ) = getProphecyThreshold(_prophecyID);
 
-        if (valid) {
-            completeProphecy(_prophecyID);
+        // if (valid) {
+        completeProphecy(_prophecyID);
 
-            emit LogProphecyProcessed(
-                _prophecyID,
-                prophecyPowerCurrent,
-                prophecyPowerThreshold,
-                msg.sender
-            );
-        }
+        emit LogProphecyProcessed(
+            _prophecyID,
+            prophecyPowerCurrent,
+            prophecyPowerThreshold,
+            msg.sender
+        );
+        // }
     }
 
     /*
@@ -153,10 +152,10 @@ contract Oracle {
             uint256 prophecyPowerThreshold
         ) = getProphecyThreshold(_prophecyID);
 
-        require(
-            valid,
-            "The cumulative power of signatory validators does not meet the threshold"
-        );
+        // require(
+        //     valid,
+        //     "The cumulative power of signatory validators does not meet the threshold"
+        // );
 
         // Update the BridgeClaim's status
         completeProphecy(_prophecyID);
@@ -179,7 +178,11 @@ contract Oracle {
         view
         onlyOperator
         isPending(_prophecyID)
-        returns (bool, uint256, uint256)
+        returns (
+            bool,
+            uint256,
+            uint256
+        )
     {
         require(
             cosmosBridge.isProphecyClaimActive(_prophecyID) == true,
@@ -197,7 +200,11 @@ contract Oracle {
     function getProphecyThreshold(uint256 _prophecyID)
         internal
         view
-        returns (bool, uint256, uint256)
+        returns (
+            bool,
+            uint256,
+            uint256
+        )
     {
         uint256 signedPower = 0;
         uint256 totalPower = valset.totalPower();

@@ -1,3 +1,5 @@
+/** @format */
+
 module.exports = async () => {
   /*******************************************
    *** Set up
@@ -8,7 +10,9 @@ module.exports = async () => {
 
   // Contract abstraction
   const truffleContract = require('truffle-contract');
-  const contract = truffleContract(require('../build/contracts/BridgeBank.json'));
+  const contract = truffleContract(
+    require('../build/contracts/BridgeBank.json')
+  );
 
   const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -17,15 +21,17 @@ module.exports = async () => {
    ******************************************/
   // Lock transaction default params
   const DEFAULT_COSMOS_RECIPIENT = Web3.utils.utf8ToHex(
-    'cosmos1pgkwvwezfy3qkh99hjnf35ek3znzs79mwqf48y'
+    'cosmos105takfh8wrsan3faey2gwwnkvplfdlhmuxc9z3'
   );
   const DEFAULT_ETH_DENOM = 'eth';
-  const DEFAULT_AMOUNT = '1000000000000000000';
+  const DEFAULT_AMOUNT = '1000';
 
   // Config values
-  const NETWORK_ROPSTEN = process.argv[4] === '--network' && process.argv[5] === 'ropsten';
+  const NETWORK_ROPSTEN =
+    process.argv[4] === '--network' && process.argv[5] === 'ropsten';
   const DEFAULT_PARAMS =
-    process.argv[4] === '--default' || (NETWORK_ROPSTEN && process.argv[6] === '--default');
+    process.argv[4] === '--default' ||
+    (NETWORK_ROPSTEN && process.argv[6] === '--default');
   const NUM_ARGS = process.argv.length - 4;
 
   /*******************************************
@@ -36,19 +42,27 @@ module.exports = async () => {
    ******************************************/
   if (NETWORK_ROPSTEN && DEFAULT_PARAMS) {
     if (NUM_ARGS !== 3) {
-      return console.error('Error: custom parameters are invalid on --default.');
+      return console.error(
+        'Error: custom parameters are invalid on --default.'
+      );
     }
   } else if (NETWORK_ROPSTEN) {
     if (NUM_ARGS !== 2 && NUM_ARGS !== 5) {
-      return console.error('Error: invalid number of parameters, please try again.');
+      return console.error(
+        'Error: invalid number of parameters, please try again.'
+      );
     }
   } else if (DEFAULT_PARAMS) {
     if (NUM_ARGS !== 1) {
-      return console.error('Error: custom parameters are invalid on --default.');
+      return console.error(
+        'Error: custom parameters are invalid on --default.'
+      );
     }
   } else {
     if (NUM_ARGS !== 3) {
-      return console.error('Error: must specify recipient address, token address, and amount.');
+      return console.error(
+        'Error: must specify recipient address, token address, and amount.'
+      );
     }
   }
 
@@ -106,14 +120,14 @@ module.exports = async () => {
       return instance.lock(cosmosRecipient, coinDenom, amount, {
         from: '0x8f287eA4DAD62A3A626942d149509D6457c2516C',
         value: coinDenom === NULL_ADDRESS ? amount : 0,
-        gas: 300000 // 300,000 Gwei
+        gas: 300000, // 300,000 Gwei
       });
     });
 
     console.log('Sent lock...');
 
     // Get event logs
-    const event = logs.find(e => e.event === 'LogLock');
+    const event = logs.find((e) => e.event === 'LogLock');
     console.log(event);
     // Parse event fields
     const lockEvent = {
@@ -122,7 +136,7 @@ module.exports = async () => {
       symbol: event.args._symbol,
       token: event.args._token,
       value: Number(event.args._value),
-      nonce: Number(event.args._nonce)
+      nonce: Number(event.args._nonce),
     };
 
     console.log(lockEvent);

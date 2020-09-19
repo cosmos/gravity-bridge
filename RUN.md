@@ -56,6 +56,8 @@ ebd start
 Ở thư mục gốc của thư mục chạy
 
 ```
+ebcli tx send validator $(ebcli keys show testuser -a) 10stake --yes
+
 yarn peggy:all
 ```
 
