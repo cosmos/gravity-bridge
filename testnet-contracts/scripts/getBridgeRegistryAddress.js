@@ -1,22 +1,24 @@
+/** @format */
+
 module.exports = async () => {
   /*******************************************
    *** Set up
    ******************************************/
-  require("dotenv").config();
-  const Web3 = require("web3");
-  const HDWalletProvider = require("@truffle/hdwallet-provider");
+  require('dotenv').config();
+  const Web3 = require('web3');
+  const HDWalletProvider = require('@truffle/hdwallet-provider');
 
   // Contract abstraction
-  const truffleContract = require("truffle-contract");
+  const truffleContract = require('truffle-contract');
   const contract = truffleContract(
-    require("../build/contracts/BridgeRegistry.json")
+    require('../build/contracts/BridgeRegistry.json')
   );
 
   /*******************************************
    *** Constants
    ******************************************/
   const NETWORK_ROPSTEN =
-    process.argv[4] === "--network" && process.argv[5] === "ropsten";
+    process.argv[4] === '--network' && process.argv[5] === 'ropsten';
 
   /*******************************************
    *** Web3 provider
@@ -26,7 +28,7 @@ module.exports = async () => {
   if (NETWORK_ROPSTEN) {
     provider = new HDWalletProvider(
       process.env.MNEMONIC,
-      "https://ropsten.infura.io/v3/".concat(process.env.INFURA_PROJECT_ID)
+      'https://ropsten.infura.io/v3/'.concat(process.env.INFURA_PROJECT_ID)
     );
   } else {
     provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
@@ -35,15 +37,17 @@ module.exports = async () => {
   const web3 = new Web3(provider);
   contract.setProvider(web3.currentProvider);
   try {
-  /*******************************************
-   *** Contract interaction
-   ******************************************/
-  const address = await contract.deployed().then(function(instance) {
-    return instance.address;
-  });
+    /*******************************************
+     *** Contract interaction
+     ******************************************/
+    const address = await contract.deployed().then(function (instance) {
+      return instance.address;
+    });
 
-  return console.log("BridgeRegistry deployed contract address: ", address);
-} catch (error) {
-  console.error({error})
-}
+    console.log('BridgeRegistry deployed contract address: ', address);
+    process.exit(0);
+  } catch (error) {
+    console.error({ error });
+    process.exit(1);
+  }
 };

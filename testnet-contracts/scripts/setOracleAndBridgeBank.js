@@ -1,20 +1,22 @@
+/** @format */
+
 module.exports = async () => {
   /*******************************************
    *** Set up
    ******************************************/
-  const Web3 = require("web3");
-  const HDWalletProvider = require("@truffle/hdwallet-provider");
+  const Web3 = require('web3');
+  const HDWalletProvider = require('@truffle/hdwallet-provider');
 
   // Contract abstraction
-  const truffleContract = require("truffle-contract");
+  const truffleContract = require('truffle-contract');
   const cosmosBridgeContract = truffleContract(
-    require("../build/contracts/CosmosBridge.json")
+    require('../build/contracts/CosmosBridge.json')
   );
   const oracleContract = truffleContract(
-    require("../build/contracts/Oracle.json")
+    require('../build/contracts/Oracle.json')
   );
   const bridgeBankContract = truffleContract(
-    require("../build/contracts/BridgeBank.json")
+    require('../build/contracts/BridgeBank.json')
   );
 
   /*******************************************
@@ -22,7 +24,7 @@ module.exports = async () => {
    ******************************************/
   // Config values
   const NETWORK_ROPSTEN =
-    process.argv[4] === "--network" && process.argv[5] === "ropsten";
+    process.argv[4] === '--network' && process.argv[5] === 'ropsten';
 
   /*******************************************
    *** Web3 provider
@@ -32,7 +34,7 @@ module.exports = async () => {
   if (NETWORK_ROPSTEN) {
     provider = new HDWalletProvider(
       process.env.MNEMONIC,
-      "https://ropsten.infura.io/v3/".concat(process.env.INFURA_PROJECT_ID)
+      'https://ropsten.infura.io/v3/'.concat(process.env.INFURA_PROJECT_ID)
     );
   } else {
     provider = new Web3.providers.HttpProvider(process.env.LOCAL_PROVIDER);
@@ -44,63 +46,65 @@ module.exports = async () => {
   oracleContract.setProvider(web3.currentProvider);
   bridgeBankContract.setProvider(web3.currentProvider);
   try {
+    /*******************************************
+     *** Contract interaction
+     ******************************************/
+    // Get current accounts
+    const accounts = await web3.eth.getAccounts();
 
-  /*******************************************
-   *** Contract interaction
-   ******************************************/
-  // Get current accounts
-  const accounts = await web3.eth.getAccounts();
+    // Get deployed Oracle's address
+    const oracleContractAddress = await oracleContract
+      .deployed()
+      .then(function (instance) {
+        return instance.address;
+      });
 
-  // Get deployed Oracle's address
-  const oracleContractAddress = await oracleContract
-    .deployed()
-    .then(function(instance) {
-      return instance.address;
-    });
+    // Set Oracle
+    const { logs: setOracleLogs } = await cosmosBridgeContract
+      .deployed()
+      .then(function (instance) {
+        return instance.setOracle(oracleContractAddress, {
+          from: accounts[0],
+          value: 0,
+          gas: 300000, // 300,000 Gwei
+        });
+      });
+    // Get event logs
+    const setOracleEvent = setOracleLogs.find(
+      (e) => e.event === 'LogOracleSet'
+    );
+    console.log("CosmosBridge's Oracle set:", setOracleEvent.args._oracle);
 
-  // Set Oracle
-  const { logs: setOracleLogs } = await cosmosBridgeContract
-    .deployed()
-    .then(function(instance) {
-      return instance.setOracle(oracleContractAddress, {
+    // Get deployed BridgeBank's address
+    const bridgeBankContractAddress = await bridgeBankContract
+      .deployed()
+      .then(function (instance) {
+        return instance.address;
+      });
+
+    // Set BridgeBank
+    const {
+      logs: setBridgeBankLogs,
+    } = await cosmosBridgeContract.deployed().then(function (instance) {
+      return instance.setBridgeBank(bridgeBankContractAddress, {
         from: accounts[0],
         value: 0,
-        gas: 300000 // 300,000 Gwei
+        gas: 300000, // 300,000 Gwei
       });
     });
-  // Get event logs
-  const setOracleEvent = setOracleLogs.find(e => e.event === "LogOracleSet");
-  console.log("CosmosBridge's Oracle set:", setOracleEvent.args._oracle);
 
-  // Get deployed BridgeBank's address
-  const bridgeBankContractAddress = await bridgeBankContract
-    .deployed()
-    .then(function(instance) {
-      return instance.address;
-    });
+    // Get event logs
+    const setBridgeBankEvent = setBridgeBankLogs.find(
+      (e) => e.event === 'LogBridgeBankSet'
+    );
+    console.log(
+      "CosmosBridge's BridgeBank set:",
+      setBridgeBankEvent.args._bridgeBank
+    );
 
-  // Set BridgeBank
-  const {
-    logs: setBridgeBankLogs
-  } = await cosmosBridgeContract.deployed().then(function(instance) {
-    return instance.setBridgeBank(bridgeBankContractAddress, {
-      from: accounts[0],
-      value: 0,
-      gas: 300000 // 300,000 Gwei
-    });
-  });
-
-  // Get event logs
-  const setBridgeBankEvent = setBridgeBankLogs.find(
-    e => e.event === "LogBridgeBankSet"
-  );
-  console.log(
-    "CosmosBridge's BridgeBank set:",
-    setBridgeBankEvent.args._bridgeBank
-  );
-
-  return;
-} catch (error) {
-  console.error({error})
-}
+    process.exit(0);
+  } catch (error) {
+    console.error({ error });
+    process.exit(1);
+  }
 };
