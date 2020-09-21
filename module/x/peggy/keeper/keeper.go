@@ -48,6 +48,11 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) {
 	store.Set(types.GetValsetRequestKey(nonce), k.cdc.MustMarshalBinaryBare(valset))
 }
 
+func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce uint64) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetValsetRequestKey(int64(nonce))) // todo: revisit type where nonce is used as int64
+}
+
 func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce int64) *types.Valset {
 	store := ctx.KVStore(k.storeKey)
 

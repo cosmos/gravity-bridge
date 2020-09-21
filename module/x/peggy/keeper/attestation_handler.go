@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"encoding/binary"
+
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -44,7 +46,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		}
 		a.keeper.storeBatch(ctx, batchID, *b)
 		if err := a.keeper.UpdateLastObservedBatchID(ctx, batchID); err != nil {
-			return nil
+			return err
 		}
 		// cleanup outgoing TX pool
 		for i := range b.Elements {
@@ -52,7 +54,24 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		}
 		return nil
 	case types.ClaimTypeEthereumBridgeMultiSigUpdate:
-		// todo: update nonce for "MultiSig Set"
+		height := att.Nonce.AsUint64()
+		if !a.keeper.HasValsetRequest(ctx, height) {
+			return types.ErrUnknown
+		}
+		if err := a.keeper.UpdateLastObservedMultiSigSet(ctx, height); err != nil {
+			return err
+		}
+
+		// todo: is there any cleanup for us like:
+		a.keeper.IterateValsetRequest(ctx, func(key []byte, _ types.Valset) bool {
+			id := binary.BigEndian.Uint64(key)
+			if id < height {
+				ctx.Logger().Info("TODO: let's remove valset request", "id", id)
+			}
+			// todo: also remove all confirmations < height
+			return false
+		})
+		return nil
 	default:
 		return sdkerrors.Wrapf(types.ErrDuplicate, "event type: %s", att.ClaimType)
 	}

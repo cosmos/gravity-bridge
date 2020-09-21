@@ -109,3 +109,48 @@ func TestObserveWithdrawBatch(t *testing.T) {
 	// and last observed status updated
 	assert.Equal(t, myBatchID, k.GetLastObservedBatchID(ctx))
 }
+
+func TestObserveBridgeMultiSigUpdate(t *testing.T) {
+	var (
+		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
+		myBlockHeight      uint64         = 100
+		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+	)
+
+	k, ctx, _ := CreateTestEnv(t)
+	k.StakingKeeper = NewStakingKeeperMock(myValAddr)
+
+	ctx = ctx.WithBlockTime(myBlockTime).WithBlockHeight(int64(myBlockHeight))
+	k.SetValsetRequest(ctx)
+
+	// when
+	myNonce := types.NonceFromUint64(myBlockHeight)
+	gotAttestation, err := k.AddClaim(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate, myNonce, myValAddr, nil)
+	// then
+	require.NoError(t, err)
+
+	// and claim persisted
+	claimFound := k.HasClaim(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate, myNonce, myValAddr, nil)
+	assert.True(t, claimFound)
+
+	// and expected state
+	exp := types.Attestation{
+		ClaimType:     types.ClaimTypeEthereumBridgeMultiSigUpdate,
+		Nonce:         myNonce,
+		Certainty:     types.CertaintyObserved,
+		Status:        types.ProcessStatusProcessed,
+		ProcessResult: types.ProcessResultSuccess,
+		Tally: types.AttestationTally{
+			TotalVotesPower:    sdk.NewUint(100),
+			TotalVotesCount:    1,
+			RequiredVotesPower: sdk.NewUint(66),
+			RequiredVotesCount: 0,
+		},
+		SubmitTime:          myBlockTime,
+		ConfirmationEndTime: time.Date(2020, 9, 14+1, 15, 20, 10, 0, time.UTC),
+	}
+	assert.Equal(t, exp, *gotAttestation)
+	// and last observed status updated
+	assert.Equal(t, myBlockHeight, k.GetLastObservedMultiSigSetHeight(ctx))
+}

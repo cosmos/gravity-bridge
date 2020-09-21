@@ -52,7 +52,7 @@ func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types
 func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
 	xCtx, commit := ctx.CacheContext()
 	if err := k.AttestationHandler.Handle(xCtx, *att); err != nil { // execute with a transient storage
-		// log
+		ctx.Logger().Error("attestation failed", "cause", err.Error())
 		att.ProcessResult = types.ProcessResultFailure
 	} else {
 		att.ProcessResult = types.ProcessResultSuccess

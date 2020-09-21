@@ -135,3 +135,22 @@ func (k Keeper) GetLastObservedBatchID(ctx sdk.Context) uint64 {
 	}
 	return 0
 }
+
+func (k Keeper) UpdateLastObservedMultiSigSet(ctx sdk.Context, height uint64) error {
+	oldValue := k.GetLastObservedMultiSigSetHeight(ctx)
+	if oldValue >= height {
+		return sdkerrors.Wrapf(types.ErrInvalid, "new value must be greater %d", oldValue)
+	}
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.LastObservedMultiSigSetUpdateKey, sdk.Uint64ToBigEndian(height))
+	return nil
+}
+
+func (k Keeper) GetLastObservedMultiSigSetHeight(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.LastObservedMultiSigSetUpdateKey)
+	if bz != nil {
+		return binary.BigEndian.Uint64(bz)
+	}
+	return 0
+}

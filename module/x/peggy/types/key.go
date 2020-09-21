@@ -21,16 +21,17 @@ const (
 )
 
 var (
-	EthAddressKey               = []byte{0x1}
-	ValsetRequestKey            = []byte{0x2}
-	ValsetConfirmKey            = []byte{0x3}
-	OracleClaimKey              = []byte{0x4}
-	OracleAttestationKey        = []byte{0x5}
-	OutgoingTXPoolKey           = []byte{0x6}
-	SequenceKeyPrefix           = []byte{0x7}
-	DenomiatorPrefix            = []byte{0x8}
-	SecondIndexOutgoingTXFeeKey = []byte{0x9}
-	LastObservedBatchKey        = []byte{0xa}
+	EthAddressKey                    = []byte{0x1}
+	ValsetRequestKey                 = []byte{0x2}
+	ValsetConfirmKey                 = []byte{0x3}
+	OracleClaimKey                   = []byte{0x4}
+	OracleAttestationKey             = []byte{0x5}
+	OutgoingTXPoolKey                = []byte{0x6}
+	SequenceKeyPrefix                = []byte{0x7}
+	DenomiatorPrefix                 = []byte{0x8}
+	SecondIndexOutgoingTXFeeKey      = []byte{0x9}
+	LastObservedBatchKey             = []byte{0xa}
+	LastObservedMultiSigSetUpdateKey = []byte{0xb}
 
 	// sequence keys
 	KeyLastTXPoolID        = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
