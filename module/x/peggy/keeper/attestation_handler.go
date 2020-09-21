@@ -8,14 +8,28 @@ import (
 
 // AttestationHandler processes `observed` Attestations
 type AttestationHandler struct {
-	keeper Keeper
+	keeper       Keeper
+	supplyKeeper types.SupplyKeeper
 }
 
 // Handle is the entry point for Attestation processing.
 func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error {
 	switch att.ClaimType {
 	case types.ClaimTypeEthereumBridgeDeposit:
-		// todo: mint new vouchers
+		deposit, ok := att.Details.(types.BridgeDeposit)
+		if !ok {
+			return sdkerrors.Wrapf(types.ErrInternal, "unexpected type: %T", att.Details)
+		}
+		coin := deposit.ERC20Token.AsVoucherCoin()
+		vouchers := sdk.Coins{coin}
+		err := a.supplyKeeper.MintCoins(ctx, types.ModuleName, vouchers)
+		if err != nil {
+			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", vouchers)
+		}
+		err = a.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, deposit.CosmosReceiver, vouchers)
+		if err != nil {
+			return sdkerrors.Wrap(err, "transfer vouchers")
+		}
 	case types.ClaimTypeEthereumBridgeWithdrawalBatch:
 		// todo: mark batch as successful
 	case types.ClaimTypeEthereumBridgeMultiSigUpdate:

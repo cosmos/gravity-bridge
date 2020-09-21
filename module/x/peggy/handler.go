@@ -53,7 +53,7 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper Keeper, msg MsgCreateEth
 		var (
 			validator = sdk.ValAddress(msg.Orchestrator) // TODO: impl find validator key for orchestrator
 		)
-		if _, err := keeper.AddClaim(ctx, c.GetType(), c.GetNonce(), validator); err != nil {
+		if _, err := keeper.AddClaim(ctx, c.GetType(), c.GetNonce(), validator, c.Details()); err != nil {
 			return nil, sdkerrors.Wrap(err, "create attestation")
 		}
 	}

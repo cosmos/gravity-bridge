@@ -408,15 +408,6 @@ func (msg MsgEthDeposit) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Validator}
 }
 
-// ClaimType is the cosmos type of an event from the counterpart chain that can be handled
-type ClaimType string
-
-const (
-	ClaimTypeEthereumBridgeDeposit         ClaimType = "BridgeDeposit"
-	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = "BridgeWithdrawalBatch"
-	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = "BridgeMultiSigUpdate"
-)
-
 func (c ClaimType) Bytes() []byte {
 	return []byte(c)
 }
@@ -425,6 +416,7 @@ type EthereumClaim interface {
 	GetNonce() Nonce
 	GetType() ClaimType
 	ValidateBasic() error
+	Details() AttestationDetails
 }
 
 var (
@@ -454,6 +446,14 @@ func (e EthereumBridgeDepositClaim) ValidateBasic() error {
 	return nil
 }
 
+func (e EthereumBridgeDepositClaim) Details() AttestationDetails {
+	return BridgeDeposit{
+		ERC20Token:     e.ERC20Token,
+		EthereumSender: e.EthereumSender,
+		CosmosReceiver: e.CosmosReceiver,
+	}
+}
+
 // EthereumBridgeWithdrawalBatchClaim claims that a batch of withdrawal operations on the bridge contract was executed.
 type EthereumBridgeWithdrawalBatchClaim struct {
 	Nonce []byte `json:"nonce" yaml:"nonce"`
@@ -472,6 +472,10 @@ func (e EthereumBridgeWithdrawalBatchClaim) ValidateBasic() error {
 	return nil
 }
 
+func (e EthereumBridgeWithdrawalBatchClaim) Details() AttestationDetails {
+	return nil
+}
+
 // EthereumBridgeMultiSigUpdateClaim claims that the multisig set was updated on the bridge contract.
 type EthereumBridgeMultiSigUpdateClaim struct {
 	Nonce []byte `json:"nonce" yaml:"nonce"`
@@ -487,6 +491,10 @@ func (e EthereumBridgeMultiSigUpdateClaim) GetNonce() Nonce {
 
 func (e EthereumBridgeMultiSigUpdateClaim) ValidateBasic() error {
 	// todo: implement me
+	return nil
+}
+
+func (e EthereumBridgeMultiSigUpdateClaim) Details() AttestationDetails {
 	return nil
 }
 

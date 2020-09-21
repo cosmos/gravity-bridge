@@ -30,4 +30,6 @@ func RegisterCodec(cdc *codec.Codec) {
 
 	cdc.RegisterConcrete(BridgedDenominator{}, "peggy/BridgedDenominator", nil)
 	cdc.RegisterConcrete(IDSet{}, "peggy/IDSet", nil)
+	cdc.RegisterInterface((*AttestationDetails)(nil), nil)
+	cdc.RegisterConcrete(BridgeDeposit{}, "peggy/BridgeDeposit", nil)
 }

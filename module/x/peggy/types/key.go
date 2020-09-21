@@ -54,13 +54,19 @@ func GetValsetConfirmKey(nonce int64, validator sdk.AccAddress) []byte {
 	return append(ValsetConfirmKey, append(nonceBytes, []byte(validator)...)...)
 }
 
-func GetClaimKey(claimType ClaimType, nonce Nonce, validator sdk.ValAddress) []byte {
+func GetClaimKey(claimType ClaimType, nonce Nonce, validator sdk.ValAddress, details AttestationDetails) []byte {
+	var detailsHash []byte
+	if details != nil {
+		detailsHash = details.Hash()
+	}
 	claimTypeLen := len(claimType)
-	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonce))
+
+	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonce)+len(detailsHash))
 	copy(key[0:], OracleClaimKey)
 	copy(key[len(OracleClaimKey):], claimType.Bytes())
 	copy(key[len(OracleClaimKey)+claimTypeLen:], validator)
 	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen:], nonce)
+	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonce):], detailsHash)
 	return key
 }
 

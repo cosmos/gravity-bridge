@@ -1,10 +1,12 @@
 package types
 
 import (
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
 type Nonce []byte
@@ -42,6 +44,15 @@ const (
 	ProcessResultFailure AttestationProcessResult = 2
 )
 
+// ClaimType is the cosmos type of an event from the counterpart chain that can be handled
+type ClaimType string
+
+const (
+	ClaimTypeEthereumBridgeDeposit         ClaimType = "BridgeDeposit"
+	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = "BridgeWithdrawalBatch"
+	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = "BridgeMultiSigUpdate"
+)
+
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by all orchestrators
 type Attestation struct {
 	ClaimType           ClaimType
@@ -53,6 +64,7 @@ type Attestation struct {
 	SubmitTime          time.Time
 	ConfirmationEndTime time.Time // votes collected <= end time. should be < unbonding period
 	// ExpiryTime time.Time // todo: do we want to keep Attestations forever persisted or can we delete them?
+	Details AttestationDetails
 }
 
 type AttestationTally struct {
@@ -90,4 +102,18 @@ func (a *Attestation) AddVote(now time.Time, power uint64) error {
 // ID is the unique identifiert used in DB
 func (a *Attestation) ID() []byte {
 	return GetAttestationKey(a.ClaimType, a.Nonce)
+}
+
+type AttestationDetails interface {
+	Hash() []byte
+}
+type BridgeDeposit struct {
+	ERC20Token     ERC20Token
+	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
+	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
+}
+
+func (b BridgeDeposit) Hash() []byte {
+	path := fmt.Sprintf("%s/%s/%s/", b.EthereumSender.String(), b.ERC20Token.String(), b.CosmosReceiver.String())
+	return tmhash.Sum([]byte(path))
 }

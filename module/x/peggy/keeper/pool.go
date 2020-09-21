@@ -8,22 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 )
-
-// SupplyKeeper defines the expected supply keeper
-type SupplyKeeper interface {
-	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
-	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
-	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) error
-	BurnCoins(ctx sdk.Context, name string, amt sdk.Coins) error
-	//SetModuleAccount(sdk.Context, supply.ModuleAccountI)
-}
-
-// AccountKeeper defines the expected account keeper
-type AccountKeeper interface {
-	GetAccount(sdk.Context, sdk.AccAddress) authexported.Account
-}
 
 // AddToOutgoingPool
 // - checks a counterpart denomintor exists for the given voucher type

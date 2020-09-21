@@ -51,8 +51,8 @@ func assertPeggyVoucher(s sdk.Coin) {
 // VoucherDenom is a unique denominator and identifier for a bridged token.
 type VoucherDenom string
 
-func NewVoucherDenom(contractAddr, token string) VoucherDenom {
-	denomTrace := fmt.Sprintf("%s/%s/", contractAddr, token)
+func NewVoucherDenom(contractAddr, symbol string) VoucherDenom {
+	denomTrace := fmt.Sprintf("%s/%s/", contractAddr, symbol)
 	var hash tmbytes.HexBytes = tmhash.Sum([]byte(denomTrace))
 	simpleVoucherDenom := VoucherDenomPrefix + DenomSeparator + hash.String()
 	sdkVersionHackDenom := strings.ToLower(simpleVoucherDenom[0:15]) // todo: up to 15 chars (lowercase) allowed in this sdk version only
@@ -68,6 +68,10 @@ func AsVoucherDenom(s string) (VoucherDenom, error) {
 }
 func (d VoucherDenom) Unprefixed() string {
 	return string(d[voucherPrefixLen:])
+}
+
+func (d VoucherDenom) String() string {
+	return string(d)
 }
 
 // IsVoucherDenom verifies the given string matches the peggy voucher conditions
