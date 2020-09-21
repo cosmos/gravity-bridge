@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+	"math"
 	"sort"
 	"strconv"
 
@@ -175,8 +176,8 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 	ethAddrs := make([]string, len(validators))
 	powers := make([]int64, len(validators))
-	totalPower := int64(0)
-	maxUint32 := int64(1 << 32)
+	var totalPower int64
+	const maxUint32 int64 = math.MaxUint32
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
 	for _, validator := range validators {
@@ -186,8 +187,9 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 	}
 	for i, validator := range validators {
 		validatorAddress := validator.GetOperator()
-		p := k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress)
+		p := k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress) // TODO: avoid this Gas costs
 		p = maxUint32 * p / totalPower
+		//	safe math version:	p = sdk.NewInt(p).MulRaw(maxUint32).QuoRaw(totalPower).Int64()
 		powers[i] = p
 		ethAddr := k.GetEthAddress(ctx, validatorAddress)
 		if ethAddr != nil {

@@ -1,8 +1,10 @@
 package keeper
 
 import (
+	"bytes"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,6 +36,38 @@ func TestPrefixRange(t *testing.T) {
 			start, end := prefixRange(tc.src)
 			assert.Equal(t, tc.expStart, start)
 			assert.Equal(t, tc.expEnd, end)
+		})
+	}
+}
+
+func TestCurrentValsetNormalization(t *testing.T) {
+	specs := map[string]struct {
+		srcPowers []int64
+		expPowers []int64
+	}{
+		"one": {
+			srcPowers: []int64{100},
+			expPowers: []int64{100},
+		},
+		"two": {
+			srcPowers: []int64{1, 100},
+			expPowers: []int64{1, 100},
+		},
+	}
+	k, ctx := CreateTestEnv(t)
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			operators := make([]MockStakingValidatorData, len(spec.srcPowers))
+			for i, v := range spec.srcPowers {
+				operators[i] = MockStakingValidatorData{
+					// any unique addr
+					Operator: bytes.Repeat([]byte{byte(i)}, sdk.AddrLen),
+					Power:    v,
+				}
+			}
+			k.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
+			r := k.GetCurrentValset(ctx)
+			assert.Equal(t, spec.expPowers, r.Powers)
 		})
 	}
 }

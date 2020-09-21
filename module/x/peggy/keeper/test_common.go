@@ -205,6 +205,26 @@ func NewStakingKeeperMock(operators ...sdk.ValAddress) *StakingKeeperMock {
 	return r
 }
 
+type MockStakingValidatorData struct {
+	Operator sdk.ValAddress
+	Power    int64
+}
+
+func NewStakingKeeperWeightedMock(t ...MockStakingValidatorData) *StakingKeeperMock {
+	r := &StakingKeeperMock{
+		BondedValidators: make([]staking.Validator, len(t)),
+		ValidatorPower:   make(map[string]int64, len(t)),
+	}
+
+	for i, a := range t {
+		r.BondedValidators[i] = staking.Validator{
+			OperatorAddress: a.Operator,
+		}
+		r.ValidatorPower[a.Operator.String()] = a.Power
+	}
+	return r
+}
+
 func (s *StakingKeeperMock) GetBondedValidatorsByPower(ctx sdk.Context) []staking.Validator {
 	return s.BondedValidators
 }
