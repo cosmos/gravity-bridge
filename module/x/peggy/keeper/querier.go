@@ -17,6 +17,7 @@ const (
 	QueryValsetConfirmsByNonce          = "valsetConfirms"
 	QueryLastValsetRequests             = "lastValsetRequests"
 	QueryLastPendingValsetRequestByAddr = "lastPendingValsetRequest"
+	QueryLastObservedNonce              = "lastObservedNonce"
 )
 
 // NewQuerier is the module level router for state queries
@@ -35,6 +36,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return lastValsetRequests(ctx, keeper)
 		case QueryLastPendingValsetRequestByAddr:
 			return lastPendingValsetRequest(ctx, path[1], keeper)
+		case QueryLastObservedNonce:
+			return lastObservedNonce(ctx, path[1], keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown nameservice query endpoint")
 		}
@@ -160,6 +163,16 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 		return nil, nil
 	}
 	res, err := codec.MarshalJSONIndent(keeper.cdc, pendingValsetReq)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
+}
+
+func lastObservedNonce(ctx sdk.Context, claimType string, keeper Keeper) ([]byte, error) {
+	// todo: verify claim type exists as defined type
+	nonce := keeper.GetLastObservedNonce(ctx, types.ClaimType(claimType))
+	res, err := codec.MarshalJSONIndent(keeper.cdc, nonce)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"github.com/althea-net/peggy/module/x/peggy/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -129,4 +130,30 @@ func (k Keeper) GetAttestation(ctx sdk.Context, claimType types.ClaimType, nonce
 func (k Keeper) HasClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, validator sdk.ValAddress, details types.AttestationDetails) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(types.GetClaimKey(claimType, nonce, validator, details))
+}
+
+func (k Keeper) IterateAttestationByClaimTypeDesc(ctx sdk.Context, claimType types.ClaimType, cb func([]byte, types.Attestation) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OracleAttestationKey)
+	iter := prefixStore.ReverseIterator(prefixRange([]byte(claimType)))
+	for ; iter.Valid(); iter.Next() {
+		var att types.Attestation
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &att)
+		if cb(iter.Key(), att) { // cb returns true to stop early
+			return
+		}
+	}
+	return
+}
+
+// GetLastObservedNonce returns nonce or nil when none found for given type
+func (k Keeper) GetLastObservedNonce(ctx sdk.Context, claimType types.ClaimType) types.Nonce {
+	var nonce types.Nonce
+	k.IterateAttestationByClaimTypeDesc(ctx, claimType, func(_ []byte, att types.Attestation) bool {
+		if att.Certainty != types.CertaintyObserved {
+			return false
+		}
+		nonce = att.Nonce
+		return true
+	})
+	return nonce
 }

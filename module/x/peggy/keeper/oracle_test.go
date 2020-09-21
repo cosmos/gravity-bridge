@@ -107,7 +107,8 @@ func TestObserveWithdrawBatch(t *testing.T) {
 	}
 	assert.Equal(t, exp, *gotAttestation)
 	// and last observed status updated
-	assert.Equal(t, myBatchID, k.GetLastObservedBatchID(ctx))
+	gotNonce := k.GetLastObservedNonce(ctx, types.ClaimTypeEthereumBridgeWithdrawalBatch)
+	assert.Equal(t, myNonce, gotNonce)
 }
 
 func TestObserveBridgeMultiSigUpdate(t *testing.T) {
@@ -152,5 +153,6 @@ func TestObserveBridgeMultiSigUpdate(t *testing.T) {
 	}
 	assert.Equal(t, exp, *gotAttestation)
 	// and last observed status updated
-	assert.Equal(t, myBlockHeight, k.GetLastObservedMultiSigSetHeight(ctx))
+	gotNonce := k.GetLastObservedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
+	assert.Equal(t, myNonce, gotNonce)
 }

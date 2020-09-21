@@ -36,7 +36,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 			return sdkerrors.Wrap(err, "transfer vouchers")
 		}
 	case types.ClaimTypeEthereumBridgeWithdrawalBatch:
-		batchID := att.Nonce.AsUint64()
+		batchID := att.Nonce.Uint64()
 		b := a.keeper.GetOutgoingTXBatch(ctx, batchID)
 		if b == nil {
 			return types.ErrUnknown
@@ -45,21 +45,15 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 			return err
 		}
 		a.keeper.storeBatch(ctx, batchID, *b)
-		if err := a.keeper.UpdateLastObservedBatchID(ctx, batchID); err != nil {
-			return err
-		}
 		// cleanup outgoing TX pool
 		for i := range b.Elements {
 			a.keeper.removePoolEntry(ctx, b.Elements[i].ID)
 		}
 		return nil
 	case types.ClaimTypeEthereumBridgeMultiSigUpdate:
-		height := att.Nonce.AsUint64()
+		height := att.Nonce.Uint64()
 		if !a.keeper.HasValsetRequest(ctx, height) {
 			return types.ErrUnknown
-		}
-		if err := a.keeper.UpdateLastObservedMultiSigSet(ctx, height); err != nil {
-			return err
 		}
 
 		// todo: is there any cleanup for us like:
