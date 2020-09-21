@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/binary"
 	"fmt"
 	"time"
 
@@ -13,6 +14,9 @@ type Nonce []byte
 
 func NonceFromUint64(s uint64) Nonce {
 	return sdk.Uint64ToBigEndian(s)
+}
+func (n Nonce) AsUint64() uint64 {
+	return binary.BigEndian.Uint64(n)
 }
 
 func (n Nonce) String() string {

@@ -46,5 +46,5 @@ func (e ERC20Token) String() string {
 
 // AsVoucherCoin converts the data into a cosmos coin with peggy voucher denom.
 func (e ERC20Token) AsVoucherCoin() sdk.Coin {
-	return sdk.NewInt64Coin(NewVoucherDenom(e.TokenContractAddress.String(), e.Symbol).String(), e.Amount)
+	return sdk.NewInt64Coin(NewVoucherDenom(e.TokenContractAddress, e.Symbol).String(), e.Amount)
 }

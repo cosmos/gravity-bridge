@@ -20,6 +20,9 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		if !ok {
 			return sdkerrors.Wrapf(types.ErrInternal, "unexpected type: %T", att.Details)
 		}
+		if !a.keeper.HasCounterpartDenominator(ctx, types.NewVoucherDenom(deposit.ERC20Token.TokenContractAddress, deposit.ERC20Token.Symbol)) {
+			a.keeper.StoreCounterpartDenominator(ctx, deposit.ERC20Token.TokenContractAddress, deposit.ERC20Token.Symbol)
+		}
 		coin := deposit.ERC20Token.AsVoucherCoin()
 		vouchers := sdk.Coins{coin}
 		err := a.supplyKeeper.MintCoins(ctx, types.ModuleName, vouchers)
@@ -31,7 +34,23 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 			return sdkerrors.Wrap(err, "transfer vouchers")
 		}
 	case types.ClaimTypeEthereumBridgeWithdrawalBatch:
-		// todo: mark batch as successful
+		batchID := att.Nonce.AsUint64()
+		b := a.keeper.GetOutgoingTXBatch(ctx, batchID)
+		if b == nil {
+			return types.ErrUnknown
+		}
+		if err := b.Observed(); err != nil {
+			return err
+		}
+		a.keeper.storeBatch(ctx, batchID, *b)
+		if err := a.keeper.UpdateLastObservedBatchID(ctx, batchID); err != nil {
+			return nil
+		}
+		// cleanup outgoing TX pool
+		for i := range b.Elements {
+			a.keeper.removePoolEntry(ctx, b.Elements[i].ID)
+		}
+		return nil
 	case types.ClaimTypeEthereumBridgeMultiSigUpdate:
 		// todo: update nonce for "MultiSig Set"
 	default:

@@ -40,7 +40,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	// persist TX in pool
 	nextID := k.autoIncrementID(ctx, types.KeyLastTXPoolID)
 	outgoing := types.OutgoingTx{
-		//BridgeContractAddress: , // TODO: do we need to store this?
+		//TokenContractAddress: , // TODO: do we need to store this?
 		Sender:      sender,
 		DestAddress: counterpartReceiver,
 		Amount:      amount,
@@ -141,6 +141,11 @@ func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.OutgoingTx, err
 	return &r, nil
 }
 
+func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetOutgoingTxPoolKey(id))
+}
+
 // GetCounterpartDenominator returns the token details on the counterpart chain for given voucher type
 func (k Keeper) GetCounterpartDenominator(ctx sdk.Context, voucherDenom types.VoucherDenom) *types.BridgedDenominator {
 	store := ctx.KVStore(k.storeKey)
@@ -154,12 +159,12 @@ func (k Keeper) GetCounterpartDenominator(ctx sdk.Context, voucherDenom types.Vo
 }
 
 // StoreCounterpartDenominator persists the bridged token details. Overwrites an existing entry without error
-func (k Keeper) StoreCounterpartDenominator(ctx sdk.Context, bridgeContractAddr, tokenID string) {
+func (k Keeper) StoreCounterpartDenominator(ctx sdk.Context, tokenContractAddress types.EthereumAddress, symbol string) {
 	store := ctx.KVStore(k.storeKey)
-	voucherDenominator := types.NewVoucherDenom(bridgeContractAddr, tokenID)
+	voucherDenominator := types.NewVoucherDenom(tokenContractAddress, symbol)
 	bridgedDenominator := types.BridgedDenominator{
-		BridgeContractAddress: bridgeContractAddr,
-		TokenID:               tokenID,
+		TokenContractAddress: tokenContractAddress,
+		Symbol:               symbol,
 	}
 	store.Set(types.GetDenominatorKey(voucherDenominator.Unprefixed()), k.cdc.MustMarshalBinaryBare(bridgedDenominator))
 }

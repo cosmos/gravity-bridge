@@ -19,13 +19,13 @@ const (
 )
 
 type OutgoingTxBatch struct {
-	Elements              []OutgoingTransferTx
-	CreatedAt             time.Time
-	TotalFee              TransferCoin
-	CosmosDenom           VoucherDenom
-	BridgedTokenID        string
-	BridgeContractAddress string
-	BatchStatus           BatchStatus
+	Elements                    []OutgoingTransferTx
+	CreatedAt                   time.Time
+	TotalFee                    TransferCoin
+	CosmosDenom                 VoucherDenom
+	BridgedTokenSymbol          string
+	BridgedTokenContractAddress EthereumAddress
+	BatchStatus                 BatchStatus
 }
 
 func (b *OutgoingTxBatch) Cancel() error {
@@ -47,6 +47,14 @@ func (v OutgoingTxBatch) GetCheckpoint() []byte {
 
 	hash := crypto.Keccak256Hash([]byte(`todo`))
 	return hash.Bytes()
+}
+
+func (b *OutgoingTxBatch) Observed() error {
+	if b.BatchStatus != BatchStatusPending && b.BatchStatus != BatchStatusSubmitted {
+		return sdkerrors.Wrap(ErrInvalid, "status")
+	}
+	b.BatchStatus = BatchStatusProcessed
+	return nil
 }
 
 type OutgoingTransferTx struct {
@@ -80,5 +88,5 @@ func NewTransferCoin(tokenID string, amount uint64) TransferCoin {
 
 func AsTransferCoin(denominator BridgedDenominator, voucher sdk.Coin) TransferCoin {
 	assertPeggyVoucher(voucher)
-	return NewTransferCoin(denominator.TokenID, voucher.Amount.Uint64())
+	return NewTransferCoin(denominator.Symbol, voucher.Amount.Uint64())
 }

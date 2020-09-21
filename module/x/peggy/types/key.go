@@ -30,6 +30,7 @@ var (
 	SequenceKeyPrefix           = []byte{0x7}
 	DenomiatorPrefix            = []byte{0x8}
 	SecondIndexOutgoingTXFeeKey = []byte{0x9}
+	LastObservedBatchKey        = []byte{0xa}
 
 	// sequence keys
 	KeyLastTXPoolID        = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)

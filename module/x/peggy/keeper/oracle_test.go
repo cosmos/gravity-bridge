@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestName(t *testing.T) {
+func TestObserveDeposit(t *testing.T) {
 	var (
 		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
 		myCosmosAddr       sdk.AccAddress = bytes.Repeat([]byte{1}, 12)
@@ -62,4 +62,50 @@ func TestName(t *testing.T) {
 		Details:             depositDetails,
 	}
 	assert.Equal(t, exp, *gotAttestation)
+}
+
+func TestObserveWithdrawBatch(t *testing.T) {
+	var (
+		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
+		myBatchID          uint64         = 1
+		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+	)
+
+	k, ctx, _ := CreateTestEnv(t)
+	k.StakingKeeper = NewStakingKeeperMock(myValAddr)
+	k.storeBatch(ctx, myBatchID, types.OutgoingTxBatch{
+		BatchStatus: types.BatchStatusSubmitted,
+	})
+
+	// when
+	ctx = ctx.WithBlockTime(myBlockTime)
+	myNonce := types.NonceFromUint64(myBatchID)
+	gotAttestation, err := k.AddClaim(ctx, types.ClaimTypeEthereumBridgeWithdrawalBatch, myNonce, myValAddr, nil)
+	// then
+	require.NoError(t, err)
+
+	// and claim persisted
+	claimFound := k.HasClaim(ctx, types.ClaimTypeEthereumBridgeWithdrawalBatch, myNonce, myValAddr, nil)
+	assert.True(t, claimFound)
+
+	// and expected state
+	exp := types.Attestation{
+		ClaimType:     types.ClaimTypeEthereumBridgeWithdrawalBatch,
+		Nonce:         myNonce,
+		Certainty:     types.CertaintyObserved,
+		Status:        types.ProcessStatusProcessed,
+		ProcessResult: types.ProcessResultSuccess,
+		Tally: types.AttestationTally{
+			TotalVotesPower:    sdk.NewUint(100),
+			TotalVotesCount:    1,
+			RequiredVotesPower: sdk.NewUint(66),
+			RequiredVotesCount: 0,
+		},
+		SubmitTime:          myBlockTime,
+		ConfirmationEndTime: time.Date(2020, 9, 14+1, 15, 20, 10, 0, time.UTC),
+	}
+	assert.Equal(t, exp, *gotAttestation)
+	// and last observed status updated
+	assert.Equal(t, myBatchID, k.GetLastObservedBatchID(ctx))
 }
