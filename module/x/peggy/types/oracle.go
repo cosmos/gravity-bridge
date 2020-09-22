@@ -1,8 +1,9 @@
 package types
 
 import (
-	"encoding/binary"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,15 +17,25 @@ func NonceFromUint64(s uint64) Nonce {
 	return sdk.Uint64ToBigEndian(s)
 }
 func (n Nonce) Uint64() uint64 {
-	return binary.BigEndian.Uint64(n)
+	return DecodeUin64(n.Bytes())
 }
 
 func (n Nonce) String() string {
-	return string(n)
+	return strings.ToUpper(hex.EncodeToString(n))
 }
 
 func (n Nonce) Bytes() []byte {
 	return n
+}
+
+func (n Nonce) ValidateBasic() error {
+	if len(n) == 0 {
+		return ErrEmpty
+	}
+	if len(n) != 8 {
+		return ErrInvalid
+	}
+	return nil
 }
 
 type AttestationCertainty uint8
@@ -56,10 +67,36 @@ const (
 type ClaimType string
 
 const (
-	ClaimTypeEthereumBridgeDeposit         ClaimType = "BridgeDeposit"
-	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = "BridgeWithdrawalBatch"
-	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = "BridgeMultiSigUpdate"
+	ClaimTypeEthereumBridgeDeposit         ClaimType = "bridge_deposit"
+	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = "bridge_withdrawal_batch"
+	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = "bridge_multisig_update"
 )
+
+var AllClaimTypes = []ClaimType{ClaimTypeEthereumBridgeDeposit, ClaimTypeEthereumBridgeWithdrawalBatch, ClaimTypeEthereumBridgeMultiSigUpdate}
+
+func IsClaimType(s string) bool {
+	for _, v := range AllClaimTypes {
+		if string(v) == s {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *ClaimType) UnmarshalJSON(b []byte) error {
+	if !IsClaimType(string(b)) {
+		return ErrInvalid
+	}
+	*c = ClaimType(b)
+	return nil
+}
+
+func (c ClaimType) MarshalJSON() ([]byte, error) {
+	return []byte(c), nil
+}
+func (c ClaimType) String() string {
+	return string(c)
+}
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by all orchestrators
 type Attestation struct {

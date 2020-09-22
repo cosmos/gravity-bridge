@@ -30,6 +30,8 @@ var (
 	SequenceKeyPrefix           = []byte{0x7}
 	DenomiatorPrefix            = []byte{0x8}
 	SecondIndexOutgoingTXFeeKey = []byte{0x9}
+	OutgoingTXBatchKey          = []byte{0xa}
+	OutgoingTXBatchConfirmKey   = []byte{0xb}
 
 	// sequence keys
 	KeyLastTXPoolID        = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
@@ -83,6 +85,16 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 	return append(OutgoingTXPoolKey, sdk.Uint64ToBigEndian(id)...)
 }
 
+func GetOutgoingTxBatchKey(batchID uint64) []byte {
+	return append(OutgoingTXBatchKey, sdk.Uint64ToBigEndian(batchID)...)
+}
+
+func GetOutgoingTXBatchConfirmKey(batchID uint64, validator sdk.ValAddress) []byte {
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, batchID)
+	return append(OutgoingTXBatchConfirmKey, append(bz, []byte(validator)...)...)
+}
+
 func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
 	assertPeggyVoucher(fee)
 
@@ -96,4 +108,8 @@ func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
 
 func GetDenominatorKey(voucherDenominator string) []byte {
 	return append(DenomiatorPrefix, []byte(voucherDenominator)...)
+}
+
+func DecodeUin64(s []byte) uint64 {
+	return binary.BigEndian.Uint64(s)
 }

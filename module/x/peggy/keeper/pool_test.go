@@ -14,7 +14,7 @@ func TestAddToOutgoingPool(t *testing.T) {
 	k, ctx, keepers := CreateTestEnv(t)
 	var (
 		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		myReceiver          = "eth receiver"
+		myReceiver          = types.NewEthereumAddress("eth receiver")
 		myETHToken          = "myETHToken"
 		myTokenContractAddr = types.NewEthereumAddress("my eth oken address")
 		voucherDenom        = types.NewVoucherDenom(myTokenContractAddr, myETHToken)
@@ -42,7 +42,7 @@ func TestAddToOutgoingPool(t *testing.T) {
 	}
 	// then
 	var got []types.OutgoingTx
-	err = k.IterateOutgoingPoolByFee(ctx, voucherDenom, func(_ uint64, tx types.OutgoingTx) bool {
+	k.IterateOutgoingPoolByFee(ctx, voucherDenom, func(_ uint64, tx types.OutgoingTx) bool {
 		got = append(got, tx)
 		return false
 	})

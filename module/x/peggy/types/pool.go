@@ -12,18 +12,42 @@ import (
 
 // OutgoingTx is a withdrawal on the bridged contract
 type OutgoingTx struct {
-	Sender      sdk.AccAddress `json:"sender"`
-	DestAddress string         `json:"dest_address"`
-	Amount      sdk.Coin       `json:"send"`
-	BridgeFee   sdk.Coin       `json:"bridge_fee"`
-	//TokenContractAddress string         `json:"bridge_contract_address"` // todo: do we need this?
+	Sender      sdk.AccAddress  `json:"sender"`
+	DestAddress EthereumAddress `json:"dest_address"`
+	Amount      sdk.Coin        `json:"send"`
+	BridgeFee   sdk.Coin        `json:"bridge_fee"`
 }
 
 // BridgedDenominator contains bridged token details
 type BridgedDenominator struct {
 	//ChainID         string
 	TokenContractAddress EthereumAddress
-	Symbol               string
+	// Symbol is the human readable erc20 symbol
+	Symbol             string
+	CosmosVoucherDenom VoucherDenom
+}
+
+func NewBridgedDenominator(tokenContractAddress EthereumAddress, erc20Symbol string) BridgedDenominator {
+	v := NewVoucherDenom(tokenContractAddress, erc20Symbol)
+	return BridgedDenominator{TokenContractAddress: tokenContractAddress, Symbol: erc20Symbol, CosmosVoucherDenom: v}
+}
+
+// ToERC20Token converts the given voucher amount to the matching ERC20Token object of same type
+func (b BridgedDenominator) ToERC20Token(s sdk.Coin) ERC20Token {
+	if b.CosmosVoucherDenom.String() != s.Denom {
+		panic("invalid denom")
+	}
+	return b.ToUint64ERC20Token(s.Amount.Uint64())
+}
+
+// ToUint64ERC20Token creates a erc20 token instance for given amount
+func (b BridgedDenominator) ToUint64ERC20Token(amount uint64) ERC20Token {
+	return NewERC20Token(amount, b.Symbol, b.TokenContractAddress)
+}
+
+// ToVoucherCoin creates a new Peggy voucher coin instance with given amount
+func (b BridgedDenominator) ToVoucherCoin(amount uint64) sdk.Coin {
+	return sdk.NewInt64Coin(b.CosmosVoucherDenom.String(), int64(amount))
 }
 
 const (
@@ -51,8 +75,9 @@ func assertPeggyVoucher(s sdk.Coin) {
 // VoucherDenom is a unique denominator and identifier for a bridged token.
 type VoucherDenom string
 
-func NewVoucherDenom(tokenContractAddr EthereumAddress, symbol string) VoucherDenom {
-	denomTrace := fmt.Sprintf("%s/%s/", tokenContractAddr.String(), symbol)
+// NewVoucherDenom builds a Peggy voucher denominator from the erc20 contract address and the human readable erc20 symbol.
+func NewVoucherDenom(tokenContractAddr EthereumAddress, erc20Symbol string) VoucherDenom {
+	denomTrace := fmt.Sprintf("%s/%s/", tokenContractAddr.String(), erc20Symbol)
 	var hash tmbytes.HexBytes = tmhash.Sum([]byte(denomTrace))
 	simpleVoucherDenom := VoucherDenomPrefix + DenomSeparator + hash.String()
 	sdkVersionHackDenom := strings.ToLower(simpleVoucherDenom[0:15]) // todo: up to 15 chars (lowercase) allowed in this sdk version only

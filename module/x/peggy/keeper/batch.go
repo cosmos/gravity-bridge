@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -31,16 +32,15 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 	for _, tx := range selectedTx[1:] {
 		totalFee = totalFee.Add(tx.BridgeFee)
 	}
-	batch := types.OutgoingTxBatch{
-		Elements:                    selectedTx,
-		CreatedAt:                   ctx.BlockTime(),
-		CosmosDenom:                 voucherDenom,
-		BridgedTokenSymbol:          bridgedDenom.Symbol,
-		BridgedTokenContractAddress: bridgedDenom.TokenContractAddress,
-		TotalFee:                    totalFee,
-		BatchStatus:                 types.BatchStatusPending,
-	}
 	nextID := k.autoIncrementID(ctx, types.KeyLastOutgoingBatchID)
+	batch := types.OutgoingTxBatch{
+		Nonce:              types.NonceFromUint64(nextID),
+		Elements:           selectedTx,
+		CreatedAt:          ctx.BlockTime(),
+		BridgedDenominator: *bridgedDenom,
+		TotalFee:           totalFee,
+		BatchStatus:        types.BatchStatusPending,
+	}
 	k.storeBatch(ctx, nextID, batch)
 
 	batchEvent := sdk.NewEvent(
@@ -55,9 +55,9 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 	return nextID, nil
 }
 
-func (k Keeper) storeBatch(ctx sdk.Context, nextID uint64, batch types.OutgoingTxBatch) {
+func (k Keeper) storeBatch(ctx sdk.Context, batchID uint64, batch types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(sdk.Uint64ToBigEndian(nextID), k.cdc.MustMarshalBinaryBare(batch))
+	store.Set(types.GetOutgoingTxBatchKey(batchID), k.cdc.MustMarshalBinaryBare(batch))
 }
 
 // pickUnbatchedTX find TX in pool and remove from "available" second index
@@ -69,8 +69,8 @@ func (k Keeper) pickUnbatchedTX(ctx sdk.Context, denom types.VoucherDenom, bridg
 			ID:          txID,
 			Sender:      tx.Sender,
 			DestAddress: tx.DestAddress,
-			Amount:      types.AsTransferCoin(bridgedDenom, tx.Amount),
-			BridgeFee:   types.AsTransferCoin(bridgedDenom, tx.BridgeFee),
+			Amount:      bridgedDenom.ToERC20Token(tx.Amount),
+			BridgeFee:   bridgedDenom.ToERC20Token(tx.BridgeFee),
 		}
 		selectedTx = append(selectedTx, txOut)
 		err = k.removeFromUnbatchedTXIndex(ctx, tx.BridgeFee, txID)
@@ -82,7 +82,7 @@ func (k Keeper) pickUnbatchedTX(ctx sdk.Context, denom types.VoucherDenom, bridg
 // GetOutgoingTXBatch loads a batch object. Returns nil when not exists.
 func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, batchID uint64) *types.OutgoingTxBatch {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(sdk.Uint64ToBigEndian(batchID))
+	bz := store.Get(types.GetOutgoingTxBatchKey(batchID))
 	if len(bz) == 0 {
 		return nil
 	}
@@ -101,7 +101,7 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, batchID uint64) error {
 		return err
 	}
 	for _, tx := range batch.Elements {
-		k.prependToUnbatchedTXIndex(ctx, sdk.NewInt64Coin(string(batch.CosmosDenom), int64(tx.BridgeFee.Amount)), tx.ID)
+		k.prependToUnbatchedTXIndex(ctx, batch.BridgedDenominator.ToVoucherCoin(tx.BridgeFee.Amount), tx.ID)
 	}
 	k.storeBatch(ctx, batchID, *batch)
 	batchEvent := sdk.NewEvent(
@@ -114,4 +114,28 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, batchID uint64) error {
 	)
 	ctx.EventManager().EmitEvent(batchEvent)
 	return nil
+}
+
+func (k Keeper) SetOutgoingTXBatchConfirm(ctx sdk.Context, batchID uint64, validator sdk.ValAddress, signature []byte) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetOutgoingTXBatchConfirmKey(batchID, validator), signature)
+}
+
+func (k Keeper) HasOutgoingTXBatchConfirm(ctx sdk.Context, nonce uint64, validatorAddr sdk.ValAddress) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetOutgoingTXBatchConfirmKey(nonce, validatorAddr))
+}
+
+// Iterate through all outgoing batches in DESC order.
+func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(batchID uint64, batch types.OutgoingTxBatch) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OutgoingTXBatchKey)
+	iter := prefixStore.ReverseIterator(nil, nil)
+	for ; iter.Valid(); iter.Next() {
+		var batch types.OutgoingTxBatch
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &batch)
+		// cb returns true to stop early
+		if cb(types.DecodeUin64(iter.Key()), batch) {
+			break
+		}
+	}
 }

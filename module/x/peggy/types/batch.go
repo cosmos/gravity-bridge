@@ -18,14 +18,17 @@ const (
 	BatchStatusCancelled BatchStatus = 4 // end state
 )
 
+func (b BatchStatus) String() string {
+	return []string{"unknown", "pending", "submitted", "observed", "processed", "cancelled"}[b]
+}
+
 type OutgoingTxBatch struct {
-	Elements                    []OutgoingTransferTx
-	CreatedAt                   time.Time
-	TotalFee                    TransferCoin
-	CosmosDenom                 VoucherDenom
-	BridgedTokenSymbol          string
-	BridgedTokenContractAddress EthereumAddress
-	BatchStatus                 BatchStatus
+	Nonce              Nonce
+	Elements           []OutgoingTransferTx
+	CreatedAt          time.Time
+	TotalFee           ERC20Token
+	BridgedDenominator BridgedDenominator
+	BatchStatus        BatchStatus
 }
 
 func (b *OutgoingTxBatch) Cancel() error {
@@ -58,35 +61,9 @@ func (b *OutgoingTxBatch) Observed() error {
 }
 
 type OutgoingTransferTx struct {
-	ID          uint64         `json:"txid"`
-	Sender      sdk.AccAddress `json:"sender"`
-	DestAddress string         `json:"dest_address"`
-	Amount      TransferCoin   `json:"send"`
-	BridgeFee   TransferCoin   `json:"bridge_fee"`
-}
-
-// TransferCoin is an outgoing token
-type TransferCoin struct {
-	TokenID string
-	Amount  uint64
-}
-
-func (t TransferCoin) Add(o TransferCoin) TransferCoin {
-	if t.TokenID != o.TokenID {
-		panic("invalid token")
-	}
-	sum := sdk.NewInt(int64(t.Amount)).AddRaw(int64(o.Amount))
-	if !sum.IsUint64() {
-		panic("invalid amount")
-	}
-	return NewTransferCoin(t.TokenID, sum.Uint64())
-}
-
-func NewTransferCoin(tokenID string, amount uint64) TransferCoin {
-	return TransferCoin{TokenID: tokenID, Amount: amount}
-}
-
-func AsTransferCoin(denominator BridgedDenominator, voucher sdk.Coin) TransferCoin {
-	assertPeggyVoucher(voucher)
-	return NewTransferCoin(denominator.Symbol, voucher.Amount.Uint64())
+	ID          uint64          `json:"txid"`
+	Sender      sdk.AccAddress  `json:"sender"`
+	DestAddress EthereumAddress `json:"dest_address"`
+	Amount      ERC20Token      `json:"send"`
+	BridgeFee   ERC20Token      `json:"bridge_fee"`
 }

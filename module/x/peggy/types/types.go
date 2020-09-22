@@ -11,7 +11,7 @@ import (
 )
 
 type Valset struct {
-	Nonce        int64
+	Nonce        int64 // todo (alex): should be of type Nonce
 	Powers       []int64
 	EthAddresses []string
 }
