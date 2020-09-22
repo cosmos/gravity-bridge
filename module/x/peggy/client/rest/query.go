@@ -134,3 +134,24 @@ func lastValsetRequestsByAddressHandler(cliCtx context.CLIContext, storeName str
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
+
+func lastObservedNonceHandler(cliCtx context.CLIContext, storeName string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		claimType := vars[claimType]
+
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastObservedNonce/%s", storeName, claimType))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "no observed nonce found for this type")
+			return
+		}
+
+		var out types.Nonce
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}

@@ -17,7 +17,7 @@ type Keeper struct {
 	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
 
 	cdc          *codec.Codec // The wire codec for binary encoding/decoding.
-	supplyKeeper SupplyKeeper
+	supplyKeeper types.SupplyKeeper
 
 	AttestationHandler interface {
 		Handle(sdk.Context, types.Attestation) error
@@ -26,14 +26,17 @@ type Keeper struct {
 
 // NewKeeper
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakingKeeper types.StakingKeeper,
-	supplyKeeper SupplyKeeper) Keeper {
+	supplyKeeper types.SupplyKeeper) Keeper {
 	k := Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
 		StakingKeeper: stakingKeeper,
 		supplyKeeper:  supplyKeeper,
 	}
-	k.AttestationHandler = AttestationHandler{keeper: k}
+	k.AttestationHandler = AttestationHandler{
+		keeper:       k,
+		supplyKeeper: supplyKeeper,
+	}
 	return k
 }
 
@@ -43,6 +46,11 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) {
 	nonce := ctx.BlockHeight()
 	valset.Nonce = nonce
 	store.Set(types.GetValsetRequestKey(nonce), k.cdc.MustMarshalBinaryBare(valset))
+}
+
+func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce uint64) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetValsetRequestKey(int64(nonce))) // todo: revisit type where nonce is used as int64
 }
 
 func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce int64) *types.Valset {

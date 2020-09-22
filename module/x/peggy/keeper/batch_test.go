@@ -14,12 +14,12 @@ import (
 func TestBatches(t *testing.T) {
 	k, ctx, keepers := CreateTestEnv(t)
 	var (
-		mySender             = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		myReceiver           = "eth receiver"
-		myBridgeContractAddr = "my eth bridge contract address"
-		myETHToken           = "myETHToken"
-		voucherDenom         = types.NewVoucherDenom(myBridgeContractAddr, myETHToken)
-		now                  = time.Now().UTC()
+		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		myReceiver          = "eth receiver"
+		myTokenContractAddr = types.NewEthereumAddress("my eth oken address")
+		myETHToken          = "myETHToken"
+		voucherDenom        = types.NewVoucherDenom(myTokenContractAddr, myETHToken)
+		now                 = time.Now().UTC()
 	)
 	// mint some voucher first
 	allVouchers := sdk.Coins{sdk.NewInt64Coin(string(voucherDenom), 99999)}
@@ -32,7 +32,7 @@ func TestBatches(t *testing.T) {
 	require.NoError(t, err)
 
 	// store counterpart
-	k.StoreCounterpartDenominator(ctx, myBridgeContractAddr, myETHToken)
+	k.StoreCounterpartDenominator(ctx, myTokenContractAddr, myETHToken)
 
 	// add some TX to the pool
 	for i, v := range []int64{2, 3, 2, 1} {
@@ -68,12 +68,12 @@ func TestBatches(t *testing.T) {
 				Amount:      types.NewTransferCoin(myETHToken, 100),
 			},
 		},
-		CreatedAt:             now,
-		TotalFee:              types.NewTransferCoin(myETHToken, 5),
-		CosmosDenom:           voucherDenom,
-		BridgedTokenID:        myETHToken,
-		BridgeContractAddress: myBridgeContractAddr,
-		BatchStatus:           types.BatchStatusPending,
+		CreatedAt:                   now,
+		TotalFee:                    types.NewTransferCoin(myETHToken, 5),
+		CosmosDenom:                 voucherDenom,
+		BridgedTokenSymbol:          myETHToken,
+		BridgedTokenContractAddress: myTokenContractAddr,
+		BatchStatus:                 types.BatchStatusPending,
 	}
 	assert.Equal(t, expBatch, *gotBatch)
 

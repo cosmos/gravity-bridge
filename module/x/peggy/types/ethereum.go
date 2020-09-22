@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
@@ -36,4 +37,14 @@ type ERC20Token struct {
 	Amount               int64           `json:"amount" yaml:"amount"`
 	Symbol               string          `json:"symbol" yaml:"symbol"`
 	TokenContractAddress EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
+}
+
+// String converts Token representation into a human readable form containing all data.
+func (e ERC20Token) String() string {
+	return fmt.Sprintf("%d %s (%s)", e.Amount, e.Symbol, e.TokenContractAddress.String())
+}
+
+// AsVoucherCoin converts the data into a cosmos coin with peggy voucher denom.
+func (e ERC20Token) AsVoucherCoin() sdk.Coin {
+	return sdk.NewInt64Coin(NewVoucherDenom(e.TokenContractAddress, e.Symbol).String(), e.Amount)
 }

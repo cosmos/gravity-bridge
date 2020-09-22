@@ -32,13 +32,13 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 		totalFee = totalFee.Add(tx.BridgeFee)
 	}
 	batch := types.OutgoingTxBatch{
-		Elements:              selectedTx,
-		CreatedAt:             ctx.BlockTime(),
-		CosmosDenom:           voucherDenom,
-		BridgedTokenID:        bridgedDenom.TokenID,
-		BridgeContractAddress: bridgedDenom.BridgeContractAddress,
-		TotalFee:              totalFee,
-		BatchStatus:           types.BatchStatusPending,
+		Elements:                    selectedTx,
+		CreatedAt:                   ctx.BlockTime(),
+		CosmosDenom:                 voucherDenom,
+		BridgedTokenSymbol:          bridgedDenom.Symbol,
+		BridgedTokenContractAddress: bridgedDenom.TokenContractAddress,
+		TotalFee:                    totalFee,
+		BatchStatus:                 types.BatchStatusPending,
 	}
 	nextID := k.autoIncrementID(ctx, types.KeyLastOutgoingBatchID)
 	k.storeBatch(ctx, nextID, batch)

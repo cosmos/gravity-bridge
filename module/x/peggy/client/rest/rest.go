@@ -11,6 +11,7 @@ import (
 const (
 	nonce                  = "nonce"
 	bech32ValidatorAddress = "bech32ValidatorAddress"
+	claimType              = "claimType"
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
@@ -24,4 +25,5 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) 
 	r.HandleFunc(fmt.Sprintf("/%s/valset_confirm/{%s}", storeName, nonce), allValsetConfirmsHandler(cliCtx, storeName)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/%s/valset_requests", storeName), lastValsetRequestsHandler(cliCtx, storeName)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/%s/pending_valset_requests/{%s}", storeName, bech32ValidatorAddress), lastValsetRequestsByAddressHandler(cliCtx, storeName)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/last_observed_nonce/{%s}", storeName, claimType), lastObservedNonceHandler(cliCtx, storeName)).Methods("GET")
 }

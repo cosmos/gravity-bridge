@@ -16,14 +16,14 @@ type OutgoingTx struct {
 	DestAddress string         `json:"dest_address"`
 	Amount      sdk.Coin       `json:"send"`
 	BridgeFee   sdk.Coin       `json:"bridge_fee"`
-	//BridgeContractAddress string         `json:"bridge_contract_address"` // todo: do we need this?
+	//TokenContractAddress string         `json:"bridge_contract_address"` // todo: do we need this?
 }
 
 // BridgedDenominator contains bridged token details
 type BridgedDenominator struct {
 	//ChainID         string
-	BridgeContractAddress string
-	TokenID               string
+	TokenContractAddress EthereumAddress
+	Symbol               string
 }
 
 const (
@@ -51,8 +51,8 @@ func assertPeggyVoucher(s sdk.Coin) {
 // VoucherDenom is a unique denominator and identifier for a bridged token.
 type VoucherDenom string
 
-func NewVoucherDenom(contractAddr, token string) VoucherDenom {
-	denomTrace := fmt.Sprintf("%s/%s/", contractAddr, token)
+func NewVoucherDenom(tokenContractAddr EthereumAddress, symbol string) VoucherDenom {
+	denomTrace := fmt.Sprintf("%s/%s/", tokenContractAddr.String(), symbol)
 	var hash tmbytes.HexBytes = tmhash.Sum([]byte(denomTrace))
 	simpleVoucherDenom := VoucherDenomPrefix + DenomSeparator + hash.String()
 	sdkVersionHackDenom := strings.ToLower(simpleVoucherDenom[0:15]) // todo: up to 15 chars (lowercase) allowed in this sdk version only
@@ -60,14 +60,18 @@ func NewVoucherDenom(contractAddr, token string) VoucherDenom {
 }
 
 // AsVoucherDenom type conversion with `IsVoucherDenom` check.
-func AsVoucherDenom(s string) (VoucherDenom, error) {
-	if !IsVoucherDenom(s) {
+func AsVoucherDenom(raw string) (VoucherDenom, error) {
+	if !IsVoucherDenom(raw) {
 		return "", sdkerrors.Wrap(ErrInvalid, "not a voucher denom")
 	}
-	return VoucherDenom(s), nil
+	return VoucherDenom(raw), nil
 }
 func (d VoucherDenom) Unprefixed() string {
 	return string(d[voucherPrefixLen:])
+}
+
+func (d VoucherDenom) String() string {
+	return string(d)
 }
 
 // IsVoucherDenom verifies the given string matches the peggy voucher conditions

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"github.com/althea-net/peggy/module/x/peggy/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -15,13 +16,13 @@ import (
 //  - `observed` attestations are processed for state transition
 //  - the process result is stored with the attestion
 //  - an `observation` event is emitted
-func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, validator sdk.ValAddress) (*types.Attestation, error) {
-	if err := k.storeClaim(ctx, claimType, nonce, validator); err != nil {
+func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, validator sdk.ValAddress, details types.AttestationDetails) (*types.Attestation, error) {
+	if err := k.storeClaim(ctx, claimType, nonce, validator, details); err != nil {
 		return nil, sdkerrors.Wrap(err, "claim")
 	}
 
 	validatorPower := k.StakingKeeper.GetLastValidatorPower(ctx, validator)
-	att, err := k.tryAttestation(ctx, claimType, nonce, uint64(validatorPower))
+	att, err := k.tryAttestation(ctx, claimType, nonce, details, uint64(validatorPower))
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +53,7 @@ func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types
 func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
 	xCtx, commit := ctx.CacheContext()
 	if err := k.AttestationHandler.Handle(xCtx, *att); err != nil { // execute with a transient storage
-		// log
+		ctx.Logger().Error("attestation failed", "cause", err.Error())
 		att.ProcessResult = types.ProcessResultFailure
 	} else {
 		att.ProcessResult = types.ProcessResultSuccess
@@ -62,9 +63,9 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
 }
 
 // storeClaim persists a claim. Fails when a claim of given type and nonce was was submitted by the validator before
-func (k Keeper) storeClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, validator sdk.ValAddress) error {
+func (k Keeper) storeClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, validator sdk.ValAddress, details types.AttestationDetails) error {
 	store := ctx.KVStore(k.storeKey)
-	cKey := types.GetClaimKey(claimType, nonce, validator)
+	cKey := types.GetClaimKey(claimType, nonce, validator, details)
 	if store.Has(cKey) {
 		return types.ErrDuplicate
 	}
@@ -79,7 +80,7 @@ var (
 
 // tryAttestation loads an existing attestation for the given claim type and nonce and adds a vote.
 // When none exists yet, a new attestation is instantiated (but not persisted here)
-func (k Keeper) tryAttestation(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, power uint64) (*types.Attestation, error) {
+func (k Keeper) tryAttestation(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, details types.AttestationDetails, power uint64) (*types.Attestation, error) {
 	now := ctx.BlockTime()
 	att := k.GetAttestation(ctx, claimType, nonce)
 	if att == nil {
@@ -91,6 +92,7 @@ func (k Keeper) tryAttestation(ctx sdk.Context, claimType types.ClaimType, nonce
 			Certainty:     types.CertaintyRequested,
 			Status:        types.ProcessStatusInit,
 			ProcessResult: types.ProcessResultUnknown,
+			Details:       details,
 			Tally: types.AttestationTally{
 				TotalVotesPower:    zero,
 				RequiredVotesPower: types.AttestationVotesPowerThreshold.MulUint64(power.Uint64()).Quo(hundred),
@@ -125,7 +127,33 @@ func (k Keeper) GetAttestation(ctx sdk.Context, claimType types.ClaimType, nonce
 	return &att
 }
 
-func (k Keeper) HasClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, validator sdk.ValAddress) bool {
+func (k Keeper) HasClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, validator sdk.ValAddress, details types.AttestationDetails) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetClaimKey(claimType, nonce, validator))
+	return store.Has(types.GetClaimKey(claimType, nonce, validator, details))
+}
+
+func (k Keeper) IterateAttestationByClaimTypeDesc(ctx sdk.Context, claimType types.ClaimType, cb func([]byte, types.Attestation) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OracleAttestationKey)
+	iter := prefixStore.ReverseIterator(prefixRange([]byte(claimType)))
+	for ; iter.Valid(); iter.Next() {
+		var att types.Attestation
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &att)
+		if cb(iter.Key(), att) { // cb returns true to stop early
+			return
+		}
+	}
+	return
+}
+
+// GetLastObservedNonce returns nonce or nil when none found for given type
+func (k Keeper) GetLastObservedNonce(ctx sdk.Context, claimType types.ClaimType) types.Nonce {
+	var nonce types.Nonce
+	k.IterateAttestationByClaimTypeDesc(ctx, claimType, func(_ []byte, att types.Attestation) bool {
+		if att.Certainty != types.CertaintyObserved {
+			return false
+		}
+		nonce = att.Nonce
+		return true
+	})
+	return nonce
 }

@@ -13,11 +13,11 @@ import (
 func TestAddToOutgoingPool(t *testing.T) {
 	k, ctx, keepers := CreateTestEnv(t)
 	var (
-		mySender             = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		myReceiver           = "eth receiver"
-		myBridgeContractAddr = "my eth bridge contract address"
-		myETHToken           = "myETHToken"
-		voucherDenom         = types.NewVoucherDenom(myBridgeContractAddr, myETHToken)
+		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		myReceiver          = "eth receiver"
+		myETHToken          = "myETHToken"
+		myTokenContractAddr = types.NewEthereumAddress("my eth oken address")
+		voucherDenom        = types.NewVoucherDenom(myTokenContractAddr, myETHToken)
 	)
 	// mint some voucher first
 	allVouchers := sdk.Coins{sdk.NewInt64Coin(string(voucherDenom), 99999)}
@@ -30,7 +30,7 @@ func TestAddToOutgoingPool(t *testing.T) {
 	require.NoError(t, err)
 
 	// store counterpart
-	k.StoreCounterpartDenominator(ctx, myBridgeContractAddr, myETHToken)
+	k.StoreCounterpartDenominator(ctx, myTokenContractAddr, myETHToken)
 
 	// when
 	for i, v := range []int64{2, 3, 2, 1} {
