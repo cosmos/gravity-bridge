@@ -68,20 +68,19 @@ async function deploy() {
   console.log("About to get latest Peggy valset");
   const latestValset = await getLatestValset(args.peggyId);
 
-  console.log("Deploying peggy contract using valset ", latestValset);
-  console.log(latestValset.result.value.powers);
   const peggy = (await factory.deploy(
     contract,
     // todo generate this randomly at deployment time that way we can avoid
     // anything but intentional conflicts
     "0x6c00000000000000000000000000000000000000000000000000000000000000",
+    // 66% of uint32_max
     2834678415,
     latestValset.result.value.eth_addresses,
     latestValset.result.value.powers
   )) as Peggy;
 
   await peggy.deployed();
-  console.log("Peggy deployed");
+  console.log("Peggy deployed at Address - ", peggy.address);
   await submitPeggyAddress(peggy.address);
 }
 
