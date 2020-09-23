@@ -9,6 +9,7 @@ contract Peggy {
 	// These are updated often
 	bytes32 public state_lastCheckpoint;
 	uint256 public state_lastTxNonce = 0;
+	uint256 public state_lastValsetNonce = 0;
 
 	// These are set once at initialization
 	address public state_tokenContract;
@@ -25,7 +26,7 @@ contract Peggy {
 		uint256[] memory _powers,
 		uint256 _valsetNonce,
 		bytes32 _peggyId
-	) public {
+	) public pure {
 		makeCheckpoint(_validators, _powers, _valsetNonce, _peggyId);
 	}
 
@@ -37,7 +38,7 @@ contract Peggy {
 		bytes32[] memory _s,
 		bytes32 _theHash,
 		uint256 _powerThreshold
-	) public {
+	) public pure {
 		checkValidatorSignatures(
 			_currentValidators,
 			_currentPowers,
@@ -50,6 +51,16 @@ contract Peggy {
 	}
 
 	// END TEST FIXTURES
+
+	// Utility to get current ValSet nonce
+	function getValsetNonce() public view returns (uint256) {
+		return state_lastValsetNonce;
+	}
+
+	// Utility to get current transaction batch nonce
+	function getTxNonce() public view returns (uint256) {
+		return state_lastTxNonce;
+	}
 
 	// Utility function to verify geth style signatures
 	function verifySig(
@@ -201,6 +212,9 @@ contract Peggy {
 		// Stored to be used next time to validate that the valset
 		// supplied by the caller is correct.
 		state_lastCheckpoint = newCheckpoint;
+
+		// Store new nonce
+		state_lastValsetNonce = _newValsetNonce;
 
 		// LOGS
 
