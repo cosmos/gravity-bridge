@@ -116,14 +116,16 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, batchID uint64) error {
 	return nil
 }
 
+// SetOutgoingTXBatchConfirm stores the signature an orchestrator has submitted for an outgoing batch
 func (k Keeper) SetOutgoingTXBatchConfirm(ctx sdk.Context, batchID uint64, validator sdk.ValAddress, signature []byte) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetOutgoingTXBatchConfirmKey(batchID, validator), signature)
 }
 
-func (k Keeper) HasOutgoingTXBatchConfirm(ctx sdk.Context, nonce uint64, validatorAddr sdk.ValAddress) bool {
+// HasOutgoingTXBatchConfirm returns true when a signature was persisted for the given batch and validator address
+func (k Keeper) HasOutgoingTXBatchConfirm(ctx sdk.Context, batchID uint64, validatorAddr sdk.ValAddress) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetOutgoingTXBatchConfirmKey(nonce, validatorAddr))
+	return store.Has(types.GetOutgoingTXBatchConfirmKey(batchID, validatorAddr))
 }
 
 // Iterate through all outgoing batches in DESC order.

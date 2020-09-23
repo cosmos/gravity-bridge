@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/binary"
 	"sort"
+	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -40,12 +41,23 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakingKeeper types.Stak
 	return k
 }
 
-func (k Keeper) SetValsetRequest(ctx sdk.Context) {
+func (k Keeper) SetValsetRequest(ctx sdk.Context) types.Valset {
 	store := ctx.KVStore(k.storeKey)
 	valset := k.GetCurrentValset(ctx)
 	nonce := ctx.BlockHeight()
 	valset.Nonce = nonce
 	store.Set(types.GetValsetRequestKey(nonce), k.cdc.MustMarshalBinaryBare(valset))
+
+	event := sdk.NewEvent(
+		types.EventTypeMultisigUpdateRequest,
+		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(types.AttributeKeyContract, types.BridgeContractAddress.String()),
+		sdk.NewAttribute(types.AttributeKeyBridgeChainID, types.BridgeContractChainID),
+		sdk.NewAttribute(types.AttributeKeyMultisigID, strconv.Itoa(int(nonce))),
+		sdk.NewAttribute(types.AttributeKeyNonce, types.NonceFromUint64(uint64(nonce)).String()),
+	)
+	ctx.EventManager().EmitEvent(event)
+	return valset
 }
 
 func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce uint64) bool {
@@ -118,15 +130,19 @@ func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce int64, cb fun
 	}
 }
 
-func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr string) {
+func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.ValAddress, ethAddr types.EthereumAddress) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
+	store.Set(types.GetEthAddressKey(validator), ethAddr.Bytes())
 }
 
-func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) string {
+func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) *types.EthereumAddress {
 	store := ctx.KVStore(k.storeKey)
 	val := store.Get(types.GetEthAddressKey(validator))
-	return string(val)
+	if len(val) == 0 {
+		return nil
+	}
+	addr := types.NewEthereumAddress(string(val))
+	return &addr
 }
 
 type valsetSort types.Valset
@@ -152,7 +168,10 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 		validatorAddress := validator.GetOperator()
 		p := k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress)
 		powers[i] = p
-		ethAddrs[i] = k.GetEthAddress(ctx, sdk.AccAddress(validatorAddress))
+		ethAddr := k.GetEthAddress(ctx, validatorAddress)
+		if ethAddr != nil {
+			ethAddrs[i] = ethAddr.String()
+		}
 	}
 	valset := types.Valset{EthAddresses: ethAddrs, Powers: powers}
 	sort.Sort(valsetSort(valset))

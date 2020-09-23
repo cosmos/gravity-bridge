@@ -1,6 +1,7 @@
 package peggy
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 
@@ -26,10 +27,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgRequestBatch(ctx, keeper, msg)
 		case MsgConfirmBatch:
 			return handleMsgConfirmBatch(ctx, keeper, msg)
-		case MsgBatchInChain:
-			return handleMsgBatchInChain(ctx, keeper, msg)
-		case MsgEthDeposit:
-			return handleMsgEthDeposit(ctx, keeper, msg)
 		case MsgCreateEthereumClaims:
 			return handleCreateEthereumClaims(ctx, keeper, msg)
 		default:
@@ -47,21 +44,35 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper Keeper, msg MsgCreateEth
 	//	return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid bridge contract address")
 	//}
 
+	var attestationIDs [][]byte
 	// auth sender in current validator set
 	for _, c := range msg.Claims {
-		var (
-			validator = sdk.ValAddress(msg.Orchestrator) // TODO: impl find validator key for orchestrator
-		)
-		if _, err := keeper.AddClaim(ctx, c.GetType(), c.GetNonce(), validator, c.Details()); err != nil {
+		validator := findValidatorKey(ctx, msg.Orchestrator)
+		if validator == nil {
+			return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+		}
+		att, err := keeper.AddClaim(ctx, c.GetType(), c.GetNonce(), validator, c.Details())
+		if err != nil {
 			return nil, sdkerrors.Wrap(err, "create attestation")
 		}
+		attestationIDs = append(attestationIDs, att.ID())
 	}
-	return &sdk.Result{}, nil
+	return &sdk.Result{
+		Data: bytes.Join(attestationIDs, []byte(", ")),
+	}, nil
+}
+
+func findValidatorKey(ctx sdk.Context, orchAddr sdk.AccAddress) sdk.ValAddress {
+	// todo: implement proper in keeper
+	return sdk.ValAddress(orchAddr)
 }
 
 func handleMsgValsetRequest(ctx sdk.Context, keeper Keeper, msg types.MsgValsetRequest) (*sdk.Result, error) {
-	keeper.SetValsetRequest(ctx)
-	return &sdk.Result{}, nil
+	// todo: is requester in current valset?
+	v := keeper.SetValsetRequest(ctx)
+	return &sdk.Result{
+		Data: sdk.Uint64ToBigEndian(uint64(v.Nonce)),
+	}, nil
 }
 
 func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm) (*sdk.Result, error) {
@@ -70,29 +81,34 @@ func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm
 	if valset == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown nonce")
 	}
-
+	validator := findValidatorKey(ctx, msg.Validator)
+	if validator == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+	}
 	checkpoint := valset.GetCheckpoint()
-	ethAddress := keeper.GetEthAddress(ctx, msg.Validator)
-	if len(ethAddress) == 0 {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty eth address")
+	if err := verifyCheckpointSignature(ctx, keeper, validator, msg.Signature, checkpoint); err != nil {
+		return nil, err
 	}
-
-	sigBytes, hexErr := hex.DecodeString(msg.Signature)
-	if hexErr != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Signature hex decoding error")
-	}
-	err := utils.ValidateEthSig(checkpoint, sigBytes, ethAddress)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Failed to validate Checkpoint Sig")
-	}
-
 	// Save valset confirmation
 	keeper.SetValsetConfirm(ctx, msg)
-	return &sdk.Result{}, nil
+
+	details := types.SignedCheckpoint{Checkpoint: checkpoint}
+	att, err := keeper.AddClaim(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, types.NonceFromUint64(uint64(msg.Nonce)), validator, details)
+	if err != nil {
+		return nil, err
+	}
+	return &sdk.Result{
+		Data: att.ID(),
+	}, nil
 }
 
 func handleMsgSetEthAddress(ctx sdk.Context, keeper Keeper, msg MsgSetEthAddress) (*sdk.Result, error) {
-	keeper.SetEthAddress(ctx, msg.Validator, msg.Address)
+	validator := findValidatorKey(ctx, msg.Validator)
+	if validator == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+	}
+
+	keeper.SetEthAddress(ctx, validator, msg.Address)
 	return &sdk.Result{}, nil
 }
 
@@ -107,8 +123,6 @@ func handleMsgSendToEth(ctx sdk.Context, keeper Keeper, msg MsgSendToEth) (*sdk.
 }
 
 func handleMsgRequestBatch(ctx sdk.Context, keeper Keeper, msg MsgRequestBatch) (*sdk.Result, error) {
-	// TODO perform the batch creation process here, including pulling transactions out of
-	// the Peggy Tx Pool and bundling them into transactions
 	batchID, err := keeper.BuildOutgoingTXBatch(ctx, msg.Denom, OutgoingTxBatchSize)
 	if err != nil {
 		return nil, err
@@ -119,19 +133,43 @@ func handleMsgRequestBatch(ctx sdk.Context, keeper Keeper, msg MsgRequestBatch) 
 }
 
 func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) (*sdk.Result, error) {
-	validator := sdk.ValAddress(msg.Orchestrator)
+	validator := findValidatorKey(ctx, msg.Orchestrator)
+	if validator == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+	}
+
+	batch := keeper.GetOutgoingTXBatch(ctx, msg.Nonce)
+	if batch == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "nonce")
+	}
+	checkpoint := batch.GetCheckpoint()
+	if err := verifyCheckpointSignature(ctx, keeper, validator, msg.Signature, checkpoint); err != nil {
+		return nil, err
+	}
+	details := types.SignedCheckpoint{Checkpoint: checkpoint}
+	att, err := keeper.AddClaim(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, types.NonceFromUint64(msg.Nonce), validator, details)
+	if err != nil {
+		return nil, err
+	}
 	keeper.SetOutgoingTXBatchConfirm(ctx, msg.Nonce, validator, []byte(msg.Signature))
-	return &sdk.Result{}, nil
+	return &sdk.Result{
+		Data: att.ID(),
+	}, nil
 }
 
-func handleMsgBatchInChain(ctx sdk.Context, keeper Keeper, msg MsgBatchInChain) (*sdk.Result, error) {
-	// TODO add batch confirmation to the store, and if this confirmation means the batch counts as
-	// `observed` (confirmations from 66% of the active voting power exist as of this block) then consider
-	// the batch completed.
-	return &sdk.Result{}, nil
-}
-
-func handleMsgEthDeposit(ctx sdk.Context, keeper Keeper, msg MsgEthDeposit) (*sdk.Result, error) {
-	// TODO issue tokens from the store of the appropriate denom once this deposit counts as `observed`
-	return &sdk.Result{}, nil
+// verifies the checkpoint was signed with the deposited ethereum key for the given validator
+func verifyCheckpointSignature(ctx sdk.Context, keeper Keeper, validator sdk.ValAddress, ethSignature string, checkpoint []byte) error {
+	ethAddress := keeper.GetEthAddress(ctx, validator)
+	if len(ethAddress) == 0 {
+		return sdkerrors.Wrap(types.ErrEmpty, "eth address")
+	}
+	sigBytes, err := hex.DecodeString(ethSignature)
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
+	}
+	err = utils.ValidateEthSig(checkpoint, sigBytes, ethAddress.String())
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrInvalid, "signature")
+	}
+	return nil
 }

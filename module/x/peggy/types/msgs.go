@@ -3,7 +3,6 @@ package types
 import (
 	"encoding/hex"
 	"fmt"
-	"regexp"
 
 	"github.com/althea-net/peggy/module/x/peggy/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -108,12 +107,12 @@ func (msg MsgValsetRequest) GetSigners() []sdk.AccAddress {
 // -------------
 type MsgSetEthAddress struct {
 	// the ethereum address
-	Address   string         `json:"address"`
-	Validator sdk.AccAddress `json:"validator"`
-	Signature string         `json:"signature"`
+	Address   EthereumAddress `json:"address"`
+	Validator sdk.AccAddress  `json:"validator"`
+	Signature string          `json:"signature"`
 }
 
-func NewMsgSetEthAddress(address string, validator sdk.AccAddress, signature string) MsgSetEthAddress {
+func NewMsgSetEthAddress(address EthereumAddress, validator sdk.AccAddress, signature string) MsgSetEthAddress {
 	return MsgSetEthAddress{
 		Address:   address,
 		Validator: validator,
@@ -134,17 +133,16 @@ func (msg MsgSetEthAddress) ValidateBasic() error {
 	if msg.Validator.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator.String())
 	}
-	valdiateEthAddr := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
 
-	if !valdiateEthAddr.MatchString(msg.Address) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "This is not a valid Ethereum address")
+	if err := msg.Address.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "ethereum address")
 	}
 	sigBytes, hexErr := hex.DecodeString(msg.Signature)
 	if hexErr != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Could not decode hex string %s", msg.Signature))
 	}
 
-	err := utils.ValidateEthSig(crypto.Keccak256(msg.Validator.Bytes()), sigBytes, msg.Address)
+	err := utils.ValidateEthSig(crypto.Keccak256(msg.Validator.Bytes()), sigBytes, msg.Address.String())
 
 	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("digest: %x sig: %x address %s error: %s", crypto.Keccak256(msg.Validator.Bytes()), msg.Signature, msg.Address, err.Error()))
@@ -322,96 +320,6 @@ func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Orchestrator}
 }
 
-// MsgBatchInChain
-// this message essentially acts as the oracle between Ethereum and Cosmos, when a validator sees
-// that a batch has been submitted on to the Ethereum blockchain they will submit this message
-// which acts as their oracle attestation. When more than 66% of the active validator set has
-// claimed to have seen the transaction batch enter the ethereum blockchain the transactions are
-// removed from the tx queue in the store and finally considered transferred. Transactions in the
-// txqueue have a batch number they are included in transactions in lower batches that have never
-// been submitted are once again valid for inclusion in blocks.
-// -------------
-type MsgBatchInChain struct {
-	Nonce     int64          `json:"nonce"`
-	Validator sdk.AccAddress `json:"validator"`
-}
-
-func NewMsgBatchInChain(nonce int64, validator sdk.AccAddress) MsgBatchInChain {
-	return MsgBatchInChain{
-		Nonce:     nonce,
-		Validator: validator,
-	}
-}
-
-// Route should return the name of the module
-func (msg MsgBatchInChain) Route() string { return RouterKey }
-
-// Type should return the action
-func (msg MsgBatchInChain) Type() string { return "batch_in_chain" }
-
-func (msg MsgBatchInChain) ValidateBasic() error {
-	// TODO ensure that nonce is > the previous BatchInChain
-	// TODO think about dealing with changing validator sets during the confirmation process
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgBatchInChain) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgBatchInChain) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Validator}
-}
-
-// MsgEthDeposit
-// this message essentially acts as the oracle between Ethereum and Cosmos, when a validator sees
-// that some funds have been sent to the bridge on the Ethereum side they send this message
-// which acts as their oracle attestation. When more than 66% of the active validator set has
-// claimed to have seen the transaction batch enter the ethereum blockchain coins are issued
-// to the Cosmos address in question
-// -------------
-type MsgEthDeposit struct {
-	Validator   sdk.AccAddress `json:"validator"`
-	Destination sdk.AccAddress `json:"Destination"`
-	Amount      sdk.Coin       `json:"Amount"`
-}
-
-func NewMsgEthDeposit(validator sdk.AccAddress, destination sdk.AccAddress, amount sdk.Coin) MsgEthDeposit {
-	return MsgEthDeposit{
-		Validator:   validator,
-		Destination: destination,
-		Amount:      amount,
-	}
-}
-
-// Route should return the name of the module
-func (msg MsgEthDeposit) Route() string { return RouterKey }
-
-// Type should return the action
-func (msg MsgEthDeposit) Type() string { return "eth_deposit" }
-
-func (msg MsgEthDeposit) ValidateBasic() error {
-	// TODO ensure that this is an allowed demon for september goal
-	// TODO slashing conditions for false deposit attestation eventually
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgEthDeposit) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgEthDeposit) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Validator}
-}
-
-func (c ClaimType) Bytes() []byte {
-	return []byte(c)
-}
-
 type EthereumClaim interface {
 	GetNonce() Nonce
 	GetType() ClaimType
@@ -424,6 +332,9 @@ var (
 	_ EthereumClaim = EthereumBridgeWithdrawalBatchClaim{}
 	_ EthereumClaim = EthereumBridgeMultiSigUpdateClaim{}
 )
+
+// NoUniqueClaimDetails is a NIL object to
+var NoUniqueClaimDetails AttestationDetails = nil
 
 // EthereumBridgeDepositClaim claims that a token was deposited on the bridge contract.
 type EthereumBridgeDepositClaim struct {
@@ -449,8 +360,14 @@ func (e EthereumBridgeDepositClaim) ValidateBasic() error {
 	return nil
 }
 
+// EthereumBridgeDepositClaim
+// When more than 66% of the active validator set has
+// claimed to have seen the deposit enter the ethereum blockchain coins are issued
+// to the Cosmos address in question
+// -------------
 func (e EthereumBridgeDepositClaim) Details() AttestationDetails {
 	return BridgeDeposit{
+		Nonce:          e.Nonce,
 		ERC20Token:     e.ERC20Token,
 		EthereumSender: e.EthereumSender,
 		CosmosReceiver: e.CosmosReceiver,
@@ -478,7 +395,7 @@ func (e EthereumBridgeWithdrawalBatchClaim) ValidateBasic() error {
 }
 
 func (e EthereumBridgeWithdrawalBatchClaim) Details() AttestationDetails {
-	return nil
+	return NoUniqueClaimDetails
 }
 
 // EthereumBridgeMultiSigUpdateClaim claims that the multisig set was updated on the bridge contract.
@@ -502,7 +419,7 @@ func (e EthereumBridgeMultiSigUpdateClaim) ValidateBasic() error {
 }
 
 func (e EthereumBridgeMultiSigUpdateClaim) Details() AttestationDetails {
-	return nil
+	return NoUniqueClaimDetails
 }
 
 const (
@@ -513,7 +430,12 @@ var (
 	_ sdk.Msg = &MsgCreateEthereumClaims{}
 )
 
-// MsgCreateEthereumClaims submits claims to the cosmos side. No duplicates allowed within the set.
+// MsgCreateEthereumClaims
+// this message essentially acts as the oracle between Ethereum and Cosmos, when an orchestrator sees
+// that a batch/ deposit/ multisig set update has been submitted on to the Ethereum blockchain they
+// will submit this message which acts as their oracle attestation. When more than 66% of the active
+// validator set has claimed to have seen the transaction enter the ethereum blockchain it is "observed"
+// and state transitions and operations are triggered on the cosmos side.
 type MsgCreateEthereumClaims struct {
 	EthereumChainID       string // todo: revisit type. can be int/ string/ ?
 	BridgeContractAddress EthereumAddress

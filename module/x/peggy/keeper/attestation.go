@@ -94,9 +94,9 @@ func (k Keeper) tryAttestation(ctx sdk.Context, claimType types.ClaimType, nonce
 			ProcessResult: types.ProcessResultUnknown,
 			Details:       details,
 			Tally: types.AttestationTally{
-				TotalVotesPower:    zero,
+				TotalVotesPower:     zero,
 				RequiredVotesPower: types.AttestationVotesPowerThreshold.MulUint64(power.Uint64()).Quo(hundred),
-				RequiredVotesCount: types.AttestationVotesCountThreshold.MulUint64(uint64(count)).Quo(hundred).Uint64(),
+				RequiredVotesCount:  types.AttestationVotesCountThreshold.MulUint64(uint64(count)).Quo(hundred).Uint64(),
 			},
 			SubmitTime:          now,
 			ConfirmationEndTime: now.Add(types.AttestationPeriod),
@@ -145,15 +145,15 @@ func (k Keeper) IterateAttestationByClaimTypeDesc(ctx sdk.Context, claimType typ
 	return
 }
 
-// GetLastObservedNonce returns nonce or nil when none found for given type
-func (k Keeper) GetLastObservedNonce(ctx sdk.Context, claimType types.ClaimType) types.Nonce {
-	var nonce types.Nonce
+// GetLastObservedAttestation returns attestation for given claim type  or nil when none found
+func (k Keeper) GetLastObservedAttestation(ctx sdk.Context, claimType types.ClaimType) *types.Attestation {
+	var result *types.Attestation
 	k.IterateAttestationByClaimTypeDesc(ctx, claimType, func(_ []byte, att types.Attestation) bool {
 		if att.Certainty != types.CertaintyObserved {
 			return false
 		}
-		nonce = att.Nonce
+		result = &att
 		return true
 	})
-	return nonce
+	return result
 }

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"crypto/ecdsa"
 	"encoding/hex"
-	"fmt"
 	"log"
 
 	"github.com/cosmos/cosmos-sdk/types/errors"
@@ -38,6 +37,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		CmdValsetRequest(cdc),
 		CmdValsetConfirm(storeKey, cdc),
 		GetObservedCmd(cdc),
+		GetApprovedCmd(storeKey, cdc),
 		GetUnsafeTestingCmd(),
 	)...)
 
@@ -93,10 +93,10 @@ func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 			if !ok {
 				log.Fatal("error casting public key to ECDSA")
 			}
-			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA)
 
 			// Make the message
-			msg := types.NewMsgSetEthAddress(ethAddress, cosmosAddr, hex.EncodeToString(signature))
+			msg := types.NewMsgSetEthAddress(types.EthereumAddress(ethAddress), cosmosAddr, hex.EncodeToString(signature))
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -121,52 +121,6 @@ func CmdValsetRequest(cdc *codec.Codec) *cobra.Command {
 			// Make the message
 			msg := types.NewMsgValsetRequest(cosmosAddr)
 
-			// Send it
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
-}
-
-func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "valset-confirm [nonce] [eth private key]",
-		Short: "this is used by validators to sign a valset with a particular nonce if it exists",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-
-			// Make Eth Signature over valset
-			privKeyString := args[1][2:]
-			privateKey, err := ethCrypto.HexToECDSA(privKeyString)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			nonce := args[0]
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, nonce), nil)
-			if err != nil {
-				fmt.Printf("could not get valset")
-				return nil
-			}
-
-			var valset types.Valset
-			cdc.MustUnmarshalJSON(res, &valset)
-			checkpoint := valset.GetCheckpoint()
-
-			signature, err := ethCrypto.Sign(checkpoint, privateKey)
-			if err != nil {
-				log.Fatal(err)
-			}
-			cosmosAddr := cliCtx.GetFromAddress()
-			// Make the message
-			msg := types.NewMsgValsetConfirm(valset.Nonce, cosmosAddr, hex.EncodeToString(signature))
-
-			err = msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
 			// Send it
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},

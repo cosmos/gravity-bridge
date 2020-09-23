@@ -3,33 +3,49 @@ package types
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
+
+var isValidETHAddress = regexp.MustCompile("^0x[0-9a-fA-F]{40}$").MatchString
 
 // EthereumAddress defines a standard ethereum address
 type EthereumAddress gethCommon.Address
 
 // NewEthereumAddress is a constructor function for EthereumAddress
 func NewEthereumAddress(address string) EthereumAddress {
-	return EthereumAddress(gethCommon.HexToAddress(address))
+	e := EthereumAddress(gethCommon.HexToAddress(address))
+	return e //, e.ValidateBasic() // TODO: check and return error
 }
 
-// Route should return the name of the module
-func (ethAddr EthereumAddress) String() string {
-	return gethCommon.Address(ethAddr).String()
+func (e EthereumAddress) String() string {
+	return gethCommon.Address(e).String()
+}
+
+// Bytes return the encoded address string as bytes
+func (e EthereumAddress) Bytes() []byte {
+	return []byte(e.String())
+}
+
+func (e EthereumAddress) ValidateBasic() error {
+	if !isValidETHAddress(e.String()) {
+		return sdkerrors.Wrap(ErrInvalid, "ethereum address")
+	}
+	return nil
 }
 
 // MarshalJSON marshals the etherum address to JSON
-func (ethAddr EthereumAddress) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%v\"", ethAddr.String())), nil
+func (e EthereumAddress) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%v\"", e.String())), nil
 }
 
 // UnmarshalJSON unmarshals an ethereum address
-func (ethAddr *EthereumAddress) UnmarshalJSON(input []byte) error {
-	return hexutil.UnmarshalFixedJSON(reflect.TypeOf(gethCommon.Address{}), input, ethAddr[:])
+func (e *EthereumAddress) UnmarshalJSON(input []byte) error {
+	return hexutil.UnmarshalFixedJSON(reflect.TypeOf(gethCommon.Address{}), input, e[:])
 }
 
 // ERC20Token unique identifier for an Ethereum erc20 token.

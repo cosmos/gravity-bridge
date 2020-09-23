@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -27,13 +28,16 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		CmdGetPendingValsetRequest(storeKey, cdc),
 		CmdGetPendingOutgoingTXBatchRequest(storeKey, cdc),
 		CmdGetAllOutgoingTXBatchRequest(storeKey, cdc),
-		QueryOracle(storeKey, cdc),
+		CmdGetAllAttestationsRequest(storeKey, cdc),
+		CmdGetAttestationRequest(storeKey, cdc),
+		QueryObserved(storeKey, cdc),
+		QueryApproved(storeKey, cdc),
 	)...)
 
 	return peggyQueryCmd
 }
 
-func QueryOracle(storeKey string, cdc *codec.Codec) *cobra.Command {
+func QueryObserved(storeKey string, cdc *codec.Codec) *cobra.Command {
 	testingTxCmd := &cobra.Command{
 		Use:                        "observed",
 		Short:                      "observed ETH events",
@@ -44,6 +48,21 @@ func QueryOracle(storeKey string, cdc *codec.Codec) *cobra.Command {
 	testingTxCmd.AddCommand(flags.PostCommands(
 		CmdGetLastObservedNonceRequest(storeKey, cdc),
 		CmdGetLastObservedNoncesRequest(storeKey, cdc),
+		CmdGetLastObservedMultiSigUpdateRequest(storeKey, cdc),
+	)...)
+
+	return testingTxCmd
+}
+func QueryApproved(storeKey string, cdc *codec.Codec) *cobra.Command {
+	testingTxCmd := &cobra.Command{
+		Use:                        "approved",
+		Short:                      "approved cosmos operation",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
+	}
+	testingTxCmd.AddCommand(flags.PostCommands(
+		CmdGetLastApprovedMultiSigUpdateRequest(storeKey, cdc),
 	)...)
 
 	return testingTxCmd
@@ -131,7 +150,7 @@ func CmdGetPendingValsetRequest(storeKey string, cdc *codec.Codec) *cobra.Comman
 				return err
 			}
 			if len(res) == 0 {
-				fmt.Println("No pending valset request")
+				fmt.Println("Nothing found")
 				return nil
 			}
 
@@ -145,7 +164,7 @@ func CmdGetPendingValsetRequest(storeKey string, cdc *codec.Codec) *cobra.Comman
 func CmdGetLastObservedNonceRequest(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "nonce [claim type]",
-		Short: fmt.Sprintf("Get the last nonce that was observed for a claim type of %s", types.AllClaimTypes),
+		Short: fmt.Sprintf("Get the last nonce that was observed for a claim type of %s", types.AllOracleClaimTypes),
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -155,7 +174,7 @@ func CmdGetLastObservedNonceRequest(storeKey string, cdc *codec.Codec) *cobra.Co
 				return err
 			}
 			if len(res) == 0 {
-				fmt.Println("No observed nonce, yet")
+				fmt.Println("Nothing found")
 				return nil
 			}
 
@@ -179,11 +198,58 @@ func CmdGetLastObservedNoncesRequest(storeKey string, cdc *codec.Codec) *cobra.C
 				return err
 			}
 			if len(res) == 0 {
-				fmt.Println("No observed nonces, yet")
+				fmt.Println("Nothing found")
 				return nil
 			}
 
 			var out map[string]types.Nonce
+			cdc.MustUnmarshalJSON(res, &out)
+			return cliCtx.PrintOutput(out)
+		},
+	}
+}
+
+func CmdGetLastObservedMultiSigUpdateRequest(storeKey string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "last-multisig-update",
+		Short: "Get last observed multisig update",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lastObservedMultiSigUpdate", storeKey), nil)
+			if err != nil {
+				return err
+			}
+			if len(res) == 0 {
+				fmt.Println("Nothing found")
+				return nil
+			}
+
+			var out keeper.MultiSigUpdateResponse
+			cdc.MustUnmarshalJSON(res, &out)
+			return cliCtx.PrintOutput(out)
+		},
+	}
+}
+func CmdGetLastApprovedMultiSigUpdateRequest(storeKey string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "last-multisig-update",
+		Short: "Get last approved multisig update",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lastApprovedMultiSigUpdate", storeKey), nil)
+			if err != nil {
+				return err
+			}
+			if len(res) == 0 {
+				fmt.Println("Nothing found")
+				return nil
+			}
+
+			var out keeper.MultiSigUpdateResponse
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},
@@ -203,7 +269,7 @@ func CmdGetPendingOutgoingTXBatchRequest(storeKey string, cdc *codec.Codec) *cob
 				return err
 			}
 			if len(res) == 0 {
-				fmt.Println("No pending outgoing batches")
+				fmt.Println("Nothing found")
 				return nil
 			}
 
@@ -232,6 +298,55 @@ func CmdGetAllOutgoingTXBatchRequest(storeKey string, cdc *codec.Codec) *cobra.C
 			}
 
 			var out []types.OutgoingTxBatch
+			cdc.MustUnmarshalJSON(res, &out)
+			return cliCtx.PrintOutput(out)
+		},
+	}
+}
+
+func CmdGetAllAttestationsRequest(storeKey string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "all-attestations [claim type]",
+		Short: fmt.Sprintf("Get all attestations by claim type descending order. Claim types: %s", append(types.AllOracleClaimTypes, types.AllConfirmationClaimTypes...)),
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/allAttestations/%s", storeKey, args[0]), nil)
+			if err != nil {
+				return err
+			}
+			if len(res) == 0 {
+				fmt.Println("Nothing found")
+				return nil
+			}
+			var out []types.Attestation
+			cdc.MustUnmarshalJSON(res, &out)
+			return cliCtx.PrintOutput(out)
+		},
+	}
+}
+func CmdGetAttestationRequest(storeKey string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "attestation [claim type] [nonce]",
+		Short: fmt.Sprintf("Get attestation by claim type and nonce. Claim types: %s", append(types.AllOracleClaimTypes, types.AllConfirmationClaimTypes...)),
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			nonce, err := parseNonce(args[1])
+			if err != nil {
+				return err
+			}
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/attestation/%s/%s", storeKey, args[0], nonce.String()), nil)
+			if err != nil {
+				return err
+			}
+			if len(res) == 0 {
+				fmt.Println("Nothing found")
+				return nil
+			}
+			var out types.Attestation
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},
