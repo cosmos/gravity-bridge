@@ -94,9 +94,9 @@ func (k Keeper) tryAttestation(ctx sdk.Context, claimType types.ClaimType, nonce
 			ProcessResult: types.ProcessResultUnknown,
 			Details:       details,
 			Tally: types.AttestationTally{
-				TotalVotesPower:     zero,
+				TotalVotesPower:    zero,
 				RequiredVotesPower: types.AttestationVotesPowerThreshold.MulUint64(power.Uint64()).Quo(hundred),
-				RequiredVotesCount:  types.AttestationVotesCountThreshold.MulUint64(uint64(count)).Quo(hundred).Uint64(),
+				RequiredVotesCount: types.AttestationVotesCountThreshold.MulUint64(uint64(count)).Quo(hundred).Uint64(),
 			},
 			SubmitTime:          now,
 			ConfirmationEndTime: now.Add(types.AttestationPeriod),

@@ -18,12 +18,17 @@ type OutgoingTx struct {
 	BridgeFee   sdk.Coin        `json:"bridge_fee"`
 }
 
-// BridgedDenominator contains bridged token details
+// BridgedDenominator track and identify the ported ERC20 tokens into Peggy.
+// An ERC20 token on the Ethereum side can be uniquely identified by the ERC20 contract address and the human readable symbol
+// used for it in the contract
+// In Peggy this is represented as "vouchers" that get minted and burned when interacting with the Ethereum side. These "vouchers"
+// are identified by a prefixed string representation. See VoucherDenom type.
 type BridgedDenominator struct {
-	//ChainID         string
+	// TokenContractAddress is the ERC20 contract address
 	TokenContractAddress EthereumAddress
-	// Symbol is the human readable erc20 symbol
-	Symbol             string
+	// Symbol is the human readable ERC20 token name.
+	Symbol string
+	// CosmosVoucherDenom is used as denom in sdk.Coin
 	CosmosVoucherDenom VoucherDenom
 }
 
@@ -72,10 +77,10 @@ func assertPeggyVoucher(s sdk.Coin) {
 	}
 }
 
-// VoucherDenom is a unique denominator and identifier for a bridged token.
+// VoucherDenom is a unique denominator and identifier for an ERC20 token in the cosmos world
 type VoucherDenom string
 
-// NewVoucherDenom builds a Peggy voucher denominator from the erc20 contract address and the human readable erc20 symbol.
+// NewVoucherDenom builds a Peggy voucher denominator from the ERC20 contract address and the human readable ERC20 symbol.
 func NewVoucherDenom(tokenContractAddr EthereumAddress, erc20Symbol string) VoucherDenom {
 	denomTrace := fmt.Sprintf("%s/%s/", tokenContractAddr.String(), erc20Symbol)
 	var hash tmbytes.HexBytes = tmhash.Sum([]byte(denomTrace))
@@ -104,5 +109,5 @@ func IsVoucherDenom(denom string) bool {
 	return len(denom) == VoucherDenomLen && strings.HasPrefix(denom, VoucherDenomPrefix)
 }
 
-// IDSet is a collection of DB keys
+// IDSet is a collection of DB keys in a second index.
 type IDSet []uint64

@@ -64,7 +64,7 @@ func GetUnsafeTestingCmd() *cobra.Command {
 func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "update-eth-addr [eth private key]",
-		Short: "update your eth address which will be used for peggy if you are a validator",
+		Short: "Update your Ethereum address which will be used for signing executables for the `multisig set`",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -111,7 +111,7 @@ func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 func CmdValsetRequest(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "valset-request",
-		Short: "request that the validators sign over the current valset",
+		Short: "Trigger a new `multisig set` update request on the cosmos side",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			inBuf := bufio.NewReader(cmd.InOrStdin())
@@ -171,7 +171,7 @@ func CmdUnsafeETHAddr() *cobra.Command {
 func CmdWithdrawToETH(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "withdraw [from_key_or_cosmos_address] [to_eth_address] [amount] [bridge_fee]",
-		Short: "adds a new entry to the tx pool to withdraw an amount from the bridge contract",
+		Short: "Adds a new entry to the transaction pool to withdraw an amount from the Ethereum bridge contract",
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -207,7 +207,7 @@ func CmdWithdrawToETH(cdc *codec.Codec) *cobra.Command {
 func CmdRequestBatch(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "build-batch [voucher_denom]",
-		Short: "build a new batch for pooled TX",
+		Short: "Build a new batch on the cosmos side for pooled withdrawal transactions",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)

@@ -55,7 +55,7 @@ func GetApprovedCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 func CmdSendETHDepositRequest(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "deposit [eth chain id] [eth contract address] [nonce] [cosmos receiver] [amount] [eth erc20 symbol] [eth erc20 contract addr] [eth sender address]",
-		Short: "Submit an eth event observed by an orchestrator",
+		Short: "Submit a claim that a deposit was made on the Ethereum side",
 		Args:  cobra.ExactArgs(8),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -106,7 +106,7 @@ func CmdSendETHDepositRequest(cdc *codec.Codec) *cobra.Command {
 func CmdSendETHWithdrawalRequest(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "withdrawal [eth chain id] [eth contract address] [nonce]",
-		Short: "Submit an eth event observed by an orchestrator",
+		Short: "Submit a claim that a withdrawal was executed on the Ethereum side",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -141,7 +141,7 @@ func CmdSendETHWithdrawalRequest(cdc *codec.Codec) *cobra.Command {
 func CmdSendETHMultiSigRequest(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "multisig-update [eth chain id] [eth contract address] [nonce]",
-		Short: "Submit an eth event observed by an orchestrator",
+		Short: "Submit a claim that the 'multisig set' update was executed on the Ethereum side",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -176,7 +176,7 @@ func CmdSendETHMultiSigRequest(cdc *codec.Codec) *cobra.Command {
 func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "valset-confirm [nonce] [eth private key]",
-		Short: "this is used by validators to sign a valset with a particular nonce if it exists",
+		Short: "Sign a `multisig set` update for given nonce with the Ethereum key and submit to cosmos side",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
