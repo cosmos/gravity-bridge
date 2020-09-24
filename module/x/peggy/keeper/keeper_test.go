@@ -47,14 +47,14 @@ func TestCurrentValsetNormalization(t *testing.T) {
 	}{
 		"one": {
 			srcPowers: []int64{100},
-			expPowers: []int64{100},
+			expPowers: []int64{4294967295},
 		},
 		"two": {
 			srcPowers: []int64{1, 100},
-			expPowers: []int64{1, 100},
+			expPowers: []int64{42524428, 4252442866},
 		},
 	}
-	k, ctx := CreateTestEnv(t)
+	k, ctx, _ := CreateTestEnv(t)
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			operators := make([]MockStakingValidatorData, len(spec.srcPowers))

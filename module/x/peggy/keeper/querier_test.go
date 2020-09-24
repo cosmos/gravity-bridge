@@ -24,34 +24,34 @@ func TestQueryValsetConfirm(t *testing.T) {
 	})
 
 	specs := map[string]struct {
-		srcNonce string
+		srcnonce string
 		srcAddr  string
 		expErr   bool
 		expResp  []byte
 	}{
 		"all good": {
-			srcNonce: "1",
+			srcnonce: "1",
 			srcAddr:  myValidatorCosmosAddr.String(),
 			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a",  "signature": ""}}`),
 		},
 		"unknown nonce": {
-			srcNonce: "999999",
+			srcnonce: "999999",
 			srcAddr:  myValidatorCosmosAddr.String(),
 		},
 		"invalid address": {
-			srcNonce: "1",
+			srcnonce: "1",
 			srcAddr:  "not a valid addr",
 			expErr:   true,
 		},
 		"invalid nonce": {
-			srcNonce: "not a valid nonce",
+			srcnonce: "not a valid nonce",
 			srcAddr:  myValidatorCosmosAddr.String(),
 			expErr:   true,
 		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := queryValsetConfirm(ctx, []string{spec.srcNonce, spec.srcAddr}, k)
+			got, err := queryValsetConfirm(ctx, []string{spec.srcnonce, spec.srcAddr}, k)
 			if spec.expErr {
 				require.Error(t, err)
 				return
@@ -66,7 +66,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 	}
 }
 
-func TestAllValsetConfirmsByNonce(t *testing.T) {
+func TestAllValsetConfirmsBynonce(t *testing.T) {
 	var (
 		nonce int64 = 1
 	)
@@ -83,12 +83,12 @@ func TestAllValsetConfirmsByNonce(t *testing.T) {
 	}
 
 	specs := map[string]struct {
-		srcNonce string
+		srcnonce string
 		expErr   bool
 		expResp  []byte
 	}{
 		"all good": {
-			srcNonce: "1",
+			srcnonce: "1",
 			expResp: []byte(`[
 {"nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a", "signature": "signature 1"},
 {"nonce": "1", "validator": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du", "signature": "signature 2"},
@@ -96,17 +96,17 @@ func TestAllValsetConfirmsByNonce(t *testing.T) {
 ]`),
 		},
 		"unknown nonce": {
-			srcNonce: "999999",
+			srcnonce: "999999",
 			expResp:  nil,
 		},
 		"invalid nonce": {
-			srcNonce: "not a valid nonce",
+			srcnonce: "not a valid nonce",
 			expErr:   true,
 		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := allValsetConfirmsByNonce(ctx, spec.srcNonce, k)
+			got, err := allValsetConfirmsByNonce(ctx, spec.srcnonce, k)
 			if spec.expErr {
 				require.Error(t, err)
 				return
@@ -121,7 +121,7 @@ func TestAllValsetConfirmsByNonce(t *testing.T) {
 	}
 }
 
-func TestLastValsetRequestNonces(t *testing.T) {
+func TestLastValsetRequestnonces(t *testing.T) {
 	k, ctx, _ := CreateTestEnv(t)
 	// seed with requests
 	for i := 0; i < 6; i++ {
@@ -143,16 +143,16 @@ func TestLastValsetRequestNonces(t *testing.T) {
 		"limit at 5": {
 			expResp: []byte(`[
   {
-	"Nonce": "105",
-	"Powers": [
-	  "100",
-	  "100",
-	  "100",
-	  "100",
-	  "100",
-	  "100"
+	"nonce": "105",
+	"powers": [
+	  "715827882",
+	  "715827882",
+	  "715827882",
+	  "715827882",
+	  "715827882",
+	  "715827882"
 	],
-	"EthAddresses": [
+	"eth_addresses": [
 	  "0x0101010101010101010101010101010101010101",
 	  "0x0202020202020202020202020202020202020202",
 	  "0x0303030303030303030303030303030303030303",
@@ -162,15 +162,15 @@ func TestLastValsetRequestNonces(t *testing.T) {
 	]
   },
   {
-	"Nonce": "104",
-	"Powers": [
-	  "100",
-	  "100",
-	  "100",
-	  "100",
-	  "100"
+	"nonce": "104",
+	"powers": [
+	  "858993459",
+	  "858993459",
+	  "858993459",
+	  "858993459",
+	  "858993459"
 	],
-	"EthAddresses": [
+	"eth_addresses": [
 	  "0x0101010101010101010101010101010101010101",
 	  "0x0202020202020202020202020202020202020202",
 	  "0x0303030303030303030303030303030303030303",
@@ -179,14 +179,14 @@ func TestLastValsetRequestNonces(t *testing.T) {
 	]
   },
   {
-	"Nonce": "103",
-	"Powers": [
-	  "100",
-	  "100",
-	  "100",
-	  "100"
+	"nonce": "103",
+	"powers": [
+	  "1073741823",
+	  "1073741823",
+	  "1073741823",
+	  "1073741823"
 	],
-	"EthAddresses": [
+	"eth_addresses": [
 	  "0x0101010101010101010101010101010101010101",
 	  "0x0202020202020202020202020202020202020202",
 	  "0x0303030303030303030303030303030303030303",
@@ -194,25 +194,25 @@ func TestLastValsetRequestNonces(t *testing.T) {
 	]
   },
   {
-	"Nonce": "102",
-	"Powers": [
-	  "100",
-	  "100",
-	  "100"
+	"nonce": "102",
+	"powers": [
+	  "1431655765",
+	  "1431655765",
+	  "1431655765"
 	],
-	"EthAddresses": [
+	"eth_addresses": [
 	  "0x0101010101010101010101010101010101010101",
 	  "0x0202020202020202020202020202020202020202",
 	  "0x0303030303030303030303030303030303030303"
 	]
   },
   {
-	"Nonce": "101",
-	"Powers": [
-	  "100",
-	  "100"
+	"nonce": "101",
+	"powers": [
+	  "2147483647",
+	  "2147483647"
 	],
-	"EthAddresses": [
+	"eth_addresses": [
 	  "0x0101010101010101010101010101010101010101",
 	  "0x0202020202020202020202020202020202020202"
 	]
@@ -255,12 +255,12 @@ func TestLastPendingValsetRequest(t *testing.T) {
 {
   "type": "peggy/Valset",
   "value": {
-	"Nonce": "201",
-	"Powers": [
-	  "100",
-	  "100"
+	"nonce": "201",
+	"powers": [
+	  "2147483647",
+	  "2147483647"
 	],
-	"EthAddresses": [
+	"eth_addresses": [
 	  "",
 	  ""
 	]
@@ -278,12 +278,12 @@ func TestLastPendingValsetRequest(t *testing.T) {
 {
   "type": "peggy/Valset",
   "value": {
-	"Nonce": "201",
-	"Powers": [
-	  "100",
-	  "100"
+	"nonce": "201",
+	"powers": [
+	  "2147483647",
+	  "2147483647"
 	],
-	"EthAddresses": [
+	"eth_addresses": [
 	  "",
 	  ""
 	]
