@@ -14,5 +14,6 @@ geth --identity "PeggyTestnet" --nodiscover \
 --rpc \
 --http \
 --minerthreads=1 \
---verbosity "0" \
---etherbase=0xBf660843528035a5A4921534E156a27e64B231fE
+--nousb \
+--verbosity=5 \
+--etherbase=0xBf660843528035a5A4921534E156a27e64B231fE &> /geth.log
