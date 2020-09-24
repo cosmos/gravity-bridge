@@ -17,6 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 )
@@ -31,17 +32,19 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	peggyTxCmd.AddCommand(flags.PostCommands(
+		CmdWithdrawToETH(cdc),
+		CmdRequestBatch(cdc),
 		CmdUpdateEthAddress(cdc),
 		CmdValsetRequest(cdc),
 		CmdValsetConfirm(storeKey, cdc),
-		GetUnsafeTestingCmd(storeKey, cdc),
+		GetObservedCmd(cdc),
+		GetUnsafeTestingCmd(),
 	)...)
 
 	return peggyTxCmd
 }
 
-// GetUnsafeTestingCmd
-func GetUnsafeTestingCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
+func GetUnsafeTestingCmd() *cobra.Command {
 	testingTxCmd := &cobra.Command{
 		Use:                        "unsafe_testing",
 		Short:                      "helpers for testing. not going into production",
@@ -207,6 +210,72 @@ func CmdUnsafeETHAddr() *cobra.Command {
 			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA).Hex()
 			println(ethAddress)
 			return nil
+		},
+	}
+}
+
+func CmdWithdrawToETH(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "withdraw [from_key_or_cosmos_address] [to_eth_address] [amount] [bridge_fee]",
+		Short: "adds a new entry to the tx pool to withdraw an amount from the bridge contract",
+		Args:  cobra.ExactArgs(4),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			cosmosAddr := cliCtx.GetFromAddress()
+
+			amount, err := sdk.ParseCoin(args[2])
+			if err != nil {
+				return sdkerrors.Wrap(err, "amount")
+			}
+			bridgeFee, err := sdk.ParseCoin(args[3])
+			if err != nil {
+				return sdkerrors.Wrap(err, "bridge fee")
+			}
+
+			// Make the message
+			msg := types.MsgSendToEth{
+				Sender:      cosmosAddr,
+				DestAddress: types.NewEthereumAddress(args[1]),
+				Amount:      amount,
+				BridgeFee:   bridgeFee,
+			}
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			// Send it
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}
+
+func CmdRequestBatch(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "build-batch [voucher_denom]",
+		Short: "build a new batch for pooled TX",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			cosmosAddr := cliCtx.GetFromAddress()
+
+			// Make the message
+			denom, err := types.AsVoucherDenom(args[0])
+			if err != nil {
+				return sdkerrors.Wrap(err, "denom")
+			}
+
+			msg := types.MsgRequestBatch{
+				Requester: cosmosAddr,
+				Denom:     denom,
+			}
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			// Send it
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
 }

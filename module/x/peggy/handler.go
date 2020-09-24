@@ -1,7 +1,6 @@
 package peggy
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 
@@ -44,9 +43,9 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper Keeper, msg MsgCreateEth
 	// auth EthereumChainID whitelisted
 	// auth bridge contract address whitelisted
 	ctx.Logger().Info("+++ TODO: implement chain id + contract address authorization")
-	if !bytes.Equal(msg.BridgeContractAddress[:], types.BridgeContractAddress[:]) {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid bridge contract address")
-	}
+	//if !bytes.Equal(msg.BridgeContractAddress[:], types.BridgeContractAddress[:]) {
+	//	return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid bridge contract address")
+	//}
 
 	// auth sender in current validator set
 	for _, c := range msg.Claims {
@@ -120,9 +119,8 @@ func handleMsgRequestBatch(ctx sdk.Context, keeper Keeper, msg MsgRequestBatch) 
 }
 
 func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) (*sdk.Result, error) {
-	// TODO add batch confirmation to the store, and if this confirmation means the batch counts as
-	// `observed` (confirmations from 66% of the active voting power exist as of this block) then consider
-	// the batch completed.
+	validator := sdk.ValAddress(msg.Orchestrator)
+	keeper.SetOutgoingTXBatchConfirm(ctx, msg.Nonce, validator, []byte(msg.Signature))
 	return &sdk.Result{}, nil
 }
 

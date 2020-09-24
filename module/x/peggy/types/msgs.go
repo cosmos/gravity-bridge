@@ -176,7 +176,7 @@ type MsgSendToEth struct {
 	// the source address on Cosmos
 	Sender sdk.AccAddress `json:"sender"`
 	// the destination address on Ethereum
-	DestAddress string `json:"dest_address"`
+	DestAddress EthereumAddress `json:"dest_address"`
 	// the coin to send across the bridge, note the restriction that this is a
 	// single coin not a set of coins that is normal in other Cosmos messages
 	Amount sdk.Coin `json:"send"`
@@ -186,7 +186,7 @@ type MsgSendToEth struct {
 	BridgeFee sdk.Coin `json:"bridge_fee"`
 }
 
-func NewMsgSendToEth(sender sdk.AccAddress, destAddress string, send sdk.Coin, bridgeFee sdk.Coin) MsgSendToEth {
+func NewMsgSendToEth(sender sdk.AccAddress, destAddress EthereumAddress, send sdk.Coin, bridgeFee sdk.Coin) MsgSendToEth {
 	return MsgSendToEth{
 		Sender:      sender,
 		DestAddress: destAddress,
@@ -286,16 +286,16 @@ func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
 // This message includes the batch as well as an Ethereum signature over this batch by the validator
 // -------------
 type MsgConfirmBatch struct {
-	Nonce     int64          `json:"nonce"`
-	Validator sdk.AccAddress `json:"validator"`
-	Signature string         `json:"signature"`
+	Nonce        uint64         `json:"nonce"`
+	Orchestrator sdk.AccAddress `json:"validator"`
+	Signature    string         `json:"signature"`
 }
 
-func NewMsgConfirmBatch(nonce int64, validator sdk.AccAddress, signature string) MsgConfirmBatch {
+func NewMsgConfirmBatch(nonce uint64, orchestrator sdk.AccAddress, signature string) MsgConfirmBatch {
 	return MsgConfirmBatch{
-		Nonce:     nonce,
-		Validator: validator,
-		Signature: signature,
+		Nonce:        nonce,
+		Orchestrator: orchestrator,
+		Signature:    signature,
 	}
 }
 
@@ -319,7 +319,7 @@ func (msg MsgConfirmBatch) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Validator}
+	return []sdk.AccAddress{msg.Orchestrator}
 }
 
 // MsgBatchInChain
@@ -427,7 +427,7 @@ var (
 
 // EthereumBridgeDepositClaim claims that a token was deposited on the bridge contract.
 type EthereumBridgeDepositClaim struct {
-	Nonce          []byte `json:"nonce" yaml:"nonce"`
+	Nonce          Nonce `json:"nonce" yaml:"nonce"`
 	ERC20Token     ERC20Token
 	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
 	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
@@ -442,7 +442,10 @@ func (e EthereumBridgeDepositClaim) GetNonce() Nonce {
 }
 
 func (e EthereumBridgeDepositClaim) ValidateBasic() error {
-	// todo: implement me
+	// todo: validate all fields
+	if err := e.Nonce.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "nonce")
+	}
 	return nil
 }
 
@@ -456,7 +459,7 @@ func (e EthereumBridgeDepositClaim) Details() AttestationDetails {
 
 // EthereumBridgeWithdrawalBatchClaim claims that a batch of withdrawal operations on the bridge contract was executed.
 type EthereumBridgeWithdrawalBatchClaim struct {
-	Nonce []byte `json:"nonce" yaml:"nonce"`
+	Nonce Nonce `json:"nonce" yaml:"nonce"`
 }
 
 func (e EthereumBridgeWithdrawalBatchClaim) GetType() ClaimType {
@@ -468,7 +471,9 @@ func (e EthereumBridgeWithdrawalBatchClaim) GetNonce() Nonce {
 }
 
 func (e EthereumBridgeWithdrawalBatchClaim) ValidateBasic() error {
-	// todo: implement me
+	if err := e.Nonce.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "nonce")
+	}
 	return nil
 }
 
@@ -478,7 +483,7 @@ func (e EthereumBridgeWithdrawalBatchClaim) Details() AttestationDetails {
 
 // EthereumBridgeMultiSigUpdateClaim claims that the multisig set was updated on the bridge contract.
 type EthereumBridgeMultiSigUpdateClaim struct {
-	Nonce []byte `json:"nonce" yaml:"nonce"`
+	Nonce Nonce `json:"nonce" yaml:"nonce"`
 }
 
 func (e EthereumBridgeMultiSigUpdateClaim) GetType() ClaimType {
@@ -490,7 +495,9 @@ func (e EthereumBridgeMultiSigUpdateClaim) GetNonce() Nonce {
 }
 
 func (e EthereumBridgeMultiSigUpdateClaim) ValidateBasic() error {
-	// todo: implement me
+	if err := e.Nonce.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "nonce")
+	}
 	return nil
 }
 
@@ -523,7 +530,15 @@ func (m MsgCreateEthereumClaims) Type() string {
 }
 
 func (m MsgCreateEthereumClaims) ValidateBasic() error {
-	// todo: implement proper
+	// todo: validate all fields
+	if err := sdk.VerifyAddressFormat(m.Orchestrator); err != nil {
+		return sdkerrors.Wrap(err, "orchestrator")
+	}
+	for i := range m.Claims {
+		if err := m.Claims[i].ValidateBasic(); err != nil {
+			return sdkerrors.Wrapf(err, "claim %d", i)
+		}
+	}
 	return nil
 }
 

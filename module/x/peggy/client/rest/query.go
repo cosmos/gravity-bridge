@@ -155,3 +155,20 @@ func lastObservedNonceHandler(cliCtx context.CLIContext, storeName string) func(
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
+func lastObservedNoncesHandler(cliCtx context.CLIContext, storeName string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastObservedNonces", storeName))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "no observed nonces")
+			return
+		}
+
+		var out map[string]types.Nonce
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}

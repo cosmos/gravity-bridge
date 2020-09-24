@@ -20,7 +20,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 	case types.ClaimTypeEthereumBridgeDeposit:
 		deposit, ok := att.Details.(types.BridgeDeposit)
 		if !ok {
-			return sdkerrors.Wrapf(types.ErrInternal, "unexpected type: %T", att.Details)
+			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
 		}
 		if !a.keeper.HasCounterpartDenominator(ctx, types.NewVoucherDenom(deposit.ERC20Token.TokenContractAddress, deposit.ERC20Token.Symbol)) {
 			a.keeper.StoreCounterpartDenominator(ctx, deposit.ERC20Token.TokenContractAddress, deposit.ERC20Token.Symbol)
@@ -39,7 +39,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		batchID := att.Nonce.Uint64()
 		b := a.keeper.GetOutgoingTXBatch(ctx, batchID)
 		if b == nil {
-			return types.ErrUnknown
+			return sdkerrors.Wrap(types.ErrUnknown, "nonce")
 		}
 		if err := b.Observed(); err != nil {
 			return err
@@ -53,7 +53,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 	case types.ClaimTypeEthereumBridgeMultiSigUpdate:
 		height := att.Nonce.Uint64()
 		if !a.keeper.HasValsetRequest(ctx, height) {
-			return types.ErrUnknown
+			return sdkerrors.Wrap(types.ErrUnknown, "nonce")
 		}
 
 		// todo: is there any cleanup for us like:
@@ -67,7 +67,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		})
 		return nil
 	default:
-		return sdkerrors.Wrapf(types.ErrDuplicate, "event type: %s", att.ClaimType)
+		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", att.ClaimType)
 	}
 	return nil
 }

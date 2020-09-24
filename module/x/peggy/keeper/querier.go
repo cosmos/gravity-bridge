@@ -18,6 +18,9 @@ const (
 	QueryLastValsetRequests             = "lastValsetRequests"
 	QueryLastPendingValsetRequestByAddr = "lastPendingValsetRequest"
 	QueryLastObservedNonce              = "lastObservedNonce"
+	QueryLastObservedNonces             = "lastObservedNonces"
+	QueryLastPendingBatchRequestByAddr  = "lastPendingBatchRequest"
+	QueryOutgoingTxBatches              = "allBatches"
 )
 
 // NewQuerier is the module level router for state queries
@@ -38,6 +41,12 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return lastPendingValsetRequest(ctx, path[1], keeper)
 		case QueryLastObservedNonce:
 			return lastObservedNonce(ctx, path[1], keeper)
+		case QueryLastObservedNonces:
+			return lastObservedNonces(ctx, keeper)
+		case QueryLastPendingBatchRequestByAddr:
+			return lastPendingBatchRequest(ctx, path[1], keeper)
+		case QueryOutgoingTxBatches:
+			return allBatchesRequest(ctx, keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown nameservice query endpoint")
 		}
@@ -169,10 +178,80 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 	return res, nil
 }
 
+// lastObservedNonce returns as single nonce value or nil
 func lastObservedNonce(ctx sdk.Context, claimType string, keeper Keeper) ([]byte, error) {
-	// todo: verify claim type exists as defined type
+	if !types.IsClaimType(claimType) {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "claim type")
+	}
 	nonce := keeper.GetLastObservedNonce(ctx, types.ClaimType(claimType))
+	if len(nonce) == 0 {
+		return nil, nil
+	}
 	res, err := codec.MarshalJSONIndent(keeper.cdc, nonce)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
+}
+
+// lastObservedNonce returns a list of nonces. One for each claim type if exists
+func lastObservedNonces(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	result := make(map[string]types.Nonce, len(types.AllClaimTypes))
+	for _, v := range types.AllClaimTypes {
+		nonce := keeper.GetLastObservedNonce(ctx, v)
+		if nonce != nil {
+			result[v.String()] = nonce
+		}
+	}
+	if len(result) == 0 {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, result)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return sdk.SortJSON(res)
+}
+
+func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
+	addr, err := sdk.AccAddressFromBech32(operatorAddr)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
+	}
+
+	// todo: find validator address by operator key
+	validatorAddr := sdk.ValAddress(addr)
+
+	var pendingBatchReq *types.OutgoingTxBatch
+	keeper.IterateOutgoingTXBatches(ctx, func(batchID uint64, batch types.OutgoingTxBatch) bool {
+		found := keeper.HasOutgoingTXBatchConfirm(ctx, batchID, validatorAddr)
+		if !found {
+			pendingBatchReq = &batch
+		}
+		return true
+	})
+	if pendingBatchReq == nil {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, pendingBatchReq)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
+}
+
+const MaxResults = 100 // todo: impl pagination
+
+func allBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	var batches []types.OutgoingTxBatch
+	keeper.IterateOutgoingTXBatches(ctx, func(batchID uint64, batch types.OutgoingTxBatch) bool {
+		batches = append(batches, batch)
+		return len(batches) == MaxResults
+	})
+	if len(batches) == 0 {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, batches)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

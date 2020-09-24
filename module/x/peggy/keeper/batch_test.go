@@ -15,7 +15,7 @@ func TestBatches(t *testing.T) {
 	k, ctx, keepers := CreateTestEnv(t)
 	var (
 		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		myReceiver          = "eth receiver"
+		myReceiver          = types.NewEthereumAddress("eth receiver")
 		myTokenContractAddr = types.NewEthereumAddress("my eth oken address")
 		myETHToken          = "myETHToken"
 		voucherDenom        = types.NewVoucherDenom(myTokenContractAddr, myETHToken)
@@ -51,35 +51,35 @@ func TestBatches(t *testing.T) {
 	gotBatch := k.GetOutgoingTXBatch(ctx, batchID)
 	require.NotNil(t, gotBatch)
 
+	denominator := types.NewBridgedDenominator(myTokenContractAddr, myETHToken)
 	expBatch := types.OutgoingTxBatch{
+		Nonce: types.NonceFromUint64(1),
 		Elements: []types.OutgoingTransferTx{
 			{
 				ID:          2,
-				BridgeFee:   types.NewTransferCoin(myETHToken, 3),
+				BridgeFee:   denominator.ToUint64ERC20Token(3),
 				Sender:      mySender,
 				DestAddress: myReceiver,
-				Amount:      types.NewTransferCoin(myETHToken, 101),
+				Amount:      denominator.ToUint64ERC20Token(101),
 			},
 			{
 				ID:          1,
-				BridgeFee:   types.NewTransferCoin(myETHToken, 2),
+				BridgeFee:   denominator.ToUint64ERC20Token(2),
 				Sender:      mySender,
 				DestAddress: myReceiver,
-				Amount:      types.NewTransferCoin(myETHToken, 100),
+				Amount:      denominator.ToUint64ERC20Token(100),
 			},
 		},
-		CreatedAt:                   now,
-		TotalFee:                    types.NewTransferCoin(myETHToken, 5),
-		CosmosDenom:                 voucherDenom,
-		BridgedTokenSymbol:          myETHToken,
-		BridgedTokenContractAddress: myTokenContractAddr,
-		BatchStatus:                 types.BatchStatusPending,
+		CreatedAt:          now,
+		TotalFee:           denominator.ToUint64ERC20Token(5),
+		BridgedDenominator: denominator,
+		BatchStatus:        types.BatchStatusPending,
 	}
 	assert.Equal(t, expBatch, *gotBatch)
 
 	// and verify remaining available Tx in the pool
 	var gotUnbatchedTx []types.OutgoingTx
-	err = k.IterateOutgoingPoolByFee(ctx, voucherDenom, func(_ uint64, tx types.OutgoingTx) bool {
+	k.IterateOutgoingPoolByFee(ctx, voucherDenom, func(_ uint64, tx types.OutgoingTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
@@ -112,7 +112,7 @@ func TestBatches(t *testing.T) {
 
 	// and all TX added back to unbatched pool
 	gotUnbatchedTx = nil
-	err = k.IterateOutgoingPoolByFee(ctx, voucherDenom, func(_ uint64, tx types.OutgoingTx) bool {
+	k.IterateOutgoingPoolByFee(ctx, voucherDenom, func(_ uint64, tx types.OutgoingTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})

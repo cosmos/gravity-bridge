@@ -34,9 +34,14 @@ func (ethAddr *EthereumAddress) UnmarshalJSON(input []byte) error {
 
 // ERC20Token unique identifier for an Ethereum erc20 token.
 type ERC20Token struct {
-	Amount               int64           `json:"amount" yaml:"amount"`
+	Amount uint64 `json:"amount" yaml:"amount"`
+	// Symbol is the erc20 human readable token name
 	Symbol               string          `json:"symbol" yaml:"symbol"`
 	TokenContractAddress EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
+}
+
+func NewERC20Token(amount uint64, symbol string, tokenContractAddress EthereumAddress) ERC20Token {
+	return ERC20Token{Amount: amount, Symbol: symbol, TokenContractAddress: tokenContractAddress}
 }
 
 // String converts Token representation into a human readable form containing all data.
@@ -46,5 +51,19 @@ func (e ERC20Token) String() string {
 
 // AsVoucherCoin converts the data into a cosmos coin with peggy voucher denom.
 func (e ERC20Token) AsVoucherCoin() sdk.Coin {
-	return sdk.NewInt64Coin(NewVoucherDenom(e.TokenContractAddress, e.Symbol).String(), e.Amount)
+	return sdk.NewInt64Coin(NewVoucherDenom(e.TokenContractAddress, e.Symbol).String(), int64(e.Amount))
+}
+
+func (t ERC20Token) Add(o ERC20Token) ERC20Token {
+	if t.Symbol != o.Symbol {
+		panic("invalid symbol")
+	}
+	if t.TokenContractAddress != o.TokenContractAddress {
+		panic("invalid contract address")
+	}
+	sum := sdk.NewInt(int64(t.Amount)).AddRaw(int64(o.Amount))
+	if !sum.IsUint64() {
+		panic("invalid amount")
+	}
+	return NewERC20Token(sum.Uint64(), t.Symbol, t.TokenContractAddress)
 }

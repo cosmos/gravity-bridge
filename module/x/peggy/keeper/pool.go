@@ -15,7 +15,7 @@ import (
 // - burns the voucher for transfer amount and fees
 // - persists an OutgoingTx
 // - adds the TX to the `available` TX pool via a second index
-func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counterpartReceiver string, amount sdk.Coin, fee sdk.Coin) (uint64, error) {
+func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counterpartReceiver types.EthereumAddress, amount sdk.Coin, fee sdk.Coin) (uint64, error) {
 	totalAmount := amount.Add(fee)
 	totalInVouchers := sdk.Coins{totalAmount}
 
@@ -162,10 +162,7 @@ func (k Keeper) GetCounterpartDenominator(ctx sdk.Context, voucherDenom types.Vo
 func (k Keeper) StoreCounterpartDenominator(ctx sdk.Context, tokenContractAddress types.EthereumAddress, symbol string) {
 	store := ctx.KVStore(k.storeKey)
 	voucherDenominator := types.NewVoucherDenom(tokenContractAddress, symbol)
-	bridgedDenominator := types.BridgedDenominator{
-		TokenContractAddress: tokenContractAddress,
-		Symbol:               symbol,
-	}
+	bridgedDenominator := types.NewBridgedDenominator(tokenContractAddress, symbol)
 	store.Set(types.GetDenominatorKey(voucherDenominator.Unprefixed()), k.cdc.MustMarshalBinaryBare(bridgedDenominator))
 }
 
@@ -174,7 +171,7 @@ func (k Keeper) HasCounterpartDenominator(ctx sdk.Context, voucherDenominator ty
 	return store.Has(types.GetDenominatorKey(voucherDenominator.Unprefixed()))
 }
 
-func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, voucherDenom types.VoucherDenom, cb func(uint64, types.OutgoingTx) bool) error {
+func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, voucherDenom types.VoucherDenom, cb func(uint64, types.OutgoingTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
 	iter := prefixStore.ReverseIterator(prefixRange([]byte(voucherDenom.Unprefixed())))
 	for ; iter.Valid(); iter.Next() {
@@ -184,14 +181,14 @@ func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, voucherDenom types.Vou
 		for _, id := range ids {
 			tx, err := k.getPoolEntry(ctx, id)
 			if err != nil {
-				return err
+				return
 			}
 			if cb(id, *tx) {
-				return nil
+				return
 			}
 		}
 	}
-	return nil
+	return
 }
 
 func (k Keeper) autoIncrementID(ctx sdk.Context, idKey []byte) uint64 {
