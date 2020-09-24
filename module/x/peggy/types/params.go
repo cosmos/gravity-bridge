@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 )
@@ -15,40 +16,40 @@ import (
 const DefaultParamspace = ModuleName
 
 // todo: implement oracle constants as params
-
 const AttestationPeriod = 24 * time.Hour // TODO: value????
+
 // voting: threshold >2/3 of validator power AND > 1/2 of validator count?
 var (
+	// AttestationVotesCountThreshold threshold of vote counts to succeed
 	AttestationVotesCountThreshold = sdk.NewUint(50)
+	// AttestationVotesCountThreshold threshold of votes power to succeed
 	AttestationVotesPowerThreshold = sdk.NewUint(66)
-	BridgeContractAddress          = NewEthereumAddress("")
-	BridgeContractChainID          = "0" // todo: revisit
 )
-
-// TODO: Defaults don't make sense for any of our params. Should we still have them?
 
 // Parameter keys
 var (
-	KeyPeggyID      = []byte("PeggyID")
-	KeyContractHash = []byte("ContractHash")
-	KeyStartBlock   = []byte("StartBlock")
+	ParamsStoreKeyPeggyID               = []byte("PeggyID")
+	ParamsStoreKeyContractHash          = []byte("ContractHash")
+	ParamsStoreKeyStartThreshold        = []byte("StartThreshold")
+	ParamsStoreKeyBridgeContractAddress = []byte("BridgeContractAddress")
+	ParamsStoreKeyBridgeContractChainID = []byte("BridgeChainID")
 )
 
 var _ subspace.ParamSet = &Params{}
 
 type Params struct {
-	PeggyID      []byte `json:"peggy_id" yaml:"peggy_id"`
-	ContractHash []byte `json:"contract_source_hash" yaml:"contract_source_hash"`
-	StartBlock   uint64 `json:"start_block" yaml:"start_block"`
-}
-
-// NewParams creates a new Params object
-func NewParams(peggyID []byte, contractHash []byte, startBlock uint64) Params {
-	return Params{
-		PeggyID:      peggyID,
-		ContractHash: contractHash,
-		StartBlock:   startBlock,
-	}
+	// PeggyID is a random 32 byte value to prevent signature reuse
+	PeggyID []byte `json:"peggy_id,omitempty" yaml:"peggy_id"`
+	// ContractHash is the code hash of a known good version of the Peggy contract solidity code.
+	// It will be used to verify exactly which version of the bridge will be deployed.
+	ContractHash []byte `json:"contract_source_hash,omitempty" yaml:"contract_source_hash"`
+	// StartThreshold is the percentage of total voting power that must be online and participating in
+	// Peggy operations before a bridge can start operating
+	StartThreshold uint64 `json:"start_threshold,omitempty" yaml:"start_threshold"`
+	// BridgeContractAddress is address of the bridge contract on the Ethereum side
+	BridgeContractAddress EthereumAddress `json:"bridge_contract_address,omitempty" yaml:"bridge_contract_address"`
+	// BridgeChainID is the unique identifier of the Ethereum chain
+	BridgeChainID uint64 `json:"bridge_chain_id,omitempty" yaml:"bridge_chain_id"`
 }
 
 // ParamKeyTable for auth module
@@ -61,9 +62,11 @@ func ParamKeyTable() subspace.KeyTable {
 // nolint
 func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 	return subspace.ParamSetPairs{
-		params.NewParamSetPair(KeyPeggyID, &p.PeggyID, validatePeggyID),
-		params.NewParamSetPair(KeyContractHash, &p.ContractHash, validateContractHash),
-		params.NewParamSetPair(KeyStartBlock, &p.StartBlock, validateStartBlock),
+		params.NewParamSetPair(ParamsStoreKeyPeggyID, &p.PeggyID, validatePeggyID),
+		params.NewParamSetPair(ParamsStoreKeyContractHash, &p.ContractHash, validateContractHash),
+		params.NewParamSetPair(ParamsStoreKeyStartThreshold, &p.StartThreshold, validateStartThreshold),
+		params.NewParamSetPair(ParamsStoreKeyBridgeContractAddress, &p.BridgeContractAddress, validateBridgeContractAddress),
+		params.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainID, validateBridgeChainID),
 	}
 }
 
@@ -80,7 +83,9 @@ func (p Params) String() string {
 	sb.WriteString("Params: \n")
 	sb.WriteString(fmt.Sprintf("PeggyID: %d\n", p.PeggyID))
 	sb.WriteString(fmt.Sprintf("ContractHash: %d\n", p.ContractHash))
-	sb.WriteString(fmt.Sprintf("StartBlock: %d\n", p.StartBlock))
+	sb.WriteString(fmt.Sprintf("StartThreshold: %d\n", p.StartThreshold))
+	sb.WriteString(fmt.Sprintf("BridgeContractAddress: %s\n", p.BridgeContractAddress.String()))
+	sb.WriteString(fmt.Sprintf("BridgeChainID: %d\n", p.BridgeChainID))
 	return sb.String()
 }
 
@@ -102,7 +107,7 @@ func validateContractHash(i interface{}) error {
 	return nil
 }
 
-func validateStartBlock(i interface{}) error {
+func validateStartThreshold(i interface{}) error {
 	_, ok := i.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -111,17 +116,38 @@ func validateStartBlock(i interface{}) error {
 	return nil
 }
 
-// Validate checks that the parameters have valid values.
-func (p Params) Validate() error {
+// ValidateBasic checks that the parameters have valid values.
+func (p Params) ValidateBasic() error {
 	if err := validatePeggyID(p.PeggyID); err != nil {
-		return err
+		return sdkerrors.Wrap(err, "peggy id")
 	}
 	if err := validateContractHash(p.ContractHash); err != nil {
-		return err
+		return sdkerrors.Wrap(err, "contract hash")
 	}
-	if err := validateStartBlock(p.StartBlock); err != nil {
-		return err
+	if err := validateStartThreshold(p.StartThreshold); err != nil {
+		return sdkerrors.Wrap(err, "start threshold")
 	}
-
+	if err := validateBridgeContractAddress(p.BridgeContractAddress); err != nil {
+		return sdkerrors.Wrap(err, "bridge contract address")
+	}
+	if err := validateBridgeChainID(p.BridgeChainID); err != nil {
+		return sdkerrors.Wrap(err, "bridge chain id")
+	}
 	return nil
+}
+
+func validateBridgeChainID(i interface{}) error {
+	_, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
+}
+
+func validateBridgeContractAddress(i interface{}) error {
+	v, ok := i.(EthereumAddress)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return v.ValidateBasic()
 }

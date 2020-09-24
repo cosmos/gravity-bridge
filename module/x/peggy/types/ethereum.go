@@ -6,12 +6,12 @@ import (
 	"regexp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 var isValidETHAddress = regexp.MustCompile("^0x[0-9a-fA-F]{40}$").MatchString
+var emptyAddr [gethCommon.AddressLength]byte
 
 // EthereumAddress defines a standard ethereum address
 type EthereumAddress gethCommon.Address
@@ -33,9 +33,13 @@ func (e EthereumAddress) Bytes() []byte {
 
 func (e EthereumAddress) ValidateBasic() error {
 	if !isValidETHAddress(e.String()) {
-		return sdkerrors.Wrap(ErrInvalid, "ethereum address")
+		return ErrInvalid
 	}
 	return nil
+}
+
+func (e EthereumAddress) IsEmpty() bool {
+	return emptyAddr == e
 }
 
 // MarshalJSON marshals the etherum address to JSON

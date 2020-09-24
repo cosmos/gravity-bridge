@@ -282,7 +282,7 @@ func NewInitApp(
 		),
 	)
 
-	app.peggyKeeper = peggy.NewKeeper(app.cdc, keys[peggy.StoreKey], stakingKeeper, app.supplyKeeper)
+	app.peggyKeeper = peggy.NewKeeper(app.cdc, keys[peggy.StoreKey], app.subspaces[peggy.ModuleName], stakingKeeper, app.supplyKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

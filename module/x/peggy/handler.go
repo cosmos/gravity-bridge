@@ -40,7 +40,7 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper Keeper, msg MsgCreateEth
 	// auth EthereumChainID whitelisted
 	// auth bridge contract address whitelisted
 	ctx.Logger().Info("+++ TODO: implement chain id + contract address authorization")
-	//if !bytes.Equal(msg.BridgeContractAddress[:], types.BridgeContractAddress[:]) {
+	//if !bytes.Equal(msg.BridgeContractAddress[:], k.GetBridgeContractAddress(ctx)[:]) {
 	//	return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid bridge contract address")
 	//}
 

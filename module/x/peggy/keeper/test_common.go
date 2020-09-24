@@ -165,7 +165,14 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 		GovKeeper:     govKeeper,
 		BankKeeper:    bankKeeper,
 	}
-	return NewKeeper(cdc, peggyKey, stakingKeeper, supplyKeeper), ctx, keepers
+
+	k := NewKeeper(cdc, peggyKey, paramsKeeper.Subspace(types.DefaultParamspace), stakingKeeper, supplyKeeper)
+	k.setParams(ctx, types.Params{
+		// any eth address
+		BridgeContractAddress: types.NewEthereumAddress("0x8858eeb3dfffa017d4bce9801d340d36cf895ccf"),
+		BridgeChainID:         11,
+	})
+	return k, ctx, keepers
 }
 
 func MakeTestCodec() *codec.Codec {

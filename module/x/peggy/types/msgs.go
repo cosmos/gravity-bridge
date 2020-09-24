@@ -137,6 +137,9 @@ func (msg MsgSetEthAddress) ValidateBasic() error {
 	if err := msg.Address.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
+	if msg.Address.IsEmpty() {
+		return sdkerrors.Wrap(ErrEmpty, "ethereum address")
+	}
 	sigBytes, hexErr := hex.DecodeString(msg.Signature)
 	if hexErr != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Could not decode hex string %s", msg.Signature))

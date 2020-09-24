@@ -10,13 +10,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	StakingKeeper types.StakingKeeper
 
-	storeKey sdk.StoreKey // Unexposed key to access store from sdk.Context
+	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
+	paramSpace params.Subspace
 
 	cdc          *codec.Codec // The wire codec for binary encoding/decoding.
 	supplyKeeper types.SupplyKeeper
@@ -27,10 +29,10 @@ type Keeper struct {
 }
 
 // NewKeeper
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakingKeeper types.StakingKeeper,
-	supplyKeeper types.SupplyKeeper) Keeper {
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace params.Subspace, stakingKeeper types.StakingKeeper, supplyKeeper types.SupplyKeeper) Keeper {
 	k := Keeper{
 		cdc:           cdc,
+		paramSpace:    paramSpace,
 		storeKey:      storeKey,
 		StakingKeeper: stakingKeeper,
 		supplyKeeper:  supplyKeeper,
@@ -39,6 +41,12 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, stakingKeeper types.Stak
 		keeper:       k,
 		supplyKeeper: supplyKeeper,
 	}
+
+	// set KeyTable if it has not already been set
+	if !paramSpace.HasKeyTable() {
+		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
+	}
+
 	return k
 }
 
@@ -52,8 +60,8 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) types.Valset {
 	event := sdk.NewEvent(
 		types.EventTypeMultisigUpdateRequest,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, types.BridgeContractAddress.String()),
-		sdk.NewAttribute(types.AttributeKeyBridgeChainID, types.BridgeContractChainID),
+		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
+		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		sdk.NewAttribute(types.AttributeKeyMultisigID, strconv.Itoa(int(nonce))),
 		sdk.NewAttribute(types.AttributeKeyNonce, types.NonceFromUint64(uint64(nonce)).String()),
 	)
@@ -199,6 +207,30 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 	valset := types.Valset{EthAddresses: ethAddrs, Powers: powers}
 	sort.Sort(valsetSort(valset))
 	return valset
+}
+
+// GetParams returns the total set of wasm parameters.
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	var params types.Params
+	k.paramSpace.GetParamSet(ctx, &params)
+	return params
+}
+
+func (k Keeper) setParams(ctx sdk.Context, ps types.Params) {
+	k.paramSpace.SetParamSet(ctx, &ps)
+}
+
+func (k Keeper) GetBridgeContractAddress(ctx sdk.Context) types.EthereumAddress {
+	var a types.EthereumAddress
+	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractAddress, &a)
+	return a
+
+}
+
+func (k Keeper) GetBridgeChainID(ctx sdk.Context) uint64 {
+	var a uint64
+	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractChainID, &a)
+	return a
 }
 
 // prefixRange turns a prefix into a (start, end) range. The start is the given prefix value and

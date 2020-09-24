@@ -20,6 +20,7 @@ var (
 	NewMsgSetEthAddress = types.NewMsgSetEthAddress
 	ModuleCdc           = types.ModuleCdc
 	RegisterCodec       = types.RegisterCodec
+	DefaultGenesisState = types.DefaultGenesisState
 )
 
 type (
@@ -35,4 +36,6 @@ type (
 	EthereumBridgeDepositClaim         = types.EthereumBridgeDepositClaim
 	EthereumBridgeWithdrawalBatchClaim = types.EthereumBridgeWithdrawalBatchClaim
 	EthereumBridgeMultiSigUpdateClaim  = types.EthereumBridgeMultiSigUpdateClaim
+	Params                             = types.Params
+	GenesisState                       = types.GenesisState
 )
