@@ -60,6 +60,7 @@ async function deploy() {
   } else {
     contract = args["erc20-address"];
   }
+  const peggyId = ethers.utils.formatBytes32String(args["peggy-id"]);
 
   console.log("Starting Peggy contract deploy");
   const { abi, bytecode } = getContractArtifacts(args["contract"]);
@@ -72,7 +73,7 @@ async function deploy() {
     contract,
     // todo generate this randomly at deployment time that way we can avoid
     // anything but intentional conflicts
-    "0x6c00000000000000000000000000000000000000000000000000000000000000",
+    peggyId,
     // 66% of uint32_max
     2834678415,
     latestValset.result.value.eth_addresses,
