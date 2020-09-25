@@ -68,6 +68,7 @@ async fn main() {
     println!("Staring Peggy test-runner");
     const COSMOS_NODE: &str = "http://localhost:1317";
     const ETH_NODE: &str = "http://localhost:8545";
+    const PEGGY_ID: &str = "foo";
     // this key is the private key for the public key defined in tests/assets/ETHGenesis.json
     // where the full node / miner sends its rewards. Therefore it's always going
     // to have a lot of ETH to pay for things like contract deployments
@@ -103,29 +104,40 @@ async fn main() {
         .await
         .expect("Failed to send valset request!")
         .height;
+    println!("Valset request is in block {}", request_block);
 
     wait_for_next_cosmos_block(&contact).await;
     wait_for_next_cosmos_block(&contact).await;
 
     for (c_key, e_key) in keys.iter() {
-        let valset = contact
+        let mut valset = contact
             .get_oldest_unsigned_valset(c_key.to_public_key().unwrap().to_address())
-            .await
-            .expect("Failed to get valset!");
-        // send in valset confirmation for all validators
-        let res = contact
-            .send_valset_confirm(
-                *e_key,
-                fee.clone(),
-                valset.result,
-                *c_key,
-                "foo".to_string(),
-                None,
-                None,
-                None,
-            )
             .await;
-        res.expect("Failed to send valset confirm!");
+        while let Ok(previous_set) = valset {
+            // send in valset confirmation for all validators
+            let res = contact
+                .send_valset_confirm(
+                    *e_key,
+                    fee.clone(),
+                    previous_set.result.clone(),
+                    *c_key,
+                    PEGGY_ID.to_string(),
+                    None,
+                    None,
+                    None,
+                )
+                .await;
+            res.expect("Failed to send valset confirm!");
+            println!(
+                "Updated valset for {}/{} with {}",
+                e_key.to_public_key().unwrap(),
+                c_key.to_public_key().unwrap().to_address(),
+                previous_set.result.nonce
+            );
+            valset = contact
+                .get_oldest_unsigned_valset(c_key.to_public_key().unwrap().to_address())
+                .await;
+        }
     }
 
     wait_for_next_cosmos_block(&contact).await;
@@ -137,10 +149,10 @@ async fn main() {
             &format!("--cosmos-node={}", COSMOS_NODE),
             &format!("--eth-node={}", ETH_NODE),
             &format!("--eth-privkey={:#x}", miner_private_key),
+            &format!("--peggy-id={}", PEGGY_ID),
             "--contract=/peggy/solidity/artifacts/Peggy.json",
             "--erc20-contract=/peggy/solidity/artifacts/TestERC20.json",
             "--test-mode=true",
-            "--peggy-id='foo'",
         ])
         .current_dir("/peggy/solidity/")
         .output()
@@ -172,6 +184,10 @@ async fn main() {
         .get_all_valset_confirms(latest.nonce)
         .await
         .expect("Failed to get valset confirms");
+    println!(
+        "Got valset confirm at height {}, {:?}",
+        latest.nonce, confirms
+    );
     send_eth_valset_update(
         latest,
         &confirms.result,
@@ -310,6 +326,19 @@ async fn send_eth_valset_update(
     .await
     .expect("Failed to get the last nonce");
     println!("Last nonce {:?}", last_nonce);
+
+    // Solidity function signature
+    // function getPeggyId() public view returns (bytes32)
+    let peggy_id = contract_call(
+        &web3,
+        peggy_contract_address,
+        "getPeggyId()",
+        &[],
+        eth_address,
+    )
+    .await
+    .expect("Failed to get PeggyId");
+    println!("PeggyId as deployed {:?}", peggy_id);
 }
 
 /// Takes an array of Option<EthAddress> and converts to EthAddress erroring when

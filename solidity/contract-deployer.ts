@@ -92,8 +92,6 @@ function getContractArtifacts(path: string): { bytecode: string; abi: string } {
 async function getLatestValset(peggyId: string): Promise<ValsetResponse> {
   let request_string = args["cosmos-node"] + "/peggy/current_valset";
   let response = await axios.get(request_string);
-  let string_response: string = await axios.get(request_string);
-  console.log(string_response);
   return response.data;
 }
 
