@@ -457,7 +457,20 @@ func (e EthereumBridgeBootstrappedClaim) GetType() ClaimType {
 }
 
 func (e EthereumBridgeBootstrappedClaim) ValidateBasic() error {
-	// todo: implement me
+	for i := range e.AllowedValidatorSet {
+		if e.AllowedValidatorSet[i].IsEmpty() {
+			return sdkerrors.Wrap(ErrEmpty, "ethereum address")
+		}
+	}
+	for i := range e.ValidatorPowers {
+		if e.ValidatorPowers[i] == 0 {
+			return sdkerrors.Wrap(ErrEmpty, "power")
+		}
+	}
+	if len(e.AllowedValidatorSet) != len(e.ValidatorPowers) {
+		return sdkerrors.Wrap(ErrInvalid, "validator and power element count does not match")
+	}
+	// todo: implement me proper
 	return nil
 }
 
@@ -481,6 +494,10 @@ type MsgCreateEthereumClaims struct {
 	BridgeContractAddress EthereumAddress
 	Orchestrator          sdk.AccAddress
 	Claims                []EthereumClaim
+}
+
+func NewMsgCreateEthereumClaims(ethereumChainID string, bridgeContractAddress EthereumAddress, orchestrator sdk.AccAddress, claims []EthereumClaim) *MsgCreateEthereumClaims {
+	return &MsgCreateEthereumClaims{EthereumChainID: ethereumChainID, BridgeContractAddress: bridgeContractAddress, Orchestrator: orchestrator, Claims: claims}
 }
 
 func (m MsgCreateEthereumClaims) Route() string {

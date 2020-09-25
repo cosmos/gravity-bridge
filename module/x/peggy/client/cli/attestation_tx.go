@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -29,6 +30,7 @@ func GetObservedCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	testingTxCmd.AddCommand(flags.PostCommands(
+		CmdSendETHBootstrapRequest(cdc),
 		CmdSendETHDepositRequest(cdc),
 		CmdSendETHWithdrawalRequest(cdc),
 		CmdSendETHMultiSigRequest(cdc),
@@ -52,6 +54,64 @@ func GetApprovedCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return testingTxCmd
 }
 
+func CmdSendETHBootstrapRequest(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "bootstrap [eth chain id] [eth contract address] [nonce] [allowed_validators] [validator_powers] [peggy_id] [start_threshold]",
+		Short: "Submit a claim that the bridge contract bootstrap was completed on the Ethereum side",
+		Args:  cobra.ExactArgs(7),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			cosmosAddr := cliCtx.GetFromAddress()
+
+			ethChainID := args[0]
+			ethContractAddress := args[1]
+			nonce, err := parseNonce(args[2])
+			if err != nil {
+				return err
+			}
+			var validators []types.EthereumAddress
+			var powers []uint64
+			for _, v := range strings.Split(args[3], ",") {
+				validators = append(validators, types.NewEthereumAddress(v))
+			}
+
+			for _, v := range strings.Split(args[4], ",") {
+				p, err := strconv.ParseUint(v, 10, 64)
+				if err != nil {
+					return sdkerrors.Wrap(err, "power")
+				}
+				powers = append(powers, p)
+			}
+
+			startThreshold, err := strconv.ParseUint(args[6], 10, 64)
+			if err != nil {
+				return sdkerrors.Wrap(err, "start threshold")
+			}
+
+			// Make the message
+			msg := types.MsgCreateEthereumClaims{
+				EthereumChainID:       ethChainID,
+				BridgeContractAddress: types.NewEthereumAddress(ethContractAddress),
+				Orchestrator:          cosmosAddr,
+				Claims: []types.EthereumClaim{
+					types.EthereumBridgeBootstrappedClaim{
+						Nonce:               nonce,
+						AllowedValidatorSet: validators,
+						ValidatorPowers:     powers,
+						PeggyID:             []byte(args[5]), // simplest solution without decoding
+						StartThreshold:      startThreshold,
+					},
+				},
+			}
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}
 func CmdSendETHDepositRequest(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "deposit [eth chain id] [eth contract address] [nonce] [cosmos receiver] [amount] [eth erc20 symbol] [eth erc20 contract addr] [eth sender address]",

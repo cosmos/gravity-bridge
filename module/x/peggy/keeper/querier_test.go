@@ -24,34 +24,34 @@ func TestQueryValsetConfirm(t *testing.T) {
 	})
 
 	specs := map[string]struct {
-		srcnonce string
+		srcNonce string
 		srcAddr  string
 		expErr   bool
 		expResp  []byte
 	}{
 		"all good": {
-			srcnonce: "1",
+			srcNonce: "1",
 			srcAddr:  myValidatorCosmosAddr.String(),
 			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a",  "signature": ""}}`),
 		},
 		"unknown nonce": {
-			srcnonce: "999999",
+			srcNonce: "999999",
 			srcAddr:  myValidatorCosmosAddr.String(),
 		},
 		"invalid address": {
-			srcnonce: "1",
+			srcNonce: "1",
 			srcAddr:  "not a valid addr",
 			expErr:   true,
 		},
 		"invalid nonce": {
-			srcnonce: "not a valid nonce",
+			srcNonce: "not a valid nonce",
 			srcAddr:  myValidatorCosmosAddr.String(),
 			expErr:   true,
 		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := queryValsetConfirm(ctx, []string{spec.srcnonce, spec.srcAddr}, k)
+			got, err := queryValsetConfirm(ctx, []string{spec.srcNonce, spec.srcAddr}, k)
 			if spec.expErr {
 				require.Error(t, err)
 				return
@@ -83,12 +83,12 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 	}
 
 	specs := map[string]struct {
-		srcnonce string
+		srcNonce string
 		expErr   bool
 		expResp  []byte
 	}{
 		"all good": {
-			srcnonce: "1",
+			srcNonce: "1",
 			expResp: []byte(`[
 {"nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a", "signature": "signature 1"},
 {"nonce": "1", "validator": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du", "signature": "signature 2"},
@@ -96,17 +96,17 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 ]`),
 		},
 		"unknown nonce": {
-			srcnonce: "999999",
+			srcNonce: "999999",
 			expResp:  nil,
 		},
 		"invalid nonce": {
-			srcnonce: "not a valid nonce",
+			srcNonce: "not a valid nonce",
 			expErr:   true,
 		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := allValsetConfirmsByNonce(ctx, spec.srcnonce, k)
+			got, err := allValsetConfirmsByNonce(ctx, spec.srcNonce, k)
 			if spec.expErr {
 				require.Error(t, err)
 				return

@@ -228,9 +228,9 @@ func lastObservedNonces(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 }
 
 type MultiSigUpdateResponse struct {
-	Valset     types.Valset
-	Signatures []string
-	Checkpoint []byte
+	Valset     types.Valset `json:"valset"`
+	Signatures []string     `json:"signatures,omitempty"`
+	Checkpoint []byte       `json:"checkpoint"`
 }
 
 func lastApprovedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
@@ -263,9 +263,6 @@ func fetchMultiSigUpdateData(ctx sdk.Context, nonce types.Nonce, keeper Keeper) 
 		result.Signatures = append(result.Signatures, confirm.Signature)
 		return false
 	})
-	if len(result.Signatures) == 0 {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "no signatures found for nonce")
-	}
 
 	res, err := codec.MarshalJSONIndent(keeper.cdc, result)
 	if err != nil {

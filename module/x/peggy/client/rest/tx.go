@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -161,6 +162,55 @@ func createValsetConfirmHandler(cliCtx context.CLIContext, storeKey string) http
 			return
 		}
 
+		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
+	}
+}
+
+type bootstrapConfirmReq struct {
+	BaseReq               rest.BaseReq            `json:"base_req"`
+	Orchestrator          sdk.AccAddress          `json:"orchestrator"`
+	EthereumChainID       string                  `json:"ethereum_chain_id"`
+	BridgeContractAddress types.EthereumAddress   `json:"bridge_contract_address"`
+	Nonce                 string                  `json:"nonce"`
+	AllowedValidatorSet   []types.EthereumAddress `json:"allowed_validator_set"`
+	ValidatorPowers       []uint64                `json:"validator_powers"`
+	PeggyID               string                  `json:"peggy_id"`
+	StartThreshold        uint64                  `json:"start_threshold"`
+}
+
+func bootstrapConfirmHandler(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req bootstrapConfirmReq
+
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+
+		baseReq := req.BaseReq.Sanitize()
+		if !baseReq.ValidateBasic(w) {
+			return
+		}
+
+		nonceNumber, err := strconv.ParseUint(req.Nonce, 10, 64)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse nonce")
+			return
+		}
+		claims := []types.EthereumClaim{
+			types.EthereumBridgeBootstrappedClaim{
+				Nonce:               types.NonceFromUint64(nonceNumber),
+				AllowedValidatorSet: req.AllowedValidatorSet,
+				ValidatorPowers:     req.ValidatorPowers,
+				PeggyID:             []byte(req.PeggyID),
+				StartThreshold:      req.StartThreshold,
+			},
+		}
+		msg := types.NewMsgCreateEthereumClaims(req.EthereumChainID, req.BridgeContractAddress, req.Orchestrator, claims)
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, fmt.Sprintf("invalid data: %s", err))
+			return
+		}
 		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
 	}
 }

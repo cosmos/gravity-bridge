@@ -276,13 +276,31 @@ func (k Keeper) GetBridgeContractAddress(ctx sdk.Context) types.EthereumAddress 
 	var a types.EthereumAddress
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractAddress, &a)
 	return a
-
 }
 
 func (k Keeper) GetBridgeChainID(ctx sdk.Context) uint64 {
 	var a uint64
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractChainID, &a)
 	return a
+}
+
+func (k Keeper) GetPeggyID(ctx sdk.Context) []byte {
+	var a []byte
+	k.paramSpace.Get(ctx, types.ParamsStoreKeyPeggyID, &a)
+	return a
+}
+func (k Keeper) setPeggyID(ctx sdk.Context, v []byte) {
+	k.paramSpace.Set(ctx, types.ParamsStoreKeyPeggyID, v)
+}
+
+func (k Keeper) GetStartThreshold(ctx sdk.Context) uint64 {
+	var a uint64
+	k.paramSpace.Get(ctx, types.ParamsStoreKeyStartThreshold, &a)
+	return a
+}
+
+func (k Keeper) setStartThreshold(ctx sdk.Context, v uint64) {
+	k.paramSpace.Set(ctx, types.ParamsStoreKeyStartThreshold, v)
 }
 
 // prefixRange turns a prefix into a (start, end) range. The start is the given prefix value and

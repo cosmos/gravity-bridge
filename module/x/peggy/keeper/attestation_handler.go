@@ -74,12 +74,17 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 	case types.ClaimTypeEthereumBootstrap:
 		// todo: here and others that we do not work with an outdated nonce:
 		// todo: can be a confirmed valset update already > current nonce or another bootstrap attestation
+		// todo: abort when we had a previous successful processed bootstrap
 		bootstrap, ok := att.Details.(types.BridgeBootstrap)
 		if !ok {
 			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
 		}
+		// storing the bootstrap data here to avoid the gov process in MVY. TODO: remove this
 		// todo: verify that StartThreshold == params.StartThreshold ? or before when accepting message?
 		// todo: verify that PeggyID == params.PeggyID ? or before when accepting message?
+
+		a.keeper.setPeggyID(ctx, bootstrap.PeggyID)
+		a.keeper.setStartThreshold(ctx, bootstrap.StartThreshold)
 
 		// todo: some type convertions that needs to be addressed with valset
 		ethAddrs := make([]string, len(bootstrap.AllowedValidatorSet))
