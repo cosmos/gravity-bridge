@@ -159,6 +159,60 @@ func TestObserveBridgeMultiSigUpdate(t *testing.T) {
 	// and last observed status updated
 	gotAttestation = k.GetLastObservedAttestation(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
 	assert.Equal(t, exp, *gotAttestation)
+	assert.Equal(t, myNonce, k.GetLastValsetObservedNonce(ctx))
+}
+
+func TestObserveBridgeBootstrap(t *testing.T) {
+	var (
+		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
+		myEthAddr                         = types.NewEthereumAddress("0xa")
+		myBlockHeight      uint64         = 100
+		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+	)
+
+	k, ctx, _ := CreateTestEnv(t)
+	k.StakingKeeper = NewStakingKeeperMock(myValAddr)
+	ctx = ctx.WithBlockTime(myBlockTime).WithBlockHeight(int64(myBlockHeight))
+
+	// when
+	myNonce := types.NonceFromUint64(myBlockHeight)
+	details := types.BridgeBootstrap{
+		AllowedValidatorSet: []types.EthereumAddress{myEthAddr},
+		ValidatorPowers:     []uint64{10},
+		PeggyID:             []byte("my random string"),
+		StartThreshold:      67,
+	}
+	gotAttestation, err := k.AddClaim(ctx, types.ClaimTypeEthereumBootstrap, myNonce, myValAddr, details)
+	// then
+	require.NoError(t, err)
+
+	// and claim persisted
+	claimFound := k.HasClaim(ctx, types.ClaimTypeEthereumBootstrap, myNonce, myValAddr, details)
+	assert.True(t, claimFound)
+
+	// and expected state
+	exp := types.Attestation{
+		ClaimType:     types.ClaimTypeEthereumBootstrap,
+		Nonce:         myNonce,
+		Certainty:     types.CertaintyObserved,
+		Status:        types.ProcessStatusProcessed,
+		ProcessResult: types.ProcessResultSuccess,
+		Tally: types.AttestationTally{
+			TotalVotesPower:    sdk.NewUint(100),
+			TotalVotesCount:    1,
+			RequiredVotesPower: sdk.NewUint(66),
+			RequiredVotesCount: 0,
+		},
+		Details:             details,
+		SubmitTime:          myBlockTime,
+		ConfirmationEndTime: time.Date(2020, 9, 14+1, 15, 20, 10, 0, time.UTC),
+	}
+	assert.Equal(t, exp, *gotAttestation)
+	// and last observed status updated
+	gotAttestation = k.GetLastObservedAttestation(ctx, types.ClaimTypeEthereumBootstrap)
+	assert.Equal(t, exp, *gotAttestation)
+	assert.Equal(t, myNonce, k.GetLastValsetObservedNonce(ctx))
 }
 
 func TestApproveBridgeMultiSigUpdate(t *testing.T) {
@@ -212,4 +266,5 @@ func TestApproveBridgeMultiSigUpdate(t *testing.T) {
 	// and last observed status updated
 	gotAttestation = k.GetLastObservedAttestation(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate)
 	assert.Equal(t, exp, *gotAttestation)
+	assert.Equal(t, myNonce, k.GetLastValsetApprovedNonce(ctx))
 }

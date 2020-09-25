@@ -39,4 +39,5 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterInterface((*AttestationDetails)(nil), nil)
 	cdc.RegisterConcrete(BridgeDeposit{}, "peggy/BridgeDeposit", nil)
 	cdc.RegisterConcrete(SignedCheckpoint{}, "peggy/SignedCheckpoint", nil)
+	cdc.RegisterConcrete(BridgeBootstrap{}, "peggy/BridgeBootstrap", nil)
 }

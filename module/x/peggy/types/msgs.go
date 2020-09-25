@@ -334,6 +334,7 @@ var (
 	_ EthereumClaim = EthereumBridgeDepositClaim{}
 	_ EthereumClaim = EthereumBridgeWithdrawalBatchClaim{}
 	_ EthereumClaim = EthereumBridgeMultiSigUpdateClaim{}
+	_ EthereumClaim = EthereumBridgeBootstrappedClaim{}
 )
 
 // NoUniqueClaimDetails is a NIL object to
@@ -432,6 +433,42 @@ const (
 var (
 	_ sdk.Msg = &MsgCreateEthereumClaims{}
 )
+
+// EthereumBridgeBootstrappedClaim orchestrators confirm that the contract is setup on the Ethereum side and the init data.
+type EthereumBridgeBootstrappedClaim struct {
+	Nonce Nonce `json:"nonce" yaml:"nonce"`
+	// AllowedValidatorSet addresses to participate
+	AllowedValidatorSet []EthereumAddress
+	// ValidatorPowers the validator's power values
+	ValidatorPowers []uint64
+	// PeggyID is a random 32 byte value to prevent signature reuse
+	PeggyID []byte `json:"peggy_id,omitempty" yaml:"peggy_id"`
+	// StartThreshold is the percentage of total voting power that must be online and participating in
+	// Peggy operations before a bridge can start operating
+	StartThreshold uint64 `json:"start_threshold,omitempty" yaml:"start_threshold"`
+}
+
+func (e EthereumBridgeBootstrappedClaim) GetNonce() Nonce {
+	return e.Nonce
+}
+
+func (e EthereumBridgeBootstrappedClaim) GetType() ClaimType {
+	return ClaimTypeEthereumBootstrap
+}
+
+func (e EthereumBridgeBootstrappedClaim) ValidateBasic() error {
+	// todo: implement me
+	return nil
+}
+
+func (e EthereumBridgeBootstrappedClaim) Details() AttestationDetails {
+	return BridgeBootstrap{
+		AllowedValidatorSet: e.AllowedValidatorSet,
+		ValidatorPowers:     e.ValidatorPowers,
+		PeggyID:             e.PeggyID,
+		StartThreshold:      e.StartThreshold,
+	}
+}
 
 // MsgCreateEthereumClaims
 // this message essentially acts as the oracle between Ethereum and Cosmos, when an orchestrator sees

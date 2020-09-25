@@ -69,6 +69,9 @@ func findValidatorKey(ctx sdk.Context, orchAddr sdk.AccAddress) sdk.ValAddress {
 
 func handleMsgValsetRequest(ctx sdk.Context, keeper Keeper, msg types.MsgValsetRequest) (*sdk.Result, error) {
 	// todo: is requester in current valset?
+	if keeper.GetLastValsetObservedNonce(ctx).IsEmpty() {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "bridge bootstrap process not observed, yet")
+	}
 	v := keeper.SetValsetRequest(ctx)
 	return &sdk.Result{
 		Data: sdk.Uint64ToBigEndian(uint64(v.Nonce)),

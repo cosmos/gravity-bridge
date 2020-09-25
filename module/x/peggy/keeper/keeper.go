@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
@@ -67,6 +68,57 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) types.Valset {
 	)
 	ctx.EventManager().EmitEvent(event)
 	return valset
+}
+
+func (k Keeper) SetBootstrapValset(ctx sdk.Context, nonce types.Nonce, valset types.Valset) error {
+	if !nonce.GreaterThan(k.GetLastValsetObservedNonce(ctx)) {
+		return types.ErrOutdated
+	}
+	store := ctx.KVStore(k.storeKey)
+	key := types.GetValsetRequestKey(int64(nonce.Uint64()))
+	if store.Has(key) {
+		return sdkerrors.Wrap(types.ErrDuplicate, "nonce")
+	}
+	store.Set(key, k.cdc.MustMarshalBinaryBare(valset))
+	k.setLastValsetObservedNonce(ctx, nonce)
+	event := sdk.NewEvent(
+		types.EventTypeMultisigUpdateRequest,
+		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
+		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
+		sdk.NewAttribute(types.AttributeKeyMultisigID, strconv.Itoa(int(nonce.Uint64()))),
+		sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
+	)
+	ctx.EventManager().EmitEvent(event)
+	return nil
+}
+
+func (k Keeper) setLastValsetApprovedNonce(ctx sdk.Context, nonce types.Nonce) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetSecondIndexLastValsetApprovedKey(nonce), []byte{}) // store payload in key only for gas optimization
+}
+
+func (k Keeper) GetLastValsetApprovedNonce(ctx sdk.Context) types.Nonce {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexLastValsetApprovedKey)
+	iter := prefixStore.Iterator(nil, nil)
+	if !iter.Valid() {
+		return nil
+	}
+	return iter.Key()
+}
+
+func (k Keeper) setLastValsetObservedNonce(ctx sdk.Context, nonce types.Nonce) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetSecondIndexLastValsetObservedKey(nonce), []byte{}) // store payload in key only for gas optimization
+}
+
+func (k Keeper) GetLastValsetObservedNonce(ctx sdk.Context) types.Nonce {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexLastValsetObservedKey)
+	iter := prefixStore.Iterator(nil, nil)
+	if !iter.Valid() {
+		return nil
+	}
+	return iter.Key()
 }
 
 func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce uint64) bool {

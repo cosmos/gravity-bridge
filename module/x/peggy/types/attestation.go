@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"time"
@@ -38,6 +39,14 @@ func (n Nonce) ValidateBasic() error {
 	return nil
 }
 
+func (n Nonce) GreaterThan(o Nonce) bool {
+	return bytes.Compare(n, o) == 1
+}
+
+func (n Nonce) IsEmpty() bool {
+	return len(n) == 0
+}
+
 type AttestationCertainty uint8
 
 const (
@@ -71,12 +80,14 @@ const ( // todo: revisit type: length and overlap
 	ClaimTypeEthereumBridgeDeposit         ClaimType = "bridge_deposit"
 	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = "bridge_withdrawal_batch"
 	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = "bridge_multisig_update"
-	// signed confirmations
+	ClaimTypeEthereumBootstrap             ClaimType = "bridge_bootstrap"
+
+	// signed confirmations to Ethereum
 	ClaimTypeOrchestratorSignedMultiSigUpdate ClaimType = "orchestrator_signed_multisig_update"
 	ClaimTypeOrchestratorSignedWithdrawBatch  ClaimType = "orchestrator_signed_withdraw_batch"
 )
 
-var AllOracleClaimTypes = []ClaimType{ClaimTypeEthereumBridgeDeposit, ClaimTypeEthereumBridgeWithdrawalBatch, ClaimTypeEthereumBridgeMultiSigUpdate}
+var AllOracleClaimTypes = []ClaimType{ClaimTypeEthereumBridgeDeposit, ClaimTypeEthereumBridgeWithdrawalBatch, ClaimTypeEthereumBridgeMultiSigUpdate, ClaimTypeEthereumBootstrap}
 var AllConfirmationClaimTypes = []ClaimType{ClaimTypeOrchestratorSignedMultiSigUpdate, ClaimTypeOrchestratorSignedWithdrawBatch}
 
 func IsClaimType(s string) bool {
@@ -147,14 +158,18 @@ func (a *Attestation) ID() []byte {
 	return GetAttestationKey(a.ClaimType, a.Nonce)
 }
 
-// AttestationDetails is the payload of an attestion.
+// AttestationDetails is the payload of an attestation.
 type AttestationDetails interface {
-	// Hash creates hash of the object that is supposed to be unique during the live time of the block chain
+	// Hash creates hash of the object that is supposed to be unique during the live time of the block chain.
+	// purpose of the hash is to very that orchestrators submit the same payload data and not only the nonce.
 	Hash() []byte
 }
 
-var _ AttestationDetails = BridgeDeposit{}
-var _ AttestationDetails = SignedCheckpoint{}
+var (
+	_ AttestationDetails = BridgeDeposit{}
+	_ AttestationDetails = SignedCheckpoint{}
+	_ AttestationDetails = BridgeBootstrap{}
+)
 
 // BridgeDeposit is an attestation detail that adds vouchers to an account when executed
 type BridgeDeposit struct {
@@ -171,9 +186,35 @@ func (b BridgeDeposit) Hash() []byte {
 
 // SignedCheckpoint is an attestation detail that approves an update for a checkpoint
 type SignedCheckpoint struct {
-	Checkpoint []byte
+	Checkpoint []byte // is a hash already
 }
 
 func (s SignedCheckpoint) Hash() []byte {
 	return s.Checkpoint
+}
+
+type BridgeBootstrap struct {
+	AllowedValidatorSet []EthereumAddress
+	ValidatorPowers     []uint64
+	PeggyID             []byte `json:"peggy_id,omitempty" yaml:"peggy_id"`
+	StartThreshold      uint64 `json:"start_threshold,omitempty" yaml:"start_threshold"`
+}
+
+func (b BridgeBootstrap) Hash() []byte {
+	hasher := tmhash.New()
+	for i := range b.AllowedValidatorSet {
+		_, err := hasher.Write(b.AllowedValidatorSet[i].RawBytes())
+		if err != nil {
+			panic(err) // can not happen in used sha256 impl
+		}
+	}
+	for i := range b.ValidatorPowers {
+		_, err := hasher.Write(sdk.Uint64ToBigEndian(b.ValidatorPowers[i]))
+		if err != nil {
+			panic(err) // can not happen in used sha256 impl
+		}
+	}
+	hasher.Write(b.PeggyID)
+	hasher.Write(sdk.Uint64ToBigEndian(b.StartThreshold))
+	return hasher.Sum(nil)
 }

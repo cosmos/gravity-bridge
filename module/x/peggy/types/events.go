@@ -3,6 +3,7 @@ package types
 const (
 	EventTypeObservation              = "observation"
 	EventTypeOutgoingBatch            = "outgoing_batch"
+	EventTypeMultisigBootstrap        = "multisig_bootstrap"
 	EventTypeMultisigUpdateRequest    = "multisig_update_request"
 	EventTypeOutgoingBatchCanceled    = "outgoing_batch_canceled"
 	EventTypeBridgeWithdrawalReceived = "withdrawal_received"

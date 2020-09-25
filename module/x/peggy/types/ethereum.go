@@ -31,6 +31,11 @@ func (e EthereumAddress) Bytes() []byte {
 	return []byte(e.String())
 }
 
+// RawBytes return the unencoded address bytes
+func (e EthereumAddress) RawBytes() []byte {
+	return e[:]
+}
+
 func (e EthereumAddress) ValidateBasic() error {
 	if !isValidETHAddress(e.String()) {
 		return ErrInvalid

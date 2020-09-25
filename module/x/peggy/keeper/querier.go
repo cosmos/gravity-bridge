@@ -234,23 +234,21 @@ type MultiSigUpdateResponse struct {
 }
 
 func lastApprovedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	attestation := keeper.GetLastObservedAttestation(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate)
-	if attestation == nil {
-		return nil, nil
-	}
-	return fetchMultiSigUpdateData(ctx, *attestation, keeper)
+	nonce := keeper.GetLastValsetApprovedNonce(ctx)
+	return fetchMultiSigUpdateData(ctx, nonce, keeper)
 }
 
 func lastObservedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	attestation := keeper.GetLastObservedAttestation(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
-	if attestation == nil {
-		return nil, nil
-	}
-	return fetchMultiSigUpdateData(ctx, *attestation, keeper)
+	nonce := keeper.GetLastValsetObservedNonce(ctx)
+	return fetchMultiSigUpdateData(ctx, nonce, keeper)
 }
 
-func fetchMultiSigUpdateData(ctx sdk.Context, attestation types.Attestation, keeper Keeper) ([]byte, error) {
-	valset := keeper.GetValsetRequest(ctx, int64(attestation.Nonce.Uint64())) // todo: revisit nonce type
+func fetchMultiSigUpdateData(ctx sdk.Context, nonce types.Nonce, keeper Keeper) ([]byte, error) {
+	if nonce.IsEmpty() {
+		return nil, nil
+	}
+
+	valset := keeper.GetValsetRequest(ctx, int64(nonce.Uint64())) // todo: revisit nonce type
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "no valset found for nonce")
 	}
@@ -259,12 +257,9 @@ func fetchMultiSigUpdateData(ctx sdk.Context, attestation types.Attestation, kee
 		Checkpoint: valset.GetCheckpoint(),
 		Valset:     *valset,
 	}
-	//would be nice to use the details. (missing in observed claims:
-	// https://github.com/althea-net/peggy/issues/53)
-	// result.Checkpoint = attestation.Details.Hash()
 
 	// todo: revisit nonce type
-	keeper.IterateValsetConfirmByNonce(ctx, int64(attestation.Nonce.Uint64()), func(_ []byte, confirm types.MsgValsetConfirm) bool {
+	keeper.IterateValsetConfirmByNonce(ctx, int64(nonce.Uint64()), func(_ []byte, confirm types.MsgValsetConfirm) bool {
 		result.Signatures = append(result.Signatures, confirm.Signature)
 		return false
 	})

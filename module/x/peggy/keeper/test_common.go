@@ -68,7 +68,7 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 	ctx := sdk.NewContext(ms, abci.Header{
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
-	}, isCheckTx, log.NewNopLogger())
+	}, isCheckTx, log.TestingLogger())
 
 	cdc := MakeTestCodec()
 

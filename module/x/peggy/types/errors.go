@@ -12,4 +12,5 @@ var (
 	ErrTimeout   = sdkerrors.Register(ModuleName, 4, "timeout")
 	ErrUnknown   = sdkerrors.Register(ModuleName, 5, "unknown")
 	ErrEmpty     = sdkerrors.Register(ModuleName, 6, "empty")
+	ErrOutdated  = sdkerrors.Register(ModuleName, 7, "outdated")
 )
