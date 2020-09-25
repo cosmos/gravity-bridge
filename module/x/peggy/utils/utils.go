@@ -24,8 +24,10 @@ func ValidateEthSig(hash []byte, signature []byte, ethAddress string) error {
 	if signature[64] == 27 || signature[64] == 28 {
 		signature[64] -= 27
 	}
+	protectBytes := []uint8("\x19Ethereum Signed Message:\n32")
+	protectedHash := crypto.Keccak256Hash(append(protectBytes, hash...))
 
-	pubkey, err := crypto.SigToPub(hash, signature)
+	pubkey, err := crypto.SigToPub(protectedHash.Bytes(), signature)
 	if err != nil {
 		return err
 	}
