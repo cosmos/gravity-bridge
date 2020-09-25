@@ -1,9 +1,8 @@
 package types
 
 import (
-	"encoding/hex"
+	"encoding/base64"
 	"fmt"
-	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,12 +15,13 @@ type Nonce []byte
 func NonceFromUint64(s uint64) Nonce {
 	return sdk.Uint64ToBigEndian(s)
 }
+
 func (n Nonce) Uint64() uint64 {
 	return DecodeUin64(n.Bytes())
 }
 
 func (n Nonce) String() string {
-	return strings.ToUpper(hex.EncodeToString(n))
+	return base64.URLEncoding.EncodeToString(n)
 }
 
 func (n Nonce) Bytes() []byte {
@@ -66,16 +66,21 @@ const (
 // ClaimType is the cosmos type of an event from the counterpart chain that can be handled
 type ClaimType string
 
-const (
+const ( // todo: revisit type: length and overlap
+	// oracles
 	ClaimTypeEthereumBridgeDeposit         ClaimType = "bridge_deposit"
 	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = "bridge_withdrawal_batch"
 	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = "bridge_multisig_update"
+	// signed confirmations
+	ClaimTypeOrchestratorSignedMultiSigUpdate ClaimType = "orchestrator_signed_multisig_update"
+	ClaimTypeOrchestratorSignedWithdrawBatch  ClaimType = "orchestrator_signed_withdraw_batch"
 )
 
-var AllClaimTypes = []ClaimType{ClaimTypeEthereumBridgeDeposit, ClaimTypeEthereumBridgeWithdrawalBatch, ClaimTypeEthereumBridgeMultiSigUpdate}
+var AllOracleClaimTypes = []ClaimType{ClaimTypeEthereumBridgeDeposit, ClaimTypeEthereumBridgeWithdrawalBatch, ClaimTypeEthereumBridgeMultiSigUpdate}
+var AllConfirmationClaimTypes = []ClaimType{ClaimTypeOrchestratorSignedMultiSigUpdate, ClaimTypeOrchestratorSignedWithdrawBatch}
 
 func IsClaimType(s string) bool {
-	for _, v := range AllClaimTypes {
+	for _, v := range append(AllOracleClaimTypes, AllConfirmationClaimTypes...) {
 		if string(v) == s {
 			return true
 		}
@@ -83,25 +88,18 @@ func IsClaimType(s string) bool {
 	return false
 }
 
-func (c *ClaimType) UnmarshalJSON(b []byte) error {
-	if !IsClaimType(string(b)) {
-		return ErrInvalid
-	}
-	*c = ClaimType(b)
-	return nil
-}
-
-func (c ClaimType) MarshalJSON() ([]byte, error) {
-	return []byte(c), nil
-}
 func (c ClaimType) String() string {
 	return string(c)
+}
+
+func (c ClaimType) Bytes() []byte {
+	return []byte(c)
 }
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by all orchestrators
 type Attestation struct {
 	ClaimType           ClaimType
-	Nonce               Nonce // or bytes or int?
+	Nonce               Nonce
 	Certainty           AttestationCertainty
 	Status              AttestationProcessStatus
 	ProcessResult       AttestationProcessResult
@@ -144,21 +142,38 @@ func (a *Attestation) AddVote(now time.Time, power uint64) error {
 	return nil
 }
 
-// ID is the unique identifiert used in DB
+// ID is the unique identifier used in DB
 func (a *Attestation) ID() []byte {
 	return GetAttestationKey(a.ClaimType, a.Nonce)
 }
 
+// AttestationDetails is the payload of an attestion.
 type AttestationDetails interface {
+	// Hash creates hash of the object that is supposed to be unique during the live time of the block chain
 	Hash() []byte
 }
+
+var _ AttestationDetails = BridgeDeposit{}
+var _ AttestationDetails = SignedCheckpoint{}
+
+// BridgeDeposit is an attestation detail that adds vouchers to an account when executed
 type BridgeDeposit struct {
+	Nonce          Nonce // redundant information but required for a unique hash. Two deposits should not have the same hash.
 	ERC20Token     ERC20Token
 	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
 	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
 }
 
 func (b BridgeDeposit) Hash() []byte {
-	path := fmt.Sprintf("%s/%s/%s/", b.EthereumSender.String(), b.ERC20Token.String(), b.CosmosReceiver.String())
+	path := fmt.Sprintf("%s/%s/%s/%s/", b.Nonce.String(), b.EthereumSender.String(), b.ERC20Token.String(), b.CosmosReceiver.String())
 	return tmhash.Sum([]byte(path))
+}
+
+// SignedCheckpoint is an attestation detail that approves an update for a checkpoint
+type SignedCheckpoint struct {
+	Checkpoint []byte
+}
+
+func (s SignedCheckpoint) Hash() []byte {
+	return s.Checkpoint
 }

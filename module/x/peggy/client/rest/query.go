@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
@@ -155,6 +156,7 @@ func lastObservedNonceHandler(cliCtx context.CLIContext, storeName string) func(
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
+
 func lastObservedNoncesHandler(cliCtx context.CLIContext, storeName string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastObservedNonces", storeName))
@@ -168,6 +170,65 @@ func lastObservedNoncesHandler(cliCtx context.CLIContext, storeName string) func
 		}
 
 		var out map[string]types.Nonce
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+func lastObservedValsetHandler(cliCtx context.CLIContext, storeName string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastObservedMultiSigUpdate", storeName))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "no observed multisig update")
+			return
+		}
+
+		var out keeper.MultiSigUpdateResponse
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+// approved = signed by >66% of the validator set
+func lastApprovedValsetHandler(cliCtx context.CLIContext, storeName string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastApprovedMultiSigUpdate", storeName))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "no approved multisig update")
+			return
+		}
+
+		var out keeper.MultiSigUpdateResponse
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+func queryAttestation(cliCtx context.CLIContext, storeName string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		claimType := vars[claimType]
+		nonce := vars[nonce]
+
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/attestation/%s/%s", storeName, claimType, nonce))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "no attestation")
+			return
+		}
+
+		var out types.Attestation
 		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}

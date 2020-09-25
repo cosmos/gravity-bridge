@@ -26,8 +26,6 @@ type (
 	MsgSendToEth                       = types.MsgSendToEth
 	MsgRequestBatch                    = types.MsgRequestBatch
 	MsgConfirmBatch                    = types.MsgConfirmBatch
-	MsgBatchInChain                    = types.MsgBatchInChain
-	MsgEthDeposit                      = types.MsgEthDeposit
 	Keeper                             = keeper.Keeper
 	MsgSetEthAddress                   = types.MsgSetEthAddress
 	MsgValsetConfirm                   = types.MsgValsetConfirm

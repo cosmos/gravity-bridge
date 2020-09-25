@@ -7,6 +7,7 @@ import (
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -128,8 +129,7 @@ func TestLastValsetRequestNonces(t *testing.T) {
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			ethAddr := fmt.Sprintf("my eth addr %d", j+1)
-			k.SetEthAddress(ctx, valAddr, ethAddr)
+			k.SetEthAddress(ctx, valAddr, createEthAddress(j+1))
 			validators = append(validators, valAddr)
 		}
 		k.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -153,12 +153,12 @@ func TestLastValsetRequestNonces(t *testing.T) {
 	  "100"
 	],
 	"EthAddresses": [
-	  "my eth addr 1",
-	  "my eth addr 2",
-	  "my eth addr 3",
-	  "my eth addr 4",
-	  "my eth addr 5",
-	  "my eth addr 6"
+	  "0x0101010101010101010101010101010101010101",
+	  "0x0202020202020202020202020202020202020202",
+	  "0x0303030303030303030303030303030303030303",
+	  "0x0404040404040404040404040404040404040404",
+	  "0x0505050505050505050505050505050505050505",
+	  "0x0606060606060606060606060606060606060606"
 	]
   },
   {
@@ -171,11 +171,11 @@ func TestLastValsetRequestNonces(t *testing.T) {
 	  "100"
 	],
 	"EthAddresses": [
-	  "my eth addr 1",
-	  "my eth addr 2",
-	  "my eth addr 3",
-	  "my eth addr 4",
-	  "my eth addr 5"
+	  "0x0101010101010101010101010101010101010101",
+	  "0x0202020202020202020202020202020202020202",
+	  "0x0303030303030303030303030303030303030303",
+	  "0x0404040404040404040404040404040404040404",
+	  "0x0505050505050505050505050505050505050505"
 	]
   },
   {
@@ -187,10 +187,10 @@ func TestLastValsetRequestNonces(t *testing.T) {
 	  "100"
 	],
 	"EthAddresses": [
-	  "my eth addr 1",
-	  "my eth addr 2",
-	  "my eth addr 3",
-	  "my eth addr 4"
+	  "0x0101010101010101010101010101010101010101",
+	  "0x0202020202020202020202020202020202020202",
+	  "0x0303030303030303030303030303030303030303",
+	  "0x0404040404040404040404040404040404040404"
 	]
   },
   {
@@ -201,9 +201,9 @@ func TestLastValsetRequestNonces(t *testing.T) {
 	  "100"
 	],
 	"EthAddresses": [
-	  "my eth addr 1",
-	  "my eth addr 2",
-	  "my eth addr 3"
+	  "0x0101010101010101010101010101010101010101",
+	  "0x0202020202020202020202020202020202020202",
+	  "0x0303030303030303030303030303030303030303"
 	]
   },
   {
@@ -213,8 +213,8 @@ func TestLastValsetRequestNonces(t *testing.T) {
 	  "100"
 	],
 	"EthAddresses": [
-	  "my eth addr 1",
-	  "my eth addr 2"
+	  "0x0101010101010101010101010101010101010101",
+	  "0x0202020202020202020202020202020202020202"
 	]
   }
 ]`),
@@ -228,6 +228,7 @@ func TestLastValsetRequestNonces(t *testing.T) {
 		})
 	}
 }
+
 func TestLastPendingValsetRequest(t *testing.T) {
 	k, ctx, _ := CreateTestEnv(t)
 	var (
@@ -306,4 +307,9 @@ func TestLastPendingValsetRequest(t *testing.T) {
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
 		})
 	}
+}
+
+func createEthAddress(i int) types.EthereumAddress {
+	return types.EthereumAddress(gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(i)}, 20)))
+
 }

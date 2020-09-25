@@ -38,7 +38,7 @@ var (
 	KeyLastOutgoingBatchID = append(SequenceKeyPrefix, []byte("lastBatchId")...)
 )
 
-func GetEthAddressKey(validator sdk.AccAddress) []byte {
+func GetEthAddressKey(validator sdk.ValAddress) []byte {
 	return append(EthAddressKey, []byte(validator)...)
 }
 

@@ -145,15 +145,15 @@ func (k Keeper) IterateAttestationByClaimTypeDesc(ctx sdk.Context, claimType typ
 	return
 }
 
-// GetLastObservedNonce returns nonce or nil when none found for given type
-func (k Keeper) GetLastObservedNonce(ctx sdk.Context, claimType types.ClaimType) types.Nonce {
-	var nonce types.Nonce
+// GetLastObservedAttestation returns attestation for given claim type  or nil when none found
+func (k Keeper) GetLastObservedAttestation(ctx sdk.Context, claimType types.ClaimType) *types.Attestation {
+	var result *types.Attestation
 	k.IterateAttestationByClaimTypeDesc(ctx, claimType, func(_ []byte, att types.Attestation) bool {
 		if att.Certainty != types.CertaintyObserved {
 			return false
 		}
-		nonce = att.Nonce
+		result = &att
 		return true
 	})
-	return nonce
+	return result
 }

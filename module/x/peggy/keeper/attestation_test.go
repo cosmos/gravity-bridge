@@ -28,6 +28,7 @@ func TestObserveDeposit(t *testing.T) {
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
 	depositDetails := types.BridgeDeposit{
+		Nonce: myNonce,
 		ERC20Token: types.ERC20Token{
 			Amount:               12,
 			Symbol:               "ALX",
@@ -61,6 +62,9 @@ func TestObserveDeposit(t *testing.T) {
 		ConfirmationEndTime: time.Date(2020, 9, 14+1, 15, 20, 10, 0, time.UTC),
 		Details:             depositDetails,
 	}
+	assert.Equal(t, exp, *gotAttestation)
+	// and last observed status updated
+	gotAttestation = k.GetLastObservedAttestation(ctx, types.ClaimTypeEthereumBridgeDeposit)
 	assert.Equal(t, exp, *gotAttestation)
 }
 
@@ -107,8 +111,8 @@ func TestObserveWithdrawBatch(t *testing.T) {
 	}
 	assert.Equal(t, exp, *gotAttestation)
 	// and last observed status updated
-	gotNonce := k.GetLastObservedNonce(ctx, types.ClaimTypeEthereumBridgeWithdrawalBatch)
-	assert.Equal(t, myNonce, gotNonce)
+	gotAttestation = k.GetLastObservedAttestation(ctx, types.ClaimTypeEthereumBridgeWithdrawalBatch)
+	assert.Equal(t, exp, *gotAttestation)
 }
 
 func TestObserveBridgeMultiSigUpdate(t *testing.T) {
@@ -153,6 +157,59 @@ func TestObserveBridgeMultiSigUpdate(t *testing.T) {
 	}
 	assert.Equal(t, exp, *gotAttestation)
 	// and last observed status updated
-	gotNonce := k.GetLastObservedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
-	assert.Equal(t, myNonce, gotNonce)
+	gotAttestation = k.GetLastObservedAttestation(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
+	assert.Equal(t, exp, *gotAttestation)
+}
+
+func TestApproveBridgeMultiSigUpdate(t *testing.T) {
+	var (
+		myOrchestratorCosmosAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myOrchestratorETHAddr                   = types.NewEthereumAddress("0x8858eeb3dfffa017d4bce9801d340d36cf895ccf")
+		myValAddr                               = sdk.ValAddress(myOrchestratorCosmosAddr)
+		myBlockHeight            uint64         = 100
+		myBlockTime                             = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+	)
+
+	k, ctx, _ := CreateTestEnv(t)
+	k.StakingKeeper = NewStakingKeeperMock(myValAddr)
+
+	ctx = ctx.WithBlockTime(myBlockTime).WithBlockHeight(int64(myBlockHeight))
+	k.SetEthAddress(ctx, myValAddr, myOrchestratorETHAddr)
+	k.SetValsetRequest(ctx)
+
+	// when
+	myNonce := types.NonceFromUint64(myBlockHeight)
+	checkpoint := k.GetValsetRequest(ctx, int64(myBlockHeight)).GetCheckpoint()
+	details := types.SignedCheckpoint{
+		Checkpoint: checkpoint,
+	}
+	gotAttestation, err := k.AddClaim(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, myNonce, myValAddr, details)
+	// then
+	require.NoError(t, err)
+
+	// and claim persisted
+	claimFound := k.HasClaim(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, myNonce, myValAddr, details)
+	assert.True(t, claimFound)
+
+	// and expected state
+	exp := types.Attestation{
+		ClaimType:     types.ClaimTypeOrchestratorSignedMultiSigUpdate,
+		Nonce:         myNonce,
+		Certainty:     types.CertaintyObserved,
+		Status:        types.ProcessStatusProcessed,
+		ProcessResult: types.ProcessResultSuccess,
+		Tally: types.AttestationTally{
+			TotalVotesPower:    sdk.NewUint(100),
+			TotalVotesCount:    1,
+			RequiredVotesPower: sdk.NewUint(66),
+			RequiredVotesCount: 0,
+		},
+		Details:             types.SignedCheckpoint{Checkpoint: checkpoint},
+		SubmitTime:          myBlockTime,
+		ConfirmationEndTime: time.Date(2020, 9, 14+1, 15, 20, 10, 0, time.UTC),
+	}
+	assert.Equal(t, exp, *gotAttestation)
+	// and last observed status updated
+	gotAttestation = k.GetLastObservedAttestation(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate)
+	assert.Equal(t, exp, *gotAttestation)
 }

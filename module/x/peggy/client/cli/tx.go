@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"crypto/ecdsa"
 	"encoding/hex"
-	"fmt"
 	"log"
 
 	"github.com/cosmos/cosmos-sdk/types/errors"
@@ -38,6 +37,7 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		CmdValsetRequest(cdc),
 		CmdValsetConfirm(storeKey, cdc),
 		GetObservedCmd(cdc),
+		GetApprovedCmd(storeKey, cdc),
 		GetUnsafeTestingCmd(),
 	)...)
 
@@ -64,7 +64,7 @@ func GetUnsafeTestingCmd() *cobra.Command {
 func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "update-eth-addr [eth private key]",
-		Short: "update your eth address which will be used for peggy if you are a validator",
+		Short: "Update your Ethereum address which will be used for signing executables for the `multisig set`",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -93,10 +93,10 @@ func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 			if !ok {
 				log.Fatal("error casting public key to ECDSA")
 			}
-			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA)
 
 			// Make the message
-			msg := types.NewMsgSetEthAddress(ethAddress, cosmosAddr, hex.EncodeToString(signature))
+			msg := types.NewMsgSetEthAddress(types.EthereumAddress(ethAddress), cosmosAddr, hex.EncodeToString(signature))
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -111,7 +111,7 @@ func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 func CmdValsetRequest(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "valset-request",
-		Short: "request that the validators sign over the current valset",
+		Short: "Trigger a new `multisig set` update request on the cosmos side",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			inBuf := bufio.NewReader(cmd.InOrStdin())
@@ -121,52 +121,6 @@ func CmdValsetRequest(cdc *codec.Codec) *cobra.Command {
 			// Make the message
 			msg := types.NewMsgValsetRequest(cosmosAddr)
 
-			// Send it
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
-}
-
-func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "valset-confirm [nonce] [eth private key]",
-		Short: "this is used by validators to sign a valset with a particular nonce if it exists",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-
-			// Make Eth Signature over valset
-			privKeyString := args[1][2:]
-			privateKey, err := ethCrypto.HexToECDSA(privKeyString)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			nonce := args[0]
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, nonce), nil)
-			if err != nil {
-				fmt.Printf("could not get valset")
-				return nil
-			}
-
-			var valset types.Valset
-			cdc.MustUnmarshalJSON(res, &valset)
-			checkpoint := valset.GetCheckpoint()
-
-			signature, err := ethCrypto.Sign(checkpoint, privateKey)
-			if err != nil {
-				log.Fatal(err)
-			}
-			cosmosAddr := cliCtx.GetFromAddress()
-			// Make the message
-			msg := types.NewMsgValsetConfirm(valset.Nonce, cosmosAddr, hex.EncodeToString(signature))
-
-			err = msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
 			// Send it
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
@@ -217,7 +171,7 @@ func CmdUnsafeETHAddr() *cobra.Command {
 func CmdWithdrawToETH(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "withdraw [from_key_or_cosmos_address] [to_eth_address] [amount] [bridge_fee]",
-		Short: "adds a new entry to the tx pool to withdraw an amount from the bridge contract",
+		Short: "Adds a new entry to the transaction pool to withdraw an amount from the Ethereum bridge contract",
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -253,7 +207,7 @@ func CmdWithdrawToETH(cdc *codec.Codec) *cobra.Command {
 func CmdRequestBatch(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "build-batch [voucher_denom]",
-		Short: "build a new batch for pooled TX",
+		Short: "Build a new batch on the cosmos side for pooled withdrawal transactions",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)

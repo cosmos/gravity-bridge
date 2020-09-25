@@ -3,6 +3,8 @@ package cli
 import (
 	"bufio"
 	"encoding/base64"
+	"encoding/hex"
+	"fmt"
 	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -14,6 +16,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 )
 
@@ -34,10 +37,25 @@ func GetObservedCmd(cdc *codec.Codec) *cobra.Command {
 	return testingTxCmd
 }
 
+func GetApprovedCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
+	testingTxCmd := &cobra.Command{
+		Use:                        "approved",
+		Short:                      "approve an operation",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
+	}
+	testingTxCmd.AddCommand(flags.PostCommands(
+		CmdValsetConfirm(storeKey, cdc),
+	)...)
+
+	return testingTxCmd
+}
+
 func CmdSendETHDepositRequest(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "deposit [eth chain id] [eth contract address] [nonce] [cosmos receiver] [amount] [eth erc20 symbol] [eth erc20 contract addr] [eth sender address]",
-		Short: "Submit an eth event observed by an orchestrator",
+		Short: "Submit a claim that a deposit was made on the Ethereum side",
 		Args:  cobra.ExactArgs(8),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -88,7 +106,7 @@ func CmdSendETHDepositRequest(cdc *codec.Codec) *cobra.Command {
 func CmdSendETHWithdrawalRequest(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "withdrawal [eth chain id] [eth contract address] [nonce]",
-		Short: "Submit an eth event observed by an orchestrator",
+		Short: "Submit a claim that a withdrawal was executed on the Ethereum side",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -123,7 +141,7 @@ func CmdSendETHWithdrawalRequest(cdc *codec.Codec) *cobra.Command {
 func CmdSendETHMultiSigRequest(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "multisig-update [eth chain id] [eth contract address] [nonce]",
-		Short: "Submit an eth event observed by an orchestrator",
+		Short: "Submit a claim that the 'multisig set' update was executed on the Ethereum side",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -150,6 +168,52 @@ func CmdSendETHMultiSigRequest(cdc *codec.Codec) *cobra.Command {
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}
+
+func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "valset-confirm [nonce] [eth private key]",
+		Short: "Sign a `multisig set` update for given nonce with the Ethereum key and submit to cosmos side",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+
+			// Make Eth Signature over valset
+			privKeyString := args[1][2:]
+			privateKey, err := ethCrypto.HexToECDSA(privKeyString)
+			if err != nil {
+				return err
+			}
+
+			nonce := args[0]
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, nonce), nil)
+			if err != nil {
+				fmt.Printf("could not get valset")
+				return nil
+			}
+
+			var valset types.Valset
+			cdc.MustUnmarshalJSON(res, &valset)
+			checkpoint := valset.GetCheckpoint()
+
+			signature, err := ethCrypto.Sign(checkpoint, privateKey)
+			if err != nil {
+				return err
+			}
+			cosmosAddr := cliCtx.GetFromAddress()
+			// Make the message
+			msg := types.NewMsgValsetConfirm(valset.Nonce, cosmosAddr, hex.EncodeToString(signature))
+
+			err = msg.ValidateBasic()
+			if err != nil {
+				return err
+			}
+			// Send it
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}

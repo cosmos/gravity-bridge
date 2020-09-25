@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/base64"
 	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -21,6 +22,12 @@ const (
 	QueryLastObservedNonces             = "lastObservedNonces"
 	QueryLastPendingBatchRequestByAddr  = "lastPendingBatchRequest"
 	QueryOutgoingTxBatches              = "allBatches"
+	// last valset that was updated on the ETH side successfully
+	QueryLastObservedValset = "lastObservedMultiSigUpdate"
+	// last valset with enough signatures
+	QueryLastApprovedValset      = "lastApprovedMultiSigUpdate"
+	QueryAttestationsByClaimType = "allAttestations"
+	QueryAttestation             = "attestation"
 )
 
 // NewQuerier is the module level router for state queries
@@ -47,6 +54,14 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return lastPendingBatchRequest(ctx, path[1], keeper)
 		case QueryOutgoingTxBatches:
 			return allBatchesRequest(ctx, keeper)
+		case QueryLastApprovedValset:
+			return lastApprovedMultiSigUpdate(ctx, keeper)
+		case QueryLastObservedValset:
+			return lastObservedMultiSigUpdate(ctx, keeper)
+		case QueryAttestationsByClaimType:
+			return allAttestations(ctx, path[1], keeper)
+		case QueryAttestation:
+			return queryAttestation(ctx, path[1], path[2], keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown nameservice query endpoint")
 		}
@@ -64,13 +79,12 @@ func queryCurrentValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 }
 
 func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
-	nonce, err := strconv.ParseInt(path[0], 10, 64)
-	println("Query for ", path[0], nonce)
+	nonce, err := parseNonce(path[0])
 	if err != nil {
 		return nil, err
 	}
 
-	valset := keeper.GetValsetRequest(ctx, nonce)
+	valset := keeper.GetValsetRequest(ctx, int64(nonce.Uint64()))
 	if valset == nil {
 		return nil, nil
 	}
@@ -85,7 +99,7 @@ func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 // queryValsetConfirm returns the confirm msg for single orchestrator address and nonce
 // When nothing found a nil value is returned
 func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
-	nonce, err := strconv.ParseInt(path[0], 10, 64)
+	nonce, err := parseNonce(path[0])
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
@@ -95,7 +109,7 @@ func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	valset := keeper.GetValsetConfirm(ctx, nonce, accAddress)
+	valset := keeper.GetValsetConfirm(ctx, int64(nonce.Uint64()), accAddress)
 	if valset == nil {
 		return nil, nil
 	}
@@ -110,13 +124,13 @@ func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 // allValsetConfirmsByNonce returns all the confirm messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
 func allValsetConfirmsByNonce(ctx sdk.Context, nonceStr string, keeper Keeper) ([]byte, error) {
-	nonce, err := strconv.ParseInt(nonceStr, 10, 64)
+	nonce, err := parseNonce(nonceStr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
 	var confirms []types.MsgValsetConfirm
-	keeper.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
+	keeper.IterateValsetConfirmByNonce(ctx, int64(nonce.Uint64()), func(_ []byte, c types.MsgValsetConfirm) bool {
 		confirms = append(confirms, c)
 		return false
 	})
@@ -183,11 +197,11 @@ func lastObservedNonce(ctx sdk.Context, claimType string, keeper Keeper) ([]byte
 	if !types.IsClaimType(claimType) {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "claim type")
 	}
-	nonce := keeper.GetLastObservedNonce(ctx, types.ClaimType(claimType))
-	if len(nonce) == 0 {
+	att := keeper.GetLastObservedAttestation(ctx, types.ClaimType(claimType))
+	if att == nil {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, nonce)
+	res, err := codec.MarshalJSONIndent(keeper.cdc, att.Nonce)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -196,16 +210,68 @@ func lastObservedNonce(ctx sdk.Context, claimType string, keeper Keeper) ([]byte
 
 // lastObservedNonce returns a list of nonces. One for each claim type if exists
 func lastObservedNonces(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	result := make(map[string]types.Nonce, len(types.AllClaimTypes))
-	for _, v := range types.AllClaimTypes {
-		nonce := keeper.GetLastObservedNonce(ctx, v)
-		if nonce != nil {
-			result[v.String()] = nonce
+	result := make(map[string]types.Nonce, len(types.AllOracleClaimTypes))
+	for _, v := range types.AllOracleClaimTypes {
+		att := keeper.GetLastObservedAttestation(ctx, v)
+		if att != nil {
+			result[v.String()] = att.Nonce
 		}
 	}
 	if len(result) == 0 {
 		return nil, nil
 	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, result)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return sdk.SortJSON(res)
+}
+
+type MultiSigUpdateResponse struct {
+	Valset     types.Valset
+	Signatures []string
+	Checkpoint []byte
+}
+
+func lastApprovedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	attestation := keeper.GetLastObservedAttestation(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate)
+	if attestation == nil {
+		return nil, nil
+	}
+	return fetchMultiSigUpdateData(ctx, *attestation, keeper)
+}
+
+func lastObservedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	attestation := keeper.GetLastObservedAttestation(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
+	if attestation == nil {
+		return nil, nil
+	}
+	return fetchMultiSigUpdateData(ctx, *attestation, keeper)
+}
+
+func fetchMultiSigUpdateData(ctx sdk.Context, attestation types.Attestation, keeper Keeper) ([]byte, error) {
+	valset := keeper.GetValsetRequest(ctx, int64(attestation.Nonce.Uint64())) // todo: revisit nonce type
+	if valset == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "no valset found for nonce")
+	}
+
+	result := MultiSigUpdateResponse{
+		Checkpoint: valset.GetCheckpoint(),
+		Valset:     *valset,
+	}
+	//would be nice to use the details. (missing in observed claims:
+	// https://github.com/althea-net/peggy/issues/53)
+	// result.Checkpoint = attestation.Details.Hash()
+
+	// todo: revisit nonce type
+	keeper.IterateValsetConfirmByNonce(ctx, int64(attestation.Nonce.Uint64()), func(_ []byte, confirm types.MsgValsetConfirm) bool {
+		result.Signatures = append(result.Signatures, confirm.Signature)
+		return false
+	})
+	if len(result.Signatures) == 0 {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "no signatures found for nonce")
+	}
+
 	res, err := codec.MarshalJSONIndent(keeper.cdc, result)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
@@ -256,4 +322,55 @@ func allBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return res, nil
+}
+
+func allAttestations(ctx sdk.Context, claimType string, keeper Keeper) ([]byte, error) {
+	if !types.IsClaimType(claimType) {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "claim type")
+	}
+	var attestations []types.Attestation
+	keeper.IterateAttestationByClaimTypeDesc(ctx, types.ClaimType(claimType), func(_ []byte, att types.Attestation) bool {
+		attestations = append(attestations, att)
+		return len(attestations) == MaxResults
+	})
+	if len(attestations) == 0 {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, attestations)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
+}
+
+func queryAttestation(ctx sdk.Context, claimType, nonceStr string, keeper Keeper) ([]byte, error) {
+	if !types.IsClaimType(claimType) {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "claim type")
+	}
+	nonce, err := parseNonce(nonceStr)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, "nonce")
+	}
+	attestation := keeper.GetAttestation(ctx, types.ClaimType(claimType), nonce)
+	if attestation == nil {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, *attestation)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
+}
+
+// todo: we mix nonces as int64 and base64 bytes at the moment
+func parseNonce(nonceArg string) (types.Nonce, error) {
+	if len(nonceArg) != base64.StdEncoding.EncodedLen(8) {
+		// not a byte nonce byte representation
+		v, err := strconv.ParseUint(nonceArg, 10, 64)
+		if err != nil {
+			return nil, sdkerrors.Wrap(err, "nonce")
+		}
+		return types.NonceFromUint64(v), nil
+	}
+	return base64.URLEncoding.DecodeString(nonceArg)
 }
