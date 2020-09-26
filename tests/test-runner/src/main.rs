@@ -92,6 +92,8 @@ async fn main() {
         amount: 1u32.into(),
     };
 
+    wait_for_cosmos_online(&contact).await;
+
     for (c_key, e_key) in keys.iter() {
         // set the eth address for all the validators
         contact
@@ -475,6 +477,14 @@ async fn wait_for_next_cosmos_block(contact: &Contact) {
             .height
     {
         thread::sleep(Duration::from_secs(1))
+    }
+}
+
+async fn wait_for_cosmos_online(contact: &Contact) {
+    let mut current_block = contact.get_latest_block().await;
+    while current_block.is_err() {
+        thread::sleep(Duration::from_secs(1));
+        current_block = contact.get_latest_block().await;
     }
 }
 

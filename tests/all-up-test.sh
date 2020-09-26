@@ -3,25 +3,13 @@
 # to be run with any PWD
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+result=$( docker images -q peggy-base )
+
 # builds the container containing various system deps
 # also builds Peggy once in order to cache Go deps, this container
-# is also used for the solidity tests
+# must be rebuilt every time you run this test if you want a faster
+# solution use start chains and then run tests
 bash $DIR/build-container.sh
-
-# Remove existing container instance if it exits, use a different name
-# than the other tests so that we can run them in parallel
-set +e
-docker rm -f peggy_all_up_test_instance
-set -e
-
-# Solidity tests
-# this only tests the solidty code using Ganahe this is sufficient
-# to see if the contracts compile and test basic functionality. The
-# contract is later deployed in the run-tests stage of the module tests
-# and is subjected to actual operation within that container
-docker run --name peggy_all_up_test_instance -t peggy-base /bin/bash /peggy/tests/container-scripts/solidity-tests.sh
-
-# Module tests
 
 # Remove existing container instance
 set +e

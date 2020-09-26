@@ -1,5 +1,16 @@
 #!/bin/bash
 
+result=$( docker images -q peggy-base )
+
+if [[ -n "$result" ]]; then
+  echo "Container exists"
+else
+  # builds the container containing various system deps
+  # also builds Peggy once in order to cache Go deps, this container
+  # is also used for the solidity tests
+  bash $DIR/build-container.sh
+fi
+
 # Remove existing container instance
 set +e
 docker rm -f peggy_solidity_test_instance
