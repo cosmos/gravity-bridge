@@ -74,7 +74,7 @@ contract Peggy {
 		uint8 _v,
 		bytes32 _r,
 		bytes32 _s
-	) private pure returns (bool) {
+	) public pure returns (bool) {
 		bytes32 messageDigest = keccak256(
 			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
 		);
@@ -116,7 +116,7 @@ contract Peggy {
 		// This is what we are checking they have signed
 		bytes32 _theHash,
 		uint256 _powerThreshold
-	) public pure {
+	) public pure returns (bool) {
 		uint256 cumulativePower = 0;
 
 		for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
@@ -144,6 +144,8 @@ contract Peggy {
 			cumulativePower > _powerThreshold,
 			"Submitted validator set signatures do not have enough power."
 		);
+		// Success
+		return true;
 	}
 
 	// This updates the valset by checking that the validators in the current valset have signed off on the
