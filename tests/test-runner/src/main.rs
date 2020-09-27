@@ -5,7 +5,7 @@ use clarity::{
     Signature, Uint256,
 };
 use clarity::{abi::Token, PrivateKey as EthPrivateKey};
-use contact::{client::test_rpc_calls, types::Valset};
+use contact::types::Valset;
 use contact::{client::Contact, types::ValsetConfirmResponse};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
@@ -16,8 +16,8 @@ use std::process::Command;
 use std::time::Duration;
 use std::{fs::File, thread};
 use tokio::time::timeout as future_timeout;
-use web30::{client, jsonrpc::error::Web3Error, types::SendTxOption, types::TransactionRequest};
 use web30::{client::Web3, types::Data, types::UnpaddedHex};
+use web30::{jsonrpc::error::Web3Error, types::SendTxOption, types::TransactionRequest};
 
 #[macro_use]
 extern crate log;
@@ -70,7 +70,8 @@ fn get_keys() -> Vec<(CosmosPrivateKey, EthPrivateKey)> {
 
 #[actix_rt::main]
 async fn main() {
-    println!("Staring Peggy test-runner");
+    env_logger::init();
+    info!("Staring Peggy test-runner");
     const COSMOS_NODE: &str = "http://localhost:1317";
     const ETH_NODE: &str = "http://localhost:8545";
     const PEGGY_ID: &str = "foo";
@@ -92,9 +93,15 @@ async fn main() {
         amount: 1u32.into(),
     };
 
+    info!("Waiting for Cosmos chain to come online");
     wait_for_cosmos_online(&contact).await;
 
     for (c_key, e_key) in keys.iter() {
+        info!(
+            "Signing and submitting Eth address {} for validator {}",
+            e_key.to_public_key().unwrap(),
+            c_key.to_public_key().unwrap().to_address(),
+        );
         // set the eth address for all the validators
         contact
             .update_peggy_eth_address(*e_key, *c_key, fee.clone(), None, None, None)
@@ -104,9 +111,10 @@ async fn main() {
 
     wait_for_next_cosmos_block(&contact).await;
 
+    info!("Sending a validator set update request");
     // get the first validator and have them send a valset request
     let (c_key, _e_key) = keys[0];
-    let request_block = contact
+    let _request_block = contact
         .send_valset_request(c_key, fee.clone(), None, None, None)
         .await
         .expect("Failed to send valset request!")
@@ -114,6 +122,7 @@ async fn main() {
 
     wait_for_next_cosmos_block(&contact).await;
 
+    info!("Each validator must now sign the request");
     for (c_key, e_key) in keys.iter() {
         let valset = contact
             .get_oldest_unsigned_valset(c_key.to_public_key().unwrap().to_address())
@@ -133,6 +142,10 @@ async fn main() {
             )
             .await;
         res.expect("Failed to send valset confirm!");
+        info!(
+            "{} has submitted their signature",
+            e_key.to_public_key().unwrap()
+        );
     }
 
     wait_for_next_cosmos_block(&contact).await;
@@ -152,9 +165,8 @@ async fn main() {
         .current_dir("/peggy/solidity/")
         .output()
         .expect("Failed to deploy contracts!");
-    println!("status: {}", output.status);
-    println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-    println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    info!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     // TODO: here we need to bootstrap the chain with the new deployed contract
     // in the meantime we parse stdout
@@ -175,6 +187,7 @@ async fn main() {
     // this will panic if there are no valsets in the response, but there must be
     // the one we have just signed and submitted above
     let latest = latest_valsets.result[0].clone();
+    info!("Retrieving validator set signatures from the Cosmos chain");
     let confirms = contact
         .get_all_valset_confirms(latest.nonce)
         .await
@@ -238,7 +251,7 @@ async fn send_basic_eth_transaction(
             vec![SendTxOption::GasLimit(27000u32.into())],
         )
         .await;
-    println!("Our tx result is {:?}", tx);
+    info!("Our tx result is {:?}", tx);
     panic!("exiting!");
 }
 
@@ -311,6 +324,7 @@ async fn send_eth_valset_update(
     sending_eth_private_key: EthPrivateKey,
     keys: &[(CosmosPrivateKey, EthPrivateKey)],
 ) {
+    info!("Ordering signatures and submitting validator set update to Ethereum");
     let old_addresses = filter_empty_addresses(&valset.eth_addresses);
     let old_powers = valset.powers;
     let new_addresses = old_addresses.clone();
@@ -340,7 +354,7 @@ async fn send_eth_valset_update(
     )
     .await
     .expect("Failed to get the first nonce");
-    println!("First nonce {:?}", first_nonce);
+    info!("Current valset nonce {:?}", first_nonce);
 
     // Solidity function signature
     // function updateValset(
@@ -373,7 +387,7 @@ async fn send_eth_valset_update(
     .await
     .expect("Valset update timed out")
     .expect("Valset update failed for other reasons");
-    println!("Finished valset update with txid {:#066x}", tx);
+    info!("Finished valset update with txid {:#066x}", tx);
 
     let mut not_in_chain = true;
     while not_in_chain {
@@ -396,7 +410,11 @@ async fn send_eth_valset_update(
     )
     .await
     .expect("Failed to get the last nonce");
-    println!("Last nonce {:?}", last_nonce);
+    assert!(first_nonce != last_nonce);
+    info!(
+        "Successfully updated Valset with new Nonce {:?}",
+        last_nonce
+    );
 }
 
 /// Takes an array of Option<EthAddress> and converts to EthAddress erroring when
@@ -537,8 +555,8 @@ async fn verify_contract_interactions(
         locally_computed_digest.to_vec(),
         contract_computed_checkpoint
     );
-    println!(
-        "Correct hash is {}",
+    trace!(
+        "Correct checkpoint hash is {}",
         bytes_to_hex_str(&contract_computed_checkpoint)
     );
 
@@ -560,7 +578,8 @@ async fn verify_contract_interactions(
     )
     .await
     .expect("Failed to get sig verification from contract");
-    println!(
+    info!("Checking validity of individual validator signatures");
+    info!(
         "Address: {} v: {:x} r: {:x} s: {:x} got: {}",
         eth_address,
         cosmos_submitted_signature.v,
@@ -570,6 +589,7 @@ async fn verify_contract_interactions(
     );
     // signature verification passed
     assert!(*contract_output.iter().last().unwrap() == 1u8);
+    info!("Passed!");
 }
 
 struct OrderedSignatures {
@@ -594,6 +614,7 @@ async fn verify_signature_passing(
     eth_address_with_funds: EthAddress,
     keys: &[(CosmosPrivateKey, EthPrivateKey)],
 ) {
+    info!("Checking validity of all validator signatures");
     let locally_computed_checkpoint_hash = get_checkpoint_hash(&valset, &peggy_id);
 
     let mut addresses = Vec::new();
@@ -634,4 +655,5 @@ async fn verify_signature_passing(
     .expect("Failed to get sig verifications from contract");
     // signature verification passed
     assert!(*contract_output.iter().last().unwrap() == 1u8);
+    info!("Passed!");
 }
