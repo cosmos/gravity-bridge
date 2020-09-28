@@ -18,7 +18,7 @@ import (
 //  - `observed` attestations are processed for state transition
 //  - the process result is stored with the attestion
 //  - an `observation` event is emitted
-func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, validator sdk.ValAddress, details types.AttestationDetails) (*types.Attestation, error) {
+func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, details types.AttestationDetails) (*types.Attestation, error) {
 	if err := k.storeClaim(ctx, claimType, nonce, validator, details); err != nil {
 		return nil, sdkerrors.Wrap(err, "claim")
 	}
@@ -65,7 +65,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
 }
 
 // storeClaim persists a claim. Fails when a claim of given type and nonce was was submitted by the validator before
-func (k Keeper) storeClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, validator sdk.ValAddress, details types.AttestationDetails) error {
+func (k Keeper) storeClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, details types.AttestationDetails) error {
 	store := ctx.KVStore(k.storeKey)
 	cKey := types.GetClaimKey(claimType, nonce, validator, details)
 	if store.Has(cKey) {
@@ -82,7 +82,7 @@ var (
 
 // tryAttestation loads an existing attestation for the given claim type and nonce and adds a vote.
 // When none exists yet, a new attestation is instantiated (but not persisted here)
-func (k Keeper) tryAttestation(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, details types.AttestationDetails, power uint64) (*types.Attestation, error) {
+func (k Keeper) tryAttestation(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, details types.AttestationDetails, power uint64) (*types.Attestation, error) {
 	now := ctx.BlockTime()
 	att := k.GetAttestation(ctx, claimType, nonce)
 	if att == nil {
@@ -117,7 +117,7 @@ func (k Keeper) storeAttestation(ctx sdk.Context, att *types.Attestation) {
 }
 
 // GetAttestation loads an attestation for the given claim type and nonce. Returns nil when none exists
-func (k Keeper) GetAttestation(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce) *types.Attestation {
+func (k Keeper) GetAttestation(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce) *types.Attestation {
 	store := ctx.KVStore(k.storeKey)
 	aKey := types.GetAttestationKey(claimType, nonce)
 	bz := store.Get(aKey)
@@ -129,7 +129,7 @@ func (k Keeper) GetAttestation(ctx sdk.Context, claimType types.ClaimType, nonce
 	return &att
 }
 
-func (k Keeper) HasClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.Nonce, validator sdk.ValAddress, details types.AttestationDetails) bool {
+func (k Keeper) HasClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, details types.AttestationDetails) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(types.GetClaimKey(claimType, nonce, validator, details))
 }

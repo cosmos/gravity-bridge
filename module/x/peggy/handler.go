@@ -98,7 +98,7 @@ func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm
 	keeper.SetValsetConfirm(ctx, msg)
 
 	details := types.SignedCheckpoint{Checkpoint: checkpoint}
-	att, err := keeper.AddClaim(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, types.NonceFromUint64(uint64(msg.Nonce)), validator, details)
+	att, err := keeper.AddClaim(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, types.NewUInt64Nonce(uint64(msg.Nonce)), validator, details)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) 
 		return nil, err
 	}
 	details := types.SignedCheckpoint{Checkpoint: checkpoint}
-	att, err := keeper.AddClaim(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, types.NonceFromUint64(msg.Nonce), validator, details)
+	att, err := keeper.AddClaim(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, types.NewUInt64Nonce(msg.Nonce), validator, details)
 	if err != nil {
 		return nil, err
 	}

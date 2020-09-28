@@ -1,9 +1,6 @@
 package keeper
 
 import (
-	"encoding/base64"
-	"strconv"
-
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -210,7 +207,7 @@ func lastObservedNonce(ctx sdk.Context, claimType string, keeper Keeper) ([]byte
 
 // lastObservedNonce returns a list of nonces. One for each claim type if exists
 func lastObservedNonces(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	result := make(map[string]types.Nonce, len(types.AllOracleClaimTypes))
+	result := make(map[string]types.UInt64Nonce, len(types.AllOracleClaimTypes))
 	for _, v := range types.AllOracleClaimTypes {
 		att := keeper.GetLastObservedAttestation(ctx, v)
 		if att != nil {
@@ -243,8 +240,8 @@ func lastObservedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) 
 	return fetchMultiSigUpdateData(ctx, nonce, keeper)
 }
 
-func fetchMultiSigUpdateData(ctx sdk.Context, nonce types.Nonce, keeper Keeper) ([]byte, error) {
-	if nonce.IsEmpty() {
+func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper Keeper) ([]byte, error) {
+	if nonce == nil || nonce.IsEmpty() {
 		return nil, nil
 	}
 
@@ -354,15 +351,6 @@ func queryAttestation(ctx sdk.Context, claimType, nonceStr string, keeper Keeper
 	return res, nil
 }
 
-// todo: we mix nonces as int64 and base64 bytes at the moment
-func parseNonce(nonceArg string) (types.Nonce, error) {
-	if len(nonceArg) != base64.StdEncoding.EncodedLen(8) {
-		// not a byte nonce byte representation
-		v, err := strconv.ParseUint(nonceArg, 10, 64)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "nonce")
-		}
-		return types.NonceFromUint64(v), nil
-	}
-	return base64.URLEncoding.DecodeString(nonceArg)
+func parseNonce(nonceArg string) (types.UInt64Nonce, error) {
+	return types.UInt64NonceFromString(nonceArg)
 }

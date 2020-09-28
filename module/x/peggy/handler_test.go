@@ -17,7 +17,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
 		myCosmosAddr       sdk.AccAddress = bytes.Repeat([]byte{1}, 12)
 		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
-		myNonce                           = bytes.Repeat([]byte{2}, 12)
+		myNonce                           = types.NewUInt64Nonce(1)
 		anyETHAddr                        = types.NewEthereumAddress("any-address")
 		tokenETHAddr                      = types.NewEthereumAddress("any-erc20-token-addr")
 		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)

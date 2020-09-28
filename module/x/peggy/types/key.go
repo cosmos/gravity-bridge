@@ -58,36 +58,37 @@ func GetValsetConfirmKey(nonce int64, validator sdk.AccAddress) []byte {
 	return append(ValsetConfirmKey, append(nonceBytes, []byte(validator)...)...)
 }
 
-func GetSecondIndexLastValsetApprovedKey(nonce Nonce) []byte {
+func GetSecondIndexLastValsetApprovedKey(nonce UInt64Nonce) []byte {
 	return append(SecondIndexLastValsetApprovedKey, nonce.Bytes()...)
 }
 
-func GetSecondIndexLastValsetObservedKey(nonce Nonce) []byte {
+func GetSecondIndexLastValsetObservedKey(nonce UInt64Nonce) []byte {
 	return append(SecondIndexLastValsetObservedKey, nonce.Bytes()...)
 }
 
-func GetClaimKey(claimType ClaimType, nonce Nonce, validator sdk.ValAddress, details AttestationDetails) []byte {
+func GetClaimKey(claimType ClaimType, nonce UInt64Nonce, validator sdk.ValAddress, details AttestationDetails) []byte {
 	var detailsHash []byte
 	if details != nil {
 		detailsHash = details.Hash()
 	}
 	claimTypeLen := len(claimType)
-
-	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonce)+len(detailsHash))
+	nonceBz := nonce.Bytes()
+	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz)+len(detailsHash))
 	copy(key[0:], OracleClaimKey)
 	copy(key[len(OracleClaimKey):], claimType.Bytes())
 	copy(key[len(OracleClaimKey)+claimTypeLen:], validator)
-	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen:], nonce)
-	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonce):], detailsHash)
+	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen:], nonceBz)
+	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz):], detailsHash)
 	return key
 }
 
-func GetAttestationKey(claimType ClaimType, nonce Nonce) []byte {
+func GetAttestationKey(claimType ClaimType, nonce UInt64Nonce) []byte {
 	claimTypeLen := len(claimType)
-	key := make([]byte, len(OracleAttestationKey)+claimTypeLen+len(nonce))
+	nonceBz := nonce.Bytes()
+	key := make([]byte, len(OracleAttestationKey)+claimTypeLen+len(nonceBz))
 	copy(key[0:], OracleAttestationKey)
 	copy(key[len(OracleAttestationKey):], claimType.Bytes())
-	copy(key[len(OracleClaimKey)+claimTypeLen:], nonce)
+	copy(key[len(OracleClaimKey)+claimTypeLen:], nonceBz)
 	return key
 }
 

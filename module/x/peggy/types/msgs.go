@@ -324,7 +324,7 @@ func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
 }
 
 type EthereumClaim interface {
-	GetNonce() Nonce
+	GetNonce() UInt64Nonce
 	GetType() ClaimType
 	ValidateBasic() error
 	Details() AttestationDetails
@@ -342,7 +342,7 @@ var NoUniqueClaimDetails AttestationDetails = nil
 
 // EthereumBridgeDepositClaim claims that a token was deposited on the bridge contract.
 type EthereumBridgeDepositClaim struct {
-	Nonce          Nonce `json:"nonce" yaml:"nonce"`
+	Nonce          UInt64Nonce `json:"nonce" yaml:"nonce"`
 	ERC20Token     ERC20Token
 	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
 	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
@@ -352,7 +352,7 @@ func (e EthereumBridgeDepositClaim) GetType() ClaimType {
 	return ClaimTypeEthereumBridgeDeposit
 }
 
-func (e EthereumBridgeDepositClaim) GetNonce() Nonce {
+func (e EthereumBridgeDepositClaim) GetNonce() UInt64Nonce {
 	return e.Nonce
 }
 
@@ -380,14 +380,14 @@ func (e EthereumBridgeDepositClaim) Details() AttestationDetails {
 
 // EthereumBridgeWithdrawalBatchClaim claims that a batch of withdrawal operations on the bridge contract was executed.
 type EthereumBridgeWithdrawalBatchClaim struct {
-	Nonce Nonce `json:"nonce" yaml:"nonce"`
+	Nonce UInt64Nonce `json:"nonce" yaml:"nonce"`
 }
 
 func (e EthereumBridgeWithdrawalBatchClaim) GetType() ClaimType {
 	return ClaimTypeEthereumBridgeWithdrawalBatch
 }
 
-func (e EthereumBridgeWithdrawalBatchClaim) GetNonce() Nonce {
+func (e EthereumBridgeWithdrawalBatchClaim) GetNonce() UInt64Nonce {
 	return e.Nonce
 }
 
@@ -404,14 +404,14 @@ func (e EthereumBridgeWithdrawalBatchClaim) Details() AttestationDetails {
 
 // EthereumBridgeMultiSigUpdateClaim claims that the multisig set was updated on the bridge contract.
 type EthereumBridgeMultiSigUpdateClaim struct {
-	Nonce Nonce `json:"nonce" yaml:"nonce"`
+	Nonce UInt64Nonce `json:"nonce" yaml:"nonce"`
 }
 
 func (e EthereumBridgeMultiSigUpdateClaim) GetType() ClaimType {
 	return ClaimTypeEthereumBridgeMultiSigUpdate
 }
 
-func (e EthereumBridgeMultiSigUpdateClaim) GetNonce() Nonce {
+func (e EthereumBridgeMultiSigUpdateClaim) GetNonce() UInt64Nonce {
 	return e.Nonce
 }
 
@@ -436,7 +436,7 @@ var (
 
 // EthereumBridgeBootstrappedClaim orchestrators confirm that the contract is setup on the Ethereum side and the init data.
 type EthereumBridgeBootstrappedClaim struct {
-	Nonce Nonce `json:"nonce" yaml:"nonce"`
+	Nonce UInt64Nonce `json:"nonce" yaml:"nonce"`
 	// AllowedValidatorSet addresses to participate
 	AllowedValidatorSet []EthereumAddress
 	// ValidatorPowers the validator's power values
@@ -448,7 +448,7 @@ type EthereumBridgeBootstrappedClaim struct {
 	StartThreshold uint64 `json:"start_threshold,omitempty" yaml:"start_threshold"`
 }
 
-func (e EthereumBridgeBootstrappedClaim) GetNonce() Nonce {
+func (e EthereumBridgeBootstrappedClaim) GetNonce() UInt64Nonce {
 	return e.Nonce
 }
 

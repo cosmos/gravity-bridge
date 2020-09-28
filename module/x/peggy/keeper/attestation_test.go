@@ -16,7 +16,7 @@ func TestObserveDeposit(t *testing.T) {
 		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
 		myCosmosAddr       sdk.AccAddress = bytes.Repeat([]byte{1}, 12)
 		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
-		myNonce                           = bytes.Repeat([]byte{2}, 12)
+		myNonce                           = types.NewUInt64Nonce(123)
 		anyETHAddr                        = types.NewEthereumAddress("any-address")
 		tokenETHAddr                      = types.NewEthereumAddress("any-erc20-token-addr")
 		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
@@ -84,7 +84,7 @@ func TestObserveWithdrawBatch(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	myNonce := types.NonceFromUint64(myBatchID)
+	myNonce := types.NewUInt64Nonce(myBatchID)
 	gotAttestation, err := k.AddClaim(ctx, types.ClaimTypeEthereumBridgeWithdrawalBatch, myNonce, myValAddr, nil)
 	// then
 	require.NoError(t, err)
@@ -130,7 +130,7 @@ func TestObserveBridgeMultiSigUpdate(t *testing.T) {
 	k.SetValsetRequest(ctx)
 
 	// when
-	myNonce := types.NonceFromUint64(myBlockHeight)
+	myNonce := types.NewUInt64Nonce(myBlockHeight)
 	gotAttestation, err := k.AddClaim(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate, myNonce, myValAddr, nil)
 	// then
 	require.NoError(t, err)
@@ -159,7 +159,9 @@ func TestObserveBridgeMultiSigUpdate(t *testing.T) {
 	// and last observed status updated
 	gotAttestation = k.GetLastObservedAttestation(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
 	assert.Equal(t, exp, *gotAttestation)
-	assert.Equal(t, myNonce, k.GetLastValsetObservedNonce(ctx))
+	gotNonce := k.GetLastValsetObservedNonce(ctx)
+	require.NotNil(t, gotNonce)
+	assert.Equal(t, myNonce, *gotNonce)
 }
 
 func TestObserveBridgeBootstrap(t *testing.T) {
@@ -176,7 +178,7 @@ func TestObserveBridgeBootstrap(t *testing.T) {
 	ctx = ctx.WithBlockTime(myBlockTime).WithBlockHeight(int64(myBlockHeight))
 
 	// when
-	myNonce := types.NonceFromUint64(myBlockHeight)
+	myNonce := types.NewUInt64Nonce(myBlockHeight)
 	details := types.BridgeBootstrap{
 		AllowedValidatorSet: []types.EthereumAddress{myEthAddr},
 		ValidatorPowers:     []uint64{10},
@@ -212,7 +214,8 @@ func TestObserveBridgeBootstrap(t *testing.T) {
 	// and last observed status updated
 	gotAttestation = k.GetLastObservedAttestation(ctx, types.ClaimTypeEthereumBootstrap)
 	assert.Equal(t, exp, *gotAttestation)
-	assert.Equal(t, myNonce, k.GetLastValsetObservedNonce(ctx))
+	gotNonce := k.GetLastValsetObservedNonce(ctx)
+	require.NotNil(t, gotNonce)
 }
 
 func TestApproveBridgeMultiSigUpdate(t *testing.T) {
@@ -232,7 +235,7 @@ func TestApproveBridgeMultiSigUpdate(t *testing.T) {
 	k.SetValsetRequest(ctx)
 
 	// when
-	myNonce := types.NonceFromUint64(myBlockHeight)
+	myNonce := types.NewUInt64Nonce(myBlockHeight)
 	checkpoint := k.GetValsetRequest(ctx, int64(myBlockHeight)).GetCheckpoint()
 	details := types.SignedCheckpoint{
 		Checkpoint: checkpoint,
@@ -266,5 +269,8 @@ func TestApproveBridgeMultiSigUpdate(t *testing.T) {
 	// and last observed status updated
 	gotAttestation = k.GetLastObservedAttestation(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate)
 	assert.Equal(t, exp, *gotAttestation)
-	assert.Equal(t, myNonce, k.GetLastValsetApprovedNonce(ctx))
+
+	gotNonce := k.GetLastValsetApprovedNonce(ctx)
+	require.NotNil(t, gotNonce)
+	assert.Equal(t, myNonce, *gotNonce)
 }

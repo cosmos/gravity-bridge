@@ -11,8 +11,8 @@ import (
 )
 
 type Valset struct {
-	Nonce        int64    `json:"nonce"` // todo (alex): should be of type Nonce
-	Powers       []int64  `json:"powers"` // todo (alex): should be of type uint64 (no negative values)
+	Nonce        int64    `json:"nonce"`         // todo (alex): should be of type Nonce
+	Powers       []int64  `json:"powers"`        // todo (alex): should be of type uint64 (no negative values)
 	EthAddresses []string `json:"eth_addresses"` // todo (alex): should be of type []EthereumAddress
 }
 

@@ -23,7 +23,7 @@ func (b BatchStatus) String() string {
 }
 
 type OutgoingTxBatch struct {
-	Nonce              Nonce
+	Nonce              UInt64Nonce
 	Elements           []OutgoingTransferTx
 	CreatedAt          time.Time
 	TotalFee           ERC20Token

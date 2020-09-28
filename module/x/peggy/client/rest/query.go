@@ -149,7 +149,7 @@ func lastObservedNonceHandler(cliCtx context.CLIContext, storeName string) func(
 			return
 		}
 
-		var out types.Nonce
+		var out types.UInt64Nonce
 		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
@@ -167,7 +167,7 @@ func lastObservedNoncesHandler(cliCtx context.CLIContext, storeName string) func
 			return
 		}
 
-		var out map[string]types.Nonce
+		var out map[string]types.UInt64Nonce
 		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}

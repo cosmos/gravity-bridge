@@ -2,7 +2,6 @@ package cli
 
 import (
 	"bufio"
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -279,15 +278,6 @@ func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-// todo: we mix nonces as int64 and base64 bytes at the moment
-func parseNonce(nonceArg string) (types.Nonce, error) {
-	if len(nonceArg) != base64.StdEncoding.EncodedLen(8) {
-		// not a byte nonce byte representation
-		v, err := strconv.ParseUint(nonceArg, 10, 64)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "nonce")
-		}
-		return types.NonceFromUint64(v), nil
-	}
-	return base64.StdEncoding.DecodeString(nonceArg)
+func parseNonce(nonceArg string) (types.UInt64Nonce, error) {
+	return types.UInt64NonceFromString(nonceArg)
 }

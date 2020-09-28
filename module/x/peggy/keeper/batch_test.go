@@ -53,7 +53,7 @@ func TestBatches(t *testing.T) {
 
 	denominator := types.NewBridgedDenominator(myTokenContractAddr, myETHToken)
 	expBatch := types.OutgoingTxBatch{
-		Nonce: types.NonceFromUint64(1),
+		Nonce: types.NewUInt64Nonce(1),
 		Elements: []types.OutgoingTransferTx{
 			{
 				ID:          2,

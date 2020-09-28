@@ -2,8 +2,10 @@ package types
 
 import (
 	"bytes"
-	"encoding/base64"
+	"encoding/binary"
 	"fmt"
+	"reflect"
+	"strconv"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,40 +13,86 @@ import (
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
-type Nonce []byte
-
-func NonceFromUint64(s uint64) Nonce {
-	return sdk.Uint64ToBigEndian(s)
+// nonce defines an abstract nonce type that is unique within it's context.
+type nonce interface {
+	// String returns an encoded human readable representation. Used in URLs.
+	String() string
+	// Bytes returns an encoded raw bytes representation
+	Bytes() []byte
+	// ValidateBasic returns the result of the syntax check
+	ValidateBasic() error
+	// GreaterThan than other.
+	GreaterThan(o nonce) bool
+	IsEmpty() bool
 }
 
-func (n Nonce) Uint64() uint64 {
-	return DecodeUin64(n.Bytes())
+type UInt64Nonce uint64
+
+var _ nonce = NewUInt64Nonce(0)
+
+func NewUInt64Nonce(s uint64) UInt64Nonce {
+	return UInt64Nonce(s)
 }
 
-func (n Nonce) String() string {
-	return base64.URLEncoding.EncodeToString(n)
+// UInt64NonceFromBytes create UInt64Nonce from binary big endian representation
+func UInt64NonceFromBytes(s []byte) UInt64Nonce {
+	return NewUInt64Nonce(binary.BigEndian.Uint64(s))
 }
 
-func (n Nonce) Bytes() []byte {
-	return n
-}
-
-func (n Nonce) ValidateBasic() error {
-	if len(n) == 0 {
-		return ErrEmpty
+// UInt64NonceFromBytes create UInt64Nonce from human readable string representation
+func UInt64NonceFromString(s string) (UInt64Nonce, error) {
+	v, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		return NewUInt64Nonce(0), err
 	}
-	if len(n) != 8 {
-		return ErrInvalid
+	return NewUInt64Nonce(v), nil
+}
+
+func Uint64FromNonce(n nonce) (uint64, error) {
+	if v, ok := n.(nonceUint64er); ok {
+		return v.Uint64(), nil
+	}
+	return 0, ErrUnsupported
+}
+
+func (n UInt64Nonce) Uint64() uint64 {
+	return uint64(n)
+}
+
+func (n UInt64Nonce) String() string {
+	return strconv.FormatUint(n.Uint64(), 10)
+}
+
+func (n UInt64Nonce) Bytes() []byte {
+	return sdk.Uint64ToBigEndian(n.Uint64())
+}
+
+func (n UInt64Nonce) ValidateBasic() error {
+	if n.IsEmpty() {
+		return ErrEmpty
 	}
 	return nil
 }
 
-func (n Nonce) GreaterThan(o Nonce) bool {
-	return bytes.Compare(n, o) == 1
+type nonceUint64er interface {
+	Uint64() uint64
 }
 
-func (n Nonce) IsEmpty() bool {
-	return len(n) == 0
+func (n UInt64Nonce) GreaterThan(o nonce) bool {
+	if o == nil || reflect.ValueOf(o).IsZero() || o.IsEmpty() {
+		return true
+	}
+	if n.IsEmpty() {
+		return false
+	}
+	if v, ok := o.(nonceUint64er); ok {
+		return n.Uint64() > v.Uint64()
+	}
+	return bytes.Compare(n.Bytes(), o.Bytes()) == 1
+}
+
+func (n UInt64Nonce) IsEmpty() bool {
+	return n == 0
 }
 
 type AttestationCertainty uint8
@@ -110,7 +158,7 @@ func (c ClaimType) Bytes() []byte {
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by all orchestrators
 type Attestation struct {
 	ClaimType           ClaimType
-	Nonce               Nonce
+	Nonce               UInt64Nonce
 	Certainty           AttestationCertainty
 	Status              AttestationProcessStatus
 	ProcessResult       AttestationProcessResult
@@ -173,7 +221,7 @@ var (
 
 // BridgeDeposit is an attestation detail that adds vouchers to an account when executed
 type BridgeDeposit struct {
-	Nonce          Nonce // redundant information but required for a unique hash. Two deposits should not have the same hash.
+	Nonce          UInt64Nonce // redundant information but required for a unique hash. Two deposits should not have the same hash.
 	ERC20Token     ERC20Token
 	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
 	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`

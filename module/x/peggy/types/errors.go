@@ -6,11 +6,12 @@ import (
 
 var (
 	// ErrInternal redacts the error message
-	ErrInternal  = sdkerrors.Register(ModuleName, 1, "internal")
-	ErrDuplicate = sdkerrors.Register(ModuleName, 2, "duplicate")
-	ErrInvalid   = sdkerrors.Register(ModuleName, 3, "invalid")
-	ErrTimeout   = sdkerrors.Register(ModuleName, 4, "timeout")
-	ErrUnknown   = sdkerrors.Register(ModuleName, 5, "unknown")
-	ErrEmpty     = sdkerrors.Register(ModuleName, 6, "empty")
-	ErrOutdated  = sdkerrors.Register(ModuleName, 7, "outdated")
+	ErrInternal    = sdkerrors.Register(ModuleName, 1, "internal")
+	ErrDuplicate   = sdkerrors.Register(ModuleName, 2, "duplicate")
+	ErrInvalid     = sdkerrors.Register(ModuleName, 3, "invalid")
+	ErrTimeout     = sdkerrors.Register(ModuleName, 4, "timeout")
+	ErrUnknown     = sdkerrors.Register(ModuleName, 5, "unknown")
+	ErrEmpty       = sdkerrors.Register(ModuleName, 6, "empty")
+	ErrOutdated    = sdkerrors.Register(ModuleName, 7, "outdated")
+	ErrUnsupported = sdkerrors.Register(ModuleName, 8, "unsupported")
 )

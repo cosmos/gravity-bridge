@@ -102,7 +102,7 @@ func createValsetRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 type valsetConfirmReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
-	Nonce   string       `json:"Nonce"`
+	Nonce   string       `json:"nonce"`
 	EthSig  string       `json:"ethSig"`
 }
 
@@ -198,7 +198,7 @@ func bootstrapConfirmHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 		claims := []types.EthereumClaim{
 			types.EthereumBridgeBootstrappedClaim{
-				Nonce:               types.NonceFromUint64(nonceNumber),
+				Nonce:               types.NewUInt64Nonce(nonceNumber),
 				AllowedValidatorSet: req.AllowedValidatorSet,
 				ValidatorPowers:     req.ValidatorPowers,
 				PeggyID:             []byte(req.PeggyID),

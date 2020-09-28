@@ -64,13 +64,13 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) types.Valset {
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		sdk.NewAttribute(types.AttributeKeyMultisigID, strconv.Itoa(int(nonce))),
-		sdk.NewAttribute(types.AttributeKeyNonce, types.NonceFromUint64(uint64(nonce)).String()),
+		sdk.NewAttribute(types.AttributeKeyNonce, types.NewUInt64Nonce(uint64(nonce)).String()),
 	)
 	ctx.EventManager().EmitEvent(event)
 	return valset
 }
 
-func (k Keeper) SetBootstrapValset(ctx sdk.Context, nonce types.Nonce, valset types.Valset) error {
+func (k Keeper) SetBootstrapValset(ctx sdk.Context, nonce types.UInt64Nonce, valset types.Valset) error {
 	if !nonce.GreaterThan(k.GetLastValsetObservedNonce(ctx)) {
 		return types.ErrOutdated
 	}
@@ -93,32 +93,34 @@ func (k Keeper) SetBootstrapValset(ctx sdk.Context, nonce types.Nonce, valset ty
 	return nil
 }
 
-func (k Keeper) setLastValsetApprovedNonce(ctx sdk.Context, nonce types.Nonce) {
+func (k Keeper) setLastValsetApprovedNonce(ctx sdk.Context, nonce types.UInt64Nonce) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetSecondIndexLastValsetApprovedKey(nonce), []byte{}) // store payload in key only for gas optimization
 }
 
-func (k Keeper) GetLastValsetApprovedNonce(ctx sdk.Context) types.Nonce {
+func (k Keeper) GetLastValsetApprovedNonce(ctx sdk.Context) *types.UInt64Nonce {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexLastValsetApprovedKey)
 	iter := prefixStore.Iterator(nil, nil)
 	if !iter.Valid() {
 		return nil
 	}
-	return iter.Key()
+	v := types.UInt64NonceFromBytes(iter.Key())
+	return &v
 }
 
-func (k Keeper) setLastValsetObservedNonce(ctx sdk.Context, nonce types.Nonce) {
+func (k Keeper) setLastValsetObservedNonce(ctx sdk.Context, nonce types.UInt64Nonce) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetSecondIndexLastValsetObservedKey(nonce), []byte{}) // store payload in key only for gas optimization
 }
 
-func (k Keeper) GetLastValsetObservedNonce(ctx sdk.Context) types.Nonce {
+func (k Keeper) GetLastValsetObservedNonce(ctx sdk.Context) *types.UInt64Nonce {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexLastValsetObservedKey)
 	iter := prefixStore.Iterator(nil, nil)
 	if !iter.Valid() {
 		return nil
 	}
-	return iter.Key()
+	v := types.UInt64NonceFromBytes(iter.Key())
+	return &v
 }
 
 func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce uint64) bool {
@@ -263,9 +265,9 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 
 // GetParams returns the total set of wasm parameters.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	var params types.Params
-	k.paramSpace.GetParamSet(ctx, &params)
-	return params
+	var p types.Params
+	k.paramSpace.GetParamSet(ctx, &p)
+	return p
 }
 
 func (k Keeper) setParams(ctx sdk.Context, ps types.Params) {

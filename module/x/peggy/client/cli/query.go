@@ -178,7 +178,7 @@ func CmdGetLastObservedNonceRequest(storeKey string, cdc *codec.Codec) *cobra.Co
 				return nil
 			}
 
-			var out types.Nonce
+			var out types.UInt64Nonce
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},
@@ -202,7 +202,7 @@ func CmdGetLastObservedNoncesRequest(storeKey string, cdc *codec.Codec) *cobra.C
 				return nil
 			}
 
-			var out map[string]types.Nonce
+			var out map[string]types.UInt64Nonce
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},

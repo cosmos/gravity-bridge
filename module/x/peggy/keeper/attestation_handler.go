@@ -36,7 +36,10 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 			return sdkerrors.Wrap(err, "transfer vouchers")
 		}
 	case types.ClaimTypeEthereumBridgeWithdrawalBatch:
-		batchID := att.Nonce.Uint64()
+		batchID, err := types.Uint64FromNonce(att.Nonce)
+		if err != nil {
+			return sdkerrors.Wrap(err, "nonce")
+		}
 		b := a.keeper.GetOutgoingTXBatch(ctx, batchID)
 		if b == nil {
 			return sdkerrors.Wrap(types.ErrUnknown, "nonce")
@@ -56,7 +59,11 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		}
 		a.keeper.setLastValsetObservedNonce(ctx, att.Nonce)
 
-		height := att.Nonce.Uint64()
+		height, err := types.Uint64FromNonce(att.Nonce)
+		if err != nil {
+			return sdkerrors.Wrap(err, "nonce")
+		}
+
 		if !a.keeper.HasValsetRequest(ctx, height) {
 			return sdkerrors.Wrap(types.ErrUnknown, "nonce")
 		}
@@ -95,13 +102,19 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		for i := range bootstrap.ValidatorPowers {
 			powers[i] = int64(bootstrap.ValidatorPowers[i])
 		}
+
+		nonce, err := types.Uint64FromNonce(att.Nonce)
+		if err != nil {
+			return sdkerrors.Wrap(err, "nonce")
+		}
+
 		initialMultisigSet := types.Valset{
-			Nonce:        int64(att.Nonce.Uint64()),
+			Nonce:        int64(nonce),
 			Powers:       powers,
 			EthAddresses: ethAddrs,
 		}
 		// todo: do we want to do a sanity check that these validator addresses exits already?
-		err := a.keeper.SetBootstrapValset(ctx, att.Nonce, initialMultisigSet)
+		err = a.keeper.SetBootstrapValset(ctx, att.Nonce, initialMultisigSet)
 		if err != nil {
 			return err
 		}
