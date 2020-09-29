@@ -78,31 +78,28 @@ func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 			// Make Eth Signature over validator address
 			privateKey, err := ethCrypto.HexToECDSA(privKeyString)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 
-			hash := ethCrypto.Keccak256Hash(cosmosAddr) // TODO: Can probably skip the "Hash" struct and use ethCrypto.Keccak256
-			signature, err := ethCrypto.Sign(hash.Bytes(), privateKey)
+			hash := ethCrypto.Keccak256(cosmosAddr.Bytes())
+			signature, err := types.NewEthereumSignature(hash, privateKey)
 			if err != nil {
-				log.Fatal(err)
+				return sdkerrors.Wrap(err, "signing cosmos address with Ethereum key")
 			}
-
 			// You've got to do all this to get an Eth address from the private key
 			publicKey := privateKey.Public()
 			publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 			if !ok {
-				log.Fatal("error casting public key to ECDSA")
+				return sdkerrors.Wrap(err, "casting public key to ECDSA")
 			}
 			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA)
 
-			// Make the message
 			msg := types.NewMsgSetEthAddress(types.EthereumAddress(ethAddress), cosmosAddr, hex.EncodeToString(signature))
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
 			}
 
-			// Send it
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}

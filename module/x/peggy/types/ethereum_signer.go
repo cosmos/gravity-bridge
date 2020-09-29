@@ -1,19 +1,30 @@
-package utils
+package types
 
 import (
-	"errors"
+	"crypto/ecdsa"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func ValidateEthSig(hash []byte, signature []byte, ethAddress string) error {
+const signaturePrefix = "\x19Ethereum Signed Message:\n32"
+
+func NewEthereumSignature(hash []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
+	protectedHash := crypto.Keccak256Hash(append([]uint8(signaturePrefix), hash...))
+	return crypto.Sign(protectedHash.Bytes(), privateKey)
+}
+
+func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress string) error {
+	if len(signature) < 65 {
+		return sdkerrors.Wrap(ErrInvalid, "signature too short")
+	}
 	// To verify signature
 	// - use crypto.SigToPub to get the public key
 	// - use crypto.PubkeyToAddress to get the address
 	// - compare this to the address given.
 
 	// for backwards compatibility reasons  the V value of an Ethereum sig is presented
-	// as 27 or 28, interally though it should be a 0-3 value due to changed formats.
+	// as 27 or 28, internally though it should be a 0-3 value due to changed formats.
 	// It seems that go-ethereum expects this to be done before sigs actually reach it's
 	// internal validation functions. In order to comply with this requirement we check
 	// the sig an dif it's in standard format we correct it. If it's in go-ethereum's expected
@@ -24,18 +35,18 @@ func ValidateEthSig(hash []byte, signature []byte, ethAddress string) error {
 	if signature[64] == 27 || signature[64] == 28 {
 		signature[64] -= 27
 	}
-	protectBytes := []uint8("\x19Ethereum Signed Message:\n32")
-	protectedHash := crypto.Keccak256Hash(append(protectBytes, hash...))
+
+	protectedHash := crypto.Keccak256Hash(append([]uint8(signaturePrefix), hash...))
 
 	pubkey, err := crypto.SigToPub(protectedHash.Bytes(), signature)
 	if err != nil {
-		return err
+		return sdkerrors.Wrap(err, "signature to public key")
 	}
 
 	addr := crypto.PubkeyToAddress(*pubkey)
 
 	if addr.Hex() != ethAddress {
-		return errors.New("Signature is not valid")
+		return sdkerrors.Wrap(ErrInvalid, "signature not matching")
 	}
 
 	return nil
