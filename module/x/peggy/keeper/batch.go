@@ -33,8 +33,9 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 		totalFee = totalFee.Add(tx.BridgeFee)
 	}
 	nextID := k.autoIncrementID(ctx, types.KeyLastOutgoingBatchID)
+	nonce := types.NewUInt64Nonce(nextID)
 	batch := types.OutgoingTxBatch{
-		Nonce:              types.NewUInt64Nonce(nextID),
+		Nonce:              nonce,
 		Elements:           selectedTx,
 		CreatedAt:          ctx.BlockTime(),
 		BridgedDenominator: *bridgedDenom,
@@ -49,7 +50,7 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, strconv.Itoa(int(nextID))),
-		sdk.NewAttribute(types.AttributeKeyNonce, types.NewUInt64Nonce(nextID).String()),
+		sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
 	)
 	ctx.EventManager().EmitEvent(batchEvent)
 	return nextID, nil

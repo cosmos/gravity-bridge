@@ -287,12 +287,12 @@ func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
 // This message includes the batch as well as an Ethereum signature over this batch by the validator
 // -------------
 type MsgConfirmBatch struct {
-	Nonce        uint64         `json:"nonce"`
+	Nonce        UInt64Nonce    `json:"nonce"`
 	Orchestrator sdk.AccAddress `json:"validator"`
 	Signature    string         `json:"signature"`
 }
 
-func NewMsgConfirmBatch(nonce uint64, orchestrator sdk.AccAddress, signature string) MsgConfirmBatch {
+func NewMsgConfirmBatch(nonce UInt64Nonce, orchestrator sdk.AccAddress, signature string) MsgConfirmBatch {
 	return MsgConfirmBatch{
 		Nonce:        nonce,
 		Orchestrator: orchestrator,

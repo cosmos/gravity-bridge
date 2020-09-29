@@ -76,7 +76,7 @@ func handleMsgValsetRequest(ctx sdk.Context, keeper Keeper, msg types.MsgValsetR
 	//}
 	v := keeper.SetValsetRequest(ctx)
 	return &sdk.Result{
-		Data: sdk.Uint64ToBigEndian(uint64(v.Nonce)),
+		Data: v.Nonce.Bytes(),
 	}, nil
 }
 
@@ -98,7 +98,7 @@ func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm
 	keeper.SetValsetConfirm(ctx, msg)
 
 	details := types.SignedCheckpoint{Checkpoint: checkpoint}
-	att, err := keeper.AddClaim(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, types.NewUInt64Nonce(uint64(msg.Nonce)), validator, details)
+	att, err := keeper.AddClaim(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, msg.Nonce, validator, details)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) 
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
-	batch := keeper.GetOutgoingTXBatch(ctx, msg.Nonce)
+	batch := keeper.GetOutgoingTXBatch(ctx, msg.Nonce.Uint64())
 	if batch == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "nonce")
 	}
@@ -152,11 +152,11 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) 
 		return nil, err
 	}
 	details := types.SignedCheckpoint{Checkpoint: checkpoint}
-	att, err := keeper.AddClaim(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, types.NewUInt64Nonce(msg.Nonce), validator, details)
+	att, err := keeper.AddClaim(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, msg.Nonce, validator, details)
 	if err != nil {
 		return nil, err
 	}
-	keeper.SetOutgoingTXBatchConfirm(ctx, msg.Nonce, validator, []byte(msg.Signature))
+	keeper.SetOutgoingTXBatchConfirm(ctx, msg.Nonce.Uint64(), validator, []byte(msg.Signature))
 	return &sdk.Result{
 		Data: att.ID(),
 	}, nil
