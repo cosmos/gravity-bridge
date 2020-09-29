@@ -2,9 +2,7 @@ package types
 
 import (
 	"encoding/hex"
-	"fmt"
 
-	"github.com/althea-net/peggy/module/x/peggy/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -131,21 +129,24 @@ func (msg MsgSetEthAddress) Type() string { return "set_eth_address" }
 // (proving control of the Eth address)
 func (msg MsgSetEthAddress) ValidateBasic() error {
 	if msg.Validator.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator.String())
+		return sdkerrors.Wrap(ErrEmpty, "validator")
+	}
+	if err := sdk.VerifyAddressFormat(msg.Validator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "validator")
 	}
 
 	if err := msg.Address.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
-	sigBytes, hexErr := hex.DecodeString(msg.Signature)
-	if hexErr != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Could not decode hex string %s", msg.Signature))
+
+	sigBytes, err := hex.DecodeString(msg.Signature)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
 	}
 
-	err := utils.ValidateEthSig(crypto.Keccak256(msg.Validator.Bytes()), sigBytes, msg.Address.String())
-
+	err = ValidateEthereumSignature(crypto.Keccak256(msg.Validator.Bytes()), sigBytes, msg.Address.String())
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("digest: %x sig: %x address %s error: %s", crypto.Keccak256(msg.Validator.Bytes()), msg.Signature, msg.Address, err.Error()))
+		return sdkerrors.Wrapf(err, "digest: %x sig: %x address %s error: %s", crypto.Keccak256(msg.Validator.Bytes()), msg.Signature, msg.Address, err.Error())
 	}
 
 	return nil

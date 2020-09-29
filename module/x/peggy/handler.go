@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
-	"github.com/althea-net/peggy/module/x/peggy/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -167,7 +166,7 @@ func verifyCheckpointSignature(ctx sdk.Context, keeper Keeper, validator sdk.Val
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
-	err = utils.ValidateEthSig(checkpoint, sigBytes, ethAddress.String())
+	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress.String())
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrInvalid, "signature")
 	}
