@@ -44,18 +44,12 @@ func GetEthAddressKey(validator sdk.ValAddress) []byte {
 	return append(EthAddressKey, []byte(validator)...)
 }
 
-func GetValsetRequestKey(nonce int64) []byte {
-	nonceBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(nonceBytes, uint64(nonce))
-
-	return append(ValsetRequestKey, nonceBytes...)
+func GetValsetRequestKey(nonce UInt64Nonce) []byte {
+	return append(ValsetRequestKey, nonce.Bytes()...)
 }
 
-func GetValsetConfirmKey(nonce int64, validator sdk.AccAddress) []byte {
-	nonceBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(nonceBytes, uint64(nonce))
-
-	return append(ValsetConfirmKey, append(nonceBytes, []byte(validator)...)...)
+func GetValsetConfirmKey(nonce UInt64Nonce, validator sdk.AccAddress) []byte {
+	return append(ValsetConfirmKey, append(nonce.Bytes(), []byte(validator)...)...)
 }
 
 func GetSecondIndexLastValsetApprovedKey(nonce UInt64Nonce) []byte {

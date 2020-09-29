@@ -24,12 +24,12 @@ import (
 // signatures in the chain store and submit them to Ethereum to update the validator set
 // -------------
 type MsgValsetConfirm struct {
-	Nonce     int64          `json:"nonce"`
+	Nonce     UInt64Nonce    `json:"nonce"`
 	Validator sdk.AccAddress `json:"validator"`
 	Signature string         `json:"signature"`
 }
 
-func NewMsgValsetConfirm(nonce int64, validator sdk.AccAddress, signature string) MsgValsetConfirm {
+func NewMsgValsetConfirm(nonce UInt64Nonce, validator sdk.AccAddress, signature string) MsgValsetConfirm {
 	return MsgValsetConfirm{
 		Nonce:     nonce,
 		Validator: validator,

@@ -14,7 +14,7 @@ import (
 
 func TestQueryValsetConfirm(t *testing.T) {
 	var (
-		nonce                 int64          = 1
+		nonce                                = types.NewUInt64Nonce(1)
 		myValidatorCosmosAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
 	)
 	k, ctx, _ := CreateTestEnv(t)
@@ -68,7 +68,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 
 func TestAllValsetConfirmsBynonce(t *testing.T) {
 	var (
-		nonce int64 = 1
+		nonce = types.NewUInt64Nonce(1)
 	)
 	k, ctx, _ := CreateTestEnv(t)
 
@@ -241,7 +241,8 @@ func TestLastPendingValsetRequest(t *testing.T) {
 	ctx = ctx.WithBlockHeight(200)
 	k.SetValsetRequest(ctx)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{Nonce: ctx.BlockHeight(), Validator: otherValidatorCosmosAddr})
+	nonce := types.NewUInt64Nonce(uint64(ctx.BlockHeight()))
+	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{Nonce: nonce, Validator: otherValidatorCosmosAddr})
 	k.SetValsetRequest(ctx)
 
 	specs := map[string]struct {

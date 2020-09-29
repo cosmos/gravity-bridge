@@ -42,16 +42,16 @@ func TestPrefixRange(t *testing.T) {
 
 func TestCurrentValsetNormalization(t *testing.T) {
 	specs := map[string]struct {
-		srcPowers []int64
-		expPowers []int64
+		srcPowers []uint64
+		expPowers []uint64
 	}{
 		"one": {
-			srcPowers: []int64{100},
-			expPowers: []int64{4294967295},
+			srcPowers: []uint64{100},
+			expPowers: []uint64{4294967295},
 		},
 		"two": {
-			srcPowers: []int64{1, 100},
-			expPowers: []int64{42524428, 4252442866},
+			srcPowers: []uint64{1, 100},
+			expPowers: []uint64{42524428, 4252442866},
 		},
 	}
 	k, ctx, _ := CreateTestEnv(t)
@@ -62,7 +62,7 @@ func TestCurrentValsetNormalization(t *testing.T) {
 				operators[i] = MockStakingValidatorData{
 					// any unique addr
 					Operator: bytes.Repeat([]byte{byte(i)}, sdk.AddrLen),
-					Power:    v,
+					Power:    int64(v),
 				}
 			}
 			k.StakingKeeper = NewStakingKeeperWeightedMock(operators...)

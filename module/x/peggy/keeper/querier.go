@@ -81,7 +81,7 @@ func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 		return nil, err
 	}
 
-	valset := keeper.GetValsetRequest(ctx, int64(nonce.Uint64()))
+	valset := keeper.GetValsetRequest(ctx, nonce)
 	if valset == nil {
 		return nil, nil
 	}
@@ -106,7 +106,7 @@ func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	valset := keeper.GetValsetConfirm(ctx, int64(nonce.Uint64()), accAddress)
+	valset := keeper.GetValsetConfirm(ctx, nonce, accAddress)
 	if valset == nil {
 		return nil, nil
 	}
@@ -127,7 +127,7 @@ func allValsetConfirmsByNonce(ctx sdk.Context, nonceStr string, keeper Keeper) (
 	}
 
 	var confirms []types.MsgValsetConfirm
-	keeper.IterateValsetConfirmByNonce(ctx, int64(nonce.Uint64()), func(_ []byte, c types.MsgValsetConfirm) bool {
+	keeper.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
 		confirms = append(confirms, c)
 		return false
 	})
@@ -147,7 +147,7 @@ const maxValsetRequestsReturned = 5
 func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var counter int
 	var valReq []types.Valset
-	keeper.IterateValsetRequest(ctx, func(key []byte, val types.Valset) bool {
+	keeper.IterateValsetRequest(ctx, func(_ []byte, val types.Valset) bool {
 		valReq = append(valReq, val)
 		counter++
 		return counter >= maxValsetRequestsReturned
@@ -172,7 +172,7 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 	validatorAddr := addr
 
 	var pendingValsetReq *types.Valset
-	keeper.IterateValsetRequest(ctx, func(key []byte, val types.Valset) bool {
+	keeper.IterateValsetRequest(ctx, func(_ []byte, val types.Valset) bool {
 		found := keeper.HasValsetConfirm(ctx, val.Nonce, validatorAddr)
 		if !found {
 			pendingValsetReq = &val
@@ -245,7 +245,7 @@ func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper K
 		return nil, nil
 	}
 
-	valset := keeper.GetValsetRequest(ctx, int64(nonce.Uint64())) // todo: revisit nonce type
+	valset := keeper.GetValsetRequest(ctx, *nonce)
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "no valset found for nonce")
 	}
@@ -256,7 +256,7 @@ func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper K
 	}
 
 	// todo: revisit nonce type
-	keeper.IterateValsetConfirmByNonce(ctx, int64(nonce.Uint64()), func(_ []byte, confirm types.MsgValsetConfirm) bool {
+	keeper.IterateValsetConfirmByNonce(ctx, *nonce, func(_ []byte, confirm types.MsgValsetConfirm) bool {
 		result.Signatures = append(result.Signatures, confirm.Signature)
 		return false
 	})

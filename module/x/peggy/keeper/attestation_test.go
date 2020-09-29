@@ -236,7 +236,7 @@ func TestApproveBridgeMultiSigUpdate(t *testing.T) {
 
 	// when
 	myNonce := types.NewUInt64Nonce(myBlockHeight)
-	checkpoint := k.GetValsetRequest(ctx, int64(myBlockHeight)).GetCheckpoint()
+	checkpoint := k.GetValsetRequest(ctx, myNonce).GetCheckpoint()
 	details := types.SignedCheckpoint{
 		Checkpoint: checkpoint,
 	}
