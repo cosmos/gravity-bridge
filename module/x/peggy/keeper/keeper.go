@@ -53,17 +53,15 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace params.Subspa
 func (k Keeper) SetValsetRequest(ctx sdk.Context) types.Valset {
 	store := ctx.KVStore(k.storeKey)
 	valset := k.GetCurrentValset(ctx)
-	nonce := types.NewUInt64Nonce(uint64(ctx.BlockHeight()))
-	valset.Nonce = nonce
-	store.Set(types.GetValsetRequestKey(nonce), k.cdc.MustMarshalBinaryBare(valset))
+	store.Set(types.GetValsetRequestKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
 
 	event := sdk.NewEvent(
 		types.EventTypeMultisigUpdateRequest,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyMultisigID, nonce.String()),
-		sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
+		sdk.NewAttribute(types.AttributeKeyMultisigID, valset.Nonce.String()),
+		sdk.NewAttribute(types.AttributeKeyNonce, valset.Nonce.String()),
 	)
 	ctx.EventManager().EmitEvent(event)
 	return valset
@@ -129,12 +127,12 @@ func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce types.UInt64Nonce) bool 
 
 func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce types.UInt64Nonce) *types.Valset {
 	store := ctx.KVStore(k.storeKey)
-	store_bytes := store.Get(types.GetValsetRequestKey(nonce))
-	if store_bytes == nil {
+	bz := store.Get(types.GetValsetRequestKey(nonce))
+	if bz == nil {
 		return nil
 	}
 	var valset types.Valset
-	k.cdc.MustUnmarshalBinaryBare(store_bytes, &valset)
+	k.cdc.MustUnmarshalBinaryBare(bz, &valset)
 	return &valset
 }
 
@@ -252,7 +250,11 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 	for i := range powers {
 		powers[i] = sdk.NewUint(powers[i]).MulUint64(math.MaxUint32).QuoUint64(totalPower).Uint64()
 	}
-	valset := types.Valset{EthAddresses: ethAddrs, Powers: powers}
+	valset := types.Valset{
+		EthAddresses: ethAddrs,
+		Powers: powers,
+		Nonce: types.NewUInt64Nonce(uint64(ctx.BlockHeight())),
+	}
 	sort.Sort(valsetSort(valset))
 	return valset
 }

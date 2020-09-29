@@ -43,7 +43,6 @@ func TestUnmarshalEthereumAddress(t *testing.T) {
 		},
 		"empty address": {
 			src:    `""`,
-			expErr: true,
 		},
 		"non prefixed address": {
 			src:    `"c783df8a850f42e7F7e57013759C285caa701eB6"`,

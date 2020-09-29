@@ -12,7 +12,7 @@ echo "## Request a batch for outgoing TX"
 peggycli tx peggy build-batch peggyf01b315c8e --from validator --chain-id=testing -b block -y
 
 echo "## Query pending request nonce"
-nonce=$(peggycli q peggy pending-batch-request $(peggycli keys show validator -a) -o json | jq -r ".value.Nonce")
+nonce=$(peggycli q peggy pending-batch-request $(peggycli keys show validator -a) -o json | jq -r ".value.nonce")
 
 echo "## Submit observation"
 # chain id: 1

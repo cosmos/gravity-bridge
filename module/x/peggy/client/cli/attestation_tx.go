@@ -260,7 +260,7 @@ func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 			cdc.MustUnmarshalJSON(res, &valset)
 			checkpoint := valset.GetCheckpoint()
 
-			signature, err := ethCrypto.Sign(checkpoint, privateKey)
+			signature, err := types.NewEthereumSignature(checkpoint, privateKey)
 			if err != nil {
 				return err
 			}

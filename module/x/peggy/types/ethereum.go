@@ -11,8 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
+const EthereumAddressLength = gethCommon.AddressLength
+
 var isValidETHAddress = regexp.MustCompile("^0x[0-9a-fA-F]{40}$").MatchString
-var emptyAddr [gethCommon.AddressLength]byte
+var emptyAddr [EthereumAddressLength]byte
 
 // EthereumAddress defines a standard ethereum address
 type EthereumAddress gethCommon.Address
@@ -58,6 +60,9 @@ func (e EthereumAddress) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON unmarshals an ethereum address
 func (e *EthereumAddress) UnmarshalJSON(input []byte) error {
+	if string(input) == `""` {
+		return nil
+	}
 	return hexutil.UnmarshalFixedJSON(reflect.TypeOf(gethCommon.Address{}), input, e[:])
 }
 
