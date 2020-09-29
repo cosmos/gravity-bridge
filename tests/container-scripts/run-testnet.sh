@@ -21,9 +21,9 @@ GAIA_HOME="--home /validator$i"
 LISTEN_ADDRESS="--address tcp://7.7.7.$i:26655"
 RPC_ADDRESS="--rpc.laddr tcp://7.7.7.$i:26657"
 P2P_ADDRESS="--p2p.laddr tcp://7.7.7.$i:26656"
-LOG_LEVEL="--log_level *:error"
-ARGS="$GAIA_HOME $LISTEN_ADDRESS $RPC_ADDRESS $P2P_ADDRESS $LOG_LEVEL"
-$BIN $ARGS start &
+LOG_LEVEL="--log_level main:info,state:debug,consensus:error,p2p:error,*:debug"
+ARGS="$GAIA_HOME $LISTEN_ADDRESS $RPC_ADDRESS $P2P_ADDRESS $LOG_LEVEL --trace"
+$BIN $ARGS start > /validator$i/logs &
 done
 
 # start the peggycli REST server this runs on port 1317 against localhost.
