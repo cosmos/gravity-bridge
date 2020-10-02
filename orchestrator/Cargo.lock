@@ -1419,6 +1419,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "orcestrator"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "clarity",
+ "contact",
+ "deep_space",
+ "docopt",
+ "lazy_static",
+ "num256",
+ "serde",
+ "serde_derive",
+ "url",
+ "web30",
+]
+
+[[package]]
 name = "parking_lot"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2080,24 +2098,6 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
-]
-
-[[package]]
-name = "validator-daemon"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "clarity",
- "contact",
- "deep_space",
- "docopt",
- "lazy_static",
- "num256",
- "serde",
- "serde_derive",
- "url",
- "web30",
 ]
 
 [[package]]

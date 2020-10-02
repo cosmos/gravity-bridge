@@ -494,10 +494,11 @@ func (e EthereumBridgeBootstrappedClaim) Details() AttestationDetails {
 // validator set has claimed to have seen the transaction enter the ethereum blockchain it is "observed"
 // and state transitions and operations are triggered on the cosmos side.
 type MsgCreateEthereumClaims struct {
-	EthereumChainID       string          `json:"ethereum_chain_id"` // todo: revisit type. can be int/ string/ ?
-	BridgeContractAddress EthereumAddress `json:"bridge_contract_address"`
-	Orchestrator          sdk.AccAddress  `json:"orchestrator"`
-	Claims                []EthereumClaim `json:"claims"`
+	EthereumChainID uint64 `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
+	// I don't think we need to specify this, shouldn't it be in the store?
+	BridgeContractAddress EthereumAddress `json:"bridge_contract_address" yaml:"bridge_contract_address"`
+	Orchestrator          sdk.AccAddress  `json:"orchestrator" yaml:"orchestrator"`
+	Claims                []EthereumClaim `json:"claims" yaml:"claims"`
 }
 
 func NewMsgCreateEthereumClaims(ethereumChainID string, bridgeContractAddress EthereumAddress, orchestrator sdk.AccAddress, claims []EthereumClaim) *MsgCreateEthereumClaims {
