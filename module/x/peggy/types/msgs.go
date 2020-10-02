@@ -501,7 +501,7 @@ type MsgCreateEthereumClaims struct {
 	Claims                []EthereumClaim `json:"claims" yaml:"claims"`
 }
 
-func NewMsgCreateEthereumClaims(ethereumChainID string, bridgeContractAddress EthereumAddress, orchestrator sdk.AccAddress, claims []EthereumClaim) *MsgCreateEthereumClaims {
+func NewMsgCreateEthereumClaims(ethereumChainID uint64, bridgeContractAddress EthereumAddress, orchestrator sdk.AccAddress, claims []EthereumClaim) *MsgCreateEthereumClaims {
 	return &MsgCreateEthereumClaims{EthereumChainID: ethereumChainID, BridgeContractAddress: bridgeContractAddress, Orchestrator: orchestrator, Claims: claims}
 }
 

@@ -170,7 +170,7 @@ func createValsetConfirmHandler(cliCtx context.CLIContext, storeKey string) http
 type bootstrapConfirmReq struct {
 	BaseReq               rest.BaseReq            `json:"base_req"`
 	Orchestrator          sdk.AccAddress          `json:"orchestrator"`
-	EthereumChainID       string                  `json:"ethereum_chain_id"`
+	EthereumChainID       uint64                  `json:"ethereum_chain_id"`
 	BridgeContractAddress types.EthereumAddress   `json:"bridge_contract_address"`
 	Block                 string                  `json:"block"`
 	AllowedValidatorSet   []types.EthereumAddress `json:"allowed_validator_set"`
