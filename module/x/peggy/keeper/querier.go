@@ -1,9 +1,6 @@
 package keeper
 
 import (
-	"encoding/base64"
-	"strconv"
-
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -84,7 +81,7 @@ func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 		return nil, err
 	}
 
-	valset := keeper.GetValsetRequest(ctx, int64(nonce.Uint64()))
+	valset := keeper.GetValsetRequest(ctx, nonce)
 	if valset == nil {
 		return nil, nil
 	}
@@ -109,7 +106,7 @@ func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	valset := keeper.GetValsetConfirm(ctx, int64(nonce.Uint64()), accAddress)
+	valset := keeper.GetValsetConfirm(ctx, nonce, accAddress)
 	if valset == nil {
 		return nil, nil
 	}
@@ -130,7 +127,7 @@ func allValsetConfirmsByNonce(ctx sdk.Context, nonceStr string, keeper Keeper) (
 	}
 
 	var confirms []types.MsgValsetConfirm
-	keeper.IterateValsetConfirmByNonce(ctx, int64(nonce.Uint64()), func(_ []byte, c types.MsgValsetConfirm) bool {
+	keeper.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
 		confirms = append(confirms, c)
 		return false
 	})
@@ -150,7 +147,7 @@ const maxValsetRequestsReturned = 5
 func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var counter int
 	var valReq []types.Valset
-	keeper.IterateValsetRequest(ctx, func(key []byte, val types.Valset) bool {
+	keeper.IterateValsetRequest(ctx, func(_ []byte, val types.Valset) bool {
 		valReq = append(valReq, val)
 		counter++
 		return counter >= maxValsetRequestsReturned
@@ -175,7 +172,7 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 	validatorAddr := addr
 
 	var pendingValsetReq *types.Valset
-	keeper.IterateValsetRequest(ctx, func(key []byte, val types.Valset) bool {
+	keeper.IterateValsetRequest(ctx, func(_ []byte, val types.Valset) bool {
 		found := keeper.HasValsetConfirm(ctx, val.Nonce, validatorAddr)
 		if !found {
 			pendingValsetReq = &val
@@ -210,7 +207,7 @@ func lastObservedNonce(ctx sdk.Context, claimType string, keeper Keeper) ([]byte
 
 // lastObservedNonce returns a list of nonces. One for each claim type if exists
 func lastObservedNonces(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	result := make(map[string]types.Nonce, len(types.AllOracleClaimTypes))
+	result := make(map[string]types.UInt64Nonce, len(types.AllOracleClaimTypes))
 	for _, v := range types.AllOracleClaimTypes {
 		att := keeper.GetLastObservedAttestation(ctx, v)
 		if att != nil {
@@ -243,12 +240,12 @@ func lastObservedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) 
 	return fetchMultiSigUpdateData(ctx, nonce, keeper)
 }
 
-func fetchMultiSigUpdateData(ctx sdk.Context, nonce types.Nonce, keeper Keeper) ([]byte, error) {
-	if nonce.IsEmpty() {
+func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper Keeper) ([]byte, error) {
+	if nonce == nil || nonce.IsEmpty() {
 		return nil, nil
 	}
 
-	valset := keeper.GetValsetRequest(ctx, int64(nonce.Uint64())) // todo: revisit nonce type
+	valset := keeper.GetValsetRequest(ctx, *nonce)
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "no valset found for nonce")
 	}
@@ -259,7 +256,7 @@ func fetchMultiSigUpdateData(ctx sdk.Context, nonce types.Nonce, keeper Keeper) 
 	}
 
 	// todo: revisit nonce type
-	keeper.IterateValsetConfirmByNonce(ctx, int64(nonce.Uint64()), func(_ []byte, confirm types.MsgValsetConfirm) bool {
+	keeper.IterateValsetConfirmByNonce(ctx, *nonce, func(_ []byte, confirm types.MsgValsetConfirm) bool {
 		result.Signatures = append(result.Signatures, confirm.Signature)
 		return false
 	})
@@ -354,15 +351,6 @@ func queryAttestation(ctx sdk.Context, claimType, nonceStr string, keeper Keeper
 	return res, nil
 }
 
-// todo: we mix nonces as int64 and base64 bytes at the moment
-func parseNonce(nonceArg string) (types.Nonce, error) {
-	if len(nonceArg) != base64.StdEncoding.EncodedLen(8) {
-		// not a byte nonce byte representation
-		v, err := strconv.ParseUint(nonceArg, 10, 64)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "nonce")
-		}
-		return types.NonceFromUint64(v), nil
-	}
-	return base64.URLEncoding.DecodeString(nonceArg)
+func parseNonce(nonceArg string) (types.UInt64Nonce, error) {
+	return types.UInt64NonceFromString(nonceArg)
 }

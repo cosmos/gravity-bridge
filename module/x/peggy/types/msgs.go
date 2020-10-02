@@ -2,9 +2,7 @@ package types
 
 import (
 	"encoding/hex"
-	"fmt"
 
-	"github.com/althea-net/peggy/module/x/peggy/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -24,12 +22,12 @@ import (
 // signatures in the chain store and submit them to Ethereum to update the validator set
 // -------------
 type MsgValsetConfirm struct {
-	Nonce     int64          `json:"nonce"`
+	Nonce     UInt64Nonce    `json:"nonce"`
 	Validator sdk.AccAddress `json:"validator"`
 	Signature string         `json:"signature"`
 }
 
-func NewMsgValsetConfirm(nonce int64, validator sdk.AccAddress, signature string) MsgValsetConfirm {
+func NewMsgValsetConfirm(nonce UInt64Nonce, validator sdk.AccAddress, signature string) MsgValsetConfirm {
 	return MsgValsetConfirm{
 		Nonce:     nonce,
 		Validator: validator,
@@ -131,24 +129,24 @@ func (msg MsgSetEthAddress) Type() string { return "set_eth_address" }
 // (proving control of the Eth address)
 func (msg MsgSetEthAddress) ValidateBasic() error {
 	if msg.Validator.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator.String())
+		return sdkerrors.Wrap(ErrEmpty, "validator")
+	}
+	if err := sdk.VerifyAddressFormat(msg.Validator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "validator")
 	}
 
 	if err := msg.Address.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
-	if msg.Address.IsEmpty() {
-		return sdkerrors.Wrap(ErrEmpty, "ethereum address")
-	}
-	sigBytes, hexErr := hex.DecodeString(msg.Signature)
-	if hexErr != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Could not decode hex string %s", msg.Signature))
-	}
 
-	err := utils.ValidateEthSig(crypto.Keccak256(msg.Validator.Bytes()), sigBytes, msg.Address.String())
-
+	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("digest: %x sig: %x address %s error: %s", crypto.Keccak256(msg.Validator.Bytes()), msg.Signature, msg.Address, err.Error()))
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
+	}
+
+	err = ValidateEthereumSignature(crypto.Keccak256(msg.Validator.Bytes()), sigBytes, msg.Address.String())
+	if err != nil {
+		return sdkerrors.Wrapf(err, "digest: %x sig: %x address %s error: %s", crypto.Keccak256(msg.Validator.Bytes()), msg.Signature, msg.Address, err.Error())
 	}
 
 	return nil
@@ -287,12 +285,12 @@ func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
 // This message includes the batch as well as an Ethereum signature over this batch by the validator
 // -------------
 type MsgConfirmBatch struct {
-	Nonce        uint64         `json:"nonce"`
+	Nonce        UInt64Nonce    `json:"nonce"`
 	Orchestrator sdk.AccAddress `json:"validator"`
 	Signature    string         `json:"signature"`
 }
 
-func NewMsgConfirmBatch(nonce uint64, orchestrator sdk.AccAddress, signature string) MsgConfirmBatch {
+func NewMsgConfirmBatch(nonce UInt64Nonce, orchestrator sdk.AccAddress, signature string) MsgConfirmBatch {
 	return MsgConfirmBatch{
 		Nonce:        nonce,
 		Orchestrator: orchestrator,
@@ -324,7 +322,7 @@ func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
 }
 
 type EthereumClaim interface {
-	GetNonce() Nonce
+	GetNonce() UInt64Nonce
 	GetType() ClaimType
 	ValidateBasic() error
 	Details() AttestationDetails
@@ -342,7 +340,7 @@ var NoUniqueClaimDetails AttestationDetails = nil
 
 // EthereumBridgeDepositClaim claims that a token was deposited on the bridge contract.
 type EthereumBridgeDepositClaim struct {
-	Nonce          Nonce `json:"nonce" yaml:"nonce"`
+	Nonce          UInt64Nonce `json:"nonce" yaml:"nonce"`
 	ERC20Token     ERC20Token
 	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
 	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
@@ -352,7 +350,7 @@ func (e EthereumBridgeDepositClaim) GetType() ClaimType {
 	return ClaimTypeEthereumBridgeDeposit
 }
 
-func (e EthereumBridgeDepositClaim) GetNonce() Nonce {
+func (e EthereumBridgeDepositClaim) GetNonce() UInt64Nonce {
 	return e.Nonce
 }
 
@@ -380,14 +378,14 @@ func (e EthereumBridgeDepositClaim) Details() AttestationDetails {
 
 // EthereumBridgeWithdrawalBatchClaim claims that a batch of withdrawal operations on the bridge contract was executed.
 type EthereumBridgeWithdrawalBatchClaim struct {
-	Nonce Nonce `json:"nonce" yaml:"nonce"`
+	Nonce UInt64Nonce `json:"nonce" yaml:"nonce"`
 }
 
 func (e EthereumBridgeWithdrawalBatchClaim) GetType() ClaimType {
 	return ClaimTypeEthereumBridgeWithdrawalBatch
 }
 
-func (e EthereumBridgeWithdrawalBatchClaim) GetNonce() Nonce {
+func (e EthereumBridgeWithdrawalBatchClaim) GetNonce() UInt64Nonce {
 	return e.Nonce
 }
 
@@ -404,14 +402,14 @@ func (e EthereumBridgeWithdrawalBatchClaim) Details() AttestationDetails {
 
 // EthereumBridgeMultiSigUpdateClaim claims that the multisig set was updated on the bridge contract.
 type EthereumBridgeMultiSigUpdateClaim struct {
-	Nonce Nonce `json:"nonce" yaml:"nonce"`
+	Nonce UInt64Nonce `json:"nonce" yaml:"nonce"`
 }
 
 func (e EthereumBridgeMultiSigUpdateClaim) GetType() ClaimType {
 	return ClaimTypeEthereumBridgeMultiSigUpdate
 }
 
-func (e EthereumBridgeMultiSigUpdateClaim) GetNonce() Nonce {
+func (e EthereumBridgeMultiSigUpdateClaim) GetNonce() UInt64Nonce {
 	return e.Nonce
 }
 
@@ -436,7 +434,7 @@ var (
 
 // EthereumBridgeBootstrappedClaim orchestrators confirm that the contract is setup on the Ethereum side and the init data.
 type EthereumBridgeBootstrappedClaim struct {
-	Nonce Nonce `json:"nonce" yaml:"nonce"`
+	Nonce UInt64Nonce `json:"nonce" yaml:"nonce"`
 	// AllowedValidatorSet addresses to participate
 	AllowedValidatorSet []EthereumAddress
 	// ValidatorPowers the validator's power values
@@ -448,7 +446,7 @@ type EthereumBridgeBootstrappedClaim struct {
 	StartThreshold uint64 `json:"start_threshold,omitempty" yaml:"start_threshold"`
 }
 
-func (e EthereumBridgeBootstrappedClaim) GetNonce() Nonce {
+func (e EthereumBridgeBootstrappedClaim) GetNonce() UInt64Nonce {
 	return e.Nonce
 }
 

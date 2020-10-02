@@ -63,7 +63,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		sdk.NewAttribute(types.AttributeKeyOutgoingTXID, strconv.Itoa(int(nextID))),
-		sdk.NewAttribute(types.AttributeKeyNonce, types.NonceFromUint64(nextID).String()),
+		sdk.NewAttribute(types.AttributeKeyNonce, types.NewUInt64Nonce(nextID).String()),
 	)
 	ctx.EventManager().EmitEvent(poolEvent)
 

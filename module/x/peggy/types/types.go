@@ -6,14 +6,13 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
 type Valset struct {
-	Nonce        int64    `json:"nonce"` // todo (alex): should be of type Nonce
-	Powers       []int64  `json:"powers"` // todo (alex): should be of type uint64 (no negative values)
-	EthAddresses []string `json:"eth_addresses"` // todo (alex): should be of type []EthereumAddress
+	Nonce        UInt64Nonce       `json:"nonce"`
+	Powers       []uint64          `json:"powers"`
+	EthAddresses []EthereumAddress `json:"eth_addresses"`
 }
 
 func (v Valset) GetCheckpoint() []byte {
@@ -33,8 +32,7 @@ func (v Valset) GetCheckpoint() []byte {
 	// In order to work around this absurd series of problems we have to manually write the below
 	// 'function specification' that will encode the same arguments into a function call. We can then
 	// truncate the first several bytes where the call name is encoded to finally get the equal of the
-	// Solidity abi.Encode() call.
-	checkpointAbiJSON := `[{
+	const checkpointAbiJSON = `[{
 	  "inputs": [
 	    {
 	      "internalType": "bytes32",
@@ -73,6 +71,7 @@ func (v Valset) GetCheckpoint() []byte {
 	  "stateMutability": "pure",
 	  "type": "function"
 	}]`
+	// Solidity abi.Encode() call.
 	// error case here should not occur outside of testing since the above is a constant
 	contractAbi, abiErr := abi.JSON(strings.NewReader(checkpointAbiJSON))
 	if abiErr != nil {
@@ -90,20 +89,13 @@ func (v Valset) GetCheckpoint() []byte {
 	copy(checkpoint[:], checkpointBytes[:])
 
 	var convertedPowers []*big.Int
-	var convertedAddresses []common.Address
 	for _, power := range v.Powers {
 		convertedPowers = append(convertedPowers, big.NewInt(int64(power)))
-	}
-	for _, ethAddress := range v.EthAddresses {
-		if !strings.HasPrefix(ethAddress, "0x") {
-			panic(fmt.Sprintf("Eth Address in store %s does not have 0x prefix!", ethAddress))
-		}
-		convertedAddresses = append(convertedAddresses, common.HexToAddress(ethAddress))
 	}
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, packErr := contractAbi.Pack("checkpoint", peggyID, checkpoint, big.NewInt(int64(v.Nonce)), convertedAddresses, convertedPowers)
+	bytes, packErr := contractAbi.Pack("checkpoint", peggyID, checkpoint, big.NewInt(int64(v.Nonce.Uint64())), v.EthAddresses, convertedPowers)
 
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
@@ -115,7 +107,5 @@ func (v Valset) GetCheckpoint() []byte {
 	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
 	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
 	hash := crypto.Keccak256Hash(bytes[4:])
-
 	return hash.Bytes()
-
 }

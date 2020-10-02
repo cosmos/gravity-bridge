@@ -7,8 +7,13 @@ import (
 )
 
 func TestValsetConfirmHash(t *testing.T) {
-	powers := [3]int64{3333, 3333, 3333}
-	ethAddresses := [3]string{"0xc783df8a850f42e7F7e57013759C285caa701eB6", "0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4", "0xE5904695748fe4A84b40b3fc79De2277660BD1D3"}
+	powers := []uint64{3333, 3333, 3333}
+	ethAddresses := []EthereumAddress{
+		NewEthereumAddress("0xc783df8a850f42e7F7e57013759C285caa701eB6"),
+		NewEthereumAddress("0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4"),
+		NewEthereumAddress("0xE5904695748fe4A84b40b3fc79De2277660BD1D3"),
+	}
+
 	var v = Valset{
 		Nonce:        0,
 		Powers:       powers[:],

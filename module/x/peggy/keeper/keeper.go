@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/binary"
 	"math"
 	"sort"
 	"strconv"
@@ -54,28 +53,26 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace params.Subspa
 func (k Keeper) SetValsetRequest(ctx sdk.Context) types.Valset {
 	store := ctx.KVStore(k.storeKey)
 	valset := k.GetCurrentValset(ctx)
-	nonce := ctx.BlockHeight()
-	valset.Nonce = nonce
-	store.Set(types.GetValsetRequestKey(nonce), k.cdc.MustMarshalBinaryBare(valset))
+	store.Set(types.GetValsetRequestKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
 
 	event := sdk.NewEvent(
 		types.EventTypeMultisigUpdateRequest,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyMultisigID, strconv.Itoa(int(nonce))),
-		sdk.NewAttribute(types.AttributeKeyNonce, types.NonceFromUint64(uint64(nonce)).String()),
+		sdk.NewAttribute(types.AttributeKeyMultisigID, valset.Nonce.String()),
+		sdk.NewAttribute(types.AttributeKeyNonce, valset.Nonce.String()),
 	)
 	ctx.EventManager().EmitEvent(event)
 	return valset
 }
 
-func (k Keeper) SetBootstrapValset(ctx sdk.Context, nonce types.Nonce, valset types.Valset) error {
+func (k Keeper) SetBootstrapValset(ctx sdk.Context, nonce types.UInt64Nonce, valset types.Valset) error {
 	if !nonce.GreaterThan(k.GetLastValsetObservedNonce(ctx)) {
 		return types.ErrOutdated
 	}
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetValsetRequestKey(int64(nonce.Uint64()))
+	key := types.GetValsetRequestKey(nonce)
 	if store.Has(key) {
 		return sdkerrors.Wrap(types.ErrDuplicate, "nonce")
 	}
@@ -86,55 +83,56 @@ func (k Keeper) SetBootstrapValset(ctx sdk.Context, nonce types.Nonce, valset ty
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyMultisigID, strconv.Itoa(int(nonce.Uint64()))),
+		sdk.NewAttribute(types.AttributeKeyMultisigID, nonce.String()),
 		sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
 	)
 	ctx.EventManager().EmitEvent(event)
 	return nil
 }
 
-func (k Keeper) setLastValsetApprovedNonce(ctx sdk.Context, nonce types.Nonce) {
+func (k Keeper) setLastValsetApprovedNonce(ctx sdk.Context, nonce types.UInt64Nonce) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetSecondIndexLastValsetApprovedKey(nonce), []byte{}) // store payload in key only for gas optimization
 }
 
-func (k Keeper) GetLastValsetApprovedNonce(ctx sdk.Context) types.Nonce {
+func (k Keeper) GetLastValsetApprovedNonce(ctx sdk.Context) *types.UInt64Nonce {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexLastValsetApprovedKey)
 	iter := prefixStore.Iterator(nil, nil)
 	if !iter.Valid() {
 		return nil
 	}
-	return iter.Key()
+	v := types.UInt64NonceFromBytes(iter.Key())
+	return &v
 }
 
-func (k Keeper) setLastValsetObservedNonce(ctx sdk.Context, nonce types.Nonce) {
+func (k Keeper) setLastValsetObservedNonce(ctx sdk.Context, nonce types.UInt64Nonce) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetSecondIndexLastValsetObservedKey(nonce), []byte{}) // store payload in key only for gas optimization
 }
 
-func (k Keeper) GetLastValsetObservedNonce(ctx sdk.Context) types.Nonce {
+func (k Keeper) GetLastValsetObservedNonce(ctx sdk.Context) *types.UInt64Nonce {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexLastValsetObservedKey)
 	iter := prefixStore.Iterator(nil, nil)
 	if !iter.Valid() {
 		return nil
 	}
-	return iter.Key()
+	v := types.UInt64NonceFromBytes(iter.Key())
+	return &v
 }
 
-func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce uint64) bool {
+func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce types.UInt64Nonce) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetValsetRequestKey(int64(nonce))) // todo: revisit type where nonce is used as int64
+	return store.Has(types.GetValsetRequestKey(nonce))
 }
 
-func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce int64) *types.Valset {
+func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce types.UInt64Nonce) *types.Valset {
 	store := ctx.KVStore(k.storeKey)
-
-	store_bytes := store.Get(types.GetValsetRequestKey(nonce))
-	if store_bytes == nil {
+	bz := store.Get(types.GetValsetRequestKey(nonce))
+	if bz == nil {
 		return nil
 	}
 	var valset types.Valset
-	k.cdc.MustUnmarshalBinaryBare(store_bytes, &valset)
+	k.cdc.MustUnmarshalBinaryBare(bz, &valset)
 	return &valset
 }
 
@@ -157,13 +155,13 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 	store.Set(types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator), k.cdc.MustMarshalBinaryBare(valsetConf))
 }
 
-func (k Keeper) HasValsetConfirm(ctx sdk.Context, nonce int64, validatorAddr sdk.AccAddress) bool {
+func (k Keeper) HasValsetConfirm(ctx sdk.Context, nonce types.UInt64Nonce, validatorAddr sdk.AccAddress) bool {
 	// todo: param should be sdk.ValAddress instead
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(types.GetValsetConfirmKey(nonce, validatorAddr))
 }
 
-func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce int64, validator sdk.AccAddress) *types.MsgValsetConfirm {
+func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce types.UInt64Nonce, validator sdk.AccAddress) *types.MsgValsetConfirm {
 	store := ctx.KVStore(k.storeKey)
 	entity := store.Get(types.GetValsetConfirmKey(nonce, validator))
 	if entity == nil {
@@ -175,12 +173,10 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce int64, validator sdk.Acc
 }
 
 // Iterate through all valset confirms for a nonce in ASC order
-func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce int64, cb func([]byte, types.MsgValsetConfirm) bool) {
+func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64Nonce, cb func([]byte, types.MsgValsetConfirm) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
 
-	nonceBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(nonceBytes, uint64(nonce))
-	iter := prefixStore.Iterator(prefixRange(nonceBytes))
+	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
 	for ; iter.Valid(); iter.Next() {
 		confirm := types.MsgValsetConfirm{}
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
@@ -216,7 +212,7 @@ func (a valsetSort) Swap(i, j int) {
 func (a valsetSort) Less(i, j int) bool {
 	// Secondary sort on eth address in case powers are equal
 	if a.Powers[i] == a.Powers[j] {
-		return a.EthAddresses[i] < a.EthAddresses[j]
+		return a.EthAddresses[i].LessThan(a.EthAddresses[j])
 	}
 	return a.Powers[i] < a.Powers[j]
 }
@@ -234,38 +230,40 @@ func (a valsetSort) Less(i, j int) bool {
 // implementations are involved.
 func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-	ethAddrs := make([]string, len(validators))
-	powers := make([]int64, len(validators))
-	var totalPower int64
-	const maxUint32 int64 = math.MaxUint32
+	ethAddrs := make([]types.EthereumAddress, len(validators))
+	powers := make([]uint64, len(validators))
+	var totalPower uint64
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
-	for _, validator := range validators {
-		validatorAddress := validator.GetOperator()
-		p := k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress)
-		totalPower += p
-	}
 	for i, validator := range validators {
 		validatorAddress := validator.GetOperator()
-		p := k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress) // TODO: avoid this Gas costs
-		p = maxUint32 * p / totalPower
-		//	safe math version:	p = sdk.NewInt(p).MulRaw(maxUint32).QuoRaw(totalPower).Int64()
-		powers[i] = p
 		ethAddr := k.GetEthAddress(ctx, validatorAddress)
 		if ethAddr != nil {
-			ethAddrs[i] = ethAddr.String()
+			ethAddrs[i] = *ethAddr
 		}
+
+		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress))
+		totalPower += p
+		powers[i] = p
 	}
-	valset := types.Valset{EthAddresses: ethAddrs, Powers: powers}
+	// normalize power values
+	for i := range powers {
+		powers[i] = sdk.NewUint(powers[i]).MulUint64(math.MaxUint32).QuoUint64(totalPower).Uint64()
+	}
+	valset := types.Valset{
+		EthAddresses: ethAddrs,
+		Powers: powers,
+		Nonce: types.NewUInt64Nonce(uint64(ctx.BlockHeight())),
+	}
 	sort.Sort(valsetSort(valset))
 	return valset
 }
 
 // GetParams returns the total set of wasm parameters.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	var params types.Params
-	k.paramSpace.GetParamSet(ctx, &params)
-	return params
+	var p types.Params
+	k.paramSpace.GetParamSet(ctx, &p)
+	return p
 }
 
 func (k Keeper) setParams(ctx sdk.Context, ps types.Params) {

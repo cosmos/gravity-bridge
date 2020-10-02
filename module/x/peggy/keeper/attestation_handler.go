@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"encoding/binary"
-
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -36,7 +34,10 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 			return sdkerrors.Wrap(err, "transfer vouchers")
 		}
 	case types.ClaimTypeEthereumBridgeWithdrawalBatch:
-		batchID := att.Nonce.Uint64()
+		batchID, err := types.Uint64FromNonce(att.Nonce)
+		if err != nil {
+			return sdkerrors.Wrap(err, "nonce")
+		}
 		b := a.keeper.GetOutgoingTXBatch(ctx, batchID)
 		if b == nil {
 			return sdkerrors.Wrap(types.ErrUnknown, "nonce")
@@ -56,16 +57,15 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		}
 		a.keeper.setLastValsetObservedNonce(ctx, att.Nonce)
 
-		height := att.Nonce.Uint64()
-		if !a.keeper.HasValsetRequest(ctx, height) {
+		if !a.keeper.HasValsetRequest(ctx, att.Nonce) {
 			return sdkerrors.Wrap(types.ErrUnknown, "nonce")
 		}
 
 		// todo: is there any cleanup for us like:
 		a.keeper.IterateValsetRequest(ctx, func(key []byte, _ types.Valset) bool {
-			id := binary.BigEndian.Uint64(key)
-			if id < height {
-				ctx.Logger().Info("TODO: let's remove valset request", "id", id)
+			nonce := types.UInt64NonceFromBytes(key)
+			if att.Nonce.GreaterThan(nonce) {
+				ctx.Logger().Info("TODO: let's remove valset request", "nonce", nonce)
 			}
 			// todo: also remove all confirmations < height
 			return false
@@ -86,25 +86,13 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		a.keeper.setPeggyID(ctx, bootstrap.PeggyID)
 		a.keeper.setStartThreshold(ctx, bootstrap.StartThreshold)
 
-		// todo: some type convertions that needs to be addressed with valset
-		ethAddrs := make([]string, len(bootstrap.AllowedValidatorSet))
-		for i := range bootstrap.AllowedValidatorSet {
-			ethAddrs[i] = bootstrap.AllowedValidatorSet[i].String()
-		}
-		powers := make([]int64, len(bootstrap.ValidatorPowers))
-		for i := range bootstrap.ValidatorPowers {
-			powers[i] = int64(bootstrap.ValidatorPowers[i])
-		}
 		initialMultisigSet := types.Valset{
-			Nonce:        int64(att.Nonce.Uint64()),
-			Powers:       powers,
-			EthAddresses: ethAddrs,
+			Nonce:        att.Nonce,
+			Powers:       bootstrap.ValidatorPowers,
+			EthAddresses: bootstrap.AllowedValidatorSet,
 		}
 		// todo: do we want to do a sanity check that these validator addresses exits already?
-		err := a.keeper.SetBootstrapValset(ctx, att.Nonce, initialMultisigSet)
-		if err != nil {
-			return err
-		}
+		return a.keeper.SetBootstrapValset(ctx, att.Nonce, initialMultisigSet)
 	case types.ClaimTypeOrchestratorSignedMultiSigUpdate:
 		if !att.Nonce.GreaterThan(a.keeper.GetLastValsetApprovedNonce(ctx)) {
 			return types.ErrOutdated

@@ -6,7 +6,7 @@ peggycli tx peggy update-eth-addr 0xb8662f35f9de8720424e82b232e8c98d15399490adae
 echo "## Request valset update"
 peggycli tx peggy valset-request --from validator --chain-id=testing -b block -y
 echo "## Query pending request nonce"
-nonce=$(peggycli q peggy pending-valset-request $(peggycli keys show validator -a) -o json | jq -r ".value.Nonce")
+nonce=$(peggycli q peggy pending-valset-request $(peggycli keys show validator -a) -o json | jq -r ".value.nonce")
 
 echo "## Approve pending request"
 peggycli tx peggy approved valset-confirm  "$nonce" 0xb8662f35f9de8720424e82b232e8c98d15399490adae9ca993f5ef1dc4883690 --from validator --chain-id=testing -b block -y

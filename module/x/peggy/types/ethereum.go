@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -10,8 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
+const EthereumAddressLength = gethCommon.AddressLength
+
 var isValidETHAddress = regexp.MustCompile("^0x[0-9a-fA-F]{40}$").MatchString
-var emptyAddr [gethCommon.AddressLength]byte
+var emptyAddr [EthereumAddressLength]byte
 
 // EthereumAddress defines a standard ethereum address
 type EthereumAddress gethCommon.Address
@@ -49,12 +52,22 @@ func (e EthereumAddress) IsEmpty() bool {
 
 // MarshalJSON marshals the etherum address to JSON
 func (e EthereumAddress) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%v\"", e.String())), nil
+	if e.IsEmpty() {
+		return []byte(`""`), nil
+	}
+	return []byte(fmt.Sprintf("%q", e.String())), nil
 }
 
 // UnmarshalJSON unmarshals an ethereum address
 func (e *EthereumAddress) UnmarshalJSON(input []byte) error {
+	if string(input) == `""` {
+		return nil
+	}
 	return hexutil.UnmarshalFixedJSON(reflect.TypeOf(gethCommon.Address{}), input, e[:])
+}
+
+func (e EthereumAddress) LessThan(o EthereumAddress) bool {
+	return bytes.Compare(e[:], o[:]) == -1
 }
 
 // ERC20Token unique identifier for an Ethereum erc20 token.

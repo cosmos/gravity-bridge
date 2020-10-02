@@ -8,16 +8,19 @@ import (
 
 func TestNonceGreaterThan(t *testing.T) {
 	specs := map[string]struct {
-		src, other Nonce
-		exp        bool
+		src   UInt64Nonce
+		other nonce
+		exp   bool
 	}{
-		"equal":       {NonceFromUint64(1), NonceFromUint64(1), false},
-		"greater":     {NonceFromUint64(2), NonceFromUint64(1), true},
-		"less":        {NonceFromUint64(1), NonceFromUint64(2), false},
-		"src nil":     {nil, NonceFromUint64(2), false},
-		"other nil":   {NonceFromUint64(1), nil, true},
-		"src empty":   {Nonce{}, NonceFromUint64(2), false},
-		"other empty": {NonceFromUint64(1), Nonce{}, true},
+		"equal":   {NewUInt64Nonce(1), NewUInt64Nonce(1), false},
+		"greater": {NewUInt64Nonce(2), NewUInt64Nonce(1), true},
+		"less":    {NewUInt64Nonce(1), NewUInt64Nonce(2), false},
+		//"src nil":     {nil, NewUInt64Nonce(2), false},
+		"other nil":         {NewUInt64Nonce(1), nil, true},
+		"other nil pointer": {NewUInt64Nonce(1), (*UInt64Nonce)(nil), true},
+		//"both nil":    {nil, nil, false},
+		"src empty":   {NewUInt64Nonce(0), NewUInt64Nonce(2), false},
+		"other empty": {NewUInt64Nonce(1), NewUInt64Nonce(0), true},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
@@ -25,5 +28,4 @@ func TestNonceGreaterThan(t *testing.T) {
 			assert.Equal(t, spec.exp, got)
 		})
 	}
-
 }
