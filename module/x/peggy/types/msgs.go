@@ -442,11 +442,11 @@ type EthereumBridgeBootstrappedClaim struct {
 	AllowedValidatorSet []EthereumAddress `json:"allowed_validator_set" yaml:"allowed_validator_set"`
 	// ValidatorPowers the validator's power values
 	ValidatorPowers []uint64 `json:"validator_powers" yaml:"validator_powers"`
-	// PeggyID is a random 32 byte value to prevent signature reuse
-	PeggyID []byte `json:"peggy_id,omitempty" yaml:"peggy_id"`
+	// PeggyID is a random 32 byte hex value to prevent signature reuse
+	PeggyID string `json:"peggy_id" yaml:"peggy_id"`
 	// StartThreshold is the percentage of total voting power that must be online and participating in
 	// Peggy operations before a bridge can start operating
-	StartThreshold uint64 `json:"start_threshold,omitempty" yaml:"start_threshold"`
+	StartThreshold uint64 `json:"start_threshold" yaml:"start_threshold"`
 }
 
 func (e EthereumBridgeBootstrappedClaim) GetNonce() UInt64Nonce {

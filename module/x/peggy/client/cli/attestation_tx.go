@@ -107,7 +107,7 @@ func CmdSendETHBootstrapRequest(cdc *codec.Codec) *cobra.Command {
 						Block:               block,
 						AllowedValidatorSet: validators,
 						ValidatorPowers:     powers,
-						PeggyID:             []byte(args[5]), // simplest solution without decoding
+						PeggyID:             args[5],
 						StartThreshold:      startThreshold,
 					},
 				},

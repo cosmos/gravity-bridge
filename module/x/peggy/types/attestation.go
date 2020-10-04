@@ -313,7 +313,7 @@ func (s SignedCheckpoint) Hash() []byte {
 type BridgeBootstrap struct {
 	AllowedValidatorSet []EthereumAddress `json:"allowed_validator_set"`
 	ValidatorPowers     []uint64          `json:"validator_powers"`
-	PeggyID             []byte            `json:"peggy_id,omitempty" yaml:"peggy_id"`
+	PeggyID             string            `json:"peggy_id" yaml:"peggy_id"`
 	StartThreshold      uint64            `json:"start_threshold,omitempty" yaml:"start_threshold"`
 }
 
@@ -331,7 +331,7 @@ func (b BridgeBootstrap) Hash() []byte {
 			panic(err) // can not happen in used sha256 impl
 		}
 	}
-	hasher.Write(b.PeggyID)
+	hasher.Write([]uint8(b.PeggyID))
 	hasher.Write(sdk.Uint64ToBigEndian(b.StartThreshold))
 	return hasher.Sum(nil)
 }

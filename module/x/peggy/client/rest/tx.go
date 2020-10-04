@@ -202,7 +202,7 @@ func bootstrapConfirmHandler(cliCtx context.CLIContext) http.HandlerFunc {
 				Block:               blockNumber,
 				AllowedValidatorSet: req.AllowedValidatorSet,
 				ValidatorPowers:     req.ValidatorPowers,
-				PeggyID:             []byte(req.PeggyID),
+				PeggyID:             req.PeggyID,
 				StartThreshold:      req.StartThreshold,
 			},
 		}

@@ -57,7 +57,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	h := NewHandler(k)
 
 	msg := MsgCreateEthereumClaims{
-		EthereumChainID:       "0",
+		EthereumChainID:       0,
 		BridgeContractAddress: types.NewEthereumAddress(""),
 		Orchestrator:          myOrchestratorAddr,
 		Claims: []EthereumClaim{

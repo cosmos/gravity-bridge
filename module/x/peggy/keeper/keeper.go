@@ -281,7 +281,7 @@ func (k Keeper) GetPeggyID(ctx sdk.Context) []byte {
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyPeggyID, &a)
 	return a
 }
-func (k Keeper) setPeggyID(ctx sdk.Context, v []byte) {
+func (k Keeper) setPeggyID(ctx sdk.Context, v string) {
 	k.paramSpace.Set(ctx, types.ParamsStoreKeyPeggyID, v)
 }
 
