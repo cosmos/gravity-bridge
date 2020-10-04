@@ -42,7 +42,7 @@ func TestUnmarshalEthereumAddress(t *testing.T) {
 			expValue: NewEthereumAddress("0xc783df8a850f42e7F7e57013759C285caa701eB6"),
 		},
 		"empty address": {
-			src:    `""`,
+			src: `""`,
 		},
 		"non prefixed address": {
 			src:    `"c783df8a850f42e7F7e57013759C285caa701eB6"`,

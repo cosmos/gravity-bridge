@@ -34,29 +34,20 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 			return sdkerrors.Wrap(err, "transfer vouchers")
 		}
 	case types.ClaimTypeEthereumBridgeWithdrawalBatch:
-		batchID, err := types.Uint64FromNonce(att.Nonce)
-		if err != nil {
-			return sdkerrors.Wrap(err, "nonce")
-		}
-		b := a.keeper.GetOutgoingTXBatch(ctx, batchID)
+		b := a.keeper.GetOutgoingTXBatch(ctx, att.Nonce)
 		if b == nil {
 			return sdkerrors.Wrap(types.ErrUnknown, "nonce")
 		}
 		if err := b.Observed(); err != nil {
 			return err
 		}
-		a.keeper.storeBatch(ctx, batchID, *b)
+		a.keeper.storeBatch(ctx, att.Nonce, *b)
 		// cleanup outgoing TX pool
 		for i := range b.Elements {
 			a.keeper.removePoolEntry(ctx, b.Elements[i].ID)
 		}
 		return nil
 	case types.ClaimTypeEthereumBridgeMultiSigUpdate:
-		if !att.Nonce.GreaterThan(a.keeper.GetLastValsetObservedNonce(ctx)) {
-			return types.ErrOutdated
-		}
-		a.keeper.setLastValsetObservedNonce(ctx, att.Nonce)
-
 		if !a.keeper.HasValsetRequest(ctx, att.Nonce) {
 			return sdkerrors.Wrap(types.ErrUnknown, "nonce")
 		}
@@ -71,17 +62,15 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 			return false
 		})
 		return nil
-	case types.ClaimTypeEthereumBootstrap:
-		// todo: here and others that we do not work with an outdated nonce:
-		// todo: can be a confirmed valset update already > current nonce or another bootstrap attestation
-		// todo: abort when we had a previous successful processed bootstrap
+	case types.ClaimTypeEthereumBridgeBootstrap:
 		bootstrap, ok := att.Details.(types.BridgeBootstrap)
 		if !ok {
 			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
 		}
-		// storing the bootstrap data here to avoid the gov process in MVY. TODO: remove this
-		// todo: verify that StartThreshold == params.StartThreshold ? or before when accepting message?
-		// todo: verify that PeggyID == params.PeggyID ? or before when accepting message?
+		// quick hack:  we are sstoring the bootstrap data here to avoid the gov process in MVY.
+		// TODO: improve process by:
+		// - verify StartThreshold == params.StartThreshold
+		// - verify PeggyID == params.PeggyID
 
 		a.keeper.setPeggyID(ctx, bootstrap.PeggyID)
 		a.keeper.setStartThreshold(ctx, bootstrap.StartThreshold)
@@ -92,13 +81,10 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 			EthAddresses: bootstrap.AllowedValidatorSet,
 		}
 		// todo: do we want to do a sanity check that these validator addresses exits already?
+		// the peggy bridge can not operate proper without orchestrators having their ethereum
+		// addresses set before.
 		return a.keeper.SetBootstrapValset(ctx, att.Nonce, initialMultisigSet)
 	case types.ClaimTypeOrchestratorSignedMultiSigUpdate:
-		if !att.Nonce.GreaterThan(a.keeper.GetLastValsetApprovedNonce(ctx)) {
-			return types.ErrOutdated
-		}
-		a.keeper.setLastValsetApprovedNonce(ctx, att.Nonce)
-
 		signedCheckpoint, ok := att.Details.(types.SignedCheckpoint)
 		if !ok {
 			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)

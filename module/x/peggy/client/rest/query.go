@@ -139,7 +139,7 @@ func lastObservedNonceHandler(cliCtx context.CLIContext, storeName string) func(
 		vars := mux.Vars(r)
 		claimType := vars[claimType]
 
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastObservedNonce/%s", storeName, claimType))
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastNonce/%s", storeName, claimType))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

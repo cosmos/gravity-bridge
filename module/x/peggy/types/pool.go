@@ -25,11 +25,11 @@ type OutgoingTx struct {
 // are identified by a prefixed string representation. See VoucherDenom type.
 type BridgedDenominator struct {
 	// TokenContractAddress is the ERC20 contract address
-	TokenContractAddress EthereumAddress
+	TokenContractAddress EthereumAddress `json:"token_contract_address"`
 	// Symbol is the human readable ERC20 token name.
-	Symbol string
+	Symbol string `json:"symbol"`
 	// CosmosVoucherDenom is used as denom in sdk.Coin
-	CosmosVoucherDenom VoucherDenom
+	CosmosVoucherDenom VoucherDenom `json:"cosmos_voucher_denom"`
 }
 
 func NewBridgedDenominator(tokenContractAddress EthereumAddress, erc20Symbol string) BridgedDenominator {

@@ -15,16 +15,21 @@ const (
 	QueryValsetConfirmsByNonce          = "valsetConfirms"
 	QueryLastValsetRequests             = "lastValsetRequests"
 	QueryLastPendingValsetRequestByAddr = "lastPendingValsetRequest"
-	QueryLastObservedNonce              = "lastObservedNonce"
+	QueryLastProcessedNonce             = "lastNonce"
 	QueryLastObservedNonces             = "lastObservedNonces"
+	QueryLastApprovedNonces             = "lastApprovedNonces"
 	QueryLastPendingBatchRequestByAddr  = "lastPendingBatchRequest"
+	QueryBatchRequestByNonce            = "batch"
 	QueryOutgoingTxBatches              = "allBatches"
+	// batches that are approved but not observed
+	QueryInflightOutgoingTxBatches = "inflightBatches"
 	// last valset that was updated on the ETH side successfully
 	QueryLastObservedValset = "lastObservedMultiSigUpdate"
 	// last valset with enough signatures
 	QueryLastApprovedValset      = "lastApprovedMultiSigUpdate"
 	QueryAttestationsByClaimType = "allAttestations"
 	QueryAttestation             = "attestation"
+	QueryBridgedDenominators     = "allBridgedDenominators"
 )
 
 // NewQuerier is the module level router for state queries
@@ -43,10 +48,12 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return lastValsetRequests(ctx, keeper)
 		case QueryLastPendingValsetRequestByAddr:
 			return lastPendingValsetRequest(ctx, path[1], keeper)
-		case QueryLastObservedNonce:
-			return lastObservedNonce(ctx, path[1], keeper)
+		case QueryLastProcessedNonce:
+			return lastProcessedNonce(ctx, path[1], keeper)
 		case QueryLastObservedNonces:
 			return lastObservedNonces(ctx, keeper)
+		case QueryLastApprovedNonces:
+			return lastApprovedNonces(ctx, keeper)
 		case QueryLastPendingBatchRequestByAddr:
 			return lastPendingBatchRequest(ctx, path[1], keeper)
 		case QueryOutgoingTxBatches:
@@ -57,10 +64,16 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return lastObservedMultiSigUpdate(ctx, keeper)
 		case QueryAttestationsByClaimType:
 			return allAttestations(ctx, path[1], keeper)
+		case QueryBatchRequestByNonce:
+			return queryBatchByNonce(ctx, path[1], keeper)
 		case QueryAttestation:
 			return queryAttestation(ctx, path[1], path[2], keeper)
+		case QueryBridgedDenominators:
+			return queryBridgedDenominators(ctx, keeper)
+		case QueryInflightOutgoingTxBatches:
+			return queryInflightBatches(ctx, keeper)
 		default:
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown nameservice query endpoint")
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint", types.ModuleName)
 		}
 	}
 }
@@ -169,11 +182,11 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 	}
 
 	// todo: find validator address by operator key
-	validatorAddr := addr
+	validatorAddr := sdk.ValAddress(addr)
 
 	var pendingValsetReq *types.Valset
 	keeper.IterateValsetRequest(ctx, func(_ []byte, val types.Valset) bool {
-		found := keeper.HasValsetConfirm(ctx, val.Nonce, validatorAddr)
+		found := keeper.HasBridgeApprovalSignature(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, val.Nonce, validatorAddr)
 		if !found {
 			pendingValsetReq = &val
 		}
@@ -189,12 +202,13 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 	return res, nil
 }
 
-// lastObservedNonce returns as single nonce value or nil
-func lastObservedNonce(ctx sdk.Context, claimType string, keeper Keeper) ([]byte, error) {
-	if !types.IsClaimType(claimType) {
+// lastProcessedNonce returns as single nonce value or nil
+func lastProcessedNonce(ctx sdk.Context, claimTypeStr string, keeper Keeper) ([]byte, error) {
+	claimType, exists := types.ClaimTypeFromName(claimTypeStr)
+	if !exists {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "claim type")
 	}
-	att := keeper.GetLastObservedAttestation(ctx, types.ClaimType(claimType))
+	att := keeper.GetLastProcessedAttestation(ctx, claimType)
 	if att == nil {
 		return nil, nil
 	}
@@ -205,13 +219,32 @@ func lastObservedNonce(ctx sdk.Context, claimType string, keeper Keeper) ([]byte
 	return res, nil
 }
 
-// lastObservedNonce returns a list of nonces. One for each claim type if exists
+// lastObservedNonces returns a list of nonces. One for each claim type if exists
 func lastObservedNonces(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	result := make(map[string]types.UInt64Nonce, len(types.AllOracleClaimTypes))
 	for _, v := range types.AllOracleClaimTypes {
-		att := keeper.GetLastObservedAttestation(ctx, v)
-		if att != nil {
-			result[v.String()] = att.Nonce
+		nonce := keeper.GetLastAttestedNonce(ctx, v)
+		if nonce != nil {
+			result[v.String()] = *nonce
+		}
+	}
+	if len(result) == 0 {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, result)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return sdk.SortJSON(res)
+}
+
+// lastApprovedNonces returns a list of nonces. One for each claim type if exists
+func lastApprovedNonces(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	result := make(map[string]types.UInt64Nonce, len(types.AllOracleClaimTypes))
+	for _, v := range types.AllSignerApprovalClaimTypes {
+		nonce := keeper.GetLastAttestedNonce(ctx, v)
+		if nonce != nil {
+			result[v.String()] = *nonce
 		}
 	}
 	if len(result) == 0 {
@@ -226,17 +259,19 @@ func lastObservedNonces(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 
 type MultiSigUpdateResponse struct {
 	Valset     types.Valset `json:"valset"`
-	Signatures []string     `json:"signatures,omitempty"`
-	Checkpoint []byte       `json:"checkpoint"`
+	Signatures [][]byte     `json:"signatures,omitempty"`
 }
 
 func lastApprovedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	nonce := keeper.GetLastValsetApprovedNonce(ctx)
+	nonce := keeper.GetLastAttestedNonce(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate)
 	return fetchMultiSigUpdateData(ctx, nonce, keeper)
 }
 
 func lastObservedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	nonce := keeper.GetLastValsetObservedNonce(ctx)
+	nonce := keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
+	if nonce == nil || nonce.IsEmpty() {
+		nonce = keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeBootstrap)
+	}
 	return fetchMultiSigUpdateData(ctx, nonce, keeper)
 }
 
@@ -251,13 +286,12 @@ func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper K
 	}
 
 	result := MultiSigUpdateResponse{
-		Checkpoint: valset.GetCheckpoint(),
-		Valset:     *valset,
+		Valset: *valset,
 	}
 
-	// todo: revisit nonce type
-	keeper.IterateValsetConfirmByNonce(ctx, *nonce, func(_ []byte, confirm types.MsgValsetConfirm) bool {
-		result.Signatures = append(result.Signatures, confirm.Signature)
+	keeper.IterateBridgeApprovalSignatures(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, *nonce, func(_ []byte, sig []byte) bool {
+		// todo: check if signature order matters
+		result.Signatures = append(result.Signatures, sig)
 		return false
 	})
 
@@ -278,8 +312,8 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 	validatorAddr := sdk.ValAddress(addr)
 
 	var pendingBatchReq *types.OutgoingTxBatch
-	keeper.IterateOutgoingTXBatches(ctx, func(batchID uint64, batch types.OutgoingTxBatch) bool {
-		found := keeper.HasOutgoingTXBatchConfirm(ctx, batchID, validatorAddr)
+	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch types.OutgoingTxBatch) bool {
+		found := keeper.HasBridgeApprovalSignature(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, batch.Nonce, validatorAddr)
 		if !found {
 			pendingBatchReq = &batch
 		}
@@ -295,11 +329,53 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 	return res, nil
 }
 
+type ApprovedOutgoingTxBatchResponse struct {
+	Batch      types.OutgoingTxBatch `json:"batch"`
+	Signatures [][]byte              `json:"signatures,omitempty"`
+}
+
+func queryInflightBatches(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	// batches that are approved but not observed, yet
+	// batch nonce > than last observed nonce
+	var lastNonce types.UInt64Nonce
+	if att := keeper.GetLastProcessedAttestation(ctx, types.ClaimTypeEthereumBridgeWithdrawalBatch); att != nil {
+		lastNonce = att.Nonce
+	}
+
+	var batches []types.OutgoingTxBatch
+	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch types.OutgoingTxBatch) bool {
+		if !batch.Nonce.GreaterThan(lastNonce) {
+			return true
+		}
+		batches = append(batches, batch)
+		return false
+	})
+	if len(batches) == 0 {
+		return nil, nil
+	}
+	out := make([]ApprovedOutgoingTxBatchResponse, len(batches))
+	for i := range batches {
+		r := ApprovedOutgoingTxBatchResponse{
+			Batch: batches[i],
+		}
+		keeper.IterateBridgeApprovalSignatures(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, batches[i].Nonce, func(_ []byte, sig []byte) bool {
+			r.Signatures = append(r.Signatures, sig)
+			return false
+		})
+		out[i] = r
+	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, out)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
+}
+
 const MaxResults = 100 // todo: impl pagination
 
 func allBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var batches []types.OutgoingTxBatch
-	keeper.IterateOutgoingTXBatches(ctx, func(batchID uint64, batch types.OutgoingTxBatch) bool {
+	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch types.OutgoingTxBatch) bool {
 		batches = append(batches, batch)
 		return len(batches) == MaxResults
 	})
@@ -313,12 +389,13 @@ func allBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
-func allAttestations(ctx sdk.Context, claimType string, keeper Keeper) ([]byte, error) {
-	if !types.IsClaimType(claimType) {
+func allAttestations(ctx sdk.Context, claimTypeStr string, keeper Keeper) ([]byte, error) {
+	claimType, exists := types.ClaimTypeFromName(claimTypeStr)
+	if !exists {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "claim type")
 	}
 	var attestations []types.Attestation
-	keeper.IterateAttestationByClaimTypeDesc(ctx, types.ClaimType(claimType), func(_ []byte, att types.Attestation) bool {
+	keeper.IterateAttestationByClaimTypeDesc(ctx, claimType, func(_ []byte, att types.Attestation) bool {
 		attestations = append(attestations, att)
 		return len(attestations) == MaxResults
 	})
@@ -332,15 +409,17 @@ func allAttestations(ctx sdk.Context, claimType string, keeper Keeper) ([]byte, 
 	return res, nil
 }
 
-func queryAttestation(ctx sdk.Context, claimType, nonceStr string, keeper Keeper) ([]byte, error) {
-	if !types.IsClaimType(claimType) {
+func queryAttestation(ctx sdk.Context, claimTypeStr, nonceStr string, keeper Keeper) ([]byte, error) {
+	claimType, exists := types.ClaimTypeFromName(claimTypeStr)
+	if !exists {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "claim type")
 	}
+
 	nonce, err := parseNonce(nonceStr)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(err, "nonce")
 	}
-	attestation := keeper.GetAttestation(ctx, types.ClaimType(claimType), nonce)
+	attestation := keeper.GetAttestation(ctx, claimType, nonce)
 	if attestation == nil {
 		return nil, nil
 	}
@@ -353,4 +432,36 @@ func queryAttestation(ctx sdk.Context, claimType, nonceStr string, keeper Keeper
 
 func parseNonce(nonceArg string) (types.UInt64Nonce, error) {
 	return types.UInt64NonceFromString(nonceArg)
+}
+
+func queryBridgedDenominators(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	var r []types.BridgedDenominator
+	keeper.IterateCounterpartDenominators(ctx, func(rawKey []byte, denominator types.BridgedDenominator) bool {
+		r = append(r, denominator)
+		return false
+	})
+	if len(r) == 0 {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, r)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
+}
+
+func queryBatchByNonce(ctx sdk.Context, nonceStr string, keeper Keeper) ([]byte, error) {
+	nonce, err := parseNonce(nonceStr)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, "nonce")
+	}
+	batch := keeper.GetOutgoingTXBatch(ctx, nonce)
+	if batch == nil {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(keeper.cdc, *batch)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
 }

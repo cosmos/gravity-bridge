@@ -32,6 +32,7 @@ type (
 	MsgValsetConfirm                   = types.MsgValsetConfirm
 	MsgValsetRequest                   = types.MsgValsetRequest
 	MsgCreateEthereumClaims            = types.MsgCreateEthereumClaims
+	MsgBridgeSignatureSubmission       = types.MsgBridgeSignatureSubmission
 	EthereumClaim                      = types.EthereumClaim
 	EthereumBridgeDepositClaim         = types.EthereumBridgeDepositClaim
 	EthereumBridgeWithdrawalBatchClaim = types.EthereumBridgeWithdrawalBatchClaim

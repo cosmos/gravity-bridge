@@ -1,99 +1,14 @@
 package types
 
 import (
-	"bytes"
-	"encoding/binary"
+	"encoding/json"
 	"fmt"
-	"reflect"
-	"strconv"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
-
-// nonce defines an abstract nonce type that is unique within it's context.
-type nonce interface {
-	// String returns an encoded human readable representation. Used in URLs.
-	String() string
-	// Bytes returns an encoded raw bytes representation
-	Bytes() []byte
-	// ValidateBasic returns the result of the syntax check
-	ValidateBasic() error
-	// GreaterThan than other.
-	GreaterThan(o nonce) bool
-	IsEmpty() bool
-}
-
-type UInt64Nonce uint64
-
-var _ nonce = NewUInt64Nonce(0)
-
-func NewUInt64Nonce(s uint64) UInt64Nonce {
-	return UInt64Nonce(s)
-}
-
-// UInt64NonceFromBytes create UInt64Nonce from binary big endian representation
-func UInt64NonceFromBytes(s []byte) UInt64Nonce {
-	return NewUInt64Nonce(binary.BigEndian.Uint64(s))
-}
-
-// UInt64NonceFromBytes create UInt64Nonce from human readable string representation
-func UInt64NonceFromString(s string) (UInt64Nonce, error) {
-	v, err := strconv.ParseUint(s, 10, 64)
-	if err != nil {
-		return NewUInt64Nonce(0), err
-	}
-	return NewUInt64Nonce(v), nil
-}
-
-func Uint64FromNonce(n nonce) (uint64, error) {
-	if v, ok := n.(nonceUint64er); ok {
-		return v.Uint64(), nil
-	}
-	return 0, ErrUnsupported
-}
-
-func (n UInt64Nonce) Uint64() uint64 {
-	return uint64(n)
-}
-
-func (n UInt64Nonce) String() string {
-	return strconv.FormatUint(n.Uint64(), 10)
-}
-
-func (n UInt64Nonce) Bytes() []byte {
-	return sdk.Uint64ToBigEndian(n.Uint64())
-}
-
-func (n UInt64Nonce) ValidateBasic() error {
-	if n.IsEmpty() {
-		return ErrEmpty
-	}
-	return nil
-}
-
-type nonceUint64er interface {
-	Uint64() uint64
-}
-
-func (n UInt64Nonce) GreaterThan(o nonce) bool {
-	if o == nil || reflect.ValueOf(o).IsZero() || o.IsEmpty() {
-		return true
-	}
-	if n.IsEmpty() {
-		return false
-	}
-	if v, ok := o.(nonceUint64er); ok {
-		return n.Uint64() > v.Uint64()
-	}
-	return bytes.Compare(n.Bytes(), o.Bytes()) == 1
-}
-
-func (n UInt64Nonce) IsEmpty() bool {
-	return n == 0
-}
 
 type AttestationCertainty uint8
 
@@ -102,6 +17,37 @@ const (
 	CertaintyRequested AttestationCertainty = 1
 	CertaintyObserved  AttestationCertainty = 2
 )
+
+var certaintyToNames = map[AttestationCertainty]string{
+	CertaintyUnknown:   "unknown",
+	CertaintyRequested: "requested",
+	CertaintyObserved:  "observed",
+}
+
+func (c AttestationCertainty) String() string {
+	return certaintyToNames[c]
+}
+
+func (c AttestationCertainty) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%q", c.String())), nil
+}
+
+func (c *AttestationCertainty) UnmarshalJSON(input []byte) error {
+	if string(input) == `""` {
+		return nil
+	}
+	var s string
+	if err := json.Unmarshal(input, &s); err != nil {
+		return err
+	}
+	for k, v := range certaintyToNames {
+		if s == v {
+			*c = k
+			return nil
+		}
+	}
+	return sdkerrors.Wrap(ErrUnknown, "certainty")
+}
 
 type AttestationProcessStatus uint8
 
@@ -112,6 +58,38 @@ const (
 	ProcessStatusTimeout   AttestationProcessStatus = 3 // end block process will set this
 )
 
+var attestationProcessStatusToNames = map[AttestationProcessStatus]string{
+	ProcessStatusUnknown:   "unknown",
+	ProcessStatusInit:      "init",
+	ProcessStatusProcessed: "processed",
+	ProcessStatusTimeout:   "timeout",
+}
+
+func (c AttestationProcessStatus) String() string {
+	return attestationProcessStatusToNames[c]
+}
+
+func (c AttestationProcessStatus) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%q", c.String())), nil
+}
+
+func (c *AttestationProcessStatus) UnmarshalJSON(input []byte) error {
+	if string(input) == `""` {
+		return nil
+	}
+	var s string
+	if err := json.Unmarshal(input, &s); err != nil {
+		return err
+	}
+	for k, v := range attestationProcessStatusToNames {
+		if s == v {
+			*c = k
+			return nil
+		}
+	}
+	return sdkerrors.Wrap(ErrUnknown, "process status")
+}
+
 type AttestationProcessResult uint8
 
 const (
@@ -120,27 +98,98 @@ const (
 	ProcessResultFailure AttestationProcessResult = 2
 )
 
+var attestationProcessResultToNames = map[AttestationProcessResult]string{
+	ProcessResultUnknown: "unknown",
+	ProcessResultSuccess: "success",
+	ProcessResultFailure: "failure",
+}
+
+func (c AttestationProcessResult) String() string {
+	return attestationProcessResultToNames[c]
+}
+
+func (c AttestationProcessResult) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%q", c.String())), nil
+}
+
+func (c *AttestationProcessResult) UnmarshalJSON(input []byte) error {
+	if string(input) == `""` {
+		return nil
+	}
+	var s string
+	if err := json.Unmarshal(input, &s); err != nil {
+		return err
+	}
+	for k, v := range attestationProcessResultToNames {
+		if s == v {
+			*c = k
+			return nil
+		}
+	}
+	return sdkerrors.Wrap(ErrUnknown, "process result")
+}
+
 // ClaimType is the cosmos type of an event from the counterpart chain that can be handled
-type ClaimType string
+type ClaimType byte
 
-const ( // todo: revisit type: length and overlap
+const (
+	ClaimTypeUnknown ClaimType = 0
 	// oracles
-	ClaimTypeEthereumBridgeDeposit         ClaimType = "bridge_deposit"
-	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = "bridge_withdrawal_batch"
-	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = "bridge_multisig_update"
-	ClaimTypeEthereumBootstrap             ClaimType = "bridge_bootstrap"
+	ClaimTypeEthereumBridgeDeposit ClaimType = 1
+	// a withdraw batch was executed on the Ethereum side
+	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = 2
+	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = 3
+	ClaimTypeEthereumBridgeBootstrap       ClaimType = 4
 
-	// signed confirmations to Ethereum
-	ClaimTypeOrchestratorSignedMultiSigUpdate ClaimType = "orchestrator_signed_multisig_update"
-	ClaimTypeOrchestratorSignedWithdrawBatch  ClaimType = "orchestrator_signed_withdraw_batch"
+	// signed confirmations on cosmos for Ethereum side
+	ClaimTypeOrchestratorSignedMultiSigUpdate ClaimType = 5
+	ClaimTypeOrchestratorSignedWithdrawBatch  ClaimType = 6
 )
 
-var AllOracleClaimTypes = []ClaimType{ClaimTypeEthereumBridgeDeposit, ClaimTypeEthereumBridgeWithdrawalBatch, ClaimTypeEthereumBridgeMultiSigUpdate, ClaimTypeEthereumBootstrap}
-var AllConfirmationClaimTypes = []ClaimType{ClaimTypeOrchestratorSignedMultiSigUpdate, ClaimTypeOrchestratorSignedWithdrawBatch}
+var claimTypeToNames = map[ClaimType]string{
+	ClaimTypeEthereumBridgeDeposit:            "bridge_deposit",
+	ClaimTypeEthereumBridgeWithdrawalBatch:    "bridge_withdrawal_batch",
+	ClaimTypeEthereumBridgeMultiSigUpdate:     "bridge_multisig_update",
+	ClaimTypeEthereumBridgeBootstrap:          "bridge_bootstrap",
+	ClaimTypeOrchestratorSignedMultiSigUpdate: "orchestrator_signed_multisig_update",
+	ClaimTypeOrchestratorSignedWithdrawBatch:  "orchestrator_signed_withdraw_batch",
+}
 
-func IsClaimType(s string) bool {
-	for _, v := range append(AllOracleClaimTypes, AllConfirmationClaimTypes...) {
-		if string(v) == s {
+// AllOracleClaimTypes types that are observed and submitted by the current orchestrator set
+var AllOracleClaimTypes = []ClaimType{ClaimTypeEthereumBridgeDeposit, ClaimTypeEthereumBridgeWithdrawalBatch, ClaimTypeEthereumBridgeMultiSigUpdate, ClaimTypeEthereumBridgeBootstrap}
+
+// AllSignerApprovalClaimTypes types that are signed with by the bridge multisig set
+var AllSignerApprovalClaimTypes = []ClaimType{ClaimTypeOrchestratorSignedMultiSigUpdate, ClaimTypeOrchestratorSignedWithdrawBatch}
+
+func ClaimTypeFromName(s string) (ClaimType, bool) {
+	for _, v := range append(AllOracleClaimTypes, AllSignerApprovalClaimTypes...) {
+		name, ok := claimTypeToNames[v]
+		if ok && name == s {
+			return v, true
+		}
+	}
+	return ClaimTypeUnknown, false
+}
+func ToClaimTypeNames(s ...ClaimType) []string {
+	r := make([]string, len(s))
+	for i := range s {
+		r[i] = s[i].String()
+	}
+	return r
+}
+
+func IsSignerApprovalClaimType(s ClaimType) bool {
+	for _, v := range AllSignerApprovalClaimTypes {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
+func IsOracleObservationClaimType(s ClaimType) bool {
+	for _, v := range AllOracleClaimTypes {
+		if v == s {
 			return true
 		}
 	}
@@ -148,32 +197,52 @@ func IsClaimType(s string) bool {
 }
 
 func (c ClaimType) String() string {
-	return string(c)
+	return claimTypeToNames[c]
 }
 
 func (c ClaimType) Bytes() []byte {
-	return []byte(c)
+	return []byte{byte(c)}
+}
+
+func (e ClaimType) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%q", e.String())), nil
+}
+
+func (e *ClaimType) UnmarshalJSON(input []byte) error {
+	if string(input) == `""` {
+		return nil
+	}
+	var s string
+	if err := json.Unmarshal(input, &s); err != nil {
+		return err
+	}
+	c, exists := ClaimTypeFromName(s)
+	if !exists {
+		return sdkerrors.Wrap(ErrUnknown, "claim type")
+	}
+	*e = c
+	return nil
 }
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by all orchestrators
 type Attestation struct {
-	ClaimType           ClaimType
-	Nonce               UInt64Nonce
-	Certainty           AttestationCertainty
-	Status              AttestationProcessStatus
-	ProcessResult       AttestationProcessResult
-	Tally               AttestationTally
-	SubmitTime          time.Time
-	ConfirmationEndTime time.Time // votes collected <= end time. should be < unbonding period
+	ClaimType           ClaimType                `json:"claim_type"`
+	Nonce               UInt64Nonce              `json:"nonce"`
+	Certainty           AttestationCertainty     `json:"certainty"`
+	Status              AttestationProcessStatus `json:"status"`
+	ProcessResult       AttestationProcessResult `json:"process_result"`
+	Tally               AttestationTally         `json:"tally"`
+	SubmitTime          time.Time                `json:"submit_time"`
+	ConfirmationEndTime time.Time                `json:"confirmation_end_time"` // votes collected <= end time. should be < unbonding period
 	// ExpiryTime time.Time // todo: do we want to keep Attestations forever persisted or can we delete them?
-	Details AttestationDetails
+	Details AttestationDetails `json:"details,omitempty"`
 }
 
 type AttestationTally struct {
-	TotalVotesPower    sdk.Uint
-	TotalVotesCount    uint64
-	RequiredVotesPower sdk.Uint // todo: revisit if the assumption is true that we can use the values from first claim timestamp
-	RequiredVotesCount uint64   // todo: revisit as above
+	TotalVotesPower    sdk.Uint `json:"total_votes_power"`
+	TotalVotesCount    uint64   `json:"total_votes_count"`
+	RequiredVotesPower sdk.Uint `json:"required_votes_power"` // todo: revisit if the assumption is true that we can use the values from first claim timestamp
+	RequiredVotesCount uint64   `json:"required_votes_count"` // todo: revisit as above
 }
 
 func (t *AttestationTally) addVote(power uint64) {
@@ -221,8 +290,8 @@ var (
 
 // BridgeDeposit is an attestation detail that adds vouchers to an account when executed
 type BridgeDeposit struct {
-	Nonce          UInt64Nonce // redundant information but required for a unique hash. Two deposits should not have the same hash.
-	ERC20Token     ERC20Token
+	Nonce          UInt64Nonce     `json:"nonce"` // redundant information but required for a unique hash. Two deposits should not have the same hash.
+	ERC20Token     ERC20Token      `json:"erc_20_token"`
 	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
 	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
 }
@@ -242,10 +311,10 @@ func (s SignedCheckpoint) Hash() []byte {
 }
 
 type BridgeBootstrap struct {
-	AllowedValidatorSet []EthereumAddress
-	ValidatorPowers     []uint64
-	PeggyID             []byte `json:"peggy_id,omitempty" yaml:"peggy_id"`
-	StartThreshold      uint64 `json:"start_threshold,omitempty" yaml:"start_threshold"`
+	AllowedValidatorSet []EthereumAddress `json:"allowed_validator_set"`
+	ValidatorPowers     []uint64          `json:"validator_powers"`
+	PeggyID             []byte            `json:"peggy_id,omitempty" yaml:"peggy_id"`
+	StartThreshold      uint64            `json:"start_threshold,omitempty" yaml:"start_threshold"`
 }
 
 func (b BridgeBootstrap) Hash() []byte {

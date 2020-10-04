@@ -19,6 +19,7 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgSendToEth{}, "peggy/MsgSendToEth", nil)
 	cdc.RegisterConcrete(MsgRequestBatch{}, "peggy/MsgRequestBatch", nil)
 	cdc.RegisterConcrete(MsgConfirmBatch{}, "peggy/MsgConfirmBatch", nil)
+	cdc.RegisterConcrete(MsgBridgeSignatureSubmission{}, "peggy/MsgBridgeSignatureSubmission", nil)
 
 	cdc.RegisterConcrete(Valset{}, "peggy/Valset", nil)
 

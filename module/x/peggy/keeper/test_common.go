@@ -190,6 +190,18 @@ func MakeTestCodec() *codec.Codec {
 	return cdc
 }
 
+func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAddress, amount types.ERC20Token) sdk.Coin {
+	if !k.HasCounterpartDenominator(ctx, types.NewVoucherDenom(amount.TokenContractAddress, amount.Symbol)) {
+		k.StoreCounterpartDenominator(ctx, amount.TokenContractAddress, amount.Symbol)
+	}
+	coin := amount.AsVoucherCoin()
+	vouchers := sdk.Coins{coin}
+	err := k.supplyKeeper.MintCoins(ctx, types.ModuleName, vouchers)
+	err = k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, dest, vouchers)
+	require.NoError(t, err)
+	return coin
+}
+
 var _ types.StakingKeeper = &StakingKeeperMock{}
 
 type StakingKeeperMock struct {

@@ -16,17 +16,17 @@ const OutgoingTxBatchSize = 100
 // - select available transactions from the outgoing transaction pool sorted by fee desc
 // - persist an outgoing batch object with an incrementing ID = nonce
 // - emit an event
-func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.VoucherDenom, maxElements int) (uint64, error) {
+func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.VoucherDenom, maxElements int) (*types.OutgoingTxBatch, error) {
 	if maxElements == 0 {
-		return 0, sdkerrors.Wrap(types.ErrInvalid, "max elements value")
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "max elements value")
 	}
 	bridgedDenom := k.GetCounterpartDenominator(ctx, voucherDenom)
 	if bridgedDenom == nil {
-		return 0, sdkerrors.Wrap(types.ErrUnknown, "bridged denominator")
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "bridged denominator")
 	}
 	selectedTx, err := k.pickUnbatchedTX(ctx, voucherDenom, *bridgedDenom, maxElements)
 	if len(selectedTx) == 0 || err != nil {
-		return 0, err
+		return nil, err
 	}
 	totalFee := selectedTx[0].BridgeFee
 	for _, tx := range selectedTx[1:] {
@@ -42,23 +42,23 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 		TotalFee:           totalFee,
 		BatchStatus:        types.BatchStatusPending,
 	}
-	k.storeBatch(ctx, nextID, batch)
+	k.storeBatch(ctx, nonce, batch)
 
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatch,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, strconv.Itoa(int(nextID))),
+		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, nonce.String()),
 		sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
 	)
 	ctx.EventManager().EmitEvent(batchEvent)
-	return nextID, nil
+	return &batch, nil
 }
 
-func (k Keeper) storeBatch(ctx sdk.Context, batchID uint64, batch types.OutgoingTxBatch) {
+func (k Keeper) storeBatch(ctx sdk.Context, nonce types.UInt64Nonce, batch types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOutgoingTxBatchKey(batchID), k.cdc.MustMarshalBinaryBare(batch))
+	store.Set(types.GetOutgoingTxBatchKey(nonce), k.cdc.MustMarshalBinaryBare(batch))
 }
 
 // pickUnbatchedTX find TX in pool and remove from "available" second index
@@ -81,9 +81,9 @@ func (k Keeper) pickUnbatchedTX(ctx sdk.Context, denom types.VoucherDenom, bridg
 }
 
 // GetOutgoingTXBatch loads a batch object. Returns nil when not exists.
-func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, batchID uint64) *types.OutgoingTxBatch {
+func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, nonce types.UInt64Nonce) *types.OutgoingTxBatch {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetOutgoingTxBatchKey(batchID))
+	bz := store.Get(types.GetOutgoingTxBatchKey(nonce))
 	if len(bz) == 0 {
 		return nil
 	}
@@ -93,8 +93,8 @@ func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, batchID uint64) *types.Outgo
 }
 
 // CancelOutgoingTXBatch releases all TX in the batch to the "available" second index. BatchStatus is set to canceled
-func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, batchID uint64) error {
-	batch := k.GetOutgoingTXBatch(ctx, batchID)
+func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, nonce types.UInt64Nonce) error {
+	batch := k.GetOutgoingTXBatch(ctx, nonce)
 	if batch == nil {
 		return types.ErrUnknown
 	}
@@ -104,40 +104,35 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, batchID uint64) error {
 	for _, tx := range batch.Elements {
 		k.prependToUnbatchedTXIndex(ctx, batch.BridgedDenominator.ToVoucherCoin(tx.BridgeFee.Amount), tx.ID)
 	}
-	k.storeBatch(ctx, batchID, *batch)
+	k.storeBatch(ctx, nonce, *batch)
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatchCanceled,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, strconv.Itoa(int(batchID))),
-		sdk.NewAttribute(types.AttributeKeyNonce, types.NewUInt64Nonce(batchID).String()),
+		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, nonce.String()),
+		sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
 	)
 	ctx.EventManager().EmitEvent(batchEvent)
 	return nil
 }
 
 // SetOutgoingTXBatchConfirm stores the signature an orchestrator has submitted for an outgoing batch
-func (k Keeper) SetOutgoingTXBatchConfirm(ctx sdk.Context, batchID uint64, validator sdk.ValAddress, signature []byte) {
+func (k Keeper) SetOutgoingTXBatchConfirm(ctx sdk.Context, nonce types.UInt64Nonce, validator sdk.ValAddress, signature []byte) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOutgoingTXBatchConfirmKey(batchID, validator), signature)
-}
-
-// HasOutgoingTXBatchConfirm returns true when a signature was persisted for the given batch and validator address
-func (k Keeper) HasOutgoingTXBatchConfirm(ctx sdk.Context, batchID uint64, validatorAddr sdk.ValAddress) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetOutgoingTXBatchConfirmKey(batchID, validatorAddr))
+	store.Set(types.GetOutgoingTXBatchConfirmKey(nonce, validator), signature)
 }
 
 // Iterate through all outgoing batches in DESC order.
-func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(batchID uint64, batch types.OutgoingTxBatch) bool) {
+func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, batch types.OutgoingTxBatch) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OutgoingTXBatchKey)
 	iter := prefixStore.ReverseIterator(nil, nil)
+	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var batch types.OutgoingTxBatch
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &batch)
 		// cb returns true to stop early
-		if cb(types.DecodeUin64(iter.Key()), batch) {
+		if cb(iter.Key(), batch) {
 			break
 		}
 	}

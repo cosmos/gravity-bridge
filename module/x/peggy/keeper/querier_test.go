@@ -232,9 +232,9 @@ func TestLastValsetRequestnonces(t *testing.T) {
 func TestLastPendingValsetRequest(t *testing.T) {
 	k, ctx, _ := CreateTestEnv(t)
 	var (
-		aValidatorCosmosAddr       = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		otherValidatorCosmosAddr   = bytes.Repeat([]byte{2}, sdk.AddrLen)
-		unknownValidatorCosmosAddr = bytes.Repeat([]byte{3}, sdk.AddrLen)
+		aValidatorCosmosAddr                      = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		otherValidatorCosmosAddr   sdk.ValAddress = bytes.Repeat([]byte{2}, sdk.AddrLen)
+		unknownValidatorCosmosAddr                = bytes.Repeat([]byte{3}, sdk.AddrLen)
 	)
 	k.StakingKeeper = NewStakingKeeperMock(aValidatorCosmosAddr, otherValidatorCosmosAddr)
 	// seed with requests
@@ -242,7 +242,7 @@ func TestLastPendingValsetRequest(t *testing.T) {
 	k.SetValsetRequest(ctx)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	nonce := types.NewUInt64Nonce(uint64(ctx.BlockHeight()))
-	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{Nonce: nonce, Validator: otherValidatorCosmosAddr})
+	k.SetBridgeApprovalSignature(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, nonce, otherValidatorCosmosAddr, []byte("signature"))
 	k.SetValsetRequest(ctx)
 
 	specs := map[string]struct {

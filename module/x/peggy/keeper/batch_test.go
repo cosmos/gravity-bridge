@@ -43,12 +43,11 @@ func TestBatches(t *testing.T) {
 	}
 	// when
 	ctx = ctx.WithBlockTime(now)
-	batchID, err := k.BuildOutgoingTXBatch(ctx, voucherDenom, 2)
+	batch, err := k.BuildOutgoingTXBatch(ctx, voucherDenom, 2)
 	require.NoError(t, err)
-	t.Logf("___ response: %#v", batchID)
 
 	// then batch is persisted
-	gotBatch := k.GetOutgoingTXBatch(ctx, batchID)
+	gotBatch := k.GetOutgoingTXBatch(ctx, batch.Nonce)
 	require.NotNil(t, gotBatch)
 
 	denominator := types.NewBridgedDenominator(myTokenContractAddr, myETHToken)
@@ -102,11 +101,11 @@ func TestBatches(t *testing.T) {
 	// ------
 	// and when canceled
 
-	err = k.CancelOutgoingTXBatch(ctx, batchID)
+	err = k.CancelOutgoingTXBatch(ctx, batch.Nonce)
 	require.NoError(t, err)
 
 	// then
-	gotBatch = k.GetOutgoingTXBatch(ctx, batchID)
+	gotBatch = k.GetOutgoingTXBatch(ctx, batch.Nonce)
 	require.NotNil(t, gotBatch)
 	assert.Equal(t, types.BatchStatusCancelled, gotBatch.BatchStatus)
 

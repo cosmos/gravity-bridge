@@ -38,13 +38,13 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		CmdValsetConfirm(storeKey, cdc),
 		GetObservedCmd(cdc),
 		GetApprovedCmd(storeKey, cdc),
-		GetUnsafeTestingCmd(),
+		GetUnsafeTestingCmd(cdc),
 	)...)
 
 	return peggyTxCmd
 }
 
-func GetUnsafeTestingCmd() *cobra.Command {
+func GetUnsafeTestingCmd(cdc *codec.Codec) *cobra.Command {
 	testingTxCmd := &cobra.Command{
 		Use:                        "unsafe_testing",
 		Short:                      "helpers for testing. not going into production",
@@ -63,7 +63,7 @@ func GetUnsafeTestingCmd() *cobra.Command {
 // GetCmdUpdateEthAddress updates the network about the eth address that you have on record.
 func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "update-eth-addr [eth private key]",
+		Use:   "update-eth-addr [eth_private_key]",
 		Short: "Update your Ethereum address which will be used for signing executables for the `multisig set`",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -126,8 +126,8 @@ func CmdValsetRequest(cdc *codec.Codec) *cobra.Command {
 
 func CmdUnsafeETHPrivKey() *cobra.Command {
 	return &cobra.Command{
-		Use:   "gen_eth_key",
-		Short: "UNSAFE - generate and print a new ecdsa key",
+		Use:   "gen-eth-key",
+		Short: "Generate and print a new ecdsa key",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			key, err := ethCrypto.GenerateKey()
 			if err != nil {
@@ -142,11 +142,10 @@ func CmdUnsafeETHPrivKey() *cobra.Command {
 
 func CmdUnsafeETHAddr() *cobra.Command {
 	return &cobra.Command{
-		Use:   "eth_address",
-		Short: "UNSAFE - print address for an ECDSA eth key",
+		Use:   "eth-address",
+		Short: "Print address for an ECDSA eth key",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Make Eth Signature over valset
 			privKeyString := args[0][2:]
 			privateKey, err := ethCrypto.HexToECDSA(privKeyString)
 			if err != nil {

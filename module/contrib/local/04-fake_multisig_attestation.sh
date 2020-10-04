@@ -17,6 +17,6 @@ peggycli q peggy attestation orchestrator_signed_multisig_update $nonce -o json 
 echo "## Submit observation"
 # chain id: 1
 # bridge contract address: 0x8858eeb3dfffa017d4bce9801d340d36cf895ccf
-peggycli tx peggy observed  multisig-update 1 0x8858eeb3dfffa017d4bce9801d340d36cf895ccf  "$nonce" --from validator --chain-id=testing -b block -y
+#peggycli tx peggy observed  multisig-update 1 0x8858eeb3dfffa017d4bce9801d340d36cf895ccf  "$nonce" --from validator --chain-id=testing -b block -y
 echo "## Query last observed state"
 peggycli q peggy observed nonces -o json

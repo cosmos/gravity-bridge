@@ -10,6 +10,9 @@ import (
 const signaturePrefix = "\x19Ethereum Signed Message:\n32"
 
 func NewEthereumSignature(hash []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
+	if privateKey == nil {
+		return nil, sdkerrors.Wrap(ErrEmpty, "private key")
+	}
 	protectedHash := crypto.Keccak256Hash(append([]uint8(signaturePrefix), hash...))
 	return crypto.Sign(protectedHash.Bytes(), privateKey)
 }

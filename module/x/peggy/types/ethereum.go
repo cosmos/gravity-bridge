@@ -50,7 +50,7 @@ func (e EthereumAddress) IsEmpty() bool {
 	return emptyAddr == e
 }
 
-// MarshalJSON marshals the etherum address to JSON
+// MarshalJSON marshals the ethereum address to JSON
 func (e EthereumAddress) MarshalJSON() ([]byte, error) {
 	if e.IsEmpty() {
 		return []byte(`""`), nil

@@ -159,11 +159,12 @@ func (k Keeper) GetCounterpartDenominator(ctx sdk.Context, voucherDenom types.Vo
 }
 
 // StoreCounterpartDenominator persists the bridged token details. Overwrites an existing entry without error
-func (k Keeper) StoreCounterpartDenominator(ctx sdk.Context, tokenContractAddress types.EthereumAddress, symbol string) {
+func (k Keeper) StoreCounterpartDenominator(ctx sdk.Context, tokenContractAddress types.EthereumAddress, symbol string) types.BridgedDenominator {
 	store := ctx.KVStore(k.storeKey)
 	voucherDenominator := types.NewVoucherDenom(tokenContractAddress, symbol)
 	bridgedDenominator := types.NewBridgedDenominator(tokenContractAddress, symbol)
 	store.Set(types.GetDenominatorKey(voucherDenominator.Unprefixed()), k.cdc.MustMarshalBinaryBare(bridgedDenominator))
+	return bridgedDenominator
 }
 
 func (k Keeper) HasCounterpartDenominator(ctx sdk.Context, voucherDenominator types.VoucherDenom) bool {
@@ -171,9 +172,26 @@ func (k Keeper) HasCounterpartDenominator(ctx sdk.Context, voucherDenominator ty
 	return store.Has(types.GetDenominatorKey(voucherDenominator.Unprefixed()))
 }
 
+// IterateCounterpartDenominators iterate through all bridged denominator types
+func (k Keeper) IterateCounterpartDenominators(ctx sdk.Context, cb func([]byte, types.BridgedDenominator) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DenomiatorPrefix)
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var d types.BridgedDenominator
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &d)
+		// cb returns true to stop early
+		if cb(iter.Key(), d) {
+			return
+		}
+	}
+	return
+}
+
 func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, voucherDenom types.VoucherDenom, cb func(uint64, types.OutgoingTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
 	iter := prefixStore.ReverseIterator(prefixRange([]byte(voucherDenom.Unprefixed())))
+	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var ids types.IDSet
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ids)

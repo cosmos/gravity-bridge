@@ -21,19 +21,21 @@ const (
 )
 
 var (
-	EthAddressKey                    = []byte{0x1}
-	ValsetRequestKey                 = []byte{0x2}
-	ValsetConfirmKey                 = []byte{0x3}
-	OracleClaimKey                   = []byte{0x4}
-	OracleAttestationKey             = []byte{0x5}
-	OutgoingTXPoolKey                = []byte{0x6}
-	SequenceKeyPrefix                = []byte{0x7}
-	DenomiatorPrefix                 = []byte{0x8}
-	SecondIndexOutgoingTXFeeKey      = []byte{0x9}
-	OutgoingTXBatchKey               = []byte{0xa}
-	OutgoingTXBatchConfirmKey        = []byte{0xb}
-	SecondIndexLastValsetApprovedKey = []byte{0xc}
-	SecondIndexLastValsetObservedKey = []byte{0xd}
+	EthAddressKey    = []byte{0x1}
+	ValsetRequestKey = []byte{0x2}
+	// deprecated
+	ValsetConfirmKey            = []byte{0x3}
+	OracleClaimKey              = []byte{0x4}
+	OracleAttestationKey        = []byte{0x5}
+	OutgoingTXPoolKey           = []byte{0x6}
+	SequenceKeyPrefix           = []byte{0x7}
+	DenomiatorPrefix            = []byte{0x8}
+	SecondIndexOutgoingTXFeeKey = []byte{0x9}
+	OutgoingTXBatchKey          = []byte{0xa}
+	// deprecated
+	OutgoingTXBatchConfirmKey  = []byte{0xb}
+	BridgeApprovalSignatureKey = []byte{0xe}
+	SecondIndexNonceByClaimKey = []byte{0xf}
 
 	// sequence keys
 	KeyLastTXPoolID        = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
@@ -48,16 +50,9 @@ func GetValsetRequestKey(nonce UInt64Nonce) []byte {
 	return append(ValsetRequestKey, nonce.Bytes()...)
 }
 
+// deprecated
 func GetValsetConfirmKey(nonce UInt64Nonce, validator sdk.AccAddress) []byte {
 	return append(ValsetConfirmKey, append(nonce.Bytes(), []byte(validator)...)...)
-}
-
-func GetSecondIndexLastValsetApprovedKey(nonce UInt64Nonce) []byte {
-	return append(SecondIndexLastValsetApprovedKey, nonce.Bytes()...)
-}
-
-func GetSecondIndexLastValsetObservedKey(nonce UInt64Nonce) []byte {
-	return append(SecondIndexLastValsetObservedKey, nonce.Bytes()...)
 }
 
 func GetClaimKey(claimType ClaimType, nonce UInt64Nonce, validator sdk.ValAddress, details AttestationDetails) []byte {
@@ -65,7 +60,7 @@ func GetClaimKey(claimType ClaimType, nonce UInt64Nonce, validator sdk.ValAddres
 	if details != nil {
 		detailsHash = details.Hash()
 	}
-	claimTypeLen := len(claimType)
+	claimTypeLen := len(claimType.Bytes())
 	nonceBz := nonce.Bytes()
 	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz)+len(detailsHash))
 	copy(key[0:], OracleClaimKey)
@@ -76,8 +71,16 @@ func GetClaimKey(claimType ClaimType, nonce UInt64Nonce, validator sdk.ValAddres
 	return key
 }
 
+func GetLastNonceByClaimTypeSecondIndexKeyPrefix(claimType ClaimType) []byte {
+	return append(SecondIndexNonceByClaimKey, claimType.Bytes()...)
+}
+
+func GetLastNonceByClaimTypeSecondIndexKey(claimType ClaimType, nonce UInt64Nonce) []byte {
+	return append(GetLastNonceByClaimTypeSecondIndexKeyPrefix(claimType), nonce.Bytes()...)
+}
+
 func GetAttestationKey(claimType ClaimType, nonce UInt64Nonce) []byte {
-	claimTypeLen := len(claimType)
+	claimTypeLen := len(claimType.Bytes())
 	nonceBz := nonce.Bytes()
 	key := make([]byte, len(OracleAttestationKey)+claimTypeLen+len(nonceBz))
 	copy(key[0:], OracleAttestationKey)
@@ -90,14 +93,28 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 	return append(OutgoingTXPoolKey, sdk.Uint64ToBigEndian(id)...)
 }
 
-func GetOutgoingTxBatchKey(batchID uint64) []byte {
-	return append(OutgoingTXBatchKey, sdk.Uint64ToBigEndian(batchID)...)
+func GetOutgoingTxBatchKey(nonce UInt64Nonce) []byte {
+	return append(OutgoingTXBatchKey, nonce.Bytes()...)
 }
 
-func GetOutgoingTXBatchConfirmKey(batchID uint64, validator sdk.ValAddress) []byte {
-	bz := make([]byte, 8)
-	binary.BigEndian.PutUint64(bz, batchID)
-	return append(OutgoingTXBatchConfirmKey, append(bz, []byte(validator)...)...)
+// deprecated
+func GetOutgoingTXBatchConfirmKey(nonce UInt64Nonce, validator sdk.ValAddress) []byte {
+	return append(OutgoingTXBatchConfirmKey, append(nonce.Bytes(), validator.Bytes()...)...)
+}
+
+func GetBridgeApprovalSignatureKeyPrefix(claimType ClaimType) []byte {
+	return append(BridgeApprovalSignatureKey, claimType.Bytes()...)
+}
+func GetBridgeApprovalSignatureKey(claimType ClaimType, nonce UInt64Nonce, validator sdk.ValAddress) []byte {
+	prefix := GetBridgeApprovalSignatureKeyPrefix(claimType)
+	prefixLen := len(prefix)
+	nonceLen := 8
+
+	r := make([]byte, prefixLen+nonceLen+len(validator))
+	copy(r, prefix)
+	copy(r[prefixLen:], nonce.Bytes())
+	copy(r[prefixLen+nonceLen:], validator)
+	return r
 }
 
 func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
