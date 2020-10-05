@@ -75,11 +75,8 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		a.keeper.setPeggyID(ctx, bootstrap.PeggyID)
 		a.keeper.setStartThreshold(ctx, bootstrap.StartThreshold)
 
-		initialMultisigSet := types.Valset{
-			Nonce:        att.Nonce,
-			Powers:       bootstrap.ValidatorPowers,
-			EthAddresses: bootstrap.AllowedValidatorSet,
-		}
+		initialMultisigSet := types.NewValset(att.Nonce, bootstrap.BridgeValidators)
+
 		// todo: do we want to do a sanity check that these validator addresses exits already?
 		// the peggy bridge can not operate proper without orchestrators having their ethereum
 		// addresses set before.

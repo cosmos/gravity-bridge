@@ -437,13 +437,11 @@ var (
 // EthereumBridgeBootstrappedClaim orchestrators confirm that the contract is setup on the Ethereum side and the init data.
 type EthereumBridgeBootstrappedClaim struct {
 	Nonce UInt64Nonce `json:"nonce" yaml:"nonce"`
-	Block uint64      `json:"block" yaml:"block"`
-	// AllowedValidatorSet addresses to participate
-	AllowedValidatorSet []EthereumAddress `json:"allowed_validator_set" yaml:"allowed_validator_set"`
-	// ValidatorPowers the validator's power values
-	ValidatorPowers []uint64 `json:"validator_powers" yaml:"validator_powers"`
-	// PeggyID is a random 32 byte hex value to prevent signature reuse
+	// PeggyID is a random 32 byte value to prevent signature reuse
 	PeggyID string `json:"peggy_id" yaml:"peggy_id"`
+	Block   uint64 `json:"block" yaml:"block"`
+	// BridgeValidators is the initial MultiSig Set
+	BridgeValidators BridgeValidators `json:"bridge_validators" yaml:"bridge_validators"`
 	// StartThreshold is the percentage of total voting power that must be online and participating in
 	// Peggy operations before a bridge can start operating
 	StartThreshold uint64 `json:"start_threshold" yaml:"start_threshold"`
@@ -461,30 +459,15 @@ func (e EthereumBridgeBootstrappedClaim) ValidateBasic() error {
 	if err := e.Nonce.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "nonce")
 	}
-	for i := range e.AllowedValidatorSet {
-		if e.AllowedValidatorSet[i].IsEmpty() {
-			return sdkerrors.Wrap(ErrEmpty, "ethereum address")
-		}
-	}
-	for i := range e.ValidatorPowers {
-		if e.ValidatorPowers[i] == 0 {
-			return sdkerrors.Wrap(ErrEmpty, "power")
-		}
-	}
-	if len(e.AllowedValidatorSet) != len(e.ValidatorPowers) {
-		return sdkerrors.Wrap(ErrInvalid, "validator and power element count does not match")
+	if err := e.BridgeValidators.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "bridge validators")
 	}
 	// todo: implement me proper
 	return nil
 }
 
 func (e EthereumBridgeBootstrappedClaim) Details() AttestationDetails {
-	return BridgeBootstrap{
-		AllowedValidatorSet: e.AllowedValidatorSet,
-		ValidatorPowers:     e.ValidatorPowers,
-		PeggyID:             e.PeggyID,
-		StartThreshold:      e.StartThreshold,
-	}
+	return NewBridgeBootstrap(e.PeggyID, e.BridgeValidators, e.StartThreshold)
 }
 
 // MsgCreateEthereumClaims
@@ -535,6 +518,7 @@ func (m MsgCreateEthereumClaims) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{m.Orchestrator}
 }
 
+// MsgBridgeSignatureSubmission submits the Ethereum signature for a given nonce an claim type.
 type MsgBridgeSignatureSubmission struct {
 	Nonce             UInt64Nonce    `json:"nonce"`
 	ClaimType         ClaimType      `json:"claim_type"`

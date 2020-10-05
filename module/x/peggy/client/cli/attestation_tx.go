@@ -82,13 +82,23 @@ func CmdSendETHBootstrapRequest(cdc *codec.Codec) *cobra.Command {
 			for _, v := range strings.Split(args[3], ",") {
 				validators = append(validators, types.NewEthereumAddress(v))
 			}
-
 			for _, v := range strings.Split(args[4], ",") {
 				p, err := strconv.ParseUint(v, 10, 64)
 				if err != nil {
 					return sdkerrors.Wrap(err, "power")
 				}
 				powers = append(powers, p)
+			}
+
+			if len(validators) != len(powers) {
+				return errors.New("not equal elements in validators and power")
+			}
+			bridgeValidators := make(types.BridgeValidators, len(validators))
+			for i := range validators {
+				bridgeValidators[i] = types.BridgeValidator{
+					Power:           powers[i],
+					EthereumAddress: validators[i],
+				}
 			}
 
 			startThreshold, err := strconv.ParseUint(args[6], 10, 64)
@@ -103,12 +113,11 @@ func CmdSendETHBootstrapRequest(cdc *codec.Codec) *cobra.Command {
 				Orchestrator:          cosmosAddr,
 				Claims: []types.EthereumClaim{
 					types.EthereumBridgeBootstrappedClaim{
-						Nonce:               1, // hard coded in ETH contract
-						Block:               block,
-						AllowedValidatorSet: validators,
-						ValidatorPowers:     powers,
-						PeggyID:             args[5],
-						StartThreshold:      startThreshold,
+						Nonce:            1, // hard coded in ETH contract
+						Block:            block,
+						BridgeValidators: bridgeValidators,
+						PeggyID:          args[5], // simplest solution without decoding
+						StartThreshold:   startThreshold,
 					},
 				},
 			}

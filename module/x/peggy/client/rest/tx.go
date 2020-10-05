@@ -168,15 +168,14 @@ func createValsetConfirmHandler(cliCtx context.CLIContext, storeKey string) http
 }
 
 type bootstrapConfirmReq struct {
-	BaseReq               rest.BaseReq            `json:"base_req"`
-	Orchestrator          sdk.AccAddress          `json:"orchestrator"`
-	EthereumChainID       uint64                  `json:"ethereum_chain_id"`
-	BridgeContractAddress types.EthereumAddress   `json:"bridge_contract_address"`
-	Block                 string                  `json:"block"`
-	AllowedValidatorSet   []types.EthereumAddress `json:"allowed_validator_set"`
-	ValidatorPowers       []uint64                `json:"validator_powers"`
-	PeggyID               string                  `json:"peggy_id"`
-	StartThreshold        uint64                  `json:"start_threshold"`
+	BaseReq               rest.BaseReq           `json:"base_req"`
+	Orchestrator          sdk.AccAddress         `json:"orchestrator"`
+	EthereumChainID       uint64                 `json:"ethereum_chain_id"`
+	BridgeContractAddress types.EthereumAddress  `json:"bridge_contract_address"`
+	Block                 string                 `json:"block"`
+	BridgeValidators      types.BridgeValidators `json:"bridge_validators"`
+	PeggyID               string                 `json:"peggy_id"`
+	StartThreshold        uint64                 `json:"start_threshold"`
 }
 
 func bootstrapConfirmHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -199,11 +198,10 @@ func bootstrapConfirmHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 		claims := []types.EthereumClaim{
 			types.EthereumBridgeBootstrappedClaim{
-				Block:               blockNumber,
-				AllowedValidatorSet: req.AllowedValidatorSet,
-				ValidatorPowers:     req.ValidatorPowers,
-				PeggyID:             req.PeggyID,
-				StartThreshold:      req.StartThreshold,
+				Block:            blockNumber,
+				BridgeValidators: req.BridgeValidators,
+				PeggyID:          req.PeggyID,
+				StartThreshold:   req.StartThreshold,
 			},
 		}
 		msg := types.NewMsgCreateEthereumClaims(req.EthereumChainID, req.BridgeContractAddress, req.Orchestrator, claims)

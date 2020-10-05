@@ -38,8 +38,9 @@ func TestHandleValsetRequest(t *testing.T) {
 	valset := k.GetValsetRequest(ctx, nonce)
 	require.NotNil(t, valset)
 	assert.Equal(t, nonce, valset.Nonce)
-	assert.Equal(t, []uint64{math.MaxUint32}, valset.Powers)
-	assert.Equal(t, []types.EthereumAddress{types.NewEthereumAddress("")}, valset.EthAddresses)
+	require.Len(t, valset.Members, 1)
+	assert.Equal(t, []uint64{math.MaxUint32}, valset.Members.GetPowers())
+	assert.Equal(t, types.NewEthereumAddress(""), valset.Members[0].EthereumAddress)
 }
 
 func TestHandleCreateEthereumClaims(t *testing.T) {

@@ -67,7 +67,7 @@ func TestCurrentValsetNormalization(t *testing.T) {
 			}
 			k.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
 			r := k.GetCurrentValset(ctx)
-			assert.Equal(t, spec.expPowers, r.Powers)
+			assert.Equal(t, spec.expPowers, r.Members.GetPowers())
 		})
 	}
 }

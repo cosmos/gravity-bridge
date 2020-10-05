@@ -3,16 +3,84 @@ package types
 import (
 	"fmt"
 	"math/big"
+	"sort"
 	"strings"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+// BridgeValidator represents the validator data in the Ethereum bridge MultiSig set.
+type BridgeValidator struct {
+	Power           uint64          `json:"power"`
+	EthereumAddress EthereumAddress `json:"ethereum_address"`
+}
+
+func (b BridgeValidator) ValidateBasic() error {
+	if b.Power == 0 {
+		return sdkerrors.Wrap(ErrEmpty, "power")
+	}
+	if b.EthereumAddress.IsEmpty() {
+		return sdkerrors.Wrap(ErrEmpty, "address")
+	}
+	return nil
+}
+
+// BridgeValidators is the sorted set of validator data for Ethereum bridge MultiSig set
+type BridgeValidators []BridgeValidator
+
+func (b BridgeValidators) Sort() {
+	sort.SliceIsSorted(b, func(i, j int) bool {
+		if b[i].Power == b[j].Power {
+			// Secondary sort on eth address in case powers are equal
+			return b[i].EthereumAddress.LessThan(b[j].EthereumAddress)
+		}
+		return b[i].Power < b[j].Power
+	})
+}
+
+func (b BridgeValidators) HasDuplicates() bool {
+	m := make(map[EthereumAddress]struct{}, len(b))
+	for i := range b {
+		m[b[i].EthereumAddress] = struct{}{}
+	}
+	return len(m) != len(b)
+}
+
+// GetPowers returns only the power values for all members
+func (b BridgeValidators) GetPowers() []uint64 {
+	r := make([]uint64, len(b))
+	for i := range b {
+		r[i] = b[i].Power
+	}
+	return r
+}
+
+func (b BridgeValidators) ValidateBasic() error {
+	if len(b) == 0 {
+		return ErrEmpty
+	}
+	for i := range b {
+		if err := b[i].ValidateBasic(); err != nil {
+			return sdkerrors.Wrapf(err, "member %d", i)
+		}
+	}
+	if b.HasDuplicates() {
+		return sdkerrors.Wrap(ErrDuplicate, "addresses")
+	}
+	return nil
+}
+
+// Valset is the Ethereum Bridge Multsig Set
 type Valset struct {
-	Nonce        UInt64Nonce       `json:"nonce"`
-	Powers       []uint64          `json:"powers"`
-	EthAddresses []EthereumAddress `json:"eth_addresses"`
+	Nonce   UInt64Nonce      `json:"nonce"`
+	Members BridgeValidators `json:"members"`
+}
+
+func NewValset(nonce UInt64Nonce, members BridgeValidators) Valset {
+	members.Sort()
+	return Valset{Nonce: nonce, Members: members}
 }
 
 func (v Valset) GetCheckpoint() []byte {
@@ -88,14 +156,16 @@ func (v Valset) GetCheckpoint() []byte {
 	var checkpoint [32]uint8
 	copy(checkpoint[:], checkpointBytes[:])
 
-	var convertedPowers []*big.Int
-	for _, power := range v.Powers {
-		convertedPowers = append(convertedPowers, big.NewInt(int64(power)))
+	memberAddresses := make([]EthereumAddress, len(v.Members))
+	convertedPowers := make([]*big.Int, len(v.Members))
+	for i, m := range v.Members {
+		memberAddresses[i] = m.EthereumAddress
+		convertedPowers[i] = big.NewInt(int64(m.Power))
 	}
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, packErr := contractAbi.Pack("checkpoint", peggyID, checkpoint, big.NewInt(int64(v.Nonce.Uint64())), v.EthAddresses, convertedPowers)
+	bytes, packErr := contractAbi.Pack("checkpoint", peggyID, checkpoint, big.NewInt(int64(v.Nonce.Uint64())), memberAddresses, convertedPowers)
 
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.

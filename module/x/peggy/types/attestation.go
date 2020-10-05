@@ -311,23 +311,23 @@ func (s SignedCheckpoint) Hash() []byte {
 }
 
 type BridgeBootstrap struct {
-	AllowedValidatorSet []EthereumAddress `json:"allowed_validator_set"`
-	ValidatorPowers     []uint64          `json:"validator_powers"`
-	PeggyID             string            `json:"peggy_id" yaml:"peggy_id"`
-	StartThreshold      uint64            `json:"start_threshold,omitempty" yaml:"start_threshold"`
+	PeggyID          string           `json:"peggy_id" yaml:"peggy_id"`
+	BridgeValidators BridgeValidators `json:"bridge_validators"`
+	StartThreshold   uint64           `json:"start_threshold,omitempty" yaml:"start_threshold"`
+}
+
+func NewBridgeBootstrap(peggyID string, bridgeValidators BridgeValidators, startThreshold uint64) *BridgeBootstrap {
+	bridgeValidators.Sort()
+	return &BridgeBootstrap{PeggyID: peggyID, BridgeValidators: bridgeValidators, StartThreshold: startThreshold}
 }
 
 func (b BridgeBootstrap) Hash() []byte {
 	hasher := tmhash.New()
-	for i := range b.AllowedValidatorSet {
-		_, err := hasher.Write(b.AllowedValidatorSet[i].RawBytes())
-		if err != nil {
+	for _, v := range b.BridgeValidators {
+		if _, err := hasher.Write(v.EthereumAddress.RawBytes()); err != nil {
 			panic(err) // can not happen in used sha256 impl
 		}
-	}
-	for i := range b.ValidatorPowers {
-		_, err := hasher.Write(sdk.Uint64ToBigEndian(b.ValidatorPowers[i]))
-		if err != nil {
+		if _, err := hasher.Write(sdk.Uint64ToBigEndian(v.Power)); err != nil {
 			panic(err) // can not happen in used sha256 impl
 		}
 	}
