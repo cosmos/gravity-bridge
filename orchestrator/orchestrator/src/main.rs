@@ -9,6 +9,20 @@
 //!   * Access to an Cosmos chain RPC server
 //!   * Access to an Ethereum chain RPC server
 
+#[macro_use]
+extern crate serde_json;
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate log;
+
+pub mod main_loop;
+pub mod tests;
+pub mod valset_relaying;
+
+use crate::main_loop::orchestrator_main_loop;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
@@ -19,18 +33,6 @@ use std::time::Duration;
 use std::time::Instant;
 use url::Url;
 use web30::client::Web3;
-
-#[macro_use]
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate log;
-
-mod cosmos_interop;
-mod utils;
 
 #[derive(Debug, Deserialize)]
 struct Args {
@@ -87,35 +89,5 @@ async fn main() {
     let web3 = Web3::new(&eth_url.to_string(), LOOP_SPEED);
     let contact = Contact::new(&cosmos_url.to_string(), LOOP_SPEED);
 
-    orchestrator(cosmos_key, ethereum_key, web3, contact, contract_address).await;
-}
-
-/// This function contains the orchestrator primary loop, it is broken out of the main loop so that
-/// it can be called in the test runner for easier orchestration of multi-node tests
-pub async fn orchestrator(
-    cosmos_key: CosmosPrivateKey,
-    ethereum_key: EthPrivateKey,
-    web3: Web3,
-    contact: Contact,
-    contract_address: EthAddress,
-) {
-    let mut last_seen_block = web3.eth_get_latest_block();
-    loop {
-        let loop_start = Instant::now();
-
-        let latest_eth_block = web3.eth_get_latest_block().await.unwrap();
-        let latest_cosmos_block = contact.get_latest_block().await.unwrap();
-        println!(
-            "Latest Eth block {} Latest Cosmos block {}",
-            latest_eth_block.number, latest_cosmos_block.block.header.version.block
-        );
-
-        // a bit of logic that tires to keep things running every 5 seconds exactly
-        // this is not required for any specific reason. In fact we expect and plan for
-        // the timing being off significantly
-        let elapsed = Instant::now() - loop_start;
-        if elapsed < LOOP_SPEED {
-            thread::sleep(LOOP_SPEED - elapsed)
-        }
-    }
+    orchestrator_main_loop(cosmos_key, ethereum_key, web3, contact, LOOP_SPEED).await;
 }

@@ -1,5 +1,5 @@
-use crate::cosmos_interop::msgs::*;
-use crate::cosmos_interop::types::*;
+use crate::messages::*;
+use crate::types::*;
 use clarity::Address as EthAddress;
 use clarity::{abi::encode_tokens, abi::Token, PrivateKey as EthPrivateKey};
 use contact::jsonrpc::error::JsonRpcError;

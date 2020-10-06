@@ -1,32 +1,3 @@
-[package]
-name = "orcestrator"
-version = "0.1.0"
-authors = ["Justin Kilpatrick <justin@althea.net>"]
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-#deep_space = {git = "https://github.com/althea-net/deep_space/"}
-#contact = {git = "https://github.com/althea-net/contact"}
-deep_space = {path = "../../deep_space"}
-contact = {path = "../../contact"}
-serde_derive = "1.0"
-clarity = "0.3"
-docopt = "1"
-serde = "1.0"
-actix = "0.10"
-actix-web = {version = "3.1", features=["openssl"]}
-actix-rt = "1"
-lazy_static = "1"
-url = "2"
-web30 = {git = "https://github.com/althea-net/web30"}
-num256 = "0.3"
-log = "0.4"
-env_logger = "0.7"
-serde_json = "1.0"
-
-[dev-dependencies]
-rand = "0.7"
-actix = "0.10"
-sha3 = "0.9"
+[workspace]
+members = ["orchestrator", "cosmos_peggy", "ethereum_peggy", "peggy_utils"]
+default-members = ["orchestrator"]

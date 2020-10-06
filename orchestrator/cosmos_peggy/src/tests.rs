@@ -1,7 +1,5 @@
-use super::*;
-use crate::cosmos_interop::query::*;
-use crate::cosmos_interop::send::*;
-use crate::cosmos_interop::types::*;
+use crate::query::*;
+use crate::send::*;
 use actix::Arbiter;
 use actix::System;
 use clarity::PrivateKey as EthPrivateKey;

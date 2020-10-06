@@ -1,4 +1,4 @@
-use crate::cosmos_interop::types::*;
+use crate::types::*;
 use contact::client::Contact;
 use contact::jsonrpc::error::JsonRpcError;
 use contact::types::ResponseWrapper;
