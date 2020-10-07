@@ -18,6 +18,7 @@ use actix::Arbiter;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
+use cosmos_peggy::send::update_peggy_eth_address;
 use cosmos_peggy::utils::wait_for_cosmos_online;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
@@ -88,6 +89,7 @@ async fn main() {
         "0xb1bab011e03a9862664706fc3bbaa1b16651528e5f0e7fbfcbfdd8be302a13e7"
             .parse()
             .unwrap();
+    let miner_address = miner_private_key.to_public_key().unwrap();
 
     let contact = Contact::new(COSMOS_NODE, TIMEOUT);
     let web30 = web30::client::Web3::new(ETH_NODE, TIMEOUT);
@@ -102,17 +104,22 @@ async fn main() {
     info!("Waiting for Cosmos chain to come online");
     wait_for_cosmos_online(&contact).await;
 
-    // start orchestrators, send them some eth so that they can pay for things
-    for (c_key, e_key) in keys {
-        // we have only one actual futures executor thread (see the actix runtime tag on our main function)
-        // but that will execute all the orchestrators in our test in parallel
-        Arbiter::spawn(orchestrator_main_loop(
-            c_key,
-            e_key,
-            web30.clone(),
-            contact.clone(),
-            TIMEOUT,
-        ));
+    // register all validator eth addresses, currently validators can just not do this
+    // a full production version of Peggy would refuse to allow validators to enter the pool
+    // without registering their address. It would also allow them to delegate their Cosmos addr
+    //
+    // Either way, validators need to setup their eth addresses out of band and it's not
+    // the orchestrators job. So this isn't exactly where it needs to be in the final version
+    // but neither is it really that different.
+    for (c_key, e_key) in keys.iter() {
+        info!(
+            "Signing and submitting Eth address {} for validator {}",
+            e_key.to_public_key().unwrap(),
+            c_key.to_public_key().unwrap().to_address(),
+        );
+        update_peggy_eth_address(&contact, *e_key, *c_key, fee.clone(), None, None, None)
+            .await
+            .expect("Failed to update Eth address");
     }
 
     // wait for the orchestrators to finish registering their eth addresses
@@ -143,6 +150,34 @@ async fn main() {
         }
     }
     let peggy_address: EthAddress = maybe_peggy_address.unwrap();
+
+    // start orchestrators, send them some eth so that they can pay for things
+    for (c_key, e_key) in keys {
+        // we have only one actual futures executor thread (see the actix runtime tag on our main function)
+        // but that will execute all the orchestrators in our test in parallel
+        Arbiter::spawn(orchestrator_main_loop(
+            c_key,
+            e_key,
+            web30.clone(),
+            contact.clone(),
+            TIMEOUT,
+        ));
+
+        let validator_eth_address = e_key.to_public_key().unwrap();
+
+        // send every orchestrator 1000 eth to pay for fees
+        web30
+            .send_transaction(
+                validator_eth_address,
+                Vec::new(),
+                1_000_000_000_000_000_000_000u128.into(),
+                miner_address,
+                miner_private_key,
+                vec![],
+            )
+            .await
+            .expect("Failed to send Eth to validator {}");
+    }
     // TODO test runner now needs to send in the bootstrapping message for the orchestrators
     // to process
 

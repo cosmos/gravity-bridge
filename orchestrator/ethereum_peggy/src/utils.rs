@@ -8,32 +8,6 @@ use sha3::{Digest, Keccak256};
 use web30::client::Web3;
 use web30::types::SendTxOption;
 
-pub async fn send_basic_eth_transaction(
-    sending_eth_private_key: EthPrivateKey,
-    dest: EthAddress,
-    web3: Web3,
-) {
-    let eth_address = sending_eth_private_key.to_public_key().unwrap();
-    println!(
-        "Our balance is {:?}",
-        web3.eth_get_balance(eth_address).await
-    );
-    println!("Our gas price is {:?}", web3.eth_gas_price().await);
-    println!("Our chain id is {:?}", web3.net_version().await);
-    let tx = web3
-        .send_transaction(
-            dest,
-            Vec::new(),
-            10000000u32.into(),
-            eth_address,
-            sending_eth_private_key,
-            vec![SendTxOption::GasLimit(27000u32.into())],
-        )
-        .await;
-    info!("Our tx result is {:?}", tx);
-    panic!("exiting!");
-}
-
 pub fn get_correct_power_for_address(address: EthAddress, valset: &Valset) -> (EthAddress, u64) {
     for (a, p) in valset.eth_addresses.iter().zip(valset.powers.iter()) {
         if let Some(a) = a {
