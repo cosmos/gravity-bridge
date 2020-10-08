@@ -20,10 +20,8 @@ ethereum_peggy = {path = "../ethereum_peggy"}
 cosmos_peggy = {path = "../cosmos_peggy"}
 peggy_utils = {path = "../peggy_utils"}
 
-#deep_space = {git = "https://github.com/althea-net/deep_space/"}
-#contact = {git = "https://github.com/althea-net/contact"}
-deep_space = {path = "/home/justin/repos/deep_space"}
-contact = {path = "/home/justin/repos/contact"}
+deep_space = "0.2"
+contact = "0.1"
 serde_derive = "1.0"
 clarity = "0.3"
 docopt = "1"

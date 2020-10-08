@@ -10,8 +10,8 @@ edition = "2018"
 cosmos_peggy = {path = "../cosmos_peggy"}
 peggy_utils = {path = "../peggy_utils"}
 
-deep_space = {path = "/home/justin/repos/deep_space"}
-contact = {path = "/home/justin/repos/contact"}
+deep_space = "0.2"
+contact = "0.1"
 clarity = "0.3"
 actix = "0.10"
 actix-web = {version = "3.1", features=["openssl"]}

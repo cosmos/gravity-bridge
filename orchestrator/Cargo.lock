@@ -539,7 +539,9 @@ checksum = "ce90df4c658c62f12d78f7508cf92f9173e5184a539c10bfe54a3107b3ffd0f2"
 
 [[package]]
 name = "contact"
-version = "0.1.5"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a0b4e028eae0c2d21c2e24a9ba3be600123735dfba880969d39975fcac93c75"
 dependencies = [
  "actix-web",
  "deep_space",
@@ -638,7 +640,9 @@ dependencies = [
 
 [[package]]
 name = "deep_space"
-version = "0.2.1"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2fbdbb77dd39b8f23096df474379135f9ba25b50ccc176823d5731296c12fe25"
 dependencies = [
  "base64 0.13.0",
  "bech32",
