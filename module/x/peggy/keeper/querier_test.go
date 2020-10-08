@@ -10,6 +10,7 @@ import (
 	gethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 func TestQueryValsetConfirm(t *testing.T) {
@@ -344,7 +345,298 @@ func TestLastPendingValsetRequest(t *testing.T) {
 	}
 }
 
+func TestLastApprovedMultiSigUpdate(t *testing.T) {
+	const maxVal = 3
+	validators := make(map[string]types.BridgeValidator, maxVal)
+	validatorAddrs := make([]sdk.ValAddress, maxVal+1)
+	sigs := make(map[string][]byte, maxVal)
+
+	// some validator/ orchestrator test data
+	for i := 0; i < maxVal; i++ {
+		n := i + 1
+		validatorAddrs[n] = createValAddress()
+		valAddr := validatorAddrs[n].String()
+		validators[valAddr] = types.BridgeValidator{
+			Power:           uint64(n),
+			EthereumAddress: createEthAddress(n),
+		}
+		sigs[valAddr] = createFakeEthSignature(n)
+	}
+	unsortedOrchestrators := make(types.BridgeValidators, 0, maxVal)
+	for _, v := range validators {
+		unsortedOrchestrators = append(unsortedOrchestrators, v)
+	}
+	nonce := types.NewUInt64Nonce(1)
+
+	specs := map[string]struct {
+		srcBridgedVal types.BridgeValidators
+		srcSigners    map[types.EthereumAddress]sdk.ValAddress
+		expResp       *MultiSigUpdateResponse
+	}{
+
+		"validators and sigs ordered by power": {
+			srcBridgedVal: []types.BridgeValidator{
+				{Power: 1, EthereumAddress: createEthAddress(1)},
+				{Power: 2, EthereumAddress: createEthAddress(2)},
+				{Power: 3, EthereumAddress: createEthAddress(3)},
+			},
+			srcSigners: map[types.EthereumAddress]sdk.ValAddress{
+				createEthAddress(1): validatorAddrs[1],
+				createEthAddress(2): validatorAddrs[2],
+				createEthAddress(3): validatorAddrs[3],
+			},
+			expResp: &MultiSigUpdateResponse{
+				Valset: types.Valset{
+					Nonce: nonce,
+					Members: types.BridgeValidators{
+						{Power: 3, EthereumAddress: createEthAddress(3)},
+						{Power: 2, EthereumAddress: createEthAddress(2)},
+						{Power: 1, EthereumAddress: createEthAddress(1)},
+					},
+				},
+				Signatures: [][]byte{
+					createFakeEthSignature(3),
+					createFakeEthSignature(2),
+					createFakeEthSignature(1),
+				},
+			},
+		},
+		"validators with power 0 excluded": {
+			srcBridgedVal: []types.BridgeValidator{
+				{Power: 0, EthereumAddress: createEthAddress(1)},
+				{Power: 2, EthereumAddress: createEthAddress(2)},
+			},
+			srcSigners: map[types.EthereumAddress]sdk.ValAddress{
+				createEthAddress(2): validatorAddrs[2],
+			},
+			expResp: &MultiSigUpdateResponse{
+				Valset: types.Valset{
+					Nonce: nonce,
+					Members: types.BridgeValidators{
+						{Power: 2, EthereumAddress: createEthAddress(2)},
+					},
+				},
+				Signatures: [][]byte{
+					createFakeEthSignature(2),
+				},
+			},
+		},
+		"validators not in current mutliSig set excluded": {
+			srcBridgedVal: []types.BridgeValidator{
+				{Power: 1, EthereumAddress: createEthAddress(1)},
+			},
+			srcSigners: map[types.EthereumAddress]sdk.ValAddress{
+				createEthAddress(1):   validatorAddrs[1],
+				createEthAddress(999): validatorAddrs[0],
+			},
+			expResp: &MultiSigUpdateResponse{
+				Valset: types.Valset{
+					Nonce: nonce,
+					Members: types.BridgeValidators{
+						{Power: 1, EthereumAddress: createEthAddress(1)},
+					},
+				},
+				Signatures: [][]byte{
+					createFakeEthSignature(1),
+				},
+			},
+		},
+		"without signatures": {
+			srcBridgedVal: []types.BridgeValidator{
+				{Power: 1, EthereumAddress: createEthAddress(1)},
+			},
+			expResp: &MultiSigUpdateResponse{
+				Valset: types.Valset{Nonce: nonce, Members: types.BridgeValidators{{Power: 1, EthereumAddress: createEthAddress(1)}}},
+			},
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			k, ctx, _ := CreateTestEnv(t)
+			// persist multiSig set as latest observed
+			k.storeValset(ctx, types.NewValset(nonce, spec.srcBridgedVal))
+			k.setLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate, nonce)
+			// store approved attestation
+			k.setLastAttestedNonce(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, nonce)
+			// with all the orchestrator's signatures stored
+			for ethAddr, valAddr := range spec.srcSigners {
+				k.SetEthAddress(ctx, valAddr, ethAddr)
+				if sig, ok := sigs[valAddr.String()]; ok {
+					k.SetBridgeApprovalSignature(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, nonce, valAddr, sig)
+				}
+			}
+
+			// when
+			bz, err := lastApprovedMultiSigUpdate(ctx, k)
+
+			// then
+			require.NoError(t, err)
+			if spec.expResp == nil {
+				require.Nil(t, bz)
+				return
+			}
+			require.NotNil(t, bz)
+
+			var got MultiSigUpdateResponse
+			k.cdc.MustUnmarshalJSON(bz, &got)
+
+			assert.Equal(t, *spec.expResp, got)
+		})
+	}
+}
+
+func TestQueryInflightBatches(t *testing.T) {
+	const maxVal = 3
+	validators := make(map[string]types.BridgeValidator, maxVal)
+	validatorAddrs := make([]sdk.ValAddress, maxVal+1)
+	sigs := make(map[string][]byte, maxVal)
+
+	// some validator/ orchestrator test data
+	for i := 0; i < maxVal; i++ {
+		n := i + 1
+		validatorAddrs[n] = createValAddress()
+		valAddr := validatorAddrs[n].String()
+		validators[valAddr] = types.BridgeValidator{
+			Power:           uint64(n),
+			EthereumAddress: createEthAddress(n),
+		}
+		sigs[valAddr] = createFakeEthSignature(n)
+	}
+	unsortedOrchestrators := make(types.BridgeValidators, 0, maxVal)
+	for _, v := range validators {
+		unsortedOrchestrators = append(unsortedOrchestrators, v)
+	}
+	var (
+		nonce = types.NewUInt64Nonce(1)
+		batch = types.OutgoingTxBatch{Nonce: nonce}
+	)
+
+	specs := map[string]struct {
+		srcBridgedVal     types.BridgeValidators
+		srcSigners        map[types.EthereumAddress]sdk.ValAddress
+		lastObservedBatch types.UInt64Nonce
+		expResp           []ApprovedOutgoingTxBatchResponse
+	}{
+		"validators and sigs ordered by power": {
+			srcBridgedVal: []types.BridgeValidator{
+				{Power: 1, EthereumAddress: createEthAddress(1)},
+				{Power: 2, EthereumAddress: createEthAddress(2)},
+				{Power: 3, EthereumAddress: createEthAddress(3)},
+			},
+			srcSigners: map[types.EthereumAddress]sdk.ValAddress{
+				createEthAddress(1): validatorAddrs[1],
+				createEthAddress(2): validatorAddrs[2],
+				createEthAddress(3): validatorAddrs[3],
+			},
+			lastObservedBatch: types.NewUInt64Nonce(0),
+
+			expResp: []ApprovedOutgoingTxBatchResponse{
+				{
+					Batch: batch,
+					Signatures: [][]byte{
+						createFakeEthSignature(3),
+						createFakeEthSignature(2),
+						createFakeEthSignature(1),
+					},
+				},
+			},
+		},
+		"validators with power 0 excluded": {
+			srcBridgedVal: []types.BridgeValidator{
+				{Power: 0, EthereumAddress: createEthAddress(1)},
+				{Power: 2, EthereumAddress: createEthAddress(2)},
+			},
+			srcSigners: map[types.EthereumAddress]sdk.ValAddress{
+				createEthAddress(2): validatorAddrs[2],
+			},
+			expResp: []ApprovedOutgoingTxBatchResponse{
+				{
+					Batch: batch,
+					Signatures: [][]byte{
+						createFakeEthSignature(2),
+					},
+				},
+			},
+		},
+		"validators not in current mutliSig set excluded": {
+			srcBridgedVal: []types.BridgeValidator{
+				{Power: 1, EthereumAddress: createEthAddress(1)},
+			},
+			srcSigners: map[types.EthereumAddress]sdk.ValAddress{
+				createEthAddress(1):   validatorAddrs[1],
+				createEthAddress(999): validatorAddrs[0],
+			},
+			expResp: []ApprovedOutgoingTxBatchResponse{
+				{
+					Batch: batch,
+					Signatures: [][]byte{
+						createFakeEthSignature(1),
+					},
+				},
+			},
+		},
+		"without signatures": {
+			srcBridgedVal: []types.BridgeValidator{
+				{Power: 1, EthereumAddress: createEthAddress(1)},
+			},
+			expResp: []ApprovedOutgoingTxBatchResponse{
+				{Batch: batch},
+			},
+		},
+		"nothing in flight": {
+			srcBridgedVal: []types.BridgeValidator{
+				{Power: 1, EthereumAddress: createEthAddress(1)},
+			},
+			lastObservedBatch: nonce,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			k, ctx, _ := CreateTestEnv(t)
+			// persist multiSig set
+			k.storeValset(ctx, types.NewValset(nonce, spec.srcBridgedVal))
+			k.setLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate, nonce)
+			// persist batch
+			k.storeBatch(ctx, batch)
+			// store an approved attestation
+			if !spec.lastObservedBatch.IsEmpty() {
+				k.setLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeWithdrawalBatch, spec.lastObservedBatch)
+			}
+			// with all the orchestrator's signatures stored
+			for ethAddr, valAddr := range spec.srcSigners {
+				k.SetEthAddress(ctx, valAddr, ethAddr)
+				if sig, ok := sigs[valAddr.String()]; ok {
+					k.SetBridgeApprovalSignature(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, nonce, valAddr, sig)
+				}
+			}
+
+			// when
+			bz, err := queryInflightBatches(ctx, k)
+
+			// then
+			require.NoError(t, err)
+			if spec.expResp == nil {
+				require.Nil(t, bz)
+				return
+			}
+			require.NotNil(t, bz)
+
+			var got []ApprovedOutgoingTxBatchResponse
+			k.cdc.MustUnmarshalJSON(bz, &got)
+
+			assert.Equal(t, spec.expResp, got)
+		})
+	}
+}
+
 func createEthAddress(i int) types.EthereumAddress {
 	return types.EthereumAddress(gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(i)}, 20)))
+}
 
+func createFakeEthSignature(n int) []byte {
+	return bytes.Repeat([]byte{byte(n)}, 64)
+}
+
+func createValAddress() sdk.ValAddress {
+	return sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 }

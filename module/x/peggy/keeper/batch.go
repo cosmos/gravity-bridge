@@ -42,7 +42,7 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 		TotalFee:           totalFee,
 		BatchStatus:        types.BatchStatusPending,
 	}
-	k.storeBatch(ctx, nonce, batch)
+	k.storeBatch(ctx, batch)
 
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatch,
@@ -56,9 +56,9 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 	return &batch, nil
 }
 
-func (k Keeper) storeBatch(ctx sdk.Context, nonce types.UInt64Nonce, batch types.OutgoingTxBatch) {
+func (k Keeper) storeBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOutgoingTxBatchKey(nonce), k.cdc.MustMarshalBinaryBare(batch))
+	store.Set(types.GetOutgoingTxBatchKey(batch.Nonce), k.cdc.MustMarshalBinaryBare(batch))
 }
 
 // pickUnbatchedTX find TX in pool and remove from "available" second index
@@ -104,7 +104,7 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, nonce types.UInt64Nonce) 
 	for _, tx := range batch.Elements {
 		k.prependToUnbatchedTXIndex(ctx, batch.BridgedDenominator.ToVoucherCoin(tx.BridgeFee.Amount), tx.ID)
 	}
-	k.storeBatch(ctx, nonce, *batch)
+	k.storeBatch(ctx, *batch)
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatchCanceled,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),

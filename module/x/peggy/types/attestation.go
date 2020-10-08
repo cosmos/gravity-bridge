@@ -316,9 +316,9 @@ type BridgeBootstrap struct {
 	StartThreshold   uint64           `json:"start_threshold,omitempty" yaml:"start_threshold"`
 }
 
-func NewBridgeBootstrap(peggyID string, bridgeValidators BridgeValidators, startThreshold uint64) *BridgeBootstrap {
+func NewBridgeBootstrap(peggyID string, bridgeValidators BridgeValidators, startThreshold uint64) BridgeBootstrap {
 	bridgeValidators.Sort()
-	return &BridgeBootstrap{PeggyID: peggyID, BridgeValidators: bridgeValidators, StartThreshold: startThreshold}
+	return BridgeBootstrap{PeggyID: peggyID, BridgeValidators: bridgeValidators, StartThreshold: startThreshold}
 }
 
 func (b BridgeBootstrap) Hash() []byte {

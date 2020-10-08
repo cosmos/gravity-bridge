@@ -22,6 +22,8 @@ type nonce interface {
 	IsEmpty() bool
 }
 
+const UInt64NonceByteLen = 8
+
 type UInt64Nonce uint64
 
 var _ nonce = NewUInt64Nonce(0)

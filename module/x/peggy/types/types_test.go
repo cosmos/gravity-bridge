@@ -1,9 +1,12 @@
 package types
 
 import (
+	"bytes"
 	"encoding/hex"
+	mrand "math/rand"
 	"testing"
 
+	gethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +25,7 @@ func TestValsetConfirmHash(t *testing.T) {
 		}
 	}
 
-	v := NewValset(0, members)
+	v := Valset{Members: members}
 	hash := v.GetCheckpoint()
 	hexHash := hex.EncodeToString(hash)
 	correctHash := "88165860d955aee7dc3e83d9d1156a5864b708841965585d206dbef6e9e1a499"
@@ -40,4 +43,55 @@ func TestValsetCheckpointGold1(t *testing.T) {
 	// hash from bridge contract
 	goldHash := "0xf024ab7404464494d3919e5a7f0d8ac40804fb9bd39ad5d16cdb3e66aa219b64"[2:]
 	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))
+}
+
+func TestValsetSort(t *testing.T) {
+	specs := map[string]struct {
+		src BridgeValidators
+		exp BridgeValidators
+	}{
+		"by power desc": {
+			src: BridgeValidators{
+				{Power: 1, EthereumAddress: createEthAddress(3)},
+				{Power: 2, EthereumAddress: createEthAddress(1)},
+				{Power: 3, EthereumAddress: createEthAddress(2)},
+			},
+			exp: BridgeValidators{
+				{Power: 3, EthereumAddress: createEthAddress(2)},
+				{Power: 2, EthereumAddress: createEthAddress(1)},
+				{Power: 1, EthereumAddress: createEthAddress(3)},
+			},
+		},
+		"by eth addr on same power": {
+			src: BridgeValidators{
+				{Power: 1, EthereumAddress: createEthAddress(2)},
+				{Power: 1, EthereumAddress: createEthAddress(1)},
+				{Power: 1, EthereumAddress: createEthAddress(3)},
+			},
+			exp: BridgeValidators{
+				{Power: 1, EthereumAddress: createEthAddress(1)},
+				{Power: 1, EthereumAddress: createEthAddress(2)},
+				{Power: 1, EthereumAddress: createEthAddress(3)},
+			},
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			// when
+			spec.src.Sort()
+			// then
+			assert.Equal(t, spec.src, spec.exp)
+		})
+	}
+}
+
+func shuffled(v BridgeValidators) BridgeValidators {
+	mrand.Shuffle(len(v), func(i, j int) {
+		v[i], v[j] = v[j], v[i]
+	})
+	return v
+}
+
+func createEthAddress(i int) EthereumAddress {
+	return EthereumAddress(gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(i)}, 20)))
 }

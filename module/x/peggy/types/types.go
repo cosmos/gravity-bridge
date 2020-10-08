@@ -27,16 +27,20 @@ func (b BridgeValidator) ValidateBasic() error {
 	return nil
 }
 
+func (b BridgeValidator) isValid() bool {
+	return !b.EthereumAddress.IsEmpty() && b.Power != 0
+}
+
 // BridgeValidators is the sorted set of validator data for Ethereum bridge MultiSig set
 type BridgeValidators []BridgeValidator
 
 func (b BridgeValidators) Sort() {
-	sort.SliceIsSorted(b, func(i, j int) bool {
+	sort.Slice(b, func(i, j int) bool {
 		if b[i].Power == b[j].Power {
 			// Secondary sort on eth address in case powers are equal
 			return b[i].EthereumAddress.LessThan(b[j].EthereumAddress)
 		}
-		return b[i].Power < b[j].Power
+		return b[i].Power > b[j].Power
 	})
 }
 
@@ -178,4 +182,18 @@ func (v Valset) GetCheckpoint() []byte {
 	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
 	hash := crypto.Keccak256Hash(bytes[4:])
 	return hash.Bytes()
+}
+
+// WithoutEmptyMembers returns a new Valset without member that have 0 power or an empty Ethereum address.
+func (v *Valset) WithoutEmptyMembers() *Valset {
+	if v == nil {
+		return nil
+	}
+	r := Valset{Nonce: v.Nonce, Members: make(BridgeValidators, 0, len(v.Members))}
+	for i := range v.Members {
+		if v.Members[i].isValid() {
+			r.Members = append(r.Members, v.Members[i])
+		}
+	}
+	return &r
 }

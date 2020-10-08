@@ -15,8 +15,8 @@ nonce=$(date +%s)  # use unix timestamp as fake nonce
 peggycli tx peggy observed bootstrap 1 0x8858eeb3dfffa017d4bce9801d340d36cf895ccf  "$nonce" "0xc783df8a850f42e7f7e57013759c285caa701eb6"  "10" my-peggy-id  0 --from validator --chain-id=testing -b block -y
 
 echo "## View attestation status"
-peggycli q peggy attestation bridge_bootstrap "$nonce" -o json
+peggycli q peggy attestation bridge_bootstrap "$nonce" -o json | jq
 
 echo "## Query last observed state"
-peggycli q peggy observed nonces -o json
+peggycli q peggy observed nonces -o json | jq
 

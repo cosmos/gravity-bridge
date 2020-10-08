@@ -50,8 +50,8 @@ func TestCurrentValsetNormalization(t *testing.T) {
 			expPowers: []uint64{4294967295},
 		},
 		"two": {
-			srcPowers: []uint64{1, 100},
-			expPowers: []uint64{42524428, 4252442866},
+			srcPowers: []uint64{100, 1},
+			expPowers: []uint64{4252442866, 42524428},
 		},
 	}
 	k, ctx, _ := CreateTestEnv(t)

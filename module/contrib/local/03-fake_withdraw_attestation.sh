@@ -23,6 +23,6 @@ echo "## Submit observation"
 peggycli tx peggy observed withdrawal 1 0x8858eeb3dfffa017d4bce9801d340d36cf895ccf  "$nonce" --from validator --chain-id=testing -b block -y
 
 echo "## Query balance"
-peggycli q account cosmos12flmaejjvzdtz58s4m5avx30wm8uffe7ycj4l9
+peggycli q account $(peggycli keys show validator -a)
 echo "## Query last observed state"
 peggycli q peggy observed nonces -o json

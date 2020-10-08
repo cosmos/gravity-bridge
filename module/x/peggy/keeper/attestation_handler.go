@@ -41,7 +41,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		if err := b.Observed(); err != nil {
 			return err
 		}
-		a.keeper.storeBatch(ctx, att.Nonce, *b)
+		a.keeper.storeBatch(ctx, *b)
 		// cleanup outgoing TX pool
 		for i := range b.Elements {
 			a.keeper.removePoolEntry(ctx, b.Elements[i].ID)
@@ -80,7 +80,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		// todo: do we want to do a sanity check that these validator addresses exits already?
 		// the peggy bridge can not operate proper without orchestrators having their ethereum
 		// addresses set before.
-		return a.keeper.SetBootstrapValset(ctx, att.Nonce, initialMultisigSet)
+		return a.keeper.SetBootstrapValset(ctx, initialMultisigSet)
 	case types.ClaimTypeOrchestratorSignedMultiSigUpdate:
 		signedCheckpoint, ok := att.Details.(types.SignedCheckpoint)
 		if !ok {
