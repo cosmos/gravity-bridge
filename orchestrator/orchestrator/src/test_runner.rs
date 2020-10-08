@@ -26,7 +26,6 @@ use main_loop::orchestrator_main_loop;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::process::Command;
-use std::thread;
 use std::time::Duration;
 
 const TIMEOUT: Duration = Duration::from_secs(30);
@@ -153,6 +152,7 @@ async fn main() {
 
     // start orchestrators, send them some eth so that they can pay for things
     for (c_key, e_key) in keys {
+        info!("Spawning Orchestrator");
         // we have only one actual futures executor thread (see the actix runtime tag on our main function)
         // but that will execute all the orchestrators in our test in parallel
         Arbiter::spawn(orchestrator_main_loop(
@@ -160,23 +160,33 @@ async fn main() {
             e_key,
             web30.clone(),
             contact.clone(),
+            peggy_address,
             TIMEOUT,
         ));
 
         let validator_eth_address = e_key.to_public_key().unwrap();
 
-        // send every orchestrator 1000 eth to pay for fees
-        web30
+        let balance = web30.eth_get_balance(miner_address).await.unwrap();
+        info!(
+            "Sending orchestrator 1 eth to pay for fees miner has {} WEI",
+            balance
+        );
+        // send every orchestrator 1 eth to pay for fees
+        let txid = web30
             .send_transaction(
                 validator_eth_address,
                 Vec::new(),
-                1_000_000_000_000_000_000_000u128.into(),
+                1_000_000_000_000_000_000u128.into(),
                 miner_address,
                 miner_private_key,
                 vec![],
             )
             .await
             .expect("Failed to send Eth to validator {}");
+        web30
+            .wait_for_transaction(txid, TIMEOUT, None)
+            .await
+            .unwrap();
     }
     // TODO test runner now needs to send in the bootstrapping message for the orchestrators
     // to process

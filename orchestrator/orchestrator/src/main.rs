@@ -89,5 +89,13 @@ async fn main() {
     let web3 = Web3::new(&eth_url.to_string(), LOOP_SPEED);
     let contact = Contact::new(&cosmos_url.to_string(), LOOP_SPEED);
 
-    orchestrator_main_loop(cosmos_key, ethereum_key, web3, contact, LOOP_SPEED).await;
+    orchestrator_main_loop(
+        cosmos_key,
+        ethereum_key,
+        web3,
+        contact,
+        contract_address,
+        LOOP_SPEED,
+    )
+    .await;
 }

@@ -27,45 +27,6 @@ struct OrderedSignatures {
     s: Vec<Uint256>,
 }
 
-/// TODO modify code in web30 if this works for some reason the
-/// geth node for the testnet seems convinced that we need to provide
-/// gas
-pub async fn contract_call(
-    web30: &Web3,
-    contract_address: EthAddress,
-    sig: &str,
-    tokens: &[Token],
-    own_address: EthAddress,
-) -> Result<Vec<u8>, Web3Error> {
-    let gas_price = match web30.eth_gas_price().await {
-        Ok(val) => val,
-        Err(e) => return Err(e),
-    };
-
-    let nonce = match web30.eth_get_transaction_count(own_address).await {
-        Ok(val) => val,
-        Err(e) => return Err(e),
-    };
-
-    let payload = encode_call(sig, tokens).unwrap();
-
-    let transaction = TransactionRequest {
-        from: Some(own_address),
-        to: contract_address,
-        nonce: Some(UnpaddedHex(nonce)),
-        gas: Some(UnpaddedHex(1_000_000u64.into())),
-        gas_price: Some(UnpaddedHex(gas_price)),
-        value: Some(UnpaddedHex(0u64.into())),
-        data: Some(Data(payload)),
-    };
-
-    let bytes = match web30.eth_call(transaction).await {
-        Ok(val) => val,
-        Err(e) => return Err(e),
-    };
-    Ok(bytes.0)
-}
-
 pub fn to_uint_vec(input: &[u64]) -> Vec<Uint256> {
     let mut new_vec = Vec::new();
     for value in input {

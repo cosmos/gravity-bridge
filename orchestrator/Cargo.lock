@@ -2379,9 +2379,9 @@ checksum = "1d649a3145108d7d3fbcde896a468d1bd636791823c9921135218ad89be08307"
 
 [[package]]
 name = "web30"
-version = "0.7.1"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4aefdda36c69d59e8cdec211744428c6348a2549a5fb8bb20b2200e92e128fb"
+checksum = "51dda975044111922fb8ac82deb1e61a84a9a0f0879c64670e2510c7e3402c11"
 dependencies = [
  "actix",
  "actix-web",

@@ -10,8 +10,6 @@ use tokio::time::timeout as future_timeout;
 use web30::client::Web3;
 use web30::types::SendTxOption;
 
-use super::contract_call;
-
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided validator set and signatures.
 /// TODO this function uses the same validator set as the old and
@@ -51,15 +49,10 @@ async fn send_eth_valset_update(
 
     // Solidity function signature
     // function getValsetNonce() public returns (uint256)
-    let first_nonce = contract_call(
-        &web3,
-        peggy_contract_address,
-        "getValsetNonce()",
-        &[],
-        eth_address,
-    )
-    .await
-    .expect("Failed to get the first nonce");
+    let first_nonce = web3
+        .contract_call(peggy_contract_address, "getValsetNonce()", &[], eth_address)
+        .await
+        .expect("Failed to get the first nonce");
     info!("Current valset nonce {:?}", first_nonce);
 
     // Solidity function signature
@@ -95,27 +88,14 @@ async fn send_eth_valset_update(
     .expect("Valset update failed for other reasons");
     info!("Finished valset update with txid {:#066x}", tx);
 
-    let mut not_in_chain = true;
-    while not_in_chain {
-        let res = web3.eth_get_transaction_by_hash(tx.clone()).await.unwrap();
-        if let Some(val) = res {
-            if let Some(_block) = val.block_number {
-                not_in_chain = false;
-            }
-        }
-    }
+    web3.wait_for_transaction(tx, timeout, None).await.unwrap();
 
     // Solidity function signature
     // function getValsetNonce() public returns (uint256)
-    let last_nonce = contract_call(
-        &web3,
-        peggy_contract_address,
-        "getValsetNonce()",
-        &[],
-        eth_address,
-    )
-    .await
-    .expect("Failed to get the last nonce");
+    let last_nonce = web3
+        .contract_call(peggy_contract_address, "getValsetNonce()", &[], eth_address)
+        .await
+        .expect("Failed to get the last nonce");
     assert!(first_nonce != last_nonce);
     info!(
         "Successfully updated Valset with new Nonce {:?}",

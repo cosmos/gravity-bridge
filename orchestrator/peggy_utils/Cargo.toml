@@ -8,4 +8,4 @@ edition = "2018"
 
 [dependencies]
 contact = "0.1"
-web30 = "0.7.1"
+web30 = "0.8"
