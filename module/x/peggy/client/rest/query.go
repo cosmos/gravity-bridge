@@ -74,6 +74,7 @@ func getValsetConfirmHandler(cliCtx context.CLIContext, storeName string) http.H
 	}
 }
 
+// gets all the confirm messages for a given validator set nonce
 func allValsetConfirmsHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -173,6 +174,7 @@ func lastObservedNoncesHandler(cliCtx context.CLIContext, storeName string) func
 	}
 }
 
+// The last valset that was observed to be on the Ethereum chain
 func lastObservedValsetHandler(cliCtx context.CLIContext, storeName string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastObservedMultiSigUpdate", storeName))

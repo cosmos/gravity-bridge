@@ -65,7 +65,7 @@ func (msg MsgValsetConfirm) GetSigners() []sdk.AccAddress {
 // This message starts off the validator set update process by coordinating a block height
 // around which signatures over the validators, powers, and ethereum addresses will be made
 // and submitted using a ValsetConfirm. Anyone can send this message as it is not authenticated
-// in any way. In theory people could spam it and the validators will have to determine which
+// except as a valid tx. In theory people could spam it and the validators will have to determine which
 // block to actually coordinate around by looking over the valset requests and seeing which one
 // some other validator has already submitted a ValsetResponse for.
 // -------------
