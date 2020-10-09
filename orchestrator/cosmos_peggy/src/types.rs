@@ -1,14 +1,14 @@
 use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
 use contact::types::parse_val;
-use deep_space::address::Address;
+use deep_space::address::Address as CosmosAddress;
 use num256::Uint256;
 
 /// the response we get when querying for a valset confirmation
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ValsetConfirmResponse {
     #[serde(deserialize_with = "parse_val")]
-    pub validator: Address,
+    pub validator: CosmosAddress,
     #[serde(deserialize_with = "parse_val")]
     pub nonce: Uint256,
     #[serde(deserialize_with = "parse_val", rename = "signature")]

@@ -2,12 +2,6 @@
 //! to maximize code and tooling shared with the validator-daemon and relayer binaries.
 
 #[macro_use]
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
 extern crate log;
 
 pub mod main_loop;
@@ -18,15 +12,18 @@ use actix::Arbiter;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
+use cosmos_peggy::send::send_valset_request;
 use cosmos_peggy::send::update_peggy_eth_address;
 use cosmos_peggy::utils::wait_for_cosmos_online;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use ethereum_peggy::utils::get_valset_nonce;
 use main_loop::orchestrator_main_loop;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::process::Command;
 use std::time::Duration;
+use tokio::time::delay_for;
 
 const TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -150,20 +147,9 @@ async fn main() {
     }
     let peggy_address: EthAddress = maybe_peggy_address.unwrap();
 
-    // start orchestrators, send them some eth so that they can pay for things
-    for (c_key, e_key) in keys {
-        info!("Spawning Orchestrator");
-        // we have only one actual futures executor thread (see the actix runtime tag on our main function)
-        // but that will execute all the orchestrators in our test in parallel
-        Arbiter::spawn(orchestrator_main_loop(
-            c_key,
-            e_key,
-            web30.clone(),
-            contact.clone(),
-            peggy_address,
-            TIMEOUT,
-        ));
-
+    // before we start the orchestrators send them some funds so they can pay
+    // for things
+    for (_c_key, e_key) in keys.iter() {
         let validator_eth_address = e_key.to_public_key().unwrap();
 
         let balance = web30.eth_get_balance(miner_address).await.unwrap();
@@ -188,8 +174,50 @@ async fn main() {
             .await
             .unwrap();
     }
-    // TODO test runner now needs to send in the bootstrapping message for the orchestrators
-    // to process
+
+    // start orchestrators, send them some eth so that they can pay for things
+    for (c_key, e_key) in keys.iter() {
+        info!("Spawning Orchestrator");
+        // we have only one actual futures executor thread (see the actix runtime tag on our main function)
+        // but that will execute all the orchestrators in our test in parallel
+        Arbiter::spawn(orchestrator_main_loop(
+            *c_key,
+            *e_key,
+            web30.clone(),
+            contact.clone(),
+            peggy_address,
+            test_token_name.clone(),
+            TIMEOUT,
+        ));
+    }
+
+    let starting_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
+        .await
+        .expect("Failed to get starting eth valset");
+
+    // now we send a valset request that the orchestrators will pick up on
+    // in this case we send it as the first validator because they can pay the fee
+    info!("Sending in valset request");
+    send_valset_request(&contact, keys[0].0, fee, None, None, None)
+        .await
+        .expect("Failed to send valset request");
+
+    let mut current_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
+        .await
+        .expect("Failed to get current eth valset");
+    info!(
+        "Our starting valset is {}, waiting for orchestrators to update it",
+        current_eth_valset_nonce,
+    );
+    while starting_eth_valset_nonce == current_eth_valset_nonce {
+        info!("Validator set is not yet updated, waiting");
+        current_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
+            .await
+            .expect("Failed to get current eth valset");
+        delay_for(Duration::from_secs(10)).await;
+    }
+
+    info!("Validator set successfully updated!");
 
     // TODO verify that a valset update has been performed
     // TODO verify that some transactions have passed etc etc

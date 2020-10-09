@@ -1,14 +1,14 @@
 use crate::utils::filter_empty_eth_addresses;
-use clarity::abi::Token;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
+use clarity::{abi::Token, Uint256};
 use cosmos_peggy::types::*;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use peggy_utils::error::OrchestratorError;
 use std::time::Duration;
 use tokio::time::timeout as future_timeout;
-use web30::client::Web3;
 use web30::types::SendTxOption;
+use web30::{client::Web3, jsonrpc::error::Web3Error};
 
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided validator set and signatures.
@@ -17,11 +17,11 @@ use web30::types::SendTxOption;
 /// the set in testing and because there's no oracle to tell us what
 /// the old set was anyways.
 /// TODO TODO should we have an oracle for the old set or look in the chain?
-async fn send_eth_valset_update(
+pub async fn send_eth_valset_update(
     new_valset: Valset,
     old_valset: Valset,
     confirms: &[ValsetConfirmResponse],
-    web3: Web3,
+    web3: &Web3,
     timeout: Duration,
     peggy_contract_address: EthAddress,
     our_eth_key: EthPrivateKey,
@@ -37,7 +37,7 @@ async fn send_eth_valset_update(
     let mut v: Vec<u8> = Vec::new();
     let mut r = Vec::new();
     let mut s = Vec::new();
-    // replace this with a function to get ordered addresses and sigs
+    //replace this with a function to get ordered addresses and sigs
     // for address in old_addresses.iter() {
     //     let cosmos_address = get_cosmos_address_from_eth_addr(*address, &keys);
     //     let (sig_v, sig_r, sig_s) = get_correct_sig_for_address(cosmos_address, confirms);

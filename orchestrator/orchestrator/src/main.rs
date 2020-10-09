@@ -41,6 +41,7 @@ struct Args {
     flag_cosmos_rpc: String,
     flag_ethereum_rpc: String,
     flag_contract_address: String,
+    flag_fees: String,
 }
 
 lazy_static! {
@@ -52,6 +53,7 @@ lazy_static! {
             --ethereum-key=<ekey>     The Ethereum private key of the validator
             --cosmos-rpc=<curl>       The Cosmos RPC url, usually the validator
             --ethereum-rpc=<eurl>     The Ethereum RPC url, should be a self hosted node
+            --fees=<denom>            The Cosmos Denom in which to pay Cosmos chain fees
             --contract-address=<addr> The Ethereum contract address for Peggy, this is temporary
         About:
             The Validator companion relayer and Ethereum network observer.
@@ -85,6 +87,7 @@ async fn main() {
         .expect("Invalid contract address!");
     let cosmos_url = Url::parse(&args.flag_cosmos_rpc).expect("Invalid Cosmos RPC url");
     let eth_url = Url::parse(&args.flag_ethereum_rpc).expect("Invalid Ethereum RPC url");
+    let fee_denom = args.flag_fees;
 
     let web3 = Web3::new(&eth_url.to_string(), LOOP_SPEED);
     let contact = Contact::new(&cosmos_url.to_string(), LOOP_SPEED);
@@ -95,6 +98,7 @@ async fn main() {
         web3,
         contact,
         contract_address,
+        fee_denom,
         LOOP_SPEED,
     )
     .await;

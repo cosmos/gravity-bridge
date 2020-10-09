@@ -69,7 +69,7 @@ async fn test_valset_request_calls(
         return Err(format!("Failed to update eth address {:?}", res));
     }
 
-    let res = get_peggy_valset_request(&contact, 1).await;
+    let res = get_peggy_valset_request(&contact, 1u32.into()).await;
     if res.is_ok() {
         return Err(format!(
             "Got valset request that should not exist {:?}",
@@ -86,7 +86,7 @@ async fn test_valset_request_calls(
     }
     let valset_request_block = res.unwrap().height;
 
-    let res = get_peggy_valset_request(&contact, valset_request_block).await;
+    let res = get_peggy_valset_request(&contact, valset_request_block.into()).await;
     println!("valset response is {:?}", res);
     if let Ok(valset) = res {
         assert_eq!(valset.height, valset_request_block);
@@ -99,7 +99,7 @@ async fn test_valset_request_calls(
     } else {
         return Err("Failed to get valset request that should exist".to_string());
     }
-    let res = get_peggy_valset_request(&contact, valset_request_block).await;
+    let res = get_peggy_valset_request(&contact, valset_request_block.into()).await;
     println!("valset response is {:?}", res);
     if let Ok(valset) = res {
         // this is actually a timing issue, but should be true

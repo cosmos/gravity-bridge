@@ -1,4 +1,5 @@
 use crate::types::*;
+use clarity::Uint256;
 use contact::client::Contact;
 use contact::jsonrpc::error::JsonRpcError;
 use contact::types::ResponseWrapper;
@@ -26,7 +27,7 @@ pub async fn get_peggy_valset(contact: &Contact) -> Result<ResponseWrapper<Valse
 /// get the valset for a given nonce (block) height
 pub async fn get_peggy_valset_request(
     contact: &Contact,
-    nonce: u128,
+    nonce: Uint256,
 ) -> Result<ResponseWrapper<Valset>, JsonRpcError> {
     let none: Option<bool> = None;
     let ret: Result<ResponseWrapper<TypeWrapper<ValsetUnparsed>>, JsonRpcError> = contact

@@ -5,8 +5,8 @@ use cosmos_peggy::{send::filter_empty_addresses, types::*};
 use deep_space::address::Address as CosmosAddress;
 use peggy_utils::error::OrchestratorError;
 use sha3::{Digest, Keccak256};
-use web30::client::Web3;
 use web30::types::SendTxOption;
+use web30::{client::Web3, jsonrpc::error::Web3Error};
 
 pub fn get_correct_power_for_address(address: EthAddress, valset: &Valset) -> (EthAddress, u64) {
     for (a, p) in valset.eth_addresses.iter().zip(valset.powers.iter()) {
@@ -71,4 +71,40 @@ pub fn get_checkpoint_hash(valset: &Valset, peggy_id: &str) -> Result<Vec<u8>, O
     let locally_computed_abi_encode = get_checkpoint_abi_encode(&valset, &peggy_id);
     let locally_computed_digest = Keccak256::digest(&locally_computed_abi_encode?);
     Ok(locally_computed_digest.to_vec())
+}
+
+/// Gets the latest validator set nonce
+pub async fn get_valset_nonce(
+    contract_address: EthAddress,
+    caller_address: EthAddress,
+    web3: &Web3,
+) -> Result<Uint256, Web3Error> {
+    let val = web3
+        .contract_call(contract_address, "getValsetNonce()", &[], caller_address)
+        .await?;
+    Ok(Uint256::from_bytes_be(&val))
+}
+
+/// Gets the latest transaction batch nonce
+pub async fn get_tx_batch_nonce(
+    contract_address: EthAddress,
+    caller_address: EthAddress,
+    web3: &Web3,
+) -> Result<Uint256, Web3Error> {
+    let val = web3
+        .contract_call(contract_address, "getTxNonce()", &[], caller_address)
+        .await?;
+    Ok(Uint256::from_bytes_be(&val))
+}
+
+/// Gets the peggyID
+pub async fn get_peggy_id(
+    contract_address: EthAddress,
+    caller_address: EthAddress,
+    web3: &Web3,
+) -> Result<Vec<u8>, Web3Error> {
+    let val = web3
+        .contract_call(contract_address, "getPeggyId()", &[], caller_address)
+        .await?;
+    Ok(val)
 }
