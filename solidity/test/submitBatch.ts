@@ -194,7 +194,7 @@ describe("submitBatch tests", function () {
     );
   });
 
-  it.only("does not throw on barely enough signatures", async function () {
+  it("does not throw on barely enough signatures", async function () {
     await runTest({ barelyEnoughPower: true });
   });
 });
