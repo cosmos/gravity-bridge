@@ -357,10 +357,21 @@ contract Peggy {
 			"Malformed current validator set"
 		);
 
+		// Check that the supplied current validator set matches the saved checkpoint
+		require(
+			makeCheckpoint(
+				_currentValidators,
+				_currentPowers,
+				_currentValsetNonce,
+				state_peggyId
+			) == state_lastCheckpoint,
+			"Supplied current validators and powers do not match checkpoint."
+		);
+
 		// Check that new validators and powers set is well-formed
 		require(_newValidators.length == _newPowers.length, "Malformed new validator set");
 
-		// Check that the valset nonce is greater than the old one
+		// Check that the new valset nonce is greater than the old one
 		require(
 			_newValsetNonce > _currentValsetNonce,
 			"New valset nonce must be greater than the current nonce"
@@ -372,17 +383,6 @@ contract Peggy {
 				_amounts.length == _fees.length &&
 				_amounts.length == _nonces.length,
 			"Malformed batch of transactions"
-		);
-
-		// Check that the supplied current validator set matches the saved checkpoint
-		require(
-			makeCheckpoint(
-				_currentValidators,
-				_currentPowers,
-				_currentValsetNonce,
-				state_peggyId
-			) == state_lastCheckpoint,
-			"Supplied current validators and powers do not match checkpoint."
 		);
 
 		// Check that the tx nonces are higher than the stored nonce and are
