@@ -19,7 +19,7 @@ use std::time::Duration;
 #[ignore]
 fn test_endpoints() {
     env_logger::init();
-    let key = PrivateKey::from_phrase("speed drastic talent solution divert cheap caution road dance sign empty aisle gift kangaroo inherit build fury general cup skirt staff present sponsor marriage", "").unwrap();
+    let key = PrivateKey::from_phrase("ski choice subject cage color ritual critic jeans vintage praise school nature lend inject laptop cost chimney auction cliff surprise outside dumb demand hollow", "").unwrap();
     let token_name = "footoken".to_string();
     let mut rng = rand::thread_rng();
     let secret: [u8; 32] = rng.gen();
@@ -91,13 +91,19 @@ async fn test_valset_request_calls(
     if let Ok(valset) = res {
         assert_eq!(valset.height, valset_request_block);
 
-        let addresses = valset.result.eth_addresses;
-        if !addresses.contains(&Some(eth_private_key.to_public_key().unwrap())) {
+        let addresses = valset.result.filter_empty_addresses().unwrap().0;
+        if !addresses.contains(&eth_private_key.to_public_key().unwrap()) {
             // we successfully submitted our eth address before, we should find it now
-            return Err("Incorrect Valset, does not include submitted eth address".to_string());
+            return Err(format!(
+                "Incorrect Valset, {:?} does not include submitted eth address",
+                valset
+            ));
         }
     } else {
-        return Err("Failed to get valset request that should exist".to_string());
+        return Err(format!(
+            "Failed to get valset {} that should exist",
+            valset_request_block
+        ));
     }
     let res = get_peggy_valset_request(&contact, valset_request_block.into()).await;
     println!("valset response is {:?}", res);
@@ -105,8 +111,8 @@ async fn test_valset_request_calls(
         // this is actually a timing issue, but should be true
         assert_eq!(valset.height, valset_request_block);
 
-        let addresses = valset.result.eth_addresses.clone();
-        if !addresses.contains(&Some(eth_private_key.to_public_key().unwrap())) {
+        let addresses = valset.result.filter_empty_addresses().unwrap().0;
+        if !addresses.contains(&eth_private_key.to_public_key().unwrap()) {
             // we successfully submitted our eth address before, we should find it now
             return Err("Incorrect Valset, does not include submitted eth address".to_string());
         }

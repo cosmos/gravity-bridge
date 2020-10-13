@@ -53,6 +53,7 @@ pub struct ValsetRequestMsg {
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ValsetConfirmMsg {
     pub validator: Address,
+    pub eth_address: EthAddress,
     pub nonce: Uint256,
     #[serde(rename = "signature")]
     pub eth_signature: String,

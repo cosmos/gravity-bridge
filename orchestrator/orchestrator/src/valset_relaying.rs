@@ -9,7 +9,6 @@ use contact::client::Contact;
 use cosmos_peggy::query::get_all_valset_confirms;
 use cosmos_peggy::query::get_last_valset_requests;
 use cosmos_peggy::query::get_oldest_unsigned_valset;
-use cosmos_peggy::query::get_peggy_valset;
 use cosmos_peggy::query::get_peggy_valset_request;
 use cosmos_peggy::send::send_valset_confirm;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
@@ -35,6 +34,7 @@ pub async fn relay_valsets(
     pay_fees_in: String,
     timeout: Duration,
 ) {
+    info!("Starting valset relay");
     let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
 
@@ -43,9 +43,9 @@ pub async fn relay_valsets(
         .await
         .expect("Failed to get Peggy ID");
 
-    // confirm arbitrarily many valsets
-    let mut last_unsigned_valset = get_oldest_unsigned_valset(contact, our_cosmos_address).await;
-    while let Ok(valset) = last_unsigned_valset {
+    // sign the last unsigned valset, TODO check if we already have signed this
+    if let Ok(last_unsigned_valset) = get_oldest_unsigned_valset(contact, our_cosmos_address).await
+    {
         send_valset_confirm(
             contact,
             ethereum_key,
@@ -53,7 +53,7 @@ pub async fn relay_valsets(
                 denom: pay_fees_in.clone(),
                 amount: 1u32.into(),
             },
-            valset.result,
+            last_unsigned_valset.result,
             cosmos_key,
             String::from_utf8(peggy_id.clone()).expect("Invalid PeggyID"),
             None,
@@ -62,14 +62,13 @@ pub async fn relay_valsets(
         )
         .await
         .unwrap();
-
-        last_unsigned_valset = get_oldest_unsigned_valset(contact, our_cosmos_address).await;
     }
 
     // now that we have caught up on valset requests we should determine if we need to relay one
     // to Ethereum for that we will find the latest confirmed valset and compare it to the ethereum chain
     let latest_valsets = get_last_valset_requests(contact).await;
     if latest_valsets.is_err() {
+        error!("Failed to get latest valsets!");
         // there are no latest valsets to check, possible on a bootstrapping chain maybe handle better?
         return;
     }
@@ -88,6 +87,7 @@ pub async fn relay_valsets(
     }
 
     if latest_confirmed.is_none() {
+        error!("We don't have a latest confirmed valset?");
         return;
     }
     let latest_confirmed = latest_confirmed.unwrap();
@@ -105,28 +105,24 @@ pub async fn relay_valsets(
 
         let old_valset = if latest_ethereum_valset == 0u8.into() {
             // we need to have a special case for validator set zero, that valset was never stored on chain
-            let mut valset = get_peggy_valset(contact)
-                .await
-                .expect("Failed to get old valset");
-            // make sure the nonce here is zero
-            valset.result.nonce = 0;
-            valset
+            // right now we just use the current valset
+            latest_valset.clone()
         } else {
             // get the old valset from the Cosmos chain
             get_peggy_valset_request(contact, latest_ethereum_valset)
                 .await
                 .expect("Failed to get old valset")
+                .result
         };
 
         send_eth_valset_update(
             latest_valset,
-            old_valset.result,
+            old_valset,
             &latest_confirmed.result,
             web3,
             timeout,
             contract_address,
             ethereum_key,
-            cosmos_key,
         )
         .await
         .expect("Failed to update valset!");

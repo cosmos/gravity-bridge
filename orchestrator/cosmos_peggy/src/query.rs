@@ -1,28 +1,10 @@
-use crate::types::*;
 use clarity::Uint256;
 use contact::client::Contact;
 use contact::jsonrpc::error::JsonRpcError;
 use contact::types::ResponseWrapper;
 use contact::types::TypeWrapper;
 use deep_space::address::Address;
-
-/// Get the latest valset recorded by the peggy module. If no valset has ever been created
-/// you will instead get a blank valset at height 0. Any value above this may or may not
-/// be a complete valset and it's up to the caller to interpret the response.
-pub async fn get_peggy_valset(contact: &Contact) -> Result<ResponseWrapper<Valset>, JsonRpcError> {
-    let none: Option<bool> = None;
-    let ret: Result<ResponseWrapper<ValsetUnparsed>, JsonRpcError> = contact
-        .jsonrpc_client
-        .request_method("peggy/current_valset", none, contact.timeout, None)
-        .await;
-    match ret {
-        Ok(val) => Ok(ResponseWrapper {
-            height: val.height,
-            result: val.result.convert(),
-        }),
-        Err(e) => Err(e),
-    }
-}
+use peggy_utils::types::*;
 
 /// get the valset for a given nonce (block) height
 pub async fn get_peggy_valset_request(
@@ -39,6 +21,7 @@ pub async fn get_peggy_valset_request(
             None,
         )
         .await;
+    trace!("Unparsed valset {:?}", ret);
     match ret {
         Ok(val) => Ok(ResponseWrapper {
             height: val.height,

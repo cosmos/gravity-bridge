@@ -582,6 +582,7 @@ dependencies = [
  "env_logger",
  "log",
  "num256",
+ "peggy_utils",
  "rand",
  "serde",
  "serde_derive",
@@ -1541,7 +1542,12 @@ dependencies = [
 name = "peggy_utils"
 version = "0.1.0"
 dependencies = [
+ "clarity",
  "contact",
+ "deep_space",
+ "num256",
+ "serde",
+ "serde_derive",
  "web30",
 ]
 

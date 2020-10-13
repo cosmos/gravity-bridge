@@ -1,6 +1,4 @@
 use crate::messages::*;
-use crate::types::*;
-use clarity::Address as EthAddress;
 use clarity::{abi::encode_tokens, abi::Token, PrivateKey as EthPrivateKey};
 use contact::jsonrpc::error::JsonRpcError;
 use contact::types::TXSendResponse;
@@ -10,6 +8,7 @@ use deep_space::stdfee::StdFee;
 use deep_space::stdsignmsg::StdSignMsg;
 use deep_space::transaction::TransactionSendType;
 use deep_space::{coin::Coin, utils::bytes_to_hex_str};
+use peggy_utils::types::*;
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
@@ -122,17 +121,19 @@ pub async fn send_valset_confirm(
         .to_public_key()
         .expect("Invalid private key!")
         .to_address();
+    let our_eth_address = eth_private_key.to_public_key().unwrap();
 
     let tx_info =
         maybe_get_optional_tx_info(our_address, chain_id, account_number, sequence, contact)
             .await?;
 
+    let (eth_addresses, powers) = valset.filter_empty_addresses()?;
     let message = encode_tokens(&[
         Token::FixedString(peggy_id),
         Token::FixedString("checkpoint".to_string()),
         valset.nonce.into(),
-        filter_empty_addresses(&valset.eth_addresses)?.into(),
-        valset.powers.into(),
+        eth_addresses.into(),
+        powers.into(),
     ]);
     let eth_signature = eth_private_key.sign_ethereum_msg(&message);
 
@@ -146,6 +147,7 @@ pub async fn send_valset_confirm(
         },
         msgs: vec![PeggyMsg::ValsetConfirmMsg(ValsetConfirmMsg {
             validator: our_address,
+            eth_address: our_eth_address,
             nonce: valset.nonce.into(),
             eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
         })],
@@ -157,23 +159,4 @@ pub async fn send_valset_confirm(
         .unwrap();
 
     contact.retry_on_block(tx).await
-}
-
-/// Takes an array of Option<EthAddress> and converts to EthAddress erroring when
-/// an None is found
-pub fn filter_empty_addresses(
-    input: &[Option<EthAddress>],
-) -> Result<Vec<EthAddress>, JsonRpcError> {
-    let mut output = Vec::new();
-    for val in input.iter() {
-        match val {
-            Some(a) => output.push(*a),
-            None => {
-                return Err(JsonRpcError::BadInput(
-                    "All Eth Addresses must be set".to_string(),
-                ))
-            }
-        }
-    }
-    Ok(output)
 }

@@ -2,12 +2,11 @@ use clarity::abi::Token;
 use clarity::private_key::PrivateKey as EthPrivateKey;
 use clarity::Address as EthAddress;
 use clarity::Signature;
-use cosmos_peggy::types::*;
 use deep_space::address::Address as CosmosAddress;
 use deep_space::{private_key::PrivateKey as CosmosPrivateKey, utils::bytes_to_hex_str};
-use ethereum_peggy::utils::filter_empty_eth_addresses;
 use ethereum_peggy::utils::get_checkpoint_abi_encode;
-use ethereum_peggy::utils::{get_checkpoint_hash, get_correct_power_for_address};
+use ethereum_peggy::utils::get_checkpoint_hash;
+use peggy_utils::types::*;
 use web30::client::Web3;
 
 async fn verify_signature_passing(
@@ -21,35 +20,18 @@ async fn verify_signature_passing(
 ) {
     info!("Checking validity of all validator signatures");
     let locally_computed_checkpoint_hash = get_checkpoint_hash(&valset, &peggy_id).unwrap();
-
-    let mut addresses = Vec::new();
-    let mut powers = Vec::new();
-    let mut v = Vec::new();
-    let mut r = Vec::new();
-    let mut s = Vec::new();
-    for sig in confirms {
-        // we can get signatures and powers back from cosmos in any order, we must now order them properly
-        let eth_private_key = get_eth_key_from_cosmos_addr(sig.validator, &keys);
-        let eth_address = eth_private_key.to_public_key().unwrap();
-        let (address, power) = get_correct_power_for_address(eth_address, &valset);
-        addresses.push(address);
-        powers.push(power);
-
-        //v.push(format!("{}", sig.eth_signature.v.clone()).parse().unwrap());
-        v.push(sig.eth_signature.v.clone());
-        r.push(Token::Bytes(sig.eth_signature.r.clone().to_bytes_be()));
-        s.push(Token::Bytes(sig.eth_signature.s.clone().to_bytes_be()));
-    }
+    let sig_data = valset.order_sigs(confirms).unwrap();
+    let sig_arrays = to_arrays(sig_data);
 
     let contract_output = web3.contract_call(
         peggy_contract_address,
         "checkValidatorSignatures(address[],uint256[],uint8[],bytes32[],bytes32[],bytes32,uint256)",
         &[
-            addresses.into(),
-            powers.into(),
-            v.into(),
-            Token::Dynamic(r),
-            Token::Dynamic(s),
+            sig_arrays.addresses.into(),
+            sig_arrays.powers.into(),
+            sig_arrays.v,
+            sig_arrays.r,
+            sig_arrays.s,
             Token::Bytes(locally_computed_checkpoint_hash),
             500u64.into(),
         ],
@@ -72,6 +54,7 @@ async fn verify_contract_interactions(
     eth_address_with_funds: EthAddress,
 ) {
     let eth_address = eth_private_key.to_public_key().unwrap();
+    let (addresses, powers) = valset.filter_empty_addresses().unwrap();
     // Solidity function signature
     // function getValsetNonce() public returns (uint256)
     let contract_computed_checkpoint = web3
@@ -79,10 +62,8 @@ async fn verify_contract_interactions(
             peggy_contract_address,
             "makeCheckpoint(address[],uint256[],uint256,bytes32)",
             &[
-                filter_empty_eth_addresses(&valset.eth_addresses)
-                    .unwrap()
-                    .into(),
-                valset.powers.clone().into(),
+                addresses.into(),
+                powers.into(),
                 valset.nonce.into(),
                 Token::FixedString(peggy_id.clone()),
             ],

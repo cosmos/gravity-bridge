@@ -7,6 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+peggy_utils = {path = "../peggy_utils"}
+
 contact = "0.1"
 deep_space = "0.2"
 serde_derive = "1.0"
