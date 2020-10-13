@@ -102,9 +102,10 @@ func createValsetRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 type valsetConfirmReq struct {
-	BaseReq rest.BaseReq `json:"base_req"`
-	Nonce   string       `json:"nonce"`
-	EthSig  string       `json:"ethSig"`
+	BaseReq    rest.BaseReq `json:"base_req"`
+	EthAddress string       `json:"eth_address"`
+	Nonce      string       `json:"nonce"`
+	EthSig     string       `json:"ethSig"`
 }
 
 // check the ethereum sig on a particular valset and broadcast a transaction containing
@@ -123,6 +124,8 @@ func createValsetConfirmHandler(cliCtx context.CLIContext, storeKey string) http
 		if !baseReq.ValidateBasic(w) {
 			return
 		}
+
+		ethAddress := types.NewEthereumAddress(req.EthAddress)
 
 		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, req.Nonce), nil)
 		if err != nil {
@@ -156,7 +159,7 @@ func createValsetConfirmHandler(cliCtx context.CLIContext, storeKey string) http
 		}
 
 		cosmosAddr := cliCtx.GetFromAddress()
-		msg := types.NewMsgValsetConfirm(valset.Nonce, cosmosAddr, req.EthSig)
+		msg := types.NewMsgValsetConfirm(valset.Nonce, ethAddress, cosmosAddr, req.EthSig)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")

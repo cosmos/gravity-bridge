@@ -15,13 +15,15 @@ import (
 
 func TestQueryValsetConfirm(t *testing.T) {
 	var (
-		nonce                                = types.NewUInt64Nonce(1)
-		myValidatorCosmosAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		nonce                                         = types.NewUInt64Nonce(1)
+		myValidatorCosmosAddr   sdk.AccAddress        = make([]byte, sdk.AddrLen)
+		myValidatorEthereumAddr types.EthereumAddress = createEthAddress(50)
 	)
 	k, ctx, _ := CreateTestEnv(t)
 	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{
 		Nonce:     nonce,
 		Validator: myValidatorCosmosAddr,
+		Address:   myValidatorEthereumAddr,
 	})
 
 	specs := map[string]struct {
@@ -33,7 +35,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			srcAddr:  myValidatorCosmosAddr.String(),
-			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a",  "signature": ""}}`),
+			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a",  "signature": ""}}`),
 		},
 		"unknown nonce": {
 			srcNonce: "999999",
@@ -79,6 +81,7 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 		k.SetValsetConfirm(ctx, types.MsgValsetConfirm{
 			Nonce:     nonce,
 			Validator: addr,
+			Address:   createEthAddress(50),
 			Signature: fmt.Sprintf("signature %d", i+1),
 		})
 	}
@@ -91,9 +94,9 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			expResp: []byte(`[
-{"nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a", "signature": "signature 1"},
-{"nonce": "1", "validator": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du", "signature": "signature 2"},
-{"nonce": "1", "validator": "cosmos1qgpqyqszqgpqyqszqgpqyqszqgpqyqszrh8mx2", "signature": "signature 3"}
+{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a", "signature": "signature 1"},
+{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du", "signature": "signature 2"},
+{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1qgpqyqszqgpqyqszqgpqyqszqgpqyqszrh8mx2", "signature": "signature 3"}
 ]`),
 		},
 		"unknown nonce": {

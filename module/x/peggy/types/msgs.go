@@ -23,15 +23,17 @@ import (
 // -------------
 // deprecated should use MsgBridgeSignatureSubmission instead
 type MsgValsetConfirm struct {
-	Nonce     UInt64Nonce    `json:"nonce"`
-	Validator sdk.AccAddress `json:"validator"`
-	Signature string         `json:"signature"`
+	Nonce     UInt64Nonce     `json:"nonce"`
+	Validator sdk.AccAddress  `json:"validator"`
+	Address   EthereumAddress `json:"eth_address"`
+	Signature string          `json:"signature"`
 }
 
-func NewMsgValsetConfirm(nonce UInt64Nonce, validator sdk.AccAddress, signature string) MsgValsetConfirm {
+func NewMsgValsetConfirm(nonce UInt64Nonce, eth_address EthereumAddress, validator sdk.AccAddress, signature string) MsgValsetConfirm {
 	return MsgValsetConfirm{
 		Nonce:     nonce,
 		Validator: validator,
+		Address:   eth_address,
 		Signature: signature,
 	}
 }
