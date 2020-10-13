@@ -23,6 +23,7 @@ async function runTest(opts: {
   badValidatorSig?: boolean;
   zeroedValidatorSig?: boolean;
   notEnoughPower?: boolean;
+  barelyEnoughPower?: boolean;
 }) {
   const signers = await ethers.getSigners();
   const peggyId = ethers.utils.formatBytes32String("foo");
@@ -118,6 +119,18 @@ async function runTest(opts: {
     sigs.v[13] = 0;
   }
 
+  if (opts.barelyEnoughPower) {
+    // Stay just above the threshold
+    sigs.v[1] = 0;
+    sigs.v[2] = 0;
+    sigs.v[3] = 0;
+    sigs.v[5] = 0;
+    sigs.v[6] = 0;
+    sigs.v[7] = 0;
+    sigs.v[9] = 0;
+    sigs.v[11] = 0;
+  }
+
   await peggy.submitBatch(
     await getSignerAddresses(validators),
     powers,
@@ -132,20 +145,20 @@ async function runTest(opts: {
   );
 }
 
-describe("submitBatch tests", function() {
-  it("throws on malformed current valset", async function() {
+describe("submitBatch tests", function () {
+  it("throws on malformed current valset", async function () {
     await expect(runTest({ malformedCurrentValset: true })).to.be.revertedWith(
       "Malformed current validator set"
     );
   });
 
-  it("throws on malformed txbatch", async function() {
+  it("throws on malformed txbatch", async function () {
     await expect(runTest({ malformedTxBatch: true })).to.be.revertedWith(
       "Malformed batch of transactions"
     );
   });
 
-  it("throws on non matching checkpoint for current valset", async function() {
+  it("throws on non matching checkpoint for current valset", async function () {
     await expect(
       runTest({ nonMatchingCurrentValset: true })
     ).to.be.revertedWith(
@@ -153,31 +166,35 @@ describe("submitBatch tests", function() {
     );
   });
 
-  it("throws on tx nonces not high enough", async function() {
+  it("throws on tx nonces not high enough", async function () {
     await expect(runTest({ nonceNotHigher: true })).to.be.revertedWith(
       "Transaction nonces in batch must be higher than last transaction nonce and strictly increasing"
     );
   });
 
-  it("throws on tx nonces not strictly increasing", async function() {
+  it("throws on tx nonces not strictly increasing", async function () {
     await expect(runTest({ nonceNotIncreasing: true })).to.be.revertedWith(
       "Transaction nonces in batch must be higher than last transaction nonce and strictly increasing"
     );
   });
 
-  it("throws on bad validator sig", async function() {
+  it("throws on bad validator sig", async function () {
     await expect(runTest({ badValidatorSig: true })).to.be.revertedWith(
       "Validator signature does not match"
     );
   });
 
-  it("allows zeroed sig", async function() {
+  it("allows zeroed sig", async function () {
     await runTest({ zeroedValidatorSig: true });
   });
 
-  it("throws on not enough signatures", async function() {
+  it("throws on not enough signatures", async function () {
     await expect(runTest({ notEnoughPower: true })).to.be.revertedWith(
       "Submitted validator set signatures do not have enough power"
     );
+  });
+
+  it.only("does not throw on barely enough signatures", async function () {
+    await runTest({ barelyEnoughPower: true });
   });
 });
