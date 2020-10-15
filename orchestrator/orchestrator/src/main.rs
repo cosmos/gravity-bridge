@@ -10,8 +10,6 @@
 //!   * Access to an Ethereum chain RPC server
 
 #[macro_use]
-extern crate serde_json;
-#[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate lazy_static;
@@ -28,9 +26,7 @@ use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
-use std::thread;
 use std::time::Duration;
-use std::time::Instant;
 use url::Url;
 use web30::client::Web3;
 

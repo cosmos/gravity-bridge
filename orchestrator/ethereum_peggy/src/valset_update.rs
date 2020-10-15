@@ -1,13 +1,11 @@
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use clarity::{abi::Token, Uint256};
-use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use peggy_utils::error::OrchestratorError;
 use peggy_utils::types::*;
 use std::time::Duration;
 use tokio::time::timeout as future_timeout;
+use web30::client::Web3;
 use web30::types::SendTxOption;
-use web30::{client::Web3, jsonrpc::error::Web3Error};
 
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided validator set and signatures.
@@ -25,12 +23,15 @@ pub async fn send_eth_valset_update(
     peggy_contract_address: EthAddress,
     our_eth_key: EthPrivateKey,
 ) -> Result<(), OrchestratorError> {
-    info!("Ordering signatures and submitting validator set update to Ethereum");
     let (old_addresses, old_powers) = old_valset.filter_empty_addresses()?;
     let (new_addresses, new_powers) = new_valset.filter_empty_addresses()?;
     let old_nonce = old_valset.nonce;
     let new_nonce = new_valset.nonce;
     let eth_address = our_eth_key.to_public_key().unwrap();
+    info!(
+        "Ordering signatures and submitting validator set {} -> {} update to Ethereum",
+        old_nonce, new_nonce
+    );
 
     let sig_data = new_valset.order_sigs(confirms)?;
     let sig_arrays = to_arrays(sig_data);

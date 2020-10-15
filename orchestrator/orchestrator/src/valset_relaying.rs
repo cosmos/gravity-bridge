@@ -90,23 +90,29 @@ pub async fn relay_valsets(
         error!("We don't have a latest confirmed valset?");
         return;
     }
-    let latest_confirmed = latest_confirmed.unwrap();
-    let latest_valset = latest_valset.unwrap();
+    let latest_cosmos_confirmed = latest_confirmed.unwrap();
+    let latest_cosmos_valset = latest_valset.unwrap();
+    info!(
+        "Latest valset is {} latest confirmed is {}",
+        latest_cosmos_valset.nonce, latest_cosmos_confirmed.result[0].nonce
+    );
 
     let latest_ethereum_valset = get_valset_nonce(contract_address, our_ethereum_address, web3)
         .await
         .expect("Failed to get Ethereum valset");
-    let latest_cosmos_valset: Uint256 = latest_confirmed.height.into();
-    if latest_cosmos_valset > latest_ethereum_valset {
+    let latest_cosmos_valset_nonce: Uint256 = latest_cosmos_valset.nonce.into();
+    if latest_cosmos_valset_nonce > latest_ethereum_valset {
         info!(
             "We have detected latest valset {} but latest on Ethereum is {} sending an update!",
-            latest_cosmos_valset, latest_ethereum_valset
+            latest_cosmos_valset.nonce, latest_ethereum_valset
         );
 
         let old_valset = if latest_ethereum_valset == 0u8.into() {
             // we need to have a special case for validator set zero, that valset was never stored on chain
             // right now we just use the current valset
-            latest_valset.clone()
+            let mut latest_valset = latest_cosmos_valset.clone();
+            latest_valset.nonce = 0;
+            latest_valset
         } else {
             // get the old valset from the Cosmos chain
             get_peggy_valset_request(contact, latest_ethereum_valset)
@@ -116,9 +122,9 @@ pub async fn relay_valsets(
         };
 
         send_eth_valset_update(
-            latest_valset,
+            latest_cosmos_valset,
             old_valset,
-            &latest_confirmed.result,
+            &latest_cosmos_confirmed.result,
             web3,
             timeout,
             contract_address,

@@ -3,7 +3,6 @@ use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
-use std::thread;
 use std::time::Duration;
 use std::time::Instant;
 use tokio::time::delay_for;
