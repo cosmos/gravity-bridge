@@ -62,7 +62,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) erro
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
 	if err := k.AttestationHandler.Handle(xCtx, *att); err != nil { // execute with a transient storage
-		ctx.Logger().Error("attestation failed", "cause", err.Error(), "claim type", att.ClaimType, "id", att.ID(), "nonce", att.Nonce.String())
+		k.logger(ctx).Error("attestation failed", "cause", err.Error(), "claim type", att.ClaimType, "id", att.ID(), "nonce", att.Nonce.String())
 		att.ProcessResult = types.ProcessResultFailure
 	} else {
 		att.ProcessResult = types.ProcessResultSuccess

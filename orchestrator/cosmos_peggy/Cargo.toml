@@ -1,0 +1,31 @@
+[package]
+name = "cosmos_peggy"
+version = "0.1.0"
+authors = ["Justin Kilpatrick <justin@althea.net>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+peggy_utils = {path = "../peggy_utils"}
+
+contact = "0.1"
+deep_space = "0.2"
+serde_derive = "1.0"
+clarity = "0.3"
+serde = "1.0"
+actix = "0.10"
+actix-web = {version = "3.1", features=["openssl"]}
+actix-rt = "1"
+url = "2"
+web30 = "0.8"
+num256 = "0.3"
+log = "0.4"
+env_logger = "0.7"
+serde_json = "1.0"
+sha3 = "0.9"
+tokio = "0.2"
+
+[dev-dependencies]
+rand = "0.7"
+actix = "0.10"

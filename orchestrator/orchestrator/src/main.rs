@@ -9,21 +9,26 @@
 //!   * Access to an Cosmos chain RPC server
 //!   * Access to an Ethereum chain RPC server
 
-use clarity::PrivateKey as EthPrivateKey;
-use contact::client::Contact;
-use deep_space::private_key::PrivateKey as CosmosPrivateKey;
-use docopt::Docopt;
-use num256::Int256;
-use std::thread;
-use std::time::Duration;
-use std::time::Instant;
-use url::Url;
-use web30::client::Web3;
-
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate log;
+
+pub mod main_loop;
+pub mod tests;
+pub mod valset_relaying;
+
+use crate::main_loop::orchestrator_main_loop;
+use clarity::Address as EthAddress;
+use clarity::PrivateKey as EthPrivateKey;
+use contact::client::Contact;
+use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use docopt::Docopt;
+use std::time::Duration;
+use url::Url;
+use web30::client::Web3;
 
 #[derive(Debug, Deserialize)]
 struct Args {
@@ -31,17 +36,21 @@ struct Args {
     flag_ethereum_key: String,
     flag_cosmos_rpc: String,
     flag_ethereum_rpc: String,
+    flag_contract_address: String,
+    flag_fees: String,
 }
 
 lazy_static! {
     pub static ref USAGE: String = format!(
         "Usage: {} --cosmos-key=<key> --ethereum-key=<key> --cosmos-rpc=<url> --ethereum-rpc=<url>
         Options:
-            -h --help              Show this screen.
-            --cosmos-key=<ckey>    The Cosmos private key of the validator
-            --ethereum-key=<ekey>  The Ethereum private key of the validator
-            --cosmos-rpc=<curl>    The Cosmos RPC url, usually the validator
-            --ethereum-rpc=<eurl>  The Ethereum RPC url, should be a self hosted node
+            -h --help                 Show this screen.
+            --cosmos-key=<ckey>       The Cosmos private key of the validator
+            --ethereum-key=<ekey>     The Ethereum private key of the validator
+            --cosmos-rpc=<curl>       The Cosmos RPC url, usually the validator
+            --ethereum-rpc=<eurl>     The Ethereum RPC url, should be a self hosted node
+            --fees=<denom>            The Cosmos Denom in which to pay Cosmos chain fees
+            --contract-address=<addr> The Ethereum contract address for Peggy, this is temporary
         About:
             The Validator companion relayer and Ethereum network observer.
             for Althea-Peggy.
@@ -68,28 +77,25 @@ async fn main() {
         .flag_ethereum_key
         .parse()
         .expect("Invalid Ethereum private key!");
+    let contract_address: EthAddress = args
+        .flag_contract_address
+        .parse()
+        .expect("Invalid contract address!");
     let cosmos_url = Url::parse(&args.flag_cosmos_rpc).expect("Invalid Cosmos RPC url");
     let eth_url = Url::parse(&args.flag_ethereum_rpc).expect("Invalid Ethereum RPC url");
+    let fee_denom = args.flag_fees;
 
     let web3 = Web3::new(&eth_url.to_string(), LOOP_SPEED);
     let contact = Contact::new(&cosmos_url.to_string(), LOOP_SPEED);
 
-    loop {
-        let loop_start = Instant::now();
-
-        let latest_eth_block = web3.eth_get_latest_block().await.unwrap();
-        let latest_cosmos_block = contact.get_latest_block().await.unwrap();
-        println!(
-            "Latest Eth block {} Latest Cosmos block {}",
-            latest_eth_block.number, latest_cosmos_block.block.header.version.block
-        );
-
-        // a bit of logic that tires to keep things running every 5 seconds exactly
-        // this is not required for any specific reason. In fact we expect and plan for
-        // the timing being off significantly
-        let elapsed = Instant::now() - loop_start;
-        if elapsed < LOOP_SPEED {
-            thread::sleep(LOOP_SPEED - elapsed)
-        }
-    }
+    orchestrator_main_loop(
+        cosmos_key,
+        ethereum_key,
+        web3,
+        contact,
+        contract_address,
+        fee_denom,
+        LOOP_SPEED,
+    )
+    .await;
 }

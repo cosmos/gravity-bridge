@@ -280,7 +280,7 @@ func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper K
 		return nil, nil
 	}
 
-	valset := keeper.GetValsetRequest(ctx, *nonce)
+	valset := keeper.GetValsetRequest(ctx, *nonce).WithoutEmptyMembers()
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "no valset found for nonce")
 	}
@@ -289,12 +289,27 @@ func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper K
 		Valset: *valset,
 	}
 
-	keeper.IterateBridgeApprovalSignatures(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, *nonce, func(_ []byte, sig []byte) bool {
-		// todo: check if signature order matters
-		result.Signatures = append(result.Signatures, sig)
+	addToSig := make(map[types.EthereumAddress][]byte, len(result.Valset.Members))
+	keeper.IterateBridgeApprovalSignatures(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, *nonce, func(key []byte, sig []byte) bool {
+		var valAddr sdk.ValAddress = key[types.UInt64NonceByteLen:] // key = nonce + validator address
+		ethAddr := keeper.GetEthAddress(ctx, valAddr)
+		if ethAddr == nil || ethAddr.IsEmpty() {
+			return false
+		}
+		addToSig[*ethAddr] = sig
 		return false
 	})
 
+	// add signatures from last observed multisig, sorted by members
+	observed := keeper.GetLastObservedMultisig(ctx).WithoutEmptyMembers()
+	if observed == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnsupported, "no multisig observed yet")
+	}
+	for _, m := range observed.Members {
+		if sig, ok := addToSig[m.EthereumAddress]; ok {
+			result.Signatures = append(result.Signatures, sig)
+		}
+	}
 	res, err := codec.MarshalJSONIndent(keeper.cdc, result)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
@@ -338,8 +353,8 @@ func queryInflightBatches(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	// batches that are approved but not observed, yet
 	// batch nonce > than last observed nonce
 	var lastNonce types.UInt64Nonce
-	if att := keeper.GetLastProcessedAttestation(ctx, types.ClaimTypeEthereumBridgeWithdrawalBatch); att != nil {
-		lastNonce = att.Nonce
+	if nonce := keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeWithdrawalBatch); nonce != nil {
+		lastNonce = *nonce
 	}
 
 	var batches []types.OutgoingTxBatch
@@ -353,17 +368,36 @@ func queryInflightBatches(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	if len(batches) == 0 {
 		return nil, nil
 	}
+
+	observed := keeper.GetLastObservedMultisig(ctx).WithoutEmptyMembers()
+	if observed == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnsupported, "no multisig observed yet")
+	}
 	out := make([]ApprovedOutgoingTxBatchResponse, len(batches))
 	for i := range batches {
 		r := ApprovedOutgoingTxBatchResponse{
 			Batch: batches[i],
 		}
-		keeper.IterateBridgeApprovalSignatures(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, batches[i].Nonce, func(_ []byte, sig []byte) bool {
-			r.Signatures = append(r.Signatures, sig)
+
+		addToSig := make(map[types.EthereumAddress][]byte)
+		keeper.IterateBridgeApprovalSignatures(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, batches[i].Nonce, func(key []byte, sig []byte) bool {
+			var valAddr sdk.ValAddress = key[types.UInt64NonceByteLen:] // key = nonce + validator address
+			ethAddr := keeper.GetEthAddress(ctx, valAddr)
+			if ethAddr == nil || ethAddr.IsEmpty() {
+				return false
+			}
+			addToSig[*ethAddr] = sig
 			return false
 		})
+		// add signatures from last observed multisig, sorted by members
+		for _, m := range observed.Members {
+			if sig, ok := addToSig[m.EthereumAddress]; ok {
+				r.Signatures = append(r.Signatures, sig)
+			}
+		}
 		out[i] = r
 	}
+
 	res, err := codec.MarshalJSONIndent(keeper.cdc, out)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())

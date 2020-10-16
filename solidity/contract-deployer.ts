@@ -28,6 +28,10 @@ const args = commandLineArgs([
 //     - We will consider the scenario that many deployers deploy many valid peggy eth contracts.
 // 5. The deployer submits the address of the peggy contract that it deployed to Ethereum.
 //     - The peggy module checks the Ethereum chain for each submitted address, and makes sure that the peggy contract at that address is using the correct source code, and has the correct validator set.
+type Validator = {
+  power: number;
+  ethereum_address: string;
+};
 type ValsetResult = {
   type: string;
   value: Valset;
@@ -37,8 +41,7 @@ type ValsetResponse = {
   result: ValsetResult;
 };
 type Valset = {
-  eth_addresses: string[];
-  powers: number[];
+  members: Validator[];
   nonce: number;
 };
 async function deploy() {
@@ -69,6 +72,12 @@ async function deploy() {
   console.log("About to get latest Peggy valset");
   const latestValset = await getLatestValset(args.peggyId);
 
+  let eth_addresses = [];
+  let powers = [];
+  for (let i = 0; i < latestValset.result.value.members.length; i++) {
+    eth_addresses.push(latestValset.result.value.members[i].ethereum_address);
+    powers.push(latestValset.result.value.members[i].power);
+  }
   const peggy = (await factory.deploy(
     contract,
     // todo generate this randomly at deployment time that way we can avoid
@@ -76,8 +85,8 @@ async function deploy() {
     peggyId,
     // 66% of uint32_max
     2834678415,
-    latestValset.result.value.eth_addresses,
-    latestValset.result.value.powers
+    eth_addresses,
+    powers
   )) as Peggy;
 
   await peggy.deployed();

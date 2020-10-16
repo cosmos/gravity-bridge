@@ -23,15 +23,17 @@ import (
 // -------------
 // deprecated should use MsgBridgeSignatureSubmission instead
 type MsgValsetConfirm struct {
-	Nonce     UInt64Nonce    `json:"nonce"`
-	Validator sdk.AccAddress `json:"validator"`
-	Signature string         `json:"signature"`
+	Nonce     UInt64Nonce     `json:"nonce"`
+	Validator sdk.AccAddress  `json:"validator"`
+	Address   EthereumAddress `json:"eth_address"`
+	Signature string          `json:"signature"`
 }
 
-func NewMsgValsetConfirm(nonce UInt64Nonce, validator sdk.AccAddress, signature string) MsgValsetConfirm {
+func NewMsgValsetConfirm(nonce UInt64Nonce, eth_address EthereumAddress, validator sdk.AccAddress, signature string) MsgValsetConfirm {
 	return MsgValsetConfirm{
 		Nonce:     nonce,
 		Validator: validator,
+		Address:   eth_address,
 		Signature: signature,
 	}
 }
@@ -65,7 +67,7 @@ func (msg MsgValsetConfirm) GetSigners() []sdk.AccAddress {
 // This message starts off the validator set update process by coordinating a block height
 // around which signatures over the validators, powers, and ethereum addresses will be made
 // and submitted using a ValsetConfirm. Anyone can send this message as it is not authenticated
-// in any way. In theory people could spam it and the validators will have to determine which
+// except as a valid tx. In theory people could spam it and the validators will have to determine which
 // block to actually coordinate around by looking over the valset requests and seeing which one
 // some other validator has already submitted a ValsetResponse for.
 // -------------
@@ -437,16 +439,14 @@ var (
 // EthereumBridgeBootstrappedClaim orchestrators confirm that the contract is setup on the Ethereum side and the init data.
 type EthereumBridgeBootstrappedClaim struct {
 	Nonce UInt64Nonce `json:"nonce" yaml:"nonce"`
-	Block uint64      `json:"block" yaml:"block"`
-	// AllowedValidatorSet addresses to participate
-	AllowedValidatorSet []EthereumAddress `json:"allowed_validator_set" yaml:"allowed_validator_set"`
-	// ValidatorPowers the validator's power values
-	ValidatorPowers []uint64 `json:"validator_powers" yaml:"validator_powers"`
 	// PeggyID is a random 32 byte value to prevent signature reuse
-	PeggyID []byte `json:"peggy_id,omitempty" yaml:"peggy_id"`
+	PeggyID string `json:"peggy_id" yaml:"peggy_id"`
+	Block   uint64 `json:"block" yaml:"block"`
+	// BridgeValidators is the initial MultiSig Set
+	BridgeValidators BridgeValidators `json:"bridge_validators" yaml:"bridge_validators"`
 	// StartThreshold is the percentage of total voting power that must be online and participating in
 	// Peggy operations before a bridge can start operating
-	StartThreshold uint64 `json:"start_threshold,omitempty" yaml:"start_threshold"`
+	StartThreshold uint64 `json:"start_threshold" yaml:"start_threshold"`
 }
 
 func (e EthereumBridgeBootstrappedClaim) GetNonce() UInt64Nonce {
@@ -461,30 +461,15 @@ func (e EthereumBridgeBootstrappedClaim) ValidateBasic() error {
 	if err := e.Nonce.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "nonce")
 	}
-	for i := range e.AllowedValidatorSet {
-		if e.AllowedValidatorSet[i].IsEmpty() {
-			return sdkerrors.Wrap(ErrEmpty, "ethereum address")
-		}
-	}
-	for i := range e.ValidatorPowers {
-		if e.ValidatorPowers[i] == 0 {
-			return sdkerrors.Wrap(ErrEmpty, "power")
-		}
-	}
-	if len(e.AllowedValidatorSet) != len(e.ValidatorPowers) {
-		return sdkerrors.Wrap(ErrInvalid, "validator and power element count does not match")
+	if err := e.BridgeValidators.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "bridge validators")
 	}
 	// todo: implement me proper
 	return nil
 }
 
 func (e EthereumBridgeBootstrappedClaim) Details() AttestationDetails {
-	return BridgeBootstrap{
-		AllowedValidatorSet: e.AllowedValidatorSet,
-		ValidatorPowers:     e.ValidatorPowers,
-		PeggyID:             e.PeggyID,
-		StartThreshold:      e.StartThreshold,
-	}
+	return NewBridgeBootstrap(e.PeggyID, e.BridgeValidators, e.StartThreshold)
 }
 
 // MsgCreateEthereumClaims
@@ -494,13 +479,14 @@ func (e EthereumBridgeBootstrappedClaim) Details() AttestationDetails {
 // validator set has claimed to have seen the transaction enter the ethereum blockchain it is "observed"
 // and state transitions and operations are triggered on the cosmos side.
 type MsgCreateEthereumClaims struct {
-	EthereumChainID       string          `json:"ethereum_chain_id"` // todo: revisit type. can be int/ string/ ?
-	BridgeContractAddress EthereumAddress `json:"bridge_contract_address"`
-	Orchestrator          sdk.AccAddress  `json:"orchestrator"`
-	Claims                []EthereumClaim `json:"claims"`
+	EthereumChainID uint64 `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
+	// I don't think we need to specify this, shouldn't it be in the store?
+	BridgeContractAddress EthereumAddress `json:"bridge_contract_address" yaml:"bridge_contract_address"`
+	Orchestrator          sdk.AccAddress  `json:"orchestrator" yaml:"orchestrator"`
+	Claims                []EthereumClaim `json:"claims" yaml:"claims"`
 }
 
-func NewMsgCreateEthereumClaims(ethereumChainID string, bridgeContractAddress EthereumAddress, orchestrator sdk.AccAddress, claims []EthereumClaim) *MsgCreateEthereumClaims {
+func NewMsgCreateEthereumClaims(ethereumChainID uint64, bridgeContractAddress EthereumAddress, orchestrator sdk.AccAddress, claims []EthereumClaim) *MsgCreateEthereumClaims {
 	return &MsgCreateEthereumClaims{EthereumChainID: ethereumChainID, BridgeContractAddress: bridgeContractAddress, Orchestrator: orchestrator, Claims: claims}
 }
 
@@ -534,6 +520,7 @@ func (m MsgCreateEthereumClaims) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{m.Orchestrator}
 }
 
+// MsgBridgeSignatureSubmission submits the Ethereum signature for a given nonce an claim type.
 type MsgBridgeSignatureSubmission struct {
 	Nonce             UInt64Nonce    `json:"nonce"`
 	ClaimType         ClaimType      `json:"claim_type"`

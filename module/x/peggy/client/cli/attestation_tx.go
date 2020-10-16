@@ -68,7 +68,10 @@ func CmdSendETHBootstrapRequest(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			cosmosAddr := cliCtx.GetFromAddress()
 
-			ethChainID := args[0]
+			ethChainID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
 			ethContractAddress := args[1]
 			block, err := strconv.ParseUint(args[2], 10, 64)
 			if err != nil {
@@ -79,13 +82,23 @@ func CmdSendETHBootstrapRequest(cdc *codec.Codec) *cobra.Command {
 			for _, v := range strings.Split(args[3], ",") {
 				validators = append(validators, types.NewEthereumAddress(v))
 			}
-
 			for _, v := range strings.Split(args[4], ",") {
 				p, err := strconv.ParseUint(v, 10, 64)
 				if err != nil {
 					return sdkerrors.Wrap(err, "power")
 				}
 				powers = append(powers, p)
+			}
+
+			if len(validators) != len(powers) {
+				return errors.New("not equal elements in validators and power")
+			}
+			bridgeValidators := make(types.BridgeValidators, len(validators))
+			for i := range validators {
+				bridgeValidators[i] = types.BridgeValidator{
+					Power:           powers[i],
+					EthereumAddress: validators[i],
+				}
 			}
 
 			startThreshold, err := strconv.ParseUint(args[6], 10, 64)
@@ -100,12 +113,11 @@ func CmdSendETHBootstrapRequest(cdc *codec.Codec) *cobra.Command {
 				Orchestrator:          cosmosAddr,
 				Claims: []types.EthereumClaim{
 					types.EthereumBridgeBootstrappedClaim{
-						Nonce:               1, // hard coded in ETH contract
-						Block:               block,
-						AllowedValidatorSet: validators,
-						ValidatorPowers:     powers,
-						PeggyID:             []byte(args[5]), // simplest solution without decoding
-						StartThreshold:      startThreshold,
+						Nonce:            1, // hard coded in ETH contract
+						Block:            block,
+						BridgeValidators: bridgeValidators,
+						PeggyID:          args[5], // simplest solution without decoding
+						StartThreshold:   startThreshold,
 					},
 				},
 			}
@@ -128,7 +140,10 @@ func CmdSendETHDepositRequest(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			cosmosAddr := cliCtx.GetFromAddress()
 
-			ethChainID := args[0]
+			ethChainID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
 			ethContractAddress := args[1]
 			nonce, err := parseNonce(args[2])
 			if err != nil {
@@ -179,7 +194,10 @@ func CmdSendETHWithdrawalRequest(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			cosmosAddr := cliCtx.GetFromAddress()
 
-			ethChainID := args[0]
+			ethChainID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
 			ethContractAddress := args[1]
 			nonce, err := parseNonce(args[2])
 			if err != nil {
@@ -214,7 +232,10 @@ func CmdSendETHMultiSigRequest(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			cosmosAddr := cliCtx.GetFromAddress()
 
-			ethChainID := args[0]
+			ethChainID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
 			ethContractAddress := types.NewEthereumAddress(args[1])
 			nonce, err := parseNonce(args[2])
 			if err != nil {
@@ -311,6 +332,7 @@ func CmdOutgointTXBatchConfirm(storeKey string, cdc *codec.Codec) *cobra.Command
 			if err != nil {
 				return err
 			}
+
 			if len(res) == 0 {
 				return ErrNotFound
 			}

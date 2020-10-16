@@ -108,12 +108,11 @@ func GetBridgeApprovalSignatureKeyPrefix(claimType ClaimType) []byte {
 func GetBridgeApprovalSignatureKey(claimType ClaimType, nonce UInt64Nonce, validator sdk.ValAddress) []byte {
 	prefix := GetBridgeApprovalSignatureKeyPrefix(claimType)
 	prefixLen := len(prefix)
-	nonceLen := 8
 
-	r := make([]byte, prefixLen+nonceLen+len(validator))
+	r := make([]byte, prefixLen+UInt64NonceByteLen+len(validator))
 	copy(r, prefix)
 	copy(r[prefixLen:], nonce.Bytes())
-	copy(r[prefixLen+nonceLen:], validator)
+	copy(r[prefixLen+UInt64NonceByteLen:], validator)
 	return r
 }
 

@@ -24,11 +24,13 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 		BridgedDenominator: BridgedDenominator{TokenContractAddress: erc20Addr, Symbol: "MAX", CosmosVoucherDenom: "peggy39b512461b"},
 		BatchStatus:        1,
 	}
-	v := Valset{
-		Nonce:        10,
-		Powers:       []uint64{4294967295},
-		EthAddresses: []EthereumAddress{orchestratorAddr},
-	}
+	v := NewValset(
+		NewUInt64Nonce(10),
+		BridgeValidators{{
+			EthereumAddress: orchestratorAddr,
+			Power:           4294967295,
+		}},
+	)
 	ourHash, err := src.GetCheckpoint(&v)
 	require.NoError(t, err)
 

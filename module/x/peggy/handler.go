@@ -72,7 +72,7 @@ func handleMsgValsetRequest(ctx sdk.Context, keeper Keeper, msg types.MsgValsetR
 	// todo: is requester in current valset?\
 
 	// disabling bootstrap check for integration tests to pass
-	//if keeper.GetLastValsetObservedNonce(ctx).IsEmpty() {
+	//if keeper.GetLastValsetObservedNonce(ctx).isValid() {
 	//	return nil, sdkerrors.Wrap(types.ErrInvalid, "bridge bootstrap process not observed, yet")
 	//}
 	v := keeper.SetValsetRequest(ctx)

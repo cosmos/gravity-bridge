@@ -1,8 +1,8 @@
 package keeper
 
 import (
+	"fmt"
 	"math"
-	"sort"
 	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -11,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
@@ -51,9 +52,8 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace params.Subspa
 }
 
 func (k Keeper) SetValsetRequest(ctx sdk.Context) types.Valset {
-	store := ctx.KVStore(k.storeKey)
 	valset := k.GetCurrentValset(ctx)
-	store.Set(types.GetValsetRequestKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
+	k.storeValset(ctx, valset)
 
 	event := sdk.NewEvent(
 		types.EventTypeMultisigUpdateRequest,
@@ -67,13 +67,17 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) types.Valset {
 	return valset
 }
 
-func (k Keeper) SetBootstrapValset(ctx sdk.Context, nonce types.UInt64Nonce, valset types.Valset) error {
+func (k Keeper) storeValset(ctx sdk.Context, valset types.Valset) {
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetValsetRequestKey(nonce)
-	if store.Has(key) {
+	store.Set(types.GetValsetRequestKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
+}
+
+func (k Keeper) SetBootstrapValset(ctx sdk.Context, valset types.Valset) error {
+	nonce := valset.Nonce
+	if k.HasValsetRequest(ctx, nonce) {
 		return sdkerrors.Wrap(types.ErrDuplicate, "nonce")
 	}
-	store.Set(key, k.cdc.MustMarshalBinaryBare(valset))
+	k.storeValset(ctx, valset)
 
 	event := sdk.NewEvent(
 		types.EventTypeMultisigUpdateRequest,
@@ -196,21 +200,6 @@ func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) *types.
 	return &addr
 }
 
-type valsetSort types.Valset
-
-func (a valsetSort) Len() int { return len(a.EthAddresses) }
-func (a valsetSort) Swap(i, j int) {
-	a.EthAddresses[i], a.EthAddresses[j] = a.EthAddresses[j], a.EthAddresses[i]
-	a.Powers[i], a.Powers[j] = a.Powers[j], a.Powers[i]
-}
-func (a valsetSort) Less(i, j int) bool {
-	// Secondary sort on eth address in case powers are equal
-	if a.Powers[i] == a.Powers[j] {
-		return a.EthAddresses[i].LessThan(a.EthAddresses[j])
-	}
-	return a.Powers[i] < a.Powers[j]
-}
-
 // GetCurrentValset gets powers from the store and normalizes them
 // into an integer percentage with a resolution of uint32 Max meaning
 // a given validators 'Peggy power' is computed as
@@ -224,33 +213,39 @@ func (a valsetSort) Less(i, j int) bool {
 // implementations are involved.
 func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-	ethAddrs := make([]types.EthereumAddress, len(validators))
-	powers := make([]uint64, len(validators))
+	bridgeValidators := make([]types.BridgeValidator, len(validators))
 	var totalPower uint64
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
 	for i, validator := range validators {
 		validatorAddress := validator.GetOperator()
-		ethAddr := k.GetEthAddress(ctx, validatorAddress)
-		if ethAddr != nil {
-			ethAddrs[i] = *ethAddr
-		}
 
 		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress))
 		totalPower += p
-		powers[i] = p
+
+		bridgeValidators[i] = types.BridgeValidator{Power: p}
+		if ethAddr := k.GetEthAddress(ctx, validatorAddress); ethAddr != nil {
+			bridgeValidators[i].EthereumAddress = *ethAddr
+		}
 	}
 	// normalize power values
-	for i := range powers {
-		powers[i] = sdk.NewUint(powers[i]).MulUint64(math.MaxUint32).QuoUint64(totalPower).Uint64()
+	for i := range bridgeValidators {
+		bridgeValidators[i].Power = sdk.NewUint(bridgeValidators[i].Power).MulUint64(math.MaxUint32).QuoUint64(totalPower).Uint64()
 	}
-	valset := types.Valset{
-		EthAddresses: ethAddrs,
-		Powers:       powers,
-		Nonce:        types.NewUInt64Nonce(uint64(ctx.BlockHeight())),
+	nonce := types.NewUInt64Nonce(uint64(ctx.BlockHeight()))
+	return types.NewValset(nonce, bridgeValidators)
+}
+
+func (k Keeper) GetLastObservedMultisig(ctx sdk.Context) *types.Valset {
+	nonce := k.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
+	if nonce == nil || nonce.IsEmpty() {
+		// todo: make this obsolete by exposing valset update event in bridge constructor
+		nonce = k.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeBootstrap)
 	}
-	sort.Sort(valsetSort(valset))
-	return valset
+	if nonce == nil || nonce.IsEmpty() {
+		return nil
+	}
+	return k.GetValsetRequest(ctx, *nonce)
 }
 
 // GetParams returns the total set of wasm parameters.
@@ -281,7 +276,7 @@ func (k Keeper) GetPeggyID(ctx sdk.Context) []byte {
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyPeggyID, &a)
 	return a
 }
-func (k Keeper) setPeggyID(ctx sdk.Context, v []byte) {
+func (k Keeper) setPeggyID(ctx sdk.Context, v string) {
 	k.paramSpace.Set(ctx, types.ParamsStoreKeyPeggyID, v)
 }
 
@@ -293,6 +288,11 @@ func (k Keeper) GetStartThreshold(ctx sdk.Context) uint64 {
 
 func (k Keeper) setStartThreshold(ctx sdk.Context, v uint64) {
 	k.paramSpace.Set(ctx, types.ParamsStoreKeyStartThreshold, v)
+}
+
+// logger returns a module-specific logger.
+func (k Keeper) logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
 // prefixRange turns a prefix into a (start, end) range. The start is the given prefix value and
