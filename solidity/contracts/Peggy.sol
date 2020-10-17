@@ -7,17 +7,21 @@ contract Peggy {
 	using SafeMath for uint256;
 
 	// These are updated often
-	bytes32 public state_lastCheckpoint;
-	uint256 public state_lastTxNonce = 0;
+	bytes32 public state_lastValsetCheckpoint;
+	mapping(address => uint256) public state_lastBatchNonces;
 	uint256 public state_lastValsetNonce = 0;
 
 	// These are set once at initialization
-	address public state_tokenContract;
 	bytes32 public state_peggyId;
 	uint256 public state_powerThreshold;
 
 	event ValsetUpdatedEvent(address[] _validators, uint256[] _powers);
-	event TransferOutEvent(bytes32 _destination, uint256 _amount);
+	event SendToCosmos(
+		address _tokenContract,
+		address _sender,
+		bytes32 _destination,
+		uint256 _amount
+	);
 
 	// TEST FIXTURES
 	// These are here to make it easier to measure gas usage. They should be removed before production
@@ -60,11 +64,6 @@ contract Peggy {
 	// Utility to get current ValSet nonce
 	function getValsetNonce() public view returns (uint256) {
 		return state_lastValsetNonce;
-	}
-
-	// Utility to get current transaction batch nonce
-	function getTxNonce() public view returns (uint256) {
-		return state_lastTxNonce;
 	}
 
 	// Utility function to verify geth style signatures
@@ -148,185 +147,6 @@ contract Peggy {
 		return true;
 	}
 
-	// This updates the valset by checking that the validators in the current valset have signed off on the
-	// new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
-	// generated from the new valset.
-	function updateValset(
-		// The new version of the validator set
-		address[] memory _newValidators,
-		uint256[] memory _newPowers,
-		uint256 _newValsetNonce,
-		// The current validators that approve the change
-		address[] memory _currentValidators,
-		uint256[] memory _currentPowers,
-		uint256 _currentValsetNonce,
-		// These are arrays of the parts of the current validator's signatures
-		uint8[] memory _v,
-		bytes32[] memory _r,
-		bytes32[] memory _s
-	) public {
-		// CHECKS
-
-		// Check that new validators and powers set is well-formed
-		require(_newValidators.length == _newPowers.length, "Malformed new validator set");
-
-		// Check that current validators, powers, and signatures (v,r,s) set is well-formed
-		require(
-			_currentValidators.length == _currentPowers.length &&
-				_currentValidators.length == _v.length &&
-				_currentValidators.length == _r.length &&
-				_currentValidators.length == _s.length,
-			"Malformed current validator set"
-		);
-
-		// Check that the supplied current validator set matches the saved checkpoint
-		require(
-			makeCheckpoint(
-				_currentValidators,
-				_currentPowers,
-				_currentValsetNonce,
-				state_peggyId
-			) == state_lastCheckpoint,
-			"Supplied current validators and powers do not match checkpoint."
-		);
-
-		// Check that the valset nonce is greater than the old one
-		require(
-			_newValsetNonce > _currentValsetNonce,
-			"New valset nonce must be greater than the current nonce"
-		);
-
-		// Check that enough current validators have signed off on the new validator set
-		bytes32 newCheckpoint = makeCheckpoint(
-			_newValidators,
-			_newPowers,
-			_newValsetNonce,
-			state_peggyId
-		);
-
-		checkValidatorSignatures(
-			_currentValidators,
-			_currentPowers,
-			_v,
-			_r,
-			_s,
-			newCheckpoint,
-			state_powerThreshold
-		);
-
-		// ACTIONS
-
-		// Stored to be used next time to validate that the valset
-		// supplied by the caller is correct.
-		state_lastCheckpoint = newCheckpoint;
-
-		// Store new nonce
-		state_lastValsetNonce = _newValsetNonce;
-
-		// LOGS
-
-		emit ValsetUpdatedEvent(_newValidators, _newPowers);
-	}
-
-	// This function submits a batch of transactions to be executed on Ethereum.
-	// The caller must supply the current validator set, along with their signatures over the batch.
-	// The contract checks that this validator set matches the saved checkpoint, then verifies their
-	// signatures over a hash of the tx batch.
-	function submitBatch(
-		// The validators that approve the batch
-		address[] memory _currentValidators,
-		uint256[] memory _currentPowers,
-		uint256 _currentValsetNonce,
-		// These are arrays of the parts of the validators signatures
-		uint8[] memory _v,
-		bytes32[] memory _r,
-		bytes32[] memory _s,
-		// The batch of transactions
-		uint256[] memory _amounts,
-		address[] memory _destinations,
-		uint256[] memory _fees,
-		uint256[] memory _nonces // TODO: multi-erc20 support (input contract address).
-	) public {
-		// CHECKS
-
-		// Check that current validators, powers, and signatures (v,r,s) set is well-formed
-		require(
-			_currentValidators.length == _currentPowers.length &&
-				_currentValidators.length == _v.length &&
-				_currentValidators.length == _r.length &&
-				_currentValidators.length == _s.length,
-			"Malformed current validator set"
-		);
-
-		// Check that the transaction batch is well-formed
-		require(
-			_amounts.length == _destinations.length &&
-				_amounts.length == _fees.length &&
-				_amounts.length == _nonces.length,
-			"Malformed batch of transactions"
-		);
-
-		// Check that the supplied current validator set matches the saved checkpoint
-		require(
-			makeCheckpoint(
-				_currentValidators,
-				_currentPowers,
-				_currentValsetNonce,
-				state_peggyId
-			) == state_lastCheckpoint,
-			"Supplied current validators and powers do not match checkpoint."
-		);
-
-		// Check that the tx nonces are higher than the stored nonce and are
-		// strictly increasing (can have gaps)
-		uint256 lastTxNonceTemp = state_lastTxNonce;
-		{
-			for (uint256 i = 0; i < _nonces.length; i = i.add(1)) {
-				require(
-					_nonces[i] > lastTxNonceTemp,
-					"Transaction nonces in batch must be higher than last transaction nonce and strictly increasing"
-				);
-
-				lastTxNonceTemp = _nonces[i];
-			}
-		}
-
-		// bytes32 encoding of "transactionBatch"
-		bytes32 methodName = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
-
-		// Get hash of the transaction batch
-		bytes32 transactionsHash = keccak256(
-			abi.encode(state_peggyId, methodName, _amounts, _destinations, _fees, _nonces)
-		);
-
-		// Check that enough current validators have signed off on the transaction batch
-		checkValidatorSignatures(
-			_currentValidators,
-			_currentPowers,
-			_v,
-			_r,
-			_s,
-			transactionsHash,
-			state_powerThreshold
-		);
-
-		// ACTIONS
-
-		// Store nonce
-		state_lastTxNonce = lastTxNonceTemp;
-
-		// Send transaction amounts to destinations
-		// Send transaction fees to msg.sender
-		uint256 totalFee;
-		{
-			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
-				IERC20(state_tokenContract).transfer(_destinations[i], _amounts[i]);
-				totalFee = totalFee.add(_fees[i]);
-			}
-			IERC20(state_tokenContract).transfer(msg.sender, totalFee);
-		}
-	}
-
 	function updateValsetAndSubmitBatch(
 		// The validators that approve the batch and new valset
 		address[] memory _currentValidators,
@@ -344,7 +164,8 @@ contract Peggy {
 		uint256[] memory _amounts,
 		address[] memory _destinations,
 		uint256[] memory _fees,
-		uint256[] memory _nonces // TODO: multi-erc20 support (input contract address).)
+		uint256 _nonce,
+		address _tokenContract
 	) public {
 		// CHECKS
 
@@ -364,7 +185,7 @@ contract Peggy {
 				_currentPowers,
 				_currentValsetNonce,
 				state_peggyId
-			) == state_lastCheckpoint,
+			) == state_lastValsetCheckpoint,
 			"Supplied current validators and powers do not match checkpoint."
 		);
 
@@ -379,27 +200,21 @@ contract Peggy {
 
 		// Check that the transaction batch is well-formed
 		require(
-			_amounts.length == _destinations.length &&
-				_amounts.length == _fees.length &&
-				_amounts.length == _nonces.length,
+			_amounts.length == _destinations.length && _amounts.length == _fees.length,
+			// _amounts.length == _nonces.length,
 			"Malformed batch of transactions"
 		);
 
-		// Check that the tx nonces are higher than the stored nonce and are
-		// strictly increasing (can have gaps)
-		uint256 lastTxNonceTemp = state_lastTxNonce;
-		{
-			for (uint256 i = 0; i < _nonces.length; i = i.add(1)) {
-				require(
-					_nonces[i] > lastTxNonceTemp,
-					"Transaction nonces in batch must be higher than last transaction nonce and strictly increasing"
-				);
-
-				lastTxNonceTemp = _nonces[i];
-			}
+		// Check that the batch nonce is higher than the last nonce for this token, if the batch is not empty
+		if (_destinations.length != 0) {
+			require(
+				state_lastBatchNonces[_tokenContract] < _nonce,
+				"New batch nonce must be greater than the current nonce"
+			);
 		}
 
-		bytes32 newCheckpoint = makeCheckpoint(
+		// Make checkpoint for new valset
+		bytes32 newValsetCheckpoint = makeCheckpoint(
 			_newValidators,
 			_newPowers,
 			_newValsetNonce,
@@ -419,11 +234,11 @@ contract Peggy {
 					state_peggyId,
 					// bytes32 encoding of "valsetAndTransactionBatch"
 					0x76616c736574416e645472616e73616374696f6e426174636800000000000000,
+					newValsetCheckpoint,
 					_amounts,
 					_destinations,
 					_fees,
-					_nonces,
-					newCheckpoint
+					_nonce
 				)
 			),
 			state_powerThreshold
@@ -431,22 +246,24 @@ contract Peggy {
 
 		// ACTIONS
 
-		// Store nonce
-		state_lastTxNonce = lastTxNonceTemp;
-
 		// Stored to be used next time to validate that the valset
 		// supplied by the caller is correct.
-		state_lastCheckpoint = newCheckpoint;
+		state_lastValsetCheckpoint = newValsetCheckpoint;
 
-		// Send transaction amounts to destinations
-		// Send transaction fees to msg.sender
-		{
+		// Skip if it is an empty batch
+		if (_destinations.length != 0) {
+			// Store batch nonce
+			state_lastBatchNonces[_tokenContract] = _nonce;
+
+			// Send transaction amounts to destinations
 			uint256 totalFee;
 			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
-				IERC20(state_tokenContract).transfer(_destinations[i], _amounts[i]);
+				IERC20(_tokenContract).transfer(_destinations[i], _amounts[i]);
 				totalFee = totalFee.add(_fees[i]);
 			}
-			IERC20(state_tokenContract).transfer(msg.sender, totalFee);
+
+			// Send transaction fees to msg.sender
+			IERC20(_tokenContract).transfer(msg.sender, totalFee);
 		}
 
 		// LOGS
@@ -454,9 +271,13 @@ contract Peggy {
 		emit ValsetUpdatedEvent(_newValidators, _newPowers);
 	}
 
-	function transferOut(bytes32 _destination, uint256 _amount) public {
-		IERC20(state_tokenContract).transferFrom(msg.sender, address(this), _amount);
-		emit TransferOutEvent(_destination, _amount);
+	function sendToCosmos(
+		address _tokenContract,
+		bytes32 _destination,
+		uint256 _amount
+	) public {
+		IERC20(_tokenContract).transferFrom(msg.sender, address(this), _amount);
+		emit SendToCosmos(_tokenContract, msg.sender, _destination, _amount);
 	}
 
 	constructor(
@@ -493,9 +314,8 @@ contract Peggy {
 
 		// ACTIONS
 
-		state_tokenContract = _tokenContract;
 		state_peggyId = _peggyId;
 		state_powerThreshold = _powerThreshold;
-		state_lastCheckpoint = newCheckpoint;
+		state_lastValsetCheckpoint = newCheckpoint;
 	}
 }
