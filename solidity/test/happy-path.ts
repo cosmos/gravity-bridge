@@ -7,21 +7,28 @@ import {
   getSignerAddresses,
   makeCheckpoint,
   signHash,
-  makeTxBatchHash,
   examplePowers
 } from "../test-utils/pure";
 
 chai.use(solidity);
 const { expect } = chai;
 
-describe("Peggy happy path", function () {
+
+describe("Peggy happy path with combination method", function () {
   it("Happy path", async function () {
+
+    // DEPLOY CONTRACTS
+    // ================
+
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
 
-    // This is the power distribution on the Cosmos hub as of 7/14/2020
-    let powers = examplePowers();
-    let validators = signers.slice(0, powers.length);
+    const valset0 = {
+      // This is the power distribution on the Cosmos hub as of 7/14/2020
+      powers: examplePowers(),
+      validators: signers.slice(0, examplePowers().length),
+      nonce: 0
+    }
 
     const powerThreshold = 6666;
 
@@ -29,140 +36,84 @@ describe("Peggy happy path", function () {
       peggy,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(peggyId, validators, powers, powerThreshold);
+    } = await deployContracts(peggyId, valset0.validators, valset0.powers, powerThreshold);
 
-    expect(await peggy.functions.state_peggyId()).to.equal(peggyId);
-    expect(await peggy.functions.state_powerThreshold()).to.equal(
-      powerThreshold
-    );
-    expect(await peggy.functions.state_tokenContract()).to.equal(
-      testERC20.address
-    );
-    expect(await peggy.functions.state_lastCheckpoint()).to.equal(
-      deployCheckpoint
-    );
 
-    let newPowers = examplePowers();
-    newPowers[0] -= 3;
-    newPowers[1] += 3;
-    let newValidators = signers.slice(0, newPowers.length);
 
-    const currentValsetNonce = 0;
-    const newValsetNonce = 1;
 
-    const checkpoint = makeCheckpoint(
-      await getSignerAddresses(newValidators),
-      newPowers,
-      newValsetNonce,
+    // UDPATEVALSET
+    // ============
+
+    const valset1 = (() => {
+      // Make new valset by modifying some powers
+      let powers = examplePowers();
+      powers[0] -= 3;
+      powers[1] += 3;
+      let validators = signers.slice(0, powers.length);
+
+      return {
+        powers: powers,
+        validators: validators,
+        nonce: 1
+      }
+    })()
+
+    const checkpoint1 = makeCheckpoint(
+      await getSignerAddresses(valset1.validators),
+      valset1.powers,
+      valset1.nonce,
       peggyId
     );
 
-    let sigs = await signHash(validators, checkpoint);
+    let sigs1 = await signHash(valset0.validators, checkpoint1);
 
     await peggy.updateValset(
-      await getSignerAddresses(newValidators),
-      newPowers,
-      newValsetNonce,
-      await getSignerAddresses(validators),
-      powers,
-      currentValsetNonce,
-      sigs.v,
-      sigs.r,
-      sigs.s
+      await getSignerAddresses(valset1.validators),
+      valset1.powers,
+      valset1.nonce,
+
+      await getSignerAddresses(valset0.validators),
+      valset0.powers,
+      valset0.nonce,
+
+      sigs1.v,
+      sigs1.r,
+      sigs1.s
     );
 
-    expect(await peggy.functions.state_lastCheckpoint()).to.equal(checkpoint);
+    expect(await peggy.functions.state_lastValsetCheckpoint()).to.equal(checkpoint1);
 
-    // Transferring out to Cosmos
 
-    await testERC20.functions.approve(peggy.address, 1000);
 
-    await peggy.functions.transferOut(
-      ethers.utils.formatBytes32String("myCosmosAddress"),
-      1000
-    );
 
-    const numTxs = 100;
-    const txDestinationsInt = new Array(numTxs);
-    const txFees = new Array(numTxs);
-    const txNonces = new Array(numTxs);
-    const txAmounts = new Array(numTxs);
-    for (let i = 0; i < numTxs; i++) {
-      txNonces[i] = i + 1;
-      txFees[i] = 1;
-      txAmounts[i] = 1;
-      txDestinationsInt[i] = signers[i + 5];
-    }
-    // Transferring into ERC20 from Cosmos
-    const txDestinations = await getSignerAddresses(txDestinationsInt);
+    // UDPATEVALSETANDSUBMITBATCH
+    // ==========================
 
-    let txHash = makeTxBatchHash(
-      txAmounts,
-      txDestinations,
-      txFees,
-      txNonces,
-      peggyId
-    );
+    const valset2 = (() => {
+      // Make new valset by modifying some powers
+      let powers = examplePowers();
+      powers[0] -= 6;
+      powers[1] += 6;
+      let validators = signers.slice(0, powers.length);
 
-    sigs = await signHash(newValidators, txHash);
+      return {
+        powers: powers,
+        validators: validators,
+        nonce: 2
+      }
+    })()
 
-    await peggy.submitBatch(
-      await getSignerAddresses(newValidators),
-      newPowers,
-      newValsetNonce,
-      sigs.v,
-      sigs.r,
-      sigs.s,
-      txAmounts,
-      txDestinations,
-      txFees,
-      txNonces
-    );
-
-    expect(
-      await (
-        await testERC20.functions.balanceOf(await signers[6].getAddress())
-      ).toNumber()
-    ).to.equal(1);
-  });
-});
-
-describe.only("Peggy happy path with combination method", function () {
-  it("Happy path", async function () {
-    const signers = await ethers.getSigners();
-    const peggyId = ethers.utils.formatBytes32String("foo");
-
-    // This is the power distribution on the Cosmos hub as of 7/14/2020
-    let powers = examplePowers();
-    let validators = signers.slice(0, powers.length);
-
-    const powerThreshold = 6666;
-
-    const {
-      peggy,
-      testERC20,
-      checkpoint: deployCheckpoint
-    } = await deployContracts(peggyId, validators, powers, powerThreshold);
-
-    // Make new valset by modifying some powers
-    let newPowers = examplePowers();
-    newPowers[0] -= 3;
-    newPowers[1] += 3;
-    let newValidators = signers.slice(0, newPowers.length);
-
-    const currentValsetNonce = 0;
-    const newValsetNonce = 1;
-
-    const checkpoint = makeCheckpoint(
-      await getSignerAddresses(newValidators),
-      newPowers,
-      newValsetNonce,
+    const checkpoint2 = makeCheckpoint(
+      await getSignerAddresses(valset2.validators),
+      valset2.powers,
+      valset2.nonce,
       peggyId
     );
 
     // Transfer out to Cosmos, locking coins
     await testERC20.functions.approve(peggy.address, 1000);
-    await peggy.functions.transferOut(
+    await peggy.functions.sendToCosmos(
+      testERC20.address,
       ethers.utils.formatBytes32String("myCosmosAddress"),
       1000
     );
@@ -171,16 +122,16 @@ describe.only("Peggy happy path with combination method", function () {
     const numTxs = 100;
     const txDestinationsInt = new Array(numTxs);
     const txFees = new Array(numTxs);
-    const txNonces = new Array(numTxs);
     const txAmounts = new Array(numTxs);
     for (let i = 0; i < numTxs; i++) {
-      txNonces[i] = i + 1;
       txFees[i] = 1;
       txAmounts[i] = 1;
       txDestinationsInt[i] = signers[i + 5];
     }
 
     const txDestinations = await getSignerAddresses(txDestinationsInt);
+
+    const batchNonce = 1
 
     const methodName = ethers.utils.formatBytes32String(
       "valsetAndTransactionBatch"
@@ -190,107 +141,56 @@ describe.only("Peggy happy path with combination method", function () {
       [
         "bytes32",
         "bytes32",
+        "bytes32",
         "uint256[]",
         "address[]",
         "uint256[]",
-        "uint256[]",
-        "bytes32"
+        "uint256",
+        "address"
       ],
       [
         peggyId,
         methodName,
+        checkpoint2,
         txAmounts,
         txDestinations,
         txFees,
-        txNonces,
-        checkpoint
+        batchNonce,
+        testERC20.address
       ]
     );
 
     let digest = ethers.utils.keccak256(abiEncoded);
 
-    let sigs = await signHash(validators, digest);
+    let sigs = await signHash(valset2.validators, digest);
 
     await peggy.updateValsetAndSubmitBatch(
-      await getSignerAddresses(validators),
-      powers,
-      currentValsetNonce,
+
+      await getSignerAddresses(valset2.validators),
+      valset2.powers,
+      valset2.nonce,
+
+      await getSignerAddresses(valset1.validators),
+      valset1.powers,
+      valset1.nonce,
+
       sigs.v,
       sigs.r,
       sigs.s,
-      await getSignerAddresses(newValidators),
-      newPowers,
-      newValsetNonce,
+
       txAmounts,
       txDestinations,
       txFees,
-      txNonces
+      1,
+      testERC20.address
     );
 
-    expect(await peggy.functions.state_lastCheckpoint()).to.equal(checkpoint);
+    expect(await peggy.functions.state_lastValsetCheckpoint()).to.equal(checkpoint2);
 
     expect(
       await (
         await testERC20.functions.balanceOf(await signers[6].getAddress())
       ).toNumber()
     ).to.equal(1);
-  });
-});
-
-describe("Gas tests", function () {
-  it("makeCheckpoint in isolation", async function () {
-    const signers = await ethers.getSigners();
-    const peggyId = ethers.utils.formatBytes32String("foo");
-
-    // This is the power distribution on the Cosmos hub as of 7/14/2020
-    let powers = examplePowers();
-    let validators = signers.slice(0, powers.length);
-
-    const powerThreshold = 6666;
-
-    const {
-      peggy,
-      testERC20,
-      checkpoint: deployCheckpoint
-    } = await deployContracts(peggyId, validators, powers, powerThreshold);
-
-    await peggy.testMakeCheckpoint(
-      await getSignerAddresses(validators),
-      powers,
-      0,
-      peggyId
-    );
-  });
-
-  it("checkValidatorSignatures in isolation", async function () {
-    const signers = await ethers.getSigners();
-    const peggyId = ethers.utils.formatBytes32String("foo");
-
-    // This is the power distribution on the Cosmos hub as of 7/14/2020
-    let powers = examplePowers();
-    let validators = signers.slice(0, powers.length);
-
-    const powerThreshold = 6666;
-
-    const {
-      peggy,
-      testERC20,
-      checkpoint: deployCheckpoint
-    } = await deployContracts(peggyId, validators, powers, powerThreshold);
-
-    let sigs = await signHash(
-      validators,
-      "0x7bc422a00c175cae98cf2f4c36f2f8b63ec51ab8c57fecda9bccf0987ae2d67d"
-    );
-
-    await peggy.testCheckValidatorSignatures(
-      await getSignerAddresses(validators),
-      powers,
-      sigs.v,
-      sigs.r,
-      sigs.s,
-      "0x7bc422a00c175cae98cf2f4c36f2f8b63ec51ab8c57fecda9bccf0987ae2d67d",
-      6666
-    );
   });
 });

@@ -316,7 +316,8 @@ contract Peggy {
 					_amounts,
 					_destinations,
 					_fees,
-					_nonce
+					_nonce,
+					_tokenContract
 				)
 			),
 			state_powerThreshold

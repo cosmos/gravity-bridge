@@ -114,20 +114,20 @@ async function runTest(opts: {
   return { peggy, checkpoint };
 }
 
-describe("updateValset tests", function() {
-  it("throws on malformed new valset", async function() {
+describe("updateValset tests", function () {
+  it("throws on malformed new valset", async function () {
     await expect(runTest({ malformedNewValset: true })).to.be.revertedWith(
       "Malformed new validator set"
     );
   });
 
-  it("throws on malformed current valset", async function() {
+  it("throws on malformed current valset", async function () {
     await expect(runTest({ malformedCurrentValset: true })).to.be.revertedWith(
       "Malformed current validator set"
     );
   });
 
-  it("throws on non matching checkpoint for current valset", async function() {
+  it("throws on non matching checkpoint for current valset", async function () {
     await expect(
       runTest({ nonMatchingCurrentValset: true })
     ).to.be.revertedWith(
@@ -135,30 +135,30 @@ describe("updateValset tests", function() {
     );
   });
 
-  it("throws on new valset nonce not incremented", async function() {
+  it("throws on new valset nonce not incremented", async function () {
     await expect(runTest({ nonceNotIncremented: true })).to.be.revertedWith(
       "New valset nonce must be greater than the current nonce"
     );
   });
 
-  it("throws on bad validator sig", async function() {
+  it("throws on bad validator sig", async function () {
     await expect(runTest({ badValidatorSig: true })).to.be.revertedWith(
       "Validator signature does not match"
     );
   });
 
-  it("allows zeroed sig", async function() {
+  it("allows zeroed sig", async function () {
     await runTest({ zeroedValidatorSig: true });
   });
 
-  it("throws on not enough signatures", async function() {
+  it("throws on not enough signatures", async function () {
     await expect(runTest({ notEnoughPower: true })).to.be.revertedWith(
       "Submitted validator set signatures do not have enough power"
     );
   });
 
-  it("happy path", async function() {
+  it("happy path", async function () {
     let { peggy, checkpoint } = await runTest({});
-    expect(await peggy.functions.state_lastCheckpoint()).to.equal(checkpoint);
+    expect(await peggy.functions.state_lastValsetCheckpoint()).to.equal(checkpoint);
   });
 });

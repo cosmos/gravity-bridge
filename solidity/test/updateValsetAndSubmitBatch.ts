@@ -21,8 +21,7 @@ async function runTest(opts: {
   newValsetNonceNotIncremented?: boolean;
 
   // Issues with the tx batch
-  txNonceNotHigher?: boolean;
-  txNonceNotIncreasing?: boolean;
+  batchNonceNotHigher?: boolean;
   malformedTxBatch?: boolean;
 
   // Issues with the current valset and signatures
@@ -78,7 +77,8 @@ async function runTest(opts: {
   // Transfer out to Cosmos, locking coins
   // =====================================
   await testERC20.functions.approve(peggy.address, 1000);
-  await peggy.functions.transferOut(
+  await peggy.functions.sendToCosmos(
+    testERC20.address,
     ethers.utils.formatBytes32String("myCosmosAddress"),
     1000
   );
@@ -90,16 +90,9 @@ async function runTest(opts: {
   const numTxs = 100;
   const txDestinationsInt = new Array(numTxs);
   const txFees = new Array(numTxs);
-  const txNonces = new Array(numTxs);
+
   const txAmounts = new Array(numTxs);
   for (let i = 0; i < numTxs; i++) {
-    txNonces[i] = i + 1;
-    if (opts.txNonceNotHigher) {
-      txNonces[i] = i;
-    }
-    if (opts.txNonceNotIncreasing) {
-      txNonces[i] = 1;
-    }
     txFees[i] = 1;
     txAmounts[i] = 1;
     txDestinationsInt[i] = signers[i + 5];
@@ -110,6 +103,10 @@ async function runTest(opts: {
     txFees.pop();
   }
 
+  let batchNonce = 1
+  if (opts.batchNonceNotHigher) {
+    batchNonce = 0
+  }
 
 
   // Call method
@@ -121,20 +118,22 @@ async function runTest(opts: {
     [
       "bytes32",
       "bytes32",
+      "bytes32",
       "uint256[]",
       "address[]",
       "uint256[]",
-      "uint256[]",
-      "bytes32"
+      "uint256",
+      "address"
     ],
     [
       peggyId,
       methodName,
+      checkpoint,
       txAmounts,
       txDestinations,
       txFees,
-      txNonces,
-      checkpoint
+      batchNonce,
+      testERC20.address
     ]
   );
   let digest = ethers.utils.keccak256(abiEncoded);
@@ -186,20 +185,41 @@ async function runTest(opts: {
     sigs.v[11] = 0;
   }
 
+  // await peggy.updateValsetAndSubmitBatch(
+  //   await getSignerAddresses(validators),
+  //   powers,
+  //   currentValsetNonce,
+  //   sigs.v,
+  //   sigs.r,
+  //   sigs.s,
+  //   await getSignerAddresses(newValidators),
+  //   newPowers,
+  //   newValsetNonce,
+  //   txAmounts,
+  //   txDestinations,
+  //   txFees,
+  //   txNonces
+  // );
+
   await peggy.updateValsetAndSubmitBatch(
-    await getSignerAddresses(validators),
-    powers,
-    currentValsetNonce,
-    sigs.v,
-    sigs.r,
-    sigs.s,
+
     await getSignerAddresses(newValidators),
     newPowers,
     newValsetNonce,
+
+    await getSignerAddresses(validators),
+    powers,
+    currentValsetNonce,
+
+    sigs.v,
+    sigs.r,
+    sigs.s,
+
     txAmounts,
     txDestinations,
     txFees,
-    txNonces
+    batchNonce,
+    testERC20.address
   );
 }
 
@@ -228,6 +248,12 @@ describe("updateValsetAndSubmitBatch tests", function () {
     );
   });
 
+  it("throws on batch nonce not incremented", async function () {
+    await expect(runTest({ batchNonceNotHigher: true })).to.be.revertedWith(
+      "New batch nonce must be greater than the current nonce"
+    );
+  });
+
   it("throws on non matching checkpoint for current valset", async function () {
     await expect(
       runTest({ nonMatchingCurrentValset: true })
@@ -236,17 +262,6 @@ describe("updateValsetAndSubmitBatch tests", function () {
     );
   });
 
-  it("throws on tx nonces not high enough", async function () {
-    await expect(runTest({ txNonceNotHigher: true })).to.be.revertedWith(
-      "Transaction nonces in batch must be higher than last transaction nonce and strictly increasing"
-    );
-  });
-
-  it("throws on tx nonces not strictly increasing", async function () {
-    await expect(runTest({ txNonceNotIncreasing: true })).to.be.revertedWith(
-      "Transaction nonces in batch must be higher than last transaction nonce and strictly increasing"
-    );
-  });
 
   it("throws on bad validator sig", async function () {
     await expect(runTest({ badValidatorSig: true })).to.be.revertedWith(
