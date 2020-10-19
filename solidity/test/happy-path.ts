@@ -14,8 +14,8 @@ import {
 chai.use(solidity);
 const { expect } = chai;
 
-describe("Peggy happy path", function() {
-  it("Happy path", async function() {
+describe("Peggy happy path", function () {
+  it("Happy path", async function () {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
 
@@ -127,8 +127,8 @@ describe("Peggy happy path", function() {
   });
 });
 
-describe("Peggy happy path with combination method", function() {
-  it("Happy path", async function() {
+describe.only("Peggy happy path with combination method", function () {
+  it("Happy path", async function () {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
 
@@ -144,7 +144,7 @@ describe("Peggy happy path with combination method", function() {
       checkpoint: deployCheckpoint
     } = await deployContracts(peggyId, validators, powers, powerThreshold);
 
-    // Make new valset
+    // Make new valset by modifying some powers
     let newPowers = examplePowers();
     newPowers[0] -= 3;
     newPowers[1] += 3;
@@ -237,8 +237,8 @@ describe("Peggy happy path with combination method", function() {
   });
 });
 
-describe("Gas tests", function() {
-  it("makeCheckpoint in isolation", async function() {
+describe("Gas tests", function () {
+  it("makeCheckpoint in isolation", async function () {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
 
@@ -262,7 +262,7 @@ describe("Gas tests", function() {
     );
   });
 
-  it("checkValidatorSignatures in isolation", async function() {
+  it("checkValidatorSignatures in isolation", async function () {
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
 
