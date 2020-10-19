@@ -331,15 +331,17 @@ contract Peggy {
 		// Store batch nonce
 		state_lastBatchNonces[_tokenContract] = _nonce;
 
-		// Send transaction amounts to destinations
-		uint256 totalFee;
-		for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
-			IERC20(_tokenContract).transfer(_destinations[i], _amounts[i]);
-			totalFee = totalFee.add(_fees[i]);
-		}
+		{
+			// Send transaction amounts to destinations
+			uint256 totalFee;
+			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
+				IERC20(_tokenContract).transfer(_destinations[i], _amounts[i]);
+				totalFee = totalFee.add(_fees[i]);
+			}
 
-		// Send transaction fees to msg.sender
-		IERC20(_tokenContract).transfer(msg.sender, totalFee);
+			// Send transaction fees to msg.sender
+			IERC20(_tokenContract).transfer(msg.sender, totalFee);
+		}
 
 		// LOGS
 
