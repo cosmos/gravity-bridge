@@ -255,14 +255,14 @@ contract Peggy {
 	}
 
 	function updateValsetAndSubmitBatch(
-		// The validators that approve the batch and new valset
-		address[] memory _currentValidators,
-		uint256[] memory _currentPowers,
-		uint256 _currentValsetNonce,
 		// The new version of the validator set
 		address[] memory _newValidators,
 		uint256[] memory _newPowers,
 		uint256 _newValsetNonce,
+		// The validators that approve the batch and new valset
+		address[] memory _currentValidators,
+		uint256[] memory _currentPowers,
+		uint256 _currentValsetNonce,
 		// These are arrays of the parts of the validators signatures
 		uint8[] memory _v,
 		bytes32[] memory _r,
