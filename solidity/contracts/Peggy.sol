@@ -147,6 +147,86 @@ contract Peggy {
 		return true;
 	}
 
+	// This updates the valset by checking that the validators in the current valset have signed off on the
+	// new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
+	// generated from the new valset.
+	function updateValset(
+		// The new version of the validator set
+		address[] memory _newValidators,
+		uint256[] memory _newPowers,
+		uint256 _newValsetNonce,
+		// The current validators that approve the change
+		address[] memory _currentValidators,
+		uint256[] memory _currentPowers,
+		uint256 _currentValsetNonce,
+		// These are arrays of the parts of the current validator's signatures
+		uint8[] memory _v,
+		bytes32[] memory _r,
+		bytes32[] memory _s
+	) public {
+		// CHECKS
+
+		// Check that new validators and powers set is well-formed
+		require(_newValidators.length == _newPowers.length, "Malformed new validator set");
+
+		// Check that current validators, powers, and signatures (v,r,s) set is well-formed
+		require(
+			_currentValidators.length == _currentPowers.length &&
+				_currentValidators.length == _v.length &&
+				_currentValidators.length == _r.length &&
+				_currentValidators.length == _s.length,
+			"Malformed current validator set"
+		);
+
+		// Check that the supplied current validator set matches the saved checkpoint
+		require(
+			makeCheckpoint(
+				_currentValidators,
+				_currentPowers,
+				_currentValsetNonce,
+				state_peggyId
+			) == state_lastValsetCheckpoint,
+			"Supplied current validators and powers do not match checkpoint."
+		);
+
+		// Check that the valset nonce is greater than the old one
+		require(
+			_newValsetNonce > _currentValsetNonce,
+			"New valset nonce must be greater than the current nonce"
+		);
+
+		// Check that enough current validators have signed off on the new validator set
+		bytes32 newCheckpoint = makeCheckpoint(
+			_newValidators,
+			_newPowers,
+			_newValsetNonce,
+			state_peggyId
+		);
+
+		checkValidatorSignatures(
+			_currentValidators,
+			_currentPowers,
+			_v,
+			_r,
+			_s,
+			newCheckpoint,
+			state_powerThreshold
+		);
+
+		// ACTIONS
+
+		// Stored to be used next time to validate that the valset
+		// supplied by the caller is correct.
+		state_lastValsetCheckpoint = newCheckpoint;
+
+		// Store new nonce
+		state_lastValsetNonce = _newValsetNonce;
+
+		// LOGS
+
+		emit ValsetUpdatedEvent(_newValidators, _newPowers);
+	}
+
 	function updateValsetAndSubmitBatch(
 		// The validators that approve the batch and new valset
 		address[] memory _currentValidators,
@@ -205,13 +285,11 @@ contract Peggy {
 			"Malformed batch of transactions"
 		);
 
-		// Check that the batch nonce is higher than the last nonce for this token, if the batch is not empty
-		if (_destinations.length != 0) {
-			require(
-				state_lastBatchNonces[_tokenContract] < _nonce,
-				"New batch nonce must be greater than the current nonce"
-			);
-		}
+		// Check that the batch nonce is higher than the last nonce for this token
+		require(
+			state_lastBatchNonces[_tokenContract] < _nonce,
+			"New batch nonce must be greater than the current nonce"
+		);
 
 		// Make checkpoint for new valset
 		bytes32 newValsetCheckpoint = makeCheckpoint(
@@ -250,21 +328,18 @@ contract Peggy {
 		// supplied by the caller is correct.
 		state_lastValsetCheckpoint = newValsetCheckpoint;
 
-		// Skip if it is an empty batch
-		if (_destinations.length != 0) {
-			// Store batch nonce
-			state_lastBatchNonces[_tokenContract] = _nonce;
+		// Store batch nonce
+		state_lastBatchNonces[_tokenContract] = _nonce;
 
-			// Send transaction amounts to destinations
-			uint256 totalFee;
-			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
-				IERC20(_tokenContract).transfer(_destinations[i], _amounts[i]);
-				totalFee = totalFee.add(_fees[i]);
-			}
-
-			// Send transaction fees to msg.sender
-			IERC20(_tokenContract).transfer(msg.sender, totalFee);
+		// Send transaction amounts to destinations
+		uint256 totalFee;
+		for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
+			IERC20(_tokenContract).transfer(_destinations[i], _amounts[i]);
+			totalFee = totalFee.add(_fees[i]);
 		}
+
+		// Send transaction fees to msg.sender
+		IERC20(_tokenContract).transfer(msg.sender, totalFee);
 
 		// LOGS
 
