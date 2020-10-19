@@ -166,16 +166,33 @@ contract Peggy {
 	) public {
 		// CHECKS
 
-		valsetChecks(
-			_currentValidators,
-			_currentPowers,
-			_currentValsetNonce,
-			_newValidators,
-			_newPowers,
-			_newValsetNonce,
-			_v,
-			_r,
-			_s
+		// Check that new validators and powers set is well-formed
+		require(_newValidators.length == _newPowers.length, "Malformed new validator set");
+
+		// Check that current validators, powers, and signatures (v,r,s) set is well-formed
+		require(
+			_currentValidators.length == _currentPowers.length &&
+				_currentValidators.length == _v.length &&
+				_currentValidators.length == _r.length &&
+				_currentValidators.length == _s.length,
+			"Malformed current validator set"
+		);
+
+		// Check that the supplied current validator set matches the saved checkpoint
+		require(
+			makeCheckpoint(
+				_currentValidators,
+				_currentPowers,
+				_currentValsetNonce,
+				state_peggyId
+			) == state_lastValsetCheckpoint,
+			"Supplied current validators and powers do not match checkpoint."
+		);
+
+		// Check that the valset nonce is greater than the old one
+		require(
+			_newValsetNonce > _currentValsetNonce,
+			"New valset nonce must be greater than the current nonce"
 		);
 
 		// Check that enough current validators have signed off on the new validator set
@@ -210,20 +227,28 @@ contract Peggy {
 		emit ValsetUpdatedEvent(_newValidators, _newPowers);
 	}
 
-	function valsetChecks(
+	function updateValsetAndSubmitBatch(
 		// The new version of the validator set
 		address[] memory _newValidators,
 		uint256[] memory _newPowers,
 		uint256 _newValsetNonce,
-		// The current validators that approve the change
+		// The validators that approve the batch and new valset
 		address[] memory _currentValidators,
 		uint256[] memory _currentPowers,
 		uint256 _currentValsetNonce,
 		// These are arrays of the parts of the validators signatures
 		uint8[] memory _v,
 		bytes32[] memory _r,
-		bytes32[] memory _s
-	) private view {
+		bytes32[] memory _s,
+		// The batch of transactions
+		uint256[] memory _amounts,
+		address[] memory _destinations,
+		uint256[] memory _fees,
+		uint256 _nonce,
+		address _tokenContract
+	) public {
+		// CHECKS
+
 		// Check that new validators and powers set is well-formed
 		require(_newValidators.length == _newPowers.length, "Malformed new validator set");
 
@@ -251,41 +276,6 @@ contract Peggy {
 		require(
 			_newValsetNonce > _currentValsetNonce,
 			"New valset nonce must be greater than the current nonce"
-		);
-	}
-
-	function updateValsetAndSubmitBatch(
-		// The new version of the validator set
-		address[] memory _newValidators,
-		uint256[] memory _newPowers,
-		uint256 _newValsetNonce,
-		// The validators that approve the batch and new valset
-		address[] memory _currentValidators,
-		uint256[] memory _currentPowers,
-		uint256 _currentValsetNonce,
-		// These are arrays of the parts of the validators signatures
-		uint8[] memory _v,
-		bytes32[] memory _r,
-		bytes32[] memory _s,
-		// The batch of transactions
-		uint256[] memory _amounts,
-		address[] memory _destinations,
-		uint256[] memory _fees,
-		uint256 _nonce,
-		address _tokenContract
-	) public {
-		// CHECKS
-
-		valsetChecks(
-			_currentValidators,
-			_currentPowers,
-			_currentValsetNonce,
-			_newValidators,
-			_newPowers,
-			_newValsetNonce,
-			_v,
-			_r,
-			_s
 		);
 
 		// Check that the transaction batch is well-formed
