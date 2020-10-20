@@ -6,6 +6,34 @@ For now Althea Peggy is focused on only one of the major functions of an Ethereu
 
 An expansion of this feature set is expected, but will only be performed once basic transfers are in production. This gives us the opportunity to develop solid foundations and technology useful for the larger peg zone vision without getting bogged down by a larger feature surface.
 
+## Status
+
+Althea Peggy is under development and unaudited. Instructions for deployment and use are provided in the hope that they will be useful.
+
+It is your responsibility to understand the financial, legal, and other risks of using this software. There is no guarantee of functionality or safety. You use Peggy entirely at your own risk.
+
+You can keep up with the latest development by watching our [public standups](https://www.youtube.com/playlist?list=PL1MwlVJloJeyeE23-UmXeIx2NSxs_CV4b) feel free to join yourself and ask questions.
+
+- Solidity Contract
+  - [x] Multiple ERC20 support
+  - [x] Tested with 100+ validators
+  - [ ] Unit tests for every throw condition
+  - [ ] Audit
+- Cosmos Module
+  - [x] Basic validator set syncing
+  - [x] Basic transaction batch generation
+  - [ ] Bootstrapping
+  - [ ] Genesis file save/load
+  - [ ] Validator set syncing edge cases
+  - [ ] Transaction batch edge cases
+  - [ ] Audit
+- Orchestrator / Relayer
+  - [x] Validator set update relaying
+  - [ ] Ethereum -> Cosmos Oracle
+  - [ ] Transaction batch relaying
+  - [ ] Tendermint KMS support
+  - [ ] Audit
+
 ## Design simplifications from the larger peg zone vision
 
 - Validators are fully trusted to manage the bridge. Validator powers and votes are replicated on the Ethereum side so trust in bridge assets depends entirely on trust in the validator set of the peg zone chain. This has known problems where the assets in the bridge exceed the market cap of the native token. We accept these known issues in exchange for the dramatic design simplification combined with acceptable decentralization this design provides.
