@@ -37,9 +37,7 @@ pub async fn send_eth_valset_update(
     let sig_data = new_valset.order_sigs(confirms)?;
     let sig_arrays = to_arrays(sig_data);
 
-    let first_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3)
-        .await
-        .expect("Failed to get the first nonce");
+    let first_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
     info!("Current valset nonce {:?}", first_nonce);
 
     // Solidity function signature
@@ -77,10 +75,10 @@ pub async fn send_eth_valset_update(
 
     web3.wait_for_transaction(tx, timeout, None).await.unwrap();
 
-    let last_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3)
-        .await
-        .expect("Failed to get the last nonce");
-    assert!(first_nonce != last_nonce);
+    let last_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
+    if first_nonce == last_nonce {
+        return Err(OrchestratorError::FailedToUpdateValset);
+    }
     info!(
         "Successfully updated Valset with new Nonce {:?}",
         last_nonce

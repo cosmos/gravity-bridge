@@ -29,10 +29,14 @@ const TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Ethereum keys are generated for every validator inside
 /// of this testing application and submitted to the blockchain
-/// use the 'update eth address' message.
-fn generate_eth_private_key() -> EthPrivateKey {
-    let key_buf: [u8; 32] = rand::random();
-    EthPrivateKey::from_slice(&key_buf).unwrap()
+/// use the 'update eth address' message. In this case we generate
+/// them based off of the Cosmos key as the seed so that we can run
+/// the test runner multiple times against one chain and get the same keys.
+///
+/// There's no particular reason to use the public key except that the bytes
+/// of the private key type are not public
+fn generate_eth_private_key(seed: CosmosPrivateKey) -> EthPrivateKey {
+    EthPrivateKey::from_slice(&seed.to_public_key().unwrap().as_bytes()[0..32]).unwrap()
 }
 
 /// Validator private keys are generated via the cosmoscli key add
@@ -66,7 +70,7 @@ fn get_keys() -> Vec<(CosmosPrivateKey, EthPrivateKey)> {
     let cosmos_keys = parse_validator_keys();
     let mut ret = Vec::new();
     for c_key in cosmos_keys {
-        ret.push((c_key, generate_eth_private_key()))
+        ret.push((c_key, generate_eth_private_key(c_key)))
     }
     ret
 }

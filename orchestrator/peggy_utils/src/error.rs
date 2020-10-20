@@ -10,6 +10,7 @@ pub enum OrchestratorError {
     CosmosRestErr(JsonRpcError),
     EthereumRestErr(Web3Error),
     InvalidBridgeStateError(String),
+    FailedToUpdateValset,
 }
 
 impl fmt::Display for OrchestratorError {
@@ -20,6 +21,7 @@ impl fmt::Display for OrchestratorError {
             OrchestratorError::InvalidBridgeStateError(val) => {
                 write!(f, "Invalid bridge state! {}", val)
             }
+            OrchestratorError::FailedToUpdateValset => write!(f, "ValidatorSetUpdate Failed!"),
         }
     }
 }
