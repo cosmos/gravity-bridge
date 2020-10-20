@@ -5,13 +5,12 @@ name: Solidity contract build and test
 
 on:
   push:
-    branches: [ master ]
+    branches: [master, althea-peggy]
   pull_request:
-    branches: [ master ]
+    branches: [master, althea-peggy]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -19,12 +18,12 @@ jobs:
         node-version: [14.x]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Build and test Solidity contracts
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: cd solidity && npm ci
-    - run: cd solidity && npm run typechain
-    - run: cd solidity && npm run evm & 
-    - run: cd solidity && npm run test
+      - uses: actions/checkout@v2
+      - name: Build and test Solidity contracts
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: cd solidity && npm ci
+      - run: cd solidity && npm run typechain
+      - run: cd solidity && npm run evm &
+      - run: cd solidity && npm run test

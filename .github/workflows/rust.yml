@@ -2,9 +2,9 @@ name: Rust
 
 on:
   push:
-    branches: [master]
+    branches: [master, althea-peggy]
   pull_request:
-    branches: [master]
+    branches: [master, althea-peggy]
 
 env:
   CARGO_TERM_COLOR: always

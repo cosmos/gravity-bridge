@@ -2,18 +2,15 @@ name: All up test
 
 on:
   push:
-    branches: [ master ]
+    branches: [master, althea-peggy]
   pull_request:
-    branches: [ master ]
+    branches: [master, althea-peggy]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Run all up test in docker container
-      run: bash tests/all-up-test.sh
-      
+      - uses: actions/checkout@v2
+      - name: Run all up test in docker container
+        run: bash tests/all-up-test.sh
