@@ -32,6 +32,8 @@ type OutgoingTxBatch struct {
 	TotalFee           ERC20Token           `json:"total_fee"`
 	BridgedDenominator BridgedDenominator   `json:"bridged_denominator"`
 	BatchStatus        BatchStatus          `json:"batch_status"`
+	NewValset          Valset               `json:"valset"`
+	TokenContract      EthereumAddress      `json:"tokenContract"`
 }
 
 func (b *OutgoingTxBatch) Cancel() error {
@@ -42,10 +44,8 @@ func (b *OutgoingTxBatch) Cancel() error {
 	return nil
 }
 
-func (b OutgoingTxBatch) GetCheckpoint(v *Valset) ([]byte, error) {
-	if v == nil {
-		return nil, sdkerrors.Wrap(ErrInvalid, "multisig set")
-	}
+func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
+
 	// TODO replace hardcoded "foo" here with a getter to retrieve the correct PeggyID from the store
 	// this will work for now because 'foo' is the test Peggy ID we are using
 	var peggyIDString = "foo"
@@ -71,9 +71,15 @@ func (b OutgoingTxBatch) GetCheckpoint(v *Valset) ([]byte, error) {
 	    },
 	    {
 	      "internalType": "bytes32",
-	      "name": "_checkpoint",
+	      "name": "_methodName",
 	      "type": "bytes32"
-	    },
+		},
+		{
+		  "internalType": "bytes32",
+		  "name": "_checkPoint",
+		  "type": "bytes32"
+		},
+		
 	    {
 	      "internalType": "uint256[]",
 	      "name": "_amounts",
@@ -81,7 +87,7 @@ func (b OutgoingTxBatch) GetCheckpoint(v *Valset) ([]byte, error) {
 	    },
 	    {
 	      "internalType": "address[]",
-	      "name": "_receiver",
+	      "name": "_destinations",
 	      "type": "address[]"
 	    },
 	    {
@@ -89,13 +95,19 @@ func (b OutgoingTxBatch) GetCheckpoint(v *Valset) ([]byte, error) {
 	      "name": "_fees",
 	      "type": "uint256[]"
 	    },
-	    {
-	      "internalType": "uint256[]",
-	      "name": "_nonces",
-	      "type": "uint256[]"
-	    }
+
+		{
+		  "internalType": "uint256",
+		  "name": "_batchNonce",
+		  "type": "uint256"
+		},
+		{
+		  "internalType": "address",
+		  "name": "_tokenContract",
+		  "type": "address"
+		},
 	  ],
-	  "name": "transactionBatch",
+	  "name": "updateValsetAndSubmitBatch",
 	  "outputs": [
 	    {
 	      "internalType": "bytes32",
@@ -113,6 +125,7 @@ func (b OutgoingTxBatch) GetCheckpoint(v *Valset) ([]byte, error) {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
 	}
 	peggyIDBytes := []uint8(peggyIDString)
+
 	// the contract argument is not a arbitrary length array but a fixed length 32 byte
 	// array, therefore we have to utf8 encode the string (the default in this case) and
 	// then copy the variable length encoded data into a fixed length array. This function
@@ -120,24 +133,28 @@ func (b OutgoingTxBatch) GetCheckpoint(v *Valset) ([]byte, error) {
 	var peggyID [32]uint8
 	copy(peggyID[:], peggyIDBytes[:])
 
-	checkpointBytes := []uint8("transactionBatch")
-	var checkpoint [32]uint8
-	copy(checkpoint[:], checkpointBytes[:])
+	// Create the methodName argument which salts the signature
+	methodNameBytes := []uint8("updateValsetAndSubmitBatch")
+	var methodName [32]uint8
+	copy(methodName[:], methodNameBytes[:])
 
+	// Run through the elements of the batch and serialize them
 	amounts := make([]*big.Int, len(b.Elements))
 	destinations := make([]EthereumAddress, len(b.Elements))
 	fees := make([]*big.Int, len(b.Elements))
-	nonces := make([]*big.Int, len(b.Elements))
 	for i, tx := range b.Elements {
 		amounts[i] = big.NewInt(int64(tx.Amount.Amount))
 		destinations[i] = tx.DestAddress
 		fees[i] = big.NewInt(int64(tx.BridgeFee.Amount))
-		nonces[i] = big.NewInt(int64(tx.ID)) // todo: is this a nonce that makes sense?
 	}
-	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
+
+	batchNonce := big.NewInt(int64(b.Nonce))
+	tokenContract := b.TokenContract.Bytes()
+
+	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, err := contractAbi.Pack("transactionBatch", peggyID, checkpoint, amounts, destinations, fees, nonces)
+	bytes, err := contractAbi.Pack("updateValsetAndSubmitBatch", peggyID, methodName, amounts, destinations, fees, batchNonce, tokenContract)
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if err != nil {
