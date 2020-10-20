@@ -359,8 +359,6 @@ contract Peggy {
 	}
 
 	constructor(
-		// The token that this bridge bridges
-		address _tokenContract,
 		// A unique identifier for this peggy instance to use in signatures
 		bytes32 _peggyId,
 		// How much voting power is needed to approve operations

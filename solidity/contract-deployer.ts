@@ -59,7 +59,7 @@ async function deploy() {
     await testERC20.deployed();
     const erc20TestAddress = testERC20.address;
     contract = erc20TestAddress;
-    console.log("Successfully deployed ERC20");
+    console.log("ERC20 deployed at Address - ", contract);
   } else {
     contract = args["erc20-address"];
   }
@@ -79,7 +79,6 @@ async function deploy() {
     powers.push(latestValset.result.value.members[i].power);
   }
   const peggy = (await factory.deploy(
-    contract,
     // todo generate this randomly at deployment time that way we can avoid
     // anything but intentional conflicts
     peggyId,

@@ -138,14 +138,18 @@ async fn main() {
     info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     let mut maybe_peggy_address = None;
+    let mut maybe_contract_address = None;
     for line in String::from_utf8_lossy(&output.stdout).lines() {
         if line.contains("Peggy deployed at Address -") {
             let address_string = line.split('-').last().unwrap();
             maybe_peggy_address = Some(address_string.trim().parse().unwrap());
-            break;
+        } else if line.contains("ERC20 deployed at Address -") {
+            let address_string = line.split('-').last().unwrap();
+            maybe_contract_address = Some(address_string.trim().parse().unwrap());
         }
     }
     let peggy_address: EthAddress = maybe_peggy_address.unwrap();
+    let contract_address: EthAddress = maybe_contract_address.unwrap();
 
     // before we start the orchestrators send them some funds so they can pay
     // for things
