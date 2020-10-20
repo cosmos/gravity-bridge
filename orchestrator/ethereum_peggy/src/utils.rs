@@ -50,7 +50,12 @@ pub async fn get_valset_nonce(
     web3: &Web3,
 ) -> Result<Uint256, Web3Error> {
     let val = web3
-        .contract_call(contract_address, "getValsetNonce()", &[], caller_address)
+        .contract_call(
+            contract_address,
+            "state_lastValsetNonce()",
+            &[],
+            caller_address,
+        )
         .await?;
     Ok(Uint256::from_bytes_be(&val))
 }
@@ -62,7 +67,12 @@ pub async fn get_tx_batch_nonce(
     web3: &Web3,
 ) -> Result<Uint256, Web3Error> {
     let val = web3
-        .contract_call(contract_address, "getTxNonce()", &[], caller_address)
+        .contract_call(
+            contract_address,
+            "state_lastBatchNonces()",
+            &[],
+            caller_address,
+        )
         .await?;
     Ok(Uint256::from_bytes_be(&val))
 }
@@ -74,7 +84,7 @@ pub async fn get_peggy_id(
     web3: &Web3,
 ) -> Result<Vec<u8>, Web3Error> {
     let val = web3
-        .contract_call(contract_address, "getPeggyId()", &[], caller_address)
+        .contract_call(contract_address, "state_peggyId()", &[], caller_address)
         .await?;
     Ok(val)
 }

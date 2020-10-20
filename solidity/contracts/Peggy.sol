@@ -56,16 +56,6 @@ contract Peggy {
 
 	// END TEST FIXTURES
 
-	// Utility to get the PeggyID
-	function getPeggyId() public view returns (bytes32) {
-		return state_peggyId;
-	}
-
-	// Utility to get current ValSet nonce
-	function getValsetNonce() public view returns (uint256) {
-		return state_lastValsetNonce;
-	}
-
 	// Utility function to verify geth style signatures
 	function verifySig(
 		address _signer,

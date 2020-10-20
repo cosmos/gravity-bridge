@@ -1,3 +1,4 @@
+use crate::utils::get_valset_nonce;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use peggy_utils::error::OrchestratorError;
@@ -36,10 +37,7 @@ pub async fn send_eth_valset_update(
     let sig_data = new_valset.order_sigs(confirms)?;
     let sig_arrays = to_arrays(sig_data);
 
-    // Solidity function signature
-    // function getValsetNonce() public returns (uint256)
-    let first_nonce = web3
-        .contract_call(peggy_contract_address, "getValsetNonce()", &[], eth_address)
+    let first_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3)
         .await
         .expect("Failed to get the first nonce");
     info!("Current valset nonce {:?}", first_nonce);
@@ -79,10 +77,7 @@ pub async fn send_eth_valset_update(
 
     web3.wait_for_transaction(tx, timeout, None).await.unwrap();
 
-    // Solidity function signature
-    // function getValsetNonce() public returns (uint256)
-    let last_nonce = web3
-        .contract_call(peggy_contract_address, "getValsetNonce()", &[], eth_address)
+    let last_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3)
         .await
         .expect("Failed to get the last nonce");
     assert!(first_nonce != last_nonce);
