@@ -238,107 +238,111 @@ contract Peggy {
 		uint256 _nonce,
 		address _tokenContract
 	) public {
-		// CHECKS
+		// CHECKS scoped to reduce stack depth
+		{
+			// Check that new validators and powers set is well-formed
+			require(_newValidators.length == _newPowers.length, "Malformed new validator set");
 
-		// Check that new validators and powers set is well-formed
-		require(_newValidators.length == _newPowers.length, "Malformed new validator set");
+			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
+			require(
+				_currentValidators.length == _currentPowers.length &&
+					_currentValidators.length == _v.length &&
+					_currentValidators.length == _r.length &&
+					_currentValidators.length == _s.length,
+				"Malformed current validator set"
+			);
 
-		// Check that current validators, powers, and signatures (v,r,s) set is well-formed
-		require(
-			_currentValidators.length == _currentPowers.length &&
-				_currentValidators.length == _v.length &&
-				_currentValidators.length == _r.length &&
-				_currentValidators.length == _s.length,
-			"Malformed current validator set"
-		);
+			// Check that the supplied current validator set matches the saved checkpoint
+			require(
+				makeCheckpoint(
+					_currentValidators,
+					_currentPowers,
+					_currentValsetNonce,
+					state_peggyId
+				) == state_lastValsetCheckpoint,
+				"Supplied current validators and powers do not match checkpoint."
+			);
 
-		// Check that the supplied current validator set matches the saved checkpoint
-		require(
-			makeCheckpoint(
+			// Check that the valset nonce is greater than the old one
+			require(
+				_newValsetNonce > _currentValsetNonce,
+				"New valset nonce must be greater than the current nonce"
+			);
+
+			// Check that the transaction batch is well-formed
+			require(
+				_amounts.length == _destinations.length && _amounts.length == _fees.length,
+				// _amounts.length == _nonces.length,
+				"Malformed batch of transactions"
+			);
+
+			// Check that the batch nonce is higher than the last nonce for this token
+			require(
+				state_lastBatchNonces[_tokenContract] < _nonce,
+				"New batch nonce must be greater than the current nonce"
+			);
+
+			// Make checkpoint for new valset
+			bytes32 newValsetCheckpoint = makeCheckpoint(
+				_newValidators,
+				_newPowers,
+				_newValsetNonce,
+				state_peggyId
+			);
+
+			// Check that enough current validators have signed off on the transaction batch and valset
+			checkValidatorSignatures(
 				_currentValidators,
 				_currentPowers,
-				_currentValsetNonce,
-				state_peggyId
-			) == state_lastValsetCheckpoint,
-			"Supplied current validators and powers do not match checkpoint."
-		);
+				_v,
+				_r,
+				_s,
+				// Get hash of the transaction batch and checkpoint
+				keccak256(
+					abi.encode(
+						state_peggyId,
+						// bytes32 encoding of "valsetAndTransactionBatch"
+						0x76616c736574416e645472616e73616374696f6e426174636800000000000000,
+						newValsetCheckpoint,
+						_amounts,
+						_destinations,
+						_fees,
+						_nonce,
+						_tokenContract
+					)
+				),
+				state_powerThreshold
+			);
 
-		// Check that the valset nonce is greater than the old one
-		require(
-			_newValsetNonce > _currentValsetNonce,
-			"New valset nonce must be greater than the current nonce"
-		);
+			// ACTIONS
 
-		// Check that the transaction batch is well-formed
-		require(
-			_amounts.length == _destinations.length && _amounts.length == _fees.length,
-			// _amounts.length == _nonces.length,
-			"Malformed batch of transactions"
-		);
+			// Stored to be used next time to validate that the valset
+			// supplied by the caller is correct.
+			state_lastValsetCheckpoint = newValsetCheckpoint;
+			// Store new nonce
+			state_lastValsetNonce = _newValsetNonce;
 
-		// Check that the batch nonce is higher than the last nonce for this token
-		require(
-			state_lastBatchNonces[_tokenContract] < _nonce,
-			"New batch nonce must be greater than the current nonce"
-		);
+			// Store batch nonce
+			state_lastBatchNonces[_tokenContract] = _nonce;
 
-		// Make checkpoint for new valset
-		bytes32 newValsetCheckpoint = makeCheckpoint(
-			_newValidators,
-			_newPowers,
-			_newValsetNonce,
-			state_peggyId
-		);
+			{
+				// Send transaction amounts to destinations
+				uint256 totalFee;
+				for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
+					IERC20(_tokenContract).transfer(_destinations[i], _amounts[i]);
+					totalFee = totalFee.add(_fees[i]);
+				}
 
-		// Check that enough current validators have signed off on the transaction batch and valset
-		checkValidatorSignatures(
-			_currentValidators,
-			_currentPowers,
-			_v,
-			_r,
-			_s,
-			// Get hash of the transaction batch and checkpoint
-			keccak256(
-				abi.encode(
-					state_peggyId,
-					// bytes32 encoding of "valsetAndTransactionBatch"
-					0x76616c736574416e645472616e73616374696f6e426174636800000000000000,
-					newValsetCheckpoint,
-					_amounts,
-					_destinations,
-					_fees,
-					_nonce,
-					_tokenContract
-				)
-			),
-			state_powerThreshold
-		);
-
-		// ACTIONS
-
-		// Stored to be used next time to validate that the valset
-		// supplied by the caller is correct.
-		state_lastValsetCheckpoint = newValsetCheckpoint;
-
-		// Store batch nonce
-		state_lastBatchNonces[_tokenContract] = _nonce;
-
-		{
-			// Send transaction amounts to destinations
-			uint256 totalFee;
-			for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
-				IERC20(_tokenContract).transfer(_destinations[i], _amounts[i]);
-				totalFee = totalFee.add(_fees[i]);
+				// Send transaction fees to msg.sender
+				IERC20(_tokenContract).transfer(msg.sender, totalFee);
 			}
-
-			// Send transaction fees to msg.sender
-			IERC20(_tokenContract).transfer(msg.sender, totalFee);
 		}
 
-		// LOGS
-
-		emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers);
-		emit TransactionBatchExecutedEvent(_nonce, _tokenContract);
+		// LOGS scoped to reduce stack depth
+		{
+			emit TransactionBatchExecutedEvent(_nonce, _tokenContract);
+			emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers);
+		}
 	}
 
 	function sendToCosmos(
