@@ -15,11 +15,12 @@ contract Peggy {
 	bytes32 public state_peggyId;
 	uint256 public state_powerThreshold;
 
-	event ValsetUpdatedEvent(address[] _validators, uint256[] _powers);
+	event ValsetUpdatedEvent(uint256 indexed _newNonce, address[] _validators, uint256[] _powers);
+	event TransactionBatchExecutedEvent(uint256 indexed _newNonce, address indexed _token);
 	event SendToCosmos(
 		address _tokenContract,
-		address _sender,
-		bytes32 _destination,
+		address indexed _sender,
+		bytes32 indexed _destination,
 		uint256 _amount
 	);
 
@@ -214,7 +215,7 @@ contract Peggy {
 
 		// LOGS
 
-		emit ValsetUpdatedEvent(_newValidators, _newPowers);
+		emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers);
 	}
 
 	function updateValsetAndSubmitBatch(
@@ -336,7 +337,8 @@ contract Peggy {
 
 		// LOGS
 
-		emit ValsetUpdatedEvent(_newValidators, _newPowers);
+		emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers);
+		emit TransactionBatchExecutedEvent(_nonce, _tokenContract);
 	}
 
 	function sendToCosmos(
