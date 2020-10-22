@@ -17,7 +17,7 @@ contract Peggy {
 
 	event ValsetUpdatedEvent(uint256 indexed _newNonce, address[] _validators, uint256[] _powers);
 	event TransactionBatchExecutedEvent(uint256 indexed _newNonce, address indexed _token);
-	event SendToCosmos(
+	event SendToCosmosEvent(
 		address _tokenContract,
 		address indexed _sender,
 		bytes32 indexed _destination,
@@ -351,7 +351,7 @@ contract Peggy {
 		uint256 _amount
 	) public {
 		IERC20(_tokenContract).transferFrom(msg.sender, address(this), _amount);
-		emit SendToCosmos(_tokenContract, msg.sender, _destination, _amount);
+		emit SendToCosmosEvent(_tokenContract, msg.sender, _destination, _amount);
 	}
 
 	constructor(
