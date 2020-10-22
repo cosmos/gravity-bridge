@@ -74,7 +74,10 @@ The Solidity contract is also covered in the Cosmos module tests, where it will 
 
 We provide a standard container-based development environment that automatically bootstraps a Cosmos chain and Ethereum chain for testing. We believe standardization of the development environment and ease of development are essential so please file issues if you run into issues with the development flow.
 
-### To test your changes quickly
+### Go unit tests
+These do not run the entire chain but instead test parts of the Go module code in isolation. To run them, go into `/module` and run `make test`
+
+### To hand test your changes quickly
 
 This method is dictinct from the all up test described above. Although it runs the same components it's much faster when editing individual components.
 
