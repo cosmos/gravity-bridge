@@ -149,7 +149,7 @@ func getCheckpoint(ctx sdk.Context, keeper Keeper, claimType types.ClaimType, no
 			if valset == nil {
 				return nil, sdkerrors.Wrap(types.ErrUnknown, "no valset found for nonce")
 			}
-			return c.GetCheckpoint(valset)
+			return c.GetCheckpoint()
 		}
 	default:
 		return nil, sdkerrors.Wrap(types.ErrUnsupported, "claim type")

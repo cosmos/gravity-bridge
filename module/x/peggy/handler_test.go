@@ -134,7 +134,7 @@ func TestHandleBridgeSignatureSubmission(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, types.ProcessStatusProcessed, att.Status)
 				// create signature
-				checkpoint, err := b.GetCheckpoint(&v)
+				checkpoint, err := b.GetCheckpoint()
 				require.NoError(t, err)
 				validSig, err := types.NewEthereumSignature(checkpoint, privKey)
 				require.NoError(t, err)
