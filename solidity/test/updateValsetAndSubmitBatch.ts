@@ -283,3 +283,118 @@ describe("updateValsetAndSubmitBatch tests", function () {
     await runTest({ barelyEnoughPower: true });
   });
 });
+
+
+// This test produces a hash for the contract which should match what is being used in the Go unit tests. It's here for
+// the use of anyone updating the Go tests.
+describe.only("updateValsetAndSubmitBatch Go test hash", function () {
+  it("produces good hash", async function () {
+
+
+    // Prep and deploy contract
+    // ========================
+    const signers = await ethers.getSigners();
+    const peggyId = ethers.utils.formatBytes32String("foo");
+    // This is the power distribution on the Cosmos hub as of 7/14/2020
+    let powers = [6667];
+    let validators = signers.slice(0, powers.length);
+    const powerThreshold = 6666;
+    const {
+      peggy,
+      testERC20,
+      checkpoint: deployCheckpoint
+    } = await deployContracts(peggyId, validators, powers, powerThreshold);
+
+
+
+    // Make new valset
+    // ===============
+    let newPowers = examplePowers();
+    newPowers[0] += 3;
+    let newValidators = signers.slice(0, newPowers.length);
+    let newValsetNonce = 1;
+
+    const valsetCheckpoint = makeCheckpoint(
+      await getSignerAddresses(newValidators),
+      newPowers,
+      newValsetNonce,
+      peggyId
+    );
+
+
+
+    // Prepare batch
+    // ===============================
+    const txFees = [1]
+    const txAmounts = [1]
+    const txDestinations = await getSignerAddresses([signers[5]]);
+    const batchNonce = 1
+
+
+
+    // Transfer out to Cosmos, locking coins
+    // =====================================
+    await testERC20.functions.approve(peggy.address, 1000);
+    await peggy.functions.sendToCosmos(
+      testERC20.address,
+      ethers.utils.formatBytes32String("myCosmosAddress"),
+      1000
+    );
+
+
+
+    // Call method
+    // ===========
+    const methodName = ethers.utils.formatBytes32String(
+      "valsetAndTransactionBatch"
+    );
+    let abiEncoded = ethers.utils.defaultAbiCoder.encode(
+      [
+        "bytes32",
+        "bytes32",
+        "bytes32",
+        "uint256[]",
+        "address[]",
+        "uint256[]",
+        "uint256",
+        "address"
+      ],
+      [
+        peggyId,
+        methodName,
+        valsetCheckpoint,
+        txAmounts,
+        txDestinations,
+        txFees,
+        batchNonce,
+        testERC20.address
+      ]
+    );
+    let digest = ethers.utils.keccak256(abiEncoded);
+    // This is where you get the hash
+    console.log(digest)
+    let sigs = await signHash(validators, digest);
+    let currentValsetNonce = 0;
+
+
+    await peggy.updateValsetAndSubmitBatch(
+      await getSignerAddresses(newValidators),
+      newPowers,
+      newValsetNonce,
+
+      await getSignerAddresses(validators),
+      powers,
+      currentValsetNonce,
+
+      sigs.v,
+      sigs.r,
+      sigs.s,
+
+      txAmounts,
+      txDestinations,
+      txFees,
+      batchNonce,
+      testERC20.address
+    );
+  });
+})
