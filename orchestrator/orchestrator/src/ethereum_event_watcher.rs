@@ -15,37 +15,38 @@ pub async fn check_for_events(
         .check_for_events(
             last_checked_block.clone(),
             Some(latest_block.clone()),
-            peggy_contract_address,
-            "SendToCosmos(address,address,bytes32,uint256)",
-            None,
-            None,
+            vec![peggy_contract_address],
+            "SendToCosmosEvent(address,bytes32,uint256)",
+            Vec::new(),
         )
         .await;
-    info!("Deposits {:?}", deposits);
+    if !deposits.unwrap().is_empty() {
+        info!("Found deposit!");
+        panic!("Found one!");
+    }
+    //info!("Deposits {:?}", deposits);
 
     let batches = web3
         .check_for_events(
             last_checked_block.clone(),
             Some(latest_block.clone()),
-            peggy_contract_address,
+            vec![peggy_contract_address],
             "TransactionBatchExecutedEvent(uint256,address)",
-            None,
-            None,
+            Vec::new(),
         )
         .await;
-    info!("Batches {:?}", deposits);
+    info!("Batches {:?}", batches);
 
     let valsets = web3
         .check_for_events(
             last_checked_block.clone(),
             Some(latest_block.clone()),
-            peggy_contract_address,
-            "ValsetUpdatedEvent(address[],uint256[])",
-            None,
-            None,
+            vec![peggy_contract_address],
+            "ValsetUpdatedEvent(uint256,address[],uint256[])",
+            Vec::new(),
         )
         .await;
-    info!("Valsets {:?}", valsets);
+    //info!("Valsets {:?}", valsets);
 
     Ok(latest_block)
 }

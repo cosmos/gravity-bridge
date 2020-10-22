@@ -6,13 +6,11 @@ use clarity::abi::{encode_call, Token};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address, Uint256};
 use deep_space::address::Address as CosmosAddress;
-use num::Bounded;
 use peggy_utils::error::OrchestratorError;
-use tokio::time::timeout as future_timeout;
+use web30::client::Web3;
 use web30::types::SendTxOption;
-use web30::{client::Web3, jsonrpc::error::Web3Error};
 
-const SEND_TO_COSMOS_GAS_LIMIT: u128 = 40_000;
+const SEND_TO_COSMOS_GAS_LIMIT: u128 = 100_000;
 
 pub async fn send_to_cosmos(
     erc20: Address,
@@ -75,7 +73,6 @@ pub async fn send_to_cosmos(
             options,
         )
         .await?;
-    info!("sendToCosmos txid: {:#066x}", tx_hash);
 
     if let Some(timeout) = wait_timeout {
         web3.wait_for_transaction(tx_hash.clone(), timeout, None)

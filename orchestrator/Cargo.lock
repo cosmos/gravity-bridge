@@ -506,9 +506,9 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
 name = "clarity"
-version = "0.3.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b29bb0b1875cf014ddde6b303f933a469e82abdd9273734b66c4719d2e9e100c"
+checksum = "a938619524530d900df2e762b2255ce780c27133334caea70d974dfa80f8f5b4"
 dependencies = [
  "lazy_static",
  "num-bigint 0.3.0",
@@ -579,7 +579,7 @@ dependencies = [
  "clarity",
  "contact",
  "deep_space",
- "env_logger 0.7.1",
+ "env_logger",
  "log",
  "num256",
  "peggy_utils",
@@ -735,25 +735,12 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44533bbbb3bb3c1fa17d9f2e4e38bbbaf8396ba82193c4cb1b6445d711445d36"
-dependencies = [
- "atty",
- "humantime 1.3.0",
- "log",
- "regex",
- "termcolor",
-]
-
-[[package]]
-name = "env_logger"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54532e3223c5af90a6a757c90b5c5521564b07e5e7a958681bcd2afad421cdcd"
 dependencies = [
  "atty",
- "humantime 2.0.1",
+ "humantime",
  "log",
  "regex",
  "termcolor",
@@ -780,7 +767,7 @@ dependencies = [
  "contact",
  "cosmos_peggy",
  "deep_space",
- "env_logger 0.8.1",
+ "env_logger",
  "log",
  "num 0.3.0",
  "num256",
@@ -1052,15 +1039,6 @@ name = "httparse"
 version = "1.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd179ae861f0c2e53da70d892f5f3029f9594be0c41dc5269cd371691b1dc2f9"
-
-[[package]]
-name = "humantime"
-version = "1.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df004cfca50ef23c36850aaaa59ad52cc70d0e90243c3c7737a4dd32dc7a3c4f"
-dependencies = [
- "quick-error",
-]
 
 [[package]]
 name = "humantime"
@@ -1501,7 +1479,7 @@ dependencies = [
  "cosmos_peggy",
  "deep_space",
  "docopt",
- "env_logger 0.8.1",
+ "env_logger",
  "ethereum_peggy",
  "lazy_static",
  "log",
@@ -2386,9 +2364,9 @@ checksum = "1d649a3145108d7d3fbcde896a468d1bd636791823c9921135218ad89be08307"
 
 [[package]]
 name = "web30"
-version = "0.8.8"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10fac3f23ba14f1051d462841157b2208c21434dcfe478b3515a803c72393697"
+checksum = "2507c8fffa437f06f8ba8b4bf64a6777dab1242ff6ccd7e352e29cf13db1b428"
 dependencies = [
  "actix",
  "actix-web",

@@ -12,12 +12,12 @@ peggy_utils = {path = "../peggy_utils"}
 
 deep_space = "0.2"
 contact = "0.1"
-clarity = "0.3"
+clarity = "0.4"
 actix = "0.10"
 actix-web = {version = "3.1", features=["openssl"]}
 actix-rt = "1"
 url = "2"
-web30 = "0.8.8"
+web30 = "0.9"
 num256 = "0.3"
 log = "0.4"
 env_logger = "0.8"

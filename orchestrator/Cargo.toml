@@ -1,3 +1,6 @@
 [workspace]
 members = ["orchestrator", "cosmos_peggy", "ethereum_peggy", "peggy_utils"]
 default-members = ["orchestrator"]
+
+
+[patch.crates-io]

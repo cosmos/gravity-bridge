@@ -10,7 +10,11 @@ mod tests;
 mod valset_relaying;
 
 use actix::Arbiter;
-use clarity::{abi::encode_call, PrivateKey as EthPrivateKey};
+use clarity::{
+    abi::{derive_signature, encode_call},
+    utils::bytes_to_hex_str,
+    PrivateKey as EthPrivateKey,
+};
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::send::send_valset_request;
@@ -27,9 +31,14 @@ use std::io::{BufRead, BufReader};
 use std::process::Command;
 use std::time::Duration;
 use tokio::time::delay_for;
-use web30::{client::Web3, jsonrpc::error::Web3Error, types::SendTxOption};
+use web30::{
+    client::Web3,
+    jsonrpc::error::Web3Error,
+    types::NewFilter,
+    types::{Log, SendTxOption},
+};
 
-const TIMEOUT: Duration = Duration::from_secs(30);
+const TIMEOUT: Duration = Duration::from_secs(60);
 
 /// Ethereum keys are generated for every validator inside
 /// of this testing application and submitted to the blockchain
@@ -206,7 +215,7 @@ async fn main() {
     // bootstrapping tests finish here and we move into operational tests
 
     // send 3 valset updates to make sure the process works back to back
-    for _ in 0u32..3 {
+    for _ in 0u32..1 {
         test_valset_update(
             &contact,
             &web30,
@@ -233,29 +242,8 @@ async fn main() {
     .expect("Failed to send tokens to Cosmos");
     info!("Send to Cosmos txid: {:#066x}", tx_id);
 
-    let latest_block = web30.eth_block_number().await.unwrap();
-    let erc20_approvals = web30
-        .check_for_events(
-            0u64.into(),
-            Some(latest_block.clone()),
-            erc20_address,
-            "Approval(address,address,uint256)",
-            None,
-            None,
-        )
-        .await;
-    info!("ERC20 Approvals {:?}", erc20_approvals);
-    let valsets = web30
-        .check_for_events(
-            0u64.into(),
-            Some(latest_block.clone()),
-            peggy_address,
-            "ValsetUpdatedAlt(uint256)",
-            None,
-            None,
-        )
-        .await;
-    info!("Valsets {:?}", valsets);
+    // now we find that message in our oracle and proceed to ferry it to cosmos
+    delay_for(Duration::from_secs(120)).await;
 }
 
 async fn test_valset_update(
