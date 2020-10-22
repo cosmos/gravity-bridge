@@ -58,7 +58,7 @@ pub async fn send_to_cosmos(
 
     let tx_hash = web3
         .send_transaction(
-            erc20,
+            peggy_contract,
             encode_call(
                 "sendToCosmos(address,bytes32,uint256)",
                 &[
