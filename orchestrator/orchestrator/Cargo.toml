@@ -31,14 +31,16 @@ actix-web = {version = "3.1", features=["openssl"]}
 actix-rt = "1"
 lazy_static = "1"
 url = "2"
-web30 = "0.8.2"
+web30 = "0.8"
 num256 = "0.3"
 log = "0.4"
-env_logger = "0.7"
+env_logger = "0.8"
 serde_json = "1.0"
 sha3 = "0.9"
 tokio = "0.2"
 rand = "0.7"
+num = "0.3"
+
 
 [dev-dependencies]
 actix = "0.10"

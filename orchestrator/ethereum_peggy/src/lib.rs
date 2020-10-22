@@ -3,5 +3,6 @@
 #[macro_use]
 extern crate log;
 
+pub mod send_to_cosmos;
 pub mod utils;
 pub mod valset_update;

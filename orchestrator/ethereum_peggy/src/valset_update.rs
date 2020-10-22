@@ -37,9 +37,6 @@ pub async fn send_eth_valset_update(
     let sig_data = new_valset.order_sigs(confirms)?;
     let sig_arrays = to_arrays(sig_data);
 
-    let first_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
-    info!("Current valset nonce {:?}", first_nonce);
-
     // Solidity function signature
     // function updateValset(
     // // The new version of the validator set
@@ -73,15 +70,26 @@ pub async fn send_eth_valset_update(
     .expect("Valset update failed for other reasons");
     info!("Finished valset update with txid {:#066x}", tx);
 
+    // TODO this segment of code works around the race condition for submitting valsets mostly
+    // by not caring if our own submission reverts and only checking if the valset has been updated
+    // period not if our update succeeded in particular. This will require some further consideration
+    // in the future as many independent relayers racing to update the same thing will hopefully
+    // be the common case.
     web3.wait_for_transaction(tx, timeout, None).await.unwrap();
+    // TODO why do we eventually succeed when we keep trying in my test case? maybe just geth being slow?
 
     let last_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
-    if first_nonce == last_nonce {
-        return Err(OrchestratorError::FailedToUpdateValset);
+    if last_nonce != new_nonce.into() {
+        error!(
+            "Current nonce is {} expected to update to nonce {}",
+            last_nonce, new_nonce
+        );
+    //return Err(OrchestratorError::FailedToUpdateValset);
+    } else {
+        info!(
+            "Successfully updated Valset with new Nonce {:?}",
+            last_nonce
+        );
     }
-    info!(
-        "Successfully updated Valset with new Nonce {:?}",
-        last_nonce
-    );
     Ok(())
 }

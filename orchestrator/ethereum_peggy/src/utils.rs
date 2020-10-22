@@ -33,7 +33,7 @@ pub fn get_checkpoint_abi_encode(
         Token::FixedString("checkpoint".to_string()),
         valset.nonce.into(),
         eth_addresses.into(),
-        powers.clone().into(),
+        powers.into(),
     ]))
 }
 

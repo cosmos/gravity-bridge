@@ -1,12 +1,15 @@
+use crate::ethereum_event_watcher::check_for_events;
 use crate::valset_relaying::relay_valsets;
-use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
+use clarity::{address::Address as EthAddress, Uint256};
 use contact::client::Contact;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use std::time::Duration;
 use std::time::Instant;
 use tokio::time::delay_for;
 use web30::client::Web3;
+
+const BLOCK_DELAY: u128 = 50;
 
 /// This function contains the orchestrator primary loop, it is broken out of the main loop so that
 /// it can be called in the test runner for easier orchestration of multi-node tests
@@ -19,6 +22,7 @@ pub async fn orchestrator_main_loop(
     pay_fees_in: String,
     loop_speed: Duration,
 ) {
+    let mut last_checked_block: Uint256 = 0u64.into();
     loop {
         let loop_start = Instant::now();
 
@@ -39,6 +43,11 @@ pub async fn orchestrator_main_loop(
             loop_speed,
         )
         .await;
+
+        match check_for_events(&web3, contract_address, last_checked_block.clone()).await {
+            Ok(new_block) => last_checked_block = new_block,
+            Err(e) => error!("Failed to get events for block range {:?}", e),
+        }
 
         // a bit of logic that tires to keep things running every 5 seconds exactly
         // this is not required for any specific reason. In fact we expect and plan for

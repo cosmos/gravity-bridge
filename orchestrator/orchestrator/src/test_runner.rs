@@ -4,26 +4,30 @@
 #[macro_use]
 extern crate log;
 
-pub mod main_loop;
-pub mod tests;
-pub mod valset_relaying;
+mod ethereum_event_watcher;
+mod main_loop;
+mod tests;
+mod valset_relaying;
 
 use actix::Arbiter;
-use clarity::Address as EthAddress;
-use clarity::PrivateKey as EthPrivateKey;
+use clarity::{abi::encode_call, PrivateKey as EthPrivateKey};
+use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::send::send_valset_request;
 use cosmos_peggy::send::update_peggy_eth_address;
 use cosmos_peggy::utils::wait_for_cosmos_online;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use ethereum_peggy::send_to_cosmos::send_to_cosmos;
 use ethereum_peggy::utils::get_valset_nonce;
 use main_loop::orchestrator_main_loop;
+use num::Bounded;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::process::Command;
 use std::time::Duration;
 use tokio::time::delay_for;
+use web30::{client::Web3, jsonrpc::error::Web3Error, types::SendTxOption};
 
 const TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -153,7 +157,7 @@ async fn main() {
         }
     }
     let peggy_address: EthAddress = maybe_peggy_address.unwrap();
-    let contract_address: EthAddress = maybe_contract_address.unwrap();
+    let erc20_address: EthAddress = maybe_contract_address.unwrap();
 
     // before we start the orchestrators send them some funds so they can pay
     // for things
@@ -199,6 +203,69 @@ async fn main() {
         ));
     }
 
+    // bootstrapping tests finish here and we move into operational tests
+
+    // send 3 valset updates to make sure the process works back to back
+    for _ in 0u32..3 {
+        test_valset_update(
+            &contact,
+            &web30,
+            &keys,
+            peggy_address,
+            miner_address,
+            fee.clone(),
+        )
+        .await;
+    }
+
+    // we send some erc20 tokens to the peggy contract to register a deposit
+    let tx_id = send_to_cosmos(
+        erc20_address,
+        peggy_address,
+        1u64.into(),
+        keys[0].0.to_public_key().unwrap().to_address(),
+        miner_private_key,
+        Some(TIMEOUT),
+        &web30,
+        vec![],
+    )
+    .await
+    .expect("Failed to send tokens to Cosmos");
+    info!("Send to Cosmos txid: {:#066x}", tx_id);
+
+    let latest_block = web30.eth_block_number().await.unwrap();
+    let erc20_approvals = web30
+        .check_for_events(
+            0u64.into(),
+            Some(latest_block.clone()),
+            erc20_address,
+            "Approval(address,address,uint256)",
+            None,
+            None,
+        )
+        .await;
+    info!("ERC20 Approvals {:?}", erc20_approvals);
+    let valsets = web30
+        .check_for_events(
+            0u64.into(),
+            Some(latest_block.clone()),
+            peggy_address,
+            "ValsetUpdatedAlt(uint256)",
+            None,
+            None,
+        )
+        .await;
+    info!("Valsets {:?}", valsets);
+}
+
+async fn test_valset_update(
+    contact: &Contact,
+    web30: &Web3,
+    keys: &[(CosmosPrivateKey, EthPrivateKey)],
+    peggy_address: EthAddress,
+    miner_address: EthAddress,
+    fee: Coin,
+) {
     let starting_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
         .await
         .expect("Failed to get starting eth valset");
@@ -224,9 +291,6 @@ async fn main() {
             .expect("Failed to get current eth valset");
         delay_for(Duration::from_secs(10)).await;
     }
-
+    assert!(starting_eth_valset_nonce != current_eth_valset_nonce);
     info!("Validator set successfully updated!");
-
-    // TODO verify that a valset update has been performed
-    // TODO verify that some transactions have passed etc etc
 }

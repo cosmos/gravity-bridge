@@ -16,9 +16,10 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 
-pub mod main_loop;
-pub mod tests;
-pub mod valset_relaying;
+mod ethereum_event_watcher;
+mod main_loop;
+mod tests;
+mod valset_relaying;
 
 use crate::main_loop::orchestrator_main_loop;
 use clarity::Address as EthAddress;

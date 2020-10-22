@@ -579,7 +579,7 @@ dependencies = [
  "clarity",
  "contact",
  "deep_space",
- "env_logger",
+ "env_logger 0.7.1",
  "log",
  "num256",
  "peggy_utils",
@@ -740,7 +740,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "44533bbbb3bb3c1fa17d9f2e4e38bbbaf8396ba82193c4cb1b6445d711445d36"
 dependencies = [
  "atty",
- "humantime",
+ "humantime 1.3.0",
+ "log",
+ "regex",
+ "termcolor",
+]
+
+[[package]]
+name = "env_logger"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54532e3223c5af90a6a757c90b5c5521564b07e5e7a958681bcd2afad421cdcd"
+dependencies = [
+ "atty",
+ "humantime 2.0.1",
  "log",
  "regex",
  "termcolor",
@@ -767,8 +780,9 @@ dependencies = [
  "contact",
  "cosmos_peggy",
  "deep_space",
- "env_logger",
+ "env_logger 0.8.1",
  "log",
+ "num 0.3.0",
  "num256",
  "peggy_utils",
  "rand",
@@ -1047,6 +1061,12 @@ checksum = "df004cfca50ef23c36850aaaa59ad52cc70d0e90243c3c7737a4dd32dc7a3c4f"
 dependencies = [
  "quick-error",
 ]
+
+[[package]]
+name = "humantime"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c1ad908cc71012b7bea4d0c53ba96a8cba9962f048fa68d143376143d863b7a"
 
 [[package]]
 name = "idna"
@@ -1481,10 +1501,11 @@ dependencies = [
  "cosmos_peggy",
  "deep_space",
  "docopt",
- "env_logger",
+ "env_logger 0.8.1",
  "ethereum_peggy",
  "lazy_static",
  "log",
+ "num 0.3.0",
  "num256",
  "peggy_utils",
  "rand",
@@ -1548,6 +1569,7 @@ dependencies = [
  "num256",
  "serde",
  "serde_derive",
+ "tokio",
  "web30",
 ]
 
@@ -2364,15 +2386,16 @@ checksum = "1d649a3145108d7d3fbcde896a468d1bd636791823c9921135218ad89be08307"
 
 [[package]]
 name = "web30"
-version = "0.8.2"
+version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07c45807175080603e7eec19cce819cb5e96e78febdb4ead681c82a1cf09d68a"
+checksum = "10fac3f23ba14f1051d462841157b2208c21434dcfe478b3515a803c72393697"
 dependencies = [
  "actix",
  "actix-web",
  "clarity",
  "futures",
  "log",
+ "num 0.3.0",
  "num256",
  "serde",
  "serde_derive",
