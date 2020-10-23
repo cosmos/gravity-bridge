@@ -345,7 +345,7 @@ var NoUniqueClaimDetails AttestationDetails = nil
 // EthereumBridgeDepositClaim claims that a token was deposited on the bridge contract.
 type EthereumBridgeDepositClaim struct {
 	Nonce          UInt64Nonce     `json:"nonce" yaml:"nonce"`
-	ERC20Token     ERC20Token      `json:"erc_20_token"`
+	ERC20Token     ERC20Token      `json:"erc20_token"`
 	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
 	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
 }
@@ -505,7 +505,7 @@ func (m MsgCreateEthereumClaims) ValidateBasic() error {
 	}
 	for i := range m.Claims {
 		if err := m.Claims[i].ValidateBasic(); err != nil {
-			return sdkerrors.Wrapf(err, "claim %d", i)
+			return sdkerrors.Wrapf(err, "claim %d failed ValidateBasic()", i)
 		}
 	}
 	return nil
