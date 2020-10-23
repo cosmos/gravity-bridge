@@ -351,7 +351,7 @@ func CmdOutgointTXBatchConfirm(storeKey string, cdc *codec.Codec) *cobra.Command
 
 			var batch types.OutgoingTxBatch
 			cdc.MustUnmarshalJSON(res, &batch)
-			checkpoint, err := batch.GetCheckpoint()
+			checkpoint, err := batch.GetDigest()
 			if err != nil {
 				return err
 			}
