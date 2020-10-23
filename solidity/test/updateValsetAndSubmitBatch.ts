@@ -295,7 +295,6 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
     // ========================
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
-    // This is the power distribution on the Cosmos hub as of 7/14/2020
     let powers = [6667];
     let validators = signers.slice(0, powers.length);
     const powerThreshold = 6666;
@@ -309,13 +308,12 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
 
     // Make new valset
     // ===============
-    let newPowers = examplePowers();
-    newPowers[0] += 3;
-    let newValidators = signers.slice(0, newPowers.length);
+    let newPowers = [6670];
+    let newValidators = await getSignerAddresses(signers.slice(0, newPowers.length));
     let newValsetNonce = 1;
 
     const valsetCheckpoint = makeCheckpoint(
-      await getSignerAddresses(newValidators),
+      newValidators,
       newPowers,
       newValsetNonce,
       peggyId
@@ -325,8 +323,8 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
 
     // Prepare batch
     // ===============================
-    const txFees = [1]
     const txAmounts = [1]
+    const txFees = [1]
     const txDestinations = await getSignerAddresses([signers[5]]);
     const batchNonce = 1
 
@@ -373,12 +371,28 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
     let digest = ethers.utils.keccak256(abiEncoded);
     // This is where you get the hash
     console.log(digest)
+    // And the stuff that goes into it
+    console.log({
+      "peggyId": peggyId,
+      "methodName": methodName,
+      "valsetCheckpoint": valsetCheckpoint,
+      "txAmounts": txAmounts,
+      "txDestinations": txDestinations,
+      "txFees": txFees,
+      "batchNonce": batchNonce,
+      "tokenContract": testERC20.address
+    })
+    console.log({
+      "newValidators": newValidators,
+      "newPowers": newPowers,
+      "newValsetNonce": newValsetNonce,
+    })
     let sigs = await signHash(validators, digest);
     let currentValsetNonce = 0;
 
 
     await peggy.updateValsetAndSubmitBatch(
-      await getSignerAddresses(newValidators),
+      newValidators,
       newPowers,
       newValsetNonce,
 

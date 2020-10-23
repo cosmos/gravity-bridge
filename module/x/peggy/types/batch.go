@@ -32,7 +32,7 @@ type OutgoingTxBatch struct {
 	TotalFee           ERC20Token           `json:"total_fee"`
 	BridgedDenominator BridgedDenominator   `json:"bridged_denominator"`
 	BatchStatus        BatchStatus          `json:"batch_status"`
-	NewValset          Valset               `json:"valset"`
+	Valset             Valset               `json:"valset"`
 	TokenContract      EthereumAddress      `json:"tokenContract"`
 }
 
@@ -105,7 +105,7 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 		  "internalType": "address",
 		  "name": "_tokenContract",
 		  "type": "address"
-		},
+		}
 	  ],
 	  "name": "updateValsetAndSubmitBatch",
 	  "outputs": [
@@ -149,12 +149,28 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	}
 
 	batchNonce := big.NewInt(int64(b.Nonce))
-	tokenContract := b.TokenContract.Bytes()
+
+	valsetCheckpointBytes := b.Valset.GetCheckpoint()
+	var valsetCheckpoint [32]uint8
+	copy(valsetCheckpoint[:], valsetCheckpointBytes[:])
+
+	tokenContractBytes := b.TokenContract.Bytes()
+	var tokenContract [32]uint8
+	copy(tokenContract[:], tokenContractBytes[:])
 
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, err := contractAbi.Pack("updateValsetAndSubmitBatch", peggyID, methodName, amounts, destinations, fees, batchNonce, tokenContract)
+	bytes, err := contractAbi.Pack("updateValsetAndSubmitBatch",
+		peggyID,
+		methodName,
+		valsetCheckpoint,
+		amounts,
+		destinations,
+		fees,
+		batchNonce,
+		tokenContract,
+	)
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if err != nil {
