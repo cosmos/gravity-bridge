@@ -313,7 +313,6 @@ pub struct SendToCosmosEvent {
 
 impl SendToCosmosEvent {
     pub fn from_log(input: &Log) -> Result<SendToCosmosEvent, OrchestratorError> {
-        println!("Parsing {:?}", input);
         let topics = (
             input.topics.get(1),
             input.topics.get(2),

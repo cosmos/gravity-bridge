@@ -1,5 +1,6 @@
 use crate::messages::*;
 use clarity::{abi::encode_tokens, abi::Token, PrivateKey as EthPrivateKey};
+use clarity::{Address as EthAddress, Uint256};
 use contact::jsonrpc::error::JsonRpcError;
 use contact::types::TXSendResponse;
 use contact::{client::Contact, utils::maybe_get_optional_tx_info};
@@ -8,7 +9,8 @@ use deep_space::stdfee::StdFee;
 use deep_space::stdsignmsg::StdSignMsg;
 use deep_space::transaction::TransactionSendType;
 use deep_space::{coin::Coin, utils::bytes_to_hex_str};
-use peggy_utils::types::*;
+use peggy_utils::{error::OrchestratorError, types::*};
+use web30::client::Web3;
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
@@ -150,6 +152,45 @@ pub async fn send_valset_confirm(
             eth_address: our_eth_address,
             nonce: valset.nonce.into(),
             eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
+        })],
+        memo: String::new(),
+    };
+
+    let tx = private_key
+        .sign_std_msg(std_sign_msg, TransactionSendType::Block)
+        .unwrap();
+
+    contact.retry_on_block(tx).await
+}
+
+pub async fn send_ethereum_claims(
+    contact: &Contact,
+    eth_chain_id: Uint256,
+    peggy_contract: EthAddress,
+    private_key: PrivateKey,
+    claims: Vec<EthereumBridgeClaim>,
+    fee: Coin,
+) -> Result<TXSendResponse, JsonRpcError> {
+    let our_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address();
+
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+
+    let std_sign_msg = StdSignMsg {
+        chain_id: tx_info.chain_id,
+        account_number: tx_info.account_number,
+        sequence: tx_info.sequence,
+        fee: StdFee {
+            amount: vec![fee],
+            gas: 500_000u64.into(),
+        },
+        msgs: vec![PeggyMsg::CreateEthereumClaimsMsg(CreateEthereumClaimsMsg {
+            ethereum_chain_id: eth_chain_id,
+            bridge_contract_address: peggy_contract,
+            orchestrator: our_address,
+            claims,
         })],
         memo: String::new(),
     };

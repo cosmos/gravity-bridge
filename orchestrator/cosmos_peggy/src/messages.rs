@@ -90,20 +90,17 @@ pub struct ConfirmBatchMsg {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ERC20Token {
-    amount: Uint256,
-    symbol: String,
+    pub amount: Uint256,
+    pub symbol: String,
     #[serde(rename = "token_contract_address")]
-    token_contract_address: EthAddress,
+    pub token_contract_address: EthAddress,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct EthereumBridgeDepositClaim {
+    /// this was added on the cosmos side due to a poorly designed interface
+    /// will always be zero
     pub nonce: Uint256,
-    pub validator: Address,
-    /// a hex encoded string representing the Ethereum signature
-    #[serde(rename = "signature")]
-    pub eth_signature: String,
-    #[serde(rename = "ERC20Token")]
     pub erc20_token: ERC20Token,
     pub ethereum_sender: EthAddress,
     pub cosmos_receiver: Address,
@@ -131,22 +128,28 @@ pub struct EthereumBridgeBootstrappedClaim {
     peggy_id: String,
     /// the amount of voting power (measured by the bridge, not cosmos) required
     /// to start the bridge, remember bridge powers are normalized to u32 max so
-    /// this would be computed as some percentage of that with on bearing on what
+    /// this would be computed as some percentage of that with no bearing on what
     /// Cosmos would consider the power number to be.
     start_threshold: Uint256,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[serde(tag = "type", content = "value")]
 pub enum EthereumBridgeClaim {
+    #[serde(rename = "peggy/EthereumBridgeDepositClaim")]
     EthereumBridgeDepositClaim(EthereumBridgeDepositClaim),
+    #[serde(rename = "peggy/EthereumBridgeMultiSigUpdateClaim")]
     EthereumBridgeMultiSigUpdateClaim(EthereumBridgeMultiSigUpdateClaim),
+    #[serde(rename = "peggy/EthereumBridgeWithdrawBatchClaim")]
     EthereumBridgeWithdrawBatchClaim(EthereumBridgeWithdrawBatchClaim),
+    #[serde(rename = "peggy/EthereumBridgeBootstrappedClaim")]
+    EthereumBridgeBootstrappedClaim(EthereumBridgeBootstrappedClaim),
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct CreateEthereumClaimsMsg {
     pub ethereum_chain_id: Uint256,
     pub bridge_contract_address: EthAddress,
-    pub validator: Address,
+    pub orchestrator: Address,
     pub claims: Vec<EthereumBridgeClaim>,
 }

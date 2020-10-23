@@ -30,8 +30,7 @@ pub async fn relay_valsets(
     web3: &Web3,
     contact: &Contact,
     contract_address: EthAddress,
-    // the denom to pay fees in
-    pay_fees_in: String,
+    fee: Coin,
     timeout: Duration,
 ) {
     info!("Starting valset relay");
@@ -49,10 +48,7 @@ pub async fn relay_valsets(
         send_valset_confirm(
             contact,
             ethereum_key,
-            Coin {
-                denom: pay_fees_in.clone(),
-                amount: 1u32.into(),
-            },
+            fee,
             last_unsigned_valset.result,
             cosmos_key,
             String::from_utf8(peggy_id.clone()).expect("Invalid PeggyID"),

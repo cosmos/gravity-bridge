@@ -3,7 +3,7 @@ use crate::valset_relaying::relay_valsets;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{address::Address as EthAddress, Uint256};
 use contact::client::Contact;
-use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use std::time::Duration;
 use std::time::Instant;
 use tokio::time::delay_for;
@@ -23,6 +23,11 @@ pub async fn orchestrator_main_loop(
     loop_speed: Duration,
 ) {
     let mut last_checked_block: Uint256 = 0u64.into();
+    let fee = Coin {
+        denom: pay_fees_in.clone(),
+        amount: 1u32.into(),
+    };
+
     loop {
         let loop_start = Instant::now();
 
@@ -33,18 +38,29 @@ pub async fn orchestrator_main_loop(
             latest_eth_block, latest_cosmos_block.block.header.version.block
         );
 
+        //  Checks for new valsets to sign and relays validator sets from Cosmos -> Ethereum including
         relay_valsets(
             cosmos_key,
             ethereum_key,
             &web3,
             &contact,
             contract_address,
-            pay_fees_in.clone(),
+            fee.clone(),
             loop_speed,
         )
         .await;
 
-        match check_for_events(&web3, contract_address, last_checked_block.clone()).await {
+        // Relays events from Ethereum -> Cosmos
+        match check_for_events(
+            &web3,
+            &contact,
+            contract_address,
+            cosmos_key,
+            fee.clone(),
+            last_checked_block.clone(),
+        )
+        .await
+        {
             Ok(new_block) => last_checked_block = new_block,
             Err(e) => error!("Failed to get events for block range {:?}", e),
         }

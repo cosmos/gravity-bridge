@@ -215,7 +215,7 @@ async fn main() {
     // bootstrapping tests finish here and we move into operational tests
 
     // send 3 valset updates to make sure the process works back to back
-    for _ in 0u32..1 {
+    for _ in 0u32..3 {
         test_valset_update(
             &contact,
             &web30,
@@ -249,6 +249,9 @@ async fn main() {
     info!("Send to Cosmos txid: {:#066x}", tx_id);
 
     delay_for(TIMEOUT).await;
+
+    let account_info = contact.get_account_info(dest).await.unwrap();
+    info!("Account balance of {} is {:?}", dest, account_info)
 }
 
 async fn test_valset_update(
