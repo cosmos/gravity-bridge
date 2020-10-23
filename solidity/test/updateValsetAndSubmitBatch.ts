@@ -295,8 +295,8 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
     // ========================
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
-    let powers = [6667];
-    let validators = signers.slice(0, powers.length);
+    const powers = [6667];
+    const validators = signers.slice(0, powers.length);
     const powerThreshold = 6666;
     const {
       peggy,
@@ -308,9 +308,9 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
 
     // Make new valset
     // ===============
-    let newPowers = [6670];
-    let newValidators = await getSignerAddresses(signers.slice(0, newPowers.length));
-    let newValsetNonce = 1;
+    const newPowers = [6670];
+    const newValidators = await getSignerAddresses(signers.slice(0, newPowers.length));
+    const newValsetNonce = 1;
 
     // const valsetCheckpoint = makeCheckpoint(
     //   newValidators,
@@ -321,12 +321,24 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
 
     const valsetMethodName = ethers.utils.formatBytes32String("checkpoint");
 
-    let abiEncodedValset = ethers.utils.defaultAbiCoder.encode(
-      ["bytes32", "bytes32", "uint256", "address[]", "uint256[]"],
-      [peggyId, valsetMethodName, newValsetNonce, newValidators, newPowers]
+    const abiEncodedValset = ethers.utils.defaultAbiCoder.encode(
+      [
+        "bytes32",
+        "bytes32",
+        "uint256",
+        "address[]",
+        "uint256[]"
+      ],
+      [
+        peggyId,
+        valsetMethodName,
+        newValsetNonce,
+        newValidators,
+        newPowers
+      ]
     );
 
-    let valsetCheckpoint = ethers.utils.keccak256(abiEncodedValset);
+    const valsetCheckpoint = ethers.utils.keccak256(abiEncodedValset);
 
 
 
@@ -352,10 +364,10 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
 
     // Call method
     // ===========
-    const methodName = ethers.utils.formatBytes32String(
+    const batchMethodName = ethers.utils.formatBytes32String(
       "valsetAndTransactionBatch"
     );
-    let abiEncodedBatch = ethers.utils.defaultAbiCoder.encode(
+    const abiEncodedBatch = ethers.utils.defaultAbiCoder.encode(
       [
         "bytes32",
         "bytes32",
@@ -368,7 +380,7 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
       ],
       [
         peggyId,
-        methodName,
+        batchMethodName,
         valsetCheckpoint,
         txAmounts,
         txDestinations,
@@ -377,19 +389,21 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
         testERC20.address
       ]
     );
-    let batchDigest = ethers.utils.keccak256(abiEncodedBatch);
+    const batchDigest = ethers.utils.keccak256(abiEncodedBatch);
 
-    console.log("elements in valset hash", {
-      "newValidators": newValidators,
-      "newPowers": newPowers,
-      "newValsetNonce": newValsetNonce,
-    })
-    console.log("ABI encoded valset", abiEncodedValset)
-    console.log("completed valset hash", valsetCheckpoint)
-
-    console.log("elements in batch hash", {
+    console.log("elements in valset checkpoint:", {
       "peggyId": peggyId,
-      "methodName": methodName,
+      "validators": newValidators,
+      "valsetMethodName": valsetMethodName,
+      "valsetNonce": newValsetNonce,
+      "powers": newPowers,
+    })
+    console.log("abiEncodedValset:", abiEncodedValset)
+    console.log("valsetCheckpoint:", valsetCheckpoint)
+
+    console.log("elements in batch digest:", {
+      "peggyId": peggyId,
+      "batchMethodName": batchMethodName,
       "valsetCheckpoint": valsetCheckpoint,
       "txAmounts": txAmounts,
       "txDestinations": txDestinations,
@@ -397,11 +411,11 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
       "batchNonce": batchNonce,
       "tokenContract": testERC20.address
     })
-    console.log("ABI encoded batch", abiEncodedBatch)
-    console.log("completed batch hash", batchDigest)
+    console.log("abiEncodedBatch:", abiEncodedBatch)
+    console.log("batchDigest:", batchDigest)
 
-    let sigs = await signHash(validators, batchDigest);
-    let currentValsetNonce = 0;
+    const sigs = await signHash(validators, batchDigest);
+    const currentValsetNonce = 0;
 
 
     await peggy.updateValsetAndSubmitBatch(

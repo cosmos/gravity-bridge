@@ -44,7 +44,7 @@ func (b *OutgoingTxBatch) Cancel() error {
 	return nil
 }
 
-func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
+func (b OutgoingTxBatch) GetDigest() ([]byte, error) {
 
 	// TODO replace hardcoded "foo" here with a getter to retrieve the correct PeggyID from the store
 	// this will work for now because 'foo' is the test Peggy ID we are using
@@ -62,7 +62,7 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	// In order to work around this absurd series of problems we have to manually write the below
 	// 'function specification' that will encode the same arguments into a function call. We can then
 	// truncate the first several bytes where the call name is encoded to finally get the equal of the
-	const checkpointAbiJSON = `[{
+	const abiJSON = `[{
 	  "inputs": [
 	    {
 	      "internalType": "bytes32",
@@ -120,7 +120,7 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	}]`
 	// Solidity abi.Encode() call.
 	// error case here should not occur outside of testing since the above is a constant
-	contractAbi, err := abi.JSON(strings.NewReader(checkpointAbiJSON))
+	abi, err := abi.JSON(strings.NewReader(abiJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
 	}
@@ -134,18 +134,18 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	copy(peggyID[:], peggyIDBytes[:])
 
 	// Create the methodName argument which salts the signature
-	methodNameBytes := []uint8("updateValsetAndSubmitBatch")
-	var methodName [32]uint8
-	copy(methodName[:], methodNameBytes[:])
+	methodNameBytes := []uint8("valsetAndTransactionBatch")
+	var batchMethodName [32]uint8
+	copy(batchMethodName[:], methodNameBytes[:])
 
 	// Run through the elements of the batch and serialize them
-	amounts := make([]*big.Int, len(b.Elements))
-	destinations := make([]EthereumAddress, len(b.Elements))
-	fees := make([]*big.Int, len(b.Elements))
+	txAmounts := make([]*big.Int, len(b.Elements))
+	txDestinations := make([]EthereumAddress, len(b.Elements))
+	txFees := make([]*big.Int, len(b.Elements))
 	for i, tx := range b.Elements {
-		amounts[i] = big.NewInt(int64(tx.Amount.Amount))
-		destinations[i] = tx.DestAddress
-		fees[i] = big.NewInt(int64(tx.BridgeFee.Amount))
+		txAmounts[i] = big.NewInt(int64(tx.Amount.Amount))
+		txDestinations[i] = tx.DestAddress
+		txFees[i] = big.NewInt(int64(tx.BridgeFee.Amount))
 	}
 
 	batchNonce := big.NewInt(int64(b.Nonce))
@@ -154,20 +154,22 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	var valsetCheckpoint [32]uint8
 	copy(valsetCheckpoint[:], valsetCheckpointBytes[:])
 
-	tokenContractBytes := b.TokenContract.Bytes()
-	var tokenContract [32]uint8
-	copy(tokenContract[:], tokenContractBytes[:])
+	// tokenContractBytes := b.TokenContract.Bytes()
+	// var tokenContract [20]uint8
+	// copy(tokenContract[:], tokenContractBytes[:])
+
+	tokenContract := b.TokenContract
 
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, err := contractAbi.Pack("updateValsetAndSubmitBatch",
+	abiEncodedBatch, err := abi.Pack("updateValsetAndSubmitBatch",
 		peggyID,
-		methodName,
+		batchMethodName,
 		valsetCheckpoint,
-		amounts,
-		destinations,
-		fees,
+		txAmounts,
+		txDestinations,
+		txFees,
 		batchNonce,
 		tokenContract,
 	)
@@ -180,9 +182,32 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
 	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
 	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
-	hash := crypto.Keccak256Hash(bytes[4:])
+	batchDigest := crypto.Keccak256Hash(abiEncodedBatch[4:])
 
-	return hash.Bytes(), nil
+	// fmt.Printf(`
+	//   valsetCheckpoint: 0x%v
+	//   elements in batch digest: {
+	// 	peggyId: 0x%v,
+	// 	batchMethodName: 0x%v,
+	// 	valsetCheckpoint: 0x%v,
+	// 	txAmounts: %v,
+	// 	txDestinations: %v,
+	// 	txFees: %v,
+	// 	batchNonce: %v,
+	// 	tokenContract: %v
+	//   }
+	//   abiEncodedBatch: 0x%v
+	//   batchDigest: 0x%v
+	// `,
+	// 	// peggyID, validators, valsetMethodName, valsetNonce, powers,
+	// 	// abiEncodedValset,
+	// 	common.Bytes2Hex(valsetCheckpoint[:]),
+	// 	common.Bytes2Hex(peggyID[:]), common.Bytes2Hex(batchMethodName[:]), common.Bytes2Hex(valsetCheckpoint[:]), txAmounts, txDestinations, txFees, batchNonce, tokenContract,
+	// 	common.Bytes2Hex(abiEncodedBatch[:]),
+	// 	common.Bytes2Hex(batchDigest[:]),
+	// )
+
+	return batchDigest.Bytes(), nil
 }
 
 func (b *OutgoingTxBatch) Observed() error {
