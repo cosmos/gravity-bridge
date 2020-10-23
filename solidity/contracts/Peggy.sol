@@ -18,7 +18,7 @@ contract Peggy {
 	event ValsetUpdatedEvent(uint256 indexed _newNonce, address[] _validators, uint256[] _powers);
 	event TransactionBatchExecutedEvent(uint256 indexed _newNonce, address indexed _token);
 	event SendToCosmosEvent(
-		address _tokenContract,
+		address indexed _tokenContract,
 		address indexed _sender,
 		bytes32 indexed _destination,
 		uint256 _amount
