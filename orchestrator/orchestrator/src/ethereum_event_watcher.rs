@@ -2,8 +2,12 @@
 //! or a transaction batch update. It then responds to these events by performing actions on the Cosmos chain if required
 
 use clarity::{Address as EthAddress, Uint256};
-use peggy_utils::error::OrchestratorError;
-use web30::client::Web3;
+use peggy_utils::{
+    error::OrchestratorError,
+    types::{SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent},
+};
+use web30::jsonrpc::error::Web3Error;
+use web30::{client::Web3, types::Log};
 
 pub async fn check_for_events(
     web3: &Web3,
@@ -20,7 +24,9 @@ pub async fn check_for_events(
             Vec::new(),
         )
         .await;
-    info!("Deposits {:?}", deposits);
+    trace!("Deposits {:?}", deposits);
+    // todo write a parser for each of these events to get the data out
+    // then send a cosmos transaction to mint tokens
 
     let batches = web3
         .check_for_events(
@@ -31,7 +37,7 @@ pub async fn check_for_events(
             Vec::new(),
         )
         .await;
-    info!("Batches {:?}", batches);
+    trace!("Batches {:?}", batches);
 
     let valsets = web3
         .check_for_events(
@@ -42,7 +48,23 @@ pub async fn check_for_events(
             Vec::new(),
         )
         .await;
-    info!("Valsets {:?}", valsets);
-
-    Ok(latest_block)
+    trace!("Valsets {:?}", valsets);
+    if let (Ok(valsets), Ok(batches), Ok(deposits)) = (valsets, batches, deposits) {
+        let valsets = ValsetUpdatedEvent::from_logs(&valsets)?;
+        let batches = TransactionBatchExecutedEvent::from_logs(&batches)?;
+        let deposits = SendToCosmosEvent::from_logs(&deposits)?;
+        info!("Parsed stuff!");
+        if !deposits.is_empty() {
+            info!(
+                "Got deposit with sender {} and destination {} and amount {}",
+                deposits[0].sender, deposits[0].destination, deposits[0].amount
+            )
+        }
+        Ok(latest_block)
+    } else {
+        error!("Failed to get events");
+        Err(OrchestratorError::EthereumRestErr(Web3Error::BadResponse(
+            "Failed to get logs!".to_string(),
+        )))
+    }
 }

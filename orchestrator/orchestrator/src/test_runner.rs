@@ -227,12 +227,18 @@ async fn main() {
         .await;
     }
 
+    let dest = keys[0].0.to_public_key().unwrap().to_address();
+    let amount = 1u64.into();
+    info!(
+        "Sending to Cosmos from {} to {} with amount {}",
+        miner_address, dest, amount
+    );
     // we send some erc20 tokens to the peggy contract to register a deposit
     let tx_id = send_to_cosmos(
         erc20_address,
         peggy_address,
-        1u64.into(),
-        keys[0].0.to_public_key().unwrap().to_address(),
+        amount,
+        dest,
         miner_private_key,
         Some(TIMEOUT),
         &web30,
@@ -242,8 +248,7 @@ async fn main() {
     .expect("Failed to send tokens to Cosmos");
     info!("Send to Cosmos txid: {:#066x}", tx_id);
 
-    // now we find that message in our oracle and proceed to ferry it to cosmos
-    delay_for(Duration::from_secs(120)).await;
+    delay_for(TIMEOUT).await;
 }
 
 async fn test_valset_update(

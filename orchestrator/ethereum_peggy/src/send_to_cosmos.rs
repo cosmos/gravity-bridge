@@ -54,6 +54,7 @@ pub async fn send_to_cosmos(
         options.push(SendTxOption::GasLimit(SEND_TO_COSMOS_GAS_LIMIT.into()));
     }
 
+    // TODO figure out bigendian encoding here
     let encoded_destination_address = Token::Bytes(cosmos_destination.as_bytes().to_vec());
 
     let tx_hash = web3

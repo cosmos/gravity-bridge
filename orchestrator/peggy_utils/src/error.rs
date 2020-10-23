@@ -16,6 +16,7 @@ pub enum OrchestratorError {
     EthereumContractError(String),
     ClarityError(ClarityError),
     TimeoutError,
+    InvalidEventLogError(String),
 }
 
 impl fmt::Display for OrchestratorError {
@@ -29,6 +30,7 @@ impl fmt::Display for OrchestratorError {
             OrchestratorError::FailedToUpdateValset => write!(f, "ValidatorSetUpdate Failed!"),
             OrchestratorError::TimeoutError => write!(f, "Operation timed out!"),
             OrchestratorError::ClarityError(val) => write!(f, "Clarity Error {}", val),
+            OrchestratorError::InvalidEventLogError(val) => write!(f, "InvalidEvent: {}", val),
             OrchestratorError::EthereumContractError(val) => {
                 write!(f, "Contract operation failed: {}", val)
             }
