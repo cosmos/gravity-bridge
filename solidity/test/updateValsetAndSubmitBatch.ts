@@ -287,7 +287,7 @@ describe("updateValsetAndSubmitBatch tests", function () {
 
 // This test produces a hash for the contract which should match what is being used in the Go unit tests. It's here for
 // the use of anyone updating the Go tests.
-describe.only("updateValsetAndSubmitBatch Go test hash", function () {
+describe("updateValsetAndSubmitBatch Go test hash", function () {
   it("produces good hash", async function () {
 
 
