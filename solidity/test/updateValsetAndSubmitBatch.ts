@@ -312,12 +312,21 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
     let newValidators = await getSignerAddresses(signers.slice(0, newPowers.length));
     let newValsetNonce = 1;
 
-    const valsetCheckpoint = makeCheckpoint(
-      newValidators,
-      newPowers,
-      newValsetNonce,
-      peggyId
+    // const valsetCheckpoint = makeCheckpoint(
+    //   newValidators,
+    //   newPowers,
+    //   newValsetNonce,
+    //   peggyId
+    // );
+
+    const valsetMethodName = ethers.utils.formatBytes32String("checkpoint");
+
+    let abiEncodedValset = ethers.utils.defaultAbiCoder.encode(
+      ["bytes32", "bytes32", "uint256", "address[]", "uint256[]"],
+      [peggyId, valsetMethodName, newValsetNonce, newValidators, newPowers]
     );
+
+    let valsetCheckpoint = ethers.utils.keccak256(abiEncodedValset);
 
 
 
@@ -346,7 +355,7 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
     const methodName = ethers.utils.formatBytes32String(
       "valsetAndTransactionBatch"
     );
-    let abiEncoded = ethers.utils.defaultAbiCoder.encode(
+    let abiEncodedBatch = ethers.utils.defaultAbiCoder.encode(
       [
         "bytes32",
         "bytes32",
@@ -368,11 +377,17 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
         testERC20.address
       ]
     );
-    let digest = ethers.utils.keccak256(abiEncoded);
-    // This is where you get the hash
-    console.log(digest)
-    // And the stuff that goes into it
-    console.log({
+    let batchDigest = ethers.utils.keccak256(abiEncodedBatch);
+
+    console.log("elements in valset hash", {
+      "newValidators": newValidators,
+      "newPowers": newPowers,
+      "newValsetNonce": newValsetNonce,
+    })
+    console.log("ABI encoded valset", abiEncodedValset)
+    console.log("completed valset hash", valsetCheckpoint)
+
+    console.log("elements in batch hash", {
       "peggyId": peggyId,
       "methodName": methodName,
       "valsetCheckpoint": valsetCheckpoint,
@@ -382,12 +397,10 @@ describe.only("updateValsetAndSubmitBatch Go test hash", function () {
       "batchNonce": batchNonce,
       "tokenContract": testERC20.address
     })
-    console.log({
-      "newValidators": newValidators,
-      "newPowers": newPowers,
-      "newValsetNonce": newValsetNonce,
-    })
-    let sigs = await signHash(validators, digest);
+    console.log("ABI encoded batch", abiEncodedBatch)
+    console.log("completed batch hash", batchDigest)
+
+    let sigs = await signHash(validators, batchDigest);
     let currentValsetNonce = 0;
 
 
