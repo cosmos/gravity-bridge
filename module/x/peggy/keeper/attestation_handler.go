@@ -67,7 +67,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		if !ok {
 			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
 		}
-		// quick hack:  we are sstoring the bootstrap data here to avoid the gov process in MVY.
+		// quick hack:  we are storing the bootstrap data here to avoid the gov process in MVY.
 		// TODO: improve process by:
 		// - verify StartThreshold == params.StartThreshold
 		// - verify PeggyID == params.PeggyID

@@ -29,6 +29,7 @@ func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types
 		return nil, err
 	}
 	if att.Certainty != types.CertaintyObserved || att.Status != types.ProcessStatusInit {
+		k.storeAttestation(ctx, att)
 		return att, nil
 	}
 
