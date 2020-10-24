@@ -1,14 +1,6 @@
-//! Orchestrator is a sort of specialized relayer for Althea-Peggy that runs on every validator.
-//! Things this binary is responsible for
-//!   * Performing all the Ethereum signing required to submit updates and generate batches
-//!   * Progressing the validator set update generation process.
-//!   * Observing events on the Ethereum chain and submitting oracle messages for validator consensus
-//! Things this binary needs
-//!   * Access to the validators signing Ethereum key
-//!   * Access to the validators Cosmos key
-//!   * Access to an Cosmos chain RPC server
-//!   * Access to an Ethereum chain RPC server
-
+//! This file is the binary entry point for the Peggy client software, an easy to use cli utility that
+//! allows anyone to send funds across the Peggy bridge. Currently this application only does anything
+//! on the Ethereum side of the bridge since withdraw batches are incomplete.
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
@@ -34,7 +26,7 @@ use web30::client::Web3;
 
 #[derive(Debug, Deserialize)]
 struct Args {
-    flag_cosmos_key: String,
+    flag_cosmos_phrase: String,
     flag_ethereum_key: String,
     flag_cosmos_rpc: String,
     flag_ethereum_rpc: String,
@@ -44,24 +36,23 @@ struct Args {
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-    "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-rpc=<url> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr>
+        "Usage: {} --cosmos-dest=<key> --erc20-address=<erc20> --amount=<amount> --contract-address=<addr> --ethereum-key=<key> --ethereum-rpc=<url>
         Options:
-            -h --help                 Show this screen.
-            --cosmos-key=<ckey>       The Cosmos private key of the validator
-            --ethereum-key=<ekey>     The Ethereum private key of the validator
-            --cosmos-rpc=<curl>       The Cosmos RPC url, usually the validator
-            --ethereum-rpc=<eurl>     The Ethereum RPC url, should be a self hosted node
-            --fees=<denom>            The Cosmos Denom in which to pay Cosmos chain fees
-            --contract-address=<addr> The Ethereum contract address for Peggy, this is temporary
+            -h --help                     Show this screen.
+            --cosmos-dest=<ckey>   The Cosmos address of your destination
+            --erc20-address=<erc20>       The Ethereum contract address for the ERC20 token you want to send
+            --amount=<amount>             The number of ERC20 tokens you wish to send
+            --contract-address=<addr>     The Ethereum contract address for Peggy, this is temporary
+            --ethereum-key=<ekey>         The Ethereum private key with the funds you wish to send
+            --ethereum-rpc=<eurl>         The Ethereum RPC url, should be a self hosted node
         About:
-            The Validator companion relayer and Ethereum network observer.
-            for Althea-Peggy.
+            Client software for the Althea-Peggy bridge
             Written By: {}
             Version {}",
-            env!("CARGO_PKG_NAME"),
-            env!("CARGO_PKG_AUTHORS"),
-            env!("CARGO_PKG_VERSION"),
-        );
+        env!("CARGO_PKG_NAME"),
+        env!("CARGO_PKG_AUTHORS"),
+        env!("CARGO_PKG_VERSION"),
+    );
 }
 
 #[actix_rt::main]
@@ -69,10 +60,8 @@ async fn main() {
     let args: Args = Docopt::new(USAGE.as_str())
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
-    let cosmos_key: CosmosPrivateKey = args
-        .flag_cosmos_key
-        .parse()
-        .expect("Invalid Private Cosmos Key!");
+    let cosmos_key = CosmosPrivateKey::from_phrase(&args.flag_cosmos_phrase, "")
+        .expect("Failed to parse validator key");
     let ethereum_key: EthPrivateKey = args
         .flag_ethereum_key
         .parse()

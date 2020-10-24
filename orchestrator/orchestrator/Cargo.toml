@@ -12,6 +12,14 @@ name = "orchestrator"
 path = "src/main.rs"
 
 [[bin]]
+name = "peggy-client"
+path = "src/client.rs"
+
+[[bin]]
+name = "register-eth-key"
+path = "src/register-eth-key.rs"
+
+[[bin]]
 name = "test-runner"
 path = "src/test_runner.rs"
 
