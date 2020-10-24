@@ -34,7 +34,7 @@ use web30::client::Web3;
 
 #[derive(Debug, Deserialize)]
 struct Args {
-    flag_cosmos_key: String,
+    flag_cosmos_phrase: String,
     flag_ethereum_key: String,
     flag_cosmos_rpc: String,
     flag_ethereum_rpc: String,
@@ -44,10 +44,10 @@ struct Args {
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-        "Usage: {} --cosmos-key=<key> --ethereum-key=<key> --cosmos-rpc=<url> --ethereum-rpc=<url>
+        "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-rpc=<url> --ethereum-rpc=<url>
         Options:
             -h --help                 Show this screen.
-            --cosmos-key=<ckey>       The Cosmos private key of the validator
+            --cosmos-phrase=<ckey>    The Cosmos private key of the validator
             --ethereum-key=<ekey>     The Ethereum private key of the validator
             --cosmos-rpc=<curl>       The Cosmos RPC url, usually the validator
             --ethereum-rpc=<eurl>     The Ethereum RPC url, should be a self hosted node
@@ -69,10 +69,8 @@ async fn main() {
     let args: Args = Docopt::new(USAGE.as_str())
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
-    let cosmos_key: CosmosPrivateKey = args
-        .flag_cosmos_key
-        .parse()
-        .expect("Invalid Private Cosmos Key!");
+    let cosmos_key = CosmosPrivateKey::from_phrase(&args.flag_cosmos_phrase, "")
+        .expect("Failed to parse validator key");
     let ethereum_key: EthPrivateKey = args
         .flag_ethereum_key
         .parse()
