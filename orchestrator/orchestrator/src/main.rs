@@ -34,7 +34,7 @@ use web30::client::Web3;
 
 #[derive(Debug, Deserialize)]
 struct Args {
-    flag_cosmos_key: String,
+    flag_cosmos_phrase: String,
     flag_ethereum_key: String,
     flag_cosmos_rpc: String,
     flag_ethereum_rpc: String,
@@ -69,9 +69,7 @@ async fn main() {
     let args: Args = Docopt::new(USAGE.as_str())
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
-    let cosmos_key: CosmosPrivateKey = args
-        .flag_cosmos_key
-        .parse()
+    let cosmos_key = CosmosPrivateKey::from_phrase(&args.flag_cosmos_phrase, "")
         .expect("Invalid Private Cosmos Key!");
     let ethereum_key: EthPrivateKey = args
         .flag_ethereum_key
