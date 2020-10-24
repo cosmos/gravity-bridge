@@ -257,9 +257,6 @@ func (t AttestationTally) ThresholdsReached() bool {
 }
 
 func (a *Attestation) AddVote(now time.Time, power uint64) error {
-	if a.Status != ProcessStatusInit {
-		return sdkerrors.Wrapf(ErrInvalid, "%d", a.Status) // no status to string impl, yet
-	}
 	if now.After(a.ConfirmationEndTime) {
 		return ErrTimeout
 	}

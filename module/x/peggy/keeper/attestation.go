@@ -28,6 +28,10 @@ func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types
 	if err != nil {
 		return nil, err
 	}
+
+	// this is a really strange conditional that needs to be simplified, just asking for trouble.
+	// it is correct, but it's too difficult to read and there's too many ways for it to be true
+	// or false that are non-obvious. Great way to have a double-spend bug TODO refactor
 	if att.Certainty != types.CertaintyObserved || att.Status != types.ProcessStatusInit {
 		k.storeAttestation(ctx, att)
 		return att, nil
