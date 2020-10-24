@@ -29,7 +29,8 @@ You can keep up with the latest development by watching our [public standups](ht
   - [ ] Audit
 - Orchestrator / Relayer
   - [x] Validator set update relaying
-  - [ ] Ethereum -> Cosmos Oracle
+  - [x] Ethereum -> Cosmos Oracle
+  - [x] Ethereum -> Cosmos Token issuing
   - [ ] Transaction batch relaying
   - [ ] Tendermint KMS support
   - [ ] Audit
