@@ -56,7 +56,7 @@ func (b BridgedDenominator) ToVoucherCoin(amount uint64) sdk.Coin {
 }
 
 const (
-	VoucherDenomPrefix = "peggy"
+	VoucherDenomPrefix = "p"
 	DenomSeparator     = "" // todo: only a-z0-9 supported
 	//DenomSeparator     = "/"  // todo: not allowed in this versions sdk coin demon
 	VoucherDenomLen  = 15 // todo: cut to 15 to match this versions sdk coin demon
@@ -85,7 +85,14 @@ func NewVoucherDenom(tokenContractAddr EthereumAddress, erc20Symbol string) Vouc
 	denomTrace := fmt.Sprintf("%s/%s/", tokenContractAddr.String(), erc20Symbol)
 	var hash tmbytes.HexBytes = tmhash.Sum([]byte(denomTrace))
 	simpleVoucherDenom := VoucherDenomPrefix + DenomSeparator + hash.String()
-	sdkVersionHackDenom := strings.ToLower(simpleVoucherDenom[0:15]) // todo: up to 15 chars (lowercase) allowed in this sdk version only
+	var symbolSliceLen int
+	// handle erc20symbol values that are shorter than 4 char
+	if len(erc20Symbol) > 4 {
+		symbolSliceLen = 4
+	} else {
+		symbolSliceLen = len(erc20Symbol)
+	}
+	sdkVersionHackDenom := strings.ToLower(simpleVoucherDenom[0:11] + erc20Symbol[0:symbolSliceLen]) // todo: up to 15 chars (lowercase) allowed in this sdk version only
 	return VoucherDenom(sdkVersionHackDenom)
 }
 
