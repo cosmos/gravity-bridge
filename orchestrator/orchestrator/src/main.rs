@@ -82,11 +82,15 @@ async fn main() {
         .parse()
         .expect("Invalid contract address!");
     let cosmos_url = Url::parse(&args.flag_cosmos_rpc).expect("Invalid Cosmos RPC url");
+    let cosmos_url = cosmos_url.to_string();
+    let cosmos_url = cosmos_url.trim_end_matches('/');
     let eth_url = Url::parse(&args.flag_ethereum_rpc).expect("Invalid Ethereum RPC url");
+    let eth_url = eth_url.to_string();
+    let eth_url = eth_url.trim_end_matches('/');
     let fee_denom = args.flag_fees;
 
-    let web3 = Web3::new(&eth_url.to_string(), LOOP_SPEED);
-    let contact = Contact::new(&cosmos_url.to_string(), LOOP_SPEED);
+    let web3 = Web3::new(&eth_url, LOOP_SPEED);
+    let contact = Contact::new(&cosmos_url, LOOP_SPEED);
 
     orchestrator_main_loop(
         cosmos_key,

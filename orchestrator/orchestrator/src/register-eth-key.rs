@@ -62,9 +62,11 @@ async fn main() {
         .parse()
         .expect("Invalid Ethereum private key!");
     let cosmos_url = Url::parse(&args.flag_cosmos_rpc).expect("Invalid Cosmos RPC url");
+    let cosmos_url = cosmos_url.to_string();
+    let cosmos_url = cosmos_url.trim_end_matches('/');
     let fee_denom = args.flag_fees;
 
-    let contact = Contact::new(&cosmos_url.to_string(), LOOP_SPEED);
+    let contact = Contact::new(&cosmos_url, LOOP_SPEED);
     let fee = Coin {
         denom: fee_denom,
         amount: 1u64.into(),
