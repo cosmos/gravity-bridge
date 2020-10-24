@@ -60,6 +60,18 @@ pub async fn get_valset_nonce(
     Ok(Uint256::from_bytes_be(&val))
 }
 
+/// Gets the ERC20 symbol, should maybe be upstreamed
+pub async fn get_erc20_symbol(
+    contract_address: EthAddress,
+    caller_address: EthAddress,
+    web3: &Web3,
+) -> Result<String, OrchestratorError> {
+    let val_symbol = web3
+        .contract_call(contract_address, "symbol()", &[], caller_address)
+        .await?;
+    Ok(String::from_utf8(val_symbol)?)
+}
+
 /// Gets the latest transaction batch nonce
 pub async fn get_tx_batch_nonce(
     contract_address: EthAddress,

@@ -4,6 +4,7 @@
 use clarity::Error as ClarityError;
 use contact::jsonrpc::error::JsonRpcError;
 use std::fmt::{self, Debug};
+use std::string::FromUtf8Error;
 use tokio::time::Elapsed;
 use web30::jsonrpc::error::Web3Error;
 
@@ -17,6 +18,7 @@ pub enum OrchestratorError {
     ClarityError(ClarityError),
     TimeoutError,
     InvalidEventLogError(String),
+    InvalidERC20TokenName,
 }
 
 impl fmt::Display for OrchestratorError {
@@ -29,6 +31,9 @@ impl fmt::Display for OrchestratorError {
             }
             OrchestratorError::FailedToUpdateValset => write!(f, "ValidatorSetUpdate Failed!"),
             OrchestratorError::TimeoutError => write!(f, "Operation timed out!"),
+            OrchestratorError::InvalidERC20TokenName => {
+                write!(f, "Token symbol is not valid UTF8!")
+            }
             OrchestratorError::ClarityError(val) => write!(f, "Clarity Error {}", val),
             OrchestratorError::InvalidEventLogError(val) => write!(f, "InvalidEvent: {}", val),
             OrchestratorError::EthereumContractError(val) => {
@@ -43,6 +48,12 @@ impl std::error::Error for OrchestratorError {}
 impl From<JsonRpcError> for OrchestratorError {
     fn from(error: JsonRpcError) -> Self {
         OrchestratorError::CosmosRestErr(error)
+    }
+}
+
+impl From<FromUtf8Error> for OrchestratorError {
+    fn from(_error: FromUtf8Error) -> Self {
+        OrchestratorError::InvalidERC20TokenName
     }
 }
 

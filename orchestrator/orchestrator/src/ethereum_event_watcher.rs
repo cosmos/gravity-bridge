@@ -11,6 +11,7 @@ use cosmos_peggy::{
     send::send_ethereum_claims,
 };
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
+use ethereum_peggy::utils::get_erc20_symbol;
 use peggy_utils::{
     error::OrchestratorError,
     types::{SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent},
@@ -22,6 +23,7 @@ pub async fn check_for_events(
     web3: &Web3,
     contact: &Contact,
     peggy_contract_address: EthAddress,
+    our_eth_address: EthAddress,
     our_private_key: CosmosPrivateKey,
     fee: Coin,
     last_checked_block: Uint256,
@@ -72,7 +74,7 @@ pub async fn check_for_events(
             )
         }
 
-        let claims = to_bridge_claims(&valsets, &batches, &deposits);
+        let claims = to_bridge_claims(&valsets, &batches, &deposits, our_eth_address, web3).await?;
         if !claims.is_empty() {
             // todo get chain id from the chain
             let res = send_ethereum_claims(
@@ -97,11 +99,13 @@ pub async fn check_for_events(
 }
 
 /// Converts events into bridge claims that can then be submitted to the Cosmos Peggy module
-fn to_bridge_claims(
+async fn to_bridge_claims(
     valsets: &[ValsetUpdatedEvent],
     batches: &[TransactionBatchExecutedEvent],
     deposits: &[SendToCosmosEvent],
-) -> Vec<EthereumBridgeClaim> {
+    our_address: EthAddress,
+    web3: &Web3,
+) -> Result<Vec<EthereumBridgeClaim>, OrchestratorError> {
     let mut out = Vec::new();
     for valset in valsets {
         let nonce = valset.nonce.clone();
@@ -116,6 +120,7 @@ fn to_bridge_claims(
         ))
     }
     for deposit in deposits {
+        let symbol = get_erc20_symbol(deposit.erc20, our_address, &web3).await?;
         out.push(EthereumBridgeClaim::EthereumBridgeDepositClaim(
             EthereumBridgeDepositClaim {
                 nonce: 50u64.into(),
@@ -131,5 +136,5 @@ fn to_bridge_claims(
         ))
     }
 
-    out
+    Ok(out)
 }

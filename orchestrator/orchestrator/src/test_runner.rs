@@ -252,20 +252,19 @@ async fn test_valset_update(
     let starting_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
         .await
         .expect("Failed to get starting eth valset");
-    let start = Instant::now();
 
     // now we send a valset request that the orchestrators will pick up on
     // in this case we send it as the first validator because they can pay the fee
     info!("Sending in valset request");
-    let res = send_valset_request(&contact, keys[0].0, fee, TIMEOUT)
+    let _res = send_valset_request(&contact, keys[0].0, fee, TIMEOUT * 2)
         .await
         .expect("Failed to send valset request");
-    info!("{:?}", res);
 
     let mut current_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
         .await
         .expect("Failed to get current eth valset");
 
+    let start = Instant::now();
     while starting_eth_valset_nonce == current_eth_valset_nonce {
         info!(
             "Validator set is not yet updated to {}>, waiting",
@@ -320,7 +319,7 @@ async fn test_erc20_send(
     let mut success = false;
     info!("Account info: {:?}", account_info);
     for coin in account_info.result.value.coins {
-        if coin.denom.contains("peggy") && coin.amount == amount {
+        if coin.denom.starts_with('p') && coin.denom.ends_with("maxx") && coin.amount == amount {
             success = true;
             break;
         }

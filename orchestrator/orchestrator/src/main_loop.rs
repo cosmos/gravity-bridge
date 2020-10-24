@@ -57,6 +57,7 @@ pub async fn orchestrator_main_loop(
             &web3,
             &contact,
             contract_address,
+            ethereum_key.to_public_key().unwrap(),
             cosmos_key,
             fee.clone(),
             last_checked_block.clone(),
