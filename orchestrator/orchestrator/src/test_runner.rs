@@ -208,7 +208,6 @@ async fn main() {
             contact.clone(),
             peggy_address,
             test_token_name.clone(),
-            TIMEOUT,
         ));
     }
 
@@ -227,31 +226,17 @@ async fn main() {
         .await;
     }
 
-    let dest = keys[0].0.to_public_key().unwrap().to_address();
-    let amount = 1u64.into();
-    info!(
-        "Sending to Cosmos from {} to {} with amount {}",
-        miner_address, dest, amount
-    );
-    // we send some erc20 tokens to the peggy contract to register a deposit
-    let tx_id = send_to_cosmos(
-        erc20_address,
-        peggy_address,
-        amount,
-        dest,
-        miner_private_key,
-        Some(TIMEOUT),
+    test_erc20_send(
+        &contact,
         &web30,
-        vec![],
+        &keys,
+        peggy_address,
+        erc20_address,
+        miner_private_key,
+        miner_address,
+        fee,
     )
-    .await
-    .expect("Failed to send tokens to Cosmos");
-    info!("Send to Cosmos txid: {:#066x}", tx_id);
-
-    delay_for(TIMEOUT).await;
-
-    let account_info = contact.get_account_info(dest).await.unwrap();
-    info!("Account balance of {} is {:?}", dest, account_info)
+    .await;
 }
 
 async fn test_valset_update(
@@ -289,4 +274,49 @@ async fn test_valset_update(
     }
     assert!(starting_eth_valset_nonce != current_eth_valset_nonce);
     info!("Validator set successfully updated!");
+}
+
+async fn test_erc20_send(
+    contact: &Contact,
+    web30: &Web3,
+    keys: &[(CosmosPrivateKey, EthPrivateKey)],
+    peggy_address: EthAddress,
+    erc20_address: EthAddress,
+    miner_private_key: EthPrivateKey,
+    miner_address: EthAddress,
+    fee: Coin,
+) {
+    let dest = keys[0].0.to_public_key().unwrap().to_address();
+    let amount: Uint256 = 1u64.into();
+    info!(
+        "Sending to Cosmos from {} to {} with amount {}",
+        miner_address, dest, amount
+    );
+    // we send some erc20 tokens to the peggy contract to register a deposit
+    let tx_id = send_to_cosmos(
+        erc20_address,
+        peggy_address,
+        amount.clone(),
+        dest,
+        miner_private_key,
+        Some(TIMEOUT),
+        &web30,
+        vec![],
+    )
+    .await
+    .expect("Failed to send tokens to Cosmos");
+    info!("Send to Cosmos txid: {:#066x}", tx_id);
+
+    delay_for(Duration::from_secs(10)).await;
+
+    let account_info = contact.get_account_info(dest).await.unwrap();
+    let mut success = false;
+    for coin in account_info.result.value.coins {
+        if coin.denom.contains("peggy") && coin.amount == amount {
+            success = true;
+            break;
+        }
+    }
+    assert!(success);
+    info!("Successfully bridged ERC20 to Cosmos!");
 }

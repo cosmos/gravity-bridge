@@ -22,6 +22,7 @@ mod tests;
 mod valset_relaying;
 
 use crate::main_loop::orchestrator_main_loop;
+use crate::main_loop::LOOP_SPEED;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
@@ -63,8 +64,6 @@ lazy_static! {
     );
 }
 
-const LOOP_SPEED: Duration = Duration::from_secs(5);
-
 #[actix_rt::main]
 async fn main() {
     let args: Args = Docopt::new(USAGE.as_str())
@@ -96,7 +95,6 @@ async fn main() {
         contact,
         contract_address,
         fee_denom,
-        LOOP_SPEED,
     )
     .await;
 }

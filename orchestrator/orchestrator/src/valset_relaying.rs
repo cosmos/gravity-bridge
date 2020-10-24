@@ -37,27 +37,32 @@ pub async fn relay_valsets(
     let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
 
-    // TODO this should compare to the cosmos value and crash if incorrect
+    // TODO this should compare to the cosmos value and crash if incorrect to do that
+    // finish the bootstrapping message
     let peggy_id = get_peggy_id(contract_address, our_ethereum_address, web3)
         .await
         .expect("Failed to get Peggy ID");
 
     // sign the last unsigned valset, TODO check if we already have signed this
-    if let Ok(last_unsigned_valset) = get_oldest_unsigned_valset(contact, our_cosmos_address).await
-    {
-        send_valset_confirm(
-            contact,
-            ethereum_key,
-            fee,
-            last_unsigned_valset.result,
-            cosmos_key,
-            String::from_utf8(peggy_id.clone()).expect("Invalid PeggyID"),
-            None,
-            None,
-            None,
-        )
-        .await
-        .unwrap();
+    match get_oldest_unsigned_valset(contact, our_cosmos_address).await {
+        Ok(last_unsigned_valset) => {
+            info!("Sending confirm for {}", last_unsigned_valset.result.nonce);
+            let res = send_valset_confirm(
+                contact,
+                ethereum_key,
+                fee,
+                last_unsigned_valset.result,
+                cosmos_key,
+                String::from_utf8(peggy_id.clone()).expect("Invalid PeggyID"),
+                None,
+                None,
+                None,
+            )
+            .await
+            .unwrap();
+            trace!("Valset confirm result is {:?}", res);
+        }
+        Err(e) => trace!("Failed to get unsigned valsets with {:?}", e),
     }
 
     // now that we have caught up on valset requests we should determine if we need to relay one
@@ -76,8 +81,12 @@ pub async fn relay_valsets(
     for set in latest_valsets.result {
         let confirms = get_all_valset_confirms(contact, set.nonce).await;
         if let Ok(confirms) = confirms {
-            latest_confirmed = Some(confirms);
-            latest_valset = Some(set);
+            if confirms.result.len() == set.members.len() {
+                latest_confirmed = Some(confirms);
+                latest_valset = Some(set);
+            } else {
+                info!("Skipping incomplete valset {}", set.nonce);
+            }
             break;
         }
     }

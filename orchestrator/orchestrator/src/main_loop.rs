@@ -11,6 +11,8 @@ use web30::client::Web3;
 
 const BLOCK_DELAY: u128 = 50;
 
+pub const LOOP_SPEED: Duration = Duration::from_secs(10);
+
 /// This function contains the orchestrator primary loop, it is broken out of the main loop so that
 /// it can be called in the test runner for easier orchestration of multi-node tests
 pub async fn orchestrator_main_loop(
@@ -20,7 +22,6 @@ pub async fn orchestrator_main_loop(
     contact: Contact,
     contract_address: EthAddress,
     pay_fees_in: String,
-    loop_speed: Duration,
 ) {
     let mut last_checked_block: Uint256 = 0u64.into();
     let fee = Coin {
@@ -32,10 +33,10 @@ pub async fn orchestrator_main_loop(
         let loop_start = Instant::now();
 
         let latest_eth_block = web3.eth_block_number().await.unwrap();
-        let latest_cosmos_block = contact.get_latest_block().await.unwrap();
+        let latest_cosmos_block = contact.get_latest_block_number().await.unwrap();
         info!(
             "Latest Eth block {} Latest Cosmos block {}",
-            latest_eth_block, latest_cosmos_block.block.header.version.block
+            latest_eth_block, latest_cosmos_block
         );
 
         //  Checks for new valsets to sign and relays validator sets from Cosmos -> Ethereum including
@@ -46,7 +47,7 @@ pub async fn orchestrator_main_loop(
             &contact,
             contract_address,
             fee.clone(),
-            loop_speed,
+            LOOP_SPEED,
         )
         .await;
 
@@ -69,8 +70,8 @@ pub async fn orchestrator_main_loop(
         // this is not required for any specific reason. In fact we expect and plan for
         // the timing being off significantly
         let elapsed = Instant::now() - loop_start;
-        if elapsed < loop_speed {
-            delay_for(loop_speed - elapsed).await;
+        if elapsed < LOOP_SPEED {
+            delay_for(LOOP_SPEED - elapsed).await;
         }
     }
 }

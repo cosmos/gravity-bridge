@@ -65,7 +65,6 @@ pub async fn check_for_events(
         let valsets = ValsetUpdatedEvent::from_logs(&valsets)?;
         let batches = TransactionBatchExecutedEvent::from_logs(&batches)?;
         let deposits = SendToCosmosEvent::from_logs(&deposits)?;
-        info!("Parsed stuff!");
         if !deposits.is_empty() {
             info!(
                 "Got deposit with sender {} and destination {} and amount {}",
