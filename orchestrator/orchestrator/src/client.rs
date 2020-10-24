@@ -19,6 +19,7 @@ use clarity::PrivateKey as EthPrivateKey;
 use clarity::Uint256;
 use contact::client::Contact;
 use cosmos_peggy::send::send_valset_request;
+use deep_space::address::Address as CosmosAddress;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
 use ethereum_peggy::send_to_cosmos::send_to_cosmos;
@@ -35,22 +36,24 @@ struct Args {
     flag_contract_address: String,
     flag_fees: String,
     flag_amount: String,
+    flag_cosmos_destination: String,
     flag_erc20_address: String,
 }
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-    "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-rpc=<url> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr> --erc20-address=<addr> --amount=<amount>
+    "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-rpc=<url> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr> --erc20-address=<addr> --amount=<amount> --cosmos-destination=<dest>
         Options:
-            -h --help                 Show this screen.
-            --cosmos-key=<ckey>       The Cosmos private key of the validator
-            --ethereum-key=<ekey>     The Ethereum private key of the validator
-            --cosmos-rpc=<curl>       The Cosmos RPC url, usually the validator
-            --ethereum-rpc=<eurl>     The Ethereum RPC url, should be a self hosted node
-            --fees=<denom>            The Cosmos Denom in which to pay Cosmos chain fees
-            --contract-address=<addr> The Ethereum contract address for Peggy, this is temporary
-            --erc20-address=<addr>    An erc20 address to send funds
-            --amount=<amount>
+            -h --help                   Show this screen.
+            --cosmos-key=<ckey>         The Cosmos private key of the validator
+            --ethereum-key=<ekey>       The Ethereum private key of the validator
+            --cosmos-rpc=<curl>         The Cosmos RPC url, usually the validator
+            --ethereum-rpc=<eurl>       The Ethereum RPC url, should be a self hosted node
+            --fees=<denom>              The Cosmos Denom in which to pay Cosmos chain fees
+            --contract-address=<addr>   The Ethereum contract address for Peggy, this is temporary
+            --erc20-address=<addr>      An erc20 address to send funds
+            --amount=<amount>           The amount of tokens to send
+            --cosmos-destination=<dest> A cosmos address to send tokens to
         About:
             Client software for Althea-Peggy.
             Written By: {}
@@ -92,6 +95,7 @@ async fn main() {
     let eth_url = eth_url.trim_end_matches('/');
     let fee_denom = args.flag_fees;
     let amount: Uint256 = args.flag_amount.parse().unwrap();
+    let cosmos_dest: CosmosAddress = args.flag_cosmos_destination.parse().unwrap();
 
     let web3 = Web3::new(&eth_url, LOOP_SPEED);
     let contact = Contact::new(&cosmos_url, LOOP_SPEED);
@@ -108,17 +112,16 @@ async fn main() {
         .await
         .expect("Failed to send valset request");
 
-    let dest = cosmos_public_key;
     info!(
         "Sending to Cosmos from {} to {} with amount {}",
-        ethereum_public_key, dest, amount
+        ethereum_public_key, cosmos_dest, amount
     );
     // we send some erc20 tokens to the peggy contract to register a deposit
     let tx_id = send_to_cosmos(
         erc20_address,
         contract_address,
         amount.clone(),
-        dest,
+        cosmos_dest,
         ethereum_key,
         Some(TIMEOUT),
         &web3,
