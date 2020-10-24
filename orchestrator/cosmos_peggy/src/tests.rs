@@ -80,7 +80,7 @@ async fn test_valset_request_calls(
     // we request a valset be created
     // and then look at results at two block heights, one where the request was made, one where it
     // was not
-    let res = send_valset_request(&contact, key, fee.clone(), None, None, None).await;
+    let res = send_valset_request(&contact, key, fee.clone(), Duration::from_secs(60)).await;
     if res.is_err() {
         return Err(format!("Failed to create valset request {:?}", res));
     }
