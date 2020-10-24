@@ -257,9 +257,10 @@ async fn test_valset_update(
     // now we send a valset request that the orchestrators will pick up on
     // in this case we send it as the first validator because they can pay the fee
     info!("Sending in valset request");
-    let _res = send_valset_request(&contact, keys[0].0, fee, None, None, None)
+    let res = send_valset_request(&contact, keys[0].0, fee, TIMEOUT)
         .await
         .expect("Failed to send valset request");
+    info!("{:?}", res);
 
     let mut current_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
         .await
@@ -280,9 +281,6 @@ async fn test_valset_update(
     }
     assert!(starting_eth_valset_nonce != current_eth_valset_nonce);
     info!("Validator set successfully updated!");
-
-    // if we run this too fast the valset request fails to submit (sequence issues)
-    delay_for(TIMEOUT).await;
 }
 
 async fn test_erc20_send(
@@ -320,6 +318,7 @@ async fn test_erc20_send(
 
     let account_info = contact.get_account_info(dest).await.unwrap();
     let mut success = false;
+    info!("Account info: {:?}", account_info);
     for coin in account_info.result.value.coins {
         if coin.denom.contains("peggy") && coin.amount == amount {
             success = true;

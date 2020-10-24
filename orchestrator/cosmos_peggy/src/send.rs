@@ -10,6 +10,8 @@ use deep_space::stdsignmsg::StdSignMsg;
 use deep_space::transaction::TransactionSendType;
 use deep_space::{coin::Coin, utils::bytes_to_hex_str};
 use peggy_utils::{error::OrchestratorError, types::*};
+use std::time::Duration;
+use std::time::Instant;
 use web30::client::Web3;
 
 /// Send a transaction updating the eth address for the sending
@@ -71,18 +73,14 @@ pub async fn send_valset_request(
     contact: &Contact,
     private_key: PrivateKey,
     fee: Coin,
-    chain_id: Option<String>,
-    account_number: Option<u128>,
-    sequence: Option<u128>,
-) -> Result<TXSendResponse, JsonRpcError> {
+    timeout: Duration,
+) -> Result<TXSendResponse, OrchestratorError> {
     let our_address = private_key
         .to_public_key()
         .expect("Invalid private key!")
         .to_address();
 
-    let tx_info =
-        maybe_get_optional_tx_info(our_address, chain_id, account_number, sequence, &contact)
-            .await?;
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, &contact).await?;
 
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
@@ -103,7 +101,21 @@ pub async fn send_valset_request(
         .unwrap();
     trace!("{}", json!(tx));
 
-    contact.retry_on_block(tx).await
+    let mut success = false;
+    let start = Instant::now();
+    while !success && Instant::now() - start < timeout {
+        match contact.retry_on_block(tx.clone()).await {
+            Ok(res) => {
+                let res: TXSendResponse = res;
+                if contact.get_tx_by_hash(&res.txhash).await.is_ok() {
+                    success = true;
+                    return Ok(res);
+                }
+            }
+            Err(e) => info!("Error {:?}", e),
+        }
+    }
+    Err(OrchestratorError::TimeoutError)
 }
 
 /// Send in a confirmation for a specific validator set for a specific block height
