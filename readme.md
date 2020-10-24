@@ -22,6 +22,7 @@ You can keep up with the latest development by watching our [public standups](ht
 - Cosmos Module
   - [x] Basic validator set syncing
   - [x] Basic transaction batch generation
+  - [x] Ethereum -> Cosmos Token issuing
   - [ ] Bootstrapping
   - [ ] Genesis file save/load
   - [ ] Validator set syncing edge cases
@@ -30,7 +31,6 @@ You can keep up with the latest development by watching our [public standups](ht
 - Orchestrator / Relayer
   - [x] Validator set update relaying
   - [x] Ethereum -> Cosmos Oracle
-  - [x] Ethereum -> Cosmos Token issuing
   - [ ] Transaction batch relaying
   - [ ] Tendermint KMS support
   - [ ] Audit
