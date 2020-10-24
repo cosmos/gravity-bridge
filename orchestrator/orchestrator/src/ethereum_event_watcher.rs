@@ -67,7 +67,7 @@ pub async fn check_for_events(
         let deposits = SendToCosmosEvent::from_logs(&deposits)?;
         if !deposits.is_empty() {
             info!(
-                "Got deposit with sender {} and destination {} and amount {}",
+                "Oracle observed deposit with sender {} and destination {} and amount {}",
                 deposits[0].sender, deposits[0].destination, deposits[0].amount
             )
         }

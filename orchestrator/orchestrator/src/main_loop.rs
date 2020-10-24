@@ -34,9 +34,10 @@ pub async fn orchestrator_main_loop(
 
         let latest_eth_block = web3.eth_block_number().await.unwrap();
         let latest_cosmos_block = contact.get_latest_block_number().await.unwrap();
-        info!(
+        trace!(
             "Latest Eth block {} Latest Cosmos block {}",
-            latest_eth_block, latest_cosmos_block
+            latest_eth_block,
+            latest_cosmos_block
         );
 
         //  Checks for new valsets to sign and relays validator sets from Cosmos -> Ethereum including

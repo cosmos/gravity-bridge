@@ -26,10 +26,10 @@ use ethereum_peggy::send_to_cosmos::send_to_cosmos;
 use ethereum_peggy::utils::get_valset_nonce;
 use main_loop::orchestrator_main_loop;
 use num::Bounded;
-use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::process::Command;
 use std::time::Duration;
+use std::{fs::File, time::Instant};
 use tokio::time::delay_for;
 use web30::{
     client::Web3,
@@ -249,25 +249,22 @@ async fn test_valset_update(
 ) {
     // if we don't do this the orchestrators may run ahead of us and we'll be stuck here after
     // getting credit for two loops when we did one
-    delay_for(Duration::from_secs(10)).await;
     let starting_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
         .await
         .expect("Failed to get starting eth valset");
+    let start = Instant::now();
 
     // now we send a valset request that the orchestrators will pick up on
     // in this case we send it as the first validator because they can pay the fee
     info!("Sending in valset request");
-    send_valset_request(&contact, keys[0].0, fee, None, None, None)
+    let _res = send_valset_request(&contact, keys[0].0, fee, None, None, None)
         .await
         .expect("Failed to send valset request");
 
     let mut current_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
         .await
         .expect("Failed to get current eth valset");
-    info!(
-        "Our starting valset is {}, waiting for orchestrators to update it",
-        current_eth_valset_nonce,
-    );
+
     while starting_eth_valset_nonce == current_eth_valset_nonce {
         info!(
             "Validator set is not yet updated to {}>, waiting",
@@ -276,10 +273,16 @@ async fn test_valset_update(
         current_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
             .await
             .expect("Failed to get current eth valset");
-        delay_for(Duration::from_secs(10)).await;
+        delay_for(Duration::from_secs(4)).await;
+        if Instant::now() - start > TIMEOUT {
+            panic!("Failed to update validator set");
+        }
     }
     assert!(starting_eth_valset_nonce != current_eth_valset_nonce);
     info!("Validator set successfully updated!");
+
+    // if we run this too fast the valset request fails to submit (sequence issues)
+    delay_for(TIMEOUT).await;
 }
 
 async fn test_erc20_send(
@@ -313,7 +316,7 @@ async fn test_erc20_send(
     .expect("Failed to send tokens to Cosmos");
     info!("Send to Cosmos txid: {:#066x}", tx_id);
 
-    delay_for(Duration::from_secs(10)).await;
+    delay_for(TIMEOUT).await;
 
     let account_info = contact.get_account_info(dest).await.unwrap();
     let mut success = false;
