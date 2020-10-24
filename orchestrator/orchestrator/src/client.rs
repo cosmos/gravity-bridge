@@ -65,6 +65,8 @@ const TIMEOUT: Duration = Duration::from_secs(60);
 
 #[actix_rt::main]
 async fn main() {
+    env_logger::init();
+
     let args: Args = Docopt::new(USAGE.as_str())
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
