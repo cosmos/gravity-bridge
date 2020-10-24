@@ -81,7 +81,7 @@ pub async fn send_eth_valset_update(
     // period not if our update succeeded in particular. This will require some further consideration
     // in the future as many independent relayers racing to update the same thing will hopefully
     // be the common case.
-    web3.wait_for_transaction(tx, timeout, None).await.unwrap();
+    web3.wait_for_transaction(tx, timeout, None).await?;
     // TODO why do we eventually succeed when we keep trying in my test case? maybe just geth being slow?
 
     let last_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
