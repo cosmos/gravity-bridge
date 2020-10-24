@@ -34,7 +34,7 @@ struct Args {
     flag_ethereum_rpc: String,
     flag_contract_address: String,
     flag_fees: String,
-    flag_amount: u128,
+    flag_amount: String,
     flag_erc20: String,
 }
 
@@ -86,6 +86,7 @@ async fn main() {
     let eth_url = eth_url.to_string();
     let eth_url = eth_url.trim_end_matches('/');
     let fee_denom = args.flag_fees;
+    let amount: Uint256 = args.flag_amount.parse().unwrap();
 
     let web3 = Web3::new(&eth_url, LOOP_SPEED);
     let contact = Contact::new(&cosmos_url, LOOP_SPEED);
@@ -103,7 +104,6 @@ async fn main() {
         .expect("Failed to send valset request");
 
     let dest = cosmos_public_key;
-    let amount: Uint256 = 1u64.into();
     info!(
         "Sending to Cosmos from {} to {} with amount {}",
         ethereum_public_key, dest, amount
