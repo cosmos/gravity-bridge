@@ -35,7 +35,7 @@ struct Args {
     flag_contract_address: String,
     flag_fees: String,
     flag_amount: String,
-    flag_erc20: String,
+    flag_erc20_address: String,
 }
 
 lazy_static! {
@@ -78,7 +78,10 @@ async fn main() {
         .flag_contract_address
         .parse()
         .expect("Invalid contract address!");
-    let erc20_address: EthAddress = args.flag_erc20.parse().expect("Invalid contract address!");
+    let erc20_address: EthAddress = args
+        .flag_erc20_address
+        .parse()
+        .expect("Invalid contract address!");
     let cosmos_url = Url::parse(&args.flag_cosmos_rpc).expect("Invalid Cosmos RPC url");
     let cosmos_url = cosmos_url.to_string();
     let cosmos_url = cosmos_url.trim_end_matches('/');
