@@ -214,7 +214,7 @@ async fn main() {
     // bootstrapping tests finish here and we move into operational tests
 
     // send 3 valset updates to make sure the process works back to back
-    for _ in 0u32..3 {
+    for _ in 0u32..2 {
         test_valset_update(
             &contact,
             &web30,
@@ -247,6 +247,9 @@ async fn test_valset_update(
     miner_address: EthAddress,
     fee: Coin,
 ) {
+    // if we don't do this the orchestrators may run ahead of us and we'll be stuck here after
+    // getting credit for two loops when we did one
+    delay_for(Duration::from_secs(10)).await;
     let starting_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
         .await
         .expect("Failed to get starting eth valset");
@@ -266,7 +269,10 @@ async fn test_valset_update(
         current_eth_valset_nonce,
     );
     while starting_eth_valset_nonce == current_eth_valset_nonce {
-        info!("Validator set is not yet updated, waiting");
+        info!(
+            "Validator set is not yet updated to {}>, waiting",
+            starting_eth_valset_nonce
+        );
         current_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
             .await
             .expect("Failed to get current eth valset");

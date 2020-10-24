@@ -84,7 +84,7 @@ pub async fn check_for_events(
                 fee,
             )
             .await?;
-            info!("Sent in Oracle claims response: {:?}", res);
+            trace!("Sent in Oracle claims response: {:?}", res);
         }
 
         Ok(latest_block)
@@ -103,18 +103,18 @@ fn to_bridge_claims(
     deposits: &[SendToCosmosEvent],
 ) -> Vec<EthereumBridgeClaim> {
     let mut out = Vec::new();
-    // for valset in valsets {
-    //     let nonce = valset.nonce.clone();
-    //     out.push(EthereumBridgeClaim::EthereumBridgeMultiSigUpdateClaim(
-    //         EthereumBridgeMultiSigUpdateClaim { nonce },
-    //     ));
-    // }
-    // for batch in batches {
-    //     let nonce = batch.nonce.clone();
-    //     out.push(EthereumBridgeClaim::EthereumBridgeWithdrawBatchClaim(
-    //         EthereumBridgeWithdrawBatchClaim { nonce },
-    //     ))
-    // }
+    for valset in valsets {
+        let nonce = valset.nonce.clone();
+        out.push(EthereumBridgeClaim::EthereumBridgeMultiSigUpdateClaim(
+            EthereumBridgeMultiSigUpdateClaim { nonce },
+        ));
+    }
+    for batch in batches {
+        let nonce = batch.nonce.clone();
+        out.push(EthereumBridgeClaim::EthereumBridgeWithdrawBatchClaim(
+            EthereumBridgeWithdrawBatchClaim { nonce },
+        ))
+    }
     for deposit in deposits {
         out.push(EthereumBridgeClaim::EthereumBridgeDepositClaim(
             EthereumBridgeDepositClaim {

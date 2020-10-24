@@ -33,7 +33,6 @@ pub async fn relay_valsets(
     fee: Coin,
     timeout: Duration,
 ) {
-    info!("Starting valset relay");
     let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
 
@@ -77,7 +76,6 @@ pub async fn relay_valsets(
 
     let mut latest_confirmed = None;
     let mut latest_valset = None;
-    info!("Retrieving validator set signatures from the Cosmos chain");
     for set in latest_valsets.result {
         let confirms = get_all_valset_confirms(contact, set.nonce).await;
         if let Ok(confirms) = confirms {
@@ -97,10 +95,6 @@ pub async fn relay_valsets(
     }
     let latest_cosmos_confirmed = latest_confirmed.unwrap();
     let latest_cosmos_valset = latest_valset.unwrap();
-    info!(
-        "Latest valset is {} latest confirmed is {}",
-        latest_cosmos_valset.nonce, latest_cosmos_confirmed.result[0].nonce
-    );
 
     let latest_ethereum_valset = get_valset_nonce(contract_address, our_ethereum_address, web3)
         .await
@@ -126,7 +120,7 @@ pub async fn relay_valsets(
                 .result
         };
 
-        send_eth_valset_update(
+        let _res = send_eth_valset_update(
             latest_cosmos_valset,
             old_valset,
             &latest_cosmos_confirmed.result,
@@ -135,7 +129,6 @@ pub async fn relay_valsets(
             contract_address,
             ethereum_key,
         )
-        .await
-        .expect("Failed to update valset!");
+        .await;
     }
 }
