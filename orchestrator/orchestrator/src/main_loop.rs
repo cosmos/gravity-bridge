@@ -23,7 +23,7 @@ pub async fn orchestrator_main_loop(
     contract_address: EthAddress,
     pay_fees_in: String,
 ) {
-    let mut last_checked_block: Uint256 = 0u64.into();
+    let mut last_checked_block: Uint256 = web3.eth_block_number().await.unwrap();
     let fee = Coin {
         denom: pay_fees_in.clone(),
         amount: 1u32.into(),
