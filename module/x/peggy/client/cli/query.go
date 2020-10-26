@@ -64,7 +64,6 @@ func QueryApproved(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	testingTxCmd.AddCommand(flags.PostCommands(
-		CmdGetLastApprovedNonceRequest(storeKey, cdc),
 		CmdGetLastApprovedNoncesRequest(storeKey, cdc),
 		CmdGetLastApprovedMultiSigUpdateRequest(storeKey, cdc),
 		CmdGetInflightBatchesRequest(storeKey, cdc),
@@ -335,7 +334,7 @@ func CmdGetAllOutgoingTXBatchRequest(storeKey string, cdc *codec.Codec) *cobra.C
 func CmdGetAllAttestationsRequest(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "all-attestations [claim type]",
-		Short: fmt.Sprintf("Get all attestations by claim type descending order. Claim types: %s", types.ToClaimTypeNames(append(types.AllOracleClaimTypes, types.AllSignerApprovalClaimTypes...)...)),
+		Short: fmt.Sprintf("Get all attestations by claim type descending order. Claim types: %s", types.ToClaimTypeNames(types.AllOracleClaimTypes...)),
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -357,7 +356,7 @@ func CmdGetAllAttestationsRequest(storeKey string, cdc *codec.Codec) *cobra.Comm
 func CmdGetAttestationRequest(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "attestation [claim type] [nonce]",
-		Short: fmt.Sprintf("Get attestation by claim type and nonce. Claim types: %s", types.ToClaimTypeNames(append(types.AllOracleClaimTypes, types.AllSignerApprovalClaimTypes...)...)),
+		Short: fmt.Sprintf("Get attestation by claim type and nonce. Claim types: %s", types.ToClaimTypeNames(types.AllOracleClaimTypes...)),
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -421,29 +420,6 @@ func CmdGetInflightBatchesRequest(storeKey string, cdc *codec.Codec) *cobra.Comm
 				return nil
 			}
 			var out []keeper.ApprovedOutgoingTxBatchResponse
-			cdc.MustUnmarshalJSON(res, &out)
-			return cliCtx.PrintOutput(out)
-		},
-	}
-}
-func CmdGetLastApprovedNonceRequest(storeKey string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "nonce [claim type]",
-		Short: fmt.Sprintf("Get the last nonce that was approved for a claim type of %s", types.ToClaimTypeNames(types.AllSignerApprovalClaimTypes...)),
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lastNonce/%s", storeKey, args[0]), nil)
-			if err != nil {
-				return err
-			}
-			if len(res) == 0 {
-				fmt.Println("Nothing found")
-				return nil
-			}
-
-			var out types.UInt64Nonce
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},

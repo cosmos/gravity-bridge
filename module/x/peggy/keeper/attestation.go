@@ -218,3 +218,31 @@ func (k Keeper) SetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetLastEventNonceByValidatorKey(validator), nonce.Bytes())
 }
+
+func (k Keeper) SetBridgeObservedSignature(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, signature []byte) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetBridgeObservedSignatureKey(claimType, nonce, validator), signature)
+}
+
+func (k Keeper) GetBridgeObservedSignature(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress) []byte {
+	store := ctx.KVStore(k.storeKey)
+	return store.Get(types.GetBridgeObservedSignatureKey(claimType, nonce, validator))
+}
+
+func (k Keeper) HasBridgeObservedSignature(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetBridgeObservedSignatureKey(claimType, nonce, validator))
+}
+
+func (k Keeper) IterateBridgeObservedSignatures(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, cb func(_ []byte, sig []byte) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetBridgeObservedSignatureKeyPrefix(claimType))
+	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		// cb returns true to stop early
+		if cb(iter.Key(), iter.Value()) {
+			break
+		}
+	}
+}

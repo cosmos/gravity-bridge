@@ -289,10 +289,9 @@ func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
 // -------------
 // deprecated should use MsgBridgeSignatureSubmission instead
 type MsgConfirmBatch struct {
-	Nonce        UInt64Nonce     `json:"nonce"`
-	Orchestrator sdk.AccAddress  `json:"validator"`
-	Address      EthereumAddress `json:"address"`
-	Signature    string          `json:"signature"`
+	Nonce        UInt64Nonce    `json:"nonce"`
+	Orchestrator sdk.AccAddress `json:"validator"`
+	Signature    string         `json:"signature"`
 }
 
 func NewMsgConfirmBatch(nonce UInt64Nonce, orchestrator sdk.AccAddress, signature string) MsgConfirmBatch {
@@ -526,9 +525,9 @@ func (m MsgCreateEthereumClaims) GetSigners() []sdk.AccAddress {
 // MsgBridgeSignatureSubmission submits the Ethereum signature for a given nonce an claim type.
 type MsgBridgeSignatureSubmission struct {
 	Nonce             UInt64Nonce    `json:"nonce"`
-	ClaimType         ClaimType      `json:"claim_type"`
+	SignType          SignType       `json:"sign_type"`
 	Orchestrator      sdk.AccAddress `json:"orchestrator"`
-	EthereumSignature string         `json:"ethereum_signature"`
+	EthereumSignature []byte         `json:"ethereum_signature"`
 }
 
 // Route should return the name of the module
@@ -542,8 +541,8 @@ func (msg MsgBridgeSignatureSubmission) ValidateBasic() error {
 	if err := msg.Nonce.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "nonce")
 	}
-	if !IsSignerApprovalClaimType(msg.ClaimType) {
-		return sdkerrors.Wrap(ErrInvalid, "claim type")
+	if !IsSignType(msg.SignType) {
+		return sdkerrors.Wrap(ErrInvalid, "sign type")
 	}
 	if msg.Orchestrator.Empty() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator.String())

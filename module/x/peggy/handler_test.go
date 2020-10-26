@@ -9,6 +9,7 @@ import (
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -150,98 +151,85 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	require.NoError(t, err)
 	balance = keepers.BankKeeper.GetCoins(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy96dde7db38", 25)}, balance)
-
 }
 
-// func TestHandleBridgeSignatureSubmission(t *testing.T) {
-// 	var (
-// 		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
-// 		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
-// 		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
-// 	)
+func TestHandleBridgeSignatureSubmission(t *testing.T) {
+	var (
+		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
+		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+	)
 
-// 	privKey, err := ethCrypto.HexToECDSA("0x2c7dd57db9fda0ea1a1428dcaa4bec1ff7c3bd7d1a88504754e0134b77badf57"[2:])
-// 	require.NoError(t, err)
+	privKey, err := ethCrypto.HexToECDSA("0x2c7dd57db9fda0ea1a1428dcaa4bec1ff7c3bd7d1a88504754e0134b77badf57"[2:])
+	require.NoError(t, err)
 
-// 	specs := map[string]struct {
-// 		setup  func(ctx sdk.Context, k Keeper) MsgBridgeSignatureSubmission
-// 		expErr bool
-// 	}{
-// 		"SignedMultiSigUpdate good": {
-// 			setup: func(ctx sdk.Context, k Keeper) MsgBridgeSignatureSubmission {
-// 				v := k.SetValsetRequest(ctx)
-// 				validSig, err := types.NewEthereumSignature(v.GetCheckpoint(), privKey)
-// 				require.NoError(t, err)
-// 				return MsgBridgeSignatureSubmission{
-// 					ClaimType:         types.ClaimTypeOrchestratorSignedMultiSigUpdate,
-// 					Nonce:             v.Nonce,
-// 					Orchestrator:      myOrchestratorAddr,
-// 					EthereumSignature: validSig,
-// 				}
-// 			},
-// 		},
-// 		"SignedWithdrawBatch good": {
-// 			setup: func(ctx sdk.Context, k Keeper) MsgBridgeSignatureSubmission {
-// 				vouchers := keeper.MintVouchersFromAir(t, ctx, k, myOrchestratorAddr, types.NewERC20Token(12, "any", types.NewEthereumAddress("0x4251ed140bf791c4112bb61fcb6e72f927e8fef2")))
-// 				require.NoError(t, err)
-// 				// with a transaction
-// 				k.AddToOutgoingPool(ctx, myOrchestratorAddr, types.NewEthereumAddress("0xb5f728530fe1477ba8b780823a2d48f367fc9fc2"), vouchers, sdk.NewInt64Coin(vouchers.Denom, 0))
-// 				voucherDenom, err := types.AsVoucherDenom(vouchers.Denom)
-// 				require.NoError(t, err)
-// 				// in a batch
-// 				b, err := k.BuildOutgoingTXBatch(ctx, voucherDenom, 10)
-// 				require.NoError(t, err)
-// 				// and a multisig observed
-// 				v := k.SetValsetRequest(ctx)
-// 				att, err := k.AddClaim(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate, v.Nonce, myValAddr, types.SignedCheckpoint{Checkpoint: v.GetCheckpoint()})
-// 				require.NoError(t, err)
-// 				require.Equal(t, types.ProcessStatusProcessed, att.Status)
-// 				// create signature
-// 				checkpoint, err := b.GetCheckpoint()
-// 				require.NoError(t, err)
-// 				validSig, err := types.NewEthereumSignature(checkpoint, privKey)
-// 				require.NoError(t, err)
-// 				return MsgBridgeSignatureSubmission{
-// 					ClaimType:         types.ClaimTypeOrchestratorSignedWithdrawBatch,
-// 					Nonce:             b.Nonce,
-// 					Orchestrator:      myOrchestratorAddr,
-// 					EthereumSignature: validSig,
-// 				}
-// 			},
-// 		},
-// 	}
-// 	for msg, spec := range specs {
-// 		t.Run(msg, func(t *testing.T) {
-// 			k, ctx, _ := keeper.CreateTestEnv(t)
-// 			k.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
-// 			h := NewHandler(k)
-// 			k.SetEthAddress(ctx, myValAddr, types.NewEthereumAddress("0xbd5d7df0349ff9671e36ec5545e849cbb93ac7fa"))
+	specs := map[string]struct {
+		setup  func(ctx sdk.Context, k Keeper) MsgBridgeSignatureSubmission
+		expErr bool
+	}{
+		"SignedMultiSigUpdate good": {
+			setup: func(ctx sdk.Context, k Keeper) MsgBridgeSignatureSubmission {
+				v := k.SetValsetRequest(ctx)
+				validSig, err := types.NewEthereumSignature(v.GetCheckpoint(), privKey)
+				require.NoError(t, err)
+				return MsgBridgeSignatureSubmission{
+					SignType:          types.SignTypeOrchestratorSignedMultiSigUpdate,
+					Nonce:             v.Nonce,
+					Orchestrator:      myOrchestratorAddr,
+					EthereumSignature: validSig,
+				}
+			},
+		},
+		"SignedWithdrawBatch good": {
+			setup: func(ctx sdk.Context, k Keeper) MsgBridgeSignatureSubmission {
+				vouchers := keeper.MintVouchersFromAir(t, ctx, k, myOrchestratorAddr, types.NewERC20Token(12, "any", types.NewEthereumAddress("0x4251ed140bf791c4112bb61fcb6e72f927e8fef2")))
+				require.NoError(t, err)
+				// with a transaction
+				k.AddToOutgoingPool(ctx, myOrchestratorAddr, types.NewEthereumAddress("0xb5f728530fe1477ba8b780823a2d48f367fc9fc2"), vouchers, sdk.NewInt64Coin(vouchers.Denom, 0))
+				voucherDenom, err := types.AsVoucherDenom(vouchers.Denom)
+				require.NoError(t, err)
+				// in a batch
+				b, err := k.BuildOutgoingTXBatch(ctx, voucherDenom, 10)
+				require.NoError(t, err)
+				// and a multisig observed
+				v := k.SetValsetRequest(ctx)
+				att, err := k.AddClaim(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate, v.Nonce, myValAddr, types.SignedCheckpoint{Checkpoint: v.GetCheckpoint()})
+				require.NoError(t, err)
+				require.Equal(t, types.ProcessStatusProcessed, att.Status)
+				// create signature
+				checkpoint, err := b.GetCheckpoint()
+				require.NoError(t, err)
+				validSig, err := types.NewEthereumSignature(checkpoint, privKey)
+				require.NoError(t, err)
+				return MsgBridgeSignatureSubmission{
+					SignType:          types.SignTypeOrchestratorSignedWithdrawBatch,
+					Nonce:             b.Nonce,
+					Orchestrator:      myOrchestratorAddr,
+					EthereumSignature: validSig,
+				}
+			},
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			k, ctx, _ := keeper.CreateTestEnv(t)
+			k.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
+			h := NewHandler(k)
+			k.SetEthAddress(ctx, myValAddr, types.NewEthereumAddress("0xbd5d7df0349ff9671e36ec5545e849cbb93ac7fa"))
 
-// 			// when
-// 			ctx = ctx.WithBlockTime(myBlockTime)
-// 			msg := spec.setup(ctx, k)
-// 			_, err = h(ctx, msg)
-// 			if spec.expErr {
-// 				assert.Error(t, err)
-// 				return
-// 			}
-// 			// then
-// 			require.NoError(t, err)
-
-// 			// and claim persisted
-// 			checkPoint, err := getCheckpoint(ctx, k, msg.ClaimType, msg.Nonce)
-// 			require.NoError(t, err)
-// 			claimFound := k.HasClaim(ctx, msg.ClaimType, msg.Nonce, myValAddr, types.SignedCheckpoint{
-// 				Checkpoint: checkPoint,
-// 			})
-// 			assert.True(t, claimFound)
-// 			// and approval persisted
-// 			sigFound := k.HasBridgeApprovalSignature(ctx, msg.ClaimType, msg.Nonce, myValAddr)
-// 			assert.True(t, sigFound)
-
-// 			// and attestation persisted
-// 			a := k.GetAttestation(ctx, msg.ClaimType, msg.Nonce)
-// 			require.NotNil(t, a)
-// 		})
-// 	}
-// }
+			// when
+			ctx = ctx.WithBlockTime(myBlockTime)
+			msg := spec.setup(ctx, k)
+			_, err = h(ctx, msg)
+			if spec.expErr {
+				assert.Error(t, err)
+				return
+			}
+			// then
+			require.NoError(t, err)
+			// and approval persisted
+			sigFound := k.HasBridgeApprovalSignature(ctx, msg.SignType, msg.Nonce, myValAddr)
+			assert.True(t, sigFound)
+		})
+	}
+}

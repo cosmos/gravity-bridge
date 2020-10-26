@@ -299,7 +299,7 @@ func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 			// Make the message
 			msg := types.MsgBridgeSignatureSubmission{
 				Nonce:             valset.Nonce,
-				ClaimType:         types.ClaimTypeOrchestratorSignedMultiSigUpdate,
+				SignType:          types.SignTypeOrchestratorSignedMultiSigUpdate,
 				Orchestrator:      cosmosAddr,
 				EthereumSignature: signature,
 			}
@@ -366,7 +366,7 @@ func CmdOutgointTXBatchConfirm(storeKey string, cdc *codec.Codec) *cobra.Command
 			// Make the message
 			msg := types.MsgBridgeSignatureSubmission{
 				Nonce:             batch.Nonce,
-				ClaimType:         types.ClaimTypeOrchestratorSignedWithdrawBatch,
+				SignType:          types.SignTypeOrchestratorSignedWithdrawBatch,
 				Orchestrator:      cosmosAddr,
 				EthereumSignature: signature,
 			}

@@ -122,35 +122,31 @@ func (k Keeper) IterateValsetRequest(ctx sdk.Context, cb func(key []byte, val ty
 	}
 }
 
-// deprecated use SetBridgeApprovalSignature instead
-func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) {
+func (k Keeper) SetBridgeApprovalSignature(ctx sdk.Context, signType types.SignType, nonce types.UInt64Nonce, validator sdk.ValAddress, signature []byte) []byte {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator), k.cdc.MustMarshalBinaryBare(valsetConf))
+	key := types.GetBridgeApprovalSignatureKey(signType, nonce, validator)
+	store.Set(key, signature)
+	return key
 }
 
-func (k Keeper) SetBridgeApprovalSignature(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, signature string) {
+func (k Keeper) GetBridgeApprovalSignature(ctx sdk.Context, signType types.SignType, nonce types.UInt64Nonce, validator sdk.ValAddress) []byte {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetBridgeApprovalSignatureKey(claimType, nonce, validator), []byte(signature))
+	return store.Get(types.GetBridgeApprovalSignatureKey(signType, nonce, validator))
 }
 
-func (k Keeper) GetBridgeApprovalSignature(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress) string {
+func (k Keeper) HasBridgeApprovalSignature(ctx sdk.Context, signType types.SignType, nonce types.UInt64Nonce, validator sdk.ValAddress) bool {
 	store := ctx.KVStore(k.storeKey)
-	return string(store.Get(types.GetBridgeApprovalSignatureKey(claimType, nonce, validator))[:])
+	return store.Has(types.GetBridgeApprovalSignatureKey(signType, nonce, validator))
 }
 
-func (k Keeper) HasBridgeApprovalSignature(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetBridgeApprovalSignatureKey(claimType, nonce, validator))
-}
-
-func (k Keeper) IterateBridgeApprovalSignatures(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, cb func(_ []byte, sig string) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetBridgeApprovalSignatureKeyPrefix(claimType))
+func (k Keeper) IterateBridgeApprovalSignatures(ctx sdk.Context, signType types.SignType, nonce types.UInt64Nonce, cb func(_ []byte, sig []byte) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetBridgeApprovalSignatureKeyPrefix(signType))
 	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
 		// cb returns true to stop early
-		if cb(iter.Key(), string(iter.Value()[:])) {
+		if cb(iter.Key(), iter.Value()) {
 			break
 		}
 	}
@@ -166,6 +162,12 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce types.UInt64Nonce, valid
 	confirm := types.MsgValsetConfirm{}
 	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
 	return &confirm
+}
+
+// deprecated use SetBridgeObservedSignature instead
+func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator), k.cdc.MustMarshalBinaryBare(valsetConf))
 }
 
 // Iterate through all valset confirms for a nonce in ASC order

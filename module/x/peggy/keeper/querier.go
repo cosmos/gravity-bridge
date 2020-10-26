@@ -52,14 +52,10 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return lastProcessedNonce(ctx, path[1], keeper)
 		case QueryLastObservedNonces:
 			return lastObservedNonces(ctx, keeper)
-		case QueryLastApprovedNonces:
-			return lastApprovedNonces(ctx, keeper)
 		case QueryLastPendingBatchRequestByAddr:
 			return lastPendingBatchRequest(ctx, path[1], keeper)
 		case QueryOutgoingTxBatches:
 			return allBatchesRequest(ctx, keeper)
-		case QueryLastApprovedValset:
-			return lastApprovedMultiSigUpdate(ctx, keeper)
 		case QueryLastObservedValset:
 			return lastObservedMultiSigUpdate(ctx, keeper)
 		case QueryAttestationsByClaimType:
@@ -186,7 +182,7 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 
 	var pendingValsetReq *types.Valset
 	keeper.IterateValsetRequest(ctx, func(_ []byte, val types.Valset) bool {
-		found := keeper.HasBridgeApprovalSignature(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, val.Nonce, validatorAddr)
+		found := keeper.HasBridgeApprovalSignature(ctx, types.SignTypeOrchestratorSignedMultiSigUpdate, val.Nonce, validatorAddr)
 		if !found {
 			pendingValsetReq = &val
 		}
@@ -238,33 +234,9 @@ func lastObservedNonces(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return sdk.SortJSON(res)
 }
 
-// lastApprovedNonces returns a list of nonces. One for each claim type if exists
-func lastApprovedNonces(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	result := make(map[string]types.UInt64Nonce, len(types.AllOracleClaimTypes))
-	for _, v := range types.AllSignerApprovalClaimTypes {
-		nonce := keeper.GetLastAttestedNonce(ctx, v)
-		if nonce != nil {
-			result[v.String()] = *nonce
-		}
-	}
-	if len(result) == 0 {
-		return nil, nil
-	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, result)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-	return sdk.SortJSON(res)
-}
-
 type MultiSigUpdateResponse struct {
-	Valset     types.Valset           `json:"valset"`
-	Signatures []SignatureWithAddress `json:"signatures"`
-}
-
-func lastApprovedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	nonce := keeper.GetLastAttestedNonce(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate)
-	return fetchMultiSigUpdateData(ctx, nonce, keeper)
+	Valset     types.Valset `json:"valset"`
+	Signatures [][]byte     `json:"signatures,omitempty"`
 }
 
 func lastObservedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
@@ -289,8 +261,8 @@ func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper K
 		Valset: *valset,
 	}
 
-	addToSig := make(map[types.EthereumAddress]string, len(result.Valset.Members))
-	keeper.IterateBridgeApprovalSignatures(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, *nonce, func(key []byte, sig string) bool {
+	addToSig := make(map[types.EthereumAddress][]byte, len(result.Valset.Members))
+	keeper.IterateBridgeApprovalSignatures(ctx, types.SignTypeOrchestratorSignedMultiSigUpdate, *nonce, func(key []byte, sig []byte) bool {
 		var valAddr sdk.ValAddress = key[types.UInt64NonceByteLen:] // key = nonce + validator address
 		ethAddr := keeper.GetEthAddress(ctx, valAddr)
 		if ethAddr == nil || ethAddr.IsEmpty() {
@@ -307,10 +279,7 @@ func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper K
 	}
 	for _, m := range observed.Members {
 		if sig, ok := addToSig[m.EthereumAddress]; ok {
-			var val SignatureWithAddress
-			val.Address = m.EthereumAddress
-			val.Signature = sig
-			result.Signatures = append(result.Signatures, val)
+			result.Signatures = append(result.Signatures, sig)
 		}
 	}
 	res, err := codec.MarshalJSONIndent(keeper.cdc, result)
@@ -331,7 +300,7 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 
 	var pendingBatchReq *types.OutgoingTxBatch
 	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch types.OutgoingTxBatch) bool {
-		found := keeper.HasBridgeApprovalSignature(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, batch.Nonce, validatorAddr)
+		found := keeper.HasBridgeApprovalSignature(ctx, types.SignTypeOrchestratorSignedWithdrawBatch, batch.Nonce, validatorAddr)
 		if !found {
 			pendingBatchReq = &batch
 		}
@@ -347,19 +316,9 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 	return res, nil
 }
 
-// We can assume that the signatures and the valset members are sorted
-// in the same order but this is insufficient for a relayer to actually
-// relay the batch. Since a batch may pass without signatures from some
-// validators we need some metadata to know who the signatures are from.
-// So that we can properly pass a blank signature for a specific validator
-type SignatureWithAddress struct {
-	Signature string                `json:"eth_signature"`
-	Address   types.EthereumAddress `json:"eth_address"`
-}
-
 type ApprovedOutgoingTxBatchResponse struct {
-	Batch      types.OutgoingTxBatch  `json:"batch"`
-	Signatures []SignatureWithAddress `json:"signatures"`
+	Batch      types.OutgoingTxBatch `json:"batch"`
+	Signatures [][]byte              `json:"signatures,omitempty"`
 }
 
 func queryInflightBatches(ctx sdk.Context, keeper Keeper) ([]byte, error) {
@@ -392,8 +351,8 @@ func queryInflightBatches(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 			Batch: batches[i],
 		}
 
-		addToSig := make(map[types.EthereumAddress]string)
-		keeper.IterateBridgeApprovalSignatures(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, batches[i].Nonce, func(key []byte, sig string) bool {
+		addToSig := make(map[types.EthereumAddress][]byte)
+		keeper.IterateBridgeApprovalSignatures(ctx, types.SignTypeOrchestratorSignedWithdrawBatch, batches[i].Nonce, func(key []byte, sig []byte) bool {
 			var valAddr sdk.ValAddress = key[types.UInt64NonceByteLen:] // key = nonce + validator address
 			ethAddr := keeper.GetEthAddress(ctx, valAddr)
 			if ethAddr == nil || ethAddr.IsEmpty() {
@@ -405,10 +364,7 @@ func queryInflightBatches(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 		// add signatures from last observed multisig, sorted by members
 		for _, m := range observed.Members {
 			if sig, ok := addToSig[m.EthereumAddress]; ok {
-				var val SignatureWithAddress
-				val.Address = m.EthereumAddress
-				val.Signature = sig
-				r.Signatures = append(r.Signatures, val)
+				r.Signatures = append(r.Signatures, sig)
 			}
 		}
 		out[i] = r

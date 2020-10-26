@@ -220,7 +220,7 @@ func bootstrapConfirmHandler(cliCtx context.CLIContext) http.HandlerFunc {
 type BridgeApprovalSignatureReq struct {
 	BaseReq           rest.BaseReq   `json:"base_req"`
 	Orchestrator      sdk.AccAddress `json:"orchestrator"`
-	EthereumSignature string         `json:"ethereum_signature"`
+	EthereumSignature []byte         `json:"ethereum_signature"`
 }
 
 func BridgeApprovalSignatureHandler(cliCtx context.CLIContext) http.HandlerFunc {
@@ -231,9 +231,9 @@ func BridgeApprovalSignatureHandler(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 		vars := mux.Vars(r)
-		claimType, exists := types.ClaimTypeFromName(vars[claimType])
+		signType, exists := types.SignTypeFromName(vars[claimType])
 		if !exists {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "unknown claim type")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "unknown sign type")
 			return
 		}
 		nonce, err := types.UInt64NonceFromString(vars[nonce])
@@ -249,7 +249,7 @@ func BridgeApprovalSignatureHandler(cliCtx context.CLIContext) http.HandlerFunc 
 
 		msg := types.MsgBridgeSignatureSubmission{
 			Nonce:             nonce,
-			ClaimType:         claimType,
+			SignType:          signType,
 			Orchestrator:      req.Orchestrator,
 			EthereumSignature: req.EthereumSignature,
 		}

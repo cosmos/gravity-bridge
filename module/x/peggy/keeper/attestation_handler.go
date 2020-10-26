@@ -82,22 +82,6 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		// the peggy bridge can not operate proper without orchestrators having their ethereum
 		// addresses set before.
 		return a.keeper.SetBootstrapValset(ctx, initialMultisigSet)
-	case types.ClaimTypeOrchestratorSignedMultiSigUpdate:
-		signedCheckpoint, ok := att.Details.(types.SignedCheckpoint)
-		if !ok {
-			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
-		}
-		_ = signedCheckpoint
-		// todo: any cleanup to do? delete all valsets with nonce < last observed one?
-		return nil
-	case types.ClaimTypeOrchestratorSignedWithdrawBatch:
-		signedCheckpoint, ok := att.Details.(types.SignedCheckpoint)
-		if !ok {
-			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
-		}
-		_ = signedCheckpoint
-		// todo: any cleanup to do? delete all withdraw batches with nonce < last observed one?
-		return nil
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", att.ClaimType)
 	}

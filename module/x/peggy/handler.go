@@ -83,22 +83,22 @@ func handleMsgValsetRequest(ctx sdk.Context, keeper Keeper, msg types.MsgValsetR
 
 // deprecated should use MsgBridgeSignatureSubmission instead
 func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm) (*sdk.Result, error) {
-	_, err := hex.DecodeString(msg.Signature)
+	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
 	keeper.SetValsetConfirm(ctx, msg) // store legacy
 	return handleBridgeSignatureSubmission(ctx, keeper, MsgBridgeSignatureSubmission{
 		Nonce:             msg.Nonce,
-		ClaimType:         types.ClaimTypeOrchestratorSignedMultiSigUpdate,
+		SignType:          types.SignTypeOrchestratorSignedMultiSigUpdate,
 		Orchestrator:      msg.Validator,
-		EthereumSignature: msg.Signature,
+		EthereumSignature: sigBytes,
 	})
 }
 
 // This function takes in a signature submitted by a validator's Eth Signer and
 func handleBridgeSignatureSubmission(ctx sdk.Context, keeper Keeper, msg MsgBridgeSignatureSubmission) (*sdk.Result, error) {
-	checkpoint, err := getCheckpoint(ctx, keeper, msg.ClaimType, msg.Nonce)
+	checkpoint, err := getCheckpoint(ctx, keeper, msg.SignType, msg.Nonce)
 	if err != nil {
 		return nil, err
 	}
@@ -111,37 +111,28 @@ func handleBridgeSignatureSubmission(ctx sdk.Context, keeper Keeper, msg MsgBrid
 	if ethAddress == nil {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
-	sigBytes, err := hex.DecodeString(msg.EthereumSignature)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
-	}
-	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress.String())
+	err = types.ValidateEthereumSignature(checkpoint, msg.EthereumSignature, ethAddress.String())
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature")
 	}
 
 	// persist signature
-	if keeper.HasBridgeApprovalSignature(ctx, msg.ClaimType, msg.Nonce, validator) {
+	if keeper.HasBridgeApprovalSignature(ctx, msg.SignType, msg.Nonce, validator) {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature")
 	}
-	keeper.SetBridgeApprovalSignature(ctx, msg.ClaimType, msg.Nonce, validator, msg.EthereumSignature)
-	details := types.SignedCheckpoint{Checkpoint: checkpoint}
-	att, err := keeper.AddClaim(ctx, msg.ClaimType, msg.Nonce, validator, details)
-	if err != nil {
-		return nil, err
-	}
+	key := keeper.SetBridgeApprovalSignature(ctx, msg.SignType, msg.Nonce, validator, msg.EthereumSignature)
 	return &sdk.Result{
-		Data: att.ID(),
+		Data: key,
 	}, nil
 }
 
-func getCheckpoint(ctx sdk.Context, keeper Keeper, claimType types.ClaimType, nonce types.UInt64Nonce) ([]byte, error) {
-	switch claimType {
-	case types.ClaimTypeOrchestratorSignedMultiSigUpdate:
+func getCheckpoint(ctx sdk.Context, keeper Keeper, signType types.SignType, nonce types.UInt64Nonce) ([]byte, error) {
+	switch signType {
+	case types.SignTypeOrchestratorSignedMultiSigUpdate:
 		if c := keeper.GetValsetRequest(ctx, nonce); c != nil {
 			return c.GetCheckpoint(), nil
 		}
-	case types.ClaimTypeOrchestratorSignedWithdrawBatch:
+	case types.SignTypeOrchestratorSignedWithdrawBatch:
 		if c := keeper.GetOutgoingTXBatch(ctx, nonce); c != nil {
 			nonce := keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
 			if nonce == nil || nonce.IsEmpty() {
@@ -193,7 +184,7 @@ func handleMsgRequestBatch(ctx sdk.Context, keeper Keeper, msg MsgRequestBatch) 
 }
 
 func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) (*sdk.Result, error) {
-	_, err := hex.DecodeString(msg.Signature)
+	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
@@ -206,8 +197,8 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) 
 
 	return handleBridgeSignatureSubmission(ctx, keeper, MsgBridgeSignatureSubmission{
 		Nonce:             msg.Nonce,
-		ClaimType:         types.ClaimTypeOrchestratorSignedWithdrawBatch,
+		SignType:          types.SignTypeOrchestratorSignedWithdrawBatch,
 		Orchestrator:      msg.Orchestrator,
-		EthereumSignature: msg.Signature,
+		EthereumSignature: sigBytes,
 	})
 }

@@ -140,29 +140,20 @@ const (
 	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = 2
 	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = 3
 	ClaimTypeEthereumBridgeBootstrap       ClaimType = 4
-
-	// signed confirmations on cosmos for Ethereum side
-	ClaimTypeOrchestratorSignedMultiSigUpdate ClaimType = 5
-	ClaimTypeOrchestratorSignedWithdrawBatch  ClaimType = 6
 )
 
 var claimTypeToNames = map[ClaimType]string{
-	ClaimTypeEthereumBridgeDeposit:            "bridge_deposit",
-	ClaimTypeEthereumBridgeWithdrawalBatch:    "bridge_withdrawal_batch",
-	ClaimTypeEthereumBridgeMultiSigUpdate:     "bridge_multisig_update",
-	ClaimTypeEthereumBridgeBootstrap:          "bridge_bootstrap",
-	ClaimTypeOrchestratorSignedMultiSigUpdate: "orchestrator_signed_multisig_update",
-	ClaimTypeOrchestratorSignedWithdrawBatch:  "orchestrator_signed_withdraw_batch",
+	ClaimTypeEthereumBridgeDeposit:         "bridge_deposit",
+	ClaimTypeEthereumBridgeWithdrawalBatch: "bridge_withdrawal_batch",
+	ClaimTypeEthereumBridgeMultiSigUpdate:  "bridge_multisig_update",
+	ClaimTypeEthereumBridgeBootstrap:       "bridge_bootstrap",
 }
 
 // AllOracleClaimTypes types that are observed and submitted by the current orchestrator set
 var AllOracleClaimTypes = []ClaimType{ClaimTypeEthereumBridgeDeposit, ClaimTypeEthereumBridgeWithdrawalBatch, ClaimTypeEthereumBridgeMultiSigUpdate, ClaimTypeEthereumBridgeBootstrap}
 
-// AllSignerApprovalClaimTypes types that are signed with by the bridge multisig set
-var AllSignerApprovalClaimTypes = []ClaimType{ClaimTypeOrchestratorSignedMultiSigUpdate, ClaimTypeOrchestratorSignedWithdrawBatch}
-
 func ClaimTypeFromName(s string) (ClaimType, bool) {
-	for _, v := range append(AllOracleClaimTypes, AllSignerApprovalClaimTypes...) {
+	for _, v := range AllOracleClaimTypes {
 		name, ok := claimTypeToNames[v]
 		if ok && name == s {
 			return v, true
@@ -176,24 +167,6 @@ func ToClaimTypeNames(s ...ClaimType) []string {
 		r[i] = s[i].String()
 	}
 	return r
-}
-
-func IsSignerApprovalClaimType(s ClaimType) bool {
-	for _, v := range AllSignerApprovalClaimTypes {
-		if v == s {
-			return true
-		}
-	}
-	return false
-}
-
-func IsOracleObservationClaimType(s ClaimType) bool {
-	for _, v := range AllOracleClaimTypes {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }
 
 func (c ClaimType) String() string {
