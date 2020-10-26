@@ -1,4 +1,10 @@
 //! This file is a single use binary that will allow you to register your validator ethereum key
+
+// there are several binaries for this crate if we allow dead code on all of them
+// we will see functions not used in one binary as dead code. In order to fix that
+// we forbid dead code in all but the 'main' binary
+#![allow(dead_code)]
+
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
@@ -8,20 +14,15 @@ extern crate log;
 
 mod ethereum_event_watcher;
 mod main_loop;
-mod tests;
 mod valset_relaying;
 
-use crate::main_loop::orchestrator_main_loop;
 use crate::main_loop::LOOP_SPEED;
-use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
 use cosmos_peggy::send::update_peggy_eth_address;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
-use std::time::Duration;
 use url::Url;
-use web30::client::Web3;
 
 #[derive(Debug, Deserialize)]
 struct Args {

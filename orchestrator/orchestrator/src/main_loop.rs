@@ -9,7 +9,7 @@ use std::time::Instant;
 use tokio::time::delay_for;
 use web30::client::Web3;
 
-const BLOCK_DELAY: u128 = 50;
+//const BLOCK_DELAY: u128 = 50;
 
 pub const LOOP_SPEED: Duration = Duration::from_secs(10);
 
@@ -32,13 +32,17 @@ pub async fn orchestrator_main_loop(
     loop {
         let loop_start = Instant::now();
 
-        let latest_eth_block = web3.eth_block_number().await.unwrap();
-        let latest_cosmos_block = contact.get_latest_block_number().await.unwrap();
-        trace!(
-            "Latest Eth block {} Latest Cosmos block {}",
-            latest_eth_block,
-            latest_cosmos_block
-        );
+        let latest_eth_block = web3.eth_block_number().await;
+        let latest_cosmos_block = contact.get_latest_block_number().await;
+        if let (Ok(latest_eth_block), Ok(latest_cosmos_block)) =
+            (latest_eth_block, latest_cosmos_block)
+        {
+            trace!(
+                "Latest Eth block {} Latest Cosmos block {}",
+                latest_eth_block,
+                latest_cosmos_block
+            );
+        }
 
         //  Checks for new valsets to sign and relays validator sets from Cosmos -> Ethereum including
         relay_valsets(

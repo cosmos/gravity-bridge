@@ -3,20 +3,18 @@
 
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
-use cosmos_peggy::{
-    messages::{
-        ERC20Token, EthereumBridgeClaim, EthereumBridgeDepositClaim,
-        EthereumBridgeMultiSigUpdateClaim, EthereumBridgeWithdrawBatchClaim,
-    },
-    send::send_ethereum_claims,
+use cosmos_peggy::messages::{
+    ERC20Token, EthereumBridgeClaim, EthereumBridgeDepositClaim, EthereumBridgeMultiSigUpdateClaim,
+    EthereumBridgeWithdrawBatchClaim,
 };
+use cosmos_peggy::send::send_ethereum_claims;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use peggy_utils::{
     error::OrchestratorError,
     types::{SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent},
 };
+use web30::client::Web3;
 use web30::jsonrpc::error::Web3Error;
-use web30::{client::Web3, types::Log};
 
 pub async fn check_for_events(
     web3: &Web3,

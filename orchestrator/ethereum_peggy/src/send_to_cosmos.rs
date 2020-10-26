@@ -12,6 +12,7 @@ use web30::types::SendTxOption;
 
 const SEND_TO_COSMOS_GAS_LIMIT: u128 = 100_000;
 
+#[allow(clippy::too_many_arguments)]
 pub async fn send_to_cosmos(
     erc20: Address,
     peggy_contract: Address,

@@ -1,6 +1,12 @@
 //! This file is the binary entry point for the Peggy client software, an easy to use cli utility that
 //! allows anyone to send funds across the Peggy bridge. Currently this application only does anything
 //! on the Ethereum side of the bridge since withdraw batches are incomplete.
+
+// there are several binaries for this crate if we allow dead code on all of them
+// we will see functions not used in one binary as dead code. In order to fix that
+// we forbid dead code in all but the 'main' binary
+#![allow(dead_code)]
+
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
@@ -10,7 +16,6 @@ extern crate log;
 
 mod ethereum_event_watcher;
 mod main_loop;
-mod tests;
 mod valset_relaying;
 
 use crate::main_loop::LOOP_SPEED;
@@ -104,11 +109,10 @@ async fn main() {
         amount: 1u64.into(),
     };
 
-    let cosmos_public_key = cosmos_key.to_public_key().unwrap().to_address();
     let ethereum_public_key = ethereum_key.to_public_key().unwrap();
 
     info!("Sending in valset request");
-    let _res = send_valset_request(&contact, cosmos_key, fee, None, None, None)
+    let _res = send_valset_request(&contact, cosmos_key, fee, TIMEOUT)
         .await
         .expect("Failed to send valset request");
 

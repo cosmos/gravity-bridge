@@ -13,7 +13,6 @@ use deep_space::{coin::Coin, utils::bytes_to_hex_str};
 use peggy_utils::{error::OrchestratorError, types::*};
 use std::time::Duration;
 use std::time::Instant;
-use web30::client::Web3;
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
@@ -102,15 +101,13 @@ pub async fn send_valset_request(
         .unwrap();
     trace!("{}", json!(tx));
 
-    let mut success = false;
     let start = Instant::now();
-    while !success && Instant::now() - start < timeout {
+    while Instant::now() - start < timeout {
         match contact.retry_on_block(tx.clone()).await {
             Ok(res) => {
                 wait_for_next_cosmos_block(&contact).await;
                 let res: TXSendResponse = res;
                 if contact.get_tx_by_hash(&res.txhash).await.is_ok() {
-                    success = true;
                     return Ok(res);
                 }
             }

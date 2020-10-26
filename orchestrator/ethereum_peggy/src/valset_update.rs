@@ -4,7 +4,6 @@ use clarity::PrivateKey as EthPrivateKey;
 use peggy_utils::error::OrchestratorError;
 use peggy_utils::types::*;
 use std::time::Duration;
-use tokio::time::timeout as future_timeout;
 use web30::client::Web3;
 use web30::types::SendTxOption;
 

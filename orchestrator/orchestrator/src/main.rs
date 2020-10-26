@@ -18,7 +18,6 @@ extern crate log;
 
 mod ethereum_event_watcher;
 mod main_loop;
-mod tests;
 mod valset_relaying;
 
 use crate::main_loop::orchestrator_main_loop;
@@ -28,7 +27,6 @@ use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
-use std::time::Duration;
 use url::Url;
 use web30::client::Web3;
 

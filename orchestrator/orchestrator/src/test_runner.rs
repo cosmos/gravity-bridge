@@ -1,20 +1,20 @@
 //! Test runner is a testing script for the Peggy Cosmos module. It is built in Rust rather than python or bash
 //! to maximize code and tooling shared with the validator-daemon and relayer binaries.
 
+// there are several binaries for this crate if we allow dead code on all of them
+// we will see functions not used in one binary as dead code. In order to fix that
+// we forbid dead code in all but the 'main' binary
+#![allow(dead_code)]
+
 #[macro_use]
 extern crate log;
 
 mod ethereum_event_watcher;
 mod main_loop;
-mod tests;
 mod valset_relaying;
 
 use actix::Arbiter;
-use clarity::{
-    abi::{derive_signature, encode_call},
-    utils::bytes_to_hex_str,
-    PrivateKey as EthPrivateKey,
-};
+use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::send::send_valset_request;
@@ -25,18 +25,12 @@ use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use ethereum_peggy::send_to_cosmos::send_to_cosmos;
 use ethereum_peggy::utils::get_valset_nonce;
 use main_loop::orchestrator_main_loop;
-use num::Bounded;
 use std::io::{BufRead, BufReader};
 use std::process::Command;
 use std::time::Duration;
 use std::{fs::File, time::Instant};
 use tokio::time::delay_for;
-use web30::{
-    client::Web3,
-    jsonrpc::error::Web3Error,
-    types::NewFilter,
-    types::{Log, SendTxOption},
-};
+use web30::client::Web3;
 
 const TIMEOUT: Duration = Duration::from_secs(60);
 
@@ -233,8 +227,6 @@ async fn main() {
         peggy_address,
         erc20_address,
         miner_private_key,
-        miner_address,
-        fee,
     )
     .await;
 }
@@ -290,9 +282,8 @@ async fn test_erc20_send(
     peggy_address: EthAddress,
     erc20_address: EthAddress,
     miner_private_key: EthPrivateKey,
-    miner_address: EthAddress,
-    fee: Coin,
 ) {
+    let miner_address = miner_private_key.to_public_key().unwrap();
     let dest = keys[0].0.to_public_key().unwrap().to_address();
     let amount: Uint256 = 1u64.into();
     info!(
