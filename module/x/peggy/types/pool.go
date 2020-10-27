@@ -85,7 +85,10 @@ func NewVoucherDenom(tokenContractAddr EthereumAddress, erc20Symbol string) Vouc
 	denomTrace := fmt.Sprintf("%s/%s/", tokenContractAddr.String(), erc20Symbol)
 	var hash tmbytes.HexBytes = tmhash.Sum([]byte(denomTrace))
 	simpleVoucherDenom := VoucherDenomPrefix + DenomSeparator + hash.String()
-	sdkVersionHackDenom := strings.ToLower(simpleVoucherDenom[0:15]) // todo: up to 15 chars (lowercase) allowed in this sdk version only
+	// todo: up to 15 chars (lowercase) allowed in this sdk version only
+	// THIS NEEDS TO BE CHANGED BEFORE PRODUCTION to not truncate the address.
+	// The truncation weakens the collision resistance of the address.
+	sdkVersionHackDenom := strings.ToLower(simpleVoucherDenom[0:15])
 	return VoucherDenom(sdkVersionHackDenom)
 }
 

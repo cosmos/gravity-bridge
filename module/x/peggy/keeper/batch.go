@@ -41,6 +41,8 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 		BridgedDenominator: *bridgedDenom,
 		TotalFee:           totalFee,
 		BatchStatus:        types.BatchStatusPending,
+		Valset:             k.GetCurrentValset(ctx),
+		TokenContract:      bridgedDenom.TokenContractAddress,
 	}
 	k.storeBatch(ctx, batch)
 

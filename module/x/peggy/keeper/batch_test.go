@@ -73,6 +73,8 @@ func TestBatches(t *testing.T) {
 		TotalFee:           denominator.ToUint64ERC20Token(5),
 		BridgedDenominator: denominator,
 		BatchStatus:        types.BatchStatusPending,
+		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
+		Valset:             types.Valset{Nonce: 0x12d687, Members: types.BridgeValidators(nil)},
 	}
 	assert.Equal(t, expBatch, *gotBatch)
 
