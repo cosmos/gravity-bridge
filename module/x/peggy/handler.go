@@ -96,6 +96,7 @@ func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm
 	})
 }
 
+// This function takes in a signature submitted by a validator's Eth Signer and
 func handleBridgeSignatureSubmission(ctx sdk.Context, keeper Keeper, msg MsgBridgeSignatureSubmission) (*sdk.Result, error) {
 	checkpoint, err := getCheckpoint(ctx, keeper, msg.ClaimType, msg.Nonce)
 	if err != nil {
@@ -149,7 +150,7 @@ func getCheckpoint(ctx sdk.Context, keeper Keeper, claimType types.ClaimType, no
 			if valset == nil {
 				return nil, sdkerrors.Wrap(types.ErrUnknown, "no valset found for nonce")
 			}
-			return c.GetDigest()
+			return c.GetCheckpoint()
 		}
 	default:
 		return nil, sdkerrors.Wrap(types.ErrUnsupported, "claim type")

@@ -44,7 +44,7 @@ func (b *OutgoingTxBatch) Cancel() error {
 	return nil
 }
 
-func (b OutgoingTxBatch) GetDigest() ([]byte, error) {
+func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 
 	// TODO replace hardcoded "foo" here with a getter to retrieve the correct PeggyID from the store
 	// this will work for now because 'foo' is the test Peggy ID we are using
