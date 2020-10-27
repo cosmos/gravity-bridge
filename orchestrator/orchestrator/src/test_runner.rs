@@ -32,7 +32,10 @@ use std::{fs::File, time::Instant};
 use tokio::time::delay_for;
 use web30::client::Web3;
 
-const TIMEOUT: Duration = Duration::from_secs(60);
+/// the timeout for individual requests
+const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
+/// the timeout for the total system
+const TOTAL_TIMEOUT: Duration = Duration::from_secs(300);
 
 /// Ethereum keys are generated for every validator inside
 /// of this testing application and submitted to the blockchain
@@ -98,8 +101,8 @@ async fn main() {
             .unwrap();
     let miner_address = miner_private_key.to_public_key().unwrap();
 
-    let contact = Contact::new(COSMOS_NODE, TIMEOUT);
-    let web30 = web30::client::Web3::new(ETH_NODE, TIMEOUT);
+    let contact = Contact::new(COSMOS_NODE, OPERATION_TIMEOUT);
+    let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
     let keys = get_keys();
     let test_token_name = "footoken".to_string();
 
@@ -185,7 +188,7 @@ async fn main() {
             .await
             .expect("Failed to send Eth to validator {}");
         web30
-            .wait_for_transaction(txid, TIMEOUT, None)
+            .wait_for_transaction(txid, TOTAL_TIMEOUT, None)
             .await
             .unwrap();
     }
@@ -249,7 +252,7 @@ async fn test_valset_update(
     // now we send a valset request that the orchestrators will pick up on
     // in this case we send it as the first validator because they can pay the fee
     info!("Sending in valset request");
-    let res = send_valset_request(&contact, keys[0].0, fee, TIMEOUT)
+    let res = send_valset_request(&contact, keys[0].0, fee, TOTAL_TIMEOUT)
         .await
         .expect("Failed to send valset request");
     info!("{:?}", res);
@@ -267,7 +270,7 @@ async fn test_valset_update(
             .await
             .expect("Failed to get current eth valset");
         delay_for(Duration::from_secs(4)).await;
-        if Instant::now() - start > TIMEOUT {
+        if Instant::now() - start > TOTAL_TIMEOUT {
             panic!("Failed to update validator set");
         }
     }
@@ -297,7 +300,7 @@ async fn test_erc20_send(
         amount.clone(),
         dest,
         miner_private_key,
-        Some(TIMEOUT),
+        Some(TOTAL_TIMEOUT),
         &web30,
         vec![],
     )
@@ -305,7 +308,7 @@ async fn test_erc20_send(
     .expect("Failed to send tokens to Cosmos");
     info!("Send to Cosmos txid: {:#066x}", tx_id);
 
-    delay_for(TIMEOUT).await;
+    delay_for(OPERATION_TIMEOUT).await;
 
     let account_info = contact.get_account_info(dest).await.unwrap();
     let mut success = false;
