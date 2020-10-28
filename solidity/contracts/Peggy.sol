@@ -10,6 +10,7 @@ contract Peggy {
 	bytes32 public state_lastValsetCheckpoint;
 	mapping(address => uint256) public state_lastBatchNonces;
 	uint256 public state_lastValsetNonce = 0;
+	uint256 public state_lastSendToCosmosNonce = 0;
 
 	// These are set once at initialization
 	bytes32 public state_peggyId;
@@ -21,7 +22,8 @@ contract Peggy {
 		address indexed _tokenContract,
 		address indexed _sender,
 		bytes32 indexed _destination,
-		uint256 _amount
+		uint256 _amount,
+		uint256 _nonce
 	);
 
 	// TEST FIXTURES
@@ -355,7 +357,14 @@ contract Peggy {
 		uint256 _amount
 	) public {
 		IERC20(_tokenContract).transferFrom(msg.sender, address(this), _amount);
-		emit SendToCosmosEvent(_tokenContract, msg.sender, _destination, _amount);
+		state_lastSendToCosmosNonce = state_lastSendToCosmosNonce.add(1);
+		emit SendToCosmosEvent(
+			_tokenContract,
+			msg.sender,
+			_destination,
+			_amount,
+			state_lastSendToCosmosNonce
+		);
 	}
 
 	constructor(
