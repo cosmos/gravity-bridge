@@ -99,7 +99,7 @@ pub async fn send_valset_request(
     let tx = private_key
         .sign_std_msg(std_sign_msg, TransactionSendType::Block)
         .unwrap();
-    trace!("{}", json!(tx));
+    info!("{}", json!(tx));
 
     let start = Instant::now();
     while Instant::now() - start < timeout {

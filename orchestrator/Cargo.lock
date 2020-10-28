@@ -506,9 +506,9 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
 name = "clarity"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a938619524530d900df2e762b2255ce780c27133334caea70d974dfa80f8f5b4"
+checksum = "af32158e3667b7e62c8d674a331d6bb477a07121219ca180a0cd0e0abb0e42b9"
 dependencies = [
  "lazy_static",
  "num-bigint 0.3.0",
@@ -1545,6 +1545,7 @@ dependencies = [
  "contact",
  "deep_space",
  "num256",
+ "rand",
  "serde",
  "serde_derive",
  "tokio",

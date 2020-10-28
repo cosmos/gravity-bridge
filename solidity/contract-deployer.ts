@@ -74,6 +74,11 @@ async function deploy() {
 
   let eth_addresses = [];
   let powers = [];
+  // this MUST be sorted uniformly across all components of Peggy in this
+  // case we perform the sorting in module/x/peggy/keeper/types.go to the
+  // output of the endpoint should always be sorted correctly. If you're
+  // having strange problems with updating the validator set you should go
+  // look there.
   for (let i = 0; i < latestValset.result.value.members.length; i++) {
     eth_addresses.push(latestValset.result.value.members[i].ethereum_address);
     powers.push(latestValset.result.value.members[i].power);
