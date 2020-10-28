@@ -90,6 +90,19 @@ async fn main() {
     let web3 = Web3::new(&eth_url, LOOP_SPEED);
     let contact = Contact::new(&cosmos_url, LOOP_SPEED);
 
+    let public_eth_key = ethereum_key
+        .to_public_key()
+        .expect("Invalid Ethereum Private Key!");
+    let public_cosmos_key = cosmos_key
+        .to_public_key()
+        .expect("Invalid Cosmos Phrase!")
+        .to_address();
+    info!("Starting Peggy Relayer + Eth Signer");
+    info!(
+        "Ethereum Address: {} Cosmos Address {}",
+        public_eth_key, public_cosmos_key
+    );
+
     orchestrator_main_loop(
         cosmos_key,
         ethereum_key,
