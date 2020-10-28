@@ -116,7 +116,7 @@ fn to_bridge_claims(
     for deposit in deposits {
         out.push(EthereumBridgeClaim::EthereumBridgeDepositClaim(
             EthereumBridgeDepositClaim {
-                nonce: 50u64.into(),
+                nonce: deposit.nonce.clone(),
                 erc20_token: ERC20Token {
                     amount: deposit.amount.clone(),
                     // TODO get symbol using web3 calls

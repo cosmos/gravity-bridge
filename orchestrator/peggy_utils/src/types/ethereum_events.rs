@@ -78,6 +78,9 @@ pub struct SendToCosmosEvent {
     pub destination: CosmosAddress,
     /// The amount of the erc20 token that is being sent
     pub amount: Uint256,
+    /// The transaction's nonce, every event from the contract gets a unique nonce that forces
+    /// the oracle stream to be in order and consistent
+    pub nonce: Uint256,
 }
 
 impl SendToCosmosEvent {
@@ -94,12 +97,14 @@ impl SendToCosmosEvent {
             // this is little endian encoded
             c_address_bytes.copy_from_slice(&destination_data[0..20]);
             let destination = CosmosAddress::from_bytes(c_address_bytes);
-            let amount = Uint256::from_bytes_be(&input.data);
+            let amount = Uint256::from_bytes_be(&input.data[..32]);
+            let nonce = Uint256::from_bytes_be(&input.data[32..]);
             Ok(SendToCosmosEvent {
                 erc20,
                 sender,
                 destination,
                 amount,
+                nonce,
             })
         } else {
             Err(OrchestratorError::InvalidEventLogError(
