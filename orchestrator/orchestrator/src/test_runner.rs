@@ -252,10 +252,17 @@ async fn test_valset_update(
     // now we send a valset request that the orchestrators will pick up on
     // in this case we send it as the first validator because they can pay the fee
     info!("Sending in valset request");
-    let res = send_valset_request(&contact, keys[0].0, fee, TOTAL_TIMEOUT)
-        .await
-        .expect("Failed to send valset request");
-    info!("{:?}", res);
+
+    // reset here since we might confirm a validator set while sending the next one resulting in an bad sequence
+    while Instant::now() - start < TOTAL_TIMEOUT {
+        let res = send_valset_request(&contact, keys[0].0, fee.clone()).await;
+        if let Ok(res) = res {
+            delay_for(Duration::from_secs(2)).await;
+            if contact.get_tx_by_hash(&res.txhash).await.is_ok() {
+                break;
+            }
+        }
+    }
 
     let mut current_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
         .await
