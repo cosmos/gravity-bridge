@@ -18,8 +18,9 @@ use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::send::send_valset_request;
-use cosmos_peggy::send::update_peggy_eth_address;
+use cosmos_peggy::send::{request_batch, send_to_eth, update_peggy_eth_address};
 use cosmos_peggy::utils::wait_for_cosmos_online;
+use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use ethereum_peggy::send_to_cosmos::send_to_cosmos;
@@ -223,15 +224,40 @@ async fn main() {
         .await;
     }
 
-    test_erc20_send(
+    // where we are sending this erc20
+    let dest = keys[0].0.to_public_key().unwrap().to_address();
+    let dest_private_key = keys[0].0;
+    let dest_eth_address = keys[0].1.to_public_key().unwrap();
+
+    let (token_name, amount) = test_erc20_send(
         &contact,
         &web30,
-        &keys,
+        dest,
         peggy_address,
         erc20_address,
         miner_private_key,
     )
     .await;
+
+    // test_batch_send
+    info!("Sending {} {} back to Ethereum", token_name, amount);
+    send_to_eth(
+        dest_private_key,
+        dest_eth_address,
+        Coin {
+            denom: token_name.clone(),
+            amount,
+        },
+        fee.clone(),
+        &contact,
+    )
+    .await
+    .unwrap();
+
+    info!("Requesting transaction batch");
+    request_batch(dest_private_key, token_name, fee.clone(), &contact)
+        .await
+        .unwrap();
 }
 
 async fn test_valset_update(
@@ -285,16 +311,16 @@ async fn test_valset_update(
     info!("Validator set successfully updated!");
 }
 
+/// this function tests Ethereum -> Cosmos
 async fn test_erc20_send(
     contact: &Contact,
     web30: &Web3,
-    keys: &[(CosmosPrivateKey, EthPrivateKey)],
+    dest: CosmosAddress,
     peggy_address: EthAddress,
     erc20_address: EthAddress,
     miner_private_key: EthPrivateKey,
-) {
+) -> (String, Uint256) {
     let miner_address = miner_private_key.to_public_key().unwrap();
-    let dest = keys[0].0.to_public_key().unwrap().to_address();
     let amount: Uint256 = 1u64.into();
     info!(
         "Sending to Cosmos from {} to {} with amount {}",
@@ -318,14 +344,16 @@ async fn test_erc20_send(
     delay_for(OPERATION_TIMEOUT).await;
 
     let account_info = contact.get_account_info(dest).await.unwrap();
-    let mut success = false;
-    info!("Account info: {:?}", account_info);
+    info!(
+        "Account info: {:?} We are looking for Peggy Denom with amount {}",
+        account_info, amount
+    );
     for coin in account_info.result.value.coins {
-        if coin.denom.contains("peggy") && coin.amount == amount {
-            success = true;
-            break;
+        // make sure the name and amount is correct
+        if coin.denom.starts_with("peggy") && amount == coin.amount {
+            info!("Successfully bridged ERC20 to Cosmos!");
+            return (coin.denom, amount);
         }
     }
-    assert!(success);
-    info!("Successfully bridged ERC20 to Cosmos!");
+    panic!("Failed to bridge ERC20 token!");
 }
