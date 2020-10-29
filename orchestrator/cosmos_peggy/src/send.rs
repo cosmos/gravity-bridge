@@ -194,3 +194,76 @@ pub async fn send_ethereum_claims(
 
     contact.retry_on_block(tx).await
 }
+
+/// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
+/// they will require some time to be included in a batch
+pub async fn send_to_eth(
+    private_key: PrivateKey,
+    destination: EthAddress,
+    amount: Coin,
+    fee: Coin,
+    contact: &Contact,
+) -> Result<TXSendResponse, JsonRpcError> {
+    let our_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address();
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+
+    let std_sign_msg = StdSignMsg {
+        chain_id: tx_info.chain_id,
+        account_number: tx_info.account_number,
+        sequence: tx_info.sequence,
+        fee: StdFee {
+            amount: vec![fee.clone()],
+            gas: 500_000u64.into(),
+        },
+        msgs: vec![PeggyMsg::SendToEthMsg(SendToEthMsg {
+            sender: our_address,
+            dest_address: destination,
+            send: amount,
+            bridge_fee: fee,
+        })],
+        memo: String::new(),
+    };
+
+    let tx = private_key
+        .sign_std_msg(std_sign_msg, TransactionSendType::Block)
+        .unwrap();
+
+    contact.retry_on_block(tx).await
+}
+
+pub async fn request_batch(
+    private_key: PrivateKey,
+    denom: String,
+    fee: Coin,
+    contact: &Contact,
+) -> Result<TXSendResponse, JsonRpcError> {
+    let our_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address();
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+
+    let std_sign_msg = StdSignMsg {
+        chain_id: tx_info.chain_id,
+        account_number: tx_info.account_number,
+        sequence: tx_info.sequence,
+        fee: StdFee {
+            amount: vec![fee.clone()],
+            gas: 500_000u64.into(),
+        },
+        msgs: vec![PeggyMsg::RequestBatchMsg(RequestBatchMsg {
+            denom,
+            requester: our_address,
+        })],
+        memo: String::new(),
+    };
+
+    let tx = private_key
+        .sign_std_msg(std_sign_msg, TransactionSendType::Block)
+        .unwrap();
+
+    contact.retry_on_block(tx).await
+}
