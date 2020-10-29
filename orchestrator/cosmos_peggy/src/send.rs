@@ -1,5 +1,4 @@
 use crate::messages::*;
-use crate::utils::wait_for_next_cosmos_block;
 use clarity::{abi::encode_tokens, abi::Token, PrivateKey as EthPrivateKey};
 use clarity::{Address as EthAddress, Uint256};
 use contact::jsonrpc::error::JsonRpcError;
@@ -10,9 +9,7 @@ use deep_space::stdfee::StdFee;
 use deep_space::stdsignmsg::StdSignMsg;
 use deep_space::transaction::TransactionSendType;
 use deep_space::{coin::Coin, utils::bytes_to_hex_str};
-use peggy_utils::{error::OrchestratorError, types::*};
-use std::time::Duration;
-use std::time::Instant;
+use peggy_utils::types::*;
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
@@ -73,8 +70,7 @@ pub async fn send_valset_request(
     contact: &Contact,
     private_key: PrivateKey,
     fee: Coin,
-    timeout: Duration,
-) -> Result<TXSendResponse, OrchestratorError> {
+) -> Result<TXSendResponse, JsonRpcError> {
     let our_address = private_key
         .to_public_key()
         .expect("Invalid private key!")
@@ -97,25 +93,10 @@ pub async fn send_valset_request(
     };
 
     let tx = private_key
-        .sign_std_msg(std_sign_msg, TransactionSendType::Block)
+        .sign_std_msg(std_sign_msg.clone(), TransactionSendType::Block)
         .unwrap();
-    info!("{}", json!(tx));
 
-    let start = Instant::now();
-    while Instant::now() - start < timeout {
-        match contact.retry_on_block(tx.clone()).await {
-            Ok(res) => {
-                wait_for_next_cosmos_block(&contact).await;
-                let res: TXSendResponse = res;
-                if contact.get_tx_by_hash(&res.txhash).await.is_ok() {
-                    return Ok(res);
-                }
-            }
-            Err(e) => info!("Error {:?}", e),
-        }
-        wait_for_next_cosmos_block(&contact).await;
-    }
-    Err(OrchestratorError::TimeoutError)
+    contact.retry_on_block(tx).await
 }
 
 /// Send in a confirmation for a specific validator set for a specific block height

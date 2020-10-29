@@ -112,7 +112,7 @@ async fn main() {
     let ethereum_public_key = ethereum_key.to_public_key().unwrap();
 
     info!("Sending in valset request");
-    let _res = send_valset_request(&contact, cosmos_key, fee, TIMEOUT)
+    let _res = send_valset_request(&contact, cosmos_key, fee)
         .await
         .expect("Failed to send valset request");
 
