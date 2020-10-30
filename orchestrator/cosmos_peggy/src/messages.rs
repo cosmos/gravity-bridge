@@ -92,8 +92,6 @@ pub struct ConfirmBatchMsg {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct EthereumBridgeDepositClaim {
-    /// this was added on the cosmos side due to a poorly designed interface
-    /// will always be zero
     pub nonce: Uint256,
     pub erc20_token: ERC20Token,
     pub ethereum_sender: EthAddress,
