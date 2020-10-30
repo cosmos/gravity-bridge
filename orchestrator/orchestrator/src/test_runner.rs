@@ -36,10 +36,10 @@ use std::{fs::File, time::Instant};
 use tokio::time::delay_for;
 use web30::client::Web3;
 use cosmos_peggy::messages::{
-    ERC20Token, EthereumBridgeClaim, EthereumBridgeDepositClaim, EthereumBridgeMultiSigUpdateClaim,
-    EthereumBridgeWithdrawBatchClaim,
+    ERC20Token, EthereumBridgeClaim, EthereumBridgeDepositClaim
 };
 use deep_space::address::Address as CosmosAddress;
+use cosmos_peggy::send::send_ethereum_claims;
 
 /// the timeout for individual requests
 const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
@@ -443,9 +443,9 @@ async fn test_batch(
 
 // this function submits a EthereumBridgeDepositClaim to the module with a given nonce. This can be set to be a nonce that has
 // already been submitted to test the nonce functionality.
-async fn submit_duplicate_erc20_send(nonce: Uint256) {
-    let token_contract_address = EthAddress::parse_and_validate("0x6b175474e89094c44da98b954eedeac495271d0f").expect("problem parsing dummy address")
-    let ethereum_sender = EthAddress::parse_and_validate("0x912fd21d7a69678227fe6d08c64222db41477ba0").expect("problem parsing dummy address")
+async fn submit_duplicate_erc20_send(nonce: Uint256, contact: &Contact, peggy_address: EthAddress, private_key: CosmosPrivateKey) {
+    let token_contract_address = EthAddress::parse_and_validate("0x6b175474e89094c44da98b954eedeac495271d0f").unwrap();
+    let ethereum_sender = EthAddress::parse_and_validate("0x912fd21d7a69678227fe6d08c64222db41477ba0").unwrap();
     let cosmos_receiver = CosmosAddress::from_bytes([0; 20]);
 
     let claim = EthereumBridgeClaim::EthereumBridgeDepositClaim(
@@ -459,5 +459,22 @@ async fn submit_duplicate_erc20_send(nonce: Uint256) {
             ethereum_sender: ethereum_sender,
             cosmos_receiver: cosmos_receiver,
         },
+    );
+    
+    let fee = Coin {
+        denom: "idunno".into(),
+        amount: 1u32.into(),
+    };
+
+    // todo get chain id from the chain
+    let res = send_ethereum_claims(
+        contact,
+        0u64.into(),
+        peggy_address,
+        private_key,
+        vec![claim],
+        fee,
     )
+    .await.unwrap();
+    trace!("Sent in Oracle claims response: {:?}", res);
 }
