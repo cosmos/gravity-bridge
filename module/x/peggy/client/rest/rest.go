@@ -36,6 +36,18 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) 
 	// The Ethereum signer queries this endpoint and signs whatever it returns once per loop iteration
 	r.HandleFunc(fmt.Sprintf("/%s/pending_valset_requests/{%s}", storeName, bech32ValidatorAddress), lastValsetRequestsByAddressHandler(cliCtx, storeName)).Methods("GET")
 
+	// batch endpoints
+
+	// The Ethereum signer queries this endpoint and signs whatever it returns once per loop iteration
+	r.HandleFunc(fmt.Sprintf("/%s/pending_batch_requests/{%s}", storeName, bech32ValidatorAddress), lastBatchRequestsByAddressHandler(cliCtx, storeName)).Methods("GET")
+	// Gets all outgoing batches in the batch queue, up to 100
+	r.HandleFunc(fmt.Sprintf("/%s/transaction_batches", storeName), lastBatchRequestsHandler(cliCtx, storeName)).Methods("GET")
+	// Gets all outgoing batches in the batch queue, up to 100
+	r.HandleFunc(fmt.Sprintf("/%s/transaction_batch/{%s}", storeName, nonce), lastBatchRequestByNonceHandler(cliCtx, storeName)).Methods("GET")
+	// Gets all outgoing batches that have signatures up to 100, these may or may not be possible to submit it's up to the relayer
+	// to attempt that.
+	r.HandleFunc(fmt.Sprintf("/%s/signed_batches", storeName), lastSignedBatchesHandler(cliCtx, storeName)).Methods("GET")
+
 	// Ethereum oracle endpoints
 
 	// This is the nonce of the last processed attestation nonce of the provided claimType from Ethereum. For example if you requested the last
