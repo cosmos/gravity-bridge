@@ -35,6 +35,11 @@ use std::time::Duration;
 use std::{fs::File, time::Instant};
 use tokio::time::delay_for;
 use web30::client::Web3;
+use cosmos_peggy::messages::{
+    ERC20Token, EthereumBridgeClaim, EthereumBridgeDepositClaim, EthereumBridgeMultiSigUpdateClaim,
+    EthereumBridgeWithdrawBatchClaim,
+};
+use deep_space::address::Address as CosmosAddress;
 
 /// the timeout for individual requests
 const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
@@ -434,4 +439,25 @@ async fn test_batch(
     //     "Successfully updated txbatch nonce to {}",
     //     current_eth_batch_nonce
     // );
+}
+
+// this function submits a EthereumBridgeDepositClaim to the module with a given nonce. This can be set to be a nonce that has
+// already been submitted to test the nonce functionality.
+async fn submit_duplicate_erc20_send(nonce: Uint256) {
+    let token_contract_address = EthAddress::parse_and_validate("0x6b175474e89094c44da98b954eedeac495271d0f").expect("problem parsing dummy address")
+    let ethereum_sender = EthAddress::parse_and_validate("0x912fd21d7a69678227fe6d08c64222db41477ba0").expect("problem parsing dummy address")
+    let cosmos_receiver = CosmosAddress::from_bytes([0; 20]);
+
+    let claim = EthereumBridgeClaim::EthereumBridgeDepositClaim(
+        EthereumBridgeDepositClaim {
+            nonce: nonce,
+            erc20_token: ERC20Token {
+                amount: 10u64.into(),
+                symbol: "MAXX".to_string(),
+                token_contract_address: token_contract_address,
+            },
+            ethereum_sender: ethereum_sender,
+            cosmos_receiver: cosmos_receiver,
+        },
+    )
 }
