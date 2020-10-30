@@ -88,3 +88,17 @@ pub async fn get_peggy_id(
         .await?;
     Ok(val)
 }
+
+/// Gets the ERC20 symbol, should maybe be upstreamed
+pub async fn get_erc20_symbol(
+    contract_address: EthAddress,
+    caller_address: EthAddress,
+    web3: &Web3,
+) -> Result<String, OrchestratorError> {
+    let val_symbol = web3
+        .contract_call(contract_address, "symbol()", &[], caller_address)
+        .await?;
+    // Pardon the unwrap, but this is temporary code, intended only for the tests, to help them
+    // deal with a deprecated feature (the symbol), which will be removed soon
+    Ok(String::from_utf8(val_symbol).unwrap())
+}

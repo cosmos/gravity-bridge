@@ -108,15 +108,18 @@ fn to_bridge_claims(
         ));
     }
     for batch in batches {
-        let nonce = batch.nonce.clone();
+        let batch_nonce = batch.batch_nonce.clone();
+        let event_nonce = batch.event_nonce.clone();
         out.push(EthereumBridgeClaim::EthereumBridgeWithdrawBatchClaim(
-            EthereumBridgeWithdrawBatchClaim { nonce },
+            EthereumBridgeWithdrawBatchClaim {
+                batch_nonce,
+                event_nonce,
+            },
         ))
     }
     for deposit in deposits {
         out.push(EthereumBridgeClaim::EthereumBridgeDepositClaim(
             EthereumBridgeDepositClaim {
-                nonce: deposit.nonce.clone(),
                 erc20_token: ERC20Token {
                     amount: deposit.amount.clone(),
                     // TODO get symbol using web3 calls
@@ -125,6 +128,7 @@ fn to_bridge_claims(
                 },
                 ethereum_sender: deposit.sender,
                 cosmos_receiver: deposit.destination,
+                event_nonce: deposit.event_nonce.clone(),
             },
         ))
     }

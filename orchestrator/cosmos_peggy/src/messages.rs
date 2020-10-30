@@ -92,15 +92,16 @@ pub struct ConfirmBatchMsg {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct EthereumBridgeDepositClaim {
-    pub nonce: Uint256,
     pub erc20_token: ERC20Token,
     pub ethereum_sender: EthAddress,
     pub cosmos_receiver: Address,
+    pub event_nonce: Uint256,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct EthereumBridgeWithdrawBatchClaim {
-    pub nonce: Uint256,
+    pub batch_nonce: Uint256,
+    pub event_nonce: Uint256,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]

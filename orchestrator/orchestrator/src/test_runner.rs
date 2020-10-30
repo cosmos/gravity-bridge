@@ -18,16 +18,21 @@ use actix::Arbiter;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
+use cosmos_peggy::send::send_ethereum_claims;
 use cosmos_peggy::send::send_valset_request;
 use cosmos_peggy::send::{request_batch, send_to_eth, update_peggy_eth_address};
 use cosmos_peggy::utils::wait_for_cosmos_online;
+use cosmos_peggy::{
+    messages::{EthereumBridgeClaim, EthereumBridgeDepositClaim},
+};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use ethereum_peggy::send_to_cosmos::send_to_cosmos;
-use ethereum_peggy::utils::get_tx_batch_nonce;
+use ethereum_peggy::utils::get_erc20_symbol;
 use ethereum_peggy::utils::get_valset_nonce;
 use main_loop::orchestrator_main_loop;
+use peggy_utils::types::ERC20Token;
 use rand::Rng;
 use std::io::{BufRead, BufReader};
 use std::process::Command;
@@ -35,11 +40,6 @@ use std::time::Duration;
 use std::{fs::File, time::Instant};
 use tokio::time::delay_for;
 use web30::client::Web3;
-use cosmos_peggy::messages::{
-    ERC20Token, EthereumBridgeClaim, EthereumBridgeDepositClaim
-};
-use deep_space::address::Address as CosmosAddress;
-use cosmos_peggy::send::send_ethereum_claims;
 
 /// the timeout for individual requests
 const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
@@ -173,6 +173,9 @@ async fn main() {
     }
     let peggy_address: EthAddress = maybe_peggy_address.unwrap();
     let erc20_address: EthAddress = maybe_contract_address.unwrap();
+    let token_symbol = get_erc20_symbol(erc20_address, miner_address, &web30)
+        .await
+        .unwrap();
 
     // before we start the orchestrators send them some funds so they can pay
     // for things
@@ -245,13 +248,34 @@ async fn main() {
 
     // the denom and amount of the token bridged from Ethereum -> Cosmos
     // so the denom is the peggy<hash> token name
-    let (denom, amount) = test_erc20_send(
+    // Send a token 3 times
+    for _ in 0u32..2 {
+        test_erc20_send(
+            &web30,
+            &contact,
+            dest_cosmos_address,
+            peggy_address,
+            erc20_address,
+            miner_private_key,
+            100u64.into(),
+        )
+        .await;
+    }
+
+    // We are going to submit a duplicate tx with nonce 1
+    // This had better not increase the balance again
+    // this test may have false positives if the timeout is not
+    // long enough. TODO check for an error on the cosmos send response
+    submit_duplicate_erc20_send(
+        1u64.into(),
         &contact,
-        &web30,
-        dest_cosmos_address,
         peggy_address,
         erc20_address,
-        miner_private_key,
+        1u64.into(),
+        dest_cosmos_address,
+        keys.clone(),
+        token_symbol,
+        fee.clone(),
     )
     .await;
 
@@ -268,10 +292,9 @@ async fn main() {
         keys[0].0,
         dest_cosmos_private_key,
         miner_private_key,
-        denom,
-        amount,
     )
     .await;
+    delay_for(OPERATION_TIMEOUT).await;
 }
 
 async fn test_valset_update(
@@ -327,15 +350,16 @@ async fn test_valset_update(
 
 /// this function tests Ethereum -> Cosmos
 async fn test_erc20_send(
-    contact: &Contact,
     web30: &Web3,
+    contact: &Contact,
     dest: CosmosAddress,
     peggy_address: EthAddress,
     erc20_address: EthAddress,
     miner_private_key: EthPrivateKey,
-) -> (String, Uint256) {
+    amount: Uint256,
+) {
+    let start_coin = check_cosmos_balance(dest, &contact).await;
     let miner_address = miner_private_key.to_public_key().unwrap();
-    let amount: Uint256 = 100u64.into();
     info!(
         "Sending to Cosmos from {} to {} with amount {}",
         miner_address, dest, amount
@@ -355,21 +379,46 @@ async fn test_erc20_send(
     .expect("Failed to send tokens to Cosmos");
     info!("Send to Cosmos txid: {:#066x}", tx_id);
 
-    delay_for(OPERATION_TIMEOUT).await;
-
-    let account_info = contact.get_account_info(dest).await.unwrap();
-    info!(
-        "Account info: {:?} We are looking for Peggy Denom with amount {}",
-        account_info, amount
-    );
-    for coin in account_info.result.value.coins {
-        // make sure the name and amount is correct
-        if coin.denom.starts_with("peggy") && amount == coin.amount {
-            info!("Successfully bridged ERC20 to Cosmos!");
-            return (coin.denom, amount);
+    let start = Instant::now();
+    while Instant::now() - start < TOTAL_TIMEOUT {
+        match (
+            start_coin.clone(),
+            check_cosmos_balance(dest, &contact).await,
+        ) {
+            (Some(start_coin), Some(end_coin)) => {
+                if start_coin.amount + amount == end_coin.amount
+                    && start_coin.denom == end_coin.denom
+                {
+                    info!("Successfully bridged ERC20 to Cosmos!");
+                    return;
+                } else {
+                    panic!("Failed to bridge ERC20!")
+                }
+            }
+            (None, Some(end_coin)) => {
+                if amount == end_coin.amount {
+                    info!("Successfully bridged ERC20 to Cosmos!");
+                    return;
+                } else {
+                    panic!("Failed to bridge ERC20!")
+                }
+            }
+            _ => {}
         }
     }
-    panic!("Failed to bridge ERC20 token!");
+    panic!("Failed to bridge ERC20!")
+}
+
+async fn check_cosmos_balance(address: CosmosAddress, contact: &Contact) -> Option<Coin> {
+    let account_info = contact.get_account_info(address).await.unwrap();
+    for coin in account_info.result.value.coins {
+        // make sure the name and amount is correct
+        if coin.denom.starts_with("peggy") {
+            info!("Successfully bridged ERC20 to Cosmos!");
+            return Some(coin);
+        }
+    }
+    None
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -382,9 +431,17 @@ async fn test_batch(
     requester_cosmos_private_key: CosmosPrivateKey,
     dest_cosmos_private_key: CosmosPrivateKey,
     miner_private_key: EthPrivateKey,
-    token_name: String,
-    amount: Uint256,
 ) {
+    let dest_cosmos_address = dest_cosmos_private_key
+        .to_public_key()
+        .unwrap()
+        .to_address();
+    let coin = check_cosmos_balance(dest_cosmos_address, &contact)
+        .await
+        .unwrap();
+    let token_name = coin.denom;
+    let amount = coin.amount;
+
     let miner_address = miner_private_key.to_public_key().unwrap();
     let bridge_denom_fee = Coin {
         denom: token_name.clone(),
@@ -443,38 +500,58 @@ async fn test_batch(
 
 // this function submits a EthereumBridgeDepositClaim to the module with a given nonce. This can be set to be a nonce that has
 // already been submitted to test the nonce functionality.
-async fn submit_duplicate_erc20_send(nonce: Uint256, contact: &Contact, peggy_address: EthAddress, private_key: CosmosPrivateKey) {
-    let token_contract_address = EthAddress::parse_and_validate("0x6b175474e89094c44da98b954eedeac495271d0f").unwrap();
-    let ethereum_sender = EthAddress::parse_and_validate("0x912fd21d7a69678227fe6d08c64222db41477ba0").unwrap();
-    let cosmos_receiver = CosmosAddress::from_bytes([0; 20]);
+#[allow(clippy::too_many_arguments)]
+async fn submit_duplicate_erc20_send(
+    nonce: Uint256,
+    contact: &Contact,
+    peggy_address: EthAddress,
+    erc20_address: EthAddress,
+    amount: Uint256,
+    receiver: CosmosAddress,
+    keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
+    symbol: String,
+    fee: Coin,
+) {
+    let start_coin = check_cosmos_balance(receiver, &contact)
+        .await
+        .expect("Did not find coins!");
 
-    let claim = EthereumBridgeClaim::EthereumBridgeDepositClaim(
-        EthereumBridgeDepositClaim {
-            nonce: nonce,
-            erc20_token: ERC20Token {
-                amount: 10u64.into(),
-                symbol: "MAXX".to_string(),
-                token_contract_address: token_contract_address,
-            },
-            ethereum_sender: ethereum_sender,
-            cosmos_receiver: cosmos_receiver,
+    let ethereum_sender =
+        EthAddress::parse_and_validate("0x912fd21d7a69678227fe6d08c64222db41477ba0").unwrap();
+
+    let claim = EthereumBridgeClaim::EthereumBridgeDepositClaim(EthereumBridgeDepositClaim {
+        event_nonce: nonce,
+        erc20_token: ERC20Token {
+            amount,
+            symbol,
+            token_contract_address: erc20_address,
         },
-    );
-    
-    let fee = Coin {
-        denom: "idunno".into(),
-        amount: 1u32.into(),
-    };
+        ethereum_sender,
+        cosmos_receiver: receiver,
+    });
 
-    // todo get chain id from the chain
-    let res = send_ethereum_claims(
-        contact,
-        0u64.into(),
-        peggy_address,
-        private_key,
-        vec![claim],
-        fee,
-    )
-    .await.unwrap();
-    trace!("Sent in Oracle claims response: {:?}", res);
+    // iterate through all validators and try to send an event with duplicate nonce
+    for (c_key, _) in keys.iter() {
+        let res = send_ethereum_claims(
+            contact,
+            0u64.into(),
+            peggy_address,
+            *c_key,
+            vec![claim.clone()],
+            fee.clone(),
+        )
+        .await
+        .unwrap();
+        trace!("Submitted duplicate sendToCosmos event: {:?}", res);
+    }
+
+    if let Some(end_coin) = check_cosmos_balance(receiver, &contact).await {
+        if start_coin.amount == end_coin.amount && start_coin.denom == end_coin.denom {
+            info!("Successfully failed to duplicate ERC20!");
+        } else {
+            panic!("Duplicated ERC20!")
+        }
+    } else {
+        panic!("Duplicate test failed for unknown reasons!");
+    }
 }

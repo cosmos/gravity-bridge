@@ -38,18 +38,31 @@ impl ValsetUpdatedEvent {
 /// A parsed struct representing the Ethereum event fired by the Peggy contract when
 /// a transaction batch is executed.
 pub struct TransactionBatchExecutedEvent {
-    pub nonce: Uint256,
+    /// the nonce attached to the transaction batch that follows
+    /// it throughout it's lifecycle
+    pub batch_nonce: Uint256,
     /// The ERC20 token contract address for the batch executed, since batches are uniform
     /// in token type there is only one
     pub erc20: EthAddress,
+    /// the event nonce representing a unique ordering of events coming out
+    /// of the Peggy solidity contract. Ensuring that these events can only be played
+    /// back in order
+    pub event_nonce: Uint256,
 }
 
 impl TransactionBatchExecutedEvent {
     pub fn from_log(input: &Log) -> Result<TransactionBatchExecutedEvent, OrchestratorError> {
-        if let (Some(nonce_data), Some(erc20_data)) = (input.topics.get(1), input.topics.get(2)) {
-            let nonce = Uint256::from_bytes_be(nonce_data);
+        if let (Some(batch_nonce_data), Some(erc20_data)) =
+            (input.topics.get(1), input.topics.get(2))
+        {
+            let batch_nonce = Uint256::from_bytes_be(batch_nonce_data);
             let erc20 = EthAddress::from_slice(&erc20_data)?;
-            Ok(TransactionBatchExecutedEvent { nonce, erc20 })
+            let event_nonce = Uint256::from_bytes_be(&input.data);
+            Ok(TransactionBatchExecutedEvent {
+                batch_nonce,
+                erc20,
+                event_nonce,
+            })
         } else {
             Err(OrchestratorError::InvalidEventLogError(
                 "Too few topics".to_string(),
@@ -78,9 +91,8 @@ pub struct SendToCosmosEvent {
     pub destination: CosmosAddress,
     /// The amount of the erc20 token that is being sent
     pub amount: Uint256,
-    /// The transaction's nonce, every event from the contract gets a unique nonce that forces
-    /// the oracle stream to be in order and consistent
-    pub nonce: Uint256,
+    /// The transaction's nonce, used to make sure there can be no accidntal duplication
+    pub event_nonce: Uint256,
 }
 
 impl SendToCosmosEvent {
@@ -98,13 +110,13 @@ impl SendToCosmosEvent {
             c_address_bytes.copy_from_slice(&destination_data[0..20]);
             let destination = CosmosAddress::from_bytes(c_address_bytes);
             let amount = Uint256::from_bytes_be(&input.data[..32]);
-            let nonce = Uint256::from_bytes_be(&input.data[32..]);
+            let event_nonce = Uint256::from_bytes_be(&input.data[32..]);
             Ok(SendToCosmosEvent {
                 erc20,
                 sender,
                 destination,
                 amount,
-                nonce,
+                event_nonce,
             })
         } else {
             Err(OrchestratorError::InvalidEventLogError(
