@@ -18,12 +18,56 @@ import (
 //  - `observed` attestations are processed for state transition
 //  - the process result is stored with the attestion
 //  - an `observation` event is emitted
+//
+// Jehan's note: AddClaim is called every time an eth signer sends in a claim. Each time:
+// - it adds the eth signer's vote to the claim using "tryAttestation". The votes are tallied in a struct called an
+//   "attestation", and when they pass a threshold, an enum called "Certainty" is updated.
+// - it checks "Certainty", and once the threshold is passed, "processAttestation" is called,
+//   which checks the nonce, updates the nonce, and actually moves tokens.
+//
+// A problem exists, involving two perfectly legitimate, non duplicated bridge deposits. The first could have e.g. nonce 101, and the second nonce 102.
+// If eth signers are not sending claims in to the Cosmos chain in strict nonce order, the second could happen to pass the vote threshold first, resulting
+// in it being impossible to submit the first. This failure is non-obvious, and could happen if one validator's packet containing
+// the claim for the first tx was dropped, or maybe just because of quirks of the Cosmos gossip network.
+//
+// To fix this here is a possible solution:
+// - Enforce strict nonce ordering on claims from a given validator. Do not let a deposit be submitted unless the nonce is exactly one
+//   higher than the last claim of the last deposit. This could be added with a nonce check in storeClaim.
+//   Eth signers will need to know how to avoid this check failing, either by knowing how to retry earlier transactions,
+//   or by not sending a claim before the last claim was successfully submitted.
+// - Don't cause a state transition (e.g. sending tokens) immediately once a deposit has reached the threshold of votes (is "observed"). Every block,
+//   attempt to play the "observed" deposit claims back and perform the state transitions. Stop if the nonce ever increases by more than 1.
+//   The unused deposit claims stick around and can be retried next block. Eth signers still need to know how to retry claims, otherwise they will be slashed.
+//
+// Jehan's note: The nonce logic for the batches is completely different. As shown above, we have to reject deposit claims
+// if all earlier deposit claims have not yet entered the system.
+// Batch claims are totally different. For batches, we need to free the transactions of earlier batches when a later batch claims
+// comes in. So given that this function is common to both types of claims, it is a bad place to implement any batch logic.
+// We will have to think about how to split the code. We may want to make two versions of this whole function.
+//
+// Let's say there are two batches in the batch pool. Batches with nonce 101 and 102. Both are successfully submitted to the
+// Ethereum chain. But due to quirks in the Cosmos gossip network, batch 102 is observed first. Batch 101's transactions are
+// free and can be put in a new batch. This results in a double spend.
+// So we need a similar mechanism to avoid out of order batch claims, just like the deposit claims. The difficulty is
+// that if an earlier batch is never submitted onto Eth (a normal occurence), it will never be observed, and with a naive
+// implementation of consecutive nonces, this will halt the bridge.
+// We need to distinguish somehow between a batch that has not been observed because it never was submitted, and a batch that
+// has not been observed because its claim got hung up in the Cosmos gossip network.
+//
+// This would not be an issue (AND deposit claims would not require a nonce at all), if we brought events in from Ethereum in blocks.
+// Each ethereum block, which could contain events relating both to deposits and batches, and would have its own nonce (the block height)
+// would be submitted as a claim. We would have the requirement that blocks be consecutive, as proposed for the deposit nonces above.
+// This would eliminate the possibility of duplicate deposits, and eliminate the possibility of batches being "observed" out of order.
+// It would also likely be more efficient.
 func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, details types.AttestationDetails) (*types.Attestation, error) {
+	// Jehan's note: Seems like this just stores the individual claim for future reference (e.g. slashing)
 	if err := k.storeClaim(ctx, claimType, nonce, validator, details); err != nil {
 		return nil, sdkerrors.Wrap(err, "claim")
 	}
 
 	validatorPower := k.StakingKeeper.GetLastValidatorPower(ctx, validator)
+	// Jehan's note: This seems to be where votes for a given claim are counted. "Attestation" seems to be a claim
+	// together with its total vote.
 	att, err := k.tryAttestation(ctx, claimType, nonce, details, uint64(validatorPower))
 	if err != nil {
 		return nil, err
@@ -32,12 +76,15 @@ func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types
 	// this is a really strange conditional that needs to be simplified, just asking for trouble.
 	// it is correct, but it's too difficult to read and there's too many ways for it to be true
 	// or false that are non-obvious. Great way to have a double-spend bug TODO refactor
+	// Jehan's note: This guards acceptance of a given claim. If this conditional does not return,
+	// tokens are moved on the next line.
 	if att.Certainty != types.CertaintyObserved || att.Status != types.ProcessStatusInit {
 		k.storeAttestation(ctx, att)
 		return att, nil
 	}
 
 	// next process Attestation
+	// Jehan's note: The nonce is checked in here.
 	if err := k.processAttestation(ctx, att); err != nil {
 		return nil, err
 	}
@@ -118,6 +165,7 @@ func (k Keeper) tryAttestation(ctx sdk.Context, claimType types.ClaimType, nonce
 			ConfirmationEndTime: now.Add(types.AttestationPeriod),
 		}
 	}
+	// Jehan's note: Adds the validators vote to a given claim
 	if err := att.AddVote(now, power); err != nil {
 		return nil, err
 	}
