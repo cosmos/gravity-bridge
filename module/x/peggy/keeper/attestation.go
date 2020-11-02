@@ -24,22 +24,8 @@ import (
 //   "attestation", and when they pass a threshold, an enum called "Certainty" is updated.
 // - it checks "Certainty", and once the threshold is passed, "processAttestation" is called,
 //   which checks the nonce, updates the nonce, and actually moves tokens.
-//
-// A problem exists, involving two perfectly legitimate, non duplicated bridge deposits. The first could have e.g. nonce 101, and the second nonce 102.
-// If eth signers are not sending claims in to the Cosmos chain in strict nonce order, the second could happen to pass the vote threshold first, resulting
-// in it being impossible to submit the first. This failure is non-obvious, and could happen if one validator's packet containing
-// the claim for the first tx was dropped, or maybe just because of quirks of the Cosmos gossip network.
-//
-// To fix this here is a possible solution:
-// - Enforce strict nonce ordering on claims from a given validator. Do not let a deposit be submitted unless the nonce is exactly one
-//   higher than the last claim of the last deposit. This could be added with a nonce check in storeClaim.
-//   Eth signers will need to know how to avoid this check failing, either by knowing how to retry earlier transactions,
-//   or by not sending a claim before the last claim was successfully submitted.
-// - Don't cause a state transition (e.g. sending tokens) immediately once a deposit has reached the threshold of votes (is "observed"). Every block,
-//   attempt to play the "observed" deposit claims back and perform the state transitions. Stop if the nonce ever increases by more than 1.
-//   The unused deposit claims stick around and can be retried next block. Eth signers still need to know how to retry claims, otherwise they will be slashed.
 func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, details types.AttestationDetails) (*types.Attestation, error) {
-	// Jehan's note: Seems like this just stores the individual claim for future reference (e.g. slashing)
+	// storeClaim stores the claim by an individual validator. It also makes sure that the event nonce is incremented by exactly 1
 	if err := k.storeClaim(ctx, claimType, nonce, validator, details); err != nil {
 		return nil, sdkerrors.Wrap(err, "claim")
 	}
@@ -63,7 +49,6 @@ func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types
 	}
 
 	// next process Attestation
-	// Jehan's note: The nonce is checked in here.
 	if err := k.processAttestation(ctx, att); err != nil {
 		return nil, err
 	}
@@ -105,8 +90,8 @@ func (k Keeper) storeClaim(ctx sdk.Context, claimType types.ClaimType, eventNonc
 	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator)
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
 	if eventNonce != lastEventNonce+1 {
-		// TODO: more descriptive error
-		return types.ErrInvalid
+		println("EVENT NONCE, LAST EVENT NONCE", eventNonce, lastEventNonce)
+		return types.ErrNonContiguousEventNonce
 	}
 	// Store this nonce and the claim
 	k.SetLastEventNonceByValidator(ctx, validator, eventNonce)
@@ -221,7 +206,12 @@ func (k Keeper) GetLastAttestedNonce(ctx sdk.Context, claimType types.ClaimType)
 
 func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValAddress) types.UInt64Nonce {
 	store := ctx.KVStore(k.storeKey)
-	return types.UInt64NonceFromBytes(store.Get(types.GetLastEventNonceByValidatorKey(validator)))
+	bytes := store.Get(types.GetLastEventNonceByValidatorKey(validator))
+
+	if len(bytes) == 0 {
+		return types.NewUInt64Nonce(0)
+	}
+	return types.UInt64NonceFromBytes(bytes)
 }
 
 func (k Keeper) SetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValAddress, nonce types.UInt64Nonce) {

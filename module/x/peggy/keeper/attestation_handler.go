@@ -46,6 +46,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		for i := range b.Elements {
 			a.keeper.removePoolEntry(ctx, b.Elements[i].ID)
 		}
+		// TODO: implement logic to free transactions from all earlier batches as well.
 		return nil
 	case types.ClaimTypeEthereumBridgeMultiSigUpdate:
 		if !a.keeper.HasValsetRequest(ctx, att.Nonce) {
