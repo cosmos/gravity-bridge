@@ -10,20 +10,34 @@ contract Peggy {
 	bytes32 public state_lastValsetCheckpoint;
 	mapping(address => uint256) public state_lastBatchNonces;
 	uint256 public state_lastValsetNonce = 0;
-	uint256 public state_lastSendToCosmosNonce = 0;
+	uint256 public state_lastEventNonce = 0;
 
 	// These are set once at initialization
 	bytes32 public state_peggyId;
 	uint256 public state_powerThreshold;
 
-	event ValsetUpdatedEvent(uint256 indexed _newNonce, address[] _validators, uint256[] _powers);
-	event TransactionBatchExecutedEvent(uint256 indexed _newNonce, address indexed _token);
+	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
+	// This is incremented every time one of these events is emitted. It is checked by the
+	// Cosmos module to ensure that all events are received in order, and that none are lost.
+	//
+	// ValsetUpdatedEvent does not include the field _eventNonce because it is never submitted to the Cosmos
+	// module. It is purely for the use of relayers to allow them to successfully submit batches.
+	event TransactionBatchExecutedEvent(
+		uint256 indexed _batchNonce,
+		address indexed _token,
+		uint256 _eventNonce
+	);
 	event SendToCosmosEvent(
 		address indexed _tokenContract,
 		address indexed _sender,
 		bytes32 indexed _destination,
 		uint256 _amount,
-		uint256 _nonce
+		uint256 _eventNonce
+	);
+	event ValsetUpdatedEvent(
+		uint256 indexed _newValsetNonce,
+		address[] _validators,
+		uint256[] _powers
 	);
 
 	// TEST FIXTURES
@@ -241,7 +255,7 @@ contract Peggy {
 		uint256[] memory _amounts,
 		address[] memory _destinations,
 		uint256[] memory _fees,
-		uint256 _nonce,
+		uint256 _batchNonce,
 		address _tokenContract
 	) public {
 		// CHECKS scoped to reduce stack depth
@@ -278,13 +292,12 @@ contract Peggy {
 			// Check that the transaction batch is well-formed
 			require(
 				_amounts.length == _destinations.length && _amounts.length == _fees.length,
-				// _amounts.length == _nonces.length,
 				"Malformed batch of transactions"
 			);
 
 			// Check that the batch nonce is higher than the last nonce for this token
 			require(
-				state_lastBatchNonces[_tokenContract] < _nonce,
+				state_lastBatchNonces[_tokenContract] < _batchNonce,
 				"New batch nonce must be greater than the current nonce"
 			);
 
@@ -313,7 +326,7 @@ contract Peggy {
 						_amounts,
 						_destinations,
 						_fees,
-						_nonce,
+						_batchNonce,
 						_tokenContract
 					)
 				),
@@ -329,7 +342,7 @@ contract Peggy {
 			state_lastValsetNonce = _newValsetNonce;
 
 			// Store batch nonce
-			state_lastBatchNonces[_tokenContract] = _nonce;
+			state_lastBatchNonces[_tokenContract] = _batchNonce;
 
 			{
 				// Send transaction amounts to destinations
@@ -346,7 +359,8 @@ contract Peggy {
 
 		// LOGS scoped to reduce stack depth
 		{
-			emit TransactionBatchExecutedEvent(_nonce, _tokenContract);
+			state_lastEventNonce = state_lastEventNonce.add(1);
+			emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, state_lastEventNonce);
 			emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers);
 		}
 	}
@@ -357,13 +371,13 @@ contract Peggy {
 		uint256 _amount
 	) public {
 		IERC20(_tokenContract).transferFrom(msg.sender, address(this), _amount);
-		state_lastSendToCosmosNonce = state_lastSendToCosmosNonce.add(1);
+		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
 			_tokenContract,
 			msg.sender,
 			_destination,
 			_amount,
-			state_lastSendToCosmosNonce
+			state_lastEventNonce
 		);
 	}
 
