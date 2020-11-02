@@ -35,7 +35,7 @@ func GetObservedCmd(cdc *codec.Codec) *cobra.Command {
 		CmdSendETHBootstrapRequest(cdc),
 		CmdSendETHDepositRequest(cdc),
 		CmdSendETHWithdrawalRequest(cdc),
-		CmdSendETHMultiSigRequest(cdc),
+		// CmdSendETHMultiSigRequest(cdc),
 	)...)
 
 	return testingTxCmd
@@ -168,7 +168,7 @@ func CmdSendETHDepositRequest(cdc *codec.Codec) *cobra.Command {
 				Orchestrator:          cosmosAddr,
 				Claims: []types.EthereumClaim{
 					types.EthereumBridgeDepositClaim{
-						Nonce:          nonce,
+						EventNonce:     nonce,
 						ERC20Token:     types.NewERC20Token(uint64(amount), tokenSymbol, tokenContractAddr),
 						EthereumSender: ethSenderAddr,
 						CosmosReceiver: receiverAddr,
@@ -185,7 +185,7 @@ func CmdSendETHDepositRequest(cdc *codec.Codec) *cobra.Command {
 
 func CmdSendETHWithdrawalRequest(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "withdrawal [eth chain id] [eth contract address] [nonce]",
+		Use:   "withdrawal [eth chain id] [eth contract address] [batch nonce] [event nonce]",
 		Short: "Submit a claim that a withdrawal was executed on the Ethereum side",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -199,7 +199,8 @@ func CmdSendETHWithdrawalRequest(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 			ethContractAddress := args[1]
-			nonce, err := parseNonce(args[2])
+			eventNonce, err := parseNonce(args[2])
+			batchNonce, err := parseNonce(args[3])
 			if err != nil {
 				return err
 			}
@@ -209,7 +210,8 @@ func CmdSendETHWithdrawalRequest(cdc *codec.Codec) *cobra.Command {
 				Orchestrator:          cosmosAddr,
 				Claims: []types.EthereumClaim{
 					types.EthereumBridgeWithdrawalBatchClaim{
-						Nonce: nonce,
+						EventNonce: eventNonce,
+						BatchNonce: batchNonce,
 					},
 				},
 			}
@@ -221,43 +223,43 @@ func CmdSendETHWithdrawalRequest(cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-func CmdSendETHMultiSigRequest(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "multisig-update [eth chain id] [eth contract address] [nonce]",
-		Short: "Submit a claim that the 'multisig set' update was executed on the Ethereum side",
-		Args:  cobra.ExactArgs(3),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cosmosAddr := cliCtx.GetFromAddress()
+// func CmdSendETHMultiSigRequest(cdc *codec.Codec) *cobra.Command {
+// 	return &cobra.Command{
+// 		Use:   "multisig-update [eth chain id] [eth contract address] [nonce]",
+// 		Short: "Submit a claim that the 'multisig set' update was executed on the Ethereum side",
+// 		Args:  cobra.ExactArgs(3),
+// 		RunE: func(cmd *cobra.Command, args []string) error {
+// 			cliCtx := context.NewCLIContext().WithCodec(cdc)
+// 			inBuf := bufio.NewReader(cmd.InOrStdin())
+// 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+// 			cosmosAddr := cliCtx.GetFromAddress()
 
-			ethChainID, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
-			ethContractAddress := types.NewEthereumAddress(args[1])
-			nonce, err := parseNonce(args[2])
-			if err != nil {
-				return err
-			}
-			msg := types.MsgCreateEthereumClaims{
-				EthereumChainID:       ethChainID,
-				BridgeContractAddress: ethContractAddress,
-				Orchestrator:          cosmosAddr,
-				Claims: []types.EthereumClaim{
-					types.EthereumBridgeMultiSigUpdateClaim{
-						Nonce: nonce,
-					},
-				},
-			}
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
-}
+// 			ethChainID, err := strconv.ParseUint(args[0], 10, 64)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			ethContractAddress := types.NewEthereumAddress(args[1])
+// 			nonce, err := parseNonce(args[2])
+// 			if err != nil {
+// 				return err
+// 			}
+// 			msg := types.MsgCreateEthereumClaims{
+// 				EthereumChainID:       ethChainID,
+// 				BridgeContractAddress: ethContractAddress,
+// 				Orchestrator:          cosmosAddr,
+// 				Claims: []types.EthereumClaim{
+// 					types.EthereumBridgeMultiSigUpdateClaim{
+// 						Nonce: nonce,
+// 					},
+// 				},
+// 			}
+// 			if err := msg.ValidateBasic(); err != nil {
+// 				return err
+// 			}
+// 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+// 		},
+// 	}
+// }
 
 func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
