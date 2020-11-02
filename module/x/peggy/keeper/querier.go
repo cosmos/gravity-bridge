@@ -258,8 +258,8 @@ func lastApprovedNonces(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 }
 
 type MultiSigUpdateResponse struct {
-	Valset     types.Valset `json:"valset"`
-	Signatures []string     `json:"signatures"`
+	Valset     types.Valset           `json:"valset"`
+	Signatures []SignatureWithAddress `json:"signatures"`
 }
 
 func lastApprovedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
@@ -307,7 +307,10 @@ func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper K
 	}
 	for _, m := range observed.Members {
 		if sig, ok := addToSig[m.EthereumAddress]; ok {
-			result.Signatures = append(result.Signatures, sig)
+			var val SignatureWithAddress
+			val.Address = m.EthereumAddress
+			val.Signature = sig
+			result.Signatures = append(result.Signatures, val)
 		}
 	}
 	res, err := codec.MarshalJSONIndent(keeper.cdc, result)
@@ -344,9 +347,19 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 	return res, nil
 }
 
+// We can assume that the signatures and the valset members are sorted
+// in the same order but this is insufficient for a relayer to actually
+// relay the batch. Since a batch may pass without signatures from some
+// validators we need some metadata to know who the signatures are from.
+// So that we can properly pass a blank signature for a specific validator
+type SignatureWithAddress struct {
+	Signature string                `json:"eth_signature"`
+	Address   types.EthereumAddress `json:"eth_address"`
+}
+
 type ApprovedOutgoingTxBatchResponse struct {
-	Batch      types.OutgoingTxBatch `json:"batch"`
-	Signatures []string              `json:"signatures"`
+	Batch      types.OutgoingTxBatch  `json:"batch"`
+	Signatures []SignatureWithAddress `json:"signatures"`
 }
 
 func queryInflightBatches(ctx sdk.Context, keeper Keeper) ([]byte, error) {
@@ -392,7 +405,10 @@ func queryInflightBatches(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 		// add signatures from last observed multisig, sorted by members
 		for _, m := range observed.Members {
 			if sig, ok := addToSig[m.EthereumAddress]; ok {
-				r.Signatures = append(r.Signatures, sig)
+				var val SignatureWithAddress
+				val.Address = m.EthereumAddress
+				val.Signature = sig
+				r.Signatures = append(r.Signatures, val)
 			}
 		}
 		out[i] = r
