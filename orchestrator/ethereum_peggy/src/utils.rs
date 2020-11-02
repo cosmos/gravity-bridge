@@ -27,7 +27,7 @@ pub fn get_checkpoint_abi_encode(
     valset: &Valset,
     peggy_id: &str,
 ) -> Result<Vec<u8>, OrchestratorError> {
-    let (eth_addresses, powers) = valset.filter_empty_addresses()?;
+    let (eth_addresses, powers) = valset.filter_empty_addresses();
     Ok(encode_tokens(&[
         Token::FixedString(peggy_id.to_string()),
         Token::FixedString("checkpoint".to_string()),

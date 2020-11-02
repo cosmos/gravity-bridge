@@ -1,3 +1,4 @@
+use crate::batch_relaying::relay_batches;
 use crate::ethereum_event_watcher::check_for_events;
 use crate::valset_relaying::relay_valsets;
 use clarity::PrivateKey as EthPrivateKey;
@@ -46,6 +47,17 @@ pub async fn orchestrator_main_loop(
 
         //  Checks for new valsets to sign and relays validator sets from Cosmos -> Ethereum including
         relay_valsets(
+            cosmos_key,
+            ethereum_key,
+            &web3,
+            &contact,
+            contract_address,
+            fee.clone(),
+            LOOP_SPEED,
+        )
+        .await;
+
+        relay_batches(
             cosmos_key,
             ethereum_key,
             &web3,

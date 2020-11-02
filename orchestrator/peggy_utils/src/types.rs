@@ -30,9 +30,10 @@ pub struct Valset {
 }
 
 impl Valset {
-    /// Takes an array of Option<EthAddress> and converts to EthAddress erroring when
-    /// an None is found
-    pub fn filter_empty_addresses(&self) -> Result<(Vec<EthAddress>, Vec<u64>), JsonRpcError> {
+    /// Takes an array of Option<EthAddress> and converts to EthAddress and replaces with zeros
+    /// when none is found, Zeros are interpreted by the contract as 'no signature provided' and
+    /// signature checks can pass with up to 33% of all voting power presented as zeroed addresses
+    pub fn filter_empty_addresses(&self) -> (Vec<EthAddress>, Vec<u64>) {
         let mut addresses = Vec::new();
         let mut powers = Vec::new();
         for val in self.members.iter() {
@@ -42,13 +43,12 @@ impl Valset {
                     powers.push(val.power);
                 }
                 None => {
-                    return Err(JsonRpcError::BadInput(
-                        "All Eth Addresses must be set".to_string(),
-                    ))
+                    addresses.push(EthAddress::default());
+                    powers.push(val.power);
                 }
             }
         }
-        Ok((addresses, powers))
+        (addresses, powers)
     }
 
     pub fn get_power(&self, address: EthAddress) -> Result<u64, JsonRpcError> {
@@ -63,10 +63,10 @@ impl Valset {
     }
 
     /// combines the provided signatures with the valset ensuring that ordering and signature data is correct
-    pub fn order_sigs(
+    pub fn order_valset_sigs(
         &self,
         signatures: &[ValsetConfirmResponse],
-    ) -> Result<Vec<ValsetSignature>, JsonRpcError> {
+    ) -> Result<Vec<PeggySignature>, JsonRpcError> {
         let mut out = Vec::new();
         let mut members = HashMap::new();
         for member in self.members.iter() {
@@ -80,7 +80,7 @@ impl Valset {
         }
         for sig in signatures {
             if let Some(val) = members.get(&sig.eth_address) {
-                out.push(ValsetSignature {
+                out.push(PeggySignature {
                     power: val.power,
                     eth_address: sig.eth_address,
                     v: sig.eth_signature.v.clone(),
@@ -97,7 +97,48 @@ impl Valset {
         }
         // sort by power so that it is accepted by the contract
         out.sort();
-        // go sorts descending, rust sorts ascending, annoying
+        // go code sorts descending, rust sorts ascending, annoying
+        out.reverse();
+
+        Ok(out)
+    }
+
+    /// combines the provided signatures with the valset ensuring that ordering and signature data is correct
+    pub fn order_batch_sigs(
+        &self,
+        signed_batch: SignedTransactionBatch,
+    ) -> Result<Vec<PeggySignature>, JsonRpcError> {
+        let mut out = Vec::new();
+        let mut members = HashMap::new();
+        for member in self.members.iter() {
+            if let Some(address) = member.eth_address {
+                members.insert(address, member);
+            } else {
+                return Err(JsonRpcError::BadInput(
+                    "All Eth Addresses must be set".to_string(),
+                ));
+            }
+        }
+        for sig in signed_batch.signatures {
+            if let Some(val) = members.get(&sig.eth_address) {
+                out.push(PeggySignature {
+                    power: val.power,
+                    eth_address: sig.eth_address,
+                    v: sig.eth_signature.v.clone(),
+                    r: sig.eth_signature.r.clone(),
+                    s: sig.eth_signature.s.clone(),
+                })
+            } else {
+                return Err(JsonRpcError::BadInput(format!(
+                    "No Match for sig! {} and {}",
+                    sig.eth_address,
+                    ValsetMember::display_vec(&self.members)
+                )));
+            }
+        }
+        // sort by power so that it is accepted by the contract
+        out.sort();
+        // go code sorts descending, rust sorts ascending, annoying
         out.reverse();
 
         Ok(out)
@@ -105,12 +146,10 @@ impl Valset {
 }
 
 /// A sortable struct of a validator and it's signatures
-/// there's some black magic here TODO we should implement
-/// ORD ourselves because the order of this structs members below
-/// determines what is compared first to produce an order. In this case
-/// it's powers, then eth addresses
+/// this can be used for either transaction batch or validator
+/// set signatures
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct ValsetSignature {
+pub struct PeggySignature {
     // ord sorts on the first member first, so this produces the correct sorting
     power: u64,
     eth_address: EthAddress,
@@ -119,7 +158,7 @@ pub struct ValsetSignature {
     s: Uint256,
 }
 
-impl Ord for ValsetSignature {
+impl Ord for PeggySignature {
     // Alex wrote the Go sorting implementation for validator
     // sets as Greatest to Least, now this isn't the convention
     // for any standard sorting implementation and Rust doesn't
@@ -137,15 +176,15 @@ impl Ord for ValsetSignature {
     }
 }
 
-impl PartialOrd for ValsetSignature {
+impl PartialOrd for PeggySignature {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-/// Validator set signatures in array formats ready to be
-/// submitted to Ethereum
-pub struct ValsetSignatureArrays {
+/// signatures in array formats ready to be
+/// submitted to the Peggy Ethereum Contract
+pub struct PeggySignatureArrays {
     pub addresses: Vec<EthAddress>,
     pub powers: Vec<u64>,
     pub v: Token,
@@ -153,10 +192,10 @@ pub struct ValsetSignatureArrays {
     pub s: Token,
 }
 
-/// This function handles converting the ValsetSignature type into an Ethereum
+/// This function handles converting the PeggySignature type into an Ethereum
 /// submittable arrays, including the finicky token encoding tricks you need to
 /// perform in order to distinguish between a uint8[] and bytes32[]
-pub fn to_arrays(input: Vec<ValsetSignature>) -> ValsetSignatureArrays {
+pub fn to_arrays(input: Vec<PeggySignature>) -> PeggySignatureArrays {
     let mut addresses = Vec::new();
     let mut powers = Vec::new();
     let mut v = Vec::new();
@@ -169,7 +208,7 @@ pub fn to_arrays(input: Vec<ValsetSignature>) -> ValsetSignatureArrays {
         r.push(Token::Bytes(val.r.to_bytes_be()));
         s.push(Token::Bytes(val.s.to_bytes_be()));
     }
-    ValsetSignatureArrays {
+    PeggySignatureArrays {
         addresses,
         powers,
         v: v.into(),
@@ -179,11 +218,35 @@ pub fn to_arrays(input: Vec<ValsetSignature>) -> ValsetSignatureArrays {
 }
 
 /// a list of validators, powers, and eth addresses at a given block height
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq)]
 pub struct ValsetMember {
     // ord sorts on the first member first, so this produces the correct sorting
     power: u64,
     eth_address: Option<EthAddress>,
+}
+
+impl Ord for ValsetMember {
+    // Alex wrote the Go sorting implementation for validator
+    // sets as Greatest to Least, now this isn't the convention
+    // for any standard sorting implementation and Rust doesn't
+    // really like it when you implement sort yourself. It prefers
+    // Ord. So here we implement Ord with the Eth address sorting
+    // reversed, since they are also sorted greatest to least in
+    // the Cosmos module. Then we can call .sort and .reverse and get
+    // the same sorting as the Cosmos module.
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.power != other.power {
+            self.power.cmp(&other.power)
+        } else {
+            self.eth_address.cmp(&other.eth_address).reverse()
+        }
+    }
+}
+
+impl PartialOrd for ValsetMember {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl ValsetMember {
@@ -373,6 +436,71 @@ impl SendToCosmosEvent {
     }
 }
 
+/// This represents an individual transaction being bridged over to Ethereum
+/// parallel is the OutgoingTransferTx in x/peggy/types/batch.go
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct BatchTransaction {
+    pub txid: Uint256,
+    pub sender: CosmosAddress,
+    pub destination: EthAddress,
+    pub amount: ERC20Token,
+    pub bridge_fee: ERC20Token,
+}
+
+/// the response we get when querying for a valset confirmation
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct TransactionBatch {
+    pub nonce: Uint256,
+    pub elements: Vec<BatchTransaction>,
+    pub created_at: String,
+    pub total_fee: ERC20Token,
+    pub bridged_denominator: String,
+    pub batch_status: String,
+    pub valset: Valset,
+    pub token_contract: EthAddress,
+}
+
+impl TransactionBatch {
+    /// extracts the amounts, destinations and fees as submitted to the Ethereum contract
+    /// and used for signatures
+    pub fn get_checkpoint_values(&self) -> (Token, Token, Token) {
+        let mut amounts = Vec::new();
+        let mut destinations = Vec::new();
+        let mut fees = Vec::new();
+        for item in self.elements.iter() {
+            amounts.push(Token::Bytes(item.amount.amount.clone().to_bytes_be()));
+            fees.push(Token::Bytes(item.bridge_fee.amount.clone().to_bytes_be()));
+            destinations.push(item.destination)
+        }
+        (
+            Token::Dynamic(amounts),
+            destinations.into(),
+            Token::Dynamic(fees),
+        )
+    }
+}
+
+/// the response we get when querying for a valset confirmation
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct SignedTransactionBatch {
+    pub batch: TransactionBatch,
+    pub signatures: Vec<SigWithAddress>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
+pub struct SigWithAddress {
+    eth_address: EthAddress,
+    eth_signature: EthSignature,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
+pub struct ERC20Token {
+    pub amount: Uint256,
+    pub symbol: String,
+    #[serde(rename = "token_contract_address")]
+    pub token_contract_address: EthAddress,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -381,8 +509,8 @@ mod tests {
 
     #[test]
     fn test_valset_sort() {
-        let correct: [ValsetSignature; 8] = [
-            ValsetSignature {
+        let correct: [PeggySignature; 8] = [
+            PeggySignature {
                 power: 685294939,
                 eth_address: "0x479FFc856Cdfa0f5D1AE6Fa61915b01351A7773D"
                     .parse()
@@ -391,7 +519,7 @@ mod tests {
                 r: 0u64.into(),
                 s: 0u64.into(),
             },
-            ValsetSignature {
+            PeggySignature {
                 power: 678509841,
                 eth_address: "0x6db48cBBCeD754bDc760720e38E456144e83269b"
                     .parse()
@@ -400,7 +528,7 @@ mod tests {
                 r: 0u64.into(),
                 s: 0u64.into(),
             },
-            ValsetSignature {
+            PeggySignature {
                 power: 671724742,
                 eth_address: "0x0A7254b318dd742A3086882321C27779B4B642a6"
                     .parse()
@@ -409,7 +537,7 @@ mod tests {
                 r: 0u64.into(),
                 s: 0u64.into(),
             },
-            ValsetSignature {
+            PeggySignature {
                 power: 671724742,
                 eth_address: "0x454330deAaB759468065d08F2b3B0562caBe1dD1"
                     .parse()
@@ -418,7 +546,7 @@ mod tests {
                 r: 0u64.into(),
                 s: 0u64.into(),
             },
-            ValsetSignature {
+            PeggySignature {
                 power: 671724742,
                 eth_address: "0x8E91960d704Df3fF24ECAb78AB9df1B5D9144140"
                     .parse()
@@ -427,7 +555,7 @@ mod tests {
                 r: 0u64.into(),
                 s: 0u64.into(),
             },
-            ValsetSignature {
+            PeggySignature {
                 power: 617443955,
                 eth_address: "0x3511A211A6759d48d107898302042d1301187BA9"
                     .parse()
@@ -436,7 +564,7 @@ mod tests {
                 r: 0u64.into(),
                 s: 0u64.into(),
             },
-            ValsetSignature {
+            PeggySignature {
                 power: 291759231,
                 eth_address: "0xF14879a175A2F1cEFC7c616f35b6d9c2b0Fd8326"
                     .parse()
@@ -445,7 +573,7 @@ mod tests {
                 r: 0u64.into(),
                 s: 0u64.into(),
             },
-            ValsetSignature {
+            PeggySignature {
                 power: 6785098,
                 eth_address: "0x37A0603dA2ff6377E5C7f75698dabA8EE4Ba97B8"
                     .parse()

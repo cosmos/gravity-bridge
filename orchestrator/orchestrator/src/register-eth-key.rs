@@ -12,6 +12,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 
+mod batch_relaying;
 mod ethereum_event_watcher;
 mod main_loop;
 mod valset_relaying;
