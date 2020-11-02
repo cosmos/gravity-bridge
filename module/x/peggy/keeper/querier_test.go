@@ -398,10 +398,19 @@ func TestLastApprovedMultiSigUpdate(t *testing.T) {
 						{Power: 1, EthereumAddress: createEthAddress(1)},
 					},
 				},
-				Signatures: []string{
-					createFakeEthSignature(3),
-					createFakeEthSignature(2),
-					createFakeEthSignature(1),
+				Signatures: []SignatureWithAddress{
+					{
+						createFakeEthSignature(3),
+						createEthAddress(3),
+					},
+					{
+						createFakeEthSignature(2),
+						createEthAddress(2),
+					},
+					{
+						createFakeEthSignature(1),
+						createEthAddress(1),
+					},
 				},
 			},
 		},
@@ -420,8 +429,11 @@ func TestLastApprovedMultiSigUpdate(t *testing.T) {
 						{Power: 2, EthereumAddress: createEthAddress(2)},
 					},
 				},
-				Signatures: []string{
-					createFakeEthSignature(2),
+				Signatures: []SignatureWithAddress{
+					{
+						createFakeEthSignature(2),
+						createEthAddress(2),
+					},
 				},
 			},
 		},
@@ -440,8 +452,11 @@ func TestLastApprovedMultiSigUpdate(t *testing.T) {
 						{Power: 1, EthereumAddress: createEthAddress(1)},
 					},
 				},
-				Signatures: []string{
-					createFakeEthSignature(1),
+				Signatures: []SignatureWithAddress{
+					{
+						createFakeEthSignature(1),
+						createEthAddress(1),
+					},
 				},
 			},
 		},
@@ -537,10 +552,19 @@ func TestQueryInflightBatches(t *testing.T) {
 			expResp: []ApprovedOutgoingTxBatchResponse{
 				{
 					Batch: batch,
-					Signatures: []string{
-						createFakeEthSignature(3),
-						createFakeEthSignature(2),
-						createFakeEthSignature(1),
+					Signatures: []SignatureWithAddress{
+						{
+							createFakeEthSignature(3),
+							createEthAddress(3),
+						},
+						{
+							createFakeEthSignature(2),
+							createEthAddress(2),
+						},
+						{
+							createFakeEthSignature(1),
+							createEthAddress(1),
+						},
 					},
 				},
 			},
@@ -556,8 +580,11 @@ func TestQueryInflightBatches(t *testing.T) {
 			expResp: []ApprovedOutgoingTxBatchResponse{
 				{
 					Batch: batch,
-					Signatures: []string{
-						createFakeEthSignature(2),
+					Signatures: []SignatureWithAddress{
+						{
+							createFakeEthSignature(2),
+							createEthAddress(2),
+						},
 					},
 				},
 			},
@@ -573,8 +600,11 @@ func TestQueryInflightBatches(t *testing.T) {
 			expResp: []ApprovedOutgoingTxBatchResponse{
 				{
 					Batch: batch,
-					Signatures: []string{
-						createFakeEthSignature(1),
+					Signatures: []SignatureWithAddress{
+						{
+							createFakeEthSignature(1),
+							createEthAddress(1),
+						},
 					},
 				},
 			},
