@@ -327,7 +327,7 @@ func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
 }
 
 type EthereumClaim interface {
-	GetNonce() UInt64Nonce
+	GetEventNonce() UInt64Nonce
 	GetType() ClaimType
 	ValidateBasic() error
 	Details() AttestationDetails
@@ -336,7 +336,7 @@ type EthereumClaim interface {
 var (
 	_ EthereumClaim = EthereumBridgeDepositClaim{}
 	_ EthereumClaim = EthereumBridgeWithdrawalBatchClaim{}
-	_ EthereumClaim = EthereumBridgeMultiSigUpdateClaim{}
+	// _ EthereumClaim = EthereumBridgeMultiSigUpdateClaim{}
 	_ EthereumClaim = EthereumBridgeBootstrappedClaim{}
 )
 
@@ -345,7 +345,7 @@ var NoUniqueClaimDetails AttestationDetails = nil
 
 // EthereumBridgeDepositClaim claims that a token was deposited on the bridge contract.
 type EthereumBridgeDepositClaim struct {
-	Nonce          UInt64Nonce     `json:"nonce" yaml:"nonce"`
+	EventNonce     UInt64Nonce     `json:"event_nonce" yaml:"event_nonce"`
 	ERC20Token     ERC20Token      `json:"erc20_token"`
 	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
 	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
@@ -355,13 +355,13 @@ func (e EthereumBridgeDepositClaim) GetType() ClaimType {
 	return ClaimTypeEthereumBridgeDeposit
 }
 
-func (e EthereumBridgeDepositClaim) GetNonce() UInt64Nonce {
-	return e.Nonce
+func (e EthereumBridgeDepositClaim) GetEventNonce() UInt64Nonce {
+	return e.EventNonce
 }
 
 func (e EthereumBridgeDepositClaim) ValidateBasic() error {
 	// todo: validate all fields
-	if err := e.Nonce.ValidateBasic(); err != nil {
+	if err := e.EventNonce.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "nonce")
 	}
 	return nil
@@ -374,7 +374,6 @@ func (e EthereumBridgeDepositClaim) ValidateBasic() error {
 // -------------
 func (e EthereumBridgeDepositClaim) Details() AttestationDetails {
 	return BridgeDeposit{
-		Nonce:          e.Nonce,
 		ERC20Token:     e.ERC20Token,
 		EthereumSender: e.EthereumSender,
 		CosmosReceiver: e.CosmosReceiver,
@@ -383,19 +382,20 @@ func (e EthereumBridgeDepositClaim) Details() AttestationDetails {
 
 // EthereumBridgeWithdrawalBatchClaim claims that a batch of withdrawal operations on the bridge contract was executed.
 type EthereumBridgeWithdrawalBatchClaim struct {
-	Nonce UInt64Nonce `json:"nonce" yaml:"nonce"`
+	EventNonce UInt64Nonce `json:"event_nonce" yaml:"event_nonce"`
+	BatchNonce UInt64Nonce `json:"batch_nonce" yaml:"batch_nonce"`
 }
 
 func (e EthereumBridgeWithdrawalBatchClaim) GetType() ClaimType {
 	return ClaimTypeEthereumBridgeWithdrawalBatch
 }
 
-func (e EthereumBridgeWithdrawalBatchClaim) GetNonce() UInt64Nonce {
-	return e.Nonce
+func (e EthereumBridgeWithdrawalBatchClaim) GetEventNonce() UInt64Nonce {
+	return e.EventNonce
 }
 
 func (e EthereumBridgeWithdrawalBatchClaim) ValidateBasic() error {
-	if err := e.Nonce.ValidateBasic(); err != nil {
+	if err := e.EventNonce.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "nonce")
 	}
 	return nil
@@ -439,6 +439,8 @@ var (
 
 // EthereumBridgeBootstrappedClaim orchestrators confirm that the contract is setup on the Ethereum side and the init data.
 type EthereumBridgeBootstrappedClaim struct {
+	// There's no way this can logically have a nonce. The bridge is only bootstrapped once. This code is over generic.
+	// This bootstrapping stuff needs to be removed from the Ethereum event oracle.
 	Nonce UInt64Nonce `json:"nonce" yaml:"nonce"`
 	// PeggyID is a random 32 byte value to prevent signature reuse
 	PeggyID string `json:"peggy_id" yaml:"peggy_id"`
@@ -450,7 +452,7 @@ type EthereumBridgeBootstrappedClaim struct {
 	StartThreshold uint64 `json:"start_threshold" yaml:"start_threshold"`
 }
 
-func (e EthereumBridgeBootstrappedClaim) GetNonce() UInt64Nonce {
+func (e EthereumBridgeBootstrappedClaim) GetEventNonce() UInt64Nonce {
 	return e.Nonce
 }
 

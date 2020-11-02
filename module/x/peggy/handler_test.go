@@ -63,7 +63,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 		Orchestrator:          myOrchestratorAddr,
 		Claims: []EthereumClaim{
 			EthereumBridgeDepositClaim{
-				Nonce: myNonce,
+				EventNonce: myNonce,
 				ERC20Token: types.ERC20Token{
 					Amount:               12,
 					Symbol:               "ALX",

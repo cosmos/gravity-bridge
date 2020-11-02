@@ -86,10 +86,6 @@ func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types
 
 // end time check was handled in adding claim and would return an error early
 func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) error {
-	// nonce > last one of same claim type
-	if !att.Nonce.GreaterThan(k.GetLastAttestedNonce(ctx, att.ClaimType)) {
-		return sdkerrors.Wrap(types.ErrOutdated, "nonce")
-	}
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
 	if err := k.AttestationHandler.Handle(xCtx, *att); err != nil { // execute with a transient storage
@@ -100,17 +96,21 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) erro
 		commit() // persist transient storage
 	}
 	att.Status = types.ProcessStatusProcessed
-	k.setLastAttestedNonce(ctx, att.ClaimType, att.Nonce)
 	return nil
 }
 
-// storeClaim persists a claim. Fails when a claim of given type and nonce was was submitted by the validator before
-func (k Keeper) storeClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, details types.AttestationDetails) error {
+// storeClaim persists a claim. Fails when a claim submitted by an Eth signer does not increment the event nonce by exactly 1.
+func (k Keeper) storeClaim(ctx sdk.Context, claimType types.ClaimType, eventNonce types.UInt64Nonce, validator sdk.ValAddress, details types.AttestationDetails) error {
 	store := ctx.KVStore(k.storeKey)
-	cKey := types.GetClaimKey(claimType, nonce, validator, details)
-	if store.Has(cKey) {
-		return types.ErrDuplicate
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator)
+	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
+	if eventNonce != lastEventNonce+1 {
+		// TODO: more descriptive error
+		return types.ErrInvalid
 	}
+	// Store this nonce and the claim
+	k.SetLastEventNonceByValidator(ctx, validator, eventNonce)
+	cKey := types.GetClaimKey(claimType, eventNonce, validator, details)
 	store.Set(cKey, []byte{}) // empty as all payload is in the key already (no gas costs)
 	return nil
 }
@@ -217,4 +217,14 @@ func (k Keeper) GetLastAttestedNonce(ctx sdk.Context, claimType types.ClaimType)
 	}
 	v := types.UInt64NonceFromBytes(iter.Key())
 	return &v
+}
+
+func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValAddress) types.UInt64Nonce {
+	store := ctx.KVStore(k.storeKey)
+	return types.UInt64NonceFromBytes(store.Get(types.GetLastEventNonceByValidatorKey(validator)))
+}
+
+func (k Keeper) SetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValAddress, nonce types.UInt64Nonce) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetLastEventNonceByValidatorKey(validator), nonce.Bytes())
 }

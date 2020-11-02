@@ -33,9 +33,10 @@ var (
 	SecondIndexOutgoingTXFeeKey = []byte{0x9}
 	OutgoingTXBatchKey          = []byte{0xa}
 	// deprecated
-	OutgoingTXBatchConfirmKey  = []byte{0xb}
-	BridgeApprovalSignatureKey = []byte{0xe}
-	SecondIndexNonceByClaimKey = []byte{0xf}
+	OutgoingTXBatchConfirmKey    = []byte{0xb}
+	BridgeApprovalSignatureKey   = []byte{0xe}
+	SecondIndexNonceByClaimKey   = []byte{0xf}
+	LastEventNonceByValidatorKey = []byte{0xf1}
 
 	// sequence keys
 	KeyLastTXPoolID        = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
@@ -133,4 +134,8 @@ func GetDenominatorKey(voucherDenominator string) []byte {
 
 func DecodeUin64(s []byte) uint64 {
 	return binary.BigEndian.Uint64(s)
+}
+
+func GetLastEventNonceByValidatorKey(validator sdk.ValAddress) []byte {
+	return append(LastEventNonceByValidatorKey, validator.Bytes()...)
 }
