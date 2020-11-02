@@ -33,7 +33,7 @@ type OutgoingTxBatch struct {
 	BridgedDenominator BridgedDenominator   `json:"bridged_denominator"`
 	BatchStatus        BatchStatus          `json:"batch_status"`
 	Valset             Valset               `json:"valset"`
-	TokenContract      EthereumAddress      `json:"tokenContract"`
+	TokenContract      EthereumAddress      `json:"token_contract"`
 }
 
 func (b *OutgoingTxBatch) Cancel() error {

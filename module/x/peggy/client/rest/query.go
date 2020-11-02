@@ -197,10 +197,8 @@ func lastBatchRequestByNonceHandler(cliCtx context.CLIContext, storeName string)
 
 func lastSignedBatchesHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		nonce := vars[nonce]
 
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/inflightBatches/%s", storeName, nonce))
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/inflightBatches/", storeName))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
