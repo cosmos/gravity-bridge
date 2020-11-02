@@ -259,7 +259,7 @@ func lastApprovedNonces(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 
 type MultiSigUpdateResponse struct {
 	Valset     types.Valset `json:"valset"`
-	Signatures [][]byte     `json:"signatures,omitempty"`
+	Signatures []string     `json:"signatures"`
 }
 
 func lastApprovedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
@@ -289,8 +289,8 @@ func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper K
 		Valset: *valset,
 	}
 
-	addToSig := make(map[types.EthereumAddress][]byte, len(result.Valset.Members))
-	keeper.IterateBridgeApprovalSignatures(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, *nonce, func(key []byte, sig []byte) bool {
+	addToSig := make(map[types.EthereumAddress]string, len(result.Valset.Members))
+	keeper.IterateBridgeApprovalSignatures(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, *nonce, func(key []byte, sig string) bool {
 		var valAddr sdk.ValAddress = key[types.UInt64NonceByteLen:] // key = nonce + validator address
 		ethAddr := keeper.GetEthAddress(ctx, valAddr)
 		if ethAddr == nil || ethAddr.IsEmpty() {
@@ -346,7 +346,7 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 
 type ApprovedOutgoingTxBatchResponse struct {
 	Batch      types.OutgoingTxBatch `json:"batch"`
-	Signatures [][]byte              `json:"signatures,omitempty"`
+	Signatures []string              `json:"signatures"`
 }
 
 func queryInflightBatches(ctx sdk.Context, keeper Keeper) ([]byte, error) {
@@ -379,8 +379,8 @@ func queryInflightBatches(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 			Batch: batches[i],
 		}
 
-		addToSig := make(map[types.EthereumAddress][]byte)
-		keeper.IterateBridgeApprovalSignatures(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, batches[i].Nonce, func(key []byte, sig []byte) bool {
+		addToSig := make(map[types.EthereumAddress]string)
+		keeper.IterateBridgeApprovalSignatures(ctx, types.ClaimTypeOrchestratorSignedWithdrawBatch, batches[i].Nonce, func(key []byte, sig string) bool {
 			var valAddr sdk.ValAddress = key[types.UInt64NonceByteLen:] // key = nonce + validator address
 			ethAddr := keeper.GetEthAddress(ctx, valAddr)
 			if ethAddr == nil || ethAddr.IsEmpty() {

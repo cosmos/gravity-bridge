@@ -94,7 +94,7 @@ func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 			}
 			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA)
 
-			msg := types.NewMsgSetEthAddress(types.EthereumAddress(ethAddress), cosmosAddr, hex.EncodeToString(signature))
+			msg := types.NewMsgSetEthAddress(types.EthereumAddress(ethAddress), cosmosAddr, signature)
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err

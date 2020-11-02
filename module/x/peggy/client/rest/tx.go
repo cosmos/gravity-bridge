@@ -220,7 +220,7 @@ func bootstrapConfirmHandler(cliCtx context.CLIContext) http.HandlerFunc {
 type BridgeApprovalSignatureReq struct {
 	BaseReq           rest.BaseReq   `json:"base_req"`
 	Orchestrator      sdk.AccAddress `json:"orchestrator"`
-	EthereumSignature []byte         `json:"ethereum_signature"`
+	EthereumSignature string         `json:"ethereum_signature"`
 }
 
 func BridgeApprovalSignatureHandler(cliCtx context.CLIContext) http.HandlerFunc {
