@@ -525,7 +525,7 @@ type MsgBridgeSignatureSubmission struct {
 	Nonce             UInt64Nonce    `json:"nonce"`
 	ClaimType         ClaimType      `json:"claim_type"`
 	Orchestrator      sdk.AccAddress `json:"orchestrator"`
-	EthereumSignature []byte         `json:"ethereum_signature"`
+	EthereumSignature string         `json:"ethereum_signature"`
 }
 
 // Route should return the name of the module

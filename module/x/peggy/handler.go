@@ -83,7 +83,7 @@ func handleMsgValsetRequest(ctx sdk.Context, keeper Keeper, msg types.MsgValsetR
 
 // deprecated should use MsgBridgeSignatureSubmission instead
 func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm) (*sdk.Result, error) {
-	sigBytes, err := hex.DecodeString(msg.Signature)
+	_, err := hex.DecodeString(msg.Signature)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
@@ -92,7 +92,7 @@ func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm
 		Nonce:             msg.Nonce,
 		ClaimType:         types.ClaimTypeOrchestratorSignedMultiSigUpdate,
 		Orchestrator:      msg.Validator,
-		EthereumSignature: sigBytes,
+		EthereumSignature: msg.Signature,
 	})
 }
 
@@ -111,7 +111,11 @@ func handleBridgeSignatureSubmission(ctx sdk.Context, keeper Keeper, msg MsgBrid
 	if ethAddress == nil {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
-	err = types.ValidateEthereumSignature(checkpoint, msg.EthereumSignature, ethAddress.String())
+	sigBytes, err := hex.DecodeString(msg.EthereumSignature)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
+	}
+	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress.String())
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature")
 	}
@@ -189,7 +193,7 @@ func handleMsgRequestBatch(ctx sdk.Context, keeper Keeper, msg MsgRequestBatch) 
 }
 
 func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) (*sdk.Result, error) {
-	sigBytes, err := hex.DecodeString(msg.Signature)
+	_, err := hex.DecodeString(msg.Signature)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
@@ -204,6 +208,6 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) 
 		Nonce:             msg.Nonce,
 		ClaimType:         types.ClaimTypeOrchestratorSignedWithdrawBatch,
 		Orchestrator:      msg.Orchestrator,
-		EthereumSignature: sigBytes,
+		EthereumSignature: msg.Signature,
 	})
 }

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"testing"
 
@@ -276,7 +277,7 @@ func TestLastPendingValsetRequest(t *testing.T) {
 	k.SetValsetRequest(ctx)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	nonce := types.NewUInt64Nonce(uint64(ctx.BlockHeight()))
-	k.SetBridgeApprovalSignature(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, nonce, otherValidatorCosmosAddr, []byte("signature"))
+	k.SetBridgeApprovalSignature(ctx, types.ClaimTypeOrchestratorSignedMultiSigUpdate, nonce, otherValidatorCosmosAddr, "signature")
 	k.SetValsetRequest(ctx)
 
 	specs := map[string]struct {
@@ -352,7 +353,7 @@ func TestLastApprovedMultiSigUpdate(t *testing.T) {
 	const maxVal = 3
 	validators := make(map[string]types.BridgeValidator, maxVal)
 	validatorAddrs := make([]sdk.ValAddress, maxVal+1)
-	sigs := make(map[string][]byte, maxVal)
+	sigs := make(map[string]string, maxVal)
 
 	// some validator/ orchestrator test data
 	for i := 0; i < maxVal; i++ {
@@ -397,7 +398,7 @@ func TestLastApprovedMultiSigUpdate(t *testing.T) {
 						{Power: 1, EthereumAddress: createEthAddress(1)},
 					},
 				},
-				Signatures: [][]byte{
+				Signatures: []string{
 					createFakeEthSignature(3),
 					createFakeEthSignature(2),
 					createFakeEthSignature(1),
@@ -419,7 +420,7 @@ func TestLastApprovedMultiSigUpdate(t *testing.T) {
 						{Power: 2, EthereumAddress: createEthAddress(2)},
 					},
 				},
-				Signatures: [][]byte{
+				Signatures: []string{
 					createFakeEthSignature(2),
 				},
 			},
@@ -439,7 +440,7 @@ func TestLastApprovedMultiSigUpdate(t *testing.T) {
 						{Power: 1, EthereumAddress: createEthAddress(1)},
 					},
 				},
-				Signatures: [][]byte{
+				Signatures: []string{
 					createFakeEthSignature(1),
 				},
 			},
@@ -492,7 +493,7 @@ func TestQueryInflightBatches(t *testing.T) {
 	const maxVal = 3
 	validators := make(map[string]types.BridgeValidator, maxVal)
 	validatorAddrs := make([]sdk.ValAddress, maxVal+1)
-	sigs := make(map[string][]byte, maxVal)
+	sigs := make(map[string]string, maxVal)
 
 	// some validator/ orchestrator test data
 	for i := 0; i < maxVal; i++ {
@@ -536,7 +537,7 @@ func TestQueryInflightBatches(t *testing.T) {
 			expResp: []ApprovedOutgoingTxBatchResponse{
 				{
 					Batch: batch,
-					Signatures: [][]byte{
+					Signatures: []string{
 						createFakeEthSignature(3),
 						createFakeEthSignature(2),
 						createFakeEthSignature(1),
@@ -555,7 +556,7 @@ func TestQueryInflightBatches(t *testing.T) {
 			expResp: []ApprovedOutgoingTxBatchResponse{
 				{
 					Batch: batch,
-					Signatures: [][]byte{
+					Signatures: []string{
 						createFakeEthSignature(2),
 					},
 				},
@@ -572,7 +573,7 @@ func TestQueryInflightBatches(t *testing.T) {
 			expResp: []ApprovedOutgoingTxBatchResponse{
 				{
 					Batch: batch,
-					Signatures: [][]byte{
+					Signatures: []string{
 						createFakeEthSignature(1),
 					},
 				},
@@ -636,8 +637,8 @@ func createEthAddress(i int) types.EthereumAddress {
 	return types.EthereumAddress(gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(i)}, 20)))
 }
 
-func createFakeEthSignature(n int) []byte {
-	return bytes.Repeat([]byte{byte(n)}, 64)
+func createFakeEthSignature(n int) string {
+	return hex.EncodeToString(bytes.Repeat([]byte{byte(n)}, 64))
 }
 
 func createValAddress() sdk.ValAddress {

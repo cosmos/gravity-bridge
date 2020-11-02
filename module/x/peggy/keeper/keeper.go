@@ -128,14 +128,14 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 	store.Set(types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator), k.cdc.MustMarshalBinaryBare(valsetConf))
 }
 
-func (k Keeper) SetBridgeApprovalSignature(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, signature []byte) {
+func (k Keeper) SetBridgeApprovalSignature(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, signature string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetBridgeApprovalSignatureKey(claimType, nonce, validator), signature)
+	store.Set(types.GetBridgeApprovalSignatureKey(claimType, nonce, validator), []byte(signature))
 }
 
-func (k Keeper) GetBridgeApprovalSignature(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress) []byte {
+func (k Keeper) GetBridgeApprovalSignature(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress) string {
 	store := ctx.KVStore(k.storeKey)
-	return store.Get(types.GetBridgeApprovalSignatureKey(claimType, nonce, validator))
+	return string(store.Get(types.GetBridgeApprovalSignatureKey(claimType, nonce, validator))[:])
 }
 
 func (k Keeper) HasBridgeApprovalSignature(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress) bool {
@@ -143,14 +143,14 @@ func (k Keeper) HasBridgeApprovalSignature(ctx sdk.Context, claimType types.Clai
 	return store.Has(types.GetBridgeApprovalSignatureKey(claimType, nonce, validator))
 }
 
-func (k Keeper) IterateBridgeApprovalSignatures(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, cb func(_ []byte, sig []byte) bool) {
+func (k Keeper) IterateBridgeApprovalSignatures(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, cb func(_ []byte, sig string) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetBridgeApprovalSignatureKeyPrefix(claimType))
 	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
 		// cb returns true to stop early
-		if cb(iter.Key(), iter.Value()) {
+		if cb(iter.Key(), string(iter.Value()[:])) {
 			break
 		}
 	}
