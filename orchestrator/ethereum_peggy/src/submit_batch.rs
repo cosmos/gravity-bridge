@@ -8,46 +8,53 @@ use web30::client::Web3;
 use web30::types::SendTxOption;
 
 /// this function generates an appropriate Ethereum transaction
-/// to submit the provided validator set and signatures.
-pub async fn send_eth_valset_update(
-    new_valset: Valset,
+/// to submit the provided transaction batch and validator set update.
+pub async fn send_eth_transaction_batch(
     old_valset: Valset,
-    confirms: &[ValsetConfirmResponse],
+    batch: SignedTransactionBatch,
     web3: &Web3,
     timeout: Duration,
     peggy_contract_address: EthAddress,
     our_eth_key: EthPrivateKey,
 ) -> Result<(), OrchestratorError> {
     let (old_addresses, old_powers) = old_valset.filter_empty_addresses();
-    let (new_addresses, new_powers) = new_valset.filter_empty_addresses();
+    let (new_addresses, new_powers) = batch.batch.valset.filter_empty_addresses();
     let old_nonce = old_valset.nonce;
-    let new_nonce = new_valset.nonce;
+    let new_nonce = batch.batch.valset.nonce;
     assert!(new_nonce > old_nonce);
     let eth_address = our_eth_key.to_public_key().unwrap();
     info!(
-        "Ordering signatures and submitting validator set {} -> {} update to Ethereum",
+        "Ordering signatures and submitting TransactionBatch {} -> {} update to Ethereum",
         old_nonce, new_nonce
     );
 
-    let sig_data = new_valset.order_valset_sigs(confirms)?;
+    let new_valset = batch.batch.valset.clone();
+    let sig_data = new_valset.order_batch_sigs(batch.clone())?;
     let sig_arrays = to_arrays(sig_data);
+    let (amounts, destinations, fees) = batch.batch.get_checkpoint_values();
 
     // Solidity function signature
-    // function updateValset(
+    // function updateValsetAndSubmitBatch(
     // // The new version of the validator set
     // address[] memory _newValidators,
     // uint256[] memory _newPowers,
     // uint256 _newValsetNonce,
-    // // The current validators that approve the change
+    // // The validators that approve the batch and new valset
     // address[] memory _currentValidators,
     // uint256[] memory _currentPowers,
     // uint256 _currentValsetNonce,
-    // // These are arrays of the parts of the current validator's signatures
+    // // These are arrays of the parts of the validators signatures
     // uint8[] memory _v,
     // bytes32[] memory _r,
-    // bytes32[] memory _s
-    let payload = clarity::abi::encode_call("updateValset(address[],uint256[],uint256,address[],uint256[],uint256,uint8[],bytes32[],bytes32[])",
-    &[new_addresses.into(), new_powers.into(), new_nonce.into(), old_addresses.into(), old_powers.into(), old_nonce.into(), sig_arrays.v, sig_arrays.r, sig_arrays.s]).unwrap();
+    // bytes32[] memory _s,
+    // // The batch of transactions
+    // uint256[] memory _amounts,
+    // address[] memory _destinations,
+    // uint256[] memory _fees,
+    // uint256 _nonce,
+    // address _tokenContract
+    let payload = clarity::abi::encode_call("updateValsetAndSubmitBatch(address[],uint256[],uint256,address[],uint256[],uint256,uint8[],bytes32[],bytes32[],uint256[],address[],uint256[],uint256,address)",
+    &[new_addresses.into(), new_powers.into(), new_nonce.into(), old_addresses.into(), old_powers.into(), old_nonce.into(), sig_arrays.v, sig_arrays.r, sig_arrays.s, amounts, destinations, fees, new_nonce.into(), batch.batch.token_contract.into()]).unwrap();
 
     let before_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
     if before_nonce != old_nonce.into() {

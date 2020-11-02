@@ -4,6 +4,7 @@ use deep_space::canonical_json::{to_canonical_json, CanonicalJsonError};
 use deep_space::coin::Coin;
 use deep_space::msg::DeepSpaceMsg;
 use num256::Uint256;
+use peggy_utils::types::ERC20Token;
 /// Any arbitrary message
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 #[serde(tag = "type", content = "value")]
@@ -83,17 +84,10 @@ pub struct RequestBatchMsg {
 pub struct ConfirmBatchMsg {
     pub nonce: Uint256,
     pub validator: Address,
+    pub address: EthAddress,
     /// a hex encoded string representing the Ethereum signature
     #[serde(rename = "signature")]
     pub eth_signature: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
-pub struct ERC20Token {
-    pub amount: Uint256,
-    pub symbol: String,
-    #[serde(rename = "token_contract_address")]
-    pub token_contract_address: EthAddress,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]

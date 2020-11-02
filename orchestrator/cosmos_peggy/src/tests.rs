@@ -69,7 +69,7 @@ async fn test_valset_request_calls(
         return Err(format!("Failed to update eth address {:?}", res));
     }
 
-    let res = get_peggy_valset_request(&contact, 1u32.into()).await;
+    let res = get_valset(&contact, 1u32.into()).await;
     if res.is_ok() {
         return Err(format!(
             "Got valset request that should not exist {:?}",
@@ -86,12 +86,12 @@ async fn test_valset_request_calls(
     }
     let valset_request_block = res.unwrap().height;
 
-    let res = get_peggy_valset_request(&contact, valset_request_block.into()).await;
+    let res = get_valset(&contact, valset_request_block.into()).await;
     println!("valset response is {:?}", res);
     if let Ok(valset) = res {
         assert_eq!(valset.height, valset_request_block);
 
-        let addresses = valset.result.filter_empty_addresses().unwrap().0;
+        let addresses = valset.result.filter_empty_addresses().0;
         if !addresses.contains(&eth_private_key.to_public_key().unwrap()) {
             // we successfully submitted our eth address before, we should find it now
             return Err(format!(
@@ -105,13 +105,13 @@ async fn test_valset_request_calls(
             valset_request_block
         ));
     }
-    let res = get_peggy_valset_request(&contact, valset_request_block.into()).await;
+    let res = get_valset(&contact, valset_request_block.into()).await;
     println!("valset response is {:?}", res);
     if let Ok(valset) = res {
         // this is actually a timing issue, but should be true
         assert_eq!(valset.height, valset_request_block);
 
-        let addresses = valset.result.filter_empty_addresses().unwrap().0;
+        let addresses = valset.result.filter_empty_addresses().0;
         if !addresses.contains(&eth_private_key.to_public_key().unwrap()) {
             // we successfully submitted our eth address before, we should find it now
             return Err("Incorrect Valset, does not include submitted eth address".to_string());
@@ -126,9 +126,6 @@ async fn test_valset_request_calls(
             valset.result,
             key,
             "test".to_string(),
-            None,
-            None,
-            None,
         )
         .await;
         if res.is_err() {
