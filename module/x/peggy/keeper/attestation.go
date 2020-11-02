@@ -38,27 +38,6 @@ import (
 // - Don't cause a state transition (e.g. sending tokens) immediately once a deposit has reached the threshold of votes (is "observed"). Every block,
 //   attempt to play the "observed" deposit claims back and perform the state transitions. Stop if the nonce ever increases by more than 1.
 //   The unused deposit claims stick around and can be retried next block. Eth signers still need to know how to retry claims, otherwise they will be slashed.
-//
-// Jehan's note: The nonce logic for the batches is completely different. As shown above, we have to reject deposit claims
-// if all earlier deposit claims have not yet entered the system.
-// Batch claims are totally different. For batches, we need to free the transactions of earlier batches when a later batch claims
-// comes in. So given that this function is common to both types of claims, it is a bad place to implement any batch logic.
-// We will have to think about how to split the code. We may want to make two versions of this whole function.
-//
-// Let's say there are two batches in the batch pool. Batches with nonce 101 and 102. Both are successfully submitted to the
-// Ethereum chain. But due to quirks in the Cosmos gossip network, batch 102 is observed first. Batch 101's transactions are
-// free and can be put in a new batch. This results in a double spend.
-// So we need a similar mechanism to avoid out of order batch claims, just like the deposit claims. The difficulty is
-// that if an earlier batch is never submitted onto Eth (a normal occurence), it will never be observed, and with a naive
-// implementation of consecutive nonces, this will halt the bridge.
-// We need to distinguish somehow between a batch that has not been observed because it never was submitted, and a batch that
-// has not been observed because its claim got hung up in the Cosmos gossip network.
-//
-// This would not be an issue (AND deposit claims would not require a nonce at all), if we brought events in from Ethereum in blocks.
-// Each ethereum block, which could contain events relating both to deposits and batches, and would have its own nonce (the block height)
-// would be submitted as a claim. We would have the requirement that blocks be consecutive, as proposed for the deposit nonces above.
-// This would eliminate the possibility of duplicate deposits, and eliminate the possibility of batches being "observed" out of order.
-// It would also likely be more efficient.
 func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, details types.AttestationDetails) (*types.Attestation, error) {
 	// Jehan's note: Seems like this just stores the individual claim for future reference (e.g. slashing)
 	if err := k.storeClaim(ctx, claimType, nonce, validator, details); err != nil {
