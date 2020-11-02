@@ -87,6 +87,70 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	// and vouchers added to the account
 	balance := keepers.BankKeeper.GetCoins(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy96dde7db38", 12)}, balance)
+
+	// Test to reject duplicate deposit
+	// when
+	ctx = ctx.WithBlockTime(myBlockTime)
+	_, err = h(ctx, msg)
+	// then
+	require.Error(t, err)
+	balance = keepers.BankKeeper.GetCoins(ctx, myCosmosAddr)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy96dde7db38", 12)}, balance)
+
+	// Test to reject skipped nonce
+	msg = MsgCreateEthereumClaims{
+		EthereumChainID:       0,
+		BridgeContractAddress: types.NewEthereumAddress(""),
+		Orchestrator:          myOrchestratorAddr,
+		Claims: []EthereumClaim{
+			EthereumBridgeDepositClaim{
+				EventNonce: types.NewUInt64Nonce(3),
+				ERC20Token: types.ERC20Token{
+					Amount:               12,
+					Symbol:               "ALX",
+					TokenContractAddress: tokenETHAddr,
+				},
+				EthereumSender: anyETHAddr,
+				CosmosReceiver: myCosmosAddr,
+			},
+		},
+	}
+
+	// when
+	ctx = ctx.WithBlockTime(myBlockTime)
+	_, err = h(ctx, msg)
+	// then
+	require.Error(t, err)
+	balance = keepers.BankKeeper.GetCoins(ctx, myCosmosAddr)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy96dde7db38", 12)}, balance)
+
+	// Test to finally accept consecutive nonce
+	msg = MsgCreateEthereumClaims{
+		EthereumChainID:       0,
+		BridgeContractAddress: types.NewEthereumAddress(""),
+		Orchestrator:          myOrchestratorAddr,
+		Claims: []EthereumClaim{
+			EthereumBridgeDepositClaim{
+				EventNonce: types.NewUInt64Nonce(2),
+				ERC20Token: types.ERC20Token{
+					Amount:               13,
+					Symbol:               "ALX",
+					TokenContractAddress: tokenETHAddr,
+				},
+				EthereumSender: anyETHAddr,
+				CosmosReceiver: myCosmosAddr,
+			},
+		},
+	}
+
+	// when
+	ctx = ctx.WithBlockTime(myBlockTime)
+	_, err = h(ctx, msg)
+	// then
+	require.NoError(t, err)
+	balance = keepers.BankKeeper.GetCoins(ctx, myCosmosAddr)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy96dde7db38", 25)}, balance)
+
 }
 
 // func TestHandleBridgeSignatureSubmission(t *testing.T) {
