@@ -25,8 +25,10 @@ use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use ethereum_peggy::send_to_cosmos::send_to_cosmos;
+use ethereum_peggy::utils::get_tx_batch_nonce;
 use ethereum_peggy::utils::get_valset_nonce;
 use main_loop::orchestrator_main_loop;
+use rand::Rng;
 use std::io::{BufRead, BufReader};
 use std::process::Command;
 use std::time::Duration;
@@ -213,27 +215,33 @@ async fn main() {
     // bootstrapping tests finish here and we move into operational tests
 
     // send 3 valset updates to make sure the process works back to back
-    for _ in 0u32..2 {
-        test_valset_update(
-            &contact,
-            &web30,
-            &keys,
-            peggy_address,
-            miner_address,
-            fee.clone(),
-        )
-        .await;
-    }
+    // for _ in 0u32..2 {
+    //     test_valset_update(
+    //         &contact,
+    //         &web30,
+    //         &keys,
+    //         peggy_address,
+    //         miner_address,
+    //         fee.clone(),
+    //     )
+    //     .await;
+    // }
 
-    // where we are sending this erc20
-    let dest = keys[0].0.to_public_key().unwrap().to_address();
-    let dest_private_key = keys[0].0;
-    let dest_eth_address = keys[0].1.to_public_key().unwrap();
+    // generate an address for coin sending tests, this ensures test imdepotency
+    let mut rng = rand::thread_rng();
+    let secret: [u8; 32] = rng.gen();
+    let dest_cosmos_private_key = CosmosPrivateKey::from_secret(&secret);
+    let dest_cosmos_address = dest_cosmos_private_key
+        .to_public_key()
+        .unwrap()
+        .to_address();
+    let dest_eth_private_key = EthPrivateKey::from_slice(&secret).unwrap();
+    let dest_eth_address = dest_eth_private_key.to_public_key().unwrap();
 
     let (token_name, amount) = test_erc20_send(
         &contact,
         &web30,
-        dest,
+        dest_cosmos_address,
         peggy_address,
         erc20_address,
         miner_private_key,
@@ -241,24 +249,50 @@ async fn main() {
     .await;
 
     // test_batch_send
-    info!("Sending {} {} back to Ethereum", token_name, amount);
-    send_to_eth(
-        dest_private_key,
+    let bridge_denom_fee = Coin {
+        denom: token_name.clone(),
+        amount: 1u64.into(),
+    };
+    let amount = amount - 5u64.into();
+    info!("Sending {}{} back to Ethereum", amount, token_name);
+    let res = send_to_eth(
+        dest_cosmos_private_key,
         dest_eth_address,
         Coin {
             denom: token_name.clone(),
             amount,
         },
-        fee.clone(),
+        bridge_denom_fee.clone(),
         &contact,
     )
     .await
     .unwrap();
+    info!("Sent tokens to Ethereum with {:?}", res);
 
     info!("Requesting transaction batch");
-    request_batch(dest_private_key, token_name, fee.clone(), &contact)
+    request_batch(keys[0].0, token_name, fee.clone(), &contact)
         .await
         .unwrap();
+
+    let mut current_eth_batch_nonce = get_tx_batch_nonce(peggy_address, miner_address, &web30)
+        .await
+        .expect("Failed to get current eth valset");
+    let starting_batch_nonce = current_eth_batch_nonce.clone();
+
+    let start = Instant::now();
+    while starting_batch_nonce == current_eth_batch_nonce {
+        info!(
+            "Batch is not yet submitted {}>, waiting",
+            starting_batch_nonce
+        );
+        current_eth_batch_nonce = get_tx_batch_nonce(peggy_address, miner_address, &web30)
+            .await
+            .expect("Failed to get current eth tx batch nonce");
+        delay_for(Duration::from_secs(4)).await;
+        if Instant::now() - start > TOTAL_TIMEOUT {
+            panic!("Failed to submit transaction batch set");
+        }
+    }
 }
 
 async fn test_valset_update(
@@ -322,7 +356,7 @@ async fn test_erc20_send(
     miner_private_key: EthPrivateKey,
 ) -> (String, Uint256) {
     let miner_address = miner_private_key.to_public_key().unwrap();
-    let amount: Uint256 = 1u64.into();
+    let amount: Uint256 = 100u64.into();
     info!(
         "Sending to Cosmos from {} to {} with amount {}",
         miner_address, dest, amount
