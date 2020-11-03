@@ -17,13 +17,13 @@ You can keep up with the latest development by watching our [public standups](ht
 - Solidity Contract
   - [x] Multiple ERC20 support
   - [x] Tested with 100+ validators
-  - [ ] Unit tests for every throw condition
+  - [X] Unit tests for every throw condition
   - [ ] Audit
 - Cosmos Module
   - [x] Basic validator set syncing
   - [x] Basic transaction batch generation
   - [x] Ethereum -> Cosmos Token issuing
-  - [ ] Bootstrapping
+  - [X] Bootstrapping
   - [ ] Genesis file save/load
   - [ ] Validator set syncing edge cases
   - [ ] Transaction batch edge cases
