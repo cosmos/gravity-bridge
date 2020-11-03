@@ -112,7 +112,7 @@ pub async fn get_oldest_unsigned_transaction_batch(
     address: Address,
 ) -> Result<ResponseWrapper<TransactionBatch>, JsonRpcError> {
     let none: Option<bool> = None;
-    let ret: Result<ResponseWrapper<TransactionBatch>, JsonRpcError> = contact
+    let ret: Result<ResponseWrapper<TypeWrapper<TransactionBatchUnparsed>>, JsonRpcError> = contact
         .jsonrpc_client
         .request_method(
             &format!("peggy/pending_batch_requests/{}", address),
@@ -122,7 +122,13 @@ pub async fn get_oldest_unsigned_transaction_batch(
         )
         .await;
     match ret {
-        Ok(val) => Ok(val),
+        Ok(val) => {
+            let wrapped = ResponseWrapper {
+                height: val.height,
+                result: val.result.value.convert(),
+            };
+            Ok(wrapped)
+        }
         Err(e) => Err(e),
     }
 }
@@ -131,7 +137,7 @@ pub async fn get_latest_transaction_batches(
     contact: &Contact,
 ) -> Result<ResponseWrapper<Vec<TransactionBatch>>, JsonRpcError> {
     let none: Option<bool> = None;
-    let ret: Result<ResponseWrapper<Vec<TransactionBatch>>, JsonRpcError> = contact
+    let ret: Result<ResponseWrapper<Vec<TransactionBatchUnparsed>>, JsonRpcError> = contact
         .jsonrpc_client
         .request_method(
             &"peggy/transaction_batches/".to_string(),
@@ -140,8 +146,19 @@ pub async fn get_latest_transaction_batches(
             None,
         )
         .await;
+
     match ret {
-        Ok(val) => Ok(val),
+        Ok(ret) => {
+            let mut parsed = Vec::new();
+            for val in ret.result {
+                parsed.push(val.convert())
+            }
+            let wrapped = ResponseWrapper {
+                height: ret.height,
+                result: parsed,
+            };
+            Ok(wrapped)
+        }
         Err(e) => Err(e),
     }
 }
@@ -151,7 +168,7 @@ pub async fn get_signed_transaction_batches(
     contact: &Contact,
 ) -> Result<ResponseWrapper<Vec<SignedTransactionBatch>>, JsonRpcError> {
     let none: Option<bool> = None;
-    let ret: Result<ResponseWrapper<Vec<SignedTransactionBatch>>, JsonRpcError> = contact
+    let ret: Result<ResponseWrapper<Vec<SignedTransactionBatchUnparsed>>, JsonRpcError> = contact
         .jsonrpc_client
         .request_method(
             &"peggy/signed_batches".to_string(),
@@ -161,7 +178,17 @@ pub async fn get_signed_transaction_batches(
         )
         .await;
     match ret {
-        Ok(val) => Ok(val),
+        Ok(ret) => {
+            let mut parsed = Vec::new();
+            for val in ret.result {
+                parsed.push(val.convert())
+            }
+            let wrapped = ResponseWrapper {
+                height: ret.height,
+                result: parsed,
+            };
+            Ok(wrapped)
+        }
         Err(e) => Err(e),
     }
 }

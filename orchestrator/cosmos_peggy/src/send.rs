@@ -10,6 +10,7 @@ use deep_space::stdsignmsg::StdSignMsg;
 use deep_space::transaction::TransactionSendType;
 use deep_space::{coin::Coin, utils::bytes_to_hex_str};
 use peggy_utils::types::*;
+use sha3::{Digest, Keccak256};
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
@@ -181,11 +182,12 @@ pub async fn send_batch_confirm(
         eth_addresses.into(),
         powers.into(),
     ]);
+    let valset_digest = Keccak256::digest(&valset_checkpoint).as_slice().to_vec();
     let (amounts, destinations, fees) = transaction_batch.get_checkpoint_values();
     let batch_checkpoint = encode_tokens(&[
         Token::FixedString(peggy_id),
         Token::FixedString("valsetAndTransactionBatch".to_string()),
-        Token::Bytes(valset_checkpoint),
+        Token::Bytes(valset_digest),
         amounts,
         destinations,
         fees,

@@ -65,7 +65,7 @@ pub async fn relay_batches(
             .unwrap();
             trace!("Batch confirm result is {:?}", res);
         }
-        Err(e) => trace!("Failed to get unsigned Batches with {:?}", e),
+        Err(e) => info!("Failed to get unsigned Batches with {:?}", e),
     }
 
     let latest_signed_batches = get_signed_transaction_batches(&contact).await;
