@@ -77,7 +77,7 @@ pub async fn send_eth_transaction_batch(
         .await?;
     info!("Finished valset update with txid {:#066x}", tx);
 
-    // TODO this segment of code works around the race condition for submitting valsets mostly
+    // TODO this segment of code works around the race condition for submitting batches mostly
     // by not caring if our own submission reverts and only checking if the valset has been updated
     // period not if our update succeeded in particular. This will require some further consideration
     // in the future as many independent relayers racing to update the same thing will hopefully
