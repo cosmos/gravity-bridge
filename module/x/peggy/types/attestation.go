@@ -138,15 +138,15 @@ const (
 	ClaimTypeEthereumBridgeDeposit ClaimType = 1
 	// a withdraw batch was executed on the Ethereum side
 	ClaimTypeEthereumBridgeWithdrawalBatch ClaimType = 2
-	ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = 3
-	ClaimTypeEthereumBridgeBootstrap       ClaimType = 4
+	// ClaimTypeEthereumBridgeMultiSigUpdate  ClaimType = 3
+	ClaimTypeEthereumBridgeBootstrap ClaimType = 4
 )
 
 var claimTypeToNames = map[ClaimType]string{
 	ClaimTypeEthereumBridgeDeposit:         "bridge_deposit",
 	ClaimTypeEthereumBridgeWithdrawalBatch: "bridge_withdrawal_batch",
-	ClaimTypeEthereumBridgeMultiSigUpdate:  "bridge_multisig_update",
-	ClaimTypeEthereumBridgeBootstrap:       "bridge_bootstrap",
+	// ClaimTypeEthereumBridgeMultiSigUpdate:  "bridge_multisig_update",
+	ClaimTypeEthereumBridgeBootstrap: "bridge_bootstrap",
 }
 
 // AllOracleClaimTypes types that are observed and submitted by the current orchestrator set
@@ -199,15 +199,12 @@ func (e *ClaimType) UnmarshalJSON(input []byte) error {
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by all orchestrators
 type Attestation struct {
-	ClaimType           ClaimType                `json:"claim_type"`
-	Nonce               UInt64Nonce              `json:"nonce"`
-	Certainty           AttestationCertainty     `json:"certainty"`
-	Status              AttestationProcessStatus `json:"status"`
-	ProcessResult       AttestationProcessResult `json:"process_result"`
-	Tally               AttestationTally         `json:"tally"`
-	SubmitTime          time.Time                `json:"submit_time"`
-	ConfirmationEndTime time.Time                `json:"confirmation_end_time"` // votes collected <= end time. should be < unbonding period
-	// ExpiryTime time.Time // todo: do we want to keep Attestations forever persisted or can we delete them?
+	ClaimType  ClaimType   `json:"claim_type"`
+	EventNonce UInt64Nonce `json:"event_nonce"`
+	Observed   bool        `json:"observed"`
+	Processed  bool        `json:"processed"`
+	// ProcessResult AttestationProcessResult `json:"process_result"`
+	Votes   []sdk.ValAddress   `json:"votes"`
 	Details AttestationDetails `json:"details,omitempty"`
 }
 
@@ -235,7 +232,7 @@ func (a *Attestation) AddVote(now time.Time, power uint64) error {
 	}
 	a.Tally.addVote(power)
 	if a.Tally.ThresholdsReached() {
-		a.Certainty = CertaintyObserved
+		a.Observed = true
 	}
 	return nil
 }
@@ -257,6 +254,8 @@ var (
 	_ AttestationDetails = SignedCheckpoint{}
 	_ AttestationDetails = BridgeBootstrap{}
 )
+
+// WithdrawalBatch
 
 // BridgeDeposit is an attestation detail that adds vouchers to an account when executed
 type BridgeDeposit struct {

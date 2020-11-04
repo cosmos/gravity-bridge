@@ -238,17 +238,17 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 	return types.NewValset(nonce, bridgeValidators)
 }
 
-func (k Keeper) GetLastObservedMultisig(ctx sdk.Context) *types.Valset {
-	nonce := k.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
-	if nonce == nil || nonce.IsEmpty() {
-		// todo: make this obsolete by exposing valset update event in bridge constructor
-		nonce = k.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeBootstrap)
-	}
-	if nonce == nil || nonce.IsEmpty() {
-		return nil
-	}
-	return k.GetValsetRequest(ctx, *nonce)
-}
+// func (k Keeper) GetLastObservedMultisig(ctx sdk.Context) *types.Valset {
+// 	nonce := k.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
+// 	if nonce == nil || nonce.IsEmpty() {
+// 		// todo: make this obsolete by exposing valset update event in bridge constructor
+// 		nonce = k.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeBootstrap)
+// 	}
+// 	if nonce == nil || nonce.IsEmpty() {
+// 		return nil
+// 	}
+// 	return k.GetValsetRequest(ctx, *nonce)
+// }
 
 // GetParams returns the total set of wasm parameters.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {

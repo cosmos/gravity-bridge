@@ -208,7 +208,7 @@ func lastProcessedNonce(ctx sdk.Context, claimTypeStr string, keeper Keeper) ([]
 	if att == nil {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, att.Nonce)
+	res, err := codec.MarshalJSONIndent(keeper.cdc, att.EventNonce)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -239,55 +239,55 @@ type MultiSigUpdateResponse struct {
 	Signatures [][]byte     `json:"signatures,omitempty"`
 }
 
-func lastObservedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	nonce := keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
-	if nonce == nil || nonce.IsEmpty() {
-		nonce = keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeBootstrap)
-	}
-	return fetchMultiSigUpdateData(ctx, nonce, keeper)
-}
+// func lastObservedMultiSigUpdate(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+// 	nonce := keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
+// 	if nonce == nil || nonce.IsEmpty() {
+// 		nonce = keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeBootstrap)
+// 	}
+// 	return fetchMultiSigUpdateData(ctx, nonce, keeper)
+// }
 
-func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper Keeper) ([]byte, error) {
-	if nonce == nil || nonce.IsEmpty() {
-		return nil, nil
-	}
+// func fetchMultiSigUpdateData(ctx sdk.Context, nonce *types.UInt64Nonce, keeper Keeper) ([]byte, error) {
+// 	if nonce == nil || nonce.IsEmpty() {
+// 		return nil, nil
+// 	}
 
-	valset := keeper.GetValsetRequest(ctx, *nonce).WithoutEmptyMembers()
-	if valset == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "no valset found for nonce")
-	}
+// 	valset := keeper.GetValsetRequest(ctx, *nonce).WithoutEmptyMembers()
+// 	if valset == nil {
+// 		return nil, sdkerrors.Wrap(types.ErrUnknown, "no valset found for nonce")
+// 	}
 
-	result := MultiSigUpdateResponse{
-		Valset: *valset,
-	}
+// 	result := MultiSigUpdateResponse{
+// 		Valset: *valset,
+// 	}
 
-	addToSig := make(map[types.EthereumAddress][]byte, len(result.Valset.Members))
-	keeper.IterateBridgeApprovalSignatures(ctx, types.SignTypeOrchestratorSignedMultiSigUpdate, *nonce, func(key []byte, sig []byte) bool {
-		var valAddr sdk.ValAddress = key[types.UInt64NonceByteLen:] // key = nonce + validator address
-		ethAddr := keeper.GetEthAddress(ctx, valAddr)
-		if ethAddr == nil || ethAddr.IsEmpty() {
-			return false
-		}
-		addToSig[*ethAddr] = sig
-		return false
-	})
+// 	addToSig := make(map[types.EthereumAddress][]byte, len(result.Valset.Members))
+// 	keeper.IterateBridgeApprovalSignatures(ctx, types.SignTypeOrchestratorSignedMultiSigUpdate, *nonce, func(key []byte, sig []byte) bool {
+// 		var valAddr sdk.ValAddress = key[types.UInt64NonceByteLen:] // key = nonce + validator address
+// 		ethAddr := keeper.GetEthAddress(ctx, valAddr)
+// 		if ethAddr == nil || ethAddr.IsEmpty() {
+// 			return false
+// 		}
+// 		addToSig[*ethAddr] = sig
+// 		return false
+// 	})
 
-	// add signatures from last observed multisig, sorted by members
-	observed := keeper.GetLastObservedMultisig(ctx).WithoutEmptyMembers()
-	if observed == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnsupported, "no multisig observed yet")
-	}
-	for _, m := range observed.Members {
-		if sig, ok := addToSig[m.EthereumAddress]; ok {
-			result.Signatures = append(result.Signatures, sig)
-		}
-	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, result)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-	return sdk.SortJSON(res)
-}
+// 	// add signatures from last observed multisig, sorted by members
+// 	observed := keeper.GetLastObservedMultisig(ctx).WithoutEmptyMembers()
+// 	if observed == nil {
+// 		return nil, sdkerrors.Wrap(types.ErrUnsupported, "no multisig observed yet")
+// 	}
+// 	for _, m := range observed.Members {
+// 		if sig, ok := addToSig[m.EthereumAddress]; ok {
+// 			result.Signatures = append(result.Signatures, sig)
+// 		}
+// 	}
+// 	res, err := codec.MarshalJSONIndent(keeper.cdc, result)
+// 	if err != nil {
+// 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+// 	}
+// 	return sdk.SortJSON(res)
+// }
 
 func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
 	addr, err := sdk.AccAddressFromBech32(operatorAddr)

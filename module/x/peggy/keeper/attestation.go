@@ -24,48 +24,39 @@ import (
 //   "attestation", and when they pass a threshold, an enum called "Certainty" is updated.
 // - it checks "Certainty", and once the threshold is passed, "processAttestation" is called,
 //   which checks the nonce, updates the nonce, and actually moves tokens.
-func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, details types.AttestationDetails) (*types.Attestation, error) {
+func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, eventNonce types.UInt64Nonce, validator sdk.ValAddress, details types.AttestationDetails) (*types.Attestation, error) {
 	// storeClaim stores the claim by an individual validator. It also makes sure that the event nonce is incremented by exactly 1
-	if err := k.storeClaim(ctx, claimType, nonce, validator, details); err != nil {
+	if err := k.storeClaim(ctx, claimType, eventNonce, validator, details); err != nil {
 		return nil, sdkerrors.Wrap(err, "claim")
 	}
 
-	validatorPower := k.StakingKeeper.GetLastValidatorPower(ctx, validator)
+	// validatorPower := k.StakingKeeper.GetLastValidatorPower(ctx, validator)
 	// Jehan's note: This seems to be where votes for a given claim are counted. "Attestation" seems to be a claim
 	// together with its total vote.
-	att, err := k.tryAttestation(ctx, claimType, nonce, details, uint64(validatorPower))
+	att, err := k.tryAttestation(ctx, claimType, eventNonce, details, validator)
 	if err != nil {
 		return nil, err
 	}
-
-	// this is a really strange conditional that needs to be simplified, just asking for trouble.
-	// it is correct, but it's too difficult to read and there's too many ways for it to be true
-	// or false that are non-obvious. Great way to have a double-spend bug TODO refactor
-	// Jehan's note: This guards acceptance of a given claim. If this conditional does not return,
-	// tokens are moved on the next line.
-	if att.Certainty != types.CertaintyObserved || att.Status != types.ProcessStatusInit {
-		k.storeAttestation(ctx, att)
-		return att, nil
-	}
-
-	// next process Attestation
-	if err := k.processAttestation(ctx, att); err != nil {
-		return nil, err
-	}
-
-	// now store all updates
 	k.storeAttestation(ctx, att)
 
-	observationEvent := sdk.NewEvent(
-		types.EventTypeObservation,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyAttestationType, string(att.ClaimType)),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
-		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyAttestationID, string(att.ID())), // todo: serialize with hex/ base64 ?
-		sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
-	)
-	ctx.EventManager().EmitEvent(observationEvent)
+	// next process Attestation if it has been observed and has not already been processed.
+	if att.Observed && !att.Processed {
+		if err := k.processAttestation(ctx, att); err != nil {
+			return nil, err
+		}
+
+		observationEvent := sdk.NewEvent(
+			types.EventTypeObservation,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyAttestationType, string(att.ClaimType)),
+			sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
+			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(att.ID())), // todo: serialize with hex/ base64 ?
+			sdk.NewAttribute(types.AttributeKeyNonce, eventNonce.String()),
+		)
+		ctx.EventManager().EmitEvent(observationEvent)
+	}
+
 	return att, nil
 }
 
@@ -74,13 +65,15 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) erro
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
 	if err := k.AttestationHandler.Handle(xCtx, *att); err != nil { // execute with a transient storage
-		k.logger(ctx).Error("attestation failed", "cause", err.Error(), "claim type", att.ClaimType, "id", att.ID(), "nonce", att.Nonce.String())
-		att.ProcessResult = types.ProcessResultFailure
+		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
+		k.logger(ctx).Error("attestation failed", "cause", err.Error(), "claim type", att.ClaimType, "id", att.ID(), "nonce", att.EventNonce.String())
+		// att.ProcessResult = types.ProcessResultFailure
 	} else {
-		att.ProcessResult = types.ProcessResultSuccess
+		// att.ProcessResult = types.ProcessResultSuccess
 		commit() // persist transient storage
 	}
-	att.Status = types.ProcessStatusProcessed
+	att.Processed = true
+	// att.Status = types.ProcessStatusProcessed
 	return nil
 }
 
@@ -95,6 +88,8 @@ func (k Keeper) storeClaim(ctx sdk.Context, claimType types.ClaimType, eventNonc
 	}
 	// Store this nonce and the claim
 	k.SetLastEventNonceByValidator(ctx, validator, eventNonce)
+	// TODO: This is not actually storing the claim. It can only be used to check if we have stored the same claim before.
+	// We need to think this through more. This will be used for slashing later.
 	cKey := types.GetClaimKey(claimType, eventNonce, validator, details)
 	store.Set(cKey, []byte{}) // empty as all payload is in the key already (no gas costs)
 	return nil
@@ -107,37 +102,49 @@ var (
 
 // tryAttestation loads an existing attestation for the given claim type and nonce and adds a vote.
 // When none exists yet, a new attestation is instantiated (but not persisted here)
-func (k Keeper) tryAttestation(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, details types.AttestationDetails, power uint64) (*types.Attestation, error) {
-	now := ctx.BlockTime()
-	att := k.GetAttestation(ctx, claimType, nonce)
+func (k Keeper) tryAttestation(ctx sdk.Context, claimType types.ClaimType, eventNonce types.UInt64Nonce, details types.AttestationDetails, validator sdk.ValAddress) (*types.Attestation, error) {
+	att := k.GetAttestation(ctx, claimType, eventNonce)
+	// TODO: We need to check here that the attestation that has been stored is about the same exact claim
+	// that we currently processing. Right now it just appears that validators are voting on whether there has been a
+	// claim with the same nonce.
 	if att == nil {
-		count := len(k.StakingKeeper.GetBondedValidatorsByPower(ctx))
-		power := k.StakingKeeper.GetLastTotalPower(ctx)
+		// count := len(k.StakingKeeper.GetBondedValidatorsByPower(ctx))
+		// power := k.StakingKeeper.GetLastTotalPower(ctx)
 		att = &types.Attestation{
-			ClaimType:     claimType,
-			Nonce:         nonce,
-			Certainty:     types.CertaintyRequested,
-			Status:        types.ProcessStatusInit,
-			ProcessResult: types.ProcessResultUnknown,
-			Details:       details,
-			Tally: types.AttestationTally{
-				TotalVotesPower:    zero,
-				RequiredVotesPower: types.AttestationVotesPowerThreshold.MulUint64(power.Uint64()).Quo(hundred),
-				RequiredVotesCount: types.AttestationVotesCountThreshold.MulUint64(uint64(count)).Quo(hundred).Uint64(),
-			},
-			SubmitTime:          now,
-			ConfirmationEndTime: now.Add(types.AttestationPeriod),
+			ClaimType:  claimType,
+			EventNonce: eventNonce,
+			Observed:   false,
+			Processed:  false,
+			Details:    details,
 		}
 	}
-	// Jehan's note: Adds the validators vote to a given claim
-	if err := att.AddVote(now, power); err != nil {
-		return nil, err
+
+	// Add the validator's vote to this attestation
+	att.Votes = append(att.Votes, validator)
+
+	// Sum the current powers of all validators who have voted and see if it passes the current threshold
+	// TODO: The different integer types and math here needs a careful review
+	totalPower := k.StakingKeeper.GetLastTotalPower(ctx)
+	requiredPower := types.AttestationVotesPowerThreshold.Mul(totalPower).Quo(sdk.NewInt(100))
+	var attestationPower sdk.Int
+	for _, validator := range att.Votes {
+		// Get the power of the current validator
+		validatorPower := k.StakingKeeper.GetLastValidatorPower(ctx, validator)
+		// Add it to the attestation power's sum
+		attestationPower = attestationPower.Add(sdk.NewInt(validatorPower))
+		// If the power of all the validators that have voted on the attestation is higher than the threshold,
+		// set Observed to true and break
+		if attestationPower.GTE(requiredPower) {
+			att.Observed = true
+			break
+		}
 	}
+
 	return att, nil
 }
 
 func (k Keeper) storeAttestation(ctx sdk.Context, att *types.Attestation) {
-	aKey := types.GetAttestationKey(att.ClaimType, att.Nonce)
+	aKey := types.GetAttestationKey(att.ClaimType, att.EventNonce)
 	store := ctx.KVStore(k.storeKey)
 	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
 }
@@ -178,7 +185,7 @@ func (k Keeper) IterateAttestationByClaimTypeDesc(ctx sdk.Context, claimType typ
 func (k Keeper) GetLastProcessedAttestation(ctx sdk.Context, claimType types.ClaimType) *types.Attestation {
 	var result *types.Attestation
 	k.IterateAttestationByClaimTypeDesc(ctx, claimType, func(_ []byte, att types.Attestation) bool {
-		if att.Certainty != types.CertaintyObserved {
+		if att.Observed != true {
 			return false
 		}
 		result = &att

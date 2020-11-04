@@ -23,7 +23,7 @@ var (
 	// AttestationVotesCountThreshold threshold of vote counts to succeed
 	AttestationVotesCountThreshold = sdk.NewUint(50)
 	// AttestationVotesCountThreshold threshold of votes power to succeed
-	AttestationVotesPowerThreshold = sdk.NewUint(66)
+	AttestationVotesPowerThreshold = sdk.NewInt(66)
 )
 
 // Parameter keys
