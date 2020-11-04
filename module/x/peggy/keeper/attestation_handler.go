@@ -63,25 +63,25 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 	// 		return false
 	// 	})
 	// 	return nil
-	case types.ClaimTypeEthereumBridgeBootstrap:
-		bootstrap, ok := att.Details.(types.BridgeBootstrap)
-		if !ok {
-			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
-		}
-		// quick hack:  we are storing the bootstrap data here to avoid the gov process in MVY.
-		// TODO: improve process by:
-		// - verify StartThreshold == params.StartThreshold
-		// - verify PeggyID == params.PeggyID
+	// case types.ClaimTypeEthereumBridgeBootstrap:
+	// 	bootstrap, ok := att.Details.(types.BridgeBootstrap)
+	// 	if !ok {
+	// 		return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
+	// 	}
+	// 	// quick hack:  we are storing the bootstrap data here to avoid the gov process in MVY.
+	// 	// TODO: improve process by:
+	// 	// - verify StartThreshold == params.StartThreshold
+	// 	// - verify PeggyID == params.PeggyID
 
-		a.keeper.setPeggyID(ctx, bootstrap.PeggyID)
-		a.keeper.setStartThreshold(ctx, bootstrap.StartThreshold)
+	// 	a.keeper.setPeggyID(ctx, bootstrap.PeggyID)
+	// 	a.keeper.setStartThreshold(ctx, bootstrap.StartThreshold)
 
-		initialMultisigSet := types.NewValset(att.EventNonce, bootstrap.BridgeValidators)
+	// 	initialMultisigSet := types.NewValset(att.EventNonce, bootstrap.BridgeValidators)
 
-		// todo: do we want to do a sanity check that these validator addresses exits already?
-		// the peggy bridge can not operate proper without orchestrators having their ethereum
-		// addresses set before.
-		return a.keeper.SetBootstrapValset(ctx, initialMultisigSet)
+	// 	// todo: do we want to do a sanity check that these validator addresses exits already?
+	// 	// the peggy bridge can not operate proper without orchestrators having their ethereum
+	// 	// addresses set before.
+	// 	return a.keeper.SetBootstrapValset(ctx, initialMultisigSet)
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", att.ClaimType)
 	}

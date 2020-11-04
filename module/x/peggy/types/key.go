@@ -39,6 +39,7 @@ var (
 	SecondIndexNonceByClaimKey   = []byte{0xf}
 	LastEventNonceByValidatorKey = []byte{0xf1}
 	BridgeObservedSignatureKey   = []byte{0x10}
+	LastObservedEventNonceKey    = []byte{0xf2}
 
 	// sequence keys
 	KeyLastTXPoolID        = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
@@ -82,14 +83,8 @@ func GetLastNonceByClaimTypeSecondIndexKey(claimType ClaimType, nonce UInt64Nonc
 	return append(GetLastNonceByClaimTypeSecondIndexKeyPrefix(claimType), nonce.Bytes()...)
 }
 
-func GetAttestationKey(claimType ClaimType, nonce UInt64Nonce) []byte {
-	claimTypeLen := len(claimType.Bytes())
-	nonceBz := nonce.Bytes()
-	key := make([]byte, len(OracleAttestationKey)+claimTypeLen+len(nonceBz))
-	copy(key[0:], OracleAttestationKey)
-	copy(key[len(OracleAttestationKey):], claimType.Bytes())
-	copy(key[len(OracleClaimKey)+claimTypeLen:], nonceBz)
-	return key
+func GetAttestationKey(eventNonce UInt64Nonce, details AttestationDetails) []byte {
+	return append(eventNonce.Bytes(), details.Hash()...)
 }
 
 func GetOutgoingTxPoolKey(id uint64) []byte {
@@ -155,4 +150,8 @@ func DecodeUin64(s []byte) uint64 {
 
 func GetLastEventNonceByValidatorKey(validator sdk.ValAddress) []byte {
 	return append(LastEventNonceByValidatorKey, validator.Bytes()...)
+}
+
+func GetLastObservedEventNonceKey() []byte {
+	return LastObservedEventNonceKey
 }

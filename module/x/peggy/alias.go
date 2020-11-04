@@ -36,7 +36,7 @@ type (
 	EthereumClaim                      = types.EthereumClaim
 	EthereumBridgeDepositClaim         = types.EthereumBridgeDepositClaim
 	EthereumBridgeWithdrawalBatchClaim = types.EthereumBridgeWithdrawalBatchClaim
-	EthereumBridgeMultiSigUpdateClaim  = types.EthereumBridgeMultiSigUpdateClaim
-	Params                             = types.Params
-	GenesisState                       = types.GenesisState
+	// EthereumBridgeMultiSigUpdateClaim  = types.EthereumBridgeMultiSigUpdateClaim
+	Params       = types.Params
+	GenesisState = types.GenesisState
 )
