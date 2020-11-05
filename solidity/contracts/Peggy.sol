@@ -57,6 +57,10 @@ contract Peggy {
 
 	// END TEST FIXTURES
 
+	function lastBatchNonce(address _erc20Address) public view returns (uint256) {
+		return state_lastBatchNonces[_erc20Address];
+	}
+
 	// Utility function to verify geth style signatures
 	function verifySig(
 		address _signer,

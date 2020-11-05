@@ -69,8 +69,8 @@ pub async fn get_tx_batch_nonce(
     let val = web3
         .contract_call(
             contract_address,
-            "state_lastBatchNonces()",
-            &[],
+            "state_lastBatchNonce(address)",
+            &[contract_address.into()],
             caller_address,
         )
         .await?;
