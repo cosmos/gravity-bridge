@@ -3,6 +3,7 @@
 #[macro_use]
 extern crate log;
 
+pub mod message_signatures;
 pub mod send_to_cosmos;
 pub mod submit_batch;
 pub mod utils;

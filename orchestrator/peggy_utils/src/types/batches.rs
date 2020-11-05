@@ -68,8 +68,8 @@ impl TransactionBatch {
         let mut destinations = Vec::new();
         let mut fees = Vec::new();
         for item in self.elements.iter() {
-            amounts.push(Token::Bytes(item.send.amount.clone().to_bytes_be()));
-            fees.push(Token::Bytes(item.bridge_fee.amount.clone().to_bytes_be()));
+            amounts.push(Token::Uint(item.send.amount.clone()));
+            fees.push(Token::Uint(item.bridge_fee.amount.clone()));
             destinations.push(item.destination)
         }
         (

@@ -1,5 +1,5 @@
 use crate::messages::*;
-use clarity::{abi::encode_tokens, abi::Token, PrivateKey as EthPrivateKey};
+use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use contact::jsonrpc::error::JsonRpcError;
 use contact::types::TXSendResponse;
@@ -9,8 +9,8 @@ use deep_space::stdfee::StdFee;
 use deep_space::stdsignmsg::StdSignMsg;
 use deep_space::transaction::TransactionSendType;
 use deep_space::{coin::Coin, utils::bytes_to_hex_str};
+use ethereum_peggy::message_signatures::{encode_tx_batch_confirm, encode_valset_confirm};
 use peggy_utils::types::*;
-use sha3::{Digest, Keccak256};
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
@@ -118,14 +118,7 @@ pub async fn send_valset_confirm(
 
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
 
-    let (eth_addresses, powers) = valset.filter_empty_addresses();
-    let message = encode_tokens(&[
-        Token::FixedString(peggy_id),
-        Token::FixedString("checkpoint".to_string()),
-        valset.nonce.into(),
-        eth_addresses.into(),
-        powers.into(),
-    ]);
+    let message = encode_valset_confirm(peggy_id, valset.clone());
     let eth_signature = eth_private_key.sign_ethereum_msg(&message);
 
     let std_sign_msg = StdSignMsg {
@@ -171,29 +164,7 @@ pub async fn send_batch_confirm(
 
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
 
-    // transaction batches include a validator set update, the way this is verified is that the valset checkpoint
-    // (encoded ethereum data) is included within the batch signature, which is itself a checkpoint over the batch data
-    let valset = transaction_batch.valset.clone();
-    let (eth_addresses, powers) = valset.filter_empty_addresses();
-    let valset_checkpoint = encode_tokens(&[
-        Token::FixedString(peggy_id.clone()),
-        Token::FixedString("checkpoint".to_string()),
-        valset.nonce.into(),
-        eth_addresses.into(),
-        powers.into(),
-    ]);
-    let valset_digest = Keccak256::digest(&valset_checkpoint).as_slice().to_vec();
-    let (amounts, destinations, fees) = transaction_batch.get_checkpoint_values();
-    let batch_checkpoint = encode_tokens(&[
-        Token::FixedString(peggy_id),
-        Token::FixedString("valsetAndTransactionBatch".to_string()),
-        Token::Bytes(valset_digest),
-        amounts,
-        destinations,
-        fees,
-        transaction_batch.nonce.clone().into(),
-        transaction_batch.token_contract.into(),
-    ]);
+    let batch_checkpoint = encode_tx_batch_confirm(peggy_id.clone(), transaction_batch.clone());
     let eth_signature = eth_private_key.sign_ethereum_msg(&batch_checkpoint);
 
     let std_sign_msg = StdSignMsg {

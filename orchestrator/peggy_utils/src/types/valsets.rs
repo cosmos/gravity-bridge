@@ -146,8 +146,8 @@ impl Valset {
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq)]
 pub struct ValsetMember {
     // ord sorts on the first member first, so this produces the correct sorting
-    power: u64,
-    eth_address: Option<EthAddress>,
+    pub power: u64,
+    pub eth_address: Option<EthAddress>,
 }
 
 impl Ord for ValsetMember {
