@@ -86,7 +86,7 @@ func (k Keeper) tryAttestation(ctx sdk.Context, att *types.Attestation) {
 		// TODO: The different integer types and math here needs a careful review
 		totalPower := k.StakingKeeper.GetLastTotalPower(ctx)
 		requiredPower := types.AttestationVotesPowerThreshold.Mul(totalPower).Quo(sdk.NewInt(100))
-		var attestationPower sdk.Int
+		attestationPower := sdk.NewInt(0)
 		for _, validator := range att.Votes {
 			// Get the power of the current validator
 			validatorPower := k.StakingKeeper.GetLastValidatorPower(ctx, validator)
