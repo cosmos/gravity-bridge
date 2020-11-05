@@ -49,7 +49,7 @@ async function runTest(opts: {}) {
     );
 
   expect(await testERC20.functions.balanceOf(peggy.address)).to.equal(1000);
-  expect(await peggy.functions.state_lastSendToCosmosNonce()).to.equal(1);
+  expect(await peggy.functions.state_lastEventNonce()).to.equal(1);
 
 
     
@@ -69,7 +69,7 @@ async function runTest(opts: {}) {
     );
 
   expect(await testERC20.functions.balanceOf(peggy.address)).to.equal(2000);
-  expect(await peggy.functions.state_lastSendToCosmosNonce()).to.equal(2);
+  expect(await peggy.functions.state_lastEventNonce()).to.equal(2);
 }
 
 describe("updateValsetAndSubmitBatch tests", function () {
