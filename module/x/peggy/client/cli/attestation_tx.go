@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -32,7 +31,7 @@ func GetObservedCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	testingTxCmd.AddCommand(flags.PostCommands(
-		CmdSendETHBootstrapRequest(cdc),
+		// CmdSendETHBootstrapRequest(cdc),
 		CmdSendETHDepositRequest(cdc),
 		CmdSendETHWithdrawalRequest(cdc),
 		// CmdSendETHMultiSigRequest(cdc),
@@ -57,77 +56,77 @@ func GetApprovedCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return testingTxCmd
 }
 
-func CmdSendETHBootstrapRequest(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "bootstrap [eth chain id] [eth contract address] [block] [allowed_validators] [validator_powers] [peggy_id] [start_threshold]",
-		Short: "Submit a claim that the bridge contract bootstrap was completed on the Ethereum side",
-		Args:  cobra.ExactArgs(7),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cosmosAddr := cliCtx.GetFromAddress()
+// func CmdSendETHBootstrapRequest(cdc *codec.Codec) *cobra.Command {
+// 	return &cobra.Command{
+// 		Use:   "bootstrap [eth chain id] [eth contract address] [block] [allowed_validators] [validator_powers] [peggy_id] [start_threshold]",
+// 		Short: "Submit a claim that the bridge contract bootstrap was completed on the Ethereum side",
+// 		Args:  cobra.ExactArgs(7),
+// 		RunE: func(cmd *cobra.Command, args []string) error {
+// 			cliCtx := context.NewCLIContext().WithCodec(cdc)
+// 			inBuf := bufio.NewReader(cmd.InOrStdin())
+// 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+// 			cosmosAddr := cliCtx.GetFromAddress()
 
-			ethChainID, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
-			ethContractAddress := args[1]
-			block, err := strconv.ParseUint(args[2], 10, 64)
-			if err != nil {
-				return err
-			}
-			var validators []types.EthereumAddress
-			var powers []uint64
-			for _, v := range strings.Split(args[3], ",") {
-				validators = append(validators, types.NewEthereumAddress(v))
-			}
-			for _, v := range strings.Split(args[4], ",") {
-				p, err := strconv.ParseUint(v, 10, 64)
-				if err != nil {
-					return sdkerrors.Wrap(err, "power")
-				}
-				powers = append(powers, p)
-			}
+// 			ethChainID, err := strconv.ParseUint(args[0], 10, 64)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			ethContractAddress := args[1]
+// 			block, err := strconv.ParseUint(args[2], 10, 64)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			var validators []types.EthereumAddress
+// 			var powers []uint64
+// 			for _, v := range strings.Split(args[3], ",") {
+// 				validators = append(validators, types.NewEthereumAddress(v))
+// 			}
+// 			for _, v := range strings.Split(args[4], ",") {
+// 				p, err := strconv.ParseUint(v, 10, 64)
+// 				if err != nil {
+// 					return sdkerrors.Wrap(err, "power")
+// 				}
+// 				powers = append(powers, p)
+// 			}
 
-			if len(validators) != len(powers) {
-				return errors.New("not equal elements in validators and power")
-			}
-			bridgeValidators := make(types.BridgeValidators, len(validators))
-			for i := range validators {
-				bridgeValidators[i] = types.BridgeValidator{
-					Power:           powers[i],
-					EthereumAddress: validators[i],
-				}
-			}
+// 			if len(validators) != len(powers) {
+// 				return errors.New("not equal elements in validators and power")
+// 			}
+// 			bridgeValidators := make(types.BridgeValidators, len(validators))
+// 			for i := range validators {
+// 				bridgeValidators[i] = types.BridgeValidator{
+// 					Power:           powers[i],
+// 					EthereumAddress: validators[i],
+// 				}
+// 			}
 
-			startThreshold, err := strconv.ParseUint(args[6], 10, 64)
-			if err != nil {
-				return sdkerrors.Wrap(err, "start threshold")
-			}
+// 			startThreshold, err := strconv.ParseUint(args[6], 10, 64)
+// 			if err != nil {
+// 				return sdkerrors.Wrap(err, "start threshold")
+// 			}
 
-			// Make the message
-			msg := types.MsgCreateEthereumClaims{
-				EthereumChainID:       ethChainID,
-				BridgeContractAddress: types.NewEthereumAddress(ethContractAddress),
-				Orchestrator:          cosmosAddr,
-				Claims: []types.EthereumClaim{
-					types.EthereumBridgeBootstrappedClaim{
-						Nonce:            1, // hard coded in ETH contract
-						Block:            block,
-						BridgeValidators: bridgeValidators,
-						PeggyID:          args[5], // simplest solution without decoding
-						StartThreshold:   startThreshold,
-					},
-				},
-			}
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
-}
+// 			// Make the message
+// 			msg := types.MsgCreateEthereumClaims{
+// 				EthereumChainID:       ethChainID,
+// 				BridgeContractAddress: types.NewEthereumAddress(ethContractAddress),
+// 				Orchestrator:          cosmosAddr,
+// 				Claims: []types.EthereumClaim{
+// 					types.EthereumBridgeBootstrappedClaim{
+// 						Nonce:            1, // hard coded in ETH contract
+// 						Block:            block,
+// 						BridgeValidators: bridgeValidators,
+// 						PeggyID:          args[5], // simplest solution without decoding
+// 						StartThreshold:   startThreshold,
+// 					},
+// 				},
+// 			}
+// 			if err := msg.ValidateBasic(); err != nil {
+// 				return err
+// 			}
+// 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+// 		},
+// 	}
+// }
 
 func CmdSendETHDepositRequest(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{

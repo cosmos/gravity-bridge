@@ -109,10 +109,9 @@ type BridgeDeposit struct {
 	ERC20Token     ERC20Token      `json:"erc_20_token"`
 	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
 	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
-	Amount         sdk.Int         `json:"amount" yaml:"amount"`
 }
 
 func (b BridgeDeposit) Hash() []byte {
-	path := fmt.Sprintf("%s/%s/%s/%s/", b.ERC20Token.String(), b.EthereumSender.String(), b.CosmosReceiver.String(), b.Amount.String())
+	path := fmt.Sprintf("%s/%s/%s/", b.ERC20Token.String(), b.EthereumSender.String(), b.CosmosReceiver.String())
 	return tmhash.Sum([]byte(path))
 }

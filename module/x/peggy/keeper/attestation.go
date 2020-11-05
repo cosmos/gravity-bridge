@@ -200,3 +200,20 @@ func (k Keeper) setLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetLastEventNonceByValidatorKey(validator), nonce.Bytes())
 }
+
+func (k Keeper) HasClaim(ctx sdk.Context, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress, details types.AttestationDetails) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetClaimKey(claimType, nonce, validator, details))
+}
+
+// func (k Keeper) IterateClaims(ctx sdk.Context, cb func(key []byte, claimType types.ClaimType, nonce types.UInt64Nonce, validator sdk.ValAddress) bool) {
+// 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OracleClaimKey)
+// 	iter := prefixStore.Iterator(nil, nil)
+// 	for ; iter.Valid(); iter.Next() {
+// 		rawKey := iter.Key()
+// 		claimType, validator, nonce := types.SplitClaimKey(rawKey)
+// 		if cb(rawKey, claimType, nonce, validator) {
+// 			break
+// 		}
+// 	}
+// }

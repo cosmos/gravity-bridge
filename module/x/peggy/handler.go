@@ -56,7 +56,7 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper Keeper, msg MsgCreateEth
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "create attestation")
 		}
-		attestationIDs = append(attestationIDs, att.ID())
+		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, att.Details))
 	}
 	return &sdk.Result{
 		Data: bytes.Join(attestationIDs, []byte(", ")),
@@ -134,17 +134,17 @@ func getCheckpoint(ctx sdk.Context, keeper Keeper, signType types.SignType, nonc
 		}
 	case types.SignTypeOrchestratorSignedWithdrawBatch:
 		if c := keeper.GetOutgoingTXBatch(ctx, nonce); c != nil {
-			nonce := keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
-			if nonce == nil || nonce.IsEmpty() {
-				nonce = keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeBootstrap)
-			}
-			if nonce == nil || nonce.IsEmpty() {
-				return nil, sdkerrors.Wrap(types.ErrUnknown, "observed multisig set")
-			}
-			valset := keeper.GetValsetRequest(ctx, *nonce)
-			if valset == nil {
-				return nil, sdkerrors.Wrap(types.ErrUnknown, "no valset found for nonce")
-			}
+			// nonce := keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
+			// if nonce == nil || nonce.IsEmpty() {
+			// 	nonce = keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeBootstrap)
+			// }
+			// if nonce == nil || nonce.IsEmpty() {
+			// 	return nil, sdkerrors.Wrap(types.ErrUnknown, "observed multisig set")
+			// }
+			// valset := keeper.GetValsetRequest(ctx, *nonce)
+			// if valset == nil {
+			// 	return nil, sdkerrors.Wrap(types.ErrUnknown, "no valset found for nonce")
+			// }
 			return c.GetCheckpoint()
 		}
 	default:
