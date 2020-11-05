@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 peggy_utils = {path = "../peggy_utils"}
+ethereum_peggy = {path = "../ethereum_peggy"}
 
 contact = "0.1"
 deep_space = "0.2"
