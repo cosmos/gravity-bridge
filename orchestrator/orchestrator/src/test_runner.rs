@@ -215,17 +215,17 @@ async fn main() {
     // bootstrapping tests finish here and we move into operational tests
 
     // send 3 valset updates to make sure the process works back to back
-    // for _ in 0u32..2 {
-    //     test_valset_update(
-    //         &contact,
-    //         &web30,
-    //         &keys,
-    //         peggy_address,
-    //         miner_address,
-    //         fee.clone(),
-    //     )
-    //     .await;
-    // }
+    for _ in 0u32..2 {
+        test_valset_update(
+            &contact,
+            &web30,
+            &keys,
+            peggy_address,
+            miner_address,
+            fee.clone(),
+        )
+        .await;
+    }
 
     // generate an address for coin sending tests, this ensures test imdepotency
     let mut rng = rand::thread_rng();
@@ -238,7 +238,9 @@ async fn main() {
     let dest_eth_private_key = EthPrivateKey::from_slice(&secret).unwrap();
     let dest_eth_address = dest_eth_private_key.to_public_key().unwrap();
 
-    let (token_name, amount) = test_erc20_send(
+    // the denom and amount of the token bridged from Ethereum -> Cosmos
+    // so the denom is the peggy<hash> token name
+    let (denom, amount) = test_erc20_send(
         &contact,
         &web30,
         dest_cosmos_address,
@@ -248,51 +250,23 @@ async fn main() {
     )
     .await;
 
-    // test_batch_send
-    let bridge_denom_fee = Coin {
-        denom: token_name.clone(),
-        amount: 1u64.into(),
-    };
-    let amount = amount - 5u64.into();
-    info!("Sending {}{} back to Ethereum", amount, token_name);
-    let res = send_to_eth(
-        dest_cosmos_private_key,
-        dest_eth_address,
-        Coin {
-            denom: token_name.clone(),
-            amount,
-        },
-        bridge_denom_fee.clone(),
+    // TODO this test is incomplete, the cosmos module is not currently in a state
+    // where it will allow it to complete. We send a tx into the Cosmos -> Eth tx pool
+    // create a batch with it, sign that batch, and then can not submit it due to failures
+    // in the code handling that.
+    test_batch(
         &contact,
+        &web30,
+        dest_eth_address,
+        peggy_address,
+        fee,
+        keys[0].0,
+        dest_cosmos_private_key,
+        miner_private_key,
+        denom,
+        amount,
     )
-    .await
-    .unwrap();
-    info!("Sent tokens to Ethereum with {:?}", res);
-
-    info!("Requesting transaction batch");
-    request_batch(keys[0].0, token_name, fee.clone(), &contact)
-        .await
-        .unwrap();
-
-    let mut current_eth_batch_nonce = get_tx_batch_nonce(peggy_address, miner_address, &web30)
-        .await
-        .expect("Failed to get current eth valset");
-    let starting_batch_nonce = current_eth_batch_nonce.clone();
-
-    let start = Instant::now();
-    while starting_batch_nonce == current_eth_batch_nonce {
-        info!(
-            "Batch is not yet submitted {}>, waiting",
-            starting_batch_nonce
-        );
-        current_eth_batch_nonce = get_tx_batch_nonce(peggy_address, miner_address, &web30)
-            .await
-            .expect("Failed to get current eth tx batch nonce");
-        delay_for(Duration::from_secs(4)).await;
-        if Instant::now() - start > TOTAL_TIMEOUT {
-            panic!("Failed to submit transaction batch set");
-        }
-    }
+    .await;
 }
 
 async fn test_valset_update(
@@ -391,4 +365,73 @@ async fn test_erc20_send(
         }
     }
     panic!("Failed to bridge ERC20 token!");
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn test_batch(
+    contact: &Contact,
+    web30: &Web3,
+    dest_eth_address: EthAddress,
+    peggy_address: EthAddress,
+    fee: Coin,
+    requester_cosmos_private_key: CosmosPrivateKey,
+    dest_cosmos_private_key: CosmosPrivateKey,
+    miner_private_key: EthPrivateKey,
+    token_name: String,
+    amount: Uint256,
+) {
+    let miner_address = miner_private_key.to_public_key().unwrap();
+    let bridge_denom_fee = Coin {
+        denom: token_name.clone(),
+        amount: 1u64.into(),
+    };
+    let amount = amount - 5u64.into();
+    info!("Sending {}{} back to Ethereum", amount, token_name);
+    let res = send_to_eth(
+        dest_cosmos_private_key,
+        dest_eth_address,
+        Coin {
+            denom: token_name.clone(),
+            amount,
+        },
+        bridge_denom_fee.clone(),
+        &contact,
+    )
+    .await
+    .unwrap();
+    info!("Sent tokens to Ethereum with {:?}", res);
+
+    info!("Requesting transaction batch");
+    request_batch(
+        requester_cosmos_private_key,
+        token_name,
+        fee.clone(),
+        &contact,
+    )
+    .await
+    .unwrap();
+
+    // let mut current_eth_batch_nonce = get_tx_batch_nonce(peggy_address, miner_address, &web30)
+    //     .await
+    //     .expect("Failed to get current eth valset");
+    // let starting_batch_nonce = current_eth_batch_nonce.clone();
+
+    // let start = Instant::now();
+    // while starting_batch_nonce == current_eth_batch_nonce {
+    //     info!(
+    //         "Batch is not yet submitted {}>, waiting",
+    //         starting_batch_nonce
+    //     );
+    //     current_eth_batch_nonce = get_tx_batch_nonce(peggy_address, miner_address, &web30)
+    //         .await
+    //         .expect("Failed to get current eth tx batch nonce");
+    //     delay_for(Duration::from_secs(4)).await;
+    //     if Instant::now() - start > TOTAL_TIMEOUT {
+    //         panic!("Failed to submit transaction batch set");
+    //     }
+    // }
+    // info!(
+    //     "Successfully updated txbatch nonce to {}",
+    //     current_eth_batch_nonce
+    // );
 }

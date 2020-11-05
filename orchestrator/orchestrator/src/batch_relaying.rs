@@ -63,7 +63,7 @@ pub async fn relay_batches(
             )
             .await
             .unwrap();
-            trace!("Batch confirm result is {:?}", res);
+            info!("Batch confirm result is {:?}", res);
         }
         Err(e) => info!("Failed to get unsigned Batches with {:?}", e),
     }
