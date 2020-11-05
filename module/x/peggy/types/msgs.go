@@ -289,9 +289,10 @@ func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
 // -------------
 // deprecated should use MsgBridgeSignatureSubmission instead
 type MsgConfirmBatch struct {
-	Nonce        UInt64Nonce    `json:"nonce"`
-	Orchestrator sdk.AccAddress `json:"validator"`
-	Signature    string         `json:"signature"`
+	Nonce        UInt64Nonce     `json:"nonce"`
+	Orchestrator sdk.AccAddress  `json:"validator"`
+	Address      EthereumAddress `json:"address"`
+	Signature    string          `json:"signature"`
 }
 
 func NewMsgConfirmBatch(nonce UInt64Nonce, orchestrator sdk.AccAddress, signature string) MsgConfirmBatch {
