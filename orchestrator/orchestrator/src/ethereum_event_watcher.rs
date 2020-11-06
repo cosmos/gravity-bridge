@@ -30,7 +30,7 @@ pub async fn check_for_events(
             last_checked_block.clone(),
             Some(latest_block.clone()),
             vec![peggy_contract_address],
-            "SendToCosmosEvent(address,address,bytes32,uint256)",
+            "SendToCosmosEvent(address,address,bytes32,uint256,uint256)",
             Vec::new(),
         )
         .await;
@@ -43,7 +43,7 @@ pub async fn check_for_events(
             last_checked_block.clone(),
             Some(latest_block.clone()),
             vec![peggy_contract_address],
-            "TransactionBatchExecutedEvent(uint256,address)",
+            "TransactionBatchExecutedEvent(uint256,address,uint256)",
             Vec::new(),
         )
         .await;
@@ -59,10 +59,14 @@ pub async fn check_for_events(
         )
         .await;
     trace!("Valsets {:?}", valsets);
+
     if let (Ok(valsets), Ok(batches), Ok(deposits)) = (valsets, batches, deposits) {
         let valsets = ValsetUpdatedEvent::from_logs(&valsets)?;
+        trace!("parsed valsets {:?}", valsets);
         let batches = TransactionBatchExecutedEvent::from_logs(&batches)?;
+        trace!("parsed batches {:?}", batches);
         let deposits = SendToCosmosEvent::from_logs(&deposits)?;
+        trace!("parsed deposits {:?}", deposits);
         if !deposits.is_empty() {
             info!(
                 "Oracle observed deposit with sender {} and destination {} and amount {}",
@@ -70,7 +74,7 @@ pub async fn check_for_events(
             )
         }
 
-        let claims = to_bridge_claims(&valsets, &batches, &deposits);
+        let claims = to_bridge_claims(&batches, &deposits);
         if !claims.is_empty() {
             // todo get chain id from the chain
             let res = send_ethereum_claims(
@@ -82,7 +86,7 @@ pub async fn check_for_events(
                 fee,
             )
             .await?;
-            trace!("Sent in Oracle claims response: {:?}", res);
+            info!("Sent in Oracle claims response: {:?}", res);
         }
 
         Ok(latest_block)
@@ -96,17 +100,10 @@ pub async fn check_for_events(
 
 /// Converts events into bridge claims that can then be submitted to the Cosmos Peggy module
 fn to_bridge_claims(
-    valsets: &[ValsetUpdatedEvent],
     batches: &[TransactionBatchExecutedEvent],
     deposits: &[SendToCosmosEvent],
 ) -> Vec<EthereumBridgeClaim> {
     let mut out = Vec::new();
-    for valset in valsets {
-        let nonce = valset.nonce.clone();
-        out.push(EthereumBridgeClaim::EthereumBridgeMultiSigUpdateClaim(
-            EthereumBridgeMultiSigUpdateClaim { nonce },
-        ));
-    }
     for batch in batches {
         let batch_nonce = batch.batch_nonce.clone();
         let event_nonce = batch.event_nonce.clone();

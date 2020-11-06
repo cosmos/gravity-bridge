@@ -7,6 +7,7 @@ use crate::error::OrchestratorError;
 
 /// A parsed struct representing the Ethereum event fired by the Peggy contract
 /// when the validator set is updated.
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ValsetUpdatedEvent {
     pub nonce: Uint256,
     // we currently don't parse members, but the data is there
@@ -37,6 +38,7 @@ impl ValsetUpdatedEvent {
 
 /// A parsed struct representing the Ethereum event fired by the Peggy contract when
 /// a transaction batch is executed.
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct TransactionBatchExecutedEvent {
     /// the nonce attached to the transaction batch that follows
     /// it throughout it's lifecycle
@@ -82,6 +84,7 @@ impl TransactionBatchExecutedEvent {
 
 /// A parsed struct representing the Ethereum event fired when someone makes a deposit
 /// on the Peggy contract
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct SendToCosmosEvent {
     /// The token contract address for the deposit
     pub erc20: EthAddress,
