@@ -69,8 +69,8 @@ pub async fn check_for_events(
         trace!("parsed deposits {:?}", deposits);
         if !deposits.is_empty() {
             info!(
-                "Oracle observed deposit with sender {} and destination {} and amount {}",
-                deposits[0].sender, deposits[0].destination, deposits[0].amount
+                "Oracle observed deposit with sender {}, destination {}, amount {}, and event nonce {}",
+                deposits[0].sender, deposits[0].destination, deposits[0].amount, deposits[0].event_nonce
             )
         }
 

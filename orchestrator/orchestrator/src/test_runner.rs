@@ -399,7 +399,10 @@ async fn test_erc20_send(
             }
             (None, Some(end_coin)) => {
                 if amount == end_coin.amount {
-                    info!("Successfully bridged ERC20 to Cosmos!");
+                    info!(
+                        "Successfully bridged ERC20 {}{} to Cosmos! Balance is now {}{}",
+                        amount, end_coin.denom, end_coin.amount, end_coin.denom
+                    );
                     return;
                 } else {
                     panic!("Failed to bridge ERC20!")
