@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strconv"
@@ -300,7 +301,7 @@ func CmdValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 				Nonce:             valset.Nonce,
 				SignType:          types.SignTypeOrchestratorSignedMultiSigUpdate,
 				Orchestrator:      cosmosAddr,
-				EthereumSignature: signature,
+				EthereumSignature: hex.EncodeToString(signature),
 			}
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -367,7 +368,7 @@ func CmdOutgointTXBatchConfirm(storeKey string, cdc *codec.Codec) *cobra.Command
 				Nonce:             batch.Nonce,
 				SignType:          types.SignTypeOrchestratorSignedWithdrawBatch,
 				Orchestrator:      cosmosAddr,
-				EthereumSignature: signature,
+				EthereumSignature: hex.EncodeToString(signature),
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err

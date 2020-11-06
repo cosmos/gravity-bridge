@@ -83,16 +83,12 @@ func handleMsgValsetRequest(ctx sdk.Context, keeper Keeper, msg types.MsgValsetR
 
 // deprecated should use MsgBridgeSignatureSubmission instead
 func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm) (*sdk.Result, error) {
-	sigBytes, err := hex.DecodeString(msg.Signature)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
-	}
 	keeper.SetValsetConfirm(ctx, msg) // store legacy
 	return handleBridgeSignatureSubmission(ctx, keeper, MsgBridgeSignatureSubmission{
 		Nonce:             msg.Nonce,
 		SignType:          types.SignTypeOrchestratorSignedMultiSigUpdate,
 		Orchestrator:      msg.Validator,
-		EthereumSignature: sigBytes,
+		EthereumSignature: msg.Signature,
 	})
 }
 
@@ -101,6 +97,10 @@ func handleBridgeSignatureSubmission(ctx sdk.Context, keeper Keeper, msg MsgBrid
 	checkpoint, err := getCheckpoint(ctx, keeper, msg.SignType, msg.Nonce)
 	if err != nil {
 		return nil, err
+	}
+	sigBytes, err := hex.DecodeString(msg.EthereumSignature)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
 	validator := findValidatorKey(ctx, msg.Orchestrator)
 	if validator == nil {
@@ -111,7 +111,7 @@ func handleBridgeSignatureSubmission(ctx sdk.Context, keeper Keeper, msg MsgBrid
 	if ethAddress == nil {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
-	err = types.ValidateEthereumSignature(checkpoint, msg.EthereumSignature, ethAddress.String())
+	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress.String())
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature")
 	}
@@ -120,7 +120,7 @@ func handleBridgeSignatureSubmission(ctx sdk.Context, keeper Keeper, msg MsgBrid
 	if keeper.HasBridgeApprovalSignature(ctx, msg.SignType, msg.Nonce, validator) {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature")
 	}
-	key := keeper.SetBridgeApprovalSignature(ctx, msg.SignType, msg.Nonce, validator, msg.EthereumSignature)
+	key := keeper.SetBridgeApprovalSignature(ctx, msg.SignType, msg.Nonce, validator, sigBytes)
 	return &sdk.Result{
 		Data: key,
 	}, nil
@@ -184,10 +184,6 @@ func handleMsgRequestBatch(ctx sdk.Context, keeper Keeper, msg MsgRequestBatch) 
 }
 
 func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) (*sdk.Result, error) {
-	sigBytes, err := hex.DecodeString(msg.Signature)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
-	}
 	validator := findValidatorKey(ctx, msg.Orchestrator)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
@@ -199,6 +195,6 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) 
 		Nonce:             msg.Nonce,
 		SignType:          types.SignTypeOrchestratorSignedWithdrawBatch,
 		Orchestrator:      msg.Orchestrator,
-		EthereumSignature: sigBytes,
+		EthereumSignature: msg.Signature,
 	})
 }
