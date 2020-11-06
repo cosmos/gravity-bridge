@@ -24,13 +24,14 @@ use cosmos_peggy::send::{request_batch, send_to_eth, update_peggy_eth_address};
 use cosmos_peggy::utils::wait_for_cosmos_online;
 use cosmos_peggy::{
     messages::{EthereumBridgeClaim, EthereumBridgeDepositClaim},
+    utils::wait_for_next_cosmos_block,
 };
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
-use ethereum_peggy::send_to_cosmos::send_to_cosmos;
 use ethereum_peggy::utils::get_erc20_symbol;
 use ethereum_peggy::utils::get_valset_nonce;
+use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use main_loop::orchestrator_main_loop;
 use peggy_utils::types::ERC20Token;
 use rand::Rng;
@@ -249,7 +250,7 @@ async fn main() {
     // the denom and amount of the token bridged from Ethereum -> Cosmos
     // so the denom is the peggy<hash> token name
     // Send a token 3 times
-    for _ in 0u32..2 {
+    for _ in 0u32..3 {
         test_erc20_send(
             &web30,
             &contact,
@@ -386,13 +387,14 @@ async fn test_erc20_send(
             check_cosmos_balance(dest, &contact).await,
         ) {
             (Some(start_coin), Some(end_coin)) => {
-                if start_coin.amount + amount == end_coin.amount
+                if start_coin.amount + amount.clone() == end_coin.amount
                     && start_coin.denom == end_coin.denom
                 {
-                    info!("Successfully bridged ERC20 to Cosmos!");
+                    info!(
+                        "Successfully bridged ERC20 {}{} to Cosmos! Balance is now {}{}",
+                        amount, start_coin.denom, end_coin.amount, end_coin.denom
+                    );
                     return;
-                } else {
-                    panic!("Failed to bridge ERC20!")
                 }
             }
             (None, Some(end_coin)) => {
@@ -405,6 +407,8 @@ async fn test_erc20_send(
             }
             _ => {}
         }
+        info!("Waiting for ERC20 deposit");
+        wait_for_next_cosmos_block(contact).await;
     }
     panic!("Failed to bridge ERC20!")
 }
@@ -414,7 +418,6 @@ async fn check_cosmos_balance(address: CosmosAddress, contact: &Contact) -> Opti
     for coin in account_info.result.value.coins {
         // make sure the name and amount is correct
         if coin.denom.starts_with("peggy") {
-            info!("Successfully bridged ERC20 to Cosmos!");
             return Some(coin);
         }
     }
@@ -516,8 +519,9 @@ async fn submit_duplicate_erc20_send(
         .await
         .expect("Did not find coins!");
 
-    let ethereum_sender =
-        EthAddress::parse_and_validate("0x912fd21d7a69678227fe6d08c64222db41477ba0").unwrap();
+    let ethereum_sender = "0x912fd21d7a69678227fe6d08c64222db41477ba0"
+        .parse()
+        .unwrap();
 
     let claim = EthereumBridgeClaim::EthereumBridgeDepositClaim(EthereumBridgeDepositClaim {
         event_nonce: nonce,
