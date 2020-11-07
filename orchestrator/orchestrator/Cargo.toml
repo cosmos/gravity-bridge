@@ -7,18 +7,23 @@ edition = "2018"
 # run the orchestrator by default
 default-run = "orchestrator"
 
+# combined relayer / validator oracle performs both tasks involving relaying
+# and validator specific oracle tasks.
 [[bin]]
 name = "orchestrator"
-path = "src/main.rs"
+path = "src/orchestrator.rs"
 
+# Used by clients to send tokens across the bridge in both directions
 [[bin]]
 name = "peggy-client"
 path = "src/client.rs"
 
+# used by validators to assist with bootstrapping a chain
 [[bin]]
 name = "register-eth-key"
 path = "src/register-eth-key.rs"
 
+# used to run integration tests
 [[bin]]
 name = "test-runner"
 path = "src/test_runner.rs"
