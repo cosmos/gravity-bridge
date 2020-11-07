@@ -4,8 +4,7 @@
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::messages::{
-    EthereumBridgeClaim, EthereumBridgeDepositClaim, EthereumBridgeMultiSigUpdateClaim,
-    EthereumBridgeWithdrawBatchClaim,
+    EthereumBridgeClaim, EthereumBridgeDepositClaim, EthereumBridgeWithdrawBatchClaim,
 };
 use cosmos_peggy::send::send_ethereum_claims;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};

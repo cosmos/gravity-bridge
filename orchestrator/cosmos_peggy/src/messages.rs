@@ -105,11 +105,6 @@ pub struct EthereumBridgeWithdrawBatchClaim {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
-pub struct EthereumBridgeMultiSigUpdateClaim {
-    pub nonce: Uint256,
-}
-
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct EthereumBridgeBootstrappedClaim {
     /// the claim nonce, in case multiple claims are made before one passes
     pub nonce: Uint256,
@@ -131,8 +126,6 @@ pub struct EthereumBridgeBootstrappedClaim {
 pub enum EthereumBridgeClaim {
     #[serde(rename = "peggy/EthereumBridgeDepositClaim")]
     EthereumBridgeDepositClaim(EthereumBridgeDepositClaim),
-    #[serde(rename = "peggy/EthereumBridgeMultiSigUpdateClaim")]
-    EthereumBridgeMultiSigUpdateClaim(EthereumBridgeMultiSigUpdateClaim),
     #[serde(rename = "peggy/EthereumBridgeWithdrawBatchClaim")]
     EthereumBridgeWithdrawBatchClaim(EthereumBridgeWithdrawBatchClaim),
     #[serde(rename = "peggy/EthereumBridgeBootstrappedClaim")]
