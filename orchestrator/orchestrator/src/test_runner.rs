@@ -8,6 +8,8 @@
 
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate lazy_static;
 
 mod batch_relaying;
 mod ethereum_event_watcher;
@@ -29,13 +31,13 @@ use cosmos_peggy::{
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use ethereum_peggy::send_to_cosmos::send_to_cosmos;
 use ethereum_peggy::utils::get_erc20_symbol;
 use ethereum_peggy::utils::get_valset_nonce;
-use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use main_loop::orchestrator_main_loop;
 use peggy_utils::types::ERC20Token;
 use rand::Rng;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::process::Command;
 use std::time::Duration;
 use std::{fs::File, time::Instant};
@@ -95,21 +97,25 @@ fn get_keys() -> Vec<(CosmosPrivateKey, EthPrivateKey)> {
     ret
 }
 
+const COSMOS_NODE: &str = "http://localhost:1317";
+const ETH_NODE: &str = "http://localhost:8545";
+const PEGGY_ID: &str = "foo";
+
+lazy_static! {
+    // this key is the private key for the public key defined in tests/assets/ETHGenesis.json
+    // where the full node / miner sends its rewards. Therefore it's always going
+    // to have a lot of ETH to pay for things like contract deployments
+    static ref MINER_PRIVATE_KEY: EthPrivateKey =
+        "0xb1bab011e03a9862664706fc3bbaa1b16651528e5f0e7fbfcbfdd8be302a13e7"
+            .parse()
+            .unwrap();
+    static ref MINER_ADDRESS: EthAddress = MINER_PRIVATE_KEY.to_public_key().unwrap();
+}
+
 #[actix_rt::main]
 async fn main() {
     env_logger::init();
     info!("Staring Peggy test-runner");
-    const COSMOS_NODE: &str = "http://localhost:1317";
-    const ETH_NODE: &str = "http://localhost:8545";
-    const PEGGY_ID: &str = "foo";
-    // this key is the private key for the public key defined in tests/assets/ETHGenesis.json
-    // where the full node / miner sends its rewards. Therefore it's always going
-    // to have a lot of ETH to pay for things like contract deployments
-    let miner_private_key: EthPrivateKey =
-        "0xb1bab011e03a9862664706fc3bbaa1b16651528e5f0e7fbfcbfdd8be302a13e7"
-            .parse()
-            .unwrap();
-    let miner_address = miner_private_key.to_public_key().unwrap();
 
     let contact = Contact::new(COSMOS_NODE, OPERATION_TIMEOUT);
     let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
@@ -124,57 +130,15 @@ async fn main() {
     info!("Waiting for Cosmos chain to come online");
     wait_for_cosmos_online(&contact).await;
 
-    // register all validator eth addresses, currently validators can just not do this
-    // a full production version of Peggy would refuse to allow validators to enter the pool
-    // without registering their address. It would also allow them to delegate their Cosmos addr
-    //
-    // Either way, validators need to setup their eth addresses out of band and it's not
-    // the orchestrators job. So this isn't exactly where it needs to be in the final version
-    // but neither is it really that different.
-    for (c_key, e_key) in keys.iter() {
-        info!(
-            "Signing and submitting Eth address {} for validator {}",
-            e_key.to_public_key().unwrap(),
-            c_key.to_public_key().unwrap().to_address(),
-        );
-        update_peggy_eth_address(&contact, *e_key, *c_key, fee.clone(), None, None, None)
-            .await
-            .expect("Failed to update Eth address");
+    // if we detect this env var we are only deploying contracts, do that then exit.
+    if option_env!("DEPLOY_CONTRACTS").is_some() {
+        info!("test-runner in contract deploying mode, deploying contracts, then exiting");
+        deploy_contracts(&contact, &keys, fee).await;
+        return;
     }
 
-    // wait for the orchestrators to finish registering their eth addresses
-    let output = Command::new("npx")
-        .args(&[
-            "ts-node",
-            "/peggy/solidity/contract-deployer.ts",
-            &format!("--cosmos-node={}", COSMOS_NODE),
-            &format!("--eth-node={}", ETH_NODE),
-            &format!("--eth-privkey={:#x}", miner_private_key),
-            &format!("--peggy-id={}", PEGGY_ID),
-            "--contract=/peggy/solidity/artifacts/Peggy.json",
-            "--erc20-contract=/peggy/solidity/artifacts/TestERC20.json",
-            "--test-mode=true",
-        ])
-        .current_dir("/peggy/solidity/")
-        .output()
-        .expect("Failed to deploy contracts!");
-    info!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-    info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-
-    let mut maybe_peggy_address = None;
-    let mut maybe_contract_address = None;
-    for line in String::from_utf8_lossy(&output.stdout).lines() {
-        if line.contains("Peggy deployed at Address -") {
-            let address_string = line.split('-').last().unwrap();
-            maybe_peggy_address = Some(address_string.trim().parse().unwrap());
-        } else if line.contains("ERC20 deployed at Address -") {
-            let address_string = line.split('-').last().unwrap();
-            maybe_contract_address = Some(address_string.trim().parse().unwrap());
-        }
-    }
-    let peggy_address: EthAddress = maybe_peggy_address.unwrap();
-    let erc20_address: EthAddress = maybe_contract_address.unwrap();
-    let token_symbol = get_erc20_symbol(erc20_address, miner_address, &web30)
+    let (peggy_address, erc20_address) = parse_contract_addresses();
+    let token_symbol = get_erc20_symbol(erc20_address, *MINER_ADDRESS, &web30)
         .await
         .unwrap();
 
@@ -183,7 +147,7 @@ async fn main() {
     for (_c_key, e_key) in keys.iter() {
         let validator_eth_address = e_key.to_public_key().unwrap();
 
-        let balance = web30.eth_get_balance(miner_address).await.unwrap();
+        let balance = web30.eth_get_balance(*MINER_ADDRESS).await.unwrap();
         info!(
             "Sending orchestrator 1 eth to pay for fees miner has {} WEI",
             balance
@@ -194,8 +158,8 @@ async fn main() {
                 validator_eth_address,
                 Vec::new(),
                 1_000_000_000_000_000_000u128.into(),
-                miner_address,
-                miner_private_key,
+                *MINER_ADDRESS,
+                *MINER_PRIVATE_KEY,
                 vec![],
             )
             .await
@@ -225,15 +189,7 @@ async fn main() {
 
     // send 3 valset updates to make sure the process works back to back
     for _ in 0u32..2 {
-        test_valset_update(
-            &contact,
-            &web30,
-            &keys,
-            peggy_address,
-            miner_address,
-            fee.clone(),
-        )
-        .await;
+        test_valset_update(&contact, &web30, &keys, peggy_address, fee.clone()).await;
     }
 
     // generate an address for coin sending tests, this ensures test imdepotency
@@ -257,7 +213,6 @@ async fn main() {
             dest_cosmos_address,
             peggy_address,
             erc20_address,
-            miner_private_key,
             100u64.into(),
         )
         .await;
@@ -292,10 +247,81 @@ async fn main() {
         fee,
         keys[0].0,
         dest_cosmos_private_key,
-        miner_private_key,
     )
     .await;
     delay_for(OPERATION_TIMEOUT).await;
+}
+
+/// This function deploys the required contracts onto the Ethereum testnet
+/// this runs only when the DEPLOY_CONTRACTS env var is set right after
+/// the Ethereum test chain starts in the testing environment. We write
+/// the stdout of this to a file for later test runs to parse
+async fn deploy_contracts(
+    contact: &Contact,
+    keys: &[(CosmosPrivateKey, EthPrivateKey)],
+    fee: Coin,
+) {
+    // register all validator eth addresses, currently validators can just not do this
+    // a full production version of Peggy would refuse to allow validators to enter the pool
+    // without registering their address. It would also allow them to delegate their Cosmos addr
+    //
+    // Either way, validators need to setup their eth addresses out of band and it's not
+    // the orchestrators job. So this isn't exactly where it needs to be in the final version
+    // but neither is it really that different.
+    for (c_key, e_key) in keys.iter() {
+        info!(
+            "Signing and submitting Eth address {} for validator {}",
+            e_key.to_public_key().unwrap(),
+            c_key.to_public_key().unwrap().to_address(),
+        );
+        update_peggy_eth_address(&contact, *e_key, *c_key, fee.clone(), None, None, None)
+            .await
+            .expect("Failed to update Eth address");
+    }
+
+    // wait for the orchestrators to finish registering their eth addresses
+    let output = Command::new("npx")
+        .args(&[
+            "ts-node",
+            "/peggy/solidity/contract-deployer.ts",
+            &format!("--cosmos-node={}", COSMOS_NODE),
+            &format!("--eth-node={}", ETH_NODE),
+            &format!("--eth-privkey={:#x}", *MINER_PRIVATE_KEY),
+            &format!("--peggy-id={}", PEGGY_ID),
+            "--contract=/peggy/solidity/artifacts/Peggy.json",
+            "--erc20-contract=/peggy/solidity/artifacts/TestERC20.json",
+            "--test-mode=true",
+        ])
+        .current_dir("/peggy/solidity/")
+        .output()
+        .expect("Failed to deploy contracts!");
+    info!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    let mut file = File::create("/contracts").unwrap();
+    file.write_all(&output.stdout).unwrap();
+}
+
+/// Parses the ERC20 and Peggy contract addresses from the file created
+/// in deploy_contracts()
+fn parse_contract_addresses() -> (EthAddress, EthAddress) {
+    let mut file =
+        File::open("/contracts").expect("Failed to find contracts! did they not deploy?");
+    let mut output = String::new();
+    file.read_to_string(&mut output).unwrap();
+    let mut maybe_peggy_address = None;
+    let mut maybe_contract_address = None;
+    for line in output.lines() {
+        if line.contains("Peggy deployed at Address -") {
+            let address_string = line.split('-').last().unwrap();
+            maybe_peggy_address = Some(address_string.trim().parse().unwrap());
+        } else if line.contains("ERC20 deployed at Address -") {
+            let address_string = line.split('-').last().unwrap();
+            maybe_contract_address = Some(address_string.trim().parse().unwrap());
+        }
+    }
+    let peggy_address: EthAddress = maybe_peggy_address.unwrap();
+    let erc20_address: EthAddress = maybe_contract_address.unwrap();
+    (peggy_address, erc20_address)
 }
 
 async fn test_valset_update(
@@ -303,12 +329,11 @@ async fn test_valset_update(
     web30: &Web3,
     keys: &[(CosmosPrivateKey, EthPrivateKey)],
     peggy_address: EthAddress,
-    miner_address: EthAddress,
     fee: Coin,
 ) {
     // if we don't do this the orchestrators may run ahead of us and we'll be stuck here after
     // getting credit for two loops when we did one
-    let starting_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
+    let starting_eth_valset_nonce = get_valset_nonce(peggy_address, *MINER_ADDRESS, &web30)
         .await
         .expect("Failed to get starting eth valset");
     let start = Instant::now();
@@ -328,7 +353,7 @@ async fn test_valset_update(
         }
     }
 
-    let mut current_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
+    let mut current_eth_valset_nonce = get_valset_nonce(peggy_address, *MINER_ADDRESS, &web30)
         .await
         .expect("Failed to get current eth valset");
 
@@ -337,7 +362,7 @@ async fn test_valset_update(
             "Validator set is not yet updated to {}>, waiting",
             starting_eth_valset_nonce
         );
-        current_eth_valset_nonce = get_valset_nonce(peggy_address, miner_address, &web30)
+        current_eth_valset_nonce = get_valset_nonce(peggy_address, *MINER_ADDRESS, &web30)
             .await
             .expect("Failed to get current eth valset");
         delay_for(Duration::from_secs(4)).await;
@@ -356,14 +381,12 @@ async fn test_erc20_send(
     dest: CosmosAddress,
     peggy_address: EthAddress,
     erc20_address: EthAddress,
-    miner_private_key: EthPrivateKey,
     amount: Uint256,
 ) {
     let start_coin = check_cosmos_balance(dest, &contact).await;
-    let miner_address = miner_private_key.to_public_key().unwrap();
     info!(
         "Sending to Cosmos from {} to {} with amount {}",
-        miner_address, dest, amount
+        *MINER_ADDRESS, dest, amount
     );
     // we send some erc20 tokens to the peggy contract to register a deposit
     let tx_id = send_to_cosmos(
@@ -371,7 +394,7 @@ async fn test_erc20_send(
         peggy_address,
         amount.clone(),
         dest,
-        miner_private_key,
+        *MINER_PRIVATE_KEY,
         Some(TOTAL_TIMEOUT),
         &web30,
         vec![],
@@ -436,7 +459,6 @@ async fn test_batch(
     fee: Coin,
     requester_cosmos_private_key: CosmosPrivateKey,
     dest_cosmos_private_key: CosmosPrivateKey,
-    miner_private_key: EthPrivateKey,
 ) {
     let dest_cosmos_address = dest_cosmos_private_key
         .to_public_key()
@@ -448,7 +470,6 @@ async fn test_batch(
     let token_name = coin.denom;
     let amount = coin.amount;
 
-    let miner_address = miner_private_key.to_public_key().unwrap();
     let bridge_denom_fee = Coin {
         denom: token_name.clone(),
         amount: 1u64.into(),
