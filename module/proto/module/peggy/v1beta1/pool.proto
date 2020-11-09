@@ -1,0 +1,31 @@
+syntax  = "proto3";
+package module.peggy.v1beta1;
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+// POOL.go
+// // OutgoingTx is a withdrawal on the bridged contract
+// type OutgoingTx struct {
+// 	Sender      sdk.AccAddress  `json:"sender"`
+// 	DestAddress EthereumAddress `json:"dest_address"`
+// 	Amount      sdk.Coin        `json:"send"`
+// 	BridgeFee   sdk.Coin        `json:"bridge_fee"`
+// }
+
+// // BridgedDenominator track and identify the ported ERC20 tokens into Peggy.
+// // An ERC20 token on the Ethereum side can be uniquely identified by the ERC20 contract address and the human readable symbol
+// // used for it in the contract
+// // In Peggy this is represented as "vouchers" that get minted and burned when interacting with the Ethereum side. These "vouchers"
+// // are identified by a prefixed string representation. See VoucherDenom type.
+// type BridgedDenominator struct {
+// 	// TokenContractAddress is the ERC20 contract address
+// 	TokenContractAddress EthereumAddress `json:"token_contract_address"`
+// 	// Symbol is the human readable ERC20 token name.
+// 	Symbol string `json:"symbol"`
+// 	// CosmosVoucherDenom is used as denom in sdk.Coin
+// 	CosmosVoucherDenom VoucherDenom `json:"cosmos_voucher_denom"`
+// }
+
+// // VoucherDenom is a unique denominator and identifier for an ERC20 token in the cosmos world
+// type VoucherDenom string
+
+// // IDSet is a collection of DB keys in a second index.
+// type IDSet []uint64

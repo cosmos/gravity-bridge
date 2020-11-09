@@ -1,0 +1,60 @@
+syntax = "proto3";
+package module.peggy.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "module/peggy/v1beta1/genesis.proto";
+
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+// Query defines the gRPC querier service
+service Query {
+    // Deployments queries deployments
+    rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {}
+    rpc CurrentValset (QueryCurrentValsetRequest) returns (QueryCurrentValsetResponse) {}
+    rpc ValsetRequest (QueryValsetRequestRequest) returns (QueryValsetRequestResponse) {}
+    rpc ValsetConfirm (QueryValsetConfirmRequest) returns (QueryValsetConfirmResponse) {}
+    rpc ValsetConfirmsByNonce (QueryValsetConfirmsByNonceRequest) returns (QueryValsetConfirmsByNonceResponse) {}
+    rpc LastValsetRequests (QueryLastValsetRequestsRequest) returns (QueryLastValsetRequestsResponse) {}
+    rpc LastPendingValsetRequestByAddr (QueryLastPendingValsetRequestByAddrRequest) returns (QueryLastPendingValsetRequestByAddrResponse) {}
+    rpc LastPendingBatchRequestByAddr (QueryLastPendingBatchRequestByAddrRequest) returns (QueryLastPendingBatchRequestByAddrResponse) {}
+    rpc OutgoingTxBatches (QueryOutgoingTxBatchesRequest) returns (QueryOutgoingTxBatchesResponse) {}
+    rpc BatchRequestByNonce (QueryBatchRequestByNonceRequest) returns (QueryBatchRequestByNonceResponse) {}
+    rpc BridgedDenominators (QueryBridgedDenominatorsRequest) returns (QueryBridgedDenominatorsResponse) {}
+}
+
+message QueryParamsRequest {}
+
+message QueryParamsResponse {
+    Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryCurrentValsetRequest {}
+message QueryCurrentValsetResponse {}
+
+message QueryValsetRequestRequest {}
+message QueryValsetRequestResponse {}
+
+message QueryValsetConfirmRequest {}
+message QueryValsetConfirmResponse {}
+
+message QueryValsetConfirmsByNonceRequest {}
+message QueryValsetConfirmsByNonceResponse {}
+
+message QueryLastValsetRequestsRequest {}
+message QueryLastValsetRequestsResponse {}
+
+message QueryLastPendingValsetRequestByAddrRequest {}
+message QueryLastPendingValsetRequestByAddrResponse {}
+
+message QueryLastPendingBatchRequestByAddrRequest {}
+message QueryLastPendingBatchRequestByAddrResponse {}
+
+message QueryOutgoingTxBatchesRequest {}
+message QueryOutgoingTxBatchesResponse {}
+
+message QueryBatchRequestByNonceRequest {}
+message QueryBatchRequestByNonceResponse {}
+
+message QueryBridgedDenominatorsRequest {}
+message QueryBridgedDenominatorsResponse {}
+

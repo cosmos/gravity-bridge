@@ -1,0 +1,18 @@
+syntax  = "proto3";
+package module.peggy.v1beta1;
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+// TYPES.go
+// // BridgeValidator represents the validator data in the Ethereum bridge MultiSig set.
+// type BridgeValidator struct {
+// 	Power           uint64          `json:"power"`
+// 	EthereumAddress EthereumAddress `json:"ethereum_address"`
+// }
+
+// // BridgeValidators is the sorted set of validator data for Ethereum bridge MultiSig set
+// type BridgeValidators []BridgeValidator
+
+// // Valset is the Ethereum Bridge Multsig Set
+// type Valset struct {
+// 	Nonce   UInt64Nonce      `json:"nonce"`
+// 	Members BridgeValidators `json:"members"`
+// }

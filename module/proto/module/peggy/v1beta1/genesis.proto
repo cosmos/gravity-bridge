@@ -1,0 +1,32 @@
+syntax = "proto3";
+package module.peggy.v1beta1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+// Params represent the peggy genesis and store parameters
+message Params {
+  // PeggyID is a random 32 byte value to prevent signature reuse
+  bytes peggy_id = 1 [(gogoproto.moretags) = "yaml:\"peggy_id\""];
+
+  // ContractHash is the code hash of a known good version of the Peggy contract solidity code.
+  // It will be used to verify exactly which version of the bridge will be deployed.
+  bytes contract_source_hash = 2  [(gogoproto.moretags) = "yaml:\"contract_source_hash\""];
+
+  // StartThreshold is the percentage of total voting power that must be online and participating in
+  // Peggy operations before a bridge can start operating
+  uint64 start_threshold = 3  [(gogoproto.moretags) = "yaml:\"start_threshold\""];
+  
+  // BridgeContractAddress is address of the bridge contract on the Ethereum side
+  bytes ethereum_address = 4  [(gogoproto.moretags) = "yaml:\"ethereum_address\""];
+
+  // BridgeChainID is the unique identifier of the Ethereum chain
+  uint64 bridge_chain_id = 5  [(gogoproto.moretags) = "yaml:\"bridge_chain_id\""];
+} 
+  
+// Genesis
+message GenesisState {
+  Params params = 1;
+}
+

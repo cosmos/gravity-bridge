@@ -1,0 +1,53 @@
+syntax = "proto3";
+package module.peggy.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "module/peggy/v1beta1/attestation.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+
+enum VoteOption {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // VOTE_OPTION_UNSPECIFIED defines a no-op vote option.
+  BATCH_STATUS_UNKNOWN = 0 [(gogoproto.enumvalue_customname) = "OptionEmpty"];
+  BATCH_STATUS_PENDING = 1;    // inital status
+  BATCH_STATUS_SUBMITTED = 2;  // in flight to ETH
+  BATCH_STATUS_PROCESSED = 3;  // observed - end state
+  BATCH_STATUS_CANCELED = 4;   // end state
+}
+
+
+message OutgoingTxBatch {
+  uint64 nonce = 1;
+  repeated OutgoingTransferTx elements = 2;
+  google.protobuf.Timestamp created_at = 3 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+
+}
+// type OutgoingTxBatch struct {
+// 	Nonce              UInt64Nonce          `json:"nonce"`
+// 	Elements           []OutgoingTransferTx `json:"elements"`
+// 	CreatedAt          time.Time            `json:"created_at"`
+// 	TotalFee           ERC20Token           `json:"total_fee"`
+// 	BridgedDenominator BridgedDenominator   `json:"bridged_denominator"`
+// 	BatchStatus        BatchStatus          `json:"batch_status"`
+// 	Valset             Valset               `json:"valset"`
+// 	TokenContract      EthereumAddress      `json:"tokenContract"`
+// }
+
+message OutgoingTransferTx {
+  uint64 id = 1;
+  string sender = 2;
+  bytes dest_address = 3;
+  ERC20Token amount = 4; 
+  ERC20Token bridge_fee = 5;
+}
+// type OutgoingTransferTx struct {
+// 	ID          uint64          `json:"txid"`
+// 	Sender      sdk.AccAddress  `json:"sender"`
+// 	DestAddress EthereumAddress `json:"dest_address"`
+// 	Amount      ERC20Token      `json:"send"`
+// 	BridgeFee   ERC20Token      `json:"bridge_fee"`
+// }

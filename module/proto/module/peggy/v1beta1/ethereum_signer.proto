@@ -1,0 +1,13 @@
+syntax  = "proto3";
+package module.peggy.v1beta1;
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+// ETHEREUM_SIGNER.go
+// SignType defines what has been signed by an orchestrator
+// type SignType byte
+
+// const (
+// 	SignTypeUnknown SignType = 0
+// 	// signed confirmations on cosmos for Ethereum side
+// 	SignTypeOrchestratorSignedMultiSigUpdate SignType = 1
+// 	SignTypeOrchestratorSignedWithdrawBatch  SignType = 2
+// )

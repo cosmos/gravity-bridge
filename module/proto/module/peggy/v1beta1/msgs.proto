@@ -1,0 +1,160 @@
+syntax  = "proto3";
+package module.peggy.v1beta1;
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+// MSGS.go
+// // ValsetConfirm
+// // this is the message sent by the validators when they wish to submit their signatures over
+// // the validator set at a given block height. A validator must first call MsgSetEthAddress to
+// // set their Ethereum address to be used for signing. Then someone (anyone) must make a ValsetRequest
+// // the request is essentially a messaging mechanism to determine which block all validators should submit
+// // signatures over. Finally validators sign the validator set, powers, and Ethereum addresses of the
+// // entire validator set at the height of a ValsetRequest and submit that signature with this message
+// // a ValsetConfirm.
+// //
+// // If a sufficient number of validators (66% of voting power) (A) have set Ethereum addresses and (B)
+// // submit ValsetConfirm messages with their signatures it is then possible for anyone to view these
+// // signatures in the chain store and submit them to Ethereum to update the validator set
+// // -------------
+// // deprecated should use MsgBridgeSignatureSubmission instead
+// type MsgValsetConfirm struct {
+// 	Nonce     UInt64Nonce     `json:"nonce"`
+// 	Validator sdk.AccAddress  `json:"validator"`
+// 	Address   EthereumAddress `json:"eth_address"`
+// 	Signature string          `json:"signature"`
+// }
+
+// // ValsetRequest
+// // This message starts off the validator set update process by coordinating a block height
+// // around which signatures over the validators, powers, and ethereum addresses will be made
+// // and submitted using a ValsetConfirm. Anyone can send this message as it is not authenticated
+// // except as a valid tx. In theory people could spam it and the validators will have to determine which
+// // block to actually coordinate around by looking over the valset requests and seeing which one
+// // some other validator has already submitted a ValsetResponse for.
+// // -------------
+// type MsgValsetRequest struct {
+// 	Requester sdk.AccAddress `json:"requester"`
+// }
+
+// // SetEthAddress
+// // This is used by the validators to set the Ethereum address that represents them on the
+// // Ethereum side of the bridge. They must sign their Cosmos address using the Ethereum address
+// // they have submitted.
+// // Like ValsetResponse this message can in theory be submitted by anyone, but only the current
+// // validator sets submissions carry any weight.
+// // -------------
+// type MsgSetEthAddress struct {
+// 	// the ethereum address
+// 	Address   EthereumAddress `json:"address"`
+// 	Validator sdk.AccAddress  `json:"validator"`
+// 	Signature string          `json:"signature"`
+// }
+
+// // MsgSendToEth
+// // This is the message that a user calls when they want to bridge an asset
+// // TODO right now this needs to be locked to a single ERC20
+// // TODO fixed fee amounts for now, variable fee amounts in the fee field later
+// // TODO actually remove amounts form the users bank balances
+// // TODO this message modifies the on chain store by adding itself to a txpool
+// // it will later be removed when it is included in a batch and successfully submitted
+// // tokens are removed from the users balance immediately
+// // -------------
+// type MsgSendToEth struct {
+// 	// the source address on Cosmos
+// 	Sender sdk.AccAddress `json:"sender"`
+// 	// the destination address on Ethereum
+// 	DestAddress EthereumAddress `json:"dest_address"`
+// 	// the coin to send across the bridge, note the restriction that this is a
+// 	// single coin not a set of coins that is normal in other Cosmos messages
+// 	Amount sdk.Coin `json:"send"`
+// 	// the fee paid for the bridge, distinct from the fee paid to the chain to
+// 	// actually send this message in the first place. So a successful send has
+// 	// two layers of fees for the user
+// 	BridgeFee sdk.Coin `json:"bridge_fee"`
+// }
+
+// // MsgRequestBatch
+// // this is a message anyone can send that requests a batch of transactions to send across
+// // the bridge be created for whatever block height this message is included in. This acts as
+// // a coordination point, the handler for this message looks at the AddToOutgoingPool tx's in the store
+// // and generates a batch, also available in the store tied to this message. The validators then
+// // grab this batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer can
+// // finally submit the batch
+// // -------------
+// type MsgRequestBatch struct {
+// 	Requester sdk.AccAddress `json:"requester"`
+// 	Denom     VoucherDenom   `json:"denom"`
+// }
+
+// // MsgConfirmBatch
+// // When validators observe a MsgRequestBatch they form a batch by ordering transactions currently
+// // in the txqueue in order of highest to lowest fee, cutting off when the batch either reaches a
+// // hardcoded maximum size (to be decided, probably around 100) or when transactions stop being
+// // profitable (TODO determine this without nondeterminism)
+// // This message includes the batch as well as an Ethereum signature over this batch by the validator
+// // -------------
+// // deprecated should use MsgBridgeSignatureSubmission instead
+// type MsgConfirmBatch struct {
+// 	Nonce        UInt64Nonce    `json:"nonce"`
+// 	Orchestrator sdk.AccAddress `json:"validator"`
+// 	Signature    string         `json:"signature"`
+// }
+
+// func NewMsgConfirmBatch(nonce UInt64Nonce, orchestrator sdk.AccAddress, signature string) MsgConfirmBatch {
+// 	return MsgConfirmBatch{
+// 		Nonce:        nonce,
+// 		Orchestrator: orchestrator,
+// 		Signature:    signature,
+// 	}
+// }
+
+
+
+// type EthereumClaim interface {
+// 	GetEventNonce() UInt64Nonce
+// 	GetType() ClaimType
+// 	ValidateBasic() error
+// 	Details() AttestationDetails
+// }
+
+// var (
+// 	_ EthereumClaim = EthereumBridgeDepositClaim{}
+// 	_ EthereumClaim = EthereumBridgeWithdrawalBatchClaim{}
+// 	// _ EthereumClaim = EthereumBridgeMultiSigUpdateClaim{}
+// 	// _ EthereumClaim = EthereumBridgeBootstrappedClaim{}
+// )
+
+// // EthereumBridgeDepositClaim claims that a token was deposited on the bridge contract.
+// type EthereumBridgeDepositClaim struct {
+// 	EventNonce     UInt64Nonce     `json:"event_nonce" yaml:"event_nonce"`
+// 	ERC20Token     ERC20Token      `json:"erc20_token"`
+// 	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
+// 	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
+// }
+
+// // EthereumBridgeWithdrawalBatchClaim claims that a batch of withdrawal operations on the bridge contract was executed.
+// type EthereumBridgeWithdrawalBatchClaim struct {
+// 	EventNonce UInt64Nonce `json:"event_nonce" yaml:"event_nonce"`
+// 	BatchNonce UInt64Nonce `json:"batch_nonce" yaml:"batch_nonce"`
+// }
+
+// // MsgCreateEthereumClaims
+// // this message essentially acts as the oracle between Ethereum and Cosmos, when an orchestrator sees
+// // that a batch/ deposit/ multisig set update has been submitted on to the Ethereum blockchain they
+// // will submit this message which acts as their oracle attestation. When more than 66% of the active
+// // validator set has claimed to have seen the transaction enter the ethereum blockchain it is "observed"
+// // and state transitions and operations are triggered on the cosmos side.
+// type MsgCreateEthereumClaims struct {
+// 	EthereumChainID uint64 `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
+// 	// I don't think we need to specify this, shouldn't it be in the store?
+// 	BridgeContractAddress EthereumAddress `json:"bridge_contract_address" yaml:"bridge_contract_address"`
+// 	Orchestrator          sdk.AccAddress  `json:"orchestrator" yaml:"orchestrator"`
+// 	Claims                []EthereumClaim `json:"claims" yaml:"claims"`
+// }
+
+// // MsgBridgeSignatureSubmission submits the Ethereum signature for a given nonce an claim type.
+// type MsgBridgeSignatureSubmission struct {
+// 	Nonce             UInt64Nonce    `json:"nonce"`
+// 	SignType          SignType       `json:"sign_type"`
+// 	Orchestrator      sdk.AccAddress `json:"orchestrator"`
+// 	EthereumSignature string         `json:"ethereum_signature"`
+// }

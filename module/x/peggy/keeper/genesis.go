@@ -5,6 +5,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+type GenesisState struct {
+	Params Params `json:"params,omitempty"`
+}
+
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	keeper.setParams(ctx, data.Params)
 }
