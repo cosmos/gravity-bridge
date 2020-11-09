@@ -40,27 +40,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
 		}
 
-		b := a.keeper.GetOutgoingTXBatch(ctx, details.BatchNonce)
-		if b == nil {
-			return sdkerrors.Wrap(types.ErrUnknown, "nonce")
-		}
-
-		// cleanup outgoing TX pool
-		for i := range b.Elements {
-			a.keeper.removePoolEntry(ctx, b.Elements[i].ID)
-		}
-
-		// Iterate through remaining batches
-		a.keeper.IterateOutgoingTXBatches(ctx, func(key []byte, iter_batch types.OutgoingTxBatch) bool {
-			// If the iterated batches nonce is lower than the one that was just executed, cancel it
-			// TODO: iterate only over batches we need to iterate over
-			if iter_batch.Nonce < b.Nonce {
-				a.keeper.CancelOutgoingTXBatch(ctx, iter_batch.Nonce)
-			}
-			return false
-		})
-		a.keeper.deleteBatch(ctx, *b)
-		return nil
+		a.keeper.OutgoingTxBatchExecuted(ctx, details.BatchNonce)
 
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", att.ClaimType)

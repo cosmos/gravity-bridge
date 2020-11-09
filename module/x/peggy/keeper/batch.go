@@ -57,6 +57,34 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 	return &batch, nil
 }
 
+// OutgoingTxBatchExecuted is run when the Cosmos chain detects that a batch has been executed on Ethereum
+// It frees all the transactions in the batch, then cancels all earlier batches
+func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, nonce types.UInt64Nonce) error {
+	b := k.GetOutgoingTXBatch(ctx, nonce)
+	if b == nil {
+		return sdkerrors.Wrap(types.ErrUnknown, "nonce")
+	}
+
+	// cleanup outgoing TX pool
+	for i := range b.Elements {
+		k.removePoolEntry(ctx, b.Elements[i].ID)
+	}
+
+	// Iterate through remaining batches
+	k.IterateOutgoingTXBatches(ctx, func(key []byte, iter_batch types.OutgoingTxBatch) bool {
+		// If the iterated batches nonce is lower than the one that was just executed, cancel it
+		// TODO: iterate only over batches we need to iterate over
+		if iter_batch.Nonce < b.Nonce {
+			k.CancelOutgoingTXBatch(ctx, iter_batch.Nonce)
+		}
+		return false
+	})
+
+	// Delete batch since it is finished
+	k.deleteBatch(ctx, *b)
+	return nil
+}
+
 func (k Keeper) storeBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetOutgoingTxBatchKey(batch.Nonce), k.cdc.MustMarshalBinaryBare(batch))
@@ -107,7 +135,10 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, nonce types.UInt64Nonce) 
 	for _, tx := range batch.Elements {
 		k.prependToUnbatchedTXIndex(ctx, batch.BridgedDenominator.ToVoucherCoin(tx.BridgeFee.Amount), tx.ID)
 	}
+
+	// Delete batch since it is finished
 	k.deleteBatch(ctx, *batch)
+
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatchCanceled,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
