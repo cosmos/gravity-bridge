@@ -40,7 +40,6 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 		CreatedAt:          ctx.BlockTime(),
 		BridgedDenominator: *bridgedDenom,
 		TotalFee:           totalFee,
-		BatchStatus:        types.BatchStatusPending,
 		Valset:             k.GetCurrentValset(ctx),
 		TokenContract:      bridgedDenom.TokenContractAddress,
 	}
@@ -61,6 +60,11 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 func (k Keeper) storeBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetOutgoingTxBatchKey(batch.Nonce), k.cdc.MustMarshalBinaryBare(batch))
+}
+
+func (k Keeper) deleteBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetOutgoingTxBatchKey(batch.Nonce))
 }
 
 // pickUnbatchedTX find TX in pool and remove from "available" second index
@@ -94,19 +98,16 @@ func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, nonce types.UInt64Nonce) *ty
 	return &b
 }
 
-// CancelOutgoingTXBatch releases all TX in the batch to the "available" second index. BatchStatus is set to canceled
+// CancelOutgoingTXBatch releases all TX in the batch and deletes the batch
 func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, nonce types.UInt64Nonce) error {
 	batch := k.GetOutgoingTXBatch(ctx, nonce)
 	if batch == nil {
 		return types.ErrUnknown
 	}
-	if err := batch.Cancel(); err != nil {
-		return err
-	}
 	for _, tx := range batch.Elements {
 		k.prependToUnbatchedTXIndex(ctx, batch.BridgedDenominator.ToVoucherCoin(tx.BridgeFee.Amount), tx.ID)
 	}
-	k.storeBatch(ctx, *batch)
+	k.deleteBatch(ctx, *batch)
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatchCanceled,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
