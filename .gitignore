@@ -7,3 +7,7 @@ tests/dockerfile/peggy.tar.gz
 #Buidler files
 cache
 artifacts
+
+tools-stamp
+proto-tools-stamp
+buf-stamp

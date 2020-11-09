@@ -10,7 +10,7 @@ use rand::Rng;
 use std::time::Duration;
 
 /// If you run the start-chains.sh script in the peggy repo it will pass
-/// port 1317 on localhost through to the peggycli rest-server which can
+/// port 1317 on localhost through to the peggy rest-server which can
 /// then be used to run this test and debug things quickly. You will need
 /// to run the following command and copy a phrase so that you actually
 /// have some coins to send funds

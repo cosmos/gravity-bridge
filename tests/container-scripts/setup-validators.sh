@@ -1,8 +1,8 @@
 #!/bin/bash
 set -eux
 # your gaiad binary name
-BIN=peggyd
-CLI=peggycli
+BIN=peggy
+CLI=peggy
 
 NODES=$1
 

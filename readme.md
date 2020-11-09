@@ -112,4 +112,4 @@ For example, you can use VS Code's "Remote-Container" extension to attach to the
 
 ## Debugger
 
-To use a stepping debugger in VS Code, follow the "Working inside the container" instructions above, but set up a one node testnet using `./tests/reload-code.sh 1`. Now kill the node with `pkill peggyd`. Start the debugger from within VS Code, and you will have a 1 node debuggable testnet.
+To use a stepping debugger in VS Code, follow the "Working inside the container" instructions above, but set up a one node testnet using `./tests/reload-code.sh 1`. Now kill the node with `pkill peggy`. Start the debugger from within VS Code, and you will have a 1 node debuggable testnet.
