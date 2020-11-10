@@ -92,7 +92,7 @@ func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm
 	})
 }
 
-// This function takes in a signature submitted by a validator's Eth Signer and
+// This function takes in a signature submitted by a validator's Eth Signer
 func handleBridgeSignatureSubmission(ctx sdk.Context, keeper Keeper, msg MsgBridgeSignatureSubmission) (*sdk.Result, error) {
 	checkpoint, err := getCheckpoint(ctx, keeper, msg.SignType, msg.Nonce)
 	if err != nil {

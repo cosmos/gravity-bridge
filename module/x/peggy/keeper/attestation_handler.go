@@ -40,7 +40,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
 		}
 
-		a.keeper.OutgoingTxBatchExecuted(ctx, details.BatchNonce)
+		a.keeper.OutgoingTxBatchExecuted(ctx, details.ERC20Token.TokenContractAddress, details.BatchNonce)
 
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", att.ClaimType)

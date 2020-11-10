@@ -91,8 +91,8 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 	return append(OutgoingTXPoolKey, sdk.Uint64ToBigEndian(id)...)
 }
 
-func GetOutgoingTxBatchKey(nonce UInt64Nonce) []byte {
-	return append(OutgoingTXBatchKey, nonce.Bytes()...)
+func GetOutgoingTxBatchKey(tokenContract EthereumAddress, nonce UInt64Nonce) []byte {
+	return append(append(OutgoingTXBatchKey, tokenContract.Bytes()...), nonce.Bytes()...)
 }
 
 // deprecated
