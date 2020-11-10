@@ -33,55 +33,15 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		if err != nil {
 			return sdkerrors.Wrap(err, "transfer vouchers")
 		}
+
 	case types.ClaimTypeEthereumBridgeWithdrawalBatch:
-		b := a.keeper.GetOutgoingTXBatch(ctx, att.EventNonce) // TODO: this is not the correct nonce. We need the batch nonce.
-		if b == nil {
-			return sdkerrors.Wrap(types.ErrUnknown, "nonce")
+		details, ok := att.Details.(types.WithdrawalBatch)
+		if !ok {
+			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
 		}
-		if err := b.Observed(); err != nil {
-			return err
-		}
-		a.keeper.storeBatch(ctx, *b)
-		// cleanup outgoing TX pool
-		for i := range b.Elements {
-			a.keeper.removePoolEntry(ctx, b.Elements[i].ID)
-		}
-		// TODO: implement logic to free transactions from all earlier batches as well.
-		return nil
-	// case types.ClaimTypeEthereumBridgeMultiSigUpdate:
-	// 	if !a.keeper.HasValsetRequest(ctx, att.EventNonce) {
-	// 		return sdkerrors.Wrap(types.ErrUnknown, "nonce")
-	// 	}
 
-	// 	// todo: is there any cleanup for us like:
-	// 	a.keeper.IterateValsetRequest(ctx, func(key []byte, _ types.Valset) bool {
-	// 		nonce := types.UInt64NonceFromBytes(key)
-	// 		if att.Nonce.GreaterThan(nonce) {
-	// 			ctx.Logger().Info("TODO: let's remove valset request", "nonce", nonce)
-	// 		}
-	// 		// todo: also remove all confirmations < height
-	// 		return false
-	// 	})
-	// 	return nil
-	// case types.ClaimTypeEthereumBridgeBootstrap:
-	// 	bootstrap, ok := att.Details.(types.BridgeBootstrap)
-	// 	if !ok {
-	// 		return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
-	// 	}
-	// 	// quick hack:  we are storing the bootstrap data here to avoid the gov process in MVY.
-	// 	// TODO: improve process by:
-	// 	// - verify StartThreshold == params.StartThreshold
-	// 	// - verify PeggyID == params.PeggyID
+		a.keeper.OutgoingTxBatchExecuted(ctx, details.BatchNonce)
 
-	// 	a.keeper.setPeggyID(ctx, bootstrap.PeggyID)
-	// 	a.keeper.setStartThreshold(ctx, bootstrap.StartThreshold)
-
-	// 	initialMultisigSet := types.NewValset(att.EventNonce, bootstrap.BridgeValidators)
-
-	// 	// todo: do we want to do a sanity check that these validator addresses exits already?
-	// 	// the peggy bridge can not operate proper without orchestrators having their ethereum
-	// 	// addresses set before.
-	// 	return a.keeper.SetBootstrapValset(ctx, initialMultisigSet)
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", att.ClaimType)
 	}

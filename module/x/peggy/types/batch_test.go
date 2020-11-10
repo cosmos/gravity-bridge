@@ -53,7 +53,6 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 			Symbol:               "MAX",
 			CosmosVoucherDenom:   "peggy39b512461b",
 		},
-		BatchStatus:   1,
 		Valset:        v,
 		TokenContract: erc20Addr,
 	}

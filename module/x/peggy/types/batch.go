@@ -11,19 +11,19 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-type BatchStatus uint8
+// type BatchStatus uint8
 
-const (
-	BatchStatusUnknown   BatchStatus = 0
-	BatchStatusPending   BatchStatus = 1 // initial status
-	BatchStatusSubmitted BatchStatus = 2 // in flight to ETH
-	BatchStatusProcessed BatchStatus = 3 // observed - end state
-	BatchStatusCancelled BatchStatus = 4 // end state
-)
+// const (
+// 	BatchStatusUnknown BatchStatus = 0
+// 	BatchStatusPending BatchStatus = 1 // initial status
+// 	// BatchStatusSubmitted BatchStatus = 2 // in flight to ETH
+// 	BatchStatusProcessed BatchStatus = 3 // observed - end state
+// 	BatchStatusCancelled BatchStatus = 4 // end state
+// )
 
-func (b BatchStatus) String() string {
-	return []string{"unknown", "pending", "submitted", "observed", "processed", "cancelled"}[b]
-}
+// func (b BatchStatus) String() string {
+// 	return []string{"unknown", "pending", "submitted", "observed", "processed", "cancelled"}[b]
+// }
 
 type OutgoingTxBatch struct {
 	Nonce              UInt64Nonce          `json:"nonce"`
@@ -31,18 +31,17 @@ type OutgoingTxBatch struct {
 	CreatedAt          time.Time            `json:"created_at"`
 	TotalFee           ERC20Token           `json:"total_fee"`
 	BridgedDenominator BridgedDenominator   `json:"bridged_denominator"`
-	BatchStatus        BatchStatus          `json:"batch_status"`
 	Valset             Valset               `json:"valset"`
 	TokenContract      EthereumAddress      `json:"tokenContract"`
 }
 
-func (b *OutgoingTxBatch) Cancel() error {
-	if b.BatchStatus != BatchStatusPending {
-		return sdkerrors.Wrap(ErrInvalid, "status - batch not pending")
-	}
-	b.BatchStatus = BatchStatusCancelled
-	return nil
-}
+// func (b *OutgoingTxBatch) Cancel() error {
+// 	if b.BatchStatus != BatchStatusPending {
+// 		return sdkerrors.Wrap(ErrInvalid, "status - batch not pending")
+// 	}
+// 	b.BatchStatus = BatchStatusCancelled
+// 	return nil
+// }
 
 func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 
@@ -210,13 +209,13 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	return batchDigest.Bytes(), nil
 }
 
-func (b *OutgoingTxBatch) Observed() error {
-	if b.BatchStatus != BatchStatusPending && b.BatchStatus != BatchStatusSubmitted {
-		return sdkerrors.Wrap(ErrInvalid, "status")
-	}
-	b.BatchStatus = BatchStatusProcessed
-	return nil
-}
+// func (b *OutgoingTxBatch) Observed() error {
+// 	if b.BatchStatus != BatchStatusPending && b.BatchStatus != BatchStatusSubmitted {
+// 		return sdkerrors.Wrap(ErrInvalid, "status")
+// 	}
+// 	b.BatchStatus = BatchStatusProcessed
+// 	return nil
+// }
 
 type OutgoingTransferTx struct {
 	ID          uint64          `json:"txid"`

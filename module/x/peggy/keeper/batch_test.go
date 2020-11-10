@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 	"time"
 
@@ -12,6 +13,10 @@ import (
 )
 
 func TestBatches(t *testing.T) {
+
+	// SETUP
+	// =====
+
 	k, ctx, keepers := CreateTestEnv(t)
 	var (
 		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
@@ -34,6 +39,11 @@ func TestBatches(t *testing.T) {
 	// store counterpart
 	k.StoreCounterpartDenominator(ctx, myTokenContractAddr, myETHToken)
 
+	denominator := types.NewBridgedDenominator(myTokenContractAddr, myETHToken)
+
+	// CREATE FIRST BATCH
+	// ==================
+
 	// add some TX to the pool
 	for i, v := range []int64{2, 3, 2, 1} {
 		amount := sdk.NewInt64Coin(string(voucherDenom), int64(i+100))
@@ -43,15 +53,18 @@ func TestBatches(t *testing.T) {
 	}
 	// when
 	ctx = ctx.WithBlockTime(now)
-	batch, err := k.BuildOutgoingTXBatch(ctx, voucherDenom, 2)
+
+	// tx batch size is 2, so that some of them stay behind
+	firstBatch, err := k.BuildOutgoingTXBatch(ctx, voucherDenom, 2)
 	require.NoError(t, err)
 
-	// then batch is persisted
-	gotBatch := k.GetOutgoingTXBatch(ctx, batch.Nonce)
-	require.NotNil(t, gotBatch)
+	fmt.Printf("FIRST BATCH VALSET %T", firstBatch.Valset)
 
-	denominator := types.NewBridgedDenominator(myTokenContractAddr, myETHToken)
-	expBatch := types.OutgoingTxBatch{
+	// then batch is persisted
+	gotFirstBatch := k.GetOutgoingTXBatch(ctx, firstBatch.Nonce)
+	require.NotNil(t, gotFirstBatch)
+
+	expFirstBatch := types.OutgoingTxBatch{
 		Nonce: types.NewUInt64Nonce(1),
 		Elements: []types.OutgoingTransferTx{
 			{
@@ -72,11 +85,10 @@ func TestBatches(t *testing.T) {
 		CreatedAt:          now,
 		TotalFee:           denominator.ToUint64ERC20Token(5),
 		BridgedDenominator: denominator,
-		BatchStatus:        types.BatchStatusPending,
 		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
 		Valset:             types.Valset{Nonce: 0x12d687, Members: types.BridgeValidators(nil)},
 	}
-	assert.Equal(t, expBatch, *gotBatch)
+	assert.Equal(t, expFirstBatch, *gotFirstBatch)
 
 	// and verify remaining available Tx in the pool
 	var gotUnbatchedTx []types.OutgoingTx
@@ -100,18 +112,62 @@ func TestBatches(t *testing.T) {
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
 
-	// ------
-	// and when canceled
+	// CREATE SECOND, MORE PROFITABLE BATCH
+	// ====================================
 
-	err = k.CancelOutgoingTXBatch(ctx, batch.Nonce)
+	// add some more TX to the pool to create a more profitable batch
+	for i, v := range []int64{4, 5} {
+		amount := sdk.NewInt64Coin(string(voucherDenom), int64(i+100))
+		fee := sdk.NewInt64Coin(string(voucherDenom), v)
+		_, err := k.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		require.NoError(t, err)
+	}
+
+	// create the more profitable batch
+	ctx = ctx.WithBlockTime(now)
+	// tx batch size is 2, so that some of them stay behind
+	secondBatch, err := k.BuildOutgoingTXBatch(ctx, voucherDenom, 2)
 	require.NoError(t, err)
 
-	// then
-	gotBatch = k.GetOutgoingTXBatch(ctx, batch.Nonce)
-	require.NotNil(t, gotBatch)
-	assert.Equal(t, types.BatchStatusCancelled, gotBatch.BatchStatus)
+	// check that the more profitable batch has the right txs in it
+	expSecondBatch := types.OutgoingTxBatch{
+		Nonce: types.NewUInt64Nonce(2),
+		Elements: []types.OutgoingTransferTx{
+			{
+				ID:          6,
+				BridgeFee:   denominator.ToUint64ERC20Token(5),
+				Sender:      mySender,
+				DestAddress: myReceiver,
+				Amount:      denominator.ToUint64ERC20Token(101),
+			},
+			{
+				ID:          5,
+				BridgeFee:   denominator.ToUint64ERC20Token(4),
+				Sender:      mySender,
+				DestAddress: myReceiver,
+				Amount:      denominator.ToUint64ERC20Token(100),
+			},
+		},
+		CreatedAt:          now,
+		TotalFee:           denominator.ToUint64ERC20Token(9),
+		BridgedDenominator: denominator,
+		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
+		// For some reason, the empty Members field can be expressed by either []types.BridgeValidator{} or types.BridgeValidators(nil)
+		Valset: types.Valset{Nonce: 0x12d687, Members: []types.BridgeValidator{}},
+	}
+	assert.Equal(t, expSecondBatch, *secondBatch)
 
-	// and all TX added back to unbatched pool
+	// EXECUTE THE MORE PROFITABLE BATCH
+	// =================================
+
+	// Execute the batch
+	k.OutgoingTxBatchExecuted(ctx, secondBatch.Nonce)
+
+	// check batch has been deleted
+	gotSecondBatch := k.GetOutgoingTXBatch(ctx, secondBatch.Nonce)
+	require.Nil(t, gotSecondBatch)
+
+	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
 	k.IterateOutgoingPoolByFee(ctx, voucherDenom, func(_ uint64, tx types.OutgoingTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)

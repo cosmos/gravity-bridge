@@ -95,8 +95,8 @@ var (
 // WithdrawalBatch is an attestation detail that marks a batch of outgoing transactions executed and
 // frees earlier unexecuted batches
 type WithdrawalBatch struct {
-	BatchNonce sdk.Int    `json:"batch_nonce"`
-	ERC20Token ERC20Token `json:"erc_20_token"`
+	BatchNonce UInt64Nonce `json:"batch_nonce"`
+	ERC20Token ERC20Token  `json:"erc_20_token"`
 }
 
 func (b WithdrawalBatch) Hash() []byte {
