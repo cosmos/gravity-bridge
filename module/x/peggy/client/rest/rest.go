@@ -34,7 +34,5 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) 
 	r.HandleFunc(fmt.Sprintf("/%s/last_observed_valset", storeName), lastObservedValsetHandler(cliCtx, storeName)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/%s/last_approved_valset", storeName), lastApprovedValsetHandler(cliCtx, storeName)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/%s/attestation/{%s}/{%s}", storeName, claimType, nonce), queryAttestation(cliCtx, storeName)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/%s/sign_bridge_request/{%s}/{%s}", storeName, signType, nonce), BridgeApprovalSignatureHandler(cliCtx)).Methods("POST")
-	// r.HandleFunc(fmt.Sprintf("/%s/bootstrap", storeName), bootstrapConfirmHandler(cliCtx)).Methods("POST")
 
 }

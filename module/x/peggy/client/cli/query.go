@@ -361,7 +361,7 @@ func CmdGetAttestationRequest(storeKey string, cdc *codec.Codec) *cobra.Command 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			nonce, err := parseNonce(args[1])
+			nonce, err := types.UInt64NonceFromString(args[1])
 			if err != nil {
 				return err
 			}

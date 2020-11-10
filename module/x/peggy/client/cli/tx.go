@@ -35,9 +35,6 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		CmdRequestBatch(cdc),
 		CmdUpdateEthAddress(cdc),
 		CmdValsetRequest(cdc),
-		CmdValsetConfirm(storeKey, cdc),
-		GetObservedCmd(cdc),
-		GetApprovedCmd(storeKey, cdc),
 		GetUnsafeTestingCmd(cdc),
 	)...)
 

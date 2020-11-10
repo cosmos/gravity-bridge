@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -35,7 +36,8 @@ var (
 	// deprecated
 
 	OutgoingTXBatchConfirmKey    = []byte{0xb}
-	BridgeApprovalSignatureKey   = []byte{0xe}
+	BatchApprovalSignatureKey    = []byte{0xe1}
+	ValsetApprovalSignatureKey   = []byte{0xe}
 	SecondIndexNonceByClaimKey   = []byte{0xf}
 	LastEventNonceByValidatorKey = []byte{0xf1}
 	BridgeObservedSignatureKey   = []byte{0x10}
@@ -100,33 +102,12 @@ func GetOutgoingTXBatchConfirmKey(nonce UInt64Nonce, validator sdk.ValAddress) [
 	return append(OutgoingTXBatchConfirmKey, append(nonce.Bytes(), validator.Bytes()...)...)
 }
 
-func GetBridgeApprovalSignatureKeyPrefix(s SignType) []byte {
-	return append(BridgeApprovalSignatureKey, s.Bytes()...)
-}
-func GetBridgeApprovalSignatureKey(singType SignType, nonce UInt64Nonce, validator sdk.ValAddress) []byte {
-	prefix := GetBridgeApprovalSignatureKeyPrefix(singType)
-	prefixLen := len(prefix)
-
-	r := make([]byte, prefixLen+UInt64NonceByteLen+len(validator))
-	copy(r, prefix)
-	copy(r[prefixLen:], nonce.Bytes())
-	copy(r[prefixLen+UInt64NonceByteLen:], validator)
-	return r
+func GetBatchApprovalSignatureKey(tokenContract EthereumAddress, batchNonce UInt64Nonce, validator sdk.ValAddress) []byte {
+	return []byte(fmt.Sprintf("%s/%s/%s/%s", BatchApprovalSignatureKey, tokenContract, batchNonce, validator))
 }
 
-func GetBridgeObservedSignatureKeyPrefix(c ClaimType) []byte {
-	return append(BridgeApprovalSignatureKey, c.Bytes()...)
-}
-
-func GetBridgeObservedSignatureKey(claimType ClaimType, nonce UInt64Nonce, validator sdk.ValAddress) []byte {
-	prefix := GetBridgeObservedSignatureKeyPrefix(claimType)
-	prefixLen := len(prefix)
-
-	r := make([]byte, prefixLen+UInt64NonceByteLen+len(validator))
-	copy(r, prefix)
-	copy(r[prefixLen:], nonce.Bytes())
-	copy(r[prefixLen+UInt64NonceByteLen:], validator)
-	return r
+func GetValsetApprovalSignatureKey(valsetNonce UInt64Nonce, validator sdk.ValAddress) []byte {
+	return []byte(fmt.Sprintf("%s/%s/%s", ValsetApprovalSignatureKey, valsetNonce, validator))
 }
 
 func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
