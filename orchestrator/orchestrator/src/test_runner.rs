@@ -279,6 +279,10 @@ async fn deploy_contracts(
             .expect("Failed to update Eth address");
     }
 
+    // prevents the node deployer from failing (rarely) when the chain has not
+    // yet produced the next block after submitting each eth address
+    wait_for_next_cosmos_block(contact).await;
+
     // wait for the orchestrators to finish registering their eth addresses
     let output = Command::new("npx")
         .args(&[
