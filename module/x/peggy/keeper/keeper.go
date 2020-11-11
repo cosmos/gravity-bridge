@@ -178,7 +178,7 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 // deprecated
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64Nonce, cb func([]byte, types.MsgValsetConfirm) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetApprovalSignatureKey)
 	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
 	defer iter.Close()
 
