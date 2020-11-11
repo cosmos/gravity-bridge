@@ -176,6 +176,7 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 
 // Iterate through all valset confirms for a nonce in ASC order
 // deprecated
+// MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64Nonce, cb func([]byte, types.MsgValsetConfirm) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
 	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
@@ -308,7 +309,7 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 //
 // In case of an overflow the end is set to nil.
 //		Example: []byte{255, 255, 255, 255} becomes nil
-//
+// MARK finish-batches: this is where some crazy shit happens
 func prefixRange(prefix []byte) ([]byte, []byte) {
 	if prefix == nil {
 		panic("nil key not allowed")
