@@ -21,7 +21,7 @@ func TestBatches(t *testing.T) {
 	var (
 		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
 		myReceiver          = types.NewEthereumAddress("eth receiver")
-		myTokenContractAddr = types.NewEthereumAddress("my eth oken address")
+		myTokenContractAddr = types.NewEthereumAddress("my eth token address")
 		myETHToken          = "myETHToken"
 		voucherDenom        = types.NewVoucherDenom(myTokenContractAddr, myETHToken)
 		now                 = time.Now().UTC()
@@ -82,7 +82,6 @@ func TestBatches(t *testing.T) {
 				Amount:      denominator.ToUint64ERC20Token(100),
 			},
 		},
-		CreatedAt:          now,
 		TotalFee:           denominator.ToUint64ERC20Token(5),
 		BridgedDenominator: denominator,
 		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
@@ -148,7 +147,6 @@ func TestBatches(t *testing.T) {
 				Amount:      denominator.ToUint64ERC20Token(100),
 			},
 		},
-		CreatedAt:          now,
 		TotalFee:           denominator.ToUint64ERC20Token(9),
 		BridgedDenominator: denominator,
 		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},

@@ -419,7 +419,7 @@ func CmdGetInflightBatchesRequest(storeKey string, cdc *codec.Codec) *cobra.Comm
 				fmt.Println("Nothing found")
 				return nil
 			}
-			var out []keeper.ApprovedOutgoingTxBatchResponse
+			var out []keeper.SignedOutgoingTxBatchResponse
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},

@@ -110,11 +110,11 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) 
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature")
 	}
 
-	// persist signature
-	if keeper.HasBatchApprovalSignature(ctx, msg.TokenContract, msg.Nonce, validator) {
+	// check if we already have this confirm
+	if keeper.GetBatchConfirm(ctx, msg.Nonce, msg.TokenContract, msg.Validator) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature")
 	}
-	key := keeper.SetBatchApprovalSignature(ctx, msg.TokenContract, msg.Nonce, validator, sigBytes)
+	key := keeper.SetBatchConfirm(ctx, msg)
 	return &sdk.Result{
 		Data: key,
 	}, nil

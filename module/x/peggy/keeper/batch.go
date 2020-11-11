@@ -37,7 +37,6 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 	batch := types.OutgoingTxBatch{
 		Nonce:              nonce,
 		Elements:           selectedTx,
-		CreatedAt:          ctx.BlockTime(),
 		BridgedDenominator: *bridgedDenom,
 		TotalFee:           totalFee,
 		Valset:             k.GetCurrentValset(ctx),
@@ -149,12 +148,6 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract types.Ether
 	)
 	ctx.EventManager().EmitEvent(batchEvent)
 	return nil
-}
-
-// SetOutgoingTXBatchConfirm stores the signature an orchestrator has submitted for an outgoing batch
-func (k Keeper) SetOutgoingTXBatchConfirm(ctx sdk.Context, nonce types.UInt64Nonce, validator sdk.ValAddress, signature []byte) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOutgoingTXBatchConfirmKey(nonce, validator), signature)
 }
 
 // IterateOutgoingTXBatches iterates through all outgoing batches in DESC order.

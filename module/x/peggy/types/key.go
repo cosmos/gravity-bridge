@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/binary"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -35,7 +34,7 @@ var (
 	// deprecated
 
 	OutgoingTXBatchConfirmKey    = []byte{0xb}
-	BatchApprovalSignatureKey    = []byte{0xe1}
+	BatchConfirmKey              = []byte{0xe1}
 	SecondIndexNonceByClaimKey   = []byte{0xf}
 	LastEventNonceByValidatorKey = []byte{0xf1}
 	BridgeObservedSignatureKey   = []byte{0x10}
@@ -95,13 +94,11 @@ func GetOutgoingTxBatchKey(tokenContract EthereumAddress, nonce UInt64Nonce) []b
 	return append(append(OutgoingTXBatchKey, tokenContract.Bytes()...), nonce.Bytes()...)
 }
 
-// deprecated
-func GetOutgoingTXBatchConfirmKey(nonce UInt64Nonce, validator sdk.ValAddress) []byte {
-	return append(OutgoingTXBatchConfirmKey, append(nonce.Bytes(), validator.Bytes()...)...)
-}
-
-func GetBatchApprovalSignatureKey(tokenContract EthereumAddress, batchNonce UInt64Nonce, validator sdk.ValAddress) []byte {
-	return []byte(fmt.Sprintf("%s/%s/%s/%s", BatchApprovalSignatureKey, tokenContract, batchNonce, validator))
+func GetBatchConfirmKey(tokenContract EthereumAddress, batchNonce UInt64Nonce, validator sdk.AccAddress) []byte {
+	a := append(batchNonce.Bytes(), validator...)
+	b := append(tokenContract.Bytes(), a...)
+	c := append(BatchConfirmKey, b...)
+	return c
 }
 
 func GetFeeSecondIndexKey(fee sdk.Coin) []byte {

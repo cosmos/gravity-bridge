@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -110,7 +111,7 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := allValsetConfirmsByNonce(ctx, spec.srcNonce, k)
+			got, err := queryAllValsetConfirms(ctx, spec.srcNonce, k)
 			if spec.expErr {
 				require.Error(t, err)
 				return
@@ -322,6 +323,159 @@ func TestPendingValsetRequests(t *testing.T) {
 			valAddr := sdk.AccAddress{}
 			valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 			got, err := lastPendingValsetRequest(ctx, valAddr.String(), k)
+			require.NoError(t, err)
+			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
+		})
+	}
+}
+func TestPendingBatchRequests(t *testing.T) {
+	k, ctx, keepers := CreateTestEnv(t)
+
+	// seed with valset requests and eth addresses to make validators
+	// that we will later use to lookup batches to be signed
+	for i := 0; i < 6; i++ {
+		var validators []sdk.ValAddress
+		for j := 0; j <= i; j++ {
+			// add an validator each block
+			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
+			k.SetEthAddress(ctx, valAddr, createEthAddress(j+1))
+			validators = append(validators, valAddr)
+		}
+		k.StakingKeeper = NewStakingKeeperMock(validators...)
+		ctx = ctx.WithBlockHeight(int64(100 + i))
+		k.SetValsetRequest(ctx)
+	}
+
+	// this should probably be broken out into a create test batch function
+	var (
+		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		myReceiver          = types.NewEthereumAddress("eth receiver")
+		myTokenContractAddr = types.NewEthereumAddress("my eth token address")
+		myETHToken          = "myETHToken"
+		voucherDenom        = types.NewVoucherDenom(myTokenContractAddr, myETHToken)
+		now                 = time.Now().UTC()
+	)
+	// mint some voucher first
+	allVouchers := sdk.Coins{sdk.NewInt64Coin(string(voucherDenom), 99999)}
+	err := keepers.SupplyKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
+	require.NoError(t, err)
+
+	// set senders balance
+	keepers.AccountKeeper.NewAccountWithAddress(ctx, mySender)
+	err = keepers.BankKeeper.SetCoins(ctx, mySender, allVouchers)
+	require.NoError(t, err)
+
+	// store counterpart
+	k.StoreCounterpartDenominator(ctx, myTokenContractAddr, myETHToken)
+
+	_ = types.NewBridgedDenominator(myTokenContractAddr, myETHToken)
+
+	// add some TX to the pool
+	for i, v := range []int64{2, 3, 2, 1} {
+		amount := sdk.NewInt64Coin(string(voucherDenom), int64(i+100))
+		fee := sdk.NewInt64Coin(string(voucherDenom), v)
+		_, err := k.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		require.NoError(t, err)
+	}
+	// when
+	ctx = ctx.WithBlockTime(now)
+
+	// tx batch size is 2, so that some of them stay behind
+	_, err = k.BuildOutgoingTXBatch(ctx, voucherDenom, 2)
+	require.NoError(t, err)
+
+	// end section that should be broken into a create test batch function
+
+	specs := map[string]struct {
+		expResp []byte
+	}{
+		"find batch": {
+			expResp: []byte(`{
+			"type": "peggy/OutgoingTxBatch",
+			"value": {
+			"nonce": "1",
+			"elements": [
+				{
+				"txid": "2",
+				"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+				"dest_address": "",
+				"send": {
+					"amount": "101",
+					"symbol": "myETHToken",
+					"token_contract_address": ""
+				},
+				"bridge_fee": {
+					"amount": "3",
+					"symbol": "myETHToken",
+					"token_contract_address": ""
+				}
+				},
+				{
+				"txid": "1",
+				"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+				"dest_address": "",
+				"send": {
+					"amount": "100",
+					"symbol": "myETHToken",
+					"token_contract_address": ""
+				},
+				"bridge_fee": {
+					"amount": "2",
+					"symbol": "myETHToken",
+					"token_contract_address": ""
+				}
+				}
+			],
+			"total_fee": {
+				"amount": "5",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			},
+			"bridged_denominator": {
+				"token_contract_address": "",
+				"symbol": "myETHToken",
+				"cosmos_voucher_denom": "peggy2ca9e20629"
+			},
+			"valset": {
+				"nonce": "105",
+				"members": [
+				{
+					"power": "715827882",
+					"ethereum_address": "0x0101010101010101010101010101010101010101"
+				},
+				{
+					"power": "715827882",
+					"ethereum_address": "0x0202020202020202020202020202020202020202"
+				},
+				{
+					"power": "715827882",
+					"ethereum_address": "0x0303030303030303030303030303030303030303"
+				},
+				{
+					"power": "715827882",
+					"ethereum_address": "0x0404040404040404040404040404040404040404"
+				},
+				{
+					"power": "715827882",
+					"ethereum_address": "0x0505050505050505050505050505050505050505"
+				},
+				{
+					"power": "715827882",
+					"ethereum_address": "0x0606060606060606060606060606060606060606"
+				}
+				]
+			},
+			"tokenContract": ""
+			}
+		}
+			`,
+			)},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			valAddr := sdk.AccAddress{}
+			valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+			got, err := lastPendingBatchRequest(ctx, valAddr.String(), k)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
 		})
