@@ -7,3 +7,4 @@ tests/dockerfile/peggy.tar.gz
 #Buidler files
 cache
 artifacts
+*.test
