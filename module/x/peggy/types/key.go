@@ -107,6 +107,7 @@ func GetBatchApprovalSignatureKey(tokenContract EthereumAddress, batchNonce UInt
 	return []byte(fmt.Sprintf("%s/%s/%s/%s", BatchApprovalSignatureKey, tokenContract, batchNonce, validator))
 }
 
+// MARK finish-batches: this is where i've tried to do things the old way
 func GetValsetApprovalSignatureKey(valsetNonce UInt64Nonce, validator sdk.ValAddress) []byte {
 	return append(ValsetApprovalSignatureKey, append(valsetNonce.Bytes(), []byte(validator)...)...)
 	// return []byte(fmt.Sprintf("%s/%s/%s", ValsetApprovalSignatureKey, valsetNonce, validator))
