@@ -57,6 +57,7 @@ func GetValsetRequestKey(nonce UInt64Nonce) []byte {
 }
 
 // deprecated
+// MARK finish-batches: this is where the key is created in the old (presumed working) code
 func GetValsetConfirmKey(nonce UInt64Nonce, validator sdk.AccAddress) []byte {
 	return append(ValsetConfirmKey, append(nonce.Bytes(), []byte(validator)...)...)
 }
@@ -107,7 +108,8 @@ func GetBatchApprovalSignatureKey(tokenContract EthereumAddress, batchNonce UInt
 }
 
 func GetValsetApprovalSignatureKey(valsetNonce UInt64Nonce, validator sdk.ValAddress) []byte {
-	return []byte(fmt.Sprintf("%s/%s/%s", ValsetApprovalSignatureKey, valsetNonce, validator))
+	return append(ValsetApprovalSignatureKey, append(valsetNonce.Bytes(), []byte(validator)...)...)
+	// return []byte(fmt.Sprintf("%s/%s/%s", ValsetApprovalSignatureKey, valsetNonce, validator))
 }
 
 func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
