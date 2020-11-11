@@ -149,10 +149,10 @@ func handleMsgConfirmValset(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm
 	}
 
 	// persist signature
-	if keeper.HasValsetApprovalSignature(ctx, msg.Nonce, validator) {
+	if keeper.GetValsetConfirm(ctx, msg.Nonce, msg.Validator) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature")
 	}
-	key := keeper.SetValsetApprovalSignature(ctx, msg.Nonce, validator, sigBytes)
+	key := keeper.SetValsetConfirm(ctx, msg)
 	return &sdk.Result{
 		Data: key,
 	}, nil

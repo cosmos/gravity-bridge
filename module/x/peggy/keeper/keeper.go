@@ -139,24 +139,6 @@ func (k Keeper) HasBatchApprovalSignature(ctx sdk.Context, tokenContract types.E
 	return store.Has(types.GetBatchApprovalSignatureKey(tokenContract, batchNonce, validator))
 }
 
-func (k Keeper) SetValsetApprovalSignature(ctx sdk.Context, valsetNonce types.UInt64Nonce, validator sdk.ValAddress, signature []byte) []byte {
-	store := ctx.KVStore(k.storeKey)
-	key := types.GetValsetApprovalSignatureKey(valsetNonce, validator)
-	store.Set(key, signature)
-	return key
-}
-
-func (k Keeper) GetValsetApprovalSignature(ctx sdk.Context, valsetNonce types.UInt64Nonce, validator sdk.ValAddress) []byte {
-	store := ctx.KVStore(k.storeKey)
-	return store.Get(types.GetValsetApprovalSignatureKey(valsetNonce, validator))
-}
-
-func (k Keeper) HasValsetApprovalSignature(ctx sdk.Context, valsetNonce types.UInt64Nonce, validator sdk.ValAddress) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetValsetApprovalSignatureKey(valsetNonce, validator))
-}
-
-// deprecated use GetBridgeApprovalSignature
 func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce types.UInt64Nonce, validator sdk.AccAddress) *types.MsgValsetConfirm {
 	store := ctx.KVStore(k.storeKey)
 	entity := store.Get(types.GetValsetConfirmKey(nonce, validator))
@@ -168,17 +150,17 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce types.UInt64Nonce, valid
 	return &confirm
 }
 
-// deprecated use SetBridgeObservedSignature instead
-func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) {
+func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) []byte {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator), k.cdc.MustMarshalBinaryBare(valsetConf))
+	key := types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator)
+	store.Set(key, k.cdc.MustMarshalBinaryBare(valsetConf))
+	return key
 }
 
 // Iterate through all valset confirms for a nonce in ASC order
-// deprecated
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64Nonce, cb func([]byte, types.MsgValsetConfirm) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetApprovalSignatureKey)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
 	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
 	defer iter.Close()
 

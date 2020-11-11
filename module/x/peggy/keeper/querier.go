@@ -126,13 +126,10 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	// todo: find validator address by operator key
-	validatorAddr := sdk.ValAddress(addr)
-
 	var pendingValsetReq *types.Valset
 	keeper.IterateValsetRequest(ctx, func(_ []byte, val types.Valset) bool {
-		found := keeper.HasValsetApprovalSignature(ctx, val.Nonce, validatorAddr)
-		if !found {
+		found := keeper.GetValsetConfirm(ctx, val.Nonce, addr)
+		if found == nil {
 			pendingValsetReq = &val
 		}
 		return true

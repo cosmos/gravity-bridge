@@ -22,9 +22,8 @@ const (
 )
 
 var (
-	EthAddressKey    = []byte{0x1}
-	ValsetRequestKey = []byte{0x2}
-	// deprecated
+	EthAddressKey               = []byte{0x1}
+	ValsetRequestKey            = []byte{0x2}
 	ValsetConfirmKey            = []byte{0x3}
 	OracleClaimKey              = []byte{0x4}
 	OracleAttestationKey        = []byte{0x5}
@@ -37,7 +36,6 @@ var (
 
 	OutgoingTXBatchConfirmKey    = []byte{0xb}
 	BatchApprovalSignatureKey    = []byte{0xe1}
-	ValsetApprovalSignatureKey   = []byte{0xe}
 	SecondIndexNonceByClaimKey   = []byte{0xf}
 	LastEventNonceByValidatorKey = []byte{0xf1}
 	BridgeObservedSignatureKey   = []byte{0x10}
@@ -56,7 +54,6 @@ func GetValsetRequestKey(nonce UInt64Nonce) []byte {
 	return append(ValsetRequestKey, nonce.Bytes()...)
 }
 
-// deprecated
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
 func GetValsetConfirmKey(nonce UInt64Nonce, validator sdk.AccAddress) []byte {
 	return append(ValsetConfirmKey, append(nonce.Bytes(), []byte(validator)...)...)
@@ -105,12 +102,6 @@ func GetOutgoingTXBatchConfirmKey(nonce UInt64Nonce, validator sdk.ValAddress) [
 
 func GetBatchApprovalSignatureKey(tokenContract EthereumAddress, batchNonce UInt64Nonce, validator sdk.ValAddress) []byte {
 	return []byte(fmt.Sprintf("%s/%s/%s/%s", BatchApprovalSignatureKey, tokenContract, batchNonce, validator))
-}
-
-// MARK finish-batches: this is where i've tried to do things the old way
-func GetValsetApprovalSignatureKey(valsetNonce UInt64Nonce, validator sdk.ValAddress) []byte {
-	return append(ValsetApprovalSignatureKey, append(valsetNonce.Bytes(), []byte(validator)...)...)
-	// return []byte(fmt.Sprintf("%s/%s/%s", ValsetApprovalSignatureKey, valsetNonce, validator))
 }
 
 func GetFeeSecondIndexKey(fee sdk.Coin) []byte {

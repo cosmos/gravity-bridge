@@ -13,61 +13,61 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
-// func TestQueryValsetConfirm(t *testing.T) {
-// 	var (
-// 		nonce                                         = types.NewUInt64Nonce(1)
-// 		myValidatorCosmosAddr   sdk.AccAddress        = make([]byte, sdk.AddrLen)
-// 		myValidatorEthereumAddr types.EthereumAddress = createEthAddress(50)
-// 	)
-// 	k, ctx, _ := CreateTestEnv(t)
-// 	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{
-// 		Nonce:     nonce,
-// 		Validator: myValidatorCosmosAddr,
-// 		Address:   myValidatorEthereumAddr,
-// 	})
+func TestQueryValsetConfirm(t *testing.T) {
+	var (
+		nonce                                         = types.NewUInt64Nonce(1)
+		myValidatorCosmosAddr   sdk.AccAddress        = make([]byte, sdk.AddrLen)
+		myValidatorEthereumAddr types.EthereumAddress = createEthAddress(50)
+	)
+	k, ctx, _ := CreateTestEnv(t)
+	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{
+		Nonce:     nonce,
+		Validator: myValidatorCosmosAddr,
+		Address:   myValidatorEthereumAddr,
+	})
 
-// 	specs := map[string]struct {
-// 		srcNonce string
-// 		srcAddr  string
-// 		expErr   bool
-// 		expResp  []byte
-// 	}{
-// 		"all good": {
-// 			srcNonce: "1",
-// 			srcAddr:  myValidatorCosmosAddr.String(),
-// 			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a",  "signature": ""}}`),
-// 		},
-// 		"unknown nonce": {
-// 			srcNonce: "999999",
-// 			srcAddr:  myValidatorCosmosAddr.String(),
-// 		},
-// 		"invalid address": {
-// 			srcNonce: "1",
-// 			srcAddr:  "not a valid addr",
-// 			expErr:   true,
-// 		},
-// 		"invalid nonce": {
-// 			srcNonce: "not a valid nonce",
-// 			srcAddr:  myValidatorCosmosAddr.String(),
-// 			expErr:   true,
-// 		},
-// 	}
-// 	for msg, spec := range specs {
-// 		t.Run(msg, func(t *testing.T) {
-// 			got, err := queryValsetConfirm(ctx, []string{spec.srcNonce, spec.srcAddr}, k)
-// 			if spec.expErr {
-// 				require.Error(t, err)
-// 				return
-// 			}
-// 			require.NoError(t, err)
-// 			if spec.expResp == nil {
-// 				assert.Nil(t, got)
-// 				return
-// 			}
-// 			assert.JSONEq(t, string(spec.expResp), string(got))
-// 		})
-// 	}
-// }
+	specs := map[string]struct {
+		srcNonce string
+		srcAddr  string
+		expErr   bool
+		expResp  []byte
+	}{
+		"all good": {
+			srcNonce: "1",
+			srcAddr:  myValidatorCosmosAddr.String(),
+			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a",  "signature": ""}}`),
+		},
+		"unknown nonce": {
+			srcNonce: "999999",
+			srcAddr:  myValidatorCosmosAddr.String(),
+		},
+		"invalid address": {
+			srcNonce: "1",
+			srcAddr:  "not a valid addr",
+			expErr:   true,
+		},
+		"invalid nonce": {
+			srcNonce: "not a valid nonce",
+			srcAddr:  myValidatorCosmosAddr.String(),
+			expErr:   true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, err := queryValsetConfirm(ctx, []string{spec.srcNonce, spec.srcAddr}, k)
+			if spec.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if spec.expResp == nil {
+				assert.Nil(t, got)
+				return
+			}
+			assert.JSONEq(t, string(spec.expResp), string(got))
+		})
+	}
+}
 
 func TestAllValsetConfirmsBynonce(t *testing.T) {
 	var (
@@ -78,7 +78,12 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 	// seed confirmations
 	for i := 0; i < 3; i++ {
 		addr := bytes.Repeat([]byte{byte(i)}, sdk.AddrLen)
-		k.SetValsetApprovalSignature(ctx, nonce, addr, []byte(fmt.Sprintf("signature %d", i+1)))
+		msg := types.MsgValsetConfirm{}
+		msg.Address = createEthAddress(i + 1)
+		msg.Nonce = nonce
+		msg.Validator = addr
+		msg.Signature = fmt.Sprintf("signature %d", i+1)
+		k.SetValsetConfirm(ctx, msg)
 	}
 
 	specs := map[string]struct {
@@ -89,9 +94,9 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			expResp: []byte(`[
-{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a", "signature": "signature 1"},
-{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du", "signature": "signature 2"},
-{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1qgpqyqszqgpqyqszqgpqyqszqgpqyqszrh8mx2", "signature": "signature 3"}
+      {"eth_address":"0x0101010101010101010101010101010101010101", "nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a", "signature": "signature 1"},
+      {"eth_address":"0x0202020202020202020202020202020202020202", "nonce": "1", "validator": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du", "signature": "signature 2"},
+      {"eth_address":"0x0303030303030303030303030303030303030303", "nonce": "1", "validator": "cosmos1qgpqyqszqgpqyqszqgpqyqszqgpqyqszrh8mx2", "signature": "signature 3"}
 ]`),
 		},
 		"unknown nonce": {
@@ -252,6 +257,71 @@ func TestLastValsetRequestNonces(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			got, err := lastValsetRequests(ctx, k)
+			require.NoError(t, err)
+			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
+		})
+	}
+}
+
+func TestPendingValsetRequests(t *testing.T) {
+	k, ctx, _ := CreateTestEnv(t)
+	// seed with requests
+	for i := 0; i < 6; i++ {
+		var validators []sdk.ValAddress
+		for j := 0; j <= i; j++ {
+			// add an validator each block
+			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
+			k.SetEthAddress(ctx, valAddr, createEthAddress(j+1))
+			validators = append(validators, valAddr)
+		}
+		k.StakingKeeper = NewStakingKeeperMock(validators...)
+		ctx = ctx.WithBlockHeight(int64(100 + i))
+		k.SetValsetRequest(ctx)
+	}
+
+	specs := map[string]struct {
+		expResp []byte
+	}{
+		"find valset": {
+			expResp: []byte(`{
+      "type": "peggy/Valset",
+      "value": {
+        "nonce": "105",
+        "members": [
+          {
+            "power": "715827882",
+            "ethereum_address": "0x0101010101010101010101010101010101010101"
+          },
+          {
+            "power": "715827882",
+            "ethereum_address": "0x0202020202020202020202020202020202020202"
+          },
+          {
+            "power": "715827882",
+            "ethereum_address": "0x0303030303030303030303030303030303030303"
+          },
+          {
+            "power": "715827882",
+            "ethereum_address": "0x0404040404040404040404040404040404040404"
+          },
+          {
+            "power": "715827882",
+            "ethereum_address": "0x0505050505050505050505050505050505050505"
+          },
+          {
+            "power": "715827882",
+            "ethereum_address": "0x0606060606060606060606060606060606060606"
+          }
+        ]
+      }
+      }`),
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			valAddr := sdk.AccAddress{}
+			valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+			got, err := lastPendingValsetRequest(ctx, valAddr.String(), k)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
 		})
