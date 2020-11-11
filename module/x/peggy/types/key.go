@@ -94,6 +94,7 @@ func GetOutgoingTxBatchKey(tokenContract EthereumAddress, nonce UInt64Nonce) []b
 	return append(append(OutgoingTXBatchKey, tokenContract.Bytes()...), nonce.Bytes()...)
 }
 
+// MARK finish-batches: take a look at this
 func GetBatchConfirmKey(tokenContract EthereumAddress, batchNonce UInt64Nonce, validator sdk.AccAddress) []byte {
 	a := append(batchNonce.Bytes(), validator...)
 	b := append(tokenContract.Bytes(), a...)

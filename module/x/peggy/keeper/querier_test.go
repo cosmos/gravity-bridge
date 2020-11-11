@@ -328,6 +328,7 @@ func TestPendingValsetRequests(t *testing.T) {
 		})
 	}
 }
+
 func TestPendingBatchRequests(t *testing.T) {
 	k, ctx, keepers := CreateTestEnv(t)
 
@@ -346,45 +347,7 @@ func TestPendingBatchRequests(t *testing.T) {
 		k.SetValsetRequest(ctx)
 	}
 
-	// this should probably be broken out into a create test batch function
-	var (
-		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		myReceiver          = types.NewEthereumAddress("eth receiver")
-		myTokenContractAddr = types.NewEthereumAddress("my eth token address")
-		myETHToken          = "myETHToken"
-		voucherDenom        = types.NewVoucherDenom(myTokenContractAddr, myETHToken)
-		now                 = time.Now().UTC()
-	)
-	// mint some voucher first
-	allVouchers := sdk.Coins{sdk.NewInt64Coin(string(voucherDenom), 99999)}
-	err := keepers.SupplyKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
-	require.NoError(t, err)
-
-	// set senders balance
-	keepers.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	err = keepers.BankKeeper.SetCoins(ctx, mySender, allVouchers)
-	require.NoError(t, err)
-
-	// store counterpart
-	k.StoreCounterpartDenominator(ctx, myTokenContractAddr, myETHToken)
-
-	_ = types.NewBridgedDenominator(myTokenContractAddr, myETHToken)
-
-	// add some TX to the pool
-	for i, v := range []int64{2, 3, 2, 1} {
-		amount := sdk.NewInt64Coin(string(voucherDenom), int64(i+100))
-		fee := sdk.NewInt64Coin(string(voucherDenom), v)
-		_, err := k.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
-		require.NoError(t, err)
-	}
-	// when
-	ctx = ctx.WithBlockTime(now)
-
-	// tx batch size is 2, so that some of them stay behind
-	_, err = k.BuildOutgoingTXBatch(ctx, voucherDenom, 2)
-	require.NoError(t, err)
-
-	// end section that should be broken into a create test batch function
+	createTestBatch(t, k, ctx, keepers)
 
 	specs := map[string]struct {
 		expResp []byte
@@ -480,6 +443,68 @@ func TestPendingBatchRequests(t *testing.T) {
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
 		})
 	}
+}
+
+func createTestBatch(t *testing.T, k Keeper, ctx sdk.Context, keepers TestKeepers) {
+	var (
+		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		myReceiver          = types.NewEthereumAddress("eth receiver")
+		myTokenContractAddr = types.NewEthereumAddress("my eth token address")
+		myETHToken          = "myETHToken"
+		voucherDenom        = types.NewVoucherDenom(myTokenContractAddr, myETHToken)
+		now                 = time.Now().UTC()
+	)
+	// mint some voucher first
+	allVouchers := sdk.Coins{sdk.NewInt64Coin(string(voucherDenom), 99999)}
+	err := keepers.SupplyKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
+	require.NoError(t, err)
+
+	// set senders balance
+	keepers.AccountKeeper.NewAccountWithAddress(ctx, mySender)
+	err = keepers.BankKeeper.SetCoins(ctx, mySender, allVouchers)
+	require.NoError(t, err)
+
+	// store counterpart
+	k.StoreCounterpartDenominator(ctx, myTokenContractAddr, myETHToken)
+
+	_ = types.NewBridgedDenominator(myTokenContractAddr, myETHToken)
+
+	// add some TX to the pool
+	for i, v := range []int64{2, 3, 2, 1} {
+		amount := sdk.NewInt64Coin(string(voucherDenom), int64(i+100))
+		fee := sdk.NewInt64Coin(string(voucherDenom), v)
+		_, err := k.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		require.NoError(t, err)
+	}
+	// when
+	ctx = ctx.WithBlockTime(now)
+
+	// tx batch size is 2, so that some of them stay behind
+	_, err = k.BuildOutgoingTXBatch(ctx, voucherDenom, 2)
+	require.NoError(t, err)
+}
+
+func TestQueryAllBatchConfirms(t *testing.T) {
+	k, ctx, _ := CreateTestEnv(t)
+
+	var (
+		tokenContract = types.NewEthereumAddress("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
+		validatorAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+	)
+
+	k.SetBatchConfirm(ctx, types.MsgConfirmBatch{
+		Nonce:         1,
+		TokenContract: tokenContract,
+		Validator:     validatorAddr,
+		Signature:     "signature",
+	})
+
+	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract.String(), k)
+	require.NoError(t, err)
+
+	expectedJSON := []byte(`[{"ethereum_address":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "nonce":"1", "signature":"signature", "validator":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}]`)
+
+	assert.JSONEq(t, string(expectedJSON), string(batchConfirms), "json is equal")
 }
 
 func createEthAddress(i int) types.EthereumAddress {
