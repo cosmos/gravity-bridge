@@ -294,22 +294,24 @@ func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
-func queryBatch(ctx sdk.Context, nonce string, denom string, keeper Keeper) ([]byte, error) {
+func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keeper) ([]byte, error) {
 	parsedNonce, err := parseNonce(nonce)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-	var foundBatch types.OutgoingTxBatch
-	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch types.OutgoingTxBatch) bool {
-		if batch.Nonce == parsedNonce {
-			foundBatch = batch
-			return true
-		}
-		return false
-	})
+
+	contractAddress := types.NewEthereumAddress(tokenContract)
+	if contractAddress.ValidateBasic() != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
+	}
+
+	foundBatch := keeper.GetOutgoingTXBatch(ctx, contractAddress, parsedNonce)
+	if foundBatch == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find tx batch")
+	}
 	res, err := codec.MarshalJSONIndent(keeper.cdc, foundBatch)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
 	return res, nil
 }

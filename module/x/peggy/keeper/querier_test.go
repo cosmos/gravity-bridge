@@ -361,43 +361,43 @@ func TestLastPendingBatchRequest(t *testing.T) {
 				{
 				"txid": "2",
 				"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-				"dest_address": "",
+				"dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
 				"send": {
 					"amount": "101",
 					"symbol": "myETHToken",
-					"token_contract_address": ""
+					"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 				},
 				"bridge_fee": {
 					"amount": "3",
 					"symbol": "myETHToken",
-					"token_contract_address": ""
+					"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 				}
 				},
 				{
 				"txid": "1",
 				"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-				"dest_address": "",
+				"dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
 				"send": {
 					"amount": "100",
 					"symbol": "myETHToken",
-					"token_contract_address": ""
+					"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 				},
 				"bridge_fee": {
 					"amount": "2",
 					"symbol": "myETHToken",
-					"token_contract_address": ""
+					"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 				}
 				}
 			],
 			"total_fee": {
 				"amount": "5",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			},
 			"bridged_denominator": {
-				"token_contract_address": "",
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
 				"symbol": "myETHToken",
-				"cosmos_voucher_denom": "peggy2ca9e20629"
+				"cosmos_voucher_denom": "peggyf005bf9aac"
 			},
 			"valset": {
 				"nonce": "105",
@@ -428,7 +428,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 				}
 				]
 			},
-			"token_contract": ""
+			"token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			}
 		}
 			`,
@@ -448,8 +448,8 @@ func TestLastPendingBatchRequest(t *testing.T) {
 func createTestBatch(t *testing.T, k Keeper, ctx sdk.Context, keepers TestKeepers) {
 	var (
 		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		myReceiver          = types.NewEthereumAddress("eth receiver")
-		myTokenContractAddr = types.NewEthereumAddress("my eth token address")
+		myReceiver          = types.NewEthereumAddress("0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934")
+		myTokenContractAddr = types.NewEthereumAddress("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
 		myETHToken          = "myETHToken"
 		voucherDenom        = types.NewVoucherDenom(myTokenContractAddr, myETHToken)
 		now                 = time.Now().UTC()
@@ -524,22 +524,22 @@ func TestQueryBatch(t *testing.T) {
 		"type": "peggy/OutgoingTxBatch",
 		"value": {
 		  "bridged_denominator": {
-			"cosmos_voucher_denom": "peggy2ca9e20629",
+			"cosmos_voucher_denom": "peggyf005bf9aac",
 			"symbol": "myETHToken",
-			"token_contract_address": ""
+			"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		  },
 		  "elements": [
 			{
 			  "bridge_fee": {
 				"amount": "3",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
-			  "dest_address": "",
+			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
 			  "send": {
 				"amount": "101",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
 			  "txid": "2"
@@ -548,24 +548,24 @@ func TestQueryBatch(t *testing.T) {
 			  "bridge_fee": {
 				"amount": "2",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
-			  "dest_address": "",
+			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
 			  "send": {
 				"amount": "100",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
 			  "txid": "1"
 			}
 		  ],
 		  "nonce": "1",
-		  "token_contract": "",
+		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
 		  "total_fee": {
 			"amount": "5",
 			"symbol": "myETHToken",
-			"token_contract_address": ""
+			"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		  },
 		  "valset": { "members": null, "nonce": "1234567" }
 		}
@@ -587,22 +587,22 @@ func TestLastBatchesRequest(t *testing.T) {
 	expectedJSON := []byte(`[
 		{
 		  "bridged_denominator": {
-			"cosmos_voucher_denom": "peggy2ca9e20629",
+			"cosmos_voucher_denom": "peggyf005bf9aac",
 			"symbol": "myETHToken",
-			"token_contract_address": ""
+			"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		  },
 		  "elements": [
 			{
 			  "bridge_fee": {
 				"amount": "3",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
-			  "dest_address": "",
+			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
 			  "send": {
 				"amount": "101",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
 			  "txid": "6"
@@ -611,45 +611,45 @@ func TestLastBatchesRequest(t *testing.T) {
 			  "bridge_fee": {
 				"amount": "2",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
-			  "dest_address": "",
+			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
 			  "send": {
 				"amount": "102",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
 			  "txid": "3"
 			}
 		  ],
 		  "nonce": "2",
-		  "token_contract": "",
+		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
 		  "total_fee": {
 			"amount": "5",
 			"symbol": "myETHToken",
-			"token_contract_address": ""
+			"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		  },
 		  "valset": { "members": null, "nonce": "1234567" }
 		},
 		{
 		  "bridged_denominator": {
-			"cosmos_voucher_denom": "peggy2ca9e20629",
+			"cosmos_voucher_denom": "peggyf005bf9aac",
 			"symbol": "myETHToken",
-			"token_contract_address": ""
+			"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		  },
 		  "elements": [
 			{
 			  "bridge_fee": {
 				"amount": "3",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
-			  "dest_address": "",
+			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
 			  "send": {
 				"amount": "101",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
 			  "txid": "2"
@@ -658,24 +658,24 @@ func TestLastBatchesRequest(t *testing.T) {
 			  "bridge_fee": {
 				"amount": "2",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
-			  "dest_address": "",
+			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
 			  "send": {
 				"amount": "100",
 				"symbol": "myETHToken",
-				"token_contract_address": ""
+				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
 			  "txid": "1"
 			}
 		  ],
 		  "nonce": "1",
-		  "token_contract": "",
+		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
 		  "total_fee": {
 			"amount": "5",
 			"symbol": "myETHToken",
-			"token_contract_address": ""
+			"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		  },
 		  "valset": { "members": null, "nonce": "1234567" }
 		}

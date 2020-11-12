@@ -86,7 +86,8 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract types.Eth
 
 func (k Keeper) storeBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOutgoingTxBatchKey(batch.TokenContract, batch.Nonce), k.cdc.MustMarshalBinaryBare(batch))
+	key := types.GetOutgoingTxBatchKey(batch.TokenContract, batch.Nonce)
+	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
 }
 
 func (k Keeper) deleteBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
@@ -116,7 +117,8 @@ func (k Keeper) pickUnbatchedTX(ctx sdk.Context, denom types.VoucherDenom, bridg
 // GetOutgoingTXBatch loads a batch object. Returns nil when not exists.
 func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, tokenContract types.EthereumAddress, nonce types.UInt64Nonce) *types.OutgoingTxBatch {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetOutgoingTxBatchKey(tokenContract, nonce))
+	key := types.GetOutgoingTxBatchKey(tokenContract, nonce)
+	bz := store.Get(key)
 	if len(bz) == 0 {
 		return nil
 	}
