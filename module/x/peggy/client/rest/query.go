@@ -49,7 +49,7 @@ func batchByNonceHandler(cliCtx context.CLIContext, storeName string) http.Handl
 			return
 		}
 
-		var out types.Valset
+		var out types.OutgoingTxBatch
 		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
@@ -68,7 +68,7 @@ func lastBatchesHandler(cliCtx context.CLIContext, storeName string) http.Handle
 			return
 		}
 
-		var out types.Valset
+		var out []types.OutgoingTxBatch
 		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
@@ -114,7 +114,7 @@ func allBatchConfirmsHandler(cliCtx context.CLIContext, storeName string) http.H
 			return
 		}
 
-		var out []types.MsgValsetConfirm
+		var out []types.MsgConfirmBatch
 		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
@@ -176,7 +176,7 @@ func lastBatchesByAddressHandler(cliCtx context.CLIContext, storeName string) ht
 			return
 		}
 
-		var out types.Valset
+		var out types.OutgoingTxBatch
 		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
