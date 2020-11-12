@@ -84,6 +84,7 @@ pub struct RequestBatchMsg {
 pub struct ConfirmBatchMsg {
     pub nonce: Uint256,
     pub validator: Address,
+    #[serde(rename = "ethereum_address")]
     pub address: EthAddress,
     /// a hex encoded string representing the Ethereum signature
     #[serde(rename = "signature")]
