@@ -1,3 +1,4 @@
+use clarity::Address as EthAddress;
 use clarity::Uint256;
 use contact::client::Contact;
 use contact::jsonrpc::error::JsonRpcError;
@@ -140,7 +141,7 @@ pub async fn get_latest_transaction_batches(
     let ret: Result<ResponseWrapper<Vec<TransactionBatchUnparsed>>, JsonRpcError> = contact
         .jsonrpc_client
         .request_method(
-            &"peggy/transaction_batches/".to_string(),
+            &"peggy/transaction_batches".to_string(),
             none,
             contact.timeout,
             None,
@@ -163,32 +164,20 @@ pub async fn get_latest_transaction_batches(
     }
 }
 
-/// get all batch confirmations for a given nonce
-pub async fn get_signed_transaction_batches(
+/// get all batch confirmations for a given nonce and denom
+pub async fn get_transaction_batch_signatures(
     contact: &Contact,
-) -> Result<ResponseWrapper<Vec<SignedTransactionBatch>>, JsonRpcError> {
+    nonce: Uint256,
+    token_contract: EthAddress,
+) -> Result<ResponseWrapper<Vec<BatchConfirmResponse>>, JsonRpcError> {
     let none: Option<bool> = None;
-    let ret: Result<ResponseWrapper<Vec<SignedTransactionBatchUnparsed>>, JsonRpcError> = contact
+    contact
         .jsonrpc_client
         .request_method(
-            &"peggy/signed_batches".to_string(),
+            &format!("peggy/batch_confirm/{}/{}", nonce, token_contract),
             none,
             contact.timeout,
             None,
         )
-        .await;
-    match ret {
-        Ok(ret) => {
-            let mut parsed = Vec::new();
-            for val in ret.result {
-                parsed.push(val.convert())
-            }
-            let wrapped = ResponseWrapper {
-                height: ret.height,
-                result: parsed,
-            };
-            Ok(wrapped)
-        }
-        Err(e) => Err(e),
-    }
+        .await
 }

@@ -73,24 +73,3 @@ impl TransactionBatch {
         )
     }
 }
-
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct SignedTransactionBatchUnparsed {
-    pub batch: TransactionBatchUnparsed,
-    pub signatures: Vec<SigWithAddress>,
-}
-
-impl SignedTransactionBatchUnparsed {
-    pub fn convert(self) -> SignedTransactionBatch {
-        SignedTransactionBatch {
-            batch: self.batch.convert(),
-            signatures: self.signatures,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct SignedTransactionBatch {
-    pub batch: TransactionBatch,
-    pub signatures: Vec<SigWithAddress>,
-}

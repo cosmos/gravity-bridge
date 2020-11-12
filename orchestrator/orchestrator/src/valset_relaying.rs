@@ -71,7 +71,7 @@ pub async fn relay_valsets(
     // to Ethereum for that we will find the latest confirmed valset and compare it to the ethereum chain
     let latest_valsets = get_latest_valsets(contact).await;
     if latest_valsets.is_err() {
-        error!("Failed to get latest valsets!");
+        trace!("Failed to get latest valsets!");
         // there are no latest valsets to check, possible on a bootstrapping chain maybe handle better?
         return;
     }
@@ -82,6 +82,7 @@ pub async fn relay_valsets(
     for set in latest_valsets.result {
         let confirms = get_all_valset_confirms(contact, set.nonce).await;
         if let Ok(confirms) = confirms {
+            // todo allow submission without signatures from all validators
             if confirms.result.len() == set.members.len() {
                 latest_confirmed = Some(confirms);
                 latest_valset = Some(set);

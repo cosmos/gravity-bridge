@@ -85,7 +85,7 @@ pub async fn check_for_events(
                 fee,
             )
             .await?;
-            info!("Sent in Oracle claims response: {:?}", res);
+            trace!("Sent in Oracle claims response: {:?}", res);
         }
 
         Ok(latest_block)
