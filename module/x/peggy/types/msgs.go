@@ -289,10 +289,11 @@ func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
 // -------------
 // deprecated should use MsgBridgeSignatureSubmission instead
 type MsgConfirmBatch struct {
-	Nonce         UInt64Nonce     `json:"nonce"`
-	TokenContract EthereumAddress `json:"ethereum_address"`
-	Validator     sdk.AccAddress  `json:"validator"`
-	Signature     string          `json:"signature"`
+	Nonce          UInt64Nonce     `json:"nonce"`
+	TokenContract  EthereumAddress `json:"token_contract"`
+	EthereumSigner EthereumAddress `json:"ethereum_signer"`
+	Validator      sdk.AccAddress  `json:"validator"`
+	Signature      string          `json:"signature"`
 }
 
 // Route should return the name of the module
