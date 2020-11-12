@@ -126,7 +126,8 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 	}
 }
 
-func TestLastValsetRequestNonces(t *testing.T) {
+// TODO: Check failure modes
+func TestLastValsetRequests(t *testing.T) {
 	k, ctx, _ := CreateTestEnv(t)
 	// seed with requests
 	for i := 0; i < 6; i++ {
@@ -264,6 +265,8 @@ func TestLastValsetRequestNonces(t *testing.T) {
 	}
 }
 
+// TODO: check that it doesn't accidently return a valset that HAS been signed
+// Right now it is basically just testing that any valset comes back
 func TestPendingValsetRequests(t *testing.T) {
 	k, ctx, _ := CreateTestEnv(t)
 	// seed with requests
@@ -329,6 +332,7 @@ func TestPendingValsetRequests(t *testing.T) {
 	}
 }
 
+// TODO: check that it actually returns the valset that has NOT been signed, not just any valset
 func TestLastPendingBatchRequest(t *testing.T) {
 	k, ctx, keepers := CreateTestEnv(t)
 
@@ -484,6 +488,7 @@ func createTestBatch(t *testing.T, k Keeper, ctx sdk.Context, keepers TestKeeper
 	require.NoError(t, err)
 }
 
+// TODO: Query more than one batch confirm
 func TestQueryAllBatchConfirms(t *testing.T) {
 	k, ctx, _ := CreateTestEnv(t)
 
@@ -507,12 +512,13 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 	assert.JSONEq(t, string(expectedJSON), string(batchConfirms), "json is equal")
 }
 
+// TODO: test that it gets the correct batch, not just any batch.
+// Check with multiple nonces and tokenContracts
 func TestQueryBatch(t *testing.T) {
 	k, ctx, keepers := CreateTestEnv(t)
 
 	var (
 		tokenContract = types.NewEthereumAddress("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
-		// validatorAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 	)
 
 	createTestBatch(t, k, ctx, keepers)

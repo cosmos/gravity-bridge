@@ -122,7 +122,8 @@ func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]
 	return res, nil
 }
 
-// allValsetConfirms returns all the confirm messages for a given nonce
+// USED BY RUST
+// allBatchConfirms returns all the confirm messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
 func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContractString string, keeper Keeper) ([]byte, error) {
 	nonce, err := parseNonce(nonceStr)
@@ -150,6 +151,7 @@ func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContractString
 const maxValsetRequestsReturned = 5
 
 /* USED BY RUST */
+// lastValsetRequests returns up to maxValsetRequestsReturned valsets from the store
 func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var counter int
 	var valReq []types.Valset
@@ -169,6 +171,7 @@ func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 }
 
 /* USED BY RUST */
+// lastPendingValsetRequest gets the oldest valset that operatorAddr has not yet signed
 func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
 	addr, err := sdk.AccAddressFromBech32(operatorAddr)
 	if err != nil {
@@ -177,13 +180,15 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 
 	var pendingValsetReq *types.Valset
 	keeper.IterateValsetRequest(ctx, func(_ []byte, val types.Valset) bool {
+		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
 		foundConfirm := keeper.GetValsetConfirm(ctx, val.Nonce, addr) != nil
-		// if we do NOT have a signature, we are looking for the first
-		// entry we can find WITHOUT signature
+		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
+		// and exit the loop
 		if !foundConfirm {
 			pendingValsetReq = &val
 			return true
 		}
+		// return false to continue the loop
 		return false
 	})
 	if pendingValsetReq == nil {
@@ -206,6 +211,7 @@ func queryCurrentValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
+// USED BY RUST //
 // queryValsetConfirm returns the confirm msg for single orchestrator address and nonce
 // When nothing found a nil value is returned
 func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
@@ -236,6 +242,8 @@ type MultiSigUpdateResponse struct {
 	Signatures [][]byte     `json:"signatures,omitempty"`
 }
 
+// USED BY RUST //
+// lastPendingBatchRequest gets the latest batch that has NOT been signed by operatorAddr
 func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
 	addr, err := sdk.AccAddressFromBech32(operatorAddr)
 	if err != nil {
@@ -278,6 +286,8 @@ type SignedOutgoingTxBatchResponse struct {
 
 const MaxResults = 100 // todo: impl pagination
 
+// USED BY RUST //
+// Gets MaxResults batches from store. Does not select by token type or anything
 func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var batches []types.OutgoingTxBatch
 	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch types.OutgoingTxBatch) bool {
@@ -294,6 +304,8 @@ func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
+// USED BY RUST //
+// queryBatch gets a batch by tokenContract and nonce
 func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keeper) ([]byte, error) {
 	parsedNonce, err := parseNonce(nonce)
 	if err != nil {
