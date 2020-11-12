@@ -19,6 +19,21 @@ pub struct ValsetConfirmResponse {
     pub eth_signature: EthSignature,
 }
 
+/// the response we get when querying for a valset confirmation
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct BatchConfirmResponse {
+    #[serde(deserialize_with = "parse_val")]
+    pub nonce: Uint256,
+    #[serde(deserialize_with = "parse_val")]
+    pub validator: CosmosAddress,
+    #[serde(deserialize_with = "parse_val")]
+    pub token_contract: EthAddress,
+    #[serde(deserialize_with = "parse_val")]
+    pub ethereum_signer: EthAddress,
+    #[serde(deserialize_with = "parse_val", rename = "signature")]
+    pub eth_signature: EthSignature,
+}
+
 /// a list of validators, powers, and eth addresses at a given block height
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Valset {
@@ -103,7 +118,7 @@ impl Valset {
     /// combines the provided signatures with the valset ensuring that ordering and signature data is correct
     pub fn order_batch_sigs(
         &self,
-        signed_batch: SignedTransactionBatch,
+        signatures: &[BatchConfirmResponse],
     ) -> Result<Vec<PeggySignature>, JsonRpcError> {
         let mut out = Vec::new();
         let mut members = HashMap::new();
@@ -116,11 +131,11 @@ impl Valset {
                 ));
             }
         }
-        for sig in signed_batch.signatures {
-            if let Some(val) = members.get(&sig.eth_address) {
+        for sig in signatures {
+            if let Some(val) = members.get(&sig.ethereum_signer) {
                 out.push(PeggySignature {
                     power: val.power,
-                    eth_address: sig.eth_address,
+                    eth_address: sig.ethereum_signer,
                     v: sig.eth_signature.v.clone(),
                     r: sig.eth_signature.r.clone(),
                     s: sig.eth_signature.s.clone(),
@@ -128,7 +143,7 @@ impl Valset {
             } else {
                 return Err(JsonRpcError::BadInput(format!(
                     "No Match for sig! {} and {}",
-                    sig.eth_address,
+                    sig.ethereum_signer,
                     ValsetMember::display_vec(&self.members)
                 )));
             }

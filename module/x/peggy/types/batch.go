@@ -3,7 +3,6 @@ package types
 import (
 	"math/big"
 	"strings"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -28,11 +27,10 @@ import (
 type OutgoingTxBatch struct {
 	Nonce              UInt64Nonce          `json:"nonce"`
 	Elements           []OutgoingTransferTx `json:"elements"`
-	CreatedAt          time.Time            `json:"created_at"`
 	TotalFee           ERC20Token           `json:"total_fee"`
 	BridgedDenominator BridgedDenominator   `json:"bridged_denominator"`
 	Valset             Valset               `json:"valset"`
-	TokenContract      EthereumAddress      `json:"tokenContract"`
+	TokenContract      EthereumAddress      `json:"token_contract"`
 }
 
 // func (b *OutgoingTxBatch) Cancel() error {

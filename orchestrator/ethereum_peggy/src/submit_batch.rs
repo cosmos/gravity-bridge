@@ -1,4 +1,4 @@
-use crate::utils::get_valset_nonce;
+use crate::utils::get_tx_batch_nonce;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use peggy_utils::error::OrchestratorError;
@@ -11,27 +11,29 @@ use web30::types::SendTxOption;
 /// to submit the provided transaction batch and validator set update.
 pub async fn send_eth_transaction_batch(
     old_valset: Valset,
-    batch: SignedTransactionBatch,
+    batch: TransactionBatch,
+    confirms: &[BatchConfirmResponse],
     web3: &Web3,
     timeout: Duration,
     peggy_contract_address: EthAddress,
     our_eth_key: EthPrivateKey,
 ) -> Result<(), OrchestratorError> {
     let (old_addresses, old_powers) = old_valset.filter_empty_addresses();
-    let (new_addresses, new_powers) = batch.batch.valset.filter_empty_addresses();
-    let old_nonce = old_valset.nonce;
-    let new_nonce = batch.batch.valset.nonce;
-    assert!(new_nonce > old_nonce);
+    let (new_addresses, new_powers) = batch.valset.filter_empty_addresses();
+    let old_valset_nonce = old_valset.nonce;
+    let new_valset_nonce = batch.valset.nonce;
+    let new_batch_nonce = batch.nonce.clone();
+    //assert!(new_valset_nonce > old_valset_nonce);
     let eth_address = our_eth_key.to_public_key().unwrap();
     info!(
-        "Ordering signatures and submitting TransactionBatch {} -> {} update to Ethereum",
-        old_nonce, new_nonce
+        "Ordering signatures and submitting TransactionBatch {}:{} to Ethereum",
+        batch.token_contract, new_batch_nonce
     );
 
-    let new_valset = batch.batch.valset.clone();
-    let sig_data = new_valset.order_batch_sigs(batch.clone())?;
+    let new_valset = batch.valset.clone();
+    let sig_data = new_valset.order_batch_sigs(confirms)?;
     let sig_arrays = to_arrays(sig_data);
-    let (amounts, destinations, fees) = batch.batch.get_checkpoint_values();
+    let (amounts, destinations, fees) = batch.get_checkpoint_values();
 
     // Solidity function signature
     // function updateValsetAndSubmitBatch(
@@ -51,15 +53,38 @@ pub async fn send_eth_transaction_batch(
     // uint256[] memory _amounts,
     // address[] memory _destinations,
     // uint256[] memory _fees,
-    // uint256 _nonce,
+    // uint256 _batchNonce,
     // address _tokenContract
+    let tokens = &[
+        new_addresses.into(),
+        new_powers.into(),
+        new_valset_nonce.into(),
+        old_addresses.into(),
+        old_powers.into(),
+        old_valset_nonce.into(),
+        sig_arrays.v,
+        sig_arrays.r,
+        sig_arrays.s,
+        amounts,
+        destinations,
+        fees,
+        new_batch_nonce.clone().into(),
+        batch.token_contract.into(),
+    ];
     let payload = clarity::abi::encode_call("updateValsetAndSubmitBatch(address[],uint256[],uint256,address[],uint256[],uint256,uint8[],bytes32[],bytes32[],uint256[],address[],uint256[],uint256,address)",
-    &[new_addresses.into(), new_powers.into(), new_nonce.into(), old_addresses.into(), old_powers.into(), old_nonce.into(), sig_arrays.v, sig_arrays.r, sig_arrays.s, amounts, destinations, fees, new_nonce.into(), batch.batch.token_contract.into()]).unwrap();
+    tokens).unwrap();
+    trace!("Tokens {:?}", tokens);
 
-    let before_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
-    if before_nonce != old_nonce.into() {
+    let before_nonce = get_tx_batch_nonce(
+        peggy_contract_address,
+        batch.token_contract,
+        eth_address,
+        &web3,
+    )
+    .await?;
+    if !(before_nonce < new_batch_nonce) {
         info!(
-            "Someone else updated the valset to {}, exiting early",
+            "Someone else updated the batch to {}, exiting early",
             before_nonce
         );
         return Ok(());
@@ -75,7 +100,7 @@ pub async fn send_eth_transaction_batch(
             vec![SendTxOption::GasLimit(1_000_000u32.into())],
         )
         .await?;
-    info!("Finished valset update with txid {:#066x}", tx);
+    info!("Sent batch update with txid {:#066x}", tx);
 
     // TODO this segment of code works around the race condition for submitting batches mostly
     // by not caring if our own submission reverts and only checking if the valset has been updated
@@ -84,17 +109,20 @@ pub async fn send_eth_transaction_batch(
     // be the common case.
     web3.wait_for_transaction(tx, timeout, None).await?;
 
-    let last_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
-    if last_nonce != new_nonce.into() {
+    let last_nonce = get_tx_batch_nonce(
+        peggy_contract_address,
+        batch.token_contract,
+        eth_address,
+        &web3,
+    )
+    .await?;
+    if last_nonce != new_batch_nonce.clone() {
         error!(
             "Current nonce is {} expected to update to nonce {}",
-            last_nonce, new_nonce
+            last_nonce, new_batch_nonce
         );
     } else {
-        info!(
-            "Successfully updated Valset with new Nonce {:?}",
-            last_nonce
-        );
+        info!("Successfully updated Batch with new Nonce {:?}", last_nonce);
     }
     Ok(())
 }

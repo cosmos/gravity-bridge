@@ -20,7 +20,6 @@ use actix::Arbiter;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
-use cosmos_peggy::send::send_ethereum_claims;
 use cosmos_peggy::send::send_valset_request;
 use cosmos_peggy::send::{request_batch, send_to_eth, update_peggy_eth_address};
 use cosmos_peggy::utils::wait_for_cosmos_online;
@@ -28,12 +27,13 @@ use cosmos_peggy::{
     messages::{EthereumBridgeClaim, EthereumBridgeDepositClaim},
     utils::wait_for_next_cosmos_block,
 };
+use cosmos_peggy::{query::get_oldest_unsigned_transaction_batch, send::send_ethereum_claims};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
-use ethereum_peggy::send_to_cosmos::send_to_cosmos;
 use ethereum_peggy::utils::get_erc20_symbol;
 use ethereum_peggy::utils::get_valset_nonce;
+use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use main_loop::orchestrator_main_loop;
 use peggy_utils::types::ERC20Token;
 use rand::Rng;
@@ -153,21 +153,7 @@ async fn main() {
             balance
         );
         // send every orchestrator 1 eth to pay for fees
-        let txid = web30
-            .send_transaction(
-                validator_eth_address,
-                Vec::new(),
-                1_000_000_000_000_000_000u128.into(),
-                *MINER_ADDRESS,
-                *MINER_PRIVATE_KEY,
-                vec![],
-            )
-            .await
-            .expect("Failed to send Eth to validator {}");
-        web30
-            .wait_for_transaction(txid, TOTAL_TIMEOUT, None)
-            .await
-            .unwrap();
+        send_one_eth(validator_eth_address, &web30).await;
     }
 
     // start orchestrators, send them some eth so that they can pay for things
@@ -247,9 +233,9 @@ async fn main() {
         fee,
         keys[0].0,
         dest_cosmos_private_key,
+        erc20_address,
     )
     .await;
-    delay_for(OPERATION_TIMEOUT).await;
 }
 
 /// This function deploys the required contracts onto the Ethereum testnet
@@ -278,6 +264,10 @@ async fn deploy_contracts(
             .await
             .expect("Failed to update Eth address");
     }
+
+    // prevents the node deployer from failing (rarely) when the chain has not
+    // yet produced the next block after submitting each eth address
+    wait_for_next_cosmos_block(contact).await;
 
     // wait for the orchestrators to finish registering their eth addresses
     let output = Command::new("npx")
@@ -459,6 +449,7 @@ async fn test_batch(
     fee: Coin,
     requester_cosmos_private_key: CosmosPrivateKey,
     dest_cosmos_private_key: CosmosPrivateKey,
+    erc20_contract: EthAddress,
 ) {
     let dest_cosmos_address = dest_cosmos_private_key
         .to_public_key()
@@ -481,7 +472,7 @@ async fn test_batch(
         dest_eth_address,
         Coin {
             denom: token_name.clone(),
-            amount,
+            amount: amount.clone(),
         },
         bridge_denom_fee.clone(),
         &contact,
@@ -493,36 +484,74 @@ async fn test_batch(
     info!("Requesting transaction batch");
     request_batch(
         requester_cosmos_private_key,
-        token_name,
+        token_name.clone(),
         fee.clone(),
         &contact,
     )
     .await
     .unwrap();
 
-    // let mut current_eth_batch_nonce = get_tx_batch_nonce(peggy_address, miner_address, &web30)
-    //     .await
-    //     .expect("Failed to get current eth valset");
-    // let starting_batch_nonce = current_eth_batch_nonce.clone();
+    wait_for_next_cosmos_block(contact).await;
+    let requester_address = requester_cosmos_private_key
+        .to_public_key()
+        .unwrap()
+        .to_address();
+    get_oldest_unsigned_transaction_batch(contact, requester_address)
+        .await
+        .expect("Failed to get batch to sign");
 
-    // let start = Instant::now();
-    // while starting_batch_nonce == current_eth_batch_nonce {
-    //     info!(
-    //         "Batch is not yet submitted {}>, waiting",
-    //         starting_batch_nonce
-    //     );
-    //     current_eth_batch_nonce = get_tx_batch_nonce(peggy_address, miner_address, &web30)
-    //         .await
-    //         .expect("Failed to get current eth tx batch nonce");
-    //     delay_for(Duration::from_secs(4)).await;
-    //     if Instant::now() - start > TOTAL_TIMEOUT {
-    //         panic!("Failed to submit transaction batch set");
-    //     }
-    // }
-    // info!(
-    //     "Successfully updated txbatch nonce to {}",
-    //     current_eth_batch_nonce
-    // );
+    let mut current_eth_batch_nonce =
+        get_tx_batch_nonce(peggy_address, erc20_contract, *MINER_ADDRESS, &web30)
+            .await
+            .expect("Failed to get current eth valset");
+    let starting_batch_nonce = current_eth_batch_nonce.clone();
+
+    let start = Instant::now();
+    while starting_batch_nonce == current_eth_batch_nonce {
+        info!(
+            "Batch is not yet submitted {}>, waiting",
+            starting_batch_nonce
+        );
+        current_eth_batch_nonce =
+            get_tx_batch_nonce(peggy_address, erc20_contract, *MINER_ADDRESS, &web30)
+                .await
+                .expect("Failed to get current eth tx batch nonce");
+        delay_for(Duration::from_secs(4)).await;
+        if Instant::now() - start > TOTAL_TIMEOUT {
+            panic!("Failed to submit transaction batch set");
+        }
+    }
+
+    //
+    let txid = web30
+        .send_transaction(
+            dest_eth_address,
+            Vec::new(),
+            1_000_000_000_000_000_000u128.into(),
+            *MINER_ADDRESS,
+            *MINER_PRIVATE_KEY,
+            vec![],
+        )
+        .await
+        .expect("Failed to send Eth to validator {}");
+    web30
+        .wait_for_transaction(txid, TOTAL_TIMEOUT, None)
+        .await
+        .unwrap();
+
+    // we have to send this address one eth so that it can perform contract calls
+    send_one_eth(dest_eth_address, web30).await;
+    assert_eq!(
+        web30
+            .get_erc20_balance(erc20_contract, dest_eth_address)
+            .await
+            .unwrap(),
+        amount
+    );
+    info!(
+        "Successfully updated txbatch nonce to {} and sent {}{} tokens to Ethereum!",
+        current_eth_batch_nonce, amount, token_name
+    );
 }
 
 // this function submits a EthereumBridgeDepositClaim to the module with a given nonce. This can be set to be a nonce that has
@@ -582,4 +611,22 @@ async fn submit_duplicate_erc20_send(
     } else {
         panic!("Duplicate test failed for unknown reasons!");
     }
+}
+
+async fn send_one_eth(dest: EthAddress, web30: &Web3) {
+    let txid = web30
+        .send_transaction(
+            dest,
+            Vec::new(),
+            1_000_000_000_000_000_000u128.into(),
+            *MINER_ADDRESS,
+            *MINER_PRIVATE_KEY,
+            vec![],
+        )
+        .await
+        .expect("Failed to send Eth to validator {}");
+    web30
+        .wait_for_transaction(txid, TOTAL_TIMEOUT, None)
+        .await
+        .unwrap();
 }

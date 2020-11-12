@@ -11,19 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func currentValsetHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/currentValset", storeName))
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		var out types.Valset
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
-	}
-}
-
+// USED BY RUST //
 func getValsetRequestHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -39,6 +27,168 @@ func getValsetRequestHandler(cliCtx context.CLIContext, storeName string) http.H
 			return
 		}
 
+		var out types.Valset
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+func batchByNonceHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		nonce := vars[nonce]
+		denom := vars[tokenAddress]
+
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/batch/%s/%s", storeName, nonce, denom))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "valset not found")
+			return
+		}
+
+		var out types.OutgoingTxBatch
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+func lastBatchesHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastBatches", storeName))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "valset not found")
+			return
+		}
+
+		var out []types.OutgoingTxBatch
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+// USED BY RUST //
+// gets all the confirm messages for a given validator set nonce
+func allValsetConfirmsHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		nonce := vars[nonce]
+
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/valsetConfirms/%s", storeName, nonce))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "valset confirms not found")
+			return
+		}
+
+		var out []types.MsgValsetConfirm
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+// gets all the confirm messages for a given transaction batch
+func allBatchConfirmsHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		nonce := vars[nonce]
+		denom := vars[tokenAddress]
+
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/batchConfirms/%s/%s", storeName, nonce, denom))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "valset confirms not found")
+			return
+		}
+
+		var out []types.MsgConfirmBatch
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+// USED BY RUST //
+func lastValsetRequestsHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastValsetRequests", storeName))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "valset requests not found")
+			return
+		}
+
+		var out []types.Valset
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+// USED BY RUST //
+func lastValsetRequestsByAddressHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		operatorAddr := vars[bech32ValidatorAddress]
+
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingValsetRequest/%s", storeName, operatorAddr))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "no pending valset requests found")
+			return
+		}
+
+		var out types.Valset
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+func lastBatchesByAddressHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		operatorAddr := vars[bech32ValidatorAddress]
+
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingBatchRequest/%s", storeName, operatorAddr))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "no pending valset requests found")
+			return
+		}
+
+		var out types.OutgoingTxBatch
+		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}
+
+func currentValsetHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/currentValset", storeName))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 		var out types.Valset
 		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
@@ -69,67 +219,6 @@ func getValsetConfirmHandler(cliCtx context.CLIContext, storeName string) http.H
 		}
 
 		var out types.MsgValsetConfirm
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
-	}
-}
-
-// gets all the confirm messages for a given validator set nonce
-func allValsetConfirmsHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		nonce := vars[nonce]
-
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/valsetConfirms/%s", storeName, nonce))
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, "valset confirms not found")
-			return
-		}
-
-		var out []types.MsgValsetConfirm
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
-	}
-}
-
-func lastValsetRequestsHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastValsetRequests", storeName))
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, "valset requests not found")
-			return
-		}
-
-		var out []types.Valset
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
-		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
-	}
-}
-
-func lastValsetRequestsByAddressHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		operatorAddr := vars[bech32ValidatorAddress]
-
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingValsetRequest/%s", storeName, operatorAddr))
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, "no pending valset requests found")
-			return
-		}
-
-		var out types.Valset
 		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}

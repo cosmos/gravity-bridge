@@ -122,37 +122,6 @@ func (k Keeper) IterateValsetRequest(ctx sdk.Context, cb func(key []byte, val ty
 	}
 }
 
-func (k Keeper) SetBridgeApprovalSignature(ctx sdk.Context, signType types.SignType, nonce types.UInt64Nonce, validator sdk.ValAddress, signature []byte) []byte {
-	store := ctx.KVStore(k.storeKey)
-	key := types.GetBridgeApprovalSignatureKey(signType, nonce, validator)
-	store.Set(key, signature)
-	return key
-}
-
-func (k Keeper) GetBridgeApprovalSignature(ctx sdk.Context, signType types.SignType, nonce types.UInt64Nonce, validator sdk.ValAddress) []byte {
-	store := ctx.KVStore(k.storeKey)
-	return store.Get(types.GetBridgeApprovalSignatureKey(signType, nonce, validator))
-}
-
-func (k Keeper) HasBridgeApprovalSignature(ctx sdk.Context, signType types.SignType, nonce types.UInt64Nonce, validator sdk.ValAddress) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetBridgeApprovalSignatureKey(signType, nonce, validator))
-}
-
-func (k Keeper) IterateBridgeApprovalSignatures(ctx sdk.Context, signType types.SignType, nonce types.UInt64Nonce, cb func(_ []byte, sig []byte) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetBridgeApprovalSignatureKeyPrefix(signType))
-	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		// cb returns true to stop early
-		if cb(iter.Key(), iter.Value()) {
-			break
-		}
-	}
-}
-
-// deprecated use GetBridgeApprovalSignature
 func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce types.UInt64Nonce, validator sdk.AccAddress) *types.MsgValsetConfirm {
 	store := ctx.KVStore(k.storeKey)
 	entity := store.Get(types.GetValsetConfirmKey(nonce, validator))
@@ -164,14 +133,33 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce types.UInt64Nonce, valid
 	return &confirm
 }
 
-// deprecated use SetBridgeObservedSignature instead
-func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) {
+func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) []byte {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator), k.cdc.MustMarshalBinaryBare(valsetConf))
+	key := types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator)
+	store.Set(key, k.cdc.MustMarshalBinaryBare(valsetConf))
+	return key
+}
+
+func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce types.UInt64Nonce, tokenContract types.EthereumAddress, validator sdk.AccAddress) *types.MsgConfirmBatch {
+	store := ctx.KVStore(k.storeKey)
+	entity := store.Get(types.GetBatchConfirmKey(tokenContract, nonce, validator))
+	if entity == nil {
+		return nil
+	}
+	confirm := types.MsgConfirmBatch{}
+	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
+	return &confirm
+}
+
+func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch types.MsgConfirmBatch) []byte {
+	store := ctx.KVStore(k.storeKey)
+	key := types.GetBatchConfirmKey(batch.TokenContract, batch.Nonce, batch.Validator)
+	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
+	return key
 }
 
 // Iterate through all valset confirms for a nonce in ASC order
-// deprecated
+// MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64Nonce, cb func([]byte, types.MsgValsetConfirm) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
 	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
@@ -179,6 +167,24 @@ func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64N
 
 	for ; iter.Valid(); iter.Next() {
 		confirm := types.MsgValsetConfirm{}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
+		// cb returns true to stop early
+		if cb(iter.Key(), confirm) {
+			break
+		}
+	}
+}
+
+// Iterate through all valset confirms for a nonce in ASC order
+// MARK finish-batches: this is where the key is iterated in the old (presumed working) code
+func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce types.UInt64Nonce, tokenContract types.EthereumAddress, cb func([]byte, types.MsgConfirmBatch) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchConfirmKey)
+	prefix := append(tokenContract.Bytes(), nonce.Bytes()...)
+	iter := prefixStore.Iterator(prefixRange(prefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		confirm := types.MsgConfirmBatch{}
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
 		// cb returns true to stop early
 		if cb(iter.Key(), confirm) {
@@ -304,7 +310,7 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 //
 // In case of an overflow the end is set to nil.
 //		Example: []byte{255, 255, 255, 255} becomes nil
-//
+// MARK finish-batches: this is where some crazy shit happens
 func prefixRange(prefix []byte) ([]byte, []byte) {
 	if prefix == nil {
 		panic("nil key not allowed")

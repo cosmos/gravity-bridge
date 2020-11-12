@@ -17,7 +17,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 		case MsgSetEthAddress:
 			return handleMsgSetEthAddress(ctx, keeper, msg)
 		case MsgValsetConfirm:
-			return handleMsgValsetConfirm(ctx, keeper, msg)
+			return handleMsgConfirmValset(ctx, keeper, msg)
 		case MsgValsetRequest:
 			return handleMsgValsetRequest(ctx, keeper, msg)
 		case MsgSendToEth:
@@ -28,8 +28,6 @@ func NewHandler(keeper Keeper) sdk.Handler {
 			return handleMsgConfirmBatch(ctx, keeper, msg)
 		case MsgCreateEthereumClaims:
 			return handleCreateEthereumClaims(ctx, keeper, msg)
-		case MsgBridgeSignatureSubmission:
-			return handleBridgeSignatureSubmission(ctx, keeper, msg)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unrecognized Peggy Msg type: %v", msg.Type()))
 		}
@@ -81,28 +79,24 @@ func handleMsgValsetRequest(ctx sdk.Context, keeper Keeper, msg types.MsgValsetR
 	}, nil
 }
 
-// deprecated should use MsgBridgeSignatureSubmission instead
-func handleMsgValsetConfirm(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm) (*sdk.Result, error) {
-	keeper.SetValsetConfirm(ctx, msg) // store legacy
-	return handleBridgeSignatureSubmission(ctx, keeper, MsgBridgeSignatureSubmission{
-		Nonce:             msg.Nonce,
-		SignType:          types.SignTypeOrchestratorSignedMultiSigUpdate,
-		Orchestrator:      msg.Validator,
-		EthereumSignature: msg.Signature,
-	})
-}
+// This function takes in a signature submitted by a validator's Eth Signer
+func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) (*sdk.Result, error) {
 
-// This function takes in a signature submitted by a validator's Eth Signer and
-func handleBridgeSignatureSubmission(ctx sdk.Context, keeper Keeper, msg MsgBridgeSignatureSubmission) (*sdk.Result, error) {
-	checkpoint, err := getCheckpoint(ctx, keeper, msg.SignType, msg.Nonce)
-	if err != nil {
-		return nil, err
+	batch := keeper.GetOutgoingTXBatch(ctx, msg.TokenContract, msg.Nonce)
+	if batch == nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
 	}
-	sigBytes, err := hex.DecodeString(msg.EthereumSignature)
+
+	checkpoint, err := batch.GetCheckpoint()
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
+	}
+
+	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
-	validator := findValidatorKey(ctx, msg.Orchestrator)
+	validator := findValidatorKey(ctx, msg.Validator)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
@@ -113,44 +107,55 @@ func handleBridgeSignatureSubmission(ctx sdk.Context, keeper Keeper, msg MsgBrid
 	}
 	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress.String())
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature")
+		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected %s found %s", checkpoint, msg.Signature))
 	}
 
-	// persist signature
-	if keeper.HasBridgeApprovalSignature(ctx, msg.SignType, msg.Nonce, validator) {
-		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature")
+	// check if we already have this confirm
+	if keeper.GetBatchConfirm(ctx, msg.Nonce, msg.TokenContract, msg.Validator) != nil {
+		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
-	key := keeper.SetBridgeApprovalSignature(ctx, msg.SignType, msg.Nonce, validator, sigBytes)
+	key := keeper.SetBatchConfirm(ctx, msg)
 	return &sdk.Result{
 		Data: key,
 	}, nil
 }
 
-func getCheckpoint(ctx sdk.Context, keeper Keeper, signType types.SignType, nonce types.UInt64Nonce) ([]byte, error) {
-	switch signType {
-	case types.SignTypeOrchestratorSignedMultiSigUpdate:
-		if c := keeper.GetValsetRequest(ctx, nonce); c != nil {
-			return c.GetCheckpoint(), nil
-		}
-	case types.SignTypeOrchestratorSignedWithdrawBatch:
-		if c := keeper.GetOutgoingTXBatch(ctx, nonce); c != nil {
-			// nonce := keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
-			// if nonce == nil || nonce.IsEmpty() {
-			// 	nonce = keeper.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeBootstrap)
-			// }
-			// if nonce == nil || nonce.IsEmpty() {
-			// 	return nil, sdkerrors.Wrap(types.ErrUnknown, "observed multisig set")
-			// }
-			// valset := keeper.GetValsetRequest(ctx, *nonce)
-			// if valset == nil {
-			// 	return nil, sdkerrors.Wrap(types.ErrUnknown, "no valset found for nonce")
-			// }
-			return c.GetCheckpoint()
-		}
-	default:
-		return nil, sdkerrors.Wrap(types.ErrUnsupported, "claim type")
+// This function takes in a signature submitted by a validator's Eth Signer
+func handleMsgConfirmValset(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm) (*sdk.Result, error) {
+
+	valset := keeper.GetValsetRequest(ctx, msg.Nonce)
+	if valset == nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
 	}
-	return nil, sdkerrors.Wrap(types.ErrInvalid, "does not exist")
+
+	checkpoint := valset.GetCheckpoint()
+
+	sigBytes, err := hex.DecodeString(msg.Signature)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
+	}
+	validator := findValidatorKey(ctx, msg.Validator)
+	if validator == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+	}
+
+	ethAddress := keeper.GetEthAddress(ctx, validator)
+	if ethAddress == nil {
+		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
+	}
+	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress.String())
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected %s found %s", checkpoint, msg.Signature))
+	}
+
+	// persist signature
+	if keeper.GetValsetConfirm(ctx, msg.Nonce, msg.Validator) != nil {
+		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
+	}
+	key := keeper.SetValsetConfirm(ctx, msg)
+	return &sdk.Result{
+		Data: key,
+	}, nil
 }
 
 func handleMsgSetEthAddress(ctx sdk.Context, keeper Keeper, msg MsgSetEthAddress) (*sdk.Result, error) {
@@ -181,20 +186,4 @@ func handleMsgRequestBatch(ctx sdk.Context, keeper Keeper, msg MsgRequestBatch) 
 	return &sdk.Result{
 		Data: batchID.Nonce.Bytes(),
 	}, nil
-}
-
-func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) (*sdk.Result, error) {
-	validator := findValidatorKey(ctx, msg.Orchestrator)
-	if validator == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-	}
-
-	keeper.SetOutgoingTXBatchConfirm(ctx, msg.Nonce, validator, []byte(msg.Signature)) // store legacy
-
-	return handleBridgeSignatureSubmission(ctx, keeper, MsgBridgeSignatureSubmission{
-		Nonce:             msg.Nonce,
-		SignType:          types.SignTypeOrchestratorSignedWithdrawBatch,
-		Orchestrator:      msg.Orchestrator,
-		EthereumSignature: msg.Signature,
-	})
 }

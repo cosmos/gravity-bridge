@@ -21,9 +21,8 @@ const (
 )
 
 var (
-	EthAddressKey    = []byte{0x1}
-	ValsetRequestKey = []byte{0x2}
-	// deprecated
+	EthAddressKey               = []byte{0x1}
+	ValsetRequestKey            = []byte{0x2}
 	ValsetConfirmKey            = []byte{0x3}
 	OracleClaimKey              = []byte{0x4}
 	OracleAttestationKey        = []byte{0x5}
@@ -35,7 +34,7 @@ var (
 	// deprecated
 
 	OutgoingTXBatchConfirmKey    = []byte{0xb}
-	BridgeApprovalSignatureKey   = []byte{0xe}
+	BatchConfirmKey              = []byte{0xe1}
 	SecondIndexNonceByClaimKey   = []byte{0xf}
 	LastEventNonceByValidatorKey = []byte{0xf1}
 	BridgeObservedSignatureKey   = []byte{0x10}
@@ -54,7 +53,7 @@ func GetValsetRequestKey(nonce UInt64Nonce) []byte {
 	return append(ValsetRequestKey, nonce.Bytes()...)
 }
 
-// deprecated
+// MARK finish-batches: this is where the key is created in the old (presumed working) code
 func GetValsetConfirmKey(nonce UInt64Nonce, validator sdk.AccAddress) []byte {
 	return append(ValsetConfirmKey, append(nonce.Bytes(), []byte(validator)...)...)
 }
@@ -91,42 +90,16 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 	return append(OutgoingTXPoolKey, sdk.Uint64ToBigEndian(id)...)
 }
 
-func GetOutgoingTxBatchKey(nonce UInt64Nonce) []byte {
-	return append(OutgoingTXBatchKey, nonce.Bytes()...)
+func GetOutgoingTxBatchKey(tokenContract EthereumAddress, nonce UInt64Nonce) []byte {
+	return append(append(OutgoingTXBatchKey, tokenContract.Bytes()...), nonce.Bytes()...)
 }
 
-// deprecated
-func GetOutgoingTXBatchConfirmKey(nonce UInt64Nonce, validator sdk.ValAddress) []byte {
-	return append(OutgoingTXBatchConfirmKey, append(nonce.Bytes(), validator.Bytes()...)...)
-}
-
-func GetBridgeApprovalSignatureKeyPrefix(s SignType) []byte {
-	return append(BridgeApprovalSignatureKey, s.Bytes()...)
-}
-func GetBridgeApprovalSignatureKey(singType SignType, nonce UInt64Nonce, validator sdk.ValAddress) []byte {
-	prefix := GetBridgeApprovalSignatureKeyPrefix(singType)
-	prefixLen := len(prefix)
-
-	r := make([]byte, prefixLen+UInt64NonceByteLen+len(validator))
-	copy(r, prefix)
-	copy(r[prefixLen:], nonce.Bytes())
-	copy(r[prefixLen+UInt64NonceByteLen:], validator)
-	return r
-}
-
-func GetBridgeObservedSignatureKeyPrefix(c ClaimType) []byte {
-	return append(BridgeApprovalSignatureKey, c.Bytes()...)
-}
-
-func GetBridgeObservedSignatureKey(claimType ClaimType, nonce UInt64Nonce, validator sdk.ValAddress) []byte {
-	prefix := GetBridgeObservedSignatureKeyPrefix(claimType)
-	prefixLen := len(prefix)
-
-	r := make([]byte, prefixLen+UInt64NonceByteLen+len(validator))
-	copy(r, prefix)
-	copy(r[prefixLen:], nonce.Bytes())
-	copy(r[prefixLen+UInt64NonceByteLen:], validator)
-	return r
+// MARK finish-batches: take a look at this
+func GetBatchConfirmKey(tokenContract EthereumAddress, batchNonce UInt64Nonce, validator sdk.AccAddress) []byte {
+	a := append(batchNonce.Bytes(), validator...)
+	b := append(tokenContract.Bytes(), a...)
+	c := append(BatchConfirmKey, b...)
+	return c
 }
 
 func GetFeeSecondIndexKey(fee sdk.Coin) []byte {

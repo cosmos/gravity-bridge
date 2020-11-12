@@ -289,17 +289,11 @@ func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
 // -------------
 // deprecated should use MsgBridgeSignatureSubmission instead
 type MsgConfirmBatch struct {
-	Nonce        UInt64Nonce    `json:"nonce"`
-	Orchestrator sdk.AccAddress `json:"validator"`
-	Signature    string         `json:"signature"`
-}
-
-func NewMsgConfirmBatch(nonce UInt64Nonce, orchestrator sdk.AccAddress, signature string) MsgConfirmBatch {
-	return MsgConfirmBatch{
-		Nonce:        nonce,
-		Orchestrator: orchestrator,
-		Signature:    signature,
-	}
+	Nonce          UInt64Nonce     `json:"nonce"`
+	TokenContract  EthereumAddress `json:"token_contract"`
+	EthereumSigner EthereumAddress `json:"ethereum_signer"`
+	Validator      sdk.AccAddress  `json:"validator"`
+	Signature      string          `json:"signature"`
 }
 
 // Route should return the name of the module
@@ -322,7 +316,7 @@ func (msg MsgConfirmBatch) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Orchestrator}
+	return []sdk.AccAddress{msg.Validator}
 }
 
 type EthereumClaim interface {
@@ -404,30 +398,6 @@ func (e EthereumBridgeWithdrawalBatchClaim) Details() AttestationDetails {
 	return NoUniqueClaimDetails
 }
 
-// // EthereumBridgeMultiSigUpdateClaim claims that the multisig set was updated on the bridge contract.
-// type EthereumBridgeMultiSigUpdateClaim struct {
-// 	Nonce UInt64Nonce `json:"nonce" yaml:"nonce"`
-// }
-
-// func (e EthereumBridgeMultiSigUpdateClaim) GetType() ClaimType {
-// 	return ClaimTypeEthereumBridgeMultiSigUpdate
-// }
-
-// func (e EthereumBridgeMultiSigUpdateClaim) GetNonce() UInt64Nonce {
-// 	return e.Nonce
-// }
-
-// func (e EthereumBridgeMultiSigUpdateClaim) ValidateBasic() error {
-// 	if err := e.Nonce.ValidateBasic(); err != nil {
-// 		return sdkerrors.Wrap(err, "nonce")
-// 	}
-// 	return nil
-// }
-
-// func (e EthereumBridgeMultiSigUpdateClaim) Details() AttestationDetails {
-// 	return NoUniqueClaimDetails
-// }
-
 const (
 	TypeMsgCreateEthereumClaims = "create_eth_claims"
 )
@@ -435,44 +405,6 @@ const (
 var (
 	_ sdk.Msg = &MsgCreateEthereumClaims{}
 )
-
-// // EthereumBridgeBootstrappedClaim orchestrators confirm that the contract is setup on the Ethereum side and the init data.
-// type EthereumBridgeBootstrappedClaim struct {
-// 	// There's no way this can logically have a nonce. The bridge is only bootstrapped once. This code is over generic.
-// 	// This bootstrapping stuff needs to be removed from the Ethereum event oracle.
-// 	Nonce UInt64Nonce `json:"nonce" yaml:"nonce"`
-// 	// PeggyID is a random 32 byte value to prevent signature reuse
-// 	PeggyID string `json:"peggy_id" yaml:"peggy_id"`
-// 	Block   uint64 `json:"block" yaml:"block"`
-// 	// BridgeValidators is the initial MultiSig Set
-// 	BridgeValidators BridgeValidators `json:"bridge_validators" yaml:"bridge_validators"`
-// 	// StartThreshold is the percentage of total voting power that must be online and participating in
-// 	// Peggy operations before a bridge can start operating
-// 	StartThreshold uint64 `json:"start_threshold" yaml:"start_threshold"`
-// }
-
-// func (e EthereumBridgeBootstrappedClaim) GetEventNonce() UInt64Nonce {
-// 	return e.Nonce
-// }
-
-// func (e EthereumBridgeBootstrappedClaim) GetType() ClaimType {
-// 	return ClaimTypeEthereumBridgeBootstrap
-// }
-
-// func (e EthereumBridgeBootstrappedClaim) ValidateBasic() error {
-// 	if err := e.Nonce.ValidateBasic(); err != nil {
-// 		return sdkerrors.Wrap(err, "nonce")
-// 	}
-// 	if err := e.BridgeValidators.ValidateBasic(); err != nil {
-// 		return sdkerrors.Wrap(err, "bridge validators")
-// 	}
-// 	// todo: implement me proper
-// 	return nil
-// }
-
-// func (e EthereumBridgeBootstrappedClaim) Details() AttestationDetails {
-// 	return NewBridgeBootstrap(e.PeggyID, e.BridgeValidators, e.StartThreshold)
-// }
 
 // MsgCreateEthereumClaims
 // this message essentially acts as the oracle between Ethereum and Cosmos, when an orchestrator sees
@@ -520,48 +452,4 @@ func (m MsgCreateEthereumClaims) GetSignBytes() []byte {
 
 func (m MsgCreateEthereumClaims) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{m.Orchestrator}
-}
-
-// MsgBridgeSignatureSubmission submits the Ethereum signature for a given nonce an claim type.
-type MsgBridgeSignatureSubmission struct {
-	Nonce             UInt64Nonce    `json:"nonce"`
-	SignType          SignType       `json:"sign_type"`
-	Orchestrator      sdk.AccAddress `json:"orchestrator"`
-	EthereumSignature string         `json:"ethereum_signature"`
-}
-
-// Route should return the name of the module
-func (msg MsgBridgeSignatureSubmission) Route() string { return RouterKey }
-
-// Type should return the action
-func (msg MsgBridgeSignatureSubmission) Type() string { return "valset_confirm" }
-
-// Stateless checks
-func (msg MsgBridgeSignatureSubmission) ValidateBasic() error {
-	if err := msg.Nonce.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "nonce")
-	}
-	if !IsSignType(msg.SignType) {
-		return sdkerrors.Wrap(ErrInvalid, "sign type")
-	}
-	if msg.Orchestrator.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator.String())
-	}
-	if err := sdk.VerifyAddressFormat(msg.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "validator")
-	}
-	if len(msg.EthereumSignature) == 0 {
-		return sdkerrors.Wrap(ErrEmpty, "signature")
-	}
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgBridgeSignatureSubmission) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgBridgeSignatureSubmission) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Orchestrator}
 }

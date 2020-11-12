@@ -68,7 +68,7 @@ pub async fn send_eth_valset_update(
             vec![SendTxOption::GasLimit(1_000_000u32.into())],
         )
         .await?;
-    info!("Finished valset update with txid {:#066x}", tx);
+    info!("Sent valset update with txid {:#066x}", tx);
 
     // TODO this segment of code works around the race condition for submitting valsets mostly
     // by not caring if our own submission reverts and only checking if the valset has been updated

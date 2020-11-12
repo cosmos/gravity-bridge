@@ -21,7 +21,7 @@ func TestBatches(t *testing.T) {
 	var (
 		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
 		myReceiver          = types.NewEthereumAddress("eth receiver")
-		myTokenContractAddr = types.NewEthereumAddress("my eth oken address")
+		myTokenContractAddr = types.NewEthereumAddress("my eth token address")
 		myETHToken          = "myETHToken"
 		voucherDenom        = types.NewVoucherDenom(myTokenContractAddr, myETHToken)
 		now                 = time.Now().UTC()
@@ -61,7 +61,7 @@ func TestBatches(t *testing.T) {
 	fmt.Printf("FIRST BATCH VALSET %T", firstBatch.Valset)
 
 	// then batch is persisted
-	gotFirstBatch := k.GetOutgoingTXBatch(ctx, firstBatch.Nonce)
+	gotFirstBatch := k.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, firstBatch.Nonce)
 	require.NotNil(t, gotFirstBatch)
 
 	expFirstBatch := types.OutgoingTxBatch{
@@ -82,7 +82,6 @@ func TestBatches(t *testing.T) {
 				Amount:      denominator.ToUint64ERC20Token(100),
 			},
 		},
-		CreatedAt:          now,
 		TotalFee:           denominator.ToUint64ERC20Token(5),
 		BridgedDenominator: denominator,
 		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
@@ -148,7 +147,6 @@ func TestBatches(t *testing.T) {
 				Amount:      denominator.ToUint64ERC20Token(100),
 			},
 		},
-		CreatedAt:          now,
 		TotalFee:           denominator.ToUint64ERC20Token(9),
 		BridgedDenominator: denominator,
 		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
@@ -161,10 +159,10 @@ func TestBatches(t *testing.T) {
 	// =================================
 
 	// Execute the batch
-	k.OutgoingTxBatchExecuted(ctx, secondBatch.Nonce)
+	k.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.Nonce)
 
 	// check batch has been deleted
-	gotSecondBatch := k.GetOutgoingTXBatch(ctx, secondBatch.Nonce)
+	gotSecondBatch := k.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, secondBatch.Nonce)
 	require.Nil(t, gotSecondBatch)
 
 	// check that txs from first batch have been freed

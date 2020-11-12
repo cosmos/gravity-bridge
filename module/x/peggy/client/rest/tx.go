@@ -10,7 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	"github.com/gorilla/mux"
 
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 
@@ -178,84 +177,4 @@ type bootstrapConfirmReq struct {
 	BridgeValidators      types.BridgeValidators `json:"bridge_validators"`
 	PeggyID               string                 `json:"peggy_id"`
 	StartThreshold        uint64                 `json:"start_threshold"`
-}
-
-// func bootstrapConfirmHandler(cliCtx context.CLIContext) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		var req bootstrapConfirmReq
-
-// 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
-// 			return
-// 		}
-
-// 		baseReq := req.BaseReq.Sanitize()
-// 		if !baseReq.ValidateBasic(w) {
-// 			return
-// 		}
-
-// 		blockNumber, err := strconv.ParseUint(req.Block, 10, 64)
-// 		if err != nil {
-// 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse block")
-// 			return
-// 		}
-// 		claims := []types.EthereumClaim{
-// 			types.EthereumBridgeBootstrappedClaim{
-// 				Block:            blockNumber,
-// 				BridgeValidators: req.BridgeValidators,
-// 				PeggyID:          req.PeggyID,
-// 				StartThreshold:   req.StartThreshold,
-// 			},
-// 		}
-// 		msg := types.NewMsgCreateEthereumClaims(req.EthereumChainID, req.BridgeContractAddress, req.Orchestrator, claims)
-// 		err = msg.ValidateBasic()
-// 		if err != nil {
-// 			rest.WriteErrorResponse(w, http.StatusBadRequest, fmt.Sprintf("invalid data: %s", err))
-// 			return
-// 		}
-// 		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
-// 	}
-// }
-
-type BridgeApprovalSignatureReq struct {
-	BaseReq           rest.BaseReq   `json:"base_req"`
-	Orchestrator      sdk.AccAddress `json:"orchestrator"`
-	EthereumSignature string         `json:"ethereum_signature"`
-}
-
-func BridgeApprovalSignatureHandler(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req BridgeApprovalSignatureReq
-
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
-			return
-		}
-		vars := mux.Vars(r)
-		signType, exists := types.SignTypeFromName(vars[claimType])
-		if !exists {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "unknown sign type")
-			return
-		}
-		nonce, err := types.UInt64NonceFromString(vars[nonce])
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, fmt.Sprintf("invalid nonce: %s", err))
-			return
-		}
-
-		baseReq := req.BaseReq.Sanitize()
-		if !baseReq.ValidateBasic(w) {
-			return
-		}
-
-		msg := types.MsgBridgeSignatureSubmission{
-			Nonce:             nonce,
-			SignType:          signType,
-			Orchestrator:      req.Orchestrator,
-			EthereumSignature: req.EthereumSignature,
-		}
-		if err := msg.ValidateBasic(); err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, fmt.Sprintf("invalid data: %s", err))
-			return
-		}
-		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
-	}
 }
