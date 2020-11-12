@@ -329,7 +329,7 @@ func TestPendingValsetRequests(t *testing.T) {
 	}
 }
 
-func TestPendingBatchRequests(t *testing.T) {
+func TestLastPendingBatchRequest(t *testing.T) {
 	k, ctx, keepers := CreateTestEnv(t)
 
 	// seed with valset requests and eth addresses to make validators
@@ -505,6 +505,184 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 	expectedJSON := []byte(`[{"ethereum_address":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "nonce":"1", "signature":"signature", "validator":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}]`)
 
 	assert.JSONEq(t, string(expectedJSON), string(batchConfirms), "json is equal")
+}
+
+func TestQueryBatch(t *testing.T) {
+	k, ctx, keepers := CreateTestEnv(t)
+
+	var (
+		tokenContract = types.NewEthereumAddress("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
+		// validatorAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+	)
+
+	createTestBatch(t, k, ctx, keepers)
+
+	batch, err := queryBatch(ctx, "1", tokenContract.String(), k)
+	require.NoError(t, err)
+
+	expectedJSON := []byte(`{
+		"type": "peggy/OutgoingTxBatch",
+		"value": {
+		  "bridged_denominator": {
+			"cosmos_voucher_denom": "peggy2ca9e20629",
+			"symbol": "myETHToken",
+			"token_contract_address": ""
+		  },
+		  "elements": [
+			{
+			  "bridge_fee": {
+				"amount": "3",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			  },
+			  "dest_address": "",
+			  "send": {
+				"amount": "101",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			  },
+			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+			  "txid": "2"
+			},
+			{
+			  "bridge_fee": {
+				"amount": "2",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			  },
+			  "dest_address": "",
+			  "send": {
+				"amount": "100",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			  },
+			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+			  "txid": "1"
+			}
+		  ],
+		  "nonce": "1",
+		  "tokenContract": "",
+		  "total_fee": {
+			"amount": "5",
+			"symbol": "myETHToken",
+			"token_contract_address": ""
+		  },
+		  "valset": { "members": null, "nonce": "1234567" }
+		}
+	  }
+	  `)
+
+	assert.JSONEq(t, string(expectedJSON), string(batch), "json is equal")
+}
+
+func TestLastBatchesRequest(t *testing.T) {
+	k, ctx, keepers := CreateTestEnv(t)
+
+	createTestBatch(t, k, ctx, keepers)
+	createTestBatch(t, k, ctx, keepers)
+
+	lastBatches, err := lastBatchesRequest(ctx, k)
+	require.NoError(t, err)
+
+	expectedJSON := []byte(`[
+		{
+		  "bridged_denominator": {
+			"cosmos_voucher_denom": "peggy2ca9e20629",
+			"symbol": "myETHToken",
+			"token_contract_address": ""
+		  },
+		  "elements": [
+			{
+			  "bridge_fee": {
+				"amount": "3",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			  },
+			  "dest_address": "",
+			  "send": {
+				"amount": "101",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			  },
+			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+			  "txid": "6"
+			},
+			{
+			  "bridge_fee": {
+				"amount": "2",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			  },
+			  "dest_address": "",
+			  "send": {
+				"amount": "102",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			  },
+			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+			  "txid": "3"
+			}
+		  ],
+		  "nonce": "2",
+		  "tokenContract": "",
+		  "total_fee": {
+			"amount": "5",
+			"symbol": "myETHToken",
+			"token_contract_address": ""
+		  },
+		  "valset": { "members": null, "nonce": "1234567" }
+		},
+		{
+		  "bridged_denominator": {
+			"cosmos_voucher_denom": "peggy2ca9e20629",
+			"symbol": "myETHToken",
+			"token_contract_address": ""
+		  },
+		  "elements": [
+			{
+			  "bridge_fee": {
+				"amount": "3",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			  },
+			  "dest_address": "",
+			  "send": {
+				"amount": "101",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			  },
+			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+			  "txid": "2"
+			},
+			{
+			  "bridge_fee": {
+				"amount": "2",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			  },
+			  "dest_address": "",
+			  "send": {
+				"amount": "100",
+				"symbol": "myETHToken",
+				"token_contract_address": ""
+			  },
+			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+			  "txid": "1"
+			}
+		  ],
+		  "nonce": "1",
+		  "tokenContract": "",
+		  "total_fee": {
+			"amount": "5",
+			"symbol": "myETHToken",
+			"token_contract_address": ""
+		  },
+		  "valset": { "members": null, "nonce": "1234567" }
+		}
+	  ]
+	  `)
+
+	assert.JSONEq(t, string(expectedJSON), string(lastBatches), "json is equal")
 }
 
 func createEthAddress(i int) types.EthereumAddress {

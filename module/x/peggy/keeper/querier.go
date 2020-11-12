@@ -61,13 +61,13 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 
 		// Batches
 		case QueryBatch:
-			return queryBatch(ctx, path[1], path[2], keeper)
+			return queryBatch(ctx, path[1], path[2], keeper) // Tested (lightly)
 		case QueryBatchConfirms:
-			return queryAllBatchConfirms(ctx, path[1], path[2], keeper)
+			return queryAllBatchConfirms(ctx, path[1], path[2], keeper) // Tested (lightly)
 		case QueryLastPendingBatchRequestByAddr:
-			return lastPendingBatchRequest(ctx, path[1], keeper)
+			return lastPendingBatchRequest(ctx, path[1], keeper) // Tested (lightly)
 		case QueryOutgoingTxBatches:
-			return lastBatchesRequest(ctx, keeper)
+			return lastBatchesRequest(ctx, keeper) // Tested (lightly)
 
 		// Other
 		case QueryBridgedDenominators:
