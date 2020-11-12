@@ -1,4 +1,4 @@
-use crate::utils::{get_tx_batch_nonce, get_valset_nonce};
+use crate::utils::get_tx_batch_nonce;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use peggy_utils::error::OrchestratorError;

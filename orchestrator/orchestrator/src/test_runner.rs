@@ -153,21 +153,7 @@ async fn main() {
             balance
         );
         // send every orchestrator 1 eth to pay for fees
-        let txid = web30
-            .send_transaction(
-                validator_eth_address,
-                Vec::new(),
-                1_000_000_000_000_000_000u128.into(),
-                *MINER_ADDRESS,
-                *MINER_PRIVATE_KEY,
-                vec![],
-            )
-            .await
-            .expect("Failed to send Eth to validator {}");
-        web30
-            .wait_for_transaction(txid, TOTAL_TIMEOUT, None)
-            .await
-            .unwrap();
+        send_one_eth(validator_eth_address, &web30).await;
     }
 
     // start orchestrators, send them some eth so that they can pay for things
@@ -250,7 +236,6 @@ async fn main() {
         erc20_address,
     )
     .await;
-    delay_for(OPERATION_TIMEOUT).await;
 }
 
 /// This function deploys the required contracts onto the Ethereum testnet
@@ -487,7 +472,7 @@ async fn test_batch(
         dest_eth_address,
         Coin {
             denom: token_name.clone(),
-            amount,
+            amount: amount.clone(),
         },
         bridge_denom_fee.clone(),
         &contact,
@@ -499,7 +484,7 @@ async fn test_batch(
     info!("Requesting transaction batch");
     request_batch(
         requester_cosmos_private_key,
-        token_name,
+        token_name.clone(),
         fee.clone(),
         &contact,
     )
@@ -536,9 +521,36 @@ async fn test_batch(
             panic!("Failed to submit transaction batch set");
         }
     }
+
+    //
+    let txid = web30
+        .send_transaction(
+            dest_eth_address,
+            Vec::new(),
+            1_000_000_000_000_000_000u128.into(),
+            *MINER_ADDRESS,
+            *MINER_PRIVATE_KEY,
+            vec![],
+        )
+        .await
+        .expect("Failed to send Eth to validator {}");
+    web30
+        .wait_for_transaction(txid, TOTAL_TIMEOUT, None)
+        .await
+        .unwrap();
+
+    // we have to send this address one eth so that it can perform contract calls
+    send_one_eth(dest_eth_address, web30).await;
+    assert_eq!(
+        web30
+            .get_erc20_balance(erc20_contract, dest_eth_address)
+            .await
+            .unwrap(),
+        amount
+    );
     info!(
-        "Successfully updated txbatch nonce to {}",
-        current_eth_batch_nonce
+        "Successfully updated txbatch nonce to {} and sent {}{} tokens to Ethereum!",
+        current_eth_batch_nonce, amount, token_name
     );
 }
 
@@ -599,4 +611,22 @@ async fn submit_duplicate_erc20_send(
     } else {
         panic!("Duplicate test failed for unknown reasons!");
     }
+}
+
+async fn send_one_eth(dest: EthAddress, web30: &Web3) {
+    let txid = web30
+        .send_transaction(
+            dest,
+            Vec::new(),
+            1_000_000_000_000_000_000u128.into(),
+            *MINER_ADDRESS,
+            *MINER_PRIVATE_KEY,
+            vec![],
+        )
+        .await
+        .expect("Failed to send Eth to validator {}");
+    web30
+        .wait_for_transaction(txid, TOTAL_TIMEOUT, None)
+        .await
+        .unwrap();
 }
