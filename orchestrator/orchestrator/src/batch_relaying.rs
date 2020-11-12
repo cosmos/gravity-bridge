@@ -101,11 +101,16 @@ pub async fn relay_batches(
     }
     let oldest_signed_batch = oldest_signed_batch.unwrap();
     let oldest_signatures = oldest_signatures.unwrap();
+    let erc20_contract = oldest_signed_batch.token_contract;
 
-    let latest_ethereum_batch =
-        get_tx_batch_nonce(peggy_contract_address, our_ethereum_address, web3)
-            .await
-            .expect("Failed to get Ethereum valset");
+    let latest_ethereum_batch = get_tx_batch_nonce(
+        peggy_contract_address,
+        erc20_contract,
+        our_ethereum_address,
+        web3,
+    )
+    .await
+    .expect("Failed to get Ethereum valset");
     let latest_ethereum_valset =
         get_valset_nonce(peggy_contract_address, our_ethereum_address, web3)
             .await

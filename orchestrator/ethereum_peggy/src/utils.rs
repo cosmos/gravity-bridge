@@ -62,15 +62,16 @@ pub async fn get_valset_nonce(
 
 /// Gets the latest transaction batch nonce
 pub async fn get_tx_batch_nonce(
-    contract_address: EthAddress,
+    peggy_contract_address: EthAddress,
+    erc20_contract_address: EthAddress,
     caller_address: EthAddress,
     web3: &Web3,
 ) -> Result<Uint256, Web3Error> {
     let val = web3
         .contract_call(
-            contract_address,
-            "state_lastBatchNonce(address)",
-            &[contract_address.into()],
+            peggy_contract_address,
+            "lastBatchNonce(address)",
+            &[erc20_contract_address.into()],
             caller_address,
         )
         .await?;
