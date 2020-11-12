@@ -57,18 +57,4 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) 
 	// This endpoint gets all of the batch confirmations for a given nonce and denom In order to determine if a batch is complete
 	// the relayer will compare the valset power on the contract to the number of signatures
 	r.HandleFunc(fmt.Sprintf("/%s/batch_confirm/{%s}/{%s}", storeName, nonce, tokenAddress), allBatchConfirmsHandler(cliCtx, storeName)).Methods("GET")
-
-	/// UNUSED
-
-	r.HandleFunc(fmt.Sprintf("/%s/last_observed_nonce/{%s}", storeName, claimType), lastObservedNonceHandler(cliCtx, storeName)).Methods("GET")
-	/* UNUSED */ r.HandleFunc(fmt.Sprintf("/%s/query_valset_confirm", storeName), getValsetConfirmHandler(cliCtx, storeName)).Methods("POST")
-	/* UNUSED */ r.HandleFunc(fmt.Sprintf("/%s/update_ethaddr", storeName), updateEthAddressHandler(cliCtx)).Methods("POST")
-	/* UNUSED */ r.HandleFunc(fmt.Sprintf("/%s/valset_request", storeName), createValsetRequestHandler(cliCtx)).Methods("POST")
-	/* UNUSED */ r.HandleFunc(fmt.Sprintf("/%s/valset_confirm", storeName), createValsetConfirmHandler(cliCtx, storeName)).Methods("POST")
-	/* UNUSED */ r.HandleFunc(fmt.Sprintf("/%s/lastNonce/{%s}", storeName, claimType), lastObservedNonceHandler(cliCtx, storeName)).Methods("GET")
-	/* UNUSED */ r.HandleFunc(fmt.Sprintf("/%s/last_observed_nonces", storeName), lastObservedNoncesHandler(cliCtx, storeName)).Methods("GET")
-	/* UNUSED */ r.HandleFunc(fmt.Sprintf("/%s/last_observed_valset", storeName), lastObservedValsetHandler(cliCtx, storeName)).Methods("GET")
-	/* UNUSED */ r.HandleFunc(fmt.Sprintf("/%s/last_approved_valset", storeName), lastApprovedValsetHandler(cliCtx, storeName)).Methods("GET")
-	/* UNUSED */ r.HandleFunc(fmt.Sprintf("/%s/attestation/{%s}/{%s}", storeName, claimType, nonce), queryAttestation(cliCtx, storeName)).Methods("GET")
-
 }
