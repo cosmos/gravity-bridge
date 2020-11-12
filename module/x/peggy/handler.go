@@ -107,12 +107,12 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) 
 	}
 	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress.String())
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature")
+		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected %s found %s", checkpoint, msg.Signature))
 	}
 
 	// check if we already have this confirm
 	if keeper.GetBatchConfirm(ctx, msg.Nonce, msg.TokenContract, msg.Validator) != nil {
-		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature")
+		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
 	key := keeper.SetBatchConfirm(ctx, msg)
 	return &sdk.Result{
@@ -145,12 +145,12 @@ func handleMsgConfirmValset(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm
 	}
 	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress.String())
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature")
+		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected %s found %s", checkpoint, msg.Signature))
 	}
 
 	// persist signature
 	if keeper.GetValsetConfirm(ctx, msg.Nonce, msg.Validator) != nil {
-		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature")
+		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
 	key := keeper.SetValsetConfirm(ctx, msg)
 	return &sdk.Result{
