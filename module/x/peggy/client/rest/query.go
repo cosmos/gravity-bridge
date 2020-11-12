@@ -17,7 +17,7 @@ func getValsetRequestHandler(cliCtx context.CLIContext, storeName string) http.H
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
 
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/valsetRequest/%s/%s", storeName, nonce, denom))
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/valsetRequest/%s", storeName, nonce))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -37,7 +37,7 @@ func batchByNonceHandler(cliCtx context.CLIContext, storeName string) http.Handl
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
-		denom := vars[denom]
+		denom := vars[tokenAddress]
 
 		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/batch/%s/%s", storeName, nonce, denom))
 		if err != nil {
@@ -102,7 +102,7 @@ func allBatchConfirmsHandler(cliCtx context.CLIContext, storeName string) http.H
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
-		denom := vars[denom]
+		denom := vars[tokenAddress]
 
 		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/batchConfirms/%s/%s", storeName, nonce, denom))
 		if err != nil {
