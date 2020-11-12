@@ -428,7 +428,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 				}
 				]
 			},
-			"tokenContract": ""
+			"token_contract": ""
 			}
 		}
 			`,
@@ -561,7 +561,7 @@ func TestQueryBatch(t *testing.T) {
 			}
 		  ],
 		  "nonce": "1",
-		  "tokenContract": "",
+		  "token_contract": "",
 		  "total_fee": {
 			"amount": "5",
 			"symbol": "myETHToken",
@@ -624,7 +624,7 @@ func TestLastBatchesRequest(t *testing.T) {
 			}
 		  ],
 		  "nonce": "2",
-		  "tokenContract": "",
+		  "token_contract": "",
 		  "total_fee": {
 			"amount": "5",
 			"symbol": "myETHToken",
@@ -671,7 +671,7 @@ func TestLastBatchesRequest(t *testing.T) {
 			}
 		  ],
 		  "nonce": "1",
-		  "tokenContract": "",
+		  "token_contract": "",
 		  "total_fee": {
 			"amount": "5",
 			"symbol": "myETHToken",

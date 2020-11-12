@@ -166,14 +166,12 @@ fn test_batch_signature() {
             bridge_fee: token.clone(),
             send: token.clone(),
         }],
-        created_at: "".to_string(),
         total_fee: token,
         bridged_denominator: ERC20Denominator {
             cosmos_voucher_denom: "peggy39b512461b".to_string(),
             symbol: "MAX".to_string(),
             token_contract_address: erc20_addr,
         },
-        batch_status: 1,
         token_contract: erc20_addr,
         valset,
     };

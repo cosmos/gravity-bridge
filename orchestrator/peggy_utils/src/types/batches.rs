@@ -23,10 +23,8 @@ pub struct TransactionBatchUnparsed {
     #[serde(deserialize_with = "parse_val")]
     pub nonce: Uint256,
     pub elements: Vec<BatchTransaction>,
-    pub created_at: String,
     pub total_fee: ERC20Token,
     pub bridged_denominator: ERC20Denominator,
-    pub batch_status: u64,
     pub valset: ValsetUnparsed,
     #[serde(deserialize_with = "parse_val")]
     pub token_contract: EthAddress,
@@ -37,10 +35,8 @@ impl TransactionBatchUnparsed {
         TransactionBatch {
             nonce: self.nonce,
             elements: self.elements,
-            created_at: self.created_at,
             total_fee: self.total_fee,
             bridged_denominator: self.bridged_denominator,
-            batch_status: self.batch_status,
             valset: self.valset.convert(),
             token_contract: self.token_contract,
         }
@@ -52,10 +48,8 @@ impl TransactionBatchUnparsed {
 pub struct TransactionBatch {
     pub nonce: Uint256,
     pub elements: Vec<BatchTransaction>,
-    pub created_at: String,
     pub total_fee: ERC20Token,
     pub bridged_denominator: ERC20Denominator,
-    pub batch_status: u64,
     pub valset: Valset,
     pub token_contract: EthAddress,
 }

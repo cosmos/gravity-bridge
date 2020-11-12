@@ -30,7 +30,7 @@ type OutgoingTxBatch struct {
 	TotalFee           ERC20Token           `json:"total_fee"`
 	BridgedDenominator BridgedDenominator   `json:"bridged_denominator"`
 	Valset             Valset               `json:"valset"`
-	TokenContract      EthereumAddress      `json:"tokenContract"`
+	TokenContract      EthereumAddress      `json:"token_contract"`
 }
 
 // func (b *OutgoingTxBatch) Cancel() error {

@@ -20,7 +20,6 @@ use actix::Arbiter;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
-use cosmos_peggy::send::send_ethereum_claims;
 use cosmos_peggy::send::send_valset_request;
 use cosmos_peggy::send::{request_batch, send_to_eth, update_peggy_eth_address};
 use cosmos_peggy::utils::wait_for_cosmos_online;
@@ -28,6 +27,7 @@ use cosmos_peggy::{
     messages::{EthereumBridgeClaim, EthereumBridgeDepositClaim},
     utils::wait_for_next_cosmos_block,
 };
+use cosmos_peggy::{query::get_oldest_unsigned_transaction_batch, send::send_ethereum_claims};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
@@ -503,6 +503,15 @@ async fn test_batch(
     )
     .await
     .unwrap();
+
+    wait_for_next_cosmos_block(contact).await;
+    let requester_address = requester_cosmos_private_key
+        .to_public_key()
+        .unwrap()
+        .to_address();
+    get_oldest_unsigned_transaction_batch(contact, requester_address)
+        .await
+        .expect("Failed to get batch to sign");
 
     // let mut current_eth_batch_nonce = get_tx_batch_nonce(peggy_address, miner_address, &web30)
     //     .await
