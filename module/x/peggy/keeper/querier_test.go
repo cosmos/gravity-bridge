@@ -498,16 +498,17 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 	)
 
 	k.SetBatchConfirm(ctx, types.MsgConfirmBatch{
-		Nonce:         1,
-		TokenContract: tokenContract,
-		Validator:     validatorAddr,
-		Signature:     "signature",
+		Nonce:          1,
+		TokenContract:  tokenContract,
+		EthereumSigner: types.NewEthereumAddress("0xf35e2cc8e6523d683ed44870f5b7cc785051a77d"),
+		Validator:      validatorAddr,
+		Signature:      "signature",
 	})
 
 	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract.String(), k)
 	require.NoError(t, err)
 
-	expectedJSON := []byte(`[{"ethereum_address":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "nonce":"1", "signature":"signature", "validator":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}]`)
+	expectedJSON := []byte(`[{"ethereum_signer":"0xF35e2cC8E6523d683eD44870f5B7cC785051a77D", "nonce":"1", "signature":"signature", "token_contract":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "validator":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}]`)
 
 	assert.JSONEq(t, string(expectedJSON), string(batchConfirms), "json is equal")
 }
