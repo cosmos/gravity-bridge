@@ -12,9 +12,9 @@ Usage example:
 
 ## Security model
 
-The Peggy contract is basically a multisig with a few tweaks. Even though it is designed to be used with a consensus process on Tendermint, the Peggy contract itself encodes nothing about this consensus process. There are three main operations- updateValset, updateValsetAndSubmitBatch, and sendToCosmos. 
+The Peggy contract is basically a multisig with a few tweaks. Even though it is designed to be used with a consensus process on Tendermint, the Peggy contract itself encodes nothing about this consensus process. There are three main operations- updateValset, submitBatch, and sendToCosmos. 
 - updateValset updates the signers on the multisig, and their relative powers. This mirrors the validator set on the Tendermint chain, so that all the Tendermint validators are signers, in proportion to their staking power on the Tendermint chain. An updateValset transaction must be signed by 2/3's of the current valset to be accepted.
-- updateValsetAndSubmitBatch is used to submit a batch of transactions unlocking and transferring tokens to Ethereum addresses. It is used to send tokens from Cosmos to Ethereum. The batch must be signed by 2/3's of the current valset. It also updates the valset, since it does not cost much more in gas once the validator signatures have been verified.
+- submitBatch is used to submit a batch of transactions unlocking and transferring tokens to Ethereum addresses. It is used to send tokens from Cosmos to Ethereum. The batch must be signed by 2/3's of the current valset.
 - sendToCosmos is used to send tokens onto the Tendermint chain. It simply locks the tokens in the contract and emits an event which is picked up by the Tendermint validators.
 
 ### updateValset
@@ -33,7 +33,7 @@ If we have a signature for a validator, we verify it, throwing an error if there
 
 At this point, all of the checks are complete, and it's time to update the valset! This is a bit anticlimactic, since all we do is save the new checkpoint over the old one. An event is also emitted.
 
-### updateValsetAndSubmitBatch
+### submitBatch
 
 This is how the bridge transfers tokens from addresses on the Tendermint chain to addresses on the Ethereum chain. The Cosmos validators sign batches of transactions that are submitted to the contract. Each transaction has a destination address, an amount, a nonce, and a fee for whoever submitted the batch.
 
@@ -63,4 +63,4 @@ This is emitted every time someone sends tokens to the contract to be bridged to
 
 ### ValsetUpdatedEvent
 
-This is emitted whenever the valset is updated. It does not contain the _eventNonce, since it is never brought into the Tendermint state. It is used by relayers when they call updateValsetAndSubmitBatch or updateValset, so that they can include the correct validator signatures with the transaction.
+This is emitted whenever the valset is updated. It does not contain the _eventNonce, since it is never brought into the Tendermint state. It is used by relayers when they call submitBatch or updateValset, so that they can include the correct validator signatures with the transaction.

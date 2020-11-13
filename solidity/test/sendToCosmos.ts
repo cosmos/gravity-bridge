@@ -72,7 +72,7 @@ async function runTest(opts: {}) {
   expect(await peggy.functions.state_lastEventNonce()).to.equal(2);
 }
 
-describe("updateValsetAndSubmitBatch tests", function () {
+describe("sendToCosmos tests", function () {
   it("works right", async function () {
     await runTest({})
   });

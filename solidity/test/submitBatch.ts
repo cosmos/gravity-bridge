@@ -173,7 +173,7 @@ async function runTest(opts: {
   );
 }
 
-describe("updateValsetAndSubmitBatch tests", function () {
+describe("submitBatch tests", function () {
   it("throws on malformed current valset", async function () {
     await expect(runTest({ malformedCurrentValset: true })).to.be.revertedWith(
       "Malformed current validator set"

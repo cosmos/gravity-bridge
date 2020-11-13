@@ -14,7 +14,7 @@ chai.use(solidity);
 const { expect } = chai;
 
 
-describe.only("Peggy happy path with combination method", function () {
+describe("Peggy happy path with combination method", function () {
   it("Happy path", async function () {
 
     // DEPLOY CONTRACTS
