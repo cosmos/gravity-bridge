@@ -69,9 +69,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case QueryOutgoingTxBatches:
 			return lastBatchesRequest(ctx, keeper) // Tested (lightly)
 
-		// Other
-		case QueryBridgedDenominators:
-			return queryBridgedDenominators(ctx, keeper)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint", types.ModuleName)
 		}
@@ -330,20 +327,4 @@ func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keep
 
 func parseNonce(nonceArg string) (types.UInt64Nonce, error) {
 	return types.UInt64NonceFromString(nonceArg)
-}
-
-func queryBridgedDenominators(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	var r []types.BridgedDenominator
-	keeper.IterateCounterpartDenominators(ctx, func(rawKey []byte, denominator types.BridgedDenominator) bool {
-		r = append(r, denominator)
-		return false
-	})
-	if len(r) == 0 {
-		return nil, nil
-	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, r)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-	return res, nil
 }
