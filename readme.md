@@ -23,15 +23,17 @@ You can keep up with the latest development by watching our [public standups](ht
   - [x] Basic validator set syncing
   - [x] Basic transaction batch generation
   - [x] Ethereum -> Cosmos Token issuing
+  - [x] Cosmos -> Ethereum Token issuing
   - [X] Bootstrapping
   - [ ] Genesis file save/load
   - [ ] Validator set syncing edge cases
   - [ ] Transaction batch edge cases
+  - [ ] Relaying edge cases
   - [ ] Audit
 - Orchestrator / Relayer
   - [x] Validator set update relaying
   - [x] Ethereum -> Cosmos Oracle
-  - [ ] Transaction batch relaying
+  - [x] Transaction batch relaying
   - [ ] Tendermint KMS support
   - [ ] Audit
 
