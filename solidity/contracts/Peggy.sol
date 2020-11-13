@@ -84,7 +84,7 @@ contract Peggy {
 		uint8 _v,
 		bytes32 _r,
 		bytes32 _s
-	) public pure returns (bool) {
+	) private pure returns (bool) {
 		bytes32 messageDigest = keccak256(
 			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
 		);
@@ -104,7 +104,7 @@ contract Peggy {
 		uint256[] memory _powers,
 		uint256 _valsetNonce,
 		bytes32 _peggyId
-	) public pure returns (bytes32) {
+	) private pure returns (bytes32) {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
@@ -126,7 +126,7 @@ contract Peggy {
 		// This is what we are checking they have signed
 		bytes32 _theHash,
 		uint256 _powerThreshold
-	) public pure returns (bool) {
+	) private pure returns (bool) {
 		uint256 cumulativePower = 0;
 
 		for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
