@@ -14,7 +14,7 @@ chai.use(solidity);
 const { expect } = chai;
 
 
-describe("Peggy happy path with combination method", function () {
+describe.only("Peggy happy path with combination method", function () {
   it("Happy path", async function () {
 
     // DEPLOY CONTRACTS
@@ -86,29 +86,29 @@ describe("Peggy happy path with combination method", function () {
 
 
 
-    // UDPATEVALSETANDSUBMITBATCH
+    // SUBMITBATCH
     // ==========================
 
-    const valset2 = (() => {
-      // Make new valset by modifying some powers
-      let powers = examplePowers();
-      powers[0] -= 6;
-      powers[1] += 6;
-      let validators = signers.slice(0, powers.length);
+    // const valset2 = (() => {
+    //   // Make new valset by modifying some powers
+    //   let powers = examplePowers();
+    //   powers[0] -= 6;
+    //   powers[1] += 6;
+    //   let validators = signers.slice(0, powers.length);
 
-      return {
-        powers: powers,
-        validators: validators,
-        nonce: 2
-      }
-    })()
+    //   return {
+    //     powers: powers,
+    //     validators: validators,
+    //     nonce: 2
+    //   }
+    // })()
 
-    const checkpoint2 = makeCheckpoint(
-      await getSignerAddresses(valset2.validators),
-      valset2.powers,
-      valset2.nonce,
-      peggyId
-    );
+    // const checkpoint2 = makeCheckpoint(
+    //   await getSignerAddresses(valset2.validators),
+    //   valset2.powers,
+    //   valset2.nonce,
+    //   peggyId
+    // );
 
     // Transfer out to Cosmos, locking coins
     await testERC20.functions.approve(peggy.address, 1000);
@@ -134,12 +134,11 @@ describe("Peggy happy path with combination method", function () {
     const batchNonce = 1
 
     const methodName = ethers.utils.formatBytes32String(
-      "valsetAndTransactionBatch"
+      "transactionBatch"
     );
 
     let abiEncoded = ethers.utils.defaultAbiCoder.encode(
       [
-        "bytes32",
         "bytes32",
         "bytes32",
         "uint256[]",
@@ -151,7 +150,6 @@ describe("Peggy happy path with combination method", function () {
       [
         peggyId,
         methodName,
-        checkpoint2,
         txAmounts,
         txDestinations,
         txFees,
@@ -162,13 +160,13 @@ describe("Peggy happy path with combination method", function () {
 
     let digest = ethers.utils.keccak256(abiEncoded);
 
-    let sigs = await signHash(valset2.validators, digest);
+    let sigs = await signHash(valset1.validators, digest);
 
-    await peggy.updateValsetAndSubmitBatch(
+    await peggy.submitBatch(
 
-      await getSignerAddresses(valset2.validators),
-      valset2.powers,
-      valset2.nonce,
+      // await getSignerAddresses(valset2.validators),
+      // valset2.powers,
+      // valset2.nonce,
 
       await getSignerAddresses(valset1.validators),
       valset1.powers,
@@ -185,7 +183,7 @@ describe("Peggy happy path with combination method", function () {
       testERC20.address
     );
 
-    expect(await peggy.functions.state_lastValsetCheckpoint()).to.equal(checkpoint2);
+    // expect(await peggy.functions.state_lastValsetCheckpoint()).to.equal(checkpoint2);
 
     expect(
       await (

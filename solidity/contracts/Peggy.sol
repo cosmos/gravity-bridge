@@ -238,12 +238,8 @@ contract Peggy {
 		emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers);
 	}
 
-	function updateValsetAndSubmitBatch(
-		// The new version of the validator set
-		address[] memory _newValidators,
-		uint256[] memory _newPowers,
-		uint256 _newValsetNonce,
-		// The validators that approve the batch and new valset
+	function submitBatch(
+		// The validators that approve the batch
 		address[] memory _currentValidators,
 		uint256[] memory _currentPowers,
 		uint256 _currentValsetNonce,
@@ -260,9 +256,6 @@ contract Peggy {
 	) public {
 		// CHECKS scoped to reduce stack depth
 		{
-			// Check that new validators and powers set is well-formed
-			require(_newValidators.length == _newPowers.length, "Malformed new validator set");
-
 			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
 			require(
 				_currentValidators.length == _currentPowers.length &&
@@ -283,12 +276,6 @@ contract Peggy {
 				"Supplied current validators and powers do not match checkpoint."
 			);
 
-			// Check that the valset nonce is greater than the old one
-			require(
-				_newValsetNonce > _currentValsetNonce,
-				"New valset nonce must be greater than the current nonce"
-			);
-
 			// Check that the transaction batch is well-formed
 			require(
 				_amounts.length == _destinations.length && _amounts.length == _fees.length,
@@ -299,14 +286,6 @@ contract Peggy {
 			require(
 				state_lastBatchNonces[_tokenContract] < _batchNonce,
 				"New batch nonce must be greater than the current nonce"
-			);
-
-			// Make checkpoint for new valset
-			bytes32 newValsetCheckpoint = makeCheckpoint(
-				_newValidators,
-				_newPowers,
-				_newValsetNonce,
-				state_peggyId
 			);
 
 			// Check that enough current validators have signed off on the transaction batch and valset
@@ -321,8 +300,7 @@ contract Peggy {
 					abi.encode(
 						state_peggyId,
 						// bytes32 encoding of "valsetAndTransactionBatch"
-						0x76616c736574416e645472616e73616374696f6e426174636800000000000000,
-						newValsetCheckpoint,
+						0x7472616e73616374696f6e426174636800000000000000000000000000000000,
 						_amounts,
 						_destinations,
 						_fees,
@@ -334,12 +312,6 @@ contract Peggy {
 			);
 
 			// ACTIONS
-
-			// Stored to be used next time to validate that the valset
-			// supplied by the caller is correct.
-			state_lastValsetCheckpoint = newValsetCheckpoint;
-			// Store new nonce
-			state_lastValsetNonce = _newValsetNonce;
 
 			// Store batch nonce
 			state_lastBatchNonces[_tokenContract] = _batchNonce;
@@ -361,7 +333,6 @@ contract Peggy {
 		{
 			state_lastEventNonce = state_lastEventNonce.add(1);
 			emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, state_lastEventNonce);
-			emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers);
 		}
 	}
 

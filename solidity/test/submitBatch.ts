@@ -16,10 +16,6 @@ const { expect } = chai;
 
 
 async function runTest(opts: {
-  // Issues with the new valset
-  malformedNewValset?: boolean;
-  newValsetNonceNotIncremented?: boolean;
-
   // Issues with the tx batch
   batchNonceNotHigher?: boolean;
   malformedTxBatch?: boolean;
@@ -48,29 +44,6 @@ async function runTest(opts: {
     testERC20,
     checkpoint: deployCheckpoint
   } = await deployContracts(peggyId, validators, powers, powerThreshold);
-
-
-
-  // Make new valset
-  // ===============
-  let newPowers = examplePowers();
-  newPowers[0] -= 3;
-  newPowers[1] += 3;
-  let newValidators = signers.slice(0, newPowers.length);
-  if (opts.malformedNewValset) {
-    // Validators and powers array don't match
-    newValidators = signers.slice(0, newPowers.length - 1);
-  }
-  let newValsetNonce = 1;
-  if (opts.newValsetNonceNotIncremented) {
-    newValsetNonce = 0;
-  }
-  const checkpoint = makeCheckpoint(
-    await getSignerAddresses(newValidators),
-    newPowers,
-    newValsetNonce,
-    peggyId
-  );
 
 
 
@@ -112,11 +85,10 @@ async function runTest(opts: {
   // Call method
   // ===========
   const methodName = ethers.utils.formatBytes32String(
-    "valsetAndTransactionBatch"
+    "transactionBatch"
   );
   let abiEncoded = ethers.utils.defaultAbiCoder.encode(
     [
-      "bytes32",
       "bytes32",
       "bytes32",
       "uint256[]",
@@ -128,7 +100,6 @@ async function runTest(opts: {
     [
       peggyId,
       methodName,
-      checkpoint,
       txAmounts,
       txDestinations,
       txFees,
@@ -185,28 +156,7 @@ async function runTest(opts: {
     sigs.v[11] = 0;
   }
 
-  // await peggy.updateValsetAndSubmitBatch(
-  //   await getSignerAddresses(validators),
-  //   powers,
-  //   currentValsetNonce,
-  //   sigs.v,
-  //   sigs.r,
-  //   sigs.s,
-  //   await getSignerAddresses(newValidators),
-  //   newPowers,
-  //   newValsetNonce,
-  //   txAmounts,
-  //   txDestinations,
-  //   txFees,
-  //   txNonces
-  // );
-
-  await peggy.updateValsetAndSubmitBatch(
-
-    await getSignerAddresses(newValidators),
-    newPowers,
-    newValsetNonce,
-
+  await peggy.submitBatch(
     await getSignerAddresses(validators),
     powers,
     currentValsetNonce,
@@ -227,18 +177,6 @@ describe("updateValsetAndSubmitBatch tests", function () {
   it("throws on malformed current valset", async function () {
     await expect(runTest({ malformedCurrentValset: true })).to.be.revertedWith(
       "Malformed current validator set"
-    );
-  });
-
-  it("throws on malformed new valset", async function () {
-    await expect(runTest({ malformedNewValset: true })).to.be.revertedWith(
-      "Malformed new validator set"
-    );
-  });
-
-  it("throws on new valset nonce not incremented", async function () {
-    await expect(runTest({ newValsetNonceNotIncremented: true })).to.be.revertedWith(
-      "New valset nonce must be greater than the current nonce"
     );
   });
 
@@ -287,7 +225,7 @@ describe("updateValsetAndSubmitBatch tests", function () {
 
 // This test produces a hash for the contract which should match what is being used in the Go unit tests. It's here for
 // the use of anyone updating the Go tests.
-describe("updateValsetAndSubmitBatch Go test hash", function () {
+describe("submitBatch Go test hash", function () {
   it("produces good hash", async function () {
 
 
@@ -303,43 +241,6 @@ describe("updateValsetAndSubmitBatch Go test hash", function () {
       testERC20,
       checkpoint: deployCheckpoint
     } = await deployContracts(peggyId, validators, powers, powerThreshold);
-
-
-
-    // Make new valset
-    // ===============
-    const newPowers = [6670];
-    const newValidators = await getSignerAddresses(signers.slice(0, newPowers.length));
-    const newValsetNonce = 1;
-
-    // const valsetCheckpoint = makeCheckpoint(
-    //   newValidators,
-    //   newPowers,
-    //   newValsetNonce,
-    //   peggyId
-    // );
-
-    const valsetMethodName = ethers.utils.formatBytes32String("checkpoint");
-
-    const abiEncodedValset = ethers.utils.defaultAbiCoder.encode(
-      [
-        "bytes32",
-        "bytes32",
-        "uint256",
-        "address[]",
-        "uint256[]"
-      ],
-      [
-        peggyId,
-        valsetMethodName,
-        newValsetNonce,
-        newValidators,
-        newPowers
-      ]
-    );
-
-    const valsetCheckpoint = ethers.utils.keccak256(abiEncodedValset);
-
 
 
     // Prepare batch
@@ -365,11 +266,10 @@ describe("updateValsetAndSubmitBatch Go test hash", function () {
     // Call method
     // ===========
     const batchMethodName = ethers.utils.formatBytes32String(
-      "valsetAndTransactionBatch"
+      "transactionBatch"
     );
     const abiEncodedBatch = ethers.utils.defaultAbiCoder.encode(
       [
-        "bytes32",
         "bytes32",
         "bytes32",
         "uint256[]",
@@ -381,7 +281,6 @@ describe("updateValsetAndSubmitBatch Go test hash", function () {
       [
         peggyId,
         batchMethodName,
-        valsetCheckpoint,
         txAmounts,
         txDestinations,
         txFees,
@@ -391,20 +290,9 @@ describe("updateValsetAndSubmitBatch Go test hash", function () {
     );
     const batchDigest = ethers.utils.keccak256(abiEncodedBatch);
 
-    console.log("elements in valset checkpoint:", {
-      "peggyId": peggyId,
-      "validators": newValidators,
-      "valsetMethodName": valsetMethodName,
-      "valsetNonce": newValsetNonce,
-      "powers": newPowers,
-    })
-    console.log("abiEncodedValset:", abiEncodedValset)
-    console.log("valsetCheckpoint:", valsetCheckpoint)
-
     console.log("elements in batch digest:", {
       "peggyId": peggyId,
       "batchMethodName": batchMethodName,
-      "valsetCheckpoint": valsetCheckpoint,
       "txAmounts": txAmounts,
       "txDestinations": txDestinations,
       "txFees": txFees,
@@ -418,11 +306,7 @@ describe("updateValsetAndSubmitBatch Go test hash", function () {
     const currentValsetNonce = 0;
 
 
-    await peggy.updateValsetAndSubmitBatch(
-      newValidators,
-      newPowers,
-      newValsetNonce,
-
+    await peggy.submitBatch(
       await getSignerAddresses(validators),
       powers,
       currentValsetNonce,
