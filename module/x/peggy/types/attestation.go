@@ -63,7 +63,7 @@ func (claim ClaimType) UnmarshalJSON(input []byte) error {
 	if !exists {
 		return sdkerrors.Wrap(ErrUnknown, "claim type")
 	}
-	*claim = c
+	claim = c
 	return nil
 }
 
@@ -81,12 +81,81 @@ type AttestationDetails interface {
 
 // Hash implements hash
 func (b WithdrawalBatch) Hash() []byte {
-	path := fmt.Sprintf("%s/%s/", b.ERC20Token, b.BatchNonce)
+	path := fmt.Sprintf("%s/%d/", b.Erc_20Token, b.BatchNonce)
 	return tmhash.Sum([]byte(path))
 }
 
 // Hash implements Hash
 func (b BridgeDeposit) Hash() []byte {
-	path := fmt.Sprintf("%s/%s/%s/", b.ERC20Token.String(), b.EthereumSender.String(), b.CosmosReceiver.String())
+	path := fmt.Sprintf("%s/%s/%s/", b.Erc_20Token.String(), string(b.EthereumSender), b.CosmosReceiver)
 	return tmhash.Sum([]byte(path))
+}
+
+func (m *ERC20Token) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Amount.Size()
+	if l > 0 {
+		n += 1 + l + sovAttestation(uint64(l))
+	}
+	l = len(m.Symbol)
+	if l > 0 {
+		n += 1 + l + sovAttestation(uint64(l))
+	}
+	l = len(m.TokenContractAddress)
+	if l > 0 {
+		n += 1 + l + sovAttestation(uint64(l))
+	}
+	return n
+}
+
+func (m *ERC20Token) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ERC20Token) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ERC20Token) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.TokenContractAddress) > 0 {
+		i -= len(m.TokenContractAddress)
+		copy(dAtA[i:], m.TokenContractAddress)
+		i = encodeVarintAttestation(dAtA, i, uint64(len(m.TokenContractAddress)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Symbol) > 0 {
+		i -= len(m.Symbol)
+		copy(dAtA[i:], m.Symbol)
+		i = encodeVarintAttestation(dAtA, i, uint64(len(m.Symbol)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Amount.Size() > 0 {
+		i -= m.Amount.Size()
+		bz, err := m.Amount.Marshal()
+		if err != nil {
+			return 0, err
+		}
+		copy(dAtA[i:], bz)
+		i = encodeVarintAttestation(dAtA, i, uint64(m.Amount.Size()))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }

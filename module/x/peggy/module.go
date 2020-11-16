@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -50,7 +50,7 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 }
 
 // Register rest routes
-func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
+func (AppModuleBasic) RegisterRESTRoutes(ctx client.Context, rtr *mux.Router) {
 	rest.RegisterRoutes(ctx, rtr, StoreKey)
 }
 

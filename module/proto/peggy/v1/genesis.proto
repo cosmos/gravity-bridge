@@ -7,6 +7,8 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 // Params represent the peggy genesis and store parameters
 message Params {
+  option (gogoproto.stringer) = false;
+
   // PeggyID is a random 32 byte value to prevent signature reuse
   bytes  peggy_id             = 1 [(gogoproto.moretags) = "json:\"peggy_id\""];
 

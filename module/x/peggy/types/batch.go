@@ -9,37 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// type BatchStatus uint8
-
-// const (
-// 	BatchStatusUnknown BatchStatus = 0
-// 	BatchStatusPending BatchStatus = 1 // initial status
-// 	// BatchStatusSubmitted BatchStatus = 2 // in flight to ETH
-// 	BatchStatusProcessed BatchStatus = 3 // observed - end state
-// 	BatchStatusCancelled BatchStatus = 4 // end state
-// )
-
-// func (b BatchStatus) String() string {
-// 	return []string{"unknown", "pending", "submitted", "observed", "processed", "cancelled"}[b]
-// }
-
-// type OutgoingTxBatch struct {
-// 	Nonce              UInt64Nonce          `json:"nonce"`
-// 	Elements           []OutgoingTransferTx `json:"elements"`
-// 	TotalFee           ERC20Token           `json:"total_fee"`
-// 	BridgedDenominator BridgedDenominator   `json:"bridged_denominator"`
-// 	Valset             Valset               `json:"valset"`
-// 	TokenContract      EthereumAddress      `json:"token_contract"`
-// }
-
-// func (b *OutgoingTxBatch) Cancel() error {
-// 	if b.BatchStatus != BatchStatusPending {
-// 		return sdkerrors.Wrap(ErrInvalid, "status - batch not pending")
-// 	}
-// 	b.BatchStatus = BatchStatusCancelled
-// 	return nil
-// }
-
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
 func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 
@@ -140,14 +109,14 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	txDestinations := make([]EthereumAddress, len(b.Elements))
 	txFees := make([]*big.Int, len(b.Elements))
 	for i, tx := range b.Elements {
-		txAmounts[i] = big.NewInt(int64(tx.Amount.Amount))
-		txDestinations[i] = tx.DestAddress
-		txFees[i] = big.NewInt(int64(tx.BridgeFee.Amount))
+		txAmounts[i] = tx.Amount.Amount.BigInt()
+		txDestinations[i] = NewEthereumAddress(string(tx.DestAddress))
+		txFees[i] = tx.BridgeFee.Amount.BigInt()
 	}
 
 	batchNonce := big.NewInt(int64(b.Nonce))
 
-	valsetCheckpointBytes := b.Valset.GetCheckpoint()
+	valsetCheckpointBytes := (*b.Valset).GetCheckpoint()
 	var valsetCheckpoint [32]uint8
 	copy(valsetCheckpoint[:], valsetCheckpointBytes[:])
 

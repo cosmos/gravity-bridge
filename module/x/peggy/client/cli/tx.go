@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bufio"
 	"crypto/ecdsa"
 	"encoding/hex"
 	"log"
@@ -12,13 +11,11 @@ import (
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 )
 
 func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
@@ -64,9 +61,10 @@ func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 		Short: "Update your Ethereum address which will be used for signing executables for the `multisig set`",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx, err := client.GetClientContextFromCmd(cmd).ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			cosmosAddr := cliCtx.GetFromAddress()
 
@@ -97,7 +95,7 @@ func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
 		},
 	}
 }
@@ -107,16 +105,17 @@ func CmdValsetRequest(cdc *codec.Codec) *cobra.Command {
 		Use:   "valset-request",
 		Short: "Trigger a new `multisig set` update request on the cosmos side",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx, err := client.GetClientContextFromCmd(cmd).ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			cosmosAddr := cliCtx.GetFromAddress()
 
 			// Make the message
 			msg := types.NewMsgValsetRequest(cosmosAddr)
 
 			// Send it
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
 		},
 	}
 }
@@ -167,9 +166,10 @@ func CmdWithdrawToETH(cdc *codec.Codec) *cobra.Command {
 		Short: "Adds a new entry to the transaction pool to withdraw an amount from the Ethereum bridge contract",
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx, err := client.GetClientContextFromCmd(cmd).ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			cosmosAddr := cliCtx.GetFromAddress()
 
 			amount, err := sdk.ParseCoin(args[2])
@@ -192,7 +192,7 @@ func CmdWithdrawToETH(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 			// Send it
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
 		},
 	}
 }
@@ -203,9 +203,10 @@ func CmdRequestBatch(cdc *codec.Codec) *cobra.Command {
 		Short: "Build a new batch on the cosmos side for pooled withdrawal transactions",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx, err := client.GetClientContextFromCmd(cmd).ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			cosmosAddr := cliCtx.GetFromAddress()
 
 			// Make the message
@@ -222,7 +223,7 @@ func CmdRequestBatch(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 			// Send it
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
 		},
 	}
 }

@@ -84,30 +84,30 @@ func (e EthereumAddress) LessThan(o EthereumAddress) bool {
 
 // NewERC20Token returns a new instance of an ERC20
 func NewERC20Token(amount uint64, symbol string, tokenContractAddress EthereumAddress) ERC20Token {
-	return ERC20Token{Amount: amount, Symbol: symbol, TokenContractAddress: tokenContractAddress}
+	return ERC20Token{Amount: sdk.NewInt(int64(amount)), Symbol: symbol, TokenContractAddress: tokenContractAddress.Bytes()}
 }
 
 // String converts Token representation into a human readable form containing all data.
-func (e ERC20Token) String() string {
-	return fmt.Sprintf("%d %s (%s)", e.Amount, e.Symbol, e.TokenContractAddress.String())
-}
+// func (e ERC20Token) String() string {
+// 	return fmt.Sprintf("%d %s (%s)", e.Amount, e.Symbol, e.TokenContractAddress.String())
+// }
 
 // AsVoucherCoin converts the data into a cosmos coin with peggy voucher denom.
-func (e ERC20Token) AsVoucherCoin() sdk.Coin {
-	return sdk.NewInt64Coin(NewVoucherDenom(e.TokenContractAddress, e.Symbol).String(), int64(e.Amount))
+func (e *ERC20Token) AsVoucherCoin() sdk.Coin {
+	return sdk.NewInt64Coin(NewVoucherDenom(NewEthereumAddress(string(e.TokenContractAddress)), e.Symbol).String(), e.Amount.Int64())
 }
 
 // Add adds one ERC20 to another
-func (t ERC20Token) Add(o ERC20Token) ERC20Token {
+func (t *ERC20Token) Add(o ERC20Token) ERC20Token {
 	if t.Symbol != o.Symbol {
 		panic("invalid symbol")
 	}
-	if t.TokenContractAddress != o.TokenContractAddress {
+	if string(t.TokenContractAddress) != string(o.TokenContractAddress) {
 		panic("invalid contract address")
 	}
-	sum := sdk.NewInt(int64(t.Amount)).AddRaw(int64(o.Amount))
+	sum := t.Amount.Add(o.Amount)
 	if !sum.IsUint64() {
 		panic("invalid amount")
 	}
-	return NewERC20Token(sum.Uint64(), t.Symbol, t.TokenContractAddress)
+	return NewERC20Token(sum.Uint64(), t.Symbol, NewEthereumAddress(string(t.TokenContractAddress)))
 }

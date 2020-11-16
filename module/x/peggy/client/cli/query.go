@@ -7,7 +7,6 @@ import (
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
@@ -77,7 +76,7 @@ func CmdGetCurrentValset(storeKey string, cdc *codec.Codec) *cobra.Command {
 		Use:   "current-valset",
 		Short: "Query current valset",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/currentValset", storeKey), nil)
 			if err != nil {
@@ -100,7 +99,7 @@ func CmdGetValsetRequest(storeKey string, cdc *codec.Codec) *cobra.Command {
 		Short: "Get requested valset with a particular nonce",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 			nonce := args[0]
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, nonce), nil)
@@ -124,7 +123,7 @@ func CmdGetValsetConfirm(storeKey string, cdc *codec.Codec) *cobra.Command {
 		Short: "Get valset confirmation with a particular nonce from a particular validator",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetConfirm/%s/%s", storeKey, args[0], args[1]), nil)
 			if err != nil {
@@ -147,7 +146,7 @@ func CmdGetPendingValsetRequest(storeKey string, cdc *codec.Codec) *cobra.Comman
 		Short: "Get the latest valset request which has not been signed by a particular validator",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lastPendingValsetRequest/%s", storeKey, args[0]), nil)
 			if err != nil {
@@ -171,7 +170,7 @@ func CmdGetLastObservedNonceRequest(storeKey string, cdc *codec.Codec) *cobra.Co
 		Short: fmt.Sprintf("Get the last nonce that was observed for a claim type of %s", types.ToClaimTypeNames(types.AllOracleClaimTypes...)),
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lastNonce/%s", storeKey, args[0]), nil)
 			if err != nil {
@@ -195,7 +194,7 @@ func CmdGetLastObservedNoncesRequest(storeKey string, cdc *codec.Codec) *cobra.C
 		Short: "Get last observed nonces for all claim types",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lastObservedNonces", storeKey), nil)
 			if err != nil {
@@ -219,7 +218,7 @@ func CmdGetLastObservedMultiSigUpdateRequest(storeKey string, cdc *codec.Codec) 
 		Short: "Get last observed multisig update",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lastObservedMultiSigUpdate", storeKey), nil)
 			if err != nil {
@@ -242,7 +241,7 @@ func CmdGetLastApprovedMultiSigUpdateRequest(storeKey string, cdc *codec.Codec) 
 		Short: "Get last approved multisig update",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lastApprovedMultiSigUpdate", storeKey), nil)
 			if err != nil {
@@ -266,7 +265,7 @@ func CmdGetPendingOutgoingTXBatchRequest(storeKey string, cdc *codec.Codec) *cob
 		Short: "Get the latest outgoing TX batch request which has not been signed by a particular validator",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lastPendingBatchRequest/%s", storeKey, args[0]), nil)
 			if err != nil {
@@ -289,7 +288,7 @@ func CmdGetOutgoingTXBatchByNonceRequest(storeKey string, cdc *codec.Codec) *cob
 		Short: "Get an outgoing TX batch by nonce",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/batch/%s", storeKey, args[0]), nil)
 			if err != nil {
@@ -313,7 +312,7 @@ func CmdGetAllOutgoingTXBatchRequest(storeKey string, cdc *codec.Codec) *cobra.C
 		Short: "Get all batches descending order",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/allBatches", storeKey), nil)
 			if err != nil {
@@ -337,7 +336,7 @@ func CmdGetAllAttestationsRequest(storeKey string, cdc *codec.Codec) *cobra.Comm
 		Short: fmt.Sprintf("Get all attestations by claim type descending order. Claim types: %s", types.ToClaimTypeNames(types.AllOracleClaimTypes...)),
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/allAttestations/%s", storeKey, args[0]), nil)
 			if err != nil {
@@ -359,7 +358,7 @@ func CmdGetAttestationRequest(storeKey string, cdc *codec.Codec) *cobra.Command 
 		Short: fmt.Sprintf("Get attestation by claim type and nonce. Claim types: %s", types.ToClaimTypeNames(types.AllOracleClaimTypes...)),
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			nonce, err := types.UInt64NonceFromString(args[1])
 			if err != nil {
@@ -386,7 +385,7 @@ func CmdGetAllBridgedDenominatorsRequest(storeKey string, cdc *codec.Codec) *cob
 		Short: "Get all bridged ERC20 denominators on the cosmos side",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/allBridgedDenominators", storeKey), nil)
 			if err != nil {
@@ -409,7 +408,7 @@ func CmdGetInflightBatchesRequest(storeKey string, cdc *codec.Codec) *cobra.Comm
 		Short: "Get all batches that have been approved but were not observed, yet",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/inflightBatches", storeKey), nil)
 			if err != nil {
@@ -431,7 +430,7 @@ func CmdGetLastApprovedNoncesRequest(storeKey string, cdc *codec.Codec) *cobra.C
 		Short: "Get last approved nonces for all claim types",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			cliCtx := client.NewCLIContext().WithCodec(cdc)
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lastApprovedNonces", storeKey), nil)
 			if err != nil {

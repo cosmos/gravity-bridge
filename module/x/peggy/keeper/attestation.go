@@ -59,18 +59,23 @@ func (k Keeper) voteForAttestation(
 ) *types.Attestation {
 	// Tries to get an attestation with the same eventNonce and details as the claim that was submitted.
 	att := k.GetAttestation(ctx, eventNonce, details)
+
+	pd, err := types.PackAttestationDetails(details)
+	if err != nil {
+		panic(err)
+	}
 	// If it does not exist, create a new one.
 	if att == nil {
 		att = &types.Attestation{
 			ClaimType:  claimType,
-			EventNonce: eventNonce,
+			EventNonce: uint64(eventNonce),
 			Observed:   false,
-			Details:    details,
+			Details:    pd,
 		}
 	}
 
 	// Add the validator's vote to this attestation
-	att.Votes = append(att.Votes, validator)
+	att.Votes = append(att.Votes, validator.String())
 
 	return att
 }
@@ -89,7 +94,11 @@ func (k Keeper) tryAttestation(ctx sdk.Context, att *types.Attestation) {
 		attestationPower := sdk.NewInt(0)
 		for _, validator := range att.Votes {
 			// Get the power of the current validator
-			validatorPower := k.StakingKeeper.GetLastValidatorPower(ctx, validator)
+			val, err := sdk.ValAddressFromBech32(validator)
+			if err != nil {
+				panic(err)
+			}
+			validatorPower := k.StakingKeeper.GetLastValidatorPower(ctx, val)
 			// Add it to the attestation power's sum
 			attestationPower = attestationPower.Add(sdk.NewInt(validatorPower))
 			// If the power of all the validators that have voted on the attestation is higher or equal to the threshold,
@@ -107,14 +116,18 @@ func (k Keeper) tryAttestation(ctx sdk.Context, att *types.Attestation) {
 // emitObservedEvent emits an event with information about an attestation that has been applied to
 // consensus state.
 func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation) {
+	ud, err := types.UnpackAttestationDetails(att.Details)
+	if err != nil {
+		panic(err)
+	}
 	observationEvent := sdk.NewEvent(
 		types.EventTypeObservation,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyAttestationType, string(att.ClaimType)),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(att.EventNonce, att.Details))), // todo: serialize with hex/ base64 ?
-		sdk.NewAttribute(types.AttributeKeyNonce, att.EventNonce.String()),
+		sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(types.NewUInt64Nonce(att.EventNonce), ud))), // todo: serialize with hex/ base64 ?
+		sdk.NewAttribute(types.AttributeKeyNonce, string(att.EventNonce)),
 		// TODO: do we want to emit more information?
 	)
 	ctx.EventManager().EmitEvent(observationEvent)
@@ -123,7 +136,7 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation) {
 // processAttestation actually applies the attestation to the consensus state
 func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
 	lastEventNonce := k.GetLastObservedEventNonce(ctx)
-	if att.EventNonce != lastEventNonce+1 {
+	if att.EventNonce != uint64(lastEventNonce)+1 {
 		// TODO: We need to figure out how to handle this situation, and whether it is even possible.
 		// I'm panicking here because if attestations are applied to the consensus state out of order, it WILL cause a
 		// double spend.
@@ -132,7 +145,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
 		// figure out how to recover.
 		panic("attempting to apply events to state out of order")
 	}
-	k.setLastObservedEventNonce(ctx, att.EventNonce)
+	k.setLastObservedEventNonce(ctx, types.NewUInt64Nonce(att.EventNonce))
 
 	// then execute in a new Tx so that we can store state on failure
 	// TODO: It seems that the validator who puts an attestation over the threshold of votes will also
@@ -142,11 +155,15 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
 		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
+		ud, err := types.UnpackAttestationDetails(att.Details)
+		if err != nil {
+			panic(err)
+		}
 		k.logger(ctx).Error("attestation failed",
 			"cause", err.Error(),
 			"claim type", att.ClaimType,
-			"id", types.GetAttestationKey(att.EventNonce, att.Details),
-			"nonce", att.EventNonce.String(),
+			"id", types.GetAttestationKey(types.NewUInt64Nonce(att.EventNonce), ud),
+			"nonce", string(att.EventNonce),
 		)
 	} else {
 		commit() // persist transient storage
@@ -155,7 +172,11 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
 
 func (k Keeper) SetAttestation(ctx sdk.Context, att *types.Attestation) {
 	store := ctx.KVStore(k.storeKey)
-	aKey := types.GetAttestationKey(att.EventNonce, att.Details)
+	ud, err := types.UnpackAttestationDetails(att.Details)
+	if err != nil {
+		panic(err)
+	}
+	aKey := types.GetAttestationKey(types.NewUInt64Nonce(att.EventNonce), ud)
 	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
 }
 

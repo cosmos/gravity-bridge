@@ -10,6 +10,7 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 // ClaimType is the cosmos type of an event from the counterpart chain that can be handled
 enum ClaimType {
   option (gogoproto.goproto_enum_prefix) = false;
+  option (gogoproto.goproto_enum_stringer)       = false; 
 
   CLAIM_TYPE_UNKNOWN                          = 0 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_UNKNOWN"];
   CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT          = 1 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT"];
@@ -28,7 +29,7 @@ message Attestation {
 // WithdrawalBatch is an attestation detail that marks a batch of outgoing transactions executed and
 // frees earlier unexecuted batches
 message WithdrawalBatch {
-    int64      batch_nonce  = 1;
+    uint64     batch_nonce  = 1;
     ERC20Token erc_20_token = 2;
 }
 

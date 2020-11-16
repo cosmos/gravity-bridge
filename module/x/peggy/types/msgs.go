@@ -2,39 +2,21 @@ package types
 
 import (
 	"encoding/hex"
+	"fmt"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// ValsetConfirm
-// this is the message sent by the validators when they wish to submit their signatures over
-// the validator set at a given block height. A validator must first call MsgSetEthAddress to
-// set their Ethereum address to be used for signing. Then someone (anyone) must make a ValsetRequest
-// the request is essentially a messaging mechanism to determine which block all validators should submit
-// signatures over. Finally validators sign the validator set, powers, and Ethereum addresses of the
-// entire validator set at the height of a ValsetRequest and submit that signature with this message
-// a ValsetConfirm.
-//
-// If a sufficient number of validators (66% of voting power) (A) have set Ethereum addresses and (B)
-// submit ValsetConfirm messages with their signatures it is then possible for anyone to view these
-// signatures in the chain store and submit them to Ethereum to update the validator set
-// -------------
-// deprecated should use MsgBridgeSignatureSubmission instead
-type MsgValsetConfirm struct {
-	Nonce     UInt64Nonce     `json:"nonce"`
-	Validator sdk.AccAddress  `json:"validator"`
-	Address   EthereumAddress `json:"eth_address"`
-	Signature string          `json:"signature"`
-}
-
-func NewMsgValsetConfirm(nonce UInt64Nonce, eth_address EthereumAddress, validator sdk.AccAddress, signature string) MsgValsetConfirm {
-	return MsgValsetConfirm{
-		Nonce:     nonce,
-		Validator: validator,
-		Address:   eth_address,
-		Signature: signature,
+// NewMsgValsetConfirm returns a new msgValsetConfirm
+func NewMsgValsetConfirm(nonce uint64, ethAddress EthereumAddress, validator sdk.AccAddress, signature string) *MsgValsetConfirm {
+	return &MsgValsetConfirm{
+		Nonce:      nonce,
+		Validator:  validator.String(),
+		EthAddress: ethAddress.Bytes(),
+		Signature:  signature,
 	}
 }
 
@@ -44,10 +26,10 @@ func (msg MsgValsetConfirm) Route() string { return RouterKey }
 // Type should return the action
 func (msg MsgValsetConfirm) Type() string { return "valset_confirm" }
 
-// Stateless checks
+// ValidateBasic performs stateless checks
 func (msg MsgValsetConfirm) ValidateBasic() error {
-	if msg.Validator.Empty() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator.String())
+	if msg.Validator == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
 	}
 
 	return nil
@@ -60,24 +42,18 @@ func (msg MsgValsetConfirm) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgValsetConfirm) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Validator}
+	// TODO: figure out how to convert between AccAddress and ValAddress properly
+	acc, err := sdk.AccAddressFromBech32(msg.Validator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{acc}
 }
 
-// ValsetRequest
-// This message starts off the validator set update process by coordinating a block height
-// around which signatures over the validators, powers, and ethereum addresses will be made
-// and submitted using a ValsetConfirm. Anyone can send this message as it is not authenticated
-// except as a valid tx. In theory people could spam it and the validators will have to determine which
-// block to actually coordinate around by looking over the valset requests and seeing which one
-// some other validator has already submitted a ValsetResponse for.
-// -------------
-type MsgValsetRequest struct {
-	Requester sdk.AccAddress `json:"requester"`
-}
-
-func NewMsgValsetRequest(requester sdk.AccAddress) MsgValsetRequest {
-	return MsgValsetRequest{
-		Requester: requester,
+// NewMsgValsetRequest returns a new msgValsetRequest
+func NewMsgValsetRequest(requester sdk.AccAddress) *MsgValsetRequest {
+	return &MsgValsetRequest{
+		Requester: requester.String(),
 	}
 }
 
@@ -87,6 +63,7 @@ func (msg MsgValsetRequest) Route() string { return RouterKey }
 // Type should return the action
 func (msg MsgValsetRequest) Type() string { return "valset_request" }
 
+// ValidateBasic performs stateless checks
 func (msg MsgValsetRequest) ValidateBasic() error { return nil }
 
 // GetSignBytes encodes the message for signing
@@ -96,27 +73,19 @@ func (msg MsgValsetRequest) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgValsetRequest) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Requester}
+	acc, err := sdk.AccAddressFromBech32(msg.Requester)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{acc}
 }
 
-// SetEthAddress
-// This is used by the validators to set the Ethereum address that represents them on the
-// Ethereum side of the bridge. They must sign their Cosmos address using the Ethereum address
-// they have submitted.
-// Like ValsetResponse this message can in theory be submitted by anyone, but only the current
-// validator sets submissions carry any weight.
-// -------------
-type MsgSetEthAddress struct {
-	// the ethereum address
-	Address   EthereumAddress `json:"address"`
-	Validator sdk.AccAddress  `json:"validator"`
-	Signature string          `json:"signature"`
-}
-
-func NewMsgSetEthAddress(address EthereumAddress, validator sdk.AccAddress, signature string) MsgSetEthAddress {
-	return MsgSetEthAddress{
-		Address:   address,
-		Validator: validator,
+// NewMsgSetEthAddress return a new msgSetEthAddress
+// TODO: figure out if we need sdk.ValAddress here
+func NewMsgSetEthAddress(address EthereumAddress, validator sdk.AccAddress, signature string) *MsgSetEthAddress {
+	return &MsgSetEthAddress{
+		Address:   address.Bytes(),
+		Validator: validator.String(),
 		Signature: signature,
 	}
 }
@@ -131,14 +100,14 @@ func (msg MsgSetEthAddress) Type() string { return "set_eth_address" }
 // Checks if the Eth address is valid, and whether the Eth address has signed the validator address
 // (proving control of the Eth address)
 func (msg MsgSetEthAddress) ValidateBasic() error {
-	if msg.Validator.Empty() {
+	if msg.Validator == "" {
 		return sdkerrors.Wrap(ErrEmpty, "validator")
 	}
-	if err := sdk.VerifyAddressFormat(msg.Validator); err != nil {
+	if err := sdk.VerifyAddressFormat([]byte(msg.Validator)); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "validator")
 	}
 
-	if err := msg.Address.ValidateBasic(); err != nil {
+	if err := NewEthereumAddress(string(msg.Address)).ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
 
@@ -147,9 +116,9 @@ func (msg MsgSetEthAddress) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
 	}
 
-	err = ValidateEthereumSignature(crypto.Keccak256(msg.Validator.Bytes()), sigBytes, msg.Address.String())
+	err = ValidateEthereumSignature(crypto.Keccak256([]byte(msg.Validator)), sigBytes, string(msg.Address))
 	if err != nil {
-		return sdkerrors.Wrapf(err, "digest: %x sig: %x address %s error: %s", crypto.Keccak256(msg.Validator.Bytes()), msg.Signature, msg.Address, err.Error())
+		return sdkerrors.Wrapf(err, "digest: %x sig: %x address %s error: %s", crypto.Keccak256([]byte(msg.Validator)), msg.Signature, msg.Address, err.Error())
 	}
 
 	return nil
@@ -162,36 +131,18 @@ func (msg MsgSetEthAddress) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgSetEthAddress) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Validator}
+	acc, err := sdk.AccAddressFromBech32(msg.Validator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{acc}
 }
 
-// MsgSendToEth
-// This is the message that a user calls when they want to bridge an asset
-// TODO right now this needs to be locked to a single ERC20
-// TODO fixed fee amounts for now, variable fee amounts in the fee field later
-// TODO actually remove amounts form the users bank balances
-// TODO this message modifies the on chain store by adding itself to a txpool
-// it will later be removed when it is included in a batch and successfully submitted
-// tokens are removed from the users balance immediately
-// -------------
-type MsgSendToEth struct {
-	// the source address on Cosmos
-	Sender sdk.AccAddress `json:"sender"`
-	// the destination address on Ethereum
-	DestAddress EthereumAddress `json:"dest_address"`
-	// the coin to send across the bridge, note the restriction that this is a
-	// single coin not a set of coins that is normal in other Cosmos messages
-	Amount sdk.Coin `json:"send"`
-	// the fee paid for the bridge, distinct from the fee paid to the chain to
-	// actually send this message in the first place. So a successful send has
-	// two layers of fees for the user
-	BridgeFee sdk.Coin `json:"bridge_fee"`
-}
-
-func NewMsgSendToEth(sender sdk.AccAddress, destAddress EthereumAddress, send sdk.Coin, bridgeFee sdk.Coin) MsgSendToEth {
-	return MsgSendToEth{
-		Sender:      sender,
-		DestAddress: destAddress,
+// NewMsgSendToEth returns a new msgSendToEth
+func NewMsgSendToEth(sender sdk.AccAddress, destAddress EthereumAddress, send sdk.Coin, bridgeFee sdk.Coin) *MsgSendToEth {
+	return &MsgSendToEth{
+		Sender:      sender.String(),
+		DestAddress: destAddress.Bytes(),
 		Amount:      send,
 		BridgeFee:   bridgeFee,
 	}
@@ -235,25 +186,18 @@ func (msg MsgSendToEth) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Sender}
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
 }
 
-// MsgRequestBatch
-// this is a message anyone can send that requests a batch of transactions to send across
-// the bridge be created for whatever block height this message is included in. This acts as
-// a coordination point, the handler for this message looks at the AddToOutgoingPool tx's in the store
-// and generates a batch, also available in the store tied to this message. The validators then
-// grab this batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer can
-// finally submit the batch
-// -------------
-type MsgRequestBatch struct {
-	Requester sdk.AccAddress `json:"requester"`
-	Denom     VoucherDenom   `json:"denom"`
-}
-
-func NewMsgRequestBatch(requester sdk.AccAddress) MsgRequestBatch {
-	return MsgRequestBatch{
-		Requester: requester,
+// NewMsgRequestBatch returns a new msgRequestBatch
+func NewMsgRequestBatch(requester sdk.AccAddress) *MsgRequestBatch {
+	return &MsgRequestBatch{
+		Requester: requester.String(),
 	}
 }
 
@@ -263,6 +207,7 @@ func (msg MsgRequestBatch) Route() string { return RouterKey }
 // Type should return the action
 func (msg MsgRequestBatch) Type() string { return "request_batch" }
 
+// ValidateBasic performs stateless checks
 func (msg MsgRequestBatch) ValidateBasic() error {
 	// TODO ensure that Demon matches hardcoded allowed value
 	// TODO later make sure that Demon matches a list of tokens already
@@ -277,23 +222,12 @@ func (msg MsgRequestBatch) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Requester}
-}
+	acc, err := sdk.AccAddressFromBech32(msg.Requester)
+	if err != nil {
+		panic(err)
+	}
 
-// MsgConfirmBatch
-// When validators observe a MsgRequestBatch they form a batch by ordering transactions currently
-// in the txqueue in order of highest to lowest fee, cutting off when the batch either reaches a
-// hardcoded maximum size (to be decided, probably around 100) or when transactions stop being
-// profitable (TODO determine this without nondeterminism)
-// This message includes the batch as well as an Ethereum signature over this batch by the validator
-// -------------
-// deprecated should use MsgBridgeSignatureSubmission instead
-type MsgConfirmBatch struct {
-	Nonce          UInt64Nonce     `json:"nonce"`
-	TokenContract  EthereumAddress `json:"token_contract"`
-	EthereumSigner EthereumAddress `json:"ethereum_signer"`
-	Validator      sdk.AccAddress  `json:"validator"`
-	Signature      string          `json:"signature"`
+	return []sdk.AccAddress{acc}
 }
 
 // Route should return the name of the module
@@ -302,6 +236,7 @@ func (msg MsgConfirmBatch) Route() string { return RouterKey }
 // Type should return the action
 func (msg MsgConfirmBatch) Type() string { return "confirm_batch" }
 
+// ValidateBasic performs stateless checks
 func (msg MsgConfirmBatch) ValidateBasic() error {
 	// TODO validate signature
 	// TODO get batch from storage
@@ -316,89 +251,77 @@ func (msg MsgConfirmBatch) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Validator}
+	acc, err := sdk.AccAddressFromBech32(msg.Validator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{acc}
 }
 
+// EthereumClaim represenets a claim on ethereum state
 type EthereumClaim interface {
-	GetEventNonce() UInt64Nonce
+	GetEventNonce() uint64
 	GetType() ClaimType
 	ValidateBasic() error
 	Details() AttestationDetails
 }
 
 var (
-	_ EthereumClaim = EthereumBridgeDepositClaim{}
-	_ EthereumClaim = EthereumBridgeWithdrawalBatchClaim{}
-	// _ EthereumClaim = EthereumBridgeMultiSigUpdateClaim{}
-	// _ EthereumClaim = EthereumBridgeBootstrappedClaim{}
+	_ EthereumClaim = &EthereumBridgeDepositClaim{}
+	_ EthereumClaim = &EthereumBridgeWithdrawalBatchClaim{}
 )
 
 // NoUniqueClaimDetails is a NIL object to
 var NoUniqueClaimDetails AttestationDetails = nil
 
-// EthereumBridgeDepositClaim claims that a token was deposited on the bridge contract.
-type EthereumBridgeDepositClaim struct {
-	EventNonce     UInt64Nonce     `json:"event_nonce" yaml:"event_nonce"`
-	ERC20Token     ERC20Token      `json:"erc20_token"`
-	EthereumSender EthereumAddress `json:"ethereum_sender" yaml:"ethereum_sender"`
-	CosmosReceiver sdk.AccAddress  `json:"cosmos_receiver" yaml:"cosmos_receiver"`
+// GetType returns the type of the claim
+func (e *EthereumBridgeDepositClaim) GetType() ClaimType {
+	return CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT
 }
 
-func (e EthereumBridgeDepositClaim) GetType() ClaimType {
-	return ClaimTypeEthereumBridgeDeposit
+// GetEventNonce returns the event nonce for the claim
+func (e *EthereumBridgeDepositClaim) GetEventNonce() uint64 {
+	return e.Nonce
 }
 
-func (e EthereumBridgeDepositClaim) GetEventNonce() UInt64Nonce {
-	return e.EventNonce
-}
-
-func (e EthereumBridgeDepositClaim) ValidateBasic() error {
+// ValidateBasic performs stateless checks
+func (e *EthereumBridgeDepositClaim) ValidateBasic() error {
 	// todo: validate all fields
-	if err := e.EventNonce.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "nonce")
+	if e.Nonce == 0 {
+		return fmt.Errorf("nonce == 0")
 	}
 	return nil
 }
 
-// EthereumBridgeDepositClaim
-// When more than 66% of the active validator set has
-// claimed to have seen the deposit enter the ethereum blockchain coins are issued
-// to the Cosmos address in question
-// -------------
-func (e EthereumBridgeDepositClaim) Details() AttestationDetails {
+// Details returns the attestation details fromt he bridge deposit claim
+func (e *EthereumBridgeDepositClaim) Details() AttestationDetails {
 	return BridgeDeposit{
-		ERC20Token:     e.ERC20Token,
+		Erc_20Token:    e.Erc20Token,
 		EthereumSender: e.EthereumSender,
 		CosmosReceiver: e.CosmosReceiver,
 	}
 }
 
-// EthereumBridgeWithdrawalBatchClaim claims that a batch of withdrawal operations on the bridge contract was executed.
-type EthereumBridgeWithdrawalBatchClaim struct {
-	EventNonce UInt64Nonce `json:"event_nonce" yaml:"event_nonce"`
-	BatchNonce UInt64Nonce `json:"batch_nonce" yaml:"batch_nonce"`
+// GetType returns the claim type
+func (e *EthereumBridgeWithdrawalBatchClaim) GetType() ClaimType {
+	return CLAIM_TYPE_ETHEREUM_BRIDGE_WITHDRAWAL_BATCH
 }
 
-func (e EthereumBridgeWithdrawalBatchClaim) GetType() ClaimType {
-	return ClaimTypeEthereumBridgeWithdrawalBatch
-}
-
-func (e EthereumBridgeWithdrawalBatchClaim) GetEventNonce() UInt64Nonce {
-	return e.EventNonce
-}
-
-func (e EthereumBridgeWithdrawalBatchClaim) ValidateBasic() error {
-	if err := e.EventNonce.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "nonce")
+// ValidateBasic performs stateless checks
+func (e *EthereumBridgeWithdrawalBatchClaim) ValidateBasic() error {
+	if e.EventNonce == 0 {
+		return fmt.Errorf("event_nonce == 0")
 	}
 	return nil
 }
 
-func (e EthereumBridgeWithdrawalBatchClaim) Details() AttestationDetails {
+// Details returns the attestation details from the claim
+func (e *EthereumBridgeWithdrawalBatchClaim) Details() AttestationDetails {
 	return NoUniqueClaimDetails
 }
 
 const (
+	// TypeMsgCreateEthereumClaims is the claim type
 	TypeMsgCreateEthereumClaims = "create_eth_claims"
 )
 
@@ -406,50 +329,60 @@ var (
 	_ sdk.Msg = &MsgCreateEthereumClaims{}
 )
 
-// MsgCreateEthereumClaims
-// this message essentially acts as the oracle between Ethereum and Cosmos, when an orchestrator sees
-// that a batch/ deposit/ multisig set update has been submitted on to the Ethereum blockchain they
-// will submit this message which acts as their oracle attestation. When more than 66% of the active
-// validator set has claimed to have seen the transaction enter the ethereum blockchain it is "observed"
-// and state transitions and operations are triggered on the cosmos side.
-type MsgCreateEthereumClaims struct {
-	EthereumChainID uint64 `json:"ethereum_chain_id" yaml:"ethereum_chain_id"`
-	// I don't think we need to specify this, shouldn't it be in the store?
-	BridgeContractAddress EthereumAddress `json:"bridge_contract_address" yaml:"bridge_contract_address"`
-	Orchestrator          sdk.AccAddress  `json:"orchestrator" yaml:"orchestrator"`
-	Claims                []EthereumClaim `json:"claims" yaml:"claims"`
-}
-
+// NewMsgCreateEthereumClaims returns a new msgCreateEthereumClaims
 func NewMsgCreateEthereumClaims(ethereumChainID uint64, bridgeContractAddress EthereumAddress, orchestrator sdk.AccAddress, claims []EthereumClaim) *MsgCreateEthereumClaims {
-	return &MsgCreateEthereumClaims{EthereumChainID: ethereumChainID, BridgeContractAddress: bridgeContractAddress, Orchestrator: orchestrator, Claims: claims}
+	var packedClaims []*codectypes.Any
+	for _, c := range claims {
+		pc, err := PackEthereumClaim(c)
+		if err != nil {
+			panic(err)
+		}
+		packedClaims = append(packedClaims, pc)
+	}
+	return &MsgCreateEthereumClaims{EthereumChainId: ethereumChainID, BridgeContractAddress: bridgeContractAddress.Bytes(), Orchestrator: orchestrator.String(), Claims: packedClaims}
 }
 
+// Route returns the route for the msg
 func (m MsgCreateEthereumClaims) Route() string {
 	return RouterKey
 }
 
+// Type returns the type of msg
 func (m MsgCreateEthereumClaims) Type() string {
 	return TypeMsgCreateEthereumClaims
 }
 
+// ValidateBasic performs stateless checks on the message
 func (m MsgCreateEthereumClaims) ValidateBasic() error {
 	// todo: validate all fields
-	if err := sdk.VerifyAddressFormat(m.Orchestrator); err != nil {
+	if err := sdk.VerifyAddressFormat([]byte(m.Orchestrator)); err != nil {
 		return sdkerrors.Wrap(err, "orchestrator")
 	}
+
 	for i := range m.Claims {
-		if err := m.Claims[i].ValidateBasic(); err != nil {
+		claim, err := UnpackEthereumClaim(m.Claims[i])
+		if err != nil {
+			return sdkerrors.Wrapf(err, "claim %d failed to unpack any", i)
+		}
+		if err := claim.ValidateBasic(); err != nil {
 			return sdkerrors.Wrapf(err, "claim %d failed ValidateBasic()", i)
 		}
 	}
 	return nil
 }
 
+// GetSignBytes returns the bytes to sign over
+// TODO: deperecate GetSignBytes methods
 func (m MsgCreateEthereumClaims) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(m)
 	return sdk.MustSortJSON(bz)
 }
 
+// GetSigners returns the signers of the message
 func (m MsgCreateEthereumClaims) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{m.Orchestrator}
+	acc, err := sdk.AccAddressFromBech32(m.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{acc}
 }

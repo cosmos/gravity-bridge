@@ -11,43 +11,40 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// BridgeValidator represents the validator data in the Ethereum bridge MultiSig set.
-type BridgeValidator struct {
-	Power           uint64          `json:"power"`
-	EthereumAddress EthereumAddress `json:"ethereum_address"`
-}
-
+// ValidateBasic performs stateless checks on validity
 func (b BridgeValidator) ValidateBasic() error {
 	if b.Power == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "power")
 	}
-	if b.EthereumAddress.IsEmpty() {
+	if NewEthereumAddress(string(b.EthereumAddress)).IsEmpty() {
 		return sdkerrors.Wrap(ErrEmpty, "address")
 	}
 	return nil
 }
 
 func (b BridgeValidator) isValid() bool {
-	return !b.EthereumAddress.IsEmpty() && b.Power != 0
+	return !NewEthereumAddress(string(b.EthereumAddress)).IsEmpty() && b.Power != 0
 }
 
 // BridgeValidators is the sorted set of validator data for Ethereum bridge MultiSig set
 type BridgeValidators []BridgeValidator
 
+// Sort sorts the validators by power
 func (b BridgeValidators) Sort() {
 	sort.Slice(b, func(i, j int) bool {
 		if b[i].Power == b[j].Power {
 			// Secondary sort on eth address in case powers are equal
-			return b[i].EthereumAddress.LessThan(b[j].EthereumAddress)
+			return NewEthereumAddress(string(b[i].EthereumAddress)).LessThan(NewEthereumAddress(string(b[j].EthereumAddress)))
 		}
 		return b[i].Power > b[j].Power
 	})
 }
 
+// HasDuplicates returns true if there are duplicates in the set
 func (b BridgeValidators) HasDuplicates() bool {
 	m := make(map[EthereumAddress]struct{}, len(b))
 	for i := range b {
-		m[b[i].EthereumAddress] = struct{}{}
+		m[NewEthereumAddress(string(b[i].EthereumAddress))] = struct{}{}
 	}
 	return len(m) != len(b)
 }
@@ -61,6 +58,7 @@ func (b BridgeValidators) GetPowers() []uint64 {
 	return r
 }
 
+// ValidateBasic performs stateless checks
 func (b BridgeValidators) ValidateBasic() error {
 	if len(b) == 0 {
 		return ErrEmpty
@@ -76,17 +74,17 @@ func (b BridgeValidators) ValidateBasic() error {
 	return nil
 }
 
-// Valset is the Ethereum Bridge Multsig Set
-type Valset struct {
-	Nonce   UInt64Nonce      `json:"nonce"`
-	Members BridgeValidators `json:"members"`
-}
-
+// NewValset returns a new valset
 func NewValset(nonce UInt64Nonce, members BridgeValidators) Valset {
 	members.Sort()
-	return Valset{Nonce: nonce, Members: members}
+	var mem []*BridgeValidator
+	for _, val := range members {
+		mem = append(mem, &val)
+	}
+	return Valset{Nonce: uint64(nonce), Members: mem}
 }
 
+// GetCheckpoint returns the checkpoint
 func (v Valset) GetCheckpoint() []byte {
 	// TODO replace hardcoded "foo" here with a getter to retrieve the correct PeggyID from the store
 	// this will work for now because 'foo' is the test Peggy ID we are using
@@ -163,13 +161,13 @@ func (v Valset) GetCheckpoint() []byte {
 	memberAddresses := make([]EthereumAddress, len(v.Members))
 	convertedPowers := make([]*big.Int, len(v.Members))
 	for i, m := range v.Members {
-		memberAddresses[i] = m.EthereumAddress
+		memberAddresses[i] = NewEthereumAddress(string(m.EthereumAddress))
 		convertedPowers[i] = big.NewInt(int64(m.Power))
 	}
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, packErr := contractAbi.Pack("checkpoint", peggyID, checkpoint, big.NewInt(int64(v.Nonce.Uint64())), memberAddresses, convertedPowers)
+	bytes, packErr := contractAbi.Pack("checkpoint", peggyID, checkpoint, big.NewInt(int64(v.Nonce)), memberAddresses, convertedPowers)
 
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
@@ -189,7 +187,7 @@ func (v *Valset) WithoutEmptyMembers() *Valset {
 	if v == nil {
 		return nil
 	}
-	r := Valset{Nonce: v.Nonce, Members: make(BridgeValidators, 0, len(v.Members))}
+	r := Valset{Nonce: v.Nonce, Members: make([]*BridgeValidator, 0, len(v.Members))}
 	for i := range v.Members {
 		if v.Members[i].isValid() {
 			r.Members = append(r.Members, v.Members[i])

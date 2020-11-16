@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 
@@ -22,11 +22,11 @@ type updateEthAddressReq struct {
 }
 
 // accepts a sig proving that the given Cosmos address is owned by a given ethereum key
-func updateEthAddressHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func updateEthAddressHandler(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req updateEthAddressReq
 
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
 			return
 		}
@@ -69,7 +69,7 @@ func updateEthAddressHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, baseReq, msg)
 	}
 }
 
@@ -77,11 +77,11 @@ type createValsetReq struct {
 	BaseReq rest.BaseReq `json:"base_req"`
 }
 
-func createValsetRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
+func createValsetRequestHandler(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req createValsetReq
 
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
 			return
 		}
@@ -95,7 +95,7 @@ func createValsetRequestHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		// Make the message
 		msg := types.NewMsgValsetRequest(cosmosAddr)
 
-		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, baseReq, msg)
 	}
 }
 
@@ -109,11 +109,11 @@ type valsetConfirmReq struct {
 // check the ethereum sig on a particular valset and broadcast a transaction containing
 // it if correct. The nonce / block height is used to determine what valset to look up
 // locally and verify
-func createValsetConfirmHandler(cliCtx context.CLIContext, storeKey string) http.HandlerFunc {
+func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req valsetConfirmReq
 
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
 			return
 		}
@@ -132,7 +132,7 @@ func createValsetConfirmHandler(cliCtx context.CLIContext, storeKey string) http
 			return
 		}
 		var valset types.Valset
-		cliCtx.Codec.MustUnmarshalJSON(res, &valset)
+		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &valset)
 		checkpoint := valset.GetCheckpoint()
 
 		// the signed message should be the hash of the checkpoint at the given nonce
@@ -164,7 +164,7 @@ func createValsetConfirmHandler(cliCtx context.CLIContext, storeKey string) http
 			return
 		}
 
-		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, baseReq, msg)
 	}
 }
 

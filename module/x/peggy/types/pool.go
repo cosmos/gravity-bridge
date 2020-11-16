@@ -10,36 +10,15 @@ import (
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
-// OutgoingTx is a withdrawal on the bridged contract
-type OutgoingTx struct {
-	Sender      sdk.AccAddress  `json:"sender"`
-	DestAddress EthereumAddress `json:"dest_address"`
-	Amount      sdk.Coin        `json:"send"`
-	BridgeFee   sdk.Coin        `json:"bridge_fee"`
-}
-
-// BridgedDenominator track and identify the ported ERC20 tokens into Peggy.
-// An ERC20 token on the Ethereum side can be uniquely identified by the ERC20 contract address and the human readable symbol
-// used for it in the contract
-// In Peggy this is represented as "vouchers" that get minted and burned when interacting with the Ethereum side. These "vouchers"
-// are identified by a prefixed string representation. See VoucherDenom type.
-type BridgedDenominator struct {
-	// TokenContractAddress is the ERC20 contract address
-	TokenContractAddress EthereumAddress `json:"token_contract_address"`
-	// Symbol is the human readable ERC20 token name.
-	Symbol string `json:"symbol"`
-	// CosmosVoucherDenom is used as denom in sdk.Coin
-	CosmosVoucherDenom VoucherDenom `json:"cosmos_voucher_denom"`
-}
-
+// NewBridgedDenominator returns a new bridged denominator
 func NewBridgedDenominator(tokenContractAddress EthereumAddress, erc20Symbol string) BridgedDenominator {
 	v := NewVoucherDenom(tokenContractAddress, erc20Symbol)
-	return BridgedDenominator{TokenContractAddress: tokenContractAddress, Symbol: erc20Symbol, CosmosVoucherDenom: v}
+	return BridgedDenominator{TokenContractAddress: tokenContractAddress.Bytes(), Symbol: erc20Symbol, CosmosVoucherDenom: v.String()}
 }
 
 // ToERC20Token converts the given voucher amount to the matching ERC20Token object of same type
 func (b BridgedDenominator) ToERC20Token(s sdk.Coin) ERC20Token {
-	if b.CosmosVoucherDenom.String() != s.Denom {
+	if b.CosmosVoucherDenom != s.Denom {
 		panic("invalid denom")
 	}
 	return b.ToUint64ERC20Token(s.Amount.Uint64())
@@ -47,25 +26,22 @@ func (b BridgedDenominator) ToERC20Token(s sdk.Coin) ERC20Token {
 
 // ToUint64ERC20Token creates a erc20 token instance for given amount
 func (b BridgedDenominator) ToUint64ERC20Token(amount uint64) ERC20Token {
-	return NewERC20Token(amount, b.Symbol, b.TokenContractAddress)
+	return NewERC20Token(amount, b.Symbol, NewEthereumAddress(string(b.TokenContractAddress)))
 }
 
 // ToVoucherCoin creates a new Peggy voucher coin instance with given amount
 func (b BridgedDenominator) ToVoucherCoin(amount uint64) sdk.Coin {
-	return sdk.NewInt64Coin(b.CosmosVoucherDenom.String(), int64(amount))
+	return sdk.NewInt64Coin(b.CosmosVoucherDenom, int64(amount))
 }
 
 const (
+	// VoucherDenomPrefix prefixes all denoms that come from ETH -> Peggy
 	VoucherDenomPrefix = "peggy"
-	DenomSeparator     = "" // todo: only a-z0-9 supported
-	//DenomSeparator     = "/"  // todo: not allowed in this versions sdk coin demon
+	// DenomSeparator seperates the denom peieces
+	DenomSeparator = "" // todo: only a-z0-9 supported
+	// VoucherDenomLen length of the denomination
 	VoucherDenomLen  = 15 // todo: cut to 15 to match this versions sdk coin demon
 	voucherPrefixLen = len(VoucherDenomPrefix + DenomSeparator)
-
-	//hashLen            = 64
-	//separatorLen       = len(DenomSeparator)
-	//prefixLen          = len(VoucherDenomPrefix)
-	//VoucherDenomLen    = hashLen + prefixLen + separatorLen
 )
 
 func assertPeggyVoucher(s sdk.Coin) {

@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/params"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -19,10 +19,10 @@ type Keeper struct {
 	StakingKeeper types.StakingKeeper
 
 	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
-	paramSpace params.Subspace
+	paramSpace paramtypes.Subspace
 
-	cdc          *codec.Codec // The wire codec for binary encoding/decoding.
-	supplyKeeper types.SupplyKeeper
+	cdc        codec.BinaryMarshaler // The wire codec for binary encoding/decoding.
+	bankKeeper types.BankKeeper
 
 	AttestationHandler interface {
 		Handle(sdk.Context, types.Attestation) error
@@ -30,7 +30,7 @@ type Keeper struct {
 }
 
 // NewKeeper
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace params.Subspace, stakingKeeper types.StakingKeeper, supplyKeeper types.SupplyKeeper) Keeper {
+func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper) Keeper {
 	k := Keeper{
 		cdc:           cdc,
 		paramSpace:    paramSpace,

@@ -19,42 +19,42 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 	v := NewValset(
 		NewUInt64Nonce(1),
 		BridgeValidators{{
-			EthereumAddress: NewEthereumAddress("0xc783df8a850f42e7F7e57013759C285caa701eB6"),
+			EthereumAddress: NewEthereumAddress("0xc783df8a850f42e7F7e57013759C285caa701eB6").Bytes(),
 			Power:           6670,
 		}},
 	)
 
 	src := OutgoingTxBatch{
 		Nonce: 1,
-		Elements: []OutgoingTransferTx{
+		Elements: []*OutgoingTransferTx{
 			{
-				ID:          0x1,
-				Sender:      senderAddr,
-				DestAddress: NewEthereumAddress("0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39"),
-				Amount: ERC20Token{
-					Amount:               0x1,
+				Id:          0x1,
+				Sender:      senderAddr.String(),
+				DestAddress: NewEthereumAddress("0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39").Bytes(),
+				Amount: &ERC20Token{
+					Amount:               sdk.NewInt(0x1),
 					Symbol:               "MAX",
-					TokenContractAddress: erc20Addr,
+					TokenContractAddress: erc20Addr.Bytes(),
 				},
-				BridgeFee: ERC20Token{
-					Amount:               0x1,
+				BridgeFee: &ERC20Token{
+					Amount:               sdk.NewInt(0x1),
 					Symbol:               "MAX",
-					TokenContractAddress: erc20Addr,
+					TokenContractAddress: erc20Addr.Bytes(),
 				},
 			},
 		},
-		TotalFee: ERC20Token{
-			Amount:               0x1,
+		TotalFee: &ERC20Token{
+			Amount:               sdk.NewInt(0x1),
 			Symbol:               "MAX",
-			TokenContractAddress: erc20Addr,
+			TokenContractAddress: erc20Addr.Bytes(),
 		},
-		BridgedDenominator: BridgedDenominator{
-			TokenContractAddress: erc20Addr,
+		BridgedDenominator: &BridgedDenominator{
+			TokenContractAddress: erc20Addr.Bytes(),
 			Symbol:               "MAX",
 			CosmosVoucherDenom:   "peggy39b512461b",
 		},
-		Valset:        v,
-		TokenContract: erc20Addr,
+		Valset:        &v,
+		TokenContract: erc20Addr.Bytes(),
 	}
 
 	ourHash, err := src.GetCheckpoint()
