@@ -1,0 +1,15 @@
+syntax  = "proto3";
+package peggy.v1;
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+// // BridgeValidator represents the validator data in the Ethereum bridge MultiSig set.
+message BridgeValidator {
+    uint64 power            = 1;
+    bytes  ethereum_address = 2;
+}
+
+// // Valset is the Ethereum Bridge Multsig Set
+message Valset {
+    uint64                   nonce   = 1;
+    repeated BridgeValidator members = 2;
+}

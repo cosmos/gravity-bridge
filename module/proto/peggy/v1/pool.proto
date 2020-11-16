@@ -1,0 +1,26 @@
+syntax  = "proto3";
+package peggy.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+// OutgoingTx is a withdrawal on the bridged contract
+message OutgoingTx {
+    string                   sender     = 1;
+    bytes                    dest_addr  = 2;
+    cosmos.base.v1beta1.Coin amount     = 3 [(gogoproto.nullable) = false];
+    cosmos.base.v1beta1.Coin bridge_fee = 4 [(gogoproto.nullable) = false];
+}
+
+// BridgedDenominator track and identify the ported ERC20 tokens into Peggy.
+// An ERC20 token on the Ethereum side can be uniquely identified by the ERC20 contract address and the human readable symbol
+// used for it in the contract
+// In Peggy this is represented as "vouchers" that get minted and burned when interacting with the Ethereum side. These "vouchers"
+// are identified by a prefixed string representation. See VoucherDenom type.
+message BridgedDenominator {
+    bytes  token_contract_address = 1;
+    string symbol                 = 2;
+    string cosmos_voucher_denom   = 3;
+}

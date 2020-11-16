@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/params/subspace"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 // DefaultParamspace defines the default auth module parameter subspace
@@ -35,7 +35,7 @@ var (
 	ParamsStoreKeyBridgeContractChainID = []byte("BridgeChainID")
 )
 
-var _ subspace.ParamSet = &Params{}
+var _ paramtypes.ParamSet = &Params{}
 
 type Params struct {
 	// PeggyID is a random 32 byte value to prevent signature reuse

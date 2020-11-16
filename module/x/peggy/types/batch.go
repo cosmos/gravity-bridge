@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -24,14 +23,14 @@ import (
 // 	return []string{"unknown", "pending", "submitted", "observed", "processed", "cancelled"}[b]
 // }
 
-type OutgoingTxBatch struct {
-	Nonce              UInt64Nonce          `json:"nonce"`
-	Elements           []OutgoingTransferTx `json:"elements"`
-	TotalFee           ERC20Token           `json:"total_fee"`
-	BridgedDenominator BridgedDenominator   `json:"bridged_denominator"`
-	Valset             Valset               `json:"valset"`
-	TokenContract      EthereumAddress      `json:"token_contract"`
-}
+// type OutgoingTxBatch struct {
+// 	Nonce              UInt64Nonce          `json:"nonce"`
+// 	Elements           []OutgoingTransferTx `json:"elements"`
+// 	TotalFee           ERC20Token           `json:"total_fee"`
+// 	BridgedDenominator BridgedDenominator   `json:"bridged_denominator"`
+// 	Valset             Valset               `json:"valset"`
+// 	TokenContract      EthereumAddress      `json:"token_contract"`
+// }
 
 // func (b *OutgoingTxBatch) Cancel() error {
 // 	if b.BatchStatus != BatchStatusPending {
@@ -41,6 +40,7 @@ type OutgoingTxBatch struct {
 // 	return nil
 // }
 
+// GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
 func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 
 	// TODO replace hardcoded "foo" here with a getter to retrieve the correct PeggyID from the store
@@ -215,10 +215,10 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 // 	return nil
 // }
 
-type OutgoingTransferTx struct {
-	ID          uint64          `json:"txid"`
-	Sender      sdk.AccAddress  `json:"sender"`
-	DestAddress EthereumAddress `json:"dest_address"`
-	Amount      ERC20Token      `json:"send"`
-	BridgeFee   ERC20Token      `json:"bridge_fee"`
-}
+// type OutgoingTransferTx struct {
+// 	ID          uint64          `json:"txid"`
+// 	Sender      sdk.AccAddress  `json:"sender"`
+// 	DestAddress EthereumAddress `json:"dest_address"`
+// 	Amount      ERC20Token      `json:"send"`
+// 	BridgeFee   ERC20Token      `json:"bridge_fee"`
+// }

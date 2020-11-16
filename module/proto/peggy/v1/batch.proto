@@ -1,0 +1,44 @@
+syntax = "proto3";
+package peggy.v1;
+
+import "gogoproto/gogo.proto";
+import "peggy/v1/attestation.proto";
+import "peggy/v1/pool.proto";
+import "peggy/v1/types.proto";
+
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+// enum BatchStatus {
+//   option (gogoproto.goproto_enum_prefix) = false;
+//   BATCH_STATUS_UNKNOWN   = 0;
+//   BATCH_STATUS_PENDING   = 1;  // inital status
+//   BATCH_STATUS_SUBMITTED = 2;  // in flight to ETH
+//   BATCH_STATUS_PROCESSED = 3;  // observed - end state
+//   BATCH_STATUS_CANCELED  = 4;  // end state
+// }
+
+
+message OutgoingTxBatch {
+  option (gogoproto.marshaler)   = false;
+  option (gogoproto.sizer)       = false;
+  option (gogoproto.unmarshaler) = false;
+
+  uint64                      nonce               = 1;
+  repeated OutgoingTransferTx elements            = 2;
+  ERC20Token                  total_fee           = 4;
+  BridgedDenominator          bridged_denominator = 5;
+  Valset                      valset              = 7;
+  bytes                       token_contract      = 8;
+}
+
+message OutgoingTransferTx {
+  option (gogoproto.marshaler)   = false;
+  option (gogoproto.sizer)       = false;
+  option (gogoproto.unmarshaler) = false;
+  
+  uint64     id           = 1;
+  string     sender       = 2;
+  bytes      dest_address = 3;
+  ERC20Token amount       = 4; 
+  ERC20Token bridge_fee   = 5;
+}

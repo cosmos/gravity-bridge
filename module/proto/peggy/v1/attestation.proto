@@ -1,0 +1,54 @@
+syntax = "proto3";
+package peggy.v1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+// ClaimType is the cosmos type of an event from the counterpart chain that can be handled
+enum ClaimType {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  CLAIM_TYPE_UNKNOWN                          = 0 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_UNKNOWN"];
+  CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT          = 1 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT"];
+  CLAIM_TYPE_ETHEREUM_BRIDGE_WITHDRAWAL_BATCH = 2 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_ETHEREUM_BRIDGE_WITHDRAWAL_BATCH"];
+}
+
+// Attestation is an aggregate of `claims` that eventually becomes `observed` by all orchestrators
+message Attestation {
+    ClaimType           claim_type  = 1;
+    uint64              event_nonce = 2;  
+    bool                observed    = 3;
+    repeated string     votes       = 4;
+    google.protobuf.Any details     = 5 [(cosmos_proto.accepts_interface) = "AttestationDetails"];
+}
+
+// WithdrawalBatch is an attestation detail that marks a batch of outgoing transactions executed and
+// frees earlier unexecuted batches
+message WithdrawalBatch {
+    int64      batch_nonce  = 1;
+    ERC20Token erc_20_token = 2;
+}
+
+
+// // BridgeDeposit is an attestation detail that adds vouchers to an account when executed
+message BridgeDeposit {
+    ERC20Token erc_20_token    = 1;
+    bytes      ethereum_sender = 2;
+    string     cosmos_receiver = 3; 
+}
+
+// ERC20Token unique identifier for an Ethereum erc20 token.
+message ERC20Token {
+    option (gogoproto.marshaler)   = false;
+    option (gogoproto.sizer)       = false;
+
+    // NOTE: i've migrated this to use sdk.Int as per the discussion earlier
+    // TODO: fix the sdk.Int generated code here
+    string amount                 = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+    // uint64 amount                 = 1;
+    string symbol                 = 2;
+    bytes  token_contract_address = 3; 
+}

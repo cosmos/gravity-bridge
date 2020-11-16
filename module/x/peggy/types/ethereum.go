@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
+// EthereumAddressLength is the length of an ETH address: 20 bytes
 const EthereumAddressLength = gethCommon.AddressLength
 
 var isValidETHAddress = regexp.MustCompile("^0x[0-9a-fA-F]{40}$").MatchString
@@ -39,6 +40,7 @@ func (e EthereumAddress) RawBytes() []byte {
 	return e[:]
 }
 
+// ValidateBasic validates the address
 func (e EthereumAddress) ValidateBasic() error {
 	if !isValidETHAddress(e.String()) {
 		return ErrInvalid
@@ -46,6 +48,7 @@ func (e EthereumAddress) ValidateBasic() error {
 	return nil
 }
 
+// IsEmpty returns if the address is empty
 func (e EthereumAddress) IsEmpty() bool {
 	return emptyAddr == e
 }
@@ -66,18 +69,20 @@ func (e *EthereumAddress) UnmarshalJSON(input []byte) error {
 	return hexutil.UnmarshalFixedJSON(reflect.TypeOf(gethCommon.Address{}), input, e[:])
 }
 
+// LessThan returns if an address is less than another
 func (e EthereumAddress) LessThan(o EthereumAddress) bool {
 	return bytes.Compare(e[:], o[:]) == -1
 }
 
-// ERC20Token unique identifier for an Ethereum erc20 token.
-type ERC20Token struct {
-	Amount uint64 `json:"amount" yaml:"amount"`
-	// Symbol is the erc20 human readable token name
-	Symbol               string          `json:"symbol" yaml:"symbol"`
-	TokenContractAddress EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
-}
+// // ERC20Token unique identifier for an Ethereum erc20 token.
+// type ERC20Token struct {
+// 	Amount uint64 `json:"amount" yaml:"amount"`
+// 	// Symbol is the erc20 human readable token name
+// 	Symbol               string          `json:"symbol" yaml:"symbol"`
+// 	TokenContractAddress EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
+// }
 
+// NewERC20Token returns a new instance of an ERC20
 func NewERC20Token(amount uint64, symbol string, tokenContractAddress EthereumAddress) ERC20Token {
 	return ERC20Token{Amount: amount, Symbol: symbol, TokenContractAddress: tokenContractAddress}
 }
@@ -92,6 +97,7 @@ func (e ERC20Token) AsVoucherCoin() sdk.Coin {
 	return sdk.NewInt64Coin(NewVoucherDenom(e.TokenContractAddress, e.Symbol).String(), int64(e.Amount))
 }
 
+// Add adds one ERC20 to another
 func (t ERC20Token) Add(o ERC20Token) ERC20Token {
 	if t.Symbol != o.Symbol {
 		panic("invalid symbol")
