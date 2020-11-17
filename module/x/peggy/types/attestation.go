@@ -68,8 +68,8 @@ func (claim ClaimType) UnmarshalJSON(input []byte) error {
 }
 
 var (
-	_ AttestationDetails = BridgeDeposit{}
-	_ AttestationDetails = WithdrawalBatch{}
+	_ AttestationDetails = &BridgeDeposit{}
+	_ AttestationDetails = &WithdrawalBatch{}
 )
 
 // AttestationDetails is the payload of an attestation.
@@ -80,13 +80,13 @@ type AttestationDetails interface {
 }
 
 // Hash implements hash
-func (b WithdrawalBatch) Hash() []byte {
+func (b *WithdrawalBatch) Hash() []byte {
 	path := fmt.Sprintf("%s/%d/", b.Erc_20Token, b.BatchNonce)
 	return tmhash.Sum([]byte(path))
 }
 
 // Hash implements Hash
-func (b BridgeDeposit) Hash() []byte {
+func (b *BridgeDeposit) Hash() []byte {
 	path := fmt.Sprintf("%s/%s/%s/", b.Erc_20Token.String(), string(b.EthereumSender), b.CosmosReceiver)
 	return tmhash.Sum([]byte(path))
 }

@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -55,6 +57,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 func PackAttestationDetails(ad AttestationDetails) (*types.Any, error) {
 	msg, ok := ad.(proto.Message)
 	if !ok {
+		fmt.Println("failed to typecast")
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", ad)
 	}
 

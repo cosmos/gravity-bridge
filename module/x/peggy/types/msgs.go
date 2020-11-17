@@ -382,7 +382,7 @@ func (e *EthereumBridgeDepositClaim) ValidateBasic() error {
 
 // Details returns the attestation details fromt he bridge deposit claim
 func (e *EthereumBridgeDepositClaim) Details() AttestationDetails {
-	return BridgeDeposit{
+	return &BridgeDeposit{
 		Erc_20Token:    e.Erc20Token,
 		EthereumSender: e.EthereumSender,
 		CosmosReceiver: e.CosmosReceiver,

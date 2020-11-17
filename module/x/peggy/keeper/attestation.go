@@ -61,12 +61,12 @@ func (k Keeper) voteForAttestation(
 	// Tries to get an attestation with the same eventNonce and details as the claim that was submitted.
 	att := k.GetAttestation(ctx, eventNonce, details)
 
-	pd, err := types.PackAttestationDetails(details)
-	if err != nil {
-		panic(err)
-	}
 	// If it does not exist, create a new one.
 	if att == nil {
+		pd, err := types.PackAttestationDetails(details)
+		if err != nil {
+			panic(err)
+		}
 		att = &types.Attestation{
 			ClaimType:  claimType,
 			EventNonce: uint64(eventNonce),
@@ -156,9 +156,9 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
 		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
-		ud, err := types.UnpackAttestationDetails(att.Details)
-		if err != nil {
-			panic(err)
+		ud, packErr := types.UnpackAttestationDetails(att.Details)
+		if packErr != nil {
+			panic(packErr)
 		}
 		k.logger(ctx).Error("attestation failed",
 			"cause", err.Error(),

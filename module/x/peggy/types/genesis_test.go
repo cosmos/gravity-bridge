@@ -8,11 +8,11 @@ import (
 
 func TestGenesisStateValidate(t *testing.T) {
 	specs := map[string]struct {
-		src    GenesisState
+		src    *GenesisState
 		expErr bool
 	}{
 		"default params": {src: DefaultGenesisState(), expErr: false},
-		"empty params":   {src: GenesisState{Params: &Params{}}, expErr: false},
+		"empty params":   {src: &GenesisState{Params: &Params{}}, expErr: false},
 		//"invalid params": {src: GenesisState{
 		//	Params: Params{},  // can't test currently
 		//}, expErr: true},
