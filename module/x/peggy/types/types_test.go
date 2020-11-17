@@ -19,7 +19,7 @@ func TestValsetConfirmHash(t *testing.T) {
 	}
 	members := make(BridgeValidators, len(powers))
 	for i := range powers {
-		members[i] = BridgeValidator{
+		members[i] = &BridgeValidator{
 			Power:           powers[i],
 			EthereumAddress: ethAddresses[i].Bytes(),
 		}
@@ -27,7 +27,7 @@ func TestValsetConfirmHash(t *testing.T) {
 
 	var mem []*BridgeValidator
 	for _, m := range members {
-		mem = append(mem, &m)
+		mem = append(mem, m)
 	}
 	v := Valset{Members: mem}
 	hash := v.GetCheckpoint()

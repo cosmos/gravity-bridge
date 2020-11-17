@@ -24,3 +24,8 @@ message BridgedDenominator {
     string symbol                 = 2;
     string cosmos_voucher_denom   = 3;
 }
+
+// IDSet represents a set of IDs
+message IDSet {
+    repeated uint64 ids = 1;
+}

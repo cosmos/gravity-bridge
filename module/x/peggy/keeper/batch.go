@@ -34,10 +34,10 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 	}
 	nextID := k.autoIncrementID(ctx, types.KeyLastOutgoingBatchID)
 	nonce := types.NewUInt64Nonce(nextID)
-	batch := types.OutgoingTxBatch{
-		Nonce:              nonce,
+	batch := &types.OutgoingTxBatch{
+		Nonce:              uint64(nonce),
 		Elements:           selectedTx,
-		BridgedDenominator: *bridgedDenom,
+		BridgedDenominator: bridgedDenom,
 		TotalFee:           totalFee,
 		Valset:             k.GetCurrentValset(ctx),
 		TokenContract:      bridgedDenom.TokenContractAddress,
@@ -53,7 +53,7 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 		sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
 	)
 	ctx.EventManager().EmitEvent(batchEvent)
-	return &batch, nil
+	return batch, nil
 }
 
 // OutgoingTxBatchExecuted is run when the Cosmos chain detects that a batch has been executed on Ethereum
@@ -66,15 +66,15 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract types.Eth
 
 	// cleanup outgoing TX pool
 	for i := range b.Elements {
-		k.removePoolEntry(ctx, b.Elements[i].ID)
+		k.removePoolEntry(ctx, b.Elements[i].Id)
 	}
 
 	// Iterate through remaining batches
-	k.IterateOutgoingTXBatches(ctx, func(key []byte, iter_batch types.OutgoingTxBatch) bool {
+	k.IterateOutgoingTXBatches(ctx, func(key []byte, iter_batch *types.OutgoingTxBatch) bool {
 		// If the iterated batches nonce is lower than the one that was just executed, cancel it
 		// TODO: iterate only over batches we need to iterate over
 		if iter_batch.Nonce < b.Nonce {
-			k.CancelOutgoingTXBatch(ctx, tokenContract, iter_batch.Nonce)
+			k.CancelOutgoingTXBatch(ctx, tokenContract, types.NewUInt64Nonce(iter_batch.Nonce))
 		}
 		return false
 	})
@@ -84,26 +84,26 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract types.Eth
 	return nil
 }
 
-func (k Keeper) storeBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
+func (k Keeper) storeBatch(ctx sdk.Context, batch *types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetOutgoingTxBatchKey(batch.TokenContract, batch.Nonce)
+	key := types.GetOutgoingTxBatchKey(types.NewEthereumAddress(string(batch.TokenContract)), types.NewUInt64Nonce(batch.Nonce))
 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
 }
 
 func (k Keeper) deleteBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetOutgoingTxBatchKey(batch.TokenContract, batch.Nonce))
+	store.Delete(types.GetOutgoingTxBatchKey(types.NewEthereumAddress(string(batch.TokenContract)), types.NewUInt64Nonce(batch.Nonce)))
 }
 
 // pickUnbatchedTX find TX in pool and remove from "available" second index
-func (k Keeper) pickUnbatchedTX(ctx sdk.Context, denom types.VoucherDenom, bridgedDenom types.BridgedDenominator, maxElements int) ([]types.OutgoingTransferTx, error) {
-	var selectedTx []types.OutgoingTransferTx
+func (k Keeper) pickUnbatchedTX(ctx sdk.Context, denom types.VoucherDenom, bridgedDenom types.BridgedDenominator, maxElements int) ([]*types.OutgoingTransferTx, error) {
+	var selectedTx []*types.OutgoingTransferTx
 	var err error
-	k.IterateOutgoingPoolByFee(ctx, denom, func(txID uint64, tx types.OutgoingTx) bool {
-		txOut := types.OutgoingTransferTx{
-			ID:          txID,
+	k.IterateOutgoingPoolByFee(ctx, denom, func(txID uint64, tx *types.OutgoingTx) bool {
+		txOut := &types.OutgoingTransferTx{
+			Id:          txID,
 			Sender:      tx.Sender,
-			DestAddress: tx.DestAddress,
+			DestAddress: tx.DestAddr,
 			Amount:      bridgedDenom.ToERC20Token(tx.Amount),
 			BridgeFee:   bridgedDenom.ToERC20Token(tx.BridgeFee),
 		}
@@ -134,7 +134,7 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract types.Ether
 		return types.ErrUnknown
 	}
 	for _, tx := range batch.Elements {
-		k.prependToUnbatchedTXIndex(ctx, batch.BridgedDenominator.ToVoucherCoin(tx.BridgeFee.Amount), tx.ID)
+		k.prependToUnbatchedTXIndex(ctx, batch.BridgedDenominator.ToVoucherCoin(tx.BridgeFee.Amount.Uint64()), tx.Id)
 	}
 
 	// Delete batch since it is finished
@@ -153,7 +153,7 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract types.Ether
 }
 
 // IterateOutgoingTXBatches iterates through all outgoing batches in DESC order.
-func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, batch types.OutgoingTxBatch) bool) {
+func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, batch *types.OutgoingTxBatch) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OutgoingTXBatchKey)
 	iter := prefixStore.ReverseIterator(nil, nil)
 	defer iter.Close()
@@ -161,7 +161,7 @@ func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, ba
 		var batch types.OutgoingTxBatch
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &batch)
 		// cb returns true to stop early
-		if cb(iter.Key(), batch) {
+		if cb(iter.Key(), &batch) {
 			break
 		}
 	}

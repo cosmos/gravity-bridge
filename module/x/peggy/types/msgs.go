@@ -10,6 +10,60 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+var (
+	_ sdk.Msg = &MsgCreateEthereumClaims{}
+	_ sdk.Msg = &MsgValsetConfirm{}
+	_ sdk.Msg = &MsgValsetRequest{}
+	_ sdk.Msg = &MsgSetEthAddress{}
+	_ sdk.Msg = &MsgSendToEth{}
+	_ sdk.Msg = &MsgRequestBatch{}
+	_ sdk.Msg = &MsgConfirmBatch{}
+	_ sdk.Msg = &MsgCreateEthereumClaims{}
+	_ sdk.Msg = &MsgBridgeSignatureSubmission{}
+)
+
+// NewMsgBridgeSignatureSubmission returns a new msgBridgeSignatureSubmission
+func NewMsgBridgeSignatureSubmission(signtype SignType, nonce uint64, orch, ethsig string) *MsgBridgeSignatureSubmission {
+	return &MsgBridgeSignatureSubmission{
+		SignType:          signtype,
+		Nonce:             nonce,
+		Orchestrator:      orch,
+		EthereumSignature: ethsig,
+	}
+}
+
+// Route should return the name of the module
+func (msg *MsgBridgeSignatureSubmission) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg *MsgBridgeSignatureSubmission) Type() string { return "bridge_signature_submission" }
+
+// ValidateBasic performs stateless checks
+func (msg *MsgBridgeSignatureSubmission) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
+	}
+	if _, err := hex.DecodeString(msg.EthereumSignature); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.EthereumSignature)
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg *MsgBridgeSignatureSubmission) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg *MsgBridgeSignatureSubmission) GetSigners() []sdk.AccAddress {
+	// TODO: figure out how to convert between AccAddress and ValAddress properly
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{acc}
+}
+
 // NewMsgValsetConfirm returns a new msgValsetConfirm
 func NewMsgValsetConfirm(nonce uint64, ethAddress EthereumAddress, validator sdk.AccAddress, signature string) *MsgValsetConfirm {
 	return &MsgValsetConfirm{
@@ -21,27 +75,29 @@ func NewMsgValsetConfirm(nonce uint64, ethAddress EthereumAddress, validator sdk
 }
 
 // Route should return the name of the module
-func (msg MsgValsetConfirm) Route() string { return RouterKey }
+func (msg *MsgValsetConfirm) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgValsetConfirm) Type() string { return "valset_confirm" }
+func (msg *MsgValsetConfirm) Type() string { return "valset_confirm" }
 
 // ValidateBasic performs stateless checks
-func (msg MsgValsetConfirm) ValidateBasic() error {
-	if msg.Validator == "" {
+func (msg *MsgValsetConfirm) ValidateBasic() (err error) {
+	if _, err = sdk.AccAddressFromBech32(msg.Validator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
 	}
-
+	if err := NewEthereumAddress(string(msg.EthAddress)).ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "ethereum address")
+	}
 	return nil
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgValsetConfirm) GetSignBytes() []byte {
+func (msg *MsgValsetConfirm) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgValsetConfirm) GetSigners() []sdk.AccAddress {
+func (msg *MsgValsetConfirm) GetSigners() []sdk.AccAddress {
 	// TODO: figure out how to convert between AccAddress and ValAddress properly
 	acc, err := sdk.AccAddressFromBech32(msg.Validator)
 	if err != nil {
@@ -64,7 +120,12 @@ func (msg MsgValsetRequest) Route() string { return RouterKey }
 func (msg MsgValsetRequest) Type() string { return "valset_request" }
 
 // ValidateBasic performs stateless checks
-func (msg MsgValsetRequest) ValidateBasic() error { return nil }
+func (msg MsgValsetRequest) ValidateBasic() (err error) {
+	if _, err = sdk.AccAddressFromBech32(msg.Requester); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Requester)
+	}
+	return nil
+}
 
 // GetSignBytes encodes the message for signing
 func (msg MsgValsetRequest) GetSignBytes() []byte {
@@ -100,27 +161,20 @@ func (msg MsgSetEthAddress) Type() string { return "set_eth_address" }
 // Checks if the Eth address is valid, and whether the Eth address has signed the validator address
 // (proving control of the Eth address)
 func (msg MsgSetEthAddress) ValidateBasic() error {
-	if msg.Validator == "" {
-		return sdkerrors.Wrap(ErrEmpty, "validator")
+	if _, err := sdk.AccAddressFromBech32(msg.Validator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
 	}
-	if err := sdk.VerifyAddressFormat([]byte(msg.Validator)); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "validator")
-	}
-
 	if err := NewEthereumAddress(string(msg.Address)).ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
-
 	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
 	}
-
 	err = ValidateEthereumSignature(crypto.Keccak256([]byte(msg.Validator)), sigBytes, string(msg.Address))
 	if err != nil {
 		return sdkerrors.Wrapf(err, "digest: %x sig: %x address %s error: %s", crypto.Keccak256([]byte(msg.Validator)), msg.Signature, msg.Address, err.Error())
 	}
-
 	return nil
 }
 
@@ -157,6 +211,9 @@ func (msg MsgSendToEth) Type() string { return "send_to_eth" }
 // ValidateBasic runs stateless checks on the message
 // Checks if the Eth address is valid
 func (msg MsgSendToEth) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
+	}
 	// fee and send must be of the same denom
 	if msg.Amount.Denom != msg.BridgeFee.Denom {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee and amount must be the same type")
@@ -173,7 +230,9 @@ func (msg MsgSendToEth) ValidateBasic() error {
 	if !msg.BridgeFee.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee")
 	}
-	// TODO validate eth address
+	if err := NewEthereumAddress(string(msg.DestAddress)).ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "ethereum address")
+	}
 	// TODO for demo get single allowed demon from the store
 	// TODO validate fee is sufficient, fixed fee to start
 	return nil
@@ -209,6 +268,9 @@ func (msg MsgRequestBatch) Type() string { return "request_batch" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgRequestBatch) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Requester); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Requester)
+	}
 	// TODO ensure that Demon matches hardcoded allowed value
 	// TODO later make sure that Demon matches a list of tokens already
 	// in the bridge to send
@@ -238,7 +300,24 @@ func (msg MsgConfirmBatch) Type() string { return "confirm_batch" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgConfirmBatch) ValidateBasic() error {
-	// TODO validate signature
+	if _, err := sdk.AccAddressFromBech32(msg.Validator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
+	}
+	if err := NewEthereumAddress(string(msg.EthSigner)).ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "eth signer")
+	}
+	if err := NewEthereumAddress(string(msg.TokenContract)).ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "token contract")
+	}
+	sigBytes, err := hex.DecodeString(msg.Signature)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
+	}
+	err = ValidateEthereumSignature(crypto.Keccak256([]byte(msg.Validator)), sigBytes, string(msg.EthSigner))
+	if err != nil {
+		return sdkerrors.Wrapf(err, "digest: %x sig: %x address %s error: %s", crypto.Keccak256([]byte(msg.Validator)), msg.Signature, msg.EthSigner, err.Error())
+	}
+
 	// TODO get batch from storage
 	// TODO generate batch in storage on MsgRequestBatch in the first place
 	return nil
@@ -286,7 +365,15 @@ func (e *EthereumBridgeDepositClaim) GetEventNonce() uint64 {
 
 // ValidateBasic performs stateless checks
 func (e *EthereumBridgeDepositClaim) ValidateBasic() error {
-	// todo: validate all fields
+	if _, err := sdk.AccAddressFromBech32(e.CosmosReceiver); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.CosmosReceiver)
+	}
+	if err := NewEthereumAddress(string(e.EthereumSender)).ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "eth signer")
+	}
+	if err := e.Erc20Token.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "erc20 token")
+	}
 	if e.Nonce == 0 {
 		return fmt.Errorf("nonce == 0")
 	}
@@ -312,6 +399,9 @@ func (e *EthereumBridgeWithdrawalBatchClaim) ValidateBasic() error {
 	if e.EventNonce == 0 {
 		return fmt.Errorf("event_nonce == 0")
 	}
+	if e.BatchNonce == 0 {
+		return fmt.Errorf("batch_nonce == 0")
+	}
 	return nil
 }
 
@@ -323,10 +413,6 @@ func (e *EthereumBridgeWithdrawalBatchClaim) Details() AttestationDetails {
 const (
 	// TypeMsgCreateEthereumClaims is the claim type
 	TypeMsgCreateEthereumClaims = "create_eth_claims"
-)
-
-var (
-	_ sdk.Msg = &MsgCreateEthereumClaims{}
 )
 
 // NewMsgCreateEthereumClaims returns a new msgCreateEthereumClaims
@@ -354,11 +440,13 @@ func (m MsgCreateEthereumClaims) Type() string {
 
 // ValidateBasic performs stateless checks on the message
 func (m MsgCreateEthereumClaims) ValidateBasic() error {
-	// todo: validate all fields
-	if err := sdk.VerifyAddressFormat([]byte(m.Orchestrator)); err != nil {
-		return sdkerrors.Wrap(err, "orchestrator")
+	// todo: validate ethereum chain id
+	if _, err := sdk.AccAddressFromBech32(m.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, m.Orchestrator)
 	}
-
+	if err := NewEthereumAddress(string(m.BridgeContractAddress)).ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "ethereum address")
+	}
 	for i := range m.Claims {
 		claim, err := UnpackEthereumClaim(m.Claims[i])
 		if err != nil {

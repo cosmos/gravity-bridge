@@ -16,7 +16,11 @@ func (b BridgeValidator) ValidateBasic() error {
 	if b.Power == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "power")
 	}
-	if NewEthereumAddress(string(b.EthereumAddress)).IsEmpty() {
+	addr := NewEthereumAddress(string(b.EthereumAddress))
+	if err := addr.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "ethereum address")
+	}
+	if addr.IsEmpty() {
 		return sdkerrors.Wrap(ErrEmpty, "address")
 	}
 	return nil
@@ -27,7 +31,7 @@ func (b BridgeValidator) isValid() bool {
 }
 
 // BridgeValidators is the sorted set of validator data for Ethereum bridge MultiSig set
-type BridgeValidators []BridgeValidator
+type BridgeValidators []*BridgeValidator
 
 // Sort sorts the validators by power
 func (b BridgeValidators) Sort() {
@@ -75,13 +79,13 @@ func (b BridgeValidators) ValidateBasic() error {
 }
 
 // NewValset returns a new valset
-func NewValset(nonce UInt64Nonce, members BridgeValidators) Valset {
+func NewValset(nonce UInt64Nonce, members BridgeValidators) *Valset {
 	members.Sort()
 	var mem []*BridgeValidator
 	for _, val := range members {
-		mem = append(mem, &val)
+		mem = append(mem, val)
 	}
-	return Valset{Nonce: uint64(nonce), Members: mem}
+	return &Valset{Nonce: uint64(nonce), Members: mem}
 }
 
 // GetCheckpoint returns the checkpoint

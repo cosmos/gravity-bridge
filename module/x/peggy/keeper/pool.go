@@ -29,22 +29,22 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	}
 
 	// burn vouchers
-	err = k.supplyKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers)
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers)
 	if err != nil {
 		return 0, err
 	}
-	if err := k.supplyKeeper.BurnCoins(ctx, types.ModuleName, totalInVouchers); err != nil {
+	if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, totalInVouchers); err != nil {
 		panic(err)
 	}
 
 	// persist TX in pool
 	nextID := k.autoIncrementID(ctx, types.KeyLastTXPoolID)
-	outgoing := types.OutgoingTx{
+	outgoing := &types.OutgoingTx{
 		//TokenContractAddress: , // TODO: do we need to store this?
-		Sender:      sender,
-		DestAddress: counterpartReceiver,
-		Amount:      amount,
-		BridgeFee:   fee,
+		Sender:    sender.String(),
+		DestAddr:  counterpartReceiver.Bytes(),
+		Amount:    amount,
+		BridgeFee: fee,
 	}
 	err = k.setPoolEntry(ctx, nextID, outgoing)
 	if err != nil {
@@ -79,8 +79,8 @@ func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID uin
 		bz := store.Get(idxKey)
 		k.cdc.MustUnmarshalBinaryBare(bz, &idSet)
 	}
-	idSet = append(idSet, txID)
-	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(idSet))
+	idSet.Ids = append(idSet.Ids, txID)
+	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(&idSet))
 }
 
 // appendToUnbatchedTXIndex add at the top when tx with same fee exists
@@ -92,8 +92,8 @@ func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID ui
 		bz := store.Get(idxKey)
 		k.cdc.MustUnmarshalBinaryBare(bz, &idSet)
 	}
-	idSet = append([]uint64{txID}, idSet...)
-	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(idSet))
+	idSet.Ids = append([]uint64{txID}, idSet.Ids...)
+	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(&idSet))
 }
 
 // removeFromUnbatchedTXIndex removes the tx from the index and makes it implicit no available anymore
@@ -106,11 +106,11 @@ func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID u
 		return sdkerrors.Wrap(types.ErrUnknown, "fee")
 	}
 	k.cdc.MustUnmarshalBinaryBare(bz, &idSet)
-	for i := range idSet {
-		if idSet[i] == txID {
-			idSet = append(idSet[0:i], idSet[i+1:]...)
-			if len(idSet) != 0 {
-				store.Set(idxKey, k.cdc.MustMarshalBinaryBare(idSet))
+	for i := range idSet.Ids {
+		if idSet.Ids[i] == txID {
+			idSet.Ids = append(idSet.Ids[0:i], idSet.Ids[i+1:]...)
+			if len(idSet.Ids) != 0 {
+				store.Set(idxKey, k.cdc.MustMarshalBinaryBare(&idSet))
 			} else {
 				store.Delete(idxKey)
 			}
@@ -120,7 +120,7 @@ func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID u
 	return sdkerrors.Wrap(types.ErrUnknown, "tx id")
 }
 
-func (k Keeper) setPoolEntry(ctx sdk.Context, id uint64, val types.OutgoingTx) error {
+func (k Keeper) setPoolEntry(ctx sdk.Context, id uint64, val *types.OutgoingTx) error {
 	bz, err := k.cdc.MarshalBinaryBare(val)
 	if err != nil {
 		return err
@@ -159,7 +159,7 @@ func (k Keeper) GetCounterpartDenominator(ctx sdk.Context, voucherDenom types.Vo
 }
 
 // StoreCounterpartDenominator persists the bridged token details. Overwrites an existing entry without error
-func (k Keeper) StoreCounterpartDenominator(ctx sdk.Context, tokenContractAddress types.EthereumAddress, symbol string) types.BridgedDenominator {
+func (k Keeper) StoreCounterpartDenominator(ctx sdk.Context, tokenContractAddress types.EthereumAddress, symbol string) *types.BridgedDenominator {
 	store := ctx.KVStore(k.storeKey)
 	voucherDenominator := types.NewVoucherDenom(tokenContractAddress, symbol)
 	bridgedDenominator := types.NewBridgedDenominator(tokenContractAddress, symbol)
@@ -188,7 +188,7 @@ func (k Keeper) IterateCounterpartDenominators(ctx sdk.Context, cb func([]byte, 
 	return
 }
 
-func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, voucherDenom types.VoucherDenom, cb func(uint64, types.OutgoingTx) bool) {
+func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, voucherDenom types.VoucherDenom, cb func(uint64, *types.OutgoingTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
 	iter := prefixStore.ReverseIterator(prefixRange([]byte(voucherDenom.Unprefixed())))
 	defer iter.Close()
@@ -196,12 +196,12 @@ func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, voucherDenom types.Vou
 		var ids types.IDSet
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ids)
 		// cb returns true to stop early
-		for _, id := range ids {
+		for _, id := range ids.Ids {
 			tx, err := k.getPoolEntry(ctx, id)
 			if err != nil {
 				return
 			}
-			if cb(id, *tx) {
+			if cb(id, tx) {
 				return
 			}
 		}

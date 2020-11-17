@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -127,7 +128,7 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation) {
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(types.NewUInt64Nonce(att.EventNonce), ud))), // todo: serialize with hex/ base64 ?
-		sdk.NewAttribute(types.AttributeKeyNonce, string(att.EventNonce)),
+		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(att.EventNonce)),
 		// TODO: do we want to emit more information?
 	)
 	ctx.EventManager().EmitEvent(observationEvent)
@@ -163,7 +164,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
 			"cause", err.Error(),
 			"claim type", att.ClaimType,
 			"id", types.GetAttestationKey(types.NewUInt64Nonce(att.EventNonce), ud),
-			"nonce", string(att.EventNonce),
+			"nonce", fmt.Sprint(att.EventNonce),
 		)
 	} else {
 		commit() // persist transient storage

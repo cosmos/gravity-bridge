@@ -36,11 +36,11 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 		paramSpace:    paramSpace,
 		storeKey:      storeKey,
 		StakingKeeper: stakingKeeper,
-		supplyKeeper:  supplyKeeper,
+		bankKeeper:    bankKeeper,
 	}
 	k.AttestationHandler = AttestationHandler{
-		keeper:       k,
-		supplyKeeper: supplyKeeper,
+		keeper:     k,
+		bankKeeper: bankKeeper,
 	}
 
 	// set KeyTable if it has not already been set
@@ -51,7 +51,7 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 	return k
 }
 
-func (k Keeper) SetValsetRequest(ctx sdk.Context) types.Valset {
+func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	valset := k.GetCurrentValset(ctx)
 	k.storeValset(ctx, valset)
 
@@ -60,21 +60,21 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) types.Valset {
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyMultisigID, valset.Nonce.String()),
-		sdk.NewAttribute(types.AttributeKeyNonce, valset.Nonce.String()),
+		sdk.NewAttribute(types.AttributeKeyMultisigID, fmt.Sprint(valset.Nonce)),
+		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(valset.Nonce)),
 	)
 	ctx.EventManager().EmitEvent(event)
 	return valset
 }
 
-func (k Keeper) storeValset(ctx sdk.Context, valset types.Valset) {
+func (k Keeper) storeValset(ctx sdk.Context, valset *types.Valset) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetValsetRequestKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
+	store.Set(types.GetValsetRequestKey(types.NewUInt64Nonce(valset.Nonce)), k.cdc.MustMarshalBinaryBare(valset))
 }
 
-func (k Keeper) SetBootstrapValset(ctx sdk.Context, valset types.Valset) error {
+func (k Keeper) SetBootstrapValset(ctx sdk.Context, valset *types.Valset) error {
 	nonce := valset.Nonce
-	if k.HasValsetRequest(ctx, nonce) {
+	if k.HasValsetRequest(ctx, types.NewUInt64Nonce(nonce)) {
 		return sdkerrors.Wrap(types.ErrDuplicate, "nonce")
 	}
 	k.storeValset(ctx, valset)
@@ -84,8 +84,8 @@ func (k Keeper) SetBootstrapValset(ctx sdk.Context, valset types.Valset) error {
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyMultisigID, nonce.String()),
-		sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
+		sdk.NewAttribute(types.AttributeKeyMultisigID, fmt.Sprint(nonce)),
+		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nonce)),
 	)
 	ctx.EventManager().EmitEvent(event)
 	return nil
@@ -108,7 +108,7 @@ func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce types.UInt64Nonce) *type
 }
 
 // Iterate through all valset set requests in DESC order.
-func (k Keeper) IterateValsetRequest(ctx sdk.Context, cb func(key []byte, val types.Valset) bool) {
+func (k Keeper) IterateValsetRequest(ctx sdk.Context, cb func(key []byte, val *types.Valset) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetRequestKey)
 	iter := prefixStore.ReverseIterator(nil, nil)
 	defer iter.Close()
@@ -116,7 +116,7 @@ func (k Keeper) IterateValsetRequest(ctx sdk.Context, cb func(key []byte, val ty
 		var valset types.Valset
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &valset)
 		// cb returns true to stop early
-		if cb(iter.Key(), valset) {
+		if cb(iter.Key(), &valset) {
 			break
 		}
 	}
@@ -135,8 +135,12 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce types.UInt64Nonce, valid
 
 func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) []byte {
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetValsetConfirmKey(valsetConf.Nonce, valsetConf.Validator)
-	store.Set(key, k.cdc.MustMarshalBinaryBare(valsetConf))
+	addr, err := sdk.AccAddressFromBech32(valsetConf.Validator)
+	if err != nil {
+		panic(err)
+	}
+	key := types.GetValsetConfirmKey(types.NewUInt64Nonce(valsetConf.Nonce), addr)
+	store.Set(key, k.cdc.MustMarshalBinaryBare(&valsetConf))
 	return key
 }
 
@@ -151,23 +155,27 @@ func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce types.UInt64Nonce, tokenC
 	return &confirm
 }
 
-func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch types.MsgConfirmBatch) []byte {
+func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) []byte {
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetBatchConfirmKey(batch.TokenContract, batch.Nonce, batch.Validator)
+	acc, err := sdk.AccAddressFromBech32(batch.Validator)
+	if err != nil {
+		panic(err)
+	}
+	key := types.GetBatchConfirmKey(types.NewEthereumAddress(string(batch.TokenContract)), types.NewUInt64Nonce(batch.Nonce), acc)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
 	return key
 }
 
 // Iterate through all valset confirms for a nonce in ASC order
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
-func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64Nonce, cb func([]byte, types.MsgValsetConfirm) bool) {
+func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64Nonce, cb func([]byte, *types.MsgValsetConfirm) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
 	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgValsetConfirm{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
+		confirm := &types.MsgValsetConfirm{}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), confirm)
 		// cb returns true to stop early
 		if cb(iter.Key(), confirm) {
 			break
@@ -219,9 +227,9 @@ func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) *types.
 // total voting power. This is an acceptable rounding error since floating
 // point may cause consensus problems if different floating point unit
 // implementations are involved.
-func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
+func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-	bridgeValidators := make([]types.BridgeValidator, len(validators))
+	bridgeValidators := make([]*types.BridgeValidator, len(validators))
 	var totalPower uint64
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
@@ -231,9 +239,9 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress))
 		totalPower += p
 
-		bridgeValidators[i] = types.BridgeValidator{Power: p}
+		bridgeValidators[i] = &types.BridgeValidator{Power: p}
 		if ethAddr := k.GetEthAddress(ctx, validatorAddress); ethAddr != nil {
-			bridgeValidators[i].EthereumAddress = *ethAddr
+			bridgeValidators[i].EthereumAddress = ethAddr.Bytes()
 		}
 	}
 	// normalize power values
@@ -257,20 +265,20 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) types.Valset {
 // }
 
 // GetParams returns the total set of wasm parameters.
-func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	var p types.Params
-	k.paramSpace.GetParamSet(ctx, &p)
+func (k Keeper) GetParams(ctx sdk.Context) *types.Params {
+	var p *types.Params
+	k.paramSpace.GetParamSet(ctx, p)
 	return p
 }
 
-func (k Keeper) setParams(ctx sdk.Context, ps types.Params) {
-	k.paramSpace.SetParamSet(ctx, &ps)
+func (k Keeper) setParams(ctx sdk.Context, ps *types.Params) {
+	k.paramSpace.SetParamSet(ctx, ps)
 }
 
 func (k Keeper) GetBridgeContractAddress(ctx sdk.Context) types.EthereumAddress {
-	var a types.EthereumAddress
+	var a []byte
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractAddress, &a)
-	return a
+	return types.NewEthereumAddress(string(a))
 }
 
 func (k Keeper) GetBridgeChainID(ctx sdk.Context) uint64 {

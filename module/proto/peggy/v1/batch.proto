@@ -1,7 +1,7 @@
 syntax = "proto3";
 package peggy.v1;
 
-import "gogoproto/gogo.proto";
+// import "gogoproto/gogo.proto";
 import "peggy/v1/attestation.proto";
 import "peggy/v1/pool.proto";
 import "peggy/v1/types.proto";
@@ -19,9 +19,9 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 
 message OutgoingTxBatch {
-  option (gogoproto.marshaler)   = false;
-  option (gogoproto.sizer)       = false;
-  option (gogoproto.unmarshaler) = false;
+  // option (gogoproto.marshaler)   = false;
+  // option (gogoproto.sizer)       = false;
+  // option (gogoproto.unmarshaler) = false;
 
   uint64                      nonce               = 1;
   repeated OutgoingTransferTx elements            = 2;
@@ -32,9 +32,9 @@ message OutgoingTxBatch {
 }
 
 message OutgoingTransferTx {
-  option (gogoproto.marshaler)   = false;
-  option (gogoproto.sizer)       = false;
-  option (gogoproto.unmarshaler) = false;
+  // option (gogoproto.marshaler)   = false;
+  // option (gogoproto.sizer)       = false;
+  // option (gogoproto.unmarshaler) = false;
   
   uint64     id           = 1;
   string     sender       = 2;

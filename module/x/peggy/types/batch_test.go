@@ -28,7 +28,8 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 		Nonce: 1,
 		Elements: []*OutgoingTransferTx{
 			{
-				Id:          0x1,
+				Id: 0x1,
+				// TODO: maybe failure in this test is due to the SDK addr?
 				Sender:      senderAddr.String(),
 				DestAddress: NewEthereumAddress("0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39").Bytes(),
 				Amount: &ERC20Token{
@@ -53,7 +54,7 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 			Symbol:               "MAX",
 			CosmosVoucherDenom:   "peggy39b512461b",
 		},
-		Valset:        &v,
+		Valset:        v,
 		TokenContract: erc20Addr.Bytes(),
 	}
 

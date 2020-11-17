@@ -35,21 +35,6 @@ var (
 
 var _ paramtypes.ParamSet = &Params{}
 
-// type Params struct {
-// 	// PeggyID is a random 32 byte value to prevent signature reuse
-// 	PeggyID []byte `json:"peggy_id,omitempty" yaml:"peggy_id"`
-// 	// ContractHash is the code hash of a known good version of the Peggy contract solidity code.
-// 	// It will be used to verify exactly which version of the bridge will be deployed.
-// 	ContractHash []byte `json:"contract_source_hash,omitempty" yaml:"contract_source_hash"`
-// 	// StartThreshold is the percentage of total voting power that must be online and participating in
-// 	// Peggy operations before a bridge can start operating
-// 	StartThreshold uint64 `json:"start_threshold,omitempty" yaml:"start_threshold"`
-// 	// BridgeContractAddress is address of the bridge contract on the Ethereum side
-// 	BridgeContractAddress EthereumAddress `json:"bridge_contract_address,omitempty" yaml:"bridge_contract_address"`
-// 	// BridgeChainID is the unique identifier of the Ethereum chain
-// 	BridgeChainID uint64 `json:"bridge_chain_id,omitempty" yaml:"bridge_chain_id"`
-// }
-
 // ParamKeyTable for auth module
 func ParamKeyTable() paramtypes.KeyTable {
 	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
@@ -143,9 +128,10 @@ func validateBridgeChainID(i interface{}) error {
 }
 
 func validateBridgeContractAddress(i interface{}) error {
-	v, ok := i.(EthereumAddress)
+	// TODO: better eth address validation, insert me here
+	v, ok := i.([]byte)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-	return v.ValidateBasic()
+	return NewEthereumAddress(string(v)).ValidateBasic()
 }

@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
@@ -83,8 +84,16 @@ func (e EthereumAddress) LessThan(o EthereumAddress) bool {
 // }
 
 // NewERC20Token returns a new instance of an ERC20
-func NewERC20Token(amount uint64, symbol string, tokenContractAddress EthereumAddress) ERC20Token {
-	return ERC20Token{Amount: sdk.NewInt(int64(amount)), Symbol: symbol, TokenContractAddress: tokenContractAddress.Bytes()}
+func NewERC20Token(amount uint64, symbol string, tokenContractAddress EthereumAddress) *ERC20Token {
+	return &ERC20Token{Amount: sdk.NewInt(int64(amount)), Symbol: symbol, TokenContractAddress: tokenContractAddress.Bytes()}
+}
+
+func (e *ERC20Token) ValidateBasic() error {
+	if err := NewEthereumAddress(string(e.TokenContractAddress)).ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "ethereum address")
+	}
+	// TODO: Validate all the things
+	return nil
 }
 
 // String converts Token representation into a human readable form containing all data.
@@ -98,7 +107,7 @@ func (e *ERC20Token) AsVoucherCoin() sdk.Coin {
 }
 
 // Add adds one ERC20 to another
-func (t *ERC20Token) Add(o ERC20Token) ERC20Token {
+func (t *ERC20Token) Add(o *ERC20Token) *ERC20Token {
 	if t.Symbol != o.Symbol {
 		panic("invalid symbol")
 	}

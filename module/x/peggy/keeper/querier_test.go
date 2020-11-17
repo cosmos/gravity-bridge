@@ -16,15 +16,16 @@ import (
 
 func TestQueryValsetConfirm(t *testing.T) {
 	var (
-		nonce                                         = types.NewUInt64Nonce(1)
-		myValidatorCosmosAddr   sdk.AccAddress        = make([]byte, sdk.AddrLen)
-		myValidatorEthereumAddr types.EthereumAddress = createEthAddress(50)
+		nonce                                          = types.NewUInt64Nonce(1)
+		myValidatorCosmosAddr, _                       = sdk.AccAddressFromBech32("cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l")
+		myValidatorEthereumAddr  types.EthereumAddress = createEthAddress(50)
 	)
 	k, ctx, _ := CreateTestEnv(t)
 	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{
-		Nonce:     nonce,
-		Validator: myValidatorCosmosAddr,
-		Address:   myValidatorEthereumAddr,
+		Nonce:      nonce.Uint64(),
+		Validator:  myValidatorCosmosAddr.String(),
+		EthAddress: myValidatorEthereumAddr.Bytes(),
+		Signature:  "alksdjhflkasjdfoiasjdfiasjdfoiasdj",
 	})
 
 	specs := map[string]struct {
@@ -36,7 +37,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			srcAddr:  myValidatorCosmosAddr.String(),
-			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a",  "signature": ""}}`),
+			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l",  "signature": "alksdjhflkasjdfoiasjdfiasjdfoiasdj"}}`),
 		},
 		"unknown nonce": {
 			srcNonce: "999999",
@@ -71,18 +72,15 @@ func TestQueryValsetConfirm(t *testing.T) {
 }
 
 func TestAllValsetConfirmsBynonce(t *testing.T) {
-	var (
-		nonce = types.NewUInt64Nonce(1)
-	)
 	k, ctx, _ := CreateTestEnv(t)
 
 	// seed confirmations
 	for i := 0; i < 3; i++ {
-		addr := bytes.Repeat([]byte{byte(i)}, sdk.AddrLen)
+		addr, _ := sdk.AccAddressFromBech32("cosmos1u508cfnsk2nhakv80vdtq3nf558ngyvldkfjj9")
 		msg := types.MsgValsetConfirm{}
-		msg.Address = createEthAddress(i + 1)
-		msg.Nonce = nonce
-		msg.Validator = addr
+		msg.EthAddress = createEthAddress(i + 1).Bytes()
+		msg.Nonce = uint64(i)
+		msg.Validator = addr.String()
 		msg.Signature = fmt.Sprintf("signature %d", i+1)
 		k.SetValsetConfirm(ctx, msg)
 	}
@@ -460,12 +458,12 @@ func createTestBatch(t *testing.T, k Keeper, ctx sdk.Context, keepers TestKeeper
 	)
 	// mint some voucher first
 	allVouchers := sdk.Coins{sdk.NewInt64Coin(string(voucherDenom), 99999)}
-	err := keepers.SupplyKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
+	err := keepers.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
 	require.NoError(t, err)
 
 	// set senders balance
 	keepers.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	err = keepers.BankKeeper.SetCoins(ctx, mySender, allVouchers)
+	err = keepers.BankKeeper.SetBalances(ctx, mySender, allVouchers)
 	require.NoError(t, err)
 
 	// store counterpart
@@ -493,16 +491,16 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 	k, ctx, _ := CreateTestEnv(t)
 
 	var (
-		tokenContract = types.NewEthereumAddress("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
-		validatorAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+		tokenContract    = types.NewEthereumAddress("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
+		validatorAddr, _ = sdk.AccAddressFromBech32("cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh")
 	)
 
-	k.SetBatchConfirm(ctx, types.MsgConfirmBatch{
-		Nonce:          1,
-		TokenContract:  tokenContract,
-		EthereumSigner: types.NewEthereumAddress("0xf35e2cc8e6523d683ed44870f5b7cc785051a77d"),
-		Validator:      validatorAddr,
-		Signature:      "signature",
+	k.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
+		Nonce:         1,
+		TokenContract: tokenContract.Bytes(),
+		EthSigner:     types.NewEthereumAddress("0xf35e2cc8e6523d683ed44870f5b7cc785051a77d").Bytes(),
+		Validator:     validatorAddr.String(),
+		Signature:     "signature",
 	})
 
 	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract.String(), k)

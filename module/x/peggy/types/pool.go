@@ -11,13 +11,13 @@ import (
 )
 
 // NewBridgedDenominator returns a new bridged denominator
-func NewBridgedDenominator(tokenContractAddress EthereumAddress, erc20Symbol string) BridgedDenominator {
+func NewBridgedDenominator(tokenContractAddress EthereumAddress, erc20Symbol string) *BridgedDenominator {
 	v := NewVoucherDenom(tokenContractAddress, erc20Symbol)
-	return BridgedDenominator{TokenContractAddress: tokenContractAddress.Bytes(), Symbol: erc20Symbol, CosmosVoucherDenom: v.String()}
+	return &BridgedDenominator{TokenContractAddress: tokenContractAddress.Bytes(), Symbol: erc20Symbol, CosmosVoucherDenom: v.String()}
 }
 
 // ToERC20Token converts the given voucher amount to the matching ERC20Token object of same type
-func (b BridgedDenominator) ToERC20Token(s sdk.Coin) ERC20Token {
+func (b BridgedDenominator) ToERC20Token(s sdk.Coin) *ERC20Token {
 	if b.CosmosVoucherDenom != s.Denom {
 		panic("invalid denom")
 	}
@@ -25,7 +25,7 @@ func (b BridgedDenominator) ToERC20Token(s sdk.Coin) ERC20Token {
 }
 
 // ToUint64ERC20Token creates a erc20 token instance for given amount
-func (b BridgedDenominator) ToUint64ERC20Token(amount uint64) ERC20Token {
+func (b BridgedDenominator) ToUint64ERC20Token(amount uint64) *ERC20Token {
 	return NewERC20Token(amount, b.Symbol, NewEthereumAddress(string(b.TokenContractAddress)))
 }
 
@@ -89,4 +89,4 @@ func IsVoucherDenom(denom string) bool {
 }
 
 // IDSet is a collection of DB keys in a second index.
-type IDSet []uint64
+// type IDSet []uint64
