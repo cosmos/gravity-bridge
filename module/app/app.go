@@ -1,7 +1,7 @@
 package app
 
 import (
-		"io"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,16 +16,20 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
+	peggyparams "github.com/althea-net/peggy/module/app/params"
+	"github.com/althea-net/peggy/module/x/peggy"
+	"github.com/althea-net/peggy/module/x/peggy/keeper"
+	peggytypes "github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
+	ccodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
+	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -66,7 +70,6 @@ import (
 	porttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/05-port/types"
 	ibchost "github.com/cosmos/cosmos-sdk/x/ibc/core/24-host"
 	ibckeeper "github.com/cosmos/cosmos-sdk/x/ibc/core/keeper"
-	ibcmock "github.com/cosmos/cosmos-sdk/x/ibc/testing/mock"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -74,7 +77,7 @@ import (
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	paramsproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -85,8 +88,6 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	"github.com/althea-net/peggy/module/x/peggy"
-	peggyparams "github.com/althea-net/peggy/module/app/params"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -110,7 +111,10 @@ var (
 		mint.AppModuleBasic{},
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(
-			paramsclient.ProposalHandler, distrclient.ProposalHandler, upgradeclient.ProposalHandler, upgradeclient.CancelProposalHandler
+			paramsclient.ProposalHandler,
+			distrclient.ProposalHandler,
+			upgradeclient.ProposalHandler,
+			upgradeclient.CancelProposalHandler,
 		),
 		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},
@@ -133,7 +137,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		peggy.ModuleName:               {authtypes.Minter, authtypes.Burner},
+		peggytypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -142,28 +146,25 @@ var (
 	}
 
 	// verify app interface at compile time
-	_ simapp.App = (*Peggy)(nil)
-	_ servertypes.Application = (*SimApp)(nil)
+	_ simapp.App              = (*Peggy)(nil)
+	_ servertypes.Application = (*Peggy)(nil)
 )
 
 // MakeCodec creates the application codec. The codec is sealed before it is
 // returned.
-func MakeCodec() *codec.Codec {
-	var cdc = codec.New()
-
-	ModuleBasics.RegisterCodec(cdc)
-	// NOTE: Why are these special cases??????
-	vesting.RegisterCodec(cdc)
-	sdk.RegisterCodec(cdc)
-	// NOTE: I think this is to let amino to do crypto for you, and this lets you tell it what crypto you want????
-	codec.RegisterCrypto(cdc)
-
-	return cdc.Seal()
+func MakeCodec() *codec.LegacyAmino {
+	var cdc = codec.NewLegacyAmino()
+	ModuleBasics.RegisterLegacyAminoCodec(cdc)
+	vesting.AppModuleBasic{}.RegisterLegacyAminoCodec(cdc)
+	sdk.RegisterLegacyAminoCodec(cdc)
+	ccodec.RegisterCrypto(cdc)
+	cdc.Seal()
+	return cdc
 }
 
 // Peggy extended ABCI application
 type Peggy struct {
-	*bam.BaseApp
+	*baseapp.BaseApp
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Marshaler
 	interfaceRegistry types.InterfaceRegistry
@@ -171,26 +172,26 @@ type Peggy struct {
 	invCheckPeriod uint
 
 	// keys to access the substores
-	keys  map[string]*sdk.KVStoreKey
-	tKeys map[string]*sdk.TransientStoreKey
+	keys    map[string]*sdk.KVStoreKey
+	tKeys   map[string]*sdk.TransientStoreKey
 	memKeys map[string]*sdk.MemoryStoreKey
 
 	// keepers
-	accountKeeper  auth.AccountKeeper
-	bankKeeper     bank.Keeper
-	capabilityKeeyper capability.Keeper
-	stakingKeeper  staking.Keeper
-	slashingKeeper slashing.Keeper
-	mintKeeper     mint.Keeper
-	distrKeeper    distr.Keeper
-	govKeeper      gov.Keeper
-	crisisKeeper   crisis.Keeper
-	upgradeKeeper  upgrade.Keeper
-	paramsKeeper   params.Keeper
-	ibcKeeper      ibc.Keeper
-	evidenceKeeper evidence.Keeper
-	transferKeeper transferkeeper.Keeper
-	peggyKeeper    peggy.Keeper
+	accountKeeper    authkeeper.AccountKeeper
+	bankKeeper       bankkeeper.Keeper
+	capabilityKeeper *capabilitykeeper.Keeper
+	stakingKeeper    stakingkeeper.Keeper
+	slashingKeeper   slashingkeeper.Keeper
+	mintKeeper       mintkeeper.Keeper
+	distrKeeper      distrkeeper.Keeper
+	govKeeper        govkeeper.Keeper
+	crisisKeeper     crisiskeeper.Keeper
+	upgradeKeeper    upgradekeeper.Keeper
+	paramsKeeper     paramskeeper.Keeper
+	ibcKeeper        *ibckeeper.Keeper
+	evidenceKeeper   evidencekeeper.Keeper
+	transferKeeper   ibctransferkeeper.Keeper
+	peggyKeeper      keeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -214,14 +215,14 @@ func init() {
 
 func NewPeggyApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
-	homePath string, invCheckPeriod uint, encodingConifg peggyparams.EncodingConfig, 
-	appOpts servertypes.AppOptions, baseAppOptions ...func(*bam.BaseApp),
+	homePath string, invCheckPeriod uint, encodingConfig peggyparams.EncodingConfig,
+	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
 ) *Peggy {
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 
-	bApp := bam.NewBaseApp(appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
+	bApp := baseapp.NewBaseApp(appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetAppVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
@@ -230,10 +231,10 @@ func NewPeggyApp(
 		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
-		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, 
-		peggy.StoreKey,
+		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
+		peggytypes.StoreKey,
 	)
-	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
+	tKeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 	var app = &Peggy{
@@ -247,28 +248,28 @@ func NewPeggyApp(
 		memKeys:           memKeys,
 	}
 
-	app.paramsKeeper = initParamsKeeper(appCodec, legacyAmino, keys[params.StoreKey], tKeys[params.TStoreKey])
+	app.paramsKeeper = initParamsKeeper(appCodec, legacyAmino, keys[paramstypes.StoreKey], tKeys[paramstypes.TStoreKey])
 
 	bApp.SetParamStore(app.paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
 
 	app.capabilityKeeper = capabilitykeeper.NewKeeper(
-		appCodec, 
-		keys[capabilitytypes.StoreKey], 
+		appCodec,
+		keys[capabilitytypes.StoreKey],
 		memKeys[capabilitytypes.MemStoreKey],
 	)
-	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
-	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
+	scopedIBCKeeper := app.capabilityKeeper.ScopeToModule(ibchost.ModuleName)
+	scopedTransferKeeper := app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 
 	app.accountKeeper = authkeeper.NewAccountKeeper(
 		appCodec,
 		keys[authtypes.StoreKey],
 		app.GetSubspace(authtypes.ModuleName),
-		auth.ProtoBaseAccount,
+		authtypes.ProtoBaseAccount,
 		maccPerms,
 	)
 
 	app.bankKeeper = bankkeeper.NewBaseKeeper(
-		appCodec, 
+		appCodec,
 		keys[banktypes.StoreKey],
 		app.accountKeeper,
 		app.GetSubspace(banktypes.ModuleName),
@@ -300,7 +301,7 @@ func NewPeggyApp(
 		app.accountKeeper,
 		app.bankKeeper,
 		&stakingKeeper,
-		auth.FeeCollectorName,
+		authtypes.FeeCollectorName,
 		app.ModuleAccountAddrs(),
 	)
 
@@ -312,30 +313,30 @@ func NewPeggyApp(
 	)
 
 	app.crisisKeeper = crisiskeeper.NewKeeper(
-		app.GetSubspace(crisistypes.ModuleName), 
-		invCheckPeriod, 
-		app.bankKeeper, 
-		auth.FeeCollectorName,
+		app.GetSubspace(crisistypes.ModuleName),
+		invCheckPeriod,
+		app.bankKeeper,
+		authtypes.FeeCollectorName,
 	)
 
 	app.upgradeKeeper = upgradekeeper.NewKeeper(
-		skipUpgradeHeights, 
-		keys[upgradetypes.StoreKey], 
-		appCodec, 
+		skipUpgradeHeights,
+		keys[upgradetypes.StoreKey],
+		appCodec,
 		homePath,
 	)
 
-	app.stakingKeeper = *stakingkeeper.SetHooks(
-		staking.NewMultiStakingHooks(
+	app.stakingKeeper = *stakingKeeper.SetHooks(
+		stakingtypes.NewMultiStakingHooks(
 			app.distrKeeper.Hooks(),
 			app.slashingKeeper.Hooks(),
 		),
 	)
 
 	app.ibcKeeper = ibckeeper.NewKeeper(
-		appCodec, 
-		keys[ibchost.StoreKey], 
-		app.StakingKeeper, 
+		appCodec,
+		keys[ibchost.StoreKey],
+		app.stakingKeeper,
 		scopedIBCKeeper,
 	)
 
@@ -345,14 +346,14 @@ func NewPeggyApp(
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
 		AddRoute(ibchost.RouterKey, ibcclient.NewClientUpdateProposalHandler(app.ibcKeeper.ClientKeeper))
-	
+
 	app.govKeeper = govkeeper.NewKeeper(
-		appCodec, 
-		keys[govtypes.StoreKey], 
+		appCodec,
+		keys[govtypes.StoreKey],
 		app.GetSubspace(govtypes.ModuleName),
-		app.accountKeeper, 
-		app.bankKeeper, 
-		&stakingKeeper, 
+		app.accountKeeper,
+		app.bankKeeper,
+		&stakingKeeper,
 		govRouter,
 	)
 
@@ -361,87 +362,88 @@ func NewPeggyApp(
 		app.ibcKeeper.ChannelKeeper, &app.ibcKeeper.PortKeeper,
 		app.accountKeeper, app.bankKeeper, scopedTransferKeeper,
 	)
-	transferModule := transfer.NewAppModule(app.TransferKeeper)
+	transferModule := transfer.NewAppModule(app.transferKeeper)
 
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferModule)
-	ibcRouter.AddRoute(ibcmock.ModuleName, mockModule)
 	app.ibcKeeper.SetRouter(ibcRouter)
 
 	evidenceKeeper := evidencekeeper.NewKeeper(
-		appCodec, 
-		keys[evidencetypes.StoreKey], 
-		&stakingKeeper, 
+		appCodec,
+		keys[evidencetypes.StoreKey],
+		&stakingKeeper,
 		app.slashingKeeper,
 	)
 	app.evidenceKeeper = *evidenceKeeper
 
-	app.peggyKeeper = peggy.NewKeeper(
-		appCodec, 
-		keys[peggy.StoreKey], 
-		app.GetSubspace(peggy.ModuleName), 
-		stakingKeeper, 
-		app.accountKeeper,
+	app.peggyKeeper = keeper.NewKeeper(
+		appCodec,
+		keys[peggytypes.StoreKey],
+		app.GetSubspace(peggytypes.ModuleName),
+		stakingKeeper,
 		app.bankKeeper,
 	)
 
+	// TODO: ensure this is wired up
+	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
+
 	app.mm = module.NewManager(
 		genutil.NewAppModule(
-			app.accountKeeper, 
-			app.stakingKeeper, 
+			app.accountKeeper,
+			app.stakingKeeper,
 			app.BaseApp.DeliverTx,
 			encodingConfig.TxConfig,
 		),
 		auth.NewAppModule(
-			appCodec, 
-			app.accountKeeper, 
+			appCodec,
+			app.accountKeeper,
 			nil,
 		),
 		vesting.NewAppModule(
-			app.accountKeeper, 
+			app.accountKeeper,
 			app.bankKeeper,
 		),
 		bank.NewAppModule(
-			appCodec, 
-			app.bankKeeper, 
+			appCodec,
+			app.bankKeeper,
 			app.accountKeeper,
 		),
 		capability.NewAppModule(
-			appCodec, 
-			*app.capabilityKeeyper,
+			appCodec,
+			*app.capabilityKeeper,
 		),
 		crisis.NewAppModule(
-			&app.crisisKeeper, 
+			&app.crisisKeeper,
 			skipGenesisInvariants,
 		),
 		gov.NewAppModule(
-			appCodec, 
-			app.govKeeper, 
-			app.accountKeeper, 
+			appCodec,
+			app.govKeeper,
+			app.accountKeeper,
 			app.bankKeeper,
 		),
 		mint.NewAppModule(
-			appCodec, 
-			app.mintKeeper, 
+			appCodec,
+			app.mintKeeper,
 			app.accountKeeper,
 		),
 		slashing.NewAppModule(
-			appCodec, 
-			app.slashingKeeper, 
-			app.accountKeeper, 
-			app.bankKeeper, 
+			appCodec,
+			app.slashingKeeper,
+			app.accountKeeper,
+			app.bankKeeper,
 			app.stakingKeeper,
 		),
 		distr.NewAppModule(
-			appCodec, 
-			app.distrKeeper, 
-			app.accountKeeper, 
-			app.bankKeeper, 
+			appCodec,
+			app.distrKeeper,
+			app.accountKeeper,
+			app.bankKeeper,
 			app.stakingKeeper,
 		),
-		staking.NewAppModule(appCodec, 
-			app.stakingKeeper, 
-			app.accountKeeper, 
+		staking.NewAppModule(appCodec,
+			app.stakingKeeper,
+			app.accountKeeper,
 			app.bankKeeper,
 		),
 		upgrade.NewAppModule(app.upgradeKeeper),
@@ -451,74 +453,73 @@ func NewPeggyApp(
 		transferModule,
 		peggy.NewAppModule(
 			app.peggyKeeper,
-			app.accountKeeper,
 			app.bankKeeper,
 		),
 	)
-	
+
 	app.mm.SetOrderBeginBlockers(
-		upgradetypes.ModuleName, 
-		minttypes.ModuleName, 
-		distrtypes.ModuleName, 
+		upgradetypes.ModuleName,
+		minttypes.ModuleName,
+		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
-		evidencetypes.ModuleName, 
-		stakingtypes.ModuleName, 
+		evidencetypes.ModuleName,
+		stakingtypes.ModuleName,
 		ibchost.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
-		crisistypes.ModuleName, 
-		govtypes.ModuleName, 
+		crisistypes.ModuleName,
+		govtypes.ModuleName,
 		stakingtypes.ModuleName,
 	)
 	app.mm.SetOrderInitGenesis(
-		capabilitytypes.ModuleName, 
-		authtypes.ModuleName, 
-		banktypes.ModuleName, 
-		distrtypes.ModuleName, 
+		capabilitytypes.ModuleName,
+		authtypes.ModuleName,
+		banktypes.ModuleName,
+		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
-		slashingtypes.ModuleName, 
-		govtypes.ModuleName, 
-		minttypes.ModuleName, 
+		slashingtypes.ModuleName,
+		govtypes.ModuleName,
+		minttypes.ModuleName,
 		crisistypes.ModuleName,
-		ibchost.ModuleName, 
-		genutiltypes.ModuleName, 
-		evidencetypes.ModuleName, 
+		ibchost.ModuleName,
+		genutiltypes.ModuleName,
+		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		peggy.ModuleName,
+		peggytypes.ModuleName,
 	)
-	
+
 	app.mm.RegisterInvariants(&app.crisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
 	app.mm.RegisterServices(module.NewConfigurator(app.MsgServiceRouter(), app.GRPCQueryRouter()))
 
 	app.sm = module.NewSimulationManager(
-		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
-		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
-		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
-		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
-		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
-		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
-		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
-		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
-		params.NewAppModule(app.ParamsKeeper),
-		evidence.NewAppModule(app.EvidenceKeeper),
-		ibc.NewAppModule(app.IBCKeeper),
+		auth.NewAppModule(appCodec, app.accountKeeper, authsims.RandomGenesisAccounts),
+		bank.NewAppModule(appCodec, app.bankKeeper, app.accountKeeper),
+		capability.NewAppModule(appCodec, *app.capabilityKeeper),
+		gov.NewAppModule(appCodec, app.govKeeper, app.accountKeeper, app.bankKeeper),
+		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
+		staking.NewAppModule(appCodec, app.stakingKeeper, app.accountKeeper, app.bankKeeper),
+		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
+		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
+		params.NewAppModule(app.paramsKeeper),
+		evidence.NewAppModule(app.evidenceKeeper),
+		ibc.NewAppModule(app.ibcKeeper),
 		transferModule,
 	)
 
 	app.sm.RegisterStoreDecoders()
-	
+
 	app.MountKVStores(keys)
 	app.MountTransientStores(tKeys)
-	app.MountMemoryStore(memKeys)
+	app.MountMemoryStores(memKeys)
 
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(
-		auth.NewAnteHandler(
+		ante.NewAnteHandler(
 			app.accountKeeper,
 			app.bankKeeper,
-			auth.DefaultSigVerificationGasConsumer,
+			ante.DefaultSigVerificationGasConsumer,
 			encodingConfig.TxConfig.SignModeHandler(),
 		),
 	)
@@ -543,7 +544,6 @@ func NewPeggyApp(
 	app.ScopedIBCKeeper = scopedIBCKeeper
 	app.ScopedTransferKeeper = scopedTransferKeeper
 
-
 	return app
 }
 
@@ -551,9 +551,10 @@ func NewPeggyApp(
 // simapp. It is useful for tests and clients who do not want to construct the
 // full simapp
 func MakeCodecs() (codec.Marshaler, *codec.LegacyAmino) {
-	config := MakeTestEncodingConfig()
+	config := MakeEncodingConfig()
 	return config.Marshaler, config.Amino
 }
+
 // Name returns the name of the App
 func (app *Peggy) Name() string { return app.BaseApp.Name() }
 
@@ -634,7 +635,7 @@ func (app *Peggy) GetKey(storeKey string) *sdk.KVStoreKey {
 //
 // NOTE: This is solely to be used for testing purposes.
 func (app *Peggy) GetTKey(storeKey string) *sdk.TransientStoreKey {
-	return app.tkeys[storeKey]
+	return app.tKeys[storeKey]
 }
 
 // GetMemKey returns the MemStoreKey for the provided mem key.
@@ -646,10 +647,9 @@ func (app *Peggy) GetMemKey(storeKey string) *sdk.MemoryStoreKey {
 
 // GetSubspace returns a param subspace for a given module name.
 func (app *Peggy) GetSubspace(moduleName string) paramstypes.Subspace {
-	subspace, _ := app.ParamsKeeper.GetSubspace(moduleName)
+	subspace, _ := app.paramsKeeper.GetSubspace(moduleName)
 	return subspace
 }
-
 
 // SimulationManager implements the SimulationApp interface
 func (app *Peggy) SimulationManager() *module.SimulationManager {
@@ -688,7 +688,6 @@ func (app *Peggy) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.BaseApp.Simulate, app.interfaceRegistry)
 }
 
-
 // GetMaccPerms returns a mapping of the application's module account permissions.
 func GetMaccPerms() map[string][]string {
 	modAccPerms := make(map[string][]string)
@@ -711,7 +710,7 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
-	paramsKeeper.Subspace(peggy.ModuleName)
+	paramsKeeper.Subspace(peggytypes.ModuleName)
 
 	return paramsKeeper
 }
