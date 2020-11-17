@@ -93,7 +93,7 @@ Example:
 
 const nodeDirPerm = 0755
 
-// Initialize the testnet
+// InitTestnet initializes the testnet
 func InitTestnet(
 	clientCtx client.Context,
 	cmd *cobra.Command,

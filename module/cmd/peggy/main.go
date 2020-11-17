@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/athea-net/peggy/module/cmd/peggy/cmd"
+	"github.com/althea-net/peggy/module/cmd/peggy/cmd"
 	"github.com/cosmos/cosmos-sdk/server"
 )
 
