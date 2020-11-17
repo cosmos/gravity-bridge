@@ -4,11 +4,17 @@ import (
 	"os"
 
 	"github.com/athea-net/peggy/module/cmd/peggy/cmd"
+	"github.com/cosmos/cosmos-sdk/server"
 )
 
 func main() {
 	rootCmd, _ := cmd.NewRootCmd()
 	if err := cmd.Execute(rootCmd); err != nil {
-		os.Exit(1)
+		switch e := err.(type) {
+		case server.ErrorCode:
+			os.Exit(e.Code)
+		default:
+			os.Exit(1)
+		}
 	}
 }
