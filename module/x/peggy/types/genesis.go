@@ -8,8 +8,8 @@ func (s GenesisState) ValidateBasic() error {
 	}
 	return nil
 }
-func DefaultGenesisState() GenesisState {
-	return GenesisState{
+func DefaultGenesisState() *GenesisState {
+	return &GenesisState{
 		Params: &Params{},
 	}
 }

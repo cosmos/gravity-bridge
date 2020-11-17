@@ -11,14 +11,12 @@ import (
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
+func GetTxCmd(storeKey string) *cobra.Command {
 	peggyTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Peggy transaction subcommands",
@@ -27,18 +25,18 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	peggyTxCmd.AddCommand(flags.PostCommands(
-		CmdWithdrawToETH(cdc),
-		CmdRequestBatch(cdc),
-		CmdUpdateEthAddress(cdc),
-		CmdValsetRequest(cdc),
-		GetUnsafeTestingCmd(cdc),
-	)...)
+	peggyTxCmd.AddCommand([]*cobra.Command{
+		CmdWithdrawToETH(),
+		CmdRequestBatch(),
+		CmdUpdateEthAddress(),
+		CmdValsetRequest(),
+		GetUnsafeTestingCmd(),
+	}...)
 
 	return peggyTxCmd
 }
 
-func GetUnsafeTestingCmd(cdc *codec.Codec) *cobra.Command {
+func GetUnsafeTestingCmd() *cobra.Command {
 	testingTxCmd := &cobra.Command{
 		Use:                        "unsafe_testing",
 		Short:                      "helpers for testing. not going into production",
@@ -46,22 +44,22 @@ func GetUnsafeTestingCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	testingTxCmd.AddCommand(flags.PostCommands(
+	testingTxCmd.AddCommand([]*cobra.Command{
 		CmdUnsafeETHPrivKey(),
 		CmdUnsafeETHAddr(),
-	)...)
+	}...)
 
 	return testingTxCmd
 }
 
 // GetCmdUpdateEthAddress updates the network about the eth address that you have on record.
-func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
+func CmdUpdateEthAddress() *cobra.Command {
 	return &cobra.Command{
 		Use:   "update-eth-addr [eth_private_key]",
 		Short: "Update your Ethereum address which will be used for signing executables for the `multisig set`",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.GetClientContextFromCmd(cmd).ReadTxCommandFlags(clientCtx, cmd.Flags())
+			cliCtx, err := client.ReadTxCommandFlags(client.GetClientContextFromCmd(cmd), cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -100,12 +98,12 @@ func CmdUpdateEthAddress(cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-func CmdValsetRequest(cdc *codec.Codec) *cobra.Command {
+func CmdValsetRequest() *cobra.Command {
 	return &cobra.Command{
 		Use:   "valset-request",
 		Short: "Trigger a new `multisig set` update request on the cosmos side",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.GetClientContextFromCmd(cmd).ReadTxCommandFlags(clientCtx, cmd.Flags())
+			cliCtx, err := client.ReadTxCommandFlags(client.GetClientContextFromCmd(cmd), cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -160,13 +158,13 @@ func CmdUnsafeETHAddr() *cobra.Command {
 	}
 }
 
-func CmdWithdrawToETH(cdc *codec.Codec) *cobra.Command {
+func CmdWithdrawToETH() *cobra.Command {
 	return &cobra.Command{
 		Use:   "withdraw [from_key_or_cosmos_address] [to_eth_address] [amount] [bridge_fee]",
 		Short: "Adds a new entry to the transaction pool to withdraw an amount from the Ethereum bridge contract",
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.GetClientContextFromCmd(cmd).ReadTxCommandFlags(clientCtx, cmd.Flags())
+			cliCtx, err := client.ReadTxCommandFlags(client.GetClientContextFromCmd(cmd), cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -183,8 +181,8 @@ func CmdWithdrawToETH(cdc *codec.Codec) *cobra.Command {
 
 			// Make the message
 			msg := types.MsgSendToEth{
-				Sender:      cosmosAddr,
-				DestAddress: types.NewEthereumAddress(args[1]),
+				Sender:      cosmosAddr.String(),
+				DestAddress: types.NewEthereumAddress(args[1]).Bytes(),
 				Amount:      amount,
 				BridgeFee:   bridgeFee,
 			}
@@ -192,18 +190,18 @@ func CmdWithdrawToETH(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 			// Send it
-			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
 		},
 	}
 }
 
-func CmdRequestBatch(cdc *codec.Codec) *cobra.Command {
+func CmdRequestBatch() *cobra.Command {
 	return &cobra.Command{
 		Use:   "build-batch [voucher_denom]",
 		Short: "Build a new batch on the cosmos side for pooled withdrawal transactions",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.GetClientContextFromCmd(cmd).ReadTxCommandFlags(clientCtx, cmd.Flags())
+			cliCtx, err := client.ReadTxCommandFlags(client.GetClientContextFromCmd(cmd), cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -216,14 +214,14 @@ func CmdRequestBatch(cdc *codec.Codec) *cobra.Command {
 			}
 
 			msg := types.MsgRequestBatch{
-				Requester: cosmosAddr,
-				Denom:     denom,
+				Requester: cosmosAddr.String(),
+				Denom:     denom.String(),
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 			// Send it
-			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
 		},
 	}
 }

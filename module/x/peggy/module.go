@@ -2,6 +2,7 @@ package peggy
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/gorilla/mux"
@@ -9,9 +10,10 @@ import (
 
 	"github.com/althea-net/peggy/module/x/peggy/client/cli"
 	"github.com/althea-net/peggy/module/x/peggy/client/rest"
+	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,54 +26,58 @@ var (
 	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
-// app module Basics object
+// AppModuleBasic object for module implementation
 type AppModuleBasic struct{}
 
+// Name implements app module basic
 func (AppModuleBasic) Name() string {
-	return ModuleName
+	return types.ModuleName
 }
 
-func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
-	RegisterCodec(cdc)
+// RegisterLegacyAminoCodec implements app module basic
+func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	types.RegisterCodec(cdc)
 }
 
-func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	return ModuleCdc.MustMarshalJSON(DefaultGenesisState())
+// DefaultGenesis implements app module basic
+func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
+	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
-// Validation check of the Genesis
-func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
-	var data GenesisState
-	err := ModuleCdc.UnmarshalJSON(bz, &data)
-	if err != nil {
-		return err
+// ValidateGenesis implements app module basic
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, _ client.TxEncodingConfig, bz json.RawMessage) error {
+	var data types.GenesisState
+	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
+		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
 	}
+
 	return data.ValidateBasic()
 }
 
-// Register rest routes
+// RegisterRESTRoutes implements app module basic
 func (AppModuleBasic) RegisterRESTRoutes(ctx client.Context, rtr *mux.Router) {
-	rest.RegisterRoutes(ctx, rtr, StoreKey)
+	rest.RegisterRoutes(ctx, rtr, types.StoreKey)
 }
 
-// Get the root query command of this module
-func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return cli.GetQueryCmd(StoreKey, cdc)
+// GetQueryCmd implements app module basic
+func (AppModuleBasic) GetQueryCmd() *cobra.Command {
+	return cli.GetQueryCmd(types.StoreKey)
 }
 
-// Get the root tx command of this module
-func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return cli.GetTxCmd(StoreKey, cdc)
+// GetTxCmd implements app module basic
+func (AppModuleBasic) GetTxCmd() *cobra.Command {
+	return cli.GetTxCmd(types.StoreKey)
 }
 
+// AppModule object for module implementation
 type AppModule struct {
 	AppModuleBasic
-	keeper     Keeper
-	bankKeeper bank.Keeper
+	keeper     keeper.Keeper
+	bankKeeper bankkeeper.Keeper
 }
 
 // NewAppModule creates a new AppModule Object
-func NewAppModule(k Keeper, bankKeeper bank.Keeper) AppModule {
+func NewAppModule(k keeper.Keeper, bankKeeper bankkeeper.Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         k,
@@ -79,41 +85,53 @@ func NewAppModule(k Keeper, bankKeeper bank.Keeper) AppModule {
 	}
 }
 
+// Name implements app module
 func (AppModule) Name() string {
-	return ModuleName
+	return types.ModuleName
 }
 
+// RegisterInvariants implements app module
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
 
+// Route implements app module
 func (am AppModule) Route() string {
-	return RouterKey
+	return types.RouterKey
 }
 
+// NewHandler implements app module
 func (am AppModule) NewHandler() sdk.Handler {
 	return NewHandler(am.keeper)
 }
+
+// QuerierRoute implements app module
 func (am AppModule) QuerierRoute() string {
-	return QuerierRoute
+	return types.QuerierRoute
 }
 
+// NewQuerierHandler implements app module
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.keeper)
+	return keeper.NewQuerier(am.keeper)
 }
 
+// BeginBlock implements app module
 func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 
+// EndBlock implements app module
 func (am AppModule) EndBlock(sdk.Context, abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
 }
 
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
-	var genesisState GenesisState
-	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	var genesisState types.GenesisState
+	// TODO: codec must be passed in here
+	// ModuleCdc.MustUnmarshalJSON(data, &genesisState)
 	keeper.InitGenesis(ctx, am.keeper, genesisState)
 	return []abci.ValidatorUpdate{}
 }
 
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := keeper.ExportGenesis(ctx, am.keeper)
-	return ModuleCdc.MustMarshalJSON(gs)
+	// TODO: codec must be passed in here
+	// return ModuleCdc.MustMarshalJSON(gs)
+	return json.RawMessage{}
 }

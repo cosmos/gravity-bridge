@@ -5,28 +5,29 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // NewHandler returns a handler for "Peggy" type messages.
-func NewHandler(keeper Keeper) sdk.Handler {
+func NewHandler(keeper keeper.Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		switch msg := msg.(type) {
-		case MsgSetEthAddress:
+		case *types.MsgSetEthAddress:
 			return handleMsgSetEthAddress(ctx, keeper, msg)
-		case MsgValsetConfirm:
+		case *types.MsgValsetConfirm:
 			return handleMsgConfirmValset(ctx, keeper, msg)
-		case MsgValsetRequest:
+		case *types.MsgValsetRequest:
 			return handleMsgValsetRequest(ctx, keeper, msg)
-		case MsgSendToEth:
+		case *types.MsgSendToEth:
 			return handleMsgSendToEth(ctx, keeper, msg)
-		case MsgRequestBatch:
+		case *types.MsgRequestBatch:
 			return handleMsgRequestBatch(ctx, keeper, msg)
-		case MsgConfirmBatch:
+		case *types.MsgConfirmBatch:
 			return handleMsgConfirmBatch(ctx, keeper, msg)
-		case MsgCreateEthereumClaims:
+		case *types.MsgCreateEthereumClaims:
 			return handleCreateEthereumClaims(ctx, keeper, msg)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unrecognized Peggy Msg type: %v", msg.Type()))
@@ -34,7 +35,7 @@ func NewHandler(keeper Keeper) sdk.Handler {
 	}
 }
 
-func handleCreateEthereumClaims(ctx sdk.Context, keeper Keeper, msg MsgCreateEthereumClaims) (*sdk.Result, error) {
+func handleCreateEthereumClaims(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgCreateEthereumClaims) (*sdk.Result, error) {
 	// TODO:
 	// auth EthereumChainID whitelisted
 	// auth bridge contract address whitelisted
@@ -46,15 +47,24 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper Keeper, msg MsgCreateEth
 	var attestationIDs [][]byte
 	// auth sender in current validator set
 	for _, c := range msg.Claims {
-		validator := findValidatorKey(ctx, msg.Orchestrator)
+		orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+		validator := findValidatorKey(ctx, orch)
 		if validator == nil {
 			return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 		}
-		att, err := keeper.AddClaim(ctx, c.GetType(), c.GetEventNonce(), validator, c.Details())
+		ec, err := types.UnpackEthereumClaim(c)
+		if err != nil {
+			return nil, sdkerrors.Wrap(err, "unpacking claim")
+		}
+		att, err := keeper.AddClaim(ctx, ec.GetType(), types.NewUInt64Nonce(ec.GetEventNonce()), validator, ec.Details())
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "create attestation")
 		}
-		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, att.Details))
+		ad, err := types.UnpackAttestationDetails(att.Details)
+		if err != nil {
+			return nil, sdkerrors.Wrap(err, "unpacking attestation")
+		}
+		attestationIDs = append(attestationIDs, types.GetAttestationKey(types.NewUInt64Nonce(att.EventNonce), ad))
 	}
 	return &sdk.Result{
 		Data: bytes.Join(attestationIDs, []byte(", ")),
@@ -66,7 +76,7 @@ func findValidatorKey(ctx sdk.Context, orchAddr sdk.AccAddress) sdk.ValAddress {
 	return sdk.ValAddress(orchAddr)
 }
 
-func handleMsgValsetRequest(ctx sdk.Context, keeper Keeper, msg types.MsgValsetRequest) (*sdk.Result, error) {
+func handleMsgValsetRequest(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgValsetRequest) (*sdk.Result, error) {
 	// todo: is requester in current valset?\
 
 	// disabling bootstrap check for integration tests to pass
@@ -75,14 +85,14 @@ func handleMsgValsetRequest(ctx sdk.Context, keeper Keeper, msg types.MsgValsetR
 	//}
 	v := keeper.SetValsetRequest(ctx)
 	return &sdk.Result{
-		Data: v.Nonce.Bytes(),
+		Data: types.NewUInt64Nonce(v.Nonce).Bytes(),
 	}, nil
 }
 
 // This function takes in a signature submitted by a validator's Eth Signer
-func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) (*sdk.Result, error) {
+func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgConfirmBatch) (*sdk.Result, error) {
 
-	batch := keeper.GetOutgoingTXBatch(ctx, msg.TokenContract, msg.Nonce)
+	batch := keeper.GetOutgoingTXBatch(ctx, types.NewEthereumAddress(string(msg.TokenContract)), types.NewUInt64Nonce(msg.Nonce))
 	if batch == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
 	}
@@ -96,7 +106,8 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) 
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
-	validator := findValidatorKey(ctx, msg.Validator)
+	valaddr, _ := sdk.AccAddressFromBech32(msg.Validator)
+	validator := findValidatorKey(ctx, valaddr)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
@@ -111,7 +122,7 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) 
 	}
 
 	// check if we already have this confirm
-	if keeper.GetBatchConfirm(ctx, msg.Nonce, msg.TokenContract, msg.Validator) != nil {
+	if keeper.GetBatchConfirm(ctx, types.NewUInt64Nonce(msg.Nonce), types.NewEthereumAddress(string(msg.TokenContract)), valaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
 	key := keeper.SetBatchConfirm(ctx, msg)
@@ -121,9 +132,9 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper Keeper, msg MsgConfirmBatch) 
 }
 
 // This function takes in a signature submitted by a validator's Eth Signer
-func handleMsgConfirmValset(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm) (*sdk.Result, error) {
+func handleMsgConfirmValset(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgValsetConfirm) (*sdk.Result, error) {
 
-	valset := keeper.GetValsetRequest(ctx, msg.Nonce)
+	valset := keeper.GetValsetRequest(ctx, types.NewUInt64Nonce(msg.Nonce))
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
 	}
@@ -134,7 +145,8 @@ func handleMsgConfirmValset(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
-	validator := findValidatorKey(ctx, msg.Validator)
+	valaddr, _ := sdk.AccAddressFromBech32(msg.Validator)
+	validator := findValidatorKey(ctx, valaddr)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
@@ -149,27 +161,29 @@ func handleMsgConfirmValset(ctx sdk.Context, keeper Keeper, msg MsgValsetConfirm
 	}
 
 	// persist signature
-	if keeper.GetValsetConfirm(ctx, msg.Nonce, msg.Validator) != nil {
+	if keeper.GetValsetConfirm(ctx, types.NewUInt64Nonce(msg.Nonce), valaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
-	key := keeper.SetValsetConfirm(ctx, msg)
+	key := keeper.SetValsetConfirm(ctx, *msg)
 	return &sdk.Result{
 		Data: key,
 	}, nil
 }
 
-func handleMsgSetEthAddress(ctx sdk.Context, keeper Keeper, msg MsgSetEthAddress) (*sdk.Result, error) {
-	validator := findValidatorKey(ctx, msg.Validator)
+func handleMsgSetEthAddress(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgSetEthAddress) (*sdk.Result, error) {
+	valaddr, _ := sdk.AccAddressFromBech32(msg.Validator)
+	validator := findValidatorKey(ctx, valaddr)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 	}
 
-	keeper.SetEthAddress(ctx, validator, msg.Address)
+	keeper.SetEthAddress(ctx, validator, types.NewEthereumAddress(string(msg.Address)))
 	return &sdk.Result{}, nil
 }
 
-func handleMsgSendToEth(ctx sdk.Context, keeper Keeper, msg MsgSendToEth) (*sdk.Result, error) {
-	txID, err := keeper.AddToOutgoingPool(ctx, msg.Sender, msg.DestAddress, msg.Amount, msg.BridgeFee)
+func handleMsgSendToEth(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgSendToEth) (*sdk.Result, error) {
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	txID, err := keeper.AddToOutgoingPool(ctx, sender, types.NewEthereumAddress(string(msg.DestAddress)), msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
 	}
@@ -178,12 +192,16 @@ func handleMsgSendToEth(ctx sdk.Context, keeper Keeper, msg MsgSendToEth) (*sdk.
 	}, nil
 }
 
-func handleMsgRequestBatch(ctx sdk.Context, keeper Keeper, msg MsgRequestBatch) (*sdk.Result, error) {
-	batchID, err := keeper.BuildOutgoingTXBatch(ctx, msg.Denom, OutgoingTxBatchSize)
+func handleMsgRequestBatch(ctx sdk.Context, k keeper.Keeper, msg *types.MsgRequestBatch) (*sdk.Result, error) {
+	vd, err := types.AsVoucherDenom(msg.Denom)
+	if err != nil {
+		return nil, err
+	}
+	batchID, err := k.BuildOutgoingTXBatch(ctx, vd, keeper.OutgoingTxBatchSize)
 	if err != nil {
 		return nil, err
 	}
 	return &sdk.Result{
-		Data: batchID.Nonce.Bytes(),
+		Data: types.NewUInt64Nonce(batchID.Nonce).Bytes(),
 	}, nil
 }
