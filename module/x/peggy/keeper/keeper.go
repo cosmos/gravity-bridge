@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
@@ -29,7 +28,7 @@ type Keeper struct {
 	}
 }
 
-// NewKeeper
+// NewKeeper returns a new instance of the peggy keeper
 func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper) Keeper {
 	k := Keeper{
 		cdc:           cdc,
@@ -51,6 +50,12 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 	return k
 }
 
+/////////////////////////////
+//     VALSET REQUESTS     //
+/////////////////////////////
+
+// SetValsetRequest returns a new instance of the Peggy BridgeValidatorSet
+// i.e. {"nonce": 1, "memebers": [{"eth_addr": "foo", "power": 11223}]}
 func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	valset := k.GetCurrentValset(ctx)
 	k.storeValset(ctx, valset)
@@ -72,30 +77,13 @@ func (k Keeper) storeValset(ctx sdk.Context, valset *types.Valset) {
 	store.Set(types.GetValsetRequestKey(types.NewUInt64Nonce(valset.Nonce)), k.cdc.MustMarshalBinaryBare(valset))
 }
 
-func (k Keeper) SetBootstrapValset(ctx sdk.Context, valset *types.Valset) error {
-	nonce := valset.Nonce
-	if k.HasValsetRequest(ctx, types.NewUInt64Nonce(nonce)) {
-		return sdkerrors.Wrap(types.ErrDuplicate, "nonce")
-	}
-	k.storeValset(ctx, valset)
-
-	event := sdk.NewEvent(
-		types.EventTypeMultisigUpdateRequest,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
-		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyMultisigID, fmt.Sprint(nonce)),
-		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nonce)),
-	)
-	ctx.EventManager().EmitEvent(event)
-	return nil
-}
-
+// HasValsetRequest returns true if a valset defined by a nonce exists
 func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce types.UInt64Nonce) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(types.GetValsetRequestKey(nonce))
 }
 
+// GetValsetRequest returns a valset by nonce
 func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce types.UInt64Nonce) *types.Valset {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetValsetRequestKey(nonce))
@@ -107,7 +95,7 @@ func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce types.UInt64Nonce) *type
 	return &valset
 }
 
-// Iterate through all valset set requests in DESC order.
+// IterateValsetRequest retruns all valsetRequests
 func (k Keeper) IterateValsetRequest(ctx sdk.Context, cb func(key []byte, val *types.Valset) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetRequestKey)
 	iter := prefixStore.ReverseIterator(nil, nil)
@@ -122,6 +110,11 @@ func (k Keeper) IterateValsetRequest(ctx sdk.Context, cb func(key []byte, val *t
 	}
 }
 
+/////////////////////////////
+//     VALSET CONFIRMS     //
+/////////////////////////////
+
+// GetValsetConfirm returns a valset confirmation by a nonce and validator address
 func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce types.UInt64Nonce, validator sdk.AccAddress) *types.MsgValsetConfirm {
 	store := ctx.KVStore(k.storeKey)
 	entity := store.Get(types.GetValsetConfirmKey(nonce, validator))
@@ -133,6 +126,7 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce types.UInt64Nonce, valid
 	return &confirm
 }
 
+// SetValsetConfirm sets a valset confirmation
 func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) []byte {
 	store := ctx.KVStore(k.storeKey)
 	addr, err := sdk.AccAddressFromBech32(valsetConf.Validator)
@@ -144,30 +138,26 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 	return key
 }
 
-func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce types.UInt64Nonce, tokenContract types.EthereumAddress, validator sdk.AccAddress) *types.MsgConfirmBatch {
-	store := ctx.KVStore(k.storeKey)
-	entity := store.Get(types.GetBatchConfirmKey(tokenContract, nonce, validator))
-	if entity == nil {
-		return nil
+// GetAllValsetConfirmsByNonce returns all validator set confirmations by nonce
+func (k Keeper) GetAllValsetConfirmsByNonce(ctx sdk.Context, nonce types.UInt64Nonce) (confirms []*types.MsgValsetConfirm) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
+	start, end := prefixRange(nonce.Bytes())
+	iterator := prefixStore.Iterator(start, end)
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		confirm := types.MsgValsetConfirm{}
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &confirm)
+		confirms = append(confirms, &confirm)
 	}
-	confirm := types.MsgConfirmBatch{}
-	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
-	return &confirm
+
+	return confirms
 }
 
-func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) []byte {
-	store := ctx.KVStore(k.storeKey)
-	acc, err := sdk.AccAddressFromBech32(batch.Validator)
-	if err != nil {
-		panic(err)
-	}
-	key := types.GetBatchConfirmKey(types.NewEthereumAddress(string(batch.TokenContract)), types.NewUInt64Nonce(batch.Nonce), acc)
-	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
-	return key
-}
-
-// Iterate through all valset confirms for a nonce in ASC order
+// IterateValsetConfirmByNonce iterates through all valset confirms by nonce in ASC order
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
+// TODO: specify which nonce this is
 func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64Nonce, cb func([]byte, types.MsgValsetConfirm) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
 	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
@@ -183,8 +173,37 @@ func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64N
 	}
 }
 
-// Iterate through all valset confirms for a nonce in ASC order
+/////////////////////////////
+//      BATCH CONFIRMS     //
+/////////////////////////////
+
+// GetBatchConfirm returns a batch confirmation given its nonce, the token contract, and a validator address
+func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce types.UInt64Nonce, tokenContract types.EthereumAddress, validator sdk.AccAddress) *types.MsgConfirmBatch {
+	store := ctx.KVStore(k.storeKey)
+	entity := store.Get(types.GetBatchConfirmKey(tokenContract, nonce, validator))
+	if entity == nil {
+		return nil
+	}
+	confirm := types.MsgConfirmBatch{}
+	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
+	return &confirm
+}
+
+// SetBatchConfirm sets a batch confirmation by a validator
+func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) []byte {
+	store := ctx.KVStore(k.storeKey)
+	acc, err := sdk.AccAddressFromBech32(batch.Validator)
+	if err != nil {
+		panic(err)
+	}
+	key := types.GetBatchConfirmKey(types.NewEthereumAddress(string(batch.TokenContract)), types.NewUInt64Nonce(batch.Nonce), acc)
+	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
+	return key
+}
+
+// IterateBatchConfirmByNonceAndTokenContract iterates through all batch confirmations
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
+// TODO: specify which nonce this is
 func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce types.UInt64Nonce, tokenContract types.EthereumAddress, cb func([]byte, types.MsgConfirmBatch) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchConfirmKey)
 	prefix := append(tokenContract.Bytes(), nonce.Bytes()...)
@@ -201,11 +220,17 @@ func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonc
 	}
 }
 
+/////////////////////////////
+//       ETH ADDRESS       //
+/////////////////////////////
+
+// SetEthAddress sets the ethereum address for a given validator
 func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.ValAddress, ethAddr types.EthereumAddress) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetEthAddressKey(validator), ethAddr.Bytes())
 }
 
+// GetEthAddress returns the eth address for a given peggy validator
 func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) *types.EthereumAddress {
 	store := ctx.KVStore(k.storeKey)
 	val := store.Get(types.GetEthAddressKey(validator))
@@ -252,56 +277,56 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	return types.NewValset(nonce, bridgeValidators)
 }
 
-// func (k Keeper) GetLastObservedMultisig(ctx sdk.Context) *types.Valset {
-// 	nonce := k.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeMultiSigUpdate)
-// 	if nonce == nil || nonce.IsEmpty() {
-// 		// todo: make this obsolete by exposing valset update event in bridge constructor
-// 		nonce = k.GetLastAttestedNonce(ctx, types.ClaimTypeEthereumBridgeBootstrap)
-// 	}
-// 	if nonce == nil || nonce.IsEmpty() {
-// 		return nil
-// 	}
-// 	return k.GetValsetRequest(ctx, *nonce)
-// }
+/////////////////////////////
+//       PARAMETERS        //
+/////////////////////////////
 
-// GetParams returns the total set of wasm parameters.
+// GetParams returns the parameters from the store
 func (k Keeper) GetParams(ctx sdk.Context) *types.Params {
 	var p *types.Params
 	k.paramSpace.GetParamSet(ctx, p)
 	return p
 }
 
+// setParams sets the parameters in the store
 func (k Keeper) setParams(ctx sdk.Context, ps *types.Params) {
 	k.paramSpace.SetParamSet(ctx, ps)
 }
 
+// GetBridgeContractAddress returns the bridge contract address on ETH
 func (k Keeper) GetBridgeContractAddress(ctx sdk.Context) types.EthereumAddress {
 	var a string
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractAddress, &a)
 	return types.NewEthereumAddress(string(a))
 }
 
+// GetBridgeChainID returns the chain id of the ETH chain we are running against
 func (k Keeper) GetBridgeChainID(ctx sdk.Context) uint64 {
 	var a uint64
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractChainID, &a)
 	return a
 }
 
+// GetPeggyID returns the PeggyID (???)
 func (k Keeper) GetPeggyID(ctx sdk.Context) []byte {
 	var a []byte
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyPeggyID, &a)
 	return a
 }
+
+// Set PeggyID sets the PeggyID (couldn't we reuse the ChainID here?)
 func (k Keeper) setPeggyID(ctx sdk.Context, v string) {
 	k.paramSpace.Set(ctx, types.ParamsStoreKeyPeggyID, v)
 }
 
+// GetStartThreshold returns the start threshold for the peggy validator set
 func (k Keeper) GetStartThreshold(ctx sdk.Context) uint64 {
 	var a uint64
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyStartThreshold, &a)
 	return a
 }
 
+// setStartThreshold sets the start threshold
 func (k Keeper) setStartThreshold(ctx sdk.Context, v uint64) {
 	k.paramSpace.Set(ctx, types.ParamsStoreKeyStartThreshold, v)
 }

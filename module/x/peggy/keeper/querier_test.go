@@ -74,12 +74,17 @@ func TestQueryValsetConfirm(t *testing.T) {
 func TestAllValsetConfirmsBynonce(t *testing.T) {
 	k, ctx, _ := CreateTestEnv(t)
 
+	addrs := []string{
+		"cosmos1u508cfnsk2nhakv80vdtq3nf558ngyvldkfjj9",
+		"cosmos1krtcsrxhadj54px0vy6j33pjuzcd3jj8kmsazv",
+		"cosmos1u94xef3cp9thkcpxecuvhtpwnmg8mhlja8hzkd",
+	}
 	// seed confirmations
 	for i := 0; i < 3; i++ {
-		addr, _ := sdk.AccAddressFromBech32("cosmos1u508cfnsk2nhakv80vdtq3nf558ngyvldkfjj9")
+		addr, _ := sdk.AccAddressFromBech32(addrs[i])
 		msg := types.MsgValsetConfirm{}
 		msg.EthAddress = createEthAddress(i + 1).String()
-		msg.Nonce = uint64(i)
+		msg.Nonce = uint64(1)
 		msg.Validator = addr.String()
 		msg.Signature = fmt.Sprintf("signature %d", i+1)
 		k.SetValsetConfirm(ctx, msg)
@@ -93,9 +98,9 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			expResp: []byte(`[
-      {"eth_address":"0x0101010101010101010101010101010101010101", "nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a", "signature": "signature 1"},
-      {"eth_address":"0x0202020202020202020202020202020202020202", "nonce": "1", "validator": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du", "signature": "signature 2"},
-      {"eth_address":"0x0303030303030303030303030303030303030303", "nonce": "1", "validator": "cosmos1qgpqyqszqgpqyqszqgpqyqszqgpqyqszrh8mx2", "signature": "signature 3"}
+      {"eth_address":"0x0101010101010101010101010101010101010101", "nonce": "1", "validator": "cosmos1u508cfnsk2nhakv80vdtq3nf558ngyvldkfjj9", "signature": "signature 1"},
+      {"eth_address":"0x0202020202020202020202020202020202020202", "nonce": "1", "validator": "cosmos1krtcsrxhadj54px0vy6j33pjuzcd3jj8kmsazv", "signature": "signature 2"},
+      {"eth_address":"0x0303030303030303030303030303030303030303", "nonce": "1", "validator": "cosmos1u94xef3cp9thkcpxecuvhtpwnmg8mhlja8hzkd", "signature": "signature 3"}
 ]`),
 		},
 		"unknown nonce": {
