@@ -73,6 +73,8 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper keeper.Keeper, msg *type
 
 func findValidatorKey(ctx sdk.Context, orchAddr sdk.AccAddress) sdk.ValAddress {
 	// todo: implement proper in keeper
+	// TODO: do we want ValAddress or do we want the AccAddress for the validator?
+	// this is a v important question for encoding
 	return sdk.ValAddress(orchAddr)
 }
 

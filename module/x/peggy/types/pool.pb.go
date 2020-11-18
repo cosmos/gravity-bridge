@@ -25,6 +25,7 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // OutgoingTx is a withdrawal on the bridged contract
+// TODO: can this type be replaced by outgoing transfer tx
 type OutgoingTx struct {
 	Sender    string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	DestAddr  []byte     `protobuf:"bytes,2,opt,name=dest_addr,json=destAddr,proto3" json:"dest_addr,omitempty"`
@@ -98,6 +99,8 @@ func (m *OutgoingTx) GetBridgeFee() types.Coin {
 // used for it in the contract
 // In Peggy this is represented as "vouchers" that get minted and burned when interacting with the Ethereum side. These "vouchers"
 // are identified by a prefixed string representation. See VoucherDenom type.
+// TODO: do we remove the symbol here and just rely on sdk.Coin and the string parsing of the denom?
+// i.e. `peggy/0x6b175474e89094c44da98b954eedeac495271d0f` for DAI
 type BridgedDenominator struct {
 	TokenContractAddress []byte `protobuf:"bytes,1,opt,name=token_contract_address,json=tokenContractAddress,proto3" json:"token_contract_address,omitempty"`
 	Symbol               string `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`

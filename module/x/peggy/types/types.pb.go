@@ -22,7 +22,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// // BridgeValidator represents the validator data in the Ethereum bridge MultiSig set.
+// BridgeValidator represents a validator's ETH address and its power
 type BridgeValidator struct {
 	Power           uint64 `protobuf:"varint,1,opt,name=power,proto3" json:"power,omitempty"`
 	EthereumAddress []byte `protobuf:"bytes,2,opt,name=ethereum_address,json=ethereumAddress,proto3" json:"ethereum_address,omitempty"`
@@ -75,9 +75,13 @@ func (m *BridgeValidator) GetEthereumAddress() []byte {
 	return nil
 }
 
-// // Valset is the Ethereum Bridge Multsig Set
+// Valset is the Ethereum Bridge Multsig Set, each peggy validator also maintains
+// an ETH key to sign messages, these are used to check signatures on ETH because
+// of the significant gas savings
 type Valset struct {
-	Nonce   uint64             `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	// Valsets are stored in the store at a nonce
+	Nonce uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	// It is made up of BridgeValidators
 	Members []*BridgeValidator `protobuf:"bytes,2,rep,name=members,proto3" json:"members,omitempty"`
 }
 

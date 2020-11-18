@@ -37,7 +37,6 @@ whitespace += $(whitespace)
 comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
-# TODO: Update the ldflags with the app, client & server names
 ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=peggy \
 	-X github.com/cosmos/cosmos-sdk/version.AppName=peggy \
 	-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \

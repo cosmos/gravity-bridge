@@ -8,14 +8,13 @@ import "google/protobuf/any.proto";
 import "cosmos_proto/cosmos.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
-// ValsetConfirm
+// MsgValsetConfirm
 // this is the message sent by the validators when they wish to submit their signatures over
 // the validator set at a given block height. A validator must first call MsgSetEthAddress to
 // set their Ethereum address to be used for signing. Then someone (anyone) must make a ValsetRequest
 // the request is essentially a messaging mechanism to determine which block all validators should submit
 // signatures over. Finally validators sign the validator set, powers, and Ethereum addresses of the
-// entire validator set at the height of a ValsetRequest and submit that signature with this message
-// a ValsetConfirm.
+// entire validator set at the height of a ValsetRequest and submit that signature with this message.
 //
 // If a sufficient number of validators (66% of voting power) (A) have set Ethereum addresses and (B)
 // submit ValsetConfirm messages with their signatures it is then possible for anyone to view these
@@ -68,7 +67,7 @@ message MsgSendToEth {
     string                   sender       = 1;
     
     // the destination address on Ethereum
-    bytes                    dest_address = 2;
+    bytes                    eth_dest     = 2;
     
     // the coin to send across the bridge, note the restriction that this is a
     // single coin not a set of coins that is normal in other Cosmos messages

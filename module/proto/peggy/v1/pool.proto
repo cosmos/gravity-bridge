@@ -7,6 +7,7 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 // OutgoingTx is a withdrawal on the bridged contract
+// TODO: can this type be replaced by outgoing transfer tx
 message OutgoingTx {
     string                   sender     = 1;
     bytes                    dest_addr  = 2;
@@ -19,6 +20,8 @@ message OutgoingTx {
 // used for it in the contract
 // In Peggy this is represented as "vouchers" that get minted and burned when interacting with the Ethereum side. These "vouchers"
 // are identified by a prefixed string representation. See VoucherDenom type.
+// TODO: do we remove the symbol here and just rely on sdk.Coin and the string parsing of the denom?
+// i.e. `peggy/0x6b175474e89094c44da98b954eedeac495271d0f` for DAI
 message BridgedDenominator {
     bytes  token_contract_address = 1;
     string symbol                 = 2;

@@ -3,9 +3,9 @@ package peggy.v1;
 import "gogoproto/gogo.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
-// SignType defines what has been signed by an orchestrator
+// SignType defines messages that have been signed by an orchestrator
 enum SignType {
-  option (gogoproto.goproto_enum_prefix) = false;
+  option (gogoproto.goproto_enum_prefix)         = false;
   option (gogoproto.goproto_enum_stringer)       = false;
   
   SIGN_TYPE_UNKNOWN                              = 0;

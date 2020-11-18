@@ -8,37 +8,42 @@ import "peggy/v1/types.proto";
 
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
-// enum BatchStatus {
-//   option (gogoproto.goproto_enum_prefix) = false;
-//   BATCH_STATUS_UNKNOWN   = 0;
-//   BATCH_STATUS_PENDING   = 1;  // inital status
-//   BATCH_STATUS_SUBMITTED = 2;  // in flight to ETH
-//   BATCH_STATUS_PROCESSED = 3;  // observed - end state
-//   BATCH_STATUS_CANCELED  = 4;  // end state
-// }
-
-
+// OutgoingTxBatch represents a batch of transactions going from Peggy to ETH
 message OutgoingTxBatch {
-  // option (gogoproto.marshaler)   = false;
-  // option (gogoproto.sizer)       = false;
-  // option (gogoproto.unmarshaler) = false;
-
+  // The nonce of...?
   uint64                      nonce               = 1;
+
+  // The individual operation of the transaction batch
   repeated OutgoingTransferTx elements            = 2;
-  ERC20Token                  total_fee           = 4;
+
+  // The fee to be paid on ETH for the transaction
+  ERC20Token                  erc20_fee           = 4;
+
+  // The peggy side representation of the ERC20 token
   BridgedDenominator          bridged_denominator = 5;
+
+  // The validator set on Peggy that will sign the transactions
   Valset                      valset              = 7;
-  bytes                       token_contract      = 8;
+
+  // The token contract on ETH were...?
+  string                      token_contract      = 8;
 }
 
+
+// OutgoingTransferTx represents an individual send from Peggy to ETH
 message OutgoingTransferTx {
-  // option (gogoproto.marshaler)   = false;
-  // option (gogoproto.sizer)       = false;
-  // option (gogoproto.unmarshaler) = false;
-  
+  // The nonce on the peggy side for this individual transfer
   uint64     id           = 1;
+
+  // The peggy address of the sender of this transaction
   string     sender       = 2;
-  bytes      dest_address = 3;
-  ERC20Token amount       = 4; 
-  ERC20Token bridge_fee   = 5;
+
+  // The address on ETH where the transfer is bound
+  string     dest_address = 3;
+
+  // The ERC20 token amount to be sent back to ETH
+  ERC20Token erc20_token  = 4; 
+
+  // The ERC20 fee paid to the bridge
+  ERC20Token erc20_fee    = 5;
 }

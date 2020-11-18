@@ -384,7 +384,6 @@ func NewPeggyApp(
 		app.bankKeeper,
 	)
 
-	// TODO: ensure this is wired up
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	app.mm = module.NewManager(

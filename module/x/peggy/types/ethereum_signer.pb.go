@@ -21,7 +21,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// SignType defines what has been signed by an orchestrator
+// SignType defines messages that have been signed by an orchestrator
 type SignType int32
 
 const (
