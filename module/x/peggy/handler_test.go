@@ -30,13 +30,13 @@ func TestHandleValsetRequest(t *testing.T) {
 	res, err := h(ctx, msg)
 	// then
 	require.NoError(t, err)
-	nonce := types.UInt64NonceFromBytes(res.Data)
-	require.False(t, nonce.IsEmpty())
-	require.Equal(t, types.NewUInt64Nonce(uint64(myBlockHeight)), nonce)
+	nonce := types.UInt64FromBytes(res.Data)
+	require.False(t, nonce == 0)
+	require.Equal(t, uint64(myBlockHeight), nonce)
 	// and persisted
 	valset := k.GetValsetRequest(ctx, nonce)
 	require.NotNil(t, valset)
-	assert.Equal(t, nonce.Uint64(), valset.Nonce)
+	assert.Equal(t, nonce, valset.Nonce)
 	require.Len(t, valset.Members, 1)
 	assert.Equal(t, []uint64{math.MaxUint32}, types.BridgeValidators(valset.Members).GetPowers())
 	assert.Equal(t, "", valset.Members[0].EthereumAddress)
@@ -47,7 +47,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
 		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
 		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
-		myNonce                           = types.NewUInt64Nonce(1)
+		myNonce                           = uint64(1)
 		anyETHAddr                        = types.NewEthereumAddress("any-address")
 		tokenETHAddr                      = types.NewEthereumAddress("any-erc20-token-addr")
 		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
@@ -62,7 +62,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	}
 
 	ethClaim := &types.EthereumBridgeDepositClaim{
-		Nonce:          myNonce.Uint64(),
+		Nonce:          myNonce,
 		Erc20Token:     &myErc20,
 		EthereumSender: anyETHAddr.String(),
 		CosmosReceiver: myCosmosAddr.String(),
@@ -107,7 +107,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 
 	// Test to reject skipped nonce
 	ethClaim = &types.EthereumBridgeDepositClaim{
-		Nonce: types.NewUInt64Nonce(3).Uint64(),
+		Nonce: uint64(3),
 		Erc20Token: &types.ERC20Token{
 			Amount:   sdk.NewInt(12),
 			Contract: tokenETHAddr.String(),
@@ -134,7 +134,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0000000000000000000000000000000000000000", 12)}, balance)
 
 	ethClaim = &types.EthereumBridgeDepositClaim{
-		Nonce: types.NewUInt64Nonce(2).Uint64(),
+		Nonce: uint64(2),
 		Erc20Token: &types.ERC20Token{
 			Amount:   sdk.NewInt(13),
 			Contract: tokenETHAddr.String(),

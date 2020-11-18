@@ -16,13 +16,13 @@ import (
 
 func TestQueryValsetConfirm(t *testing.T) {
 	var (
-		nonce                                          = types.NewUInt64Nonce(1)
+		nonce                                          = uint64(1)
 		myValidatorCosmosAddr, _                       = sdk.AccAddressFromBech32("cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l")
 		myValidatorEthereumAddr  types.EthereumAddress = createEthAddress(50)
 	)
 	k, ctx, _ := CreateTestEnv(t)
 	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{
-		Nonce:      nonce.Uint64(),
+		Nonce:      nonce,
 		Validator:  myValidatorCosmosAddr.String(),
 		EthAddress: myValidatorEthereumAddr.String(),
 		Signature:  "alksdjhflkasjdfoiasjdfiasjdfoiasdj",

@@ -79,7 +79,7 @@ func (b BridgeValidators) ValidateBasic() error {
 }
 
 // NewValset returns a new valset
-func NewValset(nonce UInt64Nonce, members BridgeValidators) *Valset {
+func NewValset(nonce uint64, members BridgeValidators) *Valset {
 	members.Sort()
 	var mem []*BridgeValidator
 	for _, val := range members {

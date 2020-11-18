@@ -74,17 +74,17 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 
 func (k Keeper) storeValset(ctx sdk.Context, valset *types.Valset) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetValsetRequestKey(types.NewUInt64Nonce(valset.Nonce)), k.cdc.MustMarshalBinaryBare(valset))
+	store.Set(types.GetValsetRequestKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
 }
 
 // HasValsetRequest returns true if a valset defined by a nonce exists
-func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce types.UInt64Nonce) bool {
+func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce uint64) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(types.GetValsetRequestKey(nonce))
 }
 
 // GetValsetRequest returns a valset by nonce
-func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce types.UInt64Nonce) *types.Valset {
+func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce uint64) *types.Valset {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetValsetRequestKey(nonce))
 	if bz == nil {
@@ -115,7 +115,7 @@ func (k Keeper) IterateValsetRequest(ctx sdk.Context, cb func(key []byte, val *t
 /////////////////////////////
 
 // GetValsetConfirm returns a valset confirmation by a nonce and validator address
-func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce types.UInt64Nonce, validator sdk.AccAddress) *types.MsgValsetConfirm {
+func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce uint64, validator sdk.AccAddress) *types.MsgValsetConfirm {
 	store := ctx.KVStore(k.storeKey)
 	entity := store.Get(types.GetValsetConfirmKey(nonce, validator))
 	if entity == nil {
@@ -133,15 +133,15 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 	if err != nil {
 		panic(err)
 	}
-	key := types.GetValsetConfirmKey(types.NewUInt64Nonce(valsetConf.Nonce), addr)
+	key := types.GetValsetConfirmKey(valsetConf.Nonce, addr)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(&valsetConf))
 	return key
 }
 
 // GetAllValsetConfirmsByNonce returns all validator set confirmations by nonce
-func (k Keeper) GetAllValsetConfirmsByNonce(ctx sdk.Context, nonce types.UInt64Nonce) (confirms []*types.MsgValsetConfirm) {
+func (k Keeper) GetAllValsetConfirmsByNonce(ctx sdk.Context, nonce uint64) (confirms []*types.MsgValsetConfirm) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
-	start, end := prefixRange(nonce.Bytes())
+	start, end := prefixRange(types.UInt64Bytes(nonce))
 	iterator := prefixStore.Iterator(start, end)
 
 	defer iterator.Close()
@@ -158,9 +158,9 @@ func (k Keeper) GetAllValsetConfirmsByNonce(ctx sdk.Context, nonce types.UInt64N
 // IterateValsetConfirmByNonce iterates through all valset confirms by nonce in ASC order
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
-func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64Nonce, cb func([]byte, types.MsgValsetConfirm) bool) {
+func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgValsetConfirm) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
-	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
+	iter := prefixStore.Iterator(prefixRange(types.UInt64Bytes(nonce)))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
@@ -178,7 +178,7 @@ func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64N
 /////////////////////////////
 
 // GetBatchConfirm returns a batch confirmation given its nonce, the token contract, and a validator address
-func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce types.UInt64Nonce, tokenContract types.EthereumAddress, validator sdk.AccAddress) *types.MsgConfirmBatch {
+func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce uint64, tokenContract types.EthereumAddress, validator sdk.AccAddress) *types.MsgConfirmBatch {
 	store := ctx.KVStore(k.storeKey)
 	entity := store.Get(types.GetBatchConfirmKey(tokenContract, nonce, validator))
 	if entity == nil {
@@ -196,7 +196,7 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 	if err != nil {
 		panic(err)
 	}
-	key := types.GetBatchConfirmKey(types.NewEthereumAddress(string(batch.TokenContract)), types.NewUInt64Nonce(batch.Nonce), acc)
+	key := types.GetBatchConfirmKey(types.NewEthereumAddress(string(batch.TokenContract)), batch.Nonce, acc)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
 	return key
 }
@@ -204,9 +204,9 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 // IterateBatchConfirmByNonceAndTokenContract iterates through all batch confirmations
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
-func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce types.UInt64Nonce, tokenContract types.EthereumAddress, cb func([]byte, types.MsgConfirmBatch) bool) {
+func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract types.EthereumAddress, cb func([]byte, types.MsgConfirmBatch) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchConfirmKey)
-	prefix := append(tokenContract.Bytes(), nonce.Bytes()...)
+	prefix := append(tokenContract.Bytes(), types.UInt64Bytes(nonce)...)
 	iter := prefixStore.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
@@ -274,8 +274,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	for i := range bridgeValidators {
 		bridgeValidators[i].Power = sdk.NewUint(bridgeValidators[i].Power).MulUint64(math.MaxUint32).QuoUint64(totalPower).Uint64()
 	}
-	nonce := types.NewUInt64Nonce(uint64(ctx.BlockHeight()))
-	return types.NewValset(nonce, bridgeValidators)
+	return types.NewValset(uint64(ctx.BlockHeight()), bridgeValidators)
 }
 
 /////////////////////////////

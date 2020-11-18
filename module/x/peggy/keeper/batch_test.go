@@ -54,7 +54,7 @@ func TestBatches(t *testing.T) {
 	require.NoError(t, err)
 
 	// then batch is persisted
-	gotFirstBatch := k.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, types.NewUInt64Nonce(firstBatch.BatchNonce))
+	gotFirstBatch := k.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
 	require.NotNil(t, gotFirstBatch)
 
 	expFirstBatch := &types.OutgoingTxBatch{
@@ -151,10 +151,10 @@ func TestBatches(t *testing.T) {
 	// =================================
 
 	// Execute the batch
-	k.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, types.NewUInt64Nonce(secondBatch.BatchNonce))
+	k.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 
 	// check batch has been deleted
-	gotSecondBatch := k.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, types.NewUInt64Nonce(secondBatch.BatchNonce))
+	gotSecondBatch := k.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 	require.Nil(t, gotSecondBatch)
 
 	// check that txs from first batch have been freed

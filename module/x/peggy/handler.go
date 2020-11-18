@@ -56,7 +56,7 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper keeper.Keeper, msg *type
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "unpacking claim")
 		}
-		att, err := keeper.AddClaim(ctx, ec.GetType(), types.NewUInt64Nonce(ec.GetEventNonce()), validator, ec.Details())
+		att, err := keeper.AddClaim(ctx, ec.GetType(), ec.GetEventNonce(), validator, ec.Details())
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "create attestation")
 		}
@@ -64,7 +64,7 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper keeper.Keeper, msg *type
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "unpacking attestation")
 		}
-		attestationIDs = append(attestationIDs, types.GetAttestationKey(types.NewUInt64Nonce(att.EventNonce), ad))
+		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, ad))
 	}
 	return &sdk.Result{
 		Data: bytes.Join(attestationIDs, []byte(", ")),
@@ -87,14 +87,14 @@ func handleMsgValsetRequest(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 	//}
 	v := keeper.SetValsetRequest(ctx)
 	return &sdk.Result{
-		Data: types.NewUInt64Nonce(v.Nonce).Bytes(),
+		Data: types.UInt64Bytes(v.Nonce),
 	}, nil
 }
 
 // This function takes in a signature submitted by a validator's Eth Signer
 func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgConfirmBatch) (*sdk.Result, error) {
 
-	batch := keeper.GetOutgoingTXBatch(ctx, msg.TokenContract, types.NewUInt64Nonce(msg.Nonce))
+	batch := keeper.GetOutgoingTXBatch(ctx, msg.TokenContract, msg.Nonce)
 	if batch == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
 	}
@@ -124,7 +124,7 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.Msg
 	}
 
 	// check if we already have this confirm
-	if keeper.GetBatchConfirm(ctx, types.NewUInt64Nonce(msg.Nonce), types.NewEthereumAddress(msg.TokenContract), valaddr) != nil {
+	if keeper.GetBatchConfirm(ctx, msg.Nonce, types.NewEthereumAddress(msg.TokenContract), valaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
 	key := keeper.SetBatchConfirm(ctx, msg)
@@ -136,7 +136,7 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.Msg
 // This function takes in a signature submitted by a validator's Eth Signer
 func handleMsgConfirmValset(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgValsetConfirm) (*sdk.Result, error) {
 
-	valset := keeper.GetValsetRequest(ctx, types.NewUInt64Nonce(msg.Nonce))
+	valset := keeper.GetValsetRequest(ctx, msg.Nonce)
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
 	}
@@ -163,7 +163,7 @@ func handleMsgConfirmValset(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 	}
 
 	// persist signature
-	if keeper.GetValsetConfirm(ctx, types.NewUInt64Nonce(msg.Nonce), valaddr) != nil {
+	if keeper.GetValsetConfirm(ctx, msg.Nonce, valaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
 	key := keeper.SetValsetConfirm(ctx, *msg)
@@ -206,6 +206,6 @@ func handleMsgRequestBatch(ctx sdk.Context, k keeper.Keeper, msg *types.MsgReque
 		return nil, err
 	}
 	return &sdk.Result{
-		Data: types.NewUInt64Nonce(batchID.BatchNonce).Bytes(),
+		Data: types.UInt64Bytes(batchID.BatchNonce),
 	}, nil
 }

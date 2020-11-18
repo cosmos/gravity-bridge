@@ -17,7 +17,7 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 	)
 
 	v := NewValset(
-		NewUInt64Nonce(1),
+		1,
 		BridgeValidators{{
 			EthereumAddress: NewEthereumAddress("0xc783df8a850f42e7F7e57013759C285caa701eB6").String(),
 			Power:           6670,
