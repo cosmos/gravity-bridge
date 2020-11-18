@@ -45,8 +45,8 @@ var (
 	KeyLastOutgoingBatchID = append(SequenceKeyPrefix, []byte("lastBatchId")...)
 )
 
-func GetEthAddressKey(validator sdk.ValAddress) []byte {
-	return append(EthAddressKey, []byte(validator)...)
+func GetEthAddressKey(validator sdk.AccAddress) []byte {
+	return append(EthAddressKey, validator.Bytes()...)
 }
 
 func GetValsetRequestKey(nonce UInt64Nonce) []byte {
@@ -55,7 +55,7 @@ func GetValsetRequestKey(nonce UInt64Nonce) []byte {
 
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
 func GetValsetConfirmKey(nonce UInt64Nonce, validator sdk.AccAddress) []byte {
-	return append(ValsetConfirmKey, append(nonce.Bytes(), []byte(validator)...)...)
+	return append(ValsetConfirmKey, append(nonce.Bytes(), validator.Bytes()...)...)
 }
 
 func GetClaimKey(claimType ClaimType, nonce UInt64Nonce, validator sdk.ValAddress, details AttestationDetails) []byte {
@@ -90,8 +90,8 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 	return append(OutgoingTXPoolKey, sdk.Uint64ToBigEndian(id)...)
 }
 
-func GetOutgoingTxBatchKey(tokenContract EthereumAddress, nonce UInt64Nonce) []byte {
-	return append(append(OutgoingTXBatchKey, tokenContract.Bytes()...), nonce.Bytes()...)
+func GetOutgoingTxBatchKey(tokenContract string, nonce UInt64Nonce) []byte {
+	return append(append(OutgoingTXBatchKey, NewEthereumAddress(tokenContract).Bytes()...), nonce.Bytes()...)
 }
 
 // MARK finish-batches: take a look at this
@@ -103,13 +103,16 @@ func GetBatchConfirmKey(tokenContract EthereumAddress, batchNonce UInt64Nonce, v
 }
 
 func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
-	assertPeggyVoucher(fee)
+	er, err := ERC20FromPeggyCoin(fee)
+	if err != nil {
+		panic(err)
+	}
 
-	r := make([]byte, 1+VoucherDenomLen+8)
+	// TODO: need to make sure this is right
+	r := make([]byte, 1+ETHContractAddressLen+8)
 	copy(r[0:], SecondIndexOutgoingTXFeeKey)
-	voucherDenom, _ := AsVoucherDenom(fee.Denom)
-	copy(r[len(SecondIndexOutgoingTXFeeKey):], voucherDenom.Unprefixed())
-	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(voucherDenom.Unprefixed()):], sdk.Uint64ToBigEndian(fee.Amount.Uint64()))
+	copy(r[len(SecondIndexOutgoingTXFeeKey):], er.Contract)
+	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(er.Contract):], sdk.Uint64ToBigEndian(fee.Amount.Uint64()))
 	return r
 }
 

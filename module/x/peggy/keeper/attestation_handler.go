@@ -24,9 +24,6 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		if !ok {
 			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
 		}
-		if !a.keeper.HasCounterpartDenominator(ctx, types.NewVoucherDenom(types.NewEthereumAddress(string(deposit.Erc20Token.TokenContractAddress)), deposit.Erc20Token.Symbol)) {
-			a.keeper.StoreCounterpartDenominator(ctx, types.NewEthereumAddress(string(deposit.Erc20Token.TokenContractAddress)), deposit.Erc20Token.Symbol)
-		}
 		coin := deposit.Erc20Token.AsVoucherCoin()
 		vouchers := sdk.Coins{coin}
 		if err = a.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers); err != nil {
@@ -51,7 +48,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
 		}
 
-		a.keeper.OutgoingTxBatchExecuted(ctx, types.NewEthereumAddress(string(details.Erc20Token.TokenContractAddress)), types.NewUInt64Nonce(details.BatchNonce))
+		a.keeper.OutgoingTxBatchExecuted(ctx, details.Erc20Token.Contract, types.NewUInt64Nonce(details.BatchNonce))
 
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", att.ClaimType)

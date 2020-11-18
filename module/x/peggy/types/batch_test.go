@@ -25,34 +25,22 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 	)
 
 	src := OutgoingTxBatch{
-		Nonce: 1,
-		Elements: []*OutgoingTransferTx{
+		BatchNonce: 1,
+		Transactions: []*OutgoingTransferTx{
 			{
 				Id: 0x1,
 				// TODO: maybe failure in this test is due to the SDK addr?
 				Sender:      senderAddr.String(),
 				DestAddress: NewEthereumAddress("0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39").String(),
 				Erc20Token: &ERC20Token{
-					Amount:               sdk.NewInt(0x1),
-					Symbol:               "MAX",
-					TokenContractAddress: erc20Addr.String(),
+					Amount:   sdk.NewInt(0x1),
+					Contract: erc20Addr.String(),
 				},
 				Erc20Fee: &ERC20Token{
-					Amount:               sdk.NewInt(0x1),
-					Symbol:               "MAX",
-					TokenContractAddress: erc20Addr.String(),
+					Amount:   sdk.NewInt(0x1),
+					Contract: erc20Addr.String(),
 				},
 			},
-		},
-		Erc20Fee: &ERC20Token{
-			Amount:               sdk.NewInt(0x1),
-			Symbol:               "MAX",
-			TokenContractAddress: erc20Addr.String(),
-		},
-		BridgedDenominator: &BridgedDenominator{
-			TokenContractAddress: erc20Addr.String(),
-			Symbol:               "MAX",
-			CosmosVoucherDenom:   "peggy39b512461b",
 		},
 		Valset:        v,
 		TokenContract: erc20Addr.String(),

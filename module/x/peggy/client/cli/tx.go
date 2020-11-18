@@ -3,6 +3,7 @@ package cli
 import (
 	"crypto/ecdsa"
 	"encoding/hex"
+	"fmt"
 	"log"
 
 	"github.com/cosmos/cosmos-sdk/types/errors"
@@ -197,7 +198,7 @@ func CmdWithdrawToETH() *cobra.Command {
 
 func CmdRequestBatch() *cobra.Command {
 	return &cobra.Command{
-		Use:   "build-batch [voucher_denom]",
+		Use:   "build-batch [token_contract_address]",
 		Short: "Build a new batch on the cosmos side for pooled withdrawal transactions",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -207,15 +208,10 @@ func CmdRequestBatch() *cobra.Command {
 			}
 			cosmosAddr := cliCtx.GetFromAddress()
 
-			// Make the message
-			denom, err := types.AsVoucherDenom(args[0])
-			if err != nil {
-				return sdkerrors.Wrap(err, "denom")
-			}
-
+			// TODO: better denom searching
 			msg := types.MsgRequestBatch{
 				Requester: cosmosAddr.String(),
-				Denom:     denom.String(),
+				Denom:     fmt.Sprintf("peggy/%s", args[0]),
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err

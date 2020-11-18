@@ -105,16 +105,16 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	copy(batchMethodName[:], methodNameBytes[:])
 
 	// Run through the elements of the batch and serialize them
-	txAmounts := make([]*big.Int, len(b.Elements))
-	txDestinations := make([]EthereumAddress, len(b.Elements))
-	txFees := make([]*big.Int, len(b.Elements))
-	for i, tx := range b.Elements {
+	txAmounts := make([]*big.Int, len(b.Transactions))
+	txDestinations := make([]EthereumAddress, len(b.Transactions))
+	txFees := make([]*big.Int, len(b.Transactions))
+	for i, tx := range b.Transactions {
 		txAmounts[i] = tx.Erc20Token.Amount.BigInt()
 		txDestinations[i] = NewEthereumAddress(tx.DestAddress)
 		txFees[i] = tx.Erc20Fee.Amount.BigInt()
 	}
 
-	batchNonce := big.NewInt(int64(b.Nonce))
+	batchNonce := big.NewInt(int64(b.BatchNonce))
 
 	valsetCheckpointBytes := (*b.Valset).GetCheckpoint()
 	var valsetCheckpoint [32]uint8

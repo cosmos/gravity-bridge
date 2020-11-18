@@ -94,7 +94,7 @@ func handleMsgValsetRequest(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 // This function takes in a signature submitted by a validator's Eth Signer
 func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgConfirmBatch) (*sdk.Result, error) {
 
-	batch := keeper.GetOutgoingTXBatch(ctx, types.NewEthereumAddress(msg.TokenContract), types.NewUInt64Nonce(msg.Nonce))
+	batch := keeper.GetOutgoingTXBatch(ctx, msg.TokenContract, types.NewUInt64Nonce(msg.Nonce))
 	if batch == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
 	}
@@ -114,7 +114,7 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.Msg
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
-	ethAddress := keeper.GetEthAddress(ctx, validator)
+	ethAddress := keeper.GetEthAddress(ctx, sdk.AccAddress(validator))
 	if ethAddress == nil {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
@@ -153,7 +153,7 @@ func handleMsgConfirmValset(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
-	ethAddress := keeper.GetEthAddress(ctx, validator)
+	ethAddress := keeper.GetEthAddress(ctx, sdk.AccAddress(validator))
 	if ethAddress == nil {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
@@ -179,7 +179,7 @@ func handleMsgSetEthAddress(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 	}
 
-	keeper.SetEthAddress(ctx, validator, types.NewEthereumAddress(msg.Address))
+	keeper.SetEthAddress(ctx, sdk.AccAddress(validator), types.NewEthereumAddress(msg.Address))
 	return &sdk.Result{}, nil
 }
 
@@ -195,15 +195,17 @@ func handleMsgSendToEth(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgSen
 }
 
 func handleMsgRequestBatch(ctx sdk.Context, k keeper.Keeper, msg *types.MsgRequestBatch) (*sdk.Result, error) {
-	vd, err := types.AsVoucherDenom(msg.Denom)
+	// ensure that peggy denom is valid
+	ec, err := types.ERC20FromPeggyCoin(sdk.NewInt64Coin(msg.Denom, 0))
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(types.ErrInvalid, "invalid denom: %s", err)
 	}
-	batchID, err := k.BuildOutgoingTXBatch(ctx, vd, keeper.OutgoingTxBatchSize)
+
+	batchID, err := k.BuildOutgoingTXBatch(ctx, ec.Contract, keeper.OutgoingTxBatchSize)
 	if err != nil {
 		return nil, err
 	}
 	return &sdk.Result{
-		Data: types.NewUInt64Nonce(batchID.Nonce).Bytes(),
+		Data: types.NewUInt64Nonce(batchID.BatchNonce).Bytes(),
 	}, nil
 }

@@ -219,10 +219,10 @@ func (msg MsgSendToEth) ValidateBasic() error {
 	if msg.Amount.Denom != msg.BridgeFee.Denom {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee and amount must be the same type")
 	}
-	if !IsVoucherDenom(msg.Amount.Denom) {
+	if _, err := ERC20FromPeggyCoin(msg.Amount); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "amount is not a voucher type")
 	}
-	if !IsVoucherDenom(msg.BridgeFee.Denom) {
+	if _, err := ERC20FromPeggyCoin(msg.BridgeFee); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee is not a voucher type")
 	}
 	if !msg.Amount.IsValid() || msg.Amount.IsZero() {

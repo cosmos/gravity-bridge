@@ -249,9 +249,6 @@ func MakeTestMarshaler() codec.BinaryMarshaler {
 }
 
 func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAddress, amount types.ERC20Token) sdk.Coin {
-	if !k.HasCounterpartDenominator(ctx, types.NewVoucherDenom(types.NewEthereumAddress(string(amount.TokenContractAddress)), amount.Symbol)) {
-		k.StoreCounterpartDenominator(ctx, types.NewEthereumAddress(string(amount.TokenContractAddress)), amount.Symbol)
-	}
 	coin := amount.AsVoucherCoin()
 	vouchers := sdk.Coins{coin}
 	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers)

@@ -1,32 +1,24 @@
 syntax = "proto3";
 package peggy.v1;
 
-// import "gogoproto/gogo.proto";
 import "peggy/v1/attestation.proto";
-import "peggy/v1/pool.proto";
 import "peggy/v1/types.proto";
 
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 // OutgoingTxBatch represents a batch of transactions going from Peggy to ETH
 message OutgoingTxBatch {
-  // The nonce of...?
-  uint64                      nonce               = 1;
+  // The nonce of of the individual batch
+  uint64                      batch_nonce         = 1;
 
   // The individual operation of the transaction batch
-  repeated OutgoingTransferTx elements            = 2;
-
-  // The fee to be paid on ETH for the transaction
-  ERC20Token                  erc20_fee           = 4;
-
-  // The peggy side representation of the ERC20 token
-  BridgedDenominator          bridged_denominator = 5;
+  repeated OutgoingTransferTx transactions        = 2;
 
   // The validator set on Peggy that will sign the transactions
-  Valset                      valset              = 7;
+  Valset                      valset              = 3;
 
-  // The token contract on ETH were...?
-  string                      token_contract      = 8;
+  // The token contract on ETH for amounts in transactions
+  string                      token_contract      = 4;
 }
 
 

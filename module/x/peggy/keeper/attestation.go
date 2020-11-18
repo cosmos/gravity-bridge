@@ -94,7 +94,6 @@ func (k Keeper) tryAttestation(ctx sdk.Context, att *types.Attestation) {
 		requiredPower := types.AttestationVotesPowerThreshold.Mul(totalPower).Quo(sdk.NewInt(100))
 		attestationPower := sdk.NewInt(0)
 		for _, validator := range att.Votes {
-			// Get the power of the current validator
 			val, err := sdk.ValAddressFromBech32(validator)
 			if err != nil {
 				panic(err)

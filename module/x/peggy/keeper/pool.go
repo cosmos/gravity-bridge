@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+	"fmt"
 	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -19,35 +20,34 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	totalAmount := amount.Add(fee)
 	totalInVouchers := sdk.Coins{totalAmount}
 
-	voucherDenom, err := types.AsVoucherDenom(totalAmount.Denom)
-	if err != nil {
+	// Ensure that the coin is a peggy voucher
+	if !types.IsPeggyCoin(totalAmount) {
+		return 0, fmt.Errorf("amount not a peggy voucher coin")
+	}
+
+	// send coins to module in prep for burn
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
 		return 0, err
 	}
 
-	if !k.HasCounterpartDenominator(ctx, voucherDenom) {
-		return 0, sdkerrors.Wrap(types.ErrUnknown, "denominator")
-	}
-
-	// burn vouchers
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers)
-	if err != nil {
-		return 0, err
-	}
+	// burn vouchers to send them back to ETH
 	if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, totalInVouchers); err != nil {
 		panic(err)
 	}
 
-	// persist TX in pool
+	// get next tx id from keeper
 	nextID := k.autoIncrementID(ctx, types.KeyLastTXPoolID)
+
+	// construct outgoing tx
 	outgoing := &types.OutgoingTx{
-		//TokenContractAddress: , // TODO: do we need to store this?
 		Sender:    sender.String(),
 		DestAddr:  counterpartReceiver.String(),
 		Amount:    amount,
 		BridgeFee: fee,
 	}
-	err = k.setPoolEntry(ctx, nextID, outgoing)
-	if err != nil {
+
+	// set the outgoing tx in the pool index
+	if err := k.setPoolEntry(ctx, nextID, outgoing); err != nil {
 		return 0, err
 	}
 
@@ -146,51 +146,11 @@ func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
 	store.Delete(types.GetOutgoingTxPoolKey(id))
 }
 
-// GetCounterpartDenominator returns the token details on the counterpart chain for given voucher type
-func (k Keeper) GetCounterpartDenominator(ctx sdk.Context, voucherDenom types.VoucherDenom) *types.BridgedDenominator {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetDenominatorKey(voucherDenom.Unprefixed()))
-	if len(bz) == 0 {
-		return nil
-	}
-	var bridgedDenominator types.BridgedDenominator
-	k.cdc.MustUnmarshalBinaryBare(bz, &bridgedDenominator)
-	return &bridgedDenominator
-}
-
-// StoreCounterpartDenominator persists the bridged token details. Overwrites an existing entry without error
-func (k Keeper) StoreCounterpartDenominator(ctx sdk.Context, tokenContractAddress types.EthereumAddress, symbol string) *types.BridgedDenominator {
-	store := ctx.KVStore(k.storeKey)
-	voucherDenominator := types.NewVoucherDenom(tokenContractAddress, symbol)
-	bridgedDenominator := types.NewBridgedDenominator(tokenContractAddress, symbol)
-	store.Set(types.GetDenominatorKey(voucherDenominator.Unprefixed()), k.cdc.MustMarshalBinaryBare(bridgedDenominator))
-	return bridgedDenominator
-}
-
-func (k Keeper) HasCounterpartDenominator(ctx sdk.Context, voucherDenominator types.VoucherDenom) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetDenominatorKey(voucherDenominator.Unprefixed()))
-}
-
-// IterateCounterpartDenominators iterate through all bridged denominator types
-func (k Keeper) IterateCounterpartDenominators(ctx sdk.Context, cb func([]byte, types.BridgedDenominator) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DenomiatorPrefix)
-	iter := prefixStore.Iterator(nil, nil)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var d types.BridgedDenominator
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &d)
-		// cb returns true to stop early
-		if cb(iter.Key(), d) {
-			return
-		}
-	}
-	return
-}
-
-func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, voucherDenom types.VoucherDenom, cb func(uint64, *types.OutgoingTx) bool) {
+// IterateOutgoingPoolByFee itetates over the outgoing pool which is sorted by fee
+func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.OutgoingTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
-	iter := prefixStore.ReverseIterator(prefixRange([]byte(voucherDenom.Unprefixed())))
+	// TODO: do we need the NewEthereumAddress(contract).Bytes() here instead?
+	iter := prefixStore.ReverseIterator(prefixRange([]byte(contract)))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var ids types.IDSet

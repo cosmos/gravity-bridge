@@ -251,7 +251,7 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 
 	var pendingBatchReq *types.OutgoingTxBatch
 	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
-		foundConfirm := keeper.GetBatchConfirm(ctx, types.NewUInt64Nonce(batch.Nonce), types.NewEthereumAddress(string(batch.TokenContract)), addr) != nil
+		foundConfirm := keeper.GetBatchConfirm(ctx, types.NewUInt64Nonce(batch.BatchNonce), types.NewEthereumAddress(batch.TokenContract), addr) != nil
 		if !foundConfirm {
 			pendingBatchReq = batch
 			return true
@@ -316,7 +316,7 @@ func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keep
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
 
-	foundBatch := keeper.GetOutgoingTXBatch(ctx, contractAddress, parsedNonce)
+	foundBatch := keeper.GetOutgoingTXBatch(ctx, tokenContract, parsedNonce)
 	if foundBatch == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find tx batch")
 	}

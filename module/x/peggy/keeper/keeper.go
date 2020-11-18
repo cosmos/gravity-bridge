@@ -225,13 +225,13 @@ func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonc
 /////////////////////////////
 
 // SetEthAddress sets the ethereum address for a given validator
-func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.ValAddress, ethAddr types.EthereumAddress) {
+func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr types.EthereumAddress) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetEthAddressKey(validator), ethAddr.Bytes())
 }
 
 // GetEthAddress returns the eth address for a given peggy validator
-func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) *types.EthereumAddress {
+func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) *types.EthereumAddress {
 	store := ctx.KVStore(k.storeKey)
 	val := store.Get(types.GetEthAddressKey(validator))
 	if len(val) == 0 {
@@ -260,12 +260,13 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	// if this is doing what I think it's doing
 	for i, validator := range validators {
 		validatorAddress := validator.GetOperator()
+		valAddr := sdk.AccAddress(validatorAddress)
 
 		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress))
 		totalPower += p
 
 		bridgeValidators[i] = &types.BridgeValidator{Power: p}
-		if ethAddr := k.GetEthAddress(ctx, validatorAddress); ethAddr != nil {
+		if ethAddr := k.GetEthAddress(ctx, valAddr); ethAddr != nil {
 			bridgeValidators[i].EthereumAddress = ethAddr.String()
 		}
 	}

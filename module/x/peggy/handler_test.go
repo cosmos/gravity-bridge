@@ -57,9 +57,8 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	h := NewHandler(k)
 
 	myErc20 := types.ERC20Token{
-		Amount:               sdk.NewInt(12),
-		Symbol:               "ALX",
-		TokenContractAddress: tokenETHAddr.String(),
+		Amount:   sdk.NewInt(12),
+		Contract: tokenETHAddr.String(),
 	}
 
 	ethClaim := &types.EthereumBridgeDepositClaim{
@@ -95,7 +94,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	require.NotNil(t, a)
 	// and vouchers added to the account
 	balance := keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy96dde7db38", 12)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0000000000000000000000000000000000000000", 12)}, balance)
 
 	// Test to reject duplicate deposit
 	// when
@@ -104,15 +103,14 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	// then
 	require.Error(t, err)
 	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy96dde7db38", 12)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0000000000000000000000000000000000000000", 12)}, balance)
 
 	// Test to reject skipped nonce
 	ethClaim = &types.EthereumBridgeDepositClaim{
 		Nonce: types.NewUInt64Nonce(3).Uint64(),
 		Erc20Token: &types.ERC20Token{
-			Amount:               sdk.NewInt(12),
-			Symbol:               "ALX",
-			TokenContractAddress: tokenETHAddr.String(),
+			Amount:   sdk.NewInt(12),
+			Contract: tokenETHAddr.String(),
 		},
 		EthereumSender: anyETHAddr.String(),
 		CosmosReceiver: myCosmosAddr.String(),
@@ -133,14 +131,13 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	// then
 	require.Error(t, err)
 	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy96dde7db38", 12)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0000000000000000000000000000000000000000", 12)}, balance)
 
 	ethClaim = &types.EthereumBridgeDepositClaim{
 		Nonce: types.NewUInt64Nonce(2).Uint64(),
 		Erc20Token: &types.ERC20Token{
-			Amount:               sdk.NewInt(13),
-			Symbol:               "ALX",
-			TokenContractAddress: tokenETHAddr.String(),
+			Amount:   sdk.NewInt(13),
+			Contract: tokenETHAddr.String(),
 		},
 		EthereumSender: anyETHAddr.String(),
 		CosmosReceiver: myCosmosAddr.String(),
@@ -162,7 +159,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy96dde7db38", 25)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0000000000000000000000000000000000000000", 25)}, balance)
 }
 
 // func TestHandleBridgeSignatureSubmission(t *testing.T) {

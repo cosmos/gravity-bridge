@@ -5,11 +5,21 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+)
+
+const (
+	PeggyDenomPrefix      = "peggy"
+	PeggyDenomSeperator   = "/"
+	PeggyDenomPrefixLen   = len(PeggyDenomPrefix)
+	PeggyDenomSepLen      = len(PeggyDenomSeperator)
+	ETHContractAddressLen = 42
+	PeggyDenomLen         = PeggyDenomPrefixLen + PeggyDenomSepLen + ETHContractAddressLen
 )
 
 // EthereumAddressLength is the length of an ETH address: 20 bytes
@@ -75,22 +85,23 @@ func (e EthereumAddress) LessThan(o EthereumAddress) bool {
 	return bytes.Compare(e[:], o[:]) == -1
 }
 
-// // ERC20Token unique identifier for an Ethereum erc20 token.
-// type ERC20Token struct {
-// 	Amount uint64 `json:"amount" yaml:"amount"`
-// 	// Symbol is the erc20 human readable token name
-// 	Symbol               string          `json:"symbol" yaml:"symbol"`
-// 	TokenContractAddress EthereumAddress `json:"token_contract_address" yaml:"token_contract_address"`
-// }
+/////////////////////////
+//     ERC20Token      //
+/////////////////////////
 
 // NewERC20Token returns a new instance of an ERC20
-func NewERC20Token(amount uint64, symbol string, tokenContractAddress EthereumAddress) *ERC20Token {
-	return &ERC20Token{Amount: sdk.NewInt(int64(amount)), Symbol: symbol, TokenContractAddress: tokenContractAddress.String()}
+func NewERC20Token(amount uint64, contract string) *ERC20Token {
+	return &ERC20Token{Amount: sdk.NewIntFromUint64(amount), Contract: contract}
+}
+
+// PeggyCoin returns the peggy representation of the ERC20
+func (e *ERC20Token) PeggyCoin() sdk.Coin {
+	return sdk.NewCoin(fmt.Sprintf("%s/%s", PeggyDenomPrefix, e.Contract), e.Amount)
 }
 
 // ValidateBasic permforms stateless validation
 func (e *ERC20Token) ValidateBasic() error {
-	if err := NewEthereumAddress(string(e.TokenContractAddress)).ValidateBasic(); err != nil {
+	if err := NewEthereumAddress(string(e.Contract)).ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
 	// TODO: Validate all the things
@@ -99,25 +110,57 @@ func (e *ERC20Token) ValidateBasic() error {
 
 // String converts Token representation into a human readable form containing all data.
 // func (e ERC20Token) String() string {
-// 	return fmt.Sprintf("%d %s (%s)", e.Amount, e.Symbol, e.TokenContractAddress.String())
+// 	return fmt.Sprintf("%d %s (%s)", e.Amount, e.Symbol, e.Contract.String())
 // }
 
 // AsVoucherCoin converts the data into a cosmos coin with peggy voucher denom.
 func (e *ERC20Token) AsVoucherCoin() sdk.Coin {
-	return sdk.NewInt64Coin(NewVoucherDenom(NewEthereumAddress(string(e.TokenContractAddress)), e.Symbol).String(), e.Amount.Int64())
+	return e.PeggyCoin()
 }
 
 // Add adds one ERC20 to another
-func (t *ERC20Token) Add(o *ERC20Token) *ERC20Token {
-	if t.Symbol != o.Symbol {
-		panic("invalid symbol")
-	}
-	if string(t.TokenContractAddress) != string(o.TokenContractAddress) {
+func (e *ERC20Token) Add(o *ERC20Token) *ERC20Token {
+	if string(e.Contract) != string(o.Contract) {
 		panic("invalid contract address")
 	}
-	sum := t.Amount.Add(o.Amount)
+	sum := e.Amount.Add(o.Amount)
 	if !sum.IsUint64() {
 		panic("invalid amount")
 	}
-	return NewERC20Token(sum.Uint64(), t.Symbol, NewEthereumAddress(string(t.TokenContractAddress)))
+	return NewERC20Token(sum.Uint64(), e.Contract)
+}
+
+// ERC20FromPeggyCoin returns the ERC20 representation of a given peggy coin
+func ERC20FromPeggyCoin(v sdk.Coin) (*ERC20Token, error) {
+	if !IsPeggyCoin(v) {
+		return nil, fmt.Errorf("%s isn't a valid peggy coin", v.String())
+	}
+	return &ERC20Token{Contract: strings.Split(v.Denom, "/")[1], Amount: v.Amount}, nil
+}
+
+func assertPeggyVoucher(s sdk.Coin) {
+	if !IsPeggyCoin(s) {
+		panic("invalid denom type")
+	}
+	if !s.IsValid() {
+		panic("invalid amount type")
+	}
+}
+
+// IsPeggyCoin returns true if a coin is a peggy representation of an ERC20 token
+func IsPeggyCoin(v sdk.Coin) bool {
+	spl := strings.Split(v.Denom, "/")
+	err := NewEthereumAddress(spl[1]).ValidateBasic()
+	switch {
+	case len(spl) != 2:
+		return false
+	case spl[0] != "peggy":
+		return false
+	case err != nil:
+		return false
+	case len(v.Denom) != PeggyDenomLen:
+		return false
+	default:
+		return true
+	}
 }
