@@ -5,7 +5,7 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 // BridgeValidator represents a validator's ETH address and its power
 message BridgeValidator {
     uint64 power            = 1;
-    bytes  ethereum_address = 2;
+    string ethereum_address = 2;
 }
 
 // Valset is the Ethereum Bridge Multsig Set, each peggy validator also maintains

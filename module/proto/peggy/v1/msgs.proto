@@ -24,7 +24,7 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 message MsgValsetConfirm {
     uint64 nonce       = 1;
     string validator   = 2;
-    bytes  eth_address = 3;
+    string eth_address = 3;
     string signature   = 4;
 }
 
@@ -48,7 +48,7 @@ message MsgValsetRequest {
 // validator sets submissions carry any weight.
 // -------------
 message MsgSetEthAddress {
-    bytes  address   = 1;
+    string address   = 1;
     string validator = 2;
     string signature = 3; 
 }
@@ -67,7 +67,7 @@ message MsgSendToEth {
     string                   sender       = 1;
     
     // the destination address on Ethereum
-    bytes                    eth_dest     = 2;
+    string                   eth_dest     = 2;
     
     // the coin to send across the bridge, note the restriction that this is a
     // single coin not a set of coins that is normal in other Cosmos messages
@@ -102,8 +102,8 @@ message MsgRequestBatch {
 // deprecated should use MsgBridgeSignatureSubmission instead
 message MsgConfirmBatch {
     uint64 nonce          = 1;
-    bytes  token_contract = 2;
-    bytes  eth_signer     = 3; 
+    string token_contract = 2;
+    string eth_signer     = 3; 
     string validator      = 4;
     string signature      = 5; 
 }
@@ -116,7 +116,7 @@ message MsgConfirmBatch {
 message EthereumBridgeDepositClaim {
     uint64     nonce           = 1;
     ERC20Token erc20_token     = 2;
-    bytes      ethereum_sender = 3;
+    string     ethereum_sender = 3;
     string     cosmos_receiver = 4;
 }
 
@@ -136,7 +136,7 @@ message MsgCreateEthereumClaims {
     uint64                       ethereum_chain_id       = 1;
 
     // do we need to specify contract address? can we get this from the store?
-    bytes                        bridge_contract_address = 2;
+    string                       bridge_contract_address = 2;
     string                       orchestrator            = 3;
     repeated google.protobuf.Any claims                  = 4 [(cosmos_proto.accepts_interface) = "EthereumClaim"]; 
 }

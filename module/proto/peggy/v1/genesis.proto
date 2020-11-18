@@ -14,14 +14,14 @@ message Params {
 
   // ContractHash is the code hash of a known good version of the Peggy contract solidity code.
   // It will be used to verify exactly which version of the bridge will be deployed.
-  bytes  contract_source_hash = 2;
+  string contract_source_hash = 2;
 
   // StartThreshold is the percentage of total voting power that must be online and participating in
   // Peggy operations before a bridge can start operating
   uint64 start_threshold      = 3;
   
   // BridgeContractAddress is address of the bridge contract on the Ethereum side
-  bytes  ethereum_address     = 4;
+  string ethereum_address     = 4;
 
   // BridgeChainID is the unique identifier of the Ethereum chain
   uint64 bridge_chain_id      = 5;

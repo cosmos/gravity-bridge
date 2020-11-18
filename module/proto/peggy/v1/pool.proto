@@ -10,7 +10,7 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 // TODO: can this type be replaced by outgoing transfer tx
 message OutgoingTx {
     string                   sender     = 1;
-    bytes                    dest_addr  = 2;
+    string                   dest_addr  = 2;
     cosmos.base.v1beta1.Coin amount     = 3 [(gogoproto.nullable) = false];
     cosmos.base.v1beta1.Coin bridge_fee = 4 [(gogoproto.nullable) = false];
 }
@@ -23,7 +23,7 @@ message OutgoingTx {
 // TODO: do we remove the symbol here and just rely on sdk.Coin and the string parsing of the denom?
 // i.e. `peggy/0x6b175474e89094c44da98b954eedeac495271d0f` for DAI
 message BridgedDenominator {
-    bytes  token_contract_address = 1;
+    string token_contract_address = 1;
     string symbol                 = 2;
     string cosmos_voucher_denom   = 3;
 }
