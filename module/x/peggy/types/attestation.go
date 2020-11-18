@@ -81,16 +81,17 @@ type AttestationDetails interface {
 
 // Hash implements hash
 func (b *WithdrawalBatch) Hash() []byte {
-	path := fmt.Sprintf("%s/%d/", b.Erc_20Token, b.BatchNonce)
+	path := fmt.Sprintf("%s/%d/", b.Erc20Token, b.BatchNonce)
 	return tmhash.Sum([]byte(path))
 }
 
 // Hash implements Hash
 func (b *BridgeDeposit) Hash() []byte {
-	path := fmt.Sprintf("%s/%s/%s/", b.Erc_20Token.String(), string(b.EthereumSender), b.CosmosReceiver)
+	path := fmt.Sprintf("%s/%s/%s/", b.Erc20Token.String(), string(b.EthereumSender), b.CosmosReceiver)
 	return tmhash.Sum([]byte(path))
 }
 
+// Size is a custom size implementation to ensure that the Amount is encoded correctly
 func (m *ERC20Token) Size() (n int) {
 	if m == nil {
 		return 0
@@ -112,6 +113,7 @@ func (m *ERC20Token) Size() (n int) {
 	return n
 }
 
+// Marshal is a custom marshal impl to ensure that the custom Size is used
 func (m *ERC20Token) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -122,11 +124,13 @@ func (m *ERC20Token) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
+// MarshalTo is a custom marshal impl to ensure that the custom Size is used
 func (m *ERC20Token) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
+// MarshalToSizedBuffer is a custom marshal impl to ensure that the custom Size is used
 func (m *ERC20Token) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i

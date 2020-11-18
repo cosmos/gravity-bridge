@@ -49,25 +49,25 @@ func TestAddToOutgoingPool(t *testing.T) {
 		{
 			BridgeFee: sdk.NewInt64Coin(string(voucherDenom), 3),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.Bytes(),
+			DestAddr:  myReceiver.String(),
 			Amount:    sdk.NewInt64Coin(string(voucherDenom), 101),
 		},
 		{
 			BridgeFee: sdk.NewInt64Coin(string(voucherDenom), 2),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.Bytes(),
+			DestAddr:  myReceiver.String(),
 			Amount:    sdk.NewInt64Coin(string(voucherDenom), 100),
 		},
 		{
 			BridgeFee: sdk.NewInt64Coin(string(voucherDenom), 2),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.Bytes(),
+			DestAddr:  myReceiver.String(),
 			Amount:    sdk.NewInt64Coin(string(voucherDenom), 102),
 		},
 		{
 			BridgeFee: sdk.NewInt64Coin(string(voucherDenom), 1),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.Bytes(),
+			DestAddr:  myReceiver.String(),
 			Amount:    sdk.NewInt64Coin(string(voucherDenom), 103),
 		},
 	}

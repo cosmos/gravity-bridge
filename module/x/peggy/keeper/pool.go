@@ -42,7 +42,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	outgoing := &types.OutgoingTx{
 		//TokenContractAddress: , // TODO: do we need to store this?
 		Sender:    sender.String(),
-		DestAddr:  counterpartReceiver.Bytes(),
+		DestAddr:  counterpartReceiver.String(),
 		Amount:    amount,
 		BridgeFee: fee,
 	}

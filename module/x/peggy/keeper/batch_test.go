@@ -65,22 +65,22 @@ func TestBatches(t *testing.T) {
 		Elements: []*types.OutgoingTransferTx{
 			{
 				Id:          2,
-				BridgeFee:   denominator.ToUint64ERC20Token(3),
+				Erc20Fee:    denominator.ToUint64ERC20Token(3),
 				Sender:      mySender.String(),
-				DestAddress: myReceiver.Bytes(),
-				Amount:      denominator.ToUint64ERC20Token(101),
+				DestAddress: myReceiver.String(),
+				Erc20Token:  denominator.ToUint64ERC20Token(101),
 			},
 			{
 				Id:          1,
-				BridgeFee:   denominator.ToUint64ERC20Token(2),
+				Erc20Fee:    denominator.ToUint64ERC20Token(2),
 				Sender:      mySender.String(),
-				DestAddress: myReceiver.Bytes(),
-				Amount:      denominator.ToUint64ERC20Token(100),
+				DestAddress: myReceiver.String(),
+				Erc20Token:  denominator.ToUint64ERC20Token(100),
 			},
 		},
-		TotalFee:           denominator.ToUint64ERC20Token(5),
+		Erc20Fee:           denominator.ToUint64ERC20Token(5),
 		BridgedDenominator: denominator,
-		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}.Bytes(),
+		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}.String(),
 		Valset:             &types.Valset{Nonce: 0x12d687, Members: types.BridgeValidators(nil)},
 	}
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
@@ -95,13 +95,13 @@ func TestBatches(t *testing.T) {
 		{
 			BridgeFee: sdk.NewInt64Coin(string(voucherDenom), 2),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.Bytes(),
+			DestAddr:  myReceiver.String(),
 			Amount:    sdk.NewInt64Coin(string(voucherDenom), 102),
 		},
 		{
 			BridgeFee: sdk.NewInt64Coin(string(voucherDenom), 1),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.Bytes(),
+			DestAddr:  myReceiver.String(),
 			Amount:    sdk.NewInt64Coin(string(voucherDenom), 103),
 		},
 	}
@@ -130,22 +130,22 @@ func TestBatches(t *testing.T) {
 		Elements: []*types.OutgoingTransferTx{
 			{
 				Id:          6,
-				BridgeFee:   denominator.ToUint64ERC20Token(5),
+				Erc20Fee:    denominator.ToUint64ERC20Token(5),
 				Sender:      mySender.String(),
-				DestAddress: myReceiver.Bytes(),
-				Amount:      denominator.ToUint64ERC20Token(101),
+				DestAddress: myReceiver.String(),
+				Erc20Token:  denominator.ToUint64ERC20Token(101),
 			},
 			{
 				Id:          5,
-				BridgeFee:   denominator.ToUint64ERC20Token(4),
+				Erc20Fee:    denominator.ToUint64ERC20Token(4),
 				Sender:      mySender.String(),
-				DestAddress: myReceiver.Bytes(),
-				Amount:      denominator.ToUint64ERC20Token(100),
+				DestAddress: myReceiver.String(),
+				Erc20Token:  denominator.ToUint64ERC20Token(100),
 			},
 		},
-		TotalFee:           denominator.ToUint64ERC20Token(9),
+		Erc20Fee:           denominator.ToUint64ERC20Token(9),
 		BridgedDenominator: denominator,
-		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}.Bytes(),
+		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}.String(),
 		// For some reason, the empty Members field can be expressed by either []types.BridgeValidator{} or types.BridgeValidators(nil)
 		// for some reason, this was the only reason for this testing failing? I've changed it
 		Valset: &types.Valset{Nonce: 0x12d687, Members: types.BridgeValidators(nil)},
@@ -173,25 +173,25 @@ func TestBatches(t *testing.T) {
 		{
 			BridgeFee: sdk.NewInt64Coin(string(voucherDenom), 3),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.Bytes(),
+			DestAddr:  myReceiver.String(),
 			Amount:    sdk.NewInt64Coin(string(voucherDenom), 101),
 		},
 		{
 			BridgeFee: sdk.NewInt64Coin(string(voucherDenom), 2),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.Bytes(),
+			DestAddr:  myReceiver.String(),
 			Amount:    sdk.NewInt64Coin(string(voucherDenom), 100),
 		},
 		{
 			BridgeFee: sdk.NewInt64Coin(string(voucherDenom), 2),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.Bytes(),
+			DestAddr:  myReceiver.String(),
 			Amount:    sdk.NewInt64Coin(string(voucherDenom), 102),
 		},
 		{
 			BridgeFee: sdk.NewInt64Coin(string(voucherDenom), 1),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.Bytes(),
+			DestAddr:  myReceiver.String(),
 			Amount:    sdk.NewInt64Coin(string(voucherDenom), 103),
 		},
 	}

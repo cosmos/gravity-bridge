@@ -60,42 +60,24 @@ func (p Params) Equal(p2 Params) bool {
 	return bytes.Equal(bz1, bz2)
 }
 
-// String implements the stringer interface.
-// func (p Params) String() string {
-// 	var sb strings.Builder
-// 	sb.WriteString("Params: \n")
-// 	sb.WriteString(fmt.Sprintf("PeggyID: %d\n", p.PeggyID))
-// 	sb.WriteString(fmt.Sprintf("ContractHash: %d\n", p.ContractHash))
-// 	sb.WriteString(fmt.Sprintf("StartThreshold: %d\n", p.StartThreshold))
-// 	sb.WriteString(fmt.Sprintf("BridgeContractAddress: %s\n", p.BridgeContractAddress.String()))
-// 	sb.WriteString(fmt.Sprintf("BridgeChainID: %d\n", p.BridgeChainID))
-// 	return sb.String()
-// }
-
 func validatePeggyID(i interface{}) error {
-	_, ok := i.([]byte)
-	if !ok {
+	if _, ok := i.([]byte); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-
 	return nil
 }
 
 func validateContractHash(i interface{}) error {
-	_, ok := i.([]byte)
-	if !ok {
+	if _, ok := i.(string); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-
 	return nil
 }
 
 func validateStartThreshold(i interface{}) error {
-	_, ok := i.(uint64)
-	if !ok {
+	if _, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-
 	return nil
 }
 
@@ -120,8 +102,8 @@ func (p Params) ValidateBasic() error {
 }
 
 func validateBridgeChainID(i interface{}) error {
-	_, ok := i.(uint64)
-	if !ok {
+
+	if _, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 	return nil
@@ -129,7 +111,7 @@ func validateBridgeChainID(i interface{}) error {
 
 func validateBridgeContractAddress(i interface{}) error {
 	// TODO: better eth address validation, insert me here
-	v, ok := i.([]byte)
+	v, ok := i.(string)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}

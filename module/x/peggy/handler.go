@@ -94,7 +94,7 @@ func handleMsgValsetRequest(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 // This function takes in a signature submitted by a validator's Eth Signer
 func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgConfirmBatch) (*sdk.Result, error) {
 
-	batch := keeper.GetOutgoingTXBatch(ctx, types.NewEthereumAddress(string(msg.TokenContract)), types.NewUInt64Nonce(msg.Nonce))
+	batch := keeper.GetOutgoingTXBatch(ctx, types.NewEthereumAddress(msg.TokenContract), types.NewUInt64Nonce(msg.Nonce))
 	if batch == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
 	}
@@ -124,7 +124,7 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.Msg
 	}
 
 	// check if we already have this confirm
-	if keeper.GetBatchConfirm(ctx, types.NewUInt64Nonce(msg.Nonce), types.NewEthereumAddress(string(msg.TokenContract)), valaddr) != nil {
+	if keeper.GetBatchConfirm(ctx, types.NewUInt64Nonce(msg.Nonce), types.NewEthereumAddress(msg.TokenContract), valaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
 	key := keeper.SetBatchConfirm(ctx, msg)
@@ -179,13 +179,13 @@ func handleMsgSetEthAddress(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 	}
 
-	keeper.SetEthAddress(ctx, validator, types.NewEthereumAddress(string(msg.Address)))
+	keeper.SetEthAddress(ctx, validator, types.NewEthereumAddress(msg.Address))
 	return &sdk.Result{}, nil
 }
 
 func handleMsgSendToEth(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgSendToEth) (*sdk.Result, error) {
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
-	txID, err := keeper.AddToOutgoingPool(ctx, sender, types.NewEthereumAddress(string(msg.DestAddress)), msg.Amount, msg.BridgeFee)
+	txID, err := keeper.AddToOutgoingPool(ctx, sender, types.NewEthereumAddress(msg.EthDest), msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
 	}

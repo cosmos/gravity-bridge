@@ -217,10 +217,10 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 	k := NewKeeper(marshaler, peggyKey, paramsKeeper.Subspace(types.DefaultParamspace), stakingKeeper, bankKeeper)
 	k.setParams(ctx, &types.Params{
 		PeggyId:            []byte("lkasjdfklajsldkfjd"),
-		ContractSourceHash: []byte("lkasjdfklajsldkfjd"),
+		ContractSourceHash: "lkasjdfklajsldkfjd",
 		StartThreshold:     0,
 		// any eth address
-		EthereumAddress: types.NewEthereumAddress("0x8858eeb3dfffa017d4bce9801d340d36cf895ccf").Bytes(),
+		EthereumAddress: types.NewEthereumAddress("0x8858eeb3dfffa017d4bce9801d340d36cf895ccf").String(),
 		BridgeChainId:   11,
 	})
 	return k, ctx, keepers

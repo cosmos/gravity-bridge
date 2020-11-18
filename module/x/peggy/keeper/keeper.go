@@ -168,14 +168,14 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 
 // Iterate through all valset confirms for a nonce in ASC order
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
-func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64Nonce, cb func([]byte, *types.MsgValsetConfirm) bool) {
+func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce types.UInt64Nonce, cb func([]byte, types.MsgValsetConfirm) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
 	iter := prefixStore.Iterator(prefixRange(nonce.Bytes()))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		confirm := &types.MsgValsetConfirm{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), confirm)
+		confirm := types.MsgValsetConfirm{}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
 		// cb returns true to stop early
 		if cb(iter.Key(), confirm) {
 			break
@@ -241,7 +241,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 
 		bridgeValidators[i] = &types.BridgeValidator{Power: p}
 		if ethAddr := k.GetEthAddress(ctx, validatorAddress); ethAddr != nil {
-			bridgeValidators[i].EthereumAddress = ethAddr.Bytes()
+			bridgeValidators[i].EthereumAddress = ethAddr.String()
 		}
 	}
 	// normalize power values
@@ -276,7 +276,7 @@ func (k Keeper) setParams(ctx sdk.Context, ps *types.Params) {
 }
 
 func (k Keeper) GetBridgeContractAddress(ctx sdk.Context) types.EthereumAddress {
-	var a []byte
+	var a string
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractAddress, &a)
 	return types.NewEthereumAddress(string(a))
 }

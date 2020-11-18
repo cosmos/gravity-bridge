@@ -19,7 +19,7 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 	v := NewValset(
 		NewUInt64Nonce(1),
 		BridgeValidators{{
-			EthereumAddress: NewEthereumAddress("0xc783df8a850f42e7F7e57013759C285caa701eB6").Bytes(),
+			EthereumAddress: NewEthereumAddress("0xc783df8a850f42e7F7e57013759C285caa701eB6").String(),
 			Power:           6670,
 		}},
 	)
@@ -31,31 +31,31 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 				Id: 0x1,
 				// TODO: maybe failure in this test is due to the SDK addr?
 				Sender:      senderAddr.String(),
-				DestAddress: NewEthereumAddress("0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39").Bytes(),
-				Amount: &ERC20Token{
+				DestAddress: NewEthereumAddress("0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39").String(),
+				Erc20Token: &ERC20Token{
 					Amount:               sdk.NewInt(0x1),
 					Symbol:               "MAX",
-					TokenContractAddress: erc20Addr.Bytes(),
+					TokenContractAddress: erc20Addr.String(),
 				},
-				BridgeFee: &ERC20Token{
+				Erc20Fee: &ERC20Token{
 					Amount:               sdk.NewInt(0x1),
 					Symbol:               "MAX",
-					TokenContractAddress: erc20Addr.Bytes(),
+					TokenContractAddress: erc20Addr.String(),
 				},
 			},
 		},
-		TotalFee: &ERC20Token{
+		Erc20Fee: &ERC20Token{
 			Amount:               sdk.NewInt(0x1),
 			Symbol:               "MAX",
-			TokenContractAddress: erc20Addr.Bytes(),
+			TokenContractAddress: erc20Addr.String(),
 		},
 		BridgedDenominator: &BridgedDenominator{
-			TokenContractAddress: erc20Addr.Bytes(),
+			TokenContractAddress: erc20Addr.String(),
 			Symbol:               "MAX",
 			CosmosVoucherDenom:   "peggy39b512461b",
 		},
 		Valset:        v,
-		TokenContract: erc20Addr.Bytes(),
+		TokenContract: erc20Addr.String(),
 	}
 
 	ourHash, err := src.GetCheckpoint()

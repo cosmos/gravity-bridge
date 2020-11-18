@@ -1,7 +1,6 @@
 package peggy
 
 import (
-	"bytes"
 	"math"
 	"testing"
 	"time"
@@ -40,13 +39,13 @@ func TestHandleValsetRequest(t *testing.T) {
 	assert.Equal(t, nonce.Uint64(), valset.Nonce)
 	require.Len(t, valset.Members, 1)
 	assert.Equal(t, []uint64{math.MaxUint32}, types.BridgeValidators(valset.Members).GetPowers())
-	assert.Equal(t, types.NewEthereumAddress("").Bytes(), valset.Members[0].EthereumAddress)
+	assert.Equal(t, "", valset.Members[0].EthereumAddress)
 }
 
 func TestHandleCreateEthereumClaims(t *testing.T) {
 	var (
 		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
-		myCosmosAddr       sdk.AccAddress = bytes.Repeat([]byte{1}, 12)
+		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
 		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
 		myNonce                           = types.NewUInt64Nonce(1)
 		anyETHAddr                        = types.NewEthereumAddress("any-address")
@@ -60,13 +59,13 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	myErc20 := types.ERC20Token{
 		Amount:               sdk.NewInt(12),
 		Symbol:               "ALX",
-		TokenContractAddress: tokenETHAddr.Bytes(),
+		TokenContractAddress: tokenETHAddr.String(),
 	}
 
 	ethClaim := &types.EthereumBridgeDepositClaim{
 		Nonce:          myNonce.Uint64(),
 		Erc20Token:     &myErc20,
-		EthereumSender: anyETHAddr.Bytes(),
+		EthereumSender: anyETHAddr.String(),
 		CosmosReceiver: myCosmosAddr.String(),
 	}
 
@@ -75,7 +74,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 
 	msg := &types.MsgCreateEthereumClaims{
 		EthereumChainId:       0,
-		BridgeContractAddress: types.NewEthereumAddress("").Bytes(),
+		BridgeContractAddress: types.NewEthereumAddress("").String(),
 		Orchestrator:          myOrchestratorAddr.String(),
 		Claims:                []*codectypes.Any{ecAny},
 	}
@@ -89,8 +88,8 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	assert.True(t, claimFound)
 	// and attestation persisted
 	a := k.GetAttestation(ctx, myNonce, &types.BridgeDeposit{
-		Erc_20Token:    &myErc20,
-		EthereumSender: anyETHAddr.Bytes(),
+		Erc20Token:     &myErc20,
+		EthereumSender: anyETHAddr.String(),
 		CosmosReceiver: myCosmosAddr.String(),
 	})
 	require.NotNil(t, a)
@@ -113,9 +112,9 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 		Erc20Token: &types.ERC20Token{
 			Amount:               sdk.NewInt(12),
 			Symbol:               "ALX",
-			TokenContractAddress: tokenETHAddr.Bytes(),
+			TokenContractAddress: tokenETHAddr.String(),
 		},
-		EthereumSender: anyETHAddr.Bytes(),
+		EthereumSender: anyETHAddr.String(),
 		CosmosReceiver: myCosmosAddr.String(),
 	}
 	ecAny, err = types.PackEthereumClaim(ethClaim)
@@ -123,7 +122,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 
 	msg = &types.MsgCreateEthereumClaims{
 		EthereumChainId:       0,
-		BridgeContractAddress: types.NewEthereumAddress("").Bytes(),
+		BridgeContractAddress: types.NewEthereumAddress("").String(),
 		Orchestrator:          myOrchestratorAddr.String(),
 		Claims:                []*codectypes.Any{ecAny},
 	}
@@ -141,9 +140,9 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 		Erc20Token: &types.ERC20Token{
 			Amount:               sdk.NewInt(13),
 			Symbol:               "ALX",
-			TokenContractAddress: tokenETHAddr.Bytes(),
+			TokenContractAddress: tokenETHAddr.String(),
 		},
-		EthereumSender: anyETHAddr.Bytes(),
+		EthereumSender: anyETHAddr.String(),
 		CosmosReceiver: myCosmosAddr.String(),
 	}
 	ecAny, err = types.PackEthereumClaim(ethClaim)
@@ -152,7 +151,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	// Test to finally accept consecutive nonce
 	msg = &types.MsgCreateEthereumClaims{
 		EthereumChainId:       0,
-		BridgeContractAddress: types.NewEthereumAddress("").Bytes(),
+		BridgeContractAddress: types.NewEthereumAddress("").String(),
 		Orchestrator:          myOrchestratorAddr.String(),
 		Claims:                []*codectypes.Any{ecAny},
 	}

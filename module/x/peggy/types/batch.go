@@ -109,9 +109,9 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	txDestinations := make([]EthereumAddress, len(b.Elements))
 	txFees := make([]*big.Int, len(b.Elements))
 	for i, tx := range b.Elements {
-		txAmounts[i] = tx.Amount.Amount.BigInt()
-		txDestinations[i] = NewEthereumAddress(string(tx.DestAddress))
-		txFees[i] = tx.BridgeFee.Amount.BigInt()
+		txAmounts[i] = tx.Erc20Token.Amount.BigInt()
+		txDestinations[i] = NewEthereumAddress(tx.DestAddress)
+		txFees[i] = tx.Erc20Fee.Amount.BigInt()
 	}
 
 	batchNonce := big.NewInt(int64(b.Nonce))
@@ -137,7 +137,7 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 		txDestinations,
 		txFees,
 		batchNonce,
-		tokenContract,
+		NewEthereumAddress(tokenContract),
 	)
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.

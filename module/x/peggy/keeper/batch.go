@@ -28,9 +28,9 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 	if len(selectedTx) == 0 || err != nil {
 		return nil, err
 	}
-	totalFee := selectedTx[0].BridgeFee
+	totalFee := selectedTx[0].Erc20Fee
 	for _, tx := range selectedTx[1:] {
-		totalFee = totalFee.Add(tx.BridgeFee)
+		totalFee = totalFee.Add(tx.Erc20Fee)
 	}
 	nextID := k.autoIncrementID(ctx, types.KeyLastOutgoingBatchID)
 	nonce := types.NewUInt64Nonce(nextID)
@@ -38,7 +38,7 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.Voucher
 		Nonce:              uint64(nonce),
 		Elements:           selectedTx,
 		BridgedDenominator: bridgedDenom,
-		TotalFee:           totalFee,
+		Erc20Fee:           totalFee,
 		Valset:             k.GetCurrentValset(ctx),
 		TokenContract:      bridgedDenom.TokenContractAddress,
 	}
@@ -104,8 +104,8 @@ func (k Keeper) pickUnbatchedTX(ctx sdk.Context, denom types.VoucherDenom, bridg
 			Id:          txID,
 			Sender:      tx.Sender,
 			DestAddress: tx.DestAddr,
-			Amount:      bridgedDenom.ToERC20Token(tx.Amount),
-			BridgeFee:   bridgedDenom.ToERC20Token(tx.BridgeFee),
+			Erc20Token:  bridgedDenom.ToERC20Token(tx.Amount),
+			Erc20Fee:    bridgedDenom.ToERC20Token(tx.BridgeFee),
 		}
 		selectedTx = append(selectedTx, txOut)
 		err = k.removeFromUnbatchedTXIndex(ctx, tx.BridgeFee, txID)
@@ -134,7 +134,7 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract types.Ether
 		return types.ErrUnknown
 	}
 	for _, tx := range batch.Elements {
-		k.prependToUnbatchedTXIndex(ctx, batch.BridgedDenominator.ToVoucherCoin(tx.BridgeFee.Amount.Uint64()), tx.Id)
+		k.prependToUnbatchedTXIndex(ctx, batch.BridgedDenominator.ToVoucherCoin(tx.Erc20Fee.Amount.Uint64()), tx.Id)
 	}
 
 	// Delete batch since it is finished

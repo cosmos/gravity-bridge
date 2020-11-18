@@ -13,7 +13,7 @@ import (
 // NewBridgedDenominator returns a new bridged denominator
 func NewBridgedDenominator(tokenContractAddress EthereumAddress, erc20Symbol string) *BridgedDenominator {
 	v := NewVoucherDenom(tokenContractAddress, erc20Symbol)
-	return &BridgedDenominator{TokenContractAddress: tokenContractAddress.Bytes(), Symbol: erc20Symbol, CosmosVoucherDenom: v.String()}
+	return &BridgedDenominator{TokenContractAddress: tokenContractAddress.String(), Symbol: erc20Symbol, CosmosVoucherDenom: v.String()}
 }
 
 // ToERC20Token converts the given voucher amount to the matching ERC20Token object of same type

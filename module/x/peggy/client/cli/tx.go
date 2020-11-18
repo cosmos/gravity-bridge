@@ -181,10 +181,10 @@ func CmdWithdrawToETH() *cobra.Command {
 
 			// Make the message
 			msg := types.MsgSendToEth{
-				Sender:      cosmosAddr.String(),
-				DestAddress: types.NewEthereumAddress(args[1]).Bytes(),
-				Amount:      amount,
-				BridgeFee:   bridgeFee,
+				Sender:    cosmosAddr.String(),
+				EthDest:   types.NewEthereumAddress(args[1]).String(),
+				Amount:    amount,
+				BridgeFee: bridgeFee,
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err

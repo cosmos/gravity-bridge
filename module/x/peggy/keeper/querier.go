@@ -106,8 +106,8 @@ func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]
 	}
 
 	var confirms []*types.MsgValsetConfirm
-	keeper.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c *types.MsgValsetConfirm) bool {
-		confirms = append(confirms, c)
+	keeper.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
+		confirms = append(confirms, &c)
 		return false
 	})
 	if len(confirms) == 0 {

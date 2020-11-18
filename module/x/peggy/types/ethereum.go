@@ -85,9 +85,10 @@ func (e EthereumAddress) LessThan(o EthereumAddress) bool {
 
 // NewERC20Token returns a new instance of an ERC20
 func NewERC20Token(amount uint64, symbol string, tokenContractAddress EthereumAddress) *ERC20Token {
-	return &ERC20Token{Amount: sdk.NewInt(int64(amount)), Symbol: symbol, TokenContractAddress: tokenContractAddress.Bytes()}
+	return &ERC20Token{Amount: sdk.NewInt(int64(amount)), Symbol: symbol, TokenContractAddress: tokenContractAddress.String()}
 }
 
+// ValidateBasic permforms stateless validation
 func (e *ERC20Token) ValidateBasic() error {
 	if err := NewEthereumAddress(string(e.TokenContractAddress)).ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
