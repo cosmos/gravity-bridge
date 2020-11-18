@@ -161,7 +161,8 @@ func (msg MsgSetEthAddress) Type() string { return "set_eth_address" }
 // Checks if the Eth address is valid, and whether the Eth address has signed the validator address
 // (proving control of the Eth address)
 func (msg MsgSetEthAddress) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Validator); err != nil {
+	val, err := sdk.AccAddressFromBech32(msg.Validator)
+	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
 	}
 	if err := NewEthereumAddress(msg.Address).ValidateBasic(); err != nil {
@@ -171,9 +172,9 @@ func (msg MsgSetEthAddress) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
 	}
-	err = ValidateEthereumSignature(crypto.Keccak256([]byte(msg.Validator)), sigBytes, string(msg.Address))
+	err = ValidateEthereumSignature(crypto.Keccak256(val.Bytes()), sigBytes, msg.Address)
 	if err != nil {
-		return sdkerrors.Wrapf(err, "digest: %x sig: %x address %s error: %s", crypto.Keccak256([]byte(msg.Validator)), msg.Signature, msg.Address, err.Error())
+		return sdkerrors.Wrapf(err, "digest: %x\nsig: %x\naddress %s\nerror: %s\n", crypto.Keccak256(val.Bytes()), msg.Signature, msg.Address, err.Error())
 	}
 	return nil
 }
