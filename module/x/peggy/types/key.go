@@ -67,11 +67,6 @@ var (
 
 	// KeyLastOutgoingBatchID indexes the lastBatchID
 	KeyLastOutgoingBatchID = append(SequenceKeyPrefix, []byte("lastBatchId")...)
-
-	// deprecated
-	// OracleAttestationKey        = []byte{0x5}
-	// OutgoingTXBatchConfirmKey    = []byte{0xb}
-	// BridgeObservedSignatureKey   = []byte{0x10}
 )
 
 // GetEthAddressKey returns the following key format
@@ -105,11 +100,11 @@ func GetClaimKey(claimType ClaimType, nonce uint64, validator sdk.ValAddress, de
 	if details != nil {
 		detailsHash = details.Hash()
 	}
-	claimTypeLen := len(claimType.Bytes())
+	claimTypeLen := len([]byte{byte(claimType)})
 	nonceBz := UInt64Bytes(nonce)
 	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz)+len(detailsHash))
 	copy(key[0:], OracleClaimKey)
-	copy(key[len(OracleClaimKey):], claimType.Bytes())
+	copy(key[len(OracleClaimKey):], []byte{byte(claimType)})
 	copy(key[len(OracleClaimKey)+claimTypeLen:], validator)
 	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen:], nonceBz)
 	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz):], detailsHash)
@@ -120,7 +115,7 @@ func GetClaimKey(claimType ClaimType, nonce uint64, validator sdk.ValAddress, de
 // prefix type
 // [0xf][0 0 0 1]
 func GetLastNonceByClaimTypeSecondIndexKeyPrefix(claimType ClaimType) []byte {
-	return append(SecondIndexNonceByClaimKey, claimType.Bytes()...)
+	return append(SecondIndexNonceByClaimKey, []byte{byte(claimType)}...)
 }
 
 // GetLastNonceByClaimTypeSecondIndexKey returns the following key format

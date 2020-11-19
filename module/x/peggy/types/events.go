@@ -8,8 +8,7 @@ const (
 	EventTypeOutgoingBatchCanceled    = "outgoing_batch_canceled"
 	EventTypeBridgeWithdrawalReceived = "withdrawal_received"
 	EventTypeBridgeDepositReceived    = "deposit_received"
-)
-const (
+
 	AttributeKeyAttestationID   = "attestation_id"
 	AttributeKeyMultisigID      = "multisig_id"
 	AttributeKeyOutgoingBatchID = "batch_id"

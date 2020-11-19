@@ -24,7 +24,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		if !ok {
 			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
 		}
-		coin := deposit.Erc20Token.AsVoucherCoin()
+		coin := deposit.Erc20Token.PeggyCoin()
 		vouchers := sdk.Coins{coin}
 		if err = a.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers); err != nil {
 			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", vouchers)

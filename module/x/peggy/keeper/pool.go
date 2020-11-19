@@ -21,8 +21,8 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	totalInVouchers := sdk.Coins{totalAmount}
 
 	// Ensure that the coin is a peggy voucher
-	if !types.IsPeggyCoin(totalAmount) {
-		return 0, fmt.Errorf("amount not a peggy voucher coin")
+	if err := types.ValidatePeggyCoin(totalAmount); err != nil {
+		return 0, fmt.Errorf("amount not a peggy voucher coin: %s", err)
 	}
 
 	// send coins to module in prep for burn

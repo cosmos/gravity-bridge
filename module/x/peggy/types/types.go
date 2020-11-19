@@ -1,11 +1,14 @@
 package types
 
 import (
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"sort"
+	"strconv"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	gethCommon "github.com/ethereum/go-ethereum/common"
@@ -13,8 +16,27 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+// UInt64FromBytes create uint from binary big endian representation
+func UInt64FromBytes(s []byte) uint64 {
+	return binary.BigEndian.Uint64(s)
+}
+
+// UInt64Bytes uses the SDK byte marshaling to encode a uint64
+func UInt64Bytes(n uint64) []byte {
+	return sdk.Uint64ToBigEndian(n)
+}
+
+// UInt64FromString to parse out a uint64 for a nonce
+func UInt64FromString(s string) (uint64, error) {
+	return strconv.ParseUint(s, 10, 64)
+}
+
+//////////////////////////////////////
+//      BRIDGE VALIDATOR(S)         //
+//////////////////////////////////////
+
 // ValidateBasic performs stateless checks on validity
-func (b BridgeValidator) ValidateBasic() error {
+func (b *BridgeValidator) ValidateBasic() error {
 	if b.Power == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "power")
 	}
@@ -27,10 +49,6 @@ func (b BridgeValidator) ValidateBasic() error {
 	return nil
 }
 
-func (b BridgeValidator) isValid() bool {
-	return !(b.EthereumAddress == "") && b.Power != 0
-}
-
 // BridgeValidators is the sorted set of validator data for Ethereum bridge MultiSig set
 type BridgeValidators []*BridgeValidator
 
@@ -39,8 +57,6 @@ func (b BridgeValidators) Sort() {
 	sort.Slice(b, func(i, j int) bool {
 		if b[i].Power == b[j].Power {
 			// Secondary sort on eth address in case powers are equal
-			// bytes.Compare(b[i].EthereumAddress[:], o[:]) == -1
-			// TODO: migrate this once tests are passing
 			return EthAddrLessThan(b[i].EthereumAddress, b[j].EthereumAddress)
 		}
 		return b[i].Power > b[j].Power
@@ -67,6 +83,7 @@ func (b BridgeValidators) GetPowers() []uint64 {
 
 // ValidateBasic performs stateless checks
 func (b BridgeValidators) ValidateBasic() error {
+	// TODO: check if the set is sorted here?
 	if len(b) == 0 {
 		return ErrEmpty
 	}
@@ -97,60 +114,8 @@ func (v Valset) GetCheckpoint() []byte {
 	// this will work for now because 'foo' is the test Peggy ID we are using
 	var peggyIDString = "foo"
 
-	// The go-ethereum ABI encoder *only* encodes function calls and then it only encodes
-	// function calls for which you provide an ABI json just like you would get out of the
-	// solidity compiler with your compiled contract.
-	// You are supposed to compile your contract, use abigen to generate an ABI , import
-	// this generated go module and then use for that for all testing and development.
-	// This abstraction layer is more trouble than it's worth, because we don't want to
-	// encode a function call at all, but instead we want to emulate a Solidity encode operation
-	// which has no equal available from go-ethereum.
-	//
-	// In order to work around this absurd series of problems we have to manually write the below
-	// 'function specification' that will encode the same arguments into a function call. We can then
-	// truncate the first several bytes where the call name is encoded to finally get the equal of the
-	const checkpointAbiJSON = `[{
-	  "inputs": [
-	    {
-	      "internalType": "bytes32",
-	      "name": "_peggyId",
-	      "type": "bytes32"
-	    },
-	    {
-	      "internalType": "bytes32",
-	      "name": "_checkpoint",
-	      "type": "bytes32"
-	    },
-	    {
-	      "internalType": "uint256",
-	      "name": "_valsetNonce",
-	      "type": "uint256"
-	    },
-	    {
-	      "internalType": "address[]",
-	      "name": "_validators",
-	      "type": "address[]"
-	    },
-	    {
-	      "internalType": "uint256[]",
-	      "name": "_powers",
-	      "type": "uint256[]"
-	    }
-	  ],
-	  "name": "checkpoint",
-	  "outputs": [
-	    {
-	      "internalType": "bytes32",
-	      "name": "",
-	      "type": "bytes32"
-	    }
-	  ],
-	  "stateMutability": "pure",
-	  "type": "function"
-	}]`
-	// Solidity abi.Encode() call.
 	// error case here should not occur outside of testing since the above is a constant
-	contractAbi, abiErr := abi.JSON(strings.NewReader(checkpointAbiJSON))
+	contractAbi, abiErr := abi.JSON(strings.NewReader(ValsetCheckpointABIJSON))
 	if abiErr != nil {
 		panic("Bad ABI constant!")
 	}
@@ -196,7 +161,7 @@ func (v *Valset) WithoutEmptyMembers() *Valset {
 	}
 	r := Valset{Nonce: v.Nonce, Members: make([]*BridgeValidator, 0, len(v.Members))}
 	for i := range v.Members {
-		if v.Members[i].isValid() {
+		if err := v.Members[i].ValidateBasic(); err == nil {
 			r.Members = append(r.Members, v.Members[i])
 		}
 	}

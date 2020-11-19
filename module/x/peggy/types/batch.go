@@ -18,77 +18,8 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	// this will work for now because 'foo' is the test Peggy ID we are using
 	var peggyIDString = "foo"
 
-	// The go-ethereum ABI encoder *only* encodes function calls and then it only encodes
-	// function calls for which you provide an ABI json just like you would get out of the
-	// solidity compiler with your compiled contract.
-	// You are supposed to compile your contract, use abigen to generate an ABI , import
-	// this generated go module and then use for that for all testing and development.
-	// This abstraction layer is more trouble than it's worth, because we don't want to
-	// encode a function call at all, but instead we want to emulate a Solidity encode operation
-	// which has no equal available from go-ethereum.
-	//
-	// In order to work around this absurd series of problems we have to manually write the below
-	// 'function specification' that will encode the same arguments into a function call. We can then
-	// truncate the first several bytes where the call name is encoded to finally get the equal of the
-	const abiJSON = `[{
-	  "inputs": [
-	    {
-	      "internalType": "bytes32",
-	      "name": "_peggyId",
-	      "type": "bytes32"
-	    },
-	    {
-	      "internalType": "bytes32",
-	      "name": "_methodName",
-	      "type": "bytes32"
-		},
-		{
-		  "internalType": "bytes32",
-		  "name": "_checkPoint",
-		  "type": "bytes32"
-		},
-		
-	    {
-	      "internalType": "uint256[]",
-	      "name": "_amounts",
-	      "type": "uint256[]"
-	    },
-	    {
-	      "internalType": "address[]",
-	      "name": "_destinations",
-	      "type": "address[]"
-	    },
-	    {
-	      "internalType": "uint256[]",
-	      "name": "_fees",
-	      "type": "uint256[]"
-	    },
-
-		{
-		  "internalType": "uint256",
-		  "name": "_batchNonce",
-		  "type": "uint256"
-		},
-		{
-		  "internalType": "address",
-		  "name": "_tokenContract",
-		  "type": "address"
-		}
-	  ],
-	  "name": "updateValsetAndSubmitBatch",
-	  "outputs": [
-	    {
-	      "internalType": "bytes32",
-	      "name": "",
-	      "type": "bytes32"
-	    }
-	  ],
-	  "stateMutability": "pure",
-	  "type": "function"
-	}]`
-	// Solidity abi.Encode() call.
 	// error case here should not occur outside of testing since the above is a constant
-	abi, err := abi.JSON(strings.NewReader(abiJSON))
+	abi, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
 	}
@@ -151,46 +82,7 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
 	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
 	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
-	batchDigest := crypto.Keccak256Hash(abiEncodedBatch[4:])
+	// batchDigest :=
 
-	// fmt.Printf(`
-	//   valsetCheckpoint: 0x%v
-	//   elements in batch digest: {
-	// 	peggyId: 0x%v,
-	// 	batchMethodName: 0x%v,
-	// 	valsetCheckpoint: 0x%v,
-	// 	txAmounts: %v,
-	// 	txDestinations: %v,
-	// 	txFees: %v,
-	// 	batchNonce: %v,
-	// 	tokenContract: %v
-	//   }
-	//   abiEncodedBatch: 0x%v
-	//   batchDigest: 0x%v
-	// `,
-	// 	// peggyID, validators, valsetMethodName, valsetNonce, powers,
-	// 	// abiEncodedValset,
-	// 	common.Bytes2Hex(valsetCheckpoint[:]),
-	// 	common.Bytes2Hex(peggyID[:]), common.Bytes2Hex(batchMethodName[:]), common.Bytes2Hex(valsetCheckpoint[:]), txAmounts, txDestinations, txFees, batchNonce, tokenContract,
-	// 	common.Bytes2Hex(abiEncodedBatch[:]),
-	// 	common.Bytes2Hex(batchDigest[:]),
-	// )
-
-	return batchDigest.Bytes(), nil
+	return crypto.Keccak256Hash(abiEncodedBatch[4:]).Bytes(), nil
 }
-
-// func (b *OutgoingTxBatch) Observed() error {
-// 	if b.BatchStatus != BatchStatusPending && b.BatchStatus != BatchStatusSubmitted {
-// 		return sdkerrors.Wrap(ErrInvalid, "status")
-// 	}
-// 	b.BatchStatus = BatchStatusProcessed
-// 	return nil
-// }
-
-// type OutgoingTransferTx struct {
-// 	ID          uint64          `json:"txid"`
-// 	Sender      sdk.AccAddress  `json:"sender"`
-// 	DestAddress EthereumAddress `json:"dest_address"`
-// 	Amount      ERC20Token      `json:"send"`
-// 	BridgeFee   ERC20Token      `json:"bridge_fee"`
-// }

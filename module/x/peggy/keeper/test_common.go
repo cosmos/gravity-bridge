@@ -248,7 +248,7 @@ func MakeTestMarshaler() codec.BinaryMarshaler {
 }
 
 func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAddress, amount types.ERC20Token) sdk.Coin {
-	coin := amount.AsVoucherCoin()
+	coin := amount.PeggyCoin()
 	vouchers := sdk.Coins{coin}
 	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers)
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, dest, vouchers)
