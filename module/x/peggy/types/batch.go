@@ -6,7 +6,6 @@ import (
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	gethCommon "github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -18,7 +17,6 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	// this will work for now because 'foo' is the test Peggy ID we are using
 	var peggyIDString = "foo"
 
-	// error case here should not occur outside of testing since the above is a constant
 	abi, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
@@ -43,22 +41,13 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	txFees := make([]*big.Int, len(b.Transactions))
 	for i, tx := range b.Transactions {
 		txAmounts[i] = tx.Erc20Token.Amount.BigInt()
-		// TODO: migrate to using gethcommon.Address
-		txDestinations[i] = gethCommon.HexToAddress(tx.DestAddress)
+		txDestinations[i] = gethcommon.HexToAddress(tx.DestAddress)
 		txFees[i] = tx.Erc20Fee.Amount.BigInt()
 	}
-
-	batchNonce := big.NewInt(int64(b.BatchNonce))
 
 	valsetCheckpointBytes := (*b.Valset).GetCheckpoint()
 	var valsetCheckpoint [32]uint8
 	copy(valsetCheckpoint[:], valsetCheckpointBytes[:])
-
-	// tokenContractBytes := b.TokenContract.Bytes()
-	// var tokenContract [20]uint8
-	// copy(tokenContract[:], tokenContractBytes[:])
-
-	tokenContract := b.TokenContract
 
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
@@ -70,9 +59,10 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 		txAmounts,
 		txDestinations,
 		txFees,
-		batchNonce,
-		gethCommon.HexToAddress(tokenContract),
+		big.NewInt(int64(b.BatchNonce)),
+		gethcommon.HexToAddress(b.TokenContract),
 	)
+
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if err != nil {
@@ -82,7 +72,5 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
 	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
 	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
-	// batchDigest :=
-
 	return crypto.Keccak256Hash(abiEncodedBatch[4:]).Bytes(), nil
 }

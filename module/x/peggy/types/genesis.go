@@ -18,19 +18,23 @@ const (
 	AttestationPeriod = 24 * time.Hour // TODO: value????
 )
 
-// voting: threshold >2/3 of validator power AND > 1/2 of validator count?
 var (
-	// AttestationVotesCountThreshold threshold of vote counts to succeed
-	AttestationVotesCountThreshold = sdk.NewUint(50)
-
-	// AttestationVotesCountThreshold threshold of votes power to succeed
+	// AttestationVotesPowerThreshold threshold of votes power to succeed
 	AttestationVotesPowerThreshold = sdk.NewInt(66)
 
-	// Parameter store keys
-	ParamsStoreKeyPeggyID               = []byte("PeggyID")
-	ParamsStoreKeyContractHash          = []byte("ContractHash")
-	ParamsStoreKeyStartThreshold        = []byte("StartThreshold")
+	// ParamsStoreKeyPeggyID stores the peggy id
+	ParamsStoreKeyPeggyID = []byte("PeggyID")
+
+	// ParamsStoreKeyContractHash stores the contract hash
+	ParamsStoreKeyContractHash = []byte("ContractHash")
+
+	// ParamsStoreKeyStartThreshold stores the start threshold
+	ParamsStoreKeyStartThreshold = []byte("StartThreshold")
+
+	// ParamsStoreKeyBridgeContractAddress stores the contract address
 	ParamsStoreKeyBridgeContractAddress = []byte("BridgeContractAddress")
+
+	// ParamsStoreKeyBridgeContractChainID stores the bridge chain id
 	ParamsStoreKeyBridgeContractChainID = []byte("BridgeChainID")
 
 	// Ensure that params implements the proper interface
@@ -50,7 +54,14 @@ func (s GenesisState) ValidateBasic() error {
 // TODO: set some better defaults here
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		Params: &Params{},
+		Params: DefaultParams(),
+	}
+}
+
+// DefaultParams returns a copy of the default params
+func DefaultParams() *Params {
+	return &Params{
+		PeggyId: "defaultpeggyid",
 	}
 }
 
@@ -99,8 +110,12 @@ func (p Params) Equal(p2 Params) bool {
 }
 
 func validatePeggyID(i interface{}) error {
-	if _, ok := i.([]byte); !ok {
+	v, ok := i.(string)
+	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if _, err := strToFixByteArray(v); err != nil {
+		return err
 	}
 	return nil
 }
@@ -138,4 +153,13 @@ func validateBridgeContractAddress(i interface{}) error {
 		}
 	}
 	return nil
+}
+
+func strToFixByteArray(s string) ([32]byte, error) {
+	var out [32]byte
+	if len([]byte(s)) > 32 {
+		return out, fmt.Errorf("string too long")
+	}
+	copy(out[:], s)
+	return out, nil
 }

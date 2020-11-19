@@ -49,33 +49,41 @@ import (
 	dbm "github.com/tendermint/tm-db"
 )
 
-var ModuleBasics = module.NewBasicManager(
-	auth.AppModuleBasic{},
-	genutil.AppModuleBasic{},
-	bank.AppModuleBasic{},
-	capability.AppModuleBasic{},
-	staking.AppModuleBasic{},
-	mint.AppModuleBasic{},
-	distribution.AppModuleBasic{},
-	gov.NewAppModuleBasic(
-		paramsclient.ProposalHandler, distrclient.ProposalHandler, upgradeclient.ProposalHandler, upgradeclient.CancelProposalHandler,
-	),
-	params.AppModuleBasic{},
-	crisis.AppModuleBasic{},
-	slashing.AppModuleBasic{},
-	upgrade.AppModuleBasic{},
-	evidence.AppModuleBasic{},
-	vesting.AppModuleBasic{},
+var (
+	// ModuleBasics is a mock module basic manager for testing
+	ModuleBasics = module.NewBasicManager(
+		auth.AppModuleBasic{},
+		genutil.AppModuleBasic{},
+		bank.AppModuleBasic{},
+		capability.AppModuleBasic{},
+		staking.AppModuleBasic{},
+		mint.AppModuleBasic{},
+		distribution.AppModuleBasic{},
+		gov.NewAppModuleBasic(
+			paramsclient.ProposalHandler, distrclient.ProposalHandler, upgradeclient.ProposalHandler, upgradeclient.CancelProposalHandler,
+		),
+		params.AppModuleBasic{},
+		crisis.AppModuleBasic{},
+		slashing.AppModuleBasic{},
+		upgrade.AppModuleBasic{},
+		evidence.AppModuleBasic{},
+		vesting.AppModuleBasic{},
+	)
+
+	// TestingStakeParams is a set of staking params for testing
+	TestingStakeParams = stakingtypes.Params{
+		UnbondingTime:     100,
+		MaxValidators:     10,
+		MaxEntries:        10,
+		HistoricalEntries: 10,
+		BondDenom:         "stake",
+	}
+
+	// Ensure that StakingKeeperMock implements required interface
+	_ types.StakingKeeper = &StakingKeeperMock{}
 )
 
-var TestingStakeParams = stakingtypes.Params{
-	UnbondingTime:     100,
-	MaxValidators:     10,
-	MaxEntries:        10,
-	HistoricalEntries: 10,
-	BondDenom:         "stake",
-}
-
+// TestKeepers stores the various keepers required to test peggy
 type TestKeepers struct {
 	AccountKeeper authkeeper.AccountKeeper
 	StakingKeeper stakingkeeper.Keeper
@@ -84,6 +92,7 @@ type TestKeepers struct {
 	GovKeeper     govkeeper.Keeper
 }
 
+// CreateTestEnv creates the keeper testing environment for peggy
 func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 	t.Helper()
 	peggyKey := sdk.NewKVStoreKey(types.StoreKey)
@@ -216,7 +225,7 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 
 	k := NewKeeper(marshaler, peggyKey, paramsKeeper.Subspace(types.DefaultParamspace), stakingKeeper, bankKeeper)
 	k.setParams(ctx, &types.Params{
-		PeggyId:            []byte("lkasjdfklajsldkfjd"),
+		PeggyId:            "lkasjdfklajsldkfjd",
 		ContractSourceHash: "lkasjdfklajsldkfjd",
 		StartThreshold:     0,
 		EthereumAddress:    "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
@@ -225,6 +234,7 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 	return k, ctx, keepers
 }
 
+// MakeTestCodec creates a legacy amino codec for testing
 func MakeTestCodec() *codec.LegacyAmino {
 	var cdc = codec.NewLegacyAmino()
 	auth.AppModuleBasic{}.RegisterLegacyAminoCodec(cdc)
@@ -239,6 +249,7 @@ func MakeTestCodec() *codec.LegacyAmino {
 	return cdc
 }
 
+// MakeTestMarshaler creates a proto codec for use in testing
 func MakeTestMarshaler() codec.BinaryMarshaler {
 	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	std.RegisterInterfaces(interfaceRegistry)
@@ -247,6 +258,7 @@ func MakeTestMarshaler() codec.BinaryMarshaler {
 	return codec.NewProtoCodec(interfaceRegistry)
 }
 
+// MintVouchersFromAir creates new peggy vouchers given erc20tokens
 func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAddress, amount types.ERC20Token) sdk.Coin {
 	coin := amount.PeggyCoin()
 	vouchers := sdk.Coins{coin}
@@ -256,13 +268,7 @@ func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAd
 	return coin
 }
 
-var _ types.StakingKeeper = &StakingKeeperMock{}
-
-type StakingKeeperMock struct {
-	BondedValidators []stakingtypes.Validator
-	ValidatorPower   map[string]int64
-}
-
+// NewStakingKeeperMock creates a new mock staking keeper
 func NewStakingKeeperMock(operators ...sdk.ValAddress) *StakingKeeperMock {
 	r := &StakingKeeperMock{
 		BondedValidators: make([]stakingtypes.Validator, 0),
@@ -278,11 +284,13 @@ func NewStakingKeeperMock(operators ...sdk.ValAddress) *StakingKeeperMock {
 	return r
 }
 
+// MockStakingValidatorData creates mock validator data
 type MockStakingValidatorData struct {
 	Operator sdk.ValAddress
 	Power    int64
 }
 
+// NewStakingKeeperWeightedMock creates a new mock staking keeper with some mock validator data
 func NewStakingKeeperWeightedMock(t ...MockStakingValidatorData) *StakingKeeperMock {
 	r := &StakingKeeperMock{
 		BondedValidators: make([]stakingtypes.Validator, len(t)),
@@ -298,10 +306,18 @@ func NewStakingKeeperWeightedMock(t ...MockStakingValidatorData) *StakingKeeperM
 	return r
 }
 
+// StakingKeeperMock is a mock staking keeper for use in the tests
+type StakingKeeperMock struct {
+	BondedValidators []stakingtypes.Validator
+	ValidatorPower   map[string]int64
+}
+
+// GetBondedValidatorsByPower implements the interface for staking keeper required by peggy
 func (s *StakingKeeperMock) GetBondedValidatorsByPower(ctx sdk.Context) []stakingtypes.Validator {
 	return s.BondedValidators
 }
 
+// GetLastValidatorPower implements the interface for staking keeper required by peggy
 func (s *StakingKeeperMock) GetLastValidatorPower(ctx sdk.Context, operator sdk.ValAddress) int64 {
 	v, ok := s.ValidatorPower[operator.String()]
 	if !ok {
@@ -310,6 +326,7 @@ func (s *StakingKeeperMock) GetLastValidatorPower(ctx sdk.Context, operator sdk.
 	return v
 }
 
+// GetLastTotalPower implements the interface for staking keeper required by peggy
 func (s *StakingKeeperMock) GetLastTotalPower(ctx sdk.Context) (power sdk.Int) {
 	var total int64
 	for _, v := range s.ValidatorPower {
@@ -318,16 +335,20 @@ func (s *StakingKeeperMock) GetLastTotalPower(ctx sdk.Context) (power sdk.Int) {
 	return sdk.NewInt(total)
 }
 
+// AlwaysPanicStakingMock is a mock staking keeper that panics on usage
 type AlwaysPanicStakingMock struct{}
 
+// GetLastTotalPower implements the interface for staking keeper required by peggy
 func (s AlwaysPanicStakingMock) GetLastTotalPower(ctx sdk.Context) (power sdk.Int) {
 	panic("unexpected call")
 }
 
+// GetBondedValidatorsByPower implements the interface for staking keeper required by peggy
 func (s AlwaysPanicStakingMock) GetBondedValidatorsByPower(ctx sdk.Context) []stakingtypes.Validator {
 	panic("unexpected call")
 }
 
+// GetLastValidatorPower implements the interface for staking keeper required by peggy
 func (s AlwaysPanicStakingMock) GetLastValidatorPower(ctx sdk.Context, operator sdk.ValAddress) int64 {
 	panic("unexpected call")
 }

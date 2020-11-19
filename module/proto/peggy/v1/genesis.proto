@@ -10,7 +10,7 @@ message Params {
   option (gogoproto.stringer) = false;
 
   // PeggyID is a random 32 byte value to prevent signature reuse
-  bytes  peggy_id             = 1;
+  string  peggy_id            = 1;
 
   // ContractHash is the code hash of a known good version of the Peggy contract solidity code.
   // It will be used to verify exactly which version of the bridge will be deployed.

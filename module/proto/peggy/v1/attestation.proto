@@ -61,9 +61,6 @@ message BridgeDeposit {
 
 // ERC20Token unique identifier for an Ethereum ERC20 token.
 message ERC20Token {
-    // option (gogoproto.marshaler)   = false;
-    // option (gogoproto.sizer)       = false;
-
     // The amount of the ERC20 token 
     string amount                 = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
 

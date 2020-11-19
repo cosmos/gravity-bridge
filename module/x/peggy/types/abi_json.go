@@ -16,38 +16,38 @@ package types
 const (
 	// OutgoingBatchTxCheckpointABIJSON checks the ETH ABI for compatability of the OutgoingBatchTx message
 	OutgoingBatchTxCheckpointABIJSON = `[{
-	  "inputs": [
-	    { "internalType": "bytes32", "name": "_peggyId", "type": "bytes32" },
-	    { "internalType": "bytes32", "name": "_methodName", "type": "bytes32" },
-		{ "internalType": "bytes32", "name": "_checkPoint", "type": "bytes32" },
-	    { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" },
-	    { "internalType": "address[]", "name": "_destinations", "type": "address[]" },
-	    { "internalType": "uint256[]", "name": "_fees", "type": "uint256[]" },
-		{ "internalType": "uint256", "name": "_batchNonce", "type": "uint256" },
-		{ "internalType": "address", "name": "_tokenContract", "type": "address" }
-	  ],
-	  "name": "updateValsetAndSubmitBatch",
-	  "outputs": [
-	    { "internalType": "bytes32", "name": "", "type": "bytes32" }
-	  ],
-	  "stateMutability": "pure",
-	  "type": "function"
+		"name": "updateValsetAndSubmitBatch",
+		"stateMutability": "pure",
+		"type": "function",
+		"inputs": [
+			{ "internalType": "bytes32",   "name": "_peggyId",       "type": "bytes32" },
+			{ "internalType": "bytes32",   "name": "_methodName",    "type": "bytes32" },
+			{ "internalType": "bytes32",   "name": "_checkPoint",    "type": "bytes32" },
+			{ "internalType": "uint256[]", "name": "_amounts",       "type": "uint256[]" },
+			{ "internalType": "address[]", "name": "_destinations",  "type": "address[]" },
+			{ "internalType": "uint256[]", "name": "_fees",          "type": "uint256[]" },
+			{ "internalType": "uint256",   "name": "_batchNonce",    "type": "uint256" },
+			{ "internalType": "address",   "name": "_tokenContract", "type": "address" }
+		],
+		"outputs": [
+			{ "internalType": "bytes32", "name": "", "type": "bytes32" }
+		]
 	}]`
 
 	// ValsetCheckpointABIJSON checks the ETH ABI for compatability of the Valset update message
 	ValsetCheckpointABIJSON = `[{
-	  "inputs": [
-	    { "internalType": "bytes32", "name": "_peggyId", "type": "bytes32" },
-	    { "internalType": "bytes32", "name": "_checkpoint", "type": "bytes32" },
-	    { "internalType": "uint256", "name": "_valsetNonce", "type": "uint256" },
-	    { "internalType": "address[]", "name": "_validators", "type": "address[]" },
-	    { "internalType": "uint256[]", "name": "_powers", "type": "uint256[]" }
-	  ],
-	  "name": "checkpoint",
-	  "outputs": [
-	    { "internalType": "bytes32", "name": "", "type": "bytes32" }
-	  ],
-	  "stateMutability": "pure",
-	  "type": "function"
+		"name": "checkpoint",
+		"stateMutability": "pure",
+		"type": "function",
+		"inputs": [
+			{ "internalType": "bytes32",   "name": "_peggyId",     "type": "bytes32" },
+			{ "internalType": "bytes32",   "name": "_checkpoint",  "type": "bytes32" },
+			{ "internalType": "uint256",   "name": "_valsetNonce", "type": "uint256" },
+			{ "internalType": "address[]", "name": "_validators",  "type": "address[]" },
+			{ "internalType": "uint256[]", "name": "_powers",      "type": "uint256[]" }
+		],
+		"outputs": [
+			{ "internalType": "bytes32", "name": "", "type": "bytes32" }
+		]
 	}]`
 )

@@ -31,7 +31,7 @@ var (
 	ValsetConfirmKey = []byte{0x3}
 
 	// OracleClaimKey attestation details by nonce and validator address
-	// i.e. cosmosvalpub1ahx7f8wyertuus9r20284ej0asrs085case3kn
+	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	// NOTE: this should be refactored to take a cosmos account address
 	OracleClaimKey = []byte{0x4}
 
@@ -93,7 +93,7 @@ func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
 
 // GetClaimKey returns the following key format
 // prefix type               cosmos-validator-address                       nonce                             attestation-details-hash
-// [0x0][0 0 0 1][cosmosvalpub1ahx7f8wyertuus9r20284ej0asrs085case3kn][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
+// [0x0][0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
 // TODO: remove the validator address usage here!
 func GetClaimKey(claimType ClaimType, nonce uint64, validator sdk.ValAddress, details AttestationDetails) []byte {
 	var detailsHash []byte
