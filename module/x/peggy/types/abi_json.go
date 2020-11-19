@@ -22,7 +22,6 @@ const (
 		"inputs": [
 			{ "internalType": "bytes32",   "name": "_peggyId",       "type": "bytes32" },
 			{ "internalType": "bytes32",   "name": "_methodName",    "type": "bytes32" },
-			{ "internalType": "bytes32",   "name": "_checkPoint",    "type": "bytes32" },
 			{ "internalType": "uint256[]", "name": "_amounts",       "type": "uint256[]" },
 			{ "internalType": "address[]", "name": "_destinations",  "type": "address[]" },
 			{ "internalType": "uint256[]", "name": "_fees",          "type": "uint256[]" },

@@ -392,35 +392,6 @@ func TestLastPendingBatchRequest(t *testing.T) {
 		}
 		}
 	],
-	"valset": {
-		"nonce": "105",
-		"members": [
-		{
-			"power": "715827882",
-			"ethereum_address": "0x0101010101010101010101010101010101010101"
-		},
-		{
-			"power": "715827882",
-			"ethereum_address": "0x0202020202020202020202020202020202020202"
-		},
-		{
-			"power": "715827882",
-			"ethereum_address": "0x0303030303030303030303030303030303030303"
-		},
-		{
-			"power": "715827882",
-			"ethereum_address": "0x0404040404040404040404040404040404040404"
-		},
-		{
-			"power": "715827882",
-			"ethereum_address": "0x0505050505050505050505050505050505050505"
-		},
-		{
-			"power": "715827882",
-			"ethereum_address": "0x0606060606060606060606060606060606060606"
-		}
-		]
-	},
 	"token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 	}
 }
@@ -541,10 +512,7 @@ func TestQueryBatch(t *testing.T) {
 			}
 		  ],
 		  "batch_nonce": "1",
-		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-		  "valset": { 
-			  "nonce": "1234567" 
-		  }
+		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		}
 	  }
 	  `)
@@ -593,8 +561,7 @@ func TestLastBatchesRequest(t *testing.T) {
 			}
 		  ],
 		  "batch_nonce": "2",
-		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-		  "valset": { "nonce": "1234567" }
+		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		},
 		{
 		  "transactions": [
@@ -626,8 +593,7 @@ func TestLastBatchesRequest(t *testing.T) {
 			}
 		  ],
 		  "batch_nonce": "1",
-		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-		  "valset": { "nonce": "1234567" }
+		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		}
 	  ]
 	  `)

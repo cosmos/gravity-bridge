@@ -13,16 +13,16 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 	senderAddr, err := sdk.AccAddressFromHex("527FBEE652609AB150F0AEE9D61A2F76CFC4A73E")
 	require.NoError(t, err)
 	var (
-		erc20Addr = "0x22474D350EC2dA53D717E30b96e9a2B7628Ede5b"
+		erc20Addr = "0x34Ac3eB6180FdD94043664C22043F004734Dc480"
 	)
 
-	v := NewValset(
-		1,
-		BridgeValidators{{
-			EthereumAddress: "0xc783df8a850f42e7F7e57013759C285caa701eB6",
-			Power:           6670,
-		}},
-	)
+	// v := NewValset(
+	// 	1,
+	// 	BridgeValidators{{
+	// 		EthereumAddress: "0xc783df8a850f42e7F7e57013759C285caa701eB6",
+	// 		Power:           6670,
+	// 	}},
+	// )
 
 	src := OutgoingTxBatch{
 		BatchNonce: 1,
@@ -42,7 +42,7 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 				},
 			},
 		},
-		Valset:        v,
+		// Valset:        v,
 		TokenContract: erc20Addr,
 	}
 
@@ -51,7 +51,7 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 	require.NoError(t, err)
 
 	// hash from bridge contract
-	goldHash := "0x746471abc2232c11039c2160365c4593110dbfbe25ff9a2dcf8b5b7376e9f346"[2:]
+	goldHash := "0x731fc6e7e13e4c4bd45664c9272d49e5a9b55bccb54cfcc0704465f9de491e86"[2:]
 	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))
 }
 

@@ -76,7 +76,7 @@ func TestBatches(t *testing.T) {
 			},
 		},
 		TokenContract: myTokenContractAddr,
-		Valset:        &types.Valset{Nonce: 0x12d687, Members: types.BridgeValidators(nil)},
+		// Valset:        &types.Valset{Nonce: 0x12d687, Members: types.BridgeValidators(nil)},
 	}
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
@@ -142,7 +142,7 @@ func TestBatches(t *testing.T) {
 		TokenContract: myTokenContractAddr,
 		// For some reason, the empty Members field can be expressed by either []types.BridgeValidator{} or types.BridgeValidators(nil)
 		// for some reason, this was the only reason for this testing failing? I've changed it
-		Valset: &types.Valset{Nonce: 0x12d687, Members: types.BridgeValidators(nil)},
+		// Valset: &types.Valset{Nonce: 0x12d687, Members: types.BridgeValidators(nil)},
 	}
 
 	assert.Equal(t, expSecondBatch, secondBatch)

@@ -45,9 +45,9 @@ func (b OutgoingTxBatch) GetCheckpoint(peggyIDstring string) ([]byte, error) {
 		txFees[i] = tx.Erc20Fee.Amount.BigInt()
 	}
 
-	valsetCheckpointBytes := (*b.Valset).GetCheckpoint(peggyIDstring)
-	var valsetCheckpoint [32]uint8
-	copy(valsetCheckpoint[:], valsetCheckpointBytes[:])
+	// valsetCheckpointBytes := (*b.Valset).GetCheckpoint(peggyIDstring)
+	// var valsetCheckpoint [32]uint8
+	// copy(valsetCheckpoint[:], valsetCheckpointBytes[:])
 
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
@@ -55,7 +55,7 @@ func (b OutgoingTxBatch) GetCheckpoint(peggyIDstring string) ([]byte, error) {
 	abiEncodedBatch, err := abi.Pack("updateValsetAndSubmitBatch",
 		peggyID,
 		batchMethodName,
-		valsetCheckpoint,
+		// valsetCheckpoint,
 		txAmounts,
 		txDestinations,
 		txFees,

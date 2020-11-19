@@ -28,9 +28,9 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, ma
 	}
 	nextID := k.autoIncrementID(ctx, types.KeyLastOutgoingBatchID)
 	batch := &types.OutgoingTxBatch{
-		BatchNonce:    nextID,
-		Transactions:  selectedTx,
-		Valset:        k.GetCurrentValset(ctx),
+		BatchNonce:   nextID,
+		Transactions: selectedTx,
+		// Valset:        k.GetCurrentValset(ctx),
 		TokenContract: contractAddress,
 	}
 	k.storeBatch(ctx, batch)
