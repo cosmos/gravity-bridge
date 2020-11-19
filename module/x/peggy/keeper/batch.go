@@ -163,3 +163,17 @@ func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, ba
 		}
 	}
 }
+
+// GetLastPendingBatch returns the last pending batch for a given key
+func (k Keeper) GetLastPendingBatch(ctx sdk.Context, operator sdk.AccAddress) *types.OutgoingTxBatch {
+	var pendingBatchReq *types.OutgoingTxBatch
+	k.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
+		foundConfirm := k.GetBatchConfirm(ctx, batch.BatchNonce, batch.TokenContract, operator) != nil
+		if !foundConfirm {
+			pendingBatchReq = batch
+			return true
+		}
+		return false
+	})
+	return pendingBatchReq
+}

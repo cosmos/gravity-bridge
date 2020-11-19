@@ -105,11 +105,8 @@ func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	var confirms []*types.MsgValsetConfirm
-	keeper.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
-		confirms = append(confirms, &c)
-		return false
-	})
+	confirms := keeper.AllValsetConfirmsByNonce(ctx, nonce)
+
 	if len(confirms) == 0 {
 		return nil, nil
 	}
@@ -129,15 +126,7 @@ func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContract strin
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
-
-	var confirms []types.MsgConfirmBatch
-	keeper.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, c types.MsgConfirmBatch) bool {
-		confirms = append(confirms, c)
-		return false
-	})
-	if len(confirms) == 0 {
-		return nil, nil
-	}
+	confirms := keeper.GetAllBatchBatchConfirmsByNonceAndTokenContract(ctx, nonce, tokenContract)
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, confirms)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
@@ -146,21 +135,12 @@ func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContract strin
 	return res, nil
 }
 
-const maxValsetRequestsReturned = 5
+// const maxValsetRequestsReturned = 5
 
 /* USED BY RUST */
 // lastValsetRequests returns up to maxValsetRequestsReturned valsets from the store
 func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	var counter int
-	var valReq []*types.Valset
-	keeper.IterateValsetRequest(ctx, func(_ []byte, val *types.Valset) bool {
-		valReq = append(valReq, val)
-		counter++
-		return counter >= maxValsetRequestsReturned
-	})
-	if len(valReq) == 0 {
-		return nil, nil
-	}
+	valReq := keeper.GetLastValsetRequests(ctx)
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, valReq)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
@@ -176,22 +156,7 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingValsetReq *types.Valset
-	keeper.IterateValsetRequest(ctx, func(_ []byte, val *types.Valset) bool {
-		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
-		foundConfirm := keeper.GetValsetConfirm(ctx, val.Nonce, addr) != nil
-		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
-		// and exit the loop
-		if !foundConfirm {
-			pendingValsetReq = val
-			return true
-		}
-		// return false to continue the loop
-		return false
-	})
-	if pendingValsetReq == nil {
-		return nil, nil
-	}
+	pendingValsetReq := keeper.GetLastPendingValsetRequest(ctx, addr)
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingValsetReq)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
@@ -248,18 +213,7 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingBatchReq *types.OutgoingTxBatch
-	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
-		foundConfirm := keeper.GetBatchConfirm(ctx, batch.BatchNonce, batch.TokenContract, addr) != nil
-		if !foundConfirm {
-			pendingBatchReq = batch
-			return true
-		}
-		return false
-	})
-	if pendingBatchReq == nil {
-		return nil, nil
-	}
+	pendingBatchReq := keeper.GetLastPendingBatch(ctx, addr)
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingBatchReq)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
@@ -309,7 +263,7 @@ func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keep
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-	if types.ValidateEthAddress(tokenContract) != nil {
+	if err := types.ValidateEthAddress(tokenContract); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
 	foundBatch := keeper.GetOutgoingTXBatch(ctx, tokenContract, parsedNonce)

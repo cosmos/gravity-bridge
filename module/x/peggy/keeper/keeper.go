@@ -95,6 +95,44 @@ func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce uint64) *types.Valset {
 	return &valset
 }
 
+const maxValsetRequestsReturned = 5
+
+// GetLastValsetRequests returns the latest 5 valset requests
+func (k Keeper) GetLastValsetRequests(ctx sdk.Context) []*types.Valset {
+	var counter int
+	var valReq []*types.Valset
+	k.IterateValsetRequest(ctx, func(_ []byte, val *types.Valset) bool {
+		valReq = append(valReq, val)
+		counter++
+		return counter >= maxValsetRequestsReturned
+	})
+	if len(valReq) == 0 {
+		return nil
+	}
+	return valReq
+}
+
+// GetLastPendingValsetRequest returns the last pending valset request for a given address
+func (k Keeper) GetLastPendingValsetRequest(ctx sdk.Context, addr sdk.AccAddress) *types.Valset {
+	var pendingValsetReq *types.Valset
+	k.IterateValsetRequest(ctx, func(_ []byte, val *types.Valset) bool {
+		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
+		foundConfirm := k.GetValsetConfirm(ctx, val.Nonce, addr) != nil
+		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
+		// and exit the loop
+		if !foundConfirm {
+			pendingValsetReq = val
+			return true
+		}
+		// return false to continue the loop
+		return false
+	})
+	if pendingValsetReq == nil {
+		return nil
+	}
+	return pendingValsetReq
+}
+
 // IterateValsetRequest retruns all valsetRequests
 func (k Keeper) IterateValsetRequest(ctx sdk.Context, cb func(key []byte, val *types.Valset) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetRequestKey)
@@ -155,6 +193,19 @@ func (k Keeper) GetAllValsetConfirmsByNonce(ctx sdk.Context, nonce uint64) (conf
 	return confirms
 }
 
+// AllValsetConfirmsByNonce returns all the validator set confirmations by nonce
+func (k Keeper) AllValsetConfirmsByNonce(ctx sdk.Context, nonce uint64) []*types.MsgValsetConfirm {
+	var confirms []*types.MsgValsetConfirm
+	k.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
+		confirms = append(confirms, &c)
+		return false
+	})
+	if len(confirms) == 0 {
+		return nil
+	}
+	return confirms
+}
+
 // IterateValsetConfirmByNonce iterates through all valset confirms by nonce in ASC order
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
@@ -199,6 +250,19 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 	key := types.GetBatchConfirmKey(batch.TokenContract, batch.Nonce, acc)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
 	return key
+}
+
+// GetAllBatchConfirmsByNonceAndTokenContract returns all batch confirms for a given nonce/token contract
+func (k Keeper) GetAllBatchBatchConfirmsByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string) []*types.MsgConfirmBatch {
+	var confirms []*types.MsgConfirmBatch
+	k.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, c types.MsgConfirmBatch) bool {
+		confirms = append(confirms, &c)
+		return false
+	})
+	if len(confirms) == 0 {
+		return nil
+	}
+	return confirms
 }
 
 // IterateBatchConfirmByNonceAndTokenContract iterates through all batch confirmations
