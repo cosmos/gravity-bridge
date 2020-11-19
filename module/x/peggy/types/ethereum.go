@@ -8,7 +8,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	gethCommon "github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -24,20 +23,11 @@ const (
 // const EthereumAddressLength = gethCommon.AddressLength
 
 // EthereumAddress defines a standard ethereum address
-type EthereumAddress gethCommon.Address
+// type EthereumAddress gethCommon.Address
 
 // EthAddrLessThan migrates the Ethereum address less than function
 func EthAddrLessThan(e, o string) bool {
 	return bytes.Compare([]byte(e)[:], []byte(o)[:]) == -1
-}
-
-// NewEthereumAddress is a constructor function for EthereumAddress
-func NewEthereumAddress(address string) EthereumAddress {
-	return EthereumAddress(gethCommon.HexToAddress(address)) //, e.ValidateBasic() // TODO: check and return error
-}
-
-func (e EthereumAddress) String() string {
-	return gethCommon.Address(e).String()
 }
 
 // ValidateEthAddress validates the ethereum address strings
@@ -49,11 +39,6 @@ func ValidateEthAddress(a string) error {
 		return fmt.Errorf("address(%s) doesn't pass regex", a)
 	}
 	return nil
-}
-
-// LessThan returns if an address is less than another
-func (e EthereumAddress) LessThan(o EthereumAddress) bool {
-	return bytes.Compare(e[:], o[:]) == -1
 }
 
 /////////////////////////

@@ -8,7 +8,7 @@ import (
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethCommon "github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 	var (
 		nonce                                       = uint64(1)
 		myValidatorCosmosAddr, _                    = sdk.AccAddressFromBech32("cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l")
-		myValidatorEthereumAddr  gethCommon.Address = gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(50)}, 20))
+		myValidatorEthereumAddr  gethcommon.Address = gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(50)}, 20))
 	)
 	k, ctx, _ := CreateTestEnv(t)
 	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{
@@ -82,7 +82,7 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		addr, _ := sdk.AccAddressFromBech32(addrs[i])
 		msg := types.MsgValsetConfirm{}
-		msg.EthAddress = gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(i + 1)}, 20)).String()
+		msg.EthAddress = gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(i + 1)}, 20)).String()
 		msg.Nonce = uint64(1)
 		msg.Validator = addr.String()
 		msg.Signature = fmt.Sprintf("signature %d", i+1)
@@ -137,7 +137,7 @@ func TestLastValsetRequests(t *testing.T) {
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			k.SetEthAddress(ctx, valAddr, gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			k.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		k.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -277,7 +277,7 @@ func TestPendingValsetRequests(t *testing.T) {
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			k.SetEthAddress(ctx, valAddr, gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			k.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		k.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -346,7 +346,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 			// add an validator each block
 			// TODO: replace with real SDK addresses
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			k.SetEthAddress(ctx, valAddr, gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			k.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		k.StakingKeeper = NewStakingKeeperMock(validators...)

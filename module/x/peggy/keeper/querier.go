@@ -273,8 +273,8 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 // validators we need some metadata to know who the signatures are from.
 // So that we can properly pass a blank signature for a specific validator
 type SignatureWithAddress struct {
-	Signature string                `json:"eth_signature"`
-	Address   types.EthereumAddress `json:"eth_address"`
+	Signature string `json:"eth_signature"`
+	Address   string `json:"eth_address"`
 }
 
 type SignedOutgoingTxBatchResponse struct {

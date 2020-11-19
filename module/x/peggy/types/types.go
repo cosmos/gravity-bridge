@@ -8,6 +8,8 @@ import (
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	gethCommon "github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -47,9 +49,9 @@ func (b BridgeValidators) Sort() {
 
 // HasDuplicates returns true if there are duplicates in the set
 func (b BridgeValidators) HasDuplicates() bool {
-	m := make(map[EthereumAddress]struct{}, len(b))
+	m := make(map[string]struct{}, len(b))
 	for i := range b {
-		m[NewEthereumAddress(string(b[i].EthereumAddress))] = struct{}{}
+		m[b[i].EthereumAddress] = struct{}{}
 	}
 	return len(m) != len(b)
 }
@@ -163,10 +165,10 @@ func (v Valset) GetCheckpoint() []byte {
 	var checkpoint [32]uint8
 	copy(checkpoint[:], checkpointBytes[:])
 
-	memberAddresses := make([]EthereumAddress, len(v.Members))
+	memberAddresses := make([]gethcommon.Address, len(v.Members))
 	convertedPowers := make([]*big.Int, len(v.Members))
 	for i, m := range v.Members {
-		memberAddresses[i] = NewEthereumAddress(string(m.EthereumAddress))
+		memberAddresses[i] = gethCommon.HexToAddress(m.EthereumAddress)
 		convertedPowers[i] = big.NewInt(int64(m.Power))
 	}
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
