@@ -63,7 +63,7 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	event := sdk.NewEvent(
 		types.EventTypeMultisigUpdateRequest,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
+		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		sdk.NewAttribute(types.AttributeKeyMultisigID, fmt.Sprint(valset.Nonce)),
 		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(valset.Nonce)),
@@ -178,7 +178,7 @@ func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb fu
 /////////////////////////////
 
 // GetBatchConfirm returns a batch confirmation given its nonce, the token contract, and a validator address
-func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce uint64, tokenContract types.EthereumAddress, validator sdk.AccAddress) *types.MsgConfirmBatch {
+func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce uint64, tokenContract string, validator sdk.AccAddress) *types.MsgConfirmBatch {
 	store := ctx.KVStore(k.storeKey)
 	entity := store.Get(types.GetBatchConfirmKey(tokenContract, nonce, validator))
 	if entity == nil {
@@ -196,7 +196,7 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 	if err != nil {
 		panic(err)
 	}
-	key := types.GetBatchConfirmKey(types.NewEthereumAddress(string(batch.TokenContract)), batch.Nonce, acc)
+	key := types.GetBatchConfirmKey(batch.TokenContract, batch.Nonce, acc)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
 	return key
 }
@@ -204,9 +204,9 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 // IterateBatchConfirmByNonceAndTokenContract iterates through all batch confirmations
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
-func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract types.EthereumAddress, cb func([]byte, types.MsgConfirmBatch) bool) {
+func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string, cb func([]byte, types.MsgConfirmBatch) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchConfirmKey)
-	prefix := append(tokenContract.Bytes(), types.UInt64Bytes(nonce)...)
+	prefix := append(types.NewEthereumAddress(tokenContract).Bytes(), types.UInt64Bytes(nonce)...)
 	iter := prefixStore.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
@@ -225,20 +225,15 @@ func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonc
 /////////////////////////////
 
 // SetEthAddress sets the ethereum address for a given validator
-func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr types.EthereumAddress) {
+func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetEthAddressKey(validator), ethAddr.Bytes())
+	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
 }
 
 // GetEthAddress returns the eth address for a given peggy validator
-func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) *types.EthereumAddress {
+func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) string {
 	store := ctx.KVStore(k.storeKey)
-	val := store.Get(types.GetEthAddressKey(validator))
-	if len(val) == 0 {
-		return nil
-	}
-	addr := types.NewEthereumAddress(string(val))
-	return &addr
+	return string(store.Get(types.GetEthAddressKey(validator)))
 }
 
 // GetCurrentValset gets powers from the store and normalizes them
@@ -266,8 +261,8 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		totalPower += p
 
 		bridgeValidators[i] = &types.BridgeValidator{Power: p}
-		if ethAddr := k.GetEthAddress(ctx, valAddr); ethAddr != nil {
-			bridgeValidators[i].EthereumAddress = ethAddr.String()
+		if ethAddr := k.GetEthAddress(ctx, valAddr); ethAddr != "" {
+			bridgeValidators[i].EthereumAddress = ethAddr
 		}
 	}
 	// normalize power values
@@ -294,10 +289,10 @@ func (k Keeper) setParams(ctx sdk.Context, ps *types.Params) {
 }
 
 // GetBridgeContractAddress returns the bridge contract address on ETH
-func (k Keeper) GetBridgeContractAddress(ctx sdk.Context) types.EthereumAddress {
+func (k Keeper) GetBridgeContractAddress(ctx sdk.Context) string {
 	var a string
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractAddress, &a)
-	return types.NewEthereumAddress(string(a))
+	return a
 }
 
 // GetBridgeChainID returns the chain id of the ETH chain we are running against

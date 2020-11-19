@@ -124,7 +124,7 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation) {
 		types.EventTypeObservation,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyAttestationType, string(att.ClaimType)),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
+		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(att.EventNonce, ud))), // todo: serialize with hex/ base64 ?
 		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(att.EventNonce)),

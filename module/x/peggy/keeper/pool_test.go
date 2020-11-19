@@ -13,7 +13,7 @@ func TestAddToOutgoingPool(t *testing.T) {
 	k, ctx, keepers := CreateTestEnv(t)
 	var (
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		myReceiver          = types.NewEthereumAddress("0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7")
+		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
 		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
 	)
 	// mint some voucher first
@@ -44,25 +44,25 @@ func TestAddToOutgoingPool(t *testing.T) {
 		{
 			BridgeFee: types.NewERC20Token(3, myTokenContractAddr).PeggyCoin(),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.String(),
+			DestAddr:  myReceiver,
 			Amount:    types.NewERC20Token(101, myTokenContractAddr).PeggyCoin(),
 		},
 		{
 			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.String(),
+			DestAddr:  myReceiver,
 			Amount:    types.NewERC20Token(100, myTokenContractAddr).PeggyCoin(),
 		},
 		{
 			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.String(),
+			DestAddr:  myReceiver,
 			Amount:    types.NewERC20Token(102, myTokenContractAddr).PeggyCoin(),
 		},
 		{
 			BridgeFee: types.NewERC20Token(1, myTokenContractAddr).PeggyCoin(),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.String(),
+			DestAddr:  myReceiver,
 			Amount:    types.NewERC20Token(103, myTokenContractAddr).PeggyCoin(),
 		},
 	}

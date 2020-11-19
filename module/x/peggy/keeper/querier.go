@@ -124,12 +124,11 @@ func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]
 // USED BY RUST
 // allBatchConfirms returns all the confirm messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
-func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContractString string, keeper Keeper) ([]byte, error) {
+func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContract string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(nonceStr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
-	tokenContract := types.NewEthereumAddress(tokenContractString)
 
 	var confirms []types.MsgConfirmBatch
 	keeper.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, c types.MsgConfirmBatch) bool {
@@ -251,7 +250,7 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 
 	var pendingBatchReq *types.OutgoingTxBatch
 	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
-		foundConfirm := keeper.GetBatchConfirm(ctx, batch.BatchNonce, types.NewEthereumAddress(batch.TokenContract), addr) != nil
+		foundConfirm := keeper.GetBatchConfirm(ctx, batch.BatchNonce, batch.TokenContract, addr) != nil
 		if !foundConfirm {
 			pendingBatchReq = batch
 			return true

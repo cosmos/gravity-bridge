@@ -20,7 +20,7 @@ func TestBatches(t *testing.T) {
 		// Sender on peggy
 		mySender, _ = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
 		// Random ETH address
-		myReceiver = types.NewEthereumAddress("0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7")
+		myReceiver = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
 		// Pickle token contract
 		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
 		now                 = time.Now().UTC()
@@ -64,14 +64,14 @@ func TestBatches(t *testing.T) {
 				Id:          2,
 				Erc20Fee:    types.NewERC20Token(3, myTokenContractAddr),
 				Sender:      mySender.String(),
-				DestAddress: myReceiver.String(),
+				DestAddress: myReceiver,
 				Erc20Token:  types.NewERC20Token(101, myTokenContractAddr),
 			},
 			{
 				Id:          1,
 				Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
 				Sender:      mySender.String(),
-				DestAddress: myReceiver.String(),
+				DestAddress: myReceiver,
 				Erc20Token:  types.NewERC20Token(100, myTokenContractAddr),
 			},
 		},
@@ -90,13 +90,13 @@ func TestBatches(t *testing.T) {
 		{
 			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.String(),
+			DestAddr:  myReceiver,
 			Amount:    types.NewERC20Token(102, myTokenContractAddr).PeggyCoin(),
 		},
 		{
 			BridgeFee: types.NewERC20Token(1, myTokenContractAddr).PeggyCoin(),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.String(),
+			DestAddr:  myReceiver,
 			Amount:    types.NewERC20Token(103, myTokenContractAddr).PeggyCoin(),
 		},
 	}
@@ -128,14 +128,14 @@ func TestBatches(t *testing.T) {
 				Id:          6,
 				Erc20Fee:    types.NewERC20Token(5, myTokenContractAddr),
 				Sender:      mySender.String(),
-				DestAddress: myReceiver.String(),
+				DestAddress: myReceiver,
 				Erc20Token:  types.NewERC20Token(101, myTokenContractAddr),
 			},
 			{
 				Id:          5,
 				Erc20Fee:    types.NewERC20Token(4, myTokenContractAddr),
 				Sender:      mySender.String(),
-				DestAddress: myReceiver.String(),
+				DestAddress: myReceiver,
 				Erc20Token:  types.NewERC20Token(100, myTokenContractAddr),
 			},
 		},
@@ -167,25 +167,25 @@ func TestBatches(t *testing.T) {
 		{
 			BridgeFee: types.NewERC20Token(3, myTokenContractAddr).PeggyCoin(),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.String(),
+			DestAddr:  myReceiver,
 			Amount:    types.NewERC20Token(101, myTokenContractAddr).PeggyCoin(),
 		},
 		{
 			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.String(),
+			DestAddr:  myReceiver,
 			Amount:    types.NewERC20Token(100, myTokenContractAddr).PeggyCoin(),
 		},
 		{
 			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.String(),
+			DestAddr:  myReceiver,
 			Amount:    types.NewERC20Token(102, myTokenContractAddr).PeggyCoin(),
 		},
 		{
 			BridgeFee: types.NewERC20Token(1, myTokenContractAddr).PeggyCoin(),
 			Sender:    mySender.String(),
-			DestAddr:  myReceiver.String(),
+			DestAddr:  myReceiver,
 			Amount:    types.NewERC20Token(103, myTokenContractAddr).PeggyCoin(),
 		},
 	}

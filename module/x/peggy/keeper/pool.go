@@ -16,7 +16,7 @@ import (
 // - burns the voucher for transfer amount and fees
 // - persists an OutgoingTx
 // - adds the TX to the `available` TX pool via a second index
-func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counterpartReceiver types.EthereumAddress, amount sdk.Coin, fee sdk.Coin) (uint64, error) {
+func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counterpartReceiver string, amount sdk.Coin, fee sdk.Coin) (uint64, error) {
 	totalAmount := amount.Add(fee)
 	totalInVouchers := sdk.Coins{totalAmount}
 
@@ -41,7 +41,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	// construct outgoing tx
 	outgoing := &types.OutgoingTx{
 		Sender:    sender.String(),
-		DestAddr:  counterpartReceiver.String(),
+		DestAddr:  counterpartReceiver,
 		Amount:    amount,
 		BridgeFee: fee,
 	}
@@ -60,7 +60,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	poolEvent := sdk.NewEvent(
 		types.EventTypeBridgeWithdrawalReceived,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
+		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		sdk.NewAttribute(types.AttributeKeyOutgoingTXID, strconv.Itoa(int(nextID))),
 		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nextID)),

@@ -11,14 +11,13 @@ import (
 	gethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 func TestQueryValsetConfirm(t *testing.T) {
 	var (
-		nonce                                          = uint64(1)
-		myValidatorCosmosAddr, _                       = sdk.AccAddressFromBech32("cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l")
-		myValidatorEthereumAddr  types.EthereumAddress = createEthAddress(50)
+		nonce                                       = uint64(1)
+		myValidatorCosmosAddr, _                    = sdk.AccAddressFromBech32("cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l")
+		myValidatorEthereumAddr  gethCommon.Address = gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(50)}, 20))
 	)
 	k, ctx, _ := CreateTestEnv(t)
 	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{
@@ -83,7 +82,7 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		addr, _ := sdk.AccAddressFromBech32(addrs[i])
 		msg := types.MsgValsetConfirm{}
-		msg.EthAddress = createEthAddress(i + 1).String()
+		msg.EthAddress = gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(i + 1)}, 20)).String()
 		msg.Nonce = uint64(1)
 		msg.Validator = addr.String()
 		msg.Signature = fmt.Sprintf("signature %d", i+1)
@@ -138,7 +137,7 @@ func TestLastValsetRequests(t *testing.T) {
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			k.SetEthAddress(ctx, valAddr, createEthAddress(j+1))
+			k.SetEthAddress(ctx, valAddr, gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		k.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -278,7 +277,7 @@ func TestPendingValsetRequests(t *testing.T) {
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			k.SetEthAddress(ctx, valAddr, createEthAddress(j+1))
+			k.SetEthAddress(ctx, valAddr, gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		k.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -347,7 +346,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 			// add an validator each block
 			// TODO: replace with real SDK addresses
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			k.SetEthAddress(ctx, valAddr, createEthAddress(j+1))
+			k.SetEthAddress(ctx, valAddr, gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		k.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -442,7 +441,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 func createTestBatch(t *testing.T, k Keeper, ctx sdk.Context, keepers TestKeepers) {
 	var (
 		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		myReceiver          = types.NewEthereumAddress("0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934")
+		myReceiver          = "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934"
 		myTokenContractAddr = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		now                 = time.Now().UTC()
 	)
@@ -476,22 +475,22 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 	k, ctx, _ := CreateTestEnv(t)
 
 	var (
-		tokenContract    = types.NewEthereumAddress("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
+		tokenContract    = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		validatorAddr, _ = sdk.AccAddressFromBech32("cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh")
 	)
 
 	k.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
 		Nonce:         1,
-		TokenContract: tokenContract.String(),
-		EthSigner:     types.NewEthereumAddress("0xf35e2cc8e6523d683ed44870f5b7cc785051a77d").String(),
+		TokenContract: tokenContract,
+		EthSigner:     "0xf35e2cc8e6523d683ed44870f5b7cc785051a77d",
 		Validator:     validatorAddr.String(),
 		Signature:     "signature",
 	})
 
-	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract.String(), k)
+	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract, k)
 	require.NoError(t, err)
 
-	expectedJSON := []byte(`[{"eth_signer":"0xF35e2cC8E6523d683eD44870f5B7cC785051a77D", "nonce":"1", "signature":"signature", "token_contract":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "validator":"cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh"}]`)
+	expectedJSON := []byte(`[{"eth_signer":"0xf35e2cc8e6523d683ed44870f5b7cc785051a77d", "nonce":"1", "signature":"signature", "token_contract":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "validator":"cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh"}]`)
 
 	assert.JSONEq(t, string(expectedJSON), string(batchConfirms), "json is equal")
 }
@@ -502,12 +501,12 @@ func TestQueryBatch(t *testing.T) {
 	k, ctx, keepers := CreateTestEnv(t)
 
 	var (
-		tokenContract = types.NewEthereumAddress("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
+		tokenContract = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 	)
 
 	createTestBatch(t, k, ctx, keepers)
 
-	batch, err := queryBatch(ctx, "1", tokenContract.String(), k)
+	batch, err := queryBatch(ctx, "1", tokenContract, k)
 	require.NoError(t, err)
 
 	expectedJSON := []byte(`{
@@ -634,16 +633,4 @@ func TestLastBatchesRequest(t *testing.T) {
 	  `)
 
 	assert.JSONEq(t, string(expectedJSON), string(lastBatches), "json is equal")
-}
-
-func createEthAddress(i int) types.EthereumAddress {
-	return types.EthereumAddress(gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(i)}, 20)))
-}
-
-func createFakeEthSignature(n int) []byte {
-	return bytes.Repeat([]byte{byte(n)}, 64)
-}
-
-func createValAddress() sdk.ValAddress {
-	return sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 }

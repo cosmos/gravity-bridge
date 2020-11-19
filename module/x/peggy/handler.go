@@ -115,16 +115,16 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.Msg
 	}
 
 	ethAddress := keeper.GetEthAddress(ctx, sdk.AccAddress(validator))
-	if ethAddress == nil {
+	if ethAddress == "" {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
-	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress.String())
+	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected %s found %s", checkpoint, msg.Signature))
 	}
 
 	// check if we already have this confirm
-	if keeper.GetBatchConfirm(ctx, msg.Nonce, types.NewEthereumAddress(msg.TokenContract), valaddr) != nil {
+	if keeper.GetBatchConfirm(ctx, msg.Nonce, msg.TokenContract, valaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
 	key := keeper.SetBatchConfirm(ctx, msg)
@@ -154,10 +154,10 @@ func handleMsgConfirmValset(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 	}
 
 	ethAddress := keeper.GetEthAddress(ctx, sdk.AccAddress(validator))
-	if ethAddress == nil {
+	if ethAddress == "" {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
-	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress.String())
+	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected %s found %s", checkpoint, msg.Signature))
 	}
@@ -179,13 +179,13 @@ func handleMsgSetEthAddress(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 	}
 
-	keeper.SetEthAddress(ctx, sdk.AccAddress(validator), types.NewEthereumAddress(msg.Address))
+	keeper.SetEthAddress(ctx, sdk.AccAddress(validator), msg.Address)
 	return &sdk.Result{}, nil
 }
 
 func handleMsgSendToEth(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgSendToEth) (*sdk.Result, error) {
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
-	txID, err := keeper.AddToOutgoingPool(ctx, sender, types.NewEthereumAddress(msg.EthDest), msg.Amount, msg.BridgeFee)
+	txID, err := keeper.AddToOutgoingPool(ctx, sender, msg.EthDest, msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
 	}

@@ -155,9 +155,9 @@ func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
 // prefix           eth-contract-address                             cosmos-address
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // MARK finish-batches: take a look at this
-func GetBatchConfirmKey(tokenContract EthereumAddress, batchNonce uint64, validator sdk.AccAddress) []byte {
+func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
 	a := append(UInt64Bytes(batchNonce), validator.Bytes()...)
-	b := append(tokenContract.Bytes(), a...)
+	b := append(NewEthereumAddress(tokenContract).Bytes(), a...)
 	c := append(BatchConfirmKey, b...)
 	return c
 }
