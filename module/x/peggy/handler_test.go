@@ -48,8 +48,8 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
 		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
 		myNonce                           = uint64(1)
-		anyETHAddr                        = types.NewEthereumAddress("any-address")
-		tokenETHAddr                      = types.NewEthereumAddress("any-erc20-token-addr")
+		anyETHAddr                        = "0xf9613b532673Cc223aBa451dFA8539B87e1F666D"
+		tokenETHAddr                      = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
 		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
 	)
 	k, ctx, keepers := keeper.CreateTestEnv(t)
@@ -58,13 +58,13 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 
 	myErc20 := types.ERC20Token{
 		Amount:   sdk.NewInt(12),
-		Contract: tokenETHAddr.String(),
+		Contract: tokenETHAddr,
 	}
 
 	ethClaim := &types.EthereumBridgeDepositClaim{
 		Nonce:          myNonce,
 		Erc20Token:     &myErc20,
-		EthereumSender: anyETHAddr.String(),
+		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
 	}
 
@@ -73,7 +73,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 
 	msg := &types.MsgCreateEthereumClaims{
 		EthereumChainId:       0,
-		BridgeContractAddress: types.NewEthereumAddress("").String(),
+		BridgeContractAddress: "",
 		Orchestrator:          myOrchestratorAddr.String(),
 		Claims:                []*codectypes.Any{ecAny},
 	}
@@ -88,13 +88,13 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	// and attestation persisted
 	a := k.GetAttestation(ctx, myNonce, &types.BridgeDeposit{
 		Erc20Token:     &myErc20,
-		EthereumSender: anyETHAddr.String(),
+		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
 	})
 	require.NotNil(t, a)
 	// and vouchers added to the account
 	balance := keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0000000000000000000000000000000000000000", 12)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
 	// Test to reject duplicate deposit
 	// when
@@ -103,16 +103,16 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	// then
 	require.Error(t, err)
 	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0000000000000000000000000000000000000000", 12)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
 	// Test to reject skipped nonce
 	ethClaim = &types.EthereumBridgeDepositClaim{
 		Nonce: uint64(3),
 		Erc20Token: &types.ERC20Token{
 			Amount:   sdk.NewInt(12),
-			Contract: tokenETHAddr.String(),
+			Contract: tokenETHAddr,
 		},
-		EthereumSender: anyETHAddr.String(),
+		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
 	}
 	ecAny, err = types.PackEthereumClaim(ethClaim)
@@ -120,7 +120,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 
 	msg = &types.MsgCreateEthereumClaims{
 		EthereumChainId:       0,
-		BridgeContractAddress: types.NewEthereumAddress("").String(),
+		BridgeContractAddress: "",
 		Orchestrator:          myOrchestratorAddr.String(),
 		Claims:                []*codectypes.Any{ecAny},
 	}
@@ -131,15 +131,15 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	// then
 	require.Error(t, err)
 	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0000000000000000000000000000000000000000", 12)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
 	ethClaim = &types.EthereumBridgeDepositClaim{
 		Nonce: uint64(2),
 		Erc20Token: &types.ERC20Token{
 			Amount:   sdk.NewInt(13),
-			Contract: tokenETHAddr.String(),
+			Contract: tokenETHAddr,
 		},
-		EthereumSender: anyETHAddr.String(),
+		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
 	}
 	ecAny, err = types.PackEthereumClaim(ethClaim)
@@ -148,7 +148,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	// Test to finally accept consecutive nonce
 	msg = &types.MsgCreateEthereumClaims{
 		EthereumChainId:       0,
-		BridgeContractAddress: types.NewEthereumAddress("").String(),
+		BridgeContractAddress: "",
 		Orchestrator:          myOrchestratorAddr.String(),
 		Claims:                []*codectypes.Any{ecAny},
 	}
@@ -159,7 +159,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0000000000000000000000000000000000000000", 25)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 25)}, balance)
 }
 
 // func TestHandleBridgeSignatureSubmission(t *testing.T) {

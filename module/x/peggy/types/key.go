@@ -148,7 +148,7 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
 func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
-	return append(append(OutgoingTXBatchKey, NewEthereumAddress(tokenContract).Bytes()...), UInt64Bytes(nonce)...)
+	return append(append(OutgoingTXBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
 }
 
 // GetBatchConfirmKey returns the following key format
@@ -157,7 +157,7 @@ func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
 // MARK finish-batches: take a look at this
 func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
 	a := append(UInt64Bytes(batchNonce), validator.Bytes()...)
-	b := append(NewEthereumAddress(tokenContract).Bytes(), a...)
+	b := append([]byte(tokenContract), a...)
 	c := append(BatchConfirmKey, b...)
 	return c
 }

@@ -13,13 +13,13 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 	senderAddr, err := sdk.AccAddressFromHex("527FBEE652609AB150F0AEE9D61A2F76CFC4A73E")
 	require.NoError(t, err)
 	var (
-		erc20Addr = NewEthereumAddress("0x22474D350EC2dA53D717E30b96e9a2B7628Ede5b")
+		erc20Addr = "0x22474D350EC2dA53D717E30b96e9a2B7628Ede5b"
 	)
 
 	v := NewValset(
 		1,
 		BridgeValidators{{
-			EthereumAddress: NewEthereumAddress("0xc783df8a850f42e7F7e57013759C285caa701eB6").String(),
+			EthereumAddress: "0xc783df8a850f42e7F7e57013759C285caa701eB6",
 			Power:           6670,
 		}},
 	)
@@ -31,19 +31,19 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 				Id: 0x1,
 				// TODO: maybe failure in this test is due to the SDK addr?
 				Sender:      senderAddr.String(),
-				DestAddress: NewEthereumAddress("0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39").String(),
+				DestAddress: "0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39",
 				Erc20Token: &ERC20Token{
 					Amount:   sdk.NewInt(0x1),
-					Contract: erc20Addr.String(),
+					Contract: erc20Addr,
 				},
 				Erc20Fee: &ERC20Token{
 					Amount:   sdk.NewInt(0x1),
-					Contract: erc20Addr.String(),
+					Contract: erc20Addr,
 				},
 			},
 		},
 		Valset:        v,
-		TokenContract: erc20Addr.String(),
+		TokenContract: erc20Addr,
 	}
 
 	ourHash, err := src.GetCheckpoint()

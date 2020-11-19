@@ -149,7 +149,6 @@ func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
 // IterateOutgoingPoolByFee itetates over the outgoing pool which is sorted by fee
 func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.OutgoingTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
-	// TODO: do we need the NewEthereumAddress(contract).Bytes() here instead?
 	iter := prefixStore.ReverseIterator(prefixRange([]byte(contract)))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {

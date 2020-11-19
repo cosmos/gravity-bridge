@@ -219,9 +219,8 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 		PeggyId:            []byte("lkasjdfklajsldkfjd"),
 		ContractSourceHash: "lkasjdfklajsldkfjd",
 		StartThreshold:     0,
-		// any eth address
-		EthereumAddress: types.NewEthereumAddress("0x8858eeb3dfffa017d4bce9801d340d36cf895ccf").String(),
-		BridgeChainId:   11,
+		EthereumAddress:    "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
+		BridgeChainId:      11,
 	})
 	return k, ctx, keepers
 }

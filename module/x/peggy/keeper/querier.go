@@ -309,12 +309,9 @@ func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keep
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-
-	contractAddress := types.NewEthereumAddress(tokenContract)
-	if contractAddress.ValidateBasic() != nil {
+	if types.ValidateEthAddress(tokenContract) != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-
 	foundBatch := keeper.GetOutgoingTXBatch(ctx, tokenContract, parsedNonce)
 	if foundBatch == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find tx batch")

@@ -88,7 +88,7 @@ func CmdUpdateEthAddress() *cobra.Command {
 			}
 			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA)
 
-			msg := types.NewMsgSetEthAddress(types.EthereumAddress(ethAddress), cosmosAddr, hex.EncodeToString(signature))
+			msg := types.NewMsgSetEthAddress(ethAddress.String(), cosmosAddr, hex.EncodeToString(signature))
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -183,7 +183,7 @@ func CmdWithdrawToETH() *cobra.Command {
 			// Make the message
 			msg := types.MsgSendToEth{
 				Sender:    cosmosAddr.String(),
-				EthDest:   types.NewEthereumAddress(args[1]).String(),
+				EthDest:   args[1],
 				Amount:    amount,
 				BridgeFee: bridgeFee,
 			}

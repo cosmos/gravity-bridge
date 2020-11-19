@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -110,10 +111,15 @@ func validateBridgeChainID(i interface{}) error {
 }
 
 func validateBridgeContractAddress(i interface{}) error {
-	// TODO: better eth address validation, insert me here
 	v, ok := i.(string)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-	return NewEthereumAddress(string(v)).ValidateBasic()
+	if err := ValidateEthAddress(v); err != nil {
+		// Empty addresses are valid
+		if !strings.Contains(err.Error(), "empty") {
+			return err
+		}
+	}
+	return nil
 }

@@ -6,6 +6,8 @@ import (
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	gethCommon "github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -106,11 +108,12 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 
 	// Run through the elements of the batch and serialize them
 	txAmounts := make([]*big.Int, len(b.Transactions))
-	txDestinations := make([]EthereumAddress, len(b.Transactions))
+	txDestinations := make([]gethcommon.Address, len(b.Transactions))
 	txFees := make([]*big.Int, len(b.Transactions))
 	for i, tx := range b.Transactions {
 		txAmounts[i] = tx.Erc20Token.Amount.BigInt()
-		txDestinations[i] = NewEthereumAddress(tx.DestAddress)
+		// TODO: migrate to using gethcommon.Address
+		txDestinations[i] = gethCommon.HexToAddress(tx.DestAddress)
 		txFees[i] = tx.Erc20Fee.Amount.BigInt()
 	}
 
@@ -137,7 +140,7 @@ func (b OutgoingTxBatch) GetCheckpoint() ([]byte, error) {
 		txDestinations,
 		txFees,
 		batchNonce,
-		NewEthereumAddress(tokenContract),
+		gethCommon.HexToAddress(tokenContract),
 	)
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.

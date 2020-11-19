@@ -16,18 +16,17 @@ func (b BridgeValidator) ValidateBasic() error {
 	if b.Power == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "power")
 	}
-	addr := NewEthereumAddress(string(b.EthereumAddress))
-	if err := addr.ValidateBasic(); err != nil {
+	if err := ValidateEthAddress(b.EthereumAddress); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
-	if addr.IsEmpty() {
+	if b.EthereumAddress == "" {
 		return sdkerrors.Wrap(ErrEmpty, "address")
 	}
 	return nil
 }
 
 func (b BridgeValidator) isValid() bool {
-	return !NewEthereumAddress(string(b.EthereumAddress)).IsEmpty() && b.Power != 0
+	return !(b.EthereumAddress == "") && b.Power != 0
 }
 
 // BridgeValidators is the sorted set of validator data for Ethereum bridge MultiSig set
@@ -38,7 +37,9 @@ func (b BridgeValidators) Sort() {
 	sort.Slice(b, func(i, j int) bool {
 		if b[i].Power == b[j].Power {
 			// Secondary sort on eth address in case powers are equal
-			return NewEthereumAddress(string(b[i].EthereumAddress)).LessThan(NewEthereumAddress(string(b[j].EthereumAddress)))
+			// bytes.Compare(b[i].EthereumAddress[:], o[:]) == -1
+			// TODO: migrate this once tests are passing
+			return EthAddrLessThan(b[i].EthereumAddress, b[j].EthereumAddress)
 		}
 		return b[i].Power > b[j].Power
 	})

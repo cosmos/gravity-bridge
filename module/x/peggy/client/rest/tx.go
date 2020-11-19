@@ -62,7 +62,7 @@ func updateEthAddressHandler(cliCtx client.Context) http.HandlerFunc {
 		// Make the message, we convert the recovered address into a string
 		// so at this point we have verified that this address signed this
 		// cosmos address
-		msg := types.NewMsgSetEthAddress(types.EthereumAddress(ethAddr), cosmosAddr, hex.EncodeToString(ethSig))
+		msg := types.NewMsgSetEthAddress(ethAddr.String(), cosmosAddr, hex.EncodeToString(ethSig))
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -123,8 +123,6 @@ func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.Han
 			return
 		}
 
-		ethAddress := types.NewEthereumAddress(req.EthAddress)
-
 		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, req.Nonce), nil)
 		if err != nil {
 			fmt.Printf("could not get valset")
@@ -157,7 +155,7 @@ func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.Han
 		}
 
 		cosmosAddr := cliCtx.GetFromAddress()
-		msg := types.NewMsgValsetConfirm(valset.Nonce, ethAddress, cosmosAddr, req.EthSig)
+		msg := types.NewMsgValsetConfirm(valset.Nonce, req.EthAddress, cosmosAddr, req.EthSig)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
