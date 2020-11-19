@@ -303,8 +303,8 @@ func (k Keeper) GetBridgeChainID(ctx sdk.Context) uint64 {
 }
 
 // GetPeggyID returns the PeggyID (???)
-func (k Keeper) GetPeggyID(ctx sdk.Context) []byte {
-	var a []byte
+func (k Keeper) GetPeggyID(ctx sdk.Context) string {
+	var a string
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyPeggyID, &a)
 	return a
 }

@@ -108,23 +108,26 @@ func NewValset(nonce uint64, members BridgeValidators) *Valset {
 }
 
 // GetCheckpoint returns the checkpoint
-func (v Valset) GetCheckpoint() []byte {
+func (v Valset) GetCheckpoint(peggyIDstring string) []byte {
 	// TODO replace hardcoded "foo" here with a getter to retrieve the correct PeggyID from the store
 	// this will work for now because 'foo' is the test Peggy ID we are using
-	var peggyIDString = "foo"
+	// var peggyIDString = "foo"
 
 	// error case here should not occur outside of testing since the above is a constant
 	contractAbi, abiErr := abi.JSON(strings.NewReader(ValsetCheckpointABIJSON))
 	if abiErr != nil {
 		panic("Bad ABI constant!")
 	}
-	peggyIDBytes := []uint8(peggyIDString)
+
 	// the contract argument is not a arbitrary length array but a fixed length 32 byte
 	// array, therefore we have to utf8 encode the string (the default in this case) and
 	// then copy the variable length encoded data into a fixed length array. This function
 	// will panic if peggyId is too long to fit in 32 bytes
-	var peggyID [32]uint8
-	copy(peggyID[:], peggyIDBytes[:])
+	peggyID, err := strToFixByteArray(peggyIDstring)
+	if err != nil {
+		panic(err)
+	}
+
 	checkpointBytes := []uint8("checkpoint")
 	var checkpoint [32]uint8
 	copy(checkpoint[:], checkpointBytes[:])

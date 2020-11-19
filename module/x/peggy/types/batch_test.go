@@ -46,7 +46,8 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 		TokenContract: erc20Addr,
 	}
 
-	ourHash, err := src.GetCheckpoint()
+	// TODO: this is hardcoded to foo, replace somehow?
+	ourHash, err := src.GetCheckpoint("foo")
 	require.NoError(t, err)
 
 	// hash from bridge contract

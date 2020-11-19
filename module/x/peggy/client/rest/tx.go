@@ -131,7 +131,9 @@ func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.Han
 		}
 		var valset types.Valset
 		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &valset)
-		checkpoint := valset.GetCheckpoint()
+
+		// TODO: fix this, need to fetch the peggyID from params here
+		checkpoint := valset.GetCheckpoint("fetch-peggy-id-from-params-please-this-should-panic")
 
 		// the signed message should be the hash of the checkpoint at the given nonce
 		ethHash := ethCrypto.Keccak256Hash(checkpoint)

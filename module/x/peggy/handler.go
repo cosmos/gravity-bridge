@@ -99,7 +99,7 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.Msg
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
 	}
 
-	checkpoint, err := batch.GetCheckpoint()
+	checkpoint, err := batch.GetCheckpoint(keeper.GetPeggyID(ctx))
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
 	}
@@ -141,7 +141,7 @@ func handleMsgConfirmValset(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
 	}
 
-	checkpoint := valset.GetCheckpoint()
+	checkpoint := valset.GetCheckpoint(keeper.GetPeggyID(ctx))
 
 	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
