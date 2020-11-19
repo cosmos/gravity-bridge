@@ -8,6 +8,20 @@ import "google/protobuf/any.proto";
 import "cosmos_proto/cosmos.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
+
+// Msg defines the peggy Msg service.
+service Msg {
+    rpc ValsetConfirm(MsgValsetConfirm) returns (MsgValsetConfirmResponse);
+    rpc ValsetRequest(MsgValsetRequest) returns (MsgValsetRequestResponse);
+    rpc SetEthAddress(MsgSetEthAddress) returns (MsgSetEthAddressResponse);
+    rpc SendToEth(MsgSendToEth) returns (MsgSendToEthResponse);
+    rpc RequestBatch(MsgRequestBatch) returns (MsgRequestBatchResponse);
+    rpc ConfirmBatch(MsgConfirmBatch) returns (MsgConfirmBatchResponse);
+    rpc CreateEthereumClaims(MsgCreateEthereumClaims) returns (MsgCreateEthereumClaimsResponse);
+    rpc BridgeSignatureSubmission(MsgBridgeSignatureSubmission) returns (MsgBridgeSignatureSubmissionResponse);
+}
+
+
 // MsgValsetConfirm
 // this is the message sent by the validators when they wish to submit their signatures over
 // the validator set at a given block height. A validator must first call MsgSetEthAddress to
@@ -28,6 +42,8 @@ message MsgValsetConfirm {
     string signature   = 4;
 }
 
+message MsgValsetConfirmResponse{}
+
 // ValsetRequest
 // This message starts off the validator set update process by coordinating a block height
 // around which signatures over the validators, powers, and ethereum addresses will be made
@@ -39,6 +55,8 @@ message MsgValsetConfirm {
 message MsgValsetRequest {
     string requester = 1;
 }
+
+message MsgValsetRequestResponse{}
 
 // SetEthAddress
 // This is used by the validators to set the Ethereum address that represents them on the
@@ -52,6 +70,8 @@ message MsgSetEthAddress {
     string validator = 2;
     string signature = 3; 
 }
+
+message MsgSetEthAddressResponse{}
 
 // MsgSendToEth
 // This is the message that a user calls when they want to bridge an asset
@@ -79,6 +99,8 @@ message MsgSendToEth {
     cosmos.base.v1beta1.Coin bridge_fee   = 4 [(gogoproto.nullable) = false];
 }
 
+message MsgSendToEthResponse{}
+
 // MsgRequestBatch
 // this is a message anyone can send that requests a batch of transactions to send across
 // the bridge be created for whatever block height this message is included in. This acts as
@@ -91,6 +113,8 @@ message MsgRequestBatch {
     string requester = 1;
     string denom     = 2;
 }
+
+message MsgRequestBatchResponse{}
 
 // MsgConfirmBatch
 // When validators observe a MsgRequestBatch they form a batch by ordering transactions currently
@@ -107,6 +131,8 @@ message MsgConfirmBatch {
     string validator      = 4;
     string signature      = 5; 
 }
+
+message MsgConfirmBatchResponse{}
 
 // EthereumBridgeDepositClaim
 // When more than 66% of the active validator set has
@@ -141,6 +167,9 @@ message MsgCreateEthereumClaims {
     repeated google.protobuf.Any claims                  = 4 [(cosmos_proto.accepts_interface) = "EthereumClaim"]; 
 }
 
+message MsgCreateEthereumClaimsResponse{}
+
+
 // MsgBridgeSignatureSubmission submits the Ethereum signature for a given nonce an claim type.
 message MsgBridgeSignatureSubmission {
     uint64   nonce              = 1;
@@ -148,3 +177,6 @@ message MsgBridgeSignatureSubmission {
     string   orchestrator       = 3;
     string   ethereum_signature = 4;
 }
+
+message MsgBridgeSignatureSubmissionResponse{}
+
