@@ -1,10 +1,12 @@
 pragma solidity ^0.6.6;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@nomiclabs/buidler/console.sol";
 
 contract Peggy {
 	using SafeMath for uint256;
+	using SafeERC20 for IERC20;
 
 	// These are updated often
 	bytes32 public state_lastValsetCheckpoint;
@@ -126,10 +128,10 @@ contract Peggy {
 		// This is what we are checking they have signed
 		bytes32 _theHash,
 		uint256 _powerThreshold
-	) private pure returns (bool) {
+	) private pure {
 		uint256 cumulativePower = 0;
 
-		for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
+		for (uint256 k = 0; k < _currentValidators.length; k++) {
 			// If v is set to 0, this signifies that it was not possible to get a signature from this validator and we skip evaluation
 			// (In a valid signature, it is either 27 or 28)
 			if (_v[k] != 0) {
@@ -155,12 +157,13 @@ contract Peggy {
 			"Submitted validator set signatures do not have enough power."
 		);
 		// Success
-		return true;
 	}
 
 	// This updates the valset by checking that the validators in the current valset have signed off on the
 	// new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
 	// generated from the new valset.
+	// Anyone can call this function, but they must supply valid signatures of 2/3s of the current valset over
+	// the new valset.
 	function updateValset(
 		// The new version of the validator set
 		address[] memory _newValidators,
@@ -238,6 +241,10 @@ contract Peggy {
 		emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers);
 	}
 
+	// submitBatch processes a batch of Cosmos -> Ethereum transactions by sending the tokens in the transactions
+	// to the destination addresses. It is approved by the current Cosmos validator set.
+	// Anyone can call this function, but they must supply valid signatures of 2/3s of the current valset over
+	// the batch.
 	function submitBatch(
 		// The validators that approve the batch
 		address[] memory _currentValidators,
@@ -319,13 +326,13 @@ contract Peggy {
 			{
 				// Send transaction amounts to destinations
 				uint256 totalFee;
-				for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
-					IERC20(_tokenContract).transfer(_destinations[i], _amounts[i]);
+				for (uint256 i = 0; i < _amounts.length; i++) {
+					IERC20(_tokenContract).safeTransfer(_destinations[i], _amounts[i]);
 					totalFee = totalFee.add(_fees[i]);
 				}
 
 				// Send transaction fees to msg.sender
-				IERC20(_tokenContract).transfer(msg.sender, totalFee);
+				IERC20(_tokenContract).safeTransfer(msg.sender, totalFee);
 			}
 		}
 
@@ -341,7 +348,7 @@ contract Peggy {
 		bytes32 _destination,
 		uint256 _amount
 	) public {
-		IERC20(_tokenContract).transferFrom(msg.sender, address(this), _amount);
+		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
 			_tokenContract,
@@ -369,7 +376,7 @@ contract Peggy {
 		// Check cumulative power to ensure the contract has sufficient power to actually
 		// pass a vote
 		uint256 cumulativePower = 0;
-		for (uint256 k = 0; k < _powers.length; k = k.add(1)) {
+		for (uint256 k = 0; k < _powers.length; k++) {
 			cumulativePower = cumulativePower + _powers[k];
 			if (cumulativePower > _powerThreshold) {
 				break;
