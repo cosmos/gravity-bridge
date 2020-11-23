@@ -131,18 +131,18 @@ contract Peggy {
 	) private pure {
 		uint256 cumulativePower = 0;
 
-		for (uint256 k = 0; k < _currentValidators.length; k++) {
+		for (uint256 i = 0; i < _currentValidators.length; i++) {
 			// If v is set to 0, this signifies that it was not possible to get a signature from this validator and we skip evaluation
 			// (In a valid signature, it is either 27 or 28)
-			if (_v[k] != 0) {
+			if (_v[i] != 0) {
 				// Check that the current validator has signed off on the hash
 				require(
-					verifySig(_currentValidators[k], _theHash, _v[k], _r[k], _s[k]),
+					verifySig(_currentValidators[i], _theHash, _v[i], _r[i], _s[i]),
 					"Validator signature does not match."
 				);
 
 				// Sum up cumulative power
-				cumulativePower = cumulativePower + _currentPowers[k];
+				cumulativePower = cumulativePower + _currentPowers[i];
 
 				// Break early to avoid wasting gas
 				if (cumulativePower > _powerThreshold) {
@@ -376,8 +376,8 @@ contract Peggy {
 		// Check cumulative power to ensure the contract has sufficient power to actually
 		// pass a vote
 		uint256 cumulativePower = 0;
-		for (uint256 k = 0; k < _powers.length; k++) {
-			cumulativePower = cumulativePower + _powers[k];
+		for (uint256 i = 0; i < _powers.length; i++) {
+			cumulativePower = cumulativePower + _powers[i];
 			if (cumulativePower > _powerThreshold) {
 				break;
 			}
