@@ -89,27 +89,6 @@ describe("Peggy happy path with combination method", function () {
     // SUBMITBATCH
     // ==========================
 
-    // const valset2 = (() => {
-    //   // Make new valset by modifying some powers
-    //   let powers = examplePowers();
-    //   powers[0] -= 6;
-    //   powers[1] += 6;
-    //   let validators = signers.slice(0, powers.length);
-
-    //   return {
-    //     powers: powers,
-    //     validators: validators,
-    //     nonce: 2
-    //   }
-    // })()
-
-    // const checkpoint2 = makeCheckpoint(
-    //   await getSignerAddresses(valset2.validators),
-    //   valset2.powers,
-    //   valset2.nonce,
-    //   peggyId
-    // );
-
     // Transfer out to Cosmos, locking coins
     await testERC20.functions.approve(peggy.address, 1000);
     await peggy.functions.sendToCosmos(

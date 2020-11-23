@@ -162,7 +162,7 @@ contract Peggy {
 	// This updates the valset by checking that the validators in the current valset have signed off on the
 	// new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
 	// generated from the new valset.
-	// Anyone can call this function, but they must supply valid signatures of 2/3s of the current valset over
+	// Anyone can call this function, but they must supply valid signatures of state_powerThreshold of the current valset over
 	// the new valset.
 	function updateValset(
 		// The new version of the validator set
@@ -243,7 +243,7 @@ contract Peggy {
 
 	// submitBatch processes a batch of Cosmos -> Ethereum transactions by sending the tokens in the transactions
 	// to the destination addresses. It is approved by the current Cosmos validator set.
-	// Anyone can call this function, but they must supply valid signatures of 2/3s of the current valset over
+	// Anyone can call this function, but they must supply valid signatures of state_powerThreshold of the current valset over
 	// the batch.
 	function submitBatch(
 		// The validators that approve the batch
