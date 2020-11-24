@@ -16,20 +16,11 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 		erc20Addr = "0x34Ac3eB6180FdD94043664C22043F004734Dc480"
 	)
 
-	// v := NewValset(
-	// 	1,
-	// 	BridgeValidators{{
-	// 		EthereumAddress: "0xc783df8a850f42e7F7e57013759C285caa701eB6",
-	// 		Power:           6670,
-	// 	}},
-	// )
-
 	src := OutgoingTxBatch{
 		BatchNonce: 1,
 		Transactions: []*OutgoingTransferTx{
 			{
-				Id: 0x1,
-				// TODO: maybe failure in this test is due to the SDK addr?
+				Id:          0x1,
 				Sender:      senderAddr.String(),
 				DestAddress: "0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39",
 				Erc20Token: &ERC20Token{

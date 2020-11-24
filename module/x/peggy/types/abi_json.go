@@ -16,7 +16,7 @@ package types
 const (
 	// OutgoingBatchTxCheckpointABIJSON checks the ETH ABI for compatability of the OutgoingBatchTx message
 	OutgoingBatchTxCheckpointABIJSON = `[{
-		"name": "updateValsetAndSubmitBatch",
+		"name": "submitBatch",
 		"stateMutability": "pure",
 		"type": "function",
 		"inputs": [

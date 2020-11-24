@@ -31,7 +31,7 @@ func (b OutgoingTxBatch) GetCheckpoint(peggyIDstring string) ([]byte, error) {
 	}
 
 	// Create the methodName argument which salts the signature
-	methodNameBytes := []uint8("valsetAndTransactionBatch")
+	methodNameBytes := []uint8("transactionBatch")
 	var batchMethodName [32]uint8
 	copy(batchMethodName[:], methodNameBytes[:])
 
@@ -45,14 +45,10 @@ func (b OutgoingTxBatch) GetCheckpoint(peggyIDstring string) ([]byte, error) {
 		txFees[i] = tx.Erc20Fee.Amount.BigInt()
 	}
 
-	// valsetCheckpointBytes := (*b.Valset).GetCheckpoint(peggyIDstring)
-	// var valsetCheckpoint [32]uint8
-	// copy(valsetCheckpoint[:], valsetCheckpointBytes[:])
-
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedBatch, err := abi.Pack("updateValsetAndSubmitBatch",
+	abiEncodedBatch, err := abi.Pack("submitBatch",
 		peggyID,
 		batchMethodName,
 		// valsetCheckpoint,
