@@ -128,7 +128,7 @@ async fn main() {
     };
 
     info!("Waiting for Cosmos chain to come online");
-    wait_for_cosmos_online(&contact).await;
+    wait_for_cosmos_online(&contact, TOTAL_TIMEOUT).await;
 
     // if we detect this env var we are only deploying contracts, do that then exit.
     if option_env!("DEPLOY_CONTRACTS").is_some() {
