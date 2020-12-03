@@ -18,7 +18,7 @@ You can keep up with the latest development by watching our [public standups](ht
   - [x] Multiple ERC20 support
   - [x] Tested with 100+ validators
   - [X] Unit tests for every throw condition
-  - [ ] Audit
+  - [x] Audit
 - Cosmos Module
   - [x] Basic validator set syncing
   - [x] Basic transaction batch generation
