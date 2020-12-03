@@ -17,6 +17,10 @@ STARTING_VALIDATOR_HOME="--home /validator$STARTING_VALIDATOR"
 $BIN init $STARTING_VALIDATOR_HOME --chain-id=$CHAIN_ID validator1
 mv /validator$STARTING_VALIDATOR/config/genesis.json /genesis.json
 
+# copy over the legacy RPC enabled config for the first validator
+# this is the only validator we want taking up this port
+cp /legacy-api-enable /validator1/config/app.toml
+
 # Sets up an arbitrary number of validators on a single machine by manipulating
 # the --home parameter on gaiad
 for i in $(seq 1 $NODES);
