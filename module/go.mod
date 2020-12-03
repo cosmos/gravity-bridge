@@ -3,6 +3,7 @@ module github.com/althea-net/peggy/module
 go 1.13
 
 require (
+	github.com/Workiva/go-datastructures v1.0.52
 	github.com/cosmos/cosmos-sdk v0.40.0-rc3
 	github.com/ethereum/go-ethereum v1.9.21
 	github.com/gogo/protobuf v1.3.1
