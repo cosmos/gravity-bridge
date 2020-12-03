@@ -82,7 +82,7 @@ pub async fn send_eth_transaction_batch(
         &web3,
     )
     .await?;
-    if !(before_nonce < new_batch_nonce) {
+    if before_nonce >= new_batch_nonce {
         info!(
             "Someone else updated the batch to {}, exiting early",
             before_nonce

@@ -41,10 +41,14 @@ pub async fn update_peggy_eth_address(
         clarity::utils::bytes_to_hex_str(&eth_signature.to_bytes()),
         clarity::utils::bytes_to_hex_str(eth_address.as_bytes())
     );
+    let account_number = match tx_info.account_number {
+        Some(acc_num) => acc_num,
+        None => 0,
+    };
 
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
-        account_number: tx_info.account_number,
+        account_number,
         sequence: tx_info.sequence,
         fee: StdFee {
             amount: vec![fee],
@@ -78,10 +82,14 @@ pub async fn send_valset_request(
         .to_address();
 
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, &contact).await?;
+    let account_number = match tx_info.account_number {
+        Some(acc_num) => acc_num,
+        None => 0,
+    };
 
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
-        account_number: tx_info.account_number,
+        account_number,
         sequence: tx_info.sequence,
         fee: StdFee {
             amount: vec![fee],
@@ -117,13 +125,17 @@ pub async fn send_valset_confirm(
     let our_eth_address = eth_private_key.to_public_key().unwrap();
 
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+    let account_number = match tx_info.account_number {
+        Some(acc_num) => acc_num,
+        None => 0,
+    };
 
     let message = encode_valset_confirm(peggy_id, valset.clone());
     let eth_signature = eth_private_key.sign_ethereum_msg(&message);
 
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
-        account_number: tx_info.account_number,
+        account_number,
         sequence: tx_info.sequence,
         fee: StdFee {
             amount: vec![fee],
@@ -163,13 +175,17 @@ pub async fn send_batch_confirm(
     let our_eth_address = eth_private_key.to_public_key().unwrap();
 
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+    let account_number = match tx_info.account_number {
+        Some(acc_num) => acc_num,
+        None => 0,
+    };
 
     let batch_checkpoint = encode_tx_batch_confirm(peggy_id.clone(), transaction_batch.clone());
     let eth_signature = eth_private_key.sign_ethereum_msg(&batch_checkpoint);
 
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
-        account_number: tx_info.account_number,
+        account_number,
         sequence: tx_info.sequence,
         fee: StdFee {
             amount: vec![fee],
@@ -206,10 +222,14 @@ pub async fn send_ethereum_claims(
         .to_address();
 
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+    let account_number = match tx_info.account_number {
+        Some(acc_num) => acc_num,
+        None => 0,
+    };
 
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
-        account_number: tx_info.account_number,
+        account_number,
         sequence: tx_info.sequence,
         fee: StdFee {
             amount: vec![fee],
@@ -245,10 +265,14 @@ pub async fn send_to_eth(
         .expect("Invalid private key!")
         .to_address();
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+    let account_number = match tx_info.account_number {
+        Some(acc_num) => acc_num,
+        None => 0,
+    };
 
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
-        account_number: tx_info.account_number,
+        account_number,
         sequence: tx_info.sequence,
         fee: StdFee {
             amount: vec![fee.clone()],
@@ -281,10 +305,14 @@ pub async fn request_batch(
         .expect("Invalid private key!")
         .to_address();
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+    let account_number = match tx_info.account_number {
+        Some(acc_num) => acc_num,
+        None => 0,
+    };
 
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
-        account_number: tx_info.account_number,
+        account_number,
         sequence: tx_info.sequence,
         fee: StdFee {
             amount: vec![fee.clone()],

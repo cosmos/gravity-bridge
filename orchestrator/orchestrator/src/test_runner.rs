@@ -430,8 +430,8 @@ async fn test_erc20_send(
 }
 
 async fn check_cosmos_balance(address: CosmosAddress, contact: &Contact) -> Option<Coin> {
-    let account_info = contact.get_account_info(address).await.unwrap();
-    for coin in account_info.result.value.coins {
+    let account_info = contact.get_balances(address).await.unwrap();
+    for coin in account_info.result {
         // make sure the name and amount is correct
         if coin.denom.starts_with("peggy") {
             return Some(coin);

@@ -539,9 +539,9 @@ checksum = "ce90df4c658c62f12d78f7508cf92f9173e5184a539c10bfe54a3107b3ffd0f2"
 
 [[package]]
 name = "contact"
-version = "0.1.9"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fb263a8af4626188ee3bed84b0e64398d79c2d3036b10f50600185f4646be8e"
+checksum = "964600181cc4dd521f5873b2ec9da0332bfd48814cc106efef80d94ff329cc50"
 dependencies = [
  "actix-web",
  "deep_space",
@@ -632,9 +632,9 @@ dependencies = [
 
 [[package]]
 name = "crypto-mac"
-version = "0.9.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58bcd97a54c7ca5ce2f6eb16f6bede5b0ab5f0055fedc17d2f0b4466e21671ca"
+checksum = "4857fd85a0c34b3c3297875b747c1e02e06b6a0ea32dd892d8192b9ce0813ea6"
 dependencies = [
  "generic-array",
  "subtle",
@@ -642,9 +642,9 @@ dependencies = [
 
 [[package]]
 name = "deep_space"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fbdbb77dd39b8f23096df474379135f9ba25b50ccc176823d5731296c12fe25"
+checksum = "415f8f04f84b8b5521b477fee2c0908dfec3041c05680cde37967bd31aeba05a"
 dependencies = [
  "base64 0.13.0",
  "bech32",
@@ -1004,9 +1004,9 @@ dependencies = [
 
 [[package]]
 name = "hmac"
-version = "0.9.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "deae6d9dbb35ec2c502d62b8f7b1c000a0822c3b0794ba36b3149c0a1c840dff"
+checksum = "c1441c6b1e930e2817404b5046f1f989899143a12bf92de603b69f4e0aee1e15"
 dependencies = [
  "crypto-mac",
  "digest",
@@ -1524,11 +1524,11 @@ dependencies = [
 
 [[package]]
 name = "pbkdf2"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7170d73bf11f39b4ce1809aabc95bf5c33564cdc16fc3200ddda17a5f6e5e48b"
+checksum = "b3b8c0d71734018084da0c0354193a5edfb81b20d2d57a92c5b154aefc554a4a"
 dependencies = [
- "base64 0.12.3",
+ "base64 0.13.0",
  "crypto-mac",
  "hmac",
  "rand",

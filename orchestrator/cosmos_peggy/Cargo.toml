@@ -10,7 +10,7 @@ edition = "2018"
 peggy_utils = {path = "../peggy_utils"}
 ethereum_peggy = {path = "../ethereum_peggy"}
 
-contact = "0.1"
+contact = "0.2"
 deep_space = "0.2"
 serde_derive = "1.0"
 clarity = "0.4"
