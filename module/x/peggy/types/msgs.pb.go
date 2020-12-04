@@ -4,12 +4,18 @@
 package types
 
 import (
+	context "context"
 	fmt "fmt"
 	types1 "github.com/cosmos/cosmos-sdk/codec/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
+	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/regen-network/cosmos-proto"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -724,6 +730,294 @@ func (m *MsgBridgeSignatureSubmission) GetEthereumSignature() string {
 	return ""
 }
 
+type MsgValsetConfirmResponse struct {
+}
+
+func (m *MsgValsetConfirmResponse) Reset()         { *m = MsgValsetConfirmResponse{} }
+func (m *MsgValsetConfirmResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgValsetConfirmResponse) ProtoMessage()    {}
+func (*MsgValsetConfirmResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b6627b296db358, []int{10}
+}
+func (m *MsgValsetConfirmResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgValsetConfirmResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgValsetConfirmResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgValsetConfirmResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgValsetConfirmResponse.Merge(m, src)
+}
+func (m *MsgValsetConfirmResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgValsetConfirmResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgValsetConfirmResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgValsetConfirmResponse proto.InternalMessageInfo
+
+type MsgValsetRequestResponse struct {
+}
+
+func (m *MsgValsetRequestResponse) Reset()         { *m = MsgValsetRequestResponse{} }
+func (m *MsgValsetRequestResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgValsetRequestResponse) ProtoMessage()    {}
+func (*MsgValsetRequestResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b6627b296db358, []int{11}
+}
+func (m *MsgValsetRequestResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgValsetRequestResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgValsetRequestResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgValsetRequestResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgValsetRequestResponse.Merge(m, src)
+}
+func (m *MsgValsetRequestResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgValsetRequestResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgValsetRequestResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgValsetRequestResponse proto.InternalMessageInfo
+
+type MsgSetEthAddressResponse struct {
+}
+
+func (m *MsgSetEthAddressResponse) Reset()         { *m = MsgSetEthAddressResponse{} }
+func (m *MsgSetEthAddressResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgSetEthAddressResponse) ProtoMessage()    {}
+func (*MsgSetEthAddressResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b6627b296db358, []int{12}
+}
+func (m *MsgSetEthAddressResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgSetEthAddressResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSetEthAddressResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSetEthAddressResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSetEthAddressResponse.Merge(m, src)
+}
+func (m *MsgSetEthAddressResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSetEthAddressResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSetEthAddressResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSetEthAddressResponse proto.InternalMessageInfo
+
+type MsgSendToEthResponse struct {
+}
+
+func (m *MsgSendToEthResponse) Reset()         { *m = MsgSendToEthResponse{} }
+func (m *MsgSendToEthResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgSendToEthResponse) ProtoMessage()    {}
+func (*MsgSendToEthResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b6627b296db358, []int{13}
+}
+func (m *MsgSendToEthResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgSendToEthResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSendToEthResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSendToEthResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSendToEthResponse.Merge(m, src)
+}
+func (m *MsgSendToEthResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSendToEthResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSendToEthResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSendToEthResponse proto.InternalMessageInfo
+
+type MsgRequestBatchResponse struct {
+}
+
+func (m *MsgRequestBatchResponse) Reset()         { *m = MsgRequestBatchResponse{} }
+func (m *MsgRequestBatchResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRequestBatchResponse) ProtoMessage()    {}
+func (*MsgRequestBatchResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b6627b296db358, []int{14}
+}
+func (m *MsgRequestBatchResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRequestBatchResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRequestBatchResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRequestBatchResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRequestBatchResponse.Merge(m, src)
+}
+func (m *MsgRequestBatchResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRequestBatchResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRequestBatchResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRequestBatchResponse proto.InternalMessageInfo
+
+type MsgConfirmBatchResponse struct {
+}
+
+func (m *MsgConfirmBatchResponse) Reset()         { *m = MsgConfirmBatchResponse{} }
+func (m *MsgConfirmBatchResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgConfirmBatchResponse) ProtoMessage()    {}
+func (*MsgConfirmBatchResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b6627b296db358, []int{15}
+}
+func (m *MsgConfirmBatchResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgConfirmBatchResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgConfirmBatchResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgConfirmBatchResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgConfirmBatchResponse.Merge(m, src)
+}
+func (m *MsgConfirmBatchResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgConfirmBatchResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgConfirmBatchResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgConfirmBatchResponse proto.InternalMessageInfo
+
+type MsgCreateEthereumClaimsResponse struct {
+}
+
+func (m *MsgCreateEthereumClaimsResponse) Reset()         { *m = MsgCreateEthereumClaimsResponse{} }
+func (m *MsgCreateEthereumClaimsResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateEthereumClaimsResponse) ProtoMessage()    {}
+func (*MsgCreateEthereumClaimsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b6627b296db358, []int{16}
+}
+func (m *MsgCreateEthereumClaimsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCreateEthereumClaimsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCreateEthereumClaimsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCreateEthereumClaimsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateEthereumClaimsResponse.Merge(m, src)
+}
+func (m *MsgCreateEthereumClaimsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCreateEthereumClaimsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateEthereumClaimsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCreateEthereumClaimsResponse proto.InternalMessageInfo
+
+type MsgBridgeSignatureSubmissionResponse struct {
+}
+
+func (m *MsgBridgeSignatureSubmissionResponse) Reset()         { *m = MsgBridgeSignatureSubmissionResponse{} }
+func (m *MsgBridgeSignatureSubmissionResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgBridgeSignatureSubmissionResponse) ProtoMessage()    {}
+func (*MsgBridgeSignatureSubmissionResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b6627b296db358, []int{17}
+}
+func (m *MsgBridgeSignatureSubmissionResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgBridgeSignatureSubmissionResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgBridgeSignatureSubmissionResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgBridgeSignatureSubmissionResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgBridgeSignatureSubmissionResponse.Merge(m, src)
+}
+func (m *MsgBridgeSignatureSubmissionResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgBridgeSignatureSubmissionResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgBridgeSignatureSubmissionResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgBridgeSignatureSubmissionResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgValsetConfirm)(nil), "peggy.v1.MsgValsetConfirm")
 	proto.RegisterType((*MsgValsetRequest)(nil), "peggy.v1.MsgValsetRequest")
@@ -735,64 +1029,420 @@ func init() {
 	proto.RegisterType((*EthereumBridgeWithdrawalBatchClaim)(nil), "peggy.v1.EthereumBridgeWithdrawalBatchClaim")
 	proto.RegisterType((*MsgCreateEthereumClaims)(nil), "peggy.v1.MsgCreateEthereumClaims")
 	proto.RegisterType((*MsgBridgeSignatureSubmission)(nil), "peggy.v1.MsgBridgeSignatureSubmission")
+	proto.RegisterType((*MsgValsetConfirmResponse)(nil), "peggy.v1.MsgValsetConfirmResponse")
+	proto.RegisterType((*MsgValsetRequestResponse)(nil), "peggy.v1.MsgValsetRequestResponse")
+	proto.RegisterType((*MsgSetEthAddressResponse)(nil), "peggy.v1.MsgSetEthAddressResponse")
+	proto.RegisterType((*MsgSendToEthResponse)(nil), "peggy.v1.MsgSendToEthResponse")
+	proto.RegisterType((*MsgRequestBatchResponse)(nil), "peggy.v1.MsgRequestBatchResponse")
+	proto.RegisterType((*MsgConfirmBatchResponse)(nil), "peggy.v1.MsgConfirmBatchResponse")
+	proto.RegisterType((*MsgCreateEthereumClaimsResponse)(nil), "peggy.v1.MsgCreateEthereumClaimsResponse")
+	proto.RegisterType((*MsgBridgeSignatureSubmissionResponse)(nil), "peggy.v1.MsgBridgeSignatureSubmissionResponse")
 }
 
 func init() { proto.RegisterFile("peggy/v1/msgs.proto", fileDescriptor_75b6627b296db358) }
 
 var fileDescriptor_75b6627b296db358 = []byte{
-	// 825 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x55, 0x4f, 0x8f, 0xdb, 0x44,
-	0x14, 0x5f, 0x77, 0xd3, 0x74, 0x33, 0x69, 0xb3, 0xd4, 0x2c, 0x34, 0x1b, 0x15, 0xef, 0xca, 0x12,
-	0x6a, 0x85, 0xb4, 0x76, 0x12, 0x04, 0xdc, 0x40, 0x4d, 0x1a, 0x24, 0x90, 0x96, 0x83, 0xb3, 0x02,
-	0x89, 0x8b, 0x35, 0xb6, 0x5f, 0xec, 0x11, 0xf1, 0x4c, 0x98, 0x19, 0x07, 0xf2, 0x01, 0xb8, 0xf3,
-	0x35, 0xb8, 0x73, 0x40, 0xf0, 0x05, 0x2a, 0x4e, 0x3d, 0x72, 0x42, 0x28, 0xfb, 0x45, 0xd0, 0xfc,
-	0xb1, 0xb3, 0xa9, 0x68, 0xd9, 0x9b, 0xe7, 0xf7, 0xde, 0x9b, 0xf9, 0xbd, 0xdf, 0xfb, 0xcd, 0x18,
-	0xbd, 0xbd, 0x82, 0x3c, 0xdf, 0x84, 0xeb, 0x51, 0x58, 0x8a, 0x5c, 0x04, 0x2b, 0xce, 0x24, 0x73,
-	0x8f, 0x34, 0x18, 0xac, 0x47, 0x03, 0x2f, 0x65, 0xa2, 0x64, 0x22, 0x4c, 0xb0, 0x80, 0x70, 0x3d,
-	0x4a, 0x40, 0xe2, 0x51, 0x98, 0x32, 0x42, 0x4d, 0xe6, 0xe0, 0x24, 0x67, 0x39, 0xd3, 0x9f, 0xa1,
-	0xfa, 0xb2, 0xe8, 0xa0, 0xd9, 0x14, 0x4b, 0x09, 0x42, 0x62, 0x49, 0x58, 0x5d, 0xe1, 0x35, 0x31,
-	0x90, 0x05, 0x70, 0xa8, 0xca, 0x58, 0x90, 0x9c, 0x02, 0xb7, 0xf1, 0xd3, 0x9c, 0xb1, 0x7c, 0x09,
-	0xa1, 0x5e, 0x25, 0xd5, 0x22, 0xc4, 0x74, 0x53, 0x87, 0x0c, 0x99, 0xd8, 0x9c, 0x67, 0x16, 0x26,
-	0xe4, 0xff, 0xe4, 0xa0, 0xb7, 0x2e, 0x45, 0xfe, 0x35, 0x5e, 0x0a, 0x90, 0x53, 0x46, 0x17, 0x84,
-	0x97, 0xee, 0x09, 0xba, 0x4b, 0x19, 0x4d, 0xa1, 0xef, 0x9c, 0x3b, 0x4f, 0x5b, 0x91, 0x59, 0xb8,
-	0x8f, 0x51, 0x67, 0x8d, 0x97, 0x24, 0xc3, 0x92, 0xf1, 0xfe, 0x9d, 0x73, 0xe7, 0x69, 0x27, 0xda,
-	0x01, 0xee, 0x19, 0xea, 0x82, 0x2c, 0x62, 0x9c, 0x65, 0x1c, 0x84, 0xe8, 0x1f, 0xea, 0x38, 0x02,
-	0x59, 0x3c, 0x33, 0x88, 0x2a, 0x57, 0x7c, 0xb1, 0xac, 0x38, 0xf4, 0x5b, 0xa6, 0xbc, 0x01, 0xfc,
-	0xe1, 0x0d, 0x1a, 0x11, 0x7c, 0x5f, 0x81, 0x90, 0xaa, 0x82, 0x9b, 0x4f, 0xe0, 0x9a, 0x4a, 0x27,
-	0xda, 0x01, 0x7e, 0xa1, 0x2b, 0xe6, 0x20, 0x67, 0xbb, 0x33, 0xfa, 0xe8, 0x5e, 0x4d, 0xc0, 0xe4,
-	0xd7, 0xcb, 0xff, 0x21, 0xbf, 0xc7, 0xed, 0xf0, 0x55, 0x6e, 0xbf, 0x3b, 0xe8, 0xbe, 0x3e, 0x8a,
-	0x66, 0x57, 0x6c, 0x26, 0x0b, 0xf7, 0x5d, 0xd4, 0x16, 0x40, 0xb3, 0x86, 0x95, 0x5d, 0xb9, 0xa7,
-	0xe8, 0x48, 0x69, 0x90, 0x81, 0x90, 0xf6, 0x8c, 0x7b, 0x20, 0x8b, 0xe7, 0xaa, 0x97, 0x4f, 0x50,
-	0x1b, 0x97, 0xac, 0xa2, 0x52, 0x6f, 0xdf, 0x1d, 0x9f, 0x06, 0x76, 0x0c, 0xca, 0x20, 0x81, 0x35,
-	0x48, 0x30, 0x65, 0x84, 0x4e, 0x5a, 0x2f, 0xfe, 0x3e, 0x3b, 0x88, 0x6c, 0xba, 0xfb, 0x29, 0x42,
-	0x09, 0x27, 0x59, 0x0e, 0xf1, 0x02, 0x8c, 0x6e, 0xb7, 0x28, 0xee, 0x98, 0x92, 0xcf, 0x01, 0xfc,
-	0x19, 0x3a, 0xbe, 0x14, 0xb9, 0x95, 0x74, 0x82, 0x65, 0x5a, 0xbc, 0x59, 0x57, 0x35, 0xfc, 0x0c,
-	0x28, 0x2b, 0x6d, 0x07, 0x66, 0xe1, 0xff, 0xe2, 0xe8, 0x7d, 0xac, 0x43, 0xcc, 0x3e, 0xff, 0x6d,
-	0x93, 0xf7, 0x51, 0x4f, 0xb2, 0xef, 0x80, 0xc6, 0x29, 0xa3, 0x92, 0xe3, 0xb4, 0x96, 0xe2, 0x81,
-	0x46, 0xa7, 0x16, 0x74, 0xdf, 0x43, 0xca, 0x1c, 0xd6, 0xc2, 0xb5, 0xe6, 0x20, 0x8b, 0xb9, 0x06,
-	0xf6, 0xe7, 0xd5, 0x7a, 0xe3, 0xbc, 0xee, 0xbe, 0x3a, 0xaf, 0x3f, 0x1c, 0x34, 0x98, 0xd9, 0x3b,
-	0x32, 0xd1, 0x42, 0x3c, 0x87, 0x15, 0x13, 0x44, 0x4e, 0x97, 0x98, 0xbc, 0xce, 0xdd, 0x1f, 0xa1,
-	0x2e, 0xf0, 0x74, 0x3c, 0x8c, 0x35, 0x4d, 0xcd, 0xb9, 0x3b, 0x3e, 0x09, 0xea, 0x0b, 0x1d, 0xcc,
-	0xa2, 0xe9, 0x78, 0x78, 0xa5, 0x62, 0x11, 0xd2, 0x89, 0xfa, 0xdb, 0x7d, 0x82, 0x8e, 0x77, 0xd7,
-	0xd1, 0x78, 0xc2, 0xf4, 0xd2, 0xab, 0xe1, 0xb9, 0xf1, 0xc6, 0x13, 0x74, 0x6c, 0x6f, 0x21, 0x87,
-	0x14, 0xc8, 0x1a, 0xea, 0xb6, 0x7a, 0x06, 0x8e, 0x2c, 0xea, 0x2f, 0x90, 0xbf, 0x4f, 0xfe, 0x1b,
-	0x22, 0x8b, 0x8c, 0xe3, 0x1f, 0xf0, 0x52, 0xcb, 0x6e, 0x9a, 0x50, 0xd7, 0x6d, 0x0d, 0x54, 0xc6,
-	0x37, 0x5b, 0x41, 0x1a, 0xfa, 0x4a, 0xf7, 0x73, 0x86, 0xba, 0x89, 0x4a, 0xb7, 0x09, 0x77, 0x4c,
-	0x82, 0x86, 0x74, 0x82, 0xbf, 0x75, 0xd0, 0x23, 0x35, 0x51, 0x0e, 0x58, 0x42, 0x7d, 0xa2, 0xde,
-	0x5c, 0xb8, 0x1f, 0xa0, 0x87, 0x4d, 0x57, 0x69, 0x81, 0x09, 0x8d, 0x49, 0x66, 0xcf, 0x68, 0xda,
-	0x9d, 0x2a, 0xfc, 0x8b, 0xcc, 0xfd, 0x18, 0x3d, 0xb2, 0x06, 0xad, 0x07, 0xde, 0x3c, 0x02, 0x66,
-	0xf0, 0xef, 0x98, 0x70, 0x3d, 0xf9, 0xfa, 0xae, 0xfa, 0xe8, 0x3e, 0xe3, 0x69, 0x01, 0x42, 0x72,
-	0x3d, 0x64, 0x23, 0xdb, 0x1e, 0xe6, 0x7e, 0x86, 0xda, 0xa9, 0x66, 0xd4, 0x6f, 0x9d, 0x1f, 0xea,
-	0x79, 0x98, 0x47, 0x2e, 0xa8, 0x1f, 0xb9, 0xe0, 0x19, 0xdd, 0x4c, 0x1e, 0xfe, 0xf9, 0xeb, 0xc5,
-	0x83, 0xbd, 0x0e, 0x22, 0x5b, 0xe6, 0xff, 0xe6, 0xa0, 0xc7, 0x97, 0x22, 0x37, 0x42, 0xce, 0x6b,
-	0x87, 0xcc, 0xab, 0xa4, 0x24, 0x42, 0x10, 0x46, 0x5f, 0x63, 0x86, 0xd0, 0xf8, 0x2b, 0x96, 0x9b,
-	0x95, 0x91, 0xae, 0x37, 0x76, 0x77, 0x56, 0x50, 0xfb, 0x5c, 0x6d, 0x56, 0x10, 0x1d, 0x09, 0xfb,
-	0x75, 0xab, 0x66, 0x2e, 0x90, 0xbb, 0xf7, 0x72, 0xdf, 0x7c, 0x09, 0x1b, 0xb9, 0x1b, 0x8e, 0x93,
-	0x2f, 0x5f, 0x6c, 0x3d, 0xe7, 0xe5, 0xd6, 0x73, 0xfe, 0xd9, 0x7a, 0xce, 0xcf, 0xd7, 0xde, 0xc1,
-	0xcb, 0x6b, 0xef, 0xe0, 0xaf, 0x6b, 0xef, 0xe0, 0xdb, 0x61, 0x4e, 0x64, 0x51, 0x25, 0x41, 0xca,
-	0xca, 0x10, 0x2f, 0x65, 0x01, 0xf8, 0x82, 0x82, 0x0c, 0xcd, 0xff, 0xa1, 0x64, 0x59, 0xb5, 0x84,
-	0xf0, 0x47, 0xbb, 0x54, 0x1d, 0x88, 0xa4, 0xad, 0xf5, 0xfa, 0xf0, 0xdf, 0x00, 0x00, 0x00, 0xff,
-	0xff, 0x08, 0x67, 0xeb, 0x10, 0xb5, 0x06, 0x00, 0x00,
+	// 1080 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x56, 0xcd, 0x6f, 0xe3, 0x44,
+	0x14, 0xaf, 0xb7, 0xdd, 0x7e, 0xbc, 0x7e, 0xed, 0x9a, 0x76, 0x9b, 0x58, 0xdd, 0xb4, 0x6b, 0xc1,
+	0xee, 0x82, 0x54, 0xbb, 0x0d, 0x02, 0x6e, 0xa0, 0x6d, 0xb6, 0x48, 0x20, 0x95, 0x83, 0x53, 0xb1,
+	0x12, 0x97, 0x68, 0x62, 0xbf, 0xda, 0x16, 0xc9, 0x4c, 0xf0, 0x4c, 0x02, 0xb9, 0xb2, 0xe2, 0x8e,
+	0xc4, 0x81, 0xbf, 0x81, 0x3b, 0x07, 0x04, 0xff, 0xc0, 0x8a, 0xd3, 0x4a, 0x5c, 0x38, 0x21, 0xd4,
+	0xf2, 0x87, 0x20, 0xcf, 0x8c, 0x9d, 0x8c, 0x95, 0x74, 0x7b, 0xf3, 0xfc, 0xde, 0xc7, 0xef, 0x7d,
+	0xcd, 0x1b, 0xc3, 0x5b, 0x03, 0x8c, 0xe3, 0xb1, 0x3f, 0x3a, 0xf1, 0xfb, 0x3c, 0xe6, 0xde, 0x20,
+	0x63, 0x82, 0xd9, 0xab, 0x12, 0xf4, 0x46, 0x27, 0x4e, 0x23, 0x64, 0xbc, 0xcf, 0xb8, 0xdf, 0x25,
+	0x1c, 0xfd, 0xd1, 0x49, 0x17, 0x05, 0x39, 0xf1, 0x43, 0x96, 0x52, 0xa5, 0xe9, 0xec, 0xc4, 0x2c,
+	0x66, 0xf2, 0xd3, 0xcf, 0xbf, 0x34, 0xea, 0x94, 0x4e, 0x89, 0x10, 0xc8, 0x05, 0x11, 0x29, 0x2b,
+	0x2c, 0xf6, 0x63, 0xc6, 0xe2, 0x1e, 0xfa, 0x64, 0x90, 0xfa, 0x84, 0x52, 0xa6, 0x84, 0x9a, 0xd9,
+	0x69, 0x94, 0x96, 0x28, 0x12, 0xcc, 0x70, 0xd8, 0xef, 0xf0, 0x34, 0xa6, 0x98, 0x69, 0x79, 0x5d,
+	0x5b, 0xcb, 0x53, 0x77, 0x78, 0xe9, 0x13, 0x3a, 0x2e, 0x44, 0x2a, 0xd4, 0x8e, 0x8a, 0x46, 0x1d,
+	0x94, 0xc8, 0xfd, 0xc1, 0x82, 0x7b, 0xe7, 0x3c, 0xfe, 0x92, 0xf4, 0x38, 0x8a, 0x16, 0xa3, 0x97,
+	0x69, 0xd6, 0xb7, 0x77, 0xe0, 0x2e, 0x65, 0x34, 0xc4, 0x9a, 0x75, 0x68, 0x3d, 0x5d, 0x0a, 0xd4,
+	0xc1, 0xde, 0x87, 0xb5, 0x11, 0xe9, 0xa5, 0x11, 0x11, 0x2c, 0xab, 0xdd, 0x39, 0xb4, 0x9e, 0xae,
+	0x05, 0x13, 0xc0, 0x3e, 0x80, 0x75, 0x14, 0x49, 0x87, 0x44, 0x51, 0x86, 0x9c, 0xd7, 0x16, 0xa5,
+	0x1c, 0x50, 0x24, 0xcf, 0x14, 0x92, 0x9b, 0xe7, 0xf1, 0x12, 0x31, 0xcc, 0xb0, 0xb6, 0xa4, 0xcc,
+	0x4b, 0xc0, 0x3d, 0x9e, 0x0a, 0x23, 0xc0, 0x6f, 0x86, 0xc8, 0x45, 0x6e, 0x91, 0xa9, 0x4f, 0xcc,
+	0x64, 0x28, 0x6b, 0xc1, 0x04, 0x70, 0x13, 0x69, 0xd1, 0x46, 0x71, 0x36, 0xe1, 0xa8, 0xc1, 0x4a,
+	0x11, 0x80, 0xd2, 0x2f, 0x8e, 0x6f, 0x08, 0xde, 0x88, 0x6d, 0xb1, 0x1a, 0xdb, 0xef, 0x16, 0x6c,
+	0x48, 0x2a, 0x1a, 0x5d, 0xb0, 0x33, 0x91, 0xd8, 0x0f, 0x60, 0x99, 0x23, 0x8d, 0xca, 0xa8, 0xf4,
+	0xc9, 0xae, 0xc3, 0x6a, 0x5e, 0x83, 0x08, 0xb9, 0xd0, 0x1c, 0x2b, 0x28, 0x92, 0xe7, 0x79, 0x2e,
+	0x1f, 0xc1, 0x32, 0xe9, 0xb3, 0x21, 0x15, 0xd2, 0xfd, 0x7a, 0xb3, 0xee, 0xe9, 0x36, 0xe4, 0xe3,
+	0xe3, 0xe9, 0xf1, 0xf1, 0x5a, 0x2c, 0xa5, 0xa7, 0x4b, 0xaf, 0xfe, 0x39, 0x58, 0x08, 0xb4, 0xba,
+	0xfd, 0x31, 0x40, 0x37, 0x4b, 0xa3, 0x18, 0x3b, 0x97, 0xa8, 0xea, 0x76, 0x0b, 0xe3, 0x35, 0x65,
+	0xf2, 0x29, 0xa2, 0x7b, 0x06, 0xdb, 0xe7, 0x3c, 0xd6, 0x25, 0x3d, 0x25, 0x22, 0x4c, 0x6e, 0xae,
+	0x6b, 0xde, 0xfc, 0x08, 0x29, 0xeb, 0xeb, 0x0c, 0xd4, 0xc1, 0xfd, 0xc5, 0x92, 0x7e, 0xf4, 0x84,
+	0x28, 0x3f, 0xb3, 0xc7, 0xe4, 0x1d, 0xd8, 0x12, 0xec, 0x6b, 0xa4, 0x9d, 0x90, 0x51, 0x91, 0x91,
+	0xb0, 0x28, 0xc5, 0xa6, 0x44, 0x5b, 0x1a, 0xb4, 0x1f, 0x42, 0x3e, 0x1c, 0x7a, 0x84, 0x8b, 0x9a,
+	0xa3, 0x48, 0xda, 0x12, 0x30, 0xfb, 0xb5, 0x74, 0x63, 0xbf, 0xee, 0x56, 0xfb, 0xf5, 0x87, 0x05,
+	0xce, 0x99, 0xbe, 0x23, 0xa7, 0xb2, 0x10, 0xcf, 0x71, 0xc0, 0x78, 0x2a, 0x5a, 0x3d, 0x92, 0xce,
+	0x9b, 0xee, 0x0f, 0x60, 0x1d, 0xb3, 0xb0, 0x79, 0xdc, 0x91, 0x61, 0xca, 0x98, 0xd7, 0x9b, 0x3b,
+	0x5e, 0x71, 0xdd, 0xbd, 0xb3, 0xa0, 0xd5, 0x3c, 0xbe, 0xc8, 0x65, 0x01, 0x48, 0x45, 0xf9, 0x6d,
+	0x3f, 0x81, 0xed, 0xc9, 0x75, 0x54, 0x33, 0xa1, 0x72, 0xd9, 0x2a, 0xe0, 0xb6, 0x9a, 0x8d, 0x27,
+	0xb0, 0xad, 0x6f, 0x61, 0x86, 0x21, 0xa6, 0x23, 0x2c, 0xd2, 0xda, 0x52, 0x70, 0xa0, 0x51, 0xf7,
+	0x12, 0x5c, 0x33, 0xf8, 0x17, 0xa9, 0x48, 0xa2, 0x8c, 0x7c, 0x4b, 0x7a, 0xb2, 0xec, 0x2a, 0x89,
+	0xfc, 0xba, 0x8d, 0x90, 0x8a, 0xce, 0x74, 0x2a, 0x20, 0xa1, 0x2f, 0x64, 0x3e, 0x07, 0xb0, 0xde,
+	0xcd, 0xd5, 0xb5, 0xc2, 0x1d, 0xa5, 0x20, 0x21, 0xa9, 0xe0, 0x5e, 0x59, 0xb0, 0x97, 0x77, 0x34,
+	0x43, 0x22, 0xb0, 0x60, 0x94, 0xce, 0xb9, 0xfd, 0x1e, 0xdc, 0x2f, 0xb3, 0x0a, 0x13, 0x92, 0xd2,
+	0x4e, 0x1a, 0x69, 0x8e, 0x32, 0xdd, 0x56, 0x8e, 0x7f, 0x16, 0xd9, 0x1f, 0xc2, 0x9e, 0x1e, 0xd0,
+	0xa2, 0xe1, 0xe5, 0x12, 0x50, 0x8d, 0xdf, 0x55, 0xe2, 0xa2, 0xf3, 0xc5, 0x5d, 0x75, 0x61, 0x83,
+	0x65, 0x61, 0x82, 0x5c, 0x64, 0xb2, 0xc9, 0xaa, 0x6c, 0x06, 0x66, 0x7f, 0x02, 0xcb, 0xa1, 0x8c,
+	0xa8, 0xb6, 0x74, 0xb8, 0x28, 0xfb, 0xa1, 0x96, 0x9c, 0x57, 0x2c, 0x39, 0xef, 0x19, 0x1d, 0x9f,
+	0xde, 0xff, 0xf3, 0xd7, 0xa3, 0x4d, 0x23, 0x83, 0x40, 0x9b, 0xb9, 0xbf, 0x59, 0xb0, 0x7f, 0xce,
+	0x63, 0x55, 0xc8, 0x76, 0x31, 0x21, 0xed, 0x61, 0xb7, 0x9f, 0x72, 0x9e, 0x32, 0x3a, 0x67, 0x18,
+	0x7c, 0x35, 0x5f, 0x1d, 0x31, 0x1e, 0xa8, 0xd2, 0x6d, 0x35, 0xed, 0xc9, 0x28, 0xe4, 0x7e, 0x2e,
+	0xc6, 0x03, 0x0c, 0x56, 0xb9, 0xfe, 0xba, 0x55, 0x32, 0x47, 0x60, 0x1b, 0x9b, 0x7b, 0x7a, 0x13,
+	0x96, 0xe5, 0x2e, 0x63, 0x74, 0x1d, 0xa8, 0x55, 0x17, 0x73, 0x80, 0x7c, 0xc0, 0x28, 0x37, 0x65,
+	0xfa, 0x6a, 0x57, 0x64, 0xc6, 0x5e, 0x2c, 0x65, 0x0f, 0x60, 0x67, 0x7a, 0x91, 0x95, 0x78, 0x5d,
+	0x8e, 0xc2, 0xf4, 0x92, 0xa8, 0x88, 0xa6, 0xef, 0x7d, 0x29, 0x7a, 0x04, 0x07, 0x73, 0x06, 0xa8,
+	0x54, 0x79, 0x0c, 0x6f, 0xdf, 0x54, 0xfe, 0x42, 0xaf, 0xf9, 0x72, 0x05, 0x16, 0xcf, 0x79, 0x6c,
+	0xc7, 0xb0, 0x69, 0x3e, 0x45, 0xce, 0xa4, 0xec, 0xd5, 0x6a, 0x38, 0xee, 0x7c, 0xd9, 0x24, 0xe3,
+	0xef, 0xff, 0xfa, 0xef, 0xa7, 0x3b, 0xf7, 0xdc, 0x2d, 0xdf, 0xf4, 0x5b, 0x12, 0x15, 0x8f, 0xcd,
+	0x2c, 0x22, 0x2d, 0x9b, 0x49, 0x54, 0x2d, 0x7b, 0x95, 0xa8, 0xf0, 0x1b, 0xc3, 0xa6, 0xf9, 0x46,
+	0x99, 0x44, 0x86, 0xac, 0x42, 0x34, 0xa7, 0x87, 0x25, 0x91, 0xe9, 0xf7, 0x05, 0xac, 0x4d, 0xbd,
+	0x50, 0x15, 0x47, 0x1a, 0x77, 0x1a, 0xb3, 0xf1, 0xd2, 0xb9, 0x2d, 0x9d, 0x6f, 0xb8, 0xe0, 0x4f,
+	0x7c, 0x85, 0xb0, 0x61, 0x3c, 0x1f, 0x75, 0xc3, 0xc7, 0xb4, 0xc8, 0x79, 0x34, 0x57, 0x54, 0x32,
+	0xec, 0x4a, 0x86, 0x6d, 0x77, 0xd3, 0x37, 0x9c, 0x86, 0xb0, 0x61, 0xbc, 0x2d, 0x26, 0xc9, 0xb4,
+	0xa8, 0x42, 0x32, 0x73, 0x32, 0x27, 0x24, 0x86, 0xd3, 0x97, 0x16, 0xec, 0xcc, 0xdc, 0x77, 0x15,
+	0x97, 0x33, 0x54, 0x9c, 0x77, 0xdf, 0xa8, 0x52, 0xb2, 0x3f, 0x94, 0xec, 0x7b, 0xee, 0xae, 0x3f,
+	0x93, 0xec, 0x67, 0x0b, 0xea, 0xf3, 0x17, 0xd2, 0x63, 0x83, 0x67, 0xae, 0x9e, 0xe3, 0xdd, 0x4e,
+	0xaf, 0x0c, 0xca, 0x95, 0x41, 0xed, 0xbb, 0x8e, 0x3f, 0x57, 0xf7, 0xf4, 0xf3, 0x57, 0x57, 0x0d,
+	0xeb, 0xf5, 0x55, 0xc3, 0xfa, 0xf7, 0xaa, 0x61, 0xfd, 0x78, 0xdd, 0x58, 0x78, 0x7d, 0xdd, 0x58,
+	0xf8, 0xfb, 0xba, 0xb1, 0xf0, 0xd5, 0x71, 0x9c, 0x8a, 0x64, 0xd8, 0xf5, 0x42, 0xd6, 0xf7, 0x49,
+	0x4f, 0x24, 0x48, 0x8e, 0x28, 0x0a, 0x5f, 0xfd, 0x92, 0xf6, 0x59, 0x34, 0xec, 0xa1, 0xff, 0x9d,
+	0x3e, 0xe6, 0x4b, 0x93, 0x77, 0x97, 0xe5, 0x8a, 0x7e, 0xff, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff,
+	0x6f, 0xc5, 0x05, 0x92, 0x46, 0x0b, 0x00, 0x00,
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion4
+
+// MsgClient is the client API for Msg service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type MsgClient interface {
+	ValsetConfirm(ctx context.Context, in *MsgValsetConfirm, opts ...grpc.CallOption) (*MsgValsetConfirmResponse, error)
+	ValsetRequest(ctx context.Context, in *MsgValsetRequest, opts ...grpc.CallOption) (*MsgValsetRequestResponse, error)
+	SetEthAddress(ctx context.Context, in *MsgSetEthAddress, opts ...grpc.CallOption) (*MsgSetEthAddressResponse, error)
+	SendToEth(ctx context.Context, in *MsgSendToEth, opts ...grpc.CallOption) (*MsgSendToEthResponse, error)
+	RequestBatch(ctx context.Context, in *MsgRequestBatch, opts ...grpc.CallOption) (*MsgRequestBatchResponse, error)
+	ConfirmBatch(ctx context.Context, in *MsgConfirmBatch, opts ...grpc.CallOption) (*MsgConfirmBatchResponse, error)
+	CreateEthereumClaims(ctx context.Context, in *MsgCreateEthereumClaims, opts ...grpc.CallOption) (*MsgCreateEthereumClaimsResponse, error)
+	BridgeSignatureSubmission(ctx context.Context, in *MsgBridgeSignatureSubmission, opts ...grpc.CallOption) (*MsgBridgeSignatureSubmissionResponse, error)
+}
+
+type msgClient struct {
+	cc grpc1.ClientConn
+}
+
+func NewMsgClient(cc grpc1.ClientConn) MsgClient {
+	return &msgClient{cc}
+}
+
+func (c *msgClient) ValsetConfirm(ctx context.Context, in *MsgValsetConfirm, opts ...grpc.CallOption) (*MsgValsetConfirmResponse, error) {
+	out := new(MsgValsetConfirmResponse)
+	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/ValsetConfirm", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) ValsetRequest(ctx context.Context, in *MsgValsetRequest, opts ...grpc.CallOption) (*MsgValsetRequestResponse, error) {
+	out := new(MsgValsetRequestResponse)
+	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/ValsetRequest", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) SetEthAddress(ctx context.Context, in *MsgSetEthAddress, opts ...grpc.CallOption) (*MsgSetEthAddressResponse, error) {
+	out := new(MsgSetEthAddressResponse)
+	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/SetEthAddress", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) SendToEth(ctx context.Context, in *MsgSendToEth, opts ...grpc.CallOption) (*MsgSendToEthResponse, error) {
+	out := new(MsgSendToEthResponse)
+	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/SendToEth", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) RequestBatch(ctx context.Context, in *MsgRequestBatch, opts ...grpc.CallOption) (*MsgRequestBatchResponse, error) {
+	out := new(MsgRequestBatchResponse)
+	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/RequestBatch", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) ConfirmBatch(ctx context.Context, in *MsgConfirmBatch, opts ...grpc.CallOption) (*MsgConfirmBatchResponse, error) {
+	out := new(MsgConfirmBatchResponse)
+	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/ConfirmBatch", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) CreateEthereumClaims(ctx context.Context, in *MsgCreateEthereumClaims, opts ...grpc.CallOption) (*MsgCreateEthereumClaimsResponse, error) {
+	out := new(MsgCreateEthereumClaimsResponse)
+	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/CreateEthereumClaims", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) BridgeSignatureSubmission(ctx context.Context, in *MsgBridgeSignatureSubmission, opts ...grpc.CallOption) (*MsgBridgeSignatureSubmissionResponse, error) {
+	out := new(MsgBridgeSignatureSubmissionResponse)
+	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/BridgeSignatureSubmission", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MsgServer is the server API for Msg service.
+type MsgServer interface {
+	ValsetConfirm(context.Context, *MsgValsetConfirm) (*MsgValsetConfirmResponse, error)
+	ValsetRequest(context.Context, *MsgValsetRequest) (*MsgValsetRequestResponse, error)
+	SetEthAddress(context.Context, *MsgSetEthAddress) (*MsgSetEthAddressResponse, error)
+	SendToEth(context.Context, *MsgSendToEth) (*MsgSendToEthResponse, error)
+	RequestBatch(context.Context, *MsgRequestBatch) (*MsgRequestBatchResponse, error)
+	ConfirmBatch(context.Context, *MsgConfirmBatch) (*MsgConfirmBatchResponse, error)
+	CreateEthereumClaims(context.Context, *MsgCreateEthereumClaims) (*MsgCreateEthereumClaimsResponse, error)
+	BridgeSignatureSubmission(context.Context, *MsgBridgeSignatureSubmission) (*MsgBridgeSignatureSubmissionResponse, error)
+}
+
+// UnimplementedMsgServer can be embedded to have forward compatible implementations.
+type UnimplementedMsgServer struct {
+}
+
+func (*UnimplementedMsgServer) ValsetConfirm(ctx context.Context, req *MsgValsetConfirm) (*MsgValsetConfirmResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValsetConfirm not implemented")
+}
+func (*UnimplementedMsgServer) ValsetRequest(ctx context.Context, req *MsgValsetRequest) (*MsgValsetRequestResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValsetRequest not implemented")
+}
+func (*UnimplementedMsgServer) SetEthAddress(ctx context.Context, req *MsgSetEthAddress) (*MsgSetEthAddressResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetEthAddress not implemented")
+}
+func (*UnimplementedMsgServer) SendToEth(ctx context.Context, req *MsgSendToEth) (*MsgSendToEthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendToEth not implemented")
+}
+func (*UnimplementedMsgServer) RequestBatch(ctx context.Context, req *MsgRequestBatch) (*MsgRequestBatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestBatch not implemented")
+}
+func (*UnimplementedMsgServer) ConfirmBatch(ctx context.Context, req *MsgConfirmBatch) (*MsgConfirmBatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConfirmBatch not implemented")
+}
+func (*UnimplementedMsgServer) CreateEthereumClaims(ctx context.Context, req *MsgCreateEthereumClaims) (*MsgCreateEthereumClaimsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateEthereumClaims not implemented")
+}
+func (*UnimplementedMsgServer) BridgeSignatureSubmission(ctx context.Context, req *MsgBridgeSignatureSubmission) (*MsgBridgeSignatureSubmissionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BridgeSignatureSubmission not implemented")
+}
+
+func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
+	s.RegisterService(&_Msg_serviceDesc, srv)
+}
+
+func _Msg_ValsetConfirm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgValsetConfirm)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ValsetConfirm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/peggy.v1.Msg/ValsetConfirm",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ValsetConfirm(ctx, req.(*MsgValsetConfirm))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_ValsetRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgValsetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ValsetRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/peggy.v1.Msg/ValsetRequest",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ValsetRequest(ctx, req.(*MsgValsetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_SetEthAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSetEthAddress)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).SetEthAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/peggy.v1.Msg/SetEthAddress",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).SetEthAddress(ctx, req.(*MsgSetEthAddress))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_SendToEth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSendToEth)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).SendToEth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/peggy.v1.Msg/SendToEth",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).SendToEth(ctx, req.(*MsgSendToEth))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_RequestBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRequestBatch)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RequestBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/peggy.v1.Msg/RequestBatch",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RequestBatch(ctx, req.(*MsgRequestBatch))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_ConfirmBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgConfirmBatch)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ConfirmBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/peggy.v1.Msg/ConfirmBatch",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ConfirmBatch(ctx, req.(*MsgConfirmBatch))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_CreateEthereumClaims_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCreateEthereumClaims)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).CreateEthereumClaims(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/peggy.v1.Msg/CreateEthereumClaims",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).CreateEthereumClaims(ctx, req.(*MsgCreateEthereumClaims))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_BridgeSignatureSubmission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgBridgeSignatureSubmission)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).BridgeSignatureSubmission(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/peggy.v1.Msg/BridgeSignatureSubmission",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).BridgeSignatureSubmission(ctx, req.(*MsgBridgeSignatureSubmission))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Msg_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "peggy.v1.Msg",
+	HandlerType: (*MsgServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ValsetConfirm",
+			Handler:    _Msg_ValsetConfirm_Handler,
+		},
+		{
+			MethodName: "ValsetRequest",
+			Handler:    _Msg_ValsetRequest_Handler,
+		},
+		{
+			MethodName: "SetEthAddress",
+			Handler:    _Msg_SetEthAddress_Handler,
+		},
+		{
+			MethodName: "SendToEth",
+			Handler:    _Msg_SendToEth_Handler,
+		},
+		{
+			MethodName: "RequestBatch",
+			Handler:    _Msg_RequestBatch_Handler,
+		},
+		{
+			MethodName: "ConfirmBatch",
+			Handler:    _Msg_ConfirmBatch_Handler,
+		},
+		{
+			MethodName: "CreateEthereumClaims",
+			Handler:    _Msg_CreateEthereumClaims_Handler,
+		},
+		{
+			MethodName: "BridgeSignatureSubmission",
+			Handler:    _Msg_BridgeSignatureSubmission_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "peggy/v1/msgs.proto",
 }
 
 func (m *MsgValsetConfirm) Marshal() (dAtA []byte, err error) {
@@ -1258,6 +1908,190 @@ func (m *MsgBridgeSignatureSubmission) MarshalToSizedBuffer(dAtA []byte) (int, e
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgValsetConfirmResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgValsetConfirmResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgValsetConfirmResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgValsetRequestResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgValsetRequestResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgValsetRequestResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgSetEthAddressResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgSetEthAddressResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgSetEthAddressResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgSendToEthResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgSendToEthResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgSendToEthResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRequestBatchResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRequestBatchResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRequestBatchResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgConfirmBatchResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgConfirmBatchResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgConfirmBatchResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCreateEthereumClaimsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCreateEthereumClaimsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCreateEthereumClaimsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgBridgeSignatureSubmissionResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgBridgeSignatureSubmissionResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgBridgeSignatureSubmissionResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintMsgs(dAtA []byte, offset int, v uint64) int {
 	offset -= sovMsgs(v)
 	base := offset
@@ -1478,6 +2312,78 @@ func (m *MsgBridgeSignatureSubmission) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovMsgs(uint64(l))
 	}
+	return n
+}
+
+func (m *MsgValsetConfirmResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgValsetRequestResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgSetEthAddressResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgSendToEthResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgRequestBatchResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgConfirmBatchResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgCreateEthereumClaimsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgBridgeSignatureSubmissionResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
 	return n
 }
 
@@ -2953,6 +3859,430 @@ func (m *MsgBridgeSignatureSubmission) Unmarshal(dAtA []byte) error {
 			}
 			m.EthereumSignature = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsgs(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgValsetConfirmResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsgs
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgValsetConfirmResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgValsetConfirmResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsgs(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgValsetRequestResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsgs
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgValsetRequestResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgValsetRequestResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsgs(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgSetEthAddressResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsgs
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSetEthAddressResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSetEthAddressResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsgs(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgSendToEthResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsgs
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSendToEthResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSendToEthResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsgs(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRequestBatchResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsgs
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRequestBatchResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRequestBatchResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsgs(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgConfirmBatchResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsgs
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgConfirmBatchResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgConfirmBatchResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsgs(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCreateEthereumClaimsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsgs
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCreateEthereumClaimsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCreateEthereumClaimsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsgs(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgBridgeSignatureSubmissionResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsgs
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgBridgeSignatureSubmissionResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgBridgeSignatureSubmissionResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMsgs(dAtA[iNdEx:])

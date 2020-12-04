@@ -3,10 +3,39 @@ package peggy.v1;
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "peggy/v1/attestation.proto";
+import "google/api/annotations.proto";
 import "peggy/v1/ethereum_signer.proto";
 import "google/protobuf/any.proto";
 import "cosmos_proto/cosmos.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+service Msg {
+    rpc ValsetConfirm(MsgValsetConfirm) returns (MsgValsetConfirmResponse) {
+        option (google.api.http).post = "/ValsetConfirm";
+    }
+    rpc ValsetRequest(MsgValsetRequest) returns (MsgValsetRequestResponse) {
+        option (google.api.http).post = "/ValsetRequest";
+    }
+    rpc SetEthAddress(MsgSetEthAddress) returns (MsgSetEthAddressResponse) {
+        option (google.api.http).post = "/SetEthAddress";
+    }
+    rpc SendToEth(MsgSendToEth) returns (MsgSendToEthResponse) {
+        option (google.api.http).post = "/SendToEth";
+    }
+    rpc RequestBatch(MsgRequestBatch) returns (MsgRequestBatchResponse) {
+        option (google.api.http).post = "/RequestBatch";
+    }
+    rpc ConfirmBatch(MsgConfirmBatch) returns (MsgConfirmBatchResponse) {
+        option (google.api.http).post = "/ConfirmBatch";
+    }
+    rpc CreateEthereumClaims(MsgCreateEthereumClaims) returns (MsgCreateEthereumClaimsResponse) {
+        option (google.api.http).post = "/CreateEthereumClaims";
+    }
+    rpc BridgeSignatureSubmission(MsgBridgeSignatureSubmission) returns (MsgBridgeSignatureSubmissionResponse) {
+        option (google.api.http).post = "/BridgeSignatureSubmission";
+    }
+}
+
 
 // MsgValsetConfirm
 // this is the message sent by the validators when they wish to submit their signatures over
@@ -148,3 +177,12 @@ message MsgBridgeSignatureSubmission {
     string   orchestrator       = 3;
     string   ethereum_signature = 4;
 }
+
+message MsgValsetConfirmResponse {}
+message MsgValsetRequestResponse {}
+message MsgSetEthAddressResponse {}
+message MsgSendToEthResponse {}
+message MsgRequestBatchResponse {}
+message MsgConfirmBatchResponse {}
+message MsgCreateEthereumClaimsResponse {}
+message MsgBridgeSignatureSubmissionResponse {}
