@@ -84,7 +84,7 @@ async fn test_valset_request_calls(
     if res.is_err() {
         return Err(format!("Failed to create valset request {:?}", res));
     }
-    let valset_request_block = res.unwrap().height;
+    let valset_request_block = res.unwrap().height.unwrap();
 
     let res = get_valset(&contact, valset_request_block.into()).await;
     println!("valset response is {:?}", res);
