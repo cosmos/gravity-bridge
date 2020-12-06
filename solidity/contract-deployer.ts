@@ -4,6 +4,8 @@ import { ethers } from "ethers";
 import fs from "fs";
 import commandLineArgs from "command-line-args";
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import { exit } from "process";
+import { Http2ServerRequest } from "http2";
 
 const args = commandLineArgs([
   // the ethernum node used to deploy the contract
@@ -32,18 +34,63 @@ type Validator = {
   power: number;
   ethereum_address: string;
 };
-type ValsetResult = {
+type ValsetTypeWrapper = {
   type: string;
   value: Valset;
-};
-type ValsetResponse = {
-  height: number;
-  result: ValsetResult;
-};
+}
 type Valset = {
   members: Validator[];
   nonce: number;
 };
+type ValsetWrapper = {
+  jsonrpc: string;
+  id: string;
+  result: ValsetResponse;
+};
+type ValsetResponse = {
+  response: ValsetResult
+}
+type ValsetResult = {
+  code: number
+  log: string,
+  info: string,
+  index: string,
+  value: string,
+  height: string,
+  codespace: string,
+};
+type StatusWrapper = {
+  jsonrpc: string,
+  id: string,
+  result: NodeStatus
+};
+type NodeInfo = {
+  protocol_version: JSON,
+  id: string,
+  listen_addr: string,
+  network: string,
+  version: string,
+  channels: string,
+  moniker: string,
+  other: JSON,
+};
+type SyncInfo = {
+  latest_block_hash: string,
+  latest_app_hash: string,
+  latest_block_height: Number
+  latest_block_time: string,
+  earliest_block_hash: string,
+  earliest_app_hash: string,
+  earliest_block_height: Number,
+  earliest_block_time: string,
+  catching_up: boolean,
+}
+type NodeStatus = {
+  node_info: NodeInfo,
+  sync_info: SyncInfo,
+  validator_info: JSON,
+};
+
 async function deploy() {
   const provider = await new ethers.providers.JsonRpcProvider(args["eth-node"]);
   let wallet = new ethers.Wallet(args["eth-privkey"], provider);
@@ -79,9 +126,9 @@ async function deploy() {
   // output of the endpoint should always be sorted correctly. If you're
   // having strange problems with updating the validator set you should go
   // look there.
-  for (let i = 0; i < latestValset.result.value.members.length; i++) {
-    eth_addresses.push(latestValset.result.value.members[i].ethereum_address);
-    powers.push(latestValset.result.value.members[i].power);
+  for (let i = 0; i < latestValset.members.length; i++) {
+    eth_addresses.push(latestValset.members[i].ethereum_address);
+    powers.push(latestValset.members[i].power);
   }
   const peggy = (await factory.deploy(
     // todo generate this randomly at deployment time that way we can avoid
@@ -102,10 +149,26 @@ function getContractArtifacts(path: string): { bytecode: string; abi: string } {
   var { bytecode, abi } = JSON.parse(fs.readFileSync(path, "utf8").toString());
   return { bytecode, abi };
 }
-async function getLatestValset(peggyId: string): Promise<ValsetResponse> {
-  let request_string = args["cosmos-node"] + "/peggy/current_valset";
-  let response = await axios.get(request_string);
-  return response.data;
+const decode = (str: string):string => Buffer.from(str, 'base64').toString('binary');
+async function getLatestValset(peggyId: string): Promise<Valset> {
+  let block_height_request_string = args["cosmos-node"] + '/status';
+  let block_height_response = await axios.get(block_height_request_string);
+  let info: StatusWrapper = await block_height_response.data;
+  let block_height = info.result.sync_info.latest_block_height;
+  if (info.result.sync_info.catching_up) {
+    console.log("This node is still syncing! You can not deploy using this validator set!");
+    exit(1);
+  }
+  let request_string = args["cosmos-node"] + "/abci_query"
+  console.log(request_string)
+  let response = await axios.get(request_string, {params: {
+    path: "\"/custom/peggy/currentValset/\"",
+    height: block_height,
+    prove: "false",
+  }});
+  let valsets: ValsetWrapper = await response.data;
+  let valset: ValsetTypeWrapper = JSON.parse(decode(valsets.result.response.value))
+  return valset.value;
 }
 
 async function submitPeggyAddress(address: string) {}

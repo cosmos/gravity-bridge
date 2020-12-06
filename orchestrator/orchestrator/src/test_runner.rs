@@ -98,6 +98,7 @@ fn get_keys() -> Vec<(CosmosPrivateKey, EthPrivateKey)> {
 }
 
 const COSMOS_NODE: &str = "http://localhost:1317";
+const COSMOS_NODE_ABCI: &str = "http://localhost:26657";
 const ETH_NODE: &str = "http://localhost:8545";
 const PEGGY_ID: &str = "foo";
 
@@ -274,7 +275,7 @@ async fn deploy_contracts(
         .args(&[
             "ts-node",
             "/peggy/solidity/contract-deployer.ts",
-            &format!("--cosmos-node={}", COSMOS_NODE),
+            &format!("--cosmos-node={}", COSMOS_NODE_ABCI),
             &format!("--eth-node={}", ETH_NODE),
             &format!("--eth-privkey={:#x}", *MINER_PRIVATE_KEY),
             &format!("--peggy-id={}", PEGGY_ID),
