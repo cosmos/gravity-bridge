@@ -65,8 +65,6 @@ fn compile_protos(out_dir: &Path) {
     // Compile all proto files
     let mut config = prost_build::Config::default();
     config.out_dir(out_dir);
-    config.extern_path(".tendermint", "::tendermint_proto");
-    config.extern_path(".cosmos", "::cosmos_sdk_proto");
     config
         .compile_protos(&protos, &proto_include_paths)
         .unwrap();
