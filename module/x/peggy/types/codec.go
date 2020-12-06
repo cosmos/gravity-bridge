@@ -5,6 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	proto "github.com/gogo/protobuf/proto"
 )
 
@@ -47,6 +48,8 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&EthereumBridgeDepositClaim{},
 		&EthereumBridgeWithdrawalBatchClaim{},
 	)
+
+	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
 // PackAttestationDetails constructs a new Any packed with the ad value. It returns
