@@ -1,5 +1,5 @@
 [workspace]
-members = ["orchestrator", "cosmos_peggy", "ethereum_peggy", "peggy_utils"]
+members = ["orchestrator", "cosmos_peggy", "ethereum_peggy", "peggy_utils", "proto_build", "peggy_proto"]
 default-members = ["orchestrator"]
 
 
