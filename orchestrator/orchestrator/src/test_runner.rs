@@ -102,7 +102,7 @@ const COSMOS_NODE: &str = "http://localhost:1317";
 const COSMOS_NODE_GRPC: &str = "http://localhost:9090";
 const COSMOS_NODE_ABCI: &str = "http://localhost:26657";
 const ETH_NODE: &str = "http://localhost:8545";
-const PEGGY_ID: &str = "foo";
+const PEGGY_ID: &str = "defaultpeggyid";
 
 lazy_static! {
     // this key is the private key for the public key defined in tests/assets/ETHGenesis.json
