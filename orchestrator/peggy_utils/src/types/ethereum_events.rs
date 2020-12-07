@@ -3,7 +3,7 @@ use deep_space::address::Address as CosmosAddress;
 use num256::Uint256;
 use web30::types::Log;
 
-use crate::error::OrchestratorError;
+use crate::error::PeggyError;
 
 /// A parsed struct representing the Ethereum event fired by the Peggy contract
 /// when the validator set is updated.
@@ -15,19 +15,19 @@ pub struct ValsetUpdatedEvent {
 }
 
 impl ValsetUpdatedEvent {
-    pub fn from_log(input: &Log) -> Result<ValsetUpdatedEvent, OrchestratorError> {
+    pub fn from_log(input: &Log) -> Result<ValsetUpdatedEvent, PeggyError> {
         // we have one indexed event so we should fine two indexes, one the event itself
         // and one the indexed nonce
         if let Some(nonce_data) = input.topics.get(1) {
             let nonce = Uint256::from_bytes_be(nonce_data);
             Ok(ValsetUpdatedEvent { nonce })
         } else {
-            Err(OrchestratorError::InvalidEventLogError(
+            Err(PeggyError::InvalidEventLogError(
                 "Too few topics".to_string(),
             ))
         }
     }
-    pub fn from_logs(input: &[Log]) -> Result<Vec<ValsetUpdatedEvent>, OrchestratorError> {
+    pub fn from_logs(input: &[Log]) -> Result<Vec<ValsetUpdatedEvent>, PeggyError> {
         let mut res = Vec::new();
         for item in input {
             res.push(ValsetUpdatedEvent::from_log(item)?);
@@ -53,7 +53,7 @@ pub struct TransactionBatchExecutedEvent {
 }
 
 impl TransactionBatchExecutedEvent {
-    pub fn from_log(input: &Log) -> Result<TransactionBatchExecutedEvent, OrchestratorError> {
+    pub fn from_log(input: &Log) -> Result<TransactionBatchExecutedEvent, PeggyError> {
         if let (Some(batch_nonce_data), Some(erc20_data)) =
             (input.topics.get(1), input.topics.get(2))
         {
@@ -66,14 +66,12 @@ impl TransactionBatchExecutedEvent {
                 event_nonce,
             })
         } else {
-            Err(OrchestratorError::InvalidEventLogError(
+            Err(PeggyError::InvalidEventLogError(
                 "Too few topics".to_string(),
             ))
         }
     }
-    pub fn from_logs(
-        input: &[Log],
-    ) -> Result<Vec<TransactionBatchExecutedEvent>, OrchestratorError> {
+    pub fn from_logs(input: &[Log]) -> Result<Vec<TransactionBatchExecutedEvent>, PeggyError> {
         let mut res = Vec::new();
         for item in input {
             res.push(TransactionBatchExecutedEvent::from_log(item)?);
@@ -99,7 +97,7 @@ pub struct SendToCosmosEvent {
 }
 
 impl SendToCosmosEvent {
-    pub fn from_log(input: &Log) -> Result<SendToCosmosEvent, OrchestratorError> {
+    pub fn from_log(input: &Log) -> Result<SendToCosmosEvent, PeggyError> {
         let topics = (
             input.topics.get(1),
             input.topics.get(2),
@@ -122,12 +120,12 @@ impl SendToCosmosEvent {
                 event_nonce,
             })
         } else {
-            Err(OrchestratorError::InvalidEventLogError(
+            Err(PeggyError::InvalidEventLogError(
                 "Too few topics".to_string(),
             ))
         }
     }
-    pub fn from_logs(input: &[Log]) -> Result<Vec<SendToCosmosEvent>, OrchestratorError> {
+    pub fn from_logs(input: &[Log]) -> Result<Vec<SendToCosmosEvent>, PeggyError> {
         let mut res = Vec::new();
         for item in input {
             res.push(SendToCosmosEvent::from_log(item)?);
