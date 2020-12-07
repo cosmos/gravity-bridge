@@ -51,7 +51,6 @@ func (b OutgoingTxBatch) GetCheckpoint(peggyIDstring string) ([]byte, error) {
 	abiEncodedBatch, err := abi.Pack("submitBatch",
 		peggyID,
 		batchMethodName,
-		// valsetCheckpoint,
 		txAmounts,
 		txDestinations,
 		txFees,
