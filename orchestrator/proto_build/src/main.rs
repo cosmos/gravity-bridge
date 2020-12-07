@@ -17,7 +17,7 @@ use walkdir::WalkDir;
 /// A temporary directory for proto building
 
 fn main() {
-    let out_path: PathBuf = "../peggy_proto/src/proto/".parse().unwrap();
+    let out_path: PathBuf = "../peggy_proto/src/prost/".parse().unwrap();
     compile_protos(&out_path);
 }
 
