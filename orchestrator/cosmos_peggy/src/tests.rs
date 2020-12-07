@@ -6,8 +6,10 @@ use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey;
+use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use rand::Rng;
 use std::time::Duration;
+use tonic::transport::Channel;
 
 /// If you run the start-chains.sh script in the peggy repo it will pass
 /// port 1317 on localhost through to the peggycli rest-server which can
@@ -32,7 +34,15 @@ fn test_endpoints() {
     let res = System::run(move || {
         let contact = Contact::new("http://localhost:1317", Duration::from_secs(30));
         Arbiter::spawn(async move {
-            let res = test_valset_request_calls(&contact, key, eth_private_key, fee.clone()).await;
+            let mut grpc_client = PeggyQueryClient::connect("localhost:26657").await.unwrap();
+            let res = test_valset_request_calls(
+                &contact,
+                &mut grpc_client,
+                key,
+                eth_private_key,
+                fee.clone(),
+            )
+            .await;
             if res.is_err() {
                 println!("{:?}", res);
                 System::current().stop_with_code(1);
@@ -49,27 +59,19 @@ fn test_endpoints() {
 
 async fn test_valset_request_calls(
     contact: &Contact,
+    grpc_client: &mut PeggyQueryClient<Channel>,
     key: PrivateKey,
     eth_private_key: EthPrivateKey,
     fee: Coin,
 ) -> Result<(), String> {
     // next we update our eth address so that we can be sure it's present in the resulting valset
     // request
-    let res = update_peggy_eth_address(
-        &contact,
-        eth_private_key,
-        key,
-        fee.clone(),
-        None,
-        None,
-        None,
-    )
-    .await;
+    let res = update_peggy_eth_address(&contact, eth_private_key, key, fee.clone()).await;
     if res.is_err() {
         return Err(format!("Failed to update eth address {:?}", res));
     }
 
-    let res = get_valset(&contact, 1u32.into()).await;
+    let res = get_valset(grpc_client, 1u32.into()).await;
     if res.is_ok() {
         return Err(format!(
             "Got valset request that should not exist {:?}",
@@ -84,14 +86,12 @@ async fn test_valset_request_calls(
     if res.is_err() {
         return Err(format!("Failed to create valset request {:?}", res));
     }
-    let valset_request_block = res.unwrap().height.unwrap();
+    let valset_request_block = res.unwrap().height;
 
-    let res = get_valset(&contact, valset_request_block.into()).await;
+    let res = get_valset(grpc_client, valset_request_block).await;
     println!("valset response is {:?}", res);
-    if let Ok(valset) = res {
-        assert_eq!(valset.height, valset_request_block);
-
-        let addresses = valset.result.filter_empty_addresses().0;
+    if let Ok(Some(valset)) = res {
+        let addresses = valset.filter_empty_addresses().0;
         if !addresses.contains(&eth_private_key.to_public_key().unwrap()) {
             // we successfully submitted our eth address before, we should find it now
             return Err(format!(
@@ -105,13 +105,10 @@ async fn test_valset_request_calls(
             valset_request_block
         ));
     }
-    let res = get_valset(&contact, valset_request_block.into()).await;
+    let res = get_valset(grpc_client, valset_request_block).await;
     println!("valset response is {:?}", res);
-    if let Ok(valset) = res {
-        // this is actually a timing issue, but should be true
-        assert_eq!(valset.height, valset_request_block);
-
-        let addresses = valset.result.filter_empty_addresses().0;
+    if let Ok(Some(valset)) = res {
+        let addresses = valset.filter_empty_addresses().0;
         if !addresses.contains(&eth_private_key.to_public_key().unwrap()) {
             // we successfully submitted our eth address before, we should find it now
             return Err("Incorrect Valset, does not include submitted eth address".to_string());
@@ -123,7 +120,7 @@ async fn test_valset_request_calls(
             &contact,
             eth_private_key,
             fee,
-            valset.result,
+            valset,
             key,
             "test".to_string(),
         )

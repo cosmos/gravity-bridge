@@ -19,9 +19,6 @@ pub async fn update_peggy_eth_address(
     eth_private_key: EthPrivateKey,
     private_key: PrivateKey,
     fee: Coin,
-    chain_id: Option<String>,
-    account_number: Option<u128>,
-    sequence: Option<u128>,
 ) -> Result<TXSendResponse, JsonRpcError> {
     trace!("Updating Peggy ETH address");
     let our_address = private_key
@@ -29,9 +26,7 @@ pub async fn update_peggy_eth_address(
         .expect("Invalid private key!")
         .to_address();
 
-    let tx_info =
-        maybe_get_optional_tx_info(our_address, chain_id, account_number, sequence, &contact)
-            .await?;
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, &contact).await?;
     trace!("got optional tx info");
 
     let eth_address = eth_private_key.to_public_key().unwrap();
@@ -195,7 +190,7 @@ pub async fn send_batch_confirm(
             validator: our_address,
             token_contract: transaction_batch.token_contract,
             ethereum_signer: our_eth_address,
-            nonce: transaction_batch.nonce,
+            nonce: transaction_batch.nonce.into(),
             eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
         })],
         memo: String::new(),

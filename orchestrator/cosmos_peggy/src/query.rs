@@ -1,183 +1,126 @@
 use clarity::Address as EthAddress;
-use clarity::Uint256;
-use contact::client::Contact;
-use contact::jsonrpc::error::JsonRpcError;
-use contact::types::ResponseWrapper;
-use contact::types::TypeWrapper;
 use deep_space::address::Address;
+use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::peggy::QueryBatchConfirmsRequest;
+use peggy_proto::peggy::QueryLastPendingBatchRequestByAddrRequest;
+use peggy_proto::peggy::QueryLastPendingValsetRequestByAddrRequest;
+use peggy_proto::peggy::QueryLastValsetRequestsRequest;
+use peggy_proto::peggy::QueryOutgoingTxBatchesRequest;
+use peggy_proto::peggy::QueryValsetConfirmsByNonceRequest;
+use peggy_proto::peggy::QueryValsetRequestRequest;
+use peggy_utils::error::PeggyError;
 use peggy_utils::types::*;
+use tonic::transport::Channel;
 
 /// get the valset for a given nonce (block) height
 pub async fn get_valset(
-    contact: &Contact,
-    nonce: Uint256,
-) -> Result<ResponseWrapper<Valset>, JsonRpcError> {
-    let none: Option<bool> = None;
-    let ret: Result<ResponseWrapper<TypeWrapper<ValsetUnparsed>>, JsonRpcError> = contact
-        .jsonrpc_client
-        .request_method(
-            &format!("peggy/valset_request/{}", nonce),
-            none,
-            contact.timeout,
-            None,
-        )
-        .await;
-    trace!("Unparsed valset {:?}", ret);
-    match ret {
-        Ok(val) => Ok(ResponseWrapper {
-            height: val.height,
-            result: val.result.value.convert(),
-        }),
-        Err(e) => Err(e),
-    }
+    client: &mut PeggyQueryClient<Channel>,
+    nonce: u64,
+) -> Result<Option<Valset>, PeggyError> {
+    let request = client
+        .valset_request(QueryValsetRequestRequest { nonce })
+        .await?;
+    let valset = request.into_inner().valset;
+    let valset = match valset {
+        Some(v) => Some(v.into()),
+        None => None,
+    };
+    Ok(valset)
 }
 
 /// This hits the /pending_valset_requests endpoint and will provide the oldest
 /// validator set we have not yet signed.
 pub async fn get_oldest_unsigned_valset(
-    contact: &Contact,
+    client: &mut PeggyQueryClient<Channel>,
     address: Address,
-) -> Result<ResponseWrapper<Valset>, JsonRpcError> {
-    let none: Option<bool> = None;
-    let ret: Result<ResponseWrapper<TypeWrapper<ValsetUnparsed>>, JsonRpcError> = contact
-        .jsonrpc_client
-        .request_method(
-            &format!("peggy/pending_valset_requests/{}", address),
-            none,
-            contact.timeout,
-            None,
-        )
-        .await;
-    match ret {
-        Ok(val) => Ok(ResponseWrapper {
-            height: val.height,
-            result: val.result.value.convert(),
-        }),
-        Err(e) => Err(e),
-    }
+) -> Result<Option<Valset>, PeggyError> {
+    let request = client
+        .last_pending_valset_request_by_addr(QueryLastPendingValsetRequestByAddrRequest {
+            address: address.to_string(),
+        })
+        .await?;
+    let valset = request.into_inner().valset;
+    let valset = match valset {
+        Some(v) => Some(v.into()),
+        None => None,
+    };
+    Ok(valset)
 }
 
 /// this input views the last five valest requests that have been made, useful if you're
 /// a relayer looking to ferry confirmations
 pub async fn get_latest_valsets(
-    contact: &Contact,
-) -> Result<ResponseWrapper<Vec<Valset>>, JsonRpcError> {
-    let none: Option<bool> = None;
-    let ret: Result<ResponseWrapper<Vec<ValsetUnparsed>>, JsonRpcError> = contact
-        .jsonrpc_client
-        .request_method(
-            &"peggy/valset_requests".to_string(),
-            none,
-            contact.timeout,
-            None,
-        )
-        .await;
-
-    match ret {
-        Ok(val) => {
-            let mut converted_values = Vec::new();
-            for item in val.result {
-                converted_values.push(item.convert());
-            }
-            Ok(ResponseWrapper {
-                height: val.height,
-                result: converted_values,
-            })
-        }
-        Err(e) => Err(e),
-    }
+    client: &mut PeggyQueryClient<Channel>,
+) -> Result<Vec<Valset>, PeggyError> {
+    let request = client
+        .last_valset_requests(QueryLastValsetRequestsRequest {})
+        .await?;
+    let valsets = request.into_inner().valsets;
+    Ok(valsets.iter().map(|v| v.into()).collect())
 }
 
 /// get all valset confirmations for a given nonce
 pub async fn get_all_valset_confirms(
-    contact: &Contact,
+    client: &mut PeggyQueryClient<Channel>,
     nonce: u64,
-) -> Result<ResponseWrapper<Vec<ValsetConfirmResponse>>, JsonRpcError> {
-    let none: Option<bool> = None;
-    let ret: Result<ResponseWrapper<Vec<ValsetConfirmResponse>>, JsonRpcError> = contact
-        .jsonrpc_client
-        .request_method(
-            &format!("peggy/valset_confirm/{}", nonce),
-            none,
-            contact.timeout,
-            None,
-        )
-        .await;
-    match ret {
-        Ok(val) => Ok(val),
-        Err(e) => Err(e),
+) -> Result<Vec<ValsetConfirmResponse>, PeggyError> {
+    let request = client
+        .valset_confirms_by_nonce(QueryValsetConfirmsByNonceRequest { nonce })
+        .await?;
+    let confirms = request.into_inner().confirms;
+    let mut parsed_confirms = Vec::new();
+    for item in confirms {
+        parsed_confirms.push(ValsetConfirmResponse::from_proto(item)?)
     }
+    Ok(parsed_confirms)
 }
+
 pub async fn get_oldest_unsigned_transaction_batch(
-    contact: &Contact,
+    client: &mut PeggyQueryClient<Channel>,
     address: Address,
-) -> Result<ResponseWrapper<TransactionBatch>, JsonRpcError> {
-    let none: Option<bool> = None;
-    let ret: Result<ResponseWrapper<TypeWrapper<TransactionBatchUnparsed>>, JsonRpcError> = contact
-        .jsonrpc_client
-        .request_method(
-            &format!("peggy/pending_batch_requests/{}", address),
-            none,
-            contact.timeout,
-            None,
-        )
-        .await;
-    match ret {
-        Ok(val) => {
-            let wrapped = ResponseWrapper {
-                height: val.height,
-                result: val.result.value.convert(),
-            };
-            Ok(wrapped)
-        }
-        Err(e) => Err(e),
+) -> Result<Option<TransactionBatch>, PeggyError> {
+    let request = client
+        .last_pending_batch_request_by_addr(QueryLastPendingBatchRequestByAddrRequest {
+            address: address.to_string(),
+        })
+        .await?;
+    let batch = request.into_inner().batch;
+    match batch {
+        Some(batch) => Ok(Some(TransactionBatch::from_proto(batch)?)),
+        None => Ok(None),
     }
 }
 
 pub async fn get_latest_transaction_batches(
-    contact: &Contact,
-) -> Result<ResponseWrapper<Vec<TransactionBatch>>, JsonRpcError> {
-    let none: Option<bool> = None;
-    let ret: Result<ResponseWrapper<Vec<TransactionBatchUnparsed>>, JsonRpcError> = contact
-        .jsonrpc_client
-        .request_method(
-            &"peggy/transaction_batches".to_string(),
-            none,
-            contact.timeout,
-            None,
-        )
-        .await;
-
-    match ret {
-        Ok(ret) => {
-            let mut parsed = Vec::new();
-            for val in ret.result {
-                parsed.push(val.convert())
-            }
-            let wrapped = ResponseWrapper {
-                height: ret.height,
-                result: parsed,
-            };
-            Ok(wrapped)
-        }
-        Err(e) => Err(e),
+    client: &mut PeggyQueryClient<Channel>,
+) -> Result<Vec<TransactionBatch>, PeggyError> {
+    let request = client
+        .outgoing_tx_batches(QueryOutgoingTxBatchesRequest {})
+        .await?;
+    let batches = request.into_inner().batches;
+    let mut out = Vec::new();
+    for batch in batches {
+        out.push(TransactionBatch::from_proto(batch)?)
     }
+    Ok(out)
 }
 
 /// get all batch confirmations for a given nonce and denom
 pub async fn get_transaction_batch_signatures(
-    contact: &Contact,
-    nonce: Uint256,
-    token_contract: EthAddress,
-) -> Result<ResponseWrapper<Vec<BatchConfirmResponse>>, JsonRpcError> {
-    let none: Option<bool> = None;
-    contact
-        .jsonrpc_client
-        .request_method(
-            &format!("peggy/batch_confirm/{}/{}", nonce, token_contract),
-            none,
-            contact.timeout,
-            None,
-        )
-        .await
+    client: &mut PeggyQueryClient<Channel>,
+    nonce: u64,
+    contract_address: EthAddress,
+) -> Result<Vec<BatchConfirmResponse>, PeggyError> {
+    let request = client
+        .batch_confirms(QueryBatchConfirmsRequest {
+            nonce,
+            contract_address: contract_address.to_string(),
+        })
+        .await?;
+    let batch_confirms = request.into_inner().confirms;
+    let mut out = Vec::new();
+    for confirm in batch_confirms {
+        out.push(BatchConfirmResponse::from_proto(confirm)?)
+    }
+    Ok(out)
 }
