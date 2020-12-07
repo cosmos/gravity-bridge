@@ -7,63 +7,74 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
-// ClaimType is the cosmos type of an event from the counterpart chain that can be handled
+// ClaimType is the cosmos type of an event from the counterpart chain that can
+// be handled
 enum ClaimType {
-  option (gogoproto.goproto_enum_prefix)      = false;
+  option(gogoproto.goproto_enum_prefix) = false;
 
-  CLAIM_TYPE_UNKNOWN                          = 0 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_UNKNOWN"];
-  CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT          = 1 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT"];
-  CLAIM_TYPE_ETHEREUM_BRIDGE_WITHDRAWAL_BATCH = 2 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_ETHEREUM_BRIDGE_WITHDRAWAL_BATCH"];
+  CLAIM_TYPE_UNKNOWN =
+      0 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_UNKNOWN"];
+  CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT =
+      1 [(gogoproto.enumvalue_customname) =
+             "CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT"];
+  CLAIM_TYPE_ETHEREUM_BRIDGE_WITHDRAWAL_BATCH =
+      2 [(gogoproto.enumvalue_customname) =
+             "CLAIM_TYPE_ETHEREUM_BRIDGE_WITHDRAWAL_BATCH"];
 }
 
-// Attestation is an aggregate of `claims` that eventually becomes `observed` by all orchestrators
+// Attestation is an aggregate of `claims` that eventually becomes `observed` by
+// all orchestrators
 message Attestation {
-    // ClaimType is the type of attestation either WithdrawBatch or BridgeDepoist
-    // TODO: we could remove ClaimType and infer the type of Claim from
-    // the details field and type assertions
-    ClaimType           claim_type  = 1;
+  // ClaimType is the type of attestation either WithdrawBatch or BridgeDepoist
+  // TODO: we could remove ClaimType and infer the type of Claim from
+  // the details field and type assertions
+  ClaimType claim_type = 1;
 
-    // EventNonce is the nonce from/for...?
-    uint64              event_nonce = 2;  
+  // EventNonce is the nonce from/for...?
+  uint64 event_nonce = 2;
 
-    // Observed says...?
-    bool                observed    = 3;
+  // Observed says...?
+  bool observed = 3;
 
-    // Validator votes for the attestation
-    repeated string     votes       = 4;
+  // Validator votes for the attestation
+  repeated string votes = 4;
 
-    // The attestation details interface type
-    google.protobuf.Any details     = 5 [(cosmos_proto.accepts_interface) = "AttestationDetails"];
+  // The attestation details interface type
+  google.protobuf.Any details =
+      5 [(cosmos_proto.accepts_interface) = "AttestationDetails"];
 }
 
-// WithdrawalBatch is an attestation detail that marks a batch of outgoing transactions executed and
-// frees earlier unexecuted batches
+// WithdrawalBatch is an attestation detail that marks a batch of outgoing
+// transactions executed and frees earlier unexecuted batches
 message WithdrawalBatch {
-    // BatchNonce is the nonce of the batch on Peggy
-    uint64     batch_nonce  = 1;
+  // BatchNonce is the nonce of the batch on Peggy
+  uint64 batch_nonce = 1;
 
-    // The ERC20 token being sent back to ETH
-    ERC20Token erc20_token  = 2;
+  // The ERC20 token being sent back to ETH
+  ERC20Token erc20_token = 2;
 }
 
-
-// // BridgeDeposit is an attestation detail that adds vouchers to an account when executed
+// // BridgeDeposit is an attestation detail that adds vouchers to an account
+// when executed
 message BridgeDeposit {
-    // The ERC20 token being sent to Peggy
-    ERC20Token erc20_token      = 1;
+  // The ERC20 token being sent to Peggy
+  ERC20Token erc20_token = 1;
 
-    // The address on ETH that sent the transaction
-    string     ethereum_sender  = 2;
+  // The address on ETH that sent the transaction
+  string ethereum_sender = 2;
 
-    // The address on Peggy recieving the funds
-    string     cosmos_receiver  = 3; 
+  // The address on Peggy recieving the funds
+  string cosmos_receiver = 3;
 }
 
 // ERC20Token unique identifier for an Ethereum ERC20 token.
 message ERC20Token {
-    // The amount of the ERC20 token 
-    string amount                 = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+  // The amount of the ERC20 token
+  string amount =
+      1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+         (gogoproto.nullable) = false];
 
-    // The contract address on ETH of the token (note: developers should look up the token symbol using the address on ETH to display for UI)
-    string contract               = 2; 
+  // The contract address on ETH of the token (note: developers should look up
+  // the token symbol using the address on ETH to display for UI)
+  string contract = 2;
 }
