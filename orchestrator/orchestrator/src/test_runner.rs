@@ -31,10 +31,10 @@ use cosmos_peggy::{query::get_oldest_unsigned_transaction_batch, send::send_ethe
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
-use ethereum_peggy::utils::get_erc20_symbol;
 use ethereum_peggy::utils::get_valset_nonce;
 use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use main_loop::orchestrator_main_loop;
+use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::types::ERC20Token;
 use rand::Rng;
 use std::io::{BufRead, BufReader, Read, Write};
@@ -42,6 +42,7 @@ use std::process::Command;
 use std::time::Duration;
 use std::{fs::File, time::Instant};
 use tokio::time::delay_for;
+use tonic::transport::Channel;
 use web30::client::Web3;
 
 /// the timeout for individual requests
@@ -98,6 +99,7 @@ fn get_keys() -> Vec<(CosmosPrivateKey, EthPrivateKey)> {
 }
 
 const COSMOS_NODE: &str = "http://localhost:1317";
+const COSMOS_NODE_GRPC: &str = "http://localhost:9090";
 const COSMOS_NODE_ABCI: &str = "http://localhost:26657";
 const ETH_NODE: &str = "http://localhost:8545";
 const PEGGY_ID: &str = "foo";
@@ -119,6 +121,7 @@ async fn main() {
     info!("Staring Peggy test-runner");
 
     let contact = Contact::new(COSMOS_NODE, OPERATION_TIMEOUT);
+    let mut grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
     let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
     let keys = get_keys();
     let test_token_name = "footoken".to_string();
@@ -139,9 +142,6 @@ async fn main() {
     }
 
     let (peggy_address, erc20_address) = parse_contract_addresses();
-    let token_symbol = get_erc20_symbol(erc20_address, *MINER_ADDRESS, &web30)
-        .await
-        .unwrap();
 
     // before we start the orchestrators send them some funds so they can pay
     // for things
@@ -160,6 +160,7 @@ async fn main() {
     // start orchestrators, send them some eth so that they can pay for things
     for (c_key, e_key) in keys.iter() {
         info!("Spawning Orchestrator");
+        let grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
         // we have only one actual futures executor thread (see the actix runtime tag on our main function)
         // but that will execute all the orchestrators in our test in parallel
         Arbiter::spawn(orchestrator_main_loop(
@@ -167,6 +168,7 @@ async fn main() {
             *e_key,
             web30.clone(),
             contact.clone(),
+            grpc_client,
             peggy_address,
             test_token_name.clone(),
         ));
@@ -217,7 +219,6 @@ async fn main() {
         1u64.into(),
         dest_cosmos_address,
         keys.clone(),
-        token_symbol,
         fee.clone(),
     )
     .await;
@@ -228,6 +229,7 @@ async fn main() {
     // in the code handling that.
     test_batch(
         &contact,
+        &mut grpc_client,
         &web30,
         dest_eth_address,
         peggy_address,
@@ -261,7 +263,7 @@ async fn deploy_contracts(
             e_key.to_public_key().unwrap(),
             c_key.to_public_key().unwrap().to_address(),
         );
-        update_peggy_eth_address(&contact, *e_key, *c_key, fee.clone(), None, None, None)
+        update_peggy_eth_address(&contact, *e_key, *c_key, fee.clone())
             .await
             .expect("Failed to update Eth address");
     }
@@ -444,6 +446,7 @@ async fn check_cosmos_balance(address: CosmosAddress, contact: &Contact) -> Opti
 #[allow(clippy::too_many_arguments)]
 async fn test_batch(
     contact: &Contact,
+    grpc_client: &mut PeggyQueryClient<Channel>,
     web30: &Web3,
     dest_eth_address: EthAddress,
     peggy_address: EthAddress,
@@ -497,7 +500,7 @@ async fn test_batch(
         .to_public_key()
         .unwrap()
         .to_address();
-    get_oldest_unsigned_transaction_batch(contact, requester_address)
+    get_oldest_unsigned_transaction_batch(grpc_client, requester_address)
         .await
         .expect("Failed to get batch to sign");
 
@@ -505,7 +508,7 @@ async fn test_batch(
         get_tx_batch_nonce(peggy_address, erc20_contract, *MINER_ADDRESS, &web30)
             .await
             .expect("Failed to get current eth valset");
-    let starting_batch_nonce = current_eth_batch_nonce.clone();
+    let starting_batch_nonce = current_eth_batch_nonce;
 
     let start = Instant::now();
     while starting_batch_nonce == current_eth_batch_nonce {
@@ -566,7 +569,6 @@ async fn submit_duplicate_erc20_send(
     amount: Uint256,
     receiver: CosmosAddress,
     keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
-    symbol: String,
     fee: Coin,
 ) {
     let start_coin = check_cosmos_balance(receiver, &contact)
@@ -581,7 +583,6 @@ async fn submit_duplicate_erc20_send(
         event_nonce: nonce,
         erc20_token: ERC20Token {
             amount,
-            symbol,
             token_contract_address: erc20_address,
         },
         ethereum_sender,

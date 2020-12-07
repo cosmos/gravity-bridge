@@ -592,9 +592,9 @@ checksum = "ce90df4c658c62f12d78f7508cf92f9173e5184a539c10bfe54a3107b3ffd0f2"
 
 [[package]]
 name = "contact"
-version = "0.2.0"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "964600181cc4dd521f5873b2ec9da0332bfd48814cc106efef80d94ff329cc50"
+checksum = "d7e770c8d5cd6de3844c1c375c69a539331d4b376b98ca500e8cc157aec92443"
 dependencies = [
  "actix-web",
  "deep_space",
@@ -653,6 +653,7 @@ dependencies = [
  "ethereum_peggy",
  "log",
  "num256",
+ "peggy_proto",
  "peggy_utils",
  "rand 0.7.3",
  "serde",
@@ -660,6 +661,7 @@ dependencies = [
  "serde_json",
  "sha3",
  "tokio",
+ "tonic",
  "url",
  "web30",
 ]
@@ -712,9 +714,9 @@ dependencies = [
 
 [[package]]
 name = "deep_space"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "415f8f04f84b8b5521b477fee2c0908dfec3041c05680cde37967bd31aeba05a"
+checksum = "ce0687924101cae44696d1fdfb6f685e38def8536f15eac086c0ad7f384ee746"
 dependencies = [
  "base64 0.13.0",
  "bech32",
@@ -1692,6 +1694,7 @@ dependencies = [
  "log",
  "num 0.3.0",
  "num256",
+ "peggy_proto",
  "peggy_utils",
  "rand 0.7.3",
  "serde",
@@ -1699,6 +1702,7 @@ dependencies = [
  "serde_json",
  "sha3",
  "tokio",
+ "tonic",
  "url",
  "web30",
 ]
@@ -1761,11 +1765,14 @@ dependencies = [
  "clarity",
  "contact",
  "deep_space",
+ "num-bigint 0.3.0",
  "num256",
+ "peggy_proto",
  "rand 0.7.3",
  "serde",
  "serde_derive",
  "tokio",
+ "tonic",
  "web30",
 ]
 

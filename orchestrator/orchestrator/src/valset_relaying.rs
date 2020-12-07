@@ -3,8 +3,8 @@
 
 use std::time::Duration;
 
+use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use clarity::{address::Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::query::get_latest_valsets;
 use cosmos_peggy::query::get_oldest_unsigned_valset;
@@ -14,6 +14,8 @@ use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_peggy::utils::get_peggy_id;
 use ethereum_peggy::utils::get_valset_nonce;
 use ethereum_peggy::valset_update::send_eth_valset_update;
+use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use tonic::transport::Channel;
 use web30::client::Web3;
 
 /// This function makes all decisions about the validator set update lifecycle.
@@ -23,11 +25,13 @@ use web30::client::Web3;
 /// 2) See if we have any unsigned validator set updates, if so sign and submit them
 /// 3) Check the last validator set on Ethereum, if it's lower than our latest validator
 ///    set then we should package and submit the update as an Ethereum transaction
+#[allow(clippy::too_many_arguments)]
 pub async fn relay_valsets(
     cosmos_key: CosmosPrivateKey,
     ethereum_key: EthPrivateKey,
     web3: &Web3,
     contact: &Contact,
+    grpc_client: &mut PeggyQueryClient<Channel>,
     contract_address: EthAddress,
     fee: Coin,
     timeout: Duration,
@@ -46,17 +50,14 @@ pub async fn relay_valsets(
     let peggy_id = String::from_utf8(peggy_id.clone()).expect("Invalid PeggyID");
 
     // sign the last unsigned valset, TODO check if we already have signed this
-    match get_oldest_unsigned_valset(contact, our_cosmos_address).await {
-        Ok(last_unsigned_valset) => {
-            info!(
-                "Sending valset confirm for {}",
-                last_unsigned_valset.result.nonce
-            );
+    match get_oldest_unsigned_valset(grpc_client, our_cosmos_address).await {
+        Ok(Some(last_unsigned_valset)) => {
+            info!("Sending valset confirm for {}", last_unsigned_valset.nonce);
             let res = send_valset_confirm(
                 contact,
                 ethereum_key,
                 fee,
-                last_unsigned_valset.result,
+                last_unsigned_valset,
                 cosmos_key,
                 peggy_id,
             )
@@ -64,12 +65,13 @@ pub async fn relay_valsets(
             .unwrap();
             trace!("Valset confirm result is {:?}", res);
         }
+        Ok(None) => trace!("No valset waiting to be signed!"),
         Err(e) => trace!("Failed to get unsigned valsets with {:?}", e),
     }
 
     // now that we have caught up on valset requests we should determine if we need to relay one
     // to Ethereum for that we will find the latest confirmed valset and compare it to the ethereum chain
-    let latest_valsets = get_latest_valsets(contact).await;
+    let latest_valsets = get_latest_valsets(grpc_client).await;
     if latest_valsets.is_err() {
         trace!("Failed to get latest valsets!");
         // there are no latest valsets to check, possible on a bootstrapping chain maybe handle better?
@@ -79,11 +81,11 @@ pub async fn relay_valsets(
 
     let mut latest_confirmed = None;
     let mut latest_valset = None;
-    for set in latest_valsets.result {
-        let confirms = get_all_valset_confirms(contact, set.nonce).await;
+    for set in latest_valsets {
+        let confirms = get_all_valset_confirms(grpc_client, set.nonce).await;
         if let Ok(confirms) = confirms {
             // todo allow submission without signatures from all validators
-            if confirms.result.len() == set.members.len() {
+            if confirms.len() == set.members.len() {
                 latest_confirmed = Some(confirms);
                 latest_valset = Some(set);
             } else {
@@ -103,14 +105,14 @@ pub async fn relay_valsets(
     let latest_ethereum_valset = get_valset_nonce(contract_address, our_ethereum_address, web3)
         .await
         .expect("Failed to get Ethereum valset");
-    let latest_cosmos_valset_nonce: Uint256 = latest_cosmos_valset.nonce.into();
+    let latest_cosmos_valset_nonce = latest_cosmos_valset.nonce;
     if latest_cosmos_valset_nonce > latest_ethereum_valset {
         info!(
             "We have detected latest valset {} but latest on Ethereum is {} sending an update!",
             latest_cosmos_valset.nonce, latest_ethereum_valset
         );
 
-        let old_valset = if latest_ethereum_valset == 0u8.into() {
+        let old_valset = if latest_ethereum_valset == 0 {
             // we need to have a special case for validator set zero, that valset was never stored on chain
             // right now we just use the current valset
             let mut latest_valset = latest_cosmos_valset.clone();
@@ -118,16 +120,18 @@ pub async fn relay_valsets(
             latest_valset
         } else {
             // get the old valset from the Cosmos chain
-            get_valset(contact, latest_ethereum_valset)
-                .await
-                .expect("Failed to get old valset")
-                .result
+            if let Ok(Some(valset)) = get_valset(grpc_client, latest_ethereum_valset).await {
+                valset
+            } else {
+                error!("Failed to get latest valset!");
+                return;
+            }
         };
 
         let _res = send_eth_valset_update(
             latest_cosmos_valset,
             old_valset,
-            &latest_cosmos_confirmed.result,
+            &latest_cosmos_confirmed,
             web3,
             timeout,
             contract_address,

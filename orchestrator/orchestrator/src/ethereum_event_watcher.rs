@@ -9,7 +9,7 @@ use cosmos_peggy::messages::{
 use cosmos_peggy::send::send_ethereum_claims;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use peggy_utils::{
-    error::OrchestratorError,
+    error::PeggyError,
     types::{ERC20Token, SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent},
 };
 use web30::client::Web3;
@@ -22,7 +22,7 @@ pub async fn check_for_events(
     our_private_key: CosmosPrivateKey,
     fee: Coin,
     last_checked_block: Uint256,
-) -> Result<Uint256, OrchestratorError> {
+) -> Result<Uint256, PeggyError> {
     let latest_block = web3.eth_block_number().await?;
     let deposits = web3
         .check_for_events(
@@ -91,7 +91,7 @@ pub async fn check_for_events(
         Ok(latest_block)
     } else {
         error!("Failed to get events");
-        Err(OrchestratorError::EthereumRestErr(Web3Error::BadResponse(
+        Err(PeggyError::EthereumRestError(Web3Error::BadResponse(
             "Failed to get logs!".to_string(),
         )))
     }
@@ -118,8 +118,6 @@ fn to_bridge_claims(
             EthereumBridgeDepositClaim {
                 erc20_token: ERC20Token {
                     amount: deposit.amount.clone(),
-                    // TODO get symbol using web3 calls
-                    symbol: "MAXX".to_string(),
                     token_contract_address: deposit.erc20,
                 },
                 ethereum_sender: deposit.sender,

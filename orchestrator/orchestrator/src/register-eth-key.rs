@@ -81,9 +81,6 @@ async fn main() {
         ethereum_key,
         cosmos_key,
         fee.clone(),
-        None,
-        None,
-        None,
     )
     .await
     .expect("Failed to update Eth address");
