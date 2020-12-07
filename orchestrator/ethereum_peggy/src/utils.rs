@@ -65,7 +65,8 @@ pub async fn get_valset_nonce(
         panic!("valset nonce overflow! Bridge halt!")
     }
     let mut lower_bytes: [u8; 8] = [0; 8];
-    lower_bytes.copy_from_slice(&val[8..16]);
+    // get the 'lowest' 8 bytes from a 256 bit integer
+    lower_bytes.copy_from_slice(&val[24..32]);
     Ok(u64::from_be_bytes(lower_bytes))
 }
 
@@ -94,7 +95,8 @@ pub async fn get_tx_batch_nonce(
         panic!("tx batch nonce overflow! Bridge halt!")
     }
     let mut lower_bytes: [u8; 8] = [0; 8];
-    lower_bytes.copy_from_slice(&val[8..16]);
+    // get the 'lowest' 8 bytes from a 256 bit integer
+    lower_bytes.copy_from_slice(&val[24..32]);
     Ok(u64::from_be_bytes(lower_bytes))
 }
 
