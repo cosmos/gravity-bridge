@@ -99,7 +99,8 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.Msg
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
 	}
 
-	checkpoint, err := batch.GetCheckpoint(keeper.GetPeggyID(ctx))
+	peggyID := keeper.GetPeggyID(ctx)
+	checkpoint, err := batch.GetCheckpoint(peggyID)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
 	}
@@ -120,7 +121,7 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.Msg
 	}
 	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected %s found %s", checkpoint, msg.Signature))
+		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with peggy-id %s with checkpoint %s found %s", ethAddress, peggyID, hex.EncodeToString(checkpoint), msg.Signature))
 	}
 
 	// check if we already have this confirm
@@ -141,7 +142,8 @@ func handleMsgConfirmValset(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
 	}
 
-	checkpoint := valset.GetCheckpoint(keeper.GetPeggyID(ctx))
+	peggyID := keeper.GetPeggyID(ctx)
+	checkpoint := valset.GetCheckpoint(peggyID)
 
 	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
@@ -159,7 +161,7 @@ func handleMsgConfirmValset(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 	}
 	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected %s found %s", checkpoint, msg.Signature))
+		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with peggy-id %s with checkpoint %s found %s", ethAddress, peggyID, hex.EncodeToString(checkpoint), msg.Signature))
 	}
 
 	// persist signature
