@@ -52,6 +52,9 @@ service Query {
       returns(QueryBatchRequestByNonceResponse) {
     option(google.api.http).get = "/peggy/v1beta/batch/{nonce}";
   }
+  rpc BatchConfirms(QueryBatchConfirmsRequest) returns (QueryBatchConfirmsResponse) {
+    option(google.api.http).get = "/peggy/v1beta/batch/confirms";
+  }
 }
 
 message QueryParamsRequest {}
@@ -96,3 +99,11 @@ message QueryBatchRequestByNonceRequest {
   string contract_address = 2;
 }
 message QueryBatchRequestByNonceResponse { OutgoingTxBatch batch = 1; }
+
+message QueryBatchConfirmsRequest {
+  uint64 nonce = 1;
+  string contract_address = 2;
+}
+message QueryBatchConfirmsResponse {
+  repeated MsgConfirmBatch confirms = 1;
+}

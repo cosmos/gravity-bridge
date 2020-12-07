@@ -8,6 +8,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+var _ types.QueryServer = Keeper{}
+
 // Params queries the params of the peggy module
 func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	var params types.Params
@@ -120,4 +122,14 @@ func (k Keeper) BatchRequestByNonce(c context.Context, req *types.QueryBatchRequ
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find tx batch")
 	}
 	return &types.QueryBatchRequestByNonceResponse{Batch: foundBatch}, nil
+}
+
+// BatchConfirms returns the batch confirmations by nonce and token contract
+func (k Keeper) BatchConfirms(c context.Context, req *types.QueryBatchConfirmsRequest) (*types.QueryBatchConfirmsResponse, error) {
+	var confirms []*types.MsgConfirmBatch
+	k.IterateBatchConfirmByNonceAndTokenContract(sdk.UnwrapSDKContext(c), req.Nonce, req.ContractAddress, func(_ []byte, c types.MsgConfirmBatch) bool {
+		confirms = append(confirms, &c)
+		return false
+	})
+	return &types.QueryBatchConfirmsResponse{Confirms: confirms}, nil
 }

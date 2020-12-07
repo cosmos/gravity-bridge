@@ -33,16 +33,19 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // MsgValsetConfirm
-// this is the message sent by the validators when they wish to submit their signatures over
-// the validator set at a given block height. A validator must first call MsgSetEthAddress to
-// set their Ethereum address to be used for signing. Then someone (anyone) must make a ValsetRequest
-// the request is essentially a messaging mechanism to determine which block all validators should submit
-// signatures over. Finally validators sign the validator set, powers, and Ethereum addresses of the
-// entire validator set at the height of a ValsetRequest and submit that signature with this message.
+// this is the message sent by the validators when they wish to submit their
+// signatures over the validator set at a given block height. A validator must
+// first call MsgSetEthAddress to set their Ethereum address to be used for
+// signing. Then someone (anyone) must make a ValsetRequest the request is
+// essentially a messaging mechanism to determine which block all validators
+// should submit signatures over. Finally validators sign the validator set,
+// powers, and Ethereum addresses of the entire validator set at the height of a
+// ValsetRequest and submit that signature with this message.
 //
-// If a sufficient number of validators (66% of voting power) (A) have set Ethereum addresses and (B)
-// submit ValsetConfirm messages with their signatures it is then possible for anyone to view these
-// signatures in the chain store and submit them to Ethereum to update the validator set
+// If a sufficient number of validators (66% of voting power) (A) have set
+// Ethereum addresses and (B) submit ValsetConfirm messages with their
+// signatures it is then possible for anyone to view these signatures in the
+// chain store and submit them to Ethereum to update the validator set
 // -------------
 // deprecated should use MsgBridgeSignatureSubmission instead
 type MsgValsetConfirm struct {
@@ -114,12 +117,14 @@ func (m *MsgValsetConfirm) GetSignature() string {
 }
 
 // ValsetRequest
-// This message starts off the validator set update process by coordinating a block height
-// around which signatures over the validators, powers, and ethereum addresses will be made
-// and submitted using a ValsetConfirm. Anyone can send this message as it is not authenticated
-// except as a valid tx. In theory people could spam it and the validators will have to determine which
-// block to actually coordinate around by looking over the valset requests and seeing which one
-// some other validator has already submitted a ValsetResponse for.
+// This message starts off the validator set update process by coordinating a
+// block height around which signatures over the validators, powers, and
+// ethereum addresses will be made and submitted using a ValsetConfirm. Anyone
+// can send this message as it is not authenticated except as a valid tx. In
+// theory people could spam it and the validators will have to determine which
+// block to actually coordinate around by looking over the valset requests and
+// seeing which one some other validator has already submitted a ValsetResponse
+// for.
 // -------------
 type MsgValsetRequest struct {
 	Requester string `protobuf:"bytes,1,opt,name=requester,proto3" json:"requester,omitempty"`
@@ -166,11 +171,11 @@ func (m *MsgValsetRequest) GetRequester() string {
 }
 
 // SetEthAddress
-// This is used by the validators to set the Ethereum address that represents them on the
-// Ethereum side of the bridge. They must sign their Cosmos address using the Ethereum address
-// they have submitted.
-// Like ValsetResponse this message can in theory be submitted by anyone, but only the current
-// validator sets submissions carry any weight.
+// This is used by the validators to set the Ethereum address that represents
+// them on the Ethereum side of the bridge. They must sign their Cosmos address
+// using the Ethereum address they have submitted. Like ValsetResponse this
+// message can in theory be submitted by anyone, but only the current validator
+// sets submissions carry any weight.
 // -------------
 type MsgSetEthAddress struct {
 	Address   string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
@@ -238,8 +243,8 @@ func (m *MsgSetEthAddress) GetSignature() string {
 // TODO fixed fee amounts for now, variable fee amounts in the fee field later
 // TODO actually remove amounts form the users bank balances
 // TODO this message modifies the on chain store by adding itself to a txpool
-// it will later be removed when it is included in a batch and successfully submitted
-// tokens are removed from the users balance immediately
+// it will later be removed when it is included in a batch and successfully
+// submitted tokens are removed from the users balance immediately
 // -------------
 type MsgSendToEth struct {
 	// the source address on Cosmos
@@ -317,12 +322,13 @@ func (m *MsgSendToEth) GetBridgeFee() types.Coin {
 }
 
 // MsgRequestBatch
-// this is a message anyone can send that requests a batch of transactions to send across
-// the bridge be created for whatever block height this message is included in. This acts as
-// a coordination point, the handler for this message looks at the AddToOutgoingPool tx's in the store
-// and generates a batch, also available in the store tied to this message. The validators then
-// grab this batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer can
-// finally submit the batch
+// this is a message anyone can send that requests a batch of transactions to
+// send across the bridge be created for whatever block height this message is
+// included in. This acts as a coordination point, the handler for this message
+// looks at the AddToOutgoingPool tx's in the store and generates a batch, also
+// available in the store tied to this message. The validators then grab this
+// batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer
+// can finally submit the batch
 // -------------
 type MsgRequestBatch struct {
 	Requester string `protobuf:"bytes,1,opt,name=requester,proto3" json:"requester,omitempty"`
@@ -377,11 +383,12 @@ func (m *MsgRequestBatch) GetDenom() string {
 }
 
 // MsgConfirmBatch
-// When validators observe a MsgRequestBatch they form a batch by ordering transactions currently
-// in the txqueue in order of highest to lowest fee, cutting off when the batch either reaches a
-// hardcoded maximum size (to be decided, probably around 100) or when transactions stop being
-// profitable (TODO determine this without nondeterminism)
-// This message includes the batch as well as an Ethereum signature over this batch by the validator
+// When validators observe a MsgRequestBatch they form a batch by ordering
+// transactions currently in the txqueue in order of highest to lowest fee,
+// cutting off when the batch either reaches a hardcoded maximum size (to be
+// decided, probably around 100) or when transactions stop being profitable
+// (TODO determine this without nondeterminism) This message includes the batch
+// as well as an Ethereum signature over this batch by the validator
 // -------------
 // deprecated should use MsgBridgeSignatureSubmission instead
 type MsgConfirmBatch struct {
@@ -462,8 +469,8 @@ func (m *MsgConfirmBatch) GetSignature() string {
 
 // EthereumBridgeDepositClaim
 // When more than 66% of the active validator set has
-// claimed to have seen the deposit enter the ethereum blockchain coins are issued
-// to the Cosmos address in question
+// claimed to have seen the deposit enter the ethereum blockchain coins are
+// issued to the Cosmos address in question
 // -------------
 type EthereumBridgeDepositClaim struct {
 	Nonce          uint64      `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
@@ -533,7 +540,8 @@ func (m *EthereumBridgeDepositClaim) GetCosmosReceiver() string {
 	return ""
 }
 
-// EthereumBridgeWithdrawalBatchClaim claims that a batch of withdrawal operations on the bridge contract was executed.
+// EthereumBridgeWithdrawalBatchClaim claims that a batch of withdrawal
+// operations on the bridge contract was executed.
 type EthereumBridgeWithdrawalBatchClaim struct {
 	EventNonce uint64 `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
 	BatchNonce uint64 `protobuf:"varint,2,opt,name=batch_nonce,json=batchNonce,proto3" json:"batch_nonce,omitempty"`
@@ -587,11 +595,13 @@ func (m *EthereumBridgeWithdrawalBatchClaim) GetBatchNonce() uint64 {
 }
 
 // MsgCreateEthereumClaims
-// this message essentially acts as the oracle between Ethereum and Cosmos, when an orchestrator sees
-// that a batch/ deposit/ multisig set update has been submitted on to the Ethereum blockchain they
-// will submit this message which acts as their oracle attestation. When more than 66% of the active
-// validator set has claimed to have seen the transaction enter the ethereum blockchain it is "observed"
-// and state transitions and operations are triggered on the cosmos side.
+// this message essentially acts as the oracle between Ethereum and Cosmos, when
+// an orchestrator sees that a batch/ deposit/ multisig set update has been
+// submitted on to the Ethereum blockchain they will submit this message which
+// acts as their oracle attestation. When more than 66% of the active validator
+// set has claimed to have seen the transaction enter the ethereum blockchain it
+// is "observed" and state transitions and operations are triggered on the
+// cosmos side.
 type MsgCreateEthereumClaims struct {
 	EthereumChainId uint64 `protobuf:"varint,1,opt,name=ethereum_chain_id,json=ethereumChainId,proto3" json:"ethereum_chain_id,omitempty"`
 	// do we need to specify contract address? can we get this from the store?
@@ -661,7 +671,8 @@ func (m *MsgCreateEthereumClaims) GetClaims() []*types1.Any {
 	return nil
 }
 
-// MsgBridgeSignatureSubmission submits the Ethereum signature for a given nonce an claim type.
+// MsgBridgeSignatureSubmission submits the Ethereum signature for a given nonce
+// an claim type.
 type MsgBridgeSignatureSubmission struct {
 	Nonce             uint64   `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	SignType          SignType `protobuf:"varint,2,opt,name=sign_type,json=signType,proto3,enum=peggy.v1.SignType" json:"sign_type,omitempty"`

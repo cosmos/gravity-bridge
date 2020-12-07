@@ -27,13 +27,15 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type Params struct {
 	// PeggyID is a random 32 byte value to prevent signature reuse
 	PeggyId string `protobuf:"bytes,1,opt,name=peggy_id,json=peggyId,proto3" json:"peggy_id,omitempty"`
-	// ContractHash is the code hash of a known good version of the Peggy contract solidity code.
-	// It will be used to verify exactly which version of the bridge will be deployed.
+	// ContractHash is the code hash of a known good version of the Peggy contract
+	// solidity code. It will be used to verify exactly which version of the
+	// bridge will be deployed.
 	ContractSourceHash string `protobuf:"bytes,2,opt,name=contract_source_hash,json=contractSourceHash,proto3" json:"contract_source_hash,omitempty"`
-	// StartThreshold is the percentage of total voting power that must be online and participating in
-	// Peggy operations before a bridge can start operating
+	// StartThreshold is the percentage of total voting power that must be online
+	// and participating in Peggy operations before a bridge can start operating
 	StartThreshold uint64 `protobuf:"varint,3,opt,name=start_threshold,json=startThreshold,proto3" json:"start_threshold,omitempty"`
-	// BridgeContractAddress is address of the bridge contract on the Ethereum side
+	// BridgeContractAddress is address of the bridge contract on the Ethereum
+	// side
 	EthereumAddress string `protobuf:"bytes,4,opt,name=ethereum_address,json=ethereumAddress,proto3" json:"ethereum_address,omitempty"`
 	// BridgeChainID is the unique identifier of the Ethereum chain
 	BridgeChainId uint64 `protobuf:"varint,5,opt,name=bridge_chain_id,json=bridgeChainId,proto3" json:"bridge_chain_id,omitempty"`

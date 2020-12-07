@@ -75,9 +75,9 @@ func (m *BridgeValidator) GetEthereumAddress() string {
 	return ""
 }
 
-// Valset is the Ethereum Bridge Multsig Set, each peggy validator also maintains
-// an ETH key to sign messages, these are used to check signatures on ETH because
-// of the significant gas savings
+// Valset is the Ethereum Bridge Multsig Set, each peggy validator also
+// maintains an ETH key to sign messages, these are used to check signatures on
+// ETH because of the significant gas savings
 type Valset struct {
 	// Valsets are stored in the store at a nonce
 	Nonce uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`

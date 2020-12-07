@@ -26,7 +26,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// ClaimType is the cosmos type of an event from the counterpart chain that can be handled
+// ClaimType is the cosmos type of an event from the counterpart chain that can
+// be handled
 type ClaimType int32
 
 const (
@@ -55,7 +56,8 @@ func (ClaimType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_20f100b984cd48a5, []int{0}
 }
 
-// Attestation is an aggregate of `claims` that eventually becomes `observed` by all orchestrators
+// Attestation is an aggregate of `claims` that eventually becomes `observed` by
+// all orchestrators
 type Attestation struct {
 	// ClaimType is the type of attestation either WithdrawBatch or BridgeDepoist
 	// TODO: we could remove ClaimType and infer the type of Claim from
@@ -139,8 +141,8 @@ func (m *Attestation) GetDetails() *types.Any {
 	return nil
 }
 
-// WithdrawalBatch is an attestation detail that marks a batch of outgoing transactions executed and
-// frees earlier unexecuted batches
+// WithdrawalBatch is an attestation detail that marks a batch of outgoing
+// transactions executed and frees earlier unexecuted batches
 type WithdrawalBatch struct {
 	// BatchNonce is the nonce of the batch on Peggy
 	BatchNonce uint64 `protobuf:"varint,1,opt,name=batch_nonce,json=batchNonce,proto3" json:"batch_nonce,omitempty"`
@@ -195,7 +197,8 @@ func (m *WithdrawalBatch) GetErc20Token() *ERC20Token {
 	return nil
 }
 
-// // BridgeDeposit is an attestation detail that adds vouchers to an account when executed
+// // BridgeDeposit is an attestation detail that adds vouchers to an account
+// when executed
 type BridgeDeposit struct {
 	// The ERC20 token being sent to Peggy
 	Erc20Token *ERC20Token `protobuf:"bytes,1,opt,name=erc20_token,json=erc20Token,proto3" json:"erc20_token,omitempty"`
@@ -263,7 +266,8 @@ func (m *BridgeDeposit) GetCosmosReceiver() string {
 type ERC20Token struct {
 	// The amount of the ERC20 token
 	Amount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
-	// The contract address on ETH of the token (note: developers should look up the token symbol using the address on ETH to display for UI)
+	// The contract address on ETH of the token (note: developers should look up
+	// the token symbol using the address on ETH to display for UI)
 	Contract string `protobuf:"bytes,2,opt,name=contract,proto3" json:"contract,omitempty"`
 }
 
