@@ -1,7 +1,7 @@
 use crate::utils::get_valset_nonce;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use peggy_utils::error::OrchestratorError;
+use peggy_utils::error::PeggyError;
 use peggy_utils::types::*;
 use std::time::Duration;
 use web30::client::Web3;
@@ -17,7 +17,7 @@ pub async fn send_eth_valset_update(
     timeout: Duration,
     peggy_contract_address: EthAddress,
     our_eth_key: EthPrivateKey,
-) -> Result<(), OrchestratorError> {
+) -> Result<(), PeggyError> {
     let (old_addresses, old_powers) = old_valset.filter_empty_addresses();
     let (new_addresses, new_powers) = new_valset.filter_empty_addresses();
     let old_nonce = old_valset.nonce;
@@ -50,7 +50,7 @@ pub async fn send_eth_valset_update(
     &[new_addresses.into(), new_powers.into(), new_nonce.into(), old_addresses.into(), old_powers.into(), old_nonce.into(), sig_arrays.v, sig_arrays.r, sig_arrays.s]).unwrap();
 
     let before_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
-    if before_nonce != old_nonce.into() {
+    if before_nonce != old_nonce {
         info!(
             "Someone else updated the valset to {}, exiting early",
             before_nonce
@@ -78,7 +78,7 @@ pub async fn send_eth_valset_update(
     web3.wait_for_transaction(tx, timeout, None).await?;
 
     let last_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
-    if last_nonce != new_nonce.into() {
+    if last_nonce != new_nonce {
         error!(
             "Current nonce is {} expected to update to nonce {}",
             last_nonce, new_nonce

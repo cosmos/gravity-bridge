@@ -1,6 +1,5 @@
 use clarity::abi::{encode_tokens, Token};
 use peggy_utils::types::{TransactionBatch, Valset};
-use sha3::{Digest, Keccak256};
 
 /// takes the required input data and produces the required signature to confirm a validator
 /// set update on the Peggy Ethereum contract. This value will then be signed before being
@@ -22,6 +21,7 @@ pub fn encode_valset_confirm(peggy_id: String, valset: Valset) -> Vec<u8> {
 fn test_valset_signature() {
     use clarity::utils::hex_str_to_bytes;
     use peggy_utils::types::ValsetMember;
+    use sha3::{Digest, Keccak256};
 
     let correct_hash: Vec<u8> =
         hex_str_to_bytes("0x88165860d955aee7dc3e83d9d1156a5864b708841965585d206dbef6e9e1a499")
@@ -104,13 +104,10 @@ fn test_valset_signature() {
 pub fn encode_tx_batch_confirm(peggy_id: String, batch: TransactionBatch) -> Vec<u8> {
     // transaction batches include a validator set update, the way this is verified is that the valset checkpoint
     // (encoded ethereum data) is included within the batch signature, which is itself a checkpoint over the batch data
-    let valset_checkpoint = encode_valset_confirm(peggy_id.clone(), batch.valset.clone());
-    let valset_digest = Keccak256::digest(&valset_checkpoint).as_slice().to_vec();
     let (amounts, destinations, fees) = batch.get_checkpoint_values();
     encode_tokens(&[
         Token::FixedString(peggy_id),
-        Token::FixedString("valsetAndTransactionBatch".to_string()),
-        Token::Bytes(valset_digest),
+        Token::FixedString("transactionBatch".to_string()),
         amounts,
         destinations,
         fees,
@@ -123,57 +120,37 @@ pub fn encode_tx_batch_confirm(peggy_id: String, batch: TransactionBatch) -> Vec
 fn test_batch_signature() {
     use clarity::utils::hex_str_to_bytes;
     use peggy_utils::types::BatchTransaction;
-    use peggy_utils::types::ERC20Denominator;
     use peggy_utils::types::ERC20Token;
-    use peggy_utils::types::ValsetMember;
+    use sha3::{Digest, Keccak256};
 
     let correct_hash: Vec<u8> =
-        hex_str_to_bytes("0x746471abc2232c11039c2160365c4593110dbfbe25ff9a2dcf8b5b7376e9f346")
+        hex_str_to_bytes("0x731fc6e7e13e4c4bd45664c9272d49e5a9b55bccb54cfcc0704465f9de491e86")
             .unwrap();
-    let erc20_addr = "0x22474D350EC2dA53D717E30b96e9a2B7628Ede5b"
+    let erc20_addr = "0x34Ac3eB6180FdD94043664C22043F004734Dc480"
         .parse()
         .unwrap();
     let sender_addr = "0x527FBEE652609AB150F0AEE9D61A2F76CFC4A73E"
         .parse()
         .unwrap();
 
-    let valset = Valset {
-        nonce: 1,
-        members: vec![ValsetMember {
-            eth_address: Some(
-                "0xc783df8a850f42e7F7e57013759C285caa701eB6"
-                    .parse()
-                    .unwrap(),
-            ),
-            power: 6670,
-        }],
-    };
-
     let token = ERC20Token {
         amount: 1u64.into(),
-        symbol: "MAX".to_string(),
         token_contract_address: erc20_addr,
     };
 
     let batch = TransactionBatch {
-        nonce: 1u64.into(),
-        elements: vec![BatchTransaction {
-            txid: 1u64.into(),
+        nonce: 1u64,
+        transactions: vec![BatchTransaction {
+            id: 1u64,
             destination: "0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39"
                 .parse()
                 .unwrap(),
             sender: sender_addr,
-            bridge_fee: token.clone(),
-            send: token.clone(),
+            erc20_fee: token.clone(),
+            erc20_token: token.clone(),
         }],
         total_fee: token,
-        bridged_denominator: ERC20Denominator {
-            cosmos_voucher_denom: "peggy39b512461b".to_string(),
-            symbol: "MAX".to_string(),
-            token_contract_address: erc20_addr,
-        },
         token_contract: erc20_addr,
-        valset,
     };
 
     let checkpoint = encode_tx_batch_confirm("foo".to_string(), batch);

@@ -2,9 +2,10 @@ use clarity::abi::Token;
 use clarity::Uint256;
 use clarity::{abi::encode_tokens, Address as EthAddress};
 use deep_space::address::Address as CosmosAddress;
-use peggy_utils::error::OrchestratorError;
+use peggy_utils::error::PeggyError;
 use peggy_utils::types::*;
 use sha3::{Digest, Keccak256};
+use std::u64::MAX as U64MAX;
 use web30::{client::Web3, jsonrpc::error::Web3Error};
 
 pub fn get_correct_sig_for_address(
@@ -23,10 +24,7 @@ pub fn get_correct_sig_for_address(
     panic!("Could not find that address!");
 }
 
-pub fn get_checkpoint_abi_encode(
-    valset: &Valset,
-    peggy_id: &str,
-) -> Result<Vec<u8>, OrchestratorError> {
+pub fn get_checkpoint_abi_encode(valset: &Valset, peggy_id: &str) -> Result<Vec<u8>, PeggyError> {
     let (eth_addresses, powers) = valset.filter_empty_addresses();
     Ok(encode_tokens(&[
         Token::FixedString(peggy_id.to_string()),
@@ -37,7 +35,7 @@ pub fn get_checkpoint_abi_encode(
     ]))
 }
 
-pub fn get_checkpoint_hash(valset: &Valset, peggy_id: &str) -> Result<Vec<u8>, OrchestratorError> {
+pub fn get_checkpoint_hash(valset: &Valset, peggy_id: &str) -> Result<Vec<u8>, PeggyError> {
     let locally_computed_abi_encode = get_checkpoint_abi_encode(&valset, &peggy_id);
     let locally_computed_digest = Keccak256::digest(&locally_computed_abi_encode?);
     Ok(locally_computed_digest.to_vec())
@@ -48,7 +46,7 @@ pub async fn get_valset_nonce(
     contract_address: EthAddress,
     caller_address: EthAddress,
     web3: &Web3,
-) -> Result<Uint256, Web3Error> {
+) -> Result<u64, Web3Error> {
     let val = web3
         .contract_call(
             contract_address,
@@ -57,7 +55,18 @@ pub async fn get_valset_nonce(
             caller_address,
         )
         .await?;
-    Ok(Uint256::from_bytes_be(&val))
+    // the go represents all nonces as u64, there's no
+    // reason they should ever overflow without a user
+    // submitting millions or tens of millions of dollars
+    // worth of transactions. But we properly check and
+    // handle that case here.
+    let real_num = Uint256::from_bytes_be(&val);
+    if real_num >= U64MAX.into() {
+        panic!("valset nonce overflow! Bridge halt!")
+    }
+    let mut lower_bytes: [u8; 8] = [0; 8];
+    lower_bytes.copy_from_slice(&val[8..16]);
+    Ok(u64::from_be_bytes(lower_bytes))
 }
 
 /// Gets the latest transaction batch nonce
@@ -66,7 +75,7 @@ pub async fn get_tx_batch_nonce(
     erc20_contract_address: EthAddress,
     caller_address: EthAddress,
     web3: &Web3,
-) -> Result<Uint256, Web3Error> {
+) -> Result<u64, Web3Error> {
     let val = web3
         .contract_call(
             peggy_contract_address,
@@ -75,7 +84,18 @@ pub async fn get_tx_batch_nonce(
             caller_address,
         )
         .await?;
-    Ok(Uint256::from_bytes_be(&val))
+    // the go represents all nonces as u64, there's no
+    // reason they should ever overflow without a user
+    // submitting millions or tens of millions of dollars
+    // worth of transactions. But we properly check and
+    // handle that case here.
+    let real_num = Uint256::from_bytes_be(&val);
+    if real_num >= U64MAX.into() {
+        panic!("tx batch nonce overflow! Bridge halt!")
+    }
+    let mut lower_bytes: [u8; 8] = [0; 8];
+    lower_bytes.copy_from_slice(&val[8..16]);
+    Ok(u64::from_be_bytes(lower_bytes))
 }
 
 /// Gets the peggyID
@@ -95,7 +115,7 @@ pub async fn get_erc20_symbol(
     contract_address: EthAddress,
     caller_address: EthAddress,
     web3: &Web3,
-) -> Result<String, OrchestratorError> {
+) -> Result<String, PeggyError> {
     let val_symbol = web3
         .contract_call(contract_address, "symbol()", &[], caller_address)
         .await?;
