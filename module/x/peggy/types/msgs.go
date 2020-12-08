@@ -412,7 +412,7 @@ const (
 )
 
 // NewMsgCreateEthereumClaims returns a new msgCreateEthereumClaims
-func NewMsgCreateEthereumClaims(ethereumChainID uint64, bridgeContractAddress string, orchestrator sdk.AccAddress, deposits []DepositClaim, withdraws []WithdrawClaim) *MsgCreateEthereumClaims {
+func NewMsgCreateEthereumClaims(ethereumChainID uint64, bridgeContractAddress string, orchestrator sdk.AccAddress, deposits []*DepositClaim, withdraws []*WithdrawClaim) *MsgCreateEthereumClaims {
 	return &MsgCreateEthereumClaims{EthereumChainId: ethereumChainID, BridgeContractAddress: bridgeContractAddress, Orchestrator: orchestrator.String(), Deposits: deposits, Withdraws: withdraws}
 }
 
