@@ -162,6 +162,7 @@ message EthereumBridgeWithdrawalBatchClaim {
   option (cosmos_proto.implements_interface) = "EthereumClaim";
   uint64 event_nonce = 1;
   uint64 batch_nonce = 2;
+  ERC20Token erc20_token = 3;
 }
 
 // MsgCreateEthereumClaims

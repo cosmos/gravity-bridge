@@ -30,13 +30,6 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	)
 
 	registry.RegisterInterface(
-		"peggy.v1beta1.AttestationDetails",
-		(*AttestationDetails)(nil),
-		&BridgeDeposit{},
-		&WithdrawalBatch{},
-	)
-
-	registry.RegisterInterface(
 		"peggy.v1beta1.EthereumClaim",
 		(*EthereumClaim)(nil),
 		&EthereumBridgeDepositClaim{},
@@ -44,38 +37,6 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
-}
-
-// PackAttestationDetails constructs a new Any packed with the ad value. It returns
-// an error if the client state can't be casted to a protobuf message or if the concrete
-// implemention is not registered to the protobuf codec.
-func PackAttestationDetails(ad AttestationDetails) (*types.Any, error) {
-	msg, ok := ad.(proto.Message)
-	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", ad)
-	}
-
-	anyad, err := types.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrPackAny, err.Error())
-	}
-
-	return anyad, nil
-}
-
-// UnpackAttestationDetails unpacks an Any into a AttestationDetails. It returns an error if the
-// attestation details can't be unpacked into a AttestationDetails.
-func UnpackAttestationDetails(any *types.Any) (AttestationDetails, error) {
-	if any == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "protobuf Any message cannot be nil")
-	}
-
-	attestationDetails, ok := any.GetCachedValue().(AttestationDetails)
-	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into AttestationDetails %T", any)
-	}
-
-	return attestationDetails, nil
 }
 
 // PackEthereumClaim constructs a new Any packed with the eth claim value. It returns
@@ -113,7 +74,6 @@ func UnpackEthereumClaim(any *types.Any) (EthereumClaim, error) {
 // RegisterCodec registers concrete types on the Amino codec
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterInterface((*EthereumClaim)(nil), nil)
-	cdc.RegisterInterface((*AttestationDetails)(nil), nil)
 
 	cdc.RegisterConcrete(&MsgSetEthAddress{}, "peggy/MsgSetEthAddress", nil)
 	cdc.RegisterConcrete(&MsgValsetRequest{}, "peggy/MsgValsetRequest", nil)
@@ -130,5 +90,4 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&ERC20Token{}, "peggy/ERC20Token", nil)
 	cdc.RegisterConcrete(&IDSet{}, "peggy/IDSet", nil)
 	cdc.RegisterConcrete(&Attestation{}, "peggy/Attestation", nil)
-	cdc.RegisterConcrete(&BridgeDeposit{}, "peggy/BridgeDeposit", nil)
 }

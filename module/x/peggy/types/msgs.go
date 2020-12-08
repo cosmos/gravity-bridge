@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
 var (
@@ -343,16 +344,13 @@ type EthereumClaim interface {
 	GetEventNonce() uint64
 	GetType() ClaimType
 	ValidateBasic() error
-	Details() AttestationDetails
+	Hash() []byte
 }
 
 var (
 	_ EthereumClaim = &EthereumBridgeDepositClaim{}
 	_ EthereumClaim = &EthereumBridgeWithdrawalBatchClaim{}
 )
-
-// NoUniqueClaimDetails is a NIL object to
-var NoUniqueClaimDetails AttestationDetails = nil
 
 // GetType returns the type of the claim
 func (e *EthereumBridgeDepositClaim) GetType() ClaimType {
@@ -381,13 +379,10 @@ func (e *EthereumBridgeDepositClaim) ValidateBasic() error {
 	return nil
 }
 
-// Details returns the attestation details fromt he bridge deposit claim
-func (e *EthereumBridgeDepositClaim) Details() AttestationDetails {
-	return &BridgeDeposit{
-		Erc20Token:     e.Erc20Token,
-		EthereumSender: e.EthereumSender,
-		CosmosReceiver: e.CosmosReceiver,
-	}
+// Hash implements BridgeDeposit.Hash
+func (b *EthereumBridgeDepositClaim) Hash() []byte {
+	path := fmt.Sprintf("%s/%s/%s/", b.Erc20Token.String(), string(b.EthereumSender), b.CosmosReceiver)
+	return tmhash.Sum([]byte(path))
 }
 
 // GetType returns the claim type
@@ -406,9 +401,10 @@ func (e *EthereumBridgeWithdrawalBatchClaim) ValidateBasic() error {
 	return nil
 }
 
-// Details returns the attestation details from the claim
-func (e *EthereumBridgeWithdrawalBatchClaim) Details() AttestationDetails {
-	return NoUniqueClaimDetails
+// Hash implements WithdrawBatch.Hash
+func (b *EthereumBridgeWithdrawalBatchClaim) Hash() []byte {
+	path := fmt.Sprintf("%s/%d/", b.Erc20Token, b.BatchNonce)
+	return tmhash.Sum([]byte(path))
 }
 
 const (

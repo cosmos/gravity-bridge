@@ -83,14 +83,10 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	// and claim persisted
-	claimFound := k.HasClaim(ctx, types.CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT, myNonce, myValAddr, ethClaim.Details())
+	claimFound := k.HasClaim(ctx, types.CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT, myNonce, myValAddr, ethClaim)
 	assert.True(t, claimFound)
 	// and attestation persisted
-	a := k.GetAttestation(ctx, myNonce, &types.BridgeDeposit{
-		Erc20Token:     &myErc20,
-		EthereumSender: anyETHAddr,
-		CosmosReceiver: myCosmosAddr.String(),
-	})
+	a := k.GetAttestation(ctx, myNonce, ethClaim)
 	require.NotNil(t, a)
 	// and vouchers added to the account
 	balance := keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)

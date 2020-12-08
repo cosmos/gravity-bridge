@@ -95,7 +95,7 @@ func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
 // prefix type               cosmos-validator-address                       nonce                             attestation-details-hash
 // [0x0][0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
 // TODO: remove the validator address usage here!
-func GetClaimKey(claimType ClaimType, nonce uint64, validator sdk.ValAddress, details AttestationDetails) []byte {
+func GetClaimKey(claimType ClaimType, nonce uint64, validator sdk.ValAddress, details EthereumClaim) []byte {
 	var detailsHash []byte
 	if details != nil {
 		detailsHash = details.Hash()
@@ -128,7 +128,7 @@ func GetLastNonceByClaimTypeSecondIndexKey(claimType ClaimType, nonce uint64) []
 // GetAttestationKey returns the following key format
 // prefix     nonce                             attestation-details-hash
 // [0x6][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
-func GetAttestationKey(eventNonce uint64, details AttestationDetails) []byte {
+func GetAttestationKey(eventNonce uint64, details EthereumClaim) []byte {
 	return append(UInt64Bytes(eventNonce), details.Hash()...)
 }
 

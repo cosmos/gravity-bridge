@@ -14,13 +14,13 @@ type AttestationHandler struct {
 
 // Handle is the entry point for Attestation processing.
 func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error {
-	switch att.ClaimType {
+	ud, err := types.UnpackEthereumClaim(att.Details)
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalid, "unpacking attestation details: %s", err)
+	}
+	switch ud.GetType() {
 	case types.CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT:
-		ud, err := types.UnpackAttestationDetails(att.Details)
-		if err != nil {
-			return sdkerrors.Wrapf(types.ErrInvalid, "unpacking attestation details: %s", err)
-		}
-		deposit, ok := ud.(*types.BridgeDeposit)
+		deposit, ok := ud.(*types.EthereumBridgeDepositClaim)
 		if !ok {
 			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
 		}
@@ -39,11 +39,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		}
 
 	case types.CLAIM_TYPE_ETHEREUM_BRIDGE_WITHDRAWAL_BATCH:
-		ud, err := types.UnpackAttestationDetails(att.Details)
-		if err != nil {
-			return sdkerrors.Wrapf(types.ErrInvalid, "unpacking attestation details: %s", err)
-		}
-		details, ok := ud.(*types.WithdrawalBatch)
+		details, ok := ud.(*types.EthereumBridgeWithdrawalBatchClaim)
 		if !ok {
 			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
 		}
@@ -51,7 +47,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		a.keeper.OutgoingTxBatchExecuted(ctx, details.Erc20Token.Contract, details.BatchNonce)
 
 	default:
-		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", att.ClaimType)
+		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", ud.GetType())
 	}
 	return nil
 }

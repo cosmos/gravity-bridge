@@ -25,50 +25,21 @@ enum ClaimType {
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by
 // all orchestrators
 message Attestation {
-  // ClaimType is the type of attestation either WithdrawBatch or BridgeDepoist
-  // TODO: we could remove ClaimType and infer the type of Claim from
-  // the details field and type assertions
-  ClaimType claim_type = 1;
+  // EventNonce a nonce provided by the peggy contract that is unique per event fired
+  // These event nonces must be relayed in order. This is a correctness issue,
+  // if relaying out of order transaction replay attacks become possible
+  uint64 event_nonce = 1;
 
-  // EventNonce is the nonce from/for...?
-  uint64 event_nonce = 2;
-
-  // Observed says...?
-  bool observed = 3;
+  // Observed indicates that >67% of validators have attested to the event,
+  // and that the event should be executed by the peggy state machine
+  bool observed = 2;
 
   // Validator votes for the attestation
-  repeated string votes = 4;
+  repeated string votes = 3;
 
-  // The attestation details interface type
+  // Details contains the claim details
   google.protobuf.Any details =
-      5 [(cosmos_proto.accepts_interface) = "AttestationDetails"];
-}
-
-// WithdrawalBatch is an attestation detail that marks a batch of outgoing
-// transactions executed and frees earlier unexecuted batches
-message WithdrawalBatch {
-  option (cosmos_proto.implements_interface) = "AttestationDetails";
-  
-  // BatchNonce is the nonce of the batch on Peggy
-  uint64 batch_nonce = 1;
-
-  // The ERC20 token being sent back to ETH
-  ERC20Token erc20_token = 2;
-}
-
-// // BridgeDeposit is an attestation detail that adds vouchers to an account
-// when executed
-message BridgeDeposit {
-  option (cosmos_proto.implements_interface) = "AttestationDetails";
-
-  // The ERC20 token being sent to Peggy
-  ERC20Token erc20_token = 1;
-
-  // The address on ETH that sent the transaction
-  string ethereum_sender = 2;
-
-  // The address on Peggy recieving the funds
-  string cosmos_receiver = 3;
+      4 [(cosmos_proto.accepts_interface) = "EthereumClaim"];
 }
 
 // ERC20Token unique identifier for an Ethereum ERC20 token.

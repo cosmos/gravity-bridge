@@ -56,15 +56,11 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper keeper.Keeper, msg *type
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "unpacking claim")
 		}
-		att, err := keeper.AddClaim(ctx, ec.GetType(), ec.GetEventNonce(), validator, ec.Details())
+		att, err := keeper.AddClaim(ctx, ec.GetType(), ec.GetEventNonce(), validator, ec)
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "create attestation")
 		}
-		ad, err := types.UnpackAttestationDetails(att.Details)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "unpacking attestation")
-		}
-		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, ad))
+		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, ec))
 	}
 	return &sdk.Result{
 		Data: bytes.Join(attestationIDs, []byte(", ")),
