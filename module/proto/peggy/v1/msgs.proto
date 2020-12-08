@@ -149,6 +149,7 @@ message MsgConfirmBatch {
 // issued to the Cosmos address in question
 // -------------
 message EthereumBridgeDepositClaim {
+  option (cosmos_proto.implements_interface) = "EthereumClaim";
   uint64 nonce = 1;
   ERC20Token erc20_token = 2;
   string ethereum_sender = 3;
@@ -158,6 +159,7 @@ message EthereumBridgeDepositClaim {
 // EthereumBridgeWithdrawalBatchClaim claims that a batch of withdrawal
 // operations on the bridge contract was executed.
 message EthereumBridgeWithdrawalBatchClaim {
+  option (cosmos_proto.implements_interface) = "EthereumClaim";
   uint64 event_nonce = 1;
   uint64 batch_nonce = 2;
 }

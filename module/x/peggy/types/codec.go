@@ -32,9 +32,6 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterInterface(
 		"peggy.v1beta1.AttestationDetails",
 		(*AttestationDetails)(nil),
-	)
-
-	registry.RegisterImplementations((*AttestationDetails)(nil),
 		&BridgeDeposit{},
 		&WithdrawalBatch{},
 	)
@@ -42,9 +39,6 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterInterface(
 		"peggy.v1beta1.EthereumClaim",
 		(*EthereumClaim)(nil),
-	)
-
-	registry.RegisterImplementations((*EthereumClaim)(nil),
 		&EthereumBridgeDepositClaim{},
 		&EthereumBridgeWithdrawalBatchClaim{},
 	)
@@ -120,6 +114,7 @@ func UnpackEthereumClaim(any *types.Any) (EthereumClaim, error) {
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterInterface((*EthereumClaim)(nil), nil)
 	cdc.RegisterInterface((*AttestationDetails)(nil), nil)
+
 	cdc.RegisterConcrete(&MsgSetEthAddress{}, "peggy/MsgSetEthAddress", nil)
 	cdc.RegisterConcrete(&MsgValsetRequest{}, "peggy/MsgValsetRequest", nil)
 	cdc.RegisterConcrete(&MsgValsetConfirm{}, "peggy/MsgValsetConfirm", nil)

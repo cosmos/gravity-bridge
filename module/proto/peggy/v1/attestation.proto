@@ -47,6 +47,8 @@ message Attestation {
 // WithdrawalBatch is an attestation detail that marks a batch of outgoing
 // transactions executed and frees earlier unexecuted batches
 message WithdrawalBatch {
+  option (cosmos_proto.implements_interface) = "AttestationDetails";
+  
   // BatchNonce is the nonce of the batch on Peggy
   uint64 batch_nonce = 1;
 
@@ -57,6 +59,8 @@ message WithdrawalBatch {
 // // BridgeDeposit is an attestation detail that adds vouchers to an account
 // when executed
 message BridgeDeposit {
+  option (cosmos_proto.implements_interface) = "AttestationDetails";
+
   // The ERC20 token being sent to Peggy
   ERC20Token erc20_token = 1;
 
