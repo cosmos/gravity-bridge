@@ -213,7 +213,8 @@ pub async fn send_ethereum_claims(
     eth_chain_id: Uint256,
     peggy_contract: EthAddress,
     private_key: PrivateKey,
-    claims: Vec<EthereumBridgeClaim>,
+    deposits: Vec<SendToCosmosEvent>,
+    withdraws: Vec<TransactionBatchExecutedEvent>,
     fee: Coin,
 ) -> Result<TXSendResponse, JsonRpcError> {
     let our_address = private_key
@@ -227,6 +228,20 @@ pub async fn send_ethereum_claims(
         None => 0,
     };
 
+    let mut msgs = Vec::new();
+    for deposit in deposits {
+        msgs.push(PeggyMsg::DepositClaimMsg(DepositClaimMsg::from_event(
+            deposit,
+            our_address,
+        )))
+    }
+    for withdraw in withdraws {
+        msgs.push(PeggyMsg::WithdrawClaimMsg(WithdrawClaimMsg::from_event(
+            withdraw,
+            our_address,
+        )))
+    }
+
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
         account_number,
@@ -235,12 +250,7 @@ pub async fn send_ethereum_claims(
             amount: vec![fee],
             gas: 500_000u64.into(),
         },
-        msgs: vec![PeggyMsg::CreateEthereumClaimsMsg(CreateEthereumClaimsMsg {
-            ethereum_chain_id: eth_chain_id,
-            bridge_contract_address: peggy_contract,
-            orchestrator: our_address,
-            claims,
-        })],
+        msgs,
         memo: String::new(),
     };
 

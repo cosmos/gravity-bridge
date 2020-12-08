@@ -23,10 +23,7 @@ use contact::client::Contact;
 use cosmos_peggy::send::send_valset_request;
 use cosmos_peggy::send::{request_batch, send_to_eth, update_peggy_eth_address};
 use cosmos_peggy::utils::wait_for_cosmos_online;
-use cosmos_peggy::{
-    messages::{EthereumBridgeClaim, EthereumBridgeDepositClaim},
-    utils::wait_for_next_cosmos_block,
-};
+use cosmos_peggy::{messages::EthereumBridgeDepositClaim, utils::wait_for_next_cosmos_block};
 use cosmos_peggy::{query::get_oldest_unsigned_transaction_batch, send::send_ethereum_claims};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
@@ -35,7 +32,7 @@ use ethereum_peggy::utils::get_valset_nonce;
 use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use main_loop::orchestrator_main_loop;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use peggy_utils::types::ERC20Token;
+use peggy_utils::types::{ERC20Token, SendToCosmosEvent};
 use rand::Rng;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::process::Command;
@@ -177,9 +174,9 @@ async fn main() {
     // bootstrapping tests finish here and we move into operational tests
 
     // send 3 valset updates to make sure the process works back to back
-    for _ in 0u32..2 {
-        test_valset_update(&contact, &web30, &keys, peggy_address, fee.clone()).await;
-    }
+    // for _ in 0u32..2 {
+    //     test_valset_update(&contact, &web30, &keys, peggy_address, fee.clone()).await;
+    // }
 
     // generate an address for coin sending tests, this ensures test imdepotency
     let mut rng = rand::thread_rng();
@@ -579,15 +576,13 @@ async fn submit_duplicate_erc20_send(
         .parse()
         .unwrap();
 
-    let claim = EthereumBridgeClaim::EthereumBridgeDepositClaim(EthereumBridgeDepositClaim {
+    let event = SendToCosmosEvent {
         event_nonce: nonce,
-        erc20_token: ERC20Token {
-            amount,
-            token_contract_address: erc20_address,
-        },
-        ethereum_sender,
-        cosmos_receiver: receiver,
-    });
+        erc20: erc20_address,
+        sender: ethereum_sender,
+        destination: receiver,
+        amount,
+    };
 
     // iterate through all validators and try to send an event with duplicate nonce
     for (c_key, _) in keys.iter() {
@@ -596,7 +591,8 @@ async fn submit_duplicate_erc20_send(
             0u64.into(),
             peggy_address,
             *c_key,
-            vec![claim.clone()],
+            vec![event.clone()],
+            vec![],
             fee.clone(),
         )
         .await

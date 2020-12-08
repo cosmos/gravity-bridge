@@ -26,6 +26,8 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgRequestBatch{},
 		&MsgConfirmBatch{},
 		&MsgCreateEthereumClaims{},
+		&MsgDepositClaim{},
+		&MsgWithdrawClaim{},
 	)
 
 	registry.RegisterInterface(
@@ -81,6 +83,8 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgConfirmBatch{}, "peggy/MsgConfirmBatch", nil)
 	cdc.RegisterConcrete(&Valset{}, "peggy/Valset", nil)
 	cdc.RegisterConcrete(&MsgCreateEthereumClaims{}, "peggy/MsgCreateEthereumClaims", nil)
+	cdc.RegisterConcrete(&MsgDepositClaim{}, "peggy/MsgDepositClaim", nil)
+	cdc.RegisterConcrete(&MsgWithdrawClaim{}, "peggy/MsgWithdrawClaim", nil)
 	cdc.RegisterConcrete(&DepositClaim{}, "peggy/DepositClaim", nil)
 	cdc.RegisterConcrete(&WithdrawClaim{}, "peggy/WithdrawClaim", nil)
 	cdc.RegisterConcrete(&OutgoingTxBatch{}, "peggy/OutgoingTxBatch", nil)

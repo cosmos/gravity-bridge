@@ -29,6 +29,10 @@ func NewHandler(keeper keeper.Keeper) sdk.Handler {
 			return handleMsgConfirmBatch(ctx, keeper, msg)
 		case *types.MsgCreateEthereumClaims:
 			return handleCreateEthereumClaims(ctx, keeper, msg)
+		case *types.MsgDepositClaim:
+			return handleDepositClaim(ctx, keeper, msg)
+		case *types.MsgWithdrawClaim:
+			return handleWithdrawClaim(ctx, keeper, msg)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unrecognized Peggy Msg type: %v", msg.Type()))
 		}
@@ -36,14 +40,6 @@ func NewHandler(keeper keeper.Keeper) sdk.Handler {
 }
 
 func handleCreateEthereumClaims(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgCreateEthereumClaims) (*sdk.Result, error) {
-	// TODO:
-	// auth EthereumChainID whitelisted
-	// auth bridge contract address whitelisted
-	ctx.Logger().Info("+++ TODO: implement chain id + contract address authorization")
-	//if !bytes.Equal(msg.BridgeContractAddress[:], k.GetBridgeContractAddress(ctx)[:]) {
-	//	return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid bridge contract address")
-	//}
-
 	var attestationIDs [][]byte
 	// auth sender in current validator set
 
@@ -74,6 +70,46 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper keeper.Keeper, msg *type
 		}
 		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, &c))
 	}
+	return &sdk.Result{
+		Data: bytes.Join(attestationIDs, []byte(", ")),
+	}, nil
+}
+
+func handleDepositClaim(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgDepositClaim) (*sdk.Result, error) {
+	var attestationIDs [][]byte
+	// auth sender in current validator set
+
+	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := findValidatorKey(ctx, orch)
+	if validator == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+	}
+	att, err := keeper.AddClaim(ctx, msg.GetType(), msg.GetEventNonce(), validator, msg)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "create attestation")
+	}
+	attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, msg))
+
+	return &sdk.Result{
+		Data: bytes.Join(attestationIDs, []byte(", ")),
+	}, nil
+}
+
+func handleWithdrawClaim(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgWithdrawClaim) (*sdk.Result, error) {
+	var attestationIDs [][]byte
+	// auth sender in current validator set
+
+	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := findValidatorKey(ctx, orch)
+	if validator == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+	}
+	att, err := keeper.AddClaim(ctx, msg.GetType(), msg.GetEventNonce(), validator, msg)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "create attestation")
+	}
+	attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, msg))
+
 	return &sdk.Result{
 		Data: bytes.Join(attestationIDs, []byte(", ")),
 	}, nil

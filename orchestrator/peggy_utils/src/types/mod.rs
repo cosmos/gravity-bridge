@@ -15,6 +15,7 @@ pub use valsets::*;
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ERC20Token {
     pub amount: Uint256,
+    #[serde(rename = "contract")]
     pub token_contract_address: EthAddress,
 }
 

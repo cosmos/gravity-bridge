@@ -41,6 +41,22 @@ pub fn get_checkpoint_hash(valset: &Valset, peggy_id: &str) -> Result<Vec<u8>, P
     Ok(locally_computed_digest.to_vec())
 }
 
+pub fn downcast_nonce(input: Uint256) -> Option<u64> {
+    if input >= U64MAX.into() {
+        None
+    } else {
+        let mut val = input.to_bytes_be();
+        // pad to 8 bytes
+        while val.len() < 8 {
+            val.insert(0, 0);
+        }
+        let mut lower_bytes: [u8; 8] = [0; 8];
+        // get the 'lowest' 8 bytes from a 256 bit integer
+        lower_bytes.copy_from_slice(&val[0..val.len()]);
+        Some(u64::from_be_bytes(lower_bytes))
+    }
+}
+
 /// Gets the latest validator set nonce
 pub async fn get_valset_nonce(
     contract_address: EthAddress,
@@ -61,13 +77,7 @@ pub async fn get_valset_nonce(
     // worth of transactions. But we properly check and
     // handle that case here.
     let real_num = Uint256::from_bytes_be(&val);
-    if real_num >= U64MAX.into() {
-        panic!("valset nonce overflow! Bridge halt!")
-    }
-    let mut lower_bytes: [u8; 8] = [0; 8];
-    // get the 'lowest' 8 bytes from a 256 bit integer
-    lower_bytes.copy_from_slice(&val[24..32]);
-    Ok(u64::from_be_bytes(lower_bytes))
+    Ok(downcast_nonce(real_num).expect("Valset nonce overflow! Bridge Halt!"))
 }
 
 /// Gets the latest transaction batch nonce
@@ -91,13 +101,7 @@ pub async fn get_tx_batch_nonce(
     // worth of transactions. But we properly check and
     // handle that case here.
     let real_num = Uint256::from_bytes_be(&val);
-    if real_num >= U64MAX.into() {
-        panic!("tx batch nonce overflow! Bridge halt!")
-    }
-    let mut lower_bytes: [u8; 8] = [0; 8];
-    // get the 'lowest' 8 bytes from a 256 bit integer
-    lower_bytes.copy_from_slice(&val[24..32]);
-    Ok(u64::from_be_bytes(lower_bytes))
+    Ok(downcast_nonce(real_num).expect("TxBatch nonce overflow! Bridge Halt!"))
 }
 
 /// Gets the peggyID

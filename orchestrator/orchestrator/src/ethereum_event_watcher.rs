@@ -3,14 +3,12 @@
 
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
-use cosmos_peggy::messages::{
-    EthereumBridgeClaim, EthereumBridgeDepositClaim, EthereumBridgeWithdrawBatchClaim,
-};
+use cosmos_peggy::messages::{EthereumBridgeDepositClaim, EthereumBridgeWithdrawBatchClaim};
 use cosmos_peggy::send::send_ethereum_claims;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use peggy_utils::{
     error::PeggyError,
-    types::{ERC20Token, SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent},
+    types::{SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent},
 };
 use web30::client::Web3;
 use web30::jsonrpc::error::Web3Error;
@@ -62,7 +60,7 @@ pub async fn check_for_events(
     if let (Ok(valsets), Ok(batches), Ok(deposits)) = (valsets, batches, deposits) {
         let valsets = ValsetUpdatedEvent::from_logs(&valsets)?;
         trace!("parsed valsets {:?}", valsets);
-        let batches = TransactionBatchExecutedEvent::from_logs(&batches)?;
+        let withdraws = TransactionBatchExecutedEvent::from_logs(&batches)?;
         trace!("parsed batches {:?}", batches);
         let deposits = SendToCosmosEvent::from_logs(&deposits)?;
         trace!("parsed deposits {:?}", deposits);
@@ -73,15 +71,15 @@ pub async fn check_for_events(
             )
         }
 
-        let claims = to_bridge_claims(&batches, &deposits);
-        if !claims.is_empty() {
+        if !deposits.is_empty() || !withdraws.is_empty() {
             // todo get eth chain id from the chain
             let res = send_ethereum_claims(
                 contact,
                 0u64.into(),
                 peggy_contract_address,
                 our_private_key,
-                claims,
+                deposits,
+                withdraws,
                 fee,
             )
             .await?;
@@ -95,37 +93,4 @@ pub async fn check_for_events(
             "Failed to get logs!".to_string(),
         )))
     }
-}
-
-/// Converts events into bridge claims that can then be submitted to the Cosmos Peggy module
-fn to_bridge_claims(
-    batches: &[TransactionBatchExecutedEvent],
-    deposits: &[SendToCosmosEvent],
-) -> Vec<EthereumBridgeClaim> {
-    let mut out = Vec::new();
-    for batch in batches {
-        let batch_nonce = batch.batch_nonce.clone();
-        let event_nonce = batch.event_nonce.clone();
-        out.push(EthereumBridgeClaim::EthereumBridgeWithdrawBatchClaim(
-            EthereumBridgeWithdrawBatchClaim {
-                batch_nonce,
-                event_nonce,
-            },
-        ))
-    }
-    for deposit in deposits {
-        out.push(EthereumBridgeClaim::EthereumBridgeDepositClaim(
-            EthereumBridgeDepositClaim {
-                erc20_token: ERC20Token {
-                    amount: deposit.amount.clone(),
-                    token_contract_address: deposit.erc20,
-                },
-                ethereum_sender: deposit.sender,
-                cosmos_receiver: deposit.destination,
-                event_nonce: deposit.event_nonce.clone(),
-            },
-        ))
-    }
-
-    out
 }

@@ -295,7 +295,7 @@ func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
-// EthereumClaim represenets a claim on ethereum state
+// EthereumClaim represents a claim on ethereum state
 type EthereumClaim interface {
 	GetEventNonce() uint64
 	GetType() ClaimType
@@ -306,6 +306,117 @@ type EthereumClaim interface {
 var (
 	_ EthereumClaim = &DepositClaim{}
 	_ EthereumClaim = &WithdrawClaim{}
+	_ EthereumClaim = &MsgDepositClaim{}
+	_ EthereumClaim = &MsgWithdrawClaim{}
+)
+
+// GetType returns the type of the claim
+func (e *MsgDepositClaim) GetType() ClaimType {
+	return CLAIM_TYPE_DEPOSIT
+}
+
+// ValidateBasic performs stateless checks
+func (e *MsgDepositClaim) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(e.CosmosReceiver); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.CosmosReceiver)
+	}
+	if err := ValidateEthAddress(e.EthereumSender); err != nil {
+		return sdkerrors.Wrap(err, "eth sender")
+	}
+	if err := ValidateEthAddress(e.TokenContract); err != nil {
+		return sdkerrors.Wrap(err, "erc20 token")
+	}
+	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	}
+	if e.EventNonce == 0 {
+		return fmt.Errorf("nonce == 0")
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgDepositClaim) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgDepositClaim) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+// Type should return the action
+func (msg MsgDepositClaim) Type() string { return "deposit_claim" }
+
+// Route should return the name of the module
+func (msg MsgDepositClaim) Route() string { return RouterKey }
+
+const (
+	TypeMsgWithdrawClaim = "withdraw_claim"
+)
+
+// Hash implements BridgeDeposit.Hash
+func (b *MsgDepositClaim) Hash() []byte {
+	path := fmt.Sprintf("%s/%s/%s/", b.TokenContract, string(b.EthereumSender), b.CosmosReceiver)
+	return tmhash.Sum([]byte(path))
+}
+
+// GetType returns the claim type
+func (e *MsgWithdrawClaim) GetType() ClaimType {
+	return CLAIM_TYPE_WITHDRAW
+}
+
+// ValidateBasic performs stateless checks
+func (e *MsgWithdrawClaim) ValidateBasic() error {
+	if e.EventNonce == 0 {
+		return fmt.Errorf("event_nonce == 0")
+	}
+	if e.BatchNonce == 0 {
+		return fmt.Errorf("batch_nonce == 0")
+	}
+	if err := ValidateEthAddress(e.TokenContract); err != nil {
+		return sdkerrors.Wrap(err, "erc20 token")
+	}
+	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	}
+	return nil
+}
+
+// Hash implements WithdrawBatch.Hash
+func (b *MsgWithdrawClaim) Hash() []byte {
+	path := fmt.Sprintf("%s/%d/", b.TokenContract, b.BatchNonce)
+	return tmhash.Sum([]byte(path))
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgWithdrawClaim) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgWithdrawClaim) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+// Route should return the name of the module
+func (msg MsgWithdrawClaim) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgWithdrawClaim) Type() string { return "withdraw_claim" }
+
+const (
+	TypeMsgDepositClaim = "deposit_claim"
 )
 
 // GetType returns the type of the claim
