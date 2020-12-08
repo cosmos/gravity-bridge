@@ -121,6 +121,7 @@ async function deploy() {
 
   let eth_addresses = [];
   let powers = [];
+  let powers_sum = 0;
   // this MUST be sorted uniformly across all components of Peggy in this
   // case we perform the sorting in module/x/peggy/keeper/types.go to the
   // output of the endpoint should always be sorted correctly. If you're
@@ -129,13 +130,21 @@ async function deploy() {
   for (let i = 0; i < latestValset.members.length; i++) {
     eth_addresses.push(latestValset.members[i].ethereum_address);
     powers.push(latestValset.members[i].power);
+    powers_sum += latestValset.members[i].power;
   }
+
+  // 66% of uint32_max
+  let vote_power = 2834678415;
+  if (powers_sum < 2834678415) {
+    console.log("Refusing to deploy incorrect powers!")
+    exit(1)
+  }
+
   const peggy = (await factory.deploy(
     // todo generate this randomly at deployment time that way we can avoid
     // anything but intentional conflicts
     peggyId,
-    // 66% of uint32_max
-    2834678415,
+    vote_power,
     eth_addresses,
     powers
   )) as Peggy;
