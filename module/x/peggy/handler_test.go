@@ -7,7 +7,6 @@ import (
 
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,32 +60,28 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 		Contract: tokenETHAddr,
 	}
 
-	ethClaim := &types.EthereumBridgeDepositClaim{
+	ethClaim := types.DepositClaim{
 		Nonce:          myNonce,
 		Erc20Token:     &myErc20,
 		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
 	}
 
-	ecAny, err := types.PackEthereumClaim(ethClaim)
-	require.NoError(t, err)
-
 	msg := &types.MsgCreateEthereumClaims{
 		EthereumChainId:       0,
 		BridgeContractAddress: "",
 		Orchestrator:          myOrchestratorAddr.String(),
-		Claims:                []*codectypes.Any{ecAny},
+		Deposits:              []types.DepositClaim{ethClaim},
 	}
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, msg)
-	// then
+	_, err := h(ctx, msg)
 	require.NoError(t, err)
 	// and claim persisted
-	claimFound := k.HasClaim(ctx, types.CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT, myNonce, myValAddr, ethClaim)
+	claimFound := k.HasClaim(ctx, types.CLAIM_TYPE_DEPOSIT, myNonce, myValAddr, &ethClaim)
 	assert.True(t, claimFound)
 	// and attestation persisted
-	a := k.GetAttestation(ctx, myNonce, ethClaim)
+	a := k.GetAttestation(ctx, myNonce, &ethClaim)
 	require.NotNil(t, a)
 	// and vouchers added to the account
 	balance := keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
@@ -102,7 +97,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
 	// Test to reject skipped nonce
-	ethClaim = &types.EthereumBridgeDepositClaim{
+	ethClaim = types.DepositClaim{
 		Nonce: uint64(3),
 		Erc20Token: &types.ERC20Token{
 			Amount:   sdk.NewInt(12),
@@ -111,14 +106,11 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
 	}
-	ecAny, err = types.PackEthereumClaim(ethClaim)
-	require.NoError(t, err)
-
 	msg = &types.MsgCreateEthereumClaims{
 		EthereumChainId:       0,
 		BridgeContractAddress: "",
 		Orchestrator:          myOrchestratorAddr.String(),
-		Claims:                []*codectypes.Any{ecAny},
+		Deposits:              []types.DepositClaim{ethClaim},
 	}
 
 	// when
@@ -129,7 +121,7 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
-	ethClaim = &types.EthereumBridgeDepositClaim{
+	ethClaim = types.DepositClaim{
 		Nonce: uint64(2),
 		Erc20Token: &types.ERC20Token{
 			Amount:   sdk.NewInt(13),
@@ -138,15 +130,12 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
 	}
-	ecAny, err = types.PackEthereumClaim(ethClaim)
-	require.NoError(t, err)
-
 	// Test to finally accept consecutive nonce
 	msg = &types.MsgCreateEthereumClaims{
 		EthereumChainId:       0,
 		BridgeContractAddress: "",
 		Orchestrator:          myOrchestratorAddr.String(),
-		Claims:                []*codectypes.Any{ecAny},
+		Deposits:              []types.DepositClaim{ethClaim},
 	}
 
 	// when

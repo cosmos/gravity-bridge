@@ -18,33 +18,23 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 	if err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalid, "unpacking attestation details: %s", err)
 	}
-	switch ud.GetType() {
-	case types.CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT:
-		deposit, ok := ud.(*types.EthereumBridgeDepositClaim)
-		if !ok {
-			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
-		}
-		coin := deposit.Erc20Token.PeggyCoin()
+	switch claim := ud.(type) {
+	case *types.DepositClaim:
+		coin := claim.Erc20Token.PeggyCoin()
 		vouchers := sdk.Coins{coin}
 		if err = a.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers); err != nil {
 			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", vouchers)
 		}
 
-		addr, err := sdk.AccAddressFromBech32(deposit.CosmosReceiver)
+		addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
 		if err != nil {
 			return sdkerrors.Wrap(err, "invalid reciever address")
 		}
 		if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, vouchers); err != nil {
 			return sdkerrors.Wrap(err, "transfer vouchers")
 		}
-
-	case types.CLAIM_TYPE_ETHEREUM_BRIDGE_WITHDRAWAL_BATCH:
-		details, ok := ud.(*types.EthereumBridgeWithdrawalBatchClaim)
-		if !ok {
-			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
-		}
-
-		a.keeper.OutgoingTxBatchExecuted(ctx, details.Erc20Token.Contract, details.BatchNonce)
+	case *types.WithdrawClaim:
+		a.keeper.OutgoingTxBatchExecuted(ctx, claim.Erc20Token.Contract, claim.BatchNonce)
 
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", ud.GetType())

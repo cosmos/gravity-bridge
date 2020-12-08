@@ -5,7 +5,6 @@ import "gogoproto/gogo.proto";
 import "peggy/v1/attestation.proto";
 import "google/api/annotations.proto";
 import "peggy/v1/ethereum_signer.proto";
-import "google/protobuf/any.proto";
 import "cosmos_proto/cosmos.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
@@ -148,7 +147,7 @@ message MsgConfirmBatch {
 // claimed to have seen the deposit enter the ethereum blockchain coins are
 // issued to the Cosmos address in question
 // -------------
-message EthereumBridgeDepositClaim {
+message DepositClaim {
   option (cosmos_proto.implements_interface) = "EthereumClaim";
   uint64 nonce = 1;
   ERC20Token erc20_token = 2;
@@ -156,9 +155,9 @@ message EthereumBridgeDepositClaim {
   string cosmos_receiver = 4;
 }
 
-// EthereumBridgeWithdrawalBatchClaim claims that a batch of withdrawal
+// WithdrawClaim claims that a batch of withdrawal
 // operations on the bridge contract was executed.
-message EthereumBridgeWithdrawalBatchClaim {
+message WithdrawClaim {
   option (cosmos_proto.implements_interface) = "EthereumClaim";
   uint64 event_nonce = 1;
   uint64 batch_nonce = 2;
@@ -174,13 +173,11 @@ message EthereumBridgeWithdrawalBatchClaim {
 // is "observed" and state transitions and operations are triggered on the
 // cosmos side.
 message MsgCreateEthereumClaims {
-  uint64 ethereum_chain_id = 1;
-
-  // do we need to specify contract address? can we get this from the store?
-  string bridge_contract_address = 2;
-  string orchestrator = 3;
-  repeated google.protobuf.Any claims =
-      4 [(cosmos_proto.accepts_interface) = "EthereumClaim"];
+  uint64                   ethereum_chain_id       = 1;
+  string                   bridge_contract_address = 2;
+  string                   orchestrator            = 3;
+  repeated DepositClaim    deposits                = 4 [(gogoproto.nullable) = false];
+  repeated WithdrawClaim   withdraws               = 5 [(gogoproto.nullable) = false];
 }
 
 // MsgBridgeSignatureSubmission submits the Ethereum signature for a given nonce

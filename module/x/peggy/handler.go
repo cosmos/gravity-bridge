@@ -46,21 +46,33 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper keeper.Keeper, msg *type
 
 	var attestationIDs [][]byte
 	// auth sender in current validator set
-	for _, c := range msg.Claims {
+
+	// process deposit claims
+	for _, c := range msg.Deposits {
 		orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 		validator := findValidatorKey(ctx, orch)
 		if validator == nil {
 			return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 		}
-		ec, err := types.UnpackEthereumClaim(c)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "unpacking claim")
-		}
-		att, err := keeper.AddClaim(ctx, ec.GetType(), ec.GetEventNonce(), validator, ec)
+		att, err := keeper.AddClaim(ctx, c.GetType(), c.GetEventNonce(), validator, &c)
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "create attestation")
 		}
-		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, ec))
+		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, &c))
+	}
+
+	// process withdraw claims
+	for _, c := range msg.Withdraws {
+		orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+		validator := findValidatorKey(ctx, orch)
+		if validator == nil {
+			return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+		}
+		att, err := keeper.AddClaim(ctx, c.GetType(), c.GetEventNonce(), validator, &c)
+		if err != nil {
+			return nil, sdkerrors.Wrap(err, "create attestation")
+		}
+		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, &c))
 	}
 	return &sdk.Result{
 		Data: bytes.Join(attestationIDs, []byte(", ")),

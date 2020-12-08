@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -348,22 +347,22 @@ type EthereumClaim interface {
 }
 
 var (
-	_ EthereumClaim = &EthereumBridgeDepositClaim{}
-	_ EthereumClaim = &EthereumBridgeWithdrawalBatchClaim{}
+	_ EthereumClaim = &DepositClaim{}
+	_ EthereumClaim = &WithdrawClaim{}
 )
 
 // GetType returns the type of the claim
-func (e *EthereumBridgeDepositClaim) GetType() ClaimType {
-	return CLAIM_TYPE_ETHEREUM_BRIDGE_DEPOSIT
+func (e *DepositClaim) GetType() ClaimType {
+	return CLAIM_TYPE_DEPOSIT
 }
 
 // GetEventNonce returns the event nonce for the claim
-func (e *EthereumBridgeDepositClaim) GetEventNonce() uint64 {
+func (e *DepositClaim) GetEventNonce() uint64 {
 	return e.Nonce
 }
 
 // ValidateBasic performs stateless checks
-func (e *EthereumBridgeDepositClaim) ValidateBasic() error {
+func (e *DepositClaim) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(e.CosmosReceiver); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.CosmosReceiver)
 	}
@@ -380,18 +379,18 @@ func (e *EthereumBridgeDepositClaim) ValidateBasic() error {
 }
 
 // Hash implements BridgeDeposit.Hash
-func (b *EthereumBridgeDepositClaim) Hash() []byte {
+func (b *DepositClaim) Hash() []byte {
 	path := fmt.Sprintf("%s/%s/%s/", b.Erc20Token.String(), string(b.EthereumSender), b.CosmosReceiver)
 	return tmhash.Sum([]byte(path))
 }
 
 // GetType returns the claim type
-func (e *EthereumBridgeWithdrawalBatchClaim) GetType() ClaimType {
-	return CLAIM_TYPE_ETHEREUM_BRIDGE_WITHDRAWAL_BATCH
+func (e *WithdrawClaim) GetType() ClaimType {
+	return CLAIM_TYPE_WITHDRAW
 }
 
 // ValidateBasic performs stateless checks
-func (e *EthereumBridgeWithdrawalBatchClaim) ValidateBasic() error {
+func (e *WithdrawClaim) ValidateBasic() error {
 	if e.EventNonce == 0 {
 		return fmt.Errorf("event_nonce == 0")
 	}
@@ -402,7 +401,7 @@ func (e *EthereumBridgeWithdrawalBatchClaim) ValidateBasic() error {
 }
 
 // Hash implements WithdrawBatch.Hash
-func (b *EthereumBridgeWithdrawalBatchClaim) Hash() []byte {
+func (b *WithdrawClaim) Hash() []byte {
 	path := fmt.Sprintf("%s/%d/", b.Erc20Token, b.BatchNonce)
 	return tmhash.Sum([]byte(path))
 }
@@ -413,16 +412,8 @@ const (
 )
 
 // NewMsgCreateEthereumClaims returns a new msgCreateEthereumClaims
-func NewMsgCreateEthereumClaims(ethereumChainID uint64, bridgeContractAddress string, orchestrator sdk.AccAddress, claims []EthereumClaim) *MsgCreateEthereumClaims {
-	var packedClaims []*codectypes.Any
-	for _, c := range claims {
-		pc, err := PackEthereumClaim(c)
-		if err != nil {
-			panic(err)
-		}
-		packedClaims = append(packedClaims, pc)
-	}
-	return &MsgCreateEthereumClaims{EthereumChainId: ethereumChainID, BridgeContractAddress: bridgeContractAddress, Orchestrator: orchestrator.String(), Claims: packedClaims}
+func NewMsgCreateEthereumClaims(ethereumChainID uint64, bridgeContractAddress string, orchestrator sdk.AccAddress, deposits []DepositClaim, withdraws []WithdrawClaim) *MsgCreateEthereumClaims {
+	return &MsgCreateEthereumClaims{EthereumChainId: ethereumChainID, BridgeContractAddress: bridgeContractAddress, Orchestrator: orchestrator.String(), Deposits: deposits, Withdraws: withdraws}
 }
 
 // Route returns the route for the msg
@@ -444,13 +435,14 @@ func (m MsgCreateEthereumClaims) ValidateBasic() error {
 	if err := ValidateEthAddress(m.BridgeContractAddress); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
-	for i := range m.Claims {
-		claim, err := UnpackEthereumClaim(m.Claims[i])
-		if err != nil {
-			return sdkerrors.Wrapf(err, "claim %d failed to unpack any", i)
-		}
+	for i, claim := range m.Deposits {
 		if err := claim.ValidateBasic(); err != nil {
-			return sdkerrors.Wrapf(err, "claim %d failed ValidateBasic()", i)
+			return sdkerrors.Wrapf(err, "deposit claim %d failed ValidateBasic()", i)
+		}
+	}
+	for i, claim := range m.Withdraws {
+		if err := claim.ValidateBasic(); err != nil {
+			return sdkerrors.Wrapf(err, "withdraw claim %d failed ValidateBasic()", i)
 		}
 	}
 	return nil

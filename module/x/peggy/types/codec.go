@@ -32,8 +32,8 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterInterface(
 		"peggy.v1beta1.EthereumClaim",
 		(*EthereumClaim)(nil),
-		&EthereumBridgeDepositClaim{},
-		&EthereumBridgeWithdrawalBatchClaim{},
+		&DepositClaim{},
+		&WithdrawClaim{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
@@ -74,7 +74,6 @@ func UnpackEthereumClaim(any *types.Any) (EthereumClaim, error) {
 // RegisterCodec registers concrete types on the Amino codec
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterInterface((*EthereumClaim)(nil), nil)
-
 	cdc.RegisterConcrete(&MsgSetEthAddress{}, "peggy/MsgSetEthAddress", nil)
 	cdc.RegisterConcrete(&MsgValsetRequest{}, "peggy/MsgValsetRequest", nil)
 	cdc.RegisterConcrete(&MsgValsetConfirm{}, "peggy/MsgValsetConfirm", nil)
@@ -83,8 +82,8 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgConfirmBatch{}, "peggy/MsgConfirmBatch", nil)
 	cdc.RegisterConcrete(&Valset{}, "peggy/Valset", nil)
 	cdc.RegisterConcrete(&MsgCreateEthereumClaims{}, "peggy/MsgCreateEthereumClaims", nil)
-	cdc.RegisterConcrete(&EthereumBridgeDepositClaim{}, "peggy/EthereumBridgeDepositClaim", nil)
-	cdc.RegisterConcrete(&EthereumBridgeWithdrawalBatchClaim{}, "peggy/EthereumBridgeWithdrawalBatchClaim", nil)
+	cdc.RegisterConcrete(&DepositClaim{}, "peggy/DepositClaim", nil)
+	cdc.RegisterConcrete(&WithdrawClaim{}, "peggy/WithdrawClaim", nil)
 	cdc.RegisterConcrete(&OutgoingTxBatch{}, "peggy/OutgoingTxBatch", nil)
 	cdc.RegisterConcrete(&OutgoingTransferTx{}, "peggy/OutgoingTransferTx", nil)
 	cdc.RegisterConcrete(&ERC20Token{}, "peggy/ERC20Token", nil)
