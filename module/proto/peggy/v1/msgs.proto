@@ -189,8 +189,14 @@ message MsgCreateEthereumClaims {
   uint64                   ethereum_chain_id       = 1;
   string                   bridge_contract_address = 2;
   string                   orchestrator            = 3;
-  repeated DepositClaim    deposits                = 4;
-  repeated WithdrawClaim   withdraws               = 5;
+  repeated DepositClaim    deposits                = 4 [
+    (gogoproto.castrepeated) = "[]DepositClaim",
+    (gogoproto.nullable) = false
+  ];
+  repeated WithdrawClaim   withdraws               = 5 [
+    (gogoproto.castrepeated) = "[]WithdrawClaim", 
+    (gogoproto.nullable) = false
+  ];
 }
 
 // TODO: write response data here

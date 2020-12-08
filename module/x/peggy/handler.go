@@ -54,11 +54,11 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper keeper.Keeper, msg *type
 		if validator == nil {
 			return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 		}
-		att, err := keeper.AddClaim(ctx, c.GetType(), c.GetEventNonce(), validator, c)
+		att, err := keeper.AddClaim(ctx, c.GetType(), c.GetEventNonce(), validator, &c)
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "create attestation")
 		}
-		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, c))
+		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, &c))
 	}
 
 	// process withdraw claims
@@ -68,11 +68,11 @@ func handleCreateEthereumClaims(ctx sdk.Context, keeper keeper.Keeper, msg *type
 		if validator == nil {
 			return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 		}
-		att, err := keeper.AddClaim(ctx, c.GetType(), c.GetEventNonce(), validator, c)
+		att, err := keeper.AddClaim(ctx, c.GetType(), c.GetEventNonce(), validator, &c)
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "create attestation")
 		}
-		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, c))
+		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, &c))
 	}
 	return &sdk.Result{
 		Data: bytes.Join(attestationIDs, []byte(", ")),
