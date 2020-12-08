@@ -61,9 +61,8 @@ pub async fn relay_valsets(
                 cosmos_key,
                 peggy_id,
             )
-            .await
-            .unwrap();
-            trace!("Valset confirm result is {:?}", res);
+            .await;
+            info!("Valset confirm result is {:?}", res);
         }
         Ok(None) => trace!("No valset waiting to be signed!"),
         Err(e) => trace!("Failed to get unsigned valsets with {:?}", e),
@@ -89,7 +88,12 @@ pub async fn relay_valsets(
                 latest_confirmed = Some(confirms);
                 latest_valset = Some(set);
             } else {
-                info!("Skipping incomplete valset {}", set.nonce);
+                info!(
+                    "Skipping incomplete valset {} we have {} confirms of {}",
+                    set.nonce,
+                    confirms.len(),
+                    set.members.len()
+                );
             }
             break;
         }
@@ -113,6 +117,7 @@ pub async fn relay_valsets(
         );
 
         let old_valset = if latest_ethereum_valset == 0 {
+            info!("This is the first validator set update! Using the current set");
             // we need to have a special case for validator set zero, that valset was never stored on chain
             // right now we just use the current valset
             let mut latest_valset = latest_cosmos_valset.clone();

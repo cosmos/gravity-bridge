@@ -128,6 +128,11 @@ pub async fn send_valset_confirm(
     let message = encode_valset_confirm(peggy_id, valset.clone());
     let eth_signature = eth_private_key.sign_ethereum_msg(&message);
 
+    trace!(
+        "Sent valset update with address {} and sig {}",
+        our_eth_address,
+        bytes_to_hex_str(&eth_signature.to_bytes())
+    );
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
         account_number,

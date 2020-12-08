@@ -270,7 +270,7 @@ async fn deploy_contracts(
 
     // prevents the node deployer from failing (rarely) when the chain has not
     // yet produced the next block after submitting each eth address
-    wait_for_next_cosmos_block(contact).await;
+    wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
 
     // wait for the orchestrators to finish registering their eth addresses
     let output = Command::new("npx")
@@ -427,7 +427,7 @@ async fn test_erc20_send(
             _ => {}
         }
         info!("Waiting for ERC20 deposit");
-        wait_for_next_cosmos_block(contact).await;
+        wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
     }
     panic!("Failed to bridge ERC20!")
 }
@@ -495,7 +495,7 @@ async fn test_batch(
     .await
     .unwrap();
 
-    wait_for_next_cosmos_block(contact).await;
+    wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
     let requester_address = requester_cosmos_private_key
         .to_public_key()
         .unwrap()

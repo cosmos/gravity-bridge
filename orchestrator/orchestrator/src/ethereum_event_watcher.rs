@@ -75,7 +75,7 @@ pub async fn check_for_events(
 
         let claims = to_bridge_claims(&batches, &deposits);
         if !claims.is_empty() {
-            // todo get chain id from the chain
+            // todo get eth chain id from the chain
             let res = send_ethereum_claims(
                 contact,
                 0u64.into(),

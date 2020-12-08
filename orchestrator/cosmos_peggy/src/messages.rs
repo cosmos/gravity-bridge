@@ -96,6 +96,7 @@ pub struct EthereumBridgeDepositClaim {
     pub erc20_token: ERC20Token,
     pub ethereum_sender: EthAddress,
     pub cosmos_receiver: Address,
+    #[serde(rename = "nonce")]
     pub event_nonce: Uint256,
 }
 
@@ -129,8 +130,6 @@ pub enum EthereumBridgeClaim {
     EthereumBridgeDepositClaim(EthereumBridgeDepositClaim),
     #[serde(rename = "peggy/EthereumBridgeWithdrawBatchClaim")]
     EthereumBridgeWithdrawBatchClaim(EthereumBridgeWithdrawBatchClaim),
-    #[serde(rename = "peggy/EthereumBridgeBootstrappedClaim")]
-    EthereumBridgeBootstrappedClaim(EthereumBridgeBootstrappedClaim),
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
