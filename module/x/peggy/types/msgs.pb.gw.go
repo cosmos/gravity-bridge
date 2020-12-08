@@ -283,42 +283,6 @@ func local_request_Msg_CreateEthereumClaims_0(ctx context.Context, marshaler run
 
 }
 
-var (
-	filter_Msg_BridgeSignatureSubmission_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
-func request_Msg_BridgeSignatureSubmission_0(ctx context.Context, marshaler runtime.Marshaler, client MsgClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq MsgBridgeSignatureSubmission
-	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_BridgeSignatureSubmission_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := client.BridgeSignatureSubmission(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-
-}
-
-func local_request_Msg_BridgeSignatureSubmission_0(ctx context.Context, marshaler runtime.Marshaler, server MsgServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq MsgBridgeSignatureSubmission
-	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Msg_BridgeSignatureSubmission_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := server.BridgeSignatureSubmission(ctx, &protoReq)
-	return msg, metadata, err
-
-}
-
 // RegisterMsgHandlerServer registers the http handlers for service Msg to "mux".
 // UnaryRPC     :call MsgServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -462,26 +426,6 @@ func RegisterMsgHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 		}
 
 		forward_Msg_CreateEthereumClaims_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	mux.Handle("POST", pattern_Msg_BridgeSignatureSubmission_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_Msg_BridgeSignatureSubmission_0(rctx, inboundMarshaler, server, req, pathParams)
-		ctx = runtime.NewServerMetadataContext(ctx, md)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_Msg_BridgeSignatureSubmission_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -666,45 +610,23 @@ func RegisterMsgHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 
 	})
 
-	mux.Handle("POST", pattern_Msg_BridgeSignatureSubmission_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_Msg_BridgeSignatureSubmission_0(rctx, inboundMarshaler, client, req, pathParams)
-		ctx = runtime.NewServerMetadataContext(ctx, md)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_Msg_BridgeSignatureSubmission_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
 	return nil
 }
 
 var (
-	pattern_Msg_ValsetConfirm_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"ValsetConfirm"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_ValsetConfirm_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "valset_confirm"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Msg_ValsetRequest_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"ValsetRequest"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_ValsetRequest_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "valset_request"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Msg_SetEthAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"SetEthAddress"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_SetEthAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "set_eth_address"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Msg_SendToEth_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"SendToEth"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_SendToEth_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "send_to_eth"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Msg_RequestBatch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"RequestBatch"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_RequestBatch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "request_batch"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Msg_ConfirmBatch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"ConfirmBatch"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_ConfirmBatch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "confirm_batch"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Msg_CreateEthereumClaims_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"CreateEthereumClaims"}, "", runtime.AssumeColonVerbOpt(true)))
-
-	pattern_Msg_BridgeSignatureSubmission_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"BridgeSignatureSubmission"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_CreateEthereumClaims_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "create_ethereum_claims"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
@@ -721,6 +643,4 @@ var (
 	forward_Msg_ConfirmBatch_0 = runtime.ForwardResponseMessage
 
 	forward_Msg_CreateEthereumClaims_0 = runtime.ForwardResponseMessage
-
-	forward_Msg_BridgeSignatureSubmission_0 = runtime.ForwardResponseMessage
 )

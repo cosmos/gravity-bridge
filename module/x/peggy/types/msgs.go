@@ -19,50 +19,7 @@ var (
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
 	_ sdk.Msg = &MsgCreateEthereumClaims{}
-	_ sdk.Msg = &MsgBridgeSignatureSubmission{}
 )
-
-// NewMsgBridgeSignatureSubmission returns a new msgBridgeSignatureSubmission
-func NewMsgBridgeSignatureSubmission(signtype SignType, nonce uint64, orch, ethsig string) *MsgBridgeSignatureSubmission {
-	return &MsgBridgeSignatureSubmission{
-		SignType:          signtype,
-		Nonce:             nonce,
-		Orchestrator:      orch,
-		EthereumSignature: ethsig,
-	}
-}
-
-// Route should return the name of the module
-func (msg *MsgBridgeSignatureSubmission) Route() string { return RouterKey }
-
-// Type should return the action
-func (msg *MsgBridgeSignatureSubmission) Type() string { return "bridge_signature_submission" }
-
-// ValidateBasic performs stateless checks
-func (msg *MsgBridgeSignatureSubmission) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
-	}
-	if _, err := hex.DecodeString(msg.EthereumSignature); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.EthereumSignature)
-	}
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg *MsgBridgeSignatureSubmission) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg *MsgBridgeSignatureSubmission) GetSigners() []sdk.AccAddress {
-	// TODO: figure out how to convert between AccAddress and ValAddress properly
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{acc}
-}
 
 // NewMsgValsetConfirm returns a new msgValsetConfirm
 func NewMsgValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddress, signature string) *MsgValsetConfirm {

@@ -52,8 +52,3 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 func (k msgServer) CreateEthereumClaims(c context.Context, msg *types.MsgCreateEthereumClaims) (*types.MsgCreateEthereumClaimsResponse, error) {
 	return nil, nil
 }
-
-// BridgeSignatureSubmission
-func (k msgServer) BridgeSignatureSubmission(c context.Context, msg *types.MsgBridgeSignatureSubmission) (*types.MsgBridgeSignatureSubmissionResponse, error) {
-	return nil, nil
-}

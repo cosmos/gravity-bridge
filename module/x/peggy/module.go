@@ -92,7 +92,6 @@ func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry
 
 // AppModule object for module implementation
 type AppModule struct {
-	// TODO: do we need the account keeper here?
 	AppModuleBasic
 	keeper     keeper.Keeper
 	bankKeeper bankkeeper.Keeper

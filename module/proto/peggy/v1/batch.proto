@@ -8,30 +8,16 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 // OutgoingTxBatch represents a batch of transactions going from Peggy to ETH
 message OutgoingTxBatch {
-  // The nonce of of the individual batch
-  uint64 batch_nonce = 1;
-
-  // The individual operation of the transaction batch
-  repeated OutgoingTransferTx transactions = 2;
-
-  // The token contract on ETH for amounts in transactions
-  string token_contract = 4;
+  uint64                      batch_nonce    = 1;
+  repeated OutgoingTransferTx transactions   = 2;
+  string                      token_contract = 3;
 }
 
 // OutgoingTransferTx represents an individual send from Peggy to ETH
 message OutgoingTransferTx {
-  // The nonce on the peggy side for this individual transfer
-  uint64 id = 1;
-
-  // The peggy address of the sender of this transaction
-  string sender = 2;
-
-  // The address on ETH where the transfer is bound
-  string dest_address = 3;
-
-  // The ERC20 token amount to be sent back to ETH
-  ERC20Token erc20_token = 4;
-
-  // The ERC20 fee paid to the bridge
-  ERC20Token erc20_fee = 5;
+  uint64     id           = 1;
+  string     sender       = 2;
+  string     dest_address = 3;
+  ERC20Token erc20_token  = 4;
+  ERC20Token erc20_fee    = 5;
 }

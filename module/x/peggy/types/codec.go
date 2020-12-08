@@ -26,7 +26,6 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgRequestBatch{},
 		&MsgConfirmBatch{},
 		&MsgCreateEthereumClaims{},
-		&MsgBridgeSignatureSubmission{},
 	)
 
 	registry.RegisterInterface(

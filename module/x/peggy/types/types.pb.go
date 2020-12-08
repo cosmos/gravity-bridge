@@ -79,9 +79,7 @@ func (m *BridgeValidator) GetEthereumAddress() string {
 // maintains an ETH key to sign messages, these are used to check signatures on
 // ETH because of the significant gas savings
 type Valset struct {
-	// Valsets are stored in the store at a nonce
-	Nonce uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	// It is made up of BridgeValidators
+	Nonce   uint64             `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	Members []*BridgeValidator `protobuf:"bytes,2,rep,name=members,proto3" json:"members,omitempty"`
 }
 

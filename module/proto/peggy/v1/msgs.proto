@@ -4,36 +4,30 @@ import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "peggy/v1/attestation.proto";
 import "google/api/annotations.proto";
-import "peggy/v1/ethereum_signer.proto";
 import "cosmos_proto/cosmos.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 service Msg {
   rpc ValsetConfirm(MsgValsetConfirm) returns(MsgValsetConfirmResponse) {
-    option(google.api.http).post = "/ValsetConfirm";
+    option (google.api.http).post = "/peggy/v1/valset_confirm";
   }
   rpc ValsetRequest(MsgValsetRequest) returns(MsgValsetRequestResponse) {
-    option(google.api.http).post = "/ValsetRequest";
+    option (google.api.http).post = "/peggy/v1/valset_request";
   }
   rpc SetEthAddress(MsgSetEthAddress) returns(MsgSetEthAddressResponse) {
-    option(google.api.http).post = "/SetEthAddress";
+    option (google.api.http).post = "/peggy/v1/set_eth_address";
   }
   rpc SendToEth(MsgSendToEth) returns(MsgSendToEthResponse) {
-    option(google.api.http).post = "/SendToEth";
+    option (google.api.http).post = "/peggy/v1/send_to_eth";
   }
   rpc RequestBatch(MsgRequestBatch) returns(MsgRequestBatchResponse) {
-    option(google.api.http).post = "/RequestBatch";
+    option (google.api.http).post = "/peggy/v1/request_batch";
   }
   rpc ConfirmBatch(MsgConfirmBatch) returns(MsgConfirmBatchResponse) {
-    option(google.api.http).post = "/ConfirmBatch";
+    option (google.api.http).post = "/peggy/v1/confirm_batch";
   }
-  rpc CreateEthereumClaims(MsgCreateEthereumClaims)
-      returns(MsgCreateEthereumClaimsResponse) {
-    option(google.api.http).post = "/CreateEthereumClaims";
-  }
-  rpc BridgeSignatureSubmission(MsgBridgeSignatureSubmission)
-      returns(MsgBridgeSignatureSubmissionResponse) {
-    option(google.api.http).post = "/BridgeSignatureSubmission";
+  rpc CreateEthereumClaims(MsgCreateEthereumClaims) returns(MsgCreateEthereumClaimsResponse) {
+    option (google.api.http).post = "/peggy/v1/create_ethereum_claims";
   }
 }
 
@@ -54,11 +48,14 @@ service Msg {
 // -------------
 // deprecated should use MsgBridgeSignatureSubmission instead
 message MsgValsetConfirm {
-  uint64 nonce = 1;
-  string validator = 2;
+  uint64 nonce       = 1;
+  string validator   = 2;
   string eth_address = 3;
-  string signature = 4;
+  string signature   = 4;
 }
+
+// TODO: write response data here
+message MsgValsetConfirmResponse {}
 
 // ValsetRequest
 // This message starts off the validator set update process by coordinating a
@@ -70,7 +67,12 @@ message MsgValsetConfirm {
 // seeing which one some other validator has already submitted a ValsetResponse
 // for.
 // -------------
-message MsgValsetRequest { string requester = 1; }
+message MsgValsetRequest { 
+  string requester = 1; 
+}
+
+// TODO: write response data here
+message MsgValsetRequestResponse {}
 
 // SetEthAddress
 // This is used by the validators to set the Ethereum address that represents
@@ -80,10 +82,13 @@ message MsgValsetRequest { string requester = 1; }
 // sets submissions carry any weight.
 // -------------
 message MsgSetEthAddress {
-  string address = 1;
+  string address   = 1;
   string validator = 2;
   string signature = 3;
 }
+
+// TODO: write response data here
+message MsgSetEthAddressResponse {}
 
 // MsgSendToEth
 // This is the message that a user calls when they want to bridge an asset
@@ -94,22 +99,22 @@ message MsgSetEthAddress {
 // it will later be removed when it is included in a batch and successfully
 // submitted tokens are removed from the users balance immediately
 // -------------
+// AMOUNT:
+// the coin to send across the bridge, note the restriction that this is a
+// single coin not a set of coins that is normal in other Cosmos messages
+// FEE:
+// the fee paid for the bridge, distinct from the fee paid to the chain to
+// actually send this message in the first place. So a successful send has
+// two layers of fees for the user
 message MsgSendToEth {
-  // the source address on Cosmos
-  string sender = 1;
-
-  // the destination address on Ethereum
-  string eth_dest = 2;
-
-  // the coin to send across the bridge, note the restriction that this is a
-  // single coin not a set of coins that is normal in other Cosmos messages
-  cosmos.base.v1beta1.Coin amount = 3 [(gogoproto.nullable) = false];
-
-  // the fee paid for the bridge, distinct from the fee paid to the chain to
-  // actually send this message in the first place. So a successful send has
-  // two layers of fees for the user
+  string                   sender     = 1;
+  string                   eth_dest   = 2;
+  cosmos.base.v1beta1.Coin amount     = 3 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.Coin bridge_fee = 4 [(gogoproto.nullable) = false];
 }
+
+// TODO: write response data here
+message MsgSendToEthResponse {}
 
 // MsgRequestBatch
 // this is a message anyone can send that requests a batch of transactions to
@@ -122,8 +127,11 @@ message MsgSendToEth {
 // -------------
 message MsgRequestBatch {
   string requester = 1;
-  string denom = 2;
+  string denom     = 2;
 }
+
+// TODO: write response data here
+message MsgRequestBatchResponse {}
 
 // MsgConfirmBatch
 // When validators observe a MsgRequestBatch they form a batch by ordering
@@ -135,12 +143,15 @@ message MsgRequestBatch {
 // -------------
 // deprecated should use MsgBridgeSignatureSubmission instead
 message MsgConfirmBatch {
-  uint64 nonce = 1;
+  uint64 nonce          = 1;
   string token_contract = 2;
-  string eth_signer = 3;
-  string validator = 4;
-  string signature = 5;
+  string eth_signer     = 3;
+  string validator      = 4;
+  string signature      = 5;
 }
+
+// TODO: write response data here
+message MsgConfirmBatchResponse {}
 
 // EthereumBridgeDepositClaim
 // When more than 66% of the active validator set has
@@ -149,18 +160,20 @@ message MsgConfirmBatch {
 // -------------
 message DepositClaim {
   option (cosmos_proto.implements_interface) = "EthereumClaim";
-  uint64 nonce = 1;
-  ERC20Token erc20_token = 2;
-  string ethereum_sender = 3;
-  string cosmos_receiver = 4;
+  
+  uint64     nonce           = 1;
+  ERC20Token erc20_token     = 2;
+  string     ethereum_sender = 3;
+  string     cosmos_receiver = 4;
 }
 
 // WithdrawClaim claims that a batch of withdrawal
 // operations on the bridge contract was executed.
 message WithdrawClaim {
   option (cosmos_proto.implements_interface) = "EthereumClaim";
-  uint64 event_nonce = 1;
-  uint64 batch_nonce = 2;
+
+  uint64     event_nonce = 1;
+  uint64     batch_nonce = 2;
   ERC20Token erc20_token = 3;
 }
 
@@ -180,20 +193,10 @@ message MsgCreateEthereumClaims {
   repeated WithdrawClaim   withdraws               = 5;
 }
 
-// MsgBridgeSignatureSubmission submits the Ethereum signature for a given nonce
-// an claim type.
-message MsgBridgeSignatureSubmission {
-  uint64 nonce = 1;
-  SignType sign_type = 2;
-  string orchestrator = 3;
-  string ethereum_signature = 4;
-}
-
-message MsgValsetConfirmResponse {}
-message MsgValsetRequestResponse {}
-message MsgSetEthAddressResponse {}
-message MsgSendToEthResponse {}
-message MsgRequestBatchResponse {}
-message MsgConfirmBatchResponse {}
+// TODO: write response data here
 message MsgCreateEthereumClaimsResponse {}
-message MsgBridgeSignatureSubmissionResponse {}
+
+
+
+
+

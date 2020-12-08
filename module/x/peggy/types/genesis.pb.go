@@ -24,21 +24,25 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params represent the peggy genesis and store parameters
+// PEGGYID:
+// a random 32 byte value to prevent signature reuse
+// CONTRACTHASH:
+// the code hash of a known good version of the Peggy contract
+// solidity code. It will be used to verify exactly which version of the
+// bridge will be deployed.
+// STARTTHRESHOLD:
+// the percentage of total voting power that must be online
+// and participating in Peggy operations before a bridge can start operating
+// BRIDGECONTRACTADDRESS:
+// is address of the bridge contract on the Ethereum side
+// BRIDGECHAINID:
+// the unique identifier of the Ethereum chain
 type Params struct {
-	// PeggyID is a random 32 byte value to prevent signature reuse
-	PeggyId string `protobuf:"bytes,1,opt,name=peggy_id,json=peggyId,proto3" json:"peggy_id,omitempty"`
-	// ContractHash is the code hash of a known good version of the Peggy contract
-	// solidity code. It will be used to verify exactly which version of the
-	// bridge will be deployed.
+	PeggyId            string `protobuf:"bytes,1,opt,name=peggy_id,json=peggyId,proto3" json:"peggy_id,omitempty"`
 	ContractSourceHash string `protobuf:"bytes,2,opt,name=contract_source_hash,json=contractSourceHash,proto3" json:"contract_source_hash,omitempty"`
-	// StartThreshold is the percentage of total voting power that must be online
-	// and participating in Peggy operations before a bridge can start operating
-	StartThreshold uint64 `protobuf:"varint,3,opt,name=start_threshold,json=startThreshold,proto3" json:"start_threshold,omitempty"`
-	// BridgeContractAddress is address of the bridge contract on the Ethereum
-	// side
-	EthereumAddress string `protobuf:"bytes,4,opt,name=ethereum_address,json=ethereumAddress,proto3" json:"ethereum_address,omitempty"`
-	// BridgeChainID is the unique identifier of the Ethereum chain
-	BridgeChainId uint64 `protobuf:"varint,5,opt,name=bridge_chain_id,json=bridgeChainId,proto3" json:"bridge_chain_id,omitempty"`
+	StartThreshold     uint64 `protobuf:"varint,3,opt,name=start_threshold,json=startThreshold,proto3" json:"start_threshold,omitempty"`
+	EthereumAddress    string `protobuf:"bytes,4,opt,name=ethereum_address,json=ethereumAddress,proto3" json:"ethereum_address,omitempty"`
+	BridgeChainId      uint64 `protobuf:"varint,5,opt,name=bridge_chain_id,json=bridgeChainId,proto3" json:"bridge_chain_id,omitempty"`
 }
 
 func (m *Params) Reset()         { *m = Params{} }
@@ -111,7 +115,6 @@ func (m *Params) GetBridgeChainId() uint64 {
 
 // GenesisState struct
 type GenesisState struct {
-	// The above params are held in GenesisState
 	Params *Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
 }
 

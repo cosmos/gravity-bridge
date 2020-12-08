@@ -4,7 +4,7 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 // BridgeValidator represents a validator's ETH address and its power
 message BridgeValidator {
-  uint64 power = 1;
+  uint64 power            = 1;
   string ethereum_address = 2;
 }
 
@@ -12,9 +12,6 @@ message BridgeValidator {
 // maintains an ETH key to sign messages, these are used to check signatures on
 // ETH because of the significant gas savings
 message Valset {
-  // Valsets are stored in the store at a nonce
-  uint64 nonce = 1;
-
-  // It is made up of BridgeValidators
+  uint64                   nonce   = 1;
   repeated BridgeValidator members = 2;
 }

@@ -58,18 +58,20 @@ func (ClaimType) EnumDescriptor() ([]byte, []int) {
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by
 // all orchestrators
+// EVENT_NONCE:
+// EventNonce a nonce provided by the peggy contract that is unique per event fired
+// These event nonces must be relayed in order. This is a correctness issue,
+// if relaying out of order transaction replay attacks become possible
+// OBSERVED:
+// Observed indicates that >67% of validators have attested to the event,
+// and that the event should be executed by the peggy state machine
+// DETAILS:
+// The details of the attestation, withdraw or deposit type
 type Attestation struct {
-	// EventNonce a nonce provided by the peggy contract that is unique per event fired
-	// These event nonces must be relayed in order. This is a correctness issue,
-	// if relaying out of order transaction replay attacks become possible
-	EventNonce uint64 `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
-	// Observed indicates that >67% of validators have attested to the event,
-	// and that the event should be executed by the peggy state machine
-	Observed bool `protobuf:"varint,2,opt,name=observed,proto3" json:"observed,omitempty"`
-	// Validator votes for the attestation
-	Votes []string `protobuf:"bytes,3,rep,name=votes,proto3" json:"votes,omitempty"`
-	// Details contains the claim details
-	Details *types.Any `protobuf:"bytes,4,opt,name=details,proto3" json:"details,omitempty"`
+	EventNonce uint64     `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
+	Observed   bool       `protobuf:"varint,2,opt,name=observed,proto3" json:"observed,omitempty"`
+	Votes      []string   `protobuf:"bytes,3,rep,name=votes,proto3" json:"votes,omitempty"`
+	Details    *types.Any `protobuf:"bytes,4,opt,name=details,proto3" json:"details,omitempty"`
 }
 
 func (m *Attestation) Reset()         { *m = Attestation{} }
@@ -134,12 +136,12 @@ func (m *Attestation) GetDetails() *types.Any {
 }
 
 // ERC20Token unique identifier for an Ethereum ERC20 token.
+// CONTRACT:
+// The contract address on ETH of the token (note: developers should look up
+// the token symbol using the address on ETH to display for UI)
 type ERC20Token struct {
-	// The amount of the ERC20 token
-	Amount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
-	// The contract address on ETH of the token (note: developers should look up
-	// the token symbol using the address on ETH to display for UI)
-	Contract string `protobuf:"bytes,2,opt,name=contract,proto3" json:"contract,omitempty"`
+	Amount   github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
+	Contract string                                 `protobuf:"bytes,2,opt,name=contract,proto3" json:"contract,omitempty"`
 }
 
 func (m *ERC20Token) Reset()         { *m = ERC20Token{} }

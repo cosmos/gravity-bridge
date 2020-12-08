@@ -10,46 +10,36 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 // ClaimType is the cosmos type of an event from the counterpart chain that can
 // be handled
 enum ClaimType {
-  option(gogoproto.goproto_enum_prefix) = false;
+  option (gogoproto.goproto_enum_prefix) = false;
 
-  CLAIM_TYPE_UNKNOWN =
-      0 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_UNKNOWN"];
-  CLAIM_TYPE_DEPOSIT =
-      1 [(gogoproto.enumvalue_customname) =
-             "CLAIM_TYPE_DEPOSIT"];
-  CLAIM_TYPE_WITHDRAW =
-      2 [(gogoproto.enumvalue_customname) =
-             "CLAIM_TYPE_WITHDRAW"];
+  CLAIM_TYPE_UNKNOWN  = 0 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_UNKNOWN" ];
+  CLAIM_TYPE_DEPOSIT  = 1 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_DEPOSIT" ];
+  CLAIM_TYPE_WITHDRAW = 2 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_WITHDRAW"];
 }
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by
 // all orchestrators
+// EVENT_NONCE:
+// EventNonce a nonce provided by the peggy contract that is unique per event fired
+// These event nonces must be relayed in order. This is a correctness issue,
+// if relaying out of order transaction replay attacks become possible
+// OBSERVED:
+// Observed indicates that >67% of validators have attested to the event,
+// and that the event should be executed by the peggy state machine
+// DETAILS:
+// The details of the attestation, withdraw or deposit type
 message Attestation {
-  // EventNonce a nonce provided by the peggy contract that is unique per event fired
-  // These event nonces must be relayed in order. This is a correctness issue,
-  // if relaying out of order transaction replay attacks become possible
-  uint64 event_nonce = 1;
-
-  // Observed indicates that >67% of validators have attested to the event,
-  // and that the event should be executed by the peggy state machine
-  bool observed = 2;
-
-  // Validator votes for the attestation
-  repeated string votes = 3;
-
-  // Details contains the claim details
-  google.protobuf.Any details =
-      4 [(cosmos_proto.accepts_interface) = "EthereumClaim"];
+  uint64              event_nonce = 1;
+  bool                observed    = 2;
+  repeated string     votes       = 3;
+  google.protobuf.Any details     = 4 [(cosmos_proto.accepts_interface) = "EthereumClaim"];
 }
 
 // ERC20Token unique identifier for an Ethereum ERC20 token.
+// CONTRACT:
+// The contract address on ETH of the token (note: developers should look up
+// the token symbol using the address on ETH to display for UI)
 message ERC20Token {
-  // The amount of the ERC20 token
-  string amount =
-      1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-         (gogoproto.nullable) = false];
-
-  // The contract address on ETH of the token (note: developers should look up
-  // the token symbol using the address on ETH to display for UI)
+  string amount   = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
   string contract = 2;
 }
