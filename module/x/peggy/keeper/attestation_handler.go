@@ -19,6 +19,24 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		return sdkerrors.Wrapf(types.ErrInvalid, "unpacking attestation details: %s", err)
 	}
 	switch claim := ud.(type) {
+	case *types.MsgDepositClaim:
+		token := types.ERC20Token{
+			claim.Amount,
+			claim.TokenContract,
+		}
+		coin := token.PeggyCoin()
+		vouchers := sdk.Coins{coin}
+		if err = a.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers); err != nil {
+			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", vouchers)
+		}
+
+		addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
+		if err != nil {
+			return sdkerrors.Wrap(err, "invalid reciever address")
+		}
+		if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, vouchers); err != nil {
+			return sdkerrors.Wrap(err, "transfer vouchers")
+		}
 	case *types.DepositClaim:
 		coin := claim.Erc20Token.PeggyCoin()
 		vouchers := sdk.Coins{coin}
@@ -35,6 +53,8 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		}
 	case *types.WithdrawClaim:
 		a.keeper.OutgoingTxBatchExecuted(ctx, claim.Erc20Token.Contract, claim.BatchNonce)
+	case *types.MsgWithdrawClaim:
+		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
 
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", ud.GetType())
