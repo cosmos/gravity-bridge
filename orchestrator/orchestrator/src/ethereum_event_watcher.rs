@@ -21,10 +21,11 @@ pub async fn check_for_events(
     fee: Coin,
     last_checked_block: Uint256,
 ) -> Result<Uint256, PeggyError> {
+    let starting_block = last_checked_block + 1u8.into();
     let latest_block = web3.eth_block_number().await?;
     let deposits = web3
         .check_for_events(
-            last_checked_block.clone(),
+            starting_block.clone(),
             Some(latest_block.clone()),
             vec![peggy_contract_address],
             "SendToCosmosEvent(address,address,bytes32,uint256,uint256)",
@@ -37,7 +38,7 @@ pub async fn check_for_events(
 
     let batches = web3
         .check_for_events(
-            last_checked_block.clone(),
+            starting_block.clone(),
             Some(latest_block.clone()),
             vec![peggy_contract_address],
             "TransactionBatchExecutedEvent(uint256,address,uint256)",
@@ -48,7 +49,7 @@ pub async fn check_for_events(
 
     let valsets = web3
         .check_for_events(
-            last_checked_block.clone(),
+            starting_block.clone(),
             Some(latest_block.clone()),
             vec![peggy_contract_address],
             "ValsetUpdatedEvent(uint256,address[],uint256[])",
