@@ -111,20 +111,6 @@ func GetClaimKey(claimType ClaimType, nonce uint64, validator sdk.ValAddress, de
 	return key
 }
 
-// GetLastNonceByClaimTypeSecondIndexKeyPrefix returns the following key format
-// prefix type
-// [0xf][0 0 0 1]
-func GetLastNonceByClaimTypeSecondIndexKeyPrefix(claimType ClaimType) []byte {
-	return append(SecondIndexNonceByClaimKey, []byte{byte(claimType)}...)
-}
-
-// GetLastNonceByClaimTypeSecondIndexKey returns the following key format
-// prefix type         nonce
-// [0xf][0 0 0 1][0 0 0 0 0 0 0 1]
-func GetLastNonceByClaimTypeSecondIndexKey(claimType ClaimType, nonce uint64) []byte {
-	return append(GetLastNonceByClaimTypeSecondIndexKeyPrefix(claimType), UInt64Bytes(nonce)...)
-}
-
 // GetAttestationKey returns the following key format
 // prefix     nonce                             attestation-details-hash
 // [0x6][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
@@ -167,13 +153,6 @@ func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
 	copy(r[len(SecondIndexOutgoingTXFeeKey):], er.Contract)
 	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(er.Contract):], sdk.Uint64ToBigEndian(fee.Amount.Uint64()))
 	return r
-}
-
-// GetDenominatorKey returns the following key format
-// prefix           eth-contract-address
-// [0x0][0xc783df8a850f42e7F7e57013759C285caa701eB6]
-func GetDenominatorKey(voucherDenominator string) []byte {
-	return append(DenomiatorPrefix, []byte(voucherDenominator)...)
 }
 
 // GetLastEventNonceByValidatorKey indexes lateset event nonce by validator
