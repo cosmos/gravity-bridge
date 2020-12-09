@@ -11,14 +11,12 @@ import (
 )
 
 var (
-	_ sdk.Msg = &MsgCreateEthereumClaims{}
 	_ sdk.Msg = &MsgValsetConfirm{}
 	_ sdk.Msg = &MsgValsetRequest{}
 	_ sdk.Msg = &MsgSetEthAddress{}
 	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
-	_ sdk.Msg = &MsgCreateEthereumClaims{}
 )
 
 // NewMsgValsetConfirm returns a new msgValsetConfirm
@@ -304,8 +302,6 @@ type EthereumClaim interface {
 }
 
 var (
-	_ EthereumClaim = &DepositClaim{}
-	_ EthereumClaim = &WithdrawClaim{}
 	_ EthereumClaim = &MsgDepositClaim{}
 	_ EthereumClaim = &MsgWithdrawClaim{}
 )
@@ -418,116 +414,3 @@ func (msg MsgWithdrawClaim) Type() string { return "withdraw_claim" }
 const (
 	TypeMsgDepositClaim = "deposit_claim"
 )
-
-// GetType returns the type of the claim
-func (e *DepositClaim) GetType() ClaimType {
-	return CLAIM_TYPE_DEPOSIT
-}
-
-// GetEventNonce returns the event nonce for the claim
-func (e *DepositClaim) GetEventNonce() uint64 {
-	return e.Nonce
-}
-
-// ValidateBasic performs stateless checks
-func (e *DepositClaim) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(e.CosmosReceiver); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.CosmosReceiver)
-	}
-	if err := ValidateEthAddress(e.EthereumSender); err != nil {
-		return sdkerrors.Wrap(err, "eth signer")
-	}
-	if err := e.Erc20Token.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "erc20 token")
-	}
-	if e.Nonce == 0 {
-		return fmt.Errorf("nonce == 0")
-	}
-	return nil
-}
-
-// Hash implements BridgeDeposit.Hash
-func (b *DepositClaim) Hash() []byte {
-	path := fmt.Sprintf("%s/%s/%s/", b.Erc20Token.String(), string(b.EthereumSender), b.CosmosReceiver)
-	return tmhash.Sum([]byte(path))
-}
-
-// GetType returns the claim type
-func (e *WithdrawClaim) GetType() ClaimType {
-	return CLAIM_TYPE_WITHDRAW
-}
-
-// ValidateBasic performs stateless checks
-func (e *WithdrawClaim) ValidateBasic() error {
-	if e.EventNonce == 0 {
-		return fmt.Errorf("event_nonce == 0")
-	}
-	if e.BatchNonce == 0 {
-		return fmt.Errorf("batch_nonce == 0")
-	}
-	return nil
-}
-
-// Hash implements WithdrawBatch.Hash
-func (b *WithdrawClaim) Hash() []byte {
-	path := fmt.Sprintf("%s/%d/", b.Erc20Token, b.BatchNonce)
-	return tmhash.Sum([]byte(path))
-}
-
-const (
-	// TypeMsgCreateEthereumClaims is the claim type
-	TypeMsgCreateEthereumClaims = "create_eth_claims"
-)
-
-// NewMsgCreateEthereumClaims returns a new msgCreateEthereumClaims
-func NewMsgCreateEthereumClaims(ethereumChainID uint64, bridgeContractAddress string, orchestrator sdk.AccAddress, deposits []DepositClaim, withdraws []WithdrawClaim) *MsgCreateEthereumClaims {
-	return &MsgCreateEthereumClaims{EthereumChainId: ethereumChainID, BridgeContractAddress: bridgeContractAddress, Orchestrator: orchestrator.String(), Deposits: deposits, Withdraws: withdraws}
-}
-
-// Route returns the route for the msg
-func (m MsgCreateEthereumClaims) Route() string {
-	return RouterKey
-}
-
-// Type returns the type of msg
-func (m MsgCreateEthereumClaims) Type() string {
-	return TypeMsgCreateEthereumClaims
-}
-
-// ValidateBasic performs stateless checks on the message
-func (m MsgCreateEthereumClaims) ValidateBasic() error {
-	// todo: validate ethereum chain id
-	if _, err := sdk.AccAddressFromBech32(m.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, m.Orchestrator)
-	}
-	if err := ValidateEthAddress(m.BridgeContractAddress); err != nil {
-		return sdkerrors.Wrap(err, "ethereum address")
-	}
-	for i, claim := range m.Deposits {
-		if err := claim.ValidateBasic(); err != nil {
-			return sdkerrors.Wrapf(err, "deposit claim %d failed ValidateBasic()", i)
-		}
-	}
-	for i, claim := range m.Withdraws {
-		if err := claim.ValidateBasic(); err != nil {
-			return sdkerrors.Wrapf(err, "withdraw claim %d failed ValidateBasic()", i)
-		}
-	}
-	return nil
-}
-
-// GetSignBytes returns the bytes to sign over
-// TODO: deperecate GetSignBytes methods
-func (m MsgCreateEthereumClaims) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(m)
-	return sdk.MustSortJSON(bz)
-}
-
-// GetSigners returns the signers of the message
-func (m MsgCreateEthereumClaims) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(m.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{acc}
-}

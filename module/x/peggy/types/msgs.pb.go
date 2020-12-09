@@ -11,7 +11,6 @@ import (
 	_ "github.com/gogo/protobuf/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
-	_ "github.com/regen-network/cosmos-proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -878,79 +877,6 @@ func (m *MsgWithdrawClaimResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWithdrawClaimResponse proto.InternalMessageInfo
 
-// EthereumBridgeDepositClaim
-// When more than 66% of the active validator set has
-// claimed to have seen the deposit enter the ethereum blockchain coins are
-// issued to the Cosmos address in question
-// -------------
-type DepositClaim struct {
-	Nonce          uint64      `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	Erc20Token     *ERC20Token `protobuf:"bytes,2,opt,name=erc20_token,json=erc20Token,proto3" json:"erc20_token,omitempty"`
-	EthereumSender string      `protobuf:"bytes,3,opt,name=ethereum_sender,json=ethereumSender,proto3" json:"ethereum_sender,omitempty"`
-	CosmosReceiver string      `protobuf:"bytes,4,opt,name=cosmos_receiver,json=cosmosReceiver,proto3" json:"cosmos_receiver,omitempty"`
-}
-
-func (m *DepositClaim) Reset()         { *m = DepositClaim{} }
-func (m *DepositClaim) String() string { return proto.CompactTextString(m) }
-func (*DepositClaim) ProtoMessage()    {}
-func (*DepositClaim) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b6627b296db358, []int{15}
-}
-func (m *DepositClaim) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *DepositClaim) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_DepositClaim.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *DepositClaim) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DepositClaim.Merge(m, src)
-}
-func (m *DepositClaim) XXX_Size() int {
-	return m.Size()
-}
-func (m *DepositClaim) XXX_DiscardUnknown() {
-	xxx_messageInfo_DepositClaim.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_DepositClaim proto.InternalMessageInfo
-
-func (m *DepositClaim) GetNonce() uint64 {
-	if m != nil {
-		return m.Nonce
-	}
-	return 0
-}
-
-func (m *DepositClaim) GetErc20Token() *ERC20Token {
-	if m != nil {
-		return m.Erc20Token
-	}
-	return nil
-}
-
-func (m *DepositClaim) GetEthereumSender() string {
-	if m != nil {
-		return m.EthereumSender
-	}
-	return ""
-}
-
-func (m *DepositClaim) GetCosmosReceiver() string {
-	if m != nil {
-		return m.CosmosReceiver
-	}
-	return ""
-}
-
 // TODO: write response data here
 type MsgDepositClaimResponse struct {
 }
@@ -959,7 +885,7 @@ func (m *MsgDepositClaimResponse) Reset()         { *m = MsgDepositClaimResponse
 func (m *MsgDepositClaimResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgDepositClaimResponse) ProtoMessage()    {}
 func (*MsgDepositClaimResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b6627b296db358, []int{16}
+	return fileDescriptor_75b6627b296db358, []int{15}
 }
 func (m *MsgDepositClaimResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -988,192 +914,6 @@ func (m *MsgDepositClaimResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgDepositClaimResponse proto.InternalMessageInfo
 
-// WithdrawClaim claims that a batch of withdrawal
-// operations on the bridge contract was executed.
-type WithdrawClaim struct {
-	EventNonce uint64      `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
-	BatchNonce uint64      `protobuf:"varint,2,opt,name=batch_nonce,json=batchNonce,proto3" json:"batch_nonce,omitempty"`
-	Erc20Token *ERC20Token `protobuf:"bytes,3,opt,name=erc20_token,json=erc20Token,proto3" json:"erc20_token,omitempty"`
-}
-
-func (m *WithdrawClaim) Reset()         { *m = WithdrawClaim{} }
-func (m *WithdrawClaim) String() string { return proto.CompactTextString(m) }
-func (*WithdrawClaim) ProtoMessage()    {}
-func (*WithdrawClaim) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b6627b296db358, []int{17}
-}
-func (m *WithdrawClaim) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *WithdrawClaim) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_WithdrawClaim.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *WithdrawClaim) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_WithdrawClaim.Merge(m, src)
-}
-func (m *WithdrawClaim) XXX_Size() int {
-	return m.Size()
-}
-func (m *WithdrawClaim) XXX_DiscardUnknown() {
-	xxx_messageInfo_WithdrawClaim.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_WithdrawClaim proto.InternalMessageInfo
-
-func (m *WithdrawClaim) GetEventNonce() uint64 {
-	if m != nil {
-		return m.EventNonce
-	}
-	return 0
-}
-
-func (m *WithdrawClaim) GetBatchNonce() uint64 {
-	if m != nil {
-		return m.BatchNonce
-	}
-	return 0
-}
-
-func (m *WithdrawClaim) GetErc20Token() *ERC20Token {
-	if m != nil {
-		return m.Erc20Token
-	}
-	return nil
-}
-
-// MsgCreateEthereumClaims
-// this message essentially acts as the oracle between Ethereum and Cosmos, when
-// an orchestrator sees that a batch/ deposit/ multisig set update has been
-// submitted on to the Ethereum blockchain they will submit this message which
-// acts as their oracle attestation. When more than 66% of the active validator
-// set has claimed to have seen the transaction enter the ethereum blockchain it
-// is "observed" and state transitions and operations are triggered on the
-// cosmos side.
-// This is not currently sendable using legacy Amino, so it's not depricated,
-// but also not possible to use currently. MsgDepositClaim and MsgWtihdrawClaim
-// are the replacement.
-type MsgCreateEthereumClaims struct {
-	EthereumChainId       uint64          `protobuf:"varint,1,opt,name=ethereum_chain_id,json=ethereumChainId,proto3" json:"ethereum_chain_id,omitempty"`
-	BridgeContractAddress string          `protobuf:"bytes,2,opt,name=bridge_contract_address,json=bridgeContractAddress,proto3" json:"bridge_contract_address,omitempty"`
-	Orchestrator          string          `protobuf:"bytes,3,opt,name=orchestrator,proto3" json:"orchestrator,omitempty"`
-	Deposits              []DepositClaim  `protobuf:"bytes,4,rep,name=deposits,proto3,castrepeated=[]DepositClaim" json:"deposits"`
-	Withdraws             []WithdrawClaim `protobuf:"bytes,5,rep,name=withdraws,proto3,castrepeated=[]WithdrawClaim" json:"withdraws"`
-}
-
-func (m *MsgCreateEthereumClaims) Reset()         { *m = MsgCreateEthereumClaims{} }
-func (m *MsgCreateEthereumClaims) String() string { return proto.CompactTextString(m) }
-func (*MsgCreateEthereumClaims) ProtoMessage()    {}
-func (*MsgCreateEthereumClaims) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b6627b296db358, []int{18}
-}
-func (m *MsgCreateEthereumClaims) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgCreateEthereumClaims) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgCreateEthereumClaims.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgCreateEthereumClaims) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgCreateEthereumClaims.Merge(m, src)
-}
-func (m *MsgCreateEthereumClaims) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgCreateEthereumClaims) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgCreateEthereumClaims.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgCreateEthereumClaims proto.InternalMessageInfo
-
-func (m *MsgCreateEthereumClaims) GetEthereumChainId() uint64 {
-	if m != nil {
-		return m.EthereumChainId
-	}
-	return 0
-}
-
-func (m *MsgCreateEthereumClaims) GetBridgeContractAddress() string {
-	if m != nil {
-		return m.BridgeContractAddress
-	}
-	return ""
-}
-
-func (m *MsgCreateEthereumClaims) GetOrchestrator() string {
-	if m != nil {
-		return m.Orchestrator
-	}
-	return ""
-}
-
-func (m *MsgCreateEthereumClaims) GetDeposits() []DepositClaim {
-	if m != nil {
-		return m.Deposits
-	}
-	return nil
-}
-
-func (m *MsgCreateEthereumClaims) GetWithdraws() []WithdrawClaim {
-	if m != nil {
-		return m.Withdraws
-	}
-	return nil
-}
-
-// TODO: write response data here
-type MsgCreateEthereumClaimsResponse struct {
-}
-
-func (m *MsgCreateEthereumClaimsResponse) Reset()         { *m = MsgCreateEthereumClaimsResponse{} }
-func (m *MsgCreateEthereumClaimsResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgCreateEthereumClaimsResponse) ProtoMessage()    {}
-func (*MsgCreateEthereumClaimsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b6627b296db358, []int{19}
-}
-func (m *MsgCreateEthereumClaimsResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgCreateEthereumClaimsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgCreateEthereumClaimsResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgCreateEthereumClaimsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgCreateEthereumClaimsResponse.Merge(m, src)
-}
-func (m *MsgCreateEthereumClaimsResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgCreateEthereumClaimsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgCreateEthereumClaimsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgCreateEthereumClaimsResponse proto.InternalMessageInfo
-
 func init() {
 	proto.RegisterType((*MsgValsetConfirm)(nil), "peggy.v1.MsgValsetConfirm")
 	proto.RegisterType((*MsgValsetConfirmResponse)(nil), "peggy.v1.MsgValsetConfirmResponse")
@@ -1190,91 +930,71 @@ func init() {
 	proto.RegisterType((*MsgDepositClaim)(nil), "peggy.v1.MsgDepositClaim")
 	proto.RegisterType((*MsgWithdrawClaim)(nil), "peggy.v1.MsgWithdrawClaim")
 	proto.RegisterType((*MsgWithdrawClaimResponse)(nil), "peggy.v1.MsgWithdrawClaimResponse")
-	proto.RegisterType((*DepositClaim)(nil), "peggy.v1.DepositClaim")
 	proto.RegisterType((*MsgDepositClaimResponse)(nil), "peggy.v1.MsgDepositClaimResponse")
-	proto.RegisterType((*WithdrawClaim)(nil), "peggy.v1.WithdrawClaim")
-	proto.RegisterType((*MsgCreateEthereumClaims)(nil), "peggy.v1.MsgCreateEthereumClaims")
-	proto.RegisterType((*MsgCreateEthereumClaimsResponse)(nil), "peggy.v1.MsgCreateEthereumClaimsResponse")
 }
 
 func init() { proto.RegisterFile("peggy/v1/msgs.proto", fileDescriptor_75b6627b296db358) }
 
 var fileDescriptor_75b6627b296db358 = []byte{
-	// 1179 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x57, 0xcd, 0x8f, 0xdb, 0x44,
-	0x14, 0x5f, 0x6f, 0xb2, 0xdb, 0xcd, 0x64, 0x3f, 0xa8, 0xd9, 0x6e, 0x12, 0xd3, 0x26, 0xbb, 0x96,
-	0xa0, 0x0b, 0xd2, 0xc6, 0xbb, 0x41, 0x80, 0xc4, 0x01, 0x89, 0xa4, 0x5b, 0xa9, 0x95, 0xb6, 0x87,
-	0x6c, 0x05, 0x12, 0x55, 0x65, 0x39, 0xf6, 0xab, 0x6d, 0x35, 0xf6, 0xa4, 0x9e, 0x49, 0x4a, 0xaf,
-	0x48, 0x5c, 0x11, 0x12, 0x48, 0x1c, 0x38, 0x70, 0x86, 0x33, 0x27, 0x24, 0x24, 0x8e, 0x3d, 0x56,
-	0x70, 0x41, 0x1c, 0x0a, 0xda, 0xe5, 0x0f, 0x41, 0x9e, 0x19, 0x4f, 0x3c, 0xc6, 0x69, 0x17, 0x89,
-	0x53, 0x3c, 0xef, 0xcd, 0xbc, 0xdf, 0xfb, 0xf8, 0xcd, 0x7b, 0x13, 0xf4, 0xea, 0x04, 0x7c, 0xff,
-	0x89, 0x35, 0x3b, 0xb2, 0x22, 0xe2, 0x93, 0xee, 0x24, 0xc1, 0x14, 0xeb, 0x6b, 0x4c, 0xd8, 0x9d,
-	0x1d, 0x19, 0x6d, 0x17, 0x93, 0x08, 0x13, 0x6b, 0xe4, 0x10, 0xb0, 0x66, 0x47, 0x23, 0xa0, 0xce,
-	0x91, 0xe5, 0xe2, 0x30, 0xe6, 0x3b, 0x8d, 0x6d, 0x1f, 0xfb, 0x98, 0x7d, 0x5a, 0xe9, 0x97, 0x90,
-	0x1a, 0xd2, 0xa8, 0x43, 0x29, 0x10, 0xea, 0xd0, 0x10, 0x67, 0x27, 0xae, 0xfa, 0x18, 0xfb, 0x63,
-	0xb0, 0x9c, 0x49, 0x68, 0x39, 0x71, 0x8c, 0xb9, 0x52, 0x20, 0x1b, 0x2d, 0x8e, 0x67, 0x73, 0x93,
-	0x7c, 0xc1, 0x55, 0xe6, 0xe7, 0x1a, 0x7a, 0xe5, 0x84, 0xf8, 0x1f, 0x39, 0x63, 0x02, 0x74, 0x80,
-	0xe3, 0x07, 0x61, 0x12, 0xe9, 0xdb, 0x68, 0x25, 0xc6, 0xb1, 0x0b, 0x4d, 0x6d, 0x57, 0xdb, 0xaf,
-	0x0e, 0xf9, 0x42, 0xbf, 0x8a, 0x6a, 0x33, 0x67, 0x1c, 0x7a, 0x0e, 0xc5, 0x49, 0x73, 0x79, 0x57,
-	0xdb, 0xaf, 0x0d, 0xe7, 0x02, 0xbd, 0x83, 0xea, 0x40, 0x03, 0xdb, 0xf1, 0xbc, 0x04, 0x08, 0x69,
-	0x56, 0x98, 0x1e, 0x01, 0x0d, 0x3e, 0xe4, 0x92, 0xf4, 0x38, 0x09, 0xfd, 0xd8, 0xa1, 0xd3, 0x04,
-	0x9a, 0x55, 0x7e, 0x5c, 0x0a, 0x4c, 0x03, 0x35, 0x8b, 0x6e, 0x0c, 0x81, 0x4c, 0x70, 0x4c, 0xc0,
-	0x3c, 0xcc, 0xb9, 0x38, 0x84, 0x47, 0x53, 0x20, 0x34, 0xb5, 0x96, 0xf0, 0x4f, 0x48, 0x98, 0x9b,
-	0xb5, 0xe1, 0x5c, 0xa0, 0x58, 0x13, 0x27, 0xa4, 0xb5, 0x80, 0x59, 0x3b, 0x05, 0x7a, 0x3c, 0xf7,
-	0xad, 0x89, 0x2e, 0x65, 0x8e, 0x73, 0x5b, 0xd9, 0xf2, 0x25, 0x41, 0x2b, 0x31, 0x55, 0xca, 0x63,
-	0x52, 0x90, 0xa4, 0x17, 0x3f, 0x69, 0x68, 0x9d, 0x29, 0x63, 0xef, 0x2e, 0x3e, 0xa6, 0x81, 0xbe,
-	0x83, 0x56, 0x09, 0xc4, 0x9e, 0x8c, 0x46, 0xac, 0xf4, 0x16, 0x5a, 0x4b, 0xf3, 0xea, 0x01, 0xa1,
-	0x02, 0xff, 0x12, 0xd0, 0xe0, 0x46, 0x9a, 0x83, 0xf7, 0xd0, 0xaa, 0x13, 0xe1, 0x69, 0x4c, 0x19,
-	0x74, 0xbd, 0xd7, 0xea, 0x8a, 0xd2, 0xa6, 0xbc, 0xea, 0x0a, 0x5e, 0x75, 0x07, 0x38, 0x8c, 0xfb,
-	0xd5, 0xa7, 0xcf, 0x3b, 0x4b, 0x43, 0xb1, 0x5d, 0xff, 0x00, 0xa1, 0x51, 0x12, 0x7a, 0x3e, 0xd8,
-	0x0f, 0x80, 0xd7, 0xe2, 0x02, 0x87, 0x6b, 0xfc, 0xc8, 0x4d, 0x00, 0x73, 0x07, 0x6d, 0xe7, 0x7d,
-	0x97, 0x41, 0x1d, 0xa3, 0xad, 0x13, 0xe2, 0x8b, 0x84, 0xf7, 0x1d, 0xea, 0x06, 0x2f, 0xae, 0x53,
-	0x4a, 0x34, 0x0f, 0x62, 0x1c, 0x89, 0xc8, 0xf8, 0xc2, 0x6c, 0xa1, 0x46, 0xc1, 0x8c, 0x44, 0xf8,
-	0x5e, 0x63, 0x10, 0x82, 0x21, 0x1c, 0xa2, 0x9c, 0xad, 0xaf, 0xa3, 0x4d, 0x8a, 0x1f, 0x42, 0x6c,
-	0xbb, 0x38, 0xa6, 0x89, 0xe3, 0x66, 0xd9, 0xdb, 0x60, 0xd2, 0x81, 0x10, 0xea, 0xd7, 0x50, 0xca,
-	0x51, 0x3b, 0x2d, 0x1a, 0x24, 0x59, 0x09, 0x81, 0x06, 0xa7, 0x4c, 0xa0, 0x96, 0xbf, 0xfa, 0xc2,
-	0xf2, 0xaf, 0x14, 0xcb, 0xcf, 0xc3, 0xc8, 0xbb, 0x2a, 0xc3, 0xf8, 0x66, 0x99, 0x85, 0x71, 0x03,
-	0x26, 0x98, 0x84, 0x74, 0x30, 0x76, 0xc2, 0x88, 0x5d, 0xa0, 0x19, 0xc4, 0xd4, 0xce, 0x07, 0x83,
-	0x98, 0xe8, 0xce, 0x7f, 0x89, 0xe8, 0xa6, 0xc2, 0x8a, 0x5a, 0xbf, 0x9b, 0x56, 0xef, 0x8f, 0xe7,
-	0x9d, 0x37, 0xfc, 0x90, 0x06, 0xd3, 0x51, 0xd7, 0xc5, 0x91, 0x68, 0x01, 0xe2, 0xe7, 0x80, 0x78,
-	0x0f, 0x2d, 0xfa, 0x64, 0x02, 0xa4, 0x7b, 0x2b, 0xa6, 0x92, 0x24, 0xd7, 0xd1, 0x16, 0xd0, 0x00,
-	0x12, 0x98, 0x46, 0xb6, 0x60, 0x26, 0x4f, 0xc0, 0x66, 0x26, 0x3e, 0xe5, 0x0c, 0xbd, 0x8e, 0xb6,
-	0x44, 0x7f, 0x49, 0xc0, 0x85, 0x70, 0x06, 0x89, 0xc8, 0xc5, 0x26, 0x17, 0x0f, 0x85, 0x54, 0x37,
-	0xd1, 0x3a, 0x4e, 0xdc, 0x00, 0x08, 0x4d, 0x58, 0x3e, 0x57, 0xd9, 0x2e, 0x45, 0x66, 0x7e, 0xc7,
-	0xfb, 0xd1, 0xc7, 0x21, 0x0d, 0xbc, 0xc4, 0x79, 0x7c, 0xc1, 0xd4, 0x74, 0x50, 0x7d, 0x94, 0x26,
-	0x58, 0x6c, 0x58, 0xe6, 0x1b, 0x98, 0x68, 0x51, 0xee, 0x2a, 0x65, 0xb9, 0x2b, 0x7a, 0x58, 0x2d,
-	0xf1, 0x90, 0xdf, 0x6a, 0xc5, 0x41, 0x59, 0xd7, 0x5f, 0x34, 0xb4, 0xae, 0x14, 0xb5, 0x9c, 0x9b,
-	0xef, 0xa0, 0x3a, 0x24, 0x6e, 0xef, 0xd0, 0x66, 0xe8, 0xcc, 0xdd, 0x7a, 0x6f, 0xbb, 0x9b, 0xcd,
-	0x87, 0xee, 0xf1, 0x70, 0xd0, 0x3b, 0xbc, 0x9b, 0xea, 0x86, 0x88, 0x6d, 0x64, 0xdf, 0x65, 0x15,
-	0xa9, 0x5c, 0xb4, 0x22, 0xd5, 0xb2, 0x8a, 0xbc, 0x7f, 0xf9, 0xd7, 0x1f, 0x0f, 0x36, 0x8e, 0xc5,
-	0x61, 0xe6, 0xb1, 0x60, 0x6d, 0x3e, 0x08, 0x19, 0xdd, 0xb7, 0x1a, 0xda, 0xf8, 0xbf, 0x0b, 0x53,
-	0x48, 0x45, 0xe5, 0x62, 0xa9, 0x28, 0x73, 0xfc, 0xe7, 0x65, 0x7e, 0xdf, 0x12, 0x70, 0x28, 0x28,
-	0x2a, 0xa2, 0xbf, 0x85, 0x2e, 0xcb, 0xcc, 0xb9, 0x81, 0x13, 0xc6, 0x76, 0xe8, 0x09, 0x6f, 0x65,
-	0x4a, 0x07, 0xa9, 0xfc, 0x96, 0xa7, 0xbf, 0x8b, 0x1a, 0xa2, 0x39, 0x66, 0x5c, 0x91, 0x43, 0x8d,
-	0xdf, 0xb7, 0x2b, 0x5c, 0x9d, 0x91, 0x26, 0x9b, 0x21, 0x45, 0xee, 0x54, 0xfe, 0xcd, 0x1d, 0xfd,
-	0x36, 0x5a, 0xf3, 0x78, 0x66, 0x49, 0xb3, 0xba, 0x5b, 0xd9, 0xaf, 0xf7, 0x76, 0xe6, 0xa1, 0xe6,
-	0x73, 0xde, 0xdf, 0x49, 0x6f, 0xed, 0x0f, 0x7f, 0x76, 0x36, 0xef, 0xdd, 0x57, 0x6a, 0x21, 0xcf,
-	0xeb, 0x77, 0x50, 0xed, 0xb1, 0x28, 0x06, 0x69, 0xae, 0x30, 0x63, 0x8d, 0xb9, 0x31, 0xa5, 0x4e,
-	0xfd, 0x86, 0xb0, 0xb6, 0x75, 0xef, 0xbe, 0x4a, 0xdc, 0xb9, 0x09, 0x73, 0x0f, 0x75, 0x16, 0xa4,
-	0x2f, 0x23, 0x40, 0xef, 0xeb, 0x35, 0x54, 0x39, 0x21, 0xbe, 0xfe, 0x08, 0x6d, 0xa8, 0x0f, 0x06,
-	0x63, 0x0e, 0x5c, 0x9c, 0xe2, 0x86, 0xb9, 0x58, 0x27, 0x99, 0xb5, 0xfb, 0xd9, 0x6f, 0x7f, 0x7f,
-	0xb5, 0x6c, 0x98, 0x4d, 0x4b, 0xbe, 0x71, 0x66, 0x6c, 0x63, 0x5a, 0x03, 0x86, 0x20, 0x21, 0xb3,
-	0x07, 0x40, 0x19, 0xa4, 0xd0, 0x95, 0x42, 0x16, 0x9f, 0x01, 0x8b, 0x21, 0xc5, 0x78, 0xd2, 0x13,
-	0xb4, 0xa1, 0xbe, 0x12, 0x54, 0x48, 0x45, 0x57, 0x80, 0x2c, 0x9f, 0xf9, 0x7b, 0x0c, 0xf2, 0x35,
-	0xb3, 0x35, 0x87, 0x4c, 0xf1, 0x72, 0xcf, 0x26, 0x7d, 0x84, 0x6a, 0xb9, 0x27, 0x41, 0xc1, 0xa6,
-	0x90, 0x1b, 0xed, 0x72, 0xb9, 0xc4, 0xb9, 0xc6, 0x70, 0x1a, 0xe6, 0x95, 0x3c, 0x4e, 0xec, 0xd9,
-	0x14, 0xa7, 0x58, 0x7a, 0x84, 0xd6, 0x95, 0x11, 0xdd, 0x52, 0xcc, 0xe5, 0x55, 0xc6, 0xde, 0x42,
-	0x95, 0x04, 0xeb, 0x30, 0xb0, 0x96, 0xd9, 0x98, 0x83, 0x89, 0x04, 0xda, 0xec, 0x9a, 0xa7, 0x70,
-	0xca, 0xb8, 0x56, 0xe1, 0xf2, 0xaa, 0x02, 0x5c, 0xe9, 0xe4, 0x2c, 0x81, 0x13, 0x14, 0x11, 0x70,
-	0x5f, 0x68, 0x68, 0xbb, 0xb4, 0x07, 0x14, 0x8c, 0x97, 0x6c, 0x31, 0xde, 0x7c, 0xe9, 0x16, 0xe9,
-	0xc7, 0x3e, 0xf3, 0xc3, 0x34, 0x77, 0x73, 0x7e, 0xb0, 0xfd, 0xf6, 0xbc, 0xd1, 0x70, 0xdc, 0xa8,
-	0x30, 0x12, 0xd4, 0xf8, 0xf3, 0xaa, 0x42, 0xfc, 0xa5, 0x3d, 0xb8, 0x24, 0x7e, 0xd1, 0x11, 0x38,
-	0x5e, 0x7a, 0x51, 0xd4, 0x1e, 0xad, 0xb2, 0x56, 0xd1, 0x15, 0x58, 0x5b, 0x3e, 0xd3, 0x4a, 0x2e,
-	0x4a, 0xd6, 0x34, 0x38, 0x64, 0xff, 0xf6, 0xd3, 0xb3, 0xb6, 0xf6, 0xec, 0xac, 0xad, 0xfd, 0x75,
-	0xd6, 0xd6, 0xbe, 0x3c, 0x6f, 0x2f, 0x3d, 0x3b, 0x6f, 0x2f, 0xfd, 0x7e, 0xde, 0x5e, 0xfa, 0xe4,
-	0x30, 0xf7, 0xe6, 0x70, 0xc6, 0x34, 0x00, 0xe7, 0x20, 0x06, 0x2a, 0x0c, 0x45, 0xd8, 0x9b, 0x8e,
-	0xc1, 0xfa, 0x54, 0x2c, 0xd9, 0x0b, 0x64, 0xb4, 0xca, 0xfe, 0x96, 0xbc, 0xfd, 0x4f, 0x00, 0x00,
-	0x00, 0xff, 0xff, 0xce, 0x65, 0x91, 0xd2, 0x42, 0x0d, 0x00, 0x00,
+	// 922 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x56, 0x4f, 0x6f, 0xdc, 0x44,
+	0x14, 0x8f, 0x93, 0x6d, 0xd2, 0x9d, 0x64, 0x13, 0x64, 0x42, 0xb3, 0x6b, 0x5a, 0x6f, 0x6a, 0x09,
+	0xda, 0x4b, 0xed, 0x6e, 0x39, 0x70, 0x43, 0x62, 0xb7, 0xa9, 0x04, 0x52, 0x38, 0x6c, 0x10, 0x48,
+	0x5c, 0xac, 0x59, 0xfb, 0xd5, 0xb6, 0xba, 0x9e, 0xd9, 0xcc, 0xcc, 0x6e, 0xe9, 0x15, 0xc4, 0x1d,
+	0x89, 0x03, 0x47, 0xce, 0x7c, 0x05, 0x3e, 0x41, 0x8f, 0x95, 0xb8, 0x20, 0x0e, 0x15, 0x4a, 0xf8,
+	0x20, 0xc8, 0x33, 0x63, 0xaf, 0xc7, 0xf2, 0x96, 0xf6, 0x14, 0xcf, 0xef, 0xbd, 0x79, 0xbf, 0xf7,
+	0xe7, 0x37, 0x6f, 0x83, 0xde, 0x5f, 0x40, 0x92, 0xbc, 0x08, 0x56, 0xa3, 0x20, 0xe7, 0x09, 0xf7,
+	0x17, 0x8c, 0x0a, 0x6a, 0xdf, 0x94, 0xa0, 0xbf, 0x1a, 0x39, 0x6e, 0x44, 0x79, 0x4e, 0x79, 0x30,
+	0xc3, 0x1c, 0x82, 0xd5, 0x68, 0x06, 0x02, 0x8f, 0x82, 0x88, 0x66, 0x44, 0x79, 0x3a, 0xc7, 0x09,
+	0x4d, 0xa8, 0xfc, 0x0c, 0x8a, 0x2f, 0x8d, 0xde, 0x4e, 0x28, 0x4d, 0xe6, 0x10, 0xe0, 0x45, 0x16,
+	0x60, 0x42, 0xa8, 0xc0, 0x22, 0xa3, 0x44, 0x47, 0xf7, 0x7e, 0xb2, 0xd0, 0x7b, 0xe7, 0x3c, 0xf9,
+	0x06, 0xcf, 0x39, 0x88, 0x09, 0x25, 0x4f, 0x33, 0x96, 0xdb, 0xc7, 0xe8, 0x06, 0xa1, 0x24, 0x82,
+	0xbe, 0x75, 0x6a, 0xdd, 0xef, 0x4c, 0xd5, 0xc1, 0xbe, 0x8d, 0xba, 0x2b, 0x3c, 0xcf, 0x62, 0x2c,
+	0x28, 0xeb, 0x6f, 0x9f, 0x5a, 0xf7, 0xbb, 0xd3, 0x35, 0x60, 0x0f, 0xd1, 0x3e, 0x88, 0x34, 0xc4,
+	0x71, 0xcc, 0x80, 0xf3, 0xfe, 0x8e, 0xb4, 0x23, 0x10, 0xe9, 0xe7, 0x0a, 0x29, 0xae, 0xf3, 0x2c,
+	0x21, 0x58, 0x2c, 0x19, 0xf4, 0x3b, 0xea, 0x7a, 0x05, 0x78, 0x0e, 0xea, 0x37, 0xd3, 0x98, 0x02,
+	0x5f, 0x50, 0xc2, 0xc1, 0x7b, 0x58, 0x4b, 0x71, 0x0a, 0x97, 0x4b, 0xe0, 0xa2, 0x88, 0xc6, 0xd4,
+	0x27, 0x30, 0x99, 0x66, 0x77, 0xba, 0x06, 0x8c, 0x68, 0xfa, 0x46, 0x15, 0x2d, 0x95, 0xd1, 0x2e,
+	0x40, 0x9c, 0xad, 0x73, 0xeb, 0xa3, 0xbd, 0x32, 0x71, 0x15, 0xab, 0x3c, 0xfe, 0x4f, 0xd1, 0x46,
+	0x4d, 0x3b, 0xed, 0x35, 0x19, 0x4c, 0x55, 0x16, 0x7f, 0x58, 0xe8, 0x40, 0x1a, 0x49, 0xfc, 0x35,
+	0x3d, 0x13, 0xa9, 0x7d, 0x0b, 0xed, 0x72, 0x20, 0x71, 0x55, 0x8d, 0x3e, 0xd9, 0x03, 0x74, 0xb3,
+	0xe8, 0x6b, 0x0c, 0x5c, 0x68, 0xfe, 0x3d, 0x10, 0xe9, 0xe3, 0xa2, 0x07, 0x9f, 0xa2, 0x5d, 0x9c,
+	0xd3, 0x25, 0x11, 0x92, 0x7a, 0xff, 0xd1, 0xc0, 0x57, 0x02, 0xf1, 0x0b, 0x81, 0xf8, 0x5a, 0x20,
+	0xfe, 0x84, 0x66, 0x64, 0xdc, 0x79, 0xf9, 0x7a, 0xb8, 0x35, 0xd5, 0xee, 0xf6, 0x67, 0x08, 0xcd,
+	0x58, 0x16, 0x27, 0x10, 0x3e, 0x05, 0x35, 0x8b, 0xb7, 0xb8, 0xdc, 0x55, 0x57, 0x9e, 0x00, 0x78,
+	0xb7, 0xd0, 0x71, 0x3d, 0xf7, 0xaa, 0xa8, 0x33, 0x74, 0x74, 0xce, 0x13, 0xdd, 0xf0, 0x31, 0x16,
+	0x51, 0xfa, 0xe6, 0x39, 0x15, 0x42, 0x8b, 0x81, 0xd0, 0x5c, 0x57, 0xa6, 0x0e, 0xde, 0x00, 0x9d,
+	0x34, 0xc2, 0x54, 0x0c, 0xbf, 0x5b, 0x92, 0x42, 0x2b, 0x44, 0x51, 0xb4, 0xab, 0xf5, 0x23, 0x74,
+	0x28, 0xe8, 0x33, 0x20, 0x61, 0x44, 0x89, 0x60, 0x38, 0x2a, 0xbb, 0xd7, 0x93, 0xe8, 0x44, 0x83,
+	0xf6, 0x1d, 0x54, 0x68, 0x34, 0x2c, 0x86, 0x06, 0xac, 0x1c, 0x21, 0x88, 0xf4, 0x42, 0x02, 0xe6,
+	0xf8, 0x3b, 0x6f, 0x1c, 0xff, 0x8d, 0xe6, 0xf8, 0x55, 0x19, 0xf5, 0x54, 0xab, 0x32, 0x7e, 0xdd,
+	0x96, 0x65, 0x3c, 0x86, 0x05, 0xe5, 0x99, 0x98, 0xcc, 0x71, 0x96, 0xcb, 0x07, 0xb4, 0x02, 0x22,
+	0xc2, 0x7a, 0x31, 0x48, 0x42, 0x5f, 0xbd, 0x4b, 0x45, 0x4f, 0x0c, 0x55, 0x74, 0xc7, 0x7e, 0x31,
+	0xbd, 0xbf, 0x5f, 0x0f, 0x3f, 0x4e, 0x32, 0x91, 0x2e, 0x67, 0x7e, 0x44, 0xf3, 0x40, 0x2f, 0x12,
+	0xf5, 0xe7, 0x01, 0x8f, 0x9f, 0x05, 0xe2, 0xc5, 0x02, 0xb8, 0xff, 0x05, 0x11, 0x95, 0x48, 0xee,
+	0xa1, 0x23, 0x10, 0x29, 0x30, 0x58, 0xe6, 0xa1, 0x56, 0xa6, 0x6a, 0xc0, 0x61, 0x09, 0x5f, 0x28,
+	0x85, 0xde, 0x43, 0x47, 0x2a, 0x50, 0xc8, 0x20, 0x82, 0x6c, 0x05, 0x4c, 0xf7, 0xe2, 0x50, 0xc1,
+	0x53, 0x8d, 0xda, 0x1e, 0x3a, 0xa0, 0x2c, 0x4a, 0x81, 0x0b, 0x26, 0xfb, 0xb9, 0x2b, 0xbd, 0x0c,
+	0xcc, 0xfb, 0x4d, 0xed, 0xa3, 0x6f, 0x33, 0x91, 0xc6, 0x0c, 0x3f, 0x7f, 0xcb, 0xd6, 0x0c, 0xd1,
+	0xfe, 0xac, 0x68, 0xb0, 0x76, 0xd8, 0x56, 0x0e, 0x12, 0xda, 0xd4, 0xbb, 0x9d, 0xb6, 0xde, 0x35,
+	0x33, 0xec, 0xb4, 0x64, 0xa8, 0x5e, 0xb5, 0x91, 0x60, 0x35, 0x57, 0x35, 0xf2, 0xfa, 0x58, 0x4b,
+	0xd3, 0xa3, 0x1f, 0xf7, 0xd0, 0xce, 0x39, 0x4f, 0xec, 0x4b, 0xd4, 0x33, 0x97, 0xad, 0xe3, 0x97,
+	0x0b, 0xde, 0x6f, 0x6e, 0x40, 0xc7, 0xdb, 0x6c, 0xab, 0x38, 0x4f, 0x7f, 0xf8, 0xf3, 0xdf, 0x5f,
+	0xb6, 0x1d, 0xaf, 0x1f, 0x54, 0xbf, 0x1e, 0x2b, 0xe9, 0x58, 0xd4, 0x2a, 0x19, 0x2a, 0xca, 0x72,
+	0x79, 0xb6, 0x51, 0x6a, 0x5b, 0x2b, 0x65, 0x73, 0x85, 0x6e, 0xa6, 0xd4, 0x4f, 0xdb, 0x66, 0xa8,
+	0x67, 0x6e, 0x58, 0x93, 0xd2, 0xb0, 0x35, 0x28, 0xdb, 0xf7, 0xe5, 0x5d, 0x49, 0xf9, 0xa1, 0x37,
+	0x58, 0x53, 0x16, 0x7c, 0xb5, 0x9f, 0x1c, 0x7b, 0x86, 0xba, 0xb5, 0x75, 0xda, 0x88, 0xa9, 0x71,
+	0xc7, 0x6d, 0xc7, 0x2b, 0x9e, 0x3b, 0x92, 0xe7, 0xc4, 0xfb, 0xa0, 0xce, 0x43, 0xe2, 0x50, 0xd0,
+	0x82, 0xcb, 0xce, 0xd1, 0x81, 0xb1, 0xde, 0x06, 0x46, 0xb8, 0xba, 0xc9, 0xb9, 0xbb, 0xd1, 0x54,
+	0x91, 0x0d, 0x25, 0xd9, 0xc0, 0x3b, 0x59, 0x93, 0xe9, 0x06, 0x86, 0x52, 0xbb, 0x05, 0x9d, 0xb1,
+	0xea, 0x4c, 0xba, 0xba, 0xa9, 0x41, 0xd7, 0xba, 0x75, 0x5a, 0xe8, 0xb4, 0x44, 0xd6, 0x74, 0xc6,
+	0x4a, 0x32, 0xe9, 0xea, 0xa6, 0x06, 0x5d, 0x9b, 0xe2, 0xdb, 0xe8, 0x62, 0xe5, 0x17, 0x46, 0x32,
+	0xfc, 0x25, 0xea, 0x99, 0xef, 0xdc, 0x14, 0x89, 0x61, 0x6b, 0x88, 0xa4, 0xfd, 0xf9, 0xb5, 0xe8,
+	0xf2, 0xb9, 0x76, 0x54, 0x94, 0xe3, 0x2f, 0x5f, 0x5e, 0xb9, 0xd6, 0xab, 0x2b, 0xd7, 0xfa, 0xe7,
+	0xca, 0xb5, 0x7e, 0xbe, 0x76, 0xb7, 0x5e, 0x5d, 0xbb, 0x5b, 0x7f, 0x5d, 0xbb, 0x5b, 0xdf, 0x3d,
+	0xac, 0xad, 0x47, 0x3c, 0x17, 0x29, 0xe0, 0x07, 0x04, 0x84, 0x0e, 0x94, 0xd3, 0x78, 0x39, 0x87,
+	0xe0, 0x7b, 0x7d, 0x94, 0xcb, 0x72, 0xb6, 0x2b, 0xff, 0x83, 0xfa, 0xe4, 0xbf, 0x00, 0x00, 0x00,
+	0xff, 0xff, 0x4d, 0x4c, 0xfc, 0xac, 0xb6, 0x09, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1295,7 +1015,6 @@ type MsgClient interface {
 	SendToEth(ctx context.Context, in *MsgSendToEth, opts ...grpc.CallOption) (*MsgSendToEthResponse, error)
 	RequestBatch(ctx context.Context, in *MsgRequestBatch, opts ...grpc.CallOption) (*MsgRequestBatchResponse, error)
 	ConfirmBatch(ctx context.Context, in *MsgConfirmBatch, opts ...grpc.CallOption) (*MsgConfirmBatchResponse, error)
-	CreateEthereumClaims(ctx context.Context, in *MsgCreateEthereumClaims, opts ...grpc.CallOption) (*MsgCreateEthereumClaimsResponse, error)
 	DepositClaim(ctx context.Context, in *MsgDepositClaim, opts ...grpc.CallOption) (*MsgDepositClaimResponse, error)
 	WithdrawClaim(ctx context.Context, in *MsgWithdrawClaim, opts ...grpc.CallOption) (*MsgWithdrawClaimResponse, error)
 }
@@ -1362,15 +1081,6 @@ func (c *msgClient) ConfirmBatch(ctx context.Context, in *MsgConfirmBatch, opts 
 	return out, nil
 }
 
-func (c *msgClient) CreateEthereumClaims(ctx context.Context, in *MsgCreateEthereumClaims, opts ...grpc.CallOption) (*MsgCreateEthereumClaimsResponse, error) {
-	out := new(MsgCreateEthereumClaimsResponse)
-	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/CreateEthereumClaims", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *msgClient) DepositClaim(ctx context.Context, in *MsgDepositClaim, opts ...grpc.CallOption) (*MsgDepositClaimResponse, error) {
 	out := new(MsgDepositClaimResponse)
 	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/DepositClaim", in, out, opts...)
@@ -1397,7 +1107,6 @@ type MsgServer interface {
 	SendToEth(context.Context, *MsgSendToEth) (*MsgSendToEthResponse, error)
 	RequestBatch(context.Context, *MsgRequestBatch) (*MsgRequestBatchResponse, error)
 	ConfirmBatch(context.Context, *MsgConfirmBatch) (*MsgConfirmBatchResponse, error)
-	CreateEthereumClaims(context.Context, *MsgCreateEthereumClaims) (*MsgCreateEthereumClaimsResponse, error)
 	DepositClaim(context.Context, *MsgDepositClaim) (*MsgDepositClaimResponse, error)
 	WithdrawClaim(context.Context, *MsgWithdrawClaim) (*MsgWithdrawClaimResponse, error)
 }
@@ -1423,9 +1132,6 @@ func (*UnimplementedMsgServer) RequestBatch(ctx context.Context, req *MsgRequest
 }
 func (*UnimplementedMsgServer) ConfirmBatch(ctx context.Context, req *MsgConfirmBatch) (*MsgConfirmBatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConfirmBatch not implemented")
-}
-func (*UnimplementedMsgServer) CreateEthereumClaims(ctx context.Context, req *MsgCreateEthereumClaims) (*MsgCreateEthereumClaimsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateEthereumClaims not implemented")
 }
 func (*UnimplementedMsgServer) DepositClaim(ctx context.Context, req *MsgDepositClaim) (*MsgDepositClaimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DepositClaim not implemented")
@@ -1546,24 +1252,6 @@ func _Msg_ConfirmBatch_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_CreateEthereumClaims_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgCreateEthereumClaims)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).CreateEthereumClaims(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/peggy.v1.Msg/CreateEthereumClaims",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).CreateEthereumClaims(ctx, req.(*MsgCreateEthereumClaims))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Msg_DepositClaim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgDepositClaim)
 	if err := dec(in); err != nil {
@@ -1627,10 +1315,6 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ConfirmBatch",
 			Handler:    _Msg_ConfirmBatch_Handler,
-		},
-		{
-			MethodName: "CreateEthereumClaims",
-			Handler:    _Msg_CreateEthereumClaims_Handler,
 		},
 		{
 			MethodName: "DepositClaim",
@@ -2192,60 +1876,6 @@ func (m *MsgWithdrawClaimResponse) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
-func (m *DepositClaim) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *DepositClaim) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *DepositClaim) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.CosmosReceiver) > 0 {
-		i -= len(m.CosmosReceiver)
-		copy(dAtA[i:], m.CosmosReceiver)
-		i = encodeVarintMsgs(dAtA, i, uint64(len(m.CosmosReceiver)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.EthereumSender) > 0 {
-		i -= len(m.EthereumSender)
-		copy(dAtA[i:], m.EthereumSender)
-		i = encodeVarintMsgs(dAtA, i, uint64(len(m.EthereumSender)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if m.Erc20Token != nil {
-		{
-			size, err := m.Erc20Token.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintMsgs(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	if m.Nonce != 0 {
-		i = encodeVarintMsgs(dAtA, i, uint64(m.Nonce))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
 func (m *MsgDepositClaimResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -2262,144 +1892,6 @@ func (m *MsgDepositClaimResponse) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *MsgDepositClaimResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *WithdrawClaim) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *WithdrawClaim) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *WithdrawClaim) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Erc20Token != nil {
-		{
-			size, err := m.Erc20Token.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintMsgs(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x1a
-	}
-	if m.BatchNonce != 0 {
-		i = encodeVarintMsgs(dAtA, i, uint64(m.BatchNonce))
-		i--
-		dAtA[i] = 0x10
-	}
-	if m.EventNonce != 0 {
-		i = encodeVarintMsgs(dAtA, i, uint64(m.EventNonce))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgCreateEthereumClaims) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgCreateEthereumClaims) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgCreateEthereumClaims) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Withdraws) > 0 {
-		for iNdEx := len(m.Withdraws) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Withdraws[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintMsgs(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x2a
-		}
-	}
-	if len(m.Deposits) > 0 {
-		for iNdEx := len(m.Deposits) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Deposits[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintMsgs(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x22
-		}
-	}
-	if len(m.Orchestrator) > 0 {
-		i -= len(m.Orchestrator)
-		copy(dAtA[i:], m.Orchestrator)
-		i = encodeVarintMsgs(dAtA, i, uint64(len(m.Orchestrator)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.BridgeContractAddress) > 0 {
-		i -= len(m.BridgeContractAddress)
-		copy(dAtA[i:], m.BridgeContractAddress)
-		i = encodeVarintMsgs(dAtA, i, uint64(len(m.BridgeContractAddress)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if m.EthereumChainId != 0 {
-		i = encodeVarintMsgs(dAtA, i, uint64(m.EthereumChainId))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgCreateEthereumClaimsResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgCreateEthereumClaimsResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgCreateEthereumClaimsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -2658,91 +2150,7 @@ func (m *MsgWithdrawClaimResponse) Size() (n int) {
 	return n
 }
 
-func (m *DepositClaim) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Nonce != 0 {
-		n += 1 + sovMsgs(uint64(m.Nonce))
-	}
-	if m.Erc20Token != nil {
-		l = m.Erc20Token.Size()
-		n += 1 + l + sovMsgs(uint64(l))
-	}
-	l = len(m.EthereumSender)
-	if l > 0 {
-		n += 1 + l + sovMsgs(uint64(l))
-	}
-	l = len(m.CosmosReceiver)
-	if l > 0 {
-		n += 1 + l + sovMsgs(uint64(l))
-	}
-	return n
-}
-
 func (m *MsgDepositClaimResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *WithdrawClaim) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.EventNonce != 0 {
-		n += 1 + sovMsgs(uint64(m.EventNonce))
-	}
-	if m.BatchNonce != 0 {
-		n += 1 + sovMsgs(uint64(m.BatchNonce))
-	}
-	if m.Erc20Token != nil {
-		l = m.Erc20Token.Size()
-		n += 1 + l + sovMsgs(uint64(l))
-	}
-	return n
-}
-
-func (m *MsgCreateEthereumClaims) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.EthereumChainId != 0 {
-		n += 1 + sovMsgs(uint64(m.EthereumChainId))
-	}
-	l = len(m.BridgeContractAddress)
-	if l > 0 {
-		n += 1 + l + sovMsgs(uint64(l))
-	}
-	l = len(m.Orchestrator)
-	if l > 0 {
-		n += 1 + l + sovMsgs(uint64(l))
-	}
-	if len(m.Deposits) > 0 {
-		for _, e := range m.Deposits {
-			l = e.Size()
-			n += 1 + l + sovMsgs(uint64(l))
-		}
-	}
-	if len(m.Withdraws) > 0 {
-		for _, e := range m.Withdraws {
-			l = e.Size()
-			n += 1 + l + sovMsgs(uint64(l))
-		}
-	}
-	return n
-}
-
-func (m *MsgCreateEthereumClaimsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4419,178 +3827,6 @@ func (m *MsgWithdrawClaimResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *DepositClaim) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowMsgs
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: DepositClaim: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: DepositClaim: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Nonce", wireType)
-			}
-			m.Nonce = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Nonce |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Erc20Token", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Erc20Token == nil {
-				m.Erc20Token = &ERC20Token{}
-			}
-			if err := m.Erc20Token.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EthereumSender", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.EthereumSender = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CosmosReceiver", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.CosmosReceiver = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipMsgs(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
 func (m *MsgDepositClaimResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4618,390 +3854,6 @@ func (m *MsgDepositClaimResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgDepositClaimResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipMsgs(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *WithdrawClaim) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowMsgs
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: WithdrawClaim: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: WithdrawClaim: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EventNonce", wireType)
-			}
-			m.EventNonce = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.EventNonce |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BatchNonce", wireType)
-			}
-			m.BatchNonce = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.BatchNonce |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Erc20Token", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Erc20Token == nil {
-				m.Erc20Token = &ERC20Token{}
-			}
-			if err := m.Erc20Token.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipMsgs(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgCreateEthereumClaims) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowMsgs
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgCreateEthereumClaims: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgCreateEthereumClaims: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EthereumChainId", wireType)
-			}
-			m.EthereumChainId = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.EthereumChainId |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BridgeContractAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.BridgeContractAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Orchestrator", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Orchestrator = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Deposits", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Deposits = append(m.Deposits, DepositClaim{})
-			if err := m.Deposits[len(m.Deposits)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Withdraws", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Withdraws = append(m.Withdraws, WithdrawClaim{})
-			if err := m.Withdraws[len(m.Withdraws)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipMsgs(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgCreateEthereumClaimsResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowMsgs
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgCreateEthereumClaimsResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgCreateEthereumClaimsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

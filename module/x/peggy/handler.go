@@ -27,8 +27,6 @@ func NewHandler(keeper keeper.Keeper) sdk.Handler {
 			return handleMsgRequestBatch(ctx, keeper, msg)
 		case *types.MsgConfirmBatch:
 			return handleMsgConfirmBatch(ctx, keeper, msg)
-		case *types.MsgCreateEthereumClaims:
-			return handleCreateEthereumClaims(ctx, keeper, msg)
 		case *types.MsgDepositClaim:
 			return handleDepositClaim(ctx, keeper, msg)
 		case *types.MsgWithdrawClaim:
@@ -39,45 +37,10 @@ func NewHandler(keeper keeper.Keeper) sdk.Handler {
 	}
 }
 
-func handleCreateEthereumClaims(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgCreateEthereumClaims) (*sdk.Result, error) {
-	var attestationIDs [][]byte
-	// auth sender in current validator set
-
-	// process deposit claims
-	for _, c := range msg.Deposits {
-		orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-		validator := findValidatorKey(ctx, orch)
-		if validator == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
-		}
-		att, err := keeper.AddClaim(ctx, c.GetType(), c.GetEventNonce(), validator, &c)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "create attestation")
-		}
-		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, &c))
-	}
-
-	// process withdraw claims
-	for _, c := range msg.Withdraws {
-		orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-		validator := findValidatorKey(ctx, orch)
-		if validator == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
-		}
-		att, err := keeper.AddClaim(ctx, c.GetType(), c.GetEventNonce(), validator, &c)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "create attestation")
-		}
-		attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, &c))
-	}
-	return &sdk.Result{
-		Data: bytes.Join(attestationIDs, []byte(", ")),
-	}, nil
-}
-
 func handleDepositClaim(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgDepositClaim) (*sdk.Result, error) {
 	var attestationIDs [][]byte
-	// auth sender in current validator set
+	// TODO SECURITY this does not auth the sender in the current validator set!
+	// anyone can vote! We need to check and reject right here.
 
 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := findValidatorKey(ctx, orch)
@@ -97,7 +60,8 @@ func handleDepositClaim(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgDep
 
 func handleWithdrawClaim(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgWithdrawClaim) (*sdk.Result, error) {
 	var attestationIDs [][]byte
-	// auth sender in current validator set
+	// TODO SECURITY this does not auth the sender in the current validator set!
+	// anyone can vote! We need to check and reject right here.
 
 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := findValidatorKey(ctx, orch)

@@ -48,11 +48,6 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	return nil, nil
 }
 
-// CreateEthereumClaims
-func (k msgServer) CreateEthereumClaims(c context.Context, msg *types.MsgCreateEthereumClaims) (*types.MsgCreateEthereumClaimsResponse, error) {
-	return nil, nil
-}
-
 func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (*types.MsgDepositClaimResponse, error) {
 	return nil, nil
 }

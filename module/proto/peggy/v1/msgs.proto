@@ -2,9 +2,7 @@ syntax = "proto3";
 package peggy.v1;
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
-import "peggy/v1/attestation.proto";
 import "google/api/annotations.proto";
-import "cosmos_proto/cosmos.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 service Msg {
@@ -25,10 +23,6 @@ service Msg {
   }
   rpc ConfirmBatch(MsgConfirmBatch) returns(MsgConfirmBatchResponse) {
     option (google.api.http).post = "/peggy/v1/confirm_batch";
-  }
-  rpc CreateEthereumClaims(MsgCreateEthereumClaims)
-      returns(MsgCreateEthereumClaimsResponse) {
-    option (google.api.http).post = "/peggy/v1/create_ethereum_claims";
   }
   rpc DepositClaim(MsgDepositClaim) returns(MsgDepositClaimResponse) {
     option (google.api.http).post = "/peggy/v1/deposit_claim";
@@ -184,55 +178,5 @@ message MsgWithdrawClaim {
 // TODO: write response data here
 message MsgWithdrawClaimResponse {}
 
-// EthereumBridgeDepositClaim
-// When more than 66% of the active validator set has
-// claimed to have seen the deposit enter the ethereum blockchain coins are
-// issued to the Cosmos address in question
-// -------------
-message DepositClaim {
-  option(cosmos_proto.implements_interface) = "EthereumClaim";
-
-  uint64 nonce = 1;
-  ERC20Token erc20_token = 2;
-  string ethereum_sender = 3;
-  string cosmos_receiver = 4;
-}
-
 // TODO: write response data here
 message MsgDepositClaimResponse {}
-
-// WithdrawClaim claims that a batch of withdrawal
-// operations on the bridge contract was executed.
-message WithdrawClaim {
-  option(cosmos_proto.implements_interface) = "EthereumClaim";
-
-  uint64 event_nonce = 1;
-  uint64 batch_nonce = 2;
-  ERC20Token erc20_token = 3;
-}
-
-// MsgCreateEthereumClaims
-// this message essentially acts as the oracle between Ethereum and Cosmos, when
-// an orchestrator sees that a batch/ deposit/ multisig set update has been
-// submitted on to the Ethereum blockchain they will submit this message which
-// acts as their oracle attestation. When more than 66% of the active validator
-// set has claimed to have seen the transaction enter the ethereum blockchain it
-// is "observed" and state transitions and operations are triggered on the
-// cosmos side.
-// This is not currently sendable using legacy Amino, so it's not depricated,
-// but also not possible to use currently. MsgDepositClaim and MsgWtihdrawClaim
-// are the replacement.
-message MsgCreateEthereumClaims {
-  uint64 ethereum_chain_id = 1;
-  string bridge_contract_address = 2;
-  string orchestrator = 3;
-  repeated DepositClaim deposits =
-      4 [(gogoproto.castrepeated) = "[]DepositClaim",
-         (gogoproto.nullable) = false];
-  repeated WithdrawClaim withdraws =
-      5 [(gogoproto.castrepeated) = "[]WithdrawClaim",
-         (gogoproto.nullable) = false];
-}
-
-// TODO: write response data here
-message MsgCreateEthereumClaimsResponse {}

@@ -60,22 +60,18 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 		Contract: tokenETHAddr,
 	}
 
-	ethClaim := types.DepositClaim{
-		Nonce:          myNonce,
-		Erc20Token:     &myErc20,
+	ethClaim := types.MsgDepositClaim{
+		EventNonce:     myNonce,
+		TokenContract:  myErc20.Contract,
+		Amount:         myErc20.Amount,
 		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
+		Orchestrator:   myOrchestratorAddr.String(),
 	}
 
-	msg := &types.MsgCreateEthereumClaims{
-		EthereumChainId:       0,
-		BridgeContractAddress: "",
-		Orchestrator:          myOrchestratorAddr.String(),
-		Deposits:              []types.DepositClaim{ethClaim},
-	}
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err := h(ctx, msg)
+	_, err := h(ctx, &ethClaim)
 	require.NoError(t, err)
 	// and claim persisted
 	claimFound := k.HasClaim(ctx, types.CLAIM_TYPE_DEPOSIT, myNonce, myValAddr, &ethClaim)
@@ -90,63 +86,50 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	// Test to reject duplicate deposit
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, msg)
+	_, err = h(ctx, &ethClaim)
 	// then
 	require.Error(t, err)
 	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
 	// Test to reject skipped nonce
-	ethClaim = types.DepositClaim{
-		Nonce: uint64(3),
-		Erc20Token: &types.ERC20Token{
-			Amount:   sdk.NewInt(12),
-			Contract: tokenETHAddr,
-		},
+	ethClaim = types.MsgDepositClaim{
+		EventNonce:     uint64(3),
+		TokenContract:  tokenETHAddr,
+		Amount:         sdk.NewInt(12),
 		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
-	}
-	msg = &types.MsgCreateEthereumClaims{
-		EthereumChainId:       0,
-		BridgeContractAddress: "",
-		Orchestrator:          myOrchestratorAddr.String(),
-		Deposits:              []types.DepositClaim{ethClaim},
+		Orchestrator:   myOrchestratorAddr.String(),
 	}
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, msg)
+	_, err = h(ctx, &ethClaim)
 	// then
 	require.Error(t, err)
 	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
-	ethClaim = types.DepositClaim{
-		Nonce: uint64(2),
-		Erc20Token: &types.ERC20Token{
-			Amount:   sdk.NewInt(13),
-			Contract: tokenETHAddr,
-		},
+	// Test to finally accept consecutive nonce
+	ethClaim = types.MsgDepositClaim{
+		EventNonce:     uint64(2),
+		Amount:         sdk.NewInt(13),
+		TokenContract:  tokenETHAddr,
 		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
-	}
-	// Test to finally accept consecutive nonce
-	msg = &types.MsgCreateEthereumClaims{
-		EthereumChainId:       0,
-		BridgeContractAddress: "",
-		Orchestrator:          myOrchestratorAddr.String(),
-		Deposits:              []types.DepositClaim{ethClaim},
+		Orchestrator:   myOrchestratorAddr.String(),
 	}
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, msg)
+	_, err = h(ctx, &ethClaim)
 	// then
 	require.NoError(t, err)
 	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 25)}, balance)
 }
 
+// depreciated, this and all functions related to bridge signature submission should be deleted.
 // func TestHandleBridgeSignatureSubmission(t *testing.T) {
 // 	var (
 // 		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
