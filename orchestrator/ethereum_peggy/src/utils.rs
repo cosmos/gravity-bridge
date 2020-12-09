@@ -57,6 +57,22 @@ pub fn downcast_nonce(input: Uint256) -> Option<u64> {
     }
 }
 
+#[test]
+fn test_downcast_nonce() {
+    let mut i = 0u64;
+    while i < 100_000 {
+        assert_eq!(i, downcast_nonce(i.into()).unwrap());
+        i += 1
+    }
+    let mut i: u64 = std::u32::MAX.into();
+    i -= 100;
+    let end = i + 100_000;
+    while i < end {
+        assert_eq!(i, downcast_nonce(i.into()).unwrap());
+        i += 1
+    }
+}
+
 /// Gets the latest validator set nonce
 pub async fn get_valset_nonce(
     contract_address: EthAddress,
