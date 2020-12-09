@@ -298,7 +298,7 @@ type EthereumClaim interface {
 	GetEventNonce() uint64
 	GetType() ClaimType
 	ValidateBasic() error
-	Hash() []byte
+	ClaimHash() []byte
 }
 
 var (
@@ -357,7 +357,7 @@ const (
 )
 
 // Hash implements BridgeDeposit.Hash
-func (b *MsgDepositClaim) Hash() []byte {
+func (b *MsgDepositClaim) ClaimHash() []byte {
 	path := fmt.Sprintf("%s/%s/%s/", b.TokenContract, string(b.EthereumSender), b.CosmosReceiver)
 	return tmhash.Sum([]byte(path))
 }
@@ -385,7 +385,7 @@ func (e *MsgWithdrawClaim) ValidateBasic() error {
 }
 
 // Hash implements WithdrawBatch.Hash
-func (b *MsgWithdrawClaim) Hash() []byte {
+func (b *MsgWithdrawClaim) ClaimHash() []byte {
 	path := fmt.Sprintf("%s/%d/", b.TokenContract, b.BatchNonce)
 	return tmhash.Sum([]byte(path))
 }

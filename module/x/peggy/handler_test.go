@@ -41,7 +41,7 @@ func TestHandleValsetRequest(t *testing.T) {
 	assert.Equal(t, "", valset.Members[0].EthereumAddress)
 }
 
-func TestHandleCreateEthereumClaims(t *testing.T) {
+func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	var (
 		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
 		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
@@ -127,6 +127,131 @@ func TestHandleCreateEthereumClaims(t *testing.T) {
 	require.NoError(t, err)
 	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 25)}, balance)
+}
+
+func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
+	var (
+		orchestratorAddr1, _ = sdk.AccAddressFromBech32("cosmos1dg55rtevlfxh46w88yjpdd08sqhh5cc3xhkcej")
+		orchestratorAddr2, _ = sdk.AccAddressFromBech32("cosmos164knshrzuuurf05qxf3q5ewpfnwzl4gj4m4dfy")
+		orchestratorAddr3, _ = sdk.AccAddressFromBech32("cosmos193fw83ynn76328pty4yl7473vg9x86alq2cft7")
+		myCosmosAddr, _      = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
+		valAddr1             = sdk.ValAddress(orchestratorAddr1) // revisit when proper mapping is impl in keeper
+		valAddr2             = sdk.ValAddress(orchestratorAddr2) // revisit when proper mapping is impl in keeper
+		valAddr3             = sdk.ValAddress(orchestratorAddr3) // revisit when proper mapping is impl in keeper
+		myNonce              = uint64(1)
+		anyETHAddr           = "0xf9613b532673Cc223aBa451dFA8539B87e1F666D"
+		tokenETHAddr         = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
+		myBlockTime          = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+	)
+	k, ctx, keepers := keeper.CreateTestEnv(t)
+	k.StakingKeeper = keeper.NewStakingKeeperMock(valAddr1, valAddr2, valAddr3)
+	h := NewHandler(k)
+
+	myErc20 := types.ERC20Token{
+		Amount:   sdk.NewInt(12),
+		Contract: tokenETHAddr,
+	}
+
+	ethClaim1 := types.MsgDepositClaim{
+		EventNonce:     myNonce,
+		TokenContract:  myErc20.Contract,
+		Amount:         myErc20.Amount,
+		EthereumSender: anyETHAddr,
+		CosmosReceiver: myCosmosAddr.String(),
+		Orchestrator:   orchestratorAddr1.String(),
+	}
+	ethClaim2 := types.MsgDepositClaim{
+		EventNonce:     myNonce,
+		TokenContract:  myErc20.Contract,
+		Amount:         myErc20.Amount,
+		EthereumSender: anyETHAddr,
+		CosmosReceiver: myCosmosAddr.String(),
+		Orchestrator:   orchestratorAddr2.String(),
+	}
+	ethClaim3 := types.MsgDepositClaim{
+		EventNonce:     myNonce,
+		TokenContract:  myErc20.Contract,
+		Amount:         myErc20.Amount,
+		EthereumSender: anyETHAddr,
+		CosmosReceiver: myCosmosAddr.String(),
+		Orchestrator:   orchestratorAddr3.String(),
+	}
+
+	// when
+	ctx = ctx.WithBlockTime(myBlockTime)
+	_, err := h(ctx, &ethClaim1)
+	require.NoError(t, err)
+	// and claim persisted
+	claimFound1 := k.HasClaim(ctx, types.CLAIM_TYPE_DEPOSIT, myNonce, valAddr1, &ethClaim1)
+	assert.True(t, claimFound1)
+	// and attestation persisted
+	a1 := k.GetAttestation(ctx, myNonce, &ethClaim1)
+	require.NotNil(t, a1)
+	// and vouchers not yet added to the account
+	balance1 := keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	assert.NotEqual(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance1)
+
+	// when
+	ctx = ctx.WithBlockTime(myBlockTime)
+	_, err = h(ctx, &ethClaim2)
+	require.NoError(t, err)
+
+	// and claim persisted
+	claimFound2 := k.HasClaim(ctx, types.CLAIM_TYPE_DEPOSIT, myNonce, valAddr1, &ethClaim2)
+	assert.True(t, claimFound2)
+	// and attestation persisted
+	a2 := k.GetAttestation(ctx, myNonce, &ethClaim1)
+	require.NotNil(t, a2)
+	// and vouchers now added to the account
+	balance2 := keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance2)
+
+	// when
+	ctx = ctx.WithBlockTime(myBlockTime)
+	_, err = h(ctx, &ethClaim3)
+	require.NoError(t, err)
+
+	// and claim persisted
+	claimFound3 := k.HasClaim(ctx, types.CLAIM_TYPE_DEPOSIT, myNonce, valAddr1, &ethClaim2)
+	assert.True(t, claimFound3)
+	// and attestation persisted
+	a3 := k.GetAttestation(ctx, myNonce, &ethClaim1)
+	require.NotNil(t, a3)
+	// and no additional added to the account
+	balance3 := keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance3)
+}
+
+func TestPackAndUnpackClaims(t *testing.T) {
+	var (
+		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
+		myNonce                           = uint64(1)
+		anyETHAddr                        = "0xf9613b532673Cc223aBa451dFA8539B87e1F666D"
+		tokenETHAddr                      = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
+	)
+
+	myErc20 := types.ERC20Token{
+		Amount:   sdk.NewInt(12),
+		Contract: tokenETHAddr,
+	}
+
+	ethClaim := types.MsgDepositClaim{
+		EventNonce:     myNonce,
+		TokenContract:  myErc20.Contract,
+		Amount:         myErc20.Amount,
+		EthereumSender: anyETHAddr,
+		CosmosReceiver: myCosmosAddr.String(),
+		Orchestrator:   myOrchestratorAddr.String(),
+	}
+
+	packed, err1 := types.PackEthereumClaim(&ethClaim)
+	require.NoError(t, err1)
+
+	unpacked, err2 := types.UnpackEthereumClaim(packed)
+	require.NoError(t, err2)
+	require.Equal(t, &ethClaim, unpacked)
+
 }
 
 // depreciated, this and all functions related to bridge signature submission should be deleted.
