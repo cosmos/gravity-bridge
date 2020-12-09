@@ -183,8 +183,8 @@ pub struct CreateEthereumClaimsMsg {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct WithdrawClaimMsg {
-    pub event_nonce: u64,
-    pub batch_nonce: u64,
+    pub event_nonce: Uint256,
+    pub batch_nonce: Uint256,
     pub token_contract: EthAddress,
     pub orchestrator: Address,
 }
@@ -193,9 +193,11 @@ impl WithdrawClaimMsg {
     pub fn from_event(input: TransactionBatchExecutedEvent, sender: Address) -> Self {
         WithdrawClaimMsg {
             event_nonce: downcast_nonce(input.event_nonce)
-                .expect("Event nonce overflow! Bridge Halt!"),
+                .expect("Event nonce overflow! Bridge Halt!")
+                .into(),
             batch_nonce: downcast_nonce(input.batch_nonce)
-                .expect("Batch nonce overflow! Bridge halt!"),
+                .expect("Batch nonce overflow! Bridge halt!")
+                .into(),
             token_contract: input.erc20,
             orchestrator: sender,
         }
@@ -204,9 +206,11 @@ impl WithdrawClaimMsg {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct DepositClaimMsg {
-    pub event_nonce: u64,
+    pub event_nonce: Uint256,
     pub token_contract: EthAddress,
     pub amount: Uint256,
+    pub ethereum_sender: EthAddress,
+    pub cosmos_receiver: Address,
     pub orchestrator: Address,
 }
 
@@ -214,9 +218,12 @@ impl DepositClaimMsg {
     pub fn from_event(input: SendToCosmosEvent, sender: Address) -> Self {
         DepositClaimMsg {
             event_nonce: downcast_nonce(input.event_nonce)
-                .expect("Event nonce overflow! Bridge Halt!"),
+                .expect("Event nonce overflow! Bridge Halt!")
+                .into(),
             amount: input.amount,
             token_contract: input.erc20,
+            ethereum_sender: input.sender,
+            cosmos_receiver: input.destination,
             orchestrator: sender,
         }
     }
