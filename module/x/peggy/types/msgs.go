@@ -170,15 +170,17 @@ func (msg MsgSendToEth) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
 	}
-	// fee and send must be of the same denom
-	if msg.Amount.Denom != msg.BridgeFee.Denom {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee and amount must be the same type")
-	}
-	if _, err := ERC20FromPeggyCoin(msg.Amount); err != nil {
+	aCoin, err := ERC20FromPeggyCoin(msg.Amount)
+	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "amount is not a voucher type")
 	}
-	if _, err := ERC20FromPeggyCoin(msg.BridgeFee); err != nil {
+	fCoin, err := ERC20FromPeggyCoin(msg.BridgeFee)
+	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee is not a voucher type")
+	}
+	// fee and send must be of the same denom
+	if aCoin.Contract != fCoin.Contract {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("fee and amount must be the same type %s != %s", aCoin.Contract, fCoin.Contract))
 	}
 	if !msg.Amount.IsValid() || msg.Amount.IsZero() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "amount")
