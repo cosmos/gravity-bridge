@@ -24,7 +24,7 @@ type Keeper struct {
 	bankKeeper types.BankKeeper
 
 	AttestationHandler interface {
-		Handle(sdk.Context, types.Attestation) error
+		Handle(sdk.Context, types.Attestation, types.EthereumClaim) error
 	}
 }
 

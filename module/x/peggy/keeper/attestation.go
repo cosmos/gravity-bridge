@@ -23,9 +23,9 @@ func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, eventNonce 
 
 	att := k.voteForAttestation(ctx, claimType, eventNonce, details, validator)
 
-	k.tryAttestation(ctx, att)
+	k.tryAttestation(ctx, att, details)
 
-	k.SetAttestation(ctx, att)
+	k.SetAttestation(ctx, att, details)
 
 	return att, nil
 }
@@ -63,14 +63,9 @@ func (k Keeper) voteForAttestation(
 
 	// If it does not exist, create a new one.
 	if att == nil {
-		pd, err := types.PackEthereumClaim(details)
-		if err != nil {
-			panic(err)
-		}
 		att = &types.Attestation{
 			EventNonce: uint64(eventNonce),
 			Observed:   false,
-			Details:    pd,
 		}
 	}
 
@@ -83,7 +78,7 @@ func (k Keeper) voteForAttestation(
 // tryAttestation checks if an attestation has enough votes to be applied to the consensus state
 // and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
 // and then marks it Observed and emits an event.
-func (k Keeper) tryAttestation(ctx sdk.Context, att *types.Attestation) {
+func (k Keeper) tryAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
 	// If the attestation has not yet been Observed, sum up the votes and see if it is ready to apply to the state.
 	// This conditional stops the attestation from accidentally being applied twice.
 	if !att.Observed {
@@ -103,9 +98,9 @@ func (k Keeper) tryAttestation(ctx sdk.Context, att *types.Attestation) {
 			// If the power of all the validators that have voted on the attestation is higher or equal to the threshold,
 			// process the attestation, set Observed to true, and break
 			if attestationPower.GTE(requiredPower) {
-				k.processAttestation(ctx, att)
+				k.processAttestation(ctx, att, claim)
 				att.Observed = true
-				k.emitObservedEvent(ctx, att)
+				k.emitObservedEvent(ctx, att, claim)
 				break
 			}
 		}
@@ -114,18 +109,14 @@ func (k Keeper) tryAttestation(ctx sdk.Context, att *types.Attestation) {
 
 // emitObservedEvent emits an event with information about an attestation that has been applied to
 // consensus state.
-func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation) {
-	ud, err := types.UnpackEthereumClaim(att.Details)
-	if err != nil {
-		panic(err)
-	}
+func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
 	observationEvent := sdk.NewEvent(
 		types.EventTypeObservation,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyAttestationType, string(ud.GetType())),
+		sdk.NewAttribute(types.AttributeKeyAttestationType, string(claim.GetType())),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(att.EventNonce, ud))), // todo: serialize with hex/ base64 ?
+		sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(att.EventNonce, claim))), // todo: serialize with hex/ base64 ?
 		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(att.EventNonce)),
 		// TODO: do we want to emit more information?
 	)
@@ -133,7 +124,7 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation) {
 }
 
 // processAttestation actually applies the attestation to the consensus state
-func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
+func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
 	lastEventNonce := k.GetLastObservedEventNonce(ctx)
 	if att.EventNonce != uint64(lastEventNonce)+1 {
 		// TODO: We need to figure out how to handle this situation, and whether it is even possible.
@@ -150,18 +141,14 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
 	// TODO: It seems that the validator who puts an attestation over the threshold of votes will also
 	// be charged for the gas of applying it to the consensus state. We should figure out a way to avoid this.
 	xCtx, commit := ctx.CacheContext()
-	if err := k.AttestationHandler.Handle(xCtx, *att); err != nil { // execute with a transient storage
+	if err := k.AttestationHandler.Handle(xCtx, *att, claim); err != nil { // execute with a transient storage
 		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
-		ud, packErr := types.UnpackEthereumClaim(att.Details)
-		if packErr != nil {
-			panic(packErr)
-		}
 		k.logger(ctx).Error("attestation failed",
 			"cause", err.Error(),
-			"claim type", ud.GetType(),
-			"id", types.GetAttestationKey(att.EventNonce, ud),
+			"claim type", claim.GetType(),
+			"id", types.GetAttestationKey(att.EventNonce, claim),
 			"nonce", fmt.Sprint(att.EventNonce),
 		)
 	} else {
@@ -170,13 +157,9 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation) {
 }
 
 // SetAttestation sets the attestation in the store
-func (k Keeper) SetAttestation(ctx sdk.Context, att *types.Attestation) {
+func (k Keeper) SetAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
 	store := ctx.KVStore(k.storeKey)
-	ud, err := types.UnpackEthereumClaim(att.Details)
-	if err != nil {
-		panic(err)
-	}
-	aKey := types.GetAttestationKey(att.EventNonce, ud)
+	aKey := types.GetAttestationKey(att.EventNonce, claim)
 	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
 }
 

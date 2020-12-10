@@ -4,9 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
-	proto "github.com/gogo/protobuf/proto"
 )
 
 // ModuleCdc is the codec for the module
@@ -37,38 +35,6 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
-}
-
-// PackEthereumClaim constructs a new Any packed with the eth claim value. It returns
-// an error if the client state can't be casted to a protobuf message or if the concrete
-// implemention is not registered to the protobuf codec.
-func PackEthereumClaim(ad EthereumClaim) (*types.Any, error) {
-	msg, ok := ad.(proto.Message)
-	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", ad)
-	}
-
-	anyad, err := types.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrPackAny, err.Error())
-	}
-
-	return anyad, nil
-}
-
-// UnpackEthereumClaim unpacks an Any into a EthereumClaim. It returns an error if the
-// attestation details can't be unpacked into a EthereumClaim.
-func UnpackEthereumClaim(any *types.Any) (EthereumClaim, error) {
-	if any == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "protobuf Any message cannot be nil")
-	}
-
-	ethereumClaim, ok := any.GetCachedValue().(EthereumClaim)
-	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into EthereumClaim %T", any)
-	}
-
-	return ethereumClaim, nil
 }
 
 // RegisterCodec registers concrete types on the Amino codec

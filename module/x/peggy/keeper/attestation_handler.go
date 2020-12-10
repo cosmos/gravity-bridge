@@ -13,12 +13,8 @@ type AttestationHandler struct {
 }
 
 // Handle is the entry point for Attestation processing.
-func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error {
-	ud, err := types.UnpackEthereumClaim(att.Details)
-	if err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalid, "unpacking attestation details: %s", err)
-	}
-	switch claim := ud.(type) {
+func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
+	switch claim := claim.(type) {
 	case *types.MsgDepositClaim:
 		token := types.ERC20Token{
 			Amount:   claim.Amount,
@@ -26,7 +22,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		}
 		coin := token.PeggyCoin()
 		vouchers := sdk.Coins{coin}
-		if err = a.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers); err != nil {
+		if err := a.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers); err != nil {
 			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", vouchers)
 		}
 
@@ -41,7 +37,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error
 		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
 
 	default:
-		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", ud.GetType())
+		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())
 	}
 	return nil
 }

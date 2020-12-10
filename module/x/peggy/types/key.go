@@ -99,6 +99,8 @@ func GetClaimKey(claimType ClaimType, nonce uint64, validator sdk.ValAddress, de
 	var detailsHash []byte
 	if details != nil {
 		detailsHash = details.ClaimHash()
+	} else {
+		panic("No claim without details!")
 	}
 	claimTypeLen := len([]byte{byte(claimType)})
 	nonceBz := UInt64Bytes(nonce)

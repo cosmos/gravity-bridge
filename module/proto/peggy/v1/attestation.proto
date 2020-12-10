@@ -2,8 +2,6 @@ syntax = "proto3";
 package peggy.v1;
 
 import "gogoproto/gogo.proto";
-import "google/protobuf/any.proto";
-import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
@@ -26,13 +24,16 @@ enum ClaimType {
 // OBSERVED:
 // Observed indicates that >67% of validators have attested to the event,
 // and that the event should be executed by the peggy state machine
-// DETAILS:
-// The details of the attestation, withdraw or deposit type
+//
+// The actual content of the claims is passed in with the transaction making the claim
+// and then passed through the call stack alongside the attestation while it is processed
+// the key in which the attestation is stored is keyed on the exact details of the claim
+// but there is no reason to store those exact details becuause the next message sender
+// will kindly provide you with them.
 message Attestation {
   uint64              event_nonce = 1;
   bool                observed    = 2;
   repeated string     votes       = 3;
-  google.protobuf.Any details     = 4 [(cosmos_proto.accepts_interface) = "EthereumClaim"];
 }
 
 // ERC20Token unique identifier for an Ethereum ERC20 token.

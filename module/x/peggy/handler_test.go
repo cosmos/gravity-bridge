@@ -222,38 +222,6 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance3)
 }
 
-func TestPackAndUnpackClaims(t *testing.T) {
-	var (
-		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
-		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
-		myNonce                           = uint64(1)
-		anyETHAddr                        = "0xf9613b532673Cc223aBa451dFA8539B87e1F666D"
-		tokenETHAddr                      = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
-	)
-
-	myErc20 := types.ERC20Token{
-		Amount:   sdk.NewInt(12),
-		Contract: tokenETHAddr,
-	}
-
-	ethClaim := types.MsgDepositClaim{
-		EventNonce:     myNonce,
-		TokenContract:  myErc20.Contract,
-		Amount:         myErc20.Amount,
-		EthereumSender: anyETHAddr,
-		CosmosReceiver: myCosmosAddr.String(),
-		Orchestrator:   myOrchestratorAddr.String(),
-	}
-
-	packed, err1 := types.PackEthereumClaim(&ethClaim)
-	require.NoError(t, err1)
-
-	unpacked, err2 := types.UnpackEthereumClaim(packed)
-	require.NoError(t, err2)
-	require.Equal(t, &ethClaim, unpacked)
-
-}
-
 // depreciated, this and all functions related to bridge signature submission should be deleted.
 // func TestHandleBridgeSignatureSubmission(t *testing.T) {
 // 	var (
