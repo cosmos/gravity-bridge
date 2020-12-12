@@ -41,6 +41,67 @@ func TestHandleValsetRequest(t *testing.T) {
 	assert.Equal(t, "", valset.Members[0].EthereumAddress)
 }
 
+func TestHandleMsgSendToEth(t *testing.T) {
+	var (
+		userCosmosAddr, _            = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
+		blockTime                    = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+		blockHeight        int64     = 200
+		denom                        = "peggy/0xB5E9944950C97acab395a324716D186632789712"
+		startingCoinAmount sdk.Int   = sdk.NewIntFromUint64(150)
+		sendAmount         sdk.Int   = sdk.NewIntFromUint64(50)
+		feeAmount          sdk.Int   = sdk.NewIntFromUint64(5)
+		startingCoins      sdk.Coins = sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}
+		sendingCoin        sdk.Coin  = sdk.NewCoin(denom, sendAmount)
+		feeCoin            sdk.Coin  = sdk.NewCoin(denom, feeAmount)
+		ethDestination               = "0x3c9289da00b02dC623d0D8D907619890301D26d4"
+	)
+
+	// we start by depositing some funds into the users balance to send
+	k, ctx, keepers := keeper.CreateTestEnv(t)
+	h := NewHandler(k)
+	keepers.BankKeeper.MintCoins(ctx, types.ModuleName, startingCoins)
+	keepers.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userCosmosAddr, startingCoins)
+	balance1 := keepers.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}, balance1)
+
+	// send some coins
+	msg := &types.MsgSendToEth{
+		Sender:    userCosmosAddr.String(),
+		EthDest:   ethDestination,
+		Amount:    sendingCoin,
+		BridgeFee: feeCoin}
+	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
+	_, err := h(ctx, msg)
+	require.NoError(t, err)
+	balance2 := keepers.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount.Sub(sendAmount).Sub(feeAmount))}, balance2)
+
+	// do the same thing again and make sure it works twice
+	msg1 := &types.MsgSendToEth{
+		Sender:    userCosmosAddr.String(),
+		EthDest:   ethDestination,
+		Amount:    sendingCoin,
+		BridgeFee: feeCoin}
+	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
+	_, err1 := h(ctx, msg1)
+	require.NoError(t, err1)
+	balance3 := keepers.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	finalAmount3 := startingCoinAmount.Sub(sendAmount).Sub(sendAmount).Sub(feeAmount).Sub(feeAmount)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance3)
+
+	// now we should be out of coins and error
+	msg2 := &types.MsgSendToEth{
+		Sender:    userCosmosAddr.String(),
+		EthDest:   ethDestination,
+		Amount:    sendingCoin,
+		BridgeFee: feeCoin}
+	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
+	_, err2 := h(ctx, msg2)
+	require.Error(t, err2)
+	balance4 := keepers.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance4)
+}
+
 func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	var (
 		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
