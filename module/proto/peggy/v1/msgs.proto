@@ -47,7 +47,6 @@ service Msg {
 // signatures it is then possible for anyone to view these signatures in the
 // chain store and submit them to Ethereum to update the validator set
 // -------------
-// deprecated should use MsgBridgeSignatureSubmission instead
 message MsgValsetConfirm {
   uint64 nonce = 1;
   string validator = 2;
@@ -140,7 +139,6 @@ message MsgRequestBatchResponse {}
 // (TODO determine this without nondeterminism) This message includes the batch
 // as well as an Ethereum signature over this batch by the validator
 // -------------
-// deprecated should use MsgBridgeSignatureSubmission instead
 message MsgConfirmBatch {
   uint64 nonce = 1;
   string token_contract = 2;
