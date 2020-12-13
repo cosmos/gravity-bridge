@@ -63,8 +63,12 @@ func (ClaimType) EnumDescriptor() ([]byte, []int) {
 // OBSERVED:
 // Observed indicates that >67% of validators have attested to the event,
 // and that the event should be executed by the peggy state machine
-// DETAILS:
-// The details of the attestation, withdraw or deposit type
+//
+// The actual content of the claims is passed in with the transaction making the claim
+// and then passed through the call stack alongside the attestation while it is processed
+// the key in which the attestation is stored is keyed on the exact details of the claim
+// but there is no reason to store those exact details becuause the next message sender
+// will kindly provide you with them.
 type Attestation struct {
 	EventNonce uint64   `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
 	Observed   bool     `protobuf:"varint,2,opt,name=observed,proto3" json:"observed,omitempty"`

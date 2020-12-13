@@ -90,10 +90,6 @@ message MsgSetEthAddressResponse {}
 
 // MsgSendToEth
 // This is the message that a user calls when they want to bridge an asset
-// TODO right now this needs to be locked to a single ERC20
-// TODO fixed fee amounts for now, variable fee amounts in the fee field later
-// TODO actually remove amounts form the users bank balances
-// TODO this message modifies the on chain store by adding itself to a txpool
 // it will later be removed when it is included in a batch and successfully
 // submitted tokens are removed from the users balance immediately
 // -------------

@@ -46,7 +46,6 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // signatures it is then possible for anyone to view these signatures in the
 // chain store and submit them to Ethereum to update the validator set
 // -------------
-// deprecated should use MsgBridgeSignatureSubmission instead
 type MsgValsetConfirm struct {
 	Nonce      uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	Validator  string `protobuf:"bytes,2,opt,name=validator,proto3" json:"validator,omitempty"`
@@ -349,10 +348,6 @@ var xxx_messageInfo_MsgSetEthAddressResponse proto.InternalMessageInfo
 
 // MsgSendToEth
 // This is the message that a user calls when they want to bridge an asset
-// TODO right now this needs to be locked to a single ERC20
-// TODO fixed fee amounts for now, variable fee amounts in the fee field later
-// TODO actually remove amounts form the users bank balances
-// TODO this message modifies the on chain store by adding itself to a txpool
 // it will later be removed when it is included in a batch and successfully
 // submitted tokens are removed from the users balance immediately
 // -------------
@@ -574,7 +569,6 @@ var xxx_messageInfo_MsgRequestBatchResponse proto.InternalMessageInfo
 // (TODO determine this without nondeterminism) This message includes the batch
 // as well as an Ethereum signature over this batch by the validator
 // -------------
-// deprecated should use MsgBridgeSignatureSubmission instead
 type MsgConfirmBatch struct {
 	Nonce         uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	TokenContract string `protobuf:"bytes,2,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
