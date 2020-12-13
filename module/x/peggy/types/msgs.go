@@ -172,11 +172,11 @@ func (msg MsgSendToEth) ValidateBasic() error {
 	}
 	aCoin, err := ERC20FromPeggyCoin(msg.Amount)
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "amount is not a voucher type")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("amount %#v is not a voucher type", msg))
 	}
 	fCoin, err := ERC20FromPeggyCoin(msg.BridgeFee)
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee is not a voucher type")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("fee %#vs is not a voucher type", msg))
 	}
 	// fee and send must be of the same denom
 	if aCoin.Contract != fCoin.Contract {
