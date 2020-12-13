@@ -81,26 +81,31 @@ func (e *ERC20Token) Add(o *ERC20Token) *ERC20Token {
 
 // ERC20FromPeggyCoin returns the ERC20 representation of a given peggy coin
 func ERC20FromPeggyCoin(v sdk.Coin) (*ERC20Token, error) {
-	if err := ValidatePeggyCoin(v); err != nil {
+	contract, err := ValidatePeggyCoin(v)
+	if err != nil {
 		return nil, fmt.Errorf("%s isn't a valid peggy coin: %s", v.String(), err)
 	}
-	return &ERC20Token{Contract: strings.Split(v.Denom, PeggyDenomSeperator)[1], Amount: v.Amount}, nil
+	return &ERC20Token{Contract: contract, Amount: v.Amount}, nil
 }
 
 // ValidatePeggyCoin returns true if a coin is a peggy representation of an ERC20 token
-func ValidatePeggyCoin(v sdk.Coin) error {
+func ValidatePeggyCoin(v sdk.Coin) (string, error) {
 	spl := strings.Split(v.Denom, PeggyDenomSeperator)
-	err := ValidateEthAddress(spl[1])
+	if len(spl) < 2 {
+		return "", fmt.Errorf("denom(%s) not valid, fewer seperators(%s) than expected", v.Denom, PeggyDenomSeperator)
+	}
+	contract := spl[1]
+	err := ValidateEthAddress(contract)
 	switch {
 	case len(spl) != 2:
-		return fmt.Errorf("denom(%s) not valid, more seperators(%s) than expected", v.Denom, PeggyDenomSeperator)
+		return "", fmt.Errorf("denom(%s) not valid, more seperators(%s) than expected", v.Denom, PeggyDenomSeperator)
 	case spl[0] != PeggyDenomPrefix:
-		return fmt.Errorf("denom prefix(%s) not equal to expected(%s)", spl[0], PeggyDenomPrefix)
+		return "", fmt.Errorf("denom prefix(%s) not equal to expected(%s)", spl[0], PeggyDenomPrefix)
 	case err != nil:
-		return fmt.Errorf("error(%s) validating ethereum contract address", err)
+		return "", fmt.Errorf("error(%s) validating ethereum contract address", err)
 	case len(v.Denom) != PeggyDenomLen:
-		return fmt.Errorf("len(denom)(%d) not equal to PeggyDenomLen(%d)", len(v.Denom), PeggyDenomLen)
+		return "", fmt.Errorf("len(denom)(%d) not equal to PeggyDenomLen(%d)", len(v.Denom), PeggyDenomLen)
 	default:
-		return nil
+		return contract, nil
 	}
 }

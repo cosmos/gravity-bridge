@@ -191,7 +191,6 @@ func (msg MsgSendToEth) ValidateBasic() error {
 	if err := ValidateEthAddress(msg.EthDest); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
-	// TODO for demo get single allowed demon from the store
 	// TODO validate fee is sufficient, fixed fee to start
 	return nil
 }
