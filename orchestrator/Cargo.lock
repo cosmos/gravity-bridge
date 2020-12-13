@@ -1691,6 +1691,7 @@ dependencies = [
  "docopt",
  "env_logger",
  "ethereum_peggy",
+ "futures",
  "lazy_static",
  "log",
  "num 0.3.0",

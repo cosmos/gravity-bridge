@@ -17,8 +17,8 @@ mod main_loop;
 mod valset_relaying;
 
 use actix::Arbiter;
-use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
+use clarity::{PrivateKey as EthPrivateKey, Transaction};
 use contact::client::Contact;
 use cosmos_peggy::send::send_valset_request;
 use cosmos_peggy::send::{request_batch, send_to_eth, update_peggy_eth_address};
@@ -30,6 +30,7 @@ use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use ethereum_peggy::utils::get_valset_nonce;
 use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
+use futures::future::join_all;
 use main_loop::orchestrator_main_loop;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::types::{ERC20Token, SendToCosmosEvent};
@@ -142,19 +143,16 @@ async fn main() {
 
     // before we start the orchestrators send them some funds so they can pay
     // for things
-    for (_c_key, e_key) in keys.iter() {
-        let validator_eth_address = e_key.to_public_key().unwrap();
+    let balance = web30.eth_get_balance(*MINER_ADDRESS).await.unwrap();
+    send_eth_to_orchestrators(&keys, &web30).await;
 
-        let balance = web30.eth_get_balance(*MINER_ADDRESS).await.unwrap();
-        info!(
-            "Sending orchestrator 1 eth to pay for fees miner has {} WEI",
-            balance
-        );
-        // send every orchestrator 1 eth to pay for fees
-        send_one_eth(validator_eth_address, &web30).await;
-    }
+    assert!(
+        test_check_cosmos_balance(keys[0].0.to_public_key().unwrap().to_address(), &contact)
+            .await
+            .is_some()
+    );
 
-    // start orchestrators, send them some eth so that they can pay for things
+    // start orchestrators
     for (c_key, e_key) in keys.iter() {
         info!("Spawning Orchestrator");
         let grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
@@ -174,9 +172,9 @@ async fn main() {
     // bootstrapping tests finish here and we move into operational tests
 
     // send 3 valset updates to make sure the process works back to back
-    // for _ in 0u32..2 {
-    //     test_valset_update(&contact, &web30, &keys, peggy_address, fee.clone()).await;
-    // }
+    for _ in 0u32..2 {
+        test_valset_update(&contact, &web30, &keys, peggy_address, fee.clone()).await;
+    }
 
     // generate an address for coin sending tests, this ensures test imdepotency
     let mut rng = rand::thread_rng();
@@ -254,15 +252,23 @@ async fn deploy_contracts(
     // Either way, validators need to setup their eth addresses out of band and it's not
     // the orchestrators job. So this isn't exactly where it needs to be in the final version
     // but neither is it really that different.
+    let mut updates = Vec::new();
     for (c_key, e_key) in keys.iter() {
         info!(
             "Signing and submitting Eth address {} for validator {}",
             e_key.to_public_key().unwrap(),
             c_key.to_public_key().unwrap().to_address(),
         );
-        update_peggy_eth_address(&contact, *e_key, *c_key, fee.clone())
-            .await
-            .expect("Failed to update Eth address");
+        updates.push(update_peggy_eth_address(
+            &contact,
+            *e_key,
+            *c_key,
+            fee.clone(),
+        ));
+    }
+    let update_results = join_all(updates).await;
+    for i in update_results {
+        i.expect("Failed to update eth address!");
     }
 
     // prevents the node deployer from failing (rarely) when the chain has not
@@ -431,9 +437,22 @@ async fn test_erc20_send(
 
 async fn check_cosmos_balance(address: CosmosAddress, contact: &Contact) -> Option<Coin> {
     let account_info = contact.get_balances(address).await.unwrap();
+    trace!("Cosmos balance {:?}", account_info.result);
     for coin in account_info.result {
         // make sure the name and amount is correct
         if coin.denom.starts_with("peggy") {
+            return Some(coin);
+        }
+    }
+    None
+}
+
+async fn test_check_cosmos_balance(address: CosmosAddress, contact: &Contact) -> Option<Coin> {
+    let account_info = contact.get_balances(address).await.unwrap();
+    trace!("Cosmos balance {:?}", account_info.result);
+    for coin in account_info.result {
+        // make sure the name and amount is correct
+        if coin.denom.starts_with("footoken") {
             return Some(coin);
         }
     }
@@ -467,7 +486,10 @@ async fn test_batch(
         amount: 1u64.into(),
     };
     let amount = amount - 5u64.into();
-    info!("Sending {}{} back to Ethereum", amount, token_name);
+    info!(
+        "Sending {}{} from {} on Cosmos back to Ethereum",
+        amount, token_name, dest_cosmos_address
+    );
     let res = send_to_eth(
         dest_cosmos_private_key,
         dest_eth_address,
@@ -609,6 +631,56 @@ async fn submit_duplicate_erc20_send(
     } else {
         panic!("Duplicate test failed for unknown reasons!");
     }
+}
+
+/// This overly complex function primarily exists to parallelize the sending of Eth to the
+/// orchestrators, waiting for these there transactions takes up nearly a minute of test time
+/// and it seemed like low hanging fruit. It in fact was not, mostly because we are sending
+/// these tx's from the same address and we therefore need to take into account the correct
+/// nonce given the other transactions in flight. This means we need to build the transactions
+/// ourselves with that info right here. If you have to modify this seriously consider
+/// just calling send_one_eth in a loop.
+async fn send_eth_to_orchestrators(keys: &[(CosmosPrivateKey, EthPrivateKey)], web30: &Web3) {
+    let balance = web30.eth_get_balance(*MINER_ADDRESS).await.unwrap();
+    info!(
+        "Sending orchestrators 1 eth to pay for fees miner has {} WEI",
+        balance
+    );
+    let mut eth_addresses = Vec::new();
+    for (_, e_key) in keys {
+        eth_addresses.push(e_key.to_public_key().unwrap())
+    }
+    let net_version = web30.net_version().await.unwrap();
+    let mut nonce = web30
+        .eth_get_transaction_count(*MINER_ADDRESS)
+        .await
+        .unwrap();
+    let mut transactions = Vec::new();
+    for address in eth_addresses {
+        let t = Transaction {
+            to: address,
+            nonce: nonce.clone(),
+            gas_price: 1_000_000_000u64.into(),
+            gas_limit: 24000u64.into(),
+            value: 1_000_000_000_000_000_000u128.into(),
+            data: Vec::new(),
+            signature: None,
+        };
+        let t = t.sign(&*MINER_PRIVATE_KEY, Some(net_version));
+        transactions.push(t);
+        nonce += 1u64.into();
+    }
+    let mut sends = Vec::new();
+    for tx in transactions {
+        sends.push(web30.eth_send_raw_transaction(tx.to_bytes().unwrap()));
+    }
+    let txids = join_all(sends).await;
+    let mut wait_for_txid = Vec::new();
+    for txid in txids {
+        let wait = web30.wait_for_transaction(txid.unwrap(), TOTAL_TIMEOUT, None);
+        wait_for_txid.push(wait);
+    }
+    join_all(wait_for_txid).await;
 }
 
 async fn send_one_eth(dest: EthAddress, web30: &Web3) {
