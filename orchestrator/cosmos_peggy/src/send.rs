@@ -178,7 +178,7 @@ pub async fn send_batch_confirm(
         msgs: vec![PeggyMsg::ConfirmBatchMsg(ConfirmBatchMsg {
             validator: our_address,
             token_contract: transaction_batch.token_contract,
-            ethereum_signer: our_eth_address,
+            eth_signer: our_eth_address,
             nonce: transaction_batch.nonce.into(),
             eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
         })],
@@ -266,8 +266,8 @@ pub async fn send_to_eth(
         },
         msgs: vec![PeggyMsg::SendToEthMsg(SendToEthMsg {
             sender: our_address,
-            dest_address: destination,
-            send: amount,
+            eth_dest: destination,
+            amount,
             bridge_fee: fee,
         })],
         memo: String::new(),

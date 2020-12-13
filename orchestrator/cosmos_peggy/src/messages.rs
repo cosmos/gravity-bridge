@@ -71,8 +71,8 @@ pub struct ValsetConfirmMsg {
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct SendToEthMsg {
     pub sender: Address,
-    pub dest_address: EthAddress,
-    pub send: Coin,
+    pub eth_dest: EthAddress,
+    pub amount: Coin,
     pub bridge_fee: Coin,
 }
 
@@ -92,7 +92,7 @@ pub struct ConfirmBatchMsg {
     pub nonce: Uint256,
     pub validator: Address,
     pub token_contract: EthAddress,
-    pub ethereum_signer: EthAddress,
+    pub eth_signer: EthAddress,
     /// a hex encoded string representing the Ethereum signature
     #[serde(rename = "signature")]
     pub eth_signature: String,
