@@ -33,7 +33,6 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 				},
 			},
 		},
-		// Valset:        v,
 		TokenContract: erc20Addr,
 	}
 

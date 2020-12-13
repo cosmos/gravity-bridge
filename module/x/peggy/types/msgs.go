@@ -266,17 +266,10 @@ func (msg MsgConfirmBatch) ValidateBasic() error {
 	if err := ValidateEthAddress(msg.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "token contract")
 	}
-	sigBytes, err := hex.DecodeString(msg.Signature)
+	_, err := hex.DecodeString(msg.Signature)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
 	}
-	err = ValidateEthereumSignature(crypto.Keccak256([]byte(msg.Validator)), sigBytes, string(msg.EthSigner))
-	if err != nil {
-		return sdkerrors.Wrapf(err, "digest: %x sig: %x address %s error: %s", crypto.Keccak256([]byte(msg.Validator)), msg.Signature, msg.EthSigner, err.Error())
-	}
-
-	// TODO get batch from storage
-	// TODO generate batch in storage on MsgRequestBatch in the first place
 	return nil
 }
 
