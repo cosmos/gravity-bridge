@@ -100,7 +100,6 @@ const COSMOS_NODE: &str = "http://localhost:1317";
 const COSMOS_NODE_GRPC: &str = "http://localhost:9090";
 const COSMOS_NODE_ABCI: &str = "http://localhost:26657";
 const ETH_NODE: &str = "http://localhost:8545";
-const PEGGY_ID: &str = "defaultpeggyid";
 
 lazy_static! {
     // this key is the private key for the public key defined in tests/assets/ETHGenesis.json
@@ -281,7 +280,6 @@ async fn deploy_contracts(
             &format!("--cosmos-node={}", COSMOS_NODE_ABCI),
             &format!("--eth-node={}", ETH_NODE),
             &format!("--eth-privkey={:#x}", *MINER_PRIVATE_KEY),
-            &format!("--peggy-id={}", PEGGY_ID),
             "--contract=/peggy/solidity/artifacts/Peggy.json",
             "--erc20-contract=/peggy/solidity/artifacts/TestERC20.json",
             "--test-mode=true",

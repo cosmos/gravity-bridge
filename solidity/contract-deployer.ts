@@ -18,8 +18,6 @@ const args = commandLineArgs([
   { name: "contract", type: String },
   // the peggy contract erc20 address for the hardcoded erc20 version, only used if test mode is not on
   { name: "erc20-address", type: String },
-  // the id to be used for this version of peggy, be sure to avoid conflicts in production
-  { name: "peggy-id", type: String },
   // test mode, if enabled this script deploys an erc20 script and uses that script as the contract erc20
   { name: "test-mode", type: String },
   // if test mode is enabled this contract is deployed and it's address is used as the erc20 address in the contract
@@ -42,15 +40,15 @@ type Valset = {
   members: Validator[];
   nonce: number;
 };
-type ValsetWrapper = {
+type ABCIWrapper = {
   jsonrpc: string;
   id: string;
-  result: ValsetResponse;
+  result: ABCIResponse;
 };
-type ValsetResponse = {
-  response: ValsetResult
+type ABCIResponse = {
+  response: ABCIResult
 }
-type ValsetResult = {
+type ABCIResult = {
   code: number
   log: string,
   info: string,
@@ -110,14 +108,15 @@ async function deploy() {
   } else {
     contract = args["erc20-address"];
   }
-  const peggyId = ethers.utils.formatBytes32String(args["peggy-id"]);
+  const peggyIdString = await getPeggyId();
+  const peggyId = ethers.utils.formatBytes32String(peggyIdString);
 
   console.log("Starting Peggy contract deploy");
   const { abi, bytecode } = getContractArtifacts(args["contract"]);
   const factory = new ethers.ContractFactory(abi, bytecode, wallet);
 
   console.log("About to get latest Peggy valset");
-  const latestValset = await getLatestValset(args.peggyId);
+  const latestValset = await getLatestValset();
 
   let eth_addresses = [];
   let powers = [];
@@ -159,7 +158,8 @@ function getContractArtifacts(path: string): { bytecode: string; abi: string } {
   return { bytecode, abi };
 }
 const decode = (str: string):string => Buffer.from(str, 'base64').toString('binary');
-async function getLatestValset(peggyId: string): Promise<Valset> {
+
+async function getLatestValset(): Promise<Valset> {
   let block_height_request_string = args["cosmos-node"] + '/status';
   let block_height_response = await axios.get(block_height_request_string);
   let info: StatusWrapper = await block_height_response.data;
@@ -169,15 +169,34 @@ async function getLatestValset(peggyId: string): Promise<Valset> {
     exit(1);
   }
   let request_string = args["cosmos-node"] + "/abci_query"
-  console.log(request_string)
   let response = await axios.get(request_string, {params: {
     path: "\"/custom/peggy/currentValset/\"",
     height: block_height,
     prove: "false",
   }});
-  let valsets: ValsetWrapper = await response.data;
+  let valsets: ABCIWrapper = await response.data;
   let valset: ValsetTypeWrapper = JSON.parse(decode(valsets.result.response.value))
   return valset.value;
+}
+async function getPeggyId(): Promise<string> {
+  let block_height_request_string = args["cosmos-node"] + '/status';
+  let block_height_response = await axios.get(block_height_request_string);
+  let info: StatusWrapper = await block_height_response.data;
+  let block_height = info.result.sync_info.latest_block_height;
+  if (info.result.sync_info.catching_up) {
+    console.log("This node is still syncing! You can not deploy using this peggyID!");
+    exit(1);
+  }
+  let request_string = args["cosmos-node"] + "/abci_query"
+  let response = await axios.get(request_string, {params: {
+    path: "\"/custom/peggy/peggyID/\"",
+    height: block_height,
+    prove: "false",
+  }});
+  let peggyIDABCIResponse: ABCIWrapper = await response.data;
+  let peggyID: string = JSON.parse(decode(peggyIDABCIResponse.result.response.value))
+  return peggyID;
+
 }
 
 async function submitPeggyAddress(address: string) {}
