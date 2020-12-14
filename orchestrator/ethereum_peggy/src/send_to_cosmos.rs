@@ -55,8 +55,15 @@ pub async fn send_to_cosmos(
         options.push(SendTxOption::GasLimit(SEND_TO_COSMOS_GAS_LIMIT.into()));
     }
 
-    // TODO figure out bigendian encoding here
-    let encoded_destination_address = Token::Bytes(cosmos_destination.as_bytes().to_vec());
+    // This code deals with some specifics of Ethereum byte encoding, Ethereum is BigEndian
+    // so small values like addresses that don't take up the full length of the byte vector
+    // are pushed up to the top. This duplicates the way Ethereum encodes it's own addresses
+    // as closely as possible.
+    let mut cosmos_dest_address_bytes = cosmos_destination.as_bytes().to_vec();
+    while cosmos_dest_address_bytes.len() < 32 {
+        cosmos_dest_address_bytes.insert(0, 0u8);
+    }
+    let encoded_destination_address = Token::Bytes(cosmos_dest_address_bytes);
 
     let tx_hash = web3
         .send_transaction(
