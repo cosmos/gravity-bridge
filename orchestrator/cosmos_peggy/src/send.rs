@@ -1,6 +1,6 @@
 use crate::messages::*;
+use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use clarity::{Address as EthAddress, Uint256};
 use contact::jsonrpc::error::JsonRpcError;
 use contact::types::TXSendResponse;
 use contact::{client::Contact, utils::maybe_get_optional_tx_info};
@@ -194,8 +194,6 @@ pub async fn send_batch_confirm(
 
 pub async fn send_ethereum_claims(
     contact: &Contact,
-    eth_chain_id: Uint256,
-    peggy_contract: EthAddress,
     private_key: PrivateKey,
     deposits: Vec<SendToCosmosEvent>,
     withdraws: Vec<TransactionBatchExecutedEvent>,

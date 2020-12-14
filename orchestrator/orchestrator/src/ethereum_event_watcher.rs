@@ -3,7 +3,6 @@
 
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
-use cosmos_peggy::messages::{EthereumBridgeDepositClaim, EthereumBridgeWithdrawBatchClaim};
 use cosmos_peggy::send::send_ethereum_claims;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use peggy_utils::{
@@ -74,16 +73,8 @@ pub async fn check_for_events(
 
         if !deposits.is_empty() || !withdraws.is_empty() {
             // todo get eth chain id from the chain
-            let res = send_ethereum_claims(
-                contact,
-                0u64.into(),
-                peggy_contract_address,
-                our_private_key,
-                deposits,
-                withdraws,
-                fee,
-            )
-            .await?;
+            let res =
+                send_ethereum_claims(contact, our_private_key, deposits, withdraws, fee).await?;
             trace!("Sent in Oracle claims response: {:?}", res);
         }
 

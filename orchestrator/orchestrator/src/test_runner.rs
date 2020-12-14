@@ -23,7 +23,7 @@ use contact::client::Contact;
 use cosmos_peggy::send::send_valset_request;
 use cosmos_peggy::send::{request_batch, send_to_eth, update_peggy_eth_address};
 use cosmos_peggy::utils::wait_for_cosmos_online;
-use cosmos_peggy::{messages::EthereumBridgeDepositClaim, utils::wait_for_next_cosmos_block};
+use cosmos_peggy::utils::wait_for_next_cosmos_block;
 use cosmos_peggy::{query::get_oldest_unsigned_transaction_batch, send::send_ethereum_claims};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
@@ -33,7 +33,7 @@ use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use futures::future::join_all;
 use main_loop::orchestrator_main_loop;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use peggy_utils::types::{ERC20Token, SendToCosmosEvent};
+use peggy_utils::types::SendToCosmosEvent;
 use rand::Rng;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::process::Command;
@@ -143,7 +143,6 @@ async fn main() {
 
     // before we start the orchestrators send them some funds so they can pay
     // for things
-    let balance = web30.eth_get_balance(*MINER_ADDRESS).await.unwrap();
     send_eth_to_orchestrators(&keys, &web30).await;
 
     assert!(
@@ -209,7 +208,6 @@ async fn main() {
     submit_duplicate_erc20_send(
         1u64.into(),
         &contact,
-        peggy_address,
         erc20_address,
         1u64.into(),
         dest_cosmos_address,
@@ -583,7 +581,6 @@ async fn test_batch(
 async fn submit_duplicate_erc20_send(
     nonce: Uint256,
     contact: &Contact,
-    peggy_address: EthAddress,
     erc20_address: EthAddress,
     amount: Uint256,
     receiver: CosmosAddress,
@@ -608,17 +605,9 @@ async fn submit_duplicate_erc20_send(
 
     // iterate through all validators and try to send an event with duplicate nonce
     for (c_key, _) in keys.iter() {
-        let res = send_ethereum_claims(
-            contact,
-            0u64.into(),
-            peggy_address,
-            *c_key,
-            vec![event.clone()],
-            vec![],
-            fee.clone(),
-        )
-        .await
-        .unwrap();
+        let res = send_ethereum_claims(contact, *c_key, vec![event.clone()], vec![], fee.clone())
+            .await
+            .unwrap();
         trace!("Submitted duplicate sendToCosmos event: {:?}", res);
     }
 
