@@ -27,6 +27,7 @@ const (
 	// used to deploy eth contract
 	QueryCurrentValset = "currentValset"
 	QueryValsetConfirm = "valsetConfirm"
+	QueryPeggyID       = "peggyID"
 
 	// Batches
 
@@ -34,10 +35,6 @@ const (
 	QueryLastPendingBatchRequestByAddr = "lastPendingBatchRequest"
 	QueryOutgoingTxBatches             = "lastBatches"
 	QueryBatchConfirms                 = "batchConfirms"
-
-	// Other
-
-	QueryBridgedDenominators = "allBridgedDenominators"
 )
 
 // NewQuerier is the module level router for state queries
@@ -68,6 +65,9 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return lastPendingBatchRequest(ctx, path[1], keeper) // Tested (lightly)
 		case QueryOutgoingTxBatches:
 			return lastBatchesRequest(ctx, keeper) // Tested (lightly)
+
+		case QueryPeggyID:
+			return queryPeggyID(ctx, keeper)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint", types.ModuleName)
@@ -321,4 +321,14 @@ func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keep
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
 	return res, nil
+}
+
+func queryPeggyID(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	peggyID := keeper.GetPeggyID(ctx)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, peggyID)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	} else {
+		return res, nil
+	}
 }
