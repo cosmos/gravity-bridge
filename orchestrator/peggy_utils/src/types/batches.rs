@@ -52,6 +52,8 @@ impl TransactionBatch {
             fees.push(Token::Uint(item.erc20_fee.amount.clone()));
             destinations.push(item.destination)
         }
+        assert_eq!(amounts.len(), destinations.len());
+        assert_eq!(fees.len(), destinations.len());
         (
             Token::Dynamic(amounts),
             destinations.into(),

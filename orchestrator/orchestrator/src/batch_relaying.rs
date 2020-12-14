@@ -107,7 +107,7 @@ pub async fn relay_batches(
         web3,
     )
     .await
-    .expect("Failed to get Ethereum valset");
+    .expect("Failed to get batch nonce from Ethereum");
     let latest_ethereum_valset =
         get_valset_nonce(peggy_contract_address, our_ethereum_address, web3)
             .await
@@ -119,7 +119,7 @@ pub async fn relay_batches(
             latest_cosmos_batch_nonce, latest_ethereum_batch
         );
 
-        // get the old valset from the Cosmos chain
+        // get the current valset from the Cosmos chain
         let current_valset = get_valset(grpc_client, latest_ethereum_valset).await;
         if let Ok(Some(current_valset)) = current_valset {
             let _res = send_eth_transaction_batch(

@@ -24,9 +24,10 @@ pub async fn send_eth_transaction_batch(
     //assert!(new_valset_nonce > old_valset_nonce);
     let eth_address = our_eth_key.to_public_key().unwrap();
     info!(
-        "Ordering signatures and submitting TransactionBatch {}:{} to Ethereum",
+        "Ordering signatures and submitting TransacqtionBatch {}:{} to Ethereum",
         batch.token_contract, new_batch_nonce
     );
+    info!("Batch {:?}", batch);
 
     let sig_data = current_valset.order_batch_sigs(confirms)?;
     let sig_arrays = to_arrays(sig_data);

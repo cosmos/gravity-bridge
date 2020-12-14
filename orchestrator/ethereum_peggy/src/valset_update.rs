@@ -46,8 +46,19 @@ pub async fn send_eth_valset_update(
     // uint8[] memory _v,
     // bytes32[] memory _r,
     // bytes32[] memory _s
+    let tokens = &[
+        new_addresses.into(),
+        new_powers.into(),
+        new_nonce.into(),
+        old_addresses.into(),
+        old_powers.into(),
+        old_nonce.into(),
+        sig_arrays.v,
+        sig_arrays.r,
+        sig_arrays.s,
+    ];
     let payload = clarity::abi::encode_call("updateValset(address[],uint256[],uint256,address[],uint256[],uint256,uint8[],bytes32[],bytes32[])",
-    &[new_addresses.into(), new_powers.into(), new_nonce.into(), old_addresses.into(), old_powers.into(), old_nonce.into(), sig_arrays.v, sig_arrays.r, sig_arrays.s]).unwrap();
+    tokens).unwrap();
 
     let before_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
     if before_nonce != old_nonce {

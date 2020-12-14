@@ -26,7 +26,7 @@ impl ValsetConfirmResponse {
     }
 }
 
-/// the response we get when querying for a valset confirmation
+/// the response we get when querying for a batch confirmation
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct BatchConfirmResponse {
     pub nonce: u64,
