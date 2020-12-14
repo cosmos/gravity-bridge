@@ -108,10 +108,11 @@ func TestValsetSort(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			// when
 			spec.src.Sort()
-			// then
 			assert.Equal(t, spec.src, spec.exp)
+			shuffled := shuffled(spec.src)
+			shuffled.Sort()
+			assert.Equal(t, shuffled, spec.exp)
 		})
 	}
 }
