@@ -1,56 +1,42 @@
 use super::*;
+use crate::error::PeggyError;
 use clarity::{abi::Token, Address as EthAddress};
-use contact::types::parse_val;
 use deep_space::address::Address as CosmosAddress;
-use num256::Uint256;
 
 /// This represents an individual transaction being bridged over to Ethereum
 /// parallel is the OutgoingTransferTx in x/peggy/types/batch.go
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct BatchTransaction {
-    #[serde(deserialize_with = "parse_val")]
-    pub txid: Uint256,
-    #[serde(deserialize_with = "parse_val")]
+    pub id: u64,
     pub sender: CosmosAddress,
-    #[serde(deserialize_with = "parse_val", rename = "dest_address")]
     pub destination: EthAddress,
-    pub send: ERC20Token,
-    pub bridge_fee: ERC20Token,
-}
-/// the response we get when querying for a valset confirmation
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct TransactionBatchUnparsed {
-    #[serde(deserialize_with = "parse_val")]
-    pub nonce: Uint256,
-    pub elements: Vec<BatchTransaction>,
-    pub total_fee: ERC20Token,
-    pub bridged_denominator: ERC20Denominator,
-    pub valset: ValsetUnparsed,
-    #[serde(deserialize_with = "parse_val")]
-    pub token_contract: EthAddress,
+    pub erc20_token: ERC20Token,
+    pub erc20_fee: ERC20Token,
 }
 
-impl TransactionBatchUnparsed {
-    pub fn convert(self) -> TransactionBatch {
-        TransactionBatch {
-            nonce: self.nonce,
-            elements: self.elements,
-            total_fee: self.total_fee,
-            bridged_denominator: self.bridged_denominator,
-            valset: self.valset.convert(),
-            token_contract: self.token_contract,
+impl BatchTransaction {
+    pub fn from_proto(input: peggy_proto::peggy::OutgoingTransferTx) -> Result<Self, PeggyError> {
+        if input.erc20_fee.is_none() || input.erc20_token.is_none() {
+            return Err(PeggyError::InvalidBridgeStateError(
+                "Can not have tx with null erc20_token!".to_string(),
+            ));
         }
+        Ok(BatchTransaction {
+            id: input.id,
+            sender: input.sender.parse()?,
+            destination: input.dest_address.parse()?,
+            erc20_token: ERC20Token::from_proto(input.erc20_token.unwrap())?,
+            erc20_fee: ERC20Token::from_proto(input.erc20_fee.unwrap())?,
+        })
     }
 }
 
 /// the response we get when querying for a valset confirmation
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct TransactionBatch {
-    pub nonce: Uint256,
-    pub elements: Vec<BatchTransaction>,
+    pub nonce: u64,
+    pub transactions: Vec<BatchTransaction>,
     pub total_fee: ERC20Token,
-    pub bridged_denominator: ERC20Denominator,
-    pub valset: Valset,
     pub token_contract: EthAddress,
 }
 
@@ -61,15 +47,46 @@ impl TransactionBatch {
         let mut amounts = Vec::new();
         let mut destinations = Vec::new();
         let mut fees = Vec::new();
-        for item in self.elements.iter() {
-            amounts.push(Token::Uint(item.send.amount.clone()));
-            fees.push(Token::Uint(item.bridge_fee.amount.clone()));
+        for item in self.transactions.iter() {
+            amounts.push(Token::Uint(item.erc20_token.amount.clone()));
+            fees.push(Token::Uint(item.erc20_fee.amount.clone()));
             destinations.push(item.destination)
         }
+        assert_eq!(amounts.len(), destinations.len());
+        assert_eq!(fees.len(), destinations.len());
         (
             Token::Dynamic(amounts),
             destinations.into(),
             Token::Dynamic(fees),
         )
+    }
+
+    pub fn from_proto(input: peggy_proto::peggy::OutgoingTxBatch) -> Result<Self, PeggyError> {
+        let mut transactions = Vec::new();
+        let mut running_total_fee: Option<ERC20Token> = None;
+        for tx in input.transactions {
+            let tx = BatchTransaction::from_proto(tx)?;
+            if let Some(total_fee) = running_total_fee {
+                running_total_fee = Some(ERC20Token {
+                    token_contract_address: total_fee.token_contract_address,
+                    amount: total_fee.amount + tx.erc20_fee.amount.clone(),
+                });
+            } else {
+                running_total_fee = Some(tx.erc20_fee.clone())
+            }
+            transactions.push(tx);
+        }
+        if let Some(total_fee) = running_total_fee {
+            Ok(TransactionBatch {
+                nonce: input.batch_nonce,
+                transactions,
+                token_contract: total_fee.token_contract_address,
+                total_fee,
+            })
+        } else {
+            Err(PeggyError::InvalidBridgeStateError(
+                "Transaction batch containing no transactions!".to_string(),
+            ))
+        }
     }
 }

@@ -10,7 +10,7 @@ import (
 
 func TestValidateMsgSetEthAddress(t *testing.T) {
 	var (
-		ethAddress                   = NewEthereumAddress("0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255")
+		ethAddress                   = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
 		cosmosAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
 		// privKeyString = "0xb8662f35f9de8720424e82b232e8c98d15399490adae9ca993f5ef1dc4883690"
 		correctSig = "46402c54b2a13f229560c5406db56fbd9b307a32ca31997955498f0df99f97cb471e8bdeb927551cbbc4d548a7739b5782c918ff9d56eed03f86b29a4bc722c400"
@@ -18,7 +18,7 @@ func TestValidateMsgSetEthAddress(t *testing.T) {
 	specs := map[string]struct {
 		srcCosmosAddr sdk.AccAddress
 		srcSignature  string
-		srcETHAddr    EthereumAddress
+		srcETHAddr    string
 		expErr        bool
 	}{
 		"all good": {
@@ -56,7 +56,7 @@ func TestValidateMsgSetEthAddress(t *testing.T) {
 		"invalid eth address": {
 			srcCosmosAddr: cosmosAddress,
 			srcSignature:  correctSig,
-			srcETHAddr:    NewEthereumAddress("invalid"),
+			srcETHAddr:    "invalid",
 			expErr:        true,
 		},
 	}

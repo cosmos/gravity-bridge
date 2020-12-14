@@ -1,37 +1,51 @@
 use super::*;
+use crate::error::PeggyError;
 use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
 use contact::{jsonrpc::error::JsonRpcError, types::parse_val};
 use deep_space::address::Address as CosmosAddress;
-use num256::Uint256;
 use std::{cmp::Ordering, collections::HashMap, fmt};
 
 /// the response we get when querying for a valset confirmation
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ValsetConfirmResponse {
-    #[serde(deserialize_with = "parse_val")]
     pub validator: CosmosAddress,
-    #[serde(deserialize_with = "parse_val")]
     pub eth_address: EthAddress,
-    #[serde(deserialize_with = "parse_val")]
-    pub nonce: Uint256,
-    #[serde(deserialize_with = "parse_val", rename = "signature")]
+    pub nonce: u64,
     pub eth_signature: EthSignature,
 }
 
-/// the response we get when querying for a valset confirmation
+impl ValsetConfirmResponse {
+    pub fn from_proto(input: peggy_proto::peggy::MsgValsetConfirm) -> Result<Self, PeggyError> {
+        Ok(ValsetConfirmResponse {
+            validator: input.validator.parse()?,
+            eth_address: input.eth_address.parse()?,
+            nonce: input.nonce,
+            eth_signature: input.signature.parse()?,
+        })
+    }
+}
+
+/// the response we get when querying for a batch confirmation
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct BatchConfirmResponse {
-    #[serde(deserialize_with = "parse_val")]
-    pub nonce: Uint256,
-    #[serde(deserialize_with = "parse_val")]
+    pub nonce: u64,
     pub validator: CosmosAddress,
-    #[serde(deserialize_with = "parse_val")]
     pub token_contract: EthAddress,
-    #[serde(deserialize_with = "parse_val")]
     pub ethereum_signer: EthAddress,
-    #[serde(deserialize_with = "parse_val", rename = "signature")]
     pub eth_signature: EthSignature,
+}
+
+impl BatchConfirmResponse {
+    pub fn from_proto(input: peggy_proto::peggy::MsgConfirmBatch) -> Result<Self, PeggyError> {
+        Ok(BatchConfirmResponse {
+            nonce: input.nonce,
+            validator: input.validator.parse()?,
+            token_contract: input.token_contract.parse()?,
+            ethereum_signer: input.eth_signer.parse()?,
+            eth_signature: input.signature.parse()?,
+        })
+    }
 }
 
 /// a list of validators, powers, and eth addresses at a given block height
@@ -157,6 +171,24 @@ impl Valset {
     }
 }
 
+impl From<peggy_proto::peggy::Valset> for Valset {
+    fn from(input: peggy_proto::peggy::Valset) -> Self {
+        Valset {
+            nonce: input.nonce,
+            members: input.members.iter().map(|i| i.into()).collect(),
+        }
+    }
+}
+
+impl From<&peggy_proto::peggy::Valset> for Valset {
+    fn from(input: &peggy_proto::peggy::Valset) -> Self {
+        Valset {
+            nonce: input.nonce,
+            members: input.members.iter().map(|i| i.into()).collect(),
+        }
+    }
+}
+
 /// a list of validators, powers, and eth addresses at a given block height
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq)]
 pub struct ValsetMember {
@@ -204,6 +236,32 @@ impl fmt::Display for ValsetMember {
         match self.eth_address {
             Some(a) => write!(f, "Address: {} Power: {}", a, self.power),
             None => write!(f, "Address: None Power: {}", self.power),
+        }
+    }
+}
+
+impl From<peggy_proto::peggy::BridgeValidator> for ValsetMember {
+    fn from(input: peggy_proto::peggy::BridgeValidator) -> Self {
+        let eth_address = match input.ethereum_address.parse() {
+            Ok(e) => Some(e),
+            Err(_) => None,
+        };
+        ValsetMember {
+            power: input.power,
+            eth_address,
+        }
+    }
+}
+
+impl From<&peggy_proto::peggy::BridgeValidator> for ValsetMember {
+    fn from(input: &peggy_proto::peggy::BridgeValidator) -> Self {
+        let eth_address = match input.ethereum_address.parse() {
+            Ok(e) => Some(e),
+            Err(_) => None,
+        };
+        ValsetMember {
+            power: input.power,
+            eth_address,
         }
     }
 }

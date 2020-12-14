@@ -1,8 +1,9 @@
 #!/bin/bash
 set -eux
 # your gaiad binary name
-BIN=peggyd
-CLI=peggycli
+BIN=peggy
+
+CHAIN_ID="peggy-test"
 
 NODES=$1
 
@@ -13,8 +14,12 @@ ALLOCATION="1000000000stake,1000000000footoken"
 STARTING_VALIDATOR=1
 STARTING_VALIDATOR_HOME="--home /validator$STARTING_VALIDATOR"
 # todo add git hash to chain name
-$BIN init $STARTING_VALIDATOR_HOME --chain-id=peggy-test validator1
+$BIN init $STARTING_VALIDATOR_HOME --chain-id=$CHAIN_ID validator1
 mv /validator$STARTING_VALIDATOR/config/genesis.json /genesis.json
+
+# copy over the legacy RPC enabled config for the first validator
+# this is the only validator we want taking up this port
+cp /legacy-api-enable /validator1/config/app.toml
 
 # Sets up an arbitrary number of validators on a single machine by manipulating
 # the --home parameter on gaiad
@@ -23,8 +28,8 @@ do
 GAIA_HOME="--home /validator$i"
 GENTX_HOME="--home-client /validator$i"
 ARGS="$GAIA_HOME --keyring-backend test"
-$CLI keys add $ARGS validator$i 2>> /validator-phrases
-KEY=$($CLI keys show validator$i -a $ARGS)
+$BIN keys add $ARGS validator$i 2>> /validator-phrases
+KEY=$($BIN keys show validator$i -a $ARGS)
 # move the genesis in
 mkdir -p /validator$i/config/
 mv /genesis.json /validator$i/config/genesis.json
@@ -38,12 +43,11 @@ for i in $(seq 1 $NODES);
 do
 cp /genesis.json /validator$i/config/genesis.json
 GAIA_HOME="--home /validator$i"
-GENTX_HOME="--home-client /validator$i"
 ARGS="$GAIA_HOME --keyring-backend test"
 # the /8 containing 7.7.7.7 is assigned to the DOD and never routable on the public internet
 # we're using it in private to prevent gaia from blacklisting it as unroutable
 # and allow local pex
-$BIN gentx $ARGS $GENTX_HOME --name validator$i --ip 7.7.7.$i
+$BIN gentx $ARGS $GAIA_HOME --moniker validator$i --chain-id=$CHAIN_ID --ip 7.7.7.$i validator$i
 # obviously we don't need to copy validator1's gentx to itself
 if [ $i -gt 1 ]; then
 cp /validator$i/config/gentx/* /validator1/config/gentx/

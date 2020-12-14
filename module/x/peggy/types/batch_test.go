@@ -13,55 +13,35 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 	senderAddr, err := sdk.AccAddressFromHex("527FBEE652609AB150F0AEE9D61A2F76CFC4A73E")
 	require.NoError(t, err)
 	var (
-		erc20Addr = NewEthereumAddress("0x22474D350EC2dA53D717E30b96e9a2B7628Ede5b")
-	)
-
-	v := NewValset(
-		NewUInt64Nonce(1),
-		BridgeValidators{{
-			EthereumAddress: NewEthereumAddress("0xc783df8a850f42e7F7e57013759C285caa701eB6"),
-			Power:           6670,
-		}},
+		erc20Addr = "0x34Ac3eB6180FdD94043664C22043F004734Dc480"
 	)
 
 	src := OutgoingTxBatch{
-		Nonce: 1,
-		Elements: []OutgoingTransferTx{
+		BatchNonce: 1,
+		Transactions: []*OutgoingTransferTx{
 			{
-				ID:          0x1,
-				Sender:      senderAddr,
-				DestAddress: NewEthereumAddress("0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39"),
-				Amount: ERC20Token{
-					Amount:               0x1,
-					Symbol:               "MAX",
-					TokenContractAddress: erc20Addr,
+				Id:          0x1,
+				Sender:      senderAddr.String(),
+				DestAddress: "0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39",
+				Erc20Token: &ERC20Token{
+					Amount:   sdk.NewInt(0x1),
+					Contract: erc20Addr,
 				},
-				BridgeFee: ERC20Token{
-					Amount:               0x1,
-					Symbol:               "MAX",
-					TokenContractAddress: erc20Addr,
+				Erc20Fee: &ERC20Token{
+					Amount:   sdk.NewInt(0x1),
+					Contract: erc20Addr,
 				},
 			},
 		},
-		TotalFee: ERC20Token{
-			Amount:               0x1,
-			Symbol:               "MAX",
-			TokenContractAddress: erc20Addr,
-		},
-		BridgedDenominator: BridgedDenominator{
-			TokenContractAddress: erc20Addr,
-			Symbol:               "MAX",
-			CosmosVoucherDenom:   "peggy39b512461b",
-		},
-		Valset:        v,
 		TokenContract: erc20Addr,
 	}
 
-	ourHash, err := src.GetCheckpoint()
+	// TODO: this is hardcoded to foo, replace somehow?
+	ourHash, err := src.GetCheckpoint("foo")
 	require.NoError(t, err)
 
 	// hash from bridge contract
-	goldHash := "0x746471abc2232c11039c2160365c4593110dbfbe25ff9a2dcf8b5b7376e9f346"[2:]
+	goldHash := "0x731fc6e7e13e4c4bd45664c9272d49e5a9b55bccb54cfcc0704465f9de491e86"[2:]
 	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))
 }
 

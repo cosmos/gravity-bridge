@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -67,7 +68,7 @@ func TestCurrentValsetNormalization(t *testing.T) {
 			}
 			k.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
 			r := k.GetCurrentValset(ctx)
-			assert.Equal(t, spec.expPowers, r.Members.GetPowers())
+			assert.Equal(t, spec.expPowers, types.BridgeValidators(r.Members).GetPowers())
 		})
 	}
 }

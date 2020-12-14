@@ -3,7 +3,7 @@ package rest
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 
 	"github.com/gorilla/mux"
 )
@@ -26,7 +26,7 @@ const (
 // "peggy/signed_batches"
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
-func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) {
+func RegisterRoutes(cliCtx client.Context, r *mux.Router, storeName string) {
 
 	/// Valsets
 

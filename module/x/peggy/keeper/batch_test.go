@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"bytes"
-	"fmt"
 	"testing"
 	"time"
 
@@ -19,35 +17,32 @@ func TestBatches(t *testing.T) {
 
 	k, ctx, keepers := CreateTestEnv(t)
 	var (
-		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		myReceiver          = types.NewEthereumAddress("eth receiver")
-		myTokenContractAddr = types.NewEthereumAddress("my eth token address")
-		myETHToken          = "myETHToken"
-		voucherDenom        = types.NewVoucherDenom(myTokenContractAddr, myETHToken)
+		// Sender on peggy
+		mySender, _ = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
+		// Random ETH address
+		myReceiver = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
+		// Pickle token contract
+		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
 		now                 = time.Now().UTC()
 	)
 	// mint some voucher first
-	allVouchers := sdk.Coins{sdk.NewInt64Coin(string(voucherDenom), 99999)}
-	err := keepers.SupplyKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
+
+	allVouchers := sdk.Coins{types.NewERC20Token(99999, myTokenContractAddr).PeggyCoin()}
+	err := keepers.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
 	require.NoError(t, err)
 
 	// set senders balance
 	keepers.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	err = keepers.BankKeeper.SetCoins(ctx, mySender, allVouchers)
+	err = keepers.BankKeeper.SetBalances(ctx, mySender, allVouchers)
 	require.NoError(t, err)
-
-	// store counterpart
-	k.StoreCounterpartDenominator(ctx, myTokenContractAddr, myETHToken)
-
-	denominator := types.NewBridgedDenominator(myTokenContractAddr, myETHToken)
 
 	// CREATE FIRST BATCH
 	// ==================
 
 	// add some TX to the pool
-	for i, v := range []int64{2, 3, 2, 1} {
-		amount := sdk.NewInt64Coin(string(voucherDenom), int64(i+100))
-		fee := sdk.NewInt64Coin(string(voucherDenom), v)
+	for i, v := range []uint64{2, 3, 2, 1} {
+		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).PeggyCoin()
+		fee := types.NewERC20Token(v, myTokenContractAddr).PeggyCoin()
 		_, err := k.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
@@ -55,58 +50,54 @@ func TestBatches(t *testing.T) {
 	ctx = ctx.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	firstBatch, err := k.BuildOutgoingTXBatch(ctx, voucherDenom, 2)
+	firstBatch, err := k.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
-	fmt.Printf("FIRST BATCH VALSET %T", firstBatch.Valset)
-
 	// then batch is persisted
-	gotFirstBatch := k.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, firstBatch.Nonce)
+	gotFirstBatch := k.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
 	require.NotNil(t, gotFirstBatch)
 
-	expFirstBatch := types.OutgoingTxBatch{
-		Nonce: types.NewUInt64Nonce(1),
-		Elements: []types.OutgoingTransferTx{
+	expFirstBatch := &types.OutgoingTxBatch{
+		BatchNonce: 1,
+		Transactions: []*types.OutgoingTransferTx{
 			{
-				ID:          2,
-				BridgeFee:   denominator.ToUint64ERC20Token(3),
-				Sender:      mySender,
+				Id:          2,
+				Erc20Fee:    types.NewERC20Token(3, myTokenContractAddr),
+				Sender:      mySender.String(),
 				DestAddress: myReceiver,
-				Amount:      denominator.ToUint64ERC20Token(101),
+				Erc20Token:  types.NewERC20Token(101, myTokenContractAddr),
 			},
 			{
-				ID:          1,
-				BridgeFee:   denominator.ToUint64ERC20Token(2),
-				Sender:      mySender,
+				Id:          1,
+				Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
+				Sender:      mySender.String(),
 				DestAddress: myReceiver,
-				Amount:      denominator.ToUint64ERC20Token(100),
+				Erc20Token:  types.NewERC20Token(100, myTokenContractAddr),
 			},
 		},
-		TotalFee:           denominator.ToUint64ERC20Token(5),
-		BridgedDenominator: denominator,
-		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
-		Valset:             types.Valset{Nonce: 0x12d687, Members: types.BridgeValidators(nil)},
+		TokenContract: myTokenContractAddr,
+		// Valset:        &types.Valset{Nonce: 0x12d687, Members: types.BridgeValidators(nil)},
 	}
-	assert.Equal(t, expFirstBatch, *gotFirstBatch)
+	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
 	// and verify remaining available Tx in the pool
-	var gotUnbatchedTx []types.OutgoingTx
-	k.IterateOutgoingPoolByFee(ctx, voucherDenom, func(_ uint64, tx types.OutgoingTx) bool {
+	var gotUnbatchedTx []*types.OutgoingTx
+	k.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx := []types.OutgoingTx{
+	expUnbatchedTx := []*types.OutgoingTx{
 		{
-			BridgeFee:   sdk.NewInt64Coin(string(voucherDenom), 2),
-			Sender:      mySender,
-			DestAddress: myReceiver,
-			Amount:      sdk.NewInt64Coin(string(voucherDenom), 102),
+			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
+			Sender:    mySender.String(),
+			DestAddr:  myReceiver,
+			Amount:    types.NewERC20Token(102, myTokenContractAddr).PeggyCoin(),
 		},
 		{
-			BridgeFee:   sdk.NewInt64Coin(string(voucherDenom), 1),
-			Sender:      mySender,
-			DestAddress: myReceiver,
-			Amount:      sdk.NewInt64Coin(string(voucherDenom), 103),
+			BridgeFee: types.NewERC20Token(1, myTokenContractAddr).PeggyCoin(),
+			Sender:    mySender.String(),
+			DestAddr:  myReceiver,
+			Amount:    types.NewERC20Token(103, myTokenContractAddr).PeggyCoin(),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
@@ -115,9 +106,10 @@ func TestBatches(t *testing.T) {
 	// ====================================
 
 	// add some more TX to the pool to create a more profitable batch
-	for i, v := range []int64{4, 5} {
-		amount := sdk.NewInt64Coin(string(voucherDenom), int64(i+100))
-		fee := sdk.NewInt64Coin(string(voucherDenom), v)
+	for i, v := range []uint64{4, 5} {
+
+		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).PeggyCoin()
+		fee := types.NewERC20Token(v, myTokenContractAddr).PeggyCoin()
 		_, err := k.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
@@ -125,76 +117,76 @@ func TestBatches(t *testing.T) {
 	// create the more profitable batch
 	ctx = ctx.WithBlockTime(now)
 	// tx batch size is 2, so that some of them stay behind
-	secondBatch, err := k.BuildOutgoingTXBatch(ctx, voucherDenom, 2)
+	secondBatch, err := k.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// check that the more profitable batch has the right txs in it
-	expSecondBatch := types.OutgoingTxBatch{
-		Nonce: types.NewUInt64Nonce(2),
-		Elements: []types.OutgoingTransferTx{
+	expSecondBatch := &types.OutgoingTxBatch{
+		BatchNonce: 2,
+		Transactions: []*types.OutgoingTransferTx{
 			{
-				ID:          6,
-				BridgeFee:   denominator.ToUint64ERC20Token(5),
-				Sender:      mySender,
+				Id:          6,
+				Erc20Fee:    types.NewERC20Token(5, myTokenContractAddr),
+				Sender:      mySender.String(),
 				DestAddress: myReceiver,
-				Amount:      denominator.ToUint64ERC20Token(101),
+				Erc20Token:  types.NewERC20Token(101, myTokenContractAddr),
 			},
 			{
-				ID:          5,
-				BridgeFee:   denominator.ToUint64ERC20Token(4),
-				Sender:      mySender,
+				Id:          5,
+				Erc20Fee:    types.NewERC20Token(4, myTokenContractAddr),
+				Sender:      mySender.String(),
 				DestAddress: myReceiver,
-				Amount:      denominator.ToUint64ERC20Token(100),
+				Erc20Token:  types.NewERC20Token(100, myTokenContractAddr),
 			},
 		},
-		TotalFee:           denominator.ToUint64ERC20Token(9),
-		BridgedDenominator: denominator,
-		TokenContract:      types.EthereumAddress{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
+		TokenContract: myTokenContractAddr,
 		// For some reason, the empty Members field can be expressed by either []types.BridgeValidator{} or types.BridgeValidators(nil)
-		Valset: types.Valset{Nonce: 0x12d687, Members: []types.BridgeValidator{}},
+		// for some reason, this was the only reason for this testing failing? I've changed it
+		// Valset: &types.Valset{Nonce: 0x12d687, Members: types.BridgeValidators(nil)},
 	}
-	assert.Equal(t, expSecondBatch, *secondBatch)
+
+	assert.Equal(t, expSecondBatch, secondBatch)
 
 	// EXECUTE THE MORE PROFITABLE BATCH
 	// =================================
 
 	// Execute the batch
-	k.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.Nonce)
+	k.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 
 	// check batch has been deleted
-	gotSecondBatch := k.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, secondBatch.Nonce)
+	gotSecondBatch := k.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 	require.Nil(t, gotSecondBatch)
 
 	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
-	k.IterateOutgoingPoolByFee(ctx, voucherDenom, func(_ uint64, tx types.OutgoingTx) bool {
+	k.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx = []types.OutgoingTx{
+	expUnbatchedTx = []*types.OutgoingTx{
 		{
-			BridgeFee:   sdk.NewInt64Coin(string(voucherDenom), 3),
-			Sender:      mySender,
-			DestAddress: myReceiver,
-			Amount:      sdk.NewInt64Coin(string(voucherDenom), 101),
+			BridgeFee: types.NewERC20Token(3, myTokenContractAddr).PeggyCoin(),
+			Sender:    mySender.String(),
+			DestAddr:  myReceiver,
+			Amount:    types.NewERC20Token(101, myTokenContractAddr).PeggyCoin(),
 		},
 		{
-			BridgeFee:   sdk.NewInt64Coin(string(voucherDenom), 2),
-			Sender:      mySender,
-			DestAddress: myReceiver,
-			Amount:      sdk.NewInt64Coin(string(voucherDenom), 100),
+			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
+			Sender:    mySender.String(),
+			DestAddr:  myReceiver,
+			Amount:    types.NewERC20Token(100, myTokenContractAddr).PeggyCoin(),
 		},
 		{
-			BridgeFee:   sdk.NewInt64Coin(string(voucherDenom), 2),
-			Sender:      mySender,
-			DestAddress: myReceiver,
-			Amount:      sdk.NewInt64Coin(string(voucherDenom), 102),
+			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
+			Sender:    mySender.String(),
+			DestAddr:  myReceiver,
+			Amount:    types.NewERC20Token(102, myTokenContractAddr).PeggyCoin(),
 		},
 		{
-			BridgeFee:   sdk.NewInt64Coin(string(voucherDenom), 1),
-			Sender:      mySender,
-			DestAddress: myReceiver,
-			Amount:      sdk.NewInt64Coin(string(voucherDenom), 103),
+			BridgeFee: types.NewERC20Token(1, myTokenContractAddr).PeggyCoin(),
+			Sender:    mySender.String(),
+			DestAddr:  myReceiver,
+			Amount:    types.NewERC20Token(103, myTokenContractAddr).PeggyCoin(),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)

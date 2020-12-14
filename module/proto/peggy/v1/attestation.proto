@@ -1,0 +1,46 @@
+syntax = "proto3";
+package peggy.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+// ClaimType is the cosmos type of an event from the counterpart chain that can
+// be handled
+enum ClaimType {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  CLAIM_TYPE_UNKNOWN  = 0 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_UNKNOWN" ];
+  CLAIM_TYPE_DEPOSIT  = 1 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_DEPOSIT" ];
+  CLAIM_TYPE_WITHDRAW = 2 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_WITHDRAW"];
+}
+
+// Attestation is an aggregate of `claims` that eventually becomes `observed` by
+// all orchestrators
+// EVENT_NONCE:
+// EventNonce a nonce provided by the peggy contract that is unique per event fired
+// These event nonces must be relayed in order. This is a correctness issue,
+// if relaying out of order transaction replay attacks become possible
+// OBSERVED:
+// Observed indicates that >67% of validators have attested to the event,
+// and that the event should be executed by the peggy state machine
+//
+// The actual content of the claims is passed in with the transaction making the claim
+// and then passed through the call stack alongside the attestation while it is processed
+// the key in which the attestation is stored is keyed on the exact details of the claim
+// but there is no reason to store those exact details becuause the next message sender
+// will kindly provide you with them.
+message Attestation {
+  uint64              event_nonce = 1;
+  bool                observed    = 2;
+  repeated string     votes       = 3;
+}
+
+// ERC20Token unique identifier for an Ethereum ERC20 token.
+// CONTRACT:
+// The contract address on ETH of the token (note: developers should look up
+// the token symbol using the address on ETH to display for UI)
+message ERC20Token {
+  string amount   = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+  string contract = 2;
+}

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+	"fmt"
 	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -15,39 +16,38 @@ import (
 // - burns the voucher for transfer amount and fees
 // - persists an OutgoingTx
 // - adds the TX to the `available` TX pool via a second index
-func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counterpartReceiver types.EthereumAddress, amount sdk.Coin, fee sdk.Coin) (uint64, error) {
+func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counterpartReceiver string, amount sdk.Coin, fee sdk.Coin) (uint64, error) {
 	totalAmount := amount.Add(fee)
 	totalInVouchers := sdk.Coins{totalAmount}
 
-	voucherDenom, err := types.AsVoucherDenom(totalAmount.Denom)
-	if err != nil {
+	// Ensure that the coin is a peggy voucher
+	if _, err := types.ValidatePeggyCoin(totalAmount); err != nil {
+		return 0, fmt.Errorf("amount not a peggy voucher coin: %s", err)
+	}
+
+	// send coins to module in prep for burn
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
 		return 0, err
 	}
 
-	if !k.HasCounterpartDenominator(ctx, voucherDenom) {
-		return 0, sdkerrors.Wrap(types.ErrUnknown, "denominator")
-	}
-
-	// burn vouchers
-	err = k.supplyKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers)
-	if err != nil {
-		return 0, err
-	}
-	if err := k.supplyKeeper.BurnCoins(ctx, types.ModuleName, totalInVouchers); err != nil {
+	// burn vouchers to send them back to ETH
+	if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, totalInVouchers); err != nil {
 		panic(err)
 	}
 
-	// persist TX in pool
+	// get next tx id from keeper
 	nextID := k.autoIncrementID(ctx, types.KeyLastTXPoolID)
-	outgoing := types.OutgoingTx{
-		//TokenContractAddress: , // TODO: do we need to store this?
-		Sender:      sender,
-		DestAddress: counterpartReceiver,
-		Amount:      amount,
-		BridgeFee:   fee,
+
+	// construct outgoing tx
+	outgoing := &types.OutgoingTx{
+		Sender:    sender.String(),
+		DestAddr:  counterpartReceiver,
+		Amount:    amount,
+		BridgeFee: fee,
 	}
-	err = k.setPoolEntry(ctx, nextID, outgoing)
-	if err != nil {
+
+	// set the outgoing tx in the pool index
+	if err := k.setPoolEntry(ctx, nextID, outgoing); err != nil {
 		return 0, err
 	}
 
@@ -60,10 +60,10 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	poolEvent := sdk.NewEvent(
 		types.EventTypeBridgeWithdrawalReceived,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
+		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		sdk.NewAttribute(types.AttributeKeyOutgoingTXID, strconv.Itoa(int(nextID))),
-		sdk.NewAttribute(types.AttributeKeyNonce, types.NewUInt64Nonce(nextID).String()),
+		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nextID)),
 	)
 	ctx.EventManager().EmitEvent(poolEvent)
 
@@ -79,8 +79,8 @@ func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID uin
 		bz := store.Get(idxKey)
 		k.cdc.MustUnmarshalBinaryBare(bz, &idSet)
 	}
-	idSet = append(idSet, txID)
-	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(idSet))
+	idSet.Ids = append(idSet.Ids, txID)
+	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(&idSet))
 }
 
 // appendToUnbatchedTXIndex add at the top when tx with same fee exists
@@ -92,8 +92,8 @@ func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID ui
 		bz := store.Get(idxKey)
 		k.cdc.MustUnmarshalBinaryBare(bz, &idSet)
 	}
-	idSet = append([]uint64{txID}, idSet...)
-	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(idSet))
+	idSet.Ids = append([]uint64{txID}, idSet.Ids...)
+	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(&idSet))
 }
 
 // removeFromUnbatchedTXIndex removes the tx from the index and makes it implicit no available anymore
@@ -106,11 +106,11 @@ func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID u
 		return sdkerrors.Wrap(types.ErrUnknown, "fee")
 	}
 	k.cdc.MustUnmarshalBinaryBare(bz, &idSet)
-	for i := range idSet {
-		if idSet[i] == txID {
-			idSet = append(idSet[0:i], idSet[i+1:]...)
-			if len(idSet) != 0 {
-				store.Set(idxKey, k.cdc.MustMarshalBinaryBare(idSet))
+	for i := range idSet.Ids {
+		if idSet.Ids[i] == txID {
+			idSet.Ids = append(idSet.Ids[0:i], idSet.Ids[i+1:]...)
+			if len(idSet.Ids) != 0 {
+				store.Set(idxKey, k.cdc.MustMarshalBinaryBare(&idSet))
 			} else {
 				store.Delete(idxKey)
 			}
@@ -120,7 +120,7 @@ func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID u
 	return sdkerrors.Wrap(types.ErrUnknown, "tx id")
 }
 
-func (k Keeper) setPoolEntry(ctx sdk.Context, id uint64, val types.OutgoingTx) error {
+func (k Keeper) setPoolEntry(ctx sdk.Context, id uint64, val *types.OutgoingTx) error {
 	bz, err := k.cdc.MarshalBinaryBare(val)
 	if err != nil {
 		return err
@@ -146,62 +146,21 @@ func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
 	store.Delete(types.GetOutgoingTxPoolKey(id))
 }
 
-// GetCounterpartDenominator returns the token details on the counterpart chain for given voucher type
-func (k Keeper) GetCounterpartDenominator(ctx sdk.Context, voucherDenom types.VoucherDenom) *types.BridgedDenominator {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetDenominatorKey(voucherDenom.Unprefixed()))
-	if len(bz) == 0 {
-		return nil
-	}
-	var bridgedDenominator types.BridgedDenominator
-	k.cdc.MustUnmarshalBinaryBare(bz, &bridgedDenominator)
-	return &bridgedDenominator
-}
-
-// StoreCounterpartDenominator persists the bridged token details. Overwrites an existing entry without error
-func (k Keeper) StoreCounterpartDenominator(ctx sdk.Context, tokenContractAddress types.EthereumAddress, symbol string) types.BridgedDenominator {
-	store := ctx.KVStore(k.storeKey)
-	voucherDenominator := types.NewVoucherDenom(tokenContractAddress, symbol)
-	bridgedDenominator := types.NewBridgedDenominator(tokenContractAddress, symbol)
-	store.Set(types.GetDenominatorKey(voucherDenominator.Unprefixed()), k.cdc.MustMarshalBinaryBare(bridgedDenominator))
-	return bridgedDenominator
-}
-
-func (k Keeper) HasCounterpartDenominator(ctx sdk.Context, voucherDenominator types.VoucherDenom) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetDenominatorKey(voucherDenominator.Unprefixed()))
-}
-
-// IterateCounterpartDenominators iterate through all bridged denominator types
-func (k Keeper) IterateCounterpartDenominators(ctx sdk.Context, cb func([]byte, types.BridgedDenominator) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.DenomiatorPrefix)
-	iter := prefixStore.Iterator(nil, nil)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var d types.BridgedDenominator
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &d)
-		// cb returns true to stop early
-		if cb(iter.Key(), d) {
-			return
-		}
-	}
-	return
-}
-
-func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, voucherDenom types.VoucherDenom, cb func(uint64, types.OutgoingTx) bool) {
+// IterateOutgoingPoolByFee itetates over the outgoing pool which is sorted by fee
+func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.OutgoingTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
-	iter := prefixStore.ReverseIterator(prefixRange([]byte(voucherDenom.Unprefixed())))
+	iter := prefixStore.ReverseIterator(prefixRange([]byte(contract)))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var ids types.IDSet
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ids)
 		// cb returns true to stop early
-		for _, id := range ids {
+		for _, id := range ids.Ids {
 			tx, err := k.getPoolEntry(ctx, id)
 			if err != nil {
 				return
 			}
-			if cb(id, *tx) {
+			if cb(id, tx) {
 				return
 			}
 		}

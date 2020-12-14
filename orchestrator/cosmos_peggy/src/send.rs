@@ -1,6 +1,6 @@
 use crate::messages::*;
+use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use clarity::{Address as EthAddress, Uint256};
 use contact::jsonrpc::error::JsonRpcError;
 use contact::types::TXSendResponse;
 use contact::{client::Contact, utils::maybe_get_optional_tx_info};
@@ -19,9 +19,6 @@ pub async fn update_peggy_eth_address(
     eth_private_key: EthPrivateKey,
     private_key: PrivateKey,
     fee: Coin,
-    chain_id: Option<String>,
-    account_number: Option<u128>,
-    sequence: Option<u128>,
 ) -> Result<TXSendResponse, JsonRpcError> {
     trace!("Updating Peggy ETH address");
     let our_address = private_key
@@ -29,9 +26,7 @@ pub async fn update_peggy_eth_address(
         .expect("Invalid private key!")
         .to_address();
 
-    let tx_info =
-        maybe_get_optional_tx_info(our_address, chain_id, account_number, sequence, &contact)
-            .await?;
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, &contact).await?;
     trace!("got optional tx info");
 
     let eth_address = eth_private_key.to_public_key().unwrap();
@@ -121,6 +116,11 @@ pub async fn send_valset_confirm(
     let message = encode_valset_confirm(peggy_id, valset.clone());
     let eth_signature = eth_private_key.sign_ethereum_msg(&message);
 
+    trace!(
+        "Sent valset update with address {} and sig {}",
+        our_eth_address,
+        bytes_to_hex_str(&eth_signature.to_bytes())
+    );
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
         account_number: tx_info.account_number,
@@ -178,8 +178,8 @@ pub async fn send_batch_confirm(
         msgs: vec![PeggyMsg::ConfirmBatchMsg(ConfirmBatchMsg {
             validator: our_address,
             token_contract: transaction_batch.token_contract,
-            ethereum_signer: our_eth_address,
-            nonce: transaction_batch.nonce,
+            eth_signer: our_eth_address,
+            nonce: transaction_batch.nonce.into(),
             eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
         })],
         memo: String::new(),
@@ -194,10 +194,9 @@ pub async fn send_batch_confirm(
 
 pub async fn send_ethereum_claims(
     contact: &Contact,
-    eth_chain_id: Uint256,
-    peggy_contract: EthAddress,
     private_key: PrivateKey,
-    claims: Vec<EthereumBridgeClaim>,
+    deposits: Vec<SendToCosmosEvent>,
+    withdraws: Vec<TransactionBatchExecutedEvent>,
     fee: Coin,
 ) -> Result<TXSendResponse, JsonRpcError> {
     let our_address = private_key
@@ -207,6 +206,20 @@ pub async fn send_ethereum_claims(
 
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
 
+    let mut msgs = Vec::new();
+    for deposit in deposits {
+        msgs.push(PeggyMsg::DepositClaimMsg(DepositClaimMsg::from_event(
+            deposit,
+            our_address,
+        )))
+    }
+    for withdraw in withdraws {
+        msgs.push(PeggyMsg::WithdrawClaimMsg(WithdrawClaimMsg::from_event(
+            withdraw,
+            our_address,
+        )))
+    }
+
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
         account_number: tx_info.account_number,
@@ -215,12 +228,7 @@ pub async fn send_ethereum_claims(
             amount: vec![fee],
             gas: 500_000u64.into(),
         },
-        msgs: vec![PeggyMsg::CreateEthereumClaimsMsg(CreateEthereumClaimsMsg {
-            ethereum_chain_id: eth_chain_id,
-            bridge_contract_address: peggy_contract,
-            orchestrator: our_address,
-            claims,
-        })],
+        msgs,
         memo: String::new(),
     };
 
@@ -256,8 +264,8 @@ pub async fn send_to_eth(
         },
         msgs: vec![PeggyMsg::SendToEthMsg(SendToEthMsg {
             sender: our_address,
-            dest_address: destination,
-            send: amount,
+            eth_dest: destination,
+            amount,
             bridge_fee: fee,
         })],
         memo: String::new(),

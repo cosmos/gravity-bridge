@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 )
 
-func getValsetRequestHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+func getValsetRequestHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
@@ -26,13 +26,13 @@ func getValsetRequestHandler(cliCtx context.CLIContext, storeName string) http.H
 		}
 
 		var out types.Valset
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
 
 // USED BY RUST
-func batchByNonceHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+func batchByNonceHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
@@ -49,13 +49,13 @@ func batchByNonceHandler(cliCtx context.CLIContext, storeName string) http.Handl
 		}
 
 		var out types.OutgoingTxBatch
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
 
 // USED BY RUST
-func lastBatchesHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+func lastBatchesHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastBatches", storeName))
@@ -68,14 +68,12 @@ func lastBatchesHandler(cliCtx context.CLIContext, storeName string) http.Handle
 			return
 		}
 
-		var out []types.OutgoingTxBatch
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
 
 // gets all the confirm messages for a given validator set nonce
-func allValsetConfirmsHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+func allValsetConfirmsHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
@@ -90,14 +88,12 @@ func allValsetConfirmsHandler(cliCtx context.CLIContext, storeName string) http.
 			return
 		}
 
-		var out []types.MsgValsetConfirm
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
 
 // gets all the confirm messages for a given transaction batch
-func allBatchConfirmsHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+func allBatchConfirmsHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
@@ -113,13 +109,11 @@ func allBatchConfirmsHandler(cliCtx context.CLIContext, storeName string) http.H
 			return
 		}
 
-		var out []types.MsgConfirmBatch
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
 
-func lastValsetRequestsHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+func lastValsetRequestsHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastValsetRequests", storeName))
 		if err != nil {
@@ -131,13 +125,11 @@ func lastValsetRequestsHandler(cliCtx context.CLIContext, storeName string) http
 			return
 		}
 
-		var out []types.Valset
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
 
-func lastValsetRequestsByAddressHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+func lastValsetRequestsByAddressHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		operatorAddr := vars[bech32ValidatorAddress]
@@ -153,12 +145,12 @@ func lastValsetRequestsByAddressHandler(cliCtx context.CLIContext, storeName str
 		}
 
 		var out types.Valset
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
 
-func lastBatchesByAddressHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+func lastBatchesByAddressHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		operatorAddr := vars[bech32ValidatorAddress]
@@ -174,12 +166,12 @@ func lastBatchesByAddressHandler(cliCtx context.CLIContext, storeName string) ht
 		}
 
 		var out types.OutgoingTxBatch
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }
 
-func currentValsetHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+func currentValsetHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/currentValset", storeName))
 		if err != nil {
@@ -187,7 +179,7 @@ func currentValsetHandler(cliCtx context.CLIContext, storeName string) http.Hand
 			return
 		}
 		var out types.Valset
-		cliCtx.Codec.MustUnmarshalJSON(res, &out)
+		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
 }

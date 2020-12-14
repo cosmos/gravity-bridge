@@ -32,9 +32,10 @@ path = "src/test_runner.rs"
 ethereum_peggy = {path = "../ethereum_peggy"}
 cosmos_peggy = {path = "../cosmos_peggy"}
 peggy_utils = {path = "../peggy_utils"}
+peggy_proto = {path = "../peggy_proto/"}
 
 deep_space = "0.2"
-contact = "0.1.9"
+contact = "0.2"
 serde_derive = "1.0"
 clarity = "0.4"
 docopt = "1"
@@ -53,6 +54,8 @@ sha3 = "0.9"
 tokio = "0.2"
 rand = "0.7"
 num = "0.3"
+tonic = "0.3"
+futures = "0.3"
 
 
 [dev-dependencies]

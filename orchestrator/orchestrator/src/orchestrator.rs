@@ -28,6 +28,7 @@ use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
+use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use url::Url;
 use web30::client::Web3;
 
@@ -35,7 +36,8 @@ use web30::client::Web3;
 struct Args {
     flag_cosmos_phrase: String,
     flag_ethereum_key: String,
-    flag_cosmos_rpc: String,
+    flag_cosmos_legacy_rpc: String,
+    flag_cosmos_grpc: String,
     flag_ethereum_rpc: String,
     flag_contract_address: String,
     flag_fees: String,
@@ -43,15 +45,16 @@ struct Args {
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-    "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-rpc=<url> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr>
+    "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-legacy-rpc=<url> --cosmos-grpc=<url> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr>
         Options:
-            -h --help                 Show this screen.
-            --cosmos-key=<ckey>       The Cosmos private key of the validator
-            --ethereum-key=<ekey>     The Ethereum private key of the validator
-            --cosmos-rpc=<curl>       The Cosmos RPC url, usually the validator
-            --ethereum-rpc=<eurl>     The Ethereum RPC url, should be a self hosted node
-            --fees=<denom>            The Cosmos Denom in which to pay Cosmos chain fees
-            --contract-address=<addr> The Ethereum contract address for Peggy, this is temporary
+            -h --help                    Show this screen.
+            --cosmos-key=<ckey>          The Cosmos private key of the validator
+            --ethereum-key=<ekey>        The Ethereum private key of the validator
+            --cosmos-legacy-rpc=<curl>   The Cosmos RPC url, usually the validator
+            --cosmos-grpc=<gurl>         The Cosmos gRPC url, usually the validator
+            --ethereum-rpc=<eurl>        The Ethereum RPC url, should be a self hosted node
+            --fees=<denom>               The Cosmos Denom in which to pay Cosmos chain fees
+            --contract-address=<addr>    The Ethereum contract address for Peggy, this is temporary
         About:
             The Validator companion relayer and Ethereum network observer.
             for Althea-Peggy.
@@ -80,16 +83,21 @@ async fn main() {
         .flag_contract_address
         .parse()
         .expect("Invalid contract address!");
-    let cosmos_url = Url::parse(&args.flag_cosmos_rpc).expect("Invalid Cosmos RPC url");
-    let cosmos_url = cosmos_url.to_string();
-    let cosmos_url = cosmos_url.trim_end_matches('/');
-    let eth_url = Url::parse(&args.flag_ethereum_rpc).expect("Invalid Ethereum RPC url");
-    let eth_url = eth_url.to_string();
-    let eth_url = eth_url.trim_end_matches('/');
+
+    let _ = Url::parse(&args.flag_cosmos_legacy_rpc).expect("Invalid Cosmos legacy RPC url");
+    let cosmos_legacy_url = args.flag_cosmos_legacy_rpc.trim_end_matches('/');
+
+    let _ = Url::parse(&args.flag_cosmos_grpc).expect("Invalid Cosmos gRPC url");
+    let cosmos_grpc_url = args.flag_cosmos_grpc.trim_end_matches('/').to_string();
+
+    let _ = Url::parse(&args.flag_ethereum_rpc).expect("Invalid Ethereum RPC url");
+    let eth_url = args.flag_ethereum_rpc.trim_end_matches('/');
+
     let fee_denom = args.flag_fees;
 
+    let grpc_client = PeggyQueryClient::connect(cosmos_grpc_url).await.unwrap();
     let web3 = Web3::new(&eth_url, LOOP_SPEED);
-    let contact = Contact::new(&cosmos_url, LOOP_SPEED);
+    let contact = Contact::new(&cosmos_legacy_url, LOOP_SPEED);
 
     let public_eth_key = ethereum_key
         .to_public_key()
@@ -109,6 +117,7 @@ async fn main() {
         ethereum_key,
         web3,
         contact,
+        grpc_client,
         contract_address,
         fee_denom,
     )

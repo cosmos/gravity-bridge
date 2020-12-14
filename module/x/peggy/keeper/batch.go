@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -16,65 +17,55 @@ const OutgoingTxBatchSize = 100
 // - select available transactions from the outgoing transaction pool sorted by fee desc
 // - persist an outgoing batch object with an incrementing ID = nonce
 // - emit an event
-func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, voucherDenom types.VoucherDenom, maxElements int) (*types.OutgoingTxBatch, error) {
+func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, maxElements int) (*types.OutgoingTxBatch, error) {
 	if maxElements == 0 {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "max elements value")
 	}
-	bridgedDenom := k.GetCounterpartDenominator(ctx, voucherDenom)
-	if bridgedDenom == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "bridged denominator")
-	}
-	selectedTx, err := k.pickUnbatchedTX(ctx, voucherDenom, *bridgedDenom, maxElements)
+	// TODO: figure out how to check for know or unknown denoms? this might not matter anymore
+	selectedTx, err := k.pickUnbatchedTX(ctx, contractAddress, maxElements)
 	if len(selectedTx) == 0 || err != nil {
 		return nil, err
 	}
-	totalFee := selectedTx[0].BridgeFee
-	for _, tx := range selectedTx[1:] {
-		totalFee = totalFee.Add(tx.BridgeFee)
-	}
 	nextID := k.autoIncrementID(ctx, types.KeyLastOutgoingBatchID)
-	nonce := types.NewUInt64Nonce(nextID)
-	batch := types.OutgoingTxBatch{
-		Nonce:              nonce,
-		Elements:           selectedTx,
-		BridgedDenominator: *bridgedDenom,
-		TotalFee:           totalFee,
-		Valset:             k.GetCurrentValset(ctx),
-		TokenContract:      bridgedDenom.TokenContractAddress,
+	batch := &types.OutgoingTxBatch{
+		BatchNonce:   nextID,
+		Transactions: selectedTx,
+		// Valset:        k.GetCurrentValset(ctx),
+		TokenContract: contractAddress,
 	}
 	k.storeBatch(ctx, batch)
 
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatch,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
+		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, nonce.String()),
-		sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
+		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, fmt.Sprint(nextID)),
+		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nextID)),
 	)
 	ctx.EventManager().EmitEvent(batchEvent)
-	return &batch, nil
+	return batch, nil
 }
 
 // OutgoingTxBatchExecuted is run when the Cosmos chain detects that a batch has been executed on Ethereum
 // It frees all the transactions in the batch, then cancels all earlier batches
-func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract types.EthereumAddress, nonce types.UInt64Nonce) error {
+func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, nonce uint64) error {
 	b := k.GetOutgoingTXBatch(ctx, tokenContract, nonce)
 	if b == nil {
 		return sdkerrors.Wrap(types.ErrUnknown, "nonce")
 	}
 
 	// cleanup outgoing TX pool
-	for i := range b.Elements {
-		k.removePoolEntry(ctx, b.Elements[i].ID)
+	for _, tx := range b.Transactions {
+		k.removePoolEntry(ctx, tx.Id)
 	}
 
 	// Iterate through remaining batches
-	k.IterateOutgoingTXBatches(ctx, func(key []byte, iter_batch types.OutgoingTxBatch) bool {
+	k.IterateOutgoingTXBatches(ctx, func(key []byte, iter_batch *types.OutgoingTxBatch) bool {
 		// If the iterated batches nonce is lower than the one that was just executed, cancel it
 		// TODO: iterate only over batches we need to iterate over
-		if iter_batch.Nonce < b.Nonce {
-			k.CancelOutgoingTXBatch(ctx, tokenContract, iter_batch.Nonce)
+		if iter_batch.BatchNonce < b.BatchNonce {
+			k.CancelOutgoingTXBatch(ctx, tokenContract, iter_batch.BatchNonce)
 		}
 		return false
 	})
@@ -84,28 +75,28 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract types.Eth
 	return nil
 }
 
-func (k Keeper) storeBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
+func (k Keeper) storeBatch(ctx sdk.Context, batch *types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetOutgoingTxBatchKey(batch.TokenContract, batch.Nonce)
+	key := types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
 }
 
 func (k Keeper) deleteBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetOutgoingTxBatchKey(batch.TokenContract, batch.Nonce))
+	store.Delete(types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce))
 }
 
 // pickUnbatchedTX find TX in pool and remove from "available" second index
-func (k Keeper) pickUnbatchedTX(ctx sdk.Context, denom types.VoucherDenom, bridgedDenom types.BridgedDenominator, maxElements int) ([]types.OutgoingTransferTx, error) {
-	var selectedTx []types.OutgoingTransferTx
+func (k Keeper) pickUnbatchedTX(ctx sdk.Context, contractAddress string, maxElements int) ([]*types.OutgoingTransferTx, error) {
+	var selectedTx []*types.OutgoingTransferTx
 	var err error
-	k.IterateOutgoingPoolByFee(ctx, denom, func(txID uint64, tx types.OutgoingTx) bool {
-		txOut := types.OutgoingTransferTx{
-			ID:          txID,
+	k.IterateOutgoingPoolByFee(ctx, contractAddress, func(txID uint64, tx *types.OutgoingTx) bool {
+		txOut := &types.OutgoingTransferTx{
+			Id:          txID,
 			Sender:      tx.Sender,
-			DestAddress: tx.DestAddress,
-			Amount:      bridgedDenom.ToERC20Token(tx.Amount),
-			BridgeFee:   bridgedDenom.ToERC20Token(tx.BridgeFee),
+			DestAddress: tx.DestAddr,
+			Erc20Token:  types.NewERC20Token(tx.Amount.Amount.Uint64(), contractAddress),
+			Erc20Fee:    types.NewERC20Token(tx.BridgeFee.Amount.Uint64(), contractAddress),
 		}
 		selectedTx = append(selectedTx, txOut)
 		err = k.removeFromUnbatchedTXIndex(ctx, tx.BridgeFee, txID)
@@ -115,7 +106,7 @@ func (k Keeper) pickUnbatchedTX(ctx sdk.Context, denom types.VoucherDenom, bridg
 }
 
 // GetOutgoingTXBatch loads a batch object. Returns nil when not exists.
-func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, tokenContract types.EthereumAddress, nonce types.UInt64Nonce) *types.OutgoingTxBatch {
+func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, tokenContract string, nonce uint64) *types.OutgoingTxBatch {
 	store := ctx.KVStore(k.storeKey)
 	key := types.GetOutgoingTxBatchKey(tokenContract, nonce)
 	bz := store.Get(key)
@@ -124,17 +115,23 @@ func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, tokenContract types.Ethereum
 	}
 	var b types.OutgoingTxBatch
 	k.cdc.MustUnmarshalBinaryBare(bz, &b)
+	// TODO: figure out why it drops the contract address in the ERC20 token representation
+	for _, tx := range b.Transactions {
+		tx.Erc20Token.Contract = tokenContract
+		tx.Erc20Fee.Contract = tokenContract
+	}
 	return &b
 }
 
 // CancelOutgoingTXBatch releases all TX in the batch and deletes the batch
-func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract types.EthereumAddress, nonce types.UInt64Nonce) error {
+func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract string, nonce uint64) error {
 	batch := k.GetOutgoingTXBatch(ctx, tokenContract, nonce)
 	if batch == nil {
 		return types.ErrUnknown
 	}
-	for _, tx := range batch.Elements {
-		k.prependToUnbatchedTXIndex(ctx, batch.BridgedDenominator.ToVoucherCoin(tx.BridgeFee.Amount), tx.ID)
+	for _, tx := range batch.Transactions {
+		tx.Erc20Fee.Contract = tokenContract
+		k.prependToUnbatchedTXIndex(ctx, tx.Erc20Fee.PeggyCoin(), tx.Id)
 	}
 
 	// Delete batch since it is finished
@@ -143,17 +140,17 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract types.Ether
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatchCanceled,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx).String()),
+		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, nonce.String()),
-		sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
+		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, fmt.Sprint(nonce)),
+		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nonce)),
 	)
 	ctx.EventManager().EmitEvent(batchEvent)
 	return nil
 }
 
 // IterateOutgoingTXBatches iterates through all outgoing batches in DESC order.
-func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, batch types.OutgoingTxBatch) bool) {
+func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, batch *types.OutgoingTxBatch) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OutgoingTXBatchKey)
 	iter := prefixStore.ReverseIterator(nil, nil)
 	defer iter.Close()
@@ -161,7 +158,7 @@ func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, ba
 		var batch types.OutgoingTxBatch
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &batch)
 		// cb returns true to stop early
-		if cb(iter.Key(), batch) {
+		if cb(iter.Key(), &batch) {
 			break
 		}
 	}

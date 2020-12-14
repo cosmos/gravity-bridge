@@ -8,23 +8,23 @@ import (
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethCommon "github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 func TestQueryValsetConfirm(t *testing.T) {
 	var (
-		nonce                                         = types.NewUInt64Nonce(1)
-		myValidatorCosmosAddr   sdk.AccAddress        = make([]byte, sdk.AddrLen)
-		myValidatorEthereumAddr types.EthereumAddress = createEthAddress(50)
+		nonce                                       = uint64(1)
+		myValidatorCosmosAddr, _                    = sdk.AccAddressFromBech32("cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l")
+		myValidatorEthereumAddr  gethcommon.Address = gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(50)}, 20))
 	)
 	k, ctx, _ := CreateTestEnv(t)
 	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{
-		Nonce:     nonce,
-		Validator: myValidatorCosmosAddr,
-		Address:   myValidatorEthereumAddr,
+		Nonce:      nonce,
+		Validator:  myValidatorCosmosAddr.String(),
+		EthAddress: myValidatorEthereumAddr.String(),
+		Signature:  "alksdjhflkasjdfoiasjdfiasjdfoiasdj",
 	})
 
 	specs := map[string]struct {
@@ -36,7 +36,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			srcAddr:  myValidatorCosmosAddr.String(),
-			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a",  "signature": ""}}`),
+			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l",  "signature": "alksdjhflkasjdfoiasjdfiasjdfoiasdj"}}`),
 		},
 		"unknown nonce": {
 			srcNonce: "999999",
@@ -71,18 +71,20 @@ func TestQueryValsetConfirm(t *testing.T) {
 }
 
 func TestAllValsetConfirmsBynonce(t *testing.T) {
-	var (
-		nonce = types.NewUInt64Nonce(1)
-	)
 	k, ctx, _ := CreateTestEnv(t)
 
+	addrs := []string{
+		"cosmos1u508cfnsk2nhakv80vdtq3nf558ngyvldkfjj9",
+		"cosmos1krtcsrxhadj54px0vy6j33pjuzcd3jj8kmsazv",
+		"cosmos1u94xef3cp9thkcpxecuvhtpwnmg8mhlja8hzkd",
+	}
 	// seed confirmations
 	for i := 0; i < 3; i++ {
-		addr := bytes.Repeat([]byte{byte(i)}, sdk.AddrLen)
+		addr, _ := sdk.AccAddressFromBech32(addrs[i])
 		msg := types.MsgValsetConfirm{}
-		msg.Address = createEthAddress(i + 1)
-		msg.Nonce = nonce
-		msg.Validator = addr
+		msg.EthAddress = gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(i + 1)}, 20)).String()
+		msg.Nonce = uint64(1)
+		msg.Validator = addr.String()
 		msg.Signature = fmt.Sprintf("signature %d", i+1)
 		k.SetValsetConfirm(ctx, msg)
 	}
@@ -95,9 +97,9 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			expResp: []byte(`[
-      {"eth_address":"0x0101010101010101010101010101010101010101", "nonce": "1", "validator": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a", "signature": "signature 1"},
-      {"eth_address":"0x0202020202020202020202020202020202020202", "nonce": "1", "validator": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du", "signature": "signature 2"},
-      {"eth_address":"0x0303030303030303030303030303030303030303", "nonce": "1", "validator": "cosmos1qgpqyqszqgpqyqszqgpqyqszqgpqyqszrh8mx2", "signature": "signature 3"}
+      {"eth_address":"0x0202020202020202020202020202020202020202", "nonce": "1", "validator": "cosmos1krtcsrxhadj54px0vy6j33pjuzcd3jj8kmsazv", "signature": "signature 2"},
+	  {"eth_address":"0x0303030303030303030303030303030303030303", "nonce": "1", "validator": "cosmos1u94xef3cp9thkcpxecuvhtpwnmg8mhlja8hzkd", "signature": "signature 3"},
+	  {"eth_address":"0x0101010101010101010101010101010101010101", "nonce": "1", "validator": "cosmos1u508cfnsk2nhakv80vdtq3nf558ngyvldkfjj9", "signature": "signature 1"}
 ]`),
 		},
 		"unknown nonce": {
@@ -135,7 +137,7 @@ func TestLastValsetRequests(t *testing.T) {
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			k.SetEthAddress(ctx, valAddr, createEthAddress(j+1))
+			k.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		k.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -275,7 +277,7 @@ func TestPendingValsetRequests(t *testing.T) {
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			k.SetEthAddress(ctx, valAddr, createEthAddress(j+1))
+			k.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		k.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -342,8 +344,9 @@ func TestLastPendingBatchRequest(t *testing.T) {
 		var validators []sdk.ValAddress
 		for j := 0; j <= i; j++ {
 			// add an validator each block
+			// TODO: replace with real SDK addresses
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			k.SetEthAddress(ctx, valAddr, createEthAddress(j+1))
+			k.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		k.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -358,83 +361,40 @@ func TestLastPendingBatchRequest(t *testing.T) {
 	}{
 		"find batch": {
 			expResp: []byte(`{
-			"type": "peggy/OutgoingTxBatch",
-			"value": {
-			"nonce": "1",
-			"elements": [
-				{
-				"txid": "2",
-				"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-				"dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
-				"send": {
-					"amount": "101",
-					"symbol": "myETHToken",
-					"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
-				},
-				"bridge_fee": {
-					"amount": "3",
-					"symbol": "myETHToken",
-					"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
-				}
-				},
-				{
-				"txid": "1",
-				"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-				"dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
-				"send": {
-					"amount": "100",
-					"symbol": "myETHToken",
-					"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
-				},
-				"bridge_fee": {
-					"amount": "2",
-					"symbol": "myETHToken",
-					"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
-				}
-				}
-			],
-			"total_fee": {
-				"amount": "5",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
-			},
-			"bridged_denominator": {
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-				"symbol": "myETHToken",
-				"cosmos_voucher_denom": "peggyf005bf9aac"
-			},
-			"valset": {
-				"nonce": "105",
-				"members": [
-				{
-					"power": "715827882",
-					"ethereum_address": "0x0101010101010101010101010101010101010101"
-				},
-				{
-					"power": "715827882",
-					"ethereum_address": "0x0202020202020202020202020202020202020202"
-				},
-				{
-					"power": "715827882",
-					"ethereum_address": "0x0303030303030303030303030303030303030303"
-				},
-				{
-					"power": "715827882",
-					"ethereum_address": "0x0404040404040404040404040404040404040404"
-				},
-				{
-					"power": "715827882",
-					"ethereum_address": "0x0505050505050505050505050505050505050505"
-				},
-				{
-					"power": "715827882",
-					"ethereum_address": "0x0606060606060606060606060606060606060606"
-				}
-				]
-			},
-			"token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
-			}
+	"type": "peggy/OutgoingTxBatch",
+	"value": {
+	"batch_nonce": "1",
+	"transactions": [
+		{
+		"id": "2",
+		"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+		"dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+		"erc20_token": {
+			"amount": "101",
+			"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		},
+		"erc20_fee": {
+			"amount": "3",
+			"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		}
+		},
+		{
+		"id": "1",
+		"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+		"dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+		"erc20_token": {
+			"amount": "100",
+			"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		},
+		"erc20_fee": {
+			"amount": "2",
+			"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		}
+		}
+	],
+	"token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+	}
+}
 			`,
 			)},
 	}
@@ -452,31 +412,24 @@ func TestLastPendingBatchRequest(t *testing.T) {
 func createTestBatch(t *testing.T, k Keeper, ctx sdk.Context, keepers TestKeepers) {
 	var (
 		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		myReceiver          = types.NewEthereumAddress("0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934")
-		myTokenContractAddr = types.NewEthereumAddress("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
-		myETHToken          = "myETHToken"
-		voucherDenom        = types.NewVoucherDenom(myTokenContractAddr, myETHToken)
+		myReceiver          = "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934"
+		myTokenContractAddr = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		now                 = time.Now().UTC()
 	)
 	// mint some voucher first
-	allVouchers := sdk.Coins{sdk.NewInt64Coin(string(voucherDenom), 99999)}
-	err := keepers.SupplyKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
+	allVouchers := sdk.Coins{types.NewERC20Token(99999, myTokenContractAddr).PeggyCoin()}
+	err := keepers.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
 	require.NoError(t, err)
 
 	// set senders balance
 	keepers.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	err = keepers.BankKeeper.SetCoins(ctx, mySender, allVouchers)
+	err = keepers.BankKeeper.SetBalances(ctx, mySender, allVouchers)
 	require.NoError(t, err)
 
-	// store counterpart
-	k.StoreCounterpartDenominator(ctx, myTokenContractAddr, myETHToken)
-
-	_ = types.NewBridgedDenominator(myTokenContractAddr, myETHToken)
-
 	// add some TX to the pool
-	for i, v := range []int64{2, 3, 2, 1} {
-		amount := sdk.NewInt64Coin(string(voucherDenom), int64(i+100))
-		fee := sdk.NewInt64Coin(string(voucherDenom), v)
+	for i, v := range []uint64{2, 3, 2, 1} {
+		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).PeggyCoin()
+		fee := types.NewERC20Token(v, myTokenContractAddr).PeggyCoin()
 		_, err := k.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
@@ -484,7 +437,7 @@ func createTestBatch(t *testing.T, k Keeper, ctx sdk.Context, keepers TestKeeper
 	ctx = ctx.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	_, err = k.BuildOutgoingTXBatch(ctx, voucherDenom, 2)
+	_, err = k.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 }
 
@@ -493,22 +446,22 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 	k, ctx, _ := CreateTestEnv(t)
 
 	var (
-		tokenContract = types.NewEthereumAddress("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
-		validatorAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+		tokenContract    = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		validatorAddr, _ = sdk.AccAddressFromBech32("cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh")
 	)
 
-	k.SetBatchConfirm(ctx, types.MsgConfirmBatch{
-		Nonce:          1,
-		TokenContract:  tokenContract,
-		EthereumSigner: types.NewEthereumAddress("0xf35e2cc8e6523d683ed44870f5b7cc785051a77d"),
-		Validator:      validatorAddr,
-		Signature:      "signature",
+	k.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
+		Nonce:         1,
+		TokenContract: tokenContract,
+		EthSigner:     "0xf35e2cc8e6523d683ed44870f5b7cc785051a77d",
+		Validator:     validatorAddr.String(),
+		Signature:     "signature",
 	})
 
-	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract.String(), k)
+	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract, k)
 	require.NoError(t, err)
 
-	expectedJSON := []byte(`[{"ethereum_signer":"0xF35e2cC8E6523d683eD44870f5B7cC785051a77D", "nonce":"1", "signature":"signature", "token_contract":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "validator":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}]`)
+	expectedJSON := []byte(`[{"eth_signer":"0xf35e2cc8e6523d683ed44870f5b7cc785051a77d", "nonce":"1", "signature":"signature", "token_contract":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "validator":"cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh"}]`)
 
 	assert.JSONEq(t, string(expectedJSON), string(batchConfirms), "json is equal")
 }
@@ -519,67 +472,53 @@ func TestQueryBatch(t *testing.T) {
 	k, ctx, keepers := CreateTestEnv(t)
 
 	var (
-		tokenContract = types.NewEthereumAddress("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
+		tokenContract = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 	)
 
 	createTestBatch(t, k, ctx, keepers)
 
-	batch, err := queryBatch(ctx, "1", tokenContract.String(), k)
+	batch, err := queryBatch(ctx, "1", tokenContract, k)
 	require.NoError(t, err)
 
 	expectedJSON := []byte(`{
 		"type": "peggy/OutgoingTxBatch",
 		"value": {
-		  "bridged_denominator": {
-			"cosmos_voucher_denom": "peggyf005bf9aac",
-			"symbol": "myETHToken",
-			"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
-		  },
-		  "elements": [
+		  "transactions": [
 			{
-			  "bridge_fee": {
+			  "erc20_fee": {
 				"amount": "3",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
-			  "send": {
+			  "erc20_token": {
 				"amount": "101",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-			  "txid": "2"
+			  "id": "2"
 			},
 			{
-			  "bridge_fee": {
+			  "erc20_fee": {
 				"amount": "2",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
-			  "send": {
+			  "erc20_token": {
 				"amount": "100",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-			  "txid": "1"
+			  "id": "1"
 			}
 		  ],
-		  "nonce": "1",
-		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-		  "total_fee": {
-			"amount": "5",
-			"symbol": "myETHToken",
-			"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
-		  },
-		  "valset": { "members": null, "nonce": "1234567" }
+		  "batch_nonce": "1",
+		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		}
 	  }
 	  `)
 
-	assert.JSONEq(t, string(expectedJSON), string(batch), "json is equal")
+	// TODO: this test is failing on the empty representation of valset members
+	assert.JSONEq(t, string(expectedJSON), string(batch), string(batch))
 }
 
 func TestLastBatchesRequest(t *testing.T) {
@@ -593,113 +532,71 @@ func TestLastBatchesRequest(t *testing.T) {
 
 	expectedJSON := []byte(`[
 		{
-		  "bridged_denominator": {
-			"cosmos_voucher_denom": "peggyf005bf9aac",
-			"symbol": "myETHToken",
-			"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
-		  },
-		  "elements": [
+		  "transactions": [
 			{
-			  "bridge_fee": {
+			  "erc20_fee": {
 				"amount": "3",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
-			  "send": {
+			  "erc20_token": {
 				"amount": "101",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-			  "txid": "6"
+			  "id": "6"
 			},
 			{
-			  "bridge_fee": {
+			  "erc20_fee": {
 				"amount": "2",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
-			  "send": {
+			  "erc20_token": {
 				"amount": "102",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-			  "txid": "3"
+			  "id": "3"
 			}
 		  ],
-		  "nonce": "2",
-		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-		  "total_fee": {
-			"amount": "5",
-			"symbol": "myETHToken",
-			"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
-		  },
-		  "valset": { "members": null, "nonce": "1234567" }
+		  "batch_nonce": "2",
+		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		},
 		{
-		  "bridged_denominator": {
-			"cosmos_voucher_denom": "peggyf005bf9aac",
-			"symbol": "myETHToken",
-			"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
-		  },
-		  "elements": [
+		  "transactions": [
 			{
-			  "bridge_fee": {
+			  "erc20_fee": {
 				"amount": "3",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
-			  "send": {
+			  "erc20_token": {
 				"amount": "101",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-			  "txid": "2"
+			  "id": "2"
 			},
 			{
-			  "bridge_fee": {
+			  "erc20_fee": {
 				"amount": "2",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
-			  "send": {
+			  "erc20_token": {
 				"amount": "100",
-				"symbol": "myETHToken",
-				"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-			  "txid": "1"
+			  "id": "1"
 			}
 		  ],
-		  "nonce": "1",
-		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-		  "total_fee": {
-			"amount": "5",
-			"symbol": "myETHToken",
-			"token_contract_address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
-		  },
-		  "valset": { "members": null, "nonce": "1234567" }
+		  "batch_nonce": "1",
+		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		}
 	  ]
 	  `)
 
 	assert.JSONEq(t, string(expectedJSON), string(lastBatches), "json is equal")
-}
-
-func createEthAddress(i int) types.EthereumAddress {
-	return types.EthereumAddress(gethCommon.BytesToAddress(bytes.Repeat([]byte{byte(i)}, 20)))
-}
-
-func createFakeEthSignature(n int) []byte {
-	return bytes.Repeat([]byte{byte(n)}, 64)
-}
-
-func createValAddress() sdk.ValAddress {
-	return sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 }

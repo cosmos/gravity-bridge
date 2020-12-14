@@ -77,7 +77,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 
 /* USED BY RUST */
 func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
-	nonce, err := parseNonce(path[0])
+	nonce, err := types.UInt64FromString(path[0])
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,9 @@ func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 	if valset == nil {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, *valset)
+	// TODO: replace these with the GRPC response types
+	// TODO: fix the use of module codec here
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, valset)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -98,20 +100,20 @@ func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 // allValsetConfirmsByNonce returns all the confirm messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
 func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]byte, error) {
-	nonce, err := parseNonce(nonceStr)
+	nonce, err := types.UInt64FromString(nonceStr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	var confirms []types.MsgValsetConfirm
+	var confirms []*types.MsgValsetConfirm
 	keeper.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
-		confirms = append(confirms, c)
+		confirms = append(confirms, &c)
 		return false
 	})
 	if len(confirms) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, confirms)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, confirms)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -122,12 +124,11 @@ func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]
 // USED BY RUST
 // allBatchConfirms returns all the confirm messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
-func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContractString string, keeper Keeper) ([]byte, error) {
-	nonce, err := parseNonce(nonceStr)
+func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContract string, keeper Keeper) ([]byte, error) {
+	nonce, err := types.UInt64FromString(nonceStr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
-	tokenContract := types.NewEthereumAddress(tokenContractString)
 
 	var confirms []types.MsgConfirmBatch
 	keeper.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, c types.MsgConfirmBatch) bool {
@@ -137,7 +138,7 @@ func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContractString
 	if len(confirms) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, confirms)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, confirms)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -151,8 +152,8 @@ const maxValsetRequestsReturned = 5
 // lastValsetRequests returns up to maxValsetRequestsReturned valsets from the store
 func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var counter int
-	var valReq []types.Valset
-	keeper.IterateValsetRequest(ctx, func(_ []byte, val types.Valset) bool {
+	var valReq []*types.Valset
+	keeper.IterateValsetRequest(ctx, func(_ []byte, val *types.Valset) bool {
 		valReq = append(valReq, val)
 		counter++
 		return counter >= maxValsetRequestsReturned
@@ -160,7 +161,7 @@ func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	if len(valReq) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, valReq)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, valReq)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -176,13 +177,13 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 	}
 
 	var pendingValsetReq *types.Valset
-	keeper.IterateValsetRequest(ctx, func(_ []byte, val types.Valset) bool {
+	keeper.IterateValsetRequest(ctx, func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
 		foundConfirm := keeper.GetValsetConfirm(ctx, val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
 		// and exit the loop
 		if !foundConfirm {
-			pendingValsetReq = &val
+			pendingValsetReq = val
 			return true
 		}
 		// return false to continue the loop
@@ -191,7 +192,7 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 	if pendingValsetReq == nil {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, pendingValsetReq)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingValsetReq)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -200,7 +201,7 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 
 func queryCurrentValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	valset := keeper.GetCurrentValset(ctx)
-	res, err := codec.MarshalJSONIndent(keeper.cdc, valset)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, valset)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -212,7 +213,7 @@ func queryCurrentValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 // queryValsetConfirm returns the confirm msg for single orchestrator address and nonce
 // When nothing found a nil value is returned
 func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
-	nonce, err := parseNonce(path[0])
+	nonce, err := types.UInt64FromString(path[0])
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
@@ -226,7 +227,7 @@ func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 	if valset == nil {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, *valset)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, *valset)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -248,10 +249,10 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 	}
 
 	var pendingBatchReq *types.OutgoingTxBatch
-	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch types.OutgoingTxBatch) bool {
-		foundConfirm := keeper.GetBatchConfirm(ctx, batch.Nonce, batch.TokenContract, addr) != nil
+	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
+		foundConfirm := keeper.GetBatchConfirm(ctx, batch.BatchNonce, batch.TokenContract, addr) != nil
 		if !foundConfirm {
-			pendingBatchReq = &batch
+			pendingBatchReq = batch
 			return true
 		}
 		return false
@@ -259,7 +260,7 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 	if pendingBatchReq == nil {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, pendingBatchReq)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingBatchReq)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -272,8 +273,8 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 // validators we need some metadata to know who the signatures are from.
 // So that we can properly pass a blank signature for a specific validator
 type SignatureWithAddress struct {
-	Signature string                `json:"eth_signature"`
-	Address   types.EthereumAddress `json:"eth_address"`
+	Signature string `json:"eth_signature"`
+	Address   string `json:"eth_address"`
 }
 
 type SignedOutgoingTxBatchResponse struct {
@@ -286,15 +287,15 @@ const MaxResults = 100 // todo: impl pagination
 // USED BY RUST //
 // Gets MaxResults batches from store. Does not select by token type or anything
 func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	var batches []types.OutgoingTxBatch
-	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch types.OutgoingTxBatch) bool {
+	var batches []*types.OutgoingTxBatch
+	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
 		batches = append(batches, batch)
 		return len(batches) == MaxResults
 	})
 	if len(batches) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, batches)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, batches)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -304,27 +305,20 @@ func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 // USED BY RUST //
 // queryBatch gets a batch by tokenContract and nonce
 func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keeper) ([]byte, error) {
-	parsedNonce, err := parseNonce(nonce)
+	parsedNonce, err := types.UInt64FromString(nonce)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-
-	contractAddress := types.NewEthereumAddress(tokenContract)
-	if contractAddress.ValidateBasic() != nil {
+	if types.ValidateEthAddress(tokenContract) != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-
-	foundBatch := keeper.GetOutgoingTXBatch(ctx, contractAddress, parsedNonce)
+	foundBatch := keeper.GetOutgoingTXBatch(ctx, tokenContract, parsedNonce)
 	if foundBatch == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find tx batch")
 	}
-	res, err := codec.MarshalJSONIndent(keeper.cdc, foundBatch)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, foundBatch)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
 	return res, nil
-}
-
-func parseNonce(nonceArg string) (types.UInt64Nonce, error) {
-	return types.UInt64NonceFromString(nonceArg)
 }

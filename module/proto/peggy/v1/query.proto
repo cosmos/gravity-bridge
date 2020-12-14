@@ -1,0 +1,82 @@
+syntax = "proto3";
+package peggy.v1;
+
+import "peggy/v1/genesis.proto";
+import "peggy/v1/types.proto";
+import "peggy/v1/msgs.proto";
+import "peggy/v1/batch.proto";
+import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+// Query defines the gRPC querier service
+service Query {
+  // Deployments queries deployments
+  rpc Params(QueryParamsRequest) returns(QueryParamsResponse) {
+    option (google.api.http).get = "/peggy/v1beta/params";
+  }
+  rpc CurrentValset(QueryCurrentValsetRequest) returns(QueryCurrentValsetResponse) {
+    option (google.api.http).get = "/peggy/v1beta/valset/current";
+  }
+  rpc ValsetRequest(QueryValsetRequestRequest) returns(QueryValsetRequestResponse) {
+    option (google.api.http).get = "/peggy/v1beta/valset";
+  }
+  rpc ValsetConfirm(QueryValsetConfirmRequest) returns(QueryValsetConfirmResponse) {
+    option (google.api.http).get = "/peggy/v1beta/valset/confirm";
+  }
+  rpc ValsetConfirmsByNonce(QueryValsetConfirmsByNonceRequest) returns(QueryValsetConfirmsByNonceResponse) {
+    option (google.api.http).get = "/peggy/v1beta/confirms/{nonce}";
+  }
+  rpc LastValsetRequests(QueryLastValsetRequestsRequest) returns(QueryLastValsetRequestsResponse) {
+    option (google.api.http).get = "/peggy/v1beta/valset/requests";
+  }
+  rpc LastPendingValsetRequestByAddr(QueryLastPendingValsetRequestByAddrRequest) returns(QueryLastPendingValsetRequestByAddrResponse) {
+    option (google.api.http).get = "/peggy/v1beta/valset/last";
+  }
+  rpc LastPendingBatchRequestByAddr(QueryLastPendingBatchRequestByAddrRequest) returns(QueryLastPendingBatchRequestByAddrResponse) {
+    option (google.api.http).get = "/peggy/v1beta/batch/{address}";
+  }
+  rpc OutgoingTxBatches(QueryOutgoingTxBatchesRequest) returns(QueryOutgoingTxBatchesResponse) {
+    option (google.api.http).get = "/peggy/v1beta/batch/outgoingtx";
+  }
+  rpc BatchRequestByNonce(QueryBatchRequestByNonceRequest) returns(QueryBatchRequestByNonceResponse) {
+    option (google.api.http).get = "/peggy/v1beta/batch/{nonce}";
+  }
+  rpc BatchConfirms(QueryBatchConfirmsRequest) returns (QueryBatchConfirmsResponse) {
+    option (google.api.http).get = "/peggy/v1beta/batch/confirms";
+  }
+}
+
+message QueryParamsRequest {}
+message QueryParamsResponse { Params params = 1 [(gogoproto.nullable) = false]; }
+
+message QueryCurrentValsetRequest {}
+message QueryCurrentValsetResponse { Valset valset = 1; }
+
+message QueryValsetRequestRequest { uint64 nonce = 1; }
+message QueryValsetRequestResponse { Valset valset = 1; }
+
+message QueryValsetConfirmRequest { uint64 nonce = 1; string address = 2; }
+message QueryValsetConfirmResponse { MsgValsetConfirm confirm = 1; }
+
+message QueryValsetConfirmsByNonceRequest { uint64 nonce = 1; }
+message QueryValsetConfirmsByNonceResponse { repeated MsgValsetConfirm confirms = 1; }
+
+message QueryLastValsetRequestsRequest {}
+message QueryLastValsetRequestsResponse { repeated Valset valsets = 1; }
+
+message QueryLastPendingValsetRequestByAddrRequest { string address = 1; }
+message QueryLastPendingValsetRequestByAddrResponse { Valset valset = 1; }
+
+message QueryLastPendingBatchRequestByAddrRequest { string address = 1; }
+message QueryLastPendingBatchRequestByAddrResponse { OutgoingTxBatch batch = 1; }
+
+message QueryOutgoingTxBatchesRequest {}
+message QueryOutgoingTxBatchesResponse { repeated OutgoingTxBatch batches = 1; }
+
+message QueryBatchRequestByNonceRequest { uint64 nonce = 1; string contract_address = 2; }
+message QueryBatchRequestByNonceResponse { OutgoingTxBatch batch = 1; }
+
+message QueryBatchConfirmsRequest { uint64 nonce = 1; string contract_address = 2; }
+message QueryBatchConfirmsResponse { repeated MsgConfirmBatch confirms = 1; }

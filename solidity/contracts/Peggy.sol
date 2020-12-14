@@ -1,10 +1,12 @@
 pragma solidity ^0.6.6;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@nomiclabs/buidler/console.sol";
 
 contract Peggy {
 	using SafeMath for uint256;
+	using SafeERC20 for IERC20;
 
 	// These are updated often
 	bytes32 public state_lastValsetCheckpoint;
@@ -84,7 +86,7 @@ contract Peggy {
 		uint8 _v,
 		bytes32 _r,
 		bytes32 _s
-	) public pure returns (bool) {
+	) private pure returns (bool) {
 		bytes32 messageDigest = keccak256(
 			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
 		);
@@ -104,7 +106,7 @@ contract Peggy {
 		uint256[] memory _powers,
 		uint256 _valsetNonce,
 		bytes32 _peggyId
-	) public pure returns (bytes32) {
+	) private pure returns (bytes32) {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
@@ -126,21 +128,21 @@ contract Peggy {
 		// This is what we are checking they have signed
 		bytes32 _theHash,
 		uint256 _powerThreshold
-	) public pure returns (bool) {
+	) private pure {
 		uint256 cumulativePower = 0;
 
-		for (uint256 k = 0; k < _currentValidators.length; k = k.add(1)) {
+		for (uint256 i = 0; i < _currentValidators.length; i++) {
 			// If v is set to 0, this signifies that it was not possible to get a signature from this validator and we skip evaluation
 			// (In a valid signature, it is either 27 or 28)
-			if (_v[k] != 0) {
+			if (_v[i] != 0) {
 				// Check that the current validator has signed off on the hash
 				require(
-					verifySig(_currentValidators[k], _theHash, _v[k], _r[k], _s[k]),
+					verifySig(_currentValidators[i], _theHash, _v[i], _r[i], _s[i]),
 					"Validator signature does not match."
 				);
 
 				// Sum up cumulative power
-				cumulativePower = cumulativePower + _currentPowers[k];
+				cumulativePower = cumulativePower + _currentPowers[i];
 
 				// Break early to avoid wasting gas
 				if (cumulativePower > _powerThreshold) {
@@ -155,12 +157,13 @@ contract Peggy {
 			"Submitted validator set signatures do not have enough power."
 		);
 		// Success
-		return true;
 	}
 
 	// This updates the valset by checking that the validators in the current valset have signed off on the
 	// new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
 	// generated from the new valset.
+	// Anyone can call this function, but they must supply valid signatures of state_powerThreshold of the current valset over
+	// the new valset.
 	function updateValset(
 		// The new version of the validator set
 		address[] memory _newValidators,
@@ -238,12 +241,12 @@ contract Peggy {
 		emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers);
 	}
 
-	function updateValsetAndSubmitBatch(
-		// The new version of the validator set
-		address[] memory _newValidators,
-		uint256[] memory _newPowers,
-		uint256 _newValsetNonce,
-		// The validators that approve the batch and new valset
+	// submitBatch processes a batch of Cosmos -> Ethereum transactions by sending the tokens in the transactions
+	// to the destination addresses. It is approved by the current Cosmos validator set.
+	// Anyone can call this function, but they must supply valid signatures of state_powerThreshold of the current valset over
+	// the batch.
+	function submitBatch(
+		// The validators that approve the batch
 		address[] memory _currentValidators,
 		uint256[] memory _currentPowers,
 		uint256 _currentValsetNonce,
@@ -260,9 +263,6 @@ contract Peggy {
 	) public {
 		// CHECKS scoped to reduce stack depth
 		{
-			// Check that new validators and powers set is well-formed
-			require(_newValidators.length == _newPowers.length, "Malformed new validator set");
-
 			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
 			require(
 				_currentValidators.length == _currentPowers.length &&
@@ -283,12 +283,6 @@ contract Peggy {
 				"Supplied current validators and powers do not match checkpoint."
 			);
 
-			// Check that the valset nonce is greater than the old one
-			require(
-				_newValsetNonce > _currentValsetNonce,
-				"New valset nonce must be greater than the current nonce"
-			);
-
 			// Check that the transaction batch is well-formed
 			require(
 				_amounts.length == _destinations.length && _amounts.length == _fees.length,
@@ -299,14 +293,6 @@ contract Peggy {
 			require(
 				state_lastBatchNonces[_tokenContract] < _batchNonce,
 				"New batch nonce must be greater than the current nonce"
-			);
-
-			// Make checkpoint for new valset
-			bytes32 newValsetCheckpoint = makeCheckpoint(
-				_newValidators,
-				_newPowers,
-				_newValsetNonce,
-				state_peggyId
 			);
 
 			// Check that enough current validators have signed off on the transaction batch and valset
@@ -320,9 +306,8 @@ contract Peggy {
 				keccak256(
 					abi.encode(
 						state_peggyId,
-						// bytes32 encoding of "valsetAndTransactionBatch"
-						0x76616c736574416e645472616e73616374696f6e426174636800000000000000,
-						newValsetCheckpoint,
+						// bytes32 encoding of "transactionBatch"
+						0x7472616e73616374696f6e426174636800000000000000000000000000000000,
 						_amounts,
 						_destinations,
 						_fees,
@@ -335,25 +320,19 @@ contract Peggy {
 
 			// ACTIONS
 
-			// Stored to be used next time to validate that the valset
-			// supplied by the caller is correct.
-			state_lastValsetCheckpoint = newValsetCheckpoint;
-			// Store new nonce
-			state_lastValsetNonce = _newValsetNonce;
-
 			// Store batch nonce
 			state_lastBatchNonces[_tokenContract] = _batchNonce;
 
 			{
 				// Send transaction amounts to destinations
 				uint256 totalFee;
-				for (uint256 i = 0; i < _amounts.length; i = i.add(1)) {
-					IERC20(_tokenContract).transfer(_destinations[i], _amounts[i]);
+				for (uint256 i = 0; i < _amounts.length; i++) {
+					IERC20(_tokenContract).safeTransfer(_destinations[i], _amounts[i]);
 					totalFee = totalFee.add(_fees[i]);
 				}
 
 				// Send transaction fees to msg.sender
-				IERC20(_tokenContract).transfer(msg.sender, totalFee);
+				IERC20(_tokenContract).safeTransfer(msg.sender, totalFee);
 			}
 		}
 
@@ -361,7 +340,6 @@ contract Peggy {
 		{
 			state_lastEventNonce = state_lastEventNonce.add(1);
 			emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, state_lastEventNonce);
-			emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers);
 		}
 	}
 
@@ -370,7 +348,7 @@ contract Peggy {
 		bytes32 _destination,
 		uint256 _amount
 	) public {
-		IERC20(_tokenContract).transferFrom(msg.sender, address(this), _amount);
+		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
 			_tokenContract,
@@ -398,8 +376,8 @@ contract Peggy {
 		// Check cumulative power to ensure the contract has sufficient power to actually
 		// pass a vote
 		uint256 cumulativePower = 0;
-		for (uint256 k = 0; k < _powers.length; k = k.add(1)) {
-			cumulativePower = cumulativePower + _powers[k];
+		for (uint256 i = 0; i < _powers.length; i++) {
+			cumulativePower = cumulativePower + _powers[i];
 			if (cumulativePower > _powerThreshold) {
 				break;
 			}

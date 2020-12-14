@@ -8,42 +8,36 @@ import (
 
 // AttestationHandler processes `observed` Attestations
 type AttestationHandler struct {
-	keeper       Keeper
-	supplyKeeper types.SupplyKeeper
+	keeper     Keeper
+	bankKeeper types.BankKeeper
 }
 
 // Handle is the entry point for Attestation processing.
-func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation) error {
-	switch att.ClaimType {
-	case types.ClaimTypeEthereumBridgeDeposit:
-		deposit, ok := att.Details.(types.BridgeDeposit)
-		if !ok {
-			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
+func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
+	switch claim := claim.(type) {
+	case *types.MsgDepositClaim:
+		token := types.ERC20Token{
+			Amount:   claim.Amount,
+			Contract: claim.TokenContract,
 		}
-		if !a.keeper.HasCounterpartDenominator(ctx, types.NewVoucherDenom(deposit.ERC20Token.TokenContractAddress, deposit.ERC20Token.Symbol)) {
-			a.keeper.StoreCounterpartDenominator(ctx, deposit.ERC20Token.TokenContractAddress, deposit.ERC20Token.Symbol)
-		}
-		coin := deposit.ERC20Token.AsVoucherCoin()
+		coin := token.PeggyCoin()
 		vouchers := sdk.Coins{coin}
-		err := a.supplyKeeper.MintCoins(ctx, types.ModuleName, vouchers)
-		if err != nil {
+		if err := a.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers); err != nil {
 			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", vouchers)
 		}
-		err = a.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, deposit.CosmosReceiver, vouchers)
+
+		addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
 		if err != nil {
+			return sdkerrors.Wrap(err, "invalid reciever address")
+		}
+		if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, vouchers); err != nil {
 			return sdkerrors.Wrap(err, "transfer vouchers")
 		}
-
-	case types.ClaimTypeEthereumBridgeWithdrawalBatch:
-		details, ok := att.Details.(types.WithdrawalBatch)
-		if !ok {
-			return sdkerrors.Wrapf(types.ErrInvalid, "unexpected type: %T", att.Details)
-		}
-
-		a.keeper.OutgoingTxBatchExecuted(ctx, details.ERC20Token.TokenContractAddress, details.BatchNonce)
+	case *types.MsgWithdrawClaim:
+		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
 
 	default:
-		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", att.ClaimType)
+		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())
 	}
 	return nil
 }

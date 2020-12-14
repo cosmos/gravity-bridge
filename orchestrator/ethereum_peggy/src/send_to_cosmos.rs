@@ -6,7 +6,7 @@ use clarity::abi::{encode_call, Token};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address, Uint256};
 use deep_space::address::Address as CosmosAddress;
-use peggy_utils::error::OrchestratorError;
+use peggy_utils::error::PeggyError;
 use web30::client::Web3;
 use web30::types::SendTxOption;
 
@@ -22,7 +22,7 @@ pub async fn send_to_cosmos(
     wait_timeout: Option<Duration>,
     web3: &Web3,
     options: Vec<SendTxOption>,
-) -> Result<Uint256, OrchestratorError> {
+) -> Result<Uint256, PeggyError> {
     let sender_address = sender_secret.to_public_key()?;
     let approved = web3
         .check_erc20_approved(erc20, sender_address, peggy_contract)

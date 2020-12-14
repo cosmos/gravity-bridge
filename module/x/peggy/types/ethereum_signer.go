@@ -2,15 +2,16 @@ package types
 
 import (
 	"crypto/ecdsa"
-	"encoding/json"
-	"fmt"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-const signaturePrefix = "\x19Ethereum Signed Message:\n32"
+const (
+	signaturePrefix = "\x19Ethereum Signed Message:\n32"
+)
 
+// NewEthereumSignature creates a new signuature over a given byte array
 func NewEthereumSignature(hash []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	if privateKey == nil {
 		return nil, sdkerrors.Wrap(ErrEmpty, "private key")
@@ -19,6 +20,8 @@ func NewEthereumSignature(hash []byte, privateKey *ecdsa.PrivateKey) ([]byte, er
 	return crypto.Sign(protectedHash.Bytes(), privateKey)
 }
 
+// ValidateEthereumSignature takes a message, an associated signature and public key and
+// returns an error if the signature isn't valid
 func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress string) error {
 	if len(signature) < 65 {
 		return sdkerrors.Wrap(ErrInvalid, "signature too short")
@@ -54,77 +57,5 @@ func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress string)
 		return sdkerrors.Wrap(ErrInvalid, "signature not matching")
 	}
 
-	return nil
-}
-
-// SignType defines what has been signed by an orchestrator
-type SignType byte
-
-const (
-	SignTypeUnknown SignType = 0
-	// signed confirmations on cosmos for Ethereum side
-	SignTypeOrchestratorSignedMultiSigUpdate SignType = 1
-	SignTypeOrchestratorSignedWithdrawBatch  SignType = 2
-)
-
-var signTypeToNames = map[SignType]string{
-	SignTypeOrchestratorSignedMultiSigUpdate: "orchestrator_signed_multisig_update",
-	SignTypeOrchestratorSignedWithdrawBatch:  "orchestrator_signed_withdraw_batch",
-}
-
-// AllSignTypes types that are signed with by the bridge multisig set
-var AllSignTypes = []SignType{SignTypeOrchestratorSignedMultiSigUpdate, SignTypeOrchestratorSignedWithdrawBatch}
-
-func IsSignType(s SignType) bool {
-	for _, v := range AllSignTypes {
-		if s == v {
-			return true
-		}
-	}
-	return false
-}
-
-func SignTypeFromName(s string) (SignType, bool) {
-	for _, v := range AllSignTypes {
-		name, ok := signTypeToNames[v]
-		if ok && name == s {
-			return v, true
-		}
-	}
-	return SignTypeUnknown, false
-}
-func ToSignTypeNames(s ...SignType) []string {
-	r := make([]string, len(s))
-	for i := range s {
-		r[i] = s[i].String()
-	}
-	return r
-}
-
-func (t SignType) String() string {
-	return signTypeToNames[t]
-}
-
-func (t SignType) Bytes() []byte {
-	return []byte{byte(t)}
-}
-
-func (t SignType) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("%q", t.String())), nil
-}
-
-func (t *SignType) UnmarshalJSON(input []byte) error {
-	if string(input) == `""` {
-		return nil
-	}
-	var s string
-	if err := json.Unmarshal(input, &s); err != nil {
-		return err
-	}
-	c, exists := SignTypeFromName(s)
-	if !exists {
-		return sdkerrors.Wrap(ErrUnknown, "claim type")
-	}
-	*t = c
 	return nil
 }

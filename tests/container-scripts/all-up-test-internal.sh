@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eux
 # the script run inside the container for all-up-test.sh
 NODES=$1
 

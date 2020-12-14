@@ -76,15 +76,7 @@ async fn main() {
         amount: 1u64.into(),
     };
 
-    update_peggy_eth_address(
-        &contact,
-        ethereum_key,
-        cosmos_key,
-        fee.clone(),
-        None,
-        None,
-        None,
-    )
-    .await
-    .expect("Failed to update Eth address");
+    update_peggy_eth_address(&contact, ethereum_key, cosmos_key, fee.clone())
+        .await
+        .expect("Failed to update Eth address");
 }

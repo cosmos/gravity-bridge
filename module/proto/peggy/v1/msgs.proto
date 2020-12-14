@@ -1,0 +1,176 @@
+syntax = "proto3";
+package peggy.v1;
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+service Msg {
+  rpc ValsetConfirm(MsgValsetConfirm) returns(MsgValsetConfirmResponse) {
+    option (google.api.http).post = "/peggy/v1/valset_confirm";
+  }
+  rpc ValsetRequest(MsgValsetRequest) returns(MsgValsetRequestResponse) {
+    option (google.api.http).post = "/peggy/v1/valset_request";
+  }
+  rpc SetEthAddress(MsgSetEthAddress) returns(MsgSetEthAddressResponse) {
+    option (google.api.http).post = "/peggy/v1/set_eth_address";
+  }
+  rpc SendToEth(MsgSendToEth) returns(MsgSendToEthResponse) {
+    option (google.api.http).post = "/peggy/v1/send_to_eth";
+  }
+  rpc RequestBatch(MsgRequestBatch) returns(MsgRequestBatchResponse) {
+    option (google.api.http).post = "/peggy/v1/request_batch";
+  }
+  rpc ConfirmBatch(MsgConfirmBatch) returns(MsgConfirmBatchResponse) {
+    option (google.api.http).post = "/peggy/v1/confirm_batch";
+  }
+  rpc DepositClaim(MsgDepositClaim) returns(MsgDepositClaimResponse) {
+    option (google.api.http).post = "/peggy/v1/deposit_claim";
+  }
+  rpc WithdrawClaim(MsgWithdrawClaim) returns(MsgWithdrawClaimResponse) {
+    option (google.api.http).post = "/peggy/v1/withdraw_claim";
+  }
+}
+
+// MsgValsetConfirm
+// this is the message sent by the validators when they wish to submit their
+// signatures over the validator set at a given block height. A validator must
+// first call MsgSetEthAddress to set their Ethereum address to be used for
+// signing. Then someone (anyone) must make a ValsetRequest the request is
+// essentially a messaging mechanism to determine which block all validators
+// should submit signatures over. Finally validators sign the validator set,
+// powers, and Ethereum addresses of the entire validator set at the height of a
+// ValsetRequest and submit that signature with this message.
+//
+// If a sufficient number of validators (66% of voting power) (A) have set
+// Ethereum addresses and (B) submit ValsetConfirm messages with their
+// signatures it is then possible for anyone to view these signatures in the
+// chain store and submit them to Ethereum to update the validator set
+// -------------
+message MsgValsetConfirm {
+  uint64 nonce = 1;
+  string validator = 2;
+  string eth_address = 3;
+  string signature = 4;
+}
+
+// TODO: write response data here
+message MsgValsetConfirmResponse {}
+
+// ValsetRequest
+// This message starts off the validator set update process by coordinating a
+// block height around which signatures over the validators, powers, and
+// ethereum addresses will be made and submitted using a ValsetConfirm. Anyone
+// can send this message as it is not authenticated except as a valid tx. In
+// theory people could spam it and the validators will have to determine which
+// block to actually coordinate around by looking over the valset requests and
+// seeing which one some other validator has already submitted a ValsetResponse
+// for.
+// -------------
+message MsgValsetRequest { string requester = 1; }
+
+// TODO: write response data here
+message MsgValsetRequestResponse {}
+
+// SetEthAddress
+// This is used by the validators to set the Ethereum address that represents
+// them on the Ethereum side of the bridge. They must sign their Cosmos address
+// using the Ethereum address they have submitted. Like ValsetResponse this
+// message can in theory be submitted by anyone, but only the current validator
+// sets submissions carry any weight.
+// -------------
+message MsgSetEthAddress {
+  string address = 1;
+  string validator = 2;
+  string signature = 3;
+}
+
+// TODO: write response data here
+message MsgSetEthAddressResponse {}
+
+// MsgSendToEth
+// This is the message that a user calls when they want to bridge an asset
+// it will later be removed when it is included in a batch and successfully
+// submitted tokens are removed from the users balance immediately
+// -------------
+// AMOUNT:
+// the coin to send across the bridge, note the restriction that this is a
+// single coin not a set of coins that is normal in other Cosmos messages
+// FEE:
+// the fee paid for the bridge, distinct from the fee paid to the chain to
+// actually send this message in the first place. So a successful send has
+// two layers of fees for the user
+message MsgSendToEth {
+  string sender = 1;
+  string eth_dest = 2;
+  cosmos.base.v1beta1.Coin amount = 3 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin bridge_fee = 4 [(gogoproto.nullable) = false];
+}
+
+// TODO: write response data here
+message MsgSendToEthResponse {}
+
+// MsgRequestBatch
+// this is a message anyone can send that requests a batch of transactions to
+// send across the bridge be created for whatever block height this message is
+// included in. This acts as a coordination point, the handler for this message
+// looks at the AddToOutgoingPool tx's in the store and generates a batch, also
+// available in the store tied to this message. The validators then grab this
+// batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer
+// can finally submit the batch
+// -------------
+message MsgRequestBatch {
+  string requester = 1;
+  string denom = 2;
+}
+
+// TODO: write response data here
+message MsgRequestBatchResponse {}
+
+// MsgConfirmBatch
+// When validators observe a MsgRequestBatch they form a batch by ordering
+// transactions currently in the txqueue in order of highest to lowest fee,
+// cutting off when the batch either reaches a hardcoded maximum size (to be
+// decided, probably around 100) or when transactions stop being profitable
+// (TODO determine this without nondeterminism) This message includes the batch
+// as well as an Ethereum signature over this batch by the validator
+// -------------
+message MsgConfirmBatch {
+  uint64 nonce = 1;
+  string token_contract = 2;
+  string eth_signer = 3;
+  string validator = 4;
+  string signature = 5;
+}
+
+// TODO: write response data here
+message MsgConfirmBatchResponse {}
+
+// EthereumBridgeDepositClaim
+// When more than 66% of the active validator set has
+// claimed to have seen the deposit enter the ethereum blockchain coins are
+// issued to the Cosmos address in question
+// -------------
+message MsgDepositClaim {
+  uint64 event_nonce = 1;
+  string token_contract = 2;
+  string amount   = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+  string ethereum_sender = 4;
+  string cosmos_receiver = 5;
+  string orchestrator = 6;
+}
+
+// WithdrawClaim claims that a batch of withdrawal
+// operations on the bridge contract was executed.
+message MsgWithdrawClaim {
+  uint64 event_nonce = 1;
+  uint64 batch_nonce = 2;
+  string token_contract = 3;
+  string orchestrator = 4;
+}
+
+// TODO: write response data here
+message MsgWithdrawClaimResponse {}
+
+// TODO: write response data here
+message MsgDepositClaimResponse {}

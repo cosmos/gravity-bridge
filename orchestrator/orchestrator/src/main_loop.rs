@@ -5,9 +5,11 @@ use clarity::PrivateKey as EthPrivateKey;
 use clarity::{address::Address as EthAddress, Uint256};
 use contact::client::Contact;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
+use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use std::time::Duration;
 use std::time::Instant;
 use tokio::time::delay_for;
+use tonic::transport::Channel;
 use web30::client::Web3;
 
 //const BLOCK_DELAY: u128 = 50;
@@ -21,9 +23,11 @@ pub async fn orchestrator_main_loop(
     ethereum_key: EthPrivateKey,
     web3: Web3,
     contact: Contact,
+    grpc_client: PeggyQueryClient<Channel>,
     contract_address: EthAddress,
     pay_fees_in: String,
 ) {
+    let mut grpc_client = grpc_client;
     let mut last_checked_block: Uint256 = web3.eth_block_number().await.unwrap();
     let fee = Coin {
         denom: pay_fees_in.clone(),
@@ -51,6 +55,7 @@ pub async fn orchestrator_main_loop(
             ethereum_key,
             &web3,
             &contact,
+            &mut grpc_client,
             contract_address,
             fee.clone(),
             LOOP_SPEED,
@@ -62,6 +67,7 @@ pub async fn orchestrator_main_loop(
             ethereum_key,
             &web3,
             &contact,
+            &mut grpc_client,
             contract_address,
             fee.clone(),
             LOOP_SPEED,

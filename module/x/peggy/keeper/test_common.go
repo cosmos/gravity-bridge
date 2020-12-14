@@ -7,48 +7,101 @@ import (
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	ccodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/x/capability"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
 	"github.com/cosmos/cosmos-sdk/x/distribution"
+	distrclient "github.com/cosmos/cosmos-sdk/x/distribution/client"
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/cosmos/cosmos-sdk/x/evidence"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/gov"
+	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
+	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	paramsproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/cosmos-sdk/x/supply"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
 
-var TestingStakeParams = staking.Params{
-	UnbondingTime:     100,
-	MaxValidators:     10,
-	MaxEntries:        10,
-	HistoricalEntries: 10,
-	BondDenom:         "stake",
-}
+var (
+	// ModuleBasics is a mock module basic manager for testing
+	ModuleBasics = module.NewBasicManager(
+		auth.AppModuleBasic{},
+		genutil.AppModuleBasic{},
+		bank.AppModuleBasic{},
+		capability.AppModuleBasic{},
+		staking.AppModuleBasic{},
+		mint.AppModuleBasic{},
+		distribution.AppModuleBasic{},
+		gov.NewAppModuleBasic(
+			paramsclient.ProposalHandler, distrclient.ProposalHandler, upgradeclient.ProposalHandler, upgradeclient.CancelProposalHandler,
+		),
+		params.AppModuleBasic{},
+		crisis.AppModuleBasic{},
+		slashing.AppModuleBasic{},
+		upgrade.AppModuleBasic{},
+		evidence.AppModuleBasic{},
+		vesting.AppModuleBasic{},
+	)
 
+	// TestingStakeParams is a set of staking params for testing
+	TestingStakeParams = stakingtypes.Params{
+		UnbondingTime:     100,
+		MaxValidators:     10,
+		MaxEntries:        10,
+		HistoricalEntries: 10,
+		BondDenom:         "stake",
+	}
+
+	// Ensure that StakingKeeperMock implements required interface
+	_ types.StakingKeeper = &StakingKeeperMock{}
+)
+
+// TestKeepers stores the various keepers required to test peggy
 type TestKeepers struct {
-	AccountKeeper auth.AccountKeeper
-	StakingKeeper staking.Keeper
-	DistKeeper    distribution.Keeper
-	SupplyKeeper  supply.Keeper
-	GovKeeper     gov.Keeper
-	BankKeeper    bank.Keeper
+	AccountKeeper authkeeper.AccountKeeper
+	StakingKeeper stakingkeeper.Keeper
+	DistKeeper    distrkeeper.Keeper
+	BankKeeper    bankkeeper.Keeper
+	GovKeeper     govkeeper.Keeper
 }
 
+// CreateTestEnv creates the keeper testing environment for peggy
 func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 	t.Helper()
 	peggyKey := sdk.NewKVStoreKey(types.StoreKey)
-	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
-	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
-	keyDistro := sdk.NewKVStoreKey(distribution.StoreKey)
-	keyParams := sdk.NewKVStoreKey(params.StoreKey)
-	tkeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
+	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
+	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
+	keyBank := sdk.NewKVStoreKey(banktypes.StoreKey)
+	keyDistro := sdk.NewKVStoreKey(distrtypes.StoreKey)
+	keyParams := sdk.NewKVStoreKey(paramstypes.StoreKey)
+	tkeyParams := sdk.NewTransientStoreKey(paramstypes.TStoreKey)
 	keyGov := sdk.NewKVStoreKey(govtypes.StoreKey)
 
 	db := dbm.NewMemDB()
@@ -57,7 +110,7 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyBank, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyDistro, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyGov, sdk.StoreTypeIAVL, db)
@@ -65,91 +118,96 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 	require.Nil(t, err)
 
 	const isCheckTx = false
-	ctx := sdk.NewContext(ms, abci.Header{
+	ctx := sdk.NewContext(ms, tmproto.Header{
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, isCheckTx, log.TestingLogger())
 
 	cdc := MakeTestCodec()
+	marshaler := MakeTestMarshaler()
 
-	paramsKeeper := params.NewKeeper(cdc, keyParams, tkeyParams)
-
-	accountKeeper := auth.NewAccountKeeper(
-		cdc,    // amino codec
-		keyAcc, // target store
-		paramsKeeper.Subspace(auth.DefaultParamspace),
-		auth.ProtoBaseAccount, // prototype
-	)
+	paramsKeeper := paramskeeper.NewKeeper(marshaler, cdc, keyParams, tkeyParams)
 
 	// this is also used to initialize module accounts for all the map keys
 	maccPerms := map[string][]string{
-		auth.FeeCollectorName:     nil,
-		distribution.ModuleName:   nil,
-		staking.BondedPoolName:    {supply.Burner, supply.Staking},
-		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
-		gov.ModuleName:            {supply.Burner},
-		types.ModuleName:          {supply.Minter, supply.Burner},
+		authtypes.FeeCollectorName:     nil,
+		distrtypes.ModuleName:          nil,
+		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:            {authtypes.Burner},
+		types.ModuleName:               {authtypes.Minter, authtypes.Burner},
 	}
+
+	accountKeeper := authkeeper.NewAccountKeeper(
+		marshaler,
+		keyAcc, // target store
+		paramsKeeper.Subspace(authtypes.ModuleName),
+		authtypes.ProtoBaseAccount, // prototype
+		maccPerms,
+	)
+
 	blockedAddr := make(map[string]bool, len(maccPerms))
 	for acc := range maccPerms {
-		blockedAddr[supply.NewModuleAddress(acc).String()] = true
+		blockedAddr[authtypes.NewModuleAddress(acc).String()] = true
 	}
-	bankKeeper := bank.NewBaseKeeper(
+	bankKeeper := bankkeeper.NewBaseKeeper(
+		marshaler,
+		keyBank,
 		accountKeeper,
-		paramsKeeper.Subspace(bank.DefaultParamspace),
+		paramsKeeper.Subspace(banktypes.ModuleName),
 		blockedAddr,
 	)
-	bankKeeper.SetSendEnabled(ctx, true)
+	bankKeeper.SetParams(ctx, banktypes.Params{DefaultSendEnabled: true})
+	// TODO: figure out which denom we need here
+	// bankKeeper.GetParams(ctx).SetDefaultSendEnabledParam(true)
+	// bankKeeper.GetParams(ctx).
 
-	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
-	stakingKeeper := staking.NewKeeper(cdc, keyStaking, supplyKeeper, paramsKeeper.Subspace(staking.DefaultParamspace))
+	// bankKeeper := bank.NewKeeper(cdc, keyBank, accountKeeper, bankKeeper, maccPerms)
+	stakingKeeper := stakingkeeper.NewKeeper(marshaler, keyStaking, accountKeeper, bankKeeper, paramsKeeper.Subspace(stakingtypes.ModuleName))
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
 
-	distKeeper := distribution.NewKeeper(cdc, keyDistro, paramsKeeper.Subspace(distribution.DefaultParamspace), stakingKeeper, supplyKeeper, auth.FeeCollectorName, nil)
-	distKeeper.SetParams(ctx, distribution.DefaultParams())
+	distKeeper := distrkeeper.NewKeeper(marshaler, keyDistro, paramsKeeper.Subspace(distrtypes.ModuleName), accountKeeper, bankKeeper, stakingKeeper, authtypes.FeeCollectorName, nil)
+	distKeeper.SetParams(ctx, distrtypes.DefaultParams())
 	stakingKeeper.SetHooks(distKeeper.Hooks())
 
 	// set genesis items required for distribution
-	distKeeper.SetFeePool(ctx, distribution.InitialFeePool())
+	distKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
 
 	// total supply to track this
 	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100000000))
-	supplyKeeper.SetSupply(ctx, supply.NewSupply(totalSupply))
+	bankKeeper.SetSupply(ctx, banktypes.NewSupply(totalSupply))
 
 	// set up initial accounts
 	for name, perms := range maccPerms {
-		mod := supply.NewEmptyModuleAccount(name, perms...)
-		if name == staking.NotBondedPoolName {
-			err = mod.SetCoins(totalSupply)
+		mod := authtypes.NewEmptyModuleAccount(name, perms...)
+		if name == stakingtypes.NotBondedPoolName {
+			err = bankKeeper.SetBalances(ctx, mod.GetAddress(), totalSupply)
 			require.NoError(t, err)
-		} else if name == distribution.ModuleName {
+		} else if name == distrtypes.ModuleName {
 			// some big pot to pay out
-			err = mod.SetCoins(sdk.NewCoins(sdk.NewInt64Coin("stake", 500000)))
+			err = bankKeeper.SetBalances(ctx, mod.GetAddress(), sdk.NewCoins(sdk.NewInt64Coin("stake", 500000)))
 			require.NoError(t, err)
 		}
-		supplyKeeper.SetModuleAccount(ctx, mod)
+		accountKeeper.SetModuleAccount(ctx, mod)
 	}
 
-	stakeAddr := supply.NewModuleAddress(staking.BondedPoolName)
+	stakeAddr := authtypes.NewModuleAddress(stakingtypes.BondedPoolName)
 	moduleAcct := accountKeeper.GetAccount(ctx, stakeAddr)
 	require.NotNil(t, moduleAcct)
 
 	router := baseapp.NewRouter()
-	bh := bank.NewHandler(bankKeeper)
-	router.AddRoute(bank.RouterKey, bh)
-	sh := staking.NewHandler(stakingKeeper)
-	router.AddRoute(staking.RouterKey, sh)
-	dh := distribution.NewHandler(distKeeper)
-	router.AddRoute(distribution.RouterKey, dh)
+	router.AddRoute(bank.AppModule{}.Route())
+	router.AddRoute(staking.AppModule{}.Route())
+	router.AddRoute(distribution.AppModule{}.Route())
 
 	// Load default wasm config
 
-	govRouter := gov.NewRouter().
-		AddRoute(params.RouterKey, params.NewParamChangeProposalHandler(paramsKeeper)).
+	govRouter := govtypes.NewRouter().
+		AddRoute(paramsproposal.RouterKey, params.NewParamChangeProposalHandler(paramsKeeper)).
 		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler)
 
-	govKeeper := gov.NewKeeper(
-		cdc, keyGov, paramsKeeper.Subspace(govtypes.DefaultParamspace).WithKeyTable(gov.ParamKeyTable()), supplyKeeper, stakingKeeper, govRouter,
+	govKeeper := govkeeper.NewKeeper(
+		marshaler, keyGov, paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable()), accountKeeper, bankKeeper, stakingKeeper, govRouter,
 	)
 
 	govKeeper.SetProposalID(ctx, govtypes.DefaultStartingProposalID)
@@ -159,95 +217,107 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 
 	keepers := TestKeepers{
 		AccountKeeper: accountKeeper,
-		SupplyKeeper:  supplyKeeper,
+		BankKeeper:    bankKeeper,
 		StakingKeeper: stakingKeeper,
 		DistKeeper:    distKeeper,
 		GovKeeper:     govKeeper,
-		BankKeeper:    bankKeeper,
 	}
 
-	k := NewKeeper(cdc, peggyKey, paramsKeeper.Subspace(types.DefaultParamspace), stakingKeeper, supplyKeeper)
-	k.setParams(ctx, types.Params{
-		// any eth address
-		BridgeContractAddress: types.NewEthereumAddress("0x8858eeb3dfffa017d4bce9801d340d36cf895ccf"),
-		BridgeChainID:         11,
+	k := NewKeeper(marshaler, peggyKey, paramsKeeper.Subspace(types.DefaultParamspace), stakingKeeper, bankKeeper)
+	k.setParams(ctx, &types.Params{
+		PeggyId:            "lkasjdfklajsldkfjd",
+		ContractSourceHash: "lkasjdfklajsldkfjd",
+		StartThreshold:     0,
+		EthereumAddress:    "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
+		BridgeChainId:      11,
 	})
 	return k, ctx, keepers
 }
 
-func MakeTestCodec() *codec.Codec {
-	var cdc = codec.New()
-	auth.AppModuleBasic{}.RegisterCodec(cdc)
-	bank.AppModuleBasic{}.RegisterCodec(cdc)
-	supply.AppModuleBasic{}.RegisterCodec(cdc)
-	staking.AppModuleBasic{}.RegisterCodec(cdc)
-	distribution.AppModuleBasic{}.RegisterCodec(cdc)
-	gov.RegisterCodec(cdc)
-	sdk.RegisterCodec(cdc)
-	codec.RegisterCrypto(cdc)
-	params.RegisterCodec(cdc)
+// MakeTestCodec creates a legacy amino codec for testing
+func MakeTestCodec() *codec.LegacyAmino {
+	var cdc = codec.NewLegacyAmino()
+	auth.AppModuleBasic{}.RegisterLegacyAminoCodec(cdc)
+	bank.AppModuleBasic{}.RegisterLegacyAminoCodec(cdc)
+	staking.AppModuleBasic{}.RegisterLegacyAminoCodec(cdc)
+	distribution.AppModuleBasic{}.RegisterLegacyAminoCodec(cdc)
+	// gov.RegisterLegacyAminoCodec(cdc)
+	sdk.RegisterLegacyAminoCodec(cdc)
+	ccodec.RegisterCrypto(cdc)
+	params.AppModuleBasic{}.RegisterLegacyAminoCodec(cdc)
 	types.RegisterCodec(cdc)
 	return cdc
 }
 
+// MakeTestMarshaler creates a proto codec for use in testing
+func MakeTestMarshaler() codec.BinaryMarshaler {
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+	std.RegisterInterfaces(interfaceRegistry)
+	ModuleBasics.RegisterInterfaces(interfaceRegistry)
+	types.RegisterInterfaces(interfaceRegistry)
+	return codec.NewProtoCodec(interfaceRegistry)
+}
+
+// MintVouchersFromAir creates new peggy vouchers given erc20tokens
 func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAddress, amount types.ERC20Token) sdk.Coin {
-	if !k.HasCounterpartDenominator(ctx, types.NewVoucherDenom(amount.TokenContractAddress, amount.Symbol)) {
-		k.StoreCounterpartDenominator(ctx, amount.TokenContractAddress, amount.Symbol)
-	}
-	coin := amount.AsVoucherCoin()
+	coin := amount.PeggyCoin()
 	vouchers := sdk.Coins{coin}
-	err := k.supplyKeeper.MintCoins(ctx, types.ModuleName, vouchers)
-	err = k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, dest, vouchers)
+	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers)
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, dest, vouchers)
 	require.NoError(t, err)
 	return coin
 }
 
-var _ types.StakingKeeper = &StakingKeeperMock{}
-
-type StakingKeeperMock struct {
-	BondedValidators []staking.Validator
-	ValidatorPower   map[string]int64
-}
-
+// NewStakingKeeperMock creates a new mock staking keeper
 func NewStakingKeeperMock(operators ...sdk.ValAddress) *StakingKeeperMock {
 	r := &StakingKeeperMock{
-		BondedValidators: make([]staking.Validator, 0),
+		BondedValidators: make([]stakingtypes.Validator, 0),
 		ValidatorPower:   make(map[string]int64, 0),
 	}
 	const defaultTestPower = 100
 	for _, a := range operators {
-		r.BondedValidators = append(r.BondedValidators, staking.Validator{
-			OperatorAddress: a,
+		r.BondedValidators = append(r.BondedValidators, stakingtypes.Validator{
+			OperatorAddress: a.String(),
 		})
 		r.ValidatorPower[a.String()] = defaultTestPower
 	}
 	return r
 }
 
+// MockStakingValidatorData creates mock validator data
 type MockStakingValidatorData struct {
 	Operator sdk.ValAddress
 	Power    int64
 }
 
+// NewStakingKeeperWeightedMock creates a new mock staking keeper with some mock validator data
 func NewStakingKeeperWeightedMock(t ...MockStakingValidatorData) *StakingKeeperMock {
 	r := &StakingKeeperMock{
-		BondedValidators: make([]staking.Validator, len(t)),
+		BondedValidators: make([]stakingtypes.Validator, len(t)),
 		ValidatorPower:   make(map[string]int64, len(t)),
 	}
 
 	for i, a := range t {
-		r.BondedValidators[i] = staking.Validator{
-			OperatorAddress: a.Operator,
+		r.BondedValidators[i] = stakingtypes.Validator{
+			OperatorAddress: a.Operator.String(),
 		}
 		r.ValidatorPower[a.Operator.String()] = a.Power
 	}
 	return r
 }
 
-func (s *StakingKeeperMock) GetBondedValidatorsByPower(ctx sdk.Context) []staking.Validator {
+// StakingKeeperMock is a mock staking keeper for use in the tests
+type StakingKeeperMock struct {
+	BondedValidators []stakingtypes.Validator
+	ValidatorPower   map[string]int64
+}
+
+// GetBondedValidatorsByPower implements the interface for staking keeper required by peggy
+func (s *StakingKeeperMock) GetBondedValidatorsByPower(ctx sdk.Context) []stakingtypes.Validator {
 	return s.BondedValidators
 }
 
+// GetLastValidatorPower implements the interface for staking keeper required by peggy
 func (s *StakingKeeperMock) GetLastValidatorPower(ctx sdk.Context, operator sdk.ValAddress) int64 {
 	v, ok := s.ValidatorPower[operator.String()]
 	if !ok {
@@ -256,6 +326,7 @@ func (s *StakingKeeperMock) GetLastValidatorPower(ctx sdk.Context, operator sdk.
 	return v
 }
 
+// GetLastTotalPower implements the interface for staking keeper required by peggy
 func (s *StakingKeeperMock) GetLastTotalPower(ctx sdk.Context) (power sdk.Int) {
 	var total int64
 	for _, v := range s.ValidatorPower {
@@ -264,16 +335,20 @@ func (s *StakingKeeperMock) GetLastTotalPower(ctx sdk.Context) (power sdk.Int) {
 	return sdk.NewInt(total)
 }
 
+// AlwaysPanicStakingMock is a mock staking keeper that panics on usage
 type AlwaysPanicStakingMock struct{}
 
+// GetLastTotalPower implements the interface for staking keeper required by peggy
 func (s AlwaysPanicStakingMock) GetLastTotalPower(ctx sdk.Context) (power sdk.Int) {
 	panic("unexpected call")
 }
 
-func (s AlwaysPanicStakingMock) GetBondedValidatorsByPower(ctx sdk.Context) []staking.Validator {
+// GetBondedValidatorsByPower implements the interface for staking keeper required by peggy
+func (s AlwaysPanicStakingMock) GetBondedValidatorsByPower(ctx sdk.Context) []stakingtypes.Validator {
 	panic("unexpected call")
 }
 
+// GetLastValidatorPower implements the interface for staking keeper required by peggy
 func (s AlwaysPanicStakingMock) GetLastValidatorPower(ctx sdk.Context, operator sdk.ValAddress) int64 {
 	panic("unexpected call")
 }
