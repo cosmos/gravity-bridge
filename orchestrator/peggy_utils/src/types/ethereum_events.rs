@@ -106,9 +106,10 @@ impl SendToCosmosEvent {
         if let (Some(erc20_data), Some(sender_data), Some(destination_data)) = topics {
             let erc20 = EthAddress::from_slice(&erc20_data[12..32])?;
             let sender = EthAddress::from_slice(&sender_data[12..32])?;
+            // this is required because deep_space requires a fixed length slice to
+            // create an address from bytes.
             let mut c_address_bytes: [u8; 20] = [0; 20];
-            // this is little endian encoded
-            c_address_bytes.copy_from_slice(&destination_data[0..20]);
+            c_address_bytes.copy_from_slice(&destination_data[12..32]);
             let destination = CosmosAddress::from_bytes(c_address_bytes);
             let amount = Uint256::from_bytes_be(&input.data[..32]);
             let event_nonce = Uint256::from_bytes_be(&input.data[32..]);
