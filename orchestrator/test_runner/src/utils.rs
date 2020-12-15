@@ -1,4 +1,4 @@
-use clarity::{Address as EthAddress};
+use clarity::Address as EthAddress;
 use clarity::{PrivateKey as EthPrivateKey, Transaction};
 use contact::client::Contact;
 use deep_space::address::Address as CosmosAddress;
@@ -7,10 +7,9 @@ use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use futures::future::join_all;
 use web30::client::Web3;
 
-use crate::test_cases::MINER_PRIVATE_KEY;
-use crate::test_cases::MINER_ADDRESS;
-use crate::test_cases::TOTAL_TIMEOUT;
-
+use crate::MINER_ADDRESS;
+use crate::MINER_PRIVATE_KEY;
+use crate::TOTAL_TIMEOUT;
 
 /// This overly complex function primarily exists to parallelize the sending of Eth to the
 /// orchestrators, waiting for these there transactions takes up nearly a minute of test time
@@ -80,24 +79,16 @@ pub async fn send_one_eth(dest: EthAddress, web30: &Web3) {
         .unwrap();
 }
 
-pub async fn check_cosmos_balance(address: CosmosAddress, contact: &Contact) -> Option<Coin> {
+pub async fn check_cosmos_balance(
+    denom: &str,
+    address: CosmosAddress,
+    contact: &Contact,
+) -> Option<Coin> {
     let account_info = contact.get_balances(address).await.unwrap();
     trace!("Cosmos balance {:?}", account_info.result);
     for coin in account_info.result {
         // make sure the name and amount is correct
-        if coin.denom.starts_with("peggy") {
-            return Some(coin);
-        }
-    }
-    None
-}
-
-pub async fn test_check_cosmos_balance(address: CosmosAddress, contact: &Contact) -> Option<Coin> {
-    let account_info = contact.get_balances(address).await.unwrap();
-    trace!("Cosmos balance {:?}", account_info.result);
-    for coin in account_info.result {
-        // make sure the name and amount is correct
-        if coin.denom.starts_with("footoken") {
+        if coin.denom.starts_with(denom) {
             return Some(coin);
         }
     }

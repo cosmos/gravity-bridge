@@ -7,9 +7,7 @@ use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
 use cosmos_peggy::query::get_latest_valsets;
-use cosmos_peggy::query::get_oldest_unsigned_valset;
 use cosmos_peggy::query::{get_all_valset_confirms, get_valset};
-use cosmos_peggy::send::send_valset_confirm;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_peggy::utils::get_peggy_id;
 use ethereum_peggy::utils::get_valset_nonce;
@@ -39,8 +37,6 @@ pub async fn relay_valsets(
     let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
 
-    // TODO this should compare to the cosmos value and crash if incorrect to do that
-    // finish the bootstrapping message
     let peggy_id = get_peggy_id(contract_address, our_ethereum_address, web3).await;
     if peggy_id.is_err() {
         error!("Failed to get PeggyID!");
@@ -48,25 +44,6 @@ pub async fn relay_valsets(
     }
     let peggy_id = peggy_id.unwrap();
     let peggy_id = String::from_utf8(peggy_id.clone()).expect("Invalid PeggyID");
-
-    // sign the last unsigned valset, TODO check if we already have signed this
-    match get_oldest_unsigned_valset(grpc_client, our_cosmos_address).await {
-        Ok(Some(last_unsigned_valset)) => {
-            info!("Sending valset confirm for {}", last_unsigned_valset.nonce);
-            let res = send_valset_confirm(
-                contact,
-                ethereum_key,
-                fee,
-                last_unsigned_valset,
-                cosmos_key,
-                peggy_id,
-            )
-            .await;
-            info!("Valset confirm result is {:?}", res);
-        }
-        Ok(None) => trace!("No valset waiting to be signed!"),
-        Err(e) => trace!("Failed to get unsigned valsets with {:?}", e),
-    }
 
     // now that we have caught up on valset requests we should determine if we need to relay one
     // to Ethereum for that we will find the latest confirmed valset and compare it to the ethereum chain

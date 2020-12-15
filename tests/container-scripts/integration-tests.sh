@@ -13,5 +13,5 @@ set +e
 killall -9 test-runner
 set -e
 
-pushd /peggy/orchestrator
+pushd /peggy/orchestrator/test_runner
 RUST_BACKTRACE=full RUST_LOG=INFO PATH=$PATH:$HOME/.cargo/bin cargo run --release --bin test-runner

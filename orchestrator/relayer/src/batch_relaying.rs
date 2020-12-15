@@ -4,10 +4,9 @@
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
+use cosmos_peggy::query::get_latest_transaction_batches;
 use cosmos_peggy::query::get_transaction_batch_signatures;
 use cosmos_peggy::query::get_valset;
-use cosmos_peggy::query::{get_latest_transaction_batches, get_oldest_unsigned_transaction_batch};
-use cosmos_peggy::send::send_batch_confirm;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_peggy::submit_batch::send_eth_transaction_batch;
 use ethereum_peggy::utils::get_valset_nonce;
@@ -39,8 +38,6 @@ pub async fn relay_batches(
     let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
 
-    // TODO this should compare to the cosmos value and crash if incorrect to do that
-    // finish the bootstrapping message
     let peggy_id = get_peggy_id(peggy_contract_address, our_ethereum_address, web3).await;
     if peggy_id.is_err() {
         error!("Failed to get PeggyID");
@@ -48,26 +45,6 @@ pub async fn relay_batches(
     }
     let peggy_id = peggy_id.unwrap();
     let peggy_id = String::from_utf8(peggy_id.clone()).expect("Invalid PeggyID");
-
-    // sign the last unsigned batch, TODO check if we already have signed this
-    match get_oldest_unsigned_transaction_batch(grpc_client, our_cosmos_address).await {
-        Ok(Some(last_unsigned_batch)) => {
-            info!("Sending batch confirm for {}", last_unsigned_batch.nonce);
-            let res = send_batch_confirm(
-                contact,
-                ethereum_key,
-                fee.clone(),
-                last_unsigned_batch,
-                cosmos_key,
-                peggy_id,
-            )
-            .await
-            .unwrap();
-            info!("Batch confirm result is {:?}", res);
-        }
-        Ok(None) => trace!("No unsigned batches! Everything good!"),
-        Err(e) => trace!("Failed to get unsigned Batches with {:?}", e),
-    }
 
     let latest_batches = get_latest_transaction_batches(grpc_client).await;
     trace!("Latest batches {:?}", latest_batches);

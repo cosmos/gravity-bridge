@@ -1,19 +1,18 @@
 [package]
-name = "orchestrator"
+name = "relayer"
 version = "0.1.0"
 authors = ["Justin Kilpatrick <justin@althea.net>"]
 edition = "2018"
 
 [lib]
-name = "orchestrator"
+name = "relayer"
 path = "src/lib.rs"
 
 [[bin]]
-name = "orchestrator"
+name = "relayer"
 path = "src/main.rs"
 
 [dependencies]
-relayer = {path = "../relayer/"}
 ethereum_peggy = {path = "../ethereum_peggy"}
 cosmos_peggy = {path = "../cosmos_peggy"}
 peggy_utils = {path = "../peggy_utils"}

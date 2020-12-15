@@ -1,23 +1,20 @@
 [package]
-name = "orchestrator"
+name = "test_runner"
 version = "0.1.0"
 authors = ["Justin Kilpatrick <justin@althea.net>"]
 edition = "2018"
 
-[lib]
-name = "orchestrator"
-path = "src/lib.rs"
-
+# only becuase I like - more in names
 [[bin]]
-name = "orchestrator"
+name = "test-runner"
 path = "src/main.rs"
 
 [dependencies]
-relayer = {path = "../relayer/"}
 ethereum_peggy = {path = "../ethereum_peggy"}
 cosmos_peggy = {path = "../cosmos_peggy"}
 peggy_utils = {path = "../peggy_utils"}
 peggy_proto = {path = "../peggy_proto/"}
+orchestrator = {path = "../orchestrator/"}
 
 deep_space = "0.2"
 contact = "0.2"

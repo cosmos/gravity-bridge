@@ -10,10 +10,10 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::process::Command;
 
-use crate::test_cases::COSMOS_NODE_ABCI;
-use crate::test_cases::ETH_NODE;
-use crate::test_cases::MINER_PRIVATE_KEY;
-use crate::test_cases::TOTAL_TIMEOUT;
+use crate::COSMOS_NODE_ABCI;
+use crate::ETH_NODE;
+use crate::MINER_PRIVATE_KEY;
+use crate::TOTAL_TIMEOUT;
 
 /// Ethereum keys are generated for every validator inside
 /// of this testing application and submitted to the blockchain

@@ -1,28 +1,21 @@
-//! This module contains all the logic executed in the test_runner binary.
-//! Since the multiple binaries of this single crate each represent different
-//! entry points it's much easier to pull the bulk of the module out of the binary
-//! up into a location that's easy to import from all segments of the code.
-//!
-//! With our code structure lesson out of the way we can get to what this code
-//! actually does, namely run all up integration tests of the Peggy code against
+//! this crate, namely runs all up integration tests of the Peggy code against
 //! several scenarios, happy path and non happy path. This is essentially meant
 //! to be executed in our specific CI docker container and nowhere else. If you
 //! find some function useful pull it up into the more general peggy_utils or the like
-//! since this code tree isn't accessible outside of the test_runner binary and probably
-//! shouldn't be.
 
-mod bootstrapping;
-mod utils;
+#[macro_use]
+extern crate log;
+#[macro_use]
+extern crate lazy_static;
 
-use crate::main_loop::orchestrator_main_loop;
-use crate::test_cases::bootstrapping::*;
-use crate::test_cases::utils::*;
+use crate::bootstrapping::*;
+use crate::utils::*;
 use actix::Arbiter;
+use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
-use clarity::{PrivateKey as EthPrivateKey, Transaction};
 use contact::client::Contact;
 use cosmos_peggy::send::send_valset_request;
-use cosmos_peggy::send::{request_batch, send_to_eth, update_peggy_eth_address};
+use cosmos_peggy::send::{request_batch, send_to_eth};
 use cosmos_peggy::utils::wait_for_cosmos_online;
 use cosmos_peggy::utils::wait_for_next_cosmos_block;
 use cosmos_peggy::{query::get_oldest_unsigned_transaction_batch, send::send_ethereum_claims};
@@ -31,7 +24,7 @@ use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use ethereum_peggy::utils::get_valset_nonce;
 use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
-use futures::future::join_all;
+use orchestrator::main_loop::orchestrator_main_loop;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::types::SendToCosmosEvent;
 use rand::Rng;
@@ -40,6 +33,9 @@ use std::time::Instant;
 use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
+
+mod bootstrapping;
+mod utils;
 
 /// the timeout for individual requests
 const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
@@ -62,7 +58,10 @@ lazy_static! {
     static ref MINER_ADDRESS: EthAddress = MINER_PRIVATE_KEY.to_public_key().unwrap();
 }
 
-pub async fn run_peggy_test_cases() {
+#[actix_rt::main]
+pub async fn main() {
+    env_logger::init();
+    info!("Staring Peggy test-runner");
     let contact = Contact::new(COSMOS_NODE, OPERATION_TIMEOUT);
     let mut grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
     let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
@@ -90,11 +89,13 @@ pub async fn run_peggy_test_cases() {
     // for things
     send_eth_to_orchestrators(&keys, &web30).await;
 
-    assert!(
-        test_check_cosmos_balance(keys[0].0.to_public_key().unwrap().to_address(), &contact)
-            .await
-            .is_some()
-    );
+    assert!(check_cosmos_balance(
+        &test_token_name,
+        keys[0].0.to_public_key().unwrap().to_address(),
+        &contact
+    )
+    .await
+    .is_some());
 
     // start orchestrators
     for (c_key, e_key) in keys.iter() {
@@ -235,7 +236,7 @@ async fn test_erc20_send(
     erc20_address: EthAddress,
     amount: Uint256,
 ) {
-    let start_coin = check_cosmos_balance(dest, &contact).await;
+    let start_coin = check_cosmos_balance("peggy", dest, &contact).await;
     info!(
         "Sending to Cosmos from {} to {} with amount {}",
         *MINER_ADDRESS, dest, amount
@@ -259,7 +260,7 @@ async fn test_erc20_send(
     while Instant::now() - start < TOTAL_TIMEOUT {
         match (
             start_coin.clone(),
-            check_cosmos_balance(dest, &contact).await,
+            check_cosmos_balance("peggy", dest, &contact).await,
         ) {
             (Some(start_coin), Some(end_coin)) => {
                 if start_coin.amount + amount.clone() == end_coin.amount
@@ -307,7 +308,7 @@ async fn test_batch(
         .to_public_key()
         .unwrap()
         .to_address();
-    let coin = check_cosmos_balance(dest_cosmos_address, &contact)
+    let coin = check_cosmos_balance("peggy", dest_cosmos_address, &contact)
         .await
         .unwrap();
     let token_name = coin.denom;
@@ -421,7 +422,7 @@ async fn submit_duplicate_erc20_send(
     keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
     fee: Coin,
 ) {
-    let start_coin = check_cosmos_balance(receiver, &contact)
+    let start_coin = check_cosmos_balance("peggy", receiver, &contact)
         .await
         .expect("Did not find coins!");
 
@@ -445,7 +446,7 @@ async fn submit_duplicate_erc20_send(
         trace!("Submitted duplicate sendToCosmos event: {:?}", res);
     }
 
-    if let Some(end_coin) = check_cosmos_balance(receiver, &contact).await {
+    if let Some(end_coin) = check_cosmos_balance("peggy", receiver, &contact).await {
         if start_coin.amount == end_coin.amount && start_coin.denom == end_coin.denom {
             info!("Successfully failed to duplicate ERC20!");
         } else {

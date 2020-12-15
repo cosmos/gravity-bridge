@@ -14,12 +14,6 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 
-mod batch_relaying;
-mod ethereum_event_watcher;
-mod main_loop;
-mod valset_relaying;
-
-use crate::main_loop::LOOP_SPEED;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::Uint256;
@@ -32,6 +26,8 @@ use ethereum_peggy::send_to_cosmos::send_to_cosmos;
 use std::time::Duration;
 use url::Url;
 use web30::client::Web3;
+
+const TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Debug, Deserialize)]
 struct Args {
@@ -70,8 +66,6 @@ lazy_static! {
         );
 }
 
-const TIMEOUT: Duration = Duration::from_secs(60);
-
 #[actix_rt::main]
 async fn main() {
     env_logger::init();
@@ -103,8 +97,8 @@ async fn main() {
     let amount: Uint256 = args.flag_amount.parse().unwrap();
     let cosmos_dest: CosmosAddress = args.flag_cosmos_destination.parse().unwrap();
 
-    let web3 = Web3::new(&eth_url, LOOP_SPEED);
-    let contact = Contact::new(&cosmos_url, LOOP_SPEED);
+    let web3 = Web3::new(&eth_url, TIMEOUT);
+    let contact = Contact::new(&cosmos_url, TIMEOUT);
     let fee = Coin {
         denom: fee_denom,
         amount: 1u64.into(),
