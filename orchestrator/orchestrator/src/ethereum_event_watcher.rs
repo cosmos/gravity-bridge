@@ -70,6 +70,12 @@ pub async fn check_for_events(
                 deposits[0].sender, deposits[0].destination, deposits[0].amount, deposits[0].event_nonce
             )
         }
+        if !withdraws.is_empty() {
+            info!(
+                "Oracle observed batch with nonce {}, contract {}, and event nonce {}",
+                withdraws[0].batch_nonce, withdraws[0].erc20, withdraws[0].event_nonce
+            )
+        }
 
         if !deposits.is_empty() || !withdraws.is_empty() {
             // todo get eth chain id from the chain

@@ -58,7 +58,7 @@ impl TransactionBatchExecutedEvent {
             (input.topics.get(1), input.topics.get(2))
         {
             let batch_nonce = Uint256::from_bytes_be(batch_nonce_data);
-            let erc20 = EthAddress::from_slice(&erc20_data)?;
+            let erc20 = EthAddress::from_slice(&erc20_data[12..32])?;
             let event_nonce = Uint256::from_bytes_be(&input.data);
             Ok(TransactionBatchExecutedEvent {
                 batch_nonce,
