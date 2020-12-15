@@ -67,11 +67,6 @@ pub async fn relay_valsets(
         .expect("Failed to get Ethereum valset");
     let latest_cosmos_valset_nonce = latest_cosmos_valset.nonce;
     if latest_cosmos_valset_nonce > latest_ethereum_valset {
-        info!(
-            "We have detected latest valset {} but latest on Ethereum is {} sending an update!",
-            latest_cosmos_valset.nonce, latest_ethereum_valset
-        );
-
         let old_valset = if latest_ethereum_valset == 0 {
             info!("This is the first validator set update! Using the current set");
             // we need to have a special case for validator set zero, that valset was never stored on chain
@@ -88,6 +83,23 @@ pub async fn relay_valsets(
                 return;
             }
         };
+        info!(
+            "We have detected latest valset {} but latest on Ethereum is {} sending an update!",
+            latest_cosmos_valset.nonce, latest_ethereum_valset
+        );
+
+        // If the ENV var NO_GAS_OPT is not set at compile time then the resulting binary will not
+        // have gas optimizations. In this case if we exit early if gas optimizations are enabled
+        // (the default value)
+        if option_env!("NO_GAS_OPT").is_none() {
+            let diff = old_valset.power_diff(&latest_cosmos_valset);
+            // if the power difference is less than one percent, skip updating
+            // the validator set
+            if diff < 0.01 {
+                info!("Difference in power between valset {} and {} is less than 1% skipping update to save gas", old_valset.nonce, latest_cosmos_valset.nonce);
+                return;
+            }
+        }
 
         let _res = send_eth_valset_update(
             latest_cosmos_valset,

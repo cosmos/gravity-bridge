@@ -24,7 +24,7 @@ tests/container-scripts/run-testnet.sh $NODES
 
 # deploy the ethereum contracts
 pushd /peggy/orchestrator/test_runner
-DEPLOY_CONTRACTS=1 RUST_BACKTRACE=full RUST_LOG=INFO PATH=$PATH:$HOME/.cargo/bin cargo run --release --bin test-runner
+DEPLOY_CONTRACTS=1 RUST_BACKTRACE=full NO_GAS_OPT=1 RUST_LOG=INFO PATH=$PATH:$HOME/.cargo/bin cargo run --release --bin test-runner
 
 # This keeps the script open to prevent Docker from stopping the container
 # immediately if the nodes are killed by a different process
