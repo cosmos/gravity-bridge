@@ -1,3 +1,7 @@
+//! This file contains the main loops for two distinct functions that just happen to reside int his same binary for ease of use. The Ethereum Signer and the Ethereum Oracle are both roles in Peggy
+//! that can only be run by a validator. This single binary the 'Orchestrator' runs not only these two rules but also the untrusted role of a relayer, that does not need any permissions and has it's
+//! own crate and binary so that anyone may run it.
+
 use crate::ethereum_event_watcher::check_for_events;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{address::Address as EthAddress, Uint256};
@@ -8,22 +12,111 @@ use cosmos_peggy::{
 };
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_peggy::utils::get_peggy_id;
+use futures::future::join3;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use relayer::batch_relaying::relay_batches;
-use relayer::valset_relaying::relay_valsets;
+use relayer::main_loop::relayer_main_loop;
 use std::time::Duration;
 use std::time::Instant;
 use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
-//const BLOCK_DELAY: u128 = 50;
-
 pub const LOOP_SPEED: Duration = Duration::from_secs(10);
 
-/// This function contains the orchestrator primary loop, it is broken out of the main loop so that
-/// it can be called in the test runner for easier orchestration of multi-node tests
+/// This loop combines the three major roles required to make
+/// up the 'Orchestrator', all three of these are async loops
+/// meaning they will occupy the same thread, but since they do
+/// very little actual cpu bound work and spend the vast majority
+/// of all execution time sleeping this shouldn't be an issue at all.
 pub async fn orchestrator_main_loop(
+    cosmos_key: CosmosPrivateKey,
+    ethereum_key: EthPrivateKey,
+    web3: Web3,
+    contact: Contact,
+    grpc_client: PeggyQueryClient<Channel>,
+    peggy_contract_address: EthAddress,
+    pay_fees_in: String,
+) {
+    let a = eth_oracle_main_loop(
+        cosmos_key,
+        web3.clone(),
+        contact.clone(),
+        peggy_contract_address,
+        pay_fees_in.clone(),
+    );
+    let b = eth_signer_main_loop(
+        cosmos_key,
+        ethereum_key,
+        web3.clone(),
+        contact,
+        grpc_client.clone(),
+        peggy_contract_address,
+        pay_fees_in,
+    );
+    let c = relayer_main_loop(ethereum_key, web3, grpc_client, peggy_contract_address);
+    join3(a, b, c).await;
+}
+
+/// This function is responsible for making sure that Ethereum events are retrieved from the Ethereum blockchain
+/// and ferried over to Cosmos where they will be used to issue tokens or process batches.
+/// TODO this loop requires a method to bootstrap back to the correct event nonce when restarted
+pub async fn eth_oracle_main_loop(
+    cosmos_key: CosmosPrivateKey,
+    web3: Web3,
+    contact: Contact,
+    peggy_contract_address: EthAddress,
+    pay_fees_in: String,
+) {
+    let mut last_checked_block: Uint256 = web3.eth_block_number().await.unwrap();
+    let fee = Coin {
+        denom: pay_fees_in.clone(),
+        amount: 1u32.into(),
+    };
+
+    loop {
+        let loop_start = Instant::now();
+
+        let latest_eth_block = web3.eth_block_number().await;
+        let latest_cosmos_block = contact.get_latest_block_number().await;
+        if let (Ok(latest_eth_block), Ok(latest_cosmos_block)) =
+            (latest_eth_block, latest_cosmos_block)
+        {
+            trace!(
+                "Latest Eth block {} Latest Cosmos block {}",
+                latest_eth_block,
+                latest_cosmos_block
+            );
+        }
+
+        // Relays events from Ethereum -> Cosmos
+        match check_for_events(
+            &web3,
+            &contact,
+            peggy_contract_address,
+            cosmos_key,
+            fee.clone(),
+            last_checked_block.clone(),
+        )
+        .await
+        {
+            Ok(new_block) => last_checked_block = new_block,
+            Err(e) => error!("Failed to get events for block range {:?}", e),
+        }
+
+        // a bit of logic that tires to keep things running every 5 seconds exactly
+        // this is not required for any specific reason. In fact we expect and plan for
+        // the timing being off significantly
+        let elapsed = Instant::now() - loop_start;
+        if elapsed < LOOP_SPEED {
+            delay_for(LOOP_SPEED - elapsed).await;
+        }
+    }
+}
+
+/// The eth_signer simply signs off on any batches or validator sets provided by the validator
+/// since these are provided directly by a trusted Cosmsos node they can simply be assumed to be
+/// valid and signed off on.
+pub async fn eth_signer_main_loop(
     cosmos_key: CosmosPrivateKey,
     ethereum_key: EthPrivateKey,
     web3: Web3,
@@ -35,7 +128,6 @@ pub async fn orchestrator_main_loop(
     let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
     let mut grpc_client = grpc_client;
-    let mut last_checked_block: Uint256 = web3.eth_block_number().await.unwrap();
     let fee = Coin {
         denom: pay_fees_in.clone(),
         amount: 1u32.into(),
@@ -62,19 +154,6 @@ pub async fn orchestrator_main_loop(
                 latest_cosmos_block
             );
         }
-
-        //  Checks for new valsets to sign and relays validator sets from Cosmos -> Ethereum including
-        relay_valsets(
-            cosmos_key,
-            ethereum_key,
-            &web3,
-            &contact,
-            &mut grpc_client,
-            peggy_contract_address,
-            fee.clone(),
-            LOOP_SPEED,
-        )
-        .await;
 
         // sign the last unsigned valset, TODO check if we already have signed this
         match get_oldest_unsigned_valset(&mut grpc_client, our_cosmos_address).await {
@@ -113,33 +192,6 @@ pub async fn orchestrator_main_loop(
             }
             Ok(None) => trace!("No unsigned batches! Everything good!"),
             Err(e) => trace!("Failed to get unsigned Batches with {:?}", e),
-        }
-
-        relay_batches(
-            cosmos_key,
-            ethereum_key,
-            &web3,
-            &contact,
-            &mut grpc_client,
-            peggy_contract_address,
-            fee.clone(),
-            LOOP_SPEED,
-        )
-        .await;
-
-        // Relays events from Ethereum -> Cosmos
-        match check_for_events(
-            &web3,
-            &contact,
-            peggy_contract_address,
-            cosmos_key,
-            fee.clone(),
-            last_checked_block.clone(),
-        )
-        .await
-        {
-            Ok(new_block) => last_checked_block = new_block,
-            Err(e) => error!("Failed to get events for block range {:?}", e),
         }
 
         // a bit of logic that tires to keep things running every 5 seconds exactly

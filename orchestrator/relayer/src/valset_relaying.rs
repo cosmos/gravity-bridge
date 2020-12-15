@@ -5,45 +5,24 @@ use std::time::Duration;
 
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use contact::client::Contact;
 use cosmos_peggy::query::get_latest_valsets;
 use cosmos_peggy::query::{get_all_valset_confirms, get_valset};
-use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
-use ethereum_peggy::utils::get_peggy_id;
 use ethereum_peggy::utils::get_valset_nonce;
 use ethereum_peggy::valset_update::send_eth_valset_update;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
-/// This function makes all decisions about the validator set update lifecycle.
-///
-/// It goes roughly in this order
-/// 1) Determine if we should request a validator set update
-/// 2) See if we have any unsigned validator set updates, if so sign and submit them
-/// 3) Check the last validator set on Ethereum, if it's lower than our latest validator
-///    set then we should package and submit the update as an Ethereum transaction
-#[allow(clippy::too_many_arguments)]
+/// Check the last validator set on Ethereum, if it's lower than our latest validator
+/// set then we should package and submit the update as an Ethereum transaction
 pub async fn relay_valsets(
-    cosmos_key: CosmosPrivateKey,
     ethereum_key: EthPrivateKey,
     web3: &Web3,
-    contact: &Contact,
     grpc_client: &mut PeggyQueryClient<Channel>,
     contract_address: EthAddress,
-    fee: Coin,
     timeout: Duration,
 ) {
-    let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
-
-    let peggy_id = get_peggy_id(contract_address, our_ethereum_address, web3).await;
-    if peggy_id.is_err() {
-        error!("Failed to get PeggyID!");
-        return;
-    }
-    let peggy_id = peggy_id.unwrap();
-    let peggy_id = String::from_utf8(peggy_id.clone()).expect("Invalid PeggyID");
 
     // now that we have caught up on valset requests we should determine if we need to relay one
     // to Ethereum for that we will find the latest confirmed valset and compare it to the ethereum chain

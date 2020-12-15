@@ -3,48 +3,28 @@
 
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use contact::client::Contact;
 use cosmos_peggy::query::get_latest_transaction_batches;
 use cosmos_peggy::query::get_transaction_batch_signatures;
 use cosmos_peggy::query::get_valset;
-use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_peggy::submit_batch::send_eth_transaction_batch;
+use ethereum_peggy::utils::get_tx_batch_nonce;
 use ethereum_peggy::utils::get_valset_nonce;
-use ethereum_peggy::utils::{get_peggy_id, get_tx_batch_nonce};
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::types::{BatchConfirmResponse, TransactionBatch};
 use std::time::Duration;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
-/// This function makes all decisions about the validator set update lifecycle.
-///
-/// It goes roughly in this order
-/// 1) Determine if we should request a validator set update
-/// 2) See if we have any unsigned validator set updates, if so sign and submit them
-/// 3) Check the last validator set on Ethereum, if it's lower than our latest validator
-///    set then we should package and submit the update as an Ethereum transaction
-#[allow(clippy::too_many_arguments)]
+/// Check the last validator set on Ethereum, if it's lower than our latest validator
+/// set then we should package and submit the update as an Ethereum transaction
 pub async fn relay_batches(
-    cosmos_key: CosmosPrivateKey,
     ethereum_key: EthPrivateKey,
     web3: &Web3,
-    contact: &Contact,
     grpc_client: &mut PeggyQueryClient<Channel>,
     peggy_contract_address: EthAddress,
-    fee: Coin,
     timeout: Duration,
 ) {
-    let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
-
-    let peggy_id = get_peggy_id(peggy_contract_address, our_ethereum_address, web3).await;
-    if peggy_id.is_err() {
-        error!("Failed to get PeggyID");
-        return;
-    }
-    let peggy_id = peggy_id.unwrap();
-    let peggy_id = String::from_utf8(peggy_id.clone()).expect("Invalid PeggyID");
 
     let latest_batches = get_latest_transaction_batches(grpc_client).await;
     trace!("Latest batches {:?}", latest_batches);

@@ -54,8 +54,8 @@ lazy_static! {
             --fees=<denom>               The Cosmos Denom in which to pay Cosmos chain fees
             --contract-address=<addr>    The Ethereum contract address for Peggy, this is temporary
         About:
-            The Validator companion relayer and Ethereum network observer.
-            for Althea-Peggy.
+            The Validator companion binary for Peggy. This must be run by all Peggy chain validators
+            and is a mix of a relayer + oracle + ethereum signing infrastructure
             Written By: {}
             Version {}",
             env!("CARGO_PKG_NAME"),
@@ -104,7 +104,7 @@ async fn main() {
         .to_public_key()
         .expect("Invalid Cosmos Phrase!")
         .to_address();
-    info!("Starting Peggy Relayer + Eth Signer");
+    info!("Starting Peggy Validator companion binary Relayer + Oracle + Eth Signer");
     info!(
         "Ethereum Address: {} Cosmos Address {}",
         public_eth_key, public_cosmos_key
