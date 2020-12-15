@@ -7,12 +7,15 @@ use clarity::PrivateKey as EthPrivateKey;
 use clarity::{address::Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::{
-    query::{get_oldest_unsigned_transaction_batch, get_oldest_unsigned_valset},
-    send::{send_batch_confirm, send_valset_confirm},
+    query::{
+        get_current_valset, get_latest_valsets, get_oldest_unsigned_transaction_batch,
+        get_oldest_unsigned_valset,
+    },
+    send::{send_batch_confirm, send_valset_confirm, send_valset_request},
 };
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_peggy::utils::get_peggy_id;
-use futures::future::join3;
+use futures::future::join4;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use relayer::main_loop::relayer_main_loop;
 use std::time::Duration;
@@ -21,6 +24,9 @@ use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
+/// The execution speed governing all loops in this file
+/// which is to say all loops started by Orchestrator main
+/// loop except the relayer loop
 pub const LOOP_SPEED: Duration = Duration::from_secs(10);
 
 /// This loop combines the three major roles required to make
@@ -37,24 +43,35 @@ pub async fn orchestrator_main_loop(
     peggy_contract_address: EthAddress,
     pay_fees_in: String,
 ) {
+    let fee = Coin {
+        denom: pay_fees_in.clone(),
+        amount: 1u32.into(),
+    };
+
     let a = eth_oracle_main_loop(
         cosmos_key,
         web3.clone(),
         contact.clone(),
         peggy_contract_address,
-        pay_fees_in.clone(),
+        fee.clone(),
     );
     let b = eth_signer_main_loop(
         cosmos_key,
         ethereum_key,
         web3.clone(),
-        contact,
+        contact.clone(),
         grpc_client.clone(),
         peggy_contract_address,
-        pay_fees_in,
+        fee.clone(),
     );
-    let c = relayer_main_loop(ethereum_key, web3, grpc_client, peggy_contract_address);
-    join3(a, b, c).await;
+    let c = relayer_main_loop(
+        ethereum_key,
+        web3,
+        grpc_client.clone(),
+        peggy_contract_address,
+    );
+    let d = valset_requester_loop(cosmos_key, contact, grpc_client, fee);
+    join4(a, b, c, d).await;
 }
 
 /// This function is responsible for making sure that Ethereum events are retrieved from the Ethereum blockchain
@@ -65,13 +82,9 @@ pub async fn eth_oracle_main_loop(
     web3: Web3,
     contact: Contact,
     peggy_contract_address: EthAddress,
-    pay_fees_in: String,
+    fee: Coin,
 ) {
     let mut last_checked_block: Uint256 = web3.eth_block_number().await.unwrap();
-    let fee = Coin {
-        denom: pay_fees_in.clone(),
-        amount: 1u32.into(),
-    };
 
     loop {
         let loop_start = Instant::now();
@@ -103,7 +116,7 @@ pub async fn eth_oracle_main_loop(
             Err(e) => error!("Failed to get events for block range {:?}", e),
         }
 
-        // a bit of logic that tires to keep things running every 5 seconds exactly
+        // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
         // this is not required for any specific reason. In fact we expect and plan for
         // the timing being off significantly
         let elapsed = Instant::now() - loop_start;
@@ -123,15 +136,11 @@ pub async fn eth_signer_main_loop(
     contact: Contact,
     grpc_client: PeggyQueryClient<Channel>,
     peggy_contract_address: EthAddress,
-    pay_fees_in: String,
+    fee: Coin,
 ) {
     let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
     let mut grpc_client = grpc_client;
-    let fee = Coin {
-        denom: pay_fees_in.clone(),
-        amount: 1u32.into(),
-    };
     let peggy_id = get_peggy_id(peggy_contract_address, our_ethereum_address, &web3).await;
     if peggy_id.is_err() {
         error!("Failed to get PeggyID");
@@ -194,7 +203,57 @@ pub async fn eth_signer_main_loop(
             Err(e) => trace!("Failed to get unsigned Batches with {:?}", e),
         }
 
-        // a bit of logic that tires to keep things running every 5 seconds exactly
+        // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
+        // this is not required for any specific reason. In fact we expect and plan for
+        // the timing being off significantly
+        let elapsed = Instant::now() - loop_start;
+        if elapsed < LOOP_SPEED {
+            delay_for(LOOP_SPEED - elapsed).await;
+        }
+    }
+}
+
+/// This loop doesn't have a formal role per say, anyone can request a valset
+/// but there does need to be some strategy to ensure requests are made. Having it
+/// be a function of the orchestrator makes a lot of sense as they are already online
+/// and have all the required funds, keys, and rpc servers setup
+///
+/// Exactly how to balance optimizing this versus testing is an interesting discussion
+/// in testing we want to make sure requests are made without any powers changing on the chain
+/// just to simplify the test environment. But in production that's somewhat wasteful. What this
+/// routine does it check the current valset versus the last requested valset, if power has changed
+/// significantly we send in a request.
+pub async fn valset_requester_loop(
+    cosmos_key: CosmosPrivateKey,
+    contact: Contact,
+    grpc_client: PeggyQueryClient<Channel>,
+    fee: Coin,
+) {
+    let mut grpc_client = grpc_client;
+    loop {
+        let loop_start = Instant::now();
+        let latest_valsets = get_latest_valsets(&mut grpc_client).await;
+        let current_valset = get_current_valset(&mut grpc_client).await;
+        if latest_valsets.is_err() || current_valset.is_err() {
+            error!("Failed to get latest valsets!");
+            // todo does this happen when there have been no valsets? if so we need to request one
+            // here
+            return;
+        }
+        let latest_valsets = latest_valsets.unwrap();
+        let current_valset = current_valset.unwrap();
+        if latest_valsets.is_empty() {
+            let _ = send_valset_request(&contact, cosmos_key, fee.clone()).await;
+        } else {
+            // if latest_valsets is not empty it has at least one entry
+            let power_diff = current_valset.power_diff(&latest_valsets[0]);
+            // if the power difference is more than 1% different than the last valset
+            if power_diff > 0.01f32 {
+                let _ = send_valset_request(&contact, cosmos_key, fee.clone()).await;
+            }
+        }
+
+        // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
         // this is not required for any specific reason. In fact we expect and plan for
         // the timing being off significantly
         let elapsed = Instant::now() - loop_start;

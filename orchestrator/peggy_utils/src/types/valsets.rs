@@ -4,7 +4,11 @@ use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
 use contact::{jsonrpc::error::JsonRpcError, types::parse_val};
 use deep_space::address::Address as CosmosAddress;
-use std::{cmp::Ordering, collections::HashMap, fmt};
+use std::{
+    cmp::Ordering,
+    collections::{HashMap, HashSet},
+    fmt,
+};
 
 /// the response we get when querying for a valset confirmation
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -168,6 +172,87 @@ impl Valset {
         out.reverse();
 
         Ok(out)
+    }
+
+    /// A utility function to provide a HashMap of members for easy lookups
+    pub fn to_hashmap(&self) -> HashMap<EthAddress, u64> {
+        let mut res = HashMap::new();
+        for item in self.members.iter() {
+            if let Some(address) = item.eth_address {
+                res.insert(address, item.power);
+            } else {
+                panic!("Validator in active set without Eth Address! This must be corrected immediately!")
+            }
+        }
+        res
+    }
+
+    /// A utility function to provide a HashSet of members for union operations
+    pub fn to_hashset(&self) -> HashSet<EthAddress> {
+        let mut res = HashSet::new();
+        for item in self.members.iter() {
+            if let Some(address) = item.eth_address {
+                res.insert(address);
+            } else {
+                panic!("Validator in active set without Eth Address! This must be corrected immediately!")
+            }
+        }
+        res
+    }
+
+    /// This function takes the current valset and compares it to a provided one
+    /// returning a percentage difference in their power allocation. This is a very
+    /// important function as it's used to decide when the validator sets are updated
+    /// on the Ethereum chain and when new validator sets are requested on the Cosmos
+    /// side. In theory an error here, if unnoticed for long enough, could allow funds
+    /// to be stolen from the bridge without the validators in question still having stake
+    /// to lose.
+    /// Returned value must be less than one
+    pub fn power_diff(&self, other: &Valset) -> f32 {
+        let mut total_power_diff = 0u64;
+        let a = self.to_hashmap();
+        let b = other.to_hashmap();
+        let a_map = self.to_hashset();
+        let b_map = other.to_hashset();
+        // items in A and B, we go through these and compute the absolute value of the
+        // difference in power and sum it.
+        let intersection = a_map.intersection(&b_map);
+        // items in A but not in B or vice versa, since we're just trying to compute the difference
+        // we can simply sum all of these up.
+        let symmetric_difference = a_map.symmetric_difference(&b_map);
+        for item in symmetric_difference {
+            let mut power = None;
+            if let Some(val) = a.get(item) {
+                power = Some(val);
+            } else if let Some(val) = b.get(item) {
+                power = Some(val);
+            }
+            // impossible for this to panic without a failure in the logic
+            // of the symmetric difference function
+            let power = power.unwrap();
+            total_power_diff += power;
+        }
+        for item in intersection {
+            // can't panic since there must be an entry for both.
+            let power_a = a[item];
+            let power_b = b[item];
+            if power_a > power_b {
+                total_power_diff += power_a - power_b;
+            } else {
+                total_power_diff += power_b - power_a;
+            }
+        }
+
+        // if this is true then something has failed in the Cosmos module. Power is supposed to be allocated by dividing
+        // between members at a resolution of u32 MAX anything greater than this value risks proposals passing with less
+        // than the desired amount of power. For example if the Cosmos module switched to using u64 max as the cap but the
+        // contract stayed the same (it always will without being redeployed the 'proposal pass' value is hardcoded on deploy)
+        // then a vote could pass with less than 1% of all power.
+        if total_power_diff > u32::MAX.into() {
+            panic!("Power in bridge greater than u32 MAX! Bridge may be open to highjacking! Take action immediately!");
+        }
+
+        (total_power_diff as f32) / (u32::MAX as f32)
     }
 }
 

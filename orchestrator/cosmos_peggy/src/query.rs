@@ -2,6 +2,7 @@ use clarity::Address as EthAddress;
 use deep_space::address::Address;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_proto::peggy::QueryBatchConfirmsRequest;
+use peggy_proto::peggy::QueryCurrentValsetRequest;
 use peggy_proto::peggy::QueryLastPendingBatchRequestByAddrRequest;
 use peggy_proto::peggy::QueryLastPendingValsetRequestByAddrRequest;
 use peggy_proto::peggy::QueryLastValsetRequestsRequest;
@@ -28,6 +29,26 @@ pub async fn get_valset(
     Ok(valset)
 }
 
+/// get the current valset. You should never sign this valset
+/// valset requests create a consensus point around the block height
+/// that transaction got in. Without that consensus point everyone trying
+/// to sign the 'current' valset would run into slight differences and fail
+/// to produce a viable update.
+pub async fn get_current_valset(
+    client: &mut PeggyQueryClient<Channel>,
+) -> Result<Valset, PeggyError> {
+    let request = client.current_valset(QueryCurrentValsetRequest {}).await?;
+    let valset = request.into_inner().valset;
+    if let Some(valset) = valset {
+        Ok(valset.into())
+    } else {
+        error!("Current valset returned None? This should be impossible");
+        Err(PeggyError::InvalidBridgeStateError(
+            "Must have a current valset!".to_string(),
+        ))
+    }
+}
+
 /// This hits the /pending_valset_requests endpoint and will provide the oldest
 /// validator set we have not yet signed.
 pub async fn get_oldest_unsigned_valset(
@@ -47,7 +68,7 @@ pub async fn get_oldest_unsigned_valset(
     Ok(valset)
 }
 
-/// this input views the last five valest requests that have been made, useful if you're
+/// this input views the last five valset requests that have been made, useful if you're
 /// a relayer looking to ferry confirmations
 pub async fn get_latest_valsets(
     client: &mut PeggyQueryClient<Channel>,

@@ -24,7 +24,7 @@ pub async fn relay_valsets(
 ) {
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
 
-    // now that we have caught up on valset requests we should determine if we need to relay one
+    // we should determine if we need to relay one
     // to Ethereum for that we will find the latest confirmed valset and compare it to the ethereum chain
     let latest_valsets = get_latest_valsets(grpc_client).await;
     if latest_valsets.is_err() {
