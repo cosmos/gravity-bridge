@@ -10,20 +10,8 @@ edition = "2018"
 peggy_utils = {path = "../peggy_utils"}
 
 deep_space = "0.2"
-contact = "0.2"
 clarity = "0.4"
-actix = "0.10"
-actix-web = {version = "3", features=["openssl"]}
-actix-rt = "1"
-url = "2"
 web30 = "0.10"
 num256 = "0.3"
 log = "0.4"
-env_logger = "0.8"
 sha3 = "0.9"
-tokio = {version = "0.2", features=["time"]}
-num = "0.3"
-
-[dev-dependencies]
-rand = "0.7"
-actix = "0.10"

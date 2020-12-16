@@ -580,9 +580,7 @@ dependencies = [
 name = "client"
 version = "0.1.0"
 dependencies = [
- "actix",
  "actix-rt",
- "actix-web",
  "clarity",
  "contact",
  "cosmos_peggy",
@@ -590,20 +588,12 @@ dependencies = [
  "docopt",
  "env_logger",
  "ethereum_peggy",
- "futures",
  "lazy_static",
  "log",
- "num 0.3.1",
- "num256",
  "peggy_proto",
  "peggy_utils",
- "rand 0.7.3",
  "serde",
  "serde_derive",
- "serde_json",
- "sha3",
- "tokio",
- "tonic",
  "url",
  "web30",
 ]
@@ -669,8 +659,6 @@ name = "cosmos_peggy"
 version = "0.1.0"
 dependencies = [
  "actix",
- "actix-rt",
- "actix-web",
  "clarity",
  "contact",
  "deep_space",
@@ -683,11 +671,9 @@ dependencies = [
  "rand 0.7.3",
  "serde",
  "serde_derive",
- "serde_json",
  "sha3",
  "tokio",
  "tonic",
- "url",
  "web30",
 ]
 
@@ -852,21 +838,12 @@ dependencies = [
 name = "ethereum_peggy"
 version = "0.1.0"
 dependencies = [
- "actix",
- "actix-rt",
- "actix-web",
  "clarity",
- "contact",
  "deep_space",
- "env_logger",
  "log",
- "num 0.3.1",
  "num256",
  "peggy_utils",
- "rand 0.7.3",
  "sha3",
- "tokio",
- "url",
  "web30",
 ]
 
@@ -1710,9 +1687,7 @@ dependencies = [
 name = "orchestrator"
 version = "0.1.0"
 dependencies = [
- "actix",
  "actix-rt",
- "actix-web",
  "clarity",
  "contact",
  "cosmos_peggy",
@@ -1723,7 +1698,6 @@ dependencies = [
  "futures",
  "lazy_static",
  "log",
- "num 0.3.1",
  "num256",
  "peggy_proto",
  "peggy_utils",
@@ -1732,7 +1706,6 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "sha3",
  "tokio",
  "tonic",
  "url",
@@ -2108,9 +2081,7 @@ checksum = "3b181ba2dcf07aaccad5448e8ead58db5b742cf85dfe035e2227f137a539a189"
 name = "register_eth_key"
 version = "0.1.0"
 dependencies = [
- "actix",
  "actix-rt",
- "actix-web",
  "clarity",
  "contact",
  "cosmos_peggy",
@@ -2118,21 +2089,13 @@ dependencies = [
  "docopt",
  "env_logger",
  "ethereum_peggy",
- "futures",
  "lazy_static",
  "log",
- "num 0.3.1",
- "num256",
  "peggy_proto",
  "peggy_utils",
- "rand 0.7.3",
  "relayer",
  "serde",
  "serde_derive",
- "serde_json",
- "sha3",
- "tokio",
- "tonic",
  "url",
  "web30",
 ]
@@ -2143,7 +2106,6 @@ version = "0.1.0"
 dependencies = [
  "actix",
  "actix-rt",
- "actix-web",
  "clarity",
  "contact",
  "cosmos_peggy",
@@ -2151,18 +2113,13 @@ dependencies = [
  "docopt",
  "env_logger",
  "ethereum_peggy",
- "futures",
  "lazy_static",
  "log",
- "num 0.3.1",
  "num256",
  "peggy_proto",
  "peggy_utils",
- "rand 0.7.3",
  "serde",
  "serde_derive",
- "serde_json",
- "sha3",
  "tokio",
  "tonic",
  "url",
@@ -2568,7 +2525,6 @@ dependencies = [
  "futures",
  "lazy_static",
  "log",
- "num 0.3.1",
  "num256",
  "orchestrator",
  "peggy_proto",
@@ -2576,8 +2532,6 @@ dependencies = [
  "rand 0.7.3",
  "serde",
  "serde_derive",
- "serde_json",
- "sha3",
  "tokio",
  "tonic",
  "url",
