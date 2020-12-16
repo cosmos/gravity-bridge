@@ -1,0 +1,39 @@
+[package]
+name = "register_eth_key"
+version = "0.1.0"
+authors = ["Justin Kilpatrick <justin@althea.net>"]
+edition = "2018"
+
+[[bin]]
+name = "register-eth-key"
+path = "src/main.rs"
+
+[dependencies]
+relayer = {path = "../relayer/"}
+ethereum_peggy = {path = "../ethereum_peggy"}
+cosmos_peggy = {path = "../cosmos_peggy"}
+peggy_utils = {path = "../peggy_utils"}
+peggy_proto = {path = "../peggy_proto/"}
+
+deep_space = "0.2"
+contact = "0.2"
+serde_derive = "1.0"
+clarity = "0.4"
+docopt = "1"
+serde = "1.0"
+actix = "0.10"
+actix-web = {version = "3", features=["openssl"]}
+actix-rt = "1"
+lazy_static = "1"
+url = "2"
+web30 = "0.10"
+num256 = "0.3"
+log = "0.4"
+env_logger = "0.8"
+serde_json = "1.0"
+sha3 = "0.9"
+tokio = "0.2"
+rand = "0.7"
+num = "0.3"
+tonic = "0.3"
+futures = "0.3"

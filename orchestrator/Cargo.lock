@@ -2105,6 +2105,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b181ba2dcf07aaccad5448e8ead58db5b742cf85dfe035e2227f137a539a189"
 
 [[package]]
+name = "register_eth_key"
+version = "0.1.0"
+dependencies = [
+ "actix",
+ "actix-rt",
+ "actix-web",
+ "clarity",
+ "contact",
+ "cosmos_peggy",
+ "deep_space",
+ "docopt",
+ "env_logger",
+ "ethereum_peggy",
+ "futures",
+ "lazy_static",
+ "log",
+ "num 0.3.1",
+ "num256",
+ "peggy_proto",
+ "peggy_utils",
+ "rand 0.7.3",
+ "relayer",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sha3",
+ "tokio",
+ "tonic",
+ "url",
+ "web30",
+]
+
+[[package]]
 name = "relayer"
 version = "0.1.0"
 dependencies = [

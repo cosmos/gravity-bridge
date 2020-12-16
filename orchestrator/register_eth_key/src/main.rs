@@ -1,10 +1,5 @@
 //! This file is a single use binary that will allow you to register your validator ethereum key
 
-// there are several binaries for this crate if we allow dead code on all of them
-// we will see functions not used in one binary as dead code. In order to fix that
-// we forbid dead code in all but the 'main' binary
-#![allow(dead_code)]
-
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
@@ -12,12 +7,8 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 
-mod batch_relaying;
-mod ethereum_event_watcher;
-mod main_loop;
-mod valset_relaying;
+use std::time::Duration;
 
-use crate::main_loop::LOOP_SPEED;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
 use cosmos_peggy::send::update_peggy_eth_address;
@@ -52,6 +43,8 @@ lazy_static! {
     );
 }
 
+const TIMEOUT: Duration = Duration::from_secs(60);
+
 #[actix_rt::main]
 async fn main() {
     env_logger::init();
@@ -70,7 +63,7 @@ async fn main() {
     let cosmos_url = cosmos_url.trim_end_matches('/');
     let fee_denom = args.flag_fees;
 
-    let contact = Contact::new(&cosmos_url, LOOP_SPEED);
+    let contact = Contact::new(&cosmos_url, TIMEOUT);
     let fee = Coin {
         denom: fee_denom,
         amount: 1u64.into(),
@@ -79,4 +72,11 @@ async fn main() {
     update_peggy_eth_address(&contact, ethereum_key, cosmos_key, fee.clone())
         .await
         .expect("Failed to update Eth address");
+
+    let eth_address = ethereum_key.to_public_key().unwrap();
+    let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
+    info!(
+        "Registered Ethereum address {} for validator address {}",
+        eth_address, cosmos_address
+    )
 }
