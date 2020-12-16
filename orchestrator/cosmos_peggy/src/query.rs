@@ -3,6 +3,7 @@ use deep_space::address::Address;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_proto::peggy::QueryBatchConfirmsRequest;
 use peggy_proto::peggy::QueryCurrentValsetRequest;
+use peggy_proto::peggy::QueryLastEventNonceByAddrRequest;
 use peggy_proto::peggy::QueryLastPendingBatchRequestByAddrRequest;
 use peggy_proto::peggy::QueryLastPendingValsetRequestByAddrRequest;
 use peggy_proto::peggy::QueryLastValsetRequestsRequest;
@@ -144,4 +145,18 @@ pub async fn get_transaction_batch_signatures(
         out.push(BatchConfirmResponse::from_proto(confirm)?)
     }
     Ok(out)
+}
+
+/// Gets the last event nonce that a given validator has attested to, this lets us
+/// catch up with what the current event nonce should be if a oracle is restarted
+pub async fn get_last_event_nonce(
+    client: &mut PeggyQueryClient<Channel>,
+    address: Address,
+) -> Result<u64, PeggyError> {
+    let request = client
+        .last_event_nonce_by_addr(QueryLastEventNonceByAddrRequest {
+            address: address.to_string(),
+        })
+        .await?;
+    Ok(request.into_inner().event_nonce)
 }

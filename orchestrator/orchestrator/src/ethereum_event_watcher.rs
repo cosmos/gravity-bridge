@@ -3,45 +3,45 @@
 
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
-use cosmos_peggy::send::send_ethereum_claims;
+use cosmos_peggy::{query::get_last_event_nonce, send::send_ethereum_claims};
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
+use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::{
     error::PeggyError,
     types::{SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent},
 };
+use tonic::transport::Channel;
 use web30::client::Web3;
 use web30::jsonrpc::error::Web3Error;
 
 pub async fn check_for_events(
     web3: &Web3,
     contact: &Contact,
+    grpc_client: &mut PeggyQueryClient<Channel>,
     peggy_contract_address: EthAddress,
     our_private_key: CosmosPrivateKey,
     fee: Coin,
-    last_checked_block: Uint256,
+    starting_block: Uint256,
 ) -> Result<Uint256, PeggyError> {
-    let starting_block = last_checked_block + 1u8.into();
+    let our_cosmos_address = our_private_key.to_public_key().unwrap().to_address();
     let latest_block = web3.eth_block_number().await?;
+
     let deposits = web3
         .check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
             vec![peggy_contract_address],
-            "SendToCosmosEvent(address,address,bytes32,uint256,uint256)",
-            Vec::new(),
+            vec!["SendToCosmosEvent(address,address,bytes32,uint256,uint256)"],
         )
         .await;
     trace!("Deposits {:?}", deposits);
-    // todo write a parser for each of these events to get the data out
-    // then send a cosmos transaction to mint tokens
 
     let batches = web3
         .check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
             vec![peggy_contract_address],
-            "TransactionBatchExecutedEvent(uint256,address,uint256)",
-            Vec::new(),
+            vec!["TransactionBatchExecutedEvent(uint256,address,uint256)"],
         )
         .await;
     trace!("Batches {:?}", batches);
@@ -51,8 +51,7 @@ pub async fn check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
             vec![peggy_contract_address],
-            "ValsetUpdatedEvent(uint256,address[],uint256[])",
-            Vec::new(),
+            vec!["ValsetUpdatedEvent(uint256,address[],uint256[])"],
         )
         .await;
     trace!("Valsets {:?}", valsets);
@@ -64,6 +63,17 @@ pub async fn check_for_events(
         trace!("parsed batches {:?}", batches);
         let deposits = SendToCosmosEvent::from_logs(&deposits)?;
         trace!("parsed deposits {:?}", deposits);
+
+        // note that starting block overlaps with our last checked block, because we have to deal with
+        // the possibility that the relayer was killed after relaying only one of multiple events in a single
+        // block, so we also need this routine so make sure we don't send in the first event in this hypothetical
+        // multi event block again. In theory we only send all events for every block and that will pass of fail
+        // atomicly but lets not take that risk.
+        let last_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
+        let deposits = SendToCosmosEvent::filter_by_event_nonce(last_event_nonce, &deposits);
+        let withdraws =
+            TransactionBatchExecutedEvent::filter_by_event_nonce(last_event_nonce, &withdraws);
+
         if !deposits.is_empty() {
             info!(
                 "Oracle observed deposit with sender {}, destination {}, amount {}, and event nonce {}",
@@ -83,7 +93,6 @@ pub async fn check_for_events(
                 send_ethereum_claims(contact, our_private_key, deposits, withdraws, fee).await?;
             trace!("Sent in Oracle claims response: {:?}", res);
         }
-
         Ok(latest_block)
     } else {
         error!("Failed to get events");

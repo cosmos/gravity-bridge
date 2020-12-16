@@ -133,3 +133,27 @@ func (k Keeper) BatchConfirms(c context.Context, req *types.QueryBatchConfirmsRe
 	})
 	return &types.QueryBatchConfirmsResponse{Confirms: confirms}, nil
 }
+
+// LastEventNonceByAddr returns the last event nonce for the given validator address, this allows eth oracles to figure out where they left off
+func (k Keeper) LastEventNonceByAddr(c context.Context, req *types.QueryLastEventNonceByAddrRequest) (*types.QueryLastEventNonceByAddrResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	var ret types.QueryLastEventNonceByAddrResponse
+	addr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, req.Address)
+	}
+	validator := findValidatorKey(ctx, addr)
+	if validator == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+	}
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator)
+	ret.EventNonce = lastEventNonce
+	return &ret, nil
+}
+
+func findValidatorKey(ctx sdk.Context, orchAddr sdk.AccAddress) sdk.ValAddress {
+	// todo: implement proper in keeper
+	// TODO: do we want ValAddress or do we want the AccAddress for the validator?
+	// this is a v important question for encoding
+	return sdk.ValAddress(orchAddr)
+}

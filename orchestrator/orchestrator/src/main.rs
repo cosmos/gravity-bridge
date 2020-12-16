@@ -18,6 +18,7 @@ extern crate log;
 
 mod ethereum_event_watcher;
 mod main_loop;
+mod oracle_resync;
 
 use crate::main_loop::orchestrator_main_loop;
 use crate::main_loop::LOOP_SPEED;

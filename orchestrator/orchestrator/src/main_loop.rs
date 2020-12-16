@@ -2,7 +2,7 @@
 //! that can only be run by a validator. This single binary the 'Orchestrator' runs not only these two rules but also the untrusted role of a relayer, that does not need any permissions and has it's
 //! own crate and binary so that anyone may run it.
 
-use crate::ethereum_event_watcher::check_for_events;
+use crate::{ethereum_event_watcher::check_for_events, oracle_resync::get_last_checked_block};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{address::Address as EthAddress, Uint256};
 use contact::client::Contact;
@@ -52,6 +52,7 @@ pub async fn orchestrator_main_loop(
         cosmos_key,
         web3.clone(),
         contact.clone(),
+        grpc_client.clone(),
         peggy_contract_address,
         fee.clone(),
     );
@@ -81,10 +82,19 @@ pub async fn eth_oracle_main_loop(
     cosmos_key: CosmosPrivateKey,
     web3: Web3,
     contact: Contact,
+    grpc_client: PeggyQueryClient<Channel>,
     peggy_contract_address: EthAddress,
     fee: Coin,
 ) {
-    let mut last_checked_block: Uint256 = web3.eth_block_number().await.unwrap();
+    let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
+    let mut last_checked_block: Uint256 = get_last_checked_block(
+        grpc_client.clone(),
+        our_cosmos_address,
+        peggy_contract_address,
+        &web3,
+    )
+    .await;
+    let mut grpc_client = grpc_client;
 
     loop {
         let loop_start = Instant::now();
@@ -97,7 +107,7 @@ pub async fn eth_oracle_main_loop(
             trace!(
                 "Latest Eth block {} Latest Cosmos block {}",
                 latest_eth_block,
-                latest_cosmos_block
+                latest_cosmos_block,
             );
         }
 
@@ -105,6 +115,7 @@ pub async fn eth_oracle_main_loop(
         match check_for_events(
             &web3,
             &contact,
+            &mut grpc_client,
             peggy_contract_address,
             cosmos_key,
             fee.clone(),
