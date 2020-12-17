@@ -67,6 +67,9 @@ var (
 
 	// KeyLastOutgoingBatchID indexes the lastBatchID
 	KeyLastOutgoingBatchID = append(SequenceKeyPrefix, []byte("lastBatchId")...)
+
+	// UnbatchedTxCountKey indexes the pool tx count unbatched
+	UnbatchedTxCountKey = []byte("unbatchedTxCount")
 )
 
 // GetEthAddressKey returns the following key format
@@ -148,12 +151,22 @@ func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.A
 // GetFeeSecondIndexKey returns the following key format
 // prefix            eth-contract-address            fee_amount
 // [0x9][0xc783df8a850f42e7F7e57013759C285caa701eB6][1000000000]
+// func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
+// 	er, _ := ERC20FromPeggyCoin(fee)
+// 	r := make([]byte, 1+ETHContractAddressLen+8)
+// 	copy(r[0:], SecondIndexOutgoingTXFeeKey)
+// 	copy(r[len(SecondIndexOutgoingTXFeeKey):], er.Contract)
+// 	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(er.Contract):], sdk.Uint64ToBigEndian(fee.Amount.Uint64()))
+// 	return r
+// }
+
+// GetFeeSecondIndexKey returns the following key format
+// prefix    fee_amount
+// [0x9][1000000000]
 func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
-	er, _ := ERC20FromPeggyCoin(fee)
-	r := make([]byte, 1+ETHContractAddressLen+8)
+	r := make([]byte, 1+8)
 	copy(r[0:], SecondIndexOutgoingTXFeeKey)
-	copy(r[len(SecondIndexOutgoingTXFeeKey):], er.Contract)
-	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(er.Contract):], sdk.Uint64ToBigEndian(fee.Amount.Uint64()))
+	copy(r[len(SecondIndexOutgoingTXFeeKey):], sdk.Uint64ToBigEndian(fee.Amount.Uint64()))
 	return r
 }
 

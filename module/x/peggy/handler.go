@@ -195,7 +195,7 @@ func handleMsgSetEthAddress(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 
 func handleMsgSendToEth(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgSendToEth) (*sdk.Result, error) {
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
-	txID, err := keeper.AddToOutgoingPool(ctx, sender, msg.EthDest, msg.Amount, msg.BridgeFee)
+	txID, err := keeper.PushToOutgoingPool(ctx, sender, msg.EthDest, msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
 	}
