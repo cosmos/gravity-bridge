@@ -1,4 +1,4 @@
-name: All up test
+name: Integration tests
 
 on:
   push:
@@ -7,10 +7,27 @@ on:
     branches: [master, althea-peggy]
 
 jobs:
-  build:
+  happy-path:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
-      - name: Run all up test in docker container
-        run: bash tests/all-up-test.sh
+      - name: Run all up happy-path test
+        run: tests/all-up-test.sh
+  validator-out:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run all up test with a validator out
+        run: tests/all-up-test.sh VALIDATOR_OUT
+  valset-stress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run all up valset stress test
+        run: tests/all-up-test.sh VALSET_STRESS
+  batch-stress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run all up batch stress test
+        run: tests/all-up-test.sh BATCH_STRESS

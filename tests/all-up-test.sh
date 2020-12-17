@@ -17,6 +17,7 @@ docker rm -f peggy_all_up_test_instance
 set -e
 
 NODES=3
+TEST_TYPE=$1
 
 # Run new test container instance
-docker run --name peggy_all_up_test_instance --cap-add=NET_ADMIN -t peggy-base /bin/bash /peggy/tests/container-scripts/all-up-test-internal.sh $NODES
+docker run --name peggy_all_up_test_instance --cap-add=NET_ADMIN -t peggy-base /bin/bash /peggy/tests/container-scripts/all-up-test-internal.sh $NODES $TEST_TYPE

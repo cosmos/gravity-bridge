@@ -1,7 +1,8 @@
 #!/bin/bash
-set -eux
 # the script run inside the container for all-up-test.sh
 NODES=$1
+TEST_TYPE=$2
+set -eux
 
 # Prepare the contracts for later deployment
 pushd /peggy/solidity/
@@ -16,4 +17,4 @@ bash /peggy/tests/container-scripts/run-testnet.sh $NODES &
 pushd /peggy/orchestrator/test_runner
 DEPLOY_CONTRACTS=1 RUST_BACKTRACE=full RUST_LOG=INFO PATH=$PATH:$HOME/.cargo/bin cargo run --release --bin test-runner
 
-bash /peggy/tests/container-scripts/integration-tests.sh $NODES
+bash /peggy/tests/container-scripts/integration-tests.sh $NODES $TEST_TYPE
