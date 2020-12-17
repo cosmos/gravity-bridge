@@ -20,7 +20,13 @@ impl ValsetUpdatedEvent {
         // and one the indexed nonce
         if let Some(nonce_data) = input.topics.get(1) {
             let nonce = Uint256::from_bytes_be(nonce_data);
-            Ok(ValsetUpdatedEvent { nonce })
+            if nonce > u64::MAX.into() {
+                Err(PeggyError::InvalidEventLogError(
+                    "Nonce overflow, probably incorrect parsing".to_string(),
+                ))
+            } else {
+                Ok(ValsetUpdatedEvent { nonce })
+            }
         } else {
             Err(PeggyError::InvalidEventLogError(
                 "Too few topics".to_string(),
@@ -60,11 +66,17 @@ impl TransactionBatchExecutedEvent {
             let batch_nonce = Uint256::from_bytes_be(batch_nonce_data);
             let erc20 = EthAddress::from_slice(&erc20_data[12..32])?;
             let event_nonce = Uint256::from_bytes_be(&input.data);
-            Ok(TransactionBatchExecutedEvent {
-                batch_nonce,
-                erc20,
-                event_nonce,
-            })
+            if event_nonce > u64::MAX.into() || batch_nonce > u64::MAX.into() {
+                Err(PeggyError::InvalidEventLogError(
+                    "Event nonce overflow, probably incorrect parsing".to_string(),
+                ))
+            } else {
+                Ok(TransactionBatchExecutedEvent {
+                    batch_nonce,
+                    erc20,
+                    event_nonce,
+                })
+            }
         } else {
             Err(PeggyError::InvalidEventLogError(
                 "Too few topics".to_string(),
@@ -124,13 +136,19 @@ impl SendToCosmosEvent {
             let destination = CosmosAddress::from_bytes(c_address_bytes);
             let amount = Uint256::from_bytes_be(&input.data[..32]);
             let event_nonce = Uint256::from_bytes_be(&input.data[32..]);
-            Ok(SendToCosmosEvent {
-                erc20,
-                sender,
-                destination,
-                amount,
-                event_nonce,
-            })
+            if event_nonce > u64::MAX.into() {
+                Err(PeggyError::InvalidEventLogError(
+                    "Event nonce overflow, probably incorrect parsing".to_string(),
+                ))
+            } else {
+                Ok(SendToCosmosEvent {
+                    erc20,
+                    sender,
+                    destination,
+                    amount,
+                    event_nonce,
+                })
+            }
         } else {
             Err(PeggyError::InvalidEventLogError(
                 "Too few topics".to_string(),

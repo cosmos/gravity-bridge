@@ -18,7 +18,7 @@ pub async fn get_last_checked_block(
     // all events from the peggy contract forever, TODO reduce scope of request to reduce load
     // on full node. Also response is limited to 5mbyte in size so if you have too many events
     // this will simply fail.
-    let mut all_peggy_contract_events = web3
+    let all_batch_events = web3
         .check_for_events(
             0u8.into(),
             None,
@@ -27,16 +27,15 @@ pub async fn get_last_checked_block(
         )
         .await
         .unwrap();
-    all_peggy_contract_events.extend(
-        web3.check_for_events(
+    let all_valset_events = web3
+        .check_for_events(
             0u8.into(),
             None,
             vec![peggy_contract_address],
             vec!["SendToCosmosEvent(address,address,bytes32,uint256,uint256)"],
         )
         .await
-        .unwrap(),
-    );
+        .unwrap();
     let last_event_nonce: Uint256 = get_last_event_nonce(&mut grpc_client, our_cosmos_address)
         .await
         .unwrap()
@@ -46,24 +45,29 @@ pub async fn get_last_checked_block(
         return web3.eth_block_number().await.unwrap();
     }
 
-    trace!("Found events {:?}", all_peggy_contract_events);
-    for event in all_peggy_contract_events {
-        match (
-            TransactionBatchExecutedEvent::from_log(&event),
-            SendToCosmosEvent::from_log(&event),
-        ) {
-            (Ok(batch), Err(_)) => {
+    trace!(
+        "Found events {:?} {:?}",
+        all_batch_events,
+        all_valset_events
+    );
+    for event in all_batch_events {
+        match TransactionBatchExecutedEvent::from_log(&event) {
+            Ok(batch) => {
                 if batch.event_nonce == last_event_nonce && event.block_number.is_some() {
                     return event.block_number.unwrap();
                 }
             }
-            (Err(_), Ok(send)) => {
+            Err(e) => error!("Got batch event that we can't parse {}", e),
+        }
+    }
+    for event in all_valset_events {
+        match SendToCosmosEvent::from_log(&event) {
+            Ok(send) => {
                 if send.event_nonce == last_event_nonce && event.block_number.is_some() {
                     return event.block_number.unwrap();
                 }
             }
-            (Err(a), Err(b)) => error!("Got event that we can't parse {} {}", a, b),
-            (Ok(_), Ok(_)) => panic!("Impossible polygot event!"),
+            Err(e) => error!("Got valset event that we can't parse {}", e),
         }
     }
 
