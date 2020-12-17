@@ -1,7 +1,7 @@
 syntax = "proto3";
 package peggy.v1;
 
-import "peggy/v1/genesis.proto";
+import "peggy/v1/params.proto";
 import "peggy/v1/types.proto";
 import "peggy/v1/msgs.proto";
 import "peggy/v1/batch.proto";

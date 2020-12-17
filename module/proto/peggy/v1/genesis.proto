@@ -1,34 +1,32 @@
 syntax = "proto3";
 package peggy.v1;
 
-import "gogoproto/gogo.proto";
+import "peggy/v1/params.proto";
 
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
-// Params represent the peggy genesis and store parameters
-// PEGGYID: 
-// a random 32 byte value to prevent signature reuse
-// CONTRACTHASH: 
-// the code hash of a known good version of the Peggy contract
-// solidity code. It will be used to verify exactly which version of the
-// bridge will be deployed.
-// STARTTHRESHOLD:
-// the percentage of total voting power that must be online
-// and participating in Peggy operations before a bridge can start operating
-// BRIDGECONTRACTADDRESS: 
-// is address of the bridge contract on the Ethereum side
-// BRIDGECHAINID:
-// the unique identifier of the Ethereum chain
-message Params {
-  option (gogoproto.stringer) = false;
+// // Params represent the peggy genesis and store parameters
+// message Params {
+//   option (gogoproto.stringer) = false;
 
-  string peggy_id             = 1;
-  string contract_source_hash = 2;
-  uint64 start_threshold      = 3;
-  string ethereum_address     = 4;
-  uint64 bridge_chain_id      = 5;
-}
+//   // PeggyID is a random 32 byte value to prevent signature reuse
+//   string  peggy_id            = 1;
 
+//   // ContractHash is the code hash of a known good version of the Peggy contract solidity code.
+//   // It will be used to verify exactly which version of the bridge will be deployed.
+//   string contract_source_hash = 2;
+
+//   // StartThreshold is the percentage of total voting power that must be online and participating in
+//   // Peggy operations before a bridge can start operating
+//   uint64 start_threshold      = 3;
+  
+//   // BridgeContractAddress is address of the bridge contract on the Ethereum side
+//   string ethereum_address     = 4;
+
+//   // BridgeChainID is the unique identifier of the Ethereum chain
+//   uint64 bridge_chain_id      = 5;
+// } 
+  
 // GenesisState struct
 message GenesisState {
   Params params = 1;

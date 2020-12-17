@@ -1,0 +1,64 @@
+syntax = "proto3";
+package peggy.v1;
+
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+import "gogoproto/gogo.proto";
+
+message PeggyBootstrapProposal {
+    option (gogoproto.equal) = false;
+    option (gogoproto.goproto_getters) = false;
+    option (gogoproto.goproto_stringer) = false;
+
+    string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
+    string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
+    string peggy_id = 3 [ (gogoproto.moretags) = "yaml:\"peggy_id\"" ];
+    string proxy_contract_hash = 4 [ (gogoproto.moretags) = "yaml:\"proxy_contract_hash\"" ];
+    string proxy_contract_address = 5 [ (gogoproto.moretags) = "yaml:\"proxy_contract_address\"" ];
+    string logic_contract_hash = 6 [ (gogoproto.moretags) = "yaml:\"logic_contract_hash\"" ];
+    string logic_contract_address = 7 [ (gogoproto.moretags) = "yaml:\"logic_contract_address\"" ];
+    uint64 start_threshold = 8 [ (gogoproto.moretags) = "yaml:\"start_threshold\"" ];
+    uint64 bridge_chain_id = 9 [ (gogoproto.moretags) = "yaml:\"bridge_chain_id\"" ];
+    uint64 bootstrap_valset_nonce = 10 [ (gogoproto.moretags) = "yaml:\"bootstrap_valset_nonce\"" ];
+}
+
+message PeggyBootstrapProposalWithDeposit {
+    option (gogoproto.goproto_getters) = false;
+    option (gogoproto.goproto_stringer) = true;
+
+    string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
+    string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
+    string peggy_id = 3 [ (gogoproto.moretags) = "yaml:\"peggy_id\"" ];
+    string proxy_contract_hash = 4 [ (gogoproto.moretags) = "yaml:\"proxy_contract_hash\"" ];
+    string proxy_contract_address = 5 [ (gogoproto.moretags) = "yaml:\"proxy_contract_address\"" ];
+    string logic_contract_hash = 6 [ (gogoproto.moretags) = "yaml:\"logic_contract_hash\"" ];
+    string logic_contract_address = 7 [ (gogoproto.moretags) = "yaml:\"logic_contract_address\"" ];
+    uint64 start_threshold = 8 [ (gogoproto.moretags) = "yaml:\"start_threshold\"" ];
+    uint64 bridge_chain_id = 9 [ (gogoproto.moretags) = "yaml:\"bridge_chain_id\"" ];
+    uint64 bootstrap_valset_nonce = 10 [ (gogoproto.moretags) = "yaml:\"bootstrap_valset_nonce\"" ];
+    string deposit = 11 [ (gogoproto.moretags) = "yaml:\"deposit\"" ];
+}
+
+message PeggyUpgradeProposal {
+    option (gogoproto.equal) = false;
+    option (gogoproto.goproto_getters) = false;
+    option (gogoproto.goproto_stringer) = false;
+
+    string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
+    string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
+    string version = 3 [ (gogoproto.moretags) = "yaml:\"version\"" ];
+    string logic_contract_hash = 4 [ (gogoproto.moretags) = "yaml:\"logic_contract_hash\"" ];
+    string logic_contract_address = 5 [ (gogoproto.moretags) = "yaml:\"logic_contract_address\"" ];
+}
+
+message PeggyUpgradeProposalWithDeposit {
+    option (gogoproto.goproto_getters) = false;
+    option (gogoproto.goproto_stringer) = true;
+
+    string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
+    string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
+    string version = 3 [ (gogoproto.moretags) = "yaml:\"version\"" ];
+    string logic_contract_hash = 4 [ (gogoproto.moretags) = "yaml:\"logic_contract_hash\"" ];
+    string logic_contract_address = 5 [ (gogoproto.moretags) = "yaml:\"logic_contract_address\"" ];
+    string deposit = 6 [ (gogoproto.moretags) = "yaml:\"deposit\"" ];
+}

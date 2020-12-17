@@ -14,11 +14,27 @@ func TestGenesisStateValidate(t *testing.T) {
 		"default params": {src: DefaultGenesisState(), expErr: false},
 		"empty params":   {src: &GenesisState{Params: &Params{}}, expErr: false},
 		"invalid params": {src: &GenesisState{
+			// Params: &Params{
+			// 	PeggyId:            "foo",
+			// 	ContractSourceHash: "laksdjflasdkfja",
+			// 	EthereumAddress:    "invalid-eth-address",
+			// 	BridgeChainId:      3279089,
+			// },
 			Params: &Params{
-				PeggyId:            "foo",
-				ContractSourceHash: "laksdjflasdkfja",
-				EthereumAddress:    "invalid-eth-address",
-				BridgeChainId:      3279089,
+				// TODO
+				PeggyId:              "",
+				ProxyContractHash:    "",
+				ProxyContractAddress: "",
+				LogicContractHash:    "",
+				LogicContractAddress: "",
+				Version:              "",
+				StartThreshold:       uint64(0),
+				BridgeChainId:        uint64(0),
+				BootstrapValsetNonce: uint64(0),
+				BatchInterval:        uint64(0),
+				BatchNum:             uint64(0),
+				ValsetInterval:       uint64(0),
+				ValsetChange:         uint64(0),
 			},
 		}, expErr: true},
 	}

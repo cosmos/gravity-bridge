@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
@@ -16,12 +17,9 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	peggyparams "github.com/althea-net/peggy/module/app/params"
-	"github.com/althea-net/peggy/module/x/peggy"
-	"github.com/althea-net/peggy/module/x/peggy/keeper"
-	peggytypes "github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
@@ -89,8 +87,11 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	// unnamed import of statik for swagger UI support
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	peggyparams "github.com/althea-net/peggy/module/app/params"
+	"github.com/althea-net/peggy/module/x/peggy"
+	peggyclient "github.com/althea-net/peggy/module/x/peggy/client"
+	"github.com/althea-net/peggy/module/x/peggy/keeper"
+	peggytypes "github.com/althea-net/peggy/module/x/peggy/types"
 )
 
 const appName = "app"
@@ -115,6 +116,8 @@ var (
 			distrclient.ProposalHandler,
 			upgradeclient.ProposalHandler,
 			upgradeclient.CancelProposalHandler,
+			peggyclient.ProposalPeggyBootstrapHandler,
+			peggyclient.ProposalPeggyUpgradeHandler,
 		),
 		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},
@@ -345,7 +348,8 @@ func NewPeggyApp(
 		AddRoute(paramsproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
-		AddRoute(ibchost.RouterKey, ibcclient.NewClientUpdateProposalHandler(app.ibcKeeper.ClientKeeper))
+		AddRoute(ibchost.RouterKey, ibcclient.NewClientUpdateProposalHandler(app.ibcKeeper.ClientKeeper)).
+		AddRoute(peggytypes.RouterKey, peggy.NewPeggyProposalHandler(app.peggyKeeper))
 
 	app.govKeeper = govkeeper.NewKeeper(
 		appCodec,

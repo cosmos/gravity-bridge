@@ -1,0 +1,25 @@
+syntax = "proto3";
+package peggy.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+
+message Params {
+    option (gogoproto.stringer) = false;
+
+    string peggy_id = 1;
+    string proxy_contract_hash = 2;
+    string proxy_contract_address = 3;
+    string logic_contract_hash = 4;
+    string logic_contract_address = 5;
+    string version = 6;
+    uint64 start_threshold = 7;
+    uint64 bridge_chain_id = 8;
+    uint64 bootstrap_valset_nonce = 9;
+
+    uint64 batch_interval = 10;
+    uint64 batch_num = 11;
+    uint64 valset_interval = 12;
+    uint64 valset_change = 13;
+}

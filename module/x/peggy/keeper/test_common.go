@@ -224,13 +224,32 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 	}
 
 	k := NewKeeper(marshaler, peggyKey, paramsKeeper.Subspace(types.DefaultParamspace), stakingKeeper, bankKeeper)
-	k.setParams(ctx, &types.Params{
-		PeggyId:            "lkasjdfklajsldkfjd",
-		ContractSourceHash: "lkasjdfklajsldkfjd",
-		StartThreshold:     0,
-		EthereumAddress:    "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
-		BridgeChainId:      11,
-	})
+	k.setParams(
+		ctx,
+		// &types.Params{
+		// 	PeggyId:            "lkasjdfklajsldkfjd",
+		// 	ContractSourceHash: "lkasjdfklajsldkfjd",
+		// 	StartThreshold:     0,
+		// 	EthereumAddress:    "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
+		// 	BridgeChainId:      11,
+		// },
+		&types.Params{
+			// TODO
+			PeggyId:              "",
+			ProxyContractHash:    "",
+			ProxyContractAddress: "",
+			LogicContractHash:    "",
+			LogicContractAddress: "",
+			Version:              "",
+			StartThreshold:       uint64(0),
+			BridgeChainId:        uint64(0),
+			BootstrapValsetNonce: uint64(0),
+			BatchInterval:        uint64(0),
+			BatchNum:             uint64(0),
+			ValsetInterval:       uint64(0),
+			ValsetChange:         uint64(0),
+		},
+	)
 	return k, ctx, keepers
 }
 
