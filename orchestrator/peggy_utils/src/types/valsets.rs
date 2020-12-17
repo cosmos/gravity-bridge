@@ -93,23 +93,35 @@ impl Valset {
     }
 
     /// combines the provided signatures with the valset ensuring that ordering and signature data is correct
+    /// TODO give the signatures types a trait and de-duplicate
     pub fn order_valset_sigs(
         &self,
         signatures: &[ValsetConfirmResponse],
     ) -> Result<Vec<PeggySignature>, JsonRpcError> {
         let mut out = Vec::new();
-        let mut members = HashMap::new();
+        let mut valset_members = HashMap::new();
+        // hashsets used for their efficient set theory types
+        let mut valset_hashset = HashSet::new();
+        let mut signatures_hashset = HashSet::new();
         for member in self.members.iter() {
             if let Some(address) = member.eth_address {
-                members.insert(address, member);
+                valset_members.insert(address, member);
+                valset_hashset.insert(address);
             } else {
-                return Err(JsonRpcError::BadInput(
-                    "All Eth Addresses must be set".to_string(),
-                ));
+                error!("Validator without set EthKey! Not included in Peggy Valset Update");
             }
         }
+        for member in signatures {
+            signatures_hashset.insert(member.eth_address);
+        }
+        // the validators who are in the valset, but not in the signatures list. Note this is order dependent
+        // symmetric_difference or difference in a different order would include people who submitted signatures
+        // but are not part of the validator set (we don't care about these people at all)
+        // We need the validators who are in the set but have not submitted a signature in order to insert them
+        // with zeroed out signatures, the contract will not accept a submission missing a signature otherwise.
+        let validators_who_did_not_sign = valset_hashset.difference(&signatures_hashset);
         for sig in signatures {
-            if let Some(val) = members.get(&sig.eth_address) {
+            if let Some(val) = valset_members.get(&sig.eth_address) {
                 out.push(PeggySignature {
                     power: val.power,
                     eth_address: sig.eth_address,
@@ -118,12 +130,25 @@ impl Valset {
                     s: sig.eth_signature.s.clone(),
                 })
             } else {
-                return Err(JsonRpcError::BadInput(format!(
-                    "No Match for sig! {} and {}",
+                // someone who is not a valset member submitted
+                // a signature, this is fine to ignore
+                info!(
+                    "No Match for sig probably non-validator submitting a signature! {} and {}",
                     sig.eth_address,
                     ValsetMember::display_vec(&self.members)
-                )));
+                );
             }
+        }
+        for val in validators_who_did_not_sign {
+            out.push(PeggySignature {
+                // in order to be in the valset_hashset an address must both in valset_members and have a set
+                // eth address, therefore we can disregard error handling here and do direct lookups
+                power: valset_members[val].power,
+                eth_address: valset_members[val].eth_address.unwrap(),
+                v: 0u8.into(),
+                r: 0u8.into(),
+                s: 0u8.into(),
+            });
         }
         // sort by power so that it is accepted by the contract
         out.sort();
@@ -134,23 +159,35 @@ impl Valset {
     }
 
     /// combines the provided signatures with the valset ensuring that ordering and signature data is correct
+    /// TODO give the signatures types a trait and de-duplicate
     pub fn order_batch_sigs(
         &self,
         signatures: &[BatchConfirmResponse],
     ) -> Result<Vec<PeggySignature>, JsonRpcError> {
         let mut out = Vec::new();
-        let mut members = HashMap::new();
+        let mut valset_members = HashMap::new();
+        // hashsets used for their efficient set theory types
+        let mut valset_hashset = HashSet::new();
+        let mut signatures_hashset = HashSet::new();
         for member in self.members.iter() {
             if let Some(address) = member.eth_address {
-                members.insert(address, member);
+                valset_members.insert(address, member);
+                valset_hashset.insert(address);
             } else {
-                return Err(JsonRpcError::BadInput(
-                    "All Eth Addresses must be set".to_string(),
-                ));
+                error!("Validator without set EthKey! Not included in Peggy Valset Update");
             }
         }
+        for member in signatures {
+            signatures_hashset.insert(member.ethereum_signer);
+        }
+        // the validators who are in the valset, but not in the signatures list. Note this is order dependent
+        // symmetric_difference or difference in a different order would include people who submitted signatures
+        // but are not part of the validator set (we don't care about these people at all)
+        // We need the validators who are in the set but have not submitted a signature in order to insert them
+        // with zeroed out signatures, the contract will not accept a submission missing a signature otherwise.
+        let validators_who_did_not_sign = valset_hashset.difference(&signatures_hashset);
         for sig in signatures {
-            if let Some(val) = members.get(&sig.ethereum_signer) {
+            if let Some(val) = valset_members.get(&sig.ethereum_signer) {
                 out.push(PeggySignature {
                     power: val.power,
                     eth_address: sig.ethereum_signer,
@@ -159,12 +196,25 @@ impl Valset {
                     s: sig.eth_signature.s.clone(),
                 })
             } else {
-                return Err(JsonRpcError::BadInput(format!(
-                    "No Match for sig! {} and {}",
+                // someone who is not a valset member submitted
+                // a signature, this is fine to ignore
+                info!(
+                    "No Match for sig probably non-validator submitting a signature! {} and {}",
                     sig.ethereum_signer,
                     ValsetMember::display_vec(&self.members)
-                )));
+                );
             }
+        }
+        for val in validators_who_did_not_sign {
+            out.push(PeggySignature {
+                // in order to be in the valset_hashset an address must both in valset_members and have a set
+                // eth address, therefore we can disregard error handling here and do direct lookups
+                power: valset_members[val].power,
+                eth_address: valset_members[val].eth_address.unwrap(),
+                v: 0u8.into(),
+                r: 0u8.into(),
+                s: 0u8.into(),
+            });
         }
         // sort by power so that it is accepted by the contract
         out.sort();

@@ -50,7 +50,7 @@ pub async fn relay_batches(
         }
     }
     if oldest_signed_batch.is_none() {
-        error!("Could not find batch with signatures! exiting");
+        trace!("Could not find batch with signatures! exiting");
         return;
     }
     let oldest_signed_batch = oldest_signed_batch.unwrap();

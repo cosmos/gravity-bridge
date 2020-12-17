@@ -19,5 +19,6 @@ serde = "1.0"
 tokio = "0.2"
 tonic = "0.3"
 num-bigint = "0.3"
+log = "0.4"
 [dev_dependencies]
 rand = "0.7"

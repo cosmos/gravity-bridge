@@ -39,18 +39,8 @@ pub async fn relay_valsets(
     for set in latest_valsets {
         let confirms = get_all_valset_confirms(grpc_client, set.nonce).await;
         if let Ok(confirms) = confirms {
-            // todo allow submission without signatures from all validators
-            if confirms.len() == set.members.len() {
-                latest_confirmed = Some(confirms);
-                latest_valset = Some(set);
-            } else {
-                info!(
-                    "Skipping incomplete valset {} we have {} confirms of {}",
-                    set.nonce,
-                    confirms.len(),
-                    set.members.len()
-                );
-            }
+            latest_confirmed = Some(confirms);
+            latest_valset = Some(set);
             break;
         }
     }

@@ -1769,6 +1769,7 @@ dependencies = [
  "clarity",
  "contact",
  "deep_space",
+ "log",
  "num-bigint 0.3.1",
  "num256",
  "peggy_proto",
