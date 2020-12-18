@@ -8,6 +8,8 @@ use web30::client::Web3;
 
 /// This function retrieves the last event nonce this oracle has relayed to Cosmos
 /// it then uses the Ethereum indexes to determine what block the last entry
+/// TODO this should simply be stored in the deposit or withdraw claim and we
+/// ask the Cosmos chain, this searching is a total waste of work
 pub async fn get_last_checked_block(
     grpc_client: PeggyQueryClient<Channel>,
     our_cosmos_address: CosmosAddress,
@@ -15,10 +17,9 @@ pub async fn get_last_checked_block(
     web3: &Web3,
 ) -> Uint256 {
     let mut grpc_client = grpc_client;
-    // loop over all bocks 1k at a time, might be very slow
     let latest_block = web3.eth_block_number().await.unwrap();
-    const BLOCKS_TO_SEARCH: u128 = 1000u128;
-    let current_block: Uint256 = 0u8.into();
+    const BLOCKS_TO_SEARCH: u128 = 50_000u128;
+    let mut current_block: Uint256 = latest_block.clone();
 
     let last_event_nonce: Uint256 = get_last_event_nonce(&mut grpc_client, our_cosmos_address)
         .await
@@ -29,16 +30,20 @@ pub async fn get_last_checked_block(
         return web3.eth_block_number().await.unwrap();
     }
 
-    while current_block.clone() < latest_block.clone() {
-        let end_search = if latest_block.clone() - current_block.clone() < BLOCKS_TO_SEARCH.into() {
-            latest_block.clone()
+    while current_block.clone() > 0u8.into() {
+        info!(
+            "Oracle is resyncing, looking back into the history to find our last event nonce, on block {}",
+            current_block
+        );
+        let end_search = if current_block.clone() < BLOCKS_TO_SEARCH.into() {
+            0u8.into()
         } else {
-            current_block.clone() + BLOCKS_TO_SEARCH.into()
+            current_block.clone() - BLOCKS_TO_SEARCH.into()
         };
         let all_batch_events = web3
             .check_for_events(
-                current_block.clone(),
-                Some(end_search.clone()),
+                end_search.clone(),
+                Some(current_block.clone()),
                 vec![peggy_contract_address],
                 vec!["TransactionBatchExecutedEvent(uint256,address,uint256)"],
             )
@@ -46,8 +51,8 @@ pub async fn get_last_checked_block(
             .unwrap();
         let all_valset_events = web3
             .check_for_events(
-                current_block.clone(),
-                Some(end_search.clone()),
+                end_search.clone(),
+                Some(current_block.clone()),
                 vec![peggy_contract_address],
                 vec!["SendToCosmosEvent(address,address,bytes32,uint256,uint256)"],
             )
@@ -79,6 +84,7 @@ pub async fn get_last_checked_block(
                 Err(e) => error!("Got valset event that we can't parse {}", e),
             }
         }
+        current_block = end_search;
     }
 
     panic!("Could not find the last event relayed by {}, Last Event nonce is {} but no event matching that could be found!", our_cosmos_address, last_event_nonce)

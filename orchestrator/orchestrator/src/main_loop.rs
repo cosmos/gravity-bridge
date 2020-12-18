@@ -87,13 +87,15 @@ pub async fn eth_oracle_main_loop(
     fee: Coin,
 ) {
     let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
+    let long_timeout_web30 = Web3::new(&web3.get_url(), Duration::from_secs(120));
     let mut last_checked_block: Uint256 = get_last_checked_block(
         grpc_client.clone(),
         our_cosmos_address,
         peggy_contract_address,
-        &web3,
+        &long_timeout_web30,
     )
     .await;
+    info!("Oracle resync complete, Oracle now operational");
     let mut grpc_client = grpc_client;
 
     loop {
