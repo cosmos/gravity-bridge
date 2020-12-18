@@ -18,10 +18,12 @@ use deep_space::coin::Coin;
 use happy_path::happy_path_test;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use std::time::Duration;
+use transaction_stress_test::transaction_stress_test;
 use valset_stress::validator_set_stress_test;
 
 mod bootstrapping;
 mod happy_path;
+mod transaction_stress_test;
 mod utils;
 mod valset_stress;
 
@@ -113,21 +115,22 @@ pub async fn main() {
             .await;
             return;
         } else if test_type == "BATCH_STRESS" {
-            info!("Starting Transaction stress test");
-            return;
-        } else if test_type == "VALSET_STRESS" {
-            info!("Starting Valset update stress test");
-            validator_set_stress_test(
+            transaction_stress_test(
                 &web30,
-                grpc_client.clone(),
+                grpc_client,
                 &contact,
                 keys,
                 peggy_address,
                 test_token_name,
-                erc20_addresses[0],
+                erc20_addresses,
                 fee,
             )
             .await;
+            return;
+        } else if test_type == "VALSET_STRESS" {
+            info!("Starting Valset update stress test");
+            validator_set_stress_test(&web30, &contact, keys, peggy_address, test_token_name, fee)
+                .await;
             return;
         }
     }

@@ -226,7 +226,7 @@ pub async fn send_ethereum_claims(
         sequence: tx_info.sequence,
         fee: StdFee {
             amount: vec![fee],
-            gas: 500_000u64.into(),
+            gas: 500_000_000u64.into(),
         },
         msgs,
         memo: String::new(),

@@ -19,6 +19,7 @@ pub enum PeggyError {
     InvalidBridgeStateError(String),
     FailedToUpdateValset,
     EthereumContractError(String),
+    InvalidOptionsError(String),
     ClarityError(ClarityError),
     TimeoutError,
     InvalidEventLogError(String),
@@ -33,6 +34,9 @@ impl fmt::Display for PeggyError {
             PeggyError::CosmosRestError(val) => write!(f, "Cosmos REST error {}", val),
             PeggyError::CosmosAddressError(val) => write!(f, "Cosmos Address error {}", val),
             PeggyError::EthereumRestError(val) => write!(f, "Ethereum REST error {}", val),
+            PeggyError::InvalidOptionsError(val) => {
+                write!(f, "Invalid TX options for this call {}", val)
+            }
             PeggyError::InvalidBridgeStateError(val) => {
                 write!(f, "Invalid bridge state! {}", val)
             }

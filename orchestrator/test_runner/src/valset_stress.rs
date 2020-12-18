@@ -7,21 +7,17 @@ use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use orchestrator::main_loop::orchestrator_main_loop;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use tonic::transport::Channel;
 use web30::client::Web3;
 
 #[allow(clippy::too_many_arguments)]
 pub async fn validator_set_stress_test(
     web30: &Web3,
-    grpc_client: PeggyQueryClient<Channel>,
     contact: &Contact,
     keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
     peggy_address: EthAddress,
     test_token_name: String,
-    erc20_address: EthAddress,
     fee: Coin,
 ) {
-    let mut grpc_client = grpc_client;
     // start orchestrators
     for (c_key, e_key) in keys.iter() {
         info!("Spawning Orchestrator");
@@ -39,6 +35,9 @@ pub async fn validator_set_stress_test(
         ));
     }
 
+    // TODO have some external system send hundreds of valset updates in parallel
+    // to do this you need to generate a non-orchestrator address, send it funds
+    // then use that to send the requests or your sequence gets all messed up
     for _ in 0u32..25 {
         test_valset_update(&contact, &web30, &keys, peggy_address, fee.clone()).await;
     }

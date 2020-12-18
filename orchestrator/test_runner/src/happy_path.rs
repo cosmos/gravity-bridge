@@ -88,7 +88,7 @@ pub async fn happy_path_test(
     // so the denom is the peggy<hash> token name
     // Send a token 3 times
     for _ in 0u32..3 {
-        test_erc20_send(
+        test_erc20_deposit(
             &web30,
             &contact,
             dest_cosmos_address,
@@ -180,7 +180,7 @@ pub async fn test_valset_update(
 }
 
 /// this function tests Ethereum -> Cosmos
-async fn test_erc20_send(
+async fn test_erc20_deposit(
     web30: &Web3,
     contact: &Contact,
     dest: CosmosAddress,
