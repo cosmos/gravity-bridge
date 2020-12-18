@@ -1,11 +1,12 @@
 import { Peggy } from "./typechain/Peggy";
-import { TestERC20 } from "./typechain/TestERC20";
+import { TestERC20A } from "./typechain/TestERC20A";
+import { TestERC20B } from "./typechain/TestERC20B";
+import { TestERC20C } from "./typechain/TestERC20C";
 import { ethers } from "ethers";
 import fs from "fs";
 import commandLineArgs from "command-line-args";
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { exit } from "process";
-import { Http2ServerRequest } from "http2";
 
 const args = commandLineArgs([
   // the ethernum node used to deploy the contract
@@ -16,12 +17,8 @@ const args = commandLineArgs([
   { name: "eth-privkey", type: String },
   // the peggy contract .json file
   { name: "contract", type: String },
-  // the peggy contract erc20 address for the hardcoded erc20 version, only used if test mode is not on
-  { name: "erc20-address", type: String },
-  // test mode, if enabled this script deploys an erc20 script and uses that script as the contract erc20
+  // test mode, if enabled this script deploys three ERC20 contracts for testing
   { name: "test-mode", type: String },
-  // if test mode is enabled this contract is deployed and it's address is used as the erc20 address in the contract
-  { name: "erc20-contract", type: String }
 ]);
 
 // 4. Now, the deployer script hits a full node api, gets the Eth signatures of the valset from the latest block, and deploys the Ethereum contract.
@@ -92,21 +89,27 @@ type NodeStatus = {
 async function deploy() {
   const provider = await new ethers.providers.JsonRpcProvider(args["eth-node"]);
   let wallet = new ethers.Wallet(args["eth-privkey"], provider);
-  let contract;
 
   if (Boolean(args["test-mode"])) {
-    console.log("Test mode, deploying ERC20 contract");
-    const { abi, bytecode } = getContractArtifacts(args["erc20-contract"]);
+    console.log("Test mode, deploying ERC20 contracts");
+    const { abi, bytecode } = getContractArtifacts("/peggy/solidity/artifacts/TestERC20A.json");
     const erc20Factory = new ethers.ContractFactory(abi, bytecode, wallet);
-
-    const testERC20 = (await erc20Factory.deploy()) as TestERC20;
-
+    const testERC20 = (await erc20Factory.deploy()) as TestERC20A;
     await testERC20.deployed();
     const erc20TestAddress = testERC20.address;
-    contract = erc20TestAddress;
-    console.log("ERC20 deployed at Address - ", contract);
-  } else {
-    contract = args["erc20-address"];
+    console.log("ERC20 deployed at Address - ", erc20TestAddress);
+    const { abi: abi1, bytecode: bytecode1 } = getContractArtifacts("/peggy/solidity/artifacts/TestERC20B.json");
+    const erc20Factory1 = new ethers.ContractFactory(abi1, bytecode1, wallet);
+    const testERC201 = (await erc20Factory1.deploy()) as TestERC20B;
+    await testERC201.deployed();
+    const erc20TestAddress1 = testERC201.address;
+    console.log("ERC20 deployed at Address - ", erc20TestAddress1);
+    const { abi: abi2, bytecode: bytecode2 } = getContractArtifacts("/peggy/solidity/artifacts/TestERC20C.json");
+    const erc20Factory2 = new ethers.ContractFactory(abi2, bytecode2, wallet);
+    const testERC202 = (await erc20Factory2.deploy()) as TestERC20C;
+    await testERC202.deployed();
+    const erc20TestAddress2 = testERC202.address;
+    console.log("ERC20 deployed at Address - ", erc20TestAddress2);
   }
   const peggyIdString = await getPeggyId();
   const peggyId = ethers.utils.formatBytes32String(peggyIdString);
@@ -135,7 +138,7 @@ async function deploy() {
   // 66% of uint32_max
   let vote_power = 2834678415;
   if (powers_sum < 2834678415) {
-    console.log("Refusing to deploy incorrect powers!")
+    console.log("Refusing to deploy! Incorrect power!")
     exit(1)
   }
 

@@ -71,7 +71,11 @@ pub async fn main() {
         return;
     }
 
-    let (peggy_address, erc20_address) = parse_contract_addresses();
+    let contracts = parse_contract_addresses();
+    // the address of the deployed Peggy contract
+    let peggy_address = contracts.peggy_contract;
+    // addresses of deployed ERC20 token contracts to be used for testing
+    let erc20_addresses = contracts.erc20_addresses;
 
     // before we start the orchestrators send them some funds so they can pay
     // for things
@@ -93,21 +97,8 @@ pub async fn main() {
     let test_type = option_env!("TEST_TYPE");
     info!("Starting tests with {:?}", test_type);
     if let Some(test_type) = test_type {
-        if test_type == "VALSET_STRESS" {
-            validator_set_stress_test(
-                &web30,
-                grpc_client,
-                &contact,
-                keys,
-                peggy_address,
-                test_token_name,
-                erc20_address,
-                fee,
-            )
-            .await;
-            return;
-        } else if test_type == "BATCH_STRESS" {
-        } else if test_type == "VALIDATOR_OUT" {
+        if test_type == "VALIDATOR_OUT" {
+            info!("Starting Validator out test");
             happy_path_test(
                 &web30,
                 grpc_client,
@@ -115,14 +106,32 @@ pub async fn main() {
                 keys,
                 peggy_address,
                 test_token_name,
-                erc20_address,
+                erc20_addresses[0],
                 fee,
                 true,
             )
             .await;
             return;
+        } else if test_type == "BATCH_STRESS" {
+            info!("Starting Transaction stress test");
+            return;
+        } else if test_type == "VALSET_STRESS" {
+            info!("Starting Valset update stress test");
+            validator_set_stress_test(
+                &web30,
+                grpc_client.clone(),
+                &contact,
+                keys,
+                peggy_address,
+                test_token_name,
+                erc20_addresses[0],
+                fee,
+            )
+            .await;
+            return;
         }
     }
+    info!("Starting Happy path test");
     happy_path_test(
         &web30,
         grpc_client,
@@ -130,7 +139,7 @@ pub async fn main() {
         keys,
         peggy_address,
         test_token_name,
-        erc20_address,
+        erc20_addresses[0],
         fee,
         false,
     )

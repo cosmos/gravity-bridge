@@ -111,7 +111,6 @@ pub async fn deploy_contracts(
             &format!("--eth-node={}", ETH_NODE),
             &format!("--eth-privkey={:#x}", *MINER_PRIVATE_KEY),
             "--contract=/peggy/solidity/artifacts/Peggy.json",
-            "--erc20-contract=/peggy/solidity/artifacts/TestERC20.json",
             "--test-mode=true",
         ])
         .current_dir("/peggy/solidity/")
@@ -123,25 +122,32 @@ pub async fn deploy_contracts(
     file.write_all(&output.stdout).unwrap();
 }
 
+pub struct BootstrapContractAddresses {
+    pub peggy_contract: EthAddress,
+    pub erc20_addresses: Vec<EthAddress>,
+}
+
 /// Parses the ERC20 and Peggy contract addresses from the file created
 /// in deploy_contracts()
-pub fn parse_contract_addresses() -> (EthAddress, EthAddress) {
+pub fn parse_contract_addresses() -> BootstrapContractAddresses {
     let mut file =
         File::open("/contracts").expect("Failed to find contracts! did they not deploy?");
     let mut output = String::new();
     file.read_to_string(&mut output).unwrap();
     let mut maybe_peggy_address = None;
-    let mut maybe_contract_address = None;
+    let mut erc20_addresses = Vec::new();
     for line in output.lines() {
         if line.contains("Peggy deployed at Address -") {
             let address_string = line.split('-').last().unwrap();
             maybe_peggy_address = Some(address_string.trim().parse().unwrap());
         } else if line.contains("ERC20 deployed at Address -") {
             let address_string = line.split('-').last().unwrap();
-            maybe_contract_address = Some(address_string.trim().parse().unwrap());
+            erc20_addresses.push(address_string.trim().parse().unwrap());
         }
     }
     let peggy_address: EthAddress = maybe_peggy_address.unwrap();
-    let erc20_address: EthAddress = maybe_contract_address.unwrap();
-    (peggy_address, erc20_address)
+    BootstrapContractAddresses {
+        peggy_contract: peggy_address,
+        erc20_addresses,
+    }
 }

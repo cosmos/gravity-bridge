@@ -1,8 +1,8 @@
 pragma solidity ^0.6.6;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-// This is the coin we test with- the REAL Bitcoin
-contract TestERC20 is ERC20 {
+// One of three testing coins
+contract TestERC20A is ERC20 {
 	constructor() public ERC20("Bitcoin MAX", "MAX") {
 		_mint(0xc783df8a850f42e7F7e57013759C285caa701eB6, 10000);
 		_mint(0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4, 10000);
@@ -12,6 +12,6 @@ contract TestERC20 is ERC20 {
 		// this is the EtherBase address for our testnet miner in
 		// tests/assets/ETHGenesis.json so it wil have both a lot
 		// of ETH and a lot of erc20 tokens to test with
-		_mint(0xBf660843528035a5A4921534E156a27e64B231fE, 100000);
+		_mint(0xBf660843528035a5A4921534E156a27e64B231fE, 1000000000000000000000);
 	}
 }

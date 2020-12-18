@@ -1,5 +1,5 @@
 import { Peggy } from "../typechain/Peggy";
-import { TestERC20 } from "../typechain/TestERC20";
+import { TestERC20A } from "../typechain/TestERC20A";
 import { ethers } from "@nomiclabs/buidler";
 import { makeCheckpoint, signHash, getSignerAddresses } from "./pure";
 import { BigNumberish } from "ethers/utils";
@@ -16,8 +16,8 @@ export async function deployContracts(
   powerThreshold: number,
   opts?: DeployContractsOptions
 ) {
-  const TestERC20 = await ethers.getContractFactory("TestERC20");
-  const testERC20 = (await TestERC20.deploy()) as TestERC20;
+  const TestERC20 = await ethers.getContractFactory("TestERC20A");
+  const testERC20 = (await TestERC20.deploy()) as TestERC20A;
 
   const Peggy = await ethers.getContractFactory("Peggy");
 
