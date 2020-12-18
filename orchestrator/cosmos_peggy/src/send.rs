@@ -278,7 +278,7 @@ pub async fn send_to_eth(
     contact.retry_on_block(tx).await
 }
 
-pub async fn request_batch(
+pub async fn send_request_batch(
     private_key: PrivateKey,
     denom: String,
     fee: Coin,

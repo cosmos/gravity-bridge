@@ -4,7 +4,7 @@ use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::send::send_valset_request;
-use cosmos_peggy::send::{request_batch, send_to_eth};
+use cosmos_peggy::send::{send_request_batch, send_to_eth};
 use cosmos_peggy::utils::wait_for_next_cosmos_block;
 use cosmos_peggy::{query::get_oldest_unsigned_transaction_batch, send::send_ethereum_claims};
 use deep_space::address::Address as CosmosAddress;
@@ -290,7 +290,7 @@ async fn test_batch(
     info!("Sent tokens to Ethereum with {:?}", res);
 
     info!("Requesting transaction batch");
-    request_batch(
+    send_request_batch(
         requester_cosmos_private_key,
         token_name.clone(),
         fee.clone(),
