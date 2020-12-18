@@ -33,6 +33,7 @@ log = "0.4"
 env_logger = "0.8"
 tokio = "0.2"
 tonic = "0.3"
+openssl-probe = "0.1"
 
 
 [dev-dependencies]
