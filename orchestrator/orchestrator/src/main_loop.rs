@@ -208,8 +208,7 @@ pub async fn eth_signer_main_loop(
                     cosmos_key,
                     peggy_id.clone(),
                 )
-                .await
-                .unwrap();
+                .await;
                 info!("Batch confirm result is {:?}", res);
             }
             Ok(None) => trace!("No unsigned batches! Everything good!"),
