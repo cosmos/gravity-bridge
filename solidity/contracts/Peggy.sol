@@ -394,5 +394,9 @@ contract Peggy {
 		state_peggyId = _peggyId;
 		state_powerThreshold = _powerThreshold;
 		state_lastValsetCheckpoint = newCheckpoint;
+
+		// LOGS
+
+		emit ValsetUpdatedEvent(0, _validators, _powers);
 	}
 }
