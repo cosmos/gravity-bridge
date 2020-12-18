@@ -90,7 +90,7 @@ async function deploy() {
   const provider = await new ethers.providers.JsonRpcProvider(args["eth-node"]);
   let wallet = new ethers.Wallet(args["eth-privkey"], provider);
 
-  if (Boolean(args["test-mode"])) {
+  if (args["test-mode"] == "True" || args["test-mode"] == "true") {
     console.log("Test mode, deploying ERC20 contracts");
     const { abi, bytecode } = getContractArtifacts("/peggy/solidity/artifacts/TestERC20A.json");
     const erc20Factory = new ethers.ContractFactory(abi, bytecode, wallet);
@@ -130,6 +130,9 @@ async function deploy() {
   // having strange problems with updating the validator set you should go
   // look there.
   for (let i = 0; i < latestValset.members.length; i++) {
+    if (latestValset.members[i].ethereum_address == null) {
+      continue;
+    }
     eth_addresses.push(latestValset.members[i].ethereum_address);
     powers.push(latestValset.members[i].power);
     powers_sum += latestValset.members[i].power;
