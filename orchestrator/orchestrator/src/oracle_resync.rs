@@ -15,27 +15,11 @@ pub async fn get_last_checked_block(
     web3: &Web3,
 ) -> Uint256 {
     let mut grpc_client = grpc_client;
-    // all events from the peggy contract forever, TODO reduce scope of request to reduce load
-    // on full node. Also response is limited to 5mbyte in size so if you have too many events
-    // this will simply fail.
-    let all_batch_events = web3
-        .check_for_events(
-            0u8.into(),
-            None,
-            vec![peggy_contract_address],
-            vec!["TransactionBatchExecutedEvent(uint256,address,uint256)"],
-        )
-        .await
-        .unwrap();
-    let all_valset_events = web3
-        .check_for_events(
-            0u8.into(),
-            None,
-            vec![peggy_contract_address],
-            vec!["SendToCosmosEvent(address,address,bytes32,uint256,uint256)"],
-        )
-        .await
-        .unwrap();
+    // loop over all bocks 1k at a time, might be very slow
+    let latest_block = web3.eth_block_number().await.unwrap();
+    const BLOCKS_TO_SEARCH: u128 = 1000u128;
+    let current_block: Uint256 = 0u8.into();
+
     let last_event_nonce: Uint256 = get_last_event_nonce(&mut grpc_client, our_cosmos_address)
         .await
         .unwrap()
@@ -45,29 +29,55 @@ pub async fn get_last_checked_block(
         return web3.eth_block_number().await.unwrap();
     }
 
-    trace!(
-        "Found events {:?} {:?}",
-        all_batch_events,
-        all_valset_events
-    );
-    for event in all_batch_events {
-        match TransactionBatchExecutedEvent::from_log(&event) {
-            Ok(batch) => {
-                if batch.event_nonce == last_event_nonce && event.block_number.is_some() {
-                    return event.block_number.unwrap();
+    while current_block.clone() < latest_block.clone() {
+        let end_search = if latest_block.clone() - current_block.clone() < BLOCKS_TO_SEARCH.into() {
+            latest_block.clone()
+        } else {
+            current_block.clone() + BLOCKS_TO_SEARCH.into()
+        };
+        let all_batch_events = web3
+            .check_for_events(
+                current_block.clone(),
+                Some(end_search.clone()),
+                vec![peggy_contract_address],
+                vec!["TransactionBatchExecutedEvent(uint256,address,uint256)"],
+            )
+            .await
+            .unwrap();
+        let all_valset_events = web3
+            .check_for_events(
+                current_block.clone(),
+                Some(end_search.clone()),
+                vec![peggy_contract_address],
+                vec!["SendToCosmosEvent(address,address,bytes32,uint256,uint256)"],
+            )
+            .await
+            .unwrap();
+
+        trace!(
+            "Found events {:?} {:?}",
+            all_batch_events,
+            all_valset_events
+        );
+        for event in all_batch_events {
+            match TransactionBatchExecutedEvent::from_log(&event) {
+                Ok(batch) => {
+                    if batch.event_nonce == last_event_nonce && event.block_number.is_some() {
+                        return event.block_number.unwrap();
+                    }
                 }
+                Err(e) => error!("Got batch event that we can't parse {}", e),
             }
-            Err(e) => error!("Got batch event that we can't parse {}", e),
         }
-    }
-    for event in all_valset_events {
-        match SendToCosmosEvent::from_log(&event) {
-            Ok(send) => {
-                if send.event_nonce == last_event_nonce && event.block_number.is_some() {
-                    return event.block_number.unwrap();
+        for event in all_valset_events {
+            match SendToCosmosEvent::from_log(&event) {
+                Ok(send) => {
+                    if send.event_nonce == last_event_nonce && event.block_number.is_some() {
+                        return event.block_number.unwrap();
+                    }
                 }
+                Err(e) => error!("Got valset event that we can't parse {}", e),
             }
-            Err(e) => error!("Got valset event that we can't parse {}", e),
         }
     }
 
