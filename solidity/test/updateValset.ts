@@ -50,7 +50,7 @@ async function runTest(opts: {
 
   let currentValsetNonce = 0;
   if (opts.nonMatchingCurrentValset) {
-    currentValsetNonce = 420;
+    powers[0] = 78;
   }
   let newValsetNonce = 1;
   if (opts.nonceNotIncremented) {

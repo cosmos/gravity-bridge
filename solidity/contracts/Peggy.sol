@@ -180,6 +180,12 @@ contract Peggy {
 	) public {
 		// CHECKS
 
+		// Check that the valset nonce is greater than the old one
+		require(
+			_newValsetNonce > _currentValsetNonce,
+			"New valset nonce must be greater than the current nonce"
+		);
+
 		// Check that new validators and powers set is well-formed
 		require(_newValidators.length == _newPowers.length, "Malformed new validator set");
 
@@ -201,12 +207,6 @@ contract Peggy {
 				state_peggyId
 			) == state_lastValsetCheckpoint,
 			"Supplied current validators and powers do not match checkpoint."
-		);
-
-		// Check that the valset nonce is greater than the old one
-		require(
-			_newValsetNonce > _currentValsetNonce,
-			"New valset nonce must be greater than the current nonce"
 		);
 
 		// Check that enough current validators have signed off on the new validator set
@@ -263,6 +263,12 @@ contract Peggy {
 	) public {
 		// CHECKS scoped to reduce stack depth
 		{
+			// Check that the batch nonce is higher than the last nonce for this token
+			require(
+				state_lastBatchNonces[_tokenContract] < _batchNonce,
+				"New batch nonce must be greater than the current nonce"
+			);
+
 			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
 			require(
 				_currentValidators.length == _currentPowers.length &&
@@ -287,12 +293,6 @@ contract Peggy {
 			require(
 				_amounts.length == _destinations.length && _amounts.length == _fees.length,
 				"Malformed batch of transactions"
-			);
-
-			// Check that the batch nonce is higher than the last nonce for this token
-			require(
-				state_lastBatchNonces[_tokenContract] < _batchNonce,
-				"New batch nonce must be greater than the current nonce"
 			);
 
 			// Check that enough current validators have signed off on the transaction batch and valset
