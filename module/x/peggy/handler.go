@@ -1,9 +1,9 @@
 package peggy
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -57,7 +57,7 @@ func handleDepositClaim(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgDep
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyAttestationIDs, string(bytes.Join(attestationIDs, []byte(","))))
+			sdk.NewAttribute(types.AttributeKeyAttestationIDs, strings.Join(attestationIDs, ",")),
 		),
 	)
 
@@ -65,7 +65,7 @@ func handleDepositClaim(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgDep
 }
 
 func handleWithdrawClaim(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgWithdrawClaim) (*sdk.Result, error) {
-	var attestationIDs [][]byte
+	var attestationIDs []string
 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := findValidatorKey(ctx, orch)
 	if validator == nil {
@@ -78,11 +78,17 @@ func handleWithdrawClaim(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgWi
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
-	attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, msg))
+	attestationIDs = append(attestationIDs, string(types.GetAttestationKey(att.EventNonce, msg)))
 
-	return &sdk.Result{
-		Data: bytes.Join(attestationIDs, []byte(", ")),
-	}, nil
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyAttestationIDs, strings.Join(attestationIDs, ",")),
+		),
+	)
+
+	return &sdk.Result{}, nil
 }
 
 func findValidatorKey(ctx sdk.Context, orchAddr sdk.AccAddress) sdk.ValAddress {
@@ -98,8 +104,12 @@ func handleMsgValsetRequest(ctx sdk.Context, k keeper.Keeper, msg *types.MsgVals
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 	}
 
-	if !k.StakingKeeper.Validator(ctx, findValidatorKey(req)).IsBonded() {
+	val := k.StakingKeeper.Validator(ctx, findValidatorKey(ctx, req))
+	switch {
+	case val == nil:
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "validator not in valset")
+	case !val.IsBonded():
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "validator not bonded")
 	}
 
 	// disabling bootstrap check for integration tests to pass
@@ -107,9 +117,14 @@ func handleMsgValsetRequest(ctx sdk.Context, k keeper.Keeper, msg *types.MsgVals
 	//	return nil, sdkerrors.Wrap(types.ErrInvalid, "bridge bootstrap process not observed, yet")
 	//}
 	v := k.SetValsetRequest(ctx)
-	return &sdk.Result{
-		Data: types.UInt64Bytes(v.Nonce),
-	}, nil
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyValsetNonce, fmt.Sprint(v.Nonce)),
+		),
+	)
+	return &sdk.Result{}, nil
 }
 
 // This function takes in a signature submitted by a validator's Eth Signer
@@ -150,9 +165,16 @@ func handleMsgConfirmBatch(ctx sdk.Context, keeper keeper.Keeper, msg *types.Msg
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
 	key := keeper.SetBatchConfirm(ctx, msg)
-	return &sdk.Result{
-		Data: key,
-	}, nil
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyBatchConfirmKey, string(key)),
+		),
+	)
+
+	return &sdk.Result{}, nil
 }
 
 // This function takes in a signature submitted by a validator's Eth Signer
@@ -190,9 +212,16 @@ func handleMsgConfirmValset(ctx sdk.Context, keeper keeper.Keeper, msg *types.Ms
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
 	key := keeper.SetValsetConfirm(ctx, *msg)
-	return &sdk.Result{
-		Data: key,
-	}, nil
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyValsetConfirmKey, string(key)),
+		),
+	)
+
+	return &sdk.Result{}, nil
 }
 
 func handleMsgSetEthAddress(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgSetEthAddress) (*sdk.Result, error) {
@@ -212,9 +241,16 @@ func handleMsgSendToEth(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgSen
 	if err != nil {
 		return nil, err
 	}
-	return &sdk.Result{
-		Data: sdk.Uint64ToBigEndian(txID),
-	}, nil
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, fmt.Sprint(txID)),
+		),
+	)
+
+	return &sdk.Result{}, nil
 }
 
 func handleMsgRequestBatch(ctx sdk.Context, k keeper.Keeper, msg *types.MsgRequestBatch) (*sdk.Result, error) {
@@ -228,7 +264,14 @@ func handleMsgRequestBatch(ctx sdk.Context, k keeper.Keeper, msg *types.MsgReque
 	if err != nil {
 		return nil, err
 	}
-	return &sdk.Result{
-		Data: types.UInt64Bytes(batchID.BatchNonce),
-	}, nil
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(batchID.BatchNonce)),
+		),
+	)
+
+	return &sdk.Result{}, nil
 }

@@ -278,6 +278,7 @@ func NewStakingKeeperMock(operators ...sdk.ValAddress) *StakingKeeperMock {
 	for _, a := range operators {
 		r.BondedValidators = append(r.BondedValidators, stakingtypes.Validator{
 			OperatorAddress: a.String(),
+			Status:          stakingtypes.Bonded,
 		})
 		r.ValidatorPower[a.String()] = defaultTestPower
 	}
@@ -300,6 +301,7 @@ func NewStakingKeeperWeightedMock(t ...MockStakingValidatorData) *StakingKeeperM
 	for i, a := range t {
 		r.BondedValidators[i] = stakingtypes.Validator{
 			OperatorAddress: a.Operator.String(),
+			Status:          stakingtypes.Bonded,
 		}
 		r.ValidatorPower[a.Operator.String()] = a.Power
 	}
@@ -335,6 +337,66 @@ func (s *StakingKeeperMock) GetLastTotalPower(ctx sdk.Context) (power sdk.Int) {
 	return sdk.NewInt(total)
 }
 
+// IterateValidators staisfies the interface
+func (s *StakingKeeperMock) IterateValidators(ctx sdk.Context, cb func(index int64, validator stakingtypes.ValidatorI) (stop bool)) {
+	for i, val := range s.BondedValidators {
+		stop := cb(int64(i), val)
+		if stop {
+			break
+		}
+	}
+}
+
+// IterateBondedValidatorsByPower staisfies the interface
+func (s *StakingKeeperMock) IterateBondedValidatorsByPower(ctx sdk.Context, cb func(index int64, validator stakingtypes.ValidatorI) (stop bool)) {
+	for i, val := range s.BondedValidators {
+		stop := cb(int64(i), val)
+		if stop {
+			break
+		}
+	}
+}
+
+// IterateLastValidators staisfies the interface
+func (s *StakingKeeperMock) IterateLastValidators(ctx sdk.Context, cb func(index int64, validator stakingtypes.ValidatorI) (stop bool)) {
+	for i, val := range s.BondedValidators {
+		stop := cb(int64(i), val)
+		if stop {
+			break
+		}
+	}
+}
+
+// Validator staisfies the interface
+func (s *StakingKeeperMock) Validator(ctx sdk.Context, addr sdk.ValAddress) stakingtypes.ValidatorI {
+	for _, val := range s.BondedValidators {
+		if val.GetOperator().Equals(addr) {
+			return val
+		}
+	}
+	return nil
+}
+
+// ValidatorByConsAddr staisfies the interface
+func (s *StakingKeeperMock) ValidatorByConsAddr(ctx sdk.Context, addr sdk.ConsAddress) stakingtypes.ValidatorI {
+	for _, val := range s.BondedValidators {
+		cons, err := val.GetConsAddr()
+		if err != nil {
+			panic(err)
+		}
+		if cons.Equals(addr) {
+			return val
+		}
+	}
+	return nil
+}
+
+// Slash staisfies the interface
+func (s *StakingKeeperMock) Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec) {}
+
+// Jail staisfies the interface
+func (s *StakingKeeperMock) Jail(sdk.Context, sdk.ConsAddress) {}
+
 // AlwaysPanicStakingMock is a mock staking keeper that panics on usage
 type AlwaysPanicStakingMock struct{}
 
@@ -350,5 +412,40 @@ func (s AlwaysPanicStakingMock) GetBondedValidatorsByPower(ctx sdk.Context) []st
 
 // GetLastValidatorPower implements the interface for staking keeper required by peggy
 func (s AlwaysPanicStakingMock) GetLastValidatorPower(ctx sdk.Context, operator sdk.ValAddress) int64 {
+	panic("unexpected call")
+}
+
+// IterateValidators staisfies the interface
+func (s AlwaysPanicStakingMock) IterateValidators(sdk.Context, func(index int64, validator stakingtypes.ValidatorI) (stop bool)) {
+	panic("unexpected call")
+}
+
+// IterateBondedValidatorsByPower staisfies the interface
+func (s AlwaysPanicStakingMock) IterateBondedValidatorsByPower(sdk.Context, func(index int64, validator stakingtypes.ValidatorI) (stop bool)) {
+	panic("unexpected call")
+}
+
+// IterateLastValidators staisfies the interface
+func (s AlwaysPanicStakingMock) IterateLastValidators(sdk.Context, func(index int64, validator stakingtypes.ValidatorI) (stop bool)) {
+	panic("unexpected call")
+}
+
+// Validator staisfies the interface
+func (s AlwaysPanicStakingMock) Validator(sdk.Context, sdk.ValAddress) stakingtypes.ValidatorI {
+	panic("unexpected call")
+}
+
+// ValidatorByConsAddr staisfies the interface
+func (s AlwaysPanicStakingMock) ValidatorByConsAddr(sdk.Context, sdk.ConsAddress) stakingtypes.ValidatorI {
+	panic("unexpected call")
+}
+
+// Slash staisfies the interface
+func (s AlwaysPanicStakingMock) Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec) {
+	panic("unexpected call")
+}
+
+// Jail staisfies the interface
+func (s AlwaysPanicStakingMock) Jail(sdk.Context, sdk.ConsAddress) {
 	panic("unexpected call")
 }

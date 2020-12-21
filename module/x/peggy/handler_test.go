@@ -13,12 +13,13 @@ import (
 )
 
 func TestHandleValsetRequest(t *testing.T) {
+	// TODO: This test requires the key that submits the valset request to be in the active set
+	// We should review this requirement, but this code path also may change soon
 	var (
-		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
-		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
-		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
-		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
-		myBlockHeight      int64          = 200
+		myCosmosAddr, _       = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
+		myValAddr             = sdk.ValAddress(myCosmosAddr) // revisit when proper mapping is impl in keeper
+		myBlockTime           = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+		myBlockHeight   int64 = 200
 	)
 
 	k, ctx, _ := keeper.CreateTestEnv(t)
@@ -26,16 +27,13 @@ func TestHandleValsetRequest(t *testing.T) {
 	h := NewHandler(k)
 	msg := &types.MsgValsetRequest{Requester: myCosmosAddr.String()}
 	ctx = ctx.WithBlockTime(myBlockTime).WithBlockHeight(myBlockHeight)
-	res, err := h(ctx, msg)
+	_, err := h(ctx, msg)
 	// then
 	require.NoError(t, err)
-	nonce := types.UInt64FromBytes(res.Data)
-	require.False(t, nonce == 0)
-	require.Equal(t, uint64(myBlockHeight), nonce)
 	// and persisted
-	valset := k.GetValsetRequest(ctx, nonce)
+	valset := k.GetValsetRequest(ctx, uint64(myBlockHeight))
 	require.NotNil(t, valset)
-	assert.Equal(t, nonce, valset.Nonce)
+	assert.Equal(t, uint64(myBlockHeight), valset.Nonce)
 	require.Len(t, valset.Members, 1)
 	assert.Equal(t, []uint64{math.MaxUint32}, types.BridgeValidators(valset.Members).GetPowers())
 	assert.Equal(t, "", valset.Members[0].EthereumAddress)
