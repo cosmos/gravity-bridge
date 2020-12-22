@@ -22,12 +22,16 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 message Params {
   option (gogoproto.stringer)  = false;
 
-  string peggy_id              = 1;
-  string contract_source_hash  = 2;
-  uint64 start_threshold       = 3;
-  string ethereum_address      = 4;
-  uint64 bridge_chain_id       = 5;
-  uint64 signed_blocks_window  = 6;
+  string peggy_id                = 1;
+  string contract_source_hash    = 2;
+  uint64 start_threshold         = 3;
+  string ethereum_address        = 4;
+  uint64 bridge_chain_id         = 5;
+  uint64 signed_blocks_window    = 6;
+  bytes  slash_fraction_valset = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
 }
 
 // GenesisState struct

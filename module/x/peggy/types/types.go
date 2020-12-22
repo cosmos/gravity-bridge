@@ -169,3 +169,18 @@ func (v *Valset) WithoutEmptyMembers() *Valset {
 	}
 	return &r
 }
+
+// Valsets is a collection of valset
+type Valsets []*Valset
+
+func (v Valsets) Len() int {
+	return len(v)
+}
+
+func (v Valsets) Less(i, j int) bool {
+	return v[i].Nonce < v[j].Nonce
+}
+
+func (v Valsets) Swap(i, j int) {
+	v[i], v[j] = v[j], v[i]
+}

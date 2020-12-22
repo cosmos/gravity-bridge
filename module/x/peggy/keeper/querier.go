@@ -82,7 +82,7 @@ func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 		return nil, err
 	}
 
-	valset := keeper.GetValsetRequest(ctx, nonce)
+	valset := keeper.GetValset(ctx, nonce)
 	if valset == nil {
 		return nil, nil
 	}

@@ -31,7 +31,7 @@ func TestHandleValsetRequest(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	// and persisted
-	valset := k.GetValsetRequest(ctx, uint64(myBlockHeight))
+	valset := k.GetValset(ctx, uint64(myBlockHeight))
 	require.NotNil(t, valset)
 	assert.Equal(t, uint64(myBlockHeight), valset.Nonce)
 	require.Len(t, valset.Members, 1)

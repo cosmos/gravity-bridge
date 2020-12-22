@@ -76,10 +76,10 @@ func GetEthAddressKey(validator sdk.AccAddress) []byte {
 	return append(EthAddressKey, validator.Bytes()...)
 }
 
-// GetValsetRequestKey returns the following key format
+// GetValsetKey returns the following key format
 // prefix    nonce
 // [0x0][0 0 0 0 0 0 0 1]
-func GetValsetRequestKey(nonce uint64) []byte {
+func GetValsetKey(nonce uint64) []byte {
 	return append(ValsetRequestKey, UInt64Bytes(nonce)...)
 }
 

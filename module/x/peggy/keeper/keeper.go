@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -60,33 +61,40 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	valset := k.GetCurrentValset(ctx)
 	k.storeValset(ctx, valset)
 
-	event := sdk.NewEvent(
-		types.EventTypeMultisigUpdateRequest,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
-		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyMultisigID, fmt.Sprint(valset.Nonce)),
-		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(valset.Nonce)),
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeMultisigUpdateRequest,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
+			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
+			sdk.NewAttribute(types.AttributeKeyMultisigID, fmt.Sprint(valset.Nonce)),
+			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(valset.Nonce)),
+		),
 	)
-	ctx.EventManager().EmitEvent(event)
+
 	return valset
 }
 
 func (k Keeper) storeValset(ctx sdk.Context, valset *types.Valset) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetValsetRequestKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
+	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
 }
 
 // HasValsetRequest returns true if a valset defined by a nonce exists
 func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce uint64) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetValsetRequestKey(nonce))
+	return store.Has(types.GetValsetKey(nonce))
 }
 
-// GetValsetRequest returns a valset by nonce
-func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce uint64) *types.Valset {
+// DeleteValset deletes the valset at a given nonce from state
+func (k Keeper) DeleteValset(ctx sdk.Context, nonce uint64) {
+	ctx.KVStore(k.storeKey).Delete(types.GetValsetKey(nonce))
+}
+
+// GetValset returns a valset by nonce
+func (k Keeper) GetValset(ctx sdk.Context, nonce uint64) *types.Valset {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetValsetRequestKey(nonce))
+	bz := store.Get(types.GetValsetKey(nonce))
 	if bz == nil {
 		return nil
 	}
@@ -108,6 +116,16 @@ func (k Keeper) IterateValsets(ctx sdk.Context, cb func(key []byte, val *types.V
 			break
 		}
 	}
+}
+
+// GetValsets returns all the validator sets in state
+func (k Keeper) GetValsets(ctx sdk.Context) (out []*types.Valset) {
+	k.IterateValsets(ctx, func(_ []byte, val *types.Valset) bool {
+		out = append(out, val)
+		return false
+	})
+	sort.Sort(types.Valsets(out))
+	return
 }
 
 /////////////////////////////
@@ -138,8 +156,8 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 	return key
 }
 
-// GetAllValsetConfirmsByNonce returns all validator set confirmations by nonce
-func (k Keeper) GetAllValsetConfirmsByNonce(ctx sdk.Context, nonce uint64) (confirms []*types.MsgValsetConfirm) {
+// GetValsetConfirms returns all validator set confirmations by nonce
+func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*types.MsgValsetConfirm) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
 	start, end := prefixRange(types.UInt64Bytes(nonce))
 	iterator := prefixStore.Iterator(start, end)

@@ -40,6 +40,9 @@ var (
 	// ParamsStoreKeySignedBlocksWindow stores the signed blocks window
 	ParamsStoreKeySignedBlocksWindow = []byte("SignedBlocksWindow")
 
+	// ParamsStoreSlashFractionValset stores the slash fraction valset
+	ParamsStoreSlashFractionValset = []byte("SlashFractionValset")
+
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
 )
@@ -64,7 +67,9 @@ func DefaultGenesisState() *GenesisState {
 // DefaultParams returns a copy of the default params
 func DefaultParams() *Params {
 	return &Params{
-		PeggyId: "defaultpeggyid",
+		PeggyId:             "defaultpeggyid",
+		SignedBlocksWindow:  10000,
+		SlashFractionValset: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 	}
 }
 
@@ -85,8 +90,11 @@ func (p Params) ValidateBasic() error {
 	if err := validateBridgeChainID(p.BridgeChainId); err != nil {
 		return sdkerrors.Wrap(err, "bridge chain id")
 	}
-	if err := validateBridgeChainID(p.SignedBlocksWindow); err != nil {
+	if err := validateSignedBlocksWindow(p.SignedBlocksWindow); err != nil {
 		return sdkerrors.Wrap(err, "signed blocks window")
+	}
+	if err := validateSlashFractionValset(p.SlashFractionValset); err != nil {
+		return sdkerrors.Wrap(err, "slash fraction valset")
 	}
 	return nil
 }
@@ -106,6 +114,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractAddress, &p.EthereumAddress, validateBridgeContractAddress),
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainId, validateBridgeChainID),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedBlocksWindow, &p.SignedBlocksWindow, validateSignedBlocksWindow),
+		paramtypes.NewParamSetPair(ParamsStoreSlashFractionValset, &p.SlashFractionValset, validateSlashFractionValset),
 	}
 }
 
@@ -164,6 +173,13 @@ func validateBridgeContractAddress(i interface{}) error {
 
 func validateSignedBlocksWindow(i interface{}) error {
 	if _, ok := i.(uint64); !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
+}
+
+func validateSlashFractionValset(i interface{}) error {
+	if _, ok := i.(sdk.Dec); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 	return nil

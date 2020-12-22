@@ -25,7 +25,7 @@ func (k Keeper) CurrentValset(c context.Context, req *types.QueryCurrentValsetRe
 
 // ValsetRequest queries the ValsetRequest of the peggy module
 func (k Keeper) ValsetRequest(c context.Context, req *types.QueryValsetRequestRequest) (*types.QueryValsetRequestResponse, error) {
-	return &types.QueryValsetRequestResponse{Valset: k.GetValsetRequest(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
+	return &types.QueryValsetRequestResponse{Valset: k.GetValset(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
 }
 
 // ValsetConfirm queries the ValsetConfirm of the peggy module

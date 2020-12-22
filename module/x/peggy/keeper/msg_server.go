@@ -26,8 +26,8 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm) (*types.MsgValsetConfirmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// fetch the ValsetRequest by nonce
-	valset := k.GetValsetRequest(ctx, msg.Nonce)
+	// fetch the Valset by nonce
+	valset := k.GetValset(ctx, msg.Nonce)
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
 	}
