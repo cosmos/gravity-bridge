@@ -364,6 +364,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 	"type": "peggy/OutgoingTxBatch",
 	"value": {
 	"batch_nonce": "1",
+	"block": "105",
 	"transactions": [
 		{
 		"id": "2",
@@ -512,6 +513,7 @@ func TestQueryBatch(t *testing.T) {
 			}
 		  ],
 		  "batch_nonce": "1",
+		  "block": "1234567",
 		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		}
 	  }
@@ -561,6 +563,7 @@ func TestLastBatchesRequest(t *testing.T) {
 			}
 		  ],
 		  "batch_nonce": "2",
+		  "block": "1234567",
 		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		},
 		{
@@ -593,6 +596,7 @@ func TestLastBatchesRequest(t *testing.T) {
 			}
 		  ],
 		  "batch_nonce": "1",
+		  "block": "1234567",
 		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		}
 	  ]

@@ -77,6 +77,8 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, n
 
 func (k Keeper) storeBatch(ctx sdk.Context, batch *types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
+	// set the current block height when storing the batch
+	batch.Block = uint64(ctx.BlockHeight())
 	key := types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
 }
@@ -164,8 +166,8 @@ func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, ba
 	}
 }
 
-// OutgoingTxBatches returns the outgoing tx batches
-func (k Keeper) OutgoingTxBatches(ctx sdk.Context) (out []*types.OutgoingTxBatch) {
+// GetOutgoingTxBatches returns the outgoing tx batches
+func (k Keeper) GetOutgoingTxBatches(ctx sdk.Context) (out []*types.OutgoingTxBatch) {
 	k.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
 		out = append(out, batch)
 		return false

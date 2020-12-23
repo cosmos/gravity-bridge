@@ -2,6 +2,7 @@ package peggy
 
 import (
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
+	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -17,7 +18,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		// on the latest validator set, check for change in power against
 		// current, and emit a new validator set if the change in power >1%
 		case i == 0:
-			if k.GetCurrentValset(ctx).BridgeValidators.PowerDiff(vs.BridgeValidators) > 0.01 {
+			if types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(vs.Members) > 0.01 {
 				k.SetValsetRequest(ctx)
 			}
 
@@ -54,10 +55,29 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// #2 condition
 	// We look through the full bonded set (not just the active set, include unbonding validators)
 	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
-	// TODO: we need to figure out timing here, maybe we perist the block height with OutgoingTxBatch?
-	// k.IterateOutgoingTXBatches()
-	// if there are batches older than 15h that are confirmed, prune them from state
-	// // k.IterateBatchConfirmByNonceAndTokenContract()
+	for _, batch := range k.GetOutgoingTxBatches(ctx) {
+		if uint64(ctx.BlockHeight())-params.SignedBlocksWindow > batch.Block {
+			var toSlash []stakingtypes.Validator
+			for _, val := range currentBondedSet {
+				found := false
+				for _, conf := range k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract) {
+					// TODO: may need to look up actual validator address
+					confVal, _ := sdk.AccAddressFromBech32(conf.Validator)
+					if confVal.Equals(val.GetOperator()) {
+						found = true
+					}
+				}
+				if !found {
+					toSlash = append(toSlash, val)
+				}
+			}
+			for _, val := range toSlash {
+				cons, _ := val.GetConsAddr()
+				// TODO: make this a different slash fraction in the params
+				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionValset)
+			}
+		}
+	}
 
 	// #3 condition
 	// Oracle events MsgDepositClaim, MsgWithdrawClaim

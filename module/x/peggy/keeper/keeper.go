@@ -238,6 +238,15 @@ func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonc
 	}
 }
 
+// GetBatchConfirmByNonceAndTokenContract returns the batch confirms
+func (k Keeper) GetBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string) (out []types.MsgConfirmBatch) {
+	k.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, msg types.MsgConfirmBatch) bool {
+		out = append(out, msg)
+		return false
+	})
+	return
+}
+
 /////////////////////////////
 //       ETH ADDRESS       //
 /////////////////////////////
