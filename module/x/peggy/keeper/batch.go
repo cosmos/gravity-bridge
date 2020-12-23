@@ -163,3 +163,12 @@ func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, ba
 		}
 	}
 }
+
+// OutgoingTxBatches returns the outgoing tx batches
+func (k Keeper) OutgoingTxBatches(ctx sdk.Context) (out []*types.OutgoingTxBatch) {
+	k.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
+		out = append(out, batch)
+		return false
+	})
+	return
+}
