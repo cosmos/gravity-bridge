@@ -289,15 +289,76 @@ func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
 
 // EthereumClaim represents a claim on ethereum state
 type EthereumClaim interface {
+	// All Ethereum claims that we relay from the Peggy contract and into the module
+	// have a nonce that is monotonically increasing and unique, since this nonce is
+	// issued by the Ethereum contract it is immutable and must be agreed on by all validators
+	// any disagreement on what claim goes to what nonce means someone is lying.
 	GetEventNonce() uint64
+	// the delegate address of the claimer, for MsgDepositClaim and MsgWithdrawClaim
+	// this is sent in as the sdk.AccAddress of the delegated key. it is up to the user
+	// to disambiguate this into a sdk.ValAddress
+	GetClaimer() sdk.AccAddress
+	// Which type of claim this is
 	GetType() ClaimType
 	ValidateBasic() error
 	ClaimHash() []byte
 }
 
+func toClaimType(input int32) ClaimType {
+	if input == 1 {
+		return CLAIM_TYPE_DEPOSIT
+	} else if input == 2 {
+		return CLAIM_TYPE_WITHDRAW
+	} else {
+		return CLAIM_TYPE_UNKNOWN
+	}
+}
+
+func fromClaimType(input ClaimType) int32 {
+	if input == CLAIM_TYPE_DEPOSIT {
+		return 1
+	} else if input == CLAIM_TYPE_WITHDRAW {
+		return 2
+	} else {
+		return 0
+	}
+}
+
+func (e *GenericClaim) GetType() ClaimType {
+	return toClaimType(e.ClaimType)
+}
+
+func (e *GenericClaim) ClaimHash() []byte {
+	return e.Hash
+}
+
+// by the time anything is turned into a generic
+// claim it has already been validated
+func (e *GenericClaim) ValidateBasic() error {
+	return nil
+}
+
+func (e *GenericClaim) GetClaimer() sdk.AccAddress {
+	val, _ := sdk.AccAddressFromBech32(e.EventClaimer)
+	return val
+}
+
+func GenericClaimfromInterface(claim EthereumClaim) (*GenericClaim, error) {
+	err := claim.ValidateBasic()
+	if err != nil {
+		return nil, err
+	}
+	return &GenericClaim{
+		EventNonce: claim.GetEventNonce(),
+		ClaimType:  fromClaimType(claim.GetType()),
+		Hash:       claim.ClaimHash(),
+	}, nil
+}
+
 var (
 	_ EthereumClaim = &MsgDepositClaim{}
 	_ EthereumClaim = &MsgWithdrawClaim{}
+	_ EthereumClaim = &GenericClaim{}
 )
 
 // GetType returns the type of the claim
@@ -328,6 +389,16 @@ func (e *MsgDepositClaim) ValidateBasic() error {
 // GetSignBytes encodes the message for signing
 func (msg MsgDepositClaim) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgDepositClaim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgDepositClaim failed ValidateBasic! Should have been handled earlier")
+	}
+
+	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	return val
 }
 
 // GetSigners defines whose signature is required
@@ -387,6 +458,15 @@ func (b *MsgWithdrawClaim) ClaimHash() []byte {
 // GetSignBytes encodes the message for signing
 func (msg MsgWithdrawClaim) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgWithdrawClaim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgWithdrawClaim failed ValidateBasic! Should have been handled earlier")
+	}
+	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	return val
 }
 
 // GetSigners defines whose signature is required

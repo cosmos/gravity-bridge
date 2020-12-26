@@ -142,18 +142,11 @@ func (k Keeper) LastEventNonceByAddr(c context.Context, req *types.QueryLastEven
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, req.Address)
 	}
-	validator := findValidatorKey(ctx, addr)
+	validator := k.FindValidatorKey(ctx, addr)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 	}
 	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator)
 	ret.EventNonce = lastEventNonce
 	return &ret, nil
-}
-
-func findValidatorKey(ctx sdk.Context, orchAddr sdk.AccAddress) sdk.ValAddress {
-	// todo: implement proper in keeper
-	// TODO: do we want ValAddress or do we want the AccAddress for the validator?
-	// this is a v important question for encoding
-	return sdk.ValAddress(orchAddr)
 }

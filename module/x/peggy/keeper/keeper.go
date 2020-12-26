@@ -300,6 +300,17 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 }
 
 /////////////////////////////
+//    ADDRESS DELEGATION   //
+/////////////////////////////
+
+// TODO placeholder function to find validator keys given an orchestrator delegate address
+func (k Keeper) FindValidatorKey(ctx sdk.Context, orchAddr sdk.AccAddress) sdk.ValAddress {
+	// TODO: do we want ValAddress or do we want the AccAddress for the validator?
+	// this is a v important question for encoding
+	return sdk.ValAddress(orchAddr)
+}
+
+/////////////////////////////
 //       PARAMETERS        //
 /////////////////////////////
 

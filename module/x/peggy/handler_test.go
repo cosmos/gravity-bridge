@@ -133,7 +133,7 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	_, err := h(ctx, &ethClaim)
 	require.NoError(t, err)
 	// and claim persisted
-	claimFound := k.HasClaim(ctx, types.CLAIM_TYPE_DEPOSIT, myNonce, myValAddr, &ethClaim)
+	claimFound := k.HasClaim(ctx, &ethClaim)
 	assert.True(t, claimFound)
 	// and attestation persisted
 	a := k.GetAttestation(ctx, myNonce, &ethClaim)
@@ -241,7 +241,7 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 	_, err := h(ctx, &ethClaim1)
 	require.NoError(t, err)
 	// and claim persisted
-	claimFound1 := k.HasClaim(ctx, types.CLAIM_TYPE_DEPOSIT, myNonce, valAddr1, &ethClaim1)
+	claimFound1 := k.HasClaim(ctx, &ethClaim1)
 	assert.True(t, claimFound1)
 	// and attestation persisted
 	a1 := k.GetAttestation(ctx, myNonce, &ethClaim1)
@@ -256,7 +256,7 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	// and claim persisted
-	claimFound2 := k.HasClaim(ctx, types.CLAIM_TYPE_DEPOSIT, myNonce, valAddr1, &ethClaim2)
+	claimFound2 := k.HasClaim(ctx, &ethClaim2)
 	assert.True(t, claimFound2)
 	// and attestation persisted
 	a2 := k.GetAttestation(ctx, myNonce, &ethClaim1)
@@ -271,7 +271,7 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	// and claim persisted
-	claimFound3 := k.HasClaim(ctx, types.CLAIM_TYPE_DEPOSIT, myNonce, valAddr1, &ethClaim2)
+	claimFound3 := k.HasClaim(ctx, &ethClaim2)
 	assert.True(t, claimFound3)
 	// and attestation persisted
 	a3 := k.GetAttestation(ctx, myNonce, &ethClaim1)

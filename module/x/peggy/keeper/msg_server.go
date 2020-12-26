@@ -40,7 +40,7 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
 	valaddr, _ := sdk.AccAddressFromBech32(msg.Validator)
-	validator := findValidatorKey(ctx, valaddr)
+	validator := k.FindValidatorKey(ctx, valaddr)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
@@ -79,7 +79,7 @@ func (k msgServer) ValsetRequest(c context.Context, msg *types.MsgValsetRequest)
 	req, _ := sdk.AccAddressFromBech32(msg.Requester)
 
 	// return an error if the validator key doesn't exist
-	validator := findValidatorKey(ctx, req)
+	validator := k.FindValidatorKey(ctx, req)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 	}
@@ -112,7 +112,7 @@ func (k msgServer) ValsetRequest(c context.Context, msg *types.MsgValsetRequest)
 func (k msgServer) SetEthAddress(c context.Context, msg *types.MsgSetEthAddress) (*types.MsgSetEthAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	valaddr, _ := sdk.AccAddressFromBech32(msg.Validator)
-	validator := findValidatorKey(ctx, valaddr)
+	validator := k.FindValidatorKey(ctx, valaddr)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 	}
@@ -188,7 +188,7 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
 	valaddr, _ := sdk.AccAddressFromBech32(msg.Validator)
-	validator := findValidatorKey(ctx, valaddr)
+	validator := k.FindValidatorKey(ctx, valaddr)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
@@ -226,7 +226,7 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 
 	// return an error if the validator key doesn't exist
-	validator := findValidatorKey(ctx, orch)
+	validator := k.FindValidatorKey(ctx, orch)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 	}
@@ -235,13 +235,13 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 	val := k.StakingKeeper.Validator(ctx, validator)
 	switch {
 	case val == nil:
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in active set")
 	case !val.IsBonded():
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in active set")
 	}
 
 	// Add the claim to the store
-	att, err := k.AddClaim(ctx, msg.GetType(), msg.GetEventNonce(), validator, msg)
+	att, err := k.AddClaim(ctx, msg)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
@@ -265,7 +265,7 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 
 	// return an error if the validator key doesn't exist
-	validator := findValidatorKey(ctx, orch)
+	validator := k.FindValidatorKey(ctx, orch)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 	}
@@ -280,7 +280,7 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 	}
 
 	// Add the claim to the store
-	att, err := k.AddClaim(ctx, msg.GetType(), msg.GetEventNonce(), validator, msg)
+	att, err := k.AddClaim(ctx, msg)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
