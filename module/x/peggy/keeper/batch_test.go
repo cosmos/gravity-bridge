@@ -11,30 +11,23 @@ import (
 )
 
 func TestBatches(t *testing.T) {
-
-	// SETUP
-	// =====
-
-	k, ctx, keepers := CreateTestEnv(t)
+	input := CreateTestEnv(t)
+	ctx := input.Context
 	var (
-		// Sender on peggy
-		mySender, _ = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		// Random ETH address
-		myReceiver = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		// Pickle token contract
-		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
 		now                 = time.Now().UTC()
+		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
+		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
+		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5" // Pickle
+		allVouchers         = sdk.NewCoins(
+			types.NewERC20Token(99999, myTokenContractAddr).PeggyCoin(),
+		)
 	)
+
 	// mint some voucher first
-
-	allVouchers := sdk.Coins{types.NewERC20Token(99999, myTokenContractAddr).PeggyCoin()}
-	err := keepers.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
-	require.NoError(t, err)
-
+	require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
 	// set senders balance
-	keepers.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	err = keepers.BankKeeper.SetBalances(ctx, mySender, allVouchers)
-	require.NoError(t, err)
+	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
+	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
 
 	// CREATE FIRST BATCH
 	// ==================
@@ -43,18 +36,19 @@ func TestBatches(t *testing.T) {
 	for i, v := range []uint64{2, 3, 2, 1} {
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).PeggyCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).PeggyCoin()
-		_, err := k.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		_, err := input.PeggyKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
+
 	// when
 	ctx = ctx.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	firstBatch, err := k.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	firstBatch, err := input.PeggyKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// then batch is persisted
-	gotFirstBatch := k.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
+	gotFirstBatch := input.PeggyKeeper.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
 	require.NotNil(t, gotFirstBatch)
 
 	expFirstBatch := &types.OutgoingTxBatch{
@@ -77,13 +71,12 @@ func TestBatches(t *testing.T) {
 		},
 		TokenContract: myTokenContractAddr,
 		Block:         1234567,
-		// Valset:        &types.Valset{Nonce: 0x12d687, Members: types.BridgeValidators(nil)},
 	}
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
 	// and verify remaining available Tx in the pool
 	var gotUnbatchedTx []*types.OutgoingTx
-	k.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
+	input.PeggyKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
@@ -111,14 +104,14 @@ func TestBatches(t *testing.T) {
 
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).PeggyCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).PeggyCoin()
-		_, err := k.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		_, err := input.PeggyKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 
 	// create the more profitable batch
 	ctx = ctx.WithBlockTime(now)
 	// tx batch size is 2, so that some of them stay behind
-	secondBatch, err := k.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	secondBatch, err := input.PeggyKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// check that the more profitable batch has the right txs in it
@@ -150,15 +143,15 @@ func TestBatches(t *testing.T) {
 	// =================================
 
 	// Execute the batch
-	k.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	input.PeggyKeeper.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 
 	// check batch has been deleted
-	gotSecondBatch := k.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	gotSecondBatch := input.PeggyKeeper.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 	require.Nil(t, gotSecondBatch)
 
 	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
-	k.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
+	input.PeggyKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})

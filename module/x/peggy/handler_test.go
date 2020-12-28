@@ -22,16 +22,16 @@ func TestHandleValsetRequest(t *testing.T) {
 		myBlockHeight   int64 = 200
 	)
 
-	k, ctx, _ := keeper.CreateTestEnv(t)
-	k.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
-	h := NewHandler(k)
+	input := keeper.CreateTestEnv(t)
+	input.PeggyKeeper.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
+	h := NewHandler(input.PeggyKeeper)
 	msg := &types.MsgValsetRequest{Requester: myCosmosAddr.String()}
-	ctx = ctx.WithBlockTime(myBlockTime).WithBlockHeight(myBlockHeight)
+	ctx := input.Context.WithBlockTime(myBlockTime).WithBlockHeight(myBlockHeight)
 	_, err := h(ctx, msg)
 	// then
 	require.NoError(t, err)
 	// and persisted
-	valset := k.GetValset(ctx, uint64(myBlockHeight))
+	valset := input.PeggyKeeper.GetValset(ctx, uint64(myBlockHeight))
 	require.NotNil(t, valset)
 	assert.Equal(t, uint64(myBlockHeight), valset.Nonce)
 	require.Len(t, valset.Members, 1)
@@ -55,11 +55,12 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	)
 
 	// we start by depositing some funds into the users balance to send
-	k, ctx, keepers := keeper.CreateTestEnv(t)
-	h := NewHandler(k)
-	keepers.BankKeeper.MintCoins(ctx, types.ModuleName, startingCoins)
-	keepers.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userCosmosAddr, startingCoins)
-	balance1 := keepers.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	input := keeper.CreateTestEnv(t)
+	ctx := input.Context
+	h := NewHandler(input.PeggyKeeper)
+	input.BankKeeper.MintCoins(ctx, types.ModuleName, startingCoins)
+	input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userCosmosAddr, startingCoins)
+	balance1 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}, balance1)
 
 	// send some coins
@@ -71,7 +72,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
 	_, err := h(ctx, msg)
 	require.NoError(t, err)
-	balance2 := keepers.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	balance2 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount.Sub(sendAmount).Sub(feeAmount))}, balance2)
 
 	// do the same thing again and make sure it works twice
@@ -83,7 +84,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
 	_, err1 := h(ctx, msg1)
 	require.NoError(t, err1)
-	balance3 := keepers.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	balance3 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
 	finalAmount3 := startingCoinAmount.Sub(sendAmount).Sub(sendAmount).Sub(feeAmount).Sub(feeAmount)
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance3)
 
@@ -96,7 +97,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
 	_, err2 := h(ctx, msg2)
 	require.Error(t, err2)
-	balance4 := keepers.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	balance4 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance4)
 }
 
@@ -110,9 +111,10 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 		tokenETHAddr                      = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
 		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
 	)
-	k, ctx, keepers := keeper.CreateTestEnv(t)
-	k.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
-	h := NewHandler(k)
+	input := keeper.CreateTestEnv(t)
+	ctx := input.Context
+	input.PeggyKeeper.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
+	h := NewHandler(input.PeggyKeeper)
 
 	myErc20 := types.ERC20Token{
 		Amount:   sdk.NewInt(12),
@@ -133,13 +135,13 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	_, err := h(ctx, &ethClaim)
 	require.NoError(t, err)
 	// and claim persisted
-	claimFound := k.HasClaim(ctx, &ethClaim)
+	claimFound := input.PeggyKeeper.HasClaim(ctx, &ethClaim)
 	assert.True(t, claimFound)
 	// and attestation persisted
-	a := k.GetAttestation(ctx, myNonce, &ethClaim)
+	a := input.PeggyKeeper.GetAttestation(ctx, myNonce, &ethClaim)
 	require.NotNil(t, a)
 	// and vouchers added to the account
-	balance := keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	balance := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
 	// Test to reject duplicate deposit
@@ -148,7 +150,7 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	_, err = h(ctx, &ethClaim)
 	// then
 	require.Error(t, err)
-	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
 	// Test to reject skipped nonce
@@ -166,7 +168,7 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	_, err = h(ctx, &ethClaim)
 	// then
 	require.Error(t, err)
-	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
 	// Test to finally accept consecutive nonce
@@ -184,7 +186,7 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	_, err = h(ctx, &ethClaim)
 	// then
 	require.NoError(t, err)
-	balance = keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 25)}, balance)
 }
 
@@ -202,9 +204,10 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 		tokenETHAddr         = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
 		myBlockTime          = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
 	)
-	k, ctx, keepers := keeper.CreateTestEnv(t)
-	k.StakingKeeper = keeper.NewStakingKeeperMock(valAddr1, valAddr2, valAddr3)
-	h := NewHandler(k)
+	input := keeper.CreateTestEnv(t)
+	ctx := input.Context
+	input.PeggyKeeper.StakingKeeper = keeper.NewStakingKeeperMock(valAddr1, valAddr2, valAddr3)
+	h := NewHandler(input.PeggyKeeper)
 
 	myErc20 := types.ERC20Token{
 		Amount:   sdk.NewInt(12),
@@ -241,13 +244,13 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 	_, err := h(ctx, &ethClaim1)
 	require.NoError(t, err)
 	// and claim persisted
-	claimFound1 := k.HasClaim(ctx, &ethClaim1)
+	claimFound1 := input.PeggyKeeper.HasClaim(ctx, &ethClaim1)
 	assert.True(t, claimFound1)
 	// and attestation persisted
-	a1 := k.GetAttestation(ctx, myNonce, &ethClaim1)
+	a1 := input.PeggyKeeper.GetAttestation(ctx, myNonce, &ethClaim1)
 	require.NotNil(t, a1)
 	// and vouchers not yet added to the account
-	balance1 := keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	balance1 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.NotEqual(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance1)
 
 	// when
@@ -256,13 +259,13 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	// and claim persisted
-	claimFound2 := k.HasClaim(ctx, &ethClaim2)
+	claimFound2 := input.PeggyKeeper.HasClaim(ctx, &ethClaim2)
 	assert.True(t, claimFound2)
 	// and attestation persisted
-	a2 := k.GetAttestation(ctx, myNonce, &ethClaim1)
+	a2 := input.PeggyKeeper.GetAttestation(ctx, myNonce, &ethClaim1)
 	require.NotNil(t, a2)
 	// and vouchers now added to the account
-	balance2 := keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	balance2 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance2)
 
 	// when
@@ -271,12 +274,12 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	// and claim persisted
-	claimFound3 := k.HasClaim(ctx, &ethClaim2)
+	claimFound3 := input.PeggyKeeper.HasClaim(ctx, &ethClaim2)
 	assert.True(t, claimFound3)
 	// and attestation persisted
-	a3 := k.GetAttestation(ctx, myNonce, &ethClaim1)
+	a3 := input.PeggyKeeper.GetAttestation(ctx, myNonce, &ethClaim1)
 	require.NotNil(t, a3)
 	// and no additional added to the account
-	balance3 := keepers.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
+	balance3 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance3)
 }

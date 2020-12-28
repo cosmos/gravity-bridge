@@ -55,7 +55,8 @@ func TestCurrentValsetNormalization(t *testing.T) {
 			expPowers: []uint64{4252442866, 42524428},
 		},
 	}
-	k, ctx, _ := CreateTestEnv(t)
+	input := CreateTestEnv(t)
+	ctx := input.Context
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			operators := make([]MockStakingValidatorData, len(spec.srcPowers))
@@ -66,8 +67,8 @@ func TestCurrentValsetNormalization(t *testing.T) {
 					Power:    int64(v),
 				}
 			}
-			k.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
-			r := k.GetCurrentValset(ctx)
+			input.PeggyKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
+			r := input.PeggyKeeper.GetCurrentValset(ctx)
 			assert.Equal(t, spec.expPowers, types.BridgeValidators(r.Members).GetPowers())
 		})
 	}

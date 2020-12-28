@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"testing"
 	"time"
 
@@ -46,6 +47,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -73,37 +75,49 @@ var (
 		vesting.AppModuleBasic{},
 	)
 
-	// TestingStakeParams is a set of staking params for testing
-	TestingStakeParams = stakingtypes.Params{
-		UnbondingTime:     100,
-		MaxValidators:     10,
-		MaxEntries:        10,
-		HistoricalEntries: 10,
-		BondDenom:         "stake",
-	}
-
 	// Ensure that StakingKeeperMock implements required interface
 	_ types.StakingKeeper = &StakingKeeperMock{}
 )
 
 var (
-	PubKeys = []ccrypto.PubKey{
-		ed25519.GenPrivKey().PubKey(),
-		ed25519.GenPrivKey().PubKey(),
-		ed25519.GenPrivKey().PubKey(),
-		ed25519.GenPrivKey().PubKey(),
-		ed25519.GenPrivKey().PubKey(),
+	// ConsPrivKeys generate ed25519 ConsPrivKeys to be used for validator operator keys
+	ConsPrivKeys = []ccrypto.PrivKey{
+		ed25519.GenPrivKey(),
+		ed25519.GenPrivKey(),
+		ed25519.GenPrivKey(),
+		ed25519.GenPrivKey(),
+		ed25519.GenPrivKey(),
 	}
 
+	// ConsPubKeys holds the consensus public keys to be used for validator operator keys
+	ConsPubKeys = []ccrypto.PubKey{
+		ConsPrivKeys[0].PubKey(),
+		ConsPrivKeys[1].PubKey(),
+		ConsPrivKeys[2].PubKey(),
+		ConsPrivKeys[3].PubKey(),
+		ConsPrivKeys[4].PubKey(),
+	}
+
+	// AccPrivKeys generate secp256k1 pubkeys to be used for account pub keys
+	AccPrivKeys = []ccrypto.PrivKey{
+		secp256k1.GenPrivKey(),
+		secp256k1.GenPrivKey(),
+		secp256k1.GenPrivKey(),
+		secp256k1.GenPrivKey(),
+		secp256k1.GenPrivKey(),
+	}
+
+	// AccPubKeys holds the pub keys for the account keys
 	AccPubKeys = []ccrypto.PubKey{
-		secp256k1.GenPrivKey().PubKey(),
-		secp256k1.GenPrivKey().PubKey(),
-		secp256k1.GenPrivKey().PubKey(),
-		secp256k1.GenPrivKey().PubKey(),
-		secp256k1.GenPrivKey().PubKey(),
+		AccPrivKeys[0].PubKey(),
+		AccPrivKeys[1].PubKey(),
+		AccPrivKeys[2].PubKey(),
+		AccPrivKeys[3].PubKey(),
+		AccPrivKeys[4].PubKey(),
 	}
 
-	Addrs = []sdk.AccAddress{
+	// AccAddrs holds the sdk.AccAddresses
+	AccAddrs = []sdk.AccAddress{
 		sdk.AccAddress(AccPubKeys[0].Address()),
 		sdk.AccAddress(AccPubKeys[1].Address()),
 		sdk.AccAddress(AccPubKeys[2].Address()),
@@ -111,6 +125,7 @@ var (
 		sdk.AccAddress(AccPubKeys[4].Address()),
 	}
 
+	// ValAddrs holds the sdk.ValAddresses
 	ValAddrs = []sdk.ValAddress{
 		sdk.ValAddress(AccPubKeys[0].Address()),
 		sdk.ValAddress(AccPubKeys[1].Address()),
@@ -119,23 +134,121 @@ var (
 		sdk.ValAddress(AccPubKeys[4].Address()),
 	}
 
-	InitTokens = sdk.TokensFromConsensusPower(200)
-	InitCoins  = sdk.NewCoins(sdk.NewCoin("stake", InitTokens))
+	// TODO: generate the eth priv keys here and
+	// derive the address from them.
+
+	// EthAddrs holds etheruem addresses
+	EthAddrs = []gethcommon.Address{
+		gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(1)}, 20)),
+		gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(2)}, 20)),
+		gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(3)}, 20)),
+		gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(4)}, 20)),
+		gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(5)}, 20)),
+	}
+
+	// TokenContractAddrs holds example token contract addresses
+	TokenContractAddrs = []string{
+		"0x6b175474e89094c44da98b954eedeac495271d0f", // DAI
+		"0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", // YFI
+		"0x1f9840a85d5af5bf1d1762f925bdaddc4201f984", // UNI
+		"0xc00e94cb662c3520282e6f5717214004a7f26888", // COMP
+		"0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f", // SNX
+	}
+
+	// InitTokens holds the number of tokens to initialize an account with
+	InitTokens = sdk.TokensFromConsensusPower(110)
+
+	// InitCoins holds the number of coins to initialize an account with
+	InitCoins = sdk.NewCoins(sdk.NewCoin(TestingStakeParams.BondDenom, InitTokens))
+
+	// StakingAmount holds the staking power to start a validator with
+	StakingAmount = sdk.TokensFromConsensusPower(10)
+
+	// StakingCoins holds the staking coins to start a validator with
+	StakingCoins = sdk.NewCoins(sdk.NewCoin(TestingStakeParams.BondDenom, StakingAmount))
+
+	// TestingStakeParams is a set of staking params for testing
+	TestingStakeParams = stakingtypes.Params{
+		UnbondingTime:     100,
+		MaxValidators:     10,
+		MaxEntries:        10,
+		HistoricalEntries: 10000,
+		BondDenom:         "stake",
+	}
+
+	// TestingPeggyParams is a set of peggy params for testing
+	TestingPeggyParams = types.Params{
+		SignedBlocksWindow:  10,
+		SlashFractionValset: sdk.NewDecWithPrec(1, 2),
+		PeggyId:             "testpeggyid",
+		ContractSourceHash:  "62328f7bc12efb28f86111d08c29b39285680a906ea0e524e0209d6f6657b713",
+		StartThreshold:      0,
+		EthereumAddress:     "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
+		BridgeChainId:       11,
+	}
 )
 
-// TestKeepers stores the various keepers required to test peggy
-type TestKeepers struct {
+// TestInput stores the various keepers required to test peggy
+type TestInput struct {
 	PeggyKeeper   Keeper
 	AccountKeeper authkeeper.AccountKeeper
 	StakingKeeper stakingkeeper.Keeper
 	DistKeeper    distrkeeper.Keeper
-	BankKeeper    bankkeeper.Keeper
+	BankKeeper    bankkeeper.BaseKeeper
 	GovKeeper     govkeeper.Keeper
+	Context       sdk.Context
+	Marshaler     codec.Marshaler
+	LegacyAmino   *codec.LegacyAmino
+}
+
+// SetupFiveValChain does all the initialization for a 5 Validator chain using the keys here
+func SetupFiveValChain(t *testing.T) TestInput {
+	t.Helper()
+	input := CreateTestEnv(t)
+
+	// Set the params for our modules
+	input.PeggyKeeper.SetParams(input.Context, &TestingPeggyParams)
+	input.StakingKeeper.SetParams(input.Context, TestingStakeParams)
+
+	// Initialize each of the validators
+	sh := staking.NewHandler(input.StakingKeeper)
+	for i := range []int{0, 1, 2, 3, 4} {
+
+		// Initialize the account for the key
+		acc := input.AccountKeeper.NewAccount(
+			input.Context,
+			authtypes.NewBaseAccount(AccAddrs[i], AccPubKeys[i], uint64(i), 0),
+		)
+
+		// Set the balance for the account
+		input.BankKeeper.SetBalances(input.Context, acc.GetAddress(), InitCoins)
+
+		// Set the account in state
+		input.AccountKeeper.SetAccount(input.Context, acc)
+
+		// Create a validator for that account using some of the tokens in the account
+		// and the staking handler
+		_, err := sh(
+			input.Context,
+			NewTestMsgCreateValidator(ValAddrs[i], ConsPubKeys[i], StakingAmount),
+		)
+
+		// Return error if one exists
+		require.NoError(t, err)
+	}
+
+	// Run the staking endblocker to ensure valset is correct in state
+	staking.EndBlocker(input.Context, input.StakingKeeper)
+
+	// Return the test input
+	return input
 }
 
 // CreateTestEnv creates the keeper testing environment for peggy
-func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
+func CreateTestEnv(t *testing.T) TestInput {
 	t.Helper()
+
+	// Initialize store keys
 	peggyKey := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
@@ -145,6 +258,7 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 	tkeyParams := sdk.NewTransientStoreKey(paramstypes.TStoreKey)
 	keyGov := sdk.NewKVStoreKey(govtypes.StoreKey)
 
+	// Initialize memory database and mount stores on it
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(peggyKey, sdk.StoreTypeIAVL, db)
@@ -158,11 +272,11 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
 
-	const isCheckTx = false
+	// Create sdk.Context
 	ctx := sdk.NewContext(ms, tmproto.Header{
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
-	}, isCheckTx, log.TestingLogger())
+	}, false, log.TestingLogger())
 
 	cdc := MakeTestCodec()
 	marshaler := MakeTestMarshaler()
@@ -199,11 +313,7 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 		blockedAddr,
 	)
 	bankKeeper.SetParams(ctx, banktypes.Params{DefaultSendEnabled: true})
-	// TODO: figure out which denom we need here
-	// bankKeeper.GetParams(ctx).SetDefaultSendEnabledParam(true)
-	// bankKeeper.GetParams(ctx).
 
-	// bankKeeper := bank.NewKeeper(cdc, keyBank, accountKeeper, bankKeeper, maccPerms)
 	stakingKeeper := stakingkeeper.NewKeeper(marshaler, keyStaking, accountKeeper, bankKeeper, paramsKeeper.Subspace(stakingtypes.ModuleName))
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
 
@@ -264,15 +374,17 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 		EthereumAddress:    "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
 		BridgeChainId:      11,
 	})
-	keepers := TestKeepers{
+	return TestInput{
 		PeggyKeeper:   k,
 		AccountKeeper: accountKeeper,
 		BankKeeper:    bankKeeper,
 		StakingKeeper: stakingKeeper,
 		DistKeeper:    distKeeper,
 		GovKeeper:     govKeeper,
+		Context:       ctx,
+		Marshaler:     marshaler,
+		LegacyAmino:   cdc,
 	}
-	return k, ctx, keepers
 }
 
 // MakeTestCodec creates a legacy amino codec for testing
@@ -282,7 +394,6 @@ func MakeTestCodec() *codec.LegacyAmino {
 	bank.AppModuleBasic{}.RegisterLegacyAminoCodec(cdc)
 	staking.AppModuleBasic{}.RegisterLegacyAminoCodec(cdc)
 	distribution.AppModuleBasic{}.RegisterLegacyAminoCodec(cdc)
-	// gov.RegisterLegacyAminoCodec(cdc)
 	sdk.RegisterLegacyAminoCodec(cdc)
 	ccodec.RegisterCrypto(cdc)
 	params.AppModuleBasic{}.RegisterLegacyAminoCodec(cdc)
@@ -291,7 +402,7 @@ func MakeTestCodec() *codec.LegacyAmino {
 }
 
 // MakeTestMarshaler creates a proto codec for use in testing
-func MakeTestMarshaler() codec.BinaryMarshaler {
+func MakeTestMarshaler() codec.Marshaler {
 	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	std.RegisterInterfaces(interfaceRegistry)
 	ModuleBasics.RegisterInterfaces(interfaceRegistry)
