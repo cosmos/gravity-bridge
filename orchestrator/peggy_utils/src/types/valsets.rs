@@ -325,7 +325,7 @@ impl From<&peggy_proto::peggy::Valset> for Valset {
 }
 
 /// a list of validators, powers, and eth addresses at a given block height
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ValsetMember {
     // ord sorts on the first member first, so this produces the correct sorting
     pub power: u64,
