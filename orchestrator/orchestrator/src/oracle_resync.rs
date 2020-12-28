@@ -49,7 +49,7 @@ pub async fn get_last_checked_block(
             )
             .await
             .unwrap();
-        let all_valset_events = web3
+        let all_send_to_cosmos_events = web3
             .check_for_events(
                 end_search.clone(),
                 Some(current_block.clone()),
@@ -62,7 +62,7 @@ pub async fn get_last_checked_block(
         trace!(
             "Found events {:?} {:?}",
             all_batch_events,
-            all_valset_events
+            all_send_to_cosmos_events
         );
         for event in all_batch_events {
             match TransactionBatchExecutedEvent::from_log(&event) {
@@ -74,7 +74,7 @@ pub async fn get_last_checked_block(
                 Err(e) => error!("Got batch event that we can't parse {}", e),
             }
         }
-        for event in all_valset_events {
+        for event in all_send_to_cosmos_events {
             match SendToCosmosEvent::from_log(&event) {
                 Ok(send) => {
                     if send.event_nonce == last_event_nonce && event.block_number.is_some() {

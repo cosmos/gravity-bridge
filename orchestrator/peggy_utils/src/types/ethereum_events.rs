@@ -9,7 +9,7 @@ use web30::types::Log;
 /// when the validator set is updated.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ValsetUpdatedEvent {
-    pub nonce: Uint256,
+    pub nonce: u64,
     pub members: Vec<ValsetMember>,
 }
 
@@ -31,6 +31,7 @@ impl ValsetUpdatedEvent {
                 "Nonce overflow, probably incorrect parsing".to_string(),
             ));
         }
+        let nonce: u64 = nonce.to_string().parse().unwrap();
         // first two indexes contain event info we don't care about, third index is
         // the length of the eth addresses array
         let index_start = 2 * 32;

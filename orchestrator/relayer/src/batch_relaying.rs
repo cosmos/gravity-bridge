@@ -1,14 +1,13 @@
 //! This module contains code for the batch update lifecycle. Functioning as a way for this validator to observe
 //! the state of both chains and perform the required operations.
 
+use crate::find_latest_valset::find_latest_valset;
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use cosmos_peggy::query::get_latest_transaction_batches;
 use cosmos_peggy::query::get_transaction_batch_signatures;
-use cosmos_peggy::query::get_valset;
 use ethereum_peggy::submit_batch::send_eth_transaction_batch;
 use ethereum_peggy::utils::get_tx_batch_nonce;
-use ethereum_peggy::utils::get_valset_nonce;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::types::{BatchConfirmResponse, TransactionBatch};
 use std::time::Duration;
@@ -20,7 +19,7 @@ use web30::client::Web3;
 pub async fn relay_batches(
     ethereum_key: EthPrivateKey,
     web3: &Web3,
-    grpc_client: &mut PeggyQueryClient<Channel>,
+    mut grpc_client: &mut PeggyQueryClient<Channel>,
     peggy_contract_address: EthAddress,
     timeout: Duration,
 ) {
@@ -65,20 +64,20 @@ pub async fn relay_batches(
     )
     .await
     .expect("Failed to get batch nonce from Ethereum");
-    let latest_ethereum_valset =
-        get_valset_nonce(peggy_contract_address, our_ethereum_address, web3)
-            .await
-            .expect("Failed to get Ethereum valset");
     let latest_cosmos_batch_nonce = oldest_signed_batch.clone().nonce;
     if latest_cosmos_batch_nonce > latest_ethereum_batch {
         info!(
             "We have detected latest batch {} but latest on Ethereum is {} sending an update!",
             latest_cosmos_batch_nonce, latest_ethereum_batch
         );
-
-        // get the current valset from the Cosmos chain
-        let current_valset = get_valset(grpc_client, latest_ethereum_valset).await;
-        if let Ok(Some(current_valset)) = current_valset {
+        let current_valset = find_latest_valset(
+            &mut grpc_client,
+            our_ethereum_address,
+            peggy_contract_address,
+            web3,
+        )
+        .await;
+        if let Ok(current_valset) = current_valset {
             let _res = send_eth_transaction_batch(
                 current_valset,
                 oldest_signed_batch,
@@ -90,7 +89,7 @@ pub async fn relay_batches(
             )
             .await;
         } else {
-            error!("Failed to get latest validator set!");
+            error!("Failed to find latest valset with {:?}", current_valset);
         }
     }
 }

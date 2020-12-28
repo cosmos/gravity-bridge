@@ -53,7 +53,7 @@ impl BatchConfirmResponse {
 }
 
 /// a list of validators, powers, and eth addresses at a given block height
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq, Eq)]
 pub struct Valset {
     pub nonce: u64,
     pub members: Vec<ValsetMember>,
