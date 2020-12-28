@@ -1,6 +1,8 @@
 package peggy
 
 import (
+	"fmt"
+
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,9 +24,9 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 				k.SetValsetRequest(ctx)
 			}
 
-		// #1 condition
-		// We look through the full bonded validator set (not just the active set, include unbonding validators)
-		// and we slash users who haven't signed a valset that is currentHeight - signedBlocksWindow old
+			// #1 condition
+			// We look through the full bonded validator set (not just the active set, include unbonding validators)
+			// and we slash users who haven't signed a valset that is currentHeight - signedBlocksWindow old
 		case uint64(ctx.BlockHeight())-params.SignedBlocksWindow > vs.Nonce:
 			// first we need to see which validators in the active set
 			// haven't signed the valdiator set and slash them,
@@ -37,6 +39,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 						break
 					}
 				}
+				fmt.Println(found)
 				if !found {
 					toSlash = append(toSlash, val)
 				}
@@ -45,6 +48,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			for _, val := range toSlash {
 				cons, _ := val.GetConsAddr()
 				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionValset)
+				k.StakingKeeper.Jail(ctx, cons)
 			}
 
 			// then we prune the valset from state

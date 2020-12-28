@@ -59,7 +59,7 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 // i.e. {"nonce": 1, "memebers": [{"eth_addr": "foo", "power": 11223}]}
 func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	valset := k.GetCurrentValset(ctx)
-	k.storeValset(ctx, valset)
+	k.StoreValset(ctx, valset)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -75,7 +75,8 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	return valset
 }
 
-func (k Keeper) storeValset(ctx sdk.Context, valset *types.Valset) {
+// StoreValset is for storing a valiator set at a given height
+func (k Keeper) StoreValset(ctx sdk.Context, valset *types.Valset) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
 }
@@ -315,15 +316,14 @@ func (k Keeper) FindValidatorKey(ctx sdk.Context, orchAddr sdk.AccAddress) sdk.V
 /////////////////////////////
 
 // GetParams returns the parameters from the store
-func (k Keeper) GetParams(ctx sdk.Context) *types.Params {
-	var p *types.Params
-	k.paramSpace.GetParamSet(ctx, p)
-	return p
+func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+	k.paramSpace.GetParamSet(ctx, &params)
+	return
 }
 
 // SetParams sets the parameters in the store
-func (k Keeper) SetParams(ctx sdk.Context, ps *types.Params) {
-	k.paramSpace.SetParamSet(ctx, ps)
+func (k Keeper) SetParams(ctx sdk.Context, ps types.Params) {
+	k.paramSpace.SetParamSet(ctx, &ps)
 }
 
 // GetBridgeContractAddress returns the bridge contract address on ETH

@@ -208,7 +208,7 @@ func (v Valsets) Len() int {
 }
 
 func (v Valsets) Less(i, j int) bool {
-	return v[i].Nonce < v[j].Nonce
+	return v[i].Nonce > v[j].Nonce
 }
 
 func (v Valsets) Swap(i, j int) {

@@ -178,13 +178,13 @@ var (
 
 	// TestingPeggyParams is a set of peggy params for testing
 	TestingPeggyParams = types.Params{
-		SignedBlocksWindow:  10,
-		SlashFractionValset: sdk.NewDecWithPrec(1, 2),
 		PeggyId:             "testpeggyid",
 		ContractSourceHash:  "62328f7bc12efb28f86111d08c29b39285680a906ea0e524e0209d6f6657b713",
 		StartThreshold:      0,
 		EthereumAddress:     "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
 		BridgeChainId:       11,
+		SignedBlocksWindow:  10,
+		SlashFractionValset: sdk.NewDecWithPrec(1, 2),
 	}
 )
 
@@ -202,12 +202,11 @@ type TestInput struct {
 }
 
 // SetupFiveValChain does all the initialization for a 5 Validator chain using the keys here
-func SetupFiveValChain(t *testing.T) TestInput {
+func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 	t.Helper()
 	input := CreateTestEnv(t)
 
 	// Set the params for our modules
-	input.PeggyKeeper.SetParams(input.Context, &TestingPeggyParams)
 	input.StakingKeeper.SetParams(input.Context, TestingStakeParams)
 
 	// Initialize each of the validators
@@ -240,8 +239,13 @@ func SetupFiveValChain(t *testing.T) TestInput {
 	// Run the staking endblocker to ensure valset is correct in state
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 
+	// Register eth addresses for each validator
+	for i, addr := range AccAddrs {
+		input.PeggyKeeper.SetEthAddress(input.Context, addr, EthAddrs[i].String())
+	}
+
 	// Return the test input
-	return input
+	return input, input.Context
 }
 
 // CreateTestEnv creates the keeper testing environment for peggy
@@ -282,6 +286,12 @@ func CreateTestEnv(t *testing.T) TestInput {
 	marshaler := MakeTestMarshaler()
 
 	paramsKeeper := paramskeeper.NewKeeper(marshaler, cdc, keyParams, tkeyParams)
+	paramsKeeper.Subspace(authtypes.ModuleName)
+	paramsKeeper.Subspace(banktypes.ModuleName)
+	paramsKeeper.Subspace(stakingtypes.ModuleName)
+	paramsKeeper.Subspace(distrtypes.ModuleName)
+	paramsKeeper.Subspace(govtypes.ModuleName)
+	paramsKeeper.Subspace(types.DefaultParamspace)
 
 	// this is also used to initialize module accounts for all the map keys
 	maccPerms := map[string][]string{
@@ -296,7 +306,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 	accountKeeper := authkeeper.NewAccountKeeper(
 		marshaler,
 		keyAcc, // target store
-		paramsKeeper.Subspace(authtypes.ModuleName),
+		getSubspace(paramsKeeper, authtypes.ModuleName),
 		authtypes.ProtoBaseAccount, // prototype
 		maccPerms,
 	)
@@ -309,15 +319,15 @@ func CreateTestEnv(t *testing.T) TestInput {
 		marshaler,
 		keyBank,
 		accountKeeper,
-		paramsKeeper.Subspace(banktypes.ModuleName),
+		getSubspace(paramsKeeper, banktypes.ModuleName),
 		blockedAddr,
 	)
 	bankKeeper.SetParams(ctx, banktypes.Params{DefaultSendEnabled: true})
 
-	stakingKeeper := stakingkeeper.NewKeeper(marshaler, keyStaking, accountKeeper, bankKeeper, paramsKeeper.Subspace(stakingtypes.ModuleName))
+	stakingKeeper := stakingkeeper.NewKeeper(marshaler, keyStaking, accountKeeper, bankKeeper, getSubspace(paramsKeeper, stakingtypes.ModuleName))
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
 
-	distKeeper := distrkeeper.NewKeeper(marshaler, keyDistro, paramsKeeper.Subspace(distrtypes.ModuleName), accountKeeper, bankKeeper, stakingKeeper, authtypes.FeeCollectorName, nil)
+	distKeeper := distrkeeper.NewKeeper(marshaler, keyDistro, getSubspace(paramsKeeper, distrtypes.ModuleName), accountKeeper, bankKeeper, stakingKeeper, authtypes.FeeCollectorName, nil)
 	distKeeper.SetParams(ctx, distrtypes.DefaultParams())
 	stakingKeeper.SetHooks(distKeeper.Hooks())
 
@@ -358,7 +368,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler)
 
 	govKeeper := govkeeper.NewKeeper(
-		marshaler, keyGov, paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable()), accountKeeper, bankKeeper, stakingKeeper, govRouter,
+		marshaler, keyGov, getSubspace(paramsKeeper, govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable()), accountKeeper, bankKeeper, stakingKeeper, govRouter,
 	)
 
 	govKeeper.SetProposalID(ctx, govtypes.DefaultStartingProposalID)
@@ -366,14 +376,10 @@ func CreateTestEnv(t *testing.T) TestInput {
 	govKeeper.SetVotingParams(ctx, govtypes.DefaultVotingParams())
 	govKeeper.SetTallyParams(ctx, govtypes.DefaultTallyParams())
 
-	k := NewKeeper(marshaler, peggyKey, paramsKeeper.Subspace(types.DefaultParamspace), stakingKeeper, bankKeeper)
-	k.SetParams(ctx, &types.Params{
-		PeggyId:            "lkasjdfklajsldkfjd",
-		ContractSourceHash: "lkasjdfklajsldkfjd",
-		StartThreshold:     0,
-		EthereumAddress:    "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
-		BridgeChainId:      11,
-	})
+	k := NewKeeper(marshaler, peggyKey, getSubspace(paramsKeeper, types.DefaultParamspace), stakingKeeper, bankKeeper)
+
+	k.SetParams(ctx, TestingPeggyParams)
+
 	return TestInput{
 		PeggyKeeper:   k,
 		AccountKeeper: accountKeeper,
@@ -385,6 +391,12 @@ func CreateTestEnv(t *testing.T) TestInput {
 		Marshaler:     marshaler,
 		LegacyAmino:   cdc,
 	}
+}
+
+// getSubspace returns a param subspace for a given module name.
+func getSubspace(k paramskeeper.Keeper, moduleName string) paramstypes.Subspace {
+	subspace, _ := k.GetSubspace(moduleName)
+	return subspace
 }
 
 // MakeTestCodec creates a legacy amino codec for testing
