@@ -88,7 +88,7 @@ impl ValsetUpdatedEvent {
         check.reverse();
         // if the validator set is not sorted we're in a bad spot
         if validators != check {
-            error!(
+            trace!(
                 "Someone submitted an unsorted validator set, this means all updates will fail until someone feeds in this unsorted value by hand {:?} instead of {:?}",
                 validators, check
             );

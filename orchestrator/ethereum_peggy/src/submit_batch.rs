@@ -27,7 +27,7 @@ pub async fn send_eth_transaction_batch(
         "Ordering signatures and submitting TransacqtionBatch {}:{} to Ethereum",
         batch.token_contract, new_batch_nonce
     );
-    info!("Batch {:?}", batch);
+    trace!("Batch {:?}", batch);
 
     let sig_data = current_valset.order_batch_sigs(confirms)?;
     let sig_arrays = to_arrays(sig_data);

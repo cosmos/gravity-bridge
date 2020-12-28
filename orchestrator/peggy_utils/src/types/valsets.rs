@@ -132,7 +132,7 @@ impl Valset {
             } else {
                 // someone who is not a valset member submitted
                 // a signature, this is fine to ignore
-                info!(
+                trace!(
                     "No Match for sig probably non-validator submitting a signature! {} and {}",
                     sig.eth_address,
                     ValsetMember::display_vec(&self.members)
@@ -198,7 +198,7 @@ impl Valset {
             } else {
                 // someone who is not a valset member submitted
                 // a signature, this is fine to ignore
-                info!(
+                trace!(
                     "No Match for sig probably non-validator submitting a signature! {} and {}",
                     sig.ethereum_signer,
                     ValsetMember::display_vec(&self.members)
@@ -231,7 +231,7 @@ impl Valset {
             if let Some(address) = item.eth_address {
                 res.insert(address, item.power);
             } else {
-                panic!("Validator in active set without Eth Address! This must be corrected immediately!")
+                error!("Validator in active set without Eth Address! This must be corrected immediately!")
             }
         }
         res
@@ -244,7 +244,7 @@ impl Valset {
             if let Some(address) = item.eth_address {
                 res.insert(address);
             } else {
-                panic!("Validator in active set without Eth Address! This must be corrected immediately!")
+                error!("Validator in active set without Eth Address! This must be corrected immediately!")
             }
         }
         res
