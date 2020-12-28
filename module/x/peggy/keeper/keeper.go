@@ -321,8 +321,8 @@ func (k Keeper) GetParams(ctx sdk.Context) *types.Params {
 	return p
 }
 
-// setParams sets the parameters in the store
-func (k Keeper) setParams(ctx sdk.Context, ps *types.Params) {
+// SetParams sets the parameters in the store
+func (k Keeper) SetParams(ctx sdk.Context, ps *types.Params) {
 	k.paramSpace.SetParamSet(ctx, ps)
 }
 

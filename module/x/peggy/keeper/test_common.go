@@ -9,6 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	ccodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	ccrypto "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -83,8 +86,46 @@ var (
 	_ types.StakingKeeper = &StakingKeeperMock{}
 )
 
+var (
+	PubKeys = []ccrypto.PubKey{
+		ed25519.GenPrivKey().PubKey(),
+		ed25519.GenPrivKey().PubKey(),
+		ed25519.GenPrivKey().PubKey(),
+		ed25519.GenPrivKey().PubKey(),
+		ed25519.GenPrivKey().PubKey(),
+	}
+
+	AccPubKeys = []ccrypto.PubKey{
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+		secp256k1.GenPrivKey().PubKey(),
+	}
+
+	Addrs = []sdk.AccAddress{
+		sdk.AccAddress(AccPubKeys[0].Address()),
+		sdk.AccAddress(AccPubKeys[1].Address()),
+		sdk.AccAddress(AccPubKeys[2].Address()),
+		sdk.AccAddress(AccPubKeys[3].Address()),
+		sdk.AccAddress(AccPubKeys[4].Address()),
+	}
+
+	ValAddrs = []sdk.ValAddress{
+		sdk.ValAddress(AccPubKeys[0].Address()),
+		sdk.ValAddress(AccPubKeys[1].Address()),
+		sdk.ValAddress(AccPubKeys[2].Address()),
+		sdk.ValAddress(AccPubKeys[3].Address()),
+		sdk.ValAddress(AccPubKeys[4].Address()),
+	}
+
+	InitTokens = sdk.TokensFromConsensusPower(200)
+	InitCoins  = sdk.NewCoins(sdk.NewCoin("stake", InitTokens))
+)
+
 // TestKeepers stores the various keepers required to test peggy
 type TestKeepers struct {
+	PeggyKeeper   Keeper
 	AccountKeeper authkeeper.AccountKeeper
 	StakingKeeper stakingkeeper.Keeper
 	DistKeeper    distrkeeper.Keeper
@@ -215,22 +256,22 @@ func CreateTestEnv(t *testing.T) (Keeper, sdk.Context, TestKeepers) {
 	govKeeper.SetVotingParams(ctx, govtypes.DefaultVotingParams())
 	govKeeper.SetTallyParams(ctx, govtypes.DefaultTallyParams())
 
-	keepers := TestKeepers{
-		AccountKeeper: accountKeeper,
-		BankKeeper:    bankKeeper,
-		StakingKeeper: stakingKeeper,
-		DistKeeper:    distKeeper,
-		GovKeeper:     govKeeper,
-	}
-
 	k := NewKeeper(marshaler, peggyKey, paramsKeeper.Subspace(types.DefaultParamspace), stakingKeeper, bankKeeper)
-	k.setParams(ctx, &types.Params{
+	k.SetParams(ctx, &types.Params{
 		PeggyId:            "lkasjdfklajsldkfjd",
 		ContractSourceHash: "lkasjdfklajsldkfjd",
 		StartThreshold:     0,
 		EthereumAddress:    "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
 		BridgeChainId:      11,
 	})
+	keepers := TestKeepers{
+		PeggyKeeper:   k,
+		AccountKeeper: accountKeeper,
+		BankKeeper:    bankKeeper,
+		StakingKeeper: stakingKeeper,
+		DistKeeper:    distKeeper,
+		GovKeeper:     govKeeper,
+	}
 	return k, ctx, keepers
 }
 
@@ -448,4 +489,16 @@ func (s AlwaysPanicStakingMock) Slash(sdk.Context, sdk.ConsAddress, int64, int64
 // Jail staisfies the interface
 func (s AlwaysPanicStakingMock) Jail(sdk.Context, sdk.ConsAddress) {
 	panic("unexpected call")
+}
+
+func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey ccrypto.PubKey, amt sdk.Int) *stakingtypes.MsgCreateValidator {
+	commission := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
+	out, err := stakingtypes.NewMsgCreateValidator(
+		address, pubKey, sdk.NewCoin("stake", amt),
+		stakingtypes.Description{}, commission, sdk.OneInt(),
+	)
+	if err != nil {
+		panic(err)
+	}
+	return out
 }

@@ -6,7 +6,7 @@ import (
 )
 
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
-	keeper.setParams(ctx, data.Params)
+	keeper.SetParams(ctx, data.Params)
 }
 
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
