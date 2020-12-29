@@ -33,7 +33,7 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, ma
 		// Valset:        k.GetCurrentValset(ctx),
 		TokenContract: contractAddress,
 	}
-	k.storeBatch(ctx, batch)
+	k.StoreBatch(ctx, batch)
 
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatch,
@@ -71,11 +71,12 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, n
 	})
 
 	// Delete batch since it is finished
-	k.deleteBatch(ctx, *b)
+	k.DeleteBatch(ctx, *b)
 	return nil
 }
 
-func (k Keeper) storeBatch(ctx sdk.Context, batch *types.OutgoingTxBatch) {
+// StoreBatch stores a transaction batch
+func (k Keeper) StoreBatch(ctx sdk.Context, batch *types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
 	// set the current block height when storing the batch
 	batch.Block = uint64(ctx.BlockHeight())
@@ -83,7 +84,15 @@ func (k Keeper) storeBatch(ctx sdk.Context, batch *types.OutgoingTxBatch) {
 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
 }
 
-func (k Keeper) deleteBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
+// StoreBatchUnsafe stores a transaction batch w/o setting the height
+func (k Keeper) StoreBatchUnsafe(ctx sdk.Context, batch *types.OutgoingTxBatch) {
+	store := ctx.KVStore(k.storeKey)
+	key := types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce)
+	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
+}
+
+// DeleteBatch deletes an outgoing transaction batch
+func (k Keeper) DeleteBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce))
 }
@@ -137,7 +146,7 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract string, non
 	}
 
 	// Delete batch since it is finished
-	k.deleteBatch(ctx, *batch)
+	k.DeleteBatch(ctx, *batch)
 
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatchCanceled,

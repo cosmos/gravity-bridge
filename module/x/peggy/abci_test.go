@@ -43,6 +43,44 @@ func TestValsetSlashing(t *testing.T) {
 	// TODO: test balance of slashed tokens
 }
 
+func TestBatchSlashing(t *testing.T) {
+	input, ctx := keeper.SetupFiveValChain(t)
+	pk := input.PeggyKeeper
+	params := pk.GetParams(ctx)
+
+	// First store a batch
+	batch := &types.OutgoingTxBatch{
+		BatchNonce:    1,
+		Transactions:  []*types.OutgoingTransferTx{},
+		TokenContract: keeper.TokenContractAddrs[0],
+		Block:         uint64(ctx.BlockHeight() - int64(params.SignedBlocksWindow+1)),
+	}
+	pk.StoreBatchUnsafe(ctx, batch)
+
+	for i, val := range keeper.AccAddrs {
+		if i == 0 {
+			// don't sign with first validator
+			continue
+		}
+		pk.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
+			Nonce:         batch.BatchNonce,
+			TokenContract: keeper.TokenContractAddrs[0],
+			EthSigner:     keeper.EthAddrs[i].String(),
+			Validator:     val.String(),
+		})
+	}
+
+	EndBlocker(ctx, pk)
+
+	// ensure that the  validator is jailed and slashed
+	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+	require.True(t, val.IsJailed())
+
+	// Ensure that the valset gets pruned properly
+	batch = input.PeggyKeeper.GetOutgoingTXBatch(ctx, batch.TokenContract, batch.BatchNonce)
+	require.Nil(t, batch)
+}
+
 func TestValsetEmission(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.PeggyKeeper

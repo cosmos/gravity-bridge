@@ -29,9 +29,10 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			// first we need to see which validators in the active set
 			// haven't signed the valdiator set and slash them,
 			var toSlash []stakingtypes.Validator
+			confirms := k.GetValsetConfirms(ctx, vs.Nonce)
 			for _, val := range currentBondedSet {
 				found := false
-				for _, conf := range k.GetValsetConfirms(ctx, vs.Nonce) {
+				for _, conf := range confirms {
 					if conf.EthAddress == k.GetEthAddress(ctx, sdk.AccAddress(val.GetOperator())) {
 						found = true
 						break
@@ -56,12 +57,14 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// #2 condition
 	// We look through the full bonded set (not just the active set, include unbonding validators)
 	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
-	for _, batch := range k.GetOutgoingTxBatches(ctx) {
+	batches := k.GetOutgoingTxBatches(ctx)
+	for _, batch := range batches {
 		if uint64(ctx.BlockHeight())-params.SignedBlocksWindow > batch.Block {
 			var toSlash []stakingtypes.Validator
+			confirms := k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)
 			for _, val := range currentBondedSet {
 				found := false
-				for _, conf := range k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract) {
+				for _, conf := range confirms {
 					// TODO: may need to look up actual validator address
 					confVal, _ := sdk.AccAddressFromBech32(conf.Validator)
 					if confVal.Equals(val.GetOperator()) {
@@ -76,7 +79,11 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 				cons, _ := val.GetConsAddr()
 				// TODO: make this a different slash fraction in the params
 				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionValset)
+				k.StakingKeeper.Jail(ctx, cons)
 			}
+
+			// clean up batches here
+			k.DeleteBatch(ctx, *batch)
 		}
 	}
 
@@ -89,10 +96,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// 1. submit a message signed by the priv key to the chain and it slashes the validator who delegated to that key
 	// return
 
-	// stretch goal
-	// Trigger valset creation
-
-	// TODO: prune valsets older than one month
 	// TODO: prune outgoing tx batches while looping over them above, older than 15h and confirmed
 	// TODO: prune claims, attestations
 }
