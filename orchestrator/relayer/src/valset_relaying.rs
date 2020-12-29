@@ -5,13 +5,15 @@ use std::time::Duration;
 
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
+use cosmos_peggy::query::get_all_valset_confirms;
 use cosmos_peggy::query::get_latest_valsets;
-use cosmos_peggy::query::{get_all_valset_confirms, get_valset};
 use ethereum_peggy::utils::get_valset_nonce;
 use ethereum_peggy::valset_update::send_eth_valset_update;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use tonic::transport::Channel;
 use web30::client::Web3;
+
+use crate::find_latest_valset::find_latest_valset;
 
 /// Check the last validator set on Ethereum, if it's lower than our latest validator
 /// set then we should package and submit the update as an Ethereum transaction
@@ -19,7 +21,7 @@ pub async fn relay_valsets(
     ethereum_key: EthPrivateKey,
     web3: &Web3,
     grpc_client: &mut PeggyQueryClient<Channel>,
-    contract_address: EthAddress,
+    peggy_contract_address: EthAddress,
     timeout: Duration,
 ) {
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
@@ -52,52 +54,49 @@ pub async fn relay_valsets(
     let latest_cosmos_confirmed = latest_confirmed.unwrap();
     let latest_cosmos_valset = latest_valset.unwrap();
 
-    let latest_ethereum_valset = get_valset_nonce(contract_address, our_ethereum_address, web3)
-        .await
-        .expect("Failed to get Ethereum valset");
+    let current_ethereum_valset =
+        get_valset_nonce(peggy_contract_address, our_ethereum_address, web3)
+            .await
+            .expect("Failed to get Ethereum valset");
     let latest_cosmos_valset_nonce = latest_cosmos_valset.nonce;
-    if latest_cosmos_valset_nonce > latest_ethereum_valset {
-        let old_valset = if latest_ethereum_valset == 0 {
-            info!("This is the first validator set update! Using the current set");
-            // we need to have a special case for validator set zero, that valset was never stored on chain
-            // right now we just use the current valset
-            let mut latest_valset = latest_cosmos_valset.clone();
-            latest_valset.nonce = 0;
-            latest_valset
-        } else {
-            // get the old valset from the Cosmos chain
-            if let Ok(Some(valset)) = get_valset(grpc_client, latest_ethereum_valset).await {
-                valset
-            } else {
-                error!("Failed to get latest valset!");
-                return;
-            }
-        };
+    if latest_cosmos_valset_nonce > current_ethereum_valset {
         info!(
             "We have detected latest valset {} but latest on Ethereum is {} sending an update!",
-            latest_cosmos_valset.nonce, latest_ethereum_valset
+            latest_cosmos_valset.nonce, current_ethereum_valset
         );
+        let current_valset = find_latest_valset(
+            grpc_client,
+            our_ethereum_address,
+            peggy_contract_address,
+            web3,
+        )
+        .await;
+        if current_valset.is_err() {
+            error!("Could not get current valset!");
+            return;
+        }
+        let current_valset = current_valset.unwrap();
 
         // If the ENV var NO_GAS_OPT is not set at compile time then the resulting binary will not
         // have gas optimizations. In this case if we exit early if gas optimizations are enabled
         // (the default value)
         if option_env!("NO_GAS_OPT").is_none() {
-            let diff = old_valset.power_diff(&latest_cosmos_valset);
+            let diff = current_valset.power_diff(&latest_cosmos_valset);
             // if the power difference is less than one percent, skip updating
             // the validator set
             if diff < 0.01 {
-                info!("Difference in power between valset {} and {} is less than 1% skipping update to save gas", old_valset.nonce, latest_cosmos_valset.nonce);
+                info!("Difference in power between valset {} and {} is less than 1% skipping update to save gas", current_valset.nonce, latest_cosmos_valset.nonce);
                 return;
             }
         }
 
         let _res = send_eth_valset_update(
             latest_cosmos_valset,
-            old_valset,
+            current_valset,
             &latest_cosmos_confirmed,
             web3,
             timeout,
-            contract_address,
+            peggy_contract_address,
             ethereum_key,
         )
         .await;

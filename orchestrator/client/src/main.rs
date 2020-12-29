@@ -16,7 +16,7 @@ use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::Uint256;
 use contact::client::Contact;
-use cosmos_peggy::send::{send_batch_confirm, send_valset_request};
+use cosmos_peggy::send::send_valset_request;
 use cosmos_peggy::send::{send_request_batch, send_to_eth};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};

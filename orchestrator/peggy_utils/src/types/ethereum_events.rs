@@ -1,37 +1,103 @@
+use super::ValsetMember;
+use crate::error::PeggyError;
 use clarity::Address as EthAddress;
 use deep_space::address::Address as CosmosAddress;
 use num256::Uint256;
 use web30::types::Log;
 
-use crate::error::PeggyError;
-
 /// A parsed struct representing the Ethereum event fired by the Peggy contract
 /// when the validator set is updated.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ValsetUpdatedEvent {
-    pub nonce: Uint256,
-    // we currently don't parse members, but the data is there
-    //members: Vec<ValsetMember>,
+    pub nonce: u64,
+    pub members: Vec<ValsetMember>,
 }
 
 impl ValsetUpdatedEvent {
+    /// This function is not an abi compatible bytes parser, but it's actually
+    /// not hard at all to extract data like this by hand.
     pub fn from_log(input: &Log) -> Result<ValsetUpdatedEvent, PeggyError> {
         // we have one indexed event so we should fine two indexes, one the event itself
         // and one the indexed nonce
-        if let Some(nonce_data) = input.topics.get(1) {
-            let nonce = Uint256::from_bytes_be(nonce_data);
-            if nonce > u64::MAX.into() {
-                Err(PeggyError::InvalidEventLogError(
-                    "Nonce overflow, probably incorrect parsing".to_string(),
-                ))
-            } else {
-                Ok(ValsetUpdatedEvent { nonce })
-            }
-        } else {
-            Err(PeggyError::InvalidEventLogError(
+        if input.topics.get(1).is_none() {
+            return Err(PeggyError::InvalidEventLogError(
                 "Too few topics".to_string(),
-            ))
+            ));
         }
+        let nonce_data = &input.topics[1];
+        let nonce = Uint256::from_bytes_be(nonce_data);
+        if nonce > u64::MAX.into() {
+            return Err(PeggyError::InvalidEventLogError(
+                "Nonce overflow, probably incorrect parsing".to_string(),
+            ));
+        }
+        let nonce: u64 = nonce.to_string().parse().unwrap();
+        // first two indexes contain event info we don't care about, third index is
+        // the length of the eth addresses array
+        let index_start = 2 * 32;
+        let index_end = index_start + 32;
+        let eth_addresses_offset = index_start + 32;
+        let len_eth_addresses = Uint256::from_bytes_be(&input.data[index_start..index_end]);
+        if len_eth_addresses > usize::MAX.into() {
+            return Err(PeggyError::InvalidEventLogError(
+                "Ethereum array len overflow, probably incorrect parsing".to_string(),
+            ));
+        }
+        let len_eth_addresses: usize = len_eth_addresses.to_string().parse().unwrap();
+        let index_start = (3 + len_eth_addresses) * 32;
+        let index_end = index_start + 32;
+        let powers_offset = index_start + 32;
+        let len_powers = Uint256::from_bytes_be(&input.data[index_start..index_end]);
+        if len_powers > usize::MAX.into() {
+            return Err(PeggyError::InvalidEventLogError(
+                "Powers array len overflow, probably incorrect parsing".to_string(),
+            ));
+        }
+        let len_powers: usize = len_eth_addresses.to_string().parse().unwrap();
+        if len_powers != len_eth_addresses {
+            return Err(PeggyError::InvalidEventLogError(
+                "Array len mismatch, probably incorrect parsing".to_string(),
+            ));
+        }
+
+        let mut validators = Vec::new();
+        for i in 0..len_eth_addresses {
+            let power_start = (i * 32) + powers_offset;
+            let power_end = power_start + 32;
+            let address_start = (i * 32) + eth_addresses_offset;
+            let address_end = address_start + 32;
+            let power = Uint256::from_bytes_be(&input.data[power_start..power_end]);
+            // an eth address at 20 bytes is 12 bytes shorter than the Uint256 it's stored in.
+            let eth_address = EthAddress::from_slice(&input.data[address_start + 12..address_end]);
+            if eth_address.is_err() {
+                return Err(PeggyError::InvalidEventLogError(
+                    "Ethereum Address parsing error, probably incorrect parsing".to_string(),
+                ));
+            }
+            let eth_address = Some(eth_address.unwrap());
+            if power > u64::MAX.into() {
+                return Err(PeggyError::InvalidEventLogError(
+                    "Power greater than u64::MAX, probably incorrect parsing".to_string(),
+                ));
+            }
+            let power: u64 = power.to_string().parse().unwrap();
+            validators.push(ValsetMember { power, eth_address })
+        }
+        let mut check = validators.clone();
+        check.sort();
+        check.reverse();
+        // if the validator set is not sorted we're in a bad spot
+        if validators != check {
+            trace!(
+                "Someone submitted an unsorted validator set, this means all updates will fail until someone feeds in this unsorted value by hand {:?} instead of {:?}",
+                validators, check
+            );
+        }
+
+        Ok(ValsetUpdatedEvent {
+            nonce,
+            members: validators,
+        })
     }
     pub fn from_logs(input: &[Log]) -> Result<Vec<ValsetUpdatedEvent>, PeggyError> {
         let mut res = Vec::new();

@@ -2,7 +2,7 @@ use super::*;
 use crate::error::PeggyError;
 use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
-use contact::{jsonrpc::error::JsonRpcError, types::parse_val};
+use contact::jsonrpc::error::JsonRpcError;
 use deep_space::address::Address as CosmosAddress;
 use std::{
     cmp::Ordering,
@@ -53,7 +53,7 @@ impl BatchConfirmResponse {
 }
 
 /// a list of validators, powers, and eth addresses at a given block height
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq, Eq)]
 pub struct Valset {
     pub nonce: u64,
     pub members: Vec<ValsetMember>,
@@ -132,7 +132,7 @@ impl Valset {
             } else {
                 // someone who is not a valset member submitted
                 // a signature, this is fine to ignore
-                info!(
+                trace!(
                     "No Match for sig probably non-validator submitting a signature! {} and {}",
                     sig.eth_address,
                     ValsetMember::display_vec(&self.members)
@@ -198,7 +198,7 @@ impl Valset {
             } else {
                 // someone who is not a valset member submitted
                 // a signature, this is fine to ignore
-                info!(
+                trace!(
                     "No Match for sig probably non-validator submitting a signature! {} and {}",
                     sig.ethereum_signer,
                     ValsetMember::display_vec(&self.members)
@@ -231,7 +231,7 @@ impl Valset {
             if let Some(address) = item.eth_address {
                 res.insert(address, item.power);
             } else {
-                panic!("Validator in active set without Eth Address! This must be corrected immediately!")
+                error!("Validator in active set without Eth Address! This must be corrected immediately!")
             }
         }
         res
@@ -244,7 +244,7 @@ impl Valset {
             if let Some(address) = item.eth_address {
                 res.insert(address);
             } else {
-                panic!("Validator in active set without Eth Address! This must be corrected immediately!")
+                error!("Validator in active set without Eth Address! This must be corrected immediately!")
             }
         }
         res
@@ -325,7 +325,7 @@ impl From<&peggy_proto::peggy::Valset> for Valset {
 }
 
 /// a list of validators, powers, and eth addresses at a given block height
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ValsetMember {
     // ord sorts on the first member first, so this produces the correct sorting
     pub power: u64,
@@ -399,61 +399,4 @@ impl From<&peggy_proto::peggy::BridgeValidator> for ValsetMember {
             eth_address,
         }
     }
-}
-
-/// a list of validators, powers, and eth addresses at a given block height
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct ValsetMemberUnparsed {
-    ethereum_address: String,
-    #[serde(deserialize_with = "parse_val")]
-    power: u64,
-}
-
-/// a list of validators, powers, and eth addresses at a given block height
-/// this version is used by the endpoint to get the data and is then processed
-/// by "convert" into ValsetResponse. Making this struct purely internal
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct ValsetUnparsed {
-    #[serde(deserialize_with = "parse_val")]
-    nonce: u64,
-    members: Vec<ValsetMemberUnparsed>,
-}
-
-impl ValsetUnparsed {
-    pub fn convert(self) -> Valset {
-        let mut out = Vec::new();
-        for member in self.members {
-            if member.ethereum_address.is_empty() {
-                out.push(ValsetMember {
-                    power: member.power,
-                    eth_address: None,
-                });
-            } else {
-                match member.ethereum_address.parse() {
-                    Ok(val) => out.push(ValsetMember {
-                        power: member.power,
-                        eth_address: Some(val),
-                    }),
-                    Err(_e) => out.push(ValsetMember {
-                        power: member.power,
-                        eth_address: None,
-                    }),
-                }
-            }
-        }
-        Valset {
-            nonce: self.nonce,
-            members: out,
-        }
-    }
-}
-
-/// the query struct required to get the valset request sent by a specific
-/// validator. This is required because the url encoded get methods don't
-/// parse addresses well. So there's no way to get an individual validators
-/// address without sending over a json body
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct QueryValsetConfirm {
-    pub nonce: String,
-    pub address: String,
 }
