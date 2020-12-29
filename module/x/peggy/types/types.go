@@ -86,7 +86,8 @@ func (b BridgeValidators) PowerDiff(c BridgeValidators) float64 {
 
 	var delta int64
 	for _, v := range powers {
-		delta += v
+		// NOTE: we care about the absolute value of the changes
+		delta += int64(math.Abs(float64(v)))
 	}
 
 	return math.Abs(float64(delta) / float64(totalB))
