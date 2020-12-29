@@ -22,9 +22,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgValsetConfirm:
 			res, err := msgServer.ValsetConfirm(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgValsetRequest:
-			res, err := msgServer.ValsetRequest(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgSendToEth:
 			res, err := msgServer.SendToEth(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)

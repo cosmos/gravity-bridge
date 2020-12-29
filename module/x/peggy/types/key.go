@@ -78,12 +78,22 @@ var (
 
 	// KeyLastOutgoingBatchID indexes the lastBatchID
 	KeyLastOutgoingBatchID = append(SequenceKeyPrefix, []byte("lastBatchId")...)
+
+	// KeyOrchestratorAddress indexes the validator keys for an orchestrator
+	KeyOrchestratorAddress = []byte{0xe8}
 )
+
+// GetOrchestratorAddressKey returns the following key format
+// prefix
+// [0xe8][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
+func GetOrchestratorAddressKey(orc sdk.AccAddress) []byte {
+	return append(KeyOrchestratorAddress, orc.Bytes()...)
+}
 
 // GetEthAddressKey returns the following key format
 // prefix              cosmos-validator
-// [0x0][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
-func GetEthAddressKey(validator sdk.AccAddress) []byte {
+// [0x0][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
+func GetEthAddressKey(validator sdk.ValAddress) []byte {
 	return append(EthAddressKey, validator.Bytes()...)
 }
 

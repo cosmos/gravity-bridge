@@ -12,12 +12,51 @@ import (
 
 var (
 	_ sdk.Msg = &MsgValsetConfirm{}
-	_ sdk.Msg = &MsgValsetRequest{}
 	_ sdk.Msg = &MsgSetEthAddress{}
 	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
+	_ sdk.Msg = &MsgSetOperatorAddress{}
 )
+
+// NewMsgSetOperatorAddress returns a new msgSetOperatorAddress
+func NewMsgSetOperatorAddress(val sdk.ValAddress, oper sdk.AccAddress) *MsgSetOperatorAddress {
+	return &MsgSetOperatorAddress{
+		Validator: val.String(),
+		Operator:  oper.String(),
+	}
+}
+
+// Route should return the name of the module
+func (msg *MsgSetOperatorAddress) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg *MsgSetOperatorAddress) Type() string { return "set_operator_address" }
+
+// ValidateBasic performs stateless checks
+func (msg *MsgSetOperatorAddress) ValidateBasic() (err error) {
+	if _, err = sdk.ValAddressFromBech32(msg.Validator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
+	}
+	if _, err = sdk.AccAddressFromBech32(msg.Operator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Operator)
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg *MsgSetOperatorAddress) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg *MsgSetOperatorAddress) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.ValAddressFromBech32(msg.Validator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{sdk.AccAddress(acc)}
+}
 
 // NewMsgValsetConfirm returns a new msgValsetConfirm
 func NewMsgValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddress, signature string) *MsgValsetConfirm {
@@ -55,41 +94,6 @@ func (msg *MsgValsetConfirm) GetSignBytes() []byte {
 func (msg *MsgValsetConfirm) GetSigners() []sdk.AccAddress {
 	// TODO: figure out how to convert between AccAddress and ValAddress properly
 	acc, err := sdk.AccAddressFromBech32(msg.Validator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{acc}
-}
-
-// NewMsgValsetRequest returns a new msgValsetRequest
-func NewMsgValsetRequest(requester sdk.AccAddress) *MsgValsetRequest {
-	return &MsgValsetRequest{
-		Requester: requester.String(),
-	}
-}
-
-// Route should return the name of the module
-func (msg MsgValsetRequest) Route() string { return RouterKey }
-
-// Type should return the action
-func (msg MsgValsetRequest) Type() string { return "valset_request" }
-
-// ValidateBasic performs stateless checks
-func (msg MsgValsetRequest) ValidateBasic() (err error) {
-	if _, err = sdk.AccAddressFromBech32(msg.Requester); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Requester)
-	}
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgValsetRequest) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgValsetRequest) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Requester)
 	if err != nil {
 		panic(err)
 	}
@@ -228,9 +232,9 @@ func (msg MsgRequestBatch) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Requester); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Requester)
 	}
-	// TODO ensure that Demon matches hardcoded allowed value
-	// TODO later make sure that Demon matches a list of tokens already
-	// in the bridge to send
+	if _, err := ERC20FromPeggyCoin(sdk.NewInt64Coin(msg.Denom, 0)); err != nil {
+		return sdkerrors.Wrapf(ErrInvalid, "invalid denom: %s", err)
+	}
 	return nil
 }
 

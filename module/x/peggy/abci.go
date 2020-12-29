@@ -33,7 +33,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			for _, val := range currentBondedSet {
 				found := false
 				for _, conf := range confirms {
-					if conf.EthAddress == k.GetEthAddress(ctx, sdk.AccAddress(val.GetOperator())) {
+					if conf.EthAddress == k.GetEthAddress(ctx, val.GetOperator()) {
 						found = true
 						break
 					}
@@ -89,6 +89,14 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 	// #3 condition
 	// Oracle events MsgDepositClaim, MsgWithdrawClaim
+	// for _, val := range currentBondedSet {
+	// 	for _, claim := range k.GetClaimsByValidatorAndType(ctx, types.CLAIM_TYPE_DEPOSIT, val.GetOperator()) {
+	// 		claim.
+	// 	}
+	// 	for _, claim := range k.GetClaimsByValidatorAndType(ctx, types.CLAIM_TYPE_WITHDRAW, val.GetOperator()) {
+
+	// 	}
+	// }
 	// Blocked on storing of the claim
 
 	// #4 condition (stretch goal)

@@ -22,4 +22,5 @@ const (
 	AttributeKeyValsetNonce      = "valset_nonce"
 	AttributeKeyBatchNonce       = "batch_nonce"
 	AttributeKeyBridgeChainID    = "bridge_chain_id"
+	AttributeKeySetOperatorAddr  = "set_operator_address"
 )

@@ -73,32 +73,6 @@ func updateEthAddressHandler(cliCtx client.Context) http.HandlerFunc {
 	}
 }
 
-type createValsetReq struct {
-	BaseReq rest.BaseReq `json:"base_req"`
-}
-
-func createValsetRequestHandler(cliCtx client.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req createValsetReq
-
-		if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
-			return
-		}
-
-		baseReq := req.BaseReq.Sanitize()
-		if !baseReq.ValidateBasic(w) {
-			return
-		}
-		// this can be the sender, since we don't really care who's name is on this
-		cosmosAddr := cliCtx.GetFromAddress()
-		// Make the message
-		msg := types.NewMsgValsetRequest(cosmosAddr)
-
-		tx.WriteGeneratedTxResponse(cliCtx, w, baseReq, msg)
-	}
-}
-
 type valsetConfirmReq struct {
 	BaseReq    rest.BaseReq `json:"base_req"`
 	EthAddress string       `json:"eth_address"`

@@ -39,7 +39,7 @@ func (k Keeper) storeClaim(ctx sdk.Context, details types.EthereumClaim) error {
 	if details.GetEventNonce() != lastEventNonce+1 {
 		return types.ErrNonContiguousEventNonce
 	}
-	valAddr := k.FindValidatorKey(ctx, details.GetClaimer())
+	valAddr := k.GetOrchestratorValidator(ctx, details.GetClaimer())
 	if valAddr == nil {
 		panic("Could not find ValAddr for delegate key, should be checked by now")
 	}
@@ -69,7 +69,7 @@ func (k Keeper) voteForAttestation(
 		}
 	}
 
-	valAddr := k.FindValidatorKey(ctx, details.GetClaimer())
+	valAddr := k.GetOrchestratorValidator(ctx, details.GetClaimer())
 	if valAddr == nil {
 		panic("Could not find ValAddr for delegate key, should be checked by now")
 	}
@@ -238,5 +238,13 @@ func (k Keeper) IterateClaimsByValidatorAndType(ctx sdk.Context, claimType types
 			break
 		}
 	}
+}
 
+// GetClaimsByValidatorAndType returns the list of claims a validator has signed for
+func (k Keeper) GetClaimsByValidatorAndType(ctx sdk.Context, claimType types.ClaimType, val sdk.ValAddress) (out []types.EthereumClaim) {
+	k.IterateClaimsByValidatorAndType(ctx, claimType, val, func(_ []byte, claim types.EthereumClaim) bool {
+		out = append(out, claim)
+		return false
+	})
+	return
 }

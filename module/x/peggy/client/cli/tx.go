@@ -30,7 +30,6 @@ func GetTxCmd(storeKey string) *cobra.Command {
 		CmdWithdrawToETH(),
 		CmdRequestBatch(),
 		CmdUpdateEthAddress(),
-		CmdValsetRequest(),
 		GetUnsafeTestingCmd(),
 	}...)
 
@@ -94,26 +93,6 @@ func CmdUpdateEthAddress() *cobra.Command {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
-		},
-	}
-}
-
-func CmdValsetRequest() *cobra.Command {
-	return &cobra.Command{
-		Use:   "valset-request",
-		Short: "Trigger a new `multisig set` update request on the cosmos side",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.ReadTxCommandFlags(client.GetClientContextFromCmd(cmd), cmd.Flags())
-			if err != nil {
-				return err
-			}
-			cosmosAddr := cliCtx.GetFromAddress()
-
-			// Make the message
-			msg := types.NewMsgValsetRequest(cosmosAddr)
-
-			// Send it
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
 		},
 	}

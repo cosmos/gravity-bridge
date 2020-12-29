@@ -240,7 +240,7 @@ func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 
 	// Register eth addresses for each validator
-	for i, addr := range AccAddrs {
+	for i, addr := range ValAddrs {
 		input.PeggyKeeper.SetEthAddress(input.Context, addr, EthAddrs[i].String())
 	}
 

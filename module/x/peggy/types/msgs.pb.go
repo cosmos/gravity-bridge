@@ -31,6 +31,104 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgSetOperatorAddress
+// this message allows validators to delegate their voting responsibilities
+// to a given key. This key is then used as an optional authentication method
+// for sigining oracle claims
+// VALIDATOR
+// The validator field is a cosmosvaloper1... string (i.e. sdk.ValAddress)
+// that references a validator in the active set
+// OPERATOR
+// The operator field is a cosmos1... string  (i.e. sdk.AccAddress) that
+// references the key that is being delegated to
+type MsgSetOperatorAddress struct {
+	Validator string `protobuf:"bytes,1,opt,name=validator,proto3" json:"validator,omitempty"`
+	Operator  string `protobuf:"bytes,2,opt,name=operator,proto3" json:"operator,omitempty"`
+}
+
+func (m *MsgSetOperatorAddress) Reset()         { *m = MsgSetOperatorAddress{} }
+func (m *MsgSetOperatorAddress) String() string { return proto.CompactTextString(m) }
+func (*MsgSetOperatorAddress) ProtoMessage()    {}
+func (*MsgSetOperatorAddress) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b6627b296db358, []int{0}
+}
+func (m *MsgSetOperatorAddress) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgSetOperatorAddress) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSetOperatorAddress.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSetOperatorAddress) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSetOperatorAddress.Merge(m, src)
+}
+func (m *MsgSetOperatorAddress) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSetOperatorAddress) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSetOperatorAddress.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSetOperatorAddress proto.InternalMessageInfo
+
+func (m *MsgSetOperatorAddress) GetValidator() string {
+	if m != nil {
+		return m.Validator
+	}
+	return ""
+}
+
+func (m *MsgSetOperatorAddress) GetOperator() string {
+	if m != nil {
+		return m.Operator
+	}
+	return ""
+}
+
+type MsgSetOperatorAddressResponse struct {
+}
+
+func (m *MsgSetOperatorAddressResponse) Reset()         { *m = MsgSetOperatorAddressResponse{} }
+func (m *MsgSetOperatorAddressResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgSetOperatorAddressResponse) ProtoMessage()    {}
+func (*MsgSetOperatorAddressResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_75b6627b296db358, []int{1}
+}
+func (m *MsgSetOperatorAddressResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgSetOperatorAddressResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSetOperatorAddressResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSetOperatorAddressResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSetOperatorAddressResponse.Merge(m, src)
+}
+func (m *MsgSetOperatorAddressResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSetOperatorAddressResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSetOperatorAddressResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSetOperatorAddressResponse proto.InternalMessageInfo
+
 // MsgValsetConfirm
 // this is the message sent by the validators when they wish to submit their
 // signatures over the validator set at a given block height. A validator must
@@ -57,7 +155,7 @@ func (m *MsgValsetConfirm) Reset()         { *m = MsgValsetConfirm{} }
 func (m *MsgValsetConfirm) String() string { return proto.CompactTextString(m) }
 func (*MsgValsetConfirm) ProtoMessage()    {}
 func (*MsgValsetConfirm) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b6627b296db358, []int{0}
+	return fileDescriptor_75b6627b296db358, []int{2}
 }
 func (m *MsgValsetConfirm) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -121,7 +219,7 @@ func (m *MsgValsetConfirmResponse) Reset()         { *m = MsgValsetConfirmRespon
 func (m *MsgValsetConfirmResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgValsetConfirmResponse) ProtoMessage()    {}
 func (*MsgValsetConfirmResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b6627b296db358, []int{1}
+	return fileDescriptor_75b6627b296db358, []int{3}
 }
 func (m *MsgValsetConfirmResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -149,96 +247,6 @@ func (m *MsgValsetConfirmResponse) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_MsgValsetConfirmResponse proto.InternalMessageInfo
-
-// ValsetRequest
-// This message starts off the validator set update process by coordinating a
-// block height around which signatures over the validators, powers, and
-// ethereum addresses will be made and submitted using a ValsetConfirm. Anyone
-// can send this message as it is not authenticated except as a valid tx. In
-// theory people could spam it and the validators will have to determine which
-// block to actually coordinate around by looking over the valset requests and
-// seeing which one some other validator has already submitted a ValsetResponse
-// for.
-// -------------
-type MsgValsetRequest struct {
-	Requester string `protobuf:"bytes,1,opt,name=requester,proto3" json:"requester,omitempty"`
-}
-
-func (m *MsgValsetRequest) Reset()         { *m = MsgValsetRequest{} }
-func (m *MsgValsetRequest) String() string { return proto.CompactTextString(m) }
-func (*MsgValsetRequest) ProtoMessage()    {}
-func (*MsgValsetRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b6627b296db358, []int{2}
-}
-func (m *MsgValsetRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgValsetRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgValsetRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgValsetRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgValsetRequest.Merge(m, src)
-}
-func (m *MsgValsetRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgValsetRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgValsetRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgValsetRequest proto.InternalMessageInfo
-
-func (m *MsgValsetRequest) GetRequester() string {
-	if m != nil {
-		return m.Requester
-	}
-	return ""
-}
-
-type MsgValsetRequestResponse struct {
-}
-
-func (m *MsgValsetRequestResponse) Reset()         { *m = MsgValsetRequestResponse{} }
-func (m *MsgValsetRequestResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgValsetRequestResponse) ProtoMessage()    {}
-func (*MsgValsetRequestResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_75b6627b296db358, []int{3}
-}
-func (m *MsgValsetRequestResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgValsetRequestResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgValsetRequestResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgValsetRequestResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgValsetRequestResponse.Merge(m, src)
-}
-func (m *MsgValsetRequestResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgValsetRequestResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgValsetRequestResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgValsetRequestResponse proto.InternalMessageInfo
 
 // SetEthAddress
 // This is used by the validators to set the Ethereum address that represents
@@ -901,10 +909,10 @@ func (m *MsgDepositClaimResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgDepositClaimResponse proto.InternalMessageInfo
 
 func init() {
+	proto.RegisterType((*MsgSetOperatorAddress)(nil), "peggy.v1.MsgSetOperatorAddress")
+	proto.RegisterType((*MsgSetOperatorAddressResponse)(nil), "peggy.v1.MsgSetOperatorAddressResponse")
 	proto.RegisterType((*MsgValsetConfirm)(nil), "peggy.v1.MsgValsetConfirm")
 	proto.RegisterType((*MsgValsetConfirmResponse)(nil), "peggy.v1.MsgValsetConfirmResponse")
-	proto.RegisterType((*MsgValsetRequest)(nil), "peggy.v1.MsgValsetRequest")
-	proto.RegisterType((*MsgValsetRequestResponse)(nil), "peggy.v1.MsgValsetRequestResponse")
 	proto.RegisterType((*MsgSetEthAddress)(nil), "peggy.v1.MsgSetEthAddress")
 	proto.RegisterType((*MsgSetEthAddressResponse)(nil), "peggy.v1.MsgSetEthAddressResponse")
 	proto.RegisterType((*MsgSendToEth)(nil), "peggy.v1.MsgSendToEth")
@@ -922,65 +930,67 @@ func init() {
 func init() { proto.RegisterFile("peggy/v1/msgs.proto", fileDescriptor_75b6627b296db358) }
 
 var fileDescriptor_75b6627b296db358 = []byte{
-	// 922 bytes of a gzipped FileDescriptorProto
+	// 953 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x56, 0x4f, 0x6f, 0xdc, 0x44,
-	0x14, 0x8f, 0x93, 0x6d, 0xd2, 0x9d, 0x64, 0x13, 0x64, 0x42, 0xb3, 0x6b, 0x5a, 0x6f, 0x6a, 0x09,
-	0xda, 0x4b, 0xed, 0x6e, 0x39, 0x70, 0x43, 0x62, 0xb7, 0xa9, 0x04, 0x52, 0x38, 0x6c, 0x10, 0x48,
-	0x5c, 0xac, 0x59, 0xfb, 0xd5, 0xb6, 0xba, 0x9e, 0xd9, 0xcc, 0xcc, 0x6e, 0xe9, 0x15, 0xc4, 0x1d,
-	0x89, 0x03, 0x47, 0xce, 0x7c, 0x05, 0x3e, 0x41, 0x8f, 0x95, 0xb8, 0x20, 0x0e, 0x15, 0x4a, 0xf8,
-	0x20, 0xc8, 0x33, 0x63, 0xaf, 0xc7, 0xf2, 0x96, 0xf6, 0x14, 0xcf, 0xef, 0xbd, 0x79, 0xbf, 0xf7,
-	0xe7, 0x37, 0x6f, 0x83, 0xde, 0x5f, 0x40, 0x92, 0xbc, 0x08, 0x56, 0xa3, 0x20, 0xe7, 0x09, 0xf7,
-	0x17, 0x8c, 0x0a, 0x6a, 0xdf, 0x94, 0xa0, 0xbf, 0x1a, 0x39, 0x6e, 0x44, 0x79, 0x4e, 0x79, 0x30,
-	0xc3, 0x1c, 0x82, 0xd5, 0x68, 0x06, 0x02, 0x8f, 0x82, 0x88, 0x66, 0x44, 0x79, 0x3a, 0xc7, 0x09,
-	0x4d, 0xa8, 0xfc, 0x0c, 0x8a, 0x2f, 0x8d, 0xde, 0x4e, 0x28, 0x4d, 0xe6, 0x10, 0xe0, 0x45, 0x16,
-	0x60, 0x42, 0xa8, 0xc0, 0x22, 0xa3, 0x44, 0x47, 0xf7, 0x7e, 0xb2, 0xd0, 0x7b, 0xe7, 0x3c, 0xf9,
-	0x06, 0xcf, 0x39, 0x88, 0x09, 0x25, 0x4f, 0x33, 0x96, 0xdb, 0xc7, 0xe8, 0x06, 0xa1, 0x24, 0x82,
-	0xbe, 0x75, 0x6a, 0xdd, 0xef, 0x4c, 0xd5, 0xc1, 0xbe, 0x8d, 0xba, 0x2b, 0x3c, 0xcf, 0x62, 0x2c,
-	0x28, 0xeb, 0x6f, 0x9f, 0x5a, 0xf7, 0xbb, 0xd3, 0x35, 0x60, 0x0f, 0xd1, 0x3e, 0x88, 0x34, 0xc4,
-	0x71, 0xcc, 0x80, 0xf3, 0xfe, 0x8e, 0xb4, 0x23, 0x10, 0xe9, 0xe7, 0x0a, 0x29, 0xae, 0xf3, 0x2c,
-	0x21, 0x58, 0x2c, 0x19, 0xf4, 0x3b, 0xea, 0x7a, 0x05, 0x78, 0x0e, 0xea, 0x37, 0xd3, 0x98, 0x02,
-	0x5f, 0x50, 0xc2, 0xc1, 0x7b, 0x58, 0x4b, 0x71, 0x0a, 0x97, 0x4b, 0xe0, 0xa2, 0x88, 0xc6, 0xd4,
-	0x27, 0x30, 0x99, 0x66, 0x77, 0xba, 0x06, 0x8c, 0x68, 0xfa, 0x46, 0x15, 0x2d, 0x95, 0xd1, 0x2e,
-	0x40, 0x9c, 0xad, 0x73, 0xeb, 0xa3, 0xbd, 0x32, 0x71, 0x15, 0xab, 0x3c, 0xfe, 0x4f, 0xd1, 0x46,
-	0x4d, 0x3b, 0xed, 0x35, 0x19, 0x4c, 0x55, 0x16, 0x7f, 0x58, 0xe8, 0x40, 0x1a, 0x49, 0xfc, 0x35,
-	0x3d, 0x13, 0xa9, 0x7d, 0x0b, 0xed, 0x72, 0x20, 0x71, 0x55, 0x8d, 0x3e, 0xd9, 0x03, 0x74, 0xb3,
-	0xe8, 0x6b, 0x0c, 0x5c, 0x68, 0xfe, 0x3d, 0x10, 0xe9, 0xe3, 0xa2, 0x07, 0x9f, 0xa2, 0x5d, 0x9c,
-	0xd3, 0x25, 0x11, 0x92, 0x7a, 0xff, 0xd1, 0xc0, 0x57, 0x02, 0xf1, 0x0b, 0x81, 0xf8, 0x5a, 0x20,
-	0xfe, 0x84, 0x66, 0x64, 0xdc, 0x79, 0xf9, 0x7a, 0xb8, 0x35, 0xd5, 0xee, 0xf6, 0x67, 0x08, 0xcd,
-	0x58, 0x16, 0x27, 0x10, 0x3e, 0x05, 0x35, 0x8b, 0xb7, 0xb8, 0xdc, 0x55, 0x57, 0x9e, 0x00, 0x78,
-	0xb7, 0xd0, 0x71, 0x3d, 0xf7, 0xaa, 0xa8, 0x33, 0x74, 0x74, 0xce, 0x13, 0xdd, 0xf0, 0x31, 0x16,
-	0x51, 0xfa, 0xe6, 0x39, 0x15, 0x42, 0x8b, 0x81, 0xd0, 0x5c, 0x57, 0xa6, 0x0e, 0xde, 0x00, 0x9d,
-	0x34, 0xc2, 0x54, 0x0c, 0xbf, 0x5b, 0x92, 0x42, 0x2b, 0x44, 0x51, 0xb4, 0xab, 0xf5, 0x23, 0x74,
-	0x28, 0xe8, 0x33, 0x20, 0x61, 0x44, 0x89, 0x60, 0x38, 0x2a, 0xbb, 0xd7, 0x93, 0xe8, 0x44, 0x83,
-	0xf6, 0x1d, 0x54, 0x68, 0x34, 0x2c, 0x86, 0x06, 0xac, 0x1c, 0x21, 0x88, 0xf4, 0x42, 0x02, 0xe6,
-	0xf8, 0x3b, 0x6f, 0x1c, 0xff, 0x8d, 0xe6, 0xf8, 0x55, 0x19, 0xf5, 0x54, 0xab, 0x32, 0x7e, 0xdd,
-	0x96, 0x65, 0x3c, 0x86, 0x05, 0xe5, 0x99, 0x98, 0xcc, 0x71, 0x96, 0xcb, 0x07, 0xb4, 0x02, 0x22,
-	0xc2, 0x7a, 0x31, 0x48, 0x42, 0x5f, 0xbd, 0x4b, 0x45, 0x4f, 0x0c, 0x55, 0x74, 0xc7, 0x7e, 0x31,
-	0xbd, 0xbf, 0x5f, 0x0f, 0x3f, 0x4e, 0x32, 0x91, 0x2e, 0x67, 0x7e, 0x44, 0xf3, 0x40, 0x2f, 0x12,
-	0xf5, 0xe7, 0x01, 0x8f, 0x9f, 0x05, 0xe2, 0xc5, 0x02, 0xb8, 0xff, 0x05, 0x11, 0x95, 0x48, 0xee,
-	0xa1, 0x23, 0x10, 0x29, 0x30, 0x58, 0xe6, 0xa1, 0x56, 0xa6, 0x6a, 0xc0, 0x61, 0x09, 0x5f, 0x28,
-	0x85, 0xde, 0x43, 0x47, 0x2a, 0x50, 0xc8, 0x20, 0x82, 0x6c, 0x05, 0x4c, 0xf7, 0xe2, 0x50, 0xc1,
-	0x53, 0x8d, 0xda, 0x1e, 0x3a, 0xa0, 0x2c, 0x4a, 0x81, 0x0b, 0x26, 0xfb, 0xb9, 0x2b, 0xbd, 0x0c,
-	0xcc, 0xfb, 0x4d, 0xed, 0xa3, 0x6f, 0x33, 0x91, 0xc6, 0x0c, 0x3f, 0x7f, 0xcb, 0xd6, 0x0c, 0xd1,
-	0xfe, 0xac, 0x68, 0xb0, 0x76, 0xd8, 0x56, 0x0e, 0x12, 0xda, 0xd4, 0xbb, 0x9d, 0xb6, 0xde, 0x35,
-	0x33, 0xec, 0xb4, 0x64, 0xa8, 0x5e, 0xb5, 0x91, 0x60, 0x35, 0x57, 0x35, 0xf2, 0xfa, 0x58, 0x4b,
-	0xd3, 0xa3, 0x1f, 0xf7, 0xd0, 0xce, 0x39, 0x4f, 0xec, 0x4b, 0xd4, 0x33, 0x97, 0xad, 0xe3, 0x97,
-	0x0b, 0xde, 0x6f, 0x6e, 0x40, 0xc7, 0xdb, 0x6c, 0xab, 0x38, 0x4f, 0x7f, 0xf8, 0xf3, 0xdf, 0x5f,
-	0xb6, 0x1d, 0xaf, 0x1f, 0x54, 0xbf, 0x1e, 0x2b, 0xe9, 0x58, 0xd4, 0x2a, 0x19, 0x2a, 0xca, 0x72,
-	0x79, 0xb6, 0x51, 0x6a, 0x5b, 0x2b, 0x65, 0x73, 0x85, 0x6e, 0xa6, 0xd4, 0x4f, 0xdb, 0x66, 0xa8,
-	0x67, 0x6e, 0x58, 0x93, 0xd2, 0xb0, 0x35, 0x28, 0xdb, 0xf7, 0xe5, 0x5d, 0x49, 0xf9, 0xa1, 0x37,
-	0x58, 0x53, 0x16, 0x7c, 0xb5, 0x9f, 0x1c, 0x7b, 0x86, 0xba, 0xb5, 0x75, 0xda, 0x88, 0xa9, 0x71,
-	0xc7, 0x6d, 0xc7, 0x2b, 0x9e, 0x3b, 0x92, 0xe7, 0xc4, 0xfb, 0xa0, 0xce, 0x43, 0xe2, 0x50, 0xd0,
-	0x82, 0xcb, 0xce, 0xd1, 0x81, 0xb1, 0xde, 0x06, 0x46, 0xb8, 0xba, 0xc9, 0xb9, 0xbb, 0xd1, 0x54,
-	0x91, 0x0d, 0x25, 0xd9, 0xc0, 0x3b, 0x59, 0x93, 0xe9, 0x06, 0x86, 0x52, 0xbb, 0x05, 0x9d, 0xb1,
-	0xea, 0x4c, 0xba, 0xba, 0xa9, 0x41, 0xd7, 0xba, 0x75, 0x5a, 0xe8, 0xb4, 0x44, 0xd6, 0x74, 0xc6,
-	0x4a, 0x32, 0xe9, 0xea, 0xa6, 0x06, 0x5d, 0x9b, 0xe2, 0xdb, 0xe8, 0x62, 0xe5, 0x17, 0x46, 0x32,
-	0xfc, 0x25, 0xea, 0x99, 0xef, 0xdc, 0x14, 0x89, 0x61, 0x6b, 0x88, 0xa4, 0xfd, 0xf9, 0xb5, 0xe8,
-	0xf2, 0xb9, 0x76, 0x54, 0x94, 0xe3, 0x2f, 0x5f, 0x5e, 0xb9, 0xd6, 0xab, 0x2b, 0xd7, 0xfa, 0xe7,
-	0xca, 0xb5, 0x7e, 0xbe, 0x76, 0xb7, 0x5e, 0x5d, 0xbb, 0x5b, 0x7f, 0x5d, 0xbb, 0x5b, 0xdf, 0x3d,
-	0xac, 0xad, 0x47, 0x3c, 0x17, 0x29, 0xe0, 0x07, 0x04, 0x84, 0x0e, 0x94, 0xd3, 0x78, 0x39, 0x87,
-	0xe0, 0x7b, 0x7d, 0x94, 0xcb, 0x72, 0xb6, 0x2b, 0xff, 0x83, 0xfa, 0xe4, 0xbf, 0x00, 0x00, 0x00,
-	0xff, 0xff, 0x4d, 0x4c, 0xfc, 0xac, 0xb6, 0x09, 0x00, 0x00,
+	0x14, 0x8f, 0x37, 0xdb, 0x24, 0xfb, 0xf2, 0x0f, 0x99, 0xb4, 0xd9, 0x35, 0xcd, 0x6e, 0x6b, 0xa9,
+	0x84, 0x4b, 0x6d, 0x52, 0x0e, 0xdc, 0x90, 0x48, 0x9a, 0x4a, 0x20, 0x05, 0xc4, 0x06, 0x81, 0xc4,
+	0xc5, 0x9a, 0xb5, 0x5f, 0x6d, 0xab, 0xeb, 0x99, 0x8d, 0x67, 0x76, 0x4b, 0xaf, 0x48, 0xbd, 0x23,
+	0x71, 0x80, 0x1b, 0x67, 0xbe, 0x02, 0x9f, 0xa0, 0xc7, 0x4a, 0x5c, 0x10, 0x87, 0x0a, 0x25, 0x7c,
+	0x10, 0xe4, 0x99, 0xb1, 0xd7, 0x63, 0x39, 0x34, 0x9c, 0x76, 0xe7, 0xbd, 0x37, 0xef, 0xf7, 0x7b,
+	0xef, 0xfd, 0xfc, 0x6c, 0x78, 0x77, 0x86, 0x71, 0xfc, 0xc2, 0x5f, 0x1c, 0xf9, 0x19, 0x8f, 0xb9,
+	0x37, 0xcb, 0x99, 0x60, 0xf6, 0x86, 0x34, 0x7a, 0x8b, 0x23, 0x67, 0x18, 0x32, 0x9e, 0x31, 0xee,
+	0x4f, 0x08, 0x47, 0x7f, 0x71, 0x34, 0x41, 0x41, 0x8e, 0xfc, 0x90, 0xa5, 0x54, 0x45, 0x3a, 0x7b,
+	0x31, 0x8b, 0x99, 0xfc, 0xeb, 0x17, 0xff, 0xb4, 0xf5, 0x6e, 0xcc, 0x58, 0x3c, 0x45, 0x9f, 0xcc,
+	0x52, 0x9f, 0x50, 0xca, 0x04, 0x11, 0x29, 0xa3, 0x3a, 0xbb, 0xfb, 0x15, 0xdc, 0x3e, 0xe3, 0xf1,
+	0x39, 0x8a, 0x2f, 0x67, 0x98, 0x13, 0xc1, 0xf2, 0x4f, 0xa3, 0x28, 0x47, 0xce, 0xed, 0xbb, 0xd0,
+	0x5b, 0x90, 0x69, 0x1a, 0x15, 0xb6, 0xbe, 0x75, 0xcf, 0xfa, 0xa0, 0x37, 0x5e, 0x1a, 0x6c, 0x07,
+	0x36, 0x98, 0xbe, 0xd0, 0xef, 0x48, 0x67, 0x75, 0x76, 0x47, 0x70, 0xd0, 0x9a, 0x72, 0x8c, 0x7c,
+	0xc6, 0x28, 0x47, 0xf7, 0xa5, 0x05, 0xef, 0x9c, 0xf1, 0xf8, 0x1b, 0x32, 0xe5, 0x28, 0x4e, 0x18,
+	0x7d, 0x9a, 0xe6, 0x99, 0xbd, 0x07, 0xb7, 0x28, 0xa3, 0x21, 0x4a, 0xac, 0xee, 0x58, 0x1d, 0x4c,
+	0x16, 0x9d, 0x26, 0x8b, 0x11, 0x6c, 0xa2, 0x48, 0x02, 0xa2, 0xf2, 0xf7, 0x57, 0xa5, 0x1f, 0x50,
+	0x24, 0xb5, 0x22, 0x78, 0x1a, 0x53, 0x22, 0xe6, 0x39, 0xf6, 0xbb, 0xea, 0x7a, 0x65, 0x70, 0x1d,
+	0xe8, 0x37, 0x69, 0x54, 0x1c, 0x13, 0x49, 0xf1, 0x1c, 0xc5, 0xe9, 0x32, 0x5b, 0x1f, 0xd6, 0x4b,
+	0x28, 0xd5, 0x90, 0xf2, 0xf8, 0x16, 0x9a, 0x06, 0x8b, 0xd5, 0x76, 0x16, 0x06, 0x52, 0xc5, 0xe2,
+	0x77, 0x0b, 0xb6, 0xa4, 0x93, 0x46, 0x5f, 0xb3, 0x53, 0x91, 0xd8, 0x77, 0x60, 0x8d, 0x23, 0x8d,
+	0xb0, 0x1c, 0x89, 0x3e, 0xd9, 0x03, 0xd8, 0x28, 0x3a, 0x11, 0x21, 0x17, 0x1a, 0x7f, 0x1d, 0x45,
+	0xf2, 0x18, 0xb9, 0xb0, 0x3f, 0x86, 0x35, 0x92, 0xb1, 0x39, 0x15, 0x12, 0x7a, 0xf3, 0xd1, 0xc0,
+	0x53, 0x32, 0xf2, 0x0a, 0x19, 0x79, 0x5a, 0x46, 0xde, 0x09, 0x4b, 0xe9, 0x71, 0xf7, 0xd5, 0x9b,
+	0xd1, 0xca, 0x58, 0x87, 0xdb, 0x9f, 0x00, 0x4c, 0xf2, 0x34, 0x8a, 0x31, 0x78, 0x8a, 0xaa, 0x7b,
+	0x37, 0xb8, 0xdc, 0x53, 0x57, 0x9e, 0x20, 0xba, 0x77, 0x60, 0xaf, 0xce, 0xbd, 0x2a, 0xea, 0x14,
+	0x76, 0xcf, 0x78, 0x3c, 0xc6, 0x8b, 0x39, 0x72, 0x71, 0x4c, 0x44, 0x98, 0x14, 0x1d, 0xca, 0xd5,
+	0xb9, 0xaa, 0x6c, 0x69, 0x28, 0xa4, 0x11, 0x21, 0x65, 0x99, 0xae, 0x4c, 0x1d, 0xdc, 0x01, 0xec,
+	0x37, 0xd2, 0x54, 0x08, 0xbf, 0x59, 0x12, 0x42, 0xcf, 0x54, 0x41, 0xb4, 0xeb, 0xeb, 0x01, 0xec,
+	0x08, 0xf6, 0x0c, 0x69, 0x10, 0x32, 0x2a, 0x72, 0x12, 0x96, 0xdd, 0xdb, 0x96, 0xd6, 0x13, 0x6d,
+	0xb4, 0x0f, 0xa0, 0x50, 0x55, 0x50, 0x0c, 0x0d, 0xf3, 0x72, 0x84, 0x28, 0x92, 0x73, 0x69, 0x30,
+	0xc7, 0xdf, 0xfd, 0xcf, 0xf1, 0xdf, 0x6a, 0x8e, 0x5f, 0x95, 0x51, 0xa7, 0x5a, 0x95, 0xf1, 0x73,
+	0x47, 0x96, 0xf1, 0x18, 0x67, 0x8c, 0xa7, 0xe2, 0x64, 0x4a, 0xd2, 0x4c, 0x4a, 0x7e, 0x81, 0x54,
+	0x04, 0xf5, 0x62, 0x40, 0x9a, 0xbe, 0xf8, 0x3f, 0x15, 0x3d, 0x31, 0x54, 0xd1, 0x3b, 0xf6, 0x8a,
+	0xe9, 0xfd, 0xf5, 0x66, 0xf4, 0x7e, 0x9c, 0x8a, 0x64, 0x3e, 0xf1, 0x42, 0x96, 0xf9, 0x7a, 0xdd,
+	0xa8, 0x9f, 0x87, 0x3c, 0x7a, 0xe6, 0x8b, 0x17, 0x33, 0xe4, 0xde, 0x67, 0x54, 0x54, 0x22, 0x39,
+	0x84, 0x5d, 0x14, 0x09, 0xe6, 0x38, 0xcf, 0x02, 0xad, 0x4c, 0xd5, 0x80, 0x9d, 0xd2, 0x7c, 0xae,
+	0x14, 0x7a, 0x08, 0xbb, 0x2a, 0x51, 0x90, 0x63, 0x88, 0xe9, 0x02, 0x73, 0xdd, 0x8b, 0x1d, 0x65,
+	0x1e, 0x6b, 0xab, 0xed, 0xc2, 0x16, 0xcb, 0xc3, 0x04, 0xb9, 0x50, 0xeb, 0x65, 0x4d, 0x46, 0x19,
+	0x36, 0xf7, 0x57, 0xb5, 0x41, 0xbe, 0x4d, 0x45, 0x12, 0xe5, 0xe4, 0xf9, 0x0d, 0x5b, 0x33, 0x82,
+	0xcd, 0x49, 0xd1, 0x60, 0x1d, 0xd0, 0x51, 0x01, 0xd2, 0x74, 0x5d, 0xef, 0x56, 0xdb, 0x7a, 0xd7,
+	0x64, 0xd8, 0x6d, 0x61, 0xa8, 0x9e, 0x6a, 0x83, 0x60, 0x35, 0x57, 0x35, 0xf2, 0xfa, 0x58, 0x4b,
+	0xd7, 0xa3, 0x5f, 0xd6, 0x61, 0xf5, 0x8c, 0xc7, 0xf6, 0x05, 0x6c, 0x9b, 0xeb, 0xd1, 0xf1, 0xca,
+	0xd7, 0x80, 0xd7, 0xdc, 0x59, 0x8e, 0x7b, 0xbd, 0xaf, 0xc2, 0xbc, 0xf7, 0xc3, 0x1f, 0xff, 0xfc,
+	0xd4, 0x71, 0xdc, 0xbe, 0x5f, 0xbd, 0x63, 0x16, 0x32, 0xb0, 0xa8, 0x55, 0x22, 0xe4, 0xb0, 0x6d,
+	0xae, 0x3b, 0x13, 0xd2, 0xf0, 0x35, 0x20, 0xdb, 0x97, 0xd7, 0x7d, 0x09, 0xf9, 0x9e, 0x3b, 0x58,
+	0x42, 0x16, 0x78, 0xb5, 0x8d, 0x6d, 0x4f, 0xa0, 0x57, 0xdb, 0x6d, 0x8d, 0x9c, 0xda, 0xee, 0x0c,
+	0xdb, 0xed, 0x15, 0xce, 0x81, 0xc4, 0xd9, 0x77, 0x6f, 0xd7, 0x71, 0x68, 0x14, 0x08, 0x56, 0x60,
+	0xd9, 0x19, 0x6c, 0x19, 0xbb, 0x66, 0x60, 0xa4, 0xab, 0xbb, 0x9c, 0xfb, 0xd7, 0xba, 0x2a, 0xb0,
+	0x91, 0x04, 0x1b, 0xb8, 0xfb, 0x4b, 0x30, 0xbd, 0xa8, 0x02, 0x29, 0xa4, 0x02, 0xce, 0xd8, 0x3b,
+	0x26, 0x5c, 0xdd, 0xd5, 0x80, 0x6b, 0x5d, 0x01, 0x2d, 0x70, 0x7a, 0x5e, 0x4b, 0x38, 0x63, 0x3f,
+	0x98, 0x70, 0x75, 0x57, 0x03, 0xae, 0x4d, 0x7e, 0x6d, 0x70, 0x91, 0x8a, 0x0b, 0x42, 0x99, 0xfe,
+	0x02, 0xb6, 0xcd, 0x87, 0xce, 0x14, 0x89, 0xe1, 0x6b, 0x88, 0xa4, 0xfd, 0x59, 0x68, 0xd1, 0xe5,
+	0x73, 0x1d, 0xa8, 0x21, 0x5f, 0x5a, 0x60, 0xb7, 0x7c, 0x9f, 0x8c, 0x9a, 0x0a, 0x6c, 0x04, 0x38,
+	0x87, 0x6f, 0x09, 0xa8, 0x28, 0x3c, 0x90, 0x14, 0x46, 0xee, 0x41, 0x49, 0x41, 0xca, 0xb4, 0xfc,
+	0x9c, 0x29, 0xb5, 0x7a, 0xfc, 0xf9, 0xab, 0xcb, 0xa1, 0xf5, 0xfa, 0x72, 0x68, 0xfd, 0x7d, 0x39,
+	0xb4, 0x7e, 0xbc, 0x1a, 0xae, 0xbc, 0xbe, 0x1a, 0xae, 0xfc, 0x79, 0x35, 0x5c, 0xf9, 0xee, 0xc3,
+	0xda, 0xce, 0x24, 0x53, 0x91, 0x20, 0x79, 0x48, 0x51, 0xe8, 0x6c, 0x19, 0x8b, 0xe6, 0x53, 0xf4,
+	0xbf, 0xd7, 0x47, 0xb9, 0x41, 0x27, 0x6b, 0xf2, 0xe3, 0xeb, 0xa3, 0x7f, 0x03, 0x00, 0x00, 0xff,
+	0xff, 0xe8, 0x6f, 0xc8, 0xf3, 0xf1, 0x09, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -996,13 +1006,13 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
 	ValsetConfirm(ctx context.Context, in *MsgValsetConfirm, opts ...grpc.CallOption) (*MsgValsetConfirmResponse, error)
-	ValsetRequest(ctx context.Context, in *MsgValsetRequest, opts ...grpc.CallOption) (*MsgValsetRequestResponse, error)
 	SetEthAddress(ctx context.Context, in *MsgSetEthAddress, opts ...grpc.CallOption) (*MsgSetEthAddressResponse, error)
 	SendToEth(ctx context.Context, in *MsgSendToEth, opts ...grpc.CallOption) (*MsgSendToEthResponse, error)
 	RequestBatch(ctx context.Context, in *MsgRequestBatch, opts ...grpc.CallOption) (*MsgRequestBatchResponse, error)
 	ConfirmBatch(ctx context.Context, in *MsgConfirmBatch, opts ...grpc.CallOption) (*MsgConfirmBatchResponse, error)
 	DepositClaim(ctx context.Context, in *MsgDepositClaim, opts ...grpc.CallOption) (*MsgDepositClaimResponse, error)
 	WithdrawClaim(ctx context.Context, in *MsgWithdrawClaim, opts ...grpc.CallOption) (*MsgWithdrawClaimResponse, error)
+	SetOperatorAddress(ctx context.Context, in *MsgSetOperatorAddress, opts ...grpc.CallOption) (*MsgSetOperatorAddressResponse, error)
 }
 
 type msgClient struct {
@@ -1016,15 +1026,6 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 func (c *msgClient) ValsetConfirm(ctx context.Context, in *MsgValsetConfirm, opts ...grpc.CallOption) (*MsgValsetConfirmResponse, error) {
 	out := new(MsgValsetConfirmResponse)
 	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/ValsetConfirm", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *msgClient) ValsetRequest(ctx context.Context, in *MsgValsetRequest, opts ...grpc.CallOption) (*MsgValsetRequestResponse, error) {
-	out := new(MsgValsetRequestResponse)
-	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/ValsetRequest", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1085,16 +1086,25 @@ func (c *msgClient) WithdrawClaim(ctx context.Context, in *MsgWithdrawClaim, opt
 	return out, nil
 }
 
+func (c *msgClient) SetOperatorAddress(ctx context.Context, in *MsgSetOperatorAddress, opts ...grpc.CallOption) (*MsgSetOperatorAddressResponse, error) {
+	out := new(MsgSetOperatorAddressResponse)
+	err := c.cc.Invoke(ctx, "/peggy.v1.Msg/SetOperatorAddress", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	ValsetConfirm(context.Context, *MsgValsetConfirm) (*MsgValsetConfirmResponse, error)
-	ValsetRequest(context.Context, *MsgValsetRequest) (*MsgValsetRequestResponse, error)
 	SetEthAddress(context.Context, *MsgSetEthAddress) (*MsgSetEthAddressResponse, error)
 	SendToEth(context.Context, *MsgSendToEth) (*MsgSendToEthResponse, error)
 	RequestBatch(context.Context, *MsgRequestBatch) (*MsgRequestBatchResponse, error)
 	ConfirmBatch(context.Context, *MsgConfirmBatch) (*MsgConfirmBatchResponse, error)
 	DepositClaim(context.Context, *MsgDepositClaim) (*MsgDepositClaimResponse, error)
 	WithdrawClaim(context.Context, *MsgWithdrawClaim) (*MsgWithdrawClaimResponse, error)
+	SetOperatorAddress(context.Context, *MsgSetOperatorAddress) (*MsgSetOperatorAddressResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -1103,9 +1113,6 @@ type UnimplementedMsgServer struct {
 
 func (*UnimplementedMsgServer) ValsetConfirm(ctx context.Context, req *MsgValsetConfirm) (*MsgValsetConfirmResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValsetConfirm not implemented")
-}
-func (*UnimplementedMsgServer) ValsetRequest(ctx context.Context, req *MsgValsetRequest) (*MsgValsetRequestResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ValsetRequest not implemented")
 }
 func (*UnimplementedMsgServer) SetEthAddress(ctx context.Context, req *MsgSetEthAddress) (*MsgSetEthAddressResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetEthAddress not implemented")
@@ -1124,6 +1131,9 @@ func (*UnimplementedMsgServer) DepositClaim(ctx context.Context, req *MsgDeposit
 }
 func (*UnimplementedMsgServer) WithdrawClaim(ctx context.Context, req *MsgWithdrawClaim) (*MsgWithdrawClaimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WithdrawClaim not implemented")
+}
+func (*UnimplementedMsgServer) SetOperatorAddress(ctx context.Context, req *MsgSetOperatorAddress) (*MsgSetOperatorAddressResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetOperatorAddress not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -1144,24 +1154,6 @@ func _Msg_ValsetConfirm_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).ValsetConfirm(ctx, req.(*MsgValsetConfirm))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Msg_ValsetRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgValsetRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).ValsetRequest(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/peggy.v1.Msg/ValsetRequest",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).ValsetRequest(ctx, req.(*MsgValsetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1274,6 +1266,24 @@ func _Msg_WithdrawClaim_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_SetOperatorAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSetOperatorAddress)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).SetOperatorAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/peggy.v1.Msg/SetOperatorAddress",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).SetOperatorAddress(ctx, req.(*MsgSetOperatorAddress))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "peggy.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -1281,10 +1291,6 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ValsetConfirm",
 			Handler:    _Msg_ValsetConfirm_Handler,
-		},
-		{
-			MethodName: "ValsetRequest",
-			Handler:    _Msg_ValsetRequest_Handler,
 		},
 		{
 			MethodName: "SetEthAddress",
@@ -1310,9 +1316,73 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			MethodName: "WithdrawClaim",
 			Handler:    _Msg_WithdrawClaim_Handler,
 		},
+		{
+			MethodName: "SetOperatorAddress",
+			Handler:    _Msg_SetOperatorAddress_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "peggy/v1/msgs.proto",
+}
+
+func (m *MsgSetOperatorAddress) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgSetOperatorAddress) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgSetOperatorAddress) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Operator) > 0 {
+		i -= len(m.Operator)
+		copy(dAtA[i:], m.Operator)
+		i = encodeVarintMsgs(dAtA, i, uint64(len(m.Operator)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Validator) > 0 {
+		i -= len(m.Validator)
+		copy(dAtA[i:], m.Validator)
+		i = encodeVarintMsgs(dAtA, i, uint64(len(m.Validator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgSetOperatorAddressResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgSetOperatorAddressResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgSetOperatorAddressResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
 }
 
 func (m *MsgValsetConfirm) Marshal() (dAtA []byte, err error) {
@@ -1380,59 +1450,6 @@ func (m *MsgValsetConfirmResponse) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *MsgValsetConfirmResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgValsetRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgValsetRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgValsetRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Requester) > 0 {
-		i -= len(m.Requester)
-		copy(dAtA[i:], m.Requester)
-		i = encodeVarintMsgs(dAtA, i, uint64(len(m.Requester)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgValsetRequestResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgValsetRequestResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgValsetRequestResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1896,6 +1913,32 @@ func encodeVarintMsgs(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *MsgSetOperatorAddress) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Validator)
+	if l > 0 {
+		n += 1 + l + sovMsgs(uint64(l))
+	}
+	l = len(m.Operator)
+	if l > 0 {
+		n += 1 + l + sovMsgs(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgSetOperatorAddressResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
 func (m *MsgValsetConfirm) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1921,28 +1964,6 @@ func (m *MsgValsetConfirm) Size() (n int) {
 }
 
 func (m *MsgValsetConfirmResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *MsgValsetRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Requester)
-	if l > 0 {
-		n += 1 + l + sovMsgs(uint64(l))
-	}
-	return n
-}
-
-func (m *MsgValsetRequestResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2151,6 +2172,176 @@ func sovMsgs(x uint64) (n int) {
 func sozMsgs(x uint64) (n int) {
 	return sovMsgs(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+func (m *MsgSetOperatorAddress) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsgs
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSetOperatorAddress: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSetOperatorAddress: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Validator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsgs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Validator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Operator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsgs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Operator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsgs(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgSetOperatorAddressResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsgs
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSetOperatorAddressResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSetOperatorAddressResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsgs(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *MsgValsetConfirm) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2346,144 +2537,6 @@ func (m *MsgValsetConfirmResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgValsetConfirmResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipMsgs(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgValsetRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowMsgs
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgValsetRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgValsetRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Requester", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMsgs
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Requester = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipMsgs(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgValsetRequestResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowMsgs
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgValsetRequestResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgValsetRequestResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

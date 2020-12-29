@@ -1,7 +1,6 @@
 package peggy
 
 import (
-	"math"
 	"testing"
 	"time"
 
@@ -11,33 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestHandleValsetRequest(t *testing.T) {
-	// TODO: This test requires the key that submits the valset request to be in the active set
-	// We should review this requirement, but this code path also may change soon
-	var (
-		myCosmosAddr, _       = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
-		myValAddr             = sdk.ValAddress(myCosmosAddr) // revisit when proper mapping is impl in keeper
-		myBlockTime           = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
-		myBlockHeight   int64 = 200
-	)
-
-	input := keeper.CreateTestEnv(t)
-	input.PeggyKeeper.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
-	h := NewHandler(input.PeggyKeeper)
-	msg := &types.MsgValsetRequest{Requester: myCosmosAddr.String()}
-	ctx := input.Context.WithBlockTime(myBlockTime).WithBlockHeight(myBlockHeight)
-	_, err := h(ctx, msg)
-	// then
-	require.NoError(t, err)
-	// and persisted
-	valset := input.PeggyKeeper.GetValset(ctx, uint64(myBlockHeight))
-	require.NotNil(t, valset)
-	assert.Equal(t, uint64(myBlockHeight), valset.Nonce)
-	require.Len(t, valset.Members, 1)
-	assert.Equal(t, []uint64{math.MaxUint32}, types.BridgeValidators(valset.Members).GetPowers())
-	assert.Equal(t, "", valset.Members[0].EthereumAddress)
-}
 
 func TestHandleMsgSendToEth(t *testing.T) {
 	var (
@@ -114,6 +86,7 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	input := keeper.CreateTestEnv(t)
 	ctx := input.Context
 	input.PeggyKeeper.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
+	input.PeggyKeeper.SetOrchestratorValidator(ctx, myValAddr, myOrchestratorAddr)
 	h := NewHandler(input.PeggyKeeper)
 
 	myErc20 := types.ERC20Token{
@@ -207,6 +180,9 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 	input := keeper.CreateTestEnv(t)
 	ctx := input.Context
 	input.PeggyKeeper.StakingKeeper = keeper.NewStakingKeeperMock(valAddr1, valAddr2, valAddr3)
+	input.PeggyKeeper.SetOrchestratorValidator(ctx, valAddr1, orchestratorAddr1)
+	input.PeggyKeeper.SetOrchestratorValidator(ctx, valAddr2, orchestratorAddr2)
+	input.PeggyKeeper.SetOrchestratorValidator(ctx, valAddr3, orchestratorAddr3)
 	h := NewHandler(input.PeggyKeeper)
 
 	myErc20 := types.ERC20Token{

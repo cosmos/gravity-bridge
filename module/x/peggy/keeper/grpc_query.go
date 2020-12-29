@@ -142,7 +142,7 @@ func (k Keeper) LastEventNonceByAddr(c context.Context, req *types.QueryLastEven
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, req.Address)
 	}
-	validator := k.FindValidatorKey(ctx, addr)
+	validator := k.GetOrchestratorValidator(ctx, addr)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 	}

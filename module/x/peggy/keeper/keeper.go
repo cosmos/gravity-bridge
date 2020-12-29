@@ -253,13 +253,13 @@ func (k Keeper) GetBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce ui
 /////////////////////////////
 
 // SetEthAddress sets the ethereum address for a given validator
-func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.AccAddress, ethAddr string) {
+func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.ValAddress, ethAddr string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
 }
 
 // GetEthAddress returns the eth address for a given peggy validator
-func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.AccAddress) string {
+func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) string {
 	store := ctx.KVStore(k.storeKey)
 	return string(store.Get(types.GetEthAddressKey(validator)))
 }
@@ -282,14 +282,13 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
 	for i, validator := range validators {
-		validatorAddress := validator.GetOperator()
-		valAddr := sdk.AccAddress(validatorAddress)
+		val := validator.GetOperator()
 
-		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, validatorAddress))
+		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, val))
 		totalPower += p
 
 		bridgeValidators[i] = &types.BridgeValidator{Power: p}
-		if ethAddr := k.GetEthAddress(ctx, valAddr); ethAddr != "" {
+		if ethAddr := k.GetEthAddress(ctx, val); ethAddr != "" {
 			bridgeValidators[i].EthereumAddress = ethAddr
 		}
 	}
@@ -304,11 +303,16 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 //    ADDRESS DELEGATION   //
 /////////////////////////////
 
-// TODO placeholder function to find validator keys given an orchestrator delegate address
-func (k Keeper) FindValidatorKey(ctx sdk.Context, orchAddr sdk.AccAddress) sdk.ValAddress {
-	// TODO: do we want ValAddress or do we want the AccAddress for the validator?
-	// this is a v important question for encoding
-	return sdk.ValAddress(orchAddr)
+// SetOrchestratorValidator sets the Orchestrator key for a given validator
+func (k Keeper) SetOrchestratorValidator(ctx sdk.Context, val sdk.ValAddress, orch sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetOrchestratorAddressKey(orch), val.Bytes())
+}
+
+// GetOrchestratorValidator returns the valdiator key associated with an orchestrator key
+func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) sdk.ValAddress {
+	store := ctx.KVStore(k.storeKey)
+	return sdk.ValAddress(store.Get(types.GetOrchestratorAddressKey(orch)))
 }
 
 /////////////////////////////
