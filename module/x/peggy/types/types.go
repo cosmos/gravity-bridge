@@ -92,6 +92,14 @@ func (b BridgeValidators) PowerDiff(c BridgeValidators) float64 {
 	return math.Abs(float64(delta) / float64(totalB))
 }
 
+// TotalPower returns the total power in the bridge validator set
+func (b BridgeValidators) TotalPower() (out uint64) {
+	for _, v := range b {
+		out += v.Power
+	}
+	return
+}
+
 // HasDuplicates returns true if there are duplicates in the set
 func (b BridgeValidators) HasDuplicates() bool {
 	m := make(map[string]struct{}, len(b))

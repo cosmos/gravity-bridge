@@ -1,8 +1,6 @@
 package peggy
 
 import (
-	"fmt"
-
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,7 +37,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 						break
 					}
 				}
-				fmt.Println(found)
 				if !found {
 					toSlash = append(toSlash, val)
 				}
