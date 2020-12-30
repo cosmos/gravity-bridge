@@ -37,6 +37,9 @@ var (
 	// ParamsStoreKeyBridgeContractChainID stores the bridge chain id
 	ParamsStoreKeyBridgeContractChainID = []byte("BridgeChainID")
 
+	// ParamsStoreKeySignedBlocksWindow stores the signed blocks window
+	ParamsStoreKeySignedBlocksWindow = []byte("SignedBlocksWindow")
+
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
 )
@@ -82,6 +85,9 @@ func (p Params) ValidateBasic() error {
 	if err := validateBridgeChainID(p.BridgeChainId); err != nil {
 		return sdkerrors.Wrap(err, "bridge chain id")
 	}
+	if err := validateBridgeChainID(p.SignedBlocksWindow); err != nil {
+		return sdkerrors.Wrap(err, "signed blocks window")
+	}
 	return nil
 }
 
@@ -99,6 +105,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamsStoreKeyStartThreshold, &p.StartThreshold, validateStartThreshold),
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractAddress, &p.EthereumAddress, validateBridgeContractAddress),
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainId, validateBridgeChainID),
+		paramtypes.NewParamSetPair(ParamsStoreKeySignedBlocksWindow, &p.SignedBlocksWindow, validateSignedBlocksWindow),
 	}
 }
 
@@ -151,6 +158,13 @@ func validateBridgeContractAddress(i interface{}) error {
 		if !strings.Contains(err.Error(), "empty") {
 			return err
 		}
+	}
+	return nil
+}
+
+func validateSignedBlocksWindow(i interface{}) error {
+	if _, ok := i.(uint64); !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 	return nil
 }

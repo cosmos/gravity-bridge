@@ -54,7 +54,6 @@ message MsgValsetConfirm {
   string signature = 4;
 }
 
-// TODO: write response data here
 message MsgValsetConfirmResponse {}
 
 // ValsetRequest
@@ -69,7 +68,6 @@ message MsgValsetConfirmResponse {}
 // -------------
 message MsgValsetRequest { string requester = 1; }
 
-// TODO: write response data here
 message MsgValsetRequestResponse {}
 
 // SetEthAddress
@@ -85,7 +83,6 @@ message MsgSetEthAddress {
   string signature = 3;
 }
 
-// TODO: write response data here
 message MsgSetEthAddressResponse {}
 
 // MsgSendToEth
@@ -107,7 +104,6 @@ message MsgSendToEth {
   cosmos.base.v1beta1.Coin bridge_fee = 4 [(gogoproto.nullable) = false];
 }
 
-// TODO: write response data here
 message MsgSendToEthResponse {}
 
 // MsgRequestBatch
@@ -124,7 +120,6 @@ message MsgRequestBatch {
   string denom = 2;
 }
 
-// TODO: write response data here
 message MsgRequestBatchResponse {}
 
 // MsgConfirmBatch
@@ -143,7 +138,6 @@ message MsgConfirmBatch {
   string signature = 5;
 }
 
-// TODO: write response data here
 message MsgConfirmBatchResponse {}
 
 // EthereumBridgeDepositClaim
@@ -169,8 +163,6 @@ message MsgWithdrawClaim {
   string orchestrator = 4;
 }
 
-// TODO: write response data here
 message MsgWithdrawClaimResponse {}
 
-// TODO: write response data here
 message MsgDepositClaimResponse {}

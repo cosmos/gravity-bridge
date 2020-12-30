@@ -114,7 +114,6 @@ func (m *MsgValsetConfirm) GetSignature() string {
 	return ""
 }
 
-// TODO: write response data here
 type MsgValsetConfirmResponse struct {
 }
 
@@ -205,7 +204,6 @@ func (m *MsgValsetRequest) GetRequester() string {
 	return ""
 }
 
-// TODO: write response data here
 type MsgValsetRequestResponse struct {
 }
 
@@ -309,7 +307,6 @@ func (m *MsgSetEthAddress) GetSignature() string {
 	return ""
 }
 
-// TODO: write response data here
 type MsgSetEthAddressResponse struct {
 }
 
@@ -426,7 +423,6 @@ func (m *MsgSendToEth) GetBridgeFee() types.Coin {
 	return types.Coin{}
 }
 
-// TODO: write response data here
 type MsgSendToEthResponse struct {
 }
 
@@ -524,7 +520,6 @@ func (m *MsgRequestBatch) GetDenom() string {
 	return ""
 }
 
-// TODO: write response data here
 type MsgRequestBatchResponse struct {
 }
 
@@ -645,7 +640,6 @@ func (m *MsgConfirmBatch) GetSignature() string {
 	return ""
 }
 
-// TODO: write response data here
 type MsgConfirmBatchResponse struct {
 }
 
@@ -834,7 +828,6 @@ func (m *MsgWithdrawClaim) GetOrchestrator() string {
 	return ""
 }
 
-// TODO: write response data here
 type MsgWithdrawClaimResponse struct {
 }
 
@@ -871,7 +864,6 @@ func (m *MsgWithdrawClaimResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWithdrawClaimResponse proto.InternalMessageInfo
 
-// TODO: write response data here
 type MsgDepositClaimResponse struct {
 }
 
