@@ -35,6 +35,7 @@ message Attestation {
   bool                observed    = 2;
   repeated string     votes       = 3;
   bytes               claim_hash  = 4;
+  uint64              height      = 5;
 }
 
 // ERC20Token unique identifier for an Ethereum ERC20 token.

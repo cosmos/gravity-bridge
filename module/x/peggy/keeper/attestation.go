@@ -167,6 +167,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 func (k Keeper) SetAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
 	store := ctx.KVStore(k.storeKey)
 	att.ClaimHash = claim.ClaimHash()
+	att.Height = uint64(ctx.BlockHeight())
 	aKey := types.GetAttestationKey(att.EventNonce, claim)
 	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
 }
