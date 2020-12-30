@@ -20,8 +20,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 			Amount:   claim.Amount,
 			Contract: claim.TokenContract,
 		}
-		coin := token.PeggyCoin()
-		vouchers := sdk.Coins{coin}
+		vouchers := sdk.NewCoins(token.PeggyCoin())
 		if err := a.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers); err != nil {
 			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", vouchers)
 		}

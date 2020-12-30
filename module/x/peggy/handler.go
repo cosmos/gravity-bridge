@@ -38,35 +38,41 @@ func NewHandler(keeper keeper.Keeper) sdk.Handler {
 }
 
 func handleDepositClaim(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgDepositClaim) (*sdk.Result, error) {
-	var attestationIDs [][]byte
-	// TODO SECURITY this does not auth the sender in the current validator set!
-	// anyone can vote! We need to check and reject right here.
-
+	var attestationIDs []string
 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := findValidatorKey(ctx, orch)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+	}
+	if !keeper.StakingKeeper.Validator(ctx, validator).IsBonded() {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
 	}
 	att, err := keeper.AddClaim(ctx, msg.GetType(), msg.GetEventNonce(), validator, msg)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
-	attestationIDs = append(attestationIDs, types.GetAttestationKey(att.EventNonce, msg))
+	attestationIDs = append(attestationIDs, fmt.Sprint(types.GetAttestationKey(att.EventNonce, msg)))
 
-	return &sdk.Result{
-		Data: bytes.Join(attestationIDs, []byte(", ")),
-	}, nil
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyAttestationIDs, string(bytes.Join(attestationIDs, []byte(","))))
+		),
+	)
+
+	return &sdk.Result{}, nil
 }
 
 func handleWithdrawClaim(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgWithdrawClaim) (*sdk.Result, error) {
 	var attestationIDs [][]byte
-	// TODO SECURITY this does not auth the sender in the current validator set!
-	// anyone can vote! We need to check and reject right here.
-
 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := findValidatorKey(ctx, orch)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+	}
+	if !keeper.StakingKeeper.Validator(ctx, validator).IsBonded() {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
 	}
 	att, err := keeper.AddClaim(ctx, msg.GetType(), msg.GetEventNonce(), validator, msg)
 	if err != nil {
@@ -86,14 +92,21 @@ func findValidatorKey(ctx sdk.Context, orchAddr sdk.AccAddress) sdk.ValAddress {
 	return sdk.ValAddress(orchAddr)
 }
 
-func handleMsgValsetRequest(ctx sdk.Context, keeper keeper.Keeper, msg *types.MsgValsetRequest) (*sdk.Result, error) {
-	// todo: is requester in current valset?\
+func handleMsgValsetRequest(ctx sdk.Context, k keeper.Keeper, msg *types.MsgValsetRequest) (*sdk.Result, error) {
+	req, err := sdk.AccAddressFromBech32(msg.Requester)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+	}
+
+	if !k.StakingKeeper.Validator(ctx, findValidatorKey(req)).IsBonded() {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "validator not in valset")
+	}
 
 	// disabling bootstrap check for integration tests to pass
 	//if keeper.GetLastValsetObservedNonce(ctx).isValid() {
 	//	return nil, sdkerrors.Wrap(types.ErrInvalid, "bridge bootstrap process not observed, yet")
 	//}
-	v := keeper.SetValsetRequest(ctx)
+	v := k.SetValsetRequest(ctx)
 	return &sdk.Result{
 		Data: types.UInt64Bytes(v.Nonce),
 	}, nil
