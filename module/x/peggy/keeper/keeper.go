@@ -78,6 +78,13 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 // StoreValset is for storing a valiator set at a given height
 func (k Keeper) StoreValset(ctx sdk.Context, valset *types.Valset) {
 	store := ctx.KVStore(k.storeKey)
+	valset.Height = uint64(ctx.BlockHeight())
+	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
+}
+
+// StoreValsetUnsafe is for storing a valiator set at a given height
+func (k Keeper) StoreValsetUnsafe(ctx sdk.Context, valset *types.Valset) {
+	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
 }
 
@@ -296,7 +303,9 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	for i := range bridgeValidators {
 		bridgeValidators[i].Power = sdk.NewUint(bridgeValidators[i].Power).MulUint64(math.MaxUint32).QuoUint64(totalPower).Uint64()
 	}
-	return types.NewValset(uint64(ctx.BlockHeight()), bridgeValidators)
+
+	// TODO: make the nonce an incrementing one (i.e. fetch last nonce from state, increment, set here)
+	return types.NewValset(uint64(ctx.BlockHeight()), uint64(ctx.BlockHeight()), bridgeValidators)
 }
 
 /////////////////////////////

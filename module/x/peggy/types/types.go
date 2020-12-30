@@ -137,13 +137,13 @@ func (b BridgeValidators) ValidateBasic() error {
 }
 
 // NewValset returns a new valset
-func NewValset(nonce uint64, members BridgeValidators) *Valset {
+func NewValset(nonce, height uint64, members BridgeValidators) *Valset {
 	members.Sort()
 	var mem []*BridgeValidator
 	for _, val := range members {
 		mem = append(mem, val)
 	}
-	return &Valset{Nonce: uint64(nonce), Members: mem}
+	return &Valset{Nonce: uint64(nonce), Members: mem, Height: height}
 }
 
 // GetCheckpoint returns the checkpoint

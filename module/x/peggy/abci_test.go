@@ -16,9 +16,12 @@ func TestValsetSlashing(t *testing.T) {
 
 	// This valset should be past the signed blocks window and trigger slashing
 	vs := pk.GetCurrentValset(ctx)
-	nonce := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
-	vs.Nonce = nonce
-	pk.StoreValset(ctx, vs)
+	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
+	vs.Height = height
+
+	// TODO: remove this once we are auto-incrementing the nonces
+	vs.Nonce = height
+	pk.StoreValsetUnsafe(ctx, vs)
 	for i, val := range keeper.AccAddrs {
 		if i == 0 {
 			// don't sign with first validator
@@ -37,7 +40,7 @@ func TestValsetSlashing(t *testing.T) {
 	require.True(t, val.IsJailed())
 
 	// Ensure that the valset gets pruned properly
-	valset := input.PeggyKeeper.GetValset(ctx, nonce)
+	valset := input.PeggyKeeper.GetValset(ctx, vs.Nonce)
 	require.Nil(t, valset)
 
 	// TODO: test balance of slashed tokens

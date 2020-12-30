@@ -23,7 +23,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		// #1 condition
 		// We look through the full bonded validator set (not just the active set, include unbonding validators)
 		// and we slash users who haven't signed a valset that is currentHeight - signedBlocksWindow old
-		case uint64(ctx.BlockHeight())-params.SignedValsetsWindow > vs.Nonce:
+		case uint64(ctx.BlockHeight())-params.SignedValsetsWindow > vs.Height:
+
 			// first we need to see which validators in the active set
 			// haven't signed the valdiator set and slash them,
 			var toSlash []stakingtypes.Validator

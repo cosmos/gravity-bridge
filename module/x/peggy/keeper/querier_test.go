@@ -155,6 +155,7 @@ func TestLastValsetRequests(t *testing.T) {
 			expResp: []byte(`[
 {
   "nonce": "105",
+  "height": "105",
   "members": [
     {
       "power": "715827882",
@@ -184,6 +185,7 @@ func TestLastValsetRequests(t *testing.T) {
 },
 {
   "nonce": "104",
+  "height": "104",
   "members": [
     {
       "power": "858993459",
@@ -209,6 +211,7 @@ func TestLastValsetRequests(t *testing.T) {
 },
 {
   "nonce": "103",
+  "height": "103",
   "members": [
     {
       "power": "1073741823",
@@ -230,6 +233,7 @@ func TestLastValsetRequests(t *testing.T) {
 },
 {
   "nonce": "102",
+  "height": "102",
   "members": [
     {
       "power": "1431655765",
@@ -247,6 +251,7 @@ func TestLastValsetRequests(t *testing.T) {
 },
 {
   "nonce": "101",
+  "height": "101",
   "members": [
     {
       "power": "2147483647",
@@ -298,6 +303,7 @@ func TestPendingValsetRequests(t *testing.T) {
       "type": "peggy/Valset",
       "value": {
         "nonce": "105",
+        "height": "105",
         "members": [
           {
             "power": "715827882",
