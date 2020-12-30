@@ -84,13 +84,13 @@ func (b BridgeValidators) PowerDiff(c BridgeValidators) float64 {
 		}
 	}
 
-	var delta int64
+	var delta float64
 	for _, v := range powers {
 		// NOTE: we care about the absolute value of the changes
-		delta += int64(math.Abs(float64(v)))
+		delta += math.Abs(float64(v))
 	}
 
-	return math.Abs(float64(delta) / float64(totalB))
+	return math.Abs(delta / float64(totalB))
 }
 
 // TotalPower returns the total power in the bridge validator set
