@@ -43,6 +43,9 @@ message Attestation {
 // The contract address on ETH of the token (note: developers should look up
 // the token symbol using the address on ETH to display for UI)
 message ERC20Token {
-  string amount   = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
-  string contract = 2;
+  string contract = 1;
+  string amount   = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false
+  ];
 }

@@ -16,41 +16,41 @@ var (
 	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
-	_ sdk.Msg = &MsgSetOperatorAddress{}
+	_ sdk.Msg = &MsgSetOrchestratorAddress{}
 )
 
-// NewMsgSetOperatorAddress returns a new msgSetOperatorAddress
-func NewMsgSetOperatorAddress(val sdk.ValAddress, oper sdk.AccAddress) *MsgSetOperatorAddress {
-	return &MsgSetOperatorAddress{
-		Validator: val.String(),
-		Operator:  oper.String(),
+// NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
+func NewMsgSetOrchestratorAddress(val sdk.ValAddress, oper sdk.AccAddress) *MsgSetOrchestratorAddress {
+	return &MsgSetOrchestratorAddress{
+		Validator:    val.String(),
+		Orchestrator: oper.String(),
 	}
 }
 
 // Route should return the name of the module
-func (msg *MsgSetOperatorAddress) Route() string { return RouterKey }
+func (msg *MsgSetOrchestratorAddress) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgSetOperatorAddress) Type() string { return "set_operator_address" }
+func (msg *MsgSetOrchestratorAddress) Type() string { return "set_operator_address" }
 
 // ValidateBasic performs stateless checks
-func (msg *MsgSetOperatorAddress) ValidateBasic() (err error) {
+func (msg *MsgSetOrchestratorAddress) ValidateBasic() (err error) {
 	if _, err = sdk.ValAddressFromBech32(msg.Validator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
 	}
-	if _, err = sdk.AccAddressFromBech32(msg.Operator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Operator)
+	if _, err = sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
 	return nil
 }
 
 // GetSignBytes encodes the message for signing
-func (msg *MsgSetOperatorAddress) GetSignBytes() []byte {
+func (msg *MsgSetOrchestratorAddress) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
-func (msg *MsgSetOperatorAddress) GetSigners() []sdk.AccAddress {
+func (msg *MsgSetOrchestratorAddress) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.ValAddressFromBech32(msg.Validator)
 	if err != nil {
 		panic(err)
@@ -61,10 +61,10 @@ func (msg *MsgSetOperatorAddress) GetSigners() []sdk.AccAddress {
 // NewMsgValsetConfirm returns a new msgValsetConfirm
 func NewMsgValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddress, signature string) *MsgValsetConfirm {
 	return &MsgValsetConfirm{
-		Nonce:      nonce,
-		Validator:  validator.String(),
-		EthAddress: ethAddress,
-		Signature:  signature,
+		Nonce:        nonce,
+		Orchestrator: validator.String(),
+		EthAddress:   ethAddress,
+		Signature:    signature,
 	}
 }
 
@@ -76,8 +76,8 @@ func (msg *MsgValsetConfirm) Type() string { return "valset_confirm" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgValsetConfirm) ValidateBasic() (err error) {
-	if _, err = sdk.AccAddressFromBech32(msg.Validator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
+	if _, err = sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
 	if err := ValidateEthAddress(msg.EthAddress); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
@@ -93,7 +93,7 @@ func (msg *MsgValsetConfirm) GetSignBytes() []byte {
 // GetSigners defines whose signature is required
 func (msg *MsgValsetConfirm) GetSigners() []sdk.AccAddress {
 	// TODO: figure out how to convert between AccAddress and ValAddress properly
-	acc, err := sdk.AccAddressFromBech32(msg.Validator)
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)
 	}
@@ -102,7 +102,7 @@ func (msg *MsgValsetConfirm) GetSigners() []sdk.AccAddress {
 
 // NewMsgSetEthAddress return a new msgSetEthAddress
 // TODO: figure out if we need sdk.ValAddress here
-func NewMsgSetEthAddress(address string, validator sdk.AccAddress, signature string) *MsgSetEthAddress {
+func NewMsgSetEthAddress(address string, validator sdk.ValAddress, signature string) *MsgSetEthAddress {
 	return &MsgSetEthAddress{
 		Address:   address,
 		Validator: validator.String(),
@@ -120,7 +120,7 @@ func (msg MsgSetEthAddress) Type() string { return "set_eth_address" }
 // Checks if the Eth address is valid, and whether the Eth address has signed the validator address
 // (proving control of the Eth address)
 func (msg MsgSetEthAddress) ValidateBasic() error {
-	val, err := sdk.AccAddressFromBech32(msg.Validator)
+	val, err := sdk.ValAddressFromBech32(msg.Validator)
 	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
 	}
@@ -215,9 +215,9 @@ func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgRequestBatch returns a new msgRequestBatch
-func NewMsgRequestBatch(requester sdk.AccAddress) *MsgRequestBatch {
+func NewMsgRequestBatch(orchestrator sdk.AccAddress) *MsgRequestBatch {
 	return &MsgRequestBatch{
-		Requester: requester.String(),
+		Orchestrator: orchestrator.String(),
 	}
 }
 
@@ -229,8 +229,8 @@ func (msg MsgRequestBatch) Type() string { return "request_batch" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgRequestBatch) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Requester); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Requester)
+	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
 	if _, err := ERC20FromPeggyCoin(sdk.NewInt64Coin(msg.Denom, 0)); err != nil {
 		return sdkerrors.Wrapf(ErrInvalid, "invalid denom: %s", err)
@@ -245,7 +245,7 @@ func (msg MsgRequestBatch) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Requester)
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)
 	}
@@ -261,8 +261,8 @@ func (msg MsgConfirmBatch) Type() string { return "confirm_batch" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgConfirmBatch) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Validator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
+	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
 	if err := ValidateEthAddress(msg.EthSigner); err != nil {
 		return sdkerrors.Wrap(err, "eth signer")
@@ -284,7 +284,7 @@ func (msg MsgConfirmBatch) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Validator)
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)
 	}

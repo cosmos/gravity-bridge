@@ -69,7 +69,7 @@ func TestBatchSlashing(t *testing.T) {
 			Nonce:         batch.BatchNonce,
 			TokenContract: keeper.TokenContractAddrs[0],
 			EthSigner:     keeper.EthAddrs[i].String(),
-			Validator:     val.String(),
+			Orchestrator:  val.String(),
 		})
 	}
 

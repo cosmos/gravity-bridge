@@ -23,11 +23,11 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-func (k msgServer) SetOperatorAddress(c context.Context, msg *types.MsgSetOperatorAddress) (*types.MsgSetOperatorAddressResponse, error) {
+func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOrchestratorAddress) (*types.MsgSetOrchestratorAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	// NOTE: we can ignore errors here because this is already checked in validate basic
 	val, _ := sdk.ValAddressFromBech32(msg.Validator)
-	orch, _ := sdk.AccAddressFromBech32(msg.Operator)
+	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 
 	// ensure that the validator exists
 	if k.Keeper.StakingKeeper.Validator(ctx, val) == nil {
@@ -45,7 +45,7 @@ func (k msgServer) SetOperatorAddress(c context.Context, msg *types.MsgSetOperat
 		),
 	)
 
-	return &types.MsgSetOperatorAddressResponse{}, nil
+	return &types.MsgSetOrchestratorAddressResponse{}, nil
 
 }
 
@@ -66,7 +66,7 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
 
-	valaddr, _ := sdk.AccAddressFromBech32(msg.Validator)
+	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, valaddr)
 	if validator == nil {
 		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
@@ -106,8 +106,8 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 // TODO: check msgValsetConfirm to have an Orchestrator field instead of a Validator field
 func (k msgServer) SetEthAddress(c context.Context, msg *types.MsgSetEthAddress) (*types.MsgSetEthAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	valaddr, _ := sdk.AccAddressFromBech32(msg.Validator)
-	validator := k.GetOrchestratorValidator(ctx, valaddr)
+	valaddr, _ := sdk.ValAddressFromBech32(msg.Validator)
+	validator := k.GetOrchestratorValidator(ctx, sdk.AccAddress(valaddr))
 	if validator == nil {
 		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
 		if sval == nil {
@@ -149,6 +149,16 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		return nil, err
 	}
 
+	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, valaddr)
+	if validator == nil {
+		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
+		if sval == nil {
+			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+		}
+		validator = sval.GetOperator()
+	}
+
 	// TODO later make sure that Demon matches a list of tokens already
 	// in the bridge to send
 
@@ -184,7 +194,7 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
 
-	valaddr, _ := sdk.AccAddressFromBech32(msg.Validator)
+	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, valaddr)
 	if validator == nil {
 		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))

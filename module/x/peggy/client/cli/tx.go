@@ -87,7 +87,7 @@ func CmdUpdateEthAddress() *cobra.Command {
 			}
 			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA)
 
-			msg := types.NewMsgSetEthAddress(ethAddress.String(), cosmosAddr, hex.EncodeToString(signature))
+			msg := types.NewMsgSetEthAddress(ethAddress.String(), sdk.ValAddress(cosmosAddr), hex.EncodeToString(signature))
 			err = msg.ValidateBasic()
 			if err != nil {
 				return err
@@ -193,8 +193,8 @@ func CmdRequestBatch() *cobra.Command {
 
 			// TODO: better denom searching
 			msg := types.MsgRequestBatch{
-				Requester: cosmosAddr.String(),
-				Denom:     fmt.Sprintf("peggy/%s", args[0]),
+				Orchestrator: cosmosAddr.String(),
+				Denom:        fmt.Sprintf("peggy/%s", args[0]),
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err

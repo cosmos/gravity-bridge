@@ -27,27 +27,27 @@ service Msg {
   rpc WithdrawClaim(MsgWithdrawClaim) returns(MsgWithdrawClaimResponse) {
     option (google.api.http).post = "/peggy/v1/withdraw_claim";
   }
-  rpc SetOperatorAddress(MsgSetOperatorAddress) returns(MsgSetOperatorAddressResponse) {
-    option (google.api.http).post = "/peggy/v/set_operator_address";
+  rpc SetOrchestratorAddress(MsgSetOrchestratorAddress) returns(MsgSetOrchestratorAddressResponse) {
+    option (google.api.http).post = "/peggy/v/set_Orchestrator_address";
   }
 }
 
-// MsgSetOperatorAddress
-// this message allows validators to delegate their voting responsibilities
+// MsgSetOrchestratorAddress
+// this message allows validators to delegate their voting responsibilities 
 // to a given key. This key is then used as an optional authentication method
 // for sigining oracle claims
 // VALIDATOR
 // The validator field is a cosmosvaloper1... string (i.e. sdk.ValAddress)
 // that references a validator in the active set
-// OPERATOR
-// The operator field is a cosmos1... string  (i.e. sdk.AccAddress) that
+// ORCHESTRATOR
+// The orchestrator field is a cosmos1... string  (i.e. sdk.AccAddress) that 
 // references the key that is being delegated to
-message MsgSetOperatorAddress {
+message MsgSetOrchestratorAddress {
   string validator = 1;
-  string operator  = 2;
+  string orchestrator  = 2;
 }
 
-message MsgSetOperatorAddressResponse {}
+message MsgSetOrchestratorAddressResponse {}
 
 // MsgValsetConfirm
 // this is the message sent by the validators when they wish to submit their
@@ -65,10 +65,10 @@ message MsgSetOperatorAddressResponse {}
 // chain store and submit them to Ethereum to update the validator set
 // -------------
 message MsgValsetConfirm {
-  uint64 nonce = 1;
-  string validator = 2;
-  string eth_address = 3;
-  string signature = 4;
+  uint64 nonce        = 1;
+  string orchestrator = 2;
+  string eth_address  = 3;
+  string signature    = 4;
 }
 
 message MsgValsetConfirmResponse {}
@@ -81,7 +81,7 @@ message MsgValsetConfirmResponse {}
 // sets submissions carry any weight.
 // -------------
 message MsgSetEthAddress {
-  string address = 1;
+  string address   = 1;
   string validator = 2;
   string signature = 3;
 }
@@ -101,10 +101,14 @@ message MsgSetEthAddressResponse {}
 // actually send this message in the first place. So a successful send has
 // two layers of fees for the user
 message MsgSendToEth {
-  string sender = 1;
-  string eth_dest = 2;
-  cosmos.base.v1beta1.Coin amount = 3 [(gogoproto.nullable) = false];
-  cosmos.base.v1beta1.Coin bridge_fee = 4 [(gogoproto.nullable) = false];
+  string                   sender     = 1;
+  string                   eth_dest   = 2;
+  cosmos.base.v1beta1.Coin amount     = 3 [
+    (gogoproto.nullable) = false
+  ];
+  cosmos.base.v1beta1.Coin bridge_fee = 4 [
+    (gogoproto.nullable) = false
+  ];
 }
 
 message MsgSendToEthResponse {}
@@ -119,8 +123,8 @@ message MsgSendToEthResponse {}
 // can finally submit the batch
 // -------------
 message MsgRequestBatch {
-  string requester = 1;
-  string denom = 2;
+  string orchestrator = 1;
+  string denom        = 2;
 }
 
 message MsgRequestBatchResponse {}
@@ -134,11 +138,11 @@ message MsgRequestBatchResponse {}
 // as well as an Ethereum signature over this batch by the validator
 // -------------
 message MsgConfirmBatch {
-  uint64 nonce = 1;
+  uint64 nonce          = 1;
   string token_contract = 2;
-  string eth_signer = 3;
-  string validator = 4;
-  string signature = 5;
+  string eth_signer     = 3;
+  string orchestrator   = 4;
+  string signature      = 5;
 }
 
 message MsgConfirmBatchResponse {}
@@ -149,23 +153,26 @@ message MsgConfirmBatchResponse {}
 // issued to the Cosmos address in question
 // -------------
 message MsgDepositClaim {
-  uint64 event_nonce = 1;
-  string token_contract = 2;
-  string amount   = 3 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+  uint64 event_nonce     = 1;
+  string token_contract  = 2;
+  string amount          = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+    (gogoproto.nullable) = false
+  ];
   string ethereum_sender = 4;
   string cosmos_receiver = 5;
-  string orchestrator = 6;
+  string orchestrator    = 6;
 }
+
+message MsgDepositClaimResponse {}
 
 // WithdrawClaim claims that a batch of withdrawal
 // operations on the bridge contract was executed.
 message MsgWithdrawClaim {
-  uint64 event_nonce = 1;
-  uint64 batch_nonce = 2;
+  uint64 event_nonce    = 1;
+  uint64 batch_nonce    = 2;
   string token_contract = 3;
-  string orchestrator = 4;
+  string orchestrator   = 4;
 }
 
 message MsgWithdrawClaimResponse {}
-
-message MsgDepositClaimResponse {}

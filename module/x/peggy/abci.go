@@ -72,7 +72,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 				found := false
 				for _, conf := range confirms {
 					// TODO: may need to look up actual validator address
-					confVal, _ := sdk.AccAddressFromBech32(conf.Validator)
+					confVal, _ := sdk.AccAddressFromBech32(conf.Orchestrator)
 					if confVal.Equals(val.GetOperator()) {
 						found = true
 					}

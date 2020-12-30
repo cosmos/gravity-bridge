@@ -22,10 +22,10 @@ func TestQueryValsetConfirm(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 	input.PeggyKeeper.SetValsetConfirm(ctx, types.MsgValsetConfirm{
-		Nonce:      nonce,
-		Validator:  myValidatorCosmosAddr.String(),
-		EthAddress: myValidatorEthereumAddr.String(),
-		Signature:  "alksdjhflkasjdfoiasjdfiasjdfoiasdj",
+		Nonce:        nonce,
+		Orchestrator: myValidatorCosmosAddr.String(),
+		EthAddress:   myValidatorEthereumAddr.String(),
+		Signature:    "alksdjhflkasjdfoiasjdfiasjdfoiasdj",
 	})
 
 	specs := map[string]struct {
@@ -37,7 +37,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			srcAddr:  myValidatorCosmosAddr.String(),
-			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l",  "signature": "alksdjhflkasjdfoiasjdfiasjdfoiasdj"}}`),
+			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "orchestrator": "cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l",  "signature": "alksdjhflkasjdfoiasjdfiasjdfoiasdj"}}`),
 		},
 		"unknown nonce": {
 			srcNonce: "999999",
@@ -86,7 +86,7 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 		msg := types.MsgValsetConfirm{}
 		msg.EthAddress = gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(i + 1)}, 20)).String()
 		msg.Nonce = uint64(1)
-		msg.Validator = addr.String()
+		msg.Orchestrator = addr.String()
 		msg.Signature = fmt.Sprintf("signature %d", i+1)
 		input.PeggyKeeper.SetValsetConfirm(ctx, msg)
 	}
@@ -99,9 +99,9 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			expResp: []byte(`[
-      {"eth_address":"0x0202020202020202020202020202020202020202", "nonce": "1", "validator": "cosmos1krtcsrxhadj54px0vy6j33pjuzcd3jj8kmsazv", "signature": "signature 2"},
-	  {"eth_address":"0x0303030303030303030303030303030303030303", "nonce": "1", "validator": "cosmos1u94xef3cp9thkcpxecuvhtpwnmg8mhlja8hzkd", "signature": "signature 3"},
-	  {"eth_address":"0x0101010101010101010101010101010101010101", "nonce": "1", "validator": "cosmos1u508cfnsk2nhakv80vdtq3nf558ngyvldkfjj9", "signature": "signature 1"}
+      {"eth_address":"0x0202020202020202020202020202020202020202", "nonce": "1", "orchestrator": "cosmos1krtcsrxhadj54px0vy6j33pjuzcd3jj8kmsazv", "signature": "signature 2"},
+	  {"eth_address":"0x0303030303030303030303030303030303030303", "nonce": "1", "orchestrator": "cosmos1u94xef3cp9thkcpxecuvhtpwnmg8mhlja8hzkd", "signature": "signature 3"},
+	  {"eth_address":"0x0101010101010101010101010101010101010101", "nonce": "1", "orchestrator": "cosmos1u508cfnsk2nhakv80vdtq3nf558ngyvldkfjj9", "signature": "signature 1"}
 ]`),
 		},
 		"unknown nonce": {
@@ -467,14 +467,14 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 		Nonce:         1,
 		TokenContract: tokenContract,
 		EthSigner:     "0xf35e2cc8e6523d683ed44870f5b7cc785051a77d",
-		Validator:     validatorAddr.String(),
+		Orchestrator:  validatorAddr.String(),
 		Signature:     "signature",
 	})
 
 	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract, input.PeggyKeeper)
 	require.NoError(t, err)
 
-	expectedJSON := []byte(`[{"eth_signer":"0xf35e2cc8e6523d683ed44870f5b7cc785051a77d", "nonce":"1", "signature":"signature", "token_contract":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "validator":"cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh"}]`)
+	expectedJSON := []byte(`[{"eth_signer":"0xf35e2cc8e6523d683ed44870f5b7cc785051a77d", "nonce":"1", "signature":"signature", "token_contract":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "orchestrator":"cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh"}]`)
 
 	assert.JSONEq(t, string(expectedJSON), string(batchConfirms), "json is equal")
 }
