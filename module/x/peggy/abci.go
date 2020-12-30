@@ -23,7 +23,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		// #1 condition
 		// We look through the full bonded validator set (not just the active set, include unbonding validators)
 		// and we slash users who haven't signed a valset that is currentHeight - signedBlocksWindow old
-		case uint64(ctx.BlockHeight())-params.SignedBlocksWindow > vs.Nonce:
+		case uint64(ctx.BlockHeight())-params.SignedValsetsWindow > vs.Nonce:
 			// first we need to see which validators in the active set
 			// haven't signed the valdiator set and slash them,
 			var toSlash []stakingtypes.Validator
@@ -64,7 +64,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
 	batches := k.GetOutgoingTxBatches(ctx)
 	for _, batch := range batches {
-		if uint64(ctx.BlockHeight())-params.SignedBlocksWindow > batch.Block {
+		if uint64(ctx.BlockHeight())-params.SignedBatchesWindow > batch.Block {
 			var toSlash []stakingtypes.Validator
 			confirms := k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)
 			for _, val := range currentBondedSet {
@@ -83,7 +83,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			for _, val := range toSlash {
 				cons, _ := val.GetConsAddr()
 				// TODO: make this a different slash fraction in the params
-				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionValset)
+				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionBatch)
 				k.StakingKeeper.Jail(ctx, cons)
 			}
 
@@ -120,7 +120,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 				validator, _ := sdk.ValAddressFromBech32(valaddr)
 				val := k.StakingKeeper.Validator(ctx, validator)
 				cons, _ := val.GetConsAddr()
-				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, validator), params.SlashFractionValset)
+				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, validator), params.SlashFractionConflictingClaim)
 				k.StakingKeeper.Jail(ctx, cons)
 			}
 		}

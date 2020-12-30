@@ -16,7 +16,7 @@ func TestValsetSlashing(t *testing.T) {
 
 	// This valset should be past the signed blocks window and trigger slashing
 	vs := pk.GetCurrentValset(ctx)
-	nonce := uint64(ctx.BlockHeight()) - (params.SignedBlocksWindow + 1)
+	nonce := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
 	vs.Nonce = nonce
 	pk.StoreValset(ctx, vs)
 	for i, val := range keeper.AccAddrs {
@@ -53,7 +53,7 @@ func TestBatchSlashing(t *testing.T) {
 		BatchNonce:    1,
 		Transactions:  []*types.OutgoingTransferTx{},
 		TokenContract: keeper.TokenContractAddrs[0],
-		Block:         uint64(ctx.BlockHeight() - int64(params.SignedBlocksWindow+1)),
+		Block:         uint64(ctx.BlockHeight() - int64(params.SignedBatchesWindow+1)),
 	}
 	pk.StoreBatchUnsafe(ctx, batch)
 

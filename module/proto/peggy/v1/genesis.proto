@@ -22,13 +22,27 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 message Params {
   option (gogoproto.stringer)  = false;
 
-  string peggy_id                = 1;
-  string contract_source_hash    = 2;
-  uint64 start_threshold         = 3;
-  string ethereum_address        = 4;
-  uint64 bridge_chain_id         = 5;
-  uint64 signed_blocks_window    = 6;
-  bytes  slash_fraction_valset = 7 [
+  string peggy_id                         = 1;
+  string contract_source_hash             = 2;
+  uint64 start_threshold                  = 3;
+  string ethereum_address                 = 4;
+  uint64 bridge_chain_id                  = 5;
+  uint64 signed_valsets_window            = 6;
+  uint64 signed_batches_window            = 7;
+  uint64 signed_claims_window             = 8;
+  bytes  slash_fraction_valset            = 9  [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  bytes  slash_fraction_batch             = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  bytes  slash_fraction_claim             = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  bytes  slash_fraction_conflicting_claim = 12 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];

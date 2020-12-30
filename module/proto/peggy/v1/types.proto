@@ -14,6 +14,7 @@ message BridgeValidator {
 message Valset {
   uint64                   nonce   = 1;
   repeated BridgeValidator members = 2;
+  uint64                   height  = 3;
 }
 
 // It's difficult to serialize and deserialize
@@ -22,8 +23,8 @@ message Valset {
 // and use it to store and then re-create a interface
 // object with all the same properties.
 message GenericClaim {
-  uint64  event_nonce = 1;
-  int32   claim_type = 2;
-  bytes   hash = 3;
+  uint64  event_nonce   = 1;
+  int32   claim_type    = 2;
+  bytes   hash          = 3;
   string  event_claimer = 4;
 }
