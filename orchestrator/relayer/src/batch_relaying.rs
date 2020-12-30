@@ -62,8 +62,14 @@ pub async fn relay_batches(
         our_ethereum_address,
         web3,
     )
-    .await
-    .expect("Failed to get batch nonce from Ethereum");
+    .await;
+    if latest_ethereum_batch.is_err() {
+        error!(
+            "Failed to get latest Ethereum batch with {:?}",
+            latest_ethereum_batch
+        );
+    }
+    let latest_ethereum_batch = latest_ethereum_batch.unwrap();
     let latest_cosmos_batch_nonce = oldest_signed_batch.clone().nonce;
     if latest_cosmos_batch_nonce > latest_ethereum_batch {
         info!(
