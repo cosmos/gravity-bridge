@@ -153,7 +153,7 @@ const maxValsetRequestsReturned = 5
 func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var counter int
 	var valReq []*types.Valset
-	keeper.IterateValsetRequest(ctx, func(_ []byte, val *types.Valset) bool {
+	keeper.IterateValsets(ctx, func(_ []byte, val *types.Valset) bool {
 		valReq = append(valReq, val)
 		counter++
 		return counter >= maxValsetRequestsReturned
@@ -177,7 +177,7 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 	}
 
 	var pendingValsetReq *types.Valset
-	keeper.IterateValsetRequest(ctx, func(_ []byte, val *types.Valset) bool {
+	keeper.IterateValsets(ctx, func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
 		foundConfirm := keeper.GetValsetConfirm(ctx, val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq

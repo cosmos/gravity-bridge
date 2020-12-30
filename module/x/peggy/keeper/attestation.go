@@ -45,6 +45,7 @@ func (k Keeper) storeClaim(ctx sdk.Context, claimType types.ClaimType, eventNonc
 	// We need to think this through more. This will be used for slashing later.
 	store := ctx.KVStore(k.storeKey)
 	cKey := types.GetClaimKey(claimType, eventNonce, validator, details)
+	// TODO: we need to store this claim here, need to change this index
 	store.Set(cKey, []byte{}) // empty as all payload is in the key already (no gas costs)
 	return nil
 }
@@ -153,6 +154,8 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 		)
 	} else {
 		commit() // persist transient storage
+
+		// TODO: after we commit, delete the outgoingtxbatch that this claim references
 	}
 }
 

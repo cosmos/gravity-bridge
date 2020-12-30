@@ -95,8 +95,8 @@ func (k Keeper) GetValsetRequest(ctx sdk.Context, nonce uint64) *types.Valset {
 	return &valset
 }
 
-// IterateValsetRequest retruns all valsetRequests
-func (k Keeper) IterateValsetRequest(ctx sdk.Context, cb func(key []byte, val *types.Valset) bool) {
+// IterateValsets retruns all valsetRequests
+func (k Keeper) IterateValsets(ctx sdk.Context, cb func(key []byte, val *types.Valset) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetRequestKey)
 	iter := prefixStore.ReverseIterator(nil, nil)
 	defer iter.Close()

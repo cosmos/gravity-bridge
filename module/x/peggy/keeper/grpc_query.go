@@ -51,7 +51,7 @@ func (k Keeper) ValsetConfirmsByNonce(c context.Context, req *types.QueryValsetC
 func (k Keeper) LastValsetRequests(c context.Context, req *types.QueryLastValsetRequestsRequest) (*types.QueryLastValsetRequestsResponse, error) {
 	var counter int
 	var valReq []*types.Valset
-	k.IterateValsetRequest(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
+	k.IterateValsets(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
 		valReq = append(valReq, val)
 		counter++
 		return counter >= maxValsetRequestsReturned
@@ -67,7 +67,7 @@ func (k Keeper) LastPendingValsetRequestByAddr(c context.Context, req *types.Que
 	}
 
 	var pendingValsetReq *types.Valset
-	k.IterateValsetRequest(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
+	k.IterateValsets(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
 		foundConfirm := k.GetValsetConfirm(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
