@@ -9,31 +9,37 @@ import (
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// params := k.GetParams(ctx)
 
-	// #1 condition
-	// TODO: slashing for lack of valset update signature submission
-	// 1. Get params and calculate (S = ctx.current_block - params.num_blocks_downtime)
-	// 2. Get the last Validator set request (ethereum signed validator set) with blockheight S< this is V
-	// 3. Check if any active validator at blockheight S or still bonded but not active validator at height S has not signed V
-	// 4. Slash if true
+	// downtimeBlock := ctx.BlockHeight() - int64(params.SignedBlocksWindow)
 
-	// *GOAL OF VALSET SLASHING* unbonding validators need to sign 1 update that does not include their key
+	// #1 condition
+	// We look through the full bonded set (not just the active set, include unbonding validators)
+	// and we slash users who haven't signed a valset that is >15hrs in blocks old
+	// k.IterateValsets()
+	// find last valset, k.GetCurrentValset.Diff(latest valset) if > %1 then we k.SetValsetRequest
+	// prune old valsets
+	// // k.IterateValsetConfirmByNonce()
+	// // Slash here
 
 	// #2 condition
-	// TODO: slashing for lack of batch signature submission
-	// 1. Get params and calculate (S = ctx.current_block - params.num_blocks_downtime)
-	// 2. Get the last batch set request (etherum signed batch set) with blockheight S< this is V
-	// 3. Check if any active validator at blockheight S or still bonded but not active valdiator at height S has not signed V
-	// 4. Slash if true
-
-	// *GOAL OF BATCH SLASHING* ensure that batch can be submitted, and if this doesn't occur, this doesn't
-	// trigger a correctness violation so long as the validator set gets updated
+	// We look through the full bonded set (not just the active set, include unbonding validators)
+	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
+	// k.IterateOutgoingTXBatches()
+	// if there are batches older than 15h that are confirmed, prune them from state
+	// // k.IterateBatchConfirmByNonceAndTokenContract()
 
 	// #3 condition
-	// TODO: oracle downtime slashing
-	// 1. Get params and calculate (S = ctx.current_block - params.num_blocks_downtime)
+	// Oracle events MsgDepositClaim, MsgWithdrawClaim
+	// Blocked on storing of the claim
 
-	// Stretch Goal
+	// #4 condition (stretch goal)
 	// TODO: lost eth key or delegate key
 	// 1. submit a message signed by the priv key to the chain and it slashes the validator who delegated to that key
-	return
+	// return
+
+	// stretch goal
+	// Trigger valset creation
+
+	// TODO: prune valsets older than one month
+	// TODO: prune outgoing tx batches while looping over them above, older than 15h and confirmed
+	// TODO: prune claims, attestations
 }
