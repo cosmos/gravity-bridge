@@ -166,6 +166,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 // SetAttestation sets the attestation in the store
 func (k Keeper) SetAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
 	store := ctx.KVStore(k.storeKey)
+	att.ClaimHash = claim.ClaimHash()
 	aKey := types.GetAttestationKey(att.EventNonce, claim)
 	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
 }
@@ -181,6 +182,42 @@ func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, details types
 	var att types.Attestation
 	k.cdc.MustUnmarshalBinaryBare(bz, &att)
 	return &att
+}
+
+// DeleteAttestation deletes an attestation given an event nonce and claim
+func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetAttestationKeyWithHash(att.EventNonce, att.ClaimHash))
+}
+
+// GetAttestationMapping returns a mapping of eventnonce -> attestations at that nonce
+func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.Attestation) {
+	k.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
+		if val, ok := out[att.EventNonce]; !ok {
+			out[att.EventNonce] = []types.Attestation{att}
+		} else {
+			out[att.EventNonce] = append(val, att)
+		}
+		return false
+	})
+	return
+}
+
+// IterateAttestaions iterates through all attestations
+func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attestation) bool) {
+	store := ctx.KVStore(k.storeKey)
+	prefix := []byte(types.OracleAttestationKey)
+	iter := store.Iterator(prefixRange(prefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		att := types.Attestation{}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &att)
+		// cb returns true to stop early
+		if cb(iter.Key(), att) {
+			return
+		}
+	}
 }
 
 // GetLastObservedEventNonce returns the latest observed event nonce

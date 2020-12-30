@@ -73,3 +73,46 @@ func TestCurrentValsetNormalization(t *testing.T) {
 		})
 	}
 }
+
+func TestAttestationIterator(t *testing.T) {
+	input := CreateTestEnv(t)
+	ctx := input.Context
+	// add some attestations to the store
+
+	att1 := &types.Attestation{
+		EventNonce: 1,
+		Observed:   true,
+		Votes:      []string{},
+	}
+	dep1 := &types.MsgDepositClaim{
+		EventNonce:     1,
+		TokenContract:  TokenContractAddrs[0],
+		Amount:         sdk.NewInt(100),
+		EthereumSender: EthAddrs[0].String(),
+		CosmosReceiver: AccAddrs[0].String(),
+		Orchestrator:   AccAddrs[0].String(),
+	}
+	att2 := &types.Attestation{
+		EventNonce: 2,
+		Observed:   true,
+		Votes:      []string{},
+	}
+	dep2 := &types.MsgDepositClaim{
+		EventNonce:     2,
+		TokenContract:  TokenContractAddrs[0],
+		Amount:         sdk.NewInt(100),
+		EthereumSender: EthAddrs[0].String(),
+		CosmosReceiver: AccAddrs[0].String(),
+		Orchestrator:   AccAddrs[0].String(),
+	}
+	input.PeggyKeeper.SetAttestation(ctx, att1, dep1)
+	input.PeggyKeeper.SetAttestation(ctx, att2, dep2)
+
+	atts := []types.Attestation{}
+	input.PeggyKeeper.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
+		atts = append(atts, att)
+		return false
+	})
+
+	require.Len(t, atts, 2)
+}

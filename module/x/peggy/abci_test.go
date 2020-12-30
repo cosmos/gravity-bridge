@@ -76,7 +76,7 @@ func TestBatchSlashing(t *testing.T) {
 	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	require.True(t, val.IsJailed())
 
-	// Ensure that the valset gets pruned properly
+	// Ensure that the batch gets pruned properly
 	batch = input.PeggyKeeper.GetOutgoingTXBatch(ctx, batch.TokenContract, batch.BatchNonce)
 	require.Nil(t, batch)
 }
@@ -90,7 +90,7 @@ func TestValsetEmission(t *testing.T) {
 	vs.Nonce = vs.Nonce - 1
 	delta := float64(types.BridgeValidators(vs.Members).TotalPower()) * 0.01
 	vs.Members[0].Power = uint64(float64(vs.Members[0].Power) - delta/2)
-	vs.Members[1].Power = uint64(float64(vs.Members[1].Power) - delta/2)
+	vs.Members[1].Power = uint64(float64(vs.Members[1].Power) + delta/2)
 	pk.StoreValset(ctx, vs)
 
 	// EndBlocker should set a new validator set

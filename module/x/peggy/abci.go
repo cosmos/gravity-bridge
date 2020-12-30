@@ -13,18 +13,16 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 
 	// valsets are sorted so the most recent one is first
-	for i, vs := range k.GetValsets(ctx) {
-		switch {
-		// on the latest validator set, check for change in power against
-		// current, and emit a new validator set if the change in power >1%
-		case i == 0:
-			if types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(vs.Members) > 0.01 {
-				k.SetValsetRequest(ctx)
-			}
+	valsets := k.GetValsets(ctx)
+	if len(valsets) == 0 {
+		k.SetValsetRequest(ctx)
+	}
 
-			// #1 condition
-			// We look through the full bonded validator set (not just the active set, include unbonding validators)
-			// and we slash users who haven't signed a valset that is currentHeight - signedBlocksWindow old
+	for i, vs := range valsets {
+		switch {
+		// #1 condition
+		// We look through the full bonded validator set (not just the active set, include unbonding validators)
+		// and we slash users who haven't signed a valset that is currentHeight - signedBlocksWindow old
 		case uint64(ctx.BlockHeight())-params.SignedBlocksWindow > vs.Nonce:
 			// first we need to see which validators in the active set
 			// haven't signed the valdiator set and slash them,
@@ -51,6 +49,13 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 			// then we prune the valset from state
 			k.DeleteValset(ctx, vs.Nonce)
+
+		// on the latest validator set, check for change in power against
+		// current, and emit a new validator set if the change in power >1%
+		case i == 0:
+			if types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(vs.Members) > 0.01 {
+				k.SetValsetRequest(ctx)
+			}
 		}
 	}
 
@@ -89,14 +94,40 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 	// #3 condition
 	// Oracle events MsgDepositClaim, MsgWithdrawClaim
-	// for _, val := range currentBondedSet {
-	// 	for _, claim := range k.GetClaimsByValidatorAndType(ctx, types.CLAIM_TYPE_DEPOSIT, val.GetOperator()) {
-	// 		claim.
-	// 	}
-	// 	for _, claim := range k.GetClaimsByValidatorAndType(ctx, types.CLAIM_TYPE_WITHDRAW, val.GetOperator()) {
+	attmap := k.GetAttestationMapping(ctx)
+	for _, atts := range attmap {
+		// Conflicting votes should be slashed
+		if len(atts) > 1 {
+			var (
+				toSlash []string
+				unObs   []types.Attestation
+			)
+			oneObserved := false
+			for _, att := range atts {
+				if att.Observed == true {
+					oneObserved = true
+					continue
+				}
+				unObs = append(unObs, att)
+			}
+			if oneObserved {
+				for _, att := range unObs {
+					toSlash = append(toSlash, att.Votes...)
+					k.DeleteAttestation(ctx, att)
+				}
+			}
+			for _, valaddr := range toSlash {
+				validator, _ := sdk.ValAddressFromBech32(valaddr)
+				val := k.StakingKeeper.Validator(ctx, validator)
+				cons, _ := val.GetConsAddr()
+				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, validator), params.SlashFractionValset)
+				k.StakingKeeper.Jail(ctx, cons)
+			}
+		}
 
-	// 	}
-	// }
+		// Pair tomorrow with Justin on slashing for not voting
+		// TODO: time out attestations
+	}
 	// Blocked on storing of the claim
 
 	// #4 condition (stretch goal)
