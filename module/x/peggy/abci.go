@@ -68,9 +68,9 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			for _, val := range currentBondedSet {
 				found := false
 				for _, conf := range confirms {
-					// TODO: may need to look up actual validator address
+					// TODO: double check this logic
 					confVal, _ := sdk.AccAddressFromBech32(conf.Orchestrator)
-					if confVal.Equals(val.GetOperator()) {
+					if k.GetOrchestratorValidator(ctx, confVal).Equals(val.GetOperator()) {
 						found = true
 						break
 					}
@@ -91,7 +91,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// Oracle events MsgDepositClaim, MsgWithdrawClaim
 	attmap := k.GetAttestationMapping(ctx)
 	for _, atts := range attmap {
-		// Conflicting votes should be slashed
+		// slash conflicting votes
 		if len(atts) > 1 {
 			var unObs []types.Attestation
 			oneObserved := false
@@ -104,7 +104,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			}
 			if oneObserved {
 				for _, att := range unObs {
-					// toSlash = append(toSlash, att.Votes...)
 					for _, valaddr := range att.Votes {
 						validator, _ := sdk.ValAddressFromBech32(valaddr)
 						val := k.StakingKeeper.Validator(ctx, validator)
@@ -117,10 +116,32 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			}
 		}
 
-		// Pair tomorrow with Justin on slashing for not voting
-		// TODO: time out attestations
+		if len(atts) == 1 {
+			att := atts[0]
+			signedWithinWindow := uint64(ctx.BlockHeight())-params.SignedClaimsWindow > att.Height
+			if !att.Observed {
+				// what to do if we have unobserved attestations that are past the signing window
+			}
+			if signedWithinWindow {
+				for _, bv := range currentBondedSet {
+					found := false
+					for _, val := range att.Votes {
+						confVal, _ := sdk.ValAddressFromBech32(val)
+						if confVal.Equals(bv.GetOperator()) {
+							found = true
+							break
+						}
+					}
+					if !found {
+						cons, _ := bv.GetConsAddr()
+						k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, bv.GetOperator()), params.SlashFractionClaim)
+						k.StakingKeeper.Jail(ctx, cons)
+					}
+				}
+				k.DeleteAttestation(ctx, att)
+			}
+		}
 	}
-	// Blocked on storing of the claim
 
 	// #4 condition (stretch goal)
 	// TODO: lost eth key or delegate key
