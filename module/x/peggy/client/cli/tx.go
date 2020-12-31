@@ -60,7 +60,7 @@ func CmdUpdateEthAddress() *cobra.Command {
 		Short: "Update your Ethereum address which will be used for signing executables for the `multisig set`",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.ReadTxCommandFlags(client.GetClientContextFromCmd(cmd), cmd.Flags())
+			cliCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -165,27 +165,31 @@ func CmdWithdrawToETH() *cobra.Command {
 		Short: "Adds a new entry to the transaction pool to withdraw an amount from the Ethereum bridge contract",
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.ReadTxCommandFlags(client.GetClientContextFromCmd(cmd), cmd.Flags())
+			cliCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 			cosmosAddr := cliCtx.GetFromAddress()
 
-			amount, err := sdk.ParseCoin(args[2])
+			amount, err := sdk.ParseCoinsNormalized(args[2])
 			if err != nil {
 				return sdkerrors.Wrap(err, "amount")
 			}
-			bridgeFee, err := sdk.ParseCoin(args[3])
+			bridgeFee, err := sdk.ParseCoinsNormalized(args[3])
 			if err != nil {
 				return sdkerrors.Wrap(err, "bridge fee")
+			}
+
+			if len(amount) > 1 || len(bridgeFee) > 1 {
+				return fmt.Errorf("coin amounts too long, expecting just 1 coin amount for both amount and bridgeFee")
 			}
 
 			// Make the message
 			msg := types.MsgSendToEth{
 				Sender:    cosmosAddr.String(),
 				EthDest:   args[1],
-				Amount:    amount,
-				BridgeFee: bridgeFee,
+				Amount:    amount[0],
+				BridgeFee: bridgeFee[0],
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
@@ -202,7 +206,7 @@ func CmdRequestBatch() *cobra.Command {
 		Short: "Build a new batch on the cosmos side for pooled withdrawal transactions",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.ReadTxCommandFlags(client.GetClientContextFromCmd(cmd), cmd.Flags())
+			cliCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
