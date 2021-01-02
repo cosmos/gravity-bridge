@@ -1,10 +1,15 @@
+use std::time::Duration;
+
 use clarity::{Address, Uint256};
 use cosmos_peggy::query::get_last_event_nonce;
 use deep_space::address::Address as CosmosAddress;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::types::{SendToCosmosEvent, TransactionBatchExecutedEvent};
+use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
+
+const RETRY_TIME: Duration = Duration::from_secs(5);
 
 /// This function retrieves the last event nonce this oracle has relayed to Cosmos
 /// it then uses the Ethereum indexes to determine what block the last entry
@@ -17,18 +22,18 @@ pub async fn get_last_checked_block(
     web3: &Web3,
 ) -> Uint256 {
     let mut grpc_client = grpc_client;
-    let latest_block = web3.eth_block_number().await.unwrap();
     const BLOCKS_TO_SEARCH: u128 = 50_000u128;
-    let mut current_block: Uint256 = latest_block.clone();
 
-    let last_event_nonce: Uint256 = get_last_event_nonce(&mut grpc_client, our_cosmos_address)
+    let latest_block = get_block_number_with_retry(web3).await;
+    let last_event_nonce = get_last_event_nonce_with_retry(&mut grpc_client, our_cosmos_address)
         .await
-        .unwrap()
         .into();
 
     if last_event_nonce == 0u8.into() {
-        return web3.eth_block_number().await.unwrap();
+        return latest_block;
     }
+
+    let mut current_block: Uint256 = latest_block.clone();
 
     while current_block.clone() > 0u8.into() {
         info!(
@@ -47,8 +52,7 @@ pub async fn get_last_checked_block(
                 vec![peggy_contract_address],
                 vec!["TransactionBatchExecutedEvent(uint256,address,uint256)"],
             )
-            .await
-            .unwrap();
+            .await;
         let all_send_to_cosmos_events = web3
             .check_for_events(
                 end_search.clone(),
@@ -56,8 +60,14 @@ pub async fn get_last_checked_block(
                 vec![peggy_contract_address],
                 vec!["SendToCosmosEvent(address,address,bytes32,uint256,uint256)"],
             )
-            .await
-            .unwrap();
+            .await;
+        if all_batch_events.is_err() || all_send_to_cosmos_events.is_err() {
+            error!("Failed to get blockchain events while resyncing, is your Eth node working?");
+            delay_for(RETRY_TIME).await;
+            continue;
+        }
+        let all_batch_events = all_batch_events.unwrap();
+        let all_send_to_cosmos_events = all_send_to_cosmos_events.unwrap();
 
         trace!(
             "Found events {:?} {:?}",
@@ -88,4 +98,29 @@ pub async fn get_last_checked_block(
     }
 
     panic!("Could not find the last event relayed by {}, Last Event nonce is {} but no event matching that could be found!", our_cosmos_address, last_event_nonce)
+}
+
+/// gets the current block number, no matter how long it takes
+async fn get_block_number_with_retry(web3: &Web3) -> Uint256 {
+    let mut res = web3.eth_block_number().await;
+    while res.is_err() {
+        error!("Failed to get latest block! Is your Eth node working?");
+        delay_for(RETRY_TIME).await;
+        res = web3.eth_block_number().await;
+    }
+    res.unwrap()
+}
+
+/// gets the last event nonce, no matter how long it takes.
+async fn get_last_event_nonce_with_retry(
+    client: &mut PeggyQueryClient<Channel>,
+    our_cosmos_address: CosmosAddress,
+) -> u64 {
+    let mut res = get_last_event_nonce(client, our_cosmos_address).await;
+    while res.is_err() {
+        error!("Failed to get last event nonce, is the Cosmos GRPC working?");
+        delay_for(RETRY_TIME).await;
+        res = get_last_event_nonce(client, our_cosmos_address).await;
+    }
+    res.unwrap()
 }

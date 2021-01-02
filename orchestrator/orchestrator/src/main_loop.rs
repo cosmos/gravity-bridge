@@ -126,7 +126,10 @@ pub async fn eth_oracle_main_loop(
         .await
         {
             Ok(new_block) => last_checked_block = new_block,
-            Err(e) => error!("Failed to get events for block range {:?}", e),
+            Err(e) => error!(
+                "Failed to get events for block range, Check your Eth node and Cosmos gRPC {:?}",
+                e
+            ),
         }
 
         // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
@@ -156,7 +159,7 @@ pub async fn eth_signer_main_loop(
     let mut grpc_client = grpc_client;
     let peggy_id = get_peggy_id(peggy_contract_address, our_ethereum_address, &web3).await;
     if peggy_id.is_err() {
-        error!("Failed to get PeggyID");
+        error!("Failed to get PeggyID, check your Eth node");
         return;
     }
     let peggy_id = peggy_id.unwrap();
@@ -193,7 +196,10 @@ pub async fn eth_signer_main_loop(
                 info!("Valset confirm result is {:?}", res);
             }
             Ok(None) => trace!("No valset waiting to be signed!"),
-            Err(e) => trace!("Failed to get unsigned valsets with {:?}", e),
+            Err(e) => trace!(
+                "Failed to get unsigned valsets, check your Cosmos gRPC {:?}",
+                e
+            ),
         }
 
         // sign the last unsigned batch, TODO check if we already have signed this
@@ -212,7 +218,10 @@ pub async fn eth_signer_main_loop(
                 info!("Batch confirm result is {:?}", res);
             }
             Ok(None) => trace!("No unsigned batches! Everything good!"),
-            Err(e) => trace!("Failed to get unsigned Batches with {:?}", e),
+            Err(e) => trace!(
+                "Failed to get unsigned Batches, check your Cosmos gRPC {:?}",
+                e
+            ),
         }
 
         // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
@@ -247,7 +256,7 @@ pub async fn valset_requester_loop(
         let latest_valsets = get_latest_valsets(&mut grpc_client).await;
         let current_valset = get_current_valset(&mut grpc_client).await;
         if latest_valsets.is_err() || current_valset.is_err() {
-            error!("Failed to get latest valsets!");
+            error!("Failed to get latest valsets!, Check your Cosmos gRPC");
             // todo does this happen when there have been no valsets? if so we need to request one
             // here
             return;
