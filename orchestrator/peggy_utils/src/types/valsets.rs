@@ -10,6 +10,16 @@ use std::{
     fmt,
 };
 
+/// The total power in the Peggy bridge is normalized to u32 max every
+/// time a validator set is created. This value of up to u32 max is then
+/// stored in a u64 to prevent overflow during computation.
+pub const TOTAL_PEGGY_POWER: u64 = u32::MAX as u64;
+
+/// takes in an amount of power in the peggy bridge, returns a percentage of total
+fn peggy_power_to_percent(input: u64) -> f32 {
+    (input as f32 / TOTAL_PEGGY_POWER as f32) * 100f32
+}
+
 /// the response we get when querying for a valset confirmation
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ValsetConfirmResponse {
@@ -121,9 +131,22 @@ impl Valset {
     pub fn order_valset_sigs(
         &self,
         signatures: &[ValsetConfirmResponse],
-    ) -> Result<Vec<PeggySignature>, JsonRpcError> {
+    ) -> Result<Vec<PeggySignature>, PeggyError> {
+        if signatures.is_empty() {
+            return Err(PeggyError::InsufficientVotingPowerToPass(
+                "No signatures!".to_string(),
+            ));
+        }
+        // if signatures is not empty this is safe.
+        let new_valset_nonce = signatures[0].nonce;
+
         let mut out = Vec::new();
         let signatures_hashmap = valset_confirms_to_hashmap(signatures);
+        let mut power_of_good_sigs = 0;
+        let mut power_of_unset_keys = 0;
+        let mut number_of_unset_key_validators = 0;
+        let mut power_of_nonvoters = 0;
+        let mut number_of_nonvoters = 0;
         for member in self.members.iter() {
             if let Some(eth_address) = member.eth_address {
                 if let Some(sig) = signatures_hashmap.get(&eth_address) {
@@ -134,7 +157,8 @@ impl Valset {
                         v: sig.eth_signature.v.clone(),
                         r: sig.eth_signature.r.clone(),
                         s: sig.eth_signature.s.clone(),
-                    })
+                    });
+                    power_of_good_sigs += member.power;
                 } else {
                     out.push(PeggySignature {
                         power: member.power,
@@ -143,6 +167,8 @@ impl Valset {
                         r: 0u8.into(),
                         s: 0u8.into(),
                     });
+                    power_of_nonvoters += member.power;
+                    number_of_nonvoters += 1;
                 }
             } else {
                 out.push(PeggySignature {
@@ -152,10 +178,42 @@ impl Valset {
                     r: 0u8.into(),
                     s: 0u8.into(),
                 });
+                power_of_unset_keys += member.power;
+                number_of_unset_key_validators += 1;
             }
         }
 
-        Ok(out)
+        let num_validators = self.members.len();
+        // now that we have collected the signatures we can determine if the measure has the votes to pass
+        // and error early if it does not, otherwise the user will pay fees for a transaction that will
+        // just throw
+        if peggy_power_to_percent(power_of_good_sigs) < 66f32 {
+            let message = format!(
+                "
+                Valset {} has {}/{} or {:.2}% power voting! Can not execute on Ethereum!
+                {}/{} validators have unset Ethereum keys representing {}/{} or {:.2}% of the power required
+                {}/{} validators have Ethereum keys set but have not voted representing {}/{} or {:.2}% of the power required
+                The bridge will remain halted until this issue is resolved.",
+                new_valset_nonce,
+                power_of_good_sigs,
+                TOTAL_PEGGY_POWER,
+                peggy_power_to_percent(power_of_good_sigs),
+                number_of_unset_key_validators,
+                num_validators,
+                power_of_unset_keys,
+                TOTAL_PEGGY_POWER,
+                peggy_power_to_percent(power_of_unset_keys),
+                number_of_nonvoters,
+                num_validators,
+                power_of_nonvoters,
+                TOTAL_PEGGY_POWER,
+                peggy_power_to_percent(power_of_nonvoters),
+            );
+            error!("{}", message);
+            Err(PeggyError::InsufficientVotingPowerToPass(message))
+        } else {
+            Ok(out)
+        }
     }
 
     /// combines the provided signatures with the valset ensuring that ordering and signature data is correct
@@ -163,9 +221,23 @@ impl Valset {
     pub fn order_batch_sigs(
         &self,
         signatures: &[BatchConfirmResponse],
-    ) -> Result<Vec<PeggySignature>, JsonRpcError> {
+    ) -> Result<Vec<PeggySignature>, PeggyError> {
+        if signatures.is_empty() {
+            return Err(PeggyError::InsufficientVotingPowerToPass(
+                "No signatures!".to_string(),
+            ));
+        }
+        // if the signatures are not empty this is safe
+        let batch_nonce = signatures[0].nonce;
+        let batch_erc20 = signatures[0].token_contract;
+
         let mut out = Vec::new();
         let signatures_hashmap = batch_confirms_to_hashmap(signatures);
+        let mut power_of_good_sigs = 0;
+        let mut power_of_unset_keys = 0;
+        let mut number_of_unset_key_validators = 0;
+        let mut power_of_nonvoters = 0;
+        let mut number_of_nonvoters = 0;
         for member in self.members.iter() {
             if let Some(eth_address) = member.eth_address {
                 if let Some(sig) = signatures_hashmap.get(&eth_address) {
@@ -176,7 +248,8 @@ impl Valset {
                         v: sig.eth_signature.v.clone(),
                         r: sig.eth_signature.r.clone(),
                         s: sig.eth_signature.s.clone(),
-                    })
+                    });
+                    power_of_good_sigs += member.power;
                 } else {
                     out.push(PeggySignature {
                         power: member.power,
@@ -185,6 +258,8 @@ impl Valset {
                         r: 0u8.into(),
                         s: 0u8.into(),
                     });
+                    power_of_nonvoters += member.power;
+                    number_of_nonvoters += 1;
                 }
             } else {
                 out.push(PeggySignature {
@@ -194,10 +269,43 @@ impl Valset {
                     r: 0u8.into(),
                     s: 0u8.into(),
                 });
+                power_of_unset_keys += member.power;
+                number_of_unset_key_validators += 1;
             }
         }
 
-        Ok(out)
+        let num_validators = self.members.len();
+        // now that we have collected the signatures we can determine if the measure has the votes to pass
+        // and error early if it does not, otherwise the user will pay fees for a transaction that will
+        // just throw
+        if peggy_power_to_percent(power_of_good_sigs) < 66f32 {
+            let message = format!(
+                "
+                Batch {} for token {} has {}/{} or {:.2}% power voting! Can not execute on Ethereum!
+                {}/{} validators have unset Ethereum keys representing {}/{} or {:.2}% of the power required
+                {}/{} validators have Ethereum keys set but have not voted representing {}/{} or {:.2}% of the power required
+                The bridge will remain halted until this issue is resolved.",
+                batch_nonce,
+                batch_erc20,
+                power_of_good_sigs,
+                TOTAL_PEGGY_POWER,
+                peggy_power_to_percent(power_of_good_sigs),
+                number_of_unset_key_validators,
+                num_validators,
+                power_of_unset_keys,
+                TOTAL_PEGGY_POWER,
+                peggy_power_to_percent(power_of_unset_keys),
+                number_of_nonvoters,
+                num_validators,
+                power_of_nonvoters,
+                TOTAL_PEGGY_POWER,
+                peggy_power_to_percent(power_of_nonvoters),
+            );
+            error!("{}", message);
+            Err(PeggyError::InsufficientVotingPowerToPass(message))
+        } else {
+            Ok(out)
+        }
     }
 
     /// A utility function to provide a HashMap of members for easy lookups
@@ -333,7 +441,7 @@ impl PartialOrd for ValsetMember {
 }
 
 impl ValsetMember {
-    fn display_vec(input: &[ValsetMember]) -> String {
+    pub fn display_vec(input: &[ValsetMember]) -> String {
         let mut out = String::new();
         for val in input.iter() {
             out += &val.to_string()

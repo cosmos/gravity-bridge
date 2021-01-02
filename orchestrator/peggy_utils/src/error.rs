@@ -24,6 +24,7 @@ pub enum PeggyError {
     TimeoutError,
     InvalidEventLogError(String),
     CosmosgRPCError(Status),
+    InsufficientVotingPowerToPass(String),
 }
 
 impl fmt::Display for PeggyError {
@@ -46,6 +47,9 @@ impl fmt::Display for PeggyError {
             PeggyError::InvalidEventLogError(val) => write!(f, "InvalidEvent: {}", val),
             PeggyError::EthereumContractError(val) => {
                 write!(f, "Contract operation failed: {}", val)
+            }
+            PeggyError::InsufficientVotingPowerToPass(val) => {
+                write!(f, "{}", val)
             }
         }
     }
