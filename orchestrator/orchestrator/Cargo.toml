@@ -45,4 +45,4 @@ openssl-probe = "0.1"
 # this crate. This allows for easy cross compiled builds because the 'vendored'
 # feature includes it's own OpenSSL version that's compiled on the fly
 # If ANY crate in this workspace has this it will work for all of them.
-openssl = {version = "0.10", features = ["vendored"], optional = true}
+openssl = {version = "0.10", features = ["vendored"]}
