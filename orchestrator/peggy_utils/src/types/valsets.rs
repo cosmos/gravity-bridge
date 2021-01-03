@@ -341,7 +341,7 @@ impl Valset {
     /// side. In theory an error here, if unnoticed for long enough, could allow funds
     /// to be stolen from the bridge without the validators in question still having stake
     /// to lose.
-    /// Returned value must be less than one
+    /// Returned value must be less than or equal to two
     pub fn power_diff(&self, other: &Valset) -> f32 {
         let mut total_power_diff = 0u64;
         let a = self.to_hashmap();
@@ -375,15 +375,6 @@ impl Valset {
             } else {
                 total_power_diff += power_b - power_a;
             }
-        }
-
-        // if this is true then something has failed in the Cosmos module. Power is supposed to be allocated by dividing
-        // between members at a resolution of u32 MAX anything greater than this value risks proposals passing with less
-        // than the desired amount of power. For example if the Cosmos module switched to using u64 max as the cap but the
-        // contract stayed the same (it always will without being redeployed the 'proposal pass' value is hardcoded on deploy)
-        // then a vote could pass with less than 1% of all power.
-        if total_power_diff > u32::MAX.into() {
-            panic!("Power in bridge greater than u32 MAX! Bridge may be open to highjacking! Take action immediately!");
         }
 
         (total_power_diff as f32) / (u32::MAX as f32)
