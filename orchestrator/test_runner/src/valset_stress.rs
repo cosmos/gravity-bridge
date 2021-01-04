@@ -38,7 +38,7 @@ pub async fn validator_set_stress_test(
     // TODO have some external system send hundreds of valset updates in parallel
     // to do this you need to generate a non-orchestrator address, send it funds
     // then use that to send the requests or your sequence gets all messed up
-    for _ in 0u32..25 {
+    for _ in 0u32..10 {
         test_valset_update(&contact, &web30, &keys, peggy_address, fee.clone()).await;
     }
 }

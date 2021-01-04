@@ -117,7 +117,6 @@ pub async fn main() {
         } else if test_type == "BATCH_STRESS" {
             transaction_stress_test(
                 &web30,
-                grpc_client,
                 &contact,
                 keys,
                 peggy_address,

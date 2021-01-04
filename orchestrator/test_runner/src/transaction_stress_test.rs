@@ -12,7 +12,6 @@ use orchestrator::main_loop::orchestrator_main_loop;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use rand::Rng;
 use std::time::{Duration, Instant};
-use tonic::transport::Channel;
 use web30::client::Web3;
 
 const TIMEOUT: Duration = Duration::from_secs(120);
@@ -33,7 +32,6 @@ pub struct BridgeUserKey {
 #[allow(clippy::too_many_arguments)]
 pub async fn transaction_stress_test(
     web30: &Web3,
-    grpc_client: PeggyQueryClient<Channel>,
     contact: &Contact,
     keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
     peggy_address: EthAddress,
@@ -41,8 +39,6 @@ pub async fn transaction_stress_test(
     erc20_addresses: Vec<EthAddress>,
     fee: Coin,
 ) {
-    let mut grpc_client = grpc_client;
-
     // start orchestrators
     for (c_key, e_key) in keys.iter() {
         info!("Spawning Orchestrator");
@@ -62,9 +58,9 @@ pub async fn transaction_stress_test(
     // send one update so we don't get warnings about there being no valsets
     test_valset_update(&contact, &web30, &keys, peggy_address, fee.clone()).await;
 
-    // Generate 1000 user keys to send ETH and multiple types of tokens
+    // Generate 100 user keys to send ETH and multiple types of tokens
     let mut user_keys = Vec::new();
-    for _ in 0..1000 {
+    for _ in 0..100 {
         let mut rng = rand::thread_rng();
         let secret: [u8; 32] = rng.gen();
         let cosmos_key = CosmosPrivateKey::from_secret(&secret);
