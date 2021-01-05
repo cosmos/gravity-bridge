@@ -9,9 +9,6 @@ service Msg {
   rpc ValsetConfirm(MsgValsetConfirm) returns(MsgValsetConfirmResponse) {
     option (google.api.http).post = "/peggy/v1/valset_confirm";
   }
-  rpc SetEthAddress(MsgSetEthAddress) returns(MsgSetEthAddressResponse) {
-    option (google.api.http).post = "/peggy/v1/set_eth_address";
-  }
   rpc SendToEth(MsgSendToEth) returns(MsgSendToEthResponse) {
     option (google.api.http).post = "/peggy/v1/send_to_eth";
   }
@@ -42,9 +39,13 @@ service Msg {
 // ORCHESTRATOR
 // The orchestrator field is a cosmos1... string  (i.e. sdk.AccAddress) that 
 // references the key that is being delegated to
+// ETH_ADDRESS
+// This is a hex encoded 0x Ethereum public key that will be used by this validator
+// on Ethereum
 message MsgSetOrchestratorAddress {
   string validator = 1;
   string orchestrator  = 2;
+  string eth_address   = 3;
 }
 
 message MsgSetOrchestratorAddressResponse {}
@@ -72,21 +73,6 @@ message MsgValsetConfirm {
 }
 
 message MsgValsetConfirmResponse {}
-
-// SetEthAddress
-// This is used by the validators to set the Ethereum address that represents
-// them on the Ethereum side of the bridge. They must sign their Cosmos address
-// using the Ethereum address they have submitted. Like ValsetResponse this
-// message can in theory be submitted by anyone, but only the current validator
-// sets submissions carry any weight.
-// -------------
-message MsgSetEthAddress {
-  string address   = 1;
-  string validator = 2;
-  string signature = 3;
-}
-
-message MsgSetEthAddressResponse {}
 
 // MsgSendToEth
 // This is the message that a user calls when they want to bridge an asset

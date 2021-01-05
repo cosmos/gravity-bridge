@@ -6,13 +6,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
 var (
 	_ sdk.Msg = &MsgValsetConfirm{}
-	_ sdk.Msg = &MsgSetEthAddress{}
 	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
@@ -20,10 +18,11 @@ var (
 )
 
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
-func NewMsgSetOrchestratorAddress(val sdk.ValAddress, oper sdk.AccAddress) *MsgSetOrchestratorAddress {
+func NewMsgSetOrchestratorAddress(val sdk.ValAddress, oper sdk.AccAddress, eth string) *MsgSetOrchestratorAddress {
 	return &MsgSetOrchestratorAddress{
 		Validator:    val.String(),
 		Orchestrator: oper.String(),
+		EthAddress:   eth,
 	}
 }
 
@@ -40,6 +39,9 @@ func (msg *MsgSetOrchestratorAddress) ValidateBasic() (err error) {
 	}
 	if _, err = sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
+	}
+	if err := ValidateEthAddress(msg.EthAddress); err != nil {
+		return sdkerrors.Wrap(err, "ethereum address")
 	}
 	return nil
 }
@@ -94,58 +96,6 @@ func (msg *MsgValsetConfirm) GetSignBytes() []byte {
 func (msg *MsgValsetConfirm) GetSigners() []sdk.AccAddress {
 	// TODO: figure out how to convert between AccAddress and ValAddress properly
 	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{acc}
-}
-
-// NewMsgSetEthAddress return a new msgSetEthAddress
-// TODO: figure out if we need sdk.ValAddress here
-func NewMsgSetEthAddress(address string, validator sdk.ValAddress, signature string) *MsgSetEthAddress {
-	return &MsgSetEthAddress{
-		Address:   address,
-		Validator: validator.String(),
-		Signature: signature,
-	}
-}
-
-// Route should return the name of the module
-func (msg MsgSetEthAddress) Route() string { return RouterKey }
-
-// Type should return the action
-func (msg MsgSetEthAddress) Type() string { return "set_eth_address" }
-
-// ValidateBasic runs stateless checks on the message
-// Checks if the Eth address is valid, and whether the Eth address has signed the validator address
-// (proving control of the Eth address)
-func (msg MsgSetEthAddress) ValidateBasic() error {
-	val, err := sdk.ValAddressFromBech32(msg.Validator)
-	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
-	}
-	if err := ValidateEthAddress(msg.Address); err != nil {
-		return sdkerrors.Wrap(err, "ethereum address")
-	}
-	sigBytes, err := hex.DecodeString(msg.Signature)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
-	}
-	err = ValidateEthereumSignature(crypto.Keccak256(val.Bytes()), sigBytes, msg.Address)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "digest: %x\nsig: %x\naddress %s\nerror: %s\n", crypto.Keccak256(val.Bytes()), msg.Signature, msg.Address, err.Error())
-	}
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgSetEthAddress) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgSetEthAddress) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Validator)
 	if err != nil {
 		panic(err)
 	}

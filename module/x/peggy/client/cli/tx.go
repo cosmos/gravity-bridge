@@ -29,7 +29,6 @@ func GetTxCmd(storeKey string) *cobra.Command {
 	peggyTxCmd.AddCommand([]*cobra.Command{
 		CmdWithdrawToETH(),
 		CmdRequestBatch(),
-		CmdUpdateEthAddress(),
 		GetUnsafeTestingCmd(),
 	}...)
 
@@ -50,52 +49,6 @@ func GetUnsafeTestingCmd() *cobra.Command {
 	}...)
 
 	return testingTxCmd
-}
-
-// GetCmdUpdateEthAddress updates the network about the eth address that you have on record.
-func CmdUpdateEthAddress() *cobra.Command {
-	return &cobra.Command{
-		Use:   "update-eth-addr [eth_private_key]",
-		Short: "Update your Ethereum address which will be used for signing executables for the `multisig set`",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			cosmosAddr := cliCtx.GetFromAddress()
-
-			privKeyString := args[0][2:]
-
-			// Make Eth Signature over validator address
-			privateKey, err := ethCrypto.HexToECDSA(privKeyString)
-			if err != nil {
-				return err
-			}
-
-			hash := ethCrypto.Keccak256(cosmosAddr.Bytes())
-			signature, err := types.NewEthereumSignature(hash, privateKey)
-			if err != nil {
-				return sdkerrors.Wrap(err, "signing cosmos address with Ethereum key")
-			}
-			// You've got to do all this to get an Eth address from the private key
-			publicKey := privateKey.Public()
-			publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-			if !ok {
-				return sdkerrors.Wrap(err, "casting public key to ECDSA")
-			}
-			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA)
-
-			msg := types.NewMsgSetEthAddress(ethAddress.String(), sdk.ValAddress(cosmosAddr), hex.EncodeToString(signature))
-			err = msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
-		},
-	}
 }
 
 func CmdUnsafeETHPrivKey() *cobra.Command {

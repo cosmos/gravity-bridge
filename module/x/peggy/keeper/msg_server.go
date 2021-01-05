@@ -24,8 +24,13 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 var _ types.MsgServer = msgServer{}
 
 func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOrchestratorAddress) (*types.MsgSetOrchestratorAddressResponse, error) {
+	// ensure that this passes validation
+	err := msg.ValidateBasic()
+	if err != nil {
+		return nil, err
+	}
+
 	ctx := sdk.UnwrapSDKContext(c)
-	// NOTE: we can ignore errors here because this is already checked in validate basic
 	val, _ := sdk.ValAddressFromBech32(msg.Validator)
 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 
@@ -34,8 +39,14 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, val.String())
 	}
 
+	// TODO consider impact of maliciously setting duplicate delegate
+	// addresses since no signatures from the private keys of these addresses
+	// are required for this message it could be sent in a hostile way.
+
 	// set the orchestrator address
 	k.SetOrchestratorValidator(ctx, val, orch)
+	// set the ethereum address
+	k.Keeper.SetEthAddress(ctx, val, msg.EthAddress)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -100,24 +111,6 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 	)
 
 	return &types.MsgValsetConfirmResponse{}, nil
-}
-
-// SetEthAddress handles MsgSetEthAddress
-// TODO: check msgValsetConfirm to have an Orchestrator field instead of a Validator field
-func (k msgServer) SetEthAddress(c context.Context, msg *types.MsgSetEthAddress) (*types.MsgSetEthAddressResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-	valaddr, _ := sdk.ValAddressFromBech32(msg.Validator)
-	validator := k.GetOrchestratorValidator(ctx, sdk.AccAddress(valaddr))
-	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
-	}
-
-	k.Keeper.SetEthAddress(ctx, validator, msg.Address)
-	return &types.MsgSetEthAddressResponse{}, nil
 }
 
 // SendToEth handles MsgSendToEth
