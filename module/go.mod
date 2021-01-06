@@ -1,6 +1,6 @@
 module github.com/althea-net/peggy/module
 
-go 1.13
+go 1.15
 
 require (
 	github.com/cosmos/cosmos-sdk v0.40.0-rc5
