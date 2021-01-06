@@ -1,7 +1,7 @@
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
-use cosmos_peggy::send::update_peggy_eth_address;
+use cosmos_peggy::send::update_peggy_delegate_addresses;
 use cosmos_peggy::utils::wait_for_next_cosmos_block;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
@@ -86,9 +86,10 @@ pub async fn deploy_contracts(
             e_key.to_public_key().unwrap(),
             c_key.to_public_key().unwrap().to_address(),
         );
-        updates.push(update_peggy_eth_address(
+        updates.push(update_peggy_delegate_addresses(
             &contact,
-            *e_key,
+            e_key.to_public_key().unwrap(),
+            c_key.to_public_key().unwrap().to_address(),
             *c_key,
             fee.clone(),
         ));

@@ -9,15 +9,18 @@ use std::time::Duration;
 
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
-use cosmos_peggy::send::update_peggy_eth_address;
-use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
+use cosmos_peggy::send::update_peggy_delegate_addresses;
+use deep_space::{
+    coin::Coin, private_key::PrivateKey as CosmosPrivateKey, utils::bytes_to_hex_str,
+};
 use docopt::Docopt;
 use rand::{thread_rng, Rng};
 use url::Url;
 
 #[derive(Debug, Deserialize)]
 struct Args {
-    flag_cosmos_phrase: String,
+    flag_validator_phrase: String,
+    flag_cosmos_phrase: Option<String>,
     flag_ethereum_key: Option<String>,
     flag_cosmos_rpc: String,
     flag_fees: String,
@@ -28,8 +31,9 @@ lazy_static! {
         "Usage: {} --cosmos-phrase=<key> [--ethereum-key=<key>] --cosmos-rpc=<url> --fees=<denom>
         Options:
             -h --help                     Show this screen.
-            --cosmos-phrase=<ckey>    The Cosmos private key of the validator. Must be saved when you generate your key
+            --validator-phrase=<vkey>    The Cosmos private key of the validator. Must be saved when you generate your key
             --ethereum-key=<ekey>     (Optional) The Ethereum private key to register, will be generated if not provided
+            --cosmos-phrase=<ckey>    (Optional) The phrase for the Cosmos key to register, will be generated if not provided.
             --cosmos-rpc=<curl>       The Cosmos Legacy RPC url, usually the validator. This will need to be manually enabled
             --fees=<denom>            The Cosmos Denom in which to pay Cosmos chain fees
         About:
@@ -57,8 +61,21 @@ async fn main() {
     let args: Args = Docopt::new(USAGE.as_str())
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
-    let cosmos_key = CosmosPrivateKey::from_phrase(&args.flag_cosmos_phrase, "")
+    let validator_key = CosmosPrivateKey::from_phrase(&args.flag_validator_phrase, "")
         .expect("Failed to parse validator key");
+    let cosmos_key = if let Some(cosmos_phrase) = args.flag_cosmos_phrase {
+        CosmosPrivateKey::from_phrase(&cosmos_phrase, "").expect("Failed to parse cosmos key")
+    } else {
+        let mut rng = thread_rng();
+        let key_bytes: [u8; 32] = rng.gen();
+        let key = CosmosPrivateKey::from_secret(&key_bytes);
+        println!(
+            "No Cosmos key provided, your generated key is {} -> {}",
+            bytes_to_hex_str(&key_bytes),
+            key.to_public_key().unwrap().to_address()
+        );
+        key
+    };
     let ethereum_key = if let Some(key) = args.flag_ethereum_key {
         key.parse().expect("Invalid Ethereum Private key!")
     } else {
@@ -83,9 +100,17 @@ async fn main() {
         amount: 1u64.into(),
     };
 
-    update_peggy_eth_address(&contact, ethereum_key, cosmos_key, fee.clone())
-        .await
-        .expect("Failed to update Eth address");
+    let ethereum_address = ethereum_key.to_public_key().unwrap();
+    let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
+    update_peggy_delegate_addresses(
+        &contact,
+        ethereum_address,
+        cosmos_address,
+        validator_key,
+        fee.clone(),
+    )
+    .await
+    .expect("Failed to update Eth address");
 
     let eth_address = ethereum_key.to_public_key().unwrap();
     let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();

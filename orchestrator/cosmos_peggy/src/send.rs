@@ -4,6 +4,7 @@ use clarity::PrivateKey as EthPrivateKey;
 use contact::jsonrpc::error::JsonRpcError;
 use contact::types::TXSendResponse;
 use contact::{client::Contact, utils::maybe_get_optional_tx_info};
+use deep_space::address::Address;
 use deep_space::private_key::PrivateKey;
 use deep_space::stdfee::StdFee;
 use deep_space::stdsignmsg::StdSignMsg;
@@ -14,13 +15,20 @@ use peggy_utils::types::*;
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
-pub async fn update_peggy_eth_address(
+pub async fn update_peggy_delegate_addresses(
     contact: &Contact,
-    eth_private_key: EthPrivateKey,
+    delegate_eth_address: EthAddress,
+    delegate_cosmos_address: Address,
     private_key: PrivateKey,
     fee: Coin,
 ) -> Result<TXSendResponse, JsonRpcError> {
-    trace!("Updating Peggy ETH address");
+    trace!("Updating Peggy Delegate addresses");
+    let our_valoper_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address()
+        .to_bech32("cosmosvaloper")
+        .unwrap();
     let our_address = private_key
         .to_public_key()
         .expect("Invalid private key!")
@@ -29,14 +37,6 @@ pub async fn update_peggy_eth_address(
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, &contact).await?;
     trace!("got optional tx info");
 
-    let eth_address = eth_private_key.to_public_key().unwrap();
-    let eth_signature = eth_private_key.sign_ethereum_msg(our_address.as_bytes());
-    trace!(
-        "sig: {} address: {}",
-        clarity::utils::bytes_to_hex_str(&eth_signature.to_bytes()),
-        clarity::utils::bytes_to_hex_str(eth_address.as_bytes())
-    );
-
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
         account_number: tx_info.account_number,
@@ -45,51 +45,18 @@ pub async fn update_peggy_eth_address(
             amount: vec![fee],
             gas: 500_000u64.into(),
         },
-        msgs: vec![PeggyMsg::SetEthAddressMsg(SetEthAddressMsg {
-            eth_address,
-            validator: our_address,
-            eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
-        })],
+        msgs: vec![PeggyMsg::SetOrchestratorAddressMsg(
+            SetOrchestratorAddressMsg {
+                eth_address: delegate_eth_address,
+                validator: our_valoper_address,
+                orchestrator: delegate_cosmos_address,
+            },
+        )],
         memo: String::new(),
     };
 
     let tx = private_key
         .sign_std_msg(std_sign_msg, TransactionSendType::Block)
-        .unwrap();
-
-    contact.retry_on_block(tx).await
-}
-
-/// Send a transaction requesting that a valset be formed for a given block
-/// height
-pub async fn send_valset_request(
-    contact: &Contact,
-    private_key: PrivateKey,
-    fee: Coin,
-) -> Result<TXSendResponse, JsonRpcError> {
-    let our_address = private_key
-        .to_public_key()
-        .expect("Invalid private key!")
-        .to_address();
-
-    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, &contact).await?;
-
-    let std_sign_msg = StdSignMsg {
-        chain_id: tx_info.chain_id,
-        account_number: tx_info.account_number,
-        sequence: tx_info.sequence,
-        fee: StdFee {
-            amount: vec![fee],
-            gas: 500_000u64.into(),
-        },
-        msgs: vec![PeggyMsg::ValsetRequestMsg(ValsetRequestMsg {
-            requester: our_address,
-        })],
-        memo: String::new(),
-    };
-
-    let tx = private_key
-        .sign_std_msg(std_sign_msg.clone(), TransactionSendType::Block)
         .unwrap();
 
     contact.retry_on_block(tx).await
