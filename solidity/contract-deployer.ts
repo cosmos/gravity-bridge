@@ -140,7 +140,7 @@ async function deploy() {
 
   // 66% of uint32_max
   let vote_power = 2834678415;
-  if (powers_sum < 2834678415) {
+  if (powers_sum < vote_power) {
     console.log("Refusing to deploy! Incorrect power!")
     exit(1)
   }
