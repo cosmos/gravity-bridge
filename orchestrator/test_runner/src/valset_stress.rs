@@ -3,7 +3,6 @@ use actix::Arbiter;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
-use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use orchestrator::main_loop::orchestrator_main_loop;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
@@ -16,7 +15,6 @@ pub async fn validator_set_stress_test(
     keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
     peggy_address: EthAddress,
     test_token_name: String,
-    fee: Coin,
 ) {
     // start orchestrators
     for (c_key, e_key) in keys.iter() {
@@ -39,6 +37,6 @@ pub async fn validator_set_stress_test(
     // to do this you need to generate a non-orchestrator address, send it funds
     // then use that to send the requests or your sequence gets all messed up
     for _ in 0u32..10 {
-        test_valset_update(&contact, &web30, &keys, peggy_address, fee.clone()).await;
+        test_valset_update(&web30, &keys, peggy_address).await;
     }
 }
