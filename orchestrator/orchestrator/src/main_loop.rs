@@ -7,15 +7,12 @@ use clarity::PrivateKey as EthPrivateKey;
 use clarity::{address::Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::{
-    query::{
-        get_current_valset, get_latest_valsets, get_oldest_unsigned_transaction_batch,
-        get_oldest_unsigned_valset,
-    },
-    send::{send_batch_confirm, send_valset_confirm, send_valset_request},
+    query::{get_oldest_unsigned_transaction_batch, get_oldest_unsigned_valset},
+    send::{send_batch_confirm, send_valset_confirm},
 };
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_peggy::utils::get_peggy_id;
-use futures::future::join4;
+use futures::future::join3;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use relayer::main_loop::relayer_main_loop;
 use std::time::Duration;
@@ -71,8 +68,7 @@ pub async fn orchestrator_main_loop(
         grpc_client.clone(),
         peggy_contract_address,
     );
-    let d = valset_requester_loop(cosmos_key, contact, grpc_client, fee);
-    join4(a, b, c, d).await;
+    join3(a, b, c).await;
 }
 
 /// This function is responsible for making sure that Ethereum events are retrieved from the Ethereum blockchain
@@ -222,56 +218,6 @@ pub async fn eth_signer_main_loop(
                 "Failed to get unsigned Batches, check your Cosmos gRPC {:?}",
                 e
             ),
-        }
-
-        // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
-        // this is not required for any specific reason. In fact we expect and plan for
-        // the timing being off significantly
-        let elapsed = Instant::now() - loop_start;
-        if elapsed < LOOP_SPEED {
-            delay_for(LOOP_SPEED - elapsed).await;
-        }
-    }
-}
-
-/// This loop doesn't have a formal role per say, anyone can request a valset
-/// but there does need to be some strategy to ensure requests are made. Having it
-/// be a function of the orchestrator makes a lot of sense as they are already online
-/// and have all the required funds, keys, and rpc servers setup
-///
-/// Exactly how to balance optimizing this versus testing is an interesting discussion
-/// in testing we want to make sure requests are made without any powers changing on the chain
-/// just to simplify the test environment. But in production that's somewhat wasteful. What this
-/// routine does it check the current valset versus the last requested valset, if power has changed
-/// significantly we send in a request.
-pub async fn valset_requester_loop(
-    cosmos_key: CosmosPrivateKey,
-    contact: Contact,
-    grpc_client: PeggyQueryClient<Channel>,
-    fee: Coin,
-) {
-    let mut grpc_client = grpc_client;
-    loop {
-        let loop_start = Instant::now();
-        let latest_valsets = get_latest_valsets(&mut grpc_client).await;
-        let current_valset = get_current_valset(&mut grpc_client).await;
-        if latest_valsets.is_err() || current_valset.is_err() {
-            error!("Failed to get latest valsets!, Check your Cosmos gRPC");
-            // todo does this happen when there have been no valsets? if so we need to request one
-            // here
-            return;
-        }
-        let latest_valsets = latest_valsets.unwrap();
-        let current_valset = current_valset.unwrap();
-        if latest_valsets.is_empty() {
-            let _ = send_valset_request(&contact, cosmos_key, fee.clone()).await;
-        } else {
-            // if latest_valsets is not empty it has at least one entry
-            let power_diff = current_valset.power_diff(&latest_valsets[0]);
-            // if the power difference is more than 1% different than the last valset
-            if power_diff > 0.01f32 {
-                let _ = send_valset_request(&contact, cosmos_key, fee.clone()).await;
-            }
         }
 
         // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
