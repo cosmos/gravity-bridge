@@ -1,9 +1,11 @@
-use crate::{utils::*, COSMOS_NODE_GRPC, MINER_ADDRESS, MINER_PRIVATE_KEY, TOTAL_TIMEOUT};
+use crate::{
+    utils::*, COSMOS_NODE_GRPC, MINER_ADDRESS, MINER_PRIVATE_KEY, STARTING_STAKE_PER_VALIDATOR,
+    TOTAL_TIMEOUT,
+};
 use actix::Arbiter;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
-use cosmos_peggy::send::send_valset_request;
 use cosmos_peggy::send::{send_request_batch, send_to_eth};
 use cosmos_peggy::utils::wait_for_next_cosmos_block;
 use cosmos_peggy::{query::get_oldest_unsigned_transaction_batch, send::send_ethereum_claims};
@@ -16,8 +18,8 @@ use orchestrator::main_loop::orchestrator_main_loop;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::types::SendToCosmosEvent;
 use rand::Rng;
-use std::time::Duration;
-use std::time::Instant;
+use std::{process::Command, time::Duration};
+use std::{process::ExitStatus, time::Instant};
 use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -70,7 +72,7 @@ pub async fn happy_path_test(
 
     // send 3 valset updates to make sure the process works back to back
     for _ in 0u32..2 {
-        test_valset_update(&contact, &web30, &keys, peggy_address, fee.clone()).await;
+        test_valset_update(&web30, &keys, peggy_address).await;
     }
 
     // generate an address for coin sending tests, this ensures test imdepotency
@@ -130,11 +132,9 @@ pub async fn happy_path_test(
 }
 
 pub async fn test_valset_update(
-    contact: &Contact,
     web30: &Web3,
     keys: &[(CosmosPrivateKey, EthPrivateKey)],
     peggy_address: EthAddress,
-    fee: Coin,
 ) {
     // if we don't do this the orchestrators may run ahead of us and we'll be stuck here after
     // getting credit for two loops when we did one
@@ -147,15 +147,49 @@ pub async fn test_valset_update(
     // in this case we send it as the first validator because they can pay the fee
     info!("Sending in valset request");
 
-    // reset here since we might confirm a validator set while sending the next one resulting in an bad sequence
-    while Instant::now() - start < TOTAL_TIMEOUT {
-        let res = send_valset_request(&contact, keys[0].0, fee.clone()).await;
-        if let Ok(res) = res {
-            delay_for(Duration::from_secs(2)).await;
-            if contact.get_tx_by_hash(&res.txhash).await.is_ok() {
-                break;
-            }
-        }
+    // this is hacky and not really a good way to test validator set updates in a highly
+    // repeatable fashion. What we really need to do is be aware of the total staking state
+    // and manipulate the validator set very intentionally rather than kinda blindly like
+    // we are here. For example the more your run this function the less this fixed amount
+    // makes any difference, eventually it will fail because the change to the total staked
+    // percentage is too small.
+    let mut rng = rand::thread_rng();
+    let validator_to_change = rng.gen_range(0..keys.len());
+    let delegate_address = &keys[validator_to_change]
+        .0
+        .to_public_key()
+        .unwrap()
+        .to_address()
+        .to_bech32("cosmosvaloper")
+        .unwrap();
+    let amount = &format!("{}stake", STARTING_STAKE_PER_VALIDATOR / 8);
+    info!(
+        "Delegating {} to {} in order to generate a validator set update",
+        amount, delegate_address
+    );
+    let output = Command::new("peggy")
+        .args(&[
+            "tx",
+            "staking",
+            "delegate",
+            // target address
+            delegate_address,
+            // amount, this should be about 4% of the total power to start
+            amount,
+            "--home=/validator1",
+            // this is defined in /tests/container-scripts/setup-validator.sh
+            "--chain-id=peggy-test",
+            "--keyring-backend=test",
+            "--yes",
+            "--from=validator1",
+        ])
+        .current_dir("/")
+        .output()
+        .expect("Failed to update stake to trigger validator set change");
+    info!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    if !ExitStatus::success(&output.status) {
+        panic!("Delegation failed!")
     }
 
     let mut current_eth_valset_nonce = get_valset_nonce(peggy_address, *MINER_ADDRESS, &web30)
