@@ -10,7 +10,7 @@ edition = "2018"
 peggy_proto = {path = "../peggy_proto/"}
 
 deep_space = "0.2"
-contact = "0.2"
+contact = "0.3"
 web30 = "0.10"
 clarity = "0.4"
 num256 = "0.3"

@@ -17,7 +17,7 @@ peggy_proto = {path = "../peggy_proto/"}
 orchestrator = {path = "../orchestrator/"}
 
 deep_space = "0.2"
-contact = "0.2"
+contact = "0.3"
 serde_derive = "1.0"
 clarity = "0.4"
 docopt = "1"

@@ -82,7 +82,7 @@ pub async fn deploy_contracts(
     let mut updates = Vec::new();
     for (c_key, e_key) in keys.iter() {
         info!(
-            "Signing and submitting Eth address {} for validator {}",
+            "Signing and submitting Delegate addresses {} for validator {}",
             e_key.to_public_key().unwrap(),
             c_key.to_public_key().unwrap().to_address(),
         );
@@ -96,7 +96,7 @@ pub async fn deploy_contracts(
     }
     let update_results = join_all(updates).await;
     for i in update_results {
-        i.expect("Failed to update eth address!");
+        i.expect("Failed to set delegate addresses!");
     }
 
     // prevents the node deployer from failing (rarely) when the chain has not

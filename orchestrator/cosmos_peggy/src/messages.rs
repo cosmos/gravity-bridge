@@ -46,7 +46,7 @@ impl DeepSpaceMsg for PeggyMsg {
 /// valoper key to simply sign off on these addresses.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct SetOrchestratorAddressMsg {
-    #[serde(rename = "address")]
+    #[serde(rename = "eth_address")]
     // the Ethereum address being delegated to
     pub eth_address: EthAddress,
     // the valoper address
