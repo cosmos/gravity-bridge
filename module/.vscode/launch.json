@@ -21,7 +21,7 @@
                 "--p2p.laddr",
                 "tcp://7.7.7.1:26656",
                 "--log_level",
-                "*:debug",
+                "info",
                 "start"
             ]
         }

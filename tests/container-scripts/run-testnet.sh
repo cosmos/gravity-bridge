@@ -31,7 +31,7 @@ fi
 LISTEN_ADDRESS="--address tcp://7.7.7.$i:26655"
 P2P_ADDRESS="--p2p.laddr tcp://7.7.7.$i:26656"
 # LOG_LEVEL="--log_level main:info,state:debug,consensus:error,p2p:error,*:debug --trace"
-LOG_LEVEL=""
+LOG_LEVEL="info"
 ARGS="$GAIA_HOME $LISTEN_ADDRESS $RPC_ADDRESS $GRPC_ADDRESS $P2P_ADDRESS $LOG_LEVEL"
 $BIN start $ARGS > /validator$i/logs &
 done
