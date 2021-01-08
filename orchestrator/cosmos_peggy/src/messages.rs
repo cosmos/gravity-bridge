@@ -10,11 +10,8 @@ use peggy_utils::types::{ERC20Token, SendToCosmosEvent, TransactionBatchExecuted
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 #[serde(tag = "type", content = "value")]
 pub enum PeggyMsg {
-    #[serde(rename = "peggy/MsgSetEthAddress")]
-    SetEthAddressMsg(SetEthAddressMsg),
-
-    #[serde(rename = "peggy/MsgValsetRequest")]
-    ValsetRequestMsg(ValsetRequestMsg),
+    #[serde(rename = "peggy/MsgSetOrchestratorAddress")]
+    SetOrchestratorAddressMsg(SetOrchestratorAddressMsg),
 
     #[serde(rename = "peggy/MsgValsetConfirm")]
     ValsetConfirmMsg(ValsetConfirmMsg),
@@ -44,18 +41,18 @@ impl DeepSpaceMsg for PeggyMsg {
     }
 }
 
+/// This message sets both the Cosmos and Ethereum address being delegated for
+/// Orchestrator operations. This allows a validator to use their highly valuable
+/// valoper key to simply sign off on these addresses.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
-pub struct SetEthAddressMsg {
+pub struct SetOrchestratorAddressMsg {
     #[serde(rename = "address")]
+    // the Ethereum address being delegated to
     pub eth_address: EthAddress,
-    pub validator: Address,
-    /// a hex encoded string representing the Ethereum signature
-    #[serde(rename = "signature")]
-    pub eth_signature: String,
-}
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
-pub struct ValsetRequestMsg {
-    pub requester: Address,
+    // the valoper address
+    pub validator: String,
+    // the Cosmos address being delegated to
+    pub orchestrator: Address,
 }
 /// a transaction we send to submit a valset confirmation signature
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]

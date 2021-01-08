@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -16,12 +17,12 @@ import (
 // - Checks if the attestation has enough votes to be considered "Observed", then attempts to apply it to the
 //   consensus state (e.g. minting tokens for a deposit event)
 // - If so, marks it "Observed" and emits an event
-func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, eventNonce uint64, validator sdk.ValAddress, details types.EthereumClaim) (*types.Attestation, error) {
-	if err := k.storeClaim(ctx, claimType, eventNonce, validator, details); err != nil {
+func (k Keeper) AddClaim(ctx sdk.Context, details types.EthereumClaim) (*types.Attestation, error) {
+	if err := k.storeClaim(ctx, details); err != nil {
 		return nil, sdkerrors.Wrap(err, "claim")
 	}
 
-	att := k.voteForAttestation(ctx, claimType, eventNonce, details, validator)
+	att := k.voteForAttestation(ctx, details)
 
 	k.tryAttestation(ctx, att, details)
 
@@ -31,21 +32,23 @@ func (k Keeper) AddClaim(ctx sdk.Context, claimType types.ClaimType, eventNonce 
 }
 
 // storeClaim persists a claim. Fails when a claim submitted by an Eth signer does not increment the event nonce by exactly 1.
-func (k Keeper) storeClaim(ctx sdk.Context, claimType types.ClaimType, eventNonce uint64, validator sdk.ValAddress, details types.EthereumClaim) error {
+func (k Keeper) storeClaim(ctx sdk.Context, details types.EthereumClaim) error {
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
 	// We check the event nonce in processAttestation as well, but checking it here gives individual eth signers a chance to retry.
-	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator)
-	if eventNonce != lastEventNonce+1 {
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, sdk.ValAddress(details.GetClaimer()))
+	if details.GetEventNonce() != lastEventNonce+1 {
 		return types.ErrNonContiguousEventNonce
 	}
-	k.setLastEventNonceByValidator(ctx, validator, eventNonce)
-
-	// Store this nonce and the claim
-	// TODO: This is not actually storing the claim. It can only be used to check if we have stored the same claim before.
-	// We need to think this through more. This will be used for slashing later.
+	valAddr := k.GetOrchestratorValidator(ctx, details.GetClaimer())
+	if valAddr == nil {
+		panic("Could not find ValAddr for delegate key, should be checked by now")
+	}
+	k.setLastEventNonceByValidator(ctx, valAddr, details.GetEventNonce())
+	// Store the claim
+	genericClaim, _ := types.GenericClaimfromInterface(details)
 	store := ctx.KVStore(k.storeKey)
-	cKey := types.GetClaimKey(claimType, eventNonce, validator, details)
-	store.Set(cKey, []byte{}) // empty as all payload is in the key already (no gas costs)
+	cKey := types.GetClaimKey(details)
+	store.Set(cKey, k.cdc.MustMarshalBinaryBare(genericClaim))
 	return nil
 }
 
@@ -53,24 +56,26 @@ func (k Keeper) storeClaim(ctx sdk.Context, claimType types.ClaimType, eventNonc
 // has submitted a claim for this exact event
 func (k Keeper) voteForAttestation(
 	ctx sdk.Context,
-	claimType types.ClaimType,
-	eventNonce uint64,
 	details types.EthereumClaim,
-	validator sdk.ValAddress,
 ) *types.Attestation {
 	// Tries to get an attestation with the same eventNonce and details as the claim that was submitted.
-	att := k.GetAttestation(ctx, eventNonce, details)
+	att := k.GetAttestation(ctx, details.GetEventNonce(), details)
 
 	// If it does not exist, create a new one.
 	if att == nil {
 		att = &types.Attestation{
-			EventNonce: uint64(eventNonce),
+			EventNonce: details.GetEventNonce(),
 			Observed:   false,
 		}
 	}
 
+	valAddr := k.GetOrchestratorValidator(ctx, details.GetClaimer())
+	if valAddr == nil {
+		panic("Could not find ValAddr for delegate key, should be checked by now")
+	}
+
 	// Add the validator's vote to this attestation
-	att.Votes = append(att.Votes, validator.String())
+	att.Votes = append(att.Votes, valAddr.String())
 
 	return att
 }
@@ -153,17 +158,28 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 		)
 	} else {
 		commit() // persist transient storage
+
+		// TODO: after we commit, delete the outgoingtxbatch that this claim references
 	}
 }
 
 // SetAttestation sets the attestation in the store
 func (k Keeper) SetAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
 	store := ctx.KVStore(k.storeKey)
+	att.ClaimHash = claim.ClaimHash()
+	att.Height = uint64(ctx.BlockHeight())
 	aKey := types.GetAttestationKey(att.EventNonce, claim)
 	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
 }
 
-// GetAttestation return an attestation given a nonce and
+// SetAttestationUnsafe sets the attestation w/o setting height and claim hash
+func (k Keeper) SetAttestationUnsafe(ctx sdk.Context, att *types.Attestation) {
+	store := ctx.KVStore(k.storeKey)
+	aKey := types.GetAttestationKeyWithHash(att.EventNonce, att.ClaimHash)
+	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
+}
+
+// GetAttestation return an attestation given a nonce
 func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, details types.EthereumClaim) *types.Attestation {
 	store := ctx.KVStore(k.storeKey)
 	aKey := types.GetAttestationKey(eventNonce, details)
@@ -174,6 +190,42 @@ func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, details types
 	var att types.Attestation
 	k.cdc.MustUnmarshalBinaryBare(bz, &att)
 	return &att
+}
+
+// DeleteAttestation deletes an attestation given an event nonce and claim
+func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetAttestationKeyWithHash(att.EventNonce, att.ClaimHash))
+}
+
+// GetAttestationMapping returns a mapping of eventnonce -> attestations at that nonce
+func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.Attestation) {
+	k.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
+		if val, ok := out[att.EventNonce]; !ok {
+			out[att.EventNonce] = []types.Attestation{att}
+		} else {
+			out[att.EventNonce] = append(val, att)
+		}
+		return false
+	})
+	return
+}
+
+// IterateAttestaions iterates through all attestations
+func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attestation) bool) {
+	store := ctx.KVStore(k.storeKey)
+	prefix := []byte(types.OracleAttestationKey)
+	iter := store.Iterator(prefixRange(prefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		att := types.Attestation{}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &att)
+		// cb returns true to stop early
+		if cb(iter.Key(), att) {
+			return
+		}
+	}
 }
 
 // GetLastObservedEventNonce returns the latest observed event nonce
@@ -211,7 +263,33 @@ func (k Keeper) setLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 }
 
 // HasClaim returns true if a claim exists
-func (k Keeper) HasClaim(ctx sdk.Context, claimType types.ClaimType, nonce uint64, validator sdk.ValAddress, details types.EthereumClaim) bool {
+func (k Keeper) HasClaim(ctx sdk.Context, details types.EthereumClaim) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetClaimKey(claimType, nonce, validator, details))
+	return store.Has(types.GetClaimKey(details))
+}
+
+// IterateClaimsByValidatorAndType takes a validator key and a claim type and then iterates over these claims
+func (k Keeper) IterateClaimsByValidatorAndType(ctx sdk.Context, claimType types.ClaimType, validatorKey sdk.ValAddress, cb func([]byte, types.EthereumClaim) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OracleClaimKey)
+	prefix := []byte(validatorKey)
+	iter := prefixStore.Iterator(prefixRange(prefix))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		genericClaim := types.GenericClaim{}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &genericClaim)
+		// cb returns true to stop early
+		if cb(iter.Key(), &genericClaim) {
+			break
+		}
+	}
+}
+
+// GetClaimsByValidatorAndType returns the list of claims a validator has signed for
+func (k Keeper) GetClaimsByValidatorAndType(ctx sdk.Context, claimType types.ClaimType, val sdk.ValAddress) (out []types.EthereumClaim) {
+	k.IterateClaimsByValidatorAndType(ctx, claimType, val, func(_ []byte, claim types.EthereumClaim) bool {
+		out = append(out, claim)
+		return false
+	})
+	return
 }

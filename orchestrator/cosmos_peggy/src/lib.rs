@@ -11,6 +11,4 @@ extern crate log;
 pub mod messages;
 pub mod query;
 pub mod send;
-#[cfg(test)]
-pub mod tests;
 pub mod utils;

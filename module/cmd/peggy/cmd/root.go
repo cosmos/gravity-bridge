@@ -79,7 +79,7 @@ func Execute(rootCmd *cobra.Command) error {
 	ctx = context.WithValue(ctx, client.ClientContextKey, &client.Context{})
 	ctx = context.WithValue(ctx, server.ServerContextKey, srvCtx)
 
-	rootCmd.PersistentFlags().String("log_level", srvCtx.Config.LogLevel, "The logging level in the format of <module>:<level>,...")
+	rootCmd.PersistentFlags().String("log_level", "", "The logging level in the format of <module>:<level>,...")
 
 	executor := tmcli.PrepareBaseCmd(rootCmd, "", app.DefaultNodeHome)
 	return executor.ExecuteContext(ctx)
@@ -93,7 +93,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
 		genutilcli.MigrateGenesisCmd(),
 		genutilcli.GenTxCmd(app.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
-		genutilcli.ValidateGenesisCmd(app.ModuleBasics, encodingConfig.TxConfig),
+		genutilcli.ValidateGenesisCmd(app.ModuleBasics),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),

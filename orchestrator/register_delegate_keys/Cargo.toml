@@ -1,11 +1,11 @@
 [package]
-name = "register_eth_key"
+name = "register_delegate_keys"
 version = "0.1.0"
 authors = ["Justin Kilpatrick <justin@althea.net>"]
 edition = "2018"
 
 [[bin]]
-name = "register-eth-key"
+name = "register-peggy-delegate-keys"
 path = "src/main.rs"
 
 [dependencies]

@@ -2,6 +2,10 @@ syntax = "proto3";
 package peggy.v1;
 
 import "gogoproto/gogo.proto";
+import "peggy/v1/types.proto";
+import "peggy/v1/msgs.proto";
+import "peggy/v1/batch.proto";
+import "peggy/v1/attestation.proto";
 
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
@@ -20,16 +24,40 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 // BRIDGECHAINID:
 // the unique identifier of the Ethereum chain
 message Params {
-  option (gogoproto.stringer) = false;
+  option (gogoproto.stringer)  = false;
 
-  string peggy_id             = 1;
-  string contract_source_hash = 2;
-  uint64 start_threshold      = 3;
-  string ethereum_address     = 4;
-  uint64 bridge_chain_id      = 5;
+  string peggy_id                         = 1;
+  string contract_source_hash             = 2;
+  uint64 start_threshold                  = 3;
+  string ethereum_address                 = 4;
+  uint64 bridge_chain_id                  = 5;
+  uint64 signed_valsets_window            = 6;
+  uint64 signed_batches_window            = 7;
+  uint64 signed_claims_window             = 8;
+  bytes  slash_fraction_valset            = 9  [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  bytes  slash_fraction_batch             = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  bytes  slash_fraction_claim             = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  bytes  slash_fraction_conflicting_claim = 12 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
 }
 
 // GenesisState struct
 message GenesisState {
-  Params params = 1;
+  Params                    params          = 1;
+  repeated Valset           valsets         = 2;
+  repeated MsgValsetConfirm valset_confirms = 3;
+  repeated OutgoingTxBatch  batches         = 4;
+  repeated MsgConfirmBatch  batch_confirms  = 5 [(gogoproto.nullable) = false];
+  repeated Attestation      attestations    = 6 [(gogoproto.nullable) = false];
 }

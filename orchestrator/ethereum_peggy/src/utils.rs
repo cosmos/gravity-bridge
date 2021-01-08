@@ -13,7 +13,7 @@ pub fn get_correct_sig_for_address(
     confirms: &[ValsetConfirmResponse],
 ) -> (Uint256, Uint256, Uint256) {
     for sig in confirms {
-        if sig.validator == address {
+        if sig.orchestrator == address {
             return (
                 sig.eth_signature.v.clone(),
                 sig.eth_signature.r.clone(),

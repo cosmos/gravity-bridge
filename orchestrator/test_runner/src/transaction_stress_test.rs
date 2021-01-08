@@ -1,10 +1,9 @@
-use crate::{happy_path::test_valset_update, utils::*, COSMOS_NODE_GRPC, TOTAL_TIMEOUT};
+use crate::{utils::*, COSMOS_NODE_GRPC, TOTAL_TIMEOUT};
 use actix::{clock::delay_for, Arbiter};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
 use deep_space::address::Address as CosmosAddress;
-use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use ethereum_peggy::send_to_cosmos::send_to_cosmos;
 use futures::future::join_all;
@@ -37,7 +36,6 @@ pub async fn transaction_stress_test(
     peggy_address: EthAddress,
     test_token_name: String,
     erc20_addresses: Vec<EthAddress>,
-    fee: Coin,
 ) {
     // start orchestrators
     for (c_key, e_key) in keys.iter() {
@@ -55,8 +53,6 @@ pub async fn transaction_stress_test(
             test_token_name.clone(),
         ));
     }
-    // send one update so we don't get warnings about there being no valsets
-    test_valset_update(&contact, &web30, &keys, peggy_address, fee.clone()).await;
 
     // Generate 100 user keys to send ETH and multiple types of tokens
     let mut user_keys = Vec::new();

@@ -25,7 +25,7 @@ func (k Keeper) CurrentValset(c context.Context, req *types.QueryCurrentValsetRe
 
 // ValsetRequest queries the ValsetRequest of the peggy module
 func (k Keeper) ValsetRequest(c context.Context, req *types.QueryValsetRequestRequest) (*types.QueryValsetRequestResponse, error) {
-	return &types.QueryValsetRequestResponse{Valset: k.GetValsetRequest(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
+	return &types.QueryValsetRequestResponse{Valset: k.GetValset(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
 }
 
 // ValsetConfirm queries the ValsetConfirm of the peggy module
@@ -51,7 +51,7 @@ func (k Keeper) ValsetConfirmsByNonce(c context.Context, req *types.QueryValsetC
 func (k Keeper) LastValsetRequests(c context.Context, req *types.QueryLastValsetRequestsRequest) (*types.QueryLastValsetRequestsResponse, error) {
 	var counter int
 	var valReq []*types.Valset
-	k.IterateValsetRequest(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
+	k.IterateValsets(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
 		valReq = append(valReq, val)
 		counter++
 		return counter >= maxValsetRequestsReturned
@@ -67,7 +67,7 @@ func (k Keeper) LastPendingValsetRequestByAddr(c context.Context, req *types.Que
 	}
 
 	var pendingValsetReq *types.Valset
-	k.IterateValsetRequest(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
+	k.IterateValsets(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
 		foundConfirm := k.GetValsetConfirm(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
@@ -142,18 +142,11 @@ func (k Keeper) LastEventNonceByAddr(c context.Context, req *types.QueryLastEven
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, req.Address)
 	}
-	validator := findValidatorKey(ctx, addr)
+	validator := k.GetOrchestratorValidator(ctx, addr)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
 	}
 	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator)
 	ret.EventNonce = lastEventNonce
 	return &ret, nil
-}
-
-func findValidatorKey(ctx sdk.Context, orchAddr sdk.AccAddress) sdk.ValAddress {
-	// todo: implement proper in keeper
-	// TODO: do we want ValAddress or do we want the AccAddress for the validator?
-	// this is a v important question for encoding
-	return sdk.ValAddress(orchAddr)
 }

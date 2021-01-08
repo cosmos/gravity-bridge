@@ -6,26 +6,67 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
 var (
 	_ sdk.Msg = &MsgValsetConfirm{}
-	_ sdk.Msg = &MsgValsetRequest{}
-	_ sdk.Msg = &MsgSetEthAddress{}
 	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
+	_ sdk.Msg = &MsgSetOrchestratorAddress{}
 )
+
+// NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
+func NewMsgSetOrchestratorAddress(val sdk.ValAddress, oper sdk.AccAddress, eth string) *MsgSetOrchestratorAddress {
+	return &MsgSetOrchestratorAddress{
+		Validator:    val.String(),
+		Orchestrator: oper.String(),
+		EthAddress:   eth,
+	}
+}
+
+// Route should return the name of the module
+func (msg *MsgSetOrchestratorAddress) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg *MsgSetOrchestratorAddress) Type() string { return "set_operator_address" }
+
+// ValidateBasic performs stateless checks
+func (msg *MsgSetOrchestratorAddress) ValidateBasic() (err error) {
+	if _, err = sdk.ValAddressFromBech32(msg.Validator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
+	}
+	if _, err = sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
+	}
+	if err := ValidateEthAddress(msg.EthAddress); err != nil {
+		return sdkerrors.Wrap(err, "ethereum address")
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg *MsgSetOrchestratorAddress) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg *MsgSetOrchestratorAddress) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.ValAddressFromBech32(msg.Validator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{sdk.AccAddress(acc)}
+}
 
 // NewMsgValsetConfirm returns a new msgValsetConfirm
 func NewMsgValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddress, signature string) *MsgValsetConfirm {
 	return &MsgValsetConfirm{
-		Nonce:      nonce,
-		Validator:  validator.String(),
-		EthAddress: ethAddress,
-		Signature:  signature,
+		Nonce:        nonce,
+		Orchestrator: validator.String(),
+		EthAddress:   ethAddress,
+		Signature:    signature,
 	}
 }
 
@@ -37,8 +78,8 @@ func (msg *MsgValsetConfirm) Type() string { return "valset_confirm" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgValsetConfirm) ValidateBasic() (err error) {
-	if _, err = sdk.AccAddressFromBech32(msg.Validator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
+	if _, err = sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
 	if err := ValidateEthAddress(msg.EthAddress); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
@@ -54,94 +95,7 @@ func (msg *MsgValsetConfirm) GetSignBytes() []byte {
 // GetSigners defines whose signature is required
 func (msg *MsgValsetConfirm) GetSigners() []sdk.AccAddress {
 	// TODO: figure out how to convert between AccAddress and ValAddress properly
-	acc, err := sdk.AccAddressFromBech32(msg.Validator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{acc}
-}
-
-// NewMsgValsetRequest returns a new msgValsetRequest
-func NewMsgValsetRequest(requester sdk.AccAddress) *MsgValsetRequest {
-	return &MsgValsetRequest{
-		Requester: requester.String(),
-	}
-}
-
-// Route should return the name of the module
-func (msg MsgValsetRequest) Route() string { return RouterKey }
-
-// Type should return the action
-func (msg MsgValsetRequest) Type() string { return "valset_request" }
-
-// ValidateBasic performs stateless checks
-func (msg MsgValsetRequest) ValidateBasic() (err error) {
-	if _, err = sdk.AccAddressFromBech32(msg.Requester); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Requester)
-	}
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgValsetRequest) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgValsetRequest) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Requester)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{acc}
-}
-
-// NewMsgSetEthAddress return a new msgSetEthAddress
-// TODO: figure out if we need sdk.ValAddress here
-func NewMsgSetEthAddress(address string, validator sdk.AccAddress, signature string) *MsgSetEthAddress {
-	return &MsgSetEthAddress{
-		Address:   address,
-		Validator: validator.String(),
-		Signature: signature,
-	}
-}
-
-// Route should return the name of the module
-func (msg MsgSetEthAddress) Route() string { return RouterKey }
-
-// Type should return the action
-func (msg MsgSetEthAddress) Type() string { return "set_eth_address" }
-
-// ValidateBasic runs stateless checks on the message
-// Checks if the Eth address is valid, and whether the Eth address has signed the validator address
-// (proving control of the Eth address)
-func (msg MsgSetEthAddress) ValidateBasic() error {
-	val, err := sdk.AccAddressFromBech32(msg.Validator)
-	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
-	}
-	if err := ValidateEthAddress(msg.Address); err != nil {
-		return sdkerrors.Wrap(err, "ethereum address")
-	}
-	sigBytes, err := hex.DecodeString(msg.Signature)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
-	}
-	err = ValidateEthereumSignature(crypto.Keccak256(val.Bytes()), sigBytes, msg.Address)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "digest: %x\nsig: %x\naddress %s\nerror: %s\n", crypto.Keccak256(val.Bytes()), msg.Signature, msg.Address, err.Error())
-	}
-	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg MsgSetEthAddress) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg MsgSetEthAddress) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Validator)
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)
 	}
@@ -211,9 +165,9 @@ func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgRequestBatch returns a new msgRequestBatch
-func NewMsgRequestBatch(requester sdk.AccAddress) *MsgRequestBatch {
+func NewMsgRequestBatch(orchestrator sdk.AccAddress) *MsgRequestBatch {
 	return &MsgRequestBatch{
-		Requester: requester.String(),
+		Orchestrator: orchestrator.String(),
 	}
 }
 
@@ -225,12 +179,12 @@ func (msg MsgRequestBatch) Type() string { return "request_batch" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgRequestBatch) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Requester); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Requester)
+	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
-	// TODO ensure that Demon matches hardcoded allowed value
-	// TODO later make sure that Demon matches a list of tokens already
-	// in the bridge to send
+	if _, err := ERC20FromPeggyCoin(sdk.NewInt64Coin(msg.Denom, 0)); err != nil {
+		return sdkerrors.Wrapf(ErrInvalid, "invalid denom: %s", err)
+	}
 	return nil
 }
 
@@ -241,7 +195,7 @@ func (msg MsgRequestBatch) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Requester)
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)
 	}
@@ -257,8 +211,8 @@ func (msg MsgConfirmBatch) Type() string { return "confirm_batch" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgConfirmBatch) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Validator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
+	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
 	if err := ValidateEthAddress(msg.EthSigner); err != nil {
 		return sdkerrors.Wrap(err, "eth signer")
@@ -280,7 +234,7 @@ func (msg MsgConfirmBatch) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Validator)
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)
 	}
@@ -289,15 +243,76 @@ func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
 
 // EthereumClaim represents a claim on ethereum state
 type EthereumClaim interface {
+	// All Ethereum claims that we relay from the Peggy contract and into the module
+	// have a nonce that is monotonically increasing and unique, since this nonce is
+	// issued by the Ethereum contract it is immutable and must be agreed on by all validators
+	// any disagreement on what claim goes to what nonce means someone is lying.
 	GetEventNonce() uint64
+	// the delegate address of the claimer, for MsgDepositClaim and MsgWithdrawClaim
+	// this is sent in as the sdk.AccAddress of the delegated key. it is up to the user
+	// to disambiguate this into a sdk.ValAddress
+	GetClaimer() sdk.AccAddress
+	// Which type of claim this is
 	GetType() ClaimType
 	ValidateBasic() error
 	ClaimHash() []byte
 }
 
+func toClaimType(input int32) ClaimType {
+	if input == 1 {
+		return CLAIM_TYPE_DEPOSIT
+	} else if input == 2 {
+		return CLAIM_TYPE_WITHDRAW
+	} else {
+		return CLAIM_TYPE_UNKNOWN
+	}
+}
+
+func fromClaimType(input ClaimType) int32 {
+	if input == CLAIM_TYPE_DEPOSIT {
+		return 1
+	} else if input == CLAIM_TYPE_WITHDRAW {
+		return 2
+	} else {
+		return 0
+	}
+}
+
+func (e *GenericClaim) GetType() ClaimType {
+	return toClaimType(e.ClaimType)
+}
+
+func (e *GenericClaim) ClaimHash() []byte {
+	return e.Hash
+}
+
+// by the time anything is turned into a generic
+// claim it has already been validated
+func (e *GenericClaim) ValidateBasic() error {
+	return nil
+}
+
+func (e *GenericClaim) GetClaimer() sdk.AccAddress {
+	val, _ := sdk.AccAddressFromBech32(e.EventClaimer)
+	return val
+}
+
+func GenericClaimfromInterface(claim EthereumClaim) (*GenericClaim, error) {
+	err := claim.ValidateBasic()
+	if err != nil {
+		return nil, err
+	}
+	return &GenericClaim{
+		EventNonce: claim.GetEventNonce(),
+		ClaimType:  fromClaimType(claim.GetType()),
+		Hash:       claim.ClaimHash(),
+	}, nil
+}
+
 var (
 	_ EthereumClaim = &MsgDepositClaim{}
 	_ EthereumClaim = &MsgWithdrawClaim{}
+	_ EthereumClaim = &GenericClaim{}
 )
 
 // GetType returns the type of the claim
@@ -328,6 +343,16 @@ func (e *MsgDepositClaim) ValidateBasic() error {
 // GetSignBytes encodes the message for signing
 func (msg MsgDepositClaim) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgDepositClaim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgDepositClaim failed ValidateBasic! Should have been handled earlier")
+	}
+
+	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	return val
 }
 
 // GetSigners defines whose signature is required
@@ -387,6 +412,15 @@ func (b *MsgWithdrawClaim) ClaimHash() []byte {
 // GetSignBytes encodes the message for signing
 func (msg MsgWithdrawClaim) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgWithdrawClaim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgWithdrawClaim failed ValidateBasic! Should have been handled earlier")
+	}
+	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	return val
 }
 
 // GetSigners defines whose signature is required

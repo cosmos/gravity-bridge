@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/hex"
 	"fmt"
 	"net/http"
 
@@ -15,89 +14,6 @@ import (
 
 	hexUtil "github.com/ethereum/go-ethereum/common/hexutil"
 )
-
-type updateEthAddressReq struct {
-	BaseReq rest.BaseReq `json:"base_req"`
-	EthSig  string       `json:"ethSig"`
-}
-
-// accepts a sig proving that the given Cosmos address is owned by a given ethereum key
-func updateEthAddressHandler(cliCtx client.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req updateEthAddressReq
-
-		if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
-			return
-		}
-
-		baseReq := req.BaseReq.Sanitize()
-		if !baseReq.ValidateBasic(w) {
-			return
-		}
-
-		cosmosAddr := cliCtx.GetFromAddress()
-		// the signed message should be the hash of the presented CosmosAddr
-		ethHash := ethCrypto.Keccak256Hash(cosmosAddr)
-
-		ethSig, err := hexUtil.Decode(req.EthSig)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		// we recover the address and public key from the sig
-		ethPubkey, err := ethCrypto.SigToPub(ethHash.Bytes(), ethSig)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		ethPubkeyBytes := ethCrypto.FromECDSAPub(ethPubkey)
-		ethAddr := ethCrypto.PubkeyToAddress(*ethPubkey)
-		correct := ethCrypto.VerifySignature(ethPubkeyBytes, ethHash.Bytes(), ethSig)
-		if correct == false {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		// Make the message, we convert the recovered address into a string
-		// so at this point we have verified that this address signed this
-		// cosmos address
-		msg := types.NewMsgSetEthAddress(ethAddr.String(), cosmosAddr, hex.EncodeToString(ethSig))
-		err = msg.ValidateBasic()
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		tx.WriteGeneratedTxResponse(cliCtx, w, baseReq, msg)
-	}
-}
-
-type createValsetReq struct {
-	BaseReq rest.BaseReq `json:"base_req"`
-}
-
-func createValsetRequestHandler(cliCtx client.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req createValsetReq
-
-		if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
-			return
-		}
-
-		baseReq := req.BaseReq.Sanitize()
-		if !baseReq.ValidateBasic(w) {
-			return
-		}
-		// this can be the sender, since we don't really care who's name is on this
-		cosmosAddr := cliCtx.GetFromAddress()
-		// Make the message
-		msg := types.NewMsgValsetRequest(cosmosAddr)
-
-		tx.WriteGeneratedTxResponse(cliCtx, w, baseReq, msg)
-	}
-}
 
 type valsetConfirmReq struct {
 	BaseReq    rest.BaseReq `json:"base_req"`

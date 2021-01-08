@@ -17,6 +17,7 @@ done
 
 
 cd /peggy/module/
+export PATH=$PATH:/usr/local/go/bin
 make
 make install
 cd /peggy/

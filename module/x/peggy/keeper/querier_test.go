@@ -19,12 +19,13 @@ func TestQueryValsetConfirm(t *testing.T) {
 		myValidatorCosmosAddr, _                    = sdk.AccAddressFromBech32("cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l")
 		myValidatorEthereumAddr  gethcommon.Address = gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(50)}, 20))
 	)
-	k, ctx, _ := CreateTestEnv(t)
-	k.SetValsetConfirm(ctx, types.MsgValsetConfirm{
-		Nonce:      nonce,
-		Validator:  myValidatorCosmosAddr.String(),
-		EthAddress: myValidatorEthereumAddr.String(),
-		Signature:  "alksdjhflkasjdfoiasjdfiasjdfoiasdj",
+	input := CreateTestEnv(t)
+	ctx := input.Context
+	input.PeggyKeeper.SetValsetConfirm(ctx, types.MsgValsetConfirm{
+		Nonce:        nonce,
+		Orchestrator: myValidatorCosmosAddr.String(),
+		EthAddress:   myValidatorEthereumAddr.String(),
+		Signature:    "alksdjhflkasjdfoiasjdfiasjdfoiasdj",
 	})
 
 	specs := map[string]struct {
@@ -36,7 +37,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			srcAddr:  myValidatorCosmosAddr.String(),
-			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "validator": "cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l",  "signature": "alksdjhflkasjdfoiasjdfiasjdfoiasdj"}}`),
+			expResp:  []byte(`{"type":"peggy/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "orchestrator": "cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l",  "signature": "alksdjhflkasjdfoiasjdfiasjdfoiasdj"}}`),
 		},
 		"unknown nonce": {
 			srcNonce: "999999",
@@ -55,7 +56,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := queryValsetConfirm(ctx, []string{spec.srcNonce, spec.srcAddr}, k)
+			got, err := queryValsetConfirm(ctx, []string{spec.srcNonce, spec.srcAddr}, input.PeggyKeeper)
 			if spec.expErr {
 				require.Error(t, err)
 				return
@@ -71,7 +72,8 @@ func TestQueryValsetConfirm(t *testing.T) {
 }
 
 func TestAllValsetConfirmsBynonce(t *testing.T) {
-	k, ctx, _ := CreateTestEnv(t)
+	input := CreateTestEnv(t)
+	ctx := input.Context
 
 	addrs := []string{
 		"cosmos1u508cfnsk2nhakv80vdtq3nf558ngyvldkfjj9",
@@ -84,9 +86,9 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 		msg := types.MsgValsetConfirm{}
 		msg.EthAddress = gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(i + 1)}, 20)).String()
 		msg.Nonce = uint64(1)
-		msg.Validator = addr.String()
+		msg.Orchestrator = addr.String()
 		msg.Signature = fmt.Sprintf("signature %d", i+1)
-		k.SetValsetConfirm(ctx, msg)
+		input.PeggyKeeper.SetValsetConfirm(ctx, msg)
 	}
 
 	specs := map[string]struct {
@@ -97,9 +99,9 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			expResp: []byte(`[
-      {"eth_address":"0x0202020202020202020202020202020202020202", "nonce": "1", "validator": "cosmos1krtcsrxhadj54px0vy6j33pjuzcd3jj8kmsazv", "signature": "signature 2"},
-	  {"eth_address":"0x0303030303030303030303030303030303030303", "nonce": "1", "validator": "cosmos1u94xef3cp9thkcpxecuvhtpwnmg8mhlja8hzkd", "signature": "signature 3"},
-	  {"eth_address":"0x0101010101010101010101010101010101010101", "nonce": "1", "validator": "cosmos1u508cfnsk2nhakv80vdtq3nf558ngyvldkfjj9", "signature": "signature 1"}
+      {"eth_address":"0x0202020202020202020202020202020202020202", "nonce": "1", "orchestrator": "cosmos1krtcsrxhadj54px0vy6j33pjuzcd3jj8kmsazv", "signature": "signature 2"},
+	  {"eth_address":"0x0303030303030303030303030303030303030303", "nonce": "1", "orchestrator": "cosmos1u94xef3cp9thkcpxecuvhtpwnmg8mhlja8hzkd", "signature": "signature 3"},
+	  {"eth_address":"0x0101010101010101010101010101010101010101", "nonce": "1", "orchestrator": "cosmos1u508cfnsk2nhakv80vdtq3nf558ngyvldkfjj9", "signature": "signature 1"}
 ]`),
 		},
 		"unknown nonce": {
@@ -113,7 +115,7 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := queryAllValsetConfirms(ctx, spec.srcNonce, k)
+			got, err := queryAllValsetConfirms(ctx, spec.srcNonce, input.PeggyKeeper)
 			if spec.expErr {
 				require.Error(t, err)
 				return
@@ -130,19 +132,20 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 
 // TODO: Check failure modes
 func TestLastValsetRequests(t *testing.T) {
-	k, ctx, _ := CreateTestEnv(t)
+	input := CreateTestEnv(t)
+	ctx := input.Context
 	// seed with requests
 	for i := 0; i < 6; i++ {
 		var validators []sdk.ValAddress
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			k.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			input.PeggyKeeper.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
-		k.StakingKeeper = NewStakingKeeperMock(validators...)
+		input.PeggyKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
 		ctx = ctx.WithBlockHeight(int64(100 + i))
-		k.SetValsetRequest(ctx)
+		input.PeggyKeeper.SetValsetRequest(ctx)
 	}
 
 	specs := map[string]struct {
@@ -152,6 +155,7 @@ func TestLastValsetRequests(t *testing.T) {
 			expResp: []byte(`[
 {
   "nonce": "105",
+  "height": "105",
   "members": [
     {
       "power": "715827882",
@@ -181,6 +185,7 @@ func TestLastValsetRequests(t *testing.T) {
 },
 {
   "nonce": "104",
+  "height": "104",
   "members": [
     {
       "power": "858993459",
@@ -206,6 +211,7 @@ func TestLastValsetRequests(t *testing.T) {
 },
 {
   "nonce": "103",
+  "height": "103",
   "members": [
     {
       "power": "1073741823",
@@ -227,6 +233,7 @@ func TestLastValsetRequests(t *testing.T) {
 },
 {
   "nonce": "102",
+  "height": "102",
   "members": [
     {
       "power": "1431655765",
@@ -244,6 +251,7 @@ func TestLastValsetRequests(t *testing.T) {
 },
 {
   "nonce": "101",
+  "height": "101",
   "members": [
     {
       "power": "2147483647",
@@ -260,7 +268,7 @@ func TestLastValsetRequests(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := lastValsetRequests(ctx, k)
+			got, err := lastValsetRequests(ctx, input.PeggyKeeper)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
 		})
@@ -270,19 +278,21 @@ func TestLastValsetRequests(t *testing.T) {
 // TODO: check that it doesn't accidently return a valset that HAS been signed
 // Right now it is basically just testing that any valset comes back
 func TestPendingValsetRequests(t *testing.T) {
-	k, ctx, _ := CreateTestEnv(t)
+	input := CreateTestEnv(t)
+	ctx := input.Context
+
 	// seed with requests
 	for i := 0; i < 6; i++ {
 		var validators []sdk.ValAddress
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			k.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			input.PeggyKeeper.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
-		k.StakingKeeper = NewStakingKeeperMock(validators...)
+		input.PeggyKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
 		ctx = ctx.WithBlockHeight(int64(100 + i))
-		k.SetValsetRequest(ctx)
+		input.PeggyKeeper.SetValsetRequest(ctx)
 	}
 
 	specs := map[string]struct {
@@ -293,6 +303,7 @@ func TestPendingValsetRequests(t *testing.T) {
       "type": "peggy/Valset",
       "value": {
         "nonce": "105",
+        "height": "105",
         "members": [
           {
             "power": "715827882",
@@ -327,7 +338,7 @@ func TestPendingValsetRequests(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			valAddr := sdk.AccAddress{}
 			valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
-			got, err := lastPendingValsetRequest(ctx, valAddr.String(), k)
+			got, err := lastPendingValsetRequest(ctx, valAddr.String(), input.PeggyKeeper)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
 		})
@@ -336,7 +347,8 @@ func TestPendingValsetRequests(t *testing.T) {
 
 // TODO: check that it actually returns the valset that has NOT been signed, not just any valset
 func TestLastPendingBatchRequest(t *testing.T) {
-	k, ctx, keepers := CreateTestEnv(t)
+	input := CreateTestEnv(t)
+	ctx := input.Context
 
 	// seed with valset requests and eth addresses to make validators
 	// that we will later use to lookup batches to be signed
@@ -346,15 +358,14 @@ func TestLastPendingBatchRequest(t *testing.T) {
 			// add an validator each block
 			// TODO: replace with real SDK addresses
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			k.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			input.PeggyKeeper.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
-		k.StakingKeeper = NewStakingKeeperMock(validators...)
-		ctx = ctx.WithBlockHeight(int64(100 + i))
-		k.SetValsetRequest(ctx)
+		input.PeggyKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
+		input.PeggyKeeper.SetValsetRequest(ctx)
 	}
 
-	createTestBatch(t, k, ctx, keepers)
+	createTestBatch(t, input)
 
 	specs := map[string]struct {
 		expResp []byte
@@ -364,6 +375,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 	"type": "peggy/OutgoingTxBatch",
 	"value": {
 	"batch_nonce": "1",
+	"block": "1234567",
 	"transactions": [
 		{
 		"id": "2",
@@ -402,14 +414,14 @@ func TestLastPendingBatchRequest(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			valAddr := sdk.AccAddress{}
 			valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
-			got, err := lastPendingBatchRequest(ctx, valAddr.String(), k)
+			got, err := lastPendingBatchRequest(ctx, valAddr.String(), input.PeggyKeeper)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
 		})
 	}
 }
 
-func createTestBatch(t *testing.T, k Keeper, ctx sdk.Context, keepers TestKeepers) {
+func createTestBatch(t *testing.T, input TestInput) {
 	var (
 		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
 		myReceiver          = "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934"
@@ -418,50 +430,51 @@ func createTestBatch(t *testing.T, k Keeper, ctx sdk.Context, keepers TestKeeper
 	)
 	// mint some voucher first
 	allVouchers := sdk.Coins{types.NewERC20Token(99999, myTokenContractAddr).PeggyCoin()}
-	err := keepers.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
+	err := input.BankKeeper.MintCoins(input.Context, types.ModuleName, allVouchers)
 	require.NoError(t, err)
 
 	// set senders balance
-	keepers.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	err = keepers.BankKeeper.SetBalances(ctx, mySender, allVouchers)
+	input.AccountKeeper.NewAccountWithAddress(input.Context, mySender)
+	err = input.BankKeeper.SetBalances(input.Context, mySender, allVouchers)
 	require.NoError(t, err)
 
 	// add some TX to the pool
 	for i, v := range []uint64{2, 3, 2, 1} {
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).PeggyCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).PeggyCoin()
-		_, err := k.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		_, err := input.PeggyKeeper.AddToOutgoingPool(input.Context, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 	// when
-	ctx = ctx.WithBlockTime(now)
+	input.Context = input.Context.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	_, err = k.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	_, err = input.PeggyKeeper.BuildOutgoingTXBatch(input.Context, myTokenContractAddr, 2)
 	require.NoError(t, err)
 }
 
 // TODO: Query more than one batch confirm
 func TestQueryAllBatchConfirms(t *testing.T) {
-	k, ctx, _ := CreateTestEnv(t)
+	input := CreateTestEnv(t)
+	ctx := input.Context
 
 	var (
 		tokenContract    = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		validatorAddr, _ = sdk.AccAddressFromBech32("cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh")
 	)
 
-	k.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
+	input.PeggyKeeper.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
 		Nonce:         1,
 		TokenContract: tokenContract,
 		EthSigner:     "0xf35e2cc8e6523d683ed44870f5b7cc785051a77d",
-		Validator:     validatorAddr.String(),
+		Orchestrator:  validatorAddr.String(),
 		Signature:     "signature",
 	})
 
-	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract, k)
+	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract, input.PeggyKeeper)
 	require.NoError(t, err)
 
-	expectedJSON := []byte(`[{"eth_signer":"0xf35e2cc8e6523d683ed44870f5b7cc785051a77d", "nonce":"1", "signature":"signature", "token_contract":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "validator":"cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh"}]`)
+	expectedJSON := []byte(`[{"eth_signer":"0xf35e2cc8e6523d683ed44870f5b7cc785051a77d", "nonce":"1", "signature":"signature", "token_contract":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "orchestrator":"cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh"}]`)
 
 	assert.JSONEq(t, string(expectedJSON), string(batchConfirms), "json is equal")
 }
@@ -469,15 +482,16 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 // TODO: test that it gets the correct batch, not just any batch.
 // Check with multiple nonces and tokenContracts
 func TestQueryBatch(t *testing.T) {
-	k, ctx, keepers := CreateTestEnv(t)
+	input := CreateTestEnv(t)
+	ctx := input.Context
 
 	var (
 		tokenContract = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 	)
 
-	createTestBatch(t, k, ctx, keepers)
+	createTestBatch(t, input)
 
-	batch, err := queryBatch(ctx, "1", tokenContract, k)
+	batch, err := queryBatch(ctx, "1", tokenContract, input.PeggyKeeper)
 	require.NoError(t, err)
 
 	expectedJSON := []byte(`{
@@ -512,6 +526,7 @@ func TestQueryBatch(t *testing.T) {
 			}
 		  ],
 		  "batch_nonce": "1",
+		  "block": "1234567",
 		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		}
 	  }
@@ -522,12 +537,13 @@ func TestQueryBatch(t *testing.T) {
 }
 
 func TestLastBatchesRequest(t *testing.T) {
-	k, ctx, keepers := CreateTestEnv(t)
+	input := CreateTestEnv(t)
+	ctx := input.Context
 
-	createTestBatch(t, k, ctx, keepers)
-	createTestBatch(t, k, ctx, keepers)
+	createTestBatch(t, input)
+	createTestBatch(t, input)
 
-	lastBatches, err := lastBatchesRequest(ctx, k)
+	lastBatches, err := lastBatchesRequest(ctx, input.PeggyKeeper)
 	require.NoError(t, err)
 
 	expectedJSON := []byte(`[
@@ -561,6 +577,7 @@ func TestLastBatchesRequest(t *testing.T) {
 			}
 		  ],
 		  "batch_nonce": "2",
+		  "block": "1234567",
 		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		},
 		{
@@ -593,6 +610,7 @@ func TestLastBatchesRequest(t *testing.T) {
 			}
 		  ],
 		  "batch_nonce": "1",
+		  "block": "1234567",
 		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		}
 	  ]

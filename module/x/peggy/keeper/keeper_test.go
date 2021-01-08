@@ -55,7 +55,8 @@ func TestCurrentValsetNormalization(t *testing.T) {
 			expPowers: []uint64{4252442866, 42524428},
 		},
 	}
-	k, ctx, _ := CreateTestEnv(t)
+	input := CreateTestEnv(t)
+	ctx := input.Context
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			operators := make([]MockStakingValidatorData, len(spec.srcPowers))
@@ -66,9 +67,52 @@ func TestCurrentValsetNormalization(t *testing.T) {
 					Power:    int64(v),
 				}
 			}
-			k.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
-			r := k.GetCurrentValset(ctx)
+			input.PeggyKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
+			r := input.PeggyKeeper.GetCurrentValset(ctx)
 			assert.Equal(t, spec.expPowers, types.BridgeValidators(r.Members).GetPowers())
 		})
 	}
+}
+
+func TestAttestationIterator(t *testing.T) {
+	input := CreateTestEnv(t)
+	ctx := input.Context
+	// add some attestations to the store
+
+	att1 := &types.Attestation{
+		EventNonce: 1,
+		Observed:   true,
+		Votes:      []string{},
+	}
+	dep1 := &types.MsgDepositClaim{
+		EventNonce:     1,
+		TokenContract:  TokenContractAddrs[0],
+		Amount:         sdk.NewInt(100),
+		EthereumSender: EthAddrs[0].String(),
+		CosmosReceiver: AccAddrs[0].String(),
+		Orchestrator:   AccAddrs[0].String(),
+	}
+	att2 := &types.Attestation{
+		EventNonce: 2,
+		Observed:   true,
+		Votes:      []string{},
+	}
+	dep2 := &types.MsgDepositClaim{
+		EventNonce:     2,
+		TokenContract:  TokenContractAddrs[0],
+		Amount:         sdk.NewInt(100),
+		EthereumSender: EthAddrs[0].String(),
+		CosmosReceiver: AccAddrs[0].String(),
+		Orchestrator:   AccAddrs[0].String(),
+	}
+	input.PeggyKeeper.SetAttestation(ctx, att1, dep1)
+	input.PeggyKeeper.SetAttestation(ctx, att2, dep2)
+
+	atts := []types.Attestation{}
+	input.PeggyKeeper.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
+		atts = append(atts, att)
+		return false
+	})
+
+	require.Len(t, atts, 2)
 }

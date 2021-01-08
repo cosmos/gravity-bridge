@@ -37,6 +37,13 @@ pub const COSMOS_NODE_GRPC: &str = "http://localhost:9090";
 pub const COSMOS_NODE_ABCI: &str = "http://localhost:26657";
 pub const ETH_NODE: &str = "http://localhost:8545";
 
+/// this value reflects the contents of /tests/container-scripts/setup-validator.sh
+/// and is used to compute if a stake change is big enough to trigger a validator set
+/// update since we want to make several such changes intentionally
+pub const STAKE_SUPPLY_PER_VALIDATOR: u128 = 1000000000;
+/// this is the amount each validator bonds at startup
+pub const STARTING_STAKE_PER_VALIDATOR: u128 = STAKE_SUPPLY_PER_VALIDATOR / 2;
+
 lazy_static! {
     // this key is the private key for the public key defined in tests/assets/ETHGenesis.json
     // where the full node / miner sends its rewards. Therefore it's always going
@@ -122,14 +129,12 @@ pub async fn main() {
                 peggy_address,
                 test_token_name,
                 erc20_addresses,
-                fee,
             )
             .await;
             return;
         } else if test_type == "VALSET_STRESS" {
             info!("Starting Valset update stress test");
-            validator_set_stress_test(&web30, &contact, keys, peggy_address, test_token_name, fee)
-                .await;
+            validator_set_stress_test(&web30, &contact, keys, peggy_address, test_token_name).await;
             return;
         }
     }

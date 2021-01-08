@@ -81,6 +81,7 @@ func (m *BridgeValidator) GetEthereumAddress() string {
 type Valset struct {
 	Nonce   uint64             `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	Members []*BridgeValidator `protobuf:"bytes,2,rep,name=members,proto3" json:"members,omitempty"`
+	Height  uint64             `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
 }
 
 func (m *Valset) Reset()         { *m = Valset{} }
@@ -130,31 +131,117 @@ func (m *Valset) GetMembers() []*BridgeValidator {
 	return nil
 }
 
+func (m *Valset) GetHeight() uint64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+// It's difficult to serialize and deserialize
+// interfaces, instead we can make this struct
+// that stores all the data the interface requires
+// and use it to store and then re-create a interface
+// object with all the same properties.
+type GenericClaim struct {
+	EventNonce   uint64 `protobuf:"varint,1,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
+	ClaimType    int32  `protobuf:"varint,2,opt,name=claim_type,json=claimType,proto3" json:"claim_type,omitempty"`
+	Hash         []byte `protobuf:"bytes,3,opt,name=hash,proto3" json:"hash,omitempty"`
+	EventClaimer string `protobuf:"bytes,4,opt,name=event_claimer,json=eventClaimer,proto3" json:"event_claimer,omitempty"`
+}
+
+func (m *GenericClaim) Reset()         { *m = GenericClaim{} }
+func (m *GenericClaim) String() string { return proto.CompactTextString(m) }
+func (*GenericClaim) ProtoMessage()    {}
+func (*GenericClaim) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1488ca6080c6185d, []int{2}
+}
+func (m *GenericClaim) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GenericClaim) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GenericClaim.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *GenericClaim) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GenericClaim.Merge(m, src)
+}
+func (m *GenericClaim) XXX_Size() int {
+	return m.Size()
+}
+func (m *GenericClaim) XXX_DiscardUnknown() {
+	xxx_messageInfo_GenericClaim.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GenericClaim proto.InternalMessageInfo
+
+func (m *GenericClaim) GetEventNonce() uint64 {
+	if m != nil {
+		return m.EventNonce
+	}
+	return 0
+}
+
+func (m *GenericClaim) GetClaimType() int32 {
+	if m != nil {
+		return m.ClaimType
+	}
+	return 0
+}
+
+func (m *GenericClaim) GetHash() []byte {
+	if m != nil {
+		return m.Hash
+	}
+	return nil
+}
+
+func (m *GenericClaim) GetEventClaimer() string {
+	if m != nil {
+		return m.EventClaimer
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*BridgeValidator)(nil), "peggy.v1.BridgeValidator")
 	proto.RegisterType((*Valset)(nil), "peggy.v1.Valset")
+	proto.RegisterType((*GenericClaim)(nil), "peggy.v1.GenericClaim")
 }
 
 func init() { proto.RegisterFile("peggy/v1/types.proto", fileDescriptor_1488ca6080c6185d) }
 
 var fileDescriptor_1488ca6080c6185d = []byte{
-	// 241 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x29, 0x48, 0x4d, 0x4f,
-	0xaf, 0xd4, 0x2f, 0x33, 0xd4, 0x2f, 0xa9, 0x2c, 0x48, 0x2d, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9,
-	0x17, 0xe2, 0x00, 0x8b, 0xea, 0x95, 0x19, 0x2a, 0x05, 0x71, 0xf1, 0x3b, 0x15, 0x65, 0xa6, 0xa4,
-	0xa7, 0x86, 0x25, 0xe6, 0x64, 0xa6, 0x24, 0x96, 0xe4, 0x17, 0x09, 0x89, 0x70, 0xb1, 0x16, 0xe4,
-	0x97, 0xa7, 0x16, 0x49, 0x30, 0x2a, 0x30, 0x6a, 0xb0, 0x04, 0x41, 0x38, 0x42, 0x9a, 0x5c, 0x02,
-	0xa9, 0x25, 0x19, 0xa9, 0x45, 0xa9, 0xa5, 0xb9, 0xf1, 0x89, 0x29, 0x29, 0x45, 0xa9, 0xc5, 0xc5,
-	0x12, 0x4c, 0x0a, 0x8c, 0x1a, 0x9c, 0x41, 0xfc, 0x30, 0x71, 0x47, 0x88, 0xb0, 0x52, 0x30, 0x17,
-	0x5b, 0x58, 0x62, 0x4e, 0x71, 0x6a, 0x09, 0xc8, 0xa8, 0xbc, 0xfc, 0xbc, 0xe4, 0x54, 0x98, 0x51,
-	0x60, 0x8e, 0x90, 0x31, 0x17, 0x7b, 0x6e, 0x6a, 0x6e, 0x52, 0x6a, 0x11, 0xc8, 0x04, 0x66, 0x0d,
-	0x6e, 0x23, 0x49, 0x3d, 0x98, 0x7b, 0xf4, 0xd0, 0x1c, 0x13, 0x04, 0x53, 0xe9, 0xe4, 0x75, 0xe2,
-	0x91, 0x1c, 0xe3, 0x85, 0x47, 0x72, 0x8c, 0x0f, 0x1e, 0xc9, 0x31, 0x4e, 0x78, 0x2c, 0xc7, 0x70,
-	0xe1, 0xb1, 0x1c, 0xc3, 0x8d, 0xc7, 0x72, 0x0c, 0x51, 0x06, 0xe9, 0x99, 0x25, 0x19, 0xa5, 0x49,
-	0x7a, 0xc9, 0xf9, 0xb9, 0xfa, 0x89, 0x39, 0x25, 0x19, 0xa9, 0x89, 0xba, 0x79, 0xa9, 0x25, 0xfa,
-	0x10, 0x8f, 0xe7, 0xe6, 0xa7, 0x94, 0xe6, 0xa4, 0xea, 0x57, 0x40, 0xb9, 0xe0, 0x40, 0x48, 0x62,
-	0x03, 0x87, 0x82, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0x47, 0x58, 0x87, 0xfa, 0x1d, 0x01, 0x00,
-	0x00,
+	// 334 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x91, 0xcf, 0x4e, 0xf2, 0x40,
+	0x14, 0xc5, 0x99, 0x8f, 0x3f, 0x9f, 0x5c, 0x30, 0x98, 0x09, 0x31, 0x75, 0x61, 0x25, 0xb8, 0xc1,
+	0x85, 0xad, 0xc8, 0x13, 0x08, 0x0b, 0x13, 0x17, 0x2e, 0x1a, 0xc3, 0xc2, 0x0d, 0x19, 0xda, 0x9b,
+	0x4e, 0x63, 0xdb, 0x69, 0xa6, 0x03, 0xca, 0x13, 0xb8, 0xf5, 0xb1, 0x5c, 0xb2, 0x74, 0x69, 0xe0,
+	0x45, 0x4c, 0x6f, 0x69, 0x62, 0xdc, 0xcd, 0xf9, 0xe5, 0xe6, 0x9c, 0x7b, 0xe7, 0x40, 0x3f, 0xc3,
+	0x30, 0xdc, 0xb8, 0xeb, 0xb1, 0x6b, 0x36, 0x19, 0xe6, 0x4e, 0xa6, 0x95, 0x51, 0xfc, 0x88, 0xa8,
+	0xb3, 0x1e, 0x0f, 0x3d, 0xe8, 0x4d, 0x75, 0x14, 0x84, 0x38, 0x17, 0x71, 0x14, 0x08, 0xa3, 0x34,
+	0xef, 0x43, 0x33, 0x53, 0xaf, 0xa8, 0x2d, 0x36, 0x60, 0xa3, 0x86, 0x57, 0x0a, 0x7e, 0x05, 0x27,
+	0x68, 0x24, 0x6a, 0x5c, 0x25, 0x0b, 0x11, 0x04, 0x1a, 0xf3, 0xdc, 0xfa, 0x37, 0x60, 0xa3, 0xb6,
+	0xd7, 0xab, 0xf8, 0x5d, 0x89, 0x87, 0x2f, 0xd0, 0x9a, 0x8b, 0x38, 0x47, 0x53, 0x58, 0xa5, 0x2a,
+	0xf5, 0xb1, 0xb2, 0x22, 0xc1, 0x27, 0xf0, 0x3f, 0xc1, 0x64, 0x89, 0xba, 0x70, 0xa8, 0x8f, 0x3a,
+	0xb7, 0x67, 0x4e, 0xb5, 0x8f, 0xf3, 0x67, 0x19, 0xaf, 0x9a, 0xe4, 0xa7, 0xd0, 0x92, 0x18, 0x85,
+	0xd2, 0x58, 0x75, 0xf2, 0x3a, 0xa8, 0xe1, 0x3b, 0x83, 0xee, 0x3d, 0xa6, 0xa8, 0x23, 0x7f, 0x16,
+	0x8b, 0x28, 0xe1, 0x17, 0xd0, 0xc1, 0x35, 0xa6, 0x66, 0xf1, 0x3b, 0x19, 0x08, 0x3d, 0x52, 0xfc,
+	0x39, 0x80, 0x5f, 0x4c, 0x2e, 0x8a, 0x1f, 0xa1, 0x1b, 0x9a, 0x5e, 0x9b, 0xc8, 0xd3, 0x26, 0x43,
+	0xce, 0xa1, 0x21, 0x45, 0x2e, 0x29, 0xa6, 0xeb, 0xd1, 0x9b, 0x5f, 0xc2, 0x71, 0xe9, 0x49, 0x63,
+	0xa8, 0xad, 0x06, 0x5d, 0xde, 0x25, 0x38, 0x2b, 0xd9, 0xf4, 0xe1, 0x73, 0x67, 0xb3, 0xed, 0xce,
+	0x66, 0xdf, 0x3b, 0x9b, 0x7d, 0xec, 0xed, 0xda, 0x76, 0x6f, 0xd7, 0xbe, 0xf6, 0x76, 0xed, 0xf9,
+	0x26, 0x8c, 0x8c, 0x5c, 0x2d, 0x1d, 0x5f, 0x25, 0xae, 0x88, 0x8d, 0x44, 0x71, 0x9d, 0xa2, 0x71,
+	0xcb, 0x6a, 0x12, 0x15, 0xac, 0x62, 0x74, 0xdf, 0x0e, 0x92, 0x6a, 0x5a, 0xb6, 0xa8, 0xa7, 0xc9,
+	0x4f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x43, 0x2c, 0x13, 0xb7, 0xbf, 0x01, 0x00, 0x00,
 }
 
 func (m *BridgeValidator) Marshal() (dAtA []byte, err error) {
@@ -212,6 +299,11 @@ func (m *Valset) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Height != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x18
+	}
 	if len(m.Members) > 0 {
 		for iNdEx := len(m.Members) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -228,6 +320,53 @@ func (m *Valset) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	if m.Nonce != 0 {
 		i = encodeVarintTypes(dAtA, i, uint64(m.Nonce))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *GenericClaim) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GenericClaim) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GenericClaim) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.EventClaimer) > 0 {
+		i -= len(m.EventClaimer)
+		copy(dAtA[i:], m.EventClaimer)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.EventClaimer)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Hash) > 0 {
+		i -= len(m.Hash)
+		copy(dAtA[i:], m.Hash)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Hash)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.ClaimType != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.ClaimType))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.EventNonce != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.EventNonce))
 		i--
 		dAtA[i] = 0x8
 	}
@@ -275,6 +414,32 @@ func (m *Valset) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovTypes(uint64(l))
 		}
+	}
+	if m.Height != 0 {
+		n += 1 + sovTypes(uint64(m.Height))
+	}
+	return n
+}
+
+func (m *GenericClaim) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.EventNonce != 0 {
+		n += 1 + sovTypes(uint64(m.EventNonce))
+	}
+	if m.ClaimType != 0 {
+		n += 1 + sovTypes(uint64(m.ClaimType))
+	}
+	l = len(m.Hash)
+	if l > 0 {
+		n += 1 + l + sovTypes(uint64(l))
+	}
+	l = len(m.EventClaimer)
+	if l > 0 {
+		n += 1 + l + sovTypes(uint64(l))
 	}
 	return n
 }
@@ -470,6 +635,182 @@ func (m *Valset) Unmarshal(dAtA []byte) error {
 			if err := m.Members[len(m.Members)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GenericClaim) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: GenericClaim: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: GenericClaim: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EventNonce", wireType)
+			}
+			m.EventNonce = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EventNonce |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClaimType", wireType)
+			}
+			m.ClaimType = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ClaimType |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hash = append(m.Hash[:0], dAtA[iNdEx:postIndex]...)
+			if m.Hash == nil {
+				m.Hash = []byte{}
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EventClaimer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EventClaimer = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

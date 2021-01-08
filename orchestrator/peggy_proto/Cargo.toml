@@ -9,5 +9,5 @@ edition = "2018"
 [dependencies]
 prost = "0.6"
 prost-types = "0.6"
-cosmos-sdk-proto = "0.1"
+cosmos-sdk-proto = "0.2"
 tonic = "0.3.1"

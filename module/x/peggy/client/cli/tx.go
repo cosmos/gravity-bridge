@@ -29,8 +29,6 @@ func GetTxCmd(storeKey string) *cobra.Command {
 	peggyTxCmd.AddCommand([]*cobra.Command{
 		CmdWithdrawToETH(),
 		CmdRequestBatch(),
-		CmdUpdateEthAddress(),
-		CmdValsetRequest(),
 		GetUnsafeTestingCmd(),
 	}...)
 
@@ -51,72 +49,6 @@ func GetUnsafeTestingCmd() *cobra.Command {
 	}...)
 
 	return testingTxCmd
-}
-
-// GetCmdUpdateEthAddress updates the network about the eth address that you have on record.
-func CmdUpdateEthAddress() *cobra.Command {
-	return &cobra.Command{
-		Use:   "update-eth-addr [eth_private_key]",
-		Short: "Update your Ethereum address which will be used for signing executables for the `multisig set`",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.ReadTxCommandFlags(client.GetClientContextFromCmd(cmd), cmd.Flags())
-			if err != nil {
-				return err
-			}
-
-			cosmosAddr := cliCtx.GetFromAddress()
-
-			privKeyString := args[0][2:]
-
-			// Make Eth Signature over validator address
-			privateKey, err := ethCrypto.HexToECDSA(privKeyString)
-			if err != nil {
-				return err
-			}
-
-			hash := ethCrypto.Keccak256(cosmosAddr.Bytes())
-			signature, err := types.NewEthereumSignature(hash, privateKey)
-			if err != nil {
-				return sdkerrors.Wrap(err, "signing cosmos address with Ethereum key")
-			}
-			// You've got to do all this to get an Eth address from the private key
-			publicKey := privateKey.Public()
-			publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-			if !ok {
-				return sdkerrors.Wrap(err, "casting public key to ECDSA")
-			}
-			ethAddress := ethCrypto.PubkeyToAddress(*publicKeyECDSA)
-
-			msg := types.NewMsgSetEthAddress(ethAddress.String(), cosmosAddr, hex.EncodeToString(signature))
-			err = msg.ValidateBasic()
-			if err != nil {
-				return err
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
-		},
-	}
-}
-
-func CmdValsetRequest() *cobra.Command {
-	return &cobra.Command{
-		Use:   "valset-request",
-		Short: "Trigger a new `multisig set` update request on the cosmos side",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.ReadTxCommandFlags(client.GetClientContextFromCmd(cmd), cmd.Flags())
-			if err != nil {
-				return err
-			}
-			cosmosAddr := cliCtx.GetFromAddress()
-
-			// Make the message
-			msg := types.NewMsgValsetRequest(cosmosAddr)
-
-			// Send it
-			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
-		},
-	}
 }
 
 func CmdUnsafeETHPrivKey() *cobra.Command {
@@ -165,27 +97,31 @@ func CmdWithdrawToETH() *cobra.Command {
 		Short: "Adds a new entry to the transaction pool to withdraw an amount from the Ethereum bridge contract",
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.ReadTxCommandFlags(client.GetClientContextFromCmd(cmd), cmd.Flags())
+			cliCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 			cosmosAddr := cliCtx.GetFromAddress()
 
-			amount, err := sdk.ParseCoin(args[2])
+			amount, err := sdk.ParseCoinsNormalized(args[2])
 			if err != nil {
 				return sdkerrors.Wrap(err, "amount")
 			}
-			bridgeFee, err := sdk.ParseCoin(args[3])
+			bridgeFee, err := sdk.ParseCoinsNormalized(args[3])
 			if err != nil {
 				return sdkerrors.Wrap(err, "bridge fee")
+			}
+
+			if len(amount) > 1 || len(bridgeFee) > 1 {
+				return fmt.Errorf("coin amounts too long, expecting just 1 coin amount for both amount and bridgeFee")
 			}
 
 			// Make the message
 			msg := types.MsgSendToEth{
 				Sender:    cosmosAddr.String(),
 				EthDest:   args[1],
-				Amount:    amount,
-				BridgeFee: bridgeFee,
+				Amount:    amount[0],
+				BridgeFee: bridgeFee[0],
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
@@ -202,7 +138,7 @@ func CmdRequestBatch() *cobra.Command {
 		Short: "Build a new batch on the cosmos side for pooled withdrawal transactions",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.ReadTxCommandFlags(client.GetClientContextFromCmd(cmd), cmd.Flags())
+			cliCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -210,8 +146,8 @@ func CmdRequestBatch() *cobra.Command {
 
 			// TODO: better denom searching
 			msg := types.MsgRequestBatch{
-				Requester: cosmosAddr.String(),
-				Denom:     fmt.Sprintf("peggy/%s", args[0]),
+				Orchestrator: cosmosAddr.String(),
+				Denom:        fmt.Sprintf("peggy/%s", args[0]),
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err

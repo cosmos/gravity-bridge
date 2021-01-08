@@ -16,7 +16,6 @@ use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::Uint256;
 use contact::client::Contact;
-use cosmos_peggy::send::send_valset_request;
 use cosmos_peggy::send::{send_request_batch, send_to_eth};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
@@ -105,11 +104,6 @@ async fn main() {
             denom: peggy_denom.clone(),
         };
         let eth_dest: EthAddress = args.flag_eth_destination.parse().unwrap();
-
-        println!("Requesting an update to the bridge validator set before sending");
-        let _res = send_valset_request(&contact, cosmos_key, fee.clone())
-            .await
-            .expect("Failed to send valset request");
 
         println!("Locking funds into the batch pool");
         send_to_eth(cosmos_key, eth_dest, amount, fee.clone(), &contact)

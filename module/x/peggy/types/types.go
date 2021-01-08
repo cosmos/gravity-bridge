@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/binary"
 	"fmt"
+	math "math"
 	"math/big"
 	"sort"
 	"strconv"
@@ -62,6 +63,44 @@ func (b BridgeValidators) Sort() {
 	})
 }
 
+// PowerDiff returns the difference in power between two bridge validator sets
+// TODO: this needs to be potentially refactored
+func (b BridgeValidators) PowerDiff(c BridgeValidators) float64 {
+	powers := map[string]int64{}
+	var totalB int64
+	// loop over b and initialize the map with their powers
+	for _, bv := range b {
+		powers[bv.EthereumAddress] = int64(bv.Power)
+		totalB += int64(bv.Power)
+	}
+
+	// subtract c powers from powers in the map, initializing
+	// uninitialized keys with negative numbers
+	for _, bv := range c {
+		if val, ok := powers[bv.EthereumAddress]; ok {
+			powers[bv.EthereumAddress] = val - int64(bv.Power)
+		} else {
+			powers[bv.EthereumAddress] = -int64(bv.Power)
+		}
+	}
+
+	var delta float64
+	for _, v := range powers {
+		// NOTE: we care about the absolute value of the changes
+		delta += math.Abs(float64(v))
+	}
+
+	return math.Abs(delta / float64(totalB))
+}
+
+// TotalPower returns the total power in the bridge validator set
+func (b BridgeValidators) TotalPower() (out uint64) {
+	for _, v := range b {
+		out += v.Power
+	}
+	return
+}
+
 // HasDuplicates returns true if there are duplicates in the set
 func (b BridgeValidators) HasDuplicates() bool {
 	m := make(map[string]struct{}, len(b))
@@ -98,13 +137,13 @@ func (b BridgeValidators) ValidateBasic() error {
 }
 
 // NewValset returns a new valset
-func NewValset(nonce uint64, members BridgeValidators) *Valset {
+func NewValset(nonce, height uint64, members BridgeValidators) *Valset {
 	members.Sort()
 	var mem []*BridgeValidator
 	for _, val := range members {
 		mem = append(mem, val)
 	}
-	return &Valset{Nonce: uint64(nonce), Members: mem}
+	return &Valset{Nonce: uint64(nonce), Members: mem, Height: height}
 }
 
 // GetCheckpoint returns the checkpoint
@@ -168,4 +207,19 @@ func (v *Valset) WithoutEmptyMembers() *Valset {
 		}
 	}
 	return &r
+}
+
+// Valsets is a collection of valset
+type Valsets []*Valset
+
+func (v Valsets) Len() int {
+	return len(v)
+}
+
+func (v Valsets) Less(i, j int) bool {
+	return v[i].Nonce > v[j].Nonce
+}
+
+func (v Valsets) Swap(i, j int) {
+	v[i], v[j] = v[j], v[i]
 }

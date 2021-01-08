@@ -23,7 +23,7 @@ fn peggy_power_to_percent(input: u64) -> f32 {
 /// the response we get when querying for a valset confirmation
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ValsetConfirmResponse {
-    pub validator: CosmosAddress,
+    pub orchestrator: CosmosAddress,
     pub eth_address: EthAddress,
     pub nonce: u64,
     pub eth_signature: EthSignature,
@@ -32,7 +32,7 @@ pub struct ValsetConfirmResponse {
 impl ValsetConfirmResponse {
     pub fn from_proto(input: peggy_proto::peggy::MsgValsetConfirm) -> Result<Self, PeggyError> {
         Ok(ValsetConfirmResponse {
-            validator: input.validator.parse()?,
+            orchestrator: input.orchestrator.parse()?,
             eth_address: input.eth_address.parse()?,
             nonce: input.nonce,
             eth_signature: input.signature.parse()?,
@@ -44,7 +44,7 @@ impl ValsetConfirmResponse {
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct BatchConfirmResponse {
     pub nonce: u64,
-    pub validator: CosmosAddress,
+    pub orchestrator: CosmosAddress,
     pub token_contract: EthAddress,
     pub ethereum_signer: EthAddress,
     pub eth_signature: EthSignature,
@@ -54,7 +54,7 @@ impl BatchConfirmResponse {
     pub fn from_proto(input: peggy_proto::peggy::MsgConfirmBatch) -> Result<Self, PeggyError> {
         Ok(BatchConfirmResponse {
             nonce: input.nonce,
-            validator: input.validator.parse()?,
+            orchestrator: input.orchestrator.parse()?,
             token_contract: input.token_contract.parse()?,
             ethereum_signer: input.eth_signer.parse()?,
             eth_signature: input.signature.parse()?,

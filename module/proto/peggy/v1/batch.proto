@@ -11,6 +11,7 @@ message OutgoingTxBatch {
   uint64                      batch_nonce    = 1;
   repeated OutgoingTransferTx transactions   = 2;
   string                      token_contract = 3;
+  uint64                      block          = 4;
 }
 
 // OutgoingTransferTx represents an individual send from Peggy to ETH
