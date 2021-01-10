@@ -318,7 +318,7 @@ func (k Keeper) SetOrchestratorValidator(ctx sdk.Context, val sdk.ValAddress, or
 	store.Set(types.GetOrchestratorAddressKey(orch), val.Bytes())
 }
 
-// GetOrchestratorValidator returns the valdiator key associated with an orchestrator key
+// GetOrchestratorValidator returns the validator key associated with an orchestrator key
 func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) sdk.ValAddress {
 	store := ctx.KVStore(k.storeKey)
 	return sdk.ValAddress(store.Get(types.GetOrchestratorAddressKey(orch)))

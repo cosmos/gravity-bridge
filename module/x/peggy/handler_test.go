@@ -1,6 +1,7 @@
 package peggy
 
 import (
+	"bytes"
 	"testing"
 	"time"
 
@@ -258,4 +259,28 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 	// and no additional added to the account
 	balance3 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance3)
+}
+
+func TestMsgSetOrchestratorAddresses(t *testing.T) {
+	var (
+		ethAddress                   = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
+		cosmosAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		valAddress    sdk.ValAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		blockTime                    = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+		blockHeight   int64          = 200
+	)
+	input := keeper.CreateTestEnv(t)
+	input.PeggyKeeper.StakingKeeper = keeper.NewStakingKeeperMock(valAddress)
+	ctx := input.Context
+	h := NewHandler(input.PeggyKeeper)
+	ctx = ctx.WithBlockTime(blockTime)
+
+	msg := types.NewMsgSetOrchestratorAddress(valAddress, cosmosAddress, ethAddress)
+	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
+	_, err := h(ctx, msg)
+	require.NoError(t, err)
+
+	assert.Equal(t, input.PeggyKeeper.GetEthAddress(ctx, valAddress), ethAddress)
+
+	assert.Equal(t, input.PeggyKeeper.GetOrchestratorValidator(ctx, cosmosAddress), valAddress)
 }

@@ -453,7 +453,6 @@ func createTestBatch(t *testing.T, input TestInput) {
 	require.NoError(t, err)
 }
 
-// TODO: Query more than one batch confirm
 func TestQueryAllBatchConfirms(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
@@ -617,4 +616,22 @@ func TestLastBatchesRequest(t *testing.T) {
 	  `)
 
 	assert.JSONEq(t, string(expectedJSON), string(lastBatches), "json is equal")
+}
+
+// tests setting and querying eth address and orchestrator addresses
+func TestQueryCurrentValset(t *testing.T) {
+	var (
+		ethAddress                = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
+		valAddress sdk.ValAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+	)
+	input := CreateTestEnv(t)
+	input.PeggyKeeper.StakingKeeper = NewStakingKeeperMock(valAddress)
+	ctx := input.Context
+	input.PeggyKeeper.SetEthAddress(ctx, valAddress, ethAddress)
+
+	currentValset := input.PeggyKeeper.GetCurrentValset(ctx)
+
+	bridgeVal := types.BridgeValidator{EthereumAddress: ethAddress, Power: 4294967295}
+	expectedValset := types.Valset{Nonce: 1234567, Height: 1234567, Members: []*types.BridgeValidator{&bridgeVal}}
+	assert.Equal(t, &expectedValset, currentValset)
 }
