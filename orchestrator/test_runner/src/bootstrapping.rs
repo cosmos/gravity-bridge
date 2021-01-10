@@ -7,8 +7,11 @@ use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use futures::future::join_all;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Read, Write};
 use std::process::Command;
+use std::{
+    io::{BufRead, BufReader, Read, Write},
+    process::ExitStatus,
+};
 
 use crate::COSMOS_NODE_ABCI;
 use crate::ETH_NODE;
@@ -119,6 +122,9 @@ pub async fn deploy_contracts(
         .expect("Failed to deploy contracts!");
     info!("stdout: {}", String::from_utf8_lossy(&output.stdout));
     info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    if !ExitStatus::success(&output.status) {
+        panic!("Contract deploy failed!")
+    }
     let mut file = File::create("/contracts").unwrap();
     file.write_all(&output.stdout).unwrap();
 }

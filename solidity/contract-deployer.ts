@@ -141,7 +141,9 @@ async function deploy() {
   // 66% of uint32_max
   let vote_power = 2834678415;
   if (powers_sum < vote_power) {
-    console.log("Refusing to deploy! Incorrect power!")
+    console.log("Refusing to deploy! Incorrect power! Please inspect the validator set below")
+    console.log("If less than 66% of the current voting power has unset Ethereum Addresses we refuse to deploy")
+    console.log(latestValset)
     exit(1)
   }
 
@@ -181,6 +183,7 @@ async function getLatestValset(): Promise<Valset> {
     prove: "false",
   }});
   let valsets: ABCIWrapper = await response.data;
+  console.log(decode(valsets.result.response.value));
   let valset: ValsetTypeWrapper = JSON.parse(decode(valsets.result.response.value))
   return valset.value;
 }
