@@ -99,4 +99,14 @@ func TestValsetEmission(t *testing.T) {
 	// EndBlocker should set a new validator set
 	EndBlocker(ctx, pk)
 	require.NotNil(t, pk.GetValset(ctx, uint64(ctx.BlockHeight())))
+	valsets := pk.GetValsets(ctx)
+	require.True(t, len(valsets) == 2)
+}
+
+func TestValsetSetting(t *testing.T) {
+	input, ctx := keeper.SetupFiveValChain(t)
+	pk := input.PeggyKeeper
+	pk.SetValsetRequest(ctx)
+	valsets := pk.GetValsets(ctx)
+	require.True(t, len(valsets) == 1)
 }
