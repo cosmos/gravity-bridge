@@ -49,14 +49,15 @@ func (k Keeper) ValsetConfirmsByNonce(c context.Context, req *types.QueryValsetC
 
 // LastValsetRequests queries the LastValsetRequests of the peggy module
 func (k Keeper) LastValsetRequests(c context.Context, req *types.QueryLastValsetRequestsRequest) (*types.QueryLastValsetRequestsResponse, error) {
-	var counter int
-	var valReq []*types.Valset
-	k.IterateValsets(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
-		valReq = append(valReq, val)
-		counter++
-		return counter >= maxValsetRequestsReturned
-	})
-	return &types.QueryLastValsetRequestsResponse{Valsets: valReq}, nil
+	valReq := k.GetValsets(sdk.UnwrapSDKContext(c))
+	valReqLen := len(valReq)
+	retLen := 0
+	if valReqLen < maxValsetRequestsReturned {
+		retLen = valReqLen
+	} else {
+		retLen = maxValsetRequestsReturned
+	}
+	return &types.QueryLastValsetRequestsResponse{Valsets: valReq[0:retLen]}, nil
 }
 
 // LastPendingValsetRequestByAddr queries the LastPendingValsetRequestByAddr of the peggy module
