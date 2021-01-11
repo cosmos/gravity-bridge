@@ -200,6 +200,7 @@ func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation) {
 
 // GetAttestationMapping returns a mapping of eventnonce -> attestations at that nonce
 func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.Attestation) {
+	out = make(map[uint64][]types.Attestation)
 	k.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
 		if val, ok := out[att.EventNonce]; !ok {
 			out[att.EventNonce] = []types.Attestation{att}
