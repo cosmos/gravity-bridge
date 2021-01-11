@@ -27,7 +27,7 @@ pub async fn find_latest_valset(
         cosmos_peggy::query::get_valset(grpc_client, latest_ethereum_valset).await?;
 
     while current_block.clone() > 0u8.into() {
-        info!(
+        trace!(
             "About to submit a Valset or Batch looking back into the history to find the last Valset Update, on block {}",
             current_block
         );
