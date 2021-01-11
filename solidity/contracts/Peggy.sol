@@ -40,6 +40,9 @@ contract Peggy {
 	event ERC20DeployedEvent(
 		string indexed _cosmosDenom,
 		address _tokenContract,
+		string _name,
+		string _symbol,
+		uint8 _decimals,
 		uint256 _eventNonce
 	);
 	event ValsetUpdatedEvent(
@@ -359,13 +362,25 @@ contract Peggy {
 		);
 	}
 
-	function deployERC20(string _cosmosDenom) public {
+	function deployERC20(
+		string memory _cosmosDenom,
+		string memory _name,
+		string memory _symbol,
+		uint8 _decimals
+	) public {
 		// Deploy an ERC20 with entire supply granted to Peggy.sol
-		erc20Address = new ComsosERC20(address(this));
+		ComsosERC20 erc20 = new ComsosERC20(address(this), _name, _symbol, _decimals);
 
 		// Fire an event to let the Cosmos module know
 		state_lastEventNonce = state_lastEventNonce.add(1);
-		emit ERC20DeployedEvent(_cosmosDenom, erc20Address, state_lastEventNonce);
+		emit ERC20DeployedEvent(
+			_cosmosDenom,
+			address(erc20),
+			_name,
+			_symbol,
+			_decimals,
+			state_lastEventNonce
+		);
 	}
 
 	constructor(
