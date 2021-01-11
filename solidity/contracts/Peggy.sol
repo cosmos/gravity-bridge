@@ -3,6 +3,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@nomiclabs/buidler/console.sol";
+import "./CosmosToken.sol";
 
 contract Peggy {
 	using SafeMath for uint256;
@@ -34,6 +35,11 @@ contract Peggy {
 		address indexed _sender,
 		bytes32 indexed _destination,
 		uint256 _amount,
+		uint256 _eventNonce
+	);
+	event ERC20DeployedEvent(
+		string indexed _cosmosDenom,
+		address _tokenContract,
 		uint256 _eventNonce
 	);
 	event ValsetUpdatedEvent(
@@ -87,9 +93,8 @@ contract Peggy {
 		bytes32 _r,
 		bytes32 _s
 	) private pure returns (bool) {
-		bytes32 messageDigest = keccak256(
-			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
-		);
+		bytes32 messageDigest =
+			keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash));
 		return _signer == ecrecover(messageDigest, _v, _r, _s);
 	}
 
@@ -110,9 +115,8 @@ contract Peggy {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes32 checkpoint = keccak256(
-			abi.encode(_peggyId, methodName, _valsetNonce, _validators, _powers)
-		);
+		bytes32 checkpoint =
+			keccak256(abi.encode(_peggyId, methodName, _valsetNonce, _validators, _powers));
 
 		return checkpoint;
 	}
@@ -210,12 +214,8 @@ contract Peggy {
 		);
 
 		// Check that enough current validators have signed off on the new validator set
-		bytes32 newCheckpoint = makeCheckpoint(
-			_newValidators,
-			_newPowers,
-			_newValsetNonce,
-			state_peggyId
-		);
+		bytes32 newCheckpoint =
+			makeCheckpoint(_newValidators, _newPowers, _newValsetNonce, state_peggyId);
 
 		checkValidatorSignatures(
 			_currentValidators,
@@ -357,6 +357,15 @@ contract Peggy {
 			_amount,
 			state_lastEventNonce
 		);
+	}
+
+	function deployERC20(string _cosmosDenom) public {
+		// Deploy an ERC20 with entire supply granted to Peggy.sol
+		erc20Address = new ComsosERC20(address(this));
+
+		// Fire an event to let the Cosmos module know
+		state_lastEventNonce = state_lastEventNonce.add(1);
+		emit ERC20DeployedEvent(_cosmosDenom, erc20Address, state_lastEventNonce);
 	}
 
 	constructor(
