@@ -97,7 +97,7 @@ pub async fn send_valset_confirm(
             gas: 500_000u64.into(),
         },
         msgs: vec![PeggyMsg::ValsetConfirmMsg(ValsetConfirmMsg {
-            validator: our_address,
+            orchestrator: our_address,
             eth_address: our_eth_address,
             nonce: valset.nonce.into(),
             eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
@@ -143,7 +143,7 @@ pub async fn send_batch_confirm(
             gas: 500_000u64.into(),
         },
         msgs: vec![PeggyMsg::ConfirmBatchMsg(ConfirmBatchMsg {
-            validator: our_address,
+            orchestrator: our_address,
             token_contract: transaction_batch.token_contract,
             eth_signer: our_eth_address,
             nonce: transaction_batch.nonce.into(),
@@ -267,7 +267,7 @@ pub async fn send_request_batch(
         },
         msgs: vec![PeggyMsg::RequestBatchMsg(RequestBatchMsg {
             denom,
-            requester: our_address,
+            orchestrator: our_address,
         })],
         memo: String::new(),
     };

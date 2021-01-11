@@ -57,7 +57,7 @@ pub struct SetOrchestratorAddressMsg {
 /// a transaction we send to submit a valset confirmation signature
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ValsetConfirmMsg {
-    pub validator: Address,
+    pub orchestrator: Address,
     pub eth_address: EthAddress,
     pub nonce: Uint256,
     #[serde(rename = "signature")]
@@ -80,14 +80,14 @@ pub struct SendToEthMsg {
 /// type of the batch. Since all batches only move a single asset within them.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct RequestBatchMsg {
-    pub requester: Address,
+    pub orchestrator: Address,
     pub denom: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ConfirmBatchMsg {
     pub nonce: Uint256,
-    pub validator: Address,
+    pub orchestrator: Address,
     pub token_contract: EthAddress,
     pub eth_signer: EthAddress,
     /// a hex encoded string representing the Ethereum signature
@@ -141,23 +141,6 @@ impl EthereumBridgeWithdrawBatchClaim {
     pub fn into_enum(self) -> EthereumBridgeClaim {
         EthereumBridgeClaim::EthereumBridgeWithdrawBatchClaim(self)
     }
-}
-
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
-pub struct EthereumBridgeBootstrappedClaim {
-    /// the claim nonce, in case multiple claims are made before one passes
-    pub nonce: Uint256,
-    /// the validator set in the contract being claimed
-    pub allowed_validator_set: Vec<EthAddress>,
-    /// the powers of the validator set in the contract being claimed
-    pub validator_powers: Vec<Uint256>,
-    /// the peggy ID a 32 byte unique value encoded as a hex string
-    pub peggy_id: String,
-    /// the amount of voting power (measured by the bridge, not cosmos) required
-    /// to start the bridge, remember bridge powers are normalized to u32 max so
-    /// this would be computed as some percentage of that with no bearing on what
-    /// Cosmos would consider the power number to be.
-    pub start_threshold: Uint256,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
