@@ -4,7 +4,7 @@ use clarity::{Address, Uint256};
 use cosmos_peggy::query::get_last_event_nonce;
 use deep_space::address::Address as CosmosAddress;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use peggy_utils::types::{SendToCosmosEvent, TransactionBatchExecutedEvent};
+use peggy_utils::types::{SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent};
 use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -13,8 +13,6 @@ const RETRY_TIME: Duration = Duration::from_secs(5);
 
 /// This function retrieves the last event nonce this oracle has relayed to Cosmos
 /// it then uses the Ethereum indexes to determine what block the last entry
-/// TODO this should simply be stored in the deposit or withdraw claim and we
-/// ask the Cosmos chain, this searching is a total waste of work
 pub async fn get_last_checked_block(
     grpc_client: PeggyQueryClient<Channel>,
     our_cosmos_address: CosmosAddress,
@@ -29,16 +27,12 @@ pub async fn get_last_checked_block(
         get_last_event_nonce_with_retry(&mut grpc_client, our_cosmos_address)
             .await
             .into();
-    let mut first_run = false;
 
-    // zero indicates this oracle has never submitted an event before
-    // this can mean one of two things, there are actually no events in history
-    // it needs to submit or it has tried and failed to submit events and got stuck
-    // on the first value. In order to determine which is which we will look for all
-    // events, if we fail to find any only then can we go and start the chain.
+    // zero indicates this oracle has never submitted an event before since there is no
+    // zero event nonce (it's pre-incremented in the solidity contract) we have to go
+    // and look for event nonce one.
     if last_event_nonce == 0u8.into() {
         last_event_nonce = 1u8.into();
-        first_run = true;
     }
 
     let mut current_block: Uint256 = latest_block.clone();
@@ -53,7 +47,7 @@ pub async fn get_last_checked_block(
         } else {
             current_block.clone() - BLOCKS_TO_SEARCH.into()
         };
-        let all_batch_events = web3
+        let batch_events = web3
             .check_for_events(
                 end_search.clone(),
                 Some(current_block.clone()),
@@ -61,7 +55,7 @@ pub async fn get_last_checked_block(
                 vec!["TransactionBatchExecutedEvent(uint256,address,uint256)"],
             )
             .await;
-        let all_send_to_cosmos_events = web3
+        let send_to_cosmos_events = web3
             .check_for_events(
                 end_search.clone(),
                 Some(current_block.clone()),
@@ -69,20 +63,39 @@ pub async fn get_last_checked_block(
                 vec!["SendToCosmosEvent(address,address,bytes32,uint256,uint256)"],
             )
             .await;
-        if all_batch_events.is_err() || all_send_to_cosmos_events.is_err() {
+        // valset events do not have an event nonce (because they are not relayed to cosmos)
+        // and therefore they are mostly useless to us. But they do have one special property
+        // that is useful to us in this handler a valset update event for nonce 0 is emitted
+        // in the contract constructor meaning once you find that event you can exit the search
+        // with confidence that you have not missed any events without searching the entire blockchain
+        // history
+        let valset_events = web3
+            .check_for_events(
+                end_search.clone(),
+                Some(current_block.clone()),
+                vec![peggy_contract_address],
+                vec!["ValsetUpdatedEvent(uint256,address[],uint256[])"],
+            )
+            .await;
+        if batch_events.is_err() || send_to_cosmos_events.is_err() || valset_events.is_err() {
             error!("Failed to get blockchain events while resyncing, is your Eth node working?");
             delay_for(RETRY_TIME).await;
             continue;
         }
-        let all_batch_events = all_batch_events.unwrap();
-        let all_send_to_cosmos_events = all_send_to_cosmos_events.unwrap();
+        let batch_events = batch_events.unwrap();
+        let send_to_cosmos_events = send_to_cosmos_events.unwrap();
+        let valset_events = valset_events.unwrap();
 
         trace!(
             "Found events {:?} {:?}",
-            all_batch_events,
-            all_send_to_cosmos_events
+            batch_events,
+            send_to_cosmos_events
         );
-        for event in all_batch_events {
+        // look for and return the block number of the event last seen on the Cosmos chain
+        // then we will play events from that block (including that block, just in case
+        // there is more than one event there) onwards. We use valset nonce 0 as an indicator
+        // of what block the contract was deployed on.
+        for event in batch_events {
             match TransactionBatchExecutedEvent::from_log(&event) {
                 Ok(batch) => {
                     if batch.event_nonce == last_event_nonce && event.block_number.is_some() {
@@ -92,11 +105,29 @@ pub async fn get_last_checked_block(
                 Err(e) => error!("Got batch event that we can't parse {}", e),
             }
         }
-        for event in all_send_to_cosmos_events {
+        for event in send_to_cosmos_events {
             match SendToCosmosEvent::from_log(&event) {
                 Ok(send) => {
                     if send.event_nonce == last_event_nonce && event.block_number.is_some() {
                         return event.block_number.unwrap();
+                    }
+                }
+                Err(e) => error!("Got SendToCosmos event that we can't parse {}", e),
+            }
+        }
+        for event in valset_events {
+            match ValsetUpdatedEvent::from_log(&event) {
+                Ok(valset) => {
+                    // if we've found this event it is the first possible event from the contract
+                    // no other events can come before it, therefore either there's been a parsing error
+                    // or no events have been submitted on this chain yet.
+                    if valset.nonce == 0 && last_event_nonce == 1u8.into() {
+                        return latest_block;
+                    }
+                    // if we're looking for a later event nonce and we find the deployment of the contract
+                    // we must have failed to parse the event we're looking for. The oracle can not start
+                    if valset.nonce == 0 && last_event_nonce > 1u8.into() {
+                        panic!("Could not find the last event relayed by {}, Last Event nonce is {} but no event matching that could be found!", our_cosmos_address, last_event_nonce)
                     }
                 }
                 Err(e) => error!("Got valset event that we can't parse {}", e),
@@ -105,13 +136,7 @@ pub async fn get_last_checked_block(
         current_block = end_search;
     }
 
-    // we have never submitted any events before AND there are no events for us to submit
-    // we can stand down.
-    if first_run {
-        return current_block;
-    }
-
-    panic!("Could not find the last event relayed by {}, Last Event nonce is {} but no event matching that could be found!", our_cosmos_address, last_event_nonce)
+    panic!("You have reached the end of block history without finding the Peggy contract deploy event! You must have the wrong contract address!");
 }
 
 /// gets the current block number, no matter how long it takes
