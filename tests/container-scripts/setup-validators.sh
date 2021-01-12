@@ -7,7 +7,7 @@ CHAIN_ID="peggy-test"
 
 NODES=$1
 
-ALLOCATION="1000000000stake,1000000000footoken"
+ALLOCATION="10000000000stake,10000000000footoken"
 
 # first we start a genesis.json with validator 1
 # validator 1 will also collect the gentx's once gnerated

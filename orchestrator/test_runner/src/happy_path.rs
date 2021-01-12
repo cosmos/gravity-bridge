@@ -160,6 +160,9 @@ pub async fn delegate_tokens(delegate_address: &str, amount: &str) {
         .expect("Failed to update stake to trigger validator set change");
     let mut stdout = String::from_utf8_lossy(&output.stdout).to_string();
     while stdout.contains("account sequence mismatch") {
+        if stdout.contains("insufficient funds") {
+            panic!("Can't continue to produce validator sets! Not enough STAKE token")
+        }
         output = cmd
             .current_dir("/")
             .output()
