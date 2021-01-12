@@ -25,20 +25,28 @@ pub async fn get_last_checked_block(
     const BLOCKS_TO_SEARCH: u128 = 50_000u128;
 
     let latest_block = get_block_number_with_retry(web3).await;
-    let last_event_nonce = get_last_event_nonce_with_retry(&mut grpc_client, our_cosmos_address)
-        .await
-        .into();
+    let mut last_event_nonce: Uint256 =
+        get_last_event_nonce_with_retry(&mut grpc_client, our_cosmos_address)
+            .await
+            .into();
+    let mut first_run = false;
 
+    // zero indicates this oracle has never submitted an event before
+    // this can mean one of two things, there are actually no events in history
+    // it needs to submit or it has tried and failed to submit events and got stuck
+    // on the first value. In order to determine which is which we will look for all
+    // events, if we fail to find any only then can we go and start the chain.
     if last_event_nonce == 0u8.into() {
-        return latest_block;
+        last_event_nonce = 1u8.into();
+        first_run = true;
     }
 
     let mut current_block: Uint256 = latest_block.clone();
 
     while current_block.clone() > 0u8.into() {
         info!(
-            "Oracle is resyncing, looking back into the history to find our last event nonce, on block {}",
-            current_block
+            "Oracle is resyncing, looking back into the history to find our last event nonce {}, on block {}",
+            last_event_nonce, current_block
         );
         let end_search = if current_block.clone() < BLOCKS_TO_SEARCH.into() {
             0u8.into()
@@ -95,6 +103,12 @@ pub async fn get_last_checked_block(
             }
         }
         current_block = end_search;
+    }
+
+    // we have never submitted any events before AND there are no events for us to submit
+    // we can stand down.
+    if first_run {
+        return current_block;
     }
 
     panic!("Could not find the last event relayed by {}, Last Event nonce is {} but no event matching that could be found!", our_cosmos_address, last_event_nonce)
