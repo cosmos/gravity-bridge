@@ -189,7 +189,7 @@ pub async fn eth_signer_main_loop(
                     peggy_id.clone(),
                 )
                 .await;
-                info!("Valset confirm result is {:?}", res);
+                trace!("Valset confirm result is {:?}", res);
             }
             Ok(None) => trace!("No valset waiting to be signed!"),
             Err(e) => trace!(
@@ -211,7 +211,7 @@ pub async fn eth_signer_main_loop(
                     peggy_id.clone(),
                 )
                 .await;
-                info!("Batch confirm result is {:?}", res);
+                trace!("Batch confirm result is {:?}", res);
             }
             Ok(None) => trace!("No unsigned batches! Everything good!"),
             Err(e) => trace!(
