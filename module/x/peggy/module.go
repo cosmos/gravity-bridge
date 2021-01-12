@@ -66,6 +66,15 @@ func (AppModuleBasic) RegisterRESTRoutes(ctx client.Context, rtr *mux.Router) {
 	rest.RegisterRoutes(ctx, rtr, types.StoreKey)
 }
 
+// TODO:  @Venkatesh, @Albert remove this function after cosmos upgrade
+// RegisterGRPCRoutes registers the gRPC Gateway routes for the orders module.
+func (AppModuleBasic) RegisterGRPCRoutes(clientCtx client.Context, serveMux *runtime.ServeMux) {
+	err := types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(clientCtx))
+	if err != nil {
+		panic("Failed to RegisterGRPCRoutes in orders module")
+	}
+}
+
 // GetQueryCmd implements app module basic
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd(types.StoreKey)
