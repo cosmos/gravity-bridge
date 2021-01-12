@@ -25,8 +25,8 @@ You can keep up with the latest development by watching our [public standups](ht
   - [x] Ethereum -> Cosmos Token issuing
   - [x] Cosmos -> Ethereum Token issuing
   - [X] Bootstrapping
-  - [ ] Genesis file save/load
-  - [ ] Validator set syncing edge cases
+  - [X] Genesis file save/load
+  - [X] Validator set syncing edge cases
   - [ ] Transaction batch edge cases
   - [ ] Relaying edge cases
   - [ ] Audit
