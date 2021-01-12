@@ -225,6 +225,9 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 }
 
 // DepositClaim handles MsgDepositClaim
+// TODO it is possible to submit an old msgDepositClaim (old defined as covering an event nonce that has already been
+// executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
+// should not be a security risk as 'old' events can never execute but it does store spam in the chain.
 func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (*types.MsgDepositClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
@@ -264,6 +267,9 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 }
 
 // WithdrawClaim handles MsgWithdrawClaim
+// TODO it is possible to submit an old msgWithdrawClaim (old defined as covering an event nonce that has already been
+// executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
+// should not be a security risk as 'old' events can never execute but it does store spam in the chain.
 func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim) (*types.MsgWithdrawClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
