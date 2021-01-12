@@ -131,6 +131,49 @@ pub async fn happy_path_test(
     .await;
 }
 
+/// This deals with the horrible error behavior of the Cosmos sdk command
+/// line, mainly that when the tx seq changes while creating the message
+/// it doesn't produce a failed output status or even print to stderror
+/// it logs to stdout and simply fails. This will retry every 5 seconds
+/// until the delegation succeeds
+pub async fn delegate_tokens(delegate_address: &str, amount: &str) {
+    let args = [
+        "tx",
+        "staking",
+        "delegate",
+        // target address
+        delegate_address,
+        // amount, this should be about 4% of the total power to start
+        amount,
+        "--home=/validator1",
+        // this is defined in /tests/container-scripts/setup-validator.sh
+        "--chain-id=peggy-test",
+        "--keyring-backend=test",
+        "--yes",
+        "--from=validator1",
+    ];
+    let mut cmd = Command::new("peggy");
+    let cmd = cmd.args(&args);
+    let mut output = cmd
+        .current_dir("/")
+        .output()
+        .expect("Failed to update stake to trigger validator set change");
+    let mut stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    while stdout.contains("account sequence mismatch") {
+        output = cmd
+            .current_dir("/")
+            .output()
+            .expect("Failed to update stake to trigger validator set change");
+        stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        delay_for(Duration::from_secs(5)).await;
+    }
+    info!("stdout: {}", stdout);
+    info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    if !ExitStatus::success(&output.status) {
+        panic!("Delegation failed!")
+    }
+}
+
 pub async fn test_valset_update(
     web30: &Web3,
     keys: &[(CosmosPrivateKey, EthPrivateKey)],
@@ -167,30 +210,7 @@ pub async fn test_valset_update(
         "Delegating {} to {} in order to generate a validator set update",
         amount, delegate_address
     );
-    let output = Command::new("peggy")
-        .args(&[
-            "tx",
-            "staking",
-            "delegate",
-            // target address
-            delegate_address,
-            // amount, this should be about 4% of the total power to start
-            amount,
-            "--home=/validator1",
-            // this is defined in /tests/container-scripts/setup-validator.sh
-            "--chain-id=peggy-test",
-            "--keyring-backend=test",
-            "--yes",
-            "--from=validator1",
-        ])
-        .current_dir("/")
-        .output()
-        .expect("Failed to update stake to trigger validator set change");
-    info!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-    info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-    if !ExitStatus::success(&output.status) {
-        panic!("Delegation failed!")
-    }
+    delegate_tokens(delegate_address, amount).await;
 
     let mut current_eth_valset_nonce = get_valset_nonce(peggy_address, *MINER_ADDRESS, &web30)
         .await
