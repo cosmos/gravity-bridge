@@ -71,8 +71,19 @@ pub async fn happy_path_test(
     // bootstrapping tests finish here and we move into operational tests
 
     // send 3 valset updates to make sure the process works back to back
-    for _ in 0u32..2 {
-        test_valset_update(&web30, &keys, peggy_address).await;
+    // don't do this in the validator out test because it changes powers
+    // randomly and may actually make it impossible for that test to pass
+    // by random re-allocation of powers. If we had 5 or 10 validators
+    // instead of 3 this wouldn't be a problem. But with 3 not even 1% of
+    // power can be reallocated to the down validator before things stop
+    // working. We'll settle for testing that the initial valset (generated
+    // with the first block) is successfully updated
+    if !validator_out {
+        for _ in 0u32..2 {
+            test_valset_update(&web30, &keys, peggy_address).await;
+        }
+    } else {
+        wait_for_nonzero_valset(&web30, peggy_address).await;
     }
 
     // generate an address for coin sending tests, this ensures test imdepotency
@@ -174,6 +185,24 @@ pub async fn delegate_tokens(delegate_address: &str, amount: &str) {
     info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
     if !ExitStatus::success(&output.status) {
         panic!("Delegation failed!")
+    }
+}
+
+pub async fn wait_for_nonzero_valset(web30: &Web3, peggy_address: EthAddress) {
+    let start = Instant::now();
+    let mut current_eth_valset_nonce = get_valset_nonce(peggy_address, *MINER_ADDRESS, &web30)
+        .await
+        .expect("Failed to get current eth valset");
+
+    while 0 == current_eth_valset_nonce {
+        info!("Validator set is not yet updated to 0>, waiting",);
+        current_eth_valset_nonce = get_valset_nonce(peggy_address, *MINER_ADDRESS, &web30)
+            .await
+            .expect("Failed to get current eth valset");
+        delay_for(Duration::from_secs(4)).await;
+        if Instant::now() - start > TOTAL_TIMEOUT {
+            panic!("Failed to update validator set");
+        }
     }
 }
 
