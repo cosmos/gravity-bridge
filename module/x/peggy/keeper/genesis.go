@@ -32,8 +32,13 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 
 	// reset attestations in state
 	for _, att := range data.Attestations {
+		claim, err := k.UnpackAttestationClaim(&att)
+		if err != nil {
+			panic("couldn't cast to claim")
+		}
+
 		// TODO: block height?
-		k.SetAttestationUnsafe(ctx, &att)
+		k.SetAttestationUnsafe(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
 	}
 }
 

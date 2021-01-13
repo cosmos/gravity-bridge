@@ -8,6 +8,11 @@ import (
 
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
+	slashing(ctx, k)
+	attestationTally(ctx, k)
+}
+
+func slashing(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
 	currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 
@@ -113,14 +118,22 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 						k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, validator), params.SlashFractionConflictingClaim)
 						k.StakingKeeper.Jail(ctx, cons)
 					}
-					k.DeleteAttestation(ctx, att)
+					claim, err := k.UnpackAttestationClaim(&att)
+					if err != nil {
+						panic("couldn't cast to claim")
+					}
+
+					k.DeleteAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
 				}
 			}
 		}
 
 		if len(atts) == 1 {
 			att := atts[0]
-			windowPassed := uint64(ctx.BlockHeight()) > params.SignedClaimsWindow && uint64(ctx.BlockHeight())-params.SignedClaimsWindow > att.Height
+			// TODO-JT: Review this
+			windowPassed := uint64(ctx.BlockHeight()) > params.SignedClaimsWindow &&
+				uint64(ctx.BlockHeight())-params.SignedClaimsWindow > att.Height
+
 			// if the signing window has passed and the attestation is still unobserved wait.
 			if windowPassed && att.Observed {
 				for _, bv := range currentBondedSet {
@@ -138,7 +151,12 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 						k.StakingKeeper.Jail(ctx, cons)
 					}
 				}
-				k.DeleteAttestation(ctx, att)
+				claim, err := k.UnpackAttestationClaim(&att)
+				if err != nil {
+					panic("couldn't cast to claim")
+				}
+
+				k.DeleteAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
 			}
 		}
 	}
@@ -150,4 +168,26 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 	// TODO: prune outgoing tx batches while looping over them above, older than 15h and confirmed
 	// TODO: prune claims, attestations
+}
+
+// Iterate over all attestations currently being voted on in order of nonce and
+// "Observe" those who have passed the threshold. Break the loop once we see
+// an attestation that has not passed the threshold
+func attestationTally(ctx sdk.Context, k keeper.Keeper) {
+	attmap := k.GetAttestationMapping(ctx)
+	for _, atts := range attmap {
+		for _, att := range atts {
+			// If it was already observed we don't need to do anything
+			if att.Observed {
+				continue
+			}
+			k.TryAttestation(ctx, &att)
+			// If it was not Observed, break the loop, either the vote
+			// was not sufficient or the vote was sufficient and the claim
+			// is out of order.
+			if !att.Observed {
+				break
+			}
+		}
+	}
 }
