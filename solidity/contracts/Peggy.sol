@@ -38,7 +38,8 @@ contract Peggy {
 		uint256 _eventNonce
 	);
 	event ERC20DeployedEvent(
-		string indexed _cosmosDenom,
+		// FYI: Can't index on a string without doing a bunch of weird stuff
+		string _cosmosDenom,
 		address _tokenContract,
 		string _name,
 		string _symbol,
