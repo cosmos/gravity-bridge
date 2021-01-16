@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "hardhat/console.sol";
 import "./CosmosToken.sol";
 
+pragma experimental ABIEncoderV2;
+
 contract Peggy {
 	using SafeMath for uint256;
 	using SafeERC20 for IERC20;
@@ -342,6 +344,109 @@ contract Peggy {
 				uint256 totalFee;
 				for (uint256 i = 0; i < _amounts.length; i++) {
 					IERC20(_tokenContract).safeTransfer(_destinations[i], _amounts[i]);
+					totalFee = totalFee.add(_fees[i]);
+				}
+
+				// Send transaction fees to msg.sender
+				IERC20(_tokenContract).safeTransfer(msg.sender, totalFee);
+			}
+		}
+
+		// LOGS scoped to reduce stack depth
+		{
+			state_lastEventNonce = state_lastEventNonce.add(1);
+			emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, state_lastEventNonce);
+		}
+	}
+
+	// submitLogicBatch is the same as submitBatch, but it integrates the arbitrary logic functionality
+	function submitLogicBatch(
+		// The validators that approve the batch
+		address[] memory _currentValidators,
+		uint256[] memory _currentPowers,
+		uint256 _currentValsetNonce,
+		// These are arrays of the parts of the validators signatures
+		uint8[] memory _v,
+		bytes32[] memory _r,
+		bytes32[] memory _s,
+		// The batch of transactions
+		uint256[] memory _amounts,
+		address[] memory _logicContractAddresses,
+		uint256[] memory _fees,
+		bytes[] memory _payloads,
+		uint256 _batchNonce,
+		address _tokenContract
+	) public {
+		// CHECKS scoped to reduce stack depth
+		{
+			// Check that the batch nonce is higher than the last nonce for this token
+			require(
+				state_lastBatchNonces[_tokenContract] < _batchNonce,
+				"New batch nonce must be greater than the current nonce"
+			);
+
+			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
+			require(
+				_currentValidators.length == _currentPowers.length &&
+					_currentValidators.length == _v.length &&
+					_currentValidators.length == _r.length &&
+					_currentValidators.length == _s.length,
+				"Malformed current validator set"
+			);
+
+			// Check that the supplied current validator set matches the saved checkpoint
+			require(
+				makeCheckpoint(
+					_currentValidators,
+					_currentPowers,
+					_currentValsetNonce,
+					state_peggyId
+				) == state_lastValsetCheckpoint,
+				"Supplied current validators and powers do not match checkpoint."
+			);
+
+			// Check that the transaction batch is well-formed
+			require(
+				_amounts.length == _logicContractAddresses.length &&
+					_amounts.length == _fees.length,
+				"Malformed batch of transactions"
+			);
+
+			// Check that enough current validators have signed off on the transaction batch and valset
+			checkValidatorSignatures(
+				_currentValidators,
+				_currentPowers,
+				_v,
+				_r,
+				_s,
+				// Get hash of the transaction batch and checkpoint
+				keccak256(
+					abi.encode(
+						state_peggyId,
+						// bytes32 encoding of "transactionBatch"
+						0x7472616e73616374696f6e426174636800000000000000000000000000000000,
+						_amounts,
+						_logicContractAddresses,
+						_fees,
+						_batchNonce,
+						_tokenContract
+					)
+				),
+				state_powerThreshold
+			);
+
+			// ACTIONS
+
+			// Store batch nonce
+			state_lastBatchNonces[_tokenContract] = _batchNonce;
+
+			{
+				// Send transaction amounts to destinations
+				uint256 totalFee;
+				for (uint256 i = 0; i < _amounts.length; i++) {
+					IERC20(_tokenContract).safeTransfer(_logicContractAddresses[i], _amounts[i]);
+					(bool success, bytes memory returnData) =
+						address(_logicContractAddresses[i]).call(_payloads[i]);
 					totalFee = totalFee.add(_fees[i]);
 				}
 
