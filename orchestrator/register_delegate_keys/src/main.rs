@@ -28,7 +28,7 @@ struct Args {
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-        "Usage: {} --cosmos-phrase=<key> [--ethereum-key=<key>] --cosmos-rpc=<url> --fees=<denom>
+        "Usage: {} --validator-phrase=<key> [--cosmos-phrase=<key>] [--ethereum-key=<key>] --cosmos-rpc=<url> --fees=<denom>
         Options:
             -h --help                     Show this screen.
             --validator-phrase=<vkey>    The Cosmos private key of the validator. Must be saved when you generate your key
