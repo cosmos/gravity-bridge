@@ -17,7 +17,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 		userCosmosAddr, _            = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
 		blockTime                    = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
 		blockHeight        int64     = 200
-		denom                        = "peggy/0xB5E9944950C97acab395a324716D186632789712"
+		denom                        = "peggy0xB5E9944950C97acab395a324716D186632789712"
 		startingCoinAmount sdk.Int   = sdk.NewIntFromUint64(150)
 		sendAmount         sdk.Int   = sdk.NewIntFromUint64(50)
 		feeAmount          sdk.Int   = sdk.NewIntFromUint64(5)
@@ -116,7 +116,7 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	require.NotNil(t, a)
 	// and vouchers added to the account
 	balance := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
 	// Test to reject duplicate deposit
 	// when
@@ -125,7 +125,7 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	// then
 	require.Error(t, err)
 	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
 	// Test to reject skipped nonce
 	ethClaim = types.MsgDepositClaim{
@@ -143,7 +143,7 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	// then
 	require.Error(t, err)
 	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
 
 	// Test to finally accept consecutive nonce
 	ethClaim = types.MsgDepositClaim{
@@ -161,7 +161,7 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 25)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 25)}, balance)
 }
 
 func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
@@ -228,7 +228,7 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 	require.NotNil(t, a1)
 	// and vouchers not yet added to the account
 	balance1 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.NotEqual(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance1)
+	assert.NotEqual(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance1)
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
@@ -243,7 +243,7 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 	require.NotNil(t, a2)
 	// and vouchers now added to the account
 	balance2 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance2)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance2)
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
@@ -258,7 +258,7 @@ func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
 	require.NotNil(t, a3)
 	// and no additional added to the account
 	balance3 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy/0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance3)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance3)
 }
 
 func TestMsgSetOrchestratorAddresses(t *testing.T) {

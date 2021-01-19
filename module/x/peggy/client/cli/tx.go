@@ -147,7 +147,7 @@ func CmdRequestBatch() *cobra.Command {
 			// TODO: better denom searching
 			msg := types.MsgRequestBatch{
 				Orchestrator: cosmosAddr.String(),
-				Denom:        fmt.Sprintf("peggy/%s", args[0]),
+				Denom:        fmt.Sprintf("peggy%s", args[0]),
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err

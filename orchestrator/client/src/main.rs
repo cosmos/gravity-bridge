@@ -97,7 +97,7 @@ async fn main() {
             denom: fee_denom,
             amount: 1u64.into(),
         };
-        let peggy_denom = format!("peggy/{}", erc20_address);
+        let peggy_denom = format!("peggy{}", erc20_address);
         let contact = Contact::new(&cosmos_url, TIMEOUT);
         let amount = Coin {
             amount,
