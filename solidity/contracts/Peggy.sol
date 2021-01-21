@@ -423,11 +423,12 @@ contract Peggy {
 				keccak256(
 					abi.encode(
 						state_peggyId,
-						// bytes32 encoding of "transactionBatch"
-						0x7472616e73616374696f6e426174636800000000000000000000000000000000,
+						// bytes32 encoding of "logicBatch"
+						0x6c6f676963426174636800000000000000000000000000000000000000000000,
 						_amounts,
 						_logicContractAddresses,
 						_fees,
+						_payloads,
 						_batchNonce,
 						_tokenContract
 					)
