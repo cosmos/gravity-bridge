@@ -40,7 +40,7 @@ contract Peggy {
 	event ERC20DeployedEvent(
 		// FYI: Can't index on a string without doing a bunch of weird stuff
 		string _cosmosDenom,
-		address _tokenContract,
+		address indexed _tokenContract,
 		string _name,
 		string _symbol,
 		uint8 _decimals,
@@ -370,7 +370,7 @@ contract Peggy {
 		uint8 _decimals
 	) public {
 		// Deploy an ERC20 with entire supply granted to Peggy.sol
-		ComsosERC20 erc20 = new ComsosERC20(address(this), _name, _symbol, _decimals);
+		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
 		// Fire an event to let the Cosmos module know
 		state_lastEventNonce = state_lastEventNonce.add(1);

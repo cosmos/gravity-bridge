@@ -1,7 +1,7 @@
 pragma solidity ^0.6.6;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract ComsosERC20 is ERC20 {
+contract CosmosERC20 is ERC20 {
 	uint256 MAX_UINT = 2**256 - 1;
 
 	constructor(
