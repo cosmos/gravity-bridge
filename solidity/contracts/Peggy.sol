@@ -3,6 +3,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "hardhat/console.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "./CosmosToken.sol";
 
 pragma experimental ABIEncoderV2;
@@ -14,6 +15,7 @@ contract Peggy {
 	// These are updated often
 	bytes32 public state_lastValsetCheckpoint;
 	mapping(address => uint256) public state_lastBatchNonces;
+	mapping(bytes32 => uint256) public state_invalidationMapping;
 	uint256 public state_lastValsetNonce = 0;
 	uint256 public state_lastEventNonce = 0;
 
@@ -52,6 +54,12 @@ contract Peggy {
 		uint256 indexed _newValsetNonce,
 		address[] _validators,
 		uint256[] _powers
+	);
+	event LogicCallEvent(
+		bytes32 _invalidationId,
+		uint256 _invalidationNonce,
+		bytes _returnData,
+		uint256 _eventNonce
 	);
 
 	// TEST FIXTURES
@@ -359,9 +367,9 @@ contract Peggy {
 		}
 	}
 
-	// submitLogicBatch is the same as submitBatch, but it integrates the arbitrary logic functionality
-	function submitLogicBatch(
-		// The validators that approve the batch
+	// This function transfers
+	function submitLogicCall(
+		// The validators that approve the call
 		address[] memory _currentValidators,
 		uint256[] memory _currentPowers,
 		uint256 _currentValsetNonce,
@@ -369,20 +377,26 @@ contract Peggy {
 		uint8[] memory _v,
 		bytes32[] memory _r,
 		bytes32[] memory _s,
-		// The batch of transactions
-		uint256[] memory _amounts,
-		address[] memory _logicContractAddresses,
-		uint256[] memory _fees,
-		bytes[] memory _payloads,
-		uint256 _batchNonce,
-		address _tokenContract
+		// Transfers out to the logic contract
+		uint256[] memory _transferAmounts,
+		address[] memory _transferTokenContracts,
+		// The fees (transferred to msg.sender)
+		uint256[] memory _feeAmounts,
+		uint256[] memory _feeTokenContracts,
+		// The arbitrary logic call
+		address _logicContractAddress,
+		bytes memory _payload,
+		// Invalidation metadata
+		uint256 _timeOut,
+		bytes32 _invalidationId,
+		uint256 _invalidationNonce
 	) public {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the batch nonce is higher than the last nonce for this token
 			require(
-				state_lastBatchNonces[_tokenContract] < _batchNonce,
-				"New batch nonce must be greater than the current nonce"
+				state_invalidationMapping[_invalidationId] < _invalidationNonce,
+				"New invalidation nonce must be greater than the current nonce"
 			);
 
 			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
@@ -405,12 +419,17 @@ contract Peggy {
 				"Supplied current validators and powers do not match checkpoint."
 			);
 
-			// Check that the transaction batch is well-formed
+			// Check that the call has not timed out
+			require(block.timestamp < _timeOut, "Timed out");
+
+			// Check that the token transfer list is well-formed
 			require(
-				_amounts.length == _logicContractAddresses.length &&
-					_amounts.length == _fees.length,
-				"Malformed batch of transactions"
+				_transferAmounts.length == _transferTokenContracts.length,
+				"Malformed list of token transfers"
 			);
+
+			// Check that the fee list is well-formed
+			require(_feeAmounts.length == _feeTokenContracts.length, "Malformed list of fees");
 
 			// Check that enough current validators have signed off on the transaction batch and valset
 			checkValidatorSignatures(
@@ -423,43 +442,53 @@ contract Peggy {
 				keccak256(
 					abi.encode(
 						state_peggyId,
-						// bytes32 encoding of "logicBatch"
+						// bytes32 encoding of "logicCall"
 						0x6c6f676963426174636800000000000000000000000000000000000000000000,
-						_amounts,
-						_logicContractAddresses,
-						_fees,
-						_payloads,
-						_batchNonce,
-						_tokenContract
+						_transferAmounts,
+						_transferTokenContracts,
+						_feeAmounts,
+						_feeTokenContracts,
+						_logicContractAddress,
+						_payload,
+						_timeOut,
+						_invalidationId,
+						_invalidationNonce
 					)
 				),
 				state_powerThreshold
 			);
-
-			// ACTIONS
-
-			// Store batch nonce
-			state_lastBatchNonces[_tokenContract] = _batchNonce;
-
-			{
-				// Send transaction amounts to destinations
-				uint256 totalFee;
-				for (uint256 i = 0; i < _amounts.length; i++) {
-					IERC20(_tokenContract).safeTransfer(_logicContractAddresses[i], _amounts[i]);
-					(bool success, bytes memory returnData) =
-						address(_logicContractAddresses[i]).call(_payloads[i]);
-					totalFee = totalFee.add(_fees[i]);
-				}
-
-				// Send transaction fees to msg.sender
-				IERC20(_tokenContract).safeTransfer(msg.sender, totalFee);
-			}
 		}
+
+		// ACTIONS
+
+		// Update invaldiation nonce
+		state_invalidationMapping[_invalidationId] = _invalidationNonce;
+
+		// Send tokens to the logic contract
+		for (uint256 i = 0; i < _transferAmounts.length; i++) {
+			IERC20(_transferTokenContracts[i]).safeTransfer(
+				_logicContractAddress,
+				_transferAmounts[i]
+			);
+		}
+
+		// Send fees to msg.sender
+		for (uint256 i = 0; i < _feeAmounts.length; i++) {
+			IERC20(_feeTokenContracts[i]).safeTransfer(msg.sender, _feeAmounts[i]);
+		}
+
+		// Make call to logic contract
+		bytes memory returnData = Address.functionCall(_logicContractAddress, _payload);
 
 		// LOGS scoped to reduce stack depth
 		{
 			state_lastEventNonce = state_lastEventNonce.add(1);
-			emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, state_lastEventNonce);
+			emit LogicCallEvent(
+				_invalidationId,
+				_invalidationNonce,
+				returnData,
+				state_lastEventNonce
+			);
 		}
 	}
 
