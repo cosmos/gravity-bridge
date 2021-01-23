@@ -382,6 +382,16 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
+func (k Keeper) UnpackAttestationClaim(att *types.Attestation) (types.EthereumClaim, error) {
+	var msg types.EthereumClaim
+	err := k.cdc.UnpackAny(att.Claim, &msg)
+	if err != nil {
+		return nil, err
+	} else {
+		return msg, nil
+	}
+}
+
 // prefixRange turns a prefix into a (start, end) range. The start is the given prefix value and
 // the end is calculated by adding 1 bit to the start value. Nil is not allowed as prefix.
 // 		Example: []byte{1, 3, 4} becomes []byte{1, 3, 5}

@@ -80,9 +80,8 @@ func TestAttestationIterator(t *testing.T) {
 	// add some attestations to the store
 
 	att1 := &types.Attestation{
-		EventNonce: 1,
-		Observed:   true,
-		Votes:      []string{},
+		Observed: true,
+		Votes:    []string{},
 	}
 	dep1 := &types.MsgDepositClaim{
 		EventNonce:     1,
@@ -93,9 +92,8 @@ func TestAttestationIterator(t *testing.T) {
 		Orchestrator:   AccAddrs[0].String(),
 	}
 	att2 := &types.Attestation{
-		EventNonce: 2,
-		Observed:   true,
-		Votes:      []string{},
+		Observed: true,
+		Votes:    []string{},
 	}
 	dep2 := &types.MsgDepositClaim{
 		EventNonce:     2,
@@ -105,8 +103,8 @@ func TestAttestationIterator(t *testing.T) {
 		CosmosReceiver: AccAddrs[0].String(),
 		Orchestrator:   AccAddrs[0].String(),
 	}
-	input.PeggyKeeper.SetAttestation(ctx, att1, dep1)
-	input.PeggyKeeper.SetAttestation(ctx, att2, dep2)
+	input.PeggyKeeper.SetAttestation(ctx, dep1.EventNonce, dep1.ClaimHash(), att1)
+	input.PeggyKeeper.SetAttestation(ctx, dep2.EventNonce, dep2.ClaimHash(), att2)
 
 	atts := []types.Attestation{}
 	input.PeggyKeeper.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {

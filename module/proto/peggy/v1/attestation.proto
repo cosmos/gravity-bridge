@@ -2,6 +2,7 @@ syntax = "proto3";
 package peggy.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
 
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
@@ -31,11 +32,10 @@ enum ClaimType {
 // but there is no reason to store those exact details becuause the next message sender
 // will kindly provide you with them.
 message Attestation {
-  uint64              event_nonce = 1;
-  bool                observed    = 2;
-  repeated string     votes       = 3;
-  bytes               claim_hash  = 4;
-  uint64              height      = 5;
+  bool                observed         = 1;
+  repeated string     votes            = 2;
+  uint64              height           = 3;
+  google.protobuf.Any claim            = 4;
 }
 
 // ERC20Token unique identifier for an Ethereum ERC20 token.
