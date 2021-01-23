@@ -24,12 +24,8 @@ describe.only("Compare gas usage of old submitBatch method vs new logicCall meth
     const signers = await ethers.getSigners();
     const peggyId = ethers.utils.formatBytes32String("foo");
 
-    const valset0 = {
-      // This is the power distribution on the Cosmos hub as of 7/14/2020
-      powers: examplePowers(),
-      validators: signers.slice(0, examplePowers().length),
-      nonce: 0
-    }
+    let powers = examplePowers();
+    let validators = signers.slice(0, powers.length);
 
     const powerThreshold = 6666;
 
@@ -37,17 +33,11 @@ describe.only("Compare gas usage of old submitBatch method vs new logicCall meth
       peggy,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(peggyId, valset0.validators, valset0.powers, powerThreshold);
+    } = await deployContracts(peggyId, validators, powers, powerThreshold);
 
     const TestTokenBatchMiddleware = await ethers.getContractFactory("TestTokenBatchMiddleware");
-    const tokenBatchMiddleware = (await TestTokenBatchMiddleware.deploy(testERC20.address)) as TestTokenBatchMiddleware;
+    const tokenBatchMiddleware = (await TestTokenBatchMiddleware.deploy()) as TestTokenBatchMiddleware;
     await tokenBatchMiddleware.transferOwnership(peggy.address);
-
-    let powers = examplePowers();
-    let validators = signers.slice(0, powers.length);
-
-
-
 
     // Transfer out to Cosmos, locking coins
     // =====================================
@@ -112,7 +102,7 @@ describe.only("Compare gas usage of old submitBatch method vs new logicCall meth
     await peggy.submitBatch(
       await getSignerAddresses(validators),
       powers,
-      1,
+      0,
 
       sigs.v,
       sigs.r,
@@ -125,39 +115,55 @@ describe.only("Compare gas usage of old submitBatch method vs new logicCall meth
       testERC20.address
     );
 
+    expect(
+      (await testERC20.functions.balanceOf(await signers[6].getAddress())).toNumber()
+    ).to.equal(1);
+
 
     // Using logicCall method
     // ========================
     methodName = ethers.utils.formatBytes32String(
         "logicCall"
       );
+
+    let logicCallArgs = {
+      transferAmounts: [100], // transferAmounts
+      transferTokenContracts: [testERC20.address], // transferTokenContracts
+      feeAmounts: [100], // feeAmounts
+      feeTokenContracts: [testERC20.address], // feeTokenContracts
+      logicContractAddress: tokenBatchMiddleware.address, // logicContractAddress
+      payload: tokenBatchMiddleware.interface.functions.submitBatch.encode([txAmounts, txDestinations, testERC20.address]), // payload
+      timeOut: 4766922941000, // timeOut, Far in the future
+      invalidationId: ethers.utils.hexZeroPad(testERC20.address, 32), // invalidationId
+      invalidationNonce: 1 // invalidationNonce
+    }
   
     digest = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(
           [
             "bytes32", // peggyId
             "bytes32", // methodName
-            // transferAmounts,
-            // transferTokenContracts,
-            // feeAmounts,
-            // feeTokenContracts,
-            // logicContractAddress,
-            // payload,
-            // timeOut,
-            // invalidationId,
-            // invalidationNonce
+            "uint256[]", // transferAmounts
+            "address[]", // transferTokenContracts
+            "uint256[]", // feeAmounts
+            "address[]", // feeTokenContracts
+            "address", // logicContractAddress
+            "bytes", // payload
+            "uint256", // timeOut
+            "bytes32", // invalidationId
+            "uint256" // invalidationNonce
           ],
           [
             peggyId,
             methodName,
-            [100], // transferAmounts
-            [testERC20.address], // transferTokenContracts
-            [100], // feeAmounts
-            [testERC20.address], // feeTokenContracts
-            tokenBatchMiddleware.address, // logicContractAddress
-            tokenBatchMiddleware.interface.functions.submitBatch.encode([txAmounts, txDestinations, testERC20.address]), // payload
-            4766922941000, // timeOut, Far in the future
-            testERC20.address, // invalidationId
-            1 // invalidationNonce
+            logicCallArgs.transferAmounts,
+            logicCallArgs.transferTokenContracts,
+            logicCallArgs.feeAmounts,
+            logicCallArgs.feeTokenContracts,
+            logicCallArgs.logicContractAddress,
+            logicCallArgs.payload,
+            logicCallArgs.timeOut,
+            logicCallArgs.invalidationId,
+            logicCallArgs.invalidationNonce
           ]
         ));
   
@@ -166,22 +172,16 @@ describe.only("Compare gas usage of old submitBatch method vs new logicCall meth
       await peggy.submitLogicCall(
         await getSignerAddresses(validators),
         powers,
-        1,
+        0,
   
         sigs.v,
         sigs.r,
         sigs.s,
-        {
-          transferAmounts: [100], // transferAmounts
-          transferTokenContracts: [testERC20.address], // transferTokenContracts
-          feeAmounts: [100], // feeAmounts
-          feeTokenContracts: [testERC20.address], // feeTokenContracts
-          logicContractAddress: tokenBatchMiddleware.address, // logicContractAddress
-          payload: tokenBatchMiddleware.interface.functions.submitBatch.encode([txAmounts, txDestinations, testERC20.address]), // payload
-          timeOut: 4766922941000, // timeOut, Far in the future
-          invalidationId: testERC20.address, // invalidationId
-          invalidationNonce: 1 // invalidationNonce
-        }
+        logicCallArgs
       );
+
+      expect(
+        (await testERC20.functions.balanceOf(await signers[6].getAddress())).toNumber()
+      ).to.equal(2);
   });
 });
