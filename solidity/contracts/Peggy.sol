@@ -453,7 +453,7 @@ contract Peggy {
 				abi.encode(
 					state_peggyId,
 					// bytes32 encoding of "logicCall"
-					0x6c6f676963426174636800000000000000000000000000000000000000000000,
+					0x6c6f67696343616c6c0000000000000000000000000000000000000000000000,
 					_args.transferAmounts,
 					_args.transferTokenContracts,
 					_args.feeAmounts,
