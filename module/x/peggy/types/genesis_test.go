@@ -12,7 +12,7 @@ func TestGenesisStateValidate(t *testing.T) {
 		expErr bool
 	}{
 		"default params": {src: DefaultGenesisState(), expErr: false},
-		"empty params":   {src: &GenesisState{Params: &Params{}}, expErr: false},
+		"empty params":   {src: &GenesisState{Params: &Params{}}, expErr: true},
 		"invalid params": {src: &GenesisState{
 			Params: &Params{
 				PeggyId:            "foo",

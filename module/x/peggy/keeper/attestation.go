@@ -97,6 +97,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 		panic("attempting to apply events to state out of order")
 	}
 	k.setLastObservedEventNonce(ctx, claim.GetEventNonce())
+	k.SetLastObservedEthereumBlockHeight(ctx, claim.GetBlockHeight())
 
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
@@ -112,8 +113,6 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 		)
 	} else {
 		commit() // persist transient storage
-
-		// TODO: after we commit, delete the outgoingtxbatch that this claim references
 	}
 }
 
@@ -211,6 +210,33 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
 		return 0
 	}
 	return types.UInt64FromBytes(bytes)
+}
+
+// GetLastObservedEthereumBlockHeight height gets the block height to of the last observed attestation from
+// the store
+func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastObservedEthereumBlockHeight {
+	store := ctx.KVStore(k.storeKey)
+	bytes := store.Get(types.LastObservedEthereumBlockHeightKey)
+
+	if len(bytes) == 0 {
+		return types.LastObservedEthereumBlockHeight{
+			CosmosBlockHeight:   0,
+			EthereumBlockHeight: 0,
+		}
+	}
+	height := types.LastObservedEthereumBlockHeight{}
+	k.cdc.MustUnmarshalBinaryBare(bytes, &height)
+	return height
+}
+
+// SetLastObservedEthereumBlockHeight sets the block height in the store.
+func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeight uint64) {
+	store := ctx.KVStore(k.storeKey)
+	height := types.LastObservedEthereumBlockHeight{
+		EthereumBlockHeight: ethereumHeight,
+		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
+	}
+	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&height))
 }
 
 // setLastObservedEventNonce sets the latest observed event nonce

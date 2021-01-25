@@ -9,9 +9,10 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 // OutgoingTxBatch represents a batch of transactions going from Peggy to ETH
 message OutgoingTxBatch {
   uint64                      batch_nonce    = 1;
-  repeated OutgoingTransferTx transactions   = 2;
-  string                      token_contract = 3;
-  uint64                      block          = 4;
+  uint64                      batch_timeout  = 2;
+  repeated OutgoingTransferTx transactions   = 3;
+  string                      token_contract = 4;
+  uint64                      block          = 5;
 }
 
 // OutgoingTransferTx represents an individual send from Peggy to ETH

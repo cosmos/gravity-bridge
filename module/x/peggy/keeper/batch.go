@@ -21,16 +21,15 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, ma
 	if maxElements == 0 {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "max elements value")
 	}
-	// TODO: figure out how to check for know or unknown denoms? this might not matter anymore
 	selectedTx, err := k.pickUnbatchedTX(ctx, contractAddress, maxElements)
 	if len(selectedTx) == 0 || err != nil {
 		return nil, err
 	}
 	nextID := k.autoIncrementID(ctx, types.KeyLastOutgoingBatchID)
 	batch := &types.OutgoingTxBatch{
-		BatchNonce:   nextID,
-		Transactions: selectedTx,
-		// Valset:        k.GetCurrentValset(ctx),
+		BatchNonce:    nextID,
+		BatchTimeout:  k.getBatchTimeoutHeight(ctx),
+		Transactions:  selectedTx,
 		TokenContract: contractAddress,
 	}
 	k.StoreBatch(ctx, batch)
@@ -45,6 +44,26 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, ma
 	)
 	ctx.EventManager().EmitEvent(batchEvent)
 	return batch, nil
+}
+
+/// This gets the batch timeout height in Ethereum blocks.
+func (k Keeper) getBatchTimeoutHeight(ctx sdk.Context) uint64 {
+	params := k.GetParams(ctx)
+	currentCosmosHeight := ctx.BlockHeight()
+	// we store the last observed Cosmos and Ethereum heights, we do not concern ourselves if these values
+	// are zero because no batch can be produced if the last Ethereum block height is not first populated by a deposit event.
+	heights := k.GetLastObservedEthereumBlockHeight(ctx)
+	if heights.CosmosBlockHeight == 0 || heights.EthereumBlockHeight == 0 {
+		return 0
+	}
+	// we project how long it has been in milliseconds since the last Ethereum block height was observed
+	projected_millis := (uint64(currentCosmosHeight) - heights.CosmosBlockHeight) * params.AverageBlockTime
+	// we convert that projection into the current Ethereum height using the average Ethereum block time in millis
+	projected_current_ethereum_height := (projected_millis / params.AverageEthereumBlockTime) + heights.EthereumBlockHeight
+	// we convert our target time for block timeouts (lets say 12 hours) into a number of blocks to
+	// place on top of our projection of the current Ethereum block height.
+	blocks_to_add := params.TargetBatchTimeout / params.AverageEthereumBlockTime
+	return projected_current_ethereum_height + blocks_to_add
 }
 
 // OutgoingTxBatchExecuted is run when the Cosmos chain detects that a batch has been executed on Ethereum
@@ -63,7 +82,6 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, n
 	// Iterate through remaining batches
 	k.IterateOutgoingTXBatches(ctx, func(key []byte, iter_batch *types.OutgoingTxBatch) bool {
 		// If the iterated batches nonce is lower than the one that was just executed, cancel it
-		// TODO: iterate only over batches we need to iterate over
 		if iter_batch.BatchNonce < b.BatchNonce {
 			k.CancelOutgoingTXBatch(ctx, tokenContract, iter_batch.BatchNonce)
 		}

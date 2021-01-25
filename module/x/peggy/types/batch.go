@@ -56,6 +56,7 @@ func (b OutgoingTxBatch) GetCheckpoint(peggyIDstring string) ([]byte, error) {
 		txFees,
 		big.NewInt(int64(b.BatchNonce)),
 		gethcommon.HexToAddress(b.TokenContract),
+		big.NewInt(int64(b.BatchTimeout)),
 	)
 
 	// this should never happen outside of test since any case that could crash on encoding

@@ -16,3 +16,13 @@ message Valset {
   repeated BridgeValidator members = 2;
   uint64                   height  = 3;
 }
+
+// LastObservedEthereumBlockHeight stores the last observed
+// Ethereum block height along with the Cosmos block height that
+// it was observed at. These two numbers can be used to project
+// outward and always produce batches with timeouts in the future
+// even if no Ethereum block height has been relayed for a long time
+message LastObservedEthereumBlockHeight {
+  uint64 cosmos_block_height = 1;
+  uint64 ethereum_block_height = 2;
+}
