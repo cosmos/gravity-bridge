@@ -258,61 +258,9 @@ type EthereumClaim interface {
 	ClaimHash() []byte
 }
 
-func toClaimType(input int32) ClaimType {
-	if input == 1 {
-		return CLAIM_TYPE_DEPOSIT
-	} else if input == 2 {
-		return CLAIM_TYPE_WITHDRAW
-	} else {
-		return CLAIM_TYPE_UNKNOWN
-	}
-}
-
-func fromClaimType(input ClaimType) int32 {
-	if input == CLAIM_TYPE_DEPOSIT {
-		return 1
-	} else if input == CLAIM_TYPE_WITHDRAW {
-		return 2
-	} else {
-		return 0
-	}
-}
-
-func (e *GenericClaim) GetType() ClaimType {
-	return toClaimType(e.ClaimType)
-}
-
-func (e *GenericClaim) ClaimHash() []byte {
-	return e.Hash
-}
-
-// by the time anything is turned into a generic
-// claim it has already been validated
-func (e *GenericClaim) ValidateBasic() error {
-	return nil
-}
-
-func (e *GenericClaim) GetClaimer() sdk.AccAddress {
-	val, _ := sdk.AccAddressFromBech32(e.EventClaimer)
-	return val
-}
-
-func GenericClaimfromInterface(claim EthereumClaim) (*GenericClaim, error) {
-	err := claim.ValidateBasic()
-	if err != nil {
-		return nil, err
-	}
-	return &GenericClaim{
-		EventNonce: claim.GetEventNonce(),
-		ClaimType:  fromClaimType(claim.GetType()),
-		Hash:       claim.ClaimHash(),
-	}, nil
-}
-
 var (
 	_ EthereumClaim = &MsgDepositClaim{}
 	_ EthereumClaim = &MsgWithdrawClaim{}
-	_ EthereumClaim = &GenericClaim{}
 )
 
 // GetType returns the type of the claim
