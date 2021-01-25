@@ -87,9 +87,8 @@ contract Peggy {
 		bytes32 _r,
 		bytes32 _s
 	) private pure returns (bool) {
-		bytes32 messageDigest = keccak256(
-			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
-		);
+		bytes32 messageDigest =
+			keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash));
 		return _signer == ecrecover(messageDigest, _v, _r, _s);
 	}
 
@@ -110,9 +109,8 @@ contract Peggy {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes32 checkpoint = keccak256(
-			abi.encode(_peggyId, methodName, _valsetNonce, _validators, _powers)
-		);
+		bytes32 checkpoint =
+			keccak256(abi.encode(_peggyId, methodName, _valsetNonce, _validators, _powers));
 
 		return checkpoint;
 	}
@@ -210,12 +208,8 @@ contract Peggy {
 		);
 
 		// Check that enough current validators have signed off on the new validator set
-		bytes32 newCheckpoint = makeCheckpoint(
-			_newValidators,
-			_newPowers,
-			_newValsetNonce,
-			state_peggyId
-		);
+		bytes32 newCheckpoint =
+			makeCheckpoint(_newValidators, _newPowers, _newValsetNonce, state_peggyId);
 
 		checkValidatorSignatures(
 			_currentValidators,
@@ -259,7 +253,10 @@ contract Peggy {
 		address[] memory _destinations,
 		uint256[] memory _fees,
 		uint256 _batchNonce,
-		address _tokenContract
+		address _tokenContract,
+		// a block height beyond which this batch is not valid
+		// used to provide a fee-free timeout
+		uint256 _batchTimeout
 	) public {
 		// CHECKS scoped to reduce stack depth
 		{
@@ -267,6 +264,12 @@ contract Peggy {
 			require(
 				state_lastBatchNonces[_tokenContract] < _batchNonce,
 				"New batch nonce must be greater than the current nonce"
+			);
+
+			// Check that the block height is less than the timeout height
+			require(
+				block.number < _batchTimeout,
+				"Batch timeout must be greater than the current block height"
 			);
 
 			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
@@ -312,7 +315,8 @@ contract Peggy {
 						_destinations,
 						_fees,
 						_batchNonce,
-						_tokenContract
+						_tokenContract,
+						_batchTimeout
 					)
 				),
 				state_powerThreshold

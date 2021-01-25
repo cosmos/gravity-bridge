@@ -14,7 +14,7 @@ chai.use(solidity);
 const { expect } = chai;
 
 
-describe("Peggy happy path with combination method", function () {
+describe("Peggy happy path valset update + batch submit", function () {
   it("Happy path", async function () {
 
     // DEPLOY CONTRACTS
@@ -111,6 +111,7 @@ describe("Peggy happy path with combination method", function () {
     const txDestinations = await getSignerAddresses(txDestinationsInt);
 
     const batchNonce = 1
+    const batchTimeout = 10000000
 
     const methodName = ethers.utils.formatBytes32String(
       "transactionBatch"
@@ -124,7 +125,8 @@ describe("Peggy happy path with combination method", function () {
         "address[]",
         "uint256[]",
         "uint256",
-        "address"
+        "address",
+        "uint256"
       ],
       [
         peggyId,
@@ -133,7 +135,8 @@ describe("Peggy happy path with combination method", function () {
         txDestinations,
         txFees,
         batchNonce,
-        testERC20.address
+        testERC20.address,
+        batchTimeout
       ]
     );
 
@@ -142,10 +145,6 @@ describe("Peggy happy path with combination method", function () {
     let sigs = await signHash(valset1.validators, digest);
 
     await peggy.submitBatch(
-
-      // await getSignerAddresses(valset2.validators),
-      // valset2.powers,
-      // valset2.nonce,
 
       await getSignerAddresses(valset1.validators),
       valset1.powers,
@@ -158,11 +157,10 @@ describe("Peggy happy path with combination method", function () {
       txAmounts,
       txDestinations,
       txFees,
-      1,
-      testERC20.address
+      batchNonce,
+      testERC20.address,
+      batchTimeout
     );
-
-    // expect(await peggy.functions.state_lastValsetCheckpoint()).to.equal(checkpoint2);
 
     expect(
       await (
