@@ -15,16 +15,14 @@
 /// will kindly provide you with them.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Attestation {
-    #[prost(uint64, tag="1")]
-    pub event_nonce: u64,
-    #[prost(bool, tag="2")]
+    #[prost(bool, tag="1")]
     pub observed: bool,
-    #[prost(string, repeated, tag="3")]
+    #[prost(string, repeated, tag="2")]
     pub votes: ::std::vec::Vec<std::string::String>,
-    #[prost(bytes, tag="4")]
-    pub claim_hash: std::vec::Vec<u8>,
-    #[prost(uint64, tag="5")]
+    #[prost(uint64, tag="3")]
     pub height: u64,
+    #[prost(message, optional, tag="4")]
+    pub claim: ::std::option::Option<::prost_types::Any>,
 }
 /// ERC20Token unique identifier for an Ethereum ERC20 token.
 /// CONTRACT:
@@ -70,11 +68,13 @@ pub struct IdSet {
 pub struct OutgoingTxBatch {
     #[prost(uint64, tag="1")]
     pub batch_nonce: u64,
-    #[prost(message, repeated, tag="2")]
+    #[prost(uint64, tag="2")]
+    pub batch_timeout: u64,
+    #[prost(message, repeated, tag="3")]
     pub transactions: ::std::vec::Vec<OutgoingTransferTx>,
-    #[prost(string, tag="3")]
+    #[prost(string, tag="4")]
     pub token_contract: std::string::String,
-    #[prost(uint64, tag="4")]
+    #[prost(uint64, tag="5")]
     pub block: u64,
 }
 /// OutgoingTransferTx represents an individual send from Peggy to ETH
@@ -119,21 +119,17 @@ pub struct Valset {
     #[prost(uint64, tag="3")]
     pub height: u64,
 }
-/// It's difficult to serialize and deserialize
-/// interfaces, instead we can make this struct
-/// that stores all the data the interface requires
-/// and use it to store and then re-create a interface
-/// object with all the same properties.
+/// LastObservedEthereumBlockHeight stores the last observed
+/// Ethereum block height along with the Cosmos block height that
+/// it was observed at. These two numbers can be used to project
+/// outward and always produce batches with timeouts in the future
+/// even if no Ethereum block height has been relayed for a long time
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenericClaim {
+pub struct LastObservedEthereumBlockHeight {
     #[prost(uint64, tag="1")]
-    pub event_nonce: u64,
-    #[prost(int32, tag="2")]
-    pub claim_type: i32,
-    #[prost(bytes, tag="3")]
-    pub hash: std::vec::Vec<u8>,
-    #[prost(string, tag="4")]
-    pub event_claimer: std::string::String,
+    pub cosmos_block_height: u64,
+    #[prost(uint64, tag="2")]
+    pub ethereum_block_height: u64,
 }
 /// MsgSetOrchestratorAddress
 /// this message allows validators to delegate their voting responsibilities 
@@ -267,15 +263,17 @@ pub struct MsgConfirmBatchResponse {
 pub struct MsgDepositClaim {
     #[prost(uint64, tag="1")]
     pub event_nonce: u64,
-    #[prost(string, tag="2")]
-    pub token_contract: std::string::String,
+    #[prost(uint64, tag="2")]
+    pub block_height: u64,
     #[prost(string, tag="3")]
-    pub amount: std::string::String,
+    pub token_contract: std::string::String,
     #[prost(string, tag="4")]
-    pub ethereum_sender: std::string::String,
+    pub amount: std::string::String,
     #[prost(string, tag="5")]
-    pub cosmos_receiver: std::string::String,
+    pub ethereum_sender: std::string::String,
     #[prost(string, tag="6")]
+    pub cosmos_receiver: std::string::String,
+    #[prost(string, tag="7")]
     pub orchestrator: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -288,10 +286,12 @@ pub struct MsgWithdrawClaim {
     #[prost(uint64, tag="1")]
     pub event_nonce: u64,
     #[prost(uint64, tag="2")]
+    pub block_height: u64,
+    #[prost(uint64, tag="3")]
     pub batch_nonce: u64,
-    #[prost(string, tag="3")]
-    pub token_contract: std::string::String,
     #[prost(string, tag="4")]
+    pub token_contract: std::string::String,
+    #[prost(string, tag="5")]
     pub orchestrator: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -329,13 +329,19 @@ pub struct Params {
     pub signed_batches_window: u64,
     #[prost(uint64, tag="8")]
     pub signed_claims_window: u64,
-    #[prost(bytes, tag="9")]
+    #[prost(uint64, tag="10")]
+    pub target_batch_timeout_millis: u64,
+    #[prost(uint64, tag="11")]
+    pub average_block_time_millis: u64,
+    #[prost(uint64, tag="12")]
+    pub average_ethereum_block_time_millis: u64,
+    #[prost(bytes, tag="13")]
     pub slash_fraction_valset: std::vec::Vec<u8>,
-    #[prost(bytes, tag="10")]
+    #[prost(bytes, tag="14")]
     pub slash_fraction_batch: std::vec::Vec<u8>,
-    #[prost(bytes, tag="11")]
+    #[prost(bytes, tag="15")]
     pub slash_fraction_claim: std::vec::Vec<u8>,
-    #[prost(bytes, tag="12")]
+    #[prost(bytes, tag="16")]
     pub slash_fraction_conflicting_claim: std::vec::Vec<u8>,
 }
 /// GenesisState struct

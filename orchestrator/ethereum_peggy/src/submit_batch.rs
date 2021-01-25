@@ -48,7 +48,8 @@ pub async fn send_eth_transaction_batch(
     // address[] memory _destinations,
     // uint256[] memory _fees,
     // uint256 _batchNonce,
-    // address _tokenContract
+    // address _tokenContract,
+    // uint256 _batchTimeout
     let tokens = &[
         current_addresses.into(),
         current_powers.into(),
@@ -61,8 +62,9 @@ pub async fn send_eth_transaction_batch(
         fees,
         new_batch_nonce.clone().into(),
         batch.token_contract.into(),
+        batch.batch_timeout.into(),
     ];
-    let payload = clarity::abi::encode_call("submitBatch(address[],uint256[],uint256,uint8[],bytes32[],bytes32[],uint256[],address[],uint256[],uint256,address)",
+    let payload = clarity::abi::encode_call("submitBatch(address[],uint256[],uint256,uint8[],bytes32[],bytes32[],uint256[],address[],uint256[],uint256,address,uint256)",
     tokens).unwrap();
     trace!("Tokens {:?}", tokens);
 

@@ -113,6 +113,7 @@ pub fn encode_tx_batch_confirm(peggy_id: String, batch: TransactionBatch) -> Vec
         fees,
         batch.nonce.into(),
         batch.token_contract.into(),
+        batch.batch_timeout.into(),
     ])
 }
 
@@ -124,9 +125,9 @@ fn test_batch_signature() {
     use sha3::{Digest, Keccak256};
 
     let correct_hash: Vec<u8> =
-        hex_str_to_bytes("0x731fc6e7e13e4c4bd45664c9272d49e5a9b55bccb54cfcc0704465f9de491e86")
+        hex_str_to_bytes("0xa3a7ee0a363b8ad2514e7ee8f110d7449c0d88f3b0913c28c1751e6e0079a9b2")
             .unwrap();
-    let erc20_addr = "0x34Ac3eB6180FdD94043664C22043F004734Dc480"
+    let erc20_addr = "0x835973768750b3ED2D5c3EF5AdcD5eDb44d12aD4"
         .parse()
         .unwrap();
     let sender_addr = "0x527FBEE652609AB150F0AEE9D61A2F76CFC4A73E"
@@ -139,6 +140,7 @@ fn test_batch_signature() {
     };
 
     let batch = TransactionBatch {
+        batch_timeout: 2111u64,
         nonce: 1u64,
         transactions: vec![BatchTransaction {
             id: 1u64,
