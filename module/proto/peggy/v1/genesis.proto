@@ -34,19 +34,22 @@ message Params {
   uint64 signed_valsets_window            = 6;
   uint64 signed_batches_window            = 7;
   uint64 signed_claims_window             = 8;
-  bytes  slash_fraction_valset            = 9  [
+  uint64 target_batch_timeout_millis        = 10;
+  uint64 average_block_time_millis        = 11;
+  uint64 average_ethereum_block_time_millis        = 12;
+  bytes  slash_fraction_valset            = 13  [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes  slash_fraction_batch             = 10 [
+  bytes  slash_fraction_batch             = 14 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes  slash_fraction_claim             = 11 [
+  bytes  slash_fraction_claim             = 15 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes  slash_fraction_conflicting_claim = 12 [
+  bytes  slash_fraction_conflicting_claim = 16 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];

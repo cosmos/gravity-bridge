@@ -140,14 +140,15 @@ message MsgConfirmBatchResponse {}
 // -------------
 message MsgDepositClaim {
   uint64 event_nonce     = 1;
-  string token_contract  = 2;
-  string amount          = 3 [
+  uint64 block_height    = 2;
+  string token_contract  = 3;
+  string amount          = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
     (gogoproto.nullable) = false
   ];
-  string ethereum_sender = 4;
-  string cosmos_receiver = 5;
-  string orchestrator    = 6;
+  string ethereum_sender = 5;
+  string cosmos_receiver = 6;
+  string orchestrator    = 7;
 }
 
 message MsgDepositClaimResponse {}
@@ -156,9 +157,10 @@ message MsgDepositClaimResponse {}
 // operations on the bridge contract was executed.
 message MsgWithdrawClaim {
   uint64 event_nonce    = 1;
-  uint64 batch_nonce    = 2;
-  string token_contract = 3;
-  string orchestrator   = 4;
+  uint64 block_height   = 2;
+  uint64 batch_nonce    = 3;
+  string token_contract = 4;
+  string orchestrator   = 5;
 }
 
 message MsgWithdrawClaimResponse {}

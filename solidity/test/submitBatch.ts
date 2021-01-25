@@ -264,7 +264,7 @@ describe("submitBatch Go test hash", function () {
     const txFees = [1]
     const txDestinations = await getSignerAddresses([signers[5]]);
     const batchNonce = 1
-    let batchTimeout = ethers.provider.blockNumber + 1000
+    const batchTimeout = ethers.provider.blockNumber + 1000
 
 
 
@@ -315,6 +315,7 @@ describe("submitBatch Go test hash", function () {
       "txDestinations": txDestinations,
       "txFees": txFees,
       "batchNonce": batchNonce,
+      "batchTimeout": batchTimeout,
       "tokenContract": testERC20.address
     })
     console.log("abiEncodedBatch:", abiEncodedBatch)

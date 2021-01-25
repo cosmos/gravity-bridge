@@ -81,6 +81,9 @@ var (
 
 	// KeyOrchestratorAddress indexes the validator keys for an orchestrator
 	KeyOrchestratorAddress = []byte{0xe8}
+
+	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
+	LastObservedEthereumBlockHeightKey = []byte{0xf9}
 )
 
 // GetOrchestratorAddressKey returns the following key format
