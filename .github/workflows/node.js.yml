@@ -5,9 +5,9 @@ name: Solidity contract build and test
 
 on:
   push:
-    branches: [master, althea-peggy]
+    branches: [master, main]
   pull_request:
-    branches: [master, althea-peggy]
+    branches: [master, main]
 
 jobs:
   build:
