@@ -14,9 +14,9 @@ import {
 chai.use(solidity);
 const { expect } = chai;
 
-
-describe.only("Compare gas usage of old submitBatch method vs new logicCall method submitting one batch", function () {
-  it("Full batch", async function () {
+async function runTest(opts: {
+  batchSize: number
+}) {
 
     // Deploy contracts
     // ================
@@ -53,7 +53,7 @@ describe.only("Compare gas usage of old submitBatch method vs new logicCall meth
 
     // Preparing tx batch
     // ===================================
-    const numTxs = 100;
+    const numTxs = opts.batchSize;
     const txDestinationsInt = new Array(numTxs);
     const txFees = new Array(numTxs);
     const txAmounts = new Array(numTxs);
@@ -183,5 +183,15 @@ describe.only("Compare gas usage of old submitBatch method vs new logicCall meth
       expect(
         (await testERC20.functions.balanceOf(await signers[6].getAddress())).toNumber()
       ).to.equal(2);
+
+}
+
+describe.only("Compare gas usage of old submitBatch method vs new logicCall method submitting one batch", function () {
+  it("Large batch", async function () {
+    await runTest({batchSize: 100})
+  });
+
+  it("Small batch", async function () {
+    await runTest({batchSize: 10})
   });
 });
