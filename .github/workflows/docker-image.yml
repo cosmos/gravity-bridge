@@ -2,9 +2,9 @@ name: Integration tests
 
 on:
   push:
-    branches: [master, althea-peggy]
+    branches: [master, main]
   pull_request:
-    branches: [master, althea-peggy]
+    branches: [master, main]
 
 jobs:
   happy-path:
