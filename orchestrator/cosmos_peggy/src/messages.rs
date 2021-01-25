@@ -3,7 +3,7 @@ use deep_space::address::Address;
 use deep_space::canonical_json::{to_canonical_json, CanonicalJsonError};
 use deep_space::coin::Coin;
 use deep_space::msg::DeepSpaceMsg;
-use ethereum_peggy::utils::downcast_nonce;
+use ethereum_peggy::utils::downcast_uint256;
 use num256::Uint256;
 use peggy_utils::types::{ERC20Token, SendToCosmosEvent, TransactionBatchExecutedEvent};
 /// Any arbitrary message
@@ -164,6 +164,7 @@ pub struct CreateEthereumClaimsMsg {
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct WithdrawClaimMsg {
     pub event_nonce: Uint256,
+    pub block_height: Uint256,
     pub batch_nonce: Uint256,
     pub token_contract: EthAddress,
     pub orchestrator: Address,
@@ -172,10 +173,13 @@ pub struct WithdrawClaimMsg {
 impl WithdrawClaimMsg {
     pub fn from_event(input: TransactionBatchExecutedEvent, sender: Address) -> Self {
         WithdrawClaimMsg {
-            event_nonce: downcast_nonce(input.event_nonce)
+            event_nonce: downcast_uint256(input.event_nonce)
                 .expect("Event nonce overflow! Bridge Halt!")
                 .into(),
-            batch_nonce: downcast_nonce(input.batch_nonce)
+            block_height: downcast_uint256(input.block_height)
+                .expect("Block Height overflow! Bridge Halt!")
+                .into(),
+            batch_nonce: downcast_uint256(input.batch_nonce)
                 .expect("Batch nonce overflow! Bridge halt!")
                 .into(),
             token_contract: input.erc20,
@@ -187,6 +191,7 @@ impl WithdrawClaimMsg {
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct DepositClaimMsg {
     pub event_nonce: Uint256,
+    pub block_height: Uint256,
     pub token_contract: EthAddress,
     pub amount: Uint256,
     pub ethereum_sender: EthAddress,
@@ -197,8 +202,11 @@ pub struct DepositClaimMsg {
 impl DepositClaimMsg {
     pub fn from_event(input: SendToCosmosEvent, sender: Address) -> Self {
         DepositClaimMsg {
-            event_nonce: downcast_nonce(input.event_nonce)
+            event_nonce: downcast_uint256(input.event_nonce)
                 .expect("Event nonce overflow! Bridge Halt!")
+                .into(),
+            block_height: downcast_uint256(input.block_height)
+                .expect("Block number overflow! Bridge Halt!")
                 .into(),
             amount: input.amount,
             token_contract: input.erc20,

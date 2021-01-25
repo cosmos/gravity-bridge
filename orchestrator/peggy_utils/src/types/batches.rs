@@ -35,6 +35,7 @@ impl BatchTransaction {
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct TransactionBatch {
     pub nonce: u64,
+    pub batch_timeout: u64,
     pub transactions: Vec<BatchTransaction>,
     pub total_fee: ERC20Token,
     pub token_contract: EthAddress,
@@ -78,6 +79,7 @@ impl TransactionBatch {
         }
         if let Some(total_fee) = running_total_fee {
             Ok(TransactionBatch {
+                batch_timeout: input.batch_timeout,
                 nonce: input.batch_nonce,
                 transactions,
                 token_contract: total_fee.token_contract_address,

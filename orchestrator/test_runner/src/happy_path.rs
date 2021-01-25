@@ -469,6 +469,7 @@ async fn submit_duplicate_erc20_send(
 
     let event = SendToCosmosEvent {
         event_nonce: nonce,
+        block_height: 500u16.into(),
         erc20: erc20_address,
         sender: ethereum_sender,
         destination: receiver,

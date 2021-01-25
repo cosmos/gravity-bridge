@@ -24,7 +24,7 @@ pub async fn send_eth_transaction_batch(
     //assert!(new_valset_nonce > old_valset_nonce);
     let eth_address = our_eth_key.to_public_key().unwrap();
     info!(
-        "Ordering signatures and submitting TransacqtionBatch {}:{} to Ethereum",
+        "Ordering signatures and submitting TransactionBatch {}:{} to Ethereum",
         batch.token_contract, new_batch_nonce
     );
     trace!("Batch {:?}", batch);
@@ -48,7 +48,8 @@ pub async fn send_eth_transaction_batch(
     // address[] memory _destinations,
     // uint256[] memory _fees,
     // uint256 _batchNonce,
-    // address _tokenContract
+    // address _tokenContract,
+    // uint256 _batchTimeout
     let tokens = &[
         current_addresses.into(),
         current_powers.into(),
@@ -61,8 +62,9 @@ pub async fn send_eth_transaction_batch(
         fees,
         new_batch_nonce.clone().into(),
         batch.token_contract.into(),
+        batch.batch_timeout.into(),
     ];
-    let payload = clarity::abi::encode_call("submitBatch(address[],uint256[],uint256,uint8[],bytes32[],bytes32[],uint256[],address[],uint256[],uint256,address)",
+    let payload = clarity::abi::encode_call("submitBatch(address[],uint256[],uint256,uint8[],bytes32[],bytes32[],uint256[],address[],uint256[],uint256,address,uint256)",
     tokens).unwrap();
     trace!("Tokens {:?}", tokens);
 
@@ -73,10 +75,17 @@ pub async fn send_eth_transaction_batch(
         &web3,
     )
     .await?;
+    let current_block_height = web3.eth_block_number().await?;
     if before_nonce >= new_batch_nonce {
         info!(
             "Someone else updated the batch to {}, exiting early",
             before_nonce
+        );
+        return Ok(());
+    } else if current_block_height > batch.batch_timeout.into() {
+        info!(
+            "This batch is timed out. timeout block: {} current block: {}, exiting early",
+            current_block_height, batch.batch_timeout
         );
         return Ok(());
     }
