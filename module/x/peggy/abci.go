@@ -1,6 +1,8 @@
 package peggy
 
 import (
+	"sort"
+
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -176,19 +178,35 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 // an attestation that has not passed the threshold
 func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 	attmap := k.GetAttestationMapping(ctx)
-	for _, atts := range attmap {
-		for _, att := range atts {
+	keys := make([]uint64, 0, len(attmap))
+	for k := range attmap {
+		keys = append(keys, k)
+	}
+	// the go standard library does not include a way to sort by uint64s...
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	for _, key := range keys {
+		oneObserved := false
+		skipped := false
+		for _, att := range attmap[key] {
 			// If it was already observed we don't need to do anything
 			if att.Observed {
+				skipped = true
 				continue
 			}
 			k.TryAttestation(ctx, &att)
-			// If it was not Observed, break the loop, either the vote
-			// was not sufficient or the vote was sufficient and the claim
-			// is out of order.
-			if !att.Observed {
-				break
+
+			// if we observe any attestation for this nonce no others can pass
+			// so it is safe to continue
+			if att.Observed {
+				oneObserved = true
+				continue
 			}
+		}
+		// If any one attestation for a nonce was not skipped and also does
+		// not become observed no later events can possibly pass. Meaning it is
+		// safe to return early.
+		if !oneObserved && !skipped {
+			return
 		}
 	}
 }
