@@ -107,8 +107,8 @@ pub async fn transaction_stress_test(
     }
 
     let start = Instant::now();
+    let mut good = true;
     while Instant::now() - start < TOTAL_TIMEOUT {
-        let mut good = true;
         for keys in user_keys.iter() {
             let c_addr = keys.cosmos_address;
             let balances = contact.get_balances(c_addr).await.unwrap().result;
@@ -125,9 +125,18 @@ pub async fn transaction_stress_test(
             }
         }
         if good {
-            info!("All {} deposits bridged successfully!", user_keys.len());
+            info!(
+                "All {} deposits bridged successfully!",
+                user_keys.len() * erc20_addresses.len()
+            );
             break;
         }
         delay_for(Duration::from_secs(1)).await;
+    }
+    if !good {
+        panic!(
+            "Failed to perform all {} deposits!",
+            user_keys.len() * erc20_addresses.len()
+        );
     }
 }
