@@ -2,6 +2,7 @@ import chai from "chai";
 import { ethers } from "@nomiclabs/buidler";
 import { solidity } from "ethereum-waffle";
 import { TestLogicContract } from "../typechain/TestLogicContract";
+import { SimpleLogicBatchMiddleware } from "../typechain/SimpleLogicBatchMiddleware";
 
 import { deployContracts } from "../test-utils";
 import {
@@ -18,7 +19,7 @@ const { expect } = chai;
 
 async function runTest(opts: {
   // Issues with the tx batch
-  batchNonceNotHigher?: boolean;
+  invalidationNonceNotHigher?: boolean;
   malformedTxBatch?: boolean;
 
   // Issues with the current valset and signatures
@@ -46,10 +47,18 @@ async function runTest(opts: {
     checkpoint: deployCheckpoint
   } = await deployContracts(peggyId, validators, powers, powerThreshold);
 
+  // First we deploy the logic batch middleware contract. This makes it easy to call a logic 
+  // contract a bunch of times in a batch.
+  const SimpleLogicBatchMiddleware = await ethers.getContractFactory("SimpleLogicBatchMiddleware");
+  const logicBatch = (await SimpleLogicBatchMiddleware.deploy()) as SimpleLogicBatchMiddleware;
+  // We set the ownership to peggy so that nobody else can call it.
+  await logicBatch.transferOwnership(peggy.address);
+
+  // Then we deploy the actual logic contract.
   const TestLogicContract = await ethers.getContractFactory("TestLogicContract");
   const logicContract = (await TestLogicContract.deploy(testERC20.address)) as TestLogicContract;
-  await logicContract.transferOwnership(peggy.address);
-
+  // We set its owner to the batch contract. 
+  await logicContract.transferOwnership(logicBatch.address);
 
 
   // Transfer out to Cosmos, locking coins
@@ -65,66 +74,80 @@ async function runTest(opts: {
 
   // Prepare batch
   // ===============================
+  // This code prepares the batch of transactions by encoding the arguments to the logicContract.
   // This batch contains 10 transactions which each:
-  // - Transfer 5 coins from Peggy's wallet to the logic contract
-  // - Pay a fee of 1 coin
+  // - Transfer 5 coins to the logic contract
   // - Call transferTokens on the logic contract, transferring 2+2 coins to signer 20
   //
   // After the batch runs, signer 20 should have 40 coins, Peggy should have 940 coins,
   // and the logic contract should have 10 coins
   const numTxs = 10;
-  const txLogicContractAddresses = new Array(numTxs);
   const txPayloads = new Array(numTxs);
-  const txFees = new Array(numTxs);
 
   const txAmounts = new Array(numTxs);
   for (let i = 0; i < numTxs; i++) {
-    txFees[i] = 1;
     txAmounts[i] = 5;
-    txLogicContractAddresses[i] = logicContract.address;
     txPayloads[i] = logicContract.interface.functions.transferTokens.encode([await signers[20].getAddress(), 2, 2])
   }
 
-  if (opts.malformedTxBatch) {
-    // Make the fees array the wrong size
-    txFees.pop();
-  }
-
-  let batchNonce = 1
-  if (opts.batchNonceNotHigher) {
-    batchNonce = 0
+  let invalidationNonce = 1
+  if (opts.invalidationNonceNotHigher) {
+    invalidationNonce = 0
   }
 
 
   // Call method
   // ===========
+  // We have to give the logicBatch contract 5 coins for each tx, since it will transfer that
+  // much to the logic contract.
+  // We give msg.sender 1 coin in fees for each tx.
   const methodName = ethers.utils.formatBytes32String(
-    "logicBatch"
+    "logicCall"
   );
-  let abiEncoded = ethers.utils.defaultAbiCoder.encode(
+
+  let logicCallArgs = {
+    transferAmounts: [numTxs * 5], // transferAmounts
+    transferTokenContracts: [testERC20.address], // transferTokenContracts
+    feeAmounts: [numTxs], // feeAmounts
+    feeTokenContracts: [testERC20.address], // feeTokenContracts
+    logicContractAddress: logicBatch.address, // logicContractAddress
+    payload: logicBatch.interface.functions.logicBatch.encode([txAmounts, txPayloads, logicContract.address, testERC20.address]), // payloads
+    timeOut: 4766922941000, // timeOut, Far in the future
+    invalidationId: ethers.utils.hexZeroPad(testERC20.address, 32), // invalidationId
+    invalidationNonce: invalidationNonce // invalidationNonce
+  }
+
+  const digest = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(
     [
-      "bytes32",
-      "bytes32",
-      "uint256[]",
-      "address[]",
-      "uint256[]",
-      "bytes[]",
-      "uint256",
-      "address"
+      "bytes32", // peggyId
+      "bytes32", // methodName
+      "uint256[]", // transferAmounts
+      "address[]", // transferTokenContracts
+      "uint256[]", // feeAmounts
+      "address[]", // feeTokenContracts
+      "address", // logicContractAddress
+      "bytes", // payload
+      "uint256", // timeOut
+      "bytes32", // invalidationId
+      "uint256" // invalidationNonce
     ],
     [
       peggyId,
       methodName,
-      txAmounts,
-      txLogicContractAddresses,
-      txFees,
-      txPayloads,
-      batchNonce,
-      testERC20.address
+      logicCallArgs.transferAmounts,
+      logicCallArgs.transferTokenContracts,
+      logicCallArgs.feeAmounts,
+      logicCallArgs.feeTokenContracts,
+      logicCallArgs.logicContractAddress,
+      logicCallArgs.payload,
+      logicCallArgs.timeOut,
+      logicCallArgs.invalidationId,
+      logicCallArgs.invalidationNonce
     ]
-  );
-  let digest = ethers.utils.keccak256(abiEncoded);
-  let sigs = await signHash(validators, digest);
+  ));
+
+  const sigs = await signHash(validators, digest);
+  
   let currentValsetNonce = 0;
   if (opts.nonMatchingCurrentValset) {
     // Wrong nonce
@@ -172,7 +195,7 @@ async function runTest(opts: {
     sigs.v[11] = 0;
   }
 
-  await peggy.submitLogicBatch(
+  await peggy.submitLogicCall(
     await getSignerAddresses(validators),
     powers,
     currentValsetNonce,
@@ -180,13 +203,7 @@ async function runTest(opts: {
     sigs.v,
     sigs.r,
     sigs.s,
-
-    txAmounts,
-    txLogicContractAddresses,
-    txFees,
-    txPayloads,
-    batchNonce,
-    testERC20.address
+    logicCallArgs
   );
 
   expect(
@@ -206,22 +223,16 @@ async function runTest(opts: {
   ).to.equal(9010);
 }
 
-describe("submitBatch tests", function () {
+describe("submitLogicCall tests", function () {
   it("throws on malformed current valset", async function () {
     await expect(runTest({ malformedCurrentValset: true })).to.be.revertedWith(
       "Malformed current validator set"
     );
   });
 
-  it("throws on malformed txbatch", async function () {
-    await expect(runTest({ malformedTxBatch: true })).to.be.revertedWith(
-      "Malformed batch of transactions"
-    );
-  });
-
-  it("throws on batch nonce not incremented", async function () {
-    await expect(runTest({ batchNonceNotHigher: true })).to.be.revertedWith(
-      "New batch nonce must be greater than the current nonce"
+  it("throws on invalidation nonce not incremented", async function () {
+    await expect(runTest({ invalidationNonceNotHigher: true })).to.be.revertedWith(
+      "New invalidation nonce must be greater than the current nonce"
     );
   });
 
