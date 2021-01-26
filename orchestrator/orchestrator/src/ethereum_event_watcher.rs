@@ -88,8 +88,9 @@ pub async fn check_for_events(
         }
 
         if !deposits.is_empty() || !withdraws.is_empty() {
-            let _res =
+            let res =
                 send_ethereum_claims(contact, our_private_key, deposits, withdraws, fee).await?;
+            trace!("Claims response {:?}", res);
             let new_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
             // since we can't actually trust that the above txresponse is correct we have to check here
             // we may be able to trust the tx response post grpc
@@ -97,6 +98,8 @@ pub async fn check_for_events(
                 return Err(PeggyError::InvalidBridgeStateError(
                     "Claims did not process, trying again in a moment".to_string(),
                 ));
+            } else {
+                info!("Claims processed, new nonce {}", new_event_nonce);
             }
         }
         Ok(latest_block)
