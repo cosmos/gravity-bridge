@@ -3,6 +3,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@nomiclabs/buidler/console.sol";
+import "./CosmosToken.sol";
 
 contract Peggy {
 	using SafeMath for uint256;
@@ -34,6 +35,15 @@ contract Peggy {
 		address indexed _sender,
 		bytes32 indexed _destination,
 		uint256 _amount,
+		uint256 _eventNonce
+	);
+	event ERC20DeployedEvent(
+		// FYI: Can't index on a string without doing a bunch of weird stuff
+		string _cosmosDenom,
+		address indexed _tokenContract,
+		string _name,
+		string _symbol,
+		uint8 _decimals,
 		uint256 _eventNonce
 	);
 	event ValsetUpdatedEvent(
@@ -359,6 +369,27 @@ contract Peggy {
 			msg.sender,
 			_destination,
 			_amount,
+			state_lastEventNonce
+		);
+	}
+
+	function deployERC20(
+		string memory _cosmosDenom,
+		string memory _name,
+		string memory _symbol,
+		uint8 _decimals
+	) public {
+		// Deploy an ERC20 with entire supply granted to Peggy.sol
+		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
+
+		// Fire an event to let the Cosmos module know
+		state_lastEventNonce = state_lastEventNonce.add(1);
+		emit ERC20DeployedEvent(
+			_cosmosDenom,
+			address(erc20),
+			_name,
+			_symbol,
+			_decimals,
 			state_lastEventNonce
 		);
 	}
