@@ -46,6 +46,15 @@ var (
 	// ParamsStoreKeySignedClaimsWindow stores the signed blocks window
 	ParamsStoreKeySignedClaimsWindow = []byte("SignedClaimsWindow")
 
+	// ParamsStoreKeySignedClaimsWindow stores the signed blocks window
+	ParamsStoreKeyTargetBatchTimeout = []byte("TargetBatchTimeout")
+
+	// ParamsStoreKeySignedClaimsWindow stores the signed blocks window
+	ParamsStoreKeyAverageBlockTime = []byte("AverageBlockTime")
+
+	// ParamsStoreKeySignedClaimsWindow stores the signed blocks window
+	ParamsStoreKeyAverageEthereumBlockTime = []byte("AverageEthereumBlockTime")
+
 	// ParamsStoreSlashFractionValset stores the slash fraction valset
 	ParamsStoreSlashFractionValset = []byte("SlashFractionValset")
 
@@ -86,6 +95,9 @@ func DefaultParams() *Params {
 		SignedValsetsWindow:           10000,
 		SignedBatchesWindow:           10000,
 		SignedClaimsWindow:            10000,
+		TargetBatchTimeout:            43200000,
+		AverageBlockTime:              5000,
+		AverageEthereumBlockTime:      15000,
 		SlashFractionValset:           sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionBatch:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionClaim:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
@@ -109,6 +121,15 @@ func (p Params) ValidateBasic() error {
 	}
 	if err := validateBridgeChainID(p.BridgeChainId); err != nil {
 		return sdkerrors.Wrap(err, "bridge chain id")
+	}
+	if err := validateTargetBatchTimeout(p.TargetBatchTimeout); err != nil {
+		return sdkerrors.Wrap(err, "Batch timeout")
+	}
+	if err := validateAverageBlockTime(p.AverageBlockTime); err != nil {
+		return sdkerrors.Wrap(err, "Block time")
+	}
+	if err := validateAverageEthereumBlockTime(p.AverageEthereumBlockTime); err != nil {
+		return sdkerrors.Wrap(err, "Ethereum block time")
 	}
 	if err := validateSignedValsetsWindow(p.SignedValsetsWindow); err != nil {
 		return sdkerrors.Wrap(err, "signed blocks window")
@@ -151,6 +172,9 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedValsetsWindow, &p.SignedValsetsWindow, validateSignedValsetsWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedBatchesWindow, &p.SignedBatchesWindow, validateSignedBatchesWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedClaimsWindow, &p.SignedClaimsWindow, validateSignedClaimsWindow),
+		paramtypes.NewParamSetPair(ParamsStoreKeyAverageBlockTime, &p.AverageBlockTime, validateAverageBlockTime),
+		paramtypes.NewParamSetPair(ParamsStoreKeyTargetBatchTimeout, &p.TargetBatchTimeout, validateTargetBatchTimeout),
+		paramtypes.NewParamSetPair(ParamsStoreKeyAverageEthereumBlockTime, &p.AverageEthereumBlockTime, validateAverageEthereumBlockTime),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionValset, &p.SlashFractionValset, validateSlashFractionValset),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionBatch, &p.SlashFractionBatch, validateSlashFractionBatch),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionClaim, &p.SlashFractionClaim, validateSlashFractionClaim),
@@ -196,6 +220,36 @@ func validateStartThreshold(i interface{}) error {
 func validateBridgeChainID(i interface{}) error {
 	if _, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
+}
+
+func validateTargetBatchTimeout(i interface{}) error {
+	val, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	} else if val < 60000 {
+		return fmt.Errorf("invalid target batch timeout, less than 60 seconds is too short")
+	}
+	return nil
+}
+
+func validateAverageBlockTime(i interface{}) error {
+	val, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	} else if val < 100 {
+		return fmt.Errorf("invalid average Cosmos block time, too short for latency limitations")
+	}
+	return nil
+}
+
+func validateAverageEthereumBlockTime(i interface{}) error {
+	val, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	} else if val < 100 {
+		return fmt.Errorf("invalid average Ethereum block time, too short for latency limitations")
 	}
 	return nil
 }

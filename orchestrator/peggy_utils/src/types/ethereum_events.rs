@@ -115,6 +115,8 @@ pub struct TransactionBatchExecutedEvent {
     /// the nonce attached to the transaction batch that follows
     /// it throughout it's lifecycle
     pub batch_nonce: Uint256,
+    /// The block height this event occurred at
+    pub block_height: Uint256,
     /// The ERC20 token contract address for the batch executed, since batches are uniform
     /// in token type there is only one
     pub erc20: EthAddress,
@@ -132,13 +134,25 @@ impl TransactionBatchExecutedEvent {
             let batch_nonce = Uint256::from_bytes_be(batch_nonce_data);
             let erc20 = EthAddress::from_slice(&erc20_data[12..32])?;
             let event_nonce = Uint256::from_bytes_be(&input.data);
-            if event_nonce > u64::MAX.into() || batch_nonce > u64::MAX.into() {
+            let block_height = if let Some(bn) = input.block_number.clone() {
+                bn
+            } else {
+                return Err(PeggyError::InvalidEventLogError(
+                    "Log does not have block number, we only search logs already in blocks?"
+                        .to_string(),
+                ));
+            };
+            if event_nonce > u64::MAX.into()
+                || batch_nonce > u64::MAX.into()
+                || block_height > u64::MAX.into()
+            {
                 Err(PeggyError::InvalidEventLogError(
                     "Event nonce overflow, probably incorrect parsing".to_string(),
                 ))
             } else {
                 Ok(TransactionBatchExecutedEvent {
                     batch_nonce,
+                    block_height,
                     erc20,
                     event_nonce,
                 })
@@ -181,8 +195,10 @@ pub struct SendToCosmosEvent {
     pub destination: CosmosAddress,
     /// The amount of the erc20 token that is being sent
     pub amount: Uint256,
-    /// The transaction's nonce, used to make sure there can be no accidntal duplication
+    /// The transaction's nonce, used to make sure there can be no accidental duplication
     pub event_nonce: Uint256,
+    /// The block height this event occurred at
+    pub block_height: Uint256,
 }
 
 impl SendToCosmosEvent {
@@ -202,7 +218,15 @@ impl SendToCosmosEvent {
             let destination = CosmosAddress::from_bytes(c_address_bytes);
             let amount = Uint256::from_bytes_be(&input.data[..32]);
             let event_nonce = Uint256::from_bytes_be(&input.data[32..]);
-            if event_nonce > u64::MAX.into() {
+            let block_height = if let Some(bn) = input.block_number.clone() {
+                bn
+            } else {
+                return Err(PeggyError::InvalidEventLogError(
+                    "Log does not have block number, we only search logs already in blocks?"
+                        .to_string(),
+                ));
+            };
+            if event_nonce > u64::MAX.into() || block_height > u64::MAX.into() {
                 Err(PeggyError::InvalidEventLogError(
                     "Event nonce overflow, probably incorrect parsing".to_string(),
                 ))
@@ -213,6 +237,7 @@ impl SendToCosmosEvent {
                     destination,
                     amount,
                     event_nonce,
+                    block_height,
                 })
             }
         } else {

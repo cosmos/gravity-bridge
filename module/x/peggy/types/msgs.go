@@ -248,6 +248,11 @@ type EthereumClaim interface {
 	// issued by the Ethereum contract it is immutable and must be agreed on by all validators
 	// any disagreement on what claim goes to what nonce means someone is lying.
 	GetEventNonce() uint64
+	// The block height that the claimed event occurred on. This EventNonce provides sufficient
+	// ordering for the execution of all claims. The block height is used only for batchTimeouts
+	// when we go to create a new batch we set the timeout some number of batches out from the last
+	// known height plus projected block progress since then.
+	GetBlockHeight() uint64
 	// the delegate address of the claimer, for MsgDepositClaim and MsgWithdrawClaim
 	// this is sent in as the sdk.AccAddress of the delegated key. it is up to the user
 	// to disambiguate this into a sdk.ValAddress
@@ -258,61 +263,9 @@ type EthereumClaim interface {
 	ClaimHash() []byte
 }
 
-func toClaimType(input int32) ClaimType {
-	if input == 1 {
-		return CLAIM_TYPE_DEPOSIT
-	} else if input == 2 {
-		return CLAIM_TYPE_WITHDRAW
-	} else {
-		return CLAIM_TYPE_UNKNOWN
-	}
-}
-
-func fromClaimType(input ClaimType) int32 {
-	if input == CLAIM_TYPE_DEPOSIT {
-		return 1
-	} else if input == CLAIM_TYPE_WITHDRAW {
-		return 2
-	} else {
-		return 0
-	}
-}
-
-func (e *GenericClaim) GetType() ClaimType {
-	return toClaimType(e.ClaimType)
-}
-
-func (e *GenericClaim) ClaimHash() []byte {
-	return e.Hash
-}
-
-// by the time anything is turned into a generic
-// claim it has already been validated
-func (e *GenericClaim) ValidateBasic() error {
-	return nil
-}
-
-func (e *GenericClaim) GetClaimer() sdk.AccAddress {
-	val, _ := sdk.AccAddressFromBech32(e.EventClaimer)
-	return val
-}
-
-func GenericClaimfromInterface(claim EthereumClaim) (*GenericClaim, error) {
-	err := claim.ValidateBasic()
-	if err != nil {
-		return nil, err
-	}
-	return &GenericClaim{
-		EventNonce: claim.GetEventNonce(),
-		ClaimType:  fromClaimType(claim.GetType()),
-		Hash:       claim.ClaimHash(),
-	}, nil
-}
-
 var (
 	_ EthereumClaim = &MsgDepositClaim{}
 	_ EthereumClaim = &MsgWithdrawClaim{}
-	_ EthereumClaim = &GenericClaim{}
 )
 
 // GetType returns the type of the claim

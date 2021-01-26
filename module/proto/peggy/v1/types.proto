@@ -17,14 +17,12 @@ message Valset {
   uint64                   height  = 3;
 }
 
-// It's difficult to serialize and deserialize
-// interfaces, instead we can make this struct
-// that stores all the data the interface requires
-// and use it to store and then re-create a interface
-// object with all the same properties.
-message GenericClaim {
-  uint64  event_nonce   = 1;
-  int32   claim_type    = 2;
-  bytes   hash          = 3;
-  string  event_claimer = 4;
+// LastObservedEthereumBlockHeight stores the last observed
+// Ethereum block height along with the Cosmos block height that
+// it was observed at. These two numbers can be used to project
+// outward and always produce batches with timeouts in the future
+// even if no Ethereum block height has been relayed for a long time
+message LastObservedEthereumBlockHeight {
+  uint64 cosmos_block_height = 1;
+  uint64 ethereum_block_height = 2;
 }

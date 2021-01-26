@@ -10,6 +10,7 @@ import {
   makeTxBatchHash,
   examplePowers
 } from "../test-utils/pure";
+import { openStdin } from "process";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -27,6 +28,7 @@ async function runTest(opts: {
   notEnoughPower?: boolean;
   barelyEnoughPower?: boolean;
   malformedCurrentValset?: boolean;
+  batchTimeout?: boolean;
 }) {
 
 
@@ -76,6 +78,10 @@ async function runTest(opts: {
     txFees.pop();
   }
 
+  let batchTimeout = ethers.provider.blockNumber + 1000
+  if (opts.batchTimeout) {
+    batchTimeout = ethers.provider.blockNumber - 1
+  }
   let batchNonce = 1
   if (opts.batchNonceNotHigher) {
     batchNonce = 0
@@ -95,7 +101,8 @@ async function runTest(opts: {
       "address[]",
       "uint256[]",
       "uint256",
-      "address"
+      "address",
+      "uint256"
     ],
     [
       peggyId,
@@ -104,7 +111,8 @@ async function runTest(opts: {
       txDestinations,
       txFees,
       batchNonce,
-      testERC20.address
+      testERC20.address,
+      batchTimeout
     ]
   );
   let digest = ethers.utils.keccak256(abiEncoded);
@@ -169,7 +177,8 @@ async function runTest(opts: {
     txDestinations,
     txFees,
     batchNonce,
-    testERC20.address
+    testERC20.address,
+    batchTimeout
   );
 }
 
@@ -189,6 +198,12 @@ describe("submitBatch tests", function () {
   it("throws on batch nonce not incremented", async function () {
     await expect(runTest({ batchNonceNotHigher: true })).to.be.revertedWith(
       "New batch nonce must be greater than the current nonce"
+    );
+  });
+
+  it("throws on timeout batch", async function () {
+    await expect(runTest({ batchTimeout: true })).to.be.revertedWith(
+      "Batch timeout must be greater than the current block height"
     );
   });
 
@@ -249,6 +264,7 @@ describe("submitBatch Go test hash", function () {
     const txFees = [1]
     const txDestinations = await getSignerAddresses([signers[5]]);
     const batchNonce = 1
+    const batchTimeout = ethers.provider.blockNumber + 1000
 
 
 
@@ -276,7 +292,8 @@ describe("submitBatch Go test hash", function () {
         "address[]",
         "uint256[]",
         "uint256",
-        "address"
+        "address",
+        "uint256",
       ],
       [
         peggyId,
@@ -285,7 +302,8 @@ describe("submitBatch Go test hash", function () {
         txDestinations,
         txFees,
         batchNonce,
-        testERC20.address
+        testERC20.address,
+        batchTimeout
       ]
     );
     const batchDigest = ethers.utils.keccak256(abiEncodedBatch);
@@ -297,6 +315,7 @@ describe("submitBatch Go test hash", function () {
       "txDestinations": txDestinations,
       "txFees": txFees,
       "batchNonce": batchNonce,
+      "batchTimeout": batchTimeout,
       "tokenContract": testERC20.address
     })
     console.log("abiEncodedBatch:", abiEncodedBatch)
@@ -319,7 +338,8 @@ describe("submitBatch Go test hash", function () {
       txDestinations,
       txFees,
       batchNonce,
-      testERC20.address
+      testERC20.address,
+      batchTimeout
     );
   });
 })

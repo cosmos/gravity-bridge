@@ -26,7 +26,8 @@ const (
 			{ "internalType": "address[]", "name": "_destinations",  "type": "address[]" },
 			{ "internalType": "uint256[]", "name": "_fees",          "type": "uint256[]" },
 			{ "internalType": "uint256",   "name": "_batchNonce",    "type": "uint256" },
-			{ "internalType": "address",   "name": "_tokenContract", "type": "address" }
+			{ "internalType": "address",   "name": "_tokenContract", "type": "address" },
+			{ "internalType": "uint256",   "name": "_batchTimeout",  "type": "uint256" }
 		],
 		"outputs": [
 			{ "internalType": "bytes32", "name": "", "type": "bytes32" }
