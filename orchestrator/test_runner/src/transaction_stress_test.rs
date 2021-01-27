@@ -116,7 +116,7 @@ pub async fn transaction_stress_test(
             for token in erc20_addresses.iter() {
                 let mut found = false;
                 for balance in balances.iter() {
-                    if balance.denom.contains(&token.to_string()) {
+                    if balance.denom.contains(&token.to_string()) && balance.amount == one_eth() {
                         found = true;
                     }
                 }
