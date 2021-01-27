@@ -29,6 +29,7 @@ async function runTest(opts: {
   notEnoughPower?: boolean;
   barelyEnoughPower?: boolean;
   malformedCurrentValset?: boolean;
+  timedOut?: boolean;
 }) {
 
 
@@ -95,6 +96,11 @@ async function runTest(opts: {
     invalidationNonce = 0
   }
 
+  let timeOut = 4766922941000
+  if (opts.timedOut) {
+    timeOut = 0
+  }
+
 
   // Call method
   // ===========
@@ -112,7 +118,7 @@ async function runTest(opts: {
     feeTokenContracts: [testERC20.address], // feeTokenContracts
     logicContractAddress: logicBatch.address, // logicContractAddress
     payload: logicBatch.interface.functions.logicBatch.encode([txAmounts, txPayloads, logicContract.address, testERC20.address]), // payloads
-    timeOut: 4766922941000, // timeOut, Far in the future
+    timeOut,
     invalidationId: ethers.utils.hexZeroPad(testERC20.address, 32), // invalidationId
     invalidationNonce: invalidationNonce // invalidationNonce
   }
@@ -264,4 +270,11 @@ describe("submitLogicCall tests", function () {
   it("does not throw on barely enough signatures", async function () {
     await runTest({ barelyEnoughPower: true });
   });
+
+  it("throws on timeout", async function () {
+    await expect(runTest({ timedOut: true })).to.be.revertedWith(
+      "Timed out"
+    );
+  });
+
 });

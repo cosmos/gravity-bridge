@@ -407,7 +407,7 @@ contract Peggy {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the call has not timed out
-			require(block.timestamp < _args.timeOut, "Timed out");
+			require(block.number < _args.timeOut, "Timed out");
 
 			// Check that the invalidation nonce is higher than the last nonce for this invalidation Id
 			require(
