@@ -97,6 +97,7 @@ async function runTest(opts: {}) {
   }
   const txDestinations = await getSignerAddresses(txDestinationsInt);
   let batchNonce = 1
+  let batchTimeout = 10000
 
 
 
@@ -114,7 +115,8 @@ async function runTest(opts: {}) {
       "address[]",
       "uint256[]",
       "uint256",
-      "address"
+      "address",
+      "uint256"
     ],
     [
       peggyId,
@@ -123,7 +125,8 @@ async function runTest(opts: {}) {
       txDestinations,
       txFees,
       batchNonce,
-      eventArgs._tokenContract
+      eventArgs._tokenContract,
+      batchTimeout
     ]
   );
   let digest = ethers.utils.keccak256(abiEncoded);
@@ -143,7 +146,8 @@ async function runTest(opts: {}) {
     txDestinations,
     txFees,
     batchNonce,
-    eventArgs._tokenContract
+    eventArgs._tokenContract,
+    batchTimeout
   );
 
   // Check that Peggy's balance is correct
@@ -153,7 +157,7 @@ async function runTest(opts: {}) {
   expect((await ERC20contract.functions.balanceOf(await signers[6].getAddress())).toString()).to.equal('1')
 }
 
-describe.only("deployERC20 tests", function () {
+describe("deployERC20 tests", function () {
   // There is no way for this function to throw so there are
   // no throwing tests
   it("runs", async function () {
