@@ -22,8 +22,6 @@ func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *cod
 	if valAddr == nil {
 		panic("Could not find ValAddr for delegate key, should be checked by now")
 	}
-	// TODO-JT: make absolutely sure that the function can't fail after this
-	k.setLastEventNonceByValidator(ctx, valAddr, claim.GetEventNonce())
 
 	// Tries to get an attestation with the same eventNonce and claim as the claim that was submitted.
 	att := k.GetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash())
@@ -32,20 +30,16 @@ func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *cod
 	if att == nil {
 		att = &types.Attestation{
 			Observed: false,
+			Height:   uint64(ctx.BlockHeight()),
+			Claim:    anyClaim,
 		}
-
-		att.Claim = anyClaim
 	}
 
 	// Add the validator's vote to this attestation
 	att.Votes = append(att.Votes, valAddr.String())
 
-	// TODO-JT: we shouldn't update this every single time,
-	// just the first time the attestation is changed
-	// Update the block height
-	att.Height = uint64(ctx.BlockHeight())
-
 	k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), att)
+	k.setLastEventNonceByValidator(ctx, valAddr, claim.GetEventNonce())
 
 	return att, nil
 }
