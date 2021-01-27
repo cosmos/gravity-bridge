@@ -1,3 +1,5 @@
+use crate::get_fee;
+use crate::get_test_token_name;
 use crate::{
     utils::*, COSMOS_NODE_GRPC, MINER_ADDRESS, MINER_PRIVATE_KEY, STARTING_STAKE_PER_VALIDATOR,
     TOTAL_TIMEOUT,
@@ -31,9 +33,7 @@ pub async fn happy_path_test(
     contact: &Contact,
     keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
     peggy_address: EthAddress,
-    test_token_name: String,
     erc20_address: EthAddress,
-    fee: Coin,
     validator_out: bool,
 ) {
     let mut grpc_client = grpc_client;
@@ -57,7 +57,7 @@ pub async fn happy_path_test(
             contact.clone(),
             grpc_client,
             peggy_address,
-            test_token_name.clone(),
+            get_test_token_name(),
         ));
 
         // used to break out of the loop early to simulate one validator
@@ -123,7 +123,6 @@ pub async fn happy_path_test(
         1u64.into(),
         dest_cosmos_address,
         keys.clone(),
-        fee.clone(),
     )
     .await;
 
@@ -134,7 +133,6 @@ pub async fn happy_path_test(
         &web30,
         dest_eth_address,
         peggy_address,
-        fee,
         keys[0].0,
         dest_cosmos_private_key,
         erc20_address,
@@ -337,7 +335,6 @@ async fn test_batch(
     web30: &Web3,
     dest_eth_address: EthAddress,
     peggy_address: EthAddress,
-    fee: Coin,
     requester_cosmos_private_key: CosmosPrivateKey,
     dest_cosmos_private_key: CosmosPrivateKey,
     erc20_contract: EthAddress,
@@ -379,7 +376,7 @@ async fn test_batch(
     send_request_batch(
         requester_cosmos_private_key,
         token_name.clone(),
-        fee.clone(),
+        get_fee(),
         &contact,
     )
     .await
@@ -457,7 +454,6 @@ async fn submit_duplicate_erc20_send(
     amount: Uint256,
     receiver: CosmosAddress,
     keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
-    fee: Coin,
 ) {
     let start_coin = check_cosmos_balance("peggy", receiver, &contact)
         .await
@@ -478,7 +474,7 @@ async fn submit_duplicate_erc20_send(
 
     // iterate through all validators and try to send an event with duplicate nonce
     for (c_key, _) in keys.iter() {
-        let res = send_ethereum_claims(contact, *c_key, vec![event.clone()], vec![], fee.clone())
+        let res = send_ethereum_claims(contact, *c_key, vec![event.clone()], vec![], get_fee())
             .await
             .unwrap();
         trace!("Submitted duplicate sendToCosmos event: {:?}", res);

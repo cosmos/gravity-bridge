@@ -1,4 +1,4 @@
-use crate::{happy_path::test_valset_update, COSMOS_NODE_GRPC};
+use crate::{get_test_token_name, happy_path::test_valset_update, COSMOS_NODE_GRPC};
 use actix::Arbiter;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
@@ -14,7 +14,6 @@ pub async fn validator_set_stress_test(
     contact: &Contact,
     keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
     peggy_address: EthAddress,
-    test_token_name: String,
 ) {
     // start orchestrators
     for (c_key, e_key) in keys.iter() {
@@ -29,7 +28,7 @@ pub async fn validator_set_stress_test(
             contact.clone(),
             grpc_client,
             peggy_address,
-            test_token_name.clone(),
+            get_test_token_name(),
         ));
     }
 

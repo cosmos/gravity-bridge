@@ -7,8 +7,8 @@ use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use futures::future::join_all;
 use web30::{client::Web3, types::SendTxOption};
 
-use crate::MINER_PRIVATE_KEY;
 use crate::TOTAL_TIMEOUT;
+use crate::{one_eth, MINER_PRIVATE_KEY};
 use crate::{MINER_ADDRESS, OPERATION_TIMEOUT};
 
 /// This overly complex function primarily exists to parallelize the sending of Eth to the
@@ -21,8 +21,8 @@ use crate::{MINER_ADDRESS, OPERATION_TIMEOUT};
 pub async fn send_eth_to_orchestrators(keys: &[(CosmosPrivateKey, EthPrivateKey)], web30: &Web3) {
     let balance = web30.eth_get_balance(*MINER_ADDRESS).await.unwrap();
     info!(
-        "Sending orchestrators 1 eth to pay for fees miner has {} ETH",
-        balance / 1_000_000_000_000_000_000u128.into()
+        "Sending orchestrators 100 eth to pay for fees miner has {} ETH",
+        balance / one_eth()
     );
     let mut eth_addresses = Vec::new();
     for (_, e_key) in keys {
@@ -40,7 +40,7 @@ pub async fn send_eth_to_orchestrators(keys: &[(CosmosPrivateKey, EthPrivateKey)
             nonce: nonce.clone(),
             gas_price: 1_000_000_000u64.into(),
             gas_limit: 24000u64.into(),
-            value: 1_000_000_000_000_000_000u128.into(),
+            value: one_eth() * 100u16.into(),
             data: Vec::new(),
             signature: None,
         };

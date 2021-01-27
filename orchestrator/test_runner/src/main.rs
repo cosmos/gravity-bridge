@@ -55,6 +55,21 @@ lazy_static! {
     static ref MINER_ADDRESS: EthAddress = MINER_PRIVATE_KEY.to_public_key().unwrap();
 }
 
+/// Gets the standard non-token fee for the testnet. We deploy the test chain with STAKE
+/// and FOOTOKEN balances by default, one footoken is sufficient for any Cosmos tx fee except
+/// fees for send_to_eth messages which have to be of the same bridged denom so that the relayers
+/// on the Ethereum side can be paid in that token.
+pub fn get_fee() -> Coin {
+    Coin {
+        denom: get_test_token_name(),
+        amount: 1u32.into(),
+    }
+}
+
+pub fn get_test_token_name() -> String {
+    "footoken".to_string()
+}
+
 #[actix_rt::main]
 pub async fn main() {
     env_logger::init();
@@ -63,12 +78,6 @@ pub async fn main() {
     let grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
     let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
     let keys = get_keys();
-    let test_token_name = "footoken".to_string();
-
-    let fee = Coin {
-        denom: test_token_name.clone(),
-        amount: 1u32.into(),
-    };
 
     info!("Waiting for Cosmos chain to come online");
     wait_for_cosmos_online(&contact, TOTAL_TIMEOUT).await;
@@ -76,7 +85,7 @@ pub async fn main() {
     // if we detect this env var we are only deploying contracts, do that then exit.
     if option_env!("DEPLOY_CONTRACTS").is_some() {
         info!("test-runner in contract deploying mode, deploying contracts, then exiting");
-        deploy_contracts(&contact, &keys, fee).await;
+        deploy_contracts(&contact, &keys, get_fee()).await;
         return;
     }
 
@@ -91,7 +100,7 @@ pub async fn main() {
     send_eth_to_orchestrators(&keys, &web30).await;
 
     assert!(check_cosmos_balance(
-        &test_token_name,
+        &get_test_token_name(),
         keys[0].0.to_public_key().unwrap().to_address(),
         &contact
     )
@@ -114,27 +123,17 @@ pub async fn main() {
                 &contact,
                 keys,
                 peggy_address,
-                test_token_name,
                 erc20_addresses[0],
-                fee,
                 true,
             )
             .await;
             return;
         } else if test_type == "BATCH_STRESS" {
-            transaction_stress_test(
-                &web30,
-                &contact,
-                keys,
-                peggy_address,
-                test_token_name,
-                erc20_addresses,
-            )
-            .await;
+            transaction_stress_test(&web30, &contact, keys, peggy_address, erc20_addresses).await;
             return;
         } else if test_type == "VALSET_STRESS" {
             info!("Starting Valset update stress test");
-            validator_set_stress_test(&web30, &contact, keys, peggy_address, test_token_name).await;
+            validator_set_stress_test(&web30, &contact, keys, peggy_address).await;
             return;
         }
     }
@@ -145,9 +144,7 @@ pub async fn main() {
         &contact,
         keys,
         peggy_address,
-        test_token_name,
         erc20_addresses[0],
-        fee,
         false,
     )
     .await;
