@@ -1,0 +1,171 @@
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Automated release build
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build and upload release assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.13
+        id: go
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # build the code before creating the release, GO first for faster failures
+      - name: Build GO
+        run: |
+          cd module
+          make
+
+      - name: Set ENV var for GOPATH
+        run: |
+          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+
+      - name: Build Rust x86_64
+        run: |
+          cargo install cross
+          cd orchestrator
+          cross build --target x86_64-unknown-linux-musl --release --all
+
+      # now that the code has built create the release and start uploading
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: true
+
+      # the 4 Rust binaries, a loop would make this much more compact
+      - name: Upload Rust client
+        id: upload-rust-release-client
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./orchestrator/target/x86_64-unknown-linux-musl/release/client
+          asset_name: client
+          asset_content_type: application/bin
+      - name: Upload Rust Orchestrator
+        id: upload-rust-release-orchestrator
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./orchestrator/target/x86_64-unknown-linux-musl/release/orchestrator
+          asset_name: orchestrator
+          asset_content_type: application/bin
+      - name: Upload Rust Relayer
+        id: upload-rust-release-relayer
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./orchestrator/target/x86_64-unknown-linux-musl/release/relayer
+          asset_name: relayer
+          asset_content_type: application/bin
+      - name: Upload Rust register-peggy-delegate-keys
+        id: upload-rust-release-key-delegator
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./orchestrator/target/x86_64-unknown-linux-musl/release/register-peggy-delegate-keys
+          asset_name: register-peggy-delegate-keys
+          asset_content_type: application/bin
+
+      - name: Upload Go Release Asset
+        id: upload-go-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.GOPATH }}/bin/peggy
+          asset_name: peggy
+          asset_content_type: application/bin
+
+      # next we start arm builds and uploads, we do this because the release
+      # entry is already made and rust builds take nearly 10 minutes, so instead
+      # of having a workable release in 20 minutes we can have one in 10 with the ARM
+      # binaries coming 10 minutes later.
+      - name: Build Rust ARM64
+        run: |
+          cd orchestrator
+          cross build --target aarch64-unknown-linux-musl --release --all
+
+      - name: Build GO ARM64
+        run: |
+          cd module
+          GOARCH=arm64 make
+
+      - name: Upload Rust client ARM
+        id: upload-rust-release-client-arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./orchestrator/target/aarch64-unknown-linux-musl/release/client
+          asset_name: client-arm
+          asset_content_type: application/bin
+      - name: Upload Rust Orchestrator ARM
+        id: upload-rust-release-orchestrator-arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./orchestrator/target/aarch64-unknown-linux-musl/release/orchestrator
+          asset_name: orchestrator-arm
+          asset_content_type: application/bin
+      - name: Upload Rust Relayer ARM
+        id: upload-rust-release-relayer-arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./orchestrator/target/aarch64-unknown-linux-musl/release/relayer
+          asset_name: relayer-arm
+          asset_content_type: application/bin
+      - name: Upload Rust register-peggy-delegate-keys ARM
+        id: upload-rust-release-key-delegator-arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./orchestrator/target/aarch64-unknown-linux-musl/release/register-peggy-delegate-keys
+          asset_name: register-peggy-delegate-keys-arm
+          asset_content_type: application/bin
+
+      - name: Upload Go Release Asset ARM
+        id: upload-go-release-asset-arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.GOPATH }}/bin/peggy
+          asset_name: peggy-arm
+          asset_content_type: application/bin
