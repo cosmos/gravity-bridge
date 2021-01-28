@@ -164,3 +164,18 @@ message MsgWithdrawClaim {
 }
 
 message MsgWithdrawClaimResponse {}
+
+// ERC20DeployedClaim allows the Cosmos module
+// to learn about an ERC20 that someone deployed to 
+message MsgERC20DeployedClaim {
+  uint64 event_nonce    = 1;
+  uint64 block_height   = 2;
+  string cosmos_denom = 3;
+  string token_contract = 4;
+  string name = 5;
+  string symbol = 6;
+  uint64 decimals = 7;
+}
+
+message MsgERC20DeployedClaimResponse {}
+
