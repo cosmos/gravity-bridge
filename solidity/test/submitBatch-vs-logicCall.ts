@@ -109,6 +109,7 @@ async function runSubmitBatchTest(opts: {
     // ================
     const txBatch = await prepareTxBatch(opts.batchSize, signers)
     const batchNonce = 1
+    const batchTimeout = 10000
 
 
 
@@ -127,7 +128,8 @@ async function runSubmitBatchTest(opts: {
           "address[]",
           "uint256[]",
           "uint256",
-          "address"
+          "address",
+          "uint256"
         ],
         [
           peggyId,
@@ -136,7 +138,8 @@ async function runSubmitBatchTest(opts: {
           txBatch.destinations,
           txBatch.fees,
           batchNonce,
-          testERC20.address
+          testERC20.address,
+          batchTimeout
         ]
       ));
 
@@ -155,7 +158,8 @@ async function runSubmitBatchTest(opts: {
       txBatch.destinations,
       txBatch.fees,
       1,
-      testERC20.address
+      testERC20.address,
+      batchTimeout
     );
 
     expect(
