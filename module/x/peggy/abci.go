@@ -178,15 +178,36 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 // an attestation that has not passed the threshold
 func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 	attmap := k.GetAttestationMapping(ctx)
+	// We make a slice with all the event nonces that are in the attestation mapping
 	keys := make([]uint64, 0, len(attmap))
 	for k := range attmap {
 		keys = append(keys, k)
 	}
-	// the go standard library does not include a way to sort by uint64s...
+	// Then we sort it
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+	// This iterates over all keys (event nonces) in the attestation mapping. Each value contains
+	// a slice with one or more attestations at that event nonce. There can be multiple attestations
+	// at one event nonce when validators disagree about what event happened at that nonce.
 	for _, key := range keys {
+		// This iterates over all attestations at a particular event nonce.
+		// They are ordered by when the first attestation at the event nonce was received.
+		// This order is not important.
 		for _, att := range attmap[key] {
-			k.TryAttestation(ctx, &att)
+			// We check if the event nonce is exactly 1 higher than the last attestation that was
+			// observed. If it is not, we just move on to the next nonce. This will skip over all
+			// attestations that have already been observed. Once an attestation at a given event
+			// nonce has enough votes and becomes observed, every other attestation at that nonce
+			// will be skipped, since the lastObservedEventNonce will be incremented.
+			//
+			// Then we go to the next event nonce in the attestation mapping, if there is one.
+			// If there is an attestation at this event nonce which has enough votes to be observed,
+			// we skip the other attestations and move on to the next nonce again.
+			// If no attestation becomes observed, when we get to the next nonce, every attestation in
+			// it will be skipped. The same will happen for every nonce after that.
+			if key == uint64(k.GetLastObservedEventNonce(ctx))+1 {
+				k.TryAttestation(ctx, &att)
+			}
 		}
 	}
 }
