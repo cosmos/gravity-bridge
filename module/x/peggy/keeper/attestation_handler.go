@@ -13,24 +13,41 @@ type AttestationHandler struct {
 }
 
 // Handle is the entry point for Attestation processing.
+// TODO-JT add handler for ERC20DeployedEvent
 func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
 	case *types.MsgDepositClaim:
-		token := types.ERC20Token{
-			Amount:   claim.Amount,
-			Contract: claim.TokenContract,
-		}
-		vouchers := sdk.NewCoins(token.PeggyCoin())
-		if err := a.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers); err != nil {
-			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", vouchers)
-		}
+		// Check if coin is Cosmos-originated asset and get denom
+		isCosmosOriginated, denom := a.keeper.ERC20ToDenom(ctx, claim.TokenContract)
 
-		addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
-		if err != nil {
-			return sdkerrors.Wrap(err, "invalid reciever address")
-		}
-		if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, vouchers); err != nil {
-			return sdkerrors.Wrap(err, "transfer vouchers")
+		if isCosmosOriginated {
+			// If it is cosmos originated, unlock the coins
+			coins := sdk.Coins{sdk.NewCoin(denom, claim.Amount)}
+
+			addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid reciever address")
+			}
+
+			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
+				return sdkerrors.Wrap(err, "transfer vouchers")
+			}
+		} else {
+			// If it is not cosmos originated, mint the coins (aka vouchers)
+			coins := sdk.Coins{sdk.NewCoin(denom, claim.Amount)}
+
+			if err := a.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
+				return sdkerrors.Wrapf(err, "mint vouchers coins: %s", coins)
+			}
+
+			addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid reciever address")
+			}
+
+			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
+				return sdkerrors.Wrap(err, "transfer vouchers")
+			}
 		}
 	case *types.MsgWithdrawClaim:
 		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)

@@ -20,19 +20,31 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	totalAmount := amount.Add(fee)
 	totalInVouchers := sdk.Coins{totalAmount}
 
-	// Ensure that the coin is a peggy voucher
-	if _, err := types.ValidatePeggyCoin(totalAmount); err != nil {
-		return 0, fmt.Errorf("amount not a peggy voucher coin: %s", err)
-	}
+	// If the coin is a peggy voucher, burn the coins. If not, check if there is a deployed ERC20 contract representing it.
+	// If there is, lock the coins.
 
-	// send coins to module in prep for burn
-	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
+	isCosmosOriginated, _, err := k.DenomToERC20(ctx, totalAmount.Denom)
+	if err != nil {
 		return 0, err
 	}
 
-	// burn vouchers to send them back to ETH
-	if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, totalInVouchers); err != nil {
-		panic(err)
+	// If it is a cosmos-originated asset we lock it
+	if isCosmosOriginated {
+		// lock coins in module
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
+			return 0, err
+		}
+	} else {
+		// If it is an ethereum-originated asset we burn it
+		// send coins to module in prep for burn
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
+			return 0, err
+		}
+
+		// burn vouchers to send them back to ETH
+		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, totalInVouchers); err != nil {
+			panic(err)
+		}
 	}
 
 	// get next tx id from keeper

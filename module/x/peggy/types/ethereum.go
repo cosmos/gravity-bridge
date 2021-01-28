@@ -54,7 +54,11 @@ func NewERC20Token(amount uint64, contract string) *ERC20Token {
 
 // PeggyCoin returns the peggy representation of the ERC20
 func (e *ERC20Token) PeggyCoin() sdk.Coin {
-	return sdk.NewCoin(fmt.Sprintf("%s%s%s", PeggyDenomPrefix, PeggyDenomSeparator, e.Contract), e.Amount)
+	return sdk.NewCoin(PeggyDenom(e.Contract), e.Amount)
+}
+
+func PeggyDenom(tokenContract string) string {
+	return fmt.Sprintf("%s%s%s", PeggyDenomPrefix, PeggyDenomSeparator, tokenContract)
 }
 
 // ValidateBasic permforms stateless validation
@@ -80,6 +84,7 @@ func (e *ERC20Token) Add(o *ERC20Token) *ERC20Token {
 }
 
 // ERC20FromPeggyCoin returns the ERC20 representation of a given peggy coin
+// TODO-JT: There might be some almost-dead code to eliminate around these 3 functions
 func ERC20FromPeggyCoin(v sdk.Coin) (*ERC20Token, error) {
 	contract, err := ValidatePeggyCoin(v)
 	if err != nil {
@@ -90,17 +95,21 @@ func ERC20FromPeggyCoin(v sdk.Coin) (*ERC20Token, error) {
 
 // ValidatePeggyCoin returns true if a coin is a peggy representation of an ERC20 token
 func ValidatePeggyCoin(v sdk.Coin) (string, error) {
+	return PeggyDenomToERC20(v.Denom)
+}
+
+func PeggyDenomToERC20(denom string) (string, error) {
 	fullPrefix := PeggyDenomPrefix + PeggyDenomSeparator
-	if !strings.HasPrefix(v.Denom, fullPrefix) {
-		return "", fmt.Errorf("denom prefix(%s) not equal to expected(%s)", v.Denom, fullPrefix)
+	if !strings.HasPrefix(denom, fullPrefix) {
+		return "", fmt.Errorf("denom prefix(%s) not equal to expected(%s)", denom, fullPrefix)
 	}
-	contract := strings.TrimPrefix(v.Denom, fullPrefix)
+	contract := strings.TrimPrefix(denom, fullPrefix)
 	err := ValidateEthAddress(contract)
 	switch {
 	case err != nil:
 		return "", fmt.Errorf("error(%s) validating ethereum contract address", err)
-	case len(v.Denom) != PeggyDenomLen:
-		return "", fmt.Errorf("len(denom)(%d) not equal to PeggyDenomLen(%d)", len(v.Denom), PeggyDenomLen)
+	case len(denom) != PeggyDenomLen:
+		return "", fmt.Errorf("len(denom)(%d) not equal to PeggyDenomLen(%d)", len(denom), PeggyDenomLen)
 	default:
 		return contract, nil
 	}

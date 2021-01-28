@@ -1,6 +1,8 @@
 syntax = "proto3";
 package peggy.v1;
 
+// TODO-JT: add ERC20DeployedEvent claim
+
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
