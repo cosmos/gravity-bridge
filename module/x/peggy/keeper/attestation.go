@@ -52,7 +52,6 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 	if err != nil {
 		panic("could not cast to claim")
 	}
-
 	// If the attestation has not yet been Observed, sum up the votes and see if it is ready to apply to the state.
 	// This conditional stops the attestation from accidentally being applied twice.
 	if !att.Observed {
@@ -71,14 +70,16 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 			attestationPower = attestationPower.Add(sdk.NewInt(validatorPower))
 			// If the power of all the validators that have voted on the attestation is higher or equal to the threshold,
 			// process the attestation, set Observed to true, and break
-			lastEventNonce := k.GetLastObservedEventNonce(ctx)
-			if attestationPower.GTE(requiredPower) && claim.GetEventNonce() == uint64(lastEventNonce)+1 {
+			if attestationPower.GTE(requiredPower) {
 				k.processAttestation(ctx, att, claim)
 				att.Observed = true
 				k.emitObservedEvent(ctx, att, claim)
 				break
 			}
 		}
+	} else {
+		// We panic here because this should never happen
+		panic("attempting to process observed attestation")
 	}
 }
 
