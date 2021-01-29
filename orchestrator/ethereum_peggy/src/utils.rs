@@ -178,3 +178,16 @@ pub async fn get_erc20_symbol(
     // deal with a deprecated feature (the symbol), which will be removed soon
     Ok(String::from_utf8(val_symbol).unwrap())
 }
+
+/// Just a helper struct to represent the cost of actions on Ethereum
+#[derive(Debug, Default, Clone)]
+pub struct GasCost {
+    pub gas: Uint256,
+    pub gas_price: Uint256,
+}
+
+impl GasCost {
+    pub fn get_total(&self) -> Uint256 {
+        self.gas.clone() * self.gas_price.clone()
+    }
+}

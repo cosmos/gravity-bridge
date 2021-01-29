@@ -1,10 +1,9 @@
-use crate::utils::get_tx_batch_nonce;
+use crate::utils::{get_tx_batch_nonce, GasCost};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use peggy_utils::error::PeggyError;
 use peggy_utils::types::*;
 use std::{cmp::min, time::Duration};
-use web30::types::SendTxOption;
 use web30::{client::Web3, types::TransactionRequest};
 
 /// this function generates an appropriate Ethereum transaction
@@ -57,7 +56,6 @@ pub async fn send_eth_transaction_batch(
             0u32.into(),
             eth_address,
             our_eth_key,
-            //vec![SendTxOption::GasLimit(10_000_000u32.into())],
             vec![],
         )
         .await?;
@@ -91,7 +89,7 @@ pub async fn estimate_tx_batch_cost(
     web3: &Web3,
     peggy_contract_address: EthAddress,
     our_eth_key: EthPrivateKey,
-) -> Result<Uint256, PeggyError> {
+) -> Result<GasCost, PeggyError> {
     let our_eth_address = our_eth_key.to_public_key().unwrap();
     let our_balance = web3.eth_get_balance(our_eth_address).await?;
     let our_nonce = web3.eth_get_transaction_count(our_eth_address).await?;
@@ -103,14 +101,17 @@ pub async fn estimate_tx_batch_cost(
             from: Some(our_eth_address),
             to: peggy_contract_address,
             nonce: Some(our_nonce.clone().into()),
-            gas_price: Some(gas_price.into()),
+            gas_price: Some(gas_price.clone().into()),
             gas: Some(gas_limit.into()),
             value: Some(zero.into()),
             data: Some(encode_batch_payload(current_valset, &batch, confirms)?.into()),
         })
         .await?;
 
-    Ok(val)
+    Ok(GasCost {
+        gas: val,
+        gas_price,
+    })
 }
 
 /// Encodes the batch payload for both estimate_tx_batch_cost and send_eth_transaction_batch

@@ -7,7 +7,7 @@ use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use cosmos_peggy::query::get_all_valset_confirms;
 use cosmos_peggy::query::get_latest_valsets;
-use ethereum_peggy::valset_update::send_eth_valset_update;
+use ethereum_peggy::{one_eth, utils::downcast_to_u128, valset_update::send_eth_valset_update};
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -67,9 +67,27 @@ pub async fn relay_valsets(
     let current_valset = current_valset.unwrap();
     let latest_cosmos_valset_nonce = latest_cosmos_valset.nonce;
     if latest_cosmos_valset_nonce > current_valset.nonce {
+        let cost = ethereum_peggy::valset_update::estimate_valset_cost(
+            &latest_cosmos_valset,
+            &current_valset,
+            &latest_cosmos_confirmed,
+            web3,
+            peggy_contract_address,
+            ethereum_key,
+        )
+        .await;
+        if cost.is_err() {
+            error!("Batch cost estimate failed with {:?}", cost);
+            return;
+        }
+        let cost = cost.unwrap();
+
         info!(
-            "We have detected latest valset {} but latest on Ethereum is {} sending an update!",
-            latest_cosmos_valset.nonce, current_valset.nonce
+           "We have detected latest valset {} but latest on Ethereum is {} This valset is estimated to cost {} Gas / {:.4} ETH to submit",
+            latest_cosmos_valset.nonce, current_valset.nonce,
+            cost.gas_price.clone(),
+            downcast_to_u128(cost.get_total()).unwrap() as f32
+                / downcast_to_u128(one_eth()).unwrap() as f32
         );
 
         // If the ENV var NO_GAS_OPT is not set at compile time then the resulting binary will not
