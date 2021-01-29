@@ -1,5 +1,7 @@
 //! This crate contains various components and utilities for interacting with the Peggy Ethereum contract.
 
+use clarity::Uint256;
+
 #[macro_use]
 extern crate log;
 
@@ -8,3 +10,7 @@ pub mod send_to_cosmos;
 pub mod submit_batch;
 pub mod utils;
 pub mod valset_update;
+
+pub fn one_eth() -> Uint256 {
+    1000000000000000000u128.into()
+}

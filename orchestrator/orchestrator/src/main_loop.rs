@@ -201,7 +201,12 @@ pub async fn eth_signer_main_loop(
         // sign the last unsigned batch, TODO check if we already have signed this
         match get_oldest_unsigned_transaction_batch(&mut grpc_client, our_cosmos_address).await {
             Ok(Some(last_unsigned_batch)) => {
-                info!("Sending batch confirm for {}", last_unsigned_batch.nonce);
+                info!(
+                    "Sending batch confirm for {}:{} with {} in fees",
+                    last_unsigned_batch.token_contract,
+                    last_unsigned_batch.nonce,
+                    last_unsigned_batch.total_fee.amount
+                );
                 let res = send_batch_confirm(
                     &contact,
                     ethereum_key,

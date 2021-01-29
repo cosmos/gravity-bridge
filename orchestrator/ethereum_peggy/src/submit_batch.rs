@@ -1,11 +1,11 @@
 use crate::utils::get_tx_batch_nonce;
-use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
+use clarity::{Address as EthAddress, Uint256};
 use peggy_utils::error::PeggyError;
 use peggy_utils::types::*;
-use std::time::Duration;
-use web30::client::Web3;
+use std::{cmp::min, time::Duration};
 use web30::types::SendTxOption;
+use web30::{client::Web3, types::TransactionRequest};
 
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided transaction batch and validator set update.
@@ -18,10 +18,7 @@ pub async fn send_eth_transaction_batch(
     peggy_contract_address: EthAddress,
     our_eth_key: EthPrivateKey,
 ) -> Result<(), PeggyError> {
-    let (current_addresses, current_powers) = current_valset.filter_empty_addresses();
-    let current_valset_nonce = current_valset.nonce;
     let new_batch_nonce = batch.nonce;
-    //assert!(new_valset_nonce > old_valset_nonce);
     let eth_address = our_eth_key.to_public_key().unwrap();
     info!(
         "Ordering signatures and submitting TransactionBatch {}:{} to Ethereum",
@@ -29,6 +26,102 @@ pub async fn send_eth_transaction_batch(
     );
     trace!("Batch {:?}", batch);
 
+    let before_nonce = get_tx_batch_nonce(
+        peggy_contract_address,
+        batch.token_contract,
+        eth_address,
+        &web3,
+    )
+    .await?;
+    let current_block_height = web3.eth_block_number().await?;
+    if before_nonce >= new_batch_nonce {
+        info!(
+            "Someone else updated the batch to {}, exiting early",
+            before_nonce
+        );
+        return Ok(());
+    } else if current_block_height > batch.batch_timeout.into() {
+        info!(
+            "This batch is timed out. timeout block: {} current block: {}, exiting early",
+            current_block_height, batch.batch_timeout
+        );
+        return Ok(());
+    }
+
+    let payload = encode_batch_payload(current_valset, &batch, confirms)?;
+
+    let tx = web3
+        .send_transaction(
+            peggy_contract_address,
+            payload,
+            0u32.into(),
+            eth_address,
+            our_eth_key,
+            //vec![SendTxOption::GasLimit(10_000_000u32.into())],
+            vec![],
+        )
+        .await?;
+    info!("Sent batch update with txid {:#066x}", tx);
+
+    web3.wait_for_transaction(tx.clone(), timeout, None).await?;
+
+    let last_nonce = get_tx_batch_nonce(
+        peggy_contract_address,
+        batch.token_contract,
+        eth_address,
+        &web3,
+    )
+    .await?;
+    if last_nonce != new_batch_nonce {
+        error!(
+            "Current nonce is {} expected to update to nonce {}",
+            last_nonce, new_batch_nonce
+        );
+    } else {
+        info!("Successfully updated Batch with new Nonce {:?}", last_nonce);
+    }
+    Ok(())
+}
+
+/// Returns the cost in Eth of sending this batch
+pub async fn estimate_tx_batch_cost(
+    current_valset: Valset,
+    batch: TransactionBatch,
+    confirms: &[BatchConfirmResponse],
+    web3: &Web3,
+    peggy_contract_address: EthAddress,
+    our_eth_key: EthPrivateKey,
+) -> Result<Uint256, PeggyError> {
+    let our_eth_address = our_eth_key.to_public_key().unwrap();
+    let our_balance = web3.eth_get_balance(our_eth_address).await?;
+    let our_nonce = web3.eth_get_transaction_count(our_eth_address).await?;
+    let gas_limit = min((u64::MAX - 1).into(), our_balance.clone());
+    let gas_price = web3.eth_gas_price().await?;
+    let zero: Uint256 = 0u8.into();
+    let val = web3
+        .eth_estimate_gas(TransactionRequest {
+            from: Some(our_eth_address),
+            to: peggy_contract_address,
+            nonce: Some(our_nonce.clone().into()),
+            gas_price: Some(gas_price.into()),
+            gas: Some(gas_limit.into()),
+            value: Some(zero.into()),
+            data: Some(encode_batch_payload(current_valset, &batch, confirms)?.into()),
+        })
+        .await?;
+
+    Ok(val)
+}
+
+/// Encodes the batch payload for both estimate_tx_batch_cost and send_eth_transaction_batch
+fn encode_batch_payload(
+    current_valset: Valset,
+    batch: &TransactionBatch,
+    confirms: &[BatchConfirmResponse],
+) -> Result<Vec<u8>, PeggyError> {
+    let (current_addresses, current_powers) = current_valset.filter_empty_addresses();
+    let current_valset_nonce = current_valset.nonce;
+    let new_batch_nonce = batch.nonce;
     let sig_data = current_valset.order_batch_sigs(confirms)?;
     let sig_arrays = to_arrays(sig_data);
     let (amounts, destinations, fees) = batch.get_checkpoint_values();
@@ -68,61 +161,5 @@ pub async fn send_eth_transaction_batch(
     tokens).unwrap();
     trace!("Tokens {:?}", tokens);
 
-    let before_nonce = get_tx_batch_nonce(
-        peggy_contract_address,
-        batch.token_contract,
-        eth_address,
-        &web3,
-    )
-    .await?;
-    let current_block_height = web3.eth_block_number().await?;
-    if before_nonce >= new_batch_nonce {
-        info!(
-            "Someone else updated the batch to {}, exiting early",
-            before_nonce
-        );
-        return Ok(());
-    } else if current_block_height > batch.batch_timeout.into() {
-        info!(
-            "This batch is timed out. timeout block: {} current block: {}, exiting early",
-            current_block_height, batch.batch_timeout
-        );
-        return Ok(());
-    }
-
-    let tx = web3
-        .send_transaction(
-            peggy_contract_address,
-            payload,
-            0u32.into(),
-            eth_address,
-            our_eth_key,
-            vec![SendTxOption::GasLimit(1_000_000u32.into())],
-        )
-        .await?;
-    info!("Sent batch update with txid {:#066x}", tx);
-
-    // TODO this segment of code works around the race condition for submitting batches mostly
-    // by not caring if our own submission reverts and only checking if the valset has been updated
-    // period not if our update succeeded in particular. This will require some further consideration
-    // in the future as many independent relayers racing to update the same thing will hopefully
-    // be the common case.
-    web3.wait_for_transaction(tx, timeout, None).await?;
-
-    let last_nonce = get_tx_batch_nonce(
-        peggy_contract_address,
-        batch.token_contract,
-        eth_address,
-        &web3,
-    )
-    .await?;
-    if last_nonce != new_batch_nonce {
-        error!(
-            "Current nonce is {} expected to update to nonce {}",
-            last_nonce, new_batch_nonce
-        );
-    } else {
-        info!("Successfully updated Batch with new Nonce {:?}", last_nonce);
-    }
-    Ok(())
+    Ok(payload)
 }

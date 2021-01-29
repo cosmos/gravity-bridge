@@ -6,8 +6,8 @@ use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use cosmos_peggy::query::get_latest_transaction_batches;
 use cosmos_peggy::query::get_transaction_batch_signatures;
-use ethereum_peggy::submit_batch::send_eth_transaction_batch;
-use ethereum_peggy::utils::get_tx_batch_nonce;
+use ethereum_peggy::utils::{downcast_to_u128, get_tx_batch_nonce};
+use ethereum_peggy::{one_eth, submit_batch::send_eth_transaction_batch};
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::types::{BatchConfirmResponse, TransactionBatch};
 use std::time::Duration;
@@ -72,10 +72,6 @@ pub async fn relay_batches(
     let latest_ethereum_batch = latest_ethereum_batch.unwrap();
     let latest_cosmos_batch_nonce = oldest_signed_batch.clone().nonce;
     if latest_cosmos_batch_nonce > latest_ethereum_batch {
-        info!(
-            "We have detected latest batch {} but latest on Ethereum is {} sending an update!",
-            latest_cosmos_batch_nonce, latest_ethereum_batch
-        );
         let current_valset = find_latest_valset(
             &mut grpc_client,
             our_ethereum_address,
@@ -83,8 +79,32 @@ pub async fn relay_batches(
             web3,
         )
         .await;
+
         if let Ok(current_valset) = current_valset {
-            let _res = send_eth_transaction_batch(
+            let cost = ethereum_peggy::submit_batch::estimate_tx_batch_cost(
+                current_valset.clone(),
+                oldest_signed_batch.clone(),
+                &oldest_signatures,
+                web3,
+                peggy_contract_address,
+                ethereum_key,
+            )
+            .await;
+            if cost.is_err() {
+                error!("Batch cost estimate failed with {:?}", cost);
+                return;
+            }
+            let cost = cost.unwrap();
+            info!(
+                "We have detected latest batch {} but latest on Ethereum is {} This batch is estimated to cost {} wei / {:.4} ETH to submit",
+                latest_cosmos_batch_nonce,
+                latest_ethereum_batch,
+                cost.clone(),
+                downcast_to_u128(cost).unwrap() as f32
+                    / downcast_to_u128(one_eth()).unwrap() as f32
+            );
+
+            let res = send_eth_transaction_batch(
                 current_valset,
                 oldest_signed_batch,
                 &oldest_signatures,
@@ -94,6 +114,9 @@ pub async fn relay_batches(
                 ethereum_key,
             )
             .await;
+            if res.is_err() {
+                info!("Batch submission failed with {:?}", res);
+            }
         } else {
             error!("Failed to find latest valset with {:?}", current_valset);
         }
