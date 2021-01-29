@@ -1,10 +1,11 @@
-import { ethers } from "@nomiclabs/buidler";
-import { BigNumberish } from "ethers/utils";
+import { ethers } from "hardhat";
+import { BigNumberish } from "ethers";
 import { Signer } from "ethers";
 
 export async function getSignerAddresses(signers: Signer[]) {
   return await Promise.all(signers.map(signer => signer.getAddress()));
 }
+
 
 export function makeCheckpoint(
   validators: string[],

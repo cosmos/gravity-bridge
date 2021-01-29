@@ -2,7 +2,7 @@ pragma solidity ^0.6.6;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@nomiclabs/buidler/console.sol";
+import "hardhat/console.sol";
 import "./CosmosToken.sol";
 
 contract Peggy {

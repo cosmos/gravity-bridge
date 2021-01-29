@@ -1,8 +1,7 @@
 import { Peggy } from "../typechain/Peggy";
 import { TestERC20A } from "../typechain/TestERC20A";
-import { ethers } from "@nomiclabs/buidler";
+import { ethers } from "hardhat";
 import { makeCheckpoint, signHash, getSignerAddresses } from "./pure";
-import { BigNumberish } from "ethers/utils";
 import { Signer } from "ethers";
 
 type DeployContractsOptions = {

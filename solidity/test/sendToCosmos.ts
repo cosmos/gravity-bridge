@@ -1,5 +1,5 @@
 import chai from "chai";
-import { ethers } from "@nomiclabs/buidler";
+import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 
 import { deployContracts } from "../test-utils";
@@ -48,8 +48,8 @@ async function runTest(opts: {}) {
       1
     );
 
-  expect(await testERC20.functions.balanceOf(peggy.address)).to.equal(1000);
-  expect(await peggy.functions.state_lastEventNonce()).to.equal(1);
+  expect((await testERC20.functions.balanceOf(peggy.address))[0]).to.equal(1000);
+  expect((await peggy.functions.state_lastEventNonce())[0]).to.equal(1);
 
 
     
@@ -68,8 +68,8 @@ async function runTest(opts: {}) {
       2
     );
 
-  expect(await testERC20.functions.balanceOf(peggy.address)).to.equal(2000);
-  expect(await peggy.functions.state_lastEventNonce()).to.equal(2);
+  expect((await testERC20.functions.balanceOf(peggy.address))[0]).to.equal(2000);
+  expect((await peggy.functions.state_lastEventNonce())[0]).to.equal(2);
 }
 
 describe("sendToCosmos tests", function () {

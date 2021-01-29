@@ -1,5 +1,5 @@
 import chai from "chai";
-import { ethers } from "@nomiclabs/buidler";
+import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 
 import { deployContracts } from "../test-utils";
@@ -11,15 +11,14 @@ import {
   examplePowers
 } from "../test-utils/pure";
 import {ContractTransaction, utils} from 'ethers';
-import { parse } from "url";
-import { BigNumber } from "ethers/utils";
+import { BigNumber } from "ethers";
 chai.use(solidity);
 const { expect } = chai;
 
 async function parseEvent(contract: any, txPromise: Promise<ContractTransaction>, eventOrder: number) {
   const tx = await txPromise
   const receipt = await contract.provider.getTransactionReceipt(tx.hash!)
-  let args = (contract.interface as utils.Interface).parseLog(receipt.logs![eventOrder]).values
+  let args = (contract.interface as utils.Interface).parseLog(receipt.logs![eventOrder]).args
 
   // Get rid of weird quasi-array keys
   const acc: any = {}
@@ -64,7 +63,7 @@ async function runTest(opts: {}) {
     _name: 'Atom',
     _symbol: 'ATOM',
     _decimals: 6,
-    _eventNonce: new BigNumber(1)
+    _eventNonce: BigNumber.from(1)
   })
 
 
@@ -77,7 +76,7 @@ async function runTest(opts: {}) {
   ], peggy.provider);
 
 
-  const maxUint256 = new BigNumber(2).pow(256).sub(1)
+  const maxUint256 = BigNumber.from(2).pow(256).sub(1)
 
   // Check that peggy balance is correct
   expect((await ERC20contract.functions.balanceOf(peggy.address)).toString()).to.equal(maxUint256.toString())

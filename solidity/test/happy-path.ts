@@ -1,5 +1,5 @@
 import chai from "chai";
-import { ethers } from "@nomiclabs/buidler";
+import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 
 import { deployContracts } from "../test-utils";
@@ -81,7 +81,7 @@ describe("Peggy happy path valset update + batch submit", function () {
       sigs1.s
     );
 
-    expect(await peggy.functions.state_lastValsetCheckpoint()).to.equal(checkpoint1);
+    expect((await peggy.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint1);
 
 
 
@@ -165,7 +165,7 @@ describe("Peggy happy path valset update + batch submit", function () {
     expect(
       await (
         await testERC20.functions.balanceOf(await signers[6].getAddress())
-      ).toNumber()
+      )[0].toNumber()
     ).to.equal(1);
   });
 });

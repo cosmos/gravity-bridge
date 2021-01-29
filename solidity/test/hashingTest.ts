@@ -1,8 +1,8 @@
 import chai from "chai";
-import { ethers } from "@nomiclabs/buidler";
+import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { HashingTest } from "../typechain/HashingTest";
-import { BigNumberish } from "ethers/utils";
+import { BigNumberish } from "ethers";
 
 import { deployContracts } from "../test-utils";
 import { getSignerAddresses } from "../test-utils/pure";

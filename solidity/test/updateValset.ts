@@ -1,5 +1,5 @@
 import chai from "chai";
-import { ethers } from "@nomiclabs/buidler";
+import { ethers} from "hardhat";
 import { solidity } from "ethereum-waffle";
 
 import { deployContracts } from "../test-utils";
@@ -159,6 +159,6 @@ describe("updateValset tests", function () {
 
   it("happy path", async function () {
     let { peggy, checkpoint } = await runTest({});
-    expect(await peggy.functions.state_lastValsetCheckpoint()).to.equal(checkpoint);
+    expect((await peggy.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
   });
 });

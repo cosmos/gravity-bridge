@@ -1,6 +1,6 @@
 pragma solidity ^0.6.6;
 
-import "@nomiclabs/buidler/console.sol";
+import "hardhat/console.sol";
 
 contract SigningTest {
 	function checkSignature(
