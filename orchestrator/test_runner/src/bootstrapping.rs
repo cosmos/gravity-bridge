@@ -114,7 +114,7 @@ pub async fn deploy_contracts(
             &format!("--cosmos-node={}", COSMOS_NODE_ABCI),
             &format!("--eth-node={}", ETH_NODE),
             &format!("--eth-privkey={:#x}", *MINER_PRIVATE_KEY),
-            "--contract=/peggy/solidity/artifacts/Peggy.json",
+            "--contract=/peggy/solidity/artifacts/contracts/Peggy.sol/Peggy.json",
             "--test-mode=true",
         ])
         .current_dir("/peggy/solidity/")
