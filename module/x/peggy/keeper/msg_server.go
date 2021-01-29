@@ -137,7 +137,10 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 // RequestBatch handles MsgRequestBatch
 func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*types.MsgRequestBatchResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	ec, _ := types.ERC20FromPeggyCoin(sdk.NewInt64Coin(msg.Denom, 0))
+	ec, err := types.ERC20FromPeggyCoin(sdk.NewInt64Coin(msg.Denom, 0))
+	if err != nil {
+		return nil, err
+	}
 	batchID, err := k.BuildOutgoingTXBatch(ctx, ec.Contract, OutgoingTxBatchSize)
 	if err != nil {
 		return nil, err
