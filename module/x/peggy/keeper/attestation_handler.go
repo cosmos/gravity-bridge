@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -53,8 +55,30 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
 	case *types.MsgERC20DeployedClaim:
 		// Check if attributes of ERC20 match Cosmos denom
-		// TODO-JT ^^^^
-		
+		metadata, exists := a.keeper.bankKeeper.GetDenomMetaData(ctx, claim.CosmosDenom)
+
+		if !exists {
+			return sdkerrors.Wrap(types.ErrUnknown, fmt.Sprintf("denom not found %s", claim.CosmosDenom))
+		}
+
+		if claim.Name != metadata.Description {
+			return sdkerrors.Wrap(
+				types.ErrInvalid,
+				fmt.Sprintf("ERC20 name %s does not match denom description %s", claim.Name, metadata.Description))
+		}
+
+		if claim.Symbol != metadata.Display {
+			return sdkerrors.Wrap(
+				types.ErrInvalid,
+				fmt.Sprintf("ERC20 symbol %s does not match denom display %s", claim.Symbol, metadata.Display))
+		}
+
+		if claim.Decimals != uint64(metadata.DenomUnits[0].Exponent) {
+			return sdkerrors.Wrap(
+				types.ErrInvalid,
+				fmt.Sprintf("ERC20 decimals %d does not match denom denomunits exponent %d", claim.Decimals, uint64(metadata.DenomUnits[0].Exponent)))
+		}
+
 		// Add to denom-erc20 mapping
 		a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.CosmosDenom, claim.TokenContract)
 
