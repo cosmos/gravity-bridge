@@ -90,19 +90,6 @@ pub async fn relay_valsets(
                 / downcast_to_u128(one_eth()).unwrap() as f32
         );
 
-        // If the ENV var NO_GAS_OPT is not set at compile time then the resulting binary will not
-        // have gas optimizations. In this case if we exit early if gas optimizations are enabled
-        // (the default value)
-        if option_env!("NO_GAS_OPT").is_none() {
-            let diff = current_valset.power_diff(&latest_cosmos_valset);
-            // if the power difference is less than one percent, skip updating
-            // the validator set
-            if diff < 0.01 {
-                info!("Difference in power between valset {} and {} is less than 1% skipping update to save gas", current_valset.nonce, latest_cosmos_valset.nonce);
-                return;
-            }
-        }
-
         let _res = send_eth_valset_update(
             latest_cosmos_valset,
             current_valset,
