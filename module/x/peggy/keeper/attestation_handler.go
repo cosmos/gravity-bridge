@@ -54,13 +54,21 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 	case *types.MsgWithdrawClaim:
 		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
 	case *types.MsgERC20DeployedClaim:
-		// Check if attributes of ERC20 match Cosmos denom
-		metadata, exists := a.keeper.bankKeeper.GetDenomMetaData(ctx, claim.CosmosDenom)
+		// Check if it already exists
+		existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.CosmosDenom)
+		if exists {
+			return sdkerrors.Wrap(
+				types.ErrInvalid,
+				fmt.Sprintf("ERC20 %s already exists for denom %s", existingERC20, claim.CosmosDenom))
+		}
 
-		if !exists {
+		// Check if denom exists
+		metadata := a.keeper.bankKeeper.GetDenomMetaData(ctx, claim.CosmosDenom)
+		if metadata.Base == "" {
 			return sdkerrors.Wrap(types.ErrUnknown, fmt.Sprintf("denom not found %s", claim.CosmosDenom))
 		}
 
+		// Check if attributes of ERC20 match Cosmos denom
 		if claim.Name != metadata.Description {
 			return sdkerrors.Wrap(
 				types.ErrInvalid,
@@ -73,10 +81,31 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 				fmt.Sprintf("ERC20 symbol %s does not match denom display %s", claim.Symbol, metadata.Display))
 		}
 
-		if claim.Decimals != uint64(metadata.DenomUnits[0].Exponent) {
+		// ERC20 tokens use a very simple mechanism to tell you where to display the decimal point.
+		// The "decimals" field simply tells you how many decimal places there will be.
+		// Cosmos denoms have a system that is much more full featured, with enterprise-ready token denominations.
+		// There is a DenomUnits array that tells you what the name of each denomination of the
+		// token is.
+		// To correlate this with an ERC20 "decimals" field, we have to search through the DenomUnits array
+		// to find the DenomUnit which matches up to the main token "display" value. Then we take the
+		// "exponent" from this DenomUnit.
+		// If the correct DenomUnit is not found, it will default to 0. This will result in there being no decimal places
+		// in the token's ERC20 on Ethereum. So, for example, if this happened with Atom, 1 Atom would appear on Ethereum
+		// as 1 million Atoms, having 6 extra places before the decimal point.
+		// This will only happen with a Denom Metadata which is for all intents and purposes invalid, but I am not sure
+		// this is checked for at any other point.
+		decimals := uint32(0)
+		for _, denomUnit := range metadata.DenomUnits {
+			if denomUnit.Denom == metadata.Display {
+				decimals = denomUnit.Exponent
+				break
+			}
+		}
+
+		if decimals != uint32(metadata.DenomUnits[0].Exponent) {
 			return sdkerrors.Wrap(
 				types.ErrInvalid,
-				fmt.Sprintf("ERC20 decimals %d does not match denom denomunits exponent %d", claim.Decimals, uint64(metadata.DenomUnits[0].Exponent)))
+				fmt.Sprintf("ERC20 decimals %d does not match denom decimals %d", claim.Decimals, decimals))
 		}
 
 		// Add to denom-erc20 mapping

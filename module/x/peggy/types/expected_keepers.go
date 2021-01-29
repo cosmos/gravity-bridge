@@ -27,5 +27,5 @@ type BankKeeper interface {
 	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) error
 	BurnCoins(ctx sdk.Context, name string, amt sdk.Coins) error
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	GetDenomMetaData(ctx sdk.Context, denom string) (bank.Metadata, bool)
+	GetDenomMetaData(ctx sdk.Context, denom string) bank.Metadata
 }
