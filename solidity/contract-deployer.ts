@@ -92,19 +92,19 @@ async function deploy() {
 
   if (args["test-mode"] == "True" || args["test-mode"] == "true") {
     console.log("Test mode, deploying ERC20 contracts");
-    const { abi, bytecode } = getContractArtifacts("/peggy/solidity/artifacts/contracts/TestERC20A/TestERC20A.json");
+    const { abi, bytecode } = getContractArtifacts("/peggy/solidity/artifacts/contracts/TestERC20A.sol/TestERC20A.json");
     const erc20Factory = new ethers.ContractFactory(abi, bytecode, wallet);
     const testERC20 = (await erc20Factory.deploy()) as TestERC20A;
     await testERC20.deployed();
     const erc20TestAddress = testERC20.address;
     console.log("ERC20 deployed at Address - ", erc20TestAddress);
-    const { abi: abi1, bytecode: bytecode1 } = getContractArtifacts("/peggy/solidity/artifacts/contracts/TestERC20B/TestERC20B.json");
+    const { abi: abi1, bytecode: bytecode1 } = getContractArtifacts("/peggy/solidity/artifacts/contracts/TestERC20B.sol/TestERC20B.json");
     const erc20Factory1 = new ethers.ContractFactory(abi1, bytecode1, wallet);
     const testERC201 = (await erc20Factory1.deploy()) as TestERC20B;
     await testERC201.deployed();
     const erc20TestAddress1 = testERC201.address;
     console.log("ERC20 deployed at Address - ", erc20TestAddress1);
-    const { abi: abi2, bytecode: bytecode2 } = getContractArtifacts("/peggy/solidity/artifacts/contracts/TestERC20C/TestERC20C.json");
+    const { abi: abi2, bytecode: bytecode2 } = getContractArtifacts("/peggy/solidity/artifacts/contracts/TestERC20C.sol/TestERC20C.json");
     const erc20Factory2 = new ethers.ContractFactory(abi2, bytecode2, wallet);
     const testERC202 = (await erc20Factory2.deploy()) as TestERC20C;
     await testERC202.deployed();
