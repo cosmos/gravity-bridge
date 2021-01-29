@@ -170,11 +170,12 @@ message MsgWithdrawClaimResponse {}
 message MsgERC20DeployedClaim {
   uint64 event_nonce    = 1;
   uint64 block_height   = 2;
-  string cosmos_denom = 3;
+  string cosmos_denom   = 3;
   string token_contract = 4;
-  string name = 5;
-  string symbol = 6;
-  uint64 decimals = 7;
+  string name           = 5;
+  string symbol         = 6;
+  uint64 decimals       = 7;
+  string orchestrator   = 8;
 }
 
 message MsgERC20DeployedClaimResponse {}

@@ -51,6 +51,12 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		}
 	case *types.MsgWithdrawClaim:
 		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
+	case *types.MsgERC20DeployedClaim:
+		// Check if attributes of ERC20 match Cosmos denom
+		// TODO-JT ^^^^
+		
+		// Add to denom-erc20 mapping
+		a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.CosmosDenom, claim.TokenContract)
 
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())
