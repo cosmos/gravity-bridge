@@ -220,6 +220,32 @@ pub async fn send_to_eth(
         .expect("Invalid private key!")
         .to_address();
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+    if amount.denom != fee.denom || !amount.denom.contains("peggy") {
+        return Err(JsonRpcError::BadInput(format!(
+            "{} {} is an invalid denom set for SendToEth",
+            amount.denom, fee.denom,
+        )));
+    }
+    let balances = contact.get_balances(our_address).await.unwrap().result;
+    let mut found = false;
+    for balance in balances {
+        if balance.denom == amount.denom {
+            let total_amount = amount.amount.clone() + (fee.amount.clone() * 2u8.into());
+            if balance.amount < total_amount {
+                return Err(JsonRpcError::BadInput(format!(
+                    "Insufficient balance of {} to send {}",
+                    amount.denom, total_amount,
+                )));
+            }
+            found = true;
+        }
+    }
+    if !found {
+        return Err(JsonRpcError::BadInput(format!(
+            "No balance of {} to send",
+            amount.denom,
+        )));
+    }
 
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
@@ -263,7 +289,7 @@ pub async fn send_request_batch(
         sequence: tx_info.sequence,
         fee: StdFee {
             amount: vec![fee.clone()],
-            gas: 500_000u64.into(),
+            gas: 500_000_000u64.into(),
         },
         msgs: vec![PeggyMsg::RequestBatchMsg(RequestBatchMsg {
             denom,

@@ -10,8 +10,8 @@ extern crate lazy_static;
 
 use crate::bootstrapping::*;
 use crate::utils::*;
-use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
+use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::utils::wait_for_cosmos_online;
 use deep_space::coin::Coin;
@@ -68,6 +68,10 @@ pub fn get_fee() -> Coin {
 
 pub fn get_test_token_name() -> String {
     "footoken".to_string()
+}
+
+pub fn one_eth() -> Uint256 {
+    1000000000000000000u128.into()
 }
 
 #[actix_rt::main]
@@ -129,6 +133,7 @@ pub async fn main() {
             .await;
             return;
         } else if test_type == "BATCH_STRESS" {
+            let contact = Contact::new(COSMOS_NODE, TOTAL_TIMEOUT);
             transaction_stress_test(&web30, &contact, keys, peggy_address, erc20_addresses).await;
             return;
         } else if test_type == "VALSET_STRESS" {
