@@ -5,6 +5,7 @@ use clarity::Uint256;
 #[macro_use]
 extern crate log;
 
+pub mod deploy_erc20;
 pub mod message_signatures;
 pub mod send_to_cosmos;
 pub mod submit_batch;

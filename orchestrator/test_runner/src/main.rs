@@ -16,6 +16,7 @@ use contact::client::Contact;
 use cosmos_peggy::utils::wait_for_cosmos_online;
 use deep_space::coin::Coin;
 use happy_path::happy_path_test;
+use happy_path_v2::happy_path_test_v2;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use std::time::Duration;
 use transaction_stress_test::transaction_stress_test;
@@ -23,6 +24,7 @@ use valset_stress::validator_set_stress_test;
 
 mod bootstrapping;
 mod happy_path;
+mod happy_path_v2;
 mod transaction_stress_test;
 mod utils;
 mod valset_stress;
@@ -139,6 +141,10 @@ pub async fn main() {
         } else if test_type == "VALSET_STRESS" {
             info!("Starting Valset update stress test");
             validator_set_stress_test(&web30, &contact, keys, peggy_address).await;
+            return;
+        } else if test_type == "V2_HAPPY_PATH" {
+            info!("Starting happy path for Gravity v2");
+            happy_path_test_v2(&web30, grpc_client, &contact, keys, peggy_address, false).await;
             return;
         }
     }

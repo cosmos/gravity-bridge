@@ -265,3 +265,147 @@ impl SendToCosmosEvent {
         ret
     }
 }
+
+/// A parsed struct representing the Ethereum event fired when someone uses the Peggy
+/// contract to deploy a new ERC20 contract representing a Cosmos asset
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
+pub struct ERC20DeployedEvent {
+    /// The denom on the Cosmos chain this contract is intended to represent
+    pub cosmos_denom: String,
+    /// The ERC20 address of the deployed contract, this may or may not be adopted
+    /// by the Cosmos chain as the contract for this asset
+    pub erc20_address: EthAddress,
+    ///
+    pub name: String,
+    pub symbol: String,
+    pub decimals: u8,
+    pub event_nonce: Uint256,
+}
+
+impl ERC20DeployedEvent {
+    pub fn from_log(input: &Log) -> Result<ERC20DeployedEvent, PeggyError> {
+        let token_contract = input.topics.get(1);
+        if let Some(new_token_contract_data) = token_contract {
+            let erc20 = EthAddress::from_slice(&new_token_contract_data[12..32])?;
+            let index_start = 3 * 32;
+            let index_end = index_start + 32;
+            let decimals = Uint256::from_bytes_be(&input.data[index_start..index_end]);
+            if decimals > u8::MAX.into() {
+                return Err(PeggyError::InvalidEventLogError(
+                    "Nonce overflow, probably incorrect parsing".to_string(),
+                ));
+            }
+            let decimals: u8 = decimals.to_string().parse().unwrap();
+
+            let index_start = 4 * 32;
+            let index_end = index_start + 32;
+            let nonce = Uint256::from_bytes_be(&input.data[index_start..index_end]);
+            if nonce > u64::MAX.into() {
+                return Err(PeggyError::InvalidEventLogError(
+                    "Nonce overflow, probably incorrect parsing".to_string(),
+                ));
+            }
+
+            let index_start = 5 * 32;
+            let index_end = index_start + 32;
+            let denom_len = Uint256::from_bytes_be(&input.data[index_start..index_end]);
+            // it's not probable that we have 4+ gigabytes of event data
+            if denom_len > u32::MAX.into() {
+                return Err(PeggyError::InvalidEventLogError(
+                    "denom length overflow, probably incorrect parsing".to_string(),
+                ));
+            }
+            let denom_len: usize = denom_len.to_string().parse().unwrap();
+            let index_start = 6 * 32;
+            let index_end = index_start + denom_len;
+            let denom = String::from_utf8(input.data[index_start..index_end].to_vec());
+            if denom.is_err() {
+                return Err(PeggyError::InvalidEventLogError(format!(
+                    "{:?} is not valid utf8, probably incorrect parsing",
+                    denom
+                )));
+            }
+            let denom = denom.unwrap();
+
+            // beyond this point we are parsing strings placed
+            // after a variable length string and we will need to compute offsets
+
+            // this trick computes the next 32 byte (256 bit) word index, then multiplies by
+            // 32 to get the bytes offset, this is required since we have dynamic length types but
+            // the next entry always starts on a round 32 byte word.
+            let index_start = ((index_end + 31) / 32) * 32;
+            let index_end = index_start + 32;
+            let erc20_name_len = Uint256::from_bytes_be(&input.data[index_start..index_end]);
+            info!("{}", index_start);
+            // it's not probable that we have 4+ gigabytes of event data
+            if erc20_name_len > u32::MAX.into() {
+                return Err(PeggyError::InvalidEventLogError(
+                    "ERC20 Name length overflow, probably incorrect parsing".to_string(),
+                ));
+            }
+            let erc20_name_len: usize = erc20_name_len.to_string().parse().unwrap();
+            let index_start = index_end;
+            let index_end = index_start + erc20_name_len;
+            let erc20_name = String::from_utf8(input.data[index_start..index_end].to_vec());
+            if erc20_name.is_err() {
+                return Err(PeggyError::InvalidEventLogError(format!(
+                    "{:?} is not valid utf8, probably incorrect parsing",
+                    erc20_name
+                )));
+            }
+            let erc20_name = erc20_name.unwrap();
+
+            let index_start = ((index_end + 31) / 32) * 32;
+            let index_end = index_start + 32;
+            let symbol_len = Uint256::from_bytes_be(&input.data[index_start..index_end]);
+            // it's not probable that we have 4+ gigabytes of event data
+            if symbol_len > u32::MAX.into() {
+                return Err(PeggyError::InvalidEventLogError(
+                    "Symbol length overflow, probably incorrect parsing".to_string(),
+                ));
+            }
+            let symbol_len: usize = denom_len.to_string().parse().unwrap();
+            let index_start = index_end;
+            let index_end = index_start + symbol_len;
+            let symbol = String::from_utf8(input.data[index_start..index_end].to_vec());
+            if symbol.is_err() {
+                return Err(PeggyError::InvalidEventLogError(format!(
+                    "{:?} is not valid utf8, probably incorrect parsing",
+                    symbol
+                )));
+            }
+            let symbol = symbol.unwrap();
+
+            Ok(ERC20DeployedEvent {
+                cosmos_denom: denom,
+                name: erc20_name,
+                decimals,
+                event_nonce: nonce,
+                erc20_address: erc20,
+                symbol,
+            })
+        } else {
+            Err(PeggyError::InvalidEventLogError(
+                "Too few topics".to_string(),
+            ))
+        }
+    }
+    pub fn from_logs(input: &[Log]) -> Result<Vec<ERC20DeployedEvent>, PeggyError> {
+        let mut res = Vec::new();
+        for item in input {
+            res.push(ERC20DeployedEvent::from_log(item)?);
+        }
+        Ok(res)
+    }
+    /// returns all values in the array with event nonces greater
+    /// than the provided value
+    pub fn filter_by_event_nonce(event_nonce: u64, input: &[Self]) -> Vec<Self> {
+        let mut ret = Vec::new();
+        for item in input {
+            if item.event_nonce > event_nonce.into() {
+                ret.push(item.clone())
+            }
+        }
+        ret
+    }
+}

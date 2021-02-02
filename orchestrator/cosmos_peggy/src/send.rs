@@ -164,6 +164,7 @@ pub async fn send_ethereum_claims(
     private_key: PrivateKey,
     deposits: Vec<SendToCosmosEvent>,
     withdraws: Vec<TransactionBatchExecutedEvent>,
+    erc20_deploys: Vec<ERC20DeployedEvent>,
     fee: Coin,
 ) -> Result<TXSendResponse, JsonRpcError> {
     let our_address = private_key
@@ -186,6 +187,12 @@ pub async fn send_ethereum_claims(
             our_address,
         )))
     }
+    // for deploy in erc20_deploys {
+    //     msgs.push(PeggyMsg::WithdrawClaimMsg(WithdrawClaimMsg::from_event(
+    //         withdraw,
+    //         our_address,
+    //     )))
+    // }
 
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,

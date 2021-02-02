@@ -8,7 +8,9 @@ use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::{
     error::PeggyError,
-    types::{SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent},
+    types::{
+        ERC20DeployedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent,
+    },
 };
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -56,13 +58,27 @@ pub async fn check_for_events(
         .await;
     trace!("Valsets {:?}", valsets);
 
-    if let (Ok(valsets), Ok(batches), Ok(deposits)) = (valsets, batches, deposits) {
+    let erc20_deployed = web3
+        .check_for_events(
+            starting_block.clone(),
+            Some(latest_block.clone()),
+            vec![peggy_contract_address],
+            vec!["ERC20DeployedEvent(string,address,string,string,uint8,uint256)"],
+        )
+        .await;
+    trace!("ERC20 Deployments {:?}", erc20_deployed);
+
+    if let (Ok(valsets), Ok(batches), Ok(deposits), Ok(deploys)) =
+        (valsets, batches, deposits, erc20_deployed)
+    {
         let valsets = ValsetUpdatedEvent::from_logs(&valsets)?;
         trace!("parsed valsets {:?}", valsets);
         let withdraws = TransactionBatchExecutedEvent::from_logs(&batches)?;
         trace!("parsed batches {:?}", batches);
         let deposits = SendToCosmosEvent::from_logs(&deposits)?;
         trace!("parsed deposits {:?}", deposits);
+        let erc20_deploys = ERC20DeployedEvent::from_logs(&deploys)?;
+        trace!("parsed erc20 deploys {:?}", erc20_deploys);
 
         // note that starting block overlaps with our last checked block, because we have to deal with
         // the possibility that the relayer was killed after relaying only one of multiple events in a single
@@ -73,6 +89,8 @@ pub async fn check_for_events(
         let deposits = SendToCosmosEvent::filter_by_event_nonce(last_event_nonce, &deposits);
         let withdraws =
             TransactionBatchExecutedEvent::filter_by_event_nonce(last_event_nonce, &withdraws);
+        let erc20_deploys =
+            ERC20DeployedEvent::filter_by_event_nonce(last_event_nonce, &erc20_deploys);
 
         if !deposits.is_empty() {
             info!(
@@ -86,10 +104,23 @@ pub async fn check_for_events(
                 withdraws[0].batch_nonce, withdraws[0].erc20, withdraws[0].event_nonce
             )
         }
+        if !erc20_deploys.is_empty() {
+            info!(
+                "Oracle observed ERC20 deployment with denom {} erc20 name {} and symbol {} and event nonce {}",
+                erc20_deploys[0].cosmos_denom, erc20_deploys[0].name, erc20_deploys[0].symbol, erc20_deploys[0].event_nonce,
+            )
+        }
 
-        if !deposits.is_empty() || !withdraws.is_empty() {
-            let res =
-                send_ethereum_claims(contact, our_private_key, deposits, withdraws, fee).await?;
+        if !deposits.is_empty() || !withdraws.is_empty() || !erc20_deploys.is_empty() {
+            let res = send_ethereum_claims(
+                contact,
+                our_private_key,
+                deposits,
+                withdraws,
+                erc20_deploys,
+                fee,
+            )
+            .await?;
             trace!("Claims response {:?}", res);
             let new_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
             // since we can't actually trust that the above txresponse is correct we have to check here

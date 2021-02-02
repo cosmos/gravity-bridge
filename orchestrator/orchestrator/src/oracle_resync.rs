@@ -4,7 +4,9 @@ use clarity::{Address, Uint256};
 use cosmos_peggy::query::get_last_event_nonce;
 use deep_space::address::Address as CosmosAddress;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use peggy_utils::types::{SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent};
+use peggy_utils::types::{
+    ERC20DeployedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent,
+};
 use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -63,6 +65,14 @@ pub async fn get_last_checked_block(
                 vec!["SendToCosmosEvent(address,address,bytes32,uint256,uint256)"],
             )
             .await;
+        let erc20_deployed_events = web3
+            .check_for_events(
+                end_search.clone(),
+                Some(current_block.clone()),
+                vec![peggy_contract_address],
+                vec!["ERC20DeployedEvent(string,address,string,string,uint8,uint256)"],
+            )
+            .await;
         // valset events do not have an event nonce (because they are not relayed to cosmos)
         // and therefore they are mostly useless to us. But they do have one special property
         // that is useful to us in this handler a valset update event for nonce 0 is emitted
@@ -77,7 +87,11 @@ pub async fn get_last_checked_block(
                 vec!["ValsetUpdatedEvent(uint256,address[],uint256[])"],
             )
             .await;
-        if batch_events.is_err() || send_to_cosmos_events.is_err() || valset_events.is_err() {
+        if batch_events.is_err()
+            || send_to_cosmos_events.is_err()
+            || valset_events.is_err()
+            || erc20_deployed_events.is_err()
+        {
             error!("Failed to get blockchain events while resyncing, is your Eth node working?");
             delay_for(RETRY_TIME).await;
             continue;
@@ -85,6 +99,7 @@ pub async fn get_last_checked_block(
         let batch_events = batch_events.unwrap();
         let send_to_cosmos_events = send_to_cosmos_events.unwrap();
         let valset_events = valset_events.unwrap();
+        let erc20_deployed_events = erc20_deployed_events.unwrap();
 
         trace!(
             "Found events {:?} {:?}",
@@ -113,6 +128,16 @@ pub async fn get_last_checked_block(
                     }
                 }
                 Err(e) => error!("Got SendToCosmos event that we can't parse {}", e),
+            }
+        }
+        for event in erc20_deployed_events {
+            match ERC20DeployedEvent::from_log(&event) {
+                Ok(send) => {
+                    if send.event_nonce == last_event_nonce && event.block_number.is_some() {
+                        return event.block_number.unwrap();
+                    }
+                }
+                Err(e) => error!("Got ERC20Deployed event that we can't parse {}", e),
             }
         }
         for event in valset_events {

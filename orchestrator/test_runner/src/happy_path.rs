@@ -26,7 +26,6 @@ use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
-#[allow(clippy::too_many_arguments)]
 pub async fn happy_path_test(
     web30: &Web3,
     grpc_client: PeggyQueryClient<Channel>,
@@ -474,9 +473,16 @@ async fn submit_duplicate_erc20_send(
 
     // iterate through all validators and try to send an event with duplicate nonce
     for (c_key, _) in keys.iter() {
-        let res = send_ethereum_claims(contact, *c_key, vec![event.clone()], vec![], get_fee())
-            .await
-            .unwrap();
+        let res = send_ethereum_claims(
+            contact,
+            *c_key,
+            vec![event.clone()],
+            vec![],
+            vec![],
+            get_fee(),
+        )
+        .await
+        .unwrap();
         trace!("Submitted duplicate sendToCosmos event: {:?}", res);
     }
 
