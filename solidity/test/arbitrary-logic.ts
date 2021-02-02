@@ -1,5 +1,5 @@
 import chai from "chai";
-import { ethers } from "@nomiclabs/buidler";
+import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { TestLogicContract } from "../typechain/TestLogicContract";
 import { SimpleLogicBatchMiddleware } from "../typechain/SimpleLogicBatchMiddleware";
@@ -88,7 +88,7 @@ async function runTest(opts: {
   const txAmounts = new Array(numTxs);
   for (let i = 0; i < numTxs; i++) {
     txAmounts[i] = 5;
-    txPayloads[i] = logicContract.interface.functions.transferTokens.encode([await signers[20].getAddress(), 2, 2])
+    txPayloads[i] = logicContract.interface.encodeFunctionData("transferTokens", [await signers[20].getAddress(), 2, 2])
   }
 
   let invalidationNonce = 1
@@ -117,7 +117,7 @@ async function runTest(opts: {
     feeAmounts: [numTxs], // feeAmounts
     feeTokenContracts: [testERC20.address], // feeTokenContracts
     logicContractAddress: logicBatch.address, // logicContractAddress
-    payload: logicBatch.interface.functions.logicBatch.encode([txAmounts, txPayloads, logicContract.address, testERC20.address]), // payloads
+    payload: logicBatch.interface.encodeFunctionData("logicBatch", [txAmounts, txPayloads, logicContract.address, testERC20.address]), // payloads
     timeOut,
     invalidationId: ethers.utils.hexZeroPad(testERC20.address, 32), // invalidationId
     invalidationNonce: invalidationNonce // invalidationNonce
@@ -213,19 +213,19 @@ async function runTest(opts: {
   );
 
   expect(
-      (await testERC20.functions.balanceOf(await signers[20].getAddress())).toNumber()
+      (await testERC20.functions.balanceOf(await signers[20].getAddress()))[0].toNumber()
   ).to.equal(40);
 
   expect(
-    (await testERC20.functions.balanceOf(peggy.address)).toNumber()
+    (await testERC20.functions.balanceOf(peggy.address))[0].toNumber()
   ).to.equal(940);
 
   expect(
-      (await testERC20.functions.balanceOf(logicContract.address)).toNumber()
+      (await testERC20.functions.balanceOf(logicContract.address))[0].toNumber()
   ).to.equal(10);
   
   expect(
-    (await testERC20.functions.balanceOf(await signers[0].getAddress())).toNumber()
+    (await testERC20.functions.balanceOf(await signers[0].getAddress()))[0].toNumber()
   ).to.equal(9010);
 }
 
