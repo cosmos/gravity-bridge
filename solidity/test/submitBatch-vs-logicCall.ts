@@ -312,8 +312,8 @@ async function runLogicCallTest(opts: {
 
 describe("Compare gas usage of old submitBatch method vs new logicCall method submitting one batch", function () {
   it("Large batch", async function () {
-    await runSubmitBatchTest({batchSize: 100})
-    await runLogicCallTest({batchSize: 100})
+    await runSubmitBatchTest({batchSize: 10})
+    await runLogicCallTest({batchSize: 10})
   });
 
   it("Small batch", async function () {
