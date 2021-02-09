@@ -1,6 +1,8 @@
 syntax = "proto3";
 package peggy.v1;
 
+// TODO-JT: add ERC20DeployedEvent claim
+
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
@@ -14,6 +16,7 @@ enum ClaimType {
   CLAIM_TYPE_UNKNOWN  = 0 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_UNKNOWN" ];
   CLAIM_TYPE_DEPOSIT  = 1 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_DEPOSIT" ];
   CLAIM_TYPE_WITHDRAW = 2 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_WITHDRAW"];
+  CLAIM_TYPE_ERC20_DEPLOYED = 3 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_ERC20_DEPLOYED"];
 }
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by

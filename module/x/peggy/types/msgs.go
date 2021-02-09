@@ -266,6 +266,7 @@ type EthereumClaim interface {
 var (
 	_ EthereumClaim = &MsgDepositClaim{}
 	_ EthereumClaim = &MsgWithdrawClaim{}
+	_ EthereumClaim = &MsgERC20DeployedClaim{}
 )
 
 // GetType returns the type of the claim
@@ -395,3 +396,62 @@ func (msg MsgWithdrawClaim) Type() string { return "withdraw_claim" }
 const (
 	TypeMsgDepositClaim = "deposit_claim"
 )
+
+// EthereumClaim implementation for MsgERC20DeployedClaim
+// ======================================================
+
+// GetType returns the type of the claim
+func (e *MsgERC20DeployedClaim) GetType() ClaimType {
+	return CLAIM_TYPE_ERC20_DEPLOYED
+}
+
+// ValidateBasic performs stateless checks
+func (e *MsgERC20DeployedClaim) ValidateBasic() error {
+	if err := ValidateEthAddress(e.TokenContract); err != nil {
+		return sdkerrors.Wrap(err, "erc20 token")
+	}
+	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	}
+	if e.EventNonce == 0 {
+		return fmt.Errorf("nonce == 0")
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgERC20DeployedClaim) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgERC20DeployedClaim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgERC20DeployedClaim failed ValidateBasic! Should have been handled earlier")
+	}
+
+	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	return val
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgERC20DeployedClaim) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+// Type should return the action
+func (msg MsgERC20DeployedClaim) Type() string { return "ERC20_deployed_claim" }
+
+// Route should return the name of the module
+func (msg MsgERC20DeployedClaim) Route() string { return RouterKey }
+
+// Hash implements BridgeDeposit.Hash
+func (b *MsgERC20DeployedClaim) ClaimHash() []byte {
+	path := fmt.Sprintf("%s/%s/%s/%s/%d/", b.CosmosDenom, b.TokenContract, b.Name, b.Symbol, b.Decimals)
+	return tmhash.Sum([]byte(path))
+}
