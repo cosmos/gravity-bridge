@@ -6,8 +6,8 @@ use cosmos_peggy::utils::wait_for_next_cosmos_block;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use futures::future::join_all;
-use std::fs::File;
 use std::process::Command;
+use std::{fs::File, path::Path};
 use std::{
     io::{BufRead, BufReader, Read, Write},
     process::ExitStatus,
@@ -102,6 +102,34 @@ pub async fn deploy_contracts(
         i.expect("Failed to set delegate addresses!");
     }
 
+    // these are the possible paths where we could find the contract deployer
+    // and the peggy contract itself, feel free to expand this if it makes your
+    // deployments more straightforward.
+
+    // both files are just in the PWD
+    const A: [&str; 3] = ["contract-deployer.ts", "Peggy.json", "."];
+    // files are placed in a root /solidity/ folder
+    const B: [&str; 3] = [
+        "/solidity/contract-deployer.ts",
+        "/solidity/Peggy.json",
+        "/solidity/",
+    ];
+    // the default unmoved locations for the Gravity repo
+    const C: [&str; 3] = [
+        "/peggy/solidity/contract-deployer.ts",
+        "/peggy/solidity/artifacts/contracts/Peggy.sol/Peggy.json",
+        "/peggy/solidity/",
+    ];
+    let paths = if all_paths_exist(&A) {
+        A
+    } else if all_paths_exist(&B) {
+        B
+    } else if all_paths_exist(&C) {
+        C
+    } else {
+        panic!("Could not find Peggy.json contract artifact in any known location!")
+    };
+
     // prevents the node deployer from failing (rarely) when the chain has not
     // yet produced the next block after submitting each eth address
     wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
@@ -110,14 +138,14 @@ pub async fn deploy_contracts(
     let output = Command::new("npx")
         .args(&[
             "ts-node",
-            "/peggy/solidity/contract-deployer.ts",
+            paths[0],
             &format!("--cosmos-node={}", COSMOS_NODE_ABCI),
             &format!("--eth-node={}", ETH_NODE),
             &format!("--eth-privkey={:#x}", *MINER_PRIVATE_KEY),
-            "--contract=/peggy/solidity/artifacts/contracts/Peggy.sol/Peggy.json",
+            &format!("--contract={}", paths[1]),
             "--test-mode=true",
         ])
-        .current_dir("/peggy/solidity/")
+        .current_dir(paths[2])
         .output()
         .expect("Failed to deploy contracts!");
     info!("stdout: {}", String::from_utf8_lossy(&output.stdout));
@@ -157,4 +185,13 @@ pub fn parse_contract_addresses() -> BootstrapContractAddresses {
         peggy_contract: peggy_address,
         erc20_addresses,
     }
+}
+
+fn all_paths_exist(input: &[&str]) -> bool {
+    for i in input {
+        if !Path::new(i).exists() {
+            return false;
+        }
+    }
+    true
 }

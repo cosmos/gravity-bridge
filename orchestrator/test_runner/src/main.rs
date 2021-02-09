@@ -81,12 +81,13 @@ pub async fn main() {
     env_logger::init();
     info!("Staring Peggy test-runner");
     let contact = Contact::new(COSMOS_NODE, OPERATION_TIMEOUT);
-    let grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
-    let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
-    let keys = get_keys();
 
     info!("Waiting for Cosmos chain to come online");
     wait_for_cosmos_online(&contact, TOTAL_TIMEOUT).await;
+
+    let grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
+    let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
+    let keys = get_keys();
 
     // if we detect this env var we are only deploying contracts, do that then exit.
     if option_env!("DEPLOY_CONTRACTS").is_some() {
