@@ -402,7 +402,7 @@ const (
 
 // GetType returns the type of the claim
 func (e *MsgERC20DeployedClaim) GetType() ClaimType {
-	return CLAIM_TYPE_DEPOSIT
+	return CLAIM_TYPE_ERC20_DEPLOYED
 }
 
 // ValidateBasic performs stateless checks

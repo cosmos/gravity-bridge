@@ -225,5 +225,5 @@ func GetDenomToERC20Key(denom string) []byte {
 }
 
 func GetERC20ToDenomKey(erc20 string) []byte {
-	return append(DenomToERC20Key, []byte(erc20)...)
+	return append(ERC20ToDenomKey, []byte(erc20)...)
 }
