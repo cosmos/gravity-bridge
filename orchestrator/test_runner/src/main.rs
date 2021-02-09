@@ -18,7 +18,7 @@ use deep_space::coin::Coin;
 use happy_path::happy_path_test;
 use happy_path_v2::happy_path_test_v2;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use std::time::Duration;
+use std::{env, time::Duration};
 use transaction_stress_test::transaction_stress_test;
 use valset_stress::validator_set_stress_test;
 
@@ -76,6 +76,13 @@ pub fn one_eth() -> Uint256 {
     1000000000000000000u128.into()
 }
 
+pub fn should_deploy_contracts() -> bool {
+    match env::var("DEPLOY_CONTRACTS") {
+        Ok(s) => s == "1" || s.to_lowercase() == "yes" || s.to_lowercase() == "true",
+        _ => false,
+    }
+}
+
 #[actix_rt::main]
 pub async fn main() {
     env_logger::init();
@@ -90,7 +97,7 @@ pub async fn main() {
     let keys = get_keys();
 
     // if we detect this env var we are only deploying contracts, do that then exit.
-    if option_env!("DEPLOY_CONTRACTS").is_some() {
+    if should_deploy_contracts() {
         info!("test-runner in contract deploying mode, deploying contracts, then exiting");
         deploy_contracts(&contact, &keys, get_fee()).await;
         return;
