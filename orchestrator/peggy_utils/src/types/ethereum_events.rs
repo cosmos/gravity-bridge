@@ -275,11 +275,15 @@ pub struct ERC20DeployedEvent {
     /// The ERC20 address of the deployed contract, this may or may not be adopted
     /// by the Cosmos chain as the contract for this asset
     pub erc20_address: EthAddress,
-    ///
+    /// The name of the token in the ERC20 contract, should match the Cosmos denom
+    /// but it is up to the Cosmos module to check that
     pub name: String,
+    /// The symbol for the token in the ERC20 contract
     pub symbol: String,
+    /// The number of decimals required to represent the smallest unit of this token
     pub decimals: u8,
     pub event_nonce: Uint256,
+    pub block_height: Uint256,
 }
 
 impl ERC20DeployedEvent {
@@ -292,7 +296,7 @@ impl ERC20DeployedEvent {
             let decimals = Uint256::from_bytes_be(&input.data[index_start..index_end]);
             if decimals > u8::MAX.into() {
                 return Err(PeggyError::InvalidEventLogError(
-                    "Nonce overflow, probably incorrect parsing".to_string(),
+                    "Decimals overflow, probably incorrect parsing".to_string(),
                 ));
             }
             let decimals: u8 = decimals.to_string().parse().unwrap();
@@ -336,7 +340,6 @@ impl ERC20DeployedEvent {
             let index_start = ((index_end + 31) / 32) * 32;
             let index_end = index_start + 32;
             let erc20_name_len = Uint256::from_bytes_be(&input.data[index_start..index_end]);
-            info!("{}", index_start);
             // it's not probable that we have 4+ gigabytes of event data
             if erc20_name_len > u32::MAX.into() {
                 return Err(PeggyError::InvalidEventLogError(
@@ -376,6 +379,15 @@ impl ERC20DeployedEvent {
             }
             let symbol = symbol.unwrap();
 
+            let block_height = if let Some(bn) = input.block_number.clone() {
+                bn
+            } else {
+                return Err(PeggyError::InvalidEventLogError(
+                    "Log does not have block number, we only search logs already in blocks?"
+                        .to_string(),
+                ));
+            };
+
             Ok(ERC20DeployedEvent {
                 cosmos_denom: denom,
                 name: erc20_name,
@@ -383,6 +395,7 @@ impl ERC20DeployedEvent {
                 event_nonce: nonce,
                 erc20_address: erc20,
                 symbol,
+                block_height,
             })
         } else {
             Err(PeggyError::InvalidEventLogError(

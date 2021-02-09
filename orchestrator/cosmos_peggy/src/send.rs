@@ -187,12 +187,11 @@ pub async fn send_ethereum_claims(
             our_address,
         )))
     }
-    // for deploy in erc20_deploys {
-    //     msgs.push(PeggyMsg::WithdrawClaimMsg(WithdrawClaimMsg::from_event(
-    //         withdraw,
-    //         our_address,
-    //     )))
-    // }
+    for deploy in erc20_deploys {
+        msgs.push(PeggyMsg::ERC20DeployedClaimMsg(
+            ERC20DeployedClaimMsg::from_event(deploy, our_address),
+        ))
+    }
 
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,

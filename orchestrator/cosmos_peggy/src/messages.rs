@@ -5,7 +5,9 @@ use deep_space::coin::Coin;
 use deep_space::msg::DeepSpaceMsg;
 use ethereum_peggy::utils::downcast_uint256;
 use num256::Uint256;
-use peggy_utils::types::{ERC20Token, SendToCosmosEvent, TransactionBatchExecutedEvent};
+use peggy_utils::types::{
+    ERC20DeployedEvent, ERC20Token, SendToCosmosEvent, TransactionBatchExecutedEvent,
+};
 /// Any arbitrary message
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 #[serde(tag = "type", content = "value")]
@@ -33,6 +35,9 @@ pub enum PeggyMsg {
 
     #[serde(rename = "peggy/MsgWithdrawClaim")]
     WithdrawClaimMsg(WithdrawClaimMsg),
+
+    #[serde(rename = "peggy/MsgERC20DeployedClaim")]
+    ERC20DeployedClaimMsg(ERC20DeployedClaimMsg),
 }
 
 impl DeepSpaceMsg for PeggyMsg {
@@ -212,6 +217,37 @@ impl DepositClaimMsg {
             token_contract: input.erc20,
             ethereum_sender: input.sender,
             cosmos_receiver: input.destination,
+            orchestrator: sender,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
+pub struct ERC20DeployedClaimMsg {
+    pub event_nonce: Uint256,
+    pub block_height: Uint256,
+    pub cosmos_denom: String,
+    pub token_contract: EthAddress,
+    pub name: String,
+    pub symbol: String,
+    pub decimals: Uint256,
+    pub orchestrator: Address,
+}
+
+impl ERC20DeployedClaimMsg {
+    pub fn from_event(input: ERC20DeployedEvent, sender: Address) -> Self {
+        ERC20DeployedClaimMsg {
+            event_nonce: downcast_uint256(input.event_nonce)
+                .expect("Event nonce overflow! Bridge Halt!")
+                .into(),
+            block_height: downcast_uint256(input.block_height)
+                .expect("Block number overflow! Bridge Halt!")
+                .into(),
+            cosmos_denom: input.cosmos_denom,
+            token_contract: input.erc20_address,
+            name: input.name,
+            symbol: input.symbol,
+            decimals: input.decimals.into(),
             orchestrator: sender,
         }
     }
