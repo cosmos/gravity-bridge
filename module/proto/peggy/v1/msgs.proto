@@ -24,8 +24,12 @@ service Msg {
   rpc WithdrawClaim(MsgWithdrawClaim) returns(MsgWithdrawClaimResponse) {
     option (google.api.http).post = "/peggy/v1/withdraw_claim";
   }
+  rpc ERC20DeployedClaim(MsgERC20DeployedClaim)
+      returns (MsgERC20DeployedClaimResponse) {
+    option (google.api.http).post = "/peggy/v1/erc20_deployed_claim";
+  }
   rpc SetOrchestratorAddress(MsgSetOrchestratorAddress) returns(MsgSetOrchestratorAddressResponse) {
-    option (google.api.http).post = "/peggy/v/set_Orchestrator_address";
+    option (google.api.http).post = "/peggy/v1/set_orchestrator_address";
   }
 }
 
