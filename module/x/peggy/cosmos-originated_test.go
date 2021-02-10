@@ -21,21 +21,18 @@ func TestCosmosOriginated(t *testing.T) {
 	tv := initializeTestingVars(t)
 	addDenomToERC20Relation(tv)
 	lockCoinsInModule(tv)
+	acceptDepositEvent(tv)
 }
 
 type testingVars struct {
 	myOrchestratorAddr sdk.AccAddress
-	// myCosmosAddr       sdk.AccAddress
-	myValAddr sdk.ValAddress
-	// myNonce            uint64
-	// anyETHAddr         string
-	// erc20              string
-	// denom              string
-	// myBlockTime        time.Time
-	input keeper.TestInput
-	ctx   sdk.Context
-	h     sdk.Handler
-	t     *testing.T
+	myValAddr          sdk.ValAddress
+	erc20              string
+	denom              string
+	input              keeper.TestInput
+	ctx                sdk.Context
+	h                  sdk.Handler
+	t                  *testing.T
 }
 
 func initializeTestingVars(t *testing.T) *testingVars {
@@ -45,6 +42,9 @@ func initializeTestingVars(t *testing.T) *testingVars {
 
 	tv.myOrchestratorAddr = make([]byte, sdk.AddrLen)
 	tv.myValAddr = sdk.ValAddress(tv.myOrchestratorAddr) // revisit when proper mapping is impl in keeper
+
+	tv.erc20 = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
+	tv.denom = "uatom"
 
 	tv.input = keeper.CreateTestEnv(t)
 	tv.ctx = tv.input.Context
@@ -58,13 +58,11 @@ func initializeTestingVars(t *testing.T) *testingVars {
 func addDenomToERC20Relation(tv *testingVars) {
 	var (
 		myNonce = uint64(1)
-		denom   = "uatom"
-		erc20   = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
 	)
 
 	ethClaim := types.MsgERC20DeployedClaim{
-		CosmosDenom:   denom,
-		TokenContract: erc20,
+		CosmosDenom:   tv.denom,
+		TokenContract: tv.erc20,
 		Name:          "Atom",
 		Symbol:        "ATOM",
 		Decimals:      6,
@@ -82,15 +80,15 @@ func addDenomToERC20Relation(tv *testingVars) {
 	require.NotNil(tv.t, a)
 
 	// check if erc20<>denom relation added to db
-	isCosmosOriginated, gotERC20, err := tv.input.PeggyKeeper.DenomToERC20(tv.ctx, denom)
+	isCosmosOriginated, gotERC20, err := tv.input.PeggyKeeper.DenomToERC20(tv.ctx, tv.denom)
 	require.NoError(tv.t, err)
 	assert.True(tv.t, isCosmosOriginated)
 
-	isCosmosOriginated, gotDenom := tv.input.PeggyKeeper.ERC20ToDenom(tv.ctx, erc20)
+	isCosmosOriginated, gotDenom := tv.input.PeggyKeeper.ERC20ToDenom(tv.ctx, tv.erc20)
 	assert.True(tv.t, isCosmosOriginated)
 
-	assert.Equal(tv.t, denom, gotDenom)
-	assert.Equal(tv.t, erc20, gotERC20)
+	assert.Equal(tv.t, tv.denom, gotDenom)
+	assert.Equal(tv.t, tv.erc20, gotERC20)
 }
 
 func lockCoinsInModule(tv *testingVars) {
@@ -107,12 +105,9 @@ func lockCoinsInModule(tv *testingVars) {
 	)
 
 	// we start by depositing some funds into the users balance to send
-	input := keeper.CreateTestEnv(tv.t)
-	ctx := input.Context
-	h := NewHandler(input.PeggyKeeper)
-	input.BankKeeper.MintCoins(ctx, types.ModuleName, startingCoins)
-	input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userCosmosAddr, startingCoins)
-	balance1 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	tv.input.BankKeeper.MintCoins(tv.ctx, types.ModuleName, startingCoins)
+	tv.input.BankKeeper.SendCoinsFromModuleToAccount(tv.ctx, types.ModuleName, userCosmosAddr, startingCoins)
+	balance1 := tv.input.BankKeeper.GetAllBalances(tv.ctx, userCosmosAddr)
 	assert.Equal(tv.t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}, balance1)
 
 	// send some coins
@@ -123,17 +118,60 @@ func lockCoinsInModule(tv *testingVars) {
 		BridgeFee: feeCoin,
 	}
 
-	_, err := h(ctx, msg)
+	_, err := tv.h(tv.ctx, msg)
 	require.NoError(tv.t, err)
 
 	// Check that user balance has gone down
-	balance2 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	balance2 := tv.input.BankKeeper.GetAllBalances(tv.ctx, userCosmosAddr)
 	assert.Equal(tv.t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount.Sub(sendAmount).Sub(feeAmount))}, balance2)
 
 	// Check that peggy balance has gone up
-	peggyAddr := input.AccountKeeper.GetModuleAddress(types.ModuleName)
+	peggyAddr := tv.input.AccountKeeper.GetModuleAddress(types.ModuleName)
 	assert.Equal(tv.t,
 		sdk.Coins{sdk.NewCoin(denom, sendAmount)},
-		input.BankKeeper.GetAllBalances(ctx, peggyAddr),
+		tv.input.BankKeeper.GetAllBalances(tv.ctx, peggyAddr),
+	)
+}
+
+func acceptDepositEvent(tv *testingVars) {
+	var (
+		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
+		myNonce                           = uint64(1)
+		anyETHAddr                        = "0xf9613b532673Cc223aBa451dFA8539B87e1F666D"
+	)
+
+	myErc20 := types.ERC20Token{
+		Amount:   sdk.NewInt(12),
+		Contract: tv.erc20,
+	}
+
+	ethClaim := types.MsgDepositClaim{
+		EventNonce:     myNonce,
+		TokenContract:  myErc20.Contract,
+		Amount:         myErc20.Amount,
+		EthereumSender: anyETHAddr,
+		CosmosReceiver: myCosmosAddr.String(),
+		Orchestrator:   myOrchestratorAddr.String(),
+	}
+
+	_, err := tv.h(tv.ctx, &ethClaim)
+	EndBlocker(tv.ctx, tv.input.PeggyKeeper)
+	require.NoError(tv.t, err)
+
+	// check that attestation persisted
+	a := tv.input.PeggyKeeper.GetAttestation(tv.ctx, myNonce, ethClaim.ClaimHash())
+	require.NotNil(tv.t, a)
+
+	// Check that user balance has gone up
+	assert.Equal(tv.t,
+		sdk.Coins{sdk.NewCoin(tv.denom, myErc20.Amount)},
+		tv.input.BankKeeper.GetAllBalances(tv.ctx, myCosmosAddr))
+
+	// Check that peggy balance has gone down
+	peggyAddr := tv.input.AccountKeeper.GetModuleAddress(types.ModuleName)
+	assert.Equal(tv.t,
+		sdk.Coins{sdk.NewCoin(tv.denom, myErc20.Amount)},
+		tv.input.BankKeeper.GetAllBalances(tv.ctx, peggyAddr),
 	)
 }
