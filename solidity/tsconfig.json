@@ -21,6 +21,7 @@
     "test/**/*",
     "typechain/**/*",
     "types/**/*",
-    "hardhat.config.ts"
+    "hardhat.config.ts",
+    "contract-deployer.ts"
   ]
 }

@@ -26,7 +26,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # build the code before creating the release, GO first for faster failures
+      # build the code before creating the release, GO and Solidity first for faster failures
       - name: Build GO
         run: |
           cd module
@@ -36,12 +36,18 @@ jobs:
         run: |
           echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
 
+      - name: Build Solidity artifacts
+        run: cd solidity && npm ci && npm run typechain
+
+      - name: Build contract deployment script into a static binary
+        run: cd solidity && npm ci && npm run compile-deployer 
+
       - name: Build Rust x86_64
         run: |
           cargo install cross
           cd orchestrator
           cross build --target x86_64-unknown-linux-musl --release --all
-
+    
       # now that the code has built create the release and start uploading
       - name: Create Release
         id: create_release
@@ -121,12 +127,6 @@ jobs:
       # already be deployed on Ethereum and this won't be very useful, but as any chain leads up
       # to launch it's nice to have a version history for the contract itself and see what if any
       # changes are made that may go unnoticed due to tooling
-      - name: Build Solidity artifacts
-        run: cd solidity && npm ci && npm run typechain
-
-      - name: Tar artifacts folder
-        run: cd solidity && tar -czvf solidity-artifacts.tar.gz artifacts/
-
       - name: Upload Gravity Ethereum artifacts
         id: upload-solidity-artifacts
         uses: actions/upload-release-asset@v1
@@ -145,8 +145,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: solidity/contract-deployer.ts
-          asset_name: contract-deployer.ts
+          asset_path: solidity/contract-deployer
+          asset_name: contract-deployer
           asset_content_type: application/bin
 
       # finally we start arm builds and uploads, we do this because the release

@@ -3,6 +3,7 @@ typechain
 target
 tests/test-runner/Cargo.lock
 tests/dockerfile/peggy.tar.gz
+solidity/dist
 
 #Hardhat files
 cache
