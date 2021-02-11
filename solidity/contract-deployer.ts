@@ -92,19 +92,50 @@ async function deploy() {
 
   if (args["test-mode"] == "True" || args["test-mode"] == "true") {
     console.log("Test mode, deploying ERC20 contracts");
-    const { abi, bytecode } = getContractArtifacts("/peggy/solidity/artifacts/contracts/TestERC20A.sol/TestERC20A.json");
+
+    // this handles several possible locations for the ERC20 artifacts
+    var erc20_a_path: string
+    var erc20_b_path: string
+    var erc20_c_path: string
+    const main_location_a = "/peggy/solidity/artifacts/contracts/TestERC20A.sol/TestERC20A.json"
+    const main_location_b = "/peggy/solidity/artifacts/contracts/TestERC20B.sol/TestERC20B.json"
+    const main_location_c = "/peggy/solidity/artifacts/contracts/TestERC20C.sol/TestERC20C.json"
+    const alt_location_1_a = "/solidity/TestERC20A.json"
+    const alt_location_1_b = "/solidity/TestERC20B.json"
+    const alt_location_1_c = "/solidity/TestERC20C.json"
+    const alt_location_2_a = "TestERC20A.json"
+    const alt_location_2_b = "TestERC20B.json"
+    const alt_location_2_c = "TestERC20C.json"
+    if (fs.existsSync(main_location_a)) {
+      erc20_a_path = main_location_a
+      erc20_b_path = main_location_b
+      erc20_c_path = main_location_c
+    } else if (fs.existsSync(alt_location_1_a)) {
+      erc20_a_path = alt_location_1_a
+      erc20_b_path = alt_location_1_b
+      erc20_c_path = alt_location_1_c
+    } else if (fs.existsSync(alt_location_2_a)) {
+      erc20_a_path = alt_location_2_a
+      erc20_b_path = alt_location_2_b
+      erc20_c_path = alt_location_2_c
+    } else {
+      console.log("Test mode was enabled but the ERC20 contracts can't be found!")
+      exit(1)
+    }
+
+    const { abi, bytecode } = getContractArtifacts(erc20_a_path);
     const erc20Factory = new ethers.ContractFactory(abi, bytecode, wallet);
     const testERC20 = (await erc20Factory.deploy()) as TestERC20A;
     await testERC20.deployed();
     const erc20TestAddress = testERC20.address;
     console.log("ERC20 deployed at Address - ", erc20TestAddress);
-    const { abi: abi1, bytecode: bytecode1 } = getContractArtifacts("/peggy/solidity/artifacts/contracts/TestERC20B.sol/TestERC20B.json");
+    const { abi: abi1, bytecode: bytecode1 } = getContractArtifacts(erc20_b_path);
     const erc20Factory1 = new ethers.ContractFactory(abi1, bytecode1, wallet);
     const testERC201 = (await erc20Factory1.deploy()) as TestERC20B;
     await testERC201.deployed();
     const erc20TestAddress1 = testERC201.address;
     console.log("ERC20 deployed at Address - ", erc20TestAddress1);
-    const { abi: abi2, bytecode: bytecode2 } = getContractArtifacts("/peggy/solidity/artifacts/contracts/TestERC20C.sol/TestERC20C.json");
+    const { abi: abi2, bytecode: bytecode2 } = getContractArtifacts(erc20_c_path);
     const erc20Factory2 = new ethers.ContractFactory(abi2, bytecode2, wallet);
     const testERC202 = (await erc20Factory2.deploy()) as TestERC20C;
     await testERC202.deployed();

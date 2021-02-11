@@ -18,4 +18,4 @@ ADD legacy-api-enable /
 # build steps for all codebases in this repo, must be below the add statement
 RUN pushd /peggy/orchestrator/ && PATH=$PATH:$HOME/.cargo/bin cargo build --all --release
 RUN pushd /peggy/module/ && PATH=$PATH:/usr/local/go/bin GOPROXY=https://proxy.golang.org make && PATH=$PATH:/usr/local/go/bin make install
-RUN pushd /peggy/solidity/ && npm ci && npm run typechain
+RUN pushd /peggy/solidity/ && npm ci

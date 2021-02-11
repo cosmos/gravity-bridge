@@ -40,14 +40,14 @@ jobs:
         run: cd solidity && npm ci && npm run typechain
 
       - name: Build contract deployment script into a static binary
-        run: cd solidity && npm ci && npm run compile-deployer 
+        run: cd solidity && npm ci && npm run compile-deployer
 
       - name: Build Rust x86_64
         run: |
           cargo install cross
           cd orchestrator
           cross build --target x86_64-unknown-linux-musl --release --all
-    
+
       # now that the code has built create the release and start uploading
       - name: Create Release
         id: create_release
@@ -136,6 +136,37 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: solidity/artifacts/contracts/Peggy.sol/Peggy.json
           asset_name: Peggy.json
+          asset_content_type: application/bin
+
+      - name: Upload Gravity Ethereum test artifact A
+        id: upload-solidity-test-a
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: solidity/artifacts/contracts/TestERC20A.sol/TestERC20A.json
+          asset_name: TestERC20A.json
+          asset_content_type: application/bin
+      - name: Upload Gravity Ethereum test artifact B
+        id: upload-solidity-test-b
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: solidity/artifacts/contracts/TestERC20B.sol/TestERC20B.json
+          asset_name: TestERC20B.json
+          asset_content_type: application/bin
+      - name: Upload Gravity Ethereum test artifact C
+        id: upload-solidity-test-c
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: solidity/artifacts/contracts/TestERC20C.sol/TestERC20C.json
+          asset_name: TestERC20C.json
           asset_content_type: application/bin
 
       - name: Upload contract deployer
