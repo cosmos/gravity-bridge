@@ -102,15 +102,19 @@ pub async fn deploy_contracts(
         i.expect("Failed to set delegate addresses!");
     }
 
+    // prevents the node deployer from failing (rarely) when the chain has not
+    // yet produced the next block after submitting each eth address
+    wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
+
     // these are the possible paths where we could find the contract deployer
     // and the peggy contract itself, feel free to expand this if it makes your
     // deployments more straightforward.
 
     // both files are just in the PWD
-    const A: [&str; 3] = ["contract-deployer.ts", "Peggy.json", "."];
+    const A: [&str; 3] = ["contract-deployer", "Peggy.json", "."];
     // files are placed in a root /solidity/ folder
     const B: [&str; 3] = [
-        "/solidity/contract-deployer.ts",
+        "/solidity/contract-deployer",
         "/solidity/Peggy.json",
         "/solidity/",
     ];
@@ -120,34 +124,38 @@ pub async fn deploy_contracts(
         "/peggy/solidity/artifacts/contracts/Peggy.sol/Peggy.json",
         "/peggy/solidity/",
     ];
-    let paths = if all_paths_exist(&A) {
-        A
-    } else if all_paths_exist(&B) {
-        B
+    let output = if all_paths_exist(&A) || all_paths_exist(&B) {
+        let paths = return_existing(A, B);
+        Command::new("contract-deployer")
+            .args(&[
+                paths[0],
+                &format!("--cosmos-node={}", COSMOS_NODE_ABCI),
+                &format!("--eth-node={}", ETH_NODE),
+                &format!("--eth-privkey={:#x}", *MINER_PRIVATE_KEY),
+                &format!("--contract={}", paths[1]),
+                "--test-mode=true",
+            ])
+            .current_dir(paths[2])
+            .output()
+            .expect("Failed to deploy contracts!")
     } else if all_paths_exist(&C) {
-        C
+        Command::new("npx")
+            .args(&[
+                "ts-node",
+                C[0],
+                &format!("--cosmos-node={}", COSMOS_NODE_ABCI),
+                &format!("--eth-node={}", ETH_NODE),
+                &format!("--eth-privkey={:#x}", *MINER_PRIVATE_KEY),
+                &format!("--contract={}", C[1]),
+                "--test-mode=true",
+            ])
+            .current_dir(C[2])
+            .output()
+            .expect("Failed to deploy contracts!")
     } else {
         panic!("Could not find Peggy.json contract artifact in any known location!")
     };
 
-    // prevents the node deployer from failing (rarely) when the chain has not
-    // yet produced the next block after submitting each eth address
-    wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
-
-    // wait for the orchestrators to finish registering their eth addresses
-    let output = Command::new("npx")
-        .args(&[
-            "ts-node",
-            paths[0],
-            &format!("--cosmos-node={}", COSMOS_NODE_ABCI),
-            &format!("--eth-node={}", ETH_NODE),
-            &format!("--eth-privkey={:#x}", *MINER_PRIVATE_KEY),
-            &format!("--contract={}", paths[1]),
-            "--test-mode=true",
-        ])
-        .current_dir(paths[2])
-        .output()
-        .expect("Failed to deploy contracts!");
     info!("stdout: {}", String::from_utf8_lossy(&output.stdout));
     info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
     if !ExitStatus::success(&output.status) {
@@ -190,8 +198,19 @@ pub fn parse_contract_addresses() -> BootstrapContractAddresses {
 fn all_paths_exist(input: &[&str]) -> bool {
     for i in input {
         if !Path::new(i).exists() {
+            info!("{} does not exist", i);
             return false;
         }
     }
     true
+}
+
+fn return_existing<'a>(a: [&'a str; 3], b: [&'a str; 3]) -> [&'a str; 3] {
+    if all_paths_exist(&a) {
+        a
+    } else if all_paths_exist(&b) {
+        b
+    } else {
+        panic!("No paths exist!")
+    }
 }
