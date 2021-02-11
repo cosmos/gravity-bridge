@@ -20,7 +20,7 @@ use orchestrator::main_loop::orchestrator_main_loop;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::types::SendToCosmosEvent;
 use rand::Rng;
-use std::{process::Command, time::Duration};
+use std::{env, process::Command, time::Duration};
 use std::{process::ExitStatus, time::Instant};
 use tokio::time::delay_for;
 use tonic::transport::Channel;
@@ -139,6 +139,18 @@ pub async fn happy_path_test(
     .await;
 }
 
+/// for downstream test cases the binary name needs to be different, so we detect
+/// if a runtime env var is set and if so use that as the chain binary name for
+/// our re-delegation. This is actually not the best way to handle this problem
+/// ideally we would send the tx staking delegate command ourselves and never need
+/// to know what the binary name is
+pub fn chain_binary() -> Option<String> {
+    match env::var("CHAIN_BINARY") {
+        Ok(s) => Some(s),
+        _ => None,
+    }
+}
+
 /// This deals with the horrible error behavior of the Cosmos sdk command
 /// line, mainly that when the tx seq changes while creating the message
 /// it doesn't produce a failed output status or even print to stderror
@@ -160,7 +172,12 @@ pub async fn delegate_tokens(delegate_address: &str, amount: &str) {
         "--yes",
         "--from=validator1",
     ];
-    let mut cmd = Command::new("peggy");
+    let mut cmd = if let Some(bin) = chain_binary() {
+        Command::new(bin)
+    } else {
+        Command::new("peggy")
+    };
+
     let cmd = cmd.args(&args);
     let mut output = cmd
         .current_dir("/")
