@@ -23,6 +23,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgConfirmBatch{},
 		&MsgDepositClaim{},
 		&MsgWithdrawClaim{},
+		&MsgERC20DeployedClaim{},
 		&MsgSetOrchestratorAddress{},
 	)
 
@@ -31,6 +32,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		(*EthereumClaim)(nil),
 		&MsgDepositClaim{},
 		&MsgWithdrawClaim{},
+		&MsgERC20DeployedClaim{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
