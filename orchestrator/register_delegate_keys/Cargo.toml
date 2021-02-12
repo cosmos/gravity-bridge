@@ -5,7 +5,7 @@ authors = ["Justin Kilpatrick <justin@althea.net>"]
 edition = "2018"
 
 [[bin]]
-name = "register-peggy-delegate-keys"
+name = "register-delegate-keys"
 path = "src/main.rs"
 
 [dependencies]
