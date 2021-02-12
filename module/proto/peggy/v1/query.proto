@@ -37,7 +37,7 @@ service Query {
   rpc LastPendingBatchRequestByAddr(QueryLastPendingBatchRequestByAddrRequest) returns (QueryLastPendingBatchRequestByAddrResponse) {
     option (google.api.http).get = "/peggy/v1beta/batch/{address}";
   }
-  rpc LastPendingLogicCallByAddr(QueryLastPendingLogicCallByAddRequest) returns (QueryLastPendingLogicCallByAddrResponse) {
+  rpc LastPendingLogicCallByAddr(QueryLastPendingLogicCallByAddrRequest) returns (QueryLastPendingLogicCallByAddrResponse) {
     option (google.api.http).get = "/peggy/v1beta/logic/{address}";
   }
   rpc LastEventNonceByAddr(QueryLastEventNonceByAddrRequest) returns (QueryLastEventNonceByAddrResponse) {
