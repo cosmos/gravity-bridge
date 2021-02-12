@@ -113,10 +113,7 @@ func (p Params) ValidateBasic() error {
 	if err := validateContractHash(p.ContractSourceHash); err != nil {
 		return sdkerrors.Wrap(err, "contract hash")
 	}
-	if err := validateStartThreshold(p.StartThreshold); err != nil {
-		return sdkerrors.Wrap(err, "start threshold")
-	}
-	if err := validateBridgeContractAddress(p.EthereumAddress); err != nil {
+	if err := validateBridgeContractAddress(p.BridgeEthereumAddress); err != nil {
 		return sdkerrors.Wrap(err, "bridge contract address")
 	}
 	if err := validateBridgeChainID(p.BridgeChainId); err != nil {
@@ -166,8 +163,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamsStoreKeyPeggyID, &p.PeggyId, validatePeggyID),
 		paramtypes.NewParamSetPair(ParamsStoreKeyContractHash, &p.ContractSourceHash, validateContractHash),
-		paramtypes.NewParamSetPair(ParamsStoreKeyStartThreshold, &p.StartThreshold, validateStartThreshold),
-		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractAddress, &p.EthereumAddress, validateBridgeContractAddress),
+		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractAddress, &p.BridgeEthereumAddress, validateBridgeContractAddress),
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainId, validateBridgeChainID),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedValsetsWindow, &p.SignedValsetsWindow, validateSignedValsetsWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedBatchesWindow, &p.SignedBatchesWindow, validateSignedBatchesWindow),

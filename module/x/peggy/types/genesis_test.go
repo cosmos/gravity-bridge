@@ -15,10 +15,10 @@ func TestGenesisStateValidate(t *testing.T) {
 		"empty params":   {src: &GenesisState{Params: &Params{}}, expErr: true},
 		"invalid params": {src: &GenesisState{
 			Params: &Params{
-				PeggyId:            "foo",
-				ContractSourceHash: "laksdjflasdkfja",
-				EthereumAddress:    "invalid-eth-address",
-				BridgeChainId:      3279089,
+				PeggyId:               "foo",
+				ContractSourceHash:    "laksdjflasdkfja",
+				BridgeEthereumAddress: "invalid-eth-address",
+				BridgeChainId:         3279089,
 			},
 		}, expErr: true},
 	}
