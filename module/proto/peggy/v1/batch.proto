@@ -23,3 +23,14 @@ message OutgoingTransferTx {
   ERC20Token erc20_token  = 4;
   ERC20Token erc20_fee    = 5;
 }
+
+// OutgoingLogicCall represents an individual logic call from Peggy to ETH
+message OutgoingLogicCall {
+  repeated ERC20Token transfers = 1;
+  repeated ERC20Token fees = 2;
+  string logic_contract_address = 3;
+  bytes payload = 4;
+  uint64 timeout = 5;
+  bytes invalidation_id = 6;
+  uint64 invalidation_nonce = 7;
+}

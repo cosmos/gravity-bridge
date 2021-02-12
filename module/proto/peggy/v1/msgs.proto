@@ -18,6 +18,9 @@ service Msg {
   rpc ConfirmBatch(MsgConfirmBatch) returns(MsgConfirmBatchResponse) {
     option (google.api.http).post = "/peggy/v1/confirm_batch";
   }
+  rpc ConfirmLogicCall(MsgConfirmLogicCall) returns(MsgConfirmLogicCallResponse) {
+    option (google.api.http).post = "/peggy/v1/confim_logic";
+  }
   rpc DepositClaim(MsgDepositClaim) returns(MsgDepositClaimResponse) {
     option (google.api.http).post = "/peggy/v1/deposit_claim";
   }
@@ -137,6 +140,24 @@ message MsgConfirmBatch {
 
 message MsgConfirmBatchResponse {}
 
+// MsgConfirmLogicCall
+// When validators observe a MsgRequestBatch they form a batch by ordering
+// transactions currently in the txqueue in order of highest to lowest fee,
+// cutting off when the batch either reaches a hardcoded maximum size (to be
+// decided, probably around 100) or when transactions stop being profitable
+// (TODO determine this without nondeterminism) This message includes the batch
+// as well as an Ethereum signature over this batch by the validator
+// -------------
+message MsgConfirmLogicCall {
+  bytes invalidation_id = 1;
+  uint64 invalidation_nonce = 2;
+  string eth_signer     = 3;
+  string orchestrator   = 4;
+  string signature      = 5;
+}
+
+message MsgConfirmLogicCallResponse {}
+
 // EthereumBridgeDepositClaim
 // When more than 66% of the active validator set has
 // claimed to have seen the deposit enter the ethereum blockchain coins are
@@ -170,7 +191,8 @@ message MsgWithdrawClaim {
 message MsgWithdrawClaimResponse {}
 
 // ERC20DeployedClaim allows the Cosmos module
-// to learn about an ERC20 that someone deployed to 
+// to learn about an ERC20 that someone deployed
+// to represent a Cosmos asset
 message MsgERC20DeployedClaim {
   uint64 event_nonce    = 1;
   uint64 block_height   = 2;
@@ -183,4 +205,3 @@ message MsgERC20DeployedClaim {
 }
 
 message MsgERC20DeployedClaimResponse {}
-
