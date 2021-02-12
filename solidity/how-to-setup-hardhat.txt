@@ -2,9 +2,9 @@
 npm init
 npm install --save-dev ts-node typescript
 npm install --save-dev chai @types/node @types/mocha @types/chai
-npm install --save-dev @nomiclabs/buidler-waffle ethereum-waffle chai @nomiclabs/buidler-ethers ethers
-npm install --save-dev @nomiclabs/buidler
-npx buidler
-npx buidler test # Just to check if it works
+npm install --save-dev hardhat-waffle ethereum-waffle chai hardhat-ethers ethers typechain typechain-target-ethers-v5
+npm install --save-dev hardhat
+npx hardhat
+npx hardhat test # Just to check if it works
 # Follow buidler typescript guide, modifying files etc
 # add gas reporter and typechain modules

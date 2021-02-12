@@ -19,5 +19,6 @@ contract TestLogicContract is Ownable {
 		uint256 _b
 	) public onlyOwner {
 		IERC20(state_tokenContract).transfer(_to, _a + _b);
+		console.log("Sent Tokens");
 	}
 }
