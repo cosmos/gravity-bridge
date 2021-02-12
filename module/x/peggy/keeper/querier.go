@@ -8,33 +8,71 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-// USED BY RUST:
-// "custom/%s/valsetRequest/%s"
-// "custom/%s/valsetConfirms/%s"
-// "custom/%s/lastValsetRequests"
-// "custom/%s/lastPendingValsetRequest/%s"
-
 const (
 
 	// Valsets
 
-	// used in the relayer
-	QueryValsetRequest                  = "valsetRequest"
-	QueryValsetConfirmsByNonce          = "valsetConfirms"
-	QueryLastValsetRequests             = "lastValsetRequests"
+	// This retrieves a specific validator set by it's nonce
+	// used to compare what's on Ethereum with what's in Cosmos
+	// to perform slashing / validation of system consistency
+	QueryValsetRequest = "valsetRequest"
+	// Gets all the confirmation signatures for a given validator
+	// set, used by the relayer to package the validator set and
+	// it's signatures into an Ethereum transaction
+	QueryValsetConfirmsByNonce = "valsetConfirms"
+	// Gets the last N (where N is currently 5) validator sets that
+	// have been produced by the chain. Useful to see if any recently
+	// signed requests can be submitted.
+	QueryLastValsetRequests = "lastValsetRequests"
+	// Gets a list of unsigned valsets for a given validators delegate
+	// orchestrator address. Up to 100 are sent at a time
 	QueryLastPendingValsetRequestByAddr = "lastPendingValsetRequest"
 
-	// used to deploy eth contract
 	QueryCurrentValset = "currentValset"
+	// TODO remove this, it's not used, getting one confirm at a time
+	// is mostly useless
 	QueryValsetConfirm = "valsetConfirm"
-	QueryPeggyID       = "peggyID"
+
+	// used by the contract deployer script. PeggyID is set in the Genesis
+	// file, then read by the contract deployer and deployed to Ethereum
+	// a unique PeggyID ensures that even if the same validator set with
+	// the same keys is running on two chains these chains can have independent
+	// bridges
+	QueryPeggyID = "peggyID"
 
 	// Batches
+	// note the current logic here constrains batch throughput to one
+	// batch (of any type) per Cosmos block.
 
-	QueryBatch                         = "batch"
+	// This retrieves a specific batch by it's nonce and token contract
+	// or in the case of a Cosmos originated address it's denom
+	QueryBatch = "batch"
+	// Get the last unsigned batch (of any denom) for the validators
+	// orchestrator to sign
 	QueryLastPendingBatchRequestByAddr = "lastPendingBatchRequest"
-	QueryOutgoingTxBatches             = "lastBatches"
-	QueryBatchConfirms                 = "batchConfirms"
+	// gets the last 100 outgoing batches, regardless of denom, useful
+	// for a relayer to see what is available to relay
+	QueryOutgoingTxBatches = "lastBatches"
+	// Used by the relayer to package a batch with signatures required
+	// to submit to Ethereum
+	QueryBatchConfirms = "batchConfirms"
+
+	// Logic calls
+	// note the current logic here constrains logic call throughput to one
+	// call (of any type) per Cosmos block.
+
+	// This retrieves a specific logic call by it's nonce and token contract
+	// or in the case of a Cosmos originated address it's denom
+	QueryLogicCall = "logicCall"
+	// Get the last unsigned logic call for the validators orchestrator
+	// to sign
+	QueryLastPendingLogicCallByAddr = "lastPendingLogicCall"
+	// gets the last 5 outgoing logic calls, regardless of denom, useful
+	// for a relayer to see what is available to relay
+	QueryOutgoingLogicCalls = "lastLogicCalls"
+	// Used by the relayer to package a logic call with signatures required
+	// to submit to Ethereum
+	QueryLogicCallConfirms = "logicCallConfirms"
 )
 
 // NewQuerier is the module level router for state queries
@@ -58,13 +96,23 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 
 		// Batches
 		case QueryBatch:
-			return queryBatch(ctx, path[1], path[2], keeper) // Tested (lightly)
+			return queryBatch(ctx, path[1], path[2], keeper)
 		case QueryBatchConfirms:
-			return queryAllBatchConfirms(ctx, path[1], path[2], keeper) // Tested (lightly)
+			return queryAllBatchConfirms(ctx, path[1], path[2], keeper)
 		case QueryLastPendingBatchRequestByAddr:
-			return lastPendingBatchRequest(ctx, path[1], keeper) // Tested (lightly)
+			return lastPendingBatchRequest(ctx, path[1], keeper)
 		case QueryOutgoingTxBatches:
-			return lastBatchesRequest(ctx, keeper) // Tested (lightly)
+			return lastBatchesRequest(ctx, keeper)
+
+		// Logic calls
+		case QueryLogicCall:
+			return queryLogicCall(ctx, path[1], path[2], keeper)
+		case QueryLogicCallConfirms:
+			return queryAllLogicCallConfirms(ctx, path[1], path[2], keeper)
+		case QueryLastPendingLogicCallByAddr:
+			return lastPendingLogicCallRequest(ctx, path[1], keeper)
+		case QueryOutgoingLogicCalls:
+			return lastLogicCallRequests(ctx, keeper)
 
 		case QueryPeggyID:
 			return queryPeggyID(ctx, keeper)
@@ -75,7 +123,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	}
 }
 
-/* USED BY RUST */
 func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(path[0])
 	if err != nil {
@@ -96,7 +143,6 @@ func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 	return res, nil
 }
 
-/* USED BY RUST */
 // allValsetConfirmsByNonce returns all the confirm messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
 func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]byte, error) {
@@ -121,7 +167,6 @@ func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]
 	return res, nil
 }
 
-// USED BY RUST
 // allBatchConfirms returns all the confirm messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
 func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContract string, keeper Keeper) ([]byte, error) {
@@ -148,7 +193,6 @@ func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContract strin
 
 const maxValsetRequestsReturned = 5
 
-/* USED BY RUST */
 // lastValsetRequests returns up to maxValsetRequestsReturned valsets from the store
 func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var counter int
@@ -168,7 +212,6 @@ func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
-/* USED BY RUST */
 // lastPendingValsetRequest gets a list of validator sets that this validator has not signed
 // limited by 100 sets per request.
 func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
@@ -214,7 +257,6 @@ func queryCurrentValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
-// USED BY RUST //
 // queryValsetConfirm returns the confirm msg for single orchestrator address and nonce
 // When nothing found a nil value is returned
 func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
@@ -245,7 +287,6 @@ type MultiSigUpdateResponse struct {
 	Signatures [][]byte     `json:"signatures,omitempty"`
 }
 
-// USED BY RUST //
 // lastPendingBatchRequest gets the latest batch that has NOT been signed by operatorAddr
 func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
 	addr, err := sdk.AccAddressFromBech32(operatorAddr)
@@ -272,24 +313,8 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 	return res, nil
 }
 
-// We can assume that the signatures and the valset members are sorted
-// in the same order but this is insufficient for a relayer to actually
-// relay the batch. Since a batch may pass without signatures from some
-// validators we need some metadata to know who the signatures are from.
-// So that we can properly pass a blank signature for a specific validator
-type SignatureWithAddress struct {
-	Signature string `json:"eth_signature"`
-	Address   string `json:"eth_address"`
-}
-
-type SignedOutgoingTxBatchResponse struct {
-	Batch      types.OutgoingTxBatch  `json:"batch"`
-	Signatures []SignatureWithAddress `json:"signatures,omitempty"`
-}
-
 const MaxResults = 100 // todo: impl pagination
 
-// USED BY RUST //
 // Gets MaxResults batches from store. Does not select by token type or anything
 func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var batches []*types.OutgoingTxBatch
@@ -307,7 +332,23 @@ func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
-// USED BY RUST //
+// Gets MaxResults logic calls from store.
+func lastLogicCallRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	var calls []*types.OutgoingLogicCall
+	keeper.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
+		calls = append(calls, call)
+		return len(calls) == MaxResults
+	})
+	if len(calls) == 0 {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, calls)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
+}
+
 // queryBatch gets a batch by tokenContract and nonce
 func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keeper) ([]byte, error) {
 	parsedNonce, err := types.UInt64FromString(nonce)
@@ -325,6 +366,74 @@ func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keep
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
+	return res, nil
+}
+
+// lastPendingLogicCallRequest gets the latest call that has NOT been signed by operatorAddr
+func lastPendingLogicCallRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
+	addr, err := sdk.AccAddressFromBech32(operatorAddr)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
+	}
+
+	var pendingLogicCalls *types.OutgoingLogicCall
+	keeper.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
+		foundConfirm := keeper.GetLogicCallConfirm(ctx, call.InvalidationId, call.InvalidationNonce, addr) != nil
+		if !foundConfirm {
+			pendingLogicCalls = call
+			return true
+		}
+		return false
+	})
+	if pendingLogicCalls == nil {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingLogicCalls)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
+}
+
+// queryLogicCall gets a logic call by nonce and invalidation id
+func queryLogicCall(ctx sdk.Context, invalidationId string, invalidationNonce string, keeper Keeper) ([]byte, error) {
+	nonce, err := types.UInt64FromString(invalidationNonce)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+	}
+
+	foundCall := keeper.GetOutgoingLogicCall(ctx, []byte(invalidationId), nonce)
+	if foundCall == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find logic call")
+	}
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, foundCall)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
+	}
+	return res, nil
+}
+
+// allLogicCallConfirms returns all the confirm messages for a given nonce
+// When nothing found an empty json array is returned. No pagination.
+func queryAllLogicCallConfirms(ctx sdk.Context, invalidationId string, invalidationNonce string, keeper Keeper) ([]byte, error) {
+	nonce, err := types.UInt64FromString(invalidationNonce)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+	}
+
+	var confirms []*types.MsgConfirmLogicCall
+	keeper.IterateLogicConfirmByInvalidationIdAndNonce(ctx, []byte(invalidationId), nonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
+		confirms = append(confirms, c)
+		return false
+	})
+	if len(confirms) == 0 {
+		return nil, nil
+	}
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, confirms)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
 	return res, nil
 }
 

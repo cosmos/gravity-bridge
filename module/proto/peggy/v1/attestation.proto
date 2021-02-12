@@ -17,6 +17,7 @@ enum ClaimType {
   CLAIM_TYPE_DEPOSIT  = 1 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_DEPOSIT" ];
   CLAIM_TYPE_WITHDRAW = 2 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_WITHDRAW"];
   CLAIM_TYPE_ERC20_DEPLOYED = 3 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_ERC20_DEPLOYED"];
+  CLAIM_TYPE_LOGIC_CALL_EXECUTED = 4 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_LOGIC_CALL_EXECUTED"];
 }
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by

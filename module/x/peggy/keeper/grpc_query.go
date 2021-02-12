@@ -107,6 +107,24 @@ func (k Keeper) LastPendingBatchRequestByAddr(c context.Context, req *types.Quer
 	return &types.QueryLastPendingBatchRequestByAddrResponse{Batch: pendingBatchReq}, nil
 }
 
+func (k Keeper) LastPendingLogicCallByAddr(c context.Context, req *types.QueryLastPendingLogicCallByAddrRequest) (*types.QueryLastPendingLogicCallByAddrResponse, error) {
+	addr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
+	}
+
+	var pendingLogicReq *types.OutgoingLogicCall
+	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), func(_ []byte, logic *types.OutgoingLogicCall) bool {
+		foundConfirm := k.GetLogicCallConfirm(sdk.UnwrapSDKContext(c), logic.InvalidationId, logic.InvalidationNonce, addr) != nil
+		if !foundConfirm {
+			pendingLogicReq = logic
+			return true
+		}
+		return false
+	})
+	return &types.QueryLastPendingLogicCallByAddrResponse{Call: pendingLogicReq}, nil
+}
+
 // OutgoingTxBatches queries the OutgoingTxBatches of the peggy module
 func (k Keeper) OutgoingTxBatches(c context.Context, req *types.QueryOutgoingTxBatchesRequest) (*types.QueryOutgoingTxBatchesResponse, error) {
 	var batches []*types.OutgoingTxBatch
@@ -115,6 +133,16 @@ func (k Keeper) OutgoingTxBatches(c context.Context, req *types.QueryOutgoingTxB
 		return len(batches) == MaxResults
 	})
 	return &types.QueryOutgoingTxBatchesResponse{Batches: batches}, nil
+}
+
+// OutgoingLogicCalls queries the OutgoingLogicCalls of the peggy module
+func (k Keeper) OutgoingLogicCalls(c context.Context, req *types.QueryOutgoingLogicCallsRequest) (*types.QueryOutgoingLogicCallsResponse, error) {
+	var calls []*types.OutgoingLogicCall
+	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), func(_ []byte, call *types.OutgoingLogicCall) bool {
+		calls = append(calls, call)
+		return len(calls) == MaxResults
+	})
+	return &types.QueryOutgoingLogicCallsResponse{Calls: calls}, nil
 }
 
 // BatchRequestByNonce queries the BatchRequestByNonce of the peggy module
@@ -137,6 +165,16 @@ func (k Keeper) BatchConfirms(c context.Context, req *types.QueryBatchConfirmsRe
 		return false
 	})
 	return &types.QueryBatchConfirmsResponse{Confirms: confirms}, nil
+}
+
+// LogicConfirms returns the Logic confirmations by nonce and token contract
+func (k Keeper) LogicConfirms(c context.Context, req *types.QueryLogicConfirmsRequest) (*types.QueryLogicConfirmsResponse, error) {
+	var confirms []*types.MsgConfirmLogicCall
+	k.IterateLogicConfirmByInvalidationIdAndNonce(sdk.UnwrapSDKContext(c), req.InvalidationId, req.InvalidationNonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
+		confirms = append(confirms, c)
+		return false
+	})
+	return &types.QueryLogicConfirmsResponse{Confirms: confirms}, nil
 }
 
 // LastEventNonceByAddr returns the last event nonce for the given validator address, this allows eth oracles to figure out where they left off

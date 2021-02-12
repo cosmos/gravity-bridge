@@ -232,6 +232,41 @@ func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
+// Route should return the name of the module
+func (msg MsgConfirmLogicCall) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgConfirmLogicCall) Type() string { return "confirm_batch" }
+
+// ValidateBasic performs stateless checks
+func (msg MsgConfirmLogicCall) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
+	}
+	if err := ValidateEthAddress(msg.EthSigner); err != nil {
+		return sdkerrors.Wrap(err, "eth signer")
+	}
+	_, err := hex.DecodeString(msg.Signature)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgConfirmLogicCall) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgConfirmLogicCall) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{acc}
+}
+
 // EthereumClaim represents a claim on ethereum state
 type EthereumClaim interface {
 	// All Ethereum claims that we relay from the Peggy contract and into the module
@@ -240,7 +275,7 @@ type EthereumClaim interface {
 	// any disagreement on what claim goes to what nonce means someone is lying.
 	GetEventNonce() uint64
 	// The block height that the claimed event occurred on. This EventNonce provides sufficient
-	// ordering for the execution of all claims. The block height is used only for batchTimeouts
+	// ordering for the execution of all claims. The block height is used only for batchTimeouts + logicTimeouts
 	// when we go to create a new batch we set the timeout some number of batches out from the last
 	// known height plus projected block progress since then.
 	GetBlockHeight() uint64
@@ -258,6 +293,7 @@ var (
 	_ EthereumClaim = &MsgDepositClaim{}
 	_ EthereumClaim = &MsgWithdrawClaim{}
 	_ EthereumClaim = &MsgERC20DeployedClaim{}
+	_ EthereumClaim = &MsgLogicCallExecutedClaim{}
 )
 
 // GetType returns the type of the claim
@@ -444,5 +480,61 @@ func (msg MsgERC20DeployedClaim) Route() string { return RouterKey }
 // Hash implements BridgeDeposit.Hash
 func (b *MsgERC20DeployedClaim) ClaimHash() []byte {
 	path := fmt.Sprintf("%s/%s/%s/%s/%d/", b.CosmosDenom, b.TokenContract, b.Name, b.Symbol, b.Decimals)
+	return tmhash.Sum([]byte(path))
+}
+
+// EthereumClaim implementation for MsgLogicCallExecutedClaim
+// ======================================================
+
+// GetType returns the type of the claim
+func (e *MsgLogicCallExecutedClaim) GetType() ClaimType {
+	return CLAIM_TYPE_LOGIC_CALL_EXECUTED
+}
+
+// ValidateBasic performs stateless checks
+func (e *MsgLogicCallExecutedClaim) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	}
+	if e.EventNonce == 0 {
+		return fmt.Errorf("nonce == 0")
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgLogicCallExecutedClaim) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgLogicCallExecutedClaim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgERC20DeployedClaim failed ValidateBasic! Should have been handled earlier")
+	}
+
+	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	return val
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgLogicCallExecutedClaim) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+// Type should return the action
+func (msg MsgLogicCallExecutedClaim) Type() string { return "Logic_Call_Executed_Claim" }
+
+// Route should return the name of the module
+func (msg MsgLogicCallExecutedClaim) Route() string { return RouterKey }
+
+// Hash implements BridgeDeposit.Hash
+func (b *MsgLogicCallExecutedClaim) ClaimHash() []byte {
+	path := fmt.Sprintf("%s/%d/", b.InvalidationId, b.InvalidationNonce)
 	return tmhash.Sum([]byte(path))
 }

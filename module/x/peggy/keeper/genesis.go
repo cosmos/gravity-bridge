@@ -25,6 +25,11 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		k.StoreBatchUnsafe(ctx, batch)
 	}
 
+	// reset logic calls in state
+	for _, call := range data.LogicCalls {
+		k.SetOutogingLogicCall(ctx, call)
+	}
+
 	// reset batch confirmations in state
 	for _, conf := range data.BatchConfirms {
 		k.SetBatchConfirm(ctx, &conf)
@@ -90,11 +95,13 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
 		p            = k.GetParams(ctx)
+		calls        = k.GetOutgoingLogicCalls(ctx)
 		batches      = k.GetOutgoingTxBatches(ctx)
 		valsets      = k.GetValsets(ctx)
 		attmap       = k.GetAttestationMapping(ctx)
 		vsconfs      = []*types.MsgValsetConfirm{}
 		batchconfs   = []types.MsgConfirmBatch{}
+		callconfs    = []types.MsgConfirmLogicCall{}
 		attestations = []types.Attestation{}
 		delegates    = k.GetDelegateKeys(ctx)
 		lastobserved = k.GetLastObservedEventNonce(ctx)
@@ -112,6 +119,12 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		batchconfs = append(batchconfs, k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)...)
 	}
 
+	// export logic call confirmations from state
+	for _, call := range calls {
+		// TODO: set height = 0?
+		callconfs = append(callconfs, k.GetLogicConfirmByInvalidationIdAndNonce(ctx, call.InvalidationId, call.InvalidationNonce)...)
+	}
+
 	// export attestations from state
 	for _, atts := range attmap {
 		// TODO: set height = 0?
@@ -125,6 +138,8 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		ValsetConfirms:    vsconfs,
 		Batches:           batches,
 		BatchConfirms:     batchconfs,
+		LogicCalls:        calls,
+		LogicCallConfirms: callconfs,
 		Attestations:      attestations,
 		DelegateKeys:      delegates,
 	}

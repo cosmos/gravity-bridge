@@ -325,6 +325,120 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 }
 
 /////////////////////////////
+//       LOGICCALLS        //
+/////////////////////////////
+
+// GetOutgoingLogicCall gets an outgoing logic call
+func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) *types.OutgoingLogicCall {
+	store := ctx.KVStore(k.storeKey)
+	call := types.OutgoingLogicCall{}
+	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetOutgoingLogicCallKey(invalidationId, invalidationNonce)), &call)
+	return &call
+}
+
+// SetOutogingLogicCall sets an outgoing logic call
+func (k Keeper) SetOutogingLogicCall(ctx sdk.Context, call *types.OutgoingLogicCall) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce), k.cdc.MustMarshalBinaryBare(call))
+}
+
+// DeleteOutgoingLogicCall deletes outgoing logic calls
+func (k Keeper) DeleteOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) {
+	ctx.KVStore(k.storeKey).Delete(types.GetOutgoingLogicCallKey(invalidationId, invalidationNonce))
+}
+
+// IterateOutgoingLogicCalls iterates over outgoing logic calls
+func (k Keeper) IterateOutgoingLogicCalls(ctx sdk.Context, cb func([]byte, *types.OutgoingLogicCall) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicCall)
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		call := types.OutgoingLogicCall{}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &call)
+		// cb returns true to stop early
+		if cb(iter.Key(), &call) {
+			break
+		}
+	}
+}
+
+// GetOutgoingLogicCalls returns the outgoing tx batches
+func (k Keeper) GetOutgoingLogicCalls(ctx sdk.Context) (out []*types.OutgoingLogicCall) {
+	k.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
+		out = append(out, call)
+		return false
+	})
+	return
+}
+
+// CancelOutgoingLogicCalls releases all TX in the batch and deletes the batch
+func (k Keeper) CancelOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) error {
+	call := k.GetOutgoingLogicCall(ctx, invalidationId, invalidationNonce)
+	if call == nil {
+		return types.ErrUnknown
+	}
+	// Delete batch since it is finished
+	k.DeleteOutgoingLogicCall(ctx, call.InvalidationId, call.InvalidationNonce)
+
+	// a consuming application will have to watch for this event and act on it
+	batchEvent := sdk.NewEvent(
+		types.EventTypeOutgoingLogicCallCanceled,
+		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(types.AttributeKeyInvalidationID, fmt.Sprint(call.InvalidationId)),
+		sdk.NewAttribute(types.AttributeKeyInvalidationNonce, fmt.Sprint(call.InvalidationNonce)),
+	)
+	ctx.EventManager().EmitEvent(batchEvent)
+	return nil
+}
+
+/////////////////////////////
+//       LOGICCONFIRMS     //
+/////////////////////////////
+
+// SetLogicCallConfirm sets a logic confirm in the store
+func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, val sdk.AccAddress, msg *types.MsgConfirmLogicCall) {
+	ctx.KVStore(k.storeKey).Set(types.GetLogicConfirmKey(msg.InvalidationId, msg.InvalidationNonce, val), k.cdc.MustMarshalBinaryBare(msg))
+}
+
+// GetLogicCallConfirm gets a logic confirm from the store
+func (k Keeper) GetLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) *types.MsgConfirmLogicCall {
+	out := types.MsgConfirmLogicCall{}
+	k.cdc.MustUnmarshalBinaryBare(ctx.KVStore(k.storeKey).Get(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val)), &out)
+	return &out
+}
+
+// DeleteLogicCallConfirm deletes a logic confirm from the store
+func (k Keeper) DeleteLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) {
+	ctx.KVStore(k.storeKey).Delete(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val))
+}
+
+// IterateLogicConfirmByNonce iterates over all logic confirms stored by nonce
+func (k Keeper) IterateLogicConfirmByInvalidationIdAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, cb func([]byte, *types.MsgConfirmLogicCall) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicConfirm)
+	iter := prefixStore.Iterator(prefixRange(append(invalidationId, types.UInt64Bytes(invalidationNonce)...)))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		confirm := types.MsgConfirmLogicCall{}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
+		// cb returns true to stop early
+		if cb(iter.Key(), &confirm) {
+			break
+		}
+	}
+}
+
+// GetLogicConfirmsByInvalidationIdAndNonce returns the logic call confirms
+func (k Keeper) GetLogicConfirmByInvalidationIdAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) (out []types.MsgConfirmLogicCall) {
+	k.IterateLogicConfirmByInvalidationIdAndNonce(ctx, invalidationId, invalidationNonce, func(_ []byte, msg *types.MsgConfirmLogicCall) bool {
+		out = append(out, *msg)
+		return false
+	})
+	return
+}
+
+/////////////////////////////
 //       PARAMETERS        //
 /////////////////////////////
 
@@ -363,18 +477,6 @@ func (k Keeper) GetPeggyID(ctx sdk.Context) string {
 // Set PeggyID sets the PeggyID (couldn't we reuse the ChainID here?)
 func (k Keeper) setPeggyID(ctx sdk.Context, v string) {
 	k.paramSpace.Set(ctx, types.ParamsStoreKeyPeggyID, v)
-}
-
-// GetStartThreshold returns the start threshold for the peggy validator set
-func (k Keeper) GetStartThreshold(ctx sdk.Context) uint64 {
-	var a uint64
-	k.paramSpace.Get(ctx, types.ParamsStoreKeyStartThreshold, &a)
-	return a
-}
-
-// setStartThreshold sets the start threshold
-func (k Keeper) setStartThreshold(ctx sdk.Context, v uint64) {
-	k.paramSpace.Set(ctx, types.ParamsStoreKeyStartThreshold, v)
 }
 
 // logger returns a module-specific logger.

@@ -82,6 +82,12 @@ var (
 	// KeyOrchestratorAddress indexes the validator keys for an orchestrator
 	KeyOrchestratorAddress = []byte{0xe8}
 
+	// KeyOutgoingLogicCall indexes the outgoing logic calls
+	KeyOutgoingLogicCall = []byte{0xde}
+
+	// KeyOutgoingLogicConfirm indexes the outgoing logic confirms
+	KeyOutgoingLogicConfirm = []byte{0xae}
+
 	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
 	LastObservedEthereumBlockHeightKey = []byte{0xf9}
 
@@ -230,4 +236,15 @@ func GetDenomToERC20Key(denom string) []byte {
 
 func GetERC20ToDenomKey(erc20 string) []byte {
 	return append(ERC20ToDenomKey, []byte(erc20)...)
+}
+
+func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {
+	a := append(KeyOutgoingLogicCall, invalidationId...)
+	return append(a, UInt64Bytes(invalidationNonce)...)
+}
+
+func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
+	interm := append(KeyOutgoingLogicConfirm, invalidationId...)
+	interm = append(interm, UInt64Bytes(invalidationNonce)...)
+	return append(interm, validator.Bytes()...)
 }

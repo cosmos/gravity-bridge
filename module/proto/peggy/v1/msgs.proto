@@ -31,6 +31,10 @@ service Msg {
       returns (MsgERC20DeployedClaimResponse) {
     option (google.api.http).post = "/peggy/v1/erc20_deployed_claim";
   }
+  rpc LogicCallExecutedClaim(MsgLogicCallExecutedClaim)
+      returns (MsgLogicCallExecutedClaimResponse) {
+    option (google.api.http).post = "/peggy/v1/logic_call_executed_claim";
+  }
   rpc SetOrchestratorAddress(MsgSetOrchestratorAddress) returns(MsgSetOrchestratorAddressResponse) {
     option (google.api.http).post = "/peggy/v1/set_orchestrator_address";
   }
@@ -205,3 +209,15 @@ message MsgERC20DeployedClaim {
 }
 
 message MsgERC20DeployedClaimResponse {}
+
+// This informs the Cosmos module that a logic
+// call has been executed
+message MsgLogicCallExecutedClaim {
+  uint64 event_nonce    = 1;
+  uint64 block_height   = 2;
+  bytes invalidation_id = 3;
+  uint64 invalidation_nonce = 4;
+  string orchestrator   = 5;
+}
+
+message MsgLogicCallExecutedClaimResponse {}

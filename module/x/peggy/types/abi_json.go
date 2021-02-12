@@ -40,9 +40,9 @@ const (
 		"stateMutability": "pure",
 		"type": "function",
 		"inputs": [
-			{ "internalType": "bytes32",   "name": "_peggyId",     "type": "bytes32" },
-			{ "internalType": "bytes32",   "name": "_checkpoint",  "type": "bytes32" },
-			{ "internalType": "uint256",   "name": "_valsetNonce", "type": "uint256" },
+			{ "internalType": "bytes32",   "name": "_peggyId",     "type": "bytes32"   },
+			{ "internalType": "bytes32",   "name": "_checkpoint",  "type": "bytes32"   },
+			{ "internalType": "uint256",   "name": "_valsetNonce", "type": "uint256"   },
 			{ "internalType": "address[]", "name": "_validators",  "type": "address[]" },
 			{ "internalType": "uint256[]", "name": "_powers",      "type": "uint256[]" }
 		],
@@ -50,4 +50,36 @@ const (
 			{ "internalType": "bytes32", "name": "", "type": "bytes32" }
 		]
 	}]`
+
+	// OutgoingLogicCallABIJSON checks the ETH ABI for compatability of the logic call message
+	OutgoingLogicCallABIJSON = `[{
+	  "name": "submitLogicCall",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function",
+      "inputs": [
+        { "internalType": "address[]", "name": "_currentValidators",  "type": "address[]" },
+        { "internalType": "uint256[]", "name": "_currentPowers",      "type": "uint256[]" },
+        { "internalType": "uint256",   "name": "_currentValsetNonce", "type": "uint256"   },
+        { "internalType": "uint8[]",   "name": "_v",                  "type": "uint8[]"   },
+        { "internalType": "bytes32[]", "name": "_r",                  "type": "bytes32[]" },
+        { "internalType": "bytes32[]", "name": "_s",                  "type": "bytes32[]" },
+        {
+		  "internalType": "struct Peggy.LogicCallArgs",
+          "name": "_args",
+          "type": "tuple",
+          "components": [
+            { "internalType": "uint256[]", "name": "transferAmounts",        "type": "uint256[]" },
+            { "internalType": "address[]", "name": "transferTokenContracts", "type": "address[]" },
+            { "internalType": "uint256[]", "name": "feeAmounts",             "type": "uint256[]" },
+            { "internalType": "address[]", "name": "feeTokenContracts",      "type": "address[]" },
+            { "internalType": "address",   "name": "logicContractAddress",   "type": "address"   },
+            { "internalType": "bytes",     "name": "payload",                "type": "bytes"     },
+            { "internalType": "uint256",   "name": "timeOut",                "type": "uint256"   },
+            { "internalType": "bytes32",   "name": "invalidationId",         "type": "bytes32"   },
+            { "internalType": "uint256",   "name": "invalidationNonce",      "type": "uint256"   }
+          ]
+        }
+      ]
+    }]`
 )

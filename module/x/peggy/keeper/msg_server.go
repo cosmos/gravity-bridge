@@ -235,6 +235,64 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	return nil, nil
 }
 
+// ConfirmLogicCall handles MsgConfirmLogicCall
+func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogicCall) (*types.MsgConfirmLogicCallResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	// fetch the outgoing logic given the nonce
+	logic := k.GetOutgoingLogicCall(ctx, msg.InvalidationId, msg.InvalidationNonce)
+	if logic == nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find logic")
+	}
+
+	peggyID := k.GetPeggyID(ctx)
+	checkpoint, err := logic.GetCheckpoint(peggyID)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
+	}
+
+	sigBytes, err := hex.DecodeString(msg.Signature)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
+	}
+
+	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, valaddr)
+	if validator == nil {
+		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
+		if sval == nil {
+			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+		}
+		validator = sval.GetOperator()
+	}
+
+	ethAddress := k.GetEthAddress(ctx, validator)
+	if ethAddress == "" {
+		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
+	}
+
+	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with peggy-id %s with checkpoint %s found %s", ethAddress, peggyID, hex.EncodeToString(checkpoint), msg.Signature))
+	}
+
+	// check if we already have this confirm
+	if k.GetLogicCallConfirm(ctx, msg.InvalidationId, msg.InvalidationNonce, valaddr) != nil {
+		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
+	}
+
+	k.SetLogicCallConfirm(ctx, sdk.AccAddress(validator), msg)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+		),
+	)
+
+	return nil, nil
+}
+
 // DepositClaim handles MsgDepositClaim
 // TODO it is possible to submit an old msgDepositClaim (old defined as covering an event nonce that has already been
 // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
@@ -371,4 +429,48 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 	)
 
 	return &types.MsgERC20DeployedClaimResponse{}, nil
+}
+
+// LogicCallExecutedClaim handles claims for executing a logic call on Ethereum
+func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogicCallExecutedClaim) (*types.MsgLogicCallExecutedClaimResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, orch)
+	if validator == nil {
+		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
+		if sval == nil {
+			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+		}
+		validator = sval.GetOperator()
+	}
+
+	// return an error if the validator isn't in the active set
+	val := k.StakingKeeper.Validator(ctx, validator)
+	if val == nil || !val.IsBonded() {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
+	}
+
+	any, err := codectypes.NewAnyWithValue(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the claim to the store
+	_, err = k.Attest(ctx, msg, any)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "create attestation")
+	}
+
+	// Emit the handle message event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			// TODO: maybe return something better here? is this the right string representation?
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+		),
+	)
+
+	return &types.MsgLogicCallExecutedClaimResponse{}, nil
 }

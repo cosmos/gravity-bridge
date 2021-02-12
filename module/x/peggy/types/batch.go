@@ -13,9 +13,6 @@ import (
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
 func (b OutgoingTxBatch) GetCheckpoint(peggyIDstring string) ([]byte, error) {
 
-	// TODO replace hardcoded "foo" here with a getter to retrieve the correct PeggyID from the store
-	// this will work for now because 'foo' is the test Peggy ID we are using
-
 	abi, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
@@ -68,5 +65,22 @@ func (b OutgoingTxBatch) GetCheckpoint(peggyIDstring string) ([]byte, error) {
 	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
 	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
 	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
+	return crypto.Keccak256Hash(abiEncodedBatch[4:]).Bytes(), nil
+}
+
+// GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
+func (b OutgoingLogicCall) GetCheckpoint(peggyIDstring string) ([]byte, error) {
+
+	abi, err := abi.JSON(strings.NewReader(OutgoingLogicCallABIJSON))
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
+	}
+
+	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
+	// but other than that it's a constant that has no impact on the output. This is because
+	// it gets encoded as a function name which we must then discard.
+	abiEncodedBatch, err := abi.Pack("submitBatch")
+	// TODO: figure out how to pack the logic call args and sync with @jtremblek about formatting here
+
 	return crypto.Keccak256Hash(abiEncodedBatch[4:]).Bytes(), nil
 }

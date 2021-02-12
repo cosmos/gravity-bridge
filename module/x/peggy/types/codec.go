@@ -14,7 +14,7 @@ func init() {
 	RegisterCodec(ModuleCdc)
 }
 
-// RegisterInterfaces regiesteres the interfaces for the proto stuff
+// RegisterInterfaces registers the interfaces for the proto stuff
 func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgValsetConfirm{},
@@ -25,6 +25,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgWithdrawClaim{},
 		&MsgERC20DeployedClaim{},
 		&MsgSetOrchestratorAddress{},
+		&MsgLogicCallExecutedClaim{},
 	)
 
 	registry.RegisterInterface(
@@ -50,6 +51,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgDepositClaim{}, "peggy/MsgDepositClaim", nil)
 	cdc.RegisterConcrete(&MsgWithdrawClaim{}, "peggy/MsgWithdrawClaim", nil)
 	cdc.RegisterConcrete(&MsgERC20DeployedClaim{}, "peggy/MsgERC20DeployedClaim", nil)
+	cdc.RegisterConcrete(&MsgLogicCallExecutedClaim{}, "peggy/MsgLogicCallExecutedClaim", nil)
 	cdc.RegisterConcrete(&OutgoingTxBatch{}, "peggy/OutgoingTxBatch", nil)
 	cdc.RegisterConcrete(&OutgoingTransferTx{}, "peggy/OutgoingTransferTx", nil)
 	cdc.RegisterConcrete(&ERC20Token{}, "peggy/ERC20Token", nil)
