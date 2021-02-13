@@ -91,15 +91,15 @@ jobs:
           asset_path: ./orchestrator/target/x86_64-unknown-linux-musl/release/relayer
           asset_name: relayer
           asset_content_type: application/bin
-      - name: Upload Rust register-peggy-delegate-keys
+      - name: Upload Rust register-delegate-keys
         id: upload-rust-release-key-delegator
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./orchestrator/target/x86_64-unknown-linux-musl/release/register-peggy-delegate-keys
-          asset_name: register-peggy-delegate-keys
+          asset_path: ./orchestrator/target/x86_64-unknown-linux-musl/release/register-delegate-keys
+          asset_name: register-delegate-keys
           asset_content_type: application/bin
       - name: Upload Rust test runner
         id: upload-rust-test-runner
@@ -224,15 +224,15 @@ jobs:
           asset_path: ./orchestrator/target/aarch64-unknown-linux-musl/release/relayer
           asset_name: relayer-arm
           asset_content_type: application/bin
-      - name: Upload Rust register-peggy-delegate-keys ARM
+      - name: Upload Rust register-delegate-keys ARM
         id: upload-rust-release-key-delegator-arm
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./orchestrator/target/aarch64-unknown-linux-musl/release/register-peggy-delegate-keys
-          asset_name: register-peggy-delegate-keys-arm
+          asset_path: ./orchestrator/target/aarch64-unknown-linux-musl/release/register-delegate-keys
+          asset_name: register-delegate-keys-arm
           asset_content_type: application/bin
 
       - name: Upload Go Release Asset ARM
