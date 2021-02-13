@@ -1,15 +1,14 @@
 package cli
 
 import (
-	"errors"
-	"fmt"
+	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
 )
 
-func GetQueryCmd(storeKey string) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	peggyQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the peggy module",
@@ -18,23 +17,23 @@ func GetQueryCmd(storeKey string) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	peggyQueryCmd.AddCommand([]*cobra.Command{
-		CmdGetCurrentValset(storeKey),
-		CmdGetValsetRequest(storeKey),
-		CmdGetValsetConfirm(storeKey),
-		CmdGetPendingValsetRequest(storeKey),
-		CmdGetPendingOutgoingTXBatchRequest(storeKey),
-		// CmdGetAllOutgoingTXBatchRequest(storeKey),
-		// CmdGetOutgoingTXBatchByNonceRequest(storeKey),
-		// CmdGetAllAttestationsRequest(storeKey),
-		// CmdGetAttestationRequest(storeKey),
-		QueryObserved(storeKey),
-		QueryApproved(storeKey),
+		CmdGetCurrentValset(),
+		CmdGetValsetRequest(),
+		CmdGetValsetConfirm(),
+		CmdGetPendingValsetRequest(),
+		CmdGetPendingOutgoingTXBatchRequest(),
+		// CmdGetAllOutgoingTXBatchRequest(),
+		// CmdGetOutgoingTXBatchByNonceRequest(),
+		// CmdGetAllAttestationsRequest(),
+		// CmdGetAttestationRequest(),
+		QueryObserved(),
+		QueryApproved(),
 	}...)
 
 	return peggyQueryCmd
 }
 
-func QueryObserved(storeKey string) *cobra.Command {
+func QueryObserved() *cobra.Command {
 	testingTxCmd := &cobra.Command{
 		Use:                        "observed",
 		Short:                      "observed ETH events",
@@ -51,7 +50,7 @@ func QueryObserved(storeKey string) *cobra.Command {
 
 	return testingTxCmd
 }
-func QueryApproved(storeKey string) *cobra.Command {
+func QueryApproved() *cobra.Command {
 	testingTxCmd := &cobra.Command{
 		Use:                        "approved",
 		Short:                      "approved cosmos operation",
@@ -68,119 +67,126 @@ func QueryApproved(storeKey string) *cobra.Command {
 	return testingTxCmd
 }
 
-func CmdGetCurrentValset(storeKey string) *cobra.Command {
+func CmdGetCurrentValset() *cobra.Command {
 	return &cobra.Command{
 		Use:   "current-valset",
 		Short: "Query current valset",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := client.GetClientContextFromCmd(cmd)
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/currentValset", storeKey), nil)
+			req := &types.QueryCurrentValsetRequest{}
+
+			res, err := queryClient.CurrentValset(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
-			if len(res) == 0 {
-				return errors.New("empty response")
-			}
 
-			var out types.Valset
-			cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
-			return cliCtx.PrintProto(&out)
+			return clientCtx.PrintProto(res)
 		},
 	}
 }
 
-func CmdGetValsetRequest(storeKey string) *cobra.Command {
+func CmdGetValsetRequest() *cobra.Command {
 	return &cobra.Command{
 		Use:   "valset-request [nonce]",
 		Short: "Get requested valset with a particular nonce",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := client.GetClientContextFromCmd(cmd)
-			nonce := args[0]
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, nonce), nil)
+			nonce, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
-			if len(res) == 0 {
-				return fmt.Errorf("no valset request found for nonce %s", nonce)
+
+			req := &types.QueryValsetRequestRequest{
+				Nonce: nonce,
 			}
 
-			var out types.Valset
-			cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
-			return cliCtx.PrintProto(&out)
+			res, err := queryClient.ValsetRequest(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
 		},
 	}
 }
 
-func CmdGetValsetConfirm(storeKey string) *cobra.Command {
+func CmdGetValsetConfirm() *cobra.Command {
 	return &cobra.Command{
 		Use:   "valset-confirm [nonce] [bech32 validator address]",
 		Short: "Get valset confirmation with a particular nonce from a particular validator",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetConfirm/%s/%s", storeKey, args[0], args[1]), nil)
+			nonce, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
-			if len(res) == 0 {
-				return fmt.Errorf("no valset confirmation found for nonce %s and address %s", args[0], args[1])
+
+			req := &types.QueryValsetConfirmRequest{
+				Nonce:   nonce,
+				Address: args[1],
 			}
 
-			var out types.MsgValsetConfirm
-			cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
-			return cliCtx.PrintProto(&out)
+			res, err := queryClient.ValsetConfirm(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
 		},
 	}
 }
 
-func CmdGetPendingValsetRequest(storeKey string) *cobra.Command {
+func CmdGetPendingValsetRequest() *cobra.Command {
 	return &cobra.Command{
 		Use:   "pending-valset-request [bech32 validator address]",
 		Short: "Get the latest valset request which has not been signed by a particular validator",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lastPendingValsetRequest/%s", storeKey, args[0]), nil)
+			req := &types.QueryLastPendingValsetRequestByAddrRequest{
+				Address: args[0],
+			}
+
+			res, err := queryClient.LastPendingValsetRequestByAddr(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
-			if len(res) == 0 {
-				fmt.Println("Nothing found")
-				return nil
-			}
 
-			var out types.Valset
-			cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
-			return cliCtx.PrintProto(&out)
+			return clientCtx.PrintProto(res)
 		},
 	}
 }
 
-func CmdGetPendingOutgoingTXBatchRequest(storeKey string) *cobra.Command {
+func CmdGetPendingOutgoingTXBatchRequest() *cobra.Command {
 	return &cobra.Command{
 		Use:   "pending-batch-request [bech32 validator address]",
 		Short: "Get the latest outgoing TX batch request which has not been signed by a particular validator",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/lastPendingBatchRequest/%s", storeKey, args[0]), nil)
+			req := &types.QueryLastPendingBatchRequestByAddrRequest{
+				Address: args[0],
+			}
+
+			res, err := queryClient.LastPendingBatchRequestByAddr(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
-			if len(res) == 0 {
-				fmt.Println("Nothing found")
-				return nil
-			}
 
-			var out types.OutgoingTxBatch
-			cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
-			return cliCtx.PrintProto(&out)
+			return clientCtx.PrintProto(res)
 		},
 	}
 }
