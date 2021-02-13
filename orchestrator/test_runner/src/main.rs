@@ -126,9 +126,9 @@ pub async fn main() {
     // VALSET_STRESS sends in 1k valsets to sign and update
     // BATCH_STRESS fills several batches and executes an out of order batch
     // VALIDATOR_OUT simulates a validator not participating in the happy path test
-    let test_type = option_env!("TEST_TYPE");
+    let test_type = env::var("TEST_TYPE");
     info!("Starting tests with {:?}", test_type);
-    if let Some(test_type) = test_type {
+    if let Ok(test_type) = test_type {
         if test_type == "VALIDATOR_OUT" {
             info!("Starting Validator out test");
             happy_path_test(
