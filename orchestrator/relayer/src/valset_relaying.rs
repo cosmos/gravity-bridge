@@ -77,7 +77,7 @@ pub async fn relay_valsets(
         )
         .await;
         if cost.is_err() {
-            error!("Batch cost estimate failed with {:?}", cost);
+            error!("Valset cost estimate failed with {:?}", cost);
             return;
         }
         let cost = cost.unwrap();

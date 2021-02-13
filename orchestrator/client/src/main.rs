@@ -56,6 +56,7 @@ struct Args {
     flag_cosmos_destination: String,
     flag_erc20_address: String,
     flag_eth_destination: String,
+    flag_no_batch: bool,
     cmd_eth_to_cosmos: bool,
     cmd_cosmos_to_eth: bool,
 }
@@ -63,7 +64,7 @@ struct Args {
 lazy_static! {
     pub static ref USAGE: String = format!(
     "Usage:
-        {} cosmos-to-eth --cosmos-phrase=<key> --cosmos-rpc=<url> --fees=<denom> --erc20-address=<addr> --amount=<amount> --eth-destination=<dest>
+        {} cosmos-to-eth --cosmos-phrase=<key> --cosmos-rpc=<url> --fees=<denom> --erc20-address=<addr> --amount=<amount> --eth-destination=<dest> [--no-batch]
         {} eth-to-cosmos --ethereum-key=<key> --ethereum-rpc=<url> --contract-address=<addr> --erc20-address=<addr> --amount=<amount> --cosmos-destination=<dest>
         Options:
             -h --help                   Show this screen.
@@ -76,7 +77,8 @@ lazy_static! {
             --erc20-address=<addr>      An erc20 address to send funds
             --amount=<amount>           The amount of tokens to send, for example 1.5DAI
             --cosmos-destination=<dest> A cosmos address to send tokens to
-            --eth-destination=<dest> A cosmos address to send tokens to
+            --eth-destination=<dest>    A cosmos address to send tokens to
+            --no-batch                  Don't request a batch when sending to Ethereum
         About:
             Althea Gravity client software, moves tokens from Ethereum to Cosmos and back
             Written By: {}
@@ -134,10 +136,14 @@ async fn main() {
             .await
             .expect("Failed to Send to ETH");
 
-        println!("Requesting a batch to push transaction along immediately");
-        send_request_batch(cosmos_key, peggy_denom, fee, &contact)
-            .await
-            .expect("Failed to request batch");
+        if !args.flag_no_batch {
+            println!("Requesting a batch to push transaction along immediately");
+            send_request_batch(cosmos_key, peggy_denom, fee, &contact)
+                .await
+                .expect("Failed to request batch");
+        } else {
+            println!("--no-batch specified, your transfer will wait until someone requests a batch for this token type")
+        }
     } else if args.cmd_eth_to_cosmos {
         let ethereum_key: EthPrivateKey = args
             .flag_ethereum_key
@@ -156,7 +162,7 @@ async fn main() {
         let ethereum_public_key = ethereum_key.to_public_key().unwrap();
 
         println!(
-            "Sending {} / {} to Cosmos from {} to {} with amount",
+            "Sending {} / {} to Cosmos from {} to {}",
             args.flag_amount, contract_address, ethereum_public_key, cosmos_dest
         );
         // we send some erc20 tokens to the peggy contract to register a deposit

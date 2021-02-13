@@ -68,7 +68,7 @@ async fn main() {
             CosmosPrivateKey::from_hd_wallet_path("m/44'/118'/0'/0/0", new_phrase.as_str(), "")
                 .unwrap();
         println!(
-            "No Cosmos key provided, your generated key is {} -> {}",
+            "No Cosmos key provided, your generated key is\n {} -> {}",
             new_phrase.as_str(),
             key.to_public_key().unwrap().to_address()
         );
@@ -81,7 +81,7 @@ async fn main() {
         let key: [u8; 32] = rng.gen();
         let key = EthPrivateKey::from_slice(&key).unwrap();
         println!(
-            "No Ethereum key provided, your generated key is {} -> {}",
+            "No Ethereum key provided, your generated key is\n {} -> {}",
             key,
             key.to_public_key().unwrap()
         );

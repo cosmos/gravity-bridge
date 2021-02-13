@@ -127,7 +127,7 @@ pub async fn check_for_events(
             // we may be able to trust the tx response post grpc
             if new_event_nonce == last_event_nonce {
                 return Err(PeggyError::InvalidBridgeStateError(
-                    "Claims did not process, trying again in a moment".to_string(),
+                    format!("Claims did not process, trying to update but still on {}, trying again in a moment, check txhash {} for errors", last_event_nonce, res.txhash),
                 ));
             } else {
                 info!("Claims processed, new nonce {}", new_event_nonce);
