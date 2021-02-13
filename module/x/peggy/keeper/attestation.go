@@ -11,16 +11,16 @@ import (
 
 // TODO-JT: carefully look at atomicity of this function
 func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *codectypes.Any) (*types.Attestation, error) {
-	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
-	// We check the event nonce in processAttestation as well, but checking it here gives individual eth signers a chance to retry,
-	// and prevents validators from submitting two claims with the same nonce
-	lastEventNonce := k.GetLastEventNonceByValidator(ctx, sdk.ValAddress(claim.GetClaimer()))
-	if claim.GetEventNonce() != lastEventNonce+1 {
-		return nil, types.ErrNonContiguousEventNonce
-	}
 	valAddr := k.GetOrchestratorValidator(ctx, claim.GetClaimer())
 	if valAddr == nil {
 		panic("Could not find ValAddr for delegate key, should be checked by now")
+	}
+	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
+	// We check the event nonce in processAttestation as well, but checking it here gives individual eth signers a chance to retry,
+	// and prevents validators from submitting two claims with the same nonce
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, valAddr)
+	if claim.GetEventNonce() != lastEventNonce+1 {
+		return nil, types.ErrNonContiguousEventNonce
 	}
 
 	// Tries to get an attestation with the same eventNonce and claim as the claim that was submitted.
