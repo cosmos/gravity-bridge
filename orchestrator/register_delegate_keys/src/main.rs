@@ -5,16 +5,13 @@ extern crate serde_derive;
 #[macro_use]
 extern crate lazy_static;
 
-use std::time::Duration;
-
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
 use cosmos_peggy::send::update_peggy_delegate_addresses;
-use deep_space::{
-    coin::Coin, private_key::PrivateKey as CosmosPrivateKey, utils::bytes_to_hex_str,
-};
+use deep_space::{coin::Coin, mnemonic::Mnemonic, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
 use rand::{thread_rng, Rng};
+use std::time::Duration;
 use url::Url;
 
 #[derive(Debug, Deserialize)]
@@ -66,12 +63,13 @@ async fn main() {
     let cosmos_key = if let Some(cosmos_phrase) = args.flag_cosmos_phrase {
         CosmosPrivateKey::from_phrase(&cosmos_phrase, "").expect("Failed to parse cosmos key")
     } else {
-        let mut rng = thread_rng();
-        let key_bytes: [u8; 32] = rng.gen();
-        let key = CosmosPrivateKey::from_secret(&key_bytes);
+        let new_phrase = Mnemonic::generate(24).unwrap();
+        let key =
+            CosmosPrivateKey::from_hd_wallet_path("m/44'/118'/0'/0/0", new_phrase.as_str(), "")
+                .unwrap();
         println!(
             "No Cosmos key provided, your generated key is {} -> {}",
-            bytes_to_hex_str(&key_bytes),
+            new_phrase.as_str(),
             key.to_public_key().unwrap().to_address()
         );
         key
@@ -115,7 +113,7 @@ async fn main() {
     let eth_address = ethereum_key.to_public_key().unwrap();
     let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     println!(
-        "Registered Ethereum address {} for validator address {}",
+        "Registered Delegate Ethereum address {} and Cosmos address {}",
         eth_address, cosmos_address
     )
 }
