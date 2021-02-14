@@ -448,8 +448,8 @@ pub struct QueryLastPendingValsetRequestByAddrRequest {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastPendingValsetRequestByAddrResponse {
-    #[prost(message, optional, tag="1")]
-    pub valset: ::std::option::Option<Valset>,
+    #[prost(message, repeated, tag="1")]
+    pub valsets: ::std::vec::Vec<Valset>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastPendingBatchRequestByAddrRequest {

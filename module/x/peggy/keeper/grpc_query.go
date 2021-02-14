@@ -67,20 +67,24 @@ func (k Keeper) LastPendingValsetRequestByAddr(c context.Context, req *types.Que
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingValsetReq *types.Valset
+	var pendingValsetReq []*types.Valset
 	k.IterateValsets(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
 		foundConfirm := k.GetValsetConfirm(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
 		// and exit the loop
 		if !foundConfirm {
-			pendingValsetReq = val
+			pendingValsetReq = append(pendingValsetReq, val)
+		}
+		// if we have more than 100 unconfirmed requests in
+		// our array we should exit, TODO pagination
+		if len(pendingValsetReq) > 100 {
 			return true
 		}
 		// return false to continue the loop
 		return false
 	})
-	return &types.QueryLastPendingValsetRequestByAddrResponse{Valset: pendingValsetReq}, nil
+	return &types.QueryLastPendingValsetRequestByAddrResponse{Valsets: pendingValsetReq}, nil
 }
 
 // LastPendingBatchRequestByAddr queries the LastPendingBatchRequestByAddr of the peggy module

@@ -70,7 +70,7 @@ message QueryLastValsetRequestsRequest {}
 message QueryLastValsetRequestsResponse { repeated Valset valsets = 1; }
 
 message QueryLastPendingValsetRequestByAddrRequest { string address = 1; }
-message QueryLastPendingValsetRequestByAddrResponse { Valset valset = 1; }
+message QueryLastPendingValsetRequestByAddrResponse { repeated Valset valsets = 1; }
 
 message QueryLastPendingBatchRequestByAddrRequest { string address = 1; }
 message QueryLastPendingBatchRequestByAddrResponse { OutgoingTxBatch batch = 1; }

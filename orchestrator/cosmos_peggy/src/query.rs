@@ -50,23 +50,21 @@ pub async fn get_current_valset(
     }
 }
 
-/// This hits the /pending_valset_requests endpoint and will provide the oldest
-/// validator set we have not yet signed.
-pub async fn get_oldest_unsigned_valset(
+/// This hits the /pending_valset_requests endpoint and will provide
+/// an array of validator sets we have not already signed
+pub async fn get_oldest_unsigned_valsets(
     client: &mut PeggyQueryClient<Channel>,
     address: Address,
-) -> Result<Option<Valset>, PeggyError> {
+) -> Result<Vec<Valset>, PeggyError> {
     let request = client
         .last_pending_valset_request_by_addr(QueryLastPendingValsetRequestByAddrRequest {
             address: address.to_string(),
         })
         .await?;
-    let valset = request.into_inner().valset;
-    let valset = match valset {
-        Some(v) => Some(v.into()),
-        None => None,
-    };
-    Ok(valset)
+    let valsets = request.into_inner().valsets;
+    // convert from proto valset type to rust valset type
+    let valsets = valsets.iter().map(|v| v.into()).collect();
+    Ok(valsets)
 }
 
 /// this input views the last five valset requests that have been made, useful if you're

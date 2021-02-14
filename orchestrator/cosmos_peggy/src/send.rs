@@ -62,13 +62,14 @@ pub async fn update_peggy_delegate_addresses(
     contact.retry_on_block(tx).await
 }
 
-/// Send in a confirmation for a specific validator set for a specific block height
+/// Send in a confirmation for an array of validator sets, it's far more efficient to send these
+/// as a single message
 #[allow(clippy::too_many_arguments)]
-pub async fn send_valset_confirm(
+pub async fn send_valset_confirms(
     contact: &Contact,
     eth_private_key: EthPrivateKey,
     fee: Coin,
-    valset: Valset,
+    valsets: Vec<Valset>,
     private_key: PrivateKey,
     peggy_id: String,
 ) -> Result<TXSendResponse, JsonRpcError> {
@@ -80,14 +81,24 @@ pub async fn send_valset_confirm(
 
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
 
-    let message = encode_valset_confirm(peggy_id, valset.clone());
-    let eth_signature = eth_private_key.sign_ethereum_msg(&message);
+    let mut messages = Vec::new();
 
-    trace!(
-        "Sent valset update with address {} and sig {}",
-        our_eth_address,
-        bytes_to_hex_str(&eth_signature.to_bytes())
-    );
+    for valset in valsets {
+        let message = encode_valset_confirm(peggy_id.clone(), valset.clone());
+        let eth_signature = eth_private_key.sign_ethereum_msg(&message);
+        trace!(
+            "Sending valset update with address {} and sig {}",
+            our_eth_address,
+            bytes_to_hex_str(&eth_signature.to_bytes())
+        );
+        messages.push(PeggyMsg::ValsetConfirmMsg(ValsetConfirmMsg {
+            orchestrator: our_address,
+            eth_address: our_eth_address,
+            nonce: valset.nonce.into(),
+            eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
+        }));
+    }
+
     let std_sign_msg = StdSignMsg {
         chain_id: tx_info.chain_id,
         account_number: tx_info.account_number,
@@ -96,12 +107,7 @@ pub async fn send_valset_confirm(
             amount: vec![fee],
             gas: 500_000u64.into(),
         },
-        msgs: vec![PeggyMsg::ValsetConfirmMsg(ValsetConfirmMsg {
-            orchestrator: our_address,
-            eth_address: our_eth_address,
-            nonce: valset.nonce.into(),
-            eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
-        })],
+        msgs: messages,
         memo: String::new(),
     };
 

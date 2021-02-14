@@ -169,27 +169,32 @@ func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 }
 
 /* USED BY RUST */
-// lastPendingValsetRequest gets the oldest valset that operatorAddr has not yet signed
+// lastPendingValsetRequest gets a list of validator sets that this validator has not signed
+// limited by 100 sets per request.
 func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
 	addr, err := sdk.AccAddressFromBech32(operatorAddr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingValsetReq *types.Valset
+	var pendingValsetReq []*types.Valset
 	keeper.IterateValsets(ctx, func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
 		foundConfirm := keeper.GetValsetConfirm(ctx, val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
 		// and exit the loop
 		if !foundConfirm {
-			pendingValsetReq = val
+			pendingValsetReq = append(pendingValsetReq, val)
+		}
+		// if we have more than 100 unconfirmed requests in
+		// our array we should exit, TODO pagination
+		if len(pendingValsetReq) > 100 {
 			return true
 		}
 		// return false to continue the loop
 		return false
 	})
-	if pendingValsetReq == nil {
+	if len(pendingValsetReq) == 0 {
 		return nil, nil
 	}
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingValsetReq)
