@@ -7,7 +7,9 @@ use clarity::PrivateKey as EthPrivateKey;
 use clarity::{address::Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::{
-    query::{get_oldest_unsigned_transaction_batch, get_oldest_unsigned_valset},
+    query::{
+        get_latest_valsets, get_oldest_unsigned_transaction_batch, get_oldest_unsigned_valset,
+    },
     send::{send_batch_confirm, send_valset_confirm},
 };
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
@@ -176,7 +178,7 @@ pub async fn eth_signer_main_loop(
             );
         }
 
-        // sign the last unsigned valset, TODO check if we already have signed this
+        // sign the last unsigned valset
         match get_oldest_unsigned_valset(&mut grpc_client, our_cosmos_address).await {
             Ok(Some(last_unsigned_valset)) => {
                 info!("Sending valset confirm for {}", last_unsigned_valset.nonce);
