@@ -5,8 +5,8 @@ use std::time::Duration;
 
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use cosmos_peggy::query::get_all_valset_confirms;
 use cosmos_peggy::query::get_latest_valsets;
+use cosmos_peggy::query::{get_all_valset_confirms, get_valset};
 use ethereum_peggy::{one_eth, utils::downcast_to_u128, valset_update::send_eth_valset_update};
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use tonic::transport::Channel;
@@ -25,34 +25,12 @@ pub async fn relay_valsets(
 ) {
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
 
-    // we should determine if we need to relay one
-    // to Ethereum for that we will find the latest confirmed valset and compare it to the ethereum chain
-    let latest_valsets = get_latest_valsets(grpc_client).await;
-    if latest_valsets.is_err() {
-        trace!("Failed to get latest valsets!");
-        // there are no latest valsets to check, possible on a bootstrapping chain maybe handle better?
-        return;
-    }
-    let latest_valsets = latest_valsets.unwrap();
-
-    let mut latest_confirmed = None;
-    let mut latest_valset = None;
-    for set in latest_valsets {
-        let confirms = get_all_valset_confirms(grpc_client, set.nonce).await;
-        if let Ok(confirms) = confirms {
-            latest_confirmed = Some(confirms);
-            latest_valset = Some(set);
-            break;
-        }
-    }
-
-    if latest_confirmed.is_none() {
-        error!("We don't have a latest confirmed valset?");
-        return;
-    }
-    let latest_cosmos_confirmed = latest_confirmed.unwrap();
-    let latest_cosmos_valset = latest_valset.unwrap();
-
+    // we have to start with the current valset, we need to know what's currently
+    // in the contract in order to determine if a new validator set is valid.
+    // For example the contract has set A which contains validators x/y/z the
+    // latest valset has set C which has validators z/e/f in order to have enough
+    // power we actually need to submit validator set B with validators x/y/e in
+    // order to know that we need a set from the history
     let current_valset = find_latest_valset(
         grpc_client,
         our_ethereum_address,
@@ -65,6 +43,54 @@ pub async fn relay_valsets(
         return;
     }
     let current_valset = current_valset.unwrap();
+
+    // we should determine if we need to relay one
+    // to Ethereum for that we will find the latest confirmed valset and compare it to the ethereum chain
+    let latest_valsets = get_latest_valsets(grpc_client).await;
+    if latest_valsets.is_err() {
+        trace!("Failed to get latest valsets!");
+        // there are no latest valsets to check, possible on a bootstrapping chain maybe handle better?
+        return;
+    }
+    let latest_valsets = latest_valsets.unwrap();
+    if latest_valsets.is_empty() {
+        return;
+    }
+
+    // we only use the latest valsets endpoint to get a starting point, from there we will iterate
+    // backwards until we find the newest validator set that we can submit to the bridge. So if we
+    // have sets A-Z and it's possible to submit only A, L, and Q before reaching Z this code will do
+    // so.
+    let mut latest_nonce = latest_valsets[0].nonce;
+    let mut latest_confirmed = None;
+    let mut latest_valset = None;
+    while latest_nonce > 0 {
+        let valset = get_valset(grpc_client, latest_nonce).await;
+        if let Ok(Some(valset)) = valset {
+            let confirms = get_all_valset_confirms(grpc_client, valset.nonce).await;
+            if let Ok(confirms) = confirms {
+                // order valset sigs prepares signatures for submission, notice we compare
+                // them to the 'current' set in the bridge, this confirms for us that the validator set
+                // we have here can be submitted to the bridge in it's current state
+                if current_valset.order_valset_sigs(&confirms).is_ok() {
+                    latest_confirmed = Some(confirms);
+                    latest_valset = Some(valset);
+                    // once we have the latest validator set we can submit exit
+                    break;
+                }
+            }
+        }
+
+        latest_nonce -= 1
+    }
+
+    if latest_confirmed.is_none() {
+        error!("We don't have a latest confirmed valset?");
+        return;
+    }
+    let latest_cosmos_confirmed = latest_confirmed.unwrap();
+    let latest_cosmos_valset = latest_valset.unwrap();
+
     let latest_cosmos_valset_nonce = latest_cosmos_valset.nonce;
     if latest_cosmos_valset_nonce > current_valset.nonce {
         let cost = ethereum_peggy::valset_update::estimate_valset_cost(
