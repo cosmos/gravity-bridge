@@ -43,8 +43,7 @@ pub async fn find_latest_valset(
                 vec![peggy_contract_address],
                 vec!["ValsetUpdatedEvent(uint256,address[],uint256[])"],
             )
-            .await
-            .unwrap();
+            .await?;
         // by default the lowest found valset goes first, we want the highest.
         all_valset_events.reverse();
 
