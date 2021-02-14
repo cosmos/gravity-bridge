@@ -163,7 +163,7 @@ async fn main() {
 
         println!(
             "Sending {} / {} to Cosmos from {} to {}",
-            args.flag_amount, contract_address, ethereum_public_key, cosmos_dest
+            args.flag_amount, erc20_address, ethereum_public_key, cosmos_dest
         );
         // we send some erc20 tokens to the peggy contract to register a deposit
         let tx_id = send_to_cosmos(
