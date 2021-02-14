@@ -68,6 +68,7 @@ pub async fn relay_batches(
             "Failed to get latest Ethereum batch with {:?}",
             latest_ethereum_batch
         );
+        return;
     }
     let latest_ethereum_batch = latest_ethereum_batch.unwrap();
     let latest_cosmos_batch_nonce = oldest_signed_batch.clone().nonce;
