@@ -1,7 +1,6 @@
 //! This module contains code for the batch update lifecycle. Functioning as a way for this validator to observe
 //! the state of both chains and perform the required operations.
 
-use crate::find_latest_valset::find_latest_valset;
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use cosmos_peggy::query::get_latest_transaction_batches;
@@ -9,6 +8,7 @@ use cosmos_peggy::query::get_transaction_batch_signatures;
 use ethereum_peggy::utils::{downcast_to_u128, get_tx_batch_nonce};
 use ethereum_peggy::{one_eth, submit_batch::send_eth_transaction_batch};
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_utils::types::Valset;
 use peggy_utils::types::{BatchConfirmResponse, TransactionBatch};
 use std::time::Duration;
 use tonic::transport::Channel;
@@ -17,9 +17,11 @@ use web30::client::Web3;
 /// Check the last validator set on Ethereum, if it's lower than our latest validator
 /// set then we should package and submit the update as an Ethereum transaction
 pub async fn relay_batches(
+    // the validator set currently in the contract on Ethereum
+    current_valset: Valset,
     ethereum_key: EthPrivateKey,
     web3: &Web3,
-    mut grpc_client: &mut PeggyQueryClient<Channel>,
+    grpc_client: &mut PeggyQueryClient<Channel>,
     peggy_contract_address: EthAddress,
     timeout: Duration,
 ) {
@@ -38,9 +40,16 @@ pub async fn relay_batches(
             get_transaction_batch_signatures(grpc_client, batch.nonce, batch.token_contract).await;
         trace!("Got sigs {:?}", sigs);
         if let Ok(sigs) = sigs {
-            // todo check that enough people have signed
-            oldest_signed_batch = Some(batch);
-            oldest_signatures = Some(sigs);
+            // this checks that the signatures for the batch are actually possible to submit to the chain
+            if current_valset.order_batch_sigs(&sigs).is_ok() {
+                oldest_signed_batch = Some(batch);
+                oldest_signatures = Some(sigs);
+            } else {
+                warn!(
+                    "Batch {}/{} can not be submitted yet, waiting for validator set update",
+                    batch.token_contract, batch.nonce
+                );
+            }
         } else {
             error!(
                 "could not get signatures for {}:{} with {:?}",
@@ -73,30 +82,21 @@ pub async fn relay_batches(
     let latest_ethereum_batch = latest_ethereum_batch.unwrap();
     let latest_cosmos_batch_nonce = oldest_signed_batch.clone().nonce;
     if latest_cosmos_batch_nonce > latest_ethereum_batch {
-        let current_valset = find_latest_valset(
-            &mut grpc_client,
-            our_ethereum_address,
-            peggy_contract_address,
+        let cost = ethereum_peggy::submit_batch::estimate_tx_batch_cost(
+            current_valset.clone(),
+            oldest_signed_batch.clone(),
+            &oldest_signatures,
             web3,
+            peggy_contract_address,
+            ethereum_key,
         )
         .await;
-
-        if let Ok(current_valset) = current_valset {
-            let cost = ethereum_peggy::submit_batch::estimate_tx_batch_cost(
-                current_valset.clone(),
-                oldest_signed_batch.clone(),
-                &oldest_signatures,
-                web3,
-                peggy_contract_address,
-                ethereum_key,
-            )
-            .await;
-            if cost.is_err() {
-                error!("Batch cost estimate failed with {:?}", cost);
-                return;
-            }
-            let cost = cost.unwrap();
-            info!(
+        if cost.is_err() {
+            error!("Batch cost estimate failed with {:?}", cost);
+            return;
+        }
+        let cost = cost.unwrap();
+        info!(
                 "We have detected latest batch {} but latest on Ethereum is {} This batch is estimated to cost {} Gas / {:.4} ETH to submit",
                 latest_cosmos_batch_nonce,
                 latest_ethereum_batch,
@@ -105,21 +105,20 @@ pub async fn relay_batches(
                     / downcast_to_u128(one_eth()).unwrap() as f32
             );
 
-            let res = send_eth_transaction_batch(
-                current_valset,
-                oldest_signed_batch,
-                &oldest_signatures,
-                web3,
-                timeout,
-                peggy_contract_address,
-                ethereum_key,
-            )
-            .await;
-            if res.is_err() {
-                info!("Batch submission failed with {:?}", res);
-            }
-        } else {
-            error!("Failed to find latest valset with {:?}", current_valset);
+        let res = send_eth_transaction_batch(
+            current_valset,
+            oldest_signed_batch,
+            &oldest_signatures,
+            web3,
+            timeout,
+            peggy_contract_address,
+            ethereum_key,
+        )
+        .await;
+        if res.is_err() {
+            info!("Batch submission failed with {:?}", res);
         }
+    } else {
+        error!("Failed to find latest valset with {:?}", current_valset);
     }
 }

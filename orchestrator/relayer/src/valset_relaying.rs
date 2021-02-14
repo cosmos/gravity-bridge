@@ -9,40 +9,27 @@ use cosmos_peggy::query::get_latest_valsets;
 use cosmos_peggy::query::{get_all_valset_confirms, get_valset};
 use ethereum_peggy::{one_eth, utils::downcast_to_u128, valset_update::send_eth_valset_update};
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_utils::types::Valset;
 use tonic::transport::Channel;
 use web30::client::Web3;
-
-use crate::find_latest_valset::find_latest_valset;
 
 /// Check the last validator set on Ethereum, if it's lower than our latest validator
 /// set then we should package and submit the update as an Ethereum transaction
 pub async fn relay_valsets(
+    // the validator set currently in the contract on Ethereum
+    current_valset: Valset,
     ethereum_key: EthPrivateKey,
     web3: &Web3,
     grpc_client: &mut PeggyQueryClient<Channel>,
     peggy_contract_address: EthAddress,
     timeout: Duration,
 ) {
-    let our_ethereum_address = ethereum_key.to_public_key().unwrap();
-
     // we have to start with the current valset, we need to know what's currently
     // in the contract in order to determine if a new validator set is valid.
     // For example the contract has set A which contains validators x/y/z the
     // latest valset has set C which has validators z/e/f in order to have enough
     // power we actually need to submit validator set B with validators x/y/e in
     // order to know that we need a set from the history
-    let current_valset = find_latest_valset(
-        grpc_client,
-        our_ethereum_address,
-        peggy_contract_address,
-        web3,
-    )
-    .await;
-    if current_valset.is_err() {
-        error!("Could not get current valset!");
-        return;
-    }
-    let current_valset = current_valset.unwrap();
 
     // we should determine if we need to relay one
     // to Ethereum for that we will find the latest confirmed valset and compare it to the ethereum chain
