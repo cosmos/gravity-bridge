@@ -209,7 +209,6 @@ impl Valset {
                 TOTAL_PEGGY_POWER,
                 peggy_power_to_percent(power_of_nonvoters),
             );
-            error!("{}", message);
             Err(PeggyError::InsufficientVotingPowerToPass(message))
         } else {
             Ok(out)
