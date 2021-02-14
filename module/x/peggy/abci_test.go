@@ -93,7 +93,7 @@ func TestValsetEmission(t *testing.T) {
 	// Store a validator set with a power change as the most recent validator set
 	vs := pk.GetCurrentValset(ctx)
 	vs.Nonce = vs.Nonce - 1
-	delta := float64(types.BridgeValidators(vs.Members).TotalPower()) * 0.01
+	delta := float64(types.BridgeValidators(vs.Members).TotalPower()) * 0.05
 	vs.Members[0].Power = uint64(float64(vs.Members[0].Power) - delta/2)
 	vs.Members[1].Power = uint64(float64(vs.Members[1].Power) + delta/2)
 	pk.StoreValset(ctx, vs)

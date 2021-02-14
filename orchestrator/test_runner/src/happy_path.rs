@@ -251,7 +251,7 @@ pub async fn test_valset_update(
         .to_address()
         .to_bech32("cosmosvaloper")
         .unwrap();
-    let amount = &format!("{}stake", STARTING_STAKE_PER_VALIDATOR / 8);
+    let amount = &format!("{}stake", STARTING_STAKE_PER_VALIDATOR / 4);
     info!(
         "Delegating {} to {} in order to generate a validator set update",
         amount, delegate_address

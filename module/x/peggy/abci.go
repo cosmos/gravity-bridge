@@ -57,9 +57,9 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 			k.DeleteValset(ctx, vs.Nonce)
 
 		// on the latest validator set, check for change in power against
-		// current, and emit a new validator set if the change in power >1%
+		// current, and emit a new validator set if the change in power >5%
 		case i == 0:
-			if types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(vs.Members) > 0.01 {
+			if types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(vs.Members) > 0.05 {
 				k.SetValsetRequest(ctx)
 			}
 		}
