@@ -7,7 +7,7 @@ use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
-pub const LOOP_SPEED: Duration = Duration::from_secs(10);
+pub const LOOP_SPEED: Duration = Duration::from_secs(17);
 
 /// This function contains the orchestrator primary loop, it is broken out of the main loop so that
 /// it can be called in the test runner for easier orchestration of multi-node tests

@@ -24,7 +24,8 @@ use web30::client::Web3;
 /// The execution speed governing all loops in this file
 /// which is to say all loops started by Orchestrator main
 /// loop except the relayer loop
-pub const LOOP_SPEED: Duration = Duration::from_secs(10);
+pub const ETH_SIGNER_LOOP_SPEED: Duration = Duration::from_secs(11);
+pub const ETH_ORACLE_LOOP_SPEED: Duration = Duration::from_secs(13);
 
 /// This loop combines the three major roles required to make
 /// up the 'Orchestrator', all three of these are async loops
@@ -73,7 +74,6 @@ pub async fn orchestrator_main_loop(
 
 /// This function is responsible for making sure that Ethereum events are retrieved from the Ethereum blockchain
 /// and ferried over to Cosmos where they will be used to issue tokens or process batches.
-/// TODO this loop requires a method to bootstrap back to the correct event nonce when restarted
 pub async fn eth_oracle_main_loop(
     cosmos_key: CosmosPrivateKey,
     web3: Web3,
@@ -132,8 +132,8 @@ pub async fn eth_oracle_main_loop(
         // this is not required for any specific reason. In fact we expect and plan for
         // the timing being off significantly
         let elapsed = Instant::now() - loop_start;
-        if elapsed < LOOP_SPEED {
-            delay_for(LOOP_SPEED - elapsed).await;
+        if elapsed < ETH_ORACLE_LOOP_SPEED {
+            delay_for(ETH_ORACLE_LOOP_SPEED - elapsed).await;
         }
     }
 }
@@ -236,8 +236,8 @@ pub async fn eth_signer_main_loop(
         // this is not required for any specific reason. In fact we expect and plan for
         // the timing being off significantly
         let elapsed = Instant::now() - loop_start;
-        if elapsed < LOOP_SPEED {
-            delay_for(LOOP_SPEED - elapsed).await;
+        if elapsed < ETH_SIGNER_LOOP_SPEED {
+            delay_for(ETH_SIGNER_LOOP_SPEED - elapsed).await;
         }
     }
 }

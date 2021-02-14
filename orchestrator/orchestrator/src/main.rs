@@ -21,13 +21,15 @@ mod main_loop;
 mod oracle_resync;
 
 use crate::main_loop::orchestrator_main_loop;
-use crate::main_loop::LOOP_SPEED;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
+use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
+use std::cmp::min;
 use url::Url;
 use web30::client::Web3;
 
@@ -98,8 +100,12 @@ async fn main() {
     let fee_denom = args.flag_fees;
 
     let grpc_client = PeggyQueryClient::connect(cosmos_grpc_url).await.unwrap();
-    let web3 = Web3::new(&eth_url, LOOP_SPEED);
-    let contact = Contact::new(&cosmos_legacy_url, LOOP_SPEED);
+    let timeout = min(
+        min(ETH_SIGNER_LOOP_SPEED, ETH_ORACLE_LOOP_SPEED),
+        RELAYER_LOOP_SPEED,
+    );
+    let web3 = Web3::new(&eth_url, timeout);
+    let contact = Contact::new(&cosmos_legacy_url, timeout);
 
     let public_eth_key = ethereum_key
         .to_public_key()
