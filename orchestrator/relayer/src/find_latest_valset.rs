@@ -85,6 +85,7 @@ fn check_if_valsets_differ(cosmos_valset: Option<Valset>, ethereum_valset: &Vals
         return;
     } else if cosmos_valset.is_none() {
         error!("Cosmos does not have a valset for nonce {} but that is the one on the Ethereum chain! Possible bridge highjacking!", ethereum_valset.nonce);
+        return;
     }
     let cosmos_valset = cosmos_valset.unwrap();
     if cosmos_valset != *ethereum_valset {
