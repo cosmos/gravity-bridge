@@ -118,7 +118,5 @@ pub async fn relay_batches(
         if res.is_err() {
             info!("Batch submission failed with {:?}", res);
         }
-    } else {
-        error!("Failed to find latest valset with {:?}", current_valset);
     }
 }
