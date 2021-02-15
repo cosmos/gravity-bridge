@@ -323,29 +323,73 @@ pub struct MsgErc20DeployedClaim {
 pub struct MsgErc20DeployedClaimResponse {
 }
 # [doc = r" Generated client implementations."] pub mod msg_client { # ! [allow (unused_variables , dead_code , missing_docs)] use tonic :: codegen :: * ; pub struct MsgClient < T > { inner : tonic :: client :: Grpc < T > , } impl MsgClient < tonic :: transport :: Channel > { # [doc = r" Attempt to create a new client by connecting to a given endpoint."] pub async fn connect < D > (dst : D) -> Result < Self , tonic :: transport :: Error > where D : std :: convert :: TryInto < tonic :: transport :: Endpoint > , D :: Error : Into < StdError > , { let conn = tonic :: transport :: Endpoint :: new (dst) ? . connect () . await ? ; Ok (Self :: new (conn)) } } impl < T > MsgClient < T > where T : tonic :: client :: GrpcService < tonic :: body :: BoxBody > , T :: ResponseBody : Body + HttpBody + Send + 'static , T :: Error : Into < StdError > , < T :: ResponseBody as HttpBody > :: Error : Into < StdError > + Send , { pub fn new (inner : T) -> Self { let inner = tonic :: client :: Grpc :: new (inner) ; Self { inner } } pub fn with_interceptor (inner : T , interceptor : impl Into < tonic :: Interceptor >) -> Self { let inner = tonic :: client :: Grpc :: with_interceptor (inner , interceptor) ; Self { inner } } pub async fn valset_confirm (& mut self , request : impl tonic :: IntoRequest < super :: MsgValsetConfirm > ,) -> Result < tonic :: Response < super :: MsgValsetConfirmResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/peggy.v1.Msg/ValsetConfirm") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn send_to_eth (& mut self , request : impl tonic :: IntoRequest < super :: MsgSendToEth > ,) -> Result < tonic :: Response < super :: MsgSendToEthResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/peggy.v1.Msg/SendToEth") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn request_batch (& mut self , request : impl tonic :: IntoRequest < super :: MsgRequestBatch > ,) -> Result < tonic :: Response < super :: MsgRequestBatchResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/peggy.v1.Msg/RequestBatch") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn confirm_batch (& mut self , request : impl tonic :: IntoRequest < super :: MsgConfirmBatch > ,) -> Result < tonic :: Response < super :: MsgConfirmBatchResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/peggy.v1.Msg/ConfirmBatch") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn deposit_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgDepositClaim > ,) -> Result < tonic :: Response < super :: MsgDepositClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/peggy.v1.Msg/DepositClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn withdraw_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgWithdrawClaim > ,) -> Result < tonic :: Response < super :: MsgWithdrawClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/peggy.v1.Msg/WithdrawClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn erc20_deployed_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgErc20DeployedClaim > ,) -> Result < tonic :: Response < super :: MsgErc20DeployedClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/peggy.v1.Msg/ERC20DeployedClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn set_orchestrator_address (& mut self , request : impl tonic :: IntoRequest < super :: MsgSetOrchestratorAddress > ,) -> Result < tonic :: Response < super :: MsgSetOrchestratorAddressResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/peggy.v1.Msg/SetOrchestratorAddress") ; self . inner . unary (request . into_request () , path , codec) . await } } impl < T : Clone > Clone for MsgClient < T > { fn clone (& self) -> Self { Self { inner : self . inner . clone () , } } } impl < T > std :: fmt :: Debug for MsgClient < T > { fn fmt (& self , f : & mut std :: fmt :: Formatter < '_ >) -> std :: fmt :: Result { write ! (f , "MsgClient {{ ... }}") } } }/// Params represent the peggy genesis and store parameters
-/// PEGGYID: 
-/// a random 32 byte value to prevent signature reuse
-/// CONTRACTHASH: 
+/// peggy_id:
+/// a random 32 byte value to prevent signature reuse, for example if the
+/// cosmos validators decided to use the same Ethereum keys for another chain
+/// also running Peggy we would not want it to be possible to play a deposit
+/// from chain A back on chain B's peggy. This value IS USED ON ETHEREUM so
+/// it must be set in your genesis.json before launch and not changed after
+/// deploying Peggy
+///
+/// contract_hash:
 /// the code hash of a known good version of the Peggy contract
-/// solidity code. It will be used to verify exactly which version of the
-/// bridge will be deployed.
-/// STARTTHRESHOLD:
-/// the percentage of total voting power that must be online
-/// and participating in Peggy operations before a bridge can start operating
-/// BRIDGECONTRACTADDRESS: 
-/// is address of the bridge contract on the Ethereum side
-/// BRIDGECHAINID:
-/// the unique identifier of the Ethereum chain
+/// solidity code. This can be used to verify the correct version
+/// of the contract has been deployed. This is a reference value for
+/// goernance action only it is never read by any Peggy code
+///
+/// bridge_ethereum_address:
+/// is address of the bridge contract on the Ethereum side, this is a
+/// reference value for governance only and is not actually used by any
+/// Peggy code
+///
+/// bridge_chain_id:
+/// the unique identifier of the Ethereum chain, this is a reference value
+/// only and is not actually used by any Peggy code
+///
+/// These reference values may be used by future Peggy client implemetnations
+/// to allow for saftey features or convenience features like the peggy address
+/// in your relayer. A relayer would require a configured peggy address if
+/// governance had not set the address on the chain it was relaying for.
+///
+/// signed_valsets_window
+/// signed_batches_window
+/// signed_claims_window
+///
+/// These values represent the time in blocks that a validator has to submit
+/// a signature for a batch or valset, or to submit a claim for a particular
+/// attestation nonce. In the case of attestations this clock starts when the
+/// attestation is created, but only allows for slashing once the event has passed
+///
+/// target_batch_timeout:
+///
+/// This is the 'target' value for when batches time out, this is a target becuase
+/// Ethereum is a probabalistic chain and you can't say for sure what the block
+/// frequency is ahead of time.
+///
+/// average_block_time
+/// average_ethereum_block_time
+///
+/// These values are the average Cosmos block time and Ethereum block time repsectively
+/// and they are used to copute what the target batch timeout is. It is important that
+/// governance updates these in case of any major, prolonged change in the time it takes
+/// to produce a block
+///
+/// slash_fraction_valset
+/// slash_fraction_batch
+/// slash_fraction_claim
+/// slash_fraction_conflicting_claim
+///
+/// The slashing fractions for the various peggy related slashing conditions. The first three
+/// refer to not submitting a particular message, the third for submitting a different claim
+/// for the same Ethereum event
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Params {
     #[prost(string, tag="1")]
     pub peggy_id: std::string::String,
     #[prost(string, tag="2")]
     pub contract_source_hash: std::string::String,
-    #[prost(uint64, tag="3")]
-    pub start_threshold: u64,
     #[prost(string, tag="4")]
-    pub ethereum_address: std::string::String,
+    pub bridge_ethereum_address: std::string::String,
     #[prost(uint64, tag="5")]
     pub bridge_chain_id: u64,
     #[prost(uint64, tag="6")]
@@ -384,6 +428,8 @@ pub struct GenesisState {
     pub batch_confirms: ::std::vec::Vec<MsgConfirmBatch>,
     #[prost(message, repeated, tag="6")]
     pub attestations: ::std::vec::Vec<Attestation>,
+    #[prost(message, repeated, tag="7")]
+    pub delegate_keys: ::std::vec::Vec<MsgSetOrchestratorAddress>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryParamsRequest {

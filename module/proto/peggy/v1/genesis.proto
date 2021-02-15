@@ -100,12 +100,14 @@ message Params {
   ];
 }
 
+
 // GenesisState struct
 message GenesisState {
-  Params                    params          = 1;
-  repeated Valset           valsets         = 2;
-  repeated MsgValsetConfirm valset_confirms = 3;
-  repeated OutgoingTxBatch  batches         = 4;
-  repeated MsgConfirmBatch  batch_confirms  = 5 [(gogoproto.nullable) = false];
-  repeated Attestation      attestations    = 6 [(gogoproto.nullable) = false];
+  Params                             params          = 1;
+  repeated Valset                    valsets         = 2;
+  repeated MsgValsetConfirm          valset_confirms = 3;
+  repeated OutgoingTxBatch           batches         = 4;
+  repeated MsgConfirmBatch           batch_confirms  = 5 [(gogoproto.nullable) = false];
+  repeated Attestation               attestations    = 6 [(gogoproto.nullable) = false];
+  repeated MsgSetOrchestratorAddress delegate_keys = 7;
 }

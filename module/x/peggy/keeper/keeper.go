@@ -256,6 +256,22 @@ func (k Keeper) GetBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce ui
 }
 
 /////////////////////////////
+//    ADDRESS DELEGATION   //
+/////////////////////////////
+
+// SetOrchestratorValidator sets the Orchestrator key for a given validator
+func (k Keeper) SetOrchestratorValidator(ctx sdk.Context, val sdk.ValAddress, orch sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetOrchestratorAddressKey(orch), val.Bytes())
+}
+
+// GetOrchestratorValidator returns the validator key associated with an orchestrator key
+func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) sdk.ValAddress {
+	store := ctx.KVStore(k.storeKey)
+	return sdk.ValAddress(store.Get(types.GetOrchestratorAddressKey(orch)))
+}
+
+/////////////////////////////
 //       ETH ADDRESS       //
 /////////////////////////////
 
@@ -306,22 +322,6 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 
 	// TODO: make the nonce an incrementing one (i.e. fetch last nonce from state, increment, set here)
 	return types.NewValset(uint64(ctx.BlockHeight()), uint64(ctx.BlockHeight()), bridgeValidators)
-}
-
-/////////////////////////////
-//    ADDRESS DELEGATION   //
-/////////////////////////////
-
-// SetOrchestratorValidator sets the Orchestrator key for a given validator
-func (k Keeper) SetOrchestratorValidator(ctx sdk.Context, val sdk.ValAddress, orch sdk.AccAddress) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOrchestratorAddressKey(orch), val.Bytes())
-}
-
-// GetOrchestratorValidator returns the validator key associated with an orchestrator key
-func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) sdk.ValAddress {
-	store := ctx.KVStore(k.storeKey)
-	return sdk.ValAddress(store.Get(types.GetOrchestratorAddressKey(orch)))
 }
 
 /////////////////////////////
@@ -390,6 +390,78 @@ func (k Keeper) UnpackAttestationClaim(att *types.Attestation) (types.EthereumCl
 	} else {
 		return msg, nil
 	}
+}
+
+// GetDelegateKeys iterates both the EthAddress and Orchestrator address indexes to produce
+// a vector of MsgSetOrchestratorAddress entires containing all the delgate keys for state
+// export / import. This may seem at first glance to be excessively complicated, why not combine
+// the EthAddress and Orchestrator address indexes and simply iterate one thing? The answer is that
+// even though we set the Eth and Orchestrator address in the same place we use them differently we
+// always go from Orchestrator address to Validator address and from validator address to Ethereum address
+// we want to keep looking up the validator address for various reasons, so a direct Orchestrator to Ethereum
+// address mapping will mean having to keep two of the same data around just to provide lookups.
+//
+// For the time being this will serve
+func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddress {
+	store := ctx.KVStore(k.storeKey)
+	prefix := []byte(types.EthAddressKey)
+	iter := store.Iterator(prefixRange(prefix))
+	defer iter.Close()
+
+	ethAddresses := make(map[string]string)
+
+	for ; iter.Valid(); iter.Next() {
+		// the 'key' contains both the prefix and the value, so we need
+		// to cut off the starting bytes, if you don't do this a valid
+		// cosmos key will be made out of EthAddressKey + the startin bytes
+		// of the actual key
+		key := iter.Key()[len(types.EthAddressKey):]
+		value := iter.Value()
+		ethAddress := string(value)
+		valAddress := sdk.ValAddress(key)
+		ethAddresses[valAddress.String()] = ethAddress
+	}
+
+	store = ctx.KVStore(k.storeKey)
+	prefix = []byte(types.KeyOrchestratorAddress)
+	iter = store.Iterator(prefixRange(prefix))
+	defer iter.Close()
+
+	orchAddresses := make(map[string]string)
+
+	for ; iter.Valid(); iter.Next() {
+		key := iter.Key()[len(types.KeyOrchestratorAddress):]
+		value := iter.Value()
+		orchAddress := sdk.AccAddress(key).String()
+		valAddress := sdk.ValAddress(value)
+		orchAddresses[valAddress.String()] = orchAddress
+	}
+
+	var result []*types.MsgSetOrchestratorAddress
+
+	for valAddr, ethAddr := range ethAddresses {
+		orch, ok := orchAddresses[valAddr]
+		if !ok {
+			// this should never happen unless the store
+			// is somehow inconsistent
+			panic("Can't find address")
+		}
+		result = append(result, &types.MsgSetOrchestratorAddress{
+			Orchestrator: orch,
+			Validator:    valAddr,
+			EthAddress:   ethAddr,
+		})
+
+	}
+
+	// we iterated over a map, so now we have to sort to ensure the
+	// output here is deterministic, eth address chosen for no particular
+	// reason
+	sort.Slice(result[:], func(i, j int) bool {
+		return result[i].EthAddress < result[j].EthAddress
+	})
+
+	return result
 }
 
 // prefixRange turns a prefix into a (start, end) range. The start is the given prefix value and

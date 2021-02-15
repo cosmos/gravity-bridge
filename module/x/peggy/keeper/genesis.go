@@ -40,6 +40,20 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// TODO: block height?
 		k.SetAttestationUnsafe(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
 	}
+
+	// reset delegate keys in state
+	for _, keys := range data.DelegateKeys {
+		err := keys.ValidateBasic()
+		if err != nil {
+			panic("Invalid delegate key in Genesis!")
+		}
+		val, _ := sdk.ValAddressFromBech32(keys.Validator)
+		orch, _ := sdk.AccAddressFromBech32(keys.Orchestrator)
+		// set the orchestrator address
+		k.SetOrchestratorValidator(ctx, val, orch)
+		// set the ethereum address
+		k.SetEthAddress(ctx, val, keys.EthAddress)
+	}
 }
 
 // ExportGenesis exports all the state needed to restart the chain
@@ -53,6 +67,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		vsconfs      = []*types.MsgValsetConfirm{}
 		batchconfs   = []types.MsgConfirmBatch{}
 		attestations = []types.Attestation{}
+		delegates    = k.GetDelegateKeys(ctx)
 	)
 
 	// export valset confirmations from state
@@ -80,5 +95,6 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		Batches:        batches,
 		BatchConfirms:  batchconfs,
 		Attestations:   attestations,
+		DelegateKeys:   delegates,
 	}
 }

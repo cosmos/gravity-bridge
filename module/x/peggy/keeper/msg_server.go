@@ -47,7 +47,7 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 	// set the orchestrator address
 	k.SetOrchestratorValidator(ctx, val, orch)
 	// set the ethereum address
-	k.Keeper.SetEthAddress(ctx, val, msg.EthAddress)
+	k.SetEthAddress(ctx, val, msg.EthAddress)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
