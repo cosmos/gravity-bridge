@@ -182,7 +182,10 @@ async fn get_last_event_nonce_with_retry(
 ) -> u64 {
     let mut res = get_last_event_nonce(client, our_cosmos_address).await;
     while res.is_err() {
-        error!("Failed to get last event nonce, is the Cosmos GRPC working?");
+        error!(
+            "Failed to get last event nonce, is the Cosmos GRPC working? {:?}",
+            res
+        );
         delay_for(RETRY_TIME).await;
         res = get_last_event_nonce(client, our_cosmos_address).await;
     }
