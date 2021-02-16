@@ -36,9 +36,36 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
-
-		// TODO: block height?
 		k.SetAttestationUnsafe(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
+	}
+	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
+
+	// reset attestation state of specific validators
+	// this must be done after the above to be correct
+	for _, att := range data.Attestations {
+		claim, err := k.UnpackAttestationClaim(&att)
+		if err != nil {
+			panic("couldn't cast to claim")
+		}
+		// reconstruct the latest event nonce for every validator
+		// if somehow this genesis state is saved when all attestations
+		// have been cleaned up GetLastEventNonceByValidator handles that case
+		//
+		// if we where to save and load the last event nonce for every validator
+		// then we would need to carry that state forever across all chain restarts
+		// but since we've already had to handle the edge case of new validators joining
+		// while all attestations have already been cleaned up we can do this instead and
+		// not carry around every validators event nonce counter forever.
+		for _, vote := range att.Votes {
+			val, err := sdk.ValAddressFromBech32(vote)
+			if err != nil {
+				panic(err)
+			}
+			last := k.GetLastEventNonceByValidator(ctx, val)
+			if claim.GetEventNonce() > last {
+				k.setLastEventNonceByValidator(ctx, val, claim.GetEventNonce())
+			}
+		}
 	}
 
 	// reset delegate keys in state
@@ -68,6 +95,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		batchconfs   = []types.MsgConfirmBatch{}
 		attestations = []types.Attestation{}
 		delegates    = k.GetDelegateKeys(ctx)
+		lastobserved = k.GetLastObservedEventNonce(ctx)
 	)
 
 	// export valset confirmations from state
@@ -89,12 +117,13 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	}
 
 	return types.GenesisState{
-		Params:         &p,
-		Valsets:        valsets,
-		ValsetConfirms: vsconfs,
-		Batches:        batches,
-		BatchConfirms:  batchconfs,
-		Attestations:   attestations,
-		DelegateKeys:   delegates,
+		Params:            &p,
+		LastObservedNonce: lastobserved,
+		Valsets:           valsets,
+		ValsetConfirms:    vsconfs,
+		Batches:           batches,
+		BatchConfirms:     batchconfs,
+		Attestations:      attestations,
+		DelegateKeys:      delegates,
 	}
 }
