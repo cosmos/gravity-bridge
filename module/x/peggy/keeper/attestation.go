@@ -80,8 +80,10 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 				k.setLastObservedEventNonce(ctx, claim.GetEventNonce())
 				k.SetLastObservedEthereumBlockHeight(ctx, claim.GetBlockHeight())
 
-				k.processAttestation(ctx, att, claim)
 				att.Observed = true
+				k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), att)
+
+				k.processAttestation(ctx, att, claim)
 				k.emitObservedEvent(ctx, att, claim)
 				break
 			}
