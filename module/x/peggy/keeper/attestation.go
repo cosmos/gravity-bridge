@@ -136,13 +136,6 @@ func (k Keeper) SetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []b
 	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
 }
 
-// SetAttestationUnsafe sets the attestation w/o setting height and claim hash
-func (k Keeper) SetAttestationUnsafe(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
-	store := ctx.KVStore(k.storeKey)
-	aKey := types.GetAttestationKeyWithHash(eventNonce, claimHash)
-	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
-}
-
 // GetAttestation return an attestation given a nonce
 func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte) *types.Attestation {
 	store := ctx.KVStore(k.storeKey)

@@ -36,7 +36,9 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
-		k.SetAttestationUnsafe(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
+
+		// TODO: block height?
+		k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
 	}
 	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
 
