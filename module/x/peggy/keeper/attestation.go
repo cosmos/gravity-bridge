@@ -71,6 +71,15 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 			// If the power of all the validators that have voted on the attestation is higher or equal to the threshold,
 			// process the attestation, set Observed to true, and break
 			if attestationPower.GTE(requiredPower) {
+				lastEventNonce := k.GetLastObservedEventNonce(ctx)
+				// this check is performed at the next level up so this should never panic
+				// outside of programmer error.
+				if claim.GetEventNonce() != uint64(lastEventNonce)+1 {
+					panic("attempting to apply events to state out of order")
+				}
+				k.setLastObservedEventNonce(ctx, claim.GetEventNonce())
+				k.SetLastObservedEthereumBlockHeight(ctx, claim.GetBlockHeight())
+
 				k.processAttestation(ctx, att, claim)
 				att.Observed = true
 				k.emitObservedEvent(ctx, att, claim)
@@ -85,15 +94,6 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 
 // processAttestation actually applies the attestation to the consensus state
 func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
-	lastEventNonce := k.GetLastObservedEventNonce(ctx)
-	// this check is performed at the next level up so this should never panic
-	// outside of programmer error.
-	if claim.GetEventNonce() != uint64(lastEventNonce)+1 {
-		panic("attempting to apply events to state out of order")
-	}
-	k.setLastObservedEventNonce(ctx, claim.GetEventNonce())
-	k.SetLastObservedEthereumBlockHeight(ctx, claim.GetBlockHeight())
-
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
 	if err := k.AttestationHandler.Handle(xCtx, *att, claim); err != nil { // execute with a transient storage
