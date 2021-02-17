@@ -76,6 +76,10 @@ pub fn one_eth() -> Uint256 {
     1000000000000000000u128.into()
 }
 
+pub fn one_hundred_eth() -> Uint256 {
+    (1000000000000000000u128 * 100).into()
+}
+
 pub fn should_deploy_contracts() -> bool {
     match env::var("DEPLOY_CONTRACTS") {
         Ok(s) => s == "1" || s.to_lowercase() == "yes" || s.to_lowercase() == "true",

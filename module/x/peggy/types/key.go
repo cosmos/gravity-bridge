@@ -204,10 +204,15 @@ func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.A
 // prefix            eth-contract-address            fee_amount
 // [0x9][0xc783df8a850f42e7F7e57013759C285caa701eB6][1000000000]
 func GetFeeSecondIndexKey(tokenContract string, fee sdk.Coin) []byte {
-	r := make([]byte, 1+ETHContractAddressLen+8)
+	r := make([]byte, 1+ETHContractAddressLen+32)
+	// sdkInts have a size limit of 255 bits or 32 bytes
+	// therefore this will never panic and is always safe
+	amount := make([]byte, 32)
+	amount = fee.Amount.BigInt().FillBytes(amount)
+	// TODO this won't ever work fix it
 	copy(r[0:], SecondIndexOutgoingTXFeeKey)
-	copy(r[len(SecondIndexOutgoingTXFeeKey):], tokenContract)
-	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(tokenContract):], sdk.Uint64ToBigEndian(fee.Amount.Uint64()))
+	copy(r[len(SecondIndexOutgoingTXFeeKey):], []byte(tokenContract))
+	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(tokenContract):], amount)
 	return r
 }
 

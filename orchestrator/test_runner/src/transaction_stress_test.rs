@@ -1,4 +1,7 @@
-use crate::{get_fee, get_test_token_name, one_eth, utils::*, COSMOS_NODE_GRPC, TOTAL_TIMEOUT};
+use crate::{
+    get_fee, get_test_token_name, one_eth, one_hundred_eth, utils::*, COSMOS_NODE_GRPC,
+    TOTAL_TIMEOUT,
+};
 use actix::{clock::delay_for, Arbiter};
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
@@ -107,8 +110,8 @@ pub async fn transaction_stress_test(
 
     // now we need to send all the sending eth addresses erc20's to send
     for token in erc20_addresses.iter() {
-        send_erc20_bulk(one_eth(), *token, &sending_eth_addresses, web30).await;
-        info!("Sent {} addresses 1 {}", NUM_USERS, token);
+        send_erc20_bulk(one_hundred_eth(), *token, &sending_eth_addresses, web30).await;
+        info!("Sent {} addresses 100 {}", NUM_USERS, token);
     }
     for token in erc20_addresses.iter() {
         let mut sends = Vec::new();
@@ -116,7 +119,7 @@ pub async fn transaction_stress_test(
             let fut = send_to_cosmos(
                 *token,
                 peggy_address,
-                one_eth(),
+                one_hundred_eth(),
                 keys.cosmos_address,
                 keys.eth_key,
                 Some(TIMEOUT),
@@ -137,7 +140,7 @@ pub async fn transaction_stress_test(
             result.block_number.unwrap();
         }
         info!(
-            "Locked 1 {} from {} into the Gravity Ethereum Contract",
+            "Locked 100 {} from {} into the Gravity Ethereum Contract",
             token, NUM_USERS
         );
     }
@@ -152,7 +155,9 @@ pub async fn transaction_stress_test(
             for token in erc20_addresses.iter() {
                 let mut found = false;
                 for balance in balances.iter() {
-                    if balance.denom.contains(&token.to_string()) && balance.amount == one_eth() {
+                    if balance.denom.contains(&token.to_string())
+                        && balance.amount == one_hundred_eth()
+                    {
                         found = true;
                     }
                 }
@@ -177,7 +182,7 @@ pub async fn transaction_stress_test(
         );
     }
 
-    let send_amount = one_eth() - 500u16.into();
+    let send_amount = one_hundred_eth() - 500u16.into();
 
     let mut denoms = HashSet::new();
     for token in erc20_addresses.iter() {

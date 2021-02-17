@@ -12,20 +12,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//TODO-JT: need to update this stuff to stop using claims
 func TestHandleMsgSendToEth(t *testing.T) {
 	var (
-		userCosmosAddr, _            = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
-		blockTime                    = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
-		blockHeight        int64     = 200
-		denom                        = "peggy0xB5E9944950C97acab395a324716D186632789712"
-		startingCoinAmount sdk.Int   = sdk.NewIntFromUint64(150)
-		sendAmount         sdk.Int   = sdk.NewIntFromUint64(50)
-		feeAmount          sdk.Int   = sdk.NewIntFromUint64(5)
-		startingCoins      sdk.Coins = sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}
-		sendingCoin        sdk.Coin  = sdk.NewCoin(denom, sendAmount)
-		feeCoin            sdk.Coin  = sdk.NewCoin(denom, feeAmount)
-		ethDestination               = "0x3c9289da00b02dC623d0D8D907619890301D26d4"
+		userCosmosAddr, _               = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
+		blockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+		blockHeight           int64     = 200
+		denom                           = "peggy0xB5E9944950C97acab395a324716D186632789712"
+		startingCoinAmount, _           = sdk.NewIntFromString("150000000000000000000") // 150 ETH worth, required to reach above u64 limit (which is about 18 ETH)
+		sendAmount, _                   = sdk.NewIntFromString("50000000000000000000")  // 50 ETH
+		feeAmount, _                    = sdk.NewIntFromString("5000000000000000000")   // 5 ETH
+		startingCoins         sdk.Coins = sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}
+		sendingCoin           sdk.Coin  = sdk.NewCoin(denom, sendAmount)
+		feeCoin               sdk.Coin  = sdk.NewCoin(denom, feeAmount)
+		ethDestination                  = "0x3c9289da00b02dC623d0D8D907619890301D26d4"
 	)
 
 	// we start by depositing some funds into the users balance to send
@@ -75,7 +74,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance4)
 }
 
-func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
+func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	var (
 		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
 		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
@@ -84,6 +83,8 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 		anyETHAddr                        = "0xf9613b532673Cc223aBa451dFA8539B87e1F666D"
 		tokenETHAddr                      = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
 		myBlockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+		amountA, _                        = sdk.NewIntFromString("50000000000000000000")  // 50 ETH
+		amountB, _                        = sdk.NewIntFromString("100000000000000000000") // 100 ETH
 	)
 	input := keeper.CreateTestEnv(t)
 	ctx := input.Context
@@ -92,7 +93,7 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	h := NewHandler(input.PeggyKeeper)
 
 	myErc20 := types.ERC20Token{
-		Amount:   sdk.NewInt(12),
+		Amount:   amountA,
 		Contract: tokenETHAddr,
 	}
 
@@ -116,7 +117,7 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	require.NotNil(t, a)
 	// and vouchers added to the account
 	balance := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to reject duplicate deposit
 	// when
@@ -126,13 +127,13 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	// then
 	require.Error(t, err)
 	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to reject skipped nonce
 	ethClaim = types.MsgDepositClaim{
 		EventNonce:     uint64(3),
 		TokenContract:  tokenETHAddr,
-		Amount:         sdk.NewInt(12),
+		Amount:         amountA,
 		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
 		Orchestrator:   myOrchestratorAddr.String(),
@@ -145,12 +146,12 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	// then
 	require.Error(t, err)
 	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to finally accept consecutive nonce
 	ethClaim = types.MsgDepositClaim{
 		EventNonce:     uint64(2),
-		Amount:         sdk.NewInt(13),
+		Amount:         amountA,
 		TokenContract:  tokenETHAddr,
 		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
@@ -165,10 +166,10 @@ func TestHandleCreateEthereumClaimsSingleValidator(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 25)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountB)}, balance)
 }
 
-func TestHandleCreateEthereumClaimsMultiValidator(t *testing.T) {
+func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	var (
 		orchestratorAddr1, _ = sdk.AccAddressFromBech32("cosmos1dg55rtevlfxh46w88yjpdd08sqhh5cc3xhkcej")
 		orchestratorAddr2, _ = sdk.AccAddressFromBech32("cosmos164knshrzuuurf05qxf3q5ewpfnwzl4gj4m4dfy")

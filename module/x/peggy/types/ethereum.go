@@ -52,6 +52,10 @@ func NewERC20Token(amount uint64, contract string) *ERC20Token {
 	return &ERC20Token{Amount: sdk.NewIntFromUint64(amount), Contract: contract}
 }
 
+func NewSDKIntERC20Token(amount sdk.Int, contract string) *ERC20Token {
+	return &ERC20Token{Amount: amount, Contract: contract}
+}
+
 // PeggyCoin returns the peggy representation of the ERC20
 func (e *ERC20Token) PeggyCoin() sdk.Coin {
 	return sdk.NewCoin(PeggyDenom(e.Contract), e.Amount)

@@ -124,8 +124,8 @@ func (k Keeper) pickUnbatchedTX(ctx sdk.Context, contractAddress string, maxElem
 			Id:          txID,
 			Sender:      tx.Sender,
 			DestAddress: tx.DestAddr,
-			Erc20Token:  types.NewERC20Token(tx.Amount.Amount.Uint64(), contractAddress),
-			Erc20Fee:    types.NewERC20Token(tx.BridgeFee.Amount.Uint64(), contractAddress),
+			Erc20Token:  types.NewSDKIntERC20Token(tx.Amount.Amount, contractAddress),
+			Erc20Fee:    types.NewSDKIntERC20Token(tx.BridgeFee.Amount, contractAddress),
 		}
 		selectedTx = append(selectedTx, txOut)
 		err = k.removeFromUnbatchedTXIndex(ctx, contractAddress, tx.BridgeFee, txID)
