@@ -46,7 +46,7 @@ pub async fn relay_batches(
                 oldest_signatures = Some(sigs);
             } else {
                 warn!(
-                    "Batch {}/{} can not be submitted yet, waiting for validator set update",
+                    "Batch {}/{} can not be submitted yet, waiting for more signatures",
                     batch.token_contract, batch.nonce
                 );
             }

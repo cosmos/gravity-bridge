@@ -193,7 +193,7 @@ impl Valset {
                 Valset {} has {}/{} or {:.2}% power voting! Can not execute on Ethereum!
                 {}/{} validators have unset Ethereum keys representing {}/{} or {:.2}% of the power required
                 {}/{} validators have Ethereum keys set but have not voted representing {}/{} or {:.2}% of the power required
-                The bridge will remain halted until this issue is resolved.",
+                This valset probably just needs to accumulate signatures for a moment.",
                 new_valset_nonce,
                 power_of_good_sigs,
                 TOTAL_PEGGY_POWER,
@@ -283,7 +283,7 @@ impl Valset {
                 Batch {} for token {} has {}/{} or {:.2}% power voting! Can not execute on Ethereum!
                 {}/{} validators have unset Ethereum keys representing {}/{} or {:.2}% of the power required
                 {}/{} validators have Ethereum keys set but have not voted representing {}/{} or {:.2}% of the power required
-                The bridge will remain halted until this issue is resolved.",
+                This batch probably just needs to accumulate signatures, for a moment.",
                 batch_nonce,
                 batch_erc20,
                 power_of_good_sigs,
@@ -300,7 +300,7 @@ impl Valset {
                 TOTAL_PEGGY_POWER,
                 peggy_power_to_percent(power_of_nonvoters),
             );
-            error!("{}", message);
+            warn!("{}", message);
             Err(PeggyError::InsufficientVotingPowerToPass(message))
         } else {
             Ok(out)

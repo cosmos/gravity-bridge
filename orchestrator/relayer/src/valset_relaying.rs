@@ -51,6 +51,8 @@ pub async fn relay_valsets(
     let mut latest_nonce = latest_valsets[0].nonce;
     let mut latest_confirmed = None;
     let mut latest_valset = None;
+    // this is used to display the state of the last validator set to fail signature checks
+    let mut last_error = None;
     while latest_nonce > 0 {
         let valset = get_valset(grpc_client, latest_nonce).await;
         if let Ok(Some(valset)) = valset {
@@ -59,11 +61,14 @@ pub async fn relay_valsets(
                 // order valset sigs prepares signatures for submission, notice we compare
                 // them to the 'current' set in the bridge, this confirms for us that the validator set
                 // we have here can be submitted to the bridge in it's current state
-                if current_valset.order_valset_sigs(&confirms).is_ok() {
+                let res = current_valset.order_valset_sigs(&confirms);
+                if res.is_ok() {
                     latest_confirmed = Some(confirms);
                     latest_valset = Some(valset);
                     // once we have the latest validator set we can submit exit
                     break;
+                } else if let Err(e) = res {
+                    last_error = Some(e);
                 }
             }
         }
@@ -75,8 +80,18 @@ pub async fn relay_valsets(
         error!("We don't have a latest confirmed valset?");
         return;
     }
-    let latest_cosmos_confirmed = latest_confirmed.unwrap();
+    // the latest cosmos validator set that it is possible to submit given the constraints
+    // of the validator set currently in the bridge
     let latest_cosmos_valset = latest_valset.unwrap();
+    // the signatures for the above
+    let latest_cosmos_confirmed = latest_confirmed.unwrap();
+
+    // this will print a message indicating the signing state of the latest validator
+    // set if the latest available validator set is not the latest one that is possible
+    // to submit. AKA if the bridge is behind where it should be
+    if latest_nonce > latest_cosmos_valset.nonce && last_error.is_some() {
+        warn!("{:?}", last_error)
+    }
 
     let latest_cosmos_valset_nonce = latest_cosmos_valset.nonce;
     if latest_cosmos_valset_nonce > current_valset.nonce {
