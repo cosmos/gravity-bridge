@@ -5,9 +5,7 @@ use deep_space::coin::Coin;
 use deep_space::msg::DeepSpaceMsg;
 use ethereum_peggy::utils::downcast_uint256;
 use num256::Uint256;
-use peggy_utils::types::{
-    ERC20DeployedEvent, ERC20Token, SendToCosmosEvent, TransactionBatchExecutedEvent,
-};
+use peggy_utils::types::{ERC20DeployedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent};
 /// Any arbitrary message
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 #[serde(tag = "type", content = "value")]
@@ -26,9 +24,6 @@ pub enum PeggyMsg {
 
     #[serde(rename = "peggy/MsgConfirmBatch")]
     ConfirmBatchMsg(ConfirmBatchMsg),
-
-    #[serde(rename = "peggy/MsgCreateEthereumClaims")]
-    CreateEthereumClaimsMsg(CreateEthereumClaimsMsg),
 
     #[serde(rename = "peggy/MsgDepositClaim")]
     DepositClaimMsg(DepositClaimMsg),
@@ -98,72 +93,6 @@ pub struct ConfirmBatchMsg {
     /// a hex encoded string representing the Ethereum signature
     #[serde(rename = "signature")]
     pub eth_signature: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
-pub struct EthereumBridgeDepositClaim {
-    #[serde(rename = "nonce")]
-    pub event_nonce: Uint256,
-    pub erc20_token: ERC20Token,
-    pub ethereum_sender: EthAddress,
-    pub cosmos_receiver: Address,
-}
-
-impl EthereumBridgeDepositClaim {
-    pub fn from_event(input: SendToCosmosEvent) -> Self {
-        EthereumBridgeDepositClaim {
-            erc20_token: ERC20Token {
-                amount: input.amount,
-                token_contract_address: input.erc20,
-            },
-            ethereum_sender: input.sender,
-            cosmos_receiver: input.destination,
-            event_nonce: input.event_nonce,
-        }
-    }
-    // used for enum typing
-    pub fn into_enum(self) -> EthereumBridgeClaim {
-        EthereumBridgeClaim::EthereumBridgeDepositClaim(self)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
-pub struct EthereumBridgeWithdrawBatchClaim {
-    pub batch_nonce: Uint256,
-    pub event_nonce: Uint256,
-    pub erc20_token: EthAddress,
-}
-
-impl EthereumBridgeWithdrawBatchClaim {
-    pub fn from_event(input: TransactionBatchExecutedEvent) -> Self {
-        EthereumBridgeWithdrawBatchClaim {
-            batch_nonce: input.batch_nonce,
-            event_nonce: input.event_nonce,
-            erc20_token: input.erc20,
-        }
-    }
-    // used for enum typing
-    pub fn into_enum(self) -> EthereumBridgeClaim {
-        EthereumBridgeClaim::EthereumBridgeWithdrawBatchClaim(self)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
-#[serde(tag = "type", content = "value")]
-pub enum EthereumBridgeClaim {
-    #[serde(rename = "peggy/DepositClaim")]
-    EthereumBridgeDepositClaim(EthereumBridgeDepositClaim),
-    #[serde(rename = "peggy/WithdrawClaim")]
-    EthereumBridgeWithdrawBatchClaim(EthereumBridgeWithdrawBatchClaim),
-}
-
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
-pub struct CreateEthereumClaimsMsg {
-    pub ethereum_chain_id: Uint256,
-    pub bridge_contract_address: EthAddress,
-    pub orchestrator: Address,
-    pub deposits: Vec<EthereumBridgeClaim>,
-    pub withdraws: Vec<EthereumBridgeClaim>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
