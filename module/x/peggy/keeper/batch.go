@@ -128,7 +128,7 @@ func (k Keeper) pickUnbatchedTX(ctx sdk.Context, contractAddress string, maxElem
 			Erc20Fee:    types.NewERC20Token(tx.BridgeFee.Amount.Uint64(), contractAddress),
 		}
 		selectedTx = append(selectedTx, txOut)
-		err = k.removeFromUnbatchedTXIndex(ctx, tx.BridgeFee, txID)
+		err = k.removeFromUnbatchedTXIndex(ctx, contractAddress, tx.BridgeFee, txID)
 		return err != nil || len(selectedTx) == maxElements
 	})
 	return selectedTx, err
@@ -160,7 +160,7 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract string, non
 	}
 	for _, tx := range batch.Transactions {
 		tx.Erc20Fee.Contract = tokenContract
-		k.prependToUnbatchedTXIndex(ctx, tx.Erc20Fee.PeggyCoin(), tx.Id)
+		k.prependToUnbatchedTXIndex(ctx, tokenContract, tx.Erc20Fee.PeggyCoin(), tx.Id)
 	}
 
 	// Delete batch since it is finished

@@ -23,7 +23,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	// If the coin is a peggy voucher, burn the coins. If not, check if there is a deployed ERC20 contract representing it.
 	// If there is, lock the coins.
 
-	isCosmosOriginated, _, err := k.DenomToERC20(ctx, totalAmount.Denom)
+	isCosmosOriginated, tokenContract, err := k.DenomToERC20(ctx, totalAmount.Denom)
 	if err != nil {
 		return 0, err
 	}
@@ -64,7 +64,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	}
 
 	// add a second index with the fee
-	k.appendToUnbatchedTXIndex(ctx, fee, nextID)
+	k.appendToUnbatchedTXIndex(ctx, tokenContract, fee, nextID)
 
 	// todo: add second index for sender so that we can easily query: give pending Tx by sender
 	// todo: what about a second index for receiver?
@@ -83,9 +83,9 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 }
 
 // appendToUnbatchedTXIndex add at the end when tx with same fee exists
-func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID uint64) {
+func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee sdk.Coin, txID uint64) {
 	store := ctx.KVStore(k.storeKey)
-	idxKey := types.GetFeeSecondIndexKey(fee)
+	idxKey := types.GetFeeSecondIndexKey(tokenContract, fee)
 	var idSet types.IDSet
 	if store.Has(idxKey) {
 		bz := store.Get(idxKey)
@@ -96,9 +96,9 @@ func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID uin
 }
 
 // appendToUnbatchedTXIndex add at the top when tx with same fee exists
-func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID uint64) {
+func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee sdk.Coin, txID uint64) {
 	store := ctx.KVStore(k.storeKey)
-	idxKey := types.GetFeeSecondIndexKey(fee)
+	idxKey := types.GetFeeSecondIndexKey(tokenContract, fee)
 	var idSet types.IDSet
 	if store.Has(idxKey) {
 		bz := store.Get(idxKey)
@@ -109,9 +109,9 @@ func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID ui
 }
 
 // removeFromUnbatchedTXIndex removes the tx from the index and makes it implicit no available anymore
-func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, fee sdk.Coin, txID uint64) error {
+func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee sdk.Coin, txID uint64) error {
 	store := ctx.KVStore(k.storeKey)
-	idxKey := types.GetFeeSecondIndexKey(fee)
+	idxKey := types.GetFeeSecondIndexKey(tokenContract, fee)
 	var idSet types.IDSet
 	bz := store.Get(idxKey)
 	if bz == nil {
