@@ -176,9 +176,6 @@ func (msg MsgRequestBatch) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
-	if _, err := ERC20FromPeggyCoin(sdk.NewInt64Coin(msg.Denom, 0)); err != nil {
-		return sdkerrors.Wrapf(ErrInvalid, "invalid denom: %s", err)
-	}
 	return nil
 }
 
