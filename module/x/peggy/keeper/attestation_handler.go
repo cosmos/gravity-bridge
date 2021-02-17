@@ -69,10 +69,10 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		}
 
 		// Check if attributes of ERC20 match Cosmos denom
-		if claim.Name != metadata.Description {
+		if claim.Name != metadata.Display {
 			return sdkerrors.Wrap(
 				types.ErrInvalid,
-				fmt.Sprintf("ERC20 name %s does not match denom description %s", claim.Name, metadata.Description))
+				fmt.Sprintf("ERC20 name %s does not match denom display %s", claim.Name, metadata.Description))
 		}
 
 		if claim.Symbol != metadata.Display {
@@ -102,7 +102,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 			}
 		}
 
-		if decimals != uint32(metadata.DenomUnits[0].Exponent) {
+		if decimals != uint32(claim.Decimals) {
 			return sdkerrors.Wrap(
 				types.ErrInvalid,
 				fmt.Sprintf("ERC20 decimals %d does not match denom decimals %d", claim.Decimals, decimals))

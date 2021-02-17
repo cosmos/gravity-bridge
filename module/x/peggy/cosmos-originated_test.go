@@ -6,6 +6,7 @@ import (
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -56,6 +57,17 @@ func initializeTestingVars(t *testing.T) *testingVars {
 }
 
 func addDenomToERC20Relation(tv *testingVars) {
+	tv.input.BankKeeper.SetDenomMetaData(tv.ctx, bank.Metadata{
+		Description: "The native staking token of the Cosmos Hub.",
+		DenomUnits: []*bank.DenomUnit{
+			{Denom: "uatom", Exponent: uint32(0), Aliases: []string{"microatom"}},
+			{Denom: "matom", Exponent: uint32(3), Aliases: []string{"milliatom"}},
+			{Denom: "atom", Exponent: uint32(6), Aliases: []string{}},
+		},
+		Base:    "uatom",
+		Display: "atom",
+	})
+
 	var (
 		myNonce = uint64(1)
 	)
@@ -63,8 +75,8 @@ func addDenomToERC20Relation(tv *testingVars) {
 	ethClaim := types.MsgERC20DeployedClaim{
 		CosmosDenom:   tv.denom,
 		TokenContract: tv.erc20,
-		Name:          "Atom",
-		Symbol:        "ATOM",
+		Name:          "atom",
+		Symbol:        "atom",
 		Decimals:      6,
 		EventNonce:    myNonce,
 		Orchestrator:  tv.myOrchestratorAddr.String(),
