@@ -83,21 +83,6 @@ func (e *ERC20Token) Add(o *ERC20Token) *ERC20Token {
 	return NewERC20Token(sum.Uint64(), e.Contract)
 }
 
-// ERC20FromPeggyCoin returns the ERC20 representation of a given peggy coin
-// TODO-JT: There might be some almost-dead code to eliminate around these 3 functions
-func ERC20FromPeggyCoin(v sdk.Coin) (*ERC20Token, error) {
-	contract, err := ValidatePeggyCoin(v)
-	if err != nil {
-		return nil, fmt.Errorf("%s isn't a valid peggy coin: %s", v.String(), err)
-	}
-	return &ERC20Token{Contract: contract, Amount: v.Amount}, nil
-}
-
-// ValidatePeggyCoin returns true if a coin is a peggy representation of an ERC20 token
-func ValidatePeggyCoin(v sdk.Coin) (string, error) {
-	return PeggyDenomToERC20(v.Denom)
-}
-
 func PeggyDenomToERC20(denom string) (string, error) {
 	fullPrefix := PeggyDenomPrefix + PeggyDenomSeparator
 	if !strings.HasPrefix(denom, fullPrefix) {
