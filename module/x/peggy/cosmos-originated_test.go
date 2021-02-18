@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO:
 // Have the validators put in a erc20<>denom relation with ERC20DeployedEvent
 // Send some coins of that denom into the cosmos module
 // Check that the coins are locked, not burned
