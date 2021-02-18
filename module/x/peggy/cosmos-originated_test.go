@@ -140,7 +140,7 @@ func lockCoinsInModule(tv *testingVars) {
 	// Check that peggy balance has gone up
 	peggyAddr := tv.input.AccountKeeper.GetModuleAddress(types.ModuleName)
 	assert.Equal(tv.t,
-		sdk.Coins{sdk.NewCoin(denom, sendAmount)},
+		sdk.Coins{sdk.NewCoin(denom, sendAmount.Add(feeAmount))},
 		tv.input.BankKeeper.GetAllBalances(tv.ctx, peggyAddr),
 	)
 }
@@ -149,7 +149,7 @@ func acceptDepositEvent(tv *testingVars) {
 	var (
 		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
 		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
-		myNonce                           = uint64(1)
+		myNonce                           = uint64(2)
 		anyETHAddr                        = "0xf9613b532673Cc223aBa451dFA8539B87e1F666D"
 	)
 
@@ -168,8 +168,8 @@ func acceptDepositEvent(tv *testingVars) {
 	}
 
 	_, err := tv.h(tv.ctx, &ethClaim)
-	EndBlocker(tv.ctx, tv.input.PeggyKeeper)
 	require.NoError(tv.t, err)
+	EndBlocker(tv.ctx, tv.input.PeggyKeeper)
 
 	// check that attestation persisted
 	a := tv.input.PeggyKeeper.GetAttestation(tv.ctx, myNonce, ethClaim.ClaimHash())
@@ -183,7 +183,7 @@ func acceptDepositEvent(tv *testingVars) {
 	// Check that peggy balance has gone down
 	peggyAddr := tv.input.AccountKeeper.GetModuleAddress(types.ModuleName)
 	assert.Equal(tv.t,
-		sdk.Coins{sdk.NewCoin(tv.denom, myErc20.Amount)},
+		sdk.Coins{sdk.NewCoin(tv.denom, sdk.NewIntFromUint64(55).Sub(myErc20.Amount))},
 		tv.input.BankKeeper.GetAllBalances(tv.ctx, peggyAddr),
 	)
 }
