@@ -49,6 +49,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&Valset{}, "peggy/Valset", nil)
 	cdc.RegisterConcrete(&MsgDepositClaim{}, "peggy/MsgDepositClaim", nil)
 	cdc.RegisterConcrete(&MsgWithdrawClaim{}, "peggy/MsgWithdrawClaim", nil)
+	cdc.RegisterConcrete(&MsgERC20DeployedClaim{}, "peggy/MsgERC20DeployedClaim", nil)
 	cdc.RegisterConcrete(&OutgoingTxBatch{}, "peggy/OutgoingTxBatch", nil)
 	cdc.RegisterConcrete(&OutgoingTransferTx{}, "peggy/OutgoingTransferTx", nil)
 	cdc.RegisterConcrete(&ERC20Token{}, "peggy/ERC20Token", nil)
