@@ -12,6 +12,8 @@ import {
   makeTxBatchHash,
   examplePowers
 } from "../test-utils/pure";
+import { DEFAULT_ENCODING } from "crypto";
+import { EthereumTwo } from "../typechain/EthereumTwo";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -278,3 +280,126 @@ describe("submitLogicCall tests", function () {
   });
 
 });
+
+// This test produces a hash for the contract which should match what is being used in the Go unit tests. It's here for
+// the use of anyone updating the Go tests.
+describe("logicCall Go test hash", function () {
+  it("produces good hash", async function () {
+
+
+    // Prep and deploy contract
+    // ========================
+    const signers = await ethers.getSigners();
+    const peggyId = ethers.utils.formatBytes32String("foo");
+    const powers = [6667];
+    const validators = signers.slice(0, powers.length);
+    const powerThreshold = 6666;
+    const {
+      peggy,
+      testERC20,
+      checkpoint: deployCheckpoint
+    } = await deployContracts(peggyId, validators, powers, powerThreshold);
+
+
+
+    // Transfer out to Cosmos, locking coins
+    // =====================================
+    await testERC20.functions.approve(peggy.address, 1000);
+    await peggy.functions.sendToCosmos(
+      testERC20.address,
+      ethers.utils.formatBytes32String("myCosmosAddress"),
+      1000
+    );
+
+
+
+    // Call method
+    // ===========
+  const methodName = ethers.utils.formatBytes32String(
+    "logicCall"
+  );
+  const numTxs = 10;
+
+  let invalidationNonce = 1
+
+  let timeOut = 4766922941000
+
+  let logicCallArgs = {
+    transferAmounts: [1], // transferAmounts
+    transferTokenContracts: [testERC20.address], // transferTokenContracts
+    feeAmounts: [1], // feeAmounts
+    feeTokenContracts: [testERC20.address], // feeTokenContracts
+    logicContractAddress: "0x17c1736CcF692F653c433d7aa2aB45148C016F68", // logicContractAddress
+    payload: ethers.utils.formatBytes32String("testingPayload"), // payloads
+    timeOut,
+    invalidationId: ethers.utils.formatBytes32String("invalidationId"), // invalidationId
+    invalidationNonce: invalidationNonce // invalidationNonce
+  }
+
+
+  const abiEncodedLogicCall = ethers.utils.defaultAbiCoder.encode(
+    [
+      "bytes32", // peggyId
+      "bytes32", // methodName
+      "uint256[]", // transferAmounts
+      "address[]", // transferTokenContracts
+      "uint256[]", // feeAmounts
+      "address[]", // feeTokenContracts
+      "address", // logicContractAddress
+      "bytes", // payload
+      "uint256", // timeOut
+      "bytes32", // invalidationId
+      "uint256" // invalidationNonce
+    ],
+    [
+      peggyId,
+      methodName,
+      logicCallArgs.transferAmounts,
+      logicCallArgs.transferTokenContracts,
+      logicCallArgs.feeAmounts,
+      logicCallArgs.feeTokenContracts,
+      logicCallArgs.logicContractAddress,
+      logicCallArgs.payload,
+      logicCallArgs.timeOut,
+      logicCallArgs.invalidationId,
+      logicCallArgs.invalidationNonce
+    ]
+  );
+    const logicCallDigest = ethers.utils.keccak256(abiEncodedLogicCall);
+
+    console.log("elements in logic call digest:", {
+      "peggyId": peggyId,
+      "logicMethodName": methodName,
+      "transferAmounts": logicCallArgs.transferAmounts,
+      "transferTokenContracts": logicCallArgs.transferTokenContracts,
+      "feeAmounts": logicCallArgs.feeAmounts,
+      "feeTokenContracts": logicCallArgs.feeTokenContracts,
+      "logicContractAddress": logicCallArgs.logicContractAddress,
+      "payload": logicCallArgs.payload,
+      "timeout": logicCallArgs.timeOut,
+      "invalidationId": logicCallArgs.invalidationId,
+      "invalidationNonce": logicCallArgs.invalidationNonce
+    })
+    console.log("abiEncodedCall:", abiEncodedLogicCall)
+    console.log("callDigest:", logicCallDigest)
+
+    const sigs = await signHash(validators, logicCallDigest);
+    const currentValsetNonce = 0;
+
+    // TODO construct the easiest possible delegate contract that will
+    // actually execute, existing ones are too large to bother with for basic
+    // signature testing
+
+    // await peggy.submitLogicCall(
+    //   await getSignerAddresses(validators),
+    //   powers,
+    //   currentValsetNonce,
+
+    //   sigs.v,
+    //   sigs.r,
+    //   sigs.s,
+
+    //   logicCallArgs
+    // )
+
+})});

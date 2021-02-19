@@ -19,6 +19,33 @@ pub const TOTAL_PEGGY_POWER: u64 = u32::MAX as u64;
 fn peggy_power_to_percent(input: u64) -> f32 {
     (input as f32 / TOTAL_PEGGY_POWER as f32) * 100f32
 }
+/// This trait implements an overarching interface for signature confirmations
+/// so that they can all use the same method to order signatures
+pub trait Confirm {
+    fn get_eth_address(&self) -> EthAddress;
+    fn get_signature(&self) -> EthSignature;
+}
+
+pub fn get_hashmap<T: Confirm + Clone>(input: &[T]) -> HashMap<EthAddress, T> {
+    let mut out = HashMap::new();
+    for i in input.iter() {
+        out.insert(i.get_eth_address(), i.clone());
+    }
+    out
+}
+
+/// Used to encapsulate signature ordering across all different confirm
+/// messages
+#[derive(Debug, Clone)]
+struct SignatureStatus {
+    ordered_signatures: Vec<PeggySignature>,
+    power_of_good_sigs: u64,
+    power_of_unset_keys: u64,
+    number_of_unset_key_validators: i32,
+    power_of_nonvoters: u64,
+    number_of_nonvoters: i32,
+    num_validators: usize,
+}
 
 /// the response we get when querying for a valset confirmation
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -40,46 +67,13 @@ impl ValsetConfirmResponse {
     }
 }
 
-/// the response we get when querying for a batch confirmation
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct BatchConfirmResponse {
-    pub nonce: u64,
-    pub orchestrator: CosmosAddress,
-    pub token_contract: EthAddress,
-    pub ethereum_signer: EthAddress,
-    pub eth_signature: EthSignature,
-}
-
-impl BatchConfirmResponse {
-    pub fn from_proto(input: peggy_proto::peggy::MsgConfirmBatch) -> Result<Self, PeggyError> {
-        Ok(BatchConfirmResponse {
-            nonce: input.nonce,
-            orchestrator: input.orchestrator.parse()?,
-            token_contract: input.token_contract.parse()?,
-            ethereum_signer: input.eth_signer.parse()?,
-            eth_signature: input.signature.parse()?,
-        })
+impl Confirm for ValsetConfirmResponse {
+    fn get_eth_address(&self) -> EthAddress {
+        self.eth_address
     }
-}
-
-fn valset_confirms_to_hashmap(
-    input: &[ValsetConfirmResponse],
-) -> HashMap<EthAddress, ValsetConfirmResponse> {
-    let mut ret = HashMap::new();
-    for item in input {
-        ret.insert(item.eth_address, item.clone());
+    fn get_signature(&self) -> EthSignature {
+        self.eth_signature.clone()
     }
-    ret
-}
-
-fn batch_confirms_to_hashmap(
-    input: &[BatchConfirmResponse],
-) -> HashMap<EthAddress, BatchConfirmResponse> {
-    let mut ret = HashMap::new();
-    for item in input {
-        ret.insert(item.ethereum_signer, item.clone());
-    }
-    ret
 }
 
 /// a list of validators, powers, and eth addresses at a given block height
@@ -127,21 +121,18 @@ impl Valset {
     /// this will be sorted, in others it will be improperly sorted but must be maintained so that the signatures
     /// are accepted on the Ethereum chain, which requires the submitted addresses to match whatever the previously
     /// submitted ordering was and the signatures must be in parallel arrays to reduce shuffling.
-    /// TODO give the signatures types a trait and de-duplicate
-    pub fn order_valset_sigs(
+    fn get_signature_status<T: Confirm + Clone>(
         &self,
-        signatures: &[ValsetConfirmResponse],
-    ) -> Result<Vec<PeggySignature>, PeggyError> {
+        signatures: &[T],
+    ) -> Result<SignatureStatus, PeggyError> {
         if signatures.is_empty() {
             return Err(PeggyError::InsufficientVotingPowerToPass(
                 "No signatures!".to_string(),
             ));
         }
-        // if signatures is not empty this is safe.
-        let new_valset_nonce = signatures[0].nonce;
 
         let mut out = Vec::new();
-        let signatures_hashmap = valset_confirms_to_hashmap(signatures);
+        let signatures_hashmap: HashMap<EthAddress, T> = get_hashmap(signatures);
         let mut power_of_good_sigs = 0;
         let mut power_of_unset_keys = 0;
         let mut number_of_unset_key_validators = 0;
@@ -150,13 +141,13 @@ impl Valset {
         for member in self.members.iter() {
             if let Some(eth_address) = member.eth_address {
                 if let Some(sig) = signatures_hashmap.get(&eth_address) {
-                    assert_eq!(sig.eth_address, eth_address);
+                    assert_eq!(sig.get_eth_address(), eth_address);
                     out.push(PeggySignature {
                         power: member.power,
-                        eth_address: sig.eth_address,
-                        v: sig.eth_signature.v.clone(),
-                        r: sig.eth_signature.r.clone(),
-                        s: sig.eth_signature.s.clone(),
+                        eth_address: sig.get_eth_address(),
+                        v: sig.get_signature().v.clone(),
+                        r: sig.get_signature().r.clone(),
+                        s: sig.get_signature().s.clone(),
                     });
                     power_of_good_sigs += member.power;
                 } else {
@@ -184,126 +175,49 @@ impl Valset {
         }
 
         let num_validators = self.members.len();
+        Ok(SignatureStatus {
+            ordered_signatures: out,
+            power_of_good_sigs,
+            power_of_nonvoters,
+            power_of_unset_keys,
+            num_validators,
+            number_of_nonvoters,
+            number_of_unset_key_validators,
+        })
+    }
+
+    pub fn order_sigs<T: Confirm + Clone>(
+        &self,
+        signatures: &[T],
+    ) -> Result<Vec<PeggySignature>, PeggyError> {
+        let status = self.get_signature_status(signatures)?;
         // now that we have collected the signatures we can determine if the measure has the votes to pass
         // and error early if it does not, otherwise the user will pay fees for a transaction that will
         // just throw
-        if peggy_power_to_percent(power_of_good_sigs) < 66f32 {
+        if peggy_power_to_percent(status.power_of_good_sigs) < 66f32 {
             let message = format!(
                 "
-                Valset {} has {}/{} or {:.2}% power voting! Can not execute on Ethereum!
+                has {}/{} or {:.2}% power voting! Can not execute on Ethereum!
                 {}/{} validators have unset Ethereum keys representing {}/{} or {:.2}% of the power required
                 {}/{} validators have Ethereum keys set but have not voted representing {}/{} or {:.2}% of the power required
                 This valset probably just needs to accumulate signatures for a moment.",
-                new_valset_nonce,
-                power_of_good_sigs,
+                status.power_of_good_sigs,
                 TOTAL_PEGGY_POWER,
-                peggy_power_to_percent(power_of_good_sigs),
-                number_of_unset_key_validators,
-                num_validators,
-                power_of_unset_keys,
+                peggy_power_to_percent(status.power_of_good_sigs),
+                status.number_of_unset_key_validators,
+                status.num_validators,
+                status.power_of_unset_keys,
                 TOTAL_PEGGY_POWER,
-                peggy_power_to_percent(power_of_unset_keys),
-                number_of_nonvoters,
-                num_validators,
-                power_of_nonvoters,
+                peggy_power_to_percent(status.power_of_unset_keys),
+                status.number_of_nonvoters,
+                status.num_validators,
+                status.power_of_nonvoters,
                 TOTAL_PEGGY_POWER,
-                peggy_power_to_percent(power_of_nonvoters),
+                peggy_power_to_percent(status.power_of_nonvoters),
             );
             Err(PeggyError::InsufficientVotingPowerToPass(message))
         } else {
-            Ok(out)
-        }
-    }
-
-    /// combines the provided signatures with the valset ensuring that ordering and signature data is correct
-    /// TODO give the signatures types a trait and de-duplicate
-    pub fn order_batch_sigs(
-        &self,
-        signatures: &[BatchConfirmResponse],
-    ) -> Result<Vec<PeggySignature>, PeggyError> {
-        if signatures.is_empty() {
-            return Err(PeggyError::InsufficientVotingPowerToPass(
-                "No signatures!".to_string(),
-            ));
-        }
-        // if the signatures are not empty this is safe
-        let batch_nonce = signatures[0].nonce;
-        let batch_erc20 = signatures[0].token_contract;
-
-        let mut out = Vec::new();
-        let signatures_hashmap = batch_confirms_to_hashmap(signatures);
-        let mut power_of_good_sigs = 0;
-        let mut power_of_unset_keys = 0;
-        let mut number_of_unset_key_validators = 0;
-        let mut power_of_nonvoters = 0;
-        let mut number_of_nonvoters = 0;
-        for member in self.members.iter() {
-            if let Some(eth_address) = member.eth_address {
-                if let Some(sig) = signatures_hashmap.get(&eth_address) {
-                    assert_eq!(sig.ethereum_signer, eth_address);
-                    out.push(PeggySignature {
-                        power: member.power,
-                        eth_address: sig.ethereum_signer,
-                        v: sig.eth_signature.v.clone(),
-                        r: sig.eth_signature.r.clone(),
-                        s: sig.eth_signature.s.clone(),
-                    });
-                    power_of_good_sigs += member.power;
-                } else {
-                    out.push(PeggySignature {
-                        power: member.power,
-                        eth_address,
-                        v: 0u8.into(),
-                        r: 0u8.into(),
-                        s: 0u8.into(),
-                    });
-                    power_of_nonvoters += member.power;
-                    number_of_nonvoters += 1;
-                }
-            } else {
-                out.push(PeggySignature {
-                    power: member.power,
-                    eth_address: EthAddress::default(),
-                    v: 0u8.into(),
-                    r: 0u8.into(),
-                    s: 0u8.into(),
-                });
-                power_of_unset_keys += member.power;
-                number_of_unset_key_validators += 1;
-            }
-        }
-
-        let num_validators = self.members.len();
-        // now that we have collected the signatures we can determine if the measure has the votes to pass
-        // and error early if it does not, otherwise the user will pay fees for a transaction that will
-        // just throw
-        if peggy_power_to_percent(power_of_good_sigs) < 66f32 {
-            let message = format!(
-                "
-                Batch {} for token {} has {}/{} or {:.2}% power voting! Can not execute on Ethereum!
-                {}/{} validators have unset Ethereum keys representing {}/{} or {:.2}% of the power required
-                {}/{} validators have Ethereum keys set but have not voted representing {}/{} or {:.2}% of the power required
-                This batch probably just needs to accumulate signatures, for a moment.",
-                batch_nonce,
-                batch_erc20,
-                power_of_good_sigs,
-                TOTAL_PEGGY_POWER,
-                peggy_power_to_percent(power_of_good_sigs),
-                number_of_unset_key_validators,
-                num_validators,
-                power_of_unset_keys,
-                TOTAL_PEGGY_POWER,
-                peggy_power_to_percent(power_of_unset_keys),
-                number_of_nonvoters,
-                num_validators,
-                power_of_nonvoters,
-                TOTAL_PEGGY_POWER,
-                peggy_power_to_percent(power_of_nonvoters),
-            );
-            warn!("{}", message);
-            Err(PeggyError::InsufficientVotingPowerToPass(message))
-        } else {
-            Ok(out)
+            Ok(status.ordered_signatures)
         }
     }
 

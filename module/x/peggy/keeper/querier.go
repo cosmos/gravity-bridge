@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"encoding/hex"
+
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -432,9 +434,13 @@ func queryAllLogicCallConfirms(ctx sdk.Context, invalidationId string, invalidat
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
+	invalidationIdBytes, err := hex.DecodeString(invalidationId)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
+	}
 
 	var confirms []*types.MsgConfirmLogicCall
-	keeper.IterateLogicConfirmByInvalidationIdAndNonce(ctx, []byte(invalidationId), nonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
+	keeper.IterateLogicConfirmByInvalidationIdAndNonce(ctx, invalidationIdBytes, nonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
 		confirms = append(confirms, c)
 		return false
 	})

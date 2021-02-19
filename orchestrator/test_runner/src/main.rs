@@ -10,6 +10,7 @@ extern crate lazy_static;
 
 use crate::bootstrapping::*;
 use crate::utils::*;
+use arbitrary_logic::arbitrary_logic_test;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
@@ -22,6 +23,7 @@ use std::{env, time::Duration};
 use transaction_stress_test::transaction_stress_test;
 use valset_stress::validator_set_stress_test;
 
+mod arbitrary_logic;
 mod bootstrapping;
 mod happy_path;
 mod happy_path_v2;
@@ -130,6 +132,9 @@ pub async fn main() {
     // VALSET_STRESS sends in 1k valsets to sign and update
     // BATCH_STRESS fills several batches and executes an out of order batch
     // VALIDATOR_OUT simulates a validator not participating in the happy path test
+    // V2_HAPPY_PATH runs the happy path tests but focusing on moving Cosmos assets to Ethereum
+    // ARBITRARY_LOGIC tests the arbitrary logic functionality, where an arbitrary contract call
+    //                 is created and deployed vai the bridge.
     let test_type = env::var("TEST_TYPE");
     info!("Starting tests with {:?}", test_type);
     if let Ok(test_type) = test_type {
@@ -157,6 +162,10 @@ pub async fn main() {
         } else if test_type == "V2_HAPPY_PATH" {
             info!("Starting happy path for Gravity v2");
             happy_path_test_v2(&web30, grpc_client, &contact, keys, peggy_address, false).await;
+            return;
+        } else if test_type == "ARBITRARY_LOGIC" {
+            info!("Starting arbitrary logic tests!");
+            arbitrary_logic_test(&web30, grpc_client, &contact, keys, peggy_address).await;
             return;
         }
     }

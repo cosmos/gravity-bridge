@@ -3,12 +3,15 @@
 //! own crate and binary so that anyone may run it.
 
 use crate::{ethereum_event_watcher::check_for_events, oracle_resync::get_last_checked_block};
-use clarity::PrivateKey as EthPrivateKey;
 use clarity::{address::Address as EthAddress, Uint256};
+use clarity::{utils::bytes_to_hex_str, PrivateKey as EthPrivateKey};
 use contact::client::Contact;
 use cosmos_peggy::{
-    query::{get_oldest_unsigned_transaction_batch, get_oldest_unsigned_valsets},
-    send::{send_batch_confirm, send_valset_confirms},
+    query::{
+        get_oldest_unsigned_logic_call, get_oldest_unsigned_transaction_batch,
+        get_oldest_unsigned_valsets,
+    },
+    send::{send_batch_confirm, send_logic_call_confirm, send_valset_confirms},
 };
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_peggy::utils::get_peggy_id;
@@ -228,6 +231,31 @@ pub async fn eth_signer_main_loop(
             Ok(None) => trace!("No unsigned batches! Everything good!"),
             Err(e) => trace!(
                 "Failed to get unsigned Batches, check your Cosmos gRPC {:?}",
+                e
+            ),
+        }
+
+        match get_oldest_unsigned_logic_call(&mut grpc_client, our_cosmos_address).await {
+            Ok(Some(last_unsigned_call)) => {
+                info!(
+                    "Sending Logic call confirm for {}:{}",
+                    bytes_to_hex_str(&last_unsigned_call.invalidation_id),
+                    last_unsigned_call.invalidation_nonce
+                );
+                let res = send_logic_call_confirm(
+                    &contact,
+                    ethereum_key,
+                    fee.clone(),
+                    last_unsigned_call,
+                    cosmos_key,
+                    peggy_id.clone(),
+                )
+                .await;
+                trace!("call confirm result is {:?}", res);
+            }
+            Ok(None) => trace!("No unsigned logic call! Everything good!"),
+            Err(e) => info!(
+                "Failed to get unsigned Logic Calls, check your Cosmos gRPC {:?}",
                 e
             ),
         }

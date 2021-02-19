@@ -152,11 +152,14 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONMarshaler) json
 }
 
 // BeginBlock implements app module
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
+func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {}
 
 // EndBlock implements app module
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	EndBlocker(ctx, am.keeper)
+	// this begin blocker is only for testing purposes, don't import into your
+	// own chain running peggy
+	TestingEndBlocker(ctx, am.keeper)
 	return []abci.ValidatorUpdate{}
 }
 

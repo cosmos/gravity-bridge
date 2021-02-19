@@ -114,7 +114,7 @@ fn encode_valset_payload(
 
     // we need to use the old valset here because our signatures need to match the current
     // members of the validator set in the contract.
-    let sig_data = old_valset.order_valset_sigs(confirms)?;
+    let sig_data = old_valset.order_sigs(confirms)?;
     let sig_arrays = to_arrays(sig_data);
 
     // Solidity function signature

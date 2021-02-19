@@ -153,7 +153,7 @@ message MsgConfirmBatchResponse {}
 // as well as an Ethereum signature over this batch by the validator
 // -------------
 message MsgConfirmLogicCall {
-  bytes invalidation_id = 1;
+  string invalidation_id = 1;
   uint64 invalidation_nonce = 2;
   string eth_signer     = 3;
   string orchestrator   = 4;

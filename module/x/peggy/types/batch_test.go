@@ -44,9 +44,39 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 
 	// hash from bridge contract
 	goldHash := "0xa3a7ee0a363b8ad2514e7ee8f110d7449c0d88f3b0913c28c1751e6e0079a9b2"[2:]
+	// The function used to compute the "gold hash" above is in /solidity/test/updateValsetAndSubmitBatch.ts
+	// Be aware that every time that you run the above .ts file, it will use a different tokenContractAddress and thus compute
+	// a different hash.
 	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))
 }
 
-// The function used to compute the "gold hash" above is in /solidity/test/updateValsetAndSubmitBatch.ts
-// Be aware that every time that you run the above .ts file, it will use a different tokenContractAddress and thus compute
-// a different hash.
+func TestOutgoingLogicCallCheckpointGold1(t *testing.T) {
+	payload, err := hex.DecodeString("0x74657374696e675061796c6f6164000000000000000000000000000000000000"[2:])
+	require.NoError(t, err)
+	invalidationId, err := hex.DecodeString("0x696e76616c69646174696f6e4964000000000000000000000000000000000000"[2:])
+	require.NoError(t, err)
+
+	token := []*ERC20Token{&ERC20Token{
+		Contract: "0xC26eFfa98B8A2632141562Ae7E34953Cfe5B4888",
+		Amount:   sdk.NewIntFromUint64(1),
+	}}
+	call := OutgoingLogicCall{
+		Transfers:            token,
+		Fees:                 token,
+		LogicContractAddress: "0x17c1736CcF692F653c433d7aa2aB45148C016F68",
+		Payload:              payload,
+		Timeout:              4766922941000,
+		InvalidationId:       invalidationId,
+		InvalidationNonce:    1,
+	}
+
+	ourHash, err := call.GetCheckpoint("foo")
+	require.NoError(t, err)
+
+	// hash from bridge contract
+	goldHash := "0x1de95c9ace999f8ec70c6dc8d045942da2612950567c4861aca959c0650194da"[2:]
+	// The function used to compute the "gold hash" above is in /solidity/test/updateValsetAndSubmitBatch.ts
+	// Be aware that every time that you run the above .ts file, it will use a different tokenContractAddress and thus compute
+	// a different hash.
+	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))
+}

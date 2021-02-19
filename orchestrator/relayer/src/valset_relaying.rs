@@ -61,7 +61,7 @@ pub async fn relay_valsets(
                 // order valset sigs prepares signatures for submission, notice we compare
                 // them to the 'current' set in the bridge, this confirms for us that the validator set
                 // we have here can be submitted to the bridge in it's current state
-                let res = current_valset.order_valset_sigs(&confirms);
+                let res = current_valset.order_sigs(&confirms);
                 if res.is_ok() {
                     latest_confirmed = Some(confirms);
                     latest_valset = Some(valset);

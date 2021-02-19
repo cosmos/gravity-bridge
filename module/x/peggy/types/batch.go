@@ -69,18 +69,67 @@ func (b OutgoingTxBatch) GetCheckpoint(peggyIDstring string) ([]byte, error) {
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (b OutgoingLogicCall) GetCheckpoint(peggyIDstring string) ([]byte, error) {
+func (c OutgoingLogicCall) GetCheckpoint(peggyIDstring string) ([]byte, error) {
 
 	abi, err := abi.JSON(strings.NewReader(OutgoingLogicCallABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
 	}
 
+	// Create the methodName argument which salts the signature
+	methodNameBytes := []uint8("logicCall")
+	var logicCallMethodName [32]uint8
+	copy(logicCallMethodName[:], methodNameBytes[:])
+
+	// the contract argument is not a arbitrary length array but a fixed length 32 byte
+	// array, therefore we have to utf8 encode the string (the default in this case) and
+	// then copy the variable length encoded data into a fixed length array. This function
+	// will panic if peggyId is too long to fit in 32 bytes
+	peggyID, err := strToFixByteArray(peggyIDstring)
+	if err != nil {
+		panic(err)
+	}
+
+	// Run through the elements of the logic call and serialize them
+	transferAmounts := make([]*big.Int, len(c.Transfers))
+	transferTokenContracts := make([]gethcommon.Address, len(c.Transfers))
+	feeAmounts := make([]*big.Int, len(c.Fees))
+	feeTokenContracts := make([]gethcommon.Address, len(c.Fees))
+	for i, tx := range c.Transfers {
+		transferAmounts[i] = tx.Amount.BigInt()
+		transferTokenContracts[i] = gethcommon.HexToAddress(tx.Contract)
+	}
+	for i, tx := range c.Fees {
+		feeAmounts[i] = tx.Amount.BigInt()
+		feeTokenContracts[i] = gethcommon.HexToAddress(tx.Contract)
+	}
+	payload := make([]byte, len(c.Payload))
+	copy(payload, c.Payload)
+	var invalidationId [32]byte
+	copy(invalidationId[:], c.InvalidationId[:])
+
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedBatch, err := abi.Pack("submitBatch")
-	// TODO: figure out how to pack the logic call args and sync with @jtremblek about formatting here
+	abiEncodedCall, err := abi.Pack("checkpoint",
+		peggyID,
+		logicCallMethodName,
+		transferAmounts,
+		transferTokenContracts,
+		feeAmounts,
+		feeTokenContracts,
+		gethcommon.HexToAddress(c.LogicContractAddress),
+		payload,
+		big.NewInt(int64(c.Timeout)),
+		invalidationId,
+		big.NewInt(int64(c.InvalidationNonce)),
+	)
 
-	return crypto.Keccak256Hash(abiEncodedBatch[4:]).Bytes(), nil
+	// this should never happen outside of test since any case that could crash on encoding
+	// should be filtered above.
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "packing checkpoint")
+	}
+
+	return crypto.Keccak256Hash(abiEncodedCall[4:]).Bytes(), nil
 }

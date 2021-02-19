@@ -236,7 +236,7 @@ func (msg MsgConfirmBatch) GetSigners() []sdk.AccAddress {
 func (msg MsgConfirmLogicCall) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgConfirmLogicCall) Type() string { return "confirm_batch" }
+func (msg MsgConfirmLogicCall) Type() string { return "confirm_logic" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgConfirmLogicCall) ValidateBasic() error {
@@ -249,6 +249,10 @@ func (msg MsgConfirmLogicCall) ValidateBasic() error {
 	_, err := hex.DecodeString(msg.Signature)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
+	}
+	_, err = hex.DecodeString(msg.InvalidationId)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.InvalidationId)
 	}
 	return nil
 }

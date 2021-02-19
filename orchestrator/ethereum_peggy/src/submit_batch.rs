@@ -7,7 +7,7 @@ use std::{cmp::min, time::Duration};
 use web30::{client::Web3, types::TransactionRequest};
 
 /// this function generates an appropriate Ethereum transaction
-/// to submit the provided transaction batch and validator set update.
+/// to submit the provided transaction batch
 pub async fn send_eth_transaction_batch(
     current_valset: Valset,
     batch: TransactionBatch,
@@ -123,7 +123,7 @@ fn encode_batch_payload(
     let (current_addresses, current_powers) = current_valset.filter_empty_addresses();
     let current_valset_nonce = current_valset.nonce;
     let new_batch_nonce = batch.nonce;
-    let sig_data = current_valset.order_batch_sigs(confirms)?;
+    let sig_data = current_valset.order_sigs(confirms)?;
     let sig_arrays = to_arrays(sig_data);
     let (amounts, destinations, fees) = batch.get_checkpoint_values();
 

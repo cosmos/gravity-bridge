@@ -37,3 +37,11 @@ jobs:
       - uses: actions/checkout@v2
       - name: Run all up batch stress test
         run: tests/all-up-test.sh V2_HAPPY_PATH
+  arbitrary-logic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run all up arbitrary logic test
+        run: tests/all-up-test.sh ARBITRARY_LOGIC $ALCHEMY_ID
+        env:
+          ALCHEMY_ID: ${{ secrets.ALCHEMY_ID }}

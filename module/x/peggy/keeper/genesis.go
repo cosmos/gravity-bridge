@@ -27,7 +27,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 
 	// reset logic calls in state
 	for _, call := range data.LogicCalls {
-		k.SetOutogingLogicCall(ctx, call)
+		k.SetOutgoingLogicCall(ctx, call)
 	}
 
 	// reset batch confirmations in state

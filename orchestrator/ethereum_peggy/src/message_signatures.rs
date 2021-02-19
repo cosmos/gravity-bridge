@@ -1,5 +1,5 @@
 use clarity::abi::{encode_tokens, Token};
-use peggy_utils::types::{TransactionBatch, Valset};
+use peggy_utils::types::{LogicCall, TransactionBatch, Valset};
 
 /// takes the required input data and produces the required signature to confirm a validator
 /// set update on the Peggy Ethereum contract. This value will then be signed before being
@@ -102,8 +102,6 @@ fn test_valset_signature() {
 /// Note: This is the message, you need to run Keccak256::digest() in order to get the 32byte
 /// digest that is normally signed or may be used as a 'hash of the message'
 pub fn encode_tx_batch_confirm(peggy_id: String, batch: TransactionBatch) -> Vec<u8> {
-    // transaction batches include a validator set update, the way this is verified is that the valset checkpoint
-    // (encoded ethereum data) is included within the batch signature, which is itself a checkpoint over the batch data
     let (amounts, destinations, fees) = batch.get_checkpoint_values();
     encode_tokens(&[
         Token::FixedString(peggy_id),
@@ -157,6 +155,85 @@ fn test_batch_signature() {
 
     let checkpoint = encode_tx_batch_confirm("foo".to_string(), batch);
     let checkpoint_hash = Keccak256::digest(&checkpoint);
+    assert_eq!(correct_hash.len(), checkpoint_hash.len());
+    assert_eq!(correct_hash, checkpoint_hash.as_slice())
+}
+
+/// takes the required input data and produces the required signature to confirm a logic
+/// call on the Peggy Ethereum contract. This value will then be signed before being
+/// submitted to Cosmos, verified, and then relayed to Ethereum
+/// Note: This is the message, you need to run Keccak256::digest() in order to get the 32byte
+/// digest that is normally signed or may be used as a 'hash of the message'
+pub fn encode_logic_call_confirm(peggy_id: String, call: LogicCall) -> Vec<u8> {
+    let mut transfer_amounts = Vec::new();
+    let mut transfer_token_contracts = Vec::new();
+    let mut fee_amounts = Vec::new();
+    let mut fee_token_contracts = Vec::new();
+    for item in call.transfers.iter() {
+        transfer_amounts.push(Token::Uint(item.amount.clone()));
+        transfer_token_contracts.push(item.token_contract_address);
+    }
+    for item in call.fees.iter() {
+        fee_amounts.push(Token::Uint(item.amount.clone()));
+        fee_token_contracts.push(item.token_contract_address);
+    }
+
+    encode_tokens(&[
+        Token::FixedString(peggy_id),                // Peggy Instance ID
+        Token::FixedString("logicCall".to_string()), //Function Name
+        Token::Dynamic(transfer_amounts),            //Array of Transfer amounts
+        transfer_token_contracts.into(),             //ERC-20 contract for transfers
+        Token::Dynamic(fee_amounts),                 // Array of Fees
+        fee_token_contracts.into(),                  // ERC-20 contract for fee payments
+        call.logic_contract_address.into(),          // Address of a logic contract
+        Token::UnboundedBytes(call.payload),         // Encoded arguments to logic contract
+        call.timeout.into(),                         // Timeout on batch
+        Token::Bytes(call.invalidation_id),          // ID of logic batch
+        call.invalidation_nonce.into(),              // Nonce of logic batch. See 2-d nonce scheme.
+    ])
+}
+
+#[test]
+fn test_logic_call_signature() {
+    use clarity::utils::hex_str_to_bytes;
+    use peggy_utils::types::ERC20Token;
+    use peggy_utils::types::LogicCall;
+    use sha3::{Digest, Keccak256};
+
+    let correct_hash: Vec<u8> =
+        hex_str_to_bytes("0x1de95c9ace999f8ec70c6dc8d045942da2612950567c4861aca959c0650194da")
+            .unwrap();
+    let token_contract_address = "0xC26eFfa98B8A2632141562Ae7E34953Cfe5B4888"
+        .parse()
+        .unwrap();
+    let logic_contract_address = "0x17c1736CcF692F653c433d7aa2aB45148C016F68"
+        .parse()
+        .unwrap();
+    let token = vec![ERC20Token {
+        amount: 1u8.into(),
+        token_contract_address,
+    }];
+
+    let logic_call = LogicCall {
+        transfers: token.clone(),
+        fees: token,
+        logic_contract_address,
+        payload: hex_str_to_bytes(
+            "0x74657374696e675061796c6f6164000000000000000000000000000000000000",
+        )
+        .unwrap(),
+        timeout: 4766922941000,
+        invalidation_id: hex_str_to_bytes(
+            "0x696e76616c69646174696f6e4964000000000000000000000000000000000000",
+        )
+        .unwrap(),
+        invalidation_nonce: 1u8.into(),
+    };
+    let checkpoint = encode_logic_call_confirm("foo".to_string(), logic_call);
+    println!("{}", checkpoint.len() / 32);
+
+    let checkpoint_hash = Keccak256::digest(&checkpoint);
+
     assert_eq!(correct_hash.len(), checkpoint_hash.len());
     assert_eq!(correct_hash, checkpoint_hash.as_slice())
 }

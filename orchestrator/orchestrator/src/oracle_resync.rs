@@ -5,7 +5,8 @@ use cosmos_peggy::query::get_last_event_nonce;
 use deep_space::address::Address as CosmosAddress;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::types::{
-    ERC20DeployedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent,
+    ERC20DeployedEvent, LogicCallExecutedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent,
+    ValsetUpdatedEvent,
 };
 use tokio::time::delay_for;
 use tonic::transport::Channel;
@@ -73,6 +74,15 @@ pub async fn get_last_checked_block(
                 vec!["ERC20DeployedEvent(string,address,string,string,uint8,uint256)"],
             )
             .await;
+        let logic_call_executed_events = web3
+            .check_for_events(
+                end_search.clone(),
+                Some(current_block.clone()),
+                vec![peggy_contract_address],
+                vec!["LogicCallEvent(bytes32,uint256,bytes,uint256)"],
+            )
+            .await;
+
         // valset events do not have an event nonce (because they are not relayed to cosmos)
         // and therefore they are mostly useless to us. But they do have one special property
         // that is useful to us in this handler a valset update event for nonce 0 is emitted
@@ -91,6 +101,7 @@ pub async fn get_last_checked_block(
             || send_to_cosmos_events.is_err()
             || valset_events.is_err()
             || erc20_deployed_events.is_err()
+            || logic_call_executed_events.is_err()
         {
             error!("Failed to get blockchain events while resyncing, is your Eth node working?");
             delay_for(RETRY_TIME).await;
@@ -100,12 +111,8 @@ pub async fn get_last_checked_block(
         let send_to_cosmos_events = send_to_cosmos_events.unwrap();
         let valset_events = valset_events.unwrap();
         let erc20_deployed_events = erc20_deployed_events.unwrap();
+        let logic_call_executed_events = logic_call_executed_events.unwrap();
 
-        trace!(
-            "Found events {:?} {:?}",
-            batch_events,
-            send_to_cosmos_events
-        );
         // look for and return the block number of the event last seen on the Cosmos chain
         // then we will play events from that block (including that block, just in case
         // there is more than one event there) onwards. We use valset nonce 0 as an indicator
@@ -132,8 +139,18 @@ pub async fn get_last_checked_block(
         }
         for event in erc20_deployed_events {
             match ERC20DeployedEvent::from_log(&event) {
-                Ok(send) => {
-                    if send.event_nonce == last_event_nonce && event.block_number.is_some() {
+                Ok(deploy) => {
+                    if deploy.event_nonce == last_event_nonce && event.block_number.is_some() {
+                        return event.block_number.unwrap();
+                    }
+                }
+                Err(e) => error!("Got ERC20Deployed event that we can't parse {}", e),
+            }
+        }
+        for event in logic_call_executed_events {
+            match LogicCallExecutedEvent::from_log(&event) {
+                Ok(call) => {
+                    if call.event_nonce == last_event_nonce && event.block_number.is_some() {
                         return event.block_number.unwrap();
                     }
                 }

@@ -18,7 +18,8 @@ set -e
 NODES=3
 set +u
 TEST_TYPE=$1
+ALCHEMY_ID=$2
 set -u
 
 # Run new test container instance
-docker run --name peggy_all_up_test_instance --cap-add=NET_ADMIN -t peggy-base /bin/bash /peggy/tests/container-scripts/all-up-test-internal.sh $NODES $TEST_TYPE
+docker run --name peggy_all_up_test_instance --cap-add=NET_ADMIN -t peggy-base /bin/bash /peggy/tests/container-scripts/all-up-test-internal.sh $NODES $TEST_TYPE $ALCHEMY_ID

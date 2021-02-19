@@ -2,6 +2,7 @@
 # the script run inside the container for all-up-test.sh
 NODES=$1
 TEST_TYPE=$2
+ALCHEMY_ID=$3
 set -eux
 
 # Prepare the contracts for later deployment
@@ -11,7 +12,7 @@ npm run typechain
 
 bash /peggy/tests/container-scripts/setup-validators.sh $NODES
 
-bash /peggy/tests/container-scripts/run-testnet.sh $NODES &
+bash /peggy/tests/container-scripts/run-testnet.sh $NODES $TEST_TYPE $ALCHEMY_ID &
 
 # deploy the ethereum contracts
 pushd /peggy/orchestrator/test_runner

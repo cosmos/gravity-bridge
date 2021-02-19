@@ -6,6 +6,7 @@ use clarity::Uint256;
 extern crate log;
 
 pub mod deploy_erc20;
+pub mod logic_call;
 pub mod message_signatures;
 pub mod send_to_cosmos;
 pub mod submit_batch;

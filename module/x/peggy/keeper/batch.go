@@ -151,7 +151,6 @@ func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, tokenContract string, nonce 
 	}
 	var b types.OutgoingTxBatch
 	k.cdc.MustUnmarshalBinaryBare(bz, &b)
-	// TODO: figure out why it drops the contract address in the ERC20 token representation
 	for _, tx := range b.Transactions {
 		tx.Erc20Token.Contract = tokenContract
 		tx.Erc20Fee.Contract = tokenContract

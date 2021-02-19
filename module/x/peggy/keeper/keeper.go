@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math"
 	"sort"
@@ -410,7 +411,7 @@ func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, inv
 }
 
 // SetOutogingLogicCall sets an outgoing logic call
-func (k Keeper) SetOutogingLogicCall(ctx sdk.Context, call *types.OutgoingLogicCall) {
+func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, call *types.OutgoingLogicCall) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce), k.cdc.MustMarshalBinaryBare(call))
 }
@@ -425,9 +426,8 @@ func (k Keeper) IterateOutgoingLogicCalls(ctx sdk.Context, cb func([]byte, *type
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicCall)
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
-
 	for ; iter.Valid(); iter.Next() {
-		call := types.OutgoingLogicCall{}
+		var call types.OutgoingLogicCall
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &call)
 		// cb returns true to stop early
 		if cb(iter.Key(), &call) {
@@ -471,13 +471,19 @@ func (k Keeper) CancelOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, 
 
 // SetLogicCallConfirm sets a logic confirm in the store
 func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, val sdk.AccAddress, msg *types.MsgConfirmLogicCall) {
-	ctx.KVStore(k.storeKey).Set(types.GetLogicConfirmKey(msg.InvalidationId, msg.InvalidationNonce, val), k.cdc.MustMarshalBinaryBare(msg))
+	bytes, _ := hex.DecodeString(msg.InvalidationId)
+	ctx.KVStore(k.storeKey).Set(types.GetLogicConfirmKey(bytes, msg.InvalidationNonce, val), k.cdc.MustMarshalBinaryBare(msg))
 }
 
 // GetLogicCallConfirm gets a logic confirm from the store
 func (k Keeper) GetLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) *types.MsgConfirmLogicCall {
+	store := ctx.KVStore(k.storeKey)
+	data := store.Get(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val))
+	if data == nil {
+		return nil
+	}
 	out := types.MsgConfirmLogicCall{}
-	k.cdc.MustUnmarshalBinaryBare(ctx.KVStore(k.storeKey).Get(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val)), &out)
+	k.cdc.MustUnmarshalBinaryBare(data, &out)
 	return &out
 }
 

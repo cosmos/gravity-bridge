@@ -10,7 +10,9 @@ use deep_space::stdfee::StdFee;
 use deep_space::stdsignmsg::StdSignMsg;
 use deep_space::transaction::TransactionSendType;
 use deep_space::{coin::Coin, utils::bytes_to_hex_str};
-use ethereum_peggy::message_signatures::{encode_tx_batch_confirm, encode_valset_confirm};
+use ethereum_peggy::message_signatures::{
+    encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
+};
 use peggy_utils::types::*;
 use std::collections::HashMap;
 
@@ -119,9 +121,7 @@ pub async fn send_valset_confirms(
     contact.retry_on_block(tx).await
 }
 
-/// Send in a confirmation for a specific transaction batch set for a specific block height
-/// since transaction batches also include validator sets this has all the arguments
-#[allow(clippy::too_many_arguments)]
+/// Send in a confirmation for a specific transaction batch
 pub async fn send_batch_confirm(
     contact: &Contact,
     eth_private_key: EthPrivateKey,
@@ -166,12 +166,58 @@ pub async fn send_batch_confirm(
     contact.retry_on_block(tx).await
 }
 
+/// Send in a confirmation for a specific logic call
+pub async fn send_logic_call_confirm(
+    contact: &Contact,
+    eth_private_key: EthPrivateKey,
+    fee: Coin,
+    logic_call: LogicCall,
+    private_key: PrivateKey,
+    peggy_id: String,
+) -> Result<TXSendResponse, JsonRpcError> {
+    let our_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address();
+    let our_eth_address = eth_private_key.to_public_key().unwrap();
+
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+
+    let logic_call_checkpoint = encode_logic_call_confirm(peggy_id.clone(), logic_call.clone());
+    let eth_signature = eth_private_key.sign_ethereum_msg(&logic_call_checkpoint);
+
+    let std_sign_msg = StdSignMsg {
+        chain_id: tx_info.chain_id,
+        account_number: tx_info.account_number,
+        sequence: tx_info.sequence,
+        fee: StdFee {
+            amount: vec![fee],
+            gas: 500_000u64.into(),
+        },
+        msgs: vec![PeggyMsg::ConfirmLogicCallMsg(ConfirmLogicCallMsg {
+            invalidation_id: bytes_to_hex_str(&logic_call.invalidation_id),
+            invalidation_nonce: logic_call.invalidation_nonce.into(),
+            orchestrator: our_address,
+            eth_signer: our_eth_address,
+            eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
+        })],
+        memo: String::new(),
+    };
+
+    let tx = private_key
+        .sign_std_msg(std_sign_msg, TransactionSendType::Block)
+        .unwrap();
+
+    contact.retry_on_block(tx).await
+}
+
 pub async fn send_ethereum_claims(
     contact: &Contact,
     private_key: PrivateKey,
     deposits: Vec<SendToCosmosEvent>,
     withdraws: Vec<TransactionBatchExecutedEvent>,
     erc20_deploys: Vec<ERC20DeployedEvent>,
+    logic_calls: Vec<LogicCallExecutedEvent>,
     fee: Coin,
 ) -> Result<TXSendResponse, JsonRpcError> {
     let our_address = private_key
@@ -206,6 +252,12 @@ pub async fn send_ethereum_claims(
         unordered_msgs.insert(
             deploy.event_nonce.clone(),
             PeggyMsg::ERC20DeployedClaimMsg(ERC20DeployedClaimMsg::from_event(deploy, our_address)),
+        );
+    }
+    for call in logic_calls {
+        unordered_msgs.insert(
+            call.event_nonce.clone(),
+            PeggyMsg::LogicCallExecutedClaim(LogicCallExecutedClaim::from_event(call, our_address)),
         );
     }
     let mut keys = Vec::new();

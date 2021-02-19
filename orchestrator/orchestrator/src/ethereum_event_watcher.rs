@@ -1,7 +1,7 @@
 //! Ethereum Event watcher watches for events such as a deposit to the Peggy Ethereum contract or a validator set update
 //! or a transaction batch update. It then responds to these events by performing actions on the Cosmos chain if required
 
-use clarity::{Address as EthAddress, Uint256};
+use clarity::{utils::bytes_to_hex_str, Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::{query::get_last_event_nonce, send::send_ethereum_claims};
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
@@ -9,7 +9,8 @@ use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::{
     error::PeggyError,
     types::{
-        ERC20DeployedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent, ValsetUpdatedEvent,
+        ERC20DeployedEvent, LogicCallExecutedEvent, SendToCosmosEvent,
+        TransactionBatchExecutedEvent, ValsetUpdatedEvent,
     },
 };
 use tonic::transport::Channel;
@@ -68,9 +69,23 @@ pub async fn check_for_events(
         .await;
     trace!("ERC20 Deployments {:?}", erc20_deployed);
 
-    if let (Ok(valsets), Ok(batches), Ok(deposits), Ok(deploys)) =
-        (valsets, batches, deposits, erc20_deployed)
-    {
+    let logic_call_executed = web3
+        .check_for_events(
+            starting_block.clone(),
+            Some(latest_block.clone()),
+            vec![peggy_contract_address],
+            vec!["LogicCallEvent(bytes32,uint256,bytes,uint256)"],
+        )
+        .await;
+    trace!("Logic call executions {:?}", logic_call_executed);
+
+    if let (Ok(valsets), Ok(batches), Ok(deposits), Ok(deploys), Ok(logic_calls)) = (
+        valsets,
+        batches,
+        deposits,
+        erc20_deployed,
+        logic_call_executed,
+    ) {
         let valsets = ValsetUpdatedEvent::from_logs(&valsets)?;
         trace!("parsed valsets {:?}", valsets);
         let withdraws = TransactionBatchExecutedEvent::from_logs(&batches)?;
@@ -79,6 +94,8 @@ pub async fn check_for_events(
         trace!("parsed deposits {:?}", deposits);
         let erc20_deploys = ERC20DeployedEvent::from_logs(&deploys)?;
         trace!("parsed erc20 deploys {:?}", erc20_deploys);
+        let logic_calls = LogicCallExecutedEvent::from_logs(&logic_calls)?;
+        trace!("logic call executions {:?}", logic_calls);
 
         // note that starting block overlaps with our last checked block, because we have to deal with
         // the possibility that the relayer was killed after relaying only one of multiple events in a single
@@ -91,6 +108,8 @@ pub async fn check_for_events(
             TransactionBatchExecutedEvent::filter_by_event_nonce(last_event_nonce, &withdraws);
         let erc20_deploys =
             ERC20DeployedEvent::filter_by_event_nonce(last_event_nonce, &erc20_deploys);
+        let logic_calls =
+            LogicCallExecutedEvent::filter_by_event_nonce(last_event_nonce, &logic_calls);
 
         if !deposits.is_empty() {
             info!(
@@ -110,14 +129,27 @@ pub async fn check_for_events(
                 erc20_deploys[0].cosmos_denom, erc20_deploys[0].name, erc20_deploys[0].symbol, erc20_deploys[0].event_nonce,
             )
         }
+        if !logic_calls.is_empty() {
+            info!(
+                "Oracle observed logic call execution with ID {} Nonce {} and event nonce {}",
+                bytes_to_hex_str(&logic_calls[0].invalidation_id),
+                logic_calls[0].invalidation_nonce,
+                logic_calls[0].event_nonce
+            )
+        }
 
-        if !deposits.is_empty() || !withdraws.is_empty() || !erc20_deploys.is_empty() {
+        if !deposits.is_empty()
+            || !withdraws.is_empty()
+            || !erc20_deploys.is_empty()
+            || !logic_calls.is_empty()
+        {
             let res = send_ethereum_claims(
                 contact,
                 our_private_key,
                 deposits,
                 withdraws,
                 erc20_deploys,
+                logic_calls,
                 fee,
             )
             .await?;

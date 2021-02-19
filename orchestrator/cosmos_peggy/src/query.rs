@@ -5,8 +5,11 @@ use peggy_proto::peggy::QueryBatchConfirmsRequest;
 use peggy_proto::peggy::QueryCurrentValsetRequest;
 use peggy_proto::peggy::QueryLastEventNonceByAddrRequest;
 use peggy_proto::peggy::QueryLastPendingBatchRequestByAddrRequest;
+use peggy_proto::peggy::QueryLastPendingLogicCallByAddrRequest;
 use peggy_proto::peggy::QueryLastPendingValsetRequestByAddrRequest;
 use peggy_proto::peggy::QueryLastValsetRequestsRequest;
+use peggy_proto::peggy::QueryLogicConfirmsRequest;
+use peggy_proto::peggy::QueryOutgoingLogicCallsRequest;
 use peggy_proto::peggy::QueryOutgoingTxBatchesRequest;
 use peggy_proto::peggy::QueryValsetConfirmsByNonceRequest;
 use peggy_proto::peggy::QueryValsetRequestRequest;
@@ -111,6 +114,8 @@ pub async fn get_oldest_unsigned_transaction_batch(
     }
 }
 
+/// gets the latest 100 transaction batches, regardless of token type
+/// for relayers to consider relaying
 pub async fn get_latest_transaction_batches(
     client: &mut PeggyQueryClient<Channel>,
 ) -> Result<Vec<TransactionBatch>, PeggyError> {
@@ -157,4 +162,54 @@ pub async fn get_last_event_nonce(
         })
         .await?;
     Ok(request.into_inner().event_nonce)
+}
+
+/// Gets the 100 latest logic calls for a relayer to consider relaying
+pub async fn get_latest_logic_calls(
+    client: &mut PeggyQueryClient<Channel>,
+) -> Result<Vec<LogicCall>, PeggyError> {
+    let request = client
+        .outgoing_logic_calls(QueryOutgoingLogicCallsRequest {})
+        .await?;
+    let calls = request.into_inner().calls;
+    let mut out = Vec::new();
+    for call in calls {
+        out.push(LogicCall::from_proto(call)?);
+    }
+    Ok(out)
+}
+
+pub async fn get_logic_call_signatures(
+    client: &mut PeggyQueryClient<Channel>,
+    invalidation_id: Vec<u8>,
+    invalidation_nonce: u64,
+) -> Result<Vec<LogicCallConfirmResponse>, PeggyError> {
+    let request = client
+        .logic_confirms(QueryLogicConfirmsRequest {
+            invalidation_id,
+            invalidation_nonce,
+        })
+        .await?;
+    let call_confirms = request.into_inner().confirms;
+    let mut out = Vec::new();
+    for confirm in call_confirms {
+        out.push(LogicCallConfirmResponse::from_proto(confirm)?)
+    }
+    Ok(out)
+}
+
+pub async fn get_oldest_unsigned_logic_call(
+    client: &mut PeggyQueryClient<Channel>,
+    address: Address,
+) -> Result<Option<LogicCall>, PeggyError> {
+    let request = client
+        .last_pending_logic_call_by_addr(QueryLastPendingLogicCallByAddrRequest {
+            address: address.to_string(),
+        })
+        .await?;
+    let call = request.into_inner().call;
+    match call {
+        Some(call) => Ok(Some(LogicCall::from_proto(call)?)),
+        None => Ok(None),
+    }
 }

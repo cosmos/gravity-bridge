@@ -1,4 +1,6 @@
 #!/bin/bash
+TEST_TYPE=$1
+ALCHEMY_ID=$2
 set -eux
 
 # the directory of this script, useful for allowing this script
@@ -15,4 +17,4 @@ NODES=3
 pushd $DIR/../
 
 # Run new test container instance
-docker run --name peggy_test_instance --mount type=bind,source="$(pwd)"/,target=/peggy --cap-add=NET_ADMIN -p 9090:9090 -p 26657:26657 -p 1317:1317 -p 8545:8545 -it peggy-base /bin/bash /peggy/tests/container-scripts/reload-code.sh $NODES
+docker run --name peggy_test_instance --mount type=bind,source="$(pwd)"/,target=/peggy --cap-add=NET_ADMIN -p 9090:9090 -p 26657:26657 -p 1317:1317 -p 8545:8545 -it peggy-base /bin/bash /peggy/tests/container-scripts/reload-code.sh $NODES $TEST_TYPE $ALCHEMY_ID

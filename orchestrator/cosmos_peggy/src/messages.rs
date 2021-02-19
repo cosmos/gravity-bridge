@@ -5,7 +5,9 @@ use deep_space::coin::Coin;
 use deep_space::msg::DeepSpaceMsg;
 use ethereum_peggy::utils::downcast_uint256;
 use num256::Uint256;
-use peggy_utils::types::{ERC20DeployedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent};
+use peggy_utils::types::{
+    ERC20DeployedEvent, LogicCallExecutedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent,
+};
 /// Any arbitrary message
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 #[serde(tag = "type", content = "value")]
@@ -25,6 +27,9 @@ pub enum PeggyMsg {
     #[serde(rename = "peggy/MsgConfirmBatch")]
     ConfirmBatchMsg(ConfirmBatchMsg),
 
+    #[serde(rename = "peggy/MsgConfirmLogicCall")]
+    ConfirmLogicCallMsg(ConfirmLogicCallMsg),
+
     #[serde(rename = "peggy/MsgDepositClaim")]
     DepositClaimMsg(DepositClaimMsg),
 
@@ -33,6 +38,9 @@ pub enum PeggyMsg {
 
     #[serde(rename = "peggy/MsgERC20DeployedClaim")]
     ERC20DeployedClaimMsg(ERC20DeployedClaimMsg),
+
+    #[serde(rename = "peggy/MsgLogicCallExecutedClaim")]
+    LogicCallExecutedClaim(LogicCallExecutedClaim),
 }
 
 impl DeepSpaceMsg for PeggyMsg {
@@ -89,6 +97,17 @@ pub struct ConfirmBatchMsg {
     pub nonce: Uint256,
     pub orchestrator: Address,
     pub token_contract: EthAddress,
+    pub eth_signer: EthAddress,
+    /// a hex encoded string representing the Ethereum signature
+    #[serde(rename = "signature")]
+    pub eth_signature: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
+pub struct ConfirmLogicCallMsg {
+    pub invalidation_id: String,
+    pub invalidation_nonce: Uint256,
+    pub orchestrator: Address,
     pub eth_signer: EthAddress,
     /// a hex encoded string representing the Ethereum signature
     #[serde(rename = "signature")]
@@ -177,6 +196,33 @@ impl ERC20DeployedClaimMsg {
             name: input.name,
             symbol: input.symbol,
             decimals: input.decimals.into(),
+            orchestrator: sender,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
+pub struct LogicCallExecutedClaim {
+    pub event_nonce: Uint256,
+    pub block_height: Uint256,
+    pub invalidation_id: Vec<u8>,
+    pub invalidation_nonce: Uint256,
+    pub orchestrator: Address,
+}
+
+impl LogicCallExecutedClaim {
+    pub fn from_event(input: LogicCallExecutedEvent, sender: Address) -> Self {
+        LogicCallExecutedClaim {
+            event_nonce: downcast_uint256(input.event_nonce)
+                .expect("Event nonce overflow! Bridge Halt!")
+                .into(),
+            block_height: downcast_uint256(input.block_height)
+                .expect("Block number overflow! Bridge Halt!")
+                .into(),
+            invalidation_nonce: downcast_uint256(input.invalidation_nonce)
+                .expect("Invalidation nonce overflow! Bridge Halt!")
+                .into(),
+            invalidation_id: input.invalidation_id,
             orchestrator: sender,
         }
     }

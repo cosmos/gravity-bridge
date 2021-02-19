@@ -3,6 +3,7 @@
 NODES=$1
 # what test to execute
 TEST_TYPE=$2
+ALCHEMY_ID=$3
 set -eux
 
 # Stop any currently running peggy and eth processes
@@ -22,7 +23,7 @@ make
 make install
 cd /peggy/
 tests/container-scripts/setup-validators.sh $NODES
-tests/container-scripts/run-testnet.sh $NODES
+tests/container-scripts/run-testnet.sh $NODES $TEST_TYPE $ALCHEMY_ID
 
 # deploy the ethereum contracts
 pushd /peggy/orchestrator/test_runner

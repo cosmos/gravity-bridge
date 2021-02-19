@@ -1,3 +1,5 @@
+use std::unimplemented;
+
 use super::ValsetMember;
 use crate::error::PeggyError;
 use clarity::Address as EthAddress;
@@ -410,6 +412,40 @@ impl ERC20DeployedEvent {
         let mut res = Vec::new();
         for item in input {
             res.push(ERC20DeployedEvent::from_log(item)?);
+        }
+        Ok(res)
+    }
+    /// returns all values in the array with event nonces greater
+    /// than the provided value
+    pub fn filter_by_event_nonce(event_nonce: u64, input: &[Self]) -> Vec<Self> {
+        let mut ret = Vec::new();
+        for item in input {
+            if item.event_nonce > event_nonce.into() {
+                ret.push(item.clone())
+            }
+        }
+        ret
+    }
+}
+/// A parsed struct representing the Ethereum event fired when someone uses the Peggy
+/// contract to deploy a new ERC20 contract representing a Cosmos asset
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
+pub struct LogicCallExecutedEvent {
+    pub invalidation_id: Vec<u8>,
+    pub invalidation_nonce: Uint256,
+    pub return_data: Vec<u8>,
+    pub event_nonce: Uint256,
+    pub block_height: Uint256,
+}
+
+impl LogicCallExecutedEvent {
+    pub fn from_log(input: &Log) -> Result<LogicCallExecutedEvent, PeggyError> {
+        unimplemented!()
+    }
+    pub fn from_logs(input: &[Log]) -> Result<Vec<LogicCallExecutedEvent>, PeggyError> {
+        let mut res = Vec::new();
+        for item in input {
+            res.push(LogicCallExecutedEvent::from_log(item)?);
         }
         Ok(res)
     }

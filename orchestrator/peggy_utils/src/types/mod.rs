@@ -3,12 +3,14 @@ use contact::types::parse_val;
 use num256::Uint256;
 mod batches;
 mod ethereum_events;
+mod logic_call;
 mod signatures;
 mod valsets;
 use crate::error::PeggyError;
 
 pub use batches::*;
 pub use ethereum_events::*;
+pub use logic_call::*;
 pub use signatures::*;
 pub use valsets::*;
 

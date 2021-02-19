@@ -116,6 +116,9 @@ contract Peggy is ReentrancyGuard {
 	function lastBatchNonce(address _erc20Address) public view returns (uint256) {
 		return state_lastBatchNonces[_erc20Address];
 	}
+	function lastLogicCallNonce(bytes32 _invalidation_id) public view returns (uint256) {
+		return state_invalidationMapping[_invalidation_id];
+	}
 
 	// Utility function to verify geth style signatures
 	function verifySig(

@@ -1,6 +1,3 @@
-//! This module contains code for the batch update lifecycle. Functioning as a way for this validator to observe
-//! the state of both chains and perform the required operations.
-
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use cosmos_peggy::query::get_latest_transaction_batches;
@@ -14,8 +11,6 @@ use std::time::Duration;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
-/// Check the last validator set on Ethereum, if it's lower than our latest validator
-/// set then we should package and submit the update as an Ethereum transaction
 pub async fn relay_batches(
     // the validator set currently in the contract on Ethereum
     current_valset: Valset,
@@ -41,7 +36,7 @@ pub async fn relay_batches(
         trace!("Got sigs {:?}", sigs);
         if let Ok(sigs) = sigs {
             // this checks that the signatures for the batch are actually possible to submit to the chain
-            if current_valset.order_batch_sigs(&sigs).is_ok() {
+            if current_valset.order_sigs(&sigs).is_ok() {
                 oldest_signed_batch = Some(batch);
                 oldest_signatures = Some(sigs);
             } else {

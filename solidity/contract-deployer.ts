@@ -2,6 +2,7 @@ import { Peggy } from "./typechain/Peggy";
 import { TestERC20A } from "./typechain/TestERC20A";
 import { TestERC20B } from "./typechain/TestERC20B";
 import { TestERC20C } from "./typechain/TestERC20C";
+import { TestUniswapLiquidity } from "./typechain/TestUniswapLiquidity";
 import { ethers } from "ethers";
 import fs from "fs";
 import commandLineArgs from "command-line-args";
@@ -141,6 +142,17 @@ async function deploy() {
     await testERC202.deployed();
     const erc20TestAddress2 = testERC202.address;
     console.log("ERC20 deployed at Address - ", erc20TestAddress2);
+
+
+    const arbitrary_logic_path = "/peggy/solidity/artifacts/contracts/TestUniswapLiquidity.sol/TestUniswapLiquidity.json"
+    if (fs.existsSync(arbitrary_logic_path)) { 
+      const { abi, bytecode } = getContractArtifacts(arbitrary_logic_path);
+      const liquidityFactory = new ethers.ContractFactory(abi, bytecode, wallet);
+      const testUniswapLiquidity = (await liquidityFactory.deploy(erc20TestAddress)) as TestUniswapLiquidity;
+      await testUniswapLiquidity.deployed();
+      const testAddress = testUniswapLiquidity.address;
+      console.log("Uniswap Liquidity test deployed at Address - ", testAddress);
+    }
   }
   const peggyIdString = await getPeggyId();
   const peggyId = ethers.utils.formatBytes32String(peggyIdString);

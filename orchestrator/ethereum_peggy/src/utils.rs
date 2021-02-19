@@ -154,6 +154,30 @@ pub async fn get_tx_batch_nonce(
 }
 
 /// Gets the latest transaction batch nonce
+pub async fn get_logic_call_nonce(
+    peggy_contract_address: EthAddress,
+    invalidation_id: Vec<u8>,
+    caller_address: EthAddress,
+    web3: &Web3,
+) -> Result<u64, Web3Error> {
+    let val = web3
+        .contract_call(
+            peggy_contract_address,
+            "lastLogicCallNonce(bytes32)",
+            &[Token::Bytes(invalidation_id)],
+            caller_address,
+        )
+        .await?;
+    // the go represents all nonces as u64, there's no
+    // reason they should ever overflow without a user
+    // submitting millions or tens of millions of dollars
+    // worth of transactions. But we properly check and
+    // handle that case here.
+    let real_num = Uint256::from_bytes_be(&val);
+    Ok(downcast_uint256(real_num).expect("LogicCall nonce overflow! Bridge Halt!"))
+}
+
+/// Gets the latest transaction batch nonce
 pub async fn get_event_nonce(
     peggy_contract_address: EthAddress,
     caller_address: EthAddress,

@@ -1,5 +1,6 @@
 use super::*;
 use crate::error::PeggyError;
+use clarity::Signature as EthSignature;
 use clarity::{abi::Token, Address as EthAddress};
 use deep_space::address::Address as CosmosAddress;
 
@@ -90,5 +91,36 @@ impl TransactionBatch {
                 "Transaction batch containing no transactions!".to_string(),
             ))
         }
+    }
+}
+
+/// the response we get when querying for a batch confirmation
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct BatchConfirmResponse {
+    pub nonce: u64,
+    pub orchestrator: CosmosAddress,
+    pub token_contract: EthAddress,
+    pub ethereum_signer: EthAddress,
+    pub eth_signature: EthSignature,
+}
+
+impl BatchConfirmResponse {
+    pub fn from_proto(input: peggy_proto::peggy::MsgConfirmBatch) -> Result<Self, PeggyError> {
+        Ok(BatchConfirmResponse {
+            nonce: input.nonce,
+            orchestrator: input.orchestrator.parse()?,
+            token_contract: input.token_contract.parse()?,
+            ethereum_signer: input.eth_signer.parse()?,
+            eth_signature: input.signature.parse()?,
+        })
+    }
+}
+
+impl Confirm for BatchConfirmResponse {
+    fn get_eth_address(&self) -> EthAddress {
+        self.ethereum_signer
+    }
+    fn get_signature(&self) -> EthSignature {
+        self.eth_signature.clone()
     }
 }

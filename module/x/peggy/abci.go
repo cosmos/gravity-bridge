@@ -299,3 +299,26 @@ func ClaimsSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, curre
 		}
 	}
 }
+
+// TestingEndBlocker is a second endblocker function only imported in the Gravity codebase itself
+// if you are a consuming Cosmos chain DO NOT IMPORT THIS, it simulates a chain using the arbitrary
+// logic API to request logic calls
+func TestingEndBlocker(ctx sdk.Context, k keeper.Keeper) {
+	// if this is nil we have not set our test outgoing logic call yet
+	if k.GetOutgoingLogicCall(ctx, []byte("GravityTesting"), 0).Payload == nil {
+		token := []*types.ERC20Token{&types.ERC20Token{
+			Contract: "0x7580bfe88dd3d07947908fae12d95872a260f2d8",
+			Amount:   sdk.NewIntFromUint64(5000),
+		}}
+		call := types.OutgoingLogicCall{
+			Transfers:            token,
+			Fees:                 token,
+			LogicContractAddress: "0x510ab76899430424d209a6c9a5b9951fb8a6f47d",
+			Payload:              []byte("fake bytes"),
+			Timeout:              10000,
+			InvalidationId:       []byte("GravityTesting"),
+			InvalidationNonce:    1,
+		}
+		k.SetOutgoingLogicCall(ctx, &call)
+	}
+}

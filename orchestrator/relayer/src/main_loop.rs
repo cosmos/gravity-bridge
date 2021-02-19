@@ -1,6 +1,6 @@
 use crate::{
     batch_relaying::relay_batches, find_latest_valset::find_latest_valset,
-    valset_relaying::relay_valsets,
+    logic_call_relaying::relay_logic_calls, valset_relaying::relay_valsets,
 };
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
@@ -49,6 +49,16 @@ pub async fn relayer_main_loop(
         .await;
 
         relay_batches(
+            current_valset.clone(),
+            ethereum_key,
+            &web3,
+            &mut grpc_client,
+            peggy_contract_address,
+            LOOP_SPEED,
+        )
+        .await;
+
+        relay_logic_calls(
             current_valset,
             ethereum_key,
             &web3,
