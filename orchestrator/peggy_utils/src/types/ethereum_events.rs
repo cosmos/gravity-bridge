@@ -323,6 +323,7 @@ impl ERC20DeployedEvent {
             let index_start = 6 * 32;
             let index_end = index_start + denom_len;
             let denom = String::from_utf8(input.data[index_start..index_end].to_vec());
+            trace!("Denom {:?}", denom);
             if denom.is_err() {
                 return Err(PeggyError::InvalidEventLogError(format!(
                     "{:?} is not valid utf8, probably incorrect parsing",
@@ -356,6 +357,7 @@ impl ERC20DeployedEvent {
                     erc20_name
                 )));
             }
+            trace!("ERC20 Name {:?}", erc20_name);
             let erc20_name = erc20_name.unwrap();
 
             let index_start = ((index_end + 31) / 32) * 32;
@@ -367,10 +369,11 @@ impl ERC20DeployedEvent {
                     "Symbol length overflow, probably incorrect parsing".to_string(),
                 ));
             }
-            let symbol_len: usize = denom_len.to_string().parse().unwrap();
+            let symbol_len: usize = symbol_len.to_string().parse().unwrap();
             let index_start = index_end;
             let index_end = index_start + symbol_len;
             let symbol = String::from_utf8(input.data[index_start..index_end].to_vec());
+            trace!("Symbol {:?}", symbol);
             if symbol.is_err() {
                 return Err(PeggyError::InvalidEventLogError(format!(
                     "{:?} is not valid utf8, probably incorrect parsing",
