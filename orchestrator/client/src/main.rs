@@ -51,12 +51,12 @@ struct Args {
     flag_cosmos_rpc: String,
     flag_ethereum_rpc: String,
     flag_contract_address: String,
-    flag_fees: String,
     flag_amount: f64,
     flag_cosmos_destination: String,
     flag_erc20_address: String,
     flag_eth_destination: String,
     flag_no_batch: bool,
+    flag_times: usize,
     cmd_eth_to_cosmos: bool,
     cmd_cosmos_to_eth: bool,
 }
@@ -64,21 +64,21 @@ struct Args {
 lazy_static! {
     pub static ref USAGE: String = format!(
     "Usage:
-        {} cosmos-to-eth --cosmos-phrase=<key> --cosmos-rpc=<url> --fees=<denom> --erc20-address=<addr> --amount=<amount> --eth-destination=<dest> [--no-batch]
-        {} eth-to-cosmos --ethereum-key=<key> --ethereum-rpc=<url> --contract-address=<addr> --erc20-address=<addr> --amount=<amount> --cosmos-destination=<dest>
+        {} cosmos-to-eth --cosmos-phrase=<key> --cosmos-rpc=<url> --erc20-address=<addr> --amount=<amount> --eth-destination=<dest> [--no-batch] [--times=<number>]
+        {} eth-to-cosmos --ethereum-key=<key> --ethereum-rpc=<url> --contract-address=<addr> --erc20-address=<addr> --amount=<amount> --cosmos-destination=<dest> [--times=<number>]
         Options:
             -h --help                   Show this screen.
             --cosmos-key=<ckey>         The Cosmos private key of the sender
             --ethereum-key=<ekey>       The Ethereum private key of the sender
             --cosmos-rpc=<curl>         The Cosmos Legacy RPC url, this will need to be manually enabled
             --ethereum-rpc=<eurl>       The Ethereum RPC url, should be a self hosted node
-            --fees=<denom>              The Cosmos Denom in which to pay Cosmos chain fees
             --contract-address=<addr>   The Ethereum contract address for Peggy, this is temporary
             --erc20-address=<addr>      An erc20 address to send funds
-            --amount=<amount>           The amount of tokens to send, for example 1.5DAI
+            --amount=<amount>           The amount of tokens to send, for example 1.5
             --cosmos-destination=<dest> A cosmos address to send tokens to
             --eth-destination=<dest>    A cosmos address to send tokens to
             --no-batch                  Don't request a batch when sending to Ethereum
+            --times=<number>            The number of times this send should be preformed, useful for stress testing
         About:
             Althea Gravity client software, moves tokens from Ethereum to Cosmos and back
             Written By: {}
@@ -101,6 +101,11 @@ async fn main() {
         .unwrap_or_else(|e| e.exit());
 
     let amount = fraction_eth_to_wei(args.flag_amount);
+    let times = if args.flag_times == 0 {
+        1usize
+    } else {
+        args.flag_times
+    };
     let erc20_address: EthAddress = args
         .flag_erc20_address
         .parse()
@@ -108,14 +113,10 @@ async fn main() {
     if args.cmd_cosmos_to_eth {
         let cosmos_key = CosmosPrivateKey::from_phrase(&args.flag_cosmos_phrase, "")
             .expect("Failed to parse cosmos key phrase, does it have a password?");
+        let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
         let cosmos_url = Url::parse(&args.flag_cosmos_rpc).expect("Invalid Cosmos RPC url");
         let cosmos_url = cosmos_url.to_string();
         let cosmos_url = cosmos_url.trim_end_matches('/');
-        let fee_denom = args.flag_fees;
-        let fee = Coin {
-            denom: fee_denom,
-            amount: 1u64.into(),
-        };
         let peggy_denom = format!("peggy{}", erc20_address);
         let contact = Contact::new(&cosmos_url, TIMEOUT);
         let amount = Coin {
@@ -128,17 +129,45 @@ async fn main() {
         };
         let eth_dest: EthAddress = args.flag_eth_destination.parse().unwrap();
 
-        println!(
-            "Locking {} / {} into the batch pool",
-            args.flag_amount, erc20_address
-        );
-        send_to_eth(cosmos_key, eth_dest, amount, bridge_fee, &contact)
+        let balances = contact
+            .get_balances(cosmos_address)
             .await
-            .expect("Failed to Send to ETH");
+            .expect("Failed to get balances!")
+            .result;
+        let mut found = None;
+        for coin in balances {
+            if coin.denom == peggy_denom {
+                found = Some(coin);
+            }
+        }
+        if found.is_none() {
+            panic!("You don't have any {} tokens!", peggy_denom);
+        } else if amount.amount.clone() * times.into() >= found.clone().unwrap().amount {
+            panic!("Your transfer of {} {} tokens is greater than your balance of {} tokens. Remember you need some to pay for fees!", amount.amount, peggy_denom, found.unwrap().amount);
+        }
+
+        for _ in 0..times {
+            println!(
+                "Locking {} / {} into the batch pool",
+                args.flag_amount, erc20_address
+            );
+            let res = send_to_eth(
+                cosmos_key,
+                eth_dest,
+                amount.clone(),
+                bridge_fee.clone(),
+                &contact,
+            )
+            .await;
+            match res {
+                Ok(tx_id) => println!("Send to Eth txid {}", tx_id.txhash),
+                Err(e) => println!("Failed to send tokens! {:?}", e),
+            }
+        }
 
         if !args.flag_no_batch {
             println!("Requesting a batch to push transaction along immediately");
-            send_request_batch(cosmos_key, peggy_denom, fee, &contact)
+            send_request_batch(cosmos_key, peggy_denom, bridge_fee, &contact)
                 .await
                 .expect("Failed to request batch");
         } else {
@@ -158,27 +187,48 @@ async fn main() {
         let eth_url = eth_url.trim_end_matches('/');
         let web3 = Web3::new(&eth_url, TIMEOUT);
         let cosmos_dest: CosmosAddress = args.flag_cosmos_destination.parse().unwrap();
-
         let ethereum_public_key = ethereum_key.to_public_key().unwrap();
 
-        println!(
-            "Sending {} / {} to Cosmos from {} to {}",
-            args.flag_amount, erc20_address, ethereum_public_key, cosmos_dest
-        );
-        // we send some erc20 tokens to the peggy contract to register a deposit
-        let tx_id = send_to_cosmos(
-            erc20_address,
-            contract_address,
-            amount.clone(),
-            cosmos_dest,
-            ethereum_key,
-            Some(TIMEOUT),
-            &web3,
-            vec![],
-        )
-        .await
-        .expect("Failed to send tokens to Cosmos");
-        println!("Send to Cosmos txid: {:#066x}", tx_id);
+        let erc20_balance = web3
+            .get_erc20_balance(erc20_address, ethereum_public_key)
+            .await
+            .expect("Failed to get balance, check ERC20 contract address");
+
+        if erc20_balance == 0u8.into() {
+            panic!(
+                "You have zero {} tokens, please double check your sender and erc20 addresses!",
+                contract_address
+            );
+        } else if amount.clone() * times.into() > erc20_balance {
+            panic!(
+                "Insufficient balance {} > {}",
+                amount * times.into(),
+                erc20_balance
+            );
+        }
+
+        for _ in 0..times {
+            println!(
+                "Sending {} / {} to Cosmos from {} to {}",
+                args.flag_amount, erc20_address, ethereum_public_key, cosmos_dest
+            );
+            // we send some erc20 tokens to the peggy contract to register a deposit
+            let res = send_to_cosmos(
+                erc20_address,
+                contract_address,
+                amount.clone(),
+                cosmos_dest,
+                ethereum_key,
+                Some(TIMEOUT),
+                &web3,
+                vec![],
+            )
+            .await;
+            match res {
+                Ok(tx_id) => println!("Send to Cosmos txid: {:#066x}", tx_id),
+                Err(e) => println!("Failed to send tokens! {:?}", e),
+            }
+        }
     }
 }
 
