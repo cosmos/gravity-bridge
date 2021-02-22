@@ -27,10 +27,9 @@ func GetTxCmd(storeKey string) *cobra.Command {
 	}
 
 	peggyTxCmd.AddCommand([]*cobra.Command{
-		CmdWithdrawToETH(),
+		CmdSendToEth(),
 		CmdRequestBatch(),
 		CmdSetOrchestratorAddress(),
-		CmdSendToEth(),
 		GetUnsafeTestingCmd(),
 	}...)
 
@@ -93,9 +92,9 @@ func CmdUnsafeETHAddr() *cobra.Command {
 	}
 }
 
-func CmdWithdrawToETH() *cobra.Command {
+func CmdSendToEth() *cobra.Command {
 	return &cobra.Command{
-		Use:   "withdraw [from_key_or_cosmos_address] [to_eth_address] [amount] [bridge_fee]",
+		Use:   "send-to-eth [eth-dest] [amount] [bridge-fee]",
 		Short: "Adds a new entry to the transaction pool to withdraw an amount from the Ethereum bridge contract",
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -105,11 +104,11 @@ func CmdWithdrawToETH() *cobra.Command {
 			}
 			cosmosAddr := cliCtx.GetFromAddress()
 
-			amount, err := sdk.ParseCoinsNormalized(args[2])
+			amount, err := sdk.ParseCoinsNormalized(args[1])
 			if err != nil {
 				return sdkerrors.Wrap(err, "amount")
 			}
-			bridgeFee, err := sdk.ParseCoinsNormalized(args[3])
+			bridgeFee, err := sdk.ParseCoinsNormalized(args[2])
 			if err != nil {
 				return sdkerrors.Wrap(err, "bridge fee")
 			}
@@ -121,7 +120,7 @@ func CmdWithdrawToETH() *cobra.Command {
 			// Make the message
 			msg := types.MsgSendToEth{
 				Sender:    cosmosAddr.String(),
-				EthDest:   args[1],
+				EthDest:   args[0],
 				Amount:    amount[0],
 				BridgeFee: bridgeFee[0],
 			}
@@ -162,56 +161,18 @@ func CmdRequestBatch() *cobra.Command {
 
 func CmdSetOrchestratorAddress() *cobra.Command {
 	return &cobra.Command{
-		Use:   "set-orchestrator-address [orchestrator-address] [ethereum-address]",
+		Use:   "set-orchestrator-address [validator-address] [orchestrator-address] [ethereum-address]",
 		Short: "Allows validators to delegate their voting responsibilities to a given key.",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-			validatorAddr := cliCtx.GetFromAddress()
-
-			msg := types.MsgSetOrchestratorAddress{
-				Validator:    validatorAddr.String(),
-				Orchestrator: args[0],
-				EthAddress:   args[1],
-			}
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			// Send it
-			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
-		},
-	}
-}
-
-func CmdSendToEth() *cobra.Command {
-	return &cobra.Command{
-		Use:   "send-to-eth [eth-dest] [amount] [bridge-fee]",
-		Short: "Allow user to bridge an asset",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-			cosmosAddr := cliCtx.GetFromAddress()
-
-			amount, err := sdk.ParseCoinsNormalized(args[1])
-			if err != nil {
-				return sdkerrors.Wrap(err, "amount coins parsing failed")
-			}
-			bridgeFee, err := sdk.ParseCoinsNormalized(args[2])
-			if err != nil {
-				return sdkerrors.Wrap(err, "bridge fee coins parsing failed")
-			}
-
-			msg := types.MsgSendToEth{
-				Sender:    cosmosAddr.String(),
-				EthDest:   args[0],
-				Amount:    amount[0],
-				BridgeFee: bridgeFee[0],
+			msg := types.MsgSetOrchestratorAddress{
+				Validator:    args[0],
+				Orchestrator: args[1],
+				EthAddress:   args[2],
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
