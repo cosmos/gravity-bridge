@@ -44,6 +44,12 @@ pub fn fraction_eth_to_wei(num: f64) -> Uint256 {
     (res as u128).into()
 }
 
+pub fn print_eth(input: Uint256) -> String {
+    let float: f64 = input.to_string().parse().unwrap();
+    let res = float / one_eth();
+    format!("{}", res)
+}
+
 #[derive(Debug, Deserialize)]
 struct Args {
     flag_cosmos_phrase: String,
@@ -110,10 +116,14 @@ async fn main() {
         .flag_erc20_address
         .parse()
         .expect("Invalid contract address!");
+
     if args.cmd_cosmos_to_eth {
         let cosmos_key = CosmosPrivateKey::from_phrase(&args.flag_cosmos_phrase, "")
             .expect("Failed to parse cosmos key phrase, does it have a password?");
         let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
+
+        println!("Sending from Cosmos address {}", cosmos_address);
+
         let cosmos_url = Url::parse(&args.flag_cosmos_rpc).expect("Invalid Cosmos RPC url");
         let cosmos_url = cosmos_url.to_string();
         let cosmos_url = cosmos_url.trim_end_matches('/');
@@ -135,15 +145,22 @@ async fn main() {
             .expect("Failed to get balances!")
             .result;
         let mut found = None;
-        for coin in balances {
+        for coin in balances.iter() {
             if coin.denom == peggy_denom {
                 found = Some(coin);
             }
         }
+
+        println!("Cosmos balances {:?}", balances);
+
         if found.is_none() {
             panic!("You don't have any {} tokens!", peggy_denom);
+        } else if amount.amount.clone() * times.into() >= found.clone().unwrap().amount
+            && times == 1
+        {
+            panic!("Your transfer of {} {} tokens is greater than your balance of {} tokens. Remember you need some to pay for fees!", print_eth(amount.amount), peggy_denom, print_eth(found.unwrap().amount.clone()));
         } else if amount.amount.clone() * times.into() >= found.clone().unwrap().amount {
-            panic!("Your transfer of {} {} tokens is greater than your balance of {} tokens. Remember you need some to pay for fees!", amount.amount, peggy_denom, found.unwrap().amount);
+            panic!("Your transfer of {} * {} {} tokens is greater than your balance of {} tokens. Try to reduce the amount or the --times parameter", print_eth(amount.amount), times, peggy_denom, print_eth(found.unwrap().amount.clone()));
         }
 
         for _ in 0..times {
