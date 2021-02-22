@@ -5,6 +5,9 @@ tests/test-runner/Cargo.lock
 tests/dockerfile/peggy.tar.gz
 solidity/dist
 
+# IDE files
+.idea/
+
 #Hardhat files
 cache
 artifacts
