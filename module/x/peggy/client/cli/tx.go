@@ -174,8 +174,8 @@ func CmdSetOrchestratorAddress() *cobra.Command {
 
 			msg := types.MsgSetOrchestratorAddress{
 				Validator:    validatorAddr.String(),
-				Orchestrator: args[1],
-				EthAddress:   args[2],
+				Orchestrator: args[0],
+				EthAddress:   args[1],
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
