@@ -96,7 +96,7 @@ func CmdSendToEth() *cobra.Command {
 	return &cobra.Command{
 		Use:   "send-to-eth [eth-dest] [amount] [bridge-fee]",
 		Short: "Adds a new entry to the transaction pool to withdraw an amount from the Ethereum bridge contract",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
