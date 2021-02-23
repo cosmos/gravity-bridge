@@ -73,6 +73,12 @@ const (
 	// Used by the relayer to package a logic call with signatures required
 	// to submit to Ethereum
 	QueryLogicCallConfirms = "logicCallConfirms"
+
+	// Cosmos originated assets
+	// This retrieves the denom which is represented by a given ERC20 contract
+	QueryERC20ToDenom = "ERC20ToDenom"
+	// This retrieves the ERC20 contract which represents a given denom
+	QueryDenomToERC20 = "DenomToERC20"
 )
 
 // NewQuerier is the module level router for state queries
@@ -116,6 +122,12 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 
 		case QueryPeggyID:
 			return queryPeggyID(ctx, keeper)
+
+		// Cosmos originated assets
+		case QueryDenomToERC20:
+			return queryDenomToERC20(ctx, path[1], keeper)
+		case QueryERC20ToDenom:
+			return queryERC20ToDenom(ctx, path[1], keeper)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint", types.ModuleName)
@@ -440,6 +452,26 @@ func queryAllLogicCallConfirms(ctx sdk.Context, invalidationId string, invalidat
 func queryPeggyID(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	peggyID := keeper.GetPeggyID(ctx)
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, peggyID)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	} else {
+		return res, nil
+	}
+}
+
+func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, error) {
+	_, peggyID, err := keeper.DenomToERC20(ctx, denom)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, peggyID)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	} else {
+		return res, nil
+	}
+}
+
+func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, error) {
+	_, denom := keeper.ERC20ToDenom(ctx, ERC20)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, denom)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {
