@@ -11,6 +11,7 @@ import (
 const (
 	nonce                  = "nonce"
 	tokenAddress           = "tokenAddress"
+	denom                  = "denom"
 	bech32ValidatorAddress = "bech32ValidatorAddress"
 	claimType              = "claimType"
 	signType               = "signType"
@@ -57,4 +58,11 @@ func RegisterRoutes(cliCtx client.Context, r *mux.Router, storeName string) {
 	// This endpoint gets all of the batch confirmations for a given nonce and denom In order to determine if a batch is complete
 	// the relayer will compare the valset power on the contract to the number of signatures
 	r.HandleFunc(fmt.Sprintf("/%s/batch_confirm/{%s}/{%s}", storeName, nonce, tokenAddress), allBatchConfirmsHandler(cliCtx, storeName)).Methods("GET")
+
+	/// Cosmos originated assets
+
+	// This handler lets you retrieve the ERC20 contract corresponding to a given denom
+	r.HandleFunc(fmt.Sprintf("/%s/denom_to_erc20/{%s}", storeName, denom), denomToERC20Handler(cliCtx, storeName)).Methods("GET")
+	// This handler lets you retrieve the denom corresponding to a given ERC20 contract
+	r.HandleFunc(fmt.Sprintf("/%s/erc20_to_denom/{%s}", storeName, tokenAddress), ERC20ToDenomHandler(cliCtx, storeName)).Methods("GET")
 }
