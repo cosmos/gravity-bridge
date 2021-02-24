@@ -88,23 +88,29 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// set the ethereum address
 		k.SetEthAddress(ctx, val, keys.EthAddress)
 	}
+
+	// populate state with cosmos originated denom-erc20 mapping
+	for _, item := range data.Erc20ToDenoms {
+		k.setCosmosOriginatedDenomToERC20(ctx, item.Denom, item.Erc20)
+	}
 }
 
 // ExportGenesis exports all the state needed to restart the chain
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p            = k.GetParams(ctx)
-		calls        = k.GetOutgoingLogicCalls(ctx)
-		batches      = k.GetOutgoingTxBatches(ctx)
-		valsets      = k.GetValsets(ctx)
-		attmap       = k.GetAttestationMapping(ctx)
-		vsconfs      = []*types.MsgValsetConfirm{}
-		batchconfs   = []types.MsgConfirmBatch{}
-		callconfs    = []types.MsgConfirmLogicCall{}
-		attestations = []types.Attestation{}
-		delegates    = k.GetDelegateKeys(ctx)
-		lastobserved = k.GetLastObservedEventNonce(ctx)
+		p             = k.GetParams(ctx)
+		calls         = k.GetOutgoingLogicCalls(ctx)
+		batches       = k.GetOutgoingTxBatches(ctx)
+		valsets       = k.GetValsets(ctx)
+		attmap        = k.GetAttestationMapping(ctx)
+		vsconfs       = []*types.MsgValsetConfirm{}
+		batchconfs    = []types.MsgConfirmBatch{}
+		callconfs     = []types.MsgConfirmLogicCall{}
+		attestations  = []types.Attestation{}
+		delegates     = k.GetDelegateKeys(ctx)
+		lastobserved  = k.GetLastObservedEventNonce(ctx)
+		erc20ToDenoms = []*types.ERC20ToDenom{}
 	)
 
 	// export valset confirmations from state
@@ -131,6 +137,12 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		attestations = append(attestations, atts...)
 	}
 
+	// export erc20 to denom relations
+	k.IterateERC20ToDenom(ctx, func(key []byte, erc20ToDenom *types.ERC20ToDenom) bool {
+		erc20ToDenoms = append(erc20ToDenoms, erc20ToDenom)
+		return false
+	})
+
 	return types.GenesisState{
 		Params:            &p,
 		LastObservedNonce: lastobserved,
@@ -142,5 +154,6 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		LogicCallConfirms: callconfs,
 		Attestations:      attestations,
 		DelegateKeys:      delegates,
+		Erc20ToDenoms:     erc20ToDenoms,
 	}
 }
