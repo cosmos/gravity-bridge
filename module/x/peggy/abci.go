@@ -20,50 +20,49 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
 	currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 
-	// valsets are sorted so the most recent one is first
-	valsets := k.GetValsets(ctx)
-	if len(valsets) == 0 {
-		k.SetValsetRequest(ctx)
-	}
+	// valsets are sorted by nonce in ASC order
+	unslashedValsets := k.GetUnSlashedValsets(ctx)
 
-	for i, vs := range valsets {
+	for _, vs := range unslashedValsets {
 		signedWithinWindow := uint64(ctx.BlockHeight()) > params.SignedValsetsWindow && uint64(ctx.BlockHeight())-params.SignedValsetsWindow > vs.Height
-		switch {
+		if !signedWithinWindow {
+			// As unslashedValsets are in sorted order, skip checking next unslashed valset
+			break
+		}
+
 		// #1 condition
 		// We look through the full bonded validator set (not just the active set, include unbonding validators)
 		// and we slash users who haven't signed a valset that is currentHeight - signedBlocksWindow old
-		case signedWithinWindow:
 
-			// first we need to see which validators in the active set
-			// haven't signed the valdiator set and slash them,
-			confirms := k.GetValsetConfirms(ctx, vs.Nonce)
-			for _, val := range currentBondedSet {
-				found := false
-				for _, conf := range confirms {
-					if conf.EthAddress == k.GetEthAddress(ctx, val.GetOperator()) {
-						found = true
-						break
-					}
-				}
-				if !found {
-					cons, _ := val.GetConsAddr()
-					k.StakingKeeper.Slash(ctx, cons,
-						ctx.BlockHeight(), val.ConsensusPower(),
-						params.SlashFractionValset)
-					k.StakingKeeper.Jail(ctx, cons)
+		// first we need to see which validators in the active set
+		// haven't signed the valdiator set and slash them,
+		confirms := k.GetValsetConfirms(ctx, vs.Nonce)
+		for _, val := range currentBondedSet {
+			found := false
+			for _, conf := range confirms {
+				if conf.EthAddress == k.GetEthAddress(ctx, val.GetOperator()) {
+					found = true
+					break
 				}
 			}
-
-			// then we prune the valset from state
-			k.DeleteValset(ctx, vs.Nonce)
-
-		// on the latest validator set, check for change in power against
-		// current, and emit a new validator set if the change in power >5%
-		case i == 0:
-			if types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(vs.Members) > 0.05 {
-				k.SetValsetRequest(ctx)
+			if !found {
+				cons, _ := val.GetConsAddr()
+				k.StakingKeeper.Slash(ctx, cons,
+					ctx.BlockHeight(), val.ConsensusPower(),
+					params.SlashFractionValset)
+				k.StakingKeeper.Jail(ctx, cons)
 			}
 		}
+
+		// then we set the latest slashed valset  nonce
+		k.SetLastSlashedValsetNonce(ctx, vs.Nonce)
+	}
+
+	// on the latest validator set, check for change in power against
+	// current, and emit a new validator set if the change in power >5%
+	latestValset := k.GetLatestValset(ctx)
+	if types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05 {
+		k.SetValsetRequest(ctx)
 	}
 
 	// #2 condition

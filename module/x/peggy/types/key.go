@@ -96,6 +96,12 @@ var (
 
 	// ERC20ToDenomKey prefixes the index of Cosmos originated assets ERC20s to denoms
 	ERC20ToDenomKey = []byte{0xf4}
+
+	// LastSlashedValsetNonce indexes the latest slashed valset nonce
+	LastSlashedValsetNonce = []byte{0xf5}
+
+	// LatestValsetNonce indexes the latest valset nonce
+	LatestValsetNonce = []byte{0xf6}
 )
 
 // GetOrchestratorAddressKey returns the following key format
