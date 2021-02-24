@@ -20,8 +20,8 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
 	currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 
-	maxHeight := ctx.BlockHeight() - int64(params.SignedValsetsWindow) + 1
-	unslashedValsets := k.GetUnSlashedValsets(ctx, uint64(maxHeight))
+	maxHeight := uint64(ctx.BlockHeight()) - params.SignedValsetsWindow + 1
+	unslashedValsets := k.GetUnSlashedValsets(ctx, maxHeight)
 
 	// valsets are sorted by nonce in ASC order
 	for _, vs := range unslashedValsets {
