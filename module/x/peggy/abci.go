@@ -20,17 +20,16 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
 	currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 
-	maxHeight := uint64(ctx.BlockHeight()) - params.SignedValsetsWindow + 1
+	maxHeight := uint64(ctx.BlockHeight()) - params.SignedValsetsWindow
+	// don't slash in the beginning before there aren't even SignedValsetsWindow blocks yet
+	if uint64(ctx.BlockHeight()) > params.SignedValsetsWindow {
+		maxHeight = uint64(0)
+	}
+
 	unslashedValsets := k.GetUnSlashedValsets(ctx, maxHeight)
 
-	// valsets are sorted by nonce in ASC order
+	// unslashedValsets are sorted by nonce in ASC order
 	for _, vs := range unslashedValsets {
-		signedWithinWindow := uint64(ctx.BlockHeight()) > params.SignedValsetsWindow && uint64(ctx.BlockHeight())-params.SignedValsetsWindow > vs.Height
-		if !signedWithinWindow {
-			// As unslashedValsets are in sorted order, skip checking next unslashed valset
-			break
-		}
-
 		// #1 condition
 		// We look through the full bonded validator set (not just the active set, include unbonding validators)
 		// and we slash users who haven't signed a valset that is currentHeight - signedBlocksWindow old
