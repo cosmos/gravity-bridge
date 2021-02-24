@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -67,5 +68,23 @@ func (k Keeper) ERC20ToDenom(ctx sdk.Context, tokenContract string) (bool, strin
 	} else {
 		// If it is not in there, it is not a cosmos originated token, turn the ERC20 into a peggy denom
 		return false, types.PeggyDenom(tokenContract)
+	}
+}
+
+// IterateERC20ToDenom iterates over erc20 to denom relations
+func (k Keeper) IterateERC20ToDenom(ctx sdk.Context, cb func([]byte, *types.ERC20ToDenom) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ERC20ToDenomKey)
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		erc20ToDenom := types.ERC20ToDenom{
+			Erc20: string(iter.Key()),
+			Denom: string(iter.Value()),
+		}
+		// cb returns true to stop early
+		if cb(iter.Key(), &erc20ToDenom) {
+			break
+		}
 	}
 }
