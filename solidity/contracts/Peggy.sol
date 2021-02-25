@@ -493,13 +493,13 @@ contract Peggy {
 			);
 		}
 
+		// Make call to logic contract
+		bytes memory returnData = Address.functionCall(_args.logicContractAddress, _args.payload);
+		
 		// Send fees to msg.sender
 		for (uint256 i = 0; i < _args.feeAmounts.length; i++) {
 			IERC20(_args.feeTokenContracts[i]).safeTransfer(msg.sender, _args.feeAmounts[i]);
 		}
-
-		// Make call to logic contract
-		bytes memory returnData = Address.functionCall(_args.logicContractAddress, _args.payload);
 
 		// LOGS scoped to reduce stack depth
 		{
