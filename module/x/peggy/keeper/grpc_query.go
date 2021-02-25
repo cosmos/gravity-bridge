@@ -87,6 +87,11 @@ func (k Keeper) LastPendingValsetRequestByAddr(c context.Context, req *types.Que
 	return &types.QueryLastPendingValsetRequestByAddrResponse{Valsets: pendingValsetReq}, nil
 }
 
+// BatchFees queries the batch fees from unbatched pool
+func (k Keeper) BatchFees(c context.Context, req *types.QueryBatchFeeRequest) (*types.QueryBatchFeeResponse, error) {
+	return &types.QueryBatchFeeResponse{BatchFees: k.CreateBatchFees(sdk.UnwrapSDKContext(c))}, nil
+}
+
 // LastPendingBatchRequestByAddr queries the LastPendingBatchRequestByAddr of the peggy module
 func (k Keeper) LastPendingBatchRequestByAddr(c context.Context, req *types.QueryLastPendingBatchRequestByAddrRequest) (*types.QueryLastPendingBatchRequestByAddrResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)

@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/binary"
 	"fmt"
+	"math/big"
 	"strconv"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -177,6 +178,60 @@ func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb fu
 			}
 		}
 	}
+	return
+}
+
+// CreateBatchFees iterates over the outgoing pool and create batch token fee map
+func (k Keeper) CreateBatchFees(ctx sdk.Context) (batchFees []*types.BatchFees) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
+	batchFeesMap := make(map[string]*types.BatchFees)
+	txCountMap := make(map[string]int)
+
+	for ; iter.Valid(); iter.Next() {
+		var ids types.IDSet
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ids)
+
+		// create a map to store the token contract address and its total fee
+		// Parse the iterator key to get contract address & fee
+		// If len(ids.Ids) > 1, multiply fee amount with len(ids.Ids) and add it to total fee amount
+
+		key := iter.Key()
+		tokenContractBytes := key[:types.ETHContractAddressLen]
+		tokenContractAddr := string(tokenContractBytes)
+
+		feeAmountBytes := key[len(tokenContractBytes):]
+		feeAmount := big.NewInt(0).SetBytes(feeAmountBytes)
+
+		for i := 0; i < len(ids.Ids); i++ {
+			if txCountMap[tokenContractAddr] >= OutgoingTxBatchSize {
+				break
+			} else {
+				// add fee amount
+				if _, ok := batchFeesMap[tokenContractAddr]; ok {
+					batchFeesMap[tokenContractAddr].TopOneHundred = batchFeesMap[tokenContractAddr].TopOneHundred.Add(sdk.NewIntFromBigInt(feeAmount))
+				} else {
+					batchFeesMap[tokenContractAddr] = &types.BatchFees{
+						Token:         tokenContractAddr,
+						TopOneHundred: sdk.NewIntFromBigInt(feeAmount)}
+				}
+
+				txCountMap[tokenContractAddr] = txCountMap[tokenContractAddr] + 1
+			}
+		}
+	}
+
+	// create array of batchFees
+	for _, batchFee := range batchFeesMap {
+		// newBatchFee := types.BatchFees{
+		// 	Token:         batchFee.Token,
+		// 	TopOneHundred: batchFee.TopOneHundred,
+		// }
+		batchFees = append(batchFees, batchFee)
+	}
+
 	return
 }
 

@@ -4,6 +4,7 @@ package peggy.v1;
 import "peggy/v1/genesis.proto";
 import "peggy/v1/types.proto";
 import "peggy/v1/msgs.proto";
+import "peggy/v1/pool.proto";
 import "peggy/v1/batch.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
@@ -43,6 +44,10 @@ service Query {
   rpc LastEventNonceByAddr(QueryLastEventNonceByAddrRequest) returns (QueryLastEventNonceByAddrResponse) {
     option (google.api.http).get = "/peggy/v1beta/oracle/eventnonce/{address}";
   }
+  rpc BatchFees(QueryBatchFeeRequest) returns (QueryBatchFeeResponse) {
+    option (google.api.http).get = "/peggy/v1beta/batchfees";
+  }
+
   rpc OutgoingTxBatches(QueryOutgoingTxBatchesRequest) returns (QueryOutgoingTxBatchesResponse) {
     option (google.api.http).get = "/peggy/v1beta/batch/outgoingtx";
   }
@@ -80,6 +85,10 @@ message QueryLastValsetRequestsResponse { repeated Valset valsets = 1; }
 
 message QueryLastPendingValsetRequestByAddrRequest { string address = 1; }
 message QueryLastPendingValsetRequestByAddrResponse { repeated Valset valsets = 1; }
+
+message QueryBatchFeeRequest {}
+message QueryBatchFeeResponse { repeated BatchFees batchFees = 1; }
+
 
 message QueryLastPendingBatchRequestByAddrRequest { string address = 1; }
 message QueryLastPendingBatchRequestByAddrResponse { OutgoingTxBatch batch = 1; }
