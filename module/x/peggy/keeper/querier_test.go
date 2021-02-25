@@ -724,3 +724,33 @@ func TestQueryCurrentValset(t *testing.T) {
 	expectedValset := types.Valset{Nonce: 1234567, Height: 1234567, Members: []*types.BridgeValidator{&bridgeVal}}
 	assert.Equal(t, &expectedValset, currentValset)
 }
+
+func TestQueryERC20ToDenom(t *testing.T) {
+	var (
+		erc20 = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
+		denom = "uatom"
+	)
+	input := CreateTestEnv(t)
+	ctx := input.Context
+	input.PeggyKeeper.setCosmosOriginatedDenomToERC20(ctx, denom, erc20)
+
+	queriedDenom, err := queryERC20ToDenom(ctx, erc20, input.PeggyKeeper)
+	require.NoError(t, err)
+
+	assert.Equal(t, denom, string(queriedDenom))
+}
+
+func TestQueryDenomToERC20(t *testing.T) {
+	var (
+		erc20 = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
+		denom = "uatom"
+	)
+	input := CreateTestEnv(t)
+	ctx := input.Context
+	input.PeggyKeeper.setCosmosOriginatedDenomToERC20(ctx, denom, erc20)
+
+	queriedERC20, err := queryDenomToERC20(ctx, denom, input.PeggyKeeper)
+	require.NoError(t, err)
+
+	assert.Equal(t, erc20, string(queriedERC20))
+}

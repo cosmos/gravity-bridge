@@ -63,6 +63,12 @@ service Query {
   rpc LogicConfirms(QueryLogicConfirmsRequest) returns (QueryLogicConfirmsResponse) {
     option (google.api.http).get = "/peggy/v1beta/logic/confirms";
   }
+  rpc ERC20ToDenom(QueryERC20ToDenomRequest) returns (QueryERC20ToDenomResponse) {
+    option (google.api.http).get = "/peggy/v1beta/cosmos_originated/erc20_to_denom";
+  }
+  rpc DenomToERC20(QueryDenomToERC20Request) returns (QueryDenomToERC20Response) {
+    option (google.api.http).get = "/peggy/v1beta/cosmos_originated/denom_to_erc20";
+  }
 }
 
 message QueryParamsRequest {}
@@ -114,4 +120,14 @@ message QueryLogicConfirmsResponse { repeated MsgConfirmLogicCall confirms = 1; 
 message QueryLastEventNonceByAddrRequest { string address = 1; }
 message QueryLastEventNonceByAddrResponse {
   uint64 event_nonce = 1;
+}
+
+message QueryERC20ToDenomRequest { string erc20 = 1; }
+message QueryERC20ToDenomResponse {
+  string denom = 1;
+}
+
+message QueryDenomToERC20Request { string denom = 1; }
+message QueryDenomToERC20Response {
+  string erc20 = 1;
 }

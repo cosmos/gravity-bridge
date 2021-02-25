@@ -460,21 +460,15 @@ func queryPeggyID(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 }
 
 func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, error) {
-	_, peggyID, err := keeper.DenomToERC20(ctx, denom)
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, peggyID)
+	_, erc20, err := keeper.DenomToERC20(ctx, denom)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {
-		return res, nil
+		return []byte(erc20), nil
 	}
 }
 
 func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, error) {
 	_, denom := keeper.ERC20ToDenom(ctx, ERC20)
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, denom)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	} else {
-		return res, nil
-	}
+	return []byte(denom), nil
 }
