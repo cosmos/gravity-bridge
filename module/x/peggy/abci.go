@@ -17,13 +17,15 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 }
 
 func slashing(ctx sdk.Context, k keeper.Keeper) {
+
 	params := k.GetParams(ctx)
 	currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 
-	maxHeight := uint64(ctx.BlockHeight()) - params.SignedValsetsWindow
+	maxHeight := uint64(0)
+
 	// don't slash in the beginning before there aren't even SignedValsetsWindow blocks yet
 	if uint64(ctx.BlockHeight()) > params.SignedValsetsWindow {
-		maxHeight = uint64(0)
+		maxHeight = uint64(ctx.BlockHeight()) - params.SignedValsetsWindow
 	}
 
 	unslashedValsets := k.GetUnSlashedValsets(ctx, maxHeight)
@@ -61,7 +63,9 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 	// on the latest validator set, check for change in power against
 	// current, and emit a new validator set if the change in power >5%
 	latestValset := k.GetLatestValset(ctx)
-	if types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05 {
+	if latestValset == nil {
+		k.SetValsetRequest(ctx)
+	} else if types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05 {
 		k.SetValsetRequest(ctx)
 	}
 

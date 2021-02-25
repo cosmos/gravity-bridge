@@ -4,12 +4,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+func TestValsetCreationIfNotAvailable(t *testing.T) {
+	input, ctx := keeper.SetupFiveValChain(t)
+	pk := input.PeggyKeeper
+
+	// EndBlocker should set a new validator set if not available
+	EndBlocker(ctx, pk)
+	require.NotNil(t, pk.GetValset(ctx, uint64(ctx.BlockHeight())))
+	valsets := pk.GetValsets(ctx)
+	require.True(t, len(valsets) == 1)
+
+}
 
 func TestValsetSlashing(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
@@ -41,9 +54,9 @@ func TestValsetSlashing(t *testing.T) {
 	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	require.True(t, val.IsJailed())
 
-	// Ensure that the valset gets pruned properly
-	valset := input.PeggyKeeper.GetValset(ctx, vs.Nonce)
-	require.Nil(t, valset)
+	// Ensure that the last slashed valset nonce is set properly
+	lastSlashedValsetNonce := input.PeggyKeeper.GetLastSlashedValsetNonce(ctx)
+	assert.Equal(t, lastSlashedValsetNonce, vs.Nonce)
 
 	// TODO: test balance of slashed tokens
 }

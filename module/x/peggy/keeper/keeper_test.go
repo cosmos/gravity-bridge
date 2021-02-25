@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
@@ -143,4 +144,50 @@ func TestDelegateKeys(t *testing.T) {
 		assert.Equal(t, ethAddrs[i], res.EthAddress)
 	}
 
+}
+
+func TestLastSlashedValsetNonce(t *testing.T) {
+	input := CreateTestEnv(t)
+	k := input.PeggyKeeper
+	ctx := input.Context
+
+	vs := k.GetCurrentValset(ctx)
+
+	i := 1
+	for ; i < 10; i++ {
+		vs.Height = uint64(i)
+		vs.Nonce = uint64(i)
+		k.StoreValsetUnsafe(ctx, vs)
+	}
+
+	latestValsetNonce := k.GetLatestValsetNonce(ctx)
+	assert.Equal(t, latestValsetNonce, uint64(i-1))
+
+	//  lastSlashedValsetNonce should be zero initially.
+	lastSlashedValsetNonce := k.GetLastSlashedValsetNonce(ctx)
+	assert.Equal(t, lastSlashedValsetNonce, uint64(0))
+	unslashedValsets := k.GetUnSlashedValsets(ctx, uint64(12))
+	assert.Equal(t, len(unslashedValsets), 9)
+
+	// check if last Slashed Valset nonce is set properly or not
+	k.SetLastSlashedValsetNonce(ctx, uint64(3))
+	lastSlashedValsetNonce = k.GetLastSlashedValsetNonce(ctx)
+	assert.Equal(t, lastSlashedValsetNonce, uint64(3))
+
+	// when maxHeight < lastSlashedValsetNonce, len(unslashedValsets) should be zero
+	unslashedValsets = k.GetUnSlashedValsets(ctx, uint64(2))
+	assert.Equal(t, len(unslashedValsets), 0)
+
+	// when maxHeight == lastSlashedValsetNonce, len(unslashedValsets) should be zero
+	unslashedValsets = k.GetUnSlashedValsets(ctx, uint64(3))
+	assert.Equal(t, len(unslashedValsets), 0)
+
+	// when maxHeight > lastSlashedValsetNonce && maxHeight <= latestValsetNonce
+	unslashedValsets = k.GetUnSlashedValsets(ctx, uint64(6))
+	assert.Equal(t, len(unslashedValsets), 2)
+
+	// when maxHeight > latestValsetNonce
+	unslashedValsets = k.GetUnSlashedValsets(ctx, uint64(15))
+	assert.Equal(t, len(unslashedValsets), 6)
+	fmt.Println("unslashedValsetsRange", unslashedValsets)
 }

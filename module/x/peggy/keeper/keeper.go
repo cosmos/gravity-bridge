@@ -183,7 +183,9 @@ func (k Keeper) GetLastSlashedValsetNonce(ctx sdk.Context) uint64 {
 func (k Keeper) GetUnSlashedValsets(ctx sdk.Context, maxHeight uint64) (out []*types.Valset) {
 	lastSlashedValsetNonce := k.GetLastSlashedValsetNonce(ctx)
 	k.IterateValsetBySlashedValsetNonce(ctx, lastSlashedValsetNonce, maxHeight, func(_ []byte, valset *types.Valset) bool {
-		out = append(out, valset)
+		if valset.Nonce > lastSlashedValsetNonce {
+			out = append(out, valset)
+		}
 		return false
 	})
 	return
