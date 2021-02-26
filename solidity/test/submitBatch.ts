@@ -8,12 +8,11 @@ import {
   makeCheckpoint,
   signHash,
   makeTxBatchHash,
-  examplePowers
+  examplePowers,
 } from "../test-utils/pure";
 
 chai.use(solidity);
 const { expect } = chai;
-
 
 async function runTest(opts: {
   // Issues with the tx batch
@@ -29,9 +28,6 @@ async function runTest(opts: {
   malformedCurrentValset?: boolean;
   batchTimeout?: boolean;
 }) {
-
-
-
   // Prep and deploy contract
   // ========================
   const signers = await ethers.getSigners();
@@ -43,10 +39,8 @@ async function runTest(opts: {
   const {
     peggy,
     testERC20,
-    checkpoint: deployCheckpoint
+    checkpoint: deployCheckpoint,
   } = await deployContracts(peggyId, validators, powers, powerThreshold);
-
-
 
   // Transfer out to Cosmos, locking coins
   // =====================================
@@ -56,8 +50,6 @@ async function runTest(opts: {
     ethers.utils.formatBytes32String("myCosmosAddress"),
     1000
   );
-
-
 
   // Prepare batch
   // ===============================
@@ -77,21 +69,18 @@ async function runTest(opts: {
     txFees.pop();
   }
 
-  let batchTimeout = ethers.provider.blockNumber + 1000
+  let batchTimeout = ethers.provider.blockNumber + 1000;
   if (opts.batchTimeout) {
-    batchTimeout = ethers.provider.blockNumber - 1
+    batchTimeout = ethers.provider.blockNumber - 1;
   }
-  let batchNonce = 1
+  let batchNonce = 1;
   if (opts.batchNonceNotHigher) {
-    batchNonce = 0
+    batchNonce = 0;
   }
-
 
   // Call method
   // ===========
-  const methodName = ethers.utils.formatBytes32String(
-    "transactionBatch"
-  );
+  const methodName = ethers.utils.formatBytes32String("transactionBatch");
   let abiEncoded = ethers.utils.defaultAbiCoder.encode(
     [
       "bytes32",
@@ -101,7 +90,7 @@ async function runTest(opts: {
       "uint256[]",
       "uint256",
       "address",
-      "uint256"
+      "uint256",
     ],
     [
       peggyId,
@@ -111,7 +100,7 @@ async function runTest(opts: {
       txFees,
       batchNonce,
       testERC20.address,
-      batchTimeout
+      batchTimeout,
     ]
   );
   let digest = ethers.utils.keccak256(abiEncoded);
@@ -214,7 +203,6 @@ describe("submitBatch tests", function () {
     );
   });
 
-
   it("throws on bad validator sig", async function () {
     await expect(runTest({ badValidatorSig: true })).to.be.revertedWith(
       "Validator signature does not match"
@@ -236,13 +224,10 @@ describe("submitBatch tests", function () {
   });
 });
 
-
 // This test produces a hash for the contract which should match what is being used in the Go unit tests. It's here for
 // the use of anyone updating the Go tests.
 describe("submitBatch Go test hash", function () {
   it("produces good hash", async function () {
-
-
     // Prep and deploy contract
     // ========================
     const signers = await ethers.getSigners();
@@ -253,19 +238,16 @@ describe("submitBatch Go test hash", function () {
     const {
       peggy,
       testERC20,
-      checkpoint: deployCheckpoint
+      checkpoint: deployCheckpoint,
     } = await deployContracts(peggyId, validators, powers, powerThreshold);
-
 
     // Prepare batch
     // ===============================
-    const txAmounts = [1]
-    const txFees = [1]
+    const txAmounts = [1];
+    const txFees = [1];
     const txDestinations = await getSignerAddresses([signers[5]]);
-    const batchNonce = 1
-    const batchTimeout = ethers.provider.blockNumber + 1000
-
-
+    const batchNonce = 1;
+    const batchTimeout = ethers.provider.blockNumber + 1000;
 
     // Transfer out to Cosmos, locking coins
     // =====================================
@@ -275,8 +257,6 @@ describe("submitBatch Go test hash", function () {
       ethers.utils.formatBytes32String("myCosmosAddress"),
       1000
     );
-
-
 
     // Call method
     // ===========
@@ -302,27 +282,26 @@ describe("submitBatch Go test hash", function () {
         txFees,
         batchNonce,
         testERC20.address,
-        batchTimeout
+        batchTimeout,
       ]
     );
     const batchDigest = ethers.utils.keccak256(abiEncodedBatch);
 
     console.log("elements in batch digest:", {
-      "peggyId": peggyId,
-      "batchMethodName": batchMethodName,
-      "txAmounts": txAmounts,
-      "txDestinations": txDestinations,
-      "txFees": txFees,
-      "batchNonce": batchNonce,
-      "batchTimeout": batchTimeout,
-      "tokenContract": testERC20.address
-    })
-    console.log("abiEncodedBatch:", abiEncodedBatch)
-    console.log("batchDigest:", batchDigest)
+      peggyId: peggyId,
+      batchMethodName: batchMethodName,
+      txAmounts: txAmounts,
+      txDestinations: txDestinations,
+      txFees: txFees,
+      batchNonce: batchNonce,
+      batchTimeout: batchTimeout,
+      tokenContract: testERC20.address,
+    });
+    console.log("abiEncodedBatch:", abiEncodedBatch);
+    console.log("batchDigest:", batchDigest);
 
     const sigs = await signHash(validators, batchDigest);
     const currentValsetNonce = 0;
-
 
     await peggy.submitBatch(
       await getSignerAddresses(validators),
@@ -341,4 +320,4 @@ describe("submitBatch Go test hash", function () {
       batchTimeout
     );
   });
-})
+});

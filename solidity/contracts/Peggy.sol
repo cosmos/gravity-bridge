@@ -1,14 +1,32 @@
 pragma solidity ^0.6.6;
+
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./CosmosToken.sol";
 
 pragma experimental ABIEncoderV2;
 
-contract Peggy {
+// This is being used purely to avoid stack too deep errors
+struct LogicCallArgs {
+	// Transfers out to the logic contract
+	uint256[] transferAmounts;
+	address[] transferTokenContracts;
+	// The fees (transferred to msg.sender)
+	uint256[] feeAmounts;
+	address[] feeTokenContracts;
+	// The arbitrary logic call
+	address logicContractAddress;
+	bytes payload;
+	// Invalidation metadata
+	uint256 timeOut;
+	bytes32 invalidationId;
+	uint256 invalidationNonce;
+}
+
+contract Peggy is ReentrancyGuard {
 	using SafeMath for uint256;
 	using SafeERC20 for IERC20;
 
@@ -277,7 +295,7 @@ contract Peggy {
 		// a block height beyond which this batch is not valid
 		// used to provide a fee-free timeout
 		uint256 _batchTimeout
-	) public {
+	) nonReentrant public {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the batch nonce is higher than the last nonce for this token
@@ -367,23 +385,6 @@ contract Peggy {
 		}
 	}
 
-	// This is being used purely to avoid stack too deep errors
-	struct LogicCallArgs {
-		// Transfers out to the logic contract
-		uint256[] transferAmounts;
-		address[] transferTokenContracts;
-		// The fees (transferred to msg.sender)
-		uint256[] feeAmounts;
-		address[] feeTokenContracts;
-		// The arbitrary logic call
-		address logicContractAddress;
-		bytes payload;
-		// Invalidation metadata
-		uint256 timeOut;
-		bytes32 invalidationId;
-		uint256 invalidationNonce;
-	}
-
 	// This makes calls to contracts that execute arbitrary logic
 	// First, it gives the logic contract some tokens
 	// Then, it gives msg.senders tokens for fees
@@ -403,7 +404,7 @@ contract Peggy {
 		bytes32[] memory _r,
 		bytes32[] memory _s,
 		LogicCallArgs memory _args
-	) public {
+	) public nonReentrant{
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the call has not timed out
@@ -495,7 +496,7 @@ contract Peggy {
 
 		// Make call to logic contract
 		bytes memory returnData = Address.functionCall(_args.logicContractAddress, _args.payload);
-		
+
 		// Send fees to msg.sender
 		for (uint256 i = 0; i < _args.feeAmounts.length; i++) {
 			IERC20(_args.feeTokenContracts[i]).safeTransfer(msg.sender, _args.feeAmounts[i]);
@@ -517,7 +518,7 @@ contract Peggy {
 		address _tokenContract,
 		bytes32 _destination,
 		uint256 _amount
-	) public {
+	) public nonReentrant {
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
