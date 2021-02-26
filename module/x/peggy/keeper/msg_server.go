@@ -143,7 +143,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 
 	// Check if the denom is a peggy coin, if not, check if there is a deployed ERC20 representing it.
 	// If not, error out
-	_, tokenContract, err := k.DenomToERC20(ctx, msg.Denom)
+	_, tokenContract, err := k.DenomToERC20Lookup(ctx, msg.Denom)
 	if err != nil {
 		return nil, err
 	}

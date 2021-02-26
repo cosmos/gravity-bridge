@@ -24,7 +24,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	// If the coin is a peggy voucher, burn the coins. If not, check if there is a deployed ERC20 contract representing it.
 	// If there is, lock the coins.
 
-	isCosmosOriginated, tokenContract, err := k.DenomToERC20(ctx, totalAmount.Denom)
+	isCosmosOriginated, tokenContract, err := k.DenomToERC20Lookup(ctx, totalAmount.Denom)
 	if err != nil {
 		return 0, err
 	}

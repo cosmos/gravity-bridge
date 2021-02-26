@@ -91,11 +91,11 @@ func addDenomToERC20Relation(tv *testingVars) {
 	require.NotNil(tv.t, a)
 
 	// check if erc20<>denom relation added to db
-	isCosmosOriginated, gotERC20, err := tv.input.PeggyKeeper.DenomToERC20(tv.ctx, tv.denom)
+	isCosmosOriginated, gotERC20, err := tv.input.PeggyKeeper.DenomToERC20Lookup(tv.ctx, tv.denom)
 	require.NoError(tv.t, err)
 	assert.True(tv.t, isCosmosOriginated)
 
-	isCosmosOriginated, gotDenom := tv.input.PeggyKeeper.ERC20ToDenom(tv.ctx, tv.erc20)
+	isCosmosOriginated, gotDenom := tv.input.PeggyKeeper.ERC20ToDenomLookup(tv.ctx, tv.erc20)
 	assert.True(tv.t, isCosmosOriginated)
 
 	assert.Equal(tv.t, tv.denom, gotDenom)

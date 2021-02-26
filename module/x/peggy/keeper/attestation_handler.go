@@ -20,7 +20,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 	switch claim := claim.(type) {
 	case *types.MsgDepositClaim:
 		// Check if coin is Cosmos-originated asset and get denom
-		isCosmosOriginated, denom := a.keeper.ERC20ToDenom(ctx, claim.TokenContract)
+		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.TokenContract)
 
 		if isCosmosOriginated {
 			// If it is cosmos originated, unlock the coins

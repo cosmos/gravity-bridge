@@ -198,3 +198,21 @@ func (k Keeper) LastEventNonceByAddr(c context.Context, req *types.QueryLastEven
 	ret.EventNonce = lastEventNonce
 	return &ret, nil
 }
+
+// DenomToERC20 queries the Cosmos Denom that maps to an Ethereum ERC20
+func (k Keeper) DenomToERC20(c context.Context, req *types.QueryDenomToERC20Request) (*types.QueryDenomToERC20Response, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	_, erc20, err := k.DenomToERC20Lookup(ctx, req.Denom)
+	var ret types.QueryDenomToERC20Response
+	ret.Erc20 = erc20
+	return &ret, err
+}
+
+// ERC20ToDenom queries the ERC20 contract that maps to an Ethereum ERC20 if any
+func (k Keeper) ERC20ToDenom(c context.Context, req *types.QueryERC20ToDenomRequest) (*types.QueryERC20ToDenomResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	_, name := k.ERC20ToDenomLookup(ctx, req.Erc20)
+	var ret types.QueryERC20ToDenomResponse
+	ret.Denom = name
+	return &ret, nil
+}

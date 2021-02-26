@@ -38,7 +38,7 @@ func (k Keeper) setCosmosOriginatedDenomToERC20(ctx sdk.Context, denom string, t
 // Using this information, you can see if an asset is native to Cosmos or Ethereum, and get its corresponding ERC20 address
 // This will return an error if it cant parse the denom as a peggy denom, and then also can't find the denom
 // in an index of ERC20 contracts deployed on Ethereum to serve as synthetic Cosmos assets.
-func (k Keeper) DenomToERC20(ctx sdk.Context, denom string) (bool, string, error) {
+func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, string, error) {
 	// First try parsing the ERC20 out of the denom
 	tc1, err := types.PeggyDenomToERC20(denom)
 
@@ -59,7 +59,7 @@ func (k Keeper) DenomToERC20(ctx sdk.Context, denom string) (bool, string, error
 // ERC20ToDenom returns (bool isCosmosOriginated, string denom, err)
 // Using this information, you can see if an ERC20 address represents an asset is native to Cosmos or Ethereum,
 // and get its corresponding denom
-func (k Keeper) ERC20ToDenom(ctx sdk.Context, tokenContract string) (bool, string) {
+func (k Keeper) ERC20ToDenomLookup(ctx sdk.Context, tokenContract string) (bool, string) {
 	// First try looking up tokenContract in index
 	dn1, exists := k.GetCosmosOriginatedDenom(ctx, tokenContract)
 	if exists {

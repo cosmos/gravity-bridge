@@ -460,7 +460,7 @@ func queryPeggyID(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 }
 
 func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, error) {
-	_, erc20, err := keeper.DenomToERC20(ctx, denom)
+	_, erc20, err := keeper.DenomToERC20Lookup(ctx, denom)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {
@@ -469,6 +469,6 @@ func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, er
 }
 
 func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, error) {
-	_, denom := keeper.ERC20ToDenom(ctx, ERC20)
+	_, denom := keeper.ERC20ToDenomLookup(ctx, ERC20)
 	return []byte(denom), nil
 }
