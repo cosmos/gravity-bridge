@@ -44,7 +44,7 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 			// Don't slash validators who joined after valset is created
 			consAddr, _ := val.GetConsAddr()
 			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
-			if exist && valSigningInfo.StartHeight <= int64(vs.Nonce) {
+			if exist && valSigningInfo.StartHeight > int64(vs.Nonce) {
 				continue
 			}
 
