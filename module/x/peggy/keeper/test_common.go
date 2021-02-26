@@ -199,15 +199,16 @@ var (
 
 // TestInput stores the various keepers required to test peggy
 type TestInput struct {
-	PeggyKeeper   Keeper
-	AccountKeeper authkeeper.AccountKeeper
-	StakingKeeper stakingkeeper.Keeper
-	DistKeeper    distrkeeper.Keeper
-	BankKeeper    bankkeeper.BaseKeeper
-	GovKeeper     govkeeper.Keeper
-	Context       sdk.Context
-	Marshaler     codec.Marshaler
-	LegacyAmino   *codec.LegacyAmino
+	PeggyKeeper    Keeper
+	AccountKeeper  authkeeper.AccountKeeper
+	StakingKeeper  stakingkeeper.Keeper
+	SlashingKeeper slashingkeeper.Keeper
+	DistKeeper     distrkeeper.Keeper
+	BankKeeper     bankkeeper.BaseKeeper
+	GovKeeper      govkeeper.Keeper
+	Context        sdk.Context
+	Marshaler      codec.Marshaler
+	LegacyAmino    *codec.LegacyAmino
 }
 
 // SetupFiveValChain does all the initialization for a 5 Validator chain using the keys here
@@ -400,15 +401,16 @@ func CreateTestEnv(t *testing.T) TestInput {
 	k.SetParams(ctx, TestingPeggyParams)
 
 	return TestInput{
-		PeggyKeeper:   k,
-		AccountKeeper: accountKeeper,
-		BankKeeper:    bankKeeper,
-		StakingKeeper: stakingKeeper,
-		DistKeeper:    distKeeper,
-		GovKeeper:     govKeeper,
-		Context:       ctx,
-		Marshaler:     marshaler,
-		LegacyAmino:   cdc,
+		PeggyKeeper:    k,
+		AccountKeeper:  accountKeeper,
+		BankKeeper:     bankKeeper,
+		StakingKeeper:  stakingKeeper,
+		SlashingKeeper: slashingKeeper,
+		DistKeeper:     distKeeper,
+		GovKeeper:      govKeeper,
+		Context:        ctx,
+		Marshaler:      marshaler,
+		LegacyAmino:    cdc,
 	}
 }
 

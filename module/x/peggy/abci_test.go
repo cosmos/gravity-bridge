@@ -10,6 +10,7 @@ import (
 	"github.com/althea-net/peggy/module/x/peggy/keeper"
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 )
 
 func TestValsetCreationIfNotAvailable(t *testing.T) {
@@ -42,6 +43,14 @@ func TestValsetSlashing(t *testing.T) {
 			// don't sign with first validator
 			continue
 		}
+		if i == 1 {
+			// don't sign with 2nd validator
+			validator := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[i])
+			valConsAddr, _ := validator.GetConsAddr()
+			valSigningInfo := slashingtypes.ValidatorSigningInfo{StartHeight: int64(vs.Nonce + 1)}
+			input.SlashingKeeper.SetValidatorSigningInfo(ctx, valConsAddr, valSigningInfo)
+			continue
+		}
 		conf := types.NewMsgValsetConfirm(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
 		pk.SetValsetConfirm(ctx, *conf)
 	}
@@ -53,6 +62,10 @@ func TestValsetSlashing(t *testing.T) {
 	// ensure that the  validator is jailed and slashed
 	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	require.True(t, val.IsJailed())
+
+	// ensure that the 2nd  validator is not jailed and slashed
+	val2 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
+	require.False(t, val2.IsJailed())
 
 	// Ensure that the last slashed valset nonce is set properly
 	lastSlashedValsetNonce := input.PeggyKeeper.GetLastSlashedValsetNonce(ctx)
