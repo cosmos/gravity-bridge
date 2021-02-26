@@ -367,6 +367,27 @@ describe("logicCall Go test hash", function () {
   );
     const logicCallDigest = ethers.utils.keccak256(abiEncodedLogicCall);
 
+
+    const sigs = await signHash(validators, logicCallDigest);
+    const currentValsetNonce = 0;
+
+    // TODO construct the easiest possible delegate contract that will
+    // actually execute, existing ones are too large to bother with for basic
+    // signature testing
+
+
+    var res = await peggy.populateTransaction.submitLogicCall(
+      await getSignerAddresses(validators),
+      powers,
+      currentValsetNonce,
+
+      sigs.v,
+      sigs.r,
+      sigs.s,
+
+      logicCallArgs
+    )
+
     console.log("elements in logic call digest:", {
       "peggyId": peggyId,
       "logicMethodName": methodName,
@@ -383,23 +404,12 @@ describe("logicCall Go test hash", function () {
     console.log("abiEncodedCall:", abiEncodedLogicCall)
     console.log("callDigest:", logicCallDigest)
 
-    const sigs = await signHash(validators, logicCallDigest);
-    const currentValsetNonce = 0;
-
-    // TODO construct the easiest possible delegate contract that will
-    // actually execute, existing ones are too large to bother with for basic
-    // signature testing
-
-    // await peggy.submitLogicCall(
-    //   await getSignerAddresses(validators),
-    //   powers,
-    //   currentValsetNonce,
-
-    //   sigs.v,
-    //   sigs.r,
-    //   sigs.s,
-
-    //   logicCallArgs
-    // )
+    console.log("elements in logic call function call:", {
+      "currentValidators": await getSignerAddresses(validators),
+      "currentPowers": powers,
+      "currentValsetNonce": currentValsetNonce,
+      "sigs": sigs,
+    })
+    console.log("Function call bytes:", res.data)
 
 })});

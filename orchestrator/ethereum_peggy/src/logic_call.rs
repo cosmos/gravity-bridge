@@ -183,7 +183,7 @@ fn encode_logic_call_payload(
         sig_arrays.v,
         sig_arrays.r,
         sig_arrays.s,
-        Token::Dynamic(struct_tokens.to_vec()),
+        Token::Struct(struct_tokens.to_vec()),
     ];
     let payload = clarity::abi::encode_call(
         "submitLogicCall(address[],uint256[],uint256,uint8[],bytes32[],bytes32[],(uint256[],address[],uint256[],address[],address,bytes,uint256,bytes32,uint256))",
@@ -193,4 +193,101 @@ fn encode_logic_call_payload(
     trace!("Tokens {:?}", tokens);
 
     Ok(payload)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clarity::utils::hex_str_to_bytes;
+    use clarity::Signature;
+
+    #[test]
+    /// This test encodes an abiV2 function call, specifically one
+    /// with a nontrivial struct in the header
+    fn encode_abiv2_function_header() {
+        // a golden master example encoding taken from Hardhat with all of it's parameters recreated
+        let encoded = "0x0c246c8200000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000001a000000000000000000000000000000000000000000000000000000000000001e000000000000000000000000000000000000000000000000000000000000002200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c783df8a850f42e7f7e57013759c285caa701eb6000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000ffffffff0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000001c0000000000000000000000000000000000000000000000000000000000000001b916bf9a6a908cbf3adee07b90c257ad68cd7006616e56db9de1b8138b83c6b600000000000000000000000000000000000000000000000000000000000000013d124e8782f054c80d07de84b5423a5f9a1d1cb005337a634066854b56b11da50000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000001a000000000000000000000000000000000000000000000000000000000000001e000000000000000000000000017c1736ccf692f653c433d7aa2ab45148c016f68000000000000000000000000000000000000000000000000000000000000022000000000000000000000000000000000000000000000000000000455e2bfa248696e76616c69646174696f6e49640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c85759553aee2d4125afa8a9421aaf5397b96e6b000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c85759553aee2d4125afa8a9421aaf5397b96e6b000000000000000000000000000000000000000000000000000000000000002074657374696e675061796c6f6164000000000000000000000000000000000000";
+        let encoded = hex_str_to_bytes(encoded).unwrap();
+
+        let token_contract_address = "0xc85759553AEE2D4125aFa8a9421AAf5397b96E6b"
+            .parse()
+            .unwrap();
+        let logic_contract_address = "0x17c1736CcF692F653c433d7aa2aB45148C016F68"
+            .parse()
+            .unwrap();
+        let invalidation_id =
+            hex_str_to_bytes("0x696e76616c69646174696f6e4964000000000000000000000000000000000000")
+                .unwrap();
+        let invalidation_nonce = 1u8.into();
+        let ethereum_signer = "0xc783df8a850f42e7F7e57013759C285caa701eB6"
+            .parse()
+            .unwrap();
+        let token = vec![ERC20Token {
+            amount: 1u8.into(),
+            token_contract_address,
+        }];
+
+        let logic_call = LogicCall {
+            transfers: token.clone(),
+            fees: token,
+            logic_contract_address,
+            payload: hex_str_to_bytes(
+                "0x74657374696e675061796c6f6164000000000000000000000000000000000000",
+            )
+            .unwrap(),
+            timeout: 4766922941000,
+            invalidation_id: invalidation_id.clone(),
+            invalidation_nonce,
+        };
+
+        // a validator set
+        let valset = Valset {
+            nonce: 0,
+            members: vec![ValsetMember {
+                eth_address: Some(ethereum_signer),
+                power: 4294967295,
+            }],
+        };
+        let confirm = LogicCallConfirmResponse {
+            invalidation_id,
+            invalidation_nonce,
+            ethereum_signer,
+            eth_signature: Signature {
+                v: 28u8.into(),
+                r: Uint256::from_bytes_be(
+                    &hex_str_to_bytes(
+                        "0xb916bf9a6a908cbf3adee07b90c257ad68cd7006616e56db9de1b8138b83c6b6",
+                    )
+                    .unwrap(),
+                ),
+                s: Uint256::from_bytes_be(
+                    &hex_str_to_bytes(
+                        "0x3d124e8782f054c80d07de84b5423a5f9a1d1cb005337a634066854b56b11da5",
+                    )
+                    .unwrap(),
+                ),
+            },
+            // this value is totally random as it's not included in any way in the eth encoding.
+            orchestrator: "cosmos1vlms2r8f6x7yxjh3ynyzc7ckarqd8a96ckjvrp"
+                .parse()
+                .unwrap(),
+        };
+
+        assert_eq!(
+            bytes_to_hex_str(&encoded),
+            bytes_to_hex_str(&encode_logic_call_payload(valset, &logic_call, &[confirm]).unwrap())
+        );
+    }
+
+    /// prints a byte vec line by line as unint256 words
+    fn _print_bytes_as_uint256_words(input: &[u8]) {
+        for i in 0..(input.len() / 32) {
+            let start = i * 32;
+            let mut end = start + 32;
+            if end > input.len() {
+                end = input.len()
+            }
+            println!("{}", bytes_to_hex_str(&input[start..end]))
+        }
+    }
 }
