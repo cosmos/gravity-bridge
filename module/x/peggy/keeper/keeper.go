@@ -21,8 +21,9 @@ type Keeper struct {
 	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
 	paramSpace paramtypes.Subspace
 
-	cdc        codec.BinaryMarshaler // The wire codec for binary encoding/decoding.
-	bankKeeper types.BankKeeper
+	cdc            codec.BinaryMarshaler // The wire codec for binary encoding/decoding.
+	bankKeeper     types.BankKeeper
+	SlashingKeeper types.SlashingKeeper
 
 	AttestationHandler interface {
 		Handle(sdk.Context, types.Attestation, types.EthereumClaim) error
@@ -30,13 +31,14 @@ type Keeper struct {
 }
 
 // NewKeeper returns a new instance of the peggy keeper
-func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper) Keeper {
+func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper, slashingKeeper types.SlashingKeeper) Keeper {
 	k := Keeper{
-		cdc:           cdc,
-		paramSpace:    paramSpace,
-		storeKey:      storeKey,
-		StakingKeeper: stakingKeeper,
-		bankKeeper:    bankKeeper,
+		cdc:            cdc,
+		paramSpace:     paramSpace,
+		storeKey:       storeKey,
+		StakingKeeper:  stakingKeeper,
+		bankKeeper:     bankKeeper,
+		SlashingKeeper: slashingKeeper,
 	}
 	k.AttestationHandler = AttestationHandler{
 		keeper:     k,

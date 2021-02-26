@@ -40,6 +40,20 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 		// haven't signed the valdiator set and slash them,
 		confirms := k.GetValsetConfirms(ctx, vs.Nonce)
 		for _, val := range currentBondedSet {
+
+			// Don't slash validators who joined after valset is created
+			consAddr, _ := val.GetConsAddr()
+			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
+			if exist && valSigningInfo.StartHeight <= int64(vs.Nonce) {
+				continue
+			}
+
+			// Don't slash validators who are unbonded and UNBOND_SLASHING_WINDOW has passed
+			if val.UnbondingHeight > 0 && vs.Nonce > uint64(val.UnbondingHeight)+params.UnbondSlashingWindow {
+				continue
+			}
+
+			// Check if validator has confirmed valset or not
 			found := false
 			for _, conf := range confirms {
 				if conf.EthAddress == k.GetEthAddress(ctx, val.GetOperator()) {
@@ -47,12 +61,13 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 					break
 				}
 			}
+
 			if !found {
+				// slash validators for not confirming valsets
 				cons, _ := val.GetConsAddr()
-				k.StakingKeeper.Slash(ctx, cons,
-					ctx.BlockHeight(), val.ConsensusPower(),
-					params.SlashFractionValset)
+				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionValset)
 				k.StakingKeeper.Jail(ctx, cons)
+
 			}
 		}
 

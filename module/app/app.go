@@ -384,6 +384,7 @@ func NewPeggyApp(
 		app.GetSubspace(peggytypes.ModuleName),
 		stakingKeeper,
 		app.bankKeeper,
+		app.slashingKeeper,
 	)
 
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))

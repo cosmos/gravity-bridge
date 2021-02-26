@@ -42,6 +42,8 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	paramsproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
+	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -268,6 +270,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 	keyParams := sdk.NewKVStoreKey(paramstypes.StoreKey)
 	tkeyParams := sdk.NewTransientStoreKey(paramstypes.TStoreKey)
 	keyGov := sdk.NewKVStoreKey(govtypes.StoreKey)
+	keySlashing := sdk.NewKVStoreKey(slashingtypes.StoreKey)
 
 	// Initialize memory database and mount stores on it
 	db := dbm.NewMemDB()
@@ -383,7 +386,14 @@ func CreateTestEnv(t *testing.T) TestInput {
 	govKeeper.SetVotingParams(ctx, govtypes.DefaultVotingParams())
 	govKeeper.SetTallyParams(ctx, govtypes.DefaultTallyParams())
 
-	k := NewKeeper(marshaler, peggyKey, getSubspace(paramsKeeper, types.DefaultParamspace), stakingKeeper, bankKeeper)
+	slashingKeeper := slashingkeeper.NewKeeper(
+		marshaler,
+		keySlashing,
+		&stakingKeeper,
+		getSubspace(paramsKeeper, slashingtypes.ModuleName).WithKeyTable(slashingtypes.ParamKeyTable()),
+	)
+
+	k := NewKeeper(marshaler, peggyKey, getSubspace(paramsKeeper, types.DefaultParamspace), stakingKeeper, bankKeeper, slashingKeeper)
 
 	k.SetParams(ctx, TestingPeggyParams)
 
