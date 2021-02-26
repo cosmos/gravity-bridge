@@ -1,5 +1,5 @@
 {
-  "name": "hardhat-test",
+  "name": "gravity-contracts",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,7 +11,7 @@
     "evm_fork": "npx hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_ID} --fork-block-number 11780000",
     "test_fork": "npx hardhat test --network localhost ./tests_mainnet_fork/*.ts"
   },
-  "author": "",
+  "author": "Jehan Tremback",
   "license": "None",
   "devDependencies": {
     "@commitlint/cli": "^9.1.2",
