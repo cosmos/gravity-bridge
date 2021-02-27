@@ -674,11 +674,11 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 		InvalidationId:    hex.EncodeToString(invalidationId),
 		InvalidationNonce: 1,
 		EthSigner:         "test",
-		Orchestrator:      "test",
+		Orchestrator:      valAddr.String(),
 		Signature:         "test",
 	}
 
-	k.SetLogicCallConfirm(ctx, valAddr, &confirm)
+	k.SetLogicCallConfirm(ctx, &confirm)
 
 	res := k.GetLogicConfirmByInvalidationIdAndNonce(ctx, invalidationId, 1)
 	assert.Equal(t, len(res), 1)

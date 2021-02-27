@@ -285,7 +285,7 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
 	}
 
-	k.SetLogicCallConfirm(ctx, sdk.AccAddress(validator), msg)
+	k.SetLogicCallConfirm(ctx, msg)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(

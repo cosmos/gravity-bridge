@@ -470,9 +470,13 @@ func (k Keeper) CancelOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, 
 /////////////////////////////
 
 // SetLogicCallConfirm sets a logic confirm in the store
-func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, val sdk.AccAddress, msg *types.MsgConfirmLogicCall) {
+func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, msg *types.MsgConfirmLogicCall) {
 	bytes, _ := hex.DecodeString(msg.InvalidationId)
-	ctx.KVStore(k.storeKey).Set(types.GetLogicConfirmKey(bytes, msg.InvalidationNonce, val), k.cdc.MustMarshalBinaryBare(msg))
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+	ctx.KVStore(k.storeKey).Set(types.GetLogicConfirmKey(bytes, msg.InvalidationNonce, acc), k.cdc.MustMarshalBinaryBare(msg))
 }
 
 // GetLogicCallConfirm gets a logic confirm from the store
