@@ -7,13 +7,9 @@ import { SimpleLogicBatchMiddleware } from "../typechain/SimpleLogicBatchMiddlew
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
-  makeCheckpoint,
   signHash,
-  makeTxBatchHash,
   examplePowers
 } from "../test-utils/pure";
-import { DEFAULT_ENCODING } from "crypto";
-import { EthereumTwo } from "../typechain/EthereumTwo";
 
 chai.use(solidity);
 const { expect } = chai;
