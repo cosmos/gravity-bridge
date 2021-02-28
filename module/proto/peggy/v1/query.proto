@@ -69,6 +69,16 @@ service Query {
   rpc DenomToERC20(QueryDenomToERC20Request) returns (QueryDenomToERC20Response) {
     option (google.api.http).get = "/peggy/v1beta/cosmos_originated/denom_to_erc20";
   }
+
+  rpc GetDelegateKeyByValidator(QueryDelegateKeysByValidatorAddress) returns (QueryDelegateKeysByValidatorAddressResponse) {
+    option (google.api.http).get = "/peggy/v1beta/query_delegate_keys_by_validator";
+  }
+  rpc GetDelegateKeyByEth(QueryDelegateKeysByEthAddress) returns (QueryDelegateKeysByEthAddressResponse) {
+    option (google.api.http).get = "/peggy/v1beta/query_delegate_keys_by_eth";
+  }
+  rpc GetDelegateKeyByOrchestrator(QueryDelegateKeysByOrchestratorAddress) returns (QueryDelegateKeysByOrchestratorAddressResponse) {
+    option (google.api.http).get = "/peggy/v1beta/query_delegate_keys_by_orchestrator";
+  }
 }
 
 message QueryParamsRequest {}
@@ -130,4 +140,22 @@ message QueryERC20ToDenomResponse {
 message QueryDenomToERC20Request { string denom = 1; }
 message QueryDenomToERC20Response {
   string erc20 = 1;
+}
+
+message QueryDelegateKeysByValidatorAddress { string validator_address = 1; }
+message QueryDelegateKeysByValidatorAddressResponse {
+  string eth_address = 1;
+  string orchestrator_address = 2;
+}
+
+message QueryDelegateKeysByEthAddress { string eth_address = 1; }
+message QueryDelegateKeysByEthAddressResponse {
+  string validator_address = 1;
+  string orchestrator_address = 2;
+}
+
+message QueryDelegateKeysByOrchestratorAddress { string orchestrator_address = 1; }
+message QueryDelegateKeysByOrchestratorAddressResponse {
+  string validator_address = 1;
+  string eth_address = 2;
 }

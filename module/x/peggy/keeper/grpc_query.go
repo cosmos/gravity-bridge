@@ -216,3 +216,50 @@ func (k Keeper) ERC20ToDenom(c context.Context, req *types.QueryERC20ToDenomRequ
 	ret.Denom = name
 	return &ret, nil
 }
+
+func (k Keeper) GetDelegateKeyByValidator(c context.Context, req *types.QueryDelegateKeysByValidatorAddress) (*types.QueryDelegateKeysByValidatorAddressResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	keys := k.GetDelegateKeys(ctx)
+	_, err := sdk.ValAddressFromBech32(req.ValidatorAddress)
+	if err != nil {
+		return nil, err
+	}
+	for _, key := range keys {
+		if req.ValidatorAddress == key.Validator {
+			return &types.QueryDelegateKeysByValidatorAddressResponse{EthAddress: key.EthAddress, OrchestratorAddress: key.Orchestrator}, nil
+		}
+
+	}
+	return nil, sdkerrors.Wrap(types.ErrInvalid, "No validator")
+}
+
+func (k Keeper) GetDelegateKeyByOrchestrator(c context.Context, req *types.QueryDelegateKeysByOrchestratorAddress) (*types.QueryDelegateKeysByOrchestratorAddressResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	keys := k.GetDelegateKeys(ctx)
+	_, err := sdk.AccAddressFromBech32(req.OrchestratorAddress)
+	if err != nil {
+		return nil, err
+	}
+	for _, key := range keys {
+		if req.OrchestratorAddress == key.Orchestrator {
+			return &types.QueryDelegateKeysByOrchestratorAddressResponse{ValidatorAddress: key.Validator, EthAddress: key.EthAddress}, nil
+		}
+
+	}
+	return nil, sdkerrors.Wrap(types.ErrInvalid, "No validator")
+}
+
+func (k Keeper) GetDelegateKeyByEth(c context.Context, req *types.QueryDelegateKeysByEthAddress) (*types.QueryDelegateKeysByEthAddressResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	keys := k.GetDelegateKeys(ctx)
+	if err := types.ValidateEthAddress(req.EthAddress); err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid eth address")
+	}
+	for _, key := range keys {
+		if req.EthAddress == key.EthAddress {
+			return &types.QueryDelegateKeysByEthAddressResponse{ValidatorAddress: key.Validator, OrchestratorAddress: key.Orchestrator}, nil
+		}
+
+	}
+	return nil, sdkerrors.Wrap(types.ErrInvalid, "No validator")
+}
