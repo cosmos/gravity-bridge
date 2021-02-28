@@ -25,6 +25,7 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 	// Slash validator for not confirming valset requests, batch requests and not attesting claims rightfully
 	ValsetSlashing(ctx, k, params, currentBondedSet)
 	BatchSlashing(ctx, k, params, currentBondedSet)
+	// TODO slashing for arbitrary logic is missing
 	ClaimsSlashing(ctx, k, params, currentBondedSet)
 
 	// #4 condition (stretch goal)
@@ -306,6 +307,11 @@ func ClaimsSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, curre
 func TestingEndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// if this is nil we have not set our test outgoing logic call yet
 	if k.GetOutgoingLogicCall(ctx, []byte("GravityTesting"), 0).Payload == nil {
+		// TODO this call isn't actually very useful for testing, since it always
+		// throws, being just junk data that's expected. But it prevents us from checking
+		// the full lifecycle of the call. We need to find some way for this to read data
+		// and encode a simple testing call, probably to one of the already deployed ERC20
+		// contracts so that we can get the full lifecycle.
 		token := []*types.ERC20Token{&types.ERC20Token{
 			Contract: "0x7580bfe88dd3d07947908fae12d95872a260f2d8",
 			Amount:   sdk.NewIntFromUint64(5000),
