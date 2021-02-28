@@ -6,7 +6,6 @@ extern crate serde_derive;
 extern crate lazy_static;
 
 use clarity::PrivateKey as EthPrivateKey;
-use contact::client::Contact;
 use cosmos_peggy::send::update_peggy_delegate_addresses;
 use deep_space::{coin::Coin, mnemonic::Mnemonic, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;

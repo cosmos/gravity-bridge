@@ -23,12 +23,17 @@ mod oracle_resync;
 use crate::main_loop::orchestrator_main_loop;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
+use deep_space::address::Address as CosmosAddress;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
 use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
+use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::peggy::QueryDelegateKeysByEthAddress;
+use peggy_proto::peggy::QueryDelegateKeysByOrchestratorAddress;
 use peggy_utils::connection_prep::create_rpc_connections;
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
-use std::cmp::min;
+use std::{cmp::min, process::exit};
+use tonic::transport::Channel;
 
 #[derive(Debug, Deserialize)]
 struct Args {
@@ -113,6 +118,11 @@ async fn main() {
         public_eth_key, public_cosmos_key
     );
 
+    let mut grpc = connections.grpc.clone().unwrap();
+    check_delegate_addresses(&mut grpc, public_eth_key, public_cosmos_key).await;
+
+    // TODO this should wait here if the cosmos node is still syncing.
+
     orchestrator_main_loop(
         cosmos_key,
         ethereum_key,
@@ -123,4 +133,77 @@ async fn main() {
         fee_denom,
     )
     .await;
+}
+
+/// This function checks the orchestrator delegate addresses
+/// for consistency what this means is that it takes the Ethereum
+/// address and Orchestrator address from the Orchestrator and checks
+/// that both are registered and internally consistent.
+async fn check_delegate_addresses(
+    client: &mut PeggyQueryClient<Channel>,
+    delegate_eth_address: EthAddress,
+    delegate_orchestrator_address: CosmosAddress,
+) {
+    let eth_response = client
+        .get_delegate_key_by_eth(QueryDelegateKeysByEthAddress {
+            eth_address: delegate_eth_address.to_string(),
+        })
+        .await;
+    let orchestrator_response = client
+        .get_delegate_key_by_orchestrator(QueryDelegateKeysByOrchestratorAddress {
+            orchestrator_address: delegate_orchestrator_address.to_string(),
+        })
+        .await;
+    match (eth_response, orchestrator_response) {
+        (Ok(e), Ok(o)) => {
+            let e = e.into_inner();
+            let o = o.into_inner();
+            let req_delegate_orchestrator_address: CosmosAddress =
+                e.orchestrator_address.parse().unwrap();
+            let req_delegate_eth_address: EthAddress = o.eth_address.parse().unwrap();
+            if req_delegate_eth_address != delegate_eth_address
+                && req_delegate_orchestrator_address != delegate_orchestrator_address
+            {
+                error!("Your Delegate Ethereum and Orchestrator addresses are both incorrect!");
+                error!(
+                    "You provided {}  Correct Value {}",
+                    delegate_eth_address, req_delegate_eth_address
+                );
+                error!(
+                    "You provided {}  Correct Value {}",
+                    delegate_orchestrator_address, req_delegate_orchestrator_address
+                );
+                error!("In order to resolve this issue you should double check your input value or re-register your delegate keys");
+                exit(1);
+            } else if req_delegate_eth_address != delegate_eth_address {
+                error!("Your Delegate Ethereum address is incorrect!");
+                error!(
+                    "You provided {}  Correct Value {}",
+                    delegate_eth_address, req_delegate_eth_address
+                );
+                error!("In order to resolve this issue you should double check how you input your eth private key");
+                exit(1);
+            } else if req_delegate_orchestrator_address != delegate_orchestrator_address {
+                error!("Your Delegate Orchestrator address is incorrect!");
+                error!(
+                    "You provided {}  Correct Value {}",
+                    delegate_eth_address, req_delegate_eth_address
+                );
+                error!("In order to resolve this issue you should double check how you input your Orchestrator address phrase, make sure you didn't use your Validator phrase!");
+                exit(1);
+            }
+
+            if e.validator_address != o.validator_address {
+                error!("You are using delegate keys from two different validator addresses!");
+                error!("If you get this error message I would just blow everything away and start again");
+                exit(1);
+            }
+        }
+        (Err(_), Ok(_)) | (Ok(_), Err(_)) => {
+            panic!("Failed to check delegate Eth address. Maybe try running the program again? If that doesn't work try registering delegate keys again")
+        }
+        (Err(_), Err(_)) => {
+            panic!("Delegate addresses are not set! Please Register your delegate keys and make sure your Althea binary is updated!")
+        }
+    }
 }
