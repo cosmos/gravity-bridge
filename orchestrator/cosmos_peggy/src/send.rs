@@ -304,9 +304,9 @@ pub async fn send_to_eth(
         .expect("Invalid private key!")
         .to_address();
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
-    if amount.denom != fee.denom || !amount.denom.contains("peggy") {
+    if amount.denom != fee.denom {
         return Err(JsonRpcError::BadInput(format!(
-            "{} {} is an invalid denom set for SendToEth",
+            "{} {} is an invalid denom set for SendToEth you must pay fees in the same token your sending",
             amount.denom, fee.denom,
         )));
     }

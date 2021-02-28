@@ -5,6 +5,7 @@ use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use futures::future::join_all;
+use rand::Rng;
 use web30::{client::Web3, types::SendTxOption};
 
 use crate::TOTAL_TIMEOUT;
@@ -170,4 +171,40 @@ pub async fn send_eth_bulk(amount: Uint256, destinations: &[EthAddress], web3: &
         wait_for_txid.push(wait);
     }
     join_all(wait_for_txid).await;
+}
+
+pub fn get_user_key() -> BridgeUserKey {
+    let mut rng = rand::thread_rng();
+    let secret: [u8; 32] = rng.gen();
+    // the starting location of the funds
+    let eth_key = EthPrivateKey::from_slice(&secret).unwrap();
+    let eth_address = eth_key.to_public_key().unwrap();
+    // the destination on cosmos that sends along to the final ethereum destination
+    let cosmos_key = CosmosPrivateKey::from_secret(&secret);
+    let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
+    let mut rng = rand::thread_rng();
+    let secret: [u8; 32] = rng.gen();
+    // the final destination of the tokens back on Ethereum
+    let eth_dest_key = EthPrivateKey::from_slice(&secret).unwrap();
+    let eth_dest_address = eth_key.to_public_key().unwrap();
+    BridgeUserKey {
+        eth_address,
+        eth_key,
+        cosmos_address,
+        cosmos_key,
+        eth_dest_key,
+        eth_dest_address,
+    }
+}
+
+pub struct BridgeUserKey {
+    // the starting addresses that get Eth balances to send across the bridge
+    pub eth_address: EthAddress,
+    pub eth_key: EthPrivateKey,
+    // the cosmos addresses that get the funds and send them on to the dest eth addresses
+    pub cosmos_address: CosmosAddress,
+    pub cosmos_key: CosmosPrivateKey,
+    // the location tokens are sent back to on Ethereum
+    pub eth_dest_address: EthAddress,
+    pub eth_dest_key: EthPrivateKey,
 }

@@ -1,15 +1,21 @@
 //! This is the happy path test for Cosmos to Ethereum asset transfers, meaning assets originated on Cosmos
 
+use std::time::{Duration, Instant};
+
+use crate::get_fee;
 use crate::get_test_token_name;
+use crate::utils::get_user_key;
+use crate::utils::send_one_eth;
 use crate::{COSMOS_NODE_GRPC, TOTAL_TIMEOUT};
 use actix::Arbiter;
-use clarity::Address as EthAddress;
-use clarity::PrivateKey as EthPrivateKey;
+use clarity::{abi::Token, Address as EthAddress};
+use clarity::{PrivateKey as EthPrivateKey, Uint256};
 use contact::client::Contact;
-use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use cosmos_peggy::send::{send_request_batch, send_to_eth};
+use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_peggy::{deploy_erc20::deploy_erc20, utils::get_event_nonce};
 use orchestrator::main_loop::orchestrator_main_loop;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::peggy::{query_client::QueryClient as PeggyQueryClient, QueryDenomToErc20Request};
 use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -22,15 +28,19 @@ pub async fn happy_path_test_v2(
     peggy_address: EthAddress,
     validator_out: bool,
 ) {
+    let mut grpc_client = grpc_client;
     let starting_event_nonce =
         get_event_nonce(peggy_address, keys[0].1.to_public_key().unwrap(), web30)
             .await
             .unwrap();
+
+    let token_to_send_to_eth = "footoken".to_string();
+
     deploy_erc20(
-        "footoken-a".to_string(),
-        "footoken-b".to_string(),
-        "foo".to_string(),
-        18,
+        token_to_send_to_eth.clone(),
+        token_to_send_to_eth.clone(),
+        token_to_send_to_eth.clone(),
+        6,
         peggy_address,
         web30,
         Some(TOTAL_TIMEOUT),
@@ -80,8 +90,126 @@ pub async fn happy_path_test_v2(
         }
     }
 
-    delay_for(TOTAL_TIMEOUT).await;
+    let start = Instant::now();
+    // the erc20 representing the cosmos asset on Ethereum
+    let mut erc20_contract = None;
+    while Instant::now() - start < TOTAL_TIMEOUT {
+        let res = grpc_client
+            .denom_to_erc20(QueryDenomToErc20Request {
+                denom: token_to_send_to_eth.clone(),
+            })
+            .await;
+        if let Ok(res) = res {
+            let erc20 = res.into_inner().erc20;
+            info!(
+                "Successfully adopted {} token contract of {}",
+                token_to_send_to_eth, erc20
+            );
+            erc20_contract = Some(erc20);
+            break;
+        }
+        delay_for(Duration::from_secs(1)).await;
+    }
+    if erc20_contract.is_none() {
+        panic!(
+            "Cosmos did not adopt the ERC20 contract for {} it must be invalid in some way",
+            token_to_send_to_eth
+        );
+    }
+    let erc20_contract: EthAddress = erc20_contract.unwrap().parse().unwrap();
 
-    // TODO make sure that Cosmos adopts the contract
-    // TODO generate batch of footoken to send over to ethereum, check that it gets there
+    // one foo token
+    let amount_to_bridge: Uint256 = 1_000_000u64.into();
+    let send_to_user_coin = Coin {
+        denom: token_to_send_to_eth.clone(),
+        amount: amount_to_bridge.clone() + 100u8.into(),
+    };
+    let send_to_eth_coin = Coin {
+        denom: token_to_send_to_eth.clone(),
+        amount: amount_to_bridge.clone(),
+    };
+
+    let user = get_user_key();
+    // send the user some footoken
+    contact
+        .create_and_send_transaction(
+            send_to_user_coin.clone(),
+            get_fee(),
+            user.cosmos_address,
+            keys[0].0,
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+
+    let balances = contact.get_balances(user.cosmos_address).await.unwrap();
+    let mut found = false;
+    for coin in balances.result {
+        if coin.denom == token_to_send_to_eth.clone() {
+            found = true;
+            break;
+        }
+    }
+    if !found {
+        panic!(
+            "Failed to send {} to the user address",
+            token_to_send_to_eth
+        );
+    }
+    info!(
+        "Sent some {} to user address {}",
+        token_to_send_to_eth, user.cosmos_address
+    );
+    // send the user some eth, they only need this to check their
+    // erc20 balance, so a pretty minor usecase
+    send_one_eth(user.eth_address, web30).await;
+    info!("Sent 1 eth to user address {}", user.eth_address);
+
+    let res = send_to_eth(
+        user.cosmos_key,
+        user.eth_address,
+        send_to_eth_coin,
+        get_fee(),
+        contact,
+    )
+    .await
+    .unwrap();
+    info!("Send to eth res {:?}", res);
+    info!(
+        "Locked up {} {} to send to Cosmos",
+        amount_to_bridge, token_to_send_to_eth
+    );
+
+    let res = send_request_batch(keys[0].0, token_to_send_to_eth.clone(), get_fee(), contact)
+        .await
+        .unwrap();
+    info!("Batch request res {:?}", res);
+    info!("Sent batch request to move things along");
+
+    info!("Waiting for batch to be signed and relayed to Ethereum");
+    let start = Instant::now();
+    while Instant::now() - start < TOTAL_TIMEOUT {
+        let balance = web30
+            .get_erc20_balance(erc20_contract, user.eth_address)
+            .await;
+        if balance.is_err() {
+            continue;
+        }
+        let balance = balance.unwrap();
+        if balance == amount_to_bridge {
+            info!(
+                "Successfully bridged {} Cosmos asset {} to Ethereum!",
+                amount_to_bridge, token_to_send_to_eth
+            );
+            break;
+        } else if balance != 0u8.into() {
+            panic!(
+                "Expected {} {} but got {} instead",
+                amount_to_bridge, token_to_send_to_eth, balance
+            );
+        }
+        delay_for(Duration::from_secs(1)).await;
+    }
 }

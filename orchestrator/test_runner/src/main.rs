@@ -74,6 +74,10 @@ pub fn get_test_token_name() -> String {
     "footoken".to_string()
 }
 
+pub fn get_chain_id() -> String {
+    "peggy-test".to_string()
+}
+
 pub fn one_eth() -> Uint256 {
     1000000000000000000u128.into()
 }

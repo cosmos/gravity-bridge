@@ -15,7 +15,17 @@ STARTING_VALIDATOR=1
 STARTING_VALIDATOR_HOME="--home /validator$STARTING_VALIDATOR"
 # todo add git hash to chain name
 $BIN init $STARTING_VALIDATOR_HOME --chain-id=$CHAIN_ID validator1
-mv /validator$STARTING_VALIDATOR/config/genesis.json /genesis.json
+
+
+## Modify generated genesis.json to our liking by editing fields using jq
+## we could keep a hardcoded genesis file around but that would prevent us from
+## testing the generated one with the default values provided by the module.
+
+# add in denom metadata for both native tokens
+jq '.app_state.bank.denom_metadata += [{"base": "footoken", display: "footoken", "description": "A non-staking test token", "denom_units": [{"denom": "footoken", "exponent": 6}]}, {"base": "stake", display: "stake", "description": "A staking test token", "denom_units": [{"denom": "stake", "exponent": 6}]}]' /validator$STARTING_VALIDATOR/config/genesis.json > /edited-genesis.json
+
+mv /edited-genesis.json /genesis.json
+
 
 # copy over the legacy RPC enabled config for the first validator
 # this is the only validator we want taking up this port

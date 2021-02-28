@@ -7,13 +7,12 @@ use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
 use cosmos_peggy::send::{send_request_batch, send_to_eth};
+use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
-use deep_space::{address::Address as CosmosAddress, coin::Coin};
 use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use futures::future::join_all;
 use orchestrator::main_loop::orchestrator_main_loop;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use rand::Rng;
 use std::{
     collections::HashSet,
     time::{Duration, Instant},
@@ -32,18 +31,6 @@ const TIMEOUT: Duration = Duration::from_secs(120);
 /// Peggy Deposits = (erc20_addresses.len() * NUM_USERS)
 /// Batches executed = erc20_addresses.len() * (NUM_USERS / 100)
 const NUM_USERS: usize = 100;
-
-pub struct BridgeUserKey {
-    // the starting addresses that get Eth balances to send across the bridge
-    pub eth_address: EthAddress,
-    pub eth_key: EthPrivateKey,
-    // the cosmos addresses that get the funds and send them on to the dest eth addresses
-    pub cosmos_address: CosmosAddress,
-    pub cosmos_key: CosmosPrivateKey,
-    // the location tokens are sent back to on Ethereum
-    pub eth_dest_address: EthAddress,
-    pub eth_dest_key: EthPrivateKey,
-}
 
 /// Perform a stress test by sending thousands of
 /// transactions and producing large batches
@@ -75,27 +62,7 @@ pub async fn transaction_stress_test(
     // Generate 100 user keys to send ETH and multiple types of tokens
     let mut user_keys = Vec::new();
     for _ in 0..NUM_USERS {
-        let mut rng = rand::thread_rng();
-        let secret: [u8; 32] = rng.gen();
-        // the starting location of the funds
-        let eth_key = EthPrivateKey::from_slice(&secret).unwrap();
-        let eth_address = eth_key.to_public_key().unwrap();
-        // the destination on cosmos that sends along to the final ethereum destination
-        let cosmos_key = CosmosPrivateKey::from_secret(&secret);
-        let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
-        let mut rng = rand::thread_rng();
-        let secret: [u8; 32] = rng.gen();
-        // the final destination of the tokens back on Ethereum
-        let eth_dest_key = EthPrivateKey::from_slice(&secret).unwrap();
-        let eth_dest_address = eth_key.to_public_key().unwrap();
-        user_keys.push(BridgeUserKey {
-            eth_address,
-            eth_key,
-            cosmos_address,
-            cosmos_key,
-            eth_dest_key,
-            eth_dest_address,
-        })
+        user_keys.push(get_user_key());
     }
     // the sending eth addresses need Ethereum to send ERC20 tokens to the bridge
     let sending_eth_addresses: Vec<EthAddress> = user_keys.iter().map(|i| i.eth_address).collect();

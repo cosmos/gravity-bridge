@@ -1,3 +1,4 @@
+use crate::get_chain_id;
 use crate::get_fee;
 use crate::get_test_token_name;
 use crate::{
@@ -167,7 +168,7 @@ pub async fn delegate_tokens(delegate_address: &str, amount: &str) {
         amount,
         "--home=/validator1",
         // this is defined in /tests/container-scripts/setup-validator.sh
-        "--chain-id=peggy-test",
+        &format!("--chain-id={}", get_chain_id()),
         "--keyring-backend=test",
         "--yes",
         "--from=validator1",
