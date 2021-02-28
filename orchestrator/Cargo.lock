@@ -1634,7 +1634,7 @@ dependencies = [
 
 [[package]]
 name = "orchestrator"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "actix-rt",
  "clarity",
@@ -2071,7 +2071,7 @@ checksum = "3b181ba2dcf07aaccad5448e8ead58db5b742cf85dfe035e2227f137a539a189"
 
 [[package]]
 name = "register_delegate_keys"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "actix-rt",
  "clarity",
@@ -2094,7 +2094,7 @@ dependencies = [
 
 [[package]]
 name = "relayer"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "actix",
  "actix-rt",
