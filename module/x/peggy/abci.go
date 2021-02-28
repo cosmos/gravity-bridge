@@ -316,7 +316,7 @@ func TestingEndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			Contract: "0x7580bfe88dd3d07947908fae12d95872a260f2d8",
 			Amount:   sdk.NewIntFromUint64(5000),
 		}}
-		call := types.OutgoingLogicCall{
+		_ = types.OutgoingLogicCall{
 			Transfers:            token,
 			Fees:                 token,
 			LogicContractAddress: "0x510ab76899430424d209a6c9a5b9951fb8a6f47d",
@@ -325,6 +325,6 @@ func TestingEndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			InvalidationId:       []byte("GravityTesting"),
 			InvalidationNonce:    1,
 		}
-		k.SetOutgoingLogicCall(ctx, &call)
+		//k.SetOutgoingLogicCall(ctx, &call)
 	}
 }
