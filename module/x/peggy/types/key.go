@@ -58,6 +58,9 @@ var (
 	// OutgoingTXBatchKey indexes outgoing tx batches under a nonce and token address
 	OutgoingTXBatchKey = []byte{0xa}
 
+	// OutgoingTXBatchBlockKey indexes outgoing tx batches under a block height and token address
+	OutgoingTXBatchBlockKey = []byte{0xb}
+
 	// BatchConfirmKey indexes validator confirmations by token contract address
 	BatchConfirmKey = []byte{0xe1}
 
@@ -102,6 +105,9 @@ var (
 
 	// LatestValsetNonce indexes the latest valset nonce
 	LatestValsetNonce = []byte{0xf6}
+
+	// LastSlashedBatchBlock indexes the latest slashed batch block height
+	LastSlashedBatchBlock = []byte{0xf7}
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -199,6 +205,13 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
 func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
 	return append(append(OutgoingTXBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
+}
+
+// GetOutgoingTxBatchBlockKey returns the following key format
+// prefix     blockheight
+// [0xb][0 0 0 0 2 1 4 3]
+func GetOutgoingTxBatchBlockKey(block uint64) []byte {
+	return append(OutgoingTXBatchBlockKey, UInt64Bytes(block)...)
 }
 
 // GetBatchConfirmKey returns the following key format

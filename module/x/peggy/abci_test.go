@@ -93,6 +93,14 @@ func TestBatchSlashing(t *testing.T) {
 			// don't sign with first validator
 			continue
 		}
+		if i == 1 {
+			// don't sign with 2nd validator. set val bond height > batch block height
+			validator := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[i])
+			valConsAddr, _ := validator.GetConsAddr()
+			valSigningInfo := slashingtypes.ValidatorSigningInfo{StartHeight: int64(batch.Block + 1)}
+			input.SlashingKeeper.SetValidatorSigningInfo(ctx, valConsAddr, valSigningInfo)
+			continue
+		}
 		pk.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
 			Nonce:         batch.BatchNonce,
 			TokenContract: keeper.TokenContractAddrs[0],
@@ -107,9 +115,14 @@ func TestBatchSlashing(t *testing.T) {
 	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	require.True(t, val.IsJailed())
 
-	// Ensure that the batch gets pruned properly
-	batch = input.PeggyKeeper.GetOutgoingTXBatch(ctx, batch.TokenContract, batch.BatchNonce)
-	require.Nil(t, batch)
+	// ensure that the 2nd  validator is not jailed and slashed
+	val2 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
+	require.False(t, val2.IsJailed())
+
+	// Ensure that the last slashed valset nonce is set properly
+	lastSlashedBatchBlock := input.PeggyKeeper.GetLastSlashedBatchBlock(ctx)
+	assert.Equal(t, lastSlashedBatchBlock, batch.Block)
+
 }
 
 func TestValsetEmission(t *testing.T) {
@@ -222,5 +235,4 @@ func TestBatchTimeout(t *testing.T) {
 	require.Nil(t, gotSecondBatch)
 	gotThirdBatch = input.PeggyKeeper.GetOutgoingTXBatch(ctx, b3.TokenContract, b3.BatchNonce)
 	require.NotNil(t, gotThirdBatch)
-
 }
