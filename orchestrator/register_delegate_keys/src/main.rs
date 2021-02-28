@@ -10,9 +10,9 @@ use contact::client::Contact;
 use cosmos_peggy::send::update_peggy_delegate_addresses;
 use deep_space::{coin::Coin, mnemonic::Mnemonic, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
+use peggy_utils::connection_prep::create_rpc_connections;
 use rand::{thread_rng, Rng};
 use std::time::Duration;
-use url::Url;
 
 #[derive(Debug, Deserialize)]
 struct Args {
@@ -87,21 +87,18 @@ async fn main() {
         );
         key
     };
-    let cosmos_url = Url::parse(&args.flag_cosmos_rpc).expect("Invalid Cosmos RPC url");
-    let cosmos_url = cosmos_url.to_string();
-    let cosmos_url = cosmos_url.trim_end_matches('/');
     let fee_denom = args.flag_fees;
-
-    let contact = Contact::new(&cosmos_url, TIMEOUT);
     let fee = Coin {
         denom: fee_denom,
         amount: 1u64.into(),
     };
 
+    let connections = create_rpc_connections(None, Some(args.flag_cosmos_rpc), None, TIMEOUT).await;
+
     let ethereum_address = ethereum_key.to_public_key().unwrap();
     let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     update_peggy_delegate_addresses(
-        &contact,
+        &connections.contact.unwrap(),
         ethereum_address,
         cosmos_address,
         validator_key,

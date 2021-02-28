@@ -23,15 +23,12 @@ mod oracle_resync;
 use crate::main_loop::orchestrator_main_loop;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use contact::client::Contact;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
 use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_utils::connection_prep::create_rpc_connections;
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
 use std::cmp::min;
-use url::Url;
-use web30::client::Web3;
 
 #[derive(Debug, Deserialize)]
 struct Args {
@@ -88,24 +85,20 @@ async fn main() {
         .parse()
         .expect("Invalid contract address!");
 
-    let _ = Url::parse(&args.flag_cosmos_legacy_rpc).expect("Invalid Cosmos legacy RPC url");
-    let cosmos_legacy_url = args.flag_cosmos_legacy_rpc.trim_end_matches('/');
-
-    let _ = Url::parse(&args.flag_cosmos_grpc).expect("Invalid Cosmos gRPC url");
-    let cosmos_grpc_url = args.flag_cosmos_grpc.trim_end_matches('/').to_string();
-
-    let _ = Url::parse(&args.flag_ethereum_rpc).expect("Invalid Ethereum RPC url");
-    let eth_url = args.flag_ethereum_rpc.trim_end_matches('/');
-
     let fee_denom = args.flag_fees;
 
-    let grpc_client = PeggyQueryClient::connect(cosmos_grpc_url).await.unwrap();
     let timeout = min(
         min(ETH_SIGNER_LOOP_SPEED, ETH_ORACLE_LOOP_SPEED),
         RELAYER_LOOP_SPEED,
     );
-    let web3 = Web3::new(&eth_url, timeout);
-    let contact = Contact::new(&cosmos_legacy_url, timeout);
+
+    let connections = create_rpc_connections(
+        Some(args.flag_cosmos_grpc),
+        Some(args.flag_cosmos_legacy_rpc),
+        Some(args.flag_ethereum_rpc),
+        timeout,
+    )
+    .await;
 
     let public_eth_key = ethereum_key
         .to_public_key()
@@ -123,9 +116,9 @@ async fn main() {
     orchestrator_main_loop(
         cosmos_key,
         ethereum_key,
-        web3,
-        contact,
-        grpc_client,
+        connections.web3.unwrap(),
+        connections.contact.unwrap(),
+        connections.grpc.unwrap(),
         contract_address,
         fee_denom,
     )

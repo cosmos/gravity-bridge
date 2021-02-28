@@ -3,9 +3,7 @@ use crate::main_loop::LOOP_SPEED;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use docopt::Docopt;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use url::Url;
-use web30::client::Web3;
+use peggy_utils::connection_prep::create_rpc_connections;
 
 pub mod batch_relaying;
 pub mod find_latest_valset;
@@ -71,14 +69,13 @@ async fn main() {
         .parse()
         .expect("Invalid contract address!");
 
-    let _ = Url::parse(&args.flag_cosmos_grpc).expect("Invalid Cosmos gRPC url");
-    let cosmos_grpc_url = args.flag_cosmos_grpc.trim_end_matches('/').to_string();
-
-    let _ = Url::parse(&args.flag_ethereum_rpc).expect("Invalid Ethereum RPC url");
-    let eth_url = args.flag_ethereum_rpc.trim_end_matches('/');
-
-    let grpc_client = PeggyQueryClient::connect(cosmos_grpc_url).await.unwrap();
-    let web3 = Web3::new(&eth_url, LOOP_SPEED);
+    let connections = create_rpc_connections(
+        Some(args.flag_cosmos_grpc),
+        Some(args.flag_cosmos_legacy_rpc),
+        Some(args.flag_ethereum_rpc),
+        LOOP_SPEED,
+    )
+    .await;
 
     let public_eth_key = ethereum_key
         .to_public_key()
@@ -86,5 +83,11 @@ async fn main() {
     info!("Starting Peggy Relayer");
     info!("Ethereum Address: {}", public_eth_key);
 
-    relayer_main_loop(ethereum_key, web3, grpc_client, peggy_contract_address).await
+    relayer_main_loop(
+        ethereum_key,
+        connections.web3.unwrap(),
+        connections.grpc.unwrap(),
+        peggy_contract_address,
+    )
+    .await
 }

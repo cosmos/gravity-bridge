@@ -1659,7 +1659,6 @@ dependencies = [
  "serde_json",
  "tokio",
  "tonic",
- "url",
  "web30",
 ]
 
@@ -1729,6 +1728,7 @@ dependencies = [
  "serde_derive",
  "tokio",
  "tonic",
+ "url",
  "web30",
 ]
 
@@ -2089,7 +2089,6 @@ dependencies = [
  "relayer",
  "serde",
  "serde_derive",
- "url",
  "web30",
 ]
 
@@ -2116,7 +2115,6 @@ dependencies = [
  "serde_derive",
  "tokio",
  "tonic",
- "url",
  "web30",
 ]
 
