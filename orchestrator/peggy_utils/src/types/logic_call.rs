@@ -1,7 +1,7 @@
 use super::*;
 use crate::error::PeggyError;
-use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
+use clarity::{utils::hex_str_to_bytes, Address as EthAddress};
 use deep_space::address::Address as CosmosAddress;
 
 /// the response we get when querying for a valset confirmation
@@ -63,7 +63,7 @@ pub struct LogicCallConfirmResponse {
 impl LogicCallConfirmResponse {
     pub fn from_proto(input: peggy_proto::peggy::MsgConfirmLogicCall) -> Result<Self, PeggyError> {
         Ok(LogicCallConfirmResponse {
-            invalidation_id: input.invalidation_id,
+            invalidation_id: hex_str_to_bytes(&input.invalidation_id).unwrap(),
             invalidation_nonce: input.invalidation_nonce,
             orchestrator: input.orchestrator.parse()?,
             ethereum_signer: input.eth_signer.parse()?,
