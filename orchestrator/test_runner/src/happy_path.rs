@@ -19,6 +19,7 @@ use ethereum_peggy::utils::get_valset_nonce;
 use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use orchestrator::main_loop::orchestrator_main_loop;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_utils::connection_prep::check_delegate_addresses;
 use peggy_utils::types::SendToCosmosEvent;
 use rand::Rng;
 use std::{env, process::Command, time::Duration};
@@ -47,7 +48,7 @@ pub async fn happy_path_test(
     #[allow(clippy::explicit_counter_loop)]
     for (c_key, e_key) in keys.iter() {
         info!("Spawning Orchestrator");
-        let grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
+        let mut grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
         // we have only one actual futures executor thread (see the actix runtime tag on our main function)
         // but that will execute all the orchestrators in our test in parallel
         Arbiter::spawn(orchestrator_main_loop(
@@ -55,10 +56,18 @@ pub async fn happy_path_test(
             *e_key,
             web30.clone(),
             contact.clone(),
-            grpc_client,
+            grpc_client.clone(),
             peggy_address,
             get_test_token_name(),
         ));
+
+        // this function is just to test normal startup
+        check_delegate_addresses(
+            &mut grpc_client,
+            e_key.to_public_key().unwrap(),
+            c_key.to_public_key().unwrap().to_address(),
+        )
+        .await;
 
         // used to break out of the loop early to simulate one validator
         // not running an orchestrator
