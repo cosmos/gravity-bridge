@@ -1,8 +1,6 @@
 This file names and documents the various slashing conditions we use in Gravity.
 
-## GRAVSLASH-01
-
-**Fake validator set evidence**
+## GRAVSLASH-01: Fake validator set evidence
 
 This slashing condition is intended to stop validators from signing over a validator set and nonce that has never existed on Cosmos. It works via an evidence mechanism, where anyone can submit a message containing the signature of a validator over a fake validator set. This is intended to produce the effect that if a cabal of validators is formed with the intention of submitting a fake validator set, one defector can cause them all to be slashed.
 
@@ -10,15 +8,11 @@ This slashing condition is intended to stop validators from signing over a valid
 
 The trickiest part of this slashing condition is determining that a validator set has never existed on Cosmos. To save space, we will need to clean up old validator sets. We could keep a mapping of validator set hash to true in the KV store, and use that to check if a validator set has ever existed. This is more efficient than storing the whole validator set, but its growth is still unbounded. It might be possible to use other cryptographic methods to cut down on the size of this mapping. It might be OK to prune very old entries from this mapping, but any pruning reduces the deterrence of this slashing condition.
 
-## GRAVSLASH-02
-
-**Fake tx batch evidence**
+## GRAVSLASH-02: Fake tx batch evidence
 
 This is the same issue as GRAVSLASH-01-A, but with the transaction batches. All of the same considerations apply.
 
-## GRAVSLASH-03
-
-**Submitting incorrect Eth oracle claim**
+## GRAVSLASH-03: Submitting incorrect Eth oracle claim
 
 The Ethereum oracle code (currently mostly contained in attestation.go), is a key part of Gravity. It allows the Gravity module to have knowledge of events that have occured on Ethereum, such as deposits and executed batches. GRAVSLASH-04 is intended to punish validators who submit a claim for an event that never happened on Ethereum.
 
@@ -36,9 +30,7 @@ If not enough of the cartel defects, then neither event will be observed, and th
 
 Also, GRAVSLASH-03 will be triggered against the honest validators in the case of a successful cartel. This could act to make it easier for a forming cartel to threaten validators who do not want to join.
 
-## GRAVSLASH-04
-
-**Failure to submit Eth oracle claims**
+## GRAVSLASH-04: Failure to submit Eth oracle claims
 
 This is similar to GRAVSLASH-03, but it is triggered against validators who do not submit an oracle claim that has been observed. In contrast to GRAVSLASH-03, this is intended to punish validators who stop participating in the oracle completely. 
 
@@ -48,9 +40,7 @@ Unfortunately, GRAVSLASH-04 has the same downsides as GRAVSLASH-03 in that it ti
 
 Without GRAVSLASH-03 and GRAVSLASH-04, the Ethereum event oracle only continues to function if >2/3 of the validators voluntarily submit correct claims. Although the arguments against GRAVSLASH-03 and GRAVSLASH-04 are convincing, we must decide whether we are comfortable with this fact. We should probably make it possible to enable or disable GRAVSLASH-03 and GRAVSLASH-04 in the chain's parameters.
 
-## GRAVSLASH-05
-
-**Failure to sign validator set update or tx batch**
+## GRAVSLASH-05: Failure to sign validator set update or tx batch
 
 This slashing condition is triggered when a validator does not sign a validator set update or transaction batch which is produced by the Gravity Cosmos module. This prevents two bad scenarios- 
 
