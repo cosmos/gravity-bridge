@@ -6,7 +6,7 @@ extern crate serde_derive;
 extern crate lazy_static;
 
 use clarity::PrivateKey as EthPrivateKey;
-use cosmos_peggy::{send::update_peggy_delegate_addresses, utils::wait_for_cosmos_online};
+use cosmos_peggy::send::update_peggy_delegate_addresses;
 use deep_space::{coin::Coin, mnemonic::Mnemonic, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
 use peggy_utils::connection_prep::{create_rpc_connections, wait_for_cosmos_node_ready};
