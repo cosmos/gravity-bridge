@@ -19,6 +19,7 @@ use cosmos_peggy::send::{send_request_batch, send_to_eth};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
+use env_logger::Env;
 use ethereum_peggy::send_to_cosmos::send_to_cosmos;
 use peggy_utils::connection_prep::create_rpc_connections;
 use std::{time::Duration, u128};
@@ -96,7 +97,7 @@ lazy_static! {
 
 #[actix_rt::main]
 async fn main() {
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     // On Linux static builds we need to probe ssl certs path to be able to
     // do TLS stuff.
     openssl_probe::init_ssl_cert_env_vars();

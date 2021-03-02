@@ -25,11 +25,12 @@ use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
+use env_logger::Env;
 use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
 use peggy_utils::connection_prep::create_rpc_connections;
 use peggy_utils::connection_prep::{check_delegate_addresses, wait_for_cosmos_node_ready};
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
-use std::cmp::min;
+use std::{cmp::min, process::exit};
 
 #[derive(Debug, Deserialize)]
 struct Args {
@@ -67,7 +68,7 @@ lazy_static! {
 
 #[actix_rt::main]
 async fn main() {
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     // On Linux static builds we need to probe ssl certs path to be able to
     // do TLS stuff.
     openssl_probe::init_ssl_cert_env_vars();
@@ -140,7 +141,8 @@ async fn main() {
         }
     }
     if !found {
-        panic!("You have specified that fees should be paid in {} but account {} has no balance of that token!", fee_denom, public_cosmos_key)
+        error!("You have specified that fees should be paid in {} but account {} has no balance of that token!", fee_denom, public_cosmos_key);
+        exit(1);
     }
 
     orchestrator_main_loop(

@@ -3,6 +3,7 @@ use crate::main_loop::LOOP_SPEED;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use docopt::Docopt;
+use env_logger::Env;
 use peggy_utils::connection_prep::{create_rpc_connections, wait_for_cosmos_node_ready};
 
 pub mod batch_relaying;
@@ -52,7 +53,7 @@ lazy_static! {
 
 #[actix_rt::main]
 async fn main() {
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     // On Linux static builds we need to probe ssl certs path to be able to
     // do TLS stuff.
     openssl_probe::init_ssl_cert_env_vars();
