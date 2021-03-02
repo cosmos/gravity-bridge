@@ -10,6 +10,7 @@ pub async fn wait_for_next_cosmos_block(contact: &Contact, timeout: Duration) {
         .await
         .unwrap()
         .block
+        .unwrap()
         .last_commit
         .height;
     while current_block
@@ -18,6 +19,7 @@ pub async fn wait_for_next_cosmos_block(contact: &Contact, timeout: Duration) {
             .await
             .unwrap()
             .block
+            .unwrap()
             .last_commit
             .height
     {

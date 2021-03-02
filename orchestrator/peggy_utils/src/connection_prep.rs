@@ -275,11 +275,28 @@ pub async fn wait_for_cosmos_node_ready(contact: &Contact) {
                 if !val.syncing {
                     break;
                 } else {
-                    info!("Cosmos node is syncing or waiting for the chain to start. Standing by")
+                    info!("Cosmos node is syncing Standing by")
                 }
             }
             Err(e) => warn!(
                 "Could not get syncing status, is your Cosmos node up? {:?}",
+                e
+            ),
+        }
+        delay_for(WAIT_TIME).await;
+    }
+    loop {
+        let res = contact.get_latest_block().await;
+        match res {
+            Ok(val) => {
+                if val.block.is_some() {
+                    break;
+                } else {
+                    info!("Cosmos node is waiting for the chain to start, Standing by")
+                }
+            }
+            Err(e) => warn!(
+                "Could not get chain launch status, is your Cosmos node up? {:?}",
                 e
             ),
         }
