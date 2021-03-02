@@ -15,15 +15,13 @@ extern crate lazy_static;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::Uint256;
-use contact::client::Contact;
 use cosmos_peggy::send::{send_request_batch, send_to_eth};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
 use ethereum_peggy::send_to_cosmos::send_to_cosmos;
+use peggy_utils::connection_prep::create_rpc_connections;
 use std::{time::Duration, u128};
-use url::Url;
-use web30::client::Web3;
 
 const TIMEOUT: Duration = Duration::from_secs(60);
 
@@ -123,12 +121,11 @@ async fn main() {
         let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
 
         println!("Sending from Cosmos address {}", cosmos_address);
+        let connections =
+            create_rpc_connections(None, Some(args.flag_cosmos_rpc), None, TIMEOUT).await;
+        let contact = connections.contact.unwrap();
 
-        let cosmos_url = Url::parse(&args.flag_cosmos_rpc).expect("Invalid Cosmos RPC url");
-        let cosmos_url = cosmos_url.to_string();
-        let cosmos_url = cosmos_url.trim_end_matches('/');
         let peggy_denom = format!("peggy{}", erc20_address);
-        let contact = Contact::new(&cosmos_url, TIMEOUT);
         let amount = Coin {
             amount,
             denom: peggy_denom.clone(),
@@ -199,10 +196,9 @@ async fn main() {
             .flag_contract_address
             .parse()
             .expect("Invalid contract address!");
-        let eth_url = Url::parse(&args.flag_ethereum_rpc).expect("Invalid Ethereum RPC url");
-        let eth_url = eth_url.to_string();
-        let eth_url = eth_url.trim_end_matches('/');
-        let web3 = Web3::new(&eth_url, TIMEOUT);
+        let connections =
+            create_rpc_connections(None, None, Some(args.flag_ethereum_rpc), TIMEOUT).await;
+        let web3 = connections.web3.unwrap();
         let cosmos_dest: CosmosAddress = args.flag_cosmos_destination.parse().unwrap();
         let ethereum_public_key = ethereum_key.to_public_key().unwrap();
 
