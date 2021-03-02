@@ -10,6 +10,7 @@ use peggy_proto::peggy::QueryDelegateKeysByEthAddress;
 use peggy_proto::peggy::QueryDelegateKeysByOrchestratorAddress;
 use std::process::exit;
 use std::time::Duration;
+use tokio::time::delay_for;
 use tonic::transport::Channel;
 use url::Url;
 use web30::client::Web3;
@@ -106,7 +107,7 @@ pub async fn create_rpc_connections(
         check_scheme(&url, &legacy_rpc_url);
         let cosmos_legacy_url = legacy_rpc_url.trim_end_matches('/');
         let base_contact = Contact::new(&cosmos_legacy_url, timeout);
-        let try_base = base_contact.get_latest_block().await;
+        let try_base = base_contact.get_syncing_status().await;
         match try_base {
             // it worked, lets go!
             Ok(_) => contact = Some(base_contact),
@@ -124,8 +125,8 @@ pub async fn create_rpc_connections(
                     let ipv4_url = format!("{}://127.0.0.1:{}", prefix, port);
                     let ipv6_contact = Contact::new(&ipv6_url, timeout);
                     let ipv4_contact = Contact::new(&ipv4_url, timeout);
-                    let ipv6_test = ipv6_contact.get_latest_block().await;
-                    let ipv4_test = ipv4_contact.get_latest_block().await;
+                    let ipv6_test = ipv6_contact.get_syncing_status().await;
+                    let ipv4_test = ipv4_contact.get_syncing_status().await;
                     warn!("Trying fallback urls {} {}", ipv6_url, ipv4_url);
                     match (ipv4_test, ipv6_test) {
                         (Ok(_), Err(_)) => {
@@ -148,8 +149,8 @@ pub async fn create_rpc_connections(
                     let https_on_443_url = format!("https://{}:443", body);
                     let https_on_80_contact = Contact::new(&https_on_80_url, timeout);
                     let https_on_443_contact = Contact::new(&https_on_443_url, timeout);
-                    let https_on_80_test = https_on_80_contact.get_latest_block().await;
-                    let https_on_443_test = https_on_443_contact.get_latest_block().await;
+                    let https_on_80_test = https_on_80_contact.get_syncing_status().await;
+                    let https_on_443_test = https_on_443_contact.get_syncing_status().await;
                     warn!(
                         "Trying fallback urls {} {}",
                         https_on_443_url, https_on_80_url
@@ -259,6 +260,30 @@ fn check_scheme(input: &Url, original_string: &str) {
             "Your url {} has an invalid scheme, please chose http or https",
             original_string
         )
+    }
+}
+
+/// This function will wait until the Cosmos node is ready, this is intended
+/// for situations such as when a node is syncing or when a node is waiting on
+/// a halted chain.
+pub async fn wait_for_cosmos_node_ready(contact: &Contact) {
+    const WAIT_TIME: Duration = Duration::from_secs(10);
+    loop {
+        let res = contact.get_syncing_status().await;
+        match res {
+            Ok(val) => {
+                if !val.syncing {
+                    break;
+                } else {
+                    info!("Cosmos node is syncing or waiting for the chain to start. Standing by")
+                }
+            }
+            Err(e) => warn!(
+                "Could not get syncing status, is your Cosmos node up? {:?}",
+                e
+            ),
+        }
+        delay_for(WAIT_TIME).await;
     }
 }
 

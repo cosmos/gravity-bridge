@@ -3,7 +3,7 @@ use crate::main_loop::LOOP_SPEED;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use docopt::Docopt;
-use peggy_utils::connection_prep::create_rpc_connections;
+use peggy_utils::connection_prep::{create_rpc_connections, wait_for_cosmos_node_ready};
 
 pub mod batch_relaying;
 pub mod find_latest_valset;
@@ -29,7 +29,7 @@ struct Args {
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-    "Usage: {} --ethereum-key=<key> --cosmos-legacy-rpc=<url> --cosmos-grpc=<url> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr>
+    "Usage: {} --ethereum-key=<key> --cosmos-legacy-rpc=<url> --cosmos-grpc=<url> --ethereum-rpc=<url> --contract-address=<addr>
         Options:
             -h --help                    Show this screen.
             --ethereum-key=<ekey>        An Ethereum private key containing non-trivial funds
@@ -82,6 +82,13 @@ async fn main() {
         .expect("Invalid Ethereum Private Key!");
     info!("Starting Peggy Relayer");
     info!("Ethereum Address: {}", public_eth_key);
+
+    let contact = connections.contact.clone().unwrap();
+
+    // check if the cosmos node is syncing, if so wait for it
+    // we can't move any steps above this because they may fail on an incorrect
+    // historic chain state while syncing occurs
+    wait_for_cosmos_node_ready(&contact).await;
 
     relayer_main_loop(
         ethereum_key,

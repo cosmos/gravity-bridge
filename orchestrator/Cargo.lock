@@ -603,9 +603,9 @@ checksum = "cd51eab21ab4fd6a3bf889e2d0958c0a6e3a61ad04260325e919e652a2a62826"
 
 [[package]]
 name = "contact"
-version = "0.3.5"
+version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f839691480c313391c53e699fc58618e9d13900b9fe81179650858f9a5156a1"
+checksum = "133a6c95f65caf3e358dfdf788454d1c641c83e8910fb8014247a1c4b7d62942"
 dependencies = [
  "actix-web",
  "deep_space",

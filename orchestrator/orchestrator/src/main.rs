@@ -26,8 +26,8 @@ use clarity::PrivateKey as EthPrivateKey;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
 use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
-use peggy_utils::connection_prep::check_delegate_addresses;
 use peggy_utils::connection_prep::create_rpc_connections;
+use peggy_utils::connection_prep::{check_delegate_addresses, wait_for_cosmos_node_ready};
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
 use std::cmp::min;
 
@@ -93,6 +93,7 @@ async fn main() {
         RELAYER_LOOP_SPEED,
     );
 
+    // probe all rpc connections and see if they are valid
     let connections = create_rpc_connections(
         Some(args.flag_cosmos_grpc),
         Some(args.flag_cosmos_legacy_rpc),
@@ -114,11 +115,18 @@ async fn main() {
         public_eth_key, public_cosmos_key
     );
 
-    // todo check if RPC is syncing
     let mut grpc = connections.grpc.clone().unwrap();
+    let contact = connections.contact.clone().unwrap();
+
+    // check if the cosmos node is syncing, if so wait for it
+    // we can't move any steps above this because they may fail on an incorrect
+    // historic chain state while syncing occurs
+    wait_for_cosmos_node_ready(&contact).await;
+
+    // check if the delegate addresses are correctly configured
     check_delegate_addresses(&mut grpc, public_eth_key, public_cosmos_key).await;
 
-    let contact = connections.contact.clone().unwrap();
+    // check if we actually have the promised balance of tokens to pay fees
     let mut found = false;
     for balance in contact
         .get_balances(public_cosmos_key)
@@ -134,8 +142,6 @@ async fn main() {
     if !found {
         panic!("You have specified that fees should be paid in {} but account {} has no balance of that token!", fee_denom, public_cosmos_key)
     }
-
-    // TODO this should wait here if the cosmos node is still syncing.
 
     orchestrator_main_loop(
         cosmos_key,

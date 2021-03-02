@@ -6,10 +6,10 @@ extern crate serde_derive;
 extern crate lazy_static;
 
 use clarity::PrivateKey as EthPrivateKey;
-use cosmos_peggy::send::update_peggy_delegate_addresses;
+use cosmos_peggy::{send::update_peggy_delegate_addresses, utils::wait_for_cosmos_online};
 use deep_space::{coin::Coin, mnemonic::Mnemonic, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
-use peggy_utils::connection_prep::create_rpc_connections;
+use peggy_utils::connection_prep::{create_rpc_connections, wait_for_cosmos_node_ready};
 use rand::{thread_rng, Rng};
 use std::time::Duration;
 
@@ -93,11 +93,13 @@ async fn main() {
     };
 
     let connections = create_rpc_connections(None, Some(args.flag_cosmos_rpc), None, TIMEOUT).await;
+    let contact = connections.contact.unwrap();
+    wait_for_cosmos_node_ready(&contact).await;
 
     let ethereum_address = ethereum_key.to_public_key().unwrap();
     let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     update_peggy_delegate_addresses(
-        &connections.contact.unwrap(),
+        &contact,
         ethereum_address,
         cosmos_address,
         validator_key,
