@@ -383,3 +383,27 @@ pub async fn check_delegate_addresses(
         }
     }
 }
+
+/// Checks if a given denom, used for fees is in the provided address
+pub async fn check_for_fee_denom(fee_denom: &str, address: CosmosAddress, contact: &Contact) {
+    let mut found = false;
+    for balance in contact.get_balances(address).await.unwrap().result {
+        if balance.denom.contains(&fee_denom) {
+            found = true;
+            break;
+        }
+    }
+    if !found {
+        error!("You have specified that fees should be paid in {} but account {} has no balance of that token!", fee_denom, address);
+        exit(1);
+    }
+}
+
+/// Checks the user has some Ethereum in their address to pay for things
+pub async fn check_for_eth(address: EthAddress, web3: &Web3) {
+    let balance = web3.eth_get_balance(address).await.unwrap();
+    if balance == 0u8.into() {
+        error!("You don't have any Ethereum! You will need to send some to {} for this program to work. Dust will do for basic operations, more info about average relaying costs will be presented as the program runs", address);
+        exit(1);
+    }
+}

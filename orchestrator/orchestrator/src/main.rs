@@ -27,10 +27,12 @@ use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
 use env_logger::Env;
 use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
-use peggy_utils::connection_prep::create_rpc_connections;
-use peggy_utils::connection_prep::{check_delegate_addresses, wait_for_cosmos_node_ready};
+use peggy_utils::connection_prep::{
+    check_delegate_addresses, check_for_eth, wait_for_cosmos_node_ready,
+};
+use peggy_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
-use std::{cmp::min, process::exit};
+use std::cmp::min;
 
 #[derive(Debug, Deserialize)]
 struct Args {
@@ -118,6 +120,7 @@ async fn main() {
 
     let mut grpc = connections.grpc.clone().unwrap();
     let contact = connections.contact.clone().unwrap();
+    let web3 = connections.web3.clone().unwrap();
 
     // check if the cosmos node is syncing, if so wait for it
     // we can't move any steps above this because they may fail on an incorrect
@@ -128,22 +131,8 @@ async fn main() {
     check_delegate_addresses(&mut grpc, public_eth_key, public_cosmos_key).await;
 
     // check if we actually have the promised balance of tokens to pay fees
-    let mut found = false;
-    for balance in contact
-        .get_balances(public_cosmos_key)
-        .await
-        .unwrap()
-        .result
-    {
-        if balance.denom.contains(&fee_denom) {
-            found = true;
-            break;
-        }
-    }
-    if !found {
-        error!("You have specified that fees should be paid in {} but account {} has no balance of that token!", fee_denom, public_cosmos_key);
-        exit(1);
-    }
+    check_for_fee_denom(&fee_denom, public_cosmos_key, &contact).await;
+    check_for_eth(public_eth_key, &web3).await;
 
     orchestrator_main_loop(
         cosmos_key,

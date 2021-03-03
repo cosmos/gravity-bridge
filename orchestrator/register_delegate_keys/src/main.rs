@@ -9,6 +9,7 @@ use clarity::PrivateKey as EthPrivateKey;
 use cosmos_peggy::send::update_peggy_delegate_addresses;
 use deep_space::{coin::Coin, mnemonic::Mnemonic, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
+use peggy_utils::connection_prep::check_for_fee_denom;
 use peggy_utils::connection_prep::{create_rpc_connections, wait_for_cosmos_node_ready};
 use rand::{thread_rng, Rng};
 use std::time::Duration;
@@ -57,8 +58,22 @@ async fn main() {
     let args: Args = Docopt::new(USAGE.as_str())
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
+
+    let fee_denom = args.flag_fees;
+    let fee = Coin {
+        denom: fee_denom.clone(),
+        amount: 1u64.into(),
+    };
+
+    let connections = create_rpc_connections(None, Some(args.flag_cosmos_rpc), None, TIMEOUT).await;
+    let contact = connections.contact.unwrap();
+    wait_for_cosmos_node_ready(&contact).await;
+
     let validator_key = CosmosPrivateKey::from_phrase(&args.flag_validator_phrase, "")
         .expect("Failed to parse validator key");
+    let validator_addr = validator_key.to_public_key().unwrap().to_address();
+    check_for_fee_denom(&fee_denom, validator_addr, &contact).await;
+
     let cosmos_key = if let Some(cosmos_phrase) = args.flag_cosmos_phrase {
         CosmosPrivateKey::from_phrase(&cosmos_phrase, "").expect("Failed to parse cosmos key")
     } else {
@@ -86,15 +101,6 @@ async fn main() {
         );
         key
     };
-    let fee_denom = args.flag_fees;
-    let fee = Coin {
-        denom: fee_denom,
-        amount: 1u64.into(),
-    };
-
-    let connections = create_rpc_connections(None, Some(args.flag_cosmos_rpc), None, TIMEOUT).await;
-    let contact = connections.contact.unwrap();
-    wait_for_cosmos_node_ready(&contact).await;
 
     let ethereum_address = ethereum_key.to_public_key().unwrap();
     let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();

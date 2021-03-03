@@ -21,7 +21,7 @@ use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
 use env_logger::Env;
 use ethereum_peggy::send_to_cosmos::send_to_cosmos;
-use peggy_utils::connection_prep::create_rpc_connections;
+use peggy_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
 use std::{time::Duration, u128};
 
 const TIMEOUT: Duration = Duration::from_secs(60);
@@ -136,6 +136,7 @@ async fn main() {
             amount: 1u64.into(),
         };
         let eth_dest: EthAddress = args.flag_eth_destination.parse().unwrap();
+        check_for_fee_denom(&peggy_denom, cosmos_address, &contact).await;
 
         let balances = contact
             .get_balances(cosmos_address)
@@ -202,6 +203,7 @@ async fn main() {
         let web3 = connections.web3.unwrap();
         let cosmos_dest: CosmosAddress = args.flag_cosmos_destination.parse().unwrap();
         let ethereum_public_key = ethereum_key.to_public_key().unwrap();
+        check_for_eth(ethereum_public_key, &web3).await;
 
         let erc20_balance = web3
             .get_erc20_balance(erc20_address, ethereum_public_key)

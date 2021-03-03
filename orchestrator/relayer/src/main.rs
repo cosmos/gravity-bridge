@@ -4,7 +4,9 @@ use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use docopt::Docopt;
 use env_logger::Env;
-use peggy_utils::connection_prep::{create_rpc_connections, wait_for_cosmos_node_ready};
+use peggy_utils::connection_prep::{
+    check_for_eth, create_rpc_connections, wait_for_cosmos_node_ready,
+};
 
 pub mod batch_relaying;
 pub mod find_latest_valset;
@@ -85,11 +87,13 @@ async fn main() {
     info!("Ethereum Address: {}", public_eth_key);
 
     let contact = connections.contact.clone().unwrap();
+    let web3 = connections.web3.clone().unwrap();
 
     // check if the cosmos node is syncing, if so wait for it
     // we can't move any steps above this because they may fail on an incorrect
     // historic chain state while syncing occurs
     wait_for_cosmos_node_ready(&contact).await;
+    check_for_eth(public_eth_key, &web3).await;
 
     relayer_main_loop(
         ethereum_key,
