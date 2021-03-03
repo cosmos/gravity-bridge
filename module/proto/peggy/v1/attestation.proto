@@ -1,8 +1,6 @@
 syntax = "proto3";
 package peggy.v1;
 
-// TODO-JT: add ERC20DeployedEvent claim
-
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
@@ -12,12 +10,22 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 // be handled
 enum ClaimType {
   option (gogoproto.goproto_enum_prefix) = false;
-
-  CLAIM_TYPE_UNKNOWN  = 0 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_UNKNOWN" ];
-  CLAIM_TYPE_DEPOSIT  = 1 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_DEPOSIT" ];
-  CLAIM_TYPE_WITHDRAW = 2 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_WITHDRAW"];
-  CLAIM_TYPE_ERC20_DEPLOYED = 3 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_ERC20_DEPLOYED"];
+  
+  CLAIM_TYPE_UNKNOWN             = 0 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_UNKNOWN" ];
+  CLAIM_TYPE_DEPOSIT             = 1 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_DEPOSIT" ];
+  CLAIM_TYPE_WITHDRAW            = 2 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_WITHDRAW"];
+  CLAIM_TYPE_ERC20_DEPLOYED      = 3 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_ERC20_DEPLOYED"];
   CLAIM_TYPE_LOGIC_CALL_EXECUTED = 4 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_LOGIC_CALL_EXECUTED"];
+}
+
+// ConfirmType is the cosmos type of a confirmation of a given object from the eth signers
+enum ConfirmType {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  CONFIRM_TYPE_UNKNOWN  = 1 [(gogoproto.enumvalue_customname) = "CONFIRM_TYPE_UNKNOWN"];
+  CONFIRM_TYPE_VALSET   = 2 [(gogoproto.enumvalue_customname) = "CONFIRM_TYPE_VALSET"];
+  CONFIRM_TYPE_BATCH    = 3 [(gogoproto.enumvalue_customname) = "CONFIRM_TYPE_BATCH"];
+  CONFIRM_TYPE_LOGIC    = 4 [(gogoproto.enumvalue_customname) = "CONFIRM_TYPE_LOGIC"];
 }
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by
@@ -39,7 +47,9 @@ message Attestation {
   bool                observed         = 1;
   repeated string     votes            = 2;
   uint64              height           = 3;
-  google.protobuf.Any claim            = 4;
+  google.protobuf.Any claim            = 4 [
+      (cosmos_proto.accepts_interface) = "EthereumClaim"
+  ];
 }
 
 // ERC20Token unique identifier for an Ethereum ERC20 token.

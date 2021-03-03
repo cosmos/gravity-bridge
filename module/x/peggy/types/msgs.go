@@ -293,6 +293,10 @@ type EthereumClaim interface {
 	ClaimHash() []byte
 }
 
+type Confirm interface {
+	// TODO: define
+}
+
 var (
 	_ EthereumClaim = &MsgDepositClaim{}
 	_ EthereumClaim = &MsgWithdrawClaim{}

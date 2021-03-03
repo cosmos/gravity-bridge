@@ -2,7 +2,6 @@ syntax = "proto3";
 package peggy.v1;
 
 import "peggy/v1/attestation.proto";
-// import "peggy/v1/types.proto";
 
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
@@ -26,11 +25,11 @@ message OutgoingTransferTx {
 
 // OutgoingLogicCall represents an individual logic call from Peggy to ETH
 message OutgoingLogicCall {
-  repeated ERC20Token transfers = 1;
-  repeated ERC20Token fees = 2;
-  string logic_contract_address = 3;
-  bytes payload = 4;
-  uint64 timeout = 5;
-  bytes invalidation_id = 6;
-  uint64 invalidation_nonce = 7;
+  repeated ERC20Token transfers              = 1;
+  repeated ERC20Token fees                   = 2;
+  string              logic_contract_address = 3;
+  bytes               payload                = 4;
+  uint64              timeout                = 5;
+  bytes               invalidation_id        = 6;
+  uint64              invalidation_nonce     = 7;
 }
