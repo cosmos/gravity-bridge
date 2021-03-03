@@ -8,7 +8,7 @@ use crate::utils::get_user_key;
 use crate::utils::send_one_eth;
 use crate::{COSMOS_NODE_GRPC, TOTAL_TIMEOUT};
 use actix::Arbiter;
-use clarity::{abi::Token, Address as EthAddress};
+use clarity::Address as EthAddress;
 use clarity::{PrivateKey as EthPrivateKey, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::send::{send_request_batch, send_to_eth};
