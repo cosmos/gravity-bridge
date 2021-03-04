@@ -591,6 +591,7 @@ dependencies = [
  "peggy_utils",
  "serde",
  "serde_derive",
+ "tokio",
  "url",
  "web30",
 ]
