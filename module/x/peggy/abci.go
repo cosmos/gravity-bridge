@@ -43,13 +43,8 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 	ValsetSlashing(ctx, k, params)
 	BatchSlashing(ctx, k, params)
 	// TODO slashing for arbitrary logic is missing
-	ClaimsSlashing(ctx, k, params)
 
-	// #4 condition (stretch goal)
-	// TODO: lost eth key or delegate key
-	// 1. submit a message signed by the priv key to the chain and it slashes the validator who delegated to that key
-	// return
-
+	// TODO: prune validator sets, older than 6 months, this time is chosen out of an abundance of caution
 	// TODO: prune outgoing tx batches while looping over them above, older than 15h and confirmed
 	// TODO: prune claims, attestations
 }
@@ -271,81 +266,6 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 		// then we set the latest slashed batch block
 		k.SetLastSlashedBatchBlock(ctx, batch.Block)
 
-	}
-}
-
-func ClaimsSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
-	// #3 condition
-	// Oracle events MsgDepositClaim, MsgWithdrawClaim
-
-	attmap := k.GetAttestationMapping(ctx)
-	for _, atts := range attmap {
-		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-		// slash conflicting votes
-		if len(atts) > 1 {
-			var unObs []types.Attestation
-			oneObserved := false
-			for _, att := range atts {
-				if att.Observed {
-					oneObserved = true
-					continue
-				}
-				unObs = append(unObs, att)
-			}
-			// if one is observed delete the *other* attestations, do not delete
-			// the original as we will need it later.
-			if oneObserved {
-				for _, att := range unObs {
-					for _, valaddr := range att.Votes {
-						validator, _ := sdk.ValAddressFromBech32(valaddr)
-						val := k.StakingKeeper.Validator(ctx, validator)
-						cons, _ := val.GetConsAddr()
-						k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, validator), params.SlashFractionConflictingClaim)
-						k.StakingKeeper.Jail(ctx, cons)
-					}
-					claim, err := k.UnpackAttestationClaim(&att)
-					if err != nil {
-						panic("couldn't cast to claim")
-					}
-
-					k.DeleteAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
-				}
-			}
-		}
-
-		if len(atts) == 1 {
-			att := atts[0]
-			// TODO-JT: Review this
-			windowPassed := uint64(ctx.BlockHeight()) > params.SignedClaimsWindow &&
-				uint64(ctx.BlockHeight())-params.SignedClaimsWindow > att.Height
-
-			// if the signing window has passed and the attestation is still unobserved wait.
-			if windowPassed && att.Observed {
-				for _, bv := range currentBondedSet {
-					found := false
-					for _, val := range att.Votes {
-						confVal, _ := sdk.ValAddressFromBech32(val)
-						if confVal.Equals(bv.GetOperator()) {
-							found = true
-							break
-						}
-					}
-					if !found {
-						cons, _ := bv.GetConsAddr()
-						k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, bv.GetOperator()), params.SlashFractionClaim)
-						if !bv.IsJailed() {
-							k.StakingKeeper.Jail(ctx, cons)
-						}
-					}
-				}
-				claim, err := k.UnpackAttestationClaim(&att)
-				if err != nil {
-					panic("couldn't cast to claim")
-				}
-
-				k.DeleteAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
-			}
-		}
 	}
 }
 
