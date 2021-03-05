@@ -331,6 +331,7 @@ func NewPeggyApp(
 		stakingtypes.NewMultiStakingHooks(
 			app.distrKeeper.Hooks(),
 			app.slashingKeeper.Hooks(),
+			app.peggyKeeper.Hooks(),
 		),
 	)
 
