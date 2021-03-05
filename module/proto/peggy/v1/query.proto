@@ -135,11 +135,13 @@ message QueryLastEventNonceByAddrResponse {
 message QueryERC20ToDenomRequest { string erc20 = 1; }
 message QueryERC20ToDenomResponse {
   string denom = 1;
+  bool   cosmos_originated = 2;
 }
 
 message QueryDenomToERC20Request { string denom = 1; }
 message QueryDenomToERC20Response {
   string erc20 = 1;
+  bool   cosmos_originated = 2;
 }
 
 message QueryDelegateKeysByValidatorAddress { string validator_address = 1; }

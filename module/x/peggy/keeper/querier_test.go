@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
@@ -847,14 +848,20 @@ func TestQueryERC20ToDenom(t *testing.T) {
 		erc20 = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
 		denom = "uatom"
 	)
+	response := types.QueryERC20ToDenomResponse{
+		Denom:            denom,
+		CosmosOriginated: true,
+	}
 	input := CreateTestEnv(t)
 	ctx := input.Context
 	input.PeggyKeeper.setCosmosOriginatedDenomToERC20(ctx, denom, erc20)
 
 	queriedDenom, err := queryERC20ToDenom(ctx, erc20, input.PeggyKeeper)
 	require.NoError(t, err)
+	correctBytes, err := codec.MarshalJSONIndent(types.ModuleCdc, response)
+	require.NoError(t, err)
 
-	assert.Equal(t, denom, string(queriedDenom))
+	assert.Equal(t, correctBytes, queriedDenom)
 }
 
 func TestQueryDenomToERC20(t *testing.T) {
@@ -862,6 +869,10 @@ func TestQueryDenomToERC20(t *testing.T) {
 		erc20 = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
 		denom = "uatom"
 	)
+	response := types.QueryDenomToERC20Response{
+		Erc20:            erc20,
+		CosmosOriginated: true,
+	}
 	input := CreateTestEnv(t)
 	ctx := input.Context
 	input.PeggyKeeper.setCosmosOriginatedDenomToERC20(ctx, denom, erc20)
@@ -869,5 +880,8 @@ func TestQueryDenomToERC20(t *testing.T) {
 	queriedERC20, err := queryDenomToERC20(ctx, denom, input.PeggyKeeper)
 	require.NoError(t, err)
 
-	assert.Equal(t, erc20, string(queriedERC20))
+	correctBytes, err := codec.MarshalJSONIndent(types.ModuleCdc, response)
+	require.NoError(t, err)
+
+	assert.Equal(t, correctBytes, queriedERC20)
 }
