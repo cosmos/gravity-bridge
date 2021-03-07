@@ -10,6 +10,7 @@ import (
 
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
+	// Question: what here can be epoched?
 	slashing(ctx, k)
 	attestationTally(ctx, k)
 	cleanupTimedOutBatches(ctx, k)
@@ -129,6 +130,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	unslashedValsets := k.GetUnSlashedValsets(ctx, maxHeight)
 
 	// unslashedValsets are sorted by nonce in ASC order
+	// Question: do we need to sort each time? See if this can be epoched
 	for _, vs := range unslashedValsets {
 		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 		confirms := k.GetValsetConfirms(ctx, vs.Nonce)

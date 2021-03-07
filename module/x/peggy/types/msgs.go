@@ -10,11 +10,16 @@ import (
 )
 
 var (
+	_ sdk.Msg = &MsgSetOrchestratorAddress{}
 	_ sdk.Msg = &MsgValsetConfirm{}
 	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
-	_ sdk.Msg = &MsgSetOrchestratorAddress{}
+	_ sdk.Msg = &MsgERC20DeployedClaim{}
+	_ sdk.Msg = &MsgConfirmLogicCall{}
+	_ sdk.Msg = &MsgLogicCallExecutedClaim{}
+	_ sdk.Msg = &MsgDepositClaim{}
+	_ sdk.Msg = &MsgWithdrawClaim{}
 )
 
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
