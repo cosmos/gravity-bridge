@@ -153,6 +153,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		return nil, err
 	}
 
+	// question: is this right? If i can delegate my voting power to a different key then this would fail each time i call it
 	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, valaddr)
 	if validator == nil {
