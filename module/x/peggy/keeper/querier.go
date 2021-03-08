@@ -58,6 +58,10 @@ const (
 	// Used by the relayer to package a batch with signatures required
 	// to submit to Ethereum
 	QueryBatchConfirms = "batchConfirms"
+	// Used to query all pending SendToEth transactions and fees available for each
+	// token type, a relayer can then estimate their potential profit when requesting
+	// a batch
+	QueryBatchFees = "batchFees"
 
 	// Logic calls
 	// note the current logic here constrains logic call throughput to one
@@ -111,6 +115,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return lastPendingBatchRequest(ctx, path[1], keeper)
 		case QueryOutgoingTxBatches:
 			return lastBatchesRequest(ctx, keeper)
+		case QueryBatchFees:
+			return queryBatchFees(ctx, keeper)
 
 		// Logic calls
 		case QueryLogicCall:
@@ -340,6 +346,15 @@ func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 		return nil, nil
 	}
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, batches)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
+}
+
+func queryBatchFees(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	val := types.QueryBatchFeeResponse{BatchFees: keeper.CreateBatchFees(ctx)}
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, val)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
