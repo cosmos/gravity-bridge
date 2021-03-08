@@ -75,23 +75,25 @@ func TestBatches(t *testing.T) {
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
 	// and verify remaining available Tx in the pool
-	var gotUnbatchedTx []*types.OutgoingTx
-	input.PeggyKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
+	var gotUnbatchedTx []*types.OutgoingTransferTx
+	input.PeggyKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx := []*types.OutgoingTx{
+	expUnbatchedTx := []*types.OutgoingTransferTx{
 		{
-			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(102, myTokenContractAddr).PeggyCoin(),
+			Id:          3,
+			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(102, myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewERC20Token(1, myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(103, myTokenContractAddr).PeggyCoin(),
+			Id:          4,
+			Erc20Fee:    types.NewERC20Token(1, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(103, myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
@@ -151,34 +153,38 @@ func TestBatches(t *testing.T) {
 
 	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
-	input.PeggyKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
+	input.PeggyKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx = []*types.OutgoingTx{
+	expUnbatchedTx = []*types.OutgoingTransferTx{
 		{
-			BridgeFee: types.NewERC20Token(3, myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(101, myTokenContractAddr).PeggyCoin(),
+			Id:          2,
+			Erc20Fee:    types.NewERC20Token(3, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(101, myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(100, myTokenContractAddr).PeggyCoin(),
+			Id:          1,
+			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(100, myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(102, myTokenContractAddr).PeggyCoin(),
+			Id:          3,
+			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(102, myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewERC20Token(1, myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(103, myTokenContractAddr).PeggyCoin(),
+			Id:          4,
+			Erc20Fee:    types.NewERC20Token(1, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(103, myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
@@ -254,23 +260,25 @@ func TestBatchesFullCoins(t *testing.T) {
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
 	// and verify remaining available Tx in the pool
-	var gotUnbatchedTx []*types.OutgoingTx
-	input.PeggyKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
+	var gotUnbatchedTx []*types.OutgoingTransferTx
+	input.PeggyKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx := []*types.OutgoingTx{
+	expUnbatchedTx := []*types.OutgoingTransferTx{
 		{
-			BridgeFee: types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr).PeggyCoin(),
+			Id:          1,
+			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr).PeggyCoin(),
+			Id:          4,
+			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
@@ -330,34 +338,38 @@ func TestBatchesFullCoins(t *testing.T) {
 
 	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
-	input.PeggyKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
+	input.PeggyKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx = []*types.OutgoingTx{
+	expUnbatchedTx = []*types.OutgoingTransferTx{
 		{
-			BridgeFee: types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr).PeggyCoin(),
+			Id:          2,
+			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr).PeggyCoin(),
+			Id:          3,
+			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(5)), myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(5)), myTokenContractAddr).PeggyCoin(),
+			Id:          6,
+			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(5)), myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(5)), myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(4)), myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(4)), myTokenContractAddr).PeggyCoin(),
+			Id:          5,
+			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(4)), myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(4)), myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)

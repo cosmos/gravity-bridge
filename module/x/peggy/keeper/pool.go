@@ -51,12 +51,17 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	// get next tx id from keeper
 	nextID := k.autoIncrementID(ctx, types.KeyLastTXPoolID)
 
-	// construct outgoing tx
-	outgoing := &types.OutgoingTx{
-		Sender:    sender.String(),
-		DestAddr:  counterpartReceiver,
-		Amount:    amount,
-		BridgeFee: fee,
+	erc20Fee := types.NewSDKIntERC20Token(fee.Amount, tokenContract)
+
+	// construct outgoing tx, as part of this process we represent
+	// the token as an ERC20 token since it is preparing to go to ETH
+	// rather than the denom that is the input to this function.
+	outgoing := &types.OutgoingTransferTx{
+		Id:          nextID,
+		Sender:      sender.String(),
+		DestAddress: counterpartReceiver,
+		Erc20Token:  types.NewSDKIntERC20Token(amount.Amount, tokenContract),
+		Erc20Fee:    erc20Fee,
 	}
 
 	// set the outgoing tx in the pool index
@@ -65,7 +70,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	}
 
 	// add a second index with the fee
-	k.appendToUnbatchedTXIndex(ctx, tokenContract, fee, nextID)
+	k.appendToUnbatchedTXIndex(ctx, tokenContract, *erc20Fee, nextID)
 
 	// todo: add second index for sender so that we can easily query: give pending Tx by sender
 	// todo: what about a second index for receiver?
@@ -84,7 +89,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 }
 
 // appendToUnbatchedTXIndex add at the end when tx with same fee exists
-func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee sdk.Coin, txID uint64) {
+func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee types.ERC20Token, txID uint64) {
 	store := ctx.KVStore(k.storeKey)
 	idxKey := types.GetFeeSecondIndexKey(tokenContract, fee)
 	var idSet types.IDSet
@@ -97,7 +102,7 @@ func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, 
 }
 
 // appendToUnbatchedTXIndex add at the top when tx with same fee exists
-func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee sdk.Coin, txID uint64) {
+func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee types.ERC20Token, txID uint64) {
 	store := ctx.KVStore(k.storeKey)
 	idxKey := types.GetFeeSecondIndexKey(tokenContract, fee)
 	var idSet types.IDSet
@@ -110,7 +115,7 @@ func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, tokenContract string,
 }
 
 // removeFromUnbatchedTXIndex removes the tx from the index and makes it implicit no available anymore
-func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee sdk.Coin, txID uint64) error {
+func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee types.ERC20Token, txID uint64) error {
 	store := ctx.KVStore(k.storeKey)
 	idxKey := types.GetFeeSecondIndexKey(tokenContract, fee)
 	var idSet types.IDSet
@@ -133,7 +138,7 @@ func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, tokenContract string
 	return sdkerrors.Wrap(types.ErrUnknown, "tx id")
 }
 
-func (k Keeper) setPoolEntry(ctx sdk.Context, id uint64, val *types.OutgoingTx) error {
+func (k Keeper) setPoolEntry(ctx sdk.Context, id uint64, val *types.OutgoingTransferTx) error {
 	bz, err := k.cdc.MarshalBinaryBare(val)
 	if err != nil {
 		return err
@@ -143,13 +148,13 @@ func (k Keeper) setPoolEntry(ctx sdk.Context, id uint64, val *types.OutgoingTx) 
 	return nil
 }
 
-func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.OutgoingTx, error) {
+func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.OutgoingTransferTx, error) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetOutgoingTxPoolKey(id))
 	if bz == nil {
 		return nil, types.ErrUnknown
 	}
-	var r types.OutgoingTx
+	var r types.OutgoingTransferTx
 	k.cdc.UnmarshalBinaryBare(bz, &r)
 	return &r, nil
 }
@@ -160,7 +165,7 @@ func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
 }
 
 // IterateOutgoingPoolByFee itetates over the outgoing pool which is sorted by fee
-func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.OutgoingTx) bool) {
+func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.OutgoingTransferTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
 	iter := prefixStore.ReverseIterator(prefixRange([]byte(contract)))
 	defer iter.Close()
