@@ -13,13 +13,13 @@ Slashing groups multiple types of slashing (validator set, batch and claim slash
 
 ### Validator Slashing
 
-A validator is slashed when a validator does not confirm validator set requests, batch requests and attesting claims.
+A validator is slashed for not signing over a validatorset. The Cosmos-SDK allows active validator sets to change from block to block, for this reason we need to store multiple validator sets within a single unbonding period. This allows validators to not be slashed. 
 
-
+A validator will be slashed or missing a single confirmation signing.
 
 ### Batch Slashing
 
-### Claims Slashing
+A validator is slashed for not signing over a batch request. A validator will be slashed for missing 
 
 ## Attestation
 
@@ -33,10 +33,6 @@ Cleanup loops through batches and logic calls in order to clean up the timed out
 
 When a batch of transactions are created they have a specified height of the opposing chain for when the batch becomes invalid. When this happens we must remove them from the store. At the end of every block, we loop through the store of logic calls checking the the timeout heights. 
 
-<!-- Question: Does this need to happen every block? -->
-
 ### Logic Calls
 
 When a logic call is created it consists of a timeout height. This height is used to know when the logic call becomes invalid. At the end of every block, we loop through the store of logic calls checking the the timeout heights. 
-
-<!-- Question: Does this need to happen every block? -->
