@@ -6,25 +6,25 @@ import "google/api/annotations.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 service Msg {
-  rpc ValsetConfirm(MsgValsetConfirm) returns(MsgValsetConfirmResponse) {
+  rpc ValsetConfirm(MsgValsetConfirm) returns (MsgValsetConfirmResponse) {
     option (google.api.http).post = "/peggy/v1/valset_confirm";
   }
-  rpc SendToEth(MsgSendToEth) returns(MsgSendToEthResponse) {
+  rpc SendToEth(MsgSendToEth) returns (MsgSendToEthResponse) {
     option (google.api.http).post = "/peggy/v1/send_to_eth";
   }
-  rpc RequestBatch(MsgRequestBatch) returns(MsgRequestBatchResponse) {
+  rpc RequestBatch(MsgRequestBatch) returns (MsgRequestBatchResponse) {
     option (google.api.http).post = "/peggy/v1/request_batch";
   }
-  rpc ConfirmBatch(MsgConfirmBatch) returns(MsgConfirmBatchResponse) {
+  rpc ConfirmBatch(MsgConfirmBatch) returns (MsgConfirmBatchResponse) {
     option (google.api.http).post = "/peggy/v1/confirm_batch";
   }
-  rpc ConfirmLogicCall(MsgConfirmLogicCall) returns(MsgConfirmLogicCallResponse) {
+  rpc ConfirmLogicCall(MsgConfirmLogicCall) returns (MsgConfirmLogicCallResponse) {
     option (google.api.http).post = "/peggy/v1/confim_logic";
   }
-  rpc DepositClaim(MsgDepositClaim) returns(MsgDepositClaimResponse) {
+  rpc DepositClaim(MsgDepositClaim) returns (MsgDepositClaimResponse) {
     option (google.api.http).post = "/peggy/v1/deposit_claim";
   }
-  rpc WithdrawClaim(MsgWithdrawClaim) returns(MsgWithdrawClaimResponse) {
+  rpc WithdrawClaim(MsgWithdrawClaim) returns (MsgWithdrawClaimResponse) {
     option (google.api.http).post = "/peggy/v1/withdraw_claim";
   }
   rpc ERC20DeployedClaim(MsgERC20DeployedClaim)
@@ -35,28 +35,28 @@ service Msg {
       returns (MsgLogicCallExecutedClaimResponse) {
     option (google.api.http).post = "/peggy/v1/logic_call_executed_claim";
   }
-  rpc SetOrchestratorAddress(MsgSetOrchestratorAddress) returns(MsgSetOrchestratorAddressResponse) {
+  rpc SetOrchestratorAddress(MsgSetOrchestratorAddress) returns (MsgSetOrchestratorAddressResponse) {
     option (google.api.http).post = "/peggy/v1/set_orchestrator_address";
   }
 }
 
 // MsgSetOrchestratorAddress
-// this message allows validators to delegate their voting responsibilities 
+// this message allows validators to delegate their voting responsibilities
 // to a given key. This key is then used as an optional authentication method
 // for sigining oracle claims
 // VALIDATOR
 // The validator field is a cosmosvaloper1... string (i.e. sdk.ValAddress)
 // that references a validator in the active set
 // ORCHESTRATOR
-// The orchestrator field is a cosmos1... string  (i.e. sdk.AccAddress) that 
+// The orchestrator field is a cosmos1... string  (i.e. sdk.AccAddress) that
 // references the key that is being delegated to
 // ETH_ADDRESS
 // This is a hex encoded 0x Ethereum public key that will be used by this validator
 // on Ethereum
 message MsgSetOrchestratorAddress {
-  string validator = 1;
-  string orchestrator  = 2;
-  string eth_address   = 3;
+  string validator    = 1;
+  string orchestrator = 2;
+  string eth_address  = 3;
 }
 
 message MsgSetOrchestratorAddressResponse {}
@@ -65,7 +65,7 @@ message MsgSetOrchestratorAddressResponse {}
 // this is the message sent by the validators when they wish to submit their
 // signatures over the validator set at a given block height. A validator must
 // first call MsgSetEthAddress to set their Ethereum address to be used for
-// signing. Then someone (anyone) must make a ValsetRequest the request is
+// signing. Then someone (anyone) must make a ValsetRequest, the request is
 // essentially a messaging mechanism to determine which block all validators
 // should submit signatures over. Finally validators sign the validator set,
 // powers, and Ethereum addresses of the entire validator set at the height of a
@@ -98,9 +98,9 @@ message MsgValsetConfirmResponse {}
 // actually send this message in the first place. So a successful send has
 // two layers of fees for the user
 message MsgSendToEth {
-  string                   sender     = 1;
-  string                   eth_dest   = 2;
-  cosmos.base.v1beta1.Coin amount     = 3 [
+  string                   sender   = 1;
+  string                   eth_dest = 2;
+  cosmos.base.v1beta1.Coin amount   = 3 [
     (gogoproto.nullable) = false
   ];
   cosmos.base.v1beta1.Coin bridge_fee = 4 [
@@ -153,11 +153,11 @@ message MsgConfirmBatchResponse {}
 // as well as an Ethereum signature over this batch by the validator
 // -------------
 message MsgConfirmLogicCall {
-  string invalidation_id = 1;
+  string invalidation_id    = 1;
   uint64 invalidation_nonce = 2;
-  string eth_signer     = 3;
-  string orchestrator   = 4;
-  string signature      = 5;
+  string eth_signer         = 3;
+  string orchestrator       = 4;
+  string signature          = 5;
 }
 
 message MsgConfirmLogicCallResponse {}
@@ -168,12 +168,12 @@ message MsgConfirmLogicCallResponse {}
 // issued to the Cosmos address in question
 // -------------
 message MsgDepositClaim {
-  uint64 event_nonce     = 1;
-  uint64 block_height    = 2;
-  string token_contract  = 3;
-  string amount          = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
-    (gogoproto.nullable) = false
+  uint64 event_nonce    = 1;
+  uint64 block_height   = 2;
+  string token_contract = 3;
+  string amount         = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false
   ];
   string ethereum_sender = 5;
   string cosmos_receiver = 6;
@@ -213,11 +213,11 @@ message MsgERC20DeployedClaimResponse {}
 // This informs the Cosmos module that a logic
 // call has been executed
 message MsgLogicCallExecutedClaim {
-  uint64 event_nonce    = 1;
-  uint64 block_height   = 2;
-  bytes invalidation_id = 3;
+  uint64 event_nonce        = 1;
+  uint64 block_height       = 2;
+  bytes  invalidation_id    = 3;
   uint64 invalidation_nonce = 4;
-  string orchestrator   = 5;
+  string orchestrator       = 5;
 }
 
 message MsgLogicCallExecutedClaimResponse {}
