@@ -15,7 +15,7 @@ func TestGenesisStateValidate(t *testing.T) {
 		"empty params":   {src: &GenesisState{Params: &Params{}}, expErr: true},
 		"invalid params": {src: &GenesisState{
 			Params: &Params{
-				PeggyId:               "foo",
+				GravityId:             "foo",
 				ContractSourceHash:    "laksdjflasdkfja",
 				BridgeEthereumAddress: "invalid-eth-address",
 				BridgeChainId:         3279089,

@@ -91,7 +91,7 @@ func DefaultGenesisState() *GenesisState {
 // DefaultParams returns a copy of the default params
 func DefaultParams() *Params {
 	return &Params{
-		PeggyId:                       "defaultgravityid",
+		GravityId:                     "defaultgravityid",
 		SignedValsetsWindow:           10000,
 		SignedBatchesWindow:           10000,
 		SignedClaimsWindow:            10000,
@@ -107,7 +107,7 @@ func DefaultParams() *Params {
 
 // ValidateBasic checks that the parameters have valid values.
 func (p Params) ValidateBasic() error {
-	if err := validateGravityID(p.PeggyId); err != nil {
+	if err := validateGravityID(p.GravityId); err != nil {
 		return sdkerrors.Wrap(err, "gravity id")
 	}
 	if err := validateContractHash(p.ContractSourceHash); err != nil {
@@ -161,7 +161,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 // pairs of auth module's parameters.
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(ParamsStoreKeyGravityID, &p.PeggyId, validateGravityID),
+		paramtypes.NewParamSetPair(ParamsStoreKeyGravityID, &p.GravityId, validateGravityID),
 		paramtypes.NewParamSetPair(ParamsStoreKeyContractHash, &p.ContractSourceHash, validateContractHash),
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractAddress, &p.BridgeEthereumAddress, validateBridgeContractAddress),
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainId, validateBridgeChainID),

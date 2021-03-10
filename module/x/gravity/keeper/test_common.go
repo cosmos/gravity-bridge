@@ -180,7 +180,7 @@ var (
 
 	// TestingGravityParams is a set of gravity params for testing
 	TestingGravityParams = types.Params{
-		PeggyId:                       "testgravityid",
+		GravityId:                     "testgravityid",
 		ContractSourceHash:            "62328f7bc12efb28f86111d08c29b39285680a906ea0e524e0209d6f6657b713",
 		BridgeEthereumAddress:         "0x8858eeb3dfffa017d4bce9801d340d36cf895ccf",
 		BridgeChainId:                 11,
