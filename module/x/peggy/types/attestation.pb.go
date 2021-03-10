@@ -146,8 +146,9 @@ func (m *Attestation) GetClaim() *types.Any {
 
 // ERC20Token unique identifier for an Ethereum ERC20 token.
 // CONTRACT:
-// The contract address on ETH of the token (note: developers should look up
-// the token symbol using the address on ETH to display for UI)
+// The contract address on ETH of the token, this could be a Cosmos
+// originated token, if so it will be the ERC20 address of the representation
+// (note: developers should look up the token symbol using the address on ETH to display for UI)
 type ERC20Token struct {
 	Contract string                                 `protobuf:"bytes,1,opt,name=contract,proto3" json:"contract,omitempty"`
 	Amount   github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`

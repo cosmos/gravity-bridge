@@ -265,3 +265,24 @@ func (k Keeper) GetDelegateKeyByEth(c context.Context, req *types.QueryDelegateK
 	}
 	return nil, sdkerrors.Wrap(types.ErrInvalid, "No validator")
 }
+
+func (k Keeper) GetPendingSendToEth(c context.Context, req *types.QueryPendingSendToEth) (*types.QueryPendingSendToEthResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	batches := k.GetOutgoingTxBatches(ctx)
+	unbatched_tx := k.GetPoolTransactions(ctx)
+	sender_address := req.SenderAddress
+	var res *types.QueryPendingSendToEthResponse
+	for _, batch := range batches {
+		for _, tx := range batch.Transactions {
+			if tx.Sender == sender_address {
+				res.TransfersInBatches = append(res.TransfersInBatches, tx)
+			}
+		}
+	}
+	for _, tx := range unbatched_tx {
+		if tx.Sender == sender_address {
+			res.UnbatchedTransfers = append(res.UnbatchedTransfers, &tx)
+		}
+	}
+	return res, nil
+}

@@ -164,7 +164,29 @@ func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
 	store.Delete(types.GetOutgoingTxPoolKey(id))
 }
 
-// IterateOutgoingPoolByFee itetates over the outgoing pool which is sorted by fee
+// GetPoolTransactions, grabs all transactions from the tx pool, useful for queries or genesis save/load
+func (k Keeper) GetPoolTransactions(ctx sdk.Context) []types.OutgoingTransferTx {
+	prefixStore := ctx.KVStore(k.storeKey)
+	// we must use the second index key here because transactions are left in the store, but removed
+	// from the tx sorting key, while in batches
+	iter := prefixStore.ReverseIterator(prefixRange([]byte(types.SecondIndexOutgoingTXFeeKey)))
+	var ret []*types.OutgoingTransferTx
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var ids types.IDSet
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ids)
+		for _, id := range ids.Ids {
+			tx, err := k.getPoolEntry(ctx, id)
+			if err != nil {
+				panic("Invalid id in tx index!")
+			}
+			ret = append(ret, tx)
+		}
+	}
+	return ret
+}
+
+// IterateOutgoingPoolByFee iterates over the outgoing pool which is sorted by fee
 func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.OutgoingTransferTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
 	iter := prefixStore.ReverseIterator(prefixRange([]byte(contract)))
@@ -176,14 +198,13 @@ func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb fu
 		for _, id := range ids.Ids {
 			tx, err := k.getPoolEntry(ctx, id)
 			if err != nil {
-				return
+				panic("Invalid id in tx index!")
 			}
 			if cb(id, tx) {
 				return
 			}
 		}
 	}
-	return
 }
 
 // CreateBatchFees iterates over the outgoing pool and create batch token fee map
