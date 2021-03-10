@@ -466,15 +466,30 @@ func queryGravityID(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 }
 
 func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, error) {
-	_, erc20, err := keeper.DenomToERC20Lookup(ctx, denom)
+	cosmos_originated, erc20, err := keeper.DenomToERC20Lookup(ctx, denom)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	var response types.QueryDenomToERC20Response
+	response.CosmosOriginated = cosmos_originated
+	response.Erc20 = erc20
+	bytes, err := codec.MarshalJSONIndent(types.ModuleCdc, response)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {
-		return []byte(erc20), nil
+		return bytes, nil
 	}
 }
 
 func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, error) {
-	_, denom := keeper.ERC20ToDenomLookup(ctx, ERC20)
-	return []byte(denom), nil
+	cosmos_originated, denom := keeper.ERC20ToDenomLookup(ctx, ERC20)
+	var response types.QueryERC20ToDenomResponse
+	response.CosmosOriginated = cosmos_originated
+	response.Denom = denom
+	bytes, err := codec.MarshalJSONIndent(types.ModuleCdc, response)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	} else {
+		return bytes, nil
+	}
 }

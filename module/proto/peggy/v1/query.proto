@@ -190,6 +190,7 @@ message QueryERC20ToDenomRequest {
 }
 message QueryERC20ToDenomResponse {
   string denom = 1;
+  bool   cosmos_originated = 2;
 }
 
 message QueryDenomToERC20Request {
@@ -197,6 +198,7 @@ message QueryDenomToERC20Request {
 }
 message QueryDenomToERC20Response {
   string erc20 = 1;
+  bool   cosmos_originated = 2;
 }
 
 message QueryDelegateKeysByValidatorAddress {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/althea-net/peggy/module/x/gravity/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -93,7 +94,7 @@ func CmdUnsafeETHAddr() *cobra.Command {
 }
 
 func CmdSendToEth() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "send-to-eth [eth-dest] [amount] [bridge-fee]",
 		Short: "Adds a new entry to the transaction pool to withdraw an amount from the Ethereum bridge contract",
 		Args:  cobra.ExactArgs(3),
@@ -131,10 +132,12 @@ func CmdSendToEth() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
 }
 
 func CmdRequestBatch() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "build-batch [token_contract_address]",
 		Short: "Build a new batch on the cosmos side for pooled withdrawal transactions",
 		Args:  cobra.ExactArgs(1),
@@ -157,10 +160,12 @@ func CmdRequestBatch() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
 }
 
 func CmdSetOrchestratorAddress() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "set-orchestrator-address [validator-address] [orchestrator-address] [ethereum-address]",
 		Short: "Allows validators to delegate their voting responsibilities to a given key.",
 		Args:  cobra.ExactArgs(3),
@@ -181,4 +186,6 @@ func CmdSetOrchestratorAddress() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
 }

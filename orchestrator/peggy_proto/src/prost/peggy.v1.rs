@@ -492,8 +492,6 @@ pub struct Params {
     pub slash_fraction_conflicting_claim: std::vec::Vec<u8>,
     #[prost(uint64, tag="17")]
     pub unbond_slashing_valsets_window: u64,
-    #[prost(uint64, tag="18")]
-    pub unbond_slashing_batch_window: u64,
 }
 /// GenesisState struct
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -686,6 +684,8 @@ pub struct QueryErc20ToDenomRequest {
 pub struct QueryErc20ToDenomResponse {
     #[prost(string, tag="1")]
     pub denom: std::string::String,
+    #[prost(bool, tag="2")]
+    pub cosmos_originated: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryDenomToErc20Request {
@@ -696,6 +696,8 @@ pub struct QueryDenomToErc20Request {
 pub struct QueryDenomToErc20Response {
     #[prost(string, tag="1")]
     pub erc20: std::string::String,
+    #[prost(bool, tag="2")]
+    pub cosmos_originated: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryDelegateKeysByValidatorAddress {
