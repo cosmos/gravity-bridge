@@ -17,7 +17,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 		userCosmosAddr, _               = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
 		blockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
 		blockHeight           int64     = 200
-		denom                           = "peggy0xB5E9944950C97acab395a324716D186632789712"
+		denom                           = "gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
 		startingCoinAmount, _           = sdk.NewIntFromString("150000000000000000000") // 150 ETH worth, required to reach above u64 limit (which is about 18 ETH)
 		sendAmount, _                   = sdk.NewIntFromString("50000000000000000000")  // 50 ETH
 		feeAmount, _                    = sdk.NewIntFromString("5000000000000000000")   // 5 ETH
@@ -117,7 +117,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	require.NotNil(t, a)
 	// and vouchers added to the account
 	balance := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewCoin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to reject duplicate deposit
 	// when
@@ -127,7 +127,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	// then
 	require.Error(t, err)
 	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewCoin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to reject skipped nonce
 	ethClaim = types.MsgDepositClaim{
@@ -146,7 +146,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	// then
 	require.Error(t, err)
 	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewCoin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to finally accept consecutive nonce
 	ethClaim = types.MsgDepositClaim{
@@ -166,7 +166,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	balance = input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewCoin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountB)}, balance)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountB)}, balance)
 }
 
 func TestMsgDepositClaimsMultiValidator(t *testing.T) {
@@ -231,7 +231,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	require.NotNil(t, a1)
 	// and vouchers not yet added to the account
 	balance1 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.NotEqual(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance1)
+	assert.NotEqual(t, sdk.Coins{sdk.NewInt64Coin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance1)
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
@@ -244,7 +244,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	require.NotNil(t, a2)
 	// and vouchers now added to the account
 	balance2 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance2)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance2)
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
@@ -257,7 +257,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	require.NotNil(t, a3)
 	// and no additional added to the account
 	balance3 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance3)
+	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance3)
 }
 
 func TestMsgSetOrchestratorAddresses(t *testing.T) {
