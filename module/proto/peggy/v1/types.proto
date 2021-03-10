@@ -1,6 +1,6 @@
 syntax = "proto3";
 package peggy.v1;
-option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+option  go_package = "github.com/althea-net/peggy/module/x/gravity/types";
 
 // BridgeValidator represents a validator's ETH address and its power
 message BridgeValidator {
@@ -8,7 +8,7 @@ message BridgeValidator {
   string ethereum_address = 2;
 }
 
-// Valset is the Ethereum Bridge Multsig Set, each peggy validator also
+// Valset is the Ethereum Bridge Multsig Set, each gravity validator also
 // maintains an ETH key to sign messages, these are used to check signatures on
 // ETH because of the significant gas savings
 message Valset {
@@ -23,7 +23,7 @@ message Valset {
 // outward and always produce batches with timeouts in the future
 // even if no Ethereum block height has been relayed for a long time
 message LastObservedEthereumBlockHeight {
-  uint64 cosmos_block_height = 1;
+  uint64 cosmos_block_height   = 1;
   uint64 ethereum_block_height = 2;
 }
 

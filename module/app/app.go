@@ -17,10 +17,6 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	peggyparams "github.com/althea-net/peggy/module/app/params"
-	"github.com/althea-net/peggy/module/x/peggy"
-	"github.com/althea-net/peggy/module/x/peggy/keeper"
-	peggytypes "github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -92,6 +88,11 @@ import (
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+
+	gravityparams "github.com/althea-net/peggy/module/app/params"
+	"github.com/althea-net/peggy/module/x/gravity"
+	"github.com/althea-net/peggy/module/x/gravity/keeper"
+	gravitytypes "github.com/althea-net/peggy/module/x/gravity/types"
 )
 
 const appName = "app"
@@ -125,7 +126,7 @@ var (
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
-		peggy.AppModuleBasic{},
+		gravity.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -138,7 +139,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		peggytypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
+		gravitytypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -216,7 +217,7 @@ func init() {
 
 func NewPeggyApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
-	homePath string, invCheckPeriod uint, encodingConfig peggyparams.EncodingConfig,
+	homePath string, invCheckPeriod uint, encodingConfig gravityparams.EncodingConfig,
 	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
 ) *Peggy {
 	appCodec := encodingConfig.Marshaler
@@ -233,7 +234,7 @@ func NewPeggyApp(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
-		peggytypes.StoreKey,
+		gravitytypes.StoreKey,
 	)
 	tKeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -380,8 +381,8 @@ func NewPeggyApp(
 
 	app.peggyKeeper = keeper.NewKeeper(
 		appCodec,
-		keys[peggytypes.StoreKey],
-		app.GetSubspace(peggytypes.ModuleName),
+		keys[gravitytypes.StoreKey],
+		app.GetSubspace(gravitytypes.ModuleName),
 		stakingKeeper,
 		app.bankKeeper,
 		app.slashingKeeper,
@@ -453,7 +454,7 @@ func NewPeggyApp(
 		ibc.NewAppModule(app.ibcKeeper),
 		params.NewAppModule(app.paramsKeeper),
 		transferModule,
-		peggy.NewAppModule(
+		gravity.NewAppModule(
 			app.peggyKeeper,
 			app.bankKeeper,
 		),
@@ -472,7 +473,7 @@ func NewPeggyApp(
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
-		peggytypes.ModuleName,
+		gravitytypes.ModuleName,
 	)
 	app.mm.SetOrderInitGenesis(
 		capabilitytypes.ModuleName,
@@ -488,7 +489,7 @@ func NewPeggyApp(
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		peggytypes.ModuleName,
+		gravitytypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
@@ -718,7 +719,7 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
-	paramsKeeper.Subspace(peggytypes.ModuleName)
+	paramsKeeper.Subspace(gravitytypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 
 	return paramsKeeper

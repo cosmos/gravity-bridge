@@ -4,9 +4,9 @@ package peggy.v1;
 import "peggy/v1/attestation.proto";
 // import "peggy/v1/types.proto";
 
-option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+option go_package = "github.com/althea-net/peggy/module/x/gravity/types";
 
-// OutgoingTxBatch represents a batch of transactions going from Peggy to ETH
+// OutgoingTxBatch represents a batch of transactions going from gravity to ETH
 message OutgoingTxBatch {
   uint64                      batch_nonce    = 1;
   uint64                      batch_timeout  = 2;
@@ -15,7 +15,7 @@ message OutgoingTxBatch {
   uint64                      block          = 5;
 }
 
-// OutgoingTransferTx represents an individual send from Peggy to ETH
+// OutgoingTransferTx represents an individual send from gravity to ETH
 message OutgoingTransferTx {
   uint64     id           = 1;
   string     sender       = 2;
@@ -24,13 +24,13 @@ message OutgoingTransferTx {
   ERC20Token erc20_fee    = 5;
 }
 
-// OutgoingLogicCall represents an individual logic call from Peggy to ETH
+// OutgoingLogicCall represents an individual logic call from gravity to ETH
 message OutgoingLogicCall {
-  repeated ERC20Token transfers = 1;
-  repeated ERC20Token fees = 2;
-  string logic_contract_address = 3;
-  bytes payload = 4;
-  uint64 timeout = 5;
-  bytes invalidation_id = 6;
-  uint64 invalidation_nonce = 7;
+  repeated ERC20Token transfers              = 1;
+  repeated ERC20Token fees                   = 2;
+  string              logic_contract_address = 3;
+  bytes               payload                = 4;
+  uint64              timeout                = 5;
+  bytes               invalidation_id        = 6;
+  uint64              invalidation_nonce     = 7;
 }
