@@ -186,6 +186,7 @@ var (
 		BridgeChainId:                 11,
 		SignedBatchesWindow:           10,
 		SignedValsetsWindow:           10,
+		UnbondSlashingValsetsWindow:   15,
 		SignedClaimsWindow:            10,
 		TargetBatchTimeout:            60001,
 		AverageBlockTime:              5000,
@@ -342,7 +343,6 @@ func CreateTestEnv(t *testing.T) TestInput {
 
 	distKeeper := distrkeeper.NewKeeper(marshaler, keyDistro, getSubspace(paramsKeeper, distrtypes.ModuleName), accountKeeper, bankKeeper, stakingKeeper, authtypes.FeeCollectorName, nil)
 	distKeeper.SetParams(ctx, distrtypes.DefaultParams())
-	stakingKeeper.SetHooks(distKeeper.Hooks())
 
 	// set genesis items required for distribution
 	distKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
@@ -397,6 +397,14 @@ func CreateTestEnv(t *testing.T) TestInput {
 	)
 
 	k := NewKeeper(marshaler, gravityKey, getSubspace(paramsKeeper, types.DefaultParamspace), stakingKeeper, bankKeeper, slashingKeeper)
+
+	stakingKeeper = *stakingKeeper.SetHooks(
+		stakingtypes.NewMultiStakingHooks(
+			distKeeper.Hooks(),
+			slashingKeeper.Hooks(),
+			k.Hooks(),
+		),
+	)
 
 	k.SetParams(ctx, TestingGravityParams)
 
@@ -576,6 +584,18 @@ func (s *StakingKeeperMock) ValidatorByConsAddr(ctx sdk.Context, addr sdk.ConsAd
 	return nil
 }
 
+func (s *StakingKeeperMock) GetParams(ctx sdk.Context) stakingtypes.Params {
+	panic("unexpected call")
+}
+
+func (s *StakingKeeperMock) GetValidator(ctx sdk.Context, addr sdk.ValAddress) (validator stakingtypes.Validator, found bool) {
+	panic("unexpected call")
+}
+
+func (s *StakingKeeperMock) ValidatorQueueIterator(ctx sdk.Context, endTime time.Time, endHeight int64) sdk.Iterator {
+	panic("unexpected call")
+}
+
 // Slash staisfies the interface
 func (s *StakingKeeperMock) Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec) {}
 
@@ -645,4 +665,9 @@ func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey ccrypto.PubKey, am
 		panic(err)
 	}
 	return out
+}
+
+func NewTestMsgUnDelegateValidator(address sdk.ValAddress, amt sdk.Int) *stakingtypes.MsgUndelegate {
+	msg := stakingtypes.NewMsgUndelegate(sdk.AccAddress(address), address, sdk.NewCoin("stake", amt))
+	return msg
 }

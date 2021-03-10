@@ -130,50 +130,92 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 	// unslashedValsets are sorted by nonce in ASC order
 	for _, vs := range unslashedValsets {
-		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 		confirms := k.GetValsetConfirms(ctx, vs.Nonce)
-		for _, val := range currentBondedSet {
 
-			// Don't slash validators who joined after valset is created
+		// SLASH BONDED VALIDTORS who didn't attest valset request
+		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
+		for _, val := range currentBondedSet {
 			consAddr, _ := val.GetConsAddr()
 			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
-			if exist && valSigningInfo.StartHeight > int64(vs.Nonce) {
-				continue
-			}
 
-			// Don't slash validators who are unbonded and UNBOND_SLASHING_WINDOW has passed
-			if val.UnbondingHeight > 0 && vs.Nonce > uint64(val.UnbondingHeight)+params.UnbondSlashingValsetsWindow {
-				continue
-			}
-
-			// Check if validator has confirmed valset or not
-			found := false
-			for _, conf := range confirms {
-				if conf.EthAddress == k.GetEthAddress(ctx, val.GetOperator()) {
-					found = true
-					break
+			//  Slash validator ONLY if he joined after valset is created
+			if exist && valSigningInfo.StartHeight < int64(vs.Nonce) {
+				// Check if validator has confirmed valset or not
+				found := false
+				for _, conf := range confirms {
+					if conf.EthAddress == k.GetEthAddress(ctx, val.GetOperator()) {
+						found = true
+						break
+					}
 				}
-			}
+				// slash validators for not confirming valsets
+				if !found {
+					cons, _ := val.GetConsAddr()
+					k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionValset)
+					if !val.IsJailed() {
+						k.StakingKeeper.Jail(ctx, cons)
+					}
 
-			// slash validators for not confirming valsets
-			if !found {
-				cons, _ := val.GetConsAddr()
-				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionValset)
-				k.StakingKeeper.Jail(ctx, cons)
-
+				}
 			}
 		}
 
+		// SLASH UNBONDING VALIDATORS who didn't attest valset request
+		blockTime := ctx.BlockTime().Add(k.StakingKeeper.GetParams(ctx).UnbondingTime)
+		blockHeight := ctx.BlockHeight()
+		unbondingValIterator := k.StakingKeeper.ValidatorQueueIterator(ctx, blockTime, blockHeight)
+		defer unbondingValIterator.Close()
+
+		// All unbonding validators
+		for ; unbondingValIterator.Valid(); unbondingValIterator.Next() {
+			unbondingValidators := k.GetUnbondingvalidators(unbondingValIterator.Value())
+
+			for _, valAddr := range unbondingValidators.Addresses {
+				addr, err := sdk.ValAddressFromBech32(valAddr)
+				if err != nil {
+					panic(err)
+				}
+				validator, exist := k.StakingKeeper.GetValidator(ctx, sdk.ValAddress(addr))
+				valConsAddr, _ := validator.GetConsAddr()
+				valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, valConsAddr)
+
+				// Only slash validators who joined after valset is created and they are unbonding and UNBOND_SLASHING_WINDOW didn't passed
+				if exist && valSigningInfo.StartHeight < int64(vs.Nonce) && validator.IsUnbonding() && vs.Nonce < uint64(validator.UnbondingHeight)+params.UnbondSlashingValsetsWindow {
+					// Check if validator has confirmed valset or not
+					found := false
+					for _, conf := range confirms {
+						if conf.EthAddress == k.GetEthAddress(ctx, validator.GetOperator()) {
+							found = true
+							break
+						}
+					}
+
+					// slash validators for not confirming valsets
+					if !found {
+						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionValset)
+						if !validator.IsJailed() {
+							k.StakingKeeper.Jail(ctx, valConsAddr)
+						}
+					}
+				}
+			}
+		}
 		// then we set the latest slashed valset  nonce
 		k.SetLastSlashedValsetNonce(ctx, vs.Nonce)
 	}
 
-	// on the latest validator set, check for change in power against
-	// current, and emit a new validator set if the change in power >5%
+	// Auto ValsetRequest Creation.
+	/*
+			1. If there are no valset requests, create a new one.
+			2. If there is atleast one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
+			   This will make sure the unbonding validator has to provide an attestation to a new Valset
+		       that excludes him before he completely Unbonds.  Otherwise he will be slashed
+			3. If power change between validators of CurrentValset and latest valset request is > 5%
+		**/
 	latestValset := k.GetLatestValset(ctx)
-	if latestValset == nil {
-		k.SetValsetRequest(ctx)
-	} else if types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05 {
+	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
+
+	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
 		k.SetValsetRequest(ctx)
 	}
 }
@@ -192,6 +234,8 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 	unslashedBatches := k.GetUnSlashedBatches(ctx, maxHeight)
 	for _, batch := range unslashedBatches {
+
+		// SLASH BONDED VALIDTORS who didn't attest batch requests
 		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 		confirms := k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)
 		for _, val := range currentBondedSet {
@@ -199,11 +243,6 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			consAddr, _ := val.GetConsAddr()
 			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
 			if exist && valSigningInfo.StartHeight > int64(batch.Block) {
-				continue
-			}
-
-			// Don't slash validators who are unbonded and UNBOND_SLASHING_WINDOW has passed
-			if val.UnbondingHeight > 0 && batch.Block > uint64(val.UnbondingHeight)+params.UnbondSlashingBatchWindow {
 				continue
 			}
 
@@ -219,10 +258,11 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			if !found {
 				cons, _ := val.GetConsAddr()
 				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionBatch)
-				k.StakingKeeper.Jail(ctx, cons)
+				if !val.IsJailed() {
+					k.StakingKeeper.Jail(ctx, cons)
+				}
 			}
 		}
-
 		// then we set the latest slashed batch block
 		k.SetLastSlashedBatchBlock(ctx, batch.Block)
 
@@ -288,7 +328,9 @@ func ClaimsSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 					if !found {
 						cons, _ := bv.GetConsAddr()
 						k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, bv.GetOperator()), params.SlashFractionClaim)
-						k.StakingKeeper.Jail(ctx, cons)
+						if !bv.IsJailed() {
+							k.StakingKeeper.Jail(ctx, cons)
+						}
 					}
 				}
 				claim, err := k.UnpackAttestationClaim(&att)

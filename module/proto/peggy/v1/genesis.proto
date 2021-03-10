@@ -9,33 +9,33 @@ import "peggy/v1/attestation.proto";
 
 option go_package = "github.com/althea-net/peggy/module/x/gravity/types";
 
-// Params represent the peggy genesis and store parameters
+// Params represent the Gravity genesis and store parameters
 // peggy_id:
 // a random 32 byte value to prevent signature reuse, for example if the
 // cosmos validators decided to use the same Ethereum keys for another chain
-// also running Peggy we would not want it to be possible to play a deposit
-// from chain A back on chain B's peggy. This value IS USED ON ETHEREUM so
+// also running Gravity we would not want it to be possible to play a deposit
+// from chain A back on chain B's Gravity. This value IS USED ON ETHEREUM so
 // it must be set in your genesis.json before launch and not changed after
-// deploying Peggy
+// deploying Gravity
 //
 // contract_hash:
-// the code hash of a known good version of the Peggy contract
+// the code hash of a known good version of the Gravity contract
 // solidity code. This can be used to verify the correct version
 // of the contract has been deployed. This is a reference value for
-// goernance action only it is never read by any Peggy code
+// goernance action only it is never read by any Gravity code
 //
 // bridge_ethereum_address:
 // is address of the bridge contract on the Ethereum side, this is a
 // reference value for governance only and is not actually used by any
-// Peggy code
+// Gravity code
 //
 // bridge_chain_id:
 // the unique identifier of the Ethereum chain, this is a reference value
-// only and is not actually used by any Peggy code
+// only and is not actually used by any Gravity code
 //
-// These reference values may be used by future Peggy client implemetnations
-// to allow for saftey features or convenience features like the peggy address
-// in your relayer. A relayer would require a configured peggy address if
+// These reference values may be used by future Gravity client implemetnations
+// to allow for saftey features or convenience features like the Gravity address
+// in your relayer. A relayer would require a configured Gravity address if
 // governance had not set the address on the chain it was relaying for.
 //
 // signed_valsets_window
@@ -66,7 +66,7 @@ option go_package = "github.com/althea-net/peggy/module/x/gravity/types";
 // slash_fraction_claim
 // slash_fraction_conflicting_claim
 //
-// The slashing fractions for the various peggy related slashing conditions. The first three
+// The slashing fractions for the various gravity related slashing conditions. The first three
 // refer to not submitting a particular message, the third for submitting a different claim
 // for the same Ethereum event
 message Params {
@@ -99,7 +99,6 @@ message Params {
     (gogoproto.nullable)   = false
   ];
   uint64 unbond_slashing_valsets_window = 17;
-  uint64 unbond_slashing_batch_window   = 18;
 }
 
 // GenesisState struct

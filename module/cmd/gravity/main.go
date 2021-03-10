@@ -3,8 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/althea-net/peggy/module/cmd/peggy/cmd"
 	"github.com/cosmos/cosmos-sdk/server"
+
+	"github.com/althea-net/peggy/module/cmd/gravity/cmd"
 )
 
 func main() {

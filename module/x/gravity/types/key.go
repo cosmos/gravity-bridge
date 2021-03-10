@@ -108,6 +108,9 @@ var (
 
 	// LastSlashedBatchBlock indexes the latest slashed batch block height
 	LastSlashedBatchBlock = []byte{0xf7}
+
+	// LastUnBondingBlockHeight indexes the last validator unbonding block height
+	LastUnBondingBlockHeight = []byte{0xf8}
 )
 
 // GetOrchestratorAddressKey returns the following key format
