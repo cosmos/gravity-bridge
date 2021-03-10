@@ -128,7 +128,7 @@ func (k Keeper) pickUnbatchedTX(ctx sdk.Context, contractAddress string, maxElem
 	var err error
 	k.IterateOutgoingPoolByFee(ctx, contractAddress, func(txID uint64, tx *types.OutgoingTransferTx) bool {
 		selectedTx = append(selectedTx, tx)
-		err = k.removeFromUnbatchedTXIndex(ctx, contractAddress, *tx.Erc20Fee, txID)
+		err = k.removeFromUnbatchedTXIndex(ctx, *tx.Erc20Fee, txID)
 		return err != nil || len(selectedTx) == maxElements
 	})
 	return selectedTx, err

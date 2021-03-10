@@ -9,6 +9,7 @@ const (
 	EventTypeOutgoingLogicCallCanceled = "outgoing_logic_call_canceled"
 	EventTypeBridgeWithdrawalReceived  = "withdrawal_received"
 	EventTypeBridgeDepositReceived     = "deposit_received"
+	EventTypeBridgeWithdrawCanceled    = "withdraw_canceled"
 
 	AttributeKeyAttestationID     = "attestation_id"
 	AttributeKeyAttestationIDs    = "attestation_ids"

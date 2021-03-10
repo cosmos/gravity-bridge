@@ -374,3 +374,54 @@ func TestBatchesFullCoins(t *testing.T) {
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
 }
+
+func TestPoolTxRefund(t *testing.T) {
+	input := CreateTestEnv(t)
+	ctx := input.Context
+	var (
+		now                 = time.Now().UTC()
+		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
+		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
+		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5" // Pickle
+		allVouchers         = sdk.NewCoins(
+			types.NewERC20Token(414, myTokenContractAddr).PeggyCoin(),
+		)
+		myDenom = types.NewERC20Token(1, myTokenContractAddr).PeggyCoin().Denom
+	)
+
+	// mint some voucher first
+	require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
+	// set senders balance
+	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
+	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
+
+	// CREATE FIRST BATCH
+	// ==================
+
+	// add some TX to the pool
+	for i, v := range []uint64{2, 3, 2, 1} {
+		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).PeggyCoin()
+		fee := types.NewERC20Token(v, myTokenContractAddr).PeggyCoin()
+		_, err := input.PeggyKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		require.NoError(t, err)
+	}
+
+	// when
+	ctx = ctx.WithBlockTime(now)
+
+	// tx batch size is 2, so that some of them stay behind
+	_, err := input.PeggyKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	require.NoError(t, err)
+
+	// try to refund a tx that's in a batch
+	err1 := input.PeggyKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 1, mySender)
+	require.Error(t, err1)
+
+	// try to refund a tx that's in the pool
+	err2 := input.PeggyKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 4, mySender)
+	require.NoError(t, err2)
+
+	// make sure refund was issued
+	balances := input.BankKeeper.GetAllBalances(ctx, mySender)
+	require.Equal(t, sdk.NewInt(104), balances.AmountOf(myDenom))
+}

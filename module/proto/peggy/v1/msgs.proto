@@ -38,6 +38,9 @@ service Msg {
   rpc SetOrchestratorAddress(MsgSetOrchestratorAddress) returns(MsgSetOrchestratorAddressResponse) {
     option (google.api.http).post = "/peggy/v1/set_orchestrator_address";
   }
+  rpc CancelSendToEth(MsgCancelSendToEth) returns(MsgCancelSendToEthResponse) {
+    option (google.api.http).post = "/peggy/v1/cancel_send_to_eth";
+  }
 }
 
 // MsgSetOrchestratorAddress
@@ -221,3 +224,13 @@ message MsgLogicCallExecutedClaim {
 }
 
 message MsgLogicCallExecutedClaimResponse {}
+
+// This call allows the sender (and only the sender)
+// to cancel a given MsgSendToEth and recieve a refund
+// of the tokens
+message MsgCancelSendToEth {
+  uint64 transaction_id = 1;
+  string sender         = 2;
+}
+
+message MsgCancelSendToEthResponse {}

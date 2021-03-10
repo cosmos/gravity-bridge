@@ -13,7 +13,7 @@ import (
 )
 
 // AddToOutgoingPool
-// - checks a counterpart denomintor exists for the given voucher type
+// - checks a counterpart denominator exists for the given voucher type
 // - burns the voucher for transfer amount and fees
 // - persists an OutgoingTx
 // - adds the TX to the `available` TX pool via a second index
@@ -88,10 +88,77 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	return nextID, nil
 }
 
+// RemoveFromOutgoingPoolAndRefund
+// - checks that the provided tx actually exists
+// - deletes the unbatched tx from the pool
+// - issues the tokens back to the sender
+func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, sender sdk.AccAddress) error {
+	// check that we actually have a tx with that id and what it's details are
+	tx, err := k.getPoolEntry(ctx, txId)
+	if err != nil {
+		return err
+	}
+
+	found := false
+	poolTx := k.GetPoolTransactions(ctx)
+	for _, pTx := range poolTx {
+		if pTx.Id == txId {
+			found = true
+		}
+	}
+	if !found {
+		return sdkerrors.Wrapf(types.ErrInvalid, "Id %d is in a batch", txId)
+	}
+
+	// An inconsistent entry should never enter the store, but this is the ideal place to exploit
+	// it such a bug if it did ever occur, so we should double check to be really sure
+	if tx.Erc20Fee.Contract != tx.Erc20Token.Contract {
+		return sdkerrors.Wrapf(types.ErrInvalid, "Inconsistent tokens to cancel!: %s %s", tx.Erc20Fee.Contract, tx.Erc20Token.Contract)
+	}
+
+	// delete this tx from both indexes
+	k.removePoolEntry(ctx, txId)
+	k.removeFromUnbatchedTXIndex(ctx, *tx.Erc20Fee, txId)
+
+	// reissue the amount and the fee
+
+	totalToRefund := tx.Erc20Token.PeggyCoin()
+	totalToRefund.Amount = totalToRefund.Amount.Add(tx.Erc20Fee.Amount)
+	totalToRefundCoins := sdk.NewCoins(totalToRefund)
+
+	isCosmosOriginated, _ := k.ERC20ToDenomLookup(ctx, tx.Erc20Token.Contract)
+
+	// If it is a cosmos-originated the coins are in the module (see AddToOutgoingPool) so we can just take them out
+	if isCosmosOriginated {
+		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
+			return err
+		}
+	} else {
+		// If it is an ethereum-originated asset we have to mint it (see Handle in attestation_handler.go)
+		// mint coins in module for prep to send
+		if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, totalToRefundCoins); err != nil {
+			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", totalToRefundCoins)
+		}
+		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
+			return sdkerrors.Wrap(err, "transfer vouchers")
+		}
+	}
+
+	poolEvent := sdk.NewEvent(
+		types.EventTypeBridgeWithdrawCanceled,
+		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
+		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
+	)
+	ctx.EventManager().EmitEvent(poolEvent)
+
+	return nil
+}
+
 // appendToUnbatchedTXIndex add at the end when tx with same fee exists
 func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee types.ERC20Token, txID uint64) {
 	store := ctx.KVStore(k.storeKey)
-	idxKey := types.GetFeeSecondIndexKey(tokenContract, fee)
+	idxKey := types.GetFeeSecondIndexKey(fee)
 	var idSet types.IDSet
 	if store.Has(idxKey) {
 		bz := store.Get(idxKey)
@@ -104,7 +171,7 @@ func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, 
 // appendToUnbatchedTXIndex add at the top when tx with same fee exists
 func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee types.ERC20Token, txID uint64) {
 	store := ctx.KVStore(k.storeKey)
-	idxKey := types.GetFeeSecondIndexKey(tokenContract, fee)
+	idxKey := types.GetFeeSecondIndexKey(fee)
 	var idSet types.IDSet
 	if store.Has(idxKey) {
 		bz := store.Get(idxKey)
@@ -115,9 +182,9 @@ func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, tokenContract string,
 }
 
 // removeFromUnbatchedTXIndex removes the tx from the index and makes it implicit no available anymore
-func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee types.ERC20Token, txID uint64) error {
+func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, fee types.ERC20Token, txID uint64) error {
 	store := ctx.KVStore(k.storeKey)
-	idxKey := types.GetFeeSecondIndexKey(tokenContract, fee)
+	idxKey := types.GetFeeSecondIndexKey(fee)
 	var idSet types.IDSet
 	bz := store.Get(idxKey)
 	if bz == nil {

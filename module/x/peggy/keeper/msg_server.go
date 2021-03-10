@@ -478,3 +478,25 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 
 	return &types.MsgLogicCallExecutedClaimResponse{}, nil
 }
+
+func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+	err = k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TransactionId, sender)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, fmt.Sprint(msg.TransactionId)),
+		),
+	)
+
+	return &types.MsgCancelSendToEthResponse{}, nil
+}
