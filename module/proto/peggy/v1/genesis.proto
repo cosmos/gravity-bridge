@@ -116,4 +116,5 @@ message GenesisState {
   repeated Attestation               attestations        = 9 [(gogoproto.nullable) = false];
   repeated MsgSetOrchestratorAddress delegate_keys       = 10;
   repeated ERC20ToDenom              erc20_to_denoms     = 11;
+  repeated OutgoingTransferTx        unbatched_transfers = 12;
 }

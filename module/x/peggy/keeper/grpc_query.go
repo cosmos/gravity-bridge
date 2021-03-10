@@ -281,7 +281,7 @@ func (k Keeper) GetPendingSendToEth(c context.Context, req *types.QueryPendingSe
 	}
 	for _, tx := range unbatched_tx {
 		if tx.Sender == sender_address {
-			res.UnbatchedTransfers = append(res.UnbatchedTransfers, &tx)
+			res.UnbatchedTransfers = append(res.UnbatchedTransfers, tx)
 		}
 	}
 	return res, nil

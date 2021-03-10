@@ -530,7 +530,7 @@ func queryPendingSendToEth(ctx sdk.Context, senderAddr string, k Keeper) ([]byte
 	}
 	for _, tx := range unbatched_tx {
 		if tx.Sender == sender_address {
-			res.UnbatchedTransfers = append(res.UnbatchedTransfers, &tx)
+			res.UnbatchedTransfers = append(res.UnbatchedTransfers, tx)
 		}
 	}
 	bytes, err := codec.MarshalJSONIndent(types.ModuleCdc, res)

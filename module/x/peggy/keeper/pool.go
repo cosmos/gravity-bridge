@@ -65,7 +65,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	}
 
 	// set the outgoing tx in the pool index
-	if err := k.setPoolEntry(ctx, nextID, outgoing); err != nil {
+	if err := k.setPoolEntry(ctx, outgoing); err != nil {
 		return 0, err
 	}
 
@@ -138,13 +138,13 @@ func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, tokenContract string
 	return sdkerrors.Wrap(types.ErrUnknown, "tx id")
 }
 
-func (k Keeper) setPoolEntry(ctx sdk.Context, id uint64, val *types.OutgoingTransferTx) error {
+func (k Keeper) setPoolEntry(ctx sdk.Context, val *types.OutgoingTransferTx) error {
 	bz, err := k.cdc.MarshalBinaryBare(val)
 	if err != nil {
 		return err
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOutgoingTxPoolKey(id), bz)
+	store.Set(types.GetOutgoingTxPoolKey(val.Id), bz)
 	return nil
 }
 
@@ -165,7 +165,7 @@ func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
 }
 
 // GetPoolTransactions, grabs all transactions from the tx pool, useful for queries or genesis save/load
-func (k Keeper) GetPoolTransactions(ctx sdk.Context) []types.OutgoingTransferTx {
+func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.OutgoingTransferTx {
 	prefixStore := ctx.KVStore(k.storeKey)
 	// we must use the second index key here because transactions are left in the store, but removed
 	// from the tx sorting key, while in batches
