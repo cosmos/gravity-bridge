@@ -16,7 +16,7 @@ and defines overall functioning of the staking module.
 
 ### OutgoingTxBatch
 
-Stored in two possible ways, first with a height and second without (unsafe)
+Stored in two possible ways, first with a height and second without (unsafe). Unsafe is used for testing and export and import of state.
 
 | key          | Value | Type   | Encoding               |
 |--------------|-------|--------|------------------------|
@@ -26,7 +26,7 @@ Stored in two possible ways, first with a height and second without (unsafe)
 
 This is the validator set of the bridge.
 
-Stored in two possible ways, first with a height and second without (unsafe)
+Stored in two possible ways, first with a height and second without (unsafe). Unsafe is used for testing and export and import of state.
 
 | key          | Value | Type   | Encoding               |
 |--------------|-------|--------|------------------------|

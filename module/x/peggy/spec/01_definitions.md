@@ -50,3 +50,7 @@ Represents a bridged ETH token on the Cosmos side. Their denom is has a `peggy` 
 ### Counterpart
 
 A `Voucher` which is the locked opposing chain token in the contract
+
+### Logic Calls
+
+A logic call refers to a created action for a smart contract interaction on the opposing chain. 
