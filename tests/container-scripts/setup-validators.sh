@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eux
 # your gaiad binary name
-BIN=peggy
+BIN=gravity
 
 CHAIN_ID="peggy-test"
 
