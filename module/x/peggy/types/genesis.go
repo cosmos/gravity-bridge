@@ -214,14 +214,6 @@ func validateContractHash(i interface{}) error {
 	return nil
 }
 
-func validateStartThreshold(i interface{}) error {
-	// TODO: do we want to validate a range of values here?
-	if _, ok := i.(uint64); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
-}
-
 func validateBridgeChainID(i interface{}) error {
 	if _, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

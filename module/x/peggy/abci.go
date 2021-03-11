@@ -177,7 +177,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 				if err != nil {
 					panic(err)
 				}
-				validator, exist := k.StakingKeeper.GetValidator(ctx, sdk.ValAddress(addr))
+				validator, _ := k.StakingKeeper.GetValidator(ctx, sdk.ValAddress(addr))
 				valConsAddr, _ := validator.GetConsAddr()
 				valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, valConsAddr)
 
@@ -357,7 +357,7 @@ func TestingEndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		// the full lifecycle of the call. We need to find some way for this to read data
 		// and encode a simple testing call, probably to one of the already deployed ERC20
 		// contracts so that we can get the full lifecycle.
-		token := []*types.ERC20Token{&types.ERC20Token{
+		token := []*types.ERC20Token{{
 			Contract: "0x7580bfe88dd3d07947908fae12d95872a260f2d8",
 			Amount:   sdk.NewIntFromUint64(5000),
 		}}
