@@ -427,8 +427,7 @@ func TestPendingValsetRequests(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			valAddr := sdk.AccAddress{}
-			valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+			var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 			got, err := lastPendingValsetRequest(ctx, valAddr.String(), input.PeggyKeeper)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
@@ -503,8 +502,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			valAddr := sdk.AccAddress{}
-			valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+			var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 			got, err := lastPendingBatchRequest(ctx, valAddr.String(), input.PeggyKeeper)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
@@ -595,7 +593,7 @@ func TestQueryLogicCalls(t *testing.T) {
 		input.PeggyKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
 	}
 
-	token := []*types.ERC20Token{&types.ERC20Token{
+	token := []*types.ERC20Token{{
 		Contract: tokenContract,
 		Amount:   sdk.NewIntFromUint64(5000),
 	}}
@@ -618,8 +616,7 @@ func TestQueryLogicCalls(t *testing.T) {
 	_, err := lastLogicCallRequests(ctx, k)
 	require.NoError(t, err)
 
-	var valAddr sdk.AccAddress
-	valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 	_, err = lastPendingLogicCallRequest(ctx, valAddr.String(), k)
 	require.NoError(t, err)
 
@@ -652,7 +649,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 		input.PeggyKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
 	}
 
-	token := []*types.ERC20Token{&types.ERC20Token{
+	token := []*types.ERC20Token{{
 		Contract: tokenContract,
 		Amount:   sdk.NewIntFromUint64(5000),
 	}}
@@ -668,8 +665,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 	}
 	k.SetOutgoingLogicCall(ctx, &call)
 
-	var valAddr sdk.AccAddress
-	valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 
 	confirm := types.MsgConfirmLogicCall{
 		InvalidationId:    hex.EncodeToString(invalidationId),

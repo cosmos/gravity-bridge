@@ -155,12 +155,14 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 
 	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, valaddr)
+
+	// a validator request can be sent from a delegate key or a validator
+	// key directly
 	if validator == nil {
 		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
 		if sval == nil {
 			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 		}
-		validator = sval.GetOperator()
 	}
 
 	// TODO later make sure that Demon matches a list of tokens already
