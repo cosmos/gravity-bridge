@@ -11,9 +11,13 @@ This section outlines terminology used throughout the spec and code.
 
 This is a person (or people) who control a Cosmos SDK validator node. This is also called `valoper` or "Validator Operator" in the Cosmos SDK staking section
 
+### Counter Chain
+
+A chain that utilizes an EVM. Some examples of this are Polygon, Ethereum, and Ethereum Classic.
+
 ### Relayer
 
-This is a type of node that submits updates to the Peggy contract on Ethereum. It earns fees from the transactions in a batch.
+This is a type of node that submits updates to the Gravity contract on the counter chain and vice versa. It earns fees from the transactions in a batch.
 
 ### Peggy Tx Pool
 
