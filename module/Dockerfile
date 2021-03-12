@@ -1,16 +1,41 @@
-FROM fedora:33 AS go
+# Simple usage with a mounted data directory:
+# > docker build -t simapp .
+#
+# Server:
+# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simapp:/root/.simapp simapp peggy init test-chain
+# TODO: need to set validator in genesis so start runs
+# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simapp:/root/.simapp simapp peggy start
+#
+# Client: (Note the simapp binary always looks at ~/.simapp we can bind to different local storage)
+# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simappcli:/root/.simapp simapp peggy keys add foo
+# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simappcli:/root/.simapp simapp peggy keys list
+# TODO: demo connecting rest-server (or is this in server now?)
+FROM golang:alpine AS build-env
 
-ENV GOPATH=/go
-ENV PATH=$PATH:/go/bin:/usr/local/go/bin
-ENV GOPROXY=https://proxy.golang.org
-ENV PATH=$PATH
+# Install minimum necessary dependencies,
+ENV PACKAGES curl make git libc-dev bash gcc linux-headers eudev-dev python3
+RUN apk add --no-cache $PACKAGES
 
-RUN dnf install -y git make gcc gcc-c++ which iproute iputils procps-ng vim-minimal tmux net-tools htop tar jq npm openssl-devel perl
-ADD https://golang.org/dl/go1.15.6.linux-amd64.tar.gz /go/
-RUN cd /go && tar -xvf * && mv /go/**/ /usr/local/
+# Set working directory for the build
+WORKDIR /go/src/github.com/althea-net/cosmos-gravity-bridge/module
 
-FROM go AS module
-
+# Add source files
 COPY . .
-CMD 'make && make install'
 
+# install simapp, remove packages
+RUN make build-linux
+
+# Final image
+FROM alpine:edge
+
+# Install ca-certificates
+RUN apk add --update ca-certificates
+WORKDIR /root
+
+# Copy over binaries from the build-env
+COPY --from=build-env /go/src/github.com/althea-net/cosmos-gravity-bridge/module/build/peggy /usr/bin/peggy
+
+EXPOSE 26656 26657 1317 9090
+
+# Run peggy by default
+CMD ["peggy"]
