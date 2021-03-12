@@ -6,7 +6,7 @@ order: 4
 
 In this section we describe the processing of the pegggy messages and the corresponding updates to the state. All created/modified state objects specified by each message are defined within the [state](./02_state_transitions.md) section.
 
-### MsgSetOrchestratorAddress
+### MsgDelegateKeys
 
 Allows validators to delegate their voting responsibilities to a given key. This Key can be used to authenticate oracle claims. 
 
@@ -29,23 +29,6 @@ This message is expected to fail if:
   - Not a length of 42
   - Does not start with 0x
 - The validator is not present in the validator set.
-
-### MsgValsetConfirm
-
-When the peggy daemon witnesses a complete validator set within the peggy module, the validator submits a signature of a message containing the entire validator set. 
-
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L79-84
-
-This message is expected to fail if:
-
-- If the validator set is not present.
-- The signature is encoded incorrectly.
-- Signature verification of the ethereum key fails.
-- If the signature submitted has already been submitted previously.
-- The validator address is incorrect. 
-  - The address is empty (`""`)
-  - Not a length of 20
-  - Bech32 decoding fails
 
 
 ### MsgSendToEth
@@ -82,83 +65,59 @@ This message will fail if:
 - Failure to build a batch of transactions.
 - If the orchestrator address is not present in the validator set
 
-### MsgConfirmBatch
+### MsgSubmitConfirm
 
-When a `MsgRequestBatch` is observed, validators need to sign batch request to signify this is not a maliciously created batch and to avoid getting slashed. 
+When the peggy daemon witnesses an event on the counter chain the validator will submit confirmation of the event. 
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L137-143
+<!-- +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L79-84 -->
 
-This message will fail if:
+```proto
+  message MsgSubmitClaim {
+    google.protobuf.Any confirm = 1 [
+        (cosmos_proto.accepts_interface) = "EthereumClaim"];
+    string signer = 2;
+  }
+```
 
-- The batch does not exist
-- If checkpoint generation fails
-- If a none validator address or delegated address 
-- If the counter chain address is empty or incorrect.
-- If counter chain address fails signature validation
-- If the signature was already presented in a previous message
+There are three types of confirmations a validator can submit.
 
-### MsgConfirmLogicCall
+- `CONFIRM_TYPE_VALSET`
+  - When the peggy daemon witnesses a complete validator set within the peggy module, the validator submits a signature of a message containing the entire validator set. 
+- `CONFIRM_TYPE_LOGIC`
+  - When a logic call request has been made, it needs to be confirmed by the bridge validators. Each validator has to submit a confirmation of the logic call being executed.
+- `CONFIRM_TYPE_BATCH`
+  - When a `MsgRequestBatch` is observed, validators need to sign batch request to signify this is not a maliciously created batch and to avoid getting slashed. 
 
-When a logic call request has been made, it needs to be confirmed by the bridge validators. Each validator has to submit a confirmation of the logic call being executed.
+This message is expected to fail if:
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L155-161
-
-This message will fail if:
-
-- The id encoding is incorrect
-- The outgoing logic call which is confirmed can not be found
-- Invalid checkpoint generation
-- Signature decoding failed
-- The address calling this function is not a validator or its delegated key
-- The counter chain address is incorrect or empty
-- Counter party signature verification failed
-- A duplicate signature is observed
-
-### MsgDepositClaim
+- If the validator set is not present.
+- The signature is encoded incorrectly.
+- Signature verification of the ethereum key fails.
+- If the signature submitted has already been submitted previously.
+- The validator address is incorrect. 
+  - The address is empty (`""`)
+  - Not a length of 20
+  - Bech32 decoding fails
+  
+### MsgSubmitClaim
 
 When a message to deposit funds into the peggy contract is created a event will be omitted and observed a message will be submitted confirming the deposit.
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L170-181
+<!-- +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L170-181 -->
+
+There are four types of claims:
+
+- `CLAIM_TYPE_DEPOSIT`
+- `CLAIM_TYPE_WITHDRAW`
+  - When a user requests a withdrawal from the peggy contract a event will omitted by the counter party chain. This event will be observed by a bridge validator and submitted to the gravity module.
+  
+- `CLAIM_TYPE_ERC20_DEPLOYED`
+  - This message allows the cosmos chain to learn information about the denom from the counter party chain.
+- `CLAIM_TYPE_LOGIC_CALL_EXECUTED`
+  - This informs the chain that a logic call has been executed. This message is submitted by bridge validators when they observe a event containing details around the logic call.
 
 This message will fail if:
 
 - The validator is unknown
 - The validator is not in the active set
 - If the creation of attestation fails
-
-### MsgWithdrawClaim
-
-When a user requests a withdrawal from the peggy contract a event will omitted by the counter party chain. This event will be observed by a bridge validator and submitted to the gravity module.
-
-
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L187-193
-
-This message will fail if:
-
-- The validator is unknown
-- The validator is not in the active set
-- If the creation of attestation fails
-
-### MsgERC20DeployedClaim
-
-This message allows the cosmos chain to learn information about the denom from the counter party chain.
-
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L200-209
-
-This message will fail if:
-
-- The validator is unknown
-- The validator is not in the active set
-- If the creation of attestation fails
-
-### MsgLogicCallExecutedClaim
-
-This informs the chain that a logic call has been executed. This message is submitted by bridge validators when they observe a event containing details around the logic call. 
-
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L215-221
-
-This message will fail if: 
-
-- The validator submitting the claim is unknown
-- The validator is not in the active set
-- Creation of attestation has failed.
