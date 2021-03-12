@@ -25,6 +25,7 @@ pub enum PeggyError {
     InvalidEventLogError(String),
     CosmosgRPCError(Status),
     InsufficientVotingPowerToPass(String),
+    ParseBigIntError(ParseBigIntError),
 }
 
 impl fmt::Display for PeggyError {
@@ -51,6 +52,7 @@ impl fmt::Display for PeggyError {
             PeggyError::InsufficientVotingPowerToPass(val) => {
                 write!(f, "{}", val)
             }
+            PeggyError::ParseBigIntError(val) => write!(f, "Failed to parse big integer {}", val),
         }
     }
 }

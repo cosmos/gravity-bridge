@@ -4,6 +4,7 @@ use crate::{
 };
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
+use ethereum_peggy::utils::get_peggy_id;
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
 use std::time::{Duration, Instant};
 use tokio::time::delay_for;
@@ -38,12 +39,21 @@ pub async fn relayer_main_loop(
         }
         let current_valset = current_valset.unwrap();
 
+        let peggy_id = get_peggy_id(peggy_contract_address, our_ethereum_address, &web3).await;
+        if peggy_id.is_err() {
+            error!("Failed to get PeggyID, check your Eth node");
+            return;
+        }
+        let peggy_id = peggy_id.unwrap();
+        let peggy_id = String::from_utf8(peggy_id.clone()).expect("Invalid PeggyID");
+
         relay_valsets(
             current_valset.clone(),
             ethereum_key,
             &web3,
             &mut grpc_client,
             peggy_contract_address,
+            peggy_id.clone(),
             LOOP_SPEED,
         )
         .await;
@@ -54,6 +64,7 @@ pub async fn relayer_main_loop(
             &web3,
             &mut grpc_client,
             peggy_contract_address,
+            peggy_id.clone(),
             LOOP_SPEED,
         )
         .await;
@@ -64,6 +75,7 @@ pub async fn relayer_main_loop(
             &web3,
             &mut grpc_client,
             peggy_contract_address,
+            peggy_id.clone(),
             LOOP_SPEED,
         )
         .await;

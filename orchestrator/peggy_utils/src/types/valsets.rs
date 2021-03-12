@@ -41,9 +41,11 @@ struct SignatureStatus {
     ordered_signatures: Vec<PeggySignature>,
     power_of_good_sigs: u64,
     power_of_unset_keys: u64,
-    number_of_unset_key_validators: i32,
+    number_of_unset_key_validators: usize,
     power_of_nonvoters: u64,
-    number_of_nonvoters: i32,
+    number_of_nonvoters: usize,
+    power_of_invalid_signers: u64,
+    number_of_invalid_signers: usize,
     num_validators: usize,
 }
 
@@ -123,6 +125,7 @@ impl Valset {
     /// submitted ordering was and the signatures must be in parallel arrays to reduce shuffling.
     fn get_signature_status<T: Confirm + Clone>(
         &self,
+        signed_message: &[u8],
         signatures: &[T],
     ) -> Result<SignatureStatus, PeggyError> {
         if signatures.is_empty() {
@@ -138,18 +141,38 @@ impl Valset {
         let mut number_of_unset_key_validators = 0;
         let mut power_of_nonvoters = 0;
         let mut number_of_nonvoters = 0;
+        let mut power_of_invalid_signers = 0;
+        let mut number_of_invalid_signers = 0;
         for member in self.members.iter() {
             if let Some(eth_address) = member.eth_address {
                 if let Some(sig) = signatures_hashmap.get(&eth_address) {
                     assert_eq!(sig.get_eth_address(), eth_address);
-                    out.push(PeggySignature {
-                        power: member.power,
-                        eth_address: sig.get_eth_address(),
-                        v: sig.get_signature().v.clone(),
-                        r: sig.get_signature().r.clone(),
-                        s: sig.get_signature().s.clone(),
-                    });
-                    power_of_good_sigs += member.power;
+                    assert!(sig.get_signature().is_valid());
+                    let recover_key = sig.get_signature().recover(signed_message).unwrap();
+                    if recover_key == sig.get_eth_address() {
+                        out.push(PeggySignature {
+                            power: member.power,
+                            eth_address: sig.get_eth_address(),
+                            v: sig.get_signature().v.clone(),
+                            r: sig.get_signature().r.clone(),
+                            s: sig.get_signature().s.clone(),
+                        });
+                        power_of_good_sigs += member.power;
+                    } else {
+                        warn!(
+                            "We found an invalid signature? How did this get here? {:?}",
+                            sig.get_signature()
+                        );
+                        out.push(PeggySignature {
+                            power: member.power,
+                            eth_address,
+                            v: 0u8.into(),
+                            r: 0u8.into(),
+                            s: 0u8.into(),
+                        });
+                        power_of_invalid_signers += member.power;
+                        number_of_invalid_signers += 1;
+                    }
                 } else {
                     out.push(PeggySignature {
                         power: member.power,
@@ -182,15 +205,18 @@ impl Valset {
             power_of_unset_keys,
             num_validators,
             number_of_nonvoters,
+            power_of_invalid_signers,
+            number_of_invalid_signers,
             number_of_unset_key_validators,
         })
     }
 
     pub fn order_sigs<T: Confirm + Clone>(
         &self,
+        signed_message: &[u8],
         signatures: &[T],
     ) -> Result<Vec<PeggySignature>, PeggyError> {
-        let status = self.get_signature_status(signatures)?;
+        let status = self.get_signature_status(signed_message, signatures)?;
         // now that we have collected the signatures we can determine if the measure has the votes to pass
         // and error early if it does not, otherwise the user will pay fees for a transaction that will
         // just throw

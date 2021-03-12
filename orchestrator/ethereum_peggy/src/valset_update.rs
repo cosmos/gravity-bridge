@@ -1,13 +1,14 @@
 use crate::utils::{get_valset_nonce, GasCost};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
-use peggy_utils::error::PeggyError;
 use peggy_utils::types::*;
+use peggy_utils::{error::PeggyError, message_signatures::encode_valset_confirm_hashed};
 use std::{cmp::min, time::Duration};
 use web30::{client::Web3, types::TransactionRequest};
 
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided validator set and signatures.
+#[allow(clippy::too_many_arguments)]
 pub async fn send_eth_valset_update(
     new_valset: Valset,
     old_valset: Valset,
@@ -15,6 +16,7 @@ pub async fn send_eth_valset_update(
     web3: &Web3,
     timeout: Duration,
     peggy_contract_address: EthAddress,
+    peggy_id: String,
     our_eth_key: EthPrivateKey,
 ) -> Result<(), PeggyError> {
     let old_nonce = old_valset.nonce;
@@ -34,7 +36,7 @@ pub async fn send_eth_valset_update(
         return Ok(());
     }
 
-    let payload = encode_valset_payload(new_valset, old_valset, confirms)?;
+    let payload = encode_valset_payload(new_valset, old_valset, confirms, peggy_id)?;
 
     let tx = web3
         .send_transaction(
@@ -72,6 +74,7 @@ pub async fn estimate_valset_cost(
     confirms: &[ValsetConfirmResponse],
     web3: &Web3,
     peggy_contract_address: EthAddress,
+    peggy_id: String,
     our_eth_key: EthPrivateKey,
 ) -> Result<GasCost, PeggyError> {
     let our_eth_address = our_eth_key.to_public_key().unwrap();
@@ -89,7 +92,8 @@ pub async fn estimate_valset_cost(
             gas: Some(gas_limit.into()),
             value: Some(zero.into()),
             data: Some(
-                encode_valset_payload(new_valset.clone(), old_valset.clone(), confirms)?.into(),
+                encode_valset_payload(new_valset.clone(), old_valset.clone(), confirms, peggy_id)?
+                    .into(),
             ),
         })
         .await?;
@@ -106,15 +110,17 @@ fn encode_valset_payload(
     new_valset: Valset,
     old_valset: Valset,
     confirms: &[ValsetConfirmResponse],
+    peggy_id: String,
 ) -> Result<Vec<u8>, PeggyError> {
     let (old_addresses, old_powers) = old_valset.filter_empty_addresses();
     let (new_addresses, new_powers) = new_valset.filter_empty_addresses();
     let old_nonce = old_valset.nonce;
     let new_nonce = new_valset.nonce;
 
+    let hash = encode_valset_confirm_hashed(peggy_id, old_valset.clone());
     // we need to use the old valset here because our signatures need to match the current
     // members of the validator set in the contract.
-    let sig_data = old_valset.order_sigs(confirms)?;
+    let sig_data = old_valset.order_sigs(&hash, confirms)?;
     let sig_arrays = to_arrays(sig_data);
 
     // Solidity function signature

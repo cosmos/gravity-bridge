@@ -5,6 +5,7 @@ use cosmos_peggy::query::get_transaction_batch_signatures;
 use ethereum_peggy::utils::{downcast_to_u128, get_tx_batch_nonce};
 use ethereum_peggy::{one_eth, submit_batch::send_eth_transaction_batch};
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_utils::message_signatures::encode_tx_batch_confirm_hashed;
 use peggy_utils::types::Valset;
 use peggy_utils::types::{BatchConfirmResponse, TransactionBatch};
 use std::time::Duration;
@@ -18,6 +19,7 @@ pub async fn relay_batches(
     web3: &Web3,
     grpc_client: &mut PeggyQueryClient<Channel>,
     peggy_contract_address: EthAddress,
+    peggy_id: String,
     timeout: Duration,
 ) {
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
@@ -36,7 +38,8 @@ pub async fn relay_batches(
         trace!("Got sigs {:?}", sigs);
         if let Ok(sigs) = sigs {
             // this checks that the signatures for the batch are actually possible to submit to the chain
-            if current_valset.order_sigs(&sigs).is_ok() {
+            let hash = encode_tx_batch_confirm_hashed(peggy_id.clone(), batch.clone());
+            if current_valset.order_sigs(&hash, &sigs).is_ok() {
                 oldest_signed_batch = Some(batch);
                 oldest_signatures = Some(sigs);
             } else {
@@ -83,6 +86,7 @@ pub async fn relay_batches(
             &oldest_signatures,
             web3,
             peggy_contract_address,
+            peggy_id.clone(),
             ethereum_key,
         )
         .await;
@@ -107,6 +111,7 @@ pub async fn relay_batches(
             web3,
             timeout,
             peggy_contract_address,
+            peggy_id,
             ethereum_key,
         )
         .await;
