@@ -8,13 +8,13 @@ import "google/protobuf/any.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 service Msg {
-  rpc DelegateKeys(MsgDelegateKeys) returns(MsgDelegateKeysResponse) {
+  rpc DelegateKeys(MsgDelegateKeys) returns (MsgDelegateKeysResponse) {
     option (google.api.http).post = "/peggy/v1/set_orchestrator_address";
   }
-  rpc SendToEth(MsgSendToEth) returns(MsgSendToEthResponse) {
+  rpc SendToEth(MsgSendToEth) returns (MsgSendToEthResponse) {
     option (google.api.http).post = "/peggy/v1/send_to_eth";
   }
-  rpc RequestBatch(MsgRequestBatch) returns(MsgRequestBatchResponse) {
+  rpc RequestBatch(MsgRequestBatch) returns (MsgRequestBatchResponse) {
     option (google.api.http).post = "/peggy/v1/request_batch";
   }
   rpc SubmitConfirm(MsgSubmitConfirm) returns (MsgSubmitConfirmResponse) {
@@ -26,18 +26,17 @@ service Msg {
 }
 
 message MsgDelegateKeys {
-  string validator = 1;
-  string orchestrator  = 2;
-  string eth_address   = 3;
+  string validator    = 1;
+  string orchestrator = 2;
+  string eth_address  = 3;
 }
 
 message MsgDelegateKeysResponse {}
 
-
 message MsgSendToEth {
-  string                   sender     = 1;
-  string                   eth_dest   = 2;
-  cosmos.base.v1beta1.Coin amount     = 3 [
+  string                   sender   = 1;
+  string                   eth_dest = 2;
+  cosmos.base.v1beta1.Coin amount   = 3 [
     (gogoproto.nullable) = false
   ];
   cosmos.base.v1beta1.Coin bridge_fee = 4 [
@@ -56,9 +55,9 @@ message MsgRequestBatchResponse {}
 
 message MsgSubmitClaim {
   google.protobuf.Any claim = 1 [
-      (cosmos_proto.accepts_interface) = "EthereumClaim"
+    (cosmos_proto.accepts_interface) = "EthereumClaim"
   ];
-  string signer             = 2;
+  string signer = 2;
 }
 
 message MsgSubmitClaimResponse {}
@@ -67,7 +66,7 @@ message MsgSubmitConfirm {
   google.protobuf.Any confirm = 1 [
     (cosmos_proto.accepts_interface) = "Confirm"
   ];
-  string signer               = 2;
+  string signer = 2;
 }
 
 message MsgSubmitConfirmResponse {}

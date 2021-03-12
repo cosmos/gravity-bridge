@@ -10,22 +10,22 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 // be handled
 enum ClaimType {
   option (gogoproto.goproto_enum_prefix) = false;
-  
-  CLAIM_TYPE_UNKNOWN             = 0 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_UNKNOWN" ];
-  CLAIM_TYPE_DEPOSIT             = 1 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_DEPOSIT" ];
-  CLAIM_TYPE_WITHDRAW            = 2 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_WITHDRAW"];
-  CLAIM_TYPE_ERC20_DEPLOYED      = 3 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_ERC20_DEPLOYED"];
-  CLAIM_TYPE_LOGIC_CALL_EXECUTED = 4 [(gogoproto.enumvalue_customname) = "CLAIM_TYPE_LOGIC_CALL_EXECUTED"];
+
+  CLAIM_TYPE_UNKNOWN             = 0;
+  CLAIM_TYPE_DEPOSIT             = 1;
+  CLAIM_TYPE_WITHDRAW            = 2;
+  CLAIM_TYPE_ERC20_DEPLOYED      = 3;
+  CLAIM_TYPE_LOGIC_CALL_EXECUTED = 4;
 }
 
 // ConfirmType is the cosmos type of a confirmation of a given object from the eth signers
 enum ConfirmType {
   option (gogoproto.goproto_enum_prefix) = false;
 
-  CONFIRM_TYPE_UNKNOWN  = 1 [(gogoproto.enumvalue_customname) = "CONFIRM_TYPE_UNKNOWN"];
-  CONFIRM_TYPE_VALSET   = 2 [(gogoproto.enumvalue_customname) = "CONFIRM_TYPE_VALSET"];
-  CONFIRM_TYPE_BATCH    = 3 [(gogoproto.enumvalue_customname) = "CONFIRM_TYPE_BATCH"];
-  CONFIRM_TYPE_LOGIC    = 4 [(gogoproto.enumvalue_customname) = "CONFIRM_TYPE_LOGIC"];
+  CONFIRM_TYPE_UNKNOWN = 0;
+  CONFIRM_TYPE_VALSET  = 1;
+  CONFIRM_TYPE_BATCH   = 2;
+  CONFIRM_TYPE_LOGIC   = 3;
 }
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by
@@ -44,11 +44,11 @@ enum ConfirmType {
 // but there is no reason to store those exact details becuause the next message sender
 // will kindly provide you with them.
 message Attestation {
-  bool                observed         = 1;
-  repeated string     votes            = 2;
-  uint64              height           = 3;
-  google.protobuf.Any claim            = 4 [
-      (cosmos_proto.accepts_interface) = "EthereumClaim"
+  bool                observed = 1;
+  repeated string     votes    = 2;
+  uint64              height   = 3;
+  google.protobuf.Any claim    = 4 [
+    (cosmos_proto.accepts_interface) = "EthereumClaim"
   ];
 }
 
@@ -59,7 +59,7 @@ message Attestation {
 message ERC20Token {
   string contract = 1;
   string amount   = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
-    (gogoproto.nullable) = false
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false
   ];
 }

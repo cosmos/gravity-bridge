@@ -18,7 +18,7 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/peggy/v1beta/params";
   }
-  
+
   // Valsets queries valsets in the store. If a nonce is not provided the latest valset is returned
   rpc Valsets(QueryValsetsRequest) returns (QueryValsetsResponse) {
     option (google.api.http).get = "/peggy/v1beta/valset";
@@ -79,25 +79,25 @@ service Query {
 
 // Params
 message QueryParamsRequest {}
-message QueryParamsResponse { 
-  Params params = 1 [(gogoproto.nullable) = false]; 
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
 }
 
 // Valsets
-message QueryValsetsRequest { 
-  uint64 nonce = 1; 
+message QueryValsetsRequest {
+  uint64 nonce = 1;
 }
-message QueryValsetsResponse { 
-  repeated Valset valsets = 1; 
+message QueryValsetsResponse {
+  repeated Valset valsets = 1;
 }
 
 // Confirms
-message QueryConfirmsRequest { 
+message QueryConfirmsRequest {
   ConfirmType type    = 1;
-  uint64      nonce   = 2; 
-  string      address = 3; 
+  uint64      nonce   = 2;
+  string      address = 3;
 }
-message QueryConfirmsResponse { 
+message QueryConfirmsResponse {
   repeated google.protobuf.Any confirms = 1 [
     (cosmos_proto.accepts_interface) = "Confirm"
   ];
@@ -115,8 +115,8 @@ message QueryPendingConfirmResponse {
 }
 
 // LastNonce
-message QueryLastNonceRequest { 
-  string address = 1; 
+message QueryLastNonceRequest {
+  string address = 1;
 }
 message QueryLastNonceResponse {
   uint64 event_nonce = 1;
@@ -124,49 +124,58 @@ message QueryLastNonceResponse {
 
 // OutgoingTxBatches
 message QueryOutgoingTxBatchesRequest {}
-message QueryOutgoingTxBatchesResponse { 
-  repeated OutgoingTxBatch batches = 1; 
+message QueryOutgoingTxBatchesResponse {
+  repeated OutgoingTxBatch batches = 1;
 }
 
 // OutgoingLogicCalls
 message QueryOutgoingLogicCallsRequest {}
-message QueryOutgoingLogicCallsResponse { 
-  repeated OutgoingLogicCall calls = 1; 
+message QueryOutgoingLogicCallsResponse {
+  repeated OutgoingLogicCall calls = 1;
 }
 
-
-message QueryBatchRequestByNonceRequest { 
-  uint64 nonce = 1; 
-  string contract_address = 2; 
+message QueryBatchRequestByNonceRequest {
+  uint64 nonce            = 1;
+  string contract_address = 2;
 }
-message QueryBatchRequestByNonceResponse { 
-  OutgoingTxBatch batch = 1; 
+message QueryBatchRequestByNonceResponse {
+  OutgoingTxBatch batch = 1;
 }
 
-message QueryERC20ToDenomRequest { string erc20 = 1; }
+message QueryERC20ToDenomRequest {
+  string erc20 = 1;
+}
 message QueryERC20ToDenomResponse {
   string denom = 1;
 }
 
-message QueryDenomToERC20Request { string denom = 1; }
+message QueryDenomToERC20Request {
+  string denom = 1;
+}
 message QueryDenomToERC20Response {
   string erc20 = 1;
 }
 
-message QueryDelegateKeysByValidatorAddress { string validator_address = 1; }
-message QueryDelegateKeysByValidatorAddressResponse {
-  string eth_address = 1;
-  string orchestrator_address = 2;
-}
-
-message QueryDelegateKeysByEthAddress { string eth_address = 1; }
-message QueryDelegateKeysByEthAddressResponse {
+message QueryDelegateKeysByValidatorAddress {
   string validator_address = 1;
+}
+message QueryDelegateKeysByValidatorAddressResponse {
+  string eth_address          = 1;
   string orchestrator_address = 2;
 }
 
-message QueryDelegateKeysByOrchestratorAddress { string orchestrator_address = 1; }
+message QueryDelegateKeysByEthAddress {
+  string eth_address = 1;
+}
+message QueryDelegateKeysByEthAddressResponse {
+  string validator_address    = 1;
+  string orchestrator_address = 2;
+}
+
+message QueryDelegateKeysByOrchestratorAddress {
+  string orchestrator_address = 1;
+}
 message QueryDelegateKeysByOrchestratorAddressResponse {
   string validator_address = 1;
-  string eth_address = 2;
+  string eth_address       = 2;
 }

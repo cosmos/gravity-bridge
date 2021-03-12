@@ -70,39 +70,37 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 // refer to not submitting a particular message, the third for submitting a different claim
 // for the same Ethereum event
 message Params {
-  option (gogoproto.stringer)  = false;
+  option (gogoproto.stringer) = false;
 
-  string peggy_id                         = 1;
-  string contract_source_hash             = 2;
-  string bridge_ethereum_address          = 4;
-  uint64 bridge_chain_id                  = 5;
-  uint64 signed_valsets_window            = 6;
-  uint64 signed_batches_window            = 7;
-  uint64 signed_claims_window             = 8;
-  uint64 target_batch_timeout             = 10;
-  uint64 average_block_time               = 11;
-  uint64 average_ethereum_block_time      = 12;
-  bytes  slash_fraction_valset            = 13  [
+  string peggy_id                    = 1;
+  string contract_source_hash        = 2;
+  string bridge_ethereum_address     = 4;
+  uint64 bridge_chain_id             = 5;
+  uint64 signed_valsets_window       = 6;
+  uint64 signed_batches_window       = 7;
+  uint64 signed_claims_window        = 8;
+  uint64 target_batch_timeout        = 10;
+  uint64 average_block_time          = 11;
+  uint64 average_ethereum_block_time = 12;
+  bytes  slash_fraction_valset       = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes  slash_fraction_batch             = 14 [
+  bytes slash_fraction_batch = 14 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes  slash_fraction_claim             = 15 [
+  bytes slash_fraction_claim = 15 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes  slash_fraction_conflicting_claim = 16 [
+  bytes slash_fraction_conflicting_claim = 16 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  uint64  unbond_slashing_valsets_window  = 17;
-  uint64  unbond_slashing_batch_window    = 18;
-
+  uint64 unbond_slashing_valsets_window = 17;
+  uint64 unbond_slashing_batch_window   = 18;
 }
-
 
 // GenesisState struct
 message GenesisState {

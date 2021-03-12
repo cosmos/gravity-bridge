@@ -1,6 +1,6 @@
 syntax = "proto3";
 package peggy.v1;
-option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+option  go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 // BridgeValidator represents a validator's ETH address and its power
 message BridgeValidator {
@@ -23,7 +23,7 @@ message Valset {
 // outward and always produce batches with timeouts in the future
 // even if no Ethereum block height has been relayed for a long time
 message LastObservedEthereumBlockHeight {
-  uint64 cosmos_block_height = 1;
+  uint64 cosmos_block_height   = 1;
   uint64 ethereum_block_height = 2;
 }
 
