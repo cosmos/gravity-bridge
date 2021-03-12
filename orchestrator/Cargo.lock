@@ -575,7 +575,7 @@ dependencies = [
 
 [[package]]
 name = "client"
-version = "0.1.0"
+version = "0.4.1"
 dependencies = [
  "actix-rt",
  "clarity",
@@ -591,6 +591,7 @@ dependencies = [
  "peggy_utils",
  "serde",
  "serde_derive",
+ "tokio",
  "url",
  "web30",
 ]
@@ -603,9 +604,9 @@ checksum = "cd51eab21ab4fd6a3bf889e2d0958c0a6e3a61ad04260325e919e652a2a62826"
 
 [[package]]
 name = "contact"
-version = "0.3.3"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "325ab26c8ccf3135d4465829eb008b8ff41f40014fa612c64669f632fda74eae"
+checksum = "db05b618e1e787aad1f089f0e2a2638131e8541b3bf7c18348bda718a3a98885"
 dependencies = [
  "actix-web",
  "deep_space",
@@ -1634,7 +1635,7 @@ dependencies = [
 
 [[package]]
 name = "orchestrator"
-version = "0.2.1"
+version = "0.4.1"
 dependencies = [
  "actix-rt",
  "clarity",
@@ -1716,6 +1717,7 @@ dependencies = [
 name = "peggy_utils"
 version = "0.1.0"
 dependencies = [
+ "actix",
  "clarity",
  "contact",
  "deep_space",
@@ -2071,7 +2073,7 @@ checksum = "3b181ba2dcf07aaccad5448e8ead58db5b742cf85dfe035e2227f137a539a189"
 
 [[package]]
 name = "register_delegate_keys"
-version = "0.2.1"
+version = "0.4.1"
 dependencies = [
  "actix-rt",
  "clarity",
@@ -2094,7 +2096,7 @@ dependencies = [
 
 [[package]]
 name = "relayer"
-version = "0.2.1"
+version = "0.4.1"
 dependencies = [
  "actix",
  "actix-rt",

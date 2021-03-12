@@ -1,6 +1,6 @@
 [package]
 name = "client"
-version = "0.1.0"
+version = "0.4.1"
 authors = ["Justin Kilpatrick <justin@althea.net>"]
 edition = "2018"
 
@@ -11,7 +11,7 @@ peggy_utils = {path = "../peggy_utils"}
 peggy_proto = {path = "../peggy_proto/"}
 
 deep_space = "0.2"
-contact = "0.3"
+contact = "0.4"
 serde_derive = "1.0"
 clarity = "0.4"
 docopt = "1"
@@ -22,3 +22,4 @@ url = "2"
 web30 = "0.10"
 env_logger = "0.8"
 openssl-probe = "0.1"
+tokio = "0.2"

@@ -54,8 +54,9 @@ message Attestation {
 
 // ERC20Token unique identifier for an Ethereum ERC20 token.
 // CONTRACT:
-// The contract address on ETH of the token (note: developers should look up
-// the token symbol using the address on ETH to display for UI)
+// The contract address on ETH of the token, this could be a Cosmos
+// originated token, if so it will be the ERC20 address of the representation
+// (note: developers should look up the token symbol using the address on ETH to display for UI)
 message ERC20Token {
   string contract = 1;
   string amount   = 2 [

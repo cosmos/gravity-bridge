@@ -202,18 +202,20 @@ func (k Keeper) LastEventNonceByAddr(c context.Context, req *types.QueryLastEven
 // DenomToERC20 queries the Cosmos Denom that maps to an Ethereum ERC20
 func (k Keeper) DenomToERC20(c context.Context, req *types.QueryDenomToERC20Request) (*types.QueryDenomToERC20Response, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	_, erc20, err := k.DenomToERC20Lookup(ctx, req.Denom)
+	cosmos_originated, erc20, err := k.DenomToERC20Lookup(ctx, req.Denom)
 	var ret types.QueryDenomToERC20Response
 	ret.Erc20 = erc20
+	ret.CosmosOriginated = cosmos_originated
 	return &ret, err
 }
 
 // ERC20ToDenom queries the ERC20 contract that maps to an Ethereum ERC20 if any
 func (k Keeper) ERC20ToDenom(c context.Context, req *types.QueryERC20ToDenomRequest) (*types.QueryERC20ToDenomResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	_, name := k.ERC20ToDenomLookup(ctx, req.Erc20)
+	cosmos_originated, name := k.ERC20ToDenomLookup(ctx, req.Erc20)
 	var ret types.QueryERC20ToDenomResponse
 	ret.Denom = name
+	ret.CosmosOriginated = cosmos_originated
 	return &ret, nil
 }
 
@@ -262,4 +264,25 @@ func (k Keeper) GetDelegateKeyByEth(c context.Context, req *types.QueryDelegateK
 
 	}
 	return nil, sdkerrors.Wrap(types.ErrInvalid, "No validator")
+}
+
+func (k Keeper) GetPendingSendToEth(c context.Context, req *types.QueryPendingSendToEth) (*types.QueryPendingSendToEthResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	batches := k.GetOutgoingTxBatches(ctx)
+	unbatched_tx := k.GetPoolTransactions(ctx)
+	sender_address := req.SenderAddress
+	var res *types.QueryPendingSendToEthResponse
+	for _, batch := range batches {
+		for _, tx := range batch.Transactions {
+			if tx.Sender == sender_address {
+				res.TransfersInBatches = append(res.TransfersInBatches, tx)
+			}
+		}
+	}
+	for _, tx := range unbatched_tx {
+		if tx.Sender == sender_address {
+			res.UnbatchedTransfers = append(res.UnbatchedTransfers, tx)
+		}
+	}
+	return res, nil
 }

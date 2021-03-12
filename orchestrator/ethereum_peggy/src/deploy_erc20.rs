@@ -2,7 +2,10 @@
 //! the event for this deployment is then ferried over to Cosmos where the validators will accept the ERC20 contract address
 //! as the representation of this asset on Ethereum
 
-use clarity::abi::{encode_call, Token};
+use clarity::{
+    abi::{encode_call, Token},
+    Uint256,
+};
 use clarity::{Address, PrivateKey};
 use peggy_utils::error::PeggyError;
 use std::time::Duration;
@@ -22,7 +25,7 @@ pub async fn deploy_erc20(
     wait_timeout: Option<Duration>,
     sender_secret: PrivateKey,
     options: Vec<SendTxOption>,
-) -> Result<(), PeggyError> {
+) -> Result<Uint256, PeggyError> {
     let sender_address = sender_secret.to_public_key().unwrap();
     let tx_hash = web3
         .send_transaction(
@@ -48,5 +51,5 @@ pub async fn deploy_erc20(
             .await?;
     }
 
-    Ok(())
+    Ok(tx_hash)
 }

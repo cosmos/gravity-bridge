@@ -3,15 +3,14 @@ package types
 const (
 	EventTypeObservation               = "observation"
 	EventTypeOutgoingBatch             = "outgoing_batch"
-	EventTypeMultisigBootstrap         = "multisig_bootstrap"
 	EventTypeMultisigUpdateRequest     = "multisig_update_request"
 	EventTypeOutgoingBatchCanceled     = "outgoing_batch_canceled"
 	EventTypeOutgoingLogicCallCanceled = "outgoing_logic_call_canceled"
 	EventTypeBridgeWithdrawalReceived  = "withdrawal_received"
 	EventTypeBridgeDepositReceived     = "deposit_received"
+	EventTypeBridgeWithdrawCanceled    = "withdraw_canceled"
 
 	AttributeKeyAttestationID     = "attestation_id"
-	AttributeKeyAttestationIDs    = "attestation_ids"
 	AttributeKeyBatchConfirmKey   = "batch_confirm_key"
 	AttributeKeyValsetConfirmKey  = "valset_confirm_key"
 	AttributeKeyMultisigID        = "multisig_id"

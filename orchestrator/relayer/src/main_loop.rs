@@ -33,7 +33,7 @@ pub async fn relayer_main_loop(
         )
         .await;
         if current_valset.is_err() {
-            error!("Could not get current valset!");
+            error!("Could not get current valset! {:?}", current_valset);
             continue;
         }
         let current_valset = current_valset.unwrap();

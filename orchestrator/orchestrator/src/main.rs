@@ -23,17 +23,16 @@ mod oracle_resync;
 use crate::main_loop::orchestrator_main_loop;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use deep_space::address::Address as CosmosAddress;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
+use env_logger::Env;
 use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use peggy_proto::peggy::QueryDelegateKeysByEthAddress;
-use peggy_proto::peggy::QueryDelegateKeysByOrchestratorAddress;
-use peggy_utils::connection_prep::create_rpc_connections;
+use peggy_utils::connection_prep::{
+    check_delegate_addresses, check_for_eth, wait_for_cosmos_node_ready,
+};
+use peggy_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
-use std::{cmp::min, process::exit};
-use tonic::transport::Channel;
+use std::cmp::min;
 
 #[derive(Debug, Deserialize)]
 struct Args {
@@ -71,7 +70,7 @@ lazy_static! {
 
 #[actix_rt::main]
 async fn main() {
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     // On Linux static builds we need to probe ssl certs path to be able to
     // do TLS stuff.
     openssl_probe::init_ssl_cert_env_vars();
@@ -97,6 +96,7 @@ async fn main() {
         RELAYER_LOOP_SPEED,
     );
 
+    // probe all rpc connections and see if they are valid
     let connections = create_rpc_connections(
         Some(args.flag_cosmos_grpc),
         Some(args.flag_cosmos_legacy_rpc),
@@ -119,9 +119,20 @@ async fn main() {
     );
 
     let mut grpc = connections.grpc.clone().unwrap();
+    let contact = connections.contact.clone().unwrap();
+    let web3 = connections.web3.clone().unwrap();
+
+    // check if the cosmos node is syncing, if so wait for it
+    // we can't move any steps above this because they may fail on an incorrect
+    // historic chain state while syncing occurs
+    wait_for_cosmos_node_ready(&contact).await;
+
+    // check if the delegate addresses are correctly configured
     check_delegate_addresses(&mut grpc, public_eth_key, public_cosmos_key).await;
 
-    // TODO this should wait here if the cosmos node is still syncing.
+    // check if we actually have the promised balance of tokens to pay fees
+    check_for_fee_denom(&fee_denom, public_cosmos_key, &contact).await;
+    check_for_eth(public_eth_key, &web3).await;
 
     orchestrator_main_loop(
         cosmos_key,
@@ -133,77 +144,4 @@ async fn main() {
         fee_denom,
     )
     .await;
-}
-
-/// This function checks the orchestrator delegate addresses
-/// for consistency what this means is that it takes the Ethereum
-/// address and Orchestrator address from the Orchestrator and checks
-/// that both are registered and internally consistent.
-async fn check_delegate_addresses(
-    client: &mut PeggyQueryClient<Channel>,
-    delegate_eth_address: EthAddress,
-    delegate_orchestrator_address: CosmosAddress,
-) {
-    let eth_response = client
-        .get_delegate_key_by_eth(QueryDelegateKeysByEthAddress {
-            eth_address: delegate_eth_address.to_string(),
-        })
-        .await;
-    let orchestrator_response = client
-        .get_delegate_key_by_orchestrator(QueryDelegateKeysByOrchestratorAddress {
-            orchestrator_address: delegate_orchestrator_address.to_string(),
-        })
-        .await;
-    match (eth_response, orchestrator_response) {
-        (Ok(e), Ok(o)) => {
-            let e = e.into_inner();
-            let o = o.into_inner();
-            let req_delegate_orchestrator_address: CosmosAddress =
-                e.orchestrator_address.parse().unwrap();
-            let req_delegate_eth_address: EthAddress = o.eth_address.parse().unwrap();
-            if req_delegate_eth_address != delegate_eth_address
-                && req_delegate_orchestrator_address != delegate_orchestrator_address
-            {
-                error!("Your Delegate Ethereum and Orchestrator addresses are both incorrect!");
-                error!(
-                    "You provided {}  Correct Value {}",
-                    delegate_eth_address, req_delegate_eth_address
-                );
-                error!(
-                    "You provided {}  Correct Value {}",
-                    delegate_orchestrator_address, req_delegate_orchestrator_address
-                );
-                error!("In order to resolve this issue you should double check your input value or re-register your delegate keys");
-                exit(1);
-            } else if req_delegate_eth_address != delegate_eth_address {
-                error!("Your Delegate Ethereum address is incorrect!");
-                error!(
-                    "You provided {}  Correct Value {}",
-                    delegate_eth_address, req_delegate_eth_address
-                );
-                error!("In order to resolve this issue you should double check how you input your eth private key");
-                exit(1);
-            } else if req_delegate_orchestrator_address != delegate_orchestrator_address {
-                error!("Your Delegate Orchestrator address is incorrect!");
-                error!(
-                    "You provided {}  Correct Value {}",
-                    delegate_eth_address, req_delegate_eth_address
-                );
-                error!("In order to resolve this issue you should double check how you input your Orchestrator address phrase, make sure you didn't use your Validator phrase!");
-                exit(1);
-            }
-
-            if e.validator_address != o.validator_address {
-                error!("You are using delegate keys from two different validator addresses!");
-                error!("If you get this error message I would just blow everything away and start again");
-                exit(1);
-            }
-        }
-        (Err(_), Ok(_)) | (Ok(_), Err(_)) => {
-            panic!("Failed to check delegate Eth address. Maybe try running the program again? If that doesn't work try registering delegate keys again")
-        }
-        (Err(_), Err(_)) => {
-            panic!("Delegate addresses are not set! Please Register your delegate keys and make sure your Althea binary is updated!")
-        }
-    }
 }

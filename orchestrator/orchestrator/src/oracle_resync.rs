@@ -103,7 +103,7 @@ pub async fn get_last_checked_block(
             || erc20_deployed_events.is_err()
             || logic_call_executed_events.is_err()
         {
-            error!("Failed to get blockchain events while resyncing, is your Eth node working?");
+            error!("Failed to get blockchain events while resyncing, is your Eth node working? If you see only one of these it's fine",);
             delay_for(RETRY_TIME).await;
             continue;
         }

@@ -11,7 +11,7 @@ peggy_utils = {path = "../peggy_utils"}
 ethereum_peggy = {path = "../ethereum_peggy"}
 peggy_proto = {path = "../peggy_proto/"}
 
-contact = "0.3.2"
+contact = "0.4"
 deep_space = "0.2"
 serde_derive = "1.0"
 clarity = "0.4"

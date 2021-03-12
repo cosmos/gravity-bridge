@@ -153,6 +153,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		return nil, err
 	}
 
+	// question: is this right? If i can delegate my voting power to a different key then this would fail each time i call it
 	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, valaddr)
 	if validator == nil {
@@ -477,4 +478,26 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 	)
 
 	return &types.MsgLogicCallExecutedClaimResponse{}, nil
+}
+
+func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+	err = k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TransactionId, sender)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, fmt.Sprint(msg.TransactionId)),
+		),
+	)
+
+	return &types.MsgCancelSendToEthResponse{}, nil
 }

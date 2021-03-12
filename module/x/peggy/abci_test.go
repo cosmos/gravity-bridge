@@ -1,6 +1,7 @@
 package peggy
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 func TestValsetCreationIfNotAvailable(t *testing.T) {
@@ -25,59 +27,151 @@ func TestValsetCreationIfNotAvailable(t *testing.T) {
 
 }
 
-func TestValsetSlashing(t *testing.T) {
+func TestValsetCreationUponUnbonding(t *testing.T) {
+	input, ctx := keeper.SetupFiveValChain(t)
+	pk := input.PeggyKeeper
+	pk.SetValsetRequest(ctx)
+
+	input.Context = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	// begin unbonding
+	sh := staking.NewHandler(input.StakingKeeper)
+	undelegateMsg := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[0], keeper.StakingAmount)
+	sh(input.Context, undelegateMsg)
+
+	// Run the staking endblocker to ensure valset is set in state
+	staking.EndBlocker(input.Context, input.StakingKeeper)
+	EndBlocker(input.Context, pk)
+
+	assert.Equal(t, uint64(input.Context.BlockHeight()), pk.GetLatestValsetNonce(ctx))
+}
+
+func TestValsetSlashing_ValsetCreated_Before_ValidatorBonded(t *testing.T) {
+	//	Don't slash validators if valset is created before he is bonded.
+
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.PeggyKeeper
 	params := input.PeggyKeeper.GetParams(ctx)
 
-	// This valset should be past the signed blocks window and trigger slashing
+	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	vs := pk.GetCurrentValset(ctx)
 	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
 	vs.Height = height
-
-	// TODO: remove this once we are auto-incrementing the nonces
 	vs.Nonce = height
 	pk.StoreValsetUnsafe(ctx, vs)
+
+	EndBlocker(ctx, pk)
+
+	// ensure that the  validator who is bonded after valset is created is not slashed
+	val = input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+	require.False(t, val.IsJailed())
+}
+
+func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
+	//	Slashing Conditions for Bonded Validator
+
+	input, ctx := keeper.SetupFiveValChain(t)
+	pk := input.PeggyKeeper
+	params := input.PeggyKeeper.GetParams(ctx)
+
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
+	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+	vs := pk.GetCurrentValset(ctx)
+	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
+	vs.Height = height
+	vs.Nonce = height
+	pk.StoreValsetUnsafe(ctx, vs)
+
 	for i, val := range keeper.AccAddrs {
 		if i == 0 {
 			// don't sign with first validator
-			continue
-		}
-		if i == 1 {
-			// don't sign with 2nd validator
-			validator := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[i])
-			valConsAddr, _ := validator.GetConsAddr()
-			valSigningInfo := slashingtypes.ValidatorSigningInfo{StartHeight: int64(vs.Nonce + 1)}
-			input.SlashingKeeper.SetValidatorSigningInfo(ctx, valConsAddr, valSigningInfo)
 			continue
 		}
 		conf := types.NewMsgValsetConfirm(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
 		pk.SetValsetConfirm(ctx, *conf)
 	}
 
-	// Set the current valset to avoid setting a new valset in the switch
-	pk.SetValsetRequest(ctx)
 	EndBlocker(ctx, pk)
 
-	// ensure that the  validator is jailed and slashed
-	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+	// ensure that the  validator who is bonded before valset is created is slashed
+	val = input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	require.True(t, val.IsJailed())
 
-	// ensure that the 2nd  validator is not jailed and slashed
+	// ensure that the  validator who attested the valset is not slashed.
+	val = input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
+	require.False(t, val.IsJailed())
+
+}
+
+func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T) {
+	//	Slashing Conditions for Unbonding Validator
+
+	//  Create 5 validators
+	input, ctx := keeper.SetupFiveValChain(t)
+	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+	fmt.Println("val1  tokens", val.GetTokens().ToDec())
+
+	pk := input.PeggyKeeper
+	params := input.PeggyKeeper.GetParams(ctx)
+
+	// Define slashing variables
+	validatorStartHeight := ctx.BlockHeight()                                                        // 0
+	valsetRequestHeight := validatorStartHeight + 1                                                  // 1
+	valUnbondingHeight := valsetRequestHeight + 1                                                    // 2
+	valsetRequestSlashedAt := valsetRequestHeight + int64(params.SignedValsetsWindow)                // 11
+	validatorUnbondingWindowExpiry := valUnbondingHeight + int64(params.UnbondSlashingValsetsWindow) // 17
+	currentBlockHeight := valsetRequestSlashedAt + 1                                                 // 12
+
+	assert.True(t, valsetRequestSlashedAt < currentBlockHeight)
+	assert.True(t, valsetRequestHeight < validatorUnbondingWindowExpiry)
+
+	// Create Valset request
+	ctx = ctx.WithBlockHeight(valsetRequestHeight)
+	vs := pk.GetCurrentValset(ctx)
+	vs.Height = uint64(valsetRequestHeight)
+	vs.Nonce = uint64(valsetRequestHeight)
+	pk.StoreValsetUnsafe(ctx, vs)
+
+	// Start Unbonding validators
+	// Validator-1  Unbond slash window is not expired. if not attested, slash
+	// Validator-2  Unbond slash window is not expired. if attested, don't slash
+	input.Context = ctx.WithBlockHeight(valUnbondingHeight)
+	sh := staking.NewHandler(input.StakingKeeper)
+	undelegateMsg1 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[0], keeper.StakingAmount)
+	sh(input.Context, undelegateMsg1)
+	undelegateMsg2 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[1], keeper.StakingAmount)
+	sh(input.Context, undelegateMsg2)
+
+	for i, val := range keeper.AccAddrs {
+		if i == 0 {
+			// don't sign with first validator
+			continue
+		}
+		conf := types.NewMsgValsetConfirm(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
+		pk.SetValsetConfirm(ctx, *conf)
+	}
+	staking.EndBlocker(input.Context, input.StakingKeeper)
+
+	ctx = ctx.WithBlockHeight(currentBlockHeight)
+	EndBlocker(ctx, pk)
+
+	// Assertions
+	val1 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+	assert.True(t, val1.IsJailed())
+	fmt.Println("val1  tokens", val1.GetTokens().ToDec())
+	// check if tokens are slashed for val1.
+
 	val2 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
-	require.False(t, val2.IsJailed())
-
-	// Ensure that the last slashed valset nonce is set properly
-	lastSlashedValsetNonce := input.PeggyKeeper.GetLastSlashedValsetNonce(ctx)
-	assert.Equal(t, lastSlashedValsetNonce, vs.Nonce)
-
-	// TODO: test balance of slashed tokens
+	assert.True(t, val2.IsJailed())
+	fmt.Println("val2  tokens", val2.GetTokens().ToDec())
+	// check if tokens shouldn't be slashed for val2.
 }
 
 func TestBatchSlashing(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.PeggyKeeper
 	params := pk.GetParams(ctx)
+
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
 
 	// First store a batch
 	batch := &types.OutgoingTxBatch{
