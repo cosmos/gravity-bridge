@@ -67,6 +67,9 @@ var (
 	// ParamsStoreSlashFractionConflictingClaim stores the slash fraction ConflictingClaim
 	ParamsStoreSlashFractionConflictingClaim = []byte("SlashFractionConflictingClaim")
 
+	//  ParamStoreUnbondSlashingValsetsWindow stores unbond slashing valset window
+	ParamStoreUnbondSlashingValsetsWindow = []byte("UnbondSlashingValsetsWindow")
+
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
 )
@@ -102,6 +105,7 @@ func DefaultParams() *Params {
 		SlashFractionBatch:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionClaim:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionConflictingClaim: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		UnbondSlashingValsetsWindow:   10000,
 	}
 }
 
@@ -149,6 +153,10 @@ func (p Params) ValidateBasic() error {
 	if err := validateSlashFractionConflictingClaim(p.SlashFractionConflictingClaim); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction valset")
 	}
+	if err := validateUnbondSlashingValsetsWindow(p.UnbondSlashingValsetsWindow); err != nil {
+		return sdkerrors.Wrap(err, "unbond Slashing valset window")
+	}
+
 	return nil
 }
 
@@ -175,6 +183,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionBatch, &p.SlashFractionBatch, validateSlashFractionBatch),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionClaim, &p.SlashFractionClaim, validateSlashFractionClaim),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionConflictingClaim, &p.SlashFractionConflictingClaim, validateSlashFractionConflictingClaim),
+		paramtypes.NewParamSetPair(ParamStoreUnbondSlashingValsetsWindow, &p.UnbondSlashingValsetsWindow, validateUnbondSlashingValsetsWindow),
 	}
 }
 
@@ -265,6 +274,14 @@ func validateBridgeContractAddress(i interface{}) error {
 }
 
 func validateSignedValsetsWindow(i interface{}) error {
+	// TODO: do we want to set some bounds on this value?
+	if _, ok := i.(uint64); !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
+}
+
+func validateUnbondSlashingValsetsWindow(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

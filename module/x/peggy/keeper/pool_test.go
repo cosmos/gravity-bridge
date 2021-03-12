@@ -37,35 +37,39 @@ func TestAddToOutgoingPool(t *testing.T) {
 		t.Logf("___ response: %#v", r)
 	}
 	// then
-	var got []*types.OutgoingTx
-	input.PeggyKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
+	var got []*types.OutgoingTransferTx
+	input.PeggyKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
 		got = append(got, tx)
 		return false
 	})
-	exp := []*types.OutgoingTx{
+	exp := []*types.OutgoingTransferTx{
 		{
-			BridgeFee: types.NewERC20Token(3, myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(101, myTokenContractAddr).PeggyCoin(),
+			Id:          2,
+			Erc20Fee:    types.NewERC20Token(3, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(101, myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(100, myTokenContractAddr).PeggyCoin(),
+			Id:          1,
+			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(100, myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(102, myTokenContractAddr).PeggyCoin(),
+			Id:          3,
+			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(102, myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewERC20Token(1, myTokenContractAddr).PeggyCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(103, myTokenContractAddr).PeggyCoin(),
+			Id:          4,
+			Erc20Fee:    types.NewERC20Token(1, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(103, myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, exp, got)

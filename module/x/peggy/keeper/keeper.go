@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -175,6 +176,23 @@ func (k Keeper) SetLastSlashedValsetNonce(ctx sdk.Context, nonce uint64) {
 func (k Keeper) GetLastSlashedValsetNonce(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get(types.LastSlashedValsetNonce)
+
+	if len(bytes) == 0 {
+		return 0
+	}
+	return types.UInt64FromBytes(bytes)
+}
+
+// SetLastUnBondingBlockHeight sets the last unbonding block height
+func (k Keeper) SetLastUnBondingBlockHeight(ctx sdk.Context, unbondingBlockHeight uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.LastUnBondingBlockHeight, types.UInt64Bytes(unbondingBlockHeight))
+}
+
+// GetLastUnBondingBlockHeight returns the last unbonding block height
+func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bytes := store.Get(types.LastUnBondingBlockHeight)
 
 	if len(bytes) == 0 {
 		return 0
@@ -647,6 +665,14 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 	})
 
 	return result
+}
+
+// GetUnbondingvalidators returns UnbondingValidators.
+// Adding here in peggy keeper as cdc is available inside endblocker.
+func (k Keeper) GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses {
+	unbondingValidators := stakingtypes.ValAddresses{}
+	k.cdc.MustUnmarshalBinaryBare(unbondingVals, &unbondingValidators)
+	return unbondingValidators
 }
 
 // prefixRange turns a prefix into a (start, end) range. The start is the given prefix value and

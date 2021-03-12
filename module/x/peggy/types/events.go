@@ -7,6 +7,11 @@ const (
 	EventTypeOutgoingBatchCanceled     = "outgoing_batch_canceled"
 	EventTypeOutgoingLogicCallCanceled = "outgoing_logic_call_canceled"
 	EventTypeBridgeWithdrawalReceived  = "withdrawal_received"
+<<<<<<< HEAD
+=======
+	EventTypeBridgeDepositReceived     = "deposit_received"
+	EventTypeBridgeWithdrawCanceled    = "withdraw_canceled"
+>>>>>>> main
 
 	AttributeKeyAttestationID     = "attestation_id"
 	AttributeKeyBatchConfirmKey   = "batch_confirm_key"
