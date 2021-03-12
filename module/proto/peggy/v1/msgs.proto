@@ -9,7 +9,7 @@ option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 service Msg {
   rpc DelegateKeys(MsgDelegateKeys) returns (MsgDelegateKeysResponse) {
-    option (google.api.http).post = "/peggy/v1/set_orchestrator_address";
+    option (google.api.http).post = "/peggy/v1/delegate_keys";
   }
   rpc SendToEth(MsgSendToEth) returns (MsgSendToEthResponse) {
     option (google.api.http).post = "/peggy/v1/send_to_eth";
