@@ -4,6 +4,7 @@ use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
 use contact::jsonrpc::error::JsonRpcError;
 use deep_space::address::Address as CosmosAddress;
+use std::fmt::Debug;
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
@@ -41,9 +42,11 @@ struct SignatureStatus {
     ordered_signatures: Vec<PeggySignature>,
     power_of_good_sigs: u64,
     power_of_unset_keys: u64,
-    number_of_unset_key_validators: i32,
+    number_of_unset_key_validators: usize,
     power_of_nonvoters: u64,
-    number_of_nonvoters: i32,
+    number_of_nonvoters: usize,
+    power_of_invalid_signers: u64,
+    number_of_invalid_signers: usize,
     num_validators: usize,
 }
 
@@ -121,8 +124,9 @@ impl Valset {
     /// this will be sorted, in others it will be improperly sorted but must be maintained so that the signatures
     /// are accepted on the Ethereum chain, which requires the submitted addresses to match whatever the previously
     /// submitted ordering was and the signatures must be in parallel arrays to reduce shuffling.
-    fn get_signature_status<T: Confirm + Clone>(
+    fn get_signature_status<T: Confirm + Clone + Debug>(
         &self,
+        signed_message: &[u8],
         signatures: &[T],
     ) -> Result<SignatureStatus, PeggyError> {
         if signatures.is_empty() {
@@ -138,18 +142,34 @@ impl Valset {
         let mut number_of_unset_key_validators = 0;
         let mut power_of_nonvoters = 0;
         let mut number_of_nonvoters = 0;
+        let mut power_of_invalid_signers = 0;
+        let mut number_of_invalid_signers = 0;
         for member in self.members.iter() {
             if let Some(eth_address) = member.eth_address {
                 if let Some(sig) = signatures_hashmap.get(&eth_address) {
                     assert_eq!(sig.get_eth_address(), eth_address);
-                    out.push(PeggySignature {
-                        power: member.power,
-                        eth_address: sig.get_eth_address(),
-                        v: sig.get_signature().v.clone(),
-                        r: sig.get_signature().r.clone(),
-                        s: sig.get_signature().s.clone(),
-                    });
-                    power_of_good_sigs += member.power;
+                    assert!(sig.get_signature().is_valid());
+                    let recover_key = sig.get_signature().recover(signed_message).unwrap();
+                    if recover_key == sig.get_eth_address() {
+                        out.push(PeggySignature {
+                            power: member.power,
+                            eth_address: sig.get_eth_address(),
+                            v: sig.get_signature().v.clone(),
+                            r: sig.get_signature().r.clone(),
+                            s: sig.get_signature().s.clone(),
+                        });
+                        power_of_good_sigs += member.power;
+                    } else {
+                        out.push(PeggySignature {
+                            power: member.power,
+                            eth_address,
+                            v: 0u8.into(),
+                            r: 0u8.into(),
+                            s: 0u8.into(),
+                        });
+                        power_of_invalid_signers += member.power;
+                        number_of_invalid_signers += 1;
+                    }
                 } else {
                     out.push(PeggySignature {
                         power: member.power,
@@ -182,15 +202,18 @@ impl Valset {
             power_of_unset_keys,
             num_validators,
             number_of_nonvoters,
+            power_of_invalid_signers,
+            number_of_invalid_signers,
             number_of_unset_key_validators,
         })
     }
 
-    pub fn order_sigs<T: Confirm + Clone>(
+    pub fn order_sigs<T: Confirm + Clone + Debug>(
         &self,
+        signed_message: &[u8],
         signatures: &[T],
     ) -> Result<Vec<PeggySignature>, PeggyError> {
-        let status = self.get_signature_status(signatures)?;
+        let status = self.get_signature_status(signed_message, signatures)?;
         // now that we have collected the signatures we can determine if the measure has the votes to pass
         // and error early if it does not, otherwise the user will pay fees for a transaction that will
         // just throw
@@ -200,6 +223,7 @@ impl Valset {
                 has {}/{} or {:.2}% power voting! Can not execute on Ethereum!
                 {}/{} validators have unset Ethereum keys representing {}/{} or {:.2}% of the power required
                 {}/{} validators have Ethereum keys set but have not voted representing {}/{} or {:.2}% of the power required
+                {}/{} validators have Invalid signatures {}/{} or {:.2}% of the power required
                 This valset probably just needs to accumulate signatures for a moment.",
                 status.power_of_good_sigs,
                 TOTAL_PEGGY_POWER,
@@ -214,6 +238,11 @@ impl Valset {
                 status.power_of_nonvoters,
                 TOTAL_PEGGY_POWER,
                 peggy_power_to_percent(status.power_of_nonvoters),
+                status.number_of_invalid_signers,
+                status.num_validators,
+                status.power_of_invalid_signers,
+                TOTAL_PEGGY_POWER,
+                peggy_power_to_percent(status.power_of_invalid_signers),
             );
             Err(PeggyError::InsufficientVotingPowerToPass(message))
         } else {

@@ -9,7 +9,7 @@ use cosmos_peggy::query::get_latest_valsets;
 use cosmos_peggy::query::{get_all_valset_confirms, get_valset};
 use ethereum_peggy::{one_eth, utils::downcast_to_u128, valset_update::send_eth_valset_update};
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use peggy_utils::types::Valset;
+use peggy_utils::{message_signatures::encode_valset_confirm_hashed, types::Valset};
 use tonic::transport::Channel;
 use web30::client::Web3;
 
@@ -22,6 +22,7 @@ pub async fn relay_valsets(
     web3: &Web3,
     grpc_client: &mut PeggyQueryClient<Channel>,
     peggy_contract_address: EthAddress,
+    peggy_id: String,
     timeout: Duration,
 ) {
     // we have to start with the current valset, we need to know what's currently
@@ -56,12 +57,17 @@ pub async fn relay_valsets(
     while latest_nonce > 0 {
         let valset = get_valset(grpc_client, latest_nonce).await;
         if let Ok(Some(valset)) = valset {
-            let confirms = get_all_valset_confirms(grpc_client, valset.nonce).await;
+            assert_eq!(valset.nonce, latest_nonce);
+            let confirms = get_all_valset_confirms(grpc_client, latest_nonce).await;
             if let Ok(confirms) = confirms {
+                for confirm in confirms.iter() {
+                    assert_eq!(valset.nonce, confirm.nonce);
+                }
+                let hash = encode_valset_confirm_hashed(peggy_id.clone(), valset.clone());
                 // order valset sigs prepares signatures for submission, notice we compare
                 // them to the 'current' set in the bridge, this confirms for us that the validator set
                 // we have here can be submitted to the bridge in it's current state
-                let res = current_valset.order_sigs(&confirms);
+                let res = current_valset.order_sigs(&hash, &confirms);
                 if res.is_ok() {
                     latest_confirmed = Some(confirms);
                     latest_valset = Some(valset);
@@ -101,11 +107,15 @@ pub async fn relay_valsets(
             &latest_cosmos_confirmed,
             web3,
             peggy_contract_address,
+            peggy_id.clone(),
             ethereum_key,
         )
         .await;
         if cost.is_err() {
-            error!("Valset cost estimate failed with {:?}", cost);
+            error!(
+                "Valset cost estimate for Nonce {} failed with {:?}",
+                latest_cosmos_valset.nonce, cost
+            );
             return;
         }
         let cost = cost.unwrap();
@@ -125,6 +135,7 @@ pub async fn relay_valsets(
             web3,
             timeout,
             peggy_contract_address,
+            peggy_id,
             ethereum_key,
         )
         .await;

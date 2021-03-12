@@ -10,7 +10,7 @@ use deep_space::stdfee::StdFee;
 use deep_space::stdsignmsg::StdSignMsg;
 use deep_space::transaction::TransactionSendType;
 use deep_space::{coin::Coin, utils::bytes_to_hex_str};
-use ethereum_peggy::message_signatures::{
+use peggy_utils::message_signatures::{
     encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
 };
 use peggy_utils::types::*;
@@ -87,6 +87,7 @@ pub async fn send_valset_confirms(
     let mut messages = Vec::new();
 
     for valset in valsets {
+        trace!("Submitting signature for valset {:?}", valset);
         let message = encode_valset_confirm(peggy_id.clone(), valset.clone());
         let eth_signature = eth_private_key.sign_ethereum_msg(&message);
         trace!(

@@ -7,8 +7,8 @@ use ethereum_peggy::{
     utils::{downcast_to_u128, get_logic_call_nonce},
 };
 use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use peggy_utils::types::LogicCall;
 use peggy_utils::types::{LogicCallConfirmResponse, Valset};
+use peggy_utils::{message_signatures::encode_logic_call_confirm_hashed, types::LogicCall};
 use std::time::Duration;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -20,6 +20,7 @@ pub async fn relay_logic_calls(
     web3: &Web3,
     grpc_client: &mut PeggyQueryClient<Channel>,
     peggy_contract_address: EthAddress,
+    peggy_id: String,
     timeout: Duration,
 ) {
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
@@ -41,8 +42,9 @@ pub async fn relay_logic_calls(
         .await;
         trace!("Got sigs {:?}", sigs);
         if let Ok(sigs) = sigs {
+            let hash = encode_logic_call_confirm_hashed(peggy_id.clone(), call.clone());
             // this checks that the signatures for the batch are actually possible to submit to the chain
-            if current_valset.order_sigs(&sigs).is_ok() {
+            if current_valset.order_sigs(&hash, &sigs).is_ok() {
                 oldest_signed_call = Some(call);
                 oldest_signatures = Some(sigs);
             } else {
@@ -91,6 +93,7 @@ pub async fn relay_logic_calls(
             &oldest_signatures,
             web3,
             peggy_contract_address,
+            peggy_id.clone(),
             ethereum_key,
         )
         .await;
@@ -115,6 +118,7 @@ pub async fn relay_logic_calls(
             web3,
             timeout,
             peggy_contract_address,
+            peggy_id.clone(),
             ethereum_key,
         )
         .await;
