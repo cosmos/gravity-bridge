@@ -3,6 +3,7 @@ package peggy.v1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
@@ -16,16 +17,6 @@ enum ClaimType {
   CLAIM_TYPE_WITHDRAW            = 2;
   CLAIM_TYPE_ERC20_DEPLOYED      = 3;
   CLAIM_TYPE_LOGIC_CALL_EXECUTED = 4;
-}
-
-// ConfirmType is the cosmos type of a confirmation of a given object from the eth signers
-enum ConfirmType {
-  option (gogoproto.goproto_enum_prefix) = false;
-
-  CONFIRM_TYPE_UNKNOWN = 0;
-  CONFIRM_TYPE_VALSET  = 1;
-  CONFIRM_TYPE_BATCH   = 2;
-  CONFIRM_TYPE_LOGIC   = 3;
 }
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by

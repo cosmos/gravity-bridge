@@ -33,3 +33,11 @@ message ERC20ToDenom {
   string erc20 = 1;
   string denom = 2;
 }
+
+// ConfirmType is the cosmos type of a confirmation of a given object from the eth signers
+enum ConfirmType {
+  CONFIRM_TYPE_UNSPECIFIED = 0;
+  CONFIRM_TYPE_VALSET      = 1;
+  CONFIRM_TYPE_BATCH       = 2;
+  CONFIRM_TYPE_LOGIC       = 3;
+}
