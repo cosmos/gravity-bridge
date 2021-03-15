@@ -3,7 +3,8 @@ package peggy.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
-
+import "peggy/v1/claims.proto";
+import "peggy/v1/confirm.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/any.proto";
@@ -105,20 +106,22 @@ message MsgCancelSendToEthResponse {}
 
 // MsgSubmitConfirm
 message MsgSubmitConfirm {
-  google.protobuf.Any confirm = 1 [
+  ConfirmType         confirm_type = 1;
+  google.protobuf.Any confirm      = 2 [
     (cosmos_proto.accepts_interface) = "Confirm"
   ];
-  string signer = 2;
+  string signer = 3;
 }
 
 message MsgSubmitConfirmResponse {}
 
 // MsgSubmitClaim
 message MsgSubmitClaim {
-  google.protobuf.Any claim = 1 [
+  ClaimType           claim_type = 1;
+  google.protobuf.Any claim      = 2 [
     (cosmos_proto.accepts_interface) = "EthereumClaim"
   ];
-  string signer = 2;
+  string signer = 3;
 }
 
 message MsgSubmitClaimResponse {}

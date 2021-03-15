@@ -15,8 +15,8 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	}
 
 	// reset valset confirmations in state
-	for _, conf := range data.ValsetConfirms {
-		k.SetValsetConfirm(ctx, *conf)
+	for _, conf := range data.Confirmations {
+		k.SetConfirmirmation(ctx, *conf)
 	}
 
 	// reset batches in state
@@ -25,19 +25,9 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		k.StoreBatchUnsafe(ctx, batch)
 	}
 
-	// reset batch confirmations in state
-	for _, conf := range data.BatchConfirms {
-		k.SetBatchConfirm(ctx, &conf)
-	}
-
 	// reset logic calls in state
 	for _, call := range data.LogicCalls {
 		k.SetOutgoingLogicCall(ctx, call)
-	}
-
-	// reset batch confirmations in state
-	for _, conf := range data.LogicCallConfirms {
-		k.SetLogicCallConfirm(ctx, &conf)
 	}
 
 	// reset pool transactions in state

@@ -224,6 +224,12 @@ func (msg *MsgSubmitConfirm) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(acc)}
 }
 
+// UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
+func (m MsgSubmitConfirm) UnpackInterfaces(unpacker types.AnyUnpacker) error {
+	var confirm Confirm
+	return unpacker.UnpackAny(m.Confirm, &confirm)
+}
+
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
 func NewMsgSubmitClaim(claim *types.Any, signer string) *MsgSubmitClaim {
 	return &MsgSubmitClaim{
@@ -259,4 +265,10 @@ func (msg *MsgSubmitClaim) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{sdk.AccAddress(acc)}
+}
+
+// UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
+func (m MsgSubmitClaim) UnpackInterfaces(unpacker types.AnyUnpacker) error {
+	var claim EthereumClaim
+	return unpacker.UnpackAny(m.Claim, &claim)
 }
