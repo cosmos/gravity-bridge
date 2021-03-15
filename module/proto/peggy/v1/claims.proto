@@ -6,11 +6,11 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 enum ClaimType {
-  CLAIM_TYPE_UNKNOWN             = 0;
-  CLAIM_TYPE_DEPOSIT             = 1;
-  CLAIM_TYPE_WITHDRAW            = 2;
-  CLAIM_TYPE_ERC20_DEPLOYED      = 3;
-  CLAIM_TYPE_LOGIC_CALL_EXECUTED = 4;
+  UNKNOWN             = 0;
+  DEPOSIT             = 1;
+  WITHDRAW            = 2;
+  ERC20_DEPLOYED      = 3;
+  LOGIC_CALL_EXECUTED = 4;
 }
 
 // EthereumBridgeDepositClaim

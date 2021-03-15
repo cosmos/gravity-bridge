@@ -24,7 +24,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOrchestratorAddress) (*types.MsgSetOrchestratorAddressResponse, error) {
+func (k msgServer) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*types.MsgDelegateKeyResponse, error) {
 	// ensure that this passes validation
 	err := msg.ValidateBasic()
 	if err != nil {
@@ -57,7 +57,7 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 		),
 	)
 
-	return &types.MsgSetOrchestratorAddressResponse{}, nil
+	return &types.MsgDelegateKeyResponse{}, nil
 
 }
 

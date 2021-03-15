@@ -274,7 +274,7 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	h := NewHandler(input.PeggyKeeper)
 	ctx = ctx.WithBlockTime(blockTime)
 
-	msg := types.NewMsgSetOrchestratorAddress(valAddress, cosmosAddress, ethAddress)
+	msg := types.NewMsgSetDelegateKeys(valAddress, cosmosAddress, ethAddress)
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
 	_, err := h(ctx, msg)
 	require.NoError(t, err)
