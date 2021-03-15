@@ -22,20 +22,12 @@ for dir in $proto_dirs; do
   -I "third_party/proto" \
   --gocosmos_out=plugins=interfacetype+grpc,\
 Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:. \
+  --grpc-gateway_out=logtostderr=true:. \
   $(find "${dir}" -maxdepth 1 -name '*.proto')
 done
 
-  # --grpc-gateway_out=logtostderr=true:. \
   # --doc_out=./docs/core \
   # --doc_opt=./docs/protodoc-markdown.tmpl,proto-docs.md \
-
-# # command to generate docs using protoc-gen-doc
-# buf protoc \
-#   -I "proto" \
-#   -I "third_party/proto" \
-#   $(find "$(pwd)/proto" -maxdepth 5 -name '*.proto')
-# go mod tidy
-
 # move proto files to the right places
 cp -r github.com/althea-net/peggy/module/* ./
 rm -rf github.com

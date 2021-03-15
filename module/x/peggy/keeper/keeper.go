@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math"
 	"sort"
@@ -232,22 +231,22 @@ func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedVa
 //     VALSET CONFIRMS     //
 /////////////////////////////
 
-// GetValsetConfirm returns a valset confirmation by a nonce and validator address
-func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce uint64, validator sdk.AccAddress) *types.MsgValsetConfirm {
+// GetConfirmation returns a valset confirmation by a nonce and validator address
+func (k Keeper) GetConfirmation(ctx sdk.Context, nonce uint64, validator sdk.AccAddress) *types.MsgSubmitClaim {
 	store := ctx.KVStore(k.storeKey)
 	entity := store.Get(types.GetValsetConfirmKey(nonce, validator))
 	if entity == nil {
 		return nil
 	}
-	confirm := types.MsgValsetConfirm{}
+	confirm := types.MsgSubmitClaim{}
 	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
 	return &confirm
 }
 
-// SetValsetConfirm sets a valset confirmation
-func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) []byte {
+// SetConfirmmation sets a valset confirmation
+func (k Keeper) SetConfirmmation(ctx sdk.Context, valsetConf types.MsgSubmitClaim) []byte {
 	store := ctx.KVStore(k.storeKey)
-	addr, err := sdk.AccAddressFromBech32(valsetConf.Orchestrator)
+	addr, err := sdk.AccAddressFromBech32(valsetConf.Signer)
 	if err != nil {
 		panic(err)
 	}
@@ -256,8 +255,8 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 	return key
 }
 
-// GetValsetConfirms returns all validator set confirmations by nonce
-func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*types.MsgValsetConfirm) {
+// GetConfirmations returns all validator set confirmations by nonce
+func (k Keeper) GetConfirmations(ctx sdk.Context, nonce uint64) (confirms []*types.MsgSubmitClaim) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
 	start, end := prefixRange(types.UInt64Bytes(nonce))
 	iterator := prefixStore.Iterator(start, end)
@@ -265,7 +264,7 @@ func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*ty
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		confirm := types.MsgValsetConfirm{}
+		confirm := types.MsgSubmitClaim{}
 		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &confirm)
 		confirms = append(confirms, &confirm)
 	}
@@ -273,16 +272,16 @@ func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*ty
 	return confirms
 }
 
-// IterateValsetConfirmByNonce iterates through all valset confirms by nonce in ASC order
+// IterateConfirmationByNonce iterates through all valset confirms by nonce in ASC order
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
-func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgValsetConfirm) bool) {
+func (k Keeper) IterateConfirmationByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgSubmitClaim) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
 	iter := prefixStore.Iterator(prefixRange(types.UInt64Bytes(nonce)))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgValsetConfirm{}
+		confirm := types.MsgSubmitClaim{}
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
 		// cb returns true to stop early
 		if cb(iter.Key(), confirm) {
@@ -295,70 +294,70 @@ func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb fu
 //      BATCH CONFIRMS     //
 /////////////////////////////
 
-// GetBatchConfirm returns a batch confirmation given its nonce, the token contract, and a validator address
-func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce uint64, tokenContract string, validator sdk.AccAddress) *types.MsgConfirmBatch {
-	store := ctx.KVStore(k.storeKey)
-	entity := store.Get(types.GetBatchConfirmKey(tokenContract, nonce, validator))
-	if entity == nil {
-		return nil
-	}
-	confirm := types.MsgConfirmBatch{}
-	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
-	return &confirm
-}
+// // GetBatchConfirm returns a batch confirmation given its nonce, the token contract, and a validator address
+// func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce uint64, tokenContract string, validator sdk.AccAddress) *types.MsgConfirmBatch {
+// 	store := ctx.KVStore(k.storeKey)
+// 	entity := store.Get(types.GetBatchConfirmKey(tokenContract, nonce, validator))
+// 	if entity == nil {
+// 		return nil
+// 	}
+// 	confirm := types.MsgConfirmBatch{}
+// 	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
+// 	return &confirm
+// }
 
-// SetBatchConfirm sets a batch confirmation by a validator
-func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) []byte {
-	store := ctx.KVStore(k.storeKey)
-	acc, err := sdk.AccAddressFromBech32(batch.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-	key := types.GetBatchConfirmKey(batch.TokenContract, batch.Nonce, acc)
-	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
-	return key
-}
+// // SetBatchConfirm sets a batch confirmation by a validator
+// func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) []byte {
+// 	store := ctx.KVStore(k.storeKey)
+// 	acc, err := sdk.AccAddressFromBech32(batch.Orchestrator)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	key := types.GetBatchConfirmKey(batch.TokenContract, batch.Nonce, acc)
+// 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
+// 	return key
+// }
 
-// IterateBatchConfirmByNonceAndTokenContract iterates through all batch confirmations
-// MARK finish-batches: this is where the key is iterated in the old (presumed working) code
-// TODO: specify which nonce this is
-func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string, cb func([]byte, types.MsgConfirmBatch) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchConfirmKey)
-	prefix := append([]byte(tokenContract), types.UInt64Bytes(nonce)...)
-	iter := prefixStore.Iterator(prefixRange(prefix))
-	defer iter.Close()
+// // IterateBatchConfirmByNonceAndTokenContract iterates through all batch confirmations
+// // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
+// // TODO: specify which nonce this is
+// func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string, cb func([]byte, types.MsgConfirmBatch) bool) {
+// 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchConfirmKey)
+// 	prefix := append([]byte(tokenContract), types.UInt64Bytes(nonce)...)
+// 	iter := prefixStore.Iterator(prefixRange(prefix))
+// 	defer iter.Close()
 
-	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgConfirmBatch{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
-		// cb returns true to stop early
-		if cb(iter.Key(), confirm) {
-			break
-		}
-	}
-}
+// 	for ; iter.Valid(); iter.Next() {
+// 		confirm := types.MsgConfirmBatch{}
+// 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
+// 		// cb returns true to stop early
+// 		if cb(iter.Key(), confirm) {
+// 			break
+// 		}
+// 	}
+// }
 
-// GetBatchConfirmByNonceAndTokenContract returns the batch confirms
-func (k Keeper) GetBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string) (out []types.MsgConfirmBatch) {
-	k.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, msg types.MsgConfirmBatch) bool {
-		out = append(out, msg)
-		return false
-	})
-	return
-}
+// // GetBatchConfirmByNonceAndTokenContract returns the batch confirms
+// func (k Keeper) GetBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string) (out []types.MsgConfirmBatch) {
+// 	k.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, msg types.MsgConfirmBatch) bool {
+// 		out = append(out, msg)
+// 		return false
+// 	})
+// 	return
+// }
 
 /////////////////////////////
 //    ADDRESS DELEGATION   //
 /////////////////////////////
 
 // SetOrchestratorValidator sets the Orchestrator key for a given validator
-func (k Keeper) SetOrchestratorValidator(ctx sdk.Context, val sdk.ValAddress, orch sdk.AccAddress) {
+func (k Keeper) SetDelegateKey(ctx sdk.Context, val sdk.ValAddress, orch sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetOrchestratorAddressKey(orch), val.Bytes())
 }
 
 // GetOrchestratorValidator returns the validator key associated with an orchestrator key
-func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) sdk.ValAddress {
+func (k Keeper) GetDelegateKey(ctx sdk.Context, orch sdk.AccAddress) sdk.ValAddress {
 	store := ctx.KVStore(k.storeKey)
 	return sdk.ValAddress(store.Get(types.GetOrchestratorAddressKey(orch)))
 }
@@ -488,56 +487,56 @@ func (k Keeper) CancelOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, 
 /////////////////////////////
 
 // SetLogicCallConfirm sets a logic confirm in the store
-func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, msg *types.MsgConfirmLogicCall) {
-	bytes, _ := hex.DecodeString(msg.InvalidationId)
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-	ctx.KVStore(k.storeKey).Set(types.GetLogicConfirmKey(bytes, msg.InvalidationNonce, acc), k.cdc.MustMarshalBinaryBare(msg))
-}
+// func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, msg *types.MsgConfirmLogicCall) {
+// 	bytes, _ := hex.DecodeString(msg.InvalidationId)
+// 	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	ctx.KVStore(k.storeKey).Set(types.GetLogicConfirmKey(bytes, msg.InvalidationNonce, acc), k.cdc.MustMarshalBinaryBare(msg))
+// }
 
-// GetLogicCallConfirm gets a logic confirm from the store
-func (k Keeper) GetLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) *types.MsgConfirmLogicCall {
-	store := ctx.KVStore(k.storeKey)
-	data := store.Get(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val))
-	if data == nil {
-		return nil
-	}
-	out := types.MsgConfirmLogicCall{}
-	k.cdc.MustUnmarshalBinaryBare(data, &out)
-	return &out
-}
+// // GetLogicCallConfirm gets a logic confirm from the store
+// func (k Keeper) GetLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) *types.MsgConfirmLogicCall {
+// 	store := ctx.KVStore(k.storeKey)
+// 	data := store.Get(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val))
+// 	if data == nil {
+// 		return nil
+// 	}
+// 	out := types.MsgConfirmLogicCall{}
+// 	k.cdc.MustUnmarshalBinaryBare(data, &out)
+// 	return &out
+// }
 
-// DeleteLogicCallConfirm deletes a logic confirm from the store
-func (k Keeper) DeleteLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) {
-	ctx.KVStore(k.storeKey).Delete(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val))
-}
+// // DeleteLogicCallConfirm deletes a logic confirm from the store
+// func (k Keeper) DeleteLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) {
+// 	ctx.KVStore(k.storeKey).Delete(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val))
+// }
 
-// IterateLogicConfirmByNonce iterates over all logic confirms stored by nonce
-func (k Keeper) IterateLogicConfirmByInvalidationIdAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, cb func([]byte, *types.MsgConfirmLogicCall) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicConfirm)
-	iter := prefixStore.Iterator(prefixRange(append(invalidationId, types.UInt64Bytes(invalidationNonce)...)))
-	defer iter.Close()
+// // IterateLogicConfirmByNonce iterates over all logic confirms stored by nonce
+// func (k Keeper) IterateLogicConfirmByInvalidationIdAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, cb func([]byte, *types.MsgConfirmLogicCall) bool) {
+// 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicConfirm)
+// 	iter := prefixStore.Iterator(prefixRange(append(invalidationId, types.UInt64Bytes(invalidationNonce)...)))
+// 	defer iter.Close()
 
-	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgConfirmLogicCall{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
-		// cb returns true to stop early
-		if cb(iter.Key(), &confirm) {
-			break
-		}
-	}
-}
+// 	for ; iter.Valid(); iter.Next() {
+// 		confirm := types.MsgConfirmLogicCall{}
+// 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
+// 		// cb returns true to stop early
+// 		if cb(iter.Key(), &confirm) {
+// 			break
+// 		}
+// 	}
+// }
 
-// GetLogicConfirmsByInvalidationIdAndNonce returns the logic call confirms
-func (k Keeper) GetLogicConfirmByInvalidationIdAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) (out []types.MsgConfirmLogicCall) {
-	k.IterateLogicConfirmByInvalidationIdAndNonce(ctx, invalidationId, invalidationNonce, func(_ []byte, msg *types.MsgConfirmLogicCall) bool {
-		out = append(out, *msg)
-		return false
-	})
-	return
-}
+// // GetLogicConfirmsByInvalidationIdAndNonce returns the logic call confirms
+// func (k Keeper) GetLogicConfirmByInvalidationIdAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) (out []types.MsgConfirmLogicCall) {
+// 	k.IterateLogicConfirmByInvalidationIdAndNonce(ctx, invalidationId, invalidationNonce, func(_ []byte, msg *types.MsgConfirmLogicCall) bool {
+// 		out = append(out, *msg)
+// 		return false
+// 	})
+// 	return
+// }
 
 /////////////////////////////
 //       PARAMETERS        //
