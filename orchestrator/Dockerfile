@@ -1,11 +1,10 @@
-FROM fedora:33 AS rust
+FROM rust:1.50
 
-ENV PATH=$PATH:$HOME/.cargo/bin
-
-RUN dnf install -y git make gcc gcc-c++ which iproute iputils procps-ng vim-minimal tmux net-tools htop tar jq npm openssl-devel perl
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-
-FROM rust AS orchestrator
+# haven't found sccache to improve docker build times
+#RUN cargo install sccache --verbose
+#ENV RUSTC_WRAPPER="/usr/local/cargo/bin/sccache"
 
 COPY . .
-CMD 'cargo build --all --release'
+RUN cargo build --workspace --release
+
+CMD ["cargo run --release test_runner"]

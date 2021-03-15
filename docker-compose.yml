@@ -1,27 +1,41 @@
 version: '3'
-#-p 9090:9090 -p 26657:26657 -p 1317:1317
 
 services:
-  peggy:
-    build:
-      context: ./module
-      dockerfile: ./Dockerfile
-    ports:
-      - "26656:26656"
-      - "26657:26657"
-      - "9090:9090"
-
   ethereum:
-    build:
-      context: ./solidity
-      dockerfile: ./Dockerfile
-    ports:
-      - "8545:8545"
-      - "8546:8546"
-      - "30303:30303"
-      - "30304:30304"
+    image: ethereum/client-go:stable
 
-  orchestrator:
+  orchestrator_a:
     build:
       context: ./orchestrator
       dockerfile: ./Dockerfile
+    depends_on:
+      - ethereum
+      - peggy_0
+
+  peggy_0:
+    build:
+      context: ./module
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./testdata/testchain/peggy_0:/root/home
+
+  peggy_1:
+    build:
+      context: ./module
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./testdata/testchain/peggy_1:/root/home
+
+  peggy_2:
+    build:
+      context: ./module
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./testdata/testchain/peggy_2:/root/home
+
+  peggy_3:
+    build:
+      context: ./module
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./testdata/testchain/peggy_3:/root/home
