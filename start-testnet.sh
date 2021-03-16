@@ -68,13 +68,13 @@ coins="100000000000stake,100000000000samoleans"
 
 # Initialize the 3 home directories and add some keys
 $PEGGY $home0 $cid init n0 &>/dev/null
-$PEGGY $home0 keys add val $kbt &>/dev/null
+echo "$n0name"_COSMOS_PHRASE=$($PEGGY $home0 keys add val $kbt --output json | jq .mnemonic) >> $n0dir/orchestrator.env
 $PEGGY $home1 $cid init n1 &>/dev/null
-$PEGGY $home1 keys add val $kbt &>/dev/null
+echo "$n1name"_COSMOS_PHRASE=$($PEGGY $home1 keys add val $kbt --output json | jq .mnemonic) >> $n1dir/orchestrator.env
 $PEGGY $home2 $cid init n2 &>/dev/null
-$PEGGY $home2 keys add val $kbt &>/dev/null
+echo "$n2name"_COSMOS_PHRASE=$($PEGGY $home2 keys add val $kbt --output json | jq .mnemonic) >> $n2dir/orchestrator.env
 $PEGGY $home3 $cid init n3 &>/dev/null
-$PEGGY $home3 keys add val $kbt &>/dev/null
+echo "$n3name"_COSMOS_PHRASE=$($PEGGY $home3 keys add val $kbt --output json | jq .mnemonic) >> $n3dir/orchestrator.env
 
 # Add some keys and init feeder configs
 #$FED $home0 config init &>/dev/null
@@ -114,11 +114,6 @@ cp $n0cfgDir/genesis.json $n2cfgDir/genesis.json
 cp $n0cfgDir/genesis.json $n3cfgDir/genesis.json
 
 # Switch sed command in the case of linux
-SED="sed -i "
-if [ `uname` = 'Linux' ]; then
-   SED="sed -i"
-fi
-
 fsed() {
   if [ `uname` = 'Linux' ]; then
     sed -i "$@"
@@ -181,6 +176,40 @@ echo "$PEGGY --home home start --pruning=nothing --grpc.address="$n2name:9090" >
 echo "$PEGGY --home home start --pruning=nothing --grpc.address="$n3name:9090" > home.n3.log" >> $n3dir/startup.sh
 chmod +x $home_dir/*/startup.sh
 
+echo "Gathering keys for orchestrator"
+#--cosmos-key=<ckey>          The Cosmos private key of the validator
+#            --ethereum-key=<ekey>        The Ethereum private key of the validator
+#            --cosmos-legacy-rpc=<curl>   The Cosmos RPC url, usually the validator
+#            --cosmos-grpc=<gurl>         The Cosmos gRPC url, usually the validator
+#            --ethereum-rpc=<eurl>        The Ethereum RPC url, should be a self hosted node
+#            --fees=<denom>               The Cosmos Denom in which to pay Cosmos chain fees
+#            --contract-address=<addr>    The Ethereum contract address for Peggy, this is temporary
+
+echo "$n0name"_COSMOS_GRPC="http://$n0name:9090" >> $n0dir/orchestrator.env
+echo "$n0name"_COSMOS_RPC="http://$n0name:26657" >> $n0dir/orchestrator.env
+echo "$n0name"_COSMOS_KEY=$(jq .priv_key.value $n0cfgDir/priv_validator_key.json) >> $n0dir/orchestrator.env
+echo "$n0name"_DENOM=stake >> $n0dir/orchestrator.env
+echo "$n0name"_ETH_RPC=http://ethereum:8545 >> $n0dir/orchestrator.env
+
+echo "$n1name"_COSMOS_GRPC="http://$n1name:9090" >> $n1dir/orchestrator.env
+echo "$n1name"_COSMOS_RPC="http://$n1name:26657" >> $n1dir/orchestrator.env
+echo "$n1name"_COSMOS_KEY=$(jq .priv_key.value $n1cfgDir/priv_validator_key.json) >> $n1dir/orchestrator.env
+echo "$n1name"_DENOM=stake >> $n1dir/orchestrator.env
+echo "$n1name"_ETH_RPC=http://ethereum:8545 >> $n1dir/orchestrator.env
+
+echo "$n2name"_COSMOS_GRPC="http://$n2name:9090" >> $n2dir/orchestrator.env
+echo "$n2name"_COSMOS_RPC="http://$n2name:26657" >> $n2dir/orchestrator.env
+echo "$n2name"_COSMOS_KEY=$(jq .priv_key.value $n2cfgDir/priv_validator_key.json) >> $n2dir/orchestrator.env
+echo "$n2name"_DENOM=stake >> $n2dir/orchestrator.env
+echo "$n2name"_ETH_RPC=http://ethereum:8545 >> $n2dir/orchestrator.env
+
+echo "$n3name"_COSMOS_GRPC="http://$n3name:9090" >> $n3dir/orchestrator.env
+echo "$n3name"_COSMOS_RPC="http://$n3name:26657" >> $n3dir/orchestrator.env
+echo "$n3name"_COSMOS_KEY=$(jq .priv_key.value $n3cfgDir/priv_validator_key.json) >> $n3dir/orchestrator.env
+echo "$n3name"_DENOM=stake >> $n3dir/orchestrator.env
+echo "$n3name"_ETH_RPC=http://ethereum:8545 >> $n3dir/orchestrator.env
+
+exit 0
 echo "Building images"
 docker-compose build
 

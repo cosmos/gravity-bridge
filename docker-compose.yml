@@ -4,6 +4,14 @@ services:
   ethereum:
     image: ethereum/client-go:stable
 
+  contract_deployer:
+    build:
+      context: ./solidity
+      dockerfile: ./Dockerfile
+    depends_on:
+      - ethereum
+      - peggy_0
+
   orchestrator_0:
     build:
       context: ./orchestrator
