@@ -26,6 +26,8 @@ services:
       dockerfile: ./Dockerfile
     volumes:
       - ./testdata/testchain/peggy_0:/root/home
+    depends_on:
+      - ethereum
 
   peggy_1:
     build:
@@ -33,6 +35,9 @@ services:
       dockerfile: ./Dockerfile
     volumes:
       - ./testdata/testchain/peggy_1:/root/home
+    depends_on:
+      - ethereum
+      - peggy_0
 
   peggy_2:
     build:
@@ -40,6 +45,9 @@ services:
       dockerfile: ./Dockerfile
     volumes:
       - ./testdata/testchain/peggy_2:/root/home
+    depends_on:
+      - ethereum
+      - peggy_0
 
   peggy_3:
     build:
@@ -47,3 +55,6 @@ services:
       dockerfile: ./Dockerfile
     volumes:
       - ./testdata/testchain/peggy_3:/root/home
+    depends_on:
+      - ethereum
+      - peggy_0

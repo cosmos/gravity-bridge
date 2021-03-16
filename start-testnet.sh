@@ -209,10 +209,12 @@ echo "$n3name"_COSMOS_KEY=$(jq .priv_key.value $n3cfgDir/priv_validator_key.json
 echo "$n3name"_DENOM=stake >> $n3dir/orchestrator.env
 echo "$n3name"_ETH_RPC=http://ethereum:8545 >> $n3dir/orchestrator.env
 
-exit 0
 echo "Building images"
 docker-compose build
 
+echo "Applying contracts"
+docker-compose run contract_deployer
+
 echo "Starting testnet"
-docker-compose up --no-start
-docker-compose start
+docker-compose up --no-start ethereum $n0name $n1name $n2name $n3name
+docker-compose start ethereum $n0name $n1name $n2name $n3name
