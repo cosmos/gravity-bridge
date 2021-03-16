@@ -15,6 +15,24 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	attestationTally(ctx, k)
 	cleanupTimedOutBatches(ctx, k)
 	cleanupTimedOutLogicCalls(ctx, k)
+	createValsets(ctx, k)
+}
+
+func createValsets(ctx sdk.Context, k keeper.Keeper) {
+	// Auto ValsetRequest Creation.
+	/*
+			1. If there are no valset requests, create a new one.
+			2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
+			   This will make sure the unbonding validator has to provide an attestation to a new Valset
+		       that excludes him before he completely Unbonds.  Otherwise he will be slashed
+			3. If power change between validators of CurrentValset and latest valset request is > 5%
+		**/
+	latestValset := k.GetLatestValset(ctx)
+	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
+
+	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
+		k.SetValsetRequest(ctx)
+	}
 }
 
 func slashing(ctx sdk.Context, k keeper.Keeper) {
@@ -204,21 +222,6 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 		}
 		// then we set the latest slashed valset  nonce
 		k.SetLastSlashedValsetNonce(ctx, vs.Nonce)
-	}
-
-	// Auto ValsetRequest Creation.
-	/*
-			1. If there are no valset requests, create a new one.
-			2. If there is atleast one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
-			   This will make sure the unbonding validator has to provide an attestation to a new Valset
-		       that excludes him before he completely Unbonds.  Otherwise he will be slashed
-			3. If power change between validators of CurrentValset and latest valset request is > 5%
-		**/
-	latestValset := k.GetLatestValset(ctx)
-	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
-
-	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
-		k.SetValsetRequest(ctx)
 	}
 }
 
