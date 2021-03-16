@@ -4,7 +4,7 @@ services:
   ethereum:
     image: ethereum/client-go:stable
 
-  orchestrator_a:
+  orchestrator_0:
     build:
       context: ./orchestrator
       dockerfile: ./Dockerfile

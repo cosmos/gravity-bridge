@@ -47,12 +47,6 @@ n3cfg="$n3cfgDir/config.toml"
 #fd1cfg="$n1dir/config.yaml"
 #fd2cfg="$n2dir/config.yaml"
 
-# App config files for nodes
-n0app="$n0cfgDir/app.toml"
-n1app="$n1cfgDir/app.toml"
-n2app="$n2cfgDir/app.toml"
-n3app="$n3cfgDir/app.toml"
-
 # Common flags
 kbt="--keyring-backend test"
 cid="--chain-id $CHAINID"
@@ -120,25 +114,33 @@ cp $n0cfgDir/genesis.json $n2cfgDir/genesis.json
 cp $n0cfgDir/genesis.json $n3cfgDir/genesis.json
 
 # Switch sed command in the case of linux
-SED="sed -i ''"
+SED="sed -i "
 if [ `uname` = 'Linux' ]; then
    SED="sed -i"
 fi
+
+fsed() {
+  if [ `uname` = 'Linux' ]; then
+    sed -i "$@"
+  else
+    sed -i '' "$@"
+  fi
+}
 
 # Change ports on n0 val
 #$SED 's#"tcp://127.0.0.1:26657"#"tcp://0.0.0.0:26657"#g' $n0cfg
 #$SED 's#addr_book_strict = true#addr_book_strict = false#g' $n0cfg
 #$SED 's#allow_duplicate_ip = false#allow_duplicate_ip = true#g' $n0cfg
-$SED 's#external_address = ""#external_address = "tcp://'$n0name:26657'"#g' $n0cfg
+fsed -i '' 's#external_address = ""#external_address = "tcp://'$n0name:26657'"#g' $n0cfg
 
 # Change ports on n1 val
 #$SED 's#"tcp://127.0.0.1:26657"#"tcp://0.0.0.0:26667"#g' $n1cfg
 #$SED 's#"tcp://0.0.0.0:26656"#"tcp://0.0.0.0:26666"#g' $n1cfg
 #$SED 's#"localhost:6060"#"localhost:6061"#g' $n1cfg
 #$SED 's#"0.0.0.0:9090"#"0.0.0.0:9091"#g' $n1app
-$SED 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n1cfg
+fsed 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n1cfg
 #$SED 's#addr_book_strict = true#addr_book_strict = false#g' $n1cfg
-$SED 's#external_address = ""#external_address = "tcp://'$n1name':26657"#g' $n1cfg
+fsed 's#external_address = ""#external_address = "tcp://'$n1name':26657"#g' $n1cfg
 #$SED 's#allow_duplicate_ip = false#allow_duplicate_ip = true#g' $n1cfg
 
 # Change ports on n1 feeder
@@ -147,17 +149,16 @@ $SED 's#external_address = ""#external_address = "tcp://'$n1name':26657"#g' $n1c
 
 # Change ports on n2 val
 #$SED 's#addr_book_strict = true#addr_book_strict = false#g' $n2cfg
-$SED 's#external_address = ""#external_address = "tcp://'$n2name':26657"#g' $n2cfg
+fsed 's#external_address = ""#external_address = "tcp://'$n2name':26657"#g' $n2cfg
 #$SED 's#"tcp://127.0.0.1:26657"#"tcp://0.0.0.0:26677"#g' $n2cfg
 #$SED 's#"tcp://0.0.0.0:26656"#"tcp://0.0.0.0:26676"#g' $n2cfg
 #$SED 's#"localhost:6060"#"localhost:6062"#g' $n2cfg
 #$SED 's#"0.0.0.0:9090"#"0.0.0.0:9092"#g' $n2app
 #$SED 's#allow_duplicate_ip = false#allow_duplicate_ip = true#g' $n2cfg
-$SED 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n2cfg
+fsed 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n2cfg
 
-$SED 's#external_address = ""#external_address = "tcp://'$n3name':26657"#g' $n3cfg
-$SED 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n3cfg
-
+fsed 's#external_address = ""#external_address = "tcp://'$n3name':26657"#g' $n3cfg
+fsed 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n3cfg
 
 # Change ports on n2 feeder
 #$SED 's#http://localhost:9090#http://localhost:9092#g' $fd1cfg
@@ -169,9 +170,9 @@ peer1="$($PEGGY $home1 tendermint show-node-id)@$n1name:26656"
 peer2="$($PEGGY $home2 tendermint show-node-id)@$n2name:26656"
 peer3="$($PEGGY $home3 tendermint show-node-id)@$n3name:26656"
 # First node has peers already set when collecting gentxs
-$SED 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer2','$peer3'"#g' $n1cfg
-$SED 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer1','$peer3'"#g' $n2cfg
-$SED 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer1','$peer2'"#g' $n3cfg
+fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer2','$peer3'"#g' $n1cfg
+fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer1','$peer3'"#g' $n2cfg
+fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer1','$peer2'"#g' $n3cfg
 
 echo "Writing start commands"
 echo "$PEGGY --home home start --pruning=nothing --grpc.address="$n0name:9090" > home.n0.log" >> $n0dir/startup.sh
