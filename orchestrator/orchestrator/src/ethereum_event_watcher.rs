@@ -13,12 +13,12 @@ use peggy_utils::{
         TransactionBatchExecutedEvent, ValsetUpdatedEvent,
     },
 };
-use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
 use web30::jsonrpc::error::Web3Error;
 
-const RETRY_TIME: Duration = Duration::from_secs(5);
+use crate::get_with_retry::get_block_number_with_retry;
+use crate::get_with_retry::get_net_version_with_retry;
 
 pub async fn check_for_events(
     web3: &Web3,
@@ -30,7 +30,8 @@ pub async fn check_for_events(
     starting_block: Uint256,
 ) -> Result<Uint256, PeggyError> {
     let our_cosmos_address = our_private_key.to_public_key().unwrap().to_address();
-    let latest_block = web3.eth_block_number().await? - get_block_delay(web3).await;
+    let latest_block = get_block_number_with_retry(web3).await;
+    let latest_block = latest_block - get_block_delay(web3).await;
 
     let deposits = web3
         .check_for_events(
@@ -210,15 +211,4 @@ pub async fn get_block_delay(web3: &Web3) -> Uint256 {
         // assume the safe option (POW) where we don't know
         _ => 6u8.into(),
     }
-}
-
-/// gets the current block number, no matter how long it takes
-async fn get_net_version_with_retry(web3: &Web3) -> u64 {
-    let mut res = web3.net_version().await;
-    while res.is_err() {
-        error!("Failed to get net version! Is your Eth node working?");
-        delay_for(RETRY_TIME).await;
-        res = web3.net_version().await;
-    }
-    res.unwrap()
 }
