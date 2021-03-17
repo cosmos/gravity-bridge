@@ -3,6 +3,8 @@ version: '3'
 services:
   ethereum:
     image: ethereum/client-go:stable
+    ports:
+    - "8545:8545"
 
   contract_deployer:
     build:
@@ -28,6 +30,11 @@ services:
       - ./testdata/testchain/peggy_0:/root/home
     depends_on:
       - ethereum
+    ports:
+    - "26656:26656"
+    - "26657:26657"
+    - "1317:1317"
+    - "9090:9090"
 
   peggy_1:
     build:

@@ -123,36 +123,33 @@ fsed() {
 }
 
 # Change ports on n0 val
-#$SED 's#"tcp://127.0.0.1:26657"#"tcp://0.0.0.0:26657"#g' $n0cfg
-#$SED 's#addr_book_strict = true#addr_book_strict = false#g' $n0cfg
-#$SED 's#allow_duplicate_ip = false#allow_duplicate_ip = true#g' $n0cfg
-fsed -i '' 's#external_address = ""#external_address = "tcp://'$n0name:26657'"#g' $n0cfg
+fsed "s#\"tcp://127.0.0.1:26656\"#\"tcp://0.0.0.0:26656\"#g" $n0cfg
+fsed "s#\"tcp://127.0.0.1:26657\"#\"tcp://0.0.0.0:26657\"#g" $n0cfg
+fsed 's#addr_book_strict = true#addr_book_strict = false#g' $n0cfg
+fsed 's#external_address = ""#external_address = "tcp://'$n0name:26656'"#g' $n0cfg
 
 # Change ports on n1 val
-#$SED 's#"tcp://127.0.0.1:26657"#"tcp://0.0.0.0:26667"#g' $n1cfg
-#$SED 's#"tcp://0.0.0.0:26656"#"tcp://0.0.0.0:26666"#g' $n1cfg
-#$SED 's#"localhost:6060"#"localhost:6061"#g' $n1cfg
-#$SED 's#"0.0.0.0:9090"#"0.0.0.0:9091"#g' $n1app
+fsed "s#\"tcp://127.0.0.1:26656\"#\"tcp://0.0.0.0:26656\"#g" $n1cfg
+fsed "s#\"tcp://127.0.0.1:26657\"#\"tcp://0.0.0.0:26657\"#g" $n1cfg
 fsed 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n1cfg
-#$SED 's#addr_book_strict = true#addr_book_strict = false#g' $n1cfg
-fsed 's#external_address = ""#external_address = "tcp://'$n1name':26657"#g' $n1cfg
-#$SED 's#allow_duplicate_ip = false#allow_duplicate_ip = true#g' $n1cfg
+fsed 's#addr_book_strict = true#addr_book_strict = false#g' $n1cfg
+fsed 's#external_address = ""#external_address = "tcp://'$n1name':26656"#g' $n1cfg
 
 # Change ports on n1 feeder
 #$SED 's#http://localhost:9090#http://localhost:9091#g' $fd1cfg
 #$SED 's#http://http://localhost:26657#http://http://localhost:26667#g' $fd1cfg
 
 # Change ports on n2 val
-#$SED 's#addr_book_strict = true#addr_book_strict = false#g' $n2cfg
-fsed 's#external_address = ""#external_address = "tcp://'$n2name':26657"#g' $n2cfg
-#$SED 's#"tcp://127.0.0.1:26657"#"tcp://0.0.0.0:26677"#g' $n2cfg
-#$SED 's#"tcp://0.0.0.0:26656"#"tcp://0.0.0.0:26676"#g' $n2cfg
-#$SED 's#"localhost:6060"#"localhost:6062"#g' $n2cfg
-#$SED 's#"0.0.0.0:9090"#"0.0.0.0:9092"#g' $n2app
-#$SED 's#allow_duplicate_ip = false#allow_duplicate_ip = true#g' $n2cfg
+fsed "s#\"tcp://127.0.0.1:26656\"#\"tcp://0.0.0.0:26656\"#g" $n2cfg
+fsed "s#\"tcp://127.0.0.1:26657\"#\"tcp://0.0.0.0:26657\"#g" $n2cfg
+fsed 's#addr_book_strict = true#addr_book_strict = false#g' $n2cfg
+fsed 's#external_address = ""#external_address = "tcp://'$n2name':26656"#g' $n2cfg
 fsed 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n2cfg
 
-fsed 's#external_address = ""#external_address = "tcp://'$n3name':26657"#g' $n3cfg
+fsed "s#\"tcp://127.0.0.1:26656\"#\"tcp://0.0.0.0:26656\"#g" $n3cfg
+fsed "s#\"tcp://127.0.0.1:26657\"#\"tcp://0.0.0.0:26657\"#g" $n3cfg
+fsed 's#addr_book_strict = true#addr_book_strict = false#g' $n3cfg
+fsed 's#external_address = ""#external_address = "tcp://'$n3name':26656"#g' $n3cfg
 fsed 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n3cfg
 
 # Change ports on n2 feeder
@@ -170,10 +167,10 @@ fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer1','$peer3'"#g'
 fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer1','$peer2'"#g' $n3cfg
 
 echo "Writing start commands"
-echo "$PEGGY --home home start --pruning=nothing --grpc.address="$n0name:9090" > home.n0.log" >> $n0dir/startup.sh
-echo "$PEGGY --home home start --pruning=nothing --grpc.address="$n1name:9090" > home.n1.log" >> $n1dir/startup.sh
-echo "$PEGGY --home home start --pruning=nothing --grpc.address="$n2name:9090" > home.n2.log" >> $n2dir/startup.sh
-echo "$PEGGY --home home start --pruning=nothing --grpc.address="$n3name:9090" > home.n3.log" >> $n3dir/startup.sh
+echo "$PEGGY --home home start --pruning=nothing > home.n0.log" >> $n0dir/startup.sh
+echo "$PEGGY --home home start --pruning=nothing > home.n1.log" >> $n1dir/startup.sh
+echo "$PEGGY --home home start --pruning=nothing > home.n2.log" >> $n2dir/startup.sh
+echo "$PEGGY --home home start --pruning=nothing > home.n3.log" >> $n3dir/startup.sh
 chmod +x $home_dir/*/startup.sh
 
 echo "Gathering keys for orchestrator"
