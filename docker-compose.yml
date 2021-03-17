@@ -2,7 +2,9 @@ version: '3'
 
 services:
   ethereum:
-    image: ethereum/client-go:stable
+    build:
+      context: .
+      dockerfile: ./ethereum/Dockerfile
     ports:
     - "8545:8545"
 
