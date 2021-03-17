@@ -13,9 +13,12 @@ use peggy_utils::{
         TransactionBatchExecutedEvent, ValsetUpdatedEvent,
     },
 };
+use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
 use web30::jsonrpc::error::Web3Error;
+
+const RETRY_TIME: Duration = Duration::from_secs(5);
 
 pub async fn check_for_events(
     web3: &Web3,
@@ -27,7 +30,7 @@ pub async fn check_for_events(
     starting_block: Uint256,
 ) -> Result<Uint256, PeggyError> {
     let our_cosmos_address = our_private_key.to_public_key().unwrap().to_address();
-    let latest_block = web3.eth_block_number().await?;
+    let latest_block = web3.eth_block_number().await? - get_block_delay(web3).await;
 
     let deposits = web3
         .check_for_events(
@@ -172,4 +175,50 @@ pub async fn check_for_events(
             "Failed to get logs!".to_string(),
         )))
     }
+}
+
+/// The number of blocks behind the 'latest block' on Ethereum our event checking should be.
+/// Ethereum does not have finality and as such is subject to chain reorgs and temporary forks
+/// if we check for events up to the very latest block we may process an event which did not
+/// 'actually occur' in the longest POW chain.
+///
+/// Obviously we must chose some delay in order to prevent incorrect events from being claimed
+///
+/// For EVM chains with finality the correct value for this is zero. As there's no need
+/// to concern ourselves with re-orgs or forking. This function checks the netID of the
+/// provided Ethereum RPC and adjusts the block delay accordingly
+///
+/// The value used here for Ethereum is a balance between being reasonably fast and reasonably secure
+/// As you can see on https://etherscan.io/blocks_forked uncles (one block deep reorgs)
+/// occur once every few minutes. Two deep once or twice a day.
+/// https://etherscan.io/chart/uncles
+/// Let's make a conservative assumption of 1% chance of an uncle being a two block deep reorg
+/// (actual is closer to 0.3%) and assume that continues as we increase the depth.
+/// Given an uncle every 2.8 minutes, a 6 deep reorg would be 2.8 minutes * (100^5) or one
+/// 6 deep reorg every 53,272 years.
+///
+pub async fn get_block_delay(web3: &Web3) -> Uint256 {
+    let net_version = get_net_version_with_retry(web3).await;
+
+    match net_version {
+        // Mainline Ethereum, Ethereum classic, or the Ropsten, Mordor testnets
+        // all pow Chains
+        1 | 3 | 7 => 6u8.into(),
+        // Rinkeby, Goerli, Kotti, our own Peggy Ethereum testnet, and 'dev' respectively
+        // all non-pow chains
+        4 | 5 | 6 | 15 | 2018 => 0u8.into(),
+        // assume the safe option (POW) where we don't know
+        _ => 6u8.into(),
+    }
+}
+
+/// gets the current block number, no matter how long it takes
+async fn get_net_version_with_retry(web3: &Web3) -> u64 {
+    let mut res = web3.net_version().await;
+    while res.is_err() {
+        error!("Failed to get net version! Is your Eth node working?");
+        delay_for(RETRY_TIME).await;
+        res = web3.net_version().await;
+    }
+    res.unwrap()
 }
