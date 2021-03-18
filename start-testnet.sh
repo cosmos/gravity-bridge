@@ -209,9 +209,10 @@ echo "$n3name"_ETH_RPC=http://ethereum:8545 >> $n3dir/orchestrator.env
 echo "Building images"
 docker-compose build
 
-echo "Applying contracts"
-docker-compose run contract_deployer
-
 echo "Starting testnet"
 docker-compose up --no-start ethereum $n0name $n1name $n2name $n3name
 docker-compose start ethereum $n0name $n1name $n2name $n3name
+
+echo "Applying contracts"
+docker-compose up contract_deployer
+

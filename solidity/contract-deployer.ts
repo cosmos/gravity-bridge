@@ -178,7 +178,8 @@ async function deploy() {
 
 
     const arbitrary_logic_path = "/peggy/solidity/artifacts/contracts/TestUniswapLiquidity.sol/TestUniswapLiquidity.json"
-    if (fs.existsSync(arbitrary_logic_path)) { 
+    if (fs.existsSync(arbitrary_logic_path)) {
+      console.log("Starting arbitrary logic test")
       const { abi, bytecode } = getContractArtifacts(arbitrary_logic_path);
       const liquidityFactory = new ethers.ContractFactory(abi, bytecode, wallet);
       const testUniswapLiquidity = (await liquidityFactory.deploy(erc20TestAddress)) as TestUniswapLiquidity;

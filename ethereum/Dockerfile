@@ -1,5 +1,7 @@
 FROM ethereum/client-go:stable
 
+RUN apk add --no-cache curl
+
 COPY tests/assets/ETHGenesis.json ETHGenesis.json
 
 RUN geth --identity "PeggyTestnet" \
@@ -9,8 +11,11 @@ RUN geth --identity "PeggyTestnet" \
 ENTRYPOINT geth --identity "PeggyTestnet" --nodiscover \
            --networkid 15 \
            --mine \
-           --rpc \
            --http \
+           --http.port "8545" \
+           --http.addr "0.0.0.0" \
+           --http.corsdomain "*" \
+           --http.vhosts "*" \
            --miner.threads=1 \
            --nousb \
            --verbosity=5 \
