@@ -213,6 +213,15 @@ echo "Starting testnet"
 docker-compose up --no-start ethereum $n0name $n1name $n2name $n3name
 docker-compose start ethereum $n0name $n1name $n2name $n3name
 
+
+
+echo "Waiting for cosmos cluster to sync"
+while $(curl http://$peggy_0:26657/status | jq .result.sync_info.catching_up)
+do
+    printf '.'
+    sleep 5
+done
+
 echo "Applying contracts"
 docker-compose up contract_deployer
 
