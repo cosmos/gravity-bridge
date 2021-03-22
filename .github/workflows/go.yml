@@ -31,4 +31,4 @@ jobs:
           go-version: ^1.16
       - uses: actions/checkout@v2
       - name: Test
-        run: cd module && go test -mod=readonly -timeout 30m -coverprofile=profile.out -covermode=atomic -r
+        run: cd module && go test ./... -mod=readonly -timeout 30m -coverprofile=profile.out -covermode=atomic -r
