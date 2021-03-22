@@ -65,7 +65,7 @@ func AddKeyCommand() *cobra.Command {
 
 type EthereumKeyOutput struct {
 	PublicKey  string `json:"public_key"`
-	PrivateKey string `json:"public_key"`
+	PrivateKey string `json:"private_key"`
 	Address    string `json:"address"`
 }
 
