@@ -245,13 +245,16 @@ func (k Keeper) GetConfirmation(ctx sdk.Context, nonce uint64, validator sdk.Acc
 }
 
 // SetValsetConfirm sets a valset confirmation
-func (k Keeper) SetConfirmirmation(ctx sdk.Context, confirm *types.MsgSubmitConfirm) []byte {
+func (k Keeper) SetConfirmirmation(ctx sdk.Context, msg *types.MsgSubmitConfirm) []byte {
 	store := ctx.KVStore(k.storeKey)
 	// we need to unpack and based on the URL
-	addr, err := sdk.AccAddressFromBech32(confirm.Signer)
+	addr, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
 		panic(err)
 	}
+
+	msg.GetConfirm()
+
 	key := types.GetValsetConfirmKey(valsetConf.Nonce, addr)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(&valsetConf))
 	return key

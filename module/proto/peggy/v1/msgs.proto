@@ -106,6 +106,8 @@ message MsgCancelSendToEthResponse {}
 
 // MsgSubmitConfirm
 message MsgSubmitConfirm {
+  option (gogoproto.goproto_getters) = false;
+
   ConfirmType         confirm_type = 1;
   google.protobuf.Any confirm      = 2 [
     (cosmos_proto.accepts_interface) = "Confirm"
@@ -117,6 +119,8 @@ message MsgSubmitConfirmResponse {}
 
 // MsgSubmitClaim
 message MsgSubmitClaim {
+  option (gogoproto.goproto_getters) = false;
+
   ClaimType           claim_type = 1;
   google.protobuf.Any claim      = 2 [
     (cosmos_proto.accepts_interface) = "EthereumClaim"

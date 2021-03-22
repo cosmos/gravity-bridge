@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/althea-net/peggy/module/x/peggy/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -237,248 +236,248 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 }
 
 // ConfirmLogicCall handles MsgConfirmLogicCall
-func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogicCall) (*types.MsgConfirmLogicCallResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-	invalidationIdBytes, err := hex.DecodeString(msg.InvalidationId)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "invalidation id encoding")
-	}
+// func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogicCall) (*types.MsgConfirmLogicCallResponse, error) {
+// 	ctx := sdk.UnwrapSDKContext(c)
+// 	invalidationIdBytes, err := hex.DecodeString(msg.InvalidationId)
+// 	if err != nil {
+// 		return nil, sdkerrors.Wrap(types.ErrInvalid, "invalidation id encoding")
+// 	}
 
-	// fetch the outgoing logic given the nonce
-	logic := k.GetOutgoingLogicCall(ctx, invalidationIdBytes, msg.InvalidationNonce)
-	if logic == nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find logic")
-	}
+// 	// fetch the outgoing logic given the nonce
+// 	logic := k.GetOutgoingLogicCall(ctx, invalidationIdBytes, msg.InvalidationNonce)
+// 	if logic == nil {
+// 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find logic")
+// 	}
 
-	peggyID := k.GetPeggyID(ctx)
-	checkpoint, err := logic.GetCheckpoint(peggyID)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
-	}
+// 	peggyID := k.GetPeggyID(ctx)
+// 	checkpoint, err := logic.GetCheckpoint(peggyID)
+// 	if err != nil {
+// 		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
+// 	}
 
-	sigBytes, err := hex.DecodeString(msg.Signature)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
-	}
+// 	sigBytes, err := hex.DecodeString(msg.Signature)
+// 	if err != nil {
+// 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
+// 	}
 
-	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, valaddr)
-	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
-	}
+// 	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+// 	validator := k.GetOrchestratorValidator(ctx, valaddr)
+// 	if validator == nil {
+// 		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
+// 		if sval == nil {
+// 			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+// 		}
+// 		validator = sval.GetOperator()
+// 	}
 
-	ethAddress := k.GetEthAddress(ctx, validator)
-	if ethAddress == "" {
-		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
-	}
+// 	ethAddress := k.GetEthAddress(ctx, validator)
+// 	if ethAddress == "" {
+// 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
+// 	}
 
-	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with peggy-id %s with checkpoint %s found %s", ethAddress, peggyID, hex.EncodeToString(checkpoint), msg.Signature))
-	}
+// 	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
+// 	if err != nil {
+// 		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with peggy-id %s with checkpoint %s found %s", ethAddress, peggyID, hex.EncodeToString(checkpoint), msg.Signature))
+// 	}
 
-	// check if we already have this confirm
-	if k.GetLogicCallConfirm(ctx, invalidationIdBytes, msg.InvalidationNonce, valaddr) != nil {
-		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
-	}
+// 	// check if we already have this confirm
+// 	if k.GetLogicCallConfirm(ctx, invalidationIdBytes, msg.InvalidationNonce, valaddr) != nil {
+// 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
+// 	}
 
-	k.SetLogicCallConfirm(ctx, msg)
+// 	k.SetLogicCallConfirm(ctx, msg)
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-		),
-	)
+// 	ctx.EventManager().EmitEvent(
+// 		sdk.NewEvent(
+// 			sdk.EventTypeMessage,
+// 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+// 		),
+// 	)
 
-	return nil, nil
-}
+// 	return nil, nil
+// }
 
-// DepositClaim handles MsgDepositClaim
-// TODO it is possible to submit an old msgDepositClaim (old defined as covering an event nonce that has already been
-// executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
-// should not be a security risk as 'old' events can never execute but it does store spam in the chain.
-func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (*types.MsgDepositClaimResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
+// // DepositClaim handles MsgDepositClaim
+// // TODO it is possible to submit an old msgDepositClaim (old defined as covering an event nonce that has already been
+// // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
+// // should not be a security risk as 'old' events can never execute but it does store spam in the chain.
+// func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (*types.MsgDepositClaimResponse, error) {
+// 	ctx := sdk.UnwrapSDKContext(c)
 
-	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orch)
-	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
-	}
+// 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+// 	validator := k.GetOrchestratorValidator(ctx, orch)
+// 	if validator == nil {
+// 		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
+// 		if sval == nil {
+// 			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+// 		}
+// 		validator = sval.GetOperator()
+// 	}
 
-	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
-	if val == nil || !val.IsBonded() {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in active set")
-	}
+// 	// return an error if the validator isn't in the active set
+// 	val := k.StakingKeeper.Validator(ctx, validator)
+// 	if val == nil || !val.IsBonded() {
+// 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in active set")
+// 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, err
-	}
+// 	any, err := codectypes.NewAnyWithValue(msg)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
-	}
+// 	// Add the claim to the store
+// 	_, err = k.Attest(ctx, msg, any)
+// 	if err != nil {
+// 		return nil, sdkerrors.Wrap(err, "create attestation")
+// 	}
 
-	// Emit the handle message event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
-		),
-	)
+// 	// Emit the handle message event
+// 	ctx.EventManager().EmitEvent(
+// 		sdk.NewEvent(
+// 			sdk.EventTypeMessage,
+// 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+// 			// TODO: maybe return something better here? is this the right string representation?
+// 			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+// 		),
+// 	)
 
-	return &types.MsgDepositClaimResponse{}, nil
-}
+// 	return &types.MsgDepositClaimResponse{}, nil
+// }
 
 // WithdrawClaim handles MsgWithdrawClaim
 // TODO it is possible to submit an old msgWithdrawClaim (old defined as covering an event nonce that has already been
 // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
 // should not be a security risk as 'old' events can never execute but it does store spam in the chain.
-func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim) (*types.MsgWithdrawClaimResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
+// func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim) (*types.MsgWithdrawClaimResponse, error) {
+// 	ctx := sdk.UnwrapSDKContext(c)
 
-	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orch)
-	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
-	}
+// 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+// 	validator := k.GetOrchestratorValidator(ctx, orch)
+// 	if validator == nil {
+// 		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
+// 		if sval == nil {
+// 			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+// 		}
+// 		validator = sval.GetOperator()
+// 	}
 
-	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
-	if val == nil || !val.IsBonded() {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
-	}
+// 	// return an error if the validator isn't in the active set
+// 	val := k.StakingKeeper.Validator(ctx, validator)
+// 	if val == nil || !val.IsBonded() {
+// 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
+// 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, err
-	}
+// 	any, err := codectypes.NewAnyWithValue(msg)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
-	}
+// 	// Add the claim to the store
+// 	_, err = k.Attest(ctx, msg, any)
+// 	if err != nil {
+// 		return nil, sdkerrors.Wrap(err, "create attestation")
+// 	}
 
-	// Emit the handle message event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
-		),
-	)
+// 	// Emit the handle message event
+// 	ctx.EventManager().EmitEvent(
+// 		sdk.NewEvent(
+// 			sdk.EventTypeMessage,
+// 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+// 			// TODO: maybe return something better here? is this the right string representation?
+// 			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+// 		),
+// 	)
 
-	return &types.MsgWithdrawClaimResponse{}, nil
-}
+// 	return &types.MsgWithdrawClaimResponse{}, nil
+// }
 
 // ERC20Deployed handles MsgERC20Deployed
-func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20DeployedClaim) (*types.MsgERC20DeployedClaimResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
+// func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20DeployedClaim) (*types.MsgERC20DeployedClaimResponse, error) {
+// 	ctx := sdk.UnwrapSDKContext(c)
 
-	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orch)
-	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
-	}
+// 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+// 	validator := k.GetOrchestratorValidator(ctx, orch)
+// 	if validator == nil {
+// 		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
+// 		if sval == nil {
+// 			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+// 		}
+// 		validator = sval.GetOperator()
+// 	}
 
-	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
-	if val == nil || !val.IsBonded() {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
-	}
+// 	// return an error if the validator isn't in the active set
+// 	val := k.StakingKeeper.Validator(ctx, validator)
+// 	if val == nil || !val.IsBonded() {
+// 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
+// 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, err
-	}
+// 	any, err := codectypes.NewAnyWithValue(msg)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
-	}
+// 	// Add the claim to the store
+// 	_, err = k.Attest(ctx, msg, any)
+// 	if err != nil {
+// 		return nil, sdkerrors.Wrap(err, "create attestation")
+// 	}
 
-	// Emit the handle message event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
-		),
-	)
+// 	// Emit the handle message event
+// 	ctx.EventManager().EmitEvent(
+// 		sdk.NewEvent(
+// 			sdk.EventTypeMessage,
+// 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+// 			// TODO: maybe return something better here? is this the right string representation?
+// 			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+// 		),
+// 	)
 
-	return &types.MsgERC20DeployedClaimResponse{}, nil
-}
+// 	return &types.MsgERC20DeployedClaimResponse{}, nil
+// }
 
 // LogicCallExecutedClaim handles claims for executing a logic call on Ethereum
-func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogicCallExecutedClaim) (*types.MsgLogicCallExecutedClaimResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
+// func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogicCallExecutedClaim) (*types.MsgLogicCallExecutedClaimResponse, error) {
+// 	ctx := sdk.UnwrapSDKContext(c)
 
-	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orch)
-	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
-	}
+// 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+// 	validator := k.GetOrchestratorValidator(ctx, orch)
+// 	if validator == nil {
+// 		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
+// 		if sval == nil {
+// 			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+// 		}
+// 		validator = sval.GetOperator()
+// 	}
 
-	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
-	if val == nil || !val.IsBonded() {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
-	}
+// 	// return an error if the validator isn't in the active set
+// 	val := k.StakingKeeper.Validator(ctx, validator)
+// 	if val == nil || !val.IsBonded() {
+// 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
+// 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		return nil, err
-	}
+// 	any, err := codectypes.NewAnyWithValue(msg)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
-	}
+// 	// Add the claim to the store
+// 	_, err = k.Attest(ctx, msg, any)
+// 	if err != nil {
+// 		return nil, sdkerrors.Wrap(err, "create attestation")
+// 	}
 
-	// Emit the handle message event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
-		),
-	)
+// 	// Emit the handle message event
+// 	ctx.EventManager().EmitEvent(
+// 		sdk.NewEvent(
+// 			sdk.EventTypeMessage,
+// 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+// 			// TODO: maybe return something better here? is this the right string representation?
+// 			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+// 		),
+// 	)
 
-	return &types.MsgLogicCallExecutedClaimResponse{}, nil
-}
+// 	return &types.MsgLogicCallExecutedClaimResponse{}, nil
+// }
 
 func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)

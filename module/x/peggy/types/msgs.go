@@ -6,6 +6,7 @@ import (
 	types "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	proto "github.com/gogo/protobuf/proto"
 )
 
 var (
@@ -224,10 +225,31 @@ func (msg *MsgSubmitConfirm) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(acc)}
 }
 
+func (m *MsgSubmitConfirm) GetConfirm() Confirm {
+	Confirm, ok := m.Confirm.GetCachedValue().(Confirm)
+	if !ok {
+		return nil
+	}
+	return Confirm
+}
+
+func (m *MsgSubmitConfirm) SetConfirm(confirm Confirm) error {
+	msg, ok := confirm.(proto.Message)
+	if !ok {
+		return fmt.Errorf("can't proto marshal %T", msg)
+	}
+	any, err := types.NewAnyWithValue(msg)
+	if err != nil {
+		return err
+	}
+	m.Confirm = any
+	return nil
+}
+
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
 func (m MsgSubmitConfirm) UnpackInterfaces(unpacker types.AnyUnpacker) error {
-	var confirm Confirm
-	return unpacker.UnpackAny(m.Confirm, &confirm)
+	var claim EthereumClaim
+	return unpacker.UnpackAny(m.Confirm, &claim)
 }
 
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
@@ -265,6 +287,27 @@ func (msg *MsgSubmitClaim) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{sdk.AccAddress(acc)}
+}
+
+func (m *MsgSubmitClaim) GetClaim() EthereumClaim {
+	content, ok := m.Claim.GetCachedValue().(EthereumClaim)
+	if !ok {
+		return nil
+	}
+	return content
+}
+
+func (m *MsgSubmitClaim) SetClaim(claim EthereumClaim) error {
+	msg, ok := claim.(proto.Message)
+	if !ok {
+		return fmt.Errorf("can't proto marshal %T", msg)
+	}
+	any, err := types.NewAnyWithValue(msg)
+	if err != nil {
+		return err
+	}
+	m.Claim = any
+	return nil
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces

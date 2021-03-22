@@ -1083,10 +1083,7 @@ func (m *DepositClaim) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthClaims
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthClaims
 			}
 			if (iNdEx + skippy) > l {
@@ -1257,10 +1254,7 @@ func (m *WithdrawClaim) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthClaims
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthClaims
 			}
 			if (iNdEx + skippy) > l {
@@ -1433,10 +1427,7 @@ func (m *LogicCallExecutedClaim) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthClaims
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthClaims
 			}
 			if (iNdEx + skippy) > l {
@@ -1703,10 +1694,7 @@ func (m *ERC20DeployedClaim) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthClaims
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthClaims
 			}
 			if (iNdEx + skippy) > l {
