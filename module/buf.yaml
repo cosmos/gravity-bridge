@@ -27,7 +27,6 @@ lint:
     - gogoproto
     - cosmos_proto
     - google
-    - confio
 breaking:
   use:
     - FILE
@@ -38,4 +37,3 @@ breaking:
     - gogoproto
     - cosmos_proto
     - google
-    - confio
