@@ -8,6 +8,8 @@ import fs from "fs";
 import commandLineArgs from "command-line-args";
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { exit } from "process";
+import { start } from "node:repl";
+import { SSL_OP_EPHEMERAL_RSA } from "node:constants";
 
 const args = commandLineArgs([
   // the ethernum node used to deploy the contract
@@ -88,8 +90,25 @@ type NodeStatus = {
 };
 
 async function deploy() {
+  var startTime = new Date();
   const provider = await new ethers.providers.JsonRpcProvider(args["eth-node"]);
   let wallet = new ethers.Wallet(args["eth-privkey"], provider);
+
+  if (args["test-mode"] == "True" || args["test-mode"] == "true") {
+    var success = false;
+    while(!success) {
+      var present = new Date();
+      var timeDiff: number = present.getTime() - startTime.getTime();
+      timeDiff = timeDiff / 1000
+      provider.getBlockNumber().then(_ => success = true).catch(_ => console.log("Ethereum RPC error, trying again"))
+
+      if (timeDiff > 600) {
+        console.log("Could not contact Ethereum RPC after 10 minutes, check the URL!")
+        exit(1)
+      }
+      await sleep(1000);
+    }
+  }
 
   if (args["test-mode"] == "True" || args["test-mode"] == "true") {
     console.log("Test mode, deploying ERC20 contracts");
@@ -255,6 +274,10 @@ async function submitPeggyAddress(address: string) {}
 
 async function main() {
   await deploy();
+}
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 main();
