@@ -113,7 +113,7 @@ func printCreate(cmd *cobra.Command, keyOutput EthereumKeyOutput) error {
 	switch output {
 	case keys.OutputFormatText:
 		cmd.PrintErrln()
-		cmd.Println("private: %s public: %s address: %s", keyOutput.PrivateKey, keyOutput.PublicKey, keyOutput.Address)
+		cmd.Printf("private: %s \npublic: %s \naddress: %s\n", keyOutput.PrivateKey, keyOutput.PublicKey, keyOutput.Address)
 
 	case keys.OutputFormatJSON:
 		outputBytes, err := json.Marshal(keyOutput)
