@@ -6,9 +6,11 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
 // IDSet represents a set of IDs
-message IDSet { repeated uint64 ids = 1; }
+message IDSet {
+  repeated uint64 ids = 1;
+}
 
-message BatchFees {  
-  string token = 1;  
-  string topOneHundred = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+message BatchFees {
+  string token           = 1;
+  string top_one_hundred = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
 }

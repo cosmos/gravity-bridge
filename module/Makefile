@@ -1,6 +1,8 @@
 PACKAGES=$(shell go list ./... | grep -v '/simulation')
 VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
+DOCKER := $(shell which docker)
+DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 
 build_tags = netgo
 ifeq ($(LEDGER_ENABLED),true)
@@ -71,10 +73,10 @@ proto-gen:
 	./contrib/local/protocgen.sh
 
 proto-lint:
-	buf check lint --error-format=json
+	@$(DOCKER_BUF) check lint --error-format=json
 
 proto-check-breaking:
-	buf check breaking --against-input '.git#branch=master'
+	@$(DOCKER_BUF) check breaking --against-input $(HTTPS_GIT)#branch=master
 
 TM_URL           = https://raw.githubusercontent.com/tendermint/tendermint/v0.34.0-rc3/proto/tendermint
 GOGO_PROTO_URL   = https://raw.githubusercontent.com/regen-network/protobuf/cosmos
