@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
 
-// Msh defines the state transitions possible within gravity
+// Msg defines the state transitions possible within gravity
 service Msg {
   rpc ValsetConfirm(MsgValsetConfirm) returns (MsgValsetConfirmResponse) {
     option (google.api.http).post = "/peggy/v1/valset_confirm";
