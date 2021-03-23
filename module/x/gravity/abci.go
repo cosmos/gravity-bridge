@@ -20,13 +20,11 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 func createValsets(ctx sdk.Context, k keeper.Keeper) {
 	// Auto ValsetRequest Creation.
-	/*
-			1. If there are no valset requests, create a new one.
-			2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
-			   This will make sure the unbonding validator has to provide an attestation to a new Valset
-		       that excludes him before he completely Unbonds.  Otherwise he will be slashed
-			3. If power change between validators of CurrentValset and latest valset request is > 5%
-		**/
+	// 1. If there are no valset requests, create a new one.
+	// 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
+	//      This will make sure the unbonding validator has to provide an attestation to a new Valset
+	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
+	// 3. If power change between validators of CurrentValset and latest valset request is > 5%
 	latestValset := k.GetLatestValset(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 
