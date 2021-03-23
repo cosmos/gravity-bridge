@@ -223,3 +223,12 @@ func (v Valsets) Less(i, j int) bool {
 func (v Valsets) Swap(i, j int) {
 	v[i], v[j] = v[j], v[i]
 }
+
+// GetFees returns the total fees contained within a given batch
+func (b OutgoingTxBatch) GetFees() sdk.Int {
+	sum := sdk.ZeroInt()
+	for _, t := range b.Transactions {
+		sum.Add(t.Erc20Fee.Amount)
+	}
+	return sum
+}
