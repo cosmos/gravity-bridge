@@ -24,7 +24,6 @@ func TestValsetCreationIfNotAvailable(t *testing.T) {
 	require.NotNil(t, pk.GetValset(ctx, uint64(ctx.BlockHeight())))
 	valsets := pk.GetValsets(ctx)
 	require.True(t, len(valsets) == 1)
-
 }
 
 func TestValsetCreationUponUnbonding(t *testing.T) {
