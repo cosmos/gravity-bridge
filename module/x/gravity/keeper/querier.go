@@ -361,7 +361,7 @@ func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 }
 
 func queryBatchFees(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	val := types.QueryBatchFeeResponse{BatchFees: keeper.CreateBatchFees(ctx)}
+	val := types.QueryBatchFeeResponse{BatchFees: keeper.GetAllBatchFees(ctx)}
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, val)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())

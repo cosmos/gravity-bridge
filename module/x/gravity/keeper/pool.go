@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
+	"sort"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -275,8 +276,39 @@ func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb fu
 	}
 }
 
-// CreateBatchFees iterates over the outgoing pool and create batch token fee map
-func (k Keeper) CreateBatchFees(ctx sdk.Context) (batchFees []*types.BatchFees) {
+// GetBatchFeesByTokenType gets the fees the next batch of a given token type would
+// have if created. This info is both presented to relayers for the purpose of determining
+// when to request batches and also used by the batch creation process to decide not to create
+// a new batch
+func (k Keeper) GetBatchFeesByTokenType(ctx sdk.Context, tokenContractAddr string) *types.BatchFees {
+	batchFeesMap := k.createBatchFees(ctx)
+	return batchFeesMap[tokenContractAddr]
+}
+
+// GetAllBatchFees creates a fee entry for every batch type currently in the store
+// this can be used by relayers to determine what batch types are desireable to request
+func (k Keeper) GetAllBatchFees(ctx sdk.Context) (batchFees []*types.BatchFees) {
+	batchFeesMap := k.createBatchFees(ctx)
+	// create array of batchFees
+	for _, batchFee := range batchFeesMap {
+		// newBatchFee := types.BatchFees{
+		// 	Token:         batchFee.Token,
+		// 	TopOneHundred: batchFee.TopOneHundred,
+		// }
+		batchFees = append(batchFees, batchFee)
+	}
+
+	// quick sort by token to make this function safe for use
+	// in consensus computations
+	sort.Slice(batchFees, func(i, j int) bool {
+		return batchFees[i].Token < batchFees[j].Token
+	})
+
+	return batchFees
+}
+
+// CreateBatchFees iterates over the outgoing pool and creates batch token fee map
+func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.BatchFees {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
@@ -317,16 +349,7 @@ func (k Keeper) CreateBatchFees(ctx sdk.Context) (batchFees []*types.BatchFees) 
 		}
 	}
 
-	// create array of batchFees
-	for _, batchFee := range batchFeesMap {
-		// newBatchFee := types.BatchFees{
-		// 	Token:         batchFee.Token,
-		// 	TopOneHundred: batchFee.TopOneHundred,
-		// }
-		batchFees = append(batchFees, batchFee)
-	}
-
-	return
+	return batchFeesMap
 }
 
 func (k Keeper) autoIncrementID(ctx sdk.Context, idKey []byte) uint64 {
