@@ -166,7 +166,7 @@ func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
 // NewMsgRequestBatch returns a new msgRequestBatch
 func NewMsgRequestBatch(orchestrator sdk.AccAddress) *MsgRequestBatch {
 	return &MsgRequestBatch{
-		Orchestrator: orchestrator.String(),
+		Sender: orchestrator.String(),
 	}
 }
 
@@ -178,8 +178,8 @@ func (msg MsgRequestBatch) Type() string { return "request_batch" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgRequestBatch) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
 	}
 	return nil
 }
@@ -191,7 +191,7 @@ func (msg MsgRequestBatch) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
 	}

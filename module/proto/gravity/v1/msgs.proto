@@ -124,7 +124,7 @@ message MsgSendToEthResponse {}
 // can finally submit the batch
 // -------------
 message MsgRequestBatch {
-  string orchestrator = 1;
+  string sender = 1;
   string denom        = 2;
 }
 
