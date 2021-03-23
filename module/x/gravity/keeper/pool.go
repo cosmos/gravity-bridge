@@ -337,11 +337,11 @@ func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.BatchFees {
 			} else {
 				// add fee amount
 				if _, ok := batchFeesMap[tokenContractAddr]; ok {
-					batchFeesMap[tokenContractAddr].TopOneHundred = batchFeesMap[tokenContractAddr].TopOneHundred.Add(sdk.NewIntFromBigInt(feeAmount))
+					batchFeesMap[tokenContractAddr].TotalFees = batchFeesMap[tokenContractAddr].TotalFees.Add(sdk.NewIntFromBigInt(feeAmount))
 				} else {
 					batchFeesMap[tokenContractAddr] = &types.BatchFees{
-						Token:         tokenContractAddr,
-						TopOneHundred: sdk.NewIntFromBigInt(feeAmount)}
+						Token:     tokenContractAddr,
+						TotalFees: sdk.NewIntFromBigInt(feeAmount)}
 				}
 
 				txCountMap[tokenContractAddr] = txCountMap[tokenContractAddr] + 1

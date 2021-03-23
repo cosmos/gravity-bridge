@@ -38,7 +38,7 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, ma
 		}
 
 		lastFees := lastBatch.GetFees()
-		if lastFees.GT(currentFees.TopOneHundred) {
+		if lastFees.GT(currentFees.TotalFees) {
 			return nil, sdkerrors.Wrap(types.ErrInvalid, "new batch would not be more profitable")
 		}
 	}
