@@ -15,6 +15,8 @@ const OutgoingTxBatchSize = 100
 
 // BuildOutgoingTXBatch starts the following process chain:
 // - find bridged denominator for given voucher type
+// - determine if a an unexecuted batch is already waiting for this token type, if so confirm the new batch would
+//   have a higher total fees. If not exit withtout creating a batch
 // - select available transactions from the outgoing transaction pool sorted by fee desc
 // - persist an outgoing batch object with an incrementing ID = nonce
 // - emit an event
@@ -22,6 +24,25 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, ma
 	if maxElements == 0 {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "max elements value")
 	}
+
+	lastBatch := k.GetLastOutgoingBatchByTokenType(ctx, contractAddress)
+
+	// lastBatch may be nil if there are no existing batches, we only need
+	// to perform this check if a previous batch exists
+	if lastBatch != nil {
+		// this traverses the current tx pool for this token type and determines what
+		// fees a hypothetical batch would have if created
+		currentFees := k.GetBatchFeesByTokenType(ctx, contractAddress)
+		if currentFees == nil {
+			return nil, sdkerrors.Wrap(types.ErrInvalid, "error getting fees from tx pool")
+		}
+
+		lastFees := lastBatch.GetFees()
+		if lastFees.GT(currentFees.TopOneHundred) {
+			return nil, sdkerrors.Wrap(types.ErrInvalid, "new batch would not be more profitable")
+		}
+	}
+
 	selectedTx, err := k.pickUnbatchedTX(ctx, contractAddress, maxElements)
 	if len(selectedTx) == 0 || err != nil {
 		return nil, err
@@ -205,6 +226,20 @@ func (k Keeper) GetOutgoingTxBatches(ctx sdk.Context) (out []*types.OutgoingTxBa
 		return false
 	})
 	return
+}
+
+// GetLastOutgoingBatchByTokenType gets the latest outgoing tx batch by token type
+func (k Keeper) GetLastOutgoingBatchByTokenType(ctx sdk.Context, token string) *types.OutgoingTxBatch {
+	batches := k.GetOutgoingTxBatches(ctx)
+	var lastBatch *types.OutgoingTxBatch = nil
+	lastNonce := uint64(0)
+	for _, batch := range batches {
+		if batch.TokenContract == token && batch.BatchNonce > lastNonce {
+			lastBatch = batch
+			lastNonce = batch.BatchNonce
+		}
+	}
+	return lastBatch
 }
 
 // SetLastSlashedBatchBlock sets the latest slashed Batch block height
