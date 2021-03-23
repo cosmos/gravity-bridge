@@ -30,7 +30,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	// we start by depositing some funds into the users balance to send
 	input := keeper.CreateTestEnv(t)
 	ctx := input.Context
-	h := NewHandler(input.PeggyKeeper)
+	handler := NewHandler(input.PeggyKeeper)
 	input.BankKeeper.MintCoins(ctx, types.ModuleName, startingCoins)
 	input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userCosmosAddr, startingCoins)
 	balance1 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
@@ -43,7 +43,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 		Amount:    sendingCoin,
 		BridgeFee: feeCoin}
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
-	_, err := h(ctx, msg)
+	_, err := handler(ctx, msg)
 	require.NoError(t, err)
 	balance2 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount.Sub(sendAmount).Sub(feeAmount))}, balance2)
@@ -55,7 +55,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 		Amount:    sendingCoin,
 		BridgeFee: feeCoin}
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
-	_, err1 := h(ctx, msg1)
+	_, err1 := handler(ctx, msg1)
 	require.NoError(t, err1)
 	balance3 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
 	finalAmount3 := startingCoinAmount.Sub(sendAmount).Sub(sendAmount).Sub(feeAmount).Sub(feeAmount)
@@ -68,7 +68,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 		Amount:    sendingCoin,
 		BridgeFee: feeCoin}
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
-	_, err2 := h(ctx, msg2)
+	_, err2 := handler(ctx, msg2)
 	require.Error(t, err2)
 	balance4 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance4)
@@ -90,14 +90,14 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	ctx := input.Context
 	input.PeggyKeeper.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
 	input.PeggyKeeper.SetOrchestratorValidator(ctx, myValAddr, myOrchestratorAddr)
-	h := NewHandler(input.PeggyKeeper)
+	handler := NewHandler(input.PeggyKeeper)
 
 	myErc20 := types.ERC20Token{
 		Amount:   amountA,
 		Contract: tokenETHAddr,
 	}
 
-	ethClaim := types.MsgDepositClaim{
+	ethClaim := types.DepositClaim{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -108,7 +108,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err := h(ctx, &ethClaim)
+	_, err := handler(ctx, &ethClaim)
 	EndBlocker(ctx, input.PeggyKeeper)
 	require.NoError(t, err)
 
@@ -122,7 +122,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	// Test to reject duplicate deposit
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, &ethClaim)
+	_, err = handler(ctx, &ethClaim)
 	EndBlocker(ctx, input.PeggyKeeper)
 	// then
 	require.Error(t, err)
@@ -130,7 +130,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to reject skipped nonce
-	ethClaim = types.MsgDepositClaim{
+	ethClaim = types.DepositClaim{
 		EventNonce:     uint64(3),
 		TokenContract:  tokenETHAddr,
 		Amount:         amountA,
@@ -141,7 +141,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, &ethClaim)
+	_, err = handler(ctx, &ethClaim)
 	EndBlocker(ctx, input.PeggyKeeper)
 	// then
 	require.Error(t, err)
@@ -149,7 +149,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin("peggy0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to finally accept consecutive nonce
-	ethClaim = types.MsgDepositClaim{
+	ethClaim = types.DepositClaim{
 		EventNonce:     uint64(2),
 		Amount:         amountA,
 		TokenContract:  tokenETHAddr,
@@ -160,7 +160,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, &ethClaim)
+	_, err = handler(ctx, &ethClaim)
 	EndBlocker(ctx, input.PeggyKeeper)
 
 	// then
@@ -189,14 +189,14 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	input.PeggyKeeper.SetOrchestratorValidator(ctx, valAddr1, orchestratorAddr1)
 	input.PeggyKeeper.SetOrchestratorValidator(ctx, valAddr2, orchestratorAddr2)
 	input.PeggyKeeper.SetOrchestratorValidator(ctx, valAddr3, orchestratorAddr3)
-	h := NewHandler(input.PeggyKeeper)
+	handler := NewHandler(input.PeggyKeeper)
 
 	myErc20 := types.ERC20Token{
 		Amount:   sdk.NewInt(12),
 		Contract: tokenETHAddr,
 	}
 
-	ethClaim1 := types.MsgDepositClaim{
+	ethClaim1 := types.DepositClaim{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -204,7 +204,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 		CosmosReceiver: myCosmosAddr.String(),
 		Orchestrator:   orchestratorAddr1.String(),
 	}
-	ethClaim2 := types.MsgDepositClaim{
+	ethClaim2 := types.DepositClaim{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -212,7 +212,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 		CosmosReceiver: myCosmosAddr.String(),
 		Orchestrator:   orchestratorAddr2.String(),
 	}
-	ethClaim3 := types.MsgDepositClaim{
+	ethClaim3 := types.DepositClaim{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -223,7 +223,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err := h(ctx, &ethClaim1)
+	_, err := handler(ctx, &ethClaim1)
 	EndBlocker(ctx, input.PeggyKeeper)
 	require.NoError(t, err)
 	// and attestation persisted
@@ -235,7 +235,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, &ethClaim2)
+	_, err = handler(ctx, &ethClaim2)
 	EndBlocker(ctx, input.PeggyKeeper)
 	require.NoError(t, err)
 
@@ -248,7 +248,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, &ethClaim3)
+	_, err = handler(ctx, &ethClaim3)
 	EndBlocker(ctx, input.PeggyKeeper)
 	require.NoError(t, err)
 
@@ -271,12 +271,12 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	input := keeper.CreateTestEnv(t)
 	input.PeggyKeeper.StakingKeeper = keeper.NewStakingKeeperMock(valAddress)
 	ctx := input.Context
-	h := NewHandler(input.PeggyKeeper)
+	handler := NewHandler(input.PeggyKeeper)
 	ctx = ctx.WithBlockTime(blockTime)
 
 	msg := types.NewMsgSetDelegateKeys(valAddress, cosmosAddress, ethAddress)
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
-	_, err := h(ctx, msg)
+	_, err := handler(ctx, msg)
 	require.NoError(t, err)
 
 	assert.Equal(t, input.PeggyKeeper.GetEthAddress(ctx, valAddress), ethAddress)

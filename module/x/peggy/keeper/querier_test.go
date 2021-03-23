@@ -23,7 +23,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 	)
 	input := CreateTestEnv(t)
 	ctx := input.Context
-	input.PeggyKeeper.SetValsetConfirm(ctx, types.MsgValsetConfirm{
+	input.PeggyKeeper.SetValsetConfirm(ctx, types.ValsetConfirm{
 		Nonce:        nonce,
 		Orchestrator: myValidatorCosmosAddr.String(),
 		EthAddress:   myValidatorEthereumAddr.String(),
@@ -85,7 +85,7 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 	// seed confirmations
 	for i := 0; i < 3; i++ {
 		addr, _ := sdk.AccAddressFromBech32(addrs[i])
-		msg := types.MsgValsetConfirm{}
+		msg := types.ValsetConfirm{}
 		msg.EthAddress = gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(i + 1)}, 20)).String()
 		msg.Nonce = uint64(1)
 		msg.Orchestrator = addr.String()
@@ -553,7 +553,7 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 		validatorAddr, _ = sdk.AccAddressFromBech32("cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh")
 	)
 
-	input.PeggyKeeper.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
+	input.PeggyKeeper.SetBatchConfirm(ctx, &types.ConfirmBatch{
 		Nonce:         1,
 		TokenContract: tokenContract,
 		EthSigner:     "0xf35e2cc8e6523d683ed44870f5b7cc785051a77d",
@@ -671,7 +671,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 	var valAddr sdk.AccAddress
 	valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 
-	confirm := types.MsgConfirmLogicCall{
+	confirm := types.ConfirmLogicCall{
 		InvalidationId:    hex.EncodeToString(invalidationId),
 		InvalidationNonce: 1,
 		EthSigner:         "test",

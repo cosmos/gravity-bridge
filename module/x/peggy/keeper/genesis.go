@@ -15,8 +15,8 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	}
 
 	// reset valset confirmations in state
-	for _, conf := range data.Confirmations {
-		k.SetConfirmirmation(ctx, *conf)
+	for _, conf := range data.ValsetConfirms {
+		k.SetValsetConfirm(ctx, *conf)
 	}
 
 	// reset batches in state
@@ -104,9 +104,9 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		batches             = k.GetOutgoingTxBatches(ctx)
 		valsets             = k.GetValsets(ctx)
 		attmap              = k.GetAttestationMapping(ctx)
-		vsconfs             = []*types.MsgValsetConfirm{}
-		batchconfs          = []types.MsgConfirmBatch{}
-		callconfs           = []types.MsgConfirmLogicCall{}
+		vsconfs             = []*types.ValsetConfirm{}
+		batchconfs          = []types.ConfirmBatch{}
+		callconfs           = []types.ConfirmLogicCall{}
 		attestations        = []types.Attestation{}
 		delegates           = k.GetDelegateKeys(ctx)
 		lastobserved        = k.GetLastObservedEventNonce(ctx)

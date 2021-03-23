@@ -3,6 +3,7 @@ package peggy.v1;
 
 import "gogoproto/gogo.proto";
 import "peggy/v1/types.proto";
+import "peggy/v1/confirm.proto";
 import "peggy/v1/msgs.proto";
 import "peggy/v1/batch.proto";
 import "peggy/v1/attestation.proto";
@@ -106,11 +107,13 @@ message GenesisState {
   Params                      params              = 1;
   uint64                      last_observed_nonce = 2;
   repeated Valset             valsets             = 3;
-  repeated OutgoingTxBatch    batches             = 4;
-  repeated MsgSubmitConfirm   confirmations       = 5 [(gogoproto.nullable) = false];
-  repeated OutgoingLogicCall  logic_calls         = 6;
-  repeated Attestation        attestations        = 7 [(gogoproto.nullable) = false];
-  repeated MsgDelegateKey     delegate_keys       = 8;
-  repeated ERC20ToDenom       erc20_to_denoms     = 9;
-  repeated OutgoingTransferTx unbatched_transfers = 10;
+  repeated ValsetConfirm      valset_confirms     = 4;
+  repeated OutgoingTxBatch    batches             = 5;
+  repeated ConfirmBatch       batch_confirms      = 6 [(gogoproto.nullable) = false];
+  repeated OutgoingLogicCall  logic_calls         = 7;
+  repeated ConfirmLogicCall   logic_call_confirms = 8 [(gogoproto.nullable) = false];
+  repeated Attestation        attestations        = 9 [(gogoproto.nullable) = false];
+  repeated MsgDelegateKey     delegate_keys       = 10;
+  repeated ERC20ToDenom       erc20_to_denoms     = 11;
+  repeated OutgoingTransferTx unbatched_transfers = 12;
 }

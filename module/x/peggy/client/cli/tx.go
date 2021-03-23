@@ -30,7 +30,7 @@ func GetTxCmd(storeKey string) *cobra.Command {
 	peggyTxCmd.AddCommand([]*cobra.Command{
 		CmdSendToEth(),
 		CmdRequestBatch(),
-		CmdSetOrchestratorAddress(),
+		CmdDelegateKey(),
 		GetUnsafeTestingCmd(),
 	}...)
 
@@ -164,9 +164,9 @@ func CmdRequestBatch() *cobra.Command {
 	return cmd
 }
 
-func CmdSetOrchestratorAddress() *cobra.Command {
+func CmdDelegateKey() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-orchestrator-address [validator-address] [orchestrator-address] [ethereum-address]",
+		Use:   "delegate-key [validator-address] [orchestrator-address] [ethereum-address]",
 		Short: "Allows validators to delegate their voting responsibilities to a given key.",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -174,7 +174,7 @@ func CmdSetOrchestratorAddress() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			msg := types.MsgSetOrchestratorAddress{
+			msg := types.MsgDelegateKey{
 				Validator:    args[0],
 				Orchestrator: args[1],
 				EthAddress:   args[2],

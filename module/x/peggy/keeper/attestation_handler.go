@@ -18,7 +18,7 @@ type AttestationHandler struct {
 // TODO-JT add handler for ERC20DeployedEvent
 func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
-	case *types.MsgDepositClaim:
+	case *types.DepositClaim:
 		// Check if coin is Cosmos-originated asset and get denom
 		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.TokenContract)
 
@@ -51,9 +51,9 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 				return sdkerrors.Wrap(err, "transfer vouchers")
 			}
 		}
-	case *types.MsgWithdrawClaim:
+	case *types.WithdrawClaim:
 		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
-	case *types.MsgERC20DeployedClaim:
+	case *types.ERC20DeployedClaim:
 		// Check if it already exists
 		existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.CosmosDenom)
 		if exists {
