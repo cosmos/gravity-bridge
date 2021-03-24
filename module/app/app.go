@@ -17,10 +17,6 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	peggyparams "github.com/althea-net/peggy/module/app/params"
-	"github.com/althea-net/peggy/module/x/peggy"
-	"github.com/althea-net/peggy/module/x/peggy/keeper"
-	peggytypes "github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -89,6 +85,10 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	peggyparams "github.com/cosmos/gravity-bridge/module/app/params"
+	"github.com/cosmos/gravity-bridge/module/x/peggy"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/keeper"
+	peggytypes "github.com/cosmos/gravity-bridge/module/x/peggy/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"

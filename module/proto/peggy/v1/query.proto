@@ -9,7 +9,7 @@ import "peggy/v1/batch.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+option go_package = "github.com/cosmos/gravity-bridge/module/x/peggy/types";
 
 // Query defines the gRPC querier service
 service Query {

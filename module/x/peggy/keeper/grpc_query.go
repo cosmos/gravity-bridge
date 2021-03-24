@@ -3,9 +3,9 @@ package keeper
 import (
 	"context"
 
-	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/types"
 )
 
 var _ types.QueryServer = Keeper{}

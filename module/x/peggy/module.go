@@ -6,19 +6,19 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/althea-net/peggy/module/x/peggy/keeper"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/keeper"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/althea-net/peggy/module/x/peggy/client/cli"
-	"github.com/althea-net/peggy/module/x/peggy/client/rest"
-	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/client/cli"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/client/rest"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/types"
 
 	// "github.com/cosmos/cosmos-sdk/x/gov/simulation"
 

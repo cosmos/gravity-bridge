@@ -7,7 +7,7 @@ import "peggy/v1/msgs.proto";
 import "peggy/v1/batch.proto";
 import "peggy/v1/attestation.proto";
 
-option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+option go_package = "github.com/cosmos/gravity-bridge/module/x/peggy/types";
 
 // Params represent the peggy genesis and store parameters
 // peggy_id:

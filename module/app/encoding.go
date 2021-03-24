@@ -1,8 +1,8 @@
 package app
 
 import (
-	peggyparams "github.com/althea-net/peggy/module/app/params"
 	"github.com/cosmos/cosmos-sdk/std"
+	peggyparams "github.com/cosmos/gravity-bridge/module/app/params"
 )
 
 // MakeEncodingConfig creates an EncodingConfig for peggy.

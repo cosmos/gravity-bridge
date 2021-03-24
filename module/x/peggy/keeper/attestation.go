@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/althea-net/peggy/module/x/peggy/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/types"
 )
 
 // TODO-JT: carefully look at atomicity of this function

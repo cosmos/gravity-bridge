@@ -7,12 +7,12 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
