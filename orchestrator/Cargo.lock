@@ -557,9 +557,9 @@ dependencies = [
 
 [[package]]
 name = "clarity"
-version = "0.4.3"
+version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55087803a7a5f3db8f61ac95c44ab317f8aba6c3c837bf9c81456c9a92b55371"
+checksum = "5e6e4fd4d89ab771e35070d5a4233f944e7769f44e99ce2c4ea565bd29ac4a6d"
 dependencies = [
  "lazy_static",
  "num-bigint 0.3.1",
@@ -1728,6 +1728,7 @@ dependencies = [
  "rand 0.8.0",
  "serde",
  "serde_derive",
+ "sha3",
  "tokio",
  "tonic",
  "url",

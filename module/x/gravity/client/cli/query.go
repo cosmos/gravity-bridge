@@ -5,6 +5,7 @@ import (
 
 	"github.com/althea-net/peggy/module/x/gravity/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -68,7 +69,7 @@ func QueryApproved() *cobra.Command {
 }
 
 func CmdGetCurrentValset() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "current-valset",
 		Short: "Query current valset",
 		Args:  cobra.NoArgs,
@@ -86,10 +87,12 @@ func CmdGetCurrentValset() *cobra.Command {
 			return clientCtx.PrintProto(res)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 func CmdGetValsetRequest() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "valset-request [nonce]",
 		Short: "Get requested valset with a particular nonce",
 		Args:  cobra.ExactArgs(1),
@@ -114,10 +117,12 @@ func CmdGetValsetRequest() *cobra.Command {
 			return clientCtx.PrintProto(res)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 func CmdGetValsetConfirm() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "valset-confirm [nonce] [bech32 validator address]",
 		Short: "Get valset confirmation with a particular nonce from a particular validator",
 		Args:  cobra.ExactArgs(2),
@@ -143,10 +148,12 @@ func CmdGetValsetConfirm() *cobra.Command {
 			return clientCtx.PrintProto(res)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 func CmdGetPendingValsetRequest() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "pending-valset-request [bech32 validator address]",
 		Short: "Get the latest valset request which has not been signed by a particular validator",
 		Args:  cobra.ExactArgs(1),
@@ -166,10 +173,12 @@ func CmdGetPendingValsetRequest() *cobra.Command {
 			return clientCtx.PrintProto(res)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 func CmdGetPendingOutgoingTXBatchRequest() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "pending-batch-request [bech32 validator address]",
 		Short: "Get the latest outgoing TX batch request which has not been signed by a particular validator",
 		Args:  cobra.ExactArgs(1),
@@ -189,4 +198,6 @@ func CmdGetPendingOutgoingTXBatchRequest() *cobra.Command {
 			return clientCtx.PrintProto(res)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }

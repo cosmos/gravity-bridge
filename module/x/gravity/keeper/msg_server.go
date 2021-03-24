@@ -78,14 +78,10 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
 
-	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, valaddr)
+	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, orchaddr)
 	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
 	ethAddress := k.GetEthAddress(ctx, validator)
@@ -98,7 +94,7 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 	}
 
 	// persist signature
-	if k.GetValsetConfirm(ctx, msg.Nonce, valaddr) != nil {
+	if k.GetValsetConfirm(ctx, msg.Nonce, orchaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
 	key := k.SetValsetConfirm(ctx, *msg)
@@ -153,14 +149,17 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		return nil, err
 	}
 
+	// question: is this right? If i can delegate my voting power to a different key then this would fail each time i call it
 	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	validator := k.GetOrchestratorValidator(ctx, valaddr)
+
+	// a validator request can be sent from a delegate key or a validator
+	// key directly
 	if validator == nil {
 		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
 		if sval == nil {
 			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 		}
-		validator = sval.GetOperator()
 	}
 
 	// TODO later make sure that Demon matches a list of tokens already
@@ -198,14 +197,10 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
 
-	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, valaddr)
+	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, orchaddr)
 	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
 	ethAddress := k.GetEthAddress(ctx, validator)
@@ -219,7 +214,7 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	}
 
 	// check if we already have this confirm
-	if k.GetBatchConfirm(ctx, msg.Nonce, msg.TokenContract, valaddr) != nil {
+	if k.GetBatchConfirm(ctx, msg.Nonce, msg.TokenContract, orchaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
 	}
 	key := k.SetBatchConfirm(ctx, msg)
@@ -260,14 +255,10 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
 
-	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, valaddr)
+	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, orchaddr)
 	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
 	ethAddress := k.GetEthAddress(ctx, validator)
@@ -281,7 +272,7 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 	}
 
 	// check if we already have this confirm
-	if k.GetLogicCallConfirm(ctx, invalidationIdBytes, msg.InvalidationNonce, valaddr) != nil {
+	if k.GetLogicCallConfirm(ctx, invalidationIdBytes, msg.InvalidationNonce, orchaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
 	}
 
@@ -304,14 +295,10 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (*types.MsgDepositClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orch)
+	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, orchaddr)
 	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
 	// return an error if the validator isn't in the active set
@@ -351,14 +338,10 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim) (*types.MsgWithdrawClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orch)
+	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, orchaddr)
 	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
 	// return an error if the validator isn't in the active set
@@ -395,14 +378,10 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20DeployedClaim) (*types.MsgERC20DeployedClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orch)
+	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, orchaddr)
 	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
 	// return an error if the validator isn't in the active set
@@ -439,14 +418,10 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogicCallExecutedClaim) (*types.MsgLogicCallExecutedClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orch)
+	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, orchaddr)
 	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(orch))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-		validator = sval.GetOperator()
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
 	// return an error if the validator isn't in the active set
@@ -477,4 +452,26 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 	)
 
 	return &types.MsgLogicCallExecutedClaimResponse{}, nil
+}
+
+func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+	err = k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TransactionId, sender)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, fmt.Sprint(msg.TransactionId)),
+		),
+	)
+
+	return &types.MsgCancelSendToEthResponse{}, nil
 }

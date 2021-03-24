@@ -40,6 +40,11 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		k.SetLogicCallConfirm(ctx, &conf)
 	}
 
+	// reset pool transactions in state
+	for _, tx := range data.UnbatchedTransfers {
+		k.setPoolEntry(ctx, tx)
+	}
+
 	// reset attestations in state
 	for _, att := range data.Attestations {
 		claim, err := k.UnpackAttestationClaim(&att)
@@ -104,18 +109,19 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p             = k.GetParams(ctx)
-		calls         = k.GetOutgoingLogicCalls(ctx)
-		batches       = k.GetOutgoingTxBatches(ctx)
-		valsets       = k.GetValsets(ctx)
-		attmap        = k.GetAttestationMapping(ctx)
-		vsconfs       = []*types.MsgValsetConfirm{}
-		batchconfs    = []types.MsgConfirmBatch{}
-		callconfs     = []types.MsgConfirmLogicCall{}
-		attestations  = []types.Attestation{}
-		delegates     = k.GetDelegateKeys(ctx)
-		lastobserved  = k.GetLastObservedEventNonce(ctx)
-		erc20ToDenoms = []*types.ERC20ToDenom{}
+		p                   = k.GetParams(ctx)
+		calls               = k.GetOutgoingLogicCalls(ctx)
+		batches             = k.GetOutgoingTxBatches(ctx)
+		valsets             = k.GetValsets(ctx)
+		attmap              = k.GetAttestationMapping(ctx)
+		vsconfs             = []*types.MsgValsetConfirm{}
+		batchconfs          = []types.MsgConfirmBatch{}
+		callconfs           = []types.MsgConfirmLogicCall{}
+		attestations        = []types.Attestation{}
+		delegates           = k.GetDelegateKeys(ctx)
+		lastobserved        = k.GetLastObservedEventNonce(ctx)
+		erc20ToDenoms       = []*types.ERC20ToDenom{}
+		unbatched_transfers = k.GetPoolTransactions(ctx)
 	)
 
 	// export valset confirmations from state
@@ -149,16 +155,17 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	})
 
 	return types.GenesisState{
-		Params:            &p,
-		LastObservedNonce: lastobserved,
-		Valsets:           valsets,
-		ValsetConfirms:    vsconfs,
-		Batches:           batches,
-		BatchConfirms:     batchconfs,
-		LogicCalls:        calls,
-		LogicCallConfirms: callconfs,
-		Attestations:      attestations,
-		DelegateKeys:      delegates,
-		Erc20ToDenoms:     erc20ToDenoms,
+		Params:             &p,
+		LastObservedNonce:  lastobserved,
+		Valsets:            valsets,
+		ValsetConfirms:     vsconfs,
+		Batches:            batches,
+		BatchConfirms:      batchconfs,
+		LogicCalls:         calls,
+		LogicCallConfirms:  callconfs,
+		Attestations:       attestations,
+		DelegateKeys:       delegates,
+		Erc20ToDenoms:      erc20ToDenoms,
+		UnbatchedTransfers: unbatched_transfers,
 	}
 }

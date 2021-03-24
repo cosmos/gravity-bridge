@@ -1,13 +1,14 @@
 use crate::utils::{get_logic_call_nonce, GasCost};
 use clarity::{abi::Token, utils::bytes_to_hex_str, PrivateKey as EthPrivateKey};
 use clarity::{Address as EthAddress, Uint256};
-use peggy_utils::error::PeggyError;
 use peggy_utils::types::*;
+use peggy_utils::{error::PeggyError, message_signatures::encode_logic_call_confirm_hashed};
 use std::{cmp::min, time::Duration};
 use web30::{client::Web3, types::TransactionRequest};
 
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided logic call
+#[allow(clippy::too_many_arguments)]
 pub async fn send_eth_logic_call(
     current_valset: Valset,
     call: LogicCall,
@@ -15,6 +16,7 @@ pub async fn send_eth_logic_call(
     web3: &Web3,
     timeout: Duration,
     peggy_contract_address: EthAddress,
+    peggy_id: String,
     our_eth_key: EthPrivateKey,
 ) -> Result<(), PeggyError> {
     let new_call_nonce = call.invalidation_nonce;
@@ -48,7 +50,7 @@ pub async fn send_eth_logic_call(
         return Ok(());
     }
 
-    let payload = encode_logic_call_payload(current_valset, &call, confirms)?;
+    let payload = encode_logic_call_payload(current_valset, &call, confirms, peggy_id)?;
 
     let tx = web3
         .send_transaction(
@@ -92,6 +94,7 @@ pub async fn estimate_logic_call_cost(
     confirms: &[LogicCallConfirmResponse],
     web3: &Web3,
     peggy_contract_address: EthAddress,
+    peggy_id: String,
     our_eth_key: EthPrivateKey,
 ) -> Result<GasCost, PeggyError> {
     let our_eth_address = our_eth_key.to_public_key().unwrap();
@@ -108,7 +111,9 @@ pub async fn estimate_logic_call_cost(
             gas_price: Some(gas_price.clone().into()),
             gas: Some(gas_limit.into()),
             value: Some(zero.into()),
-            data: Some(encode_logic_call_payload(current_valset, &call, confirms)?.into()),
+            data: Some(
+                encode_logic_call_payload(current_valset, &call, confirms, peggy_id)?.into(),
+            ),
         })
         .await?;
 
@@ -123,10 +128,12 @@ fn encode_logic_call_payload(
     current_valset: Valset,
     call: &LogicCall,
     confirms: &[LogicCallConfirmResponse],
+    peggy_id: String,
 ) -> Result<Vec<u8>, PeggyError> {
     let (current_addresses, current_powers) = current_valset.filter_empty_addresses();
     let current_valset_nonce = current_valset.nonce;
-    let sig_data = current_valset.order_sigs(confirms)?;
+    let hash = encode_logic_call_confirm_hashed(peggy_id, call.clone());
+    let sig_data = current_valset.order_sigs(&hash, confirms)?;
     let sig_arrays = to_arrays(sig_data);
 
     let mut transfer_amounts = Vec::new();
@@ -275,7 +282,10 @@ mod tests {
 
         assert_eq!(
             bytes_to_hex_str(&encoded),
-            bytes_to_hex_str(&encode_logic_call_payload(valset, &logic_call, &[confirm]).unwrap())
+            bytes_to_hex_str(
+                &encode_logic_call_payload(valset, &logic_call, &[confirm], "foo".to_string())
+                    .unwrap()
+            )
         );
     }
 

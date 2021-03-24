@@ -427,8 +427,7 @@ func TestPendingValsetRequests(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			valAddr := sdk.AccAddress{}
-			valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+			var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 			got, err := lastPendingValsetRequest(ctx, valAddr.String(), input.GravityKeeper)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
@@ -503,8 +502,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			valAddr := sdk.AccAddress{}
-			valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+			var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 			got, err := lastPendingBatchRequest(ctx, valAddr.String(), input.GravityKeeper)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
@@ -595,7 +593,7 @@ func TestQueryLogicCalls(t *testing.T) {
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
 	}
 
-	token := []*types.ERC20Token{&types.ERC20Token{
+	token := []*types.ERC20Token{{
 		Contract: tokenContract,
 		Amount:   sdk.NewIntFromUint64(5000),
 	}}
@@ -618,8 +616,7 @@ func TestQueryLogicCalls(t *testing.T) {
 	_, err := lastLogicCallRequests(ctx, k)
 	require.NoError(t, err)
 
-	var valAddr sdk.AccAddress
-	valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 	_, err = lastPendingLogicCallRequest(ctx, valAddr.String(), k)
 	require.NoError(t, err)
 
@@ -652,7 +649,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
 	}
 
-	token := []*types.ERC20Token{&types.ERC20Token{
+	token := []*types.ERC20Token{{
 		Contract: tokenContract,
 		Amount:   sdk.NewIntFromUint64(5000),
 	}}
@@ -668,8 +665,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 	}
 	k.SetOutgoingLogicCall(ctx, &call)
 
-	var valAddr sdk.AccAddress
-	valAddr = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 
 	confirm := types.MsgConfirmLogicCall{
 		InvalidationId:    hex.EncodeToString(invalidationId),
@@ -884,4 +880,105 @@ func TestQueryDenomToERC20(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, correctBytes, queriedERC20)
+}
+
+func TestQueryPendingSendToEth(t *testing.T) {
+	input := CreateTestEnv(t)
+	ctx := input.Context
+	var (
+		now                 = time.Now().UTC()
+		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
+		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
+		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5" // Pickle
+		allVouchers         = sdk.NewCoins(
+			types.NewERC20Token(99999, myTokenContractAddr).GravityCoin(),
+		)
+	)
+
+	// mint some voucher first
+	require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
+	// set senders balance
+	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
+	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
+
+	// CREATE FIRST BATCH
+	// ==================
+
+	// add some TX to the pool
+	for i, v := range []uint64{2, 3, 2, 1} {
+		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
+		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
+		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		require.NoError(t, err)
+	}
+
+	// when
+	ctx = ctx.WithBlockTime(now)
+
+	// tx batch size is 2, so that some of them stay behind
+	_, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	require.NoError(t, err)
+
+	response, err := queryPendingSendToEth(ctx, mySender.String(), input.GravityKeeper)
+	require.NoError(t, err)
+	expectedJSON := []byte(`{
+  "transfers_in_batches": [
+    {
+      "id": "2",
+      "sender": "cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn",
+      "dest_address": "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
+      "erc20_token": {
+        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "amount": "101"
+      },
+      "erc20_fee": {
+        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "amount": "3"
+      }
+    },
+    {
+      "id": "1",
+      "sender": "cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn",
+      "dest_address": "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
+      "erc20_token": {
+        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "amount": "100"
+      },
+      "erc20_fee": {
+        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "amount": "2"
+      }
+    }
+  ],
+  "unbatched_transfers": [
+    {
+      "id": "3",
+      "sender": "cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn",
+      "dest_address": "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
+      "erc20_token": {
+        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "amount": "102"
+      },
+      "erc20_fee": {
+        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "amount": "2"
+      }
+    },
+    {
+      "id": "4",
+      "sender": "cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn",
+      "dest_address": "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
+      "erc20_token": {
+        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "amount": "103"
+      },
+      "erc20_fee": {
+        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "amount": "1"
+      }
+    }
+  ]}
+	  `)
+
+	assert.JSONEq(t, string(expectedJSON), string(response), "json is equal")
 }

@@ -56,7 +56,7 @@ func TestOutgoingLogicCallCheckpointGold1(t *testing.T) {
 	invalidationId, err := hex.DecodeString("0x696e76616c69646174696f6e4964000000000000000000000000000000000000"[2:])
 	require.NoError(t, err)
 
-	token := []*ERC20Token{&ERC20Token{
+	token := []*ERC20Token{{
 		Contract: "0xC26eFfa98B8A2632141562Ae7E34953Cfe5B4888",
 		Amount:   sdk.NewIntFromUint64(1),
 	}}

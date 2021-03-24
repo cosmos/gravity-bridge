@@ -75,23 +75,25 @@ func TestBatches(t *testing.T) {
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
 	// and verify remaining available Tx in the pool
-	var gotUnbatchedTx []*types.OutgoingTx
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
+	var gotUnbatchedTx []*types.OutgoingTransferTx
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx := []*types.OutgoingTx{
+	expUnbatchedTx := []*types.OutgoingTransferTx{
 		{
-			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).GravityCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(102, myTokenContractAddr).GravityCoin(),
+			Id:          3,
+			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(102, myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewERC20Token(1, myTokenContractAddr).GravityCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(103, myTokenContractAddr).GravityCoin(),
+			Id:          4,
+			Erc20Fee:    types.NewERC20Token(1, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(103, myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
@@ -151,34 +153,38 @@ func TestBatches(t *testing.T) {
 
 	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx = []*types.OutgoingTx{
+	expUnbatchedTx = []*types.OutgoingTransferTx{
 		{
-			BridgeFee: types.NewERC20Token(3, myTokenContractAddr).GravityCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(101, myTokenContractAddr).GravityCoin(),
+			Id:          2,
+			Erc20Fee:    types.NewERC20Token(3, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(101, myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).GravityCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(100, myTokenContractAddr).GravityCoin(),
+			Id:          1,
+			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(100, myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewERC20Token(2, myTokenContractAddr).GravityCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(102, myTokenContractAddr).GravityCoin(),
+			Id:          3,
+			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(102, myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewERC20Token(1, myTokenContractAddr).GravityCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewERC20Token(103, myTokenContractAddr).GravityCoin(),
+			Id:          4,
+			Erc20Fee:    types.NewERC20Token(1, myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewERC20Token(103, myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
@@ -254,23 +260,25 @@ func TestBatchesFullCoins(t *testing.T) {
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
 	// and verify remaining available Tx in the pool
-	var gotUnbatchedTx []*types.OutgoingTx
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
+	var gotUnbatchedTx []*types.OutgoingTransferTx
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx := []*types.OutgoingTx{
+	expUnbatchedTx := []*types.OutgoingTransferTx{
 		{
-			BridgeFee: types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr).GravityCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr).GravityCoin(),
+			Id:          1,
+			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr).GravityCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr).GravityCoin(),
+			Id:          4,
+			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
@@ -330,35 +338,90 @@ func TestBatchesFullCoins(t *testing.T) {
 
 	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTx) bool {
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx = []*types.OutgoingTx{
+	expUnbatchedTx = []*types.OutgoingTransferTx{
 		{
-			BridgeFee: types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr).GravityCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr).GravityCoin(),
+			Id:          2,
+			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr).GravityCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr).GravityCoin(),
+			Id:          3,
+			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(5)), myTokenContractAddr).GravityCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(5)), myTokenContractAddr).GravityCoin(),
+			Id:          6,
+			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(5)), myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(5)), myTokenContractAddr),
 		},
 		{
-			BridgeFee: types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(4)), myTokenContractAddr).GravityCoin(),
-			Sender:    mySender.String(),
-			DestAddr:  myReceiver,
-			Amount:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(4)), myTokenContractAddr).GravityCoin(),
+			Id:          5,
+			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(4)), myTokenContractAddr),
+			Sender:      mySender.String(),
+			DestAddress: myReceiver,
+			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(4)), myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
+}
+
+func TestPoolTxRefund(t *testing.T) {
+	input := CreateTestEnv(t)
+	ctx := input.Context
+	var (
+		now                 = time.Now().UTC()
+		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
+		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
+		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5" // Pickle
+		allVouchers         = sdk.NewCoins(
+			types.NewERC20Token(414, myTokenContractAddr).GravityCoin(),
+		)
+		myDenom = types.NewERC20Token(1, myTokenContractAddr).GravityCoin().Denom
+	)
+
+	// mint some voucher first
+	require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
+	// set senders balance
+	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
+	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
+
+	// CREATE FIRST BATCH
+	// ==================
+
+	// add some TX to the pool
+	for i, v := range []uint64{2, 3, 2, 1} {
+		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
+		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
+		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		require.NoError(t, err)
+	}
+
+	// when
+	ctx = ctx.WithBlockTime(now)
+
+	// tx batch size is 2, so that some of them stay behind
+	_, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	require.NoError(t, err)
+
+	// try to refund a tx that's in a batch
+	err1 := input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 1, mySender)
+	require.Error(t, err1)
+
+	// try to refund a tx that's in the pool
+	err2 := input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 4, mySender)
+	require.NoError(t, err2)
+
+	// make sure refund was issued
+	balances := input.BankKeeper.GetAllBalances(ctx, mySender)
+	require.Equal(t, sdk.NewInt(104), balances.AmountOf(myDenom))
 }

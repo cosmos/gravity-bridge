@@ -456,6 +456,7 @@ func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAd
 	coin := amount.GravityCoin()
 	vouchers := sdk.Coins{coin}
 	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers)
+	require.NoError(t, err)
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, dest, vouchers)
 	require.NoError(t, err)
 	return coin
@@ -465,7 +466,7 @@ func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAd
 func NewStakingKeeperMock(operators ...sdk.ValAddress) *StakingKeeperMock {
 	r := &StakingKeeperMock{
 		BondedValidators: make([]stakingtypes.Validator, 0),
-		ValidatorPower:   make(map[string]int64, 0),
+		ValidatorPower:   make(map[string]int64),
 	}
 	const defaultTestPower = 100
 	for _, a := range operators {

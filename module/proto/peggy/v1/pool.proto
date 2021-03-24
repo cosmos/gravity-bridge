@@ -1,19 +1,9 @@
 syntax = "proto3";
 package peggy.v1;
 
-import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/althea-net/peggy/module/x/gravity/types";
-
-// OutgoingTx is a withdrawal on the bridged contract
-// TODO: can this type be replaced by outgoing transfer tx
-message OutgoingTx {
-  string                   sender     = 1;
-  string                   dest_addr  = 2;
-  cosmos.base.v1beta1.Coin amount     = 3 [(gogoproto.nullable) = false];
-  cosmos.base.v1beta1.Coin bridge_fee = 4 [(gogoproto.nullable) = false];
-}
 
 // IDSet represents a set of IDs
 message IDSet {
@@ -21,6 +11,6 @@ message IDSet {
 }
 
 message BatchFees {
-  string token         = 1;
-  string topOneHundred = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+  string token           = 1;
+  string top_one_hundred = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
 }

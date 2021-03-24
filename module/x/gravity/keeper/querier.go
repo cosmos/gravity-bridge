@@ -58,6 +58,10 @@ const (
 	// Used by the relayer to package a batch with signatures required
 	// to submit to Ethereum
 	QueryBatchConfirms = "batchConfirms"
+	// Used to query all pending SendToEth transactions and fees available for each
+	// token type, a relayer can then estimate their potential profit when requesting
+	// a batch
+	QueryBatchFees = "batchFees"
 
 	// Logic calls
 	// note the current logic here constrains logic call throughput to one
@@ -76,11 +80,14 @@ const (
 	// to submit to Ethereum
 	QueryLogicCallConfirms = "logicCallConfirms"
 
-	// Cosmos originated assets
+	// Token mapping
 	// This retrieves the denom which is represented by a given ERC20 contract
 	QueryERC20ToDenom = "ERC20ToDenom"
 	// This retrieves the ERC20 contract which represents a given denom
 	QueryDenomToERC20 = "DenomToERC20"
+
+	// Query pending transactions
+	QueryPendingSendToEth = "PendingSendToEth"
 )
 
 // NewQuerier is the module level router for state queries
@@ -111,6 +118,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return lastPendingBatchRequest(ctx, path[1], keeper)
 		case QueryOutgoingTxBatches:
 			return lastBatchesRequest(ctx, keeper)
+		case QueryBatchFees:
+			return queryBatchFees(ctx, keeper)
 
 		// Logic calls
 		case QueryLogicCall:
@@ -125,11 +134,15 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case QueryGravityID:
 			return queryGravityID(ctx, keeper)
 
-		// Cosmos originated assets
+		// Token mappings
 		case QueryDenomToERC20:
 			return queryDenomToERC20(ctx, path[1], keeper)
 		case QueryERC20ToDenom:
 			return queryERC20ToDenom(ctx, path[1], keeper)
+
+		// Pending transactions
+		case QueryPendingSendToEth:
+			return queryPendingSendToEth(ctx, path[1], keeper)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint", types.ModuleName)
@@ -346,6 +359,15 @@ func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
+func queryBatchFees(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	val := types.QueryBatchFeeResponse{BatchFees: keeper.CreateBatchFees(ctx)}
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, val)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return res, nil
+}
+
 // Gets MaxResults logic calls from store.
 func lastLogicCallRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var calls []*types.OutgoingLogicCall
@@ -487,6 +509,31 @@ func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, er
 	response.CosmosOriginated = cosmos_originated
 	response.Denom = denom
 	bytes, err := codec.MarshalJSONIndent(types.ModuleCdc, response)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	} else {
+		return bytes, nil
+	}
+}
+
+func queryPendingSendToEth(ctx sdk.Context, senderAddr string, k Keeper) ([]byte, error) {
+	batches := k.GetOutgoingTxBatches(ctx)
+	unbatched_tx := k.GetPoolTransactions(ctx)
+	sender_address := senderAddr
+	res := types.QueryPendingSendToEthResponse{}
+	for _, batch := range batches {
+		for _, tx := range batch.Transactions {
+			if tx.Sender == sender_address {
+				res.TransfersInBatches = append(res.TransfersInBatches, tx)
+			}
+		}
+	}
+	for _, tx := range unbatched_tx {
+		if tx.Sender == sender_address {
+			res.UnbatchedTransfers = append(res.UnbatchedTransfers, tx)
+		}
+	}
+	bytes, err := codec.MarshalJSONIndent(types.ModuleCdc, res)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	} else {

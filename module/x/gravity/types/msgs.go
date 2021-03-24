@@ -10,11 +10,16 @@ import (
 )
 
 var (
+	_ sdk.Msg = &MsgSetOrchestratorAddress{}
 	_ sdk.Msg = &MsgValsetConfirm{}
 	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
-	_ sdk.Msg = &MsgSetOrchestratorAddress{}
+	_ sdk.Msg = &MsgERC20DeployedClaim{}
+	_ sdk.Msg = &MsgConfirmLogicCall{}
+	_ sdk.Msg = &MsgLogicCallExecutedClaim{}
+	_ sdk.Msg = &MsgDepositClaim{}
+	_ sdk.Msg = &MsgWithdrawClaim{}
 )
 
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
@@ -541,4 +546,40 @@ func (msg MsgLogicCallExecutedClaim) Route() string { return RouterKey }
 func (b *MsgLogicCallExecutedClaim) ClaimHash() []byte {
 	path := fmt.Sprintf("%s/%d/", b.InvalidationId, b.InvalidationNonce)
 	return tmhash.Sum([]byte(path))
+}
+
+// NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
+func NewMsgCancelSendToEth(val sdk.ValAddress, id uint64) *MsgCancelSendToEth {
+	return &MsgCancelSendToEth{
+		TransactionId: id,
+	}
+}
+
+// Route should return the name of the module
+func (msg *MsgCancelSendToEth) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg *MsgCancelSendToEth) Type() string { return "cancel_send_to_eth" }
+
+// ValidateBasic performs stateless checks
+func (msg *MsgCancelSendToEth) ValidateBasic() (err error) {
+	_, err = sdk.ValAddressFromBech32(msg.Sender)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg *MsgCancelSendToEth) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg *MsgCancelSendToEth) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.ValAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{sdk.AccAddress(acc)}
 }

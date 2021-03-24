@@ -52,7 +52,6 @@ func TestValsetSlashing_ValsetCreated_Before_ValidatorBonded(t *testing.T) {
 	pk := input.GravityKeeper
 	params := input.GravityKeeper.GetParams(ctx)
 
-	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	vs := pk.GetCurrentValset(ctx)
 	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
 	vs.Height = height
@@ -62,7 +61,7 @@ func TestValsetSlashing_ValsetCreated_Before_ValidatorBonded(t *testing.T) {
 	EndBlocker(ctx, pk)
 
 	// ensure that the  validator who is bonded after valset is created is not slashed
-	val = input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	require.False(t, val.IsJailed())
 }
 
@@ -74,7 +73,6 @@ func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
 	params := input.GravityKeeper.GetParams(ctx)
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
-	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	vs := pk.GetCurrentValset(ctx)
 	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
 	vs.Height = height
@@ -93,7 +91,7 @@ func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
 	EndBlocker(ctx, pk)
 
 	// ensure that the  validator who is bonded before valset is created is slashed
-	val = input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	require.True(t, val.IsJailed())
 
 	// ensure that the  validator who attested the valset is not slashed.

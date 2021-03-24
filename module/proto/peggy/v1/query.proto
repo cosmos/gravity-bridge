@@ -79,6 +79,10 @@ service Query {
   rpc GetDelegateKeyByOrchestrator(QueryDelegateKeysByOrchestratorAddress) returns (QueryDelegateKeysByOrchestratorAddressResponse) {
     option (google.api.http).get = "/gravity/v1beta/query_delegate_keys_by_orchestrator";
   }
+
+  rpc GetPendingSendToEth(QueryPendingSendToEth) returns (QueryPendingSendToEthResponse) {
+    option (google.api.http).get = "/peggy/v1beta/query_pending_send_to_eth";
+  }
 }
 
 message QueryParamsRequest {}
@@ -127,7 +131,7 @@ message QueryLastPendingValsetRequestByAddrResponse {
 
 message QueryBatchFeeRequest {}
 message QueryBatchFeeResponse {
-  repeated BatchFees batchFees = 1;
+  repeated BatchFees batch_fees = 1;
 }
 
 message QueryLastPendingBatchRequestByAddrRequest {
@@ -189,7 +193,7 @@ message QueryERC20ToDenomRequest {
   string erc20 = 1;
 }
 message QueryERC20ToDenomResponse {
-  string denom = 1;
+  string denom             = 1;
   bool   cosmos_originated = 2;
 }
 
@@ -197,7 +201,7 @@ message QueryDenomToERC20Request {
   string denom = 1;
 }
 message QueryDenomToERC20Response {
-  string erc20 = 1;
+  string erc20             = 1;
   bool   cosmos_originated = 2;
 }
 
@@ -223,4 +227,12 @@ message QueryDelegateKeysByOrchestratorAddress {
 message QueryDelegateKeysByOrchestratorAddressResponse {
   string validator_address = 1;
   string eth_address       = 2;
+}
+
+message QueryPendingSendToEth {
+  string sender_address = 1;
+}
+message QueryPendingSendToEthResponse {
+  repeated OutgoingTransferTx transfers_in_batches = 1;
+  repeated OutgoingTransferTx unbatched_transfers  = 2;
 }

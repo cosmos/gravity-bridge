@@ -35,11 +35,12 @@ pub async fn happy_path_test_v2(
             .unwrap();
 
     let token_to_send_to_eth = "footoken".to_string();
+    let token_to_send_to_eth_display_name = "mfootoken".to_string();
 
     deploy_erc20(
         token_to_send_to_eth.clone(),
-        token_to_send_to_eth.clone(),
-        token_to_send_to_eth.clone(),
+        token_to_send_to_eth_display_name.clone(),
+        token_to_send_to_eth_display_name.clone(),
         6,
         peggy_address,
         web30,

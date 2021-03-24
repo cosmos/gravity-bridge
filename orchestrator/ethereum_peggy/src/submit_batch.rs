@@ -2,12 +2,14 @@ use crate::utils::{get_tx_batch_nonce, GasCost};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use peggy_utils::error::PeggyError;
+use peggy_utils::message_signatures::encode_tx_batch_confirm_hashed;
 use peggy_utils::types::*;
 use std::{cmp::min, time::Duration};
 use web30::{client::Web3, types::TransactionRequest};
 
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided transaction batch
+#[allow(clippy::too_many_arguments)]
 pub async fn send_eth_transaction_batch(
     current_valset: Valset,
     batch: TransactionBatch,
@@ -15,6 +17,7 @@ pub async fn send_eth_transaction_batch(
     web3: &Web3,
     timeout: Duration,
     peggy_contract_address: EthAddress,
+    peggy_id: String,
     our_eth_key: EthPrivateKey,
 ) -> Result<(), PeggyError> {
     let new_batch_nonce = batch.nonce;
@@ -47,7 +50,7 @@ pub async fn send_eth_transaction_batch(
         return Ok(());
     }
 
-    let payload = encode_batch_payload(current_valset, &batch, confirms)?;
+    let payload = encode_batch_payload(current_valset, &batch, confirms, peggy_id)?;
 
     let tx = web3
         .send_transaction(
@@ -88,6 +91,7 @@ pub async fn estimate_tx_batch_cost(
     confirms: &[BatchConfirmResponse],
     web3: &Web3,
     peggy_contract_address: EthAddress,
+    peggy_id: String,
     our_eth_key: EthPrivateKey,
 ) -> Result<GasCost, PeggyError> {
     let our_eth_address = our_eth_key.to_public_key().unwrap();
@@ -104,7 +108,7 @@ pub async fn estimate_tx_batch_cost(
             gas_price: Some(gas_price.clone().into()),
             gas: Some(gas_limit.into()),
             value: Some(zero.into()),
-            data: Some(encode_batch_payload(current_valset, &batch, confirms)?.into()),
+            data: Some(encode_batch_payload(current_valset, &batch, confirms, peggy_id)?.into()),
         })
         .await?;
 
@@ -119,11 +123,13 @@ fn encode_batch_payload(
     current_valset: Valset,
     batch: &TransactionBatch,
     confirms: &[BatchConfirmResponse],
+    peggy_id: String,
 ) -> Result<Vec<u8>, PeggyError> {
     let (current_addresses, current_powers) = current_valset.filter_empty_addresses();
     let current_valset_nonce = current_valset.nonce;
     let new_batch_nonce = batch.nonce;
-    let sig_data = current_valset.order_sigs(confirms)?;
+    let hash = encode_tx_batch_confirm_hashed(peggy_id, batch.clone());
+    let sig_data = current_valset.order_sigs(&hash, confirms)?;
     let sig_arrays = to_arrays(sig_data);
     let (amounts, destinations, fees) = batch.get_checkpoint_values();
 

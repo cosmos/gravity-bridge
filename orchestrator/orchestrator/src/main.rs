@@ -17,6 +17,7 @@ extern crate lazy_static;
 extern crate log;
 
 mod ethereum_event_watcher;
+mod get_with_retry;
 mod main_loop;
 mod oracle_resync;
 

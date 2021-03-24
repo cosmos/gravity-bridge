@@ -10,10 +10,29 @@ import (
 
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
+	// Question: what here can be epoched?
 	slashing(ctx, k)
 	attestationTally(ctx, k)
 	cleanupTimedOutBatches(ctx, k)
 	cleanupTimedOutLogicCalls(ctx, k)
+	createValsets(ctx, k)
+}
+
+func createValsets(ctx sdk.Context, k keeper.Keeper) {
+	// Auto ValsetRequest Creation.
+	/*
+			1. If there are no valset requests, create a new one.
+			2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
+			   This will make sure the unbonding validator has to provide an attestation to a new Valset
+		       that excludes him before he completely Unbonds.  Otherwise he will be slashed
+			3. If power change between validators of CurrentValset and latest valset request is > 5%
+		**/
+	latestValset := k.GetLatestValset(ctx)
+	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
+
+	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
+		k.SetValsetRequest(ctx)
+	}
 }
 
 func slashing(ctx sdk.Context, k keeper.Keeper) {
@@ -24,13 +43,8 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 	ValsetSlashing(ctx, k, params)
 	BatchSlashing(ctx, k, params)
 	// TODO slashing for arbitrary logic is missing
-	ClaimsSlashing(ctx, k, params)
 
-	// #4 condition (stretch goal)
-	// TODO: lost eth key or delegate key
-	// 1. submit a message signed by the priv key to the chain and it slashes the validator who delegated to that key
-	// return
-
+	// TODO: prune validator sets, older than 6 months, this time is chosen out of an abundance of caution
 	// TODO: prune outgoing tx batches while looping over them above, older than 15h and confirmed
 	// TODO: prune claims, attestations
 }
@@ -129,6 +143,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	unslashedValsets := k.GetUnSlashedValsets(ctx, maxHeight)
 
 	// unslashedValsets are sorted by nonce in ASC order
+	// Question: do we need to sort each time? See if this can be epoched
 	for _, vs := range unslashedValsets {
 		confirms := k.GetValsetConfirms(ctx, vs.Nonce)
 
@@ -175,7 +190,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 				if err != nil {
 					panic(err)
 				}
-				validator, exist := k.StakingKeeper.GetValidator(ctx, sdk.ValAddress(addr))
+				validator, _ := k.StakingKeeper.GetValidator(ctx, sdk.ValAddress(addr))
 				valConsAddr, _ := validator.GetConsAddr()
 				valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, valConsAddr)
 
@@ -202,21 +217,6 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 		}
 		// then we set the latest slashed valset  nonce
 		k.SetLastSlashedValsetNonce(ctx, vs.Nonce)
-	}
-
-	// Auto ValsetRequest Creation.
-	/*
-			1. If there are no valset requests, create a new one.
-			2. If there is atleast one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
-			   This will make sure the unbonding validator has to provide an attestation to a new Valset
-		       that excludes him before he completely Unbonds.  Otherwise he will be slashed
-			3. If power change between validators of CurrentValset and latest valset request is > 5%
-		**/
-	latestValset := k.GetLatestValset(ctx)
-	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
-
-	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
-		k.SetValsetRequest(ctx)
 	}
 }
 
@@ -269,81 +269,6 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	}
 }
 
-func ClaimsSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
-	// #3 condition
-	// Oracle events MsgDepositClaim, MsgWithdrawClaim
-
-	attmap := k.GetAttestationMapping(ctx)
-	for _, atts := range attmap {
-		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-		// slash conflicting votes
-		if len(atts) > 1 {
-			var unObs []types.Attestation
-			oneObserved := false
-			for _, att := range atts {
-				if att.Observed {
-					oneObserved = true
-					continue
-				}
-				unObs = append(unObs, att)
-			}
-			// if one is observed delete the *other* attestations, do not delete
-			// the original as we will need it later.
-			if oneObserved {
-				for _, att := range unObs {
-					for _, valaddr := range att.Votes {
-						validator, _ := sdk.ValAddressFromBech32(valaddr)
-						val := k.StakingKeeper.Validator(ctx, validator)
-						cons, _ := val.GetConsAddr()
-						k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, validator), params.SlashFractionConflictingClaim)
-						k.StakingKeeper.Jail(ctx, cons)
-					}
-					claim, err := k.UnpackAttestationClaim(&att)
-					if err != nil {
-						panic("couldn't cast to claim")
-					}
-
-					k.DeleteAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
-				}
-			}
-		}
-
-		if len(atts) == 1 {
-			att := atts[0]
-			// TODO-JT: Review this
-			windowPassed := uint64(ctx.BlockHeight()) > params.SignedClaimsWindow &&
-				uint64(ctx.BlockHeight())-params.SignedClaimsWindow > att.Height
-
-			// if the signing window has passed and the attestation is still unobserved wait.
-			if windowPassed && att.Observed {
-				for _, bv := range currentBondedSet {
-					found := false
-					for _, val := range att.Votes {
-						confVal, _ := sdk.ValAddressFromBech32(val)
-						if confVal.Equals(bv.GetOperator()) {
-							found = true
-							break
-						}
-					}
-					if !found {
-						cons, _ := bv.GetConsAddr()
-						k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), k.StakingKeeper.GetLastValidatorPower(ctx, bv.GetOperator()), params.SlashFractionClaim)
-						if !bv.IsJailed() {
-							k.StakingKeeper.Jail(ctx, cons)
-						}
-					}
-				}
-				claim, err := k.UnpackAttestationClaim(&att)
-				if err != nil {
-					panic("couldn't cast to claim")
-				}
-
-				k.DeleteAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
-			}
-		}
-	}
-}
-
 // TestingEndBlocker is a second endblocker function only imported in the Gravity codebase itself
 // if you are a consuming Cosmos chain DO NOT IMPORT THIS, it simulates a chain using the arbitrary
 // logic API to request logic calls
@@ -355,7 +280,7 @@ func TestingEndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		// the full lifecycle of the call. We need to find some way for this to read data
 		// and encode a simple testing call, probably to one of the already deployed ERC20
 		// contracts so that we can get the full lifecycle.
-		token := []*types.ERC20Token{&types.ERC20Token{
+		token := []*types.ERC20Token{{
 			Contract: "0x7580bfe88dd3d07947908fae12d95872a260f2d8",
 			Amount:   sdk.NewIntFromUint64(5000),
 		}}

@@ -27,6 +27,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgERC20DeployedClaim{},
 		&MsgSetOrchestratorAddress{},
 		&MsgLogicCallExecutedClaim{},
+		&MsgCancelSendToEth{},
 	)
 
 	registry.RegisterInterface(
@@ -56,6 +57,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgERC20DeployedClaim{}, "gravity/MsgERC20DeployedClaim", nil)
 	cdc.RegisterConcrete(&MsgLogicCallExecutedClaim{}, "gravity/MsgLogicCallExecutedClaim", nil)
 	cdc.RegisterConcrete(&OutgoingTxBatch{}, "gravity/OutgoingTxBatch", nil)
+	cdc.RegisterConcrete(&MsgCancelSendToEth{}, "gravity/MsgCancelSendToEth", nil)
 	cdc.RegisterConcrete(&OutgoingTransferTx{}, "gravity/OutgoingTransferTx", nil)
 	cdc.RegisterConcrete(&ERC20Token{}, "gravity/ERC20Token", nil)
 	cdc.RegisterConcrete(&IDSet{}, "gravity/IDSet", nil)

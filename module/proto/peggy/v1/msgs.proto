@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 option go_package = "github.com/althea-net/peggy/module/x/gravity/types";
 
+// Msg defines the state transitions possible within gravity
 service Msg {
   rpc ValsetConfirm(MsgValsetConfirm) returns (MsgValsetConfirmResponse) {
     option (google.api.http).post = "/gravity/v1/valset_confirm";
@@ -38,6 +39,9 @@ service Msg {
   rpc SetOrchestratorAddress(MsgSetOrchestratorAddress) returns (MsgSetOrchestratorAddressResponse) {
     option (google.api.http).post = "/gravity/v1/set_orchestrator_address";
   }
+  rpc CancelSendToEth(MsgCancelSendToEth) returns (MsgCancelSendToEthResponse) {
+    option (google.api.http).post = "/peggy/v1/cancel_send_to_eth";
+  }
 }
 
 // MsgSetOrchestratorAddress
@@ -65,7 +69,7 @@ message MsgSetOrchestratorAddressResponse {}
 // this is the message sent by the validators when they wish to submit their
 // signatures over the validator set at a given block height. A validator must
 // first call MsgSetEthAddress to set their Ethereum address to be used for
-// signing. Then someone (anyone) must make a ValsetRequest the request is
+// signing. Then someone (anyone) must make a ValsetRequest, the request is
 // essentially a messaging mechanism to determine which block all validators
 // should submit signatures over. Finally validators sign the validator set,
 // powers, and Ethereum addresses of the entire validator set at the height of a
@@ -221,3 +225,13 @@ message MsgLogicCallExecutedClaim {
 }
 
 message MsgLogicCallExecutedClaimResponse {}
+
+// This call allows the sender (and only the sender)
+// to cancel a given MsgSendToEth and recieve a refund
+// of the tokens
+message MsgCancelSendToEth {
+  uint64 transaction_id = 1;
+  string sender         = 2;
+}
+
+message MsgCancelSendToEthResponse {}

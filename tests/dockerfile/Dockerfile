@@ -6,7 +6,7 @@ ADD https://golang.org/dl/go1.15.6.linux-amd64.tar.gz /go/
 RUN cd /go && tar -xvf * && mv /go/**/ /usr/local/
 # only required for deployment script
 RUN npm install -g ts-node && npm install -g typescript
-ADD https://gethstore.blob.core.windows.net/builds/geth-linux-amd64-1.9.14-6d74d1e5.tar.gz /geth/
+ADD https://gethstore.blob.core.windows.net/builds/geth-linux-amd64-1.10.1-c2d2f4ed.tar.gz /geth/
 RUN cd /geth && tar -xvf * && mv /geth/**/geth /usr/bin/geth
 # rust for the testing suite and the relayers / validator daemons
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
