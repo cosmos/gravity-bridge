@@ -5,11 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch peggyd",
+            "name": "Launch gravityd",
             "type": "go",
             "request": "launch",
             "mode": "exec",
-            "program": "/go/bin/peggyd",
+            "program": "/go/bin/gravityd",
             "showLog": true,
             "args": [
                 "--home",

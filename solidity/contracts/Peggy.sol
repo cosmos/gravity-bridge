@@ -26,7 +26,7 @@ struct LogicCallArgs {
 	uint256 invalidationNonce;
 }
 
-contract Peggy is ReentrancyGuard {
+contract Gravity is ReentrancyGuard {
 	using SafeMath for uint256;
 	using SafeERC20 for IERC20;
 
@@ -38,7 +38,7 @@ contract Peggy is ReentrancyGuard {
 	uint256 public state_lastEventNonce = 0;
 
 	// These are set once at initialization
-	bytes32 public state_peggyId;
+	bytes32 public state_gravityId;
 	uint256 public state_powerThreshold;
 
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
@@ -86,9 +86,9 @@ contract Peggy is ReentrancyGuard {
 		address[] memory _validators,
 		uint256[] memory _powers,
 		uint256 _valsetNonce,
-		bytes32 _peggyId
+		bytes32 _gravityId
 	) public pure {
-		makeCheckpoint(_validators, _powers, _valsetNonce, _peggyId);
+		makeCheckpoint(_validators, _powers, _valsetNonce, _gravityId);
 	}
 
 	function testCheckValidatorSignatures(
@@ -137,7 +137,7 @@ contract Peggy is ReentrancyGuard {
 	// A checkpoint is a hash of all relevant information about the valset. This is stored by the contract,
 	// instead of storing the information directly. This saves on storage and gas.
 	// The format of the checkpoint is:
-	// h(peggyId, "checkpoint", valsetNonce, validators[], powers[])
+	// h(gravityId, "checkpoint", valsetNonce, validators[], powers[])
 	// Where h is the keccak256 hash function.
 	// The validator powers must be decreasing or equal. This is important for checking the signatures on the
 	// next valset, since it allows the caller to stop verifying signatures once a quorum of signatures have been verified.
@@ -145,13 +145,13 @@ contract Peggy is ReentrancyGuard {
 		address[] memory _validators,
 		uint256[] memory _powers,
 		uint256 _valsetNonce,
-		bytes32 _peggyId
+		bytes32 _gravityId
 	) private pure returns (bytes32) {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
 		bytes32 checkpoint =
-			keccak256(abi.encode(_peggyId, methodName, _valsetNonce, _validators, _powers));
+			keccak256(abi.encode(_gravityId, methodName, _valsetNonce, _validators, _powers));
 
 		return checkpoint;
 	}
@@ -243,14 +243,14 @@ contract Peggy is ReentrancyGuard {
 				_currentValidators,
 				_currentPowers,
 				_currentValsetNonce,
-				state_peggyId
+				state_gravityId
 			) == state_lastValsetCheckpoint,
 			"Supplied current validators and powers do not match checkpoint."
 		);
 
 		// Check that enough current validators have signed off on the new validator set
 		bytes32 newCheckpoint =
-			makeCheckpoint(_newValidators, _newPowers, _newValsetNonce, state_peggyId);
+			makeCheckpoint(_newValidators, _newPowers, _newValsetNonce, state_gravityId);
 
 		checkValidatorSignatures(
 			_currentValidators,
@@ -328,7 +328,7 @@ contract Peggy is ReentrancyGuard {
 					_currentValidators,
 					_currentPowers,
 					_currentValsetNonce,
-					state_peggyId
+					state_gravityId
 				) == state_lastValsetCheckpoint,
 				"Supplied current validators and powers do not match checkpoint."
 			);
@@ -349,7 +349,7 @@ contract Peggy is ReentrancyGuard {
 				// Get hash of the transaction batch and checkpoint
 				keccak256(
 					abi.encode(
-						state_peggyId,
+						state_gravityId,
 						// bytes32 encoding of "transactionBatch"
 						0x7472616e73616374696f6e426174636800000000000000000000000000000000,
 						_amounts,
@@ -434,7 +434,7 @@ contract Peggy is ReentrancyGuard {
 					_currentValidators,
 					_currentPowers,
 					_currentValsetNonce,
-					state_peggyId
+					state_gravityId
 				) == state_lastValsetCheckpoint,
 				"Supplied current validators and powers do not match checkpoint."
 			);
@@ -455,7 +455,7 @@ contract Peggy is ReentrancyGuard {
 		bytes32 argsHash =
 			keccak256(
 				abi.encode(
-					state_peggyId,
+					state_gravityId,
 					// bytes32 encoding of "logicCall"
 					0x6c6f67696343616c6c0000000000000000000000000000000000000000000000,
 					_args.transferAmounts,
@@ -539,7 +539,7 @@ contract Peggy is ReentrancyGuard {
 		string memory _symbol,
 		uint8 _decimals
 	) public {
-		// Deploy an ERC20 with entire supply granted to Peggy.sol
+		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
 		// Fire an event to let the Cosmos module know
@@ -555,8 +555,8 @@ contract Peggy is ReentrancyGuard {
 	}
 
 	constructor(
-		// A unique identifier for this peggy instance to use in signatures
-		bytes32 _peggyId,
+		// A unique identifier for this gravity instance to use in signatures
+		bytes32 _gravityId,
 		// How much voting power is needed to approve operations
 		uint256 _powerThreshold,
 		// The validator set
@@ -582,11 +582,11 @@ contract Peggy is ReentrancyGuard {
 			"Submitted validator set signatures do not have enough power."
 		);
 
-		bytes32 newCheckpoint = makeCheckpoint(_validators, _powers, 0, _peggyId);
+		bytes32 newCheckpoint = makeCheckpoint(_validators, _powers, 0, _gravityId);
 
 		// ACTIONS
 
-		state_peggyId = _peggyId;
+		state_gravityId = _gravityId;
 		state_powerThreshold = _powerThreshold;
 		state_lastValsetCheckpoint = newCheckpoint;
 

@@ -1,6 +1,8 @@
 PACKAGES=$(shell go list ./... | grep -v '/simulation')
-VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
+VERSION := $(shell git describe --abbrev=6 --dirty --always --tags)
 COMMIT := $(shell git log -1 --format='%H')
+DOCKER := $(shell which docker)
+DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 
 build_tags = netgo
 ifeq ($(LEDGER_ENABLED),true)
@@ -37,8 +39,8 @@ whitespace += $(whitespace)
 comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
-ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=peggy \
-	-X github.com/cosmos/cosmos-sdk/version.AppName=peggy \
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gravity \
+	-X github.com/cosmos/cosmos-sdk/version.AppName=gravity \
 	-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 	-X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 	-X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
@@ -48,7 +50,7 @@ BUILD_FLAGS := -ldflags '$(ldflags)' -gcflags="all=-N -l"
 all: install
 
 install: go.sum
-		go install $(BUILD_FLAGS) ./cmd/peggy
+		go install $(BUILD_FLAGS) ./cmd/gravity
 
 go.sum: go.mod
 		@echo "--> Ensure dependencies have not been modified"
@@ -71,10 +73,10 @@ proto-gen:
 	./contrib/local/protocgen.sh
 
 proto-lint:
-	buf check lint --error-format=json
+	@$(DOCKER_BUF) check lint --error-format=json
 
 proto-check-breaking:
-	buf check breaking --against-input '.git#branch=master'
+	@$(DOCKER_BUF) check breaking --against-input $(HTTPS_GIT)#branch=main
 
 TM_URL           = https://raw.githubusercontent.com/tendermint/tendermint/v0.34.0-rc3/proto/tendermint
 GOGO_PROTO_URL   = https://raw.githubusercontent.com/regen-network/protobuf/cosmos

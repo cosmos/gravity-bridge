@@ -3,47 +3,47 @@ use deep_space::address::Address;
 use deep_space::canonical_json::{to_canonical_json, CanonicalJsonError};
 use deep_space::coin::Coin;
 use deep_space::msg::DeepSpaceMsg;
-use ethereum_peggy::utils::downcast_uint256;
+use ethereum_gravity::utils::downcast_uint256;
 use num256::Uint256;
-use peggy_utils::types::{
+use gravity_utils::types::{
     ERC20DeployedEvent, LogicCallExecutedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent,
 };
 /// Any arbitrary message
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 #[serde(tag = "type", content = "value")]
-pub enum PeggyMsg {
-    #[serde(rename = "peggy/MsgSetOrchestratorAddress")]
+pub enum GravityMsg {
+    #[serde(rename = "gravity/MsgSetOrchestratorAddress")]
     SetOrchestratorAddressMsg(SetOrchestratorAddressMsg),
 
-    #[serde(rename = "peggy/MsgValsetConfirm")]
+    #[serde(rename = "gravity/MsgValsetConfirm")]
     ValsetConfirmMsg(ValsetConfirmMsg),
 
-    #[serde(rename = "peggy/MsgSendToEth")]
+    #[serde(rename = "gravity/MsgSendToEth")]
     SendToEthMsg(SendToEthMsg),
 
-    #[serde(rename = "peggy/MsgRequestBatch")]
+    #[serde(rename = "gravity/MsgRequestBatch")]
     RequestBatchMsg(RequestBatchMsg),
 
-    #[serde(rename = "peggy/MsgConfirmBatch")]
+    #[serde(rename = "gravity/MsgConfirmBatch")]
     ConfirmBatchMsg(ConfirmBatchMsg),
 
-    #[serde(rename = "peggy/MsgConfirmLogicCall")]
+    #[serde(rename = "gravity/MsgConfirmLogicCall")]
     ConfirmLogicCallMsg(ConfirmLogicCallMsg),
 
-    #[serde(rename = "peggy/MsgDepositClaim")]
+    #[serde(rename = "gravity/MsgDepositClaim")]
     DepositClaimMsg(DepositClaimMsg),
 
-    #[serde(rename = "peggy/MsgWithdrawClaim")]
+    #[serde(rename = "gravity/MsgWithdrawClaim")]
     WithdrawClaimMsg(WithdrawClaimMsg),
 
-    #[serde(rename = "peggy/MsgERC20DeployedClaim")]
+    #[serde(rename = "gravity/MsgERC20DeployedClaim")]
     ERC20DeployedClaimMsg(ERC20DeployedClaimMsg),
 
-    #[serde(rename = "peggy/MsgLogicCallExecutedClaim")]
+    #[serde(rename = "gravity/MsgLogicCallExecutedClaim")]
     LogicCallExecutedClaim(LogicCallExecutedClaim),
 }
 
-impl DeepSpaceMsg for PeggyMsg {
+impl DeepSpaceMsg for GravityMsg {
     fn to_sign_bytes(&self) -> Result<Vec<u8>, CanonicalJsonError> {
         Ok(to_canonical_json(self)?)
     }

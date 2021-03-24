@@ -2,8 +2,9 @@ node_modules
 typechain
 target
 tests/test-runner/Cargo.lock
-tests/dockerfile/peggy.tar.gz
+tests/dockerfile/gravity.tar.gz
 solidity/dist
+orchestrator/bins
 
 # IDE files
 .idea/

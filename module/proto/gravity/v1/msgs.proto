@@ -1,0 +1,132 @@
+syntax = "proto3";
+package gravity.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gravity/v1/claims.proto";
+import "gravity/v1/confirm.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
+
+// Msg defines the state transitions possible within gravity
+service Msg {
+  rpc SendToEth(MsgSendToEth) returns (MsgSendToEthResponse) {
+    option (google.api.http).post = "/gravity/v1/send_to_eth";
+  }
+  rpc RequestBatch(MsgRequestBatch) returns (MsgRequestBatchResponse) {
+    option (google.api.http).post = "/gravity/v1/request_batch";
+  }
+  rpc SubmitConfirm(MsgSubmitConfirm) returns (MsgSubmitConfirmResponse) {
+    option (google.api.http).post = "/peggy/v1/confim_logic";
+  }
+  rpc CancelSendToEth(MsgCancelSendToEth) returns (MsgCancelSendToEthResponse) {
+    option (google.api.http).post = "/peggy/v1/cancel_send_to_eth";
+  }
+  rpc SubmitClaim(MsgSubmitClaim) returns (MsgSubmitClaimResponse) {
+    option (google.api.http).post = "/peggy/v1/deposit_claim";
+  }
+  rpc SetDelegateKey(MsgDelegateKey) returns (MsgDelegateKeyResponse) {
+    option (google.api.http).post = "/peggy/v1/delegate_keys";
+  }
+}
+
+// MsgDelegateKey
+// this message allows validators to delegate their voting responsibilities
+// to a given key. This key is then used as an optional authentication method
+// for sigining oracle claims
+// VALIDATOR
+// The validator field is a cosmosvaloper1... string (i.e. sdk.ValAddress)
+// that references a validator in the active set
+// ORCHESTRATOR
+// The orchestrator field is a cosmos1... string  (i.e. sdk.AccAddress) that
+// references the key that is being delegated to
+// ETH_ADDRESS
+// This is a hex encoded 0x Ethereum public key that will be used by this validator
+// on Ethereum
+message MsgDelegateKey {
+  string validator    = 1;
+  string orchestrator = 2;
+  string eth_address  = 3;
+}
+
+message MsgDelegateKeyResponse {}
+
+// MsgSendToEth
+// This is the message that a user calls when they want to bridge an asset
+// it will later be removed when it is included in a batch and successfully
+// submitted tokens are removed from the users balance immediately
+// -------------
+// AMOUNT:
+// the coin to send across the bridge, note the restriction that this is a
+// single coin not a set of coins that is normal in other Cosmos messages
+// FEE:
+// the fee paid for the bridge, distinct from the fee paid to the chain to
+// actually send this message in the first place. So a successful send has
+// two layers of fees for the user
+message MsgSendToEth {
+  string                   sender   = 1;
+  string                   eth_dest = 2;
+  cosmos.base.v1beta1.Coin amount   = 3 [
+    (gogoproto.nullable) = false
+  ];
+  cosmos.base.v1beta1.Coin bridge_fee = 4 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgSendToEthResponse {}
+
+// MsgRequestBatch
+// this is a message anyone can send that requests a batch of transactions to
+// send across the bridge be created for whatever block height this message is
+// included in. This acts as a coordination point, the handler for this message
+// looks at the AddToOutgoingPool tx's in the store and generates a batch, also
+// available in the store tied to this message. The validators then grab this
+// batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer
+// can finally submit the batch
+// -------------
+message MsgRequestBatch {
+  string orchestrator = 1;
+  string denom        = 2;
+}
+
+message MsgRequestBatchResponse {}
+
+// This call allows the sender (and only the sender)
+// to cancel a given MsgSendToEth and recieve a refund
+// of the tokens
+message MsgCancelSendToEth {
+  uint64 transaction_id = 1;
+  string sender         = 2;
+}
+
+message MsgCancelSendToEthResponse {}
+
+// MsgSubmitConfirm
+message MsgSubmitConfirm {
+  option (gogoproto.goproto_getters) = false;
+
+  ConfirmType         confirm_type = 1;
+  google.protobuf.Any confirm      = 2 [
+    (cosmos_proto.accepts_interface) = "Confirm"
+  ];
+  string signer = 3;
+}
+
+message MsgSubmitConfirmResponse {}
+
+// MsgSubmitClaim
+message MsgSubmitClaim {
+  option (gogoproto.goproto_getters) = false;
+
+  ClaimType           claim_type = 1;
+  google.protobuf.Any claim      = 2 [
+    (cosmos_proto.accepts_interface) = "EthereumClaim"
+  ];
+  string signer = 3;
+}
+
+message MsgSubmitClaimResponse {}

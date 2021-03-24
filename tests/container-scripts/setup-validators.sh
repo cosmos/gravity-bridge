@@ -1,9 +1,9 @@
 #!/bin/bash
 set -eux
 # your gaiad binary name
-BIN=peggy
+BIN=gravity
 
-CHAIN_ID="peggy-test"
+CHAIN_ID="gravity-test"
 
 NODES=$1
 
@@ -22,7 +22,7 @@ $BIN init $STARTING_VALIDATOR_HOME --chain-id=$CHAIN_ID validator1
 ## testing the generated one with the default values provided by the module.
 
 # add in denom metadata for both native tokens
-jq '.app_state.bank.denom_metadata += [{"base": "footoken", display: "footoken", "description": "A non-staking test token", "denom_units": [{"denom": "footoken", "exponent": 6}]}, {"base": "stake", display: "stake", "description": "A staking test token", "denom_units": [{"denom": "stake", "exponent": 6}]}]' /validator$STARTING_VALIDATOR/config/genesis.json > /edited-genesis.json
+jq '.app_state.bank.denom_metadata += [{"base": "footoken", display: "mfootoken", "description": "A non-staking test token", "denom_units": [{"denom": "footoken", "exponent": 0}, {"denom": "mfootoken", "exponent": 6}]}, {"base": "stake", display: "mstake", "description": "A staking test token", "denom_units": [{"denom": "stake", "exponent": 0}, {"denom": "mstake", "exponent": 6}]}]' /validator$STARTING_VALIDATOR/config/genesis.json > /edited-genesis.json
 
 mv /edited-genesis.json /genesis.json
 

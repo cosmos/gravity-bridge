@@ -6,7 +6,7 @@ mod ethereum_events;
 mod logic_call;
 mod signatures;
 mod valsets;
-use crate::error::PeggyError;
+use crate::error::GravityError;
 
 pub use batches::*;
 pub use ethereum_events::*;
@@ -22,7 +22,7 @@ pub struct ERC20Token {
 }
 
 impl ERC20Token {
-    pub fn from_proto(input: peggy_proto::peggy::Erc20Token) -> Result<Self, PeggyError> {
+    pub fn from_proto(input: gravity_proto::gravity::Erc20Token) -> Result<Self, GravityError> {
         Ok(ERC20Token {
             amount: input.amount.parse()?,
             token_contract_address: input.contract.parse()?,

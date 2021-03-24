@@ -1,8 +1,8 @@
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
-use cosmos_peggy::send::update_peggy_delegate_addresses;
-use cosmos_peggy::utils::wait_for_next_cosmos_block;
+use cosmos_gravity::send::update_gravity_delegate_addresses;
+use cosmos_gravity::utils::wait_for_next_cosmos_block;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use futures::future::join_all;
@@ -76,7 +76,7 @@ pub async fn deploy_contracts(
     fee: Coin,
 ) {
     // register all validator eth addresses, currently validators can just not do this
-    // a full production version of Peggy would refuse to allow validators to enter the pool
+    // a full production version of Gravity would refuse to allow validators to enter the pool
     // without registering their address. It would also allow them to delegate their Cosmos addr
     //
     // Either way, validators need to setup their eth addresses out of band and it's not
@@ -89,7 +89,7 @@ pub async fn deploy_contracts(
             e_key.to_public_key().unwrap(),
             c_key.to_public_key().unwrap().to_address(),
         );
-        updates.push(update_peggy_delegate_addresses(
+        updates.push(update_gravity_delegate_addresses(
             &contact,
             e_key.to_public_key().unwrap(),
             c_key.to_public_key().unwrap().to_address(),
@@ -107,18 +107,18 @@ pub async fn deploy_contracts(
     wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
 
     // these are the possible paths where we could find the contract deployer
-    // and the peggy contract itself, feel free to expand this if it makes your
+    // and the gravity contract itself, feel free to expand this if it makes your
     // deployments more straightforward.
 
     // both files are just in the PWD
-    const A: [&str; 2] = ["contract-deployer", "Peggy.json"];
+    const A: [&str; 2] = ["contract-deployer", "Gravity.json"];
     // files are placed in a root /solidity/ folder
-    const B: [&str; 2] = ["/solidity/contract-deployer", "/solidity/Peggy.json"];
+    const B: [&str; 2] = ["/solidity/contract-deployer", "/solidity/Gravity.json"];
     // the default unmoved locations for the Gravity repo
     const C: [&str; 3] = [
-        "/peggy/solidity/contract-deployer.ts",
-        "/peggy/solidity/artifacts/contracts/Peggy.sol/Peggy.json",
-        "/peggy/solidity/",
+        "/gravity/solidity/contract-deployer.ts",
+        "/gravity/solidity/artifacts/contracts/Gravity.sol/Gravity.json",
+        "/gravity/solidity/",
     ];
     let output = if all_paths_exist(&A) || all_paths_exist(&B) {
         let paths = return_existing(A, B);
@@ -147,7 +147,7 @@ pub async fn deploy_contracts(
             .output()
             .expect("Failed to deploy contracts!")
     } else {
-        panic!("Could not find Peggy.json contract artifact in any known location!")
+        panic!("Could not find Gravity.json contract artifact in any known location!")
     };
 
     info!("stdout: {}", String::from_utf8_lossy(&output.stdout));
@@ -160,25 +160,25 @@ pub async fn deploy_contracts(
 }
 
 pub struct BootstrapContractAddresses {
-    pub peggy_contract: EthAddress,
+    pub gravity_contract: EthAddress,
     pub erc20_addresses: Vec<EthAddress>,
     pub uniswap_liquidity_address: Option<EthAddress>,
 }
 
-/// Parses the ERC20 and Peggy contract addresses from the file created
+/// Parses the ERC20 and Gravity contract addresses from the file created
 /// in deploy_contracts()
 pub fn parse_contract_addresses() -> BootstrapContractAddresses {
     let mut file =
         File::open("/contracts").expect("Failed to find contracts! did they not deploy?");
     let mut output = String::new();
     file.read_to_string(&mut output).unwrap();
-    let mut maybe_peggy_address = None;
+    let mut maybe_gravity_address = None;
     let mut erc20_addresses = Vec::new();
     let mut uniswap_liquidity = None;
     for line in output.lines() {
-        if line.contains("Peggy deployed at Address -") {
+        if line.contains("Gravity deployed at Address -") {
             let address_string = line.split('-').last().unwrap();
-            maybe_peggy_address = Some(address_string.trim().parse().unwrap());
+            maybe_gravity_address = Some(address_string.trim().parse().unwrap());
         } else if line.contains("ERC20 deployed at Address -") {
             let address_string = line.split('-').last().unwrap();
             erc20_addresses.push(address_string.trim().parse().unwrap());
@@ -187,9 +187,9 @@ pub fn parse_contract_addresses() -> BootstrapContractAddresses {
             uniswap_liquidity = Some(address_string.trim().parse().unwrap());
         }
     }
-    let peggy_address: EthAddress = maybe_peggy_address.unwrap();
+    let gravity_address: EthAddress = maybe_gravity_address.unwrap();
     BootstrapContractAddresses {
-        peggy_contract: peggy_address,
+        gravity_contract: gravity_address,
         erc20_addresses,
         uniswap_liquidity_address: uniswap_liquidity,
     }

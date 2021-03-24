@@ -35,23 +35,23 @@ async function runTest(opts: {
   // Prep and deploy contract
   // ========================
   const signers = await ethers.getSigners();
-  const peggyId = ethers.utils.formatBytes32String("foo");
+  const gravityId = ethers.utils.formatBytes32String("foo");
   // This is the power distribution on the Cosmos hub as of 7/14/2020
   let powers = examplePowers();
   let validators = signers.slice(0, powers.length);
   const powerThreshold = 6666;
   const {
-    peggy,
+    gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(peggyId, validators, powers, powerThreshold);
+  } = await deployContracts(gravityId, validators, powers, powerThreshold);
 
   // First we deploy the logic batch middleware contract. This makes it easy to call a logic 
   // contract a bunch of times in a batch.
   const SimpleLogicBatchMiddleware = await ethers.getContractFactory("SimpleLogicBatchMiddleware");
   const logicBatch = (await SimpleLogicBatchMiddleware.deploy()) as SimpleLogicBatchMiddleware;
-  // We set the ownership to peggy so that nobody else can call it.
-  await logicBatch.transferOwnership(peggy.address);
+  // We set the ownership to gravity so that nobody else can call it.
+  await logicBatch.transferOwnership(gravity.address);
 
   // Then we deploy the actual logic contract.
   const TestLogicContract = await ethers.getContractFactory("TestLogicContract");
@@ -62,8 +62,8 @@ async function runTest(opts: {
 
   // Transfer out to Cosmos, locking coins
   // =====================================
-  await testERC20.functions.approve(peggy.address, 1000);
-  await peggy.functions.sendToCosmos(
+  await testERC20.functions.approve(gravity.address, 1000);
+  await gravity.functions.sendToCosmos(
     testERC20.address,
     ethers.utils.formatBytes32String("myCosmosAddress"),
     1000
@@ -78,7 +78,7 @@ async function runTest(opts: {
   // - Transfer 5 coins to the logic contract
   // - Call transferTokens on the logic contract, transferring 2+2 coins to signer 20
   //
-  // After the batch runs, signer 20 should have 40 coins, Peggy should have 940 coins,
+  // After the batch runs, signer 20 should have 40 coins, Gravity should have 940 coins,
   // and the logic contract should have 10 coins
   const numTxs = 10;
   const txPayloads = new Array(numTxs);
@@ -123,7 +123,7 @@ async function runTest(opts: {
 
   const digest = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(
     [
-      "bytes32", // peggyId
+      "bytes32", // gravityId
       "bytes32", // methodName
       "uint256[]", // transferAmounts
       "address[]", // transferTokenContracts
@@ -136,7 +136,7 @@ async function runTest(opts: {
       "uint256" // invalidationNonce
     ],
     [
-      peggyId,
+      gravityId,
       methodName,
       logicCallArgs.transferAmounts,
       logicCallArgs.transferTokenContracts,
@@ -199,7 +199,7 @@ async function runTest(opts: {
     sigs.v[11] = 0;
   }
 
-  await peggy.submitLogicCall(
+  await gravity.submitLogicCall(
     await getSignerAddresses(validators),
     powers,
     currentValsetNonce,
@@ -215,7 +215,7 @@ async function runTest(opts: {
   ).to.equal(40);
 
   expect(
-    (await testERC20.functions.balanceOf(peggy.address))[0].toNumber()
+    (await testERC20.functions.balanceOf(gravity.address))[0].toNumber()
   ).to.equal(940);
 
   expect(
@@ -286,22 +286,22 @@ describe("logicCall Go test hash", function () {
     // Prep and deploy contract
     // ========================
     const signers = await ethers.getSigners();
-    const peggyId = ethers.utils.formatBytes32String("foo");
+    const gravityId = ethers.utils.formatBytes32String("foo");
     const powers = [6667];
     const validators = signers.slice(0, powers.length);
     const powerThreshold = 6666;
     const {
-      peggy,
+      gravity,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(peggyId, validators, powers, powerThreshold);
+    } = await deployContracts(gravityId, validators, powers, powerThreshold);
 
 
 
     // Transfer out to Cosmos, locking coins
     // =====================================
-    await testERC20.functions.approve(peggy.address, 1000);
-    await peggy.functions.sendToCosmos(
+    await testERC20.functions.approve(gravity.address, 1000);
+    await gravity.functions.sendToCosmos(
       testERC20.address,
       ethers.utils.formatBytes32String("myCosmosAddress"),
       1000
@@ -335,7 +335,7 @@ describe("logicCall Go test hash", function () {
 
   const abiEncodedLogicCall = ethers.utils.defaultAbiCoder.encode(
     [
-      "bytes32", // peggyId
+      "bytes32", // gravityId
       "bytes32", // methodName
       "uint256[]", // transferAmounts
       "address[]", // transferTokenContracts
@@ -348,7 +348,7 @@ describe("logicCall Go test hash", function () {
       "uint256" // invalidationNonce
     ],
     [
-      peggyId,
+      gravityId,
       methodName,
       logicCallArgs.transferAmounts,
       logicCallArgs.transferTokenContracts,
@@ -372,7 +372,7 @@ describe("logicCall Go test hash", function () {
     // signature testing
 
 
-    var res = await peggy.populateTransaction.submitLogicCall(
+    var res = await gravity.populateTransaction.submitLogicCall(
       await getSignerAddresses(validators),
       powers,
       currentValsetNonce,
@@ -385,7 +385,7 @@ describe("logicCall Go test hash", function () {
     )
 
     console.log("elements in logic call digest:", {
-      "peggyId": peggyId,
+      "gravityId": gravityId,
       "logicMethodName": methodName,
       "transferAmounts": logicCallArgs.transferAmounts,
       "transferTokenContracts": logicCallArgs.transferTokenContracts,

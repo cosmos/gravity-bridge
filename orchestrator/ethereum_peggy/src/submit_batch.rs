@@ -1,22 +1,25 @@
 use crate::utils::{get_tx_batch_nonce, GasCost};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
-use peggy_utils::error::PeggyError;
-use peggy_utils::types::*;
+use gravity_utils::error::GravityError;
+use gravity_utils::message_signatures::encode_tx_batch_confirm_hashed;
+use gravity_utils::types::*;
 use std::{cmp::min, time::Duration};
 use web30::{client::Web3, types::TransactionRequest};
 
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided transaction batch
+#[allow(clippy::too_many_arguments)]
 pub async fn send_eth_transaction_batch(
     current_valset: Valset,
     batch: TransactionBatch,
     confirms: &[BatchConfirmResponse],
     web3: &Web3,
     timeout: Duration,
-    peggy_contract_address: EthAddress,
+    gravity_contract_address: EthAddress,
+    gravity_id: String,
     our_eth_key: EthPrivateKey,
-) -> Result<(), PeggyError> {
+) -> Result<(), GravityError> {
     let new_batch_nonce = batch.nonce;
     let eth_address = our_eth_key.to_public_key().unwrap();
     info!(
@@ -26,7 +29,7 @@ pub async fn send_eth_transaction_batch(
     trace!("Batch {:?}", batch);
 
     let before_nonce = get_tx_batch_nonce(
-        peggy_contract_address,
+        gravity_contract_address,
         batch.token_contract,
         eth_address,
         &web3,
@@ -47,11 +50,11 @@ pub async fn send_eth_transaction_batch(
         return Ok(());
     }
 
-    let payload = encode_batch_payload(current_valset, &batch, confirms)?;
+    let payload = encode_batch_payload(current_valset, &batch, confirms, gravity_id)?;
 
     let tx = web3
         .send_transaction(
-            peggy_contract_address,
+            gravity_contract_address,
             payload,
             0u32.into(),
             eth_address,
@@ -64,7 +67,7 @@ pub async fn send_eth_transaction_batch(
     web3.wait_for_transaction(tx.clone(), timeout, None).await?;
 
     let last_nonce = get_tx_batch_nonce(
-        peggy_contract_address,
+        gravity_contract_address,
         batch.token_contract,
         eth_address,
         &web3,
@@ -87,9 +90,10 @@ pub async fn estimate_tx_batch_cost(
     batch: TransactionBatch,
     confirms: &[BatchConfirmResponse],
     web3: &Web3,
-    peggy_contract_address: EthAddress,
+    gravity_contract_address: EthAddress,
+    gravity_id: String,
     our_eth_key: EthPrivateKey,
-) -> Result<GasCost, PeggyError> {
+) -> Result<GasCost, GravityError> {
     let our_eth_address = our_eth_key.to_public_key().unwrap();
     let our_balance = web3.eth_get_balance(our_eth_address).await?;
     let our_nonce = web3.eth_get_transaction_count(our_eth_address).await?;
@@ -99,12 +103,12 @@ pub async fn estimate_tx_batch_cost(
     let val = web3
         .eth_estimate_gas(TransactionRequest {
             from: Some(our_eth_address),
-            to: peggy_contract_address,
+            to: gravity_contract_address,
             nonce: Some(our_nonce.clone().into()),
             gas_price: Some(gas_price.clone().into()),
             gas: Some(gas_limit.into()),
             value: Some(zero.into()),
-            data: Some(encode_batch_payload(current_valset, &batch, confirms)?.into()),
+            data: Some(encode_batch_payload(current_valset, &batch, confirms, gravity_id)?.into()),
         })
         .await?;
 
@@ -119,11 +123,13 @@ fn encode_batch_payload(
     current_valset: Valset,
     batch: &TransactionBatch,
     confirms: &[BatchConfirmResponse],
-) -> Result<Vec<u8>, PeggyError> {
+    gravity_id: String,
+) -> Result<Vec<u8>, GravityError> {
     let (current_addresses, current_powers) = current_valset.filter_empty_addresses();
     let current_valset_nonce = current_valset.nonce;
     let new_batch_nonce = batch.nonce;
-    let sig_data = current_valset.order_sigs(confirms)?;
+    let hash = encode_tx_batch_confirm_hashed(gravity_id, batch.clone());
+    let sig_data = current_valset.order_sigs(&hash, confirms)?;
     let sig_arrays = to_arrays(sig_data);
     let (amounts, destinations, fees) = batch.get_checkpoint_values();
 

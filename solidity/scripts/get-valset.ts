@@ -45,7 +45,7 @@ async function getValset(): Promise<Valset> {
   console.log("Starting")
   let request_string = args["cosmos-node"] + "/abci_query"
   let response = await axios.get(request_string, {params: {
-    path: "\"/custom/peggy/currentValset/\"",
+    path: "\"/custom/gravity/currentValset/\"",
     height: args["block"],
     prove: "false",
   }});

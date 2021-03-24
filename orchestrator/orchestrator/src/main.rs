@@ -1,4 +1,4 @@
-//! Orchestrator is a sort of specialized relayer for Althea-Peggy that runs on every validator.
+//! Orchestrator is a sort of specialized relayer for Althea-Gravity that runs on every validator.
 //! Things this binary is responsible for
 //!   * Performing all the Ethereum signing required to submit updates and generate batches
 //!   * Progressing the validator set update generation process.
@@ -17,6 +17,7 @@ extern crate lazy_static;
 extern crate log;
 
 mod ethereum_event_watcher;
+mod get_with_retry;
 mod main_loop;
 mod oracle_resync;
 
@@ -27,10 +28,10 @@ use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
 use env_logger::Env;
 use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
-use peggy_utils::connection_prep::{
+use gravity_utils::connection_prep::{
     check_delegate_addresses, check_for_eth, wait_for_cosmos_node_ready,
 };
-use peggy_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
+use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
 use std::cmp::min;
 
@@ -56,9 +57,9 @@ lazy_static! {
             --cosmos-grpc=<gurl>         The Cosmos gRPC url, usually the validator
             --ethereum-rpc=<eurl>        The Ethereum RPC url, should be a self hosted node
             --fees=<denom>               The Cosmos Denom in which to pay Cosmos chain fees
-            --contract-address=<addr>    The Ethereum contract address for Peggy, this is temporary
+            --contract-address=<addr>    The Ethereum contract address for Gravity, this is temporary
         About:
-            The Validator companion binary for Peggy. This must be run by all Peggy chain validators
+            The Validator companion binary for Gravity. This must be run by all Gravity chain validators
             and is a mix of a relayer + oracle + ethereum signing infrastructure
             Written By: {}
             Version {}",
@@ -112,7 +113,7 @@ async fn main() {
         .to_public_key()
         .expect("Invalid Cosmos Phrase!")
         .to_address();
-    info!("Starting Peggy Validator companion binary Relayer + Oracle + Eth Signer");
+    info!("Starting Gravity Validator companion binary Relayer + Oracle + Eth Signer");
     info!(
         "Ethereum Address: {} Cosmos Address {}",
         public_eth_key, public_cosmos_key
