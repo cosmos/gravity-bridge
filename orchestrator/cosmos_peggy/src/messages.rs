@@ -3,15 +3,15 @@ use deep_space::address::Address;
 use deep_space::canonical_json::{to_canonical_json, CanonicalJsonError};
 use deep_space::coin::Coin;
 use deep_space::msg::DeepSpaceMsg;
-use ethereum_peggy::utils::downcast_uint256;
+use ethereum_gravity::utils::downcast_uint256;
 use num256::Uint256;
-use peggy_utils::types::{
+use gravity_utils::types::{
     ERC20DeployedEvent, LogicCallExecutedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent,
 };
 /// Any arbitrary message
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 #[serde(tag = "type", content = "value")]
-pub enum PeggyMsg {
+pub enum GravityMsg {
     #[serde(rename = "gravity/MsgSetOrchestratorAddress")]
     SetOrchestratorAddressMsg(SetOrchestratorAddressMsg),
 
@@ -43,7 +43,7 @@ pub enum PeggyMsg {
     LogicCallExecutedClaim(LogicCallExecutedClaim),
 }
 
-impl DeepSpaceMsg for PeggyMsg {
+impl DeepSpaceMsg for GravityMsg {
     fn to_sign_bytes(&self) -> Result<Vec<u8>, CanonicalJsonError> {
         Ok(to_canonical_json(self)?)
     }

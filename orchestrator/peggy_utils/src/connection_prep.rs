@@ -5,9 +5,9 @@
 use clarity::Address as EthAddress;
 use contact::client::Contact;
 use deep_space::address::Address as CosmosAddress;
-use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
-use peggy_proto::gravity::QueryDelegateKeysByEthAddress;
-use peggy_proto::gravity::QueryDelegateKeysByOrchestratorAddress;
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_proto::gravity::QueryDelegateKeysByEthAddress;
+use gravity_proto::gravity::QueryDelegateKeysByOrchestratorAddress;
 use std::process::exit;
 use std::time::Duration;
 use tokio::time::delay_for;
@@ -17,7 +17,7 @@ use web30::client::Web3;
 
 pub struct Connections {
     pub web3: Option<Web3>,
-    pub grpc: Option<PeggyQueryClient<Channel>>,
+    pub grpc: Option<GravityQueryClient<Channel>>,
     pub contact: Option<Contact>,
 }
 
@@ -39,7 +39,7 @@ pub async fn create_rpc_connections(
         check_scheme(&url, &grpc_url);
         let cosmos_grpc_url = grpc_url.trim_end_matches('/').to_string();
         // try the base url first.
-        let try_base = PeggyQueryClient::connect(cosmos_grpc_url).await;
+        let try_base = GravityQueryClient::connect(cosmos_grpc_url).await;
         match try_base {
             // it worked, lets go!
             Ok(val) => grpc = Some(val),
@@ -55,8 +55,8 @@ pub async fn create_rpc_connections(
                     let prefix = url.scheme();
                     let ipv6_url = format!("{}://::1:{}", prefix, port);
                     let ipv4_url = format!("{}://127.0.0.1:{}", prefix, port);
-                    let ipv6 = PeggyQueryClient::connect(ipv6_url.clone()).await;
-                    let ipv4 = PeggyQueryClient::connect(ipv4_url.clone()).await;
+                    let ipv6 = GravityQueryClient::connect(ipv6_url.clone()).await;
+                    let ipv4 = GravityQueryClient::connect(ipv4_url.clone()).await;
                     warn!("Trying fallback urls {} {}", ipv6_url, ipv4_url);
                     match (ipv4, ipv6) {
                         (Ok(v), Err(_)) => {
@@ -77,8 +77,8 @@ pub async fn create_rpc_connections(
                     // transparently upgrade to https if available, we can't transparently downgrade for obvious security reasons
                     let https_on_80_url = format!("https://{}:80", body);
                     let https_on_443_url = format!("https://{}:443", body);
-                    let https_on_80 = PeggyQueryClient::connect(https_on_80_url.clone()).await;
-                    let https_on_443 = PeggyQueryClient::connect(https_on_443_url.clone()).await;
+                    let https_on_80 = GravityQueryClient::connect(https_on_80_url.clone()).await;
+                    let https_on_443 = GravityQueryClient::connect(https_on_443_url.clone()).await;
                     warn!(
                         "Trying fallback urls {} {}",
                         https_on_443_url, https_on_80_url
@@ -309,7 +309,7 @@ pub async fn wait_for_cosmos_node_ready(contact: &Contact) {
 /// address and Orchestrator address from the Orchestrator and checks
 /// that both are registered and internally consistent.
 pub async fn check_delegate_addresses(
-    client: &mut PeggyQueryClient<Channel>,
+    client: &mut GravityQueryClient<Channel>,
     delegate_eth_address: EthAddress,
     delegate_orchestrator_address: CosmosAddress,
 ) {

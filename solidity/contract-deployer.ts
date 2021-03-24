@@ -173,8 +173,8 @@ async function deploy() {
       console.log("Uniswap Liquidity test deployed at Address - ", testAddress);
     }
   }
-  const peggyIdString = await getPeggyId();
-  const peggyId = ethers.utils.formatBytes32String(peggyIdString);
+  const gravityIdString = await getGravityId();
+  const gravityId = ethers.utils.formatBytes32String(gravityIdString);
 
   console.log("Starting Gravity contract deploy");
   const { abi, bytecode } = getContractArtifacts(args["contract"]);
@@ -212,7 +212,7 @@ async function deploy() {
   const gravity = (await factory.deploy(
     // todo generate this randomly at deployment time that way we can avoid
     // anything but intentional conflicts
-    peggyId,
+    gravityId,
     vote_power,
     eth_addresses,
     powers
@@ -220,7 +220,7 @@ async function deploy() {
 
   await gravity.deployed();
   console.log("Gravity deployed at Address - ", gravity.address);
-  await submitPeggyAddress(gravity.address);
+  await submitGravityAddress(gravity.address);
 }
 
 function getContractArtifacts(path: string): { bytecode: string; abi: string } {
@@ -249,28 +249,28 @@ async function getLatestValset(): Promise<Valset> {
   let valset: ValsetTypeWrapper = JSON.parse(decode(valsets.result.response.value))
   return valset.value;
 }
-async function getPeggyId(): Promise<string> {
+async function getGravityId(): Promise<string> {
   let block_height_request_string = args["cosmos-node"] + '/status';
   let block_height_response = await axios.get(block_height_request_string);
   let info: StatusWrapper = await block_height_response.data;
   let block_height = info.result.sync_info.latest_block_height;
   if (info.result.sync_info.catching_up) {
-    console.log("This node is still syncing! You can not deploy using this peggyID!");
+    console.log("This node is still syncing! You can not deploy using this gravityID!");
     exit(1);
   }
   let request_string = args["cosmos-node"] + "/abci_query"
   let response = await axios.get(request_string, {params: {
-    path: "\"/custom/gravity/peggyID/\"",
+    path: "\"/custom/gravity/gravityID/\"",
     height: block_height,
     prove: "false",
   }});
-  let peggyIDABCIResponse: ABCIWrapper = await response.data;
-  let peggyID: string = JSON.parse(decode(peggyIDABCIResponse.result.response.value))
-  return peggyID;
+  let gravityIDABCIResponse: ABCIWrapper = await response.data;
+  let gravityID: string = JSON.parse(decode(gravityIDABCIResponse.result.response.value))
+  return gravityID;
 
 }
 
-async function submitPeggyAddress(address: string) {}
+async function submitGravityAddress(address: string) {}
 
 async function main() {
   await deploy();

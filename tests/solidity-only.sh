@@ -13,8 +13,8 @@ fi
 
 # Remove existing container instance
 set +e
-docker rm -f peggy_solidity_test_instance
+docker rm -f gravity_solidity_test_instance
 set -e
 
 # Run new test container instance
-docker run --name peggy_solidity_test_instance --mount type=bind,source="$(pwd)"/,target=/gravity --cap-add=NET_ADMIN -it gravity-base /bin/bash /gravity/tests/container-scripts/solidity-tests.sh
+docker run --name gravity_solidity_test_instance --mount type=bind,source="$(pwd)"/,target=/gravity --cap-add=NET_ADMIN -it gravity-base /bin/bash /gravity/tests/container-scripts/solidity-tests.sh

@@ -57,7 +57,7 @@ async function prep() {
   // ================
 
   const signers = await ethers.getSigners();
-  const peggyId = ethers.utils.formatBytes32String("foo");
+  const gravityId = ethers.utils.formatBytes32String("foo");
 
   let powers = examplePowers();
   let validators = signers.slice(0, powers.length);
@@ -65,7 +65,7 @@ async function prep() {
   const powerThreshold = 6666;
 
   const { gravity, testERC20 } = await deployContracts(
-    peggyId,
+    gravityId,
     validators,
     powers,
     powerThreshold
@@ -80,7 +80,7 @@ async function prep() {
 
   return {
     signers,
-    peggyId,
+    gravityId,
     powers,
     validators,
     gravity,
@@ -92,7 +92,7 @@ async function prep() {
 async function runSubmitBatchTest(opts: { batchSize: number }) {
   const {
     signers,
-    peggyId,
+    gravityId,
     powers,
     validators,
     gravity,
@@ -138,7 +138,7 @@ async function runSubmitBatchTest(opts: { batchSize: number }) {
         "uint256",
       ],
       [
-        peggyId,
+        gravityId,
         methodName,
         txBatch.amounts,
         txBatch.destinations,
@@ -206,7 +206,7 @@ async function runLogicCallTest(opts: {
 }) {
   const {
     signers,
-    peggyId,
+    gravityId,
     powers,
     validators,
     gravity,
@@ -264,7 +264,7 @@ async function runLogicCallTest(opts: {
   const digest = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "bytes32", // peggyId
+        "bytes32", // gravityId
         "bytes32", // methodName
         "uint256[]", // transferAmounts
         "address[]", // transferTokenContracts
@@ -277,7 +277,7 @@ async function runLogicCallTest(opts: {
         "uint256", // invalidationNonce
       ],
       [
-        peggyId,
+        gravityId,
         methodName,
         logicCallArgs.transferAmounts,
         logicCallArgs.transferTokenContracts,

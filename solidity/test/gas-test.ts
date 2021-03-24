@@ -15,7 +15,7 @@ const { expect } = chai;
 describe("Gas tests", function () {
     it("makeCheckpoint in isolation", async function () {
         const signers = await ethers.getSigners();
-        const peggyId = ethers.utils.formatBytes32String("foo");
+        const gravityId = ethers.utils.formatBytes32String("foo");
 
         // This is the power distribution on the Cosmos hub as of 7/14/2020
         let powers = examplePowers();
@@ -27,19 +27,19 @@ describe("Gas tests", function () {
             gravity,
             testERC20,
             checkpoint: deployCheckpoint
-        } = await deployContracts(peggyId, validators, powers, powerThreshold);
+        } = await deployContracts(gravityId, validators, powers, powerThreshold);
 
         await gravity.testMakeCheckpoint(
             await getSignerAddresses(validators),
             powers,
             0,
-            peggyId
+            gravityId
         );
     });
 
     it("checkValidatorSignatures in isolation", async function () {
         const signers = await ethers.getSigners();
-        const peggyId = ethers.utils.formatBytes32String("foo");
+        const gravityId = ethers.utils.formatBytes32String("foo");
 
         // This is the power distribution on the Cosmos hub as of 7/14/2020
         let powers = examplePowers();
@@ -51,7 +51,7 @@ describe("Gas tests", function () {
             gravity,
             testERC20,
             checkpoint: deployCheckpoint
-        } = await deployContracts(peggyId, validators, powers, powerThreshold);
+        } = await deployContracts(gravityId, validators, powers, powerThreshold);
 
         let sigs = await signHash(
             validators,

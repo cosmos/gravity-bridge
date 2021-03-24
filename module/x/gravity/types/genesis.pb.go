@@ -25,7 +25,7 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params represent the Gravity genesis and store parameters
-// peggy_id:
+// gravity_id:
 // a random 32 byte value to prevent signature reuse, for example if the
 // cosmos validators decided to use the same Ethereum keys for another chain
 // also running Gravity we would not want it to be possible to play a deposit

@@ -2,12 +2,12 @@ package app
 
 import (
 	"github.com/cosmos/cosmos-sdk/std"
-	peggyparams "github.com/cosmos/gravity-bridge/module/app/params"
+	gravityparams "github.com/cosmos/gravity-bridge/module/app/params"
 )
 
 // MakeEncodingConfig creates an EncodingConfig for gravity.
-func MakeEncodingConfig() peggyparams.EncodingConfig {
-	encodingConfig := peggyparams.MakeEncodingConfig()
+func MakeEncodingConfig() gravityparams.EncodingConfig {
+	encodingConfig := gravityparams.MakeEncodingConfig()
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)

@@ -10,15 +10,15 @@ use deep_space::stdfee::StdFee;
 use deep_space::stdsignmsg::StdSignMsg;
 use deep_space::transaction::TransactionSendType;
 use deep_space::{coin::Coin, utils::bytes_to_hex_str};
-use peggy_utils::message_signatures::{
+use gravity_utils::message_signatures::{
     encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
 };
-use peggy_utils::types::*;
+use gravity_utils::types::*;
 use std::collections::HashMap;
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
-pub async fn update_peggy_delegate_addresses(
+pub async fn update_gravity_delegate_addresses(
     contact: &Contact,
     delegate_eth_address: EthAddress,
     delegate_cosmos_address: Address,
@@ -48,7 +48,7 @@ pub async fn update_peggy_delegate_addresses(
             amount: vec![fee],
             gas: 500_000u64.into(),
         },
-        msgs: vec![PeggyMsg::SetOrchestratorAddressMsg(
+        msgs: vec![GravityMsg::SetOrchestratorAddressMsg(
             SetOrchestratorAddressMsg {
                 eth_address: delegate_eth_address,
                 validator: our_valoper_address,
@@ -74,7 +74,7 @@ pub async fn send_valset_confirms(
     fee: Coin,
     valsets: Vec<Valset>,
     private_key: PrivateKey,
-    peggy_id: String,
+    gravity_id: String,
 ) -> Result<TXSendResponse, JsonRpcError> {
     let our_address = private_key
         .to_public_key()
@@ -88,14 +88,14 @@ pub async fn send_valset_confirms(
 
     for valset in valsets {
         trace!("Submitting signature for valset {:?}", valset);
-        let message = encode_valset_confirm(peggy_id.clone(), valset.clone());
+        let message = encode_valset_confirm(gravity_id.clone(), valset.clone());
         let eth_signature = eth_private_key.sign_ethereum_msg(&message);
         trace!(
             "Sending valset update with address {} and sig {}",
             our_eth_address,
             bytes_to_hex_str(&eth_signature.to_bytes())
         );
-        messages.push(PeggyMsg::ValsetConfirmMsg(ValsetConfirmMsg {
+        messages.push(GravityMsg::ValsetConfirmMsg(ValsetConfirmMsg {
             orchestrator: our_address,
             eth_address: our_eth_address,
             nonce: valset.nonce.into(),
@@ -129,7 +129,7 @@ pub async fn send_batch_confirm(
     fee: Coin,
     transaction_batch: TransactionBatch,
     private_key: PrivateKey,
-    peggy_id: String,
+    gravity_id: String,
 ) -> Result<TXSendResponse, JsonRpcError> {
     let our_address = private_key
         .to_public_key()
@@ -139,7 +139,7 @@ pub async fn send_batch_confirm(
 
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
 
-    let batch_checkpoint = encode_tx_batch_confirm(peggy_id.clone(), transaction_batch.clone());
+    let batch_checkpoint = encode_tx_batch_confirm(gravity_id.clone(), transaction_batch.clone());
     let eth_signature = eth_private_key.sign_ethereum_msg(&batch_checkpoint);
 
     let std_sign_msg = StdSignMsg {
@@ -150,7 +150,7 @@ pub async fn send_batch_confirm(
             amount: vec![fee],
             gas: 500_000u64.into(),
         },
-        msgs: vec![PeggyMsg::ConfirmBatchMsg(ConfirmBatchMsg {
+        msgs: vec![GravityMsg::ConfirmBatchMsg(ConfirmBatchMsg {
             orchestrator: our_address,
             token_contract: transaction_batch.token_contract,
             eth_signer: our_eth_address,
@@ -174,7 +174,7 @@ pub async fn send_logic_call_confirm(
     fee: Coin,
     logic_call: LogicCall,
     private_key: PrivateKey,
-    peggy_id: String,
+    gravity_id: String,
 ) -> Result<TXSendResponse, JsonRpcError> {
     let our_address = private_key
         .to_public_key()
@@ -184,7 +184,7 @@ pub async fn send_logic_call_confirm(
 
     let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
 
-    let logic_call_checkpoint = encode_logic_call_confirm(peggy_id.clone(), logic_call.clone());
+    let logic_call_checkpoint = encode_logic_call_confirm(gravity_id.clone(), logic_call.clone());
     let eth_signature = eth_private_key.sign_ethereum_msg(&logic_call_checkpoint);
 
     let std_sign_msg = StdSignMsg {
@@ -195,7 +195,7 @@ pub async fn send_logic_call_confirm(
             amount: vec![fee],
             gas: 500_000u64.into(),
         },
-        msgs: vec![PeggyMsg::ConfirmLogicCallMsg(ConfirmLogicCallMsg {
+        msgs: vec![GravityMsg::ConfirmLogicCallMsg(ConfirmLogicCallMsg {
             invalidation_id: bytes_to_hex_str(&logic_call.invalidation_id),
             invalidation_nonce: logic_call.invalidation_nonce.into(),
             orchestrator: our_address,
@@ -230,8 +230,8 @@ pub async fn send_ethereum_claims(
 
     // This sorts oracle messages by event nonce before submitting them. It's not a pretty implementation because
     // we're missing an intermediary layer of abstraction. We could implement 'EventTrait' and then implement sort
-    // for it, but then when we go to transform 'EventTrait' objects into PeggyMsg enum values we'll have all sorts
-    // of issues extracting the inner object from the TraitObject. Likewise we could implement sort of PeggyMsg but that
+    // for it, but then when we go to transform 'EventTrait' objects into GravityMsg enum values we'll have all sorts
+    // of issues extracting the inner object from the TraitObject. Likewise we could implement sort of GravityMsg but that
     // would require a truly horrendous (nearly 100 line) match statement to deal with all combinations. That match statement
     // could be reduced by adding two traits to sort against but really this is the easiest option.
     //
@@ -240,25 +240,25 @@ pub async fn send_ethereum_claims(
     for deposit in deposits {
         unordered_msgs.insert(
             deposit.event_nonce.clone(),
-            PeggyMsg::DepositClaimMsg(DepositClaimMsg::from_event(deposit, our_address)),
+            GravityMsg::DepositClaimMsg(DepositClaimMsg::from_event(deposit, our_address)),
         );
     }
     for withdraw in withdraws {
         unordered_msgs.insert(
             withdraw.event_nonce.clone(),
-            PeggyMsg::WithdrawClaimMsg(WithdrawClaimMsg::from_event(withdraw, our_address)),
+            GravityMsg::WithdrawClaimMsg(WithdrawClaimMsg::from_event(withdraw, our_address)),
         );
     }
     for deploy in erc20_deploys {
         unordered_msgs.insert(
             deploy.event_nonce.clone(),
-            PeggyMsg::ERC20DeployedClaimMsg(ERC20DeployedClaimMsg::from_event(deploy, our_address)),
+            GravityMsg::ERC20DeployedClaimMsg(ERC20DeployedClaimMsg::from_event(deploy, our_address)),
         );
     }
     for call in logic_calls {
         unordered_msgs.insert(
             call.event_nonce.clone(),
-            PeggyMsg::LogicCallExecutedClaim(LogicCallExecutedClaim::from_event(call, our_address)),
+            GravityMsg::LogicCallExecutedClaim(LogicCallExecutedClaim::from_event(call, our_address)),
         );
     }
     let mut keys = Vec::new();
@@ -340,7 +340,7 @@ pub async fn send_to_eth(
             amount: vec![fee.clone()],
             gas: 500_000u64.into(),
         },
-        msgs: vec![PeggyMsg::SendToEthMsg(SendToEthMsg {
+        msgs: vec![GravityMsg::SendToEthMsg(SendToEthMsg {
             sender: our_address,
             eth_dest: destination,
             amount,
@@ -376,7 +376,7 @@ pub async fn send_request_batch(
             amount: vec![fee.clone()],
             gas: 500_000_000u64.into(),
         },
-        msgs: vec![PeggyMsg::RequestBatchMsg(RequestBatchMsg {
+        msgs: vec![GravityMsg::RequestBatchMsg(RequestBatchMsg {
             denom,
             orchestrator: our_address,
         })],

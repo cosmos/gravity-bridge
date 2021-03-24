@@ -21,7 +21,7 @@ async function runTest(opts: {}) {
   // Prep and deploy contract
   // ========================
   const signers = await ethers.getSigners();
-  const peggyId = ethers.utils.formatBytes32String("foo");
+  const gravityId = ethers.utils.formatBytes32String("foo");
   // This is the power distribution on the Cosmos hub as of 7/14/2020
   let powers = examplePowers();
   let validators = signers.slice(0, powers.length);
@@ -30,7 +30,7 @@ async function runTest(opts: {}) {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(peggyId, validators, powers, powerThreshold);
+  } = await deployContracts(gravityId, validators, powers, powerThreshold);
 
 
   // Transfer out to Cosmos, locking coins

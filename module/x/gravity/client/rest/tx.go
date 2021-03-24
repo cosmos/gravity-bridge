@@ -90,6 +90,6 @@ type bootstrapConfirmReq struct {
 	BridgeContractAddress string                 `json:"bridge_contract_address"`
 	Block                 string                 `json:"block"`
 	BridgeValidators      types.BridgeValidators `json:"bridge_validators"`
-	PeggyID               string                 `json:"peggy_id"`
+	GravityID             string                 `json:"gravity_id"`
 	StartThreshold        uint64                 `json:"start_threshold"`
 }

@@ -12,7 +12,7 @@ bash $DIR/build-container.sh
 
 # Remove existing container instance
 set +e
-docker rm -f peggy_all_up_test_instance
+docker rm -f gravity_all_up_test_instance
 set -e
 
 NODES=3
@@ -22,4 +22,4 @@ ALCHEMY_ID=$2
 set -u
 
 # Run new test container instance
-docker run --name peggy_all_up_test_instance --cap-add=NET_ADMIN -t gravity-base /bin/bash /gravity/tests/container-scripts/all-up-test-internal.sh $NODES $TEST_TYPE $ALCHEMY_ID
+docker run --name gravity_all_up_test_instance --cap-add=NET_ADMIN -t gravity-base /bin/bash /gravity/tests/container-scripts/all-up-test-internal.sh $NODES $TEST_TYPE $ALCHEMY_ID

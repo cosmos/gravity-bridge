@@ -20,7 +20,7 @@ const (
 		"stateMutability": "pure",
 		"type": "function",
 		"inputs": [
-			{ "internalType": "bytes32",   "name": "_peggyId",       "type": "bytes32" },
+			{ "internalType": "bytes32",   "name": "_gravityId",       "type": "bytes32" },
 			{ "internalType": "bytes32",   "name": "_methodName",    "type": "bytes32" },
 			{ "internalType": "uint256[]", "name": "_amounts",       "type": "uint256[]" },
 			{ "internalType": "address[]", "name": "_destinations",  "type": "address[]" },
@@ -40,7 +40,7 @@ const (
 		"stateMutability": "pure",
 		"type": "function",
 		"inputs": [
-			{ "internalType": "bytes32",   "name": "_peggyId",     "type": "bytes32"   },
+			{ "internalType": "bytes32",   "name": "_gravityId",     "type": "bytes32"   },
 			{ "internalType": "bytes32",   "name": "_checkpoint",  "type": "bytes32"   },
 			{ "internalType": "uint256",   "name": "_valsetNonce", "type": "uint256"   },
 			{ "internalType": "address[]", "name": "_validators",  "type": "address[]" },
@@ -58,7 +58,7 @@ const (
       "stateMutability": "pure",
       "type": "function",
       "inputs": [
-			{ "internalType": "bytes32",   "name": "_peggyId",                "type": "bytes32"   },
+			{ "internalType": "bytes32",   "name": "_gravityId",                "type": "bytes32"   },
 			{ "internalType": "bytes32",   "name": "_methodName",             "type": "bytes32"   },
 			{ "internalType": "uint256[]", "name": "_transferAmounts",        "type": "uint256[]" },
 			{ "internalType": "address[]", "name": "_transferTokenContracts", "type": "address[]" },

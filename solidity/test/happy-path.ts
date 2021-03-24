@@ -21,7 +21,7 @@ describe("Gravity happy path valset update + batch submit", function () {
     // ================
 
     const signers = await ethers.getSigners();
-    const peggyId = ethers.utils.formatBytes32String("foo");
+    const gravityId = ethers.utils.formatBytes32String("foo");
 
     const valset0 = {
       // This is the power distribution on the Cosmos hub as of 7/14/2020
@@ -36,7 +36,7 @@ describe("Gravity happy path valset update + batch submit", function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(peggyId, valset0.validators, valset0.powers, powerThreshold);
+    } = await deployContracts(gravityId, valset0.validators, valset0.powers, powerThreshold);
 
 
 
@@ -62,7 +62,7 @@ describe("Gravity happy path valset update + batch submit", function () {
       await getSignerAddresses(valset1.validators),
       valset1.powers,
       valset1.nonce,
-      peggyId
+      gravityId
     );
 
     let sigs1 = await signHash(valset0.validators, checkpoint1);
@@ -129,7 +129,7 @@ describe("Gravity happy path valset update + batch submit", function () {
         "uint256"
       ],
       [
-        peggyId,
+        gravityId,
         methodName,
         txAmounts,
         txDestinations,

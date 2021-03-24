@@ -5,11 +5,11 @@ use std::time::Duration;
 
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use cosmos_peggy::query::get_latest_valsets;
-use cosmos_peggy::query::{get_all_valset_confirms, get_valset};
-use ethereum_peggy::{one_eth, utils::downcast_to_u128, valset_update::send_eth_valset_update};
-use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
-use peggy_utils::{message_signatures::encode_valset_confirm_hashed, types::Valset};
+use cosmos_gravity::query::get_latest_valsets;
+use cosmos_gravity::query::{get_all_valset_confirms, get_valset};
+use ethereum_gravity::{one_eth, utils::downcast_to_u128, valset_update::send_eth_valset_update};
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::{message_signatures::encode_valset_confirm_hashed, types::Valset};
 use tonic::transport::Channel;
 use web30::client::Web3;
 
@@ -20,9 +20,9 @@ pub async fn relay_valsets(
     current_valset: Valset,
     ethereum_key: EthPrivateKey,
     web3: &Web3,
-    grpc_client: &mut PeggyQueryClient<Channel>,
-    peggy_contract_address: EthAddress,
-    peggy_id: String,
+    grpc_client: &mut GravityQueryClient<Channel>,
+    gravity_contract_address: EthAddress,
+    gravity_id: String,
     timeout: Duration,
 ) {
     // we have to start with the current valset, we need to know what's currently
@@ -63,7 +63,7 @@ pub async fn relay_valsets(
                 for confirm in confirms.iter() {
                     assert_eq!(valset.nonce, confirm.nonce);
                 }
-                let hash = encode_valset_confirm_hashed(peggy_id.clone(), valset.clone());
+                let hash = encode_valset_confirm_hashed(gravity_id.clone(), valset.clone());
                 // order valset sigs prepares signatures for submission, notice we compare
                 // them to the 'current' set in the bridge, this confirms for us that the validator set
                 // we have here can be submitted to the bridge in it's current state
@@ -101,13 +101,13 @@ pub async fn relay_valsets(
 
     let latest_cosmos_valset_nonce = latest_cosmos_valset.nonce;
     if latest_cosmos_valset_nonce > current_valset.nonce {
-        let cost = ethereum_peggy::valset_update::estimate_valset_cost(
+        let cost = ethereum_gravity::valset_update::estimate_valset_cost(
             &latest_cosmos_valset,
             &current_valset,
             &latest_cosmos_confirmed,
             web3,
-            peggy_contract_address,
-            peggy_id.clone(),
+            gravity_contract_address,
+            gravity_id.clone(),
             ethereum_key,
         )
         .await;
@@ -134,8 +134,8 @@ pub async fn relay_valsets(
             &latest_cosmos_confirmed,
             web3,
             timeout,
-            peggy_contract_address,
-            peggy_id,
+            gravity_contract_address,
+            gravity_id,
             ethereum_key,
         )
         .await;

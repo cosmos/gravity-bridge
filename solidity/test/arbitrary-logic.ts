@@ -35,7 +35,7 @@ async function runTest(opts: {
   // Prep and deploy contract
   // ========================
   const signers = await ethers.getSigners();
-  const peggyId = ethers.utils.formatBytes32String("foo");
+  const gravityId = ethers.utils.formatBytes32String("foo");
   // This is the power distribution on the Cosmos hub as of 7/14/2020
   let powers = examplePowers();
   let validators = signers.slice(0, powers.length);
@@ -44,7 +44,7 @@ async function runTest(opts: {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(peggyId, validators, powers, powerThreshold);
+  } = await deployContracts(gravityId, validators, powers, powerThreshold);
 
   // First we deploy the logic batch middleware contract. This makes it easy to call a logic 
   // contract a bunch of times in a batch.
@@ -123,7 +123,7 @@ async function runTest(opts: {
 
   const digest = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(
     [
-      "bytes32", // peggyId
+      "bytes32", // gravityId
       "bytes32", // methodName
       "uint256[]", // transferAmounts
       "address[]", // transferTokenContracts
@@ -136,7 +136,7 @@ async function runTest(opts: {
       "uint256" // invalidationNonce
     ],
     [
-      peggyId,
+      gravityId,
       methodName,
       logicCallArgs.transferAmounts,
       logicCallArgs.transferTokenContracts,
@@ -286,7 +286,7 @@ describe("logicCall Go test hash", function () {
     // Prep and deploy contract
     // ========================
     const signers = await ethers.getSigners();
-    const peggyId = ethers.utils.formatBytes32String("foo");
+    const gravityId = ethers.utils.formatBytes32String("foo");
     const powers = [6667];
     const validators = signers.slice(0, powers.length);
     const powerThreshold = 6666;
@@ -294,7 +294,7 @@ describe("logicCall Go test hash", function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(peggyId, validators, powers, powerThreshold);
+    } = await deployContracts(gravityId, validators, powers, powerThreshold);
 
 
 
@@ -335,7 +335,7 @@ describe("logicCall Go test hash", function () {
 
   const abiEncodedLogicCall = ethers.utils.defaultAbiCoder.encode(
     [
-      "bytes32", // peggyId
+      "bytes32", // gravityId
       "bytes32", // methodName
       "uint256[]", // transferAmounts
       "address[]", // transferTokenContracts
@@ -348,7 +348,7 @@ describe("logicCall Go test hash", function () {
       "uint256" // invalidationNonce
     ],
     [
-      peggyId,
+      gravityId,
       methodName,
       logicCallArgs.transferAmounts,
       logicCallArgs.transferTokenContracts,
@@ -385,7 +385,7 @@ describe("logicCall Go test hash", function () {
     )
 
     console.log("elements in logic call digest:", {
-      "peggyId": peggyId,
+      "gravityId": gravityId,
       "logicMethodName": methodName,
       "transferAmounts": logicCallArgs.transferAmounts,
       "transferTokenContracts": logicCallArgs.transferTokenContracts,

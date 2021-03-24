@@ -1,5 +1,5 @@
 [package]
-name = "ethereum_peggy"
+name = "ethereum_gravity"
 version = "0.1.0"
 authors = ["Justin Kilpatrick <justin@althea.net>"]
 edition = "2018"
@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-peggy_utils = {path = "../peggy_utils"}
+gravity_utils = {path = "../gravity_utils"}
 
 deep_space = "0.2"
 clarity = "0.4"

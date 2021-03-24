@@ -1,8 +1,8 @@
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
-use cosmos_peggy::send::update_peggy_delegate_addresses;
-use cosmos_peggy::utils::wait_for_next_cosmos_block;
+use cosmos_gravity::send::update_gravity_delegate_addresses;
+use cosmos_gravity::utils::wait_for_next_cosmos_block;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use futures::future::join_all;
@@ -89,7 +89,7 @@ pub async fn deploy_contracts(
             e_key.to_public_key().unwrap(),
             c_key.to_public_key().unwrap().to_address(),
         );
-        updates.push(update_peggy_delegate_addresses(
+        updates.push(update_gravity_delegate_addresses(
             &contact,
             e_key.to_public_key().unwrap(),
             c_key.to_public_key().unwrap().to_address(),
@@ -160,7 +160,7 @@ pub async fn deploy_contracts(
 }
 
 pub struct BootstrapContractAddresses {
-    pub peggy_contract: EthAddress,
+    pub gravity_contract: EthAddress,
     pub erc20_addresses: Vec<EthAddress>,
     pub uniswap_liquidity_address: Option<EthAddress>,
 }
@@ -172,13 +172,13 @@ pub fn parse_contract_addresses() -> BootstrapContractAddresses {
         File::open("/contracts").expect("Failed to find contracts! did they not deploy?");
     let mut output = String::new();
     file.read_to_string(&mut output).unwrap();
-    let mut maybe_peggy_address = None;
+    let mut maybe_gravity_address = None;
     let mut erc20_addresses = Vec::new();
     let mut uniswap_liquidity = None;
     for line in output.lines() {
         if line.contains("Gravity deployed at Address -") {
             let address_string = line.split('-').last().unwrap();
-            maybe_peggy_address = Some(address_string.trim().parse().unwrap());
+            maybe_gravity_address = Some(address_string.trim().parse().unwrap());
         } else if line.contains("ERC20 deployed at Address -") {
             let address_string = line.split('-').last().unwrap();
             erc20_addresses.push(address_string.trim().parse().unwrap());
@@ -187,9 +187,9 @@ pub fn parse_contract_addresses() -> BootstrapContractAddresses {
             uniswap_liquidity = Some(address_string.trim().parse().unwrap());
         }
     }
-    let peggy_address: EthAddress = maybe_peggy_address.unwrap();
+    let gravity_address: EthAddress = maybe_gravity_address.unwrap();
     BootstrapContractAddresses {
-        peggy_contract: peggy_address,
+        gravity_contract: gravity_address,
         erc20_addresses,
         uniswap_liquidity_address: uniswap_liquidity,
     }

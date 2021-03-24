@@ -11,26 +11,26 @@ use actix::Arbiter;
 use clarity::Address as EthAddress;
 use clarity::{PrivateKey as EthPrivateKey, Uint256};
 use contact::client::Contact;
-use cosmos_peggy::send::{send_request_batch, send_to_eth};
+use cosmos_gravity::send::{send_request_batch, send_to_eth};
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
-use ethereum_peggy::{deploy_erc20::deploy_erc20, utils::get_event_nonce};
+use ethereum_gravity::{deploy_erc20::deploy_erc20, utils::get_event_nonce};
 use orchestrator::main_loop::orchestrator_main_loop;
-use peggy_proto::gravity::{query_client::QueryClient as PeggyQueryClient, QueryDenomToErc20Request};
+use gravity_proto::gravity::{query_client::QueryClient as GravityQueryClient, QueryDenomToErc20Request};
 use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
 pub async fn happy_path_test_v2(
     web30: &Web3,
-    grpc_client: PeggyQueryClient<Channel>,
+    grpc_client: GravityQueryClient<Channel>,
     contact: &Contact,
     keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
-    peggy_address: EthAddress,
+    gravity_address: EthAddress,
     validator_out: bool,
 ) {
     let mut grpc_client = grpc_client;
     let starting_event_nonce =
-        get_event_nonce(peggy_address, keys[0].1.to_public_key().unwrap(), web30)
+        get_event_nonce(gravity_address, keys[0].1.to_public_key().unwrap(), web30)
             .await
             .unwrap();
 
@@ -42,7 +42,7 @@ pub async fn happy_path_test_v2(
         token_to_send_to_eth_display_name.clone(),
         token_to_send_to_eth_display_name.clone(),
         6,
-        peggy_address,
+        gravity_address,
         web30,
         Some(TOTAL_TIMEOUT),
         keys[0].1,
@@ -51,7 +51,7 @@ pub async fn happy_path_test_v2(
     .await
     .unwrap();
     let ending_event_nonce =
-        get_event_nonce(peggy_address, keys[0].1.to_public_key().unwrap(), web30)
+        get_event_nonce(gravity_address, keys[0].1.to_public_key().unwrap(), web30)
             .await
             .unwrap();
 
@@ -70,7 +70,7 @@ pub async fn happy_path_test_v2(
     #[allow(clippy::explicit_counter_loop)]
     for (c_key, e_key) in keys.iter() {
         info!("Spawning Orchestrator");
-        let grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
+        let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
         // we have only one actual futures executor thread (see the actix runtime tag on our main function)
         // but that will execute all the orchestrators in our test in parallel
         Arbiter::spawn(orchestrator_main_loop(
@@ -79,7 +79,7 @@ pub async fn happy_path_test_v2(
             web30.clone(),
             contact.clone(),
             grpc_client,
-            peggy_address,
+            gravity_address,
             get_test_token_name(),
         ));
 

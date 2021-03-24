@@ -20,7 +20,7 @@ import (
 )
 
 func GetTxCmd(storeKey string) *cobra.Command {
-	peggyTxCmd := &cobra.Command{
+	gravityTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Gravity transaction subcommands",
 		DisableFlagParsing:         true,
@@ -28,14 +28,14 @@ func GetTxCmd(storeKey string) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	peggyTxCmd.AddCommand([]*cobra.Command{
+	gravityTxCmd.AddCommand([]*cobra.Command{
 		CmdSendToEth(),
 		CmdRequestBatch(),
 		CmdSetOrchestratorAddress(),
 		GetUnsafeTestingCmd(),
 	}...)
 
-	return peggyTxCmd
+	return gravityTxCmd
 }
 
 func GetUnsafeTestingCmd() *cobra.Command {

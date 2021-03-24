@@ -9,18 +9,18 @@ use actix::Arbiter;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
-use cosmos_peggy::send::{send_request_batch, send_to_eth};
-use cosmos_peggy::utils::wait_for_next_cosmos_block;
-use cosmos_peggy::{query::get_oldest_unsigned_transaction_batch, send::send_ethereum_claims};
+use cosmos_gravity::send::{send_request_batch, send_to_eth};
+use cosmos_gravity::utils::wait_for_next_cosmos_block;
+use cosmos_gravity::{query::get_oldest_unsigned_transaction_batch, send::send_ethereum_claims};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
-use ethereum_peggy::utils::get_valset_nonce;
-use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
+use ethereum_gravity::utils::get_valset_nonce;
+use ethereum_gravity::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use orchestrator::main_loop::orchestrator_main_loop;
-use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
-use peggy_utils::connection_prep::check_delegate_addresses;
-use peggy_utils::types::SendToCosmosEvent;
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::connection_prep::check_delegate_addresses;
+use gravity_utils::types::SendToCosmosEvent;
 use rand::Rng;
 use std::{env, process::Command, time::Duration};
 use std::{process::ExitStatus, time::Instant};
@@ -30,10 +30,10 @@ use web30::client::Web3;
 
 pub async fn happy_path_test(
     web30: &Web3,
-    grpc_client: PeggyQueryClient<Channel>,
+    grpc_client: GravityQueryClient<Channel>,
     contact: &Contact,
     keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
-    peggy_address: EthAddress,
+    gravity_address: EthAddress,
     erc20_address: EthAddress,
     validator_out: bool,
 ) {
@@ -48,7 +48,7 @@ pub async fn happy_path_test(
     #[allow(clippy::explicit_counter_loop)]
     for (c_key, e_key) in keys.iter() {
         info!("Spawning Orchestrator");
-        let mut grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
+        let mut grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
         // we have only one actual futures executor thread (see the actix runtime tag on our main function)
         // but that will execute all the orchestrators in our test in parallel
         Arbiter::spawn(orchestrator_main_loop(
@@ -57,7 +57,7 @@ pub async fn happy_path_test(
             web30.clone(),
             contact.clone(),
             grpc_client.clone(),
-            peggy_address,
+            gravity_address,
             get_test_token_name(),
         ));
 
@@ -89,10 +89,10 @@ pub async fn happy_path_test(
     // with the first block) is successfully updated
     if !validator_out {
         for _ in 0u32..2 {
-            test_valset_update(&web30, &keys, peggy_address).await;
+            test_valset_update(&web30, &keys, gravity_address).await;
         }
     } else {
-        wait_for_nonzero_valset(&web30, peggy_address).await;
+        wait_for_nonzero_valset(&web30, gravity_address).await;
     }
 
     // generate an address for coin sending tests, this ensures test imdepotency
@@ -114,7 +114,7 @@ pub async fn happy_path_test(
             &web30,
             &contact,
             dest_cosmos_address,
-            peggy_address,
+            gravity_address,
             erc20_address,
             100u64.into(),
         )
@@ -141,7 +141,7 @@ pub async fn happy_path_test(
         &mut grpc_client,
         &web30,
         dest_eth_address,
-        peggy_address,
+        gravity_address,
         keys[0].0,
         dest_cosmos_private_key,
         erc20_address,
@@ -212,15 +212,15 @@ pub async fn delegate_tokens(delegate_address: &str, amount: &str) {
     }
 }
 
-pub async fn wait_for_nonzero_valset(web30: &Web3, peggy_address: EthAddress) {
+pub async fn wait_for_nonzero_valset(web30: &Web3, gravity_address: EthAddress) {
     let start = Instant::now();
-    let mut current_eth_valset_nonce = get_valset_nonce(peggy_address, *MINER_ADDRESS, &web30)
+    let mut current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
         .await
         .expect("Failed to get current eth valset");
 
     while 0 == current_eth_valset_nonce {
         info!("Validator set is not yet updated to 0>, waiting",);
-        current_eth_valset_nonce = get_valset_nonce(peggy_address, *MINER_ADDRESS, &web30)
+        current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
             .await
             .expect("Failed to get current eth valset");
         delay_for(Duration::from_secs(4)).await;
@@ -233,11 +233,11 @@ pub async fn wait_for_nonzero_valset(web30: &Web3, peggy_address: EthAddress) {
 pub async fn test_valset_update(
     web30: &Web3,
     keys: &[(CosmosPrivateKey, EthPrivateKey)],
-    peggy_address: EthAddress,
+    gravity_address: EthAddress,
 ) {
     // if we don't do this the orchestrators may run ahead of us and we'll be stuck here after
     // getting credit for two loops when we did one
-    let starting_eth_valset_nonce = get_valset_nonce(peggy_address, *MINER_ADDRESS, &web30)
+    let starting_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
         .await
         .expect("Failed to get starting eth valset");
     let start = Instant::now();
@@ -268,7 +268,7 @@ pub async fn test_valset_update(
     );
     delegate_tokens(delegate_address, amount).await;
 
-    let mut current_eth_valset_nonce = get_valset_nonce(peggy_address, *MINER_ADDRESS, &web30)
+    let mut current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
         .await
         .expect("Failed to get current eth valset");
 
@@ -277,7 +277,7 @@ pub async fn test_valset_update(
             "Validator set is not yet updated to {}>, waiting",
             starting_eth_valset_nonce
         );
-        current_eth_valset_nonce = get_valset_nonce(peggy_address, *MINER_ADDRESS, &web30)
+        current_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
             .await
             .expect("Failed to get current eth valset");
         delay_for(Duration::from_secs(4)).await;
@@ -294,7 +294,7 @@ async fn test_erc20_deposit(
     web30: &Web3,
     contact: &Contact,
     dest: CosmosAddress,
-    peggy_address: EthAddress,
+    gravity_address: EthAddress,
     erc20_address: EthAddress,
     amount: Uint256,
 ) {
@@ -306,7 +306,7 @@ async fn test_erc20_deposit(
     // we send some erc20 tokens to the gravity contract to register a deposit
     let tx_id = send_to_cosmos(
         erc20_address,
-        peggy_address,
+        gravity_address,
         amount.clone(),
         dest,
         *MINER_PRIVATE_KEY,
@@ -357,10 +357,10 @@ async fn test_erc20_deposit(
 #[allow(clippy::too_many_arguments)]
 async fn test_batch(
     contact: &Contact,
-    grpc_client: &mut PeggyQueryClient<Channel>,
+    grpc_client: &mut GravityQueryClient<Channel>,
     web30: &Web3,
     dest_eth_address: EthAddress,
-    peggy_address: EthAddress,
+    gravity_address: EthAddress,
     requester_cosmos_private_key: CosmosPrivateKey,
     dest_cosmos_private_key: CosmosPrivateKey,
     erc20_contract: EthAddress,
@@ -418,7 +418,7 @@ async fn test_batch(
         .expect("Failed to get batch to sign");
 
     let mut current_eth_batch_nonce =
-        get_tx_batch_nonce(peggy_address, erc20_contract, *MINER_ADDRESS, &web30)
+        get_tx_batch_nonce(gravity_address, erc20_contract, *MINER_ADDRESS, &web30)
             .await
             .expect("Failed to get current eth valset");
     let starting_batch_nonce = current_eth_batch_nonce;
@@ -430,7 +430,7 @@ async fn test_batch(
             starting_batch_nonce
         );
         current_eth_batch_nonce =
-            get_tx_batch_nonce(peggy_address, erc20_contract, *MINER_ADDRESS, &web30)
+            get_tx_batch_nonce(gravity_address, erc20_contract, *MINER_ADDRESS, &web30)
                 .await
                 .expect("Failed to get current eth tx batch nonce");
         delay_for(Duration::from_secs(4)).await;

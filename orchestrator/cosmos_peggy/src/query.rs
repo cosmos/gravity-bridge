@@ -1,27 +1,27 @@
 use clarity::Address as EthAddress;
 use deep_space::address::Address;
-use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
-use peggy_proto::gravity::QueryBatchConfirmsRequest;
-use peggy_proto::gravity::QueryCurrentValsetRequest;
-use peggy_proto::gravity::QueryLastEventNonceByAddrRequest;
-use peggy_proto::gravity::QueryLastPendingBatchRequestByAddrRequest;
-use peggy_proto::gravity::QueryLastPendingLogicCallByAddrRequest;
-use peggy_proto::gravity::QueryLastPendingValsetRequestByAddrRequest;
-use peggy_proto::gravity::QueryLastValsetRequestsRequest;
-use peggy_proto::gravity::QueryLogicConfirmsRequest;
-use peggy_proto::gravity::QueryOutgoingLogicCallsRequest;
-use peggy_proto::gravity::QueryOutgoingTxBatchesRequest;
-use peggy_proto::gravity::QueryValsetConfirmsByNonceRequest;
-use peggy_proto::gravity::QueryValsetRequestRequest;
-use peggy_utils::error::PeggyError;
-use peggy_utils::types::*;
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_proto::gravity::QueryBatchConfirmsRequest;
+use gravity_proto::gravity::QueryCurrentValsetRequest;
+use gravity_proto::gravity::QueryLastEventNonceByAddrRequest;
+use gravity_proto::gravity::QueryLastPendingBatchRequestByAddrRequest;
+use gravity_proto::gravity::QueryLastPendingLogicCallByAddrRequest;
+use gravity_proto::gravity::QueryLastPendingValsetRequestByAddrRequest;
+use gravity_proto::gravity::QueryLastValsetRequestsRequest;
+use gravity_proto::gravity::QueryLogicConfirmsRequest;
+use gravity_proto::gravity::QueryOutgoingLogicCallsRequest;
+use gravity_proto::gravity::QueryOutgoingTxBatchesRequest;
+use gravity_proto::gravity::QueryValsetConfirmsByNonceRequest;
+use gravity_proto::gravity::QueryValsetRequestRequest;
+use gravity_utils::error::GravityError;
+use gravity_utils::types::*;
 use tonic::transport::Channel;
 
 /// get the valset for a given nonce (block) height
 pub async fn get_valset(
-    client: &mut PeggyQueryClient<Channel>,
+    client: &mut GravityQueryClient<Channel>,
     nonce: u64,
-) -> Result<Option<Valset>, PeggyError> {
+) -> Result<Option<Valset>, GravityError> {
     let request = client
         .valset_request(QueryValsetRequestRequest { nonce })
         .await?;
@@ -39,15 +39,15 @@ pub async fn get_valset(
 /// to sign the 'current' valset would run into slight differences and fail
 /// to produce a viable update.
 pub async fn get_current_valset(
-    client: &mut PeggyQueryClient<Channel>,
-) -> Result<Valset, PeggyError> {
+    client: &mut GravityQueryClient<Channel>,
+) -> Result<Valset, GravityError> {
     let request = client.current_valset(QueryCurrentValsetRequest {}).await?;
     let valset = request.into_inner().valset;
     if let Some(valset) = valset {
         Ok(valset.into())
     } else {
         error!("Current valset returned None? This should be impossible");
-        Err(PeggyError::InvalidBridgeStateError(
+        Err(GravityError::InvalidBridgeStateError(
             "Must have a current valset!".to_string(),
         ))
     }
@@ -56,9 +56,9 @@ pub async fn get_current_valset(
 /// This hits the /pending_valset_requests endpoint and will provide
 /// an array of validator sets we have not already signed
 pub async fn get_oldest_unsigned_valsets(
-    client: &mut PeggyQueryClient<Channel>,
+    client: &mut GravityQueryClient<Channel>,
     address: Address,
-) -> Result<Vec<Valset>, PeggyError> {
+) -> Result<Vec<Valset>, GravityError> {
     let request = client
         .last_pending_valset_request_by_addr(QueryLastPendingValsetRequestByAddrRequest {
             address: address.to_string(),
@@ -73,8 +73,8 @@ pub async fn get_oldest_unsigned_valsets(
 /// this input views the last five valset requests that have been made, useful if you're
 /// a relayer looking to ferry confirmations
 pub async fn get_latest_valsets(
-    client: &mut PeggyQueryClient<Channel>,
-) -> Result<Vec<Valset>, PeggyError> {
+    client: &mut GravityQueryClient<Channel>,
+) -> Result<Vec<Valset>, GravityError> {
     let request = client
         .last_valset_requests(QueryLastValsetRequestsRequest {})
         .await?;
@@ -84,9 +84,9 @@ pub async fn get_latest_valsets(
 
 /// get all valset confirmations for a given nonce
 pub async fn get_all_valset_confirms(
-    client: &mut PeggyQueryClient<Channel>,
+    client: &mut GravityQueryClient<Channel>,
     nonce: u64,
-) -> Result<Vec<ValsetConfirmResponse>, PeggyError> {
+) -> Result<Vec<ValsetConfirmResponse>, GravityError> {
     let request = client
         .valset_confirms_by_nonce(QueryValsetConfirmsByNonceRequest { nonce })
         .await?;
@@ -99,9 +99,9 @@ pub async fn get_all_valset_confirms(
 }
 
 pub async fn get_oldest_unsigned_transaction_batch(
-    client: &mut PeggyQueryClient<Channel>,
+    client: &mut GravityQueryClient<Channel>,
     address: Address,
-) -> Result<Option<TransactionBatch>, PeggyError> {
+) -> Result<Option<TransactionBatch>, GravityError> {
     let request = client
         .last_pending_batch_request_by_addr(QueryLastPendingBatchRequestByAddrRequest {
             address: address.to_string(),
@@ -117,8 +117,8 @@ pub async fn get_oldest_unsigned_transaction_batch(
 /// gets the latest 100 transaction batches, regardless of token type
 /// for relayers to consider relaying
 pub async fn get_latest_transaction_batches(
-    client: &mut PeggyQueryClient<Channel>,
-) -> Result<Vec<TransactionBatch>, PeggyError> {
+    client: &mut GravityQueryClient<Channel>,
+) -> Result<Vec<TransactionBatch>, GravityError> {
     let request = client
         .outgoing_tx_batches(QueryOutgoingTxBatchesRequest {})
         .await?;
@@ -132,10 +132,10 @@ pub async fn get_latest_transaction_batches(
 
 /// get all batch confirmations for a given nonce and denom
 pub async fn get_transaction_batch_signatures(
-    client: &mut PeggyQueryClient<Channel>,
+    client: &mut GravityQueryClient<Channel>,
     nonce: u64,
     contract_address: EthAddress,
-) -> Result<Vec<BatchConfirmResponse>, PeggyError> {
+) -> Result<Vec<BatchConfirmResponse>, GravityError> {
     let request = client
         .batch_confirms(QueryBatchConfirmsRequest {
             nonce,
@@ -153,9 +153,9 @@ pub async fn get_transaction_batch_signatures(
 /// Gets the last event nonce that a given validator has attested to, this lets us
 /// catch up with what the current event nonce should be if a oracle is restarted
 pub async fn get_last_event_nonce(
-    client: &mut PeggyQueryClient<Channel>,
+    client: &mut GravityQueryClient<Channel>,
     address: Address,
-) -> Result<u64, PeggyError> {
+) -> Result<u64, GravityError> {
     let request = client
         .last_event_nonce_by_addr(QueryLastEventNonceByAddrRequest {
             address: address.to_string(),
@@ -166,8 +166,8 @@ pub async fn get_last_event_nonce(
 
 /// Gets the 100 latest logic calls for a relayer to consider relaying
 pub async fn get_latest_logic_calls(
-    client: &mut PeggyQueryClient<Channel>,
-) -> Result<Vec<LogicCall>, PeggyError> {
+    client: &mut GravityQueryClient<Channel>,
+) -> Result<Vec<LogicCall>, GravityError> {
     let request = client
         .outgoing_logic_calls(QueryOutgoingLogicCallsRequest {})
         .await?;
@@ -180,10 +180,10 @@ pub async fn get_latest_logic_calls(
 }
 
 pub async fn get_logic_call_signatures(
-    client: &mut PeggyQueryClient<Channel>,
+    client: &mut GravityQueryClient<Channel>,
     invalidation_id: Vec<u8>,
     invalidation_nonce: u64,
-) -> Result<Vec<LogicCallConfirmResponse>, PeggyError> {
+) -> Result<Vec<LogicCallConfirmResponse>, GravityError> {
     let request = client
         .logic_confirms(QueryLogicConfirmsRequest {
             invalidation_id,
@@ -199,9 +199,9 @@ pub async fn get_logic_call_signatures(
 }
 
 pub async fn get_oldest_unsigned_logic_call(
-    client: &mut PeggyQueryClient<Channel>,
+    client: &mut GravityQueryClient<Channel>,
     address: Address,
-) -> Result<Option<LogicCall>, PeggyError> {
+) -> Result<Option<LogicCall>, GravityError> {
     let request = client
         .last_pending_logic_call_by_addr(QueryLastPendingLogicCallByAddrRequest {
             address: address.to_string(),

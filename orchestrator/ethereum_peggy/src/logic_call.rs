@@ -1,8 +1,8 @@
 use crate::utils::{get_logic_call_nonce, GasCost};
 use clarity::{abi::Token, utils::bytes_to_hex_str, PrivateKey as EthPrivateKey};
 use clarity::{Address as EthAddress, Uint256};
-use peggy_utils::types::*;
-use peggy_utils::{error::PeggyError, message_signatures::encode_logic_call_confirm_hashed};
+use gravity_utils::types::*;
+use gravity_utils::{error::GravityError, message_signatures::encode_logic_call_confirm_hashed};
 use std::{cmp::min, time::Duration};
 use web30::{client::Web3, types::TransactionRequest};
 
@@ -15,10 +15,10 @@ pub async fn send_eth_logic_call(
     confirms: &[LogicCallConfirmResponse],
     web3: &Web3,
     timeout: Duration,
-    peggy_contract_address: EthAddress,
-    peggy_id: String,
+    gravity_contract_address: EthAddress,
+    gravity_id: String,
     our_eth_key: EthPrivateKey,
-) -> Result<(), PeggyError> {
+) -> Result<(), GravityError> {
     let new_call_nonce = call.invalidation_nonce;
     let eth_address = our_eth_key.to_public_key().unwrap();
     info!(
@@ -29,7 +29,7 @@ pub async fn send_eth_logic_call(
     trace!("Call {:?}", call);
 
     let before_nonce = get_logic_call_nonce(
-        peggy_contract_address,
+        gravity_contract_address,
         call.invalidation_id.clone(),
         eth_address,
         &web3,
@@ -50,11 +50,11 @@ pub async fn send_eth_logic_call(
         return Ok(());
     }
 
-    let payload = encode_logic_call_payload(current_valset, &call, confirms, peggy_id)?;
+    let payload = encode_logic_call_payload(current_valset, &call, confirms, gravity_id)?;
 
     let tx = web3
         .send_transaction(
-            peggy_contract_address,
+            gravity_contract_address,
             payload,
             0u32.into(),
             eth_address,
@@ -67,7 +67,7 @@ pub async fn send_eth_logic_call(
     web3.wait_for_transaction(tx.clone(), timeout, None).await?;
 
     let last_nonce = get_logic_call_nonce(
-        peggy_contract_address,
+        gravity_contract_address,
         call.invalidation_id,
         eth_address,
         &web3,
@@ -93,10 +93,10 @@ pub async fn estimate_logic_call_cost(
     call: LogicCall,
     confirms: &[LogicCallConfirmResponse],
     web3: &Web3,
-    peggy_contract_address: EthAddress,
-    peggy_id: String,
+    gravity_contract_address: EthAddress,
+    gravity_id: String,
     our_eth_key: EthPrivateKey,
-) -> Result<GasCost, PeggyError> {
+) -> Result<GasCost, GravityError> {
     let our_eth_address = our_eth_key.to_public_key().unwrap();
     let our_balance = web3.eth_get_balance(our_eth_address).await?;
     let our_nonce = web3.eth_get_transaction_count(our_eth_address).await?;
@@ -106,13 +106,13 @@ pub async fn estimate_logic_call_cost(
     let val = web3
         .eth_estimate_gas(TransactionRequest {
             from: Some(our_eth_address),
-            to: peggy_contract_address,
+            to: gravity_contract_address,
             nonce: Some(our_nonce.clone().into()),
             gas_price: Some(gas_price.clone().into()),
             gas: Some(gas_limit.into()),
             value: Some(zero.into()),
             data: Some(
-                encode_logic_call_payload(current_valset, &call, confirms, peggy_id)?.into(),
+                encode_logic_call_payload(current_valset, &call, confirms, gravity_id)?.into(),
             ),
         })
         .await?;
@@ -128,11 +128,11 @@ fn encode_logic_call_payload(
     current_valset: Valset,
     call: &LogicCall,
     confirms: &[LogicCallConfirmResponse],
-    peggy_id: String,
-) -> Result<Vec<u8>, PeggyError> {
+    gravity_id: String,
+) -> Result<Vec<u8>, GravityError> {
     let (current_addresses, current_powers) = current_valset.filter_empty_addresses();
     let current_valset_nonce = current_valset.nonce;
-    let hash = encode_logic_call_confirm_hashed(peggy_id, call.clone());
+    let hash = encode_logic_call_confirm_hashed(gravity_id, call.clone());
     let sig_data = current_valset.order_sigs(&hash, confirms)?;
     let sig_arrays = to_arrays(sig_data);
 

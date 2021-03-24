@@ -1,7 +1,7 @@
 //! this crate, namely runs all up integration tests of the Gravity code against
 //! several scenarios, happy path and non happy path. This is essentially meant
 //! to be executed in our specific CI docker container and nowhere else. If you
-//! find some function useful pull it up into the more general peggy_utils or the like
+//! find some function useful pull it up into the more general gravity_utils or the like
 
 #[macro_use]
 extern crate log;
@@ -14,11 +14,11 @@ use arbitrary_logic::arbitrary_logic_test;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use contact::client::Contact;
-use cosmos_peggy::utils::wait_for_cosmos_online;
+use cosmos_gravity::utils::wait_for_cosmos_online;
 use deep_space::coin::Coin;
 use happy_path::happy_path_test;
 use happy_path_v2::happy_path_test_v2;
-use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use std::{env, time::Duration};
 use transaction_stress_test::transaction_stress_test;
 use valset_stress::validator_set_stress_test;
@@ -102,7 +102,7 @@ pub async fn main() {
     info!("Waiting for Cosmos chain to come online");
     wait_for_cosmos_online(&contact, TOTAL_TIMEOUT).await;
 
-    let grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
+    let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
     let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
     let keys = get_keys();
 
@@ -115,7 +115,7 @@ pub async fn main() {
 
     let contracts = parse_contract_addresses();
     // the address of the deployed Gravity contract
-    let peggy_address = contracts.peggy_contract;
+    let gravity_address = contracts.gravity_contract;
     // addresses of deployed ERC20 token contracts to be used for testing
     let erc20_addresses = contracts.erc20_addresses;
 
@@ -149,7 +149,7 @@ pub async fn main() {
                 grpc_client,
                 &contact,
                 keys,
-                peggy_address,
+                gravity_address,
                 erc20_addresses[0],
                 true,
             )
@@ -157,19 +157,19 @@ pub async fn main() {
             return;
         } else if test_type == "BATCH_STRESS" {
             let contact = Contact::new(COSMOS_NODE, TOTAL_TIMEOUT);
-            transaction_stress_test(&web30, &contact, keys, peggy_address, erc20_addresses).await;
+            transaction_stress_test(&web30, &contact, keys, gravity_address, erc20_addresses).await;
             return;
         } else if test_type == "VALSET_STRESS" {
             info!("Starting Valset update stress test");
-            validator_set_stress_test(&web30, &contact, keys, peggy_address).await;
+            validator_set_stress_test(&web30, &contact, keys, gravity_address).await;
             return;
         } else if test_type == "V2_HAPPY_PATH" {
             info!("Starting happy path for Gravity v2");
-            happy_path_test_v2(&web30, grpc_client, &contact, keys, peggy_address, false).await;
+            happy_path_test_v2(&web30, grpc_client, &contact, keys, gravity_address, false).await;
             return;
         } else if test_type == "ARBITRARY_LOGIC" {
             info!("Starting arbitrary logic tests!");
-            arbitrary_logic_test(&web30, grpc_client, &contact, keys, peggy_address).await;
+            arbitrary_logic_test(&web30, grpc_client, &contact, keys, gravity_address).await;
             return;
         }
     }
@@ -179,7 +179,7 @@ pub async fn main() {
         grpc_client,
         &contact,
         keys,
-        peggy_address,
+        gravity_address,
         erc20_addresses[0],
         false,
     )

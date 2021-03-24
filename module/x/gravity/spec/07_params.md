@@ -8,7 +8,7 @@ The gravity module contains the following parameters:
 
 | Key                           | Type         | Example        |
 |-------------------------------|--------------|----------------|
-| peggyId                       | string       | "gravity"        |
+| gravityId                       | string       | "gravity"        |
 | ContractSourceHash            | string       | "special hash" |
 | BridgeEthereumAddress         | string       | "0x1"          |
 | BridgeChainId                 | uint64       | 4              |

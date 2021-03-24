@@ -16,7 +16,7 @@
    - Gravity publishes a validator's Ethereum address every single block.
      - This is most likely just going to mean putting it in the gravity keeper, but maybe there needs to be some kind of greater tie in with the rest of the validator set information
        - see staking/keeper/keeper.go for an example of getting individual and all validators
-   - A peggyId is chosen at this step.
+   - A gravityId is chosen at this step.
      - This may be hardcoded for now
    - The source code hash of the gravity Ethereum contract is saved here.
      - This may be hardcoded as well

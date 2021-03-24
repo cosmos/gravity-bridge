@@ -6,13 +6,13 @@ use actix::{clock::delay_for, Arbiter};
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
-use cosmos_peggy::send::{send_request_batch, send_to_eth};
+use cosmos_gravity::send::{send_request_batch, send_to_eth};
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
-use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
+use ethereum_gravity::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use futures::future::join_all;
 use orchestrator::main_loop::orchestrator_main_loop;
-use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use std::{
     collections::HashSet,
     time::{Duration, Instant},
@@ -39,13 +39,13 @@ pub async fn transaction_stress_test(
     web30: &Web3,
     contact: &Contact,
     keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
-    peggy_address: EthAddress,
+    gravity_address: EthAddress,
     erc20_addresses: Vec<EthAddress>,
 ) {
     // start orchestrators
     for (c_key, e_key) in keys.iter() {
         info!("Spawning Orchestrator");
-        let grpc_client = PeggyQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
+        let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
         // we have only one actual futures executor thread (see the actix runtime tag on our main function)
         // but that will execute all the orchestrators in our test in parallel
         Arbiter::spawn(orchestrator_main_loop(
@@ -54,7 +54,7 @@ pub async fn transaction_stress_test(
             web30.clone(),
             contact.clone(),
             grpc_client,
-            peggy_address,
+            gravity_address,
             get_test_token_name(),
         ));
     }
@@ -85,7 +85,7 @@ pub async fn transaction_stress_test(
         for keys in user_keys.iter() {
             let fut = send_to_cosmos(
                 *token,
-                peggy_address,
+                gravity_address,
                 one_hundred_eth(),
                 keys.cosmos_address,
                 keys.eth_key,
@@ -230,7 +230,7 @@ pub async fn transaction_stress_test(
     for token in erc20_addresses {
         assert!(
             get_tx_batch_nonce(
-                peggy_address,
+                gravity_address,
                 token,
                 keys[0].1.to_public_key().unwrap(),
                 web30

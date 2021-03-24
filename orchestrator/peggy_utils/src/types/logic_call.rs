@@ -1,5 +1,5 @@
 use super::*;
-use crate::error::PeggyError;
+use crate::error::GravityError;
 use clarity::Signature as EthSignature;
 use clarity::{utils::hex_str_to_bytes, Address as EthAddress};
 use deep_space::address::Address as CosmosAddress;
@@ -17,7 +17,7 @@ pub struct LogicCall {
 }
 
 impl LogicCall {
-    pub fn from_proto(input: peggy_proto::gravity::OutgoingLogicCall) -> Result<Self, PeggyError> {
+    pub fn from_proto(input: gravity_proto::gravity::OutgoingLogicCall) -> Result<Self, GravityError> {
         let mut transfers: Vec<ERC20Token> = Vec::new();
         let mut fees: Vec<ERC20Token> = Vec::new();
         for transfer in input.transfers {
@@ -33,7 +33,7 @@ impl LogicCall {
             })
         }
         if transfers.is_empty() || fees.is_empty() {
-            return Err(PeggyError::InvalidBridgeStateError(
+            return Err(GravityError::InvalidBridgeStateError(
                 "Transaction batch containing no transactions!".to_string(),
             ));
         }
@@ -61,7 +61,7 @@ pub struct LogicCallConfirmResponse {
 }
 
 impl LogicCallConfirmResponse {
-    pub fn from_proto(input: peggy_proto::gravity::MsgConfirmLogicCall) -> Result<Self, PeggyError> {
+    pub fn from_proto(input: gravity_proto::gravity::MsgConfirmLogicCall) -> Result<Self, GravityError> {
         Ok(LogicCallConfirmResponse {
             invalidation_id: hex_str_to_bytes(&input.invalidation_id).unwrap(),
             invalidation_nonce: input.invalidation_nonce,

@@ -4,7 +4,7 @@ use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use docopt::Docopt;
 use env_logger::Env;
-use peggy_utils::connection_prep::{
+use gravity_utils::connection_prep::{
     check_for_eth, create_rpc_connections, wait_for_cosmos_node_ready,
 };
 
@@ -67,7 +67,7 @@ async fn main() {
         .flag_ethereum_key
         .parse()
         .expect("Invalid Ethereum private key!");
-    let peggy_contract_address: EthAddress = args
+    let gravity_contract_address: EthAddress = args
         .flag_contract_address
         .parse()
         .expect("Invalid contract address!");
@@ -99,7 +99,7 @@ async fn main() {
         ethereum_key,
         connections.web3.unwrap(),
         connections.grpc.unwrap(),
-        peggy_contract_address,
+        gravity_contract_address,
     )
     .await
 }

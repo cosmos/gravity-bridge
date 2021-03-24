@@ -9,7 +9,7 @@ type DeployContractsOptions = {
 };
 
 export async function deployContracts(
-  peggyId: string = "foo",
+  gravityId: string = "foo",
   validators: Signer[],
   powers: number[],
   powerThreshold: number,
@@ -22,10 +22,10 @@ export async function deployContracts(
 
   const valAddresses = await getSignerAddresses(validators);
 
-  const checkpoint = makeCheckpoint(valAddresses, powers, 0, peggyId);
+  const checkpoint = makeCheckpoint(valAddresses, powers, 0, gravityId);
 
   const gravity = (await Gravity.deploy(
-    peggyId,
+    gravityId,
     powerThreshold,
     valAddresses,
     powers

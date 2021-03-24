@@ -181,9 +181,9 @@ func acceptDepositEvent(tv *testingVars) {
 		tv.input.BankKeeper.GetAllBalances(tv.ctx, myCosmosAddr))
 
 	// Check that gravity balance has gone down
-	peggyAddr := tv.input.AccountKeeper.GetModuleAddress(types.ModuleName)
+	gravityAddr := tv.input.AccountKeeper.GetModuleAddress(types.ModuleName)
 	assert.Equal(tv.t,
 		sdk.Coins{sdk.NewCoin(tv.denom, sdk.NewIntFromUint64(55).Sub(myErc20.Amount))},
-		tv.input.BankKeeper.GetAllBalances(tv.ctx, peggyAddr),
+		tv.input.BankKeeper.GetAllBalances(tv.ctx, gravityAddr),
 	)
 }

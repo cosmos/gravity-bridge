@@ -1,9 +1,9 @@
 use clarity::Address as EthAddress;
 use clarity::{Address, Uint256};
-use ethereum_peggy::utils::get_valset_nonce;
-use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
-use peggy_utils::types::ValsetUpdatedEvent;
-use peggy_utils::{error::PeggyError, types::Valset};
+use ethereum_gravity::utils::get_valset_nonce;
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::types::ValsetUpdatedEvent;
+use gravity_utils::{error::GravityError, types::Valset};
 use tonic::transport::Channel;
 use web30::client::Web3;
 
@@ -13,18 +13,18 @@ use web30::client::Web3;
 /// backwards in time. In the case that the validator set has not been updated for a very long time
 /// this will take longer.
 pub async fn find_latest_valset(
-    grpc_client: &mut PeggyQueryClient<Channel>,
+    grpc_client: &mut GravityQueryClient<Channel>,
     our_ethereum_address: EthAddress,
-    peggy_contract_address: Address,
+    gravity_contract_address: Address,
     web3: &Web3,
-) -> Result<Valset, PeggyError> {
+) -> Result<Valset, GravityError> {
     const BLOCKS_TO_SEARCH: u128 = 5_000u128;
     let latest_block = web3.eth_block_number().await?;
     let mut current_block: Uint256 = latest_block.clone();
     let latest_ethereum_valset =
-        get_valset_nonce(peggy_contract_address, our_ethereum_address, web3).await?;
+        get_valset_nonce(gravity_contract_address, our_ethereum_address, web3).await?;
     let cosmos_chain_valset =
-        cosmos_peggy::query::get_valset(grpc_client, latest_ethereum_valset).await?;
+        cosmos_gravity::query::get_valset(grpc_client, latest_ethereum_valset).await?;
 
     while current_block.clone() > 0u8.into() {
         trace!(
@@ -40,7 +40,7 @@ pub async fn find_latest_valset(
             .check_for_events(
                 end_search.clone(),
                 Some(current_block.clone()),
-                vec![peggy_contract_address],
+                vec![gravity_contract_address],
                 vec!["ValsetUpdatedEvent(uint256,address[],uint256[])"],
             )
             .await?;
@@ -67,7 +67,7 @@ pub async fn find_latest_valset(
         current_block = end_search;
     }
 
-    panic!("Could not find the last validator set for contract {}, probably not a valid Gravity contract!", peggy_contract_address)
+    panic!("Could not find the last validator set for contract {}, probably not a valid Gravity contract!", gravity_contract_address)
 }
 
 /// This function exists to provide a warning if Cosmos and Ethereum have different validator sets

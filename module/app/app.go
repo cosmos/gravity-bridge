@@ -193,7 +193,7 @@ type Gravity struct {
 	ibcKeeper        *ibckeeper.Keeper
 	evidenceKeeper   evidencekeeper.Keeper
 	transferKeeper   ibctransferkeeper.Keeper
-	peggyKeeper      keeper.Keeper
+	gravityKeeper    keeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -215,7 +215,7 @@ func init() {
 	DefaultNodeHome = filepath.Join(userHomeDir, ".gravity")
 }
 
-func NewPeggyApp(
+func NewGravityApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
 	homePath string, invCheckPeriod uint, encodingConfig gravityparams.EncodingConfig,
 	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
@@ -332,7 +332,7 @@ func NewPeggyApp(
 		stakingtypes.NewMultiStakingHooks(
 			app.distrKeeper.Hooks(),
 			app.slashingKeeper.Hooks(),
-			app.peggyKeeper.Hooks(),
+			app.gravityKeeper.Hooks(),
 		),
 	)
 
@@ -380,7 +380,7 @@ func NewPeggyApp(
 	)
 	app.evidenceKeeper = *evidenceKeeper
 
-	app.peggyKeeper = keeper.NewKeeper(
+	app.gravityKeeper = keeper.NewKeeper(
 		appCodec,
 		keys[gravitytypes.StoreKey],
 		app.GetSubspace(gravitytypes.ModuleName),
@@ -456,7 +456,7 @@ func NewPeggyApp(
 		params.NewAppModule(app.paramsKeeper),
 		transferModule,
 		gravity.NewAppModule(
-			app.peggyKeeper,
+			app.gravityKeeper,
 			app.bankKeeper,
 		),
 	)

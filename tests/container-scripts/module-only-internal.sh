@@ -5,7 +5,7 @@ set -eux
 NODES=$1
 
 # Stop any currently running gravity and eth processes
-pkill peggyd || true # allowed to fail
+pkill gravityd || true # allowed to fail
 pkill geth || true # allowed to fail
 
 # Wipe filesystem changes

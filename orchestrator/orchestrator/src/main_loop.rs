@@ -6,7 +6,7 @@ use crate::{ethereum_event_watcher::check_for_events, oracle_resync::get_last_ch
 use clarity::{address::Address as EthAddress, Uint256};
 use clarity::{utils::bytes_to_hex_str, PrivateKey as EthPrivateKey};
 use contact::client::Contact;
-use cosmos_peggy::{
+use cosmos_gravity::{
     query::{
         get_oldest_unsigned_logic_call, get_oldest_unsigned_transaction_batch,
         get_oldest_unsigned_valsets,
@@ -14,9 +14,9 @@ use cosmos_peggy::{
     send::{send_batch_confirm, send_logic_call_confirm, send_valset_confirms},
 };
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
-use ethereum_peggy::utils::get_peggy_id;
+use ethereum_gravity::utils::get_gravity_id;
 use futures::future::join3;
-use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use relayer::main_loop::relayer_main_loop;
 use std::time::Duration;
 use std::time::Instant;
@@ -40,8 +40,8 @@ pub async fn orchestrator_main_loop(
     ethereum_key: EthPrivateKey,
     web3: Web3,
     contact: Contact,
-    grpc_client: PeggyQueryClient<Channel>,
-    peggy_contract_address: EthAddress,
+    grpc_client: GravityQueryClient<Channel>,
+    gravity_contract_address: EthAddress,
     pay_fees_in: String,
 ) {
     let fee = Coin {
@@ -54,7 +54,7 @@ pub async fn orchestrator_main_loop(
         web3.clone(),
         contact.clone(),
         grpc_client.clone(),
-        peggy_contract_address,
+        gravity_contract_address,
         fee.clone(),
     );
     let b = eth_signer_main_loop(
@@ -63,14 +63,14 @@ pub async fn orchestrator_main_loop(
         web3.clone(),
         contact.clone(),
         grpc_client.clone(),
-        peggy_contract_address,
+        gravity_contract_address,
         fee.clone(),
     );
     let c = relayer_main_loop(
         ethereum_key,
         web3,
         grpc_client.clone(),
-        peggy_contract_address,
+        gravity_contract_address,
     );
     join3(a, b, c).await;
 }
@@ -81,8 +81,8 @@ pub async fn eth_oracle_main_loop(
     cosmos_key: CosmosPrivateKey,
     web3: Web3,
     contact: Contact,
-    grpc_client: PeggyQueryClient<Channel>,
-    peggy_contract_address: EthAddress,
+    grpc_client: GravityQueryClient<Channel>,
+    gravity_contract_address: EthAddress,
     fee: Coin,
 ) {
     let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
@@ -90,7 +90,7 @@ pub async fn eth_oracle_main_loop(
     let mut last_checked_block: Uint256 = get_last_checked_block(
         grpc_client.clone(),
         our_cosmos_address,
-        peggy_contract_address,
+        gravity_contract_address,
         &long_timeout_web30,
     )
     .await;
@@ -117,7 +117,7 @@ pub async fn eth_oracle_main_loop(
             &web3,
             &contact,
             &mut grpc_client,
-            peggy_contract_address,
+            gravity_contract_address,
             cosmos_key,
             fee.clone(),
             last_checked_block.clone(),
@@ -149,20 +149,20 @@ pub async fn eth_signer_main_loop(
     ethereum_key: EthPrivateKey,
     web3: Web3,
     contact: Contact,
-    grpc_client: PeggyQueryClient<Channel>,
-    peggy_contract_address: EthAddress,
+    grpc_client: GravityQueryClient<Channel>,
+    gravity_contract_address: EthAddress,
     fee: Coin,
 ) {
     let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
     let mut grpc_client = grpc_client;
-    let peggy_id = get_peggy_id(peggy_contract_address, our_ethereum_address, &web3).await;
-    if peggy_id.is_err() {
-        error!("Failed to get PeggyID, check your Eth node");
+    let gravity_id = get_gravity_id(gravity_contract_address, our_ethereum_address, &web3).await;
+    if gravity_id.is_err() {
+        error!("Failed to get GravityID, check your Eth node");
         return;
     }
-    let peggy_id = peggy_id.unwrap();
-    let peggy_id = String::from_utf8(peggy_id.clone()).expect("Invalid PeggyID");
+    let gravity_id = gravity_id.unwrap();
+    let gravity_id = String::from_utf8(gravity_id.clone()).expect("Invalid GravityID");
 
     loop {
         let loop_start = Instant::now();
@@ -196,7 +196,7 @@ pub async fn eth_signer_main_loop(
                         fee.clone(),
                         valsets,
                         cosmos_key,
-                        peggy_id.clone(),
+                        gravity_id.clone(),
                     )
                     .await;
                     trace!("Valset confirm result is {:?}", res);
@@ -223,7 +223,7 @@ pub async fn eth_signer_main_loop(
                     fee.clone(),
                     last_unsigned_batch,
                     cosmos_key,
-                    peggy_id.clone(),
+                    gravity_id.clone(),
                 )
                 .await;
                 trace!("Batch confirm result is {:?}", res);
@@ -248,7 +248,7 @@ pub async fn eth_signer_main_loop(
                     fee.clone(),
                     last_unsigned_call,
                     cosmos_key,
-                    peggy_id.clone(),
+                    gravity_id.clone(),
                 )
                 .await;
                 trace!("call confirm result is {:?}", res);
