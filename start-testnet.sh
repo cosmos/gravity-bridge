@@ -194,45 +194,12 @@ echo "$PEGGY --home home start --pruning=nothing > home.n2.log" >> $n2dir/startu
 echo "$PEGGY --home home start --pruning=nothing > home.n3.log" >> $n3dir/startup.sh
 chmod +x $home_dir/*/startup.sh
 
-echo "Gathering keys for orchestrator"
-#--cosmos-key=<ckey>          The Cosmos private key of the validator
-#            --ethereum-key=<ekey>        The Ethereum private key of the validator
-#            --cosmos-legacy-rpc=<curl>   The Cosmos RPC url, usually the validator
-#            --cosmos-grpc=<gurl>         The Cosmos gRPC url, usually the validator
-#            --ethereum-rpc=<eurl>        The Ethereum RPC url, should be a self hosted node
-#            --fees=<denom>               The Cosmos Denom in which to pay Cosmos chain fees
-#            --contract-address=<addr>    The Ethereum contract address for Peggy, this is temporary
-
-echo "$n0name"_COSMOS_GRPC="http://$n0name:9090" >> $n0dir/orchestrator.env
-echo "$n0name"_COSMOS_RPC="http://$n0name:26657" >> $n0dir/orchestrator.env
-echo "$n0name"_COSMOS_KEY=$(jq .priv_key.value $n0cfgDir/priv_validator_key.json) >> $n0dir/orchestrator.env
-echo "$n0name"_DENOM=stake >> $n0dir/orchestrator.env
-echo "$n0name"_ETH_RPC=http://ethereum:8545 >> $n0dir/orchestrator.env
-
-echo "$n1name"_COSMOS_GRPC="http://$n1name:9090" >> $n1dir/orchestrator.env
-echo "$n1name"_COSMOS_RPC="http://$n1name:26657" >> $n1dir/orchestrator.env
-echo "$n1name"_COSMOS_KEY=$(jq .priv_key.value $n1cfgDir/priv_validator_key.json) >> $n1dir/orchestrator.env
-echo "$n1name"_DENOM=stake >> $n1dir/orchestrator.env
-echo "$n1name"_ETH_RPC=http://ethereum:8545 >> $n1dir/orchestrator.env
-
-echo "$n2name"_COSMOS_GRPC="http://$n2name:9090" >> $n2dir/orchestrator.env
-echo "$n2name"_COSMOS_RPC="http://$n2name:26657" >> $n2dir/orchestrator.env
-echo "$n2name"_COSMOS_KEY=$(jq .priv_key.value $n2cfgDir/priv_validator_key.json) >> $n2dir/orchestrator.env
-echo "$n2name"_DENOM=stake >> $n2dir/orchestrator.env
-echo "$n2name"_ETH_RPC=http://ethereum:8545 >> $n2dir/orchestrator.env
-
-echo "$n3name"_COSMOS_GRPC="http://$n3name:9090" >> $n3dir/orchestrator.env
-echo "$n3name"_COSMOS_RPC="http://$n3name:26657" >> $n3dir/orchestrator.env
-echo "$n3name"_COSMOS_KEY=$(jq .priv_key.value $n3cfgDir/priv_validator_key.json) >> $n3dir/orchestrator.env
-echo "$n3name"_DENOM=stake >> $n3dir/orchestrator.env
-echo "$n3name"_ETH_RPC=http://ethereum:8545 >> $n3dir/orchestrator.env
-
-echo "Building images"
-docker-compose build
+echo "Building ethereum and validator images"
+docker-compose build ethereum $n0name $n1name $n2name $n3name
 
 echo "Starting testnet"
-docker-compose up --no-start ethereum $n0name $n1name $n2name $n3name
-docker-compose start ethereum $n0name $n1name $n2name $n3name
+docker-compose up --no-start ethereum $n0name $n1name $n2name $n3name &>/dev/null
+docker-compose start ethereum $n0name $n1name $n2name $n3name &>/dev/null
 
 echo "Delegating keys"
 
@@ -244,5 +211,64 @@ do
 done
 
 echo "Applying contracts"
-docker-compose up contract_deployer
+contractAddress=$(docker-compose up contract_deployer | grep "Peggy deployed at Address" | grep -Eow '0x[0-9a-fA-F]{40}')
+echo "Contract address: $contractAddress"
 
+echo "Gathering keys for orchestrators"
+#--cosmos-key=<ckey>          The Cosmos private key of the validator
+#            --ethereum-key=<ekey>        The Ethereum private key of the validator
+#            --cosmos-legacy-rpc=<curl>   The Cosmos RPC url, usually the validator
+#            --cosmos-grpc=<gurl>         The Cosmos gRPC url, usually the validator
+#            --ethereum-rpc=<eurl>        The Ethereum RPC url, should be a self hosted node
+#            --fees=<denom>               The Cosmos Denom in which to pay Cosmos chain fees
+#            --contract-address=<addr>    The Ethereum contract address for Peggy, this is temporary
+
+echo COSMOS_GRPC="http://$n0name:9090" >> $n0dir/orchestrator.env
+echo COSMOS_RPC="http://$n0name:26657" >> $n0dir/orchestrator.env
+echo COSMOS_KEY=$(jq .priv_key.value $n0cfgDir/priv_validator_key.json) >> $n0dir/orchestrator.env
+echo DENOM=stake >> $n0dir/orchestrator.env
+echo ETH_RPC=http://ethereum:8545 >> $n0dir/orchestrator.env
+echo ETH_PRIVATE_KEY=$(jq .private_key $n0dir/eth_key.json) >> $n0dir/orchestrator.env
+echo CONTRACT_ADDR=$contractAddress >> $n0dir/orchestrator.env
+
+echo COSMOS_GRPC="http://$n1name:9090" >> $n1dir/orchestrator.env
+echo COSMOS_RPC="http://$n1name:26657" >> $n1dir/orchestrator.env
+echo COSMOS_KEY=$(jq .priv_key.value $n1cfgDir/priv_validator_key.json) >> $n1dir/orchestrator.env
+echo DENOM=stake >> $n1dir/orchestrator.env
+echo ETH_RPC=http://ethereum:8545 >> $n1dir/orchestrator.env
+echo ETH_PRIVATE_KEY=$(jq .private_key $n1dir/eth_key.json) >> $n1dir/orchestrator.env
+echo CONTRACT_ADDR=$contractAddress >> $n1dir/orchestrator.env
+
+echo COSMOS_GRPC="http://$n2name:9090" >> $n2dir/orchestrator.env
+echo COSMOS_RPC="http://$n2name:26657" >> $n2dir/orchestrator.env
+echo COSMOS_KEY=$(jq .priv_key.value $n2cfgDir/priv_validator_key.json) >> $n2dir/orchestrator.env
+echo DENOM=stake >> $n2dir/orchestrator.env
+echo ETH_RPC=http://ethereum:8545 >> $n2dir/orchestrator.env
+echo ETH_PRIVATE_KEY=$(jq .private_key $n2dir/eth_key.json) >> $n2dir/orchestrator.env
+echo CONTRACT_ADDR=$contractAddress >> $n2dir/orchestrator.env
+
+echo COSMOS_GRPC="http://$n3name:9090" >> $n3dir/orchestrator.env
+echo COSMOS_RPC="http://$n3name:26657" >> $n3dir/orchestrator.env
+echo COSMOS_KEY=$(jq .priv_key.value $n3cfgDir/priv_validator_key.json) >> $n3dir/orchestrator.env
+echo DENOM=stake >> $n3dir/orchestrator.env
+echo ETH_RPC=http://ethereum:8545 >> $n3dir/orchestrator.env
+echo ETH_PRIVATE_KEY=$(jq .private_key $n3dir/eth_key.json) >> $n3dir/orchestrator.env
+echo CONTRACT_ADDR=$contractAddress >> $n3dir/orchestrator.env
+
+echo "Building orchestrators"
+docker-compose --env-file $n0dir/orchestrator.env build orchestrator_0
+docker-compose --env-file $n1dir/orchestrator.env build orchestrator_1
+docker-compose --env-file $n2dir/orchestrator.env build orchestrator_2
+docker-compose --env-file $n3dir/orchestrator.env build orchestrator_3
+
+echo "Deploying orchestrators"
+docker-compose --env-file $n0dir/orchestrator.env up --no-start orchestrator_0
+docker-compose --env-file $n0dir/orchestrator.env start orchestrator_0
+docker-compose --env-file $n1dir/orchestrator.env up --no-start orchestrator_1
+docker-compose --env-file $n1dir/orchestrator.env start orchestrator_1
+docker-compose --env-file $n2dir/orchestrator.env up --no-start orchestrator_2
+docker-compose --env-file $n2dir/orchestrator.env start orchestrator_2
+docker-compose --env-file $n3dir/orchestrator.env up --no-start orchestrator_3
+docker-compose --env-file $n3dir/orchestrator.env start orchestrator_3
+
+echo "Run tests"

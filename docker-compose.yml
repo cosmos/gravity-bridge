@@ -16,14 +16,6 @@ services:
       - ethereum
       - peggy_0
 
-  orchestrator_0:
-    build:
-      context: ./orchestrator
-      dockerfile: ./Dockerfile
-    depends_on:
-      - ethereum
-      - peggy_0
-
   peggy_0:
     build:
       context: ./module
@@ -38,6 +30,14 @@ services:
       - "1317:1317"
       - "9090:9090"
 
+  orchestrator_0:
+    build:
+      context: ./orchestrator
+      dockerfile: ./Dockerfile
+    depends_on:
+      - ethereum
+      - peggy_0
+
   peggy_1:
     build:
       context: ./module
@@ -47,6 +47,14 @@ services:
     depends_on:
       - ethereum
       - peggy_0
+
+  orchestrator_1:
+    build:
+      context: ./orchestrator
+      dockerfile: ./Dockerfile
+    depends_on:
+      - ethereum
+      - peggy_1
 
   peggy_2:
     build:
@@ -58,6 +66,14 @@ services:
       - ethereum
       - peggy_0
 
+  orchestrator_2:
+    build:
+      context: ./orchestrator
+      dockerfile: ./Dockerfile
+    depends_on:
+      - ethereum
+      - peggy_2
+
   peggy_3:
     build:
       context: ./module
@@ -67,3 +83,11 @@ services:
     depends_on:
       - ethereum
       - peggy_0
+
+  orchestrator_3:
+    build:
+      context: ./orchestrator
+      dockerfile: ./Dockerfile
+    depends_on:
+      - ethereum
+      - peggy_3

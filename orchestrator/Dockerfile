@@ -7,4 +7,13 @@ FROM rust:1.50
 COPY . .
 RUN cargo build --workspace --release
 
-CMD ["cargo run --release test_runner"]
+#ENV COSMOS_KEY="UNSET"
+#ENV ETH_PRIVATE_KEY="UNSET"
+#ENV ETH_PRIVATE_KEY="UNSET"
+#ENV COSMOS_RPC="UNSET"
+#ENV COSMOS_GRPC="UNSET"
+#ENV ETH_RPC="UNSET"
+#ENV DENOM="UNSET"
+#ENV CONTRACT_ADDR="UNSET"
+
+CMD sh startup.sh
