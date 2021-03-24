@@ -9,6 +9,18 @@ PEGGY=peggy
 #FED=oracle-feeder
 home_dir="$CHAINDIR/$CHAINID"
 
+# Find or install rust binary
+#binaryFound=$(which register-delegate-keys 2>/dev/null || echo FALSE)
+#echo "$binaryFound"
+#if [ $binaryFound == "FALSE" ]
+#then
+#  pushd orchestrator/register_delegate_keys
+#  cargo install --path .
+#  popd
+#else
+#  echo "found binary at $(which register-delegate-keys)"
+#fi
+
 # stop processes
 docker-compose down
 rm -r $CHAINDIR
@@ -42,11 +54,6 @@ n1cfg="$n1cfgDir/config.toml"
 n2cfg="$n2cfgDir/config.toml"
 n3cfg="$n3cfgDir/config.toml"
 
-# Config files for feeders
-#fd0cfg="$n0dir/config.yaml"
-#fd1cfg="$n1dir/config.yaml"
-#fd2cfg="$n2dir/config.yaml"
-
 # Common flags
 kbt="--keyring-backend test"
 cid="--chain-id $CHAINID"
@@ -68,21 +75,14 @@ coins="100000000000stake,100000000000samoleans"
 
 # Initialize the 3 home directories and add some keys
 $PEGGY $home0 $cid init n0 &>/dev/null
-echo "$n0name"_COSMOS_PHRASE=$($PEGGY $home0 keys add val $kbt --output json | jq .mnemonic) >> $n0dir/orchestrator.env
+$PEGGY $home0 keys add val $kbt --output json | jq . >> $n0dir/validator_key.json
 $PEGGY $home1 $cid init n1 &>/dev/null
-echo "$n1name"_COSMOS_PHRASE=$($PEGGY $home1 keys add val $kbt --output json | jq .mnemonic) >> $n1dir/orchestrator.env
+$PEGGY $home1 keys add val $kbt --output json | jq . >> $n1dir/validator_key.json
 $PEGGY $home2 $cid init n2 &>/dev/null
-echo "$n2name"_COSMOS_PHRASE=$($PEGGY $home2 keys add val $kbt --output json | jq .mnemonic) >> $n2dir/orchestrator.env
+$PEGGY $home2 keys add val $kbt --output json | jq . >> $n2dir/validator_key.json
 $PEGGY $home3 $cid init n3 &>/dev/null
-echo "$n3name"_COSMOS_PHRASE=$($PEGGY $home3 keys add val $kbt --output json | jq .mnemonic) >> $n3dir/orchestrator.env
+$PEGGY $home3 keys add val $kbt --output json | jq . >> $n3dir/validator_key.json
 
-# Add some keys and init feeder configs
-#$FED $home0 config init &>/dev/null
-#$FED $home0 keys add feeder &>/dev/null
-#$FED $home1 config init &>/dev/null
-#$FED $home1 keys add feeder &>/dev/null
-#$FED $home2 config init &>/dev/null
-#$FED $home2 keys add feeder &>/dev/null
 
 echo "Adding addresses to genesis files"
 $PEGGY $home0 add-genesis-account $($PEGGY $home0 keys show val -a $kbt) $coins &>/dev/null
@@ -108,6 +108,27 @@ cp $n1cfgDir/gentx/*.json $n0cfgDir/gentx/
 cp $n2cfgDir/gentx/*.json $n0cfgDir/gentx/
 cp $n3cfgDir/gentx/*.json $n0cfgDir/gentx/
 $PEGGY $home0 collect-gentxs &>/dev/null
+
+echo "Generating orchestrator keys"
+$PEGGY $home0 keys add --dry-run=true --output=json orch | jq . >> $n0dir/orchestrator_key.json
+$PEGGY $home1 keys add --dry-run=true --output=json orch | jq . >> $n1dir/orchestrator_key.json
+$PEGGY $home2 keys add --dry-run=true --output=json orch | jq . >> $n2dir/orchestrator_key.json
+$PEGGY $home3 keys add --dry-run=true --output=json orch | jq . >> $n3dir/orchestrator_key.json
+
+echo "Adding orchestrator keys to genesis"
+n0orchKey="$(jq .address $n0dir/orchestrator_key.json)"
+n1orchKey="$(jq .address $n1dir/orchestrator_key.json)"
+n2orchKey="$(jq .address $n2dir/orchestrator_key.json)"
+n3orchKey="$(jq .address $n3dir/orchestrator_key.json)"
+jq ".app_state.auth.accounts += [{\"@type\": \"/cosmos.auth.v1beta1.BaseAccount\",\"address\": $n0orchKey,\"pub_key\": null,\"account_number\": \"0\",\"sequence\": \"0\"}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+jq ".app_state.auth.accounts += [{\"@type\": \"/cosmos.auth.v1beta1.BaseAccount\",\"address\": $n1orchKey,\"pub_key\": null,\"account_number\": \"0\",\"sequence\": \"0\"}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+jq ".app_state.auth.accounts += [{\"@type\": \"/cosmos.auth.v1beta1.BaseAccount\",\"address\": $n2orchKey,\"pub_key\": null,\"account_number\": \"0\",\"sequence\": \"0\"}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+jq ".app_state.auth.accounts += [{\"@type\": \"/cosmos.auth.v1beta1.BaseAccount\",\"address\": $n3orchKey,\"pub_key\": null,\"account_number\": \"0\",\"sequence\": \"0\"}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+jq ".app_state.bank.balances += [{\"address\": $n0orchKey,\"coins\": [{\"denom\": \"samoleans\",\"amount\": \"100000000000\"},{\"denom\": \"stake\",\"amount\": \"100000000000\"}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+jq ".app_state.bank.balances += [{\"address\": $n1orchKey,\"coins\": [{\"denom\": \"samoleans\",\"amount\": \"100000000000\"},{\"denom\": \"stake\",\"amount\": \"100000000000\"}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+jq ".app_state.bank.balances += [{\"address\": $n2orchKey,\"coins\": [{\"denom\": \"samoleans\",\"amount\": \"100000000000\"},{\"denom\": \"stake\",\"amount\": \"100000000000\"}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+jq ".app_state.bank.balances += [{\"address\": $n3orchKey,\"coins\": [{\"denom\": \"samoleans\",\"amount\": \"100000000000\"},{\"denom\": \"stake\",\"amount\": \"100000000000\"}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+
 echo "Distributing genesis file into $n1name, $n2name, $n3name"
 cp $n0cfgDir/genesis.json $n1cfgDir/genesis.json
 cp $n0cfgDir/genesis.json $n2cfgDir/genesis.json
@@ -135,10 +156,6 @@ fsed 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "i
 fsed 's#addr_book_strict = true#addr_book_strict = false#g' $n1cfg
 fsed 's#external_address = ""#external_address = "tcp://'$n1name':26656"#g' $n1cfg
 
-# Change ports on n1 feeder
-#$SED 's#http://localhost:9090#http://localhost:9091#g' $fd1cfg
-#$SED 's#http://http://localhost:26657#http://http://localhost:26667#g' $fd1cfg
-
 # Change ports on n2 val
 fsed "s#\"tcp://127.0.0.1:26656\"#\"tcp://0.0.0.0:26656\"#g" $n2cfg
 fsed "s#\"tcp://127.0.0.1:26657\"#\"tcp://0.0.0.0:26657\"#g" $n2cfg
@@ -152,10 +169,6 @@ fsed 's#addr_book_strict = true#addr_book_strict = false#g' $n3cfg
 fsed 's#external_address = ""#external_address = "tcp://'$n3name':26656"#g' $n3cfg
 fsed 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n3cfg
 
-# Change ports on n2 feeder
-#$SED 's#http://localhost:9090#http://localhost:9092#g' $fd1cfg
-#$SED 's#http://http://localhost:26657#http://http://localhost:26677#g' $fd1cfg
-
 echo "Setting peers"
 peer0="$($PEGGY $home0 tendermint show-node-id)@$n0name:26656"
 peer1="$($PEGGY $home1 tendermint show-node-id)@$n1name:26656"
@@ -165,6 +178,12 @@ peer3="$($PEGGY $home3 tendermint show-node-id)@$n3name:26656"
 fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer2','$peer3'"#g' $n1cfg
 fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer1','$peer3'"#g' $n2cfg
 fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer1','$peer2'"#g' $n3cfg
+
+echo "Generating ethereum keys"
+$PEGGY $home0 eth_keys add --output=json --dry-run=true | jq . >> $n0dir/eth_key.json
+$PEGGY $home1 eth_keys add --output=json --dry-run=true | jq . >> $n1dir/eth_key.json
+$PEGGY $home2 eth_keys add --output=json --dry-run=true | jq . >> $n2dir/eth_key.json
+$PEGGY $home3 eth_keys add --output=json --dry-run=true | jq . >> $n3dir/eth_key.json
 
 echo "Writing start commands"
 echo "$PEGGY --home home start --pruning=nothing > home.n0.log" >> $n0dir/startup.sh
@@ -187,6 +206,7 @@ echo "$n0name"_COSMOS_RPC="http://$n0name:26657" >> $n0dir/orchestrator.env
 echo "$n0name"_COSMOS_KEY=$(jq .priv_key.value $n0cfgDir/priv_validator_key.json) >> $n0dir/orchestrator.env
 echo "$n0name"_DENOM=stake >> $n0dir/orchestrator.env
 echo "$n0name"_ETH_RPC=http://ethereum:8545 >> $n0dir/orchestrator.env
+echo "$n0name"_ETH_PRIVATE_KEY=$(peggy $home0 eth_keys add --test-run=true | jq .private_key) >> $n0dir/orchestrator.env
 
 echo "$n1name"_COSMOS_GRPC="http://$n1name:9090" >> $n1dir/orchestrator.env
 echo "$n1name"_COSMOS_RPC="http://$n1name:26657" >> $n1dir/orchestrator.env
@@ -213,7 +233,10 @@ echo "Starting testnet"
 docker-compose up --no-start ethereum $n0name $n1name $n2name $n3name
 docker-compose start ethereum $n0name $n1name $n2name $n3name
 
+echo "Delegating keys"
 
+#RUST_BACKTRACE=1
+#register-delegate-keys --validator-phrase="$(jq .mnemonic $n0dir/validator_key.json)" --ethereum-key="$(jq .private_key $n0dir/eth_key.json)" --cosmos-phrase="$(jq .mnemonic $n0dir/orchestrator_key.json)" --cosmos-rpc="http://localhost:26657" --fees="stake"
 
 echo "Waiting for cosmos cluster to sync"
 while $(curl http://$peggy_0:26657/status | jq .result.sync_info.catching_up)
