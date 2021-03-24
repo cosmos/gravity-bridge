@@ -84,7 +84,7 @@ $PEGGY $home3 $cid init n3 &>/dev/null
 $PEGGY $home3 keys add val $kbt --output json | jq . >> $n3dir/validator_key.json
 
 
-echo "Adding addresses to genesis files"
+echo "Adding validator addresses to genesis files"
 $PEGGY $home0 add-genesis-account $($PEGGY $home0 keys show val -a $kbt) $coins &>/dev/null
 #$PEGGY $home0 add-genesis-account $($FED $home0 keys show feeder) $coins &>/dev/null
 $PEGGY $home0 add-genesis-account $($PEGGY $home1 keys show val -a $kbt) $coins &>/dev/null
@@ -93,21 +93,6 @@ $PEGGY $home0 add-genesis-account $($PEGGY $home2 keys show val -a $kbt) $coins 
 #$PEGGY $home0 add-genesis-account $($FED $home2 keys show feeder) $coins &>/dev/null
 $PEGGY $home0 add-genesis-account $($PEGGY $home3 keys show val -a $kbt) $coins &>/dev/null
 #$PEGGY $home0 add-genesis-account $($FED $home3 keys show feeder) $coins &>/dev/null
-
-echo "Copying genesis file around to sign"
-cp $n0cfgDir/genesis.json $n1cfgDir/genesis.json
-cp $n0cfgDir/genesis.json $n2cfgDir/genesis.json
-cp $n0cfgDir/genesis.json $n3cfgDir/genesis.json
-
-echo "Creating gentxs and collect them in $n0name"
-$PEGGY $home0 gentx --ip $n0name val 100000000000stake $kbt $cid &>/dev/null
-$PEGGY $home1 gentx --ip $n1name val 100000000000stake $kbt $cid &>/dev/null
-$PEGGY $home2 gentx --ip $n2name val 100000000000stake $kbt $cid &>/dev/null
-$PEGGY $home3 gentx --ip $n3name val 100000000000stake $kbt $cid &>/dev/null
-cp $n1cfgDir/gentx/*.json $n0cfgDir/gentx/
-cp $n2cfgDir/gentx/*.json $n0cfgDir/gentx/
-cp $n3cfgDir/gentx/*.json $n0cfgDir/gentx/
-$PEGGY $home0 collect-gentxs &>/dev/null
 
 echo "Generating orchestrator keys"
 $PEGGY $home0 keys add --dry-run=true --output=json orch | jq . >> $n0dir/orchestrator_key.json
@@ -128,6 +113,32 @@ jq ".app_state.bank.balances += [{\"address\": $n0orchKey,\"coins\": [{\"denom\"
 jq ".app_state.bank.balances += [{\"address\": $n1orchKey,\"coins\": [{\"denom\": \"samoleans\",\"amount\": \"100000000000\"},{\"denom\": \"stake\",\"amount\": \"100000000000\"}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
 jq ".app_state.bank.balances += [{\"address\": $n2orchKey,\"coins\": [{\"denom\": \"samoleans\",\"amount\": \"100000000000\"},{\"denom\": \"stake\",\"amount\": \"100000000000\"}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
 jq ".app_state.bank.balances += [{\"address\": $n3orchKey,\"coins\": [{\"denom\": \"samoleans\",\"amount\": \"100000000000\"},{\"denom\": \"stake\",\"amount\": \"100000000000\"}]}]" $n0cfgDir/genesis.json | sponge $n0cfgDir/genesis.json
+
+echo "Copying genesis file around to sign"
+cp $n0cfgDir/genesis.json $n1cfgDir/genesis.json
+cp $n0cfgDir/genesis.json $n2cfgDir/genesis.json
+cp $n0cfgDir/genesis.json $n3cfgDir/genesis.json
+
+echo "Generating ethereum keys"
+$PEGGY $home0 eth_keys add --output=json --dry-run=true | jq . >> $n0dir/eth_key.json
+$PEGGY $home1 eth_keys add --output=json --dry-run=true | jq . >> $n1dir/eth_key.json
+$PEGGY $home2 eth_keys add --output=json --dry-run=true | jq . >> $n2dir/eth_key.json
+$PEGGY $home3 eth_keys add --output=json --dry-run=true | jq . >> $n3dir/eth_key.json
+
+echo "Creating gentxs"
+$PEGGY $home0 gentx --ip $n0name val 100000000000stake $(jq -r .address $n0dir/eth_key.json) $(jq -r .address $n0dir/orchestrator_key.json) $kbt $cid
+#$PEGGY $home0 gentx --ip $n0name val 100000000000stake $(jq -r .address $n0dir/eth_key.json) $(jq -r .address $n0dir/orchestrator_key.json) $kbt $cid &>/dev/null
+$PEGGY $home1 gentx --ip $n1name val 100000000000stake $(jq -r .address $n1dir/eth_key.json) $(jq -r .address $n1dir/orchestrator_key.json) $kbt $cid &>/dev/null
+$PEGGY $home2 gentx --ip $n2name val 100000000000stake $(jq -r .address $n2dir/eth_key.json) $(jq -r .address $n2dir/orchestrator_key.json) $kbt $cid &>/dev/null
+$PEGGY $home3 gentx --ip $n3name val 100000000000stake $(jq -r .address $n3dir/eth_key.json) $(jq -r .address $n3dir/orchestrator_key.json) $kbt $cid &>/dev/null
+
+echo "Collecting gentxs in $n0name"
+cp $n1cfgDir/gentx/*.json $n0cfgDir/gentx/
+cp $n2cfgDir/gentx/*.json $n0cfgDir/gentx/
+cp $n3cfgDir/gentx/*.json $n0cfgDir/gentx/
+$PEGGY $home0 collect-gentxs
+
+
 
 echo "Distributing genesis file into $n1name, $n2name, $n3name"
 cp $n0cfgDir/genesis.json $n1cfgDir/genesis.json
@@ -179,12 +190,6 @@ fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer2','$peer3'"#g'
 fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer1','$peer3'"#g' $n2cfg
 fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer1','$peer2'"#g' $n3cfg
 
-echo "Generating ethereum keys"
-$PEGGY $home0 eth_keys add --output=json --dry-run=true | jq . >> $n0dir/eth_key.json
-$PEGGY $home1 eth_keys add --output=json --dry-run=true | jq . >> $n1dir/eth_key.json
-$PEGGY $home2 eth_keys add --output=json --dry-run=true | jq . >> $n2dir/eth_key.json
-$PEGGY $home3 eth_keys add --output=json --dry-run=true | jq . >> $n3dir/eth_key.json
-
 echo "Writing start commands"
 echo "$PEGGY --home home start --pruning=nothing > home.n0.log" >> $n0dir/startup.sh
 echo "$PEGGY --home home start --pruning=nothing > home.n1.log" >> $n1dir/startup.sh
@@ -206,7 +211,6 @@ echo "$n0name"_COSMOS_RPC="http://$n0name:26657" >> $n0dir/orchestrator.env
 echo "$n0name"_COSMOS_KEY=$(jq .priv_key.value $n0cfgDir/priv_validator_key.json) >> $n0dir/orchestrator.env
 echo "$n0name"_DENOM=stake >> $n0dir/orchestrator.env
 echo "$n0name"_ETH_RPC=http://ethereum:8545 >> $n0dir/orchestrator.env
-echo "$n0name"_ETH_PRIVATE_KEY=$(peggy $home0 eth_keys add --test-run=true | jq .private_key) >> $n0dir/orchestrator.env
 
 echo "$n1name"_COSMOS_GRPC="http://$n1name:9090" >> $n1dir/orchestrator.env
 echo "$n1name"_COSMOS_RPC="http://$n1name:26657" >> $n1dir/orchestrator.env
