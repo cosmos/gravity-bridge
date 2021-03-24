@@ -4,10 +4,11 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/althea-net/peggy/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 func TestAddToOutgoingPool(t *testing.T) {

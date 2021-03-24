@@ -18,7 +18,7 @@ pub async fn find_latest_valset(
     peggy_contract_address: Address,
     web3: &Web3,
 ) -> Result<Valset, PeggyError> {
-    const BLOCKS_TO_SEARCH: u128 = 50_000u128;
+    const BLOCKS_TO_SEARCH: u128 = 5_000u128;
     let latest_block = web3.eth_block_number().await?;
     let mut current_block: Uint256 = latest_block.clone();
     let latest_ethereum_valset =

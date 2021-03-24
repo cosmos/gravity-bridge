@@ -3,12 +3,13 @@ package gravity
 import (
 	"testing"
 
-	"github.com/althea-net/peggy/module/x/gravity/keeper"
-	"github.com/althea-net/peggy/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 // Have the validators put in a erc20<>denom relation with ERC20DeployedEvent

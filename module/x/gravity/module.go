@@ -6,25 +6,23 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/althea-net/peggy/module/x/gravity/keeper"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/althea-net/peggy/module/x/gravity/client/cli"
-	"github.com/althea-net/peggy/module/x/gravity/client/rest"
-	"github.com/althea-net/peggy/module/x/gravity/types"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-
-	// "github.com/cosmos/cosmos-sdk/x/gov/simulation"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/cosmos/gravity-bridge/module/x/gravity/client/cli"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/client/rest"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 // type check to ensure the interface is properly implemented

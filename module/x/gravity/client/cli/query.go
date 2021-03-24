@@ -3,10 +3,11 @@ package cli
 import (
 	"strconv"
 
-	"github.com/althea-net/peggy/module/x/gravity/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
+
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 func GetQueryCmd() *cobra.Command {

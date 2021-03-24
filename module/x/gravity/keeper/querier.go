@@ -3,11 +3,12 @@ package keeper
 import (
 	"encoding/hex"
 
-	"github.com/althea-net/peggy/module/x/gravity/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 const (

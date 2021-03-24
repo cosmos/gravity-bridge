@@ -5,11 +5,12 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/althea-net/peggy/module/x/gravity/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 type msgServer struct {

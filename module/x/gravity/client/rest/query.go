@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/althea-net/peggy/module/x/gravity/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 func getValsetRequestHandler(cliCtx client.Context, storeName string) http.HandlerFunc {

@@ -3,10 +3,11 @@ package gravity
 import (
 	"fmt"
 
-	"github.com/althea-net/peggy/module/x/gravity/keeper"
-	"github.com/althea-net/peggy/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 // NewHandler returns a handler for "Gravity" type messages.

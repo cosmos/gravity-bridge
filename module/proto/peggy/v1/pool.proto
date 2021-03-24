@@ -3,7 +3,7 @@ package peggy.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/althea-net/peggy/module/x/gravity/types";
+option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
 // IDSet represents a set of IDs
 message IDSet {

@@ -4,8 +4,7 @@ import (
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/server"
-
-	"github.com/althea-net/peggy/module/cmd/gravity/cmd"
+	"github.com/cosmos/gravity-bridge/module/cmd/gravity/cmd"
 )
 
 func main() {

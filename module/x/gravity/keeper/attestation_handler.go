@@ -3,9 +3,10 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/althea-net/peggy/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 // AttestationHandler processes `observed` Attestations

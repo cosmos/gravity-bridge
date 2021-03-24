@@ -22,7 +22,7 @@ pub async fn get_last_checked_block(
     web3: &Web3,
 ) -> Uint256 {
     let mut grpc_client = grpc_client;
-    const BLOCKS_TO_SEARCH: u128 = 50_000u128;
+    const BLOCKS_TO_SEARCH: u128 = 5_000u128;
 
     let latest_block = get_block_number_with_retry(web3).await;
     let mut last_event_nonce: Uint256 =
