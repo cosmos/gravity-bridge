@@ -3,9 +3,9 @@ package peggy
 import (
 	"sort"
 
-	"github.com/althea-net/peggy/module/x/peggy/keeper"
-	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/keeper"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/types"
 )
 
 // EndBlocker is called at the end of every block

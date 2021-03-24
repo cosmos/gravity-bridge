@@ -3,7 +3,6 @@ module github.com/cosmos/gravity-bridge/module
 go 1.15
 
 require (
-	github.com/althea-net/peggy/module v0.0.0-20210322173118-25d77b5f9b46
 	github.com/cosmos/cosmos-sdk v0.42.1
 	github.com/ethereum/go-ethereum v1.9.21
 	github.com/gogo/protobuf v1.3.3

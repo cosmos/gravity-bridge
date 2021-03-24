@@ -3,9 +3,9 @@ package cli
 import (
 	"strconv"
 
-	"github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/types"
 	"github.com/spf13/cobra"
 )
 

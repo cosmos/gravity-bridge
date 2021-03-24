@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/types"
 )
 
 // InitGenesis starts a chain from a genesis state

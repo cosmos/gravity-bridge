@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/althea-net/peggy/module/x/peggy/keeper"
-	"github.com/althea-net/peggy/module/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/keeper"
+	"github.com/cosmos/gravity-bridge/module/x/peggy/types"
 )
 
 func TestValsetCreationIfNotAvailable(t *testing.T) {

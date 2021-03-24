@@ -4,7 +4,7 @@ package peggy.v1;
 import "peggy/v1/attestation.proto";
 // import "peggy/v1/types.proto";
 
-option go_package = "github.com/althea-net/peggy/module/x/peggy/types";
+option go_package = "github.com/cosmos/gravity-bridge/module/x/peggy/types";
 
 // OutgoingTxBatch represents a batch of transactions going from Peggy to ETH
 message OutgoingTxBatch {
