@@ -14,11 +14,11 @@ use std::{
 /// The total power in the Gravity bridge is normalized to u32 max every
 /// time a validator set is created. This value of up to u32 max is then
 /// stored in a u64 to prevent overflow during computation.
-pub const TOTAL_PEGGY_POWER: u64 = u32::MAX as u64;
+pub const TOTAL_GRAVITY_POWER: u64 = u32::MAX as u64;
 
 /// takes in an amount of power in the gravity bridge, returns a percentage of total
 fn gravity_power_to_percent(input: u64) -> f32 {
-    (input as f32 / TOTAL_PEGGY_POWER as f32) * 100f32
+    (input as f32 / TOTAL_GRAVITY_POWER as f32) * 100f32
 }
 /// This trait implements an overarching interface for signature confirmations
 /// so that they can all use the same method to order signatures
@@ -226,22 +226,22 @@ impl Valset {
                 {}/{} validators have Invalid signatures {}/{} or {:.2}% of the power required
                 This valset probably just needs to accumulate signatures for a moment.",
                 status.power_of_good_sigs,
-                TOTAL_PEGGY_POWER,
+                TOTAL_GRAVITY_POWER,
                 gravity_power_to_percent(status.power_of_good_sigs),
                 status.number_of_unset_key_validators,
                 status.num_validators,
                 status.power_of_unset_keys,
-                TOTAL_PEGGY_POWER,
+                TOTAL_GRAVITY_POWER,
                 gravity_power_to_percent(status.power_of_unset_keys),
                 status.number_of_nonvoters,
                 status.num_validators,
                 status.power_of_nonvoters,
-                TOTAL_PEGGY_POWER,
+                TOTAL_GRAVITY_POWER,
                 gravity_power_to_percent(status.power_of_nonvoters),
                 status.number_of_invalid_signers,
                 status.num_validators,
                 status.power_of_invalid_signers,
-                TOTAL_PEGGY_POWER,
+                TOTAL_GRAVITY_POWER,
                 gravity_power_to_percent(status.power_of_invalid_signers),
             );
             Err(GravityError::InsufficientVotingPowerToPass(message))

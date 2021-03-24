@@ -29,7 +29,7 @@ A transaction batch is a set of Ethereum transactions to be sent from the Gravit
 
 ### Gravity Batch Pool
 
-Is a transaction pool like strucutre that exists in the chains to store, seperate from the `Pegg Tx pool` it stores transactions that have been placed in batches that are in the process of being signed or being submitted by the `Orchestrator Set`
+Is a transaction pool like structure that exists in the chains to store, separate from the `Gravity Tx Pool` it stores transactions that have been placed in batches that are in the process of being signed or being submitted by the `Orchestrator Set`
 
 ### Observed 
 
