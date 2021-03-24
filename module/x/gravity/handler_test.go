@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -98,7 +99,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 		Contract: tokenETHAddr,
 	}
 
-	ethClaim := types.DepositClaim{
+	msg := types.DepositClaim{
 		EventNonce:          myNonce,
 		TokenContract:       myErc20.Contract,
 		Amount:              myErc20.Amount,
@@ -107,14 +108,22 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 		OrchestratorAddress: myOrchestratorAddr.String(),
 	}
 
+	any, err := codectypes.NewAnyWithValue(&msg)
+	require.NoError(t, err)
+
+	ethClaim := types.MsgSubmitClaim{
+		ClaimType: types.ClaimType_DEPOSIT,
+		Claim:     any,
+	}
+
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err := handler(ctx, &ethClaim)
+	_, err = handler(ctx, &ethClaim)
 	EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 
 	// and attestation persisted
-	a := input.GravityKeeper.GetAttestation(ctx, myNonce, ethClaim.ClaimHash())
+	a := input.GravityKeeper.GetAttestation(ctx, myNonce, msg.ClaimHash())
 	require.NotNil(t, a)
 	// and vouchers added to the account
 	balance := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
@@ -131,13 +140,21 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to reject skipped nonce
-	ethClaim = types.DepositClaim{
+	msg = types.DepositClaim{
 		EventNonce:          uint64(3),
 		TokenContract:       tokenETHAddr,
 		Amount:              amountA,
 		EthereumSender:      anyETHAddr,
 		CosmosReceiver:      myCosmosAddr.String(),
 		OrchestratorAddress: myOrchestratorAddr.String(),
+	}
+
+	any, err = codectypes.NewAnyWithValue(&msg)
+	require.NoError(t, err)
+
+	ethClaim = types.MsgSubmitClaim{
+		ClaimType: types.ClaimType_DEPOSIT,
+		Claim:     any,
 	}
 
 	// when
@@ -150,13 +167,21 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to finally accept consecutive nonce
-	ethClaim = types.DepositClaim{
+	msg = types.DepositClaim{
 		EventNonce:          uint64(2),
 		Amount:              amountA,
 		TokenContract:       tokenETHAddr,
 		EthereumSender:      anyETHAddr,
 		CosmosReceiver:      myCosmosAddr.String(),
 		OrchestratorAddress: myOrchestratorAddr.String(),
+	}
+
+	any, err = codectypes.NewAnyWithValue(&msg)
+	require.NoError(t, err)
+
+	ethClaim = types.MsgSubmitClaim{
+		ClaimType: types.ClaimType_DEPOSIT,
+		Claim:     any,
 	}
 
 	// when
@@ -197,45 +222,63 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 		Contract: tokenETHAddr,
 	}
 
-	ethClaim1 := types.MsgSubmitClaim{
-		// 	types.DepositClaim{
-		// 	EventNonce:          myNonce,
-		// 	TokenContract:       myErc20.Contract,
-		// 	Amount:              myErc20.Amount,
-		// 	EthereumSender:      anyETHAddr,
-		// 	CosmosReceiver:      myCosmosAddr.String(),
-		// 	OrchestratorAddress: orchestratorAddr1.String(),
-		// },
+	msg := types.DepositClaim{
+		EventNonce:          myNonce,
+		TokenContract:       myErc20.Contract,
+		Amount:              myErc20.Amount,
+		EthereumSender:      anyETHAddr,
+		CosmosReceiver:      myCosmosAddr.String(),
+		OrchestratorAddress: orchestratorAddr1.String(),
 	}
-	ethClaim2 := types.MsgSubmitClaim{
-		// types.DepositClaim{
-		// 	EventNonce:          myNonce,
-		// 	TokenContract:       myErc20.Contract,
-		// 	Amount:              myErc20.Amount,
-		// 	EthereumSender:      anyETHAddr,
-		// 	CosmosReceiver:      myCosmosAddr.String(),
-		// 	OrchestratorAddress: orchestratorAddr2.String(),
-		// },
+	any1, err := codectypes.NewAnyWithValue(&msg)
+	require.NoError(t, err)
+
+	ethClaim1 := types.MsgSubmitClaim{
+		ClaimType: types.ClaimType_DEPOSIT,
+		Claim:     any1,
 	}
 
+	msg2 := types.DepositClaim{
+		EventNonce:          myNonce,
+		TokenContract:       myErc20.Contract,
+		Amount:              myErc20.Amount,
+		EthereumSender:      anyETHAddr,
+		CosmosReceiver:      myCosmosAddr.String(),
+		OrchestratorAddress: orchestratorAddr2.String(),
+	}
+
+	any2, err := codectypes.NewAnyWithValue(&msg2)
+	require.NoError(t, err)
+
+	ethClaim2 := types.MsgSubmitClaim{
+		ClaimType: types.ClaimType_DEPOSIT,
+		Claim:     any2,
+	}
+
+	msg3 := types.DepositClaim{
+		EventNonce:          myNonce,
+		TokenContract:       myErc20.Contract,
+		Amount:              myErc20.Amount,
+		EthereumSender:      anyETHAddr,
+		CosmosReceiver:      myCosmosAddr.String(),
+		OrchestratorAddress: orchestratorAddr3.String(),
+	}
+
+	any3, err := codectypes.NewAnyWithValue(&msg3)
+	require.NoError(t, err)
+
 	ethClaim3 := types.MsgSubmitClaim{
-		// Claim: types.DepositClaim{
-		// 	EventNonce:          myNonce,
-		// 	TokenContract:       myErc20.Contract,
-		// 	Amount:              myErc20.Amount,
-		// 	EthereumSender:      anyETHAddr,
-		// 	CosmosReceiver:      myCosmosAddr.String(),
-		// 	OrchestratorAddress: orchestratorAddr3.String(),
-		// },
+		ClaimType: types.ClaimType_DEPOSIT,
+		Claim:     any3,
 	}
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err := h(ctx, &ethClaim1)
+	_, err = h(ctx, &ethClaim1)
 	EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 	// and attestation persisted
-	a1 := input.GravityKeeper.GetAttestation(ctx, myNonce, ethClaim1.ClaimHash())
+	a1 := input.GravityKeeper.GetAttestation(ctx, myNonce, msg.ClaimHash())
 	require.NotNil(t, a1)
 	// and vouchers not yet added to the account
 	balance1 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
@@ -248,7 +291,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	// and attestation persisted
-	a2 := input.GravityKeeper.GetAttestation(ctx, myNonce, ethClaim1.ClaimHash())
+	a2 := input.GravityKeeper.GetAttestation(ctx, myNonce, msg.ClaimHash())
 	require.NotNil(t, a2)
 	// and vouchers now added to the account
 	balance2 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
@@ -261,7 +304,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	// and attestation persisted
-	a3 := input.GravityKeeper.GetAttestation(ctx, myNonce, ethClaim1.ClaimHash())
+	a3 := input.GravityKeeper.GetAttestation(ctx, myNonce, msg.ClaimHash())
 	require.NotNil(t, a3)
 	// and no additional added to the account
 	balance3 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)

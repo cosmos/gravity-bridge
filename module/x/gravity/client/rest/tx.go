@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	hexUtil "github.com/ethereum/go-ethereum/common/hexutil"
@@ -72,14 +73,24 @@ func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.Han
 		}
 
 		cosmosAddr := cliCtx.GetFromAddress()
-		msg := types.NewValsetConfirm(valset.Nonce, req.EthAddress, cosmosAddr, req.EthSig)
-		err = msg.ValidateBasic()
+		vc := types.NewValsetConfirm(valset.Nonce, req.EthAddress, cosmosAddr, req.EthSig)
+		err = vc.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
 			return
 		}
 
-		tx.WriteGeneratedTxResponse(cliCtx, w, baseReq, msg)
+		any, err := codectypes.NewAnyWithValue(vc)
+		if err != nil {
+			return
+		}
+
+		msg := types.MsgSubmitClaim{
+			ClaimType: types.ClaimType_DEPOSIT,
+			Claim:     any,
+		}
+
+		tx.WriteGeneratedTxResponse(cliCtx, w, baseReq, &msg)
 	}
 }
 
