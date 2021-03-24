@@ -1,5 +1,5 @@
 use super::*;
-use crate::error::PeggyError;
+use crate::error::GravityError;
 use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
 use contact::jsonrpc::error::JsonRpcError;
@@ -11,14 +11,14 @@ use std::{
     fmt,
 };
 
-/// The total power in the Peggy bridge is normalized to u32 max every
+/// The total power in the Gravity bridge is normalized to u32 max every
 /// time a validator set is created. This value of up to u32 max is then
 /// stored in a u64 to prevent overflow during computation.
-pub const TOTAL_PEGGY_POWER: u64 = u32::MAX as u64;
+pub const TOTAL_GRAVITY_POWER: u64 = u32::MAX as u64;
 
-/// takes in an amount of power in the peggy bridge, returns a percentage of total
-fn peggy_power_to_percent(input: u64) -> f32 {
-    (input as f32 / TOTAL_PEGGY_POWER as f32) * 100f32
+/// takes in an amount of power in the gravity bridge, returns a percentage of total
+fn gravity_power_to_percent(input: u64) -> f32 {
+    (input as f32 / TOTAL_GRAVITY_POWER as f32) * 100f32
 }
 /// This trait implements an overarching interface for signature confirmations
 /// so that they can all use the same method to order signatures
@@ -39,7 +39,7 @@ pub fn get_hashmap<T: Confirm + Clone>(input: &[T]) -> HashMap<EthAddress, T> {
 /// messages
 #[derive(Debug, Clone)]
 struct SignatureStatus {
-    ordered_signatures: Vec<PeggySignature>,
+    ordered_signatures: Vec<GravitySignature>,
     power_of_good_sigs: u64,
     power_of_unset_keys: u64,
     number_of_unset_key_validators: usize,
@@ -60,7 +60,7 @@ pub struct ValsetConfirmResponse {
 }
 
 impl ValsetConfirmResponse {
-    pub fn from_proto(input: peggy_proto::peggy::MsgValsetConfirm) -> Result<Self, PeggyError> {
+    pub fn from_proto(input: gravity_proto::gravity::MsgValsetConfirm) -> Result<Self, GravityError> {
         Ok(ValsetConfirmResponse {
             orchestrator: input.orchestrator.parse()?,
             eth_address: input.eth_address.parse()?,
@@ -128,9 +128,9 @@ impl Valset {
         &self,
         signed_message: &[u8],
         signatures: &[T],
-    ) -> Result<SignatureStatus, PeggyError> {
+    ) -> Result<SignatureStatus, GravityError> {
         if signatures.is_empty() {
-            return Err(PeggyError::InsufficientVotingPowerToPass(
+            return Err(GravityError::InsufficientVotingPowerToPass(
                 "No signatures!".to_string(),
             ));
         }
@@ -151,7 +151,7 @@ impl Valset {
                     assert!(sig.get_signature().is_valid());
                     let recover_key = sig.get_signature().recover(signed_message).unwrap();
                     if recover_key == sig.get_eth_address() {
-                        out.push(PeggySignature {
+                        out.push(GravitySignature {
                             power: member.power,
                             eth_address: sig.get_eth_address(),
                             v: sig.get_signature().v.clone(),
@@ -160,7 +160,7 @@ impl Valset {
                         });
                         power_of_good_sigs += member.power;
                     } else {
-                        out.push(PeggySignature {
+                        out.push(GravitySignature {
                             power: member.power,
                             eth_address,
                             v: 0u8.into(),
@@ -171,7 +171,7 @@ impl Valset {
                         number_of_invalid_signers += 1;
                     }
                 } else {
-                    out.push(PeggySignature {
+                    out.push(GravitySignature {
                         power: member.power,
                         eth_address,
                         v: 0u8.into(),
@@ -182,7 +182,7 @@ impl Valset {
                     number_of_nonvoters += 1;
                 }
             } else {
-                out.push(PeggySignature {
+                out.push(GravitySignature {
                     power: member.power,
                     eth_address: EthAddress::default(),
                     v: 0u8.into(),
@@ -212,12 +212,12 @@ impl Valset {
         &self,
         signed_message: &[u8],
         signatures: &[T],
-    ) -> Result<Vec<PeggySignature>, PeggyError> {
+    ) -> Result<Vec<GravitySignature>, GravityError> {
         let status = self.get_signature_status(signed_message, signatures)?;
         // now that we have collected the signatures we can determine if the measure has the votes to pass
         // and error early if it does not, otherwise the user will pay fees for a transaction that will
         // just throw
-        if peggy_power_to_percent(status.power_of_good_sigs) < 66f32 {
+        if gravity_power_to_percent(status.power_of_good_sigs) < 66f32 {
             let message = format!(
                 "
                 has {}/{} or {:.2}% power voting! Can not execute on Ethereum!
@@ -226,25 +226,25 @@ impl Valset {
                 {}/{} validators have Invalid signatures {}/{} or {:.2}% of the power required
                 This valset probably just needs to accumulate signatures for a moment.",
                 status.power_of_good_sigs,
-                TOTAL_PEGGY_POWER,
-                peggy_power_to_percent(status.power_of_good_sigs),
+                TOTAL_GRAVITY_POWER,
+                gravity_power_to_percent(status.power_of_good_sigs),
                 status.number_of_unset_key_validators,
                 status.num_validators,
                 status.power_of_unset_keys,
-                TOTAL_PEGGY_POWER,
-                peggy_power_to_percent(status.power_of_unset_keys),
+                TOTAL_GRAVITY_POWER,
+                gravity_power_to_percent(status.power_of_unset_keys),
                 status.number_of_nonvoters,
                 status.num_validators,
                 status.power_of_nonvoters,
-                TOTAL_PEGGY_POWER,
-                peggy_power_to_percent(status.power_of_nonvoters),
+                TOTAL_GRAVITY_POWER,
+                gravity_power_to_percent(status.power_of_nonvoters),
                 status.number_of_invalid_signers,
                 status.num_validators,
                 status.power_of_invalid_signers,
-                TOTAL_PEGGY_POWER,
-                peggy_power_to_percent(status.power_of_invalid_signers),
+                TOTAL_GRAVITY_POWER,
+                gravity_power_to_percent(status.power_of_invalid_signers),
             );
-            Err(PeggyError::InsufficientVotingPowerToPass(message))
+            Err(GravityError::InsufficientVotingPowerToPass(message))
         } else {
             Ok(status.ordered_signatures)
         }
@@ -323,8 +323,8 @@ impl Valset {
     }
 }
 
-impl From<peggy_proto::peggy::Valset> for Valset {
-    fn from(input: peggy_proto::peggy::Valset) -> Self {
+impl From<gravity_proto::gravity::Valset> for Valset {
+    fn from(input: gravity_proto::gravity::Valset) -> Self {
         Valset {
             nonce: input.nonce,
             members: input.members.iter().map(|i| i.into()).collect(),
@@ -332,8 +332,8 @@ impl From<peggy_proto::peggy::Valset> for Valset {
     }
 }
 
-impl From<&peggy_proto::peggy::Valset> for Valset {
-    fn from(input: &peggy_proto::peggy::Valset) -> Self {
+impl From<&gravity_proto::gravity::Valset> for Valset {
+    fn from(input: &gravity_proto::gravity::Valset) -> Self {
         Valset {
             nonce: input.nonce,
             members: input.members.iter().map(|i| i.into()).collect(),
@@ -392,8 +392,8 @@ impl fmt::Display for ValsetMember {
     }
 }
 
-impl From<peggy_proto::peggy::BridgeValidator> for ValsetMember {
-    fn from(input: peggy_proto::peggy::BridgeValidator) -> Self {
+impl From<gravity_proto::gravity::BridgeValidator> for ValsetMember {
+    fn from(input: gravity_proto::gravity::BridgeValidator) -> Self {
         let eth_address = match input.ethereum_address.parse() {
             Ok(e) => Some(e),
             Err(_) => None,
@@ -405,8 +405,8 @@ impl From<peggy_proto::peggy::BridgeValidator> for ValsetMember {
     }
 }
 
-impl From<&peggy_proto::peggy::BridgeValidator> for ValsetMember {
-    fn from(input: &peggy_proto::peggy::BridgeValidator) -> Self {
+impl From<&gravity_proto::gravity::BridgeValidator> for ValsetMember {
+    fn from(input: &gravity_proto::gravity::BridgeValidator) -> Self {
         let eth_address = match input.ethereum_address.parse() {
             Ok(e) => Some(e),
             Err(_) => None,

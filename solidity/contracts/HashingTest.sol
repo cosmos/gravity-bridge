@@ -15,12 +15,12 @@ contract HashingTest {
 		address[] memory _validators,
 		uint256[] memory _powers,
 		uint256 _valsetNonce,
-		bytes32 _peggyId
+		bytes32 _gravityId
 	) public {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes32 checkpoint = keccak256(abi.encode(_peggyId, methodName, _valsetNonce));
+		bytes32 checkpoint = keccak256(abi.encode(_gravityId, methodName, _valsetNonce));
 
 		// Iterative hashing of valset
 		{
@@ -44,12 +44,12 @@ contract HashingTest {
 		address[] memory _validators,
 		uint256[] memory _powers,
 		uint256 _valsetNonce,
-		bytes32 _peggyId
+		bytes32 _gravityId
 	) public {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes32 idHash = keccak256(abi.encode(_peggyId, methodName, _valsetNonce));
+		bytes32 idHash = keccak256(abi.encode(_gravityId, methodName, _valsetNonce));
 
 		bytes32 validatorHash = keccak256(abi.encode(_validators));
 
@@ -64,13 +64,13 @@ contract HashingTest {
 		address[] memory _validators,
 		uint256[] memory _powers,
 		uint256 _valsetNonce,
-		bytes32 _peggyId
+		bytes32 _gravityId
 	) public {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
 		bytes32 checkpoint = keccak256(
-			abi.encode(_peggyId, methodName, _valsetNonce, _validators, _powers)
+			abi.encode(_gravityId, methodName, _valsetNonce, _validators, _powers)
 		);
 
 		lastCheckpoint = checkpoint;

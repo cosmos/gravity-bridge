@@ -6,7 +6,7 @@ use clarity::abi::{encode_call, Token};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address, Uint256};
 use deep_space::address::Address as CosmosAddress;
-use peggy_utils::error::PeggyError;
+use gravity_utils::error::GravityError;
 use web30::client::Web3;
 use web30::types::SendTxOption;
 
@@ -15,27 +15,27 @@ const SEND_TO_COSMOS_GAS_LIMIT: u128 = 100_000;
 #[allow(clippy::too_many_arguments)]
 pub async fn send_to_cosmos(
     erc20: Address,
-    peggy_contract: Address,
+    gravity_contract: Address,
     amount: Uint256,
     cosmos_destination: CosmosAddress,
     sender_secret: EthPrivateKey,
     wait_timeout: Option<Duration>,
     web3: &Web3,
     options: Vec<SendTxOption>,
-) -> Result<Uint256, PeggyError> {
+) -> Result<Uint256, GravityError> {
     let sender_address = sender_secret.to_public_key()?;
     let mut approve_nonce = None;
 
     for option in options.iter() {
         if let SendTxOption::Nonce(_) = option {
-            return Err(PeggyError::InvalidOptionsError(
+            return Err(GravityError::InvalidOptionsError(
                 "This call sends more than one tx! Can't specify".to_string(),
             ));
         }
     }
 
     let approved = web3
-        .check_erc20_approved(erc20, sender_address, peggy_contract)
+        .check_erc20_approved(erc20, sender_address, gravity_contract)
         .await?;
     if !approved {
         let mut options = options.clone();
@@ -43,7 +43,7 @@ pub async fn send_to_cosmos(
         options.push(SendTxOption::Nonce(nonce.clone()));
         approve_nonce = Some(nonce);
         let txid = web3
-            .approve_erc20_transfers(erc20, sender_secret, peggy_contract, None, options)
+            .approve_erc20_transfers(erc20, sender_secret, gravity_contract, None, options)
             .await?;
         trace!(
             "We are not approved for ERC20 transfers, approving txid: {:#066x}",
@@ -86,7 +86,7 @@ pub async fn send_to_cosmos(
 
     let tx_hash = web3
         .send_transaction(
-            peggy_contract,
+            gravity_contract,
             encode_call(
                 "sendToCosmos(address,bytes32,uint256)",
                 &[

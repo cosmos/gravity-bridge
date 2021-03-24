@@ -7,7 +7,7 @@ use clarity::{
     Uint256,
 };
 use clarity::{Address, PrivateKey};
-use peggy_utils::error::PeggyError;
+use gravity_utils::error::GravityError;
 use std::time::Duration;
 use web30::{client::Web3, types::SendTxOption};
 
@@ -20,16 +20,16 @@ pub async fn deploy_erc20(
     erc20_name: String,
     erc20_symbol: String,
     decimals: u8,
-    peggy_contract: Address,
+    gravity_contract: Address,
     web3: &Web3,
     wait_timeout: Option<Duration>,
     sender_secret: PrivateKey,
     options: Vec<SendTxOption>,
-) -> Result<Uint256, PeggyError> {
+) -> Result<Uint256, GravityError> {
     let sender_address = sender_secret.to_public_key().unwrap();
     let tx_hash = web3
         .send_transaction(
-            peggy_contract,
+            gravity_contract,
             encode_call(
                 "deployERC20(string,string,string,uint8)",
                 &[

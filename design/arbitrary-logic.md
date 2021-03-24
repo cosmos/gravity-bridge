@@ -13,7 +13,7 @@ Gravity offers a method which can be called by other modules to create an outgoi
 `SetOutgoingLogicCall` takes an `OutgoingLogicCall` as an argument. Here is an explanation of its parameters:
 
 ```golang
-// OutgoingLogicCall represents an individual logic call from Peggy to ETH
+// OutgoingLogicCall represents an individual logic call from Gravity to ETH
 type OutgoingLogicCall struct {
 	Transfers            []*ERC20Token `protobuf:"bytes,1,rep,name=transfers,proto3" json:"transfers,omitempty"`
 	Fees                 []*ERC20Token `protobuf:"bytes,2,rep,name=fees,proto3" json:"fees,omitempty"`

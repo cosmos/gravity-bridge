@@ -39,8 +39,8 @@ whitespace += $(whitespace)
 comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
-ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=peggy \
-	-X github.com/cosmos/cosmos-sdk/version.AppName=peggy \
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gravity \
+	-X github.com/cosmos/cosmos-sdk/version.AppName=gravity \
 	-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 	-X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 	-X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
@@ -50,7 +50,7 @@ BUILD_FLAGS := -ldflags '$(ldflags)' -gcflags="all=-N -l"
 all: install
 
 install: go.sum
-		go install $(BUILD_FLAGS) ./cmd/peggy
+		go install $(BUILD_FLAGS) ./cmd/gravity
 
 go.sum: go.mod
 		@echo "--> Ensure dependencies have not been modified"

@@ -1,18 +1,18 @@
-# Functioning of the Peggy.sol contract
+# Functioning of the Gravity.sol contract
 
-The Peggy contract locks assets on Ethereum to facilitate a Tendermint blockchain creating synthetic versions of those assets. It is designed to be used alongside software on the Tendermint blockchain, but this article focuses on the Ethereum side.
+The Gravity contract locks assets on Ethereum to facilitate a Tendermint blockchain creating synthetic versions of those assets. It is designed to be used alongside software on the Tendermint blockchain, but this article focuses on the Ethereum side.
 
 Usage example:
 
-- You send 25 DAI to the Peggy contract, specifying which address on the Tendermint chain should recieve the syntehtic DAI.
+- You send 25 DAI to the Gravity contract, specifying which address on the Tendermint chain should recieve the syntehtic DAI.
 - Validators on the Tendermint chain see that this has happened and mint 25 synthetic DAI for the address you specified on the Tendermint chain.
 - You send the 25 synthetic DAI to Jim on the Tendermint chain.
-- Jim sends the synthetic DAI to Peggy module on the Tendermint chain, specifying which Ethereum address should receive it.
+- Jim sends the synthetic DAI to Gravity module on the Tendermint chain, specifying which Ethereum address should receive it.
 - The Tendermint validators burn the synthetic DAI on the Tendermint chain and unlock 25 DAI for Jim on Ethereum
 
 ## Security model
 
-The Peggy contract is basically a multisig with a few tweaks. Even though it is designed to be used with a consensus process on Tendermint, the Peggy contract itself encodes nothing about this consensus process. There are three main operations- updateValset, submitBatch, and sendToCosmos. 
+The Gravity contract is basically a multisig with a few tweaks. Even though it is designed to be used with a consensus process on Tendermint, the Gravity contract itself encodes nothing about this consensus process. There are three main operations- updateValset, submitBatch, and sendToCosmos. 
 - updateValset updates the signers on the multisig, and their relative powers. This mirrors the validator set on the Tendermint chain, so that all the Tendermint validators are signers, in proportion to their staking power on the Tendermint chain. An updateValset transaction must be signed by 2/3's of the current valset to be accepted.
 - submitBatch is used to submit a batch of transactions unlocking and transferring tokens to Ethereum addresses. It is used to send tokens from Cosmos to Ethereum. The batch must be signed by 2/3's of the current valset.
 - sendToCosmos is used to send tokens onto the Tendermint chain. It simply locks the tokens in the contract and emits an event which is picked up by the Tendermint validators.
@@ -39,7 +39,7 @@ This is how the bridge transfers tokens from addresses on the Tendermint chain t
 
 We start with some of the same checks that are done in UpdateValset- checking that the lengths of the arrays match up, and checking the supplied current valset against the checkpoint.
 
-We also check the batches nonce against the state_lastBatchNonces mapping. This stores a nonce for each ERC20 handled by Peggy. The purpose of this nonce is to ensure that old batches cannot be submitted. It is also used on the Tendermint chain to clean up old batches that were never submitted and whose nonce is now too low to ever submit.
+We also check the batches nonce against the state_lastBatchNonces mapping. This stores a nonce for each ERC20 handled by Gravity. The purpose of this nonce is to ensure that old batches cannot be submitted. It is also used on the Tendermint chain to clean up old batches that were never submitted and whose nonce is now too low to ever submit.
 
 We check the current validator's signatures over the hash of the transaction batch, using the same method used above to check their signatures over a new valset.
 

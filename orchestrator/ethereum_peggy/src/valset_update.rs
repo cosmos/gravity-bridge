@@ -1,8 +1,8 @@
 use crate::utils::{get_valset_nonce, GasCost};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
-use peggy_utils::types::*;
-use peggy_utils::{error::PeggyError, message_signatures::encode_valset_confirm_hashed};
+use gravity_utils::types::*;
+use gravity_utils::{error::GravityError, message_signatures::encode_valset_confirm_hashed};
 use std::{cmp::min, time::Duration};
 use web30::{client::Web3, types::TransactionRequest};
 
@@ -15,10 +15,10 @@ pub async fn send_eth_valset_update(
     confirms: &[ValsetConfirmResponse],
     web3: &Web3,
     timeout: Duration,
-    peggy_contract_address: EthAddress,
-    peggy_id: String,
+    gravity_contract_address: EthAddress,
+    gravity_id: String,
     our_eth_key: EthPrivateKey,
-) -> Result<(), PeggyError> {
+) -> Result<(), GravityError> {
     let old_nonce = old_valset.nonce;
     let new_nonce = new_valset.nonce;
     assert!(new_nonce > old_nonce);
@@ -27,7 +27,7 @@ pub async fn send_eth_valset_update(
         "Ordering signatures and submitting validator set {} -> {} update to Ethereum",
         old_nonce, new_nonce
     );
-    let before_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
+    let before_nonce = get_valset_nonce(gravity_contract_address, eth_address, web3).await?;
     if before_nonce != old_nonce {
         info!(
             "Someone else updated the valset to {}, exiting early",
@@ -36,11 +36,11 @@ pub async fn send_eth_valset_update(
         return Ok(());
     }
 
-    let payload = encode_valset_payload(new_valset, old_valset, confirms, peggy_id)?;
+    let payload = encode_valset_payload(new_valset, old_valset, confirms, gravity_id)?;
 
     let tx = web3
         .send_transaction(
-            peggy_contract_address,
+            gravity_contract_address,
             payload,
             0u32.into(),
             eth_address,
@@ -52,7 +52,7 @@ pub async fn send_eth_valset_update(
 
     web3.wait_for_transaction(tx, timeout, None).await?;
 
-    let last_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
+    let last_nonce = get_valset_nonce(gravity_contract_address, eth_address, web3).await?;
     if last_nonce != new_nonce {
         error!(
             "Current nonce is {} expected to update to nonce {}",
@@ -73,10 +73,10 @@ pub async fn estimate_valset_cost(
     old_valset: &Valset,
     confirms: &[ValsetConfirmResponse],
     web3: &Web3,
-    peggy_contract_address: EthAddress,
-    peggy_id: String,
+    gravity_contract_address: EthAddress,
+    gravity_id: String,
     our_eth_key: EthPrivateKey,
-) -> Result<GasCost, PeggyError> {
+) -> Result<GasCost, GravityError> {
     let our_eth_address = our_eth_key.to_public_key().unwrap();
     let our_balance = web3.eth_get_balance(our_eth_address).await?;
     let our_nonce = web3.eth_get_transaction_count(our_eth_address).await?;
@@ -86,13 +86,13 @@ pub async fn estimate_valset_cost(
     let val = web3
         .eth_estimate_gas(TransactionRequest {
             from: Some(our_eth_address),
-            to: peggy_contract_address,
+            to: gravity_contract_address,
             nonce: Some(our_nonce.clone().into()),
             gas_price: Some(gas_price.clone().into()),
             gas: Some(gas_limit.into()),
             value: Some(zero.into()),
             data: Some(
-                encode_valset_payload(new_valset.clone(), old_valset.clone(), confirms, peggy_id)?
+                encode_valset_payload(new_valset.clone(), old_valset.clone(), confirms, gravity_id)?
                     .into(),
             ),
         })
@@ -110,8 +110,8 @@ fn encode_valset_payload(
     new_valset: Valset,
     old_valset: Valset,
     confirms: &[ValsetConfirmResponse],
-    peggy_id: String,
-) -> Result<Vec<u8>, PeggyError> {
+    gravity_id: String,
+) -> Result<Vec<u8>, GravityError> {
     let (old_addresses, old_powers) = old_valset.filter_empty_addresses();
     let (new_addresses, new_powers) = new_valset.filter_empty_addresses();
     let old_nonce = old_valset.nonce;
@@ -119,7 +119,7 @@ fn encode_valset_payload(
 
     // remember the signatures are over the new valset and therefore this is the value we must encode
     // the old valset exists only as a hash in the ethereum store
-    let hash = encode_valset_confirm_hashed(peggy_id, new_valset);
+    let hash = encode_valset_confirm_hashed(gravity_id, new_valset);
     // we need to use the old valset here because our signatures need to match the current
     // members of the validator set in the contract.
     let sig_data = old_valset.order_sigs(&hash, confirms)?;

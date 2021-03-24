@@ -1,8 +1,8 @@
 //! Basic utility functions to stubbornly get data
 use clarity::Uint256;
-use cosmos_peggy::query::get_last_event_nonce;
+use cosmos_gravity::query::get_last_event_nonce;
 use deep_space::address::Address as CosmosAddress;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use std::time::Duration;
 use tokio::time::delay_for;
 use tonic::transport::Channel;
@@ -23,7 +23,7 @@ pub async fn get_block_number_with_retry(web3: &Web3) -> Uint256 {
 
 /// gets the last event nonce, no matter how long it takes.
 pub async fn get_last_event_nonce_with_retry(
-    client: &mut PeggyQueryClient<Channel>,
+    client: &mut GravityQueryClient<Channel>,
     our_cosmos_address: CosmosAddress,
 ) -> u64 {
     let mut res = get_last_event_nonce(client, our_cosmos_address).await;

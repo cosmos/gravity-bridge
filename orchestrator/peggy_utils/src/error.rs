@@ -11,7 +11,7 @@ use tonic::Status;
 use web30::jsonrpc::error::Web3Error;
 
 #[derive(Debug)]
-pub enum PeggyError {
+pub enum GravityError {
     InvalidBigInt(ParseBigIntError),
     CosmosRestError(JsonRpcError),
     CosmosAddressError(CosmosAddressError),
@@ -28,72 +28,72 @@ pub enum PeggyError {
     ParseBigIntError(ParseBigIntError),
 }
 
-impl fmt::Display for PeggyError {
+impl fmt::Display for GravityError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            PeggyError::CosmosgRPCError(val) => write!(f, "Cosmos gRPC error {}", val),
-            PeggyError::InvalidBigInt(val) => write!(f, "Got invalid BigInt from cosmos! {}", val),
-            PeggyError::CosmosRestError(val) => write!(f, "Cosmos REST error {}", val),
-            PeggyError::CosmosAddressError(val) => write!(f, "Cosmos Address error {}", val),
-            PeggyError::EthereumRestError(val) => write!(f, "Ethereum REST error {}", val),
-            PeggyError::InvalidOptionsError(val) => {
+            GravityError::CosmosgRPCError(val) => write!(f, "Cosmos gRPC error {}", val),
+            GravityError::InvalidBigInt(val) => write!(f, "Got invalid BigInt from cosmos! {}", val),
+            GravityError::CosmosRestError(val) => write!(f, "Cosmos REST error {}", val),
+            GravityError::CosmosAddressError(val) => write!(f, "Cosmos Address error {}", val),
+            GravityError::EthereumRestError(val) => write!(f, "Ethereum REST error {}", val),
+            GravityError::InvalidOptionsError(val) => {
                 write!(f, "Invalid TX options for this call {}", val)
             }
-            PeggyError::InvalidBridgeStateError(val) => {
+            GravityError::InvalidBridgeStateError(val) => {
                 write!(f, "Invalid bridge state! {}", val)
             }
-            PeggyError::FailedToUpdateValset => write!(f, "ValidatorSetUpdate Failed!"),
-            PeggyError::TimeoutError => write!(f, "Operation timed out!"),
-            PeggyError::ClarityError(val) => write!(f, "Clarity Error {}", val),
-            PeggyError::InvalidEventLogError(val) => write!(f, "InvalidEvent: {}", val),
-            PeggyError::EthereumContractError(val) => {
+            GravityError::FailedToUpdateValset => write!(f, "ValidatorSetUpdate Failed!"),
+            GravityError::TimeoutError => write!(f, "Operation timed out!"),
+            GravityError::ClarityError(val) => write!(f, "Clarity Error {}", val),
+            GravityError::InvalidEventLogError(val) => write!(f, "InvalidEvent: {}", val),
+            GravityError::EthereumContractError(val) => {
                 write!(f, "Contract operation failed: {}", val)
             }
-            PeggyError::InsufficientVotingPowerToPass(val) => {
+            GravityError::InsufficientVotingPowerToPass(val) => {
                 write!(f, "{}", val)
             }
-            PeggyError::ParseBigIntError(val) => write!(f, "Failed to parse big integer {}", val),
+            GravityError::ParseBigIntError(val) => write!(f, "Failed to parse big integer {}", val),
         }
     }
 }
 
-impl std::error::Error for PeggyError {}
+impl std::error::Error for GravityError {}
 
-impl From<JsonRpcError> for PeggyError {
+impl From<JsonRpcError> for GravityError {
     fn from(error: JsonRpcError) -> Self {
-        PeggyError::CosmosRestError(error)
+        GravityError::CosmosRestError(error)
     }
 }
 
-impl From<Elapsed> for PeggyError {
+impl From<Elapsed> for GravityError {
     fn from(_error: Elapsed) -> Self {
-        PeggyError::TimeoutError
+        GravityError::TimeoutError
     }
 }
 
-impl From<ClarityError> for PeggyError {
+impl From<ClarityError> for GravityError {
     fn from(error: ClarityError) -> Self {
-        PeggyError::ClarityError(error)
+        GravityError::ClarityError(error)
     }
 }
 
-impl From<Web3Error> for PeggyError {
+impl From<Web3Error> for GravityError {
     fn from(error: Web3Error) -> Self {
-        PeggyError::EthereumRestError(error)
+        GravityError::EthereumRestError(error)
     }
 }
-impl From<Status> for PeggyError {
+impl From<Status> for GravityError {
     fn from(error: Status) -> Self {
-        PeggyError::CosmosgRPCError(error)
+        GravityError::CosmosgRPCError(error)
     }
 }
-impl From<CosmosAddressError> for PeggyError {
+impl From<CosmosAddressError> for GravityError {
     fn from(error: CosmosAddressError) -> Self {
-        PeggyError::CosmosAddressError(error)
+        GravityError::CosmosAddressError(error)
     }
 }
-impl From<ParseBigIntError> for PeggyError {
+impl From<ParseBigIntError> for GravityError {
     fn from(error: ParseBigIntError) -> Self {
-        PeggyError::InvalidBigInt(error)
+        GravityError::InvalidBigInt(error)
     }
 }

@@ -1,13 +1,13 @@
 use std::unimplemented;
 
 use super::ValsetMember;
-use crate::error::PeggyError;
+use crate::error::GravityError;
 use clarity::Address as EthAddress;
 use deep_space::address::Address as CosmosAddress;
 use num256::Uint256;
 use web30::types::Log;
 
-/// A parsed struct representing the Ethereum event fired by the Peggy contract
+/// A parsed struct representing the Ethereum event fired by the Gravity contract
 /// when the validator set is updated.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ValsetUpdatedEvent {
@@ -18,18 +18,18 @@ pub struct ValsetUpdatedEvent {
 impl ValsetUpdatedEvent {
     /// This function is not an abi compatible bytes parser, but it's actually
     /// not hard at all to extract data like this by hand.
-    pub fn from_log(input: &Log) -> Result<ValsetUpdatedEvent, PeggyError> {
+    pub fn from_log(input: &Log) -> Result<ValsetUpdatedEvent, GravityError> {
         // we have one indexed event so we should fine two indexes, one the event itself
         // and one the indexed nonce
         if input.topics.get(1).is_none() {
-            return Err(PeggyError::InvalidEventLogError(
+            return Err(GravityError::InvalidEventLogError(
                 "Too few topics".to_string(),
             ));
         }
         let nonce_data = &input.topics[1];
         let nonce = Uint256::from_bytes_be(nonce_data);
         if nonce > u64::MAX.into() {
-            return Err(PeggyError::InvalidEventLogError(
+            return Err(GravityError::InvalidEventLogError(
                 "Nonce overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -41,7 +41,7 @@ impl ValsetUpdatedEvent {
         let eth_addresses_offset = index_start + 32;
         let len_eth_addresses = Uint256::from_bytes_be(&input.data[index_start..index_end]);
         if len_eth_addresses > usize::MAX.into() {
-            return Err(PeggyError::InvalidEventLogError(
+            return Err(GravityError::InvalidEventLogError(
                 "Ethereum array len overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -51,13 +51,13 @@ impl ValsetUpdatedEvent {
         let powers_offset = index_start + 32;
         let len_powers = Uint256::from_bytes_be(&input.data[index_start..index_end]);
         if len_powers > usize::MAX.into() {
-            return Err(PeggyError::InvalidEventLogError(
+            return Err(GravityError::InvalidEventLogError(
                 "Powers array len overflow, probably incorrect parsing".to_string(),
             ));
         }
         let len_powers: usize = len_eth_addresses.to_string().parse().unwrap();
         if len_powers != len_eth_addresses {
-            return Err(PeggyError::InvalidEventLogError(
+            return Err(GravityError::InvalidEventLogError(
                 "Array len mismatch, probably incorrect parsing".to_string(),
             ));
         }
@@ -72,13 +72,13 @@ impl ValsetUpdatedEvent {
             // an eth address at 20 bytes is 12 bytes shorter than the Uint256 it's stored in.
             let eth_address = EthAddress::from_slice(&input.data[address_start + 12..address_end]);
             if eth_address.is_err() {
-                return Err(PeggyError::InvalidEventLogError(
+                return Err(GravityError::InvalidEventLogError(
                     "Ethereum Address parsing error, probably incorrect parsing".to_string(),
                 ));
             }
             let eth_address = Some(eth_address.unwrap());
             if power > u64::MAX.into() {
-                return Err(PeggyError::InvalidEventLogError(
+                return Err(GravityError::InvalidEventLogError(
                     "Power greater than u64::MAX, probably incorrect parsing".to_string(),
                 ));
             }
@@ -101,7 +101,7 @@ impl ValsetUpdatedEvent {
             members: validators,
         })
     }
-    pub fn from_logs(input: &[Log]) -> Result<Vec<ValsetUpdatedEvent>, PeggyError> {
+    pub fn from_logs(input: &[Log]) -> Result<Vec<ValsetUpdatedEvent>, GravityError> {
         let mut res = Vec::new();
         for item in input {
             res.push(ValsetUpdatedEvent::from_log(item)?);
@@ -110,7 +110,7 @@ impl ValsetUpdatedEvent {
     }
 }
 
-/// A parsed struct representing the Ethereum event fired by the Peggy contract when
+/// A parsed struct representing the Ethereum event fired by the Gravity contract when
 /// a transaction batch is executed.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct TransactionBatchExecutedEvent {
@@ -123,13 +123,13 @@ pub struct TransactionBatchExecutedEvent {
     /// in token type there is only one
     pub erc20: EthAddress,
     /// the event nonce representing a unique ordering of events coming out
-    /// of the Peggy solidity contract. Ensuring that these events can only be played
+    /// of the Gravity solidity contract. Ensuring that these events can only be played
     /// back in order
     pub event_nonce: Uint256,
 }
 
 impl TransactionBatchExecutedEvent {
-    pub fn from_log(input: &Log) -> Result<TransactionBatchExecutedEvent, PeggyError> {
+    pub fn from_log(input: &Log) -> Result<TransactionBatchExecutedEvent, GravityError> {
         if let (Some(batch_nonce_data), Some(erc20_data)) =
             (input.topics.get(1), input.topics.get(2))
         {
@@ -139,7 +139,7 @@ impl TransactionBatchExecutedEvent {
             let block_height = if let Some(bn) = input.block_number.clone() {
                 bn
             } else {
-                return Err(PeggyError::InvalidEventLogError(
+                return Err(GravityError::InvalidEventLogError(
                     "Log does not have block number, we only search logs already in blocks?"
                         .to_string(),
                 ));
@@ -148,7 +148,7 @@ impl TransactionBatchExecutedEvent {
                 || batch_nonce > u64::MAX.into()
                 || block_height > u64::MAX.into()
             {
-                Err(PeggyError::InvalidEventLogError(
+                Err(GravityError::InvalidEventLogError(
                     "Event nonce overflow, probably incorrect parsing".to_string(),
                 ))
             } else {
@@ -160,12 +160,12 @@ impl TransactionBatchExecutedEvent {
                 })
             }
         } else {
-            Err(PeggyError::InvalidEventLogError(
+            Err(GravityError::InvalidEventLogError(
                 "Too few topics".to_string(),
             ))
         }
     }
-    pub fn from_logs(input: &[Log]) -> Result<Vec<TransactionBatchExecutedEvent>, PeggyError> {
+    pub fn from_logs(input: &[Log]) -> Result<Vec<TransactionBatchExecutedEvent>, GravityError> {
         let mut res = Vec::new();
         for item in input {
             res.push(TransactionBatchExecutedEvent::from_log(item)?);
@@ -186,7 +186,7 @@ impl TransactionBatchExecutedEvent {
 }
 
 /// A parsed struct representing the Ethereum event fired when someone makes a deposit
-/// on the Peggy contract
+/// on the Gravity contract
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct SendToCosmosEvent {
     /// The token contract address for the deposit
@@ -204,7 +204,7 @@ pub struct SendToCosmosEvent {
 }
 
 impl SendToCosmosEvent {
-    pub fn from_log(input: &Log) -> Result<SendToCosmosEvent, PeggyError> {
+    pub fn from_log(input: &Log) -> Result<SendToCosmosEvent, GravityError> {
         let topics = (
             input.topics.get(1),
             input.topics.get(2),
@@ -223,13 +223,13 @@ impl SendToCosmosEvent {
             let block_height = if let Some(bn) = input.block_number.clone() {
                 bn
             } else {
-                return Err(PeggyError::InvalidEventLogError(
+                return Err(GravityError::InvalidEventLogError(
                     "Log does not have block number, we only search logs already in blocks?"
                         .to_string(),
                 ));
             };
             if event_nonce > u64::MAX.into() || block_height > u64::MAX.into() {
-                Err(PeggyError::InvalidEventLogError(
+                Err(GravityError::InvalidEventLogError(
                     "Event nonce overflow, probably incorrect parsing".to_string(),
                 ))
             } else {
@@ -243,12 +243,12 @@ impl SendToCosmosEvent {
                 })
             }
         } else {
-            Err(PeggyError::InvalidEventLogError(
+            Err(GravityError::InvalidEventLogError(
                 "Too few topics".to_string(),
             ))
         }
     }
-    pub fn from_logs(input: &[Log]) -> Result<Vec<SendToCosmosEvent>, PeggyError> {
+    pub fn from_logs(input: &[Log]) -> Result<Vec<SendToCosmosEvent>, GravityError> {
         let mut res = Vec::new();
         for item in input {
             res.push(SendToCosmosEvent::from_log(item)?);
@@ -268,7 +268,7 @@ impl SendToCosmosEvent {
     }
 }
 
-/// A parsed struct representing the Ethereum event fired when someone uses the Peggy
+/// A parsed struct representing the Ethereum event fired when someone uses the Gravity
 /// contract to deploy a new ERC20 contract representing a Cosmos asset
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ERC20DeployedEvent {
@@ -289,7 +289,7 @@ pub struct ERC20DeployedEvent {
 }
 
 impl ERC20DeployedEvent {
-    pub fn from_log(input: &Log) -> Result<ERC20DeployedEvent, PeggyError> {
+    pub fn from_log(input: &Log) -> Result<ERC20DeployedEvent, GravityError> {
         let token_contract = input.topics.get(1);
         if let Some(new_token_contract_data) = token_contract {
             let erc20 = EthAddress::from_slice(&new_token_contract_data[12..32])?;
@@ -297,7 +297,7 @@ impl ERC20DeployedEvent {
             let index_end = index_start + 32;
             let decimals = Uint256::from_bytes_be(&input.data[index_start..index_end]);
             if decimals > u8::MAX.into() {
-                return Err(PeggyError::InvalidEventLogError(
+                return Err(GravityError::InvalidEventLogError(
                     "Decimals overflow, probably incorrect parsing".to_string(),
                 ));
             }
@@ -307,7 +307,7 @@ impl ERC20DeployedEvent {
             let index_end = index_start + 32;
             let nonce = Uint256::from_bytes_be(&input.data[index_start..index_end]);
             if nonce > u64::MAX.into() {
-                return Err(PeggyError::InvalidEventLogError(
+                return Err(GravityError::InvalidEventLogError(
                     "Nonce overflow, probably incorrect parsing".to_string(),
                 ));
             }
@@ -317,7 +317,7 @@ impl ERC20DeployedEvent {
             let denom_len = Uint256::from_bytes_be(&input.data[index_start..index_end]);
             // it's not probable that we have 4+ gigabytes of event data
             if denom_len > u32::MAX.into() {
-                return Err(PeggyError::InvalidEventLogError(
+                return Err(GravityError::InvalidEventLogError(
                     "denom length overflow, probably incorrect parsing".to_string(),
                 ));
             }
@@ -327,7 +327,7 @@ impl ERC20DeployedEvent {
             let denom = String::from_utf8(input.data[index_start..index_end].to_vec());
             trace!("Denom {:?}", denom);
             if denom.is_err() {
-                return Err(PeggyError::InvalidEventLogError(format!(
+                return Err(GravityError::InvalidEventLogError(format!(
                     "{:?} is not valid utf8, probably incorrect parsing",
                     denom
                 )));
@@ -345,7 +345,7 @@ impl ERC20DeployedEvent {
             let erc20_name_len = Uint256::from_bytes_be(&input.data[index_start..index_end]);
             // it's not probable that we have 4+ gigabytes of event data
             if erc20_name_len > u32::MAX.into() {
-                return Err(PeggyError::InvalidEventLogError(
+                return Err(GravityError::InvalidEventLogError(
                     "ERC20 Name length overflow, probably incorrect parsing".to_string(),
                 ));
             }
@@ -354,7 +354,7 @@ impl ERC20DeployedEvent {
             let index_end = index_start + erc20_name_len;
             let erc20_name = String::from_utf8(input.data[index_start..index_end].to_vec());
             if erc20_name.is_err() {
-                return Err(PeggyError::InvalidEventLogError(format!(
+                return Err(GravityError::InvalidEventLogError(format!(
                     "{:?} is not valid utf8, probably incorrect parsing",
                     erc20_name
                 )));
@@ -367,7 +367,7 @@ impl ERC20DeployedEvent {
             let symbol_len = Uint256::from_bytes_be(&input.data[index_start..index_end]);
             // it's not probable that we have 4+ gigabytes of event data
             if symbol_len > u32::MAX.into() {
-                return Err(PeggyError::InvalidEventLogError(
+                return Err(GravityError::InvalidEventLogError(
                     "Symbol length overflow, probably incorrect parsing".to_string(),
                 ));
             }
@@ -377,7 +377,7 @@ impl ERC20DeployedEvent {
             let symbol = String::from_utf8(input.data[index_start..index_end].to_vec());
             trace!("Symbol {:?}", symbol);
             if symbol.is_err() {
-                return Err(PeggyError::InvalidEventLogError(format!(
+                return Err(GravityError::InvalidEventLogError(format!(
                     "{:?} is not valid utf8, probably incorrect parsing",
                     symbol
                 )));
@@ -387,7 +387,7 @@ impl ERC20DeployedEvent {
             let block_height = if let Some(bn) = input.block_number.clone() {
                 bn
             } else {
-                return Err(PeggyError::InvalidEventLogError(
+                return Err(GravityError::InvalidEventLogError(
                     "Log does not have block number, we only search logs already in blocks?"
                         .to_string(),
                 ));
@@ -403,12 +403,12 @@ impl ERC20DeployedEvent {
                 block_height,
             })
         } else {
-            Err(PeggyError::InvalidEventLogError(
+            Err(GravityError::InvalidEventLogError(
                 "Too few topics".to_string(),
             ))
         }
     }
-    pub fn from_logs(input: &[Log]) -> Result<Vec<ERC20DeployedEvent>, PeggyError> {
+    pub fn from_logs(input: &[Log]) -> Result<Vec<ERC20DeployedEvent>, GravityError> {
         let mut res = Vec::new();
         for item in input {
             res.push(ERC20DeployedEvent::from_log(item)?);
@@ -427,7 +427,7 @@ impl ERC20DeployedEvent {
         ret
     }
 }
-/// A parsed struct representing the Ethereum event fired when someone uses the Peggy
+/// A parsed struct representing the Ethereum event fired when someone uses the Gravity
 /// contract to deploy a new ERC20 contract representing a Cosmos asset
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct LogicCallExecutedEvent {
@@ -439,10 +439,10 @@ pub struct LogicCallExecutedEvent {
 }
 
 impl LogicCallExecutedEvent {
-    pub fn from_log(input: &Log) -> Result<LogicCallExecutedEvent, PeggyError> {
+    pub fn from_log(input: &Log) -> Result<LogicCallExecutedEvent, GravityError> {
         unimplemented!()
     }
-    pub fn from_logs(input: &[Log]) -> Result<Vec<LogicCallExecutedEvent>, PeggyError> {
+    pub fn from_logs(input: &[Log]) -> Result<Vec<LogicCallExecutedEvent>, GravityError> {
         let mut res = Vec::new();
         for item in input {
             res.push(LogicCallExecutedEvent::from_log(item)?);

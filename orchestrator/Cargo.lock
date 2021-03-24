@@ -580,15 +580,15 @@ dependencies = [
  "actix-rt",
  "clarity",
  "contact",
- "cosmos_peggy",
+ "cosmos_gravity",
  "deep_space",
  "docopt",
  "env_logger",
- "ethereum_peggy",
+ "ethereum_gravity",
  "lazy_static",
  "openssl-probe",
- "peggy_proto",
- "peggy_utils",
+ "gravity_proto",
+ "gravity_utils",
  "serde",
  "serde_derive",
  "tokio",
@@ -648,7 +648,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmos_peggy"
+name = "cosmos_gravity"
 version = "0.1.0"
 dependencies = [
  "actix",
@@ -656,11 +656,11 @@ dependencies = [
  "contact",
  "deep_space",
  "env_logger",
- "ethereum_peggy",
+ "ethereum_gravity",
  "log",
  "num256",
- "peggy_proto",
- "peggy_utils",
+ "gravity_proto",
+ "gravity_utils",
  "rand 0.8.0",
  "serde",
  "serde_derive",
@@ -828,14 +828,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "ethereum_peggy"
+name = "ethereum_gravity"
 version = "0.1.0"
 dependencies = [
  "clarity",
  "deep_space",
  "log",
  "num256",
- "peggy_utils",
+ "gravity_utils",
  "sha3",
  "web30",
 ]
@@ -1640,19 +1640,19 @@ dependencies = [
  "actix-rt",
  "clarity",
  "contact",
- "cosmos_peggy",
+ "cosmos_gravity",
  "deep_space",
  "docopt",
  "env_logger",
- "ethereum_peggy",
+ "ethereum_gravity",
  "futures",
  "lazy_static",
  "log",
  "num256",
  "openssl",
  "openssl-probe",
- "peggy_proto",
- "peggy_utils",
+ "gravity_proto",
+ "gravity_utils",
  "rand 0.8.0",
  "relayer",
  "serde",
@@ -1704,7 +1704,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "peggy_proto"
+name = "gravity_proto"
 version = "0.1.0"
 dependencies = [
  "cosmos-sdk-proto",
@@ -1714,7 +1714,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "peggy_utils"
+name = "gravity_utils"
 version = "0.1.0"
 dependencies = [
  "actix",
@@ -1724,7 +1724,7 @@ dependencies = [
  "log",
  "num-bigint 0.3.1",
  "num256",
- "peggy_proto",
+ "gravity_proto",
  "rand 0.8.0",
  "serde",
  "serde_derive",
@@ -2079,15 +2079,15 @@ dependencies = [
  "actix-rt",
  "clarity",
  "contact",
- "cosmos_peggy",
+ "cosmos_gravity",
  "deep_space",
  "docopt",
  "env_logger",
- "ethereum_peggy",
+ "ethereum_gravity",
  "lazy_static",
  "openssl-probe",
- "peggy_proto",
- "peggy_utils",
+ "gravity_proto",
+ "gravity_utils",
  "rand 0.8.0",
  "relayer",
  "serde",
@@ -2103,17 +2103,17 @@ dependencies = [
  "actix-rt",
  "clarity",
  "contact",
- "cosmos_peggy",
+ "cosmos_gravity",
  "deep_space",
  "docopt",
  "env_logger",
- "ethereum_peggy",
+ "ethereum_gravity",
  "lazy_static",
  "log",
  "num256",
  "openssl-probe",
- "peggy_proto",
- "peggy_utils",
+ "gravity_proto",
+ "gravity_utils",
  "serde",
  "serde_derive",
  "tokio",
@@ -2529,18 +2529,18 @@ dependencies = [
  "actix-web",
  "clarity",
  "contact",
- "cosmos_peggy",
+ "cosmos_gravity",
  "deep_space",
  "docopt",
  "env_logger",
- "ethereum_peggy",
+ "ethereum_gravity",
  "futures",
  "lazy_static",
  "log",
  "num256",
  "orchestrator",
- "peggy_proto",
- "peggy_utils",
+ "gravity_proto",
+ "gravity_utils",
  "rand 0.8.0",
  "serde",
  "serde_derive",

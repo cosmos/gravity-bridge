@@ -11,13 +11,13 @@ export function makeCheckpoint(
   validators: string[],
   powers: BigNumberish[],
   valsetNonce: BigNumberish,
-  peggyId: string
+  gravityId: string
 ) {
   const methodName = ethers.utils.formatBytes32String("checkpoint");
 
   let abiEncoded = ethers.utils.defaultAbiCoder.encode(
     ["bytes32", "bytes32", "uint256", "address[]", "uint256[]"],
-    [peggyId, methodName, valsetNonce, validators, powers]
+    [gravityId, methodName, valsetNonce, validators, powers]
   );
 
   let checkpoint = ethers.utils.keccak256(abiEncoded);
@@ -48,13 +48,13 @@ export function makeTxBatchHash(
   destinations: string[],
   fees: number[],
   nonces: number[],
-  peggyId: string
+  gravityId: string
 ) {
   const methodName = ethers.utils.formatBytes32String("transactionBatch");
 
   let abiEncoded = ethers.utils.defaultAbiCoder.encode(
     ["bytes32", "bytes32", "uint256[]", "address[]", "uint256[]", "uint256[]"],
-    [peggyId, methodName, amounts, destinations, fees, nonces]
+    [gravityId, methodName, amounts, destinations, fees, nonces]
   );
 
   // console.log(abiEncoded);

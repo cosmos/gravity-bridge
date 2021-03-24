@@ -1,13 +1,13 @@
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use cosmos_peggy::query::get_latest_transaction_batches;
-use cosmos_peggy::query::get_transaction_batch_signatures;
-use ethereum_peggy::utils::{downcast_to_u128, get_tx_batch_nonce};
-use ethereum_peggy::{one_eth, submit_batch::send_eth_transaction_batch};
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use peggy_utils::message_signatures::encode_tx_batch_confirm_hashed;
-use peggy_utils::types::Valset;
-use peggy_utils::types::{BatchConfirmResponse, TransactionBatch};
+use cosmos_gravity::query::get_latest_transaction_batches;
+use cosmos_gravity::query::get_transaction_batch_signatures;
+use ethereum_gravity::utils::{downcast_to_u128, get_tx_batch_nonce};
+use ethereum_gravity::{one_eth, submit_batch::send_eth_transaction_batch};
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::message_signatures::encode_tx_batch_confirm_hashed;
+use gravity_utils::types::Valset;
+use gravity_utils::types::{BatchConfirmResponse, TransactionBatch};
 use std::time::Duration;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -17,9 +17,9 @@ pub async fn relay_batches(
     current_valset: Valset,
     ethereum_key: EthPrivateKey,
     web3: &Web3,
-    grpc_client: &mut PeggyQueryClient<Channel>,
-    peggy_contract_address: EthAddress,
-    peggy_id: String,
+    grpc_client: &mut GravityQueryClient<Channel>,
+    gravity_contract_address: EthAddress,
+    gravity_id: String,
     timeout: Duration,
 ) {
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
@@ -38,7 +38,7 @@ pub async fn relay_batches(
         trace!("Got sigs {:?}", sigs);
         if let Ok(sigs) = sigs {
             // this checks that the signatures for the batch are actually possible to submit to the chain
-            let hash = encode_tx_batch_confirm_hashed(peggy_id.clone(), batch.clone());
+            let hash = encode_tx_batch_confirm_hashed(gravity_id.clone(), batch.clone());
             if current_valset.order_sigs(&hash, &sigs).is_ok() {
                 oldest_signed_batch = Some(batch);
                 oldest_signatures = Some(sigs);
@@ -64,7 +64,7 @@ pub async fn relay_batches(
     let erc20_contract = oldest_signed_batch.token_contract;
 
     let latest_ethereum_batch = get_tx_batch_nonce(
-        peggy_contract_address,
+        gravity_contract_address,
         erc20_contract,
         our_ethereum_address,
         web3,
@@ -80,13 +80,13 @@ pub async fn relay_batches(
     let latest_ethereum_batch = latest_ethereum_batch.unwrap();
     let latest_cosmos_batch_nonce = oldest_signed_batch.clone().nonce;
     if latest_cosmos_batch_nonce > latest_ethereum_batch {
-        let cost = ethereum_peggy::submit_batch::estimate_tx_batch_cost(
+        let cost = ethereum_gravity::submit_batch::estimate_tx_batch_cost(
             current_valset.clone(),
             oldest_signed_batch.clone(),
             &oldest_signatures,
             web3,
-            peggy_contract_address,
-            peggy_id.clone(),
+            gravity_contract_address,
+            gravity_id.clone(),
             ethereum_key,
         )
         .await;
@@ -110,8 +110,8 @@ pub async fn relay_batches(
             &oldest_signatures,
             web3,
             timeout,
-            peggy_contract_address,
-            peggy_id,
+            gravity_contract_address,
+            gravity_id,
             ethereum_key,
         )
         .await;

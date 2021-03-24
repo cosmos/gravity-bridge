@@ -4,7 +4,7 @@ use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use docopt::Docopt;
 use env_logger::Env;
-use peggy_utils::connection_prep::{
+use gravity_utils::connection_prep::{
     check_for_eth, create_rpc_connections, wait_for_cosmos_node_ready,
 };
 
@@ -39,12 +39,12 @@ lazy_static! {
             --cosmos-legacy-rpc=<curl>   The Cosmos RPC url
             --cosmos-grpc=<gurl>         The Cosmos gRPC url
             --ethereum-rpc=<eurl>        The Ethereum RPC url, Geth light clients work and sync fast
-            --contract-address=<addr>    The Ethereum contract address for Peggy
+            --contract-address=<addr>    The Ethereum contract address for Gravity
         About:
-            The Peggy relayer component, responsible for relaying data from the Cosmos blockchain
+            The Gravity relayer component, responsible for relaying data from the Cosmos blockchain
             to the Ethereum blockchain, cosmos key and fees are optional since they are only used
             to request the creation of batches or validator sets to relay.
-            for Althea-Peggy.
+            for Althea-Gravity.
             Written By: {}
             Version {}",
             env!("CARGO_PKG_NAME"),
@@ -67,7 +67,7 @@ async fn main() {
         .flag_ethereum_key
         .parse()
         .expect("Invalid Ethereum private key!");
-    let peggy_contract_address: EthAddress = args
+    let gravity_contract_address: EthAddress = args
         .flag_contract_address
         .parse()
         .expect("Invalid contract address!");
@@ -83,7 +83,7 @@ async fn main() {
     let public_eth_key = ethereum_key
         .to_public_key()
         .expect("Invalid Ethereum Private Key!");
-    info!("Starting Peggy Relayer");
+    info!("Starting Gravity Relayer");
     info!("Ethereum Address: {}", public_eth_key);
 
     let contact = connections.contact.clone().unwrap();
@@ -99,7 +99,7 @@ async fn main() {
         ethereum_key,
         connections.web3.unwrap(),
         connections.grpc.unwrap(),
-        peggy_contract_address,
+        gravity_contract_address,
     )
     .await
 }

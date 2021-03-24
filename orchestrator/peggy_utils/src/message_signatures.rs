@@ -3,14 +3,14 @@ use clarity::abi::{encode_tokens, Token};
 use clarity::utils::get_ethereum_msg_hash;
 
 /// takes the required input data and produces the required signature to confirm a validator
-/// set update on the Peggy Ethereum contract. This value will then be signed before being
+/// set update on the Gravity Ethereum contract. This value will then be signed before being
 /// submitted to Cosmos, verified, and then relayed to Ethereum
 /// Note: This is the message, you need to run Keccak256::digest() in order to get the 32byte
 /// digest that is normally signed or may be used as a 'hash of the message'
-pub fn encode_valset_confirm(peggy_id: String, valset: Valset) -> Vec<u8> {
+pub fn encode_valset_confirm(gravity_id: String, valset: Valset) -> Vec<u8> {
     let (eth_addresses, powers) = valset.filter_empty_addresses();
     encode_tokens(&[
-        Token::FixedString(peggy_id),
+        Token::FixedString(gravity_id),
         Token::FixedString("checkpoint".to_string()),
         valset.nonce.into(),
         eth_addresses.into(),
@@ -18,8 +18,8 @@ pub fn encode_valset_confirm(peggy_id: String, valset: Valset) -> Vec<u8> {
     ])
 }
 
-pub fn encode_valset_confirm_hashed(peggy_id: String, valset: Valset) -> Vec<u8> {
-    let digest = encode_valset_confirm(peggy_id, valset);
+pub fn encode_valset_confirm_hashed(gravity_id: String, valset: Valset) -> Vec<u8> {
+    let digest = encode_valset_confirm(gravity_id, valset);
     get_ethereum_msg_hash(&digest)
 }
 
@@ -103,14 +103,14 @@ fn test_valset_signature() {
 }
 
 /// takes the required input data and produces the required signature to confirm a transaction
-/// batch on the Peggy Ethereum contract. This value will then be signed before being
+/// batch on the Gravity Ethereum contract. This value will then be signed before being
 /// submitted to Cosmos, verified, and then relayed to Ethereum
 /// Note: This is the message, you need to run Keccak256::digest() in order to get the 32byte
 /// digest that is normally signed or may be used as a 'hash of the message'
-pub fn encode_tx_batch_confirm(peggy_id: String, batch: TransactionBatch) -> Vec<u8> {
+pub fn encode_tx_batch_confirm(gravity_id: String, batch: TransactionBatch) -> Vec<u8> {
     let (amounts, destinations, fees) = batch.get_checkpoint_values();
     encode_tokens(&[
-        Token::FixedString(peggy_id),
+        Token::FixedString(gravity_id),
         Token::FixedString("transactionBatch".to_string()),
         amounts,
         destinations,
@@ -121,8 +121,8 @@ pub fn encode_tx_batch_confirm(peggy_id: String, batch: TransactionBatch) -> Vec
     ])
 }
 
-pub fn encode_tx_batch_confirm_hashed(peggy_id: String, batch: TransactionBatch) -> Vec<u8> {
-    let digest = encode_tx_batch_confirm(peggy_id, batch);
+pub fn encode_tx_batch_confirm_hashed(gravity_id: String, batch: TransactionBatch) -> Vec<u8> {
+    let digest = encode_tx_batch_confirm(gravity_id, batch);
     get_ethereum_msg_hash(&digest)
 }
 
@@ -232,11 +232,11 @@ fn test_specific_batch_signature() {
 }
 
 /// takes the required input data and produces the required signature to confirm a logic
-/// call on the Peggy Ethereum contract. This value will then be signed before being
+/// call on the Gravity Ethereum contract. This value will then be signed before being
 /// submitted to Cosmos, verified, and then relayed to Ethereum
 /// Note: This is the message, you need to run Keccak256::digest() in order to get the 32byte
 /// digest that is normally signed or may be used as a 'hash of the message'
-pub fn encode_logic_call_confirm(peggy_id: String, call: LogicCall) -> Vec<u8> {
+pub fn encode_logic_call_confirm(gravity_id: String, call: LogicCall) -> Vec<u8> {
     let mut transfer_amounts = Vec::new();
     let mut transfer_token_contracts = Vec::new();
     let mut fee_amounts = Vec::new();
@@ -251,7 +251,7 @@ pub fn encode_logic_call_confirm(peggy_id: String, call: LogicCall) -> Vec<u8> {
     }
 
     encode_tokens(&[
-        Token::FixedString(peggy_id),                // Peggy Instance ID
+        Token::FixedString(gravity_id),                // Gravity Instance ID
         Token::FixedString("logicCall".to_string()), //Function Name
         Token::Dynamic(transfer_amounts),            //Array of Transfer amounts
         transfer_token_contracts.into(),             //ERC-20 contract for transfers
@@ -265,8 +265,8 @@ pub fn encode_logic_call_confirm(peggy_id: String, call: LogicCall) -> Vec<u8> {
     ])
 }
 
-pub fn encode_logic_call_confirm_hashed(peggy_id: String, call: LogicCall) -> Vec<u8> {
-    let digest = encode_logic_call_confirm(peggy_id, call);
+pub fn encode_logic_call_confirm_hashed(gravity_id: String, call: LogicCall) -> Vec<u8> {
+    let digest = encode_logic_call_confirm(gravity_id, call);
     get_ethereum_msg_hash(&digest)
 }
 

@@ -14,14 +14,14 @@ chai.use(solidity);
 const { expect } = chai;
 
 
-describe("Peggy happy path valset update + batch submit", function () {
+describe("Gravity happy path valset update + batch submit", function () {
   it("Happy path", async function () {
 
     // DEPLOY CONTRACTS
     // ================
 
     const signers = await ethers.getSigners();
-    const peggyId = ethers.utils.formatBytes32String("foo");
+    const gravityId = ethers.utils.formatBytes32String("foo");
 
     const valset0 = {
       // This is the power distribution on the Cosmos hub as of 7/14/2020
@@ -33,10 +33,10 @@ describe("Peggy happy path valset update + batch submit", function () {
     const powerThreshold = 6666;
 
     const {
-      peggy,
+      gravity,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(peggyId, valset0.validators, valset0.powers, powerThreshold);
+    } = await deployContracts(gravityId, valset0.validators, valset0.powers, powerThreshold);
 
 
 
@@ -62,12 +62,12 @@ describe("Peggy happy path valset update + batch submit", function () {
       await getSignerAddresses(valset1.validators),
       valset1.powers,
       valset1.nonce,
-      peggyId
+      gravityId
     );
 
     let sigs1 = await signHash(valset0.validators, checkpoint1);
 
-    await peggy.updateValset(
+    await gravity.updateValset(
       await getSignerAddresses(valset1.validators),
       valset1.powers,
       valset1.nonce,
@@ -81,7 +81,7 @@ describe("Peggy happy path valset update + batch submit", function () {
       sigs1.s
     );
 
-    expect((await peggy.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint1);
+    expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint1);
 
 
 
@@ -90,8 +90,8 @@ describe("Peggy happy path valset update + batch submit", function () {
     // ==========================
 
     // Transfer out to Cosmos, locking coins
-    await testERC20.functions.approve(peggy.address, 1000);
-    await peggy.functions.sendToCosmos(
+    await testERC20.functions.approve(gravity.address, 1000);
+    await gravity.functions.sendToCosmos(
       testERC20.address,
       ethers.utils.formatBytes32String("myCosmosAddress"),
       1000
@@ -129,7 +129,7 @@ describe("Peggy happy path valset update + batch submit", function () {
         "uint256"
       ],
       [
-        peggyId,
+        gravityId,
         methodName,
         txAmounts,
         txDestinations,
@@ -144,7 +144,7 @@ describe("Peggy happy path valset update + batch submit", function () {
 
     let sigs = await signHash(valset1.validators, digest);
 
-    await peggy.submitBatch(
+    await gravity.submitBatch(
 
       await getSignerAddresses(valset1.validators),
       valset1.powers,

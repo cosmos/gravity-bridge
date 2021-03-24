@@ -1,4 +1,4 @@
-//! This crate contains various components and utilities for interacting with the Peggy Ethereum contract.
+//! This crate contains various components and utilities for interacting with the Gravity Ethereum contract.
 
 use clarity::Uint256;
 

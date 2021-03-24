@@ -1,11 +1,11 @@
-//! Protobuf files in the peggy repo, copying the result to the peggy_proto crate for import
-//! and use. While this builder generates about a dozen files only one contains all the peggy
+//! Protobuf files in the gravity repo, copying the result to the gravity_proto crate for import
+//! and use. While this builder generates about a dozen files only one contains all the gravity
 //! proto info and the rest are discarded in favor of upstream cosmos-sdk-proto
 
-// Building new Peggy rust proto definitions
+// Building new Gravity rust proto definitions
 // run 'cargo run'
-// go to peggy_proto/prost
-// delete all files except peggy.v1.rs
+// go to gravity_proto/prost
+// delete all files except gravity.v1.rs
 // re-write calls to super::super::cosmos as cosmos-sdk-proto::cosmos
 
 use std::path::Path;
@@ -17,7 +17,7 @@ use walkdir::WalkDir;
 /// A temporary directory for proto building
 
 fn main() {
-    let out_path: PathBuf = "../peggy_proto/src/prost/".parse().unwrap();
+    let out_path: PathBuf = "../gravity_proto/src/prost/".parse().unwrap();
     compile_protos(&out_path);
 }
 
@@ -32,18 +32,18 @@ fn compile_protos(out_dir: &Path) {
     // this gives us the repo root by going up two levels from the module root
     let root = root.parent().unwrap().parent().unwrap().to_path_buf();
 
-    let mut peggy_proto_dir = root.clone();
-    peggy_proto_dir.push("module/proto/peggy/v1");
-    let mut peggy_proto_include_dir = root.clone();
-    peggy_proto_include_dir.push("module/proto");
+    let mut gravity_proto_dir = root.clone();
+    gravity_proto_dir.push("module/proto/gravity/v1");
+    let mut gravity_proto_include_dir = root.clone();
+    gravity_proto_include_dir.push("module/proto");
     let mut third_party_proto_include_dir = root;
     third_party_proto_include_dir.push("module/third_party/proto");
 
     // Paths
-    let proto_paths = [peggy_proto_dir];
+    let proto_paths = [gravity_proto_dir];
     // we need to have an include which is just the folder of our protos to satisfy protoc
     // which insists that any passed file be included in a directory passed as an include
-    let proto_include_paths = [peggy_proto_include_dir, third_party_proto_include_dir];
+    let proto_include_paths = [gravity_proto_include_dir, third_party_proto_include_dir];
 
     // List available proto files
     let mut protos: Vec<PathBuf> = vec![];
