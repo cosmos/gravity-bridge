@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # USAGE: ./two-node-net skip
 
 # Constants
@@ -126,8 +126,7 @@ $PEGGY $home2 eth_keys add --output=json --dry-run=true | jq . >> $n2dir/eth_key
 $PEGGY $home3 eth_keys add --output=json --dry-run=true | jq . >> $n3dir/eth_key.json
 
 echo "Creating gentxs"
-$PEGGY $home0 gentx --ip $n0name val 100000000000stake $(jq -r .address $n0dir/eth_key.json) $(jq -r .address $n0dir/orchestrator_key.json) $kbt $cid
-#$PEGGY $home0 gentx --ip $n0name val 100000000000stake $(jq -r .address $n0dir/eth_key.json) $(jq -r .address $n0dir/orchestrator_key.json) $kbt $cid &>/dev/null
+$PEGGY $home0 gentx --ip $n0name val 100000000000stake $(jq -r .address $n0dir/eth_key.json) $(jq -r .address $n0dir/orchestrator_key.json) $kbt $cid &>/dev/null
 $PEGGY $home1 gentx --ip $n1name val 100000000000stake $(jq -r .address $n1dir/eth_key.json) $(jq -r .address $n1dir/orchestrator_key.json) $kbt $cid &>/dev/null
 $PEGGY $home2 gentx --ip $n2name val 100000000000stake $(jq -r .address $n2dir/eth_key.json) $(jq -r .address $n2dir/orchestrator_key.json) $kbt $cid &>/dev/null
 $PEGGY $home3 gentx --ip $n3name val 100000000000stake $(jq -r .address $n3dir/eth_key.json) $(jq -r .address $n3dir/orchestrator_key.json) $kbt $cid &>/dev/null
@@ -136,9 +135,7 @@ echo "Collecting gentxs in $n0name"
 cp $n1cfgDir/gentx/*.json $n0cfgDir/gentx/
 cp $n2cfgDir/gentx/*.json $n0cfgDir/gentx/
 cp $n3cfgDir/gentx/*.json $n0cfgDir/gentx/
-$PEGGY $home0 collect-gentxs
-
-
+$PEGGY $home0 collect-gentxs &>/dev/null
 
 echo "Distributing genesis file into $n1name, $n2name, $n3name"
 cp $n0cfgDir/genesis.json $n1cfgDir/genesis.json
@@ -238,9 +235,6 @@ docker-compose up --no-start ethereum $n0name $n1name $n2name $n3name
 docker-compose start ethereum $n0name $n1name $n2name $n3name
 
 echo "Delegating keys"
-
-#RUST_BACKTRACE=1
-#register-delegate-keys --validator-phrase="$(jq .mnemonic $n0dir/validator_key.json)" --ethereum-key="$(jq .private_key $n0dir/eth_key.json)" --cosmos-phrase="$(jq .mnemonic $n0dir/orchestrator_key.json)" --cosmos-rpc="http://localhost:26657" --fees="stake"
 
 echo "Waiting for cosmos cluster to sync"
 while $(curl http://$peggy_0:26657/status | jq .result.sync_info.catching_up)
