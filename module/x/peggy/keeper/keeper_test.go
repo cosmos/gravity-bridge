@@ -85,24 +85,24 @@ func TestAttestationIterator(t *testing.T) {
 		Votes:    []string{},
 	}
 	dep1 := &types.DepositClaim{
-		EventNonce:     1,
-		TokenContract:  TokenContractAddrs[0],
-		Amount:         sdk.NewInt(100),
-		EthereumSender: EthAddrs[0].String(),
-		CosmosReceiver: AccAddrs[0].String(),
-		Orchestrator:   AccAddrs[0].String(),
+		EventNonce:          1,
+		TokenContract:       TokenContractAddrs[0],
+		Amount:              sdk.NewInt(100),
+		EthereumSender:      EthAddrs[0].String(),
+		CosmosReceiver:      AccAddrs[0].String(),
+		OrchestratorAddress: AccAddrs[0].String(),
 	}
 	att2 := &types.Attestation{
 		Observed: true,
 		Votes:    []string{},
 	}
 	dep2 := &types.DepositClaim{
-		EventNonce:     2,
-		TokenContract:  TokenContractAddrs[0],
-		Amount:         sdk.NewInt(100),
-		EthereumSender: EthAddrs[0].String(),
-		CosmosReceiver: AccAddrs[0].String(),
-		Orchestrator:   AccAddrs[0].String(),
+		EventNonce:          2,
+		TokenContract:       TokenContractAddrs[0],
+		Amount:              sdk.NewInt(100),
+		EthereumSender:      EthAddrs[0].String(),
+		CosmosReceiver:      AccAddrs[0].String(),
+		OrchestratorAddress: AccAddrs[0].String(),
 	}
 	input.PeggyKeeper.SetAttestation(ctx, dep1.EventNonce, dep1.ClaimHash(), att1)
 	input.PeggyKeeper.SetAttestation(ctx, dep2.EventNonce, dep2.ClaimHash(), att2)

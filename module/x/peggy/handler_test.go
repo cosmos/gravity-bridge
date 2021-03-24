@@ -98,12 +98,12 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	}
 
 	ethClaim := types.DepositClaim{
-		EventNonce:     myNonce,
-		TokenContract:  myErc20.Contract,
-		Amount:         myErc20.Amount,
-		EthereumSender: anyETHAddr,
-		CosmosReceiver: myCosmosAddr.String(),
-		Orchestrator:   myOrchestratorAddr.String(),
+		EventNonce:          myNonce,
+		TokenContract:       myErc20.Contract,
+		Amount:              myErc20.Amount,
+		EthereumSender:      anyETHAddr,
+		CosmosReceiver:      myCosmosAddr.String(),
+		OrchestratorAddress: myOrchestratorAddr.String(),
 	}
 
 	// when
@@ -131,12 +131,12 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 
 	// Test to reject skipped nonce
 	ethClaim = types.DepositClaim{
-		EventNonce:     uint64(3),
-		TokenContract:  tokenETHAddr,
-		Amount:         amountA,
-		EthereumSender: anyETHAddr,
-		CosmosReceiver: myCosmosAddr.String(),
-		Orchestrator:   myOrchestratorAddr.String(),
+		EventNonce:          uint64(3),
+		TokenContract:       tokenETHAddr,
+		Amount:              amountA,
+		EthereumSender:      anyETHAddr,
+		CosmosReceiver:      myCosmosAddr.String(),
+		OrchestratorAddress: myOrchestratorAddr.String(),
 	}
 
 	// when
@@ -150,12 +150,12 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 
 	// Test to finally accept consecutive nonce
 	ethClaim = types.DepositClaim{
-		EventNonce:     uint64(2),
-		Amount:         amountA,
-		TokenContract:  tokenETHAddr,
-		EthereumSender: anyETHAddr,
-		CosmosReceiver: myCosmosAddr.String(),
-		Orchestrator:   myOrchestratorAddr.String(),
+		EventNonce:          uint64(2),
+		Amount:              amountA,
+		TokenContract:       tokenETHAddr,
+		EthereumSender:      anyETHAddr,
+		CosmosReceiver:      myCosmosAddr.String(),
+		OrchestratorAddress: myOrchestratorAddr.String(),
 	}
 
 	// when
@@ -197,28 +197,28 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	}
 
 	ethClaim1 := types.DepositClaim{
-		EventNonce:     myNonce,
-		TokenContract:  myErc20.Contract,
-		Amount:         myErc20.Amount,
-		EthereumSender: anyETHAddr,
-		CosmosReceiver: myCosmosAddr.String(),
-		Orchestrator:   orchestratorAddr1.String(),
+		EventNonce:          myNonce,
+		TokenContract:       myErc20.Contract,
+		Amount:              myErc20.Amount,
+		EthereumSender:      anyETHAddr,
+		CosmosReceiver:      myCosmosAddr.String(),
+		OrchestratorAddress: orchestratorAddr1.String(),
 	}
 	ethClaim2 := types.DepositClaim{
-		EventNonce:     myNonce,
-		TokenContract:  myErc20.Contract,
-		Amount:         myErc20.Amount,
-		EthereumSender: anyETHAddr,
-		CosmosReceiver: myCosmosAddr.String(),
-		Orchestrator:   orchestratorAddr2.String(),
+		EventNonce:          myNonce,
+		TokenContract:       myErc20.Contract,
+		Amount:              myErc20.Amount,
+		EthereumSender:      anyETHAddr,
+		CosmosReceiver:      myCosmosAddr.String(),
+		OrchestratorAddress: orchestratorAddr2.String(),
 	}
 	ethClaim3 := types.DepositClaim{
-		EventNonce:     myNonce,
-		TokenContract:  myErc20.Contract,
-		Amount:         myErc20.Amount,
-		EthereumSender: anyETHAddr,
-		CosmosReceiver: myCosmosAddr.String(),
-		Orchestrator:   orchestratorAddr3.String(),
+		EventNonce:          myNonce,
+		TokenContract:       myErc20.Contract,
+		Amount:              myErc20.Amount,
+		EthereumSender:      anyETHAddr,
+		CosmosReceiver:      myCosmosAddr.String(),
+		OrchestratorAddress: orchestratorAddr3.String(),
 	}
 
 	// when

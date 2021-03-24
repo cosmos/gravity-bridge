@@ -248,7 +248,7 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce uint64, validator sdk.Ac
 // SetValsetConfirm sets a valset confirmation
 func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.ValsetConfirm) []byte {
 	store := ctx.KVStore(k.storeKey)
-	addr, err := sdk.AccAddressFromBech32(valsetConf.Orchestrator)
+	addr, err := sdk.AccAddressFromBech32(valsetConf.OrchestratorAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -311,7 +311,7 @@ func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce uint64, tokenContract str
 // SetBatchConfirm sets a batch confirmation by a validator
 func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.ConfirmBatch) []byte {
 	store := ctx.KVStore(k.storeKey)
-	acc, err := sdk.AccAddressFromBech32(batch.Orchestrator)
+	acc, err := sdk.AccAddressFromBech32(batch.OrchestratorAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -491,7 +491,7 @@ func (k Keeper) CancelOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, 
 // SetLogicCallConfirm sets a logic confirm in the store
 func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, msg *types.ConfirmLogicCall) {
 	bytes, _ := hex.DecodeString(msg.InvalidationId)
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	acc, err := sdk.AccAddressFromBech32(msg.OrchestratorAddress)
 	if err != nil {
 		panic(err)
 	}

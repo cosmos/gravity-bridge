@@ -7,7 +7,12 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-type Confirm interface{}
+type Confirm interface {
+	GetType() ConfirmType
+	GetOrchestratorAddress() string
+	GetNonce() uint64
+	GetSignature() string
+}
 
 var (
 	_ Confirm = &ConfirmBatch{}
@@ -15,16 +20,13 @@ var (
 	_ Confirm = &ValsetConfirm{}
 )
 
-// Route should return the name of the module
-func (msg ConfirmBatch) Route() string { return RouterKey }
-
 // Type should return the action
-func (msg ConfirmBatch) Type() string { return "confirm_batch" }
+func (msg ConfirmBatch) GetType() ConfirmType { return ConfirmType_CONFIRM_TYPE_BATCH }
 
 // ValidateBasic performs stateless checks
 func (msg ConfirmBatch) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
+	if _, err := sdk.AccAddressFromBech32(msg.OrchestratorAddress); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.OrchestratorAddress)
 	}
 	if err := ValidateEthAddress(msg.EthSigner); err != nil {
 		return sdkerrors.Wrap(err, "eth signer")
@@ -39,30 +41,13 @@ func (msg ConfirmBatch) ValidateBasic() error {
 	return nil
 }
 
-// GetSignBytes encodes the message for signing
-func (msg ConfirmBatch) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg ConfirmBatch) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{acc}
-}
-
-// Route should return the name of the module
-func (msg ConfirmLogicCall) Route() string { return RouterKey }
-
 // Type should return the action
-func (msg ConfirmLogicCall) Type() string { return "confirm_logic" }
+func (msg ConfirmLogicCall) GetType() ConfirmType { return ConfirmType_CONFIRM_TYPE_LOGIC }
 
 // ValidateBasic performs stateless checks
 func (msg ConfirmLogicCall) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
+	if _, err := sdk.AccAddressFromBech32(msg.OrchestratorAddress); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.OrchestratorAddress)
 	}
 	if err := ValidateEthAddress(msg.EthSigner); err != nil {
 		return sdkerrors.Wrap(err, "eth signer")
@@ -78,58 +63,30 @@ func (msg ConfirmLogicCall) ValidateBasic() error {
 	return nil
 }
 
-// GetSignBytes encodes the message for signing
-func (msg ConfirmLogicCall) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg ConfirmLogicCall) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{acc}
+func (msg ConfirmLogicCall) GetNonce() uint64 {
+	return 0
 }
 
 // NewMsgValsetConfirm returns a new ValsetConfirm
 func NewMsgValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddress, signature string) *ValsetConfirm {
 	return &ValsetConfirm{
-		Nonce:        nonce,
-		Orchestrator: validator.String(),
-		EthAddress:   ethAddress,
-		Signature:    signature,
+		Nonce:               nonce,
+		OrchestratorAddress: validator.String(),
+		EthAddress:          ethAddress,
+		Signature:           signature,
 	}
 }
 
-// Route should return the name of the module
-func (msg *ValsetConfirm) Route() string { return RouterKey }
-
 // Type should return the action
-func (msg *ValsetConfirm) Type() string { return "valset_confirm" }
+func (msg *ValsetConfirm) GetType() ConfirmType { return ConfirmType_CONFIRM_TYPE_VALSET }
 
 // ValidateBasic performs stateless checks
 func (msg *ValsetConfirm) ValidateBasic() (err error) {
-	if _, err = sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
+	if _, err = sdk.AccAddressFromBech32(msg.OrchestratorAddress); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.OrchestratorAddress)
 	}
 	if err := ValidateEthAddress(msg.EthAddress); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
 	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg *ValsetConfirm) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
-// GetSigners defines whose signature is required
-func (msg *ValsetConfirm) GetSigners() []sdk.AccAddress {
-	// TODO: figure out how to convert between AccAddress and ValAddress properly
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{acc}
 }

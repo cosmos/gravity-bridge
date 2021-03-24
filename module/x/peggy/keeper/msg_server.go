@@ -61,10 +61,44 @@ func (k msgServer) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) 
 
 func (k msgServer) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
 
+	confirm := msg.GetConfirm()
+
+	switch msg.ConfirmType {
+	case types.ConfirmType_CONFIRM_TYPE_BATCH:
+	case types.ConfirmType_CONFIRM_TYPE_LOGIC:
+	case types.ConfirmType_CONFIRM_TYPE_VALSET:
+	default:
+
+		return nil, sdkerrors.Wrap(types.ErrInvalidConfirm, confirm.GetType().String())
+	}
+
 	return &types.MsgSubmitConfirmResponse{}, nil
 }
 
 func (k msgServer) SubmitClaim(c context.Context, msg *types.MsgSubmitClaim) (*types.MsgSubmitClaimResponse, error) {
+
+	claim := msg.GetClaim()
+
+	switch msg.ClaimType {
+	case types.ClaimType_DEPOSIT:
+		if err := k.depositClaim(c, claim); err != nil {
+			return nil, err
+		}
+	case types.ClaimType_WITHDRAW:
+		if err := k.withdrawClaim(c, claim); err != nil {
+			return nil, err
+		}
+	case types.ClaimType_ERC20_DEPLOYED:
+		if err := k.eRC20DeployedClaim(c, claim); err != nil {
+			return nil, err
+		}
+	case types.ClaimType_LOGIC_CALL_EXECUTED:
+		if err := k.logicCallExecutedClaim(c, claim); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, sdkerrors.Wrap(types.ErrInvalidClaim, claim.GetType().String())
+	}
 
 	return &types.MsgSubmitClaimResponse{}, nil
 }

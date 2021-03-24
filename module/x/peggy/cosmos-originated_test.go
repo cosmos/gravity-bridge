@@ -72,13 +72,13 @@ func addDenomToERC20Relation(tv *testingVars) {
 	)
 
 	ethClaim := types.ERC20DeployedClaim{
-		CosmosDenom:   tv.denom,
-		TokenContract: tv.erc20,
-		Name:          "atom",
-		Symbol:        "atom",
-		Decimals:      6,
-		EventNonce:    myNonce,
-		Orchestrator:  tv.myOrchestratorAddr.String(),
+		CosmosDenom:         tv.denom,
+		TokenContract:       tv.erc20,
+		Name:                "atom",
+		Symbol:              "atom",
+		Decimals:            6,
+		EventNonce:          myNonce,
+		OrchestratorAddress: tv.myOrchestratorAddr.String(),
 	}
 
 	_, err := tv.h(tv.ctx, &ethClaim)
@@ -158,12 +158,12 @@ func acceptDepositEvent(tv *testingVars) {
 	}
 
 	ethClaim := types.DepositClaim{
-		EventNonce:     myNonce,
-		TokenContract:  myErc20.Contract,
-		Amount:         myErc20.Amount,
-		EthereumSender: anyETHAddr,
-		CosmosReceiver: myCosmosAddr.String(),
-		Orchestrator:   myOrchestratorAddr.String(),
+		EventNonce:          myNonce,
+		TokenContract:       myErc20.Contract,
+		Amount:              myErc20.Amount,
+		EthereumSender:      anyETHAddr,
+		CosmosReceiver:      myCosmosAddr.String(),
+		OrchestratorAddress: myOrchestratorAddr.String(),
 	}
 
 	_, err := tv.h(tv.ctx, &ethClaim)

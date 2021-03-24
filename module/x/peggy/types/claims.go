@@ -28,6 +28,8 @@ type EthereumClaim interface {
 	GetType() ClaimType
 	ValidateBasic() error
 	ClaimHash() []byte
+
+	GetOrchestratorAddress() string
 }
 
 var (
@@ -53,8 +55,8 @@ func (e *DepositClaim) ValidateBasic() error {
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
-	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	if _, err := sdk.AccAddressFromBech32(e.OrchestratorAddress); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.OrchestratorAddress)
 	}
 	if e.EventNonce == 0 {
 		return fmt.Errorf("nonce == 0")
@@ -68,7 +70,7 @@ func (msg DepositClaim) GetClaimer() sdk.AccAddress {
 		panic("DepositClaim failed ValidateBasic! Should have been handled earlier")
 	}
 
-	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	val, _ := sdk.AccAddressFromBech32(msg.OrchestratorAddress)
 	return val
 }
 
@@ -98,8 +100,8 @@ func (e *WithdrawClaim) ValidateBasic() error {
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
-	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	if _, err := sdk.AccAddressFromBech32(e.OrchestratorAddress); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.OrchestratorAddress)
 	}
 	return nil
 }
@@ -115,7 +117,7 @@ func (msg WithdrawClaim) GetClaimer() sdk.AccAddress {
 	if err != nil {
 		panic("WithdrawClaim failed ValidateBasic! Should have been handled earlier")
 	}
-	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	val, _ := sdk.AccAddressFromBech32(msg.OrchestratorAddress)
 	return val
 }
 
@@ -136,8 +138,8 @@ func (e *ERC20DeployedClaim) ValidateBasic() error {
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
-	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	if _, err := sdk.AccAddressFromBech32(e.OrchestratorAddress); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.OrchestratorAddress)
 	}
 	if e.EventNonce == 0 {
 		return fmt.Errorf("nonce == 0")
@@ -151,7 +153,7 @@ func (msg ERC20DeployedClaim) GetClaimer() sdk.AccAddress {
 		panic("ERC20DeployedClaim failed ValidateBasic! Should have been handled earlier")
 	}
 
-	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	val, _ := sdk.AccAddressFromBech32(msg.OrchestratorAddress)
 	return val
 }
 
@@ -171,8 +173,8 @@ func (e *LogicCallExecutedClaim) GetType() ClaimType {
 
 // ValidateBasic performs stateless checks
 func (e *LogicCallExecutedClaim) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	if _, err := sdk.AccAddressFromBech32(e.OrchestratorAddress); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.OrchestratorAddress)
 	}
 	if e.EventNonce == 0 {
 		return fmt.Errorf("nonce == 0")
@@ -186,7 +188,7 @@ func (msg LogicCallExecutedClaim) GetClaimer() sdk.AccAddress {
 		panic("MsgERC20DeployedClaim failed ValidateBasic! Should have been handled earlier")
 	}
 
-	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	val, _ := sdk.AccAddressFromBech32(msg.OrchestratorAddress)
 	return val
 }
 

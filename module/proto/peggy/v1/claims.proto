@@ -26,41 +26,41 @@ message DepositClaim {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable)   = false
   ];
-  string ethereum_sender = 5;
-  string cosmos_receiver = 6;
-  string orchestrator    = 7;
+  string ethereum_sender      = 5;
+  string cosmos_receiver      = 6;
+  string orchestrator_address = 7;
 }
 
 // WithdrawClaim claims that a batch of withdrawal
 // operations on the bridge contract was executed.
 message WithdrawClaim {
-  uint64 event_nonce    = 1;
-  uint64 block_height   = 2;
-  uint64 batch_nonce    = 3;
-  string token_contract = 4;
-  string orchestrator   = 5;
+  uint64 event_nonce          = 1;
+  uint64 block_height         = 2;
+  uint64 batch_nonce          = 3;
+  string token_contract       = 4;
+  string orchestrator_address = 5;
 }
 
 // This informs the Cosmos module that a logic
 // call has been executed
 message LogicCallExecutedClaim {
-  uint64 event_nonce        = 1;
-  uint64 block_height       = 2;
-  bytes  invalidation_id    = 3;
-  uint64 invalidation_nonce = 4;
-  string orchestrator       = 5;
+  uint64 event_nonce          = 1;
+  uint64 block_height         = 2;
+  bytes  invalidation_id      = 3;
+  uint64 invalidation_nonce   = 4;
+  string orchestrator_address = 5;
 }
 
 // ERC20DeployedClaim allows the Cosmos module
 // to learn about an ERC20 that someone deployed
 // to represent a Cosmos asset
 message ERC20DeployedClaim {
-  uint64 event_nonce    = 1;
-  uint64 block_height   = 2;
-  string cosmos_denom   = 3;
-  string token_contract = 4;
-  string name           = 5;
-  string symbol         = 6;
-  uint64 decimals       = 7;
-  string orchestrator   = 8;
+  uint64 event_nonce          = 1;
+  uint64 block_height         = 2;
+  string cosmos_denom         = 3;
+  string token_contract       = 4;
+  string name                 = 5;
+  string symbol               = 6;
+  uint64 decimals             = 7;
+  string orchestrator_address = 8;
 }
