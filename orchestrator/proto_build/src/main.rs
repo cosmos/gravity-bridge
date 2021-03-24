@@ -1,11 +1,11 @@
-//! Protobuf files in the peggy repo, copying the result to the peggy_proto crate for import
-//! and use. While this builder generates about a dozen files only one contains all the peggy
+//! Protobuf files in the gravity repo, copying the result to the peggy_proto crate for import
+//! and use. While this builder generates about a dozen files only one contains all the gravity
 //! proto info and the rest are discarded in favor of upstream cosmos-sdk-proto
 
-// Building new Peggy rust proto definitions
+// Building new Gravity rust proto definitions
 // run 'cargo run'
 // go to peggy_proto/prost
-// delete all files except peggy.v1.rs
+// delete all files except gravity.v1.rs
 // re-write calls to super::super::cosmos as cosmos-sdk-proto::cosmos
 
 use std::path::Path;
@@ -33,7 +33,7 @@ fn compile_protos(out_dir: &Path) {
     let root = root.parent().unwrap().parent().unwrap().to_path_buf();
 
     let mut peggy_proto_dir = root.clone();
-    peggy_proto_dir.push("module/proto/peggy/v1");
+    peggy_proto_dir.push("module/proto/gravity/v1");
     let mut peggy_proto_include_dir = root.clone();
     peggy_proto_include_dir.push("module/proto");
     let mut third_party_proto_include_dir = root;

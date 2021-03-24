@@ -8,7 +8,7 @@ use clarity::PrivateKey as EthPrivateKey;
 use cosmos_peggy::query::get_latest_valsets;
 use cosmos_peggy::query::{get_all_valset_confirms, get_valset};
 use ethereum_peggy::{one_eth, utils::downcast_to_u128, valset_update::send_eth_valset_update};
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::{message_signatures::encode_valset_confirm_hashed, types::Valset};
 use tonic::transport::Channel;
 use web30::client::Web3;

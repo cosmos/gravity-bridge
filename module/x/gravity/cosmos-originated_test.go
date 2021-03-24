@@ -137,7 +137,7 @@ func lockCoinsInModule(tv *testingVars) {
 	balance2 := tv.input.BankKeeper.GetAllBalances(tv.ctx, userCosmosAddr)
 	assert.Equal(tv.t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount.Sub(sendAmount).Sub(feeAmount))}, balance2)
 
-	// Check that peggy balance has gone up
+	// Check that gravity balance has gone up
 	gravityAddr := tv.input.AccountKeeper.GetModuleAddress(types.ModuleName)
 	assert.Equal(tv.t,
 		sdk.Coins{sdk.NewCoin(denom, sendAmount.Add(feeAmount))},
@@ -180,7 +180,7 @@ func acceptDepositEvent(tv *testingVars) {
 		sdk.Coins{sdk.NewCoin(tv.denom, myErc20.Amount)},
 		tv.input.BankKeeper.GetAllBalances(tv.ctx, myCosmosAddr))
 
-	// Check that peggy balance has gone down
+	// Check that gravity balance has gone down
 	peggyAddr := tv.input.AccountKeeper.GetModuleAddress(types.ModuleName)
 	assert.Equal(tv.t,
 		sdk.Coins{sdk.NewCoin(tv.denom, sdk.NewIntFromUint64(55).Sub(myErc20.Amount))},

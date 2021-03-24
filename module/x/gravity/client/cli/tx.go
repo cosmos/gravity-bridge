@@ -22,7 +22,7 @@ import (
 func GetTxCmd(storeKey string) *cobra.Command {
 	peggyTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      "Peggy transaction subcommands",
+		Short:                      "Gravity transaction subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -152,7 +152,7 @@ func CmdRequestBatch() *cobra.Command {
 			// TODO: better denom searching
 			msg := types.MsgRequestBatch{
 				Orchestrator: cosmosAddr.String(),
-				Denom:        fmt.Sprintf("peggy%s", args[0]),
+				Denom:        fmt.Sprintf("gravity%s", args[0]),
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err

@@ -22,7 +22,7 @@ pub struct ERC20Token {
 }
 
 impl ERC20Token {
-    pub fn from_proto(input: peggy_proto::peggy::Erc20Token) -> Result<Self, PeggyError> {
+    pub fn from_proto(input: peggy_proto::gravity::Erc20Token) -> Result<Self, PeggyError> {
         Ok(ERC20Token {
             amount: input.amount.parse()?,
             token_contract_address: input.contract.parse()?,

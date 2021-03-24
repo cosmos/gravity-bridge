@@ -25,7 +25,7 @@ pub async fn update_peggy_delegate_addresses(
     private_key: PrivateKey,
     fee: Coin,
 ) -> Result<TXSendResponse, JsonRpcError> {
-    trace!("Updating Peggy Delegate addresses");
+    trace!("Updating Gravity Delegate addresses");
     let our_valoper_address = private_key
         .to_public_key()
         .expect("Invalid private key!")

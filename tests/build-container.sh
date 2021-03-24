@@ -11,6 +11,6 @@ pushd $REPOFOLDER
 
 #docker system prune -a -f
 # Build base container
-git archive --format=tar.gz -o $DOCKERFOLDER/peggy.tar.gz --prefix=peggy/ HEAD
+git archive --format=tar.gz -o $DOCKERFOLDER/gravity.tar.gz --prefix=gravity/ HEAD
 pushd $DOCKERFOLDER
-docker build -t peggy-base .
+docker build -t gravity-base .

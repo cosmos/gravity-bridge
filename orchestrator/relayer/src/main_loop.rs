@@ -5,7 +5,7 @@ use crate::{
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use ethereum_peggy::utils::get_peggy_id;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
 use std::time::{Duration, Instant};
 use tokio::time::delay_for;
 use tonic::transport::Channel;

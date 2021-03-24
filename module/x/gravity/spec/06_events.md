@@ -4,19 +4,19 @@ order: 6
 
 # Events
 
-The peggy module emits the following events:
+The gravity module emits the following events:
 
 ## EndBlocker
 
 | Type                         | Attribute Key                 | Attribute Value                 |
 |------------------------------|-------------------------------|---------------------------------|
-| outgoing_logic_call_canceled | module                        | peggy                           |
+| outgoing_logic_call_canceled | module                        | gravity                           |
 | outgoing_logic_call_canceled | logic_call_invalidation_id    | {logic_call_invalidation_id}    |
 | outgoing_logic_call_canceled | logic_call_invalidation_nonce | {logic_call_invalidation_nonce} |
 
 | Type                    | Attribute Key   | Attribute Value   |
 |-------------------------|-----------------|-------------------|
-| multisig_update_request | module          | peggy             |
+| multisig_update_request | module          | gravity             |
 | multisig_update_request | bridge_contract | {bridge_contract} |
 | multisig_update_request | bridge_chain_id | {bridge_chain_id} |
 | multisig_update_request | multisig_id     | {multisig_id}     |
@@ -24,7 +24,7 @@ The peggy module emits the following events:
 
 | Type                         | Attribute Key   | Attribute Value   |
 |------------------------------|-----------------|-------------------|
-| outgoing_logic_call_canceled | module          | peggy             |
+| outgoing_logic_call_canceled | module          | gravity             |
 | outgoing_logic_call_canceled | bridge_contract | {bridge_contract} |
 | outgoing_logic_call_canceled | bridge_chain_id | {bridge_chain_id} |
 | outgoing_logic_call_canceled | batch_id        | {batch_id}        |
@@ -32,7 +32,7 @@ The peggy module emits the following events:
 
 | Type        | Attribute Key    | Attribute Value    |
 |-------------|------------------|--------------------|
-| observation | module           | peggy              |
+| observation | module           | gravity              |
 | observation | attestation_type | {attestation_type} |
 | observation | bridge_contract  | {bridge_contract}  |
 | observation | bridge_chain_id  | {bridge_chain_id}  |
@@ -58,7 +58,7 @@ The peggy module emits the following events:
 
 | Type                | Attribute Key   | Attribute Value   |
 |---------------------|-----------------|-------------------|
-| withdrawal_received | module          | peggy             |
+| withdrawal_received | module          | gravity             |
 | withdrawal_received | bridge_contract | {bridge_contract} |
 | withdrawal_received | bridge_chain_id | {bridge_chain_id} |
 | withdrawal_received | outgoing_tx_id  | {outgoing_tx_id}  |
@@ -73,7 +73,7 @@ The peggy module emits the following events:
 
 | Type           | Attribute Key   | Attribute Value   |
 |----------------|-----------------|-------------------|
-| outgoing_batch | module          | peggy             |
+| outgoing_batch | module          | gravity             |
 | outgoing_batch | bridge_contract | {bridge_contract} |
 | outgoing_batch | bridge_chain_id | {bridge_chain_id} |
 | outgoing_batch | outgoing_tx_id  | {outgoing_tx_id}  |

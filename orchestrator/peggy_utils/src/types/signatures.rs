@@ -40,7 +40,7 @@ impl PartialOrd for PeggySignature {
 }
 
 /// signatures in array formats ready to be
-/// submitted to the Peggy Ethereum Contract
+/// submitted to the Gravity Ethereum Contract
 pub struct PeggySignatureArrays {
     pub addresses: Vec<EthAddress>,
     pub powers: Vec<u64>,

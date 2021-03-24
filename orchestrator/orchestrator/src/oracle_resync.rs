@@ -1,6 +1,6 @@
 use clarity::{Address, Uint256};
 use deep_space::address::Address as CosmosAddress;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::types::{
     ERC20DeployedEvent, LogicCallExecutedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent,
     ValsetUpdatedEvent,
@@ -177,5 +177,5 @@ pub async fn get_last_checked_block(
         current_block = end_search;
     }
 
-    panic!("You have reached the end of block history without finding the Peggy contract deploy event! You must have the wrong contract address!");
+    panic!("You have reached the end of block history without finding the Gravity contract deploy event! You must have the wrong contract address!");
 }

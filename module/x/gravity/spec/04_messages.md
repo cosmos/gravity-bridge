@@ -10,9 +10,9 @@ In this section we describe the processing of the pegggy messages and the corres
 
 Allows validators to delegate their voting responsibilities to a given key. This Key can be used to authenticate oracle claims. 
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L38-L40
++++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L38-L40
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L56-60
++++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L56-60
 
 This message is expected to fail if: 
 
@@ -32,9 +32,9 @@ This message is expected to fail if:
 
 ### MsgValsetConfirm
 
-When the peggy daemon witnesses a complete validator set within the peggy module, the validator submits a signature of a message containing the entire validator set. 
+When the gravity daemon witnesses a complete validator set within the gravity module, the validator submits a signature of a message containing the entire validator set. 
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L79-84
++++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L79-84
 
 This message is expected to fail if:
 
@@ -55,7 +55,7 @@ When a user wants to bridge an asset to an EVM. If the token has originated from
 > Note: this message will later be removed when it is included in a batch.
 
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L100-109
++++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L100-109
 
 This message will fail if:
 
@@ -74,7 +74,7 @@ This message will fail if:
 
 When enough transactions have been added into a batch, a user or validator can call send this message in order to send a batch of transactions across the bridge. 
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L122-125
++++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L122-125
 
 This message will fail if:
 
@@ -86,7 +86,7 @@ This message will fail if:
 
 When a `MsgRequestBatch` is observed, validators need to sign batch request to signify this is not a maliciously created batch and to avoid getting slashed. 
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L137-143
++++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L137-143
 
 This message will fail if:
 
@@ -101,7 +101,7 @@ This message will fail if:
 
 When a logic call request has been made, it needs to be confirmed by the bridge validators. Each validator has to submit a confirmation of the logic call being executed.
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L155-161
++++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L155-161
 
 This message will fail if:
 
@@ -116,9 +116,9 @@ This message will fail if:
 
 ### MsgDepositClaim
 
-When a message to deposit funds into the peggy contract is created a event will be omitted and observed a message will be submitted confirming the deposit.
+When a message to deposit funds into the gravity contract is created a event will be omitted and observed a message will be submitted confirming the deposit.
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L170-181
++++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L170-181
 
 This message will fail if:
 
@@ -128,10 +128,10 @@ This message will fail if:
 
 ### MsgWithdrawClaim
 
-When a user requests a withdrawal from the peggy contract a event will omitted by the counter party chain. This event will be observed by a bridge validator and submitted to the gravity module.
+When a user requests a withdrawal from the gravity contract a event will omitted by the counter party chain. This event will be observed by a bridge validator and submitted to the gravity module.
 
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L187-193
++++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L187-193
 
 This message will fail if:
 
@@ -143,7 +143,7 @@ This message will fail if:
 
 This message allows the cosmos chain to learn information about the denom from the counter party chain.
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L200-209
++++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L200-209
 
 This message will fail if:
 
@@ -155,7 +155,7 @@ This message will fail if:
 
 This informs the chain that a logic call has been executed. This message is submitted by bridge validators when they observe a event containing details around the logic call. 
 
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/msgs.proto#L215-221
++++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L215-221
 
 This message will fail if: 
 

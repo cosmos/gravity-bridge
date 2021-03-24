@@ -31,7 +31,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	)
 
 	registry.RegisterInterface(
-		"peggy.v1beta1.EthereumClaim",
+		"gravity.v1beta1.EthereumClaim",
 		(*EthereumClaim)(nil),
 		&MsgDepositClaim{},
 		&MsgWithdrawClaim{},

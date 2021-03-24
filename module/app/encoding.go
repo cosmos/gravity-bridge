@@ -5,7 +5,7 @@ import (
 	peggyparams "github.com/cosmos/gravity-bridge/module/app/params"
 )
 
-// MakeEncodingConfig creates an EncodingConfig for peggy.
+// MakeEncodingConfig creates an EncodingConfig for gravity.
 func MakeEncodingConfig() peggyparams.EncodingConfig {
 	encodingConfig := peggyparams.MakeEncodingConfig()
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)

@@ -1,13 +1,13 @@
 use clarity::Address as EthAddress;
 use clarity::{Address, Uint256};
 use ethereum_peggy::utils::get_valset_nonce;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::types::ValsetUpdatedEvent;
 use peggy_utils::{error::PeggyError, types::Valset};
 use tonic::transport::Channel;
 use web30::client::Web3;
 
-/// This function finds the latest valset on the Peggy contract by looking back through the event
+/// This function finds the latest valset on the Gravity contract by looking back through the event
 /// history and finding the most recent ValsetUpdatedEvent. Most of the time this will be very fast
 /// as the latest update will be in recent blockchain history and the search moves from the present
 /// backwards in time. In the case that the validator set has not been updated for a very long time
@@ -67,17 +67,17 @@ pub async fn find_latest_valset(
         current_block = end_search;
     }
 
-    panic!("Could not find the last validator set for contract {}, probably not a valid Peggy contract!", peggy_contract_address)
+    panic!("Could not find the last validator set for contract {}, probably not a valid Gravity contract!", peggy_contract_address)
 }
 
 /// This function exists to provide a warning if Cosmos and Ethereum have different validator sets
 /// for a given nonce. In the mundane version of this warning the validator sets disagree on sorting order
 /// which can happen if some relayer uses an unstable sort, or in a case of a mild griefing attack.
-/// The Peggy contract validates signatures in order of highest to lowest power. That way it can exit
+/// The Gravity contract validates signatures in order of highest to lowest power. That way it can exit
 /// the loop early once a vote has enough power, if a relayer where to submit things in the reverse order
 /// they could grief users of the contract into paying more in gas.
 /// The other (and far worse) way a disagreement here could occur is if validators are colluding to steal
-/// funds from the Peggy contract and have submitted a highjacking update. If slashing for off Cosmos chain
+/// funds from the Gravity contract and have submitted a highjacking update. If slashing for off Cosmos chain
 /// Ethereum signatures is implemented you would put that handler here.
 fn check_if_valsets_differ(cosmos_valset: Option<Valset>, ethereum_valset: &Valset) {
     if cosmos_valset.is_none() && ethereum_valset.nonce == 0 {

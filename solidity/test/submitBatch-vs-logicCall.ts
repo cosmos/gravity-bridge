@@ -11,7 +11,7 @@ import {
   examplePowers,
 } from "../test-utils/pure";
 import { Signer } from "ethers";
-import { Peggy } from "../typechain/Peggy";
+import { Gravity } from "../typechain/Gravity";
 import { TestERC20A } from "../typechain/TestERC20A";
 import { ReentrantERC20 } from "../typechain/ReentrantERC20";
 
@@ -38,14 +38,14 @@ async function prepareTxBatch(batchSize: number, signers: Signer[]) {
 }
 
 async function sendToCosmos(
-  peggy: Peggy,
+  gravity: Gravity,
   testERC20: TestERC20A,
   numCoins: number
 ) {
   // Transfer out to Cosmos, locking coins
   // =====================================
-  await testERC20.functions.approve(peggy.address, numCoins);
-  await peggy.functions.sendToCosmos(
+  await testERC20.functions.approve(gravity.address, numCoins);
+  await gravity.functions.sendToCosmos(
     testERC20.address,
     ethers.utils.formatBytes32String("myCosmosAddress"),
     numCoins
@@ -64,7 +64,7 @@ async function prep() {
 
   const powerThreshold = 6666;
 
-  const { peggy, testERC20 } = await deployContracts(
+  const { gravity, testERC20 } = await deployContracts(
     peggyId,
     validators,
     powers,
@@ -75,7 +75,7 @@ async function prep() {
     "ReentrantERC20"
   );
   const reentrantERC20 = (await ReentrantERC20Contract.deploy(
-    peggy.address
+    gravity.address
   )) as ReentrantERC20;
 
   return {
@@ -83,7 +83,7 @@ async function prep() {
     peggyId,
     powers,
     validators,
-    peggy,
+    gravity,
     testERC20,
     reentrantERC20,
   };
@@ -95,17 +95,17 @@ async function runSubmitBatchTest(opts: { batchSize: number }) {
     peggyId,
     powers,
     validators,
-    peggy,
+    gravity,
     testERC20,
   } = await prep();
 
-  // Lock tokens in peggy
+  // Lock tokens in gravity
   // ====================
-  await sendToCosmos(peggy, testERC20, 1000);
+  await sendToCosmos(gravity, testERC20, 1000);
 
   expect(
-    (await testERC20.functions.balanceOf(peggy.address))[0].toNumber(),
-    "peggy does not have correct balance after sendToCosmos"
+    (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
+    "gravity does not have correct balance after sendToCosmos"
   ).to.equal(1000);
 
   expect(
@@ -152,7 +152,7 @@ async function runSubmitBatchTest(opts: { batchSize: number }) {
 
   let sigs = await signHash(validators, digest);
 
-  await peggy.submitBatch(
+  await gravity.submitBatch(
     await getSignerAddresses(validators),
     powers,
     0,
@@ -186,8 +186,8 @@ async function runSubmitBatchTest(opts: { batchSize: number }) {
   ).to.equal(1);
 
   expect(
-    (await testERC20.functions.balanceOf(peggy.address))[0].toNumber(),
-    "peggy does not have correct balance after submitBatch"
+    (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
+    "gravity does not have correct balance after submitBatch"
     // Each tx in batch is worth 1 coin sent + 1 coin fee
   ).to.equal(1000 - txBatch.numTxs * 2);
 
@@ -209,7 +209,7 @@ async function runLogicCallTest(opts: {
     peggyId,
     powers,
     validators,
-    peggy,
+    gravity,
     testERC20,
     reentrantERC20,
   } = await prep();
@@ -218,15 +218,15 @@ async function runLogicCallTest(opts: {
     "TestTokenBatchMiddleware"
   );
   const tokenBatchMiddleware = (await TestTokenBatchMiddleware.deploy()) as TestTokenBatchMiddleware;
-  await tokenBatchMiddleware.transferOwnership(peggy.address);
+  await tokenBatchMiddleware.transferOwnership(gravity.address);
 
-  // Lock tokens in peggy
+  // Lock tokens in gravity
   // ====================
-  await sendToCosmos(peggy, testERC20, 1000);
+  await sendToCosmos(gravity, testERC20, 1000);
 
   expect(
-    (await testERC20.functions.balanceOf(peggy.address))[0].toNumber(),
-    "peggy does not have correct balance after sendToCosmos"
+    (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
+    "gravity does not have correct balance after sendToCosmos"
   ).to.equal(1000);
 
   expect(
@@ -294,7 +294,7 @@ async function runLogicCallTest(opts: {
 
   const sigs = await signHash(validators, digest);
 
-  await peggy.submitLogicCall(
+  await gravity.submitLogicCall(
     await getSignerAddresses(validators),
     powers,
     0,
@@ -322,8 +322,8 @@ async function runLogicCallTest(opts: {
   ).to.equal(1);
 
   expect(
-    (await testERC20.functions.balanceOf(peggy.address))[0].toNumber(),
-    "peggy does not have correct balance after submitLogicCall"
+    (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
+    "gravity does not have correct balance after submitLogicCall"
     // Each tx in batch is worth 1 coin sent + 1 coin fee
   ).to.equal(1000 - txBatch.numTxs * 2);
 

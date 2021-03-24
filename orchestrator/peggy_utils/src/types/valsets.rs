@@ -11,12 +11,12 @@ use std::{
     fmt,
 };
 
-/// The total power in the Peggy bridge is normalized to u32 max every
+/// The total power in the Gravity bridge is normalized to u32 max every
 /// time a validator set is created. This value of up to u32 max is then
 /// stored in a u64 to prevent overflow during computation.
 pub const TOTAL_PEGGY_POWER: u64 = u32::MAX as u64;
 
-/// takes in an amount of power in the peggy bridge, returns a percentage of total
+/// takes in an amount of power in the gravity bridge, returns a percentage of total
 fn peggy_power_to_percent(input: u64) -> f32 {
     (input as f32 / TOTAL_PEGGY_POWER as f32) * 100f32
 }
@@ -60,7 +60,7 @@ pub struct ValsetConfirmResponse {
 }
 
 impl ValsetConfirmResponse {
-    pub fn from_proto(input: peggy_proto::peggy::MsgValsetConfirm) -> Result<Self, PeggyError> {
+    pub fn from_proto(input: peggy_proto::gravity::MsgValsetConfirm) -> Result<Self, PeggyError> {
         Ok(ValsetConfirmResponse {
             orchestrator: input.orchestrator.parse()?,
             eth_address: input.eth_address.parse()?,
@@ -323,8 +323,8 @@ impl Valset {
     }
 }
 
-impl From<peggy_proto::peggy::Valset> for Valset {
-    fn from(input: peggy_proto::peggy::Valset) -> Self {
+impl From<peggy_proto::gravity::Valset> for Valset {
+    fn from(input: peggy_proto::gravity::Valset) -> Self {
         Valset {
             nonce: input.nonce,
             members: input.members.iter().map(|i| i.into()).collect(),
@@ -332,8 +332,8 @@ impl From<peggy_proto::peggy::Valset> for Valset {
     }
 }
 
-impl From<&peggy_proto::peggy::Valset> for Valset {
-    fn from(input: &peggy_proto::peggy::Valset) -> Self {
+impl From<&peggy_proto::gravity::Valset> for Valset {
+    fn from(input: &peggy_proto::gravity::Valset) -> Self {
         Valset {
             nonce: input.nonce,
             members: input.members.iter().map(|i| i.into()).collect(),
@@ -392,8 +392,8 @@ impl fmt::Display for ValsetMember {
     }
 }
 
-impl From<peggy_proto::peggy::BridgeValidator> for ValsetMember {
-    fn from(input: peggy_proto::peggy::BridgeValidator) -> Self {
+impl From<peggy_proto::gravity::BridgeValidator> for ValsetMember {
+    fn from(input: peggy_proto::gravity::BridgeValidator) -> Self {
         let eth_address = match input.ethereum_address.parse() {
             Ok(e) => Some(e),
             Err(_) => None,
@@ -405,8 +405,8 @@ impl From<peggy_proto::peggy::BridgeValidator> for ValsetMember {
     }
 }
 
-impl From<&peggy_proto::peggy::BridgeValidator> for ValsetMember {
-    fn from(input: &peggy_proto::peggy::BridgeValidator) -> Self {
+impl From<&peggy_proto::gravity::BridgeValidator> for ValsetMember {
+    fn from(input: &peggy_proto::gravity::BridgeValidator) -> Self {
         let eth_address = match input.ethereum_address.parse() {
             Ok(e) => Some(e),
             Err(_) => None,

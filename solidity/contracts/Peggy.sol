@@ -26,7 +26,7 @@ struct LogicCallArgs {
 	uint256 invalidationNonce;
 }
 
-contract Peggy is ReentrancyGuard {
+contract Gravity is ReentrancyGuard {
 	using SafeMath for uint256;
 	using SafeERC20 for IERC20;
 
@@ -539,7 +539,7 @@ contract Peggy is ReentrancyGuard {
 		string memory _symbol,
 		uint8 _decimals
 	) public {
-		// Deploy an ERC20 with entire supply granted to Peggy.sol
+		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
 		// Fire an event to let the Cosmos module know
@@ -555,7 +555,7 @@ contract Peggy is ReentrancyGuard {
 	}
 
 	constructor(
-		// A unique identifier for this peggy instance to use in signatures
+		// A unique identifier for this gravity instance to use in signatures
 		bytes32 _peggyId,
 		// How much voting power is needed to approve operations
 		uint256 _powerThreshold,

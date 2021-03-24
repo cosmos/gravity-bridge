@@ -2,7 +2,7 @@
 use clarity::Uint256;
 use cosmos_peggy::query::get_last_event_nonce;
 use deep_space::address::Address as CosmosAddress;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
 use std::time::Duration;
 use tokio::time::delay_for;
 use tonic::transport::Channel;

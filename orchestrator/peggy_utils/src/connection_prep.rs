@@ -5,9 +5,9 @@
 use clarity::Address as EthAddress;
 use contact::client::Contact;
 use deep_space::address::Address as CosmosAddress;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use peggy_proto::peggy::QueryDelegateKeysByEthAddress;
-use peggy_proto::peggy::QueryDelegateKeysByOrchestratorAddress;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::QueryDelegateKeysByEthAddress;
+use peggy_proto::gravity::QueryDelegateKeysByOrchestratorAddress;
 use std::process::exit;
 use std::time::Duration;
 use tokio::time::delay_for;

@@ -15,7 +15,7 @@ use cosmos_peggy::send::{send_request_batch, send_to_eth};
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_peggy::{deploy_erc20::deploy_erc20, utils::get_event_nonce};
 use orchestrator::main_loop::orchestrator_main_loop;
-use peggy_proto::peggy::{query_client::QueryClient as PeggyQueryClient, QueryDenomToErc20Request};
+use peggy_proto::gravity::{query_client::QueryClient as PeggyQueryClient, QueryDenomToErc20Request};
 use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;

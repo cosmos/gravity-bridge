@@ -76,7 +76,7 @@ async function runTest() {
   let validators = signers.slice(0, powers.length);
   const powerThreshold = 6666;
   const {
-    peggy,
+    gravity,
     testERC20,
     checkpoint: deployCheckpoint,
   } = await deployContracts(peggyId, validators, powers, powerThreshold);
@@ -87,8 +87,8 @@ async function runTest() {
     "SimpleLogicBatchMiddleware"
   );
   const logicBatch = (await SimpleLogicBatchMiddleware.deploy()) as SimpleLogicBatchMiddleware;
-  // We set the ownership to peggy so that nobody else can call it.
-  await logicBatch.transferOwnership(peggy.address);
+  // We set the ownership to gravity so that nobody else can call it.
+  await logicBatch.transferOwnership(gravity.address);
 
   // Then we deploy the actual logic contract.
   const TestUniswapLiquidityContract = await ethers.getContractFactory(
@@ -109,10 +109,10 @@ async function runTest() {
 
   // Transfer out to Cosmos, locking coins
   // =====================================
-  await usdc_eth_lp.functions.approve(peggy.address, lp_provider_balance);
+  await usdc_eth_lp.functions.approve(gravity.address, lp_provider_balance);
 
-  // Swap the signer of Peggy to the whale liqudity provider.
-  let peggy_lp_signer = peggy.connect(lp_signer);
+  // Swap the signer of Gravity to the whale liqudity provider.
+  let peggy_lp_signer = gravity.connect(lp_signer);
 
   await peggy_lp_signer.functions.sendToCosmos(
     usdc_eth_lp.address,
@@ -132,7 +132,7 @@ async function runTest() {
   // - Transfer 5 coins to the logic contract
   // - Call transferTokens on the logic contract, transferring 2+2 coins to signer 20
   //
-  // After the batch runs, signer 20 should have 40 coins, Peggy should have 940 coins,
+  // After the batch runs, signer 20 should have 40 coins, Gravity should have 940 coins,
   // and the logic contract should have 10 coins
   const numTxs = 3;
   const txPayloads = new Array(numTxs);
@@ -222,7 +222,7 @@ async function runTest() {
 
   let currentValsetNonce = 0;
 
-  await peggy.submitLogicCall(
+  await gravity.submitLogicCall(
     await getSignerAddresses(validators),
     powers,
     currentValsetNonce,

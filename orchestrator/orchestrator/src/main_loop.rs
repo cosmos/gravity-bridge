@@ -1,4 +1,4 @@
-//! This file contains the main loops for two distinct functions that just happen to reside int his same binary for ease of use. The Ethereum Signer and the Ethereum Oracle are both roles in Peggy
+//! This file contains the main loops for two distinct functions that just happen to reside int his same binary for ease of use. The Ethereum Signer and the Ethereum Oracle are both roles in Gravity
 //! that can only be run by a validator. This single binary the 'Orchestrator' runs not only these two rules but also the untrusted role of a relayer, that does not need any permissions and has it's
 //! own crate and binary so that anyone may run it.
 
@@ -16,7 +16,7 @@ use cosmos_peggy::{
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_peggy::utils::get_peggy_id;
 use futures::future::join3;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
 use relayer::main_loop::relayer_main_loop;
 use std::time::Duration;
 use std::time::Instant;

@@ -36,7 +36,7 @@ async function runTest(opts: {}) {
 
 
 
-  // Prep and deploy Peggy contract
+  // Prep and deploy Gravity contract
   // ========================
   const signers = await ethers.getSigners();
   const peggyId = ethers.utils.formatBytes32String("foo");
@@ -45,7 +45,7 @@ async function runTest(opts: {}) {
   let validators = signers.slice(0, powers.length);
   const powerThreshold = 6666;
   const {
-    peggy,
+    gravity,
     testERC20,
     checkpoint: deployCheckpoint
   } = await deployContracts(peggyId, validators, powers, powerThreshold);
@@ -55,7 +55,7 @@ async function runTest(opts: {}) {
 
   // Deploy ERC20 contract representing Cosmos asset
   // ===============================================
-  const eventArgs = await parseEvent(peggy, peggy.deployERC20('uatom', 'Atom', 'ATOM', 6), 1)
+  const eventArgs = await parseEvent(gravity, gravity.deployERC20('uatom', 'Atom', 'ATOM', 6), 1)
 
   expect(eventArgs).to.deep.equal({
     _cosmosDenom: 'uatom',
@@ -73,13 +73,13 @@ async function runTest(opts: {}) {
   // ========================================
   let ERC20contract = new ethers.Contract(eventArgs._tokenContract, [
     "function balanceOf(address account) view returns (uint256 balance)"
-  ], peggy.provider);
+  ], gravity.provider);
 
 
   const maxUint256 = BigNumber.from(2).pow(256).sub(1)
 
-  // Check that peggy balance is correct
-  expect((await ERC20contract.functions.balanceOf(peggy.address)).toString()).to.equal(maxUint256.toString())
+  // Check that gravity balance is correct
+  expect((await ERC20contract.functions.balanceOf(gravity.address)).toString()).to.equal(maxUint256.toString())
 
 
   // Prepare batch
@@ -132,7 +132,7 @@ async function runTest(opts: {}) {
   let sigs = await signHash(validators, digest);
   let currentValsetNonce = 0;
 
-  await peggy.submitBatch(
+  await gravity.submitBatch(
     await getSignerAddresses(validators),
     powers,
     currentValsetNonce,
@@ -149,8 +149,8 @@ async function runTest(opts: {}) {
     batchTimeout
   );
 
-  // Check that Peggy's balance is correct
-  expect((await ERC20contract.functions.balanceOf(peggy.address)).toString()).to.equal(maxUint256.sub(200).toString())
+  // Check that Gravity's balance is correct
+  expect((await ERC20contract.functions.balanceOf(gravity.address)).toString()).to.equal(maxUint256.sub(200).toString())
 
   // Check that one of the recipient's balance is correct
   expect((await ERC20contract.functions.balanceOf(await signers[6].getAddress())).toString()).to.equal('1')

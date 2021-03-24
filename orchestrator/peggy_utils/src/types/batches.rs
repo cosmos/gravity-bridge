@@ -5,7 +5,7 @@ use clarity::{abi::Token, Address as EthAddress};
 use deep_space::address::Address as CosmosAddress;
 
 /// This represents an individual transaction being bridged over to Ethereum
-/// parallel is the OutgoingTransferTx in x/peggy/types/batch.go
+/// parallel is the OutgoingTransferTx in x/gravity/types/batch.go
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct BatchTransaction {
     pub id: u64,
@@ -16,7 +16,7 @@ pub struct BatchTransaction {
 }
 
 impl BatchTransaction {
-    pub fn from_proto(input: peggy_proto::peggy::OutgoingTransferTx) -> Result<Self, PeggyError> {
+    pub fn from_proto(input: peggy_proto::gravity::OutgoingTransferTx) -> Result<Self, PeggyError> {
         if input.erc20_fee.is_none() || input.erc20_token.is_none() {
             return Err(PeggyError::InvalidBridgeStateError(
                 "Can not have tx with null erc20_token!".to_string(),
@@ -63,7 +63,7 @@ impl TransactionBatch {
         )
     }
 
-    pub fn from_proto(input: peggy_proto::peggy::OutgoingTxBatch) -> Result<Self, PeggyError> {
+    pub fn from_proto(input: peggy_proto::gravity::OutgoingTxBatch) -> Result<Self, PeggyError> {
         let mut transactions = Vec::new();
         let mut running_total_fee: Option<ERC20Token> = None;
         for tx in input.transactions {
@@ -105,7 +105,7 @@ pub struct BatchConfirmResponse {
 }
 
 impl BatchConfirmResponse {
-    pub fn from_proto(input: peggy_proto::peggy::MsgConfirmBatch) -> Result<Self, PeggyError> {
+    pub fn from_proto(input: peggy_proto::gravity::MsgConfirmBatch) -> Result<Self, PeggyError> {
         Ok(BatchConfirmResponse {
             nonce: input.nonce,
             orchestrator: input.orchestrator.parse()?,

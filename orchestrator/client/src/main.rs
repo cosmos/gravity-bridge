@@ -1,5 +1,5 @@
-//! This file is the binary entry point for the Peggy client software, an easy to use cli utility that
-//! allows anyone to send funds across the Peggy bridge. Currently this application only does anything
+//! This file is the binary entry point for the Gravity client software, an easy to use cli utility that
+//! allows anyone to send funds across the Gravity bridge. Currently this application only does anything
 //! on the Ethereum side of the bridge since withdraw batches are incomplete.
 
 // there are several binaries for this crate if we allow dead code on all of them
@@ -22,7 +22,7 @@ use docopt::Docopt;
 use env_logger::Env;
 use ethereum_peggy::deploy_erc20::deploy_erc20;
 use ethereum_peggy::send_to_cosmos::send_to_cosmos;
-use peggy_proto::peggy::QueryDenomToErc20Request;
+use peggy_proto::gravity::QueryDenomToErc20Request;
 use peggy_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
 use std::time::Instant;
 use std::{process::exit, time::Duration, u128};
@@ -102,7 +102,7 @@ lazy_static! {
             --cosmos-legacy-rpc=<curl>  The Cosmos Legacy RPC url, this will need to be manually enabled
             --cosmos-grpc=<curl>         The Cosmos gRPC url
             --ethereum-rpc=<eurl>       The Ethereum RPC url, should be a self hosted node
-            --contract-address=<addr>   The Ethereum contract address for Peggy, this is temporary
+            --contract-address=<addr>   The Ethereum contract address for Gravity, this is temporary
             --erc20-address=<addr>      An erc20 address on Ethereum to send funds from
             --cosmos-denom=<amount>     The Cosmos denom that you intend to send to Ethereum
             --amount=<amount>           The amount of tokens to send, for example 1.5
@@ -148,7 +148,7 @@ async fn main() {
     if args.cmd_cosmos_to_eth {
         let peggy_denom = args.flag_cosmos_denom;
         // todo actually query metadata for this
-        let is_cosmos_originated = !peggy_denom.starts_with("peggy");
+        let is_cosmos_originated = !peggy_denom.starts_with("gravity");
         let amount = if is_cosmos_originated {
             fraction_to_exponent(args.flag_amount.unwrap(), 6)
         } else {
@@ -312,7 +312,7 @@ async fn main() {
                 ethereum_public_key,
                 cosmos_dest
             );
-            // we send some erc20 tokens to the peggy contract to register a deposit
+            // we send some erc20 tokens to the gravity contract to register a deposit
             let res = send_to_cosmos(
                 erc20_address,
                 contract_address,

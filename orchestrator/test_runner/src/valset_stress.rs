@@ -5,7 +5,7 @@ use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use orchestrator::main_loop::orchestrator_main_loop;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
 use web30::client::Web3;
 
 #[allow(clippy::too_many_arguments)]

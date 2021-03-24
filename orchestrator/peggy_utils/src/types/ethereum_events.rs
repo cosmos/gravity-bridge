@@ -7,7 +7,7 @@ use deep_space::address::Address as CosmosAddress;
 use num256::Uint256;
 use web30::types::Log;
 
-/// A parsed struct representing the Ethereum event fired by the Peggy contract
+/// A parsed struct representing the Ethereum event fired by the Gravity contract
 /// when the validator set is updated.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ValsetUpdatedEvent {
@@ -110,7 +110,7 @@ impl ValsetUpdatedEvent {
     }
 }
 
-/// A parsed struct representing the Ethereum event fired by the Peggy contract when
+/// A parsed struct representing the Ethereum event fired by the Gravity contract when
 /// a transaction batch is executed.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct TransactionBatchExecutedEvent {
@@ -123,7 +123,7 @@ pub struct TransactionBatchExecutedEvent {
     /// in token type there is only one
     pub erc20: EthAddress,
     /// the event nonce representing a unique ordering of events coming out
-    /// of the Peggy solidity contract. Ensuring that these events can only be played
+    /// of the Gravity solidity contract. Ensuring that these events can only be played
     /// back in order
     pub event_nonce: Uint256,
 }
@@ -186,7 +186,7 @@ impl TransactionBatchExecutedEvent {
 }
 
 /// A parsed struct representing the Ethereum event fired when someone makes a deposit
-/// on the Peggy contract
+/// on the Gravity contract
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct SendToCosmosEvent {
     /// The token contract address for the deposit
@@ -268,7 +268,7 @@ impl SendToCosmosEvent {
     }
 }
 
-/// A parsed struct representing the Ethereum event fired when someone uses the Peggy
+/// A parsed struct representing the Ethereum event fired when someone uses the Gravity
 /// contract to deploy a new ERC20 contract representing a Cosmos asset
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct ERC20DeployedEvent {
@@ -427,7 +427,7 @@ impl ERC20DeployedEvent {
         ret
     }
 }
-/// A parsed struct representing the Ethereum event fired when someone uses the Peggy
+/// A parsed struct representing the Ethereum event fired when someone uses the Gravity
 /// contract to deploy a new ERC20 contract representing a Cosmos asset
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct LogicCallExecutedEvent {

@@ -221,16 +221,16 @@ func createSimappAndExport(
 
 	encCfg := app.MakeEncodingConfig() // Ideally, we would reuse the one created by NewRootCmd.
 	encCfg.Marshaler = codec.NewProtoCodec(encCfg.InterfaceRegistry)
-	var peggy *app.Peggy
+	var gravity *app.Gravity
 	if height != -1 {
-		peggy = app.NewPeggyApp(logger, db, traceStore, false, map[int64]bool{}, "", uint(1), encCfg, appOpts)
+		gravity = app.NewPeggyApp(logger, db, traceStore, false, map[int64]bool{}, "", uint(1), encCfg, appOpts)
 
-		if err := peggy.LoadHeight(height); err != nil {
+		if err := gravity.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		peggy = app.NewPeggyApp(logger, db, traceStore, true, map[int64]bool{}, "", uint(1), encCfg, appOpts)
+		gravity = app.NewPeggyApp(logger, db, traceStore, true, map[int64]bool{}, "", uint(1), encCfg, appOpts)
 	}
 
-	return peggy.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)
+	return gravity.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)
 }

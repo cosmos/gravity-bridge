@@ -17,7 +17,7 @@ pub struct LogicCall {
 }
 
 impl LogicCall {
-    pub fn from_proto(input: peggy_proto::peggy::OutgoingLogicCall) -> Result<Self, PeggyError> {
+    pub fn from_proto(input: peggy_proto::gravity::OutgoingLogicCall) -> Result<Self, PeggyError> {
         let mut transfers: Vec<ERC20Token> = Vec::new();
         let mut fees: Vec<ERC20Token> = Vec::new();
         for transfer in input.transfers {
@@ -61,7 +61,7 @@ pub struct LogicCallConfirmResponse {
 }
 
 impl LogicCallConfirmResponse {
-    pub fn from_proto(input: peggy_proto::peggy::MsgConfirmLogicCall) -> Result<Self, PeggyError> {
+    pub fn from_proto(input: peggy_proto::gravity::MsgConfirmLogicCall) -> Result<Self, PeggyError> {
         Ok(LogicCallConfirmResponse {
             invalidation_id: hex_str_to_bytes(&input.invalidation_id).unwrap(),
             invalidation_nonce: input.invalidation_nonce,

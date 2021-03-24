@@ -1,5 +1,5 @@
 syntax = "proto3";
-package peggy.v1;
+package gravity.v1;
 import "gogoproto/gogo.proto";
 option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 

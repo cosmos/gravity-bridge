@@ -18,7 +18,7 @@ use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use ethereum_peggy::utils::get_valset_nonce;
 use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use orchestrator::main_loop::orchestrator_main_loop;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::connection_prep::check_delegate_addresses;
 use peggy_utils::types::SendToCosmosEvent;
 use rand::Rng;
@@ -107,7 +107,7 @@ pub async fn happy_path_test(
     let dest_eth_address = dest_eth_private_key.to_public_key().unwrap();
 
     // the denom and amount of the token bridged from Ethereum -> Cosmos
-    // so the denom is the peggy<hash> token name
+    // so the denom is the gravity<hash> token name
     // Send a token 3 times
     for _ in 0u32..3 {
         test_erc20_deposit(
@@ -185,7 +185,7 @@ pub async fn delegate_tokens(delegate_address: &str, amount: &str) {
     let mut cmd = if let Some(bin) = chain_binary() {
         Command::new(bin)
     } else {
-        Command::new("peggy")
+        Command::new("gravity")
     };
 
     let cmd = cmd.args(&args);
@@ -298,12 +298,12 @@ async fn test_erc20_deposit(
     erc20_address: EthAddress,
     amount: Uint256,
 ) {
-    let start_coin = check_cosmos_balance("peggy", dest, &contact).await;
+    let start_coin = check_cosmos_balance("gravity", dest, &contact).await;
     info!(
         "Sending to Cosmos from {} to {} with amount {}",
         *MINER_ADDRESS, dest, amount
     );
-    // we send some erc20 tokens to the peggy contract to register a deposit
+    // we send some erc20 tokens to the gravity contract to register a deposit
     let tx_id = send_to_cosmos(
         erc20_address,
         peggy_address,
@@ -322,7 +322,7 @@ async fn test_erc20_deposit(
     while Instant::now() - start < TOTAL_TIMEOUT {
         match (
             start_coin.clone(),
-            check_cosmos_balance("peggy", dest, &contact).await,
+            check_cosmos_balance("gravity", dest, &contact).await,
         ) {
             (Some(start_coin), Some(end_coin)) => {
                 if start_coin.amount + amount.clone() == end_coin.amount
@@ -369,7 +369,7 @@ async fn test_batch(
         .to_public_key()
         .unwrap()
         .to_address();
-    let coin = check_cosmos_balance("peggy", dest_cosmos_address, &contact)
+    let coin = check_cosmos_balance("gravity", dest_cosmos_address, &contact)
         .await
         .unwrap();
     let token_name = coin.denom;
@@ -481,7 +481,7 @@ async fn submit_duplicate_erc20_send(
     receiver: CosmosAddress,
     keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
 ) {
-    let start_coin = check_cosmos_balance("peggy", receiver, &contact)
+    let start_coin = check_cosmos_balance("gravity", receiver, &contact)
         .await
         .expect("Did not find coins!");
 
@@ -514,7 +514,7 @@ async fn submit_duplicate_erc20_send(
         trace!("Submitted duplicate sendToCosmos event: {:?}", res);
     }
 
-    if let Some(end_coin) = check_cosmos_balance("peggy", receiver, &contact).await {
+    if let Some(end_coin) = check_cosmos_balance("gravity", receiver, &contact).await {
         if start_coin.amount == end_coin.amount && start_coin.denom == end_coin.denom {
             info!("Successfully failed to duplicate ERC20!");
         } else {

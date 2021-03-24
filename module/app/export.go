@@ -14,7 +14,7 @@ import (
 
 // ExportAppStateAndValidators exports the state of the application for a genesis
 // file.
-func (app *Peggy) ExportAppStateAndValidators(
+func (app *Gravity) ExportAppStateAndValidators(
 	forZeroHeight bool, jailWhiteList []string,
 ) (servertypes.ExportedApp, error) {
 
@@ -44,7 +44,7 @@ func (app *Peggy) ExportAppStateAndValidators(
 // prepare for fresh start at zero height
 // NOTE zero height genesis is a temporary feature which will be deprecated
 //      in favour of export at a block height
-func (app *Peggy) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []string) {
+func (app *Gravity) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []string) {
 	applyWhiteList := false
 
 	//Check if there is a whitelist

@@ -12,7 +12,7 @@ type Hooks struct {
 
 var _ stakingtypes.StakingHooks = Hooks{}
 
-// Create new peggy hooks
+// Create new gravity hooks
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 func (h Hooks) AfterValidatorBeginUnbonding(ctx sdk.Context, _ sdk.ConsAddress, _ sdk.ValAddress) {

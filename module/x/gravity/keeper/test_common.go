@@ -452,7 +452,7 @@ func MakeTestMarshaler() codec.Marshaler {
 	return codec.NewProtoCodec(interfaceRegistry)
 }
 
-// MintVouchersFromAir creates new peggy vouchers given erc20tokens
+// MintVouchersFromAir creates new gravity vouchers given erc20tokens
 func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAddress, amount types.ERC20Token) sdk.Coin {
 	coin := amount.GravityCoin()
 	vouchers := sdk.Coins{coin}

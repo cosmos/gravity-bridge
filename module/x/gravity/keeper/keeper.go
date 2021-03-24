@@ -570,12 +570,12 @@ func (k Keeper) GetBridgeChainID(ctx sdk.Context) uint64 {
 }
 
 // GetGravityID returns the PeggyID the PeggyID is essentially a salt value
-// for bridge signatures, provided each chain running Peggy has a unique ID
+// for bridge signatures, provided each chain running Gravity has a unique ID
 // it won't be possible to play back signatures from one bridge onto another
 // even if they share a validator set.
 //
 // The lifecycle of the PeggyID is that it is set in the Genesis file
-// read from the live chain for the contract deployment, once a Peggy contract
+// read from the live chain for the contract deployment, once a Gravity contract
 // is deployed the PeggyID CAN NOT BE CHANGED. Meaning that it can't just be the
 // same as the chain id since the chain id may be changed many times with each
 // successive chain in charge of the same bridge
@@ -586,12 +586,12 @@ func (k Keeper) GetGravityID(ctx sdk.Context) string {
 }
 
 // Set PeggyID sets the PeggyID the PeggyID is essentially a salt value
-// for bridge signatures, provided each chain running Peggy has a unique ID
+// for bridge signatures, provided each chain running Gravity has a unique ID
 // it won't be possible to play back signatures from one bridge onto another
 // even if they share a validator set.
 //
 // The lifecycle of the PeggyID is that it is set in the Genesis file
-// read from the live chain for the contract deployment, once a Peggy contract
+// read from the live chain for the contract deployment, once a Gravity contract
 // is deployed the PeggyID CAN NOT BE CHANGED. Meaning that it can't just be the
 // same as the chain id since the chain id may be changed many times with each
 // successive chain in charge of the same bridge
@@ -687,7 +687,7 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 }
 
 // GetUnbondingvalidators returns UnbondingValidators.
-// Adding here in peggy keeper as cdc is available inside endblocker.
+// Adding here in gravity keeper as cdc is available inside endblocker.
 func (k Keeper) GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses {
 	unbondingValidators := stakingtypes.ValAddresses{}
 	k.cdc.MustUnmarshalBinaryBare(unbondingVals, &unbondingValidators)

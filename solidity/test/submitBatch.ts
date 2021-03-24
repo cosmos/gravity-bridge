@@ -37,15 +37,15 @@ async function runTest(opts: {
   let validators = signers.slice(0, powers.length);
   const powerThreshold = 6666;
   const {
-    peggy,
+    gravity,
     testERC20,
     checkpoint: deployCheckpoint,
   } = await deployContracts(peggyId, validators, powers, powerThreshold);
 
   // Transfer out to Cosmos, locking coins
   // =====================================
-  await testERC20.functions.approve(peggy.address, 1000);
-  await peggy.functions.sendToCosmos(
+  await testERC20.functions.approve(gravity.address, 1000);
+  await gravity.functions.sendToCosmos(
     testERC20.address,
     ethers.utils.formatBytes32String("myCosmosAddress"),
     1000
@@ -152,7 +152,7 @@ async function runTest(opts: {
     sigs.v[11] = 0;
   }
 
-  await peggy.submitBatch(
+  await gravity.submitBatch(
     await getSignerAddresses(validators),
     powers,
     currentValsetNonce,
@@ -236,7 +236,7 @@ describe("submitBatch Go test hash", function () {
     const validators = signers.slice(0, powers.length);
     const powerThreshold = 6666;
     const {
-      peggy,
+      gravity,
       testERC20,
       checkpoint: deployCheckpoint,
     } = await deployContracts(peggyId, validators, powers, powerThreshold);
@@ -251,8 +251,8 @@ describe("submitBatch Go test hash", function () {
 
     // Transfer out to Cosmos, locking coins
     // =====================================
-    await testERC20.functions.approve(peggy.address, 1000);
-    await peggy.functions.sendToCosmos(
+    await testERC20.functions.approve(gravity.address, 1000);
+    await gravity.functions.sendToCosmos(
       testERC20.address,
       ethers.utils.formatBytes32String("myCosmosAddress"),
       1000
@@ -303,7 +303,7 @@ describe("submitBatch Go test hash", function () {
     const sigs = await signHash(validators, batchDigest);
     const currentValsetNonce = 0;
 
-    await peggy.submitBatch(
+    await gravity.submitBatch(
       await getSignerAddresses(validators),
       powers,
       currentValsetNonce,

@@ -4,7 +4,7 @@ use cosmos_peggy::query::get_latest_transaction_batches;
 use cosmos_peggy::query::get_transaction_batch_signatures;
 use ethereum_peggy::utils::{downcast_to_u128, get_tx_batch_nonce};
 use ethereum_peggy::{one_eth, submit_batch::send_eth_transaction_batch};
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::message_signatures::encode_tx_batch_confirm_hashed;
 use peggy_utils::types::Valset;
 use peggy_utils::types::{BatchConfirmResponse, TransactionBatch};

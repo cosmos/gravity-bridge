@@ -67,7 +67,7 @@ func (k Keeper) ERC20ToDenomLookup(ctx sdk.Context, tokenContract string) (bool,
 		// It is a cosmos originated asset
 		return true, dn1
 	} else {
-		// If it is not in there, it is not a cosmos originated token, turn the ERC20 into a peggy denom
+		// If it is not in there, it is not a cosmos originated token, turn the ERC20 into a gravity denom
 		return false, types.GravityDenom(tokenContract)
 	}
 }

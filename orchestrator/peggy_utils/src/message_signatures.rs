@@ -3,7 +3,7 @@ use clarity::abi::{encode_tokens, Token};
 use clarity::utils::get_ethereum_msg_hash;
 
 /// takes the required input data and produces the required signature to confirm a validator
-/// set update on the Peggy Ethereum contract. This value will then be signed before being
+/// set update on the Gravity Ethereum contract. This value will then be signed before being
 /// submitted to Cosmos, verified, and then relayed to Ethereum
 /// Note: This is the message, you need to run Keccak256::digest() in order to get the 32byte
 /// digest that is normally signed or may be used as a 'hash of the message'
@@ -103,7 +103,7 @@ fn test_valset_signature() {
 }
 
 /// takes the required input data and produces the required signature to confirm a transaction
-/// batch on the Peggy Ethereum contract. This value will then be signed before being
+/// batch on the Gravity Ethereum contract. This value will then be signed before being
 /// submitted to Cosmos, verified, and then relayed to Ethereum
 /// Note: This is the message, you need to run Keccak256::digest() in order to get the 32byte
 /// digest that is normally signed or may be used as a 'hash of the message'
@@ -232,7 +232,7 @@ fn test_specific_batch_signature() {
 }
 
 /// takes the required input data and produces the required signature to confirm a logic
-/// call on the Peggy Ethereum contract. This value will then be signed before being
+/// call on the Gravity Ethereum contract. This value will then be signed before being
 /// submitted to Cosmos, verified, and then relayed to Ethereum
 /// Note: This is the message, you need to run Keccak256::digest() in order to get the 32byte
 /// digest that is normally signed or may be used as a 'hash of the message'
@@ -251,7 +251,7 @@ pub fn encode_logic_call_confirm(peggy_id: String, call: LogicCall) -> Vec<u8> {
     }
 
     encode_tokens(&[
-        Token::FixedString(peggy_id),                // Peggy Instance ID
+        Token::FixedString(peggy_id),                // Gravity Instance ID
         Token::FixedString("logicCall".to_string()), //Function Name
         Token::Dynamic(transfer_amounts),            //Array of Transfer amounts
         transfer_token_contracts.into(),             //ERC-20 contract for transfers

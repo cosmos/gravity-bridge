@@ -148,8 +148,8 @@ var (
 	}
 
 	// verify app interface at compile time
-	_ simapp.App              = (*Peggy)(nil)
-	_ servertypes.Application = (*Peggy)(nil)
+	_ simapp.App              = (*Gravity)(nil)
+	_ servertypes.Application = (*Gravity)(nil)
 )
 
 // MakeCodec creates the application codec. The codec is sealed before it is
@@ -164,8 +164,8 @@ func MakeCodec() *codec.LegacyAmino {
 	return cdc
 }
 
-// Peggy extended ABCI application
-type Peggy struct {
+// Gravity extended ABCI application
+type Gravity struct {
 	*baseapp.BaseApp
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Marshaler
@@ -212,14 +212,14 @@ func init() {
 		panic(err)
 	}
 
-	DefaultNodeHome = filepath.Join(userHomeDir, ".peggy")
+	DefaultNodeHome = filepath.Join(userHomeDir, ".gravity")
 }
 
 func NewPeggyApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
 	homePath string, invCheckPeriod uint, encodingConfig gravityparams.EncodingConfig,
 	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
-) *Peggy {
+) *Gravity {
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
@@ -239,7 +239,7 @@ func NewPeggyApp(
 	tKeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
-	var app = &Peggy{
+	var app = &Gravity{
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,
 		appCodec:          appCodec,
@@ -561,20 +561,20 @@ func MakeCodecs() (codec.Marshaler, *codec.LegacyAmino) {
 }
 
 // Name returns the name of the App
-func (app *Peggy) Name() string { return app.BaseApp.Name() }
+func (app *Gravity) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
-func (app *Peggy) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *Gravity) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
 // EndBlocker application updates every end block
-func (app *Peggy) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *Gravity) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
 
 // InitChainer application update at chain initialization
-func (app *Peggy) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *Gravity) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState simapp.GenesisState
 	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
@@ -583,12 +583,12 @@ func (app *Peggy) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.R
 }
 
 // LoadHeight loads a particular height
-func (app *Peggy) LoadHeight(height int64) error {
+func (app *Gravity) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.
-func (app *Peggy) ModuleAccountAddrs() map[string]bool {
+func (app *Gravity) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
@@ -599,7 +599,7 @@ func (app *Peggy) ModuleAccountAddrs() map[string]bool {
 
 // BlockedAddrs returns all the app's module account addresses that are not
 // allowed to receive external tokens.
-func (app *Peggy) BlockedAddrs() map[string]bool {
+func (app *Gravity) BlockedAddrs() map[string]bool {
 	blockedAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
@@ -612,7 +612,7 @@ func (app *Peggy) BlockedAddrs() map[string]bool {
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *Peggy) LegacyAmino() *codec.LegacyAmino {
+func (app *Gravity) LegacyAmino() *codec.LegacyAmino {
 	return app.legacyAmino
 }
 
@@ -620,64 +620,64 @@ func (app *Peggy) LegacyAmino() *codec.LegacyAmino {
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *Peggy) AppCodec() codec.Marshaler {
+func (app *Gravity) AppCodec() codec.Marshaler {
 	return app.appCodec
 }
 
 // InterfaceRegistry returns SimApp's InterfaceRegistry
-func (app *Peggy) InterfaceRegistry() types.InterfaceRegistry {
+func (app *Gravity) InterfaceRegistry() types.InterfaceRegistry {
 	return app.interfaceRegistry
 }
 
 // GetKey returns the KVStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *Peggy) GetKey(storeKey string) *sdk.KVStoreKey {
+func (app *Gravity) GetKey(storeKey string) *sdk.KVStoreKey {
 	return app.keys[storeKey]
 }
 
 // GetTKey returns the TransientStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *Peggy) GetTKey(storeKey string) *sdk.TransientStoreKey {
+func (app *Gravity) GetTKey(storeKey string) *sdk.TransientStoreKey {
 	return app.tKeys[storeKey]
 }
 
 // GetMemKey returns the MemStoreKey for the provided mem key.
 //
 // NOTE: This is solely used for testing purposes.
-func (app *Peggy) GetMemKey(storeKey string) *sdk.MemoryStoreKey {
+func (app *Gravity) GetMemKey(storeKey string) *sdk.MemoryStoreKey {
 	return app.memKeys[storeKey]
 }
 
 // GetSubspace returns a param subspace for a given module name.
-func (app *Peggy) GetSubspace(moduleName string) paramstypes.Subspace {
+func (app *Gravity) GetSubspace(moduleName string) paramstypes.Subspace {
 	subspace, _ := app.paramsKeeper.GetSubspace(moduleName)
 	return subspace
 }
 
 // SimulationManager implements the SimulationApp interface
-func (app *Peggy) SimulationManager() *module.SimulationManager {
+func (app *Gravity) SimulationManager() *module.SimulationManager {
 	return app.sm
 }
 
 // RegisterAPIRoutes registers all application module routes with the provided
 // API server.
-func (app *Peggy) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
+func (app *Gravity) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
 	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
 	authrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
-	// TODO: build the custom peggy swagger files and add here?
+	// TODO: build the custom gravity swagger files and add here?
 	if apiConfig.Swagger {
 		RegisterSwaggerAPI(clientCtx, apiSvr.Router)
 	}
 }
 
 // RegisterSwaggerAPI registers swagger route with API Server
-// TODO: build the custom peggy swagger files and add here?
+// TODO: build the custom gravity swagger files and add here?
 func RegisterSwaggerAPI(ctx client.Context, rtr *mux.Router) {
 	statikFS, err := fs.New()
 	if err != nil {
@@ -689,12 +689,12 @@ func RegisterSwaggerAPI(ctx client.Context, rtr *mux.Router) {
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.
-func (app *Peggy) RegisterTxService(clientCtx client.Context) {
+func (app *Gravity) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.BaseApp.Simulate, app.interfaceRegistry)
 }
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
-func (app *Peggy) RegisterTendermintService(clientCtx client.Context) {
+func (app *Gravity) RegisterTendermintService(clientCtx client.Context) {
 	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
 }
 

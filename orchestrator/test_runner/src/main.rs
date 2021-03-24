@@ -1,4 +1,4 @@
-//! this crate, namely runs all up integration tests of the Peggy code against
+//! this crate, namely runs all up integration tests of the Gravity code against
 //! several scenarios, happy path and non happy path. This is essentially meant
 //! to be executed in our specific CI docker container and nowhere else. If you
 //! find some function useful pull it up into the more general peggy_utils or the like
@@ -18,7 +18,7 @@ use cosmos_peggy::utils::wait_for_cosmos_online;
 use deep_space::coin::Coin;
 use happy_path::happy_path_test;
 use happy_path_v2::happy_path_test_v2;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
 use std::{env, time::Duration};
 use transaction_stress_test::transaction_stress_test;
 use valset_stress::validator_set_stress_test;
@@ -75,7 +75,7 @@ pub fn get_test_token_name() -> String {
 }
 
 pub fn get_chain_id() -> String {
-    "peggy-test".to_string()
+    "gravity-test".to_string()
 }
 
 pub fn one_eth() -> Uint256 {
@@ -96,7 +96,7 @@ pub fn should_deploy_contracts() -> bool {
 #[actix_rt::main]
 pub async fn main() {
     env_logger::init();
-    info!("Staring Peggy test-runner");
+    info!("Staring Gravity test-runner");
     let contact = Contact::new(COSMOS_NODE, OPERATION_TIMEOUT);
 
     info!("Waiting for Cosmos chain to come online");
@@ -114,7 +114,7 @@ pub async fn main() {
     }
 
     let contracts = parse_contract_addresses();
-    // the address of the deployed Peggy contract
+    // the address of the deployed Gravity contract
     let peggy_address = contracts.peggy_contract;
     // addresses of deployed ERC20 token contracts to be used for testing
     let erc20_addresses = contracts.erc20_addresses;
@@ -132,7 +132,7 @@ pub async fn main() {
     .is_some());
 
     // This segment contains optional tests, by default we run a happy path test
-    // this tests all major functionality of Peggy once or twice.
+    // this tests all major functionality of Gravity once or twice.
     // VALSET_STRESS sends in 1k valsets to sign and update
     // BATCH_STRESS fills several batches and executes an out of order batch
     // VALIDATOR_OUT simulates a validator not participating in the happy path test

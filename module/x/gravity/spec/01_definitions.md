@@ -19,15 +19,15 @@ A chain that utilizes an EVM. Some examples of this are Polygon, Ethereum, and E
 
 This is a type of node that submits updates to the Gravity contract on the counter chain and vice versa. It earns fees from the transactions in a batch.
 
-### Peggy Tx Pool
+### Gravity Tx Pool
 
 Is a transaction pool that exists in the chain store of Cosmos -> Ethereum transactions waiting to be placed into a transaction batch
 
 ### Transaction Batch
 
-A transaction batch is a set of Ethereum transactions to be sent from the Peggy Ethereum contract at the same time. This helps reduce the costs of submitting a batch. Batches have a maximum size (currently around 100 transactions) and are only involved in the Cosmos -> Ethereum flow
+A transaction batch is a set of Ethereum transactions to be sent from the Gravity Ethereum contract at the same time. This helps reduce the costs of submitting a batch. Batches have a maximum size (currently around 100 transactions) and are only involved in the Cosmos -> Ethereum flow
 
-### Peggy Batch Pool
+### Gravity Batch Pool
 
 Is a transaction pool like strucutre that exists in the chains to store, seperate from the `Pegg Tx pool` it stores transactions that have been placed in batches that are in the process of being signed or being submitted by the `Orchestrator Set`
 
@@ -37,7 +37,7 @@ Events on Ethereum are considered `Observed` when the `Eth Signers` of 66% of th
 
 ### Validator Set Delta
 
-This is a term for the difference between the validator set currently in the Peggy Ethereum contract and the actual validator set on the Cosmos chain. Since the validator set may change every single block there is essentially guaranteed to be some nonzero `Validator set delta` at any given time.
+This is a term for the difference between the validator set currently in the Gravity Ethereum contract and the actual validator set on the Cosmos chain. Since the validator set may change every single block there is essentially guaranteed to be some nonzero `Validator set delta` at any given time.
 
 ### Claim
 
@@ -49,7 +49,7 @@ Aggregate of claims that eventually becomes `observed` by all orchestrators.
 
 ### Voucher
 
-Represents a bridged ETH token on the Cosmos side. Their denom is has a `peggy` prefix and a hash that is build from contract address and contract token. The denom is considered unique within the system.
+Represents a bridged ETH token on the Cosmos side. Their denom is has a `gravity` prefix and a hash that is build from contract address and contract token. The denom is considered unique within the system.
 
 ### Counterpart
 

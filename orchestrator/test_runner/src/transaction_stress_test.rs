@@ -12,7 +12,7 @@ use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use ethereum_peggy::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use futures::future::join_all;
 use orchestrator::main_loop::orchestrator_main_loop;
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
 use std::{
     collections::HashSet,
     time::{Duration, Instant},
@@ -28,7 +28,7 @@ const TIMEOUT: Duration = Duration::from_secs(120);
 /// So the total number of
 /// Ethereum sends = (2 * NUM_USERS)
 /// ERC20 sends = (erc20_addresses.len() * NUM_USERS)
-/// Peggy Deposits = (erc20_addresses.len() * NUM_USERS)
+/// Gravity Deposits = (erc20_addresses.len() * NUM_USERS)
 /// Batches executed = erc20_addresses.len() * (NUM_USERS / 100)
 const NUM_USERS: usize = 100;
 

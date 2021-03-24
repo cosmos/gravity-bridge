@@ -1,11 +1,11 @@
-//! Ethereum Event watcher watches for events such as a deposit to the Peggy Ethereum contract or a validator set update
+//! Ethereum Event watcher watches for events such as a deposit to the Gravity Ethereum contract or a validator set update
 //! or a transaction batch update. It then responds to these events by performing actions on the Cosmos chain if required
 
 use clarity::{utils::bytes_to_hex_str, Address as EthAddress, Uint256};
 use contact::client::Contact;
 use cosmos_peggy::{query::get_last_event_nonce, send::send_ethereum_claims};
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
+use peggy_proto::gravity::query_client::QueryClient as PeggyQueryClient;
 use peggy_utils::{
     error::PeggyError,
     types::{
@@ -205,7 +205,7 @@ pub async fn get_block_delay(web3: &Web3) -> Uint256 {
         // Mainline Ethereum, Ethereum classic, or the Ropsten, Mordor testnets
         // all POW Chains
         1 | 3 | 7 => 6u8.into(),
-        // Rinkeby, Goerli, Dev, our own Peggy Ethereum testnet, and Kotti respectively
+        // Rinkeby, Goerli, Dev, our own Gravity Ethereum testnet, and Kotti respectively
         // all non-pow chains
         4 | 5 | 2018 | 15 | 6 => 0u8.into(),
         // assume the safe option (POW) where we don't know

@@ -24,12 +24,12 @@ describe("Gas tests", function () {
         const powerThreshold = 6666;
 
         const {
-            peggy,
+            gravity,
             testERC20,
             checkpoint: deployCheckpoint
         } = await deployContracts(peggyId, validators, powers, powerThreshold);
 
-        await peggy.testMakeCheckpoint(
+        await gravity.testMakeCheckpoint(
             await getSignerAddresses(validators),
             powers,
             0,
@@ -48,7 +48,7 @@ describe("Gas tests", function () {
         const powerThreshold = 6666;
 
         const {
-            peggy,
+            gravity,
             testERC20,
             checkpoint: deployCheckpoint
         } = await deployContracts(peggyId, validators, powers, powerThreshold);
@@ -58,7 +58,7 @@ describe("Gas tests", function () {
             "0x7bc422a00c175cae98cf2f4c36f2f8b63ec51ab8c57fecda9bccf0987ae2d67d"
         );
 
-        await peggy.testCheckValidatorSignatures(
+        await gravity.testCheckValidatorSignatures(
             await getSignerAddresses(validators),
             powers,
             sigs.v,

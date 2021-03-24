@@ -1,6 +1,6 @@
 pragma solidity ^0.6.6;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./Peggy.sol";
+import "./Gravity.sol";
 
 pragma experimental ABIEncoderV2;
 
@@ -35,7 +35,7 @@ contract ReentrantERC20 {
             );
         }
         
-        Peggy(state_peggyAddress).submitLogicCall(
+        Gravity(state_peggyAddress).submitLogicCall(
             addresses, 
             uint256s, 
             zero, 

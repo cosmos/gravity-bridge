@@ -4,11 +4,11 @@ order: 7
 
 # Parameters
 
-The peggy module contains the following parameters:
+The gravity module contains the following parameters:
 
 | Key                           | Type         | Example        |
 |-------------------------------|--------------|----------------|
-| peggyId                       | string       | "peggy"        |
+| peggyId                       | string       | "gravity"        |
 | ContractSourceHash            | string       | "special hash" |
 | BridgeEthereumAddress         | string       | "0x1"          |
 | BridgeChainId                 | uint64       | 4              |

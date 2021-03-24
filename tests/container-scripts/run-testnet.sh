@@ -43,8 +43,8 @@ done
 # consumes a lot of processing power
 sleep 10
 if [[ $TEST_TYPE == *"ARBITRARY_LOGIC"* ]]; then
-bash /peggy/tests/container-scripts/run-eth-fork.sh $ALCHEMY_ID &
+bash /gravity/tests/container-scripts/run-eth-fork.sh $ALCHEMY_ID &
 else
-bash /peggy/tests/container-scripts/run-eth.sh &
+bash /gravity/tests/container-scripts/run-eth.sh &
 fi
 sleep 10

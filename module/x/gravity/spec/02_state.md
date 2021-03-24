@@ -9,9 +9,9 @@ order: 2
 Params is a module-wide configuration structure that stores system parameters
 and defines overall functioning of the staking module.
 
-- Params: `Paramsspace("peggy") -> legacy_amino(params)`
+- Params: `Paramsspace("gravity") -> legacy_amino(params)`
 
-+++ <https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/peggy/v1/genesis.proto#L72-L104>
++++ <https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/genesis.proto#L72-L104>
 
 
 ### OutgoingTxBatch
@@ -84,7 +84,7 @@ A validator has an associated counter chain address.
 
 ### OutgoingLogicCall
 
-When a user requests a logic call to be executed on an opposing chain it is stored in a store within the peggy module.
+When a user requests a logic call to be executed on an opposing chain it is stored in a store within the gravity module.
 
 | Key                                 | Value                                        | Type     | Encoding         |
 |-------------------------------------|----------------------------------------------|----------|------------------|
