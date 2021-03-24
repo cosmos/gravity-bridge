@@ -85,18 +85,14 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	peggyparams "github.com/cosmos/gravity-bridge/module/app/params"
-	"github.com/cosmos/gravity-bridge/module/x/peggy"
-	"github.com/cosmos/gravity-bridge/module/x/peggy/keeper"
-	peggytypes "github.com/cosmos/gravity-bridge/module/x/peggy/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
-	gravityparams "github.com/althea-net/peggy/module/app/params"
-	"github.com/althea-net/peggy/module/x/gravity"
-	"github.com/althea-net/peggy/module/x/gravity/keeper"
-	gravitytypes "github.com/althea-net/peggy/module/x/gravity/types"
+	gravityparams "github.com/cosmos/gravity-bridge/module/app/params"
+	"github.com/cosmos/gravity-bridge/module/x/gravity"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
+	gravitytypes "github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 const appName = "app"
