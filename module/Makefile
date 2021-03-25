@@ -70,7 +70,8 @@ lint:
 ###############################################################################
 
 proto-gen:
-	./contrib/local/protocgen.sh
+	@echo "Generating Protobuf files"
+	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace tendermintdev/sdk-proto-gen:v0.1 sh ./contrib/local/protocgen.sh
 
 proto-lint:
 	@$(DOCKER_BUF) check lint --error-format=json
@@ -134,50 +135,3 @@ proto-update-deps:
 
 	mkdir -p $(SDK_COIN_TYPES)
 	curl -sSL $(COSMOS_SDK_PROTO_URL)/v1beta1/coin.proto > $(SDK_COIN_TYPES)/coin.proto
-
-PREFIX ?= /usr/local
-BIN ?= $(PREFIX)/bin
-UNAME_S ?= $(shell uname -s)
-UNAME_M ?= $(shell uname -m)
-
-BUF_VERSION ?= 0.11.0
-
-PROTOC_VERSION ?= 3.11.2
-ifeq ($(UNAME_S),Linux)
-  PROTOC_ZIP ?= protoc-${PROTOC_VERSION}-linux-x86_64.zip
-endif
-ifeq ($(UNAME_S),Darwin)
-  PROTOC_ZIP ?= protoc-${PROTOC_VERSION}-osx-x86_64.zip
-endif
-
-proto-tools: proto-tools-stamp buf
-
-proto-tools-stamp:
-	echo "Installing protoc compiler..."
-	(cd /tmp; \
-	curl -OL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}"; \
-	unzip -o ${PROTOC_ZIP} -d $(PREFIX) bin/protoc; \
-	unzip -o ${PROTOC_ZIP} -d $(PREFIX) 'include/*'; \
-	rm -f ${PROTOC_ZIP})
-
-	echo "Installing protoc-gen-gocosmos..."
-	go install github.com/regen-network/cosmos-proto/protoc-gen-gocosmos
-
-	# Create dummy file to satisfy dependency and avoid
-	# rebuilding when this Makefile target is hit twice
-	# in a row
-	touch $@
-
-buf: buf-stamp
-
-buf-stamp:
-	echo "Installing buf..."
-	curl -sSL \
-    "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-${UNAME_S}-${UNAME_M}" \
-    -o "${BIN}/buf" && \
-	chmod +x "${BIN}/buf"
-
-	touch $@
-
-tools-clean:
-	rm -f proto-tools-stamp buf-stamp
