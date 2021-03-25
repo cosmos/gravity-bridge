@@ -19,7 +19,6 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	peggytypes "github.com/althea-net/peggy/module/x/peggy/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -35,6 +34,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	gravitytypes "github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 // GenTxCmd builds the application's gentx command.
@@ -116,7 +116,7 @@ $ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 c
 
 			ethAddress := args[2]
 
-			if err := peggytypes.ValidateEthAddress(ethAddress); err != nil {
+			if err := gravitytypes.ValidateEthAddress(ethAddress); err != nil {
 				return errors.Wrapf(err, "invalid ethereum address")
 			}
 
@@ -179,7 +179,7 @@ $ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 c
 				return errors.Wrap(err, "failed to build create-validator message")
 			}
 
-			delegatePeggyMsg := &peggytypes.MsgSetOrchestratorAddress{
+			delegatePeggyMsg := &gravitytypes.MsgSetOrchestratorAddress{
 				Validator:    sdk.ValAddress(key.GetAddress()).String(),
 				Orchestrator: orchAddress.String(),
 				EthAddress:   ethAddress,
