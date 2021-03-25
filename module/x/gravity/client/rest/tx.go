@@ -67,7 +67,7 @@ func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.Han
 		ethPubkeyBytes := ethCrypto.FromECDSAPub(ethPubkey)
 
 		correct := ethCrypto.VerifySignature(ethPubkeyBytes, ethHash.Bytes(), ethSig)
-		if correct == false {
+		if !correct {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -85,9 +85,9 @@ func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.Han
 			return
 		}
 
-		msg := types.MsgSubmitClaim{
-			ClaimType: types.ClaimType_DEPOSIT,
-			Claim:     any,
+		msg := types.MsgSubmitConfirm{
+			ConfirmType: types.ConfirmType_CONFIRM_TYPE_VALSET,
+			Confirm:     any,
 		}
 
 		tx.WriteGeneratedTxResponse(cliCtx, w, baseReq, &msg)

@@ -15,5 +15,5 @@ var (
 	ErrUnsupported             = sdkerrors.Register(ModuleName, 8, "unsupported")
 	ErrNonContiguousEventNonce = sdkerrors.Register(ModuleName, 9, "non contiguous event nonce")
 	ErrInvalidClaim            = sdkerrors.Register(ModuleName, 10, "invalid or unsupported claim")
-	ErrInvalidConfirm          = sdkerrors.Register(ModuleName, 10, "invalid or unsupported confirm")
+	ErrInvalidConfirm          = sdkerrors.Register(ModuleName, 11, "invalid or unsupported confirm")
 )
