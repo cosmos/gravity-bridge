@@ -1,3 +1,6 @@
+use crate::TOTAL_TIMEOUT;
+use crate::{one_eth, MINER_PRIVATE_KEY};
+use crate::{MINER_ADDRESS, OPERATION_TIMEOUT};
 use clarity::{Address as EthAddress, Uint256};
 use clarity::{PrivateKey as EthPrivateKey, Transaction};
 use contact::client::Contact;
@@ -8,10 +11,6 @@ use futures::future::join_all;
 use rand::Rng;
 use web30::{client::Web3, types::SendTxOption};
 
-use crate::TOTAL_TIMEOUT;
-use crate::{one_eth, MINER_PRIVATE_KEY};
-use crate::{MINER_ADDRESS, OPERATION_TIMEOUT};
-
 /// This overly complex function primarily exists to parallelize the sending of Eth to the
 /// orchestrators, waiting for these there transactions takes up nearly a minute of test time
 /// and it seemed like low hanging fruit. It in fact was not, mostly because we are sending
@@ -19,14 +18,15 @@ use crate::{MINER_ADDRESS, OPERATION_TIMEOUT};
 /// nonce given the other transactions in flight. This means we need to build the transactions
 /// ourselves with that info right here. If you have to modify this seriously consider
 /// just calling send_one_eth in a loop.
-pub async fn send_eth_to_orchestrators(keys: &[(CosmosPrivateKey, EthPrivateKey)], web30: &Web3) {
+pub async fn send_eth_to_orchestrators(keys: &[ValidatorKeys], web30: &Web3) {
     let balance = web30.eth_get_balance(*MINER_ADDRESS).await.unwrap();
     info!(
         "Sending orchestrators 100 eth to pay for fees miner has {} ETH",
         balance / one_eth()
     );
     let mut eth_addresses = Vec::new();
-    for (_, e_key) in keys {
+    for k in keys {
+        let e_key = k.eth_key;
         eth_addresses.push(e_key.to_public_key().unwrap())
     }
     let net_version = web30.net_version().await.unwrap();
@@ -207,4 +207,14 @@ pub struct BridgeUserKey {
     // the location tokens are sent back to on Ethereum
     pub eth_dest_address: EthAddress,
     pub eth_dest_key: EthPrivateKey,
+}
+
+pub struct ValidatorKeys {
+    /// The Ethereum key used by this validator to sign Gravity bridge messages
+    pub eth_key: EthPrivateKey,
+    /// The Orchestrator key used by this validator to submit oracle messages and signatures
+    /// to the cosmos chain
+    pub orch_key: CosmosPrivateKey,
+    /// The validator key used by this validator to actually sign and produce blocks
+    pub validator_key: CosmosPrivateKey,
 }

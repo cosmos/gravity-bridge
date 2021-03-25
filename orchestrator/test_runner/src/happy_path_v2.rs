@@ -2,20 +2,22 @@
 
 use std::time::{Duration, Instant};
 
-use crate::get_fee;
 use crate::get_test_token_name;
 use crate::utils::get_user_key;
 use crate::utils::send_one_eth;
+use crate::{get_fee, utils::ValidatorKeys};
 use crate::{COSMOS_NODE_GRPC, TOTAL_TIMEOUT};
 use actix::Arbiter;
 use clarity::Address as EthAddress;
-use clarity::{PrivateKey as EthPrivateKey, Uint256};
+use clarity::Uint256;
 use contact::client::Contact;
 use cosmos_gravity::send::{send_request_batch, send_to_eth};
-use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
+use deep_space::coin::Coin;
 use ethereum_gravity::{deploy_erc20::deploy_erc20, utils::get_event_nonce};
+use gravity_proto::gravity::{
+    query_client::QueryClient as GravityQueryClient, QueryDenomToErc20Request,
+};
 use orchestrator::main_loop::orchestrator_main_loop;
-use gravity_proto::gravity::{query_client::QueryClient as GravityQueryClient, QueryDenomToErc20Request};
 use tokio::time::delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -24,15 +26,18 @@ pub async fn happy_path_test_v2(
     web30: &Web3,
     grpc_client: GravityQueryClient<Channel>,
     contact: &Contact,
-    keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
+    keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
     validator_out: bool,
 ) {
     let mut grpc_client = grpc_client;
-    let starting_event_nonce =
-        get_event_nonce(gravity_address, keys[0].1.to_public_key().unwrap(), web30)
-            .await
-            .unwrap();
+    let starting_event_nonce = get_event_nonce(
+        gravity_address,
+        keys[0].eth_key.to_public_key().unwrap(),
+        web30,
+    )
+    .await
+    .unwrap();
 
     let token_to_send_to_eth = "footoken".to_string();
     let token_to_send_to_eth_display_name = "mfootoken".to_string();
@@ -45,15 +50,18 @@ pub async fn happy_path_test_v2(
         gravity_address,
         web30,
         Some(TOTAL_TIMEOUT),
-        keys[0].1,
+        keys[0].eth_key,
         vec![],
     )
     .await
     .unwrap();
-    let ending_event_nonce =
-        get_event_nonce(gravity_address, keys[0].1.to_public_key().unwrap(), web30)
-            .await
-            .unwrap();
+    let ending_event_nonce = get_event_nonce(
+        gravity_address,
+        keys[0].eth_key.to_public_key().unwrap(),
+        web30,
+    )
+    .await
+    .unwrap();
 
     assert!(starting_event_nonce != ending_event_nonce);
     info!(
@@ -68,14 +76,14 @@ pub async fn happy_path_test_v2(
 
     // start orchestrators
     #[allow(clippy::explicit_counter_loop)]
-    for (c_key, e_key) in keys.iter() {
+    for k in keys.iter() {
         info!("Spawning Orchestrator");
         let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
         // we have only one actual futures executor thread (see the actix runtime tag on our main function)
         // but that will execute all the orchestrators in our test in parallel
         Arbiter::spawn(orchestrator_main_loop(
-            *c_key,
-            *e_key,
+            k.orch_key,
+            k.eth_key,
             web30.clone(),
             contact.clone(),
             grpc_client,
@@ -137,7 +145,7 @@ pub async fn happy_path_test_v2(
             send_to_user_coin.clone(),
             get_fee(),
             user.cosmos_address,
-            keys[0].0,
+            keys[0].validator_key,
             None,
             None,
             None,
@@ -183,9 +191,14 @@ pub async fn happy_path_test_v2(
         amount_to_bridge, token_to_send_to_eth
     );
 
-    let res = send_request_batch(keys[0].0, token_to_send_to_eth.clone(), get_fee(), contact)
-        .await
-        .unwrap();
+    let res = send_request_batch(
+        keys[0].validator_key,
+        token_to_send_to_eth.clone(),
+        get_fee(),
+        contact,
+    )
+    .await
+    .unwrap();
     info!("Batch request res {:?}", res);
     info!("Sent batch request to move things along");
 
