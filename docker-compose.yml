@@ -37,6 +37,15 @@ services:
     depends_on:
       - ethereum
       - peggy_0
+    environment:
+      - COSMOS_KEY=${COSMOS_KEY}
+      - COSMOS_PHRASE=${COSMOS_PHRASE}
+      - ETH_PRIVATE_KEY=${ETH_PRIVATE_KEY}
+      - COSMOS_RPC=${COSMOS_RPC}
+      - COSMOS_GRPC=${COSMOS_GRPC}
+      - ETH_RPC=${ETH_RPC}
+      - DENOM=${DENOM}
+      - CONTRACT_ADDR=${CONTRACT_ADDR}
 
   peggy_1:
     build:
@@ -55,6 +64,15 @@ services:
     depends_on:
       - ethereum
       - peggy_1
+    environment:
+      - COSMOS_KEY=${COSMOS_KEY}
+      - COSMOS_PHRASE=${COSMOS_PHRASE}
+      - ETH_PRIVATE_KEY=${ETH_PRIVATE_KEY}
+      - COSMOS_RPC=${COSMOS_RPC}
+      - COSMOS_GRPC=${COSMOS_GRPC}
+      - ETH_RPC=${ETH_RPC}
+      - DENOM=${DENOM}
+      - CONTRACT_ADDR=${CONTRACT_ADDR}
 
   peggy_2:
     build:
@@ -73,6 +91,15 @@ services:
     depends_on:
       - ethereum
       - peggy_2
+    environment:
+      - COSMOS_KEY=${COSMOS_KEY}
+      - COSMOS_PHRASE=${COSMOS_PHRASE}
+      - ETH_PRIVATE_KEY=${ETH_PRIVATE_KEY}
+      - COSMOS_RPC=${COSMOS_RPC}
+      - COSMOS_GRPC=${COSMOS_GRPC}
+      - ETH_RPC=${ETH_RPC}
+      - DENOM=${DENOM}
+      - CONTRACT_ADDR=${CONTRACT_ADDR}
 
   peggy_3:
     build:
@@ -91,3 +118,12 @@ services:
     depends_on:
       - ethereum
       - peggy_3
+    environment:
+      - COSMOS_KEY=${COSMOS_KEY}
+      - COSMOS_PHRASE=${COSMOS_PHRASE}
+      - ETH_PRIVATE_KEY=${ETH_PRIVATE_KEY}
+      - COSMOS_RPC=${COSMOS_RPC}
+      - COSMOS_GRPC=${COSMOS_GRPC}
+      - ETH_RPC=${ETH_RPC}
+      - DENOM=${DENOM}
+      - CONTRACT_ADDR=${CONTRACT_ADDR}
