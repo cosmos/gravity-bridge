@@ -1,4 +1,4 @@
-cargo run --release orchestrator \
+cargo run --release orchestrator -- \
     --cosmos-phrase="\"${COSMOS_PHRASE}\"" \
     --ethereum-key="\"${ETH_PRIVATE_KEY}\"" \
     --cosmos-legacy-rpc="\"${COSMOS_RPC}\"" \
