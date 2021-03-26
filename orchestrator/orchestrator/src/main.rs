@@ -51,7 +51,7 @@ lazy_static! {
     "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-legacy-rpc=<url> --cosmos-grpc=<url> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr>
         Options:
             -h --help                    Show this screen.
-            --cosmos-key=<ckey>          The Cosmos private key of the validator
+            --cosmos-phrase=<ckey>       The mnenmonic of the Cosmos account key of the validator
             --ethereum-key=<ekey>        The Ethereum private key of the validator
             --cosmos-legacy-rpc=<curl>   The Cosmos RPC url, usually the validator
             --cosmos-grpc=<gurl>         The Cosmos gRPC url, usually the validator

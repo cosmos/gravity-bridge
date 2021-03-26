@@ -97,7 +97,7 @@ lazy_static! {
         {} deploy-erc20-representation --cosmos-grpc=<url> --cosmos-denom=<denom> --ethereum-key=<key> --ethereum-rpc=<url> --contract-address=<addr> --erc20-name=<name> --erc20-symbol=<symbol> --erc20-decimals=<decimals>
         Options:
             -h --help                   Show this screen.
-            --cosmos-key=<ckey>         The Cosmos private key of the sender
+            --cosmos-phrase=<ckey>      The mnenmonic of the Cosmos account key of the validator
             --ethereum-key=<ekey>       The Ethereum private key of the sender
             --cosmos-legacy-rpc=<curl>  The Cosmos Legacy RPC url, this will need to be manually enabled
             --cosmos-grpc=<curl>         The Cosmos gRPC url
