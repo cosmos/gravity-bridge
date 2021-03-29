@@ -5,7 +5,7 @@
 CURRENT_WORKING_DIR=$(pwd)
 CHAINID="testchain"
 CHAINDIR="$CURRENT_WORKING_DIR/testdata"
-PEGGY=peggy
+gravity=peggy
 #FED=oracle-feeder
 home_dir="$CHAINDIR/$CHAINID"
 
@@ -25,10 +25,10 @@ home_dir="$CHAINDIR/$CHAINID"
 docker-compose down
 rm -r $CHAINDIR
 
-n0name="peggy_0"
-n1name="peggy_1"
-n2name="peggy_2"
-n3name="peggy_3"
+n0name="gravity0"
+n1name="gravity1"
+n2name="gravity2"
+n3name="gravity3"
 
 # Folders for nodes
 n0dir="$home_dir/$n0name"
@@ -67,38 +67,38 @@ if [[ -d $SIGNER_DATA ]] && [[ ! "$1" == "skip" ]]; then
   fi
 fi
 
-echo "Creating 4x $PEGGY validators with chain-id=$CHAINID..."
+echo "Creating 4x $gravity validators with chain-id=$CHAINID..."
 echo "Initializing genesis files"
 
 # Build genesis file incl account for passed address
 coins="100000000000stake,100000000000samoleans"
 
 # Initialize the 3 home directories and add some keys
-$PEGGY $home0 $cid init n0 &>/dev/null
-$PEGGY $home0 keys add val $kbt --output json | jq . >> $n0dir/validator_key.json
-$PEGGY $home1 $cid init n1 &>/dev/null
-$PEGGY $home1 keys add val $kbt --output json | jq . >> $n1dir/validator_key.json
-$PEGGY $home2 $cid init n2 &>/dev/null
-$PEGGY $home2 keys add val $kbt --output json | jq . >> $n2dir/validator_key.json
-$PEGGY $home3 $cid init n3 &>/dev/null
-$PEGGY $home3 keys add val $kbt --output json | jq . >> $n3dir/validator_key.json
+$gravity $home0 $cid init n0 &>/dev/null
+$gravity $home0 keys add val $kbt --output json | jq . >> $n0dir/validator_key.json
+$gravity $home1 $cid init n1 &>/dev/null
+$gravity $home1 keys add val $kbt --output json | jq . >> $n1dir/validator_key.json
+$gravity $home2 $cid init n2 &>/dev/null
+$gravity $home2 keys add val $kbt --output json | jq . >> $n2dir/validator_key.json
+$gravity $home3 $cid init n3 &>/dev/null
+$gravity $home3 keys add val $kbt --output json | jq . >> $n3dir/validator_key.json
 
 
 echo "Adding validator addresses to genesis files"
-$PEGGY $home0 add-genesis-account $($PEGGY $home0 keys show val -a $kbt) $coins &>/dev/null
-#$PEGGY $home0 add-genesis-account $($FED $home0 keys show feeder) $coins &>/dev/null
-$PEGGY $home0 add-genesis-account $($PEGGY $home1 keys show val -a $kbt) $coins &>/dev/null
-#$PEGGY $home0 add-genesis-account $($FED $home1 keys show feeder) $coins &>/dev/null
-$PEGGY $home0 add-genesis-account $($PEGGY $home2 keys show val -a $kbt) $coins &>/dev/null
-#$PEGGY $home0 add-genesis-account $($FED $home2 keys show feeder) $coins &>/dev/null
-$PEGGY $home0 add-genesis-account $($PEGGY $home3 keys show val -a $kbt) $coins &>/dev/null
-#$PEGGY $home0 add-genesis-account $($FED $home3 keys show feeder) $coins &>/dev/null
+$gravity $home0 add-genesis-account $($gravity $home0 keys show val -a $kbt) $coins &>/dev/null
+#$gravity $home0 add-genesis-account $($FED $home0 keys show feeder) $coins &>/dev/null
+$gravity $home0 add-genesis-account $($gravity $home1 keys show val -a $kbt) $coins &>/dev/null
+#$gravity $home0 add-genesis-account $($FED $home1 keys show feeder) $coins &>/dev/null
+$gravity $home0 add-genesis-account $($gravity $home2 keys show val -a $kbt) $coins &>/dev/null
+#$gravity $home0 add-genesis-account $($FED $home2 keys show feeder) $coins &>/dev/null
+$gravity $home0 add-genesis-account $($gravity $home3 keys show val -a $kbt) $coins &>/dev/null
+#$gravity $home0 add-genesis-account $($FED $home3 keys show feeder) $coins &>/dev/null
 
 echo "Generating orchestrator keys"
-$PEGGY $home0 keys add --dry-run=true --output=json orch | jq . >> $n0dir/orchestrator_key.json
-$PEGGY $home1 keys add --dry-run=true --output=json orch | jq . >> $n1dir/orchestrator_key.json
-$PEGGY $home2 keys add --dry-run=true --output=json orch | jq . >> $n2dir/orchestrator_key.json
-$PEGGY $home3 keys add --dry-run=true --output=json orch | jq . >> $n3dir/orchestrator_key.json
+$gravity $home0 keys add --dry-run=true --output=json orch | jq . >> $n0dir/orchestrator_key.json
+$gravity $home1 keys add --dry-run=true --output=json orch | jq . >> $n1dir/orchestrator_key.json
+$gravity $home2 keys add --dry-run=true --output=json orch | jq . >> $n2dir/orchestrator_key.json
+$gravity $home3 keys add --dry-run=true --output=json orch | jq . >> $n3dir/orchestrator_key.json
 
 echo "Adding orchestrator keys to genesis"
 n0orchKey="$(jq .address $n0dir/orchestrator_key.json)"
@@ -120,22 +120,22 @@ cp $n0cfgDir/genesis.json $n2cfgDir/genesis.json
 cp $n0cfgDir/genesis.json $n3cfgDir/genesis.json
 
 echo "Generating ethereum keys"
-$PEGGY $home0 eth_keys add --output=json --dry-run=true | jq . >> $n0dir/eth_key.json
-$PEGGY $home1 eth_keys add --output=json --dry-run=true | jq . >> $n1dir/eth_key.json
-$PEGGY $home2 eth_keys add --output=json --dry-run=true | jq . >> $n2dir/eth_key.json
-$PEGGY $home3 eth_keys add --output=json --dry-run=true | jq . >> $n3dir/eth_key.json
+$gravity $home0 eth_keys add --output=json --dry-run=true | jq . >> $n0dir/eth_key.json
+$gravity $home1 eth_keys add --output=json --dry-run=true | jq . >> $n1dir/eth_key.json
+$gravity $home2 eth_keys add --output=json --dry-run=true | jq . >> $n2dir/eth_key.json
+$gravity $home3 eth_keys add --output=json --dry-run=true | jq . >> $n3dir/eth_key.json
 
 echo "Creating gentxs"
-$PEGGY $home0 gentx --ip $n0name val 100000000000stake $(jq -r .address $n0dir/eth_key.json) $(jq -r .address $n0dir/orchestrator_key.json) $kbt $cid &>/dev/null
-$PEGGY $home1 gentx --ip $n1name val 100000000000stake $(jq -r .address $n1dir/eth_key.json) $(jq -r .address $n1dir/orchestrator_key.json) $kbt $cid &>/dev/null
-$PEGGY $home2 gentx --ip $n2name val 100000000000stake $(jq -r .address $n2dir/eth_key.json) $(jq -r .address $n2dir/orchestrator_key.json) $kbt $cid &>/dev/null
-$PEGGY $home3 gentx --ip $n3name val 100000000000stake $(jq -r .address $n3dir/eth_key.json) $(jq -r .address $n3dir/orchestrator_key.json) $kbt $cid &>/dev/null
+$gravity $home0 gentx --ip $n0name val 100000000000stake $(jq -r .address $n0dir/eth_key.json) $(jq -r .address $n0dir/orchestrator_key.json) $kbt $cid &>/dev/null
+$gravity $home1 gentx --ip $n1name val 100000000000stake $(jq -r .address $n1dir/eth_key.json) $(jq -r .address $n1dir/orchestrator_key.json) $kbt $cid &>/dev/null
+$gravity $home2 gentx --ip $n2name val 100000000000stake $(jq -r .address $n2dir/eth_key.json) $(jq -r .address $n2dir/orchestrator_key.json) $kbt $cid &>/dev/null
+$gravity $home3 gentx --ip $n3name val 100000000000stake $(jq -r .address $n3dir/eth_key.json) $(jq -r .address $n3dir/orchestrator_key.json) $kbt $cid &>/dev/null
 
 echo "Collecting gentxs in $n0name"
 cp $n1cfgDir/gentx/*.json $n0cfgDir/gentx/
 cp $n2cfgDir/gentx/*.json $n0cfgDir/gentx/
 cp $n3cfgDir/gentx/*.json $n0cfgDir/gentx/
-$PEGGY $home0 collect-gentxs &>/dev/null
+$gravity $home0 collect-gentxs &>/dev/null
 
 echo "Distributing genesis file into $n1name, $n2name, $n3name"
 cp $n0cfgDir/genesis.json $n1cfgDir/genesis.json
@@ -178,20 +178,20 @@ fsed 's#external_address = ""#external_address = "tcp://'$n3name':26656"#g' $n3c
 fsed 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n3cfg
 
 echo "Setting peers"
-peer0="$($PEGGY $home0 tendermint show-node-id)@$n0name:26656"
-peer1="$($PEGGY $home1 tendermint show-node-id)@$n1name:26656"
-peer2="$($PEGGY $home2 tendermint show-node-id)@$n2name:26656"
-peer3="$($PEGGY $home3 tendermint show-node-id)@$n3name:26656"
+peer0="$($gravity $home0 tendermint show-node-id)@$n0name:26656"
+peer1="$($gravity $home1 tendermint show-node-id)@$n1name:26656"
+peer2="$($gravity $home2 tendermint show-node-id)@$n2name:26656"
+peer3="$($gravity $home3 tendermint show-node-id)@$n3name:26656"
 # First node has peers already set when collecting gentxs
 fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer2','$peer3'"#g' $n1cfg
 fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer1','$peer3'"#g' $n2cfg
 fsed 's#persistent_peers = ""#persistent_peers = "'$peer0','$peer1','$peer2'"#g' $n3cfg
 
 echo "Writing start commands"
-echo "$PEGGY --home home start --pruning=nothing > home.n0.log" >> $n0dir/startup.sh
-echo "$PEGGY --home home start --pruning=nothing > home.n1.log" >> $n1dir/startup.sh
-echo "$PEGGY --home home start --pruning=nothing > home.n2.log" >> $n2dir/startup.sh
-echo "$PEGGY --home home start --pruning=nothing > home.n3.log" >> $n3dir/startup.sh
+echo "$gravity --home home start --pruning=nothing > home.n0.log" >> $n0dir/startup.sh
+echo "$gravity --home home start --pruning=nothing > home.n1.log" >> $n1dir/startup.sh
+echo "$gravity --home home start --pruning=nothing > home.n2.log" >> $n2dir/startup.sh
+echo "$gravity --home home start --pruning=nothing > home.n3.log" >> $n3dir/startup.sh
 chmod +x $home_dir/*/startup.sh
 
 echo "Building ethereum and validator images"
@@ -204,27 +204,19 @@ docker-compose start ethereum $n0name $n1name $n2name $n3name &>/dev/null
 echo "Delegating keys"
 
 echo "Waiting for cosmos cluster to sync"
-while $(curl http://$peggy_0:26657/status | jq .result.sync_info.catching_up)
+while $(curl http://localhost:26657/status | jq .result.sync_info.catching_up)
 do
     printf '.'
     sleep 5
 done
 
 echo "Applying contracts"
-contractAddress=$(docker-compose up contract_deployer | grep "Peggy deployed at Address" | grep -Eow '0x[0-9a-fA-F]{40}')
+contractAddress=$(docker-compose up contract_deployer | grep "gravity deployed at Address" | grep -Eow '0x[0-9a-fA-F]{40}')
 echo "Contract address: $contractAddress"
 
 echo "Gathering keys for orchestrators"
-#--cosmos-key=<ckey>          The Cosmos private key of the validator
-#            --ethereum-key=<ekey>        The Ethereum private key of the validator
-#            --cosmos-legacy-rpc=<curl>   The Cosmos RPC url, usually the validator
-#            --cosmos-grpc=<gurl>         The Cosmos gRPC url, usually the validator
-#            --ethereum-rpc=<eurl>        The Ethereum RPC url, should be a self hosted node
-#            --fees=<denom>               The Cosmos Denom in which to pay Cosmos chain fees
-#            --contract-address=<addr>    The Ethereum contract address for Peggy, this is temporary
-
-echo COSMOS_GRPC="http://$n0name:9090" >> $n0dir/orchestrator.env
-echo COSMOS_RPC="http://$n0name:26657" >> $n0dir/orchestrator.env
+echo COSMOS_GRPC="http://$n0name:9090/" >> $n0dir/orchestrator.env
+echo COSMOS_RPC="http://$n0name:26657/" >> $n0dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n0cfgDir/priv_validator_key.json) >> $n0dir/orchestrator.env
 echo COSMOS_PHRASE=$(jq .mnemonic $n0dir/validator_key.json) >> $n0dir/orchestrator.env
 echo DENOM=stake >> $n0dir/orchestrator.env
@@ -232,8 +224,8 @@ echo ETH_RPC=http://ethereum:8545 >> $n0dir/orchestrator.env
 echo ETH_PRIVATE_KEY=$(jq .private_key $n0dir/eth_key.json) >> $n0dir/orchestrator.env
 echo CONTRACT_ADDR=$contractAddress >> $n0dir/orchestrator.env
 
-echo COSMOS_GRPC="http://$n1name:9090" >> $n1dir/orchestrator.env
-echo COSMOS_RPC="http://$n1name:26657" >> $n1dir/orchestrator.env
+echo COSMOS_GRPC="http://$n1name:9090/" >> $n1dir/orchestrator.env
+echo COSMOS_RPC="http://$n1name:26657/" >> $n1dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n1cfgDir/priv_validator_key.json) >> $n1dir/orchestrator.env
 echo COSMOS_PHRASE=$(jq .mnemonic $n1dir/validator_key.json) >> $n1dir/orchestrator.env
 echo DENOM=stake >> $n1dir/orchestrator.env
@@ -241,8 +233,8 @@ echo ETH_RPC=http://ethereum:8545 >> $n1dir/orchestrator.env
 echo ETH_PRIVATE_KEY=$(jq .private_key $n1dir/eth_key.json) >> $n1dir/orchestrator.env
 echo CONTRACT_ADDR=$contractAddress >> $n1dir/orchestrator.env
 
-echo COSMOS_GRPC="http://$n2name:9090" >> $n2dir/orchestrator.env
-echo COSMOS_RPC="http://$n2name:26657" >> $n2dir/orchestrator.env
+echo COSMOS_GRPC="http://$n2name:9090/" >> $n2dir/orchestrator.env
+echo COSMOS_RPC="http://$n2name:26657/" >> $n2dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n2cfgDir/priv_validator_key.json) >> $n2dir/orchestrator.env
 echo COSMOS_PHRASE=$(jq .mnemonic $n2dir/validator_key.json) >> $n2dir/orchestrator.env
 echo DENOM=stake >> $n2dir/orchestrator.env
@@ -250,8 +242,8 @@ echo ETH_RPC=http://ethereum:8545 >> $n2dir/orchestrator.env
 echo ETH_PRIVATE_KEY=$(jq .private_key $n2dir/eth_key.json) >> $n2dir/orchestrator.env
 echo CONTRACT_ADDR=$contractAddress >> $n2dir/orchestrator.env
 
-echo COSMOS_GRPC="http://$n3name:9090" >> $n3dir/orchestrator.env
-echo COSMOS_RPC="http://$n3name:26657" >> $n3dir/orchestrator.env
+echo COSMOS_GRPC="http://$n3name:9090/" >> $n3dir/orchestrator.env
+echo COSMOS_RPC="http://$n3name:26657/" >> $n3dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n3cfgDir/priv_validator_key.json) >> $n3dir/orchestrator.env
 echo COSMOS_PHRASE=$(jq .mnemonic $n3dir/validator_key.json) >> $n3dir/orchestrator.env
 echo DENOM=stake >> $n3dir/orchestrator.env
@@ -260,19 +252,19 @@ echo ETH_PRIVATE_KEY=$(jq .private_key $n3dir/eth_key.json) >> $n3dir/orchestrat
 echo CONTRACT_ADDR=$contractAddress >> $n3dir/orchestrator.env
 
 echo "Building orchestrators"
-docker-compose --env-file $n0dir/orchestrator.env build orchestrator_0
-docker-compose --env-file $n1dir/orchestrator.env build orchestrator_1
-docker-compose --env-file $n2dir/orchestrator.env build orchestrator_2
-docker-compose --env-file $n3dir/orchestrator.env build orchestrator_3
+docker-compose --env-file $n0dir/orchestrator.env build orchestrator0
+docker-compose --env-file $n1dir/orchestrator.env build orchestrator1
+docker-compose --env-file $n2dir/orchestrator.env build orchestrator2
+docker-compose --env-file $n3dir/orchestrator.env build orchestrator3
 
 echo "Deploying orchestrators"
-docker-compose --env-file $n0dir/orchestrator.env up --no-start orchestrator_0
-docker-compose --env-file $n0dir/orchestrator.env start orchestrator_0
-docker-compose --env-file $n1dir/orchestrator.env up --no-start orchestrator_1
-docker-compose --env-file $n1dir/orchestrator.env start orchestrator_1
-docker-compose --env-file $n2dir/orchestrator.env up --no-start orchestrator_2
-docker-compose --env-file $n2dir/orchestrator.env start orchestrator_2
-docker-compose --env-file $n3dir/orchestrator.env up --no-start orchestrator_3
-docker-compose --env-file $n3dir/orchestrator.env start orchestrator_3
+docker-compose --env-file $n0dir/orchestrator.env up --no-start orchestrator0
+docker-compose --env-file $n0dir/orchestrator.env start orchestrator0
+docker-compose --env-file $n1dir/orchestrator.env up --no-start orchestrator1
+docker-compose --env-file $n1dir/orchestrator.env start orchestrator1
+docker-compose --env-file $n2dir/orchestrator.env up --no-start orchestrator2
+docker-compose --env-file $n2dir/orchestrator.env start orchestrator2
+docker-compose --env-file $n3dir/orchestrator.env up --no-start orchestrator3
+docker-compose --env-file $n3dir/orchestrator.env start orchestrator3
 
 echo "Run tests"

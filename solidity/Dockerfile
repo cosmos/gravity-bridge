@@ -11,7 +11,7 @@ RUN npm run typechain
 
 CMD npx ts-node \
     contract-deployer.ts \
-    --cosmos-node="http://peggy_0:26657" \
+    --cosmos-node="http://gravity0:26657" \
     --eth-node="http://ethereum:8545" \
     --eth-privkey="0xb1bab011e03a9862664706fc3bbaa1b16651528e5f0e7fbfcbfdd8be302a13e7" \
     --contract=artifacts/contracts/Peggy.sol/Peggy.json \

@@ -14,14 +14,14 @@ services:
       dockerfile: ./Dockerfile
     depends_on:
       - ethereum
-      - peggy_0
+      - gravity0
 
-  peggy_0:
+  gravity0:
     build:
       context: ./module
       dockerfile: ./Dockerfile
     volumes:
-      - ./testdata/testchain/peggy_0:/root/home
+      - ./testdata/testchain/gravity0:/root/home
     depends_on:
       - ethereum
     ports:
@@ -30,13 +30,13 @@ services:
       - "1317:1317"
       - "9090:9090"
 
-  orchestrator_0:
+  orchestrator0:
     build:
       context: ./orchestrator
       dockerfile: ./Dockerfile
     depends_on:
       - ethereum
-      - peggy_0
+      - gravity0
     environment:
       - COSMOS_KEY=${COSMOS_KEY}
       - COSMOS_PHRASE=${COSMOS_PHRASE}
@@ -46,24 +46,25 @@ services:
       - ETH_RPC=${ETH_RPC}
       - DENOM=${DENOM}
       - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - RUST_BACKTRACE=1
 
-  peggy_1:
+  gravity1:
     build:
       context: ./module
       dockerfile: ./Dockerfile
     volumes:
-      - ./testdata/testchain/peggy_1:/root/home
+      - ./testdata/testchain/gravity1:/root/home
     depends_on:
       - ethereum
-      - peggy_0
+      - gravity0
 
-  orchestrator_1:
+  orchestrator1:
     build:
       context: ./orchestrator
       dockerfile: ./Dockerfile
     depends_on:
       - ethereum
-      - peggy_1
+      - gravity1
     environment:
       - COSMOS_KEY=${COSMOS_KEY}
       - COSMOS_PHRASE=${COSMOS_PHRASE}
@@ -73,24 +74,25 @@ services:
       - ETH_RPC=${ETH_RPC}
       - DENOM=${DENOM}
       - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - RUST_BACKTRACE=1
 
-  peggy_2:
+  gravity2:
     build:
       context: ./module
       dockerfile: ./Dockerfile
     volumes:
-      - ./testdata/testchain/peggy_2:/root/home
+      - ./testdata/testchain/gravity2:/root/home
     depends_on:
       - ethereum
-      - peggy_0
+      - gravity0
 
-  orchestrator_2:
+  orchestrator2:
     build:
       context: ./orchestrator
       dockerfile: ./Dockerfile
     depends_on:
       - ethereum
-      - peggy_2
+      - gravity2
     environment:
       - COSMOS_KEY=${COSMOS_KEY}
       - COSMOS_PHRASE=${COSMOS_PHRASE}
@@ -100,24 +102,25 @@ services:
       - ETH_RPC=${ETH_RPC}
       - DENOM=${DENOM}
       - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - RUST_BACKTRACE=1
 
-  peggy_3:
+  gravity3:
     build:
       context: ./module
       dockerfile: ./Dockerfile
     volumes:
-      - ./testdata/testchain/peggy_3:/root/home
+      - ./testdata/testchain/gravity3:/root/home
     depends_on:
       - ethereum
-      - peggy_0
+      - gravity0
 
-  orchestrator_3:
+  orchestrator3:
     build:
       context: ./orchestrator
       dockerfile: ./Dockerfile
     depends_on:
       - ethereum
-      - peggy_3
+      - gravity3
     environment:
       - COSMOS_KEY=${COSMOS_KEY}
       - COSMOS_PHRASE=${COSMOS_PHRASE}
@@ -127,3 +130,4 @@ services:
       - ETH_RPC=${ETH_RPC}
       - DENOM=${DENOM}
       - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - RUST_BACKTRACE=1
