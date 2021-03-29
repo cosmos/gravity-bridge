@@ -211,12 +211,13 @@ do
 done
 
 echo "Applying contracts"
-contractAddress=$(docker-compose up contract_deployer | grep "gravity deployed at Address" | grep -Eow '0x[0-9a-fA-F]{40}')
+docker-compose build contract_deployer
+contractAddress=$(docker-compose up contract_deployer | grep "Peggy deployed at Address" | grep -Eow '0x[0-9a-fA-F]{40}')
 echo "Contract address: $contractAddress"
 
 echo "Gathering keys for orchestrators"
 echo COSMOS_GRPC="http://$n0name:9090/" >> $n0dir/orchestrator.env
-echo COSMOS_RPC="http://$n0name:26657/" >> $n0dir/orchestrator.env
+echo COSMOS_RPC="http://$n0name:1317/" >> $n0dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n0cfgDir/priv_validator_key.json) >> $n0dir/orchestrator.env
 echo COSMOS_PHRASE=$(jq .mnemonic $n0dir/validator_key.json) >> $n0dir/orchestrator.env
 echo DENOM=stake >> $n0dir/orchestrator.env
@@ -225,7 +226,7 @@ echo ETH_PRIVATE_KEY=$(jq .private_key $n0dir/eth_key.json) >> $n0dir/orchestrat
 echo CONTRACT_ADDR=$contractAddress >> $n0dir/orchestrator.env
 
 echo COSMOS_GRPC="http://$n1name:9090/" >> $n1dir/orchestrator.env
-echo COSMOS_RPC="http://$n1name:26657/" >> $n1dir/orchestrator.env
+echo COSMOS_RPC="http://$n1name:1317/" >> $n1dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n1cfgDir/priv_validator_key.json) >> $n1dir/orchestrator.env
 echo COSMOS_PHRASE=$(jq .mnemonic $n1dir/validator_key.json) >> $n1dir/orchestrator.env
 echo DENOM=stake >> $n1dir/orchestrator.env
@@ -234,7 +235,7 @@ echo ETH_PRIVATE_KEY=$(jq .private_key $n1dir/eth_key.json) >> $n1dir/orchestrat
 echo CONTRACT_ADDR=$contractAddress >> $n1dir/orchestrator.env
 
 echo COSMOS_GRPC="http://$n2name:9090/" >> $n2dir/orchestrator.env
-echo COSMOS_RPC="http://$n2name:26657/" >> $n2dir/orchestrator.env
+echo COSMOS_RPC="http://$n2name:1317/" >> $n2dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n2cfgDir/priv_validator_key.json) >> $n2dir/orchestrator.env
 echo COSMOS_PHRASE=$(jq .mnemonic $n2dir/validator_key.json) >> $n2dir/orchestrator.env
 echo DENOM=stake >> $n2dir/orchestrator.env
@@ -243,7 +244,7 @@ echo ETH_PRIVATE_KEY=$(jq .private_key $n2dir/eth_key.json) >> $n2dir/orchestrat
 echo CONTRACT_ADDR=$contractAddress >> $n2dir/orchestrator.env
 
 echo COSMOS_GRPC="http://$n3name:9090/" >> $n3dir/orchestrator.env
-echo COSMOS_RPC="http://$n3name:26657/" >> $n3dir/orchestrator.env
+echo COSMOS_RPC="http://$n3name:1317/" >> $n3dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n3cfgDir/priv_validator_key.json) >> $n3dir/orchestrator.env
 echo COSMOS_PHRASE=$(jq .mnemonic $n3dir/validator_key.json) >> $n3dir/orchestrator.env
 echo DENOM=stake >> $n3dir/orchestrator.env
