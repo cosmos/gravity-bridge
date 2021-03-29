@@ -196,7 +196,7 @@ pub fn get_user_key() -> BridgeUserKey {
         eth_dest_address,
     }
 }
-
+#[derive(Debug)]
 pub struct BridgeUserKey {
     // the starting addresses that get Eth balances to send across the bridge
     pub eth_address: EthAddress,
@@ -209,6 +209,7 @@ pub struct BridgeUserKey {
     pub eth_dest_key: EthPrivateKey,
 }
 
+#[derive(Debug)]
 pub struct ValidatorKeys {
     /// The Ethereum key used by this validator to sign Gravity bridge messages
     pub eth_key: EthPrivateKey,

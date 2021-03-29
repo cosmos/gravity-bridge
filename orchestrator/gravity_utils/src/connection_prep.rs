@@ -369,12 +369,12 @@ pub async fn check_delegate_addresses(
                 exit(1);
             }
         }
-        (Err(_), Ok(_o)) => {
-            error!("Your delegate Ethereum address is incorrect, please double check you private key. If you can't locate the correct private key register your delegate keys again and use the new value");
+        (Err(e), Ok(_)) => {
+            error!("Your delegate Ethereum address is incorrect, please double check you private key. If you can't locate the correct private key register your delegate keys again and use the new value {:?}", e);
             exit(1);
         }
-        (Ok(_e), Err(_)) => {
-            error!("Your delegate Cosmos address is incorrect, please double check your phrase. If you can't locate the correct phrase register your delegate keys again and use the new value");
+        (Ok(_), Err(e)) => {
+            error!("Your delegate Cosmos address is incorrect, please double check your phrase. If you can't locate the correct phrase register your delegate keys again and use the new value {:?}", e);
             exit(1);
         }
         (Err(_), Err(_)) => {
