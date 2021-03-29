@@ -114,7 +114,7 @@ pub async fn create_rpc_connections(
             // did not work, now we check if it's localhost
             Err(e) => {
                 warn!(
-                    "Failed to access Cosmos Leagcy RPC with {:?} trying fallback options",
+                    "Failed to access Cosmos Legacy RPC with {:?} trying fallback options",
                     e
                 );
                 if legacy_rpc_url.to_lowercase().contains("localhost") {

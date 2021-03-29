@@ -54,6 +54,12 @@ n1cfg="$n1cfgDir/config.toml"
 n2cfg="$n2cfgDir/config.toml"
 n3cfg="$n3cfgDir/config.toml"
 
+# App config files for nodes
+n0appCfg="$n0cfgDir/app.toml"
+n1appCfg="$n1cfgDir/app.toml"
+n2appCfg="$n2cfgDir/app.toml"
+n3appCfg="$n3cfgDir/app.toml"
+
 # Common flags
 kbt="--keyring-backend test"
 cid="--chain-id $CHAINID"
@@ -156,6 +162,7 @@ fsed "s#\"tcp://127.0.0.1:26656\"#\"tcp://0.0.0.0:26656\"#g" $n0cfg
 fsed "s#\"tcp://127.0.0.1:26657\"#\"tcp://0.0.0.0:26657\"#g" $n0cfg
 fsed 's#addr_book_strict = true#addr_book_strict = false#g' $n0cfg
 fsed 's#external_address = ""#external_address = "tcp://'$n0name:26656'"#g' $n0cfg
+fsed 's#enable = false#enable = true#g' $n0appCfg
 
 # Change ports on n1 val
 fsed "s#\"tcp://127.0.0.1:26656\"#\"tcp://0.0.0.0:26656\"#g" $n1cfg
@@ -163,6 +170,7 @@ fsed "s#\"tcp://127.0.0.1:26657\"#\"tcp://0.0.0.0:26657\"#g" $n1cfg
 fsed 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n1cfg
 fsed 's#addr_book_strict = true#addr_book_strict = false#g' $n1cfg
 fsed 's#external_address = ""#external_address = "tcp://'$n1name':26656"#g' $n1cfg
+fsed 's#enable = false#enable = true#g' $n1appCfg
 
 # Change ports on n2 val
 fsed "s#\"tcp://127.0.0.1:26656\"#\"tcp://0.0.0.0:26656\"#g" $n2cfg
@@ -170,12 +178,14 @@ fsed "s#\"tcp://127.0.0.1:26657\"#\"tcp://0.0.0.0:26657\"#g" $n2cfg
 fsed 's#addr_book_strict = true#addr_book_strict = false#g' $n2cfg
 fsed 's#external_address = ""#external_address = "tcp://'$n2name':26656"#g' $n2cfg
 fsed 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n2cfg
+fsed 's#enable = false#enable = true#g' $n2appCfg
 
 fsed "s#\"tcp://127.0.0.1:26656\"#\"tcp://0.0.0.0:26656\"#g" $n3cfg
 fsed "s#\"tcp://127.0.0.1:26657\"#\"tcp://0.0.0.0:26657\"#g" $n3cfg
 fsed 's#addr_book_strict = true#addr_book_strict = false#g' $n3cfg
 fsed 's#external_address = ""#external_address = "tcp://'$n3name':26656"#g' $n3cfg
 fsed 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "info"#g' $n3cfg
+fsed 's#enable = false#enable = true#g' $n3appCfg
 
 echo "Setting peers"
 peer0="$($gravity $home0 tendermint show-node-id)@$n0name:26656"
@@ -217,7 +227,7 @@ echo "Contract address: $contractAddress"
 
 echo "Gathering keys for orchestrators"
 echo COSMOS_GRPC="http://$n0name:9090/" >> $n0dir/orchestrator.env
-echo COSMOS_RPC="http://$n0name:1317/" >> $n0dir/orchestrator.env
+echo COSMOS_RPC="http://$n0name:1317" >> $n0dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n0cfgDir/priv_validator_key.json) >> $n0dir/orchestrator.env
 echo COSMOS_PHRASE=$(jq .mnemonic $n0dir/validator_key.json) >> $n0dir/orchestrator.env
 echo DENOM=stake >> $n0dir/orchestrator.env
@@ -226,7 +236,7 @@ echo ETH_PRIVATE_KEY=$(jq .private_key $n0dir/eth_key.json) >> $n0dir/orchestrat
 echo CONTRACT_ADDR=$contractAddress >> $n0dir/orchestrator.env
 
 echo COSMOS_GRPC="http://$n1name:9090/" >> $n1dir/orchestrator.env
-echo COSMOS_RPC="http://$n1name:1317/" >> $n1dir/orchestrator.env
+echo COSMOS_RPC="http://$n1name:1317" >> $n1dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n1cfgDir/priv_validator_key.json) >> $n1dir/orchestrator.env
 echo COSMOS_PHRASE=$(jq .mnemonic $n1dir/validator_key.json) >> $n1dir/orchestrator.env
 echo DENOM=stake >> $n1dir/orchestrator.env
@@ -235,7 +245,7 @@ echo ETH_PRIVATE_KEY=$(jq .private_key $n1dir/eth_key.json) >> $n1dir/orchestrat
 echo CONTRACT_ADDR=$contractAddress >> $n1dir/orchestrator.env
 
 echo COSMOS_GRPC="http://$n2name:9090/" >> $n2dir/orchestrator.env
-echo COSMOS_RPC="http://$n2name:1317/" >> $n2dir/orchestrator.env
+echo COSMOS_RPC="http://$n2name:1317" >> $n2dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n2cfgDir/priv_validator_key.json) >> $n2dir/orchestrator.env
 echo COSMOS_PHRASE=$(jq .mnemonic $n2dir/validator_key.json) >> $n2dir/orchestrator.env
 echo DENOM=stake >> $n2dir/orchestrator.env
@@ -244,7 +254,7 @@ echo ETH_PRIVATE_KEY=$(jq .private_key $n2dir/eth_key.json) >> $n2dir/orchestrat
 echo CONTRACT_ADDR=$contractAddress >> $n2dir/orchestrator.env
 
 echo COSMOS_GRPC="http://$n3name:9090/" >> $n3dir/orchestrator.env
-echo COSMOS_RPC="http://$n3name:1317/" >> $n3dir/orchestrator.env
+echo COSMOS_RPC="http://$n3name:1317" >> $n3dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n3cfgDir/priv_validator_key.json) >> $n3dir/orchestrator.env
 echo COSMOS_PHRASE=$(jq .mnemonic $n3dir/validator_key.json) >> $n3dir/orchestrator.env
 echo DENOM=stake >> $n3dir/orchestrator.env
