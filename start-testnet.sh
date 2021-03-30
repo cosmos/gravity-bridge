@@ -163,6 +163,7 @@ fsed "s#\"tcp://127.0.0.1:26657\"#\"tcp://0.0.0.0:26657\"#g" $n0cfg
 fsed 's#addr_book_strict = true#addr_book_strict = false#g' $n0cfg
 fsed 's#external_address = ""#external_address = "tcp://'$n0name:26656'"#g' $n0cfg
 fsed 's#enable = false#enable = true#g' $n0appCfg
+fsed 's#swagger = false#swagger = true#g' $n0appCfg
 
 # Change ports on n1 val
 fsed "s#\"tcp://127.0.0.1:26656\"#\"tcp://0.0.0.0:26656\"#g" $n1cfg
@@ -226,6 +227,7 @@ contractAddress=$(docker-compose up contract_deployer | grep "Peggy deployed at 
 echo "Contract address: $contractAddress"
 
 echo "Gathering keys for orchestrators"
+echo VALIDATOR=$n0name >> $n0dir/orchestrator.env
 echo COSMOS_GRPC="http://$n0name:9090/" >> $n0dir/orchestrator.env
 echo COSMOS_RPC="http://$n0name:1317" >> $n0dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n0cfgDir/priv_validator_key.json) >> $n0dir/orchestrator.env
