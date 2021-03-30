@@ -2,6 +2,7 @@ PACKAGES=$(shell go list ./... | grep -v '/simulation')
 VERSION := $(shell git describe --abbrev=6 --dirty --always --tags)
 COMMIT := $(shell git log -1 --format='%H')
 DOCKER := $(shell which docker)
+TEST_DOCKER_REPO=jackzampolin/gravitytest
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 
 build_tags = netgo
@@ -64,6 +65,17 @@ lint:
 	@echo "--> Running linter"
 	@golangci-lint run
 	@go mod verify
+
+test-docker:
+	@docker build -f contrib/Dockerfile-test -t ${TEST_DOCKER_REPO}:$(shell git rev-parse --short HEAD) .
+	@docker tag ${TEST_DOCKER_REPO}:$(shell git rev-parse --short HEAD) ${TEST_DOCKER_REPO}:$(shell git rev-parse --abbrev-ref HEAD | sed 's#/#_#g')
+	@docker tag ${TEST_DOCKER_REPO}:$(shell git rev-parse --short HEAD) ${TEST_DOCKER_REPO}:latest
+
+test-docker-push: test-docker
+	@docker push ${TEST_DOCKER_REPO}:$(shell git rev-parse --short HEAD)
+	@docker push ${TEST_DOCKER_REPO}:$(shell git rev-parse --abbrev-ref HEAD | sed 's#/#_#g')
+	@docker push ${TEST_DOCKER_REPO}:latest
+
 
 ###############################################################################
 ###                           Protobuf                                    ###
