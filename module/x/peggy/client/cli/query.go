@@ -22,6 +22,7 @@ func GetQueryCmd() *cobra.Command {
 	peggyQueryCmd.AddCommand([]*cobra.Command{
 		CmdGetCurrentValset(),
 		CmdGetValsetRequest(),
+		CmdGetDelegateAddress(),
 		CmdGetValsetConfirm(),
 		CmdGetPendingValsetRequest(),
 		CmdGetPendingOutgoingTXBatchRequest(),
