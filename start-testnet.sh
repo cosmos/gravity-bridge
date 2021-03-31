@@ -212,14 +212,22 @@ echo "Starting testnet"
 docker-compose up --no-start ethereum $n0name $n1name $n2name $n3name &>/dev/null
 docker-compose start ethereum $n0name $n1name $n2name $n3name &>/dev/null
 
-echo "Delegating keys"
-
 echo "Waiting for cosmos cluster to sync"
 while $(curl http://localhost:26657/status | jq .result.sync_info.catching_up)
 do
     printf '.'
     sleep 5
 done
+
+echo "Checking validators"
+echo $gravity $home0 q staking validators
+$gravity $home0 q staking validators
+
+echo "Checking delegate keys"
+echo $gravity $home0 q peggy delegate-keys $($gravity $home0 keys show val -a $kbt --bech val)
+$gravity $home0 q peggy delegate-keys $($gravity $home0 keys show val -a $kbt --bech val)
+
+exit 0
 
 echo "Applying contracts"
 docker-compose build contract_deployer
