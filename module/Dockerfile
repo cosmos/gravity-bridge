@@ -2,13 +2,13 @@
 # > docker build -t simapp .
 #
 # Server:
-# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simapp:/root/.simapp simapp peggy init test-chain
+# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simapp:/root/.simapp simapp gravity init test-chain
 # TODO: need to set validator in genesis so start runs
-# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simapp:/root/.simapp simapp peggy start
+# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simapp:/root/.simapp simapp gravity start
 #
 # Client: (Note the simapp binary always looks at ~/.simapp we can bind to different local storage)
-# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simappcli:/root/.simapp simapp peggy keys add foo
-# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simappcli:/root/.simapp simapp peggy keys list
+# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simappcli:/root/.simapp simapp gravity keys add foo
+# > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simappcli:/root/.simapp simapp gravity keys list
 # TODO: demo connecting rest-server (or is this in server now?)
 FROM golang:alpine AS build-env
 
@@ -33,9 +33,9 @@ RUN apk add --update ca-certificates
 WORKDIR /root
 
 # Copy over binaries from the build-env
-COPY --from=build-env /go/src/github.com/althea-net/cosmos-gravity-bridge/module/build/peggy /usr/bin/peggy
+COPY --from=build-env /go/src/github.com/althea-net/cosmos-gravity-bridge/module/build/gravity /usr/bin/gravity
 
 EXPOSE 26656 26657 1317 9090
 
-# Run peggy by default
+# Run gravity by default
 CMD sh home/startup.sh

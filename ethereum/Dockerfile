@@ -4,11 +4,11 @@ RUN apk add --no-cache curl
 
 COPY testdata/testchain/ETHGenesis.json ETHGenesis.json
 
-RUN geth --identity "PeggyTestnet" \
+RUN geth --identity "GravityTestnet" \
     --nodiscover \
     --networkid 15 init ETHGenesis.json
 
-ENTRYPOINT geth --identity "PeggyTestnet" --nodiscover \
+ENTRYPOINT geth --identity "GravityTestnet" --nodiscover \
            --networkid 15 \
            --mine \
            --http \

@@ -240,7 +240,7 @@ echo ETH_RPC=http://ethereum:8545 >> $n0dir/orchestrator.env
 echo ETH_PRIVATE_KEY=$(jq .private_key $n0dir/eth_key.json) >> $n0dir/orchestrator.env
 echo CONTRACT_ADDR=$contractAddress >> $n0dir/orchestrator.env
 
-echo VALIDATOR=$n1name >> $n0dir/orchestrator.env
+echo VALIDATOR=$n1name >> $n1dir/orchestrator.env
 echo COSMOS_GRPC="http://$n1name:9090/" >> $n1dir/orchestrator.env
 echo COSMOS_RPC="http://$n1name:1317" >> $n1dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n1cfgDir/priv_validator_key.json) >> $n1dir/orchestrator.env
@@ -250,7 +250,7 @@ echo ETH_RPC=http://ethereum:8545 >> $n1dir/orchestrator.env
 echo ETH_PRIVATE_KEY=$(jq .private_key $n1dir/eth_key.json) >> $n1dir/orchestrator.env
 echo CONTRACT_ADDR=$contractAddress >> $n1dir/orchestrator.env
 
-echo VALIDATOR=$n2name >> $n0dir/orchestrator.env
+echo VALIDATOR=$n2name >> $n2dir/orchestrator.env
 echo COSMOS_GRPC="http://$n2name:9090/" >> $n2dir/orchestrator.env
 echo COSMOS_RPC="http://$n2name:1317" >> $n2dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n2cfgDir/priv_validator_key.json) >> $n2dir/orchestrator.env
@@ -260,7 +260,7 @@ echo ETH_RPC=http://ethereum:8545 >> $n2dir/orchestrator.env
 echo ETH_PRIVATE_KEY=$(jq .private_key $n2dir/eth_key.json) >> $n2dir/orchestrator.env
 echo CONTRACT_ADDR=$contractAddress >> $n2dir/orchestrator.env
 
-echo VALIDATOR=$n3name >> $n0dir/orchestrator.env
+echo VALIDATOR=$n3name >> $n3dir/orchestrator.env
 echo COSMOS_GRPC="http://$n3name:9090/" >> $n3dir/orchestrator.env
 echo COSMOS_RPC="http://$n3name:1317" >> $n3dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n3cfgDir/priv_validator_key.json) >> $n3dir/orchestrator.env

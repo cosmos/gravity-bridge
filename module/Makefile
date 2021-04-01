@@ -60,10 +60,10 @@ test:
 	@go test -mod=readonly $(PACKAGES)
 
 build-linux:
-	GOOS=linux GOARCH=amd64 go build -o build/peggy $(BUILD_FLAGS) ./cmd/peggy/main.go
+	GOOS=linux GOARCH=amd64 go build -o build/gravity $(BUILD_FLAGS) ./cmd/gravity/main.go
 
 docker-build:
-	docker build -t github.com/althea-net/peggy:latest
+	docker build -t github.com/althea-net/gravity:latest
 
 # look into .golangci.yml for enabling / disabling linters
 lint:
