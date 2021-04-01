@@ -22,13 +22,13 @@ Happy path implementations
 - For an **observation** status in Attestation the power AND count thresholds must be exceeded
 - Fraction type allows higher precision math than %. For example with 2/3
 
-A good start to follow the process would be the `x/peggy/handler_test.go` file
+A good start to follow the process would be the `x/gravity/handler_test.go` file
 
 ### Outgoing TX Pool
 
 #### Features
 
-- Unique denominator for peggy vouchers in cosmos (🚧 cut to 15 chars and without a separator due to sdk limitations in v0.38.4)
+- Unique denominator for gravity vouchers in cosmos (🚧 cut to 15 chars and without a separator due to sdk limitations in v0.38.4)
 - Voucher burning 🔥 (minting in test ⛏️ )
 - Store/ resolve bridged ETH denominator and contract
 - Persistent transaction pool

@@ -12,10 +12,10 @@ RUN cd /geth && tar -xvf * && mv /geth/**/geth /usr/bin/geth
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 # the actual source code for this repo, this **only** includes checked in files!
 # this is a bit of a pain but it does speed things up a lot
-ADD peggy.tar.gz /
+ADD gravity.tar.gz /
 # this config file allows enablement of the legacy Amino api
 ADD legacy-api-enable /
 # build steps for all codebases in this repo, must be below the add statement
-RUN pushd /peggy/orchestrator/ && PATH=$PATH:$HOME/.cargo/bin cargo build --all --release
-RUN pushd /peggy/module/ && PATH=$PATH:/usr/local/go/bin GOPROXY=https://proxy.golang.org make && PATH=$PATH:/usr/local/go/bin make install
-RUN pushd /peggy/solidity/ && npm ci
+RUN pushd /gravity/orchestrator/ && PATH=$PATH:$HOME/.cargo/bin cargo build --all --release
+RUN pushd /gravity/module/ && PATH=$PATH:/usr/local/go/bin GOPROXY=https://proxy.golang.org make && PATH=$PATH:/usr/local/go/bin make install
+RUN pushd /gravity/solidity/ && npm ci

@@ -1,4 +1,4 @@
-module github.com/althea-net/peggy/module
+module github.com/cosmos/gravity-bridge/module
 
 go 1.15
 

@@ -1,13 +1,13 @@
-//! Ethereum Event watcher watches for events such as a deposit to the Peggy Ethereum contract or a validator set update
+//! Ethereum Event watcher watches for events such as a deposit to the Gravity Ethereum contract or a validator set update
 //! or a transaction batch update. It then responds to these events by performing actions on the Cosmos chain if required
 
 use clarity::{utils::bytes_to_hex_str, Address as EthAddress, Uint256};
 use contact::client::Contact;
-use cosmos_peggy::{query::get_last_event_nonce, send::send_ethereum_claims};
+use cosmos_gravity::{query::get_last_event_nonce, send::send_ethereum_claims};
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
-use peggy_proto::peggy::query_client::QueryClient as PeggyQueryClient;
-use peggy_utils::{
-    error::PeggyError,
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::{
+    error::GravityError,
     types::{
         ERC20DeployedEvent, LogicCallExecutedEvent, SendToCosmosEvent,
         TransactionBatchExecutedEvent, ValsetUpdatedEvent,
@@ -23,12 +23,12 @@ use crate::get_with_retry::get_net_version_with_retry;
 pub async fn check_for_events(
     web3: &Web3,
     contact: &Contact,
-    grpc_client: &mut PeggyQueryClient<Channel>,
-    peggy_contract_address: EthAddress,
+    grpc_client: &mut GravityQueryClient<Channel>,
+    gravity_contract_address: EthAddress,
     our_private_key: CosmosPrivateKey,
     fee: Coin,
     starting_block: Uint256,
-) -> Result<Uint256, PeggyError> {
+) -> Result<Uint256, GravityError> {
     let our_cosmos_address = our_private_key.to_public_key().unwrap().to_address();
     let latest_block = get_block_number_with_retry(web3).await;
     let latest_block = latest_block - get_block_delay(web3).await;
@@ -37,7 +37,7 @@ pub async fn check_for_events(
         .check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
-            vec![peggy_contract_address],
+            vec![gravity_contract_address],
             vec!["SendToCosmosEvent(address,address,bytes32,uint256,uint256)"],
         )
         .await;
@@ -47,7 +47,7 @@ pub async fn check_for_events(
         .check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
-            vec![peggy_contract_address],
+            vec![gravity_contract_address],
             vec!["TransactionBatchExecutedEvent(uint256,address,uint256)"],
         )
         .await;
@@ -57,7 +57,7 @@ pub async fn check_for_events(
         .check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
-            vec![peggy_contract_address],
+            vec![gravity_contract_address],
             vec!["ValsetUpdatedEvent(uint256,address[],uint256[])"],
         )
         .await;
@@ -67,7 +67,7 @@ pub async fn check_for_events(
         .check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
-            vec![peggy_contract_address],
+            vec![gravity_contract_address],
             vec!["ERC20DeployedEvent(string,address,string,string,uint8,uint256)"],
         )
         .await;
@@ -77,7 +77,7 @@ pub async fn check_for_events(
         .check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
-            vec![peggy_contract_address],
+            vec![gravity_contract_address],
             vec!["LogicCallEvent(bytes32,uint256,bytes,uint256)"],
         )
         .await;
@@ -162,7 +162,7 @@ pub async fn check_for_events(
             // since we can't actually trust that the above txresponse is correct we have to check here
             // we may be able to trust the tx response post grpc
             if new_event_nonce == last_event_nonce {
-                return Err(PeggyError::InvalidBridgeStateError(
+                return Err(GravityError::InvalidBridgeStateError(
                     format!("Claims did not process, trying to update but still on {}, trying again in a moment, check txhash {} for errors", last_event_nonce, res.txhash),
                 ));
             } else {
@@ -172,7 +172,7 @@ pub async fn check_for_events(
         Ok(latest_block)
     } else {
         error!("Failed to get events");
-        Err(PeggyError::EthereumRestError(Web3Error::BadResponse(
+        Err(GravityError::EthereumRestError(Web3Error::BadResponse(
             "Failed to get logs!".to_string(),
         )))
     }
@@ -205,7 +205,7 @@ pub async fn get_block_delay(web3: &Web3) -> Uint256 {
         // Mainline Ethereum, Ethereum classic, or the Ropsten, Mordor testnets
         // all POW Chains
         1 | 3 | 7 => 6u8.into(),
-        // Rinkeby, Goerli, Dev, our own Peggy Ethereum testnet, and Kotti respectively
+        // Rinkeby, Goerli, Dev, our own Gravity Ethereum testnet, and Kotti respectively
         // all non-pow chains
         4 | 5 | 2018 | 15 | 6 => 0u8.into(),
         // assume the safe option (POW) where we don't know

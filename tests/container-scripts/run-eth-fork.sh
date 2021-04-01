@@ -7,5 +7,5 @@ set -eux
 # may be different
 
 export ALCHEMY_ID=$1
-pushd /peggy/solidity
+pushd /gravity/solidity
 npm run evm_fork

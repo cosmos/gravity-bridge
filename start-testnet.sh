@@ -5,7 +5,7 @@
 CURRENT_WORKING_DIR=$(pwd)
 CHAINID="testchain"
 CHAINDIR="$CURRENT_WORKING_DIR/testdata"
-gravity=peggy
+gravity=gravity
 #FED=oracle-feeder
 home_dir="$CHAINDIR/$CHAINID"
 
@@ -226,7 +226,7 @@ sleep 10
 
 echo "Applying contracts"
 docker-compose build contract_deployer
-contractAddress=$(docker-compose up contract_deployer | grep "Peggy deployed at Address" | grep -Eow '0x[0-9a-fA-F]{40}')
+contractAddress=$(docker-compose up contract_deployer | grep "Gravity deployed at Address" | grep -Eow '0x[0-9a-fA-F]{40}')
 echo "Contract address: $contractAddress"
 
 echo "Gathering keys for orchestrators"
@@ -285,13 +285,5 @@ docker-compose --env-file $n2dir/orchestrator.env up --no-start orchestrator2
 docker-compose --env-file $n2dir/orchestrator.env start orchestrator2
 docker-compose --env-file $n3dir/orchestrator.env up --no-start orchestrator3
 docker-compose --env-file $n3dir/orchestrator.env start orchestrator3
-
-echo "Checking validators"
-echo $gravity $home0 q staking validators
-$gravity $home0 q staking validators
-
-echo "Checking delegate keys"
-echo $gravity $home0 q peggy delegate-keys $($gravity $home0 keys show val -a $kbt --bech val)
-$gravity $home0 q peggy delegate-keys $($gravity $home0 keys show val -a $kbt --bech val)
 
 echo "Run tests"

@@ -580,15 +580,15 @@ dependencies = [
  "actix-rt",
  "clarity",
  "contact",
- "cosmos_peggy",
+ "cosmos_gravity",
  "deep_space",
  "docopt",
  "env_logger",
- "ethereum_peggy",
+ "ethereum_gravity",
+ "gravity_proto",
+ "gravity_utils",
  "lazy_static",
  "openssl-probe",
- "peggy_proto",
- "peggy_utils",
  "serde",
  "serde_derive",
  "tokio",
@@ -604,9 +604,9 @@ checksum = "cd51eab21ab4fd6a3bf889e2d0958c0a6e3a61ad04260325e919e652a2a62826"
 
 [[package]]
 name = "contact"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db05b618e1e787aad1f089f0e2a2638131e8541b3bf7c18348bda718a3a98885"
+checksum = "46eb2b658f7d46ac4a9737d8d69f4784796aea04b7388935d3eddd4470b883f4"
 dependencies = [
  "actix-web",
  "deep_space",
@@ -648,7 +648,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmos_peggy"
+name = "cosmos_gravity"
 version = "0.1.0"
 dependencies = [
  "actix",
@@ -656,11 +656,11 @@ dependencies = [
  "contact",
  "deep_space",
  "env_logger",
- "ethereum_peggy",
+ "ethereum_gravity",
+ "gravity_proto",
+ "gravity_utils",
  "log",
  "num256",
- "peggy_proto",
- "peggy_utils",
  "rand 0.8.0",
  "serde",
  "serde_derive",
@@ -828,14 +828,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "ethereum_peggy"
+name = "ethereum_gravity"
 version = "0.1.0"
 dependencies = [
  "clarity",
  "deep_space",
+ "gravity_utils",
  "log",
  "num256",
- "peggy_utils",
  "sha3",
  "web30",
 ]
@@ -1052,6 +1052,38 @@ name = "gimli"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
+
+[[package]]
+name = "gravity_proto"
+version = "0.1.0"
+dependencies = [
+ "cosmos-sdk-proto",
+ "prost",
+ "prost-types",
+ "tonic",
+]
+
+[[package]]
+name = "gravity_utils"
+version = "0.1.0"
+dependencies = [
+ "actix",
+ "clarity",
+ "contact",
+ "deep_space",
+ "gravity_proto",
+ "log",
+ "num-bigint 0.3.1",
+ "num256",
+ "rand 0.8.0",
+ "serde",
+ "serde_derive",
+ "sha3",
+ "tokio",
+ "tonic",
+ "url",
+ "web30",
+]
 
 [[package]]
 name = "h2"
@@ -1640,19 +1672,19 @@ dependencies = [
  "actix-rt",
  "clarity",
  "contact",
- "cosmos_peggy",
+ "cosmos_gravity",
  "deep_space",
  "docopt",
  "env_logger",
- "ethereum_peggy",
+ "ethereum_gravity",
  "futures",
+ "gravity_proto",
+ "gravity_utils",
  "lazy_static",
  "log",
  "num256",
  "openssl",
  "openssl-probe",
- "peggy_proto",
- "peggy_utils",
  "rand 0.8.0",
  "relayer",
  "serde",
@@ -1701,38 +1733,6 @@ dependencies = [
  "rand_core 0.5.1",
  "sha2",
  "subtle",
-]
-
-[[package]]
-name = "peggy_proto"
-version = "0.1.0"
-dependencies = [
- "cosmos-sdk-proto",
- "prost",
- "prost-types",
- "tonic",
-]
-
-[[package]]
-name = "peggy_utils"
-version = "0.1.0"
-dependencies = [
- "actix",
- "clarity",
- "contact",
- "deep_space",
- "log",
- "num-bigint 0.3.1",
- "num256",
- "peggy_proto",
- "rand 0.8.0",
- "serde",
- "serde_derive",
- "sha3",
- "tokio",
- "tonic",
- "url",
- "web30",
 ]
 
 [[package]]
@@ -2079,15 +2079,15 @@ dependencies = [
  "actix-rt",
  "clarity",
  "contact",
- "cosmos_peggy",
+ "cosmos_gravity",
  "deep_space",
  "docopt",
  "env_logger",
- "ethereum_peggy",
+ "ethereum_gravity",
+ "gravity_proto",
+ "gravity_utils",
  "lazy_static",
  "openssl-probe",
- "peggy_proto",
- "peggy_utils",
  "rand 0.8.0",
  "relayer",
  "serde",
@@ -2103,17 +2103,17 @@ dependencies = [
  "actix-rt",
  "clarity",
  "contact",
- "cosmos_peggy",
+ "cosmos_gravity",
  "deep_space",
  "docopt",
  "env_logger",
- "ethereum_peggy",
+ "ethereum_gravity",
+ "gravity_proto",
+ "gravity_utils",
  "lazy_static",
  "log",
  "num256",
  "openssl-probe",
- "peggy_proto",
- "peggy_utils",
  "serde",
  "serde_derive",
  "tokio",
@@ -2529,18 +2529,18 @@ dependencies = [
  "actix-web",
  "clarity",
  "contact",
- "cosmos_peggy",
+ "cosmos_gravity",
  "deep_space",
  "docopt",
  "env_logger",
- "ethereum_peggy",
+ "ethereum_gravity",
  "futures",
+ "gravity_proto",
+ "gravity_utils",
  "lazy_static",
  "log",
  "num256",
  "orchestrator",
- "peggy_proto",
- "peggy_utils",
  "rand 0.8.0",
  "serde",
  "serde_derive",
@@ -3180,9 +3180,9 @@ checksum = "7e7811dd7f9398f14cc76efd356f98f03aa30419dea46aa810d71e819fc97158"
 
 [[package]]
 name = "web30"
-version = "0.10.2"
+version = "0.10.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1492467879d37c07f4d94a2398a957693b1808e32eb077d6c64a3c2f720bcc7"
+checksum = "37550e647c01239c4ecc270420eb664935235e646874c1bc4716b6c0f4a8cc16"
 dependencies = [
  "actix",
  "actix-web",

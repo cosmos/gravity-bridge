@@ -1,0 +1,391 @@
+use crate::messages::*;
+use clarity::Address as EthAddress;
+use clarity::PrivateKey as EthPrivateKey;
+use contact::jsonrpc::error::JsonRpcError;
+use contact::types::TXSendResponse;
+use contact::{client::Contact, utils::maybe_get_optional_tx_info};
+use deep_space::address::Address;
+use deep_space::private_key::PrivateKey;
+use deep_space::stdfee::StdFee;
+use deep_space::stdsignmsg::StdSignMsg;
+use deep_space::transaction::TransactionSendType;
+use deep_space::{coin::Coin, utils::bytes_to_hex_str};
+use gravity_utils::message_signatures::{
+    encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
+};
+use gravity_utils::types::*;
+use std::collections::HashMap;
+
+/// Send a transaction updating the eth address for the sending
+/// Cosmos address. The sending Cosmos address should be a validator
+pub async fn update_gravity_delegate_addresses(
+    contact: &Contact,
+    delegate_eth_address: EthAddress,
+    delegate_cosmos_address: Address,
+    private_key: PrivateKey,
+    fee: Coin,
+) -> Result<TXSendResponse, JsonRpcError> {
+    trace!("Updating Gravity Delegate addresses");
+    let our_valoper_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address()
+        .to_bech32("cosmosvaloper")
+        .unwrap();
+    let our_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address();
+
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, &contact).await?;
+    trace!("got optional tx info");
+
+    let std_sign_msg = StdSignMsg {
+        chain_id: tx_info.chain_id,
+        account_number: tx_info.account_number,
+        sequence: tx_info.sequence,
+        fee: StdFee {
+            amount: vec![fee],
+            gas: 500_000u64.into(),
+        },
+        msgs: vec![GravityMsg::SetOrchestratorAddressMsg(
+            SetOrchestratorAddressMsg {
+                eth_address: delegate_eth_address,
+                validator: our_valoper_address,
+                orchestrator: delegate_cosmos_address,
+            },
+        )],
+        memo: String::new(),
+    };
+
+    let tx = private_key
+        .sign_std_msg(std_sign_msg, TransactionSendType::Block)
+        .unwrap();
+
+    contact.retry_on_block(tx).await
+}
+
+/// Send in a confirmation for an array of validator sets, it's far more efficient to send these
+/// as a single message
+#[allow(clippy::too_many_arguments)]
+pub async fn send_valset_confirms(
+    contact: &Contact,
+    eth_private_key: EthPrivateKey,
+    fee: Coin,
+    valsets: Vec<Valset>,
+    private_key: PrivateKey,
+    gravity_id: String,
+) -> Result<TXSendResponse, JsonRpcError> {
+    let our_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address();
+    let our_eth_address = eth_private_key.to_public_key().unwrap();
+
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+
+    let mut messages = Vec::new();
+
+    for valset in valsets {
+        trace!("Submitting signature for valset {:?}", valset);
+        let message = encode_valset_confirm(gravity_id.clone(), valset.clone());
+        let eth_signature = eth_private_key.sign_ethereum_msg(&message);
+        trace!(
+            "Sending valset update with address {} and sig {}",
+            our_eth_address,
+            bytes_to_hex_str(&eth_signature.to_bytes())
+        );
+        messages.push(GravityMsg::ValsetConfirmMsg(ValsetConfirmMsg {
+            orchestrator: our_address,
+            eth_address: our_eth_address,
+            nonce: valset.nonce.into(),
+            eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
+        }));
+    }
+
+    let std_sign_msg = StdSignMsg {
+        chain_id: tx_info.chain_id,
+        account_number: tx_info.account_number,
+        sequence: tx_info.sequence,
+        fee: StdFee {
+            amount: vec![fee],
+            gas: 500_000_000u64.into(),
+        },
+        msgs: messages,
+        memo: String::new(),
+    };
+
+    let tx = private_key
+        .sign_std_msg(std_sign_msg, TransactionSendType::Block)
+        .unwrap();
+
+    contact.retry_on_block(tx).await
+}
+
+/// Send in a confirmation for a specific transaction batch
+pub async fn send_batch_confirm(
+    contact: &Contact,
+    eth_private_key: EthPrivateKey,
+    fee: Coin,
+    transaction_batch: TransactionBatch,
+    private_key: PrivateKey,
+    gravity_id: String,
+) -> Result<TXSendResponse, JsonRpcError> {
+    let our_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address();
+    let our_eth_address = eth_private_key.to_public_key().unwrap();
+
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+
+    let batch_checkpoint = encode_tx_batch_confirm(gravity_id.clone(), transaction_batch.clone());
+    let eth_signature = eth_private_key.sign_ethereum_msg(&batch_checkpoint);
+
+    let std_sign_msg = StdSignMsg {
+        chain_id: tx_info.chain_id,
+        account_number: tx_info.account_number,
+        sequence: tx_info.sequence,
+        fee: StdFee {
+            amount: vec![fee],
+            gas: 500_000u64.into(),
+        },
+        msgs: vec![GravityMsg::ConfirmBatchMsg(ConfirmBatchMsg {
+            orchestrator: our_address,
+            token_contract: transaction_batch.token_contract,
+            eth_signer: our_eth_address,
+            nonce: transaction_batch.nonce.into(),
+            eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
+        })],
+        memo: String::new(),
+    };
+
+    let tx = private_key
+        .sign_std_msg(std_sign_msg, TransactionSendType::Block)
+        .unwrap();
+
+    contact.retry_on_block(tx).await
+}
+
+/// Send in a confirmation for a specific logic call
+pub async fn send_logic_call_confirm(
+    contact: &Contact,
+    eth_private_key: EthPrivateKey,
+    fee: Coin,
+    logic_call: LogicCall,
+    private_key: PrivateKey,
+    gravity_id: String,
+) -> Result<TXSendResponse, JsonRpcError> {
+    let our_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address();
+    let our_eth_address = eth_private_key.to_public_key().unwrap();
+
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+
+    let logic_call_checkpoint = encode_logic_call_confirm(gravity_id.clone(), logic_call.clone());
+    let eth_signature = eth_private_key.sign_ethereum_msg(&logic_call_checkpoint);
+
+    let std_sign_msg = StdSignMsg {
+        chain_id: tx_info.chain_id,
+        account_number: tx_info.account_number,
+        sequence: tx_info.sequence,
+        fee: StdFee {
+            amount: vec![fee],
+            gas: 500_000u64.into(),
+        },
+        msgs: vec![GravityMsg::ConfirmLogicCallMsg(ConfirmLogicCallMsg {
+            invalidation_id: bytes_to_hex_str(&logic_call.invalidation_id),
+            invalidation_nonce: logic_call.invalidation_nonce.into(),
+            orchestrator: our_address,
+            eth_signer: our_eth_address,
+            eth_signature: bytes_to_hex_str(&eth_signature.to_bytes()),
+        })],
+        memo: String::new(),
+    };
+
+    let tx = private_key
+        .sign_std_msg(std_sign_msg, TransactionSendType::Block)
+        .unwrap();
+
+    contact.retry_on_block(tx).await
+}
+
+pub async fn send_ethereum_claims(
+    contact: &Contact,
+    private_key: PrivateKey,
+    deposits: Vec<SendToCosmosEvent>,
+    withdraws: Vec<TransactionBatchExecutedEvent>,
+    erc20_deploys: Vec<ERC20DeployedEvent>,
+    logic_calls: Vec<LogicCallExecutedEvent>,
+    fee: Coin,
+) -> Result<TXSendResponse, JsonRpcError> {
+    let our_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address();
+
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+
+    // This sorts oracle messages by event nonce before submitting them. It's not a pretty implementation because
+    // we're missing an intermediary layer of abstraction. We could implement 'EventTrait' and then implement sort
+    // for it, but then when we go to transform 'EventTrait' objects into GravityMsg enum values we'll have all sorts
+    // of issues extracting the inner object from the TraitObject. Likewise we could implement sort of GravityMsg but that
+    // would require a truly horrendous (nearly 100 line) match statement to deal with all combinations. That match statement
+    // could be reduced by adding two traits to sort against but really this is the easiest option.
+    //
+    // We index the events by event nonce in an unordered hashmap and then play them back in order into a vec
+    let mut unordered_msgs = HashMap::new();
+    for deposit in deposits {
+        unordered_msgs.insert(
+            deposit.event_nonce.clone(),
+            GravityMsg::DepositClaimMsg(DepositClaimMsg::from_event(deposit, our_address)),
+        );
+    }
+    for withdraw in withdraws {
+        unordered_msgs.insert(
+            withdraw.event_nonce.clone(),
+            GravityMsg::WithdrawClaimMsg(WithdrawClaimMsg::from_event(withdraw, our_address)),
+        );
+    }
+    for deploy in erc20_deploys {
+        unordered_msgs.insert(
+            deploy.event_nonce.clone(),
+            GravityMsg::ERC20DeployedClaimMsg(ERC20DeployedClaimMsg::from_event(deploy, our_address)),
+        );
+    }
+    for call in logic_calls {
+        unordered_msgs.insert(
+            call.event_nonce.clone(),
+            GravityMsg::LogicCallExecutedClaim(LogicCallExecutedClaim::from_event(call, our_address)),
+        );
+    }
+    let mut keys = Vec::new();
+    for (key, _) in unordered_msgs.iter() {
+        keys.push(key);
+    }
+    keys.sort();
+
+    let mut msgs = Vec::new();
+    for i in keys {
+        msgs.push(unordered_msgs[i].clone());
+    }
+
+    let std_sign_msg = StdSignMsg {
+        chain_id: tx_info.chain_id,
+        account_number: tx_info.account_number,
+        sequence: tx_info.sequence,
+        fee: StdFee {
+            amount: vec![fee],
+            gas: 500_000_000u64.into(),
+        },
+        msgs,
+        memo: String::new(),
+    };
+
+    let tx = private_key
+        .sign_std_msg(std_sign_msg, TransactionSendType::Block)
+        .unwrap();
+
+    contact.retry_on_block(tx).await
+}
+
+/// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
+/// they will require some time to be included in a batch
+pub async fn send_to_eth(
+    private_key: PrivateKey,
+    destination: EthAddress,
+    amount: Coin,
+    fee: Coin,
+    contact: &Contact,
+) -> Result<TXSendResponse, JsonRpcError> {
+    let our_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address();
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+    if amount.denom != fee.denom {
+        return Err(JsonRpcError::BadInput(format!(
+            "{} {} is an invalid denom set for SendToEth you must pay fees in the same token your sending",
+            amount.denom, fee.denom,
+        )));
+    }
+    let balances = contact.get_balances(our_address).await.unwrap().result;
+    let mut found = false;
+    for balance in balances {
+        if balance.denom == amount.denom {
+            let total_amount = amount.amount.clone() + (fee.amount.clone() * 2u8.into());
+            if balance.amount < total_amount {
+                return Err(JsonRpcError::BadInput(format!(
+                    "Insufficient balance of {} to send {}",
+                    amount.denom, total_amount,
+                )));
+            }
+            found = true;
+        }
+    }
+    if !found {
+        return Err(JsonRpcError::BadInput(format!(
+            "No balance of {} to send",
+            amount.denom,
+        )));
+    }
+
+    let std_sign_msg = StdSignMsg {
+        chain_id: tx_info.chain_id,
+        account_number: tx_info.account_number,
+        sequence: tx_info.sequence,
+        fee: StdFee {
+            amount: vec![fee.clone()],
+            gas: 500_000u64.into(),
+        },
+        msgs: vec![GravityMsg::SendToEthMsg(SendToEthMsg {
+            sender: our_address,
+            eth_dest: destination,
+            amount,
+            bridge_fee: fee,
+        })],
+        memo: String::new(),
+    };
+
+    let tx = private_key
+        .sign_std_msg(std_sign_msg, TransactionSendType::Block)
+        .unwrap();
+
+    contact.retry_on_block(tx).await
+}
+
+pub async fn send_request_batch(
+    private_key: PrivateKey,
+    denom: String,
+    fee: Coin,
+    contact: &Contact,
+) -> Result<TXSendResponse, JsonRpcError> {
+    let our_address = private_key
+        .to_public_key()
+        .expect("Invalid private key!")
+        .to_address();
+    let tx_info = maybe_get_optional_tx_info(our_address, None, None, None, contact).await?;
+
+    let std_sign_msg = StdSignMsg {
+        chain_id: tx_info.chain_id,
+        account_number: tx_info.account_number,
+        sequence: tx_info.sequence,
+        fee: StdFee {
+            amount: vec![fee.clone()],
+            gas: 500_000_000u64.into(),
+        },
+        msgs: vec![GravityMsg::RequestBatchMsg(RequestBatchMsg {
+            denom,
+            sender: our_address,
+        })],
+        memo: String::new(),
+    };
+
+    let tx = private_key
+        .sign_std_msg(std_sign_msg, TransactionSendType::Block)
+        .unwrap();
+
+    contact.retry_on_block(tx).await
+}

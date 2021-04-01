@@ -13,10 +13,10 @@ name = "relayer"
 path = "src/main.rs"
 
 [dependencies]
-ethereum_peggy = {path = "../ethereum_peggy"}
-cosmos_peggy = {path = "../cosmos_peggy"}
-peggy_utils = {path = "../peggy_utils"}
-peggy_proto = {path = "../peggy_proto/"}
+ethereum_gravity = {path = "../ethereum_gravity"}
+cosmos_gravity = {path = "../cosmos_gravity"}
+gravity_utils = {path = "../gravity_utils"}
+gravity_proto = {path = "../gravity_proto/"}
 
 deep_space = "0.2"
 contact = "0.4"

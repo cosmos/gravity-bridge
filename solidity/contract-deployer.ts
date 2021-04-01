@@ -1,4 +1,4 @@
-import { Peggy } from "./typechain/Peggy";
+import { Gravity } from "./typechain/Gravity";
 import { TestERC20A } from "./typechain/TestERC20A";
 import { TestERC20B } from "./typechain/TestERC20B";
 import { TestERC20C } from "./typechain/TestERC20C";
@@ -18,16 +18,16 @@ const args = commandLineArgs([
   { name: "cosmos-node", type: String },
   // the Ethereum private key that will contain the gas required to pay for the contact deployment
   { name: "eth-privkey", type: String },
-  // the peggy contract .json file
+  // the gravity contract .json file
   { name: "contract", type: String },
   // test mode, if enabled this script deploys three ERC20 contracts for testing
   { name: "test-mode", type: String },
 ]);
 
 // 4. Now, the deployer script hits a full node api, gets the Eth signatures of the valset from the latest block, and deploys the Ethereum contract.
-//     - We will consider the scenario that many deployers deploy many valid peggy eth contracts.
-// 5. The deployer submits the address of the peggy contract that it deployed to Ethereum.
-//     - The peggy module checks the Ethereum chain for each submitted address, and makes sure that the peggy contract at that address is using the correct source code, and has the correct validator set.
+//     - We will consider the scenario that many deployers deploy many valid gravity eth contracts.
+// 5. The deployer submits the address of the gravity contract that it deployed to Ethereum.
+//     - The gravity module checks the Ethereum chain for each submitted address, and makes sure that the gravity contract at that address is using the correct source code, and has the correct validator set.
 type Validator = {
   power: number;
   ethereum_address: string;
@@ -117,9 +117,9 @@ async function deploy() {
     var erc20_a_path: string
     var erc20_b_path: string
     var erc20_c_path: string
-    const main_location_a = "/peggy/solidity/artifacts/contracts/TestERC20A.sol/TestERC20A.json"
-    const main_location_b = "/peggy/solidity/artifacts/contracts/TestERC20B.sol/TestERC20B.json"
-    const main_location_c = "/peggy/solidity/artifacts/contracts/TestERC20C.sol/TestERC20C.json"
+    const main_location_a = "/gravity/solidity/artifacts/contracts/TestERC20A.sol/TestERC20A.json"
+    const main_location_b = "/gravity/solidity/artifacts/contracts/TestERC20B.sol/TestERC20B.json"
+    const main_location_c = "/gravity/solidity/artifacts/contracts/TestERC20C.sol/TestERC20C.json"
     const alt_location_1_a = "/solidity/TestERC20A.json"
     const alt_location_1_b = "/solidity/TestERC20B.json"
     const alt_location_1_c = "/solidity/TestERC20C.json"
@@ -177,7 +177,7 @@ async function deploy() {
     console.log("ERC20 deployed at Address - ", erc20TestAddress2);
 
 
-    const arbitrary_logic_path = "/peggy/solidity/artifacts/contracts/TestUniswapLiquidity.sol/TestUniswapLiquidity.json"
+    const arbitrary_logic_path = "/gravity/solidity/artifacts/contracts/TestUniswapLiquidity.sol/TestUniswapLiquidity.json"
     if (fs.existsSync(arbitrary_logic_path)) {
       console.log("Starting arbitrary logic test")
       const { abi, bytecode } = getContractArtifacts(arbitrary_logic_path);
@@ -188,21 +188,21 @@ async function deploy() {
       console.log("Uniswap Liquidity test deployed at Address - ", testAddress);
     }
   }
-  const peggyIdString = await getPeggyId();
-  const peggyId = ethers.utils.formatBytes32String(peggyIdString);
+  const gravityIdString = await getGravityId();
+  const gravityId = ethers.utils.formatBytes32String(gravityIdString);
 
-  console.log("Starting Peggy contract deploy");
+  console.log("Starting Gravity contract deploy");
   const { abi, bytecode } = getContractArtifacts(args["contract"]);
   const factory = new ethers.ContractFactory(abi, bytecode, wallet);
 
-  console.log("About to get latest Peggy valset");
+  console.log("About to get latest Gravity valset");
   const latestValset = await getLatestValset();
 
   let eth_addresses = [];
   let powers = [];
   let powers_sum = 0;
-  // this MUST be sorted uniformly across all components of Peggy in this
-  // case we perform the sorting in module/x/peggy/keeper/types.go to the
+  // this MUST be sorted uniformly across all components of Gravity in this
+  // case we perform the sorting in module/x/gravity/keeper/types.go to the
   // output of the endpoint should always be sorted correctly. If you're
   // having strange problems with updating the validator set you should go
   // look there.
@@ -224,18 +224,18 @@ async function deploy() {
     exit(1)
   }
 
-  const peggy = (await factory.deploy(
+  const gravity = (await factory.deploy(
     // todo generate this randomly at deployment time that way we can avoid
     // anything but intentional conflicts
-    peggyId,
+    gravityId,
     vote_power,
     eth_addresses,
     powers
-  )) as Peggy;
+  )) as Gravity;
 
-  await peggy.deployed();
-  console.log("Peggy deployed at Address - ", peggy.address);
-  await submitPeggyAddress(peggy.address);
+  await gravity.deployed();
+  console.log("Gravity deployed at Address - ", gravity.address);
+  await submitGravityAddress(gravity.address);
 }
 
 function getContractArtifacts(path: string): { bytecode: string; abi: string } {
@@ -255,7 +255,7 @@ async function getLatestValset(): Promise<Valset> {
   }
   let request_string = args["cosmos-node"] + "/abci_query"
   let response = await axios.get(request_string, {params: {
-    path: "\"/custom/peggy/currentValset/\"",
+    path: "\"/custom/gravity/currentValset/\"",
     height: block_height,
     prove: "false",
   }});
@@ -264,28 +264,28 @@ async function getLatestValset(): Promise<Valset> {
   let valset: ValsetTypeWrapper = JSON.parse(decode(valsets.result.response.value))
   return valset.value;
 }
-async function getPeggyId(): Promise<string> {
+async function getGravityId(): Promise<string> {
   let block_height_request_string = args["cosmos-node"] + '/status';
   let block_height_response = await axios.get(block_height_request_string);
   let info: StatusWrapper = await block_height_response.data;
   let block_height = info.result.sync_info.latest_block_height;
   if (info.result.sync_info.catching_up) {
-    console.log("This node is still syncing! You can not deploy using this peggyID!");
+    console.log("This node is still syncing! You can not deploy using this gravityID!");
     exit(1);
   }
   let request_string = args["cosmos-node"] + "/abci_query"
   let response = await axios.get(request_string, {params: {
-    path: "\"/custom/peggy/peggyID/\"",
+    path: "\"/custom/gravity/gravityID/\"",
     height: block_height,
     prove: "false",
   }});
-  let peggyIDABCIResponse: ABCIWrapper = await response.data;
-  let peggyID: string = JSON.parse(decode(peggyIDABCIResponse.result.response.value))
-  return peggyID;
+  let gravityIDABCIResponse: ABCIWrapper = await response.data;
+  let gravityID: string = JSON.parse(decode(gravityIDABCIResponse.result.response.value))
+  return gravityID;
 
 }
 
-async function submitPeggyAddress(address: string) {}
+async function submitGravityAddress(address: string) {}
 
 async function main() {
   await deploy();

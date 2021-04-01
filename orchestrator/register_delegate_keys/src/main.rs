@@ -6,11 +6,11 @@ extern crate serde_derive;
 extern crate lazy_static;
 
 use clarity::PrivateKey as EthPrivateKey;
-use cosmos_peggy::send::update_peggy_delegate_addresses;
+use cosmos_gravity::send::update_gravity_delegate_addresses;
 use deep_space::{coin::Coin, mnemonic::Mnemonic, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
-use peggy_utils::connection_prep::check_for_fee_denom;
-use peggy_utils::connection_prep::{create_rpc_connections, wait_for_cosmos_node_ready};
+use gravity_utils::connection_prep::check_for_fee_denom;
+use gravity_utils::connection_prep::{create_rpc_connections, wait_for_cosmos_node_ready};
 use rand::{thread_rng, Rng};
 use std::time::Duration;
 
@@ -34,9 +34,9 @@ lazy_static! {
             --cosmos-rpc=<curl>       The Cosmos Legacy RPC url, usually the validator. This will need to be manually enabled
             --fees=<denom>            The Cosmos Denom in which to pay Cosmos chain fees
         About:
-            Special purpose binary for bootstrapping Peggy chains. This will submit and optionally
+            Special purpose binary for bootstrapping Gravity chains. This will submit and optionally
             generate an Ethereum key that will be used to sign messages on behalf of your Validator
-            on the Cosmos blockchain running the Peggy module. Be aware this Ethereum key must be kept
+            on the Cosmos blockchain running the Gravity module. Be aware this Ethereum key must be kept
             safe as you can be slashed for losing it.
             Written By: {}
             Version {}",
@@ -104,7 +104,7 @@ async fn main() {
 
     let ethereum_address = ethereum_key.to_public_key().unwrap();
     let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
-    update_peggy_delegate_addresses(
+    update_gravity_delegate_addresses(
         &contact,
         ethereum_address,
         cosmos_address,
