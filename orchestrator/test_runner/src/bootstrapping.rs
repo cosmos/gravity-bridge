@@ -1,11 +1,8 @@
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use contact::client::Contact;
-use cosmos_gravity::send::update_gravity_delegate_addresses;
 use cosmos_gravity::utils::wait_for_next_cosmos_block;
-use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
-use futures::future::join_all;
 use std::process::Command;
 use std::{fs::File, path::Path};
 use std::{
@@ -13,32 +10,33 @@ use std::{
     process::ExitStatus,
 };
 
-use crate::COSMOS_NODE_ABCI;
 use crate::ETH_NODE;
 use crate::MINER_PRIVATE_KEY;
 use crate::TOTAL_TIMEOUT;
+use crate::{utils::ValidatorKeys, COSMOS_NODE_ABCI};
 
-/// Ethereum keys are generated for every validator inside
-/// of this testing application and submitted to the blockchain
-/// use the 'update eth address' message. In this case we generate
-/// them based off of the Cosmos key as the seed so that we can run
-/// the test runner multiple times against one chain and get the same keys.
-///
-/// There's no particular reason to use the public key except that the bytes
-/// of the private key type are not public
-pub fn generate_eth_private_key(seed: CosmosPrivateKey) -> EthPrivateKey {
-    EthPrivateKey::from_slice(&seed.to_public_key().unwrap().as_bytes()[0..32]).unwrap()
+/// Ethereum private keys for the validators are generated using the gravity eth_keys add command
+/// and dumped into a file /validator-eth-keys in the container, from there they are then used by
+/// the orchestrator on startup
+pub fn parse_ethereum_keys() -> Vec<EthPrivateKey> {
+    let filename = "/validator-eth-keys";
+    let file = File::open(filename).expect("Failed to find eth keys");
+    let reader = BufReader::new(file);
+    let mut ret = Vec::new();
+
+    for line in reader.lines() {
+        let key = line.expect("Error reading eth key file!");
+        if key.is_empty() || key.contains("public") || key.contains("address") {
+            continue;
+        }
+        let key = key.split(':').last().unwrap().trim();
+        ret.push(key.parse().unwrap());
+    }
+    ret
 }
 
-/// Validator private keys are generated via the cosmoscli key add
-/// command, from there they are used to create gentx's and start the
-/// chain, these keys change every time the container is restarted.
-/// The mnemonic phrases are dumped into a text file /validator-phrases
-/// the phrases are in increasing order, so validator 1 is the first key
-/// and so on. While validators may later fail to start it is guaranteed
-/// that we have one key for each validator in this file.
-pub fn parse_validator_keys() -> Vec<CosmosPrivateKey> {
-    let filename = "/validator-phrases";
+/// Parses the output of the cosmoscli keys add command to import the private key
+fn parse_phrases(filename: &str) -> Vec<CosmosPrivateKey> {
     let file = File::open(filename).expect("Failed to find phrases");
     let reader = BufReader::new(file);
     let mut ret = Vec::new();
@@ -57,11 +55,37 @@ pub fn parse_validator_keys() -> Vec<CosmosPrivateKey> {
     ret
 }
 
-pub fn get_keys() -> Vec<(CosmosPrivateKey, EthPrivateKey)> {
+/// Validator private keys are generated via the gravity key add
+/// command, from there they are used to create gentx's and start the
+/// chain, these keys change every time the container is restarted.
+/// The mnemonic phrases are dumped into a text file /validator-phrases
+/// the phrases are in increasing order, so validator 1 is the first key
+/// and so on. While validators may later fail to start it is guaranteed
+/// that we have one key for each validator in this file.
+pub fn parse_validator_keys() -> Vec<CosmosPrivateKey> {
+    let filename = "/validator-phrases";
+    parse_phrases(filename)
+}
+
+/// Orchestrator private keys are generated via the gravity key add
+/// command just like the validator keys themselves and stored in a
+/// similar file /orchestrator-phrases
+pub fn parse_orchestrator_keys() -> Vec<CosmosPrivateKey> {
+    let filename = "/orchestrator-phrases";
+    parse_phrases(filename)
+}
+
+pub fn get_keys() -> Vec<ValidatorKeys> {
     let cosmos_keys = parse_validator_keys();
+    let orch_keys = parse_orchestrator_keys();
+    let eth_keys = parse_ethereum_keys();
     let mut ret = Vec::new();
-    for c_key in cosmos_keys {
-        ret.push((c_key, generate_eth_private_key(c_key)))
+    for ((c_key, o_key), e_key) in cosmos_keys.into_iter().zip(orch_keys).zip(eth_keys) {
+        ret.push(ValidatorKeys {
+            eth_key: e_key,
+            validator_key: c_key,
+            orch_key: o_key,
+        })
     }
     ret
 }
@@ -70,38 +94,7 @@ pub fn get_keys() -> Vec<(CosmosPrivateKey, EthPrivateKey)> {
 /// this runs only when the DEPLOY_CONTRACTS env var is set right after
 /// the Ethereum test chain starts in the testing environment. We write
 /// the stdout of this to a file for later test runs to parse
-pub async fn deploy_contracts(
-    contact: &Contact,
-    keys: &[(CosmosPrivateKey, EthPrivateKey)],
-    fee: Coin,
-) {
-    // register all validator eth addresses, currently validators can just not do this
-    // a full production version of Gravity would refuse to allow validators to enter the pool
-    // without registering their address. It would also allow them to delegate their Cosmos addr
-    //
-    // Either way, validators need to setup their eth addresses out of band and it's not
-    // the orchestrators job. So this isn't exactly where it needs to be in the final version
-    // but neither is it really that different.
-    let mut updates = Vec::new();
-    for (c_key, e_key) in keys.iter() {
-        info!(
-            "Signing and submitting Delegate addresses {} for validator {}",
-            e_key.to_public_key().unwrap(),
-            c_key.to_public_key().unwrap().to_address(),
-        );
-        updates.push(update_gravity_delegate_addresses(
-            &contact,
-            e_key.to_public_key().unwrap(),
-            c_key.to_public_key().unwrap().to_address(),
-            *c_key,
-            fee.clone(),
-        ));
-    }
-    let update_results = join_all(updates).await;
-    for i in update_results {
-        i.expect("Failed to set delegate addresses!");
-    }
-
+pub async fn deploy_contracts(contact: &Contact) {
     // prevents the node deployer from failing (rarely) when the chain has not
     // yet produced the next block after submitting each eth address
     wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
