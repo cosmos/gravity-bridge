@@ -131,6 +131,15 @@ $gravity $home1 eth_keys add --output=json --dry-run=true | jq . >> $n1dir/eth_k
 $gravity $home2 eth_keys add --output=json --dry-run=true | jq . >> $n2dir/eth_key.json
 $gravity $home3 eth_keys add --output=json --dry-run=true | jq . >> $n3dir/eth_key.json
 
+echo "Copying ethereum genesis file"
+cp tests/assets/ETHGenesis.json $home_dir
+
+echo "Adding initial ethereum value"
+jq ".alloc |= . + {$(jq .address $n0dir/eth_key.json) : {\"balance\": \"0x1337000000000000000000\"}}" $home_dir/ETHGenesis.json | sponge $home_dir/ETHGenesis.json
+jq ".alloc |= . + {$(jq .address $n1dir/eth_key.json) : {\"balance\": \"0x1337000000000000000000\"}}" $home_dir/ETHGenesis.json | sponge $home_dir/ETHGenesis.json
+jq ".alloc |= . + {$(jq .address $n2dir/eth_key.json) : {\"balance\": \"0x1337000000000000000000\"}}" $home_dir/ETHGenesis.json | sponge $home_dir/ETHGenesis.json
+jq ".alloc |= . + {$(jq .address $n3dir/eth_key.json) : {\"balance\": \"0x1337000000000000000000\"}}" $home_dir/ETHGenesis.json | sponge $home_dir/ETHGenesis.json
+
 echo "Creating gentxs"
 $gravity $home0 gentx --ip $n0name val 100000000000stake $(jq -r .address $n0dir/eth_key.json) $(jq -r .address $n0dir/orchestrator_key.json) $kbt $cid &>/dev/null
 $gravity $home1 gentx --ip $n1name val 100000000000stake $(jq -r .address $n1dir/eth_key.json) $(jq -r .address $n1dir/orchestrator_key.json) $kbt $cid &>/dev/null
@@ -213,21 +222,7 @@ docker-compose up --no-start ethereum $n0name $n1name $n2name $n3name &>/dev/nul
 docker-compose start ethereum $n0name $n1name $n2name $n3name &>/dev/null
 
 echo "Waiting for cosmos cluster to sync"
-while $(curl http://localhost:26657/status | jq .result.sync_info.catching_up)
-do
-    printf '.'
-    sleep 5
-done
-
-echo "Checking validators"
-echo $gravity $home0 q staking validators
-$gravity $home0 q staking validators
-
-echo "Checking delegate keys"
-echo $gravity $home0 q peggy delegate-keys $($gravity $home0 keys show val -a $kbt --bech val)
-$gravity $home0 q peggy delegate-keys $($gravity $home0 keys show val -a $kbt --bech val)
-
-exit 0
+sleep 10
 
 echo "Applying contracts"
 docker-compose build contract_deployer
@@ -239,34 +234,37 @@ echo VALIDATOR=$n0name >> $n0dir/orchestrator.env
 echo COSMOS_GRPC="http://$n0name:9090/" >> $n0dir/orchestrator.env
 echo COSMOS_RPC="http://$n0name:1317" >> $n0dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n0cfgDir/priv_validator_key.json) >> $n0dir/orchestrator.env
-echo COSMOS_PHRASE=$(jq .mnemonic $n0dir/validator_key.json) >> $n0dir/orchestrator.env
+echo COSMOS_PHRASE=$(jq .mnemonic $n0dir/orchestrator_key.json) >> $n0dir/orchestrator.env
 echo DENOM=stake >> $n0dir/orchestrator.env
 echo ETH_RPC=http://ethereum:8545 >> $n0dir/orchestrator.env
 echo ETH_PRIVATE_KEY=$(jq .private_key $n0dir/eth_key.json) >> $n0dir/orchestrator.env
 echo CONTRACT_ADDR=$contractAddress >> $n0dir/orchestrator.env
 
+echo VALIDATOR=$n1name >> $n0dir/orchestrator.env
 echo COSMOS_GRPC="http://$n1name:9090/" >> $n1dir/orchestrator.env
 echo COSMOS_RPC="http://$n1name:1317" >> $n1dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n1cfgDir/priv_validator_key.json) >> $n1dir/orchestrator.env
-echo COSMOS_PHRASE=$(jq .mnemonic $n1dir/validator_key.json) >> $n1dir/orchestrator.env
+echo COSMOS_PHRASE=$(jq .mnemonic $n1dir/orchestrator_key.json) >> $n1dir/orchestrator.env
 echo DENOM=stake >> $n1dir/orchestrator.env
 echo ETH_RPC=http://ethereum:8545 >> $n1dir/orchestrator.env
 echo ETH_PRIVATE_KEY=$(jq .private_key $n1dir/eth_key.json) >> $n1dir/orchestrator.env
 echo CONTRACT_ADDR=$contractAddress >> $n1dir/orchestrator.env
 
+echo VALIDATOR=$n2name >> $n0dir/orchestrator.env
 echo COSMOS_GRPC="http://$n2name:9090/" >> $n2dir/orchestrator.env
 echo COSMOS_RPC="http://$n2name:1317" >> $n2dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n2cfgDir/priv_validator_key.json) >> $n2dir/orchestrator.env
-echo COSMOS_PHRASE=$(jq .mnemonic $n2dir/validator_key.json) >> $n2dir/orchestrator.env
+echo COSMOS_PHRASE=$(jq .mnemonic $n2dir/orchestrator_key.json) >> $n2dir/orchestrator.env
 echo DENOM=stake >> $n2dir/orchestrator.env
 echo ETH_RPC=http://ethereum:8545 >> $n2dir/orchestrator.env
 echo ETH_PRIVATE_KEY=$(jq .private_key $n2dir/eth_key.json) >> $n2dir/orchestrator.env
 echo CONTRACT_ADDR=$contractAddress >> $n2dir/orchestrator.env
 
+echo VALIDATOR=$n3name >> $n0dir/orchestrator.env
 echo COSMOS_GRPC="http://$n3name:9090/" >> $n3dir/orchestrator.env
 echo COSMOS_RPC="http://$n3name:1317" >> $n3dir/orchestrator.env
 echo COSMOS_KEY=$(jq .priv_key.value $n3cfgDir/priv_validator_key.json) >> $n3dir/orchestrator.env
-echo COSMOS_PHRASE=$(jq .mnemonic $n3dir/validator_key.json) >> $n3dir/orchestrator.env
+echo COSMOS_PHRASE=$(jq .mnemonic $n3dir/orchestrator_key.json) >> $n3dir/orchestrator.env
 echo DENOM=stake >> $n3dir/orchestrator.env
 echo ETH_RPC=http://ethereum:8545 >> $n3dir/orchestrator.env
 echo ETH_PRIVATE_KEY=$(jq .private_key $n3dir/eth_key.json) >> $n3dir/orchestrator.env
@@ -287,5 +285,13 @@ docker-compose --env-file $n2dir/orchestrator.env up --no-start orchestrator2
 docker-compose --env-file $n2dir/orchestrator.env start orchestrator2
 docker-compose --env-file $n3dir/orchestrator.env up --no-start orchestrator3
 docker-compose --env-file $n3dir/orchestrator.env start orchestrator3
+
+echo "Checking validators"
+echo $gravity $home0 q staking validators
+$gravity $home0 q staking validators
+
+echo "Checking delegate keys"
+echo $gravity $home0 q peggy delegate-keys $($gravity $home0 keys show val -a $kbt --bech val)
+$gravity $home0 q peggy delegate-keys $($gravity $home0 keys show val -a $kbt --bech val)
 
 echo "Run tests"
