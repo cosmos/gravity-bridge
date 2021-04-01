@@ -45,7 +45,6 @@ services:
       - DENOM=${DENOM}
       - CONTRACT_ADDR=${CONTRACT_ADDR}
       - RUST_BACKTRACE=1
-      - RUST_LOG=trace
 
   gravity1:
     build:

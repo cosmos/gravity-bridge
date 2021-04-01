@@ -2,7 +2,7 @@ FROM ethereum/client-go:stable
 
 RUN apk add --no-cache curl
 
-COPY tests/assets/ETHGenesis.json ETHGenesis.json
+COPY testdata/testchain/ETHGenesis.json ETHGenesis.json
 
 RUN geth --identity "PeggyTestnet" \
     --nodiscover \
