@@ -106,6 +106,7 @@ pub async fn create_rpc_connections(
             .unwrap_or_else(|_| panic!("Invalid Cosmos legacy RPC url {}", legacy_rpc_url));
         check_scheme(&url, &legacy_rpc_url);
         let cosmos_legacy_url = legacy_rpc_url.trim_end_matches('/');
+        dbg!(&cosmos_legacy_url);
         let base_contact = Contact::new(&cosmos_legacy_url, timeout);
         let try_base = base_contact.get_syncing_status().await;
         match try_base {
@@ -114,7 +115,7 @@ pub async fn create_rpc_connections(
             // did not work, now we check if it's localhost
             Err(e) => {
                 warn!(
-                    "Failed to access Cosmos Leagcy RPC with {:?} trying fallback options",
+                    "Failed to access Cosmos Legacy RPC with {:?} trying fallback options",
                     e
                 );
                 if legacy_rpc_url.to_lowercase().contains("localhost") {
