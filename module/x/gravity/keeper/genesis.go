@@ -7,6 +7,7 @@ import (
 )
 
 // InitGenesis starts a chain from a genesis state
+// FIXME: remove the Unsafe methods
 func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	k.SetParams(ctx, *data.Params)
 	// reset valsets in state
@@ -36,25 +37,17 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		k.setPoolEntry(ctx, tx)
 	}
 
+	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
+
 	// reset attestations in state
-	for _, att := range data.Attestations {
-		claim, err := k.UnpackAttestationClaim(&att)
+	for _, attestation := range data.Attestations {
+		claim, err := types.UnpackClaim(attestation.Claim)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
 
 		// TODO: block height?
-		k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
-	}
-	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
-
-	// reset attestation state of specific validators
-	// this must be done after the above to be correct
-	for _, att := range data.Attestations {
-		claim, err := k.UnpackAttestationClaim(&att)
-		if err != nil {
-			panic("couldn't cast to claim")
-		}
+		k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), attestation)
 		// reconstruct the latest event nonce for every validator
 		// if somehow this genesis state is saved when all attestations
 		// have been cleaned up GetLastEventNonceByValidator handles that case
@@ -64,11 +57,10 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// but since we've already had to handle the edge case of new validators joining
 		// while all attestations have already been cleaned up we can do this instead and
 		// not carry around every validators event nonce counter forever.
-		for _, vote := range att.Votes {
-			val, err := sdk.ValAddressFromBech32(vote)
-			if err != nil {
-				panic(err)
-			}
+		for _, vote := range attestation.Votes {
+			// NOTE: error checked on validate basic
+			val, _ := sdk.ValAddressFromBech32(vote)
+
 			last := k.GetLastEventNonceByValidator(ctx, val)
 			if claim.GetEventNonce() > last {
 				k.setLastEventNonceByValidator(ctx, val, claim.GetEventNonce())
@@ -100,19 +92,19 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p                   = k.GetParams(ctx)
-		calls               = k.GetOutgoingLogicCalls(ctx)
-		batches             = k.GetOutgoingTxBatches(ctx)
-		valsets             = k.GetValsets(ctx)
-		attmap              = k.GetAttestationMapping(ctx)
-		vsconfs             = []*types.ValsetConfirm{}
-		batchconfs          = []types.ConfirmBatch{}
-		callconfs           = []types.ConfirmLogicCall{}
-		attestations        = []types.Attestation{}
-		delegates           = k.GetDelegateKeys(ctx)
-		lastobserved        = k.GetLastObservedEventNonce(ctx)
-		erc20ToDenoms       = []*types.ERC20ToDenom{}
-		unbatched_transfers = k.GetPoolTransactions(ctx)
+		p                  = k.GetParams(ctx)
+		calls              = k.GetOutgoingLogicCalls(ctx)
+		batches            = k.GetOutgoingTxBatches(ctx)
+		valsets            = k.GetValsets(ctx)
+		attmap             = k.GetAttestationMapping(ctx)
+		vsconfs            = []*types.ValsetConfirm{}
+		batchconfs         = []types.ConfirmBatch{}
+		callconfs          = []types.ConfirmLogicCall{}
+		attestations       = []types.Attestation{}
+		delegates          = k.GetDelegateKeys(ctx)
+		lastobserved       = k.GetLastObservedEventNonce(ctx)
+		erc20ToDenoms      = []types.ERC20ToDenom{}
+		unbatchedTransfers = k.GetPoolTransactions(ctx)
 	)
 
 	// export valset confirmations from state
@@ -140,7 +132,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	}
 
 	// export erc20 to denom relations
-	k.IterateERC20ToDenom(ctx, func(key []byte, erc20ToDenom *types.ERC20ToDenom) bool {
+	k.IterateERC20ToDenom(ctx, func(erc20ToDenom types.ERC20ToDenom) bool {
 		erc20ToDenoms = append(erc20ToDenoms, erc20ToDenom)
 		return false
 	})
@@ -157,6 +149,6 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		Attestations:       attestations,
 		DelegateKeys:       delegates,
 		Erc20ToDenoms:      erc20ToDenoms,
-		UnbatchedTransfers: unbatched_transfers,
+		UnbatchedTransfers: unbatchedTransfers,
 	}
 }

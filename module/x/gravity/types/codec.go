@@ -1,9 +1,12 @@
 package types
 
 import (
+	proto "github.com/gogo/protobuf/proto"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
@@ -25,7 +28,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	)
 
 	registry.RegisterInterface(
-		"gravity.v1beta1.EthereumClaim",
+		"gravity.v1.EthereumClaim",
 		(*EthereumClaim)(nil),
 		&DepositClaim{},
 		&WithdrawClaim{},
@@ -35,6 +38,37 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
+
+func PackClaim(claim EthereumClaim) (*types.Any, error) {
+	msg, ok := claim.(proto.Message)
+	if !ok {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", claim)
+	}
+
+	anyClaim, err := types.NewAnyWithValue(msg)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrPackAny, err.Error())
+	}
+
+	return anyClaim, nil
+}
+
+// UnpackClaim unpacks an Any into an EthereumClaim. It returns an error if the
+// claim can't be unpacked.
+func UnpackClaim(any *types.Any) (EthereumClaim, error) {
+	if any == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "protobuf Any message cannot be nil")
+	}
+
+	claim, ok := any.GetCachedValue().(EthereumClaim)
+	if !ok {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into EthereumClaim %T", any)
+	}
+
+	return claim, nil
+}
+
+// TODO: remove
 
 // RegisterCodec registers concrete types on the Amino codec
 func RegisterCodec(cdc *codec.LegacyAmino) {

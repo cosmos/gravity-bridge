@@ -12,7 +12,7 @@ import (
 )
 
 // ConfirmBatch handles ConfirmBatch
-func (k msgServer) confirmBatch(c context.Context, confirm types.Confirm) error {
+func (k Keeper) confirmBatch(c context.Context, confirm types.Confirm) error {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// fetch the outgoing batch given the nonce
@@ -76,7 +76,7 @@ func (k msgServer) confirmBatch(c context.Context, confirm types.Confirm) error 
 }
 
 // ConfirmLogicCall handles MsgConfirmLogicCall
-func (k msgServer) confirmLogicCall(c context.Context, confirm types.Confirm) error {
+func (k Keeper) confirmLogicCall(c context.Context, confirm types.Confirm) error {
 	ctx := sdk.UnwrapSDKContext(c)
 	invalidationIdBytes, err := hex.DecodeString(confirm.GetInvalidationId())
 	if err != nil {
@@ -144,7 +144,7 @@ func (k msgServer) confirmLogicCall(c context.Context, confirm types.Confirm) er
 
 // // ValsetConfirm handles MsgValsetConfirm
 // TODO: check msgValsetConfirm to have an Orchestrator field instead of a Validator field
-func (k msgServer) valsetConfirm(c context.Context, confirm types.Confirm) error {
+func (k Keeper) valsetConfirm(c context.Context, confirm types.Confirm) error {
 	ctx := sdk.UnwrapSDKContext(c)
 	valset := k.GetValset(ctx, confirm.GetNonce())
 	if valset == nil {

@@ -221,7 +221,7 @@ func (k Keeper) GetLastSlashedBatchBlock(ctx sdk.Context) uint64 {
 	if len(bytes) == 0 {
 		return 0
 	}
-	return types.UInt64FromBytes(bytes)
+	return sdk.BigEndianToUint64(bytes)
 }
 
 // GetUnSlashedBatches returns all the unslashed batches in state

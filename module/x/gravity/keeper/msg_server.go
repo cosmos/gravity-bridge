@@ -11,31 +11,16 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-type msgServer struct {
-	Keeper
-}
+var _ types.MsgServer = &Keeper{}
 
-// NewMsgServerImpl returns an implementation of the gov MsgServer interface
-// for the provided Keeper.
-func NewMsgServerImpl(keeper Keeper) types.MsgServer {
-	return &msgServer{Keeper: keeper}
-}
-
-var _ types.MsgServer = msgServer{}
-
-func (k msgServer) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*types.MsgDelegateKeyResponse, error) {
-	// ensure that this passes validation
-	err := msg.ValidateBasic()
-	if err != nil {
-		return nil, err
-	}
-
+func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*types.MsgDelegateKeyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+
 	val, _ := sdk.ValAddressFromBech32(msg.Validator)
 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 
 	// ensure that the validator exists
-	if k.Keeper.StakingKeeper.Validator(ctx, val) == nil {
+	if k.StakingKeeper.Validator(ctx, val) == nil {
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, val.String())
 	}
 
@@ -59,7 +44,7 @@ func (k msgServer) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) 
 	return &types.MsgDelegateKeyResponse{}, nil
 }
 
-func (k msgServer) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
+func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
 
 	confirm := msg.GetConfirm()
 
@@ -75,41 +60,26 @@ func (k msgServer) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm)
 	return &types.MsgSubmitConfirmResponse{}, nil
 }
 
-func (k msgServer) SubmitClaim(c context.Context, msg *types.MsgSubmitClaim) (*types.MsgSubmitClaimResponse, error) {
+func (k Keeper) SubmitClaim(c context.Context, msg *types.MsgSubmitClaim) (*types.MsgSubmitClaimResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	claim, err := types.UnpackClaim(msg.Claim)
+	if err != nil {
+		return nil, err
+	}
 
-	claim := msg.GetClaim()
-
-	switch msg.ClaimType {
-	case types.ClaimType_DEPOSIT:
-		if err := k.depositClaim(c, claim); err != nil {
-			return nil, err
-		}
-	case types.ClaimType_WITHDRAW:
-		if err := k.withdrawClaim(c, claim); err != nil {
-			return nil, err
-		}
-	case types.ClaimType_ERC20_DEPLOYED:
-		if err := k.eRC20DeployedClaim(c, claim); err != nil {
-			return nil, err
-		}
-	case types.ClaimType_LOGIC_CALL_EXECUTED:
-		if err := k.logicCallExecutedClaim(c, claim); err != nil {
-			return nil, err
-		}
-	default:
-		return nil, sdkerrors.Wrap(types.ErrInvalidClaim, claim.GetType().String())
+	if err := k.HandleClaim(ctx, claim); err != nil {
+		return nil, err
 	}
 
 	return &types.MsgSubmitClaimResponse{}, nil
 }
 
 // SendToEth handles MsgSendToEth
-func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types.MsgSendToEthResponse, error) {
+func (k Keeper) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types.MsgSendToEthResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
+
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+
 	txID, err := k.AddToOutgoingPool(ctx, sender, msg.EthDest, msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
@@ -127,7 +97,7 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 }
 
 // RequestBatch handles MsgRequestBatch
-func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*types.MsgRequestBatchResponse, error) {
+func (k Keeper) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*types.MsgRequestBatchResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Check if the denom is a gravity coin, if not, check if there is a deployed ERC20 representing it.
@@ -169,7 +139,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 	return &types.MsgRequestBatchResponse{}, nil
 }
 
-func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
+func (k Keeper) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {

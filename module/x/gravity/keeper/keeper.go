@@ -120,7 +120,7 @@ func (k Keeper) GetLatestValsetNonce(ctx sdk.Context) uint64 {
 	if len(bytes) == 0 {
 		return 0
 	}
-	return types.UInt64FromBytes(bytes)
+	return sdk.BigEndianToUint64(bytes)
 }
 
 // GetValset returns a valset by nonce
@@ -181,7 +181,7 @@ func (k Keeper) GetLastSlashedValsetNonce(ctx sdk.Context) uint64 {
 	if len(bytes) == 0 {
 		return 0
 	}
-	return types.UInt64FromBytes(bytes)
+	return sdk.BigEndianToUint64(bytes)
 }
 
 // SetLastUnBondingBlockHeight sets the last unbonding block height
@@ -198,7 +198,7 @@ func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
 	if len(bytes) == 0 {
 		return 0
 	}
-	return types.UInt64FromBytes(bytes)
+	return sdk.BigEndianToUint64(bytes)
 }
 
 // GetUnSlashedValsets returns all the unslashed validator sets in state
@@ -361,7 +361,12 @@ func (k Keeper) SetOrchestratorValidator(ctx sdk.Context, val sdk.ValAddress, or
 // GetOrchestratorValidator returns the validator key associated with an orchestrator key
 func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) sdk.ValAddress {
 	store := ctx.KVStore(k.storeKey)
-	return sdk.ValAddress(store.Get(types.GetOrchestratorAddressKey(orch)))
+	bz := store.Get(types.GetOrchestratorAddressKey(orch))
+	if len(bz) == 0 {
+		return nil
+	}
+
+	return sdk.ValAddress(bz)
 }
 
 /////////////////////////////
@@ -602,16 +607,6 @@ func (k Keeper) SetGravityID(ctx sdk.Context, v string) {
 // logger returns a module-specific logger.
 func (k Keeper) logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
-}
-
-func (k Keeper) UnpackAttestationClaim(att *types.Attestation) (types.EthereumClaim, error) {
-	var msg types.EthereumClaim
-	err := k.cdc.UnpackAny(att.Claim, &msg)
-	if err != nil {
-		return nil, err
-	} else {
-		return msg, nil
-	}
 }
 
 // GetDelegateKeys iterates both the EthAddress and Orchestrator address indexes to produce
