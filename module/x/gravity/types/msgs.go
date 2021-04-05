@@ -53,7 +53,7 @@ func (msg *MsgSetOrchestratorAddress) ValidateBasic() (err error) {
 
 // GetSignBytes encodes the message for signing
 func (msg *MsgSetOrchestratorAddress) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
@@ -94,7 +94,7 @@ func (msg *MsgValsetConfirm) ValidateBasic() (err error) {
 
 // GetSignBytes encodes the message for signing
 func (msg *MsgValsetConfirm) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
@@ -150,7 +150,7 @@ func (msg MsgSendToEth) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgSendToEth) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
@@ -186,7 +186,7 @@ func (msg MsgRequestBatch) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgRequestBatch) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
@@ -225,7 +225,7 @@ func (msg MsgConfirmBatch) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgConfirmBatch) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
@@ -264,7 +264,7 @@ func (msg MsgConfirmLogicCall) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgConfirmLogicCall) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
@@ -332,7 +332,7 @@ func (e *MsgDepositClaim) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgDepositClaim) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 func (msg MsgDepositClaim) GetClaimer() sdk.AccAddress {
@@ -401,7 +401,7 @@ func (b *MsgWithdrawClaim) ClaimHash() []byte {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgWithdrawClaim) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 func (msg MsgWithdrawClaim) GetClaimer() sdk.AccAddress {
@@ -457,7 +457,7 @@ func (e *MsgERC20DeployedClaim) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgERC20DeployedClaim) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 func (msg MsgERC20DeployedClaim) GetClaimer() sdk.AccAddress {
@@ -513,7 +513,7 @@ func (e *MsgLogicCallExecutedClaim) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgLogicCallExecutedClaim) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 func (msg MsgLogicCallExecutedClaim) GetClaimer() sdk.AccAddress {
@@ -572,7 +572,7 @@ func (msg *MsgCancelSendToEth) ValidateBasic() (err error) {
 
 // GetSignBytes encodes the message for signing
 func (msg *MsgCancelSendToEth) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
