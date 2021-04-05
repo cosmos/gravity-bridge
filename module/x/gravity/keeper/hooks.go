@@ -19,7 +19,8 @@ func (h Hooks) AfterValidatorBeginUnbonding(ctx sdk.Context, _ sdk.ConsAddress, 
 
 	// When Validator starts Unbonding, Persist the block height in the store
 	// Later in endblocker, check if there is atleast one validator who started unbonding and create a valset request.
-	// The reason for creating valset requests in endblock is to create only one valset request per block if multiple validators starts unbonding at same block.
+	// The reason for creating valset requests in endblock is to create only one valset request per block,
+	// if multiple validators starts unbonding at same block.
 
 	h.k.SetLastUnBondingBlockHeight(ctx, uint64(ctx.BlockHeight()))
 

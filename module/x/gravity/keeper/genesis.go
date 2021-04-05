@@ -28,6 +28,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 
 	// reset batch confirmations in state
 	for _, conf := range data.BatchConfirms {
+		conf := conf
 		k.SetBatchConfirm(ctx, &conf)
 	}
 
@@ -38,16 +39,20 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 
 	// reset batch confirmations in state
 	for _, conf := range data.LogicCallConfirms {
+		conf := conf
 		k.SetLogicCallConfirm(ctx, &conf)
 	}
 
 	// reset pool transactions in state
 	for _, tx := range data.UnbatchedTransfers {
-		k.setPoolEntry(ctx, tx)
+		if err := k.setPoolEntry(ctx, tx); err != nil {
+			panic(err)
+		}
 	}
 
 	// reset attestations in state
 	for _, att := range data.Attestations {
+		att := att
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
@@ -61,6 +66,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	// reset attestation state of specific validators
 	// this must be done after the above to be correct
 	for _, att := range data.Attestations {
+		att := att
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
@@ -92,8 +98,16 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		if err != nil {
 			panic("Invalid delegate key in Genesis!")
 		}
-		val, _ := sdk.ValAddressFromBech32(keys.Validator)
-		orch, _ := sdk.AccAddressFromBech32(keys.Orchestrator)
+		val, err := sdk.ValAddressFromBech32(keys.Validator)
+		if err != nil {
+			panic(err)
+		}
+
+		orch, err := sdk.AccAddressFromBech32(keys.Orchestrator)
+		if err != nil {
+			panic(err)
+		}
+
 		// set the orchestrator address
 		k.SetOrchestratorValidator(ctx, val, orch)
 		// set the ethereum address
@@ -110,19 +124,19 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p                   = k.GetParams(ctx)
-		calls               = k.GetOutgoingLogicCalls(ctx)
-		batches             = k.GetOutgoingTxBatches(ctx)
-		valsets             = k.GetValsets(ctx)
-		attmap              = k.GetAttestationMapping(ctx)
-		vsconfs             = []*types.MsgValsetConfirm{}
-		batchconfs          = []types.MsgConfirmBatch{}
-		callconfs           = []types.MsgConfirmLogicCall{}
-		attestations        = []types.Attestation{}
-		delegates           = k.GetDelegateKeys(ctx)
-		lastobserved        = k.GetLastObservedEventNonce(ctx)
-		erc20ToDenoms       = []*types.ERC20ToDenom{}
-		unbatched_transfers = k.GetPoolTransactions(ctx)
+		p                  = k.GetParams(ctx)
+		calls              = k.GetOutgoingLogicCalls(ctx)
+		batches            = k.GetOutgoingTxBatches(ctx)
+		valsets            = k.GetValsets(ctx)
+		attmap             = k.GetAttestationMapping(ctx)
+		vsconfs            = []*types.MsgValsetConfirm{}
+		batchconfs         = []types.MsgConfirmBatch{}
+		callconfs          = []types.MsgConfirmLogicCall{}
+		attestations       = []types.Attestation{}
+		delegates          = k.GetDelegateKeys(ctx)
+		lastobserved       = k.GetLastObservedEventNonce(ctx)
+		erc20ToDenoms      = []*types.ERC20ToDenom{}
+		unbatchedTransfers = k.GetPoolTransactions(ctx)
 	)
 
 	// export valset confirmations from state
@@ -134,13 +148,15 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	// export batch confirmations from state
 	for _, batch := range batches {
 		// TODO: set height = 0?
-		batchconfs = append(batchconfs, k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)...)
+		batchconfs = append(batchconfs,
+			k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)...)
 	}
 
 	// export logic call confirmations from state
 	for _, call := range calls {
 		// TODO: set height = 0?
-		callconfs = append(callconfs, k.GetLogicConfirmByInvalidationIdAndNonce(ctx, call.InvalidationId, call.InvalidationNonce)...)
+		callconfs = append(callconfs,
+			k.GetLogicConfirmByInvalidationIDAndNonce(ctx, call.InvalidationId, call.InvalidationNonce)...)
 	}
 
 	// export attestations from state
@@ -167,6 +183,6 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		Attestations:       attestations,
 		DelegateKeys:       delegates,
 		Erc20ToDenoms:      erc20ToDenoms,
-		UnbatchedTransfers: unbatched_transfers,
+		UnbatchedTransfers: unbatchedTransfers,
 	}
 }
