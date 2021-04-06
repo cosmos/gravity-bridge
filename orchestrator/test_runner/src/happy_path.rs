@@ -1,30 +1,26 @@
 use crate::get_chain_id;
 use crate::get_fee;
-use crate::get_test_token_name;
 use crate::utils::*;
 use crate::MINER_ADDRESS;
 use crate::MINER_PRIVATE_KEY;
 use crate::STARTING_STAKE_PER_VALIDATOR;
 use crate::TOTAL_TIMEOUT;
-use actix::Arbiter;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
-use contact::client::Contact;
 use cosmos_gravity::send::{send_request_batch, send_to_eth};
-use cosmos_gravity::utils::wait_for_next_cosmos_block;
 use cosmos_gravity::{query::get_oldest_unsigned_transaction_batch, send::send_ethereum_claims};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use deep_space::Contact;
 use ethereum_gravity::utils::get_valset_nonce;
 use ethereum_gravity::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::types::SendToCosmosEvent;
-use orchestrator::main_loop::orchestrator_main_loop;
 use rand::Rng;
 use std::{env, process::Command, time::Duration};
 use std::{process::ExitStatus, time::Instant};
-use tokio::time::delay_for;
+use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
@@ -39,34 +35,7 @@ pub async fn happy_path_test(
 ) {
     let mut grpc_client = grpc_client;
 
-    // used to break out of the loop early to simulate one validator
-    // not running an Orchestrator
-    let num_validators = keys.len();
-    let mut count = 0;
-
-    // start orchestrators
-    #[allow(clippy::explicit_counter_loop)]
-    for k in keys.iter() {
-        info!("Spawning Orchestrator");
-        // we have only one actual futures executor thread (see the actix runtime tag on our main function)
-        // but that will execute all the orchestrators in our test in parallel
-        Arbiter::spawn(orchestrator_main_loop(
-            k.orch_key,
-            k.eth_key,
-            web30.clone(),
-            contact.clone(),
-            grpc_client.clone(),
-            gravity_address,
-            get_test_token_name(),
-        ));
-
-        // used to break out of the loop early to simulate one validator
-        // not running an orchestrator
-        count += 1;
-        if validator_out && count == num_validators - 1 {
-            break;
-        }
-    }
+    start_orchestrators(keys.clone(), gravity_address, validator_out).await;
 
     // bootstrapping tests finish here and we move into operational tests
 
@@ -336,7 +305,7 @@ async fn test_erc20_deposit(
             _ => {}
         }
         info!("Waiting for ERC20 deposit");
-        wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
+        contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
     }
     panic!("Failed to bridge ERC20!")
 }
@@ -395,7 +364,7 @@ async fn test_batch(
     .await
     .unwrap();
 
-    wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
+    contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
     let requester_address = requester_cosmos_private_key
         .to_public_key()
         .unwrap()

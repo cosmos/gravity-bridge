@@ -2,10 +2,10 @@ use clarity::{Address, Uint256};
 use deep_space::address::Address as CosmosAddress;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::types::{
-    ERC20DeployedEvent, LogicCallExecutedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent,
+    Erc20DeployedEvent, LogicCallExecutedEvent, SendToCosmosEvent, TransactionBatchExecutedEvent,
     ValsetUpdatedEvent,
 };
-use tokio::time::delay_for;
+use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
@@ -137,7 +137,7 @@ pub async fn get_last_checked_block(
             }
         }
         for event in erc20_deployed_events {
-            match ERC20DeployedEvent::from_log(&event) {
+            match Erc20DeployedEvent::from_log(&event) {
                 Ok(deploy) => {
                     if deploy.event_nonce == last_event_nonce && event.block_number.is_some() {
                         return event.block_number.unwrap();
