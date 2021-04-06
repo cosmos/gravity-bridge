@@ -5,7 +5,6 @@
 use crate::{ethereum_event_watcher::check_for_events, oracle_resync::get_last_checked_block};
 use clarity::{address::Address as EthAddress, Uint256};
 use clarity::{utils::bytes_to_hex_str, PrivateKey as EthPrivateKey};
-use contact::client::Contact;
 use cosmos_gravity::{
     query::{
         get_oldest_unsigned_logic_call, get_oldest_unsigned_transaction_batch,
@@ -13,6 +12,8 @@ use cosmos_gravity::{
     },
     send::{send_batch_confirm, send_logic_call_confirm, send_valset_confirms},
 };
+use deep_space::client::ChainStatus;
+use deep_space::Contact;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use ethereum_gravity::utils::get_gravity_id;
 use futures::future::join3;
@@ -20,7 +21,7 @@ use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use relayer::main_loop::relayer_main_loop;
 use std::time::Duration;
 use std::time::Instant;
-use tokio::time::delay_for;
+use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
@@ -75,6 +76,8 @@ pub async fn orchestrator_main_loop(
     join3(a, b, c).await;
 }
 
+const DELAY: Duration = Duration::from_secs(5);
+
 /// This function is responsible for making sure that Ethereum events are retrieved from the Ethereum blockchain
 /// and ferried over to Cosmos where they will be used to issue tokens or process batches.
 pub async fn eth_oracle_main_loop(
@@ -101,15 +104,40 @@ pub async fn eth_oracle_main_loop(
         let loop_start = Instant::now();
 
         let latest_eth_block = web3.eth_block_number().await;
-        let latest_cosmos_block = contact.get_latest_block_number().await;
-        if let (Ok(latest_eth_block), Ok(latest_cosmos_block)) =
-            (latest_eth_block, latest_cosmos_block)
-        {
-            trace!(
-                "Latest Eth block {} Latest Cosmos block {}",
-                latest_eth_block,
-                latest_cosmos_block,
-            );
+        let latest_cosmos_block = contact.get_chain_status().await;
+        match (latest_eth_block, latest_cosmos_block) {
+            (Ok(latest_eth_block), Ok(ChainStatus::Moving { block_height })) => {
+                trace!(
+                    "Latest Eth block {} Latest Cosmos block {}",
+                    latest_eth_block,
+                    block_height,
+                );
+            }
+            (Ok(_latest_eth_block), Ok(ChainStatus::Syncing)) => {
+                warn!("Cosmos node syncing, Eth oracle paused");
+                delay_for(DELAY).await;
+                continue;
+            }
+            (Ok(_latest_eth_block), Ok(ChainStatus::WaitingToStart)) => {
+                warn!("Cosmos node syncing waiting for chain start, Eth oracle paused");
+                delay_for(DELAY).await;
+                continue;
+            }
+            (Ok(_), Err(_)) => {
+                warn!("Could not contact Cosmos grpc, trying again");
+                delay_for(DELAY).await;
+                continue;
+            }
+            (Err(_), Ok(_)) => {
+                warn!("Could not contact Eth node, trying again");
+                delay_for(DELAY).await;
+                continue;
+            }
+            (Err(_), Err(_)) => {
+                error!("Could not reach Ethereum or Cosmos rpc!");
+                delay_for(DELAY).await;
+                continue;
+            }
         }
 
         // Relays events from Ethereum -> Cosmos
@@ -168,15 +196,40 @@ pub async fn eth_signer_main_loop(
         let loop_start = Instant::now();
 
         let latest_eth_block = web3.eth_block_number().await;
-        let latest_cosmos_block = contact.get_latest_block_number().await;
-        if let (Ok(latest_eth_block), Ok(latest_cosmos_block)) =
-            (latest_eth_block, latest_cosmos_block)
-        {
-            trace!(
-                "Latest Eth block {} Latest Cosmos block {}",
-                latest_eth_block,
-                latest_cosmos_block
-            );
+        let latest_cosmos_block = contact.get_chain_status().await;
+        match (latest_eth_block, latest_cosmos_block) {
+            (Ok(latest_eth_block), Ok(ChainStatus::Moving { block_height })) => {
+                trace!(
+                    "Latest Eth block {} Latest Cosmos block {}",
+                    latest_eth_block,
+                    block_height,
+                );
+            }
+            (Ok(_latest_eth_block), Ok(ChainStatus::Syncing)) => {
+                warn!("Cosmos node syncing, Eth signer paused");
+                delay_for(DELAY).await;
+                continue;
+            }
+            (Ok(_latest_eth_block), Ok(ChainStatus::WaitingToStart)) => {
+                warn!("Cosmos node syncing waiting for chain start, Eth signer paused");
+                delay_for(DELAY).await;
+                continue;
+            }
+            (Ok(_), Err(_)) => {
+                warn!("Could not contact Cosmos grpc, trying again");
+                delay_for(DELAY).await;
+                continue;
+            }
+            (Err(_), Ok(_)) => {
+                warn!("Could not contact Eth node, trying again");
+                delay_for(DELAY).await;
+                continue;
+            }
+            (Err(_), Err(_)) => {
+                error!("Could not reach Ethereum or Cosmos rpc!");
+                delay_for(DELAY).await;
+                continue;
+            }
         }
 
         // sign the last unsigned valsets
@@ -221,7 +274,7 @@ pub async fn eth_signer_main_loop(
                     &contact,
                     ethereum_key,
                     fee.clone(),
-                    last_unsigned_batch,
+                    vec![last_unsigned_batch],
                     cosmos_key,
                     gravity_id.clone(),
                 )
@@ -246,7 +299,7 @@ pub async fn eth_signer_main_loop(
                     &contact,
                     ethereum_key,
                     fee.clone(),
-                    last_unsigned_call,
+                    vec![last_unsigned_call],
                     cosmos_key,
                     gravity_id.clone(),
                 )

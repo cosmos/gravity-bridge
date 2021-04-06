@@ -3,14 +3,15 @@
 //! by trying more than one thing to handle potentially misconfigured inputs.
 
 use clarity::Address as EthAddress;
-use contact::client::Contact;
-use deep_space::address::Address as CosmosAddress;
+use deep_space::client::ChainStatus;
+use deep_space::Address as CosmosAddress;
+use deep_space::Contact;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_proto::gravity::QueryDelegateKeysByEthAddress;
 use gravity_proto::gravity::QueryDelegateKeysByOrchestratorAddress;
 use std::process::exit;
 use std::time::Duration;
-use tokio::time::delay_for;
+use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use url::Url;
 use web30::client::Web3;
@@ -108,7 +109,7 @@ pub async fn create_rpc_connections(
         let cosmos_legacy_url = legacy_rpc_url.trim_end_matches('/');
         dbg!(&cosmos_legacy_url);
         let base_contact = Contact::new(&cosmos_legacy_url, timeout);
-        let try_base = base_contact.get_syncing_status().await;
+        let try_base = base_contact.get_chain_status().await;
         match try_base {
             // it worked, lets go!
             Ok(_) => contact = Some(base_contact),
@@ -126,8 +127,8 @@ pub async fn create_rpc_connections(
                     let ipv4_url = format!("{}://127.0.0.1:{}", prefix, port);
                     let ipv6_contact = Contact::new(&ipv6_url, timeout);
                     let ipv4_contact = Contact::new(&ipv4_url, timeout);
-                    let ipv6_test = ipv6_contact.get_syncing_status().await;
-                    let ipv4_test = ipv4_contact.get_syncing_status().await;
+                    let ipv6_test = ipv6_contact.get_chain_status().await;
+                    let ipv4_test = ipv4_contact.get_chain_status().await;
                     warn!("Trying fallback urls {} {}", ipv6_url, ipv4_url);
                     match (ipv4_test, ipv6_test) {
                         (Ok(_), Err(_)) => {
@@ -150,8 +151,8 @@ pub async fn create_rpc_connections(
                     let https_on_443_url = format!("https://{}:443", body);
                     let https_on_80_contact = Contact::new(&https_on_80_url, timeout);
                     let https_on_443_contact = Contact::new(&https_on_443_url, timeout);
-                    let https_on_80_test = https_on_80_contact.get_syncing_status().await;
-                    let https_on_443_test = https_on_443_contact.get_syncing_status().await;
+                    let https_on_80_test = https_on_80_contact.get_chain_status().await;
+                    let https_on_443_test = https_on_443_contact.get_chain_status().await;
                     warn!(
                         "Trying fallback urls {} {}",
                         https_on_443_url, https_on_80_url
@@ -270,34 +271,19 @@ fn check_scheme(input: &Url, original_string: &str) {
 pub async fn wait_for_cosmos_node_ready(contact: &Contact) {
     const WAIT_TIME: Duration = Duration::from_secs(10);
     loop {
-        let res = contact.get_syncing_status().await;
+        let res = contact.get_chain_status().await;
         match res {
-            Ok(val) => {
-                if !val.syncing {
-                    break;
-                } else {
-                    info!("Cosmos node is syncing Standing by")
-                }
+            Ok(ChainStatus::Syncing) => {
+                info!("Cosmos node is syncing Standing by")
+            }
+            Ok(ChainStatus::WaitingToStart) => {
+                info!("Cosmos node is waiting for the chain to start, Standing by")
+            }
+            Ok(ChainStatus::Moving { .. }) => {
+                break;
             }
             Err(e) => warn!(
                 "Could not get syncing status, is your Cosmos node up? {:?}",
-                e
-            ),
-        }
-        delay_for(WAIT_TIME).await;
-    }
-    loop {
-        let res = contact.get_latest_block().await;
-        match res {
-            Ok(val) => {
-                if val.block.is_some() {
-                    break;
-                } else {
-                    info!("Cosmos node is waiting for the chain to start, Standing by")
-                }
-            }
-            Err(e) => warn!(
-                "Could not get chain launch status, is your Cosmos node up? {:?}",
                 e
             ),
         }
@@ -388,7 +374,7 @@ pub async fn check_delegate_addresses(
 /// Checks if a given denom, used for fees is in the provided address
 pub async fn check_for_fee_denom(fee_denom: &str, address: CosmosAddress, contact: &Contact) {
     let mut found = false;
-    for balance in contact.get_balances(address).await.unwrap().result {
+    for balance in contact.get_balances(address).await.unwrap() {
         if balance.denom.contains(&fee_denom) {
             found = true;
             break;

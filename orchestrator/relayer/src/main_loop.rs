@@ -7,7 +7,7 @@ use clarity::PrivateKey as EthPrivateKey;
 use ethereum_gravity::utils::get_gravity_id;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use std::time::{Duration, Instant};
-use tokio::time::delay_for;
+use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
@@ -39,7 +39,8 @@ pub async fn relayer_main_loop(
         }
         let current_valset = current_valset.unwrap();
 
-        let gravity_id = get_gravity_id(gravity_contract_address, our_ethereum_address, &web3).await;
+        let gravity_id =
+            get_gravity_id(gravity_contract_address, our_ethereum_address, &web3).await;
         if gravity_id.is_err() {
             error!("Failed to get GravityID, check your Eth node");
             return;

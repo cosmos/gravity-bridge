@@ -2,14 +2,14 @@
 //! or a transaction batch update. It then responds to these events by performing actions on the Cosmos chain if required
 
 use clarity::{utils::bytes_to_hex_str, Address as EthAddress, Uint256};
-use contact::client::Contact;
 use cosmos_gravity::{query::get_last_event_nonce, send::send_ethereum_claims};
+use deep_space::Contact;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::{
     error::GravityError,
     types::{
-        ERC20DeployedEvent, LogicCallExecutedEvent, SendToCosmosEvent,
+        Erc20DeployedEvent, LogicCallExecutedEvent, SendToCosmosEvent,
         TransactionBatchExecutedEvent, ValsetUpdatedEvent,
     },
 };
@@ -96,7 +96,7 @@ pub async fn check_for_events(
         trace!("parsed batches {:?}", batches);
         let deposits = SendToCosmosEvent::from_logs(&deposits)?;
         trace!("parsed deposits {:?}", deposits);
-        let erc20_deploys = ERC20DeployedEvent::from_logs(&deploys)?;
+        let erc20_deploys = Erc20DeployedEvent::from_logs(&deploys)?;
         trace!("parsed erc20 deploys {:?}", erc20_deploys);
         let logic_calls = LogicCallExecutedEvent::from_logs(&logic_calls)?;
         trace!("logic call executions {:?}", logic_calls);
@@ -111,7 +111,7 @@ pub async fn check_for_events(
         let withdraws =
             TransactionBatchExecutedEvent::filter_by_event_nonce(last_event_nonce, &withdraws);
         let erc20_deploys =
-            ERC20DeployedEvent::filter_by_event_nonce(last_event_nonce, &erc20_deploys);
+            Erc20DeployedEvent::filter_by_event_nonce(last_event_nonce, &erc20_deploys);
         let logic_calls =
             LogicCallExecutedEvent::filter_by_event_nonce(last_event_nonce, &logic_calls);
 

@@ -26,7 +26,7 @@ use gravity_proto::gravity::QueryDenomToErc20Request;
 use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
 use std::time::Instant;
 use std::{process::exit, time::Duration, u128};
-use tokio::time::delay_for;
+use tokio::time::sleep as delay_for;
 use web30::{client::Web3, jsonrpc::error::Web3Error};
 
 const TIMEOUT: Duration = Duration::from_secs(60);
@@ -203,8 +203,7 @@ async fn main() {
         let balances = contact
             .get_balances(cosmos_address)
             .await
-            .expect("Failed to get balances!")
-            .result;
+            .expect("Failed to get balances!");
         let mut found = None;
         for coin in balances.iter() {
             if coin.denom == gravity_denom {
