@@ -2,7 +2,7 @@ use super::*;
 use crate::error::GravityError;
 use clarity::Signature as EthSignature;
 use clarity::{abi::Token, Address as EthAddress};
-use deep_space::address::Address as CosmosAddress;
+use deep_space::Address as CosmosAddress;
 
 /// This represents an individual transaction being bridged over to Ethereum
 /// parallel is the OutgoingTransferTx in x/gravity/types/batch.go
@@ -11,12 +11,14 @@ pub struct BatchTransaction {
     pub id: u64,
     pub sender: CosmosAddress,
     pub destination: EthAddress,
-    pub erc20_token: ERC20Token,
-    pub erc20_fee: ERC20Token,
+    pub erc20_token: Erc20Token,
+    pub erc20_fee: Erc20Token,
 }
 
 impl BatchTransaction {
-    pub fn from_proto(input: gravity_proto::gravity::OutgoingTransferTx) -> Result<Self, GravityError> {
+    pub fn from_proto(
+        input: gravity_proto::gravity::OutgoingTransferTx,
+    ) -> Result<Self, GravityError> {
         if input.erc20_fee.is_none() || input.erc20_token.is_none() {
             return Err(GravityError::InvalidBridgeStateError(
                 "Can not have tx with null erc20_token!".to_string(),
@@ -26,8 +28,8 @@ impl BatchTransaction {
             id: input.id,
             sender: input.sender.parse()?,
             destination: input.dest_address.parse()?,
-            erc20_token: ERC20Token::from_proto(input.erc20_token.unwrap())?,
-            erc20_fee: ERC20Token::from_proto(input.erc20_fee.unwrap())?,
+            erc20_token: Erc20Token::from_proto(input.erc20_token.unwrap())?,
+            erc20_fee: Erc20Token::from_proto(input.erc20_fee.unwrap())?,
         })
     }
 }
@@ -38,7 +40,7 @@ pub struct TransactionBatch {
     pub nonce: u64,
     pub batch_timeout: u64,
     pub transactions: Vec<BatchTransaction>,
-    pub total_fee: ERC20Token,
+    pub total_fee: Erc20Token,
     pub token_contract: EthAddress,
 }
 
@@ -63,13 +65,15 @@ impl TransactionBatch {
         )
     }
 
-    pub fn from_proto(input: gravity_proto::gravity::OutgoingTxBatch) -> Result<Self, GravityError> {
+    pub fn from_proto(
+        input: gravity_proto::gravity::OutgoingTxBatch,
+    ) -> Result<Self, GravityError> {
         let mut transactions = Vec::new();
-        let mut running_total_fee: Option<ERC20Token> = None;
+        let mut running_total_fee: Option<Erc20Token> = None;
         for tx in input.transactions {
             let tx = BatchTransaction::from_proto(tx)?;
             if let Some(total_fee) = running_total_fee {
-                running_total_fee = Some(ERC20Token {
+                running_total_fee = Some(Erc20Token {
                     token_contract_address: total_fee.token_contract_address,
                     amount: total_fee.amount + tx.erc20_fee.amount.clone(),
                 });
@@ -105,7 +109,9 @@ pub struct BatchConfirmResponse {
 }
 
 impl BatchConfirmResponse {
-    pub fn from_proto(input: gravity_proto::gravity::MsgConfirmBatch) -> Result<Self, GravityError> {
+    pub fn from_proto(
+        input: gravity_proto::gravity::MsgConfirmBatch,
+    ) -> Result<Self, GravityError> {
         Ok(BatchConfirmResponse {
             nonce: input.nonce,
             orchestrator: input.orchestrator.parse()?,

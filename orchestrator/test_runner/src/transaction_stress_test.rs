@@ -1,20 +1,15 @@
-use crate::{
-    get_fee, get_test_token_name, one_eth, one_hundred_eth, utils::*, COSMOS_NODE_GRPC,
-    TOTAL_TIMEOUT,
-};
-use actix::{clock::delay_for, Arbiter};
+use crate::{get_fee, one_eth, one_hundred_eth, utils::*, TOTAL_TIMEOUT};
 use clarity::Address as EthAddress;
-use contact::client::Contact;
 use cosmos_gravity::send::{send_request_batch, send_to_eth};
 use deep_space::coin::Coin;
+use deep_space::Contact;
 use ethereum_gravity::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
 use futures::future::join_all;
-use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use orchestrator::main_loop::orchestrator_main_loop;
 use std::{
     collections::HashSet,
     time::{Duration, Instant},
 };
+use tokio::time::sleep as delay_for;
 use web30::client::Web3;
 
 const TIMEOUT: Duration = Duration::from_secs(120);
@@ -40,22 +35,7 @@ pub async fn transaction_stress_test(
     gravity_address: EthAddress,
     erc20_addresses: Vec<EthAddress>,
 ) {
-    // start orchestrators
-    for k in keys.iter() {
-        info!("Spawning Orchestrator");
-        let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
-        // we have only one actual futures executor thread (see the actix runtime tag on our main function)
-        // but that will execute all the orchestrators in our test in parallel
-        Arbiter::spawn(orchestrator_main_loop(
-            k.orch_key,
-            k.eth_key,
-            web30.clone(),
-            contact.clone(),
-            grpc_client,
-            gravity_address,
-            get_test_token_name(),
-        ));
-    }
+    start_orchestrators(keys.clone(), gravity_address, false).await;
 
     // Generate 100 user keys to send ETH and multiple types of tokens
     let mut user_keys = Vec::new();
@@ -116,7 +96,7 @@ pub async fn transaction_stress_test(
         good = true;
         for keys in user_keys.iter() {
             let c_addr = keys.cosmos_address;
-            let balances = contact.get_balances(c_addr).await.unwrap().result;
+            let balances = contact.get_balances(c_addr).await.unwrap();
             for token in erc20_addresses.iter() {
                 let mut found = false;
                 for balance in balances.iter() {
@@ -156,7 +136,7 @@ pub async fn transaction_stress_test(
             let c_addr = keys.cosmos_address;
             let c_key = keys.cosmos_key;
             let e_dest_addr = keys.eth_dest_address;
-            let balances = contact.get_balances(c_addr).await.unwrap().result;
+            let balances = contact.get_balances(c_addr).await.unwrap();
             // this way I don't have to hardcode a denom and we can change the way denoms are formed
             // without changing this test.
             let mut send_coin = None;

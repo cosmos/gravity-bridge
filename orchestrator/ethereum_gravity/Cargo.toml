@@ -9,9 +9,9 @@ edition = "2018"
 [dependencies]
 gravity_utils = {path = "../gravity_utils"}
 
-deep_space = "0.2"
+deep_space = {git = "https://github.com/althea-net/deep_space"}
 clarity = "0.4"
-web30 = "0.10"
+web30 = "0.12"
 num256 = "0.3"
 log = "0.4"
 sha3 = "0.9"

@@ -4,10 +4,10 @@ use crate::get_fee;
 use crate::utils::ValidatorKeys;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use contact::client::Contact;
-use cosmos_gravity::{send::update_gravity_delegate_addresses, utils::wait_for_next_cosmos_block};
+use cosmos_gravity::send::update_gravity_delegate_addresses;
 use deep_space::address::Address as CosmosAddress;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use deep_space::Contact;
 use futures::future::join_all;
 use gravity_proto::gravity::{
     query_client::QueryClient as GravityQueryClient, QueryDelegateKeysByEthAddress,
@@ -89,7 +89,7 @@ pub async fn orch_keys_update(
         i.expect("Failed to set delegate addresses!");
     }
 
-    wait_for_next_cosmos_block(contact, BLOCK_TIMEOUT).await;
+    contact.wait_for_next_block(BLOCK_TIMEOUT).await.unwrap();
 
     // TODO registering is too unreliable right now for confusing reasons, revisit with prototx
 

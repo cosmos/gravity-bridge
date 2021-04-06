@@ -2,8 +2,8 @@ use super::*;
 use crate::error::GravityError;
 use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
-use contact::jsonrpc::error::JsonRpcError;
-use deep_space::address::Address as CosmosAddress;
+use deep_space::error::CosmosGrpcError;
+use deep_space::Address as CosmosAddress;
 use std::fmt::Debug;
 use std::{
     cmp::Ordering,
@@ -60,7 +60,9 @@ pub struct ValsetConfirmResponse {
 }
 
 impl ValsetConfirmResponse {
-    pub fn from_proto(input: gravity_proto::gravity::MsgValsetConfirm) -> Result<Self, GravityError> {
+    pub fn from_proto(
+        input: gravity_proto::gravity::MsgValsetConfirm,
+    ) -> Result<Self, GravityError> {
         Ok(ValsetConfirmResponse {
             orchestrator: input.orchestrator.parse()?,
             eth_address: input.eth_address.parse()?,
@@ -108,13 +110,13 @@ impl Valset {
         (addresses, powers)
     }
 
-    pub fn get_power(&self, address: EthAddress) -> Result<u64, JsonRpcError> {
+    pub fn get_power(&self, address: EthAddress) -> Result<u64, CosmosGrpcError> {
         for val in self.members.iter() {
             if val.eth_address == Some(address) {
                 return Ok(val.power);
             }
         }
-        Err(JsonRpcError::BadInput(
+        Err(CosmosGrpcError::BadInput(
             "All Eth Addresses must be set".to_string(),
         ))
     }

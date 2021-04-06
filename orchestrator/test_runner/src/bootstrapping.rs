@@ -1,19 +1,17 @@
+use crate::ETH_NODE;
+use crate::MINER_PRIVATE_KEY;
+use crate::TOTAL_TIMEOUT;
+use crate::{utils::ValidatorKeys, COSMOS_NODE_ABCI};
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use contact::client::Contact;
-use cosmos_gravity::utils::wait_for_next_cosmos_block;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use deep_space::Contact;
 use std::process::Command;
 use std::{fs::File, path::Path};
 use std::{
     io::{BufRead, BufReader, Read, Write},
     process::ExitStatus,
 };
-
-use crate::ETH_NODE;
-use crate::MINER_PRIVATE_KEY;
-use crate::TOTAL_TIMEOUT;
-use crate::{utils::ValidatorKeys, COSMOS_NODE_ABCI};
 
 /// Ethereum private keys for the validators are generated using the gravity eth_keys add command
 /// and dumped into a file /validator-eth-keys in the container, from there they are then used by
@@ -97,7 +95,7 @@ pub fn get_keys() -> Vec<ValidatorKeys> {
 pub async fn deploy_contracts(contact: &Contact) {
     // prevents the node deployer from failing (rarely) when the chain has not
     // yet produced the next block after submitting each eth address
-    wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
+    contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
 
     // these are the possible paths where we could find the contract deployer
     // and the gravity contract itself, feel free to expand this if it makes your

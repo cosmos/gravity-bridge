@@ -129,7 +129,7 @@ pub fn encode_tx_batch_confirm_hashed(gravity_id: String, batch: TransactionBatc
 #[test]
 fn test_batch_signature() {
     use crate::types::BatchTransaction;
-    use crate::types::ERC20Token;
+    use crate::types::Erc20Token;
     use clarity::utils::hex_str_to_bytes;
     use clarity::PrivateKey as EthPrivateKey;
     use rand::Rng;
@@ -145,7 +145,7 @@ fn test_batch_signature() {
         .parse()
         .unwrap();
 
-    let token = ERC20Token {
+    let token = Erc20Token {
         amount: 1u64.into(),
         token_contract_address: erc20_addr,
     };
@@ -186,7 +186,7 @@ fn test_batch_signature() {
 #[test]
 fn test_specific_batch_signature() {
     use crate::types::BatchTransaction;
-    use crate::types::ERC20Token;
+    use crate::types::Erc20Token;
     use clarity::PrivateKey as EthPrivateKey;
     use rand::Rng;
 
@@ -197,7 +197,7 @@ fn test_specific_batch_signature() {
         .parse()
         .unwrap();
 
-    let token = ERC20Token {
+    let token = Erc20Token {
         amount: 1u64.into(),
         token_contract_address: erc20_addr,
     };
@@ -251,7 +251,7 @@ pub fn encode_logic_call_confirm(gravity_id: String, call: LogicCall) -> Vec<u8>
     }
 
     encode_tokens(&[
-        Token::FixedString(gravity_id),                // Gravity Instance ID
+        Token::FixedString(gravity_id),              // Gravity Instance ID
         Token::FixedString("logicCall".to_string()), //Function Name
         Token::Dynamic(transfer_amounts),            //Array of Transfer amounts
         transfer_token_contracts.into(),             //ERC-20 contract for transfers
@@ -272,7 +272,7 @@ pub fn encode_logic_call_confirm_hashed(gravity_id: String, call: LogicCall) -> 
 
 #[test]
 fn test_logic_call_signature() {
-    use crate::types::ERC20Token;
+    use crate::types::Erc20Token;
     use crate::types::LogicCall;
     use clarity::utils::hex_str_to_bytes;
     use sha3::{Digest, Keccak256};
@@ -286,7 +286,7 @@ fn test_logic_call_signature() {
     let logic_contract_address = "0x17c1736CcF692F653c433d7aa2aB45148C016F68"
         .parse()
         .unwrap();
-    let token = vec![ERC20Token {
+    let token = vec![Erc20Token {
         amount: 1u8.into(),
         token_contract_address,
     }];
