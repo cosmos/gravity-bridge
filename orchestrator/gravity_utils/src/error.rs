@@ -11,6 +11,7 @@ use tonic::Status;
 use web30::jsonrpc::error::Web3Error;
 
 #[derive(Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum GravityError {
     InvalidBigInt(ParseBigIntError),
     CosmosGrpcError(CosmosGrpcError),

@@ -755,7 +755,7 @@ dependencies = [
  "actix-rt 2.2.0",
  "clarity",
  "cosmos_gravity",
- "deep_space 1.0.0",
+ "deep_space 1.1.0",
  "docopt",
  "env_logger",
  "ethereum_gravity",
@@ -817,8 +817,9 @@ checksum = "a2df960f5d869b2dd8532793fde43eb5427cceb126c929747a26823ab0eeb536"
 
 [[package]]
 name = "cosmos-sdk-proto"
-version = "0.4.0"
-source = "git+https://github.com/cosmos/cosmos-rust/?branch=jkilpatr/all-upstream-proto#c77dc9c91efd622dc444097c0a76466f57225d70"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "78f4841c74e806ccb9198968db8312355830751a3e9849789c328692a65e4c6a"
 dependencies = [
  "prost",
  "prost-types",
@@ -832,7 +833,7 @@ version = "0.1.0"
 dependencies = [
  "actix",
  "clarity",
- "deep_space 1.0.0",
+ "deep_space 1.1.0",
  "env_logger",
  "ethereum_gravity",
  "gravity_proto",
@@ -918,8 +919,9 @@ dependencies = [
 
 [[package]]
 name = "deep_space"
-version = "1.0.0"
-source = "git+https://github.com/althea-net/deep_space#c7f943c79479a3ba6181ef8399903b2d8fb1aed7"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e49e08c85e480851189263e7c2c4b40a21d16be3291983a8ce13e84224e2a873"
 dependencies = [
  "base64",
  "bech32 0.8.0",
@@ -1041,7 +1043,7 @@ name = "ethereum_gravity"
 version = "0.1.0"
 dependencies = [
  "clarity",
- "deep_space 1.0.0",
+ "deep_space 1.1.0",
  "gravity_utils",
  "log",
  "num256",
@@ -1275,7 +1277,7 @@ version = "0.1.0"
 dependencies = [
  "actix",
  "clarity",
- "deep_space 1.0.0",
+ "deep_space 1.1.0",
  "gravity_proto",
  "log",
  "num-bigint 0.4.0",
@@ -1951,7 +1953,7 @@ dependencies = [
  "actix-rt 2.2.0",
  "clarity",
  "cosmos_gravity",
- "deep_space 1.0.0",
+ "deep_space 1.1.0",
  "docopt",
  "env_logger",
  "ethereum_gravity",
@@ -2373,7 +2375,7 @@ dependencies = [
  "clarity",
  "contact",
  "cosmos_gravity",
- "deep_space 1.0.0",
+ "deep_space 1.1.0",
  "docopt",
  "env_logger",
  "ethereum_gravity",
@@ -2396,7 +2398,7 @@ dependencies = [
  "actix-rt 2.2.0",
  "clarity",
  "cosmos_gravity",
- "deep_space 1.0.0",
+ "deep_space 1.1.0",
  "docopt",
  "env_logger",
  "ethereum_gravity",
@@ -2807,9 +2809,9 @@ dependencies = [
 
 [[package]]
 name = "tendermint-proto"
-version = "0.18.1"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32afe47d9e66ac1ed94adaf389fd3ad42a06782508d0e7b2a8053738d45c2f2a"
+checksum = "32bbc1bc55f09de4d00b5d69aa6b60392ba37c5e4761d869f76065d352bd3360"
 dependencies = [
  "anomaly",
  "bytes 1.0.1",
@@ -2842,7 +2844,7 @@ dependencies = [
  "actix-web",
  "clarity",
  "cosmos_gravity",
- "deep_space 1.0.0",
+ "deep_space 1.1.0",
  "docopt",
  "env_logger",
  "ethereum_gravity",
