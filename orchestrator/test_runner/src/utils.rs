@@ -243,7 +243,12 @@ pub async fn start_orchestrators(
 
     #[allow(clippy::explicit_counter_loop)]
     for k in keys {
-        info!("Spawning Orchestrator");
+        info!(
+            "Spawning Orchestrator with delegate keys {} {} and validator key {}",
+            k.eth_key.to_public_key().unwrap(),
+            k.orch_key.to_public_key().unwrap().to_address(),
+            k.validator_key.to_public_key().unwrap().to_address()
+        );
         let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
         // we have only one actual futures executor thread (see the actix runtime tag on our main function)
         // but that will execute all the orchestrators in our test in parallel

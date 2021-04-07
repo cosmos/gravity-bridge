@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 gravity_proto = {path = "../gravity_proto/"}
 
-deep_space = {git = "https://github.com/althea-net/deep_space"}
+deep_space = "1.1"
 web30 = "0.12"
 clarity = "0.4"
 num256 = "0.3"
