@@ -18,18 +18,10 @@ message Valset {
 }
 
 // LastObservedEthereumBlockHeight stores the last observed
-// Ethereum block height along with the Cosmos block height that
-// it was observed at. These two numbers can be used to project
-// outward and always produce batches with timeouts in the future
+// Ethereum block height along with timestamp this block was observed. 
+// These two values can be used to produce batches with timeouts in the future
 // even if no Ethereum block height has been relayed for a long time
 message LastObservedEthereumBlockHeight {
-  uint64 cosmos_block_height   = 1;
+  uint64 timestamp   = 1;
   uint64 ethereum_block_height = 2;
-}
-
-// This records the relationship between an ERC20 token and the denom
-// of the corresponding Cosmos originated asset
-message ERC20ToDenom {
-  string erc20 = 1;
-  string denom = 2;
 }

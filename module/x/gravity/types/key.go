@@ -13,9 +13,6 @@ const (
 
 	// RouterKey is the module name router key
 	RouterKey = ModuleName
-
-	// QuerierRoute to be used for querierer msgs
-	QuerierRoute = ModuleName
 )
 
 var (
@@ -46,20 +43,17 @@ var (
 	// eventually executes
 	OracleAttestationKey = []byte{0x5}
 
-	// OutgoingTXPoolKey indexes the last nonce for the outgoing tx pool
-	OutgoingTXPoolKey = []byte{0x6}
+	// OutgoingTxPoolKey indexes the last nonce for the outgoing tx pool
+	OutgoingTxPoolKey = []byte{0x6}
 
-	// DenomiatorPrefix indexes token contract addresses from ETH on gravity
-	DenomiatorPrefix = []byte{0x8}
+	// SecondIndexOutgoingTxFeeKey indexes fee amounts by token contract address
+	SecondIndexOutgoingTxFeeKey = []byte{0x9}
 
-	// SecondIndexOutgoingTXFeeKey indexes fee amounts by token contract address
-	SecondIndexOutgoingTXFeeKey = []byte{0x9}
+	// OutgoingTxBatchKey indexes outgoing tx batches under a nonce and token address
+	OutgoingTxBatchKey = []byte{0xa}
 
-	// OutgoingTXBatchKey indexes outgoing tx batches under a nonce and token address
-	OutgoingTXBatchKey = []byte{0xa}
-
-	// OutgoingTXBatchBlockKey indexes outgoing tx batches under a block height and token address
-	OutgoingTXBatchBlockKey = []byte{0xb}
+	// OutgoingTxBatchBlockKey indexes outgoing tx batches under a block height and token address
+	OutgoingTxBatchBlockKey = []byte{0xb}
 
 	// BatchConfirmKey indexes validator confirmations by token contract address
 	BatchConfirmKey = []byte{0xe1}
@@ -76,8 +70,8 @@ var (
 	// SequenceKeyPrefix indexes different txids
 	SequenceKeyPrefix = []byte{0x7}
 
-	// KeyLastTXPoolID indexes the lastTxPoolID
-	KeyLastTXPoolID = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
+	// KeyLastTxPoolID indexes the lastTxPoolID
+	KeyLastTxPoolID = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
 
 	// KeyLastOutgoingBatchID indexes the lastBatchID
 	KeyLastOutgoingBatchID = append(SequenceKeyPrefix, []byte("lastBatchId")...)
@@ -131,7 +125,7 @@ func GetEthAddressKey(validator sdk.ValAddress) []byte {
 // prefix    nonce
 // [0x0][0 0 0 0 0 0 0 1]
 func GetValsetKey(nonce uint64) []byte {
-	return append(ValsetRequestKey, UInt64Bytes(nonce)...)
+	return append(ValsetRequestKey, sdk.Uint64ToBigEndian(nonce)...)
 }
 
 // GetValsetConfirmKey returns the following key format
@@ -139,7 +133,7 @@ func GetValsetKey(nonce uint64) []byte {
 // [0x0][0 0 0 0 0 0 0 1][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
 func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
-	return append(ValsetConfirmKey, append(UInt64Bytes(nonce), validator.Bytes()...)...)
+	return append(ValsetConfirmKey, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
 }
 
 // GetClaimKey returns the following key format
@@ -155,7 +149,7 @@ func GetClaimKey(details EthereumClaim) []byte {
 		panic("No claim without details!")
 	}
 	claimTypeLen := len([]byte{byte(details.GetType())})
-	nonceBz := UInt64Bytes(details.GetEventNonce())
+	nonceBz := sdk.Uint64ToBigEndian(details.GetEventNonce())
 	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz)+len(detailsHash))
 	copy(key[0:], OracleClaimKey)
 	copy(key[len(OracleClaimKey):], []byte{byte(details.GetType())})
@@ -174,10 +168,10 @@ func GetClaimKey(details EthereumClaim) []byte {
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
 func GetAttestationKey(eventNonce uint64, claimHash []byte) []byte {
-	key := make([]byte, len(OracleAttestationKey)+len(UInt64Bytes(0))+len(claimHash))
+	key := make([]byte, len(OracleAttestationKey)+len(sdk.Uint64ToBigEndian(0))+len(claimHash))
 	copy(key[0:], OracleAttestationKey)
-	copy(key[len(OracleAttestationKey):], UInt64Bytes(eventNonce))
-	copy(key[len(OracleAttestationKey)+len(UInt64Bytes(0)):], claimHash)
+	copy(key[len(OracleAttestationKey):], sdk.Uint64ToBigEndian(eventNonce))
+	copy(key[len(OracleAttestationKey)+len(sdk.Uint64ToBigEndian(0)):], claimHash)
 	return key
 }
 
@@ -189,10 +183,10 @@ func GetAttestationKey(eventNonce uint64, claimHash []byte) []byte {
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
 func GetAttestationKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
-	key := make([]byte, len(OracleAttestationKey)+len(UInt64Bytes(0))+len(claimHash))
+	key := make([]byte, len(OracleAttestationKey)+len(sdk.Uint64ToBigEndian(0))+len(claimHash))
 	copy(key[0:], OracleAttestationKey)
-	copy(key[len(OracleAttestationKey):], UInt64Bytes(eventNonce))
-	copy(key[len(OracleAttestationKey)+len(UInt64Bytes(0)):], claimHash)
+	copy(key[len(OracleAttestationKey):], sdk.Uint64ToBigEndian(eventNonce))
+	copy(key[len(OracleAttestationKey)+len(sdk.Uint64ToBigEndian(0)):], claimHash)
 	return key
 }
 
@@ -200,21 +194,21 @@ func GetAttestationKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
 // prefix     id
 // [0x6][0 0 0 0 0 0 0 1]
 func GetOutgoingTxPoolKey(id uint64) []byte {
-	return append(OutgoingTXPoolKey, sdk.Uint64ToBigEndian(id)...)
+	return append(OutgoingTxPoolKey, sdk.Uint64ToBigEndian(id)...)
 }
 
 // GetOutgoingTxBatchKey returns the following key format
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
 func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
-	return append(append(OutgoingTXBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
+	return append(append(OutgoingTxBatchKey, []byte(tokenContract)...), sdk.Uint64ToBigEndian(nonce)...)
 }
 
 // GetOutgoingTxBatchBlockKey returns the following key format
 // prefix     blockheight
 // [0xb][0 0 0 0 2 1 4 3]
 func GetOutgoingTxBatchBlockKey(block uint64) []byte {
-	return append(OutgoingTXBatchBlockKey, UInt64Bytes(block)...)
+	return append(OutgoingTxBatchBlockKey, sdk.Uint64ToBigEndian(block)...)
 }
 
 // GetBatchConfirmKey returns the following key format
@@ -222,7 +216,7 @@ func GetOutgoingTxBatchBlockKey(block uint64) []byte {
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // TODO this should be a sdk.ValAddress
 func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
-	a := append(UInt64Bytes(batchNonce), validator.Bytes()...)
+	a := append(sdk.Uint64ToBigEndian(batchNonce), validator.Bytes()...)
 	b := append([]byte(tokenContract), a...)
 	c := append(BatchConfirmKey, b...)
 	return c
@@ -238,9 +232,9 @@ func GetFeeSecondIndexKey(fee ERC20Token) []byte {
 	amount := make([]byte, 32)
 	amount = fee.Amount.BigInt().FillBytes(amount)
 	// TODO this won't ever work fix it
-	copy(r[0:], SecondIndexOutgoingTXFeeKey)
-	copy(r[len(SecondIndexOutgoingTXFeeKey):], []byte(fee.Contract))
-	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(fee.Contract):], amount)
+	copy(r[0:], SecondIndexOutgoingTxFeeKey)
+	copy(r[len(SecondIndexOutgoingTxFeeKey):], []byte(fee.Contract))
+	copy(r[len(SecondIndexOutgoingTxFeeKey)+len(fee.Contract):], amount)
 	return r
 }
 
@@ -262,11 +256,11 @@ func GetERC20ToDenomKey(erc20 string) []byte {
 
 func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {
 	a := append(KeyOutgoingLogicCall, invalidationId...)
-	return append(a, UInt64Bytes(invalidationNonce)...)
+	return append(a, sdk.Uint64ToBigEndian(invalidationNonce)...)
 }
 
 func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
 	interm := append(KeyOutgoingLogicConfirm, invalidationId...)
-	interm = append(interm, UInt64Bytes(invalidationNonce)...)
+	interm = append(interm, sdk.Uint64ToBigEndian(invalidationNonce)...)
 	return append(interm, validator.Bytes()...)
 }

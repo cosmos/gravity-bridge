@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
+// TODO: this should be a parameter
 const OutgoingTxBatchSize = 100
 
 // BuildOutgoingTXBatch starts the following process chain:
@@ -26,6 +27,7 @@ func (k Keeper) BuildOutgoingTXBatch(ctx sdk.Context, contractAddress string, ma
 	if len(selectedTx) == 0 || err != nil {
 		return nil, err
 	}
+
 	nextID := k.autoIncrementID(ctx, types.KeyLastOutgoingBatchID)
 	batch := &types.OutgoingTxBatch{
 		BatchNonce:    nextID,
@@ -53,7 +55,7 @@ func (k Keeper) getBatchTimeoutHeight(ctx sdk.Context) uint64 {
 	currentCosmosHeight := ctx.BlockHeight()
 	// we store the last observed Cosmos and Ethereum heights, we do not concern ourselves if these values
 	// are zero because no batch can be produced if the last Ethereum block height is not first populated by a deposit event.
-	heights := k.GetLastObservedEthereumBlockHeight(ctx)
+	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx)
 	if heights.CosmosBlockHeight == 0 || heights.EthereumBlockHeight == 0 {
 		return 0
 	}
@@ -141,45 +143,52 @@ func (k Keeper) pickUnbatchedTX(ctx sdk.Context, contractAddress string, maxElem
 }
 
 // GetOutgoingTXBatch loads a batch object. Returns nil when not exists.
-func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, tokenContract string, nonce uint64) *types.OutgoingTxBatch {
+func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, tokenContract string, nonce uint64) (types.OutgoingTxBatch, bool) {
 	store := ctx.KVStore(k.storeKey)
 	key := types.GetOutgoingTxBatchKey(tokenContract, nonce)
 	bz := store.Get(key)
 	if len(bz) == 0 {
-		return nil
+		return types.OutgoingTxBatch{}, false
 	}
-	var b types.OutgoingTxBatch
-	k.cdc.MustUnmarshalBinaryBare(bz, &b)
-	for _, tx := range b.Transactions {
-		tx.Erc20Token.Contract = tokenContract
-		tx.Erc20Fee.Contract = tokenContract
-	}
-	return &b
+
+	var batchTx types.OutgoingTxBatch
+	k.cdc.MustUnmarshalBinaryBare(bz, &batchTx)
+
+	// TODO: why are we populating these fields???
+	// for _, tx := range batchTx.Transactions {
+	// 	tx.Erc20Token.Contract = tokenContract
+	// 	tx.Erc20Fee.Contract = tokenContract
+	// }
+	return batchTx, true
 }
 
-// CancelOutgoingTXBatch releases all TX in the batch and deletes the batch
-func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract string, nonce uint64) error {
-	batch := k.GetOutgoingTXBatch(ctx, tokenContract, nonce)
-	if batch == nil {
-		return types.ErrUnknown
+// CancelOutgoingTxBatch releases all txs in the batch and deletes the batch
+func (k Keeper) CancelOutgoingTxBatch(ctx sdk.Context, tokenContract string, nonce uint64) error {
+	batchTx, found := k.GetOutgoingTXBatch(ctx, tokenContract, nonce)
+	if !found {
+		// TODO: fix error msg
+		return sdkerrors.Wrap(types.ErrEmpty, "outgoing batch tx not found")
 	}
-	for _, tx := range batch.Transactions {
-		tx.Erc20Fee.Contract = tokenContract
-		k.prependToUnbatchedTXIndex(ctx, tokenContract, *tx.Erc20Fee, tx.Id)
+
+	for _, tx := range batchTx.Transactions {
+		tx.Erc20Fee.Contract = tokenContract // ?? why ?
+		k.prependToUnbatchedTxIndex(ctx, tokenContract, *tx.Erc20Fee, tx.Id)
 	}
 
 	// Delete batch since it is finished
-	k.DeleteBatch(ctx, *batch)
+	k.DeleteBatch(ctx, batchTx)
 
-	batchEvent := sdk.NewEvent(
-		types.EventTypeOutgoingBatchCanceled,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
-		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, fmt.Sprint(nonce)),
-		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nonce)),
+	// TODO: fix events
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeOutgoingBatchCanceled,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
+			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
+			sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, fmt.Sprint(nonce)),
+			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nonce)),
+		),
 	)
-	ctx.EventManager().EmitEvent(batchEvent)
 	return nil
 }
 

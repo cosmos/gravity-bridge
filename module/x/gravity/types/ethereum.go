@@ -15,7 +15,7 @@ const (
 	GravityDenomPrefix = ModuleName
 
 	// GravityDenomSeparator is the separator for gravity denoms
-	GravityDenomSeparator = ""
+	GravityDenomSeparator = "/"
 
 	// ETHContractAddressLen is the length of contract address strings
 	ETHContractAddressLen = 42
@@ -29,77 +29,67 @@ func EthAddrLessThan(e, o string) bool {
 	return bytes.Compare([]byte(e)[:], []byte(o)[:]) == -1
 }
 
-// ValidateEthAddress validates the ethereum address strings
-func ValidateEthAddress(a string) error {
-	if a == "" {
-		return fmt.Errorf("empty")
+// ValidateEthAddress validates an ethereum address in hex format.
+func ValidateEthAddress(address string) error {
+	if strings.TrimSpace(address) == "" {
+		return fmt.Errorf("empty address")
 	}
-	if !regexp.MustCompile("^0x[0-9a-fA-F]{40}$").MatchString(a) {
-		return fmt.Errorf("address(%s) doesn't pass regex", a)
+	if len(address) != ETHContractAddressLen {
+		return fmt.Errorf("address(%s) of the wrong length exp(%d) actual(%d)", address, len(address), ETHContractAddressLen)
 	}
-	if len(a) != ETHContractAddressLen {
-		return fmt.Errorf("address(%s) of the wrong length exp(%d) actual(%d)", a, len(a), ETHContractAddressLen)
+	if !regexp.MustCompile("^0x[0-9a-fA-F]{40}$").MatchString(address) {
+		return fmt.Errorf("address %s has an invalid hex format", address)
 	}
 	return nil
 }
 
-/////////////////////////
-//     ERC20Token      //
-/////////////////////////
-
-// NewERC20Token returns a new instance of an ERC20
-func NewERC20Token(amount uint64, contract string) *ERC20Token {
-	return &ERC20Token{Amount: sdk.NewIntFromUint64(amount), Contract: contract}
-}
-
-func NewSDKIntERC20Token(amount sdk.Int, contract string) *ERC20Token {
-	return &ERC20Token{Amount: amount, Contract: contract}
-}
-
-// GravityCoin returns the gravity representation of the ERC20
-func (e *ERC20Token) GravityCoin() sdk.Coin {
-	return sdk.NewCoin(GravityDenom(e.Contract), e.Amount)
-}
-
-func GravityDenom(tokenContract string) string {
-	return fmt.Sprintf("%s%s%s", GravityDenomPrefix, GravityDenomSeparator, tokenContract)
-}
-
-// ValidateBasic permforms stateless validation
-func (e *ERC20Token) ValidateBasic() error {
-	if err := ValidateEthAddress(e.Contract); err != nil {
-		return sdkerrors.Wrap(err, "ethereum address")
+// ValidateGravityDenom validates that the given denomination is either:
+//
+//  - A valid base denomination (eg: 'uatom')
+//  - A valid gravity bridge token representation (i.e 'gravity/{address}')
+func ValidateGravityDenom(denom string) error {
+	if err := sdk.ValidateDenom(denom); err != nil {
+		return err
 	}
-	// TODO: Validate all the things
-	return nil
-}
 
-// Add adds one ERC20 to another
-// TODO: make this return errors instead
-func (e *ERC20Token) Add(o *ERC20Token) *ERC20Token {
-	if string(e.Contract) != string(o.Contract) {
-		panic("invalid contract address")
-	}
-	sum := e.Amount.Add(o.Amount)
-	if !sum.IsUint64() {
-		panic("invalid amount")
-	}
-	return NewERC20Token(sum.Uint64(), e.Contract)
-}
+	denomSplit := strings.SplitN(denom, GravityDenomSeparator, 2)
 
-func GravityDenomToERC20(denom string) (string, error) {
-	fullPrefix := GravityDenomPrefix + GravityDenomSeparator
-	if !strings.HasPrefix(denom, fullPrefix) {
-		return "", fmt.Errorf("denom prefix(%s) not equal to expected(%s)", denom, fullPrefix)
-	}
-	contract := strings.TrimPrefix(denom, fullPrefix)
-	err := ValidateEthAddress(contract)
 	switch {
-	case err != nil:
-		return "", fmt.Errorf("error(%s) validating ethereum contract address", err)
-	case len(denom) != GravityDenomLen:
-		return "", fmt.Errorf("len(denom)(%d) not equal to GravityDenomLen(%d)", len(denom), GravityDenomLen)
-	default:
-		return contract, nil
+	case strings.TrimSpace(denom) == "",
+		len(denomSplit) == 1 && denomSplit[0] == GravityDenomPrefix,
+		len(denomSplit) == 2 && (denomSplit[0] != GravityDenomPrefix || strings.TrimSpace(denomSplit[1]) == ""):
+		return sdkerrors.Wrapf(ErrInvalidGravityDenom, "denomination should be prefixed with the format '%s%s{address}'", GravityDenomPrefix, GravityDenomSeparator)
+
+	case denomSplit[0] == denom && strings.TrimSpace(denom) != "":
+		// denom source is from the current chain. Return nil as it has already been validated
+		return nil
 	}
+
+	// denom source is ethereum. Validate the ethereum hex address
+	if err := ValidateEthAddress(denomSplit[1]); err != nil {
+		return fmt.Errorf("invalid contract address: %w", err)
+	}
+
+	return nil
+}
+
+// GravityDenom returns the prefixed coin denomination of the ERC20 token sdk.Coin in the following
+// format: gravity-{address}. Example:
+// 	gravity/0xa478c2975ab1ea89e8196811f51a7b7ade33eb11
+func GravityDenom(contractAddress string) string {
+	return fmt.Sprintf("%s%s%s", GravityDenomPrefix, GravityDenomSeparator, contractAddress)
+}
+
+func IsEthereumERC20Token(denom string) bool {
+	prefix := GravityDenomPrefix + GravityDenomSeparator
+	return strings.HasPrefix(denom, prefix)
+}
+
+func IsCosmosCoin(denom string) bool {
+	return !IsEthereumERC20Token(denom)
+}
+
+func GravityDenomToERC20Contract(denom string) string {
+	fullPrefix := GravityDenomPrefix + GravityDenomSeparator
+	return strings.TrimPrefix(denom, fullPrefix)
 }

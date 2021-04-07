@@ -1,8 +1,6 @@
 package gravity
 
 import (
-	"sort"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
@@ -53,44 +51,15 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 // "Observe" those who have passed the threshold. Break the loop once we see
 // an attestation that has not passed the threshold
 func attestationTally(ctx sdk.Context, k keeper.Keeper) {
-	attmap := k.GetAttestationMapping(ctx)
-	// We make a slice with all the event nonces that are in the attestation mapping
-	keys := make([]uint64, 0, len(attmap))
-	for k := range attmap {
-		keys = append(keys, k)
-	}
-	// Then we sort it
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	// We check the attestations that haven't been observed, i.e nonce is exactly 1 higher than the last attestation
+	nonce := uint64(k.GetLastObservedEventNonce(ctx)) + 1
 
-	// This iterates over all keys (event nonces) in the attestation mapping. Each value contains
-	// a slice with one or more attestations at that event nonce. There can be multiple attestations
-	// at one event nonce when validators disagree about what event happened at that nonce.
-	for _, nonce := range keys {
-		// This iterates over all attestations at a particular event nonce.
-		// They are ordered by when the first attestation at the event nonce was received.
-		// This order is not important.
-		for _, att := range attmap[nonce] {
-			// We check if the event nonce is exactly 1 higher than the last attestation that was
-			// observed. If it is not, we just move on to the next nonce. This will skip over all
-			// attestations that have already been observed.
-			//
-			// Once we hit an event nonce that is one higher than the last observed event, we stop
-			// skipping over this conditional and start calling tryAttestation (counting votes)
-			// Once an attestation at a given event nonce has enough votes and becomes observed,
-			// every other attestation at that nonce will be skipped, since the lastObservedEventNonce
-			// will be incremented.
-			//
-			// Then we go to the next event nonce in the attestation mapping, if there is one. This
-			// nonce will once again be one higher than the lastObservedEventNonce.
-			// If there is an attestation at this event nonce which has enough votes to be observed,
-			// we skip the other attestations and move on to the next nonce again.
-			// If no attestation becomes observed, when we get to the next nonce, every attestation in
-			// it will be skipped. The same will happen for every nonce after that.
-			if nonce == uint64(k.GetLastObservedEventNonce(ctx))+1 {
-				k.TryAttestation(ctx, &att)
-			}
-		}
-	}
+	k.IterateAttestationByNonce(ctx, nonce, func(attestation types.Attestation) bool {
+		// try unobserved attestations
+		// TODO: rename. "Try" is too ambiguous
+		k.TryAttestation(ctx, attestation)
+		return false
+	})
 }
 
 // cleanupTimedOutBatches deletes batches that have passed their expiration on Ethereum
@@ -103,7 +72,12 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 //    project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 //    AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
-	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumBlockHeight
+	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx)
+	if ethereumHeight == 0 {
+		panic("ethereum observed height cannot be 0")
+	}
+
+	// TODO: use iterator
 	batches := k.GetOutgoingTxBatches(ctx)
 	for _, batch := range batches {
 		if batch.BatchTimeout < ethereumHeight {
@@ -122,7 +96,12 @@ func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
 //    project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 //    AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutLogicCalls(ctx sdk.Context, k keeper.Keeper) {
-	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumBlockHeight
+	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx)
+	if ethereumHeight == 0 {
+		panic("ethereum observed height cannot be 0")
+	}
+
+	// TODO: use iterator
 	calls := k.GetOutgoingLogicCalls(ctx)
 	for _, call := range calls {
 		if call.Timeout < ethereumHeight {

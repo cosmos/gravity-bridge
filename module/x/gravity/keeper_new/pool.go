@@ -9,82 +9,110 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
+
+// TODO: rename functions to Send / Receive
+// TODO: test with IBC vouchers
 
 // AddToOutgoingPool
 // - checks a counterpart denominator exists for the given voucher type
 // - burns the voucher for transfer amount and fees
 // - persists an OutgoingTx
 // - adds the TX to the `available` TX pool via a second index
-func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counterpartReceiver string, amount sdk.Coin, fee sdk.Coin) (uint64, error) {
-	totalAmount := amount.Add(fee)
-	totalInVouchers := sdk.Coins{totalAmount}
+//
+//
+// CONTRACT: amount and fee must be valid Ethereum ERC20 token or a Cosmos coin
+// (i.e with or without the gravity prefix)
+func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethereumReceiver common.Address, amount, fee sdk.Coin) (uint64, error) {
+	if amount.Denom != fee.Denom {
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "coin denom doesn't match with fee denom (%s ≠ %s)", amount.Denom, fee.Denom)
+	}
+
+	// Add the fees to the transfer coins in order to escrow them on the ModuleAccount
+	coinsToEscrow := sdk.NewCoins(amount.Add(fee))
 
 	// If the coin is a gravity voucher, burn the coins. If not, check if there is a deployed ERC20 contract representing it.
 	// If there is, lock the coins.
 
-	isCosmosOriginated, tokenContract, err := k.DenomToERC20Lookup(ctx, totalAmount.Denom)
-	if err != nil {
-		return 0, err
-	}
+	var (
+		tokenContract    common.Address
+		tokenContractHex string
+		found            bool
+	)
 
-	// If it is a cosmos-originated asset we lock it
-	if isCosmosOriginated {
-		// lock coins in module
-		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
-			return 0, err
-		}
-	} else {
+	if types.IsEthereumERC20Token(amount.Denom) {
+		tokenContractHex = types.GravityDenomToERC20Contract(amount.Denom)
+		tokenContract = common.HexToAddress(hexAddress)
+
 		// If it is an ethereum-originated asset we burn it
 		// send coins to module in prep for burn
-		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, coinsToEscrow); err != nil {
 			return 0, err
 		}
 
 		// burn vouchers to send them back to ETH
-		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, totalInVouchers); err != nil {
-			panic(err)
+		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToEscrow); err != nil {
+			panic(fmt.Errorf("couldn't burn ERC20 vouchers %s: %w", hexAddress, err))
+		}
+	} else {
+		// coin is a native Cosmos coin, fetch the contract if exists
+		tokenContract, found = k.GetERC20ContractFromCoinDenom(ctx, amount.Denom)
+		if !found {
+			// TODO: what if there is no corresponding contract? will it be "generated" on ethereum
+			// upon receiving?
+			// FIXME: this will fail if the cosmos tokens are relayed for the first time and they don't have a counterparty contract
+			// Fede: Also there's the question of how do we handle IBC denominations from a security perspective. Do we assign them the same
+			// contract? My guess is that each new contract assigned to a cosmos coin should be approved by governance
+			return 0, sdkerrors.Wrapf(types.ErrContractNotFound, "denom %s", amount.Denom)
+		}
+
+		tokenContractHex = tokenContract.String()
+
+		// lock coins in module
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, coinsToEscrow); err != nil {
+			return 0, err
 		}
 	}
 
 	// get next tx id from keeper
-	nextID := k.autoIncrementID(ctx, types.KeyLastTXPoolID)
-
-	erc20Fee := types.NewSDKIntERC20Token(fee.Amount, tokenContract)
+	// TODO: why is this an integer instead of a hash??
+	nextID := k.autoIncrementID(ctx, types.KeyLastTxPoolID)
 
 	// construct outgoing tx, as part of this process we represent
 	// the token as an ERC20 token since it is preparing to go to ETH
 	// rather than the denom that is the input to this function.
-	outgoing := &types.OutgoingTransferTx{
+
+	// TODO: update to sdk.Coin
+	tx := types.OutgoingTransferTx{
 		Id:          nextID,
 		Sender:      sender.String(),
-		DestAddress: counterpartReceiver,
-		Erc20Token:  types.NewSDKIntERC20Token(amount.Amount, tokenContract),
-		Erc20Fee:    erc20Fee,
+		DestAddress: ethereumReceiver.String(),
+		Erc20Token:  sdk.NewCoin(tokenContractHex, amount.Amount),
+		Erc20Fee:    sdk.NewCoin(tokenContractHex, fee.Amount),
 	}
 
 	// set the outgoing tx in the pool index
-	if err := k.setPoolEntry(ctx, outgoing); err != nil {
-		return 0, err
-	}
+	k.SetOutgoingTx(ctx, tx)
 
 	// add a second index with the fee
-	k.appendToUnbatchedTxIndex(ctx, tokenContract, *erc20Fee, nextID)
 
-	// todo: add second index for sender so that we can easily query: give pending Tx by sender
-	// todo: what about a second index for receiver?
+	// TODO: why are we doing this?
+	k.appendToUnbatchedTxIndex(ctx, tokenContract, erc20Fee, nextID)
 
-	poolEvent := sdk.NewEvent(
-		types.EventTypeBridgeWithdrawalReceived,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
-		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyOutgoingTXID, strconv.Itoa(int(nextID))),
-		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nextID)),
+	// TODO: fix events / add more attrs
+	nonceStr := strconv.FormatUint(nextID, 64)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeBridgeWithdrawalReceived,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			// TODO: why are the nonce and the txID the same?
+			sdk.NewAttribute(types.AttributeKeyOutgoingTxID, nonceStr),
+			sdk.NewAttribute(types.AttributeKeyNonce, nonceStr),
+		),
 	)
-	ctx.EventManager().EmitEvent(poolEvent)
 
 	return nextID, nil
 }
@@ -95,12 +123,11 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 // - issues the tokens back to the sender
 func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID uint64, sender sdk.AccAddress) error {
 	// check that we actually have a tx with that id and what it's details are
-	tx, err := k.getPoolEntry(ctx, txID)
-	if err != nil {
-		return err
+	tx, found := k.GetOutgoingTx(ctx, txID)
+	if !found {
+		return sdkerrors.Wrapf(types.ErrOutgoingTxNotFound, "tx id %d", txID)
 	}
 
-	found := false
 	poolTx := k.GetPoolTransactions(ctx)
 	for _, pTx := range poolTx {
 		if pTx.Id == txID {
@@ -118,7 +145,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID uint64, se
 	}
 
 	// delete this tx from both indexes
-	k.removePoolEntry(ctx, txID)
+	k.DeleteOutgoingTx(ctx, txID)
 	k.removeFromUnbatchedTxIndex(ctx, *tx.Erc20Fee, txID)
 
 	// reissue the amount and the fee
@@ -204,54 +231,6 @@ func (k Keeper) removeFromUnbatchedTxIndex(ctx sdk.Context, fee types.ERC20Token
 		}
 	}
 	return sdkerrors.Wrap(types.ErrUnknown, "tx id")
-}
-
-func (k Keeper) setPoolEntry(ctx sdk.Context, val *types.OutgoingTransferTx) error {
-	bz, err := k.cdc.MarshalBinaryBare(val)
-	if err != nil {
-		return err
-	}
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOutgoingTxPoolKey(val.Id), bz)
-	return nil
-}
-
-func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.OutgoingTransferTx, error) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetOutgoingTxPoolKey(id))
-	if bz == nil {
-		return nil, types.ErrUnknown
-	}
-	var r types.OutgoingTransferTx
-	k.cdc.UnmarshalBinaryBare(bz, &r)
-	return &r, nil
-}
-
-func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetOutgoingTxPoolKey(id))
-}
-
-// GetPoolTransactions, grabs all transactions from the tx pool, useful for queries or genesis save/load
-func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.OutgoingTransferTx {
-	prefixStore := ctx.KVStore(k.storeKey)
-	// we must use the second index key here because transactions are left in the store, but removed
-	// from the tx sorting key, while in batches
-	iter := prefixStore.ReverseIterator(prefixRange([]byte(types.SecondIndexOutgoingTXFeeKey)))
-	var ret []*types.OutgoingTransferTx
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var ids types.IDSet
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ids)
-		for _, id := range ids.Ids {
-			tx, err := k.getPoolEntry(ctx, id)
-			if err != nil {
-				panic("Invalid id in tx index!")
-			}
-			ret = append(ret, tx)
-		}
-	}
-	return ret
 }
 
 // IterateOutgoingPoolByFee iterates over the outgoing pool which is sorted by fee

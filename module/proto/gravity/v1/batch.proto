@@ -1,33 +1,48 @@
 syntax = "proto3";
 package gravity.v1;
 
-import "gravity/v1/attestation.proto";
-// import "gravity/v1/types.proto";
-
 option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
-// OutgoingTxBatch represents a batch of transactions going from gravity to ETH
-message OutgoingTxBatch {
-  uint64                      batch_nonce    = 1;
-  uint64                      batch_timeout  = 2;
-  repeated OutgoingTransferTx transactions   = 3;
+// BatchTx represents a batch of transactions going from Cosmos to Ethereum
+message BatchTx {
+  uint64                      nonce    = 1;
+  uint64                      timeout  = 2;
+  repeated TransferTx         transactions   = 3;
   string                      token_contract = 4;
   uint64                      block          = 5;
 }
 
-// OutgoingTransferTx represents an individual send from gravity to ETH
-message OutgoingTransferTx {
-  uint64     id           = 1;
-  string     sender       = 2;
-  string     dest_address = 3;
-  ERC20Token erc20_token  = 4;
-  ERC20Token erc20_fee    = 5;
+// TransferTx represents an individual transfer from Cosmos to Ethereum
+message TransferTx {
+  // cosmos account address of the sender in bech32 format
+  string     sender       = 1;
+  // ethereum recipient address in hex format
+  string     ethereum_recipient = 2;
+  // amount of the transfer represented as an sdk.Coin. The coin denomination
+  // must correspond to a valid ERC20 token contract address
+  cosmos.base.v1beta1.Coin erc20_token  = 3 [
+    (gogoproto.nullable) = false
+  ]; 
+  // transfer fees for the bridge orchestrators, represented as an sdk.Coin.
+  // The coin denomination must correspond to a valid ERC20 token contract address
+  cosmos.base.v1beta1.Coin erc20_fee  = 4 [
+    (gogoproto.nullable) = false
+  ];
 }
 
-// OutgoingLogicCall represents an individual logic call from gravity to ETH
-message OutgoingLogicCall {
-  repeated ERC20Token transfers              = 1;
-  repeated ERC20Token fees                   = 2;
+// LogicCallTx represents an individual arbitratry logic call transaction from
+// Cosmos to Ethereum.
+message LogicCallTx {
+  // erc20 tokens represented as sdk.Coins
+  repeated cosmos.base.v1beta1.Coin tokens = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // erc20 tokens represented as sdk.Coins used as fees for the bridge orchestrators.
+  repeated cosmos.base.v1beta1.Coin fees = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
   string              logic_contract_address = 3;
   bytes               payload                = 4;
   uint64              timeout                = 5;
