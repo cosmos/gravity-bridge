@@ -65,7 +65,7 @@ async fn main() {
         amount: 1u64.into(),
     };
 
-    let connections = create_rpc_connections(None, Some(args.flag_cosmos_rpc), None, TIMEOUT).await;
+    let connections = create_rpc_connections(Some(args.flag_cosmos_rpc), None, TIMEOUT).await;
     let contact = connections.contact.unwrap();
     wait_for_cosmos_node_ready(&contact).await;
 
