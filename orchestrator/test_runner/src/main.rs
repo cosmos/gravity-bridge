@@ -38,7 +38,6 @@ const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
 /// the timeout for the total system
 const TOTAL_TIMEOUT: Duration = Duration::from_secs(300);
 
-pub const COSMOS_NODE: &str = "http://localhost:1317";
 pub const COSMOS_NODE_GRPC: &str = "http://localhost:9090";
 pub const COSMOS_NODE_ABCI: &str = "http://localhost:26657";
 pub const ETH_NODE: &str = "http://localhost:8545";
@@ -99,7 +98,7 @@ pub fn should_deploy_contracts() -> bool {
 pub async fn main() {
     env_logger::init();
     info!("Staring Gravity test-runner");
-    let contact = Contact::new(COSMOS_NODE, OPERATION_TIMEOUT);
+    let contact = Contact::new(COSMOS_NODE_GRPC, OPERATION_TIMEOUT);
 
     info!("Waiting for Cosmos chain to come online");
     wait_for_cosmos_online(&contact, TOTAL_TIMEOUT).await;
@@ -158,7 +157,7 @@ pub async fn main() {
             .await;
             return;
         } else if test_type == "BATCH_STRESS" {
-            let contact = Contact::new(COSMOS_NODE, TOTAL_TIMEOUT);
+            let contact = Contact::new(COSMOS_NODE_GRPC, TOTAL_TIMEOUT);
             transaction_stress_test(&web30, &contact, keys, gravity_address, erc20_addresses).await;
             return;
         } else if test_type == "VALSET_STRESS" {
