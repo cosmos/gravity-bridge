@@ -1,5 +1,4 @@
 use crate::get_test_token_name;
-use crate::COSMOS_NODE;
 use crate::COSMOS_NODE_GRPC;
 use crate::ETH_NODE;
 use crate::TOTAL_TIMEOUT;
@@ -250,7 +249,7 @@ pub async fn start_orchestrators(
         // but that will execute all the orchestrators in our test in parallel
         thread::spawn(move || {
             let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
-            let contact = Contact::new(COSMOS_NODE, OPERATION_TIMEOUT);
+            let contact = Contact::new(COSMOS_NODE_GRPC, OPERATION_TIMEOUT);
             let fut = orchestrator_main_loop(
                 k.validator_key,
                 k.eth_key,
