@@ -5,6 +5,9 @@ package types
 
 import (
 	fmt "fmt"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
@@ -22,27 +25,27 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// OutgoingTxBatch represents a batch of transactions going from gravity to ETH
-type OutgoingTxBatch struct {
-	BatchNonce    uint64                `protobuf:"varint,1,opt,name=batch_nonce,json=batchNonce,proto3" json:"batch_nonce,omitempty"`
-	BatchTimeout  uint64                `protobuf:"varint,2,opt,name=batch_timeout,json=batchTimeout,proto3" json:"batch_timeout,omitempty"`
-	Transactions  []*OutgoingTransferTx `protobuf:"bytes,3,rep,name=transactions,proto3" json:"transactions,omitempty"`
-	TokenContract string                `protobuf:"bytes,4,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
-	Block         uint64                `protobuf:"varint,5,opt,name=block,proto3" json:"block,omitempty"`
+// BatchTx represents a batch of transactions going from Cosmos to Ethereum
+type BatchTx struct {
+	Nonce         uint64       `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	Timeout       uint64       `protobuf:"varint,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	Transactions  []TransferTx `protobuf:"bytes,3,rep,name=transactions,proto3" json:"transactions"`
+	TokenContract string       `protobuf:"bytes,4,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
+	Block         uint64       `protobuf:"varint,5,opt,name=block,proto3" json:"block,omitempty"`
 }
 
-func (m *OutgoingTxBatch) Reset()         { *m = OutgoingTxBatch{} }
-func (m *OutgoingTxBatch) String() string { return proto.CompactTextString(m) }
-func (*OutgoingTxBatch) ProtoMessage()    {}
-func (*OutgoingTxBatch) Descriptor() ([]byte, []int) {
+func (m *BatchTx) Reset()         { *m = BatchTx{} }
+func (m *BatchTx) String() string { return proto.CompactTextString(m) }
+func (*BatchTx) ProtoMessage()    {}
+func (*BatchTx) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4453b445b0660cab, []int{0}
 }
-func (m *OutgoingTxBatch) XXX_Unmarshal(b []byte) error {
+func (m *BatchTx) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *OutgoingTxBatch) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *BatchTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_OutgoingTxBatch.Marshal(b, m, deterministic)
+		return xxx_messageInfo_BatchTx.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -52,217 +55,218 @@ func (m *OutgoingTxBatch) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-func (m *OutgoingTxBatch) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OutgoingTxBatch.Merge(m, src)
+func (m *BatchTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BatchTx.Merge(m, src)
 }
-func (m *OutgoingTxBatch) XXX_Size() int {
+func (m *BatchTx) XXX_Size() int {
 	return m.Size()
 }
-func (m *OutgoingTxBatch) XXX_DiscardUnknown() {
-	xxx_messageInfo_OutgoingTxBatch.DiscardUnknown(m)
+func (m *BatchTx) XXX_DiscardUnknown() {
+	xxx_messageInfo_BatchTx.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_OutgoingTxBatch proto.InternalMessageInfo
+var xxx_messageInfo_BatchTx proto.InternalMessageInfo
 
-func (m *OutgoingTxBatch) GetBatchNonce() uint64 {
+func (m *BatchTx) GetNonce() uint64 {
 	if m != nil {
-		return m.BatchNonce
+		return m.Nonce
 	}
 	return 0
 }
 
-func (m *OutgoingTxBatch) GetBatchTimeout() uint64 {
-	if m != nil {
-		return m.BatchTimeout
-	}
-	return 0
-}
-
-func (m *OutgoingTxBatch) GetTransactions() []*OutgoingTransferTx {
-	if m != nil {
-		return m.Transactions
-	}
-	return nil
-}
-
-func (m *OutgoingTxBatch) GetTokenContract() string {
-	if m != nil {
-		return m.TokenContract
-	}
-	return ""
-}
-
-func (m *OutgoingTxBatch) GetBlock() uint64 {
-	if m != nil {
-		return m.Block
-	}
-	return 0
-}
-
-// OutgoingTransferTx represents an individual send from gravity to ETH
-type OutgoingTransferTx struct {
-	Id          uint64      `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Sender      string      `protobuf:"bytes,2,opt,name=sender,proto3" json:"sender,omitempty"`
-	DestAddress string      `protobuf:"bytes,3,opt,name=dest_address,json=destAddress,proto3" json:"dest_address,omitempty"`
-	Erc20Token  *ERC20Token `protobuf:"bytes,4,opt,name=erc20_token,json=erc20Token,proto3" json:"erc20_token,omitempty"`
-	Erc20Fee    *ERC20Token `protobuf:"bytes,5,opt,name=erc20_fee,json=erc20Fee,proto3" json:"erc20_fee,omitempty"`
-}
-
-func (m *OutgoingTransferTx) Reset()         { *m = OutgoingTransferTx{} }
-func (m *OutgoingTransferTx) String() string { return proto.CompactTextString(m) }
-func (*OutgoingTransferTx) ProtoMessage()    {}
-func (*OutgoingTransferTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4453b445b0660cab, []int{1}
-}
-func (m *OutgoingTransferTx) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *OutgoingTransferTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_OutgoingTransferTx.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *OutgoingTransferTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OutgoingTransferTx.Merge(m, src)
-}
-func (m *OutgoingTransferTx) XXX_Size() int {
-	return m.Size()
-}
-func (m *OutgoingTransferTx) XXX_DiscardUnknown() {
-	xxx_messageInfo_OutgoingTransferTx.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_OutgoingTransferTx proto.InternalMessageInfo
-
-func (m *OutgoingTransferTx) GetId() uint64 {
-	if m != nil {
-		return m.Id
-	}
-	return 0
-}
-
-func (m *OutgoingTransferTx) GetSender() string {
-	if m != nil {
-		return m.Sender
-	}
-	return ""
-}
-
-func (m *OutgoingTransferTx) GetDestAddress() string {
-	if m != nil {
-		return m.DestAddress
-	}
-	return ""
-}
-
-func (m *OutgoingTransferTx) GetErc20Token() *ERC20Token {
-	if m != nil {
-		return m.Erc20Token
-	}
-	return nil
-}
-
-func (m *OutgoingTransferTx) GetErc20Fee() *ERC20Token {
-	if m != nil {
-		return m.Erc20Fee
-	}
-	return nil
-}
-
-// OutgoingLogicCall represents an individual logic call from gravity to ETH
-type OutgoingLogicCall struct {
-	Transfers            []*ERC20Token `protobuf:"bytes,1,rep,name=transfers,proto3" json:"transfers,omitempty"`
-	Fees                 []*ERC20Token `protobuf:"bytes,2,rep,name=fees,proto3" json:"fees,omitempty"`
-	LogicContractAddress string        `protobuf:"bytes,3,opt,name=logic_contract_address,json=logicContractAddress,proto3" json:"logic_contract_address,omitempty"`
-	Payload              []byte        `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
-	Timeout              uint64        `protobuf:"varint,5,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	InvalidationId       []byte        `protobuf:"bytes,6,opt,name=invalidation_id,json=invalidationId,proto3" json:"invalidation_id,omitempty"`
-	InvalidationNonce    uint64        `protobuf:"varint,7,opt,name=invalidation_nonce,json=invalidationNonce,proto3" json:"invalidation_nonce,omitempty"`
-}
-
-func (m *OutgoingLogicCall) Reset()         { *m = OutgoingLogicCall{} }
-func (m *OutgoingLogicCall) String() string { return proto.CompactTextString(m) }
-func (*OutgoingLogicCall) ProtoMessage()    {}
-func (*OutgoingLogicCall) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4453b445b0660cab, []int{2}
-}
-func (m *OutgoingLogicCall) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *OutgoingLogicCall) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_OutgoingLogicCall.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *OutgoingLogicCall) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OutgoingLogicCall.Merge(m, src)
-}
-func (m *OutgoingLogicCall) XXX_Size() int {
-	return m.Size()
-}
-func (m *OutgoingLogicCall) XXX_DiscardUnknown() {
-	xxx_messageInfo_OutgoingLogicCall.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_OutgoingLogicCall proto.InternalMessageInfo
-
-func (m *OutgoingLogicCall) GetTransfers() []*ERC20Token {
-	if m != nil {
-		return m.Transfers
-	}
-	return nil
-}
-
-func (m *OutgoingLogicCall) GetFees() []*ERC20Token {
-	if m != nil {
-		return m.Fees
-	}
-	return nil
-}
-
-func (m *OutgoingLogicCall) GetLogicContractAddress() string {
-	if m != nil {
-		return m.LogicContractAddress
-	}
-	return ""
-}
-
-func (m *OutgoingLogicCall) GetPayload() []byte {
-	if m != nil {
-		return m.Payload
-	}
-	return nil
-}
-
-func (m *OutgoingLogicCall) GetTimeout() uint64 {
+func (m *BatchTx) GetTimeout() uint64 {
 	if m != nil {
 		return m.Timeout
 	}
 	return 0
 }
 
-func (m *OutgoingLogicCall) GetInvalidationId() []byte {
+func (m *BatchTx) GetTransactions() []TransferTx {
+	if m != nil {
+		return m.Transactions
+	}
+	return nil
+}
+
+func (m *BatchTx) GetTokenContract() string {
+	if m != nil {
+		return m.TokenContract
+	}
+	return ""
+}
+
+func (m *BatchTx) GetBlock() uint64 {
+	if m != nil {
+		return m.Block
+	}
+	return 0
+}
+
+// TransferTx represents an individual transfer from Cosmos to Ethereum
+type TransferTx struct {
+	// cosmos account address of the sender in bech32 format
+	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	// ethereum recipient address in hex format
+	EthereumRecipient string `protobuf:"bytes,2,opt,name=ethereum_recipient,json=ethereumRecipient,proto3" json:"ethereum_recipient,omitempty"`
+	// amount of the transfer represented as an sdk.Coin. The coin denomination
+	// must correspond to a valid ERC20 token contract address
+	Erc20Token types.Coin `protobuf:"bytes,3,opt,name=erc20_token,json=erc20Token,proto3" json:"erc20_token"`
+	// transfer fees for the bridge orchestrators, represented as an sdk.Coin.
+	// The coin denomination must correspond to a valid ERC20 token contract address
+	Erc20Fee types.Coin `protobuf:"bytes,4,opt,name=erc20_fee,json=erc20Fee,proto3" json:"erc20_fee"`
+}
+
+func (m *TransferTx) Reset()         { *m = TransferTx{} }
+func (m *TransferTx) String() string { return proto.CompactTextString(m) }
+func (*TransferTx) ProtoMessage()    {}
+func (*TransferTx) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4453b445b0660cab, []int{1}
+}
+func (m *TransferTx) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TransferTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TransferTx.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *TransferTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TransferTx.Merge(m, src)
+}
+func (m *TransferTx) XXX_Size() int {
+	return m.Size()
+}
+func (m *TransferTx) XXX_DiscardUnknown() {
+	xxx_messageInfo_TransferTx.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TransferTx proto.InternalMessageInfo
+
+func (m *TransferTx) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *TransferTx) GetEthereumRecipient() string {
+	if m != nil {
+		return m.EthereumRecipient
+	}
+	return ""
+}
+
+func (m *TransferTx) GetErc20Token() types.Coin {
+	if m != nil {
+		return m.Erc20Token
+	}
+	return types.Coin{}
+}
+
+func (m *TransferTx) GetErc20Fee() types.Coin {
+	if m != nil {
+		return m.Erc20Fee
+	}
+	return types.Coin{}
+}
+
+// LogicCallTx represents an individual arbitratry logic call transaction from
+// Cosmos to Ethereum.
+type LogicCallTx struct {
+	// erc20 tokens represented as sdk.Coins
+	Tokens github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=tokens,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"tokens"`
+	// erc20 tokens represented as sdk.Coins used as fees for the bridge orchestrators.
+	Fees                 github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=fees,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"fees"`
+	LogicContractAddress string                                   `protobuf:"bytes,3,opt,name=logic_contract_address,json=logicContractAddress,proto3" json:"logic_contract_address,omitempty"`
+	Payload              []byte                                   `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
+	Timeout              uint64                                   `protobuf:"varint,5,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	InvalidationId       []byte                                   `protobuf:"bytes,6,opt,name=invalidation_id,json=invalidationId,proto3" json:"invalidation_id,omitempty"`
+	InvalidationNonce    uint64                                   `protobuf:"varint,7,opt,name=invalidation_nonce,json=invalidationNonce,proto3" json:"invalidation_nonce,omitempty"`
+}
+
+func (m *LogicCallTx) Reset()         { *m = LogicCallTx{} }
+func (m *LogicCallTx) String() string { return proto.CompactTextString(m) }
+func (*LogicCallTx) ProtoMessage()    {}
+func (*LogicCallTx) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4453b445b0660cab, []int{2}
+}
+func (m *LogicCallTx) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *LogicCallTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_LogicCallTx.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *LogicCallTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LogicCallTx.Merge(m, src)
+}
+func (m *LogicCallTx) XXX_Size() int {
+	return m.Size()
+}
+func (m *LogicCallTx) XXX_DiscardUnknown() {
+	xxx_messageInfo_LogicCallTx.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LogicCallTx proto.InternalMessageInfo
+
+func (m *LogicCallTx) GetTokens() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Tokens
+	}
+	return nil
+}
+
+func (m *LogicCallTx) GetFees() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Fees
+	}
+	return nil
+}
+
+func (m *LogicCallTx) GetLogicContractAddress() string {
+	if m != nil {
+		return m.LogicContractAddress
+	}
+	return ""
+}
+
+func (m *LogicCallTx) GetPayload() []byte {
+	if m != nil {
+		return m.Payload
+	}
+	return nil
+}
+
+func (m *LogicCallTx) GetTimeout() uint64 {
+	if m != nil {
+		return m.Timeout
+	}
+	return 0
+}
+
+func (m *LogicCallTx) GetInvalidationId() []byte {
 	if m != nil {
 		return m.InvalidationId
 	}
 	return nil
 }
 
-func (m *OutgoingLogicCall) GetInvalidationNonce() uint64 {
+func (m *LogicCallTx) GetInvalidationNonce() uint64 {
 	if m != nil {
 		return m.InvalidationNonce
 	}
@@ -270,50 +274,53 @@ func (m *OutgoingLogicCall) GetInvalidationNonce() uint64 {
 }
 
 func init() {
-	proto.RegisterType((*OutgoingTxBatch)(nil), "gravity.v1.OutgoingTxBatch")
-	proto.RegisterType((*OutgoingTransferTx)(nil), "gravity.v1.OutgoingTransferTx")
-	proto.RegisterType((*OutgoingLogicCall)(nil), "gravity.v1.OutgoingLogicCall")
+	proto.RegisterType((*BatchTx)(nil), "gravity.v1.BatchTx")
+	proto.RegisterType((*TransferTx)(nil), "gravity.v1.TransferTx")
+	proto.RegisterType((*LogicCallTx)(nil), "gravity.v1.LogicCallTx")
 }
 
 func init() { proto.RegisterFile("gravity/v1/batch.proto", fileDescriptor_4453b445b0660cab) }
 
 var fileDescriptor_4453b445b0660cab = []byte{
-	// 510 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x93, 0xcf, 0x6a, 0xdb, 0x4e,
-	0x10, 0xc7, 0x2d, 0xc7, 0x71, 0x7e, 0x1e, 0x3b, 0x0e, 0x59, 0x82, 0x11, 0x3f, 0x8a, 0xea, 0xba,
-	0x94, 0x9a, 0x42, 0xac, 0xc4, 0x09, 0xe4, 0x5c, 0x9b, 0x16, 0x0a, 0xa5, 0xa5, 0xc2, 0xa7, 0x5e,
-	0xc4, 0x6a, 0x77, 0xad, 0x2c, 0x91, 0xb5, 0x46, 0xbb, 0x36, 0xf6, 0x5b, 0xf4, 0x6d, 0xfa, 0x0a,
-	0xbd, 0x14, 0x72, 0xcc, 0xb1, 0xd8, 0x2f, 0x52, 0x76, 0x24, 0x25, 0x4e, 0x4b, 0x7a, 0xd3, 0x7c,
-	0xe6, 0x3b, 0x7f, 0x77, 0x04, 0x9d, 0x38, 0xa3, 0x4b, 0x69, 0xd6, 0xfe, 0xf2, 0xdc, 0x8f, 0xa8,
-	0x61, 0xd7, 0x83, 0x79, 0xa6, 0x8c, 0x22, 0x50, 0xf0, 0xc1, 0xf2, 0xfc, 0xff, 0x67, 0x3b, 0x1a,
-	0x6a, 0x8c, 0xd0, 0x86, 0x1a, 0xa9, 0xd2, 0x5c, 0xd9, 0xbb, 0x73, 0xe0, 0xe8, 0xf3, 0xc2, 0xc4,
-	0x4a, 0xa6, 0xf1, 0x64, 0x35, 0xb2, 0x39, 0xc8, 0x73, 0x68, 0x62, 0xb2, 0x30, 0x55, 0x29, 0x13,
-	0xae, 0xd3, 0x75, 0xfa, 0xb5, 0x00, 0x10, 0x7d, 0xb2, 0x84, 0xbc, 0x84, 0xc3, 0x5c, 0x60, 0xe4,
-	0x4c, 0xa8, 0x85, 0x71, 0xab, 0x28, 0x69, 0x21, 0x9c, 0xe4, 0x8c, 0x8c, 0xa0, 0x65, 0x32, 0x9a,
-	0x6a, 0xca, 0x6c, 0x39, 0xed, 0xee, 0x75, 0xf7, 0xfa, 0xcd, 0xa1, 0x37, 0x78, 0x68, 0x6d, 0x70,
-	0x5f, 0xd8, 0xea, 0xa6, 0x22, 0x9b, 0xac, 0x82, 0x47, 0x31, 0xe4, 0x15, 0xb4, 0x8d, 0xba, 0x11,
-	0x69, 0xc8, 0x54, 0x6a, 0x32, 0xca, 0x8c, 0x5b, 0xeb, 0x3a, 0xfd, 0x46, 0x70, 0x88, 0x74, 0x5c,
-	0x40, 0x72, 0x02, 0xfb, 0x51, 0xa2, 0xd8, 0x8d, 0xbb, 0x8f, 0x7d, 0xe4, 0x46, 0xef, 0xa7, 0x03,
-	0xe4, 0xef, 0x0a, 0xa4, 0x0d, 0x55, 0xc9, 0x8b, 0xa1, 0xaa, 0x92, 0x93, 0x0e, 0xd4, 0xb5, 0x48,
-	0xb9, 0xc8, 0x70, 0x8a, 0x46, 0x50, 0x58, 0xe4, 0x05, 0xb4, 0xb8, 0xd0, 0x26, 0xa4, 0x9c, 0x67,
-	0x42, 0xdb, 0xfe, 0xad, 0xb7, 0x69, 0xd9, 0xdb, 0x1c, 0x91, 0x2b, 0x68, 0x8a, 0x8c, 0x0d, 0xcf,
-	0x42, 0x6c, 0x07, 0x7b, 0x6b, 0x0e, 0x3b, 0xbb, 0x13, 0xbe, 0x0b, 0xc6, 0xc3, 0xb3, 0x89, 0xf5,
-	0x06, 0x80, 0x52, 0xfc, 0x26, 0x17, 0xd0, 0xc8, 0x03, 0xa7, 0x42, 0x60, 0xd3, 0x4f, 0x87, 0xfd,
-	0x87, 0xc2, 0xf7, 0x42, 0xf4, 0xbe, 0x57, 0xe1, 0xb8, 0x9c, 0xe7, 0xa3, 0x8a, 0x25, 0x1b, 0xd3,
-	0x24, 0x21, 0x97, 0xd0, 0x30, 0xc5, 0x70, 0xda, 0x75, 0x70, 0xc7, 0x4f, 0xa5, 0x7a, 0x10, 0x92,
-	0x37, 0x50, 0x9b, 0x0a, 0xa1, 0xdd, 0xea, 0x3f, 0x03, 0x50, 0x43, 0x2e, 0xa1, 0x93, 0xd8, 0x72,
-	0xf7, 0x8f, 0xf0, 0xc7, 0x4a, 0x4e, 0xd0, 0x5b, 0x3e, 0x46, 0xb9, 0x1b, 0x17, 0x0e, 0xe6, 0x74,
-	0x9d, 0x28, 0xca, 0x71, 0x2f, 0xad, 0xa0, 0x34, 0xad, 0xa7, 0xbc, 0x9b, 0xfc, 0xbd, 0x4a, 0x93,
-	0xbc, 0x86, 0x23, 0x99, 0x2e, 0x69, 0x22, 0x39, 0x9e, 0x68, 0x28, 0xb9, 0x5b, 0xc7, 0xd8, 0xf6,
-	0x2e, 0xfe, 0xc0, 0xc9, 0x29, 0x90, 0x47, 0xc2, 0xfc, 0x50, 0x0f, 0x30, 0xdb, 0xf1, 0xae, 0x07,
-	0xef, 0x75, 0xf4, 0xe5, 0xc7, 0xc6, 0x73, 0x6e, 0x37, 0x9e, 0xf3, 0x6b, 0xe3, 0x39, 0xdf, 0xb6,
-	0x5e, 0xe5, 0x76, 0xeb, 0x55, 0xee, 0xb6, 0x5e, 0xe5, 0xeb, 0x55, 0x2c, 0xcd, 0xf5, 0x22, 0x1a,
-	0x30, 0x35, 0xf3, 0x99, 0xd2, 0x33, 0xa5, 0xfd, 0x62, 0x15, 0xa7, 0x51, 0x26, 0x79, 0x2c, 0xfc,
-	0x99, 0xe2, 0x8b, 0x44, 0xf8, 0xab, 0x92, 0xfb, 0x66, 0x3d, 0x17, 0x3a, 0xaa, 0xe3, 0xef, 0x73,
-	0xf1, 0x3b, 0x00, 0x00, 0xff, 0xff, 0x3f, 0xa1, 0x12, 0x22, 0x82, 0x03, 0x00, 0x00,
+	// 546 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x53, 0xc1, 0x8a, 0xd3, 0x40,
+	0x18, 0x6e, 0xb6, 0xdd, 0xae, 0x9d, 0xae, 0x2b, 0x3b, 0x2c, 0x25, 0xee, 0x21, 0x5b, 0x0a, 0x62,
+	0x2f, 0x4d, 0xb6, 0x55, 0xf0, 0xe2, 0x61, 0x6d, 0x41, 0x10, 0x44, 0x30, 0xf4, 0xe4, 0x25, 0x4c,
+	0x26, 0x7f, 0xd3, 0xa1, 0x69, 0xa6, 0xcc, 0x4c, 0x4b, 0xfb, 0x16, 0x5e, 0x7c, 0x09, 0x9f, 0xc0,
+	0x47, 0xd8, 0xe3, 0x82, 0x17, 0x4f, 0x2a, 0xed, 0x8b, 0xc8, 0xcc, 0x24, 0x6e, 0x8b, 0x20, 0x1e,
+	0x3c, 0x35, 0xff, 0xff, 0xcd, 0xf7, 0xf5, 0xff, 0xbf, 0xf9, 0x06, 0xb5, 0x52, 0x41, 0x56, 0x4c,
+	0x6d, 0x82, 0x55, 0x3f, 0x88, 0x89, 0xa2, 0x53, 0x7f, 0x21, 0xb8, 0xe2, 0x18, 0x15, 0x7d, 0x7f,
+	0xd5, 0xbf, 0xf4, 0x28, 0x97, 0x73, 0x2e, 0x83, 0x98, 0x48, 0x08, 0x56, 0xfd, 0x18, 0x14, 0xe9,
+	0x07, 0x94, 0xb3, 0xdc, 0x9e, 0xbd, 0xbc, 0x48, 0x79, 0xca, 0xcd, 0x67, 0xa0, 0xbf, 0x6c, 0xb7,
+	0xf3, 0xc5, 0x41, 0x27, 0x43, 0xad, 0x38, 0x5e, 0xe3, 0x0b, 0x74, 0x9c, 0xf3, 0x9c, 0x82, 0xeb,
+	0xb4, 0x9d, 0x6e, 0x2d, 0xb4, 0x05, 0x76, 0xd1, 0x89, 0x62, 0x73, 0xe0, 0x4b, 0xe5, 0x1e, 0x99,
+	0x7e, 0x59, 0xe2, 0x1b, 0x74, 0xaa, 0x04, 0xc9, 0x25, 0xa1, 0x8a, 0xf1, 0x5c, 0xba, 0xd5, 0x76,
+	0xb5, 0xdb, 0x1c, 0xb4, 0xfc, 0xfb, 0xa1, 0xfc, 0xb1, 0xc6, 0x27, 0x20, 0xc6, 0xeb, 0x61, 0xed,
+	0xf6, 0xfb, 0x55, 0x25, 0x3c, 0x60, 0xe0, 0x27, 0xe8, 0x4c, 0xf1, 0x19, 0xe4, 0x11, 0xe5, 0xb9,
+	0x12, 0x84, 0x2a, 0xb7, 0xd6, 0x76, 0xba, 0x8d, 0xf0, 0xa1, 0xe9, 0x8e, 0x8a, 0xa6, 0x1e, 0x2c,
+	0xce, 0x38, 0x9d, 0xb9, 0xc7, 0x76, 0x30, 0x53, 0x74, 0xbe, 0x3a, 0x08, 0xdd, 0xeb, 0xe3, 0x16,
+	0xaa, 0x4b, 0xc8, 0x13, 0x10, 0x66, 0xfc, 0x46, 0x58, 0x54, 0xb8, 0x87, 0x30, 0xa8, 0x29, 0x08,
+	0x58, 0xce, 0x23, 0x01, 0x94, 0x2d, 0x18, 0xe4, 0x76, 0x95, 0x46, 0x78, 0x5e, 0x22, 0x61, 0x09,
+	0xe0, 0x1b, 0xd4, 0x04, 0x41, 0x07, 0xd7, 0x91, 0x19, 0xc1, 0xad, 0xb6, 0x9d, 0x6e, 0x73, 0xf0,
+	0xd8, 0xb7, 0xe6, 0xfa, 0xda, 0x5c, 0xbf, 0x30, 0xd7, 0x1f, 0x71, 0x96, 0x17, 0x6b, 0x21, 0xc3,
+	0x19, 0x6b, 0x0a, 0x7e, 0x89, 0x1a, 0x56, 0x61, 0x02, 0x60, 0xf6, 0xf9, 0x07, 0xfe, 0x03, 0xc3,
+	0x78, 0x0d, 0xd0, 0xf9, 0x54, 0x45, 0xcd, 0xb7, 0x3c, 0x65, 0x74, 0x44, 0xb2, 0x6c, 0xbc, 0xc6,
+	0x14, 0xd5, 0xcd, 0x24, 0xd2, 0x75, 0x8c, 0xbd, 0x7f, 0x91, 0xba, 0xd6, 0x52, 0x9f, 0x7f, 0x5c,
+	0x75, 0x53, 0xa6, 0xa6, 0xcb, 0xd8, 0xa7, 0x7c, 0x1e, 0x14, 0xa1, 0xb0, 0x3f, 0x3d, 0x99, 0xcc,
+	0x02, 0xb5, 0x59, 0x80, 0x34, 0x04, 0x19, 0x16, 0xd2, 0x38, 0x42, 0xb5, 0x09, 0x80, 0x74, 0x8f,
+	0xfe, 0xff, 0x5f, 0x18, 0x61, 0xfc, 0x1c, 0xb5, 0x32, 0xbd, 0xd4, 0xef, 0x8b, 0x8e, 0x48, 0x92,
+	0x08, 0x90, 0xd2, 0x18, 0xdc, 0x08, 0x2f, 0x0c, 0x5a, 0x5e, 0xf8, 0x2b, 0x8b, 0xe9, 0xe8, 0x2d,
+	0xc8, 0x26, 0xe3, 0x24, 0x31, 0x3e, 0x9e, 0x86, 0x65, 0xb9, 0x1f, 0xca, 0xe3, 0xc3, 0x50, 0x3e,
+	0x45, 0x8f, 0x58, 0xbe, 0x22, 0x19, 0x4b, 0x88, 0xce, 0x58, 0xc4, 0x12, 0xb7, 0x6e, 0xb8, 0x67,
+	0xfb, 0xed, 0x37, 0x89, 0xce, 0xc5, 0xc1, 0x41, 0x1b, 0xfd, 0x13, 0xa3, 0x76, 0xbe, 0x8f, 0xbc,
+	0xd3, 0xc0, 0xf0, 0xfd, 0xed, 0xd6, 0x73, 0xee, 0xb6, 0x9e, 0xf3, 0x73, 0xeb, 0x39, 0x1f, 0x77,
+	0x5e, 0xe5, 0x6e, 0xe7, 0x55, 0xbe, 0xed, 0xbc, 0xca, 0x87, 0x17, 0x7f, 0x7a, 0x51, 0xbc, 0x80,
+	0x5e, 0x2c, 0x58, 0x92, 0x42, 0x30, 0xe7, 0xc9, 0x32, 0x83, 0x60, 0x5d, 0xf6, 0xad, 0x41, 0x71,
+	0xdd, 0x3c, 0xc1, 0x67, 0xbf, 0x02, 0x00, 0x00, 0xff, 0xff, 0x03, 0xeb, 0x93, 0xbe, 0xde, 0x03,
+	0x00, 0x00,
 }
 
-func (m *OutgoingTxBatch) Marshal() (dAtA []byte, err error) {
+func (m *BatchTx) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -323,12 +330,12 @@ func (m *OutgoingTxBatch) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *OutgoingTxBatch) MarshalTo(dAtA []byte) (int, error) {
+func (m *BatchTx) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *OutgoingTxBatch) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *BatchTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -359,20 +366,20 @@ func (m *OutgoingTxBatch) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x1a
 		}
 	}
-	if m.BatchTimeout != 0 {
-		i = encodeVarintBatch(dAtA, i, uint64(m.BatchTimeout))
+	if m.Timeout != 0 {
+		i = encodeVarintBatch(dAtA, i, uint64(m.Timeout))
 		i--
 		dAtA[i] = 0x10
 	}
-	if m.BatchNonce != 0 {
-		i = encodeVarintBatch(dAtA, i, uint64(m.BatchNonce))
+	if m.Nonce != 0 {
+		i = encodeVarintBatch(dAtA, i, uint64(m.Nonce))
 		i--
 		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *OutgoingTransferTx) Marshal() (dAtA []byte, err error) {
+func (m *TransferTx) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -382,63 +389,54 @@ func (m *OutgoingTransferTx) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *OutgoingTransferTx) MarshalTo(dAtA []byte) (int, error) {
+func (m *TransferTx) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *OutgoingTransferTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *TransferTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Erc20Fee != nil {
-		{
-			size, err := m.Erc20Fee.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintBatch(dAtA, i, uint64(size))
+	{
+		size, err := m.Erc20Fee.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
 		}
-		i--
-		dAtA[i] = 0x2a
+		i -= size
+		i = encodeVarintBatch(dAtA, i, uint64(size))
 	}
-	if m.Erc20Token != nil {
-		{
-			size, err := m.Erc20Token.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintBatch(dAtA, i, uint64(size))
+	i--
+	dAtA[i] = 0x22
+	{
+		size, err := m.Erc20Token.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
 		}
-		i--
-		dAtA[i] = 0x22
+		i -= size
+		i = encodeVarintBatch(dAtA, i, uint64(size))
 	}
-	if len(m.DestAddress) > 0 {
-		i -= len(m.DestAddress)
-		copy(dAtA[i:], m.DestAddress)
-		i = encodeVarintBatch(dAtA, i, uint64(len(m.DestAddress)))
+	i--
+	dAtA[i] = 0x1a
+	if len(m.EthereumRecipient) > 0 {
+		i -= len(m.EthereumRecipient)
+		copy(dAtA[i:], m.EthereumRecipient)
+		i = encodeVarintBatch(dAtA, i, uint64(len(m.EthereumRecipient)))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x12
 	}
 	if len(m.Sender) > 0 {
 		i -= len(m.Sender)
 		copy(dAtA[i:], m.Sender)
 		i = encodeVarintBatch(dAtA, i, uint64(len(m.Sender)))
 		i--
-		dAtA[i] = 0x12
-	}
-	if m.Id != 0 {
-		i = encodeVarintBatch(dAtA, i, uint64(m.Id))
-		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *OutgoingLogicCall) Marshal() (dAtA []byte, err error) {
+func (m *LogicCallTx) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -448,12 +446,12 @@ func (m *OutgoingLogicCall) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *OutgoingLogicCall) MarshalTo(dAtA []byte) (int, error) {
+func (m *LogicCallTx) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *OutgoingLogicCall) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *LogicCallTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -503,10 +501,10 @@ func (m *OutgoingLogicCall) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x12
 		}
 	}
-	if len(m.Transfers) > 0 {
-		for iNdEx := len(m.Transfers) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Tokens) > 0 {
+		for iNdEx := len(m.Tokens) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Transfers[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Tokens[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -531,17 +529,17 @@ func encodeVarintBatch(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *OutgoingTxBatch) Size() (n int) {
+func (m *BatchTx) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.BatchNonce != 0 {
-		n += 1 + sovBatch(uint64(m.BatchNonce))
+	if m.Nonce != 0 {
+		n += 1 + sovBatch(uint64(m.Nonce))
 	}
-	if m.BatchTimeout != 0 {
-		n += 1 + sovBatch(uint64(m.BatchTimeout))
+	if m.Timeout != 0 {
+		n += 1 + sovBatch(uint64(m.Timeout))
 	}
 	if len(m.Transactions) > 0 {
 		for _, e := range m.Transactions {
@@ -559,42 +557,35 @@ func (m *OutgoingTxBatch) Size() (n int) {
 	return n
 }
 
-func (m *OutgoingTransferTx) Size() (n int) {
+func (m *TransferTx) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Id != 0 {
-		n += 1 + sovBatch(uint64(m.Id))
-	}
 	l = len(m.Sender)
 	if l > 0 {
 		n += 1 + l + sovBatch(uint64(l))
 	}
-	l = len(m.DestAddress)
+	l = len(m.EthereumRecipient)
 	if l > 0 {
 		n += 1 + l + sovBatch(uint64(l))
 	}
-	if m.Erc20Token != nil {
-		l = m.Erc20Token.Size()
-		n += 1 + l + sovBatch(uint64(l))
-	}
-	if m.Erc20Fee != nil {
-		l = m.Erc20Fee.Size()
-		n += 1 + l + sovBatch(uint64(l))
-	}
+	l = m.Erc20Token.Size()
+	n += 1 + l + sovBatch(uint64(l))
+	l = m.Erc20Fee.Size()
+	n += 1 + l + sovBatch(uint64(l))
 	return n
 }
 
-func (m *OutgoingLogicCall) Size() (n int) {
+func (m *LogicCallTx) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.Transfers) > 0 {
-		for _, e := range m.Transfers {
+	if len(m.Tokens) > 0 {
+		for _, e := range m.Tokens {
 			l = e.Size()
 			n += 1 + l + sovBatch(uint64(l))
 		}
@@ -632,7 +623,7 @@ func sovBatch(x uint64) (n int) {
 func sozBatch(x uint64) (n int) {
 	return sovBatch(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *OutgoingTxBatch) Unmarshal(dAtA []byte) error {
+func (m *BatchTx) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -655,17 +646,17 @@ func (m *OutgoingTxBatch) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: OutgoingTxBatch: wiretype end group for non-group")
+			return fmt.Errorf("proto: BatchTx: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: OutgoingTxBatch: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: BatchTx: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BatchNonce", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Nonce", wireType)
 			}
-			m.BatchNonce = 0
+			m.Nonce = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowBatch
@@ -675,16 +666,16 @@ func (m *OutgoingTxBatch) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.BatchNonce |= uint64(b&0x7F) << shift
+				m.Nonce |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 2:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BatchTimeout", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Timeout", wireType)
 			}
-			m.BatchTimeout = 0
+			m.Timeout = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowBatch
@@ -694,7 +685,7 @@ func (m *OutgoingTxBatch) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.BatchTimeout |= uint64(b&0x7F) << shift
+				m.Timeout |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -728,7 +719,7 @@ func (m *OutgoingTxBatch) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Transactions = append(m.Transactions, &OutgoingTransferTx{})
+			m.Transactions = append(m.Transactions, TransferTx{})
 			if err := m.Transactions[len(m.Transactions)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -790,7 +781,10 @@ func (m *OutgoingTxBatch) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthBatch
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthBatch
 			}
 			if (iNdEx + skippy) > l {
@@ -805,7 +799,7 @@ func (m *OutgoingTxBatch) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *OutgoingTransferTx) Unmarshal(dAtA []byte) error {
+func (m *TransferTx) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -828,32 +822,13 @@ func (m *OutgoingTransferTx) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: OutgoingTransferTx: wiretype end group for non-group")
+			return fmt.Errorf("proto: TransferTx: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: OutgoingTransferTx: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: TransferTx: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
-			}
-			m.Id = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowBatch
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Id |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
 			}
@@ -885,9 +860,9 @@ func (m *OutgoingTransferTx) Unmarshal(dAtA []byte) error {
 			}
 			m.Sender = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 3:
+		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DestAddress", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field EthereumRecipient", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -915,9 +890,9 @@ func (m *OutgoingTransferTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.DestAddress = string(dAtA[iNdEx:postIndex])
+			m.EthereumRecipient = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Erc20Token", wireType)
 			}
@@ -946,14 +921,11 @@ func (m *OutgoingTransferTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Erc20Token == nil {
-				m.Erc20Token = &ERC20Token{}
-			}
 			if err := m.Erc20Token.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Erc20Fee", wireType)
 			}
@@ -982,9 +954,6 @@ func (m *OutgoingTransferTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Erc20Fee == nil {
-				m.Erc20Fee = &ERC20Token{}
-			}
 			if err := m.Erc20Fee.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -995,7 +964,10 @@ func (m *OutgoingTransferTx) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthBatch
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthBatch
 			}
 			if (iNdEx + skippy) > l {
@@ -1010,7 +982,7 @@ func (m *OutgoingTransferTx) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *OutgoingLogicCall) Unmarshal(dAtA []byte) error {
+func (m *LogicCallTx) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1033,15 +1005,15 @@ func (m *OutgoingLogicCall) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: OutgoingLogicCall: wiretype end group for non-group")
+			return fmt.Errorf("proto: LogicCallTx: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: OutgoingLogicCall: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: LogicCallTx: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Transfers", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Tokens", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1068,8 +1040,8 @@ func (m *OutgoingLogicCall) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Transfers = append(m.Transfers, &ERC20Token{})
-			if err := m.Transfers[len(m.Transfers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Tokens = append(m.Tokens, types.Coin{})
+			if err := m.Tokens[len(m.Tokens)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1102,7 +1074,7 @@ func (m *OutgoingLogicCall) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Fees = append(m.Fees, &ERC20Token{})
+			m.Fees = append(m.Fees, types.Coin{})
 			if err := m.Fees[len(m.Fees)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1251,7 +1223,10 @@ func (m *OutgoingLogicCall) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthBatch
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthBatch
 			}
 			if (iNdEx + skippy) > l {

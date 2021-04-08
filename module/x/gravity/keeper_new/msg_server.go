@@ -81,7 +81,7 @@ func (k Keeper) SubmitClaim(c context.Context, msg *types.MsgSubmitClaim) (*type
 func (k Keeper) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*types.MsgRequestBatchResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	// orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 
 	// FIXME: update logic
 
@@ -106,23 +106,10 @@ func (k Keeper) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*ty
 		}
 	}
 
-	// TODO: add batch size to params
-	// params := k.GetParams(ctx)
-	batchSize := OutgoingTxBatchSize // params.BatchSize
-
-	batchID, err := k.BuildOutgoingTxBatch(ctx, tokenContract, batchSize)
+	_, err := k.CreateBatchTx(ctx, tokenContract)
 	if err != nil {
 		return nil, err
 	}
-
-	// FIXME: what is this used for ?
-	// validatorAddr := k.GetOrchestratorValidator(ctx, orchestratorAddr)
-	// if validatorAddr == nil {
-	// 	validator := k.stakingKeeper.Validator(ctx, validatorAddr)
-	// 	if validator == nil {
-	// 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, validatorAddr.String())
-	// 	}
-	// }
 
 	// TODO later make sure that Demon matches a list of tokens already
 	// in the bridge to send
@@ -131,7 +118,6 @@ func (k Keeper) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*ty
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(batchID.BatchNonce)),
 		),
 	)
 
@@ -144,9 +130,9 @@ func (k Keeper) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types.Ms
 
 	// NOTE: errors checked on msg validation
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
-	ethreumAddr := common.HexToAddress(msg.EthDest)
+	ethereumAddr := common.HexToAddress(msg.EthDest)
 
-	txID, err := k.AddToOutgoingPool(ctx, sender, ethreumAddr, msg.Amount, msg.BridgeFee)
+	txID, err := k.AddToOutgoingPool(ctx, sender, ethereumAddr, msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
 	}

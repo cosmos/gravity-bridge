@@ -139,12 +139,11 @@ func (m *Valset) GetHeight() uint64 {
 }
 
 // LastObservedEthereumBlockHeight stores the last observed
-// Ethereum block height along with the Cosmos block height that
-// it was observed at. These two numbers can be used to project
-// outward and always produce batches with timeouts in the future
+// Ethereum block height along with timestamp this block was observed.
+// These two values can be used to produce batches with timeouts in the future
 // even if no Ethereum block height has been relayed for a long time
 type LastObservedEthereumBlockHeight struct {
-	CosmosBlockHeight   uint64 `protobuf:"varint,1,opt,name=cosmos_block_height,json=cosmosBlockHeight,proto3" json:"cosmos_block_height,omitempty"`
+	Timestamp           uint64 `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	EthereumBlockHeight uint64 `protobuf:"varint,2,opt,name=ethereum_block_height,json=ethereumBlockHeight,proto3" json:"ethereum_block_height,omitempty"`
 }
 
@@ -181,9 +180,9 @@ func (m *LastObservedEthereumBlockHeight) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_LastObservedEthereumBlockHeight proto.InternalMessageInfo
 
-func (m *LastObservedEthereumBlockHeight) GetCosmosBlockHeight() uint64 {
+func (m *LastObservedEthereumBlockHeight) GetTimestamp() uint64 {
 	if m != nil {
-		return m.CosmosBlockHeight
+		return m.Timestamp
 	}
 	return 0
 }
@@ -195,94 +194,36 @@ func (m *LastObservedEthereumBlockHeight) GetEthereumBlockHeight() uint64 {
 	return 0
 }
 
-// This records the relationship between an ERC20 token and the denom
-// of the corresponding Cosmos originated asset
-type ERC20ToDenom struct {
-	Erc20 string `protobuf:"bytes,1,opt,name=erc20,proto3" json:"erc20,omitempty"`
-	Denom string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
-}
-
-func (m *ERC20ToDenom) Reset()         { *m = ERC20ToDenom{} }
-func (m *ERC20ToDenom) String() string { return proto.CompactTextString(m) }
-func (*ERC20ToDenom) ProtoMessage()    {}
-func (*ERC20ToDenom) Descriptor() ([]byte, []int) {
-	return fileDescriptor_163831c23fcc179f, []int{3}
-}
-func (m *ERC20ToDenom) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *ERC20ToDenom) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ERC20ToDenom.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *ERC20ToDenom) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ERC20ToDenom.Merge(m, src)
-}
-func (m *ERC20ToDenom) XXX_Size() int {
-	return m.Size()
-}
-func (m *ERC20ToDenom) XXX_DiscardUnknown() {
-	xxx_messageInfo_ERC20ToDenom.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ERC20ToDenom proto.InternalMessageInfo
-
-func (m *ERC20ToDenom) GetErc20() string {
-	if m != nil {
-		return m.Erc20
-	}
-	return ""
-}
-
-func (m *ERC20ToDenom) GetDenom() string {
-	if m != nil {
-		return m.Denom
-	}
-	return ""
-}
-
 func init() {
 	proto.RegisterType((*BridgeValidator)(nil), "gravity.v1.BridgeValidator")
 	proto.RegisterType((*Valset)(nil), "gravity.v1.Valset")
 	proto.RegisterType((*LastObservedEthereumBlockHeight)(nil), "gravity.v1.LastObservedEthereumBlockHeight")
-	proto.RegisterType((*ERC20ToDenom)(nil), "gravity.v1.ERC20ToDenom")
 }
 
 func init() { proto.RegisterFile("gravity/v1/types.proto", fileDescriptor_163831c23fcc179f) }
 
 var fileDescriptor_163831c23fcc179f = []byte{
-	// 353 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x64, 0x51, 0x4f, 0x4b, 0xfb, 0x40,
-	0x10, 0xed, 0xb6, 0xbf, 0x5f, 0xa5, 0xab, 0x50, 0x4d, 0xb5, 0x14, 0x84, 0x58, 0x72, 0xaa, 0x07,
-	0x93, 0x36, 0x22, 0x82, 0x37, 0xab, 0x05, 0x0f, 0x82, 0x18, 0xa4, 0x07, 0x2f, 0x25, 0xc9, 0x0e,
-	0x49, 0x30, 0xdb, 0x2d, 0xbb, 0xdb, 0x68, 0x3f, 0x80, 0x77, 0x3f, 0x96, 0xc7, 0x1e, 0x3d, 0x4a,
-	0xfb, 0x45, 0x24, 0xbb, 0x89, 0x7f, 0x8f, 0xef, 0xcd, 0xcc, 0x9b, 0x37, 0x6f, 0x70, 0x3b, 0xe2,
-	0x7e, 0x96, 0xc8, 0x85, 0x93, 0x0d, 0x1c, 0xb9, 0x98, 0x81, 0xb0, 0x67, 0x9c, 0x49, 0x66, 0xe0,
-	0x82, 0xb7, 0xb3, 0x81, 0xe5, 0xe1, 0xe6, 0x90, 0x27, 0x24, 0x82, 0xb1, 0x9f, 0x26, 0xc4, 0x97,
-	0x8c, 0x1b, 0xbb, 0xf8, 0xff, 0x8c, 0x3d, 0x02, 0xef, 0xa0, 0x2e, 0xea, 0xfd, 0xf3, 0x34, 0x30,
-	0x0e, 0xf1, 0x36, 0xc8, 0x18, 0x38, 0xcc, 0xe9, 0xc4, 0x27, 0x84, 0x83, 0x10, 0x9d, 0x6a, 0x17,
-	0xf5, 0x1a, 0x5e, 0xb3, 0xe4, 0xcf, 0x35, 0x6d, 0x51, 0x5c, 0x1f, 0xfb, 0xa9, 0x00, 0x99, 0x4b,
-	0x4d, 0xd9, 0x34, 0x84, 0x52, 0x4a, 0x01, 0xe3, 0x04, 0x6f, 0x50, 0xa0, 0x01, 0xf0, 0x5c, 0xa1,
-	0xd6, 0xdb, 0x74, 0xf7, 0xed, 0x2f, 0x47, 0xf6, 0x2f, 0x3b, 0x5e, 0xd9, 0x6b, 0xb4, 0x71, 0x3d,
-	0x86, 0x24, 0x8a, 0x65, 0xa7, 0xa6, 0xd4, 0x0a, 0x64, 0x3d, 0x23, 0x7c, 0x70, 0xed, 0x0b, 0x79,
-	0x13, 0x08, 0xe0, 0x19, 0x90, 0x51, 0x61, 0x67, 0x98, 0xb2, 0xf0, 0xe1, 0x4a, 0xf5, 0x18, 0x36,
-	0x6e, 0x85, 0x4c, 0x50, 0x26, 0x26, 0x41, 0xce, 0x4e, 0x0a, 0x21, 0x6d, 0x6b, 0x47, 0x97, 0xbe,
-	0xf7, 0xbb, 0x78, 0xef, 0xf3, 0xda, 0x1f, 0x13, 0x55, 0x35, 0xd1, 0x82, 0xbf, 0x3b, 0xac, 0x33,
-	0xbc, 0x35, 0xf2, 0x2e, 0xdc, 0xfe, 0x1d, 0xbb, 0x84, 0x29, 0xa3, 0xf9, 0xf1, 0xc0, 0x43, 0xb7,
-	0xaf, 0xb6, 0x34, 0x3c, 0x0d, 0x72, 0x96, 0xe4, 0xe5, 0x22, 0x3c, 0x0d, 0x86, 0xb7, 0xaf, 0x2b,
-	0x13, 0x2d, 0x57, 0x26, 0x7a, 0x5f, 0x99, 0xe8, 0x65, 0x6d, 0x56, 0x96, 0x6b, 0xb3, 0xf2, 0xb6,
-	0x36, 0x2b, 0xf7, 0xa7, 0x51, 0x22, 0xe3, 0x79, 0x60, 0x87, 0x8c, 0x3a, 0xda, 0xa7, 0x53, 0x84,
-	0x75, 0x14, 0xa8, 0xa4, 0x1c, 0xca, 0xc8, 0x3c, 0x05, 0xe7, 0xa9, 0xe4, 0xf5, 0xaf, 0x83, 0xba,
-	0x7a, 0xf6, 0xf1, 0x47, 0x00, 0x00, 0x00, 0xff, 0xff, 0xde, 0x29, 0xe4, 0xbf, 0x06, 0x02, 0x00,
-	0x00,
+	// 314 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x64, 0x91, 0x31, 0x4b, 0x03, 0x31,
+	0x1c, 0xc5, 0x7b, 0xad, 0x56, 0x1a, 0x87, 0x4a, 0xd4, 0x52, 0x50, 0xce, 0xd2, 0xa9, 0x0e, 0x5e,
+	0x68, 0x45, 0x9c, 0x2d, 0x08, 0x0e, 0x82, 0x78, 0x43, 0x07, 0x97, 0x92, 0x5c, 0xfe, 0xdc, 0x05,
+	0x2f, 0xcd, 0x91, 0xa4, 0xa7, 0xfd, 0x16, 0x7e, 0x2c, 0xc7, 0x8e, 0x8e, 0xd2, 0x7e, 0x11, 0x69,
+	0x9a, 0xb3, 0xa0, 0xe3, 0x7b, 0xbc, 0xfc, 0xf2, 0x1e, 0x7f, 0xd4, 0x49, 0x35, 0x2d, 0x85, 0x5d,
+	0x90, 0x72, 0x48, 0xec, 0xa2, 0x00, 0x13, 0x15, 0x5a, 0x59, 0x85, 0x91, 0xf7, 0xa3, 0x72, 0xd8,
+	0x8f, 0x51, 0x7b, 0xac, 0x05, 0x4f, 0x61, 0x42, 0x73, 0xc1, 0xa9, 0x55, 0x1a, 0x9f, 0xa0, 0xfd,
+	0x42, 0xbd, 0x81, 0xee, 0x06, 0xbd, 0x60, 0xb0, 0x17, 0x6f, 0x05, 0xbe, 0x44, 0x47, 0x60, 0x33,
+	0xd0, 0x30, 0x97, 0x53, 0xca, 0xb9, 0x06, 0x63, 0xba, 0xf5, 0x5e, 0x30, 0x68, 0xc5, 0xed, 0xca,
+	0xbf, 0xdb, 0xda, 0x7d, 0x89, 0x9a, 0x13, 0x9a, 0x1b, 0xb0, 0x1b, 0xd4, 0x4c, 0xcd, 0x12, 0xa8,
+	0x50, 0x4e, 0xe0, 0x1b, 0x74, 0x20, 0x41, 0x32, 0xd0, 0x1b, 0x42, 0x63, 0x70, 0x38, 0x3a, 0x8b,
+	0x76, 0x8d, 0xa2, 0x3f, 0x75, 0xe2, 0x2a, 0x8b, 0x3b, 0xa8, 0x99, 0x81, 0x48, 0x33, 0xdb, 0x6d,
+	0x38, 0x9a, 0x57, 0x7d, 0x83, 0x2e, 0x1e, 0xa9, 0xb1, 0x4f, 0xcc, 0x80, 0x2e, 0x81, 0xdf, 0xfb,
+	0x36, 0xe3, 0x5c, 0x25, 0xaf, 0x0f, 0x2e, 0x82, 0xcf, 0x51, 0xcb, 0x0a, 0x09, 0xc6, 0x52, 0x59,
+	0xf8, 0x2e, 0x3b, 0x03, 0x8f, 0xd0, 0xe9, 0xef, 0x34, 0xb6, 0x79, 0x35, 0xf5, 0xff, 0xd4, 0x5d,
+	0xf2, 0x18, 0xfe, 0x13, 0xc7, 0xcf, 0x9f, 0xab, 0x30, 0x58, 0xae, 0xc2, 0xe0, 0x7b, 0x15, 0x06,
+	0x1f, 0xeb, 0xb0, 0xb6, 0x5c, 0x87, 0xb5, 0xaf, 0x75, 0x58, 0x7b, 0xb9, 0x4d, 0x85, 0xcd, 0xe6,
+	0x2c, 0x4a, 0x94, 0x24, 0x89, 0x32, 0x52, 0x19, 0xe2, 0xd7, 0x5d, 0x31, 0x37, 0x8d, 0x48, 0xc5,
+	0xe7, 0x39, 0x90, 0xf7, 0xca, 0xdf, 0x1e, 0x87, 0x35, 0xdd, 0x75, 0xae, 0x7f, 0x02, 0x00, 0x00,
+	0xff, 0xff, 0xa1, 0xbe, 0x57, 0x9c, 0xb7, 0x01, 0x00, 0x00,
 }
 
 func (m *BridgeValidator) Marshal() (dAtA []byte, err error) {
@@ -392,47 +333,10 @@ func (m *LastObservedEthereumBlockHeight) MarshalToSizedBuffer(dAtA []byte) (int
 		i--
 		dAtA[i] = 0x10
 	}
-	if m.CosmosBlockHeight != 0 {
-		i = encodeVarintTypes(dAtA, i, uint64(m.CosmosBlockHeight))
+	if m.Timestamp != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.Timestamp))
 		i--
 		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *ERC20ToDenom) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ERC20ToDenom) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ERC20ToDenom) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Denom) > 0 {
-		i -= len(m.Denom)
-		copy(dAtA[i:], m.Denom)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Denom)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Erc20) > 0 {
-		i -= len(m.Erc20)
-		copy(dAtA[i:], m.Erc20)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Erc20)))
-		i--
-		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -491,28 +395,11 @@ func (m *LastObservedEthereumBlockHeight) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.CosmosBlockHeight != 0 {
-		n += 1 + sovTypes(uint64(m.CosmosBlockHeight))
+	if m.Timestamp != 0 {
+		n += 1 + sovTypes(uint64(m.Timestamp))
 	}
 	if m.EthereumBlockHeight != 0 {
 		n += 1 + sovTypes(uint64(m.EthereumBlockHeight))
-	}
-	return n
-}
-
-func (m *ERC20ToDenom) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Erc20)
-	if l > 0 {
-		n += 1 + l + sovTypes(uint64(l))
-	}
-	l = len(m.Denom)
-	if l > 0 {
-		n += 1 + l + sovTypes(uint64(l))
 	}
 	return n
 }
@@ -609,7 +496,10 @@ func (m *BridgeValidator) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthTypes
 			}
 			if (iNdEx + skippy) > l {
@@ -731,7 +621,10 @@ func (m *Valset) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthTypes
 			}
 			if (iNdEx + skippy) > l {
@@ -777,9 +670,9 @@ func (m *LastObservedEthereumBlockHeight) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CosmosBlockHeight", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Timestamp", wireType)
 			}
-			m.CosmosBlockHeight = 0
+			m.Timestamp = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTypes
@@ -789,7 +682,7 @@ func (m *LastObservedEthereumBlockHeight) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.CosmosBlockHeight |= uint64(b&0x7F) << shift
+				m.Timestamp |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -819,121 +712,10 @@ func (m *LastObservedEthereumBlockHeight) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
 				return ErrInvalidLengthTypes
 			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ERC20ToDenom) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: ERC20ToDenom: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ERC20ToDenom: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Erc20", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Erc20 = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Denom = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthTypes
 			}
 			if (iNdEx + skippy) > l {

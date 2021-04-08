@@ -317,5 +317,5 @@ func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 // setLastEventNonceByValidator sets the latest event nonce for a give validator
 func (k Keeper) setLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValAddress, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetLastEventNonceByValidatorKey(validator), types.UInt64Bytes(nonce))
+	store.Set(types.GetLastEventNonceByValidatorKey(validator), sdk.Uint64ToBigEndian(nonce))
 }

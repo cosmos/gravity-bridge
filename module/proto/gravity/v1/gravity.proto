@@ -29,3 +29,12 @@ message Attestation {
     (cosmos_proto.accepts_interface) = "EthereumClaim"
   ];
 }
+
+// EthereumInfo defines the latest observed ethereum block height and the
+// corresponding timestamp value in nanoseconds.
+message EthereumInfo {
+  // timestamp in nanoseconds
+  int64 timestamp = 1;
+  // ethereum block height
+  uint64  height   = 2;
+}

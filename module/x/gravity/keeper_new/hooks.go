@@ -12,7 +12,7 @@ type Hooks struct {
 
 var _ stakingtypes.StakingHooks = Hooks{}
 
-// Create new gravity staking hooks
+// Hooks create new gravity staking hooks
 func (k Keeper) Hooks() Hooks {
 	return Hooks{k}
 }

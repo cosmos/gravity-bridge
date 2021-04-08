@@ -50,9 +50,10 @@ func (k Keeper) IterateERC20ToDenom(ctx sdk.Context, cb func(types.ERC20ToDenom)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
+		// FIXME: remove prefix from key
 		erc20ToDenom := types.ERC20ToDenom{
-			Erc20: string(iter.Key()),
-			Denom: string(iter.Value()),
+			Erc20Address: string(iter.Key()),
+			Denom:        string(iter.Value()),
 		}
 
 		// cb returns true to stop early

@@ -43,17 +43,17 @@ var (
 	// eventually executes
 	OracleAttestationKey = []byte{0x5}
 
-	// OutgoingTxPoolKey indexes the last nonce for the outgoing tx pool
-	OutgoingTxPoolKey = []byte{0x6}
+	// TransferTxPoolKey indexes the last nonce for the outgoing tx pool
+	TransferTxPoolKey = []byte{0x6}
 
-	// SecondIndexOutgoingTxFeeKey indexes fee amounts by token contract address
-	SecondIndexOutgoingTxFeeKey = []byte{0x9}
+	// SecondIndexTransferTxFeeKey indexes fee amounts by token contract address
+	SecondIndexTransferTxFeeKey = []byte{0x9}
 
-	// OutgoingTxBatchKey indexes outgoing tx batches under a nonce and token address
-	OutgoingTxBatchKey = []byte{0xa}
+	// BatchTxKey indexes outgoing tx batches under a nonce and token address
+	BatchTxKey = []byte{0xa}
 
-	// OutgoingTxBatchBlockKey indexes outgoing tx batches under a block height and token address
-	OutgoingTxBatchBlockKey = []byte{0xb}
+	// BatchTxBlockKey indexes outgoing tx batches under a block height and token address
+	BatchTxBlockKey = []byte{0xb}
 
 	// BatchConfirmKey indexes validator confirmations by token contract address
 	BatchConfirmKey = []byte{0xe1}
@@ -190,25 +190,25 @@ func GetAttestationKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
 	return key
 }
 
-// GetOutgoingTxPoolKey returns the following key format
+// GetTransferTxPoolKey returns the following key format
 // prefix     id
 // [0x6][0 0 0 0 0 0 0 1]
-func GetOutgoingTxPoolKey(id uint64) []byte {
-	return append(OutgoingTxPoolKey, sdk.Uint64ToBigEndian(id)...)
+func GetTransferTxPoolKey(id uint64) []byte {
+	return append(TransferTxPoolKey, sdk.Uint64ToBigEndian(id)...)
 }
 
-// GetOutgoingTxBatchKey returns the following key format
+// GetBatchTxKey returns the following key format
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
-func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
-	return append(append(OutgoingTxBatchKey, []byte(tokenContract)...), sdk.Uint64ToBigEndian(nonce)...)
+func GetBatchTxKey(tokenContract string, nonce uint64) []byte {
+	return append(append(BatchTxKey, []byte(tokenContract)...), sdk.Uint64ToBigEndian(nonce)...)
 }
 
-// GetOutgoingTxBatchBlockKey returns the following key format
+// GetBatchTxBlockKey returns the following key format
 // prefix     blockheight
 // [0xb][0 0 0 0 2 1 4 3]
-func GetOutgoingTxBatchBlockKey(block uint64) []byte {
-	return append(OutgoingTxBatchBlockKey, sdk.Uint64ToBigEndian(block)...)
+func GetBatchTxBlockKey(block uint64) []byte {
+	return append(BatchTxBlockKey, sdk.Uint64ToBigEndian(block)...)
 }
 
 // GetBatchConfirmKey returns the following key format
@@ -220,22 +220,6 @@ func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.A
 	b := append([]byte(tokenContract), a...)
 	c := append(BatchConfirmKey, b...)
 	return c
-}
-
-// GetFeeSecondIndexKey returns the following key format
-// prefix            eth-contract-address            fee_amount
-// [0x9][0xc783df8a850f42e7F7e57013759C285caa701eB6][1000000000]
-func GetFeeSecondIndexKey(fee ERC20Token) []byte {
-	r := make([]byte, 1+ETHContractAddressLen+32)
-	// sdkInts have a size limit of 255 bits or 32 bytes
-	// therefore this will never panic and is always safe
-	amount := make([]byte, 32)
-	amount = fee.Amount.BigInt().FillBytes(amount)
-	// TODO this won't ever work fix it
-	copy(r[0:], SecondIndexOutgoingTxFeeKey)
-	copy(r[len(SecondIndexOutgoingTxFeeKey):], []byte(fee.Contract))
-	copy(r[len(SecondIndexOutgoingTxFeeKey)+len(fee.Contract):], amount)
-	return r
 }
 
 // GetLastEventNonceByValidatorKey indexes lateset event nonce by validator

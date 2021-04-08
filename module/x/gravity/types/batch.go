@@ -5,13 +5,14 @@ import (
 	"strings"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 
 	abi, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
 	if err != nil {
@@ -34,11 +35,11 @@ func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 
 	// Run through the elements of the batch and serialize them
 	txAmounts := make([]*big.Int, len(b.Transactions))
-	txDestinations := make([]gethcommon.Address, len(b.Transactions))
+	txDestinations := make([]common.Address, len(b.Transactions))
 	txFees := make([]*big.Int, len(b.Transactions))
 	for i, tx := range b.Transactions {
 		txAmounts[i] = tx.Erc20Token.Amount.BigInt()
-		txDestinations[i] = gethcommon.HexToAddress(tx.DestAddress)
+		txDestinations[i] = common.HexToAddress(tx.EthereumRecipient)
 		txFees[i] = tx.Erc20Fee.Amount.BigInt()
 	}
 
@@ -51,9 +52,9 @@ func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 		txAmounts,
 		txDestinations,
 		txFees,
-		big.NewInt(int64(b.BatchNonce)),
-		gethcommon.HexToAddress(b.TokenContract),
-		big.NewInt(int64(b.BatchTimeout)),
+		big.NewInt(int64(b.Nonce)),
+		common.HexToAddress(b.TokenContract),
+		big.NewInt(int64(b.Timeout)),
 	)
 
 	// this should never happen outside of test since any case that could crash on encoding
@@ -69,7 +70,7 @@ func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (c OutgoingLogicCall) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+func (c LogicCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 
 	abi, err := abi.JSON(strings.NewReader(OutgoingLogicCallABIJSON))
 	if err != nil {
@@ -91,22 +92,22 @@ func (c OutgoingLogicCall) GetCheckpoint(gravityIDstring string) ([]byte, error)
 	}
 
 	// Run through the elements of the logic call and serialize them
-	transferAmounts := make([]*big.Int, len(c.Transfers))
-	transferTokenContracts := make([]gethcommon.Address, len(c.Transfers))
+	transferAmounts := make([]*big.Int, len(c.Tokens))
+	transferTokenContracts := make([]common.Address, len(c.Tokens))
 	feeAmounts := make([]*big.Int, len(c.Fees))
-	feeTokenContracts := make([]gethcommon.Address, len(c.Fees))
-	for i, tx := range c.Transfers {
+	feeTokenContracts := make([]common.Address, len(c.Fees))
+	for i, tx := range c.Tokens {
 		transferAmounts[i] = tx.Amount.BigInt()
-		transferTokenContracts[i] = gethcommon.HexToAddress(tx.Contract)
+		transferTokenContracts[i] = common.HexToAddress(tx.Denom)
 	}
 	for i, tx := range c.Fees {
 		feeAmounts[i] = tx.Amount.BigInt()
-		feeTokenContracts[i] = gethcommon.HexToAddress(tx.Contract)
+		feeTokenContracts[i] = common.HexToAddress(tx.Denom)
 	}
 	payload := make([]byte, len(c.Payload))
 	copy(payload, c.Payload)
-	var invalidationId [32]byte
-	copy(invalidationId[:], c.InvalidationId[:])
+	var invalidationID [32]byte
+	copy(invalidationID[:], c.InvalidationId[:])
 
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
@@ -118,10 +119,10 @@ func (c OutgoingLogicCall) GetCheckpoint(gravityIDstring string) ([]byte, error)
 		transferTokenContracts,
 		feeAmounts,
 		feeTokenContracts,
-		gethcommon.HexToAddress(c.LogicContractAddress),
+		common.HexToAddress(c.LogicContractAddress),
 		payload,
 		big.NewInt(int64(c.Timeout)),
-		invalidationId,
+		invalidationID,
 		big.NewInt(int64(c.InvalidationNonce)),
 	)
 

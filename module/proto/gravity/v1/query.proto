@@ -51,10 +51,10 @@ service Query {
     option (google.api.http).get = "/gravity/v1beta/batchfees";
   }
 
-  rpc OutgoingTxBatches(QueryOutgoingTxBatchesRequest) returns (QueryOutgoingTxBatchesResponse) {
-    option (google.api.http).get = "/gravity/v1beta/batch/outgoingtx";
+  rpc BatchTxs(QueryBatchTxsRequest) returns (QueryBatchTxsResponse) {
+    option (google.api.http).get = "/gravity/v1beta/batch/tx";
   }
-  rpc OutgoingLogicCalls(QueryOutgoingLogicCallsRequest) returns (QueryOutgoingLogicCallsResponse) {
+  rpc LogicCalls(QueryLogicCallsRequest) returns (QueryLogicCallsResponse) {
     option (google.api.http).get = "/gravity/v1beta/batch/outgoinglogic";
   }
   rpc BatchRequestByNonce(QueryBatchRequestByNonceRequest) returns (QueryBatchRequestByNonceResponse) {
@@ -141,24 +141,24 @@ message QueryLastPendingBatchRequestByAddrRequest {
   string address = 1;
 }
 message QueryLastPendingBatchRequestByAddrResponse {
-  OutgoingTxBatch batch = 1;
+  BatchTx batch = 1;
 }
 
 message QueryLastPendingLogicCallByAddrRequest {
   string address = 1;
 }
 message QueryLastPendingLogicCallByAddrResponse {
-  OutgoingLogicCall call = 1;
+  LogicCallTx call = 1;
 }
 
-message QueryOutgoingTxBatchesRequest {}
-message QueryOutgoingTxBatchesResponse {
-  repeated OutgoingTxBatch batches = 1;
+message QueryBatchTxsRequest {}
+message QueryBatchTxsResponse {
+  repeated BatchTx batches = 1;
 }
 
-message QueryOutgoingLogicCallsRequest {}
-message QueryOutgoingLogicCallsResponse {
-  repeated OutgoingLogicCall calls = 1;
+message QueryLogicCallsRequest {}
+message QueryLogicCallsResponse {
+  repeated LogicCallTx calls = 1;
 }
 
 message QueryBatchRequestByNonceRequest {
@@ -166,7 +166,7 @@ message QueryBatchRequestByNonceRequest {
   string contract_address = 2;
 }
 message QueryBatchRequestByNonceResponse {
-  OutgoingTxBatch batch = 1;
+  BatchTx batch = 1;
 }
 
 message QueryBatchConfirmsRequest {
@@ -236,6 +236,6 @@ message QueryPendingSendToEth {
   string sender_address = 1;
 }
 message QueryPendingSendToEthResponse {
-  repeated OutgoingTransferTx transfers_in_batches = 1;
-  repeated OutgoingTransferTx unbatched_transfers  = 2;
+  repeated TransferTx transfers_in_batches = 1;
+  repeated TransferTx unbatched_transfers  = 2;
 }

@@ -34,7 +34,8 @@ type Keeper struct {
 func NewKeeper(
 	cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace,
 	stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper, slashingKeeper types.SlashingKeeper,
-	attestationHandler AttestationHandler) Keeper {
+	attestationHandler AttestationHandler,
+) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
@@ -93,37 +94,76 @@ func (k Keeper) SetOrchestratorValidator(ctx sdk.Context, val sdk.ValAddress, or
 	store.Set(types.GetOrchestratorAddressKey(orch), val.Bytes())
 }
 
-func (k Keeper) GetOutgoingTx(ctx sdk.Context, id uint64) (types.OutgoingTransferTx, bool) {
+// GetEthereumInfo returns the ethereum block height and timestamp of the last
+// observed attestation.
+func (k Keeper) GetEthereumInfo(ctx sdk.Context) (types.EthereumInfo, bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetOutgoingTxPoolKey(id))
+	bz := store.Get(types.LastObservedEthereumBlockHeightKey)
 	if len(bz) == 0 {
-		return types.OutgoingTransferTx{}, false
+		return types.EthereumInfo{}, false
 	}
 
-	var tx types.OutgoingTransferTx
+	ctx.BlockTime().UnixNano()
+
+	var info types.EthereumInfo
+	k.cdc.UnmarshalBinaryBare(bz, &info)
+	return info, false
+}
+
+// SetEthereumInfo sets an observed ethereum block height and timestamp to the store.
+func (k Keeper) SetEthereumInfo(ctx sdk.Context, info types.EthereumInfo) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&info))
+}
+
+// GetLastObservedEventNonce returns the latest observed event nonce
+func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bytes := store.Get(types.LastObservedEventNonceKey)
+	if len(bytes) == 0 {
+		return 0
+	}
+
+	return sdk.BigEndianToUint64(bytes)
+}
+
+// setLastObservedEventNonce sets the latest observed event nonce
+func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.LastObservedEventNonceKey, sdk.Uint64ToBigEndian(nonce))
+}
+
+func (k Keeper) GetTransferTx(ctx sdk.Context, id uint64) (types.TransferTx, bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetTransferTxPoolKey(id))
+	if len(bz) == 0 {
+		return types.TransferTx{}, false
+	}
+
+	var tx types.TransferTx
 	k.cdc.UnmarshalBinaryBare(bz, &tx)
 	return tx, true
 }
 
-func (k Keeper) SetOutgoingTx(ctx sdk.Context, id uint64, tx types.OutgoingTransferTx) {
+func (k Keeper) SetTransferTx(ctx sdk.Context, id uint64, tx types.TransferTx) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryBare(&tx)
-	store.Set(types.GetOutgoingTxPoolKey(id), bz)
+	store.Set(types.GetTransferTxPoolKey(id), bz)
 }
 
-func (k Keeper) DeleteOutgoingTx(ctx sdk.Context, id uint64) {
+func (k Keeper) DeleteTransferTx(ctx sdk.Context, id uint64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetOutgoingTxPoolKey(id))
+	store.Delete(types.GetTransferTxPoolKey(id))
 }
 
-// IterateOutgoingTxs
-func (k Keeper) IterateOutgoingTxs(ctx sdk.Context, cb func(id uint64, tx types.OutgoingTransferTx) (stop bool)) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OutgoingTxPoolKey)
+// IterateTransferTxs
+func (k Keeper) IterateTransferTxs(ctx sdk.Context, cb func(id uint64, tx types.TransferTx) (stop bool)) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferTxPoolKey)
 
 	iterator := prefixStore.ReverseIterator(nil, nil)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
-		var tx types.OutgoingTransferTx
+		var tx types.TransferTx
 		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &tx)
 		id := sdk.BigEndianToUint64(iterator.Key()[:1]) // TODO: check correctness
 		if cb(id, tx) {
@@ -132,11 +172,11 @@ func (k Keeper) IterateOutgoingTxs(ctx sdk.Context, cb func(id uint64, tx types.
 	}
 }
 
-// GetOutgoingTxs returns all the outgoing transactions from the pool in desc order.
+// GetTransferTxs returns all the outgoing transactions from the pool in desc order.
 // TODO: create struct with ID and transferTx
-func (k Keeper) GetOutgoingTxs(ctx sdk.Context) []types.OutgoingTransferTx {
-	txs := make([]types.OutgoingTransferTx, 0)
-	k.IterateOutgoingTxs(ctx, func(id uint64, tx types.OutgoingTransferTx) bool {
+func (k Keeper) GetTransferTxs(ctx sdk.Context) []types.TransferTx {
+	txs := make([]types.TransferTx, 0)
+	k.IterateTransferTxs(ctx, func(id uint64, tx types.TransferTx) bool {
 		txs = append(txs, tx)
 		return false
 	})
