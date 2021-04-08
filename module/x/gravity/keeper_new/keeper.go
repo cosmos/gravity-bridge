@@ -105,10 +105,10 @@ func (k Keeper) GetOutgoingTx(ctx sdk.Context, id uint64) (types.OutgoingTransfe
 	return tx, true
 }
 
-func (k Keeper) SetOutgoingTx(ctx sdk.Context, tx types.OutgoingTransferTx) {
+func (k Keeper) SetOutgoingTx(ctx sdk.Context, id uint64, tx types.OutgoingTransferTx) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryBare(&tx)
-	store.Set(types.GetOutgoingTxPoolKey(tx.Id), bz)
+	store.Set(types.GetOutgoingTxPoolKey(id), bz)
 }
 
 func (k Keeper) DeleteOutgoingTx(ctx sdk.Context, id uint64) {
@@ -117,7 +117,7 @@ func (k Keeper) DeleteOutgoingTx(ctx sdk.Context, id uint64) {
 }
 
 // IterateOutgoingTxs
-func (k Keeper) IterateOutgoingTxs(ctx sdk.Context, cb func(tx types.OutgoingTransferTx) (stop bool)) {
+func (k Keeper) IterateOutgoingTxs(ctx sdk.Context, cb func(id uint64, tx types.OutgoingTransferTx) (stop bool)) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OutgoingTxPoolKey)
 
 	iterator := prefixStore.ReverseIterator(nil, nil)
@@ -125,17 +125,18 @@ func (k Keeper) IterateOutgoingTxs(ctx sdk.Context, cb func(tx types.OutgoingTra
 	for ; iterator.Valid(); iterator.Next() {
 		var tx types.OutgoingTransferTx
 		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &tx)
-
-		if cb(tx) {
+		id := sdk.BigEndianToUint64(iterator.Key()[:1]) // TODO: check correctness
+		if cb(id, tx) {
 			break // stop iteration
 		}
 	}
 }
 
 // GetOutgoingTxs returns all the outgoing transactions from the pool in desc order.
+// TODO: create struct with ID and transferTx
 func (k Keeper) GetOutgoingTxs(ctx sdk.Context) []types.OutgoingTransferTx {
 	txs := make([]types.OutgoingTransferTx, 0)
-	k.IterateOutgoingTxs(ctx, func(tx types.OutgoingTransferTx) bool {
+	k.IterateOutgoingTxs(ctx, func(id uint64, tx types.OutgoingTransferTx) bool {
 		txs = append(txs, tx)
 		return false
 	})

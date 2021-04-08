@@ -1,35 +1,18 @@
 package types
 
 import (
-	"encoding/binary"
 	"fmt"
-	math "math"
+	"math"
 	"math/big"
 	"sort"
-	"strconv"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
-
-// UInt64FromBytes create uint from binary big endian representation
-func UInt64FromBytes(s []byte) uint64 {
-	return binary.BigEndian.Uint64(s)
-}
-
-// UInt64Bytes uses the SDK byte marshaling to encode a uint64
-func UInt64Bytes(n uint64) []byte {
-	return sdk.Uint64ToBigEndian(n)
-}
-
-// UInt64FromString to parse out a uint64 for a nonce
-func UInt64FromString(s string) (uint64, error) {
-	return strconv.ParseUint(s, 10, 64)
-}
 
 //////////////////////////////////////
 //      BRIDGE VALIDATOR(S)         //
@@ -171,10 +154,10 @@ func (v Valset) GetCheckpoint(gravityIDstring string) []byte {
 	var checkpoint [32]uint8
 	copy(checkpoint[:], checkpointBytes[:])
 
-	memberAddresses := make([]gethcommon.Address, len(v.Members))
+	memberAddresses := make([]common.Address, len(v.Members))
 	convertedPowers := make([]*big.Int, len(v.Members))
 	for i, m := range v.Members {
-		memberAddresses[i] = gethcommon.HexToAddress(m.EthereumAddress)
+		memberAddresses[i] = common.HexToAddress(m.EthereumAddress)
 		convertedPowers[i] = big.NewInt(int64(m.Power))
 	}
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson

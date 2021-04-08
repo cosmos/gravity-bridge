@@ -81,33 +81,48 @@ func (k Keeper) SubmitClaim(c context.Context, msg *types.MsgSubmitClaim) (*type
 func (k Keeper) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*types.MsgRequestBatchResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// question: is this right? If i can delegate my voting power to a different key then this would fail each time i call it
-	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 
 	// FIXME: update logic
 
-	// Check if the denom is a gravity coin, if not, check if there is a deployed ERC20 representing it.
-	// If not, error out
-	_, tokenContract, err := k.DenomToERC20Lookup(ctx, msg.Denom)
-	if err != nil {
-		return nil, err
-	}
+	var (
+		tokenContract common.Address
+		found         bool
+	)
 
-	batchID, err := k.BuildOutgoingTxBatch(ctx, tokenContract, OutgoingTxBatchSize)
-	if err != nil {
-		return nil, err
-	}
-
-	validator := k.GetOrchestratorValidator(ctx, valaddr)
-
-	// a validator request can be sent from a delegate key or a validator
-	// key directly
-	if validator == nil {
-		sval := k.stakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+	if types.IsEthereumERC20Token(msg.Denom) {
+		tokenContractHex := types.GravityDenomToERC20Contract(msg.Denom)
+		tokenContract = common.HexToAddress(tokenContractHex)
+	} else {
+		// get contract from store
+		tokenContract, found = k.GetERC20ContractFromCoinDenom(ctx, msg.Denom)
+		if !found {
+			// TODO: what if there is no corresponding contract? will it be "generated" on ethereum
+			// upon receiving?
+			// FIXME: this will fail if the cosmos tokens are relayed for the first time and they don't have a counterparty contract
+			// Fede: Also there's the question of how do we handle IBC denominations from a security perspective. Do we assign them the same
+			// contract? My guess is that each new contract assigned to a cosmos coin should be approved by governance
+			return nil, sdkerrors.Wrapf(types.ErrContractNotFound, "denom %s", msg.Denom)
 		}
 	}
+
+	// TODO: add batch size to params
+	// params := k.GetParams(ctx)
+	batchSize := OutgoingTxBatchSize // params.BatchSize
+
+	batchID, err := k.BuildOutgoingTxBatch(ctx, tokenContract, batchSize)
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME: what is this used for ?
+	// validatorAddr := k.GetOrchestratorValidator(ctx, orchestratorAddr)
+	// if validatorAddr == nil {
+	// 	validator := k.stakingKeeper.Validator(ctx, validatorAddr)
+	// 	if validator == nil {
+	// 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, validatorAddr.String())
+	// 	}
+	// }
 
 	// TODO later make sure that Demon matches a list of tokens already
 	// in the bridge to send

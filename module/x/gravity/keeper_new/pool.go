@@ -1,9 +1,7 @@
 package keeper
 
 import (
-	"encoding/binary"
 	"fmt"
-	"math/big"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -45,7 +43,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 
 	if types.IsEthereumERC20Token(amount.Denom) {
 		tokenContractHex = types.GravityDenomToERC20Contract(amount.Denom)
-		tokenContract = common.HexToAddress(hexAddress)
+		tokenContract = common.HexToAddress(tokenContractHex)
 
 		// If it is an ethereum-originated asset we burn it
 		// send coins to module in prep for burn
@@ -55,7 +53,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 
 		// burn vouchers to send them back to ETH
 		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToEscrow); err != nil {
-			panic(fmt.Errorf("couldn't burn ERC20 vouchers %s: %w", hexAddress, err))
+			panic(fmt.Errorf("couldn't burn ERC20 vouchers %s: %w", tokenContractHex, err))
 		}
 	} else {
 		// coin is a native Cosmos coin, fetch the contract if exists
@@ -78,16 +76,17 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 	}
 
 	// get next tx id from keeper
-	// TODO: why is this an integer instead of a hash??
-	nextID := k.autoIncrementID(ctx, types.KeyLastTxPoolID)
+	// TODO: why is this an integer instead of a hash? The nonce should be uint64 and the id a hash
+	txID := k.GetTxID(ctx)
+	txID++
 
 	// construct outgoing tx, as part of this process we represent
 	// the token as an ERC20 token since it is preparing to go to ETH
 	// rather than the denom that is the input to this function.
 
 	// TODO: update to sdk.Coin
-	tx := types.OutgoingTransferTx{
-		Id:          nextID,
+	// TODO: remove ID from struct
+	tx := types.TransferTx{
 		Sender:      sender.String(),
 		DestAddress: ethereumReceiver.String(),
 		Erc20Token:  sdk.NewCoin(tokenContractHex, amount.Amount),
@@ -95,15 +94,16 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 	}
 
 	// set the outgoing tx in the pool index
-	k.SetOutgoingTx(ctx, tx)
-
-	// add a second index with the fee
+	k.SetOutgoingTx(ctx, txID, tx)
 
 	// TODO: why are we doing this?
-	k.appendToUnbatchedTxIndex(ctx, tokenContract, erc20Fee, nextID)
+
+	k.appendToUnbatchedTxIndex(ctx, tokenContract, erc20Fee, txID)
+	// set the incremented tx ID
+	k.setTxID(ctx, txID)
 
 	// TODO: fix events / add more attrs
-	nonceStr := strconv.FormatUint(nextID, 64)
+	nonceStr := strconv.FormatUint(txID, 64)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeBridgeWithdrawalReceived,
@@ -114,7 +114,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 		),
 	)
 
-	return nextID, nil
+	return txID, nil
 }
 
 // RemoveFromOutgoingPoolAndRefund
@@ -128,6 +128,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID uint64, se
 		return sdkerrors.Wrapf(types.ErrOutgoingTxNotFound, "tx id %d", txID)
 	}
 
+	//
 	poolTx := k.GetPoolTransactions(ctx)
 	for _, pTx := range poolTx {
 		if pTx.Id == txID {
@@ -138,11 +139,14 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID uint64, se
 		return sdkerrors.Wrapf(types.ErrInvalid, "Id %d is in a batch", txID)
 	}
 
-	// An inconsistent entry should never enter the store, but this is the ideal place to exploit
-	// it such a bug if it did ever occur, so we should double check to be really sure
-	if tx.Erc20Fee.Contract != tx.Erc20Token.Contract {
-		return sdkerrors.Wrapf(types.ErrInvalid, "Inconsistent tokens to cancel!: %s %s", tx.Erc20Fee.Contract, tx.Erc20Token.Contract)
-	}
+	// TODO: this should be checked on validate basic. Or just create sdk.Coins, which will transfer
+	// amount and fee tokens back to the sender
+
+	// // An inconsistent entry should never enter the store, but this is the ideal place to exploit
+	// // it such a bug if it did ever occur, so we should double check to be really sure
+	// if tx.Erc20Fee.Contract != tx.Erc20Token.Contract {
+	// 	return sdkerrors.Wrapf(types.ErrInvalid, "Inconsistent tokens to cancel!: %s %s", tx.Erc20Fee.Contract, tx.Erc20Token.Contract)
+	// }
 
 	// delete this tx from both indexes
 	k.DeleteOutgoingTx(ctx, txID)
@@ -167,18 +171,18 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID uint64, se
 		if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, totalToRefundCoins); err != nil {
 			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", totalToRefundCoins)
 		}
-		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
+		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
 			return sdkerrors.Wrap(err, "transfer vouchers")
 		}
 	}
 
-	poolEvent := sdk.NewEvent(
-		types.EventTypeBridgeWithdrawCanceled,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
-		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeBridgeWithdrawCanceled,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTxID, strconv.FormatUint(txID, 64)),
+		),
 	)
-	ctx.EventManager().EmitEvent(poolEvent)
 
 	return nil
 }
@@ -254,68 +258,18 @@ func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb fu
 	}
 }
 
-// CreateBatchFees iterates over the outgoing pool and create batch token fee map
-func (k Keeper) CreateBatchFees(ctx sdk.Context) (batchFees []*types.BatchFees) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
-	iter := prefixStore.Iterator(nil, nil)
-	defer iter.Close()
-
-	batchFeesMap := make(map[string]*types.BatchFees)
-	txCountMap := make(map[string]int)
-
-	for ; iter.Valid(); iter.Next() {
-		var ids types.IDSet
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ids)
-
-		// create a map to store the token contract address and its total fee
-		// Parse the iterator key to get contract address & fee
-		// If len(ids.Ids) > 1, multiply fee amount with len(ids.Ids) and add it to total fee amount
-
-		key := iter.Key()
-		tokenContractBytes := key[:types.ETHContractAddressLen]
-		tokenContractAddr := string(tokenContractBytes)
-
-		feeAmountBytes := key[len(tokenContractBytes):]
-		feeAmount := big.NewInt(0).SetBytes(feeAmountBytes)
-
-		for i := 0; i < len(ids.Ids); i++ {
-			if txCountMap[tokenContractAddr] >= OutgoingTxBatchSize {
-				break
-			} else {
-				// add fee amount
-				if _, ok := batchFeesMap[tokenContractAddr]; ok {
-					batchFeesMap[tokenContractAddr].TopOneHundred = batchFeesMap[tokenContractAddr].TopOneHundred.Add(sdk.NewIntFromBigInt(feeAmount))
-				} else {
-					batchFeesMap[tokenContractAddr] = &types.BatchFees{
-						Token:         tokenContractAddr,
-						TopOneHundred: sdk.NewIntFromBigInt(feeAmount)}
-				}
-
-				txCountMap[tokenContractAddr] = txCountMap[tokenContractAddr] + 1
-			}
-		}
+// TODO: explain difference with batch ID?
+func (k Keeper) GetTxID(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.KeyLastTxPoolID)
+	if len(bz) == 0 {
+		return 0
 	}
 
-	// create array of batchFees
-	for _, batchFee := range batchFeesMap {
-		// newBatchFee := types.BatchFees{
-		// 	Token:         batchFee.Token,
-		// 	TopOneHundred: batchFee.TopOneHundred,
-		// }
-		batchFees = append(batchFees, batchFee)
-	}
-
-	return
+	return sdk.BigEndianToUint64(bz)
 }
 
-func (k Keeper) autoIncrementID(ctx sdk.Context, idKey []byte) uint64 {
+func (k Keeper) setTxID(ctx sdk.Context, txID uint64) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(idKey)
-	var id uint64 = 1
-	if bz != nil {
-		id = binary.BigEndian.Uint64(bz)
-	}
-	bz = sdk.Uint64ToBigEndian(id + 1)
-	store.Set(idKey, bz)
-	return id
+	store.Set(types.KeyLastTxPoolID, sdk.Uint64ToBigEndian(txID))
 }
