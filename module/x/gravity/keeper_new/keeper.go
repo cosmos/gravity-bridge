@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -182,4 +183,13 @@ func (k Keeper) GetTransferTxs(ctx sdk.Context) []types.TransferTx {
 	})
 
 	return txs
+}
+
+// TODO: is this necessary ??
+// GetUnbondingValidators returns UnbondingValidators.
+// Adding here in gravity keeper as cdc is available inside endblocker.
+func (k Keeper) GetUnbondingValidators(unbondingVals []byte) stakingtypes.ValAddresses {
+	var unbondingValidators stakingtypes.ValAddresses
+	k.cdc.MustUnmarshalBinaryBare(unbondingVals, &unbondingValidators)
+	return unbondingValidators
 }
