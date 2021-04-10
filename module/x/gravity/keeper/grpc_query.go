@@ -9,6 +9,11 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
+const maxValsetRequestsReturned = 5
+
+// todo: impl pagination
+const MaxResults = 100
+
 var _ types.QueryServer = Keeper{}
 
 // Params queries the params of the gravity module
