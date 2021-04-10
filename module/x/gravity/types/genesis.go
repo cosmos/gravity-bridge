@@ -186,11 +186,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	}
 }
 
-// Equal returns a boolean determining if two Params types are identical.
-func (p Params) Equal(p2 Params) bool {
-	return p.Equal(p2)
-}
-
 func validateGravityID(i interface{}) error {
 	v, ok := i.(string)
 	if !ok {
