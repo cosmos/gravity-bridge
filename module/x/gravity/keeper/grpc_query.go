@@ -9,6 +9,11 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
+const maxValsetRequestsReturned = 5
+
+// todo: impl pagination
+const MaxResults = 100
+
 var _ types.QueryServer = Keeper{}
 
 // Params queries the params of the gravity module
@@ -90,7 +95,7 @@ func (k Keeper) LastPendingValsetRequestByAddr(c context.Context, req *types.Que
 
 // BatchFees queries the batch fees from unbatched pool
 func (k Keeper) BatchFees(c context.Context, req *types.QueryBatchFeeRequest) (*types.QueryBatchFeeResponse, error) {
-	return &types.QueryBatchFeeResponse{BatchFees: k.CreateBatchFees(sdk.UnwrapSDKContext(c))}, nil
+	return &types.QueryBatchFeeResponse{BatchFees: k.GetAllBatchFees(sdk.UnwrapSDKContext(c))}, nil
 }
 
 // LastPendingBatchRequestByAddr queries the LastPendingBatchRequestByAddr of the gravity module

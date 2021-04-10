@@ -88,7 +88,7 @@ pub struct SendToEthMsg {
 /// type of the batch. Since all batches only move a single asset within them.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct RequestBatchMsg {
-    pub orchestrator: Address,
+    pub sender: Address,
     pub denom: String,
 }
 

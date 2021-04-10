@@ -378,7 +378,7 @@ pub async fn send_request_batch(
         },
         msgs: vec![GravityMsg::RequestBatchMsg(RequestBatchMsg {
             denom,
-            orchestrator: our_address,
+            sender: our_address,
         })],
         memo: String::new(),
     };

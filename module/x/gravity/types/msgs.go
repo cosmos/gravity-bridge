@@ -46,11 +46,6 @@ func (msg *MsgDelegateKey) ValidateBasic() (err error) {
 	return nil
 }
 
-// GetSignBytes encodes the message for signing
-func (msg *MsgDelegateKey) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
-
 // GetSigners defines whose signature is required
 func (msg *MsgDelegateKey) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.ValAddressFromBech32(msg.Validator)
@@ -58,6 +53,11 @@ func (msg *MsgDelegateKey) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{sdk.AccAddress(acc)}
+}
+
+// GetSignBytes encodes the message for signing
+func (msg *MsgDelegateKey) GetSignBytes() []byte {
+	panic("Gravity messages do not support amino")
 }
 
 // NewMsgSendToEth returns a new msgSendToEth
@@ -103,7 +103,7 @@ func (msg MsgSendToEth) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgSendToEth) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
@@ -119,7 +119,7 @@ func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
 // NewMsgRequestBatch returns a new msgRequestBatch
 func NewMsgRequestBatch(orchestrator sdk.AccAddress) *MsgRequestBatch {
 	return &MsgRequestBatch{
-		Orchestrator: orchestrator.String(),
+		Sender: orchestrator.String(),
 	}
 }
 
@@ -131,20 +131,20 @@ func (msg MsgRequestBatch) Type() string { return "request_batch" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgRequestBatch) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
 	}
 	return nil
 }
 
 // GetSignBytes encodes the message for signing
 func (msg MsgRequestBatch) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
 func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
 	}
@@ -176,7 +176,7 @@ func (msg *MsgCancelSendToEth) ValidateBasic() (err error) {
 
 // GetSignBytes encodes the message for signing
 func (msg *MsgCancelSendToEth) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	panic("Gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
@@ -209,11 +209,6 @@ func (msg *MsgSubmitConfirm) ValidateBasic() (err error) {
 		return err
 	}
 	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg *MsgSubmitConfirm) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
@@ -252,6 +247,11 @@ func (m MsgSubmitConfirm) UnpackInterfaces(unpacker types.AnyUnpacker) error {
 	return unpacker.UnpackAny(m.Confirm, &claim)
 }
 
+// GetSignBytes encodes the message for signing
+func (msg *MsgSubmitConfirm) GetSignBytes() []byte {
+	panic("Gravity messages do not support amino")
+}
+
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
 func NewMsgSubmitClaim(claim *types.Any, signer string) *MsgSubmitClaim {
 	return &MsgSubmitClaim{
@@ -273,11 +273,6 @@ func (msg *MsgSubmitClaim) ValidateBasic() (err error) {
 		return err
 	}
 	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg *MsgSubmitClaim) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
@@ -314,4 +309,9 @@ func (m *MsgSubmitClaim) SetClaim(claim EthereumClaim) error {
 func (m MsgSubmitClaim) UnpackInterfaces(unpacker types.AnyUnpacker) error {
 	var claim EthereumClaim
 	return unpacker.UnpackAny(m.Claim, &claim)
+}
+
+// GetSignBytes encodes the message for signing
+func (msg *MsgSubmitClaim) GetSignBytes() []byte {
+	panic("Gravity messages do not support amino")
 }

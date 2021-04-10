@@ -142,22 +142,6 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		return nil, err
 	}
 
-	// question: is this right? If i can delegate my voting power to a different key then this would fail each time i call it
-	valaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, valaddr)
-
-	// a validator request can be sent from a delegate key or a validator
-	// key directly
-	if validator == nil {
-		sval := k.StakingKeeper.Validator(ctx, sdk.ValAddress(valaddr))
-		if sval == nil {
-			return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-		}
-	}
-
-	// TODO later make sure that Demon matches a list of tokens already
-	// in the bridge to send
-
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
