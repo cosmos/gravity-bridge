@@ -65,7 +65,10 @@ pub async fn update_gravity_delegate_addresses(
         payer: None,
     };
 
-    let msg = Msg::new("gravity/MsgSetOrchestratorAddress", msg_set_orch_address);
+    let msg = Msg::new(
+        "/gravity.v1.MsgSetOrchestratorAddress",
+        msg_set_orch_address,
+    );
 
     let args = contact.get_message_args(our_address, fee).await?;
     trace!("got optional tx info");
@@ -127,7 +130,7 @@ pub async fn send_valset_confirms(
             nonce: valset.nonce,
             signature: bytes_to_hex_str(&eth_signature.to_bytes()),
         };
-        let msg = Msg::new("gravity/MsgValsetConfirm", confirm);
+        let msg = Msg::new("/gravity.v1.MsgValsetConfirm", confirm);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
@@ -189,7 +192,7 @@ pub async fn send_batch_confirm(
             nonce: batch.nonce,
             signature: bytes_to_hex_str(&eth_signature.to_bytes()),
         };
-        let msg = Msg::new("gravity/MsgConfirmBatch", confirm);
+        let msg = Msg::new("/gravity.v1.MsgConfirmBatch", confirm);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
@@ -251,7 +254,7 @@ pub async fn send_logic_call_confirm(
             invalidation_id: bytes_to_hex_str(&call.invalidation_id),
             invalidation_nonce: call.invalidation_nonce,
         };
-        let msg = Msg::new("gravity/MsgConfirmLogicCall", confirm);
+        let msg = Msg::new("/gravity.v1.MsgConfirmLogicCall", confirm);
         messages.push(msg);
     }
     let args = contact.get_message_args(our_address, fee).await?;
@@ -306,7 +309,7 @@ pub async fn send_ethereum_claims(
             ethereum_sender: deposit.sender.to_string(),
             orchestrator: our_address.to_string(),
         };
-        let msg = Msg::new("gravity/MsgDepositClaim", claim);
+        let msg = Msg::new("/gravity.v1.MsgDepositClaim", claim);
         unordered_msgs.insert(deposit.event_nonce.clone(), msg);
     }
     for withdraw in withdraws {
@@ -317,7 +320,7 @@ pub async fn send_ethereum_claims(
             batch_nonce: downcast_uint256(withdraw.batch_nonce).unwrap(),
             orchestrator: our_address.to_string(),
         };
-        let msg = Msg::new("gravity/MsgWithdrawClaim", claim);
+        let msg = Msg::new("/gravity.v1.MsgWithdrawClaim", claim);
         unordered_msgs.insert(withdraw.event_nonce.clone(), msg);
     }
     for deploy in erc20_deploys {
@@ -331,7 +334,7 @@ pub async fn send_ethereum_claims(
             decimals: deploy.decimals as u64,
             orchestrator: our_address.to_string(),
         };
-        let msg = Msg::new("gravity/MsgERC20DeployedClaim", claim);
+        let msg = Msg::new("/gravity.v1.MsgERC20DeployedClaim", claim);
         unordered_msgs.insert(deploy.event_nonce.clone(), msg);
     }
     for call in logic_calls {
@@ -342,7 +345,7 @@ pub async fn send_ethereum_claims(
             invalidation_nonce: downcast_uint256(call.invalidation_nonce).unwrap(),
             orchestrator: our_address.to_string(),
         };
-        let msg = Msg::new("gravity/MsgLogicCallExecutedClaim", claim);
+        let msg = Msg::new("/gravity.v1.MsgLogicCallExecutedClaim", claim);
         unordered_msgs.insert(call.event_nonce.clone(), msg);
     }
     let mut keys = Vec::new();
@@ -436,7 +439,7 @@ pub async fn send_to_eth(
         payer: None,
     };
 
-    let msg = Msg::new("gravity/MsgSendToEth", msg_send_to_eth);
+    let msg = Msg::new("/gravity.v1.MsgSendToEth", msg_send_to_eth);
 
     let args = contact.get_message_args(our_address, fee).await?;
     trace!("got optional tx info");
@@ -480,7 +483,7 @@ pub async fn send_request_batch(
         payer: None,
     };
 
-    let msg = Msg::new("gravity/MsgRequestBatch", msg_request_batch);
+    let msg = Msg::new("/gravity.v1.MsgRequestBatch", msg_request_batch);
 
     let args = contact.get_message_args(our_address, fee).await?;
     trace!("got optional tx info");
