@@ -256,7 +256,7 @@ pub async fn start_orchestrators(
             let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
             let contact = Contact::new(COSMOS_NODE_GRPC, OPERATION_TIMEOUT);
             let fut = orchestrator_main_loop(
-                k.validator_key,
+                k.orch_key,
                 k.eth_key,
                 web30,
                 contact,
