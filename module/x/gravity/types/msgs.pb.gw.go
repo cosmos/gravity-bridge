@@ -584,6 +584,3 @@ var (
 
 	forward_Msg_SetDelegateKey_0 = runtime.ForwardResponseMessage
 )
-	if m.Claim != nil {
-		l = m.Claim.Size()
-		n += 1 + l + sovMsgs(uint64(l))
