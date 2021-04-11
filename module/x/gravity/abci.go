@@ -266,31 +266,3 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 	}
 }
-
-// TestingEndBlocker is a second endblocker function only imported in the Gravity codebase itself
-// if you are a consuming Cosmos chain DO NOT IMPORT THIS, it simulates a chain using the arbitrary
-// logic API to request logic calls
-func TestingEndBlocker(ctx sdk.Context, k keeper.Keeper) {
-	// if this is nil we have not set our test outgoing logic call yet
-	if k.GetOutgoingLogicCall(ctx, []byte("GravityTesting"), 0).Payload == nil {
-		// TODO this call isn't actually very useful for testing, since it always
-		// throws, being just junk data that's expected. But it prevents us from checking
-		// the full lifecycle of the call. We need to find some way for this to read data
-		// and encode a simple testing call, probably to one of the already deployed ERC20
-		// contracts so that we can get the full lifecycle.
-		token := []*types.ERC20Token{{
-			Contract: "0x7580bfe88dd3d07947908fae12d95872a260f2d8",
-			Amount:   sdk.NewIntFromUint64(5000),
-		}}
-		_ = types.OutgoingLogicCall{
-			Transfers:            token,
-			Fees:                 token,
-			LogicContractAddress: "0x510ab76899430424d209a6c9a5b9951fb8a6f47d",
-			Payload:              []byte("fake bytes"),
-			Timeout:              10000,
-			InvalidationId:       []byte("GravityTesting"),
-			InvalidationNonce:    1,
-		}
-		//k.SetOutgoingLogicCall(ctx, &call)
-	}
-}
