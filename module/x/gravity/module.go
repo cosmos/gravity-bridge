@@ -155,9 +155,6 @@ func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {}
 // EndBlock implements app module
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	EndBlocker(ctx, am.keeper)
-	// this begin blocker is only for testing purposes, don't import into your
-	// own chain running gravity
-	TestingEndBlocker(ctx, am.keeper)
 	return []abci.ValidatorUpdate{}
 }
 
