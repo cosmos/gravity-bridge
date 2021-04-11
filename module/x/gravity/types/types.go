@@ -64,14 +64,24 @@ func (b BridgeValidators) Sort() {
 }
 
 // PowerDiff returns the difference in power between two bridge validator sets
-// TODO: this needs to be potentially refactored
+// note this is Gravity bridge power *not* Cosmos voting power. Cosmos voting
+// power is based on the absolute number of tokens in the staking pool at any given
+// time Gravity bridge power is normalized using the equation.
+//
+// validators cosmos voting power / total cosmos voting power in this block = gravity bridge power / u32_max
+//
+// As an example if someone has 52% of the Cosmos voting power when a validator set is created their Gravity
+// bridge voting power is u32_max * .52
+//
+// Normalized voting power dramatically reduces how often we have to produce new validator set updates. For example
+// if the total on chain voting power increases by 1% due to inflation, we shouldn't have to generate a new validator
+// set, after all the validators retained their relative percentages during inflation and normalized Gravity bridge power
+// shows no difference.
 func (b BridgeValidators) PowerDiff(c BridgeValidators) float64 {
 	powers := map[string]int64{}
-	var totalB int64
 	// loop over b and initialize the map with their powers
 	for _, bv := range b {
 		powers[bv.EthereumAddress] = int64(bv.Power)
-		totalB += int64(bv.Power)
 	}
 
 	// subtract c powers from powers in the map, initializing
@@ -90,7 +100,7 @@ func (b BridgeValidators) PowerDiff(c BridgeValidators) float64 {
 		delta += math.Abs(float64(v))
 	}
 
-	return math.Abs(delta / float64(totalB))
+	return math.Abs(delta / float64(math.MaxUint32))
 }
 
 // TotalPower returns the total power in the bridge validator set
