@@ -3,13 +3,6 @@ package gravity.v1;
 
 option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
-// ConfirmType is the cosmos type of a confirmation of a given object from the eth signers
-enum ConfirmType {
-  CONFIRM_TYPE_UNSPECIFIED = 0;
-  CONFIRM_TYPE_VALSET      = 1;
-  CONFIRM_TYPE_BATCH       = 2;
-  CONFIRM_TYPE_LOGIC       = 3;
-}
 
 // ConfirmLogicCall
 // When validators observe a MsgRequestBatch they form a batch by ordering
@@ -18,7 +11,6 @@ enum ConfirmType {
 // decided, probably around 100) or when transactions stop being profitable
 // (TODO determine this without nondeterminism) This message includes the batch
 // as well as an Ethereum signature over this batch by the validator
-// -------------
 message ConfirmLogicCall {
   string invalidation_id      = 1;
   uint64 invalidation_nonce   = 2;
@@ -28,13 +20,6 @@ message ConfirmLogicCall {
 }
 
 // ConfirmBatch
-// When validators observe a MsgRequestBatch they form a batch by ordering
-// transactions currently in the txqueue in order of highest to lowest fee,
-// cutting off when the batch either reaches a hardcoded maximum size (to be
-// decided, probably around 100) or when transactions stop being profitable
-// (TODO determine this without nondeterminism) This message includes the batch
-// as well as an Ethereum signature over this batch by the validator
-// -------------
 message ConfirmBatch {
   uint64 nonce                = 1;
   string token_contract       = 2;
@@ -43,7 +28,7 @@ message ConfirmBatch {
   string signature            = 5;
 }
 
-// ValsetConfirm
+// ConfirmValset
 // this is the message sent by the validators when they wish to submit their
 // signatures over the validator set at a given block height. A validator must
 // first call MsgSetEthAddress to set their Ethereum address to be used for
@@ -57,8 +42,7 @@ message ConfirmBatch {
 // Ethereum addresses and (B) submit ValsetConfirm messages with their
 // signatures it is then possible for anyone to view these signatures in the
 // chain store and submit them to Ethereum to update the validator set
-// -------------
-message ValsetConfirm {
+message ConfirmValset {
   uint64 nonce                = 1;
   string orchestrator_address = 2;
   string eth_address          = 3;

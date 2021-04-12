@@ -60,10 +60,15 @@ message LogicCallExecutedEvent {
 // CosmosERC20DeployedEvent is submitted when an ERC20 contract
 // for a Cosmos SDK coin has been deployed on Ethereum.
 message CosmosERC20DeployedEvent {
+  // cosmos SDK coin denomination
   string cosmos_denom         = 1;
+  // ethereum ERC20 contract address in hex format
   string token_contract       = 2;
+  // name of the token
   string name                 = 3;
+  // symbol or tick of the token
   string symbol               = 4;
+  // number of decimals the token supports (i.e precision)
   uint64 decimals             = 5;
 }
 
@@ -143,14 +148,3 @@ message LogicCallTx {
   bytes               invalidation_id        = 6;
   uint64              invalidation_nonce     = 7;
 }
-
-// SignType defines messages that have been signed by an orchestrator
-// TODO: why do we need this
-// enum SignType {
-//   option (gogoproto.goproto_enum_prefix)   = false;
-//   option (gogoproto.goproto_enum_stringer) = false;
-
-//   SIGN_TYPE_UNSPECIFIED                          = 0;
-//   SIGN_TYPE_ORCHESTRATOR_SIGNED_MULTI_SIG_UPDATE = 1;
-//   SIGN_TYPE_ORCHESTRATOR_SIGNED_WITHDRAW_BATCH   = 2;
-// }

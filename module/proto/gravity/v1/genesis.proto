@@ -111,13 +111,13 @@ message GenesisState {
   Params                      params              = 1;
   uint64                      last_observed_nonce = 2;
   repeated EthSignerSet             valsets             = 3;
-  repeated ValsetConfirm      valset_confirms     = 4;
-  repeated BatchTx    batches             = 5;
-  repeated ConfirmBatch       batch_confirms      = 6 [(gogoproto.nullable) = false];
-  repeated LogicCallTx  logic_calls         = 7;
-  repeated ConfirmLogicCall   logic_call_confirms = 8 [(gogoproto.nullable) = false];
-  repeated Attestation        attestations        = 9 [(gogoproto.nullable) = false];
-  repeated MsgDelegateKey     delegate_keys       = 10;
-  repeated ERC20ToDenom       erc20_to_denoms     = 11 [(gogoproto.nullable) = false];
-  repeated TransferTx unbatched_transfers = 12;
+  repeated BatchTx    batches             = 4;
+  repeated LogicCallTx  logic_calls         = 5;
+  repeated TransferTx transfers_pool = 6;
+  repeated ConfirmValset      valset_confirms     = 7;
+  repeated ConfirmBatch       batch_confirms      = 8 [(gogoproto.nullable) = false];
+  repeated ConfirmLogicCall   logic_call_confirms = 9 [(gogoproto.nullable) = false];
+  repeated Attestation        attestations        = 10 [(gogoproto.nullable) = false];
+  repeated MsgDelegateKey     delegate_keys       = 11;
+  repeated ERC20ToDenom       erc20_to_denoms     = 12 [(gogoproto.nullable) = false];
 }

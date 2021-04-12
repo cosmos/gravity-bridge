@@ -285,11 +285,16 @@ func (m *LogicCallExecutedEvent) GetInvalidationNonce() uint64 {
 // CosmosERC20DeployedEvent is submitted when an ERC20 contract
 // for a Cosmos SDK coin has been deployed on Ethereum.
 type CosmosERC20DeployedEvent struct {
-	CosmosDenom   string `protobuf:"bytes,1,opt,name=cosmos_denom,json=cosmosDenom,proto3" json:"cosmos_denom,omitempty"`
+	// cosmos SDK coin denomination
+	CosmosDenom string `protobuf:"bytes,1,opt,name=cosmos_denom,json=cosmosDenom,proto3" json:"cosmos_denom,omitempty"`
+	// ethereum ERC20 contract address in hex format
 	TokenContract string `protobuf:"bytes,2,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
-	Name          string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Symbol        string `protobuf:"bytes,4,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Decimals      uint64 `protobuf:"varint,5,opt,name=decimals,proto3" json:"decimals,omitempty"`
+	// name of the token
+	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// symbol or tick of the token
+	Symbol string `protobuf:"bytes,4,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	// number of decimals the token supports (i.e precision)
+	Decimals uint64 `protobuf:"varint,5,opt,name=decimals,proto3" json:"decimals,omitempty"`
 }
 
 func (m *CosmosERC20DeployedEvent) Reset()         { *m = CosmosERC20DeployedEvent{} }
