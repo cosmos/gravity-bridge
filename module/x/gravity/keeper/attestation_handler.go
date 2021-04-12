@@ -15,9 +15,9 @@ type AttestationHandler struct {
 	bankKeeper types.BankKeeper
 }
 
-// Handle is the entry point for Attestation processing.
+// HandleAttestation is the entry point for Attestation processing.
 // TODO-JT add handler for ERC20DeployedEvent
-func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
+func (a AttestationHandler) HandleAttestation(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
 	case *types.DepositClaim:
 		// Check if coin is Cosmos-originated asset and get denom

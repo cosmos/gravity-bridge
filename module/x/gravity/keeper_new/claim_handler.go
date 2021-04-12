@@ -9,6 +9,8 @@ import (
 )
 
 // HandleClaim handles a given claim by attesting it
+// TODO: it's not clear the utility of this from the code. Explain what it does,
+// provice example and where this is executed on the step-by-step incoming logic.
 func (k Keeper) HandleClaim(ctx sdk.Context, claim types.EthereumClaim) error {
 	orch, _ := sdk.AccAddressFromBech32(claim.GetOrchestratorAddress())
 	validatorAddr := k.GetOrchestratorValidator(ctx, orch)

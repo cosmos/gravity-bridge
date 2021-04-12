@@ -187,6 +187,7 @@ func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract string, nonce uint6
 		return sdkerrors.Wrap(types.ErrEmpty, "outgoing batch tx not found")
 	}
 
+	// TODO: why do we need to do this?
 	for _, tx := range batchTx.Transactions {
 		// store all the transactions from the batch
 		k.prependToUnbatchedTxIndex(ctx, tx.Id, tokenContract, tx.Erc20Fee)
