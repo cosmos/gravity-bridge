@@ -123,7 +123,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 // - checks that the provided tx actually exists
 // - deletes the unbatched tx from the pool
 // - issues the tokens back to the sender
-func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID uint64, sender sdk.AccAddress) error {
+func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID string, sender sdk.AccAddress) error {
 	// check that we actually have a tx with that id and what it's details are
 	tx, found := k.GetTransferTx(ctx, txID)
 	if !found {

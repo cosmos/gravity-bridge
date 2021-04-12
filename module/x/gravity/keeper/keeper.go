@@ -28,7 +28,7 @@ import (
 //
 // - Deposit into an AMM pair
 type AttestationHandler interface {
-	HandleAttestation(sdk.Context, types.Attestation, types.EthereumClaim) error
+	HandleAttestation(ctx sdk.Context, attestation types.Attestation) error
 }
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
@@ -147,7 +147,7 @@ func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
 	store.Set(types.LastObservedEventNonceKey, sdk.Uint64ToBigEndian(nonce))
 }
 
-func (k Keeper) GetTransferTx(ctx sdk.Context, id uint64) (types.TransferTx, bool) {
+func (k Keeper) GetTransferTx(ctx sdk.Context, id string) (types.TransferTx, bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetTransferTxPoolKey(id))
 	if len(bz) == 0 {
@@ -159,19 +159,19 @@ func (k Keeper) GetTransferTx(ctx sdk.Context, id uint64) (types.TransferTx, boo
 	return tx, true
 }
 
-func (k Keeper) SetTransferTx(ctx sdk.Context, id uint64, tx types.TransferTx) {
+func (k Keeper) SetTransferTx(ctx sdk.Context, id string, tx types.TransferTx) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryBare(&tx)
 	store.Set(types.GetTransferTxPoolKey(id), bz)
 }
 
-func (k Keeper) DeleteTransferTx(ctx sdk.Context, id uint64) {
+func (k Keeper) DeleteTransferTx(ctx sdk.Context, id string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetTransferTxPoolKey(id))
 }
 
 // IterateTransferTxs
-func (k Keeper) IterateTransferTxs(ctx sdk.Context, cb func(id uint64, tx types.TransferTx) (stop bool)) {
+func (k Keeper) IterateTransferTxs(ctx sdk.Context, cb func(id string, tx types.TransferTx) (stop bool)) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferTxPoolKey)
 
 	iterator := prefixStore.ReverseIterator(nil, nil)
@@ -179,7 +179,7 @@ func (k Keeper) IterateTransferTxs(ctx sdk.Context, cb func(id uint64, tx types.
 	for ; iterator.Valid(); iterator.Next() {
 		var tx types.TransferTx
 		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &tx)
-		id := sdk.BigEndianToUint64(iterator.Key()[:1]) // TODO: check correctness
+		id := string(iterator.Key()[:1]) // TODO: check correctness
 		if cb(id, tx) {
 			break // stop iteration
 		}
@@ -190,7 +190,7 @@ func (k Keeper) IterateTransferTxs(ctx sdk.Context, cb func(id uint64, tx types.
 // TODO: create struct with ID and transferTx
 func (k Keeper) GetTransferTxs(ctx sdk.Context) []types.TransferTx {
 	txs := make([]types.TransferTx, 0)
-	k.IterateTransferTxs(ctx, func(id uint64, tx types.TransferTx) bool {
+	k.IterateTransferTxs(ctx, func(id string, tx types.TransferTx) bool {
 		txs = append(txs, tx)
 		return false
 	})

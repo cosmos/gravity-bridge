@@ -8,11 +8,11 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-// HandleClaim handles a given claim by attesting it
+// HandleEthEvent handles a given event by attesting it
 // TODO: it's not clear the utility of this from the code. Explain what it does,
 // provice example and where this is executed on the step-by-step incoming logic.
-func (k Keeper) HandleClaim(ctx sdk.Context, claim types.EthereumClaim) error {
-	orch, _ := sdk.AccAddressFromBech32(claim.GetOrchestratorAddress())
+func (k Keeper) HandleEthEvent(ctx sdk.Context, event types.EthereumEvent) error {
+	orch, _ := sdk.AccAddressFromBech32(event.GetOrchestratorAddress())
 	validatorAddr := k.GetOrchestratorValidator(ctx, orch)
 	if validatorAddr == nil {
 		validatorAddr = sdk.ValAddress(orch)
@@ -26,8 +26,8 @@ func (k Keeper) HandleClaim(ctx sdk.Context, claim types.EthereumClaim) error {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "validator %s not in active set", validatorAddr)
 	}
 
-	// Add the claim to the store
-	if err := k.Attest(ctx, claim); err != nil {
+	// Add the event to the store
+	if err := k.Attest(ctx, event); err != nil {
 		return sdkerrors.Wrap(err, "create attestation")
 	}
 
@@ -35,9 +35,9 @@ func (k Keeper) HandleClaim(ctx sdk.Context, claim types.EthereumClaim) error {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, claim.GetType().String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, event.GetType()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()))),
+			// sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(event.GetEventNonce(), event.ClaimHash()))),
 		),
 	)
 

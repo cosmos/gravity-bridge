@@ -19,8 +19,8 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// NOTE: address checked on msg validation
-	validatorAddr, _ := sdk.ValAddressFromBech32(msg.Validator)
-	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validatorAddr, _ := sdk.ValAddressFromBech32(msg.ValidatorAddress)
+	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.OrchestratorAddress)
 	ethereumAddr := common.HexToAddress(msg.EthAddress)
 
 	// ensure that the validator exists
@@ -41,7 +41,7 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeySetOperatorAddr, msg.Orchestrator),
+			sdk.NewAttribute(types.AttributeKeySetOperatorAddr, msg.OrchestratorAddress),
 		),
 	)
 
@@ -50,31 +50,23 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 
 func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
 
-	confirm := msg.GetConfirm()
-
-	switch msg.ConfirmType {
-	case types.ConfirmType_CONFIRM_TYPE_BATCH:
-	case types.ConfirmType_CONFIRM_TYPE_LOGIC:
-	case types.ConfirmType_CONFIRM_TYPE_VALSET:
-	default:
-		return nil, sdkerrors.Wrap(types.ErrInvalidConfirm, confirm.GetType().String())
-	}
+	// confirm := msg.GetConfirm()
 
 	return &types.MsgSubmitConfirmResponse{}, nil
 }
 
-func (k Keeper) SubmitClaim(c context.Context, msg *types.MsgSubmitClaim) (*types.MsgSubmitClaimResponse, error) {
+func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*types.MsgSubmitEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	claim, err := types.UnpackClaim(msg.Claim)
+	claim, err := types.UnpackEvent(msg.Event)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := k.HandleClaim(ctx, claim); err != nil {
+	if err := k.HandleEthEvent(ctx, claim); err != nil {
 		return nil, err
 	}
 
-	return &types.MsgSubmitClaimResponse{}, nil
+	return &types.MsgSubmitEventResponse{}, nil
 }
 
 // RequestBatch handles MsgRequestBatch
@@ -130,7 +122,7 @@ func (k Keeper) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types.Ms
 
 	// NOTE: errors checked on msg validation
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
-	ethereumAddr := common.HexToAddress(msg.EthDest)
+	ethereumAddr := common.HexToAddress(msg.EthRecipient)
 
 	txID, err := k.AddToOutgoingPool(ctx, sender, ethereumAddr, msg.Amount, msg.BridgeFee)
 	if err != nil {

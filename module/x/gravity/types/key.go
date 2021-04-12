@@ -141,7 +141,7 @@ func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
 // [0x0][0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
 // The Claim hash identifies a unique event, for example it would have a event nonce, a sender and a receiver. Or an event nonce and a batch nonce. But
 // the Claim is stored indexed with the claimer key to make sure that it is unique.
-func GetClaimKey(details EthereumClaim) []byte {
+func GetClaimKey(details EthereumEvent) []byte {
 	var detailsHash []byte
 	if details != nil {
 		detailsHash = details.ClaimHash()
@@ -193,8 +193,9 @@ func GetAttestationKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
 // GetTransferTxPoolKey returns the following key format
 // prefix     id
 // [0x6][0 0 0 0 0 0 0 1]
-func GetTransferTxPoolKey(id uint64) []byte {
-	return append(TransferTxPoolKey, sdk.Uint64ToBigEndian(id)...)
+func GetTransferTxPoolKey(id string) []byte {
+	// TODO: use hex hash .Bytes() instead ?
+	return append(TransferTxPoolKey, []byte(id)...)
 }
 
 // GetBatchTxKey returns the following key format

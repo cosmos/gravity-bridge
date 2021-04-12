@@ -21,7 +21,7 @@ type Confirm interface {
 var (
 	_ Confirm = &ConfirmBatch{}
 	_ Confirm = &ConfirmLogicCall{}
-	_ Confirm = &ValsetConfirm{}
+	_ Confirm = &ConfirmValset{}
 )
 
 // Type should return the action
@@ -81,9 +81,9 @@ func (msg ConfirmLogicCall) GetTokenContract() string {
 	return ""
 }
 
-// NewValsetConfirm returns a new ValsetConfirm
-func NewValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddress, signature string) *ValsetConfirm {
-	return &ValsetConfirm{
+// NewConfirmValset returns a new ConfirmValset
+func NewConfirmValset(nonce uint64, ethAddress string, validator sdk.AccAddress, signature string) *ConfirmValset {
+	return &ConfirmValset{
 		Nonce:               nonce,
 		OrchestratorAddress: validator.String(),
 		EthAddress:          ethAddress,
@@ -92,10 +92,10 @@ func NewValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddress,
 }
 
 // Type should return the action
-func (msg *ValsetConfirm) GetType() ConfirmType { return ConfirmType_CONFIRM_TYPE_VALSET }
+func (msg *ConfirmValset) GetType() ConfirmType { return ConfirmType_CONFIRM_TYPE_VALSET }
 
 // ValidateBasic performs stateless checks
-func (msg *ValsetConfirm) ValidateBasic() (err error) {
+func (msg *ConfirmValset) ValidateBasic() (err error) {
 	if _, err = sdk.AccAddressFromBech32(msg.OrchestratorAddress); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.OrchestratorAddress)
 	}
@@ -106,11 +106,11 @@ func (msg *ValsetConfirm) ValidateBasic() (err error) {
 }
 
 // GetInvalidationNonce is a noop to implement confirm interface
-func (msg ValsetConfirm) GetInvalidationNonce() uint64 { return 0 }
+func (msg ConfirmValset) GetInvalidationNonce() uint64 { return 0 }
 
 // GetInvalidationId is a noop to implement confirm interface
-func (msg ValsetConfirm) GetInvalidationId() string { return "" }
+func (msg ConfirmValset) GetInvalidationId() string { return "" }
 
-func (msg *ValsetConfirm) GetTokenContract() string {
+func (msg *ConfirmValset) GetTokenContract() string {
 	return ""
 }

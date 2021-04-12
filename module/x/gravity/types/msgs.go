@@ -11,7 +11,7 @@ import (
 
 var (
 	_ sdk.Msg = &MsgDelegateKey{}
-	_ sdk.Msg = &MsgSubmitClaim{}
+	_ sdk.Msg = &MsgSubmitEvent{}
 	_ sdk.Msg = &MsgSubmitConfirm{}
 	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
@@ -248,26 +248,26 @@ func (m *MsgSubmitConfirm) SetConfirm(confirm Confirm) error {
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
 func (m MsgSubmitConfirm) UnpackInterfaces(unpacker types.AnyUnpacker) error {
-	var claim EthereumClaim
+	var claim EthereumEvent
 	return unpacker.UnpackAny(m.Confirm, &claim)
 }
 
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
-func NewMsgSubmitClaim(claim *types.Any, signer string) *MsgSubmitClaim {
-	return &MsgSubmitClaim{
-		Claim:  claim,
+func NewMsgSubmitEvent(claim *types.Any, signer string) *MsgSubmitEvent {
+	return &MsgSubmitEvent{
+		Event:  claim,
 		Signer: signer,
 	}
 }
 
 // Route should return the name of the module
-func (msg *MsgSubmitClaim) Route() string { return RouterKey }
+func (msg *MsgSubmitEvent) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgSubmitClaim) Type() string { return "cancel_send_to_eth" }
+func (msg *MsgSubmitEvent) Type() string { return "cancel_send_to_eth" }
 
 // ValidateBasic performs stateless checks
-func (msg *MsgSubmitClaim) ValidateBasic() (err error) {
+func (msg *MsgSubmitEvent) ValidateBasic() (err error) {
 	_, err = sdk.ValAddressFromBech32(msg.Signer)
 	if err != nil {
 		return err
@@ -276,12 +276,12 @@ func (msg *MsgSubmitClaim) ValidateBasic() (err error) {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg *MsgSubmitClaim) GetSignBytes() []byte {
+func (msg *MsgSubmitEvent) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
-func (msg *MsgSubmitClaim) GetSigners() []sdk.AccAddress {
+func (msg *MsgSubmitEvent) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.ValAddressFromBech32(msg.Signer)
 	if err != nil {
 		panic(err)
@@ -289,15 +289,15 @@ func (msg *MsgSubmitClaim) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(acc)}
 }
 
-func (m *MsgSubmitClaim) GetClaim() EthereumClaim {
-	content, ok := m.Claim.GetCachedValue().(EthereumClaim)
+func (m *MsgSubmitEvent) GetEvent() EthereumEvent {
+	content, ok := m.Event.GetCachedValue().(EthereumEvent)
 	if !ok {
 		return nil
 	}
 	return content
 }
 
-func (m *MsgSubmitClaim) SetClaim(claim EthereumClaim) error {
+func (m *MsgSubmitEvent) SetEvent(claim EthereumEvent) error {
 	msg, ok := claim.(proto.Message)
 	if !ok {
 		return fmt.Errorf("can't proto marshal %T", msg)
@@ -306,12 +306,12 @@ func (m *MsgSubmitClaim) SetClaim(claim EthereumClaim) error {
 	if err != nil {
 		return err
 	}
-	m.Claim = any
+	m.Event = any
 	return nil
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
-func (m MsgSubmitClaim) UnpackInterfaces(unpacker types.AnyUnpacker) error {
-	var claim EthereumClaim
-	return unpacker.UnpackAny(m.Claim, &claim)
+func (m MsgSubmitEvent) UnpackInterfaces(unpacker types.AnyUnpacker) error {
+	var claim EthereumEvent
+	return unpacker.UnpackAny(m.Event, &claim)
 }
