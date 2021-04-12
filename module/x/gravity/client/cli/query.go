@@ -5,9 +5,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/spf13/cobra"
-
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/spf13/cobra"
 )
 
 func GetQueryCmd() *cobra.Command {
@@ -21,6 +21,7 @@ func GetQueryCmd() *cobra.Command {
 	gravityQueryCmd.AddCommand([]*cobra.Command{
 		CmdGetCurrentValset(),
 		CmdGetValsetRequest(),
+		CmdGetDelegateAddress(),
 		CmdGetValsetConfirm(),
 		CmdGetPendingValsetRequest(),
 		CmdGetPendingOutgoingTXBatchRequest(),
@@ -81,6 +82,36 @@ func CmdGetCurrentValset() *cobra.Command {
 			req := &types.QueryCurrentValsetRequest{}
 
 			res, err := queryClient.CurrentValset(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdGetDelegateAddress() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delegate-keys [validator]",
+		Short: "Get delegate eth and cosmos key for a given validator",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			validator, err := sdk.ValAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			req := &types.QueryDelegateKeysByValidatorAddress{
+				ValidatorAddress: validator.String(),
+			}
+
+			res, err := queryClient.GetDelegateKeyByValidator(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
