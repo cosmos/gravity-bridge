@@ -3,7 +3,7 @@ package gravity.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
-import "gravity/v1/claims.proto";
+import "gravity/v1/gravity.proto";
 import "gravity/v1/confirm.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
@@ -25,8 +25,8 @@ service Msg {
   rpc CancelSendToEth(MsgCancelSendToEth) returns (MsgCancelSendToEthResponse) {
     option (google.api.http).post = "/peggy/v1/cancel_send_to_eth";
   }
-  rpc SubmitClaim(MsgSubmitClaim) returns (MsgSubmitClaimResponse) {
-    option (google.api.http).post = "/peggy/v1/deposit_claim";
+  rpc SubmitEvent(MsgSubmitEvent) returns (MsgSubmitEventResponse) {
+    option (google.api.http).post = "/peggy/v1/event";
   }
   rpc SetDelegateKey(MsgDelegateKey) returns (MsgDelegateKeyResponse) {
     option (google.api.http).post = "/peggy/v1/delegate_keys";
@@ -118,15 +118,14 @@ message MsgSubmitConfirm {
 
 message MsgSubmitConfirmResponse {}
 
-// MsgSubmitClaim
-message MsgSubmitClaim {
+// MsgSubmitEvent
+message MsgSubmitEvent {
   option (gogoproto.goproto_getters) = false;
 
-  ClaimType           claim_type = 1;
-  google.protobuf.Any claim      = 2 [
-    (cosmos_proto.accepts_interface) = "EthereumClaim"
+  google.protobuf.Any event      = 1 [
+    (cosmos_proto.accepts_interface) = "EthereumEvent"
   ];
-  string signer = 3;
+  string signer = 2;
 }
 
-message MsgSubmitClaimResponse {}
+message MsgSubmitEventResponse {}

@@ -9,15 +9,19 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-// AttestationHandler processes `observed` Attestations
-type AttestationHandler struct {
+// DefaultAttestationHandler is the default handler for processing observed
+// event attestations received from Ethereum.
+type DefaultAttestationHandler struct {
 	keeper     Keeper
 	bankKeeper types.BankKeeper
 }
 
-// HandleAttestation is the entry point for Attestation processing.
-// TODO-JT add handler for ERC20DeployedEvent
-func (a AttestationHandler) HandleAttestation(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
+var _ AttestationHandler = DefaultAttestationHandler{}
+
+// Handle is the entry point for Attestation processing.
+// TODO: add handler for ERC20DeployedEvent
+// TODO: clean up
+func (a DefaultAttestationHandler) HandleAttestation(ctx sdk.Context, _ types.Attestation, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
 	case *types.DepositClaim:
 		// Check if coin is Cosmos-originated asset and get denom

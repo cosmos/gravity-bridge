@@ -65,7 +65,6 @@ func (k Keeper) timeoutTxs(ctx sdk.Context) {
 //      that excludes him before he completely Unbonds.  Otherwise he will be slashed
 // 3. If power change between validators of CurrentValset and latest valset request is > 5%
 func (k Keeper) createEthSignerSet(ctx sdk.Context) {
-
 	latestValset := k.GetLatestValset(ctx)
 	lastUnbondingHeight := k.GetLastUnbondingBlockHeight(ctx)
 

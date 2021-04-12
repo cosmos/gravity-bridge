@@ -1,33 +1,70 @@
 syntax = "proto3";
 package gravity.v1;
 
-import "cosmos_proto/cosmos.proto";
 import "google/protobuf/any.proto";
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
-// Attestation is an aggregate of `claims` that eventually becomes `observed` by
-// all orchestrators
-// EVENT_NONCE:
-// EventNonce a nonce provided by the gravity contract that is unique per event fired
-// These event nonces must be relayed in order. This is a correctness issue,
-// if relaying out of order transaction replay attacks become possible
-// OBSERVED:
-// Observed indicates that >67% of validators have attested to the event,
-// and that the event should be executed by the gravity state machine
-//
-// The actual content of the claims is passed in with the transaction making the claim
-// and then passed through the call stack alongside the attestation while it is processed
-// the key in which the attestation is stored is keyed on the exact details of the claim
-// but there is no reason to store those exact details becuause the next message sender
-// will kindly provide you with them.
+// Attestation is an event that is pending of confirmation by 2/3 of the signer set.
+// The event is then attested and executed vy the state machine once the required
+// threshold is met.
 message Attestation {
-  bool                observed = 1;
+  // event unique identifier
+  string event_id = 1 [(gogoproto.customname) = "EventID"];
+  // set of the validator operators address in bech32 format that attest in
+  // favor of this event.
   repeated string     votes    = 2;
-  uint64              height   = 3;
-  google.protobuf.Any claim    = 4 [
-    (cosmos_proto.accepts_interface) = "EthereumClaim"
+  // amount of voting power in support of this event execution
+  int64         attested_power = 3;
+  // height at which the event was attested an executed 
+  // TODO: double-check
+  uint64        height   = 4;
+}
+
+// DepositEvent is submitted when more than 66% of the active
+// Cosmos validator set has claimed to have seen a deposit
+// on Ethereum. ERC20 coins are minted to the receiver address
+// address.
+message DepositEvent {
+  // ethereum hex address of the contract
+  string token_contract = 1;
+  // amount of tokens deposited on Ethereum
+  string amount         = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false
   ];
+  // ethereum sender address in hex format
+  string ethereum_sender      = 3;
+  // cosmos bech32 account address of the receiver 
+  string cosmos_receiver      = 4;
+}
+
+// WithdrawEvent claims that a batch of withdrawal
+// operations on the bridge contract was executed.
+message WithdrawEvent {
+  // nonce of the batch tx on Cosmos
+  uint64 batch_nonce          = 1;
+  // ethereum hex address of the contract
+  string token_contract       = 2;
+}
+
+// LogicCallExecutedEvent describes a logic call that has been
+// successfully executed on Ethereum.
+message LogicCallExecutedEvent {
+  bytes  invalidation_id      = 1;
+  uint64 invalidation_nonce   = 2;
+}
+
+// CosmosERC20DeployedEvent is submitted when an ERC20 contract
+// for a Cosmos SDK coin has been deployed on Ethereum.
+message CosmosERC20DeployedEvent {
+  string cosmos_denom         = 1;
+  string token_contract       = 2;
+  string name                 = 3;
+  string symbol               = 4;
+  uint64 decimals             = 5;
 }
 
 // EthereumInfo defines the latest observed ethereum block height and the
@@ -38,3 +75,82 @@ message EthereumInfo {
   // ethereum block height
   uint64  height   = 2;
 }
+
+// EthSigner represents a cosmos validator with its corresponding bridge operator
+// ethereum address and its staking consensus power.
+message EthSigner {
+  // staking consensus power of the validator
+  int64 power            = 1;
+  // bridge operator ethereum address in hex format
+  string ethereum_address = 2;
+}
+
+// EthSignerSet is the Ethereum Bridge multisig set that relays transactions
+// the two chains. The staking validators keep ethereum keys which are used to
+// check signatures on Ethereum in order to get significant gas savings.
+message EthSignerSet {
+  // signer set nonce. TODO: why is this required?
+  uint64                   nonce   = 1;
+  // set of signers. Sorted by power
+  repeated EthSigner signers = 2 [(gogoproto.nullable)   = false];
+  // TODO: which height? cosmos? This should be the key
+  uint64                   height  = 3;
+}
+
+// BatchTx represents a batch of transactions going from Cosmos to Ethereum
+message BatchTx {
+  uint64                      nonce    = 1;
+  uint64                      timeout  = 2;
+  repeated TransferTx         transactions   = 3  [(gogoproto.nullable) = false];
+  string                      token_contract = 4;
+  uint64                      block          = 5;
+}
+
+// TransferTx represents an individual transfer from Cosmos to Ethereum
+message TransferTx {
+  // cosmos account address of the sender in bech32 format
+  string     sender       = 1;
+  // ethereum recipient address in hex format
+  string     ethereum_recipient = 2;
+  // amount of the transfer represented as an sdk.Coin. The coin denomination
+  // must correspond to a valid ERC20 token contract address
+  cosmos.base.v1beta1.Coin erc20_token  = 3 [
+    (gogoproto.nullable) = false
+  ]; 
+  // transfer fees for the bridge orchestrators, represented as an sdk.Coin.
+  // The coin denomination must correspond to a valid ERC20 token contract address
+  cosmos.base.v1beta1.Coin erc20_fee  = 4 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+// LogicCallTx represents an individual arbitratry logic call transaction from
+// Cosmos to Ethereum.
+message LogicCallTx {
+  // erc20 tokens represented as sdk.Coins
+  repeated cosmos.base.v1beta1.Coin tokens = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // erc20 tokens represented as sdk.Coins used as fees for the bridge orchestrators.
+  repeated cosmos.base.v1beta1.Coin fees = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  string              logic_contract_address = 3;
+  bytes               payload                = 4;
+  uint64              timeout                = 5;
+  bytes               invalidation_id        = 6;
+  uint64              invalidation_nonce     = 7;
+}
+
+// SignType defines messages that have been signed by an orchestrator
+// TODO: why do we need this
+// enum SignType {
+//   option (gogoproto.goproto_enum_prefix)   = false;
+//   option (gogoproto.goproto_enum_stringer) = false;
+
+//   SIGN_TYPE_UNSPECIFIED                          = 0;
+//   SIGN_TYPE_ORCHESTRATOR_SIGNED_MULTI_SIG_UPDATE = 1;
+//   SIGN_TYPE_ORCHESTRATOR_SIGNED_WITHDRAW_BATCH   = 2;
+// }

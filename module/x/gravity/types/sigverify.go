@@ -2,14 +2,15 @@ package types
 
 import (
 	"crypto/ecdsa"
+	fmt "fmt"
+	"regexp"
+	"strings"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-const (
-	signaturePrefix = "\x19Ethereum Signed Message:\n32"
-)
+const signaturePrefix = "\x19Ethereum Signed Message:\n32"
 
 // NewEthereumSignature creates a new signuature over a given byte array
 func NewEthereumSignature(hash []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
@@ -57,5 +58,19 @@ func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress string)
 		return sdkerrors.Wrap(ErrInvalid, "signature not matching")
 	}
 
+	return nil
+}
+
+// ValidateEthAddress validates an ethereum address in hex format.
+func ValidateEthAddress(address string) error {
+	if strings.TrimSpace(address) == "" {
+		return fmt.Errorf("empty address")
+	}
+	if len(address) != ETHContractAddressLen {
+		return fmt.Errorf("address(%s) of the wrong length exp(%d) actual(%d)", address, len(address), ETHContractAddressLen)
+	}
+	if !regexp.MustCompile("^0x[0-9a-fA-F]{40}$").MatchString(address) {
+		return fmt.Errorf("address %s has an invalid hex format", address)
+	}
 	return nil
 }
