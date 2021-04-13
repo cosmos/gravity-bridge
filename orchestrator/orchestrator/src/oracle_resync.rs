@@ -12,6 +12,7 @@ use web30::client::Web3;
 use crate::get_with_retry::get_block_number_with_retry;
 use crate::get_with_retry::get_last_event_nonce_with_retry;
 use crate::get_with_retry::RETRY_TIME;
+use gravity_utils::types::event_signatures::*;
 
 /// This function retrieves the last event nonce this oracle has relayed to Cosmos
 /// it then uses the Ethereum indexes to determine what block the last entry
@@ -54,7 +55,7 @@ pub async fn get_last_checked_block(
                 end_search.clone(),
                 Some(current_block.clone()),
                 vec![gravity_contract_address],
-                vec!["TransactionBatchExecutedEvent(uint256,address,uint256)"],
+                vec![TRANSACTION_BATCH_EXECUTED_EVENT_SIG],
             )
             .await;
         let send_to_cosmos_events = web3
@@ -62,7 +63,7 @@ pub async fn get_last_checked_block(
                 end_search.clone(),
                 Some(current_block.clone()),
                 vec![gravity_contract_address],
-                vec!["SendToCosmosEvent(address,address,bytes32,uint256,uint256)"],
+                vec![SENT_TO_COSMOS_EVENT_SIG],
             )
             .await;
         let erc20_deployed_events = web3
@@ -70,7 +71,7 @@ pub async fn get_last_checked_block(
                 end_search.clone(),
                 Some(current_block.clone()),
                 vec![gravity_contract_address],
-                vec!["ERC20DeployedEvent(string,address,string,string,uint8,uint256)"],
+                vec![ERC20_DEPLOYED_EVENT_SIG],
             )
             .await;
         let logic_call_executed_events = web3
@@ -78,7 +79,7 @@ pub async fn get_last_checked_block(
                 end_search.clone(),
                 Some(current_block.clone()),
                 vec![gravity_contract_address],
-                vec!["LogicCallEvent(bytes32,uint256,bytes,uint256)"],
+                vec![LOGIC_CALL_EVENT_SIG],
             )
             .await;
 
@@ -93,7 +94,7 @@ pub async fn get_last_checked_block(
                 end_search.clone(),
                 Some(current_block.clone()),
                 vec![gravity_contract_address],
-                vec!["ValsetUpdatedEvent(uint256,address[],uint256[])"],
+                vec![VALSET_UPDATED_EVENT_SIG],
             )
             .await;
         if batch_events.is_err()
@@ -162,12 +163,12 @@ pub async fn get_last_checked_block(
                     // if we've found this event it is the first possible event from the contract
                     // no other events can come before it, therefore either there's been a parsing error
                     // or no events have been submitted on this chain yet.
-                    if valset.nonce == 0 && last_event_nonce == 1u8.into() {
+                    if valset.valset_nonce == 0 && last_event_nonce == 1u8.into() {
                         return latest_block;
                     }
                     // if we're looking for a later event nonce and we find the deployment of the contract
                     // we must have failed to parse the event we're looking for. The oracle can not start
-                    if valset.nonce == 0 && last_event_nonce > 1u8.into() {
+                    if valset.valset_nonce == 0 && last_event_nonce > 1u8.into() {
                         panic!("Could not find the last event relayed by {}, Last Event nonce is {} but no event matching that could be found!", our_cosmos_address, last_event_nonce)
                     }
                 }
