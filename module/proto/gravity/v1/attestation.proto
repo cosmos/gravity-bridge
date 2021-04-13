@@ -18,6 +18,7 @@ enum ClaimType {
   CLAIM_TYPE_WITHDRAW            = 2;
   CLAIM_TYPE_ERC20_DEPLOYED      = 3;
   CLAIM_TYPE_LOGIC_CALL_EXECUTED = 4;
+  CLAIM_TYPE_VALSET_UPDATED      = 5;
 }
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by
