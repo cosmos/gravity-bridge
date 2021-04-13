@@ -10,6 +10,23 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
+// AttestationHandler defines an interface that processes incoming attestations
+// from Ethereum. While the default handler only mints ERC20 tokens, additional
+// custom functionality can be implemented by passing an external handler to the
+// bridge keeper.
+//
+// Examples of custom functionality could be, but not limited to:
+//
+// - Transfering newly minted ERC20 tokens (represented as an sdk.Coins) to a
+// given recipient, either local or via IBC to a counterparty chain
+//
+// - Pooling the tokens into an escrow account for interest accruing DeFi solutions
+//
+// - Deposit into an AMM pair
+type AttestationHandler interface {
+	OnAttestation(ctx sdk.Context, attestation types.Attestation) error
+}
+
 // DefaultAttestationHandler is the default handler for processing observed
 // event attestations received from Ethereum.
 type DefaultAttestationHandler struct {
@@ -18,18 +35,18 @@ type DefaultAttestationHandler struct {
 
 var _ AttestationHandler = DefaultAttestationHandler{}
 
-// HandleAttestation processes an attested ethereum event and performs a custom
+// OnAttestation processes ethereum event upon attestation and performs a custom
+// logic.
 //
 // TODO: add handler for ERC20DeployedEvent
 // TODO: clean up
-func (handler DefaultAttestationHandler) HandleAttestation(ctx sdk.Context, attestation types.Attestation) error {
+func (handler DefaultAttestationHandler) OnAttestation(ctx sdk.Context, attestation types.Attestation) error {
 	event, found := handler.keeper.GetEthEvent(ctx, attestation.EventID)
 	if !found {
 		// TODO: err msg
 		return fmt.Errorf("not found")
 	}
 
-	// TODO: ideally this should be
 	switch event := event.(type) {
 	case *types.DepositEvent:
 		// Check if coin is Cosmos-originated asset and get denom

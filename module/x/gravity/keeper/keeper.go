@@ -14,23 +14,6 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-// AttestationHandler defines an interface that processes incoming attestations
-// from Ethereum. While the default handler only mints ERC20 tokens, additional
-// custom functionality can be implemented by passing an external handler to the
-// bridge keeper.
-//
-// Examples of custom functionality could be, but not limited to:
-//
-// - Transfering newly minted ERC20 tokens (represented as an sdk.Coins) to a
-// given recipient, either local or via IBC to a counterparty chain
-//
-// - Pooling the tokens into an escrow account for interest accruing DeFi solutions
-//
-// - Deposit into an AMM pair
-type AttestationHandler interface {
-	HandleAttestation(ctx sdk.Context, attestation types.Attestation) error
-}
-
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	storeKey   sdk.StoreKey

@@ -50,19 +50,22 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 
 func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
 
-	// confirm := msg.GetConfirm()
+	// TODO:
 
 	return &types.MsgSubmitConfirmResponse{}, nil
 }
 
 func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*types.MsgSubmitEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	claim, err := types.UnpackEvent(msg.Event)
+
+	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Signer)
+
+	event, err := types.UnpackEvent(msg.Event)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := k.HandleEthEvent(ctx, claim); err != nil {
+	if err := k.HandleEthEvent(ctx, event, orchestratorAddr); err != nil {
 		return nil, err
 	}
 

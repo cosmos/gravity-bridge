@@ -25,7 +25,7 @@ func (k Keeper) tallyAttestations(ctx sdk.Context) {
 	k.IterateAttestationByNonce(ctx, nonce, func(attestation types.Attestation) bool {
 		// try unobserved attestations
 		// TODO: rename. "Try" is too ambiguous
-		k.TryAttestation(ctx, attestation)
+		k.TallyAttestation(ctx, attestation)
 		return false
 	})
 }

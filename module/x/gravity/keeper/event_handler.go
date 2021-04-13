@@ -11,11 +11,10 @@ import (
 // HandleEthEvent handles a given event by attesting it
 // TODO: it's not clear the utility of this from the code. Explain what it does,
 // provice example and where this is executed on the step-by-step incoming logic.
-func (k Keeper) HandleEthEvent(ctx sdk.Context, event types.EthereumEvent) error {
-	orch, _ := sdk.AccAddressFromBech32(event.GetOrchestratorAddress())
-	validatorAddr := k.GetOrchestratorValidator(ctx, orch)
+func (k Keeper) HandleEthEvent(ctx sdk.Context, event types.EthereumEvent, orchestratorAddr sdk.AccAddress) error {
+	validatorAddr := k.GetOrchestratorValidator(ctx, orchestratorAddr)
 	if validatorAddr == nil {
-		validatorAddr = sdk.ValAddress(orch)
+		validatorAddr = sdk.ValAddress(orchestratorAddr)
 	}
 
 	// return an error if the validator isn't in the active set
