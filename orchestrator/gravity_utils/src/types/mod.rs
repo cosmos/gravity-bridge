@@ -2,6 +2,7 @@ use clarity::Address as EthAddress;
 use num256::Uint256;
 mod batches;
 mod ethereum_events;
+pub mod event_signatures;
 mod logic_call;
 mod signatures;
 mod valsets;

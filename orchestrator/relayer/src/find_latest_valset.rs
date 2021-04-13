@@ -2,6 +2,7 @@ use clarity::Address as EthAddress;
 use clarity::{Address, Uint256};
 use ethereum_gravity::utils::get_valset_nonce;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::types::event_signatures::*;
 use gravity_utils::types::ValsetUpdatedEvent;
 use gravity_utils::{error::GravityError, types::Valset};
 use tonic::transport::Channel;
@@ -41,7 +42,7 @@ pub async fn find_latest_valset(
                 end_search.clone(),
                 Some(current_block.clone()),
                 vec![gravity_contract_address],
-                vec!["ValsetUpdatedEvent(uint256,address[],uint256[])"],
+                vec![VALSET_UPDATED_EVENT_SIG],
             )
             .await?;
         // by default the lowest found valset goes first, we want the highest.
@@ -55,7 +56,7 @@ pub async fn find_latest_valset(
             match ValsetUpdatedEvent::from_log(event) {
                 Ok(event) => {
                     let valset = Valset {
-                        nonce: event.nonce,
+                        nonce: event.valset_nonce,
                         members: event.members,
                     };
                     check_if_valsets_differ(cosmos_chain_valset, &valset);
