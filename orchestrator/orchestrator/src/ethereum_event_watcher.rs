@@ -6,6 +6,7 @@ use cosmos_gravity::{query::get_last_event_nonce, send::send_ethereum_claims};
 use deep_space::Contact;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::types::event_signatures::*;
 use gravity_utils::{
     error::GravityError,
     types::{
@@ -38,7 +39,7 @@ pub async fn check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
             vec![gravity_contract_address],
-            vec!["SendToCosmosEvent(address,address,bytes32,uint256,uint256)"],
+            vec![SENT_TO_COSMOS_EVENT_SIG],
         )
         .await;
     trace!("Deposits {:?}", deposits);
@@ -48,7 +49,7 @@ pub async fn check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
             vec![gravity_contract_address],
-            vec!["TransactionBatchExecutedEvent(uint256,address,uint256)"],
+            vec![TRANSACTION_BATCH_EXECUTED_EVENT_SIG],
         )
         .await;
     trace!("Batches {:?}", batches);
@@ -58,7 +59,7 @@ pub async fn check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
             vec![gravity_contract_address],
-            vec!["ValsetUpdatedEvent(uint256,address[],uint256[])"],
+            vec![VALSET_UPDATED_EVENT_SIG],
         )
         .await;
     trace!("Valsets {:?}", valsets);
@@ -68,7 +69,7 @@ pub async fn check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
             vec![gravity_contract_address],
-            vec!["ERC20DeployedEvent(string,address,string,string,uint8,uint256)"],
+            vec![ERC20_DEPLOYED_EVENT_SIG],
         )
         .await;
     trace!("ERC20 Deployments {:?}", erc20_deployed);
@@ -78,7 +79,7 @@ pub async fn check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
             vec![gravity_contract_address],
-            vec!["LogicCallEvent(bytes32,uint256,bytes,uint256)"],
+            vec![LOGIC_CALL_EVENT_SIG],
         )
         .await;
     trace!("Logic call executions {:?}", logic_call_executed);
