@@ -108,6 +108,7 @@ pub async fn check_for_events(
         // multi event block again. In theory we only send all events for every block and that will pass of fail
         // atomicly but lets not take that risk.
         let last_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
+        let valsets = ValsetUpdatedEvent::filter_by_event_nonce(last_event_nonce, &valsets);
         let deposits = SendToCosmosEvent::filter_by_event_nonce(last_event_nonce, &deposits);
         let withdraws =
             TransactionBatchExecutedEvent::filter_by_event_nonce(last_event_nonce, &withdraws);
@@ -116,6 +117,12 @@ pub async fn check_for_events(
         let logic_calls =
             LogicCallExecutedEvent::filter_by_event_nonce(last_event_nonce, &logic_calls);
 
+        if !valsets.is_empty() {
+            info!(
+                "Oracle observed Valset update with nonce {} and event nonce {}",
+                valsets[0].valset_nonce, valsets[0].event_nonce
+            )
+        }
         if !deposits.is_empty() {
             info!(
                 "Oracle observed deposit with sender {}, destination {}, amount {}, and event nonce {}",
@@ -155,6 +162,7 @@ pub async fn check_for_events(
                 withdraws,
                 erc20_deploys,
                 logic_calls,
+                valsets,
                 fee,
             )
             .await?;

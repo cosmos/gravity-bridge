@@ -86,7 +86,7 @@ pub async fn happy_path_test(
     // this test may have false positives if the timeout is not
     // long enough. TODO check for an error on the cosmos send response
     submit_duplicate_erc20_send(
-        1u64.into(),
+        1u64,
         &contact,
         erc20_address,
         1u64.into(),
@@ -430,7 +430,7 @@ async fn test_batch(
 // already been submitted to test the nonce functionality.
 #[allow(clippy::too_many_arguments)]
 async fn submit_duplicate_erc20_send(
-    nonce: Uint256,
+    nonce: u64,
     contact: &Contact,
     erc20_address: EthAddress,
     amount: Uint256,
@@ -461,6 +461,7 @@ async fn submit_duplicate_erc20_send(
             contact,
             c_key,
             vec![event.clone()],
+            vec![],
             vec![],
             vec![],
             vec![],
