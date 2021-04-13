@@ -10,16 +10,20 @@ import (
 
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
+	params := k.GetParams(ctx)
 	// Question: what here can be epoched?
 	slashing(ctx, k)
 	attestationTally(ctx, k)
 	cleanupTimedOutBatches(ctx, k)
 	cleanupTimedOutLogicCalls(ctx, k)
 	createValsets(ctx, k)
+	pruneValsets(ctx, k, params)
+	// TODO: prune claims, attestations when they pass in the handler
 }
 
 func createValsets(ctx sdk.Context, k keeper.Keeper) {
 	// Auto ValsetRequest Creation.
+	// WARNING: do not use k.GetLastObservedValset in this function, it *will* result in losing control of the bridge
 	// 1. If there are no valset requests, create a new one.
 	// 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
 	//      This will make sure the unbonding validator has to provide an attestation to a new Valset
@@ -33,18 +37,36 @@ func createValsets(ctx sdk.Context, k keeper.Keeper) {
 	}
 }
 
+func pruneValsets(ctx sdk.Context, k keeper.Keeper, params types.Params) {
+	// Validator set pruning
+	// prune all validator sets with a nonce less than the
+	// last observed nonce, they can't be submitted any longer
+	//
+	// Only prune valsets after the signed valsets window has passed
+	// so that slashing can occur the block before we remove them
+	lastObserved := k.GetLastObservedValset(ctx)
+	currentBlock := uint64(ctx.BlockHeight())
+	tooEarly := currentBlock < params.SignedValsetsWindow
+	if lastObserved != nil && !tooEarly {
+		earliestToPrune := currentBlock - params.SignedValsetsWindow
+		sets := k.GetValsets(ctx)
+		for _, set := range sets {
+			if set.Nonce < lastObserved.Nonce && set.Height < earliestToPrune {
+				k.DeleteValset(ctx, set.Nonce)
+			}
+		}
+	}
+}
+
 func slashing(ctx sdk.Context, k keeper.Keeper) {
 
 	params := k.GetParams(ctx)
 
-	// Slash validator for not confirming valset requests, batch requests and not attesting claims rightfully
+	// Slash validator for not confirming valset requests, batch requests
 	ValsetSlashing(ctx, k, params)
 	BatchSlashing(ctx, k, params)
-	// TODO slashing for arbitrary logic is missing
+	// TODO slashing for arbitrary logic signatures is missing
 
-	// TODO: prune validator sets, older than 6 months, this time is chosen out of an abundance of caution
-	// TODO: prune outgoing tx batches while looping over them above, older than 15h and confirmed
-	// TODO: prune claims, attestations
 }
 
 // Iterate over all attestations currently being voted on in order of nonce and
