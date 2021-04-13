@@ -3,6 +3,7 @@ package gravity.v1;
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "gravity/v1/types.proto";
 option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
 // Msg defines the state transitions possible within gravity
@@ -27,6 +28,9 @@ service Msg {
   }
   rpc WithdrawClaim(MsgWithdrawClaim) returns (MsgWithdrawClaimResponse) {
     option (google.api.http).post = "/gravity/v1/withdraw_claim";
+  }
+  rpc ValsetUpdateClaim(MsgValsetUpdatedClaim) returns (MsgValsetUpdatedClaimResponse) {
+    option (google.api.http).post = "/gravity/v1/valset_updated_claim";
   }
   rpc ERC20DeployedClaim(MsgERC20DeployedClaim)
       returns (MsgERC20DeployedClaimResponse) {
@@ -225,6 +229,18 @@ message MsgLogicCallExecutedClaim {
 }
 
 message MsgLogicCallExecutedClaimResponse {}
+
+// This informs the Cosmos module that a validator
+// set has been updated.
+message MsgValsetUpdatedClaim {
+  uint64 event_nonce               = 1;
+  uint64 valset_nonce              = 2;
+  uint64 block_height              = 3;
+  repeated BridgeValidator members = 4;
+  string orchestrator              = 6;
+}
+
+message MsgValsetUpdatedClaimResponse {}
 
 // This call allows the sender (and only the sender)
 // to cancel a given MsgSendToEth and recieve a refund
