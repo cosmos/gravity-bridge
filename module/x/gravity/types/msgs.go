@@ -548,7 +548,63 @@ func (b *MsgLogicCallExecutedClaim) ClaimHash() []byte {
 	return tmhash.Sum([]byte(path))
 }
 
-// NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
+// EthereumClaim implementation for MsgValsetUpdatedClaim
+// ======================================================
+
+// GetType returns the type of the claim
+func (e *MsgValsetUpdatedClaim) GetType() ClaimType {
+	return CLAIM_TYPE_VALSET_UPDATED
+}
+
+// ValidateBasic performs stateless checks
+func (e *MsgValsetUpdatedClaim) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	}
+	if e.EventNonce == 0 {
+		return fmt.Errorf("nonce == 0")
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgValsetUpdatedClaim) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgValsetUpdatedClaim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgERC20DeployedClaim failed ValidateBasic! Should have been handled earlier")
+	}
+
+	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	return val
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgValsetUpdatedClaim) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+// Type should return the action
+func (msg MsgValsetUpdatedClaim) Type() string { return "Valset_Updated_Claim" }
+
+// Route should return the name of the module
+func (msg MsgValsetUpdatedClaim) Route() string { return RouterKey }
+
+// Hash implements BridgeDeposit.Hash
+func (b *MsgValsetUpdatedClaim) ClaimHash() []byte {
+	path := fmt.Sprintf("%d/%d/%d/%s/", b.ValsetNonce, b.EventNonce, b.BlockHeight, b.Members)
+	return tmhash.Sum([]byte(path))
+}
+
+// NewMsgCancelSendToEth returns a new msgSetOrchestratorAddress
 func NewMsgCancelSendToEth(val sdk.ValAddress, id uint64) *MsgCancelSendToEth {
 	return &MsgCancelSendToEth{
 		TransactionId: id,

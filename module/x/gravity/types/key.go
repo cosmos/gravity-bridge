@@ -91,9 +91,6 @@ var (
 	// KeyOutgoingLogicConfirm indexes the outgoing logic confirms
 	KeyOutgoingLogicConfirm = []byte{0xae}
 
-	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
-	LastObservedEthereumBlockHeightKey = []byte{0xf9}
-
 	// DenomToERC20Key prefixes the index of Cosmos originated asset denoms to ERC20s
 	DenomToERC20Key = []byte{0xf3}
 
@@ -111,6 +108,15 @@ var (
 
 	// LastUnBondingBlockHeight indexes the last validator unbonding block height
 	LastUnBondingBlockHeight = []byte{0xf8}
+
+	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
+	LastObservedEthereumBlockHeightKey = []byte{0xf9}
+
+	// LastObservedValsetNonceKey indexes the latest observed valset nonce
+	// HERE THERE BE DRAGONS, do not use this value as an up to date validator set
+	// on Ethereum it will always lag significantly and may be totally wrong at some
+	// times.
+	LastObservedValsetKey = []byte{0xfa}
 )
 
 // GetOrchestratorAddressKey returns the following key format
