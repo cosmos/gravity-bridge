@@ -19,6 +19,7 @@ use web30::types::Log;
 pub struct ValsetUpdatedEvent {
     pub valset_nonce: u64,
     pub event_nonce: u64,
+    pub block_height: Uint256,
     pub members: Vec<ValsetMember>,
 }
 
@@ -116,9 +117,19 @@ impl ValsetUpdatedEvent {
             );
         }
 
+        let block_height = if let Some(bn) = input.block_number.clone() {
+            bn
+        } else {
+            return Err(GravityError::InvalidEventLogError(
+                "Log does not have block number, we only search logs already in blocks?"
+                    .to_string(),
+            ));
+        };
+
         Ok(ValsetUpdatedEvent {
             valset_nonce,
             event_nonce,
+            block_height,
             members: validators,
         })
     }
@@ -129,6 +140,17 @@ impl ValsetUpdatedEvent {
         }
         Ok(res)
     }
+    /// returns all values in the array with event nonces greater
+    /// than the provided value
+    pub fn filter_by_event_nonce(event_nonce: u64, input: &[Self]) -> Vec<Self> {
+        let mut ret = Vec::new();
+        for item in input {
+            if item.event_nonce > event_nonce {
+                ret.push(item.clone())
+            }
+        }
+        ret
+    }
 }
 
 /// A parsed struct representing the Ethereum event fired by the Gravity contract when
@@ -137,7 +159,7 @@ impl ValsetUpdatedEvent {
 pub struct TransactionBatchExecutedEvent {
     /// the nonce attached to the transaction batch that follows
     /// it throughout it's lifecycle
-    pub batch_nonce: Uint256,
+    pub batch_nonce: u64,
     /// The block height this event occurred at
     pub block_height: Uint256,
     /// The ERC20 token contract address for the batch executed, since batches are uniform
@@ -146,7 +168,7 @@ pub struct TransactionBatchExecutedEvent {
     /// the event nonce representing a unique ordering of events coming out
     /// of the Gravity solidity contract. Ensuring that these events can only be played
     /// back in order
-    pub event_nonce: Uint256,
+    pub event_nonce: u64,
 }
 
 impl TransactionBatchExecutedEvent {
@@ -173,6 +195,8 @@ impl TransactionBatchExecutedEvent {
                     "Event nonce overflow, probably incorrect parsing".to_string(),
                 ))
             } else {
+                let batch_nonce: u64 = batch_nonce.to_string().parse().unwrap();
+                let event_nonce: u64 = event_nonce.to_string().parse().unwrap();
                 Ok(TransactionBatchExecutedEvent {
                     batch_nonce,
                     block_height,
@@ -198,7 +222,7 @@ impl TransactionBatchExecutedEvent {
     pub fn filter_by_event_nonce(event_nonce: u64, input: &[Self]) -> Vec<Self> {
         let mut ret = Vec::new();
         for item in input {
-            if item.event_nonce > event_nonce.into() {
+            if item.event_nonce > event_nonce {
                 ret.push(item.clone())
             }
         }
@@ -219,7 +243,7 @@ pub struct SendToCosmosEvent {
     /// The amount of the erc20 token that is being sent
     pub amount: Uint256,
     /// The transaction's nonce, used to make sure there can be no accidental duplication
-    pub event_nonce: Uint256,
+    pub event_nonce: u64,
     /// The block height this event occurred at
     pub block_height: Uint256,
 }
@@ -255,6 +279,7 @@ impl SendToCosmosEvent {
                     "Event nonce overflow, probably incorrect parsing".to_string(),
                 ))
             } else {
+                let event_nonce: u64 = event_nonce.to_string().parse().unwrap();
                 Ok(SendToCosmosEvent {
                     erc20,
                     sender,
@@ -282,7 +307,7 @@ impl SendToCosmosEvent {
     pub fn filter_by_event_nonce(event_nonce: u64, input: &[Self]) -> Vec<Self> {
         let mut ret = Vec::new();
         for item in input {
-            if item.event_nonce > event_nonce.into() {
+            if item.event_nonce > event_nonce {
                 ret.push(item.clone())
             }
         }
@@ -306,7 +331,7 @@ pub struct Erc20DeployedEvent {
     pub symbol: String,
     /// The number of decimals required to represent the smallest unit of this token
     pub decimals: u8,
-    pub event_nonce: Uint256,
+    pub event_nonce: u64,
     pub block_height: Uint256,
 }
 
@@ -333,6 +358,7 @@ impl Erc20DeployedEvent {
                     "Nonce overflow, probably incorrect parsing".to_string(),
                 ));
             }
+            let event_nonce: u64 = nonce.to_string().parse().unwrap();
 
             let index_start = 5 * 32;
             let index_end = index_start + 32;
@@ -419,7 +445,7 @@ impl Erc20DeployedEvent {
                 cosmos_denom: denom,
                 name: erc20_name,
                 decimals,
-                event_nonce: nonce,
+                event_nonce,
                 erc20_address: erc20,
                 symbol,
                 block_height,
@@ -442,7 +468,7 @@ impl Erc20DeployedEvent {
     pub fn filter_by_event_nonce(event_nonce: u64, input: &[Self]) -> Vec<Self> {
         let mut ret = Vec::new();
         for item in input {
-            if item.event_nonce > event_nonce.into() {
+            if item.event_nonce > event_nonce {
                 ret.push(item.clone())
             }
         }
@@ -454,9 +480,9 @@ impl Erc20DeployedEvent {
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct LogicCallExecutedEvent {
     pub invalidation_id: Vec<u8>,
-    pub invalidation_nonce: Uint256,
+    pub invalidation_nonce: u64,
     pub return_data: Vec<u8>,
-    pub event_nonce: Uint256,
+    pub event_nonce: u64,
     pub block_height: Uint256,
 }
 
@@ -476,7 +502,7 @@ impl LogicCallExecutedEvent {
     pub fn filter_by_event_nonce(event_nonce: u64, input: &[Self]) -> Vec<Self> {
         let mut ret = Vec::new();
         for item in input {
-            if item.event_nonce > event_nonce.into() {
+            if item.event_nonce > event_nonce {
                 ret.push(item.clone())
             }
         }

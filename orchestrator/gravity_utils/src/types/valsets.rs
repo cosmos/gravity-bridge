@@ -419,3 +419,16 @@ impl From<&gravity_proto::gravity::BridgeValidator> for ValsetMember {
         }
     }
 }
+
+impl From<&ValsetMember> for gravity_proto::gravity::BridgeValidator {
+    fn from(input: &ValsetMember) -> gravity_proto::gravity::BridgeValidator {
+        let ethereum_address = match input.eth_address {
+            Some(e) => e.to_string(),
+            None => String::new(),
+        };
+        gravity_proto::gravity::BridgeValidator {
+            power: input.power,
+            ethereum_address,
+        }
+    }
+}
