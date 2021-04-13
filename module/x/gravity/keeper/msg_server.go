@@ -439,6 +439,46 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 	return &types.MsgLogicCallExecutedClaimResponse{}, nil
 }
 
+// ValsetUpdatedClaim handles claims for executing a validator set update on Ethereum
+func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgValsetUpdatedClaim) (*types.MsgValsetUpdatedClaimResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, orchaddr)
+	if validator == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+	}
+
+	// return an error if the validator isn't in the active set
+	val := k.StakingKeeper.Validator(ctx, validator)
+	if val == nil || !val.IsBonded() {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
+	}
+
+	any, err := codectypes.NewAnyWithValue(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the claim to the store
+	_, err = k.Attest(ctx, msg, any)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "create attestation")
+	}
+
+	// Emit the handle message event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			// TODO: maybe return something better here? is this the right string representation?
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+		),
+	)
+
+	return &types.MsgValsetUpdatedClaimResponse{}, nil
+}
+
 func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)

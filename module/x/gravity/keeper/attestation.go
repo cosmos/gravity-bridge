@@ -237,6 +237,28 @@ func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeig
 	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&height))
 }
 
+// GetLastObservedValset retrieves the last observed validator set from the store
+// WARNING: This value is not an up to date validator set on Ethereum, it is a validator set
+// that AT ONE POINT was the one in the Gravity bridge on Ethereum. If you assume that it's up
+// to date you may break the bridge
+func (k Keeper) GetLastObservedValset(ctx sdk.Context) *types.Valset {
+	store := ctx.KVStore(k.storeKey)
+	bytes := store.Get(types.LastObservedValsetKey)
+
+	if len(bytes) == 0 {
+		return nil
+	}
+	valset := types.Valset{}
+	k.cdc.MustUnmarshalBinaryBare(bytes, &valset)
+	return &valset
+}
+
+// SetLastObservedValset updates the last observed validator set in the store
+func (k Keeper) SetLastObservedValset(ctx sdk.Context, valset types.Valset) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.LastObservedValsetKey, k.cdc.MustMarshalBinaryBare(&valset))
+}
+
 // setLastObservedEventNonce sets the latest observed event nonce
 func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
