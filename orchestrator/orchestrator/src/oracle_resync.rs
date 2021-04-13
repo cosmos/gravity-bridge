@@ -120,7 +120,8 @@ pub async fn get_last_checked_block(
         for event in batch_events {
             match TransactionBatchExecutedEvent::from_log(&event) {
                 Ok(batch) => {
-                    if batch.event_nonce == last_event_nonce && event.block_number.is_some() {
+                    if upcast(batch.event_nonce) == last_event_nonce && event.block_number.is_some()
+                    {
                         return event.block_number.unwrap();
                     }
                 }
@@ -130,7 +131,8 @@ pub async fn get_last_checked_block(
         for event in send_to_cosmos_events {
             match SendToCosmosEvent::from_log(&event) {
                 Ok(send) => {
-                    if send.event_nonce == last_event_nonce && event.block_number.is_some() {
+                    if upcast(send.event_nonce) == last_event_nonce && event.block_number.is_some()
+                    {
                         return event.block_number.unwrap();
                     }
                 }
@@ -140,7 +142,9 @@ pub async fn get_last_checked_block(
         for event in erc20_deployed_events {
             match Erc20DeployedEvent::from_log(&event) {
                 Ok(deploy) => {
-                    if deploy.event_nonce == last_event_nonce && event.block_number.is_some() {
+                    if upcast(deploy.event_nonce) == last_event_nonce
+                        && event.block_number.is_some()
+                    {
                         return event.block_number.unwrap();
                     }
                 }
@@ -150,7 +154,8 @@ pub async fn get_last_checked_block(
         for event in logic_call_executed_events {
             match LogicCallExecutedEvent::from_log(&event) {
                 Ok(call) => {
-                    if call.event_nonce == last_event_nonce && event.block_number.is_some() {
+                    if upcast(call.event_nonce) == last_event_nonce && event.block_number.is_some()
+                    {
                         return event.block_number.unwrap();
                     }
                 }
@@ -179,4 +184,8 @@ pub async fn get_last_checked_block(
     }
 
     panic!("You have reached the end of block history without finding the Gravity contract deploy event! You must have the wrong contract address!");
+}
+
+fn upcast(input: u64) -> Uint256 {
+    input.into()
 }
