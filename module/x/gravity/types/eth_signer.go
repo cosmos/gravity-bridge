@@ -64,12 +64,11 @@ func (s EthSigners) ValidateBasic() error {
 
 // NewSignerSet returns a new ethereum signer set based on the staking bonded
 // validator set
-func NewSignerSet(nonce, height uint64, signers ...EthSigner) EthSignerSet {
+func NewSignerSet(height uint64, signers ...EthSigner) EthSignerSet {
 	ethSigners := EthSigners(signers)
 	ethSigners.Sort()
 
 	return EthSignerSet{
-		Nonce:   nonce,
 		Signers: ethSigners,
 		Height:  height,
 	}

@@ -244,7 +244,7 @@ func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []
 	return append(a, sdk.Uint64ToBigEndian(invalidationNonce)...)
 }
 
-func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
+func GetLogicCallTxKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
 	interm := append(KeyOutgoingLogicConfirm, invalidationId...)
 	interm = append(interm, sdk.Uint64ToBigEndian(invalidationNonce)...)
 	return append(interm, validator.Bytes()...)

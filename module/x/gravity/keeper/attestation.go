@@ -10,11 +10,7 @@ import (
 
 // AttestEvent signals an ethereum event as
 // TODO: explain logic
-func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, orchestratorAddr sdk.AccAddress) error {
-	validatorAddr := k.GetOrchestratorValidator(ctx, orchestratorAddr)
-	if validatorAddr == nil {
-		panic("Could not find ValAddr for delegate key, should be checked by now")
-	}
+func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validatorAddr sdk.ValAddress) error {
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
 	// We check the event nonce in processAttestation as well, but checking it here gives individual eth signers a chance to retry,
 	// and prevents validators from submitting two events with the same nonce
@@ -23,25 +19,22 @@ func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, orchestr
 		return types.ErrNonContiguousEventNonce
 	}
 
-	// Tries to get an attestation with the same eventNonce and event as the event that was submitted.
-	attestation, found := k.GetAttestation(ctx, event.GetEventNonce(), event.ClaimHash())
-	if !found {
-		anyClaim, err := types.PackClaim(event)
-		if err != nil {
-			return err
-		}
+	eventHash := event.Hash()
 
+	// Tries to get an attestation with the same hash as the event that has been submitted
+	attestation, found := k.GetAttestation(ctx, eventHash)
+	if !found {
 		attestation = types.Attestation{
-			Observed: false,
-			Height:   uint64(ctx.BlockHeight()),
-			Claim:    anyClaim,
+			EventID:       string(eventHash), // TODO: use hex bytes
+			AttestedPower: 0,
+			Height:        uint64(ctx.BlockHeight()),
 		}
 	}
 
 	// Add the validator's vote to this attestation
 	attestation.Votes = append(attestation.Votes, validatorAddr.String())
 
-	k.SetAttestation(ctx, event.GetEventNonce(), event.ClaimHash(), attestation)
+	k.SetAttestation(ctx, eventHash, attestation)
 	// TODO: what is this for?
 	k.setLastEventNonceByValidator(ctx, validatorAddr, event.GetEventNonce())
 	return nil
@@ -100,7 +93,8 @@ func (k Keeper) TryAttestation(ctx sdk.Context, attestation types.Attestation) {
 func (k Keeper) processAttestation(ctx sdk.Context, attestation types.Attestation, event types.EthereumEvent) {
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
-	if err := k.attestationHandler.HandleAttestation(xCtx, attestation); err != nil { // execute with a transient storage
+
+	if err := k.attestationHandler.OnAttestation(xCtx, attestation); err != nil { // execute with a transient storage
 		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
@@ -113,4 +107,32 @@ func (k Keeper) processAttestation(ctx sdk.Context, attestation types.Attestatio
 	} else {
 		commit() // persist transient storage
 	}
+}
+
+// GetAttestation return an attestation given a nonce
+func (k Keeper) GetAttestation(ctx sdk.Context, hash []byte) (types.Attestation, bool) {
+	store := ctx.KVStore(k.storeKey)
+	key := types.GetAttestationKey(hash)
+	bz := store.Get(key)
+	if len(bz) == 0 {
+		return types.Attestation{}, false
+	}
+
+	var attestation types.Attestation
+	k.cdc.MustUnmarshalBinaryBare(bz, &attestation)
+
+	return attestation, true
+}
+
+// SetAttestation sets the attestation in the store
+func (k Keeper) SetAttestation(ctx sdk.Context, hash []byte, attestation types.Attestation) {
+	store := ctx.KVStore(k.storeKey)
+	key := types.GetAttestationKey(hash)
+	store.Set(key, k.cdc.MustMarshalBinaryBare(&attestation))
+}
+
+// DeleteAttestation deletes an attestation given an event hash
+func (k Keeper) DeleteAttestation(ctx sdk.Context, hash []byte, attestation types.Attestation) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetAttestationKeyWithHash(hash))
 }

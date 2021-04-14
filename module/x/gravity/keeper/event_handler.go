@@ -26,7 +26,7 @@ func (k Keeper) HandleEthEvent(ctx sdk.Context, event types.EthereumEvent, orche
 	}
 
 	// Add the event to the store
-	if err := k.Attest(ctx, event); err != nil {
+	if err := k.AttestEvent(ctx, event, validatorAddr); err != nil {
 		return sdkerrors.Wrap(err, "create attestation")
 	}
 

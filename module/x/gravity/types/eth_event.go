@@ -26,7 +26,7 @@ type EthereumEvent interface {
 	// Which type of event this is
 	GetType() string
 	ValidateBasic() error
-	EventHash() []byte
+	Hash() []byte
 }
 
 var (
@@ -65,8 +65,8 @@ func (e DepositEvent) ValidateBasic() error {
 
 const ()
 
-// EventHash implements BridgeDeposit.EventHash
-func (e DepositEvent) EventHash() []byte {
+// Hash implements BridgeDeposit.Hash
+func (e DepositEvent) Hash() []byte {
 	path := fmt.Sprintf("%s/%s/%s/", e.TokenContract, e.EthereumSender, e.CosmosReceiver)
 	return tmhash.Sum([]byte(path))
 }
@@ -87,8 +87,8 @@ func (e WithdrawEvent) ValidateBasic() error {
 	return nil
 }
 
-// EventHash implements WithdrawBatch.EventHash
-func (e WithdrawEvent) EventHash() []byte {
+// Hash implements WithdrawBatch.Hash
+func (e WithdrawEvent) Hash() []byte {
 	path := fmt.Sprintf("%s/%d/", e.TokenContract, e.BatchNonce)
 	return tmhash.Sum([]byte(path))
 }
@@ -118,8 +118,8 @@ func (e CosmosERC20DeployedEvent) ValidateBasic() error {
 	return nil
 }
 
-// EventHash implements BridgeDeposit.EventHash
-func (e CosmosERC20DeployedEvent) EventHash() []byte {
+// Hash implements BridgeDeposit.Hash
+func (e CosmosERC20DeployedEvent) Hash() []byte {
 	path := fmt.Sprintf("%s/%s/%s/%s/%d/", e.CosmosDenom, e.TokenContract, e.Name, e.Symbol, e.Decimals)
 	return tmhash.Sum([]byte(path))
 }
@@ -143,8 +143,8 @@ func (e LogicCallExecutedEvent) ValidateBasic() error {
 	return nil
 }
 
-// EventHash implements BridgeDeposit.EventHash
-func (e LogicCallExecutedEvent) EventHash() []byte {
+// Hash implements BridgeDeposit.Hash
+func (e LogicCallExecutedEvent) Hash() []byte {
 	path := fmt.Sprintf("%s/%d/", e.InvalidationId, e.InvalidationNonce)
 	return tmhash.Sum([]byte(path))
 }
