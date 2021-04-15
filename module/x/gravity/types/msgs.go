@@ -13,6 +13,7 @@ var (
 	_ sdk.Msg = &MsgSetOrchestratorAddress{}
 	_ sdk.Msg = &MsgValsetConfirm{}
 	_ sdk.Msg = &MsgSendToEth{}
+	_ sdk.Msg = &MsgCancelSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
 	_ sdk.Msg = &MsgERC20DeployedClaim{}
@@ -549,8 +550,9 @@ func (b *MsgLogicCallExecutedClaim) ClaimHash() []byte {
 }
 
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
-func NewMsgCancelSendToEth(val sdk.ValAddress, id uint64) *MsgCancelSendToEth {
+func NewMsgCancelSendToEth(user sdk.AccAddress, id uint64) *MsgCancelSendToEth {
 	return &MsgCancelSendToEth{
+		Sender:        user.String(),
 		TransactionId: id,
 	}
 }
@@ -563,7 +565,7 @@ func (msg *MsgCancelSendToEth) Type() string { return "cancel_send_to_eth" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgCancelSendToEth) ValidateBasic() (err error) {
-	_, err = sdk.ValAddressFromBech32(msg.Sender)
+	_, err = sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return err
 	}
@@ -577,9 +579,9 @@ func (msg *MsgCancelSendToEth) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg *MsgCancelSendToEth) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.ValAddressFromBech32(msg.Sender)
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{sdk.AccAddress(acc)}
+	return []sdk.AccAddress{acc}
 }

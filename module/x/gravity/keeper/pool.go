@@ -101,6 +101,16 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 		return err
 	}
 
+	// Check that this user actually sent the transaction, this prevents someone from refunding someone
+	// elses transaction to themselves.
+	txSender, err := sdk.AccAddressFromBech32(tx.Sender)
+	if err != nil {
+		panic("Invalid address in store!")
+	}
+	if !txSender.Equals(sender) {
+		return sdkerrors.Wrapf(types.ErrInvalid, "Sender %s did not send Id %d", sender, txId)
+	}
+
 	found := false
 	poolTx := k.GetPoolTransactions(ctx)
 	for _, pTx := range poolTx {
