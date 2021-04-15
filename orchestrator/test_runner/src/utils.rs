@@ -188,7 +188,9 @@ pub fn get_user_key() -> BridgeUserKey {
     let eth_address = eth_key.to_public_key().unwrap();
     // the destination on cosmos that sends along to the final ethereum destination
     let cosmos_key = CosmosPrivateKey::from_secret(&secret);
-    let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
+    let cosmos_address = cosmos_key
+        .to_address(CosmosAddress::DEFAULT_PREFIX)
+        .unwrap();
     let mut rng = rand::thread_rng();
     let secret: [u8; 32] = rng.gen();
     // the final destination of the tokens back on Ethereum
@@ -246,15 +248,22 @@ pub async fn start_orchestrators(
         info!(
             "Spawning Orchestrator with delegate keys {} {} and validator key {}",
             k.eth_key.to_public_key().unwrap(),
-            k.orch_key.to_public_key().unwrap().to_address(),
-            k.validator_key.to_public_key().unwrap().to_address()
+            k.orch_key
+                .to_address(CosmosAddress::DEFAULT_PREFIX)
+                .unwrap(),
+            k.validator_key.to_address("cosmosvaloper").unwrap()
         );
         let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
         // we have only one actual futures executor thread (see the actix runtime tag on our main function)
         // but that will execute all the orchestrators in our test in parallel
         thread::spawn(move || {
             let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
-            let contact = Contact::new(COSMOS_NODE_GRPC, OPERATION_TIMEOUT);
+            let contact = Contact::new(
+                COSMOS_NODE_GRPC,
+                OPERATION_TIMEOUT,
+                CosmosAddress::DEFAULT_PREFIX,
+            )
+            .unwrap();
             let fut = orchestrator_main_loop(
                 k.orch_key,
                 k.eth_key,
