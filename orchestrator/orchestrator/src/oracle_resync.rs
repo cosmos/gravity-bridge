@@ -169,11 +169,11 @@ pub async fn get_last_checked_block(
                     // no other events can come before it, therefore either there's been a parsing error
                     // or no events have been submitted on this chain yet.
                     if valset.valset_nonce == 0 && last_event_nonce == 1u8.into() {
-                        return latest_block;
+                        return event.block_number.unwrap();
                     }
                     // if we're looking for a later event nonce and we find the deployment of the contract
                     // we must have failed to parse the event we're looking for. The oracle can not start
-                    if valset.valset_nonce == 0 && last_event_nonce > 1u8.into() {
+                    else if valset.valset_nonce == 0 && last_event_nonce > 1u8.into() {
                         panic!("Could not find the last event relayed by {}, Last Event nonce is {} but no event matching that could be found!", our_cosmos_address, last_event_nonce)
                     }
                 }
@@ -183,6 +183,8 @@ pub async fn get_last_checked_block(
         current_block = end_search;
     }
 
+    // we should exit above when we find the zero valset, if we have the wrong contract address through we could be at it a while as we go over
+    // the entire history to 'prove' it.
     panic!("You have reached the end of block history without finding the Gravity contract deploy event! You must have the wrong contract address!");
 }
 

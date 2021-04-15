@@ -35,7 +35,9 @@ contract Gravity is ReentrancyGuard {
 	mapping(address => uint256) public state_lastBatchNonces;
 	mapping(bytes32 => uint256) public state_invalidationMapping;
 	uint256 public state_lastValsetNonce = 0;
-	uint256 public state_lastEventNonce = 0;
+	// event nonce zero is reserved by the Cosmos module as a special
+	// value indicating that no events have yet been submitted
+	uint256 public state_lastEventNonce = 1;
 
 	// These are set once at initialization
 	bytes32 public state_gravityId;
