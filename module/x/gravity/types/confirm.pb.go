@@ -739,10 +739,7 @@ func (m *ConfirmLogicCall) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthConfirm
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthConfirm
 			}
 			if (iNdEx + skippy) > l {
@@ -939,10 +936,7 @@ func (m *ConfirmBatch) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthConfirm
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthConfirm
 			}
 			if (iNdEx + skippy) > l {
@@ -1107,10 +1101,7 @@ func (m *ConfirmValset) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthConfirm
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthConfirm
 			}
 			if (iNdEx + skippy) > l {

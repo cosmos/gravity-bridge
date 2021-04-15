@@ -585,10 +585,10 @@ dependencies = [
  "docopt",
  "env_logger",
  "ethereum_gravity",
- "lazy_static",
- "openssl-probe",
  "gravity_proto",
  "gravity_utils",
+ "lazy_static",
+ "openssl-probe",
  "serde",
  "serde_derive",
  "tokio",
@@ -657,10 +657,10 @@ dependencies = [
  "deep_space",
  "env_logger",
  "ethereum_gravity",
- "log",
- "num256",
  "gravity_proto",
  "gravity_utils",
+ "log",
+ "num256",
  "rand 0.8.0",
  "serde",
  "serde_derive",
@@ -833,9 +833,9 @@ version = "0.1.0"
 dependencies = [
  "clarity",
  "deep_space",
+ "gravity_utils",
  "log",
  "num256",
- "gravity_utils",
  "sha3",
  "web30",
 ]
@@ -1052,6 +1052,38 @@ name = "gimli"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
+
+[[package]]
+name = "gravity_proto"
+version = "0.1.0"
+dependencies = [
+ "cosmos-sdk-proto",
+ "prost",
+ "prost-types",
+ "tonic",
+]
+
+[[package]]
+name = "gravity_utils"
+version = "0.1.0"
+dependencies = [
+ "actix",
+ "clarity",
+ "contact",
+ "deep_space",
+ "gravity_proto",
+ "log",
+ "num-bigint 0.3.1",
+ "num256",
+ "rand 0.8.0",
+ "serde",
+ "serde_derive",
+ "sha3",
+ "tokio",
+ "tonic",
+ "url",
+ "web30",
+]
 
 [[package]]
 name = "h2"
@@ -1646,13 +1678,13 @@ dependencies = [
  "env_logger",
  "ethereum_gravity",
  "futures",
+ "gravity_proto",
+ "gravity_utils",
  "lazy_static",
  "log",
  "num256",
  "openssl",
  "openssl-probe",
- "gravity_proto",
- "gravity_utils",
  "rand 0.8.0",
  "relayer",
  "serde",
@@ -1701,38 +1733,6 @@ dependencies = [
  "rand_core 0.5.1",
  "sha2",
  "subtle",
-]
-
-[[package]]
-name = "gravity_proto"
-version = "0.1.0"
-dependencies = [
- "cosmos-sdk-proto",
- "prost",
- "prost-types",
- "tonic",
-]
-
-[[package]]
-name = "gravity_utils"
-version = "0.1.0"
-dependencies = [
- "actix",
- "clarity",
- "contact",
- "deep_space",
- "log",
- "num-bigint 0.3.1",
- "num256",
- "gravity_proto",
- "rand 0.8.0",
- "serde",
- "serde_derive",
- "sha3",
- "tokio",
- "tonic",
- "url",
- "web30",
 ]
 
 [[package]]
@@ -2084,10 +2084,10 @@ dependencies = [
  "docopt",
  "env_logger",
  "ethereum_gravity",
- "lazy_static",
- "openssl-probe",
  "gravity_proto",
  "gravity_utils",
+ "lazy_static",
+ "openssl-probe",
  "rand 0.8.0",
  "relayer",
  "serde",
@@ -2108,12 +2108,12 @@ dependencies = [
  "docopt",
  "env_logger",
  "ethereum_gravity",
+ "gravity_proto",
+ "gravity_utils",
  "lazy_static",
  "log",
  "num256",
  "openssl-probe",
- "gravity_proto",
- "gravity_utils",
  "serde",
  "serde_derive",
  "tokio",
@@ -2535,12 +2535,12 @@ dependencies = [
  "env_logger",
  "ethereum_gravity",
  "futures",
+ "gravity_proto",
+ "gravity_utils",
  "lazy_static",
  "log",
  "num256",
  "orchestrator",
- "gravity_proto",
- "gravity_utils",
  "rand 0.8.0",
  "serde",
  "serde_derive",

@@ -17,6 +17,8 @@ const BatchTxSize = 100
 
 // CreateBatchTx starts the following process chain:
 // - find bridged denominator for given voucher type
+// - determine if a an unexecuted batch is already waiting for this token type, if so confirm the new batch would
+//   have a higher total fees. If not exit withtout creating a batch
 // - select available transactions from the outgoing transaction pool sorted by fee desc
 // - persist an outgoing batch object with an incrementing ID = nonce
 // - emit an event
@@ -44,6 +46,7 @@ func (k Keeper) CreateBatchTx(ctx sdk.Context, contractAddress common.Address) (
 		Timeout:       timeoutHeight,
 		Transactions:  txs,
 		TokenContract: contractAddress.String(),
+		Block:         0, // TODO: add?
 	}
 
 	// TODO: pass tx id as key
@@ -235,6 +238,20 @@ func (k Keeper) GetBatchTxs(ctx sdk.Context) []types.BatchTx {
 	})
 
 	return txs
+}
+
+// GetLastOutgoingBatchByTokenType gets the latest outgoing tx batch by token type
+func (k Keeper) GetLastOutgoingBatchByTokenType(ctx sdk.Context, token string) *types.OutgoingTxBatch {
+	batches := k.GetOutgoingTxBatches(ctx)
+	var lastBatch *types.OutgoingTxBatch = nil
+	lastNonce := uint64(0)
+	for _, batch := range batches {
+		if batch.TokenContract == token && batch.BatchNonce > lastNonce {
+			lastBatch = batch
+			lastNonce = batch.BatchNonce
+		}
+	}
+	return lastBatch
 }
 
 // SetLastSlashedBatchBlock sets the latest slashed Batch block height

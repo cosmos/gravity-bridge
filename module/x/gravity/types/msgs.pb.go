@@ -9,7 +9,6 @@ import (
 	types1 "github.com/cosmos/cosmos-sdk/codec/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
-	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/regen-network/cosmos-proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -690,10 +689,10 @@ type MsgClient interface {
 }
 
 type msgClient struct {
-	cc grpc1.ClientConn
+	cc *grpc.ClientConn
 }
 
-func NewMsgClient(cc grpc1.ClientConn) MsgClient {
+func NewMsgClient(cc *grpc.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
@@ -784,7 +783,7 @@ func (*UnimplementedMsgServer) SetDelegateKey(ctx context.Context, req *MsgDeleg
 	return nil, status.Errorf(codes.Unimplemented, "method SetDelegateKey not implemented")
 }
 
-func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
+func RegisterMsgServer(s *grpc.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
 }
 
@@ -1672,10 +1671,7 @@ func (m *MsgSendToEth) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -1725,10 +1721,7 @@ func (m *MsgSendToEthResponse) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -1842,10 +1835,7 @@ func (m *MsgCancelSendToEth) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -1895,10 +1885,7 @@ func (m *MsgCancelSendToEthResponse) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -2012,10 +1999,7 @@ func (m *MsgRequestBatch) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -2065,10 +2049,7 @@ func (m *MsgRequestBatchResponse) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -2186,10 +2167,7 @@ func (m *MsgSubmitConfirm) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -2239,10 +2217,7 @@ func (m *MsgSubmitConfirmResponse) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -2360,10 +2335,7 @@ func (m *MsgSubmitEvent) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -2413,10 +2385,7 @@ func (m *MsgSubmitEventResponse) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -2562,10 +2531,7 @@ func (m *MsgDelegateKey) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {
@@ -2615,10 +2581,7 @@ func (m *MsgDelegateKeyResponse) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthMsgs
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthMsgs
 			}
 			if (iNdEx + skippy) > l {

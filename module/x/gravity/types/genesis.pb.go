@@ -481,46 +481,34 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	{
-		size := m.SlashFractionConflictingClaim.Size()
-		i -= size
-		if _, err := m.SlashFractionConflictingClaim.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	if len(m.SlashFractionConflictingClaim) > 0 {
+		i -= len(m.SlashFractionConflictingClaim)
+		copy(dAtA[i:], m.SlashFractionConflictingClaim)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.SlashFractionConflictingClaim)))
+		i--
+		dAtA[i] = 0x72
 	}
-	i--
-	dAtA[i] = 0x72
-	{
-		size := m.SlashFractionClaim.Size()
-		i -= size
-		if _, err := m.SlashFractionClaim.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	if len(m.SlashFractionClaim) > 0 {
+		i -= len(m.SlashFractionClaim)
+		copy(dAtA[i:], m.SlashFractionClaim)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.SlashFractionClaim)))
+		i--
+		dAtA[i] = 0x6a
 	}
-	i--
-	dAtA[i] = 0x6a
-	{
-		size := m.SlashFractionBatch.Size()
-		i -= size
-		if _, err := m.SlashFractionBatch.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	if len(m.SlashFractionBatch) > 0 {
+		i -= len(m.SlashFractionBatch)
+		copy(dAtA[i:], m.SlashFractionBatch)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.SlashFractionBatch)))
+		i--
+		dAtA[i] = 0x62
 	}
-	i--
-	dAtA[i] = 0x62
-	{
-		size := m.SlashFractionValset.Size()
-		i -= size
-		if _, err := m.SlashFractionValset.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	if len(m.SlashFractionValset) > 0 {
+		i -= len(m.SlashFractionValset)
+		copy(dAtA[i:], m.SlashFractionValset)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.SlashFractionValset)))
+		i--
+		dAtA[i] = 0x5a
 	}
-	i--
-	dAtA[i] = 0x5a
 	if m.AverageEthereumBlockTime != 0 {
 		i = encodeVarintGenesis(dAtA, i, uint64(m.AverageEthereumBlockTime))
 		i--
@@ -844,14 +832,22 @@ func (m *Params) Size() (n int) {
 	if m.AverageEthereumBlockTime != 0 {
 		n += 1 + sovGenesis(uint64(m.AverageEthereumBlockTime))
 	}
-	l = m.SlashFractionValset.Size()
-	n += 1 + l + sovGenesis(uint64(l))
-	l = m.SlashFractionBatch.Size()
-	n += 1 + l + sovGenesis(uint64(l))
-	l = m.SlashFractionClaim.Size()
-	n += 1 + l + sovGenesis(uint64(l))
-	l = m.SlashFractionConflictingClaim.Size()
-	n += 1 + l + sovGenesis(uint64(l))
+	l = len(m.SlashFractionValset)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.SlashFractionBatch)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.SlashFractionClaim)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.SlashFractionConflictingClaim)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
 	return n
 }
 
@@ -1229,9 +1225,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.SlashFractionValset.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.SlashFractionValset = github_com_cosmos_cosmos_sdk_types.Dec(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 12:
 			if wireType != 2 {
@@ -1263,9 +1257,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.SlashFractionBatch.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.SlashFractionBatch = github_com_cosmos_cosmos_sdk_types.Dec(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 13:
 			if wireType != 2 {
@@ -1297,9 +1289,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.SlashFractionClaim.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.SlashFractionClaim = github_com_cosmos_cosmos_sdk_types.Dec(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 14:
 			if wireType != 2 {
@@ -1331,9 +1321,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.SlashFractionConflictingClaim.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.SlashFractionConflictingClaim = github_com_cosmos_cosmos_sdk_types.Dec(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1341,10 +1329,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenesis
 			}
 			if (iNdEx + skippy) > l {
@@ -1458,10 +1443,7 @@ func (m *ERC20ToDenom) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenesis
 			}
 			if (iNdEx + skippy) > l {
@@ -1906,10 +1888,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenesis
 			}
 			if (iNdEx + skippy) > l {

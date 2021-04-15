@@ -20,7 +20,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/client/cli"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/client/rest"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -40,9 +39,7 @@ func (AppModuleBasic) Name() string {
 }
 
 // RegisterLegacyAminoCodec implements app module basic
-func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	types.RegisterCodec(cdc)
-}
+func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
 
 // DefaultGenesis implements app module basic
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
@@ -60,9 +57,7 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, _ client.TxEncodi
 }
 
 // RegisterRESTRoutes implements app module basic
-func (AppModuleBasic) RegisterRESTRoutes(ctx client.Context, rtr *mux.Router) {
-	rest.RegisterRoutes(ctx, rtr, types.StoreKey)
-}
+func (AppModuleBasic) RegisterRESTRoutes(ctx client.Context, rtr *mux.Router) {}
 
 // GetQueryCmd implements app module basic
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
