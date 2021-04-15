@@ -108,7 +108,7 @@ message ERC20ToDenom {
 
 // GenesisState struct
 message GenesisState {
-  Params                      params              = 1;
+  Params                      params              = 1 [(gogoproto.nullable) = false];
   uint64                      last_observed_nonce = 2;
   repeated EthSignerSet             valsets             = 3;
   repeated BatchTx    batches             = 4;

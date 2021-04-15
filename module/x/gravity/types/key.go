@@ -27,7 +27,7 @@ var (
 	// i.e cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	ValsetConfirmKey = []byte{0x3}
 
-	// OracleClaimKey Claim details by nonce and validator address
+	// OracleClaimKey Claim event by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	// A claim is named more intuitively than an Attestation, it is literally
 	// a validator making a claim to have seen something happen. Claims are
@@ -35,7 +35,7 @@ var (
 	// will eventually be executed.
 	OracleClaimKey = []byte{0x4}
 
-	// OracleAttestationKey attestation details by nonce and validator address
+	// OracleAttestationKey attestation event by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	// An attestation can be thought of as the 'event to be executed' while
 	// the Claims are an individual validator saying that they saw an event
@@ -136,35 +136,35 @@ func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
 	return append(ValsetConfirmKey, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
 }
 
-// GetClaimKey returns the following key format
-// prefix type               cosmos-validator-address                       nonce                             attestation-details-hash
+// GetEventKey returns the following key format
+// prefix type               cosmos-validator-address                       nonce                             attestation-event-hash
 // [0x0][0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
 // The Claim hash identifies a unique event, for example it would have a event nonce, a sender and a receiver. Or an event nonce and a batch nonce. But
 // the Claim is stored indexed with the claimer key to make sure that it is unique.
-func GetClaimKey(details EthereumEvent) []byte {
-	var detailsHash []byte
-	if details != nil {
-		detailsHash = details.ClaimHash()
+func GetEventKey(event EthereumEvent) []byte {
+	var eventHash []byte
+	if event != nil {
+		eventHash = event.Hash()
 	} else {
-		panic("No claim without details!")
+		panic("No claim without event!")
 	}
-	claimTypeLen := len([]byte{byte(details.GetType())})
-	nonceBz := sdk.Uint64ToBigEndian(details.GetEventNonce())
-	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz)+len(detailsHash))
+	claimTypeLen := len([]byte{byte(event.GetType())})
+	nonceBz := sdk.Uint64ToBigEndian(event.GetEventNonce())
+	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz)+len(eventHash))
 	copy(key[0:], OracleClaimKey)
-	copy(key[len(OracleClaimKey):], []byte{byte(details.GetType())})
+	copy(key[len(OracleClaimKey):], []byte{byte(event.GetType())})
 	// TODO this is the delegate address, should be stored by the valaddress
-	copy(key[len(OracleClaimKey)+claimTypeLen:], details.GetClaimer())
+	copy(key[len(OracleClaimKey)+claimTypeLen:], event.GetClaimer())
 	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen:], nonceBz)
-	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz):], detailsHash)
+	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz):], eventHash)
 	return key
 }
 
 // GetAttestationKey returns the following key format
-// prefix     nonce                             claim-details-hash
+// prefix     nonce                             claim-event-hash
 // [0x5][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
 // An attestation is an event multiple people are voting on, this function needs the claim
-// details because each Attestation is aggregating all claims of a specific event, lets say
+// event because each Attestation is aggregating all claims of a specific event, lets say
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
 func GetAttestationKey(eventNonce uint64, claimHash []byte) []byte {
@@ -176,10 +176,10 @@ func GetAttestationKey(eventNonce uint64, claimHash []byte) []byte {
 }
 
 // GetAttestationKeyWithHash returns the following key format
-// prefix     nonce                             claim-details-hash
+// prefix     nonce                             claim-event-hash
 // [0x5][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
 // An attestation is an event multiple people are voting on, this function needs the claim
-// details because each Attestation is aggregating all claims of a specific event, lets say
+// event because each Attestation is aggregating all claims of a specific event, lets say
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
 func GetAttestationKeyWithHash(eventNonce uint64, claimHash []byte) []byte {

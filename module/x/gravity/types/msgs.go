@@ -2,19 +2,20 @@ package types
 
 import (
 	"fmt"
+	"strings"
 
 	types "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	proto "github.com/gogo/protobuf/proto"
 )
 
 var (
 	_ sdk.Msg = &MsgDelegateKey{}
 	_ sdk.Msg = &MsgSubmitEvent{}
 	_ sdk.Msg = &MsgSubmitConfirm{}
-	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
+	_ sdk.Msg = &MsgSendToEth{}
+	_ sdk.Msg = &MsgCancelSendToEth{}
 )
 
 // NewMsgSetDelegateKeys returns a new msgSetOrchestratorAddress
@@ -30,7 +31,7 @@ func NewMsgSetDelegateKeys(val sdk.ValAddress, oper sdk.AccAddress, eth string) 
 func (msg *MsgDelegateKey) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgDelegateKey) Type() string { return "set_operator_address" }
+func (msg *MsgDelegateKey) Type() string { return "delegate_key" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgDelegateKey) ValidateBasic() (err error) {
@@ -57,7 +58,7 @@ func (msg *MsgDelegateKey) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes encodes the message for signing
 func (msg *MsgDelegateKey) GetSignBytes() []byte {
-	panic("Gravity messages do not support amino")
+	panic("gravity messages do not support amino")
 }
 
 // NewMsgSendToEth returns a new msgSendToEth
@@ -103,7 +104,7 @@ func (msg MsgSendToEth) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgSendToEth) GetSignBytes() []byte {
-	panic("Gravity messages do not support amino")
+	panic("gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
@@ -117,9 +118,10 @@ func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgRequestBatch returns a new msgRequestBatch
-func NewMsgRequestBatch(orchestrator sdk.AccAddress) *MsgRequestBatch {
+func NewMsgRequestBatch(denom string, orchestrator sdk.AccAddress) *MsgRequestBatch {
 	return &MsgRequestBatch{
-		Sender: orchestrator.String(),
+		OrchestratorAddress: orchestrator.String(),
+		Denom:               denom,
 	}
 }
 
@@ -131,20 +133,23 @@ func (msg MsgRequestBatch) Type() string { return "request_batch" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgRequestBatch) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
+	if _, err := sdk.AccAddressFromBech32(msg.OrchestratorAddress); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.OrchestratorAddress)
 	}
-	return nil
+
+	// NOTE: this only supports gravity denoms (plain or with the 'gravity/' namespace)
+	// consider only passing ethereum addresses?
+	return ValidateGravityDenom(msg.Denom)
 }
 
 // GetSignBytes encodes the message for signing
 func (msg MsgRequestBatch) GetSignBytes() []byte {
-	panic("Gravity messages do not support amino")
+	panic("gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
 func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Sender)
+	acc, err := sdk.AccAddressFromBech32(msg.OrchestratorAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -153,7 +158,7 @@ func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgCancelSendToEth returns a new MsgCancelSendToEth
-func NewMsgCancelSendToEth(txID uint64, sender sdk.AccAddress) *MsgCancelSendToEth {
+func NewMsgCancelSendToEth(txID string, sender sdk.AccAddress) *MsgCancelSendToEth {
 	return &MsgCancelSendToEth{
 		TransactionId: txID,
 		Sender:        sender.String(),
@@ -168,7 +173,11 @@ func (msg *MsgCancelSendToEth) Type() string { return "cancel_send_to_eth" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgCancelSendToEth) ValidateBasic() (err error) {
-	_, err = sdk.ValAddressFromBech32(msg.Sender)
+	if strings.TrimSpace(msg.TransactionId) == "" {
+		return fmt.Errorf("tx id cannot be blank")
+	}
+
+	_, err = sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return err
 	}
@@ -177,12 +186,12 @@ func (msg *MsgCancelSendToEth) ValidateBasic() (err error) {
 
 // GetSignBytes encodes the message for signing
 func (msg *MsgCancelSendToEth) GetSignBytes() []byte {
-	panic("Gravity messages do not support amino")
+	panic("gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
 func (msg *MsgCancelSendToEth) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.ValAddressFromBech32(msg.Sender)
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
 	}
@@ -190,10 +199,10 @@ func (msg *MsgCancelSendToEth) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgSubmitConfirm returns a new MsgSubmitConfirm
-func NewMsgSubmitConfirm(confirm *types.Any, signer string) *MsgSubmitConfirm {
+func NewMsgSubmitConfirm(confirm *types.Any, signer sdk.AccAddress) *MsgSubmitConfirm {
 	return &MsgSubmitConfirm{
 		Confirm: confirm,
-		Signer:  signer,
+		Signer:  signer.String(),
 	}
 }
 
@@ -201,15 +210,21 @@ func NewMsgSubmitConfirm(confirm *types.Any, signer string) *MsgSubmitConfirm {
 func (msg *MsgSubmitConfirm) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgSubmitConfirm) Type() string { return "cancel_send_to_eth" }
+func (msg *MsgSubmitConfirm) Type() string { return "submit_confirm" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgSubmitConfirm) ValidateBasic() (err error) {
-	_, err = sdk.ValAddressFromBech32(msg.Signer)
+	_, err = sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
 		return err
 	}
-	return nil
+
+	confirm, err := UnpackConfirm(msg.Confirm)
+	if err != nil {
+		return err
+	}
+
+	return confirm.Validate()
 }
 
 // GetSigners defines whose signature is required
@@ -222,42 +237,40 @@ func (msg *MsgSubmitConfirm) GetSigners() []sdk.AccAddress {
 }
 
 func (m *MsgSubmitConfirm) GetConfirm() Confirm {
-	Confirm, ok := m.Confirm.GetCachedValue().(Confirm)
+	confirm, ok := m.Confirm.GetCachedValue().(Confirm)
 	if !ok {
 		return nil
 	}
-	return Confirm
+
+	return confirm
 }
 
 func (m *MsgSubmitConfirm) SetConfirm(confirm Confirm) error {
-	msg, ok := confirm.(proto.Message)
-	if !ok {
-		return fmt.Errorf("can't proto marshal %T", msg)
-	}
-	any, err := types.NewAnyWithValue(msg)
+	any, err := types.NewAnyWithValue(confirm)
 	if err != nil {
 		return err
 	}
+
 	m.Confirm = any
 	return nil
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
 func (m MsgSubmitConfirm) UnpackInterfaces(unpacker types.AnyUnpacker) error {
-	var claim EthereumEvent // TODO: shouldn't this be a confirm?
-	return unpacker.UnpackAny(m.Confirm, &claim)
+	var confirm Confirm
+	return unpacker.UnpackAny(m.Confirm, &confirm)
 }
 
 // GetSignBytes encodes the message for signing
 func (msg *MsgSubmitConfirm) GetSignBytes() []byte {
-	panic("Gravity messages do not support amino")
+	panic("gravity messages do not support amino")
 }
 
-// NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
-func NewMsgSubmitEvent(claim *types.Any, signer string) *MsgSubmitEvent {
+// NewMsgSubmitEvent returns a new MsgSubmitEvent
+func NewMsgSubmitEvent(event *types.Any, signer sdk.AccAddress) *MsgSubmitEvent {
 	return &MsgSubmitEvent{
-		Event:  claim,
-		Signer: signer,
+		Event:  event,
+		Signer: signer.String(),
 	}
 }
 
@@ -265,40 +278,41 @@ func NewMsgSubmitEvent(claim *types.Any, signer string) *MsgSubmitEvent {
 func (msg *MsgSubmitEvent) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgSubmitEvent) Type() string { return "cancel_send_to_eth" }
+func (msg *MsgSubmitEvent) Type() string { return "submit_event" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgSubmitEvent) ValidateBasic() (err error) {
-	_, err = sdk.ValAddressFromBech32(msg.Signer)
+	_, err = sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
 		return err
 	}
-	return nil
+	event, err := UnpackEvent(msg.Event)
+	if err != nil {
+		return err
+	}
+
+	return event.Validate()
 }
 
 // GetSigners defines whose signature is required
 func (msg *MsgSubmitEvent) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.ValAddressFromBech32(msg.Signer)
+	acc, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{sdk.AccAddress(acc)}
+	return []sdk.AccAddress{acc}
 }
 
 func (m *MsgSubmitEvent) GetEvent() EthereumEvent {
-	content, ok := m.Event.GetCachedValue().(EthereumEvent)
+	event, ok := m.Event.GetCachedValue().(EthereumEvent)
 	if !ok {
 		return nil
 	}
-	return content
+	return event
 }
 
-func (m *MsgSubmitEvent) SetEvent(claim EthereumEvent) error {
-	msg, ok := claim.(proto.Message)
-	if !ok {
-		return fmt.Errorf("can't proto marshal %T", msg)
-	}
-	any, err := types.NewAnyWithValue(msg)
+func (m *MsgSubmitEvent) SetEvent(event EthereumEvent) error {
+	any, err := types.NewAnyWithValue(event)
 	if err != nil {
 		return err
 	}
@@ -308,11 +322,11 @@ func (m *MsgSubmitEvent) SetEvent(claim EthereumEvent) error {
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
 func (m MsgSubmitEvent) UnpackInterfaces(unpacker types.AnyUnpacker) error {
-	var claim EthereumEvent
-	return unpacker.UnpackAny(m.Event, &claim)
+	var event EthereumEvent
+	return unpacker.UnpackAny(m.Event, &event)
 }
 
 // GetSignBytes encodes the message for signing
 func (msg MsgSubmitEvent) GetSignBytes() []byte {
-	panic("Gravity messages do not support amino")
+	panic("gravity messages do not support amino")
 }

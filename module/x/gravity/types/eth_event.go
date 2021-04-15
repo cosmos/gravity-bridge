@@ -25,7 +25,7 @@ type EthereumEvent interface {
 	// GetBlockHeight() uint64
 	// Which type of event this is
 	GetType() string
-	ValidateBasic() error
+	Validate() error
 	Hash() []byte
 }
 
@@ -46,8 +46,8 @@ func (e DepositEvent) GetType() string {
 	return "deposit"
 }
 
-// ValidateBasic performs stateless checks
-func (e DepositEvent) ValidateBasic() error {
+// Validate performs stateless checks
+func (e DepositEvent) Validate() error {
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
@@ -76,8 +76,8 @@ func (e WithdrawEvent) GetType() string {
 	return "withdraw"
 }
 
-// ValidateBasic performs stateless checks
-func (e WithdrawEvent) ValidateBasic() error {
+// Validate performs stateless checks
+func (e WithdrawEvent) Validate() error {
 	if e.BatchNonce == 0 {
 		return fmt.Errorf("batch_nonce == 0")
 	}
@@ -101,8 +101,8 @@ func (e CosmosERC20DeployedEvent) GetType() string {
 	return "cosmos_erc20_deployed"
 }
 
-// ValidateBasic performs stateless checks
-func (e CosmosERC20DeployedEvent) ValidateBasic() error {
+// Validate performs stateless checks
+func (e CosmosERC20DeployedEvent) Validate() error {
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
@@ -132,8 +132,8 @@ func (e LogicCallExecutedEvent) GetType() string {
 	return "logic_call_executed"
 }
 
-// ValidateBasic performs stateless checks
-func (e LogicCallExecutedEvent) ValidateBasic() error {
+// Validate performs stateless checks
+func (e LogicCallExecutedEvent) Validate() error {
 	if len(e.InvalidationId) == 0 {
 		return fmt.Errorf("invalidation id cannot be blank")
 	}

@@ -5,13 +5,17 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	proto "github.com/gogo/protobuf/proto"
 )
 
 type Confirm interface {
-	GetType() ConfirmType
+	proto.Message
+
+	GetType() string
 	GetOrchestratorAddress() string
 	GetNonce() uint64
 	GetSignature() string
+	Validate() error
 
 	GetTokenContract() string
 	GetInvalidationId() string
@@ -24,11 +28,11 @@ var (
 	_ Confirm = &ConfirmValset{}
 )
 
-// Type should return the action
-func (msg ConfirmBatch) GetType() ConfirmType { return ConfirmType_CONFIRM_TYPE_BATCH }
+// GetType should return the action
+func (msg ConfirmBatch) GetType() string { return "batch" }
 
-// ValidateBasic performs stateless checks
-func (msg ConfirmBatch) ValidateBasic() error {
+// Validate performs stateless checks
+func (msg ConfirmBatch) Validate() error {
 	if _, err := sdk.AccAddressFromBech32(msg.OrchestratorAddress); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.OrchestratorAddress)
 	}
@@ -40,7 +44,7 @@ func (msg ConfirmBatch) ValidateBasic() error {
 	}
 	_, err := hex.DecodeString(msg.Signature)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "could not decode hex string %s", msg.Signature)
 	}
 	return nil
 }
@@ -48,14 +52,14 @@ func (msg ConfirmBatch) ValidateBasic() error {
 // GetInvalidationNonce is a noop to implement confirm interface
 func (msg ConfirmBatch) GetInvalidationNonce() uint64 { return 0 }
 
-// GetInvalidationId is a noop to implement confirm interface
+// GetInvalidationID is a noop to implement confirm interface
 func (msg ConfirmBatch) GetInvalidationId() string { return "" }
 
-// Type should return the action
-func (msg ConfirmLogicCall) GetType() ConfirmType { return ConfirmType_CONFIRM_TYPE_LOGIC }
+// GetType should return the action
+func (msg ConfirmLogicCall) GetType() string { return "logic_Call" }
 
-// ValidateBasic performs stateless checks
-func (msg ConfirmLogicCall) ValidateBasic() error {
+// Validate performs stateless checks
+func (msg ConfirmLogicCall) Validate() error {
 	if _, err := sdk.AccAddressFromBech32(msg.OrchestratorAddress); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.OrchestratorAddress)
 	}
@@ -91,11 +95,11 @@ func NewConfirmValset(nonce uint64, ethAddress string, validator sdk.AccAddress,
 	}
 }
 
-// Type should return the action
-func (msg *ConfirmValset) GetType() ConfirmType { return ConfirmType_CONFIRM_TYPE_VALSET }
+// GetType should return the action
+func (msg *ConfirmValset) GetType() string { return "valset" }
 
-// ValidateBasic performs stateless checks
-func (msg *ConfirmValset) ValidateBasic() (err error) {
+// Validate performs stateless checks
+func (msg *ConfirmValset) Validate() (err error) {
 	if _, err = sdk.AccAddressFromBech32(msg.OrchestratorAddress); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.OrchestratorAddress)
 	}
@@ -108,7 +112,7 @@ func (msg *ConfirmValset) ValidateBasic() (err error) {
 // GetInvalidationNonce is a noop to implement confirm interface
 func (msg ConfirmValset) GetInvalidationNonce() uint64 { return 0 }
 
-// GetInvalidationId is a noop to implement confirm interface
+// GetInvalidationID is a noop to implement confirm interface
 func (msg ConfirmValset) GetInvalidationId() string { return "" }
 
 func (msg *ConfirmValset) GetTokenContract() string {

@@ -48,13 +48,6 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 	return &types.MsgDelegateKeyResponse{}, nil
 }
 
-func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
-
-	// TODO:
-
-	return &types.MsgSubmitConfirmResponse{}, nil
-}
-
 func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*types.MsgSubmitEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
@@ -70,6 +63,23 @@ func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*type
 	}
 
 	return &types.MsgSubmitEventResponse{}, nil
+}
+
+func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Signer)
+
+	confirm, err := types.UnpackConfirm(msg.Confirm)
+	if err != nil {
+		return nil, err
+	}
+
+	if 
+
+	// TODO:
+
+	return &types.MsgSubmitConfirmResponse{}, nil
 }
 
 // RequestBatch handles MsgRequestBatch

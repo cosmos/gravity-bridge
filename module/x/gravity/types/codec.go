@@ -31,10 +31,10 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
-func PackEvent(claim EthereumEvent) (*types.Any, error) {
-	msg, ok := claim.(proto.Message)
+func PackEvent(event EthereumEvent) (*types.Any, error) {
+	msg, ok := event.(proto.Message)
 	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", claim)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", event)
 	}
 
 	anyEvent, err := types.NewAnyWithValue(msg)
@@ -46,16 +46,31 @@ func PackEvent(claim EthereumEvent) (*types.Any, error) {
 }
 
 // UnpackEvent unpacks an Any into an EthereumEvent. It returns an error if the
-// claim can't be unpacked.
+// event can't be unpacked.
 func UnpackEvent(any *types.Any) (EthereumEvent, error) {
 	if any == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "protobuf Any message cannot be nil")
 	}
 
-	claim, ok := any.GetCachedValue().(EthereumEvent)
+	event, ok := any.GetCachedValue().(EthereumEvent)
 	if !ok {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into EthereumEvent %T", any)
 	}
 
-	return claim, nil
+	return event, nil
+}
+
+// UnpackConfirm unpacks an Any into a Confirm interface. It returns an error if the
+// confirm can't be unpacked.
+func UnpackConfirm(any *types.Any) (Confirm, error) {
+	if any == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "protobuf Any message cannot be nil")
+	}
+
+	confirm, ok := any.GetCachedValue().(Confirm)
+	if !ok {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into Confirm %T", any)
+	}
+
+	return confirm, nil
 }

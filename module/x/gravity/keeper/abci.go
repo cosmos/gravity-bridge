@@ -7,7 +7,7 @@ import (
 )
 
 // EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k Keeper) {
+func (k Keeper) EndBlocker(ctx sdk.Context) {
 	// Question: what here can be epoched?
 	k.slash(ctx)
 	k.tallyAttestations(ctx)

@@ -62,3 +62,14 @@ func (k Keeper) IterateERC20ToDenom(ctx sdk.Context, cb func(types.ERC20ToDenom)
 		}
 	}
 }
+
+// GetERC20Denoms iterates over erc20 to denom relations
+func (k Keeper) GetERC20Denoms(ctx sdk.Context) []types.ERC20ToDenom {
+	relations := make([]types.ERC20ToDenom, 0)
+	k.IterateERC20ToDenom(ctx, func(erc20ToDenom types.ERC20ToDenom) bool {
+		relations = append(relations, erc20ToDenom)
+		return false
+	})
+
+	return relations
+}
