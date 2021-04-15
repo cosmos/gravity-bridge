@@ -13,7 +13,8 @@ func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
 // TODO:
 func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	return types.GenesisState{
-		Params:        k.GetParams(ctx),
-		Erc20ToDenoms: k.GetERC20Denoms(ctx),
+		Params:            k.GetParams(ctx),
+		LastObservedNonce: 0, // TODO:
+		Erc20ToDenoms:     k.GetERC20Denoms(ctx),
 	}
 }

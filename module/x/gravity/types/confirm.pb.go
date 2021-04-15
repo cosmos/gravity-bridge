@@ -22,13 +22,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// ConfirmLogicCall
-// When validators observe a MsgRequestBatch they form a batch by ordering
-// transactions currently in the txqueue in order of highest to lowest fee,
-// cutting off when the batch either reaches a hardcoded maximum size (to be
-// decided, probably around 100) or when transactions stop being profitable
-// (TODO determine this without nondeterminism) This message includes the batch
-// as well as an Ethereum signature over this batch by the validator
+// ConfirmLogicCal ...
 type ConfirmLogicCall struct {
 	InvalidationId      string `protobuf:"bytes,1,opt,name=invalidation_id,json=invalidationId,proto3" json:"invalidation_id,omitempty"`
 	InvalidationNonce   uint64 `protobuf:"varint,2,opt,name=invalidation_nonce,json=invalidationNonce,proto3" json:"invalidation_nonce,omitempty"`
@@ -105,10 +99,11 @@ func (m *ConfirmLogicCall) GetSignature() string {
 	return ""
 }
 
-// ConfirmBatch
+// ConfirmBatch an orchestrator confirms a batch transaction by signing
+// with the ethereum keys on the signer set.
 type ConfirmBatch struct {
-	Nonce               uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	TokenContract       string `protobuf:"bytes,2,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
+	TokenContract       string `protobuf:"bytes,1,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
+	Nonce               uint64 `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	EthSigner           string `protobuf:"bytes,3,opt,name=eth_signer,json=ethSigner,proto3" json:"eth_signer,omitempty"`
 	OrchestratorAddress string `protobuf:"bytes,4,opt,name=orchestrator_address,json=orchestratorAddress,proto3" json:"orchestrator_address,omitempty"`
 	Signature           string `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
@@ -147,18 +142,18 @@ func (m *ConfirmBatch) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ConfirmBatch proto.InternalMessageInfo
 
-func (m *ConfirmBatch) GetNonce() uint64 {
-	if m != nil {
-		return m.Nonce
-	}
-	return 0
-}
-
 func (m *ConfirmBatch) GetTokenContract() string {
 	if m != nil {
 		return m.TokenContract
 	}
 	return ""
+}
+
+func (m *ConfirmBatch) GetNonce() uint64 {
+	if m != nil {
+		return m.Nonce
+	}
+	return 0
 }
 
 func (m *ConfirmBatch) GetEthSigner() string {
@@ -182,39 +177,34 @@ func (m *ConfirmBatch) GetSignature() string {
 	return ""
 }
 
-// ConfirmValset
-// this is the message sent by the validators when they wish to submit their
-// signatures over the validator set at a given block height. A validator must
-// first call MsgSetEthAddress to set their Ethereum address to be used for
-// signing. Then someone (anyone) must make a ValsetRequest, the request is
-// essentially a messaging mechanism to determine which block all validators
-// should submit signatures over. Finally validators sign the validator set,
-// powers, and Ethereum addresses of the entire validator set at the height of a
+// ConfirmSignerSet submits a signature of the validator set at a given block height. A validator
+// must first call MsgSetEthAddress to set their Ethereum address to be used for signing.
+// Finally validators sign the
+// validator set, powers, and Ethereum addresses of the entire validator set at the height of a
 // ValsetRequest and submit that signature with this message.
 //
-// If a sufficient number of validators (66% of voting power) (A) have set
-// Ethereum addresses and (B) submit ValsetConfirm messages with their
-// signatures it is then possible for anyone to view these signatures in the
-// chain store and submit them to Ethereum to update the validator set
-type ConfirmValset struct {
+// If a sufficient number of validators (66% of voting power) (A) have set Ethereum addresses and
+// (B) submit ValsetConfirm messages with their signatures it is then possible for anyone to view
+// these signatures in the chain store and submit them to Ethereum to update the validator set
+type ConfirmSignerSet struct {
 	Nonce               uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	OrchestratorAddress string `protobuf:"bytes,2,opt,name=orchestrator_address,json=orchestratorAddress,proto3" json:"orchestrator_address,omitempty"`
-	EthAddress          string `protobuf:"bytes,3,opt,name=eth_address,json=ethAddress,proto3" json:"eth_address,omitempty"`
+	EthSigner           string `protobuf:"bytes,2,opt,name=eth_signer,json=ethSigner,proto3" json:"eth_signer,omitempty"`
+	OrchestratorAddress string `protobuf:"bytes,3,opt,name=orchestrator_address,json=orchestratorAddress,proto3" json:"orchestrator_address,omitempty"`
 	Signature           string `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`
 }
 
-func (m *ConfirmValset) Reset()         { *m = ConfirmValset{} }
-func (m *ConfirmValset) String() string { return proto.CompactTextString(m) }
-func (*ConfirmValset) ProtoMessage()    {}
-func (*ConfirmValset) Descriptor() ([]byte, []int) {
+func (m *ConfirmSignerSet) Reset()         { *m = ConfirmSignerSet{} }
+func (m *ConfirmSignerSet) String() string { return proto.CompactTextString(m) }
+func (*ConfirmSignerSet) ProtoMessage()    {}
+func (*ConfirmSignerSet) Descriptor() ([]byte, []int) {
 	return fileDescriptor_9fd753ee695c4d9b, []int{2}
 }
-func (m *ConfirmValset) XXX_Unmarshal(b []byte) error {
+func (m *ConfirmSignerSet) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ConfirmValset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ConfirmSignerSet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ConfirmValset.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ConfirmSignerSet.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -224,40 +214,40 @@ func (m *ConfirmValset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *ConfirmValset) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ConfirmValset.Merge(m, src)
+func (m *ConfirmSignerSet) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ConfirmSignerSet.Merge(m, src)
 }
-func (m *ConfirmValset) XXX_Size() int {
+func (m *ConfirmSignerSet) XXX_Size() int {
 	return m.Size()
 }
-func (m *ConfirmValset) XXX_DiscardUnknown() {
-	xxx_messageInfo_ConfirmValset.DiscardUnknown(m)
+func (m *ConfirmSignerSet) XXX_DiscardUnknown() {
+	xxx_messageInfo_ConfirmSignerSet.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ConfirmValset proto.InternalMessageInfo
+var xxx_messageInfo_ConfirmSignerSet proto.InternalMessageInfo
 
-func (m *ConfirmValset) GetNonce() uint64 {
+func (m *ConfirmSignerSet) GetNonce() uint64 {
 	if m != nil {
 		return m.Nonce
 	}
 	return 0
 }
 
-func (m *ConfirmValset) GetOrchestratorAddress() string {
+func (m *ConfirmSignerSet) GetEthSigner() string {
+	if m != nil {
+		return m.EthSigner
+	}
+	return ""
+}
+
+func (m *ConfirmSignerSet) GetOrchestratorAddress() string {
 	if m != nil {
 		return m.OrchestratorAddress
 	}
 	return ""
 }
 
-func (m *ConfirmValset) GetEthAddress() string {
-	if m != nil {
-		return m.EthAddress
-	}
-	return ""
-}
-
-func (m *ConfirmValset) GetSignature() string {
+func (m *ConfirmSignerSet) GetSignature() string {
 	if m != nil {
 		return m.Signature
 	}
@@ -267,36 +257,35 @@ func (m *ConfirmValset) GetSignature() string {
 func init() {
 	proto.RegisterType((*ConfirmLogicCall)(nil), "gravity.v1.ConfirmLogicCall")
 	proto.RegisterType((*ConfirmBatch)(nil), "gravity.v1.ConfirmBatch")
-	proto.RegisterType((*ConfirmValset)(nil), "gravity.v1.ConfirmValset")
+	proto.RegisterType((*ConfirmSignerSet)(nil), "gravity.v1.ConfirmSignerSet")
 }
 
 func init() { proto.RegisterFile("gravity/v1/confirm.proto", fileDescriptor_9fd753ee695c4d9b) }
 
 var fileDescriptor_9fd753ee695c4d9b = []byte{
-	// 365 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x92, 0xb1, 0x4e, 0xeb, 0x30,
-	0x14, 0x86, 0xeb, 0xde, 0xf6, 0x4a, 0xf1, 0xbd, 0xed, 0xbd, 0x98, 0x0e, 0x19, 0x20, 0x54, 0x95,
-	0x10, 0x5d, 0xda, 0xa8, 0x62, 0x60, 0xa6, 0x9d, 0x90, 0x10, 0x12, 0x45, 0x62, 0x60, 0x89, 0x5c,
-	0xc7, 0x24, 0x16, 0x89, 0x5d, 0xd9, 0xa7, 0x11, 0x7d, 0x0b, 0x36, 0x1e, 0x86, 0x17, 0x60, 0xec,
-	0x88, 0x98, 0x50, 0xfb, 0x22, 0x28, 0x4e, 0x8a, 0x0a, 0xa2, 0x2b, 0xa3, 0xff, 0xef, 0xe8, 0xf8,
-	0xfb, 0xa5, 0x83, 0xdd, 0x48, 0xd3, 0x4c, 0xc0, 0xdc, 0xcf, 0x06, 0x3e, 0x53, 0xf2, 0x56, 0xe8,
-	0xb4, 0x3f, 0xd5, 0x0a, 0x14, 0xc1, 0x25, 0xe9, 0x67, 0x83, 0xce, 0x2b, 0xc2, 0xff, 0x47, 0x05,
-	0x3d, 0x57, 0x91, 0x60, 0x23, 0x9a, 0x24, 0xe4, 0x08, 0xff, 0x13, 0x32, 0xa3, 0x89, 0x08, 0x29,
-	0x08, 0x25, 0x03, 0x11, 0xba, 0xa8, 0x8d, 0xba, 0xce, 0xb8, 0xb9, 0x19, 0x9f, 0x85, 0xa4, 0x87,
-	0xc9, 0xa7, 0x41, 0xa9, 0x24, 0xe3, 0x6e, 0xb5, 0x8d, 0xba, 0xb5, 0xf1, 0xce, 0x26, 0xb9, 0xc8,
-	0x01, 0xd9, 0xc7, 0x98, 0x43, 0x1c, 0x18, 0x11, 0x49, 0xae, 0xdd, 0x5f, 0x76, 0xa5, 0xc3, 0x21,
-	0xbe, 0xb2, 0x01, 0x19, 0xe0, 0x96, 0xd2, 0x2c, 0xe6, 0x06, 0x34, 0x05, 0xa5, 0x03, 0x1a, 0x86,
-	0x9a, 0x1b, 0xe3, 0xd6, 0xec, 0xe0, 0xee, 0x26, 0x3b, 0x2d, 0x10, 0xd9, 0xc3, 0x4e, 0xbe, 0x8d,
-	0xc2, 0x4c, 0x73, 0xb7, 0x5e, 0x2c, 0xfc, 0x08, 0x3a, 0x4f, 0x08, 0xff, 0x2d, 0xcb, 0x0d, 0x29,
-	0xb0, 0x98, 0xb4, 0x70, 0xbd, 0x50, 0x44, 0x56, 0xb1, 0x78, 0x90, 0x43, 0xdc, 0x04, 0x75, 0xc7,
-	0x65, 0xc0, 0x94, 0x04, 0x4d, 0x19, 0xd8, 0x06, 0xce, 0xb8, 0x61, 0xd3, 0x51, 0x19, 0xfe, 0xb8,
-	0xfd, 0x23, 0xc2, 0x8d, 0xd2, 0xfe, 0x9a, 0x26, 0x86, 0xc3, 0x16, 0xfd, 0x6d, 0x1f, 0x57, 0xb7,
-	0x7f, 0x7c, 0x80, 0xff, 0xe4, 0x55, 0xd6, 0x93, 0x45, 0x97, 0xbc, 0xdd, 0xb7, 0x66, 0xb5, 0x2f,
-	0x66, 0xc3, 0xcb, 0xe7, 0xa5, 0x87, 0x16, 0x4b, 0x0f, 0xbd, 0x2d, 0x3d, 0xf4, 0xb0, 0xf2, 0x2a,
-	0x8b, 0x95, 0x57, 0x79, 0x59, 0x79, 0x95, 0x9b, 0x93, 0x48, 0x40, 0x3c, 0x9b, 0xf4, 0x99, 0x4a,
-	0x7d, 0xa6, 0x4c, 0xaa, 0x8c, 0x5f, 0x1e, 0x5b, 0x6f, 0xa2, 0x45, 0x18, 0x71, 0x3f, 0x55, 0xe1,
-	0x2c, 0xe1, 0xfe, 0xfd, 0x3a, 0xf7, 0x61, 0x3e, 0xe5, 0x66, 0xf2, 0xdb, 0x9e, 0xe6, 0xf1, 0x7b,
-	0x00, 0x00, 0x00, 0xff, 0xff, 0xa0, 0x13, 0x93, 0x2b, 0xb6, 0x02, 0x00, 0x00,
+	// 350 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x92, 0xcf, 0x4a, 0xeb, 0x40,
+	0x14, 0xc6, 0x3b, 0xfd, 0x73, 0xa1, 0xc3, 0xbd, 0xbd, 0xf7, 0x8e, 0x5d, 0x64, 0xa1, 0xa1, 0x14,
+	0xc4, 0x6e, 0xda, 0x50, 0x5c, 0xb8, 0xb6, 0x5d, 0x09, 0x22, 0xd8, 0xee, 0xdc, 0x84, 0xe9, 0x64,
+	0x4c, 0x06, 0x93, 0x39, 0x65, 0xe6, 0x34, 0xd8, 0xb7, 0x70, 0xe9, 0xbb, 0xf8, 0x02, 0x2e, 0xbb,
+	0x14, 0x57, 0xd2, 0xbe, 0x88, 0x34, 0x89, 0x1a, 0x05, 0xa1, 0x2b, 0x97, 0xf9, 0x7e, 0x87, 0x93,
+	0xdf, 0xc7, 0x1c, 0xea, 0x84, 0x86, 0xa7, 0x0a, 0x97, 0x5e, 0x3a, 0xf4, 0x04, 0xe8, 0x6b, 0x65,
+	0x92, 0xc1, 0xdc, 0x00, 0x02, 0xa3, 0x05, 0x19, 0xa4, 0xc3, 0xee, 0x33, 0xa1, 0xff, 0xc6, 0x39,
+	0x3d, 0x87, 0x50, 0x89, 0x31, 0x8f, 0x63, 0x76, 0x44, 0xff, 0x2a, 0x9d, 0xf2, 0x58, 0x05, 0x1c,
+	0x15, 0x68, 0x5f, 0x05, 0x0e, 0xe9, 0x90, 0x5e, 0x73, 0xd2, 0x2a, 0xc7, 0x67, 0x01, 0xeb, 0x53,
+	0xf6, 0x69, 0x50, 0x83, 0x16, 0xd2, 0xa9, 0x76, 0x48, 0xaf, 0x3e, 0xf9, 0x5f, 0x26, 0x17, 0x5b,
+	0xc0, 0x0e, 0x28, 0x95, 0x18, 0xf9, 0x56, 0x85, 0x5a, 0x1a, 0xa7, 0x96, 0xad, 0x6c, 0x4a, 0x8c,
+	0xa6, 0x59, 0xc0, 0x86, 0xb4, 0x0d, 0x46, 0x44, 0xd2, 0xa2, 0xe1, 0x08, 0xc6, 0xe7, 0x41, 0x60,
+	0xa4, 0xb5, 0x4e, 0x3d, 0x1b, 0xdc, 0x2b, 0xb3, 0xd3, 0x1c, 0xb1, 0x7d, 0xda, 0xdc, 0x6e, 0xe3,
+	0xb8, 0x30, 0xd2, 0x69, 0xe4, 0x0b, 0xdf, 0x83, 0xee, 0x03, 0xa1, 0xbf, 0x8b, 0x72, 0x23, 0x8e,
+	0x22, 0x62, 0x87, 0xb4, 0x85, 0x70, 0x23, 0xb5, 0x2f, 0x40, 0xa3, 0xe1, 0x02, 0x8b, 0x5e, 0x7f,
+	0xb2, 0x74, 0x5c, 0x84, 0xac, 0x4d, 0x1b, 0xe5, 0x26, 0xf9, 0xc7, 0x8f, 0xdb, 0xdf, 0x7f, 0x3c,
+	0x4d, 0xfe, 0x8b, 0xa9, 0x2c, 0xa9, 0x91, 0xef, 0xd5, 0xaa, 0xbb, 0xaa, 0xd5, 0x76, 0x54, 0xab,
+	0x7f, 0x51, 0x1b, 0x5d, 0x3e, 0xae, 0x5d, 0xb2, 0x5a, 0xbb, 0xe4, 0x65, 0xed, 0x92, 0xbb, 0x8d,
+	0x5b, 0x59, 0x6d, 0xdc, 0xca, 0xd3, 0xc6, 0xad, 0x5c, 0x9d, 0x84, 0x0a, 0xa3, 0xc5, 0x6c, 0x20,
+	0x20, 0xf1, 0x04, 0xd8, 0x04, 0xac, 0x57, 0x5c, 0x5b, 0x7f, 0x66, 0x54, 0x10, 0x4a, 0x2f, 0x81,
+	0x60, 0x11, 0x4b, 0xef, 0xf6, 0x2d, 0xf7, 0x70, 0x39, 0x97, 0x76, 0xf6, 0x2b, 0xbb, 0xcd, 0xe3,
+	0xd7, 0x00, 0x00, 0x00, 0xff, 0xff, 0x0f, 0x14, 0x7e, 0x91, 0xb7, 0x02, 0x00, 0x00,
 }
 
 func (m *ConfirmLogicCall) Marshal() (dAtA []byte, err error) {
@@ -396,22 +385,22 @@ func (m *ConfirmBatch) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x1a
 	}
+	if m.Nonce != 0 {
+		i = encodeVarintConfirm(dAtA, i, uint64(m.Nonce))
+		i--
+		dAtA[i] = 0x10
+	}
 	if len(m.TokenContract) > 0 {
 		i -= len(m.TokenContract)
 		copy(dAtA[i:], m.TokenContract)
 		i = encodeVarintConfirm(dAtA, i, uint64(len(m.TokenContract)))
 		i--
-		dAtA[i] = 0x12
-	}
-	if m.Nonce != 0 {
-		i = encodeVarintConfirm(dAtA, i, uint64(m.Nonce))
-		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *ConfirmValset) Marshal() (dAtA []byte, err error) {
+func (m *ConfirmSignerSet) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -421,12 +410,12 @@ func (m *ConfirmValset) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ConfirmValset) MarshalTo(dAtA []byte) (int, error) {
+func (m *ConfirmSignerSet) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ConfirmValset) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *ConfirmSignerSet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -438,17 +427,17 @@ func (m *ConfirmValset) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.EthAddress) > 0 {
-		i -= len(m.EthAddress)
-		copy(dAtA[i:], m.EthAddress)
-		i = encodeVarintConfirm(dAtA, i, uint64(len(m.EthAddress)))
-		i--
-		dAtA[i] = 0x1a
-	}
 	if len(m.OrchestratorAddress) > 0 {
 		i -= len(m.OrchestratorAddress)
 		copy(dAtA[i:], m.OrchestratorAddress)
 		i = encodeVarintConfirm(dAtA, i, uint64(len(m.OrchestratorAddress)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.EthSigner) > 0 {
+		i -= len(m.EthSigner)
+		copy(dAtA[i:], m.EthSigner)
+		i = encodeVarintConfirm(dAtA, i, uint64(len(m.EthSigner)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -505,12 +494,12 @@ func (m *ConfirmBatch) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Nonce != 0 {
-		n += 1 + sovConfirm(uint64(m.Nonce))
-	}
 	l = len(m.TokenContract)
 	if l > 0 {
 		n += 1 + l + sovConfirm(uint64(l))
+	}
+	if m.Nonce != 0 {
+		n += 1 + sovConfirm(uint64(m.Nonce))
 	}
 	l = len(m.EthSigner)
 	if l > 0 {
@@ -527,7 +516,7 @@ func (m *ConfirmBatch) Size() (n int) {
 	return n
 }
 
-func (m *ConfirmValset) Size() (n int) {
+func (m *ConfirmSignerSet) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -536,11 +525,11 @@ func (m *ConfirmValset) Size() (n int) {
 	if m.Nonce != 0 {
 		n += 1 + sovConfirm(uint64(m.Nonce))
 	}
-	l = len(m.OrchestratorAddress)
+	l = len(m.EthSigner)
 	if l > 0 {
 		n += 1 + l + sovConfirm(uint64(l))
 	}
-	l = len(m.EthAddress)
+	l = len(m.OrchestratorAddress)
 	if l > 0 {
 		n += 1 + l + sovConfirm(uint64(l))
 	}
@@ -784,25 +773,6 @@ func (m *ConfirmBatch) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Nonce", wireType)
-			}
-			m.Nonce = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowConfirm
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Nonce |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TokenContract", wireType)
 			}
@@ -834,6 +804,25 @@ func (m *ConfirmBatch) Unmarshal(dAtA []byte) error {
 			}
 			m.TokenContract = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Nonce", wireType)
+			}
+			m.Nonce = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowConfirm
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Nonce |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EthSigner", wireType)
@@ -951,7 +940,7 @@ func (m *ConfirmBatch) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ConfirmValset) Unmarshal(dAtA []byte) error {
+func (m *ConfirmSignerSet) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -974,10 +963,10 @@ func (m *ConfirmValset) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ConfirmValset: wiretype end group for non-group")
+			return fmt.Errorf("proto: ConfirmSignerSet: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ConfirmValset: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ConfirmSignerSet: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1000,6 +989,38 @@ func (m *ConfirmValset) Unmarshal(dAtA []byte) error {
 				}
 			}
 		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EthSigner", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowConfirm
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthConfirm
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthConfirm
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EthSigner = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field OrchestratorAddress", wireType)
 			}
@@ -1030,38 +1051,6 @@ func (m *ConfirmValset) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.OrchestratorAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EthAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowConfirm
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthConfirm
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthConfirm
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.EthAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {

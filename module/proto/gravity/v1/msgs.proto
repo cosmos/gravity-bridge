@@ -13,17 +13,17 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
 // Msg defines the state transitions possible within gravity
 service Msg {
-  rpc SendToEth(MsgSendToEth) returns (MsgSendToEthResponse) {
-    option (google.api.http).post = "/gravity/v1/send_to_eth";
+  rpc Transfer(MsgTransfer) returns (MsgTransferResponse) {
+    option (google.api.http).post = "/gravity/v1/transfer";
   }
-  rpc CancelSendToEth(MsgCancelSendToEth) returns (MsgCancelSendToEthResponse) {
-    option (google.api.http).post = "/peggy/v1/cancel_send_to_eth";
+  rpc CancelTransfer(MsgCancelTransfer) returns (MsgCancelTransferResponse) {
+    option (google.api.http).post = "/peggy/v1/transfer/cancel";
   }
   rpc RequestBatch(MsgRequestBatch) returns (MsgRequestBatchResponse) {
     option (google.api.http).post = "/gravity/v1/request_batch";
   }
   rpc SubmitConfirm(MsgSubmitConfirm) returns (MsgSubmitConfirmResponse) {
-    option (google.api.http).post = "/peggy/v1/confim_logic";
+    option (google.api.http).post = "/peggy/v1/confim";
   }
   rpc SubmitEvent(MsgSubmitEvent) returns (MsgSubmitEventResponse) {
     option (google.api.http).post = "/peggy/v1/event";
@@ -33,10 +33,10 @@ service Msg {
   }
 }
 
-// MsgSendToEth submits a transfer attempt to bridge an asset over to Ethereum.
+// MsgTransfer submits a transfer attempt to bridge an asset over to Ethereum.
 // The transfer will be stored and then included in a batch and then
 // submitted to Ethereum.
-message MsgSendToEth {
+message MsgTransfer {
   // cosmos account address of the sender in bech32 format
   string                   sender   = 1;
    // ethereum hex address of the recipient
@@ -55,42 +55,38 @@ message MsgSendToEth {
   ];
 }
 
-// MsgSendToEthResponse returns the transfer transaction ID which will be included
+// MsgTransferResponse returns the transfer transaction ID which will be included
 // in the batch tx.
-message MsgSendToEthResponse {} // TODO: add tx id
+message MsgTransferResponse {} // TODO: add tx id
 
-// MsgCancelSendToEth allows the sender to cancel its own outgoing transfer tx
+// MsgCancelTransfer allows the sender to cancel its own outgoing transfer tx
 // and recieve a refund of the tokens and bridge fees. This tx will only succeed
 // if the transfer tx hasn't been batched to be processed and relayed to Ethereum.
-message MsgCancelSendToEth {
+message MsgCancelTransfer {
   // transfer tx unique identifier
   string transaction_id = 1;
     // cosmos account address of the sender in bech32 format
   string sender         = 2;
 }
 
-message MsgCancelSendToEthResponse {}
+message MsgCancelTransferResponse {}
 
-// MsgRequestBatch
-// this is a message anyone can send that requests a batch of transactions to
-// send across the bridge be created for whatever block height this message is
-// included in. This acts as a coordination point, the handler for this message
-// looks at the AddToOutgoingPool tx's in the store and generates a batch, also
-// available in the store tied to this message. The validators then grab this
-// batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer
-// can finally submit the batch
+// MsgRequestBatch requests a batch of transactions with a given coin denomination to send across
+// the bridge to Ethereum. 
 message MsgRequestBatch {
   // cosmos account address of the orchestrator in bech32 format
   string orchestrator_address = 1;
+  // coin denomination
   string denom        = 2;
 }
 
 message MsgRequestBatchResponse {}
 
-// MsgSubmitConfirm
+// MsgSubmitConfirm 
 message MsgSubmitConfirm {
   option (gogoproto.goproto_getters) = false;
 
+  // confirmation for batch txs, logic call txs or signer sets
   google.protobuf.Any confirm      = 1 [
     (cosmos_proto.accepts_interface) = "Confirm"
   ];

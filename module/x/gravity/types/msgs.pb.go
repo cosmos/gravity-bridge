@@ -31,10 +31,10 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgSendToEth submits a transfer attempt to bridge an asset over to Ethereum.
+// MsgTransfer submits a transfer attempt to bridge an asset over to Ethereum.
 // The transfer will be stored and then included in a batch and then
 // submitted to Ethereum.
-type MsgSendToEth struct {
+type MsgTransfer struct {
 	// cosmos account address of the sender in bech32 format
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	// ethereum hex address of the recipient
@@ -49,18 +49,18 @@ type MsgSendToEth struct {
 	BridgeFee types.Coin `protobuf:"bytes,4,opt,name=bridge_fee,json=bridgeFee,proto3" json:"bridge_fee"`
 }
 
-func (m *MsgSendToEth) Reset()         { *m = MsgSendToEth{} }
-func (m *MsgSendToEth) String() string { return proto.CompactTextString(m) }
-func (*MsgSendToEth) ProtoMessage()    {}
-func (*MsgSendToEth) Descriptor() ([]byte, []int) {
+func (m *MsgTransfer) Reset()         { *m = MsgTransfer{} }
+func (m *MsgTransfer) String() string { return proto.CompactTextString(m) }
+func (*MsgTransfer) ProtoMessage()    {}
+func (*MsgTransfer) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2f8523f2f6feb451, []int{0}
 }
-func (m *MsgSendToEth) XXX_Unmarshal(b []byte) error {
+func (m *MsgTransfer) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgSendToEth) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgTransfer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgSendToEth.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgTransfer.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -70,63 +70,63 @@ func (m *MsgSendToEth) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *MsgSendToEth) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgSendToEth.Merge(m, src)
+func (m *MsgTransfer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgTransfer.Merge(m, src)
 }
-func (m *MsgSendToEth) XXX_Size() int {
+func (m *MsgTransfer) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgSendToEth) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgSendToEth.DiscardUnknown(m)
+func (m *MsgTransfer) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgTransfer.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgSendToEth proto.InternalMessageInfo
+var xxx_messageInfo_MsgTransfer proto.InternalMessageInfo
 
-func (m *MsgSendToEth) GetSender() string {
+func (m *MsgTransfer) GetSender() string {
 	if m != nil {
 		return m.Sender
 	}
 	return ""
 }
 
-func (m *MsgSendToEth) GetEthRecipient() string {
+func (m *MsgTransfer) GetEthRecipient() string {
 	if m != nil {
 		return m.EthRecipient
 	}
 	return ""
 }
 
-func (m *MsgSendToEth) GetAmount() types.Coin {
+func (m *MsgTransfer) GetAmount() types.Coin {
 	if m != nil {
 		return m.Amount
 	}
 	return types.Coin{}
 }
 
-func (m *MsgSendToEth) GetBridgeFee() types.Coin {
+func (m *MsgTransfer) GetBridgeFee() types.Coin {
 	if m != nil {
 		return m.BridgeFee
 	}
 	return types.Coin{}
 }
 
-// MsgSendToEthResponse returns the transfer transaction ID which will be included
+// MsgTransferResponse returns the transfer transaction ID which will be included
 // in the batch tx.
-type MsgSendToEthResponse struct {
+type MsgTransferResponse struct {
 }
 
-func (m *MsgSendToEthResponse) Reset()         { *m = MsgSendToEthResponse{} }
-func (m *MsgSendToEthResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgSendToEthResponse) ProtoMessage()    {}
-func (*MsgSendToEthResponse) Descriptor() ([]byte, []int) {
+func (m *MsgTransferResponse) Reset()         { *m = MsgTransferResponse{} }
+func (m *MsgTransferResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgTransferResponse) ProtoMessage()    {}
+func (*MsgTransferResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2f8523f2f6feb451, []int{1}
 }
-func (m *MsgSendToEthResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgTransferResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgSendToEthResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgTransferResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgSendToEthResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgTransferResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -136,40 +136,40 @@ func (m *MsgSendToEthResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-func (m *MsgSendToEthResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgSendToEthResponse.Merge(m, src)
+func (m *MsgTransferResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgTransferResponse.Merge(m, src)
 }
-func (m *MsgSendToEthResponse) XXX_Size() int {
+func (m *MsgTransferResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgSendToEthResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgSendToEthResponse.DiscardUnknown(m)
+func (m *MsgTransferResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgTransferResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgSendToEthResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgTransferResponse proto.InternalMessageInfo
 
-// MsgCancelSendToEth allows the sender to cancel its own outgoing transfer tx
+// MsgCancelTransfer allows the sender to cancel its own outgoing transfer tx
 // and recieve a refund of the tokens and bridge fees. This tx will only succeed
 // if the transfer tx hasn't been batched to be processed and relayed to Ethereum.
-type MsgCancelSendToEth struct {
+type MsgCancelTransfer struct {
 	// transfer tx unique identifier
 	TransactionId string `protobuf:"bytes,1,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
 	// cosmos account address of the sender in bech32 format
 	Sender string `protobuf:"bytes,2,opt,name=sender,proto3" json:"sender,omitempty"`
 }
 
-func (m *MsgCancelSendToEth) Reset()         { *m = MsgCancelSendToEth{} }
-func (m *MsgCancelSendToEth) String() string { return proto.CompactTextString(m) }
-func (*MsgCancelSendToEth) ProtoMessage()    {}
-func (*MsgCancelSendToEth) Descriptor() ([]byte, []int) {
+func (m *MsgCancelTransfer) Reset()         { *m = MsgCancelTransfer{} }
+func (m *MsgCancelTransfer) String() string { return proto.CompactTextString(m) }
+func (*MsgCancelTransfer) ProtoMessage()    {}
+func (*MsgCancelTransfer) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2f8523f2f6feb451, []int{2}
 }
-func (m *MsgCancelSendToEth) XXX_Unmarshal(b []byte) error {
+func (m *MsgCancelTransfer) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgCancelSendToEth) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgCancelTransfer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgCancelSendToEth.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgCancelTransfer.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -179,47 +179,47 @@ func (m *MsgCancelSendToEth) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-func (m *MsgCancelSendToEth) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgCancelSendToEth.Merge(m, src)
+func (m *MsgCancelTransfer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCancelTransfer.Merge(m, src)
 }
-func (m *MsgCancelSendToEth) XXX_Size() int {
+func (m *MsgCancelTransfer) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgCancelSendToEth) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgCancelSendToEth.DiscardUnknown(m)
+func (m *MsgCancelTransfer) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCancelTransfer.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgCancelSendToEth proto.InternalMessageInfo
+var xxx_messageInfo_MsgCancelTransfer proto.InternalMessageInfo
 
-func (m *MsgCancelSendToEth) GetTransactionId() string {
+func (m *MsgCancelTransfer) GetTransactionId() string {
 	if m != nil {
 		return m.TransactionId
 	}
 	return ""
 }
 
-func (m *MsgCancelSendToEth) GetSender() string {
+func (m *MsgCancelTransfer) GetSender() string {
 	if m != nil {
 		return m.Sender
 	}
 	return ""
 }
 
-type MsgCancelSendToEthResponse struct {
+type MsgCancelTransferResponse struct {
 }
 
-func (m *MsgCancelSendToEthResponse) Reset()         { *m = MsgCancelSendToEthResponse{} }
-func (m *MsgCancelSendToEthResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgCancelSendToEthResponse) ProtoMessage()    {}
-func (*MsgCancelSendToEthResponse) Descriptor() ([]byte, []int) {
+func (m *MsgCancelTransferResponse) Reset()         { *m = MsgCancelTransferResponse{} }
+func (m *MsgCancelTransferResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCancelTransferResponse) ProtoMessage()    {}
+func (*MsgCancelTransferResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2f8523f2f6feb451, []int{3}
 }
-func (m *MsgCancelSendToEthResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgCancelTransferResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgCancelSendToEthResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgCancelTransferResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgCancelSendToEthResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgCancelTransferResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -229,30 +229,25 @@ func (m *MsgCancelSendToEthResponse) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-func (m *MsgCancelSendToEthResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgCancelSendToEthResponse.Merge(m, src)
+func (m *MsgCancelTransferResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCancelTransferResponse.Merge(m, src)
 }
-func (m *MsgCancelSendToEthResponse) XXX_Size() int {
+func (m *MsgCancelTransferResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgCancelSendToEthResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgCancelSendToEthResponse.DiscardUnknown(m)
+func (m *MsgCancelTransferResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCancelTransferResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgCancelSendToEthResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgCancelTransferResponse proto.InternalMessageInfo
 
-// MsgRequestBatch
-// this is a message anyone can send that requests a batch of transactions to
-// send across the bridge be created for whatever block height this message is
-// included in. This acts as a coordination point, the handler for this message
-// looks at the AddToOutgoingPool tx's in the store and generates a batch, also
-// available in the store tied to this message. The validators then grab this
-// batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer
-// can finally submit the batch
+// MsgRequestBatch requests a batch of transactions with a given coin denomination to send across
+// the bridge to Ethereum.
 type MsgRequestBatch struct {
 	// cosmos account address of the orchestrator in bech32 format
 	OrchestratorAddress string `protobuf:"bytes,1,opt,name=orchestrator_address,json=orchestratorAddress,proto3" json:"orchestrator_address,omitempty"`
-	Denom               string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	// coin denomination
+	Denom string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
 }
 
 func (m *MsgRequestBatch) Reset()         { *m = MsgRequestBatch{} }
@@ -340,6 +335,7 @@ var xxx_messageInfo_MsgRequestBatchResponse proto.InternalMessageInfo
 
 // MsgSubmitConfirm
 type MsgSubmitConfirm struct {
+	// confirmation for batch txs, logic call txs or signer sets
 	Confirm *types1.Any `protobuf:"bytes,1,opt,name=confirm,proto3" json:"confirm,omitempty"`
 	// cosmos account address of the orchestrator signer in bech32 format
 	Signer string `protobuf:"bytes,2,opt,name=signer,proto3" json:"signer,omitempty"`
@@ -596,10 +592,10 @@ func (m *MsgDelegateKeyResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgDelegateKeyResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*MsgSendToEth)(nil), "gravity.v1.MsgSendToEth")
-	proto.RegisterType((*MsgSendToEthResponse)(nil), "gravity.v1.MsgSendToEthResponse")
-	proto.RegisterType((*MsgCancelSendToEth)(nil), "gravity.v1.MsgCancelSendToEth")
-	proto.RegisterType((*MsgCancelSendToEthResponse)(nil), "gravity.v1.MsgCancelSendToEthResponse")
+	proto.RegisterType((*MsgTransfer)(nil), "gravity.v1.MsgTransfer")
+	proto.RegisterType((*MsgTransferResponse)(nil), "gravity.v1.MsgTransferResponse")
+	proto.RegisterType((*MsgCancelTransfer)(nil), "gravity.v1.MsgCancelTransfer")
+	proto.RegisterType((*MsgCancelTransferResponse)(nil), "gravity.v1.MsgCancelTransferResponse")
 	proto.RegisterType((*MsgRequestBatch)(nil), "gravity.v1.MsgRequestBatch")
 	proto.RegisterType((*MsgRequestBatchResponse)(nil), "gravity.v1.MsgRequestBatchResponse")
 	proto.RegisterType((*MsgSubmitConfirm)(nil), "gravity.v1.MsgSubmitConfirm")
@@ -613,59 +609,58 @@ func init() {
 func init() { proto.RegisterFile("gravity/v1/msgs.proto", fileDescriptor_2f8523f2f6feb451) }
 
 var fileDescriptor_2f8523f2f6feb451 = []byte{
-	// 820 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x55, 0x4f, 0x6f, 0xe3, 0x44,
-	0x14, 0x8f, 0xfb, 0x6f, 0xd5, 0x49, 0xff, 0x6c, 0x4d, 0x68, 0x1d, 0x6f, 0xe5, 0x16, 0xef, 0x82,
-	0x56, 0x42, 0xb5, 0x95, 0x72, 0x58, 0x09, 0x04, 0xd2, 0xa6, 0x14, 0x09, 0xa1, 0x1c, 0x48, 0x39,
-	0xed, 0xc5, 0x1a, 0xdb, 0x2f, 0x63, 0x8b, 0x78, 0x26, 0xeb, 0x99, 0x44, 0xe4, 0x84, 0xc4, 0x89,
-	0x23, 0x88, 0x2f, 0xc0, 0x87, 0x58, 0xbe, 0x01, 0x87, 0xd5, 0x9e, 0x56, 0xe2, 0xc2, 0x09, 0xa1,
-	0x96, 0x0f, 0x82, 0x3c, 0x1e, 0x3b, 0x53, 0xb7, 0x09, 0xdc, 0x3c, 0xf3, 0x7b, 0xef, 0xfd, 0xde,
-	0x9f, 0xdf, 0x1b, 0xa3, 0x77, 0x49, 0x8e, 0x67, 0xa9, 0x98, 0xfb, 0xb3, 0x9e, 0x9f, 0x71, 0xc2,
-	0xbd, 0x49, 0xce, 0x04, 0x33, 0x91, 0xba, 0xf6, 0x66, 0x3d, 0xdb, 0x89, 0x18, 0xcf, 0x18, 0xf7,
-	0x43, 0xcc, 0xc1, 0x9f, 0xf5, 0x42, 0x10, 0xb8, 0xe7, 0x47, 0x2c, 0xa5, 0xa5, 0xad, 0xdd, 0x2d,
-	0xf1, 0x40, 0x9e, 0xfc, 0xf2, 0xa0, 0x20, 0x4b, 0x8b, 0x5e, 0x45, 0xbc, 0x8b, 0x44, 0x8c, 0x8e,
-	0xd2, 0x3c, 0x53, 0x48, 0x87, 0x30, 0xc2, 0xca, 0x58, 0xc5, 0x97, 0xba, 0x3d, 0x26, 0x8c, 0x91,
-	0x31, 0xf8, 0x78, 0x92, 0xfa, 0x98, 0x52, 0x26, 0xb0, 0x48, 0x19, 0xad, 0x78, 0xba, 0x0a, 0x95,
-	0xa7, 0x70, 0x3a, 0xf2, 0x31, 0x55, 0x44, 0xee, 0xef, 0x06, 0xda, 0x19, 0x70, 0x72, 0x05, 0x34,
-	0xfe, 0x86, 0x5d, 0x8a, 0xc4, 0x3c, 0x44, 0x5b, 0x1c, 0x68, 0x0c, 0xb9, 0x65, 0x9c, 0x1a, 0x4f,
-	0xb7, 0x87, 0xea, 0x64, 0x3e, 0x46, 0xbb, 0x20, 0x92, 0x20, 0x87, 0x28, 0x9d, 0xa4, 0x40, 0x85,
-	0xb5, 0x26, 0xe1, 0x1d, 0x10, 0xc9, 0xb0, 0xba, 0x33, 0x9f, 0xa1, 0x2d, 0x9c, 0xb1, 0x29, 0x15,
-	0xd6, 0xfa, 0xa9, 0xf1, 0xb4, 0x7d, 0xde, 0xf5, 0x54, 0xbd, 0x45, 0x73, 0x3c, 0xd5, 0x1c, 0xef,
-	0x82, 0xa5, 0xb4, 0xbf, 0xf1, 0xfa, 0xaf, 0x93, 0xd6, 0x50, 0x99, 0x9b, 0x9f, 0x21, 0x14, 0xe6,
-	0x69, 0x4c, 0x20, 0x18, 0x01, 0x58, 0x1b, 0xff, 0xcf, 0x79, 0xbb, 0x74, 0xf9, 0x02, 0xc0, 0x3d,
-	0x44, 0x1d, 0xbd, 0x8a, 0x21, 0xf0, 0x09, 0xa3, 0x1c, 0xdc, 0x2b, 0x64, 0x0e, 0x38, 0xb9, 0xc0,
-	0x34, 0x82, 0xf1, 0xa2, 0xc6, 0xf7, 0xd1, 0x9e, 0xc8, 0x31, 0xe5, 0x38, 0x2a, 0xba, 0x14, 0xa4,
-	0xb1, 0xaa, 0x75, 0x57, 0xbb, 0xfd, 0x32, 0xd6, 0x5a, 0xb1, 0xa6, 0xb7, 0xc2, 0x3d, 0x46, 0xf6,
-	0xdd, 0xa0, 0x35, 0xe5, 0x0b, 0xb4, 0x3f, 0xe0, 0x64, 0x08, 0x2f, 0xa7, 0xc0, 0x45, 0x1f, 0x8b,
-	0x28, 0x31, 0x7b, 0xa8, 0xc3, 0xf2, 0x28, 0x01, 0x2e, 0x72, 0x2c, 0x58, 0x1e, 0xe0, 0x38, 0xce,
-	0x81, 0x73, 0xc5, 0xfa, 0x8e, 0x8e, 0x3d, 0x2f, 0x21, 0xb3, 0x83, 0x36, 0x63, 0xa0, 0x2c, 0x53,
-	0xd4, 0xe5, 0xc1, 0xed, 0xa2, 0xa3, 0x46, 0xec, 0x9a, 0x36, 0x43, 0x0f, 0x8b, 0x0e, 0x4c, 0xc3,
-	0x2c, 0x15, 0x17, 0xa5, 0x62, 0xcc, 0x4f, 0xd0, 0x03, 0x25, 0x1e, 0x49, 0xd5, 0x3e, 0xef, 0x78,
-	0xa5, 0x12, 0xbc, 0x4a, 0x09, 0xde, 0x73, 0x3a, 0xef, 0xb7, 0xdf, 0xbc, 0x3a, 0x7b, 0xa0, 0x7c,
-	0x86, 0x95, 0x87, 0xac, 0x3e, 0x25, 0x54, 0xab, 0x5e, 0x9e, 0x3e, 0xde, 0xf8, 0xf1, 0xd7, 0x93,
-	0x96, 0x6b, 0x23, 0xab, 0x49, 0xa7, 0xa5, 0xb2, 0x57, 0x63, 0x97, 0xb3, 0x42, 0x17, 0x9f, 0xa2,
-	0x4d, 0x28, 0x3e, 0x56, 0xa6, 0x71, 0xf0, 0xe6, 0xd5, 0xd9, 0xee, 0xa5, 0x48, 0x20, 0x87, 0x69,
-	0x26, 0xfd, 0x86, 0xa5, 0xd7, 0x7f, 0xa4, 0x62, 0xa1, 0xc3, 0xdb, 0x74, 0x75, 0x22, 0x3f, 0x1b,
-	0x32, 0x93, 0xcf, 0x61, 0x0c, 0x04, 0x0b, 0xf8, 0x0a, 0xe6, 0xe6, 0x87, 0xe8, 0x60, 0x86, 0xc7,
-	0x69, 0x7c, 0xcf, 0x1c, 0x1e, 0xd6, 0x40, 0x35, 0x84, 0x65, 0x73, 0x5b, 0x5b, 0x3e, 0xb7, 0x13,
-	0xd4, 0x2e, 0xd6, 0xa4, 0xb2, 0x5c, 0x97, 0x96, 0x08, 0x44, 0xa2, 0x0c, 0x54, 0xb6, 0x5a, 0x4a,
-	0x55, 0xb6, 0xe7, 0xbf, 0x6d, 0xa2, 0xf5, 0x01, 0x27, 0x66, 0x82, 0xb6, 0x17, 0x52, 0xb5, 0xbc,
-	0xc5, 0x53, 0xe3, 0xe9, 0x12, 0xb7, 0x4f, 0x97, 0x21, 0x75, 0xf9, 0x27, 0x3f, 0xfc, 0xf1, 0xcf,
-	0x2f, 0x6b, 0x5d, 0xf7, 0xc8, 0xd7, 0x5e, 0x93, 0x42, 0xc3, 0x81, 0x60, 0x01, 0x88, 0xc4, 0xfc,
-	0x1e, 0xed, 0x37, 0x57, 0xc3, 0x69, 0x44, 0x6d, 0xe0, 0xf6, 0x07, 0xab, 0xf1, 0x9a, 0xfb, 0x89,
-	0xe4, 0x76, 0xdc, 0x63, 0x7f, 0x02, 0x84, 0x94, 0xef, 0x98, 0x34, 0x0d, 0xf4, 0x04, 0x38, 0xda,
-	0xb9, 0xb5, 0x28, 0x8f, 0x1a, 0xd1, 0x75, 0xd0, 0x7e, 0xbc, 0x02, 0xac, 0x79, 0xdf, 0x93, 0xbc,
-	0x8f, 0xdc, 0xae, 0x5e, 0x73, 0x5e, 0x5a, 0x06, 0xa1, 0x24, 0xe1, 0x68, 0xf7, 0xf6, 0x9a, 0x1c,
-	0x37, 0x3b, 0xa9, 0xa3, 0xf6, 0x93, 0x55, 0x68, 0xcd, 0xeb, 0x48, 0x5e, 0xcb, 0x3d, 0xd4, 0xea,
-	0x2d, 0x4c, 0xb2, 0x60, 0xcc, 0x48, 0x1a, 0x99, 0x23, 0xd4, 0xd6, 0x17, 0xc2, 0xbe, 0x37, 0xa8,
-	0xc4, 0x6c, 0x77, 0x39, 0x56, 0xd3, 0x1d, 0x49, 0xba, 0x03, 0x77, 0x7f, 0x41, 0x57, 0xae, 0xca,
-	0x4b, 0xb4, 0x77, 0x05, 0x42, 0x57, 0x7c, 0x93, 0x4a, 0xc3, 0xee, 0x50, 0xdd, 0x23, 0x4b, 0x4d,
-	0x45, 0x35, 0x55, 0xac, 0xcc, 0x82, 0x6f, 0x61, 0xce, 0xfb, 0x5f, 0xbf, 0xbe, 0x76, 0x8c, 0xb7,
-	0xd7, 0x8e, 0xf1, 0xf7, 0xb5, 0x63, 0xfc, 0x74, 0xe3, 0xb4, 0xde, 0xde, 0x38, 0xad, 0x3f, 0x6f,
-	0x9c, 0xd6, 0x8b, 0x67, 0x24, 0x15, 0xc9, 0x34, 0xf4, 0x22, 0x96, 0xa9, 0x1f, 0x5f, 0x35, 0x95,
-	0xb3, 0xf2, 0xe9, 0xf6, 0x33, 0x16, 0x4f, 0xc7, 0xe0, 0x7f, 0x57, 0x4f, 0x4b, 0xcc, 0x27, 0xc0,
-	0xc3, 0x2d, 0xf9, 0x30, 0x7c, 0xf4, 0x6f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x99, 0x10, 0x31, 0x45,
-	0x7f, 0x07, 0x00, 0x00,
+	// 810 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x95, 0xcf, 0x8f, 0xdb, 0x44,
+	0x14, 0xc7, 0xe3, 0xec, 0x8f, 0xd2, 0x49, 0x93, 0x6e, 0xdc, 0x74, 0xe3, 0x78, 0x97, 0xa4, 0xb8,
+	0x54, 0xaa, 0x84, 0xd6, 0x56, 0x96, 0x43, 0x25, 0x10, 0x48, 0xcd, 0x52, 0x24, 0x84, 0x72, 0xc0,
+	0xe5, 0xd4, 0x4b, 0x34, 0xb6, 0x5f, 0x26, 0x16, 0xf1, 0x4c, 0xea, 0x99, 0x44, 0xe4, 0xca, 0x89,
+	0x23, 0x88, 0x7f, 0x00, 0x89, 0x7f, 0xa1, 0xff, 0x01, 0x97, 0xd5, 0x9e, 0x56, 0xe2, 0xc2, 0x09,
+	0xa1, 0x5d, 0xfe, 0x10, 0x94, 0xf1, 0xd8, 0x99, 0x64, 0x93, 0xc0, 0xcd, 0x33, 0xdf, 0xf7, 0xde,
+	0xe7, 0xbd, 0x99, 0xf7, 0xc6, 0xe8, 0x31, 0x49, 0xf1, 0x2c, 0x16, 0x73, 0x6f, 0xd6, 0xf5, 0x12,
+	0x4e, 0xb8, 0x3b, 0x49, 0x99, 0x60, 0x26, 0x52, 0xdb, 0xee, 0xac, 0x6b, 0xb7, 0x43, 0xc6, 0x13,
+	0xc6, 0xbd, 0x00, 0x73, 0xf0, 0x66, 0xdd, 0x00, 0x04, 0xee, 0x7a, 0x21, 0x8b, 0x69, 0x66, 0x6b,
+	0xb7, 0x32, 0x7d, 0x20, 0x57, 0x5e, 0xb6, 0x50, 0x92, 0xa5, 0x45, 0xcf, 0x23, 0xde, 0x55, 0x42,
+	0x46, 0x87, 0x71, 0x9a, 0x28, 0xa5, 0x41, 0x18, 0x61, 0x59, 0xac, 0xc5, 0x97, 0xda, 0x3d, 0x25,
+	0x8c, 0x91, 0x31, 0x78, 0x78, 0x12, 0x7b, 0x98, 0x52, 0x26, 0xb0, 0x88, 0x19, 0xcd, 0x39, 0x2d,
+	0xa5, 0xca, 0x55, 0x30, 0x1d, 0x7a, 0x98, 0x2a, 0x90, 0xf3, 0xbb, 0x81, 0x2a, 0x7d, 0x4e, 0xbe,
+	0x4d, 0x31, 0xe5, 0x43, 0x48, 0xcd, 0x63, 0x74, 0xc8, 0x81, 0x46, 0x90, 0x5a, 0xc6, 0x13, 0xe3,
+	0xf9, 0x7d, 0x5f, 0xad, 0xcc, 0xa7, 0xa8, 0x0a, 0x62, 0x34, 0x48, 0x21, 0x8c, 0x27, 0x31, 0x50,
+	0x61, 0x95, 0xa5, 0xfc, 0x00, 0xc4, 0xc8, 0xcf, 0xf7, 0xcc, 0x17, 0xe8, 0x10, 0x27, 0x6c, 0x4a,
+	0x85, 0xb5, 0xf7, 0xc4, 0x78, 0x5e, 0x39, 0x6f, 0xb9, 0xaa, 0xdc, 0xc5, 0xd9, 0xb8, 0xea, 0x6c,
+	0xdc, 0x0b, 0x16, 0xd3, 0xde, 0xfe, 0xe5, 0x5f, 0x9d, 0x92, 0xaf, 0xcc, 0xcd, 0xcf, 0x11, 0x0a,
+	0xd2, 0x38, 0x22, 0x30, 0x18, 0x02, 0x58, 0xfb, 0xff, 0xcf, 0xf9, 0x7e, 0xe6, 0xf2, 0x25, 0x80,
+	0xf3, 0x18, 0x3d, 0xd2, 0x8a, 0xf0, 0x81, 0x4f, 0x18, 0xe5, 0xe0, 0xf8, 0xa8, 0xde, 0xe7, 0xe4,
+	0x02, 0xd3, 0x10, 0xc6, 0x45, 0x85, 0xcf, 0x50, 0x4d, 0x2c, 0xbe, 0x71, 0xb8, 0x38, 0xa2, 0x41,
+	0x1c, 0xa9, 0x4a, 0xab, 0xda, 0xee, 0x57, 0x91, 0x76, 0x10, 0x65, 0xfd, 0x20, 0x9c, 0x13, 0xd4,
+	0xba, 0x13, 0xb3, 0x00, 0xbe, 0x41, 0x0f, 0xfb, 0x9c, 0xf8, 0xf0, 0x76, 0x0a, 0x5c, 0xf4, 0xb0,
+	0x08, 0x47, 0x66, 0x17, 0x35, 0x58, 0x1a, 0x8e, 0x80, 0x8b, 0x14, 0x0b, 0x96, 0x0e, 0x70, 0x14,
+	0xa5, 0xc0, 0xb9, 0x82, 0x3e, 0xd2, 0xb5, 0x97, 0x99, 0x64, 0x36, 0xd0, 0x41, 0x04, 0x94, 0x25,
+	0x8a, 0x9c, 0x2d, 0x9c, 0x16, 0x6a, 0xae, 0xc5, 0x2e, 0xb0, 0x09, 0x3a, 0xea, 0x73, 0xf2, 0x7a,
+	0x1a, 0x24, 0xb1, 0xb8, 0xc8, 0xba, 0xc5, 0xfc, 0x14, 0xdd, 0x53, 0x8d, 0x23, 0x51, 0x95, 0xf3,
+	0x86, 0x9b, 0x75, 0x81, 0x9b, 0x77, 0x81, 0xfb, 0x92, 0xce, 0x7b, 0x95, 0xab, 0x77, 0x67, 0xf7,
+	0x94, 0x8f, 0x9f, 0x7b, 0xc8, 0xe2, 0x63, 0x42, 0xb5, 0xe2, 0xe5, 0xea, 0x93, 0xfd, 0x1f, 0x7f,
+	0xed, 0x94, 0x1c, 0x1b, 0x59, 0xeb, 0x38, 0x2d, 0x95, 0x5a, 0xa1, 0xbd, 0x9a, 0x2d, 0x9a, 0xe2,
+	0x33, 0x74, 0x00, 0x8b, 0x8f, 0x9d, 0x69, 0xd4, 0xaf, 0xde, 0x9d, 0x55, 0x5f, 0x89, 0x11, 0xa4,
+	0x30, 0x4d, 0xa4, 0x9f, 0x9f, 0x79, 0xfd, 0x47, 0x2a, 0x16, 0x3a, 0x5e, 0xc5, 0x15, 0x89, 0xfc,
+	0x6c, 0xc8, 0x4c, 0xbe, 0x80, 0x31, 0x10, 0x2c, 0xe0, 0x6b, 0x98, 0x9b, 0x1f, 0xa1, 0xfa, 0x0c,
+	0x8f, 0xe3, 0x68, 0xc3, 0x3d, 0x1c, 0x15, 0x42, 0x7e, 0x09, 0xdb, 0xee, 0xad, 0xbc, 0xfd, 0xde,
+	0x3a, 0xa8, 0xb2, 0x98, 0x91, 0xdc, 0x72, 0x4f, 0x5a, 0x22, 0x10, 0x23, 0x65, 0xa0, 0xb2, 0xd5,
+	0x52, 0xca, 0xb3, 0x3d, 0xff, 0xed, 0x00, 0xed, 0xf5, 0x39, 0x31, 0x03, 0xf4, 0x5e, 0xd1, 0xa8,
+	0x4d, 0x77, 0xf9, 0xca, 0xb8, 0x5a, 0x7b, 0xdb, 0x9d, 0x2d, 0x42, 0x51, 0xfb, 0xe9, 0x0f, 0x7f,
+	0xfc, 0xf3, 0x4b, 0xf9, 0xd8, 0x69, 0x78, 0xda, 0x33, 0x22, 0xf2, 0xb8, 0x73, 0x54, 0x5b, 0x1b,
+	0x89, 0xf7, 0xd7, 0x02, 0xae, 0xca, 0xf6, 0xb3, 0x9d, 0x72, 0x41, 0xfd, 0x40, 0x52, 0x4f, 0x9c,
+	0x96, 0x37, 0x01, 0x42, 0x56, 0x98, 0x5e, 0x28, 0x5d, 0x4c, 0x8e, 0x1e, 0xac, 0x0c, 0xc7, 0xc9,
+	0x5a, 0x64, 0x5d, 0xb4, 0x9f, 0xee, 0x10, 0x37, 0x40, 0xb5, 0x52, 0xd3, 0xcc, 0x72, 0x10, 0x48,
+	0x48, 0x82, 0xaa, 0xab, 0xa3, 0x71, 0xba, 0x16, 0x78, 0x45, 0xb5, 0x3f, 0xdc, 0xa5, 0x16, 0x5c,
+	0x4b, 0x72, 0x4d, 0xe7, 0x68, 0x59, 0xac, 0x1c, 0x9e, 0xc4, 0x1c, 0xa2, 0x8a, 0xde, 0xfe, 0xf6,
+	0xc6, 0x70, 0x52, 0xb3, 0x9d, 0xed, 0x5a, 0x01, 0x6a, 0x4a, 0x50, 0xdd, 0x79, 0xb8, 0x04, 0x65,
+	0x83, 0xf1, 0x16, 0xd5, 0x5e, 0x83, 0xd0, 0xfb, 0x7b, 0x1d, 0xa5, 0x69, 0x77, 0x50, 0x1b, 0x9a,
+	0xd0, 0xe9, 0x48, 0x54, 0xcb, 0x69, 0x2e, 0x51, 0x91, 0x32, 0x1b, 0x7c, 0x07, 0x73, 0xde, 0xfb,
+	0xe6, 0xf2, 0xa6, 0x6d, 0x5c, 0xdf, 0xb4, 0x8d, 0xbf, 0x6f, 0xda, 0xc6, 0x4f, 0xb7, 0xed, 0xd2,
+	0xf5, 0x6d, 0xbb, 0xf4, 0xe7, 0x6d, 0xbb, 0xf4, 0xe6, 0x05, 0x89, 0xc5, 0x68, 0x1a, 0xb8, 0x21,
+	0x4b, 0xd4, 0x2f, 0x2e, 0xbf, 0x8f, 0xb3, 0xec, 0x95, 0xf6, 0x12, 0x16, 0x4d, 0xc7, 0xe0, 0x7d,
+	0x5f, 0xdc, 0x93, 0x98, 0x4f, 0x80, 0x07, 0x87, 0xf2, 0x19, 0xf8, 0xf8, 0xdf, 0x00, 0x00, 0x00,
+	0xff, 0xff, 0x36, 0x95, 0x4d, 0x6e, 0x69, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -680,8 +675,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	SendToEth(ctx context.Context, in *MsgSendToEth, opts ...grpc.CallOption) (*MsgSendToEthResponse, error)
-	CancelSendToEth(ctx context.Context, in *MsgCancelSendToEth, opts ...grpc.CallOption) (*MsgCancelSendToEthResponse, error)
+	Transfer(ctx context.Context, in *MsgTransfer, opts ...grpc.CallOption) (*MsgTransferResponse, error)
+	CancelTransfer(ctx context.Context, in *MsgCancelTransfer, opts ...grpc.CallOption) (*MsgCancelTransferResponse, error)
 	RequestBatch(ctx context.Context, in *MsgRequestBatch, opts ...grpc.CallOption) (*MsgRequestBatchResponse, error)
 	SubmitConfirm(ctx context.Context, in *MsgSubmitConfirm, opts ...grpc.CallOption) (*MsgSubmitConfirmResponse, error)
 	SubmitEvent(ctx context.Context, in *MsgSubmitEvent, opts ...grpc.CallOption) (*MsgSubmitEventResponse, error)
@@ -696,18 +691,18 @@ func NewMsgClient(cc *grpc.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) SendToEth(ctx context.Context, in *MsgSendToEth, opts ...grpc.CallOption) (*MsgSendToEthResponse, error) {
-	out := new(MsgSendToEthResponse)
-	err := c.cc.Invoke(ctx, "/gravity.v1.Msg/SendToEth", in, out, opts...)
+func (c *msgClient) Transfer(ctx context.Context, in *MsgTransfer, opts ...grpc.CallOption) (*MsgTransferResponse, error) {
+	out := new(MsgTransferResponse)
+	err := c.cc.Invoke(ctx, "/gravity.v1.Msg/Transfer", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *msgClient) CancelSendToEth(ctx context.Context, in *MsgCancelSendToEth, opts ...grpc.CallOption) (*MsgCancelSendToEthResponse, error) {
-	out := new(MsgCancelSendToEthResponse)
-	err := c.cc.Invoke(ctx, "/gravity.v1.Msg/CancelSendToEth", in, out, opts...)
+func (c *msgClient) CancelTransfer(ctx context.Context, in *MsgCancelTransfer, opts ...grpc.CallOption) (*MsgCancelTransferResponse, error) {
+	out := new(MsgCancelTransferResponse)
+	err := c.cc.Invoke(ctx, "/gravity.v1.Msg/CancelTransfer", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -752,8 +747,8 @@ func (c *msgClient) SetDelegateKey(ctx context.Context, in *MsgDelegateKey, opts
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	SendToEth(context.Context, *MsgSendToEth) (*MsgSendToEthResponse, error)
-	CancelSendToEth(context.Context, *MsgCancelSendToEth) (*MsgCancelSendToEthResponse, error)
+	Transfer(context.Context, *MsgTransfer) (*MsgTransferResponse, error)
+	CancelTransfer(context.Context, *MsgCancelTransfer) (*MsgCancelTransferResponse, error)
 	RequestBatch(context.Context, *MsgRequestBatch) (*MsgRequestBatchResponse, error)
 	SubmitConfirm(context.Context, *MsgSubmitConfirm) (*MsgSubmitConfirmResponse, error)
 	SubmitEvent(context.Context, *MsgSubmitEvent) (*MsgSubmitEventResponse, error)
@@ -764,11 +759,11 @@ type MsgServer interface {
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) SendToEth(ctx context.Context, req *MsgSendToEth) (*MsgSendToEthResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendToEth not implemented")
+func (*UnimplementedMsgServer) Transfer(ctx context.Context, req *MsgTransfer) (*MsgTransferResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Transfer not implemented")
 }
-func (*UnimplementedMsgServer) CancelSendToEth(ctx context.Context, req *MsgCancelSendToEth) (*MsgCancelSendToEthResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CancelSendToEth not implemented")
+func (*UnimplementedMsgServer) CancelTransfer(ctx context.Context, req *MsgCancelTransfer) (*MsgCancelTransferResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelTransfer not implemented")
 }
 func (*UnimplementedMsgServer) RequestBatch(ctx context.Context, req *MsgRequestBatch) (*MsgRequestBatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestBatch not implemented")
@@ -787,38 +782,38 @@ func RegisterMsgServer(s *grpc.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
 }
 
-func _Msg_SendToEth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgSendToEth)
+func _Msg_Transfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgTransfer)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).SendToEth(ctx, in)
+		return srv.(MsgServer).Transfer(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gravity.v1.Msg/SendToEth",
+		FullMethod: "/gravity.v1.Msg/Transfer",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).SendToEth(ctx, req.(*MsgSendToEth))
+		return srv.(MsgServer).Transfer(ctx, req.(*MsgTransfer))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_CancelSendToEth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgCancelSendToEth)
+func _Msg_CancelTransfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCancelTransfer)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).CancelSendToEth(ctx, in)
+		return srv.(MsgServer).CancelTransfer(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gravity.v1.Msg/CancelSendToEth",
+		FullMethod: "/gravity.v1.Msg/CancelTransfer",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).CancelSendToEth(ctx, req.(*MsgCancelSendToEth))
+		return srv.(MsgServer).CancelTransfer(ctx, req.(*MsgCancelTransfer))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -900,12 +895,12 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SendToEth",
-			Handler:    _Msg_SendToEth_Handler,
+			MethodName: "Transfer",
+			Handler:    _Msg_Transfer_Handler,
 		},
 		{
-			MethodName: "CancelSendToEth",
-			Handler:    _Msg_CancelSendToEth_Handler,
+			MethodName: "CancelTransfer",
+			Handler:    _Msg_CancelTransfer_Handler,
 		},
 		{
 			MethodName: "RequestBatch",
@@ -928,7 +923,7 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	Metadata: "gravity/v1/msgs.proto",
 }
 
-func (m *MsgSendToEth) Marshal() (dAtA []byte, err error) {
+func (m *MsgTransfer) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -938,12 +933,12 @@ func (m *MsgSendToEth) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgSendToEth) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgTransfer) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgSendToEth) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgTransfer) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -985,7 +980,7 @@ func (m *MsgSendToEth) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgSendToEthResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgTransferResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -995,12 +990,12 @@ func (m *MsgSendToEthResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgSendToEthResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgTransferResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgSendToEthResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgTransferResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1008,7 +1003,7 @@ func (m *MsgSendToEthResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgCancelSendToEth) Marshal() (dAtA []byte, err error) {
+func (m *MsgCancelTransfer) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1018,12 +1013,12 @@ func (m *MsgCancelSendToEth) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgCancelSendToEth) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgCancelTransfer) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgCancelSendToEth) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgCancelTransfer) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1045,7 +1040,7 @@ func (m *MsgCancelSendToEth) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgCancelSendToEthResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgCancelTransferResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1055,12 +1050,12 @@ func (m *MsgCancelSendToEthResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgCancelSendToEthResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgCancelTransferResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgCancelSendToEthResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgCancelTransferResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1336,7 +1331,7 @@ func encodeVarintMsgs(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *MsgSendToEth) Size() (n int) {
+func (m *MsgTransfer) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1357,7 +1352,7 @@ func (m *MsgSendToEth) Size() (n int) {
 	return n
 }
 
-func (m *MsgSendToEthResponse) Size() (n int) {
+func (m *MsgTransferResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1366,7 +1361,7 @@ func (m *MsgSendToEthResponse) Size() (n int) {
 	return n
 }
 
-func (m *MsgCancelSendToEth) Size() (n int) {
+func (m *MsgCancelTransfer) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1383,7 +1378,7 @@ func (m *MsgCancelSendToEth) Size() (n int) {
 	return n
 }
 
-func (m *MsgCancelSendToEthResponse) Size() (n int) {
+func (m *MsgCancelTransferResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1506,7 +1501,7 @@ func sovMsgs(x uint64) (n int) {
 func sozMsgs(x uint64) (n int) {
 	return sovMsgs(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *MsgSendToEth) Unmarshal(dAtA []byte) error {
+func (m *MsgTransfer) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1529,10 +1524,10 @@ func (m *MsgSendToEth) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgSendToEth: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgTransfer: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgSendToEth: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgTransfer: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1686,7 +1681,7 @@ func (m *MsgSendToEth) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgSendToEthResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgTransferResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1709,10 +1704,10 @@ func (m *MsgSendToEthResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgSendToEthResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgTransferResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgSendToEthResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgTransferResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -1736,7 +1731,7 @@ func (m *MsgSendToEthResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgCancelSendToEth) Unmarshal(dAtA []byte) error {
+func (m *MsgCancelTransfer) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1759,10 +1754,10 @@ func (m *MsgCancelSendToEth) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgCancelSendToEth: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgCancelTransfer: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgCancelSendToEth: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgCancelTransfer: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1850,7 +1845,7 @@ func (m *MsgCancelSendToEth) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgCancelSendToEthResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgCancelTransferResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1873,10 +1868,10 @@ func (m *MsgCancelSendToEthResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgCancelSendToEthResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgCancelTransferResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgCancelSendToEthResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgCancelTransferResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

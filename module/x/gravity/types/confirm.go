@@ -12,11 +12,13 @@ type Confirm interface {
 	proto.Message
 
 	GetType() string
+	// TODO: delete
 	GetOrchestratorAddress() string
 	GetNonce() uint64
 	GetSignature() string
 	Validate() error
 
+	// TODO: consider deleting
 	GetTokenContract() string
 	GetInvalidationId() string
 	GetInvalidationNonce() uint64
@@ -52,7 +54,7 @@ func (msg ConfirmBatch) Validate() error {
 // GetInvalidationNonce is a noop to implement confirm interface
 func (msg ConfirmBatch) GetInvalidationNonce() uint64 { return 0 }
 
-// GetInvalidationID is a noop to implement confirm interface
+// GetInvalidationId is a noop to implement confirm interface
 func (msg ConfirmBatch) GetInvalidationId() string { return "" }
 
 // GetType should return the action
@@ -112,7 +114,7 @@ func (msg *ConfirmValset) Validate() (err error) {
 // GetInvalidationNonce is a noop to implement confirm interface
 func (msg ConfirmValset) GetInvalidationNonce() uint64 { return 0 }
 
-// GetInvalidationID is a noop to implement confirm interface
+// GetInvalidationId is a noop to implement confirm interface
 func (msg ConfirmValset) GetInvalidationId() string { return "" }
 
 func (msg *ConfirmValset) GetTokenContract() string {

@@ -9,33 +9,10 @@ import "gravity/v1/gravity.proto";
 option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
 // Params represent the Gravity genesis and store parameters
-// gravity_id:
-// a random 32 byte value to prevent signature reuse, for example if the
-// cosmos validators decided to use the same Ethereum keys for another chain
-// also running Gravity we would not want it to be possible to play a deposit
-// from chain A back on chain B's Gravity. This value IS USED ON ETHEREUM so
-// it must be set in your genesis.json before launch and not changed after
-// deploying Gravity
-//
-// contract_hash:
-// the code hash of a known good version of the Gravity contract
-// solidity code. This can be used to verify the correct version
-// of the contract has been deployed. This is a reference value for
-// goernance action only it is never read by any Gravity code
-//
 // bridge_ethereum_address:
 // is address of the bridge contract on the Ethereum side, this is a
 // reference value for governance only and is not actually used by any
 // Gravity code
-//
-// bridge_chain_id:
-// the unique identifier of the Ethereum chain, this is a reference value
-// only and is not actually used by any Gravity code
-//
-// These reference values may be used by future Gravity client implemetnations
-// to allow for saftey features or convenience features like the Gravity address
-// in your relayer. A relayer would require a configured Gravity address if
-// governance had not set the address on the chain it was relaying for.
 //
 // signed_valsets_window
 // signed_batches_window
@@ -71,29 +48,40 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 message Params {
   option (gogoproto.stringer) = false;
 
-  string contract_source_hash        = 1;
-  string bridge_ethereum_address     = 2;
-  uint64 bridge_chain_id             = 3;
-  uint64 signed_valsets_window       = 4;
-  uint64 signed_batches_window       = 5;
-  uint64 signed_claims_window        = 6;
-  uint64 unbond_slashing_valsets_window = 7;
-  uint64 target_batch_timeout        = 8;
-  uint64 average_block_time          = 9;
-  uint64 average_ethereum_block_time = 10;
-  string  slash_fraction_valset       = 11 [
+  // address of the bridge contract on the EVM chain
+  string bridge_contract_address     = 1;
+  // unique identifier of the EVM chain
+  uint64 bridge_chain_id             = 2;
+// target value for when batch transactions time out on Ethereum
+  uint64 target_batch_timeout        = 3;
+// Average Cosmos block time used to compute batch timeout
+  uint64 average_block_time          = 4;
+  // Average ethereum block time used to compute batch timeout
+  uint64 average_ethereum_block_time = 5;
+  // amount of blocks of the rolling window required to submit a signature for a signer set confirmation.
+  uint64 signerset_window       = 6;
+  // amount of blocks of the rolling window required to submit a signature for a batch transaction.
+  uint64 batch_tx_window       = 7;
+  // amount of blocks of the rolling window required to attest an ethereum event.
+  uint64 event_window        = 8;
+  uint64 unbonding_window = 9;
+  // slashing fraction for not signing a signerset confirmation
+  string  slash_fraction_signerset       = 10 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  string slash_fraction_batch = 12 [
+  // slashing fraction for not signing an outgoing batch transaction to ethereum
+  string slash_fraction_batch = 11 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  string slash_fraction_claim = 13 [
+  // slashing fraction for not signing events
+  string slash_fraction_event = 12 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  string slash_fraction_conflicting_claim = 14 [
+  // slashing fraction for submitting a conflicting event from Ethereum
+  string slash_fraction_conflicting_event = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
@@ -102,7 +90,9 @@ message Params {
 // ERC20ToDenom records the relationship between an ERC20 token contract and the
 // denomination of the corresponding Cosmos coin.
 message ERC20ToDenom {
+  // token contract address in hex format
   string erc20_address = 1;
+  // coin denomination
   string denom = 2;
 }
 
@@ -110,14 +100,16 @@ message ERC20ToDenom {
 message GenesisState {
   Params                      params              = 1 [(gogoproto.nullable) = false];
   uint64                      last_observed_nonce = 2;
-  repeated EthSignerSet             valsets             = 3;
-  repeated BatchTx    batches             = 4;
-  repeated LogicCallTx  logic_calls         = 5;
-  repeated TransferTx transfers_pool = 6;
-  repeated ConfirmValset      valset_confirms     = 7;
+  repeated EthSignerSet             signersets             = 3 [(gogoproto.nullable) = false];
+  // requested batc transactions
+  repeated BatchTx    batch_txs             = 4 [(gogoproto.nullable) = false];
+  repeated LogicCallTx  logic_call_txs         = 5 [(gogoproto.nullable) = false];
+  // unbatched transfer transactions
+  repeated TransferTx transfer_txs = 6 [(gogoproto.nullable) = false];
+  repeated ConfirmSignerSet      valset_confirms     = 7 [(gogoproto.nullable) = false];
   repeated ConfirmBatch       batch_confirms      = 8 [(gogoproto.nullable) = false];
   repeated ConfirmLogicCall   logic_call_confirms = 9 [(gogoproto.nullable) = false];
   repeated Attestation        attestations        = 10 [(gogoproto.nullable) = false];
-  repeated MsgDelegateKey     delegate_keys       = 11;
+  repeated MsgDelegateKey     delegate_keys       = 11 [(gogoproto.nullable) = false];
   repeated ERC20ToDenom       erc20_to_denoms     = 12 [(gogoproto.nullable) = false];
 }
