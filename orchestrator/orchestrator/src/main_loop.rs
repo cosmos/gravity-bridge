@@ -88,7 +88,7 @@ pub async fn eth_oracle_main_loop(
     gravity_contract_address: EthAddress,
     fee: Coin,
 ) {
-    let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
+    let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
     let long_timeout_web30 = Web3::new(&web3.get_url(), Duration::from_secs(120));
     let mut last_checked_block: Uint256 = get_last_checked_block(
         grpc_client.clone(),
@@ -181,7 +181,7 @@ pub async fn eth_signer_main_loop(
     gravity_contract_address: EthAddress,
     fee: Coin,
 ) {
-    let our_cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
+    let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
     let mut grpc_client = grpc_client;
     let gravity_id = get_gravity_id(gravity_contract_address, our_ethereum_address, &web3).await;

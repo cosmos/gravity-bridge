@@ -187,7 +187,7 @@ impl TransactionBatchExecutedEvent {
 
 /// A parsed struct representing the Ethereum event fired when someone makes a deposit
 /// on the Gravity contract
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct SendToCosmosEvent {
     /// The token contract address for the deposit
     pub erc20: EthAddress,
@@ -217,7 +217,8 @@ impl SendToCosmosEvent {
             // create an address from bytes.
             let mut c_address_bytes: [u8; 20] = [0; 20];
             c_address_bytes.copy_from_slice(&destination_data[12..32]);
-            let destination = CosmosAddress::from_bytes(c_address_bytes);
+            let destination =
+                CosmosAddress::from_bytes(c_address_bytes, CosmosAddress::DEFAULT_PREFIX).unwrap();
             let amount = Uint256::from_bytes_be(&input.data[..32]);
             let event_nonce = Uint256::from_bytes_be(&input.data[32..]);
             let block_height = if let Some(bn) = input.block_number.clone() {

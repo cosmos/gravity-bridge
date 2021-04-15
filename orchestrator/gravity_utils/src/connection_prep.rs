@@ -26,6 +26,7 @@ pub struct Connections {
 /// operation in a error resilient manner. TODO find some way to generalize
 /// this so that it's less ugly
 pub async fn create_rpc_connections(
+    chain_prefix: String,
     grpc_url: Option<String>,
     eth_rpc_url: Option<String>,
     timeout: Duration,
@@ -61,12 +62,12 @@ pub async fn create_rpc_connections(
                     match (ipv4, ipv6) {
                         (Ok(v), Err(_)) => {
                             info!("Url fallback succeeded, your cosmos gRPC url {} has been corrected to {}", grpc_url, ipv4_url);
-                            contact = Some(Contact::new(&ipv4_url, timeout));
+                            contact = Some(Contact::new(&ipv4_url, timeout, &chain_prefix).unwrap());
                             grpc = Some(v)
                         },
                         (Err(_), Ok(v)) => {
                             info!("Url fallback succeeded, your cosmos gRPC url {} has been corrected to {}", grpc_url, ipv6_url);
-                            contact = Some(Contact::new(&ipv6_url, timeout));
+                            contact = Some(Contact::new(&ipv6_url, timeout, &chain_prefix).unwrap());
                             grpc = Some(v)
                         },
                         (Ok(_), Ok(_)) => panic!("This should never happen? Why didn't things work the first time?"),
@@ -88,12 +89,12 @@ pub async fn create_rpc_connections(
                     match (https_on_80, https_on_443) {
                         (Ok(v), Err(_)) => {
                             info!("Https upgrade succeeded, your cosmos gRPC url {} has been corrected to {}", grpc_url, https_on_80_url);
-                            contact = Some(Contact::new(&https_on_80_url, timeout));
+                            contact = Some(Contact::new(&https_on_80_url, timeout, &chain_prefix).unwrap());
                             grpc = Some(v)
                         },
                         (Err(_), Ok(v)) => {
                             info!("Https upgrade succeeded, your cosmos gRPC url {} has been corrected to {}", grpc_url, https_on_443_url);
-                            contact = Some(Contact::new(&https_on_443_url, timeout));
+                            contact = Some(Contact::new(&https_on_443_url, timeout, &chain_prefix).unwrap());
                             grpc = Some(v)
                         },
                         (Ok(_), Ok(_)) => panic!("This should never happen? Why didn't things work the first time?"),

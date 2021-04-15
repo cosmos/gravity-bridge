@@ -60,9 +60,8 @@ pub async fn happy_path_test(
     let secret: [u8; 32] = rng.gen();
     let dest_cosmos_private_key = CosmosPrivateKey::from_secret(&secret);
     let dest_cosmos_address = dest_cosmos_private_key
-        .to_public_key()
-        .unwrap()
-        .to_address();
+        .to_address(CosmosAddress::DEFAULT_PREFIX)
+        .unwrap();
     let dest_eth_private_key = EthPrivateKey::from_slice(&secret).unwrap();
     let dest_eth_address = dest_eth_private_key.to_public_key().unwrap();
 
@@ -212,11 +211,9 @@ pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_ad
     let validator_to_change = rng.gen_range(0..keys.len());
     let delegate_address = &keys[validator_to_change]
         .validator_key
-        .to_public_key()
+        .to_address("cosmosvaloper")
         .unwrap()
-        .to_address()
-        .to_bech32("cosmosvaloper")
-        .unwrap();
+        .to_string();
     let amount = &format!("{}stake", STARTING_STAKE_PER_VALIDATOR / 4);
     info!(
         "Delegating {} to {} in order to generate a validator set update",
@@ -322,9 +319,8 @@ async fn test_batch(
     erc20_contract: EthAddress,
 ) {
     let dest_cosmos_address = dest_cosmos_private_key
-        .to_public_key()
-        .unwrap()
-        .to_address();
+        .to_address(&contact.get_prefix())
+        .unwrap();
     let coin = check_cosmos_balance("gravity", dest_cosmos_address, &contact)
         .await
         .unwrap();
@@ -366,9 +362,8 @@ async fn test_batch(
 
     contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
     let requester_address = requester_cosmos_private_key
-        .to_public_key()
-        .unwrap()
-        .to_address();
+        .to_address(&contact.get_prefix())
+        .unwrap();
     get_oldest_unsigned_transaction_batch(grpc_client, requester_address)
         .await
         .expect("Failed to get batch to sign");

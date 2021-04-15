@@ -25,7 +25,10 @@ pub fn get_correct_sig_for_address(
     panic!("Could not find that address!");
 }
 
-pub fn get_checkpoint_abi_encode(valset: &Valset, gravity_id: &str) -> Result<Vec<u8>, GravityError> {
+pub fn get_checkpoint_abi_encode(
+    valset: &Valset,
+    gravity_id: &str,
+) -> Result<Vec<u8>, GravityError> {
     let (eth_addresses, powers) = valset.filter_empty_addresses();
     Ok(encode_tokens(&[
         Token::FixedString(gravity_id.to_string()),

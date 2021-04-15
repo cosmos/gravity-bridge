@@ -30,7 +30,7 @@ pub async fn orch_keys_update(
     info!("About to check already set delegate addresses");
     for k in keys.iter() {
         let eth_address = k.eth_key.to_public_key().unwrap();
-        let orch_address = k.orch_key.to_public_key().unwrap().to_address();
+        let orch_address = k.orch_key.to_address(&contact.get_prefix()).unwrap();
         let eth_response = grpc_client
             .get_delegate_key_by_eth(QueryDelegateKeysByEthAddress {
                 eth_address: eth_address.to_string(),
@@ -69,17 +69,18 @@ pub async fn orch_keys_update(
         // update the keys in the key list
         k.eth_key = eth_key;
         k.orch_key = cosmos_key;
+        let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
         info!(
             "Signing and submitting Delegate addresses {} for validator {}",
             eth_key.to_public_key().unwrap(),
-            cosmos_key.to_public_key().unwrap().to_address(),
+            cosmos_address,
         );
         // send in the new delegate keys signed by the validator address
         updates.push(update_gravity_delegate_addresses(
             &contact,
             eth_key.to_public_key().unwrap(),
-            cosmos_key.to_public_key().unwrap().to_address(),
+            cosmos_address,
             k.validator_key,
             get_fee(),
         ));

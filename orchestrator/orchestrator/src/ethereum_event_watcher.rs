@@ -29,7 +29,7 @@ pub async fn check_for_events(
     fee: Coin,
     starting_block: Uint256,
 ) -> Result<Uint256, GravityError> {
-    let our_cosmos_address = our_private_key.to_public_key().unwrap().to_address();
+    let our_cosmos_address = our_private_key.to_address(&contact.get_prefix()).unwrap();
     let latest_block = get_block_number_with_retry(web3).await;
     let latest_block = latest_block - get_block_delay(web3).await;
 

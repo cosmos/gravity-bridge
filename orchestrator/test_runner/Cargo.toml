@@ -16,7 +16,7 @@ gravity_utils = {path = "../gravity_utils"}
 gravity_proto = {path = "../gravity_proto/"}
 orchestrator = {path = "../orchestrator/"}
 
-deep_space = "1.1"
+deep_space = "2.1"
 serde_derive = "1.0"
 clarity = "0.4"
 docopt = "1"
