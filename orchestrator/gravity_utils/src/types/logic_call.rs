@@ -53,7 +53,7 @@ impl LogicCall {
 }
 
 /// the response we get when querying for a logic call confirmation
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LogicCallConfirmResponse {
     pub invalidation_id: Vec<u8>,
     pub invalidation_nonce: u64,

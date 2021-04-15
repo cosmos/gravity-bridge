@@ -51,7 +51,7 @@ struct SignatureStatus {
 }
 
 /// the response we get when querying for a valset confirmation
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ValsetConfirmResponse {
     pub orchestrator: CosmosAddress,
     pub eth_address: EthAddress,
