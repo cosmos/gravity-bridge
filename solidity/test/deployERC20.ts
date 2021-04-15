@@ -63,7 +63,7 @@ async function runTest(opts: {}) {
     _name: 'Atom',
     _symbol: 'ATOM',
     _decimals: 6,
-    _eventNonce: BigNumber.from(1)
+    _eventNonce: BigNumber.from(2)
   })
 
 
