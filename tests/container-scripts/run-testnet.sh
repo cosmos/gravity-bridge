@@ -34,7 +34,7 @@ GRPC_ADDRESS="--grpc.address 7.7.7.$i:9091"
 fi
 LISTEN_ADDRESS="--address tcp://7.7.7.$i:26655"
 P2P_ADDRESS="--p2p.laddr tcp://7.7.7.$i:26656"
-PPROF_ADDRESS="--rpc.pprof_laddr 0.0.0.0:606$1"
+PPROF_ADDRESS="--rpc.pprof_laddr 7.7.7.$1:6060"
 LOG_LEVEL="--log_level error"
 ARGS="$GAIA_HOME $LISTEN_ADDRESS $RPC_ADDRESS $GRPC_ADDRESS $LOG_LEVEL $P2P_ADDRESS $PPROF_ADDRESS"
 $BIN $ARGS start > /validator$i/logs &
