@@ -112,7 +112,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	ethClaim := types.MsgSubmitClaim{
-		ClaimType: types.ClaimType_DEPOSIT,
+		ClaimType: types.ClaimType_CLAIM_TYPE_DEPOSIT,
 		Claim:     any,
 	}
 
@@ -153,7 +153,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	ethClaim = types.MsgSubmitClaim{
-		ClaimType: types.ClaimType_DEPOSIT,
+		ClaimType: types.ClaimType_CLAIM_TYPE_DEPOSIT,
 		Claim:     any,
 	}
 
@@ -180,7 +180,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	ethClaim = types.MsgSubmitClaim{
-		ClaimType: types.ClaimType_DEPOSIT,
+		ClaimType: types.ClaimType_CLAIM_TYPE_DEPOSIT,
 		Claim:     any,
 	}
 
@@ -234,7 +234,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	ethClaim1 := types.MsgSubmitClaim{
-		ClaimType: types.ClaimType_DEPOSIT,
+		ClaimType: types.ClaimType_CLAIM_TYPE_DEPOSIT,
 		Claim:     any1,
 	}
 
@@ -251,7 +251,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	ethClaim2 := types.MsgSubmitClaim{
-		ClaimType: types.ClaimType_DEPOSIT,
+		ClaimType: types.ClaimType_CLAIM_TYPE_DEPOSIT,
 		Claim:     any2,
 	}
 
@@ -268,7 +268,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	ethClaim3 := types.MsgSubmitClaim{
-		ClaimType: types.ClaimType_DEPOSIT,
+		ClaimType: types.ClaimType_CLAIM_TYPE_DEPOSIT,
 		Claim:     any3,
 	}
 

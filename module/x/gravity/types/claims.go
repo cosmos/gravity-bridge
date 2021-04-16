@@ -25,7 +25,7 @@ type EthereumClaim interface {
 	// to disambiguate this into a sdk.ValAddress
 	GetClaimer() sdk.AccAddress
 	// Which type of claim this is
-	GetType() ClaimType
+	Type() ClaimType
 	ValidateBasic() error
 	ClaimHash() []byte
 
@@ -40,8 +40,8 @@ var (
 )
 
 // GetType returns the type of the claim
-func (e *DepositClaim) GetType() ClaimType {
-	return ClaimType_DEPOSIT
+func (e *DepositClaim) Type() ClaimType {
+	return ClaimType_CLAIM_TYPE_DEPOSIT
 }
 
 // ValidateBasic performs stateless checks
@@ -85,8 +85,8 @@ func (b *DepositClaim) ClaimHash() []byte {
 }
 
 // GetType returns the claim type
-func (e *WithdrawClaim) GetType() ClaimType {
-	return ClaimType_WITHDRAW
+func (e *WithdrawClaim) Type() ClaimType {
+	return ClaimType_CLAIM_TYPE_WITHDRAW
 }
 
 // ValidateBasic performs stateless checks
@@ -129,8 +129,8 @@ const (
 // ======================================================
 
 // GetType returns the type of the claim
-func (e *ERC20DeployedClaim) GetType() ClaimType {
-	return ClaimType_ERC20_DEPLOYED
+func (e *ERC20DeployedClaim) Type() ClaimType {
+	return ClaimType_CLAIM_TYPE_ERC20_DEPLOYED
 }
 
 // ValidateBasic performs stateless checks
@@ -167,8 +167,8 @@ func (b *ERC20DeployedClaim) ClaimHash() []byte {
 // ======================================================
 
 // GetType returns the type of the claim
-func (e *LogicCallExecutedClaim) GetType() ClaimType {
-	return ClaimType_LOGIC_CALL_EXECUTED
+func (e *LogicCallExecutedClaim) Type() ClaimType {
+	return ClaimType_CLAIM_TYPE_LOGIC_CALL_EXECUTED
 }
 
 // ValidateBasic performs stateless checks

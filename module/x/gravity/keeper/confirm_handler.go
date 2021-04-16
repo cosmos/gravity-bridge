@@ -67,7 +67,7 @@ func (k msgServer) confirmBatch(c context.Context, confirm types.Confirm) error 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, confirm.GetType().String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, confirm.Type().String()),
 			sdk.NewAttribute(types.AttributeKeyBatchConfirmKey, string(key)),
 		),
 	)
@@ -78,7 +78,7 @@ func (k msgServer) confirmBatch(c context.Context, confirm types.Confirm) error 
 // ConfirmLogicCall handles MsgConfirmLogicCall
 func (k msgServer) confirmLogicCall(c context.Context, confirm types.Confirm) error {
 	ctx := sdk.UnwrapSDKContext(c)
-	invalidationIdBytes, err := hex.DecodeString(confirm.GetInvalidationId())
+	invalidationIdBytes, err := hex.DecodeString(confirm.GetInvalidationID())
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrInvalid, "invalidation id encoding")
 	}
@@ -135,7 +135,7 @@ func (k msgServer) confirmLogicCall(c context.Context, confirm types.Confirm) er
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, confirm.GetType().String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, confirm.Type().String()),
 		),
 	)
 
@@ -193,7 +193,7 @@ func (k msgServer) valsetConfirm(c context.Context, confirm types.Confirm) error
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, confirm.GetType().String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, confirm.Type().String()),
 			sdk.NewAttribute(types.AttributeKeyValsetConfirmKey, string(key)),
 		),
 	)

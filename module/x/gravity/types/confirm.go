@@ -8,13 +8,13 @@ import (
 )
 
 type Confirm interface {
-	GetType() ConfirmType
+	Type() ConfirmType
 	GetOrchestratorAddress() string
 	GetNonce() uint64
 	GetSignature() string
 
 	GetTokenContract() string
-	GetInvalidationId() string
+	GetInvalidationID() string
 	GetInvalidationNonce() uint64
 }
 
@@ -25,7 +25,7 @@ var (
 )
 
 // Type should return the action
-func (msg ConfirmBatch) GetType() ConfirmType { return ConfirmType_CONFIRM_TYPE_BATCH }
+func (msg ConfirmBatch) Type() ConfirmType { return ConfirmType_CONFIRM_TYPE_BATCH }
 
 // ValidateBasic performs stateless checks
 func (msg ConfirmBatch) ValidateBasic() error {
@@ -49,10 +49,10 @@ func (msg ConfirmBatch) ValidateBasic() error {
 func (msg ConfirmBatch) GetInvalidationNonce() uint64 { return 0 }
 
 // GetInvalidationId is a noop to implement confirm interface
-func (msg ConfirmBatch) GetInvalidationId() string { return "" }
+func (msg ConfirmBatch) GetInvalidationID() string { return "" }
 
 // Type should return the action
-func (msg ConfirmLogicCall) GetType() ConfirmType { return ConfirmType_CONFIRM_TYPE_LOGIC }
+func (msg ConfirmLogicCall) Type() ConfirmType { return ConfirmType_CONFIRM_TYPE_LOGIC }
 
 // ValidateBasic performs stateless checks
 func (msg ConfirmLogicCall) ValidateBasic() error {
@@ -81,6 +81,9 @@ func (msg ConfirmLogicCall) GetTokenContract() string {
 	return ""
 }
 
+// GetInvalidationId is a noop to implement confirm interface
+func (msg ConfirmLogicCall) GetInvalidationID() string { return "" }
+
 // NewValsetConfirm returns a new ValsetConfirm
 func NewValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddress, signature string) *ValsetConfirm {
 	return &ValsetConfirm{
@@ -92,7 +95,7 @@ func NewValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddress,
 }
 
 // Type should return the action
-func (msg *ValsetConfirm) GetType() ConfirmType { return ConfirmType_CONFIRM_TYPE_VALSET }
+func (msg *ValsetConfirm) Type() ConfirmType { return ConfirmType_CONFIRM_TYPE_VALSET }
 
 // ValidateBasic performs stateless checks
 func (msg *ValsetConfirm) ValidateBasic() (err error) {
@@ -109,7 +112,7 @@ func (msg *ValsetConfirm) ValidateBasic() (err error) {
 func (msg ValsetConfirm) GetInvalidationNonce() uint64 { return 0 }
 
 // GetInvalidationId is a noop to implement confirm interface
-func (msg ValsetConfirm) GetInvalidationId() string { return "" }
+func (msg ValsetConfirm) GetInvalidationID() string { return "" }
 
 func (msg *ValsetConfirm) GetTokenContract() string {
 	return ""

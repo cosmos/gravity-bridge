@@ -55,7 +55,7 @@ func (k msgServer) depositClaim(c context.Context, claim types.EthereumClaim) er
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, claim.GetType().String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, claim.Type().String()),
 			// TODO: maybe return something better here? is this the right string representation?
 			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()))),
 		),
@@ -107,7 +107,7 @@ func (k msgServer) withdrawClaim(c context.Context, claim types.EthereumClaim) e
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, claim.GetType().String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, claim.Type().String()),
 			// TODO: maybe return something better here? is this the right string representation?
 			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()))),
 		),
@@ -156,7 +156,7 @@ func (k msgServer) eRC20DeployedClaim(c context.Context, claim types.EthereumCla
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, claim.GetType().String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, claim.Type().String()),
 			// TODO: maybe return something better here? is this the right string representation?
 			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()))),
 		),
@@ -205,7 +205,7 @@ func (k msgServer) logicCallExecutedClaim(c context.Context, claim types.Ethereu
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, claim.GetType().String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, claim.Type().String()),
 			// TODO: maybe return something better here? is this the right string representation?
 			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()))),
 		),

@@ -105,7 +105,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 		// having voted for it.
 		k.logger(ctx).Error("attestation failed",
 			"cause", err.Error(),
-			"claim type", claim.GetType(),
+			"claim type", claim.Type(),
 			"id", types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
@@ -120,7 +120,7 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 	observationEvent := sdk.NewEvent(
 		types.EventTypeObservation,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyAttestationType, string(claim.GetType())),
+		sdk.NewAttribute(types.AttributeKeyAttestationType, string(claim.Type())),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()))), // todo: serialize with hex/ base64 ?

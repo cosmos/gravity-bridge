@@ -87,7 +87,7 @@ func addDenomToERC20Relation(tv *testingVars) {
 	require.NoError(tv.t, err)
 
 	ethClaim := types.MsgSubmitClaim{
-		ClaimType: types.ClaimType_DEPOSIT,
+		ClaimType: types.ClaimType_CLAIM_TYPE_DEPOSIT,
 		Claim:     any,
 	}
 
@@ -180,7 +180,7 @@ func acceptDepositEvent(tv *testingVars) {
 	require.NoError(tv.t, err)
 
 	ethClaim := types.MsgSubmitClaim{
-		ClaimType: types.ClaimType_DEPOSIT,
+		ClaimType: types.ClaimType_CLAIM_TYPE_DEPOSIT,
 		Claim:     any,
 	}
 

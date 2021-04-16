@@ -154,11 +154,11 @@ func GetClaimKey(details EthereumClaim) []byte {
 	} else {
 		panic("No claim without details!")
 	}
-	claimTypeLen := len([]byte{byte(details.GetType())})
+	claimTypeLen := len([]byte{byte(details.Type())})
 	nonceBz := UInt64Bytes(details.GetEventNonce())
 	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz)+len(detailsHash))
 	copy(key[0:], OracleClaimKey)
-	copy(key[len(OracleClaimKey):], []byte{byte(details.GetType())})
+	copy(key[len(OracleClaimKey):], []byte{byte(details.Type())})
 	// TODO this is the delegate address, should be stored by the valaddress
 	copy(key[len(OracleClaimKey)+claimTypeLen:], details.GetClaimer())
 	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen:], nonceBz)

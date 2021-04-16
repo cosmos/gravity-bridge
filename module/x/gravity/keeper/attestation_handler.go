@@ -113,7 +113,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.CosmosDenom, claim.TokenContract)
 
 	default:
-		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())
+		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.Type())
 	}
 	return nil
 }
