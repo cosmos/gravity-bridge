@@ -3,7 +3,7 @@ use std::unimplemented;
 use super::ValsetMember;
 use crate::error::GravityError;
 use clarity::Address as EthAddress;
-use deep_space::address::Address as CosmosAddress;
+use deep_space::Address as CosmosAddress;
 use num256::Uint256;
 use web30::types::Log;
 
@@ -271,7 +271,7 @@ impl SendToCosmosEvent {
 /// A parsed struct representing the Ethereum event fired when someone uses the Gravity
 /// contract to deploy a new ERC20 contract representing a Cosmos asset
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
-pub struct ERC20DeployedEvent {
+pub struct Erc20DeployedEvent {
     /// The denom on the Cosmos chain this contract is intended to represent
     pub cosmos_denom: String,
     /// The ERC20 address of the deployed contract, this may or may not be adopted
@@ -288,8 +288,8 @@ pub struct ERC20DeployedEvent {
     pub block_height: Uint256,
 }
 
-impl ERC20DeployedEvent {
-    pub fn from_log(input: &Log) -> Result<ERC20DeployedEvent, GravityError> {
+impl Erc20DeployedEvent {
+    pub fn from_log(input: &Log) -> Result<Erc20DeployedEvent, GravityError> {
         let token_contract = input.topics.get(1);
         if let Some(new_token_contract_data) = token_contract {
             let erc20 = EthAddress::from_slice(&new_token_contract_data[12..32])?;
@@ -393,7 +393,7 @@ impl ERC20DeployedEvent {
                 ));
             };
 
-            Ok(ERC20DeployedEvent {
+            Ok(Erc20DeployedEvent {
                 cosmos_denom: denom,
                 name: erc20_name,
                 decimals,
@@ -408,10 +408,10 @@ impl ERC20DeployedEvent {
             ))
         }
     }
-    pub fn from_logs(input: &[Log]) -> Result<Vec<ERC20DeployedEvent>, GravityError> {
+    pub fn from_logs(input: &[Log]) -> Result<Vec<Erc20DeployedEvent>, GravityError> {
         let mut res = Vec::new();
         for item in input {
-            res.push(ERC20DeployedEvent::from_log(item)?);
+            res.push(Erc20DeployedEvent::from_log(item)?);
         }
         Ok(res)
     }

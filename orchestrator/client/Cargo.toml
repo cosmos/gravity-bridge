@@ -10,16 +10,15 @@ cosmos_gravity = {path = "../cosmos_gravity"}
 gravity_utils = {path = "../gravity_utils"}
 gravity_proto = {path = "../gravity_proto/"}
 
-deep_space = "0.2"
-contact = "0.4"
+deep_space = "1.1"
 serde_derive = "1.0"
 clarity = "0.4"
 docopt = "1"
 serde = "1.0"
-actix-rt = "1"
+actix-rt = "2.2"
 lazy_static = "1"
 url = "2"
-web30 = "0.10"
+web30 = "0.12"
 env_logger = "0.8"
 openssl-probe = "0.1"
-tokio = "0.2"
+tokio = "1.4"

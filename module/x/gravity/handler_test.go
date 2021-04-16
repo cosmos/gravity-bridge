@@ -263,15 +263,21 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 
 func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	var (
-		ethAddress                   = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
-		cosmosAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
-		valAddress    sdk.ValAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
-		blockTime                    = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
-		blockHeight   int64          = 200
+		ethAddress                    = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
+		cosmosAddress  sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		ethAddress2                   = "0x26126048c706fB45a5a6De8432F428e794d0b952"
+		cosmosAddress2 sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		valAddress     sdk.ValAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		blockTime                     = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+		blockTime2                    = time.Date(2020, 9, 15, 15, 20, 10, 0, time.UTC)
+		blockHeight    int64          = 200
+		blockHeight2   int64          = 210
 	)
 	input := keeper.CreateTestEnv(t)
 	input.GravityKeeper.StakingKeeper = keeper.NewStakingKeeperMock(valAddress)
 	ctx := input.Context
+	wctx := sdk.WrapSDKContext(ctx)
+	k := input.GravityKeeper
 	h := NewHandler(input.GravityKeeper)
 	ctx = ctx.WithBlockTime(blockTime)
 
@@ -280,7 +286,40 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	_, err := h(ctx, msg)
 	require.NoError(t, err)
 
-	assert.Equal(t, input.GravityKeeper.GetEthAddress(ctx, valAddress), ethAddress)
+	assert.Equal(t, k.GetEthAddress(ctx, valAddress), ethAddress)
 
-	assert.Equal(t, input.GravityKeeper.GetOrchestratorValidator(ctx, cosmosAddress), valAddress)
+	assert.Equal(t, k.GetOrchestratorValidator(ctx, cosmosAddress), valAddress)
+
+	queryO := types.QueryDelegateKeysByOrchestratorAddress{
+		OrchestratorAddress: cosmosAddress.String(),
+	}
+	_, err = k.GetDelegateKeyByOrchestrator(wctx, &queryO)
+	require.NoError(t, err)
+
+	queryE := types.QueryDelegateKeysByEthAddress{
+		EthAddress: ethAddress,
+	}
+	_, err = k.GetDelegateKeyByEth(wctx, &queryE)
+	require.NoError(t, err)
+
+	msg = types.NewMsgSetOrchestratorAddress(valAddress, cosmosAddress2, ethAddress2)
+	ctx = ctx.WithBlockTime(blockTime2).WithBlockHeight(blockHeight2)
+	_, err = h(ctx, msg)
+	require.NoError(t, err)
+
+	assert.Equal(t, k.GetEthAddress(ctx, valAddress), ethAddress2)
+
+	assert.Equal(t, k.GetOrchestratorValidator(ctx, cosmosAddress2), valAddress)
+
+	queryO = types.QueryDelegateKeysByOrchestratorAddress{
+		OrchestratorAddress: cosmosAddress2.String(),
+	}
+	_, err = k.GetDelegateKeyByOrchestrator(wctx, &queryO)
+	require.NoError(t, err)
+
+	queryE = types.QueryDelegateKeysByEthAddress{
+		EthAddress: ethAddress2,
+	}
+	_, err = k.GetDelegateKeyByEth(wctx, &queryE)
+	require.NoError(t, err)
 }

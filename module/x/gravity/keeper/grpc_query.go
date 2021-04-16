@@ -266,16 +266,26 @@ func (k Keeper) GetDelegateKeyByValidator(
 	req *types.QueryDelegateKeysByValidatorAddress) (*types.QueryDelegateKeysByValidatorAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	keys := k.GetDelegateKeys(ctx)
-	_, err := sdk.ValAddressFromBech32(req.ValidatorAddress)
+	reqValidator, err := sdk.ValAddressFromBech32(req.ValidatorAddress)
 	if err != nil {
 		return nil, err
 	}
 	for _, key := range keys {
+<<<<<<< HEAD
 		if req.ValidatorAddress == key.Validator {
 			return &types.QueryDelegateKeysByValidatorAddressResponse{
 				EthAddress:          key.EthAddress,
 				OrchestratorAddress: key.Orchestrator,
 			}, nil
+=======
+		keyValidator, err := sdk.ValAddressFromBech32(key.Validator)
+		// this should be impossible due to the validate basic on the set orchestrator message
+		if err != nil {
+			panic("Invalid validator addr in store!")
+		}
+		if reqValidator.Equals(keyValidator) {
+			return &types.QueryDelegateKeysByValidatorAddressResponse{EthAddress: key.EthAddress, OrchestratorAddress: key.Orchestrator}, nil
+>>>>>>> main
 		}
 	}
 
@@ -287,16 +297,26 @@ func (k Keeper) GetDelegateKeyByOrchestrator(
 	req *types.QueryDelegateKeysByOrchestratorAddress) (*types.QueryDelegateKeysByOrchestratorAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	keys := k.GetDelegateKeys(ctx)
-	_, err := sdk.AccAddressFromBech32(req.OrchestratorAddress)
+	reqOrchestrator, err := sdk.AccAddressFromBech32(req.OrchestratorAddress)
 	if err != nil {
 		return nil, err
 	}
 	for _, key := range keys {
+<<<<<<< HEAD
 		if req.OrchestratorAddress == key.Orchestrator {
 			return &types.QueryDelegateKeysByOrchestratorAddressResponse{
 				ValidatorAddress: key.Validator,
 				EthAddress:       key.EthAddress,
 			}, nil
+=======
+		keyOrchestrator, err := sdk.AccAddressFromBech32(key.Orchestrator)
+		// this should be impossible due to the validate basic on the set orchestrator message
+		if err != nil {
+			panic("Invalid orchestrator addr in store!")
+		}
+		if reqOrchestrator.Equals(keyOrchestrator) {
+			return &types.QueryDelegateKeysByOrchestratorAddressResponse{ValidatorAddress: key.Validator, EthAddress: key.EthAddress}, nil
+>>>>>>> main
 		}
 
 	}
