@@ -200,7 +200,7 @@ func NewMsgSubmitConfirm(confirm *types.Any, signer string) *MsgSubmitConfirm {
 func (msg *MsgSubmitConfirm) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgSubmitConfirm) Type() string { return "cancel_send_to_eth" }
+func (msg *MsgSubmitConfirm) Type() string { return "submit_confirm" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgSubmitConfirm) ValidateBasic() (err error) {
@@ -242,9 +242,9 @@ func (m *MsgSubmitConfirm) SetConfirm(confirm Confirm) error {
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
-func (m MsgSubmitConfirm) UnpackInterfaces(unpacker types.AnyUnpacker) error {
+func (msg MsgSubmitConfirm) UnpackInterfaces(unpacker types.AnyUnpacker) error {
 	var claim EthereumClaim
-	return unpacker.UnpackAny(m.Confirm, &claim)
+	return unpacker.UnpackAny(msg.Confirm, &claim)
 }
 
 // GetSignBytes encodes the message for signing
@@ -264,7 +264,7 @@ func NewMsgSubmitClaim(claim *types.Any, signer string) *MsgSubmitClaim {
 func (msg *MsgSubmitClaim) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgSubmitClaim) Type() string { return "cancel_send_to_eth" }
+func (msg *MsgSubmitClaim) Type() string { return "submit_claim" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgSubmitClaim) ValidateBasic() (err error) {
