@@ -107,7 +107,7 @@ func TestBatches(t *testing.T) {
 
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		_, err = input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 
@@ -146,7 +146,8 @@ func TestBatches(t *testing.T) {
 	// =================================
 
 	// Execute the batch
-	input.GravityKeeper.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	err = input.GravityKeeper.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	require.NoError(t, err)
 
 	// check batch has been deleted
 	gotSecondBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
@@ -292,7 +293,7 @@ func TestBatchesFullCoins(t *testing.T) {
 		vAsSDKInt := sdk.NewIntFromUint64(v)
 		amount := types.NewSDKIntERC20Token(oneEth.Mul(vAsSDKInt), myTokenContractAddr).GravityCoin()
 		fee := types.NewSDKIntERC20Token(oneEth.Mul(vAsSDKInt), myTokenContractAddr).GravityCoin()
-		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		_, err = input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 
@@ -331,7 +332,8 @@ func TestBatchesFullCoins(t *testing.T) {
 	// =================================
 
 	// Execute the batch
-	input.GravityKeeper.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	err = input.GravityKeeper.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	require.NoError(t, err)
 
 	// check batch has been deleted
 	gotSecondBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
