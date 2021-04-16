@@ -18,6 +18,11 @@ var (
 	_ sdk.Msg = &MsgCancelTransfer{}
 )
 
+const (
+	TypeMsgWithdrawEvent = "withdraw_event"
+	TypeMsgDepositEvent  = "deposit_event"
+)
+
 // NewMsgSetDelegateKeys returns a new msgSetOrchestratorAddress
 func NewMsgSetDelegateKeys(val sdk.ValAddress, oper sdk.AccAddress, eth string) *MsgDelegateKey {
 	return &MsgDelegateKey{

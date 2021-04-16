@@ -13,8 +13,7 @@ import (
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
 func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
-
-	abi, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
+	contractABI, err := abi.JSON(strings.NewReader(BatchTxCheckpointABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
 	}
@@ -46,7 +45,7 @@ func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedBatch, err := abi.Pack("submitBatch",
+	abiEncodedBatch, err := contractABI.Pack("submitBatch",
 		gravityID,
 		batchMethodName,
 		txAmounts,
@@ -71,8 +70,7 @@ func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
 func (c LogicCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
-
-	abi, err := abi.JSON(strings.NewReader(OutgoingLogicCallABIJSON))
+	contractABI, err := abi.JSON(strings.NewReader(LogicCallTxABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
 	}
@@ -126,11 +124,12 @@ func (c LogicCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 		big.NewInt(int64(c.InvalidationNonce)),
 	)
 
-	// this should never happen outside of test since any case that could crash on encoding
-	// should be filtered above.
 	if err != nil {
+		// this should never happen outside of test since any case that could crash on encoding
+		// should be filtered above.
 		return nil, sdkerrors.Wrap(err, "packing checkpoint")
 	}
 
-	return crypto.Keccak256Hash(abiEncodedCall[4:]).Bytes(), nil
+	hash := crypto.Keccak256Hash(abiEncodedCall[4:])
+	return hash.Bytes(), nil
 }

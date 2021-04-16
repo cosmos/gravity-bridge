@@ -2,6 +2,9 @@ package types
 
 import (
 	"encoding/hex"
+	"fmt"
+
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -20,7 +23,7 @@ type Confirm interface {
 
 	// TODO: consider deleting
 	GetTokenContract() string
-	GetInvalidationId() string
+	GetInvalidationId() tmbytes.HexBytes
 	GetInvalidationNonce() uint64
 }
 
@@ -31,59 +34,58 @@ var (
 )
 
 // GetType should return the action
-func (msg ConfirmBatch) GetType() string { return "batch" }
+func (c ConfirmBatch) GetType() string { return "batch" }
 
 // Validate performs stateless checks
-func (msg ConfirmBatch) Validate() error {
-	if _, err := sdk.AccAddressFromBech32(msg.OrchestratorAddress); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.OrchestratorAddress)
+func (c ConfirmBatch) Validate() error {
+	if _, err := sdk.AccAddressFromBech32(c.OrchestratorAddress); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, c.OrchestratorAddress)
 	}
-	if err := ValidateEthAddress(msg.EthSigner); err != nil {
+	if err := ValidateEthAddress(c.EthSigner); err != nil {
 		return sdkerrors.Wrap(err, "eth signer")
 	}
-	if err := ValidateEthAddress(msg.TokenContract); err != nil {
+	if err := ValidateEthAddress(c.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "token contract")
 	}
-	_, err := hex.DecodeString(msg.Signature)
+	_, err := hex.DecodeString(c.Signature)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "could not decode hex string %s", msg.Signature)
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "could not decode hex string %s", c.Signature)
 	}
 	return nil
 }
 
 // GetInvalidationNonce is a noop to implement confirm interface
-func (msg ConfirmBatch) GetInvalidationNonce() uint64 { return 0 }
+func (c ConfirmBatch) GetInvalidationNonce() uint64 { return 0 }
 
 // GetInvalidationId is a noop to implement confirm interface
-func (msg ConfirmBatch) GetInvalidationId() string { return "" }
+func (c ConfirmBatch) GetInvalidationId() tmbytes.HexBytes { return nil }
 
 // GetType should return the action
-func (msg ConfirmLogicCall) GetType() string { return "logic_Call" }
+func (c ConfirmLogicCall) GetType() string { return "logic_Call" }
 
 // Validate performs stateless checks
-func (msg ConfirmLogicCall) Validate() error {
-	if _, err := sdk.AccAddressFromBech32(msg.OrchestratorAddress); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.OrchestratorAddress)
+func (c ConfirmLogicCall) Validate() error {
+	if _, err := sdk.AccAddressFromBech32(c.OrchestratorAddress); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, c.OrchestratorAddress)
 	}
-	if err := ValidateEthAddress(msg.EthSigner); err != nil {
+	if err := ValidateEthAddress(c.EthSigner); err != nil {
 		return sdkerrors.Wrap(err, "eth signer")
 	}
-	_, err := hex.DecodeString(msg.Signature)
+	_, err := hex.DecodeString(c.Signature)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.Signature)
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", c.Signature)
 	}
-	_, err = hex.DecodeString(msg.InvalidationId)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", msg.InvalidationId)
+	if len(c.InvalidationId) == 0 {
+		return fmt.Errorf("invalidation id is empty")
 	}
 	return nil
 }
 
-func (msg ConfirmLogicCall) GetNonce() uint64 {
+func (c ConfirmLogicCall) GetNonce() uint64 {
 	return 0
 }
 
-func (msg ConfirmLogicCall) GetTokenContract() string {
+func (c ConfirmLogicCall) GetTokenContract() string {
 	return ""
 }
 
@@ -117,8 +119,8 @@ func (c *ConfirmSignerSet) Validate() (err error) {
 func (c ConfirmSignerSet) GetInvalidationNonce() uint64 { return 0 }
 
 // GetInvalidationId is a noop to implement confirm interface
-func (c ConfirmSignerSet) GetInvalidationId() string { return "" }
+func (c ConfirmSignerSet) GetInvalidationId() tmbytes.HexBytes { return nil }
 
-func (c *ConfirmSignerSet) GetTokenContract() string {
+func (c ConfirmSignerSet) GetTokenContract() string {
 	return ""
 }

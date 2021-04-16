@@ -74,20 +74,11 @@ func NewSignerSet(height uint64, signers ...EthSigner) EthSignerSet {
 	}
 }
 
-//////////////////////////////////////
-//      BRIDGE VALIDATOR(S)         //
-//////////////////////////////////////
-
 // GetCheckpoint returns the checkpoint
-func (v EthSignerSet) GetCheckpoint(gravityIDstring string) []byte {
-	// TODO replace hardcoded "foo" here with a getter to retrieve the correct gravityID from the store
-	// this will work for now because 'foo' is the test gravityID we are using
-	// var gravityIDString = "foo"
-
-	// error case here should not occur outside of testing since the above is a constant
-	contractAbi, abiErr := abi.JSON(strings.NewReader(ValsetCheckpointABIJSON))
-	if abiErr != nil {
-		panic("Bad ABI constant!")
+func (ss EthSignerSet) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+	contractABI, err := abi.JSON(strings.NewReader(SignerSetCheckpointABIJSON))
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
 	}
 
 	// the contract argument is not a arbitrary length array but a fixed length 32 byte
@@ -103,26 +94,25 @@ func (v EthSignerSet) GetCheckpoint(gravityIDstring string) []byte {
 	var checkpoint [32]uint8
 	copy(checkpoint[:], checkpointBytes[:])
 
-	memberAddresses := make([]common.Address, len(v.Signers))
-	convertedPowers := make([]*big.Int, len(v.Signers))
-	for i, m := range v.Signers {
+	memberAddresses := make([]common.Address, len(ss.Signers))
+	convertedPowers := make([]*big.Int, len(ss.Signers))
+	for i, m := range ss.Signers {
 		memberAddresses[i] = common.HexToAddress(m.EthereumAddress)
 		convertedPowers[i] = big.NewInt(int64(m.Power))
 	}
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, packErr := contractAbi.Pack("checkpoint", gravityID, checkpoint, big.NewInt(int64(v.Nonce)), memberAddresses, convertedPowers)
-
-	// this should never happen outside of test since any case that could crash on encoding
-	// should be filtered above.
-	if packErr != nil {
-		panic(fmt.Sprintf("Error packing checkpoint! %s/n", packErr))
+	bytes, err := contractABI.Pack("checkpoint", gravityID, checkpoint, big.NewInt(int64(ss.Height)), memberAddresses, convertedPowers)
+	if err != nil {
+		// this should never happen outside of test since any case that could crash on encoding
+		// should be filtered above.
+		return nil, sdkerrors.Wrap(err, "packing checkpoint")
 	}
 
 	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
 	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
 	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
 	hash := crypto.Keccak256Hash(bytes[4:])
-	return hash.Bytes()
+	return hash.Bytes(), err
 }

@@ -15,7 +15,7 @@ func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validato
 	// We check the event nonce in processAttestation as well, but checking it here gives individual eth signers a chance to retry,
 	// and prevents validators from submitting two events with the same nonce
 	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validatorAddr)
-	if event.GetEventNonce() != lastEventNonce+1 {
+	if event.GetNonce() != lastEventNonce+1 {
 		return types.ErrNonContiguousEventNonce
 	}
 
@@ -25,7 +25,7 @@ func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validato
 	attestation, found := k.GetAttestation(ctx, eventHash)
 	if !found {
 		attestation = types.Attestation{
-			EventID:       string(eventHash), // TODO: use hex bytes
+			EventID:       eventHash, // TODO: use hex bytes
 			AttestedPower: 0,
 			Height:        uint64(ctx.BlockHeight()),
 		}
@@ -36,7 +36,7 @@ func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validato
 
 	k.SetAttestation(ctx, eventHash, attestation)
 	// TODO: what is this for?
-	k.setLastEventNonceByValidator(ctx, validatorAddr, event.GetEventNonce())
+	k.setLastEventNonceByValidator(ctx, validatorAddr, event.GetNonce())
 	return nil
 }
 
@@ -75,15 +75,15 @@ func (k Keeper) TryAttestation(ctx sdk.Context, attestation types.Attestation) {
 	}
 
 	if !thresholdMet {
-		k.Logger(ctx).Debug("attestation threshold not met for event", "type", event.GetType().String(), "hash", event.ClaimHash())
+		k.Logger(ctx).Debug("attestation threshold not met for event", "type", event.GetType().String(), "hash", event.Hash())
 		return
 	}
 
-	k.setLastObservedEventNonce(ctx, event.GetEventNonce())
+	k.setLastObservedEventNonce(ctx, event.GetNonce())
 	k.SetLastObservedEthereumBlockHeight(ctx, event.GetBlockHeight())
 
 	attestation.Observed = true
-	k.SetAttestation(ctx, event.GetEventNonce(), event.ClaimHash(), attestation)
+	k.SetAttestation(ctx, event.GetNonce(), event.Hash(), attestation)
 
 	k.processAttestation(ctx, attestation, event)
 	k.emitObservedEvent(ctx, attestation, event)
@@ -101,8 +101,8 @@ func (k Keeper) processAttestation(ctx sdk.Context, attestation types.Attestatio
 		k.Logger(ctx).Error("attestation failed",
 			"cause", err.Error(),
 			"event type", event.GetType(),
-			"id", types.GetAttestationKey(event.GetEventNonce(), event.ClaimHash()),
-			"nonce", fmt.Sprint(event.GetEventNonce()),
+			"id", types.GetAttestationKey(event.GetNonce(), event.Hash()),
+			"nonce", fmt.Sprint(event.GetNonce()),
 		)
 	} else {
 		commit() // persist transient storage

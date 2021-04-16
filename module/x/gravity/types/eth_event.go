@@ -17,13 +17,12 @@ type EthereumEvent interface {
 	// have a nonce that is monotonically increasing and unique, since this nonce is
 	// issued by the Ethereum contract it is immutable and must be agreed on by all validators
 	// any disagreement on what event goes to what nonce means someone is lying.
-	// GetEventNonce() uint64
+	GetNonce() uint64
 	// The block height that the evented event occurred on. This EventNonce provides sufficient
 	// ordering for the execution of all events. The block height is used only for batchTimeouts + logicTimeouts
 	// when we go to create a new batch we set the timeout some number of batches out from the last
 	// known height plus projected block progress since then.
 	// GetBlockHeight() uint64
-	// Which type of event this is
 	GetType() string
 	Validate() error
 	Hash() []byte
@@ -36,11 +35,6 @@ var (
 	_ EthereumEvent = &LogicCallExecutedEvent{}
 )
 
-const (
-	TypeMsgWithdrawEvent = "withdraw_event"
-	TypeMsgDepositEvent  = "deposit_event"
-)
-
 // GetType returns the type of the event
 func (e DepositEvent) GetType() string {
 	return "deposit"
@@ -48,6 +42,9 @@ func (e DepositEvent) GetType() string {
 
 // Validate performs stateless checks
 func (e DepositEvent) Validate() error {
+	if e.Nonce == 0 {
+		return fmt.Errorf("nonce cannot be 0")
+	}
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
@@ -78,8 +75,8 @@ func (e WithdrawEvent) GetType() string {
 
 // Validate performs stateless checks
 func (e WithdrawEvent) Validate() error {
-	if e.BatchNonce == 0 {
-		return fmt.Errorf("batch_nonce == 0")
+	if e.Nonce == 0 {
+		return fmt.Errorf("nonce cannot be 0")
 	}
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
@@ -89,7 +86,7 @@ func (e WithdrawEvent) Validate() error {
 
 // Hash implements WithdrawBatch.Hash
 func (e WithdrawEvent) Hash() []byte {
-	path := fmt.Sprintf("%s/%d/", e.TokenContract, e.BatchNonce)
+	path := fmt.Sprintf("%s/%d/", e.TokenContract, e.Nonce)
 	return tmhash.Sum([]byte(path))
 }
 
@@ -103,6 +100,9 @@ func (e CosmosERC20DeployedEvent) GetType() string {
 
 // Validate performs stateless checks
 func (e CosmosERC20DeployedEvent) Validate() error {
+	if e.Nonce == 0 {
+		return fmt.Errorf("nonce cannot be 0")
+	}
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
@@ -134,8 +134,11 @@ func (e LogicCallExecutedEvent) GetType() string {
 
 // Validate performs stateless checks
 func (e LogicCallExecutedEvent) Validate() error {
+	if e.Nonce == 0 {
+		return fmt.Errorf("nonce cannot be 0")
+	}
 	if len(e.InvalidationId) == 0 {
-		return fmt.Errorf("invalidation id cannot be blank")
+		return fmt.Errorf("invalidation id cannot be empty")
 	}
 	if e.InvalidationNonce == 0 {
 		return fmt.Errorf("invalidation nonce cannot be 0")

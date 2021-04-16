@@ -148,11 +148,11 @@ func GetEventKey(event EthereumEvent) []byte {
 	} else {
 		panic("No claim without event!")
 	}
-	claimTypeLen := len([]byte{byte(event.GetType())})
-	nonceBz := sdk.Uint64ToBigEndian(event.GetEventNonce())
+	claimTypeLen := len([]byte(event.GetType()))
+	nonceBz := sdk.Uint64ToBigEndian(event.GetNonce())
 	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz)+len(eventHash))
 	copy(key[0:], OracleClaimKey)
-	copy(key[len(OracleClaimKey):], []byte{byte(event.GetType())})
+	copy(key[len(OracleClaimKey):], []byte(event.GetType()))
 	// TODO this is the delegate address, should be stored by the valaddress
 	copy(key[len(OracleClaimKey)+claimTypeLen:], event.GetClaimer())
 	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen:], nonceBz)
