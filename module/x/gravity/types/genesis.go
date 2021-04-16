@@ -2,17 +2,16 @@ package types
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
-// DefaultParamspace defines the default auth module parameter subspace
+// DefaultParamspace defines the default gravity module parameter subspace
 const (
-	// todo: implement oracle constants as params
 	DefaultParamspace = ModuleName
 	AttestationPeriod = 24 * time.Hour // TODO: value????
 )
@@ -20,12 +19,6 @@ const (
 var (
 	// AttestationVotesPowerThreshold threshold of votes power to succeed
 	AttestationVotesPowerThreshold = sdk.NewInt(66)
-
-	// ParamsStoreKeyGravityID stores the gravity id
-	ParamsStoreKeyGravityID = []byte("GravityID")
-
-	// ParamsStoreKeyContractHash stores the contract hash
-	ParamsStoreKeyContractHash = []byte("ContractHash")
 
 	// ParamsStoreKeyStartThreshold stores the start threshold
 	ParamsStoreKeyStartThreshold = []byte("StartThreshold")
@@ -36,38 +29,38 @@ var (
 	// ParamsStoreKeyBridgeContractChainID stores the bridge chain id
 	ParamsStoreKeyBridgeContractChainID = []byte("BridgeChainID")
 
-	// ParamsStoreKeySignedValsetsWindow stores the signed blocks window
-	ParamsStoreKeySignedValsetsWindow = []byte("SignedValsetsWindow")
+	// ParamsStoreKeySignersetWindow stores the signed blocks window
+	ParamsStoreKeySignersetWindow = []byte("SignersetWindow")
 
-	// ParamsStoreKeySignedBatchesWindow stores the signed blocks window
-	ParamsStoreKeySignedBatchesWindow = []byte("SignedBatchesWindow")
+	// ParamsStoreKeyBatchTxWindow stores the signed blocks window
+	ParamsStoreKeyBatchTxWindow = []byte("BatchTxWindow")
 
-	// ParamsStoreKeySignedClaimsWindow stores the signed blocks window
-	ParamsStoreKeySignedClaimsWindow = []byte("SignedClaimsWindow")
+	// ParamsStoreKeyEventWindow stores the signed blocks window
+	ParamsStoreKeyEventWindow = []byte("EventWindow")
 
-	// ParamsStoreKeySignedClaimsWindow stores the signed blocks window
+	// ParamsStoreKeyTargetBatchTimeout stores the signed blocks window
 	ParamsStoreKeyTargetBatchTimeout = []byte("TargetBatchTimeout")
 
-	// ParamsStoreKeySignedClaimsWindow stores the signed blocks window
+	// ParamsStoreKeyAverageBlockTime stores the signed blocks window
 	ParamsStoreKeyAverageBlockTime = []byte("AverageBlockTime")
 
-	// ParamsStoreKeySignedClaimsWindow stores the signed blocks window
+	// ParamsStoreKeyAverageEthereumBlockTime stores the signed blocks window
 	ParamsStoreKeyAverageEthereumBlockTime = []byte("AverageEthereumBlockTime")
 
-	// ParamsStoreSlashFractionValset stores the slash fraction valset
-	ParamsStoreSlashFractionValset = []byte("SlashFractionValset")
+	// ParamsStoreSlashFractionSignerset stores the slash fraction valset
+	ParamsStoreSlashFractionSignerset = []byte("SlashFractionSignerset")
 
 	// ParamsStoreSlashFractionBatch stores the slash fraction Batch
 	ParamsStoreSlashFractionBatch = []byte("SlashFractionBatch")
 
-	// ParamsStoreSlashFractionClaim stores the slash fraction Claim
-	ParamsStoreSlashFractionClaim = []byte("SlashFractionClaim")
+	// ParamsStoreSlashFractionEvent stores the slash fraction Claim
+	ParamsStoreSlashFractionEvent = []byte("SlashFractionEvent")
 
-	// ParamsStoreSlashFractionConflictingClaim stores the slash fraction ConflictingClaim
-	ParamsStoreSlashFractionConflictingClaim = []byte("SlashFractionConflictingClaim")
+	// ParamsStoreSlashFractionConflictingEvent stores the slash fraction ConflictingClaim
+	ParamsStoreSlashFractionConflictingEvent = []byte("SlashFractionConflictingEvent")
 
-	//  ParamStoreUnbondSlashingValsetsWindow stores unbond slashing valset window
-	ParamStoreUnbondSlashingValsetsWindow = []byte("UnbondSlashingValsetsWindow")
+	// ParamStoreUnbondingWindow stores unbond slashing valset window
+	ParamStoreUnbondingWindow = []byte("UnbondingWindow")
 
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
@@ -91,28 +84,27 @@ func DefaultGenesisState() *GenesisState {
 }
 
 // DefaultParams returns a copy of the default params
-func DefaultParams() *Params {
-	return &Params{
-		SignedValsetsWindow:           10000,
-		SignedBatchesWindow:           10000,
-		SignedClaimsWindow:            10000,
+func DefaultParams() Params {
+	return Params{
+		BridgeContractAddress:         common.Address{}.String(),
+		BridgeChainId:                 1, // Ethereum Mainnet
+		SignersetWindow:               10000,
+		BatchTxWindow:                 10000,
+		EventWindow:                   10000,
 		TargetBatchTimeout:            43200000,
 		AverageBlockTime:              5000,
 		AverageEthereumBlockTime:      15000,
-		SlashFractionValset:           sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		SlashFractionSignerset:        sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionBatch:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		SlashFractionClaim:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		SlashFractionConflictingClaim: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		UnbondSlashingValsetsWindow:   10000,
+		SlashFractionEvent:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		SlashFractionConflictingEvent: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		UnbondingWindow:               10000,
 	}
 }
 
 // ValidateBasic checks that the parameters have valid values.
 func (p Params) ValidateBasic() error {
-	if err := validateContractHash(p.ContractSourceHash); err != nil {
-		return sdkerrors.Wrap(err, "contract hash")
-	}
-	if err := validateBridgeContractAddress(p.BridgeEthereumAddress); err != nil {
+	if err := validateBridgeContractAddress(p.BridgeContractAddress); err != nil {
 		return sdkerrors.Wrap(err, "bridge contract address")
 	}
 	if err := validateBridgeChainID(p.BridgeChainId); err != nil {
@@ -127,84 +119,66 @@ func (p Params) ValidateBasic() error {
 	if err := validateAverageEthereumBlockTime(p.AverageEthereumBlockTime); err != nil {
 		return sdkerrors.Wrap(err, "Ethereum block time")
 	}
-	if err := validateSignedValsetsWindow(p.SignedValsetsWindow); err != nil {
+	if err := validateSignersetWindow(p.SignersetWindow); err != nil {
 		return sdkerrors.Wrap(err, "signed blocks window")
 	}
-	if err := validateSignedBatchesWindow(p.SignedBatchesWindow); err != nil {
+	if err := validateBatchTxWindow(p.BatchTxWindow); err != nil {
 		return sdkerrors.Wrap(err, "signed blocks window")
 	}
-	if err := validateSignedClaimsWindow(p.SignedClaimsWindow); err != nil {
+	if err := validateEventWindow(p.EventWindow); err != nil {
 		return sdkerrors.Wrap(err, "signed blocks window")
 	}
-	if err := validateSlashFractionValset(p.SlashFractionValset); err != nil {
+	if err := validateSlashFractionSignerset(p.SlashFractionSignerset); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction valset")
 	}
 	if err := validateSlashFractionBatch(p.SlashFractionBatch); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction valset")
 	}
-	if err := validateSlashFractionClaim(p.SlashFractionClaim); err != nil {
+	if err := validateSlashFractionEvent(p.SlashFractionEvent); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction valset")
 	}
-	if err := validateSlashFractionConflictingClaim(p.SlashFractionConflictingClaim); err != nil {
+	if err := validateSlashFractionConflictingEvent(p.SlashFractionConflictingEvent); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction valset")
 	}
-	if err := validateUnbondSlashingValsetsWindow(p.UnbondSlashingValsetsWindow); err != nil {
+	if err := validateUnbondingWindow(p.UnbondingWindow); err != nil {
 		return sdkerrors.Wrap(err, "unbond Slashing valset window")
 	}
 
 	return nil
 }
 
-// ParamKeyTable for auth module
+// ParamKeyTable for gravity module
 func ParamKeyTable() paramtypes.KeyTable {
 	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
 }
 
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
-// pairs of auth module's parameters.
+// pairs of gravity module's parameters.
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		// paramtypes.NewParamSetPair(ParamsStoreKeyGravityID, &p.GravityId, validateGravityID),
-		paramtypes.NewParamSetPair(ParamsStoreKeyContractHash, &p.ContractSourceHash, validateContractHash),
-		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractAddress, &p.BridgeEthereumAddress, validateBridgeContractAddress),
+		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractAddress, &p.BridgeContractAddress, validateBridgeContractAddress),
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainId, validateBridgeChainID),
-		paramtypes.NewParamSetPair(ParamsStoreKeySignedValsetsWindow, &p.SignedValsetsWindow, validateSignedValsetsWindow),
-		paramtypes.NewParamSetPair(ParamsStoreKeySignedBatchesWindow, &p.SignedBatchesWindow, validateSignedBatchesWindow),
-		paramtypes.NewParamSetPair(ParamsStoreKeySignedClaimsWindow, &p.SignedClaimsWindow, validateSignedClaimsWindow),
+		paramtypes.NewParamSetPair(ParamsStoreKeySignersetWindow, &p.SignersetWindow, validateSignersetWindow),
+		paramtypes.NewParamSetPair(ParamsStoreKeyBatchTxWindow, &p.BatchTxWindow, validateBatchTxWindow),
+		paramtypes.NewParamSetPair(ParamsStoreKeyEventWindow, &p.EventWindow, validateEventWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeyAverageBlockTime, &p.AverageBlockTime, validateAverageBlockTime),
 		paramtypes.NewParamSetPair(ParamsStoreKeyTargetBatchTimeout, &p.TargetBatchTimeout, validateTargetBatchTimeout),
 		paramtypes.NewParamSetPair(ParamsStoreKeyAverageEthereumBlockTime, &p.AverageEthereumBlockTime, validateAverageEthereumBlockTime),
-		paramtypes.NewParamSetPair(ParamsStoreSlashFractionValset, &p.SlashFractionValset, validateSlashFractionValset),
+		paramtypes.NewParamSetPair(ParamsStoreSlashFractionSignerset, &p.SlashFractionSignerset, validateSlashFractionSignerset),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionBatch, &p.SlashFractionBatch, validateSlashFractionBatch),
-		paramtypes.NewParamSetPair(ParamsStoreSlashFractionClaim, &p.SlashFractionClaim, validateSlashFractionClaim),
-		paramtypes.NewParamSetPair(ParamsStoreSlashFractionConflictingClaim, &p.SlashFractionConflictingClaim, validateSlashFractionConflictingClaim),
-		paramtypes.NewParamSetPair(ParamStoreUnbondSlashingValsetsWindow, &p.UnbondSlashingValsetsWindow, validateUnbondSlashingValsetsWindow),
+		paramtypes.NewParamSetPair(ParamsStoreSlashFractionEvent, &p.SlashFractionEvent, validateSlashFractionEvent),
+		paramtypes.NewParamSetPair(ParamsStoreSlashFractionConflictingEvent, &p.SlashFractionConflictingEvent, validateSlashFractionConflictingEvent),
+		paramtypes.NewParamSetPair(ParamStoreUnbondingWindow, &p.UnbondingWindow, validateUnbondingWindow),
 	}
-}
-
-func validateGravityID(i interface{}) error {
-	v, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	if _, err := strToFixByteArray(v); err != nil {
-		return err
-	}
-	return nil
-}
-
-func validateContractHash(i interface{}) error {
-	// TODO: should we validate that the input here is a properly formatted
-	// SHA256 (or other) hash?
-	if _, ok := i.(string); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
 }
 
 func validateBridgeChainID(i interface{}) error {
-	if _, ok := i.(uint64); !ok {
+	chainID, ok := i.(uint64)
+	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if chainID == 0 {
+		return fmt.Errorf("invalid chain ID %d", chainID)
 	}
 	return nil
 }
@@ -244,16 +218,11 @@ func validateBridgeContractAddress(i interface{}) error {
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-	if err := ValidateEthAddress(v); err != nil {
-		// TODO: ensure that empty addresses are valid in params
-		if !strings.Contains(err.Error(), "empty") {
-			return err
-		}
-	}
-	return nil
+
+	return ValidateEthAddress(v)
 }
 
-func validateSignedValsetsWindow(i interface{}) error {
+func validateSignersetWindow(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -261,7 +230,7 @@ func validateSignedValsetsWindow(i interface{}) error {
 	return nil
 }
 
-func validateUnbondSlashingValsetsWindow(i interface{}) error {
+func validateUnbondingWindow(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -269,7 +238,7 @@ func validateUnbondSlashingValsetsWindow(i interface{}) error {
 	return nil
 }
 
-func validateSlashFractionValset(i interface{}) error {
+func validateSlashFractionSignerset(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(sdk.Dec); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -277,7 +246,7 @@ func validateSlashFractionValset(i interface{}) error {
 	return nil
 }
 
-func validateSignedBatchesWindow(i interface{}) error {
+func validateBatchTxWindow(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -285,7 +254,7 @@ func validateSignedBatchesWindow(i interface{}) error {
 	return nil
 }
 
-func validateSignedClaimsWindow(i interface{}) error {
+func validateEventWindow(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -301,7 +270,7 @@ func validateSlashFractionBatch(i interface{}) error {
 	return nil
 }
 
-func validateSlashFractionClaim(i interface{}) error {
+func validateSlashFractionEvent(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(sdk.Dec); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -309,19 +278,10 @@ func validateSlashFractionClaim(i interface{}) error {
 	return nil
 }
 
-func validateSlashFractionConflictingClaim(i interface{}) error {
+func validateSlashFractionConflictingEvent(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(sdk.Dec); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 	return nil
-}
-
-func strToFixByteArray(s string) ([32]byte, error) {
-	var out [32]byte
-	if len([]byte(s)) > 32 {
-		return out, fmt.Errorf("string too long")
-	}
-	copy(out[:], s)
-	return out, nil
 }

@@ -2,7 +2,6 @@ syntax = "proto3";
 package gravity.v1;
 
 import "gravity/v1/genesis.proto";
-import "gravity/v1/msgs.proto";
 import "gravity/v1/confirm.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";

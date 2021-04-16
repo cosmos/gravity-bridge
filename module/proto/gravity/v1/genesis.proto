@@ -2,7 +2,7 @@ syntax = "proto3";
 package gravity.v1;
 
 import "gogoproto/gogo.proto";
-import "gravity/v1/msgs.proto";
+import "gravity/v1/tx.proto";
 import "gravity/v1/confirm.proto";
 import "gravity/v1/gravity.proto";
 

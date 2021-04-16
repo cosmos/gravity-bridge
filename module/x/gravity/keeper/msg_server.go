@@ -66,16 +66,14 @@ func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*type
 }
 
 func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
+	// ctx := sdk.UnwrapSDKContext(c)
 
-	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Signer)
+	// orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Signer)
 
-	confirm, err := types.UnpackConfirm(msg.Confirm)
-	if err != nil {
-		return nil, err
-	}
-
-	if 
+	// confirm, err := types.UnpackConfirm(msg.Confirm)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// TODO:
 
@@ -129,8 +127,8 @@ func (k Keeper) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*ty
 	return &types.MsgRequestBatchResponse{}, nil
 }
 
-// SendToEth handles MsgSendToEth
-func (k Keeper) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types.MsgSendToEthResponse, error) {
+// Transfer handles MsgTransfer
+func (k Keeper) Transfer(c context.Context, msg *types.MsgTransfer) (*types.MsgTransferResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// NOTE: errors checked on msg validation
@@ -150,11 +148,11 @@ func (k Keeper) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types.Ms
 		),
 	)
 
-	return &types.MsgSendToEthResponse{}, nil
+	return &types.MsgTransferResponse{}, nil
 }
 
-// CancelSendToEth
-func (k Keeper) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
+// CancelTransfer
+func (k Keeper) CancelTransfer(c context.Context, msg *types.MsgCancelTransfer) (*types.MsgCancelTransferResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
@@ -171,5 +169,5 @@ func (k Keeper) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth
 		),
 	)
 
-	return &types.MsgCancelSendToEthResponse{}, nil
+	return &types.MsgCancelTransferResponse{}, nil
 }

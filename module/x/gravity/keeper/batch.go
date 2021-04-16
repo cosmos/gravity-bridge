@@ -241,14 +241,14 @@ func (k Keeper) GetBatchTxs(ctx sdk.Context) []types.BatchTx {
 }
 
 // GetLastOutgoingBatchByTokenType gets the latest outgoing tx batch by token type
-func (k Keeper) GetLastOutgoingBatchByTokenType(ctx sdk.Context, token string) *types.OutgoingTxBatch {
-	batches := k.GetOutgoingTxBatches(ctx)
-	var lastBatch *types.OutgoingTxBatch = nil
+func (k Keeper) GetLastOutgoingBatchByTokenType(ctx sdk.Context, token string) types.BatchTx {
+	batches := k.GetBatchTxs(ctx)
 	lastNonce := uint64(0)
+	lastBatch := types.BatchTx{}
 	for _, batch := range batches {
-		if batch.TokenContract == token && batch.BatchNonce > lastNonce {
+		if batch.TokenContract == token && batch.Nonce > lastNonce {
 			lastBatch = batch
-			lastNonce = batch.BatchNonce
+			lastNonce = batch.Nonce
 		}
 	}
 	return lastBatch

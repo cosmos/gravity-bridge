@@ -27,7 +27,7 @@ type Confirm interface {
 var (
 	_ Confirm = &ConfirmBatch{}
 	_ Confirm = &ConfirmLogicCall{}
-	_ Confirm = &ConfirmValset{}
+	_ Confirm = &ConfirmSignerSet{}
 )
 
 // GetType should return the action
@@ -87,36 +87,38 @@ func (msg ConfirmLogicCall) GetTokenContract() string {
 	return ""
 }
 
-// NewConfirmValset returns a new ConfirmValset
-func NewConfirmValset(nonce uint64, ethAddress string, validator sdk.AccAddress, signature string) *ConfirmValset {
-	return &ConfirmValset{
+// NewConfirmSignerSet returns a new ConfirmSignerSet
+func NewConfirmSignerSet(nonce uint64, ethSigner string, validator sdk.AccAddress, signature string) *ConfirmSignerSet {
+	return &ConfirmSignerSet{
 		Nonce:               nonce,
 		OrchestratorAddress: validator.String(),
-		EthAddress:          ethAddress,
+		EthSigner:           ethSigner,
 		Signature:           signature,
 	}
 }
 
 // GetType should return the action
-func (msg *ConfirmValset) GetType() string { return "valset" }
+func (c *ConfirmSignerSet) GetType() string { return "valset" }
 
 // Validate performs stateless checks
-func (msg *ConfirmValset) Validate() (err error) {
-	if _, err = sdk.AccAddressFromBech32(msg.OrchestratorAddress); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.OrchestratorAddress)
+func (c *ConfirmSignerSet) Validate() (err error) {
+	if _, err = sdk.AccAddressFromBech32(c.OrchestratorAddress); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, c.OrchestratorAddress)
 	}
-	if err := ValidateEthAddress(msg.EthAddress); err != nil {
+	if err := ValidateEthAddress(c.EthSigner); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
+
+	// TODO: validate signatre
 	return nil
 }
 
 // GetInvalidationNonce is a noop to implement confirm interface
-func (msg ConfirmValset) GetInvalidationNonce() uint64 { return 0 }
+func (c ConfirmSignerSet) GetInvalidationNonce() uint64 { return 0 }
 
 // GetInvalidationId is a noop to implement confirm interface
-func (msg ConfirmValset) GetInvalidationId() string { return "" }
+func (c ConfirmSignerSet) GetInvalidationId() string { return "" }
 
-func (msg *ConfirmValset) GetTokenContract() string {
+func (c *ConfirmSignerSet) GetTokenContract() string {
 	return ""
 }

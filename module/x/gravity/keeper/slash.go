@@ -24,10 +24,10 @@ func (k Keeper) slash(ctx sdk.Context) {
 func (k Keeper) valsetSlashing(ctx sdk.Context, params types.Params) {
 	maxHeight := uint64(0)
 
-	// don't slash in the beginning before there aren't even SignedValsetsWindow blocks yet
+	// don't slash in the beginning before there aren't even SignersetWindow blocks yet
 	// TODO: I don't understand the purpose of this logic
-	if uint64(ctx.BlockHeight()) > params.SignedValsetsWindow {
-		maxHeight = uint64(ctx.BlockHeight()) - params.SignedValsetsWindow
+	if uint64(ctx.BlockHeight()) > params.SignersetWindow {
+		maxHeight = uint64(ctx.BlockHeight()) - params.SignersetWindow
 	}
 
 	// what's an unslashed valset?
@@ -35,13 +35,14 @@ func (k Keeper) valsetSlashing(ctx sdk.Context, params types.Params) {
 
 	// unslashedValsets are sorted by nonce in ASC order
 	for _, valset := range unslashedValsets {
+		// TODO: use iterator here
 		confirms := k.GetValsetConfirms(ctx, valset.Nonce)
 
 		// slash bonded validators who didn't attest valset request claims
-		k.slashBondedValidators(ctx, valset.Nonce, confirms, params.SlashFractionValset)
+		k.slashBondedValidators(ctx, valset.Nonce, confirms, params.SlashFractionSignerset)
 
 		// slash unbonding validators who didn't attest valset request claims
-		k.slashUnbondingValidators(ctx, valset.Nonce, confirms, params.SlashFractionValset, params.SignedValsetsWindow)
+		k.slashUnbondingValidators(ctx, valset.Nonce, confirms, params.SlashFractionSignerset, params.SignedValsetsWindow)
 
 		// set the latest slashed valset nonce
 		// TODO: why every time tho??
@@ -49,7 +50,7 @@ func (k Keeper) valsetSlashing(ctx sdk.Context, params types.Params) {
 	}
 }
 
-func (k Keeper) slashBondedValidators(ctx sdk.Context, nonce uint64, slashFraction sdk.Dec) {
+func (k Keeper) slashBondedValidators(ctx sdk.Context, nonce uint64, confirms []types.Confirm, slashFraction sdk.Dec) {
 	currentBondedSet := k.stakingKeeper.GetBondedValidatorsByPower(ctx)
 
 	for _, val := range currentBondedSet {
@@ -86,7 +87,7 @@ func (k Keeper) slashBondedValidators(ctx sdk.Context, nonce uint64, slashFracti
 	}
 }
 
-func (k Keeper) slashUnbondingValidators(ctx sdk.Context, nonce uint64, slashFraction sdk.Dec, slashingWindow uint64) {
+func (k Keeper) slashUnbondingValidators(ctx sdk.Context, nonce uint64, confirms []types.Confirm, slashFraction sdk.Dec, slashingWindow uint64) {
 	blockTime := ctx.BlockTime().Add(k.stakingKeeper.GetParams(ctx).UnbondingTime)
 	blockHeight := ctx.BlockHeight()
 
@@ -151,9 +152,9 @@ func (k Keeper) batchTxSlashing(ctx sdk.Context, params types.Params) {
 	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
 	maxHeight := uint64(0)
 
-	// don't slash in the beginning before there aren't even SignedBatchesWindow blocks yet
-	if uint64(ctx.BlockHeight()) > params.SignedBatchesWindow {
-		maxHeight = uint64(ctx.BlockHeight()) - params.SignedBatchesWindow
+	// don't slash in the beginning before there aren't even BatchTxWindow blocks yet
+	if uint64(ctx.BlockHeight()) > params.BatchTxWindow {
+		maxHeight = uint64(ctx.BlockHeight()) - params.BatchTxWindow
 	}
 
 	unslashedBatches := k.GetUnslashedBatches(ctx, maxHeight)

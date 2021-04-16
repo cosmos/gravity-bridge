@@ -14,8 +14,8 @@ var (
 	_ sdk.Msg = &MsgSubmitEvent{}
 	_ sdk.Msg = &MsgSubmitConfirm{}
 	_ sdk.Msg = &MsgRequestBatch{}
-	_ sdk.Msg = &MsgSendToEth{}
-	_ sdk.Msg = &MsgCancelSendToEth{}
+	_ sdk.Msg = &MsgTransfer{}
+	_ sdk.Msg = &MsgCancelTransfer{}
 )
 
 // NewMsgSetDelegateKeys returns a new msgSetOrchestratorAddress
@@ -61,9 +61,9 @@ func (msg *MsgDelegateKey) GetSignBytes() []byte {
 	panic("gravity messages do not support amino")
 }
 
-// NewMsgSendToEth returns a new msgSendToEth
-func NewMsgSendToEth(sender sdk.AccAddress, ethRecipientAddr string, send, bridgeFee sdk.Coin) *MsgSendToEth {
-	return &MsgSendToEth{
+// NewMsgTransfer returns a new MsgTransfer
+func NewMsgTransfer(sender sdk.AccAddress, ethRecipientAddr string, send, bridgeFee sdk.Coin) *MsgTransfer {
+	return &MsgTransfer{
 		Sender:       sender.String(),
 		EthRecipient: ethRecipientAddr,
 		Amount:       send,
@@ -72,14 +72,14 @@ func NewMsgSendToEth(sender sdk.AccAddress, ethRecipientAddr string, send, bridg
 }
 
 // Route should return the name of the module
-func (msg MsgSendToEth) Route() string { return RouterKey }
+func (msg MsgTransfer) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgSendToEth) Type() string { return "send_to_eth" }
+func (msg MsgTransfer) Type() string { return "transfer" }
 
 // ValidateBasic runs stateless checks on the message
 // Checks if the Eth address is valid
-func (msg MsgSendToEth) ValidateBasic() error {
+func (msg MsgTransfer) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
 	}
@@ -103,12 +103,12 @@ func (msg MsgSendToEth) ValidateBasic() error {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgSendToEth) GetSignBytes() []byte {
+func (msg MsgTransfer) GetSignBytes() []byte {
 	panic("gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
+func (msg MsgTransfer) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
@@ -157,22 +157,22 @@ func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
-// NewMsgCancelSendToEth returns a new MsgCancelSendToEth
-func NewMsgCancelSendToEth(txID string, sender sdk.AccAddress) *MsgCancelSendToEth {
-	return &MsgCancelSendToEth{
+// NewMsgCancelTransfer returns a new MsgCancelTransfer
+func NewMsgCancelTransfer(txID string, sender sdk.AccAddress) *MsgCancelTransfer {
+	return &MsgCancelTransfer{
 		TransactionId: txID,
 		Sender:        sender.String(),
 	}
 }
 
 // Route should return the name of the module
-func (msg *MsgCancelSendToEth) Route() string { return RouterKey }
+func (msg *MsgCancelTransfer) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgCancelSendToEth) Type() string { return "cancel_send_to_eth" }
+func (msg *MsgCancelTransfer) Type() string { return "cancel_transfer" }
 
 // ValidateBasic performs stateless checks
-func (msg *MsgCancelSendToEth) ValidateBasic() (err error) {
+func (msg *MsgCancelTransfer) ValidateBasic() (err error) {
 	if strings.TrimSpace(msg.TransactionId) == "" {
 		return fmt.Errorf("tx id cannot be blank")
 	}
@@ -185,12 +185,12 @@ func (msg *MsgCancelSendToEth) ValidateBasic() (err error) {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg *MsgCancelSendToEth) GetSignBytes() []byte {
+func (msg *MsgCancelTransfer) GetSignBytes() []byte {
 	panic("gravity messages do not support amino")
 }
 
 // GetSigners defines whose signature is required
-func (msg *MsgCancelSendToEth) GetSigners() []sdk.AccAddress {
+func (msg *MsgCancelTransfer) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)

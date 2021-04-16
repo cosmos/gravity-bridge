@@ -18,8 +18,11 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgDelegateKey:
 			res, err := k.SetDelegateKey(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgSendToEth:
-			res, err := k.SendToEth(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgTransfer:
+			res, err := k.Transfer(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgCancelTransfer:
+			res, err := k.CancelTransfer(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRequestBatch:
 			res, err := k.RequestBatch(sdk.WrapSDKContext(ctx), msg)

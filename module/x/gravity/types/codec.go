@@ -12,11 +12,11 @@ import (
 // RegisterInterfaces registers the interfaces for the proto stuff
 func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgSendToEth{},
+		&MsgTransfer{},
+		&MsgCancelTransfer{},
 		&MsgRequestBatch{},
 		&MsgSubmitEvent{},
 		&MsgSubmitConfirm{},
-		&MsgCancelSendToEth{},
 	)
 
 	registry.RegisterInterface(
@@ -26,6 +26,14 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&WithdrawEvent{},
 		&CosmosERC20DeployedEvent{},
 		&LogicCallExecutedEvent{},
+	)
+
+	registry.RegisterInterface(
+		"gravity.v1.Confirm",
+		(*Confirm)(nil),
+		&ConfirmBatch{},
+		&ConfirmLogicCall{},
+		&ConfirmSignerSet{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
