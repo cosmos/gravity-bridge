@@ -1,12 +1,14 @@
 syntax = "proto3";
 package gravity.v1;
 
+import "gogoproto/gogo.proto";
+
 option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
 
-// ConfirmLogicCal ...
+// ConfirmLogicCall ...
 message ConfirmLogicCall {
-  string invalidation_id      = 1;
+  bytes invalidation_id      = 1 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
   uint64 invalidation_nonce   = 2;
   string eth_signer           = 3;
   string orchestrator_address = 4;

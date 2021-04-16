@@ -2,6 +2,7 @@ syntax = "proto3";
 package gravity.v1;
 
 import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
@@ -12,7 +13,10 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 // threshold is met.
 message Attestation {
   // event unique identifier
-  string event_id = 1 [(gogoproto.customname) = "EventID"];
+  bytes event_id = 1 [
+    (gogoproto.customname) = "EventID",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
   // set of the validator operators address in bech32 format that attest in
   // favor of this event.
   repeated string     votes    = 2;
@@ -28,55 +32,67 @@ message Attestation {
 // on Ethereum. ERC20 coins are minted to the receiver address
 // address.
 message DepositEvent {
+  // event nonce for replay protection
+  uint64 nonce = 1;
   // ethereum hex address of the contract
-  string token_contract = 1;
+  string token_contract = 2;
   // amount of tokens deposited on Ethereum
-  string amount         = 2 [
+  string amount         = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable)   = false
   ];
   // ethereum sender address in hex format
-  string ethereum_sender      = 3;
+  string ethereum_sender      = 4;
   // cosmos bech32 account address of the receiver 
-  string cosmos_receiver      = 4;
+  string cosmos_receiver      = 5;
 }
 
 // WithdrawEvent claims that a batch of withdrawal
 // operations on the bridge contract was executed.
 message WithdrawEvent {
-  // nonce of the batch tx on Cosmos
-  uint64 batch_nonce          = 1;
+  // transaction identifier of the batch tx
+  bytes tx_id          = 1 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
+  // event nonce of the batch tx on Cosmos
+  uint64 nonce = 2;
   // ethereum hex address of the contract
-  string token_contract       = 2;
+  string token_contract       = 3;
 }
 
 // LogicCallExecutedEvent describes a logic call that has been
 // successfully executed on Ethereum.
 message LogicCallExecutedEvent {
-  bytes  invalidation_id      = 1;
-  uint64 invalidation_nonce   = 2;
+  // event nonce for replay protection
+  uint64 nonce = 1;
+
+  bytes  invalidation_id      = 2 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
+  uint64  invalidation_nonce   = 3;
 }
 
 // CosmosERC20DeployedEvent is submitted when an ERC20 contract
 // for a Cosmos SDK coin has been deployed on Ethereum.
 message CosmosERC20DeployedEvent {
+  // event nonce for replay protection
+  uint64 nonce = 1;
   // cosmos SDK coin denomination
-  string cosmos_denom         = 1;
+  string cosmos_denom         = 2;
   // ethereum ERC20 contract address in hex format
-  string token_contract       = 2;
+  string token_contract       = 3;
   // name of the token
-  string name                 = 3;
+  string name                 = 4;
   // symbol or tick of the token
-  string symbol               = 4;
+  string symbol               = 5;
   // number of decimals the token supports (i.e precision)
-  uint64 decimals             = 5;
+  uint64 decimals             = 6;
 }
 
 // EthereumInfo defines the latest observed ethereum block height and the
 // corresponding timestamp value in nanoseconds.
 message EthereumInfo {
   // timestamp in nanoseconds
-  int64 timestamp = 1;
+  google.protobuf.Timestamp timestamp = 1 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
   // ethereum block height
   uint64  height   = 2;
 }
@@ -94,21 +110,18 @@ message EthSigner {
 // the two chains. The staking validators keep ethereum keys which are used to
 // check signatures on Ethereum in order to get significant gas savings.
 message EthSignerSet {
-  // signer set nonce. TODO: why is this required?
-  uint64                   nonce   = 1;
   // set of signers. Sorted by power
-  repeated EthSigner signers = 2 [(gogoproto.nullable)   = false];
+  repeated EthSigner signers = 1 [(gogoproto.nullable)   = false];
   // TODO: which height? cosmos? This should be the key
-  uint64                   height  = 3;
+  uint64             height  = 2;
 }
 
 // BatchTx represents a batch of transactions going from Cosmos to Ethereum
-message BatchTx {
-  uint64                      nonce    = 1;
-  uint64                      timeout  = 2;
-  repeated TransferTx         transactions   = 3  [(gogoproto.nullable) = false];
-  string                      token_contract = 4;
-  uint64                      block          = 5;
+message BatchTx {;
+  uint64                      timeout  = 1;
+  repeated TransferTx         transactions   = 2  [(gogoproto.nullable) = false];
+  string                      token_contract = 3;
+  uint64                      block          = 4;
 }
 
 // TransferTx represents an individual transfer from Cosmos to Ethereum
@@ -145,6 +158,6 @@ message LogicCallTx {
   string              logic_contract_address = 3;
   bytes               payload                = 4;
   uint64              timeout                = 5;
-  bytes               invalidation_id        = 6;
+  bytes              invalidation_id         = 6 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
   uint64              invalidation_nonce     = 7;
 }

@@ -25,42 +25,6 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params represent the Gravity genesis and store parameters
-// bridge_ethereum_address:
-// is address of the bridge contract on the Ethereum side, this is a
-// reference value for governance only and is not actually used by any
-// Gravity code
-//
-// signed_valsets_window
-// signed_batches_window
-// signed_claims_window
-//
-// These values represent the time in blocks that a validator has to submit
-// a signature for a batch or valset, or to submit a claim for a particular
-// attestation nonce. In the case of attestations this clock starts when the
-// attestation is created, but only allows for slashing once the event has passed
-//
-// target_batch_timeout:
-//
-// This is the 'target' value for when batches time out, this is a target becuase
-// Ethereum is a probabalistic chain and you can't say for sure what the block
-// frequency is ahead of time.
-//
-// average_block_time
-// average_ethereum_block_time
-//
-// These values are the average Cosmos block time and Ethereum block time repsectively
-// and they are used to copute what the target batch timeout is. It is important that
-// governance updates these in case of any major, prolonged change in the time it takes
-// to produce a block
-//
-// slash_fraction_valset
-// slash_fraction_batch
-// slash_fraction_claim
-// slash_fraction_conflicting_claim
-//
-// The slashing fractions for the various gravity related slashing conditions. The first three
-// refer to not submitting a particular message, the third for submitting a different claim
-// for the same Ethereum event
 type Params struct {
 	// address of the bridge contract on the EVM chain
 	BridgeContractAddress string `protobuf:"bytes,1,opt,name=bridge_contract_address,json=bridgeContractAddress,proto3" json:"bridge_contract_address,omitempty"`

@@ -62,7 +62,7 @@ func (handler DefaultAttestationHandler) OnAttestation(ctx sdk.Context, attestat
 			}
 
 			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
-				return sdkerrors.Wrap(err, "transfer vouchers")
+				return sdkerrors.Wrap(err, "cosmos coins")
 			}
 		} else {
 			// If it is not cosmos originated, mint the coins (aka vouchers)
@@ -74,11 +74,11 @@ func (handler DefaultAttestationHandler) OnAttestation(ctx sdk.Context, attestat
 
 			addr, err := sdk.AccAddressFromBech32(event.CosmosReceiver)
 			if err != nil {
-				return sdkerrors.Wrap(err, "invalid reciever address")
+				return sdkerrors.Wrap(err, "invalid receiver address")
 			}
 
 			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
-				return sdkerrors.Wrap(err, "transfer vouchers")
+				return sdkerrors.Wrap(err, "erc20 vouchers")
 			}
 		}
 	case *types.WithdrawEvent:

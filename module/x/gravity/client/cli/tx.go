@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-func GetTxCmd(storeKey string) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	gravityTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Gravity transaction subcommands",
