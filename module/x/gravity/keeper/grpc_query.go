@@ -271,13 +271,6 @@ func (k Keeper) GetDelegateKeyByValidator(
 		return nil, err
 	}
 	for _, key := range keys {
-<<<<<<< HEAD
-		if req.ValidatorAddress == key.Validator {
-			return &types.QueryDelegateKeysByValidatorAddressResponse{
-				EthAddress:          key.EthAddress,
-				OrchestratorAddress: key.Orchestrator,
-			}, nil
-=======
 		keyValidator, err := sdk.ValAddressFromBech32(key.Validator)
 		// this should be impossible due to the validate basic on the set orchestrator message
 		if err != nil {
@@ -285,7 +278,6 @@ func (k Keeper) GetDelegateKeyByValidator(
 		}
 		if reqValidator.Equals(keyValidator) {
 			return &types.QueryDelegateKeysByValidatorAddressResponse{EthAddress: key.EthAddress, OrchestratorAddress: key.Orchestrator}, nil
->>>>>>> main
 		}
 	}
 
@@ -302,13 +294,6 @@ func (k Keeper) GetDelegateKeyByOrchestrator(
 		return nil, err
 	}
 	for _, key := range keys {
-<<<<<<< HEAD
-		if req.OrchestratorAddress == key.Orchestrator {
-			return &types.QueryDelegateKeysByOrchestratorAddressResponse{
-				ValidatorAddress: key.Validator,
-				EthAddress:       key.EthAddress,
-			}, nil
-=======
 		keyOrchestrator, err := sdk.AccAddressFromBech32(key.Orchestrator)
 		// this should be impossible due to the validate basic on the set orchestrator message
 		if err != nil {
@@ -316,7 +301,6 @@ func (k Keeper) GetDelegateKeyByOrchestrator(
 		}
 		if reqOrchestrator.Equals(keyOrchestrator) {
 			return &types.QueryDelegateKeysByOrchestratorAddressResponse{ValidatorAddress: key.Validator, EthAddress: key.EthAddress}, nil
->>>>>>> main
 		}
 
 	}
