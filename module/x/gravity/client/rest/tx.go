@@ -66,7 +66,7 @@ func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.Han
 		ethPubkeyBytes := ethCrypto.FromECDSAPub(ethPubkey)
 
 		correct := ethCrypto.VerifySignature(ethPubkeyBytes, ethHash.Bytes(), ethSig)
-		if correct == false {
+		if !correct {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

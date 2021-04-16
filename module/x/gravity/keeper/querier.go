@@ -463,7 +463,7 @@ func queryAllLogicCallConfirms(ctx sdk.Context, invalidationId string, invalidat
 	}
 
 	var confirms []*types.MsgConfirmLogicCall
-	keeper.IterateLogicConfirmByInvalidationIdAndNonce(ctx, invalidationIdBytes, nonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
+	keeper.IterateLogicConfirmByInvalidationIDAndNonce(ctx, invalidationIdBytes, nonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
 		confirms = append(confirms, c)
 		return false
 	})

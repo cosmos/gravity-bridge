@@ -4,7 +4,7 @@ linters:
     - deadcode
     - depguard
     - dogsled
-    - dupl
+    # - dupl
     - errcheck
     # - funlen
     # - gochecknoglobals
@@ -20,7 +20,6 @@ linters:
     - gosimple
     - govet
     - ineffassign
-    - interfacer
     - lll
     - misspell
     # - maligned

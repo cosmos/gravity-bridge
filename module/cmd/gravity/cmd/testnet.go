@@ -217,7 +217,7 @@ func InitTestnet(
 		}
 
 		txBuilder := clientCtx.TxConfig.NewTxBuilder()
-		if err := txBuilder.SetMsgs(createValMsg); err != nil {
+		if err = txBuilder.SetMsgs(createValMsg); err != nil {
 			return err
 		}
 
@@ -230,7 +230,7 @@ func InitTestnet(
 			WithKeybase(kb).
 			WithTxConfig(clientCtx.TxConfig)
 
-		if err := tx.Sign(txFactory, nodeDirName, txBuilder, true); err != nil {
+		if err = tx.Sign(txFactory, nodeDirName, txBuilder, true); err != nil {
 			return err
 		}
 

@@ -29,7 +29,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 
 			addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
 			if err != nil {
-				return sdkerrors.Wrap(err, "invalid reciever address")
+				return sdkerrors.Wrap(err, "invalid receiver address")
 			}
 
 			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
@@ -45,7 +45,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 
 			addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
 			if err != nil {
-				return sdkerrors.Wrap(err, "invalid reciever address")
+				return sdkerrors.Wrap(err, "invalid receiver address")
 			}
 
 			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
@@ -53,7 +53,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 			}
 		}
 	case *types.MsgWithdrawClaim:
-		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
+		return a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
 	case *types.MsgERC20DeployedClaim:
 		// Check if it already exists
 		existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.CosmosDenom)

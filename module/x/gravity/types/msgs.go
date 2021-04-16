@@ -67,7 +67,12 @@ func (msg *MsgSetOrchestratorAddress) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgValsetConfirm returns a new msgValsetConfirm
-func NewMsgValsetConfirm(nonce uint64, ethAddress string, validator sdk.AccAddress, signature string) *MsgValsetConfirm {
+func NewMsgValsetConfirm(
+	nonce uint64,
+	ethAddress string,
+	validator sdk.AccAddress,
+	signature string,
+) *MsgValsetConfirm {
 	return &MsgValsetConfirm{
 		Nonce:        nonce,
 		Orchestrator: validator.String(),
@@ -133,7 +138,8 @@ func (msg MsgSendToEth) ValidateBasic() error {
 
 	// fee and send must be of the same denom
 	if msg.Amount.Denom != msg.BridgeFee.Denom {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("fee and amount must be the same type %s != %s", msg.Amount.Denom, msg.BridgeFee.Denom))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins,
+			fmt.Sprintf("fee and amount must be the same type %s != %s", msg.Amount.Denom, msg.BridgeFee.Denom))
 	}
 
 	if !msg.Amount.IsValid() || msg.Amount.IsZero() {
@@ -307,25 +313,25 @@ var (
 )
 
 // GetType returns the type of the claim
-func (e *MsgDepositClaim) GetType() ClaimType {
+func (msg *MsgDepositClaim) GetType() ClaimType {
 	return CLAIM_TYPE_DEPOSIT
 }
 
 // ValidateBasic performs stateless checks
-func (e *MsgDepositClaim) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(e.CosmosReceiver); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.CosmosReceiver)
+func (msg *MsgDepositClaim) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.CosmosReceiver); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosReceiver)
 	}
-	if err := ValidateEthAddress(e.EthereumSender); err != nil {
+	if err := ValidateEthAddress(msg.EthereumSender); err != nil {
 		return sdkerrors.Wrap(err, "eth sender")
 	}
-	if err := ValidateEthAddress(e.TokenContract); err != nil {
+	if err := ValidateEthAddress(msg.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
-	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
+	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
-	if e.EventNonce == 0 {
+	if msg.EventNonce == 0 {
 		return fmt.Errorf("nonce == 0")
 	}
 	return nil
@@ -342,7 +348,11 @@ func (msg MsgDepositClaim) GetClaimer() sdk.AccAddress {
 		panic("MsgDepositClaim failed ValidateBasic! Should have been handled earlier")
 	}
 
-	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	val, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
 	return val
 }
 
@@ -367,13 +377,13 @@ const (
 )
 
 // Hash implements BridgeDeposit.Hash
-func (b *MsgDepositClaim) ClaimHash() []byte {
-	path := fmt.Sprintf("%s/%s/%s/", b.TokenContract, string(b.EthereumSender), b.CosmosReceiver)
+func (msg *MsgDepositClaim) ClaimHash() []byte {
+	path := fmt.Sprintf("%s/%s/%s/", msg.TokenContract, string(msg.EthereumSender), msg.CosmosReceiver)
 	return tmhash.Sum([]byte(path))
 }
 
 // GetType returns the claim type
-func (e *MsgWithdrawClaim) GetType() ClaimType {
+func (msg *MsgWithdrawClaim) GetType() ClaimType {
 	return CLAIM_TYPE_WITHDRAW
 }
 
@@ -395,8 +405,8 @@ func (e *MsgWithdrawClaim) ValidateBasic() error {
 }
 
 // Hash implements WithdrawBatch.Hash
-func (b *MsgWithdrawClaim) ClaimHash() []byte {
-	path := fmt.Sprintf("%s/%d/", b.TokenContract, b.BatchNonce)
+func (msg *MsgWithdrawClaim) ClaimHash() []byte {
+	path := fmt.Sprintf("%s/%d/", msg.TokenContract, msg.BatchNonce)
 	return tmhash.Sum([]byte(path))
 }
 

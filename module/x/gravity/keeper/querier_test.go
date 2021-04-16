@@ -532,7 +532,7 @@ func createTestBatch(t *testing.T, input TestInput) {
 	for i, v := range []uint64{2, 3, 2, 1} {
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		_, err := input.GravityKeeper.AddToOutgoingPool(input.Context, mySender, myReceiver, amount, fee)
+		_, err = input.GravityKeeper.AddToOutgoingPool(input.Context, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 	// when
@@ -678,7 +678,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 
 	k.SetLogicCallConfirm(ctx, &confirm)
 
-	res := k.GetLogicConfirmByInvalidationIdAndNonce(ctx, invalidationId, 1)
+	res := k.GetLogicConfirmByInvalidationIDAndNonce(ctx, invalidationId, 1)
 	assert.Equal(t, len(res), 1)
 }
 
