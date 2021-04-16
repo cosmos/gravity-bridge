@@ -45,3 +45,9 @@ jobs:
         run: tests/all-up-test.sh ARBITRARY_LOGIC $ALCHEMY_ID
         env:
           ALCHEMY_ID: ${{ secrets.ALCHEMY_ID }}
+  orchestrator-keys:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run all up arbitrary logic test
+        run: tests/all-up-test.sh ORCHESTRATOR_KEYS

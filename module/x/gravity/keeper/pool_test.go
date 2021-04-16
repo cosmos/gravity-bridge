@@ -100,8 +100,8 @@ func TestTotalBatchFeeInPool(t *testing.T) {
 	for i, v := range []uint64{2, 3, 2, 1} {
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		r, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
-		require.NoError(t, err)
+		r, err2 := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		require.NoError(t, err2)
 		t.Logf("___ response: %#v", r)
 	}
 

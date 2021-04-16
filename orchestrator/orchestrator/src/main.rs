@@ -27,11 +27,11 @@ use clarity::PrivateKey as EthPrivateKey;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
 use env_logger::Env;
-use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
 use gravity_utils::connection_prep::{
     check_delegate_addresses, check_for_eth, wait_for_cosmos_node_ready,
 };
 use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
+use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
 use std::cmp::min;
 
@@ -39,7 +39,6 @@ use std::cmp::min;
 struct Args {
     flag_cosmos_phrase: String,
     flag_ethereum_key: String,
-    flag_cosmos_legacy_rpc: String,
     flag_cosmos_grpc: String,
     flag_ethereum_rpc: String,
     flag_contract_address: String,
@@ -48,12 +47,11 @@ struct Args {
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-    "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-legacy-rpc=<url> --cosmos-grpc=<url> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr>
+    "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-grpc=<url> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr>
         Options:
             -h --help                    Show this screen.
             --cosmos-phrase=<ckey>       The mnenmonic of the Cosmos account key of the validator
             --ethereum-key=<ekey>        The Ethereum private key of the validator
-            --cosmos-legacy-rpc=<curl>   The Cosmos RPC url, usually the validator
             --cosmos-grpc=<gurl>         The Cosmos gRPC url, usually the validator
             --ethereum-rpc=<eurl>        The Ethereum RPC url, should be a self hosted node
             --fees=<denom>               The Cosmos Denom in which to pay Cosmos chain fees
@@ -100,7 +98,6 @@ async fn main() {
     // probe all rpc connections and see if they are valid
     let connections = create_rpc_connections(
         Some(args.flag_cosmos_grpc),
-        Some(args.flag_cosmos_legacy_rpc),
         Some(args.flag_ethereum_rpc),
         timeout,
     )

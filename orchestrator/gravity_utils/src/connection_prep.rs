@@ -3,14 +3,15 @@
 //! by trying more than one thing to handle potentially misconfigured inputs.
 
 use clarity::Address as EthAddress;
-use contact::client::Contact;
-use deep_space::address::Address as CosmosAddress;
+use deep_space::client::ChainStatus;
+use deep_space::Address as CosmosAddress;
+use deep_space::Contact;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_proto::gravity::QueryDelegateKeysByEthAddress;
 use gravity_proto::gravity::QueryDelegateKeysByOrchestratorAddress;
 use std::process::exit;
 use std::time::Duration;
-use tokio::time::delay_for;
+use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use url::Url;
 use web30::client::Web3;
@@ -26,7 +27,6 @@ pub struct Connections {
 /// this so that it's less ugly
 pub async fn create_rpc_connections(
     grpc_url: Option<String>,
-    legacy_rpc_url: Option<String>,
     eth_rpc_url: Option<String>,
     timeout: Duration,
 ) -> Connections {
@@ -61,10 +61,12 @@ pub async fn create_rpc_connections(
                     match (ipv4, ipv6) {
                         (Ok(v), Err(_)) => {
                             info!("Url fallback succeeded, your cosmos gRPC url {} has been corrected to {}", grpc_url, ipv4_url);
+                            contact = Some(Contact::new(&ipv4_url, timeout));
                             grpc = Some(v)
                         },
                         (Err(_), Ok(v)) => {
                             info!("Url fallback succeeded, your cosmos gRPC url {} has been corrected to {}", grpc_url, ipv6_url);
+                            contact = Some(Contact::new(&ipv6_url, timeout));
                             grpc = Some(v)
                         },
                         (Ok(_), Ok(_)) => panic!("This should never happen? Why didn't things work the first time?"),
@@ -86,10 +88,12 @@ pub async fn create_rpc_connections(
                     match (https_on_80, https_on_443) {
                         (Ok(v), Err(_)) => {
                             info!("Https upgrade succeeded, your cosmos gRPC url {} has been corrected to {}", grpc_url, https_on_80_url);
+                            contact = Some(Contact::new(&https_on_80_url, timeout));
                             grpc = Some(v)
                         },
                         (Err(_), Ok(v)) => {
                             info!("Https upgrade succeeded, your cosmos gRPC url {} has been corrected to {}", grpc_url, https_on_443_url);
+                            contact = Some(Contact::new(&https_on_443_url, timeout));
                             grpc = Some(v)
                         },
                         (Ok(_), Ok(_)) => panic!("This should never happen? Why didn't things work the first time?"),
@@ -97,78 +101,6 @@ pub async fn create_rpc_connections(
                     }
                 } else {
                     panic!("Could not connect to Cosmos gRPC! please check your grpc url {} for errors {:?}", grpc_url, e)
-                }
-            }
-        }
-    }
-    if let Some(legacy_rpc_url) = legacy_rpc_url {
-        let url = Url::parse(&legacy_rpc_url)
-            .unwrap_or_else(|_| panic!("Invalid Cosmos legacy RPC url {}", legacy_rpc_url));
-        check_scheme(&url, &legacy_rpc_url);
-        let cosmos_legacy_url = legacy_rpc_url.trim_end_matches('/');
-        let base_contact = Contact::new(&cosmos_legacy_url, timeout);
-        let try_base = base_contact.get_syncing_status().await;
-        match try_base {
-            // it worked, lets go!
-            Ok(_) => contact = Some(base_contact),
-            // did not work, now we check if it's localhost
-            Err(e) => {
-                warn!(
-                    "Failed to access Cosmos Leagcy RPC with {:?} trying fallback options",
-                    e
-                );
-                if legacy_rpc_url.to_lowercase().contains("localhost") {
-                    let port = url.port().unwrap_or(80);
-                    // this should be http or https
-                    let prefix = url.scheme();
-                    let ipv6_url = format!("{}://::1:{}", prefix, port);
-                    let ipv4_url = format!("{}://127.0.0.1:{}", prefix, port);
-                    let ipv6_contact = Contact::new(&ipv6_url, timeout);
-                    let ipv4_contact = Contact::new(&ipv4_url, timeout);
-                    let ipv6_test = ipv6_contact.get_syncing_status().await;
-                    let ipv4_test = ipv4_contact.get_syncing_status().await;
-                    warn!("Trying fallback urls {} {}", ipv6_url, ipv4_url);
-                    match (ipv4_test, ipv6_test) {
-                        (Ok(_), Err(_)) => {
-                            info!("Url fallback succeeded, your cosmos legacy rpc url {} has been corrected to {}", legacy_rpc_url, ipv4_url);
-                            contact = Some(ipv4_contact)
-                        },
-                        (Err(_), Ok(_)) => {
-                            info!("Url fallback succeeded, your cosmos legacy rpc url {} has been corrected to {}", legacy_rpc_url, ipv6_url);
-                            contact = Some(ipv6_contact)
-                        },
-                        (Ok(_), Ok(_)) => panic!("This should never happen? Why didn't things work the first time?"),
-                        (Err(_), Err(_)) => panic!("Could not connect to Cosmos legacy rpc, are you sure it's running and on the specified port? {}", legacy_rpc_url)
-                    }
-                } else if url.port().is_none() || url.scheme() == "http" {
-                    let body = url.host_str().unwrap_or_else(|| {
-                        panic!("Cosmos legacy rpc url contains no host? {}", legacy_rpc_url)
-                    });
-                    // transparently upgrade to https if available, we can't transparently downgrade for obvious security reasons
-                    let https_on_80_url = format!("https://{}:80", body);
-                    let https_on_443_url = format!("https://{}:443", body);
-                    let https_on_80_contact = Contact::new(&https_on_80_url, timeout);
-                    let https_on_443_contact = Contact::new(&https_on_443_url, timeout);
-                    let https_on_80_test = https_on_80_contact.get_syncing_status().await;
-                    let https_on_443_test = https_on_443_contact.get_syncing_status().await;
-                    warn!(
-                        "Trying fallback urls {} {}",
-                        https_on_443_url, https_on_80_url
-                    );
-                    match (https_on_80_test, https_on_443_test) {
-                        (Ok(_), Err(_)) => {
-                            info!("Https upgrade succeeded, your cosmos legacy rpc url {} has been corrected to {}", legacy_rpc_url, https_on_80_url);
-                            contact = Some(https_on_80_contact)
-                        },
-                        (Err(_), Ok(_)) => {
-                            info!("Https upgrade succeeded, your cosmos legacy rpc url {} has been corrected to {}", legacy_rpc_url, https_on_443_url);
-                            contact = Some(https_on_443_contact)
-                        },
-                        (Ok(_), Ok(_)) => panic!("This should never happen? Why didn't things work the first time?"),
-                        (Err(_), Err(_)) => panic!("Could not connect to Cosmos legacy rpc, are you sure it's running and on the specified port? {}", legacy_rpc_url)
-                    }
-                } else {
-                    panic!("Could not connect to Cosmos legacy rpc! please check your url {} for errors {:?}", legacy_rpc_url, e)
                 }
             }
         }
@@ -269,34 +201,19 @@ fn check_scheme(input: &Url, original_string: &str) {
 pub async fn wait_for_cosmos_node_ready(contact: &Contact) {
     const WAIT_TIME: Duration = Duration::from_secs(10);
     loop {
-        let res = contact.get_syncing_status().await;
+        let res = contact.get_chain_status().await;
         match res {
-            Ok(val) => {
-                if !val.syncing {
-                    break;
-                } else {
-                    info!("Cosmos node is syncing Standing by")
-                }
+            Ok(ChainStatus::Syncing) => {
+                info!("Cosmos node is syncing Standing by")
+            }
+            Ok(ChainStatus::WaitingToStart) => {
+                info!("Cosmos node is waiting for the chain to start, Standing by")
+            }
+            Ok(ChainStatus::Moving { .. }) => {
+                break;
             }
             Err(e) => warn!(
                 "Could not get syncing status, is your Cosmos node up? {:?}",
-                e
-            ),
-        }
-        delay_for(WAIT_TIME).await;
-    }
-    loop {
-        let res = contact.get_latest_block().await;
-        match res {
-            Ok(val) => {
-                if val.block.is_some() {
-                    break;
-                } else {
-                    info!("Cosmos node is waiting for the chain to start, Standing by")
-                }
-            }
-            Err(e) => warn!(
-                "Could not get chain launch status, is your Cosmos node up? {:?}",
                 e
             ),
         }
@@ -369,12 +286,12 @@ pub async fn check_delegate_addresses(
                 exit(1);
             }
         }
-        (Err(_), Ok(_o)) => {
-            error!("Your delegate Ethereum address is incorrect, please double check you private key. If you can't locate the correct private key register your delegate keys again and use the new value");
+        (Err(e), Ok(_)) => {
+            error!("Your delegate Ethereum address is incorrect, please double check you private key. If you can't locate the correct private key register your delegate keys again and use the new value {:?}", e);
             exit(1);
         }
-        (Ok(_e), Err(_)) => {
-            error!("Your delegate Cosmos address is incorrect, please double check your phrase. If you can't locate the correct phrase register your delegate keys again and use the new value");
+        (Ok(_), Err(e)) => {
+            error!("Your delegate Cosmos address is incorrect, please double check your phrase. If you can't locate the correct phrase register your delegate keys again and use the new value {:?}", e);
             exit(1);
         }
         (Err(_), Err(_)) => {
@@ -387,7 +304,7 @@ pub async fn check_delegate_addresses(
 /// Checks if a given denom, used for fees is in the provided address
 pub async fn check_for_fee_denom(fee_denom: &str, address: CosmosAddress, contact: &Contact) {
     let mut found = false;
-    for balance in contact.get_balances(address).await.unwrap().result {
+    for balance in contact.get_balances(address).await.unwrap() {
         if balance.denom.contains(&fee_denom) {
             found = true;
             break;

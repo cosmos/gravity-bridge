@@ -85,7 +85,8 @@ func (msg *MsgSendToEth) ValidateBasic() error {
 
 	// fee and send must be of the same denom
 	if msg.Amount.Denom != msg.BridgeFee.Denom {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("fee and amount must be the same type %s != %s", msg.Amount.Denom, msg.BridgeFee.Denom))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins,
+			fmt.Sprintf("fee and amount must be the same type %s != %s", msg.Amount.Denom, msg.BridgeFee.Denom))
 	}
 
 	if !msg.Amount.IsValid() || msg.Amount.IsZero() {
@@ -205,10 +206,7 @@ func (msg *MsgSubmitConfirm) Type() string { return "submit_confirm" }
 // ValidateBasic performs stateless checks
 func (msg *MsgSubmitConfirm) ValidateBasic() (err error) {
 	_, err = sdk.AccAddressFromBech32(msg.Signer)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // GetSigners defines whose signature is required
@@ -242,7 +240,7 @@ func (msg *MsgSubmitConfirm) SetConfirm(confirm Confirm) error {
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
-func (msg MsgSubmitConfirm) UnpackInterfaces(unpacker types.AnyUnpacker) error {
+func (msg *MsgSubmitConfirm) UnpackInterfaces(unpacker types.AnyUnpacker) error {
 	var claim EthereumClaim
 	return unpacker.UnpackAny(msg.Confirm, &claim)
 }
@@ -284,31 +282,31 @@ func (msg *MsgSubmitClaim) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
-func (m *MsgSubmitClaim) GetClaim() EthereumClaim {
-	content, ok := m.Claim.GetCachedValue().(EthereumClaim)
+func (msg *MsgSubmitClaim) GetClaim() EthereumClaim {
+	content, ok := msg.Claim.GetCachedValue().(EthereumClaim)
 	if !ok {
 		return nil
 	}
 	return content
 }
 
-func (m *MsgSubmitClaim) SetClaim(claim EthereumClaim) error {
-	msg, ok := claim.(proto.Message)
+func (msg *MsgSubmitClaim) SetClaim(claim EthereumClaim) error {
+	message, ok := claim.(proto.Message)
 	if !ok {
 		return fmt.Errorf("can't proto marshal %T", msg)
 	}
-	any, err := types.NewAnyWithValue(msg)
+	any, err := types.NewAnyWithValue(message)
 	if err != nil {
 		return err
 	}
-	m.Claim = any
+	msg.Claim = any
 	return nil
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
-func (m MsgSubmitClaim) UnpackInterfaces(unpacker types.AnyUnpacker) error {
+func (msg MsgSubmitClaim) UnpackInterfaces(unpacker types.AnyUnpacker) error {
 	var claim EthereumClaim
-	return unpacker.UnpackAny(m.Claim, &claim)
+	return unpacker.UnpackAny(msg.Claim, &claim)
 }
 
 // GetSignBytes encodes the message for signing
