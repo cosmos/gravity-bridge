@@ -1,0 +1,126 @@
+version: '3'
+
+services:
+  ethereum:
+    build:
+      context: .
+      dockerfile: ./ethereum/Dockerfile
+    ports:
+      - "8545:8545"
+
+  contract_deployer:
+    build:
+      context: ./solidity
+      dockerfile: ./Dockerfile
+    depends_on:
+      - ethereum
+      - gravity0
+
+  gravity0:
+    build:
+      context: ./module
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./testdata/testchain/gravity0:/root/home
+    depends_on:
+      - ethereum
+    ports:
+      - "26656:26656"
+      - "26657:26657"
+      - "1317:1317"
+      - "9090:9090"
+      - "6060-6065:6060-6065"
+
+  orchestrator0:
+    build:
+      context: ./orchestrator
+      dockerfile: ./Dockerfile
+    depends_on:
+      - ethereum
+      - gravity0
+    environment:
+      - COSMOS_KEY=${COSMOS_KEY}
+      - COSMOS_PHRASE=${COSMOS_PHRASE}
+      - ETH_PRIVATE_KEY=${ETH_PRIVATE_KEY}
+      - VALIDATOR=${VALIDATOR}
+      - DENOM=${DENOM}
+      - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - RUST_BACKTRACE=1
+
+  gravity1:
+    build:
+      context: ./module
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./testdata/testchain/gravity1:/root/home
+    depends_on:
+      - ethereum
+      - gravity0
+
+  orchestrator1:
+    build:
+      context: ./orchestrator
+      dockerfile: ./Dockerfile
+    depends_on:
+      - ethereum
+      - gravity1
+    environment:
+      - COSMOS_KEY=${COSMOS_KEY}
+      - COSMOS_PHRASE=${COSMOS_PHRASE}
+      - ETH_PRIVATE_KEY=${ETH_PRIVATE_KEY}
+      - VALIDATOR=${VALIDATOR}
+      - DENOM=${DENOM}
+      - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - RUST_BACKTRACE=1
+
+  gravity2:
+    build:
+      context: ./module
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./testdata/testchain/gravity2:/root/home
+    depends_on:
+      - ethereum
+      - gravity0
+
+  orchestrator2:
+    build:
+      context: ./orchestrator
+      dockerfile: ./Dockerfile
+    depends_on:
+      - ethereum
+      - gravity2
+    environment:
+      - COSMOS_KEY=${COSMOS_KEY}
+      - COSMOS_PHRASE=${COSMOS_PHRASE}
+      - ETH_PRIVATE_KEY=${ETH_PRIVATE_KEY}
+      - VALIDATOR=${VALIDATOR}
+      - DENOM=${DENOM}
+      - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - RUST_BACKTRACE=1
+
+  gravity3:
+    build:
+      context: ./module
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./testdata/testchain/gravity3:/root/home
+    depends_on:
+      - ethereum
+      - gravity0
+
+  orchestrator3:
+    build:
+      context: ./orchestrator
+      dockerfile: ./Dockerfile
+    depends_on:
+      - ethereum
+      - gravity3
+    environment:
+      - COSMOS_KEY=${COSMOS_KEY}
+      - COSMOS_PHRASE=${COSMOS_PHRASE}
+      - ETH_PRIVATE_KEY=${ETH_PRIVATE_KEY}
+      - VALIDATOR=${VALIDATOR}
+      - DENOM=${DENOM}
+      - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - RUST_BACKTRACE=1

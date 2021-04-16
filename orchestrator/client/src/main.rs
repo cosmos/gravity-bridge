@@ -26,7 +26,7 @@ use gravity_proto::gravity::QueryDenomToErc20Request;
 use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
 use std::time::Instant;
 use std::{process::exit, time::Duration, u128};
-use tokio::time::delay_for;
+use tokio::time::sleep as delay_for;
 use web30::{client::Web3, jsonrpc::error::Web3Error};
 
 const TIMEOUT: Duration = Duration::from_secs(60);
@@ -71,7 +71,6 @@ struct Args {
     flag_cosmos_phrase: String,
     flag_ethereum_key: String,
     flag_cosmos_grpc: String,
-    flag_cosmos_legacy_rpc: String,
     flag_ethereum_rpc: String,
     flag_contract_address: String,
     flag_cosmos_denom: String,
@@ -92,7 +91,7 @@ struct Args {
 lazy_static! {
     pub static ref USAGE: String = format!(
     "Usage:
-        {} cosmos-to-eth --cosmos-phrase=<key> --cosmos-legacy-rpc=<url> --cosmos-grpc=<url> --cosmos-denom=<denom> --amount=<amount> --eth-destination=<dest> [--no-batch] [--times=<number>]
+        {} cosmos-to-eth --cosmos-phrase=<key> --cosmos-grpc=<url> --cosmos-denom=<denom> --amount=<amount> --eth-destination=<dest> [--no-batch] [--times=<number>]
         {} eth-to-cosmos --ethereum-key=<key> --ethereum-rpc=<url> --contract-address=<addr> --erc20-address=<addr> --amount=<amount> --cosmos-destination=<dest> [--times=<number>]
         {} deploy-erc20-representation --cosmos-grpc=<url> --cosmos-denom=<denom> --ethereum-key=<key> --ethereum-rpc=<url> --contract-address=<addr> --erc20-name=<name> --erc20-symbol=<symbol> --erc20-decimals=<decimals>
         Options:
@@ -159,13 +158,7 @@ async fn main() {
         let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
 
         println!("Sending from Cosmos address {}", cosmos_address);
-        let connections = create_rpc_connections(
-            Some(args.flag_cosmos_grpc),
-            Some(args.flag_cosmos_legacy_rpc),
-            None,
-            TIMEOUT,
-        )
-        .await;
+        let connections = create_rpc_connections(Some(args.flag_cosmos_grpc), None, TIMEOUT).await;
         let contact = connections.contact.unwrap();
         let mut grpc = connections.grpc.unwrap();
 
@@ -203,8 +196,7 @@ async fn main() {
         let balances = contact
             .get_balances(cosmos_address)
             .await
-            .expect("Failed to get balances!")
-            .result;
+            .expect("Failed to get balances!");
         let mut found = None;
         for coin in balances.iter() {
             if coin.denom == gravity_denom {
@@ -273,8 +265,7 @@ async fn main() {
             .flag_contract_address
             .parse()
             .expect("Invalid contract address!");
-        let connections =
-            create_rpc_connections(None, None, Some(args.flag_ethereum_rpc), TIMEOUT).await;
+        let connections = create_rpc_connections(None, Some(args.flag_ethereum_rpc), TIMEOUT).await;
         let web3 = connections.web3.unwrap();
         let cosmos_dest: CosmosAddress = args.flag_cosmos_destination.parse().unwrap();
         let ethereum_public_key = ethereum_key.to_public_key().unwrap();
@@ -340,7 +331,6 @@ async fn main() {
             .expect("Invalid contract address!");
         let connections = create_rpc_connections(
             Some(args.flag_cosmos_grpc),
-            None,
             Some(args.flag_ethereum_rpc),
             TIMEOUT,
         )

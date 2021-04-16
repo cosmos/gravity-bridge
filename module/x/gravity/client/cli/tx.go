@@ -6,15 +6,13 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cosmos/cosmos-sdk/types/errors"
-	ethCrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/spf13/cobra"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/spf13/cobra"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -61,7 +59,7 @@ func CmdUnsafeETHPrivKey() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			key, err := ethCrypto.GenerateKey()
 			if err != nil {
-				return errors.Wrap(err, "can not generate key")
+				return sdkerrors.Wrap(err, "can not generate key")
 			}
 			k := "0x" + hex.EncodeToString(ethCrypto.FromECDSA(key))
 			println(k)

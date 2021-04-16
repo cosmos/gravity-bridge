@@ -24,7 +24,6 @@ extern crate log;
 #[derive(Debug, Deserialize)]
 struct Args {
     flag_ethereum_key: String,
-    flag_cosmos_legacy_rpc: String,
     flag_cosmos_grpc: String,
     flag_ethereum_rpc: String,
     flag_contract_address: String,
@@ -32,11 +31,10 @@ struct Args {
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-    "Usage: {} --ethereum-key=<key> --cosmos-legacy-rpc=<url> --cosmos-grpc=<url> --ethereum-rpc=<url> --contract-address=<addr>
+    "Usage: {} --ethereum-key=<key> --cosmos-grpc=<url> --ethereum-rpc=<url> --contract-address=<addr>
         Options:
             -h --help                    Show this screen.
             --ethereum-key=<ekey>        An Ethereum private key containing non-trivial funds
-            --cosmos-legacy-rpc=<curl>   The Cosmos RPC url
             --cosmos-grpc=<gurl>         The Cosmos gRPC url
             --ethereum-rpc=<eurl>        The Ethereum RPC url, Geth light clients work and sync fast
             --contract-address=<addr>    The Ethereum contract address for Gravity
@@ -74,7 +72,6 @@ async fn main() {
 
     let connections = create_rpc_connections(
         Some(args.flag_cosmos_grpc),
-        Some(args.flag_cosmos_legacy_rpc),
         Some(args.flag_ethereum_rpc),
         LOOP_SPEED,
     )

@@ -11,13 +11,18 @@ import (
 )
 
 // TODO-JT: carefully look at atomicity of this function
-func (k Keeper) Attest(ctx sdk.Context, claim types.EthereumClaim, anyClaim *codectypes.Any) (*types.Attestation, error) {
+func (k Keeper) Attest(
+	ctx sdk.Context,
+	claim types.EthereumClaim,
+	anyClaim *codectypes.Any,
+) (*types.Attestation, error) {
 	valAddr := k.GetOrchestratorValidator(ctx, claim.GetClaimer())
 	if valAddr == nil {
 		panic("Could not find ValAddr for delegate key, should be checked by now")
 	}
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
-	// We check the event nonce in processAttestation as well, but checking it here gives individual eth signers a chance to retry,
+	// We check the event nonce in processAttestation as well,
+	// but checking it here gives individual eth signers a chance to retry,
 	// and prevents validators from submitting two claims with the same nonce
 	lastEventNonce := k.GetLastEventNonceByValidator(ctx, valAddr)
 	if claim.GetEventNonce() != lastEventNonce+1 {
@@ -75,7 +80,7 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 				lastEventNonce := k.GetLastObservedEventNonce(ctx)
 				// this check is performed at the next level up so this should never panic
 				// outside of programmer error.
-				if claim.GetEventNonce() != uint64(lastEventNonce)+1 {
+				if claim.GetEventNonce() != lastEventNonce+1 {
 					panic("attempting to apply events to state out of order")
 				}
 				k.setLastObservedEventNonce(ctx, claim.GetEventNonce())
@@ -123,7 +128,9 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 		sdk.NewAttribute(types.AttributeKeyAttestationType, string(claim.GetType())),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()))), // todo: serialize with hex/ base64 ?
+		// todo: serialize with hex/ base64 ?
+		sdk.NewAttribute(types.AttributeKeyAttestationID,
+			string(types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()))),
 		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(claim.GetEventNonce())),
 		// TODO: do we want to emit more information?
 	)
@@ -178,7 +185,7 @@ func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.A
 // IterateAttestaions iterates through all attestations
 func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attestation) bool) {
 	store := ctx.KVStore(k.storeKey)
-	prefix := []byte(types.OracleAttestationKey)
+	prefix := types.OracleAttestationKey
 	iter := store.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
@@ -255,30 +262,29 @@ func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 		// the slashing window. Since we delete attestations after the slashing window that's
 		// just the lowest observed event in the store. If no claims have been submitted in for
 		// params.SignedClaimsWindow we may have no attestations in our nonce. At which point
-		// the last observed which is a persistant and never cleaned counter will suffice.
-		lowest_observed := k.GetLastObservedEventNonce(ctx)
+		// the last observed which is a persistent and never cleaned counter will suffice.
+		lowestObserved := k.GetLastObservedEventNonce(ctx)
 		attmap := k.GetAttestationMapping(ctx)
 		// no new claims in params.SignedClaimsWindow, we can return the current value
 		// because the validator can't be slashed for an event that has already passed.
 		// so they only have to worry about the *next* event to occur
 		if len(attmap) == 0 {
-			return lowest_observed
+			return lowestObserved
 		}
 		for nonce, atts := range attmap {
 			for att := range atts {
-				if atts[att].Observed && nonce < lowest_observed {
-					lowest_observed = nonce
+				if atts[att].Observed && nonce < lowestObserved {
+					lowestObserved = nonce
 				}
 			}
 		}
 		// return the latest event minus one so that the validator
 		// can submit that event and avoid slashing. special case
 		// for zero
-		if lowest_observed > 0 {
-			return lowest_observed - 1
-		} else {
-			return 0
+		if lowestObserved > 0 {
+			return lowestObserved - 1
 		}
+		return 0
 	}
 	return types.UInt64FromBytes(bytes)
 }

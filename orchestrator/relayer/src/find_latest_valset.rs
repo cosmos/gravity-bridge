@@ -105,7 +105,6 @@ fn check_if_valsets_differ(cosmos_valset: Option<Valset>, ethereum_valset: &Vals
                 "Sorting disagreement between Cosmos and Ethereum on Valset nonce {}",
                 ethereum_valset.nonce
             );
-            return;
         } else {
             info!("Validator sets for nonce {} Cosmos and Ethereum differ. Possible bridge highjacking!", ethereum_valset.nonce)
         }

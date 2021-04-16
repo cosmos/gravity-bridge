@@ -13,12 +13,13 @@ use crate::utils::*;
 use arbitrary_logic::arbitrary_logic_test;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
-use contact::client::Contact;
 use cosmos_gravity::utils::wait_for_cosmos_online;
 use deep_space::coin::Coin;
+use deep_space::Contact;
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use happy_path::happy_path_test;
 use happy_path_v2::happy_path_test_v2;
-use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use orch_keys_update::orch_keys_update;
 use std::{env, time::Duration};
 use transaction_stress_test::transaction_stress_test;
 use valset_stress::validator_set_stress_test;
@@ -27,6 +28,7 @@ mod arbitrary_logic;
 mod bootstrapping;
 mod happy_path;
 mod happy_path_v2;
+mod orch_keys_update;
 mod transaction_stress_test;
 mod utils;
 mod valset_stress;
@@ -36,7 +38,6 @@ const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
 /// the timeout for the total system
 const TOTAL_TIMEOUT: Duration = Duration::from_secs(300);
 
-pub const COSMOS_NODE: &str = "http://localhost:1317";
 pub const COSMOS_NODE_GRPC: &str = "http://localhost:9090";
 pub const COSMOS_NODE_ABCI: &str = "http://localhost:26657";
 pub const ETH_NODE: &str = "http://localhost:8545";
@@ -97,7 +98,7 @@ pub fn should_deploy_contracts() -> bool {
 pub async fn main() {
     env_logger::init();
     info!("Staring Gravity test-runner");
-    let contact = Contact::new(COSMOS_NODE, OPERATION_TIMEOUT);
+    let contact = Contact::new(COSMOS_NODE_GRPC, OPERATION_TIMEOUT);
 
     info!("Waiting for Cosmos chain to come online");
     wait_for_cosmos_online(&contact, TOTAL_TIMEOUT).await;
@@ -109,7 +110,7 @@ pub async fn main() {
     // if we detect this env var we are only deploying contracts, do that then exit.
     if should_deploy_contracts() {
         info!("test-runner in contract deploying mode, deploying contracts, then exiting");
-        deploy_contracts(&contact, &keys, get_fee()).await;
+        deploy_contracts(&contact).await;
         return;
     }
 
@@ -125,7 +126,7 @@ pub async fn main() {
 
     assert!(check_cosmos_balance(
         &get_test_token_name(),
-        keys[0].0.to_public_key().unwrap().to_address(),
+        keys[0].validator_key.to_public_key().unwrap().to_address(),
         &contact
     )
     .await
@@ -156,7 +157,7 @@ pub async fn main() {
             .await;
             return;
         } else if test_type == "BATCH_STRESS" {
-            let contact = Contact::new(COSMOS_NODE, TOTAL_TIMEOUT);
+            let contact = Contact::new(COSMOS_NODE_GRPC, TOTAL_TIMEOUT);
             transaction_stress_test(&web30, &contact, keys, gravity_address, erc20_addresses).await;
             return;
         } else if test_type == "VALSET_STRESS" {
@@ -170,6 +171,10 @@ pub async fn main() {
         } else if test_type == "ARBITRARY_LOGIC" {
             info!("Starting arbitrary logic tests!");
             arbitrary_logic_test(&web30, grpc_client, &contact, keys, gravity_address).await;
+            return;
+        } else if test_type == "ORCHESTRATOR_KEYS" {
+            info!("Starting orchestrator key update tests!");
+            orch_keys_update(grpc_client, &contact, keys).await;
             return;
         }
     }
