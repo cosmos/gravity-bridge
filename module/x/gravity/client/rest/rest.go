@@ -13,8 +13,6 @@ const (
 	tokenAddress           = "tokenAddress"
 	denom                  = "denom"
 	bech32ValidatorAddress = "bech32ValidatorAddress"
-	claimType              = "claimType"
-	signType               = "signType"
 )
 
 // Here are the routes that are actually queried by the rust
