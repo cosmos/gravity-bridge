@@ -3,6 +3,7 @@ package gravity
 import (
 	"testing"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
@@ -72,23 +73,31 @@ func addDenomToERC20Relation(tv *testingVars) {
 		myNonce = uint64(1)
 	)
 
-	ethClaim := types.MsgERC20DeployedClaim{
-		CosmosDenom:   tv.denom,
-		TokenContract: tv.erc20,
-		Name:          "atom",
-		Symbol:        "atom",
-		Decimals:      6,
-		EventNonce:    myNonce,
-		Orchestrator:  tv.myOrchestratorAddr.String(),
+	msg := types.ERC20DeployedClaim{
+		CosmosDenom:         tv.denom,
+		TokenContract:       tv.erc20,
+		Name:                "atom",
+		Symbol:              "atom",
+		Decimals:            6,
+		EventNonce:          myNonce,
+		OrchestratorAddress: tv.myOrchestratorAddr.String(),
 	}
 
-	_, err := tv.h(tv.ctx, &ethClaim)
+	any, err := codectypes.NewAnyWithValue(&msg)
+	require.NoError(tv.t, err)
+
+	ethClaim := types.MsgSubmitClaim{
+		ClaimType: types.ClaimType_CLAIM_TYPE_DEPOSIT,
+		Claim:     any,
+	}
+
+	_, err = tv.h(tv.ctx, &ethClaim)
 	require.NoError(tv.t, err)
 
 	EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
 	// check if attestation persisted
-	a := tv.input.GravityKeeper.GetAttestation(tv.ctx, myNonce, ethClaim.ClaimHash())
+	a := tv.input.GravityKeeper.GetAttestation(tv.ctx, myNonce, msg.ClaimHash())
 	require.NotNil(tv.t, a)
 
 	// check if erc20<>denom relation added to db
@@ -158,21 +167,29 @@ func acceptDepositEvent(tv *testingVars) {
 		Contract: tv.erc20,
 	}
 
-	ethClaim := types.MsgDepositClaim{
-		EventNonce:     myNonce,
-		TokenContract:  myErc20.Contract,
-		Amount:         myErc20.Amount,
-		EthereumSender: anyETHAddr,
-		CosmosReceiver: myCosmosAddr.String(),
-		Orchestrator:   myOrchestratorAddr.String(),
+	msg := types.DepositClaim{
+		EventNonce:          myNonce,
+		TokenContract:       myErc20.Contract,
+		Amount:              myErc20.Amount,
+		EthereumSender:      anyETHAddr,
+		CosmosReceiver:      myCosmosAddr.String(),
+		OrchestratorAddress: myOrchestratorAddr.String(),
 	}
 
-	_, err := tv.h(tv.ctx, &ethClaim)
+	any, err := codectypes.NewAnyWithValue(&msg)
+	require.NoError(tv.t, err)
+
+	ethClaim := types.MsgSubmitClaim{
+		ClaimType: types.ClaimType_CLAIM_TYPE_DEPOSIT,
+		Claim:     any,
+	}
+
+	_, err = tv.h(tv.ctx, &ethClaim)
 	require.NoError(tv.t, err)
 	EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
 	// check that attestation persisted
-	a := tv.input.GravityKeeper.GetAttestation(tv.ctx, myNonce, ethClaim.ClaimHash())
+	a := tv.input.GravityKeeper.GetAttestation(tv.ctx, myNonce, msg.ClaimHash())
 	require.NotNil(tv.t, a)
 
 	// Check that user balance has gone up

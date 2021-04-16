@@ -4,6 +4,7 @@ package gravity.v1;
 import "gogoproto/gogo.proto";
 import "gravity/v1/types.proto";
 import "gravity/v1/msgs.proto";
+import "gravity/v1/confirm.proto";
 import "gravity/v1/batch.proto";
 import "gravity/v1/attestation.proto";
 
@@ -103,16 +104,16 @@ message Params {
 
 // GenesisState struct
 message GenesisState {
-  Params                             params              = 1;
-  uint64                             last_observed_nonce = 2;
-  repeated Valset                    valsets             = 3;
-  repeated MsgValsetConfirm          valset_confirms     = 4;
-  repeated OutgoingTxBatch           batches             = 5;
-  repeated MsgConfirmBatch           batch_confirms      = 6 [(gogoproto.nullable) = false];
-  repeated OutgoingLogicCall         logic_calls         = 7;
-  repeated MsgConfirmLogicCall       logic_call_confirms = 8 [(gogoproto.nullable) = false];
-  repeated Attestation               attestations        = 9 [(gogoproto.nullable) = false];
-  repeated MsgSetOrchestratorAddress delegate_keys       = 10;
-  repeated ERC20ToDenom              erc20_to_denoms     = 11;
-  repeated OutgoingTransferTx        unbatched_transfers = 12;
+  Params                      params              = 1;
+  uint64                      last_observed_nonce = 2;
+  repeated Valset             valsets             = 3;
+  repeated ValsetConfirm      valset_confirms     = 4;
+  repeated OutgoingTxBatch    batches             = 5;
+  repeated ConfirmBatch       batch_confirms      = 6 [(gogoproto.nullable) = false];
+  repeated OutgoingLogicCall  logic_calls         = 7;
+  repeated ConfirmLogicCall   logic_call_confirms = 8 [(gogoproto.nullable) = false];
+  repeated Attestation        attestations        = 9 [(gogoproto.nullable) = false];
+  repeated MsgDelegateKey     delegate_keys       = 10;
+  repeated ERC20ToDenom       erc20_to_denoms     = 11;
+  repeated OutgoingTransferTx unbatched_transfers = 12;
 }

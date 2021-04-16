@@ -83,7 +83,7 @@ func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
 			// don't sign with first validator
 			continue
 		}
-		conf := types.NewMsgValsetConfirm(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
+		conf := types.NewValsetConfirm(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
 		pk.SetValsetConfirm(ctx, *conf)
 	}
 
@@ -143,7 +143,7 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 			// don't sign with first validator
 			continue
 		}
-		conf := types.NewMsgValsetConfirm(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
+		conf := types.NewValsetConfirm(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
 		pk.SetValsetConfirm(ctx, *conf)
 	}
 	staking.EndBlocker(input.Context, input.StakingKeeper)
@@ -192,11 +192,11 @@ func TestBatchSlashing(t *testing.T) {
 			input.SlashingKeeper.SetValidatorSigningInfo(ctx, valConsAddr, valSigningInfo)
 			continue
 		}
-		pk.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
-			Nonce:         batch.BatchNonce,
-			TokenContract: keeper.TokenContractAddrs[0],
-			EthSigner:     keeper.EthAddrs[i].String(),
-			Orchestrator:  val.String(),
+		pk.SetBatchConfirm(ctx, &types.ConfirmBatch{
+			Nonce:               batch.BatchNonce,
+			TokenContract:       keeper.TokenContractAddrs[0],
+			EthSigner:           keeper.EthAddrs[i].String(),
+			OrchestratorAddress: val.String(),
 		})
 	}
 

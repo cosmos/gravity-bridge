@@ -53,8 +53,8 @@ func (k Keeper) ValsetConfirm(
 func (k Keeper) ValsetConfirmsByNonce(
 	c context.Context,
 	req *types.QueryValsetConfirmsByNonceRequest) (*types.QueryValsetConfirmsByNonceResponse, error) {
-	var confirms []*types.MsgValsetConfirm
-	k.IterateValsetConfirmByNonce(sdk.UnwrapSDKContext(c), req.Nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
+	var confirms []*types.ValsetConfirm
+	k.IterateValsetConfirmByNonce(sdk.UnwrapSDKContext(c), req.Nonce, func(_ []byte, c types.ValsetConfirm) bool {
 		confirms = append(confirms, &c)
 		return false
 	})
@@ -197,9 +197,9 @@ func (k Keeper) BatchRequestByNonce(
 func (k Keeper) BatchConfirms(
 	c context.Context,
 	req *types.QueryBatchConfirmsRequest) (*types.QueryBatchConfirmsResponse, error) {
-	var confirms []*types.MsgConfirmBatch
+	var confirms []*types.ConfirmBatch
 	k.IterateBatchConfirmByNonceAndTokenContract(sdk.UnwrapSDKContext(c),
-		req.Nonce, req.ContractAddress, func(_ []byte, c types.MsgConfirmBatch) bool {
+		req.Nonce, req.ContractAddress, func(_ []byte, c types.ConfirmBatch) bool {
 			confirms = append(confirms, &c)
 			return false
 		})
@@ -210,9 +210,9 @@ func (k Keeper) BatchConfirms(
 func (k Keeper) LogicConfirms(
 	c context.Context,
 	req *types.QueryLogicConfirmsRequest) (*types.QueryLogicConfirmsResponse, error) {
-	var confirms []*types.MsgConfirmLogicCall
+	var confirms []*types.ConfirmLogicCall
 	k.IterateLogicConfirmByInvalidationIDAndNonce(sdk.UnwrapSDKContext(c), req.InvalidationId,
-		req.InvalidationNonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
+		req.InvalidationNonce, func(_ []byte, c *types.ConfirmLogicCall) bool {
 			confirms = append(confirms, c)
 			return false
 		})

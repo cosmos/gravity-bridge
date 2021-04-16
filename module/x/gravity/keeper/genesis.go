@@ -129,9 +129,9 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		batches            = k.GetOutgoingTxBatches(ctx)
 		valsets            = k.GetValsets(ctx)
 		attmap             = k.GetAttestationMapping(ctx)
-		vsconfs            = []*types.MsgValsetConfirm{}
-		batchconfs         = []types.MsgConfirmBatch{}
-		callconfs          = []types.MsgConfirmLogicCall{}
+		vsconfs            = []*types.ValsetConfirm{}
+		batchconfs         = []types.ConfirmBatch{}
+		callconfs          = []types.ConfirmLogicCall{}
 		attestations       = []types.Attestation{}
 		delegates          = k.GetDelegateKeys(ctx)
 		lastobserved       = k.GetLastObservedEventNonce(ctx)

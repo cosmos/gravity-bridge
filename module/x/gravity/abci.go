@@ -247,7 +247,7 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			found := false
 			for _, conf := range confirms {
 				// TODO: double check this logic
-				confVal, _ := sdk.AccAddressFromBech32(conf.Orchestrator)
+				confVal, _ := sdk.AccAddressFromBech32(conf.OrchestratorAddress)
 				if k.GetOrchestratorValidator(ctx, confVal).Equals(val.GetOperator()) {
 					found = true
 					break

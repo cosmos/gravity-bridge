@@ -9,26 +9,20 @@ import (
 // RegisterInterfaces registers the interfaces for the proto stuff
 func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgValsetConfirm{},
 		&MsgSendToEth{},
 		&MsgRequestBatch{},
-		&MsgConfirmBatch{},
-		&MsgConfirmLogicCall{},
-		&MsgDepositClaim{},
-		&MsgWithdrawClaim{},
-		&MsgERC20DeployedClaim{},
-		&MsgSetOrchestratorAddress{},
-		&MsgLogicCallExecutedClaim{},
+		&MsgSubmitClaim{},
+		&MsgSubmitConfirm{},
 		&MsgCancelSendToEth{},
 	)
 
 	registry.RegisterInterface(
 		"gravity.v1beta1.EthereumClaim",
 		(*EthereumClaim)(nil),
-		&MsgDepositClaim{},
-		&MsgWithdrawClaim{},
-		&MsgERC20DeployedClaim{},
-		&MsgLogicCallExecutedClaim{},
+		&DepositClaim{},
+		&WithdrawClaim{},
+		&ERC20DeployedClaim{},
+		&LogicCallExecutedClaim{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
