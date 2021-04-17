@@ -7,7 +7,10 @@ use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use cosmos_gravity::query::get_latest_valsets;
 use cosmos_gravity::query::{get_all_valset_confirms, get_valset};
-use ethereum_gravity::{one_eth, utils::downcast_to_u128, valset_update::send_eth_valset_update};
+use ethereum_gravity::{
+    one_eth, utils::downcast_to_u128, utils::get_valset_nonce,
+    valset_update::send_eth_valset_update,
+};
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::{message_signatures::encode_valset_confirm_hashed, types::Valset};
 use tonic::transport::Channel;
@@ -112,10 +115,15 @@ pub async fn relay_valsets(
         )
         .await;
         if cost.is_err() {
-            error!(
-                "Valset cost estimate for Nonce {} failed with {:?}",
-                latest_cosmos_valset.nonce, cost
-            );
+            let our_address = ethereum_key.to_public_key().unwrap();
+            let current_valset_from_eth =
+                get_valset_nonce(gravity_contract_address, our_address, web3).await;
+            if let Ok(current_valset_from_eth) = current_valset_from_eth {
+                error!(
+                    "Valset cost estimate for Nonce {} failed with {:?}, current valset {} / {}",
+                    latest_cosmos_valset.nonce, cost, current_valset.nonce, current_valset_from_eth
+                );
+            }
             return;
         }
         let cost = cost.unwrap();
