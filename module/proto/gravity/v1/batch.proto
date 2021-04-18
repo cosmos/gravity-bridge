@@ -4,7 +4,7 @@ package gravity.v1;
 import "gravity/v1/attestation.proto";
 // import "gravity/v1/types.proto";
 
-option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
+option go_package = "github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types";
 
 // OutgoingTxBatch represents a batch of transactions going from gravity to ETH
 message OutgoingTxBatch {

@@ -3,9 +3,9 @@ package gravity
 import (
 	"sort"
 
+	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/keeper"
+	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 // EndBlocker is called at the end of every block

@@ -1,7 +1,7 @@
 syntax = "proto3";
 package gravity.v1;
 import "gogoproto/gogo.proto";
-option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
+option go_package = "github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types";
 
 // SignType defines messages that have been signed by an orchestrator
 enum SignType {

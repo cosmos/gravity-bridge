@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
 
 func GetQueryCmd() *cobra.Command {

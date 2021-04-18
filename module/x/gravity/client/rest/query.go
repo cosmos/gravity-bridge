@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
 
 func getValsetRequestHandler(cliCtx client.Context, storeName string) http.HandlerFunc {

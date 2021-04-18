@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
 
 func (k Keeper) GetCosmosOriginatedDenom(ctx sdk.Context, tokenContract string) (string, bool) {

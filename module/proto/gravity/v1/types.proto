@@ -1,6 +1,6 @@
 syntax = "proto3";
 package gravity.v1;
-option  go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
+option  go_package = "github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types";
 
 // BridgeValidator represents a validator's ETH address and its power
 message BridgeValidator {

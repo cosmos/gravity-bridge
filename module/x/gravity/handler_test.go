@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/keeper"
+	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
 
 func TestHandleMsgSendToEth(t *testing.T) {

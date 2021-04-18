@@ -1,8 +1,8 @@
 package app
 
 import (
+	gravityparams "github.com/althea-net/cosmos-gravity-bridge/module/app/params"
 	"github.com/cosmos/cosmos-sdk/std"
-	gravityparams "github.com/cosmos/gravity-bridge/module/app/params"
 )
 
 // MakeEncodingConfig creates an EncodingConfig for gravity.

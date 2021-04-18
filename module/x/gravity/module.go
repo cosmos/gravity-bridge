@@ -19,10 +19,10 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/client/cli"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/client/rest"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/client/cli"
+	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/client/rest"
+	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/keeper"
+	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
 
 // type check to ensure the interface is properly implemented
