@@ -41,10 +41,10 @@ func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validato
 	return nil
 }
 
-// TryAttestation checks if an attestation has enough votes to be applied to the consensus state
+// TallyAttestation checks if an attestation has enough votes to be applied to the consensus state
 // and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
 // and then marks it Observed and emits an event.
-func (k Keeper) TryAttestation(ctx sdk.Context, attestation types.Attestation) {
+func (k Keeper) TallyAttestation(ctx sdk.Context, attestation types.Attestation) {
 
 	if attestation.Observed {
 		panic("attempting to process observed attestation")
@@ -101,8 +101,8 @@ func (k Keeper) processAttestation(ctx sdk.Context, attestation types.Attestatio
 		// having voted for it.
 		k.Logger(ctx).Error("attestation failed",
 			"cause", err.Error(),
-			"event type", event.GetType(),
-			"id", types.GetAttestationKey(event.GetNonce(), event.Hash()),
+			"event-type", event.GetType(),
+			"event-hash", event.Hash(),
 			"nonce", fmt.Sprint(event.GetNonce()),
 		)
 	} else {

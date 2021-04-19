@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -23,9 +24,9 @@ import (
 //
 // CONTRACT: amount and fee must be valid Ethereum ERC20 token or a Cosmos coin
 // (i.e with or without the gravity prefix)
-func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethereumReceiver common.Address, amount, fee sdk.Coin) (uint64, error) {
+func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethereumReceiver common.Address, amount, fee sdk.Coin) (tmbytes.HexBytes, error) {
 	if amount.Denom != fee.Denom {
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "coin denom doesn't match with fee denom (%s ≠ %s)", amount.Denom, fee.Denom)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "coin denom doesn't match with fee denom (%s ≠ %s)", amount.Denom, fee.Denom)
 	}
 
 	// Add the fees to the transfer coins in order to escrow them on the ModuleAccount
@@ -47,7 +48,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 		// If it is an ethereum-originated asset we burn it
 		// send coins to module in prep for burn
 		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, coinsToEscrow); err != nil {
-			return 0, err
+			return nil, err
 		}
 
 		// burn vouchers to send them back to ETH
@@ -63,14 +64,14 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 			// FIXME: this will fail if the cosmos tokens are relayed for the first time and they don't have a counterparty contract
 			// Fede: Also there's the question of how do we handle IBC denominations from a security perspective. Do we assign them the same
 			// contract? My guess is that each new contract assigned to a cosmos coin should be approved by governance
-			return 0, sdkerrors.Wrapf(types.ErrContractNotFound, "denom %s", amount.Denom)
+			return nil, sdkerrors.Wrapf(types.ErrContractNotFound, "denom %s", amount.Denom)
 		}
 
 		tokenContractHex = tokenContract.String()
 
 		// lock coins in module
 		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, coinsToEscrow); err != nil {
-			return 0, err
+			return nil, err
 		}
 	}
 
@@ -111,7 +112,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 			types.EventTypeBridgeWithdrawalReceived,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			// TODO: why are the nonce and the txID the same?
-			sdk.NewAttribute(types.AttributeKeyOutgoingTxID, nonceStr),
+			sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, nonceStr), // FIXME: rename attr
 			sdk.NewAttribute(types.AttributeKeyNonce, nonceStr),
 		),
 	)
@@ -123,11 +124,11 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 // - checks that the provided tx actually exists
 // - deletes the unbatched tx from the pool
 // - issues the tokens back to the sender
-func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID string, sender sdk.AccAddress) error {
+func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID tmbytes.HexBytes, sender sdk.AccAddress) error {
 	// check that we actually have a tx with that id and what it's details are
 	tx, found := k.GetTransferTx(ctx, txID)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrOutgoingTxNotFound, "tx id %d", txID)
+		return sdkerrors.Wrapf(types.ErrOutgoingTxNotFound, "tx id %s", txID)
 	}
 
 	// TODO: check if the transaction is currently on a batch and remove it
@@ -171,7 +172,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID string, se
 			types.EventTypeBridgeWithdrawCanceled,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute("denom", refund.Denom), // TODO: create attr
-			sdk.NewAttribute(types.AttributeKeyOutgoingTxID, strconv.FormatUint(txID, 64)),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTxID, txID.String()),
 		),
 	)
 

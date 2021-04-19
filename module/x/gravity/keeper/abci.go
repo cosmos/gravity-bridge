@@ -2,6 +2,8 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -41,9 +43,9 @@ func (k Keeper) timeoutTxs(ctx sdk.Context) {
 	// TODO: start iteration in desc order from height = info.Height
 	// TODO: can we iterate once for over a height range [0, info.Height] instead of
 	// once for every tx type
-	k.IterateBatchTxs(ctx, func(tx types.BatchTx) bool {
-		if tx.Timeout < info.Height {
-			k.CancelBatchTx(ctx, tx.TokenContract, tx.Nonce)
+	k.IterateBatchTxs(ctx, func(tokenContract common.Address, txID tmbytes.HexBytes, batchTx types.BatchTx) bool {
+		if batchTx.Timeout < info.Height {
+			k.CancelBatchTx(ctx, tokenContract, txID)
 		}
 
 		return false

@@ -133,7 +133,7 @@ func GetSignersetKey(nonce uint64) []byte {
 // prefix   nonce                    validator-address
 // [0x0][0 0 0 0 0 0 0 1][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
-func GetSignersetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
+func GetSignersetConfirmKey(nonce uint64, validator sdk.ValAddress) []byte {
 	return append(SignersetConfirmKey, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
 }
 
@@ -164,15 +164,13 @@ func GetEventKey(event EthereumEvent) []byte {
 // GetTransferTxPoolKey returns the following key format
 // prefix     id
 // [0x6][0 0 0 0 0 0 0 1]
-func GetTransferTxPoolKey(id string) []byte {
-	// TODO: use hex hash .Bytes() instead ?
-	return append(TransferTxPoolKey, []byte(id)...)
+func GetTransferTxPoolKey(txID tmbytes.HexBytes) []byte {
+	return append(TransferTxPoolKey, txID.Bytes()...)
 }
 
 // GetBatchTxKey returns the following key format
 // prefix  eth-contract-address
 // [0xa][0xc783df8a850f42e7F7e57013759C285caa701eB6][HASH]
-// TODO: use bytes
 func GetBatchTxKey(tokenContract string, txID tmbytes.HexBytes) []byte {
 	return append([]byte(tokenContract), txID.Bytes()...)
 }
@@ -187,8 +185,7 @@ func GetBatchTxBlockKey(block uint64) []byte {
 // GetBatchConfirmKey returns the following key format
 // prefix           eth-contract-address                BatchNonce                       Validator-address
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
-// TODO this should be a sdk.ValAddress
-func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
+func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.ValAddress) []byte {
 	a := append(sdk.Uint64ToBigEndian(batchNonce), validator.Bytes()...)
 	b := append([]byte(tokenContract), a...)
 	c := append(BatchConfirmKey, b...)
@@ -198,7 +195,7 @@ func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.A
 // GetLastEventNonceByValidatorKey indexes lateset event nonce by validator
 // GetLastEventNonceByValidatorKey returns the following key format
 // prefix              cosmos-validator
-// [0x0][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
+// [0x0][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 func GetLastEventNonceByValidatorKey(validator sdk.ValAddress) []byte {
 	return append(LastEventNonceByValidatorKey, validator.Bytes()...)
 }
@@ -211,13 +208,13 @@ func GetERC20ToDenomKey(erc20 string) []byte {
 	return append(ERC20ToDenomKey, []byte(erc20)...)
 }
 
-func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {
-	a := append(KeyOutgoingLogicCall, invalidationId...)
+func GetOutgoingLogicCallKey(invalidationID tmbytes.HexBytes, invalidationNonce uint64) []byte {
+	a := append(KeyOutgoingLogicCall, invalidationID...)
 	return append(a, sdk.Uint64ToBigEndian(invalidationNonce)...)
 }
 
-func GetLogicCallTxKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
-	interm := append(KeyOutgoingLogicConfirm, invalidationId...)
-	interm = append(interm, sdk.Uint64ToBigEndian(invalidationNonce)...)
-	return append(interm, validator.Bytes()...)
+func GetLogicCallTxKey(invalidationID tmbytes.HexBytes, invalidationNonce uint64, validator sdk.ValAddress) []byte {
+	key := append(KeyOutgoingLogicConfirm, invalidationID.Bytes()...)
+	key = append(key, sdk.Uint64ToBigEndian(invalidationNonce)...)
+	return append(key, validator.Bytes()...)
 }

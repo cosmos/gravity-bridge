@@ -9,6 +9,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
@@ -130,7 +131,7 @@ func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
 	store.Set(types.LastObservedEventNonceKey, sdk.Uint64ToBigEndian(nonce))
 }
 
-func (k Keeper) GetTransferTx(ctx sdk.Context, id string) (types.TransferTx, bool) {
+func (k Keeper) GetTransferTx(ctx sdk.Context, id tmbytes.HexBytes) (types.TransferTx, bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetTransferTxPoolKey(id))
 	if len(bz) == 0 {
@@ -142,19 +143,19 @@ func (k Keeper) GetTransferTx(ctx sdk.Context, id string) (types.TransferTx, boo
 	return tx, true
 }
 
-func (k Keeper) SetTransferTx(ctx sdk.Context, id string, tx types.TransferTx) {
+func (k Keeper) SetTransferTx(ctx sdk.Context, id tmbytes.HexBytes, tx types.TransferTx) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinaryBare(&tx)
 	store.Set(types.GetTransferTxPoolKey(id), bz)
 }
 
-func (k Keeper) DeleteTransferTx(ctx sdk.Context, id string) {
+func (k Keeper) DeleteTransferTx(ctx sdk.Context, id tmbytes.HexBytes) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetTransferTxPoolKey(id))
 }
 
 // IterateTransferTxs
-func (k Keeper) IterateTransferTxs(ctx sdk.Context, cb func(id string, tx types.TransferTx) (stop bool)) {
+func (k Keeper) IterateTransferTxs(ctx sdk.Context, cb func(id tmbytes.HexBytes, tx types.TransferTx) (stop bool)) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferTxPoolKey)
 
 	iterator := prefixStore.ReverseIterator(nil, nil)
@@ -173,7 +174,7 @@ func (k Keeper) IterateTransferTxs(ctx sdk.Context, cb func(id string, tx types.
 // TODO: create struct with ID and transferTx
 func (k Keeper) GetTransferTxs(ctx sdk.Context) []types.TransferTx {
 	txs := make([]types.TransferTx, 0)
-	k.IterateTransferTxs(ctx, func(id string, tx types.TransferTx) bool {
+	k.IterateTransferTxs(ctx, func(id tmbytes.HexBytes, tx types.TransferTx) bool {
 		txs = append(txs, tx)
 		return false
 	})
