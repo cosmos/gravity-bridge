@@ -19,7 +19,7 @@ type AttestationHandler struct {
 // TODO-JT add handler for ERC20DeployedEvent
 func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
-	case *types.MsgDepositClaim:
+	case *types.DepositClaim:
 		// Check if coin is Cosmos-originated asset and get denom
 		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.TokenContract)
 
@@ -29,7 +29,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 
 			addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
 			if err != nil {
-				return sdkerrors.Wrap(err, "invalid reciever address")
+				return sdkerrors.Wrap(err, "invalid receiver address")
 			}
 
 			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
@@ -45,16 +45,16 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 
 			addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
 			if err != nil {
-				return sdkerrors.Wrap(err, "invalid reciever address")
+				return sdkerrors.Wrap(err, "invalid receiver address")
 			}
 
 			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
 				return sdkerrors.Wrap(err, "transfer vouchers")
 			}
 		}
-	case *types.MsgWithdrawClaim:
-		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
-	case *types.MsgERC20DeployedClaim:
+	case *types.WithdrawClaim:
+		return a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
+	case *types.ERC20DeployedClaim:
 		// Check if it already exists
 		existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.CosmosDenom)
 		if exists {
@@ -113,7 +113,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.CosmosDenom, claim.TokenContract)
 
 	default:
-		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())
+		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.Type())
 	}
 	return nil
 }

@@ -1,30 +1,26 @@
 use crate::get_chain_id;
 use crate::get_fee;
-use crate::get_test_token_name;
-use crate::{
-    utils::*, COSMOS_NODE_GRPC, MINER_ADDRESS, MINER_PRIVATE_KEY, STARTING_STAKE_PER_VALIDATOR,
-    TOTAL_TIMEOUT,
-};
-use actix::Arbiter;
+use crate::utils::*;
+use crate::MINER_ADDRESS;
+use crate::MINER_PRIVATE_KEY;
+use crate::STARTING_STAKE_PER_VALIDATOR;
+use crate::TOTAL_TIMEOUT;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
-use contact::client::Contact;
 use cosmos_gravity::send::{send_request_batch, send_to_eth};
-use cosmos_gravity::utils::wait_for_next_cosmos_block;
 use cosmos_gravity::{query::get_oldest_unsigned_transaction_batch, send::send_ethereum_claims};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::coin::Coin;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use deep_space::Contact;
 use ethereum_gravity::utils::get_valset_nonce;
 use ethereum_gravity::{send_to_cosmos::send_to_cosmos, utils::get_tx_batch_nonce};
-use orchestrator::main_loop::orchestrator_main_loop;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use gravity_utils::connection_prep::check_delegate_addresses;
 use gravity_utils::types::SendToCosmosEvent;
 use rand::Rng;
 use std::{env, process::Command, time::Duration};
 use std::{process::ExitStatus, time::Instant};
-use tokio::time::delay_for;
+use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
@@ -32,50 +28,14 @@ pub async fn happy_path_test(
     web30: &Web3,
     grpc_client: GravityQueryClient<Channel>,
     contact: &Contact,
-    keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
+    keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
     erc20_address: EthAddress,
     validator_out: bool,
 ) {
     let mut grpc_client = grpc_client;
 
-    // used to break out of the loop early to simulate one validator
-    // not running an Orchestrator
-    let num_validators = keys.len();
-    let mut count = 0;
-
-    // start orchestrators
-    #[allow(clippy::explicit_counter_loop)]
-    for (c_key, e_key) in keys.iter() {
-        info!("Spawning Orchestrator");
-        let mut grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
-        // we have only one actual futures executor thread (see the actix runtime tag on our main function)
-        // but that will execute all the orchestrators in our test in parallel
-        Arbiter::spawn(orchestrator_main_loop(
-            *c_key,
-            *e_key,
-            web30.clone(),
-            contact.clone(),
-            grpc_client.clone(),
-            gravity_address,
-            get_test_token_name(),
-        ));
-
-        // this function is just to test normal startup
-        check_delegate_addresses(
-            &mut grpc_client,
-            e_key.to_public_key().unwrap(),
-            c_key.to_public_key().unwrap().to_address(),
-        )
-        .await;
-
-        // used to break out of the loop early to simulate one validator
-        // not running an orchestrator
-        count += 1;
-        if validator_out && count == num_validators - 1 {
-            break;
-        }
-    }
+    start_orchestrators(keys.clone(), gravity_address, validator_out).await;
 
     // bootstrapping tests finish here and we move into operational tests
 
@@ -131,7 +91,7 @@ pub async fn happy_path_test(
         erc20_address,
         1u64.into(),
         dest_cosmos_address,
-        keys.clone(),
+        &keys,
     )
     .await;
 
@@ -142,7 +102,7 @@ pub async fn happy_path_test(
         &web30,
         dest_eth_address,
         gravity_address,
-        keys[0].0,
+        keys[0].validator_key,
         dest_cosmos_private_key,
         erc20_address,
     )
@@ -230,11 +190,7 @@ pub async fn wait_for_nonzero_valset(web30: &Web3, gravity_address: EthAddress) 
     }
 }
 
-pub async fn test_valset_update(
-    web30: &Web3,
-    keys: &[(CosmosPrivateKey, EthPrivateKey)],
-    gravity_address: EthAddress,
-) {
+pub async fn test_valset_update(web30: &Web3, keys: &[ValidatorKeys], gravity_address: EthAddress) {
     // if we don't do this the orchestrators may run ahead of us and we'll be stuck here after
     // getting credit for two loops when we did one
     let starting_eth_valset_nonce = get_valset_nonce(gravity_address, *MINER_ADDRESS, &web30)
@@ -255,7 +211,7 @@ pub async fn test_valset_update(
     let mut rng = rand::thread_rng();
     let validator_to_change = rng.gen_range(0..keys.len());
     let delegate_address = &keys[validator_to_change]
-        .0
+        .validator_key
         .to_public_key()
         .unwrap()
         .to_address()
@@ -349,7 +305,7 @@ async fn test_erc20_deposit(
             _ => {}
         }
         info!("Waiting for ERC20 deposit");
-        wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
+        contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
     }
     panic!("Failed to bridge ERC20!")
 }
@@ -408,7 +364,7 @@ async fn test_batch(
     .await
     .unwrap();
 
-    wait_for_next_cosmos_block(contact, TOTAL_TIMEOUT).await;
+    contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
     let requester_address = requester_cosmos_private_key
         .to_public_key()
         .unwrap()
@@ -479,7 +435,7 @@ async fn submit_duplicate_erc20_send(
     erc20_address: EthAddress,
     amount: Uint256,
     receiver: CosmosAddress,
-    keys: Vec<(CosmosPrivateKey, EthPrivateKey)>,
+    keys: &[ValidatorKeys],
 ) {
     let start_coin = check_cosmos_balance("gravity", receiver, &contact)
         .await
@@ -499,10 +455,11 @@ async fn submit_duplicate_erc20_send(
     };
 
     // iterate through all validators and try to send an event with duplicate nonce
-    for (c_key, _) in keys.iter() {
+    for k in keys.iter() {
+        let c_key = k.validator_key;
         let res = send_ethereum_claims(
             contact,
-            *c_key,
+            c_key,
             vec![event.clone()],
             vec![],
             vec![],

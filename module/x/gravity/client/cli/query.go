@@ -2,9 +2,8 @@ package cli
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/spf13/cobra"
-
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/spf13/cobra"
 )
 
 func GetQueryCmd() *cobra.Command {

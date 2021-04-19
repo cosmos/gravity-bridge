@@ -59,6 +59,12 @@ go.sum: go.mod
 test:
 	@go test -mod=readonly $(PACKAGES)
 
+build-linux:
+	GOOS=linux GOARCH=amd64 go build -o build/gravity $(BUILD_FLAGS) ./cmd/gravity/main.go
+
+docker-build:
+	docker build -t github.com/althea-net/gravity:latest
+
 # look into .golangci.yml for enabling / disabling linters
 lint:
 	@echo "--> Running linter"
@@ -77,7 +83,7 @@ proto-lint:
 	@$(DOCKER_BUF) check lint --error-format=json
 
 proto-check-breaking:
-	@$(DOCKER_BUF) check breaking --against-input $(HTTPS_GIT)#branch=main
+	@$(DOCKER_BUF) breaking --against $(HTTPS_GIT)#branch=main
 
 TM_URL           = https://raw.githubusercontent.com/tendermint/tendermint/v0.34.0-rc3/proto/tendermint
 GOGO_PROTO_URL   = https://raw.githubusercontent.com/regen-network/protobuf/cosmos

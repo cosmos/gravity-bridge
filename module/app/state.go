@@ -41,7 +41,7 @@ func AppStateFn(cdc codec.JSONMarshaler, simManager *module.SimulationManager) s
 
 		case config.GenesisFile != "":
 			// override the default chain-id from simapp to set it later to the config
-			genesisDoc, accounts := AppStateFromGenesisFileFn(r, cdc, config.GenesisFile)
+			genesisDoc, accounts := StateFromGenesisFileFn(r, cdc, config.GenesisFile)
 
 			if FlagGenesisTimeValue == 0 {
 				// use genesis timestamp if no custom timestamp is provided (i.e no random timestamp)
@@ -129,9 +129,9 @@ func AppStateRandomizedFn(
 	return appState, accs
 }
 
-// AppStateFromGenesisFileFn util function to generate the genesis AppState
+// StateFromGenesisFileFn util function to generate the genesis AppState
 // from a genesis.json file.
-func AppStateFromGenesisFileFn(r io.Reader, cdc codec.JSONMarshaler, genesisFile string) (tmtypes.GenesisDoc, []simtypes.Account) {
+func StateFromGenesisFileFn(r io.Reader, cdc codec.JSONMarshaler, genesisFile string) (tmtypes.GenesisDoc, []simtypes.Account) {
 	bytes, err := ioutil.ReadFile(genesisFile)
 	if err != nil {
 		panic(err)

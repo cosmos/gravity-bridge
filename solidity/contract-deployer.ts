@@ -126,6 +126,12 @@ async function deploy() {
     const alt_location_2_a = "TestERC20A.json"
     const alt_location_2_b = "TestERC20B.json"
     const alt_location_2_c = "TestERC20C.json"
+    const solidity_dir_a = "artifacts/contracts/TestERC20A.sol/TestERC20A.json"
+    const solidity_dir_b = "artifacts/contracts/TestERC20B.sol/TestERC20B.json"
+    const solidity_dir_c = "artifacts/contracts/TestERC20C.sol/TestERC20C.json"
+    const docker_location_a = "/artifacts/contracts/TestERC20A.sol/TestERC20A.json"
+    const docker_location_b = "/artifacts/contracts/TestERC20B.sol/TestERC20B.json"
+    const docker_location_c = "/artifacts/contracts/TestERC20C.sol/TestERC20C.json"
     if (fs.existsSync(main_location_a)) {
       erc20_a_path = main_location_a
       erc20_b_path = main_location_b
@@ -138,6 +144,14 @@ async function deploy() {
       erc20_a_path = alt_location_2_a
       erc20_b_path = alt_location_2_b
       erc20_c_path = alt_location_2_c
+    } else if (fs.existsSync(solidity_dir_a)) {
+      erc20_a_path = solidity_dir_a
+      erc20_b_path = solidity_dir_b
+      erc20_c_path = solidity_dir_c
+    } else if (fs.existsSync(docker_location_a)) {
+      erc20_a_path = docker_location_a
+      erc20_b_path = docker_location_b
+      erc20_c_path = docker_location_c
     } else {
       console.log("Test mode was enabled but the ERC20 contracts can't be found!")
       exit(1)
@@ -164,7 +178,8 @@ async function deploy() {
 
 
     const arbitrary_logic_path = "/gravity/solidity/artifacts/contracts/TestUniswapLiquidity.sol/TestUniswapLiquidity.json"
-    if (fs.existsSync(arbitrary_logic_path)) { 
+    if (fs.existsSync(arbitrary_logic_path)) {
+      console.log("Starting arbitrary logic test")
       const { abi, bytecode } = getContractArtifacts(arbitrary_logic_path);
       const liquidityFactory = new ethers.ContractFactory(abi, bytecode, wallet);
       const testUniswapLiquidity = (await liquidityFactory.deploy(erc20TestAddress)) as TestUniswapLiquidity;

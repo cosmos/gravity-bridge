@@ -103,7 +103,7 @@ func (k Keeper) OnBatchTxExecuted(ctx sdk.Context, tokenContract string, nonce u
 		// TODO: get the txs ids
 		k.removePoolEntry(ctx, tx.Id)
 	}
-
+	var err error
 	// Iterate through remaining batches
 	// TODO: still not getting why we need to cancel the other batch txs
 	k.IterateBatchTxs(ctx, func(batchTx types.BatchTx) bool {

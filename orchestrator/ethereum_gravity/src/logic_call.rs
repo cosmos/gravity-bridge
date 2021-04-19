@@ -229,7 +229,7 @@ mod tests {
         let ethereum_signer = "0xc783df8a850f42e7F7e57013759C285caa701eB6"
             .parse()
             .unwrap();
-        let token = vec![ERC20Token {
+        let token = vec![Erc20Token {
             amount: 1u8.into(),
             token_contract_address,
         }];

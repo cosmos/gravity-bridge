@@ -91,7 +91,8 @@ func (msg MsgTransfer) ValidateBasic() error {
 
 	// fee and send must be of the same denom
 	if msg.Amount.Denom != msg.BridgeFee.Denom {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, fmt.Sprintf("fee and amount must be the same type %s != %s", msg.Amount.Denom, msg.BridgeFee.Denom))
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins,
+			fmt.Sprintf("fee and amount must be the same type %s != %s", msg.Amount.Denom, msg.BridgeFee.Denom))
 	}
 
 	if !msg.Amount.IsValid() || msg.Amount.IsZero() {

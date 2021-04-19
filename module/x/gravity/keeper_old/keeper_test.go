@@ -19,16 +19,18 @@ func TestPrefixRange(t *testing.T) {
 		expEnd   []byte
 		expPanic bool
 	}{
-		"normal":                 {src: []byte{1, 3, 4}, expStart: []byte{1, 3, 4}, expEnd: []byte{1, 3, 5}},
-		"normal short":           {src: []byte{79}, expStart: []byte{79}, expEnd: []byte{80}},
-		"empty case":             {src: []byte{}},
-		"roll-over example 1":    {src: []byte{17, 28, 255}, expStart: []byte{17, 28, 255}, expEnd: []byte{17, 29, 0}},
-		"roll-over example 2":    {src: []byte{15, 42, 255, 255}, expStart: []byte{15, 42, 255, 255}, expEnd: []byte{15, 43, 0, 0}},
+		"normal":              {src: []byte{1, 3, 4}, expStart: []byte{1, 3, 4}, expEnd: []byte{1, 3, 5}},
+		"normal short":        {src: []byte{79}, expStart: []byte{79}, expEnd: []byte{80}},
+		"empty case":          {src: []byte{}},
+		"roll-over example 1": {src: []byte{17, 28, 255}, expStart: []byte{17, 28, 255}, expEnd: []byte{17, 29, 0}},
+		"roll-over example 2": {src: []byte{15, 42, 255, 255},
+			expStart: []byte{15, 42, 255, 255}, expEnd: []byte{15, 43, 0, 0}},
 		"pathological roll-over": {src: []byte{255, 255, 255, 255}, expStart: []byte{255, 255, 255, 255}},
 		"nil prohibited":         {expPanic: true},
 	}
 
 	for testName, tc := range cases {
+		tc := tc
 		t.Run(testName, func(t *testing.T) {
 			if tc.expPanic {
 				require.Panics(t, func() {
@@ -60,6 +62,7 @@ func TestCurrentValsetNormalization(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 	for msg, spec := range specs {
+		spec := spec
 		t.Run(msg, func(t *testing.T) {
 			operators := make([]MockStakingValidatorData, len(spec.srcPowers))
 			for i, v := range spec.srcPowers {
@@ -85,25 +88,25 @@ func TestAttestationIterator(t *testing.T) {
 		Observed: true,
 		Votes:    []string{},
 	}
-	dep1 := &types.MsgDepositClaim{
-		EventNonce:     1,
-		TokenContract:  TokenContractAddrs[0],
-		Amount:         sdk.NewInt(100),
-		EthereumSender: EthAddrs[0].String(),
-		CosmosReceiver: AccAddrs[0].String(),
-		Orchestrator:   AccAddrs[0].String(),
+	dep1 := &types.DepositClaim{
+		EventNonce:          1,
+		TokenContract:       TokenContractAddrs[0],
+		Amount:              sdk.NewInt(100),
+		EthereumSender:      EthAddrs[0].String(),
+		CosmosReceiver:      AccAddrs[0].String(),
+		OrchestratorAddress: AccAddrs[0].String(),
 	}
 	att2 := &types.Attestation{
 		Observed: true,
 		Votes:    []string{},
 	}
-	dep2 := &types.MsgDepositClaim{
-		EventNonce:     2,
-		TokenContract:  TokenContractAddrs[0],
-		Amount:         sdk.NewInt(100),
-		EthereumSender: EthAddrs[0].String(),
-		CosmosReceiver: AccAddrs[0].String(),
-		Orchestrator:   AccAddrs[0].String(),
+	dep2 := &types.DepositClaim{
+		EventNonce:          2,
+		TokenContract:       TokenContractAddrs[0],
+		Amount:              sdk.NewInt(100),
+		EthereumSender:      EthAddrs[0].String(),
+		CosmosReceiver:      AccAddrs[0].String(),
+		OrchestratorAddress: AccAddrs[0].String(),
 	}
 	input.GravityKeeper.SetAttestation(ctx, dep1.EventNonce, dep1.ClaimHash(), att1)
 	input.GravityKeeper.SetAttestation(ctx, dep2.EventNonce, dep2.ClaimHash(), att2)
@@ -121,9 +124,18 @@ func TestDelegateKeys(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 	k := input.GravityKeeper
-	var ethAddrs = []string{"0x3146D2d6Eed46Afa423969f5dDC3152DfC359b09", "0x610277F0208D342C576b991daFdCb36E36515e76", "0x835973768750b3ED2D5c3EF5AdcD5eDb44d12aD4", "0xb2A7F3E84F8FdcA1da46c810AEa110dd96BAE6bF"}
-	var valAddrs = []string{"cosmosvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6z3plt4", "cosmosvaloper15n79nty2fj37ant3p2gj4wju4ls6eu6tjwmdt0", "cosmosvaloper16dnkc6ac6ruuyr6l372fc3p77jgjpet6fka0cq", "cosmosvaloper1vrptwhl3ht2txmzy28j9msqkcvmn8gjz507pgu"}
-	var orchAddrs = []string{"cosmos1g0etv93428tvxqftnmj25jn06mz6dtdasj5nz7", "cosmos1rhfs24tlw4na04v35tzmjncy785kkw9j27d5kx", "cosmos10upq3tmt04zf55f6hw67m0uyrda3mp722q70rw", "cosmos1nt2uwjh5peg9vz2wfh2m3jjwqnu9kpjlhgpmen"}
+	var (
+		ethAddrs = []string{"0x3146D2d6Eed46Afa423969f5dDC3152DfC359b09",
+			"0x610277F0208D342C576b991daFdCb36E36515e76", "0x835973768750b3ED2D5c3EF5AdcD5eDb44d12aD4",
+			"0xb2A7F3E84F8FdcA1da46c810AEa110dd96BAE6bF"}
+
+		valAddrs = []string{"cosmosvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6z3plt4",
+			"cosmosvaloper15n79nty2fj37ant3p2gj4wju4ls6eu6tjwmdt0", "cosmosvaloper16dnkc6ac6ruuyr6l372fc3p77jgjpet6fka0cq",
+			"cosmosvaloper1vrptwhl3ht2txmzy28j9msqkcvmn8gjz507pgu"}
+
+		orchAddrs = []string{"cosmos1g0etv93428tvxqftnmj25jn06mz6dtdasj5nz7", "cosmos1rhfs24tlw4na04v35tzmjncy785kkw9j27d5kx",
+			"cosmos10upq3tmt04zf55f6hw67m0uyrda3mp722q70rw", "cosmos1nt2uwjh5peg9vz2wfh2m3jjwqnu9kpjlhgpmen"}
+	)
 
 	for i := range ethAddrs {
 		// set some addresses
