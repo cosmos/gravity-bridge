@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
@@ -111,9 +112,8 @@ func (k Keeper) processAttestation(ctx sdk.Context, attestation types.Attestatio
 
 // GetAttestation return an attestation given a nonce
 func (k Keeper) GetAttestation(ctx sdk.Context, hash []byte) (types.Attestation, bool) {
-	store := ctx.KVStore(k.storeKey)
-	key := types.GetAttestationKey(hash)
-	bz := store.Get(key)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AttestationKeyPrefix)
+	bz := store.Get(hash)
 	if len(bz) == 0 {
 		return types.Attestation{}, false
 	}
@@ -126,13 +126,12 @@ func (k Keeper) GetAttestation(ctx sdk.Context, hash []byte) (types.Attestation,
 
 // SetAttestation sets the attestation in the store
 func (k Keeper) SetAttestation(ctx sdk.Context, hash []byte, attestation types.Attestation) {
-	store := ctx.KVStore(k.storeKey)
-	key := types.GetAttestationKey(hash)
-	store.Set(key, k.cdc.MustMarshalBinaryBare(&attestation))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AttestationKeyPrefix)
+	store.Set(hash, k.cdc.MustMarshalBinaryBare(&attestation))
 }
 
 // DeleteAttestation deletes an attestation given an event hash
 func (k Keeper) DeleteAttestation(ctx sdk.Context, hash []byte, attestation types.Attestation) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetAttestationKeyWithHash(hash))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AttestationKeyPrefix)
+	store.Delete(hash)
 }

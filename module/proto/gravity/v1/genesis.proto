@@ -13,42 +13,34 @@ message Params {
   option (gogoproto.stringer) = false;
 
   // address of the bridge contract on the EVM chain
-  string bridge_contract_address     = 1;
+  string bridge_contract_address = 1;
   // unique identifier of the EVM chain
-  uint64 bridge_chain_id             = 2;
-// target value for when batch transactions time out on Ethereum
-  uint64 target_batch_timeout        = 3;
-// Average Cosmos block time used to compute batch timeout
-  uint64 average_block_time          = 4;
+  uint64 bridge_chain_id = 2;
+  // target value for when batch transactions time out on Ethereum
+  uint64 target_batch_timeout = 3;
+  // Average Cosmos block time used to compute batch timeout
+  uint64 average_block_time = 4;
   // Average ethereum block time used to compute batch timeout
   uint64 average_ethereum_block_time = 5;
   // amount of blocks of the rolling window required to submit a signature for a signer set confirmation.
-  uint64 signerset_window       = 6;
+  uint64 signerset_window = 6;
   // amount of blocks of the rolling window required to submit a signature for a batch transaction.
-  uint64 batch_tx_window       = 7;
+  uint64 batch_tx_window = 7;
   // amount of blocks of the rolling window required to attest an ethereum event.
-  uint64 event_window        = 8;
+  uint64 event_window     = 8;
   uint64 unbonding_window = 9;
   // slashing fraction for not signing a signerset confirmation
-  string  slash_fraction_signerset       = 10 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
-  ];
+  string slash_fraction_signerset = 10
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
   // slashing fraction for not signing an outgoing batch transaction to ethereum
-  string slash_fraction_batch = 11 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
-  ];
+  string slash_fraction_batch = 11
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
   // slashing fraction for not signing events
-  string slash_fraction_event = 12 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
-  ];
+  string slash_fraction_event = 12
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
   // slashing fraction for submitting a conflicting event from Ethereum
-  string slash_fraction_conflicting_event = 13 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
-  ];
+  string slash_fraction_conflicting_event = 13
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }
 
 // ERC20ToDenom records the relationship between an ERC20 token contract and the
@@ -62,18 +54,18 @@ message ERC20ToDenom {
 
 // GenesisState struct
 message GenesisState {
-  Params                      params              = 1 [(gogoproto.nullable) = false];
-  uint64                      last_observed_nonce = 2;
-  repeated EthSignerSet             signersets             = 3 [(gogoproto.nullable) = false];
+  Params                params              = 1 [(gogoproto.nullable) = false];
+  uint64                last_observed_nonce = 2;
+  repeated EthSignerSet signersets          = 3 [(gogoproto.nullable) = false];
   // requested batc transactions
-  repeated BatchTx    batch_txs             = 4 [(gogoproto.nullable) = false];
-  repeated LogicCallTx  logic_call_txs         = 5 [(gogoproto.nullable) = false];
+  repeated BatchTx     batch_txs      = 4 [(gogoproto.nullable) = false];
+  repeated LogicCallTx logic_call_txs = 5 [(gogoproto.nullable) = false];
   // unbatched transfer transactions
-  repeated TransferTx transfer_txs = 6 [(gogoproto.nullable) = false];
-  repeated ConfirmSignerSet      valset_confirms     = 7 [(gogoproto.nullable) = false];
-  repeated ConfirmBatch       batch_confirms      = 8 [(gogoproto.nullable) = false];
-  repeated ConfirmLogicCall   logic_call_confirms = 9 [(gogoproto.nullable) = false];
-  repeated Attestation        attestations        = 10 [(gogoproto.nullable) = false];
-  repeated MsgDelegateKey     delegate_keys       = 11 [(gogoproto.nullable) = false];
-  repeated ERC20ToDenom       erc20_to_denoms     = 12 [(gogoproto.nullable) = false];
+  repeated TransferTx       transfer_txs        = 6 [(gogoproto.nullable) = false];
+  repeated ConfirmSignerSet valset_confirms     = 7 [(gogoproto.nullable) = false];
+  repeated ConfirmBatch     batch_confirms      = 8 [(gogoproto.nullable) = false];
+  repeated ConfirmLogicCall logic_call_confirms = 9 [(gogoproto.nullable) = false];
+  repeated Attestation      attestations        = 10 [(gogoproto.nullable) = false];
+  repeated MsgDelegateKey   delegate_keys       = 11 [(gogoproto.nullable) = false];
+  repeated ERC20ToDenom     erc20_to_denoms     = 12 [(gogoproto.nullable) = false];
 }

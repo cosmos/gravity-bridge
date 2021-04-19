@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 const (
@@ -20,28 +21,28 @@ var (
 	// i.e. cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	EthAddressKey = []byte{0x1}
 
-	// ValsetRequestKey indexes valset requests by nonce
-	ValsetRequestKey = []byte{0x2}
+	// SignersetRequestKey indexes valset requests by nonce
+	SignersetRequestKey = []byte{0x2}
 
-	// ValsetConfirmKey indexes valset confirmations by nonce and the validator account address
+	// SignersetConfirmKey indexes valset confirmations by nonce and the validator account address
 	// i.e cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
-	ValsetConfirmKey = []byte{0x3}
+	SignersetConfirmKey = []byte{0x3}
 
-	// OracleClaimKey Claim event by nonce and validator address
+	// OracleEventKey Event event by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
-	// A claim is named more intuitively than an Attestation, it is literally
-	// a validator making a claim to have seen something happen. Claims are
+	// A event is named more intuitively than an Attestation, it is literally
+	// a validator making a event to have seen something happen. Events are
 	// attached to attestations which can be thought of as 'the event' that
 	// will eventually be executed.
-	OracleClaimKey = []byte{0x4}
+	OracleEventKey = []byte{0x4}
 
-	// OracleAttestationKey attestation event by nonce and validator address
+	// AttestationKeyPrefix attestation event by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	// An attestation can be thought of as the 'event to be executed' while
-	// the Claims are an individual validator saying that they saw an event
-	// occur the Attestation is 'the event' that multiple claims vote on and
+	// the Events are an individual validator saying that they saw an event
+	// occur the Attestation is 'the event' that multiple events vote on and
 	// eventually executes
-	OracleAttestationKey = []byte{0x5}
+	AttestationKeyPrefix = []byte{0x5}
 
 	// TransferTxPoolKey indexes the last nonce for the outgoing tx pool
 	TransferTxPoolKey = []byte{0x6}
@@ -58,8 +59,8 @@ var (
 	// BatchConfirmKey indexes validator confirmations by token contract address
 	BatchConfirmKey = []byte{0xe1}
 
-	// SecondIndexNonceByClaimKey indexes latest nonce for a given claim type
-	SecondIndexNonceByClaimKey = []byte{0xf}
+	// SecondIndexNonceByEventKey indexes latest nonce for a given event type
+	SecondIndexNonceByEventKey = []byte{0xf}
 
 	// LastEventNonceByValidatorKey indexes lateset event nonce by validator
 	LastEventNonceByValidatorKey = []byte{0xf1}
@@ -73,8 +74,8 @@ var (
 	// KeyLastTxPoolID indexes the lastTxPoolID
 	KeyLastTxPoolID = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
 
-	// KeyLastOutgoingBatchID indexes the lastBatchID
-	KeyLastOutgoingBatchID = append(SequenceKeyPrefix, []byte("lastBatchId")...)
+	// KeyLastBatchTxNonce indexes the lastBatchID
+	KeyLastBatchTxNonce = append(SequenceKeyPrefix, []byte("lastBatchId")...)
 
 	// KeyOrchestratorAddress indexes the validator keys for an orchestrator
 	KeyOrchestratorAddress = []byte{0xe8}
@@ -94,11 +95,11 @@ var (
 	// ERC20ToDenomKey prefixes the index of Cosmos originated assets ERC20s to denoms
 	ERC20ToDenomKey = []byte{0xf4}
 
-	// LastSlashedValsetNonce indexes the latest slashed valset nonce
-	LastSlashedValsetNonce = []byte{0xf5}
+	// LastSlashedSignersetNonce indexes the latest slashed valset nonce
+	LastSlashedSignersetNonce = []byte{0xf5}
 
-	// LatestValsetNonce indexes the latest valset nonce
-	LatestValsetNonce = []byte{0xf6}
+	// LatestSignersetNonce indexes the latest valset nonce
+	LatestSignersetNonce = []byte{0xf6}
 
 	// LastSlashedBatchBlock indexes the latest slashed batch block height
 	LastSlashedBatchBlock = []byte{0xf7}
@@ -121,72 +122,42 @@ func GetEthAddressKey(validator sdk.ValAddress) []byte {
 	return append(EthAddressKey, validator.Bytes()...)
 }
 
-// GetValsetKey returns the following key format
+// GetSignersetKey returns the following key format
 // prefix    nonce
 // [0x0][0 0 0 0 0 0 0 1]
-func GetValsetKey(nonce uint64) []byte {
-	return append(ValsetRequestKey, sdk.Uint64ToBigEndian(nonce)...)
+func GetSignersetKey(nonce uint64) []byte {
+	return append(SignersetRequestKey, sdk.Uint64ToBigEndian(nonce)...)
 }
 
-// GetValsetConfirmKey returns the following key format
+// GetSignersetConfirmKey returns the following key format
 // prefix   nonce                    validator-address
 // [0x0][0 0 0 0 0 0 0 1][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
-func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
-	return append(ValsetConfirmKey, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
+func GetSignersetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
+	return append(SignersetConfirmKey, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
 }
 
 // GetEventKey returns the following key format
 // prefix type               cosmos-validator-address                       nonce                             attestation-event-hash
 // [0x0][0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
-// The Claim hash identifies a unique event, for example it would have a event nonce, a sender and a receiver. Or an event nonce and a batch nonce. But
-// the Claim is stored indexed with the claimer key to make sure that it is unique.
+// The Event hash identifies a unique event, for example it would have a event nonce, a sender and a receiver. Or an event nonce and a batch nonce. But
+// the Event is stored indexed with the eventer key to make sure that it is unique.
 func GetEventKey(event EthereumEvent) []byte {
 	var eventHash []byte
 	if event != nil {
 		eventHash = event.Hash()
 	} else {
-		panic("No claim without event!")
+		panic("No event without event!")
 	}
-	claimTypeLen := len([]byte(event.GetType()))
+	eventTypeLen := len([]byte(event.GetType()))
 	nonceBz := sdk.Uint64ToBigEndian(event.GetNonce())
-	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz)+len(eventHash))
-	copy(key[0:], OracleClaimKey)
-	copy(key[len(OracleClaimKey):], []byte(event.GetType()))
+	key := make([]byte, len(OracleEventKey)+eventTypeLen+sdk.AddrLen+len(nonceBz)+len(eventHash))
+	copy(key[0:], OracleEventKey)
+	copy(key[len(OracleEventKey):], []byte(event.GetType()))
 	// TODO this is the delegate address, should be stored by the valaddress
-	copy(key[len(OracleClaimKey)+claimTypeLen:], event.GetClaimer())
-	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen:], nonceBz)
-	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz):], eventHash)
-	return key
-}
-
-// GetAttestationKey returns the following key format
-// prefix     nonce                             claim-event-hash
-// [0x5][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
-// An attestation is an event multiple people are voting on, this function needs the claim
-// event because each Attestation is aggregating all claims of a specific event, lets say
-// validator X and validator y where making different claims about the same event nonce
-// Note that the claim hash does NOT include the claimer address and only identifies an event
-func GetAttestationKey(eventNonce uint64, claimHash []byte) []byte {
-	key := make([]byte, len(OracleAttestationKey)+len(sdk.Uint64ToBigEndian(0))+len(claimHash))
-	copy(key[0:], OracleAttestationKey)
-	copy(key[len(OracleAttestationKey):], sdk.Uint64ToBigEndian(eventNonce))
-	copy(key[len(OracleAttestationKey)+len(sdk.Uint64ToBigEndian(0)):], claimHash)
-	return key
-}
-
-// GetAttestationKeyWithHash returns the following key format
-// prefix     nonce                             claim-event-hash
-// [0x5][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
-// An attestation is an event multiple people are voting on, this function needs the claim
-// event because each Attestation is aggregating all claims of a specific event, lets say
-// validator X and validator y where making different claims about the same event nonce
-// Note that the claim hash does NOT include the claimer address and only identifies an event
-func GetAttestationKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
-	key := make([]byte, len(OracleAttestationKey)+len(sdk.Uint64ToBigEndian(0))+len(claimHash))
-	copy(key[0:], OracleAttestationKey)
-	copy(key[len(OracleAttestationKey):], sdk.Uint64ToBigEndian(eventNonce))
-	copy(key[len(OracleAttestationKey)+len(sdk.Uint64ToBigEndian(0)):], claimHash)
+	copy(key[len(OracleEventKey)+eventTypeLen:], event.GetEventer())
+	copy(key[len(OracleEventKey)+eventTypeLen+sdk.AddrLen:], nonceBz)
+	copy(key[len(OracleEventKey)+eventTypeLen+sdk.AddrLen+len(nonceBz):], eventHash)
 	return key
 }
 
@@ -199,17 +170,18 @@ func GetTransferTxPoolKey(id string) []byte {
 }
 
 // GetBatchTxKey returns the following key format
-// prefix     nonce                     eth-contract-address
-// [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
-func GetBatchTxKey(tokenContract string, nonce uint64) []byte {
-	return append(append(BatchTxKey, []byte(tokenContract)...), sdk.Uint64ToBigEndian(nonce)...)
+// prefix  eth-contract-address
+// [0xa][0xc783df8a850f42e7F7e57013759C285caa701eB6][HASH]
+// TODO: use bytes
+func GetBatchTxKey(tokenContract string, txID tmbytes.HexBytes) []byte {
+	return append([]byte(tokenContract), txID.Bytes()...)
 }
 
 // GetBatchTxBlockKey returns the following key format
 // prefix     blockheight
 // [0xb][0 0 0 0 2 1 4 3]
 func GetBatchTxBlockKey(block uint64) []byte {
-	return append(BatchTxBlockKey, sdk.Uint64ToBigEndian(block)...)
+	return sdk.Uint64ToBigEndian(block)
 }
 
 // GetBatchConfirmKey returns the following key format

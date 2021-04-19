@@ -5,11 +5,16 @@ import (
 	"strings"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
+
+// TxIDs defines a util type for casting a slice of byte arrays into transaction
+// identifiers
+type TxIDs []tmbytes.HexBytes
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
 func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {

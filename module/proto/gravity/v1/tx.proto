@@ -38,21 +38,17 @@ service Msg {
 // submitted to Ethereum.
 message MsgTransfer {
   // cosmos account address of the sender in bech32 format
-  string                   sender   = 1;
-   // ethereum hex address of the recipient
-  string                   eth_recipient = 2;
+  string sender = 1;
+  // ethereum hex address of the recipient
+  string eth_recipient = 2;
   // the SDK coin to send across the bridge to Ethereum. This can be either an
   // ERC20 token voucher or a native cosmos denomination (including IBC vouchers).
-  cosmos.base.v1beta1.Coin amount   = 3 [
-    (gogoproto.nullable) = false
-  ];
+  cosmos.base.v1beta1.Coin amount = 3 [(gogoproto.nullable) = false];
   // the fee paid for the transaction relay accross the bridge to Ethereum.
   // NOTE: this is distinct from the Cosmos transaction fee paid, so a successful
   // transfer has two layers of fees for the user (Cosmos & Bridge).
   // TODO: specify if this needs to be an ERC20 or not.
-  cosmos.base.v1beta1.Coin bridge_fee = 4 [
-    (gogoproto.nullable) = false
-  ];
+  cosmos.base.v1beta1.Coin bridge_fee = 4 [(gogoproto.nullable) = false];
 }
 
 // MsgTransferResponse returns the transfer transaction ID which will be included
@@ -65,31 +61,29 @@ message MsgTransferResponse {} // TODO: add tx id
 message MsgCancelTransfer {
   // transfer tx unique identifier
   string transaction_id = 1;
-    // cosmos account address of the sender in bech32 format
-  string sender         = 2;
+  // cosmos account address of the sender in bech32 format
+  string sender = 2;
 }
 
 message MsgCancelTransferResponse {}
 
 // MsgRequestBatch requests a batch of transactions with a given coin denomination to send across
-// the bridge to Ethereum. 
+// the bridge to Ethereum.
 message MsgRequestBatch {
   // cosmos account address of the orchestrator in bech32 format
   string orchestrator_address = 1;
   // coin denomination
-  string denom        = 2;
+  string denom = 2;
 }
 
 message MsgRequestBatchResponse {}
 
-// MsgSubmitConfirm 
+// MsgSubmitConfirm
 message MsgSubmitConfirm {
   option (gogoproto.goproto_getters) = false;
 
   // confirmation for batch txs, logic call txs or signer sets
-  google.protobuf.Any confirm      = 1 [
-    (cosmos_proto.accepts_interface) = "Confirm"
-  ];
+  google.protobuf.Any confirm = 1 [(cosmos_proto.accepts_interface) = "Confirm"];
 
   // cosmos account address of the orchestrator signer in bech32 format
   string signer = 2;
@@ -102,10 +96,8 @@ message MsgSubmitEvent {
   option (gogoproto.goproto_getters) = false;
 
   // event requested observed by a single validator orchestrator on Ethereum,
-  // which will then need to be 
-  google.protobuf.Any event      = 1 [
-    (cosmos_proto.accepts_interface) = "EthereumEvent"
-  ];
+  // which will then need to be
+  google.protobuf.Any event = 1 [(cosmos_proto.accepts_interface) = "EthereumEvent"];
   // cosmos account address of the orchestrator signer in bech32 format
   string signer = 2;
 }
@@ -117,12 +109,12 @@ message MsgSubmitEventResponse {}
 // authentication method for attesting events from Ethereum.
 message MsgDelegateKey {
   // validator operator address in bech32 format
-  string validator_address    = 1;
+  string validator_address = 1;
   // cosmos account address of the orchestrator in bech32 format that
   // references the key that is being delegated to
   string orchestrator_address = 2;
   // ethereum hex address of the used by the orchestrator
-  string eth_address  = 3;
+  string eth_address = 3;
 }
 
 message MsgDelegateKeyResponse {}

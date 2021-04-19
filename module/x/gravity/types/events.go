@@ -15,7 +15,6 @@ const (
 	AttributeKeyValsetConfirmKey  = "valset_confirm_key"
 	AttributeKeyMultisigID        = "multisig_id"
 	AttributeKeyOutgoingBatchID   = "batch_id"
-	AttributeKeyOutgoingTxID      = "outgoing_tx_id"
 	AttributeKeyAttestationType   = "attestation_type"
 	AttributeKeyContract          = "bridge_contract"
 	AttributeKeyNonce             = "nonce"

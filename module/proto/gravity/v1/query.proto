@@ -29,13 +29,16 @@ service Query {
   // rpc LastValsetRequests(QueryLastValsetRequestsRequest) returns (QueryLastValsetRequestsResponse) {
   //   option (google.api.http).get = "/gravity/v1beta/valset/requests";
   // }
-  // rpc LastPendingValsetRequestByAddr(QueryLastPendingValsetRequestByAddrRequest) returns (QueryLastPendingValsetRequestByAddrResponse) {
+  // rpc LastPendingValsetRequestByAddr(QueryLastPendingValsetRequestByAddrRequest) returns
+  // (QueryLastPendingValsetRequestByAddrResponse) {
   //   option (google.api.http).get = "/gravity/v1beta/valset/last";
   // }
-  // rpc LastPendingBatchRequestByAddr(QueryLastPendingBatchRequestByAddrRequest) returns (QueryLastPendingBatchRequestByAddrResponse) {
+  // rpc LastPendingBatchRequestByAddr(QueryLastPendingBatchRequestByAddrRequest) returns
+  // (QueryLastPendingBatchRequestByAddrResponse) {
   //   option (google.api.http).get = "/gravity/v1beta/batch/{address}";
   // }
-  // rpc LastPendingLogicCallByAddr(QueryLastPendingLogicCallByAddrRequest) returns (QueryLastPendingLogicCallByAddrResponse) {
+  // rpc LastPendingLogicCallByAddr(QueryLastPendingLogicCallByAddrRequest) returns
+  // (QueryLastPendingLogicCallByAddrResponse) {
   //   option (google.api.http).get = "/gravity/v1beta/logic/{address}";
   // }
   // rpc LastEventNonceByAddr(QueryLastEventNonceByAddrRequest) returns (QueryLastEventNonceByAddrResponse) {
@@ -67,13 +70,15 @@ service Query {
   //   option (google.api.http).get = "/gravity/v1beta/cosmos_originated/denom_to_erc20";
   // }
 
-  // rpc GetDelegateKeyByValidator(QueryDelegateKeysByValidatorAddress) returns (QueryDelegateKeysByValidatorAddressResponse) {
+  // rpc GetDelegateKeyByValidator(QueryDelegateKeysByValidatorAddress) returns
+  // (QueryDelegateKeysByValidatorAddressResponse) {
   //   option (google.api.http).get = "/gravity/v1beta/query_delegate_keys_by_validator";
   // }
   // rpc GetDelegateKeyByEth(QueryDelegateKeysByEthAddress) returns (QueryDelegateKeysByEthAddressResponse) {
   //   option (google.api.http).get = "/gravity/v1beta/query_delegate_keys_by_eth";
   // }
-  // rpc GetDelegateKeyByOrchestrator(QueryDelegateKeysByOrchestratorAddress) returns (QueryDelegateKeysByOrchestratorAddressResponse) {
+  // rpc GetDelegateKeyByOrchestrator(QueryDelegateKeysByOrchestratorAddress) returns
+  // (QueryDelegateKeysByOrchestratorAddressResponse) {
   //   option (google.api.http).get = "/gravity/v1beta/query_delegate_keys_by_orchestrator";
   // }
 
