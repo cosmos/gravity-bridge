@@ -51,9 +51,9 @@ func (k Keeper) timeoutTxs(ctx sdk.Context) {
 		return false
 	})
 
-	k.IterateLogicCallTxs(ctx, func(tx types.LogicCallTx) bool {
+	k.IterateLogicCallTxs(ctx, func(invalidationID tmbytes.HexBytes, invalidationNonce uint64, tx types.LogicCallTx) bool {
 		if tx.Timeout < info.Height {
-			k.CancelLogicCallTx(ctx, tx.InvalidationId, tx.InvalidationNonce)
+			k.CancelLogicCallTx(ctx, invalidationID, invalidationNonce)
 		}
 
 		return false

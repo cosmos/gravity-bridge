@@ -191,8 +191,10 @@ func (k Keeper) DeleteBatchTx(ctx sdk.Context, tokenContract common.Address, txI
 func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract common.Address, txID tmbytes.HexBytes) error {
 	batchTx, found := k.GetBatchTx(ctx, tokenContract, txID)
 	if !found {
-		// TODO: fix error msg
-		return sdkerrors.Wrap(types.ErrEmpty, "outgoing batch tx not found")
+		return sdkerrors.Wrapf(
+			types.ErrEmpty, // TODO: fix
+			"outgoing batch tx not found for contract %s and tx id %s", tokenContract, txID,
+		)
 	}
 
 	// TODO: why do we need to do this?

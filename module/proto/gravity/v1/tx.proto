@@ -53,14 +53,17 @@ message MsgTransfer {
 
 // MsgTransferResponse returns the transfer transaction ID which will be included
 // in the batch tx.
-message MsgTransferResponse {} // TODO: add tx id
+message MsgTransferResponse {
+  // transfer tx unique identifier
+  bytes tx_id = 1 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
+}
 
 // MsgCancelTransfer allows the sender to cancel its own outgoing transfer tx
 // and recieve a refund of the tokens and bridge fees. This tx will only succeed
 // if the transfer tx hasn't been batched to be processed and relayed to Ethereum.
 message MsgCancelTransfer {
   // transfer tx unique identifier
-  string transaction_id = 1;
+  bytes tx_id = 1 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
   // cosmos account address of the sender in bech32 format
   string sender = 2;
 }

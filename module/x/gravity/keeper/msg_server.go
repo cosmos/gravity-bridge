@@ -144,7 +144,7 @@ func (k Keeper) Transfer(c context.Context, msg *types.MsgTransfer) (*types.MsgT
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyOutgoingTxID, fmt.Sprint(txID)),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTxID, txID.String()),
 		),
 	)
 

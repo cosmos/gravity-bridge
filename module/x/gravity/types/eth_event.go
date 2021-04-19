@@ -1,13 +1,14 @@
 package types
 
 import (
+	"crypto/sha256"
 	fmt "fmt"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	proto "github.com/gogo/protobuf/proto"
-	"github.com/tendermint/tendermint/crypto/tmhash"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 // EthereumEvent represents a event on ethereum state
@@ -22,10 +23,10 @@ type EthereumEvent interface {
 	// ordering for the execution of all events. The block height is used only for batchTimeouts + logicTimeouts
 	// when we go to create a new batch we set the timeout some number of batches out from the last
 	// known height plus projected block progress since then.
-	// GetBlockHeight() uint64
+	GetEthereumHeight() uint64
 	GetType() string
 	Validate() error
-	Hash() []byte
+	Hash() tmbytes.HexBytes
 }
 
 var (
@@ -57,15 +58,19 @@ func (e DepositEvent) Validate() error {
 	if _, err := sdk.AccAddressFromBech32(e.CosmosReceiver); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.CosmosReceiver)
 	}
+	if e.EthereumHeight == 0 {
+		return fmt.Errorf("ethereum height cannot be 0")
+	}
 	return nil
 }
 
 const ()
 
 // Hash implements BridgeDeposit.Hash
-func (e DepositEvent) Hash() []byte {
+func (e DepositEvent) Hash() tmbytes.HexBytes {
 	path := fmt.Sprintf("%s/%s/%s/", e.TokenContract, e.EthereumSender, e.CosmosReceiver)
-	return tmhash.Sum([]byte(path))
+	hash := sha256.Sum256([]byte(path))
+	return hash[:]
 }
 
 // GetType returns the event type
@@ -81,13 +86,17 @@ func (e WithdrawEvent) Validate() error {
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
+	if e.EthereumHeight == 0 {
+		return fmt.Errorf("ethereum height cannot be 0")
+	}
 	return nil
 }
 
 // Hash implements WithdrawBatch.Hash
-func (e WithdrawEvent) Hash() []byte {
+func (e WithdrawEvent) Hash() tmbytes.HexBytes {
 	path := fmt.Sprintf("%s/%d/", e.TokenContract, e.Nonce)
-	return tmhash.Sum([]byte(path))
+	hash := sha256.Sum256([]byte(path))
+	return hash[:]
 }
 
 // EthereumEvent implementation for CosmosERC20DeployedEvent
@@ -115,13 +124,17 @@ func (e CosmosERC20DeployedEvent) Validate() error {
 	if strings.TrimSpace(e.Symbol) == "" {
 		return fmt.Errorf("token symbol cannot be blank")
 	}
+	if e.EthereumHeight == 0 {
+		return fmt.Errorf("ethereum height cannot be 0")
+	}
 	return nil
 }
 
 // Hash implements BridgeDeposit.Hash
-func (e CosmosERC20DeployedEvent) Hash() []byte {
+func (e CosmosERC20DeployedEvent) Hash() tmbytes.HexBytes {
 	path := fmt.Sprintf("%s/%s/%s/%s/%d/", e.CosmosDenom, e.TokenContract, e.Name, e.Symbol, e.Decimals)
-	return tmhash.Sum([]byte(path))
+	hash := sha256.Sum256([]byte(path))
+	return hash[:]
 }
 
 // EthereumEvent implementation for LogicCallExecutedEvent
@@ -143,11 +156,15 @@ func (e LogicCallExecutedEvent) Validate() error {
 	if e.InvalidationNonce == 0 {
 		return fmt.Errorf("invalidation nonce cannot be 0")
 	}
+	if e.EthereumHeight == 0 {
+		return fmt.Errorf("ethereum height cannot be 0")
+	}
 	return nil
 }
 
 // Hash implements BridgeDeposit.Hash
-func (e LogicCallExecutedEvent) Hash() []byte {
+func (e LogicCallExecutedEvent) Hash() tmbytes.HexBytes {
 	path := fmt.Sprintf("%s/%d/", e.InvalidationId, e.InvalidationNonce)
-	return tmhash.Sum([]byte(path))
+	hash := sha256.Sum256([]byte(path))
+	return hash[:]
 }

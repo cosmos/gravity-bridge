@@ -2,11 +2,11 @@ package types
 
 import (
 	"fmt"
-	"strings"
 
 	types "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 var (
@@ -164,10 +164,10 @@ func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgCancelTransfer returns a new MsgCancelTransfer
-func NewMsgCancelTransfer(txID string, sender sdk.AccAddress) *MsgCancelTransfer {
+func NewMsgCancelTransfer(txID tmbytes.HexBytes, sender sdk.AccAddress) *MsgCancelTransfer {
 	return &MsgCancelTransfer{
-		TransactionId: txID,
-		Sender:        sender.String(),
+		TxId:   txID,
+		Sender: sender.String(),
 	}
 }
 
@@ -179,8 +179,8 @@ func (msg *MsgCancelTransfer) Type() string { return "cancel_transfer" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgCancelTransfer) ValidateBasic() (err error) {
-	if strings.TrimSpace(msg.TransactionId) == "" {
-		return fmt.Errorf("tx id cannot be blank")
+	if len(msg.TxId) == 0 {
+		return fmt.Errorf("tx id cannot be empty")
 	}
 
 	_, err = sdk.AccAddressFromBech32(msg.Sender)

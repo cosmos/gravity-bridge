@@ -44,8 +44,8 @@ var (
 	// eventually executes
 	AttestationKeyPrefix = []byte{0x5}
 
-	// TransferTxPoolKey indexes the last nonce for the outgoing tx pool
-	TransferTxPoolKey = []byte{0x6}
+	// TransferTxKey indexes the transaction id for the outgoing transfer tx pool
+	TransferTxKey = []byte{0x6}
 
 	// SecondIndexTransferTxFeeKey indexes fee amounts by token contract address
 	SecondIndexTransferTxFeeKey = []byte{0x9}
@@ -71,8 +71,8 @@ var (
 	// SequenceKeyPrefix indexes different txids
 	SequenceKeyPrefix = []byte{0x7}
 
-	// KeyLastTxPoolID indexes the lastTxPoolID
-	KeyLastTxPoolID = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
+	// KeyLastTransferTxID indexes the lastTxPoolID
+	KeyLastTransferTxID = append(SequenceKeyPrefix, []byte("lastTransferId")...)
 
 	// KeyLastBatchTxNonce indexes the lastBatchID
 	KeyLastBatchTxNonce = append(SequenceKeyPrefix, []byte("lastBatchId")...)
@@ -161,11 +161,11 @@ func GetEventKey(event EthereumEvent) []byte {
 	return key
 }
 
-// GetTransferTxPoolKey returns the following key format
+// GetTransferTxKey returns the following key format
 // prefix     id
-// [0x6][0 0 0 0 0 0 0 1]
-func GetTransferTxPoolKey(txID tmbytes.HexBytes) []byte {
-	return append(TransferTxPoolKey, txID.Bytes()...)
+// [0x6][HASH]
+func GetTransferTxKey(txID tmbytes.HexBytes) []byte {
+	return txID.Bytes()
 }
 
 // GetBatchTxKey returns the following key format
@@ -208,13 +208,6 @@ func GetERC20ToDenomKey(erc20 string) []byte {
 	return append(ERC20ToDenomKey, []byte(erc20)...)
 }
 
-func GetOutgoingLogicCallKey(invalidationID tmbytes.HexBytes, invalidationNonce uint64) []byte {
-	a := append(KeyOutgoingLogicCall, invalidationID...)
-	return append(a, sdk.Uint64ToBigEndian(invalidationNonce)...)
-}
-
-func GetLogicCallTxKey(invalidationID tmbytes.HexBytes, invalidationNonce uint64, validator sdk.ValAddress) []byte {
-	key := append(KeyOutgoingLogicConfirm, invalidationID.Bytes()...)
-	key = append(key, sdk.Uint64ToBigEndian(invalidationNonce)...)
-	return append(key, validator.Bytes()...)
+func GetLogicCallTxKey(invalidationID tmbytes.HexBytes, invalidationNonce uint64) []byte {
+	return append(invalidationID, sdk.Uint64ToBigEndian(invalidationNonce)...)
 }

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"crypto/sha256"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -133,7 +134,7 @@ func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
 
 func (k Keeper) GetTransferTx(ctx sdk.Context, id tmbytes.HexBytes) (types.TransferTx, bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetTransferTxPoolKey(id))
+	bz := store.Get(types.GetTransferTxKey(id))
 	if len(bz) == 0 {
 		return types.TransferTx{}, false
 	}
@@ -143,28 +144,32 @@ func (k Keeper) GetTransferTx(ctx sdk.Context, id tmbytes.HexBytes) (types.Trans
 	return tx, true
 }
 
-func (k Keeper) SetTransferTx(ctx sdk.Context, id tmbytes.HexBytes, tx types.TransferTx) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) SetTransferTx(ctx sdk.Context, tx types.TransferTx) tmbytes.HexBytes {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferTxKey)
 	bz := k.cdc.MustMarshalBinaryBare(&tx)
-	store.Set(types.GetTransferTxPoolKey(id), bz)
+	hash := sha256.Sum256(bz)
+	txID := tmbytes.HexBytes(hash[:])
+	store.Set(types.GetTransferTxKey(txID), bz)
+
+	return txID
 }
 
-func (k Keeper) DeleteTransferTx(ctx sdk.Context, id tmbytes.HexBytes) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetTransferTxPoolKey(id))
+func (k Keeper) DeleteTransferTx(ctx sdk.Context, txID tmbytes.HexBytes) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferTxKey)
+	store.Delete(types.GetTransferTxKey(txID))
 }
 
 // IterateTransferTxs
-func (k Keeper) IterateTransferTxs(ctx sdk.Context, cb func(id tmbytes.HexBytes, tx types.TransferTx) (stop bool)) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferTxPoolKey)
+func (k Keeper) IterateTransferTxs(ctx sdk.Context, cb func(txID tmbytes.HexBytes, tx types.TransferTx) (stop bool)) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferTxKey)
 
 	iterator := prefixStore.ReverseIterator(nil, nil)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		var tx types.TransferTx
 		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &tx)
-		id := string(iterator.Key()[:1]) // TODO: check correctness
-		if cb(id, tx) {
+		txID := tmbytes.HexBytes(iterator.Key()[:1]) // TODO: check correctness
+		if cb(txID, tx) {
 			break // stop iteration
 		}
 	}

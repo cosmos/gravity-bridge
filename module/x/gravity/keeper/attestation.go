@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -76,15 +77,21 @@ func (k Keeper) TallyAttestation(ctx sdk.Context, attestation types.Attestation)
 	}
 
 	if !thresholdMet {
-		k.Logger(ctx).Debug("attestation threshold not met for event", "type", event.GetType().String(), "hash", event.Hash())
+		k.Logger(ctx).Debug("attestation threshold not met for event", "type", event.GetType(), "hash", event.Hash())
 		return
 	}
 
 	k.setLastObservedEventNonce(ctx, event.GetNonce())
-	k.SetLastObservedEthereumBlockHeight(ctx, event.GetBlockHeight())
+
+	info := types.EthereumInfo{
+		Timestamp: ctx.BlockTime(),
+		Height:    event.GetBlockHeight(),
+	}
+
+	k.SetEthereumInfo(ctx, info)
 
 	attestation.Observed = true
-	k.SetAttestation(ctx, event.GetNonce(), event.Hash(), attestation)
+	k.SetAttestation(ctx, event.Hash(), attestation)
 
 	k.processAttestation(ctx, attestation, event)
 	k.emitObservedEvent(ctx, attestation, event)
@@ -111,7 +118,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, attestation types.Attestatio
 }
 
 // GetAttestation return an attestation given a nonce
-func (k Keeper) GetAttestation(ctx sdk.Context, hash []byte) (types.Attestation, bool) {
+func (k Keeper) GetAttestation(ctx sdk.Context, hash tmbytes.HexBytes) (types.Attestation, bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AttestationKeyPrefix)
 	bz := store.Get(hash)
 	if len(bz) == 0 {
@@ -125,13 +132,13 @@ func (k Keeper) GetAttestation(ctx sdk.Context, hash []byte) (types.Attestation,
 }
 
 // SetAttestation sets the attestation in the store
-func (k Keeper) SetAttestation(ctx sdk.Context, hash []byte, attestation types.Attestation) {
+func (k Keeper) SetAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestation types.Attestation) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AttestationKeyPrefix)
 	store.Set(hash, k.cdc.MustMarshalBinaryBare(&attestation))
 }
 
 // DeleteAttestation deletes an attestation given an event hash
-func (k Keeper) DeleteAttestation(ctx sdk.Context, hash []byte, attestation types.Attestation) {
+func (k Keeper) DeleteAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestation types.Attestation) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AttestationKeyPrefix)
 	store.Delete(hash)
 }
