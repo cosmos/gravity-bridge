@@ -29,17 +29,19 @@ message Params {
   // amount of blocks of the rolling window required to attest an ethereum event.
   uint64 event_window     = 8;
   uint64 unbonding_window = 9;
+  // max amount of transactions batched
+  uint64 batch_size     = 10;
   // slashing fraction for not signing a signerset confirmation
-  string slash_fraction_signerset = 10
+  string slash_fraction_signerset = 11
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
   // slashing fraction for not signing an outgoing batch transaction to ethereum
-  string slash_fraction_batch = 11
+  string slash_fraction_batch = 12
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
   // slashing fraction for not signing events
-  string slash_fraction_event = 12
+  string slash_fraction_event = 13
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
   // slashing fraction for submitting a conflicting event from Ethereum
-  string slash_fraction_conflicting_event = 13
+  string slash_fraction_conflicting_event = 14
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }
 

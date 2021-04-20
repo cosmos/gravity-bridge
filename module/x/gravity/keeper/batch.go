@@ -14,9 +14,6 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-// TODO: this should be a parameter
-const BatchTxSize = 100
-
 // CreateBatchTx starts the following process chain:
 // - find bridged denominator for given voucher type
 // - determine if a an unexecuted batch is already waiting for this token type, if so confirm the new batch would
@@ -25,11 +22,10 @@ const BatchTxSize = 100
 // - persist an outgoing batch object with an incrementing ID = nonce
 // - emit an event
 func (k Keeper) CreateBatchTx(ctx sdk.Context, contractAddress common.Address) (tmbytes.HexBytes, error) {
-	// select transfer txs from outgoing pool sorted by fee in desc order
-	// TODO: use parameter for batch size
-	txs := k.pickUnbatchedTxs(ctx, contractAddress.String(), BatchTxSize)
+	// select transfer txs from outgoing transfer tx pool sorted by fee in desc order
+	// TODO: mark the transfer txs as batched
+	txs := k.SelectTransferTxs(ctx, contractAddress)
 	if len(txs) == 0 {
-		// TODO: fix error
 		return nil, sdkerrors.Wrapf(types.ErrEmpty, "batch tx failed for address %s", contractAddress)
 	}
 
@@ -38,6 +34,7 @@ func (k Keeper) CreateBatchTx(ctx sdk.Context, contractAddress common.Address) (
 		return nil, err
 	}
 
+	// get the latest batch nonce for replay protection
 	nonce := k.GetLastBatchNonce(ctx)
 	nonce++
 
@@ -49,14 +46,18 @@ func (k Keeper) CreateBatchTx(ctx sdk.Context, contractAddress common.Address) (
 		Block:         uint64(ctx.BlockHeight()),
 	}
 
+	// set batch tx by transaction ID and block height
 	txID := k.SetBatchTx(ctx, batchTx)
+	k.SetBatchTxByBlock(ctx, batchTx.Block, txID)
+
+	// set the updated batch nonce for replay protection
 	k.setLastBatchNonce(ctx, nonce)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeOutgoingBatch,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, txID.String()),
+			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
 			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(nonce, 64)),
 		),
 	)
@@ -91,31 +92,30 @@ func (k Keeper) GetBatchTimeoutHeight(ctx sdk.Context) (uint64, error) {
 
 // OnBatchTxExecuted is run when the Cosmos chain detects that a batch has been executed on Ethereum
 // It frees all the transactions in the batch, then cancels all earlier batches
-func (k Keeper) OnBatchTxExecuted(ctx sdk.Context, tokenContract common.Address, txID tmbytes.HexBytes) error {
-	batchTx, found := k.GetBatchTx(ctx, tokenContract, txID)
+func (k Keeper) OnBatchTxExecuted(ctx sdk.Context, tokenContract common.Address, batchTxID tmbytes.HexBytes) error {
+	batchTx, found := k.GetBatchTx(ctx, tokenContract, batchTxID)
 	if !found {
 		// TODO: fix error msg
 		return sdkerrors.Wrapf(types.ErrOutgoingTxNotFound, "contract %s and tx id %s")
 	}
 
-	// cleanup outgoing tx pool
-	for _, tx := range batchTx.Transactions {
-		// TODO: get the txs ids
-		k.removePoolEntry(ctx, txID)
+	// cleanup outgoing transfer tx pool
+	for _, transferTxID := range batchTx.Transactions {
+		k.DeleteTransferTx(ctx, transferTxID)
 	}
 
 	// Iterate through remaining batches with the same token contract
-	// TODO: still not getting why we need to cancel the other batch txs
+	// TODO: still not getting why we need to cancel the other batch txs?
 	k.IterateBatchTxsByToken(ctx, tokenContract, func(txID tmbytes.HexBytes, batch types.BatchTx) bool {
 		// If the iterated batches nonce is lower than the one that was just executed, cancel it
 		if batch.Nonce < batchTx.Nonce {
-			k.CancelBatchTx(ctx, tokenContract, txID)
+			k.CancelBatchTx(ctx, tokenContract, txID, batchTx)
 		}
 
 		return false
 	})
 
-	k.DeleteBatchTx(ctx, tokenContract, txID, batchTx.Block)
+	k.DeleteBatchTx(ctx, tokenContract, batchTxID, batchTx.Block)
 	return nil
 }
 
@@ -134,14 +134,30 @@ func (k Keeper) setLastBatchNonce(ctx sdk.Context, nonce uint64) {
 	store.Set(types.KeyLastBatchTxNonce, sdk.Uint64ToBigEndian(nonce))
 }
 
-// pickUnbatchedTx find TX in pool and remove from "available" second index
-func (k Keeper) pickUnbatchedTxs(ctx sdk.Context, contractAddress string, maxElements int) []tmbytes.HexBytes {
+// SelectTransferTxs selects the transfer transactions with the highest fee for a given contract
+// until the batch is full or all the txs have been selected
+func (k Keeper) SelectTransferTxs(ctx sdk.Context, tokenContract common.Address) []tmbytes.HexBytes {
 	var txs []tmbytes.HexBytes
 
-	k.IterateTransferTxsByFee(ctx, contractAddress, func(txID tmbytes.HexBytes, tx types.TransferTx) bool {
-		txs = append(txs, txID)
-		k.removeFromUnbatchedTxIndex(ctx, txID, tx.Erc20Fee)
-		return len(txs) == maxElements // stop if we've reached the limit
+	params := k.GetParams(ctx)
+
+	k.IterateTransferPoolByFee(ctx, tokenContract, func(_ uint64, txIDs []tmbytes.HexBytes) bool {
+		size := len(txs) + len(txIDs)
+		switch {
+		case size < int(params.BatchSize):
+			txs = append(txs, txIDs...)
+			// TODO: delete transactions from second index
+			return false
+		case size == int(params.BatchSize):
+			txs = append(txs, txIDs...)
+			// TODO: delete transactions from second index
+			return true // stop if we've reached the limit
+		default: // case size > int(params.BatchSize):
+			diff := size - int(params.BatchSize)
+			txs = append(txs, txIDs[:diff-1]...)
+			// TODO: set the diff to store
+			return true // stop if we've reached the limit
+		}
 	})
 
 	return txs
@@ -171,12 +187,6 @@ func (k Keeper) SetBatchTx(ctx sdk.Context, batchTx types.BatchTx) tmbytes.HexBy
 
 	key := types.GetBatchTxKey(batchTx.TokenContract, txID)
 	store.Set(key, bz)
-
-	// second index to store the block height at which the batch tx was stored
-	blockKey := types.GetBatchTxBlockKey(batchTx.Block)
-
-	// TODO: only store ID ?
-	store.Set(blockKey, txID.Bytes())
 	return txID
 }
 
@@ -187,20 +197,31 @@ func (k Keeper) DeleteBatchTx(ctx sdk.Context, tokenContract common.Address, txI
 	store.Delete(append(types.BatchTxBlockKey, types.GetBatchTxBlockKey(blockHeight)...))
 }
 
-// CancelBatchTx releases all txs in the batch and deletes the batch
-func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract common.Address, txID tmbytes.HexBytes) error {
-	batchTx, found := k.GetBatchTx(ctx, tokenContract, txID)
-	if !found {
-		return sdkerrors.Wrapf(
-			types.ErrEmpty, // TODO: fix
-			"outgoing batch tx not found for contract %s and tx id %s", tokenContract, txID,
-		)
-	}
+func (k Keeper) SetBatchTxByBlock(ctx sdk.Context, blockHeight uint64, txID tmbytes.HexBytes) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchTxBlockKey)
+	// second index to store the block height at which the batch tx was stored
+	blockKey := types.GetBatchTxBlockKey(blockHeight)
 
-	// TODO: why do we need to do this?
-	for _, tx := range batchTx.Transactions {
-		// store all the transactions from the batch
-		k.prependToUnbatchedTxIndex(ctx, txID, tokenContract, tx.Erc20Fee)
+	store.Set(blockKey, txID.Bytes())
+}
+
+// CancelBatchTx releases all txs in the batch and deletes the batch
+func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract common.Address, txID tmbytes.HexBytes, batchTx types.BatchTx) error {
+	// since the transaction is now canceled, we need to readd each of the
+	// transactions to the second index by fee
+	for _, transferID := range batchTx.Transactions {
+		_, found := k.GetTransferTx(ctx, transferID)
+		if !found {
+			// TODO: panic? this shouldn't happen regardless because we only delete transfer txs from
+			// the store once the OnBatchTxExecuted callback is executed
+			sdkerrors.Wrapf(
+				types.ErrOutgoingTxNotFound, // TODO: fix
+				"transfer tx not found for contract %s and tx id %s", tokenContract, transferID,
+			)
+		}
+
+		// TODO: only set once!!
+		// k.prependToUnbatchedTxIndex(ctx, txID, tokenContract, tx.Erc20Fee)
 	}
 
 	// Delete batch since it is finished
@@ -210,7 +231,7 @@ func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract common.Address, txI
 		sdk.NewEvent(
 			types.EventTypeOutgoingBatchCanceled,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, txID.String()),
+			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
 			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(batchTx.Nonce, 64)),
 		),
 	)

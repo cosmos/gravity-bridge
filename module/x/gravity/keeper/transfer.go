@@ -100,8 +100,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 	// set the outgoing transfer tx in the pool
 	txID := k.SetTransferTx(ctx, tx)
 
-	// TODO: add the transfer tx to the unbatched transaction pool
-	// k.appendToUnbatchedTxIndex(ctx, txID, tokenContractHex, fee)
+	k.IndexTransferTxByFee(ctx, tokenContract, fee, txID)
 
 	// set the incremented tx ID
 	k.setTransferTxNonce(ctx, nonce)
@@ -111,8 +110,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 		sdk.NewEvent(
 			types.EventTypeBridgeWithdrawalReceived,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			// TODO: why are the nonce and the txID the same?
-			sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, txID.String()), // FIXME: rename attr
+			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
 			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(nonce, 64)),
 		),
 	)
@@ -172,43 +170,44 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID tmbytes.He
 			types.EventTypeBridgeWithdrawCanceled,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute("denom", refund.Denom), // TODO: create attr
-			sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, txID.String()),
+			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
 		),
 	)
 
 	return nil
 }
 
-// appendToUnbatchedTXIndex add at the end when tx with same fee exists
-func (k Keeper) appendToUnbatchedTxIndex(ctx sdk.Context, txID common.Address, tokenContract common.Address, fee sdk.Coin) {
-	store := ctx.KVStore(k.storeKey)
-	idxKey := types.GetFeeSecondIndexKey(fee)
-	var idSet types.IDSet
-	if store.Has(idxKey) {
-		bz := store.Get(idxKey)
-		k.cdc.MustUnmarshalBinaryBare(bz, &idSet)
+// IndexTransferTxByFee
+func (k Keeper) IndexTransferTxByFee(ctx sdk.Context, tokenContract common.Address, fee sdk.Coin, txID tmbytes.HexBytes) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferTxFeeKey)
+	key := types.GetTransferTxFeeKey(tokenContract.String(), fee.Amount.Uint64())
+
+	var txIDs types.TransactionIDs
+
+	bz := store.Get(key)
+	if len(bz) != 0 {
+		k.cdc.MustUnmarshalBinaryBare(bz, &txIDs)
 	}
-	idSet.Ids = append(idSet.Ids, txID)
-	store.Set(idxKey, k.cdc.MustMarshalBinaryBare(&idSet))
+
+	txIDs.Ids = append(txIDs.Ids, txID)
+
+	store.Set(key, k.cdc.MustMarshalBinaryBare(&txIDs))
 }
 
-// IterateOutgoingPoolByFee iterates over the outgoing pool which is sorted by fee
-func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(txID uint64, transferTx types.TransferTx) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTxFeeKey)
-	iter := prefixStore.ReverseIterator(prefixRange([]byte(contract)))
+// IterateTransferPoolByFee iterates in DESC order over the contracts and performs a callback with
+// transactions that share the same contract and fee amount
+func (k Keeper) IterateTransferPoolByFee(ctx sdk.Context, tokenContract common.Address, cb func(fee uint64, txIDs []tmbytes.HexBytes) bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), append(types.TransferTxFeeKey, []byte(tokenContract.String())...))
+
+	iter := store.ReverseIterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		var ids types.IDSet
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ids)
-		// cb returns true to stop early
-		for _, id := range ids.Ids {
-			tx, err := k.getPoolEntry(ctx, id)
-			if err != nil {
-				panic("Invalid id in tx index!")
-			}
-			if cb(id, tx) {
-				return
-			}
+		var txIDs types.TransactionIDs
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &txIDs)
+
+		fee := uint64(0)
+		if cb(fee, txIDs.Ids) {
+			return
 		}
 	}
 }

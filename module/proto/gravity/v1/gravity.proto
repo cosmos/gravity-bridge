@@ -166,3 +166,9 @@ message LogicCallTx {
   // timeout in seconds  // TODO: double check
   uint64 timeout = 6;
 }
+
+// TransactionIDs defines a protobuf message for storing transfer tx ids.
+message TransactionIDs {
+  // slice of transfer transaction identifiers
+  repeated bytes ids = 1 [(gogoproto.casttype) = "github.com/cosmos/gravity-bridge/module/x/gravity/types.TxIDs"];
+}

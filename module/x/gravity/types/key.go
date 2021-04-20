@@ -47,8 +47,8 @@ var (
 	// TransferTxKey indexes the transaction id for the outgoing transfer tx pool
 	TransferTxKey = []byte{0x6}
 
-	// SecondIndexTransferTxFeeKey indexes fee amounts by token contract address
-	SecondIndexTransferTxFeeKey = []byte{0x9}
+	// TransferTxFeeKey indexes transfer txs by token contract address and fee
+	TransferTxFeeKey = []byte{0x9}
 
 	// BatchTxKey indexes outgoing tx batches under a nonce and token address
 	BatchTxKey = []byte{0xa}
@@ -166,6 +166,13 @@ func GetEventKey(event EthereumEvent) []byte {
 // [0x6][HASH]
 func GetTransferTxKey(txID tmbytes.HexBytes) []byte {
 	return txID.Bytes()
+}
+
+// GetTransferTxFeeKey returns the following key format
+// prefix     eth-contract-address										amount
+// [0x6][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 2 1 4 3]
+func GetTransferTxFeeKey(tokenContract string, amount uint64) []byte {
+	return append([]byte(tokenContract), sdk.Uint64ToBigEndian(amount)...)
 }
 
 // GetBatchTxKey returns the following key format

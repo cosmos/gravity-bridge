@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -144,7 +143,7 @@ func (k Keeper) Transfer(c context.Context, msg *types.MsgTransfer) (*types.MsgT
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyOutgoingTxID, txID.String()),
+			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
 		),
 	)
 
@@ -157,7 +156,7 @@ func (k Keeper) CancelTransfer(c context.Context, msg *types.MsgCancelTransfer) 
 
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 
-	if err := k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TransactionId, sender); err != nil {
+	if err := k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TxId, sender); err != nil {
 		return nil, err
 	}
 
@@ -165,7 +164,7 @@ func (k Keeper) CancelTransfer(c context.Context, msg *types.MsgCancelTransfer) 
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyOutgoingTxID, fmt.Sprint(msg.TransactionId)),
+			sdk.NewAttribute(types.AttributeKeyTxID, msg.TxId.String()),
 		),
 	)
 
