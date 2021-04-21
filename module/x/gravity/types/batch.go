@@ -11,6 +11,7 @@ import (
 )
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
+// TODO JNT: use this for evidence based slashing
 func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 
 	abi, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
