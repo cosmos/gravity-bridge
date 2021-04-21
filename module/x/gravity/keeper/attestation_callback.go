@@ -107,6 +107,10 @@ func RegisterERC20(k Keeper, ctx sdk.Context, event types.CosmosERC20DeployedEve
 	// Check if denom exists
 	metadata := k.bankKeeper.GetDenomMetaData(ctx, event.CosmosDenom)
 
+	// NOTE: this will fail on all IBC vouchers or any Cosmos coin that hasn't
+	// a denom metadata value defined
+	// TODO: discuss if we should create/set a new metadata if it's not currently
+	// set to store for the given cosmos denom
 	if err := validateCoinMetadata(event, metadata); err != nil {
 		return err
 	}
@@ -118,6 +122,8 @@ func RegisterERC20(k Keeper, ctx sdk.Context, event types.CosmosERC20DeployedEve
 	return nil
 }
 
+// validateCoinMetadata performs a stateless validation on the metadata fields and compares its values
+// with the deployed ERC20 contract values.
 func validateCoinMetadata(event types.CosmosERC20DeployedEvent, metadata banktypes.Metadata) error {
 	if err := metadata.Validate(); err != nil {
 		return err
@@ -138,26 +144,8 @@ func validateCoinMetadata(event types.CosmosERC20DeployedEvent, metadata banktyp
 			"ERC20 symbol %s does not match denom display %s", event.Symbol, metadata.Display)
 	}
 
-	// ERC20 tokens use a very simple mechanism to tell you where to display the decimal point.
-	// The "decimals" field simply tells you how many decimal places there will be.
-	// Cosmos denoms have a system that is much more full featured, with enterprise-ready token denominations.
-	// There is a DenomUnits array that tells you what the name of each denomination of the
-	// token is.
-	// To correlate this with an ERC20 "decimals" field, we have to search through the DenomUnits array
-	// to find the DenomUnit which matches up to the main token "display" value. Then we take the
-	// "exponent" from this DenomUnit.
-	// If the correct DenomUnit is not found, it will default to 0. This will result in there being no decimal places
-	// in the token's ERC20 on Ethereum. So, for example, if this happened with Atom, 1 Atom would appear on Ethereum
-	// as 1 million Atoms, having 6 extra places before the decimal point.
-	// This will only happen with a Denom Metadata which is for all intents and purposes invalid, but I am not sure
-	// this is checked for at any other point.
-	decimals := uint32(0)
-	for _, denomUnit := range metadata.DenomUnits {
-		if denomUnit.Denom == metadata.Display {
-			decimals = denomUnit.Exponent
-			break
-		}
-	}
+	// NOTE: denomination units can't be empty and are sorted in ASC order
+	decimals := metadata.DenomUnits[len(metadata.DenomUnits)-1].Exponent
 
 	if decimals != uint32(event.Decimals) {
 		return sdkerrors.Wrapf(

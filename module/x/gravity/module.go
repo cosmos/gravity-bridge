@@ -19,7 +19,6 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/cosmos/gravity-bridge/module/x/gravity/client/cli"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/keeper"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -61,12 +60,12 @@ func (AppModuleBasic) RegisterRESTRoutes(ctx client.Context, rtr *mux.Router) {}
 
 // GetQueryCmd implements app module basic
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return cli.GetQueryCmd()
+	return nil
 }
 
 // GetTxCmd implements app module basic
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.GetTxCmd()
+	return nil
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the distribution module.
