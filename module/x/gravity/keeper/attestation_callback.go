@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -38,9 +39,9 @@ var _ AttestationHandler = DefaultAttestationHandler{}
 // OnAttestation processes ethereum event upon attestation and performs a custom
 // logic.
 //
-// TODO: add handler for ERC20DeployedEvent
 // TODO: clean up
 func (handler DefaultAttestationHandler) OnAttestation(ctx sdk.Context, attestation types.Attestation) error {
+	// FIXME: create func
 	event, found := handler.keeper.GetEthEvent(ctx, attestation.EventID)
 	if !found {
 		// TODO: err msg
@@ -86,7 +87,7 @@ func (handler DefaultAttestationHandler) OnAttestation(ctx sdk.Context, attestat
 	case *types.ERC20DeployedEvent:
 		return RegisterERC20(a.keeper, ctx, event)
 	default:
-		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", event.GetType())
+		return sdkerrors.Wrapf(types.ErrInvalid, "unsupported event type %s: %T", event.GetType(), event)
 	}
 
 	return nil
@@ -110,13 +111,16 @@ func RegisterERC20(k Keeper, ctx sdk.Context, event types.CosmosERC20DeployedEve
 		return err
 	}
 
-	// Add to denom-erc20 mapping
+	tokenContract := common.HexToAddress(event.TokenContract)
+	k.setERC20DenomMap(ctx, event.CosmosDenom, tokenContract)
+
+	k.Logger(ctx).Debug("erc20 token registered", "contract-address", event.TokenContract, "cosmos-denom", event.CosmosDenom)
 	return nil
 }
 
 func validateCoinMetadata(event types.CosmosERC20DeployedEvent, metadata banktypes.Metadata) error {
-	if metadata.Base == "" {
-		return sdkerrors.Wrapf(types.ErrUnknown, "denom not found %s", event.CosmosDenom)
+	if err := metadata.Validate(); err != nil {
+		return err
 	}
 
 	// Check if attributes of ERC20 match Cosmos denom

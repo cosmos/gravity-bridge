@@ -195,3 +195,20 @@ func (k Keeper) GetUnbondingValidators(unbondingVals []byte) stakingtypes.ValAdd
 	k.cdc.MustUnmarshalBinaryBare(unbondingVals, &unbondingValidators)
 	return unbondingValidators
 }
+
+func (k Keeper) IterateValidatorsByPower(ctx sdk.Context, cb func(validator stakingtypes.Validator) bool) {
+	iterator := k.stakingKeeper.ValidatorsPowerStoreIterator(ctx)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		validatorAddr := sdk.ValAddress(iterator.Value())
+		validator, found := k.stakingKeeper.GetValidator(ctx, validatorAddr)
+		if !found {
+			continue
+		}
+
+		if cb(validator) {
+			break // stop
+		}
+	}
+}

@@ -24,9 +24,9 @@ func (k Keeper) tallyAttestations(ctx sdk.Context) {
 	// We check the attestations that haven't been observed, i.e nonce is exactly 1 higher than the last attestation
 	nonce := uint64(k.GetLastObservedEventNonce(ctx)) + 1
 
+	// FIXME: update iterator function
 	k.IterateAttestationByNonce(ctx, nonce, func(attestation types.Attestation) bool {
 		// try unobserved attestations
-		// TODO: rename. "Try" is too ambiguous
 		k.TallyAttestation(ctx, attestation)
 		return false
 	})
@@ -45,7 +45,7 @@ func (k Keeper) timeoutTxs(ctx sdk.Context) {
 	// once for every tx type
 	k.IterateBatchTxs(ctx, func(tokenContract common.Address, txID tmbytes.HexBytes, batchTx types.BatchTx) bool {
 		if batchTx.Timeout < info.Height {
-			k.CancelBatchTx(ctx, tokenContract, txID)
+			k.CancelBatchTx(ctx, tokenContract, txID, batchTx)
 		}
 
 		return false
@@ -65,7 +65,7 @@ func (k Keeper) timeoutTxs(ctx sdk.Context) {
 // 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
 //    This will make sure the unbonding validator has to provide an attestation to a new Valset
 //      that excludes him before he completely Unbonds.  Otherwise he will be slashed
-// 3. If power change between validators of CurrentValset and latest valset request is > 5%
+// 3. If power change between validators of CurrentValset and latest valset request is > 5% // TODO: define percentage on params?
 func (k Keeper) createEthSignerSet(ctx sdk.Context) {
 	latestValset := k.GetLatestValset(ctx)
 	lastUnbondingHeight := k.GetLastUnbondingBlockHeight(ctx)

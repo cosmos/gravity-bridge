@@ -1,200 +1,249 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // Gravity slashes validator orchestrators for not confirming the current validator set or not
 // building batch transactions for ERC20 tokens. The slash factor is defined on the module parameters
 // (default 0.1%).
 func (k Keeper) slash(ctx sdk.Context) {
-	params := k.GetParams(ctx)
+	// params := k.GetParams(ctx)
 
-	// Slash validator for not confirming valset requests, batch requests and not attesting claims rightfully
-	k.valsetSlashing(ctx, params)
-	k.batchTxSlashing(ctx, params)
+	// iterate validators by power in DESC order
+	k.IterateValidatorsByPower(ctx, func(validator stakingtypes.Validator) bool {
+		if validator.IsUnbonded() {
+			return false // continue with next validator
+		}
+
+		consAddr, err := validator.GetConsAddr()
+		if err != nil {
+			panic(fmt.Errorf("failed to get validator's %s consensus address: %w", validator.OperatorAddress, err))
+		}
+
+		_, exist := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
+		if exist {
+			k.Logger(ctx).Debug("signing not found for validator", "consensus-address", consAddr.String())
+			return false
+		}
+
+		switch validator.Status {
+		case stakingtypes.Bonded:
+			// TODO: slash bonded validators who didn't attest valset request events
+			// TODO: slash bonded validators who didn't attest batch requests
+			return false
+		case stakingtypes.Unbonding:
+			// TODO: slash unbonding validators who didn't attest valset request events
+			return false
+		default:
+			// unbonded validator, checked above to fail earlier
+			return false
+		}
+	})
 
 	// TODO: slashing for arbitrary logic is missing
 	// TODO: prune validator sets, older than 6 months, this time is chosen out of an abundance of caution
 	// TODO: prune outgoing tx batches while looping over them above, older than 15h and confirmed
-	// TODO: prune claims, attestations
+	// TODO: prune events, attestations
 }
 
-func (k Keeper) valsetSlashing(ctx sdk.Context, params types.Params) {
-	maxHeight := uint64(0)
+// func (k Keeper) valsetSlashing(ctx sdk.Context, params types.Params) {
+// 	maxHeight := uint64(0)
 
-	// don't slash in the beginning before there aren't even SignersetWindow blocks yet
-	// TODO: I don't understand the purpose of this logic
-	if uint64(ctx.BlockHeight()) > params.SignersetWindow {
-		maxHeight = uint64(ctx.BlockHeight()) - params.SignersetWindow
-	}
+// 	// don't slash in the beginning before there aren't even SignersetWindow blocks yet
+// 	// TODO: I don't understand the purpose of this logic
+// 	if uint64(ctx.BlockHeight()) > params.SignersetWindow {
+// 		maxHeight = uint64(ctx.BlockHeight()) - params.SignersetWindow
+// 	}
 
-	// what's an unslashed valset?
-	unslashedValsets := k.GetUnslashedValsets(ctx, maxHeight)
+// 	// what's an unslashed valset?
+// 	unslashedValsets := k.GetUnslashedValsets(ctx, maxHeight)
 
-	// unslashedValsets are sorted by nonce in ASC order
-	for _, valset := range unslashedValsets {
-		// TODO: use iterator here
-		confirms := k.GetValsetConfirms(ctx, valset.Nonce)
+// 	// unslashedValsets are sorted by nonce in ASC order
+// 	for _, valset := range unslashedValsets {
+// 		// TODO: use iterator here
+// 		confirms := k.GetValsetConfirms(ctx, valset.Nonce)
 
-		// slash bonded validators who didn't attest valset request claims
-		k.slashBondedValidators(ctx, valset.Nonce, confirms, params.SlashFractionSignerset)
+// 		// slash bonded validators who didn't attest valset request events
+// 		k.slashBondedValidators(ctx, valset.Nonce, confirms, params.SlashFractionSignerset)
 
-		// slash unbonding validators who didn't attest valset request claims
-		k.slashUnbondingValidators(ctx, valset.Nonce, confirms, params.SlashFractionSignerset, params.SignedValsetsWindow)
+// 		// slash unbonding validators who didn't attest valset request events
+// 		k.slashUnbondingValidators(ctx, valset.Nonce, confirms, params.SlashFractionSignerset, params.SignedValsetsWindow)
 
-		// set the latest slashed valset nonce
-		// TODO: why every time tho??
-		k.SetLastSlashedValsetNonce(ctx, valset.Nonce)
-	}
-}
+// 		// set the latest slashed valset nonce
+// 		// TODO: why every time tho??
+// 		k.SetLastSlashedValsetNonce(ctx, valset.Nonce)
+// 	}
+// }
 
-func (k Keeper) slashBondedValidators(ctx sdk.Context, nonce uint64, confirms []types.Confirm, slashFraction sdk.Dec) {
-	currentBondedSet := k.stakingKeeper.GetBondedValidatorsByPower(ctx)
+// func (k Keeper) slashBondedValidators(ctx sdk.Context, nonce uint64, confirms []types.Confirm, slashFraction sdk.Dec) {
+// 	currentBondedSet := k.stakingKeeper.GetBondedValidatorsByPower(ctx)
 
-	for _, val := range currentBondedSet {
-		consAddr, _ := val.GetConsAddr()
+// 	for _, val := range currentBondedSet {
+// 		consAddr, _ := val.GetConsAddr()
 
-		//  Slash validator ONLY if he joined after valset is created
-		valSigningInfo, exist := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
-		if !exist || valSigningInfo.StartHeight >= int64(nonce) {
-			continue
-		}
+// 		//  Slash validator ONLY if he joined after valset is created
+// 		valSigningInfo, exist := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
+// 		if !exist || valSigningInfo.StartHeight >= int64(nonce) {
+// 			continue
+// 		}
 
-		// Check if validator has confirmed valset or not
-		found := false
+// 		// Check if validator has confirmed valset or not
+// 		found := false
 
-		for _, conf := range confirms {
-			if conf.EthAddress == k.GetEthAddress(ctx, val.GetOperator()) {
-				found = true
-				break
-			}
-		}
+// 		for _, conf := range confirms {
+// 			if conf.EthAddress == k.GetEthAddress(ctx, val.GetOperator()) {
+// 				found = true
+// 				break
+// 			}
+// 		}
 
-		// slash validators for not confirming valsets
-		if found {
-			continue
-		}
+// 		// slash validators for not confirming valsets
+// 		if found {
+// 			continue
+// 		}
 
-		// NOTE: this shouldn't panic because we are iterating over the bonded valset
-		k.stakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(), slashFraction)
+// 		// NOTE: this shouldn't panic because we are iterating over the bonded valset
+// 		k.stakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(), slashFraction)
 
-		// jail the validator if not already
-		if !val.IsJailed() {
-			k.stakingKeeper.Jail(ctx, consAddr)
-		}
-	}
-}
+// 		// jail the validator if not already
+// 		if !val.IsJailed() {
+// 			k.stakingKeeper.Jail(ctx, consAddr)
+// 		}
+// 	}
+// }
 
-func (k Keeper) slashUnbondingValidators(ctx sdk.Context, nonce uint64, confirms []types.Confirm, slashFraction sdk.Dec, slashingWindow uint64) {
-	blockTime := ctx.BlockTime().Add(k.stakingKeeper.GetParams(ctx).UnbondingTime)
-	blockHeight := ctx.BlockHeight()
+// func (k Keeper) slashUnbondingValidators(ctx sdk.Context, nonce uint64, confirms []types.Confirm, slashFraction sdk.Dec, slashingWindow uint64) {
+// 	blockTime := ctx.BlockTime().Add(k.stakingKeeper.GetParams(ctx).UnbondingTime)
+// 	blockHeight := ctx.BlockHeight()
 
-	// TODO: double-check this iterator on the staking module
-	iterator := k.stakingKeeper.ValidatorQueueIterator(ctx, blockTime, blockHeight)
-	defer iterator.Close()
+// 	// TODO: double-check this iterator on the staking module
+// 	iterator := k.stakingKeeper.ValidatorQueueIterator(ctx, blockTime, blockHeight)
+// 	defer iterator.Close()
 
-	// All unbonding validators
-	for ; iterator.Valid(); iterator.Next() {
-		// TODO: ?? why is the value an array of addresses?
-		unbondingValidators := k.GetUnbondingValidators(iterator.Value())
+// 	// All unbonding validators
+// 	for ; iterator.Valid(); iterator.Next() {
+// 		// TODO: ?? why is the value an array of addresses?
+// 		unbondingValidators := k.GetUnbondingValidators(iterator.Value())
 
-		for _, bechValAddr := range unbondingValidators.Addresses {
-			validatorAddr, err := sdk.ValAddressFromBech32(bechValAddr)
-			if err != nil {
-				panic(err)
-			}
+// 		for _, bechValAddr := range unbondingValidators.Addresses {
+// 			validatorAddr, err := sdk.ValAddressFromBech32(bechValAddr)
+// 			if err != nil {
+// 				panic(err)
+// 			}
 
-			validator, found := k.stakingKeeper.GetValidator(ctx, validatorAddr)
-			if !found {
-				panic("validator not found")
-			}
+// 			validator, found := k.stakingKeeper.GetValidator(ctx, validatorAddr)
+// 			if !found {
+// 				panic("validator not found")
+// 			}
 
-			valConsAddr, _ := validator.GetConsAddr()
-			valSigningInfo, exist := k.slashingKeeper.GetValidatorSigningInfo(ctx, valConsAddr)
+// 			valConsAddr, _ := validator.GetConsAddr()
+// 			valSigningInfo, exist := k.slashingKeeper.GetValidatorSigningInfo(ctx, valConsAddr)
 
-			// Only slash validators who joined after valset is created and they are unbonding and UNBOND_SLASHING_WINDOW didn't passed
-			if !exist ||
-				!validator.IsUnbonding() ||
-				valSigningInfo.StartHeight >= int64(nonce) ||
-				nonce >= uint64(validator.UnbondingHeight)+slashingWindow {
-				continue
-			}
+// 			// Only slash validators who joined after valset is created and they are unbonding and UNBOND_SLASHING_WINDOW didn't passed
+// 			if !exist ||
+// 				!validator.IsUnbonding() ||
+// 				valSigningInfo.StartHeight >= int64(nonce) ||
+// 				nonce >= uint64(validator.UnbondingHeight)+slashingWindow {
+// 				continue
+// 			}
 
-			// Check if validator has confirmed valset or not
-			found = false
-			for _, conf := range confirms {
-				if conf.EthAddress == k.GetEthAddress(ctx, validator.GetOperator()) {
-					found = true
-					break
-				}
-			}
+// 			// Check if validator has confirmed valset or not
+// 			found = false
+// 			for _, conf := range confirms {
+// 				if conf.EthAddress == k.GetEthAddress(ctx, validator.GetOperator()) {
+// 					found = true
+// 					break
+// 				}
+// 			}
 
-			// slash validators for not confirming valsets
-			if found {
-				continue
-			}
+// 			// slash validators for not confirming valsets
+// 			if found {
+// 				continue
+// 			}
 
-			k.stakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(), slashFraction)
-			// jail the validator if not already
-			if !validator.IsJailed() {
-				k.stakingKeeper.Jail(ctx, valConsAddr)
-			}
-		}
+// 			k.stakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(), slashFraction)
+// 			// jail the validator if not already
+// 			if !validator.IsJailed() {
+// 				k.stakingKeeper.Jail(ctx, valConsAddr)
+// 			}
+// 		}
 
-	}
-}
+// 	}
+// }
 
-func (k Keeper) batchTxSlashing(ctx sdk.Context, params types.Params) {
-	// #2 condition
-	// We look through the full bonded set (not just the active set, include unbonding validators)
-	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
-	maxHeight := uint64(0)
+// func (k Keeper) batchTxSlashing(ctx sdk.Context, params types.Params) {
+// 	// #2 condition
+// 	// We look through the full bonded set (not just the active set, include unbonding validators)
+// 	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
+// 	maxHeight := uint64(0)
 
-	// don't slash in the beginning before there aren't even BatchTxWindow blocks yet
-	if uint64(ctx.BlockHeight()) > params.BatchTxWindow {
-		maxHeight = uint64(ctx.BlockHeight()) - params.BatchTxWindow
-	}
+// 	// don't slash in the beginning before there aren't even BatchTxWindow blocks yet
+// 	if uint64(ctx.BlockHeight()) > params.BatchTxWindow {
+// 		maxHeight = uint64(ctx.BlockHeight()) - params.BatchTxWindow
+// 	}
 
-	unslashedBatches := k.GetUnslashedBatches(ctx, maxHeight)
-	for _, batch := range unslashedBatches {
+// 	lastSlashedBatchBlock := k.GetLastSlashedBatchBlock(ctx)
 
-		// SLASH BONDED VALIDTORS who didn't attest batch requests
-		currentBondedSet := k.stakingKeeper.GetBondedValidatorsByPower(ctx)
-		confirms := k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.Nonce, batch.TokenContract)
+// 	k.stakingKeeper.IterateBondedValidatorsByPower(ctx, func(_ int64, validator stakingtypes.ValidatorI) bool {
+// 		// Don't slash validators who joined after batch is created
+// 		consAddr, _ := validator.GetConsAddr()
+// 		valSigningInfo, exist := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
+// 		if exist && valSigningInfo.StartHeight > int64(batch.Block) {
+// 			return false
+// 		}
 
-		for _, val := range currentBondedSet {
-			// Don't slash validators who joined after batch is created
-			consAddr, _ := val.GetConsAddr()
-			valSigningInfo, exist := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
-			if exist && valSigningInfo.StartHeight > int64(batch.Block) {
-				continue
-			}
+// 		return false
+// 	})
 
-			found := false
-			for _, conf := range confirms {
-				// TODO: double check this logic
-				confVal, _ := sdk.AccAddressFromBech32(conf.OrchestratorAddress)
-				validatorAddr := k.GetOrchestratorValidator(ctx, confVal)
-				if validatorAddr.Equals(val.GetOperator()) {
-					found = true
-					break
-				}
-			}
+// 	//
+// 	k.IterateBatchBySlashedBatchBlock(ctx, lastSlashedBatchBlock+1, maxHeight, func(txID tmbytes.HexBytes, batch types.BatchTx) bool {
+// 		confirms := k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.Nonce, batch.TokenContract)
 
-			if found {
-				continue
-			}
+// 		return false
+// 	})
 
-			cons, _ := val.GetConsAddr()
-			k.stakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionBatch)
-			if !val.IsJailed() {
-				k.stakingKeeper.Jail(ctx, cons)
-			}
-		}
+// 	unslashedBatches := k.GetUnslashedBatches(ctx, maxHeight)
+// 	for _, batch := range unslashedBatches {
 
-		// then we set the latest slashed batch block
-		k.SetLastSlashedBatchBlock(ctx, batch.Block)
-	}
-}
+// 		// SLASH BONDED VALIDTORS who didn't attest batch requests
+// 		currentBondedSet := k.stakingKeeper.GetBondedValidatorsByPower(ctx)
+// 		confirms := k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.Nonce, batch.TokenContract)
+
+// 		for _, val := range currentBondedSet {
+// 			// Don't slash validators who joined after batch is created
+// 			consAddr, _ := val.GetConsAddr()
+// 			valSigningInfo, exist := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
+// 			if exist && valSigningInfo.StartHeight > int64(batch.Block) {
+// 				continue
+// 			}
+
+// 			found := false
+// 			for _, conf := range confirms {
+// 				// TODO: double check this logic
+// 				confVal, _ := sdk.AccAddressFromBech32(conf.OrchestratorAddress)
+// 				validatorAddr := k.GetOrchestratorValidator(ctx, confVal)
+// 				if validatorAddr.Equals(val.GetOperator()) {
+// 					found = true
+// 					break
+// 				}
+// 			}
+
+// 			if found {
+// 				continue
+// 			}
+
+// 			cons, _ := val.GetConsAddr()
+// 			k.stakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionBatch)
+// 			if !val.IsJailed() {
+// 				k.stakingKeeper.Jail(ctx, cons)
+// 			}
+// 		}
+
+// 		// then we set the latest slashed batch block
+// 		k.SetLastSlashedBatchBlock(ctx, batch.Block)
+// 	}
+// }

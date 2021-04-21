@@ -325,7 +325,7 @@ func (k Keeper) GetUnslashedBatches(ctx sdk.Context, maxHeight uint64) []types.B
 	txs := []types.BatchTx{}
 	lastSlashedBatchBlock := k.GetLastSlashedBatchBlock(ctx)
 
-	k.IterateBatchBySlashedBatchBlock(ctx, lastSlashedBatchBlock+1, maxHeight, func(batch types.BatchTx) bool {
+	k.IterateBatchBySlashedBatchBlock(ctx, lastSlashedBatchBlock+1, maxHeight, func(_ tmbytes.HexBytes, batch types.BatchTx) bool {
 		txs = append(txs, batch)
 		return false
 	})
@@ -334,16 +334,22 @@ func (k Keeper) GetUnslashedBatches(ctx sdk.Context, maxHeight uint64) []types.B
 }
 
 // IterateBatchBySlashedBatchBlock iterates through all Batch by last slashed Batch block in ASC order
-func (k Keeper) IterateBatchBySlashedBatchBlock(ctx sdk.Context, lastSlashedBatchBlock uint64, maxHeight uint64, cb func(types.BatchTx) bool) {
+func (k Keeper) IterateBatchBySlashedBatchBlock(
+	ctx sdk.Context,
+	lastSlashedBatchBlock, maxHeight uint64,
+	cb func(txID tmbytes.HexBytes, batchTx types.BatchTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchTxBlockKey)
 	iter := prefixStore.Iterator(sdk.Uint64ToBigEndian(lastSlashedBatchBlock), sdk.Uint64ToBigEndian(maxHeight))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
 		var batch types.BatchTx
+
+		// TODO: get from key
+		txID := tmbytes.HexBytes{}
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &batch)
 		// cb returns true to stop early
-		if cb(batch) {
+		if cb(txID, batch) {
 			break
 		}
 	}

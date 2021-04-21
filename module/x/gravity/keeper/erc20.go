@@ -35,7 +35,6 @@ func (k Keeper) GetERC20ContractFromCoinDenom(ctx sdk.Context, denom string) (co
 }
 
 func (k Keeper) setERC20DenomMap(ctx sdk.Context, denom string, tokenContract common.Address) {
-	// TODO: prefix store
 	store := ctx.KVStore(k.storeKey)
 	contractHex := tokenContract.String()
 	// TODO: use contract address bytes

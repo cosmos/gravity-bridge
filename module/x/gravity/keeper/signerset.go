@@ -20,7 +20,6 @@ func (k Keeper) SetEthSignerSetRequest(ctx sdk.Context) types.EthSignerSet {
 		sdk.NewEvent(
 			types.EventTypeMultisigUpdateRequest,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyMultisigID, fmt.Sprint(signerSet.Nonce)),
 			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(signerSet.Nonce)),
 		),
 	)
@@ -77,7 +76,7 @@ func (k Keeper) GetLatestEthSignerSet(ctx sdk.Context) (out *types.EthSignerSet)
 	return
 }
 
-// setLastSlashedEthSignerSetNonce sets the latest slashed signerSet nonce
+// SetLastSlashedEthSignerSetNonce sets the latest slashed signerSet nonce
 func (k Keeper) SetLastSlashedEthSignerSetNonce(ctx sdk.Context, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.LastSlashedEthSignerSetNonce, sdk.Uint64ToBigEndian(nonce))
@@ -111,8 +110,8 @@ func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
 	return sdk.BigEndianToUint64(bytes)
 }
 
-// GetUnSlashedEthSignerSets returns all the unslashed validator sets in state
-func (k Keeper) GetUnSlashedEthSignerSets(ctx sdk.Context, maxHeight uint64) (out []*types.EthSignerSet) {
+// GetUnslashedEthSignerSets returns all the unslashed validator sets in state
+func (k Keeper) GetUnslashedEthSignerSets(ctx sdk.Context, maxHeight uint64) (out []*types.EthSignerSet) {
 	lastSlashedEthSignerSetNonce := k.GetLastSlashedEthSignerSetNonce(ctx)
 	k.IterateEthSignerSetBySlashedEthSignerSetNonce(ctx, lastSlashedEthSignerSetNonce, maxHeight, func(_ []byte, signerSet *types.EthSignerSet) bool {
 		if signerSet.Nonce > lastSlashedEthSignerSetNonce {
