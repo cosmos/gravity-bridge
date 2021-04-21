@@ -649,3 +649,5 @@ func (msg *MsgCancelSendToEth) GetSigners() []sdk.AccAddress {
 	}
 	return []sdk.AccAddress{sdk.AccAddress(acc)}
 }
+
+// TODO JNT: write boilerplate for evidence message type

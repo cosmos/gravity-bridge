@@ -157,6 +157,7 @@ func NewValset(nonce, height uint64, members BridgeValidators) *Valset {
 }
 
 // GetCheckpoint returns the checkpoint
+// TODO JNT: use this function to get valset hash
 func (v Valset) GetCheckpoint(gravityIDstring string) []byte {
 	// TODO replace hardcoded "foo" here with a getter to retrieve the correct gravityID from the store
 	// this will work for now because 'foo' is the test gravityID we are using

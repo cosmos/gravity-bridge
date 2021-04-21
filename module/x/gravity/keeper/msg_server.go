@@ -145,10 +145,14 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		return nil, err
 	}
 
+	// TODO JNT: fix naming of batchID, it is actually a batch
 	batchID, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize)
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO JNT: get and set batch hash for evidence here
+	// batchID.GetCheckpoint()
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -500,3 +504,14 @@ func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendTo
 
 	return &types.MsgCancelSendToEthResponse{}, nil
 }
+
+// TODO JNT: define logic for evidence slashing endpoint here
+// Message: {
+// 	Bad sig
+//  Bad checkpoint
+// }
+
+// Check if the checkpoint is bad.
+// Look for it in the store of past checkpoints, if not found, it is indeed bad. IF SO:
+// Bad sig + Bad checkpoint = Bad eth address
+// Look up which validator has that eth address and slash them
