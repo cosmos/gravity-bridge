@@ -16,7 +16,7 @@ import (
 // TODO: rename functions to Send / Receive
 // TODO: test with IBC vouchers
 
-// AddToOutgoingPool
+// AddTransferToOutgoingPool
 // - checks a counterpart denominator exists for the given voucher type
 // - burns the voucher for transfer amount and fees
 // - persists an OutgoingTx
@@ -25,11 +25,7 @@ import (
 //
 // CONTRACT: amount and fee must be valid Ethereum ERC20 token or a Cosmos coin
 // (i.e with or without the gravity prefix)
-func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethereumReceiver common.Address, amount, fee sdk.Coin) (tmbytes.HexBytes, error) {
-	if amount.Denom != fee.Denom {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "coin denom doesn't match with fee denom (%s ≠ %s)", amount.Denom, fee.Denom)
-	}
-
+func (k Keeper) AddTransferToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethereumReceiver common.Address, amount, fee sdk.Coin) (tmbytes.HexBytes, error) {
 	// Add the fees to the transfer coins in order to escrow them on the ModuleAccount
 	coinsToEscrow := sdk.NewCoins(amount.Add(fee))
 
@@ -108,10 +104,11 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, ethere
 	// TODO: fix events / add more attrs
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeBridgeWithdrawalReceived,
+			types.EventTypeTransferPooled,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
 			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(nonce, 64)),
+			sdk.NewAttribute(types.AttributeKeyTokenContract, tokenContractHex),
 		),
 	)
 
@@ -167,9 +164,9 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID tmbytes.He
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeBridgeWithdrawCanceled,
+			types.EventTypeTransferCanceled,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute("denom", refund.Denom), // TODO: create attr
+			sdk.NewAttribute(types.AttributeKeyDenom, refund.Denom), // TODO: create attr
 			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
 		),
 	)
@@ -189,7 +186,7 @@ func (k Keeper) IndexTransferTxByFee(ctx sdk.Context, tokenContract common.Addre
 		k.cdc.MustUnmarshalBinaryBare(bz, &txIDs)
 	}
 
-	txIDs.Ids = append(txIDs.Ids, txID)
+	txIDs.IDs = append(txIDs.IDs, txID)
 
 	store.Set(key, k.cdc.MustMarshalBinaryBare(&txIDs))
 }
@@ -206,7 +203,7 @@ func (k Keeper) IterateTransferPoolByFee(ctx sdk.Context, tokenContract common.A
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &txIDs)
 
 		fee := uint64(0)
-		if cb(fee, txIDs.Ids) {
+		if cb(fee, txIDs.IDs) {
 			return
 		}
 	}

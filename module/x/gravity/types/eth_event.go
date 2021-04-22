@@ -150,7 +150,7 @@ func (e LogicCallExecutedEvent) Validate() error {
 	if e.Nonce == 0 {
 		return fmt.Errorf("nonce cannot be 0")
 	}
-	if len(e.InvalidationId) == 0 {
+	if len(e.InvalidationID) == 0 {
 		return fmt.Errorf("invalidation id cannot be empty")
 	}
 	if e.InvalidationNonce == 0 {
@@ -164,7 +164,7 @@ func (e LogicCallExecutedEvent) Validate() error {
 
 // Hash implements BridgeDeposit.Hash
 func (e LogicCallExecutedEvent) Hash() tmbytes.HexBytes {
-	path := fmt.Sprintf("%s/%d/", e.InvalidationId, e.InvalidationNonce)
+	path := fmt.Sprintf("%s/%d/", e.InvalidationID, e.InvalidationNonce)
 	hash := sha256.Sum256([]byte(path))
 	return hash[:]
 }

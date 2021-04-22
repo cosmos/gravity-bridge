@@ -134,7 +134,7 @@ func (k Keeper) Transfer(c context.Context, msg *types.MsgTransfer) (*types.MsgT
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	ethereumAddr := common.HexToAddress(msg.EthRecipient)
 
-	txID, err := k.AddToOutgoingPool(ctx, sender, ethereumAddr, msg.Amount, msg.BridgeFee)
+	txID, err := k.AddTransferToOutgoingPool(ctx, sender, ethereumAddr, msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
 	}
@@ -143,11 +143,16 @@ func (k Keeper) Transfer(c context.Context, msg *types.MsgTransfer) (*types.MsgT
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
+			sdk.NewAttribute(types.AttributeKeyEthRecipient, msg.EthRecipient),
 			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
+			sdk.NewAttribute(types.AttributeKeyDenom, msg.Amount.Denom),
 		),
 	)
 
-	return &types.MsgTransferResponse{}, nil
+	return &types.MsgTransferResponse{
+		TxId: txID,
+	}, nil
 }
 
 // CancelTransfer
@@ -165,6 +170,7 @@ func (k Keeper) CancelTransfer(c context.Context, msg *types.MsgCancelTransfer) 
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			sdk.NewAttribute(types.AttributeKeyTxID, msg.TxId.String()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 		),
 	)
 

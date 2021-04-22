@@ -26,7 +26,7 @@ func (k Keeper) HandleEthEvent(ctx sdk.Context, event types.EthereumEvent, orche
 	}
 
 	// Add the event to the store
-	if err := k.AttestEvent(ctx, event, validatorAddr); err != nil {
+	if err := k.AttestEvent(ctx, event, validator); err != nil {
 		return sdkerrors.Wrap(err, "create attestation")
 	}
 
@@ -35,6 +35,7 @@ func (k Keeper) HandleEthEvent(ctx sdk.Context, event types.EthereumEvent, orche
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, event.GetType()),
+			sdk.NewAttribute(types.AttributeKeyOrchestratorValidator, validatorAddr.String()),
 			// TODO: maybe return something better here? is this the right string representation?
 			// sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(event.GetEventNonce(), event.ClaimHash()))),
 		),

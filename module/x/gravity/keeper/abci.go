@@ -22,12 +22,13 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 // an attestation that has not passed the threshold
 func (k Keeper) tallyAttestations(ctx sdk.Context) {
 	// We check the attestations that haven't been observed, i.e nonce is exactly 1 higher than the last attestation
+	// TODO: I don't know why do we use this for iterations
 	nonce := uint64(k.GetLastObservedEventNonce(ctx)) + 1
 
 	// FIXME: update iterator function
-	k.IterateAttestationByNonce(ctx, nonce, func(attestation types.Attestation) bool {
+	k.IterateAttestationByNonce(ctx, nonce, func(hash tmbytes.HexBytes, attestation types.Attestation) bool {
 		// try unobserved attestations
-		k.TallyAttestation(ctx, attestation)
+		k.TallyAttestation(ctx, hash, attestation)
 		return false
 	})
 }

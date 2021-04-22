@@ -49,7 +49,10 @@ message DepositEvent {
 // operations on the bridge contract was executed.
 message WithdrawEvent {
   // transaction identifier of the batch tx
-  bytes tx_id = 1 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
+  bytes tx_id = 1 [
+    (gogoproto.customname) = "TxID",  
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
   // event nonce of the batch tx on Cosmos
   uint64 nonce = 2;
   // ethereum hex address of the contract
@@ -64,7 +67,10 @@ message LogicCallExecutedEvent {
   // event nonce for replay protection
   uint64 nonce = 1;
 
-  bytes  invalidation_id    = 2 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
+  bytes  invalidation_id    = 2 [
+    (gogoproto.customname) = "InvalidationID",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
   uint64 invalidation_nonce = 3;
   // etherereum block height at which the event was observed
   uint64 ethereum_height = 4;
@@ -124,8 +130,7 @@ message BatchTx {
   // timeout in seconds  // TODO: double check
   uint64 timeout = 2;
   // transaction identifiers of the transfer txs included in this batch
-  repeated bytes transactions = 3
-      [(gogoproto.casttype) = "github.com/cosmos/gravity-bridge/module/x/gravity/types.TxIDs"];
+  repeated bytes transactions = 3 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
   // ethereum contract address of the batch contract in hex format
   string token_contract = 4;
   // ethereum block height // TODO: double check
@@ -170,5 +175,8 @@ message LogicCallTx {
 // TransactionIDs defines a protobuf message for storing transfer tx ids.
 message TransactionIDs {
   // slice of transfer transaction identifiers
-  repeated bytes ids = 1 [(gogoproto.casttype) = "github.com/cosmos/gravity-bridge/module/x/gravity/types.TxIDs"];
+  repeated bytes ids = 1 [
+    (gogoproto.customname) = "IDs",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
 }

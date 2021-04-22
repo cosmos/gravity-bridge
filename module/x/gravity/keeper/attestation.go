@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
@@ -12,14 +13,16 @@ import (
 
 // AttestEvent signals an ethereum event as
 // TODO: explain logic
-func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validatorAddr sdk.ValAddress) error {
+func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validator stakingtypes.ValidatorI) error {
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
 	// We check the event nonce in processAttestation as well, but checking it here gives individual eth signers a chance to retry,
 	// and prevents validators from submitting two events with the same nonce
-	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validatorAddr)
-	if event.GetNonce() != lastEventNonce+1 {
-		return types.ErrNonContiguousEventNonce
-	}
+
+	// TODO: why is this per validator?
+	// lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator.GetOperator())
+	// if event.GetNonce() != lastEventNonce+1 {
+	// 	return types.ErrNonContiguousEventNonce
+	// }
 
 	eventHash := event.Hash()
 
@@ -27,25 +30,31 @@ func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validato
 	attestation, found := k.GetAttestation(ctx, eventHash)
 	if !found {
 		attestation = types.Attestation{
-			EventID:       eventHash, // TODO: use hex bytes
+			EventID:       eventHash,
+			Votes:         []string{},
 			AttestedPower: 0,
 			Height:        uint64(ctx.BlockHeight()),
 		}
 	}
 
 	// Add the validator's vote to this attestation
-	attestation.Votes = append(attestation.Votes, validatorAddr.String())
+	attestation.Votes = append(attestation.Votes, validator.GetOperator().String())
+	attestation.AttestedPower += validator.GetConsensusPower()
 
 	k.SetAttestation(ctx, eventHash, attestation)
 	// TODO: what is this for?
-	k.setLastEventNonceByValidator(ctx, validatorAddr, event.GetNonce())
+	// k.setLastEventNonceByValidator(ctx, validatorAddr, event.GetNonce())
 	return nil
 }
 
 // TallyAttestation checks if an attestation has enough votes to be applied to the consensus state
 // and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
 // and then marks it Observed and emits an event.
-func (k Keeper) TallyAttestation(ctx sdk.Context, attestation types.Attestation) {
+func (k Keeper) TallyAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestation types.Attestation) {
+	// TODO: get the event from store
+
+	// check if the event is observed
+	// TODO: why? shouldn't all of them be unobserved if we remove them from the store??
 
 	if attestation.Observed {
 		panic("attempting to process observed attestation")
