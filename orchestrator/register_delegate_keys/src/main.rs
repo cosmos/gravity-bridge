@@ -19,21 +19,21 @@ struct Args {
     flag_validator_phrase: String,
     flag_cosmos_phrase: Option<String>,
     flag_ethereum_key: Option<String>,
-    flag_cosmos_prefix: String,
-    flag_cosmos_rpc: String,
+    flag_address_prefix: String,
+    flag_cosmos_grpc: String,
     flag_fees: String,
 }
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-        "Usage: {} --validator-phrase=<key> --cosmos-prefix=<prefix> [--cosmos-phrase=<key>] [--ethereum-key=<key>] --cosmos-rpc=<url> --fees=<denom>
+        "Usage: {} --validator-phrase=<key> --address-prefix=<prefix> [--cosmos-phrase=<key>] [--ethereum-key=<key>] --cosmos-grpc=<url> --fees=<denom>
         Options:
             -h --help                 Show this screen.
             --validator-phrase=<vkey> The Cosmos private key of the validator. Must be saved when you generate your key
             --ethereum-key=<ekey>     (Optional) The Ethereum private key to register, will be generated if not provided
             --cosmos-phrase=<ckey>    (Optional) The phrase for the Cosmos key to register, will be generated if not provided.
-            --cosos-prefix=<prefix>   The phrase for Addresses on this chain (eg 'cosmos')
-            --cosmos-rpc=<curl>       The Cosmos Legacy RPC url, usually the validator. This will need to be manually enabled
+            --address-prefix=<prefix> The prefix for Addresses on this chain (eg 'cosmos')
+            --cosmos-grpc=<curl>      The Cosmos RPC url, usually the validator. This will need to be manually enabled
             --fees=<denom>            The Cosmos Denom in which to pay Cosmos chain fees
         About:
             Special purpose binary for bootstrapping Gravity chains. This will submit and optionally
@@ -68,8 +68,8 @@ async fn main() {
     };
 
     let connections = create_rpc_connections(
-        args.flag_cosmos_prefix,
-        Some(args.flag_cosmos_rpc),
+        args.flag_address_prefix,
+        Some(args.flag_cosmos_grpc),
         None,
         TIMEOUT,
     )

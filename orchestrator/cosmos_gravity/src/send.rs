@@ -44,7 +44,11 @@ pub async fn update_gravity_delegate_addresses(
     let our_valoper_address = private_key
         .to_address(&contact.get_prefix())
         .unwrap()
-        .to_bech32("cosmosvaloper")
+        // This works so long as the format set by the cosmos hub is maintained
+        // having a main prefix followed by a series of titles for specific keys
+        // this will not work if that convention is broken. This will be resolved when
+        // GRPC exposes prefix endpoints (coming to upstream cosmos sdk soon)
+        .to_bech32(format!("{}valoper", contact.get_prefix()))
         .unwrap();
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
 
