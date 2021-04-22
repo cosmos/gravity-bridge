@@ -26,7 +26,7 @@ pub struct Connections {
 /// operation in a error resilient manner. TODO find some way to generalize
 /// this so that it's less ugly
 pub async fn create_rpc_connections(
-    chain_prefix: String,
+    address_prefix: String,
     grpc_url: Option<String>,
     eth_rpc_url: Option<String>,
     timeout: Duration,
@@ -40,10 +40,13 @@ pub async fn create_rpc_connections(
         check_scheme(&url, &grpc_url);
         let cosmos_grpc_url = grpc_url.trim_end_matches('/').to_string();
         // try the base url first.
-        let try_base = GravityQueryClient::connect(cosmos_grpc_url).await;
+        let try_base = GravityQueryClient::connect(cosmos_grpc_url.clone()).await;
         match try_base {
             // it worked, lets go!
-            Ok(val) => grpc = Some(val),
+            Ok(val) => {
+                grpc = Some(val);
+                contact = Some(Contact::new(&cosmos_grpc_url, timeout, &address_prefix).unwrap());
+            }
             // did not work, now we check if it's localhost
             Err(e) => {
                 warn!(
@@ -62,12 +65,12 @@ pub async fn create_rpc_connections(
                     match (ipv4, ipv6) {
                         (Ok(v), Err(_)) => {
                             info!("Url fallback succeeded, your cosmos gRPC url {} has been corrected to {}", grpc_url, ipv4_url);
-                            contact = Some(Contact::new(&ipv4_url, timeout, &chain_prefix).unwrap());
+                            contact = Some(Contact::new(&ipv4_url, timeout, &address_prefix).unwrap());
                             grpc = Some(v)
                         },
                         (Err(_), Ok(v)) => {
                             info!("Url fallback succeeded, your cosmos gRPC url {} has been corrected to {}", grpc_url, ipv6_url);
-                            contact = Some(Contact::new(&ipv6_url, timeout, &chain_prefix).unwrap());
+                            contact = Some(Contact::new(&ipv6_url, timeout, &address_prefix).unwrap());
                             grpc = Some(v)
                         },
                         (Ok(_), Ok(_)) => panic!("This should never happen? Why didn't things work the first time?"),
@@ -89,12 +92,12 @@ pub async fn create_rpc_connections(
                     match (https_on_80, https_on_443) {
                         (Ok(v), Err(_)) => {
                             info!("Https upgrade succeeded, your cosmos gRPC url {} has been corrected to {}", grpc_url, https_on_80_url);
-                            contact = Some(Contact::new(&https_on_80_url, timeout, &chain_prefix).unwrap());
+                            contact = Some(Contact::new(&https_on_80_url, timeout, &address_prefix).unwrap());
                             grpc = Some(v)
                         },
                         (Err(_), Ok(v)) => {
                             info!("Https upgrade succeeded, your cosmos gRPC url {} has been corrected to {}", grpc_url, https_on_443_url);
-                            contact = Some(Contact::new(&https_on_443_url, timeout, &chain_prefix).unwrap());
+                            contact = Some(Contact::new(&https_on_443_url, timeout, &address_prefix).unwrap());
                             grpc = Some(v)
                         },
                         (Ok(_), Ok(_)) => panic!("This should never happen? Why didn't things work the first time?"),
@@ -230,6 +233,7 @@ pub async fn check_delegate_addresses(
     client: &mut GravityQueryClient<Channel>,
     delegate_eth_address: EthAddress,
     delegate_orchestrator_address: CosmosAddress,
+    prefix: &str,
 ) {
     let eth_response = client
         .get_delegate_key_by_eth(QueryDelegateKeysByEthAddress {
@@ -238,7 +242,7 @@ pub async fn check_delegate_addresses(
         .await;
     let orchestrator_response = client
         .get_delegate_key_by_orchestrator(QueryDelegateKeysByOrchestratorAddress {
-            orchestrator_address: delegate_orchestrator_address.to_string(),
+            orchestrator_address: delegate_orchestrator_address.to_bech32(prefix).unwrap(),
         })
         .await;
     trace!("{:?} {:?}", eth_response, orchestrator_response);
