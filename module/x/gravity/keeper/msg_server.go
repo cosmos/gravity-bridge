@@ -176,10 +176,7 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	}
 
 	gravityID := k.GetGravityID(ctx)
-	checkpoint, err := batch.GetCheckpoint(gravityID)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
-	}
+	checkpoint := batch.GetCheckpoint(gravityID)
 
 	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
@@ -234,10 +231,7 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 	}
 
 	gravityID := k.GetGravityID(ctx)
-	checkpoint, err := logic.GetCheckpoint(gravityID)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
-	}
+	checkpoint := logic.GetCheckpoint(gravityID)
 
 	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
@@ -511,7 +505,43 @@ func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendTo
 //  Bad checkpoint
 // }
 
-// Check if the checkpoint is bad.
+// Deserialize the subject, get the checkpoint.
 // Look for it in the store of past checkpoints, if not found, it is indeed bad. IF SO:
 // Bad sig + Bad checkpoint = Bad eth address
 // Look up which validator has that eth address and slash them
+// Give the slashed funds to the submitter of this message
+func (k msgServer) SubmitBadSignatureEvidence(c context.Context, msg *types.MsgSubmitBadSignatureEvidence) (*types.MsgSubmitBadSignatureEvidenceResponse, error) {
+	// println("ANY TYPE URL", msg.Subject.TypeUrl)
+
+	// ctx := sdk.UnwrapSDKContext(c)
+
+	// switch
+
+	// switch m := msg.Subject.(type) {
+	// case *foopb.MyMessage:
+	// 	// ... // make use of m as a *foopb.MyMessage
+	// case *barpb.OtherMessage:
+	// 	// ... // make use of m as a *barpb.OtherMessage
+	// case *bazpb.SomeMessage:
+	// 	// ... // make use of m as a *bazpb.SomeMessage
+	// }
+
+	// sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// err = k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TransactionId, sender)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// ctx.EventManager().EmitEvent(
+	// 	sdk.NewEvent(
+	// 		sdk.EventTypeMessage,
+	// 		sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+	// 		sdk.NewAttribute(types.AttributeKeyOutgoingTXID, fmt.Sprint(msg.TransactionId)),
+	// 	),
+	// )
+
+	return &types.MsgSubmitBadSignatureEvidenceResponse{}, nil
+}

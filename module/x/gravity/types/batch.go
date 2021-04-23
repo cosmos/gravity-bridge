@@ -1,10 +1,10 @@
 package types
 
 import (
+	fmt "fmt"
 	"math/big"
 	"strings"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -12,11 +12,11 @@ import (
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
 // TODO JNT: use this for evidence based slashing
-func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) []byte {
 
 	abi, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
+		panic("Bad ABI constant!")
 	}
 
 	// the contract argument is not a arbitrary length array but a fixed length 32 byte
@@ -60,21 +60,21 @@ func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "packing checkpoint")
+		panic(fmt.Sprintf("Error packing checkpoint! %s/n", err))
 	}
 
 	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
 	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
 	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
-	return crypto.Keccak256Hash(abiEncodedBatch[4:]).Bytes(), nil
+	return crypto.Keccak256Hash(abiEncodedBatch[4:]).Bytes()
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (c OutgoingLogicCall) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+func (c OutgoingLogicCall) GetCheckpoint(gravityIDstring string) []byte {
 
 	abi, err := abi.JSON(strings.NewReader(OutgoingLogicCallABIJSON))
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
+		panic("Bad ABI constant!")
 	}
 
 	// Create the methodName argument which salts the signature
@@ -129,8 +129,8 @@ func (c OutgoingLogicCall) GetCheckpoint(gravityIDstring string) ([]byte, error)
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "packing checkpoint")
+		panic(fmt.Sprintf("Error packing checkpoint! %s/n", err))
 	}
 
-	return crypto.Keccak256Hash(abiEncodedCall[4:]).Bytes(), nil
+	return crypto.Keccak256Hash(abiEncodedCall[4:]).Bytes()
 }
