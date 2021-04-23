@@ -39,8 +39,7 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 	}
 
 	// TODO: get from params
-	ourHash, err := src.GetCheckpoint("foo")
-	require.NoError(t, err)
+	ourHash := src.GetCheckpoint("foo")
 
 	// hash from bridge contract
 	goldHash := "0xa3a7ee0a363b8ad2514e7ee8f110d7449c0d88f3b0913c28c1751e6e0079a9b2"[2:]
@@ -70,8 +69,7 @@ func TestOutgoingLogicCallCheckpointGold1(t *testing.T) {
 		InvalidationNonce:    1,
 	}
 
-	ourHash, err := call.GetCheckpoint("foo")
-	require.NoError(t, err)
+	ourHash := call.GetCheckpoint("foo")
 
 	// hash from bridge contract
 	goldHash := "0x1de95c9ace999f8ec70c6dc8d045942da2612950567c4861aca959c0650194da"[2:]
