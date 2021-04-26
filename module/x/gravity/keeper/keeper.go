@@ -375,13 +375,13 @@ func (k Keeper) SetEthAddressForValidator(ctx sdk.Context, validator sdk.ValAddr
 	store.Set(types.GetValidatorByEthAddressKey(ethAddr), []byte(validator))
 }
 
-// GetEthAddress returns the eth address for a given gravity validator
+// GetEthAddressByValidator returns the eth address for a given gravity validator
 func (k Keeper) GetEthAddressByValidator(ctx sdk.Context, validator sdk.ValAddress) string {
 	store := ctx.KVStore(k.storeKey)
 	return string(store.Get(types.GetEthAddressByValidatorKey(validator)))
 }
 
-// GetEthAddress returns the eth address for a given gravity validator
+// GetValidatorByEthAddress returns the validator for a given eth address
 func (k Keeper) GetValidatorByEthAddress(ctx sdk.Context, ethAddr string) string {
 	store := ctx.KVStore(k.storeKey)
 	return string(store.Get(types.GetValidatorByEthAddressKey(ethAddr)))
