@@ -375,7 +375,7 @@ func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.ValAddress, ethAddr
 }
 
 // GetEthAddress returns the eth address for a given gravity validator
-func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) string {
+func (k Keeper) GetEthAddressByValidator(ctx sdk.Context, validator sdk.ValAddress) string {
 	store := ctx.KVStore(k.storeKey)
 	return string(store.Get(types.GetEthAddressKey(validator)))
 }
@@ -404,7 +404,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		totalPower += p
 
 		bridgeValidators[i] = &types.BridgeValidator{Power: p}
-		if ethAddr := k.GetEthAddress(ctx, val); ethAddr != "" {
+		if ethAddr := k.GetEthAddressByValidator(ctx, val); ethAddr != "" {
 			bridgeValidators[i].EthereumAddress = ethAddr
 		}
 	}
