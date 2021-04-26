@@ -286,7 +286,7 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	_, err := h(ctx, msg)
 	require.NoError(t, err)
 
-	assert.Equal(t, k.GetEthAddress(ctx, valAddress), ethAddress)
+	assert.Equal(t, k.GetEthAddressByValidator(ctx, valAddress), ethAddress)
 
 	assert.Equal(t, k.GetOrchestratorValidator(ctx, cosmosAddress), valAddress)
 
@@ -307,7 +307,7 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	_, err = h(ctx, msg)
 	require.NoError(t, err)
 
-	assert.Equal(t, k.GetEthAddress(ctx, valAddress), ethAddress2)
+	assert.Equal(t, k.GetEthAddressByValidator(ctx, valAddress), ethAddress2)
 
 	assert.Equal(t, k.GetOrchestratorValidator(ctx, cosmosAddress2), valAddress)
 

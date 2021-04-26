@@ -146,7 +146,7 @@ func TestDelegateKeys(t *testing.T) {
 		// set the orchestrator address
 		k.SetOrchestratorValidator(ctx, val, orch)
 		// set the ethereum address
-		k.SetEthAddress(ctx, val, ethAddrs[i])
+		k.SetEthAddressForValidator(ctx, val, ethAddrs[i])
 	}
 
 	addresses := k.GetDelegateKeys(ctx)

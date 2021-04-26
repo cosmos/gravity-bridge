@@ -181,7 +181,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 				// Check if validator has confirmed valset or not
 				found := false
 				for _, conf := range confirms {
-					if conf.EthAddress == k.GetEthAddress(ctx, val.GetOperator()) {
+					if conf.EthAddress == k.GetEthAddressByValidator(ctx, val.GetOperator()) {
 						found = true
 						break
 					}
@@ -222,7 +222,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 					// Check if validator has confirmed valset or not
 					found := false
 					for _, conf := range confirms {
-						if conf.EthAddress == k.GetEthAddress(ctx, validator.GetOperator()) {
+						if conf.EthAddress == k.GetEthAddressByValidator(ctx, validator.GetOperator()) {
 							found = true
 							break
 						}

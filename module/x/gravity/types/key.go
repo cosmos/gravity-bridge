@@ -19,9 +19,13 @@ const (
 )
 
 var (
-	// EthAddressKey indexes cosmos validator account addresses
+	// EthAddressByValidatorKey indexes cosmos validator account addresses
 	// i.e. cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
-	EthAddressKey = []byte{0x1}
+	EthAddressByValidatorKey = []byte{0x1}
+
+	// ValidatorByEthAddressKey indexes ethereum addresses
+	// i.e. 0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B
+	ValidatorByEthAddressKey = []byte{0xf9}
 
 	// ValsetRequestKey indexes valset requests by nonce
 	ValsetRequestKey = []byte{0x2}
@@ -126,11 +130,18 @@ func GetOrchestratorAddressKey(orc sdk.AccAddress) []byte {
 	return append(KeyOrchestratorAddress, orc.Bytes()...)
 }
 
-// GetEthAddressKey returns the following key format
+// GetEthAddressByValidatorKey returns the following key format
 // prefix              cosmos-validator
 // [0x0][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
-func GetEthAddressKey(validator sdk.ValAddress) []byte {
-	return append(EthAddressKey, validator.Bytes()...)
+func GetEthAddressByValidatorKey(validator sdk.ValAddress) []byte {
+	return append(EthAddressByValidatorKey, validator.Bytes()...)
+}
+
+// GetValidatorByEthAddressKey returns the following key format
+// prefix              cosmos-validator
+// [0xf9][0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B]
+func GetValidatorByEthAddressKey(ethAddress string) []byte {
+	return append(ValidatorByEthAddressKey, []byte(ethAddress)...)
 }
 
 // GetValsetKey returns the following key format
