@@ -143,7 +143,7 @@ func TestLastValsetRequests(t *testing.T) {
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			input.GravityKeeper.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -290,7 +290,7 @@ func TestPendingValsetRequests(t *testing.T) {
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			input.GravityKeeper.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -449,7 +449,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 			// add an validator each block
 			// TODO: replace with real SDK addresses
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			input.GravityKeeper.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -588,7 +588,7 @@ func TestQueryLogicCalls(t *testing.T) {
 			// add an validator each block
 			// TODO: replace with real SDK addresses
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			input.GravityKeeper.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -644,7 +644,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 			// add an validator each block
 			// TODO: replace with real SDK addresses
 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			input.GravityKeeper.SetEthAddress(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
 			validators = append(validators, valAddr)
 		}
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -831,7 +831,7 @@ func TestQueryCurrentValset(t *testing.T) {
 	input := CreateTestEnv(t)
 	input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(valAddress)
 	ctx := input.Context
-	input.GravityKeeper.SetEthAddress(ctx, valAddress, ethAddress)
+	input.GravityKeeper.SetEthAddressForValidator(ctx, valAddress, ethAddress)
 
 	currentValset := input.GravityKeeper.GetCurrentValset(ctx)
 
