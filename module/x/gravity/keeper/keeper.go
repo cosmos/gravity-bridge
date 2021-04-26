@@ -187,13 +187,29 @@ func (k Keeper) GetTransferTxs(ctx sdk.Context) []types.TransferTx {
 	return txs
 }
 
-// TODO: is this necessary ??
-// GetUnbondingValidators returns UnbondingValidators.
-// Adding here in gravity keeper as cdc is available inside endblocker.
-func (k Keeper) GetUnbondingValidators(unbondingVals []byte) stakingtypes.ValAddresses {
-	var unbondingValidators stakingtypes.ValAddresses
-	k.cdc.MustUnmarshalBinaryBare(unbondingVals, &unbondingValidators)
-	return unbondingValidators
+func (k Keeper) GetEthereumEvent(ctx sdk.Context, eventID tmbytes.HexBytes) (types.EthereumEvent, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.EventKeyPrefix)
+	bz := store.Get(eventID.Bytes())
+	if len(bz) == 0 {
+		return nil, false
+	}
+
+	var event types.EthereumEvent
+	if err := k.cdc.UnmarshalInterface(bz, event); err != nil {
+		panic(err)
+	}
+
+	return event, true
+}
+
+func (k Keeper) SetEthereumEvent(ctx sdk.Context, eventID tmbytes.HexBytes, event types.EthereumEvent) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.EventKeyPrefix)
+	bz, err := k.cdc.MarshalInterface(event)
+	if err != nil {
+		panic(err)
+	}
+
+	store.Set(eventID.Bytes(), bz)
 }
 
 func (k Keeper) IterateValidatorsByPower(ctx sdk.Context, cb func(validator stakingtypes.Validator) bool) {
