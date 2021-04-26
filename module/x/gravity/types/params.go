@@ -163,6 +163,40 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	}
 }
 
+func validateBoundedUInt64(i interface{}, lower uint64, upper uint64) error {
+	u, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if u > upper {
+		return fmt.Errorf("parameter value %s larger than bound %s", u, upper)
+	}
+
+	if u < lower {
+		return fmt.Errorf("parameter value %s smaller than bound %s", u, lower)
+	}
+
+	return nil
+}
+
+func validateBoundedDec(i interface{}, lower sdk.Dec, upper sdk.Dec) error {
+	d, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if d.GT(upper) {
+		return fmt.Errorf("parameter value %s larger than bound %s", d, upper)
+	}
+
+	if d.LT(lower) {
+		return fmt.Errorf("parameter value %s smaller than bound %s", d, lower)
+	}
+
+	return nil
+}
+
 func validateBridgeChainID(i interface{}) error {
 	chainID, ok := i.(uint64)
 	if !ok {
