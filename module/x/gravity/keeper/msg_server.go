@@ -85,7 +85,7 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
-	ethAddress := k.GetEthAddress(ctx, validator)
+	ethAddress := k.GetEthAddressByValidator(ctx, validator)
 	if ethAddress == "" {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
@@ -189,7 +189,7 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
-	ethAddress := k.GetEthAddress(ctx, validator)
+	ethAddress := k.GetEthAddressByValidator(ctx, validator)
 	if ethAddress == "" {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
@@ -244,7 +244,7 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
-	ethAddress := k.GetEthAddress(ctx, validator)
+	ethAddress := k.GetEthAddressByValidator(ctx, validator)
 	if ethAddress == "" {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
