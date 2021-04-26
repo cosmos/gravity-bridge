@@ -180,9 +180,9 @@ $ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 c
 			}
 
 			delegateGravityMsg := &gravitytypes.MsgDelegateKey{
-				Validator:    sdk.ValAddress(key.GetAddress()).String(),
-				Orchestrator: orchAddress.String(),
-				EthAddress:   ethAddress,
+				ValidatorAddress:    sdk.ValAddress(key.GetAddress()).String(),
+				OrchestratorAddress: orchAddress.String(),
+				EthAddress:          ethAddress,
 			}
 
 			msgs := []sdk.Msg{msg, delegateGravityMsg}
