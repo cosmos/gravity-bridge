@@ -17,17 +17,11 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 	k.createEthSignerSet(ctx)
 }
 
-// Iterate over all attestations currently being voted on in order of nonce and
-// "Observe" those who have passed the threshold. Break the loop once we see
-// an attestation that has not passed the threshold
+// Iterate over all attestations and tally the current result.
 func (k Keeper) tallyAttestations(ctx sdk.Context) {
-	// We check the attestations that haven't been observed, i.e nonce is exactly 1 higher than the last attestation
-	// TODO: I don't know why do we use this for iterations
-	nonce := uint64(k.GetLastObservedEventNonce(ctx)) + 1
-
-	// FIXME: update iterator function
-	k.IterateAttestationByNonce(ctx, nonce, func(hash tmbytes.HexBytes, attestation types.Attestation) bool {
-		// try unobserved attestations
+	// all attestations on the store are considered unobserved, i.e the event being
+	// voted hasn't been handled
+	k.IterateAttestations(ctx, func(hash tmbytes.HexBytes, attestation types.Attestation) bool {
 		k.TallyAttestation(ctx, hash, attestation)
 		return false
 	})
@@ -36,6 +30,8 @@ func (k Keeper) tallyAttestations(ctx sdk.Context) {
 // timeoutTxs deletes the batch and logic call transactions that have passed
 // their expiration height on Ethereum.
 func (k Keeper) timeoutTxs(ctx sdk.Context) {
+	// get the latest ethereum height set after attesting the events
+	// TODO: pass as argument?
 	info, found := k.GetEthereumInfo(ctx)
 	if !found {
 		panic("ethereum observed info not found")

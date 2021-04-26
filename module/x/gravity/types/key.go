@@ -44,6 +44,9 @@ var (
 	// eventually executes
 	AttestationKeyPrefix = []byte{0x5}
 
+	// EventKeyPrefix
+	EventKeyPrefix = []byte{0xc}
+
 	// TransferTxKey indexes the transaction id for the outgoing transfer tx pool
 	TransferTxKey = []byte{0x6}
 
@@ -135,30 +138,6 @@ func GetSignersetKey(nonce uint64) []byte {
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
 func GetSignersetConfirmKey(nonce uint64, validator sdk.ValAddress) []byte {
 	return append(SignersetConfirmKey, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
-}
-
-// GetEventKey returns the following key format
-// prefix type               cosmos-validator-address                       nonce                             attestation-event-hash
-// [0x0][0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
-// The Event hash identifies a unique event, for example it would have a event nonce, a sender and a receiver. Or an event nonce and a batch nonce. But
-// the Event is stored indexed with the eventer key to make sure that it is unique.
-func GetEventKey(event EthereumEvent) []byte {
-	var eventHash []byte
-	if event != nil {
-		eventHash = event.Hash()
-	} else {
-		panic("No event without event!")
-	}
-	eventTypeLen := len([]byte(event.GetType()))
-	nonceBz := sdk.Uint64ToBigEndian(event.GetNonce())
-	key := make([]byte, len(OracleEventKey)+eventTypeLen+sdk.AddrLen+len(nonceBz)+len(eventHash))
-	copy(key[0:], OracleEventKey)
-	copy(key[len(OracleEventKey):], []byte(event.GetType()))
-	// TODO this is the delegate address, should be stored by the valaddress
-	copy(key[len(OracleEventKey)+eventTypeLen:], event.GetEventer())
-	copy(key[len(OracleEventKey)+eventTypeLen+sdk.AddrLen:], nonceBz)
-	copy(key[len(OracleEventKey)+eventTypeLen+sdk.AddrLen+len(nonceBz):], eventHash)
-	return key
 }
 
 // GetTransferTxKey returns the following key format

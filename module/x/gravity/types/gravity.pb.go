@@ -782,9 +782,9 @@ type LogicCallTx struct {
 	// tx nonce for replay protection
 	Nonce uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	// erc20 tokens represented as sdk.Coins
-	Tokens []types.Coin `protobuf:"bytes,2,rep,name=tokens,proto3" json:"tokens"`
+	Tokens github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=tokens,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"tokens"`
 	// erc20 tokens represented as sdk.Coins used as fees for the bridge orchestrators.
-	Fees []types.Coin `protobuf:"bytes,3,rep,name=fees,proto3" json:"fees"`
+	Fees github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,3,rep,name=fees,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"fees"`
 	// ethereum contract address of the arbitrary logic contract in hex format
 	LogicContractAddress string `protobuf:"bytes,4,opt,name=logic_contract_address,json=logicContractAddress,proto3" json:"logic_contract_address,omitempty"`
 	// ABI payload of the smart contract function call
@@ -833,14 +833,14 @@ func (m *LogicCallTx) GetNonce() uint64 {
 	return 0
 }
 
-func (m *LogicCallTx) GetTokens() []types.Coin {
+func (m *LogicCallTx) GetTokens() github_com_cosmos_cosmos_sdk_types.Coins {
 	if m != nil {
 		return m.Tokens
 	}
 	return nil
 }
 
-func (m *LogicCallTx) GetFees() []types.Coin {
+func (m *LogicCallTx) GetFees() github_com_cosmos_cosmos_sdk_types.Coins {
 	if m != nil {
 		return m.Fees
 	}
@@ -1090,13 +1090,16 @@ func (m *DepositEvent) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.Amount) > 0 {
-		i -= len(m.Amount)
-		copy(dAtA[i:], m.Amount)
-		i = encodeVarintGravity(dAtA, i, uint64(len(m.Amount)))
-		i--
-		dAtA[i] = 0x1a
+	{
+		size := m.Amount.Size()
+		i -= size
+		if _, err := m.Amount.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintGravity(dAtA, i, uint64(size))
 	}
+	i--
+	dAtA[i] = 0x1a
 	if len(m.TokenContract) > 0 {
 		i -= len(m.TokenContract)
 		copy(dAtA[i:], m.TokenContract)
@@ -1655,10 +1658,8 @@ func (m *DepositEvent) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovGravity(uint64(l))
 	}
-	l = len(m.Amount)
-	if l > 0 {
-		n += 1 + l + sovGravity(uint64(l))
-	}
+	l = m.Amount.Size()
+	n += 1 + l + sovGravity(uint64(l))
 	l = len(m.EthereumSender)
 	if l > 0 {
 		n += 1 + l + sovGravity(uint64(l))
@@ -2047,7 +2048,10 @@ func (m *Attestation) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2172,7 +2176,9 @@ func (m *DepositEvent) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Amount = github_com_cosmos_cosmos_sdk_types.Int(dAtA[iNdEx:postIndex])
+			if err := m.Amount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
@@ -2263,7 +2269,10 @@ func (m *DepositEvent) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2417,7 +2426,10 @@ func (m *WithdrawEvent) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2558,7 +2570,10 @@ func (m *LogicCallExecutedEvent) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2793,7 +2808,10 @@ func (m *CosmosERC20DeployedEvent) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2895,7 +2913,10 @@ func (m *EthereumInfo) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -2996,7 +3017,10 @@ func (m *EthSigner) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -3099,7 +3123,10 @@ func (m *EthSignerSet) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -3270,7 +3297,10 @@ func (m *BatchTx) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -3469,7 +3499,10 @@ func (m *TransferTx) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -3691,7 +3724,10 @@ func (m *LogicCallTx) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {
@@ -3773,7 +3809,10 @@ func (m *TransactionIDs) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if skippy < 0 {
+				return ErrInvalidLengthGravity
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if (iNdEx + skippy) > l {

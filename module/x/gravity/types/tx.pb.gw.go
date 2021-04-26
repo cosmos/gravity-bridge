@@ -538,17 +538,17 @@ func RegisterMsgHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 }
 
 var (
-	pattern_Msg_Transfer_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "transfer"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_Transfer_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "transfer"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_CancelTransfer_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"peggy", "v1", "transfer", "cancel"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_CancelTransfer_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"peggy", "v1", "transfer", "cancel"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_RequestBatch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "request_batch"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_RequestBatch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "request_batch"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_SubmitConfirm_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "confim"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_SubmitConfirm_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "confim"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_SubmitEvent_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "event"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_SubmitEvent_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "event"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_SetDelegateKey_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "delegate_keys"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_SetDelegateKey_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"peggy", "v1", "delegate_keys"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

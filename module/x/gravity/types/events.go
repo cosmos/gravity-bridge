@@ -9,6 +9,7 @@ const (
 	EventTypeTransferCanceled          = "transfer_canceled"
 
 	AttributeKeyAttestationID         = "attestation_id"
+	AttributeKeyEventID               = "event_id"
 	AttributeKeyBatchConfirmKey       = "batch_confirm_key"
 	AttributeKeyValsetConfirmKey      = "valset_confirm_key"
 	AttributeKeyTxID                  = "tx_id"

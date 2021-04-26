@@ -40,9 +40,8 @@ var _ AttestationHandler = DefaultAttestationHandler{}
 // logic.
 //
 // TODO: clean up
-func (handler DefaultAttestationHandler) OnAttestation(ctx sdk.Context, attestation types.Attestation) error {
-	// FIXME: create func
-	event, found := handler.keeper.GetEthEvent(ctx, attestation.EventID)
+func (h DefaultAttestationHandler) OnAttestation(ctx sdk.Context, attestation types.Attestation) error {
+	event, found := h.keeper.GetEthereumEvent(ctx, attestation.EventID)
 	if !found {
 		// TODO: err msg
 		return fmt.Errorf("not found")
@@ -50,51 +49,50 @@ func (handler DefaultAttestationHandler) OnAttestation(ctx sdk.Context, attestat
 
 	switch event := event.(type) {
 	case *types.DepositEvent:
-		// Check if coin is Cosmos-originated asset and get denom
-		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, event.TokenContract)
-
-		if isCosmosOriginated {
-			// If it is cosmos originated, unlock the coins
-			coins := sdk.Coins{sdk.NewCoin(denom, event.Amount)}
-
-			addr, err := sdk.AccAddressFromBech32(event.CosmosReceiver)
-			if err != nil {
-				return sdkerrors.Wrap(err, "invalid reciever address")
-			}
-
-			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
-				return sdkerrors.Wrap(err, "cosmos coins")
-			}
-		} else {
-			// If it is not cosmos originated, mint the coins (aka vouchers)
-			coins := sdk.Coins{sdk.NewCoin(denom, event.Amount)}
-
-			if err := a.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
-				return sdkerrors.Wrapf(err, "mint vouchers coins: %s", coins)
-			}
-
-			addr, err := sdk.AccAddressFromBech32(event.CosmosReceiver)
-			if err != nil {
-				return sdkerrors.Wrap(err, "invalid receiver address")
-			}
-
-			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
-				return sdkerrors.Wrap(err, "erc20 vouchers")
-			}
-		}
+		return h.keeper.OnReceiveDeposit(ctx, event)
 	case *types.WithdrawEvent:
-		a.keeper.OutgoingTxBatchExecuted(ctx, event.TokenContract, event.BatchNonce)
-	case *types.ERC20DeployedEvent:
-		return RegisterERC20(a.keeper, ctx, event)
+		tokenContract := common.HexToAddress(event.TokenContract)
+		return h.keeper.OnBatchTxExecuted(ctx, tokenContract, event.TxID)
+	case *types.CosmosERC20DeployedEvent:
+		return h.keeper.RegisterERC20(ctx, event)
 	default:
-		return sdkerrors.Wrapf(types.ErrInvalid, "unsupported event type %s: %T", event.GetType(), event)
+		// TODO: fix errors
+		return sdkerrors.Wrapf(types.ErrNonContiguousEventNonce, "unsupported event type %s: %T", event.GetType(), event)
 	}
 
 	return nil
 }
 
+// OnReceiveDeposit
+func (k Keeper) OnReceiveDeposit(ctx sdk.Context, event *types.DepositEvent) error {
+	tokenContract := common.HexToAddress(event.TokenContract)
+	// Check if coin is Cosmos-originated asset and get denom
+	denom, isCosmosCoin := k.GetCoinDenomFromERC20Contract(ctx, tokenContract)
+
+	coins := sdk.Coins{}
+	if isCosmosCoin {
+		//  if the coin is a native cosmos coin, unlock the coins and transfer to recipient
+		coins = sdk.Coins{sdk.NewCoin(denom, event.Amount)}
+	} else {
+		// if the coin is an ERC20 token, mint the ERC20 token vouchers and transfer to recipient
+		voucherDenom := types.GravityDenom(event.TokenContract)
+		coins := sdk.Coins{sdk.NewCoin(voucherDenom, event.Amount)}
+
+		if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
+			return sdkerrors.Wrapf(err, "mint erc20 vouchers: %s", coins)
+		}
+	}
+
+	addr, err := sdk.AccAddressFromBech32(event.CosmosReceiver)
+	if err != nil {
+		return sdkerrors.Wrap(err, "invalid receiver address")
+	}
+
+	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins)
+}
+
 // RegisterERC20
-func RegisterERC20(k Keeper, ctx sdk.Context, event types.CosmosERC20DeployedEvent) error {
+func (k Keeper) RegisterERC20(ctx sdk.Context, event *types.CosmosERC20DeployedEvent) error {
 	// Check if it already exists
 	contractAddr, found := k.GetERC20ContractFromCoinDenom(ctx, event.CosmosDenom)
 	if found {
@@ -111,7 +109,7 @@ func RegisterERC20(k Keeper, ctx sdk.Context, event types.CosmosERC20DeployedEve
 	// a denom metadata value defined
 	// TODO: discuss if we should create/set a new metadata if it's not currently
 	// set to store for the given cosmos denom
-	if err := validateCoinMetadata(event, metadata); err != nil {
+	if err := validateCoinMetadata(*event, metadata); err != nil {
 		return err
 	}
 
