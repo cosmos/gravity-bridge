@@ -23,7 +23,9 @@ func (k Keeper) Attest(
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
 	// We check the event nonce in processAttestation as well,
 	// but checking it here gives individual eth signers a chance to retry,
-	// and prevents validators from submitting two claims with the same nonce
+	// and prevents validators from submitting two claims with the same nonce.
+	// This prevents there being two attestations with the same nonce that get 2/3s of the votes
+	// in the endBlocker.
 	lastEventNonce := k.GetLastEventNonceByValidator(ctx, valAddr)
 	if claim.GetEventNonce() != lastEventNonce+1 {
 		return nil, types.ErrNonContiguousEventNonce
