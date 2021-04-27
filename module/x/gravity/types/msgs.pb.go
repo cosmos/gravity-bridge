@@ -1411,7 +1411,6 @@ func (m *MsgCancelSendToEthResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgCancelSendToEthResponse proto.InternalMessageInfo
 
-// TODO JNT: define MsgSubmitEvidence
 // This call allows anyone to submit evidence that a
 // validator has signed a valset, batch, or logic call that never
 // existed. Subject contains the batch, valset, or logic call.
@@ -1655,7 +1654,6 @@ type MsgClient interface {
 	LogicCallExecutedClaim(ctx context.Context, in *MsgLogicCallExecutedClaim, opts ...grpc.CallOption) (*MsgLogicCallExecutedClaimResponse, error)
 	SetOrchestratorAddress(ctx context.Context, in *MsgSetOrchestratorAddress, opts ...grpc.CallOption) (*MsgSetOrchestratorAddressResponse, error)
 	CancelSendToEth(ctx context.Context, in *MsgCancelSendToEth, opts ...grpc.CallOption) (*MsgCancelSendToEthResponse, error)
-	// TODO JNT: define endpoint for evidence
 	SubmitBadSignatureEvidence(ctx context.Context, in *MsgSubmitBadSignatureEvidence, opts ...grpc.CallOption) (*MsgSubmitBadSignatureEvidenceResponse, error)
 }
 
@@ -1798,7 +1796,6 @@ type MsgServer interface {
 	LogicCallExecutedClaim(context.Context, *MsgLogicCallExecutedClaim) (*MsgLogicCallExecutedClaimResponse, error)
 	SetOrchestratorAddress(context.Context, *MsgSetOrchestratorAddress) (*MsgSetOrchestratorAddressResponse, error)
 	CancelSendToEth(context.Context, *MsgCancelSendToEth) (*MsgCancelSendToEthResponse, error)
-	// TODO JNT: define endpoint for evidence
 	SubmitBadSignatureEvidence(context.Context, *MsgSubmitBadSignatureEvidence) (*MsgSubmitBadSignatureEvidenceResponse, error)
 }
 
