@@ -47,8 +47,6 @@ service Msg {
   rpc CancelSendToEth(MsgCancelSendToEth) returns (MsgCancelSendToEthResponse) {
     option (google.api.http).post = "/gravity/v1/cancel_send_to_eth";
   }
-
-  // TODO JNT: define endpoint for evidence
   rpc SubmitBadSignatureEvidence(MsgSubmitBadSignatureEvidence) returns (MsgSubmitBadSignatureEvidenceResponse) {
     option (google.api.http).post = "/gravity/v1/submit_bad_signature_evidence";
   }
@@ -258,7 +256,6 @@ message MsgCancelSendToEth {
 
 message MsgCancelSendToEthResponse {}
 
-// TODO JNT: define MsgSubmitEvidence
 // This call allows anyone to submit evidence that a
 // validator has signed a valset, batch, or logic call that never
 // existed. Subject contains the batch, valset, or logic call.

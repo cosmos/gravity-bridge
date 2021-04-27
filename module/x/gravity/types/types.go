@@ -157,11 +157,7 @@ func NewValset(nonce, height uint64, members BridgeValidators) *Valset {
 }
 
 // GetCheckpoint returns the checkpoint
-// TODO JNT: use this function to get valset hash
 func (v Valset) GetCheckpoint(gravityIDstring string) []byte {
-	// TODO replace hardcoded "foo" here with a getter to retrieve the correct gravityID from the store
-	// this will work for now because 'foo' is the test gravityID we are using
-	// var gravityIDString = "foo"
 
 	// error case here should not occur outside of testing since the above is a constant
 	contractAbi, abiErr := abi.JSON(strings.NewReader(ValsetCheckpointABIJSON))

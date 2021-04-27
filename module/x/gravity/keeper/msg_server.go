@@ -145,7 +145,6 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		return nil, err
 	}
 
-	// TODO JNT: fix naming of batchID, it is actually a batch
 	batch, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize)
 	if err != nil {
 		return nil, err
@@ -496,49 +495,10 @@ func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendTo
 	return &types.MsgCancelSendToEthResponse{}, nil
 }
 
-// TODO JNT: define logic for evidence slashing endpoint here
-// Message: {
-// 	Bad sig
-//  Bad checkpoint
-// }
-
-// Deserialize the subject, get the checkpoint.
-// Look for it in the store of past checkpoints, if not found, it is indeed bad. IF SO:
-// Bad sig + Bad checkpoint = Bad eth address
-// Look up which validator has that eth address and slash them
-// Give the slashed funds to the submitter of this message
 func (k msgServer) SubmitBadSignatureEvidence(c context.Context, msg *types.MsgSubmitBadSignatureEvidence) (*types.MsgSubmitBadSignatureEvidenceResponse, error) {
-	// println("ANY TYPE URL", msg.Subject.TypeUrl)
+	ctx := sdk.UnwrapSDKContext(c)
 
-	// ctx := sdk.UnwrapSDKContext(c)
+	err := k.CheckBadSignatureEvidence(ctx, msg)
 
-	// switch
-
-	// switch m := msg.Subject.(type) {
-	// case *foopb.MyMessage:
-	// 	// ... // make use of m as a *foopb.MyMessage
-	// case *barpb.OtherMessage:
-	// 	// ... // make use of m as a *barpb.OtherMessage
-	// case *bazpb.SomeMessage:
-	// 	// ... // make use of m as a *bazpb.SomeMessage
-	// }
-
-	// sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// err = k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TransactionId, sender)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// ctx.EventManager().EmitEvent(
-	// 	sdk.NewEvent(
-	// 		sdk.EventTypeMessage,
-	// 		sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-	// 		sdk.NewAttribute(types.AttributeKeyOutgoingTXID, fmt.Sprint(msg.TransactionId)),
-	// 	),
-	// )
-
-	return &types.MsgSubmitBadSignatureEvidenceResponse{}, nil
+	return &types.MsgSubmitBadSignatureEvidenceResponse{}, err
 }

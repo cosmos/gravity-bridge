@@ -33,8 +33,6 @@ func createValsets(ctx sdk.Context, k keeper.Keeper) {
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 
 	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
-		// TODO JNT: store valset hash here as well
-
 		// Store valset
 		k.SetValsetRequest(ctx)
 	}
