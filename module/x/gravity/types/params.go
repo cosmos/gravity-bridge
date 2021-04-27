@@ -73,7 +73,7 @@ var (
 func DefaultParams() Params {
 	return Params{
 		BridgeContractAddress:         common.Address{}.String(),
-		BridgeChainId:                 1, // Ethereum Mainnet
+		BridgeChainID:                 1, // Ethereum Mainnet
 		SignersetWindow:               10000,
 		BatchTxWindow:                 10000,
 		EventWindow:                   10000,
@@ -94,7 +94,7 @@ func (p Params) ValidateBasic() error {
 	if err := validateBridgeContractAddress(p.BridgeContractAddress); err != nil {
 		return sdkerrors.Wrap(err, "bridge contract address")
 	}
-	if err := validateBridgeChainID(p.BridgeChainId); err != nil {
+	if err := validateBridgeChainID(p.BridgeChainID); err != nil {
 		return sdkerrors.Wrap(err, "bridge chain id")
 	}
 	if err := validateTargetBatchTimeout(p.TargetBatchTimeout); err != nil {
@@ -147,7 +147,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractAddress, &p.BridgeContractAddress, validateBridgeContractAddress),
-		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainId, validateBridgeChainID),
+		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainID, validateBridgeChainID),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignersetWindow, &p.SignersetWindow, validateSignersetWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeyBatchTxWindow, &p.BatchTxWindow, validateBatchTxWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeyEventWindow, &p.EventWindow, validateEventWindow),

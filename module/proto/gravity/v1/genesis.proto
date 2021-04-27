@@ -15,7 +15,7 @@ message Params {
   // address of the bridge contract on the EVM chain
   string bridge_contract_address = 1;
   // unique identifier of the EVM chain
-  uint64 bridge_chain_id = 2;
+  uint64 bridge_chain_id = 2 [(gogoproto.customname) = "BridgeChainID"];
   // target value for when batch transactions time out on Ethereum
   uint64 target_batch_timeout = 3;
   // Average Cosmos block time used to compute batch timeout
@@ -56,18 +56,30 @@ message ERC20ToDenom {
 
 // GenesisState struct
 message GenesisState {
-  Params                params              = 1 [(gogoproto.nullable) = false];
-  uint64                last_observed_nonce = 2;
-  repeated EthSignerSet signersets          = 3 [(gogoproto.nullable) = false];
-  // requested batc transactions
-  repeated BatchTx     batch_txs      = 4 [(gogoproto.nullable) = false];
-  repeated LogicCallTx logic_call_txs = 5 [(gogoproto.nullable) = false];
+// bridge id is a random 32 byte value to prevent signature reuse (eg: if the
+// cosmos validators decided to use the same Ethereum keys for another chain
+// also running Gravity, we would not want it to be possible to play a deposit
+// from chain A back on chain B's Gravity). This value IS USED on the bridge smart
+// contracts.
+//
+// TODO: is this like the IBC client ID but for the bridge?
+  bytes bridge_id = 1 [(gogoproto.customname) = "BridgeID"];
+  Params                params              = 2 [(gogoproto.nullable) = false];
+  uint64                last_observed_nonce = 3;
+  repeated EthSignerSet signer_sets          = 4 [(gogoproto.nullable) = false];
+  // requested batch transactions
+  repeated BatchTx     batch_txs      = 5 [(gogoproto.nullable) = false];
+  repeated LogicCallTx logic_call_txs = 6 [(gogoproto.nullable) = false];
   // unbatched transfer transactions
-  repeated TransferTx       transfer_txs        = 6 [(gogoproto.nullable) = false];
-  repeated ConfirmSignerSet valset_confirms     = 7 [(gogoproto.nullable) = false];
-  repeated ConfirmBatch     batch_confirms      = 8 [(gogoproto.nullable) = false];
-  repeated ConfirmLogicCall logic_call_confirms = 9 [(gogoproto.nullable) = false];
-  repeated Attestation      attestations        = 10 [(gogoproto.nullable) = false];
-  repeated MsgDelegateKey   delegate_keys       = 11 [(gogoproto.nullable) = false];
-  repeated ERC20ToDenom     erc20_to_denoms     = 12 [(gogoproto.nullable) = false];
+  repeated TransferTx       transfer_txs        = 7 [(gogoproto.nullable) = false];
+  // TODO: use any for confirms
+
+  repeated ConfirmSignerSet signer_set_confirms     = 8 [(gogoproto.nullable) = false];
+  repeated ConfirmBatch     batch_confirms      = 9 [(gogoproto.nullable) = false];
+  repeated ConfirmLogicCall logic_call_confirms = 10 [(gogoproto.nullable) = false];
+  repeated Attestation      attestations        = 11 [(gogoproto.nullable) = false];
+  // TODO: proto.Any ethereum eventss
+
+  repeated MsgDelegateKey   delegate_keys       = 12 [(gogoproto.nullable) = false];
+  repeated ERC20ToDenom     erc20_to_denoms     = 13 [(gogoproto.nullable) = false];
 }

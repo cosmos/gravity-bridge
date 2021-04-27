@@ -6,14 +6,22 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+// BridgeIDLen defines the length of the random bytes used for signature reuse
+// prevention
+const BridgeIDLen = 32
+
 // ValidateBasic validates genesis state by looping through the params and
 // calling their validation functions
 func (g GenesisState) ValidateBasic() error {
+	if len(g.BridgeID) != BridgeIDLen {
+		return fmt.Errorf("invalid bridge ID bytes length, expected %d, got %d", BridgeIDLen, len(g.BridgeID))
+	}
+
 	if err := g.Params.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "params")
 	}
 
-	for _, signerSet := range g.Signersets {
+	for _, signerSet := range g.SignerSets {
 		if signerSet.Height == 0 {
 			return fmt.Errorf("signer set height cannot be 0")
 		}

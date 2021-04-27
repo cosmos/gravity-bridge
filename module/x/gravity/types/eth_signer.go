@@ -15,10 +15,10 @@ import (
 // ValidateBasic performs stateless checks on validity
 func (s EthSigner) ValidateBasic() error {
 	if s.Power == 0 {
-		return sdkerrors.Wrap(ErrEmpty, "power")
+		return fmt.Errorf("consensus power cannot be 0")
 	}
 	if err := ValidateEthAddress(s.EthereumAddress); err != nil {
-		return sdkerrors.Wrap(err, "ethereum address")
+		return fmt.Errorf("invalid signer ethereum address: %w", err)
 	}
 	return nil
 }
@@ -31,7 +31,7 @@ func (s EthSigners) Sort() {
 	sort.Slice(s, func(i, j int) bool {
 		if s[i].Power == s[j].Power {
 			// Secondary sort on eth address in case powers are equal
-			return s[i].EthereumAddress > s[i].EthereumAddress
+			return s[i].EthereumAddress > s[j].EthereumAddress
 		}
 		return s[i].Power > s[j].Power
 	})
@@ -75,19 +75,10 @@ func NewSignerSet(height uint64, signers ...EthSigner) EthSignerSet {
 }
 
 // GetCheckpoint returns the checkpoint
-func (ss EthSignerSet) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+func (ss EthSignerSet) GetCheckpoint(bridgeID []byte) ([]byte, error) {
 	contractABI, err := abi.JSON(strings.NewReader(SignerSetCheckpointABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
-	}
-
-	// the contract argument is not a arbitrary length array but a fixed length 32 byte
-	// array, therefore we have to utf8 encode the string (the default in this case) and
-	// then copy the variable length encoded data into a fixed length array. This function
-	// will panic if gravityId is too long to fit in 32 bytes
-	gravityID, err := strToFixByteArray(gravityIDstring)
-	if err != nil {
-		panic(err)
 	}
 
 	checkpointBytes := []uint8("checkpoint")
@@ -103,7 +94,15 @@ func (ss EthSignerSet) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, err := contractABI.Pack("checkpoint", gravityID, checkpoint, big.NewInt(int64(ss.Height)), memberAddresses, convertedPowers)
+	bytes, err := contractABI.Pack(
+		"checkpoint",
+		bridgeID,
+		checkpoint,
+		big.NewInt(int64(ss.Height)),
+		memberAddresses,
+		convertedPowers,
+	)
+
 	if err != nil {
 		// this should never happen outside of test since any case that could crash on encoding
 		// should be filtered above.

@@ -75,7 +75,7 @@ func (c ConfirmLogicCall) Validate() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", c.Signature)
 	}
-	if len(c.InvalidationId) == 0 {
+	if len(c.InvalidationID) == 0 {
 		return fmt.Errorf("invalidation id is empty")
 	}
 	return nil

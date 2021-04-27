@@ -7,7 +7,10 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
 // ConfirmLogicCall ...
 message ConfirmLogicCall {
-  bytes  invalidation_id      = 1 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
+  bytes  invalidation_id      = 1 [
+    (gogoproto.customname) = "InvalidationID",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
   uint64 invalidation_nonce   = 2;
   string eth_signer           = 3;
   string orchestrator_address = 4;

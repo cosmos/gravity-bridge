@@ -17,19 +17,10 @@ import (
 type TxIDs []tmbytes.HexBytes
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+func (b BatchTx) GetCheckpoint(bridgeID []byte) ([]byte, error) {
 	contractABI, err := abi.JSON(strings.NewReader(BatchTxCheckpointABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
-	}
-
-	// the contract argument is not a arbitrary length array but a fixed length 32 byte
-	// array, therefore we have to utf8 encode the string (the default in this case) and
-	// then copy the variable length encoded data into a fixed length array. This function
-	// will panic if gravityId is too long to fit in 32 bytes
-	gravityID, err := strToFixByteArray(gravityIDstring)
-	if err != nil {
-		panic(err)
 	}
 
 	// Create the methodName argument which salts the signature
@@ -51,7 +42,7 @@ func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
 	abiEncodedBatch, err := contractABI.Pack("submitBatch",
-		gravityID,
+		bridgeID,
 		batchMethodName,
 		txAmounts,
 		txDestinations,
@@ -74,7 +65,7 @@ func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (c LogicCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+func (c LogicCallTx) GetCheckpoint(bridgeID []byte) ([]byte, error) {
 	contractABI, err := abi.JSON(strings.NewReader(LogicCallTxABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
@@ -84,15 +75,6 @@ func (c LogicCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	methodNameBytes := []uint8("logicCall")
 	var logicCallMethodName [32]uint8
 	copy(logicCallMethodName[:], methodNameBytes[:])
-
-	// the contract argument is not a arbitrary length array but a fixed length 32 byte
-	// array, therefore we have to utf8 encode the string (the default in this case) and
-	// then copy the variable length encoded data into a fixed length array. This function
-	// will panic if gravityId is too long to fit in 32 bytes
-	gravityID, err := strToFixByteArray(gravityIDstring)
-	if err != nil {
-		panic(err)
-	}
 
 	// Run through the elements of the logic call and serialize them
 	transferAmounts := make([]*big.Int, len(c.Tokens))
@@ -115,8 +97,9 @@ func (c LogicCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedCall, err := contractABI.Pack("checkpoint",
-		gravityID,
+	abiEncodedCall, err := contractABI.Pack(
+		"checkpoint",
+		bridgeID,
 		logicCallMethodName,
 		transferAmounts,
 		transferTokenContracts,
