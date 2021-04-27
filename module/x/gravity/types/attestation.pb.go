@@ -25,8 +25,6 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// ClaimType is the cosmos type of an event from the counterpart chain that can
-// be handled
 type ClaimType int32
 
 const (

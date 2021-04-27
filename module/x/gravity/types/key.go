@@ -290,3 +290,10 @@ func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validat
 	interm = append(interm, UInt64Bytes(invalidationNonce)...)
 	return append(interm, validator.Bytes()...)
 }
+
+// GetPastEthSignatureCheckpointKey returns the following key format
+// prefix    checkpoint
+// [0x0][ checkpoint bytes ]
+func GetPastEthSignatureCheckpointKey(checkpoint []byte) []byte {
+	return append(PastEthSignatureCheckpointKey, checkpoint...)
+}

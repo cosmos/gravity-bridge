@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 	"time"
 
@@ -196,6 +197,7 @@ var (
 		SlashFractionBatch:            sdk.NewDecWithPrec(1, 2),
 		SlashFractionClaim:            sdk.NewDecWithPrec(1, 2),
 		SlashFractionConflictingClaim: sdk.NewDecWithPrec(1, 2),
+		SlashFractionBadEthSignature:  sdk.NewDecWithPrec(1, 2),
 	}
 )
 
@@ -408,6 +410,9 @@ func CreateTestEnv(t *testing.T) TestInput {
 	)
 
 	k.SetParams(ctx, TestingGravityParams)
+	params := k.GetParams(ctx)
+
+	fmt.Println(params)
 
 	return TestInput{
 		GravityKeeper:  k,

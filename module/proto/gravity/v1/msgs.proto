@@ -4,6 +4,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "gravity/v1/types.proto";
+import "google/protobuf/any.proto";
 option go_package = "github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types";
 
 // Msg defines the state transitions possible within gravity
@@ -46,7 +47,9 @@ service Msg {
   rpc CancelSendToEth(MsgCancelSendToEth) returns (MsgCancelSendToEthResponse) {
     option (google.api.http).post = "/gravity/v1/cancel_send_to_eth";
   }
-  // TODO JNT: define endpoint for evidence
+  rpc SubmitBadSignatureEvidence(MsgSubmitBadSignatureEvidence) returns (MsgSubmitBadSignatureEvidenceResponse) {
+    option (google.api.http).post = "/gravity/v1/submit_bad_signature_evidence";
+  }
 }
 
 // MsgSetOrchestratorAddress
@@ -253,4 +256,12 @@ message MsgCancelSendToEth {
 
 message MsgCancelSendToEthResponse {}
 
-// TODO JNT: define MsgSubmitEvidence
+// This call allows anyone to submit evidence that a
+// validator has signed a valset, batch, or logic call that never
+// existed. Subject contains the batch, valset, or logic call.
+message MsgSubmitBadSignatureEvidence {
+  google.protobuf.Any subject   = 1;
+  string              signature = 2;
+}
+
+message MsgSubmitBadSignatureEvidenceResponse {}

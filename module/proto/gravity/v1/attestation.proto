@@ -1,8 +1,6 @@
 syntax = "proto3";
 package gravity.v1;
 
-// TODO-JT: add ERC20DeployedEvent claim
-
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
@@ -10,6 +8,7 @@ option go_package = "github.com/althea-net/cosmos-gravity-bridge/module/x/gravit
 
 // ClaimType is the cosmos type of an event from the counterpart chain that can
 // be handled
+
 enum ClaimType {
   option (gogoproto.goproto_enum_prefix) = false;
 

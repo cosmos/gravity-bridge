@@ -66,6 +66,10 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	valset := k.GetCurrentValset(ctx)
 	k.StoreValset(ctx, valset)
 
+	// Store the checkpoint as a legit past valset
+	checkpoint := valset.GetCheckpoint(k.GetGravityID(ctx))
+	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
+
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeMultisigUpdateRequest,
@@ -382,9 +386,18 @@ func (k Keeper) GetEthAddressByValidator(ctx sdk.Context, validator sdk.ValAddre
 }
 
 // GetValidatorByEthAddress returns the validator for a given eth address
-func (k Keeper) GetValidatorByEthAddress(ctx sdk.Context, ethAddr string) string {
+func (k Keeper) GetValidatorByEthAddress(ctx sdk.Context, ethAddr string) (validator stakingtypes.Validator, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	return string(store.Get(types.GetValidatorByEthAddressKey(ethAddr)))
+	valAddr := store.Get(types.GetValidatorByEthAddressKey(ethAddr))
+	if valAddr == nil {
+		return stakingtypes.Validator{}, false
+	}
+	validator, found = k.StakingKeeper.GetValidator(ctx, valAddr)
+	if !found {
+		return stakingtypes.Validator{}, false
+	}
+
+	return validator, true
 }
 
 // GetCurrentValset gets powers from the store and normalizes them
@@ -439,6 +452,11 @@ func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, invalidationID []byte, inv
 // SetOutogingLogicCall sets an outgoing logic call
 func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, call *types.OutgoingLogicCall) {
 	store := ctx.KVStore(k.storeKey)
+
+	// Store checkpoint to prove that this logic call actually happened
+	checkpoint := call.GetCheckpoint(k.GetGravityID(ctx))
+	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
+
 	store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce),
 		k.cdc.MustMarshalBinaryBare(call))
 }

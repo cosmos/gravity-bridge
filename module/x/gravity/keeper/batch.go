@@ -59,6 +59,10 @@ func (k Keeper) BuildOutgoingTXBatch(
 	}
 	k.StoreBatch(ctx, batch)
 
+	// Get the checkpoint and store it as a legit past batch
+	checkpoint := batch.GetCheckpoint(k.GetGravityID(ctx))
+	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
+
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatch,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),

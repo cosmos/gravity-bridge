@@ -22,6 +22,7 @@ var (
 	_ sdk.Msg = &MsgDepositClaim{}
 	_ sdk.Msg = &MsgWithdrawClaim{}
 	_ sdk.Msg = &MsgValsetUpdatedClaim{}
+	_ sdk.Msg = &MsgSubmitBadSignatureEvidence{}
 )
 
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
@@ -653,4 +654,26 @@ func (msg *MsgCancelSendToEth) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
-// TODO JNT: write boilerplate for evidence message type
+// MsgSubmitBadSignatureEvidence
+// ======================================================
+
+// ValidateBasic performs stateless checks
+func (e *MsgSubmitBadSignatureEvidence) ValidateBasic() error {
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgSubmitBadSignatureEvidence) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgSubmitBadSignatureEvidence) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{}
+}
+
+// Type should return the action
+func (msg MsgSubmitBadSignatureEvidence) Type() string { return "Submit_Bad_Signature_Evidence" }
+
+// Route should return the name of the module
+func (msg MsgSubmitBadSignatureEvidence) Route() string { return RouterKey }
