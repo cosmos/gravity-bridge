@@ -146,19 +146,16 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 	}
 
 	// TODO JNT: fix naming of batchID, it is actually a batch
-	batchID, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize)
+	batch, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize)
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO JNT: get and set batch hash for evidence here
-	// batchID.GetCheckpoint()
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(batchID.BatchNonce)),
+			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(batch.BatchNonce)),
 		),
 	)
 

@@ -66,6 +66,10 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	valset := k.GetCurrentValset(ctx)
 	k.StoreValset(ctx, valset)
 
+	// Store the checkpoint as a legit past valset
+	checkpoint := valset.GetCheckpoint(k.GetGravityID(ctx))
+	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
+
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeMultisigUpdateRequest,
@@ -448,6 +452,11 @@ func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, invalidationID []byte, inv
 // SetOutogingLogicCall sets an outgoing logic call
 func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, call *types.OutgoingLogicCall) {
 	store := ctx.KVStore(k.storeKey)
+
+	// Store checkpoint to prove that this logic call actually happened
+	checkpoint := call.GetCheckpoint(k.GetGravityID(ctx))
+	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
+
 	store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce),
 		k.cdc.MustMarshalBinaryBare(call))
 }
