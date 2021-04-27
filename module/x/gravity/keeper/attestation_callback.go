@@ -28,13 +28,20 @@ type AttestationHandler interface {
 	OnAttestation(ctx sdk.Context, attestation types.Attestation) error
 }
 
+var _ AttestationHandler = DefaultAttestationHandler{}
+
 // DefaultAttestationHandler is the default handler for processing observed
 // event attestations received from Ethereum.
 type DefaultAttestationHandler struct {
 	keeper Keeper
 }
 
-var _ AttestationHandler = DefaultAttestationHandler{}
+// NewAttestationHandler creates a default attestation handler instance
+func NewAttestationHandler(k Keeper) AttestationHandler {
+	return &DefaultAttestationHandler{
+		keeper: k,
+	}
+}
 
 // OnAttestation processes ethereum event upon attestation and performs a custom
 // logic.
@@ -57,8 +64,6 @@ func (h DefaultAttestationHandler) OnAttestation(ctx sdk.Context, attestation ty
 	default:
 		return sdkerrors.Wrapf(types.ErrEventUnsupported, "event type %s: %T", event.GetType(), event)
 	}
-
-	return nil
 }
 
 // OnReceiveDeposit

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -17,10 +18,17 @@ import (
 type TxIDs []tmbytes.HexBytes
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (b BatchTx) GetCheckpoint(bridgeID []byte) ([]byte, error) {
+func (b BatchTx) GetCheckpoint(bridgeID []byte, transfers []TransferTx) ([]byte, error) {
+	if len(transfers) != len(b.Transactions) {
+		return nil, fmt.Errorf(
+			"batch transactions length doesn't match with transfer argument (%d ≠ %d)",
+			len(transfers), len(b.Transactions),
+		)
+	}
+
 	contractABI, err := abi.JSON(strings.NewReader(BatchTxCheckpointABIJSON))
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
+		return nil, fmt.Errorf("bad ABI definition in code: %w", err)
 	}
 
 	// Create the methodName argument which salts the signature
@@ -29,27 +37,32 @@ func (b BatchTx) GetCheckpoint(bridgeID []byte) ([]byte, error) {
 	copy(batchMethodName[:], methodNameBytes[:])
 
 	// Run through the elements of the batch and serialize them
-	txAmounts := make([]*big.Int, len(b.Transactions))
-	txDestinations := make([]common.Address, len(b.Transactions))
-	txFees := make([]*big.Int, len(b.Transactions))
-	for i, tx := range b.Transactions {
-		txAmounts[i] = tx.Erc20Token.Amount.BigInt()
-		txDestinations[i] = common.HexToAddress(tx.EthereumRecipient)
-		txFees[i] = tx.Erc20Fee.Amount.BigInt()
+
+	var (
+		txAmounts      = make([]*big.Int, len(b.Transactions))
+		txFees         = make([]*big.Int, len(b.Transactions))
+		txDestinations = make([]common.Address, len(b.Transactions))
+	)
+
+	for i := 0; i < len(transfers); i++ {
+		txAmounts[i] = transfers[i].Erc20Token.Amount.BigInt()
+		txDestinations[i] = common.HexToAddress(transfers[i].EthereumRecipient)
+		txFees[i] = transfers[i].Erc20Fee.Amount.BigInt()
 	}
 
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedBatch, err := contractABI.Pack("submitBatch",
-		bridgeID,
-		batchMethodName,
-		txAmounts,
-		txDestinations,
-		txFees,
-		big.NewInt(int64(b.Nonce)),
-		common.HexToAddress(b.TokenContract),
-		big.NewInt(int64(b.Timeout)),
+	abiEncodedBatch, err := contractABI.Pack(
+		"submitBatch",
+		bridgeID,                             // bytes32
+		batchMethodName,                      // bytes32
+		txAmounts,                            // uint256[]
+		txDestinations,                       // address[]
+		txFees,                               // uint256[]
+		big.NewInt(int64(b.Nonce)),           // uint256
+		common.HexToAddress(b.TokenContract), // address
+		big.NewInt(int64(b.Timeout)),         // uint256
 	)
 
 	// this should never happen outside of test since any case that could crash on encoding
@@ -65,7 +78,7 @@ func (b BatchTx) GetCheckpoint(bridgeID []byte) ([]byte, error) {
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (c LogicCallTx) GetCheckpoint(bridgeID []byte) ([]byte, error) {
+func (c LogicCallTx) GetCheckpoint(bridgeID []byte, invalidationID tmbytes.HexBytes, invalidationNonce uint64) ([]byte, error) {
 	contractABI, err := abi.JSON(strings.NewReader(LogicCallTxABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
@@ -77,10 +90,13 @@ func (c LogicCallTx) GetCheckpoint(bridgeID []byte) ([]byte, error) {
 	copy(logicCallMethodName[:], methodNameBytes[:])
 
 	// Run through the elements of the logic call and serialize them
-	transferAmounts := make([]*big.Int, len(c.Tokens))
-	transferTokenContracts := make([]common.Address, len(c.Tokens))
-	feeAmounts := make([]*big.Int, len(c.Fees))
-	feeTokenContracts := make([]common.Address, len(c.Fees))
+	var (
+		transferAmounts        = make([]*big.Int, len(c.Tokens))
+		feeAmounts             = make([]*big.Int, len(c.Fees))
+		transferTokenContracts = make([]common.Address, len(c.Tokens))
+		feeTokenContracts      = make([]common.Address, len(c.Fees))
+	)
+
 	for i, tx := range c.Tokens {
 		transferAmounts[i] = tx.Amount.BigInt()
 		transferTokenContracts[i] = common.HexToAddress(tx.Denom)
@@ -91,8 +107,8 @@ func (c LogicCallTx) GetCheckpoint(bridgeID []byte) ([]byte, error) {
 	}
 	payload := make([]byte, len(c.Payload))
 	copy(payload, c.Payload)
-	var invalidationID [32]byte
-	copy(invalidationID[:], c.InvalidationId[:])
+	var invalidationIDCopy [32]byte
+	copy(invalidationIDCopy[:], invalidationID[:])
 
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
@@ -107,9 +123,9 @@ func (c LogicCallTx) GetCheckpoint(bridgeID []byte) ([]byte, error) {
 		feeTokenContracts,
 		common.HexToAddress(c.LogicContractAddress),
 		payload,
-		big.NewInt(int64(c.Timeout)),
-		invalidationID,
-		big.NewInt(int64(c.InvalidationNonce)),
+		new(big.Int).SetUint64(c.Timeout),
+		invalidationIDCopy,
+		new(big.Int).SetUint64(invalidationNonce),
 	)
 
 	if err != nil {

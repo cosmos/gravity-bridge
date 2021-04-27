@@ -66,11 +66,13 @@ message WithdrawEvent {
 message LogicCallExecutedEvent {
   // event nonce for replay protection
   uint64 nonce = 1;
-
+  // invalidation ID allows to withdraw funds in case the logic call fails on the
+  // ethereum side
   bytes  invalidation_id    = 2 [
     (gogoproto.customname) = "InvalidationID",
     (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
   ];
+  // TODO: explain
   uint64 invalidation_nonce = 3;
   // etherereum block height at which the event was observed
   uint64 ethereum_height = 4;
@@ -118,7 +120,7 @@ message EthSigner {
 // check signatures on Ethereum in order to get significant gas savings.
 message EthSignerSet {
   // set of signers. Sorted by power
-  repeated EthSigner signers = 1 [(gogoproto.nullable) = false];
+  repeated EthSigner signers = 1 [(gogoproto.castrepeated) = "EthSigners", (gogoproto.nullable) = false];
   // TODO: which height? cosmos? This should be the key
   uint64 height = 2;
 }

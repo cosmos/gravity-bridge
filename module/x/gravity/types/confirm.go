@@ -23,7 +23,7 @@ type Confirm interface {
 
 	// TODO: consider deleting
 	GetTokenContract() string
-	GetInvalidationId() tmbytes.HexBytes
+	GetInvalidationID() tmbytes.HexBytes
 	GetInvalidationNonce() uint64
 }
 
@@ -57,8 +57,8 @@ func (c ConfirmBatch) Validate() error {
 // GetInvalidationNonce is a noop to implement confirm interface
 func (c ConfirmBatch) GetInvalidationNonce() uint64 { return 0 }
 
-// GetInvalidationId is a noop to implement confirm interface
-func (c ConfirmBatch) GetInvalidationId() tmbytes.HexBytes { return nil }
+// GetInvalidationID is a noop to implement confirm interface
+func (c ConfirmBatch) GetInvalidationID() tmbytes.HexBytes { return nil }
 
 // GetType should return the action
 func (c ConfirmLogicCall) GetType() string { return "logic_Call" }
@@ -118,8 +118,8 @@ func (c *ConfirmSignerSet) Validate() (err error) {
 // GetInvalidationNonce is a noop to implement confirm interface
 func (c ConfirmSignerSet) GetInvalidationNonce() uint64 { return 0 }
 
-// GetInvalidationId is a noop to implement confirm interface
-func (c ConfirmSignerSet) GetInvalidationId() tmbytes.HexBytes { return nil }
+// GetInvalidationID is a noop to implement confirm interface
+func (c ConfirmSignerSet) GetInvalidationID() tmbytes.HexBytes { return nil }
 
 func (c ConfirmSignerSet) GetTokenContract() string {
 	return ""

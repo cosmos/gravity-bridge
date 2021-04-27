@@ -21,8 +21,8 @@ var (
 	// i.e. cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	EthAddressKey = []byte{0x1}
 
-	// SignersetRequestKey indexes valset requests by nonce
-	SignersetRequestKey = []byte{0x2}
+	// SignerSetRequestKey indexes valset requests by nonce
+	SignerSetRequestKey = []byte{0x2}
 
 	// SignersetConfirmKey indexes valset confirmations by nonce and the validator account address
 	// i.e cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
@@ -65,7 +65,7 @@ var (
 	// SecondIndexNonceByEventKey indexes latest nonce for a given event type
 	SecondIndexNonceByEventKey = []byte{0xf}
 
-	// LastEventNonceByValidatorKey indexes lateset event nonce by validator
+	// LastEventNonceByValidatorKey indexes latest event nonce by validator
 	LastEventNonceByValidatorKey = []byte{0xf1}
 
 	// LastObservedEventNonceKey indexes the latest event nonce
@@ -98,11 +98,11 @@ var (
 	// ERC20ToDenomKey prefixes the index of Cosmos originated assets ERC20s to denoms
 	ERC20ToDenomKey = []byte{0xf4}
 
-	// LastSlashedSignersetNonce indexes the latest slashed valset nonce
-	LastSlashedSignersetNonce = []byte{0xf5}
+	// LastSlashedSignerSetNonce indexes the latest slashed valset nonce
+	LastSlashedSignerSetNonce = []byte{0xf5}
 
-	// LatestSignersetNonce indexes the latest valset nonce
-	LatestSignersetNonce = []byte{0xf6}
+	// LatestSignerSetNonce indexes the latest valset nonce
+	LatestSignerSetNonce = []byte{0xf6}
 
 	// LastSlashedBatchBlock indexes the latest slashed batch block height
 	LastSlashedBatchBlock = []byte{0xf7}
@@ -128,15 +128,15 @@ func GetEthAddressKey(validator sdk.ValAddress) []byte {
 // GetSignersetKey returns the following key format
 // prefix    nonce
 // [0x0][0 0 0 0 0 0 0 1]
-func GetSignersetKey(nonce uint64) []byte {
-	return append(SignersetRequestKey, sdk.Uint64ToBigEndian(nonce)...)
+func GetSignerSetKey(nonce uint64) []byte {
+	return append(SignerSetRequestKey, sdk.Uint64ToBigEndian(nonce)...)
 }
 
-// GetSignersetConfirmKey returns the following key format
+// GetSignerSetConfirmKey returns the following key format
 // prefix   nonce                    validator-address
 // [0x0][0 0 0 0 0 0 0 1][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
-func GetSignersetConfirmKey(nonce uint64, validator sdk.ValAddress) []byte {
+func GetSignerSetConfirmKey(nonce uint64, validator sdk.ValAddress) []byte {
 	return append(SignersetConfirmKey, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
 }
 

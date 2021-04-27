@@ -112,7 +112,7 @@ func (k Keeper) TallyAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attesta
 	}
 
 	// FIXME: define an attestation key that is not dependent on the event ID
-	// /TODO: Ideally we should have multiple events attested at the same time?
+	// TODO: Ideally we should have multiple events attested at the same time?
 	k.SetAttestation(ctx, event.Hash(), attestation)
 
 	k.processAttestation(ctx, attestation)

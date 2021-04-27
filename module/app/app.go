@@ -384,9 +384,14 @@ func NewGravityApp(
 		appCodec,
 		keys[gravitytypes.StoreKey],
 		app.GetSubspace(gravitytypes.ModuleName),
-		stakingKeeper,
+		app.stakingKeeper,
 		app.bankKeeper,
 		app.slashingKeeper,
+	)
+
+	// set the handler for ethereum events attestations
+	app.gravityKeeper.SetAttestationHandler(
+		keeper.NewAttestationHandler(app.gravityKeeper),
 	)
 
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))

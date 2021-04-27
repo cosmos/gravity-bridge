@@ -14,4 +14,5 @@ var (
 	ErrEventInvalid        = sdkerrors.Register(ModuleName, 7, "invalid ethereum event")
 	ErrTxNotFound          = sdkerrors.Register(ModuleName, 8, "outgoing transaction not found")
 	ErrValidatorNotBonded  = sdkerrors.Register(ModuleName, 9, "validator is not bonded")
+	ErrSignerSetNotFound   = sdkerrors.Register(ModuleName, 10, "ethereum signer set not found")
 )
