@@ -59,7 +59,7 @@ func (k Keeper) CheckBadSignatureEvidence(
 		}
 
 	default:
-		panic("foo") // Replace this with a returned error
+		return sdkerrors.Wrap(types.ErrInvalid, "Bad signature must be over a batch, valset, or logic call")
 	}
 
 	return nil
