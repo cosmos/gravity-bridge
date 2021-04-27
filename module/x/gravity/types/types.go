@@ -243,3 +243,10 @@ func (b OutgoingTxBatch) GetFees() sdk.Int {
 	}
 	return sum
 }
+
+// This interface is implemented by all the types that are used
+// to create transactions on Ethereum that are signed by validators.
+// The naming here could be improved.
+type EthereumSigned interface {
+	GetCheckpoint(gravityIDstring string) []byte
+}

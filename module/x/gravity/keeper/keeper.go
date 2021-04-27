@@ -382,9 +382,18 @@ func (k Keeper) GetEthAddressByValidator(ctx sdk.Context, validator sdk.ValAddre
 }
 
 // GetValidatorByEthAddress returns the validator for a given eth address
-func (k Keeper) GetValidatorByEthAddress(ctx sdk.Context, ethAddr string) string {
+func (k Keeper) GetValidatorByEthAddress(ctx sdk.Context, ethAddr string) (validator stakingtypes.Validator, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	return string(store.Get(types.GetValidatorByEthAddressKey(ethAddr)))
+	valAddr := store.Get(types.GetValidatorByEthAddressKey(ethAddr))
+	if valAddr == nil {
+		return stakingtypes.Validator{}, false
+	}
+	validator, found = k.StakingKeeper.GetValidator(ctx, valAddr)
+	if !found {
+		return stakingtypes.Validator{}, false
+	}
+
+	return validator, true
 }
 
 // GetCurrentValset gets powers from the store and normalizes them

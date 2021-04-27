@@ -16,7 +16,6 @@ type AttestationHandler struct {
 }
 
 // Handle is the entry point for Attestation processing.
-// TODO-JT add handler for ERC20DeployedEvent
 func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
 	case *types.MsgDepositClaim:

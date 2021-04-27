@@ -20,6 +20,7 @@ var (
 	_ sdk.Msg = &MsgLogicCallExecutedClaim{}
 	_ sdk.Msg = &MsgDepositClaim{}
 	_ sdk.Msg = &MsgWithdrawClaim{}
+	_ sdk.Msg = &MsgSubmitBadSignatureEvidence{}
 )
 
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
@@ -651,3 +652,74 @@ func (msg *MsgCancelSendToEth) GetSigners() []sdk.AccAddress {
 }
 
 // TODO JNT: write boilerplate for evidence message type
+
+// MsgSubmitBadSignatureEvidence
+// ======================================================
+
+// GetType returns the type of the claim
+// func (e *MsgSubmitBadSignatureEvidence) GetType() ClaimType {
+// 	return CLAIM_TYPE_LOGIC_CALL_EXECUTED
+// }
+
+// ValidateBasic performs stateless checks
+func (e *MsgSubmitBadSignatureEvidence) ValidateBasic() error {
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgSubmitBadSignatureEvidence) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgSubmitBadSignatureEvidence) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{}
+}
+
+// Type should return the action
+func (msg MsgSubmitBadSignatureEvidence) Type() string { return "Submit_Bad_Signature_Evidence" }
+
+// Route should return the name of the module
+func (msg MsgSubmitBadSignatureEvidence) Route() string { return RouterKey }
+
+// Hash implements BridgeDeposit.Hash
+// func (b *MsgSubmitBadSignatureEvidence) ClaimHash() []byte {
+// 	path := fmt.Sprintf("%s/%d/", b.Signature)
+// 	return tmhash.Sum([]byte(path))
+// }
+
+// // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
+// func NewMsgCancelSendToEth(val sdk.ValAddress, id uint64) *MsgCancelSendToEth {
+// 	return &MsgCancelSendToEth{
+// 		TransactionId: id,
+// 	}
+// }
+
+// // Route should return the name of the module
+// func (msg *MsgCancelSendToEth) Route() string { return RouterKey }
+
+// // Type should return the action
+// func (msg *MsgCancelSendToEth) Type() string { return "cancel_send_to_eth" }
+
+// // ValidateBasic performs stateless checks
+// func (msg *MsgCancelSendToEth) ValidateBasic() (err error) {
+// 	_, err = sdk.ValAddressFromBech32(msg.Sender)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+
+// // GetSignBytes encodes the message for signing
+// func (msg *MsgCancelSendToEth) GetSignBytes() []byte {
+// 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+// }
+
+// // GetSigners defines whose signature is required
+// func (msg *MsgCancelSendToEth) GetSigners() []sdk.AccAddress {
+// 	acc, err := sdk.ValAddressFromBech32(msg.Sender)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return []sdk.AccAddress{sdk.AccAddress(acc)}
+// }
