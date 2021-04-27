@@ -20,46 +20,52 @@ func (k Keeper) CheckBadSignatureEvidence(
 
 	switch subject := subject.(type) {
 	case *types.OutgoingTxBatch:
+		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
 	case *types.Valset:
+		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
 	case *types.OutgoingLogicCall:
-		// Get checkpoint of the supposed bad signature (fake valset, batch, or logic call submitted to eth)
-		gravityID := k.GetGravityID(ctx)
-		checkpoint := subject.GetCheckpoint(gravityID)
-
-		// Try to find the checkpoint in the archives. If it exists, we don't slash because
-		// this is not a bad signature
-		if k.GetPastEthSignatureCheckpoint(ctx, checkpoint) {
-			return sdkerrors.Wrap(types.ErrInvalid, "Checkpoint exists, cannot slash")
-		}
-
-		// Decode Eth signature to bytes
-		sigBytes, err := hex.DecodeString(msg.Signature)
-		if err != nil {
-			return sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
-		}
-
-		// Get eth address of the offending validator using the checkpoint and the signature
-		ethAddress, err := types.EthAddressFromSignature(checkpoint, sigBytes)
-		if err != nil {
-			return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
-		}
-
-		// Find the offending validator by eth address
-		val, found := k.GetValidatorByEthAddress(ctx, ethAddress)
-		if !found {
-			return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("Did not find validator for eth address %s", ethAddress))
-		}
-
-		// Slash the offending validator
-		cons, _ := val.GetConsAddr()
-		params := k.GetParams(ctx)
-		k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionBadEthSignature)
-		if !val.IsJailed() {
-			k.StakingKeeper.Jail(ctx, cons)
-		}
+		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
 
 	default:
 		return sdkerrors.Wrap(types.ErrInvalid, "Bad signature must be over a batch, valset, or logic call")
+	}
+}
+
+func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, subject types.EthereumSigned, signature string) error {
+	// Get checkpoint of the supposed bad signature (fake valset, batch, or logic call submitted to eth)
+	gravityID := k.GetGravityID(ctx)
+	checkpoint := subject.GetCheckpoint(gravityID)
+
+	// Try to find the checkpoint in the archives. If it exists, we don't slash because
+	// this is not a bad signature
+	if k.GetPastEthSignatureCheckpoint(ctx, checkpoint) {
+		return sdkerrors.Wrap(types.ErrInvalid, "Checkpoint exists, cannot slash")
+	}
+
+	// Decode Eth signature to bytes
+	sigBytes, err := hex.DecodeString(signature)
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
+	}
+
+	// Get eth address of the offending validator using the checkpoint and the signature
+	ethAddress, err := types.EthAddressFromSignature(checkpoint, sigBytes)
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), signature))
+	}
+
+	// Find the offending validator by eth address
+	val, found := k.GetValidatorByEthAddress(ctx, ethAddress)
+	if !found {
+		return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("Did not find validator for eth address %s", ethAddress))
+	}
+
+	// Slash the offending validator
+	cons, _ := val.GetConsAddr()
+	params := k.GetParams(ctx)
+	k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionBadEthSignature)
+	if !val.IsJailed() {
+		k.StakingKeeper.Jail(ctx, cons)
 	}
 
 	return nil
