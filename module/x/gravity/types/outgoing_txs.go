@@ -115,7 +115,7 @@ func (c LogicCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedCall, err := abi.Pack("checkpoint",
+	abiEncodedCall, err := contractABI.Pack("checkpoint",
 		gravityID,
 		logicCallMethodName,
 		transferAmounts,

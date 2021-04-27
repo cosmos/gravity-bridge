@@ -50,6 +50,7 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*types.MsgSubmitEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
+	// NOTE: error checked on msg validate basic
 	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Signer)
 
 	event, err := types.UnpackEvent(msg.Event)
@@ -64,6 +65,7 @@ func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*type
 	return &types.MsgSubmitEventResponse{}, nil
 }
 
+// FIXME:
 func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
 	// ctx := sdk.UnwrapSDKContext(c)
 

@@ -26,7 +26,7 @@ func (k Keeper) slash(ctx sdk.Context) {
 
 		_, exist := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
 		if exist {
-			k.Logger(ctx).Debug("signing not found for validator", "consensus-address", consAddr.String())
+			k.Logger(ctx).Debug("signing info not found for validator", "consensus-address", consAddr.String())
 			return false
 		}
 
