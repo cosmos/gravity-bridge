@@ -38,6 +38,9 @@ func (c ConfirmBatch) GetType() string { return "batch" }
 
 // Validate performs stateless checks
 func (c ConfirmBatch) Validate() error {
+	if c.Nonce == 0 {
+		return fmt.Errorf("nonce cannot be 0")
+	}
 	if _, err := sdk.AccAddressFromBech32(c.OrchestratorAddress); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, c.OrchestratorAddress)
 	}
@@ -78,6 +81,9 @@ func (c ConfirmLogicCall) Validate() error {
 	if len(c.InvalidationID) == 0 {
 		return fmt.Errorf("invalidation id is empty")
 	}
+	if c.InvalidationNonce == 0 {
+		return fmt.Errorf("invalidation nonce cannot be 0")
+	}
 	return nil
 }
 
@@ -100,18 +106,21 @@ func NewConfirmSignerSet(nonce uint64, ethSigner string, validator sdk.AccAddres
 }
 
 // GetType should return the action
-func (c *ConfirmSignerSet) GetType() string { return "valset" }
+func (c ConfirmSignerSet) GetType() string { return "valset" }
 
 // Validate performs stateless checks
-func (c *ConfirmSignerSet) Validate() (err error) {
+func (c ConfirmSignerSet) Validate() (err error) {
+	if c.Nonce == 0 {
+		return fmt.Errorf("nonce cannot be 0")
+	}
 	if _, err = sdk.AccAddressFromBech32(c.OrchestratorAddress); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, c.OrchestratorAddress)
 	}
 	if err := ValidateEthAddress(c.EthSigner); err != nil {
-		return sdkerrors.Wrap(err, "ethereum address")
+		return sdkerrors.Wrap(err, "ethereum signer address")
 	}
 
-	// TODO: validate signatre
+	// TODO: validate signature
 	return nil
 }
 

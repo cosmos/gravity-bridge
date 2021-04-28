@@ -26,37 +26,52 @@ func (g GenesisState) ValidateBasic() error {
 			return fmt.Errorf("signer set height cannot be 0")
 		}
 
-		for _, signer := range signerSet.Signers {
-			if err := ValidateEthAddress(signer.EthereumAddress); err != nil {
-				return err
-			}
-			if signer.Power <= 0 {
-				return fmt.Errorf("signer %s: consensus power cannot be 0 or negative", signer.EthereumAddress)
-			}
+		if err := signerSet.Signers.ValidateBasic(); err != nil {
+			return err
 		}
 	}
 
 	for _, batchTx := range g.BatchTxs {
-		if batchTx.Block == 0 {
-			return fmt.Errorf("batch tx block height cannot be 0")
-		}
-		if batchTx.Timeout == 0 {
-			return fmt.Errorf("batch timeout cannot be 0")
-		}
-		if err := ValidateEthAddress(batchTx.TokenContract); err != nil {
-			return err
-		}
 		if len(batchTx.Transactions) > int(g.Params.BatchSize) {
 			return fmt.Errorf("number of batched txs (%d) > max batch size (%d)", len(batchTx.Transactions), g.Params.BatchSize)
 		}
-		for _, tx := range batchTx.Transactions {
-			if len(tx) == 0 {
-				return fmt.Errorf("tx id cannot be empty")
-			}
+
+		if err := batchTx.Validate(); err != nil {
+			return err
 		}
 	}
 
-	// TODO: finish
+	for _, tx := range g.LogicCallTxs {
+		if err := tx.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for _, tx := range g.TransferTxs {
+		if err := tx.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for _, attestation := range g.Attestations {
+		if err := attestation.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for _, keyDelegation := range g.DelegateKeys {
+		if err := keyDelegation.ValidateBasic(); err != nil {
+			return err
+		}
+	}
+
+	for _, e := range g.Erc20ToDenoms {
+		if err := e.Validate(); err != nil {
+			return err
+		}
+	}
+
+	// TODO: validate confirms
 	return nil
 }
 
