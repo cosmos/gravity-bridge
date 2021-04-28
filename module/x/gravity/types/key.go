@@ -109,6 +109,8 @@ var (
 
 	// LastUnBondingBlockHeight indexes the last validator unbonding block height
 	LastUnBondingBlockHeight = []byte{0xf8}
+
+	BridgeIDKey = []byte{0x19}
 )
 
 // GetOrchestratorAddressKey returns the following key format

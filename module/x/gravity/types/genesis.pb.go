@@ -219,10 +219,8 @@ func (m *ERC20ToDenom) GetDenom() string {
 
 // GenesisState struct
 type GenesisState struct {
-	// bridge id is a random 32 byte value to prevent signature reuse (eg: if the
-	// cosmos validators decided to use the same Ethereum keys for another chain
-	// also running Gravity, we would not want it to be possible to play a deposit
-	// from chain A back on chain B's Gravity). This value IS USED on the bridge smart
+	// bridge id is a random 32 byte salt value to prevent signature reuse across different
+	// instances of the ethereum bridge. This value IS USED on the bridge smart
 	// contracts.
 	//
 	// TODO: is this like the IBC client ID but for the bridge?

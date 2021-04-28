@@ -10,8 +10,7 @@ const (
 
 	AttributeKeyAttestationID         = "attestation_id"
 	AttributeKeyEventID               = "event_id"
-	AttributeKeyBatchConfirmKey       = "batch_confirm_key"
-	AttributeKeyValsetConfirmKey      = "valset_confirm_key"
+	AttributeKeyConfirmType           = "confirm_type"
 	AttributeKeyTxID                  = "tx_id"
 	AttributeKeyEthRecipient          = "eth_recipient"
 	AttributeKeyDenom                 = "denom"

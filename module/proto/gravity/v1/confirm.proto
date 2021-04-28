@@ -14,7 +14,7 @@ message ConfirmLogicCall {
   uint64 invalidation_nonce   = 2;
   string eth_signer           = 3;
   string orchestrator_address = 4;
-  string signature            = 5;
+  bytes signature             = 5 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
 }
 
 // ConfirmBatch an orchestrator confirms a batch transaction by signing
@@ -24,7 +24,7 @@ message ConfirmBatch {
   uint64 nonce                = 2;
   string eth_signer           = 3;
   string orchestrator_address = 4;
-  string signature            = 5;
+  bytes signature             = 5 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
 }
 
 // ConfirmSignerSet submits a signature of the validator set at a given block height. A validator
@@ -40,5 +40,5 @@ message ConfirmSignerSet {
   uint64 nonce                = 1;
   string eth_signer           = 2;
   string orchestrator_address = 3;
-  string signature            = 4;
+  bytes signature             = 4 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
 }

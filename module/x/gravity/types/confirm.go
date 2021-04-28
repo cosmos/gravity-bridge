@@ -1,9 +1,9 @@
 package types
 
 import (
-	"encoding/hex"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,16 +15,10 @@ type Confirm interface {
 	proto.Message
 
 	GetType() string
-	// TODO: delete
 	GetOrchestratorAddress() string
 	GetNonce() uint64
-	GetSignature() string
+	GetSignature() hexutil.Bytes
 	Validate() error
-
-	// TODO: consider deleting
-	GetTokenContract() string
-	GetInvalidationID() tmbytes.HexBytes
-	GetInvalidationNonce() uint64
 }
 
 var (
@@ -50,9 +44,8 @@ func (c ConfirmBatch) Validate() error {
 	if err := ValidateEthAddress(c.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "token contract")
 	}
-	_, err := hex.DecodeString(c.Signature)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "could not decode hex string %s", c.Signature)
+	if len(c.Signature) == 0 {
+		return fmt.Errorf("ethereum signature cannot be empty")
 	}
 	return nil
 }
@@ -74,9 +67,8 @@ func (c ConfirmLogicCall) Validate() error {
 	if err := ValidateEthAddress(c.EthSigner); err != nil {
 		return sdkerrors.Wrap(err, "eth signer")
 	}
-	_, err := hex.DecodeString(c.Signature)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", c.Signature)
+	if len(c.Signature) == 0 {
+		return fmt.Errorf("ethereum signature cannot be empty")
 	}
 	if len(c.InvalidationID) == 0 {
 		return fmt.Errorf("invalidation id is empty")
@@ -96,7 +88,7 @@ func (c ConfirmLogicCall) GetTokenContract() string {
 }
 
 // NewConfirmSignerSet returns a new ConfirmSignerSet
-func NewConfirmSignerSet(nonce uint64, ethSigner string, validator sdk.AccAddress, signature string) *ConfirmSignerSet {
+func NewConfirmSignerSet(nonce uint64, ethSigner string, validator sdk.AccAddress, signature hexutil.Bytes) *ConfirmSignerSet {
 	return &ConfirmSignerSet{
 		Nonce:               nonce,
 		OrchestratorAddress: validator.String(),
@@ -119,8 +111,9 @@ func (c ConfirmSignerSet) Validate() (err error) {
 	if err := ValidateEthAddress(c.EthSigner); err != nil {
 		return sdkerrors.Wrap(err, "ethereum signer address")
 	}
-
-	// TODO: validate signature
+	if len(c.Signature) == 0 {
+		return fmt.Errorf("ethereum signature cannot be empty")
+	}
 	return nil
 }
 

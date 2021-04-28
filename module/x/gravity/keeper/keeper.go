@@ -68,6 +68,18 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
+// GetBridgeID returns the BridgeID.
+func (k Keeper) GetBridgeID(ctx sdk.Context) tmbytes.HexBytes {
+	store := ctx.KVStore(k.storeKey)
+	return store.Get(types.BridgeIDKey)
+}
+
+// SetBridgeID sets the BridgeID value to store
+func (k Keeper) SetBridgeID(ctx sdk.Context, ID tmbytes.HexBytes) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.BridgeIDKey, ID)
+}
+
 // GetEthAddress returns the eth address for a given gravity validatorAddr
 func (k Keeper) GetEthAddress(ctx sdk.Context, validatorAddr sdk.ValAddress) common.Address {
 	// TODO: use prefix store
