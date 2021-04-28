@@ -1,526 +1,465 @@
-/// Attestation is an aggregate of `claims` that eventually becomes `observed` by
-/// all orchestrators
-/// EVENT_NONCE:
-/// EventNonce a nonce provided by the gravity contract that is unique per event fired
-/// These event nonces must be relayed in order. This is a correctness issue,
-/// if relaying out of order transaction replay attacks become possible
-/// OBSERVED:
-/// Observed indicates that >67% of validators have attested to the event,
-/// and that the event should be executed by the gravity state machine
-///
-/// The actual content of the claims is passed in with the transaction making the claim
-/// and then passed through the call stack alongside the attestation while it is processed
-/// the key in which the attestation is stored is keyed on the exact details of the claim
-/// but there is no reason to store those exact details becuause the next message sender
-/// will kindly provide you with them.
+/// Attestation is an event that is pending of confirmation by 2/3 of the signer set.
+/// The event is then attested and executed vy the state machine once the required
+/// threshold is met.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Attestation {
-    #[prost(bool, tag="1")]
-    pub observed: bool,
+    /// event unique identifier
+    #[prost(bytes="vec", tag="1")]
+    pub event_id: ::prost::alloc::vec::Vec<u8>,
+    /// set of the validator operators address in bech32 format that attest in
+    /// favor of this event.
     #[prost(string, repeated, tag="2")]
     pub votes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    #[prost(uint64, tag="3")]
+    /// amount of voting power in support of this event execution
+    #[prost(int64, tag="3")]
+    pub attested_power: i64,
+    /// height at which the event was attested an executed
+    #[prost(uint64, tag="4")]
     pub height: u64,
-    #[prost(message, optional, tag="4")]
-    pub claim: ::core::option::Option<::prost_types::Any>,
 }
-/// ERC20Token unique identifier for an Ethereum ERC20 token.
-/// CONTRACT:
-/// The contract address on ETH of the token, this could be a Cosmos
-/// originated token, if so it will be the ERC20 address of the representation
-/// (note: developers should look up the token symbol using the address on ETH to display for UI)
+/// DepositEvent is submitted when more than 66% of the active
+/// Cosmos validator set has claimed to have seen a deposit
+/// on Ethereum. ERC20 coins are minted to the receiver address
+/// address.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Erc20Token {
-    #[prost(string, tag="1")]
-    pub contract: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub amount: ::prost::alloc::string::String,
-}
-/// ClaimType is the cosmos type of an event from the counterpart chain that can
-/// be handled
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum ClaimType {
-    Unspecified = 0,
-    Deposit = 1,
-    Withdraw = 2,
-    Erc20Deployed = 3,
-    LogicCallExecuted = 4,
-}
-/// IDSet represents a set of IDs
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct IdSet {
-    #[prost(uint64, repeated, tag="1")]
-    pub ids: ::prost::alloc::vec::Vec<u64>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BatchFees {
-    #[prost(string, tag="1")]
-    pub token: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub total_fees: ::prost::alloc::string::String,
-}
-/// OutgoingTxBatch represents a batch of transactions going from gravity to ETH
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct OutgoingTxBatch {
+pub struct DepositEvent {
+    /// event nonce for replay protection
     #[prost(uint64, tag="1")]
-    pub batch_nonce: u64,
-    #[prost(uint64, tag="2")]
-    pub batch_timeout: u64,
-    #[prost(message, repeated, tag="3")]
-    pub transactions: ::prost::alloc::vec::Vec<OutgoingTransferTx>,
-    #[prost(string, tag="4")]
+    pub nonce: u64,
+    /// ethereum hex address of the contract
+    #[prost(string, tag="2")]
     pub token_contract: ::prost::alloc::string::String,
-    #[prost(uint64, tag="5")]
-    pub block: u64,
+    /// amount of tokens deposited on Ethereum
+    #[prost(string, tag="3")]
+    pub amount: ::prost::alloc::string::String,
+    /// ethereum sender address in hex format
+    #[prost(string, tag="4")]
+    pub ethereum_sender: ::prost::alloc::string::String,
+    /// cosmos bech32 account address of the receiver
+    #[prost(string, tag="5")]
+    pub cosmos_receiver: ::prost::alloc::string::String,
+    /// etherereum block height at which the event was observed
+    #[prost(uint64, tag="6")]
+    pub ethereum_height: u64,
 }
-/// OutgoingTransferTx represents an individual send from gravity to ETH
+/// WithdrawEvent claims that a batch of withdrawal
+/// operations on the bridge contract was executed.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct OutgoingTransferTx {
+pub struct WithdrawEvent {
+    /// transaction identifier of the batch tx
+    #[prost(bytes="vec", tag="1")]
+    pub tx_id: ::prost::alloc::vec::Vec<u8>,
+    /// event nonce of the batch tx on Cosmos
+    #[prost(uint64, tag="2")]
+    pub nonce: u64,
+    /// ethereum hex address of the contract
+    #[prost(string, tag="3")]
+    pub token_contract: ::prost::alloc::string::String,
+    /// etherereum block height at which the event was observed
+    #[prost(uint64, tag="4")]
+    pub ethereum_height: u64,
+}
+/// LogicCallExecutedEvent describes a logic call that has been
+/// successfully executed on Ethereum.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LogicCallExecutedEvent {
+    /// event nonce for replay protection
     #[prost(uint64, tag="1")]
-    pub id: u64,
-    #[prost(string, tag="2")]
-    pub sender: ::prost::alloc::string::String,
-    #[prost(string, tag="3")]
-    pub dest_address: ::prost::alloc::string::String,
-    #[prost(message, optional, tag="4")]
-    pub erc20_token: ::core::option::Option<Erc20Token>,
-    #[prost(message, optional, tag="5")]
-    pub erc20_fee: ::core::option::Option<Erc20Token>,
-}
-/// OutgoingLogicCall represents an individual logic call from gravity to ETH
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct OutgoingLogicCall {
-    #[prost(message, repeated, tag="1")]
-    pub transfers: ::prost::alloc::vec::Vec<Erc20Token>,
-    #[prost(message, repeated, tag="2")]
-    pub fees: ::prost::alloc::vec::Vec<Erc20Token>,
-    #[prost(string, tag="3")]
-    pub logic_contract_address: ::prost::alloc::string::String,
-    #[prost(bytes="vec", tag="4")]
-    pub payload: ::prost::alloc::vec::Vec<u8>,
-    #[prost(uint64, tag="5")]
-    pub timeout: u64,
-    #[prost(bytes="vec", tag="6")]
+    pub nonce: u64,
+    /// invalidation ID allows to withdraw funds in case the logic call fails on the
+    /// ethereum side
+    #[prost(bytes="vec", tag="2")]
     pub invalidation_id: ::prost::alloc::vec::Vec<u8>,
-    #[prost(uint64, tag="7")]
+    /// TODO: explain
+    #[prost(uint64, tag="3")]
     pub invalidation_nonce: u64,
+    /// etherereum block height at which the event was observed
+    #[prost(uint64, tag="4")]
+    pub ethereum_height: u64,
 }
-/// SignType defines messages that have been signed by an orchestrator
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum SignType {
-    Unspecified = 0,
-    OrchestratorSignedMultiSigUpdate = 1,
-    OrchestratorSignedWithdrawBatch = 2,
-}
-/// BridgeValidator represents a validator's ETH address and its power
+/// CosmosERC20DeployedEvent is submitted when an ERC20 contract
+/// for a Cosmos SDK coin has been deployed on Ethereum.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BridgeValidator {
+pub struct CosmosErc20DeployedEvent {
+    /// event nonce for replay protection
     #[prost(uint64, tag="1")]
-    pub power: u64,
+    pub nonce: u64,
+    /// cosmos SDK coin denomination
+    #[prost(string, tag="2")]
+    pub cosmos_denom: ::prost::alloc::string::String,
+    /// ethereum ERC20 contract address in hex format
+    #[prost(string, tag="3")]
+    pub token_contract: ::prost::alloc::string::String,
+    /// name of the token
+    #[prost(string, tag="4")]
+    pub name: ::prost::alloc::string::String,
+    /// symbol or tick of the token
+    #[prost(string, tag="5")]
+    pub symbol: ::prost::alloc::string::String,
+    /// number of decimals the token supports (i.e precision)
+    #[prost(uint64, tag="6")]
+    pub decimals: u64,
+    /// etherereum block height at which the event was observed
+    #[prost(uint64, tag="7")]
+    pub ethereum_height: u64,
+}
+/// EthereumInfo defines the latest observed ethereum block height and the
+/// corresponding timestamp value in nanoseconds.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EthereumInfo {
+    /// timestamp in nanoseconds
+    #[prost(message, optional, tag="1")]
+    pub timestamp: ::core::option::Option<::prost_types::Timestamp>,
+    /// ethereum block height
+    #[prost(uint64, tag="2")]
+    pub height: u64,
+}
+/// EthSigner represents a cosmos validator with its corresponding bridge operator
+/// ethereum address and its staking consensus power.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EthSigner {
+    /// staking consensus power of the validator
+    #[prost(int64, tag="1")]
+    pub power: i64,
+    /// bridge operator ethereum address in hex format
     #[prost(string, tag="2")]
     pub ethereum_address: ::prost::alloc::string::String,
 }
-/// Valset is the Ethereum Bridge Multsig Set, each gravity validator also
-/// maintains an ETH key to sign messages, these are used to check signatures on
-/// ETH because of the significant gas savings
+/// EthSignerSet is the Ethereum Bridge multisig set that relays transactions
+/// the two chains. The staking validators keep ethereum keys which are used to
+/// check signatures on Ethereum in order to get significant gas savings.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Valset {
-    #[prost(uint64, tag="1")]
-    pub nonce: u64,
-    #[prost(message, repeated, tag="2")]
-    pub members: ::prost::alloc::vec::Vec<BridgeValidator>,
-    #[prost(uint64, tag="3")]
+pub struct EthSignerSet {
+    /// set of signers. Sorted by power
+    #[prost(message, repeated, tag="1")]
+    pub signers: ::prost::alloc::vec::Vec<EthSigner>,
+    /// TODO: which height? cosmos? This should be the key
+    #[prost(uint64, tag="2")]
     pub height: u64,
 }
-/// LastObservedEthereumBlockHeight stores the last observed
-/// Ethereum block height along with the Cosmos block height that
-/// it was observed at. These two numbers can be used to project
-/// outward and always produce batches with timeouts in the future
-/// even if no Ethereum block height has been relayed for a long time
+/// BatchTx represents a batch of transactions going from Cosmos to Ethereum
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct LastObservedEthereumBlockHeight {
+pub struct BatchTx {
+    /// tx nonce for replay protection
     #[prost(uint64, tag="1")]
-    pub cosmos_block_height: u64,
+    pub nonce: u64,
+    /// timeout in seconds  // TODO: double check
     #[prost(uint64, tag="2")]
-    pub ethereum_block_height: u64,
+    pub timeout: u64,
+    /// transaction identifiers of the transfer txs included in this batch
+    #[prost(bytes="vec", repeated, tag="3")]
+    pub transactions: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+    /// ethereum contract address of the batch contract in hex format
+    #[prost(string, tag="4")]
+    pub token_contract: ::prost::alloc::string::String,
+    /// ethereum block height // TODO: double check
+    #[prost(uint64, tag="5")]
+    pub block: u64,
 }
-/// This records the relationship between an ERC20 token and the denom
-/// of the corresponding Cosmos originated asset
+/// TransferTx represents an individual transfer from Cosmos to Ethereum
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Erc20ToDenom {
-    #[prost(string, tag="1")]
-    pub erc20: ::prost::alloc::string::String,
+pub struct TransferTx {
+    /// tx nonce for replay protection
+    #[prost(uint64, tag="1")]
+    pub nonce: u64,
+    /// cosmos account address of the sender in bech32 format
     #[prost(string, tag="2")]
-    pub denom: ::prost::alloc::string::String,
-}
-/// MsgSetOrchestratorAddress
-/// this message allows validators to delegate their voting responsibilities
-/// to a given key. This key is then used as an optional authentication method
-/// for sigining oracle claims
-/// VALIDATOR
-/// The validator field is a cosmosvaloper1... string (i.e. sdk.ValAddress)
-/// that references a validator in the active set
-/// ORCHESTRATOR
-/// The orchestrator field is a cosmos1... string  (i.e. sdk.AccAddress) that
-/// references the key that is being delegated to
-/// ETH_ADDRESS
-/// This is a hex encoded 0x Ethereum public key that will be used by this validator
-/// on Ethereum
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgSetOrchestratorAddress {
-    #[prost(string, tag="1")]
-    pub validator: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub orchestrator: ::prost::alloc::string::String,
+    pub sender: ::prost::alloc::string::String,
+    /// ethereum recipient address in hex format
     #[prost(string, tag="3")]
-    pub eth_address: ::prost::alloc::string::String,
+    pub ethereum_recipient: ::prost::alloc::string::String,
+    /// amount of the transfer represented as an sdk.Coin. The coin denomination
+    /// must correspond to a valid ERC20 token contract address
+    #[prost(message, optional, tag="4")]
+    pub erc20_token: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
+    /// transfer fees for the bridge orchestrators, represented as an sdk.Coin.
+    /// The coin denomination must correspond to a valid ERC20 token contract address
+    #[prost(message, optional, tag="5")]
+    pub erc20_fee: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
 }
+/// LogicCallTx represents an individual arbitratry logic call transaction from
+/// Cosmos to Ethereum.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgSetOrchestratorAddressResponse {
+pub struct LogicCallTx {
+    /// tx nonce for replay protection
+    #[prost(uint64, tag="1")]
+    pub nonce: u64,
+    /// erc20 tokens represented as sdk.Coins
+    #[prost(message, repeated, tag="2")]
+    pub tokens: ::prost::alloc::vec::Vec<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
+    /// erc20 tokens represented as sdk.Coins used as fees for the bridge orchestrators.
+    #[prost(message, repeated, tag="3")]
+    pub fees: ::prost::alloc::vec::Vec<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
+    /// ethereum contract address of the arbitrary logic contract in hex format
+    #[prost(string, tag="4")]
+    pub logic_contract_address: ::prost::alloc::string::String,
+    /// ABI payload of the smart contract function call
+    #[prost(bytes="vec", tag="5")]
+    pub payload: ::prost::alloc::vec::Vec<u8>,
+    /// timeout in seconds  // TODO: double check
+    #[prost(uint64, tag="6")]
+    pub timeout: u64,
 }
-/// MsgValsetConfirm
-/// this is the message sent by the validators when they wish to submit their
-/// signatures over the validator set at a given block height. A validator must
-/// first call MsgSetEthAddress to set their Ethereum address to be used for
-/// signing. Then someone (anyone) must make a ValsetRequest, the request is
-/// essentially a messaging mechanism to determine which block all validators
-/// should submit signatures over. Finally validators sign the validator set,
-/// powers, and Ethereum addresses of the entire validator set at the height of a
+/// TransactionIDs defines a protobuf message for storing transfer tx ids.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TransactionIDs {
+    /// slice of transfer transaction identifiers
+    #[prost(bytes="vec", repeated, tag="1")]
+    pub ids: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+}
+/// ConfirmLogicCall ...
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConfirmLogicCall {
+    #[prost(bytes="vec", tag="1")]
+    pub invalidation_id: ::prost::alloc::vec::Vec<u8>,
+    #[prost(uint64, tag="2")]
+    pub invalidation_nonce: u64,
+    #[prost(string, tag="3")]
+    pub eth_signer: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub orchestrator_address: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="5")]
+    pub signature: ::prost::alloc::vec::Vec<u8>,
+}
+/// ConfirmBatch an orchestrator confirms a batch transaction by signing
+/// with the ethereum keys on the signer set.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConfirmBatch {
+    #[prost(string, tag="1")]
+    pub token_contract: ::prost::alloc::string::String,
+    #[prost(uint64, tag="2")]
+    pub nonce: u64,
+    #[prost(string, tag="3")]
+    pub eth_signer: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub orchestrator_address: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="5")]
+    pub signature: ::prost::alloc::vec::Vec<u8>,
+}
+/// ConfirmSignerSet submits a signature of the validator set at a given block height. A validator
+/// must first call MsgSetEthAddress to set their Ethereum address to be used for signing.
+/// Finally validators sign the
+/// validator set, powers, and Ethereum addresses of the entire validator set at the height of a
 /// ValsetRequest and submit that signature with this message.
 ///
-/// If a sufficient number of validators (66% of voting power) (A) have set
-/// Ethereum addresses and (B) submit ValsetConfirm messages with their
-/// signatures it is then possible for anyone to view these signatures in the
-/// chain store and submit them to Ethereum to update the validator set
-/// -------------
+/// If a sufficient number of validators (66% of voting power) (A) have set Ethereum addresses and
+/// (B) submit ValsetConfirm messages with their signatures it is then possible for anyone to view
+/// these signatures in the chain store and submit them to Ethereum to update the validator set
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgValsetConfirm {
+pub struct ConfirmSignerSet {
     #[prost(uint64, tag="1")]
     pub nonce: u64,
     #[prost(string, tag="2")]
-    pub orchestrator: ::prost::alloc::string::String,
+    pub eth_signer: ::prost::alloc::string::String,
     #[prost(string, tag="3")]
-    pub eth_address: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub signature: ::prost::alloc::string::String,
+    pub orchestrator_address: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="4")]
+    pub signature: ::prost::alloc::vec::Vec<u8>,
 }
+/// MsgTransfer submits a transfer attempt to bridge an asset over to Ethereum.
+/// The transfer will be stored and then included in a batch and then
+/// submitted to Ethereum.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgValsetConfirmResponse {
-}
-/// MsgSendToEth
-/// This is the message that a user calls when they want to bridge an asset
-/// it will later be removed when it is included in a batch and successfully
-/// submitted tokens are removed from the users balance immediately
-/// -------------
-/// AMOUNT:
-/// the coin to send across the bridge, note the restriction that this is a
-/// single coin not a set of coins that is normal in other Cosmos messages
-/// FEE:
-/// the fee paid for the bridge, distinct from the fee paid to the chain to
-/// actually send this message in the first place. So a successful send has
-/// two layers of fees for the user
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgSendToEth {
+pub struct MsgTransfer {
+    /// cosmos account address of the sender in bech32 format
     #[prost(string, tag="1")]
     pub sender: ::prost::alloc::string::String,
+    /// ethereum hex address of the recipient
     #[prost(string, tag="2")]
-    pub eth_dest: ::prost::alloc::string::String,
+    pub eth_recipient: ::prost::alloc::string::String,
+    /// the SDK coin to send across the bridge to Ethereum. This can be either an
+    /// ERC20 token voucher or a native cosmos denomination (including IBC vouchers).
     #[prost(message, optional, tag="3")]
     pub amount: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
+    /// the fee paid for the transaction relay accross the bridge to Ethereum.
+    /// NOTE: this is distinct from the Cosmos transaction fee paid, so a successful
+    /// transfer has two layers of fees for the user (Cosmos & Bridge).
+    /// TODO: specify if this needs to be an ERC20 or not.
     #[prost(message, optional, tag="4")]
     pub bridge_fee: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
 }
+/// MsgTransferResponse returns the transfer transaction ID which will be included
+/// in the batch tx.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgSendToEthResponse {
+pub struct MsgTransferResponse {
+    /// transfer tx unique identifier
+    #[prost(bytes="vec", tag="1")]
+    pub tx_id: ::prost::alloc::vec::Vec<u8>,
 }
-/// MsgRequestBatch
-/// this is a message anyone can send that requests a batch of transactions to
-/// send across the bridge be created for whatever block height this message is
-/// included in. This acts as a coordination point, the handler for this message
-/// looks at the AddToOutgoingPool tx's in the store and generates a batch, also
-/// available in the store tied to this message. The validators then grab this
-/// batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer
-/// can finally submit the batch
-/// -------------
+/// MsgCancelTransfer allows the sender to cancel its own outgoing transfer tx
+/// and recieve a refund of the tokens and bridge fees. This tx will only succeed
+/// if the transfer tx hasn't been batched to be processed and relayed to Ethereum.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgCancelTransfer {
+    /// transfer tx unique identifier
+    #[prost(bytes="vec", tag="1")]
+    pub tx_id: ::prost::alloc::vec::Vec<u8>,
+    /// cosmos account address of the sender in bech32 format
+    #[prost(string, tag="2")]
+    pub sender: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgCancelTransferResponse {
+}
+/// MsgRequestBatch requests a batch of transactions with a given coin denomination to send across
+/// the bridge to Ethereum.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgRequestBatch {
+    /// cosmos account address of the orchestrator in bech32 format
     #[prost(string, tag="1")]
-    pub sender: ::prost::alloc::string::String,
+    pub orchestrator_address: ::prost::alloc::string::String,
+    /// coin denomination
     #[prost(string, tag="2")]
     pub denom: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgRequestBatchResponse {
 }
-/// MsgConfirmBatch
-/// When validators observe a MsgRequestBatch they form a batch by ordering
-/// transactions currently in the txqueue in order of highest to lowest fee,
-/// cutting off when the batch either reaches a hardcoded maximum size (to be
-/// decided, probably around 100) or when transactions stop being profitable
-/// (TODO determine this without nondeterminism) This message includes the batch
-/// as well as an Ethereum signature over this batch by the validator
-/// -------------
+/// MsgSubmitConfirm
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgConfirmBatch {
-    #[prost(uint64, tag="1")]
-    pub nonce: u64,
+pub struct MsgSubmitConfirm {
+    /// confirmation for batch txs, logic call txs or signer sets
+    #[prost(message, optional, tag="1")]
+    pub confirm: ::core::option::Option<::prost_types::Any>,
+    /// cosmos account address of the orchestrator signer in bech32 format
     #[prost(string, tag="2")]
-    pub token_contract: ::prost::alloc::string::String,
-    #[prost(string, tag="3")]
-    pub eth_signer: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub orchestrator: ::prost::alloc::string::String,
-    #[prost(string, tag="5")]
-    pub signature: ::prost::alloc::string::String,
+    pub signer: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgConfirmBatchResponse {
+pub struct MsgSubmitConfirmResponse {
 }
-/// MsgConfirmLogicCall
-/// When validators observe a MsgRequestBatch they form a batch by ordering
-/// transactions currently in the txqueue in order of highest to lowest fee,
-/// cutting off when the batch either reaches a hardcoded maximum size (to be
-/// decided, probably around 100) or when transactions stop being profitable
-/// (TODO determine this without nondeterminism) This message includes the batch
-/// as well as an Ethereum signature over this batch by the validator
-/// -------------
+/// MsgSubmitEvent
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgConfirmLogicCall {
+pub struct MsgSubmitEvent {
+    /// event requested observed by a single validator orchestrator on Ethereum,
+    /// which will then need to be
+    #[prost(message, optional, tag="1")]
+    pub event: ::core::option::Option<::prost_types::Any>,
+    /// cosmos account address of the orchestrator signer in bech32 format
+    #[prost(string, tag="2")]
+    pub signer: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSubmitEventResponse {
+}
+/// MsgDelegateKey allows validators to delegate their voting responsibilities
+/// to a given orchestrator address. This key is then used as an optional
+/// authentication method for attesting events from Ethereum.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgDelegateKey {
+    /// validator operator address in bech32 format
     #[prost(string, tag="1")]
-    pub invalidation_id: ::prost::alloc::string::String,
-    #[prost(uint64, tag="2")]
-    pub invalidation_nonce: u64,
-    #[prost(string, tag="3")]
-    pub eth_signer: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub orchestrator: ::prost::alloc::string::String,
-    #[prost(string, tag="5")]
-    pub signature: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgConfirmLogicCallResponse {
-}
-/// EthereumBridgeDepositClaim
-/// When more than 66% of the active validator set has
-/// claimed to have seen the deposit enter the ethereum blockchain coins are
-/// issued to the Cosmos address in question
-/// -------------
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgDepositClaim {
-    #[prost(uint64, tag="1")]
-    pub event_nonce: u64,
-    #[prost(uint64, tag="2")]
-    pub block_height: u64,
-    #[prost(string, tag="3")]
-    pub token_contract: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub amount: ::prost::alloc::string::String,
-    #[prost(string, tag="5")]
-    pub ethereum_sender: ::prost::alloc::string::String,
-    #[prost(string, tag="6")]
-    pub cosmos_receiver: ::prost::alloc::string::String,
-    #[prost(string, tag="7")]
-    pub orchestrator: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgDepositClaimResponse {
-}
-/// WithdrawClaim claims that a batch of withdrawal
-/// operations on the bridge contract was executed.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgWithdrawClaim {
-    #[prost(uint64, tag="1")]
-    pub event_nonce: u64,
-    #[prost(uint64, tag="2")]
-    pub block_height: u64,
-    #[prost(uint64, tag="3")]
-    pub batch_nonce: u64,
-    #[prost(string, tag="4")]
-    pub token_contract: ::prost::alloc::string::String,
-    #[prost(string, tag="5")]
-    pub orchestrator: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgWithdrawClaimResponse {
-}
-/// ERC20DeployedClaim allows the Cosmos module
-/// to learn about an ERC20 that someone deployed
-/// to represent a Cosmos asset
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgErc20DeployedClaim {
-    #[prost(uint64, tag="1")]
-    pub event_nonce: u64,
-    #[prost(uint64, tag="2")]
-    pub block_height: u64,
-    #[prost(string, tag="3")]
-    pub cosmos_denom: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub token_contract: ::prost::alloc::string::String,
-    #[prost(string, tag="5")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag="6")]
-    pub symbol: ::prost::alloc::string::String,
-    #[prost(uint64, tag="7")]
-    pub decimals: u64,
-    #[prost(string, tag="8")]
-    pub orchestrator: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgErc20DeployedClaimResponse {
-}
-/// This informs the Cosmos module that a logic
-/// call has been executed
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgLogicCallExecutedClaim {
-    #[prost(uint64, tag="1")]
-    pub event_nonce: u64,
-    #[prost(uint64, tag="2")]
-    pub block_height: u64,
-    #[prost(bytes="vec", tag="3")]
-    pub invalidation_id: ::prost::alloc::vec::Vec<u8>,
-    #[prost(uint64, tag="4")]
-    pub invalidation_nonce: u64,
-    #[prost(string, tag="5")]
-    pub orchestrator: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgLogicCallExecutedClaimResponse {
-}
-/// This call allows the sender (and only the sender)
-/// to cancel a given MsgSendToEth and recieve a refund
-/// of the tokens
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgCancelSendToEth {
-    #[prost(uint64, tag="1")]
-    pub transaction_id: u64,
+    pub validator_address: ::prost::alloc::string::String,
+    /// cosmos account address of the orchestrator in bech32 format that
+    /// references the key that is being delegated to
     #[prost(string, tag="2")]
-    pub sender: ::prost::alloc::string::String,
+    pub orchestrator_address: ::prost::alloc::string::String,
+    /// ethereum hex address of the used by the orchestrator
+    #[prost(string, tag="3")]
+    pub eth_address: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MsgCancelSendToEthResponse {
+pub struct MsgDelegateKeyResponse {
 }
-# [doc = r" Generated client implementations."] pub mod msg_client { # ! [allow (unused_variables , dead_code , missing_docs)] use tonic :: codegen :: * ; # [doc = " Msg defines the state transitions possible within gravity"] pub struct MsgClient < T > { inner : tonic :: client :: Grpc < T > , } impl MsgClient < tonic :: transport :: Channel > { # [doc = r" Attempt to create a new client by connecting to a given endpoint."] pub async fn connect < D > (dst : D) -> Result < Self , tonic :: transport :: Error > where D : std :: convert :: TryInto < tonic :: transport :: Endpoint > , D :: Error : Into < StdError > , { let conn = tonic :: transport :: Endpoint :: new (dst) ? . connect () . await ? ; Ok (Self :: new (conn)) } } impl < T > MsgClient < T > where T : tonic :: client :: GrpcService < tonic :: body :: BoxBody > , T :: ResponseBody : Body + HttpBody + Send + 'static , T :: Error : Into < StdError > , < T :: ResponseBody as HttpBody > :: Error : Into < StdError > + Send , { pub fn new (inner : T) -> Self { let inner = tonic :: client :: Grpc :: new (inner) ; Self { inner } } pub fn with_interceptor (inner : T , interceptor : impl Into < tonic :: Interceptor >) -> Self { let inner = tonic :: client :: Grpc :: with_interceptor (inner , interceptor) ; Self { inner } } pub async fn valset_confirm (& mut self , request : impl tonic :: IntoRequest < super :: MsgValsetConfirm > ,) -> Result < tonic :: Response < super :: MsgValsetConfirmResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ValsetConfirm") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn send_to_eth (& mut self , request : impl tonic :: IntoRequest < super :: MsgSendToEth > ,) -> Result < tonic :: Response < super :: MsgSendToEthResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/SendToEth") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn request_batch (& mut self , request : impl tonic :: IntoRequest < super :: MsgRequestBatch > ,) -> Result < tonic :: Response < super :: MsgRequestBatchResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/RequestBatch") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn confirm_batch (& mut self , request : impl tonic :: IntoRequest < super :: MsgConfirmBatch > ,) -> Result < tonic :: Response < super :: MsgConfirmBatchResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ConfirmBatch") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn confirm_logic_call (& mut self , request : impl tonic :: IntoRequest < super :: MsgConfirmLogicCall > ,) -> Result < tonic :: Response < super :: MsgConfirmLogicCallResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ConfirmLogicCall") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn deposit_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgDepositClaim > ,) -> Result < tonic :: Response < super :: MsgDepositClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/DepositClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn withdraw_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgWithdrawClaim > ,) -> Result < tonic :: Response < super :: MsgWithdrawClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/WithdrawClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn erc20_deployed_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgErc20DeployedClaim > ,) -> Result < tonic :: Response < super :: MsgErc20DeployedClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ERC20DeployedClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn logic_call_executed_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgLogicCallExecutedClaim > ,) -> Result < tonic :: Response < super :: MsgLogicCallExecutedClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/LogicCallExecutedClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn set_orchestrator_address (& mut self , request : impl tonic :: IntoRequest < super :: MsgSetOrchestratorAddress > ,) -> Result < tonic :: Response < super :: MsgSetOrchestratorAddressResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/SetOrchestratorAddress") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn cancel_send_to_eth (& mut self , request : impl tonic :: IntoRequest < super :: MsgCancelSendToEth > ,) -> Result < tonic :: Response < super :: MsgCancelSendToEthResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/CancelSendToEth") ; self . inner . unary (request . into_request () , path , codec) . await } } impl < T : Clone > Clone for MsgClient < T > { fn clone (& self) -> Self { Self { inner : self . inner . clone () , } } } impl < T > std :: fmt :: Debug for MsgClient < T > { fn fmt (& self , f : & mut std :: fmt :: Formatter < '_ >) -> std :: fmt :: Result { write ! (f , "MsgClient {{ ... }}") } } }/// Params represent the Gravity genesis and store parameters
-/// gravity_id:
-/// a random 32 byte value to prevent signature reuse, for example if the
-/// cosmos validators decided to use the same Ethereum keys for another chain
-/// also running Gravity we would not want it to be possible to play a deposit
-/// from chain A back on chain B's Gravity. This value IS USED ON ETHEREUM so
-/// it must be set in your genesis.json before launch and not changed after
-/// deploying Gravity
-///
-/// contract_hash:
-/// the code hash of a known good version of the Gravity contract
-/// solidity code. This can be used to verify the correct version
-/// of the contract has been deployed. This is a reference value for
-/// goernance action only it is never read by any Gravity code
-///
-/// bridge_ethereum_address:
-/// is address of the bridge contract on the Ethereum side, this is a
-/// reference value for governance only and is not actually used by any
-/// Gravity code
-///
-/// bridge_chain_id:
-/// the unique identifier of the Ethereum chain, this is a reference value
-/// only and is not actually used by any Gravity code
-///
-/// These reference values may be used by future Gravity client implemetnations
-/// to allow for saftey features or convenience features like the Gravity address
-/// in your relayer. A relayer would require a configured Gravity address if
-/// governance had not set the address on the chain it was relaying for.
-///
-/// signed_valsets_window
-/// signed_batches_window
-/// signed_claims_window
-///
-/// These values represent the time in blocks that a validator has to submit
-/// a signature for a batch or valset, or to submit a claim for a particular
-/// attestation nonce. In the case of attestations this clock starts when the
-/// attestation is created, but only allows for slashing once the event has passed
-///
-/// target_batch_timeout:
-///
-/// This is the 'target' value for when batches time out, this is a target becuase
-/// Ethereum is a probabalistic chain and you can't say for sure what the block
-/// frequency is ahead of time.
-///
-/// average_block_time
-/// average_ethereum_block_time
-///
-/// These values are the average Cosmos block time and Ethereum block time repsectively
-/// and they are used to copute what the target batch timeout is. It is important that
-/// governance updates these in case of any major, prolonged change in the time it takes
-/// to produce a block
-///
-/// slash_fraction_valset
-/// slash_fraction_batch
-/// slash_fraction_claim
-/// slash_fraction_conflicting_claim
-///
-/// The slashing fractions for the various gravity related slashing conditions. The first three
-/// refer to not submitting a particular message, the third for submitting a different claim
-/// for the same Ethereum event
+# [doc = r" Generated client implementations."] pub mod msg_client { # ! [allow (unused_variables , dead_code , missing_docs)] use tonic :: codegen :: * ; # [doc = " Msg defines the state transitions possible within gravity"] pub struct MsgClient < T > { inner : tonic :: client :: Grpc < T > , } impl MsgClient < tonic :: transport :: Channel > { # [doc = r" Attempt to create a new client by connecting to a given endpoint."] pub async fn connect < D > (dst : D) -> Result < Self , tonic :: transport :: Error > where D : std :: convert :: TryInto < tonic :: transport :: Endpoint > , D :: Error : Into < StdError > , { let conn = tonic :: transport :: Endpoint :: new (dst) ? . connect () . await ? ; Ok (Self :: new (conn)) } } impl < T > MsgClient < T > where T : tonic :: client :: GrpcService < tonic :: body :: BoxBody > , T :: ResponseBody : Body + HttpBody + Send + 'static , T :: Error : Into < StdError > , < T :: ResponseBody as HttpBody > :: Error : Into < StdError > + Send , { pub fn new (inner : T) -> Self { let inner = tonic :: client :: Grpc :: new (inner) ; Self { inner } } pub fn with_interceptor (inner : T , interceptor : impl Into < tonic :: Interceptor >) -> Self { let inner = tonic :: client :: Grpc :: with_interceptor (inner , interceptor) ; Self { inner } } pub async fn transfer (& mut self , request : impl tonic :: IntoRequest < super :: MsgTransfer > ,) -> Result < tonic :: Response < super :: MsgTransferResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/Transfer") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn cancel_transfer (& mut self , request : impl tonic :: IntoRequest < super :: MsgCancelTransfer > ,) -> Result < tonic :: Response < super :: MsgCancelTransferResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/CancelTransfer") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn request_batch (& mut self , request : impl tonic :: IntoRequest < super :: MsgRequestBatch > ,) -> Result < tonic :: Response < super :: MsgRequestBatchResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/RequestBatch") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn submit_confirm (& mut self , request : impl tonic :: IntoRequest < super :: MsgSubmitConfirm > ,) -> Result < tonic :: Response < super :: MsgSubmitConfirmResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/SubmitConfirm") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn submit_event (& mut self , request : impl tonic :: IntoRequest < super :: MsgSubmitEvent > ,) -> Result < tonic :: Response < super :: MsgSubmitEventResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/SubmitEvent") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn set_delegate_key (& mut self , request : impl tonic :: IntoRequest < super :: MsgDelegateKey > ,) -> Result < tonic :: Response < super :: MsgDelegateKeyResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/SetDelegateKey") ; self . inner . unary (request . into_request () , path , codec) . await } } impl < T : Clone > Clone for MsgClient < T > { fn clone (& self) -> Self { Self { inner : self . inner . clone () , } } } impl < T > std :: fmt :: Debug for MsgClient < T > { fn fmt (& self , f : & mut std :: fmt :: Formatter < '_ >) -> std :: fmt :: Result { write ! (f , "MsgClient {{ ... }}") } } }/// Params represent the Gravity genesis and store parameters
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Params {
+    /// address of the bridge contract on the EVM chain
     #[prost(string, tag="1")]
-    pub gravity_id: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub contract_source_hash: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub bridge_ethereum_address: ::prost::alloc::string::String,
-    #[prost(uint64, tag="5")]
+    pub bridge_contract_address: ::prost::alloc::string::String,
+    /// unique identifier of the EVM chain
+    #[prost(uint64, tag="2")]
     pub bridge_chain_id: u64,
-    #[prost(uint64, tag="6")]
-    pub signed_valsets_window: u64,
-    #[prost(uint64, tag="7")]
-    pub signed_batches_window: u64,
-    #[prost(uint64, tag="8")]
-    pub signed_claims_window: u64,
-    #[prost(uint64, tag="10")]
+    /// target value for when batch transactions time out on Ethereum
+    #[prost(uint64, tag="3")]
     pub target_batch_timeout: u64,
-    #[prost(uint64, tag="11")]
+    /// Average Cosmos block time used to compute batch timeout
+    #[prost(uint64, tag="4")]
     pub average_block_time: u64,
-    #[prost(uint64, tag="12")]
+    /// Average ethereum block time used to compute batch timeout
+    #[prost(uint64, tag="5")]
     pub average_ethereum_block_time: u64,
-    #[prost(bytes="vec", tag="13")]
-    pub slash_fraction_valset: ::prost::alloc::vec::Vec<u8>,
-    #[prost(bytes="vec", tag="14")]
-    pub slash_fraction_batch: ::prost::alloc::vec::Vec<u8>,
-    #[prost(bytes="vec", tag="15")]
-    pub slash_fraction_claim: ::prost::alloc::vec::Vec<u8>,
-    #[prost(bytes="vec", tag="16")]
-    pub slash_fraction_conflicting_claim: ::prost::alloc::vec::Vec<u8>,
-    #[prost(uint64, tag="17")]
-    pub unbond_slashing_valsets_window: u64,
+    /// amount of blocks of the rolling window required to submit a signature for a signer set confirmation.
+    #[prost(uint64, tag="6")]
+    pub signer_set_window: u64,
+    /// amount of blocks of the rolling window required to submit a signature for a batch transaction.
+    #[prost(uint64, tag="7")]
+    pub batch_tx_window: u64,
+    /// amount of blocks of the rolling window required to attest an ethereum event.
+    #[prost(uint64, tag="8")]
+    pub event_window: u64,
+    #[prost(uint64, tag="9")]
+    pub unbonding_window: u64,
+    /// max amount of transactions batched
+    #[prost(uint64, tag="10")]
+    pub batch_size: u64,
+    /// slashing fraction for not signing a signerset confirmation
+    #[prost(string, tag="11")]
+    pub slash_fraction_signer_set: ::prost::alloc::string::String,
+    /// slashing fraction for not signing an outgoing batch transaction to ethereum
+    #[prost(string, tag="12")]
+    pub slash_fraction_batch: ::prost::alloc::string::String,
+    /// slashing fraction for not signing events
+    #[prost(string, tag="13")]
+    pub slash_fraction_event: ::prost::alloc::string::String,
+    /// slashing fraction for submitting a conflicting event from Ethereum
+    #[prost(string, tag="14")]
+    pub slash_fraction_conflicting_event: ::prost::alloc::string::String,
+    /// maximum allowed power difference between the latest and the current ethereum 
+    /// signer set before submitting a new signer set update request.
+    #[prost(string, tag="15")]
+    pub max_signer_set_power_diff: ::prost::alloc::string::String,
+}
+/// ERC20ToDenom records the relationship between an ERC20 token contract and the
+/// denomination of the corresponding Cosmos coin.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Erc20ToDenom {
+    /// token contract address in hex format
+    #[prost(string, tag="1")]
+    pub erc20_address: ::prost::alloc::string::String,
+    /// coin denomination
+    #[prost(string, tag="2")]
+    pub denom: ::prost::alloc::string::String,
 }
 /// GenesisState struct
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenesisState {
-    #[prost(message, optional, tag="1")]
+    /// bridge id is a random 32 byte salt value to prevent signature reuse across different
+    /// instances of the ethereum bridge. This value IS USED on the bridge smart
+    /// contracts.
+    ///
+    /// TODO: is this like the IBC client ID but for the bridge?
+    #[prost(bytes="vec", tag="1")]
+    pub bridge_id: ::prost::alloc::vec::Vec<u8>,
+    #[prost(message, optional, tag="2")]
     pub params: ::core::option::Option<Params>,
-    #[prost(uint64, tag="2")]
+    #[prost(uint64, tag="3")]
     pub last_observed_nonce: u64,
-    #[prost(message, repeated, tag="3")]
-    pub valsets: ::prost::alloc::vec::Vec<Valset>,
     #[prost(message, repeated, tag="4")]
-    pub valset_confirms: ::prost::alloc::vec::Vec<MsgValsetConfirm>,
+    pub signer_sets: ::prost::alloc::vec::Vec<EthSignerSet>,
+    /// requested batch transactions
     #[prost(message, repeated, tag="5")]
-    pub batches: ::prost::alloc::vec::Vec<OutgoingTxBatch>,
+    pub batch_txs: ::prost::alloc::vec::Vec<BatchTx>,
     #[prost(message, repeated, tag="6")]
-    pub batch_confirms: ::prost::alloc::vec::Vec<MsgConfirmBatch>,
+    pub logic_call_txs: ::prost::alloc::vec::Vec<LogicCallTx>,
+    /// unbatched transfer transactions
+    ///
+    /// TODO: use any for confirms
     #[prost(message, repeated, tag="7")]
-    pub logic_calls: ::prost::alloc::vec::Vec<OutgoingLogicCall>,
+    pub transfer_txs: ::prost::alloc::vec::Vec<TransferTx>,
     #[prost(message, repeated, tag="8")]
-    pub logic_call_confirms: ::prost::alloc::vec::Vec<MsgConfirmLogicCall>,
+    pub signer_set_confirms: ::prost::alloc::vec::Vec<ConfirmSignerSet>,
     #[prost(message, repeated, tag="9")]
-    pub attestations: ::prost::alloc::vec::Vec<Attestation>,
+    pub batch_confirms: ::prost::alloc::vec::Vec<ConfirmBatch>,
     #[prost(message, repeated, tag="10")]
-    pub delegate_keys: ::prost::alloc::vec::Vec<MsgSetOrchestratorAddress>,
+    pub logic_call_confirms: ::prost::alloc::vec::Vec<ConfirmLogicCall>,
+    /// TODO: proto.Any ethereum eventss
     #[prost(message, repeated, tag="11")]
-    pub erc20_to_denoms: ::prost::alloc::vec::Vec<Erc20ToDenom>,
+    pub attestations: ::prost::alloc::vec::Vec<Attestation>,
     #[prost(message, repeated, tag="12")]
-    pub unbatched_transfers: ::prost::alloc::vec::Vec<OutgoingTransferTx>,
+    pub delegate_keys: ::prost::alloc::vec::Vec<MsgDelegateKey>,
+    #[prost(message, repeated, tag="13")]
+    pub erc20_to_denoms: ::prost::alloc::vec::Vec<Erc20ToDenom>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryParamsRequest {
@@ -530,224 +469,4 @@ pub struct QueryParamsResponse {
     #[prost(message, optional, tag="1")]
     pub params: ::core::option::Option<Params>,
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryCurrentValsetRequest {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryCurrentValsetResponse {
-    #[prost(message, optional, tag="1")]
-    pub valset: ::core::option::Option<Valset>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryValsetRequestRequest {
-    #[prost(uint64, tag="1")]
-    pub nonce: u64,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryValsetRequestResponse {
-    #[prost(message, optional, tag="1")]
-    pub valset: ::core::option::Option<Valset>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryValsetConfirmRequest {
-    #[prost(uint64, tag="1")]
-    pub nonce: u64,
-    #[prost(string, tag="2")]
-    pub address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryValsetConfirmResponse {
-    #[prost(message, optional, tag="1")]
-    pub confirm: ::core::option::Option<MsgValsetConfirm>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryValsetConfirmsByNonceRequest {
-    #[prost(uint64, tag="1")]
-    pub nonce: u64,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryValsetConfirmsByNonceResponse {
-    #[prost(message, repeated, tag="1")]
-    pub confirms: ::prost::alloc::vec::Vec<MsgValsetConfirm>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryLastValsetRequestsRequest {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryLastValsetRequestsResponse {
-    #[prost(message, repeated, tag="1")]
-    pub valsets: ::prost::alloc::vec::Vec<Valset>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryLastPendingValsetRequestByAddrRequest {
-    #[prost(string, tag="1")]
-    pub address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryLastPendingValsetRequestByAddrResponse {
-    #[prost(message, repeated, tag="1")]
-    pub valsets: ::prost::alloc::vec::Vec<Valset>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryBatchFeeRequest {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryBatchFeeResponse {
-    #[prost(message, repeated, tag="1")]
-    pub batch_fees: ::prost::alloc::vec::Vec<BatchFees>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryLastPendingBatchRequestByAddrRequest {
-    #[prost(string, tag="1")]
-    pub address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryLastPendingBatchRequestByAddrResponse {
-    #[prost(message, optional, tag="1")]
-    pub batch: ::core::option::Option<OutgoingTxBatch>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryLastPendingLogicCallByAddrRequest {
-    #[prost(string, tag="1")]
-    pub address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryLastPendingLogicCallByAddrResponse {
-    #[prost(message, optional, tag="1")]
-    pub call: ::core::option::Option<OutgoingLogicCall>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryOutgoingTxBatchesRequest {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryOutgoingTxBatchesResponse {
-    #[prost(message, repeated, tag="1")]
-    pub batches: ::prost::alloc::vec::Vec<OutgoingTxBatch>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryOutgoingLogicCallsRequest {
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryOutgoingLogicCallsResponse {
-    #[prost(message, repeated, tag="1")]
-    pub calls: ::prost::alloc::vec::Vec<OutgoingLogicCall>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryBatchRequestByNonceRequest {
-    #[prost(uint64, tag="1")]
-    pub nonce: u64,
-    #[prost(string, tag="2")]
-    pub contract_address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryBatchRequestByNonceResponse {
-    #[prost(message, optional, tag="1")]
-    pub batch: ::core::option::Option<OutgoingTxBatch>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryBatchConfirmsRequest {
-    #[prost(uint64, tag="1")]
-    pub nonce: u64,
-    #[prost(string, tag="2")]
-    pub contract_address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryBatchConfirmsResponse {
-    #[prost(message, repeated, tag="1")]
-    pub confirms: ::prost::alloc::vec::Vec<MsgConfirmBatch>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryLogicConfirmsRequest {
-    #[prost(bytes="vec", tag="1")]
-    pub invalidation_id: ::prost::alloc::vec::Vec<u8>,
-    #[prost(uint64, tag="2")]
-    pub invalidation_nonce: u64,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryLogicConfirmsResponse {
-    #[prost(message, repeated, tag="1")]
-    pub confirms: ::prost::alloc::vec::Vec<MsgConfirmLogicCall>,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryLastEventNonceByAddrRequest {
-    #[prost(string, tag="1")]
-    pub address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryLastEventNonceByAddrResponse {
-    #[prost(uint64, tag="1")]
-    pub event_nonce: u64,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryErc20ToDenomRequest {
-    #[prost(string, tag="1")]
-    pub erc20: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryErc20ToDenomResponse {
-    #[prost(string, tag="1")]
-    pub denom: ::prost::alloc::string::String,
-    #[prost(bool, tag="2")]
-    pub cosmos_originated: bool,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryDenomToErc20Request {
-    #[prost(string, tag="1")]
-    pub denom: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryDenomToErc20Response {
-    #[prost(string, tag="1")]
-    pub erc20: ::prost::alloc::string::String,
-    #[prost(bool, tag="2")]
-    pub cosmos_originated: bool,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryDelegateKeysByValidatorAddress {
-    #[prost(string, tag="1")]
-    pub validator_address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryDelegateKeysByValidatorAddressResponse {
-    #[prost(string, tag="1")]
-    pub eth_address: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub orchestrator_address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryDelegateKeysByEthAddress {
-    #[prost(string, tag="1")]
-    pub eth_address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryDelegateKeysByEthAddressResponse {
-    #[prost(string, tag="1")]
-    pub validator_address: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub orchestrator_address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryDelegateKeysByOrchestratorAddress {
-    #[prost(string, tag="1")]
-    pub orchestrator_address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryDelegateKeysByOrchestratorAddressResponse {
-    #[prost(string, tag="1")]
-    pub validator_address: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub eth_address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryPendingSendToEth {
-    #[prost(string, tag="1")]
-    pub sender_address: ::prost::alloc::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryPendingSendToEthResponse {
-    #[prost(message, repeated, tag="1")]
-    pub transfers_in_batches: ::prost::alloc::vec::Vec<OutgoingTransferTx>,
-    #[prost(message, repeated, tag="2")]
-    pub unbatched_transfers: ::prost::alloc::vec::Vec<OutgoingTransferTx>,
-}
-# [doc = r" Generated client implementations."] pub mod query_client { # ! [allow (unused_variables , dead_code , missing_docs)] use tonic :: codegen :: * ; # [doc = " Query defines the gRPC querier service"] pub struct QueryClient < T > { inner : tonic :: client :: Grpc < T > , } impl QueryClient < tonic :: transport :: Channel > { # [doc = r" Attempt to create a new client by connecting to a given endpoint."] pub async fn connect < D > (dst : D) -> Result < Self , tonic :: transport :: Error > where D : std :: convert :: TryInto < tonic :: transport :: Endpoint > , D :: Error : Into < StdError > , { let conn = tonic :: transport :: Endpoint :: new (dst) ? . connect () . await ? ; Ok (Self :: new (conn)) } } impl < T > QueryClient < T > where T : tonic :: client :: GrpcService < tonic :: body :: BoxBody > , T :: ResponseBody : Body + HttpBody + Send + 'static , T :: Error : Into < StdError > , < T :: ResponseBody as HttpBody > :: Error : Into < StdError > + Send , { pub fn new (inner : T) -> Self { let inner = tonic :: client :: Grpc :: new (inner) ; Self { inner } } pub fn with_interceptor (inner : T , interceptor : impl Into < tonic :: Interceptor >) -> Self { let inner = tonic :: client :: Grpc :: with_interceptor (inner , interceptor) ; Self { inner } } # [doc = " Deployments queries deployments"] pub async fn params (& mut self , request : impl tonic :: IntoRequest < super :: QueryParamsRequest > ,) -> Result < tonic :: Response < super :: QueryParamsResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/Params") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn current_valset (& mut self , request : impl tonic :: IntoRequest < super :: QueryCurrentValsetRequest > ,) -> Result < tonic :: Response < super :: QueryCurrentValsetResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/CurrentValset") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn valset_request (& mut self , request : impl tonic :: IntoRequest < super :: QueryValsetRequestRequest > ,) -> Result < tonic :: Response < super :: QueryValsetRequestResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/ValsetRequest") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn valset_confirm (& mut self , request : impl tonic :: IntoRequest < super :: QueryValsetConfirmRequest > ,) -> Result < tonic :: Response < super :: QueryValsetConfirmResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/ValsetConfirm") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn valset_confirms_by_nonce (& mut self , request : impl tonic :: IntoRequest < super :: QueryValsetConfirmsByNonceRequest > ,) -> Result < tonic :: Response < super :: QueryValsetConfirmsByNonceResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/ValsetConfirmsByNonce") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn last_valset_requests (& mut self , request : impl tonic :: IntoRequest < super :: QueryLastValsetRequestsRequest > ,) -> Result < tonic :: Response < super :: QueryLastValsetRequestsResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/LastValsetRequests") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn last_pending_valset_request_by_addr (& mut self , request : impl tonic :: IntoRequest < super :: QueryLastPendingValsetRequestByAddrRequest > ,) -> Result < tonic :: Response < super :: QueryLastPendingValsetRequestByAddrResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/LastPendingValsetRequestByAddr") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn last_pending_batch_request_by_addr (& mut self , request : impl tonic :: IntoRequest < super :: QueryLastPendingBatchRequestByAddrRequest > ,) -> Result < tonic :: Response < super :: QueryLastPendingBatchRequestByAddrResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/LastPendingBatchRequestByAddr") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn last_pending_logic_call_by_addr (& mut self , request : impl tonic :: IntoRequest < super :: QueryLastPendingLogicCallByAddrRequest > ,) -> Result < tonic :: Response < super :: QueryLastPendingLogicCallByAddrResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/LastPendingLogicCallByAddr") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn last_event_nonce_by_addr (& mut self , request : impl tonic :: IntoRequest < super :: QueryLastEventNonceByAddrRequest > ,) -> Result < tonic :: Response < super :: QueryLastEventNonceByAddrResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/LastEventNonceByAddr") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn batch_fees (& mut self , request : impl tonic :: IntoRequest < super :: QueryBatchFeeRequest > ,) -> Result < tonic :: Response < super :: QueryBatchFeeResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/BatchFees") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn outgoing_tx_batches (& mut self , request : impl tonic :: IntoRequest < super :: QueryOutgoingTxBatchesRequest > ,) -> Result < tonic :: Response < super :: QueryOutgoingTxBatchesResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/OutgoingTxBatches") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn outgoing_logic_calls (& mut self , request : impl tonic :: IntoRequest < super :: QueryOutgoingLogicCallsRequest > ,) -> Result < tonic :: Response < super :: QueryOutgoingLogicCallsResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/OutgoingLogicCalls") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn batch_request_by_nonce (& mut self , request : impl tonic :: IntoRequest < super :: QueryBatchRequestByNonceRequest > ,) -> Result < tonic :: Response < super :: QueryBatchRequestByNonceResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/BatchRequestByNonce") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn batch_confirms (& mut self , request : impl tonic :: IntoRequest < super :: QueryBatchConfirmsRequest > ,) -> Result < tonic :: Response < super :: QueryBatchConfirmsResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/BatchConfirms") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn logic_confirms (& mut self , request : impl tonic :: IntoRequest < super :: QueryLogicConfirmsRequest > ,) -> Result < tonic :: Response < super :: QueryLogicConfirmsResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/LogicConfirms") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn erc20_to_denom (& mut self , request : impl tonic :: IntoRequest < super :: QueryErc20ToDenomRequest > ,) -> Result < tonic :: Response < super :: QueryErc20ToDenomResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/ERC20ToDenom") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn denom_to_erc20 (& mut self , request : impl tonic :: IntoRequest < super :: QueryDenomToErc20Request > ,) -> Result < tonic :: Response < super :: QueryDenomToErc20Response > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/DenomToERC20") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn get_delegate_key_by_validator (& mut self , request : impl tonic :: IntoRequest < super :: QueryDelegateKeysByValidatorAddress > ,) -> Result < tonic :: Response < super :: QueryDelegateKeysByValidatorAddressResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/GetDelegateKeyByValidator") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn get_delegate_key_by_eth (& mut self , request : impl tonic :: IntoRequest < super :: QueryDelegateKeysByEthAddress > ,) -> Result < tonic :: Response < super :: QueryDelegateKeysByEthAddressResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/GetDelegateKeyByEth") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn get_delegate_key_by_orchestrator (& mut self , request : impl tonic :: IntoRequest < super :: QueryDelegateKeysByOrchestratorAddress > ,) -> Result < tonic :: Response < super :: QueryDelegateKeysByOrchestratorAddressResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/GetDelegateKeyByOrchestrator") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn get_pending_send_to_eth (& mut self , request : impl tonic :: IntoRequest < super :: QueryPendingSendToEth > ,) -> Result < tonic :: Response < super :: QueryPendingSendToEthResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/GetPendingSendToEth") ; self . inner . unary (request . into_request () , path , codec) . await } } impl < T : Clone > Clone for QueryClient < T > { fn clone (& self) -> Self { Self { inner : self . inner . clone () , } } } impl < T > std :: fmt :: Debug for QueryClient < T > { fn fmt (& self , f : & mut std :: fmt :: Formatter < '_ >) -> std :: fmt :: Result { write ! (f , "QueryClient {{ ... }}") } } }
+# [doc = r" Generated client implementations."] pub mod query_client { # ! [allow (unused_variables , dead_code , missing_docs)] use tonic :: codegen :: * ; # [doc = " Query defines the gRPC querier service"] pub struct QueryClient < T > { inner : tonic :: client :: Grpc < T > , } impl QueryClient < tonic :: transport :: Channel > { # [doc = r" Attempt to create a new client by connecting to a given endpoint."] pub async fn connect < D > (dst : D) -> Result < Self , tonic :: transport :: Error > where D : std :: convert :: TryInto < tonic :: transport :: Endpoint > , D :: Error : Into < StdError > , { let conn = tonic :: transport :: Endpoint :: new (dst) ? . connect () . await ? ; Ok (Self :: new (conn)) } } impl < T > QueryClient < T > where T : tonic :: client :: GrpcService < tonic :: body :: BoxBody > , T :: ResponseBody : Body + HttpBody + Send + 'static , T :: Error : Into < StdError > , < T :: ResponseBody as HttpBody > :: Error : Into < StdError > + Send , { pub fn new (inner : T) -> Self { let inner = tonic :: client :: Grpc :: new (inner) ; Self { inner } } pub fn with_interceptor (inner : T , interceptor : impl Into < tonic :: Interceptor >) -> Self { let inner = tonic :: client :: Grpc :: with_interceptor (inner , interceptor) ; Self { inner } } pub async fn params (& mut self , request : impl tonic :: IntoRequest < super :: QueryParamsRequest > ,) -> Result < tonic :: Response < super :: QueryParamsResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Query/Params") ; self . inner . unary (request . into_request () , path , codec) . await } } impl < T : Clone > Clone for QueryClient < T > { fn clone (& self) -> Self { Self { inner : self . inner . clone () , } } } impl < T > std :: fmt :: Debug for QueryClient < T > { fn fmt (& self , f : & mut std :: fmt :: Formatter < '_ >) -> std :: fmt :: Result { write ! (f , "QueryClient {{ ... }}") } } }
