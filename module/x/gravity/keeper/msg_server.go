@@ -500,5 +500,14 @@ func (k msgServer) SubmitBadSignatureEvidence(c context.Context, msg *types.MsgS
 
 	err := k.CheckBadSignatureEvidence(ctx, msg)
 
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyBadEthSignature, fmt.Sprint(msg.Signature)),
+			sdk.NewAttribute(types.AttributeKeyBadEthSignatureSubject, fmt.Sprint(msg.Subject)),
+		),
+	)
+
 	return &types.MsgSubmitBadSignatureEvidenceResponse{}, err
 }
