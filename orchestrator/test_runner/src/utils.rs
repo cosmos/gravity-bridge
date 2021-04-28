@@ -253,13 +253,15 @@ pub async fn start_orchestrators(
                 .unwrap(),
             k.validator_key.to_address("cosmosvaloper").unwrap()
         );
-        let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
+        let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC.as_str())
+            .await
+            .unwrap();
         // we have only one actual futures executor thread (see the actix runtime tag on our main function)
         // but that will execute all the orchestrators in our test in parallel
         thread::spawn(move || {
-            let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
+            let web30 = web30::client::Web3::new(ETH_NODE.as_str(), OPERATION_TIMEOUT);
             let contact = Contact::new(
-                COSMOS_NODE_GRPC,
+                COSMOS_NODE_GRPC.as_str(),
                 OPERATION_TIMEOUT,
                 CosmosAddress::DEFAULT_PREFIX,
             )

@@ -5,8 +5,6 @@
 
 #[macro_use]
 extern crate log;
-#[macro_use]
-extern crate lazy_static;
 
 use crate::bootstrapping::*;
 use crate::utils::*;
@@ -20,6 +18,7 @@ use deep_space::Contact;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use happy_path::happy_path_test;
 use happy_path_v2::happy_path_test_v2;
+use lazy_static::lazy_static;
 use orch_keys_update::orch_keys_update;
 use std::{env, time::Duration};
 use transaction_stress_test::transaction_stress_test;
@@ -39,9 +38,14 @@ const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
 /// the timeout for the total system
 const TOTAL_TIMEOUT: Duration = Duration::from_secs(300);
 
-pub const COSMOS_NODE_GRPC: &str = "http://localhost:9090";
-pub const COSMOS_NODE_ABCI: &str = "http://localhost:26657";
-pub const ETH_NODE: &str = "http://localhost:8545";
+lazy_static! {
+    static ref COSMOS_NODE_GRPC: String =
+        env::var("COSMOS_NODE_GRPC").unwrap_or_else(|_| "http://localhost:9090".to_owned());
+    static ref COSMOS_NODE_ABCI: String =
+        env::var("COSMOS_NODE_ABCI").unwrap_or_else(|_| "http://localhost:26657".to_owned());
+    static ref ETH_NODE: String =
+        env::var("ETH_NODE").unwrap_or_else(|_| "http://localhost:8545".to_owned());
+}
 
 /// this value reflects the contents of /tests/container-scripts/setup-validator.sh
 /// and is used to compute if a stake change is big enough to trigger a validator set
@@ -100,7 +104,7 @@ pub async fn main() {
     env_logger::init();
     info!("Staring Gravity test-runner");
     let contact = Contact::new(
-        COSMOS_NODE_GRPC,
+        COSMOS_NODE_GRPC.as_str(),
         OPERATION_TIMEOUT,
         CosmosAddress::DEFAULT_PREFIX,
     )
@@ -109,8 +113,10 @@ pub async fn main() {
     info!("Waiting for Cosmos chain to come online");
     wait_for_cosmos_online(&contact, TOTAL_TIMEOUT).await;
 
-    let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC).await.unwrap();
-    let web30 = web30::client::Web3::new(ETH_NODE, OPERATION_TIMEOUT);
+    let grpc_client = GravityQueryClient::connect(COSMOS_NODE_GRPC.as_str())
+        .await
+        .unwrap();
+    let web30 = web30::client::Web3::new(ETH_NODE.as_str(), OPERATION_TIMEOUT);
     let keys = get_keys();
 
     // if we detect this env var we are only deploying contracts, do that then exit.
@@ -167,7 +173,7 @@ pub async fn main() {
             return;
         } else if test_type == "BATCH_STRESS" {
             let contact = Contact::new(
-                COSMOS_NODE_GRPC,
+                COSMOS_NODE_GRPC.as_str(),
                 TOTAL_TIMEOUT,
                 CosmosAddress::DEFAULT_PREFIX,
             )
