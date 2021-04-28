@@ -1,7 +1,9 @@
 package types
 
 import (
+	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -169,18 +171,22 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	}
 }
 
+var ErrWrongType = errors.New("invalid type")
+var ErrTooLarge = errors.New("value above bound")
+var ErrTooSmall = errors.New("value below bound")
+
 func validateBoundedUInt64(i interface{}, lower uint64, upper uint64) error {
 	u, ok := i.(uint64)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return sdkerrors.Wrapf(ErrWrongType, fmt.Sprintf("invalid parameter type: %T", i))
 	}
 
 	if u > upper {
-		return fmt.Errorf("parameter value %s larger than bound %s", u, upper)
+		return sdkerrors.Wrapf(ErrTooLarge, fmt.Sprintf("parameter value %d larger than bound %d", u, upper))
 	}
 
 	if u < lower {
-		return fmt.Errorf("parameter value %s smaller than bound %s", u, lower)
+		return sdkerrors.Wrapf(ErrTooSmall, fmt.Sprintf("parameter value %d smaller than bound %d", u, lower))
 	}
 
 	return nil
@@ -189,15 +195,15 @@ func validateBoundedUInt64(i interface{}, lower uint64, upper uint64) error {
 func validateBoundedDec(i interface{}, lower sdk.Dec, upper sdk.Dec) error {
 	d, ok := i.(sdk.Dec)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+		return sdkerrors.Wrapf(ErrWrongType, fmt.Sprintf("invalid parameter type: %T", i))
 	}
 
 	if d.GT(upper) {
-		return fmt.Errorf("parameter value %s larger than bound %s", d, upper)
+		return sdkerrors.Wrapf(ErrTooLarge, fmt.Sprintf("parameter value %s larger than bound %s", d, upper))
 	}
 
 	if d.LT(lower) {
-		return fmt.Errorf("parameter value %s smaller than bound %s", d, lower)
+		return sdkerrors.Wrapf(ErrTooSmall, fmt.Sprintf("parameter value %s smaller than bound %s", d, lower))
 	}
 
 	return nil
@@ -215,44 +221,43 @@ func validateBridgeChainID(i interface{}) error {
 }
 
 func validateTargetBatchTimeout(i interface{}) error {
-	val, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	} else if val < 60000 {
-		return fmt.Errorf("invalid target batch timeout, less than 60 seconds is too short")
+	err := validateBoundedUInt64(i, 60000, math.MaxUint64)
+	if err != nil {
+		if err == ErrTooSmall {
+			return sdkerrors.Wrapf(err, "invalid target batch timeout, less than 60 seconds is too short")
+		}
 	}
-	return nil
+	return err
 }
 
 func validateAverageBlockTime(i interface{}) error {
-	val, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	} else if val < 100 {
-		return fmt.Errorf("invalid average Cosmos block time, too short for latency limitations")
+	err := validateBoundedUInt64(i, 100, math.MaxUint64)
+	if err != nil {
+		if err == ErrTooSmall {
+			return sdkerrors.Wrapf(err, "invalid average Cosmos block time, too short for latency limitations")
+		}
 	}
-	return nil
+	return err
 }
 
 func validateAverageEthereumBlockTime(i interface{}) error {
-	val, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	} else if val < 100 {
-		return fmt.Errorf("invalid average Ethereum block time, too short for latency limitations")
+	err := validateBoundedUInt64(i, 100, math.MaxUint64)
+	if err != nil {
+		if err == ErrTooSmall {
+			return sdkerrors.Wrapf(err, "invalid average Ethereum block time, too short for latency limitations")
+		}
 	}
-	return nil
+	return err
 }
 
 func validateBatchSize(i interface{}) error {
-	val, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+	err := validateBoundedUInt64(i, 1, math.MaxUint64)
+	if err != nil {
+		if err == ErrTooSmall {
+			return sdkerrors.Wrapf(err, "batch tx size cannot be 0")
+		}
 	}
-	if val == 0 {
-		return fmt.Errorf("batch tx size cannot be 0")
-	}
-	return nil
+	return err
 }
 
 func validateBridgeContractAddress(i interface{}) error {
@@ -265,65 +270,33 @@ func validateBridgeContractAddress(i interface{}) error {
 }
 
 func validateSignerSetWindow(i interface{}) error {
-	// TODO: do we want to set some bounds on this value?
-	if _, ok := i.(uint64); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
+	return validateBoundedUInt64(i, 0, math.MaxUint64)
 }
 
 func validateUnbondingWindow(i interface{}) error {
-	// TODO: do we want to set some bounds on this value?
-	if _, ok := i.(uint64); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
+	return validateBoundedUInt64(i, 0, math.MaxUint64)
 }
 
 func validateSlashFractionSignerSet(i interface{}) error {
-	// TODO: do we want to set some bounds on this value?
-	if _, ok := i.(sdk.Dec); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
+	return validateBoundedDec(i, sdk.ZeroDec(), sdk.OneDec())
 }
 
 func validateBatchTxWindow(i interface{}) error {
-	// TODO: do we want to set some bounds on this value?
-	if _, ok := i.(uint64); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
+	return validateBoundedUInt64(i, 0, math.MaxUint64)
 }
 
 func validateEventWindow(i interface{}) error {
-	// TODO: do we want to set some bounds on this value?
-	if _, ok := i.(uint64); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
+	return validateBoundedUInt64(i, 0, math.MaxUint64)
 }
 
 func validateSlashFractionBatch(i interface{}) error {
-	// TODO: do we want to set some bounds on this value?
-	if _, ok := i.(sdk.Dec); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
+	return validateBoundedDec(i, sdk.ZeroDec(), sdk.OneDec())
 }
 
 func validateSlashFractionEvent(i interface{}) error {
-	// TODO: do we want to set some bounds on this value?
-	if _, ok := i.(sdk.Dec); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
+	return validateBoundedDec(i, sdk.ZeroDec(), sdk.OneDec())
 }
 
 func validateSlashFractionConflictingEvent(i interface{}) error {
-	// TODO: do we want to set some bounds on this value?
-	if _, ok := i.(sdk.Dec); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
+	return validateBoundedDec(i, sdk.ZeroDec(), sdk.OneDec())
 }

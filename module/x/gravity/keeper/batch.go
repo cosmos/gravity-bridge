@@ -98,7 +98,7 @@ func (k Keeper) GetBatchTimeoutHeight(ctx sdk.Context) (uint64, error) {
 func (k Keeper) OnBatchTxExecuted(ctx sdk.Context, tokenContract common.Address, batchTxID tmbytes.HexBytes) error {
 	batchTx, found := k.GetBatchTx(ctx, tokenContract, batchTxID)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrTxNotFound, "batch tx for contract %s and tx id %s")
+		return sdkerrors.Wrapf(types.ErrTxNotFound, "batch tx for contract %s and tx id %s", tokenContract.String(), batchTxID.String())
 	}
 
 	// cleanup outgoing transfer tx pool
