@@ -27,7 +27,7 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, validatorAddr.String())
 	}
 
-	// TODO consider impact of maliciously setting duplicate delegate
+	// TODO: consider impact of maliciously setting duplicate delegate
 	// addresses since no signatures from the private keys of these addresses
 	// are required for this message it could be sent in a hostile way.
 
@@ -135,7 +135,7 @@ func (k Keeper) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*ty
 		return nil, err
 	}
 
-	// TODO later make sure that Demon matches a list of tokens already
+	// TODO: later make sure that Demon matches a list of tokens already
 	// in the bridge to send
 
 	ctx.EventManager().EmitEvent(

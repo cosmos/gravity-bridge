@@ -20,11 +20,11 @@ func (k Keeper) ConfirmEvent(ctx sdk.Context, confirm types.Confirm, orchestrato
 
 	switch confirm := confirm.(type) {
 	case *types.ConfirmBatch:
-		checkpoint, err = k.ConfirmBatchTx(ctx, confirm, bridgeID)
+		checkpoint, err = k.CheckpointBatchTx(ctx, confirm, bridgeID)
 	case *types.ConfirmLogicCall:
-		checkpoint, err = k.ConfirmLogicCallTx(ctx, confirm, bridgeID)
+		checkpoint, err = k.CheckpointLogicCallTx(ctx, confirm, bridgeID)
 	case *types.ConfirmSignerSet:
-		checkpoint, err = k.ConfirmEthSignerSet(ctx, confirm, bridgeID)
+		checkpoint, err = k.CheckpointEthSignerSet(ctx, confirm, bridgeID)
 	default:
 		return sdkerrors.Wrapf(types.ErrConfirmUnsupported, "confirm type %s: %T", confirm.GetType(), confirm)
 	}
@@ -50,7 +50,7 @@ func (k Keeper) ConfirmEvent(ctx sdk.Context, confirm types.Confirm, orchestrato
 	return nil
 }
 
-func (k Keeper) ConfirmBatchTx(
+func (k Keeper) CheckpointBatchTx(
 	ctx sdk.Context, confirm *types.ConfirmBatch, bridgeID tmbytes.HexBytes,
 ) ([]byte, error) {
 	// TODO:
@@ -71,7 +71,7 @@ func (k Keeper) ConfirmBatchTx(
 	return batchTx.GetCheckpoint(bridgeID, transfers)
 }
 
-func (k Keeper) ConfirmLogicCallTx(
+func (k Keeper) CheckpointLogicCallTx(
 	ctx sdk.Context, confirm *types.ConfirmLogicCall, bridgeID tmbytes.HexBytes,
 ) ([]byte, error) {
 	logicCallTx, found := k.GetLogicCallTx(ctx, confirm.InvalidationID, confirm.InvalidationNonce)
@@ -82,7 +82,7 @@ func (k Keeper) ConfirmLogicCallTx(
 	return logicCallTx.GetCheckpoint(bridgeID, confirm.InvalidationID, confirm.InvalidationNonce)
 }
 
-func (k Keeper) ConfirmEthSignerSet(
+func (k Keeper) CheckpointEthSignerSet(
 	ctx sdk.Context, confirm *types.ConfirmSignerSet, bridgeID tmbytes.HexBytes,
 ) ([]byte, error) {
 
