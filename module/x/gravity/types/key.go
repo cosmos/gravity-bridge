@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
@@ -83,6 +84,9 @@ var (
 	// KeyOrchestratorAddress indexes the validator keys for an orchestrator
 	KeyOrchestratorAddress = []byte{0xe8}
 
+	// KeyEthOrchAddress indexes the orchestrator for an eth key
+	KeyEthOrchAddress = []byte{0xe9}
+
 	// KeyOutgoingLogicCall indexes the outgoing logic calls
 	KeyOutgoingLogicCall = []byte{0xde}
 
@@ -118,6 +122,13 @@ var (
 // [0xe8][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 func GetOrchestratorAddressKey(orc sdk.AccAddress) []byte {
 	return append(KeyOrchestratorAddress, orc.Bytes()...)
+}
+
+// GetEthOrcAddressKey returns the following key format
+// prefix
+// [0xe9][0xc783df8a850f42e7F7e57013759C285caa701eB6]
+func GetEthOrchAddressKey(ethKey common.Address) []byte {
+	return append(KeyEthOrchAddress, ethKey.Bytes()...)
 }
 
 // GetEthAddressKey returns the following key format

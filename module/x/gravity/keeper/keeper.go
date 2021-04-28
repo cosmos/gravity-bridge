@@ -100,6 +100,22 @@ func (k Keeper) SetEthAddress(ctx sdk.Context, validatorAddr sdk.ValAddress, eth
 	store.Set(types.GetEthAddressKey(validatorAddr), ethereumAddr.Bytes())
 }
 
+// SetEthOrchAddress sets the map[eth]orch to help with lookups
+func (k Keeper) SetEthOrchAddress(ctx sdk.Context, ethAddress common.Address, orcAddress sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetEthOrchAddressKey(ethAddress), orcAddress.Bytes())
+}
+
+// GetEthOrchAddress gets the orchestrator key for a given ethereum key
+func (k Keeper) GetEthOrchAddress(ctx sdk.Context, ethAddress common.Address) (orcAddress sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetEthOrchAddressKey(ethAddress))
+	if len(bz) == 0 {
+		return nil
+	}
+	return sdk.AccAddress(bz)
+}
+
 // GetOrchestratorValidator returns the validator key associated with an orchestrator key
 func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) sdk.ValAddress {
 	store := ctx.KVStore(k.storeKey)

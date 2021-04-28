@@ -31,10 +31,12 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 	// addresses since no signatures from the private keys of these addresses
 	// are required for this message it could be sent in a hostile way.
 
-	// set the orchestrator address
+	// set the orchestrator address (map[orch]val)
 	k.SetOrchestratorValidator(ctx, validatorAddr, orchestratorAddr)
-	// set the ethereum address
+	// set the ethereum address (map[val]eth)
 	k.SetEthAddress(ctx, validatorAddr, ethereumAddr)
+	// set third index (map[eth]orch)
+	k.SetEthOrchAddress(ctx, ethereumAddr, orchestratorAddr)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
