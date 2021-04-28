@@ -23,8 +23,8 @@ const (
 	TypeMsgDepositEvent  = "deposit_event"
 )
 
-// NewMsgSetDelegateKeys returns a new msgSetOrchestratorAddress
-func NewMsgSetDelegateKeys(val sdk.ValAddress, oper sdk.AccAddress, eth string) *MsgDelegateKey {
+// NewMsgDelegateKey returns a new msgSetOrchestratorAddress
+func NewMsgDelegateKey(val sdk.ValAddress, oper sdk.AccAddress, eth string) *MsgDelegateKey {
 	return &MsgDelegateKey{
 		ValidatorAddress:    val.String(),
 		OrchestratorAddress: oper.String(),

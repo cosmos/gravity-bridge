@@ -3,34 +3,50 @@ package types
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func TestValidateGravityDenomIncorrectValues(t *testing.T) {
-	err := ValidateGravityDenom("fake/denom")
-	require.Errorf(t, err, "invalid denom prefix accepted")
-
-	err = ValidateGravityDenom("gravity/fakedenom")
-	require.Errorf(t, err, "invalid denom accepted")
-}
-
-func TestValidateGravityDenomCorrectValues(t *testing.T) {
-	err := ValidateGravityDenom("gravity/test-denom")
-	require.Errorf(t, err, "valid denom prefix not accepted")
-
-	err = ValidateGravityDenom("testdenom")
-	require.NoError(t, err, "valid existing denom not accepted")
-
+func newEthAddress() (*common.Address, error) {
 	privateKey, err := crypto.GenerateKey()
-	require.NoError(t, err, "failed to generate new crypto address")
+	if err != nil {
+		return nil, err
+	}
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		t.Errorf("failed casting public key to ECDSA")
+		return nil, fmt.Errorf("failed casting public key to ECDSA")
 	}
 	address := crypto.PubkeyToAddress(*publicKeyECDSA)
+	return &address, nil
+}
+
+
+func TestValidateGravityDenom(t *testing.T) {
+	testCases := []struct {
+		name string
+		denom string
+		expError bool
+	}{
+		{"invalid denom prefix", "fake/denom", true },
+		{"invalid format, correct prefix, no address", "gravity/test-denom", true},
+		{"valid existing denom", "testdenom", false},
+	}
+	for _, tc := range testCases {
+		err := ValidateGravityDenom(tc.denom)
+		if tc.expError {
+			require.Error(t, err, tc.name)
+		} else {
+			require.NoError(t, err, tc.name)
+		}
+	}
+}
+
+func TestValidateGravityDenomWithAddress(t *testing.T) {
+	address, err := newEthAddress()
+	require.NoError(t, err, "unable to generate eth address")
 
 	denom := fmt.Sprintf("gravity/%s", address.Hex())
 	err = ValidateGravityDenom(denom)
