@@ -1,6 +1,8 @@
 package types
 
 import (
+	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/gogo/protobuf/proto"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -91,6 +93,94 @@ func TestMsgTransfer_ValidateBasic(t *testing.T) {
 	for _, tc := range testCases {
 		mt := MsgTransfer{tc.sender, tc.eth, tc.amount, tc.bridgeFee}
 		err := mt.ValidateBasic()
+		if tc.expError {
+			require.Error(t, err, tc.name)
+		} else {
+			require.NoError(t, err, tc.name)
+		}
+	}
+}
+
+func TestMsgRequestBatch_ValidateBasic(t *testing.T) {
+	orchCryptoAddr, err := newCosmosAddress()
+	require.NoError(t, err, "unable to generate cosmos address")
+	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
+	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
+
+	testCases := []struct{
+		name string
+		orch string
+		denom string
+		expError bool
+	}{
+		{"valid input", orchAddr.String(), "testcoin", false},
+		{"invalid denom", orchAddr.String(), "gravity/broken", true},
+		{"no orchestrator", "not an addr", "testcoin", true},
+	}
+
+	for _, tc := range testCases {
+		mrb := MsgRequestBatch{tc.orch, tc.denom}
+		err := mrb.ValidateBasic()
+		if tc.expError {
+			require.Error(t, err, tc.name)
+		} else {
+			require.NoError(t, err, tc.name)
+		}
+	}
+}
+
+func TestMsgCancelTransfer_ValidateBasic(t *testing.T) {
+	orchCryptoAddr, err := newCosmosAddress()
+	require.NoError(t, err, "unable to generate cosmos address")
+	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
+	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
+
+	testCases := []struct{
+		name string
+		sender string
+		txid []byte
+		expError bool
+	}{
+		{"valid input", orchAddr.String(), []byte("10"), false},
+		{"invalid transaction ID", orchAddr.String(), []byte(""), true},
+		{"no sender", "not an addr", []byte("10"), true},
+	}
+
+	for _, tc := range testCases {
+		mct := MsgCancelTransfer{tc.txid, tc.sender}
+		err := mct.ValidateBasic()
+		if tc.expError {
+			require.Error(t, err, tc.name)
+		} else {
+			require.NoError(t, err, tc.name)
+		}
+	}
+}
+
+func TestMsgSubmitConfirm_ValidateBasic(t *testing.T) {
+	orchCryptoAddr, err := newCosmosAddress()
+	require.NoError(t, err, "unable to generate cosmos address")
+	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
+	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
+	ethAddr, err := newEthAddress()
+	require.NoError(t, err, "unable to generate ethereum address")
+
+	testCases := []struct{
+		name string
+		signer string
+		confirm interface{}
+		expError bool
+	}{
+		{"valid input", orchAddr.String(), ConfirmSignerSet{12, ethAddr.String(), orchAddr.String(), []byte("signature")}, false},
+		{"no confirm", orchAddr.String(), nil, true},
+		{"no signer", "not an addr", ConfirmSignerSet{12, ethAddr.String(), orchAddr.String(), []byte("signature")}, true},
+	}
+
+	for _, tc := range testCases {
+		any, err := types.NewAnyWithValue(tc.confirm.(proto.Message))
+		require.NoError(t, err, tc.name)
+		msc := MsgSubmitConfirm{any, tc.signer}
+		err = msc.ValidateBasic()
 		if tc.expError {
 			require.Error(t, err, tc.name)
 		} else {
