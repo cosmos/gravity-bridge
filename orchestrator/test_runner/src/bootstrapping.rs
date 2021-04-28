@@ -115,8 +115,8 @@ pub async fn deploy_contracts(contact: &Contact) {
         let paths = return_existing(A, B);
         Command::new(paths[0])
             .args(&[
-                &format!("--cosmos-node={}", COSMOS_NODE_ABCI),
-                &format!("--eth-node={}", ETH_NODE),
+                &format!("--cosmos-node={}", COSMOS_NODE_ABCI.as_str()),
+                &format!("--eth-node={}", ETH_NODE.as_str()),
                 &format!("--eth-privkey={:#x}", *MINER_PRIVATE_KEY),
                 &format!("--contract={}", paths[1]),
                 "--test-mode=true",
@@ -128,8 +128,8 @@ pub async fn deploy_contracts(contact: &Contact) {
             .args(&[
                 "ts-node",
                 C[0],
-                &format!("--cosmos-node={}", COSMOS_NODE_ABCI),
-                &format!("--eth-node={}", ETH_NODE),
+                &format!("--cosmos-node={}", COSMOS_NODE_ABCI.as_str()),
+                &format!("--eth-node={}", ETH_NODE.as_str()),
                 &format!("--eth-privkey={:#x}", *MINER_PRIVATE_KEY),
                 &format!("--contract={}", C[1]),
                 "--test-mode=true",
