@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"strconv"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
@@ -11,10 +13,12 @@ import (
 // EndBlocker is called at the end of every block
 func (k Keeper) EndBlocker(ctx sdk.Context) {
 	// Question: what here can be epoched?
-	k.slash(ctx)
+	params := k.GetParams(ctx)
+
+	k.slash(ctx, params)
 	k.tallyAttestations(ctx)
 	k.timeoutTxs(ctx)
-	k.createEthSignerSet(ctx)
+	k.createEthSignerSet(ctx, params)
 }
 
 // Iterate over all attestations and tally the current result.
@@ -63,11 +67,38 @@ func (k Keeper) timeoutTxs(ctx sdk.Context) {
 //    This will make sure the unbonding validator has to provide an attestation to a new Valset
 //      that excludes him before he completely Unbonds.  Otherwise he will be slashed
 // 3. If power change between validators of CurrentValset and latest valset request is > 5% // TODO: define percentage on params?
-func (k Keeper) createEthSignerSet(ctx sdk.Context) {
-	latestValset := k.GetLatestValset(ctx)
-	lastUnbondingHeight := k.GetLastUnbondingBlockHeight(ctx)
-
-	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
-		k.SetValsetRequest(ctx)
+func (k Keeper) createEthSignerSet(ctx sdk.Context, params types.Params) {
+	latestSignerSet, nonce, found := k.GetLatestEthSignerSet(ctx)
+	if !found || len(latestSignerSet.Signers) == 0 {
+		k.Logger(ctx).Debug("no signer set", "nonce", strconv.FormatUint(nonce, 64))
+		k.SetEthSignerSetRequest(ctx)
+		return
 	}
+
+	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
+
+	if lastUnbondingHeight == uint64(ctx.BlockHeight()) {
+		k.Logger(ctx).Debug("validator unbonding", "height", strconv.FormatInt(ctx.BlockHeight(), 64))
+		k.SetEthSignerSetRequest(ctx)
+		return
+	}
+
+	currentSignerSet := k.GetCurrentEthSignerSet(ctx)
+	if len(currentSignerSet.Signers) == 0 {
+		k.Logger(ctx).Debug("current signer set is empty", "height", strconv.FormatUint(currentSignerSet.Height, 64))
+		return
+	}
+
+	currentPower := sdk.NewDec(currentSignerSet.Signers.TotalPower())
+	latestPower := sdk.NewDec(latestSignerSet.Signers.TotalPower())
+
+	powerDiff := latestPower.Sub(currentPower).Abs().QuoInt64(100)
+
+	if powerDiff.LTE(params.MaxSignerSetPowerDiff) {
+		// power difference is below threshold, don't submit request
+		return
+	}
+
+	k.Logger(ctx).Debug("signer set power diff larger than threshold", "diff", powerDiff.String())
+	k.SetEthSignerSetRequest(ctx)
 }

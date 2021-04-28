@@ -15,7 +15,7 @@ message Params {
   // address of the bridge contract on the EVM chain
   string bridge_contract_address = 1;
   // unique identifier of the EVM chain
-  uint64 bridge_chain_id = 2;
+  uint64 bridge_chain_id = 2 [(gogoproto.customname) = "BridgeChainID"];
   // target value for when batch transactions time out on Ethereum
   uint64 target_batch_timeout = 3;
   // Average Cosmos block time used to compute batch timeout
@@ -23,7 +23,7 @@ message Params {
   // Average ethereum block time used to compute batch timeout
   uint64 average_ethereum_block_time = 5;
   // amount of blocks of the rolling window required to submit a signature for a signer set confirmation.
-  uint64 signerset_window = 6;
+  uint64 signer_set_window = 6;
   // amount of blocks of the rolling window required to submit a signature for a batch transaction.
   uint64 batch_tx_window = 7;
   // amount of blocks of the rolling window required to attest an ethereum event.
@@ -32,7 +32,7 @@ message Params {
   // max amount of transactions batched
   uint64 batch_size     = 10;
   // slashing fraction for not signing a signerset confirmation
-  string slash_fraction_signerset = 11
+  string slash_fraction_signer_set = 11
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
   // slashing fraction for not signing an outgoing batch transaction to ethereum
   string slash_fraction_batch = 12
@@ -42,6 +42,10 @@ message Params {
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
   // slashing fraction for submitting a conflicting event from Ethereum
   string slash_fraction_conflicting_event = 14
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  // maximum allowed power difference between the latest and the current ethereum 
+  // signer set before submitting a new signer set update request.
+  string max_signer_set_power_diff = 15
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }
 
@@ -56,18 +60,28 @@ message ERC20ToDenom {
 
 // GenesisState struct
 message GenesisState {
-  Params                params              = 1 [(gogoproto.nullable) = false];
-  uint64                last_observed_nonce = 2;
-  repeated EthSignerSet signersets          = 3 [(gogoproto.nullable) = false];
-  // requested batc transactions
-  repeated BatchTx     batch_txs      = 4 [(gogoproto.nullable) = false];
-  repeated LogicCallTx logic_call_txs = 5 [(gogoproto.nullable) = false];
+// bridge id is a random 32 byte salt value to prevent signature reuse across different
+// instances of the ethereum bridge. This value IS USED on the bridge smart
+// contracts.
+//
+// TODO: is this like the IBC client ID but for the bridge?
+  bytes bridge_id = 1 [(gogoproto.customname) = "BridgeID"];
+  Params                params              = 2 [(gogoproto.nullable) = false];
+  uint64                last_observed_nonce = 3;
+  repeated EthSignerSet signer_sets          = 4 [(gogoproto.nullable) = false];
+  // requested batch transactions
+  repeated BatchTx     batch_txs      = 5 [(gogoproto.nullable) = false];
+  repeated LogicCallTx logic_call_txs = 6 [(gogoproto.nullable) = false];
   // unbatched transfer transactions
-  repeated TransferTx       transfer_txs        = 6 [(gogoproto.nullable) = false];
-  repeated ConfirmSignerSet valset_confirms     = 7 [(gogoproto.nullable) = false];
-  repeated ConfirmBatch     batch_confirms      = 8 [(gogoproto.nullable) = false];
-  repeated ConfirmLogicCall logic_call_confirms = 9 [(gogoproto.nullable) = false];
-  repeated Attestation      attestations        = 10 [(gogoproto.nullable) = false];
-  repeated MsgDelegateKey   delegate_keys       = 11 [(gogoproto.nullable) = false];
-  repeated ERC20ToDenom     erc20_to_denoms     = 12 [(gogoproto.nullable) = false];
+  repeated TransferTx       transfer_txs        = 7 [(gogoproto.nullable) = false];
+  // TODO: use any for confirms
+
+  repeated ConfirmSignerSet signer_set_confirms     = 8 [(gogoproto.nullable) = false];
+  repeated ConfirmBatch     batch_confirms      = 9 [(gogoproto.nullable) = false];
+  repeated ConfirmLogicCall logic_call_confirms = 10 [(gogoproto.nullable) = false];
+  repeated Attestation      attestations        = 11 [(gogoproto.nullable) = false];
+  // TODO: proto.Any ethereum eventss
+
+  repeated MsgDelegateKey   delegate_keys       = 12 [(gogoproto.nullable) = false];
+  repeated ERC20ToDenom     erc20_to_denoms     = 13 [(gogoproto.nullable) = false];
 }

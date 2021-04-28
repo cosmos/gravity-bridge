@@ -5,12 +5,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
 // Gravity slashes validator orchestrators for not confirming the current validator set or not
 // building batch transactions for ERC20 tokens. The slash factor is defined on the module parameters
 // (default 0.1%).
-func (k Keeper) slash(ctx sdk.Context) {
+func (k Keeper) slash(ctx sdk.Context, params types.Params) {
 	// params := k.GetParams(ctx)
 
 	// iterate validators by power in DESC order
@@ -26,7 +27,7 @@ func (k Keeper) slash(ctx sdk.Context) {
 
 		_, exist := k.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
 		if exist {
-			k.Logger(ctx).Debug("signing not found for validator", "consensus-address", consAddr.String())
+			k.Logger(ctx).Debug("signing info not found for validator", "consensus-address", consAddr.String())
 			return false
 		}
 

@@ -27,7 +27,7 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, validatorAddr.String())
 	}
 
-	// TODO consider impact of maliciously setting duplicate delegate
+	// TODO: consider impact of maliciously setting duplicate delegate
 	// addresses since no signatures from the private keys of these addresses
 	// are required for this message it could be sent in a hostile way.
 
@@ -50,6 +50,7 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*types.MsgSubmitEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
+	// NOTE: error checked on msg validate basic
 	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Signer)
 
 	event, err := types.UnpackEvent(msg.Event)
@@ -64,17 +65,38 @@ func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*type
 	return &types.MsgSubmitEventResponse{}, nil
 }
 
+// FIXME:
 func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(c)
+	ctx := sdk.UnwrapSDKContext(c)
 
-	// orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Signer)
+	// NOTE: error checked on msg validate basic
+	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Signer)
+	validatorAddr := k.GetOrchestratorValidator(ctx, orchestratorAddr)
+	if validatorAddr == nil {
+		return nil, sdkerrors.Wrapf(stakingtypes.ErrNoValidatorFound, "orchestrator address %s", orchestratorAddr)
+	}
 
-	// confirm, err := types.UnpackConfirm(msg.Confirm)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	ethAddress := k.GetEthAddress(ctx, validatorAddr)
+	if (ethAddress == common.Address{}) {
+		return nil, sdkerrors.Wrap(types.ErrValidatorEthAddressNotFound, validatorAddr.String())
+	}
 
-	// TODO:
+	confirm, err := types.UnpackConfirm(msg.Confirm)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := k.ConfirmEvent(ctx, confirm, orchestratorAddr, ethAddress); err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyConfirmType, confirm.GetType()),
+		),
+	)
 
 	return &types.MsgSubmitConfirmResponse{}, nil
 }
@@ -113,7 +135,7 @@ func (k Keeper) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*ty
 		return nil, err
 	}
 
-	// TODO later make sure that Demon matches a list of tokens already
+	// TODO: later make sure that Demon matches a list of tokens already
 	// in the bridge to send
 
 	ctx.EventManager().EmitEvent(

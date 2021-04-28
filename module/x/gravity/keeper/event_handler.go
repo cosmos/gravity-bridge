@@ -22,7 +22,7 @@ func (k Keeper) HandleEthEvent(ctx sdk.Context, event types.EthereumEvent, orche
 	if validator == nil {
 		return sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, validatorAddr.String())
 	} else if !validator.IsBonded() {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "validator %s not in active set", validatorAddr)
+		return sdkerrors.Wrapf(types.ErrValidatorNotBonded, "validator %s not in active set", validatorAddr)
 	}
 
 	// Add the event to the store

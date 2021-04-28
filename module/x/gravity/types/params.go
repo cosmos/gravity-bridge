@@ -29,8 +29,8 @@ var (
 	// ParamsStoreKeyBridgeContractChainID stores the bridge chain id
 	ParamsStoreKeyBridgeContractChainID = []byte("BridgeChainID")
 
-	// ParamsStoreKeySignersetWindow stores the signed blocks window
-	ParamsStoreKeySignersetWindow = []byte("SignersetWindow")
+	// ParamsStoreKeySignerSetWindow stores the signed blocks window
+	ParamsStoreKeySignerSetWindow = []byte("SignerSetWindow")
 
 	// ParamsStoreKeyBatchTxWindow stores the signed blocks window
 	ParamsStoreKeyBatchTxWindow = []byte("BatchTxWindow")
@@ -50,8 +50,8 @@ var (
 	// ParamsStoreKeyAverageEthereumBlockTime stores the signed blocks window
 	ParamsStoreKeyAverageEthereumBlockTime = []byte("AverageEthereumBlockTime")
 
-	// ParamsStoreSlashFractionSignerset stores the slash fraction valset
-	ParamsStoreSlashFractionSignerset = []byte("SlashFractionSignerset")
+	// ParamsStoreSlashFractionSignerSet stores the slash fraction valset
+	ParamsStoreSlashFractionSignerSet = []byte("SlashFractionSignerSet")
 
 	// ParamsStoreSlashFractionBatch stores the slash fraction Batch
 	ParamsStoreSlashFractionBatch = []byte("SlashFractionBatch")
@@ -65,6 +65,10 @@ var (
 	// ParamStoreUnbondingWindow stores unbond slashing valset window
 	ParamStoreUnbondingWindow = []byte("UnbondingWindow")
 
+	// ParamStoreMaxSignerSetPowerDiff stores the power diff threshold value for
+	// the ethereum signer sets
+	ParamStoreMaxSignerSetPowerDiff = []byte("MaxSignerSetPowerDiff")
+
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
 )
@@ -73,19 +77,20 @@ var (
 func DefaultParams() Params {
 	return Params{
 		BridgeContractAddress:         common.Address{}.String(),
-		BridgeChainId:                 1, // Ethereum Mainnet
-		SignersetWindow:               10000,
+		BridgeChainID:                 1, // Ethereum Mainnet
+		SignerSetWindow:               10000,
 		BatchTxWindow:                 10000,
 		EventWindow:                   10000,
 		TargetBatchTimeout:            43200000,
 		AverageBlockTime:              5000,
 		AverageEthereumBlockTime:      15000,
 		BatchSize:                     100,
-		SlashFractionSignerset:        sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		SlashFractionBatch:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		SlashFractionEvent:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		SlashFractionConflictingEvent: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		SlashFractionSignerSet:        sdk.NewDecWithPrec(1, 3),
+		SlashFractionBatch:            sdk.NewDecWithPrec(1, 3),
+		SlashFractionEvent:            sdk.NewDecWithPrec(1, 3),
+		SlashFractionConflictingEvent: sdk.NewDecWithPrec(1, 3),
 		UnbondingWindow:               10000,
+		MaxSignerSetPowerDiff:         sdk.NewDecWithPrec(5, 2),
 	}
 }
 
@@ -94,7 +99,7 @@ func (p Params) ValidateBasic() error {
 	if err := validateBridgeContractAddress(p.BridgeContractAddress); err != nil {
 		return sdkerrors.Wrap(err, "bridge contract address")
 	}
-	if err := validateBridgeChainID(p.BridgeChainId); err != nil {
+	if err := validateBridgeChainID(p.BridgeChainID); err != nil {
 		return sdkerrors.Wrap(err, "bridge chain id")
 	}
 	if err := validateTargetBatchTimeout(p.TargetBatchTimeout); err != nil {
@@ -109,7 +114,7 @@ func (p Params) ValidateBasic() error {
 	if err := validateBatchSize(p.BatchSize); err != nil {
 		return sdkerrors.Wrap(err, "batch size")
 	}
-	if err := validateSignersetWindow(p.SignersetWindow); err != nil {
+	if err := validateSignerSetWindow(p.SignerSetWindow); err != nil {
 		return sdkerrors.Wrap(err, "signed blocks window")
 	}
 	if err := validateBatchTxWindow(p.BatchTxWindow); err != nil {
@@ -118,7 +123,7 @@ func (p Params) ValidateBasic() error {
 	if err := validateEventWindow(p.EventWindow); err != nil {
 		return sdkerrors.Wrap(err, "signed blocks window")
 	}
-	if err := validateSlashFractionSignerset(p.SlashFractionSignerset); err != nil {
+	if err := validateSlashFractionSignerSet(p.SlashFractionSignerSet); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction valset")
 	}
 	if err := validateSlashFractionBatch(p.SlashFractionBatch); err != nil {
@@ -147,19 +152,20 @@ func ParamKeyTable() paramtypes.KeyTable {
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractAddress, &p.BridgeContractAddress, validateBridgeContractAddress),
-		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainId, validateBridgeChainID),
-		paramtypes.NewParamSetPair(ParamsStoreKeySignersetWindow, &p.SignersetWindow, validateSignersetWindow),
+		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainID, validateBridgeChainID),
+		paramtypes.NewParamSetPair(ParamsStoreKeySignerSetWindow, &p.SignerSetWindow, validateSignerSetWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeyBatchTxWindow, &p.BatchTxWindow, validateBatchTxWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeyEventWindow, &p.EventWindow, validateEventWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeyAverageBlockTime, &p.AverageBlockTime, validateAverageBlockTime),
 		paramtypes.NewParamSetPair(ParamsStoreKeyTargetBatchTimeout, &p.TargetBatchTimeout, validateTargetBatchTimeout),
 		paramtypes.NewParamSetPair(ParamsStoreKeyAverageEthereumBlockTime, &p.AverageEthereumBlockTime, validateAverageEthereumBlockTime),
 		paramtypes.NewParamSetPair(ParamsStoreKeyBatchSize, &p.BatchSize, validateBatchSize),
-		paramtypes.NewParamSetPair(ParamsStoreSlashFractionSignerset, &p.SlashFractionSignerset, validateSlashFractionSignerset),
+		paramtypes.NewParamSetPair(ParamsStoreSlashFractionSignerSet, &p.SlashFractionSignerSet, validateSlashFractionSignerSet),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionBatch, &p.SlashFractionBatch, validateSlashFractionBatch),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionEvent, &p.SlashFractionEvent, validateSlashFractionEvent),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionConflictingEvent, &p.SlashFractionConflictingEvent, validateSlashFractionConflictingEvent),
 		paramtypes.NewParamSetPair(ParamStoreUnbondingWindow, &p.UnbondingWindow, validateUnbondingWindow),
+		paramtypes.NewParamSetPair(ParamStoreMaxSignerSetPowerDiff, &p.MaxSignerSetPowerDiff, validateSlashFractionSignerSet),
 	}
 }
 
@@ -258,7 +264,7 @@ func validateBridgeContractAddress(i interface{}) error {
 	return ValidateEthAddress(v)
 }
 
-func validateSignersetWindow(i interface{}) error {
+func validateSignerSetWindow(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -274,7 +280,7 @@ func validateUnbondingWindow(i interface{}) error {
 	return nil
 }
 
-func validateSlashFractionSignerset(i interface{}) error {
+func validateSlashFractionSignerSet(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(sdk.Dec); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

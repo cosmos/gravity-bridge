@@ -6,7 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -15,50 +16,37 @@ const signaturePrefix = "\x19Ethereum Signed Message:\n32"
 // NewEthereumSignature creates a new signuature over a given byte array
 func NewEthereumSignature(hash []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	if privateKey == nil {
-		return nil, sdkerrors.Wrap(ErrEmpty, "private key")
+		return nil, fmt.Errorf("private key cannot be empty")
 	}
+
 	protectedHash := crypto.Keccak256Hash(append([]uint8(signaturePrefix), hash...))
 	return crypto.Sign(protectedHash.Bytes(), privateKey)
 }
 
-// ValidateEthereumSignature takes a message, an associated signature and public key and
-// returns an error if the signature isn't valid
-func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress string) error {
-	if len(signature) < 65 {
-		return sdkerrors.Wrap(ErrInvalid, "signature too short")
+// EcRecover returns the address for the account that was used to create the signature.
+// Note, this function is compatible with eth_sign and personal_sign. As such it recovers
+// the address of:
+// hash = keccak256("\x19Ethereum Signed Message:\n"${message length}${message})
+// addr = ecrecover(hash, signature)
+//
+// Note, the signature must conform to the secp256k1 curve R, S and V values, where
+// the V value must be 27 or 28 for legacy reasons.
+//
+// https://github.com/ethereum/go-ethereum/wiki/Management-APIs#personal_ecRecover
+func EcRecover(data, sig []byte) (common.Address, error) {
+	if len(sig) != crypto.SignatureLength {
+		return common.Address{}, fmt.Errorf("signature must be %d bytes long", crypto.SignatureLength)
 	}
-	// To verify signature
-	// - use crypto.SigToPub to get the public key
-	// - use crypto.PubkeyToAddress to get the address
-	// - compare this to the address given.
-
-	// for backwards compatibility reasons  the V value of an Ethereum sig is presented
-	// as 27 or 28, internally though it should be a 0-3 value due to changed formats.
-	// It seems that go-ethereum expects this to be done before sigs actually reach it's
-	// internal validation functions. In order to comply with this requirement we check
-	// the sig an dif it's in standard format we correct it. If it's in go-ethereum's expected
-	// format already we make no changes.
-	//
-	// We could attempt to break or otherwise exit early on obviously invalid values for this
-	// byte, but that's a task best left to go-ethereum
-	if signature[64] == 27 || signature[64] == 28 {
-		signature[64] -= 27
+	if sig[crypto.RecoveryIDOffset] != 27 && sig[crypto.RecoveryIDOffset] != 28 {
+		return common.Address{}, fmt.Errorf("invalid Ethereum signature (V is not 27 or 28)")
 	}
+	sig[crypto.RecoveryIDOffset] -= 27 // Transform yellow paper V from 27/28 to 0/1
 
-	protectedHash := crypto.Keccak256Hash(append([]uint8(signaturePrefix), hash...))
-
-	pubkey, err := crypto.SigToPub(protectedHash.Bytes(), signature)
+	pubKey, err := crypto.SigToPub(accounts.TextHash(data), sig)
 	if err != nil {
-		return sdkerrors.Wrap(err, "signature to public key")
+		return common.Address{}, err
 	}
-
-	addr := crypto.PubkeyToAddress(*pubkey)
-
-	if addr.Hex() != ethAddress {
-		return sdkerrors.Wrap(ErrInvalid, "signature not matching")
-	}
-
-	return nil
+	return crypto.PubkeyToAddress(*pubKey), nil
 }
 
 // ValidateEthAddress validates an ethereum address in hex format.
@@ -67,7 +55,7 @@ func ValidateEthAddress(address string) error {
 		return fmt.Errorf("empty address")
 	}
 	if len(address) != ETHContractAddressLen {
-		return fmt.Errorf("address(%s) of the wrong length exp(%d) actual(%d)", address, len(address), ETHContractAddressLen)
+		return fmt.Errorf("invalid address length for %s; expected %d, got %d", address, len(address), ETHContractAddressLen)
 	}
 	if !regexp.MustCompile("^0x[0-9a-fA-F]{40}$").MatchString(address) {
 		return fmt.Errorf("address %s has an invalid hex format", address)

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,7 +49,11 @@ func (k Keeper) CancelLogicCallTx(ctx sdk.Context, invalidationID tmbytes.HexByt
 		),
 	)
 
-	k.Logger(ctx).Debug("logic call tx cancelled")
+	k.Logger(ctx).Debug(
+		"logic call tx cancelled",
+		"invalidation-id", invalidationID.String(),
+		"invalidation-nonce", strconv.FormatUint(invalidationNonce, 64),
+	)
 }
 
 // IterateLogicCallTxs iterates over outgoing logic calls

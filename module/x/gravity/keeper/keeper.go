@@ -33,7 +33,6 @@ type Keeper struct {
 func NewKeeper(
 	cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace,
 	stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper, slashingKeeper types.SlashingKeeper,
-	attestationHandler AttestationHandler,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
@@ -41,19 +40,44 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:                cdc,
-		paramSpace:         paramSpace,
-		storeKey:           storeKey,
-		bankKeeper:         bankKeeper,
-		slashingKeeper:     slashingKeeper,
-		stakingKeeper:      stakingKeeper,
-		attestationHandler: attestationHandler,
+		cdc:            cdc,
+		paramSpace:     paramSpace,
+		storeKey:       storeKey,
+		bankKeeper:     bankKeeper,
+		slashingKeeper: slashingKeeper,
+		stakingKeeper:  stakingKeeper,
 	}
+}
+
+// SetAttestationHandler sets an attestation handler for the bridge module. This function panics if
+// the attestation handler is already set
+func (k *Keeper) SetAttestationHandler(handler AttestationHandler) {
+	if k.attestationHandler != nil {
+		panic("attestation handler already set")
+	}
+
+	if handler == nil {
+		panic("attestation handler provided cannot be nil")
+	}
+
+	k.attestationHandler = handler
 }
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// GetBridgeID returns the BridgeID.
+func (k Keeper) GetBridgeID(ctx sdk.Context) tmbytes.HexBytes {
+	store := ctx.KVStore(k.storeKey)
+	return store.Get(types.BridgeIDKey)
+}
+
+// SetBridgeID sets the BridgeID value to store
+func (k Keeper) SetBridgeID(ctx sdk.Context, ID tmbytes.HexBytes) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.BridgeIDKey, ID)
 }
 
 // GetEthAddress returns the eth address for a given gravity validatorAddr

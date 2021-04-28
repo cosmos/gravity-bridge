@@ -28,13 +28,20 @@ type AttestationHandler interface {
 	OnAttestation(ctx sdk.Context, attestation types.Attestation) error
 }
 
+var _ AttestationHandler = DefaultAttestationHandler{}
+
 // DefaultAttestationHandler is the default handler for processing observed
 // event attestations received from Ethereum.
 type DefaultAttestationHandler struct {
 	keeper Keeper
 }
 
-var _ AttestationHandler = DefaultAttestationHandler{}
+// NewAttestationHandler creates a default attestation handler instance
+func NewAttestationHandler(k Keeper) AttestationHandler {
+	return &DefaultAttestationHandler{
+		keeper: k,
+	}
+}
 
 // OnAttestation processes ethereum event upon attestation and performs a custom
 // logic.
@@ -43,8 +50,7 @@ var _ AttestationHandler = DefaultAttestationHandler{}
 func (h DefaultAttestationHandler) OnAttestation(ctx sdk.Context, attestation types.Attestation) error {
 	event, found := h.keeper.GetEthereumEvent(ctx, attestation.EventID)
 	if !found {
-		// TODO: err msg
-		return fmt.Errorf("not found")
+		return sdkerrors.Wrap(types.ErrEventNotFound, attestation.EventID.String())
 	}
 
 	switch event := event.(type) {
@@ -56,11 +62,8 @@ func (h DefaultAttestationHandler) OnAttestation(ctx sdk.Context, attestation ty
 	case *types.CosmosERC20DeployedEvent:
 		return h.keeper.RegisterERC20(ctx, event)
 	default:
-		// TODO: fix errors
-		return sdkerrors.Wrapf(types.ErrNonContiguousEventNonce, "unsupported event type %s: %T", event.GetType(), event)
+		return sdkerrors.Wrapf(types.ErrEventUnsupported, "event type %s: %T", event.GetType(), event)
 	}
-
-	return nil
 }
 
 // OnReceiveDeposit
@@ -97,8 +100,7 @@ func (k Keeper) RegisterERC20(ctx sdk.Context, event *types.CosmosERC20DeployedE
 	contractAddr, found := k.GetERC20ContractFromCoinDenom(ctx, event.CosmosDenom)
 	if found {
 		return sdkerrors.Wrap(
-			// TODO: fix
-			types.ErrContractNotFound,
+			types.ErrContractExists,
 			fmt.Sprintf("erc20 contract %s already registered for coin denom %s", contractAddr.String(), event.CosmosDenom))
 	}
 
@@ -130,15 +132,13 @@ func validateCoinMetadata(event types.CosmosERC20DeployedEvent, metadata banktyp
 	// Check if attributes of ERC20 match Cosmos denom
 	if event.Name != metadata.Display {
 		return sdkerrors.Wrapf(
-			// TODO: fix
-			types.ErrContractNotFound,
+			types.ErrEventInvalid,
 			"ERC20 name %s does not match denom display %s", event.Name, metadata.Description)
 	}
 
 	if event.Symbol != metadata.Display {
 		return sdkerrors.Wrapf(
-			// TODO: fix
-			types.ErrContractNotFound,
+			types.ErrEventInvalid,
 			"ERC20 symbol %s does not match denom display %s", event.Symbol, metadata.Display)
 	}
 
@@ -147,8 +147,7 @@ func validateCoinMetadata(event types.CosmosERC20DeployedEvent, metadata banktyp
 
 	if decimals != uint32(event.Decimals) {
 		return sdkerrors.Wrapf(
-			// TODO: fix
-			types.ErrContractNotFound,
+			types.ErrEventInvalid,
 			"ERC20 decimals %d does not match denom decimals %d", event.Decimals, decimals)
 	}
 

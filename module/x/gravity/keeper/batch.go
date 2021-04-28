@@ -26,7 +26,10 @@ func (k Keeper) CreateBatchTx(ctx sdk.Context, contractAddress common.Address) (
 	// TODO: mark the transfer txs as batched
 	txs := k.SelectTransferTxs(ctx, contractAddress)
 	if len(txs) == 0 {
-		return nil, sdkerrors.Wrapf(types.ErrEmpty, "batch tx failed for address %s", contractAddress)
+		return nil, sdkerrors.Wrapf(
+			types.ErrTxNotFound,
+			"transfer transaction pool is currently empty for token address %s", contractAddress,
+		)
 	}
 
 	timeoutHeight, err := k.GetBatchTimeoutHeight(ctx)
@@ -95,8 +98,7 @@ func (k Keeper) GetBatchTimeoutHeight(ctx sdk.Context) (uint64, error) {
 func (k Keeper) OnBatchTxExecuted(ctx sdk.Context, tokenContract common.Address, batchTxID tmbytes.HexBytes) error {
 	batchTx, found := k.GetBatchTx(ctx, tokenContract, batchTxID)
 	if !found {
-		// TODO: fix error msg
-		return sdkerrors.Wrapf(types.ErrOutgoingTxNotFound, "contract %s and tx id %s")
+		return sdkerrors.Wrapf(types.ErrTxNotFound, "batch tx for contract %s and tx id %s")
 	}
 
 	// cleanup outgoing transfer tx pool
@@ -215,7 +217,7 @@ func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract common.Address, txI
 			// TODO: panic? this shouldn't happen regardless because we only delete transfer txs from
 			// the store once the OnBatchTxExecuted callback is executed
 			sdkerrors.Wrapf(
-				types.ErrOutgoingTxNotFound, // TODO: fix
+				types.ErrTxNotFound,
 				"transfer tx not found for contract %s and tx id %s", tokenContract, transferID,
 			)
 		}

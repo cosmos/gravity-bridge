@@ -19,6 +19,7 @@ func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validato
 	// and prevents validators from submitting two events with the same nonce
 
 	// TODO: why is this per validator?
+	// Q: so there's an error right away
 	// lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator.GetOperator())
 	// if event.GetNonce() != lastEventNonce+1 {
 	// 	return types.ErrNonContiguousEventNonce
@@ -46,6 +47,7 @@ func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validato
 	k.SetAttestation(ctx, eventID, attestation)
 	// TODO: what is this for?
 	// k.setLastEventNonceByValidator(ctx, validatorAddr, event.GetNonce())
+	// TODO: return attestation ID
 	return nil, nil
 }
 
@@ -112,7 +114,7 @@ func (k Keeper) TallyAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attesta
 	}
 
 	// FIXME: define an attestation key that is not dependent on the event ID
-	// /TODO: Ideally we should have multiple events attested at the same time?
+	// TODO: Ideally we should have multiple events attested at the same time?
 	k.SetAttestation(ctx, event.Hash(), attestation)
 
 	k.processAttestation(ctx, attestation)

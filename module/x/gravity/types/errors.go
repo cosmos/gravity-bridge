@@ -4,17 +4,18 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// IBC channel sentinel errors
+// ethereum bridge errors
 var (
-	ErrInvalidGravityDenom     = sdkerrors.Register(ModuleName, 2, "invalid denomination for bridge transfer")
-	ErrContractNotFound        = sdkerrors.Register(ModuleName, 3, "contract address not found for ERC20 token")
-	ErrOutgoingTxNotFound      = sdkerrors.Register(ModuleName, 4, "outgoing ethereum tx not found")
-	ErrTimeout                 = sdkerrors.Register(ModuleName, 40, "timeout")
-	ErrUnknown                 = sdkerrors.Register(ModuleName, 5, "unknown")
-	ErrEmpty                   = sdkerrors.Register(ModuleName, 6, "empty")
-	ErrOutdated                = sdkerrors.Register(ModuleName, 7, "outdated")
-	ErrUnsupported             = sdkerrors.Register(ModuleName, 8, "unsupported")
-	ErrNonContiguousEventNonce = sdkerrors.Register(ModuleName, 9, "non contiguous event nonce")
-	ErrInvalidClaim            = sdkerrors.Register(ModuleName, 10, "invalid or unsupported claim")
-	ErrInvalidConfirm          = sdkerrors.Register(ModuleName, 11, "invalid or unsupported confirm")
+	ErrInvalidGravityDenom         = sdkerrors.Register(ModuleName, 2, "invalid denomination for bridge transfer")
+	ErrContractNotFound            = sdkerrors.Register(ModuleName, 3, "contract address not found for ERC20 token")
+	ErrContractExists              = sdkerrors.Register(ModuleName, 4, "contract address already exists")
+	ErrEventNotFound               = sdkerrors.Register(ModuleName, 5, "ethereum event not found")
+	ErrEventUnsupported            = sdkerrors.Register(ModuleName, 6, "ethereum event type unsupported")
+	ErrEventInvalid                = sdkerrors.Register(ModuleName, 7, "invalid ethereum event")
+	ErrTxNotFound                  = sdkerrors.Register(ModuleName, 8, "outgoing transaction not found")
+	ErrValidatorNotBonded          = sdkerrors.Register(ModuleName, 9, "validator is not bonded")
+	ErrSignerSetNotFound           = sdkerrors.Register(ModuleName, 10, "ethereum signer set not found")
+	ErrValidatorEthAddressNotFound = sdkerrors.Register(ModuleName, 11, "ethereum address not found for validator")
+	ErrConfirmUnsupported          = sdkerrors.Register(ModuleName, 12, "confirm tx type unsupported")
+	ErrSignatureInvalid            = sdkerrors.Register(ModuleName, 13, "invalid signature")
 )

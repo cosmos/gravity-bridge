@@ -123,7 +123,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID tmbytes.He
 	// check that we actually have a tx with that id and what it's details are
 	tx, found := k.GetTransferTx(ctx, txID)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrOutgoingTxNotFound, "tx id %s", txID)
+		return sdkerrors.Wrapf(types.ErrTxNotFound, "transfer tx with id %s", txID)
 	}
 
 	// TODO: check if the transaction is currently on a batch and remove it

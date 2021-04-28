@@ -1,9 +1,9 @@
 package types
 
 import (
-	"encoding/hex"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,16 +15,10 @@ type Confirm interface {
 	proto.Message
 
 	GetType() string
-	// TODO: delete
 	GetOrchestratorAddress() string
 	GetNonce() uint64
-	GetSignature() string
+	GetSignature() hexutil.Bytes
 	Validate() error
-
-	// TODO: consider deleting
-	GetTokenContract() string
-	GetInvalidationId() tmbytes.HexBytes
-	GetInvalidationNonce() uint64
 }
 
 var (
@@ -38,6 +32,9 @@ func (c ConfirmBatch) GetType() string { return "batch" }
 
 // Validate performs stateless checks
 func (c ConfirmBatch) Validate() error {
+	if c.Nonce == 0 {
+		return fmt.Errorf("nonce cannot be 0")
+	}
 	if _, err := sdk.AccAddressFromBech32(c.OrchestratorAddress); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, c.OrchestratorAddress)
 	}
@@ -47,9 +44,8 @@ func (c ConfirmBatch) Validate() error {
 	if err := ValidateEthAddress(c.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "token contract")
 	}
-	_, err := hex.DecodeString(c.Signature)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "could not decode hex string %s", c.Signature)
+	if len(c.Signature) == 0 {
+		return fmt.Errorf("ethereum signature cannot be empty")
 	}
 	return nil
 }
@@ -57,8 +53,8 @@ func (c ConfirmBatch) Validate() error {
 // GetInvalidationNonce is a noop to implement confirm interface
 func (c ConfirmBatch) GetInvalidationNonce() uint64 { return 0 }
 
-// GetInvalidationId is a noop to implement confirm interface
-func (c ConfirmBatch) GetInvalidationId() tmbytes.HexBytes { return nil }
+// GetInvalidationID is a noop to implement confirm interface
+func (c ConfirmBatch) GetInvalidationID() tmbytes.HexBytes { return nil }
 
 // GetType should return the action
 func (c ConfirmLogicCall) GetType() string { return "logic_Call" }
@@ -71,12 +67,14 @@ func (c ConfirmLogicCall) Validate() error {
 	if err := ValidateEthAddress(c.EthSigner); err != nil {
 		return sdkerrors.Wrap(err, "eth signer")
 	}
-	_, err := hex.DecodeString(c.Signature)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Could not decode hex string %s", c.Signature)
+	if len(c.Signature) == 0 {
+		return fmt.Errorf("ethereum signature cannot be empty")
 	}
-	if len(c.InvalidationId) == 0 {
+	if len(c.InvalidationID) == 0 {
 		return fmt.Errorf("invalidation id is empty")
+	}
+	if c.InvalidationNonce == 0 {
+		return fmt.Errorf("invalidation nonce cannot be 0")
 	}
 	return nil
 }
@@ -90,7 +88,7 @@ func (c ConfirmLogicCall) GetTokenContract() string {
 }
 
 // NewConfirmSignerSet returns a new ConfirmSignerSet
-func NewConfirmSignerSet(nonce uint64, ethSigner string, validator sdk.AccAddress, signature string) *ConfirmSignerSet {
+func NewConfirmSignerSet(nonce uint64, ethSigner string, validator sdk.AccAddress, signature hexutil.Bytes) *ConfirmSignerSet {
 	return &ConfirmSignerSet{
 		Nonce:               nonce,
 		OrchestratorAddress: validator.String(),
@@ -100,26 +98,30 @@ func NewConfirmSignerSet(nonce uint64, ethSigner string, validator sdk.AccAddres
 }
 
 // GetType should return the action
-func (c *ConfirmSignerSet) GetType() string { return "valset" }
+func (c ConfirmSignerSet) GetType() string { return "valset" }
 
 // Validate performs stateless checks
-func (c *ConfirmSignerSet) Validate() (err error) {
+func (c ConfirmSignerSet) Validate() (err error) {
+	if c.Nonce == 0 {
+		return fmt.Errorf("nonce cannot be 0")
+	}
 	if _, err = sdk.AccAddressFromBech32(c.OrchestratorAddress); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, c.OrchestratorAddress)
 	}
 	if err := ValidateEthAddress(c.EthSigner); err != nil {
-		return sdkerrors.Wrap(err, "ethereum address")
+		return sdkerrors.Wrap(err, "ethereum signer address")
 	}
-
-	// TODO: validate signatre
+	if len(c.Signature) == 0 {
+		return fmt.Errorf("ethereum signature cannot be empty")
+	}
 	return nil
 }
 
 // GetInvalidationNonce is a noop to implement confirm interface
 func (c ConfirmSignerSet) GetInvalidationNonce() uint64 { return 0 }
 
-// GetInvalidationId is a noop to implement confirm interface
-func (c ConfirmSignerSet) GetInvalidationId() tmbytes.HexBytes { return nil }
+// GetInvalidationID is a noop to implement confirm interface
+func (c ConfirmSignerSet) GetInvalidationID() tmbytes.HexBytes { return nil }
 
 func (c ConfirmSignerSet) GetTokenContract() string {
 	return ""

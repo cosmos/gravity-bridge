@@ -72,3 +72,13 @@ func GravityDenomToERC20Contract(denom string) string {
 	fullPrefix := GravityDenomPrefix + GravityDenomSeparator
 	return strings.TrimPrefix(denom, fullPrefix)
 }
+
+func (e ERC20ToDenom) Validate() error {
+	if err := sdk.ValidateDenom(e.Denom); err != nil {
+		return fmt.Errorf("invalid cosmos denomination: %w", err)
+	}
+	if err := ValidateEthAddress(e.Erc20Address); err != nil {
+		return fmt.Errorf("invalid erc20 address: %w", err)
+	}
+	return nil
+}
