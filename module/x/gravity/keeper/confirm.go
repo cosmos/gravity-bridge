@@ -20,11 +20,11 @@ func (k Keeper) ConfirmEvent(ctx sdk.Context, confirm types.Confirm, orchestrato
 
 	switch confirm := confirm.(type) {
 	case *types.ConfirmBatch:
-		checkpoint, err = k.ConfirmBatchTx(ctx, confirm, bridgeID, ethAddress)
+		checkpoint, err = k.ConfirmBatchTx(ctx, confirm, bridgeID)
 	case *types.ConfirmLogicCall:
-		checkpoint, err = k.ConfirmLogicCallTx(ctx, confirm, bridgeID, ethAddress)
+		checkpoint, err = k.ConfirmLogicCallTx(ctx, confirm, bridgeID)
 	case *types.ConfirmSignerSet:
-		checkpoint, err = k.ConfirmEthSignerSet(ctx, confirm, bridgeID, ethAddress)
+		checkpoint, err = k.ConfirmEthSignerSet(ctx, confirm, bridgeID)
 	default:
 		return sdkerrors.Wrapf(types.ErrConfirmUnsupported, "confirm type %s: %T", confirm.GetType(), confirm)
 	}
@@ -51,7 +51,7 @@ func (k Keeper) ConfirmEvent(ctx sdk.Context, confirm types.Confirm, orchestrato
 }
 
 func (k Keeper) ConfirmBatchTx(
-	ctx sdk.Context, confirm *types.ConfirmBatch, bridgeID tmbytes.HexBytes, ethAddress common.Address,
+	ctx sdk.Context, confirm *types.ConfirmBatch, bridgeID tmbytes.HexBytes,
 ) ([]byte, error) {
 	// TODO:
 	batchTx, found := k.GetBatchTx(ctx, common.Address{}, nil)
@@ -72,18 +72,24 @@ func (k Keeper) ConfirmBatchTx(
 }
 
 func (k Keeper) ConfirmLogicCallTx(
-	ctx sdk.Context, confirm *types.ConfirmLogicCall, bridgeID tmbytes.HexBytes, ethAddress common.Address,
+	ctx sdk.Context, confirm *types.ConfirmLogicCall, bridgeID tmbytes.HexBytes,
 ) ([]byte, error) {
 	logicCallTx, found := k.GetLogicCallTx(ctx, confirm.InvalidationID, confirm.InvalidationNonce)
 	if !found {
-		return nil, sdkerrors.Wrap(types.ErrTxNotFound, "batch tx")
+		return nil, sdkerrors.Wrap(types.ErrTxNotFound, "logic call tx")
 	}
 
 	return logicCallTx.GetCheckpoint(bridgeID, confirm.InvalidationID, confirm.InvalidationNonce)
 }
 
 func (k Keeper) ConfirmEthSignerSet(
-	ctx sdk.Context, confirm *types.ConfirmSignerSet, bridgeID tmbytes.HexBytes, ethAddress common.Address,
+	ctx sdk.Context, confirm *types.ConfirmSignerSet, bridgeID tmbytes.HexBytes,
 ) ([]byte, error) {
-	return nil, nil
+
+	signerSet, found := k.GetEthSignerSet(ctx, confirm.Nonce)
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrSignerSetNotFound, "nonce %d", confirm.Nonce)
+	}
+
+	return signerSet.GetCheckpoint(bridgeID)
 }
