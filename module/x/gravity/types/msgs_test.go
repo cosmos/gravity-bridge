@@ -2,7 +2,6 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/gogo/protobuf/proto"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -165,21 +164,58 @@ func TestMsgSubmitConfirm_ValidateBasic(t *testing.T) {
 	ethAddr, err := newEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
 
+	css := ConfirmSignerSet{12, ethAddr.String(), orchAddr.String(), []byte("signature")}
+	any, err := PackConfirm(css)
+	require.NoError(t, err, "unable to pack test confirm")
+
 	testCases := []struct{
 		name string
 		signer string
-		confirm interface{}
+		confirm *types.Any
 		expError bool
 	}{
-		{"valid input", orchAddr.String(), ConfirmSignerSet{12, ethAddr.String(), orchAddr.String(), []byte("signature")}, false},
+		{"valid input", orchAddr.String(), any, false},
 		{"no confirm", orchAddr.String(), nil, true},
-		{"no signer", "not an addr", ConfirmSignerSet{12, ethAddr.String(), orchAddr.String(), []byte("signature")}, true},
+		{"no signer", "not an addr", any, true},
 	}
 
 	for _, tc := range testCases {
-		any, err := types.NewAnyWithValue(tc.confirm.(proto.Message))
-		require.NoError(t, err, tc.name)
 		msc := MsgSubmitConfirm{any, tc.signer}
+		err = msc.ValidateBasic()
+		if tc.expError {
+			require.Error(t, err, tc.name)
+		} else {
+			require.NoError(t, err, tc.name)
+		}
+	}
+}
+
+func TestMsgSubmitEvent_ValidateBasic(t *testing.T) {
+	orchCryptoAddr, err := newCosmosAddress()
+	require.NoError(t, err, "unable to generate cosmos address")
+	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
+	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
+	ethAddr, err := newEthAddress()
+	require.NoError(t, err, "unable to generate ethereum address")
+
+	we := WithdrawEvent{[]byte("txid"), 12, ethAddr.String(), 12}
+	any, err := PackEvent(we.(EthereumEvent))
+
+	testCases := []struct{
+		name string
+		signer string
+		event *types.Any
+		expError bool
+	}{
+		{"valid input", orchAddr.String(), any, false},
+		{"no confirm", orchAddr.String(), nil, true},
+		{"no signer", "not an addr", any, true},
+	}
+
+	for _, tc := range testCases {
+		any := tc.event
+		require.NoError(t, err, tc.name)
+		msc := MsgSubmitEvent{any, tc.signer}
 		err = msc.ValidateBasic()
 		if tc.expError {
 			require.Error(t, err, tc.name)

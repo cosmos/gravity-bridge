@@ -82,3 +82,18 @@ func UnpackConfirm(any *types.Any) (Confirm, error) {
 
 	return confirm, nil
 }
+
+
+func PackConfirm(confirm Confirm) (*types.Any, error) {
+	msg, ok := confirm.(proto.Message)
+	if !ok {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", confirm)
+	}
+
+	anyEvent, err := types.NewAnyWithValue(msg)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrPackAny, err.Error())
+	}
+
+	return anyEvent, nil
+}
