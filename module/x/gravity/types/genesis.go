@@ -67,8 +67,11 @@ var (
 	// ParamsStoreSlashFractionConflictingClaim stores the slash fraction ConflictingClaim
 	ParamsStoreSlashFractionConflictingClaim = []byte("SlashFractionConflictingClaim")
 
-	//  ParamStoreUnbondSlashingValsetsWindow stores unbond slashing valset window
+	// ParamStoreUnbondSlashingValsetsWindow stores unbond slashing valset window
 	ParamStoreUnbondSlashingValsetsWindow = []byte("UnbondSlashingValsetsWindow")
+
+	// ParamStoreSlashFractionBadEthSignature stores the amount by which a validator making a fraudulent eth signature will be slashed
+	ParamStoreSlashFractionBadEthSignature = []byte("SlashFractionBadEthSignature")
 
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
@@ -105,6 +108,7 @@ func DefaultParams() *Params {
 		SlashFractionBatch:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionClaim:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionConflictingClaim: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		SlashFractionBadEthSignature:  sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		UnbondSlashingValsetsWindow:   10000,
 	}
 }
@@ -153,6 +157,9 @@ func (p Params) ValidateBasic() error {
 	if err := validateSlashFractionConflictingClaim(p.SlashFractionConflictingClaim); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction valset")
 	}
+	if err := validateSlashFractionBadEthSignature(p.SlashFractionBadEthSignature); err != nil {
+		return sdkerrors.Wrap(err, "slash fraction BadEthSignature")
+	}
 	if err := validateUnbondSlashingValsetsWindow(p.UnbondSlashingValsetsWindow); err != nil {
 		return sdkerrors.Wrap(err, "unbond Slashing valset window")
 	}
@@ -183,6 +190,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionBatch, &p.SlashFractionBatch, validateSlashFractionBatch),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionClaim, &p.SlashFractionClaim, validateSlashFractionClaim),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionConflictingClaim, &p.SlashFractionConflictingClaim, validateSlashFractionConflictingClaim),
+		paramtypes.NewParamSetPair(ParamStoreSlashFractionBadEthSignature, &p.SlashFractionBadEthSignature, validateSlashFractionBadEthSignature),
 		paramtypes.NewParamSetPair(ParamStoreUnbondSlashingValsetsWindow, &p.UnbondSlashingValsetsWindow, validateUnbondSlashingValsetsWindow),
 	}
 }
@@ -322,6 +330,14 @@ func validateSlashFractionClaim(i interface{}) error {
 }
 
 func validateSlashFractionConflictingClaim(i interface{}) error {
+	// TODO: do we want to set some bounds on this value?
+	if _, ok := i.(sdk.Dec); !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
+}
+
+func validateSlashFractionBadEthSignature(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(sdk.Dec); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
