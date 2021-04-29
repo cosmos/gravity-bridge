@@ -183,17 +183,19 @@ type Gravity struct {
 	bankKeeper       bankkeeper.Keeper
 	capabilityKeeper *capabilitykeeper.Keeper
 	stakingKeeper    stakingkeeper.Keeper
-	slashingKeeper   slashingkeeper.Keeper
-	mintKeeper       mintkeeper.Keeper
-	distrKeeper      distrkeeper.Keeper
-	govKeeper        govkeeper.Keeper
-	crisisKeeper     crisiskeeper.Keeper
-	upgradeKeeper    upgradekeeper.Keeper
-	paramsKeeper     paramskeeper.Keeper
-	ibcKeeper        *ibckeeper.Keeper
-	evidenceKeeper   evidencekeeper.Keeper
-	transferKeeper   ibctransferkeeper.Keeper
-	gravityKeeper    keeper.Keeper
+	slashingKeeper slashingkeeper.Keeper
+	mintKeeper     mintkeeper.Keeper
+	distrKeeper    distrkeeper.Keeper
+	govKeeper      govkeeper.Keeper
+	crisisKeeper   crisiskeeper.Keeper
+	upgradeKeeper  upgradekeeper.Keeper
+	paramsKeeper   paramskeeper.Keeper
+	ibcKeeper      *ibckeeper.Keeper
+	evidenceKeeper evidencekeeper.Keeper
+	transferKeeper ibctransferkeeper.Keeper
+
+	// gravity keeper
+	GravityKeeper  keeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -332,7 +334,7 @@ func NewGravityApp(
 		stakingtypes.NewMultiStakingHooks(
 			app.distrKeeper.Hooks(),
 			app.slashingKeeper.Hooks(),
-			app.gravityKeeper.Hooks(),
+			app.GravityKeeper.Hooks(),
 		),
 	)
 
@@ -380,7 +382,7 @@ func NewGravityApp(
 	)
 	app.evidenceKeeper = *evidenceKeeper
 
-	app.gravityKeeper = keeper.NewKeeper(
+	app.GravityKeeper = keeper.NewKeeper(
 		appCodec,
 		keys[gravitytypes.StoreKey],
 		app.GetSubspace(gravitytypes.ModuleName),
@@ -390,8 +392,8 @@ func NewGravityApp(
 	)
 
 	// set the handler for ethereum events attestations
-	app.gravityKeeper.SetAttestationHandler(
-		keeper.NewAttestationHandler(app.gravityKeeper),
+	app.GravityKeeper.SetAttestationHandler(
+		keeper.NewAttestationHandler(app.GravityKeeper),
 	)
 
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
@@ -461,7 +463,7 @@ func NewGravityApp(
 		params.NewAppModule(app.paramsKeeper),
 		transferModule,
 		gravity.NewAppModule(
-			app.gravityKeeper,
+			app.GravityKeeper,
 			app.bankKeeper,
 		),
 	)
