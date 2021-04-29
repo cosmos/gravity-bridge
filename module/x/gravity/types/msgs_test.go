@@ -165,7 +165,7 @@ func TestMsgSubmitConfirm_ValidateBasic(t *testing.T) {
 	require.NoError(t, err, "unable to generate ethereum address")
 
 	css := ConfirmSignerSet{12, ethAddr.String(), orchAddr.String(), []byte("signature")}
-	any, err := PackConfirm(css)
+	any, err := PackConfirm(&css)
 	require.NoError(t, err, "unable to pack test confirm")
 
 	testCases := []struct{
@@ -180,7 +180,7 @@ func TestMsgSubmitConfirm_ValidateBasic(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		msc := MsgSubmitConfirm{any, tc.signer}
+		msc := MsgSubmitConfirm{tc.confirm, tc.signer}
 		err = msc.ValidateBasic()
 		if tc.expError {
 			require.Error(t, err, tc.name)
@@ -199,7 +199,7 @@ func TestMsgSubmitEvent_ValidateBasic(t *testing.T) {
 	require.NoError(t, err, "unable to generate ethereum address")
 
 	we := WithdrawEvent{[]byte("txid"), 12, ethAddr.String(), 12}
-	any, err := PackEvent(we.(EthereumEvent))
+	any, err := PackEvent(&we)
 
 	testCases := []struct{
 		name string
@@ -213,9 +213,7 @@ func TestMsgSubmitEvent_ValidateBasic(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		any := tc.event
-		require.NoError(t, err, tc.name)
-		msc := MsgSubmitEvent{any, tc.signer}
+		msc := MsgSubmitEvent{tc.event, tc.signer}
 		err = msc.ValidateBasic()
 		if tc.expError {
 			require.Error(t, err, tc.name)
