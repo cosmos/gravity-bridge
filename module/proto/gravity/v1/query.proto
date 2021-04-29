@@ -120,21 +120,23 @@ message QuerySignerSetConfirmsRequest {
   string validator = 2;
 }
 message QuerySignerSetConfirmsResponse {
-  repeated ConfirmSignerSet signersets = 1;
+  map<string, bytes> confirms = 1;
 }
 
 message QueryBatchConfirmsRequest {
   uint64 nonce         = 1;
   string token_address = 2;
+  string validator     = 3;
 }
 message QueryBatchConfirmsResponse {
-  repeated ConfirmBatch confirms = 1;
+  map<string, bytes> confirms = 1;
 }
 
 message QueryLogicCallConfirmsRequest {
-  bytes invalidation_id = 1;
+  bytes  invalidation_id    = 1;
   uint64 invalidation_nonce = 2;
+  string validator          = 3;
 }
 message QueryLogicCallConfirmsResponse {
-  repeated ConfirmLogicCall confirms = 1;
+  map<string, bytes> confirms = 1;
 }

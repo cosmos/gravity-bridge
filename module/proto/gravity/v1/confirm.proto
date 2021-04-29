@@ -12,7 +12,7 @@ message ConfirmLogicCall {
     (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
   ];
   uint64 invalidation_nonce   = 2;
-  bytes signature             = 3 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
+  bytes  signature            = 3 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
 }
 
 // ConfirmBatch an orchestrator confirms a batch transaction by signing
@@ -20,7 +20,7 @@ message ConfirmLogicCall {
 message ConfirmBatch {
   string token_contract       = 1;
   uint64 nonce                = 2;
-  bytes signature             = 3 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
+  bytes  signature            = 3 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
 }
 
 // ConfirmSignerSet submits a signature of the validator set at a given block height. A validator

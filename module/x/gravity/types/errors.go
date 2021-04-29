@@ -19,4 +19,5 @@ var (
 	ErrConfirmUnsupported          = sdkerrors.Register(ModuleName, 12, "confirm tx type unsupported")
 	ErrSignatureInvalid            = sdkerrors.Register(ModuleName, 13, "invalid signature")
 	ErrSignatureDuplicate          = sdkerrors.Register(ModuleName, 14, "confirm already signed")
+	ErrAddressInvalid              = sdkerrors.Register(ModuleName, 15, "invalid address")
 )

@@ -197,7 +197,6 @@ func GetBatchConfirmKey(nonce uint64, contract common.Address, validator sdk.Val
 }
 
 // GetLastEventNonceByValidatorKey indexes lateset event nonce by validator
-// GetLastEventNonceByValidatorKey returns the following key format
 // prefix              cosmos-validator
 // [0x0][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 func GetLastEventNonceByValidatorKey(validator sdk.ValAddress) []byte {
@@ -217,6 +216,8 @@ func GetLogicCallTxKey(invalidationID tmbytes.HexBytes, invalidationNonce uint64
 }
 
 // GetLogicCallConfirmKey indexes the a validators signatures by invalidationid and nonce
+// prefix  invalid            nonce                      validator address
+// [0x0][invalidation-id][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 func GetLogCallConfirmKey(invalID []byte, invalNonce uint64, validator sdk.ValAddress) []byte {
 	a := append(KeyConfirmLogicCall, invalID...)
 	a = append(a, sdk.Uint64ToBigEndian(invalNonce)...)

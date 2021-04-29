@@ -120,6 +120,10 @@ func (k Keeper) CheckpointEthSignerSet(ctx sdk.Context, confirm *types.ConfirmSi
 	return signerSet.GetCheckpoint(bridgeID)
 }
 
+//////////////////
+// ConfirmBatch //
+//////////////////
+
 // SetConfirmBatch sets a confirmation signature for a given validator, nonce and address into the store
 func (k Keeper) SetConfirmBatch(ctx sdk.Context, confirm *types.ConfirmBatch, valAddr sdk.ValAddress) {
 	ctx.KVStore(k.storeKey).Set(types.GetBatchConfirmKey(confirm.Nonce, common.HexToAddress(confirm.TokenContract), valAddr), confirm.Signature)
@@ -135,25 +139,32 @@ func (k Keeper) HasBatchConfirm(ctx sdk.Context, nonce uint64, valAddr sdk.ValAd
 	return ctx.KVStore(k.storeKey).Has(types.GetBatchConfirmKey(nonce, contractAddr, valAddr))
 }
 
-// IterateBatchConfirms
-func (k Keeper) IterateBatchConfirms(ctx sdk.Context, nonce uint64, contractAddr common.Address) {
+// IterateBatchConfirms iterates over all batch confirmations
+func (k Keeper) IterateBatchConfirms(ctx sdk.Context, nonce uint64, contractAddr common.Address, cb func(val sdk.ValAddress, sig hexutil.Bytes) bool) {
 	iter := prefix.NewStore(
 		ctx.KVStore(k.storeKey),
 		append(append(types.BatchConfirmKey, contractAddr.Bytes()...), sdk.Uint64ToBigEndian(nonce)...),
 	).Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		var batch types.BatchTx
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &batch)
-
-		txID := tmbytes.HexBytes{}
-		// cb returns true to stop early
-		if cb(txID, batch) {
+		if cb(sdk.ValAddress(iter.Key()), hexutil.Bytes(iter.Value())) {
 			break
 		}
 	}
-
 }
+
+// GetBatchConfirms returns all the confirmations in map[valaddress]signature format
+func (k Keeper) GetBatchConfirms(ctx sdk.Context, nonce uint64, contractAddr common.Address) (out map[string][]byte) {
+	k.IterateBatchConfirms(ctx, nonce, contractAddr, func(val sdk.ValAddress, sig hexutil.Bytes) bool {
+		out[val.String()] = sig
+		return false
+	})
+	return
+}
+
+//////////////////////
+// ConfirmLogicCall //
+//////////////////////
 
 // SetConfirmLogicCall sets a confirmation signature for a given validator into the store
 func (k Keeper) SetConfirmLogicCall(ctx sdk.Context, confirm *types.ConfirmLogicCall, valAddr sdk.ValAddress) {
@@ -165,29 +176,37 @@ func (k Keeper) GetConfirmLogicCall(ctx sdk.Context, invalid []byte, invalnonce 
 	return ctx.KVStore(k.storeKey).Get(types.GetLogCallConfirmKey(invalid, invalnonce, valAddr))
 }
 
-// HasConfirmLogicCall returns
+// HasConfirmLogicCall returns true if the key exists in the store
 func (k Keeper) HasConfirmLogicCall(ctx sdk.Context, invalid []byte, invalnonce uint64, valAddr sdk.ValAddress) bool {
 	return ctx.KVStore(k.storeKey).Has(types.GetLogCallConfirmKey(invalid, invalnonce, valAddr))
 }
 
-// IterateConfirmLogicCalls
-func (k Keeper) IterateConfirmLogicCalls(ctx sdk.Context, invalid []byte, invalnonce uint64, valAddr sdk.ValAddress) []hexutil.Bytes {
-	key := append(types.BatchTxKey, []byte(tokenContract.String())...)
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), key)
-	iter := prefixStore.Iterator(nil, nil)
+// IterateConfirmLogicCalls iterates over all the logic call confirmations in the store
+func (k Keeper) IterateConfirmLogicCalls(ctx sdk.Context, invalid []byte, invalnonce uint64, cb func(valAddr sdk.ValAddress, sig hexutil.Bytes) bool) {
+	iter := prefix.NewStore(
+		ctx.KVStore(k.storeKey),
+		append(append(types.KeyConfirmLogicCall, invalid...), sdk.Uint64ToBigEndian(invalnonce)...),
+	).Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		var batch types.BatchTx
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &batch)
-
-		txID := tmbytes.HexBytes{}
-		// cb returns true to stop early
-		if cb(txID, batch) {
+		if cb(sdk.ValAddress(iter.Key()), hexutil.Bytes(iter.Value())) {
 			break
 		}
 	}
-
 }
+
+// GetLogicCallConfirms returns all the confirmations in map[valaddress]signature format
+func (k Keeper) GetLogicCallConfirms(ctx sdk.Context, invalid []byte, invalnonce uint64) (out map[string][]byte) {
+	k.IterateConfirmLogicCalls(ctx, invalid, invalnonce, func(val sdk.ValAddress, sig hexutil.Bytes) bool {
+		out[val.String()] = sig
+		return false
+	})
+	return
+}
+
+//////////////////////
+// ConfirmSignerSet //
+//////////////////////
 
 // SetConfirmSignerSet sets a confirmation signature for a given validator and nonce into the store
 func (k Keeper) SetConfirmSignerSet(ctx sdk.Context, confirm *types.ConfirmSignerSet, valAddr sdk.ValAddress) {
@@ -204,21 +223,25 @@ func (k Keeper) HasSignerSetConfirm(ctx sdk.Context, nonce uint64, valAddr sdk.V
 	return ctx.KVStore(k.storeKey).Has(types.GetSignerSetConfirmKey(nonce, valAddr))
 }
 
-// IterateSignerSetConfirms
-func (k Keeper) IterateSignerSetConfirms(ctx sdk.Context, nonce uint64, valAddr sdk.ValAddress) []hexutil.Bytes {
-	key := append(types.BatchTxKey, []byte(tokenContract.String())...)
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), key)
-	iter := prefixStore.Iterator(nil, nil)
+// IterateSignerSetConfirms iterates over all the signer set confirmations in the store
+func (k Keeper) IterateSignerSetConfirms(ctx sdk.Context, nonce uint64, cb func(valAddr sdk.ValAddress, sig hexutil.Bytes) bool) {
+	iter := prefix.NewStore(
+		ctx.KVStore(k.storeKey),
+		append(types.SignersetConfirmKey, sdk.Uint64ToBigEndian(nonce)...),
+	).Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		var batch types.BatchTx
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &batch)
-
-		txID := tmbytes.HexBytes{}
-		// cb returns true to stop early
-		if cb(txID, batch) {
+		if cb(sdk.ValAddress(iter.Key()), hexutil.Bytes(iter.Value())) {
 			break
 		}
 	}
+}
 
+// GetSignerSetConfirms returns all the confirmations in map[valaddress]signature format
+func (k Keeper) GetSignerSetConfirms(ctx sdk.Context, nonce uint64) (out map[string][]byte) {
+	k.IterateSignerSetConfirms(ctx, nonce, func(val sdk.ValAddress, sig hexutil.Bytes) bool {
+		out[val.String()] = sig
+		return false
+	})
+	return
 }
