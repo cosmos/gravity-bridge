@@ -122,6 +122,13 @@ var (
 	KeyConfirmLogicCall = []byte{0xcd}
 )
 
+// GetAttestationKey returns the following key format
+// prefix
+// [0x0][hash]
+func GetAttestationKey(hash tmbytes.HexBytes) []byte {
+	return append(AttestationKeyPrefix, hash.Bytes()...)
+}
+
 // GetOrchestratorAddressKey returns the following key format
 // prefix
 // [0xe8][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]

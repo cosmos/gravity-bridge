@@ -2,6 +2,7 @@ syntax = "proto3";
 package gravity.v1;
 
 import "google/protobuf/any.proto";
+import "cosmos_proto/cosmos.proto";
 import "google/protobuf/timestamp.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
@@ -20,10 +21,10 @@ message Attestation {
   // set of the validator operators address in bech32 format that attest in
   // favor of this event.
   repeated string votes = 2;
-  // amount of voting power in support of this event execution
-  int64 attested_power = 3;
   // height at which the event was attested an executed
-  uint64 height = 4;
+  uint64 height = 3;
+  // The event that is being attested to 
+  google.protobuf.Any event = 4 [(cosmos_proto.accepts_interface) = "EthereumEvent"];
 }
 
 // DepositEvent is submitted when more than 66% of the active

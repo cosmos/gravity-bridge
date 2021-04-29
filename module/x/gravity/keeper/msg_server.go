@@ -49,41 +49,47 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 	return &types.MsgDelegateKeyResponse{}, nil
 }
 
+// SubmitEvent handles event submission for events originating on ethereum
 func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*types.MsgSubmitEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-
-	// NOTE: error checked on msg validate basic
-	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Signer)
-
+	val, err := k.GetValFromSigner(ctx, msg.Signer)
+	if err != nil {
+		return nil, err
+	}
 	event, err := types.UnpackEvent(msg.Event)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := k.HandleEthEvent(ctx, event, orchestratorAddr); err != nil {
-		return nil, err
+	if err := k.AttestEvent(ctx, event, val); err != nil {
+		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, event.GetType()),
+			sdk.NewAttribute(types.AttributeKeyOrchestratorValidator, val.String()),
+			sdk.NewAttribute(types.AttributeKeyEventID, event.Hash().String()),
+		),
+	)
 
 	return &types.MsgSubmitEventResponse{}, nil
 }
 
-// FIXME:
+// TODO: Review this logic, this should properly persist confirms now
 func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-
-	// NOTE: error checked on msg validate basic
-	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Signer)
-	validatorAddr := k.GetOrchestratorValidator(ctx, orchestratorAddr)
-	if validatorAddr == nil {
-		return nil, sdkerrors.Wrapf(stakingtypes.ErrNoValidatorFound, "orchestrator address %s", orchestratorAddr)
+	val, err := k.GetValFromSigner(ctx, msg.Signer)
+	if err != nil {
+		return nil, err
 	}
-
 	confirm, err := types.UnpackConfirm(msg.Confirm)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := k.ProcessConfirm(ctx, confirm, validatorAddr); err != nil {
+	if err := k.ProcessConfirm(ctx, confirm, val); err != nil {
 		return nil, err
 	}
 
@@ -91,7 +97,7 @@ func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyValidator, validatorAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyValidator, val.String()),
 			sdk.NewAttribute(types.AttributeKeyConfirmType, confirm.GetType()),
 		),
 	)
@@ -195,4 +201,20 @@ func (k Keeper) CancelTransfer(c context.Context, msg *types.MsgCancelTransfer) 
 	)
 
 	return &types.MsgCancelTransferResponse{}, nil
+}
+
+// GetValFromSigner returns the validator address for a given signed message and error if
+// there is no validator associated with the signer
+// TODO: Audit this code plz
+// TODO: return validator interface to avoid subsequent lookups
+func (k Keeper) GetValFromSigner(ctx sdk.Context, signer string) (val sdk.ValAddress, err error) {
+	signerAddr, _ := sdk.AccAddressFromBech32(signer)
+	if k.stakingKeeper.Validator(ctx, sdk.ValAddress(signerAddr)) == nil {
+		if val = k.GetOrchestratorValidator(ctx, signerAddr); val == nil {
+			return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, signer)
+		}
+	} else {
+		val = sdk.ValAddress(signer)
+	}
+	return
 }

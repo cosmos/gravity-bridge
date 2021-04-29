@@ -15,13 +15,13 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/gravity/v1beta/params";
   }
-  rpc QuerySignerSetConfirmsRequest(QuerySignerSetConfirmsRequest) returns (QuerySignerSetConfirmsResponse) {
+  rpc QuerySignerSetConfirmsRequest(QuerySignerSetConfirmsRequest) returns (QueryConfirmsResponse) {
     option (google.api.http).get = "/gravity/v1beta/confirms/signerset/{nonce}/{validator}";
   }
-  rpc QueryBatchConfirmsRequest(QueryBatchConfirmsRequest) returns (QueryBatchConfirmsResponse) {
+  rpc QueryBatchConfirmsRequest(QueryBatchConfirmsRequest) returns (QueryConfirmsResponse) {
     option (google.api.http).get = "/gravity/v1beta/confirms/batch/{nonce}/{token_address}";
   }
-  rpc QueryLogicCallConfirmsRequest(QueryLogicCallConfirmsRequest) returns (QueryLogicCallConfirmsResponse) {
+  rpc QueryLogicCallConfirmsRequest(QueryLogicCallConfirmsRequest) returns (QueryConfirmsResponse) {
     option (google.api.http).get = "/gravity/v1beta/confirms/logiccall/{invalidation_id}/{invalidation_nonce}";
   }
   // rpc CurrentValset(QueryCurrentValsetRequest) returns (QueryCurrentValsetResponse) {
@@ -91,6 +91,10 @@ message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
+///////////////////
+// DELEGATE KEYS //
+///////////////////
+
 message QueryDelegateKeysByValidatorAddress {
   string validator_address = 1;
 }
@@ -115,12 +119,13 @@ message QueryDelegateKeysByOrchestratorAddressResponse {
   string eth_address       = 2;
 }
 
+//////////////
+// CONFIRMS //
+//////////////
+
 message QuerySignerSetConfirmsRequest {
   uint64 nonce     = 1;
   string validator = 2;
-}
-message QuerySignerSetConfirmsResponse {
-  map<string, bytes> confirms = 1;
 }
 
 message QueryBatchConfirmsRequest {
@@ -128,15 +133,13 @@ message QueryBatchConfirmsRequest {
   string token_address = 2;
   string validator     = 3;
 }
-message QueryBatchConfirmsResponse {
-  map<string, bytes> confirms = 1;
-}
 
 message QueryLogicCallConfirmsRequest {
   bytes  invalidation_id    = 1;
   uint64 invalidation_nonce = 2;
   string validator          = 3;
 }
-message QueryLogicCallConfirmsResponse {
-  map<string, bytes> confirms = 1;
+
+message QueryConfirmsResponse {
+    map<string, bytes> confirms = 1;
 }

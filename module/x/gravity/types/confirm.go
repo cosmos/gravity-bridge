@@ -56,7 +56,7 @@ func (c ConfirmLogicCall) Validate() error {
 	if len(c.Signature) == 0 {
 		return fmt.Errorf("ethereum signature cannot be empty")
 	}
-	if len(c.InvalidationID) == 0 {
+	if len(c.InvalidationId) == 0 {
 		return fmt.Errorf("invalidation id is empty")
 	}
 	if c.InvalidationNonce == 0 {

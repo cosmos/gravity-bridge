@@ -44,9 +44,10 @@ func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
 
 	// TODO: set last unbonding height?
 
+	// TODO: export attestations as map<hash, Attestation>?
 	for _, attestation := range gs.Attestations {
 		// FIXME: attestation id
-		k.SetAttestation(ctx, nil, attestation)
+		k.SetAttestation(ctx, nil, &attestation)
 	}
 
 	// TODO: events

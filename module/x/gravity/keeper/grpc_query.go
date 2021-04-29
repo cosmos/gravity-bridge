@@ -58,46 +58,46 @@ func (k Keeper) GetDelegateKeyByOrchestrator(c context.Context, req *types.Query
 	return &types.QueryDelegateKeysByOrchestratorAddressResponse{EthAddress: eth.Hex(), ValidatorAddress: val.String()}, nil
 }
 
-func (k Keeper) QuerySignerSetConfirmsRequest(c context.Context, req *types.QuerySignerSetConfirmsRequest) (*types.QuerySignerSetConfirmsResponse, error) {
+func (k Keeper) QuerySignerSetConfirmsRequest(c context.Context, req *types.QuerySignerSetConfirmsRequest) (*types.QueryConfirmsResponse, error) {
 	// TODO: more validation here
 	ctx := sdk.UnwrapSDKContext(c)
 	// if the validator isn't specified return all the signatures and their associated validator
 	if req.Validator == "" {
-		return &types.QuerySignerSetConfirmsResponse{Confirms: k.GetSignerSetConfirms(ctx, req.Nonce)}, nil
+		return &types.QueryConfirmsResponse{Confirms: k.GetSignerSetConfirms(ctx, req.Nonce)}, nil
 	}
 	val, err := sdk.ValAddressFromBech32(req.Validator)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrAddressInvalid, req.Validator)
 	}
-	return &types.QuerySignerSetConfirmsResponse{Confirms: map[string][]byte{val.String(): k.GetSignerSetConfirm(ctx, req.Nonce, val)}}, nil
+	return &types.QueryConfirmsResponse{Confirms: map[string][]byte{val.String(): k.GetSignerSetConfirm(ctx, req.Nonce, val)}}, nil
 }
 
-func (k Keeper) QueryBatchConfirmsRequest(c context.Context, req *types.QueryBatchConfirmsRequest) (*types.QueryBatchConfirmsResponse, error) {
+func (k Keeper) QueryBatchConfirmsRequest(c context.Context, req *types.QueryBatchConfirmsRequest) (*types.QueryConfirmsResponse, error) {
 	// TODO: more validation here
 	ctx := sdk.UnwrapSDKContext(c)
 	// if the validator isn't specified return all the signatures and their associated validator
 	if req.Validator == "" {
-		return &types.QueryBatchConfirmsResponse{Confirms: k.GetBatchConfirms(ctx, req.Nonce, common.HexToAddress(req.TokenAddress))}, nil
+		return &types.QueryConfirmsResponse{Confirms: k.GetBatchConfirms(ctx, req.Nonce, common.HexToAddress(req.TokenAddress))}, nil
 	}
 	val, err := sdk.ValAddressFromBech32(req.Validator)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrAddressInvalid, req.Validator)
 	}
-	return &types.QueryBatchConfirmsResponse{Confirms: map[string][]byte{val.String(): k.GetConfirmBatch(ctx, req.Nonce, val, common.HexToAddress(req.TokenAddress))}}, nil
+	return &types.QueryConfirmsResponse{Confirms: map[string][]byte{val.String(): k.GetConfirmBatch(ctx, req.Nonce, val, common.HexToAddress(req.TokenAddress))}}, nil
 }
 
-func (k Keeper) QueryLogicCallConfirmsRequest(c context.Context, req *types.QueryLogicCallConfirmsRequest) (*types.QueryLogicCallConfirmsResponse, error) {
+func (k Keeper) QueryLogicCallConfirmsRequest(c context.Context, req *types.QueryLogicCallConfirmsRequest) (*types.QueryConfirmsResponse, error) {
 	// TODO: more validation here
 	ctx := sdk.UnwrapSDKContext(c)
 	// if the validator isn't specified return all the signatures and their associated validator
 	if req.Validator == "" {
-		return &types.QueryLogicCallConfirmsResponse{Confirms: k.GetLogicCallConfirms(ctx, req.InvalidationId, req.InvalidationNonce)}, nil
+		return &types.QueryConfirmsResponse{Confirms: k.GetLogicCallConfirms(ctx, req.InvalidationId, req.InvalidationNonce)}, nil
 
 	}
 	val, err := sdk.ValAddressFromBech32(req.Validator)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrAddressInvalid, req.Validator)
 	}
-	return &types.QueryLogicCallConfirmsResponse{Confirms: map[string][]byte{val.String(): k.GetConfirmLogicCall(ctx, req.InvalidationId, req.InvalidationNonce, val)}}, nil
+	return &types.QueryConfirmsResponse{Confirms: map[string][]byte{val.String(): k.GetConfirmLogicCall(ctx, req.InvalidationId, req.InvalidationNonce, val)}}, nil
 
 }

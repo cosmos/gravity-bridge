@@ -252,6 +252,7 @@ func (k Keeper) SetEthereumEvent(ctx sdk.Context, eventID tmbytes.HexBytes, even
 	store.Set(eventID.Bytes(), bz)
 }
 
+// IterateValidators
 func (k Keeper) IterateValidatorsByPower(ctx sdk.Context, cb func(validator stakingtypes.Validator) bool) {
 	iterator := k.stakingKeeper.ValidatorsPowerStoreIterator(ctx)
 	defer iterator.Close()
@@ -267,4 +268,14 @@ func (k Keeper) IterateValidatorsByPower(ctx sdk.Context, cb func(validator stak
 			break // stop
 		}
 	}
+}
+
+// SetLastEventNonceByValidator sets the last event nonce a validator has voted on
+func (k Keeper) SetLastEventNonceByValidator(ctx sdk.Context, val sdk.ValAddress, nonce uint64) {
+	ctx.KVStore(k.storeKey).Set(types.GetLastEventNonceByValidatorKey(val), sdk.Uint64ToBigEndian(nonce))
+}
+
+// GetLastEventNonceByValidator returns the latest event nonce for a given validator
+func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, val sdk.ValAddress) uint64 {
+	return sdk.BigEndianToUint64(ctx.KVStore(k.storeKey).Get(types.GetLastEventNonceByValidatorKey(val)))
 }

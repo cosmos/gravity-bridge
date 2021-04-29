@@ -29,7 +29,7 @@ func (k Keeper) SetConfirm(ctx sdk.Context, confirm types.Confirm, validatorAddr
 		}
 		k.SetConfirmBatch(ctx, confirm, validatorAddr)
 	case *types.ConfirmLogicCall:
-		if k.HasConfirmLogicCall(ctx, confirm.InvalidationID, confirm.InvalidationNonce, validatorAddr) {
+		if k.HasConfirmLogicCall(ctx, confirm.InvalidationId, confirm.InvalidationNonce, validatorAddr) {
 			return sdkerrors.Wrap(types.ErrSignatureDuplicate, "duplicate signature")
 		}
 		k.SetConfirmLogicCall(ctx, confirm, validatorAddr)
@@ -104,11 +104,11 @@ func (k Keeper) CheckpointBatchTx(ctx sdk.Context, confirm *types.ConfirmBatch, 
 
 // CheckpointLogicCallTx returns the abi encoded call and an error
 func (k Keeper) CheckpointLogicCallTx(ctx sdk.Context, confirm *types.ConfirmLogicCall, bridgeID tmbytes.HexBytes) ([]byte, error) {
-	logicCallTx, found := k.GetLogicCallTx(ctx, confirm.InvalidationID, confirm.InvalidationNonce)
+	logicCallTx, found := k.GetLogicCallTx(ctx, confirm.InvalidationId, confirm.InvalidationNonce)
 	if !found {
 		return nil, sdkerrors.Wrap(types.ErrTxNotFound, "logic call tx")
 	}
-	return logicCallTx.GetCheckpoint(bridgeID, confirm.InvalidationID, confirm.InvalidationNonce)
+	return logicCallTx.GetCheckpoint(bridgeID, confirm.InvalidationId, confirm.InvalidationNonce)
 }
 
 // CheckpointEthSignerSet returns the abi encoded call and an error
@@ -168,7 +168,7 @@ func (k Keeper) GetBatchConfirms(ctx sdk.Context, nonce uint64, contractAddr com
 
 // SetConfirmLogicCall sets a confirmation signature for a given validator into the store
 func (k Keeper) SetConfirmLogicCall(ctx sdk.Context, confirm *types.ConfirmLogicCall, valAddr sdk.ValAddress) {
-	ctx.KVStore(k.storeKey).Set(types.GetLogCallConfirmKey(confirm.InvalidationID, confirm.InvalidationNonce, valAddr), confirm.Signature)
+	ctx.KVStore(k.storeKey).Set(types.GetLogCallConfirmKey(confirm.InvalidationId, confirm.InvalidationNonce, valAddr), confirm.Signature)
 }
 
 // GetLogicCallConfirm sets the confirmation signature for a given validator into the store

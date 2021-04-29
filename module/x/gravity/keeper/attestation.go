@@ -5,56 +5,49 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-// AttestEvent signals an ethereum event as
-// TODO: explain logic
-func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validator stakingtypes.ValidatorI) (tmbytes.HexBytes, error) {
+// AttestEvent adds one validators voting power to the attestation it references and
+// creates a new one if that doesn't exist
+func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validator sdk.ValAddress) error {
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
-	// We check the event nonce in processAttestation as well, but checking it here gives individual eth signers a chance to retry,
-	// and prevents validators from submitting two events with the same nonce
-
-	// TODO: why is this per validator?
-	// Q: so there's an error right away
-	// lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator.GetOperator())
-	// if event.GetNonce() != lastEventNonce+1 {
-	// 	return types.ErrNonContiguousEventNonce
-	// }
-
-	eventID := event.Hash()
-
-	// Tries to get an attestation with the same hash as the event that has been submitted
-	attestation, found := k.GetAttestation(ctx, eventID)
-	if !found {
-		attestation = types.Attestation{
-			EventID:       eventID,
-			Votes:         []string{},
-			AttestedPower: 0,
-			Height:        uint64(ctx.BlockHeight()),
-		}
-
-		k.SetEthereumEvent(ctx, eventID, event)
+	// We check the event nonce in processAttestation as well,
+	// but checking it here gives individual eth signers a chance to retry,
+	// and prevents validators from submitting two claims with the same nonce
+	nonce := k.GetLastEventNonceByValidator(ctx, validator)
+	if event.GetNonce() != nonce+1 {
+		return types.ErrEventInvalid
 	}
 
-	// Add the validator's vote to this attestation
-	attestation.Votes = append(attestation.Votes, validator.GetOperator().String())
-	attestation.AttestedPower += validator.GetConsensusPower()
+	eany, err := types.PackEvent(event)
+	if err != nil {
+		return err
+	}
 
-	k.SetAttestation(ctx, eventID, attestation)
-	// TODO: what is this for?
-	// k.setLastEventNonceByValidator(ctx, validatorAddr, event.GetNonce())
-	// TODO: return attestation ID
-	return nil, nil
+	var att *types.Attestation
+	if att = k.GetAttestation(ctx, event.Hash()); att == nil {
+		att = &types.Attestation{
+			EventID: event.Hash(),
+			Votes:   []string{},
+			Height:  uint64(ctx.BlockHeight()),
+			Event:   eany,
+		}
+	}
+
+	att.Votes = append(att.Votes, validator.String())
+
+	k.SetAttestation(ctx, event.Hash(), att)
+	k.SetLastEventNonceByValidator(ctx, validator, event.GetNonce())
+	return nil
 }
 
-// TallyAttestation checks if an attestation has enough votes to be applied to the consensus state
+// TryAttestation checks if an attestation has enough votes to be applied to the consensus state
 // and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
 // and then marks it Observed and emits an event.
-func (k Keeper) TallyAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestation types.Attestation) {
+func (k Keeper) TryAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestation *types.Attestation) {
 	// Sum up the votes and see if it is ready to apply to the state.
 	// This conditional stops the attestation from accidentally being applied twice.
 
@@ -122,7 +115,7 @@ func (k Keeper) TallyAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attesta
 }
 
 // processAttestation actually applies the attestation to the consensus state
-func (k Keeper) processAttestation(ctx sdk.Context, attestation types.Attestation) {
+func (k Keeper) processAttestation(ctx sdk.Context, attestation *types.Attestation) {
 	// then execute in a new Tx so that we can store state on failure
 	cacheCtx, commit := ctx.CacheContext()
 
@@ -140,45 +133,51 @@ func (k Keeper) processAttestation(ctx sdk.Context, attestation types.Attestatio
 }
 
 // GetAttestation return an attestation given a nonce
-func (k Keeper) GetAttestation(ctx sdk.Context, hash tmbytes.HexBytes) (types.Attestation, bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AttestationKeyPrefix)
-	bz := store.Get(hash)
-	if len(bz) == 0 {
-		return types.Attestation{}, false
-	}
-
-	var attestation types.Attestation
-	k.cdc.MustUnmarshalBinaryBare(bz, &attestation)
-
-	return attestation, true
+// TODO: audit, test
+func (k Keeper) GetAttestation(ctx sdk.Context, hash tmbytes.HexBytes) *types.Attestation {
+	var out types.Attestation
+	k.cdc.MustUnmarshalBinaryBare(ctx.KVStore(k.storeKey).Get(types.GetAttestationKey(hash)), &out)
+	return &out
 }
 
 // SetAttestation sets the attestation in the store
-func (k Keeper) SetAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestation types.Attestation) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AttestationKeyPrefix)
-	store.Set(hash, k.cdc.MustMarshalBinaryBare(&attestation))
+func (k Keeper) SetAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestation *types.Attestation) {
+	ctx.KVStore(k.storeKey).Set(types.GetAttestationKey(hash), k.cdc.MustMarshalBinaryBare(attestation))
 }
 
-func (k Keeper) IterateAttestations(ctx sdk.Context, cb func(hash tmbytes.HexBytes, attestation types.Attestation) bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AttestationKeyPrefix)
-	iterator := store.Iterator(nil, nil)
+// IterateAttestations iterates over the attestations in the store
+// TODO: why would we need this? should we index attestations by nonce as well as hash?
+func (k Keeper) IterateAttestations(ctx sdk.Context, cb func(hash tmbytes.HexBytes, attestation *types.Attestation) bool) {
+	iterator := prefix.NewStore(ctx.KVStore(k.storeKey), types.AttestationKeyPrefix).Iterator(nil, nil)
 	defer iterator.Close()
-
 	for ; iterator.Valid(); iterator.Next() {
-
-		hash := tmbytes.HexBytes(iterator.Key()[1:])
-
 		var attestation types.Attestation
 		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &attestation)
-		if cb(hash, attestation) {
+		if cb(tmbytes.HexBytes(iterator.Key()), &attestation) {
 			break
 		}
 	}
 
 }
 
+// AttestationMap returns a mapping of event nonces to their assoicated attestations in the store
+func (k Keeper) AttestationMap(ctx sdk.Context) (out map[uint64][]*types.Attestation) {
+	k.IterateAttestations(ctx, func(_ tmbytes.HexBytes, att *types.Attestation) bool {
+		event, err := types.UnpackEvent(att.Event)
+		if err != nil {
+			panic("shouldn't be here")
+		}
+		if val, ok := out[event.GetNonce()]; !ok {
+			out[event.GetNonce()] = []*types.Attestation{att}
+		} else {
+			out[event.GetNonce()] = append(val, att)
+		}
+		return false
+	})
+	return
+}
+
 // DeleteAttestation deletes an attestation given an event hash
-func (k Keeper) DeleteAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestation types.Attestation) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AttestationKeyPrefix)
-	store.Delete(hash)
+func (k Keeper) DeleteAttestation(ctx sdk.Context, hash tmbytes.HexBytes) {
+	ctx.KVStore(k.storeKey).Delete(types.GetAttestationKey(hash))
 }

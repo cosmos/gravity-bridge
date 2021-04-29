@@ -460,50 +460,6 @@ func (m *QuerySignerSetConfirmsRequest) GetValidator() string {
 	return ""
 }
 
-type QuerySignerSetConfirmsResponse struct {
-	Confirms map[string][]byte `protobuf:"bytes,1,rep,name=confirms,proto3" json:"confirms,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-}
-
-func (m *QuerySignerSetConfirmsResponse) Reset()         { *m = QuerySignerSetConfirmsResponse{} }
-func (m *QuerySignerSetConfirmsResponse) String() string { return proto.CompactTextString(m) }
-func (*QuerySignerSetConfirmsResponse) ProtoMessage()    {}
-func (*QuerySignerSetConfirmsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_29a9d4192703013c, []int{9}
-}
-func (m *QuerySignerSetConfirmsResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QuerySignerSetConfirmsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QuerySignerSetConfirmsResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QuerySignerSetConfirmsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QuerySignerSetConfirmsResponse.Merge(m, src)
-}
-func (m *QuerySignerSetConfirmsResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QuerySignerSetConfirmsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QuerySignerSetConfirmsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QuerySignerSetConfirmsResponse proto.InternalMessageInfo
-
-func (m *QuerySignerSetConfirmsResponse) GetConfirms() map[string][]byte {
-	if m != nil {
-		return m.Confirms
-	}
-	return nil
-}
-
 type QueryBatchConfirmsRequest struct {
 	Nonce        uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	TokenAddress string `protobuf:"bytes,2,opt,name=token_address,json=tokenAddress,proto3" json:"token_address,omitempty"`
@@ -514,7 +470,7 @@ func (m *QueryBatchConfirmsRequest) Reset()         { *m = QueryBatchConfirmsReq
 func (m *QueryBatchConfirmsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBatchConfirmsRequest) ProtoMessage()    {}
 func (*QueryBatchConfirmsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_29a9d4192703013c, []int{10}
+	return fileDescriptor_29a9d4192703013c, []int{9}
 }
 func (m *QueryBatchConfirmsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -564,50 +520,6 @@ func (m *QueryBatchConfirmsRequest) GetValidator() string {
 	return ""
 }
 
-type QueryBatchConfirmsResponse struct {
-	Confirms map[string][]byte `protobuf:"bytes,1,rep,name=confirms,proto3" json:"confirms,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-}
-
-func (m *QueryBatchConfirmsResponse) Reset()         { *m = QueryBatchConfirmsResponse{} }
-func (m *QueryBatchConfirmsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryBatchConfirmsResponse) ProtoMessage()    {}
-func (*QueryBatchConfirmsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_29a9d4192703013c, []int{11}
-}
-func (m *QueryBatchConfirmsResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryBatchConfirmsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryBatchConfirmsResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryBatchConfirmsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBatchConfirmsResponse.Merge(m, src)
-}
-func (m *QueryBatchConfirmsResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryBatchConfirmsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBatchConfirmsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryBatchConfirmsResponse proto.InternalMessageInfo
-
-func (m *QueryBatchConfirmsResponse) GetConfirms() map[string][]byte {
-	if m != nil {
-		return m.Confirms
-	}
-	return nil
-}
-
 type QueryLogicCallConfirmsRequest struct {
 	InvalidationId    []byte `protobuf:"bytes,1,opt,name=invalidation_id,json=invalidationId,proto3" json:"invalidation_id,omitempty"`
 	InvalidationNonce uint64 `protobuf:"varint,2,opt,name=invalidation_nonce,json=invalidationNonce,proto3" json:"invalidation_nonce,omitempty"`
@@ -618,7 +530,7 @@ func (m *QueryLogicCallConfirmsRequest) Reset()         { *m = QueryLogicCallCon
 func (m *QueryLogicCallConfirmsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryLogicCallConfirmsRequest) ProtoMessage()    {}
 func (*QueryLogicCallConfirmsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_29a9d4192703013c, []int{12}
+	return fileDescriptor_29a9d4192703013c, []int{10}
 }
 func (m *QueryLogicCallConfirmsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -668,22 +580,22 @@ func (m *QueryLogicCallConfirmsRequest) GetValidator() string {
 	return ""
 }
 
-type QueryLogicCallConfirmsResponse struct {
+type QueryConfirmsResponse struct {
 	Confirms map[string][]byte `protobuf:"bytes,1,rep,name=confirms,proto3" json:"confirms,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
-func (m *QueryLogicCallConfirmsResponse) Reset()         { *m = QueryLogicCallConfirmsResponse{} }
-func (m *QueryLogicCallConfirmsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryLogicCallConfirmsResponse) ProtoMessage()    {}
-func (*QueryLogicCallConfirmsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_29a9d4192703013c, []int{13}
+func (m *QueryConfirmsResponse) Reset()         { *m = QueryConfirmsResponse{} }
+func (m *QueryConfirmsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryConfirmsResponse) ProtoMessage()    {}
+func (*QueryConfirmsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_29a9d4192703013c, []int{11}
 }
-func (m *QueryLogicCallConfirmsResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryConfirmsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryLogicCallConfirmsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryConfirmsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryLogicCallConfirmsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryConfirmsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -693,19 +605,19 @@ func (m *QueryLogicCallConfirmsResponse) XXX_Marshal(b []byte, deterministic boo
 		return b[:n], nil
 	}
 }
-func (m *QueryLogicCallConfirmsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryLogicCallConfirmsResponse.Merge(m, src)
+func (m *QueryConfirmsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryConfirmsResponse.Merge(m, src)
 }
-func (m *QueryLogicCallConfirmsResponse) XXX_Size() int {
+func (m *QueryConfirmsResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryLogicCallConfirmsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryLogicCallConfirmsResponse.DiscardUnknown(m)
+func (m *QueryConfirmsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryConfirmsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryLogicCallConfirmsResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryConfirmsResponse proto.InternalMessageInfo
 
-func (m *QueryLogicCallConfirmsResponse) GetConfirms() map[string][]byte {
+func (m *QueryConfirmsResponse) GetConfirms() map[string][]byte {
 	if m != nil {
 		return m.Confirms
 	}
@@ -722,78 +634,71 @@ func init() {
 	proto.RegisterType((*QueryDelegateKeysByOrchestratorAddress)(nil), "gravity.v1.QueryDelegateKeysByOrchestratorAddress")
 	proto.RegisterType((*QueryDelegateKeysByOrchestratorAddressResponse)(nil), "gravity.v1.QueryDelegateKeysByOrchestratorAddressResponse")
 	proto.RegisterType((*QuerySignerSetConfirmsRequest)(nil), "gravity.v1.QuerySignerSetConfirmsRequest")
-	proto.RegisterType((*QuerySignerSetConfirmsResponse)(nil), "gravity.v1.QuerySignerSetConfirmsResponse")
-	proto.RegisterMapType((map[string][]byte)(nil), "gravity.v1.QuerySignerSetConfirmsResponse.ConfirmsEntry")
 	proto.RegisterType((*QueryBatchConfirmsRequest)(nil), "gravity.v1.QueryBatchConfirmsRequest")
-	proto.RegisterType((*QueryBatchConfirmsResponse)(nil), "gravity.v1.QueryBatchConfirmsResponse")
-	proto.RegisterMapType((map[string][]byte)(nil), "gravity.v1.QueryBatchConfirmsResponse.ConfirmsEntry")
 	proto.RegisterType((*QueryLogicCallConfirmsRequest)(nil), "gravity.v1.QueryLogicCallConfirmsRequest")
-	proto.RegisterType((*QueryLogicCallConfirmsResponse)(nil), "gravity.v1.QueryLogicCallConfirmsResponse")
-	proto.RegisterMapType((map[string][]byte)(nil), "gravity.v1.QueryLogicCallConfirmsResponse.ConfirmsEntry")
+	proto.RegisterType((*QueryConfirmsResponse)(nil), "gravity.v1.QueryConfirmsResponse")
+	proto.RegisterMapType((map[string][]byte)(nil), "gravity.v1.QueryConfirmsResponse.ConfirmsEntry")
 }
 
 func init() { proto.RegisterFile("gravity/v1/query.proto", fileDescriptor_29a9d4192703013c) }
 
 var fileDescriptor_29a9d4192703013c = []byte{
-	// 915 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0xcf, 0x6f, 0x1b, 0x45,
-	0x14, 0xce, 0x38, 0x6d, 0x44, 0x26, 0x29, 0xb4, 0x13, 0xab, 0x4a, 0xac, 0xb0, 0x41, 0x5b, 0xb5,
-	0xf4, 0x07, 0xf5, 0xd4, 0x2e, 0x50, 0xab, 0x95, 0x10, 0xb8, 0x44, 0x55, 0x55, 0x04, 0xcd, 0x06,
-	0x71, 0x80, 0x83, 0x35, 0xde, 0x9d, 0xae, 0x57, 0x59, 0xef, 0xb8, 0x3b, 0x63, 0x8b, 0x55, 0x64,
-	0x24, 0xb8, 0x70, 0x45, 0x42, 0xfc, 0x0d, 0x48, 0x70, 0x44, 0xe2, 0xca, 0xb5, 0x88, 0x4b, 0x25,
-	0x2e, 0x9c, 0x2a, 0x94, 0xf0, 0x87, 0x20, 0xcf, 0xce, 0xae, 0xf7, 0x87, 0xd7, 0x5e, 0x57, 0xea,
-	0xcd, 0xfb, 0xe6, 0xbd, 0xef, 0x7d, 0xef, 0x9b, 0xf7, 0x3c, 0x0f, 0x5e, 0xb4, 0x7d, 0x32, 0x72,
-	0x44, 0x80, 0x47, 0x0d, 0xfc, 0x74, 0x48, 0xfd, 0xa0, 0x3e, 0xf0, 0x99, 0x60, 0x08, 0x2a, 0x7b,
-	0x7d, 0xd4, 0xa8, 0x6d, 0x27, 0x7c, 0x6c, 0xea, 0x51, 0xee, 0xf0, 0xd0, 0x2b, 0x7d, 0xa2, 0x02,
-	0xf2, 0x27, 0x26, 0xf3, 0x9e, 0x38, 0x7e, 0x5f, 0x9d, 0xec, 0xda, 0x8c, 0xd9, 0x2e, 0xc5, 0x64,
-	0xe0, 0x60, 0xe2, 0x79, 0x4c, 0x10, 0xe1, 0x30, 0x2f, 0x42, 0xac, 0xda, 0xcc, 0x66, 0xf2, 0x27,
-	0x9e, 0xfc, 0x52, 0xd6, 0x1d, 0x15, 0x23, 0xbf, 0xba, 0xc3, 0x27, 0x98, 0x78, 0x2a, 0x91, 0x5e,
-	0x85, 0xe8, 0x60, 0xc2, 0xfb, 0x31, 0xf1, 0x49, 0x9f, 0x1b, 0xf4, 0xe9, 0x90, 0x72, 0xa1, 0x3f,
-	0x80, 0x5b, 0x29, 0x2b, 0x1f, 0x30, 0x8f, 0x53, 0x74, 0x0b, 0xae, 0x0d, 0xa4, 0x65, 0x1b, 0xbc,
-	0x05, 0xae, 0x6e, 0x34, 0x51, 0x7d, 0x5a, 0x66, 0x3d, 0xf4, 0x6d, 0x9f, 0x79, 0xf6, 0x62, 0x6f,
-	0xc5, 0x50, 0x7e, 0xba, 0x01, 0x2f, 0x49, 0xa0, 0x8f, 0xa9, 0x4b, 0x6d, 0x22, 0xe8, 0x23, 0x1a,
-	0xf0, 0x76, 0xf0, 0x05, 0x71, 0x1d, 0x8b, 0x08, 0xe6, 0x7f, 0x64, 0x59, 0x3e, 0xe5, 0x1c, 0xdd,
-	0x80, 0x17, 0x46, 0x91, 0xad, 0x43, 0x42, 0xa3, 0xcc, 0xb1, 0x6e, 0x9c, 0x1f, 0x65, 0x9c, 0xf5,
-	0x6f, 0x01, 0xbc, 0x51, 0x02, 0x34, 0x66, 0xbd, 0x07, 0x37, 0xa8, 0xe8, 0x65, 0x60, 0x21, 0x15,
-	0xbd, 0x28, 0x7b, 0x03, 0x56, 0x99, 0x6f, 0xf6, 0x28, 0x17, 0x7e, 0x8a, 0x40, 0x45, 0x7a, 0x6e,
-	0x25, 0xcf, 0x22, 0x0e, 0x1f, 0xc2, 0x37, 0x67, 0x50, 0xd8, 0x9f, 0x62, 0x2e, 0x4a, 0xaa, 0x7f,
-	0x0f, 0xe0, 0xe5, 0xb9, 0x10, 0x31, 0xff, 0x65, 0xc4, 0x79, 0x99, 0x5a, 0xbe, 0x82, 0x57, 0x66,
-	0x10, 0xf9, 0x2c, 0xef, 0x59, 0x08, 0x0e, 0x8a, 0xc1, 0xbf, 0x81, 0xf5, 0x72, 0xe0, 0x2f, 0x57,
-	0x6e, 0x46, 0xe6, 0x4a, 0x4e, 0xe6, 0x43, 0x75, 0x51, 0x87, 0x8e, 0xed, 0x51, 0xff, 0x90, 0x8a,
-	0xfb, 0xe1, 0x34, 0x45, 0xad, 0x8e, 0xaa, 0xf0, 0xac, 0xc7, 0x3c, 0x93, 0xca, 0x14, 0x67, 0x8c,
-	0xf0, 0x03, 0xed, 0xc2, 0xf5, 0x38, 0x97, 0x42, 0x9d, 0x1a, 0xf4, 0xdf, 0x00, 0xd4, 0x8a, 0x50,
-	0x55, 0x15, 0x9f, 0xc3, 0xd7, 0xd4, 0xdc, 0x4e, 0xc8, 0xaf, 0x5e, 0xdd, 0x68, 0xb6, 0x92, 0xc3,
-	0x32, 0x3f, 0xba, 0x1e, 0x19, 0xf6, 0x3d, 0xe1, 0x07, 0x46, 0x8c, 0x54, 0xbb, 0x07, 0xcf, 0xa5,
-	0x8e, 0xd0, 0x79, 0xb8, 0x7a, 0x44, 0x03, 0x25, 0xcf, 0xe4, 0xe7, 0xa4, 0x9e, 0x11, 0x71, 0x87,
-	0x54, 0xb2, 0xde, 0x34, 0xc2, 0x8f, 0xbb, 0x95, 0x16, 0xd0, 0x05, 0xdc, 0x91, 0x69, 0xdb, 0x44,
-	0x98, 0xbd, 0x72, 0x32, 0x5c, 0x82, 0xe7, 0x04, 0x3b, 0xa2, 0x5e, 0x46, 0xe0, 0x4d, 0x69, 0x8c,
-	0xee, 0x20, 0xa5, 0xd5, 0x6a, 0x56, 0xab, 0x5f, 0x01, 0xac, 0xcd, 0x4a, 0xab, 0x74, 0x7a, 0x9c,
-	0xd3, 0xe9, 0xdd, 0x9c, 0x4e, 0x33, 0x23, 0x5f, 0x8d, 0x46, 0x3f, 0x01, 0xd5, 0x2f, 0x9f, 0x30,
-	0xdb, 0x31, 0xef, 0x13, 0xd7, 0xcd, 0x0a, 0xf5, 0x36, 0x7c, 0xc3, 0xf1, 0x54, 0x79, 0x0e, 0xf3,
-	0x3a, 0x8e, 0x25, 0x91, 0x37, 0x8d, 0xd7, 0x93, 0xe6, 0x87, 0x16, 0xba, 0x09, 0x51, 0xca, 0x31,
-	0x94, 0xb7, 0x22, 0xe5, 0xbd, 0x90, 0x3c, 0xf9, 0x34, 0xdf, 0x71, 0xab, 0x85, 0x1d, 0x37, 0x83,
-	0xd7, 0x12, 0x1d, 0x57, 0x18, 0xfd, 0x4a, 0xd4, 0x6c, 0xbe, 0x58, 0x87, 0x67, 0x65, 0x5e, 0xe4,
-	0xc0, 0xb5, 0xf0, 0x7d, 0x40, 0x5a, 0x8e, 0x54, 0xea, 0xe9, 0xa9, 0xed, 0x15, 0x9e, 0x87, 0x4c,
-	0x75, 0xed, 0xbb, 0xbf, 0xff, 0xfb, 0xb1, 0xb2, 0x8d, 0x2e, 0xe2, 0xe9, 0x1b, 0xd9, 0xa5, 0x82,
-	0xe0, 0xf0, 0xc9, 0x41, 0xbf, 0x83, 0x45, 0x23, 0x7f, 0xad, 0xcc, 0x24, 0x86, 0x6c, 0xae, 0x97,
-	0x1f, 0x5a, 0xfd, 0x03, 0x49, 0xac, 0x85, 0xde, 0xcf, 0x12, 0x8b, 0xc4, 0xc4, 0x5c, 0xc6, 0x72,
-	0x2a, 0xf0, 0xb1, 0xec, 0x86, 0x31, 0x3e, 0x8e, 0xaf, 0x78, 0x8c, 0x7e, 0x01, 0xf3, 0x06, 0xf4,
-	0xf2, 0xa2, 0xb1, 0x08, 0x09, 0x5f, 0x29, 0x37, 0x3d, 0x25, 0xc8, 0x76, 0x27, 0x71, 0x53, 0xa2,
-	0xa9, 0xff, 0x81, 0x31, 0xfa, 0x73, 0xe1, 0xa0, 0x5c, 0x2b, 0xd3, 0x7d, 0x45, 0x2a, 0x17, 0x36,
-	0xaa, 0x7e, 0x20, 0x89, 0x3f, 0x42, 0x0f, 0x0b, 0x89, 0xbb, 0x93, 0x58, 0x93, 0xb8, 0x2e, 0x3e,
-	0xce, 0x4c, 0xea, 0x38, 0x63, 0x09, 0x6b, 0x43, 0x7f, 0x00, 0xb8, 0xf3, 0x80, 0x8a, 0xc4, 0x13,
-	0x95, 0xd8, 0x26, 0x10, 0xce, 0x91, 0x9b, 0xbf, 0x77, 0xd4, 0xee, 0x2c, 0x19, 0x10, 0x97, 0xd6,
-	0x92, 0xa5, 0x35, 0xd1, 0xad, 0x6c, 0x69, 0x72, 0xb3, 0xec, 0x58, 0x0a, 0xa5, 0x73, 0x44, 0x03,
-	0xde, 0xe9, 0x06, 0x9d, 0xb8, 0x77, 0xd0, 0xcf, 0x00, 0x6e, 0x65, 0x2b, 0xd8, 0x17, 0xbd, 0x19,
-	0x77, 0x50, 0xb4, 0x6d, 0xd4, 0x1a, 0xa5, 0x5d, 0x63, 0xbe, 0x4d, 0xc9, 0xf7, 0x1d, 0x74, 0xbd,
-	0x24, 0x5f, 0x2a, 0x7a, 0xe8, 0x2f, 0x00, 0x77, 0xb3, 0x4c, 0x93, 0xdb, 0x00, 0x6a, 0x2e, 0xe0,
-	0x31, 0x63, 0x75, 0xa8, 0xdd, 0x5d, 0x3e, 0x26, 0x2e, 0xe2, 0x9e, 0x2c, 0xe2, 0x3d, 0x74, 0xbb,
-	0x64, 0x11, 0xc9, 0x25, 0xa7, 0x7d, 0xf0, 0xec, 0x44, 0x03, 0xcf, 0x4f, 0x34, 0xf0, 0xef, 0x89,
-	0x06, 0x7e, 0x38, 0xd5, 0x56, 0x9e, 0x9f, 0x6a, 0x2b, 0xff, 0x9c, 0x6a, 0x2b, 0x5f, 0xde, 0xb1,
-	0x1d, 0xd1, 0x1b, 0x76, 0xeb, 0x26, 0xeb, 0x63, 0x93, 0xf1, 0x3e, 0xe3, 0x11, 0xfe, 0xcd, 0xae,
-	0xef, 0x58, 0x36, 0xc5, 0x7d, 0x66, 0x0d, 0x5d, 0x8a, 0xbf, 0x8e, 0xf3, 0x8a, 0x60, 0x40, 0x79,
-	0x77, 0x4d, 0xee, 0xe5, 0xb7, 0xff, 0x0f, 0x00, 0x00, 0xff, 0xff, 0x18, 0x82, 0xd0, 0xc3, 0x5a,
-	0x0c, 0x00, 0x00,
+	// 871 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x96, 0x4f, 0x4f, 0x3b, 0x45,
+	0x18, 0xc7, 0x3b, 0xe5, 0xf7, 0x23, 0x32, 0x80, 0xc2, 0x50, 0x09, 0x34, 0xb8, 0xe8, 0x12, 0x14,
+	0x45, 0x3a, 0xb4, 0x44, 0x21, 0x90, 0x18, 0x2d, 0x12, 0x42, 0x30, 0x2a, 0x4b, 0xe2, 0x41, 0x0f,
+	0xcd, 0x74, 0x77, 0xd8, 0x6e, 0xd8, 0xee, 0x94, 0x9d, 0x69, 0xe3, 0x86, 0xd4, 0x44, 0x2f, 0x5e,
+	0x4d, 0x8c, 0x2f, 0xc0, 0x83, 0xf1, 0xe4, 0x6b, 0xd0, 0x9b, 0x24, 0x5e, 0x48, 0xbc, 0x78, 0x32,
+	0x06, 0x7c, 0x21, 0xa6, 0xb3, 0x7f, 0xba, 0x7f, 0x5a, 0x5a, 0x88, 0xb7, 0x9d, 0x67, 0x9e, 0xf9,
+	0x3e, 0x9f, 0xe7, 0x99, 0x99, 0x67, 0x16, 0x2e, 0x9a, 0x2e, 0xe9, 0x58, 0xc2, 0xc3, 0x9d, 0x32,
+	0xbe, 0x6a, 0x53, 0xd7, 0x2b, 0xb5, 0x5c, 0x26, 0x18, 0x82, 0x81, 0xbd, 0xd4, 0x29, 0x17, 0x97,
+	0x62, 0x3e, 0x26, 0x75, 0x28, 0xb7, 0xb8, 0xef, 0x95, 0x9c, 0x09, 0x16, 0x64, 0x67, 0x74, 0xe6,
+	0x5c, 0x58, 0x6e, 0x33, 0x98, 0x59, 0x31, 0x19, 0x33, 0x6d, 0x8a, 0x49, 0xcb, 0xc2, 0xc4, 0x71,
+	0x98, 0x20, 0xc2, 0x62, 0x4e, 0xa8, 0x58, 0x30, 0x99, 0xc9, 0xe4, 0x27, 0xee, 0x7d, 0x05, 0xd6,
+	0xe5, 0x60, 0x8d, 0x1c, 0xd5, 0xdb, 0x17, 0x98, 0x38, 0x41, 0x20, 0xb5, 0x00, 0xd1, 0x59, 0x8f,
+	0xfb, 0x53, 0xe2, 0x92, 0x26, 0xd7, 0xe8, 0x55, 0x9b, 0x72, 0xa1, 0x1e, 0xc3, 0x85, 0x84, 0x95,
+	0xb7, 0x98, 0xc3, 0x29, 0xda, 0x86, 0x93, 0x2d, 0x69, 0x59, 0x02, 0xaf, 0x82, 0x8d, 0xe9, 0x0a,
+	0x2a, 0xf5, 0xd3, 0x2c, 0xf9, 0xbe, 0xd5, 0x67, 0x37, 0x7f, 0xaf, 0xe6, 0xb4, 0xc0, 0x4f, 0xd5,
+	0xe0, 0x9a, 0x14, 0xfa, 0x90, 0xda, 0xd4, 0x24, 0x82, 0x9e, 0x52, 0x8f, 0x57, 0xbd, 0xcf, 0x88,
+	0x6d, 0x19, 0x44, 0x30, 0xf7, 0x03, 0xc3, 0x70, 0x29, 0xe7, 0x68, 0x13, 0xce, 0x77, 0x42, 0x5b,
+	0x8d, 0xf8, 0x46, 0x19, 0x63, 0x4a, 0x9b, 0xeb, 0xa4, 0x9c, 0xd5, 0xaf, 0x01, 0xdc, 0x1c, 0x43,
+	0x34, 0xa2, 0x5e, 0x85, 0xd3, 0x54, 0x34, 0x52, 0xb2, 0x90, 0x8a, 0x46, 0x18, 0xbd, 0x0c, 0x0b,
+	0xcc, 0xd5, 0x1b, 0x94, 0x0b, 0x37, 0x01, 0x90, 0x97, 0x9e, 0x0b, 0xf1, 0xb9, 0x90, 0xe1, 0x7d,
+	0xf8, 0xca, 0x00, 0x84, 0xa3, 0xbe, 0xe6, 0xa8, 0xa0, 0xea, 0xb7, 0x00, 0xae, 0x3f, 0x28, 0x11,
+	0xf1, 0x3f, 0xa6, 0x38, 0x4f, 0xc9, 0xe5, 0x0b, 0xf8, 0xfa, 0x00, 0x90, 0x4f, 0xb2, 0x9e, 0x43,
+	0xc5, 0xc1, 0x70, 0xf1, 0xaf, 0x60, 0x69, 0x3c, 0xf1, 0xa7, 0xa5, 0x9b, 0x2a, 0x73, 0x3e, 0x53,
+	0xe6, 0xf3, 0x60, 0xa3, 0xce, 0x2d, 0xd3, 0xa1, 0xee, 0x39, 0x15, 0x87, 0xfe, 0x6d, 0x0a, 0x8f,
+	0x3a, 0x2a, 0xc0, 0xe7, 0x0e, 0x73, 0x74, 0x2a, 0x43, 0x3c, 0xd3, 0xfc, 0x01, 0x5a, 0x81, 0x53,
+	0x51, 0xac, 0x40, 0xb5, 0x6f, 0x50, 0x05, 0x5c, 0x96, 0xa2, 0x55, 0x22, 0xf4, 0xc6, 0x78, 0x82,
+	0x6b, 0x70, 0x56, 0xb0, 0x4b, 0xea, 0xa4, 0x50, 0x67, 0xa4, 0x31, 0xcc, 0x26, 0x11, 0x75, 0x22,
+	0x1d, 0xf5, 0x07, 0x10, 0xe4, 0xf2, 0x11, 0x33, 0x2d, 0xfd, 0x90, 0xd8, 0x76, 0x3a, 0xf4, 0x1b,
+	0xf0, 0x25, 0xcb, 0x09, 0x16, 0x58, 0xcc, 0xa9, 0x59, 0x86, 0x84, 0x98, 0xd1, 0x5e, 0x8c, 0x9b,
+	0x4f, 0x0c, 0xb4, 0x05, 0x51, 0xc2, 0xd1, 0x07, 0xce, 0x4b, 0xe0, 0xf9, 0xf8, 0xcc, 0xc7, 0xd9,
+	0x6a, 0x64, 0xb8, 0x7e, 0x04, 0xf0, 0x65, 0xc9, 0xd5, 0xc7, 0x09, 0xb6, 0xf2, 0x14, 0xbe, 0x10,
+	0x34, 0xaf, 0xde, 0x0e, 0x4e, 0x6c, 0x4c, 0x57, 0x70, 0xbc, 0x63, 0x0c, 0x5c, 0x54, 0x0a, 0x0d,
+	0x47, 0x8e, 0x70, 0x3d, 0x2d, 0x12, 0x28, 0x1e, 0xc0, 0xd9, 0xc4, 0x14, 0x9a, 0x83, 0x13, 0x97,
+	0xd4, 0x0b, 0x8e, 0x46, 0xef, 0xb3, 0x57, 0xfa, 0x0e, 0xb1, 0xdb, 0x7e, 0x26, 0x33, 0x9a, 0x3f,
+	0xd8, 0xcf, 0xef, 0x81, 0xca, 0xef, 0x53, 0xf0, 0xb9, 0x0c, 0x87, 0x2c, 0x38, 0xe9, 0x77, 0x2a,
+	0xa4, 0x64, 0x58, 0x12, 0x4d, 0xb0, 0xb8, 0x3a, 0x74, 0xde, 0x27, 0x55, 0x95, 0x6f, 0xfe, 0xfc,
+	0xf7, 0xfb, 0xfc, 0x12, 0x5a, 0xc4, 0xfd, 0x6e, 0x5d, 0xa7, 0x82, 0x60, 0xbf, 0xf9, 0xa1, 0x5f,
+	0xc0, 0xa8, 0xc3, 0xf7, 0x66, 0x26, 0xc4, 0x30, 0xd7, 0xe2, 0x6b, 0x23, 0x2b, 0xa7, 0xbe, 0x27,
+	0x79, 0xf6, 0xd0, 0xbb, 0x69, 0x9e, 0xb0, 0x86, 0x98, 0x4b, 0x75, 0x4e, 0x05, 0xbe, 0x96, 0x5b,
+	0xde, 0xc5, 0xd7, 0xd1, 0x3e, 0x76, 0xd1, 0x4f, 0xe0, 0xa1, 0x73, 0xbd, 0x9e, 0x01, 0x18, 0xe4,
+	0xf6, 0xff, 0x70, 0xd6, 0x7b, 0xca, 0x7d, 0xc6, 0xc4, 0xcd, 0xe9, 0xa2, 0xdf, 0x46, 0x5e, 0x84,
+	0x6c, 0x5d, 0x87, 0xb9, 0x8e, 0xc3, 0x7b, 0x26, 0x79, 0x4f, 0xd1, 0xc9, 0x50, 0x5e, 0xbb, 0xa7,
+	0xae, 0x13, 0xdb, 0xc6, 0xd7, 0xa9, 0x0b, 0xd8, 0x4d, 0x59, 0xfc, 0x94, 0xd0, 0xaf, 0x00, 0x2e,
+	0x1f, 0x53, 0x11, 0xeb, 0x8a, 0xb1, 0x07, 0x0c, 0x65, 0x6f, 0xc9, 0xc3, 0x4f, 0x5d, 0x71, 0xf7,
+	0x91, 0x0b, 0xa2, 0xd4, 0xf6, 0x64, 0x6a, 0x15, 0xb4, 0x9d, 0x4e, 0x4d, 0xfe, 0xcc, 0xd4, 0x8c,
+	0x40, 0xa5, 0x76, 0x49, 0x3d, 0x5e, 0xab, 0x7b, 0xb5, 0xe8, 0xb4, 0xa0, 0x9f, 0x01, 0x5c, 0x48,
+	0x67, 0x70, 0x24, 0x1a, 0x03, 0x4a, 0x3f, 0xec, 0x81, 0x2b, 0x96, 0xc7, 0x76, 0x8d, 0x78, 0x2b,
+	0x92, 0xf7, 0x6d, 0xf4, 0xd6, 0x98, 0xbc, 0x54, 0x34, 0xd0, 0x1f, 0x00, 0xae, 0xa4, 0x49, 0xe3,
+	0x0f, 0x10, 0xaa, 0x8c, 0xe0, 0x18, 0xf0, 0x5a, 0x15, 0xf7, 0x1f, 0xbf, 0x26, 0x4a, 0xe2, 0x40,
+	0x26, 0xf1, 0x0e, 0xda, 0x19, 0x33, 0x89, 0xf8, 0xbb, 0x5a, 0x3d, 0xbb, 0xb9, 0x53, 0xc0, 0xed,
+	0x9d, 0x02, 0xfe, 0xb9, 0x53, 0xc0, 0x77, 0xf7, 0x4a, 0xee, 0xf6, 0x5e, 0xc9, 0xfd, 0x75, 0xaf,
+	0xe4, 0x3e, 0xdf, 0x35, 0x2d, 0xd1, 0x68, 0xd7, 0x4b, 0x3a, 0x6b, 0x62, 0x9d, 0xf1, 0x26, 0xe3,
+	0xa1, 0xfe, 0x56, 0xdd, 0xb5, 0x0c, 0x93, 0xe2, 0x26, 0x33, 0xda, 0x36, 0xc5, 0x5f, 0x46, 0x71,
+	0x85, 0xd7, 0xa2, 0xbc, 0x3e, 0x29, 0x7f, 0x05, 0x77, 0xfe, 0x0b, 0x00, 0x00, 0xff, 0xff, 0x8b,
+	0x0c, 0x2b, 0x8d, 0xcd, 0x0a, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -809,9 +714,9 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	QuerySignerSetConfirmsRequest(ctx context.Context, in *QuerySignerSetConfirmsRequest, opts ...grpc.CallOption) (*QuerySignerSetConfirmsResponse, error)
-	QueryBatchConfirmsRequest(ctx context.Context, in *QueryBatchConfirmsRequest, opts ...grpc.CallOption) (*QueryBatchConfirmsResponse, error)
-	QueryLogicCallConfirmsRequest(ctx context.Context, in *QueryLogicCallConfirmsRequest, opts ...grpc.CallOption) (*QueryLogicCallConfirmsResponse, error)
+	QuerySignerSetConfirmsRequest(ctx context.Context, in *QuerySignerSetConfirmsRequest, opts ...grpc.CallOption) (*QueryConfirmsResponse, error)
+	QueryBatchConfirmsRequest(ctx context.Context, in *QueryBatchConfirmsRequest, opts ...grpc.CallOption) (*QueryConfirmsResponse, error)
+	QueryLogicCallConfirmsRequest(ctx context.Context, in *QueryLogicCallConfirmsRequest, opts ...grpc.CallOption) (*QueryConfirmsResponse, error)
 	GetDelegateKeyByValidator(ctx context.Context, in *QueryDelegateKeysByValidatorAddress, opts ...grpc.CallOption) (*QueryDelegateKeysByValidatorAddressResponse, error)
 	GetDelegateKeyByEth(ctx context.Context, in *QueryDelegateKeysByEthAddress, opts ...grpc.CallOption) (*QueryDelegateKeysByEthAddressResponse, error)
 	GetDelegateKeyByOrchestrator(ctx context.Context, in *QueryDelegateKeysByOrchestratorAddress, opts ...grpc.CallOption) (*QueryDelegateKeysByOrchestratorAddressResponse, error)
@@ -834,8 +739,8 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
-func (c *queryClient) QuerySignerSetConfirmsRequest(ctx context.Context, in *QuerySignerSetConfirmsRequest, opts ...grpc.CallOption) (*QuerySignerSetConfirmsResponse, error) {
-	out := new(QuerySignerSetConfirmsResponse)
+func (c *queryClient) QuerySignerSetConfirmsRequest(ctx context.Context, in *QuerySignerSetConfirmsRequest, opts ...grpc.CallOption) (*QueryConfirmsResponse, error) {
+	out := new(QueryConfirmsResponse)
 	err := c.cc.Invoke(ctx, "/gravity.v1.Query/QuerySignerSetConfirmsRequest", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -843,8 +748,8 @@ func (c *queryClient) QuerySignerSetConfirmsRequest(ctx context.Context, in *Que
 	return out, nil
 }
 
-func (c *queryClient) QueryBatchConfirmsRequest(ctx context.Context, in *QueryBatchConfirmsRequest, opts ...grpc.CallOption) (*QueryBatchConfirmsResponse, error) {
-	out := new(QueryBatchConfirmsResponse)
+func (c *queryClient) QueryBatchConfirmsRequest(ctx context.Context, in *QueryBatchConfirmsRequest, opts ...grpc.CallOption) (*QueryConfirmsResponse, error) {
+	out := new(QueryConfirmsResponse)
 	err := c.cc.Invoke(ctx, "/gravity.v1.Query/QueryBatchConfirmsRequest", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -852,8 +757,8 @@ func (c *queryClient) QueryBatchConfirmsRequest(ctx context.Context, in *QueryBa
 	return out, nil
 }
 
-func (c *queryClient) QueryLogicCallConfirmsRequest(ctx context.Context, in *QueryLogicCallConfirmsRequest, opts ...grpc.CallOption) (*QueryLogicCallConfirmsResponse, error) {
-	out := new(QueryLogicCallConfirmsResponse)
+func (c *queryClient) QueryLogicCallConfirmsRequest(ctx context.Context, in *QueryLogicCallConfirmsRequest, opts ...grpc.CallOption) (*QueryConfirmsResponse, error) {
+	out := new(QueryConfirmsResponse)
 	err := c.cc.Invoke(ctx, "/gravity.v1.Query/QueryLogicCallConfirmsRequest", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -891,9 +796,9 @@ func (c *queryClient) GetDelegateKeyByOrchestrator(ctx context.Context, in *Quer
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	QuerySignerSetConfirmsRequest(context.Context, *QuerySignerSetConfirmsRequest) (*QuerySignerSetConfirmsResponse, error)
-	QueryBatchConfirmsRequest(context.Context, *QueryBatchConfirmsRequest) (*QueryBatchConfirmsResponse, error)
-	QueryLogicCallConfirmsRequest(context.Context, *QueryLogicCallConfirmsRequest) (*QueryLogicCallConfirmsResponse, error)
+	QuerySignerSetConfirmsRequest(context.Context, *QuerySignerSetConfirmsRequest) (*QueryConfirmsResponse, error)
+	QueryBatchConfirmsRequest(context.Context, *QueryBatchConfirmsRequest) (*QueryConfirmsResponse, error)
+	QueryLogicCallConfirmsRequest(context.Context, *QueryLogicCallConfirmsRequest) (*QueryConfirmsResponse, error)
 	GetDelegateKeyByValidator(context.Context, *QueryDelegateKeysByValidatorAddress) (*QueryDelegateKeysByValidatorAddressResponse, error)
 	GetDelegateKeyByEth(context.Context, *QueryDelegateKeysByEthAddress) (*QueryDelegateKeysByEthAddressResponse, error)
 	GetDelegateKeyByOrchestrator(context.Context, *QueryDelegateKeysByOrchestratorAddress) (*QueryDelegateKeysByOrchestratorAddressResponse, error)
@@ -906,13 +811,13 @@ type UnimplementedQueryServer struct {
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
-func (*UnimplementedQueryServer) QuerySignerSetConfirmsRequest(ctx context.Context, req *QuerySignerSetConfirmsRequest) (*QuerySignerSetConfirmsResponse, error) {
+func (*UnimplementedQueryServer) QuerySignerSetConfirmsRequest(ctx context.Context, req *QuerySignerSetConfirmsRequest) (*QueryConfirmsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QuerySignerSetConfirmsRequest not implemented")
 }
-func (*UnimplementedQueryServer) QueryBatchConfirmsRequest(ctx context.Context, req *QueryBatchConfirmsRequest) (*QueryBatchConfirmsResponse, error) {
+func (*UnimplementedQueryServer) QueryBatchConfirmsRequest(ctx context.Context, req *QueryBatchConfirmsRequest) (*QueryConfirmsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueryBatchConfirmsRequest not implemented")
 }
-func (*UnimplementedQueryServer) QueryLogicCallConfirmsRequest(ctx context.Context, req *QueryLogicCallConfirmsRequest) (*QueryLogicCallConfirmsResponse, error) {
+func (*UnimplementedQueryServer) QueryLogicCallConfirmsRequest(ctx context.Context, req *QueryLogicCallConfirmsRequest) (*QueryConfirmsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueryLogicCallConfirmsRequest not implemented")
 }
 func (*UnimplementedQueryServer) GetDelegateKeyByValidator(ctx context.Context, req *QueryDelegateKeysByValidatorAddress) (*QueryDelegateKeysByValidatorAddressResponse, error) {
@@ -1384,50 +1289,6 @@ func (m *QuerySignerSetConfirmsRequest) MarshalToSizedBuffer(dAtA []byte) (int, 
 	return len(dAtA) - i, nil
 }
 
-func (m *QuerySignerSetConfirmsResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QuerySignerSetConfirmsResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QuerySignerSetConfirmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Confirms) > 0 {
-		for k := range m.Confirms {
-			v := m.Confirms[k]
-			baseI := i
-			if len(v) > 0 {
-				i -= len(v)
-				copy(dAtA[i:], v)
-				i = encodeVarintQuery(dAtA, i, uint64(len(v)))
-				i--
-				dAtA[i] = 0x12
-			}
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintQuery(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintQuery(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0xa
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
 func (m *QueryBatchConfirmsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1466,50 +1327,6 @@ func (m *QueryBatchConfirmsRequest) MarshalToSizedBuffer(dAtA []byte) (int, erro
 		i = encodeVarintQuery(dAtA, i, uint64(m.Nonce))
 		i--
 		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryBatchConfirmsResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryBatchConfirmsResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryBatchConfirmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Confirms) > 0 {
-		for k := range m.Confirms {
-			v := m.Confirms[k]
-			baseI := i
-			if len(v) > 0 {
-				i -= len(v)
-				copy(dAtA[i:], v)
-				i = encodeVarintQuery(dAtA, i, uint64(len(v)))
-				i--
-				dAtA[i] = 0x12
-			}
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintQuery(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintQuery(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0xa
-		}
 	}
 	return len(dAtA) - i, nil
 }
@@ -1556,7 +1373,7 @@ func (m *QueryLogicCallConfirmsRequest) MarshalToSizedBuffer(dAtA []byte) (int, 
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryLogicCallConfirmsResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryConfirmsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1566,12 +1383,12 @@ func (m *QueryLogicCallConfirmsResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryLogicCallConfirmsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryConfirmsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryLogicCallConfirmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryConfirmsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1737,27 +1554,6 @@ func (m *QuerySignerSetConfirmsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QuerySignerSetConfirmsResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.Confirms) > 0 {
-		for k, v := range m.Confirms {
-			_ = k
-			_ = v
-			l = 0
-			if len(v) > 0 {
-				l = 1 + len(v) + sovQuery(uint64(len(v)))
-			}
-			mapEntrySize := 1 + len(k) + sovQuery(uint64(len(k))) + l
-			n += mapEntrySize + 1 + sovQuery(uint64(mapEntrySize))
-		}
-	}
-	return n
-}
-
 func (m *QueryBatchConfirmsRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1774,27 +1570,6 @@ func (m *QueryBatchConfirmsRequest) Size() (n int) {
 	l = len(m.Validator)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryBatchConfirmsResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.Confirms) > 0 {
-		for k, v := range m.Confirms {
-			_ = k
-			_ = v
-			l = 0
-			if len(v) > 0 {
-				l = 1 + len(v) + sovQuery(uint64(len(v)))
-			}
-			mapEntrySize := 1 + len(k) + sovQuery(uint64(len(k))) + l
-			n += mapEntrySize + 1 + sovQuery(uint64(mapEntrySize))
-		}
 	}
 	return n
 }
@@ -1819,7 +1594,7 @@ func (m *QueryLogicCallConfirmsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryLogicCallConfirmsResponse) Size() (n int) {
+func (m *QueryConfirmsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2695,187 +2470,6 @@ func (m *QuerySignerSetConfirmsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QuerySignerSetConfirmsResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QuerySignerSetConfirmsResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QuerySignerSetConfirmsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Confirms", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Confirms == nil {
-				m.Confirms = make(map[string][]byte)
-			}
-			var mapkey string
-			mapvalue := []byte{}
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowQuery
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowQuery
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthQuery
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthQuery
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var mapbyteLen uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowQuery
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						mapbyteLen |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intMapbyteLen := int(mapbyteLen)
-					if intMapbyteLen < 0 {
-						return ErrInvalidLengthQuery
-					}
-					postbytesIndex := iNdEx + intMapbyteLen
-					if postbytesIndex < 0 {
-						return ErrInvalidLengthQuery
-					}
-					if postbytesIndex > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = make([]byte, mapbyteLen)
-					copy(mapvalue, dAtA[iNdEx:postbytesIndex])
-					iNdEx = postbytesIndex
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipQuery(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthQuery
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Confirms[mapkey] = mapvalue
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
 func (m *QueryBatchConfirmsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2987,187 +2581,6 @@ func (m *QueryBatchConfirmsRequest) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Validator = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryBatchConfirmsResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBatchConfirmsResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBatchConfirmsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Confirms", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Confirms == nil {
-				m.Confirms = make(map[string][]byte)
-			}
-			var mapkey string
-			mapvalue := []byte{}
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowQuery
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowQuery
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthQuery
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthQuery
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var mapbyteLen uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowQuery
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						mapbyteLen |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intMapbyteLen := int(mapbyteLen)
-					if intMapbyteLen < 0 {
-						return ErrInvalidLengthQuery
-					}
-					postbytesIndex := iNdEx + intMapbyteLen
-					if postbytesIndex < 0 {
-						return ErrInvalidLengthQuery
-					}
-					if postbytesIndex > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = make([]byte, mapbyteLen)
-					copy(mapvalue, dAtA[iNdEx:postbytesIndex])
-					iNdEx = postbytesIndex
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipQuery(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthQuery
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Confirms[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -3331,7 +2744,7 @@ func (m *QueryLogicCallConfirmsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryLogicCallConfirmsResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryConfirmsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3354,10 +2767,10 @@ func (m *QueryLogicCallConfirmsResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryLogicCallConfirmsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryConfirmsResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryLogicCallConfirmsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryConfirmsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
