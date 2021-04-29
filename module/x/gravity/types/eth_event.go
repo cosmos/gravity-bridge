@@ -86,6 +86,9 @@ func (e WithdrawEvent) Validate() error {
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
+	if len(e.TxID) == 0 {
+		return fmt.Errorf("transaction id cannot be empty")
+	}
 	if e.EthereumHeight == 0 {
 		return fmt.Errorf("ethereum height cannot be 0")
 	}
@@ -123,6 +126,9 @@ func (e CosmosERC20DeployedEvent) Validate() error {
 	}
 	if strings.TrimSpace(e.Symbol) == "" {
 		return fmt.Errorf("token symbol cannot be blank")
+	}
+	if e.Decimals <= 0 {
+		return fmt.Errorf("decimal precision must be positive")
 	}
 	if e.EthereumHeight == 0 {
 		return fmt.Errorf("ethereum height cannot be 0")
