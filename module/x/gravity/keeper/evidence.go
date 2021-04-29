@@ -85,9 +85,5 @@ func (k Keeper) SetPastEthSignatureCheckpoint(ctx sdk.Context, checkpoint []byte
 // GetPastEthSignatureCheckpoint tells you whether a given checkpoint has ever existed
 func (k Keeper) GetPastEthSignatureCheckpoint(ctx sdk.Context, checkpoint []byte) (found bool) {
 	store := ctx.KVStore(k.storeKey)
-	if bytes.Equal(store.Get(types.GetPastEthSignatureCheckpointKey(checkpoint)), []byte{0x1}) {
-		return true
-	} else {
-		return false
-	}
+	return bytes.Equal(store.Get(types.GetPastEthSignatureCheckpointKey(checkpoint)), []byte{0x1})
 }
