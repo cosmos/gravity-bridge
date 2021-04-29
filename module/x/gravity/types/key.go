@@ -114,7 +114,12 @@ var (
 	// LastUnBondingBlockHeight indexes the last validator unbonding block height
 	LastUnBondingBlockHeight = []byte{0xf8}
 
+	// KeyLogicCallConfirm indexes logic call confirmations
+	KeyLogicCallConfirm = []byte{0xdf}
+
 	BridgeIDKey = []byte{0x19}
+
+	KeyConfirmLogicCall = []byte{0xcd}
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -149,8 +154,8 @@ func GetSignerSetKey(nonce uint64) []byte {
 // prefix   nonce                    validator-address
 // [0x0][0 0 0 0 0 0 0 1][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
-func GetSignerSetConfirmKey(nonce uint64, validator sdk.ValAddress) []byte {
-	return append(SignersetConfirmKey, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
+func GetSignerSetConfirmKey(confirm *ConfirmSignerSet, validator sdk.ValAddress) []byte {
+	return append(SignersetConfirmKey, append(sdk.Uint64ToBigEndian(confirm.Nonce), validator.Bytes()...)...)
 }
 
 // GetTransferTxKey returns the following key format
@@ -184,9 +189,9 @@ func GetBatchTxBlockKey(block uint64) []byte {
 // GetBatchConfirmKey returns the following key format
 // prefix           eth-contract-address                BatchNonce                       Validator-address
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
-func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.ValAddress) []byte {
-	a := append(sdk.Uint64ToBigEndian(batchNonce), validator.Bytes()...)
-	b := append([]byte(tokenContract), a...)
+func GetBatchConfirmKey(batch *ConfirmBatch, validator sdk.ValAddress) []byte {
+	a := append(sdk.Uint64ToBigEndian(batch.Nonce), validator.Bytes()...)
+	b := append([]byte(batch.TokenContract), a...)
 	c := append(BatchConfirmKey, b...)
 	return c
 }
@@ -209,4 +214,9 @@ func GetERC20ToDenomKey(erc20 string) []byte {
 
 func GetLogicCallTxKey(invalidationID tmbytes.HexBytes, invalidationNonce uint64) []byte {
 	return append(invalidationID, sdk.Uint64ToBigEndian(invalidationNonce)...)
+}
+
+// GetLogicCallConfirmKey indexes the a validators signatures by invalidationid
+func GetLogCallConfirmKey(confirm *ConfirmLogicCall, validator sdk.ValAddress) []byte {
+	return append(append(KeyConfirmLogicCall, confirm.InvalidationID.Bytes()...), validator.Bytes()...)
 }

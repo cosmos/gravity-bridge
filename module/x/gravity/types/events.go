@@ -17,6 +17,7 @@ const (
 	AttributeKeyTokenContract         = "token_contract"
 	AttributeKeyNonce                 = "nonce"
 	AttributeKeyOrchestratorValidator = "orchestrator_validator"
+	AttributeKeyValidator             = "validator_address"
 	AttributeKeyValsetNonce           = "valset_nonce"
 	AttributeKeySetOperatorAddr       = "set_operator_address"
 	AttributeKeyInvalidationID        = "invalidation_id"
