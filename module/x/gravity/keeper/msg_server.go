@@ -58,11 +58,14 @@ func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*type
 		return nil, err
 	}
 
-	if err := k.HandleEthEvent(ctx, event, orchestratorAddr); err != nil {
+	eventID, err := k.HandleEthEvent(ctx, event, orchestratorAddr)
+	if err != nil {
 		return nil, err
 	}
 
-	return &types.MsgSubmitEventResponse{}, nil
+	return &types.MsgSubmitEventResponse{
+		EventID: eventID,
+	}, nil
 }
 
 // FIXME:
@@ -86,19 +89,23 @@ func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*
 		return nil, err
 	}
 
-	if err := k.ConfirmEvent(ctx, confirm, orchestratorAddr, ethAddress); err != nil {
+	confirmID, err := k.ConfirmEvent(ctx, confirm, orchestratorAddr, ethAddress)
+	if err != nil {
 		return nil, err
 	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyConfirmID, confirmID.String()),
 			sdk.NewAttribute(types.AttributeKeyConfirmType, confirm.GetType()),
 		),
 	)
 
-	return &types.MsgSubmitConfirmResponse{}, nil
+	return &types.MsgSubmitConfirmResponse{
+		ConfirmID: confirmID,
+	}, nil
 }
 
 // RequestBatch handles MsgRequestBatch
@@ -173,7 +180,7 @@ func (k Keeper) Transfer(c context.Context, msg *types.MsgTransfer) (*types.MsgT
 	)
 
 	return &types.MsgTransferResponse{
-		TxId: txID,
+		TxID: txID,
 	}, nil
 }
 
@@ -183,7 +190,7 @@ func (k Keeper) CancelTransfer(c context.Context, msg *types.MsgCancelTransfer) 
 
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 
-	if err := k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TxId, sender); err != nil {
+	if err := k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TxID, sender); err != nil {
 		return nil, err
 	}
 
@@ -191,7 +198,7 @@ func (k Keeper) CancelTransfer(c context.Context, msg *types.MsgCancelTransfer) 
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyTxID, msg.TxId.String()),
+			sdk.NewAttribute(types.AttributeKeyTxID, msg.TxID.String()),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 		),
 	)

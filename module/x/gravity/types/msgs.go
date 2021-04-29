@@ -165,7 +165,7 @@ func (msg MsgRequestBatch) GetSigners() []sdk.AccAddress {
 // NewMsgCancelTransfer returns a new MsgCancelTransfer
 func NewMsgCancelTransfer(txID tmbytes.HexBytes, sender sdk.AccAddress) *MsgCancelTransfer {
 	return &MsgCancelTransfer{
-		TxId:   txID,
+		TxID:   txID,
 		Sender: sender.String(),
 	}
 }
@@ -178,7 +178,7 @@ func (msg *MsgCancelTransfer) Type() string { return "cancel_transfer" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgCancelTransfer) ValidateBasic() (err error) {
-	if len(msg.TxId) == 0 {
+	if len(msg.TxID) == 0 {
 		return fmt.Errorf("tx id cannot be empty")
 	}
 
@@ -242,16 +242,12 @@ func (msg *MsgSubmitConfirm) GetSigners() []sdk.AccAddress {
 }
 
 func (m *MsgSubmitConfirm) GetConfirm() Confirm {
-	confirm, ok := m.Confirm.GetCachedValue().(Confirm)
-	if !ok {
-		return nil
-	}
-
+	confirm, _ := UnpackConfirm(m.Confirm)
 	return confirm
 }
 
 func (m *MsgSubmitConfirm) SetConfirm(confirm Confirm) error {
-	any, err := types.NewAnyWithValue(confirm)
+	any, err := PackConfirm(confirm)
 	if err != nil {
 		return err
 	}
@@ -309,15 +305,12 @@ func (msg *MsgSubmitEvent) GetSigners() []sdk.AccAddress {
 }
 
 func (m *MsgSubmitEvent) GetEvent() EthereumEvent {
-	event, ok := m.Event.GetCachedValue().(EthereumEvent)
-	if !ok {
-		return nil
-	}
+	event, _ := UnpackEvent(m.Event)
 	return event
 }
 
 func (m *MsgSubmitEvent) SetEvent(event EthereumEvent) error {
-	any, err := types.NewAnyWithValue(event)
+	any, err := PackEvent(event)
 	if err != nil {
 		return err
 	}
