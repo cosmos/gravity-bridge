@@ -1,8 +1,9 @@
 package types
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec/types"
 	"testing"
+
+	"github.com/cosmos/cosmos-sdk/codec/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -38,10 +39,10 @@ func TestMsgDelegateKey_ValidateBasic(t *testing.T) {
 	require.NoError(t, err, "unable to generate ethereum address")
 
 	testCases := []struct {
-		name string
-		val string
-		orch string
-		eth string
+		name     string
+		val      string
+		orch     string
+		eth      string
 		expError bool
 	}{
 		{"valid input", valAddr.String(), orchAddr.String(), ethAddr.String(), false},
@@ -69,13 +70,13 @@ func TestMsgTransfer_ValidateBasic(t *testing.T) {
 	ethAddr, err := newEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
 
-	testCases := []struct{
-		name string
-		sender string
-		eth string
-		amount sdk.Coin
+	testCases := []struct {
+		name      string
+		sender    string
+		eth       string
+		amount    sdk.Coin
 		bridgeFee sdk.Coin
-		expError bool
+		expError  bool
 	}{
 		{"valid input", orchAddr.String(), ethAddr.String(),
 			sdk.Coin{"testcoin", sdk.NewInt(10)}, sdk.Coin{"testcoin", sdk.NewInt(2)}, false},
@@ -106,10 +107,10 @@ func TestMsgRequestBatch_ValidateBasic(t *testing.T) {
 	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
 
-	testCases := []struct{
-		name string
-		orch string
-		denom string
+	testCases := []struct {
+		name     string
+		orch     string
+		denom    string
 		expError bool
 	}{
 		{"valid input", orchAddr.String(), "testcoin", false},
@@ -134,10 +135,10 @@ func TestMsgCancelTransfer_ValidateBasic(t *testing.T) {
 	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
 
-	testCases := []struct{
-		name string
-		sender string
-		txid []byte
+	testCases := []struct {
+		name     string
+		sender   string
+		txid     []byte
 		expError bool
 	}{
 		{"valid input", orchAddr.String(), []byte("10"), false},
@@ -164,24 +165,24 @@ func TestMsgSubmitConfirm_ValidateBasic(t *testing.T) {
 	ethAddr, err := newEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
 
-	css := ConfirmSignerSet{12, ethAddr.String(), orchAddr.String(), []byte("signature")}
+	css := &ConfirmSignerSet{12, ethAddr.String(), orchAddr.String(), []byte("signature")}
 	any, err := PackConfirm(css)
 	require.NoError(t, err, "unable to pack test confirm")
 
-	testCases := []struct{
-		name string
-		signer string
-		confirm *types.Any
+	testCases := []struct {
+		name     string
+		signer   sdk.AccAddress
+		confirm  *types.Any
 		expError bool
 	}{
-		{"valid input", orchAddr.String(), any, false},
-		{"no confirm", orchAddr.String(), nil, true},
-		{"no signer", "not an addr", any, true},
+		{"valid input", orchAddr, any, false},
+		{"no confirm", orchAddr, nil, true},
+		{"no signer", nil, any, true},
 	}
 
 	for _, tc := range testCases {
-		msc := MsgSubmitConfirm{any, tc.signer}
-		err = msc.ValidateBasic()
+		msc := NewMsgSubmitConfirm(any, tc.signer)
+		err := msc.ValidateBasic()
 		if tc.expError {
 			require.Error(t, err, tc.name)
 		} else {
@@ -198,13 +199,14 @@ func TestMsgSubmitEvent_ValidateBasic(t *testing.T) {
 	ethAddr, err := newEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
 
-	we := WithdrawEvent{[]byte("txid"), 12, ethAddr.String(), 12}
-	any, err := PackEvent(we.(EthereumEvent))
+	we := &WithdrawEvent{[]byte("txid"), 12, ethAddr.String(), 12}
+	any, err := PackEvent(we)
+	require.NoError(t, err)
 
-	testCases := []struct{
-		name string
-		signer string
-		event *types.Any
+	testCases := []struct {
+		name     string
+		signer   string
+		event    *types.Any
 		expError bool
 	}{
 		{"valid input", orchAddr.String(), any, false},
@@ -214,7 +216,6 @@ func TestMsgSubmitEvent_ValidateBasic(t *testing.T) {
 
 	for _, tc := range testCases {
 		any := tc.event
-		require.NoError(t, err, tc.name)
 		msc := MsgSubmitEvent{any, tc.signer}
 		err = msc.ValidateBasic()
 		if tc.expError {

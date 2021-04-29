@@ -236,6 +236,25 @@ func (k Keeper) SetEthereumEvent(ctx sdk.Context, eventID tmbytes.HexBytes, even
 	store.Set(eventID.Bytes(), bz)
 }
 
+func (k Keeper) IterateEthereumEvents(ctx sdk.Context, cb func(eventID tmbytes.HexBytes, event types.EthereumEvent) bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.EventKeyPrefix)
+	iterator := store.Iterator(nil, nil)
+
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+
+		eventID := tmbytes.HexBytes(iterator.Key()[:1])
+		var event types.EthereumEvent
+		if err := k.cdc.UnmarshalInterface(iterator.Value(), event); err != nil {
+			panic(err)
+		}
+
+		if cb(eventID, event) {
+			break // stop
+		}
+	}
+}
+
 func (k Keeper) IterateValidatorsByPower(ctx sdk.Context, cb func(validator stakingtypes.Validator) bool) {
 	iterator := k.stakingKeeper.ValidatorsPowerStoreIterator(ctx)
 	defer iterator.Close()
