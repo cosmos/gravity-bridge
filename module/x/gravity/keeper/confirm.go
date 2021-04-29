@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"crypto/sha256"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,7 +11,7 @@ import (
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
-func (k Keeper) ConfirmEvent(ctx sdk.Context, confirm types.Confirm, orchestratorAddr sdk.AccAddress, ethAddress common.Address) error {
+func (k Keeper) ConfirmEvent(ctx sdk.Context, confirm types.Confirm, orchestratorAddr sdk.AccAddress, ethAddress common.Address) (tmbytes.HexBytes, error) {
 	bridgeID := k.GetBridgeID(ctx)
 
 	var (
@@ -26,28 +27,32 @@ func (k Keeper) ConfirmEvent(ctx sdk.Context, confirm types.Confirm, orchestrato
 	case *types.ConfirmSignerSet:
 		checkpoint, err = k.CheckpointEthSignerSet(ctx, confirm, bridgeID)
 	default:
-		return sdkerrors.Wrapf(types.ErrConfirmUnsupported, "confirm type %s: %T", confirm.GetType(), confirm)
+		return nil, sdkerrors.Wrapf(types.ErrConfirmUnsupported, "confirm type %s: %T", confirm.GetType(), confirm)
 	}
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	signatureAddr, err := types.EcRecover(checkpoint, confirm.GetSignature())
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrSignatureInvalid, "signature verification failed: %w", err)
+		return nil, sdkerrors.Wrapf(types.ErrSignatureInvalid, "signature verification failed: %w", err)
 	}
 
 	if signatureAddr != ethAddress {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"signature address doesn't match the provided ethereum address (%s ≠ %s)",
 			signatureAddr, ethAddress,
 		)
 	}
 
-	// TODO: set confirm to store?
+	hash := sha256.Sum256(checkpoint)
+	confirmID := tmbytes.HexBytes(hash[:])
+
+	k.SetConfirm(ctx, confirmID, confirm)
+
 	// TODO: emit event
-	return nil
+	return confirmID, err
 }
 
 func (k Keeper) CheckpointBatchTx(

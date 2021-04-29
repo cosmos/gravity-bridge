@@ -55,7 +55,10 @@ message MsgTransfer {
 // in the batch tx.
 message MsgTransferResponse {
   // transfer tx unique identifier
-  bytes tx_id = 1 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
+  bytes tx_id = 1 [
+    (gogoproto.customname) = "TxID",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
 }
 
 // MsgCancelTransfer allows the sender to cancel its own outgoing transfer tx
@@ -63,7 +66,10 @@ message MsgTransferResponse {
 // if the transfer tx hasn't been batched to be processed and relayed to Ethereum.
 message MsgCancelTransfer {
   // transfer tx unique identifier
-  bytes tx_id = 1 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
+  bytes tx_id = 1 [
+    (gogoproto.customname) = "TxID",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
   // cosmos account address of the sender in bech32 format
   string sender = 2;
 }
@@ -92,7 +98,13 @@ message MsgSubmitConfirm {
   string signer = 2;
 }
 
-message MsgSubmitConfirmResponse {}
+message MsgSubmitConfirmResponse {
+  // confirm unique identifier
+  bytes confirm_id = 1 [
+    (gogoproto.customname) = "ConfirmID",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
+}
 
 // MsgSubmitEvent
 message MsgSubmitEvent {
@@ -105,7 +117,12 @@ message MsgSubmitEvent {
   string signer = 2;
 }
 
-message MsgSubmitEventResponse {}
+message MsgSubmitEventResponse {
+  bytes event_id = 1 [
+    (gogoproto.customname) = "EventID",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
+}
 
 // MsgDelegateKey allows validators to delegate their voting responsibilities
 // to a given orchestrator address. This key is then used as an optional

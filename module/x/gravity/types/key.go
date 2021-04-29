@@ -59,8 +59,8 @@ var (
 	// BatchTxBlockKey indexes outgoing tx batches under a block height and token address
 	BatchTxBlockKey = []byte{0xb}
 
-	// BatchConfirmKey indexes validator confirmations by token contract address
-	BatchConfirmKey = []byte{0xe1}
+	// ConfirmKey indexes
+	ConfirmKey = []byte{0xe1}
 
 	// SecondIndexNonceByEventKey indexes latest nonce for a given event type
 	SecondIndexNonceByEventKey = []byte{0xf}
@@ -168,16 +168,6 @@ func GetBatchTxKey(tokenContract string, txID tmbytes.HexBytes) []byte {
 // [0xb][0 0 0 0 2 1 4 3]
 func GetBatchTxBlockKey(block uint64) []byte {
 	return sdk.Uint64ToBigEndian(block)
-}
-
-// GetBatchConfirmKey returns the following key format
-// prefix           eth-contract-address                BatchNonce                       Validator-address
-// [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
-func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.ValAddress) []byte {
-	a := append(sdk.Uint64ToBigEndian(batchNonce), validator.Bytes()...)
-	b := append([]byte(tokenContract), a...)
-	c := append(BatchConfirmKey, b...)
-	return c
 }
 
 // GetLastEventNonceByValidatorKey indexes lateset event nonce by validator

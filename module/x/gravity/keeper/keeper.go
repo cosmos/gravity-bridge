@@ -114,7 +114,7 @@ func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) s
 // SetOrchestratorValidator sets the Orchestrator key for a given validator
 func (k Keeper) SetOrchestratorValidator(ctx sdk.Context, val sdk.ValAddress, orch sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOrchestratorAddressKey(orch), val.Bytes())
+	store.Set(types.GetOrchestratorAddressKey(orch), val)
 }
 
 // GetEthereumInfo returns the ethereum block height and timestamp of the last
@@ -213,7 +213,7 @@ func (k Keeper) GetTransferTxs(ctx sdk.Context) []types.TransferTx {
 
 func (k Keeper) GetEthereumEvent(ctx sdk.Context, eventID tmbytes.HexBytes) (types.EthereumEvent, bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.EventKeyPrefix)
-	bz := store.Get(eventID.Bytes())
+	bz := store.Get(eventID)
 	if len(bz) == 0 {
 		return nil, false
 	}
@@ -233,7 +233,7 @@ func (k Keeper) SetEthereumEvent(ctx sdk.Context, eventID tmbytes.HexBytes, even
 		panic(err)
 	}
 
-	store.Set(eventID.Bytes(), bz)
+	store.Set(eventID, bz)
 }
 
 func (k Keeper) IterateEthereumEvents(ctx sdk.Context, cb func(eventID tmbytes.HexBytes, event types.EthereumEvent) bool) {
@@ -250,6 +250,50 @@ func (k Keeper) IterateEthereumEvents(ctx sdk.Context, cb func(eventID tmbytes.H
 		}
 
 		if cb(eventID, event) {
+			break // stop
+		}
+	}
+}
+
+func (k Keeper) GetConfirm(ctx sdk.Context, confirmID tmbytes.HexBytes) (types.Confirm, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.ConfirmKey)
+	bz := store.Get(confirmID)
+	if len(bz) == 0 {
+		return nil, false
+	}
+
+	var confirm types.Confirm
+	if err := k.cdc.UnmarshalInterface(bz, confirm); err != nil {
+		panic(err)
+	}
+
+	return confirm, true
+}
+
+func (k Keeper) SetConfirm(ctx sdk.Context, confirmID tmbytes.HexBytes, confirm types.Confirm) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.ConfirmKey)
+	bz, err := k.cdc.MarshalInterface(confirm)
+	if err != nil {
+		panic(err)
+	}
+
+	store.Set(confirmID, bz)
+}
+
+func (k Keeper) IterateConfirmations(ctx sdk.Context, cb func(confirmID tmbytes.HexBytes, confirm types.Confirm) bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.ConfirmKey)
+	iterator := store.Iterator(nil, nil)
+
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+
+		confirmID := tmbytes.HexBytes(iterator.Key()[:1])
+		var confirm types.Confirm
+		if err := k.cdc.UnmarshalInterface(iterator.Value(), confirm); err != nil {
+			panic(err)
+		}
+
+		if cb(confirmID, confirm) {
 			break // stop
 		}
 	}

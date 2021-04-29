@@ -33,11 +33,11 @@ func (k Keeper) slash(ctx sdk.Context, params types.Params) {
 
 		switch validator.Status {
 		case stakingtypes.Bonded:
-			// TODO: slash bonded validators who didn't attest valset request events
+			// TODO: slash bonded validators who didn't attest signer set request events
 			// TODO: slash bonded validators who didn't attest batch requests
 			return false
 		case stakingtypes.Unbonding:
-			// TODO: slash unbonding validators who didn't attest valset request events
+			// TODO: slash unbonding validators who didn't attest signer set request events
 			return false
 		default:
 			// unbonded validator, checked above to fail earlier
