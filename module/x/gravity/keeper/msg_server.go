@@ -83,7 +83,7 @@ func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*
 		return nil, err
 	}
 
-	if err := k.ConfirmEvent(ctx, confirm, validatorAddr); err != nil {
+	if err := k.ProcessConfirm(ctx, confirm, validatorAddr); err != nil {
 		return nil, err
 	}
 

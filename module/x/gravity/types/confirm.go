@@ -6,7 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	proto "github.com/gogo/protobuf/proto"
 )
@@ -15,7 +14,6 @@ type Confirm interface {
 	proto.Message
 
 	GetType() string
-	GetOrchestratorAddress() string
 	GetNonce() uint64
 	GetSignature() hexutil.Bytes
 	Validate() error
@@ -34,12 +32,6 @@ func (c ConfirmBatch) GetType() string { return "batch" }
 func (c ConfirmBatch) Validate() error {
 	if c.Nonce == 0 {
 		return fmt.Errorf("nonce cannot be 0")
-	}
-	if _, err := sdk.AccAddressFromBech32(c.OrchestratorAddress); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, c.OrchestratorAddress)
-	}
-	if err := ValidateEthAddress(c.EthSigner); err != nil {
-		return sdkerrors.Wrap(err, "eth signer")
 	}
 	if err := ValidateEthAddress(c.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "token contract")
@@ -61,12 +53,6 @@ func (c ConfirmLogicCall) GetType() string { return "logic_Call" }
 
 // Validate performs stateless checks
 func (c ConfirmLogicCall) Validate() error {
-	if _, err := sdk.AccAddressFromBech32(c.OrchestratorAddress); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, c.OrchestratorAddress)
-	}
-	if err := ValidateEthAddress(c.EthSigner); err != nil {
-		return sdkerrors.Wrap(err, "eth signer")
-	}
 	if len(c.Signature) == 0 {
 		return fmt.Errorf("ethereum signature cannot be empty")
 	}
@@ -88,12 +74,10 @@ func (c ConfirmLogicCall) GetTokenContract() string {
 }
 
 // NewConfirmSignerSet returns a new ConfirmSignerSet
-func NewConfirmSignerSet(nonce uint64, ethSigner string, validator sdk.AccAddress, signature hexutil.Bytes) *ConfirmSignerSet {
+func NewConfirmSignerSet(nonce uint64, signature hexutil.Bytes) *ConfirmSignerSet {
 	return &ConfirmSignerSet{
-		Nonce:               nonce,
-		OrchestratorAddress: validator.String(),
-		EthSigner:           ethSigner,
-		Signature:           signature,
+		Nonce:     nonce,
+		Signature: signature,
 	}
 }
 
@@ -104,12 +88,6 @@ func (c ConfirmSignerSet) GetType() string { return "valset" }
 func (c ConfirmSignerSet) Validate() (err error) {
 	if c.Nonce == 0 {
 		return fmt.Errorf("nonce cannot be 0")
-	}
-	if _, err = sdk.AccAddressFromBech32(c.OrchestratorAddress); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, c.OrchestratorAddress)
-	}
-	if err := ValidateEthAddress(c.EthSigner); err != nil {
-		return sdkerrors.Wrap(err, "ethereum signer address")
 	}
 	if len(c.Signature) == 0 {
 		return fmt.Errorf("ethereum signature cannot be empty")

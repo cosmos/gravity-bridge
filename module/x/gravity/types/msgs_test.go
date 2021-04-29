@@ -1,9 +1,10 @@
 package types
 
 import (
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/gogo/protobuf/proto"
-	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -39,10 +40,10 @@ func TestMsgDelegateKey_ValidateBasic(t *testing.T) {
 	require.NoError(t, err, "unable to generate ethereum address")
 
 	testCases := []struct {
-		name string
-		val string
-		orch string
-		eth string
+		name     string
+		val      string
+		orch     string
+		eth      string
 		expError bool
 	}{
 		{"valid input", valAddr.String(), orchAddr.String(), ethAddr.String(), false},
@@ -70,13 +71,13 @@ func TestMsgTransfer_ValidateBasic(t *testing.T) {
 	ethAddr, err := newEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
 
-	testCases := []struct{
-		name string
-		sender string
-		eth string
-		amount sdk.Coin
+	testCases := []struct {
+		name      string
+		sender    string
+		eth       string
+		amount    sdk.Coin
 		bridgeFee sdk.Coin
-		expError bool
+		expError  bool
 	}{
 		{"valid input", orchAddr.String(), ethAddr.String(),
 			sdk.Coin{"testcoin", sdk.NewInt(10)}, sdk.Coin{"testcoin", sdk.NewInt(2)}, false},
@@ -107,10 +108,10 @@ func TestMsgRequestBatch_ValidateBasic(t *testing.T) {
 	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
 
-	testCases := []struct{
-		name string
-		orch string
-		denom string
+	testCases := []struct {
+		name     string
+		orch     string
+		denom    string
 		expError bool
 	}{
 		{"valid input", orchAddr.String(), "testcoin", false},
@@ -135,10 +136,10 @@ func TestMsgCancelTransfer_ValidateBasic(t *testing.T) {
 	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
 
-	testCases := []struct{
-		name string
-		sender string
-		txid []byte
+	testCases := []struct {
+		name     string
+		sender   string
+		txid     []byte
 		expError bool
 	}{
 		{"valid input", orchAddr.String(), []byte("10"), false},
@@ -162,18 +163,16 @@ func TestMsgSubmitConfirm_ValidateBasic(t *testing.T) {
 	require.NoError(t, err, "unable to generate cosmos address")
 	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
-	ethAddr, err := newEthAddress()
-	require.NoError(t, err, "unable to generate ethereum address")
 
-	testCases := []struct{
-		name string
-		signer string
-		confirm interface{}
+	testCases := []struct {
+		name     string
+		signer   string
+		confirm  interface{}
 		expError bool
 	}{
-		{"valid input", orchAddr.String(), ConfirmSignerSet{12, ethAddr.String(), orchAddr.String(), []byte("signature")}, false},
+		{"valid input", orchAddr.String(), ConfirmSignerSet{12, []byte("signature")}, false},
 		{"no confirm", orchAddr.String(), nil, true},
-		{"no signer", "not an addr", ConfirmSignerSet{12, ethAddr.String(), orchAddr.String(), []byte("signature")}, true},
+		{"no signer", "not an addr", ConfirmSignerSet{12, []byte("signature")}, true},
 	}
 
 	for _, tc := range testCases {

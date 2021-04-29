@@ -18,4 +18,5 @@ var (
 	ErrValidatorEthAddressNotFound = sdkerrors.Register(ModuleName, 11, "ethereum address not found for validator")
 	ErrConfirmUnsupported          = sdkerrors.Register(ModuleName, 12, "confirm tx type unsupported")
 	ErrSignatureInvalid            = sdkerrors.Register(ModuleName, 13, "invalid signature")
+	ErrSignatureDuplicate          = sdkerrors.Register(ModuleName, 14, "confirm already signed")
 )

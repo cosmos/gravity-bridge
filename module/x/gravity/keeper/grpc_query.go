@@ -59,16 +59,18 @@ func (k Keeper) GetDelegateKeyByOrchestrator(c context.Context, req *types.Query
 }
 
 func (k Keeper) QuerySignerSetConfirmsRequest(c context.Context, req *types.QuerySignerSetConfirmsRequest) (*types.QuerySignerSetConfirmsResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(c)
+	ctx := sdk.UnwrapSDKContext(c)
+	val, err := sdk.ValAddressFromBech32(req.Validator)
 	return nil, nil
 }
 func (k Keeper) QueryBatchConfirmsRequest(c context.Context, req *types.QueryBatchConfirmsRequest) (*types.QueryBatchConfirmsResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(c)
+	ctx := sdk.UnwrapSDKContext(c)
+	val, err := sdk.ValAddressFromBech32(req.Validator)
 	return nil, nil
-
 }
 func (k Keeper) QueryLogicCallConfirmsRequest(c context.Context, req *types.QueryLogicCallConfirmsRequest) (*types.QueryLogicCallConfirmsResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(c)
+	ctx := sdk.UnwrapSDKContext(c)
+	val, err := sdk.ValAddressFromBech32(req.Validator)
 	return nil, nil
 
 }
