@@ -224,6 +224,11 @@ docker-compose start ethereum $n0name $n1name $n2name $n3name &>/dev/null
 echo "Waiting for cosmos cluster to sync"
 sleep 10
 
+if [ "$( docker container inspect -f '{{.State.Running}}' $(docker-compose ps -q $n0name))" == "false" ]; then
+  echo "node down, exiting"
+  exit 0
+fi
+
 echo "Applying contracts"
 docker-compose build contract_deployer
 contractAddress=$(docker-compose up contract_deployer | grep "Gravity deployed at Address" | grep -Eow '0x[0-9a-fA-F]{40}')
