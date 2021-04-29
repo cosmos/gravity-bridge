@@ -392,12 +392,7 @@ func (k Keeper) GetValidatorByEthAddress(ctx sdk.Context, ethAddr string) (valid
 	if valAddr == nil {
 		return stakingtypes.Validator{}, false
 	}
-	validator, found = k.StakingKeeper.GetValidator(ctx, valAddr)
-	if !found {
-		return stakingtypes.Validator{}, false
-	}
-
-	return validator, true
+	return k.StakingKeeper.GetValidator(ctx, valAddr)
 }
 
 // GetCurrentValset gets powers from the store and normalizes them
