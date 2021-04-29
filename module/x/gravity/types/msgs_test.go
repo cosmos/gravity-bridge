@@ -171,13 +171,13 @@ func TestMsgSubmitConfirm_ValidateBasic(t *testing.T) {
 
 	testCases := []struct {
 		name     string
-		signer   sdk.AccAddress
+		signer   string
 		confirm  *types.Any
 		expError bool
 	}{
-		{"valid input", orchAddr, any, false},
-		{"no confirm", orchAddr, nil, true},
-		{"no signer", nil, any, true},
+		{"valid input", orchAddr.String(), any, false},
+		{"no confirm", orchAddr.String(), nil, true},
+		{"no signer", "not an addr", any, true},
 	}
 
 	for _, tc := range testCases {
