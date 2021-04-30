@@ -10,7 +10,7 @@ import (
 func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
 	k.SetBridgeID(ctx, gs.BridgeID)
 	k.SetParams(ctx, gs.Params)
-	k.setLastObservedEventNonce(ctx, gs.LastObservedNonce)
+	k.SetLastObservedEventNonce(ctx, gs.LastObservedNonce)
 
 	for _, ss := range gs.SignerSets {
 		// store signer set and latest height
