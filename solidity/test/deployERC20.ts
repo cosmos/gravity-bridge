@@ -8,7 +8,8 @@ import {
   makeCheckpoint,
   signHash,
   makeTxBatchHash,
-  examplePowers
+  examplePowers,
+  ZeroAddress
 } from "../test-utils/pure";
 import {ContractTransaction, utils} from 'ethers';
 import { BigNumber } from "ethers";
@@ -48,7 +49,7 @@ async function runTest(opts: {}) {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(gravityId, validators, powers, powerThreshold);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers);
 
 
 
@@ -132,10 +133,16 @@ async function runTest(opts: {}) {
   let sigs = await signHash(validators, digest);
   let currentValsetNonce = 0;
 
-  await gravity.submitBatch(
-    await getSignerAddresses(validators),
+  let valset = {
+    validators: await getSignerAddresses(validators),
     powers,
-    currentValsetNonce,
+    valsetNonce: currentValsetNonce,
+    rewardAmount: 0,
+    rewardToken: ZeroAddress
+  }
+
+  await gravity.submitBatch(
+    valset,
 
     sigs.v,
     sigs.r,

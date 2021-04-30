@@ -6,7 +6,8 @@ import { deployContracts } from "../test-utils";
 import {
     getSignerAddresses,
     signHash,
-    examplePowers
+    examplePowers,
+    ZeroAddress
 } from "../test-utils/pure";
 
 chai.use(solidity);
@@ -27,12 +28,18 @@ describe("Gas tests", function () {
             gravity,
             testERC20,
             checkpoint: deployCheckpoint
-        } = await deployContracts(gravityId, validators, powers, powerThreshold);
+        } = await deployContracts(gravityId, powerThreshold, validators, powers);
+
+        let valset = {
+            validators: await getSignerAddresses(validators),
+            powers,
+            valsetNonce: 0,
+            rewardAmount: 0,
+            rewardToken: ZeroAddress
+        }
 
         await gravity.testMakeCheckpoint(
-            await getSignerAddresses(validators),
-            powers,
-            0,
+            valset,
             gravityId
         );
     });
@@ -51,7 +58,7 @@ describe("Gas tests", function () {
             gravity,
             testERC20,
             checkpoint: deployCheckpoint
-        } = await deployContracts(gravityId, validators, powers, powerThreshold);
+        } = await deployContracts(gravityId, powerThreshold, validators, powers);
 
         let sigs = await signHash(
             validators,

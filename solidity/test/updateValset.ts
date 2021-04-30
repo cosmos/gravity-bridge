@@ -8,7 +8,8 @@ import {
   makeCheckpoint,
   signHash,
   makeTxBatchHash,
-  examplePowers
+  examplePowers,
+  ZeroAddress
 } from "../test-utils/pure";
 
 chai.use(solidity);
@@ -36,7 +37,7 @@ async function runTest(opts: {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(gravityId, validators, powers, powerThreshold);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers);
 
   let newPowers = examplePowers();
   newPowers[0] -= 3;
@@ -57,10 +58,28 @@ async function runTest(opts: {
     newValsetNonce = 0;
   }
 
+  let currentValset = {
+    validators: await getSignerAddresses(validators),
+    powers,
+    valsetNonce: currentValsetNonce,
+    rewardAmount: 0,
+    rewardToken: ZeroAddress
+  }
+
+  let newValset = {
+    validators: await getSignerAddresses(newValidators),
+    powers: newPowers,
+    valsetNonce: newValsetNonce,
+    rewardAmount: 0,
+    rewardToken: ZeroAddress
+  }
+
   const checkpoint = makeCheckpoint(
-    await getSignerAddresses(newValidators),
-    newPowers,
-    newValsetNonce,
+    newValset.validators,
+    newValset.powers,
+    newValset.valsetNonce,
+    newValset.rewardAmount,
+    newValset.rewardToken,
     gravityId
   );
 
@@ -99,13 +118,10 @@ async function runTest(opts: {
     powers.pop();
   }
 
+
   await gravity.updateValset(
-    await getSignerAddresses(newValidators),
-    newPowers,
-    newValsetNonce,
-    await getSignerAddresses(validators),
-    powers,
-    currentValsetNonce,
+    newValset,
+    currentValset,
     sigs.v,
     sigs.r,
     sigs.s

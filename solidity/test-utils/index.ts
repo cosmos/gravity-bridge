@@ -1,7 +1,7 @@
 import { Gravity } from "../typechain/Gravity";
 import { TestERC20A } from "../typechain/TestERC20A";
 import { ethers } from "hardhat";
-import { makeCheckpoint, signHash, getSignerAddresses } from "./pure";
+import { makeCheckpoint, signHash, getSignerAddresses, ZeroAddress } from "./pure";
 import { Signer } from "ethers";
 
 type DeployContractsOptions = {
@@ -10,9 +10,9 @@ type DeployContractsOptions = {
 
 export async function deployContracts(
   gravityId: string = "foo",
+  powerThreshold: number,
   validators: Signer[],
   powers: number[],
-  powerThreshold: number,
   opts?: DeployContractsOptions
 ) {
   const TestERC20 = await ethers.getContractFactory("TestERC20A");
@@ -22,13 +22,13 @@ export async function deployContracts(
 
   const valAddresses = await getSignerAddresses(validators);
 
-  const checkpoint = makeCheckpoint(valAddresses, powers, 0, gravityId);
+  const checkpoint = makeCheckpoint(valAddresses, powers, 0, 0, ZeroAddress, gravityId);
 
   const gravity = (await Gravity.deploy(
     gravityId,
     powerThreshold,
-    valAddresses,
-    powers
+    await getSignerAddresses(validators),
+    powers,
   )) as Gravity;
 
   await gravity.deployed();

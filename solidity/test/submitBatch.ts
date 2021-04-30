@@ -9,6 +9,7 @@ import {
   signHash,
   makeTxBatchHash,
   examplePowers,
+  ZeroAddress,
 } from "../test-utils/pure";
 
 chai.use(solidity);
@@ -40,7 +41,7 @@ async function runTest(opts: {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint,
-  } = await deployContracts(gravityId, validators, powers, powerThreshold);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers);
 
   // Transfer out to Cosmos, locking coins
   // =====================================
@@ -152,10 +153,16 @@ async function runTest(opts: {
     sigs.v[11] = 0;
   }
 
-  await gravity.submitBatch(
-    await getSignerAddresses(validators),
+  let valset = {
+    validators: await getSignerAddresses(validators),
     powers,
-    currentValsetNonce,
+    valsetNonce: currentValsetNonce,
+    rewardAmount: 0,
+    rewardToken: ZeroAddress
+  }
+
+  await gravity.submitBatch(
+    valset,
 
     sigs.v,
     sigs.r,
@@ -239,7 +246,7 @@ describe("submitBatch Go test hash", function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint,
-    } = await deployContracts(gravityId, validators, powers, powerThreshold);
+    } = await deployContracts(gravityId, powerThreshold, validators, powers);
 
     // Prepare batch
     // ===============================
@@ -303,10 +310,16 @@ describe("submitBatch Go test hash", function () {
     const sigs = await signHash(validators, batchDigest);
     const currentValsetNonce = 0;
 
-    await gravity.submitBatch(
-      await getSignerAddresses(validators),
+    let valset = {
+      validators: await getSignerAddresses(validators),
       powers,
-      currentValsetNonce,
+      valsetNonce: currentValsetNonce,
+      rewardAmount: 0,
+      rewardToken: ZeroAddress
+    }
+
+    await gravity.submitBatch(
+      valset,
 
       sigs.v,
       sigs.r,
