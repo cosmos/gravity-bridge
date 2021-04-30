@@ -30,7 +30,7 @@ async function runTest(opts: {}) {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(gravityId, validators, powers, powerThreshold);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers);
 
 
   // Transfer out to Cosmos, locking coins

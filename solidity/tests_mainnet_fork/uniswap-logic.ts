@@ -12,9 +12,8 @@ import {IUniswapV2Router02__factory} from "../typechain/factories/IUniswapV2Rout
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
-  makeCheckpoint,
   signHash,
-  makeTxBatchHash,
+  ZeroAddress,
   examplePowers,
 } from "../test-utils/pure";
 import { assert } from "console";
@@ -79,7 +78,7 @@ async function runTest() {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint,
-  } = await deployContracts(gravityId, validators, powers, powerThreshold);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers);
 
   // First we deploy the logic batch middleware contract. This makes it easy to call a logic
   // contract a bunch of times in a batch.
@@ -222,10 +221,16 @@ async function runTest() {
 
   let currentValsetNonce = 0;
 
-  await gravity.submitLogicCall(
-    await getSignerAddresses(validators),
+  let valset = {
+    validators: await getSignerAddresses(validators),
     powers,
-    currentValsetNonce,
+    valsetNonce: currentValsetNonce,
+    rewardAmount: 0,
+    rewardToken: ZeroAddress
+  }
+
+  await gravity.submitLogicCall(
+    valset,
 
     sigs.v,
     sigs.r,

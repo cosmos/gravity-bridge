@@ -7,7 +7,8 @@ import {
   getSignerAddresses,
   makeCheckpoint,
   signHash,
-  examplePowers
+  examplePowers,
+  ZeroAddress,
 } from "../test-utils/pure";
 
 chai.use(solidity);
@@ -27,8 +28,11 @@ describe("Gravity happy path valset update + batch submit", function () {
       // This is the power distribution on the Cosmos hub as of 7/14/2020
       powers: examplePowers(),
       validators: signers.slice(0, examplePowers().length),
-      nonce: 0
+      valsetNonce: 0,
+      rewardAmount: 0,
+      rewardToken: ZeroAddress
     }
+
 
     const powerThreshold = 6666;
 
@@ -36,7 +40,7 @@ describe("Gravity happy path valset update + batch submit", function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(gravityId, valset0.validators, valset0.powers, powerThreshold);
+    } = await deployContracts(gravityId, powerThreshold, valset0.validators, valset0.powers);
 
 
 
@@ -54,27 +58,43 @@ describe("Gravity happy path valset update + batch submit", function () {
       return {
         powers: powers,
         validators: validators,
-        nonce: 1
+        valsetNonce: 1,
+        rewardAmount: 0,
+        rewardToken: ZeroAddress
       }
     })()
 
+    // redefine valset0 and 1 with strings for 'validators'
+    const valset0_str = {
+      powers: valset0.powers,
+      validators: await getSignerAddresses(valset0.validators),
+      valsetNonce: valset0.valsetNonce,
+      rewardAmount: valset0.rewardAmount,
+      rewardToken: valset0.rewardToken
+    }
+    const valset1_str = {
+      powers: valset1.powers,
+      validators: await getSignerAddresses(valset1.validators),
+      valsetNonce: valset1.valsetNonce,
+      rewardAmount: valset1.rewardAmount,
+      rewardToken: valset1.rewardToken
+    }
+
     const checkpoint1 = makeCheckpoint(
-      await getSignerAddresses(valset1.validators),
-      valset1.powers,
-      valset1.nonce,
+      valset1_str.validators,
+      valset1_str.powers,
+      valset1_str.valsetNonce,
+      valset1_str.rewardAmount,
+      valset1_str.rewardToken,
       gravityId
     );
 
     let sigs1 = await signHash(valset0.validators, checkpoint1);
 
     await gravity.updateValset(
-      await getSignerAddresses(valset1.validators),
-      valset1.powers,
-      valset1.nonce,
+      valset1_str,
 
-      await getSignerAddresses(valset0.validators),
-      valset0.powers,
-      valset0.nonce,
+      valset0_str,
 
       sigs1.v,
       sigs1.r,
@@ -145,10 +165,7 @@ describe("Gravity happy path valset update + batch submit", function () {
     let sigs = await signHash(valset1.validators, digest);
 
     await gravity.submitBatch(
-
-      await getSignerAddresses(valset1.validators),
-      valset1.powers,
-      valset1.nonce,
+      valset1_str,
 
       sigs.v,
       sigs.r,

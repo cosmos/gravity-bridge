@@ -26,7 +26,7 @@ describe("constructor tests", function() {
     const powerThreshold = 6666;
 
     await expect(
-      deployContracts(gravityId, validators, powers, powerThreshold)
+      deployContracts(gravityId, powerThreshold, validators, powers,)
     ).to.be.revertedWith("Malformed current validator set");
   });
 
@@ -41,7 +41,7 @@ describe("constructor tests", function() {
     const powerThreshold = 666666666;
 
     await expect(
-      deployContracts(gravityId, validators, powers, powerThreshold)
+      deployContracts(gravityId, powerThreshold, validators, powers)
     ).to.be.revertedWith(
       "Submitted validator set signatures do not have enough power"
     );
