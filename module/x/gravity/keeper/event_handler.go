@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"strconv"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -32,13 +34,13 @@ func (k Keeper) HandleEthEvent(ctx sdk.Context, event types.EthereumEvent, orche
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
 
-	// Emit the handle message event
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, event.GetType()),
-			sdk.NewAttribute(types.AttributeKeyOrchestratorValidator, validatorAddr.String()),
+			types.EventTypeSubmitEvent,
 			sdk.NewAttribute(types.AttributeKeyEventID, eventID.String()),
+			sdk.NewAttribute(types.AttributeKeyEventType, event.GetType()),
+			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(event.GetNonce(), 64)),
+			sdk.NewAttribute(types.AttributeKeyOrchestratorAddr, orchestratorAddr.String()),
 		),
 	)
 

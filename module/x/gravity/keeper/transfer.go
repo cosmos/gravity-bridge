@@ -101,15 +101,24 @@ func (k Keeper) AddTransferToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress
 	// set the incremented tx ID
 	k.setTransferTxNonce(ctx, nonce)
 
-	// TODO: fix events / add more attrs
+	nonceStr := strconv.FormatUint(nonce, 64)
+
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeTransferPooled,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
-			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(nonce, 64)),
-			sdk.NewAttribute(types.AttributeKeyTokenContract, tokenContractHex),
+			sdk.NewAttribute(sdk.AttributeKeySender, sender.String()),
+			sdk.NewAttribute(types.AttributeKeyEthRecipient, ethereumReceiver.String()),
+			sdk.NewAttribute(types.AttributeKeyDenom, amount.Denom),             // cosmos or gravity denom
+			sdk.NewAttribute(types.AttributeKeyTokenContract, tokenContractHex), // ERC20 contract address
+			sdk.NewAttribute(types.AttributeKeyNonce, nonceStr),
 		),
+	)
+
+	k.Logger(ctx).Info(
+		"outgoing transfer",
+		"id", txID.String(),
+		"nonce", nonceStr,
 	)
 
 	return txID, nil
@@ -165,9 +174,9 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID tmbytes.He
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeTransferCanceled,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyDenom, refund.Denom), // TODO: create attr
 			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
+			sdk.NewAttribute(types.AttributeKeyRefundDenom, refund.Denom), // cosmos or gravity denom
+			sdk.NewAttribute(sdk.AttributeKeySender, sender.String()),
 		),
 	)
 

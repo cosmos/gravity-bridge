@@ -51,7 +51,17 @@ func (k Keeper) ConfirmEvent(ctx sdk.Context, confirm types.Confirm, orchestrato
 
 	k.SetConfirm(ctx, confirmID, confirm)
 
-	// TODO: emit event
+	k.Logger(ctx).Info("confirm", "id", confirmID.String(), "type", confirm.GetType(), "ethereum-address", ethAddress.String())
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeConfirm,
+			sdk.NewAttribute(types.AttributeKeyConfirmID, confirmID.String()),
+			sdk.NewAttribute(types.AttributeKeyConfirmType, confirm.GetType()),
+			sdk.NewAttribute(types.AttributeKeyEthereumAddr, ethAddress.String()),
+		),
+	)
+
 	return confirmID, err
 }
 

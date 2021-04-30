@@ -55,15 +55,17 @@ func (k Keeper) CreateBatchTx(ctx sdk.Context, contractAddress common.Address) (
 
 	// set the updated batch nonce for replay protection
 	k.setLastBatchNonce(ctx, nonce)
+	nonceStr := strconv.FormatUint(nonce, 64)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeOutgoingBatch,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			types.EventTypeOutgoingBatchTx,
 			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
-			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(nonce, 64)),
+			sdk.NewAttribute(types.AttributeKeyNonce, nonceStr),
 		),
 	)
+
+	k.Logger(ctx).Info("outgoing batch created", "id", txID.String(), "nonce", nonceStr)
 
 	return txID, nil
 }
@@ -229,12 +231,15 @@ func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract common.Address, txI
 	// Delete batch since it is finished
 	k.DeleteBatchTx(ctx, tokenContract, txID, batchTx.Block)
 
+	nonceStr := strconv.FormatUint(batchTx.Nonce, 64)
+
+	k.Logger(ctx).Info("outgoing batch canceled", "id", txID.String(), "nonce", nonceStr)
+
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeOutgoingBatchCanceled,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
-			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(batchTx.Nonce, 64)),
+			sdk.NewAttribute(types.AttributeKeyNonce, nonceStr),
 		),
 	)
 	return nil

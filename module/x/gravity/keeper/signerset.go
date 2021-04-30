@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"fmt"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,10 +18,8 @@ func (k Keeper) SetEthSignerSetRequest(ctx sdk.Context) types.EthSignerSet {
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeMultisigUpdateRequest,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			// TODO: fix event to height
-			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(signerSet.Height)),
+			types.EventTypeSignerSetRequest,
+			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(signerSet.Height, 64)),
 		),
 	)
 
