@@ -10,7 +10,7 @@ import (
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
-// Gravity slashes validator orchestrators for not confirming the current validator set or not
+// Gravity slashes validator orchestrators for not confirming the current ethereum signer set or not
 // building batch transactions for ERC20 tokens. The slash factor is defined, per type, on the module
 // parameters.
 func (k Keeper) slash(ctx sdk.Context, params types.Params) {
@@ -68,6 +68,7 @@ func (k Keeper) slash(ctx sdk.Context, params types.Params) {
 			k.stakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionBatch)
 		}
 
+		// FIXME: figure out the unslashed signer sets and only slash after the signer set nonce
 		if !hasConfirmed || confirmsByType[types.ConfirmTypeSignerSet] {
 			k.Logger(ctx).Debug("slashing validator for not signing signer set confirms", "consensus-address", consAddr.String())
 			k.stakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionSignerSet)
