@@ -36,13 +36,25 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 	// set the ethereum address
 	k.SetEthAddress(ctx, validatorAddr, ethereumAddr)
 
-	ctx.EventManager().EmitEvent(
+	k.Logger(ctx).Info(
+		"orchestrator key delegated",
+		"validator-address", msg.ValidatorAddress,
+		"orchestrator-address", msg.OrchestratorAddress,
+		"ethereum-address", msg.EthAddress,
+	)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeDelegateKey,
+			sdk.NewAttribute(types.AttributeKeyOrchestratorAddr, msg.OrchestratorAddress),
+			sdk.NewAttribute(types.AttributeKeyEthereumAddr, msg.EthAddress),
+			sdk.NewAttribute(types.AttributeKeyValidatorAddr, msg.ValidatorAddress),
+		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeySetOperatorAddr, msg.OrchestratorAddress),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		),
-	)
+	})
 
 	return &types.MsgDelegateKeyResponse{}, nil
 }
@@ -63,12 +75,18 @@ func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*type
 		return nil, err
 	}
 
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		),
+	)
+
 	return &types.MsgSubmitEventResponse{
 		EventID: eventID,
 	}, nil
 }
 
-// FIXME:
 func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
@@ -97,9 +115,7 @@ func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyConfirmID, confirmID.String()),
-			sdk.NewAttribute(types.AttributeKeyConfirmType, confirm.GetType()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		),
 	)
 
@@ -113,8 +129,6 @@ func (k Keeper) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*ty
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-
-	// FIXME: update logic
 
 	var (
 		tokenContract common.Address
@@ -148,7 +162,7 @@ func (k Keeper) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*ty
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		),
 	)
 
@@ -171,11 +185,7 @@ func (k Keeper) Transfer(c context.Context, msg *types.MsgTransfer) (*types.MsgT
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
-			sdk.NewAttribute(types.AttributeKeyEthRecipient, msg.EthRecipient),
-			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
-			sdk.NewAttribute(types.AttributeKeyDenom, msg.Amount.Denom),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		),
 	)
 
@@ -197,8 +207,7 @@ func (k Keeper) CancelTransfer(c context.Context, msg *types.MsgCancelTransfer) 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyTxID, msg.TxID.String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 		),
 	)

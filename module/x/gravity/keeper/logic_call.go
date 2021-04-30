@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -40,19 +39,19 @@ func (k Keeper) DeleteLogicCallTx(ctx sdk.Context, invalidationID tmbytes.HexByt
 func (k Keeper) CancelLogicCallTx(ctx sdk.Context, invalidationID tmbytes.HexBytes, invalidationNonce uint64) {
 	k.DeleteLogicCallTx(ctx, invalidationID, invalidationNonce)
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeOutgoingLogicCallCanceled,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyInvalidationID, fmt.Sprint(invalidationID)),
-			sdk.NewAttribute(types.AttributeKeyInvalidationNonce, fmt.Sprint(invalidationNonce)),
-		),
+	nonceStr := strconv.FormatUint(invalidationNonce, 64)
+	k.Logger(ctx).Info(
+		"logic call cancelled",
+		"invalidation-id", invalidationID.String(),
+		"invalidation-nonce", nonceStr,
 	)
 
-	k.Logger(ctx).Debug(
-		"logic call tx cancelled",
-		"invalidation-id", invalidationID.String(),
-		"invalidation-nonce", strconv.FormatUint(invalidationNonce, 64),
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeLogicCallCanceled,
+			sdk.NewAttribute(types.AttributeKeyInvalidationID, invalidationID.String()),
+			sdk.NewAttribute(types.AttributeKeyInvalidationNonce, nonceStr),
+		),
 	)
 }
 

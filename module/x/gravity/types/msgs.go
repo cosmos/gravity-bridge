@@ -6,6 +6,7 @@ import (
 	types "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/common"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
@@ -18,17 +19,12 @@ var (
 	_ sdk.Msg = &MsgCancelTransfer{}
 )
 
-const (
-	TypeMsgWithdrawEvent = "withdraw_event"
-	TypeMsgDepositEvent  = "deposit_event"
-)
-
 // NewMsgDelegateKey returns a new msgSetOrchestratorAddress
-func NewMsgDelegateKey(val sdk.ValAddress, oper sdk.AccAddress, eth string) *MsgDelegateKey {
+func NewMsgDelegateKey(validatorAddr sdk.ValAddress, operatorAddr sdk.AccAddress, ethereumAddr common.Address) *MsgDelegateKey {
 	return &MsgDelegateKey{
-		ValidatorAddress:    val.String(),
-		OrchestratorAddress: oper.String(),
-		EthAddress:          eth,
+		ValidatorAddress:    validatorAddr.String(),
+		OrchestratorAddress: operatorAddr.String(),
+		EthAddress:          ethereumAddr.String(),
 	}
 }
 
@@ -67,12 +63,12 @@ func (msg *MsgDelegateKey) GetSignBytes() []byte {
 }
 
 // NewMsgTransfer returns a new MsgTransfer
-func NewMsgTransfer(sender sdk.AccAddress, ethRecipientAddr string, send, bridgeFee sdk.Coin) *MsgTransfer {
+func NewMsgTransfer(sender sdk.AccAddress, ethRecipientAddr common.Address, amount, fee sdk.Coin) *MsgTransfer {
 	return &MsgTransfer{
 		Sender:       sender.String(),
-		EthRecipient: ethRecipientAddr,
-		Amount:       send,
-		BridgeFee:    bridgeFee,
+		EthRecipient: ethRecipientAddr.String(),
+		Amount:       amount,
+		BridgeFee:    fee,
 	}
 }
 
@@ -204,10 +200,10 @@ func (msg *MsgCancelTransfer) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgSubmitConfirm returns a new MsgSubmitConfirm
-func NewMsgSubmitConfirm(confirm *types.Any, signer sdk.AccAddress) *MsgSubmitConfirm {
+func NewMsgSubmitConfirm(confirm *types.Any, orchestratorAddr sdk.AccAddress) *MsgSubmitConfirm {
 	return &MsgSubmitConfirm{
 		Confirm: confirm,
-		Signer:  signer.String(),
+		Signer:  orchestratorAddr.String(),
 	}
 }
 
@@ -234,11 +230,11 @@ func (msg *MsgSubmitConfirm) ValidateBasic() (err error) {
 
 // GetSigners defines whose signature is required
 func (msg *MsgSubmitConfirm) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.ValAddressFromBech32(msg.Signer)
+	acc, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{sdk.AccAddress(acc)}
+	return []sdk.AccAddress{acc}
 }
 
 func (m *MsgSubmitConfirm) GetConfirm() Confirm {

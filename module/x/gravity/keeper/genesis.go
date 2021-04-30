@@ -30,15 +30,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
 		_ = k.SetTransferTx(ctx, tx)
 	}
 
-	// for _, confirm := range gs.SignerSetConfirms {
-
-	// }
-
-	// for _, confirm := range gs.BatchConfirms {
-
-	// }
-
-	// for _, confirm := range gs.LogicCallConfirms {
+	// for _, confirm := range gs.Confirms {
 
 	// }
 
@@ -77,6 +69,7 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 		BatchTxs:          k.GetBatchTxs(ctx),
 		LogicCallTxs:      k.GetOutgoingLogicCalls(ctx),
 		TransferTxs:       k.GetTransferTxs(ctx),
+		// TODO: get confirms
 		SignerSetConfirms: nil,
 		BatchConfirms:     nil,
 		LogicCallConfirms: nil,

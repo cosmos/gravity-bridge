@@ -183,6 +183,30 @@ func (k Keeper) DeleteTransferTx(ctx sdk.Context, txID tmbytes.HexBytes) {
 	store.Delete(types.GetTransferTxKey(txID))
 }
 
+// TODO: update keys and proto
+// func (k Keeper) GetTransferBatchMapping(ctx sdk.Context, txID tmbytes.HexBytes) (types.TransferTx, bool) {
+// 	store := ctx.KVStore(k.storeKey)
+// 	bz := store.Get(types.GetTransferTxKey(txID))
+// 	if len(bz) == 0 {
+// 		return types.TransferTx{}, false
+// 	}
+
+// 	var tx types.TransferTx
+// 	k.cdc.UnmarshalBinaryBare(bz, &tx)
+// 	return tx, true
+// }
+
+// func (k Keeper) SetTransferBatchMapping(ctx sdk.Context,txID tmbytes.HexBytes, tokenContract common.Address, batchID tmbytes.HexBytes) {
+// 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferTxKey)
+// 	// bz := k.cdc.MustMarshalBinaryBare(&tx)
+// 	store.Set(types.GetTransferTxKey(txID), batchID)
+// }
+
+// func (k Keeper) DeleteTransferBatchMapping(ctx sdk.Context, txID tmbytes.HexBytes) {
+// 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferTxKey)
+// 	store.Delete(types.GetTransferTxKey(txID))
+// }
+
 // IterateTransferTxs
 func (k Keeper) IterateTransferTxs(ctx sdk.Context, cb func(txID tmbytes.HexBytes, tx types.TransferTx) (stop bool)) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferTxKey)

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 
@@ -101,15 +102,24 @@ func (k Keeper) AddTransferToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress
 	// set the incremented tx ID
 	k.setTransferTxNonce(ctx, nonce)
 
-	// TODO: fix events / add more attrs
+	nonceStr := strconv.FormatUint(nonce, 64)
+
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeTransferPooled,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
-			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(nonce, 64)),
-			sdk.NewAttribute(types.AttributeKeyTokenContract, tokenContractHex),
+			sdk.NewAttribute(sdk.AttributeKeySender, sender.String()),
+			sdk.NewAttribute(types.AttributeKeyEthRecipient, ethereumReceiver.String()),
+			sdk.NewAttribute(types.AttributeKeyDenom, amount.Denom),             // cosmos or gravity denom
+			sdk.NewAttribute(types.AttributeKeyTokenContract, tokenContractHex), // ERC20 contract address
+			sdk.NewAttribute(types.AttributeKeyNonce, nonceStr),
 		),
+	)
+
+	k.Logger(ctx).Info(
+		"outgoing transfer",
+		"id", txID.String(),
+		"nonce", nonceStr,
 	)
 
 	return txID, nil
@@ -128,17 +138,45 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID tmbytes.He
 
 	// TODO: check if the transaction is currently on a batch and remove it
 
-	// poolTx := k.GetPoolTransactions(ctx)
-	// for _, pTx := range poolTx {
-	// 	if pTx.Id == txID {
-	// 		found = true
-	// 	}
-	// }
-	// if !found {
-	// 	return sdkerrors.Wrapf(types.ErrInvalid, "Id %d is in a batch", txID)
-	// }
+	// TODO: set transfer txID --> batch {contract, txID} to store in order to remove the
 
-	// k.removeFromUnbatchedTxIndex(ctx, txID, tx.Erc20Fee)
+	inBatch := false
+
+	if inBatch {
+		// remove tx from batch
+		// FIXME: use batch keys token and ID
+		batchTx, found := k.GetBatchTx(ctx, common.Address{}, txID)
+		if !found {
+			panic(fmt.Sprintf("transaction %s should be included in a tx batch %s", txID.String(), txID.String()))
+		}
+
+		var idx int
+		found = false
+		for i, ID := range batchTx.Transactions {
+			if bytes.Equal(ID, txID) {
+				idx = i
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			panic(fmt.Sprintf("transaction id %s should be included in a the tx list from batch %s", txID.String(), txID.String()))
+		}
+
+		if idx != len(batchTx.Transactions)-1 {
+			batchTx.Transactions = append(batchTx.Transactions[:idx], batchTx.Transactions[idx+1:]...)
+		} else {
+			batchTx.Transactions = batchTx.Transactions[:idx]
+		}
+
+		// set the batch tx with the updated txs
+		// TODO: add attribute and include batch ID in msg response
+		_ = k.SetBatchTx(ctx, batchTx)
+		// because the batch is the hash of the marshaled struct bytes, we need to remove the batch tx
+		// that contained the deleted transaction
+		k.DeleteBatchTx(ctx, common.Address{}, txID, batchTx.Block)
+	}
 
 	// delete the tx from the transfer tx pool
 	k.DeleteTransferTx(ctx, txID)
@@ -165,11 +203,13 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID tmbytes.He
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeTransferCanceled,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyDenom, refund.Denom), // TODO: create attr
 			sdk.NewAttribute(types.AttributeKeyTxID, txID.String()),
+			sdk.NewAttribute(types.AttributeKeyRefundDenom, refund.Denom), // cosmos or gravity denom
+			sdk.NewAttribute(sdk.AttributeKeySender, sender.String()),
 		),
 	)
+
+	k.Logger(ctx).Info("transfer canceled", "id", txID.String())
 
 	return nil
 }
