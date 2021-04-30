@@ -17,9 +17,11 @@ contract ReentrantERC20 {
         address[] memory addresses = new address[](0);
         bytes32[] memory bytes32s = new bytes32[](0);
         uint256[] memory uint256s = new uint256[](0);
+        address blankAddress = address(0);
         bytes memory bytess = new bytes(0);
         uint256 zero = 0;
         LogicCallArgs memory args;
+        ValsetArgs memory valset;
 
         {
             args = LogicCallArgs(
@@ -34,11 +36,13 @@ contract ReentrantERC20 {
                 zero
             );
         }
+
+        {
+            valset = ValsetArgs(addresses, uint256s, zero, zero, blankAddress);
+        }
         
         Gravity(state_gravityAddress).submitLogicCall(
-            addresses, 
-            uint256s, 
-            zero, 
+            valset,
             new uint8[](0), 
             bytes32s, 
             bytes32s,
