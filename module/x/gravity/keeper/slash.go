@@ -6,6 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
+	"github.com/ethereum/go-ethereum/common"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 // Gravity slashes validator orchestrators for not confirming the current validator set or not
@@ -14,10 +16,26 @@ import (
 func (k Keeper) slash(ctx sdk.Context, params types.Params) {
 	// params := k.GetParams(ctx)
 
+	// iterate available confirmations to check if the ethereum signer matches the validators ethereum
+	// address.
+	// map: <address>|<confirm_type> --> bool
+	confirmsByAddressType := make(map[string]map[string]bool)
+	k.IterateConfirmations(ctx, func(confirmID tmbytes.HexBytes, confirm types.Confirm) bool {
+		ethereumAddr := confirm.GetEthSigner()
+		_, ok := confirmsByAddressType[ethereumAddr]
+		if !ok {
+			confirmsByAddressType[ethereumAddr] = make(map[string]bool)
+		}
+
+		confirmsByAddressType[ethereumAddr][confirm.GetType()] = true
+		return false
+	})
+
 	// iterate validators by power in DESC order
 	k.IterateValidatorsByPower(ctx, func(validator stakingtypes.Validator) bool {
+		// validators with unbonded status can't be slashed, so we continue with next one
 		if validator.IsUnbonded() {
-			return false // continue with next validator
+			return false
 		}
 
 		consAddr, err := validator.GetConsAddr()
@@ -31,21 +49,43 @@ func (k Keeper) slash(ctx sdk.Context, params types.Params) {
 			return false
 		}
 
-		switch validator.Status {
-		case stakingtypes.Bonded:
-			// TODO: slash bonded validators who didn't attest signer set request events
-			// TODO: slash bonded validators who didn't attest batch requests
-			return false
-		case stakingtypes.Unbonding:
-			// TODO: slash unbonding validators who didn't attest signer set request events
-			return false
-		default:
-			// unbonded validator, checked above to fail earlier
+		// TODO: should we slash once per slashing event (signer set req, batch req and logic call) or just once?
+		// TODO: if slashing once, do we slash with the max of the 3 slash fractions, min, avg?
+
+		ethereumAddr := k.GetEthAddress(ctx, validator.GetOperator())
+
+		// TODO: should we remove this check? if so, the validator will always be slashed if it hasn't submitted the ethereum key
+		if (ethereumAddr == common.Address{}) {
+			k.Logger(ctx).Debug("ethereum signing address not found for validator", "validator-address", validator.OperatorAddress)
 			return false
 		}
+
+		// check the requests that the validator signed or not the confirms
+		confirmsByType, hasConfirmed := confirmsByAddressType[ethereumAddr.String()]
+
+		// slash up to 3 times in case the validator didn't sign the confirms
+
+		if !hasConfirmed || confirmsByType[types.ConfirmTypeBatch] {
+			k.stakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionBatch)
+		}
+
+		if !hasConfirmed || confirmsByType[types.ConfirmTypeSignerSet] {
+			k.stakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionSignerSet)
+		}
+
+		if !hasConfirmed || confirmsByType[types.ConfirmTypeLogicCall] {
+			// TODO: create slash fraction for logic call
+			k.stakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionBatch)
+		}
+
+		// 	jail the validator if not already
+		if !validator.IsJailed() {
+			k.stakingKeeper.Jail(ctx, consAddr)
+		}
+
+		return false
 	})
 
-	// TODO: slashing for arbitrary logic is missing
 	// TODO: prune validator sets, older than 6 months, this time is chosen out of an abundance of caution
 	// TODO: prune outgoing tx batches while looping over them above, older than 15h and confirmed
 	// TODO: prune events, attestations

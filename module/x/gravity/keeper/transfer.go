@@ -180,6 +180,8 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID tmbytes.He
 		),
 	)
 
+	k.Logger(ctx).Info("transfer canceled", "id", txID.String())
+
 	return nil
 }
 

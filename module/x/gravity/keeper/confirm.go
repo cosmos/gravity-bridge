@@ -36,7 +36,7 @@ func (k Keeper) ConfirmEvent(ctx sdk.Context, confirm types.Confirm, orchestrato
 
 	signatureAddr, err := types.EcRecover(checkpoint, confirm.GetSignature())
 	if err != nil {
-		return nil, sdkerrors.Wrapf(types.ErrSignatureInvalid, "signature verification failed: %w", err)
+		return nil, sdkerrors.Wrapf(types.ErrSignatureInvalid, "signature verification failed: %s", err.Error())
 	}
 
 	if signatureAddr != ethAddress {

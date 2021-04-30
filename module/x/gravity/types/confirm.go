@@ -16,6 +16,7 @@ type Confirm interface {
 
 	GetType() string
 	GetOrchestratorAddress() string
+	GetEthSigner() string
 	GetNonce() uint64
 	GetSignature() hexutil.Bytes
 	Validate() error
@@ -27,8 +28,15 @@ var (
 	_ Confirm = &ConfirmSignerSet{}
 )
 
+// available confirm types
+const (
+	ConfirmTypeBatch     = "batch"
+	ConfirmTypeLogicCall = "logic_call"
+	ConfirmTypeSignerSet = "signer_set"
+)
+
 // GetType should return the action
-func (c ConfirmBatch) GetType() string { return "batch" }
+func (c ConfirmBatch) GetType() string { return ConfirmTypeBatch }
 
 // Validate performs stateless checks
 func (c ConfirmBatch) Validate() error {
@@ -57,7 +65,7 @@ func (c ConfirmBatch) GetInvalidationNonce() uint64 { return 0 }
 func (c ConfirmBatch) GetInvalidationID() tmbytes.HexBytes { return nil }
 
 // GetType should return the action
-func (c ConfirmLogicCall) GetType() string { return "logic_Call" }
+func (c ConfirmLogicCall) GetType() string { return ConfirmTypeLogicCall }
 
 // Validate performs stateless checks
 func (c ConfirmLogicCall) Validate() error {
@@ -98,7 +106,7 @@ func NewConfirmSignerSet(nonce uint64, ethSigner string, validator sdk.AccAddres
 }
 
 // GetType should return the action
-func (c ConfirmSignerSet) GetType() string { return "valset" }
+func (c ConfirmSignerSet) GetType() string { return ConfirmTypeSignerSet }
 
 // Validate performs stateless checks
 func (c ConfirmSignerSet) Validate() (err error) {
