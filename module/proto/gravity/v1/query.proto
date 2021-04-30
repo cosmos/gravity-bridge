@@ -54,7 +54,6 @@ service Query {
   // rpc BatchFees(QueryBatchFeeRequest) returns (QueryBatchFeeResponse) {
   //   option (google.api.http).get = "/gravity/v1beta/batchfees";
   // }
-
   // rpc OutgoingTxBatches(QueryOutgoingTxBatchesRequest) returns (QueryOutgoingTxBatchesResponse) {
   //   option (google.api.http).get = "/gravity/v1beta/batch/outgoingtx";
   // }
@@ -70,7 +69,6 @@ service Query {
   // rpc DenomToERC20(QueryDenomToERC20Request) returns (QueryDenomToERC20Response) {
   //   option (google.api.http).get = "/gravity/v1beta/cosmos_originated/denom_to_erc20";
   // }
-
   rpc GetDelegateKeyByValidator(QueryDelegateKeysByValidatorAddress) returns (QueryDelegateKeysByValidatorAddressResponse) {
     option (google.api.http).get = "/gravity/v1beta/query_delegate_keys_by_validator";
   }
@@ -80,7 +78,6 @@ service Query {
   rpc GetDelegateKeyByOrchestrator(QueryDelegateKeysByOrchestratorAddress) returns (QueryDelegateKeysByOrchestratorAddressResponse) {
     option (google.api.http).get = "/gravity/v1beta/query_delegate_keys_by_orchestrator";
   }
-
   // rpc GetPendingSendToEth(QueryPendingSendToEth) returns (QueryPendingSendToEthResponse) {
   //   option (google.api.http).get = "/gravity/v1beta/query_pending_send_to_eth";
   // }

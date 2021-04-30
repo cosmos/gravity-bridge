@@ -60,11 +60,9 @@ func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*type
 	if err != nil {
 		return nil, err
 	}
-
 	if err := k.AttestEvent(ctx, event, val); err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
-
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
@@ -73,7 +71,6 @@ func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*type
 			sdk.NewAttribute(types.AttributeKeyEventID, event.Hash().String()),
 		),
 	)
-
 	return &types.MsgSubmitEventResponse{}, nil
 }
 
@@ -108,34 +105,21 @@ func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*
 // RequestBatch handles MsgRequestBatch
 func (k Keeper) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*types.MsgRequestBatchResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-
-	// orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-
-	// FIXME: update logic
-
 	var (
 		tokenContract common.Address
 		found         bool
 	)
 
 	if types.IsEthereumERC20Token(msg.Denom) {
-		tokenContractHex := types.GravityDenomToERC20Contract(msg.Denom)
-		tokenContract = common.HexToAddress(tokenContractHex)
+		tokenContract = common.HexToAddress(types.GravityDenomToERC20Contract(msg.Denom))
 	} else {
-		// get contract from store
 		tokenContract, found = k.GetERC20ContractFromCoinDenom(ctx, msg.Denom)
 		if !found {
-			// TODO: what if there is no corresponding contract? will it be "generated" on ethereum
-			// upon receiving?
-			// FIXME: this will fail if the cosmos tokens are relayed for the first time and they don't have a counterparty contract
-			// Fede: Also there's the question of how do we handle IBC denominations from a security perspective. Do we assign them the same
-			// contract? My guess is that each new contract assigned to a cosmos coin should be approved by governance
 			return nil, sdkerrors.Wrapf(types.ErrContractNotFound, "denom %s", msg.Denom)
 		}
 	}
 
-	_, err := k.CreateBatchTx(ctx, tokenContract)
-	if err != nil {
+	if _, err := k.CreateBatchTx(ctx, tokenContract); err != nil {
 		return nil, err
 	}
 

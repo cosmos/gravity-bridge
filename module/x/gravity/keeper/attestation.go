@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
@@ -39,7 +37,11 @@ func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validato
 
 	att.Votes = append(att.Votes, validator.String())
 
-	k.SetAttestation(ctx, event.Hash(), att)
+	if err = att.Validate(); err != nil {
+		return err
+	}
+
+	k.SetAttestation(ctx, att)
 	k.SetLastEventNonceByValidator(ctx, validator, event.GetNonce())
 	return nil
 }
@@ -47,10 +49,7 @@ func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validato
 // TryAttestation checks if an attestation has enough votes to be applied to the consensus state
 // and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
 // and then marks it Observed and emits an event.
-func (k Keeper) TryAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestation *types.Attestation) {
-	// Sum up the votes and see if it is ready to apply to the state.
-	// This conditional stops the attestation from accidentally being applied twice.
-
+func (k Keeper) TryAttestation(ctx sdk.Context, attestation *types.Attestation) {
 	// Sum the current powers of all validators who have voted and see if it passes the current threshold
 	// TODO: The different integer types and math here needs a careful review
 	totalPower := k.stakingKeeper.GetLastTotalPower(ctx)
@@ -78,14 +77,16 @@ func (k Keeper) TryAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestati
 		return
 	}
 
-	// fetch the event to set the ethereum info
-	event, found := k.GetEthereumEvent(ctx, attestation.EventID)
-	if !found {
-		panic(fmt.Errorf("event with ID %s not found for observed attestation", attestation.EventID))
+	event := attestation.GetEthereumEvent()
+
+	lastEventNonce := k.GetLastObservedEventNonce(ctx)
+	// this check is performed at the next level up so this should never panic
+	// outside of programmer error.
+	if event.GetNonce() != lastEventNonce+1 {
+		panic("attempting to apply events to state out of order")
 	}
 
-	// TODO: figure nonces
-	// k.setLastObservedEventNonce(ctx, event.GetNonce())
+	k.SetLastObservedEventNonce(ctx, event.GetNonce())
 
 	// now that the the event is attested (observed), we set the ethereum info to
 	// the store
@@ -98,27 +99,16 @@ func (k Keeper) TryAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestati
 	// we only override the latest ethereum info if the block height from the
 	// event is greater than the latest seen height
 	if info.Height < event.GetEthereumHeight() {
-		info = types.EthereumInfo{
+		k.SetEthereumInfo(ctx, types.EthereumInfo{
 			Timestamp: ctx.BlockTime(),
 			Height:    event.GetEthereumHeight(),
-		}
-
-		k.SetEthereumInfo(ctx, info)
+		})
 	}
 
-	// FIXME: define an attestation key that is not dependent on the event ID
-	// TODO: Ideally we should have multiple events attested at the same time?
-	k.SetAttestation(ctx, event.Hash(), attestation)
+	k.SetAttestation(ctx, attestation)
 
-	k.processAttestation(ctx, attestation)
-	// k.emitObservedEvent(ctx, attestation, event)
-}
-
-// processAttestation actually applies the attestation to the consensus state
-func (k Keeper) processAttestation(ctx sdk.Context, attestation *types.Attestation) {
 	// then execute in a new Tx so that we can store state on failure
 	cacheCtx, commit := ctx.CacheContext()
-
 	if err := k.attestationHandler.OnAttestation(cacheCtx, attestation); err != nil { // execute with a transient storage
 		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
@@ -141,8 +131,8 @@ func (k Keeper) GetAttestation(ctx sdk.Context, hash tmbytes.HexBytes) *types.At
 }
 
 // SetAttestation sets the attestation in the store
-func (k Keeper) SetAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestation *types.Attestation) {
-	ctx.KVStore(k.storeKey).Set(types.GetAttestationKey(hash), k.cdc.MustMarshalBinaryBare(attestation))
+func (k Keeper) SetAttestation(ctx sdk.Context, attestation *types.Attestation) {
+	ctx.KVStore(k.storeKey).Set(types.GetAttestationKey(attestation.GetEthereumEvent().Hash()), k.cdc.MustMarshalBinaryBare(attestation))
 }
 
 // IterateAttestations iterates over the attestations in the store

@@ -30,6 +30,7 @@ func (k Keeper) tallyAttestations(ctx sdk.Context) {
 	for k := range attmap {
 		keys = append(keys, k)
 	}
+
 	// Then we sort it
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
@@ -58,16 +59,10 @@ func (k Keeper) tallyAttestations(ctx sdk.Context) {
 			// If no attestation becomes observed, when we get to the next nonce, every attestation in
 			// it will be skipped. The same will happen for every nonce after that.
 			if nonce == uint64(k.GetLastObservedEventNonce(ctx))+1 {
-				k.TryAttestation(ctx, &att)
+				k.TryAttestation(ctx, att)
 			}
 		}
 	}
-	// all attestations on the store are considered unobserved, i.e the event being
-	// voted hasn't been handled
-	k.IterateAttestations(ctx, func(hash tmbytes.HexBytes, attestation *types.Attestation) bool {
-		k.TallyAttestation(ctx, hash, attestation)
-		return false
-	})
 }
 
 // timeoutTxs deletes the batch and logic call transactions that have passed
