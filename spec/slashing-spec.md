@@ -8,12 +8,18 @@ This slashing condition is intended to stop validators from signing over a valid
 
 The trickiest part of this slashing condition is determining that a validator set has never existed on Cosmos. To save space, we will need to clean up old validator sets. We could keep a mapping of validator set hash to true in the KV store, and use that to check if a validator set has ever existed. This is more efficient than storing the whole validator set, but its growth is still unbounded. It might be possible to use other cryptographic methods to cut down on the size of this mapping. It might be OK to prune very old entries from this mapping, but any pruning reduces the deterrence of this slashing condition.
 
+The implemented version of this slashing condition stores a map of hashes for all past events, this is smaller than storing entire batches or validator sets and doesn't have to be accessed as frequently. A possible but not currently implemented efficiency optimization would be to remove hashes from this list after a given period. But this would require storing more metadata about each hash.
+
+Currently automatic evidence submission is not implemented in the relayer. By the time a signature is visible on Ethereum it's already too late for slashing to prevent bridge highjacking or theft of funds. Furthermore since 66% of the validator set is required to perform this action anyways that same controlling majority could simply refuse the evidence. The most common case envisioned for this slashing condition is to break up a cabal of validators trying to take over the bridge by making it more difficult for them to trust one another and actually coordinate such a theft.
+
+The theft would involve exchanging of slashable Ethereum signatures and open up the possibility of a manual submission of this message by any defector in the group.
+
 ## GRAVSLASH-02: Failure to sign validator set update or tx batch
 
-This slashing condition is triggered when a validator does not sign a validator set update or transaction batch which is produced by the Gravity Cosmos module. This prevents two bad scenarios- 
+This slashing condition is triggered when a validator does not sign a validator set update or transaction batch which is produced by the Gravity Cosmos module. This prevents two bad scenarios-
 
 1. A validator simply does not bother to keep the correct binaries running on their system,
-2. A cartel of >1/3 validators unbond and then refuse to sign updates, preventing any validator set updates from getting enough signatures to be submitted to the Gravity Ethereum contract. If they prevent validator set updates for longer than the Cosmos unbonding period, they can no longer be punished for submitting fake validator set updates and tx batches (GRAVSLASH-01 and GRAVSLASH-02). 
+2. A cartel of >1/3 validators unbond and then refuse to sign updates, preventing any validator set updates from getting enough signatures to be submitted to the Gravity Ethereum contract. If they prevent validator set updates for longer than the Cosmos unbonding period, they can no longer be punished for submitting fake validator set updates and tx batches (GRAVSLASH-01 and GRAVSLASH-02).
 
 To deal with scenario 2, GRAVSLASH-02 will also need to slash validators who are no longer validating, but are still in the unbonding period. This means that when a validator leaves the validator set, they will need to keep running their equipment for 2 weeks. This is unusual for a Cosmos chain, and may not be accepted by the validators. Research is ongoing for ways to allow validators to stop signing before the unbonding period is fully over.
 
@@ -29,7 +35,7 @@ Although well-intentioned, this slashing condition is likely not advisable for m
 
 Maybe GRAVSLASH-03 is not necessary at all:
 
-The real utility of this slashing condition is to make it so that, if >2/3 of the validators form a cartel to all submit a fake event at a certain nonce, some number of them can defect from the cartel and submit the real event at that nonce. If there are enough defecting cartel members that the real event becomes observed, then the remaining cartel members will be slashed by this condition. However, this would require >1/2 of the cartel members to defect in most conditions. 
+The real utility of this slashing condition is to make it so that, if >2/3 of the validators form a cartel to all submit a fake event at a certain nonce, some number of them can defect from the cartel and submit the real event at that nonce. If there are enough defecting cartel members that the real event becomes observed, then the remaining cartel members will be slashed by this condition. However, this would require >1/2 of the cartel members to defect in most conditions.
 
 If not enough of the cartel defects, then neither event will be observed, and the Ethereum oracle will just halt. This is a much more likely scenario than one in which GRAVSLASH-03 is actually triggered.
 
@@ -37,7 +43,7 @@ Also, GRAVSLASH-03 will be triggered against the honest validators in the case o
 
 ## GRAVSLASH-04: Failure to submit Eth oracle claims
 
-This is similar to GRAVSLASH-03, but it is triggered against validators who do not submit an oracle claim that has been observed. In contrast to GRAVSLASH-03, GRAVSLASH-04 is intended to punish validators who stop participating in the oracle completely. 
+This is similar to GRAVSLASH-03, but it is triggered against validators who do not submit an oracle claim that has been observed. In contrast to GRAVSLASH-03, GRAVSLASH-04 is intended to punish validators who stop participating in the oracle completely.
 
 **Implementation considerations**
 
