@@ -7,7 +7,6 @@ import {
   getSignerAddresses,
   makeCheckpoint,
   signHash,
-  makeTxBatchHash,
   examplePowers,
   ZeroAddress
 } from "../test-utils/pure";
@@ -178,3 +177,79 @@ describe("updateValset tests", function () {
     expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
   });
 });
+
+// This test produces a hash for the contract which should match what is being used in the Go unit tests. It's here for
+// the use of anyone updating the Go tests.
+describe("updateValset Go test hash", function () {
+  it("produces good hash", async function () {
+
+
+    // Prep and deploy contract
+    // ========================
+    const gravityId = ethers.utils.formatBytes32String("foo");
+    const methodName = ethers.utils.formatBytes32String("checkpoint");
+    // note these are manually sorted, functions in Go and Rust auto-sort
+    // but this does not so be aware of the order!
+    const validators = ["0xE5904695748fe4A84b40b3fc79De2277660BD1D3",
+                        "0xc783df8a850f42e7F7e57013759C285caa701eB6", 
+                        "0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4", 
+                        ];
+    const powers = [3333,3333,3333];
+
+
+
+    let newValset = {
+      validators: validators,
+      powers: powers,
+      valsetNonce: 0,
+      rewardAmount: 0,
+      rewardToken: ZeroAddress
+    }
+
+    const checkpoint = makeCheckpoint(
+      newValset.validators,
+      newValset.powers,
+      newValset.valsetNonce,
+      newValset.rewardAmount,
+      newValset.rewardToken,
+      gravityId
+    );
+
+
+    const abiEncodedValset = ethers.utils.defaultAbiCoder.encode(
+      [
+        "bytes32", // gravityId
+        "bytes32", // methodName
+        "uint256", // valsetNonce
+        "address[]", // validators
+        "uint256[]", // powers
+        "uint256", // rewardAmount
+        "address" // rewardToken
+      ],
+      [
+        gravityId,
+        methodName,
+        newValset.valsetNonce,
+        newValset.validators,
+        newValset.powers,
+        newValset.rewardAmount,
+        newValset.rewardToken,
+      ]
+    );
+    const valsetDigest = ethers.utils.keccak256(abiEncodedValset);
+
+    // these should be equal, otherwise either our abi encoding here
+    // or over in test-utils/pure.ts is incorrect
+    expect(valsetDigest).equal(checkpoint)
+
+    console.log("elements in Valset digest:", {
+      "gravityId": gravityId,
+      "validators": validators,
+      "powers": powers,
+      "valsetNonce": newValset.valsetNonce,
+      "rewardAmount": newValset.rewardAmount,
+      "rewardToken": newValset.rewardToken
+    })
+    console.log("abiEncodedValset:", abiEncodedValset)
+    console.log("valsetDigest:", valsetDigest)
+})});
