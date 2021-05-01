@@ -413,8 +413,12 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		bridgeValidators[i].Power = sdk.NewUint(bridgeValidators[i].Power).MulUint64(math.MaxUint32).QuoUint64(totalPower).Uint64()
 	}
 
+	// get the reward from the params store
+	reward := k.GetParams(ctx).ValsetReward
+	rewardToken, rewardAmount := k.RewardToERC20Lookup(ctx, reward)
+
 	// TODO: make the nonce an incrementing one (i.e. fetch last nonce from state, increment, set here)
-	return types.NewValset(uint64(ctx.BlockHeight()), uint64(ctx.BlockHeight()), bridgeValidators)
+	return types.NewValset(uint64(ctx.BlockHeight()), uint64(ctx.BlockHeight()), bridgeValidators, rewardAmount, rewardToken)
 }
 
 /////////////////////////////

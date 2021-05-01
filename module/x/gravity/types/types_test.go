@@ -6,6 +6,7 @@ import (
 	mrand "math/rand"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 )
@@ -25,29 +26,29 @@ func TestValsetConfirmHash(t *testing.T) {
 		}
 	}
 
-	var mem []*BridgeValidator
-	for _, m := range members {
-		mem = append(mem, m)
-	}
-	v := Valset{Members: mem}
-	// TODO: this is hardcoded to foo, replace?
+	v := NewValset(0, 0, members, sdk.NewInt(0), "0x0000000000000000000000000000000000000000")
+
+	// normally we would load the GravityID from the store, but for this test we use
+	// the same hardcoded value in the solidity tests
 	hash := v.GetCheckpoint("foo")
 	hexHash := hex.EncodeToString(hash)
-	correctHash := "88165860d955aee7dc3e83d9d1156a5864b708841965585d206dbef6e9e1a499"
+	correctHash := "0xaca2f283f21a03ba182dc7d34a55c04771b25087401d680011df7dcba453f798"[2:]
 	assert.Equal(t, correctHash, hexHash)
 }
 
 func TestValsetCheckpointGold1(t *testing.T) {
-	src := NewValset(0xc, 0xc, BridgeValidators{{
-		Power:           0xffffffff,
-		EthereumAddress: gethcommon.Address{0xb4, 0x62, 0x86, 0x4e, 0x39, 0x5d, 0x88, 0xd6, 0xbc, 0x7c, 0x5d, 0xd5, 0xf3, 0xf5, 0xeb, 0x4c, 0xc2, 0x59, 0x92, 0x55}.String(),
-	}})
 
-	// TODO: this is hardcoded to foo, replace
+	src := NewValset(0, 0, BridgeValidators{{
+		Power:           6667,
+		EthereumAddress: "0xc783df8a850f42e7F7e57013759C285caa701eB6",
+	}}, sdk.NewInt(0), "0x0000000000000000000000000000000000000000")
+
+	// normally we would load the GravityID from the store, but for this test we use
+	// the same hardcoded value in the solidity tests
 	ourHash := src.GetCheckpoint("foo")
 
 	// hash from bridge contract
-	goldHash := "0xf024ab7404464494d3919e5a7f0d8ac40804fb9bd39ad5d16cdb3e66aa219b64"[2:]
+	goldHash := "0x89731c26bab12cf0cb5363ef9abab6f9bd5496cf758a2309311c7946d54bca85"[2:]
 	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))
 }
 

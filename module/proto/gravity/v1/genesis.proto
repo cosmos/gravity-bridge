@@ -6,6 +6,7 @@ import "gravity/v1/types.proto";
 import "gravity/v1/msgs.proto";
 import "gravity/v1/batch.proto";
 import "gravity/v1/attestation.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types";
 
@@ -69,6 +70,23 @@ option go_package = "github.com/althea-net/cosmos-gravity-bridge/module/x/gravit
 // The slashing fractions for the various gravity related slashing conditions. The first three
 // refer to not submitting a particular message, the third for submitting a different claim
 // for the same Ethereum event
+//
+// unbond_slashing_valsets_window
+//
+// The unbond slashing valsets window is used to determine how many blocks after starting to unbond
+// a validator needs to continue signing blocks. The goal of this paramater is that when a validator leaves
+// the set, if their leaving creates enough change in the validator set to justify an update they will sign
+// a validator set update for the Ethereum bridge that does not include themselves. Allowing us to remove them
+// from the Ethereum bridge and replace them with the new set gracefully.
+//
+// valset_reward
+//
+// Valset rewards are the amount of tokens this chain issues to relayers of validator sets.
+// These can be any ERC20 token in the bridge, but it's strongly advised that chains use only
+// Cosmos originated tokens, which the bridge effectively mints on Ethereum. If you run out of
+// the token you are using for validator set rewards valset updates will fail and the bridge
+// will be vulnerable to highjacking. For these paramaters the zero values are special and indicate
+// not to attempt any reward. This is the default for bootstrapping.
 message Params {
   option (gogoproto.stringer) = false;
 
@@ -99,6 +117,10 @@ message Params {
     (gogoproto.nullable)   = false
   ];
   uint64 unbond_slashing_valsets_window = 17;
+  cosmos.base.v1beta1.Coin valset_reward = 18 [
+    (gogoproto.nullable) = false
+  ];
+  
 }
 
 // GenesisState struct

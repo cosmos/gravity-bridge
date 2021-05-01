@@ -40,11 +40,13 @@ const (
 		"stateMutability": "pure",
 		"type": "function",
 		"inputs": [
-			{ "internalType": "bytes32",   "name": "_gravityId",     "type": "bytes32"   },
+			{ "internalType": "bytes32",   "name": "_gravityId",   "type": "bytes32"   },
 			{ "internalType": "bytes32",   "name": "_checkpoint",  "type": "bytes32"   },
 			{ "internalType": "uint256",   "name": "_valsetNonce", "type": "uint256"   },
 			{ "internalType": "address[]", "name": "_validators",  "type": "address[]" },
-			{ "internalType": "uint256[]", "name": "_powers",      "type": "uint256[]" }
+			{ "internalType": "uint256[]", "name": "_powers",      "type": "uint256[]" },
+			{ "internalType": "uint256",   "name": "_rewardAmount","type": "uint256"   },
+			{ "internalType": "address",   "name": "_rewardToken", "type": "address"   }
 		],
 		"outputs": [
 			{ "internalType": "bytes32", "name": "", "type": "bytes32" }

@@ -59,6 +59,32 @@ func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, string,
 	return false, tc1, nil
 }
 
+// RewardToERC20Lookup is a specialized function wrapping DenomToERC20Lookup designed to handle
+// the case where a validator has 'no reward'. The 'no reward' value is interpreted as having a zero
+// address for the ERC20 token and a zero value for the reward amount. Since we store a coin with the
+// params, a coin with a blank denom and/or zero amount is interpreted in this way.
+func (k Keeper) RewardToERC20Lookup(ctx sdk.Context, coin sdk.Coin) (string, sdk.Int) {
+	if len(coin.Denom) == 0 || coin.Amount.BigInt() == nil || coin.Amount == sdk.NewInt(0) {
+		// no reward case, handle as described in function comment
+		return "0x0000000000000000000000000000000000000000", sdk.NewIntFromUint64(0)
+
+	} else {
+		// reward case, pass to DenomToERC20Lookup
+		_, addressStr, err := k.DenomToERC20Lookup(ctx, coin.Denom)
+		if err != nil {
+			// This can only ever happen if governance sets a value for the reward
+			// which is not a valid ERC20 that as been bridged before (either from or to Cosmos)
+			// We'll classify that as operator error and just panic
+			panic("Invalid Valset reward! Correct or remove the paramater value")
+		}
+		err = types.ValidateEthAddress(addressStr)
+		if err != nil {
+			panic("Invalid Valset reward! Correct or remove the paramater value")
+		}
+		return addressStr, coin.Amount
+	}
+}
+
 // ERC20ToDenom returns (bool isCosmosOriginated, string denom, err)
 // Using this information, you can see if an ERC20 address represents an asset is native to Cosmos or Ethereum,
 // and get its corresponding denom

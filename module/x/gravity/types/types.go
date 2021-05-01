@@ -147,13 +147,13 @@ func (b BridgeValidators) ValidateBasic() error {
 }
 
 // NewValset returns a new valset
-func NewValset(nonce, height uint64, members BridgeValidators) *Valset {
+func NewValset(nonce, height uint64, members BridgeValidators, rewardAmount sdk.Int, rewardToken string) *Valset {
 	members.Sort()
 	var mem []*BridgeValidator
 	for _, val := range members {
 		mem = append(mem, val)
 	}
-	return &Valset{Nonce: uint64(nonce), Members: mem, Height: height}
+	return &Valset{Nonce: uint64(nonce), Members: mem, Height: height, RewardAmount: rewardAmount, RewardToken: rewardToken}
 }
 
 // GetCheckpoint returns the checkpoint
@@ -177,6 +177,19 @@ func (v Valset) GetCheckpoint(gravityIDstring string) []byte {
 		panic(err)
 	}
 
+	// this should never happen, unless an invalid paramater value has been set by the chain
+	err = ValidateEthAddress(v.RewardToken)
+	if err != nil {
+		panic(err)
+	}
+	rewardToken := gethcommon.HexToAddress(v.RewardToken)
+
+	if v.RewardAmount.BigInt() == nil {
+		// this must be programmer error
+		panic("Invalid reward amount passed in valset GetCheckpoint!")
+	}
+	rewardAmount := v.RewardAmount.BigInt()
+
 	checkpointBytes := []uint8("checkpoint")
 	var checkpoint [32]uint8
 	copy(checkpoint[:], checkpointBytes[:])
@@ -190,7 +203,7 @@ func (v Valset) GetCheckpoint(gravityIDstring string) []byte {
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, packErr := contractAbi.Pack("checkpoint", gravityID, checkpoint, big.NewInt(int64(v.Nonce)), memberAddresses, convertedPowers)
+	bytes, packErr := contractAbi.Pack("checkpoint", gravityID, checkpoint, big.NewInt(int64(v.Nonce)), memberAddresses, convertedPowers, rewardAmount, rewardToken)
 
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
