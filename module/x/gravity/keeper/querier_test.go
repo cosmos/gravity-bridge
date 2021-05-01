@@ -159,6 +159,8 @@ func TestLastValsetRequests(t *testing.T) {
 {
   "nonce": "105",
   "height": "105",
+  "reward_amount": "0",
+  "reward_token": "0x0000000000000000000000000000000000000000",
   "members": [
     {
       "power": "715827882",
@@ -189,6 +191,8 @@ func TestLastValsetRequests(t *testing.T) {
 {
   "nonce": "104",
   "height": "104",
+  "reward_amount": "0",
+  "reward_token": "0x0000000000000000000000000000000000000000",
   "members": [
     {
       "power": "858993459",
@@ -215,6 +219,8 @@ func TestLastValsetRequests(t *testing.T) {
 {
   "nonce": "103",
   "height": "103",
+  "reward_amount": "0",
+  "reward_token": "0x0000000000000000000000000000000000000000",
   "members": [
     {
       "power": "1073741823",
@@ -237,6 +243,8 @@ func TestLastValsetRequests(t *testing.T) {
 {
   "nonce": "102",
   "height": "102",
+  "reward_amount": "0",
+  "reward_token": "0x0000000000000000000000000000000000000000",
   "members": [
     {
       "power": "1431655765",
@@ -255,6 +263,8 @@ func TestLastValsetRequests(t *testing.T) {
 {
   "nonce": "101",
   "height": "101",
+  "reward_amount": "0",
+  "reward_token": "0x0000000000000000000000000000000000000000",
   "members": [
     {
       "power": "2147483647",
@@ -331,7 +341,9 @@ func TestPendingValsetRequests(t *testing.T) {
                                         "ethereum_address": "0x0606060606060606060606060606060606060606"
                                       }
                                     ],
-                                    "height": "105"
+                                    "height": "105",
+									"reward_amount": "0",
+                                    "reward_token": "0x0000000000000000000000000000000000000000"
                                   },
                                   {
                                     "nonce": "104",
@@ -357,7 +369,9 @@ func TestPendingValsetRequests(t *testing.T) {
                                         "ethereum_address": "0x0505050505050505050505050505050505050505"
                                       }
                                     ],
-                                    "height": "104"
+                                    "height": "104",
+									"reward_amount": "0",
+                                    "reward_token": "0x0000000000000000000000000000000000000000"
                                   },
                                   {
                                     "nonce": "103",
@@ -379,7 +393,9 @@ func TestPendingValsetRequests(t *testing.T) {
                                         "ethereum_address": "0x0404040404040404040404040404040404040404"
                                       }
                                     ],
-                                    "height": "103"
+                                    "height": "103",
+									"reward_amount": "0",
+                                    "reward_token": "0x0000000000000000000000000000000000000000"
                                   },
                                   {
                                     "nonce": "102",
@@ -397,7 +413,9 @@ func TestPendingValsetRequests(t *testing.T) {
                                         "ethereum_address": "0x0303030303030303030303030303030303030303"
                                       }
                                     ],
-                                    "height": "102"
+                                    "height": "102",
+									"reward_amount": "0",
+                                    "reward_token": "0x0000000000000000000000000000000000000000"
                                   },
                                   {
                                     "nonce": "101",
@@ -411,7 +429,9 @@ func TestPendingValsetRequests(t *testing.T) {
                                         "ethereum_address": "0x0202020202020202020202020202020202020202"
                                       }
                                     ],
-                                    "height": "101"
+                                    "height": "101",
+									"reward_amount": "0",
+                                    "reward_token": "0x0000000000000000000000000000000000000000"
                                   },
                                   {
                                     "nonce": "100",
@@ -421,7 +441,9 @@ func TestPendingValsetRequests(t *testing.T) {
                                         "ethereum_address": "0x0101010101010101010101010101010101010101"
                                       }
                                     ],
-                                    "height": "100"
+                                    "height": "100",
+									"reward_amount": "0",
+                                    "reward_token": "0x0000000000000000000000000000000000000000"
                                   }
                                 ]`),
 		},
@@ -836,8 +858,8 @@ func TestQueryCurrentValset(t *testing.T) {
 	currentValset := input.GravityKeeper.GetCurrentValset(ctx)
 
 	bridgeVal := types.BridgeValidator{EthereumAddress: ethAddress, Power: 4294967295}
-	expectedValset := types.Valset{Nonce: 1234567, Height: 1234567, Members: []*types.BridgeValidator{&bridgeVal}}
-	assert.Equal(t, &expectedValset, currentValset)
+	expectedValset := types.NewValset(1234567, 1234567, []*types.BridgeValidator{&bridgeVal}, sdk.NewIntFromUint64(0), "0x0000000000000000000000000000000000000000")
+	assert.Equal(t, expectedValset, currentValset)
 }
 
 func TestQueryERC20ToDenom(t *testing.T) {

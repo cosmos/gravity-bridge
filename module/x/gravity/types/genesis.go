@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -15,7 +14,6 @@ import (
 const (
 	// todo: implement oracle constants as params
 	DefaultParamspace = ModuleName
-	AttestationPeriod = 24 * time.Hour // TODO: value????
 )
 
 var (
@@ -73,6 +71,10 @@ var (
 	// ParamStoreSlashFractionBadEthSignature stores the amount by which a validator making a fraudulent eth signature will be slashed
 	ParamStoreSlashFractionBadEthSignature = []byte("SlashFractionBadEthSignature")
 
+	// ValsetRewardAmount the amount of the coin, both denom and amount to issue
+	// to a relayer when they relay a valset
+	ParamStoreValsetRewardAmount = []byte("ValsetReward")
+
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
 )
@@ -110,6 +112,7 @@ func DefaultParams() *Params {
 		SlashFractionConflictingClaim: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionBadEthSignature:  sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		UnbondSlashingValsetsWindow:   10000,
+		ValsetReward:                  nil,
 	}
 }
 
