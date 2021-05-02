@@ -1,4 +1,4 @@
-use crate::utils::{get_valset_nonce, GasCost};
+use crate::utils::{encode_valset_struct, get_valset_nonce, GasCost};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use gravity_utils::types::*;
@@ -36,7 +36,7 @@ pub async fn send_eth_valset_update(
         return Ok(());
     }
 
-    let payload = encode_valset_payload(new_valset, old_valset, confirms, gravity_id)?;
+    let payload = encode_valset_update_payload(new_valset, old_valset, confirms, gravity_id)?;
 
     let tx = web3
         .send_transaction(
@@ -92,8 +92,13 @@ pub async fn estimate_valset_cost(
             gas: Some(gas_limit.into()),
             value: Some(zero.into()),
             data: Some(
-                encode_valset_payload(new_valset.clone(), old_valset.clone(), confirms, gravity_id)?
-                    .into(),
+                encode_valset_update_payload(
+                    new_valset.clone(),
+                    old_valset.clone(),
+                    confirms,
+                    gravity_id,
+                )?
+                .into(),
             ),
         })
         .await?;
@@ -106,16 +111,14 @@ pub async fn estimate_valset_cost(
 
 /// Encodes the payload bytes for the validator set update call, useful for
 /// estimating the cost of submitting a validator set
-fn encode_valset_payload(
+fn encode_valset_update_payload(
     new_valset: Valset,
     old_valset: Valset,
     confirms: &[ValsetConfirmResponse],
     gravity_id: String,
 ) -> Result<Vec<u8>, GravityError> {
-    let (old_addresses, old_powers) = old_valset.filter_empty_addresses();
-    let (new_addresses, new_powers) = new_valset.filter_empty_addresses();
-    let old_nonce = old_valset.nonce;
-    let new_nonce = new_valset.nonce;
+    let new_valset_token = encode_valset_struct(&new_valset);
+    let old_valset_token = encode_valset_struct(&old_valset);
 
     // remember the signatures are over the new valset and therefore this is the value we must encode
     // the old valset exists only as a hash in the ethereum store
@@ -127,30 +130,33 @@ fn encode_valset_payload(
 
     // Solidity function signature
     // function updateValset(
-    // // The new version of the validator set
+    // // The new version of the validator set encoded as a ValsetArgsStruct
     // address[] memory _newValidators,
     // uint256[] memory _newPowers,
     // uint256 _newValsetNonce,
-    // // The current validators that approve the change
+    // uint256 _newRewardAmount,
+    // address _newRewardToken,
+    //
+    // // The current validators that approve the change encoded as a ValsetArgsStruct
+    // // note that these rewards where *already* issued but we must pass it back in for the hash
     // address[] memory _currentValidators,
     // uint256[] memory _currentPowers,
     // uint256 _currentValsetNonce,
+    // uint256 _currentRewardAmount,
+    // address _currentRewardToken,
+    //
     // // These are arrays of the parts of the current validator's signatures
     // uint8[] memory _v,
     // bytes32[] memory _r,
     // bytes32[] memory _s
     let tokens = &[
-        new_addresses.into(),
-        new_powers.into(),
-        new_nonce.into(),
-        old_addresses.into(),
-        old_powers.into(),
-        old_nonce.into(),
+        new_valset_token,
+        old_valset_token,
         sig_arrays.v,
         sig_arrays.r,
         sig_arrays.s,
     ];
-    let payload = clarity::abi::encode_call("updateValset(address[],uint256[],uint256,address[],uint256[],uint256,uint8[],bytes32[],bytes32[])",
+    let payload = clarity::abi::encode_call("updateValset((address[],uint256[],uint256,uint256,address),(address[],uint256[],uint256,uint256,address),uint8[],bytes32[],bytes32[])",
     tokens).unwrap();
 
     Ok(payload)

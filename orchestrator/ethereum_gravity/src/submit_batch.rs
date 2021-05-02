@@ -1,4 +1,4 @@
-use crate::utils::{get_tx_batch_nonce, GasCost};
+use crate::utils::{encode_valset_struct, get_tx_batch_nonce, GasCost};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use gravity_utils::error::GravityError;
@@ -125,8 +125,7 @@ fn encode_batch_payload(
     confirms: &[BatchConfirmResponse],
     gravity_id: String,
 ) -> Result<Vec<u8>, GravityError> {
-    let (current_addresses, current_powers) = current_valset.filter_empty_addresses();
-    let current_valset_nonce = current_valset.nonce;
+    let current_valset_token = encode_valset_struct(&current_valset);
     let new_batch_nonce = batch.nonce;
     let hash = encode_tx_batch_confirm_hashed(gravity_id, batch.clone());
     let sig_data = current_valset.order_sigs(&hash, confirms)?;
@@ -135,10 +134,13 @@ fn encode_batch_payload(
 
     // Solidity function signature
     // function submitBatch(
-    // // The validators that approve the batch and new valset
+    // // The validators that approve the batch and new valset encoded as a ValsetArgs struct
     // address[] memory _currentValidators,
     // uint256[] memory _currentPowers,
     // uint256 _currentValsetNonce,
+    // uint256 _rewardAmount,
+    // address _rewardToken,
+    //
     // // These are arrays of the parts of the validators signatures
     // uint8[] memory _v,
     // bytes32[] memory _r,
@@ -151,9 +153,7 @@ fn encode_batch_payload(
     // address _tokenContract,
     // uint256 _batchTimeout
     let tokens = &[
-        current_addresses.into(),
-        current_powers.into(),
-        current_valset_nonce.into(),
+        current_valset_token,
         sig_arrays.v,
         sig_arrays.r,
         sig_arrays.s,
@@ -164,7 +164,7 @@ fn encode_batch_payload(
         batch.token_contract.into(),
         batch.batch_timeout.into(),
     ];
-    let payload = clarity::abi::encode_call("submitBatch(address[],uint256[],uint256,uint8[],bytes32[],bytes32[],uint256[],address[],uint256[],uint256,address,uint256)",
+    let payload = clarity::abi::encode_call("submitBatch((address[],uint256[],uint256,uint256,address),uint8[],bytes32[],bytes32[],uint256[],address[],uint256[],uint256,address,uint256)",
     tokens).unwrap();
     trace!("Tokens {:?}", tokens);
 

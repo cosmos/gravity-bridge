@@ -1,4 +1,4 @@
-use crate::types::{LogicCall, TransactionBatch, Valset};
+use crate::types::{zero_address, LogicCall, TransactionBatch, Valset};
 use clarity::abi::{encode_tokens, Token};
 use clarity::utils::get_ethereum_msg_hash;
 
@@ -9,12 +9,19 @@ use clarity::utils::get_ethereum_msg_hash;
 /// digest that is normally signed or may be used as a 'hash of the message'
 pub fn encode_valset_confirm(gravity_id: String, valset: Valset) -> Vec<u8> {
     let (eth_addresses, powers) = valset.filter_empty_addresses();
+    let reward_token = if let Some(v) = valset.reward_token {
+        v
+    } else {
+        zero_address()
+    };
     encode_tokens(&[
         Token::FixedString(gravity_id),
         Token::FixedString("checkpoint".to_string()),
         valset.nonce.into(),
         eth_addresses.into(),
         powers.into(),
+        valset.reward_amount.into(),
+        reward_token.into(),
     ])
 }
 
@@ -26,17 +33,30 @@ pub fn encode_valset_confirm_hashed(gravity_id: String, valset: Valset) -> Vec<u
 #[test]
 fn test_valset_signature() {
     use crate::types::ValsetMember;
+    use clarity::utils::bytes_to_hex_str;
     use clarity::utils::hex_str_to_bytes;
     use sha3::{Digest, Keccak256};
 
     let correct_hash: Vec<u8> =
-        hex_str_to_bytes("0x88165860d955aee7dc3e83d9d1156a5864b708841965585d206dbef6e9e1a499")
+        hex_str_to_bytes("0xaca2f283f21a03ba182dc7d34a55c04771b25087401d680011df7dcba453f798")
             .unwrap();
 
-    // a validator set
+    // a validator set, keep an eye on the sorting here as it's manually
+    // sorted and won't be identical to the other signer impl without manual
+    // ordering checks
     let valset = Valset {
         nonce: 0,
+        reward_amount: 0u8.into(),
+        reward_token: None,
         members: vec![
+            ValsetMember {
+                eth_address: Some(
+                    "0xE5904695748fe4A84b40b3fc79De2277660BD1D3"
+                        .parse()
+                        .unwrap(),
+                ),
+                power: 3333,
+            },
             ValsetMember {
                 eth_address: Some(
                     "0xc783df8a850f42e7F7e57013759C285caa701eB6"
@@ -53,23 +73,20 @@ fn test_valset_signature() {
                 ),
                 power: 3333,
             },
-            ValsetMember {
-                eth_address: Some(
-                    "0xE5904695748fe4A84b40b3fc79De2277660BD1D3"
-                        .parse()
-                        .unwrap(),
-                ),
-                power: 3333,
-            },
         ],
     };
     let checkpoint = encode_valset_confirm("foo".to_string(), valset);
     let checkpoint_hash = Keccak256::digest(&checkpoint);
-    assert_eq!(correct_hash, checkpoint_hash.as_slice());
+    assert_eq!(
+        bytes_to_hex_str(&correct_hash),
+        bytes_to_hex_str(&checkpoint_hash)
+    );
 
     // the same valset, except with an intentionally incorrect hash
     let valset = Valset {
         nonce: 1,
+        reward_amount: 0u8.into(),
+        reward_token: None,
         members: vec![
             ValsetMember {
                 eth_address: Some(
@@ -99,7 +116,10 @@ fn test_valset_signature() {
     };
     let checkpoint = encode_valset_confirm("foo".to_string(), valset);
     let checkpoint_hash = Keccak256::digest(&checkpoint);
-    assert_ne!(correct_hash, checkpoint_hash.as_slice())
+    assert_ne!(
+        bytes_to_hex_str(&correct_hash),
+        bytes_to_hex_str(&checkpoint_hash)
+    )
 }
 
 /// takes the required input data and produces the required signature to confirm a transaction

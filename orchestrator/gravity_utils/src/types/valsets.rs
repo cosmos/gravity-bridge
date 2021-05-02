@@ -16,6 +16,13 @@ use std::{
 /// stored in a u64 to prevent overflow during computation.
 pub const TOTAL_GRAVITY_POWER: u64 = u32::MAX as u64;
 
+// TODO this should probably be in clarity
+pub fn zero_address() -> EthAddress {
+    "0x0000000000000000000000000000000000000000"
+        .parse()
+        .unwrap()
+}
+
 /// takes in an amount of power in the gravity bridge, returns a percentage of total
 fn gravity_power_to_percent(input: u64) -> f32 {
     (input as f32 / TOTAL_GRAVITY_POWER as f32) * 100f32
@@ -86,6 +93,8 @@ impl Confirm for ValsetConfirmResponse {
 pub struct Valset {
     pub nonce: u64,
     pub members: Vec<ValsetMember>,
+    pub reward_amount: Uint256,
+    pub reward_token: Option<EthAddress>,
 }
 
 impl Valset {
@@ -327,18 +336,23 @@ impl Valset {
 
 impl From<gravity_proto::gravity::Valset> for Valset {
     fn from(input: gravity_proto::gravity::Valset) -> Self {
-        Valset {
-            nonce: input.nonce,
-            members: input.members.iter().map(|i| i.into()).collect(),
-        }
+        (&input).into()
     }
 }
 
 impl From<&gravity_proto::gravity::Valset> for Valset {
     fn from(input: &gravity_proto::gravity::Valset) -> Self {
+        let parsed_reward_token = input.reward_token.parse().unwrap();
+        let reward_token = if parsed_reward_token == zero_address() {
+            None
+        } else {
+            Some(parsed_reward_token)
+        };
         Valset {
             nonce: input.nonce,
             members: input.members.iter().map(|i| i.into()).collect(),
+            reward_amount: input.reward_amount.parse().unwrap(),
+            reward_token,
         }
     }
 }
