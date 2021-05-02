@@ -58,6 +58,8 @@ pub async fn find_latest_valset(
                     let valset = Valset {
                         nonce: event.valset_nonce,
                         members: event.members,
+                        reward_amount: event.reward_amount,
+                        reward_token: event.reward_token,
                     };
                     check_if_valsets_differ(cosmos_chain_valset, &valset);
                     return Ok(valset);

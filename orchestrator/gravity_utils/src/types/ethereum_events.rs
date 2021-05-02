@@ -4,7 +4,7 @@
 //! mirror Serde and perhaps even become a serde crate for Ethereum ABI decoding
 //! For now reference the ABI encoding document here https://docs.soliditylang.org/en/v0.8.3/abi-spec.html
 
-use super::ValsetMember;
+use super::{zero_address, ValsetMember};
 use crate::error::GravityError;
 use clarity::Address as EthAddress;
 use deep_space::utils::bytes_to_hex_str;
@@ -20,34 +20,30 @@ pub struct ValsetUpdatedEvent {
     pub valset_nonce: u64,
     pub event_nonce: u64,
     pub block_height: Uint256,
+    pub reward_amount: Uint256,
+    pub reward_token: Option<EthAddress>,
+    pub members: Vec<ValsetMember>,
+}
+
+/// special return struct just for the data bytes components
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
+struct ValsetDataBytes {
+    pub event_nonce: u64,
+    pub reward_amount: Uint256,
+    pub reward_token: Option<EthAddress>,
     pub members: Vec<ValsetMember>,
 }
 
 impl ValsetUpdatedEvent {
-    /// This function is not an abi compatible bytes parser, but it's actually
-    /// not hard at all to extract data like this by hand.
-    pub fn from_log(input: &Log) -> Result<ValsetUpdatedEvent, GravityError> {
-        // we have one indexed event so we should fined two indexes, one the event itself
-        // and one the indexed nonce
-        if input.topics.get(1).is_none() {
-            return Err(GravityError::InvalidEventLogError(
-                "Too few topics".to_string(),
-            ));
-        }
-        let valset_nonce_data = &input.topics[1];
-        let valset_nonce = Uint256::from_bytes_be(valset_nonce_data);
-        if valset_nonce > u64::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
-                "Nonce overflow, probably incorrect parsing".to_string(),
-            ));
-        }
-        let valset_nonce: u64 = valset_nonce.to_string().parse().unwrap();
+    /// Decodes the data bytes of a valset log event, separated for easy testing
+    fn decode_data_bytes(input: &[u8]) -> Result<ValsetDataBytes, GravityError> {
+        // first index is the event nonce, then the reward token, amount, following two have event data we don't
+        // care about, sixth index contains the length of the eth address array
 
-        // first index is the event nonce, following two have event data we don't
-        // care about, fourth index contains the length of the eth address array
+        // event nonce
         let index_start = 0;
         let index_end = index_start + 32;
-        let nonce_data = &input.data[index_start..index_end];
+        let nonce_data = &input[index_start..index_end];
         let event_nonce = Uint256::from_bytes_be(nonce_data);
         if event_nonce > u64::MAX.into() {
             return Err(GravityError::InvalidEventLogError(
@@ -55,22 +51,49 @@ impl ValsetUpdatedEvent {
             ));
         }
         let event_nonce: u64 = event_nonce.to_string().parse().unwrap();
-        // first index is the event nonce, following two have event data we don't
-        // care about, fourth index contains the length of the eth address array
-        let index_start = 3 * 32;
+
+        // reward amount
+        let index_start = 32;
+        let index_end = index_start + 32;
+        let reward_amount_data = &input[index_start..index_end];
+        let reward_amount = Uint256::from_bytes_be(reward_amount_data);
+
+        // reward token
+        let index_start = 2 * 32;
+        let index_end = index_start + 32;
+        let reward_token_data = &input[index_start..index_end];
+        // addresses are 12 bytes shorter than the 32 byte field they are stored in
+        let reward_token = EthAddress::from_slice(&reward_token_data[12..]);
+        if let Err(e) = reward_token {
+            return Err(GravityError::InvalidEventLogError(format!(
+                "Bad reward address, must be incorrect parsing {:?}",
+                e
+            )));
+        }
+        let reward_token = reward_token.unwrap();
+        // zero address represents no reward, so we replace it here with a none
+        // for ease of checking in the future
+        let reward_token = if reward_token == zero_address() {
+            None
+        } else {
+            Some(reward_token)
+        };
+
+        // below this we are parsing the dynamic data from the 6th index on
+        let index_start = 5 * 32;
         let index_end = index_start + 32;
         let eth_addresses_offset = index_start + 32;
-        let len_eth_addresses = Uint256::from_bytes_be(&input.data[index_start..index_end]);
+        let len_eth_addresses = Uint256::from_bytes_be(&input[index_start..index_end]);
         if len_eth_addresses > usize::MAX.into() {
             return Err(GravityError::InvalidEventLogError(
                 "Ethereum array len overflow, probably incorrect parsing".to_string(),
             ));
         }
         let len_eth_addresses: usize = len_eth_addresses.to_string().parse().unwrap();
-        let index_start = (4 + len_eth_addresses) * 32;
+        let index_start = (6 + len_eth_addresses) * 32;
         let index_end = index_start + 32;
         let powers_offset = index_start + 32;
-        let len_powers = Uint256::from_bytes_be(&input.data[index_start..index_end]);
+        let len_powers = Uint256::from_bytes_be(&input[index_start..index_end]);
         if len_powers > usize::MAX.into() {
             return Err(GravityError::InvalidEventLogError(
                 "Powers array len overflow, probably incorrect parsing".to_string(),
@@ -89,9 +112,9 @@ impl ValsetUpdatedEvent {
             let power_end = power_start + 32;
             let address_start = (i * 32) + eth_addresses_offset;
             let address_end = address_start + 32;
-            let power = Uint256::from_bytes_be(&input.data[power_start..power_end]);
+            let power = Uint256::from_bytes_be(&input[power_start..power_end]);
             // an eth address at 20 bytes is 12 bytes shorter than the Uint256 it's stored in.
-            let eth_address = EthAddress::from_slice(&input.data[address_start + 12..address_end]);
+            let eth_address = EthAddress::from_slice(&input[address_start + 12..address_end]);
             if eth_address.is_err() {
                 return Err(GravityError::InvalidEventLogError(
                     "Ethereum Address parsing error, probably incorrect parsing".to_string(),
@@ -117,6 +140,33 @@ impl ValsetUpdatedEvent {
             );
         }
 
+        Ok(ValsetDataBytes {
+            event_nonce,
+            members: validators,
+            reward_amount,
+            reward_token,
+        })
+    }
+
+    /// This function is not an abi compatible bytes parser, but it's actually
+    /// not hard at all to extract data like this by hand.
+    pub fn from_log(input: &Log) -> Result<ValsetUpdatedEvent, GravityError> {
+        // we have one indexed event so we should find two indexes, one the event itself
+        // and one the indexed nonce
+        if input.topics.get(1).is_none() {
+            return Err(GravityError::InvalidEventLogError(
+                "Too few topics".to_string(),
+            ));
+        }
+        let valset_nonce_data = &input.topics[1];
+        let valset_nonce = Uint256::from_bytes_be(valset_nonce_data);
+        if valset_nonce > u64::MAX.into() {
+            return Err(GravityError::InvalidEventLogError(
+                "Nonce overflow, probably incorrect parsing".to_string(),
+            ));
+        }
+        let valset_nonce: u64 = valset_nonce.to_string().parse().unwrap();
+
         let block_height = if let Some(bn) = input.block_number.clone() {
             bn
         } else {
@@ -126,13 +176,18 @@ impl ValsetUpdatedEvent {
             ));
         };
 
+        let decoded_bytes = Self::decode_data_bytes(&input.data)?;
+
         Ok(ValsetUpdatedEvent {
             valset_nonce,
-            event_nonce,
+            event_nonce: decoded_bytes.event_nonce,
             block_height,
-            members: validators,
+            reward_amount: decoded_bytes.reward_amount,
+            reward_token: decoded_bytes.reward_token,
+            members: decoded_bytes.members,
         })
     }
+
     pub fn from_logs(input: &[Log]) -> Result<Vec<ValsetUpdatedEvent>, GravityError> {
         let mut res = Vec::new();
         for item in input {
@@ -511,12 +566,71 @@ impl LogicCallExecutedEvent {
 }
 
 /// Function used for debug printing hex dumps
-/// of ethereum events
-fn _debug_print_data(input: &[u8]) {
+/// of ethereum events with each uint256 on a new
+/// line
+fn debug_print_data(input: &[u8]) {
     let count = input.len() / 32;
     println!("data hex dump");
     for i in 0..count {
         println!("0x{}", bytes_to_hex_str(&input[(i * 32)..((i * 32) + 32)]))
     }
     println!("end dump");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clarity::utils::hex_str_to_bytes;
+
+    #[test]
+    fn test_valset_decode() {
+        let event = "0x0000000000000000000000000000000000000000000000000000000000000001\
+                          000000000000000000000000000000000000000000000000000000000000000000\
+                          000000000000000000000000000000000000000000000000000000000000000000\
+                          0000000000000000000000000000000000000000000000000000000000a0000000\
+                          000000000000000000000000000000000000000000000000000000012000000000\
+                          000000000000000000000000000000000000000000000000000000030000000000\
+                          000000000000001bb537aa56ffc7d608793baffc6c9c7de3c4f270000000000000\
+                          000000000000906313229cfb30959b39a5946099e4526625cbd400000000000000\
+                          00000000009f49c7617b72b5784f482bd728d26eba354a0b390000000000000000\
+                          000000000000000000000000000000000000000000000003000000000000000000\
+                          000000000000000000000000000000000000005555555500000000000000000000\
+                          000000000000000000000000000000000000555555550000000000000000000000\
+                          000000000000000000000000000000000055555555";
+        let event_bytes = hex_str_to_bytes(event).unwrap();
+
+        let correct = ValsetDataBytes {
+            event_nonce: 1u8.into(),
+            reward_amount: 0u8.into(),
+            reward_token: None,
+            members: vec![
+                ValsetMember {
+                    eth_address: Some(
+                        "0x1bb537Aa56fFc7D608793BAFFC6c9C7De3c4F270"
+                            .parse()
+                            .unwrap(),
+                    ),
+                    power: 1431655765,
+                },
+                ValsetMember {
+                    eth_address: Some(
+                        "0x906313229CFB30959b39A5946099e4526625CBD4"
+                            .parse()
+                            .unwrap(),
+                    ),
+                    power: 1431655765,
+                },
+                ValsetMember {
+                    eth_address: Some(
+                        "0x9F49C7617b72b5784F482Bd728d26EbA354a0B39"
+                            .parse()
+                            .unwrap(),
+                    ),
+                    power: 1431655765,
+                },
+            ],
+        };
+        let res = ValsetUpdatedEvent::decode_data_bytes(&event_bytes).unwrap();
+        assert_eq!(correct, res);
+    }
 }

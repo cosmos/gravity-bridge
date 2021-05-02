@@ -134,6 +134,11 @@ pub struct Valset {
     pub members: ::prost::alloc::vec::Vec<BridgeValidator>,
     #[prost(uint64, tag="3")]
     pub height: u64,
+    #[prost(string, tag="4")]
+    pub reward_amount: ::prost::alloc::string::String,
+    /// the reward token in it's Ethereum hex address representation
+    #[prost(string, tag="5")]
+    pub reward_token: ::prost::alloc::string::String,
 }
 /// LastObservedEthereumBlockHeight stores the last observed
 /// Ethereum block height along with the Cosmos block height that
@@ -480,6 +485,23 @@ pub struct MsgCancelSendToEthResponse {
 /// The slashing fractions for the various gravity related slashing conditions. The first three
 /// refer to not submitting a particular message, the third for submitting a different claim
 /// for the same Ethereum event
+///
+/// unbond_slashing_valsets_window
+///
+/// The unbond slashing valsets window is used to determine how many blocks after starting to unbond
+/// a validator needs to continue signing blocks. The goal of this paramater is that when a validator leaves
+/// the set, if their leaving creates enough change in the validator set to justify an update they will sign
+/// a validator set update for the Ethereum bridge that does not include themselves. Allowing us to remove them
+/// from the Ethereum bridge and replace them with the new set gracefully.
+///
+/// valset_reward
+///
+/// Valset rewards are the amount of tokens this chain issues to relayers of validator sets.
+/// These can be any ERC20 token in the bridge, but it's strongly advised that chains use only
+/// Cosmos originated tokens, which the bridge effectively mints on Ethereum. If you run out of
+/// the token you are using for validator set rewards valset updates will fail and the bridge
+/// will be vulnerable to highjacking. For these paramaters the zero values are special and indicate
+/// not to attempt any reward. This is the default for bootstrapping.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Params {
     #[prost(string, tag="1")]
@@ -512,6 +534,8 @@ pub struct Params {
     pub slash_fraction_conflicting_claim: ::prost::alloc::vec::Vec<u8>,
     #[prost(uint64, tag="17")]
     pub unbond_slashing_valsets_window: u64,
+    #[prost(message, optional, tag="18")]
+    pub valset_reward: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
 }
 /// GenesisState struct
 #[derive(Clone, PartialEq, ::prost::Message)]

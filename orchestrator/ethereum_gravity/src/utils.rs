@@ -241,3 +241,31 @@ impl GasCost {
         self.gas.clone() * self.gas_price.clone()
     }
 }
+
+/// This encodes the solidity struct ValsetArgs from the Gravity
+/// contract useful for all three major contract calls
+/// struct ValsetArgs {
+///     address[] validators;
+///     uint256[] powers;
+///     uint256 valsetNonce;
+///     uint256 rewardAmount;
+///     address rewardToken;
+// }
+pub fn encode_valset_struct(valset: &Valset) -> Token {
+    let (addresses, powers) = valset.filter_empty_addresses();
+    let nonce = valset.nonce;
+    let reward_amount = valset.reward_amount.clone();
+    // the zero address represents 'no reward' in this case we have replaced it with a 'none'
+    // so that it's easy to identify if this validator set has a reward or not. Now that we're
+    // going to encode it for the contract call we need return it to the magic value the contract
+    // expects.
+    let reward_token = valset.reward_token.unwrap_or_else(zero_address);
+    let struct_tokens = &[
+        addresses.into(),
+        powers.into(),
+        nonce.into(),
+        reward_amount.into(),
+        reward_token.into(),
+    ];
+    Token::Struct(struct_tokens.to_vec())
+}
