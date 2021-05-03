@@ -9,7 +9,7 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 message ConfirmLogicCall {
   bytes  invalidation_id      = 1 [
     (gogoproto.customname) = "InvalidationID",
-    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+    (gogoproto.casttype)   = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
   ];
   uint64 invalidation_nonce   = 2;
   // ethereum signer address in hex format. This must match with the
@@ -25,10 +25,7 @@ message ConfirmLogicCall {
 // with the ethereum keys on the signer set.
 message ConfirmBatch {
   string token_contract       = 1;
-  bytes  batch_id             = 2 [
-    (gogoproto.customname) = "BatchID",
-    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
-  ];
+  uint64 nonce                = 2; 
   // ethereum signer address in hex format. This must match with the
   // signature address and the address registered to the
   // orchestrator validator
@@ -53,5 +50,5 @@ message ConfirmSignerSet {
   // orchestrator validator
   string eth_signer           = 2;
   // signature of the orchestrator for the confirm's ABI checkpoint
-  bytes signature              = 3 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
+  bytes signature             = 3 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
 }

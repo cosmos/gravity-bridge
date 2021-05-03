@@ -168,7 +168,7 @@ func (k Keeper) SelectTransferTxs(ctx sdk.Context, tokenContract common.Address)
 }
 
 // GetBatchTx loads a batch object
-func (k Keeper) GetBatchTx(ctx sdk.Context, tokenContract common.Address, txID tmbytes.HexBytes) (types.BatchTx, bool) {
+func (k Keeper) GetBatchTx(ctx sdk.Context, tokenContract common.Address, nonce uint64) (types.BatchTx, bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchTxKey)
 	key := types.GetBatchTxKey(tokenContract.String(), txID)
 	bz := store.Get(key)
@@ -182,7 +182,7 @@ func (k Keeper) GetBatchTx(ctx sdk.Context, tokenContract common.Address, txID t
 }
 
 // SetBatchTx stores a batch transaction
-func (k Keeper) SetBatchTx(ctx sdk.Context, batchTx types.BatchTx) tmbytes.HexBytes {
+func (k Keeper) SetBatchTx(ctx sdk.Context, batchTx types.BatchTx) uint64 {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchTxKey)
 	bz := k.cdc.MustMarshalBinaryBare(&batchTx)
 

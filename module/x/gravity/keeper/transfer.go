@@ -145,7 +145,8 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txID tmbytes.He
 	if inBatch {
 		// remove tx from batch
 		// FIXME: use batch keys token and ID
-		batchTx, found := k.GetBatchTx(ctx, common.Address{}, txID)
+		// TODO: FIX ME
+		batchTx, found := k.GetBatchTx(ctx, common.Address{}, nonce)
 		if !found {
 			panic(fmt.Sprintf("transaction %s should be included in a tx batch %s", txID.String(), txID.String()))
 		}

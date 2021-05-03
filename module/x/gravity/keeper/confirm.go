@@ -4,10 +4,12 @@ import (
 	"crypto/sha256"
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
@@ -59,7 +61,7 @@ func (k Keeper) CheckpointBatchTx(
 ) ([]byte, error) {
 	tokenContract := common.HexToAddress(confirm.TokenContract)
 
-	batchTx, found := k.GetBatchTx(ctx, tokenContract, confirm.BatchID)
+	batchTx, found := k.GetBatchTx(ctx, tokenContract, confirm.Nonce)
 	if !found {
 		return nil, sdkerrors.Wrap(types.ErrTxNotFound, "batch tx")
 	}
@@ -97,4 +99,130 @@ func (k Keeper) CheckpointEthSignerSet(
 	}
 
 	return signerSet.GetCheckpoint(bridgeID)
+}
+
+//////////////////
+// ConfirmBatch //
+//////////////////
+
+// SetConfirmBatch sets a confirmation signature for a given validator, nonce and address into the store
+func (k Keeper) SetConfirmBatch(ctx sdk.Context, confirm *types.ConfirmBatch, valAddr sdk.ValAddress) {
+	ctx.KVStore(k.storeKey).Set(types.GetBatchConfirmKey(confirm.Nonce, common.HexToAddress(confirm.TokenContract), valAddr), confirm.Signature)
+}
+
+// GetBatchConfirm returns the signature for a given validator, nonce and address from the store
+func (k Keeper) GetConfirmBatch(ctx sdk.Context, nonce uint64, valAddr sdk.ValAddress, contractAddr common.Address) hexutil.Bytes {
+	return ctx.KVStore(k.storeKey).Get(types.GetBatchConfirmKey(nonce, contractAddr, valAddr))
+}
+
+// HasBatchConfirm returns if a validator has confirmed a given batch identified by nonce and contract address
+func (k Keeper) HasBatchConfirm(ctx sdk.Context, nonce uint64, valAddr sdk.ValAddress, contractAddr common.Address) bool {
+	return ctx.KVStore(k.storeKey).Has(types.GetBatchConfirmKey(nonce, contractAddr, valAddr))
+}
+
+// IterateBatchConfirms iterates over all batch confirmations
+func (k Keeper) IterateBatchConfirms(ctx sdk.Context, nonce uint64, contractAddr common.Address, cb func(val sdk.ValAddress, sig hexutil.Bytes) bool) {
+	iter := prefix.NewStore(
+		ctx.KVStore(k.storeKey),
+		append(append(types.BatchConfirmKey, contractAddr.Bytes()...), sdk.Uint64ToBigEndian(nonce)...),
+	).Iterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		if cb(sdk.ValAddress(iter.Key()), hexutil.Bytes(iter.Value())) {
+			break
+		}
+	}
+}
+
+// GetBatchConfirms returns all the confirmations in map[valaddress]signature format
+func (k Keeper) GetBatchConfirms(ctx sdk.Context, nonce uint64, contractAddr common.Address) (out map[string][]byte) {
+	k.IterateBatchConfirms(ctx, nonce, contractAddr, func(val sdk.ValAddress, sig hexutil.Bytes) bool {
+		out[val.String()] = sig
+		return false
+	})
+	return
+}
+
+//////////////////////
+// ConfirmLogicCall //
+//////////////////////
+
+// SetConfirmLogicCall sets a confirmation signature for a given validator into the store
+func (k Keeper) SetConfirmLogicCall(ctx sdk.Context, confirm *types.ConfirmLogicCall, valAddr sdk.ValAddress) {
+	ctx.KVStore(k.storeKey).Set(types.GetLogCallConfirmKey(confirm.InvalidationID, confirm.InvalidationNonce, valAddr), confirm.Signature)
+}
+
+// GetLogicCallConfirm sets the confirmation signature for a given validator into the store
+func (k Keeper) GetConfirmLogicCall(ctx sdk.Context, invalid []byte, invalnonce uint64, valAddr sdk.ValAddress) hexutil.Bytes {
+	return ctx.KVStore(k.storeKey).Get(types.GetLogCallConfirmKey(invalid, invalnonce, valAddr))
+}
+
+// HasConfirmLogicCall returns true if the key exists in the store
+func (k Keeper) HasConfirmLogicCall(ctx sdk.Context, invalid []byte, invalnonce uint64, valAddr sdk.ValAddress) bool {
+	return ctx.KVStore(k.storeKey).Has(types.GetLogCallConfirmKey(invalid, invalnonce, valAddr))
+}
+
+// IterateConfirmLogicCalls iterates over all the logic call confirmations in the store
+func (k Keeper) IterateConfirmLogicCalls(ctx sdk.Context, invalid []byte, invalnonce uint64, cb func(valAddr sdk.ValAddress, sig hexutil.Bytes) bool) {
+	iter := prefix.NewStore(
+		ctx.KVStore(k.storeKey),
+		append(append(types.KeyConfirmLogicCall, invalid...), sdk.Uint64ToBigEndian(invalnonce)...),
+	).Iterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		if cb(sdk.ValAddress(iter.Key()), hexutil.Bytes(iter.Value())) {
+			break
+		}
+	}
+}
+
+// GetLogicCallConfirms returns all the confirmations in map[valaddress]signature format
+func (k Keeper) GetLogicCallConfirms(ctx sdk.Context, invalid []byte, invalnonce uint64) (out map[string][]byte) {
+	k.IterateConfirmLogicCalls(ctx, invalid, invalnonce, func(val sdk.ValAddress, sig hexutil.Bytes) bool {
+		out[val.String()] = sig
+		return false
+	})
+	return
+}
+
+//////////////////////
+// ConfirmSignerSet //
+//////////////////////
+
+// SetConfirmSignerSet sets a confirmation signature for a given validator and nonce into the store
+func (k Keeper) SetConfirmSignerSet(ctx sdk.Context, confirm *types.ConfirmSignerSet, valAddr sdk.ValAddress) {
+	ctx.KVStore(k.storeKey).Set(types.GetSignerSetConfirmKey(confirm.Nonce, valAddr), confirm.Signature)
+}
+
+// GetSignerSetConfirm gets a confirmation signature for a given validator and nonce to the store
+func (k Keeper) GetSignerSetConfirm(ctx sdk.Context, nonce uint64, valAddr sdk.ValAddress) hexutil.Bytes {
+	return ctx.KVStore(k.storeKey).Get(types.GetSignerSetConfirmKey(nonce, valAddr))
+}
+
+// HasSignerSetConfirm returns if a validator has confirmed a given signerset identified by a nonce
+func (k Keeper) HasSignerSetConfirm(ctx sdk.Context, nonce uint64, valAddr sdk.ValAddress) bool {
+	return ctx.KVStore(k.storeKey).Has(types.GetSignerSetConfirmKey(nonce, valAddr))
+}
+
+// IterateSignerSetConfirms iterates over all the signer set confirmations in the store
+func (k Keeper) IterateSignerSetConfirms(ctx sdk.Context, nonce uint64, cb func(valAddr sdk.ValAddress, sig hexutil.Bytes) bool) {
+	iter := prefix.NewStore(
+		ctx.KVStore(k.storeKey),
+		append(types.SignersetConfirmKey, sdk.Uint64ToBigEndian(nonce)...),
+	).Iterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		if cb(sdk.ValAddress(iter.Key()), hexutil.Bytes(iter.Value())) {
+			break
+		}
+	}
+}
+
+// GetSignerSetConfirms returns all the confirmations in map[valaddress]signature format
+func (k Keeper) GetSignerSetConfirms(ctx sdk.Context, nonce uint64) (out map[string][]byte) {
+	k.IterateSignerSetConfirms(ctx, nonce, func(val sdk.ValAddress, sig hexutil.Bytes) bool {
+		out[val.String()] = sig
+		return false
+	})
+	return
 }

@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
@@ -59,8 +60,8 @@ var (
 	// BatchTxBlockKey indexes outgoing tx batches under a block height and token address
 	BatchTxBlockKey = []byte{0xb}
 
-	// ConfirmKey indexes
-	ConfirmKey = []byte{0xe1}
+	// BatchConfirmKey indexes
+	BatchConfirmKey = []byte{0xe1}
 
 	// SecondIndexNonceByEventKey indexes latest nonce for a given event type
 	SecondIndexNonceByEventKey = []byte{0xf}
@@ -74,14 +75,22 @@ var (
 	// SequenceKeyPrefix indexes different txids
 	SequenceKeyPrefix = []byte{0x7}
 
+	// KeyEthOrchAddress indexes the orchestrator for an eth key
+	KeyEthOrchAddress = []byte{0xe9}
+
 	// KeyLastTransferTxID indexes the lastTxPoolID
 	KeyLastTransferTxID = append(SequenceKeyPrefix, []byte("lastTransferId")...)
+
+	// KeyLogicCallConfirm indexes logic call confirmations
+	KeyLogicCallConfirm = []byte{0xdf}
 
 	// KeyLastBatchTxNonce indexes the lastBatchID
 	KeyLastBatchTxNonce = append(SequenceKeyPrefix, []byte("lastBatchId")...)
 
 	// KeyOrchestratorAddress indexes the validator keys for an orchestrator
 	KeyOrchestratorAddress = []byte{0xe8}
+
+	KeyConfirmLogicCall = []byte{0xcd}
 
 	// KeyOutgoingLogicCall indexes the outgoing logic calls
 	KeyOutgoingLogicCall = []byte{0xde}
@@ -113,6 +122,13 @@ var (
 	BridgeIDKey = []byte{0x19}
 )
 
+// GetAttestationKey returns the following key format
+// prefix
+// [0x0][hash]
+func GetAttestationKey(hash tmbytes.HexBytes) []byte {
+	return append(AttestationKeyPrefix, hash.Bytes()...)
+}
+
 // GetOrchestratorAddressKey returns the following key format
 // prefix
 // [0xe8][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
@@ -132,6 +148,32 @@ func GetEthAddressKey(validator sdk.ValAddress) []byte {
 // [0x0][0 0 0 0 0 0 0 1]
 func GetSignerSetKey(nonce uint64) []byte {
 	return append(SignerSetRequestKey, sdk.Uint64ToBigEndian(nonce)...)
+}
+
+// GetBatchConfirmKey returns the following key format
+// prefix           eth-contract-address                BatchNonce                       Validator-address
+// [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
+func GetBatchConfirmKey(nonce uint64, contract common.Address, validator sdk.ValAddress) []byte {
+	a := append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)
+	b := append(contract.Bytes(), a...)
+	c := append(BatchConfirmKey, b...)
+	return c
+}
+
+// GetLogicCallConfirmKey indexes the a validators signatures by invalidationid and nonce
+// prefix  invalid            nonce                      validator address
+// [0x0][invalidation-id][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
+func GetLogCallConfirmKey(invalID []byte, invalNonce uint64, validator sdk.ValAddress) []byte {
+	a := append(KeyConfirmLogicCall, invalID...)
+	a = append(a, sdk.Uint64ToBigEndian(invalNonce)...)
+	return append(a, validator.Bytes()...)
+}
+
+// GetEthOrcAddressKey returns the following key format
+// prefix
+// [0xe9][0xc783df8a850f42e7F7e57013759C285caa701eB6]
+func GetEthOrchAddressKey(ethKey common.Address) []byte {
+	return append(KeyEthOrchAddress, ethKey.Bytes()...)
 }
 
 // GetSignerSetConfirmKey returns the following key format
@@ -159,8 +201,8 @@ func GetTransferTxFeeKey(tokenContract string, amount uint64) []byte {
 // GetBatchTxKey returns the following key format
 // prefix  eth-contract-address
 // [0xa][0xc783df8a850f42e7F7e57013759C285caa701eB6][HASH]
-func GetBatchTxKey(tokenContract string, txID tmbytes.HexBytes) []byte {
-	return append([]byte(tokenContract), txID.Bytes()...)
+func GetBatchTxKey(tokenContract string, nonce uint64) []byte {
+	return append([]byte(tokenContract), sdk.Uint64ToBigEndian(nonce)...)
 }
 
 // GetBatchTxBlockKey returns the following key format

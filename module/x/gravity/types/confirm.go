@@ -37,8 +37,8 @@ func (c ConfirmBatch) GetType() string { return ConfirmTypeBatch }
 
 // Validate performs stateless checks
 func (c ConfirmBatch) Validate() error {
-	if len(c.BatchID) == 0 {
-		return fmt.Errorf("batch id cannot be empty")
+	if c.Nonce == 0 {
+		return fmt.Errorf("batch nonce cannot be empty")
 	}
 	if err := ValidateEthAddress(c.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "token contract")
