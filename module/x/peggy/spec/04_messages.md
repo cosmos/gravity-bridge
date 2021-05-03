@@ -79,7 +79,7 @@ When the peggy daemon witnesses an event on the counter chain the validator will
   }
 ```
 
-There are three types of confirmations a validator can submit.
+There are three types of event confirmations a validator can submit.
 
 - `CONFIRM_TYPE_VALSET`
   - When the peggy daemon witnesses a complete validator set within the peggy module, the validator submits a signature of a message containing the entire validator set. 
