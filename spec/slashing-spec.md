@@ -14,16 +14,27 @@ Currently automatic evidence submission is not implemented in the relayer. By th
 
 The theft would involve exchanging of slashable Ethereum signatures and open up the possibility of a manual submission of this message by any defector in the group.
 
-## GRAVSLASH-02: Failure to sign validator set update or tx batch
+Currently this is implemented as an ever growing array of hashes in state.
+
+## GRAVSLASH-02: Failure to sign tx batch, or arbitrary logic call
+
+This slashing condition is triggered when a validator does not sign a transaction batch or arbitrary logic call which is produced by the Gravity Cosmos module. This prevents two bad scenarios-
+
+1. A validator simply does not bother to keep the correct binaries running on their system,
+2. A cartel of >1/3 validators unbond and then refuse to sign updates, preventing any batches or logic calls from getting enough signatures to be submitted to the Gravity Ethereum contract.
+
+## GRAVSLASH-03: Failure to sign validator set update
 
 This slashing condition is triggered when a validator does not sign a validator set update or transaction batch which is produced by the Gravity Cosmos module. This prevents two bad scenarios-
 
 1. A validator simply does not bother to keep the correct binaries running on their system,
-2. A cartel of >1/3 validators unbond and then refuse to sign updates, preventing any validator set updates from getting enough signatures to be submitted to the Gravity Ethereum contract. If they prevent validator set updates for longer than the Cosmos unbonding period, they can no longer be punished for submitting fake validator set updates and tx batches (GRAVSLASH-01 and GRAVSLASH-02).
+2. A cartel of >1/3 validators unbond and then refuse to sign updates, preventing any validator set updates from getting enough signatures to be submitted to the Gravity Ethereum contract. If they prevent validator set updates for longer than the Cosmos unbonding period, they can no longer be punished for submitting fake validator set updates and tx batches (GRAVSLASH-01 and GRAVSLASH-03).
 
-To deal with scenario 2, GRAVSLASH-02 will also need to slash validators who are no longer validating, but are still in the unbonding period. This means that when a validator leaves the validator set, they will need to keep running their equipment for 2 weeks. This is unusual for a Cosmos chain, and may not be accepted by the validators. Research is ongoing for ways to allow validators to stop signing before the unbonding period is fully over.
+To deal with scenario 2, GRAVSLASH-03 will also need to slash validators who are no longer validating, but are still in the unbonding period for up to `UnbondSlashingValsetsWindow` blocks. This means that when a validator leaves the validator set, they will need to keep running their equipment for at least `UnbondSlashingValsetsWindow` blocks. This is unusual for a Cosmos chain, and may not be accepted by the validators.
 
-## GRAVSLASH-03: Submitting incorrect Eth oracle claim - INTENTIONALLY NOT IMPLEMENTED
+The current value of `UnbondSlashingValsetsWindow` is 10,000 blocks, or about 12-14 hours. We have determined this to be a safe value based on the following logic. So long as every validator leaving hte validator set signs at least one validator set update that they are not contained in then it is guaranteed to be possible for a relayer to produce a chain of validator set updates to transform the current state on the chain into the present state.
+
+## GRAVSLASH-04: Submitting incorrect Eth oracle claim - INTENTIONALLY NOT IMPLEMENTED
 
 The Ethereum oracle code (currently mostly contained in attestation.go), is a key part of Gravity. It allows the Gravity module to have knowledge of events that have occurred on Ethereum, such as deposits and executed batches. GRAVSLASH-03 is intended to punish validators who submit a claim for an event that never happened on Ethereum.
 
@@ -37,16 +48,18 @@ Maybe GRAVSLASH-03 is not necessary at all:
 
 The real utility of this slashing condition is to make it so that, if >2/3 of the validators form a cartel to all submit a fake event at a certain nonce, some number of them can defect from the cartel and submit the real event at that nonce. If there are enough defecting cartel members that the real event becomes observed, then the remaining cartel members will be slashed by this condition. However, this would require >1/2 of the cartel members to defect in most conditions.
 
-If not enough of the cartel defects, then neither event will be observed, and the Ethereum oracle will just halt. This is a much more likely scenario than one in which GRAVSLASH-03 is actually triggered.
+If not enough of the cartel defects, then neither event will be observed, and the Ethereum oracle will just halt. This is a much more likely scenario than one in which GRAVSLASH-04 is actually triggered.
 
-Also, GRAVSLASH-03 will be triggered against the honest validators in the case of a successful cartel. This could act to make it easier for a forming cartel to threaten validators who do not want to join.
+Also, GRAVSLASH-04 will be triggered against the honest validators in the case of a successful cartel. This could act to make it easier for a forming cartel to threaten validators who do not want to join.
 
-## GRAVSLASH-04: Failure to submit Eth oracle claims
+## GRAVSLASH-05: Failure to submit Eth oracle claims - INTENTIONALLY NOT IMPLEMENTED
 
-This is similar to GRAVSLASH-03, but it is triggered against validators who do not submit an oracle claim that has been observed. In contrast to GRAVSLASH-03, GRAVSLASH-04 is intended to punish validators who stop participating in the oracle completely.
+This is similar to GRAVSLASH-04, but it is triggered against validators who do not submit an oracle claim that has been observed. In contrast to GRAVSLASH-04, GRAVSLASH-05 is intended to punish validators who stop participating in the oracle completely.
 
 **Implementation considerations**
 
-Unfortunately, GRAVSLASH-04 has the same downsides as GRAVSLASH-03 in that it ties the correct operation of the Cosmos chain to the Ethereum chain. Also, it likely does not incentivize much in the way of correct behavior. To avoid triggering GRAVSLASH-04, a validator simply needs to copy claims which are close to becoming observed. This copying of claims could be prevented by a commit-reveal scheme, but it would still be easy for a "lazy validator" to simply use a public Ethereum full node or block explorer, with similar effects on security. Therefore, the real usefulness of GRAVSLASH-04 is likely minimal
+Unfortunately, GRAVSLASH-05 has the same downsides as GRAVSLASH-04 in that it ties the correct operation of the Cosmos chain to the Ethereum chain. Also, it likely does not incentivize much in the way of correct behavior. To avoid triggering GRAVSLASH-05, a validator simply needs to copy claims which are close to becoming observed. This copying of claims could be prevented by a commit-reveal scheme, but it would still be easy for a "lazy validator" to simply use a public Ethereum full node or block explorer, with similar effects on security. Therefore, the real usefulness of GRAVSLASH-04 is likely minimal
 
-Without GRAVSLASH-03 and GRAVSLASH-04, the Ethereum event oracle only continues to function if >2/3 of the validators voluntarily submit correct claims. Although the arguments against GRAVSLASH-03 and GRAVSLASH-04 are convincing, we must decide whether we are comfortable with this fact. We should probably make it possible to enable or disable GRAVSLASH-03 and GRAVSLASH-04 in the chain's parameters.
+GRAVSLASH-05 also introduces significant risks. Mostly around forks on the Ethereum chain. For example recently OpenEthereum failed to properly handle the Berlin hardfork, the resulting node 'failure' was totally undetectable to automated tools. It didn't crash so there was no restart to perform, blocks where still being produced although extremely slowly. If this had occurred while Gravity was running with GRAVSLASH-05 active it would have caused those validators to be removed from the set. Possibly resulting in a very chaotic moment for the chain as dozens of validators where removed for little to no fault of their own.
+
+Without GRAVSLASH-04 and GRAVSLASH-05, the Ethereum event oracle only continues to function if >2/3 of the validators voluntarily submit correct claims. Although the arguments against GRAVSLASH-04 and GRAVSLASH-05 are convincing, we must decide whether we are comfortable with this fact. Alternatively we must be comfortable with the Cosmos chain potentially halting entirely due to Ethereum generated factors. We should probably make it possible to enable or disable GRAVSLASH-04 and GRAVSLASH-05 in the chain's parameters.
