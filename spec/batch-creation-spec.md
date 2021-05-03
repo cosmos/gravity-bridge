@@ -1,6 +1,6 @@
 ## Transaction batch creation
 
-Deposits (Ethereum > Cosmos transfers) happen as single operations. Each deposit creates a single oracle event that is voted on see [the deposit spce](deposit-spec.md). Withdraws are more complicated, since Ethereum gas is very expensive we want to spread out the cost of verifying the validator signatures across as many transactions as possible. Hence batches.
+Deposits (Ethereum > Cosmos transfers) happen as single operations. Each deposit creates a single oracle event that is voted on see [the deposit spec](deposit-spec.md). Withdraws are more complicated, since Ethereum gas is very expensive we want to spread out the cost of verifying the validator signatures across as many transactions as possible. Hence batches.
 
 When a user calls MsgSendToEth they lock up some tokens and some fee value into the 'Gravity tx pool' which is a pool of transactions waiting to enter batches.
 

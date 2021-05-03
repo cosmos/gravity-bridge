@@ -2,7 +2,7 @@
 
 This document is designed to assist developers in implementing alternate Gravity relayers. The two major components of the Orchestrator which interact with Ethereum. The Gravity bridge has been designed for increased efficiency, not for ease of use. This means there are many implicit requirements of these external binaries which this document does it's best to make explicit.
 
-The Gravity `orchestrator` is described in [overview.md](overview.md) it's a combination of three distinct roles that need to be performed by external binaries in the Gravity bridge. This document highlights the requirements of the `relayer` which is one of those roles included in the `orchestrator`.
+The Gravity `orchestrator` is described in [overview.md](/docs/design/overview.md) it's a combination of three distinct roles that need to be performed by external binaries in the Gravity bridge. This document highlights the requirements of the `relayer` which is one of those roles included in the `orchestrator`.
 
 ## Semantics for Validator set update relaying
 
@@ -12,7 +12,7 @@ When updating the validator set in the Gravity contract you must provide a copy 
 
 Providing the old validator set is part of a storage optimization, instead of storing the entire validator set in Ethereum storage it is instead provided by each caller and stored in the much cheaper Ethereum event queue. No sorting of any kind is performed in the Gravity contract, meaning the list of validators and their new signatures must be submitted in exactly the same order as the last call.
 
-For the purpose of normal operation this requirement can be shortened to 'sort the validators by descending power, and by Eth address bytes where power is equal'. Since the Cosmos module produces the validator sets they should always come in order. But a flaw in this sorting method that caused an unsorted validator set to make it's way into the chain would halt valset updates and essentially decouple the bridge unless your implementation is smart enough to take a look at the last submitted order rather than blindly following sorting.
+For the purpose of normal operation this requirement can be shortened to 'sort the validators by descending power, and by Eth address bytes where power is equal'. Since the Cosmos module produces the validator sets they should always come in order. It is not possible for the relayer to change this order since it is part of the signature. But a change in this sorting method on the Gravity module side would halt valset updates and essentially decouple the bridge unless your implementation is smart enough to take a look at the last submitted order rather than blindly following sorting.
 
 ### Deciding what Validator set to relay
 
