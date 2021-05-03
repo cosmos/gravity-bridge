@@ -118,13 +118,16 @@ This message will fail if:
 There are four types of claims:
 
 - `CLAIM_TYPE_DEPOSIT`
+  - When a user wishes to deposit funds onto the cosmos chain, this message will be used. This event signals that minting to a certain adddress must be done.
+
 - `CLAIM_TYPE_WITHDRAW`
   - When a user requests a withdrawal from the peggy contract a event will omitted by the counter party chain. This event will be observed by a bridge validator and submitted to the gravity module.
   
 - `CLAIM_TYPE_ERC20_DEPLOYED`
-  - This message allows the cosmos chain to learn information about the denom from the counter party chain.
+  - This message allows the cosmos chain to learn information about the denom, token contract, symbol and cosmos denom from the counter party chain.
+
 - `CLAIM_TYPE_LOGIC_CALL_EXECUTED`
-  - This informs the chain that a logic call has been executed. This message is submitted by bridge validators when they observe a event containing details around the logic call.
+  - This informs the chain that a logic call has been executed. This message is submitted by bridge validators when they observe a event containing information about the execution of the logic call.
 
 This message will fail if:
 
