@@ -8,8 +8,11 @@ import {
   makeCheckpoint,
   signHash,
   examplePowers,
-  ZeroAddress
+  ZeroAddress,
+  parseEvent
 } from "../test-utils/pure";
+import { openStdin } from "node:process";
+import { format } from "prettier";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -22,6 +25,9 @@ async function runTest(opts: {
   badValidatorSig?: boolean;
   zeroedValidatorSig?: boolean;
   notEnoughPower?: boolean;
+  badReward?: boolean;
+  notEnoughReward?: boolean;
+  withReward?: boolean;
 }) {
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
@@ -73,6 +79,37 @@ async function runTest(opts: {
     rewardToken: ZeroAddress
   }
 
+  let ERC20contract;
+  if (opts.badReward) {
+    // some amount of a reward, in a random token that's not in the bridge
+    // should panic because the token doesn't exist
+    newValset.rewardAmount = 5000000;
+    newValset.rewardToken = "0x8bcd7D3532CB626A7138962Bdb859737e5B6d4a7";
+  } else if (opts.withReward) {
+    // deploy a ERC20 representing a Cosmos asset, as this is the common
+    // case for validator set rewards
+    const eventArgs = await parseEvent(gravity, gravity.deployERC20('uatom', 'Atom', 'ATOM', 6), 1)
+    newValset.rewardToken = eventArgs._tokenContract
+    // five atom, issued as an inflationary reward
+    newValset.rewardAmount = 5000000
+
+    // connect with the contract to check balances later
+    ERC20contract = new ethers.Contract(eventArgs._tokenContract, [
+      "function balanceOf(address account) view returns (uint256 balance)"
+    ], gravity.provider);
+
+  } else if (opts.notEnoughReward) {
+    // send in 1000 tokens, then have a reward of five million
+    await testERC20.functions.approve(gravity.address, 1000);
+    await gravity.functions.sendToCosmos(
+      testERC20.address,
+      ethers.utils.formatBytes32String("myCosmosAddress"),
+      1000
+    );
+    newValset.rewardToken = testERC20.address
+    newValset.rewardAmount = 5000000
+  }
+
   const checkpoint = makeCheckpoint(
     newValset.validators,
     newValset.powers,
@@ -118,13 +155,26 @@ async function runTest(opts: {
   }
 
 
-  await gravity.updateValset(
+  let valsetUpdateTx = await gravity.updateValset(
     newValset,
     currentValset,
     sigs.v,
     sigs.r,
     sigs.s
   );
+  
+  // check that the relayer was paid
+  if (opts.withReward) {
+    // panic if we failed to deploy the contract earlier
+    expect(ERC20contract)
+    if (ERC20contract) {
+        expect(
+          await (
+            await ERC20contract.functions.balanceOf(await valsetUpdateTx.from)
+          )[0].toNumber()
+        ).to.equal(5000000);
+      }
+  }
 
   return { gravity, checkpoint };
 }
@@ -170,6 +220,23 @@ describe("updateValset tests", function () {
     await expect(runTest({ notEnoughPower: true })).to.be.revertedWith(
       "Submitted validator set signatures do not have enough power"
     );
+  });
+
+  it("throws on bad reward ", async function () {
+    await expect(runTest({ badReward: true })).to.be.revertedWith(
+      "Address: call to non-contract"
+    );
+  });
+
+  it("throws on not enough reward ", async function () {
+    await expect(runTest({ notEnoughReward: true })).to.be.revertedWith(
+      "transfer amount exceeds balance"
+    );
+  });
+
+  it("pays reward correctly", async function () {
+    let {gravity, checkpoint} = await runTest({ withReward: true });
+    expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
   });
 
   it("happy path", async function () {

@@ -5,33 +5,15 @@ import { solidity } from "ethereum-waffle";
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
-  makeCheckpoint,
   signHash,
-  makeTxBatchHash,
   examplePowers,
-  ZeroAddress
+  ZeroAddress,
+  parseEvent,
 } from "../test-utils/pure";
-import {ContractTransaction, utils} from 'ethers';
 import { BigNumber } from "ethers";
 chai.use(solidity);
 const { expect } = chai;
 
-async function parseEvent(contract: any, txPromise: Promise<ContractTransaction>, eventOrder: number) {
-  const tx = await txPromise
-  const receipt = await contract.provider.getTransactionReceipt(tx.hash!)
-  let args = (contract.interface as utils.Interface).parseLog(receipt.logs![eventOrder]).args
-
-  // Get rid of weird quasi-array keys
-  const acc: any = {}
-  args = Object.keys(args).reduce((acc, key) => {
-    if (Number.isNaN(parseInt(key, 10)) && key !== 'length') {
-      acc[key] = args[key]
-    }
-    return acc
-  }, acc)
-
-  return args
-}
 
 async function runTest(opts: {}) {
 
