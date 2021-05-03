@@ -11,6 +11,7 @@ import {
   examplePowers,
   ZeroAddress,
 } from "../test-utils/pure";
+import { TestERC20 } from "../typechain/TestERC20";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -161,7 +162,7 @@ async function runTest(opts: {
     rewardToken: ZeroAddress
   }
 
-  await gravity.submitBatch(
+  let batchSubmitTx = await gravity.submitBatch(
     valset,
 
     sigs.v,
