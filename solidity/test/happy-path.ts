@@ -121,9 +121,11 @@ describe("Gravity happy path valset update + batch submit", function () {
     const numTxs = 100;
     const txDestinationsInt = new Array(numTxs);
     const txFees = new Array(numTxs);
+    let totalFees = 0;
     const txAmounts = new Array(numTxs);
     for (let i = 0; i < numTxs; i++) {
       txFees[i] = 1;
+      totalFees += 1;
       txAmounts[i] = 1;
       txDestinationsInt[i] = signers[i + 5];
     }
@@ -164,7 +166,7 @@ describe("Gravity happy path valset update + batch submit", function () {
 
     let sigs = await signHash(valset1.validators, digest);
 
-    await gravity.submitBatch(
+    let batchSubmitTx = await gravity.submitBatch(
       valset1_str,
 
       sigs.v,
@@ -179,10 +181,18 @@ describe("Gravity happy path valset update + batch submit", function () {
       batchTimeout
     );
 
+    // check that the transfer was successful
     expect(
       await (
         await testERC20.functions.balanceOf(await signers[6].getAddress())
       )[0].toNumber()
     ).to.equal(1);
+
+    // check that the relayer was paid
+    expect(
+      await (
+        await testERC20.functions.balanceOf(await batchSubmitTx.from)
+      )[0].toNumber()
+    ).to.equal(9000 + totalFees);
   });
 });

@@ -161,7 +161,7 @@ async function runTest(opts: {
     rewardToken: ZeroAddress
   }
 
-  await gravity.submitBatch(
+  let batchSubmitTx = await gravity.submitBatch(
     valset,
 
     sigs.v,

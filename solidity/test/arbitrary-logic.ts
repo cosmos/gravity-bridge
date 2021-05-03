@@ -209,7 +209,7 @@ async function runTest(opts: {
     rewardToken: ZeroAddress
   }
 
-  await gravity.submitLogicCall(
+  let logicCallSubmitResult = await gravity.submitLogicCall(
     valset,
 
     sigs.v,
@@ -217,6 +217,14 @@ async function runTest(opts: {
     sigs.s,
     logicCallArgs
   );
+
+
+    // check that the relayer was paid
+    expect(
+      await (
+        await testERC20.functions.balanceOf(await logicCallSubmitResult.from)
+      )[0].toNumber()
+    ).to.equal(9010);
 
   expect(
       (await testERC20.functions.balanceOf(await signers[20].getAddress()))[0].toNumber()
