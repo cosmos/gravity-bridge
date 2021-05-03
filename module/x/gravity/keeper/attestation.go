@@ -92,7 +92,7 @@ func (k Keeper) TallyAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attesta
 	}
 
 	// TODO: figure nonces
-	// k.setLastObservedEventNonce(ctx, event.GetNonce())
+	// k.SetLastObservedEventNonce(ctx, event.GetNonce())
 
 	// now that the the event is attested (observed), we set the ethereum info to
 	// the store

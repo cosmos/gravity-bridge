@@ -148,8 +148,8 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
 	return sdk.BigEndianToUint64(bytes)
 }
 
-// setLastObservedEventNonce sets the latest observed event nonce
-func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
+// SetLastObservedEventNonce sets the latest observed event nonce
+func (k Keeper) SetLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.LastObservedEventNonceKey, sdk.Uint64ToBigEndian(nonce))
 }

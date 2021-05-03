@@ -7,13 +7,13 @@ import (
 )
 
 func TestDepositEvent_Validate(t *testing.T) {
-	orchCryptoAddr, err := newCosmosAddress()
+	orchCryptoAddr, err := GenerateTestCosmosAddress()
 	require.NoError(t, err, "unable to generate cosmos address")
 	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
-	ethAddr, err := newEthAddress()
+	ethAddr, err := GenerateTestEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
-	ethAddr2, err := newEthAddress()
+	ethAddr2, err := GenerateTestEthAddress()
 	require.NoError(t, err, "unable to generate second ethereum address")
 
 	testCases := []struct {
@@ -117,7 +117,7 @@ func TestDepositEvent_Validate(t *testing.T) {
 }
 
 func TestWithdrawEvent_Validate(t *testing.T) {
-	ethAddr, err := newEthAddress()
+	ethAddr, err := GenerateTestEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
 
 	testCases := []struct {
@@ -142,7 +142,7 @@ func TestWithdrawEvent_Validate(t *testing.T) {
 }
 
 func TestCosmosERC20DeployedEvent_Validate(t *testing.T) {
-	ethAddr, err := newEthAddress()
+	ethAddr, err := GenerateTestEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
 
 	testCases := []struct {

@@ -5,37 +5,20 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec/types"
 
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	crypto "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
-func newCosmosAddress() (crypto.Address, error) {
-	kb, err := keyring.New("keybasename", "memory", "", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	info, _, err := kb.NewMnemonic("john", keyring.English, sdk.FullFundraiserPath, hd.Secp256k1)
-	if err != nil {
-		return nil, err
-	}
-
-	return info.GetPubKey().Address(), nil
-}
-
 func TestMsgDelegateKey_ValidateBasic(t *testing.T) {
-	valCryptoAddr, err := newCosmosAddress()
+	valCryptoAddr, err := GenerateTestCosmosAddress()
 	require.NoError(t, err, "unable to generate cosmos address")
 	valAddr, err := sdk.ValAddressFromHex(valCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to validator address")
-	orchCryptoAddr, err := newCosmosAddress()
+	orchCryptoAddr, err := GenerateTestCosmosAddress()
 	require.NoError(t, err, "unable to generate cosmos address")
 	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
-	ethAddr, err := newEthAddress()
+	ethAddr, err := GenerateTestEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
 
 	testCases := []struct {
@@ -63,11 +46,11 @@ func TestMsgDelegateKey_ValidateBasic(t *testing.T) {
 }
 
 func TestMsgTransfer_ValidateBasic(t *testing.T) {
-	orchCryptoAddr, err := newCosmosAddress()
+	orchCryptoAddr, err := GenerateTestCosmosAddress()
 	require.NoError(t, err, "unable to generate cosmos address")
 	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
-	ethAddr, err := newEthAddress()
+	ethAddr, err := GenerateTestEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
 
 	testCases := []struct {
@@ -102,7 +85,7 @@ func TestMsgTransfer_ValidateBasic(t *testing.T) {
 }
 
 func TestMsgRequestBatch_ValidateBasic(t *testing.T) {
-	orchCryptoAddr, err := newCosmosAddress()
+	orchCryptoAddr, err := GenerateTestCosmosAddress()
 	require.NoError(t, err, "unable to generate cosmos address")
 	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
@@ -130,7 +113,7 @@ func TestMsgRequestBatch_ValidateBasic(t *testing.T) {
 }
 
 func TestMsgCancelTransfer_ValidateBasic(t *testing.T) {
-	orchCryptoAddr, err := newCosmosAddress()
+	orchCryptoAddr, err := GenerateTestCosmosAddress()
 	require.NoError(t, err, "unable to generate cosmos address")
 	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
@@ -158,11 +141,11 @@ func TestMsgCancelTransfer_ValidateBasic(t *testing.T) {
 }
 
 func TestMsgSubmitConfirm_ValidateBasic(t *testing.T) {
-	orchCryptoAddr, err := newCosmosAddress()
+	orchCryptoAddr, err := GenerateTestCosmosAddress()
 	require.NoError(t, err, "unable to generate cosmos address")
 	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
-	ethAddr, err := newEthAddress()
+	ethAddr, err := GenerateTestEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
 
 	css := &ConfirmSignerSet{12, ethAddr.String(), orchAddr.String(), []byte("signature")}
@@ -192,11 +175,11 @@ func TestMsgSubmitConfirm_ValidateBasic(t *testing.T) {
 }
 
 func TestMsgSubmitEvent_ValidateBasic(t *testing.T) {
-	orchCryptoAddr, err := newCosmosAddress()
+	orchCryptoAddr, err := GenerateTestCosmosAddress()
 	require.NoError(t, err, "unable to generate cosmos address")
 	orchAddr, err := sdk.AccAddressFromHex(orchCryptoAddr.String())
 	require.NoError(t, err, "unable to cast cosmos address to orchestrator address")
-	ethAddr, err := newEthAddress()
+	ethAddr, err := GenerateTestEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
 
 	we := &WithdrawEvent{[]byte("txid"), 12, ethAddr.String(), 12}
