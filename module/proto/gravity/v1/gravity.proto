@@ -21,7 +21,7 @@ message Attestation {
   repeated string votes = 2;
   // amount of voting power in support of this event execution
   int64 attested_power = 3;
-  // height at which the event was attested an executed
+  // cosmos height at which the event was attested an executed
   uint64 height = 4;
 }
 

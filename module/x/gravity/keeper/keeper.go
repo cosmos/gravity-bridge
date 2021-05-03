@@ -225,7 +225,7 @@ func (k Keeper) IterateTransferTxs(ctx sdk.Context, cb func(txID tmbytes.HexByte
 // TODO: create struct with ID and transferTx
 func (k Keeper) GetTransferTxs(ctx sdk.Context) []types.TransferTx {
 	txs := make([]types.TransferTx, 0)
-	k.IterateTransferTxs(ctx, func(id tmbytes.HexBytes, tx types.TransferTx) bool {
+	k.IterateTransferTxs(ctx, func(_ tmbytes.HexBytes, tx types.TransferTx) bool {
 		txs = append(txs, tx)
 		return false
 	})
@@ -319,6 +319,27 @@ func (k Keeper) IterateConfirmations(ctx sdk.Context, cb func(confirmID tmbytes.
 			break // stop
 		}
 	}
+}
+
+func (k Keeper) GetIdentifiedConfirms(ctx sdk.Context) []types.IdentifiedConfirm {
+	var confirms []types.IdentifiedConfirm
+
+	k.IterateConfirmations(ctx, func(confirmID tmbytes.HexBytes, confirm types.Confirm) bool {
+		confirmAny, err := types.PackConfirm(confirm)
+		if err != nil {
+			panic(err)
+		}
+
+		idConfirm := types.IdentifiedConfirm{
+			ConfirmID: confirmID,
+			Confirm:   confirmAny,
+		}
+
+		confirms = append(confirms, idConfirm)
+		return false
+	})
+
+	return confirms
 }
 
 func (k Keeper) IterateValidatorsByPower(ctx sdk.Context, cb func(validator stakingtypes.Validator) bool) {

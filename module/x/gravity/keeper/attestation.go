@@ -174,7 +174,22 @@ func (k Keeper) IterateAttestations(ctx sdk.Context, cb func(hash tmbytes.HexByt
 			break
 		}
 	}
+}
 
+func (k Keeper) GetIdentifiedAttestations(ctx sdk.Context) []types.IdentifiedAttestation {
+	var attestations []types.IdentifiedAttestation
+
+	k.IterateAttestations(ctx, func(attestationID tmbytes.HexBytes, attestation types.Attestation) bool {
+		idAttestation := types.IdentifiedAttestation{
+			AttestationID: attestationID,
+			Attestation:   attestation,
+		}
+
+		attestations = append(attestations, idAttestation)
+		return false
+	})
+
+	return attestations
 }
 
 // DeleteAttestation deletes an attestation given an event hash

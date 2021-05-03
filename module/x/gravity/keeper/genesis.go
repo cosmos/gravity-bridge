@@ -73,8 +73,8 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 		BatchTxs:          k.GetBatchTxs(ctx),
 		LogicCallTxs:      k.GetIdentifiedLogicCalls(ctx),
 		TransferTxs:       k.GetTransferTxs(ctx),
-		Confirms:          nil, // k.GetIdentifiedConfirms(ctx),
-		Attestations:      nil, // k.GetIdentifiedAttestations(ctx),
+		Confirms:          k.GetIdentifiedConfirms(ctx),
+		Attestations:      k.GetIdentifiedAttestations(ctx),
 		DelegateKeys:      nil,
 		Erc20ToDenoms:     k.GetERC20Denoms(ctx),
 	}
