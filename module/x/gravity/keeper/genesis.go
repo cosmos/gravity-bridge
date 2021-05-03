@@ -6,7 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// TODO:
+// InitGenesis imports the gravity bridge state from a genesis.json and sets it
+// to store
 func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
 	k.SetBridgeID(ctx, gs.BridgeID)
 	k.SetParams(ctx, gs.Params)
@@ -22,23 +23,26 @@ func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
 	}
 
 	for _, tx := range gs.LogicCallTxs {
-		// FIXME: id and nonce
-		k.SetLogicCallTx(ctx, nil, 0, tx)
+		k.SetLogicCallTx(ctx, tx.InvalidationID, tx.InvalidationNonce, tx.LogicCall)
 	}
 
 	for _, tx := range gs.TransferTxs {
 		_ = k.SetTransferTx(ctx, tx)
 	}
 
-	// for _, confirm := range gs.Confirms {
+	for _, cc := range gs.Confirms {
+		confirm, err := types.UnpackConfirm(cc.Confirm)
+		if err != nil {
+			panic(err)
+		}
 
-	// }
+		k.SetConfirm(ctx, cc.ConfirmID, confirm)
+	}
 
 	// TODO: set last unbonding height?
 
-	for _, attestation := range gs.Attestations {
-		// FIXME: attestation id
-		k.SetAttestation(ctx, nil, attestation)
+	for _, att := range gs.Attestations {
+		k.SetAttestation(ctx, att.AttestationID, att.Attestation)
 	}
 
 	// TODO: events
@@ -59,7 +63,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
 	}
 }
 
-// TODO:
+// ExportGenesis exports the gravity bridge state into a genesis.json
 func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 	return types.GenesisState{
 		BridgeID:          k.GetBridgeID(ctx),
@@ -67,13 +71,10 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) types.GenesisState {
 		LastObservedNonce: k.GetLastObservedEventNonce(ctx),
 		SignerSets:        nil, // TODO:
 		BatchTxs:          k.GetBatchTxs(ctx),
-		LogicCallTxs:      k.GetOutgoingLogicCalls(ctx),
+		LogicCallTxs:      k.GetIdentifiedLogicCalls(ctx),
 		TransferTxs:       k.GetTransferTxs(ctx),
-		// TODO: get confirms
-		SignerSetConfirms: nil,
-		BatchConfirms:     nil,
-		LogicCallConfirms: nil,
-		Attestations:      nil,
+		Confirms:          nil, // k.GetIdentifiedConfirms(ctx),
+		Attestations:      nil, // k.GetIdentifiedAttestations(ctx),
 		DelegateKeys:      nil,
 		Erc20ToDenoms:     k.GetERC20Denoms(ctx),
 	}

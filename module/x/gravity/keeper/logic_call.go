@@ -73,12 +73,18 @@ func (k Keeper) IterateLogicCallTxs(ctx sdk.Context, cb func(invalidationID tmby
 	}
 }
 
-// GetOutgoingLogicCalls returns the all the outgoing logic txs
-// FIXME: update to incorporate invalidation id and nonce
-func (k Keeper) GetOutgoingLogicCalls(ctx sdk.Context) []types.LogicCallTx {
-	txs := []types.LogicCallTx{}
+// GetIdentifiedLogicCalls returns the all the outgoing logic txs with they corresponding
+// store key (invalidation id and nonce).
+func (k Keeper) GetIdentifiedLogicCalls(ctx sdk.Context) []types.IdentifiedLogicCall {
+	txs := []types.IdentifiedLogicCall{}
+
 	k.IterateLogicCallTxs(ctx, func(invalidationID tmbytes.HexBytes, invalidationNonce uint64, tx types.LogicCallTx) bool {
-		txs = append(txs, tx)
+		call := types.IdentifiedLogicCall{
+			InvalidationID:    invalidationID,
+			InvalidationNonce: invalidationNonce,
+			LogicCall:         tx,
+		}
+		txs = append(txs, call)
 		return false
 	})
 

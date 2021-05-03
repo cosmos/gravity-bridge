@@ -68,8 +68,9 @@ func (k Keeper) ConfirmEvent(ctx sdk.Context, confirm types.Confirm, orchestrato
 func (k Keeper) CheckpointBatchTx(
 	ctx sdk.Context, confirm *types.ConfirmBatch, bridgeID tmbytes.HexBytes,
 ) ([]byte, error) {
-	// TODO:
-	batchTx, found := k.GetBatchTx(ctx, common.Address{}, nil)
+	tokenContract := common.HexToAddress(confirm.TokenContract)
+
+	batchTx, found := k.GetBatchTx(ctx, tokenContract, confirm.BatchID)
 	if !found {
 		return nil, sdkerrors.Wrap(types.ErrTxNotFound, "batch tx")
 	}

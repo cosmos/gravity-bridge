@@ -42,7 +42,7 @@ func (g GenesisState) ValidateBasic() error {
 	}
 
 	for _, tx := range g.LogicCallTxs {
-		if err := tx.Validate(); err != nil {
+		if err := tx.LogicCall.Validate(); err != nil {
 			return err
 		}
 	}
@@ -53,8 +53,8 @@ func (g GenesisState) ValidateBasic() error {
 		}
 	}
 
-	for _, attestation := range g.Attestations {
-		if err := attestation.Validate(); err != nil {
+	for _, att := range g.Attestations {
+		if err := att.Attestation.Validate(); err != nil {
 			return err
 		}
 	}

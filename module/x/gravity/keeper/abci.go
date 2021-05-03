@@ -15,17 +15,17 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 	params := k.GetParams(ctx)
 
 	k.slash(ctx, params)
-	k.tallyAttestations(ctx)
+	k.tallyAttestations(ctx, params)
 	k.timeoutTxs(ctx)
 	k.createEthSignerSet(ctx, params)
 }
 
 // Iterate over all attestations and tally the current result.
-func (k Keeper) tallyAttestations(ctx sdk.Context) {
+func (k Keeper) tallyAttestations(ctx sdk.Context, params types.Params) {
 	// all attestations on the store are considered unobserved, i.e the event being
 	// voted hasn't been handled
 	k.IterateAttestations(ctx, func(hash tmbytes.HexBytes, attestation types.Attestation) bool {
-		k.TallyAttestation(ctx, hash, attestation)
+		k.TallyAttestation(ctx, hash, attestation, params.AttestationVotesPowerThreshold)
 		return false
 	})
 }

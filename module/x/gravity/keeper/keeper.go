@@ -126,8 +126,6 @@ func (k Keeper) GetEthereumInfo(ctx sdk.Context) (types.EthereumInfo, bool) {
 		return types.EthereumInfo{}, false
 	}
 
-	ctx.BlockTime().UnixNano()
-
 	var info types.EthereumInfo
 	k.cdc.UnmarshalBinaryBare(bz, &info)
 	return info, false

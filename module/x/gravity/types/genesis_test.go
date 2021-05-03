@@ -12,19 +12,17 @@ func generateTestGenesisState() GenesisState {
 	rand.Read(bridgeID)
 
 	return GenesisState{
-		BridgeID: bridgeID,
-		Params: DefaultParams(),
+		BridgeID:          bridgeID,
+		Params:            DefaultParams(),
 		LastObservedNonce: 10,
-		SignerSets: []EthSignerSet{},
-		BatchTxs: []BatchTx{},
-		LogicCallTxs: []LogicCallTx{},
-		TransferTxs: []TransferTx{},
-		SignerSetConfirms: []ConfirmSignerSet{},
-		BatchConfirms: []ConfirmBatch{},
-		LogicCallConfirms: []ConfirmLogicCall{},
-		Attestations: []Attestation{},
-		DelegateKeys: []MsgDelegateKey{},
-		Erc20ToDenoms: []ERC20ToDenom{},
+		SignerSets:        []EthSignerSet{},
+		BatchTxs:          []BatchTx{},
+		LogicCallTxs:      []IdentifiedLogicCall{},
+		TransferTxs:       []TransferTx{},
+		Confirms:          []IdentifiedConfirm{},
+		Attestations:      []IdentifiedAttestation{},
+		DelegateKeys:      []MsgDelegateKey{},
+		Erc20ToDenoms:     []ERC20ToDenom{},
 	}
 }
 
@@ -33,8 +31,8 @@ func TestGenesisState_ValidateBasic(t *testing.T) {
 	rand.Read(bridgeID)
 
 	testCases := []struct {
-		name string
-		state GenesisState
+		name     string
+		state    GenesisState
 		expError bool
 	}{
 		{"valid input", generateTestGenesisState(), false},

@@ -5,40 +5,53 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
-// ConfirmLogicCall ...
+// ConfirmLogicCall confirms an outgoing logic call
 message ConfirmLogicCall {
   bytes  invalidation_id      = 1 [
     (gogoproto.customname) = "InvalidationID",
     (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
   ];
   uint64 invalidation_nonce   = 2;
+  // ethereum signer address in hex format. This must match with the
+  // signature address and the address registered to the
+  // orchestrator validator
   string eth_signer           = 3;
-  string orchestrator_address = 4;
-  bytes signature             = 5 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
+  // signature of the orchestrator for the confirm's ABI checkpoint
+  bytes signature             = 4 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
+  
 }
 
 // ConfirmBatch an orchestrator confirms a batch transaction by signing
 // with the ethereum keys on the signer set.
 message ConfirmBatch {
   string token_contract       = 1;
-  uint64 nonce                = 2;
+  bytes  batch_id             = 2 [
+    (gogoproto.customname) = "BatchID",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
+  // ethereum signer address in hex format. This must match with the
+  // signature address and the address registered to the
+  // orchestrator validator
   string eth_signer           = 3;
-  string orchestrator_address = 4;
-  bytes signature             = 5 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
+  // signature of the orchestrator for the confirm's ABI checkpoint
+  bytes signature             = 4 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
 }
 
 // ConfirmSignerSet submits a signature of the validator set at a given block height. A validator
 // must first call MsgSetEthAddress to set their Ethereum address to be used for signing.
 // Finally validators sign the
 // validator set, powers, and Ethereum addresses of the entire validator set at the height of a
-// ValsetRequest and submit that signature with this message.
+// SignerSetRequest and submit that signature with this message.
 //
 // If a sufficient number of validators (66% of voting power) (A) have set Ethereum addresses and
-// (B) submit ValsetConfirm messages with their signatures it is then possible for anyone to view
-// these signatures in the chain store and submit them to Ethereum to update the validator set
+// (B) submit ConfirmSignerSet messages with their signatures it is then possible for anyone to view
+// these signatures in the chain store and submit them to Ethereum to update the signer set
 message ConfirmSignerSet {
   uint64 nonce                = 1;
+  // ethereum signer address in hex format. This must match with the
+  // signature address and the address registered to the
+  // orchestrator validator
   string eth_signer           = 2;
-  string orchestrator_address = 3;
-  bytes signature             = 4 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
+  // signature of the orchestrator for the confirm's ABI checkpoint
+  bytes signature              = 3 [(gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"];
 }

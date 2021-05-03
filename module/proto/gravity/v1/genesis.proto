@@ -2,6 +2,8 @@ syntax = "proto3";
 package gravity.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+import "cosmos_proto/cosmos.proto";
 import "gravity/v1/tx.proto";
 import "gravity/v1/confirm.proto";
 import "gravity/v1/gravity.proto";
@@ -37,15 +39,22 @@ message Params {
   // slashing fraction for not signing an outgoing batch transaction to ethereum
   string slash_fraction_batch = 12
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  // slashing fraction for not signing an outgoing logic call transaction to ethereum
+  string slash_fraction_logic_call = 13
+  [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
   // slashing fraction for not signing events
-  string slash_fraction_event = 13
+  string slash_fraction_event = 14
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
   // slashing fraction for submitting a conflicting event from Ethereum
-  string slash_fraction_conflicting_event = 14
+  string slash_fraction_conflicting_event = 15
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
   // maximum allowed power difference between the latest and the current ethereum 
   // signer set before submitting a new signer set update request.
-  string max_signer_set_power_diff = 15
+  string max_signer_set_power_diff = 16
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  // attestation voting power threshold after which an ethereum event is considered
+  // observed.
+  string attestation_votes_power_threshold = 17
       [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }
 
@@ -57,6 +66,40 @@ message ERC20ToDenom {
   // coin denomination
   string denom = 2;
 }
+
+message IdentifiedLogicCall {
+  // invalidation ID allows to withdraw funds in case the logic call fails on the
+  // ethereum side
+  bytes  invalidation_id    = 1 [
+    (gogoproto.customname) = "InvalidationID",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
+  // TODO: explain
+  uint64 invalidation_nonce = 2;
+  // logic call transaction instance
+  LogicCallTx logic_call = 3 [(gogoproto.nullable) = false];
+}
+
+message IdentifiedAttestation {
+  // attestation unique identifier
+  bytes attestation_id    = 1 [
+    (gogoproto.customname) = "AttestationID",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
+  // attestation instance
+  Attestation attestation = 2 [(gogoproto.nullable) = false];
+}
+
+message IdentifiedConfirm {
+  // confirm unique identifier
+  bytes confirm_id    = 1 [
+    (gogoproto.customname) = "ConfirmID",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
+  // confirm instance
+  google.protobuf.Any confirm = 2 [(cosmos_proto.accepts_interface) = "Confirm"];
+}
+
 
 // GenesisState struct
 message GenesisState {
@@ -71,17 +114,13 @@ message GenesisState {
   repeated EthSignerSet signer_sets          = 4 [(gogoproto.nullable) = false];
   // requested batch transactions
   repeated BatchTx     batch_txs      = 5 [(gogoproto.nullable) = false];
-  repeated LogicCallTx logic_call_txs = 6 [(gogoproto.nullable) = false];
+  repeated IdentifiedLogicCall logic_call_txs = 6 [(gogoproto.nullable) = false];
   // unbatched transfer transactions
   repeated TransferTx       transfer_txs        = 7 [(gogoproto.nullable) = false];
   // TODO: use any for confirms
-
-  repeated ConfirmSignerSet signer_set_confirms     = 8 [(gogoproto.nullable) = false];
-  repeated ConfirmBatch     batch_confirms      = 9 [(gogoproto.nullable) = false];
-  repeated ConfirmLogicCall logic_call_confirms = 10 [(gogoproto.nullable) = false];
-  repeated Attestation      attestations        = 11 [(gogoproto.nullable) = false];
+  repeated IdentifiedConfirm confirms = 8 [(gogoproto.nullable) = false];
+  repeated IdentifiedAttestation      attestations        = 9 [(gogoproto.nullable) = false];
   // TODO: proto.Any ethereum eventss
-
-  repeated MsgDelegateKey   delegate_keys       = 12 [(gogoproto.nullable) = false];
-  repeated ERC20ToDenom     erc20_to_denoms     = 13 [(gogoproto.nullable) = false];
+  repeated MsgDelegateKey   delegate_keys       = 10 [(gogoproto.nullable) = false];
+  repeated ERC20ToDenom     erc20_to_denoms     = 11 [(gogoproto.nullable) = false];
 }

@@ -54,23 +54,23 @@ func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validato
 // TallyAttestation checks if an attestation has enough votes to be applied to the consensus state
 // and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
 // and then marks it Observed and emits an event.
-func (k Keeper) TallyAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestation types.Attestation) {
+func (k Keeper) TallyAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attestation types.Attestation, threshold sdk.Dec) {
 	// Sum up the votes and see if it is ready to apply to the state.
 	// This conditional stops the attestation from accidentally being applied twice.
 
 	// Sum the current powers of all validators who have voted and see if it passes the current threshold
 	// TODO: The different integer types and math here needs a careful review
 	totalPower := k.stakingKeeper.GetLastTotalPower(ctx)
-	requiredPower := types.AttestationVotesPowerThreshold.Mul(totalPower).Quo(sdk.NewInt(100))
+	requiredPower := threshold.MulInt(totalPower)
 
-	attestationPower := sdk.ZeroInt()
+	attestationPower := sdk.ZeroDec()
 	var thresholdMet bool
 
 	for _, validator := range attestation.Votes {
 		val, _ := sdk.ValAddressFromBech32(validator)
 
 		validatorPower := k.stakingKeeper.GetLastValidatorPower(ctx, val)
-		attestationPower = attestationPower.Add(sdk.NewInt(validatorPower))
+		attestationPower = attestationPower.Add(sdk.NewDec(validatorPower))
 
 		// If the power of all the validators that have voted on the attestation is higher or equal to the threshold,
 		// process the attestation, set Observed to true, and break

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -13,18 +12,9 @@ import (
 )
 
 // DefaultParamspace defines the default gravity module parameter subspace
-const (
-	DefaultParamspace = ModuleName
-	AttestationPeriod = 24 * time.Hour // TODO: value????
-)
+const DefaultParamspace = ModuleName
 
 var (
-	// AttestationVotesPowerThreshold threshold of votes power to succeed
-	AttestationVotesPowerThreshold = sdk.NewInt(66)
-
-	// ParamsStoreKeyStartThreshold stores the start threshold
-	ParamsStoreKeyStartThreshold = []byte("StartThreshold")
-
 	// ParamsStoreKeyBridgeContractAddress stores the contract address
 	ParamsStoreKeyBridgeContractAddress = []byte("BridgeContractAddress")
 
@@ -52,11 +42,14 @@ var (
 	// ParamsStoreKeyAverageEthereumBlockTime stores the signed blocks window
 	ParamsStoreKeyAverageEthereumBlockTime = []byte("AverageEthereumBlockTime")
 
-	// ParamsStoreSlashFractionSignerSet stores the slash fraction valset
+	// ParamsStoreSlashFractionSignerSet stores the slash fraction signer set
 	ParamsStoreSlashFractionSignerSet = []byte("SlashFractionSignerSet")
 
-	// ParamsStoreSlashFractionBatch stores the slash fraction Batch
+	// ParamsStoreSlashFractionBatch stores the slash fraction batch
 	ParamsStoreSlashFractionBatch = []byte("SlashFractionBatch")
+
+	// ParamsStoreSlashFractionLogicCall stores the slash fraction logic call
+	ParamsStoreSlashFractionLogicCall = []byte("SlashFractionLogicCall")
 
 	// ParamsStoreSlashFractionEvent stores the slash fraction Claim
 	ParamsStoreSlashFractionEvent = []byte("SlashFractionEvent")
@@ -71,6 +64,9 @@ var (
 	// the ethereum signer sets
 	ParamStoreMaxSignerSetPowerDiff = []byte("MaxSignerSetPowerDiff")
 
+	// ParamsStoreKeyAttestationVotesPowerThreshold stores the attestation voting power threshold
+	ParamsStoreKeyAttestationVotesPowerThreshold = []byte("AttestationVotesPowerThreshold")
+
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
 )
@@ -78,26 +74,29 @@ var (
 // DefaultParams returns a copy of the default params
 func DefaultParams() Params {
 	return Params{
-		BridgeContractAddress:         common.Address{}.String(),
-		BridgeChainID:                 1, // Ethereum Mainnet
-		SignerSetWindow:               10000,
-		BatchTxWindow:                 10000,
-		EventWindow:                   10000,
-		TargetBatchTimeout:            43200000,
-		AverageBlockTime:              5000,
-		AverageEthereumBlockTime:      15000,
-		BatchSize:                     100,
-		SlashFractionSignerSet:        sdk.NewDecWithPrec(1, 3),
-		SlashFractionBatch:            sdk.NewDecWithPrec(1, 3),
-		SlashFractionEvent:            sdk.NewDecWithPrec(1, 3),
-		SlashFractionConflictingEvent: sdk.NewDecWithPrec(1, 3),
-		UnbondingWindow:               10000,
-		MaxSignerSetPowerDiff:         sdk.NewDecWithPrec(5, 2),
+		BridgeContractAddress:          common.Address{}.String(),
+		BridgeChainID:                  1, // Ethereum Mainnet
+		SignerSetWindow:                10000,
+		BatchTxWindow:                  10000,
+		EventWindow:                    10000,
+		TargetBatchTimeout:             43200000,
+		AverageBlockTime:               5000,
+		AverageEthereumBlockTime:       15000,
+		BatchSize:                      100,
+		SlashFractionSignerSet:         sdk.NewDecWithPrec(1, 3), // 0.1 %
+		SlashFractionBatch:             sdk.NewDecWithPrec(1, 3), // 0.1 %
+		SlashFractionLogicCall:         sdk.NewDecWithPrec(1, 3), // 0.1 %
+		SlashFractionEvent:             sdk.NewDecWithPrec(1, 3), // 0.1 %
+		SlashFractionConflictingEvent:  sdk.NewDecWithPrec(1, 3), // 0.1 %
+		UnbondingWindow:                10000,
+		MaxSignerSetPowerDiff:          sdk.NewDecWithPrec(5, 2),   // 5 %
+		AttestationVotesPowerThreshold: sdk.NewDecWithPrec(666, 3), // 66.6 %
 	}
 }
 
 // ValidateBasic checks that the parameters have valid values.
 func (p Params) ValidateBasic() error {
+	// TODO: reuse validation functions
 	if err := validateBridgeContractAddress(p.BridgeContractAddress); err != nil {
 		return sdkerrors.Wrap(err, "bridge contract address")
 	}
@@ -105,42 +104,49 @@ func (p Params) ValidateBasic() error {
 		return sdkerrors.Wrap(err, "bridge chain id")
 	}
 	if err := validateTargetBatchTimeout(p.TargetBatchTimeout); err != nil {
-		return sdkerrors.Wrap(err, "Batch timeout")
+		return sdkerrors.Wrap(err, "target batch timeout")
 	}
 	if err := validateAverageBlockTime(p.AverageBlockTime); err != nil {
-		return sdkerrors.Wrap(err, "Block time")
+		return sdkerrors.Wrap(err, "avg block time")
 	}
 	if err := validateAverageEthereumBlockTime(p.AverageEthereumBlockTime); err != nil {
-		return sdkerrors.Wrap(err, "Ethereum block time")
+		return sdkerrors.Wrap(err, "avg ethereum block time")
 	}
 	if err := validateBatchSize(p.BatchSize); err != nil {
 		return sdkerrors.Wrap(err, "batch size")
 	}
 	if err := validateSignerSetWindow(p.SignerSetWindow); err != nil {
-		return sdkerrors.Wrap(err, "signed blocks window")
+		return sdkerrors.Wrap(err, "signer set rolling window")
 	}
 	if err := validateBatchTxWindow(p.BatchTxWindow); err != nil {
-		return sdkerrors.Wrap(err, "signed blocks window")
+		return sdkerrors.Wrap(err, "batch tx rolling window")
 	}
 	if err := validateEventWindow(p.EventWindow); err != nil {
-		return sdkerrors.Wrap(err, "signed blocks window")
+		return sdkerrors.Wrap(err, "event rolling window")
 	}
 	if err := validateSlashFractionSignerSet(p.SlashFractionSignerSet); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction valset")
 	}
 	if err := validateSlashFractionBatch(p.SlashFractionBatch); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction valset")
+		return sdkerrors.Wrap(err, "slash fraction batch")
+	}
+	// FIXME: update func
+	if err := validateSlashFractionBatch(p.SlashFractionLogicCall); err != nil {
+		return sdkerrors.Wrap(err, "slash fraction logic call")
 	}
 	if err := validateSlashFractionEvent(p.SlashFractionEvent); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction valset")
+		return sdkerrors.Wrap(err, "slash fraction event")
 	}
 	if err := validateSlashFractionConflictingEvent(p.SlashFractionConflictingEvent); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction valset")
+		return sdkerrors.Wrap(err, "slash fraction conflicting event")
 	}
 	if err := validateUnbondingWindow(p.UnbondingWindow); err != nil {
-		return sdkerrors.Wrap(err, "unbond Slashing valset window")
+		return sdkerrors.Wrap(err, "unbond slashing validator window")
 	}
-
+	// FIXME: update func
+	if err := validateSlashFractionConflictingEvent(p.AttestationVotesPowerThreshold); err != nil {
+		return sdkerrors.Wrap(err, "attestation voting power threshold")
+	}
 	return nil
 }
 
@@ -164,10 +170,12 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamsStoreKeyBatchSize, &p.BatchSize, validateBatchSize),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionSignerSet, &p.SlashFractionSignerSet, validateSlashFractionSignerSet),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionBatch, &p.SlashFractionBatch, validateSlashFractionBatch),
+		paramtypes.NewParamSetPair(ParamsStoreSlashFractionBatch, &p.SlashFractionLogicCall, validateSlashFractionBatch),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionEvent, &p.SlashFractionEvent, validateSlashFractionEvent),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionConflictingEvent, &p.SlashFractionConflictingEvent, validateSlashFractionConflictingEvent),
 		paramtypes.NewParamSetPair(ParamStoreUnbondingWindow, &p.UnbondingWindow, validateUnbondingWindow),
 		paramtypes.NewParamSetPair(ParamStoreMaxSignerSetPowerDiff, &p.MaxSignerSetPowerDiff, validateSlashFractionSignerSet),
+		paramtypes.NewParamSetPair(ParamsStoreKeyAttestationVotesPowerThreshold, &p.AttestationVotesPowerThreshold, validateSlashFractionSignerSet),
 	}
 }
 

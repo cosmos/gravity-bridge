@@ -1,7 +1,6 @@
 syntax = "proto3";
 package gravity.v1;
 
-import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
@@ -125,7 +124,22 @@ message EthSignerSet {
   uint64 height = 2;
 }
 
-// BatchTx represents a batch of transactions going from Cosmos to Ethereum
+// BatchTxInfo defines the key for a given batch transaction. It is used to map 
+// a transfer tx identifier to the batch tx in which it's currently located in order
+// to make user transfers easier to track.
+message BatchTxInfo {
+  // token contract of the transactions in the batch
+  string token_contract = 1;
+  // batch tx identifier
+  bytes  id    = 2 [
+    (gogoproto.customname) = "ID",
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
+}
+
+// BatchTx represents a batch of transactions going from Cosmos to Ethereum. Batch
+// txs are are identified by a unique hash and the token contract that is shared by
+// all the transfer
 message BatchTx {
   // tx nonce for replay protection
   uint64 nonce = 1;
