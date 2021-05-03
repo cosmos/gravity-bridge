@@ -406,7 +406,11 @@ pub struct MsgValsetUpdatedClaim {
     pub block_height: u64,
     #[prost(message, repeated, tag="4")]
     pub members: ::prost::alloc::vec::Vec<BridgeValidator>,
+    #[prost(string, tag="5")]
+    pub reward_amount: ::prost::alloc::string::String,
     #[prost(string, tag="6")]
+    pub reward_token: ::prost::alloc::string::String,
+    #[prost(string, tag="7")]
     pub orchestrator: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]

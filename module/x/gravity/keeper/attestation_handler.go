@@ -16,7 +16,6 @@ type AttestationHandler struct {
 }
 
 // Handle is the entry point for Attestation processing.
-// TODO-JT add handler for ERC20DeployedEvent
 func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
 	case *types.MsgDepositClaim:
@@ -116,9 +115,31 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		// the store, if they differ we should take some action to indicate to the
 		// user that bridge highjacking has occurred
 		a.keeper.SetLastObservedValset(ctx, types.Valset{
-			Nonce:   claim.ValsetNonce,
-			Members: claim.Members,
+			Nonce:        claim.ValsetNonce,
+			Members:      claim.Members,
+			RewardAmount: claim.RewardAmount,
+			RewardToken:  claim.RewardToken,
 		})
+		// if the reward is greater than zero and the reward token
+		// is valid then some reward was issued by this validator set
+		// and we need to either add to the total tokens for a Cosmos native
+		// token, or burn non cosmos native tokens
+		if claim.RewardAmount.GT(sdk.ZeroInt()) && claim.RewardToken != "0x0000000000000000000000000000000000000000" {
+			// Check if coin is Cosmos-originated asset and get denom
+			isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.RewardToken)
+			if isCosmosOriginated {
+				// If it is cosmos originated, mint some coins to account
+				// for coins that now exist on Ethereum and may eventually come
+				// back to Cosmos
+				coins := sdk.Coins{sdk.NewCoin(denom, claim.RewardAmount)}
+				a.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
+			} else {
+				// If it is not cosmos originated, burn the coins (aka Vouchers)
+				// so that we don't think we have more in the bridge than we actually do
+				coins := sdk.Coins{sdk.NewCoin(denom, claim.RewardAmount)}
+				a.bankKeeper.BurnCoins(ctx, types.ModuleName, coins)
+			}
+		}
 
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())
