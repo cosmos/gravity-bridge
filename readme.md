@@ -2,9 +2,25 @@
 
 Gravity bridge is Cosmos <-> Ethereum bridge designed to run on the [Cosmos Hub](https://github.com/cosmos/gaia) focused on maximum design simplicity and efficiency.
 
-Gravity is currently can transfer ERC20 assets originating on Ethereum to a Cosmos based chain and back to Ethereum.
+Gravity is currently can transfer ERC20 assets originating on Cosmos or Ethereum to and from Ethereum.
 
-The ability to transfer assets originating on Cosmos to an ERC20 representation on Ethereum is coming within a few months.
+## Documentation
+
+### Design docs
+
+[design overview](/design/overview.md)
+
+[arbitrary logic](/design/arbitrary-logic.md)
+
+[relaying semantics](/design/relaying-semantics.md)
+
+### Specs
+
+[slashing-spec](/spec/slashing-spec.md)
+
+[batch-creation-spec](/spec/batch-creation-spec.md)
+
+[valset-creation-spec](/spec/valset-creation-spec.md)
 
 ## Status
 
@@ -19,7 +35,7 @@ You can keep up with the latest development by watching our [public standups](ht
   - [x] Tested with 100+ validators
   - [x] Unit tests for every throw condition
   - [x] Audit for assets originating on Ethereum
-  - [ ] Support for issuing Cosmos assets on Ethereum
+  - [x] Support for issuing Cosmos assets on Ethereum
 - Cosmos Module
   - [x] Basic validator set syncing
   - [x] Basic transaction batch generation
@@ -30,8 +46,8 @@ You can keep up with the latest development by watching our [public standups](ht
   - [x] Validator set syncing edge cases
   - [x] Slashing
   - [x] Relaying edge cases
-  - [ ] Transaction batch edge cases
-  - [ ] Support for issuing Cosmos assets on Ethereum
+  - [x] Transaction batch edge cases
+  - [x] Support for issuing Cosmos assets on Ethereum
   - [ ] Audit
 - Orchestrator / Relayer
   - [x] Validator set update relaying
