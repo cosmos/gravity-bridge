@@ -1,6 +1,8 @@
 PACKAGES=$(shell go list ./... | grep -v '/simulation')
-VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
+VERSION := $(shell git describe --abbrev=6 --dirty --always --tags)
 COMMIT := $(shell git log -1 --format='%H')
+DOCKER := $(shell which docker)
+DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 
 build_tags = netgo
 ifeq ($(LEDGER_ENABLED),true)
@@ -37,8 +39,8 @@ whitespace += $(whitespace)
 comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
-ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=peggy \
-	-X github.com/cosmos/cosmos-sdk/version.AppName=peggy \
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gravity \
+	-X github.com/cosmos/cosmos-sdk/version.AppName=gravity \
 	-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 	-X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 	-X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
@@ -48,7 +50,7 @@ BUILD_FLAGS := -ldflags '$(ldflags)' -gcflags="all=-N -l"
 all: install
 
 install: go.sum
-		go install $(BUILD_FLAGS) ./cmd/peggy
+		go install $(BUILD_FLAGS) ./cmd/gravity
 
 go.sum: go.mod
 		@echo "--> Ensure dependencies have not been modified"
@@ -56,6 +58,12 @@ go.sum: go.mod
 
 test:
 	@go test -mod=readonly $(PACKAGES)
+
+build-linux:
+	GOOS=linux GOARCH=amd64 go build -o build/gravity $(BUILD_FLAGS) ./cmd/gravity/main.go
+
+docker-build:
+	docker build -t github.com/althea-net/gravity:latest
 
 # look into .golangci.yml for enabling / disabling linters
 lint:
@@ -68,13 +76,14 @@ lint:
 ###############################################################################
 
 proto-gen:
-	./contrib/local/protocgen.sh
+	@echo "Generating Protobuf files"
+	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace tendermintdev/sdk-proto-gen:v0.1 sh ./contrib/local/protocgen.sh
 
 proto-lint:
-	buf check lint --error-format=json
+	@$(DOCKER_BUF) check lint --error-format=json
 
 proto-check-breaking:
-	buf check breaking --against-input '.git#branch=master'
+	@$(DOCKER_BUF) breaking --against $(HTTPS_GIT)#branch=main
 
 TM_URL           = https://raw.githubusercontent.com/tendermint/tendermint/v0.34.0-rc3/proto/tendermint
 GOGO_PROTO_URL   = https://raw.githubusercontent.com/regen-network/protobuf/cosmos
@@ -132,50 +141,3 @@ proto-update-deps:
 
 	mkdir -p $(SDK_COIN_TYPES)
 	curl -sSL $(COSMOS_SDK_PROTO_URL)/v1beta1/coin.proto > $(SDK_COIN_TYPES)/coin.proto
-
-PREFIX ?= /usr/local
-BIN ?= $(PREFIX)/bin
-UNAME_S ?= $(shell uname -s)
-UNAME_M ?= $(shell uname -m)
-
-BUF_VERSION ?= 0.11.0
-
-PROTOC_VERSION ?= 3.11.2
-ifeq ($(UNAME_S),Linux)
-  PROTOC_ZIP ?= protoc-${PROTOC_VERSION}-linux-x86_64.zip
-endif
-ifeq ($(UNAME_S),Darwin)
-  PROTOC_ZIP ?= protoc-${PROTOC_VERSION}-osx-x86_64.zip
-endif
-
-proto-tools: proto-tools-stamp buf
-
-proto-tools-stamp:
-	echo "Installing protoc compiler..."
-	(cd /tmp; \
-	curl -OL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}"; \
-	unzip -o ${PROTOC_ZIP} -d $(PREFIX) bin/protoc; \
-	unzip -o ${PROTOC_ZIP} -d $(PREFIX) 'include/*'; \
-	rm -f ${PROTOC_ZIP})
-
-	echo "Installing protoc-gen-gocosmos..."
-	go install github.com/regen-network/cosmos-proto/protoc-gen-gocosmos
-
-	# Create dummy file to satisfy dependency and avoid
-	# rebuilding when this Makefile target is hit twice
-	# in a row
-	touch $@
-
-buf: buf-stamp
-
-buf-stamp:
-	echo "Installing buf..."
-	curl -sSL \
-    "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-${UNAME_S}-${UNAME_M}" \
-    -o "${BIN}/buf" && \
-	chmod +x "${BIN}/buf"
-
-	touch $@
-
-tools-clean:
-	rm -f proto-tools-stamp buf-stamp

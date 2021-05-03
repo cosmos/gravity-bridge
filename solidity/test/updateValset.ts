@@ -24,7 +24,7 @@ async function runTest(opts: {
   notEnoughPower?: boolean;
 }) {
   const signers = await ethers.getSigners();
-  const peggyId = ethers.utils.formatBytes32String("foo");
+  const gravityId = ethers.utils.formatBytes32String("foo");
 
   // This is the power distribution on the Cosmos hub as of 7/14/2020
   let powers = examplePowers();
@@ -33,10 +33,10 @@ async function runTest(opts: {
   const powerThreshold = 6666;
 
   const {
-    peggy,
+    gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(peggyId, validators, powers, powerThreshold);
+  } = await deployContracts(gravityId, validators, powers, powerThreshold);
 
   let newPowers = examplePowers();
   newPowers[0] -= 3;
@@ -61,7 +61,7 @@ async function runTest(opts: {
     await getSignerAddresses(newValidators),
     newPowers,
     newValsetNonce,
-    peggyId
+    gravityId
   );
 
   let sigs = await signHash(validators, checkpoint);
@@ -99,7 +99,7 @@ async function runTest(opts: {
     powers.pop();
   }
 
-  await peggy.updateValset(
+  await gravity.updateValset(
     await getSignerAddresses(newValidators),
     newPowers,
     newValsetNonce,
@@ -111,7 +111,7 @@ async function runTest(opts: {
     sigs.s
   );
 
-  return { peggy, checkpoint };
+  return { gravity, checkpoint };
 }
 
 describe("updateValset tests", function () {
@@ -158,7 +158,7 @@ describe("updateValset tests", function () {
   });
 
   it("happy path", async function () {
-    let { peggy, checkpoint } = await runTest({});
-    expect((await peggy.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
+    let { gravity, checkpoint } = await runTest({});
+    expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
   });
 });

@@ -17,7 +17,7 @@ const { expect } = chai;
 describe("constructor tests", function() {
   it("throws on malformed valset", async function() {
     const signers = await ethers.getSigners();
-    const peggyId = ethers.utils.formatBytes32String("foo");
+    const gravityId = ethers.utils.formatBytes32String("foo");
 
     // This is the power distribution on the Cosmos hub as of 7/14/2020
     let powers = examplePowers();
@@ -26,13 +26,13 @@ describe("constructor tests", function() {
     const powerThreshold = 6666;
 
     await expect(
-      deployContracts(peggyId, validators, powers, powerThreshold)
+      deployContracts(gravityId, validators, powers, powerThreshold)
     ).to.be.revertedWith("Malformed current validator set");
   });
 
   it("throws on insufficient power", async function() {
     const signers = await ethers.getSigners();
-    const peggyId = ethers.utils.formatBytes32String("foo");
+    const gravityId = ethers.utils.formatBytes32String("foo");
 
     // This is the power distribution on the Cosmos hub as of 7/14/2020
     let powers = examplePowers();
@@ -41,7 +41,7 @@ describe("constructor tests", function() {
     const powerThreshold = 666666666;
 
     await expect(
-      deployContracts(peggyId, validators, powers, powerThreshold)
+      deployContracts(gravityId, validators, powers, powerThreshold)
     ).to.be.revertedWith(
       "Submitted validator set signatures do not have enough power"
     );

@@ -14,27 +14,26 @@ path = "src/main.rs"
 
 [dependencies]
 relayer = {path = "../relayer/"}
-ethereum_peggy = {path = "../ethereum_peggy"}
-cosmos_peggy = {path = "../cosmos_peggy"}
-peggy_utils = {path = "../peggy_utils"}
-peggy_proto = {path = "../peggy_proto/"}
+ethereum_gravity = {path = "../ethereum_gravity"}
+cosmos_gravity = {path = "../cosmos_gravity"}
+gravity_utils = {path = "../gravity_utils"}
+gravity_proto = {path = "../gravity_proto/"}
 
-deep_space = "0.2"
-contact = "0.4"
+deep_space = "2.1"
 serde_derive = "1.0"
 clarity = "0.4"
 docopt = "1"
 serde = "1.0"
-actix-rt = "1"
+actix-rt = "2.2"
 lazy_static = "1"
-web30 = "0.10"
+web30 = "0.12"
 num256 = "0.3"
 log = "0.4"
 env_logger = "0.8"
 serde_json = "1.0"
-tokio = "0.2"
+tokio = "1.4.0"
 rand = "0.8"
-tonic = "0.3"
+tonic = "0.4"
 futures = "0.3"
 openssl-probe = "0.1"
 

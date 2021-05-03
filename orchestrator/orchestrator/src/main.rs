@@ -1,4 +1,4 @@
-//! Orchestrator is a sort of specialized relayer for Althea-Peggy that runs on every validator.
+//! Orchestrator is a sort of specialized relayer for Althea-Gravity that runs on every validator.
 //! Things this binary is responsible for
 //!   * Performing all the Ethereum signing required to submit updates and generate batches
 //!   * Progressing the validator set update generation process.
@@ -17,6 +17,7 @@ extern crate lazy_static;
 extern crate log;
 
 mod ethereum_event_watcher;
+mod get_with_retry;
 mod main_loop;
 mod oracle_resync;
 
@@ -26,11 +27,11 @@ use clarity::PrivateKey as EthPrivateKey;
 use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use docopt::Docopt;
 use env_logger::Env;
-use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
-use peggy_utils::connection_prep::{
+use gravity_utils::connection_prep::{
     check_delegate_addresses, check_for_eth, wait_for_cosmos_node_ready,
 };
-use peggy_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
+use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
+use main_loop::{ETH_ORACLE_LOOP_SPEED, ETH_SIGNER_LOOP_SPEED};
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
 use std::cmp::min;
 
@@ -38,8 +39,8 @@ use std::cmp::min;
 struct Args {
     flag_cosmos_phrase: String,
     flag_ethereum_key: String,
-    flag_cosmos_legacy_rpc: String,
     flag_cosmos_grpc: String,
+    flag_address_prefix: String,
     flag_ethereum_rpc: String,
     flag_contract_address: String,
     flag_fees: String,
@@ -47,18 +48,18 @@ struct Args {
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-    "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-legacy-rpc=<url> --cosmos-grpc=<url> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr>
+    "Usage: {} --cosmos-phrase=<key> --ethereum-key=<key> --cosmos-grpc=<url> --address-prefix=<prefix> --ethereum-rpc=<url> --fees=<denom> --contract-address=<addr>
         Options:
             -h --help                    Show this screen.
-            --cosmos-key=<ckey>          The Cosmos private key of the validator
+            --cosmos-phrase=<ckey>       The mnenmonic of the Cosmos account key of the validator
             --ethereum-key=<ekey>        The Ethereum private key of the validator
-            --cosmos-legacy-rpc=<curl>   The Cosmos RPC url, usually the validator
             --cosmos-grpc=<gurl>         The Cosmos gRPC url, usually the validator
+            --address-prefix=<prefix>    The prefix for addresses on this Cosmos chain
             --ethereum-rpc=<eurl>        The Ethereum RPC url, should be a self hosted node
             --fees=<denom>               The Cosmos Denom in which to pay Cosmos chain fees
-            --contract-address=<addr>    The Ethereum contract address for Peggy, this is temporary
+            --contract-address=<addr>    The Ethereum contract address for Gravity, this is temporary
         About:
-            The Validator companion binary for Peggy. This must be run by all Peggy chain validators
+            The Validator companion binary for Gravity. This must be run by all Gravity chain validators
             and is a mix of a relayer + oracle + ethereum signing infrastructure
             Written By: {}
             Version {}",
@@ -96,31 +97,29 @@ async fn main() {
         RELAYER_LOOP_SPEED,
     );
 
+    trace!("Probing RPC connections");
     // probe all rpc connections and see if they are valid
     let connections = create_rpc_connections(
+        args.flag_address_prefix,
         Some(args.flag_cosmos_grpc),
-        Some(args.flag_cosmos_legacy_rpc),
         Some(args.flag_ethereum_rpc),
         timeout,
     )
     .await;
 
+    let mut grpc = connections.grpc.clone().unwrap();
+    let contact = connections.contact.clone().unwrap();
+    let web3 = connections.web3.clone().unwrap();
+
     let public_eth_key = ethereum_key
         .to_public_key()
         .expect("Invalid Ethereum Private Key!");
-    let public_cosmos_key = cosmos_key
-        .to_public_key()
-        .expect("Invalid Cosmos Phrase!")
-        .to_address();
-    info!("Starting Peggy Validator companion binary Relayer + Oracle + Eth Signer");
+    let public_cosmos_key = cosmos_key.to_address(&contact.get_prefix()).unwrap();
+    info!("Starting Gravity Validator companion binary Relayer + Oracle + Eth Signer");
     info!(
         "Ethereum Address: {} Cosmos Address {}",
         public_eth_key, public_cosmos_key
     );
-
-    let mut grpc = connections.grpc.clone().unwrap();
-    let contact = connections.contact.clone().unwrap();
-    let web3 = connections.web3.clone().unwrap();
 
     // check if the cosmos node is syncing, if so wait for it
     // we can't move any steps above this because they may fail on an incorrect
@@ -128,7 +127,13 @@ async fn main() {
     wait_for_cosmos_node_ready(&contact).await;
 
     // check if the delegate addresses are correctly configured
-    check_delegate_addresses(&mut grpc, public_eth_key, public_cosmos_key).await;
+    check_delegate_addresses(
+        &mut grpc,
+        public_eth_key,
+        public_cosmos_key,
+        &contact.get_prefix(),
+    )
+    .await;
 
     // check if we actually have the promised balance of tokens to pay fees
     check_for_fee_denom(&fee_denom, public_cosmos_key, &contact).await;

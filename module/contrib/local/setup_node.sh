@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 
-peggyd init --chain-id=testing local
-peggyd add-genesis-account validator 1000000000stake
-peggyd gentx --name validator  --amount 1000000000stake
-peggyd collect-gentxs
+gravityd init --chain-id=testing local
+gravityd add-genesis-account validator 1000000000stake
+gravityd gentx --name validator  --amount 1000000000stake
+gravityd collect-gentxs

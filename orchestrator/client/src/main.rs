@@ -1,5 +1,5 @@
-//! This file is the binary entry point for the Peggy client software, an easy to use cli utility that
-//! allows anyone to send funds across the Peggy bridge. Currently this application only does anything
+//! This file is the binary entry point for the Gravity client software, an easy to use cli utility that
+//! allows anyone to send funds across the Gravity bridge. Currently this application only does anything
 //! on the Ethereum side of the bridge since withdraw batches are incomplete.
 
 // there are several binaries for this crate if we allow dead code on all of them
@@ -15,18 +15,18 @@ extern crate lazy_static;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::Uint256;
-use cosmos_peggy::send::{send_request_batch, send_to_eth};
+use cosmos_gravity::send::{send_request_batch, send_to_eth};
 use deep_space::address::Address as CosmosAddress;
 use deep_space::{coin::Coin, private_key::PrivateKey as CosmosPrivateKey};
 use docopt::Docopt;
 use env_logger::Env;
-use ethereum_peggy::deploy_erc20::deploy_erc20;
-use ethereum_peggy::send_to_cosmos::send_to_cosmos;
-use peggy_proto::peggy::QueryDenomToErc20Request;
-use peggy_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
+use ethereum_gravity::deploy_erc20::deploy_erc20;
+use ethereum_gravity::send_to_cosmos::send_to_cosmos;
+use gravity_proto::gravity::QueryDenomToErc20Request;
+use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_rpc_connections};
 use std::time::Instant;
 use std::{process::exit, time::Duration, u128};
-use tokio::time::delay_for;
+use tokio::time::sleep as delay_for;
 use web30::{client::Web3, jsonrpc::error::Web3Error};
 
 const TIMEOUT: Duration = Duration::from_secs(60);
@@ -71,7 +71,6 @@ struct Args {
     flag_cosmos_phrase: String,
     flag_ethereum_key: String,
     flag_cosmos_grpc: String,
-    flag_cosmos_legacy_rpc: String,
     flag_ethereum_rpc: String,
     flag_contract_address: String,
     flag_cosmos_denom: String,
@@ -84,6 +83,7 @@ struct Args {
     flag_erc20_name: String,
     flag_erc20_symbol: String,
     flag_erc20_decimals: u8,
+    flag_cosmos_prefix: String,
     cmd_eth_to_cosmos: bool,
     cmd_cosmos_to_eth: bool,
     cmd_deploy_erc20_representation: bool,
@@ -92,17 +92,18 @@ struct Args {
 lazy_static! {
     pub static ref USAGE: String = format!(
     "Usage:
-        {} cosmos-to-eth --cosmos-phrase=<key> --cosmos-legacy-rpc=<url> --cosmos-grpc=<url> --cosmos-denom=<denom> --amount=<amount> --eth-destination=<dest> [--no-batch] [--times=<number>]
-        {} eth-to-cosmos --ethereum-key=<key> --ethereum-rpc=<url> --contract-address=<addr> --erc20-address=<addr> --amount=<amount> --cosmos-destination=<dest> [--times=<number>]
-        {} deploy-erc20-representation --cosmos-grpc=<url> --cosmos-denom=<denom> --ethereum-key=<key> --ethereum-rpc=<url> --contract-address=<addr> --erc20-name=<name> --erc20-symbol=<symbol> --erc20-decimals=<decimals>
+        {} cosmos-to-eth --cosmos-phrase=<key> --cosmos-grpc=<url> --cosmos-prefix=<prefix> --cosmos-denom=<denom> --amount=<amount> --eth-destination=<dest> [--no-batch] [--times=<number>]
+        {} eth-to-cosmos --ethereum-key=<key> --ethereum-rpc=<url> --cosmos-prefix=<prefix> --contract-address=<addr> --erc20-address=<addr> --amount=<amount> --cosmos-destination=<dest> [--times=<number>]
+        {} deploy-erc20-representation --cosmos-grpc=<url> --cosmos-prefix=<prefix> --cosmos-denom=<denom> --ethereum-key=<key> --ethereum-rpc=<url> --contract-address=<addr> --erc20-name=<name> --erc20-symbol=<symbol> --erc20-decimals=<decimals>
         Options:
             -h --help                   Show this screen.
-            --cosmos-key=<ckey>         The Cosmos private key of the sender
+            --cosmos-phrase=<ckey>      The mnenmonic of the Cosmos account key of the validator
             --ethereum-key=<ekey>       The Ethereum private key of the sender
             --cosmos-legacy-rpc=<curl>  The Cosmos Legacy RPC url, this will need to be manually enabled
-            --cosmos-grpc=<curl>         The Cosmos gRPC url
+            --cosmos-grpc=<curl>        The Cosmos gRPC url
+            --cosmos-prefix=<prefix>    The Bech32 Prefix used for the Cosmos chain's addresses
             --ethereum-rpc=<eurl>       The Ethereum RPC url, should be a self hosted node
-            --contract-address=<addr>   The Ethereum contract address for Peggy, this is temporary
+            --contract-address=<addr>   The Ethereum contract address for Gravity, this is temporary
             --erc20-address=<addr>      An erc20 address on Ethereum to send funds from
             --cosmos-denom=<amount>     The Cosmos denom that you intend to send to Ethereum
             --amount=<amount>           The amount of tokens to send, for example 1.5
@@ -112,7 +113,7 @@ lazy_static! {
             --times=<number>            The number of times this send should be preformed, useful for stress testing
             --erc20-name=<name>         The 'name' value for the deployed ERC20 contract, must match Cosmos denom metadata
             --erc20-symbol=<symbol>     The 'symbol 'value for the deployed ERC20 contract, must match the Cosmos denom metadata
-            --erc20-decimals=<decimals> The number of decimals the deployed ERC20 token will have, must match the resolution of the Cosmos asset to be adopted by the chain   
+            --erc20-decimals=<decimals> The number of decimals the deployed ERC20 token will have, must match the resolution of the Cosmos asset to be adopted by the chain  
         Description:
             cosmos-to-eth               Locks up a Cosmos asset in the batch pool. Optionally this command will also request a batch.
             eth-to-cosmos               Sends an Ethereum ERC20 asset to a Cosmos destination address
@@ -146,9 +147,9 @@ async fn main() {
     };
 
     if args.cmd_cosmos_to_eth {
-        let peggy_denom = args.flag_cosmos_denom;
+        let gravity_denom = args.flag_cosmos_denom;
         // todo actually query metadata for this
-        let is_cosmos_originated = !peggy_denom.starts_with("peggy");
+        let is_cosmos_originated = !gravity_denom.starts_with("gravity");
         let amount = if is_cosmos_originated {
             fraction_to_exponent(args.flag_amount.unwrap(), 6)
         } else {
@@ -156,12 +157,12 @@ async fn main() {
         };
         let cosmos_key = CosmosPrivateKey::from_phrase(&args.flag_cosmos_phrase, "")
             .expect("Failed to parse cosmos key phrase, does it have a password?");
-        let cosmos_address = cosmos_key.to_public_key().unwrap().to_address();
+        let cosmos_address = cosmos_key.to_address(&args.flag_cosmos_prefix).unwrap();
 
         println!("Sending from Cosmos address {}", cosmos_address);
         let connections = create_rpc_connections(
+            args.flag_cosmos_prefix,
             Some(args.flag_cosmos_grpc),
-            Some(args.flag_cosmos_legacy_rpc),
             None,
             TIMEOUT,
         )
@@ -171,19 +172,19 @@ async fn main() {
 
         let res = grpc
             .denom_to_erc20(QueryDenomToErc20Request {
-                denom: peggy_denom.clone(),
+                denom: gravity_denom.clone(),
             })
             .await;
         match res {
             Ok(val) => println!(
                 "Asset {} has ERC20 representation {}",
-                peggy_denom,
+                gravity_denom,
                 val.into_inner().erc20
             ),
             Err(_e) => {
                 println!(
                     "Asset {} has no ERC20 representation, you may need to deploy an ERC20 for it!",
-                    peggy_denom
+                    gravity_denom
                 );
                 exit(1);
             }
@@ -191,23 +192,22 @@ async fn main() {
 
         let amount = Coin {
             amount,
-            denom: peggy_denom.clone(),
+            denom: gravity_denom.clone(),
         };
         let bridge_fee = Coin {
-            denom: peggy_denom.clone(),
+            denom: gravity_denom.clone(),
             amount: 1u64.into(),
         };
         let eth_dest: EthAddress = args.flag_eth_destination.parse().unwrap();
-        check_for_fee_denom(&peggy_denom, cosmos_address, &contact).await;
+        check_for_fee_denom(&gravity_denom, cosmos_address, &contact).await;
 
         let balances = contact
             .get_balances(cosmos_address)
             .await
-            .expect("Failed to get balances!")
-            .result;
+            .expect("Failed to get balances!");
         let mut found = None;
         for coin in balances.iter() {
-            if coin.denom == peggy_denom {
+            if coin.denom == gravity_denom {
                 found = Some(coin);
             }
         }
@@ -215,20 +215,20 @@ async fn main() {
         println!("Cosmos balances {:?}", balances);
 
         if found.is_none() {
-            panic!("You don't have any {} tokens!", peggy_denom);
+            panic!("You don't have any {} tokens!", gravity_denom);
         } else if amount.amount.clone() * times.into() >= found.clone().unwrap().amount
             && times == 1
         {
             if is_cosmos_originated {
-                panic!("Your transfer of {} {} tokens is greater than your balance of {} tokens. Remember you need some to pay for fees!", print_atom(amount.amount), peggy_denom, print_atom(found.unwrap().amount.clone()));
+                panic!("Your transfer of {} {} tokens is greater than your balance of {} tokens. Remember you need some to pay for fees!", print_atom(amount.amount), gravity_denom, print_atom(found.unwrap().amount.clone()));
             } else {
-                panic!("Your transfer of {} {} tokens is greater than your balance of {} tokens. Remember you need some to pay for fees!", print_eth(amount.amount), peggy_denom, print_eth(found.unwrap().amount.clone()));
+                panic!("Your transfer of {} {} tokens is greater than your balance of {} tokens. Remember you need some to pay for fees!", print_eth(amount.amount), gravity_denom, print_eth(found.unwrap().amount.clone()));
             }
         } else if amount.amount.clone() * times.into() >= found.clone().unwrap().amount {
             if is_cosmos_originated {
-                panic!("Your transfer of {} * {} {} tokens is greater than your balance of {} tokens. Try to reduce the amount or the --times parameter", print_atom(amount.amount), times, peggy_denom, print_atom(found.unwrap().amount.clone()));
+                panic!("Your transfer of {} * {} {} tokens is greater than your balance of {} tokens. Try to reduce the amount or the --times parameter", print_atom(amount.amount), times, gravity_denom, print_atom(found.unwrap().amount.clone()));
             } else {
-                panic!("Your transfer of {} * {} {} tokens is greater than your balance of {} tokens. Try to reduce the amount or the --times parameter", print_eth(amount.amount), times, peggy_denom, print_eth(found.unwrap().amount.clone()));
+                panic!("Your transfer of {} * {} {} tokens is greater than your balance of {} tokens. Try to reduce the amount or the --times parameter", print_eth(amount.amount), times, gravity_denom, print_eth(found.unwrap().amount.clone()));
             }
         }
 
@@ -236,7 +236,7 @@ async fn main() {
             println!(
                 "Locking {} / {} into the batch pool",
                 args.flag_amount.unwrap(),
-                peggy_denom
+                gravity_denom
             );
             let res = send_to_eth(
                 cosmos_key,
@@ -254,7 +254,7 @@ async fn main() {
 
         if !args.flag_no_batch {
             println!("Requesting a batch to push transaction along immediately");
-            send_request_batch(cosmos_key, peggy_denom, bridge_fee, &contact)
+            send_request_batch(cosmos_key, gravity_denom, bridge_fee, &contact)
                 .await
                 .expect("Failed to request batch");
         } else {
@@ -273,8 +273,13 @@ async fn main() {
             .flag_contract_address
             .parse()
             .expect("Invalid contract address!");
-        let connections =
-            create_rpc_connections(None, None, Some(args.flag_ethereum_rpc), TIMEOUT).await;
+        let connections = create_rpc_connections(
+            args.flag_cosmos_prefix,
+            None,
+            Some(args.flag_ethereum_rpc),
+            TIMEOUT,
+        )
+        .await;
         let web3 = connections.web3.unwrap();
         let cosmos_dest: CosmosAddress = args.flag_cosmos_destination.parse().unwrap();
         let ethereum_public_key = ethereum_key.to_public_key().unwrap();
@@ -312,7 +317,7 @@ async fn main() {
                 ethereum_public_key,
                 cosmos_dest
             );
-            // we send some erc20 tokens to the peggy contract to register a deposit
+            // we send some erc20 tokens to the gravity contract to register a deposit
             let res = send_to_cosmos(
                 erc20_address,
                 contract_address,
@@ -339,8 +344,8 @@ async fn main() {
             .parse()
             .expect("Invalid contract address!");
         let connections = create_rpc_connections(
+            args.flag_cosmos_prefix,
             Some(args.flag_cosmos_grpc),
-            None,
             Some(args.flag_ethereum_rpc),
             TIMEOUT,
         )

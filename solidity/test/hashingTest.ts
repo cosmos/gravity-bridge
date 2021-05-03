@@ -13,7 +13,7 @@ const { expect } = chai;
 describe("Hashing test", function() {
   it("Hashing test", async function() {
     const signers = await ethers.getSigners();
-    const peggyId = ethers.utils.formatBytes32String("foo");
+    const gravityId = ethers.utils.formatBytes32String("foo");
 
     let validators = [];
     let powers = [];
@@ -33,21 +33,21 @@ describe("Hashing test", function() {
       await getSignerAddresses(validators),
       powers,
       1,
-      peggyId
+      gravityId
     );
 
     await hashingContract.ConcatHash(
       await getSignerAddresses(validators),
       powers,
       1,
-      peggyId
+      gravityId
     );
 
     await hashingContract.ConcatHash2(
       await getSignerAddresses(validators),
       powers,
       1,
-      peggyId
+      gravityId
     );
 
     const contractCheckpoint = await hashingContract.lastCheckpoint();
@@ -55,7 +55,7 @@ describe("Hashing test", function() {
       await getSignerAddresses(validators),
       powers,
       1,
-      peggyId
+      gravityId
     );
 
     expect(contractCheckpoint === externalCheckpoint);
@@ -78,13 +78,13 @@ export function makeCheckpoint(
   validators: string[],
   powers: BigNumberish[],
   valsetNonce: BigNumberish,
-  peggyId: string
+  gravityId: string
 ) {
   const methodName = ethers.utils.formatBytes32String("checkpoint");
 
   let abiEncoded = ethers.utils.defaultAbiCoder.encode(
     ["bytes32", "bytes32", "uint256", "address[]", "uint256[]"],
-    [peggyId, methodName, valsetNonce, validators, powers]
+    [gravityId, methodName, valsetNonce, validators, powers]
   );
 
   let checkpoint = ethers.utils.keccak256(abiEncoded);

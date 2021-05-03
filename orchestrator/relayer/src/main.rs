@@ -4,7 +4,7 @@ use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use docopt::Docopt;
 use env_logger::Env;
-use peggy_utils::connection_prep::{
+use gravity_utils::connection_prep::{
     check_for_eth, create_rpc_connections, wait_for_cosmos_node_ready,
 };
 
@@ -24,27 +24,27 @@ extern crate log;
 #[derive(Debug, Deserialize)]
 struct Args {
     flag_ethereum_key: String,
-    flag_cosmos_legacy_rpc: String,
     flag_cosmos_grpc: String,
+    flag_address_prefix: String,
     flag_ethereum_rpc: String,
     flag_contract_address: String,
 }
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-    "Usage: {} --ethereum-key=<key> --cosmos-legacy-rpc=<url> --cosmos-grpc=<url> --ethereum-rpc=<url> --contract-address=<addr>
+    "Usage: {} --ethereum-key=<key> --cosmos-grpc=<url> --address-prefix=<prefix> --ethereum-rpc=<url> --contract-address=<addr> --cosmos-grpc=<gurl>
         Options:
             -h --help                    Show this screen.
             --ethereum-key=<ekey>        An Ethereum private key containing non-trivial funds
-            --cosmos-legacy-rpc=<curl>   The Cosmos RPC url
             --cosmos-grpc=<gurl>         The Cosmos gRPC url
-            --ethereum-rpc=<eurl>        The Ethereum RPC url, Geth light clients work and sync fast
-            --contract-address=<addr>    The Ethereum contract address for Peggy
+            --address-prefix=<prefix>    The prefix for addresses on this Cosmos chain
+            --ethereum-grpc=<eurl>       The Ethereum RPC url, Geth light clients work and sync fast
+            --contract-address=<addr>    The Ethereum contract address for Gravity
         About:
-            The Peggy relayer component, responsible for relaying data from the Cosmos blockchain
+            The Gravity relayer component, responsible for relaying data from the Cosmos blockchain
             to the Ethereum blockchain, cosmos key and fees are optional since they are only used
             to request the creation of batches or validator sets to relay.
-            for Althea-Peggy.
+            for Althea-Gravity.
             Written By: {}
             Version {}",
             env!("CARGO_PKG_NAME"),
@@ -67,14 +67,14 @@ async fn main() {
         .flag_ethereum_key
         .parse()
         .expect("Invalid Ethereum private key!");
-    let peggy_contract_address: EthAddress = args
+    let gravity_contract_address: EthAddress = args
         .flag_contract_address
         .parse()
         .expect("Invalid contract address!");
 
     let connections = create_rpc_connections(
+        args.flag_address_prefix,
         Some(args.flag_cosmos_grpc),
-        Some(args.flag_cosmos_legacy_rpc),
         Some(args.flag_ethereum_rpc),
         LOOP_SPEED,
     )
@@ -83,7 +83,7 @@ async fn main() {
     let public_eth_key = ethereum_key
         .to_public_key()
         .expect("Invalid Ethereum Private Key!");
-    info!("Starting Peggy Relayer");
+    info!("Starting Gravity Relayer");
     info!("Ethereum Address: {}", public_eth_key);
 
     let contact = connections.contact.clone().unwrap();
@@ -99,7 +99,7 @@ async fn main() {
         ethereum_key,
         connections.web3.unwrap(),
         connections.grpc.unwrap(),
-        peggy_contract_address,
+        gravity_contract_address,
     )
     .await
 }
