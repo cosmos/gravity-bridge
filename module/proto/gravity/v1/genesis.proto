@@ -16,22 +16,22 @@ option go_package = "github.com/peggyjv/gravity-bridge/module/x/gravity/types";
 // from chain A back on chain B's Gravity. This value IS USED ON ETHEREUM so
 // it must be set in your genesis.json before launch and not changed after
 // deploying Gravity
-//
+
 // contract_hash:
 // the code hash of a known good version of the Gravity contract
 // solidity code. This can be used to verify the correct version
 // of the contract has been deployed. This is a reference value for
 // goernance action only it is never read by any Gravity code
-//
+
 // bridge_ethereum_address:
 // is address of the bridge contract on the Ethereum side, this is a
 // reference value for governance only and is not actually used by any
 // Gravity code
-//
+
 // bridge_chain_id:
 // the unique identifier of the Ethereum chain, this is a reference value
 // only and is not actually used by any Gravity code
-//
+
 // These reference values may be used by future Gravity client implemetnations
 // to allow for saftey features or convenience features like the Gravity address
 // in your relayer. A relayer would require a configured Gravity address if

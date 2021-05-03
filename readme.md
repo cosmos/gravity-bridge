@@ -5,6 +5,37 @@ Gravity bridge is Cosmos <-> Ethereum bridge designed to run on the [Cosmos Hub]
 Gravity can transfer ERC20 assets originating on Ethereum to a Cosmos based chain and back to Ethereum.
 
 The ability to transfer assets originating on Cosmos to an ERC20 representation on Ethereum is coming within a few months.
+## Documentation
+
+### Design docs
+
+[design overview](/docs/design/overview.md)
+
+[Bootstrapping the bridge](/docs/design/bootstrapping.md)
+
+[Minting and locking tokens in Gravity](/docs/design/mint-lock.md)
+
+[Oracle design](/docs/design/oracle.md)
+
+[Ethereum signing](/docs/design/ethereum-signing.md)
+
+[Messages](/docs/design/messages.md)
+
+[Parameters](/docs/design/parameters.md)
+
+[Incentives](/docs/design/incentives.md)
+
+[arbitrary logic](/docs/design/arbitrary-logic.md)
+
+[relaying semantics](/docs/design/relaying-semantics.md)
+
+### Specs
+
+[slashing-spec](/spec/slashing-spec.md)
+
+[batch-creation-spec](/spec/batch-creation-spec.md)
+
+[valset-creation-spec](/spec/valset-creation-spec.md)
 
 ## Status
 
