@@ -1,9 +1,11 @@
 syntax = "proto3";
 package gravity.v1;
 
+import "cosmos_proto/cosmos.proto";
 import "google/protobuf/timestamp.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "google/protobuf/any.proto";
 
 option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
@@ -11,18 +13,13 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 // The event is then attested and executed vy the state machine once the required
 // threshold is met.
 message Attestation {
-  // event unique identifier
-  bytes event_id = 1 [
-    (gogoproto.customname) = "EventID",
-    (gogoproto.casttype)   = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
-  ];
+  // event stored on 
+  google.protobuf.Any event   = 1 [(cosmos_proto.accepts_interface) = "EthereumEvent"];  
   // set of the validator operators address in bech32 format that attest in
   // favor of this event.
-  repeated string votes = 2;
-  // amount of voting power in support of this event execution
-  int64 attested_power = 3;
+  repeated string     votes  = 2;
   // cosmos height at which the event was attested an executed
-  uint64 height = 4;
+  uint64              height = 3;
 }
 
 // DepositEvent is submitted when more than 66% of the active

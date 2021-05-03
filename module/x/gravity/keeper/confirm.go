@@ -11,7 +11,7 @@ import (
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
-func (k Keeper) ConfirmEvent(ctx sdk.Context, confirm types.Confirm, orchestratorAddr sdk.AccAddress, ethAddress common.Address) (tmbytes.HexBytes, error) {
+func (k Keeper) ProcessConfirm(ctx sdk.Context, confirm types.Confirm, ethAddress common.Address) (tmbytes.HexBytes, error) {
 	bridgeID := k.GetBridgeID(ctx)
 
 	var (
@@ -50,17 +50,6 @@ func (k Keeper) ConfirmEvent(ctx sdk.Context, confirm types.Confirm, orchestrato
 	confirmID := tmbytes.HexBytes(hash[:])
 
 	k.SetConfirm(ctx, confirmID, confirm)
-
-	k.Logger(ctx).Info("confirm", "id", confirmID.String(), "type", confirm.GetType(), "ethereum-address", ethAddress.String())
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeConfirm,
-			sdk.NewAttribute(types.AttributeKeyConfirmID, confirmID.String()),
-			sdk.NewAttribute(types.AttributeKeyConfirmType, confirm.GetType()),
-			sdk.NewAttribute(types.AttributeKeyEthereumAddr, ethAddress.String()),
-		),
-	)
 
 	return confirmID, err
 }

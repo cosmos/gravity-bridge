@@ -48,12 +48,8 @@ func NewAttestationHandler(k Keeper) AttestationHandler {
 //
 // TODO: clean up
 func (h DefaultAttestationHandler) OnAttestation(ctx sdk.Context, attestation types.Attestation) error {
-	event, found := h.keeper.GetEthereumEvent(ctx, attestation.EventID)
-	if !found {
-		return sdkerrors.Wrap(types.ErrEventNotFound, attestation.EventID.String())
-	}
-
-	switch event := event.(type) {
+	eve, _ := types.UnpackEvent(attestation.Event)
+	switch event := eve.(type) {
 	case *types.DepositEvent:
 		return h.keeper.OnReceiveDeposit(ctx, event)
 	case *types.WithdrawEvent:

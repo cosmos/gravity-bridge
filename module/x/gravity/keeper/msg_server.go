@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -27,16 +28,10 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, validatorAddr.String())
 	}
 
-	// TODO: consider impact of maliciously setting duplicate delegate
-	// addresses since no signatures from the private keys of these addresses
-	// are required for this message it could be sent in a hostile way.
-
-	// set the orchestrator address
 	k.SetOrchestratorValidator(ctx, validatorAddr, orchestratorAddr)
-	// set the ethereum address
 	k.SetEthAddress(ctx, validatorAddr, ethereumAddr)
 
-	k.Logger(ctx).Info(
+	k.Logger(ctx).Debug(
 		"orchestrator key delegated",
 		"validator-address", msg.ValidatorAddress,
 		"orchestrator-address", msg.OrchestratorAddress,
@@ -61,67 +56,78 @@ func (k Keeper) SetDelegateKey(c context.Context, msg *types.MsgDelegateKey) (*t
 
 func (k Keeper) SubmitEvent(c context.Context, msg *types.MsgSubmitEvent) (*types.MsgSubmitEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+	signer, _ := sdk.AccAddressFromBech32(msg.Signer)
+	event, _ := types.UnpackEvent(msg.Event)
 
-	// NOTE: error checked on msg validate basic
-	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Signer)
-
-	event, err := types.UnpackEvent(msg.Event)
+	val, err := k.GetValidatorFromSigner(ctx, signer)
 	if err != nil {
 		return nil, err
 	}
 
-	eventID, err := k.HandleEthEvent(ctx, event, orchestratorAddr)
+	eventID, err := k.AttestEvent(ctx, event, val)
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
 
-	ctx.EventManager().EmitEvent(
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeSubmitEvent,
+			sdk.NewAttribute(types.AttributeKeyEventID, eventID.String()),
+			sdk.NewAttribute(types.AttributeKeyEventType, event.GetType()),
+			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(event.GetNonce(), 64)),
+			sdk.NewAttribute(types.AttributeKeyOrchestratorAddr, val.GetOperator().String()),
+		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		),
-	)
+	})
 
-	return &types.MsgSubmitEventResponse{
-		EventID: eventID,
-	}, nil
+	return &types.MsgSubmitEventResponse{EventID: eventID}, nil
 }
 
 func (k Keeper) SubmitConfirm(c context.Context, msg *types.MsgSubmitConfirm) (*types.MsgSubmitConfirmResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// NOTE: error checked on msg validate basic
-	orchestratorAddr, _ := sdk.AccAddressFromBech32(msg.Signer)
-	validatorAddr := k.GetOrchestratorValidator(ctx, orchestratorAddr)
-	if validatorAddr == nil {
-		return nil, sdkerrors.Wrapf(stakingtypes.ErrNoValidatorFound, "orchestrator address %s", orchestratorAddr)
+	signer, _ := sdk.AccAddressFromBech32(msg.Signer)
+	confirm, _ := types.UnpackConfirm(msg.Confirm)
+
+	val, err := k.GetValidatorFromSigner(ctx, signer)
+	if err != nil {
+		return nil, err
 	}
 
-	ethAddress := k.GetEthAddress(ctx, validatorAddr)
+	ethAddress := k.GetEthAddress(ctx, val.GetOperator())
 	if (ethAddress == common.Address{}) {
-		return nil, sdkerrors.Wrap(types.ErrValidatorEthAddressNotFound, validatorAddr.String())
+		return nil, sdkerrors.Wrap(types.ErrValidatorEthAddressNotFound, val.GetOperator().String())
 	}
 
-	confirm, err := types.UnpackConfirm(msg.Confirm)
+	confirmID, err := k.ProcessConfirm(ctx, confirm, ethAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	confirmID, err := k.ConfirmEvent(ctx, confirm, orchestratorAddr, ethAddress)
-	if err != nil {
-		return nil, err
-	}
+	k.Logger(ctx).Debug(
+		"confirm",
+		"id", confirmID.String(),
+		"type", confirm.GetType(),
+		"ethereum-address", ethAddress.String(),
+	)
 
-	ctx.EventManager().EmitEvent(
+	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		),
-	)
+		sdk.NewEvent(
+			types.EventTypeConfirm,
+			sdk.NewAttribute(types.AttributeKeyConfirmID, confirmID.String()),
+			sdk.NewAttribute(types.AttributeKeyConfirmType, confirm.GetType()),
+			sdk.NewAttribute(types.AttributeKeyEthereumAddr, ethAddress.String()),
+		),
+	})
 
-	return &types.MsgSubmitConfirmResponse{
-		ConfirmID: confirmID,
-	}, nil
+	return &types.MsgSubmitConfirmResponse{ConfirmID: confirmID}, nil
 }
 
 // RequestBatch handles MsgRequestBatch
@@ -213,4 +219,20 @@ func (k Keeper) CancelTransfer(c context.Context, msg *types.MsgCancelTransfer) 
 	)
 
 	return &types.MsgCancelTransferResponse{}, nil
+}
+
+func (k Keeper) GetValidatorFromSigner(ctx sdk.Context, signer sdk.AccAddress) (stakingtypes.ValidatorI, error) {
+	validatorAddr := k.GetOrchestratorValidator(ctx, signer)
+	if validatorAddr == nil {
+		validatorAddr = sdk.ValAddress(signer)
+	}
+
+	// return an error if the validator isn't in the active set
+	validator := k.stakingKeeper.Validator(ctx, validatorAddr)
+	if validator == nil {
+		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, validatorAddr.String())
+	} else if !validator.IsBonded() {
+		return nil, sdkerrors.Wrapf(types.ErrValidatorNotBonded, "validator %s not in active set", validatorAddr)
+	}
+	return validator, nil
 }

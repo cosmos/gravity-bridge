@@ -134,7 +134,7 @@ func (suite *KeeperTestSuite) TestEthereumEventCRUD() {
 
 func (suite *KeeperTestSuite) TestConfirmCRUD() {
 	id := []byte("testid")
-	confirm := types.ConfirmLogicCall{InvalidationID: []byte("invitationID"), InvalidationNonce: 10, EthSigner: "signer", OrchestratorAddress: "orchestrator", Signature: []byte("signature")}
+	confirm := types.ConfirmLogicCall{InvalidationID: []byte("invitationID"), InvalidationNonce: 10, EthSigner: "signer", Signature: []byte("signature")}
 
 	suite.app.GravityKeeper.SetConfirm(suite.ctx, id, &confirm)
 	returnedConfirm, ok := suite.app.GravityKeeper.GetConfirm(suite.ctx, id)

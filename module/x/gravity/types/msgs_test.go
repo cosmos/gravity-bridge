@@ -148,7 +148,7 @@ func TestMsgSubmitConfirm_ValidateBasic(t *testing.T) {
 	ethAddr, err := GenerateTestEthAddress()
 	require.NoError(t, err, "unable to generate ethereum address")
 
-	css := &ConfirmSignerSet{12, ethAddr.String(), orchAddr.String(), []byte("signature")}
+	css := &ConfirmSignerSet{12, ethAddr.String(), []byte("signature")}
 	any, err := PackConfirm(css)
 	require.NoError(t, err, "unable to pack test confirm")
 

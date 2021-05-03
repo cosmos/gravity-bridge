@@ -14,40 +14,21 @@ import (
 // AttestEvent signals an ethereum event as
 // TODO: explain logic
 func (k Keeper) AttestEvent(ctx sdk.Context, event types.EthereumEvent, validator stakingtypes.ValidatorI) (tmbytes.HexBytes, error) {
-	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
-	// We check the event nonce in processAttestation as well, but checking it here gives individual eth signers a chance to retry,
-	// and prevents validators from submitting two events with the same nonce
-
-	// TODO: why is this per validator?
-	// Q: so there's an error right away
-	// lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator.GetOperator())
-	// if event.GetNonce() != lastEventNonce+1 {
-	// 	return types.ErrNonContiguousEventNonce
-	// }
-
+	// TODO: Refactor logic to match original gravity bridge
 	eventID := event.Hash()
-
-	// Tries to get an attestation with the same hash as the event that has been submitted
 	attestation, found := k.GetAttestation(ctx, eventID)
 	if !found {
+		eve, _ := types.PackEvent(event)
 		attestation = types.Attestation{
-			EventID:       eventID,
-			Votes:         []string{},
-			AttestedPower: 0,
-			Height:        uint64(ctx.BlockHeight()),
+			Votes:  []string{},
+			Height: uint64(ctx.BlockHeight()),
+			Event:  eve,
 		}
 
 		k.SetEthereumEvent(ctx, eventID, event)
 	}
-
-	// Add the validator's vote to this attestation
 	attestation.Votes = append(attestation.Votes, validator.GetOperator().String())
-	attestation.AttestedPower += validator.GetConsensusPower()
-
 	k.SetAttestation(ctx, eventID, attestation)
-	// TODO: what is this for?
-	// k.setLastEventNonceByValidator(ctx, validatorAddr, event.GetNonce())
-	// TODO: return attestation ID
 	return nil, nil
 }
 
@@ -60,6 +41,7 @@ func (k Keeper) TallyAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attesta
 
 	// Sum the current powers of all validators who have voted and see if it passes the current threshold
 	// TODO: The different integer types and math here needs a careful review
+	event, _ := types.UnpackEvent(attestation.Event)
 	totalPower := k.stakingKeeper.GetLastTotalPower(ctx)
 	requiredPower := threshold.MulInt(totalPower)
 
@@ -81,14 +63,14 @@ func (k Keeper) TallyAttestation(ctx sdk.Context, hash tmbytes.HexBytes, attesta
 	}
 
 	if !thresholdMet {
-		k.Logger(ctx).Debug("attestation threshold not met for event", "event-id", attestation.EventID.String())
+		k.Logger(ctx).Debug("attestation threshold not met for event", "event-id", event.Hash())
 		return
 	}
 
 	// fetch the event to set the ethereum info
-	event, found := k.GetEthereumEvent(ctx, attestation.EventID)
+	event, found := k.GetEthereumEvent(ctx, event.Hash())
 	if !found {
-		panic(fmt.Errorf("event with ID %s not found for observed attestation", attestation.EventID))
+		panic(fmt.Errorf("event with ID %s not found for observed attestation", event.Hash()))
 	}
 
 	// TODO: figure nonces
@@ -131,7 +113,8 @@ func (k Keeper) processAttestation(ctx sdk.Context, attestation types.Attestatio
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
 		k.Logger(ctx).Error("attestation failed",
-			"event-id", attestation.EventID.String(),
+			// TODO: fix
+			"event-id", "FOOOOOO",
 			"error", err.Error(),
 		)
 	} else {
