@@ -577,6 +577,19 @@ func (e *MsgValsetUpdatedClaim) ValidateBasic() error {
 	if e.EventNonce == 0 {
 		return fmt.Errorf("nonce == 0")
 	}
+
+	err := ValidateEthAddress(e.RewardToken)
+	if err != nil {
+		return err
+	}
+
+	for _, member := range e.Members {
+		err := ValidateEthAddress(member.EthereumAddress)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

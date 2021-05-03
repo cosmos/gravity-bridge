@@ -115,9 +115,47 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		// the store, if they differ we should take some action to indicate to the
 		// user that bridge highjacking has occurred
 		a.keeper.SetLastObservedValset(ctx, types.Valset{
-			Nonce:   claim.ValsetNonce,
-			Members: claim.Members,
+			Nonce:        claim.ValsetNonce,
+			Members:      claim.Members,
+			RewardAmount: claim.RewardAmount,
+			RewardToken:  claim.RewardToken,
 		})
+		// if the reward is greater than zero and the reward token
+		// is valid then some reward was issued by this validator set
+		// and we need to either add to the total tokens for a Cosmos native
+		// token, or burn non cosmos native tokens
+		if claim.RewardAmount.GT(sdk.ZeroInt()) && claim.RewardToken != "0x0000000000000000000000000000000000000000" {
+			// Check if coin is Cosmos-originated asset and get denom
+			isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.RewardToken)
+			if isCosmosOriginated {
+				// If it is cosmos originated, mint some coins to account
+				// for coins that now exist on Ethereum and may eventually come
+				// back to Cosmos.
+				//
+				// Note the flow is
+				// user relays valset and gets reward -> event relayed to cosmos mints tokens to module
+				// -> user sends tokens to cosmos and gets the minted tokens from the module
+				//
+				// it is not possible for this to be a race condition thanks to the event nonces
+				// no matter how long it takes to relay the valset updated event the deposit event
+				// for the user will always come after.
+				//
+				// Note we are minting based on the claim! This is important as the reward value
+				// could change between when this event occurred and the present
+				coins := sdk.Coins{sdk.NewCoin(denom, claim.RewardAmount)}
+				a.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
+			} else {
+				// // If it is not cosmos originated, burn the coins (aka Vouchers)
+				// // so that we don't think we have more in the bridge than we actually do
+				// coins := sdk.Coins{sdk.NewCoin(denom, claim.RewardAmount)}
+				// a.bankKeeper.BurnCoins(ctx, types.ModuleName, coins)
+
+				// if you want to issue Ethereum originated tokens remove this panic and uncomment
+				// the above code but note that you will have to constantly replenish the tokens in the
+				// module or your chain will eventually halt.
+				panic("Can not use Ethereum originated token as reward!")
+			}
+		}
 
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())
