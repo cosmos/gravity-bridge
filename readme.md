@@ -8,11 +8,25 @@ Gravity is currently can transfer ERC20 assets originating on Cosmos or Ethereum
 
 ### Design docs
 
-[design overview](/design/overview.md)
+[design overview](/docs/design/overview.md)
 
-[arbitrary logic](/design/arbitrary-logic.md)
+[Bootstrapping the bridge](/docs/design/bootstrapping.md)
 
-[relaying semantics](/design/relaying-semantics.md)
+[Minting and locking tokens in Gravity](/docs/design/mint-lock.md)
+
+[Oracle design](/docs/design/oracle.md)
+
+[Ethereum signing](/docs/design/ethereum-signing.md)
+
+[Messages](/docs/design/messages.md)
+
+[Parameters](/docs/design/parameters.md)
+
+[Incentives](/docs/design/incentives.md)
+
+[arbitrary logic](/docs/design/arbitrary-logic.md)
+
+[relaying semantics](/docs/design/relaying-semantics.md)
 
 ### Specs
 
