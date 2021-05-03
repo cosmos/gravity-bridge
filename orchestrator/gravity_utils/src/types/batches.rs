@@ -6,7 +6,7 @@ use deep_space::Address as CosmosAddress;
 
 /// This represents an individual transaction being bridged over to Ethereum
 /// parallel is the OutgoingTransferTx in x/gravity/types/batch.go
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BatchTransaction {
     pub id: u64,
     pub sender: CosmosAddress,
@@ -99,7 +99,7 @@ impl TransactionBatch {
 }
 
 /// the response we get when querying for a batch confirmation
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BatchConfirmResponse {
     pub nonce: u64,
     pub orchestrator: CosmosAddress,

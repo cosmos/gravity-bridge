@@ -29,7 +29,9 @@ Key concepts that we mention below will be defined here:
 - `Operator` - This is a person (or people) who control a Cosmos SDK validator node. This is also called `valoper` or "Validator Operator" in the Cosmos SDK staking section
 - `Full Node` - This is an _Ethereum_ Full Node run by an Operator
 - `Validator` - This is a Cosmos SDK Validating Node (signing blocks)
-- `Eth Signer` (name WIP) - This is a Rust binary controlled by an Operator that holds Cosmos SDK and Ethereum private keys used for signing transactions used to move tokens between the two chains.
+- `Eth Signer` (name WIP) - This is a separate binary controlled by an Operator that holds Ethereum private keys used for signing transactions used to move tokens between the two chains.
+- `Oracle` (name WIP) - This is a separate binary controlled by an Operator that holds Cosmos SDK private keys used for bringing data from the Ethereum chain over to the Cosmos chain by submitting `Claims`, these claims aggregate into an `Attestation`
+- `Orchestrator` - a single binary that combines the `Eth Signer`, `Oracle`, and `Relayer` for ease of use by the `Operator`
 - `Relayer` - This is a type of node that submits updates to the Gravity contract on Ethereum. It earns fees from the transactions in a batch.
 - `REST server` - This is the Cosmos SDK "REST Server" that runs on Port 1317, either on the validator node or another Cosmos SDK node controlled by the Operator
 - `Ethereum RPC` - This is the JSON-RPC server for the Ethereum Full Node.
@@ -44,11 +46,13 @@ Key concepts that we mention below will be defined here:
 - `Gravity ID` - This is a random 32 byte value required to be included in all Gravity signatures for a particular contract instance. It is passed into the contract constructor on Ethereum and used to prevent signature reuse when contracts may share a validator set or subsets of a validator set. This is also set by a governance vote _before_ MsgProposeGravityContract can be sent.
 - `Gravity contract code hash` - This is the code hash of a known good version of the Gravity contract solidity code. It will be used to verify exactly which version of the bridge will be deployed.
 - `Start Threshold` - This is the percentage of total voting power that must be online and participating in Gravity operations before a bridge can start operating.
-- `Claim` - an Ethereum event signed and submitted to cosmos by a single `Orchestrator` instance 
-- `Attestation` - aggregate of claims that eventually becomes `observed` by all orchestrators
+- `Claim` (name WIP) - an Ethereum event signed and submitted to cosmos by a single `Orchestrator` instance
+- `Attestation` (name WIP) - aggregate of claims that eventually becomes `observed` by all orchestrators
 - `Voucher` - represent a bridged ETH token on the Cosmos side. Their denom is has a `gravity` prefix and a hash that is build from contract address and contract token. The denom is considered unique within the system.
 - `Counterpart` - to a `Voucher` is the locked ETH token in the contract
-  
+- `Delegate keys` - when an `Operator` sets up the `Eth Signer` and `Oracle` they assign `Delegate Keys` by sending a message containing these keys using their `Validator` address. There is one delegate Ethereum key, used for signing messages on Ethereum and representing this `Validator` on Ethereum and one delegate Cosmos key that is used to submit `Oracle` messages.
+- `Gravity Contract` - The `Gravity Contract` is the Ethereum contract that holds all of the Gravity bridge bunds on the Ethereum side. It contains a representation of the cosmos validator set using `Delegate Keys` and normalized powers. For example if a validator has 5% of the Cosmos chain validator power, their delegate key will have 5% of the voting power in the `Gravity Contract` these value are regularly updated to keep the Cosmos and Ethereum chain validator sets in sync.
+
 The _Operator_ is the key unit of trust here. Each operator is responsible for maintaining 3 secure processes:
 
 1. Cosmos SDK Validator - signing blocks
@@ -63,7 +67,6 @@ each chain, but is our gold standard. Even IBC offers no more security than the 
 
 The **Eth Signer** is a binary run alongside the main Cosmos daemon (`gaiad` or equivalent) by the validator set. It exists purely as a matter of code organization and is in charge of signing Ethereum transactions, as well as observing events on Ethereum and bringing them into the Cosmos state. It signs transactions bound for Ethereum with an Ethereum key, and signs over events coming from Ethereum with a Cosmos SDK key. We can add slashing conditions to any mis-signed message by any _Eth Signer_ run by the _Validator Set_ and be able to provide the same security as the _Valiator Set_, just a different module detecting evidence of malice and deciding how much to slash. If we can prove a transaction signed by any _Eth Signer_ of the _Validator Set_ was illegal or malicious, then we can slash on the Cosmos chain side and potentially provide 100% of the security of the _Validator Set_. Note that this also has access to the 3 week unbonding
 period to allow evidence to slash even if they immediately unbond.
-
 
 The **MultiSig Set** is a (possibly aged) mirror of the _Validator Set_ but with Ethereum keys, and stored on the Ethereum
 contract. If we ensure the _MultiSig Set_ is updated much more often than the unbonding period (eg at least once per week),
@@ -100,19 +103,23 @@ At this point, we know we have a contract on Ethereum with the proper _MultiSig 
 
 Note: `start threshold` is some security factor for bootstrapping. 67% is sufficient to release, but we don't want to start until there is a margin of error online (not to fall off with a small change of voting power). This may be 70, 80, 90, or even 95% depending on how much assurances we want that all _Orchestrators_ are operational before starting.
 
-## Relaying ETH to Cosmos
+## ETH to Cosmos Oracle
 
-**TODO**
+All `Operators` run an `Oracle` binary. This separate process monitors an Ethereum node for new events involving the `Gravity Contract` on the Ethereum chain. Every event that `Oracle` monitors has an event nonce. This nonce is a unique coordinating value for a `Claim`. Since every event that may need to be observed by the `Oracle` has a unique event nonce `Claims` can always refer to a unique event by specifying the event nonce.
+
+- An `Oracle` observes an event on the Ethereum chain, it packages this event into a `Claim` and submits this claim to the cosmos chain
+- Within the Gravity Cosmos module this `Claim` either creates or is added to an existing `Attestation` that matches the details of the `Claim` once more than 66% of the active `Validator` set has made a `Claim` that matches the given `Attestation` the `Attestation` is executed. This may mint tokens, burn tokens, or whatever is appropriate for this particular event.
+- In the event that the validators can not agree >66% on a single `Attestation` the oracle is halted. This means no new events will be relayed from Ethereum until some of the validators change their votes. There is no slashing condition for this, because having one would risk the liveness of the chain itself if there was an expected Ethereum fork.
 
 ## Relaying Cosmos to ETH
 
 - A user sends a MsgSendToEth when they want to transfer tokens across to Ethereum. This debits the tokens from their account, and places a transaction in the `Gravity Tx Pool`
 - Someone (permissionlessly) sends a MsgRequestBatch, this produces a new `Transaction batch` in the `Gravity Batch pool`. The creation of this batch occurs in CosmosSDK and is entirely deterministic, and should create the most profitable batch possible out of transactions in the `Gravity Tx Pool`.
-    - The `TransactionBatch` includes a batch nonce.
-    - It also includes the latest `Valset`
-    - The transactions in this batch are removed from the `Gravity Tx Pool`, and cannot be included in a new batch.
+  - The `TransactionBatch` includes a batch nonce.
+  - It also includes the latest `Valset`
+  - The transactions in this batch are removed from the `Gravity Tx Pool`, and cannot be included in a new batch.
 - Batches in the `Gravity Batch Pool` are signed over by the `Validator Set`'s `Eth Signers`.
-    - `Relayers` may now attempt to submit these batches to the Gravity contract. If a batch has enough signatures (2/3+1 of the `Multisig Set`), it's submission will succeed. The decision whether or not to attempt a batch submission is entirely up to a given `Relayer`.
+  - `Relayers` may now attempt to submit these batches to the Gravity contract. If a batch has enough signatures (2/3+1 of the `Multisig Set`), it's submission will succeed. The decision whether or not to attempt a batch submission is entirely up to a given `Relayer`.
 - Once a batch is `Observed` to have been successfully submitted to Ethereum (this takes at least as long as the `EthBlockDelay`), any batches in the `Gravity Batch Pool` which have a lower nonce, and have not yet been successfully submitted have their transactions returned to the `Gravity Tx Pool` to be tried in a new batch. This is safe because we know that these batches cannot possibly be submitted any more since their nonces are too low.
 
 - When a new MsgRequestBatch comes in a new batch will not be produced unless it is more profitable than any batch currently in the `Gravity Batch Pool`. This means that when there is a batch backlog batches _must_ become progressively more profitable to submit.

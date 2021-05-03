@@ -141,7 +141,7 @@ fn test_batch_signature() {
     let erc20_addr = "0x835973768750b3ED2D5c3EF5AdcD5eDb44d12aD4"
         .parse()
         .unwrap();
-    let sender_addr = "0x527FBEE652609AB150F0AEE9D61A2F76CFC4A73E"
+    let sender_addr = "althea1c8nkaxk3d0p2gd7ummvmyqpdvqd6pkehqhwnnt"
         .parse()
         .unwrap();
 

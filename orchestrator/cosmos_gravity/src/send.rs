@@ -42,15 +42,15 @@ pub async fn update_gravity_delegate_addresses(
 ) -> Result<TxResponse, CosmosGrpcError> {
     trace!("Updating Gravity Delegate addresses");
     let our_valoper_address = private_key
-        .to_public_key()
-        .expect("Invalid private key!")
-        .to_address()
-        .to_bech32("cosmosvaloper")
+        .to_address(&contact.get_prefix())
+        .unwrap()
+        // This works so long as the format set by the cosmos hub is maintained
+        // having a main prefix followed by a series of titles for specific keys
+        // this will not work if that convention is broken. This will be resolved when
+        // GRPC exposes prefix endpoints (coming to upstream cosmos sdk soon)
+        .to_bech32(format!("{}valoper", contact.get_prefix()))
         .unwrap();
-    let our_address = private_key
-        .to_public_key()
-        .expect("Invalid private key!")
-        .to_address();
+    let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
 
     let msg_set_orch_address = MsgSetOrchestratorAddress {
         validator: our_valoper_address.to_string(),
@@ -100,10 +100,7 @@ pub async fn send_valset_confirms(
     private_key: PrivateKey,
     gravity_id: String,
 ) -> Result<TxResponse, CosmosGrpcError> {
-    let our_address = private_key
-        .to_public_key()
-        .expect("Invalid private key!")
-        .to_address();
+    let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
     let our_eth_address = eth_private_key.to_public_key().unwrap();
 
     let fee = Fee {
@@ -161,10 +158,7 @@ pub async fn send_batch_confirm(
     private_key: PrivateKey,
     gravity_id: String,
 ) -> Result<TxResponse, CosmosGrpcError> {
-    let our_address = private_key
-        .to_public_key()
-        .expect("Invalid private key!")
-        .to_address();
+    let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
     let our_eth_address = eth_private_key.to_public_key().unwrap();
 
     let fee = Fee {
@@ -223,10 +217,7 @@ pub async fn send_logic_call_confirm(
     private_key: PrivateKey,
     gravity_id: String,
 ) -> Result<TxResponse, CosmosGrpcError> {
-    let our_address = private_key
-        .to_public_key()
-        .expect("Invalid private key!")
-        .to_address();
+    let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
     let our_eth_address = eth_private_key.to_public_key().unwrap();
 
     let fee = Fee {
@@ -285,10 +276,7 @@ pub async fn send_ethereum_claims(
     logic_calls: Vec<LogicCallExecutedEvent>,
     fee: Coin,
 ) -> Result<TxResponse, CosmosGrpcError> {
-    let our_address = private_key
-        .to_public_key()
-        .expect("Invalid private key!")
-        .to_address();
+    let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
 
     // This sorts oracle messages by event nonce before submitting them. It's not a pretty implementation because
     // we're missing an intermediary layer of abstraction. We could implement 'EventTrait' and then implement sort
@@ -394,10 +382,7 @@ pub async fn send_to_eth(
     fee: Coin,
     contact: &Contact,
 ) -> Result<TxResponse, CosmosGrpcError> {
-    let our_address = private_key
-        .to_public_key()
-        .expect("Invalid private key!")
-        .to_address();
+    let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
     if amount.denom != fee.denom {
         return Err(CosmosGrpcError::BadInput(format!(
             "{} {} is an invalid denom set for SendToEth you must pay fees in the same token your sending",
@@ -466,10 +451,7 @@ pub async fn send_request_batch(
     fee: Coin,
     contact: &Contact,
 ) -> Result<TxResponse, CosmosGrpcError> {
-    let our_address = private_key
-        .to_public_key()
-        .expect("Invalid private key!")
-        .to_address();
+    let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
 
     let msg_request_batch = MsgRequestBatch {
         sender: our_address.to_string(),

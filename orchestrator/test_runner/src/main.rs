@@ -15,6 +15,7 @@ use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use cosmos_gravity::utils::wait_for_cosmos_online;
 use deep_space::coin::Coin;
+use deep_space::Address as CosmosAddress;
 use deep_space::Contact;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use happy_path::happy_path_test;
@@ -98,7 +99,12 @@ pub fn should_deploy_contracts() -> bool {
 pub async fn main() {
     env_logger::init();
     info!("Staring Gravity test-runner");
-    let contact = Contact::new(COSMOS_NODE_GRPC, OPERATION_TIMEOUT);
+    let contact = Contact::new(
+        COSMOS_NODE_GRPC,
+        OPERATION_TIMEOUT,
+        CosmosAddress::DEFAULT_PREFIX,
+    )
+    .unwrap();
 
     info!("Waiting for Cosmos chain to come online");
     wait_for_cosmos_online(&contact, TOTAL_TIMEOUT).await;
@@ -126,7 +132,10 @@ pub async fn main() {
 
     assert!(check_cosmos_balance(
         &get_test_token_name(),
-        keys[0].validator_key.to_public_key().unwrap().to_address(),
+        keys[0]
+            .validator_key
+            .to_address(&contact.get_prefix())
+            .unwrap(),
         &contact
     )
     .await
@@ -157,7 +166,12 @@ pub async fn main() {
             .await;
             return;
         } else if test_type == "BATCH_STRESS" {
-            let contact = Contact::new(COSMOS_NODE_GRPC, TOTAL_TIMEOUT);
+            let contact = Contact::new(
+                COSMOS_NODE_GRPC,
+                TOTAL_TIMEOUT,
+                CosmosAddress::DEFAULT_PREFIX,
+            )
+            .unwrap();
             transaction_stress_test(&web30, &contact, keys, gravity_address, erc20_addresses).await;
             return;
         } else if test_type == "VALSET_STRESS" {
