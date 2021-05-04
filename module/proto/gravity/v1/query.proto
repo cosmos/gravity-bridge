@@ -14,40 +14,36 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 // Query defines the gRPC querier service
 service Query {
   // Deployments queries deployments
-  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+  rpc Params(ParamsRequest) returns (ParamsResponse) {
     option (google.api.http).get = "/gravity/v1beta/params";
   }
-  rpc CurrentValset(QueryCurrentValsetRequest) returns (QueryCurrentValsetResponse) {
-    option (google.api.http).get = "/gravity/v1beta/valset/current";
+  rpc SignerSet(SignerSetRequest) returns (SignerSetResponse) {
+    option (google.api.http).get = "/gravity/v1beta/signersets";
   }
-  rpc ValsetRequest(QueryValsetRequestRequest) returns (QueryValsetRequestResponse) {
-    option (google.api.http).get = "/gravity/v1beta/valset";
+  rpc SignerSetConfirms(SignerSetConfirmsRequest) returns (SignerSetConfirmsResponse) {
+    option (google.api.http).get = "/gravity/v1beta/signerset/confirms";
   }
-  rpc ValsetConfirm(QueryValsetConfirmRequest) returns (QueryValsetConfirmResponse) {
-    option (google.api.http).get = "/gravity/v1beta/valset/confirm";
+  rpc RecentSignerSets(RecentSignerSetsRequest) returns (RecentSignerSetsResponse) {
+    option (google.api.http).get = "/gravity/v1beta/signersets/last";
   }
-  rpc ValsetConfirmsByNonce(QueryValsetConfirmsByNonceRequest) returns (QueryValsetConfirmsByNonceResponse) {
-    option (google.api.http).get = "/gravity/v1beta/confirms/{nonce}";
+  rpc BatchFees(QueryBatchFeesRequest) returns (QueryBatchFeesResponse) {
+    option (google.api.http).get = "/gravity/v1beta/batches/fees";
   }
-  rpc LastValsetRequests(QueryLastValsetRequestsRequest) returns (QueryLastValsetRequestsResponse) {
-    option (google.api.http).get = "/gravity/v1beta/valset/requests";
+  
+  rpc PendingSignerSetConfirms(PendingSignerSetConfirmsRequest) returns (PendingSignerSetConfirmsResponse) {
+    option (google.api.http).get = "/gravity/v1beta/signersets/{address}/pending";
   }
-  rpc LastPendingValsetRequestByAddr(QueryLastPendingValsetRequestByAddrRequest) returns (QueryLastPendingValsetRequestByAddrResponse) {
-    option (google.api.http).get = "/gravity/v1beta/valset/last";
+  rpc PendingBatchConfirms(PendingBatchConfirmsRequest) returns (PendingBatchConfirmsResponse) {
+    option (google.api.http).get = "/gravity/v1beta/batches/{address}/pending";
   }
-  rpc LastPendingBatchRequestByAddr(QueryLastPendingBatchRequestByAddrRequest) returns (QueryLastPendingBatchRequestByAddrResponse) {
-    option (google.api.http).get = "/gravity/v1beta/batch/{address}";
+  rpc PendingLogicConfirms(QueryPendingLogicConfirmsRequest) returns (QueryPendingLogicConfirmsResponse) {
+    option (google.api.http).get = "/gravity/v1beta/logiccalls/{address}/pending";
   }
-  rpc LastPendingLogicCallByAddr(QueryLastPendingLogicCallByAddrRequest) returns (QueryLastPendingLogicCallByAddrResponse) {
-    option (google.api.http).get = "/gravity/v1beta/logic/{address}";
-  }
+
+  // TODO: start here tomorrow
   rpc LastEventNonceByAddr(QueryLastEventNonceByAddrRequest) returns (QueryLastEventNonceByAddrResponse) {
     option (google.api.http).get = "/gravity/v1beta/oracle/eventnonce/{address}";
   }
-  rpc BatchFees(QueryBatchFeeRequest) returns (QueryBatchFeeResponse) {
-    option (google.api.http).get = "/gravity/v1beta/batchfees";
-  }
-
   rpc OutgoingTxBatches(QueryOutgoingTxBatchesRequest) returns (QueryOutgoingTxBatchesResponse) {
     option (google.api.http).get = "/gravity/v1beta/batch/outgoingtx";
   }
@@ -85,67 +81,73 @@ service Query {
   }
 }
 
-message QueryParamsRequest {}
-message QueryParamsResponse {
+// rpc Params
+message ParamsRequest {}
+message ParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
-message QueryCurrentValsetRequest {}
-message QueryCurrentValsetResponse {
-  Valset valset = 1;
-}
-
-message QueryValsetRequestRequest {
+// rpc SignerSet
+message SignerSetRequest {
+  // NOTE: if nonce is not passed, then return the current
   uint64 nonce = 1;
 }
-message QueryValsetRequestResponse {
-  Valset valset = 1;
+message SignerSetResponse {
+  EthSignerSet signer_set = 1;
 }
 
-message QueryValsetConfirmRequest {
+// rpc SignerSetConfirms
+message SignerSetConfirmsRequest {
   uint64 nonce   = 1;
+  // NOTE: if address is passed, return only the signature from that validator
   string address = 2;
 }
-message QueryValsetConfirmResponse {
-  MsgValsetConfirm confirm = 1;
+message SignerSetConfirmsResponse {
+  repeated ConfirmSignerSet confirm = 1;
 }
 
-message QueryValsetConfirmsByNonceRequest {
-  uint64 nonce = 1;
+// rpc RecentSignerSets
+message RecentSignerSetsRequest {
+  int64 count = 1;
 }
-message QueryValsetConfirmsByNonceResponse {
-  repeated MsgValsetConfirm confirms = 1;
-}
-
-message QueryLastValsetRequestsRequest {}
-message QueryLastValsetRequestsResponse {
-  repeated Valset valsets = 1;
+message RecentSignerSetsResponse {
+  repeated EthSignerSet signer_sets = 1;
 }
 
-message QueryLastPendingValsetRequestByAddrRequest {
+// rpc PendingSignerSetConfirms
+message PendingSignerSetConfirmsRequest {
+  // NOTE: this is an sdk.AccAddress and can represent either the 
+  // orchestartor address or the cooresponding validator address
   string address = 1;
 }
-message QueryLastPendingValsetRequestByAddrResponse {
-  repeated Valset valsets = 1;
+message PendingSignerSetConfirmsResponse {
+  repeated EthSignerSet signer_sets = 1;
 }
 
-message QueryBatchFeeRequest {}
-message QueryBatchFeeResponse {
-  repeated BatchFees batch_fees = 1;
-}
-
-message QueryLastPendingBatchRequestByAddrRequest {
+message PendingBatchConfirmsRequest {
+  // NOTE: this is an sdk.AccAddress and can represent either the 
+  // orchestartor address or the cooresponding validator address
   string address = 1;
 }
-message QueryLastPendingBatchRequestByAddrResponse {
-  OutgoingTxBatch batch = 1;
+message PendingBatchConfirmsResponse {
+  // Note these are returned with the signature empty
+  repeated BatchTx batches = 1;
 }
 
-message QueryLastPendingLogicCallByAddrRequest {
+message QueryBatchFeesRequest {}
+message QueryBatchFeesResponse {
+  repeated cosmos.base.v1beta1.Coin fees = 1 [
+      (gogoproto.nullable) = false, 
+      (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message QueryPendingLogicConfirmsRequest {
   string address = 1;
 }
-message QueryLastPendingLogicCallByAddrResponse {
-  OutgoingLogicCall call = 1;
+message QueryPendingLogicConfirmsResponse {
+  // Note these are returned with the signature empty
+  repeated LogicCallTx logic_call_confirms = 1;
 }
 
 message QueryOutgoingTxBatchesRequest {}

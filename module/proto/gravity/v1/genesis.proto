@@ -72,25 +72,25 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 message Params {
   option (gogoproto.stringer) = false;
 
-  string gravity_id                  = 1;
-  string contract_source_hash        = 2;
-  string bridge_ethereum_address     = 4;
-  uint64 bridge_chain_id             = 5;
-  uint64 signed_valsets_window       = 6;
-  uint64 signed_batches_window       = 7;
-  uint64 signed_claims_window        = 8;
-  uint64 target_batch_timeout        = 10;
-  uint64 average_block_time          = 11;
-  uint64 average_ethereum_block_time = 12;
-  bytes  slash_fraction_valset       = 13 [
+  string gravity_id                      = 1;
+  string contract_source_hash            = 2;
+  string bridge_ethereum_address         = 4;
+  uint64 bridge_chain_id                 = 5;
+  uint64 signed_valsets_window           = 6;
+  uint64 signed_batches_window           = 7;
+  uint64 signed_claims_window            = 8;
+  uint64 target_batch_timeout            = 10;
+  uint64 average_block_time              = 11;
+  uint64 average_ethereum_block_time     = 12;
+  bytes  slash_fraction_valset           = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes slash_fraction_batch = 14 [
+  bytes slash_fraction_batch             = 14 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes slash_fraction_claim = 15 [
+  bytes slash_fraction_claim             = 15 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
@@ -98,21 +98,28 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  uint64 unbond_slashing_valsets_window = 17;
+  uint64 unbond_slashing_valsets_window  = 17;
 }
 
 // GenesisState struct
 message GenesisState {
   Params                             params              = 1;
   uint64                             last_observed_nonce = 2;
-  repeated Valset                    valsets             = 3;
-  repeated MsgValsetConfirm          valset_confirms     = 4;
-  repeated OutgoingTxBatch           batches             = 5;
-  repeated MsgConfirmBatch           batch_confirms      = 6 [(gogoproto.nullable) = false];
-  repeated OutgoingLogicCall         logic_calls         = 7;
-  repeated MsgConfirmLogicCall       logic_call_confirms = 8 [(gogoproto.nullable) = false];
+  repeated EthSignerSet              valsets             = 3;
+  repeated ConfirmSignerSet          valset_confirms     = 4;
+  repeated BatchTx                   batches             = 5;
+  repeated ConfirmBatch              batch_confirms      = 6 [(gogoproto.nullable) = false];
+  repeated LogicCallTx               logic_calls         = 7;
+  repeated ConfirmLogicCall          logic_call_confirms = 8 [(gogoproto.nullable) = false];
   repeated Attestation               attestations        = 9 [(gogoproto.nullable) = false];
-  repeated MsgSetOrchestratorAddress delegate_keys       = 10;
+  repeated MsgDelegateKeys           delegate_keys       = 10;
   repeated ERC20ToDenom              erc20_to_denoms     = 11;
-  repeated OutgoingTransferTx        unbatched_transfers = 12;
+  repeated TransferTx                unbatched_transfers = 12;
+}
+
+// This records the relationship between an ERC20 token and the denom
+// of the corresponding Cosmos originated asset
+message ERC20ToDenom {
+  string erc20 = 1;
+  string denom = 2;
 }

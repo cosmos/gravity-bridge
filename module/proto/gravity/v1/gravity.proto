@@ -1,0 +1,99 @@
+syntax = "proto3";
+package gravity.v1;
+
+import "cosmos_proto/cosmos.proto";
+import "google/protobuf/timestamp.proto";
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
+
+// Attestation is an event that is pending of confirmation by 2/3 of the signer set.
+// The event is then attested and executed in the state machine once the required
+// threshold is met.
+message Attestation {
+  google.protobuf.Any event  = 1 [
+    (cosmos_proto.accepts_interface) = "EthereumEvent"
+  ];  
+  repeated string     votes  = 2;
+  uint64              height = 3;
+}
+
+// EthereumInfo defines the latest observed ethereum block height and the
+// corresponding timestamp value in nanoseconds.
+message EthereumInfo {
+  uint64 ethereum_height = 1;
+  uint64 cosmos_height   = 2;
+}
+
+// EthSigner represents a cosmos validator with its corresponding bridge operator
+// ethereum address and its staking consensus power.
+message EthSigner {
+  int64  power            = 1;
+  string ethereum_address = 2;
+}
+
+// EthSignerSet is the Ethereum Bridge multisig set that relays transactions
+// the two chains. The staking validators keep ethereum keys which are used to
+// check signatures on Ethereum in order to get significant gas savings.
+message EthSignerSet {
+  uint64             nonce   = 1;
+  repeated EthSigner signers = 2 [
+    (gogoproto.castrepeated) = "EthSigners", 
+    (gogoproto.nullable) = false
+  ];
+}
+
+// BatchTx represents a batch of transactions going from Cosmos to Ethereum. Batch
+// txs are are identified by a unique hash and the token contract that is shared by
+// all the transfer
+message BatchTx {
+  uint64         nonce          = 1;
+  uint64         timeout        = 2;
+  repeated bytes transactions   = 3 [
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
+  string         token_contract = 4;
+  uint64         ethereum_block = 5;
+}
+
+// TransferTx represents an individual transfer from Cosmos to Ethereum
+message TransferTx {
+  uint64                   id                 = 1;
+  string                   sender             = 2;
+  string                   ethereum_recipient = 3;
+  cosmos.base.v1beta1.Coin erc20_token        = 4 [
+    (gogoproto.nullable) = false
+  ];
+  cosmos.base.v1beta1.Coin erc20_fee          = 5 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+// LogicCallTx represents an individual arbitratry logic call transaction from
+// Cosmos to Ethereum.
+message LogicCallTx {
+  uint64                            invalidation_nonce     = 1;
+  bytes                             invalidation_id        = 2 [
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
+  string                            logic_contract_address = 3;
+  bytes                             payload                = 4;
+  uint64                            timeout                = 5;
+  repeated cosmos.base.v1beta1.Coin tokens                 = 6 [
+      (gogoproto.nullable) = false, 
+      (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  repeated cosmos.base.v1beta1.Coin fees                   = 7 [
+      (gogoproto.nullable) = false, 
+      (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+// TransactionIDs defines a protobuf message for storing transfer tx ids.
+message TransactionIDs {
+  repeated bytes ids = 1 [
+    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
+  ];
+}
