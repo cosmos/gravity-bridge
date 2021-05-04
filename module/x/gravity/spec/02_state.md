@@ -143,6 +143,26 @@ This is the last observed height on ethereum. There will always only be a single
 
 ### Attestation
 
-| Key                                                                | Value                                 | Type                | Encoding         |
-| ------------------------------------------------------------------ | ------------------------------------- | ------------------- | ---------------- |
-| `[]byte{0x5} + evenNonce (big endian encoded) + []byte(claimHash)` | Attestation of occurred events/claims | `types.Attestation` | Protobuf encoded |
+This is a record of all the votes for a given claim (Ethereum event).
+
+| Key                                                                 | Value                                 | Type                | Encoding         |
+| ------------------------------------------------------------------- | ------------------------------------- | ------------------- | ---------------- |
+| `[]byte{0x5} + eventNonce (big endian encoded) + []byte(claimHash)` | Attestation of occurred events/claims | `types.Attestation` | Protobuf encoded |
+
+Attestation fields:
+
+message Attestation {
+// This field stores whether the Attestation has had its event applied to the Cosmos state. This happens when
+// enough (usually >2/3s) of the validator power votes that they saw the event on Ethereum.
+// For example, once a DepositClaim has modified the token balance of the account that it was deposited to,
+// this boolean will be set to true.
+bool observed = 1;
+// This is an array of the addresses of the validators which have voted that they saw the event on Ethereum.
+repeated string votes = 2;
+// This is the Cosmos block height that this event was first observed by a validator.
+uint64 height = 3;
+// The claim is the Ethereum event that this attestation is recording votes for.
+google.protobuf.Any claim = 4;
+}
+
++++ <https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/attestation.proto#L38-L43>
