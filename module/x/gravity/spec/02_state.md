@@ -220,3 +220,24 @@ message Attestation {
 ```
 
 +++ <https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/attestation.proto#L38-L43>
+
+### Valset
+
+This is a record of the Cosmos validator set at a given moment. Can be sent to the Gravity.sol contract to update the signer set.
+
+| Key                                 | Value                      | Type           | Encoding         |
+| ----------------------------------- | -------------------------- | -------------- | ---------------- |
+| `[]byte{0x5} + uint64 valset nonce` | Validator set for Ethereum | `types.Valset` | Protobuf encoded |
+
+```
+message Valset {
+  // This nonce is incremented for each subsequent valset produced by the Gravity module.
+  // The Gravity.sol contract will only accept a valset with a higher nonce than the last
+  // executed Valset.
+  uint64 nonce = 1;
+  // The validators in the valset.
+  repeated BridgeValidator members = 2;
+  // TODO: what is this for?
+  uint64 height = 3;
+}
+```

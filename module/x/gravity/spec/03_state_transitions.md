@@ -115,3 +115,21 @@ Another module on the same Cosmos chain can call `SetOutgoingLogicCall` to creat
 Once a logic call has been created and stored, it is up to the current validators to sign it with their Ethereum keys so that it can be submitted to the Ethereum chain. They do this with a separate process called the "orchestrator", and send the signatures to the Cosmos chain as `MsgConfirmLogicCall` messages. The Gravity module then checks that the signature is valid and stores it.
 
 Relayers are then able to get all the signatures for a logic call, assemble them into an Ethereum transaction, and send it to the Gravity.sol contract.
+
+## Valset
+
+### Valset creation
+
+To create valsets:
+
+- We get the all bonded validators using `StakingKeeper.GetBondedValidatorsByPower`.
+- We get their Ethereum addresses and powers.
+- We normalize their powers by dividing each validator's power by the sum of powers in the whole validator set.
+
+We save this data in a `Valset`
+
+### Valset signing
+
+Once a valset has been created and stored, it is up to the current validators to sign it with their Ethereum keys so that it can be submitted to the Ethereum chain. They do this with a separate process called the "orchestrator", and send the signatures to the Cosmos chain as `MsgValsetConfirm` messages. The Gravity module then checks that the signature is valid and stores it.
+
+Relayers are then able to get all the signatures for a valset, assemble them into an Ethereum transaction, and send it to the Gravity.sol contract.
