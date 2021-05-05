@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -135,11 +136,7 @@ func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
 func GetAttestationKey(eventNonce uint64, claimHash []byte) []byte {
-	key := make([]byte, 1 + len(UInt64Bytes(0)) + len(claimHash))
-	copy(key[0:], []byte{OracleAttestationKey})
-	copy(key[1:], UInt64Bytes(eventNonce))
-	copy(key[1 + len(UInt64Bytes(0)):], claimHash)
-	return key
+	return bytes.Join([][]byte{{OracleAttestationKey}, UInt64Bytes(eventNonce), claimHash}, []byte{})
 }
 
 // GetAttestationKeyWithHash returns the following key format
@@ -150,11 +147,7 @@ func GetAttestationKey(eventNonce uint64, claimHash []byte) []byte {
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
 func GetAttestationKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
-	key := make([]byte, 1 + len(UInt64Bytes(0)) + len(claimHash))
-	copy(key[0:], []byte{OracleAttestationKey})
-	copy(key[1:], UInt64Bytes(eventNonce))
-	copy(key[1 + len(UInt64Bytes(0)):], claimHash)
-	return key
+	return bytes.Join([][]byte{{OracleAttestationKey}, UInt64Bytes(eventNonce), claimHash} , []byte{})
 }
 
 // GetOutgoingTxPoolKey returns the following key format
@@ -183,26 +176,18 @@ func GetOutgoingTxBatchBlockKey(block uint64) []byte {
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // TODO this should be a sdk.ValAddress
 func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
-	a := append(UInt64Bytes(batchNonce), validator.Bytes()...)
-	b := append([]byte(tokenContract), a...)
-	c := append([]byte{BatchConfirmKey}, b...)
-	return c
+	return bytes.Join([][]byte{{BatchConfirmKey}, []byte(tokenContract), UInt64Bytes(batchNonce), validator.Bytes()}, []byte{})
 }
 
 // GetFeeSecondIndexKey returns the following key format
 // prefix            eth-contract-address            fee_amount
 // [0x9][0xc783df8a850f42e7F7e57013759C285caa701eB6][1000000000]
 func GetFeeSecondIndexKey(fee ERC20Token) []byte {
-	r := make([]byte, 1+ETHContractAddressLen+32)
-	// sdkInts have a size limit of 255 bits or 32 bytes
-	// therefore this will never panic and is always safe
 	amount := make([]byte, 32)
 	amount = fee.Amount.BigInt().FillBytes(amount)
 	// TODO this won't ever work fix it
-	copy(r[0:], []byte{SecondIndexOutgoingTXFeeKey})
-	copy(r[1:], fee.Contract)
-	copy(r[1 + len(fee.Contract):], amount)
-	return r
+	// TODO figure out what this comment was referencing ^^
+	return bytes.Join([][]byte{{SecondIndexOutgoingTXFeeKey}, []byte(fee.Contract), amount}, []byte{})
 }
 
 // GetLastEventNonceByValidatorKey indexes lateset event nonce by validator
@@ -226,8 +211,7 @@ func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []
 	return append(a, UInt64Bytes(invalidationNonce)...)
 }
 
+// prefix    invalidationID  nonce  validatorAddr
 func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
-	interm := append([]byte{KeyOutgoingLogicConfirm}, invalidationId...)
-	interm = append(interm, UInt64Bytes(invalidationNonce)...)
-	return append(interm, validator.Bytes()...)
+	return bytes.Join([][]byte{{KeyOutgoingLogicConfirm}, invalidationId, UInt64Bytes(invalidationNonce), validator.Bytes()}, []byte{})
 }
