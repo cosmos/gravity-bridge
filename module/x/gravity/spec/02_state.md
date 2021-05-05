@@ -103,7 +103,37 @@ A validator has an associated counter chain address.
 
 ### OutgoingLogicCall
 
-When a user requests a logic call to be executed on an opposing chain it is stored in a store within the gravity module.
+```
+message OutgoingLogicCall {
+  // This is the address of the logic contract that Gravity.sol will call
+  string              logic_contract_address = 3;
+  // This is the content of the function call on the logic contract. It is formatted
+  // as an Ethereum function call which can be passed to .call() and contains the function
+  // name and arguments.
+  bytes               payload                = 4;
+  // The timeout is an Ethereum block at which this logic call will no longer be executed by Gravity.sol. This
+  // allows the calling module to cancel logic calls that we know have timed out.
+  uint64              timeout                = 5;
+  // These are ERC20 transfers to the logic contract that take place before the logic call is made. This is useful
+  // if the logic contract implements logic that deals with tokens.
+  repeated ERC20Token transfers              = 1;
+  // These are fees that go to the relayer of the logic call.
+  repeated ERC20Token fees                   = 2;
+  // The invalidation_id and invalidation_nonce provide a way for the calling module to implement a variety of
+  // replay protection/invalidation strategies. The rules are simple: When a logic call is submitted to the
+  // Gravity.sol contract, it will not be executed if a previous logic call with the same invalidation_id
+  // and an equal or higher invalidation_nonce was executed previously. To use a strategy where a submitted logic
+  // call invalidates all earlier unsubmitted logic calls, the calling module would simply keep the invalidation_id
+  // the same and increment the invalidation_nonce. To implement a strategy where logic calls do not invalidate each other
+  // at all, and are only invalidated by timing out, the calling module would increment the invalidation_id with each call.
+  // To implement a strategy identical to the one used by this module for transaction batches, the calling module would set the
+  // invalidation_id to the token contract, and increment the invalidation_nonce.
+  bytes               invalidation_id        = 6;
+  uint64              invalidation_nonce     = 7;
+}
+```
+
+When another module requests a logic call to be executed on Ethereum it is stored in a store within the gravity module.
 
 | Key                                                                  | Value                                                     | Type                      | Encoding         |
 | -------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------- | ---------------- |
