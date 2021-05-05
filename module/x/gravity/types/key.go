@@ -161,7 +161,7 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
 func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
-	return append(append([]byte{OutgoingTXBatchKey}, []byte(tokenContract)...), UInt64Bytes(nonce)...)
+	return bytes.Join([][]byte{{OutgoingTXBatchKey}, UInt64Bytes(nonce), []byte(tokenContract)}, []byte{})
 }
 
 // GetOutgoingTxBatchBlockKey returns the following key format
