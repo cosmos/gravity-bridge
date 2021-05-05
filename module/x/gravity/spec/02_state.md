@@ -21,6 +21,28 @@ Stored in two possible ways, first with a height and second without (unsafe). Un
 | ------------------------------------------------------------------ | -------------------------------- | ----------------------- | ---------------- |
 | `[]byte{0xa} + []byte(tokenContract) + nonce (big endian encoded)` | A batch of outgoing transactions | `types.OutgoingTxBatch` | Protobuf encoded |
 
+```
+message OutgoingTxBatch {
+  // The batch_nonce is an incrementing nonce which is assigned to a batch on creation.
+  // The Gravity.sol Ethereum contract stores the last executed batch nonce for each token type
+  // and it will only execute batches with a lower nonce. Note that the nonce sequence is
+  // PER TOKEN, i.e. GRT tokens could have a last executed nonce of 3002 while DAI tokens had a nonce of 4556
+  // This property is important for creating batches that are profitable to submit, which is covered in greater
+  // detail in the [state transitions spec](03_state_transitions.md)
+  uint64                      batch_nonce    = 1;
+  // The batch_timeout is an Ethereum block at which this batch will no longer be executed by Gravity.sol. This
+  // allows us to cancel batches that we know have timed out, releasing their transactions to be included in a new batch
+  // or cancelled by their sender.
+  uint64                      batch_timeout  = 2;
+  // These are the transactions sending tokens to destinations on Ethereum.
+  repeated OutgoingTransferTx transactions   = 3;
+  // This is the token contract of the tokens that are being sent in this batch.
+  string                      token_contract = 4;
+  // The Cosmos block height that this batch was created. This is used in slashing.
+  uint64                      block          = 5;
+}
+```
+
 ### ValidatorSet
 
 This is the validator set of the bridge.

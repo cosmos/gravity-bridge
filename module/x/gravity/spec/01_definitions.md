@@ -2,7 +2,6 @@
 order: 1
 -->
 
-
 # Definitions
 
 This section outlines terminology used throughout the spec and code.
@@ -11,9 +10,9 @@ This section outlines terminology used throughout the spec and code.
 
 This is a person (or people) who control a Cosmos SDK validator node. This is also called `valoper` or "Validator Operator" in the Cosmos SDK staking section
 
-### Counter Chain
+### Ethereum
 
-A chain that utilizes an EVM. Some examples of this are Polygon, Ethereum, and Ethereum Classic.
+The EVM-using chain that this Gravity module is connected to. Some examples of this are Binance Smart Chain, Ethereum, and Ethereum Classic. We refer to it as "Ethereum" in this documentation for convenience and because a given Gravity module can only connect to one chain at a time so there is no need to differentiate.
 
 ### Relayer
 
@@ -31,7 +30,7 @@ A transaction batch is a set of Ethereum transactions to be sent from the Gravit
 
 Is a transaction pool like structure that exists in the chains to store, separate from the `Gravity Tx Pool` it stores transactions that have been placed in batches that are in the process of being signed or being submitted by the `Orchestrator Set`
 
-### Observed 
+### Observed
 
 Events on Ethereum are considered `Observed` when the `Eth Signers` of 66% of the active Cosmos validator set during a given block has submitted an oracle message attesting to seeing the event.
 
@@ -57,4 +56,4 @@ A `Voucher` which is the locked opposing chain token in the contract
 
 ### Logic Calls
 
-A logic call refers to a created action for a smart contract interaction on the opposing chain. 
+A logic call refers to a created action for a smart contract interaction on the opposing chain.

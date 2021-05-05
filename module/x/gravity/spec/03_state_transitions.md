@@ -74,3 +74,32 @@ Cosmos originated assets are represented by ERC20 contracts deployed on Ethereum
 - Check if the Cosmos denom that the contract was deployed even exists. If not, error out.
 - Check if the ERC20 parameters, Name, Symbol, and Decimals match the equivalent attributes in the `DenomMetaData`. If not, error out.
 - If the previous checks all passed, associate the ERC20's contract address with the denom using the `CosmosOriginatedDenomToERC20` index
+
+## OutgoingTxBatch
+
+### Batch creation
+
+To create a new batch for a given token type:
+
+- Check if there is a previous active batch for this token type, if so:
+  - Calculate the fees (denominated in the batches token) that the new batch would generate for a relayer once submitted to Ethereum.
+  - Calculate the fees that the previous batch would generate for a relayer.
+  - If the new batch does not have higher fees than the old batch, error out.
+
+This mechanism ensures smooth functioning of the bridge, by keeping batches from being filled with low value transactions. Consider:
+
+If there were many transactions in the transaction pool with an unprofitably low fee, and a few coming in every block with a high fee, each high fee transaction might end up in a batch with a bunch of unprofitable transactions. These batches would not be profitable to submit, and so the profitable transactions would end up in unprofitable batches, and not be submitted.
+
+By making it so that every new batch must be more profitable than any other batch that is waiting to be submitted, it gives the few profitable transactions that come in every block the chance to build up and form a batch profitable enough to submit.
+
+Moving on with the batch creation process:
+
+- Take the `OutgoingTxBatchSize` unbatched transactions with the highest fees for the given token type, add them to the batches `transactions` field, and remove the transactions from the `UnbatchedTXIndex`, so they cannot be cancelled or added to another batch.
+- Increment the `LastOutgoingBatchID` and set the batches `batch_nonce` field to the incremented value.
+- Store the batch, indexed by the token contract and the batch nonce.
+
+### Batch signing
+
+Once a batch has been created and stored, it is up to the current validators to sign it with their Ethereum keys so that it can be submitted to the Ethereum chain. They do this with a separate process called the "orchestrator", and send the signatures to the Cosmos chain as `MsgConfirmBatch` messages. The Gravity module then checks that the signature is valid and stores it.
+
+Relayers are then able to get all the signatures for a batch, assemble them into an Ethereum transaction, and send it to the Gravity.sol contract.
