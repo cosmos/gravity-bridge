@@ -21,10 +21,10 @@ service Msg {
   rpc RequestBatch(MsgRequestBatch) returns (MsgRequestBatchResponse) {
     option (google.api.http).post = "/gravity/v1/request_batch";
   }
-  rpc SubmitConfirm(MsgSubmitConfirm) returns (MsgSubmitConfirmResponse) {
+  rpc SubmitEthereumSignature(MsgSubmitEthereumSignature) returns (MsgSubmitEthereumSignatureResponse) {
     option (google.api.http).post = "/peggy/v1/confim";
   }
-  rpc SubmitEvent(MsgSubmitEvent) returns (MsgSubmitEventResponse) {
+  rpc SubmitEthereumEvent(MsgSubmitEthereumEvent) returns (MsgSubmitEthereumEventResponse) {
     option (google.api.http).post = "/peggy/v1/event";
   }
   rpc SetDelegateKeys(MsgDelegateKeys) returns (MsgDelegateKeysResponse) {
@@ -73,8 +73,8 @@ message MsgSubmitConfirm {
   string              signer  = 2;
 }
 
-// ConfirmLogicCall confirms an outgoing logic call
-message ConfirmLogicCall {
+// ConfirmContractCallTx confirms an outgoing logic call
+message ConfirmContractCallTx {
   bytes  invalidation_id      = 1 [
     (gogoproto.casttype)   = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
   ];
@@ -140,9 +140,9 @@ message WithdrawEvent {
   uint64 ethereum_height = 3;
 }
 
-// LogicCallExecutedEvent describes a logic call that has been
+// ContractCallTxExecutedEvent describes a logic call that has been
 // successfully executed on Ethereum.
-message LogicCallExecutedEvent {
+message ContractCallTxExecutedEvent {
   uint64 event_nonce        = 1;
   bytes  invalidation_id    = 2 [
     (gogoproto.customname) = "InvalidationID",

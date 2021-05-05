@@ -36,31 +36,31 @@ service Query {
   rpc BatchTxs(BatchTxsRequest) returns (BatchTxsResponse) {
     option (google.api.http).get = "/gravity/v1/batch/batch_txs";
   }
-  rpc LogicCalls(LogicCallsRequest) returns (LogicCallsResponse) {
+  rpc ContractCallTxs(LogicCallsRequest) returns (LogicCallsResponse) {
     option (google.api.http).get = "/gravity/v1/batch/logic_calls";
   }
 
   // confirmation queries
   // TODO: can/should we group these into one endpoint?
-  rpc SignerSetConfirms(SignerSetConfirmsRequest) returns (SignerSetConfirmsResponse) {
-    option (google.api.http).get = "/gravity/v1/signer_sets/confirms";
+  rpc SignerSetEthereumSignatures(SignerSetEthereumSignaturesRequest) returns (SignerSetEthereumSignaturesResponse) {
+    option (google.api.http).get = "/gravity/v1/signer_sets/EthereumSignatures";
   }
-  rpc BatchConfirms(BatchConfirmsRequest) returns (BatchConfirmsResponse) {
-    option (google.api.http).get = "/gravity/v1/batch_txs/confirms";
+  rpc BatchTxEthereumSignatures(BatchTxEthereumSignaturesRequest) returns (BatchTxEthereumSignaturesResponse) {
+    option (google.api.http).get = "/gravity/v1/batch_txs/EthereumSignatures";
   }
-  rpc LogicConfirms(LogicConfirmsRequest) returns (LogicConfirmsResponse) {
-    option (google.api.http).get = "/gravity/v1/logic_calls/confirms";
+  rpc ContractCallTxEthereumSignatures(ContractCallTxEthereumSignaturesRequest) returns (ContractCallTxEthereumSignaturesResponse) {
+    option (google.api.http).get = "/gravity/v1/logic_calls/EthereumSignatures";
   }
   
   // pending confirmation queries
   // TODO: can/should we group this into one endpoint?
-  rpc PendingSignerSetConfirms(PendingSignerSetConfirmsRequest) returns (PendingSignerSetConfirmsResponse) {
+  rpc PendingSignerSetEthereumSignatures(PendingSignerSetEthereumSignaturesRequest) returns (PendingSignerSetEthereumSignaturesResponse) {
     option (google.api.http).get = "/gravity/v1/signersets/{address}/pending";
   }
-  rpc PendingBatchConfirms(PendingBatchConfirmsRequest) returns (PendingBatchConfirmsResponse) {
+  rpc PendingBatchEthereumSignatures(PendingBatchEthereumSignaturesRequest) returns (PendingBatchEthereumSignaturesResponse) {
     option (google.api.http).get = "/gravity/v1/batches/{address}/pending";
   }
-  rpc PendingLogicConfirms(PendingLogicConfirmsRequest) returns (PendingLogicConfirmsResponse) {
+  rpc PendingLogicEthereumSignatures(PendingLogicEthereumSignaturesRequest) returns (PendingLogicEthereumSignaturesResponse) {
     option (google.api.http).get = "/gravity/v1/logiccalls/{address}/pending";
   }
 
