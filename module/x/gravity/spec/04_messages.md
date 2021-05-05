@@ -8,15 +8,15 @@ In this section we describe the processing of the gravity messages and the corre
 
 ### MsgSetOrchestratorAddress
 
-Allows validators to delegate their voting responsibilities to a given key. This Key can be used to authenticate oracle claims. 
+Allows validators to delegate their voting responsibilities to a given key. This Key can be used to authenticate oracle claims.
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L38-L40
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L56-60
 
-This message is expected to fail if: 
+This message is expected to fail if:
 
-- The validator address is incorrect. 
+- The validator address is incorrect.
   - The address is empty (`""`)
   - Not a length of 20
   - Bech32 decoding fails
@@ -30,30 +30,11 @@ This message is expected to fail if:
   - Does not start with 0x
 - The validator is not present in the validator set.
 
-### MsgValsetConfirm
-
-When the gravity daemon witnesses a complete validator set within the gravity module, the validator submits a signature of a message containing the entire validator set. 
-
-+++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L79-84
-
-This message is expected to fail if:
-
-- If the validator set is not present.
-- The signature is encoded incorrectly.
-- Signature verification of the ethereum key fails.
-- If the signature submitted has already been submitted previously.
-- The validator address is incorrect. 
-  - The address is empty (`""`)
-  - Not a length of 20
-  - Bech32 decoding fails
-
-
 ### MsgSendToEth
 
 When a user wants to bridge an asset to an EVM. If the token has originated from the cosmos chain it will be held in a module account. If the token is originally from ethereum it will be burned on the cosmos side.
 
 > Note: this message will later be removed when it is included in a batch.
-
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L100-109
 
@@ -72,7 +53,7 @@ This message will fail if:
 
 ### MsgRequestBatch
 
-When enough transactions have been added into a batch, a user or validator can call send this message in order to send a batch of transactions across the bridge. 
+Anyone can send this message to trigger [creation](03_state_transitions.md#batch-creation) of an `OutgoingTxBatch`.
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L122-125
 
@@ -84,7 +65,7 @@ This message will fail if:
 
 ### MsgConfirmBatch
 
-When a `MsgRequestBatch` is observed, validators need to sign batch request to signify this is not a maliciously created batch and to avoid getting slashed. 
+Validators sign `OutgoingTxBatch`'s with their Ethereum keys, and send the signatures to the Gravity module using this message.
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L137-143
 
@@ -92,14 +73,14 @@ This message will fail if:
 
 - The batch does not exist
 - If checkpoint generation fails
-- If a none validator address or delegated address 
+- If a none validator address or delegated address
 - If the counter chain address is empty or incorrect.
 - If counter chain address fails signature validation
 - If the signature was already presented in a previous message
 
 ### MsgConfirmLogicCall
 
-When a logic call request has been made, it needs to be confirmed by the bridge validators. Each validator has to submit a confirmation of the logic call being executed.
+Validators sign `OutgoingLogicCall`'s with their Ethereum keys, and send the signatures to the Gravity module using this message.
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L155-161
 
@@ -114,9 +95,26 @@ This message will fail if:
 - Counter party signature verification failed
 - A duplicate signature is observed
 
+### MsgValsetConfirm
+
+When a `Valset` is created by the Gravity module, validators sign it with their Ethereum keys, and send the signatures to the Gravity module using this message.
+
++++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L79-84
+
+This message is expected to fail if:
+
+- If the validator set is not present.
+- The signature is encoded incorrectly.
+- Signature verification of the ethereum key fails.
+- If the signature submitted has already been submitted previously.
+- The validator address is incorrect.
+  - The address is empty (`""`)
+  - Not a length of 20
+  - Bech32 decoding fails
+
 ### MsgDepositClaim
 
-When a message to deposit funds into the gravity contract is created a event will be omitted and observed a message will be submitted confirming the deposit.
+When a user deposits funds into the Gravity.sol Ethereum contract an event is emitted by the contract. When validators observe this event, they send this message.
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L170-181
 
@@ -128,8 +126,7 @@ This message will fail if:
 
 ### MsgWithdrawClaim
 
-When a user requests a withdrawal from the gravity contract a event will omitted by the counter party chain. This event will be observed by a bridge validator and submitted to the gravity module.
-
+When a transaction batch is executed by the Gravity.sol Ethereum contract, an event is emitted by the contract. When validators observe this event, they send this message.
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L187-193
 
@@ -141,7 +138,7 @@ This message will fail if:
 
 ### MsgERC20DeployedClaim
 
-This message allows the cosmos chain to learn information about the denom from the counter party chain.
+When a transaction batch is executed by the Gravity.sol Ethereum contract, an event is emitted by the contract. When validators observe this event, they send this message.
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L200-209
 
@@ -153,11 +150,11 @@ This message will fail if:
 
 ### MsgLogicCallExecutedClaim
 
-This informs the chain that a logic call has been executed. This message is submitted by bridge validators when they observe a event containing details around the logic call. 
+When a logic call is executed by the Gravity.sol Ethereum contract, an event is emitted by the contract. When validators observe this event, they send this message.
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L215-221
 
-This message will fail if: 
+This message will fail if:
 
 - The validator submitting the claim is unknown
 - The validator is not in the active set

@@ -95,7 +95,7 @@ When a validator would like to delegate their voting power to another key. The v
 
 ### EthAddress
 
-A validator has an associated counter chain address.
+A validator has an associated Ethereum address.
 
 | Key                                | Value                                    | Type     | Encoding         |
 | ---------------------------------- | ---------------------------------------- | -------- | ---------------- |
@@ -135,9 +135,9 @@ message OutgoingLogicCall {
 
 When another module requests a logic call to be executed on Ethereum it is stored in a store within the gravity module.
 
-| Key                                                                  | Value                                                     | Type                      | Encoding         |
-| -------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------- | ---------------- |
-| `[]byte{0xde} + []byte(invalidationId) + nonce (big endian encoded)` | A user created logic call to be sent to the counter chain | `types.OutgoingLogicCall` | Protobuf encoded |
+| Key                                                                  | Value                                                | Type                      | Encoding         |
+| -------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------- | ---------------- |
+| `[]byte{0xde} + []byte(invalidationId) + nonce (big endian encoded)` | A user created logic call to be sent to the Ethereum | `types.OutgoingLogicCall` | Protobuf encoded |
 
 ### ConfirmLogicCall
 
@@ -165,9 +165,9 @@ Represents the latest slashed block height. There is always only a singe value s
 | -------------- | --------------------------------------- | -------- | ------------------ |
 | `[]byte{0xf7}` | Latest height a batch slashing occurred | `uint64` | Big endian encoded |
 
-### TokenContract & Denom
+### Cosmos originated ERC20 - TokenContract & Denom
 
-A denom that is originally from a counter chain will be from a contract. The toke contract and denom are stored in two ways. First, the denom is used as the key and the value is the token contract. Second, the contract is used as the key, the value is the denom the token contract represents.
+This is how we associate the ERC20 contracts representing Cosmos originated assets with the asset's denom on Cosmos. First, the denom is used as the key and the value is the token contract. Second, the contract is used as the key, the value is the denom the token contract represents.
 
 | Key                            | Value                  | Type     | Encoding              |
 | ------------------------------ | ---------------------- | -------- | --------------------- |
@@ -200,8 +200,6 @@ This is a record of all the votes for a given claim (Ethereum event).
 | Key                                                                 | Value                                 | Type                | Encoding         |
 | ------------------------------------------------------------------- | ------------------------------------- | ------------------- | ---------------- |
 | `[]byte{0x5} + eventNonce (big endian encoded) + []byte(claimHash)` | Attestation of occurred events/claims | `types.Attestation` | Protobuf encoded |
-
-Attestation fields:
 
 ```
 message Attestation {
