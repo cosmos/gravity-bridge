@@ -83,7 +83,7 @@ service Query {
     option (google.api.http).get = "/gravity/v1/cosmos_originated/denom_to_erc20";
   }
   // Query for pending tranfertxs
-  rpc PendingTransferTxs(PendingTransferTxsRequest) returns (PendingTransferTxsResponse) {
+  rpc PendingSendToEthereumTxs(PendingSendToEthereumTxsRequest) returns (PendingSendToEthereumTxsResponse) {
     option (google.api.http).get = "/gravity/v1/query_pending_send_to_eth";
   }
 
@@ -263,10 +263,10 @@ message DelegateKeysByOrchestratorAddressResponse {
 
 // NOTE: if there is no sender address, return all
 // TODO: pagination
-message PendingTransferTxsRequest {
+message PendingSendToEthereumTxsRequest {
   string sender_address = 1;
 }
-message PendingTransferTxsResponse {
-  repeated TransferTx batched_transfers   = 1;
-  repeated TransferTx unbatched_transfers = 2;
+message PendingSendToEthereumTxsResponse {
+  repeated SendToEthereumTx batched_send_to_ethereum_txs   = 1;
+  repeated SendToEthereumTx unbatched_send_to_ethereum_txs = 2;
 }

@@ -47,7 +47,7 @@ message EthereumSignerSet {
 
 // BatchTx represents a batch of transactions going from Cosmos to Ethereum. Batch
 // txs are are identified by a unique hash and the token contract that is shared by
-// all the transfer
+// all the SendToEthereum
 message BatchTx {
   uint64         nonce          = 1;
   uint64         timeout        = 2;
@@ -58,8 +58,8 @@ message BatchTx {
   uint64         ethereum_block = 5;
 }
 
-// TransferTx represents an individual transfer from Cosmos to Ethereum
-message TransferTx {
+// SendToEthereumTx represents an individual SendToEthereum from Cosmos to Ethereum
+message SendToEthereumTx {
   uint64                   id                 = 1;
   string                   sender             = 2;
   string                   ethereum_recipient = 3;

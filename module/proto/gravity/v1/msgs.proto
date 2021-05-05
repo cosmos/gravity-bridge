@@ -12,11 +12,11 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
 // Msg defines the state transitions possible within gravity
 service Msg {
-  rpc Transfer(MsgTransfer) returns (MsgTransferResponse) {
-    option (google.api.http).post = "/gravity/v1/transfer";
+  rpc SendToEthereum(MsgSendToEthereum) returns (MsgSendToEthereumResponse) {
+    option (google.api.http).post = "/gravity/v1/send_to_ethereum";
   }
-  rpc CancelTransfer(MsgCancelTransfer) returns (MsgCancelTransferResponse) {
-    option (google.api.http).post = "/peggy/v1/transfer/cancel";
+  rpc CancelSendToEthereum(MsgCancelSendToEthereum) returns (MsgCancelSendToEthereumResponse) {
+    option (google.api.http).post = "/peggy/v1/send_to_ethereum/cancel";
   }
   rpc RequestBatchTx(MsgRequestBatchTx) returns (MsgRequestBatchTxResponse) {
     option (google.api.http).post = "/gravity/v1/batchtx/request";
@@ -32,29 +32,29 @@ service Msg {
   }
 }
 
-// MsgTransfer submits a transfer attempt to bridge an asset over to Ethereum.
-// The transfer will be stored and then included in a batch and then
+// MsgSendToEthereum submits a SendToEthereum attempt to bridge an asset over to Ethereum.
+// The SendToEthereum will be stored and then included in a batch and then
 // submitted to Ethereum.
-message MsgTransfer {
+message MsgSendToEthereum {
   string                   sender        = 1;
   string                   eth_recipient = 2;
   cosmos.base.v1beta1.Coin amount        = 3 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.Coin bridge_fee    = 4 [(gogoproto.nullable) = false];
 }
 
-// MsgTransferResponse returns the transfer transaction ID which will be included
+// MsgSendToEthereumResponse returns the SendToEthereum transaction ID which will be included
 // in the batch tx.
-message MsgTransferResponse { uint64 id = 1; }
+message MsgSendToEthereumResponse { uint64 id = 1; }
 
-// MsgCancelTransfer allows the sender to cancel its own outgoing transfer tx
+// MsgCancelSendToEthereum allows the sender to cancel its own outgoing SendToEthereum tx
 // and recieve a refund of the tokens and bridge fees. This tx will only succeed
-// if the transfer tx hasn't been batched to be processed and relayed to Ethereum.
-message MsgCancelTransfer {
+// if the SendToEthereum tx hasn't been batched to be processed and relayed to Ethereum.
+message MsgCancelSendToEthereum {
   uint64 id     = 1;
   string sender = 2;
 }
 
-message MsgCancelTransferResponse {}
+message MsgCancelSendToEthereumResponse {}
 
 // MsgRequestBatch requests a batch of transactions with a given coin denomination to send across
 // the bridge to Ethereum.
@@ -129,9 +129,9 @@ message DepositEvent {
   uint64 ethereum_height = 6;
 }
 
-// WithdrawEvent claims that a batch of withdrawal operations on the bridge contract
+// BatchTxExecutedEvent claims that a batch of BatchTxExecutedal operations on the bridge contract
 // was executed successfully on ETH
-message WithdrawEvent {
+message BatchTxExecutedEvent {
   string token_contract  = 1;
   uint64 event_nonce     = 2;
   uint64 ethereum_height = 3;
