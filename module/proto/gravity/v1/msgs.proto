@@ -96,8 +96,8 @@ message BatchTxSignature {
   ];
 }
 
-// SignerSetUpdateTxSignature is a signature on behalf of a validator for a SignerSetUpdateTx
-message SignerSetUpdateTxSignature {
+// UpdateSignerSetTxSignature is a signature on behalf of a validator for a UpdateSignerSetTx
+message UpdateSignerSetTxSignature {
   uint64 nonce                = 1;
   string eth_signer           = 2;
   bytes  signature            = 3 [
@@ -115,9 +115,9 @@ message MsgSubmitEthereumEvent {
   string              signer = 2;
 }
 
-// DepositEvent is submitted when the DepositEvent is emitted by they gravity contract. 
+// SendToCosmosEvent is submitted when the SendToCosmosEvent is emitted by they gravity contract. 
 // ERC20 representation coins are minted to the cosmosreceiver address.
-message DepositEvent {
+message SendToCosmosEvent {
   uint64 event_nonce     = 1;
   string token_contract  = 2;
   string amount          = 3 [

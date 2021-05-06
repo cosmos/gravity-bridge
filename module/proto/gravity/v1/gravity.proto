@@ -34,10 +34,10 @@ message EthereumSigner {
   string ethereum_address = 2;
 }
 
-// EthereumSignerSet is the Ethereum Bridge multisig set that relays transactions
+// UpdateSignerSetTx is the Ethereum Bridge multisig set that relays transactions
 // the two chains. The staking validators keep ethereum keys which are used to
 // check signatures on Ethereum in order to get significant gas savings.
-message EthereumSignerSet {
+message UpdateSignerSetTx {
   uint64             nonce   = 1;
   repeated EthereumSigner signers = 2 [
     (gogoproto.castrepeated) = "EthereumSigners", 
