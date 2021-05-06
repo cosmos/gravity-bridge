@@ -2,10 +2,8 @@ syntax = "proto3";
 package gravity.v1;
 
 import "gogoproto/gogo.proto";
-import "gravity/v1/types.proto";
+import "gravity/v1/gravity.proto";
 import "gravity/v1/msgs.proto";
-import "gravity/v1/batch.proto";
-import "gravity/v1/attestation.proto";
 
 option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
@@ -103,18 +101,18 @@ message Params {
 
 // GenesisState struct
 message GenesisState {
-  Params                             params              = 1;
-  uint64                             last_observed_nonce = 2;
-  repeated EthSignerSet              valsets             = 3;
-  repeated ConfirmSignerSet          valset_confirms     = 4;
-  repeated BatchTx                   batches             = 5;
-  repeated ConfirmBatch              batch_confirms      = 6 [(gogoproto.nullable) = false];
-  repeated LogicCallTx               logic_calls         = 7;
-  repeated ConfirmLogicCall          logic_call_confirms = 8 [(gogoproto.nullable) = false];
-  repeated Attestation               attestations        = 9 [(gogoproto.nullable) = false];
-  repeated MsgDelegateKeys           delegate_keys       = 10;
-  repeated ERC20ToDenom              erc20_to_denoms     = 11;
-  repeated TransferTx                unbatched_transfers = 12;
+  Params                              params                         = 1;
+  uint64                              last_observed_nonce            = 2;
+  repeated UpdateSignerSetTx          valsets                        = 3;
+  repeated UpdateSignerSetTxSignature valset_confirms                = 4;
+  repeated BatchTx                    batches                        = 5;
+  repeated BatchTxSignature           batch_confirms                 = 6 [(gogoproto.nullable) = false];
+  repeated ContractCallTx             logic_calls                    = 7;
+  repeated ContractCallTxSignature    logic_call_confirms            = 8 [(gogoproto.nullable) = false];
+  repeated EthereumEventVoteRecord    ethereum_event_vote_records    = 9 [(gogoproto.nullable) = false];
+  repeated MsgDelegateKeys            delegate_keys                  = 10;
+  repeated ERC20ToDenom               erc20_to_denoms                = 11;
+  repeated SendToEthereumTx           unbatched_send_to_ethereum_txs = 12;
 }
 
 // This records the relationship between an ERC20 token and the denom
