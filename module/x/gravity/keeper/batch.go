@@ -124,7 +124,7 @@ func (k Keeper) StoreBatch(ctx sdk.Context, batch *types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
 	// set the current block height when storing the batch
 	batch.Block = uint64(ctx.BlockHeight())
-	key := types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce)
+	key := types.GetBatchTxKey(batch.TokenContract, batch.BatchNonce)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
 
 	blockKey := types.GetOutgoingTxBatchBlockKey(batch.Block)
@@ -134,7 +134,7 @@ func (k Keeper) StoreBatch(ctx sdk.Context, batch *types.OutgoingTxBatch) {
 // StoreBatchUnsafe stores a transaction batch w/o setting the height
 func (k Keeper) StoreBatchUnsafe(ctx sdk.Context, batch *types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce)
+	key := types.GetBatchTxKey(batch.TokenContract, batch.BatchNonce)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
 
 	blockKey := types.GetOutgoingTxBatchBlockKey(batch.Block)
@@ -144,7 +144,7 @@ func (k Keeper) StoreBatchUnsafe(ctx sdk.Context, batch *types.OutgoingTxBatch) 
 // DeleteBatch deletes an outgoing transaction batch
 func (k Keeper) DeleteBatch(ctx sdk.Context, batch types.OutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetOutgoingTxBatchKey(batch.TokenContract, batch.BatchNonce))
+	store.Delete(types.GetBatchTxKey(batch.TokenContract, batch.BatchNonce))
 	store.Delete(types.GetOutgoingTxBatchBlockKey(batch.Block))
 }
 
@@ -170,7 +170,7 @@ func (k Keeper) pickUnbatchedTX(
 // GetOutgoingTXBatch loads a batch object. Returns nil when not exists.
 func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, tokenContract string, nonce uint64) *types.OutgoingTxBatch {
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetOutgoingTxBatchKey(tokenContract, nonce)
+	key := types.GetBatchTxKey(tokenContract, nonce)
 	bz := store.Get(key)
 	if len(bz) == 0 {
 		return nil
@@ -212,7 +212,7 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract string, non
 
 // IterateOutgoingTXBatches iterates through all outgoing batches in DESC order.
 func (k Keeper) IterateOutgoingTXBatches(ctx sdk.Context, cb func(key []byte, batch *types.OutgoingTxBatch) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.OutgoingTXBatchKey)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchTxKey)
 	iter := prefixStore.ReverseIterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {

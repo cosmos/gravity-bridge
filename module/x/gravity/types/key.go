@@ -27,20 +27,20 @@ const (
 	// i.e. cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	EthAddressKey
 
-	// ValsetRequestKey indexes valset requests by nonce
-	ValsetRequestKey
+	// UpdateSignerSetTxKey indexes valset requests by nonce
+	UpdateSignerSetTxKey
 
-	// ValsetConfirmKey indexes valset confirmations by nonce and the validator account address
+	// UpdateSignerSetTxSignatureKey indexes valset confirmations by nonce and the validator account address
 	// i.e cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
-	ValsetConfirmKey
+	UpdateSignerSetTxSignatureKey
 
-	// OracleAttestationKey attestation details by nonce and validator address
+	// EthereumEventVoteRecordKey attestation details by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	// An attestation can be thought of as the 'event to be executed' while
 	// the Claims are an individual validator saying that they saw an event
 	// occur the Attestation is 'the event' that multiple claims vote on and
 	// eventually executes
-	OracleAttestationKey
+	EthereumEventVoteRecordKey
 
 	// OutgoingTXPoolKey indexes the last nonce for the outgoing tx pool
 	OutgoingTXPoolKey
@@ -48,14 +48,14 @@ const (
 	// SecondIndexOutgoingTXFeeKey indexes fee amounts by token contract address
 	SecondIndexOutgoingTXFeeKey
 
-	// OutgoingTXBatchKey indexes outgoing tx batches under a nonce and token address
-	OutgoingTXBatchKey
+	// BatchTxKey indexes outgoing tx batches under a nonce and token address
+	BatchTxKey
 
 	// OutgoingTXBatchBlockKey indexes outgoing tx batches under a block height and token address
 	OutgoingTXBatchBlockKey
 
-	// BatchConfirmKey indexes validator confirmations by token contract address
-	BatchConfirmKey
+	// BatchTxSignatureKey indexes validator confirmations by token contract address
+	BatchTxSignatureKey
 
 	// LastEventNonceByValidatorKey indexes lateset event nonce by validator
 	LastEventNonceByValidatorKey
@@ -72,11 +72,11 @@ const (
 	// KeyOrchestratorAddress indexes the validator keys for an orchestrator
 	KeyOrchestratorAddress
 
-	// KeyOutgoingLogicCall indexes the outgoing logic calls
-	KeyOutgoingLogicCall
+	// ContractCallTxKey indexes the outgoing logic calls
+	ContractCallTxKey
 
-	// KeyOutgoingLogicConfirm indexes the outgoing logic confirms
-	KeyOutgoingLogicConfirm
+	// ContractCallTxSignatureKey indexes the outgoing logic confirms
+	ContractCallTxSignatureKey
 
 	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
 	LastObservedEthereumBlockHeightKey
@@ -114,41 +114,41 @@ func GetEthAddressKey(validator sdk.ValAddress) []byte {
 	return append([]byte{EthAddressKey}, validator.Bytes()...)
 }
 
-// GetValsetKey returns the following key format
+// GetUpdateSignerSetTxKey returns the following key format
 // prefix    nonce
 // [0x0][0 0 0 0 0 0 0 1]
-func GetValsetKey(nonce uint64) []byte {
-	return append([]byte{ValsetRequestKey}, UInt64Bytes(nonce)...)
+func GetUpdateSignerSetTxKey(nonce uint64) []byte {
+	return append([]byte{UpdateSignerSetTxKey}, UInt64Bytes(nonce)...)
 }
 
-// GetValsetConfirmKey returns the following key format
+// GetUpdateSignerSetTxSignatureKey returns the following key format
 // prefix   nonce                    validator-address
 // [0x0][0 0 0 0 0 0 0 1][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
-func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
-	return append([]byte{ValsetConfirmKey}, append(UInt64Bytes(nonce), validator.Bytes()...)...)
+func GetUpdateSignerSetTxSignatureKey(nonce uint64, validator sdk.AccAddress) []byte {
+	return append([]byte{UpdateSignerSetTxSignatureKey}, append(UInt64Bytes(nonce), validator.Bytes()...)...)
 }
 
-// GetAttestationKey returns the following key format
+// GetEthereumEventVoteRecordKey returns the following key format
 // prefix     nonce                             claim-details-hash
 // [0x5][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
 // An attestation is an event multiple people are voting on, this function needs the claim
 // details because each Attestation is aggregating all claims of a specific event, lets say
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
-func GetAttestationKey(eventNonce uint64, claimHash []byte) []byte {
-	return bytes.Join([][]byte{{OracleAttestationKey}, UInt64Bytes(eventNonce), claimHash}, []byte{})
+func GetEthereumEventVoteRecordKey(eventNonce uint64, claimHash []byte) []byte {
+	return bytes.Join([][]byte{{EthereumEventVoteRecordKey}, UInt64Bytes(eventNonce), claimHash}, []byte{})
 }
 
-// GetAttestationKeyWithHash returns the following key format
+// GetEthereumEventVoteRecordKeyWithHash returns the following key format
 // prefix     nonce                             claim-details-hash
 // [0x5][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
 // An attestation is an event multiple people are voting on, this function needs the claim
 // details because each Attestation is aggregating all claims of a specific event, lets say
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
-func GetAttestationKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
-	return bytes.Join([][]byte{{OracleAttestationKey}, UInt64Bytes(eventNonce), claimHash} , []byte{})
+func GetEthereumEventVoteRecordKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
+	return bytes.Join([][]byte{{EthereumEventVoteRecordKey}, UInt64Bytes(eventNonce), claimHash} , []byte{})
 }
 
 // GetOutgoingTxPoolKey returns the following key format
@@ -158,11 +158,11 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 	return append([]byte{OutgoingTXPoolKey}, sdk.Uint64ToBigEndian(id)...)
 }
 
-// GetOutgoingTxBatchKey returns the following key format
+// GetBatchTxKey returns the following key format
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
-func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
-	return bytes.Join([][]byte{{OutgoingTXBatchKey}, UInt64Bytes(nonce), []byte(tokenContract)}, []byte{})
+func GetBatchTxKey(tokenContract string, nonce uint64) []byte {
+	return bytes.Join([][]byte{{BatchTxKey}, UInt64Bytes(nonce), []byte(tokenContract)}, []byte{})
 }
 
 // GetOutgoingTxBatchBlockKey returns the following key format
@@ -172,12 +172,12 @@ func GetOutgoingTxBatchBlockKey(block uint64) []byte {
 	return append([]byte{OutgoingTXBatchBlockKey}, UInt64Bytes(block)...)
 }
 
-// GetBatchConfirmKey returns the following key format
+// GetBatchTxSignatureKey returns the following key format
 // prefix           eth-contract-address                BatchNonce                       Validator-address
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // TODO this should be a sdk.ValAddress
-func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
-	return bytes.Join([][]byte{{BatchConfirmKey}, []byte(tokenContract), UInt64Bytes(batchNonce), validator.Bytes()}, []byte{})
+func GetBatchTxSignatureKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
+	return bytes.Join([][]byte{{BatchTxSignatureKey}, []byte(tokenContract), UInt64Bytes(batchNonce), validator.Bytes()}, []byte{})
 }
 
 // GetFeeSecondIndexKey returns the following key format
@@ -206,12 +206,11 @@ func GetERC20ToDenomKey(erc20 string) []byte {
 	return append([]byte{ERC20ToDenomKey}, []byte(erc20)...)
 }
 
-func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {
-	a := append([]byte{KeyOutgoingLogicCall}, invalidationId...)
-	return append(a, UInt64Bytes(invalidationNonce)...)
+func GetContractCallTxKey(invalidationId []byte, invalidationNonce uint64) []byte {
+	return bytes.Join([][]byte{{ContractCallTxKey}, invalidationId, UInt64Bytes(invalidationNonce)}, []byte{})
 }
 
 // prefix    invalidationID  nonce  validatorAddr
-func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
-	return bytes.Join([][]byte{{KeyOutgoingLogicConfirm}, invalidationId, UInt64Bytes(invalidationNonce), validator.Bytes()}, []byte{})
+func GetContractCallTxSignatureKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
+	return bytes.Join([][]byte{{ContractCallTxSignatureKey}, invalidationId, UInt64Bytes(invalidationNonce), validator.Bytes()}, []byte{})
 }

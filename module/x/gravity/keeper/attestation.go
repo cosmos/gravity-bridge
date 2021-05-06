@@ -111,7 +111,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 		k.logger(ctx).Error("attestation failed",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()),
+			"id", types.GetEthereumEventVoteRecordKey(claim.GetEventNonce(), claim.ClaimHash()),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	} else {
@@ -130,7 +130,7 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		// todo: serialize with hex/ base64 ?
 		sdk.NewAttribute(types.AttributeKeyAttestationID,
-			string(types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()))),
+			string(types.GetEthereumEventVoteRecordKey(claim.GetEventNonce(), claim.ClaimHash()))),
 		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(claim.GetEventNonce())),
 		// TODO: do we want to emit more information?
 	)
@@ -140,14 +140,14 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 // SetAttestation sets the attestation in the store
 func (k Keeper) SetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
 	store := ctx.KVStore(k.storeKey)
-	aKey := types.GetAttestationKey(eventNonce, claimHash)
+	aKey := types.GetEthereumEventVoteRecordKey(eventNonce, claimHash)
 	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
 }
 
 // GetAttestation return an attestation given a nonce
 func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte) *types.Attestation {
 	store := ctx.KVStore(k.storeKey)
-	aKey := types.GetAttestationKey(eventNonce, claimHash)
+	aKey := types.GetEthereumEventVoteRecordKey(eventNonce, claimHash)
 	bz := store.Get(aKey)
 	if len(bz) == 0 {
 		return nil
@@ -160,7 +160,7 @@ func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []b
 // DeleteAttestation deletes an attestation given an event nonce and claim
 func (k Keeper) DeleteAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetAttestationKeyWithHash(eventNonce, claimHash))
+	store.Delete(types.GetEthereumEventVoteRecordKeyWithHash(eventNonce, claimHash))
 }
 
 // GetAttestationMapping returns a mapping of eventnonce -> attestations at that nonce
@@ -185,7 +185,7 @@ func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.A
 // IterateAttestaions iterates through all attestations
 func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attestation) bool) {
 	store := ctx.KVStore(k.storeKey)
-	prefix := []byte{types.OracleAttestationKey}
+	prefix := []byte{types.EthereumEventVoteRecordKey}
 	iter := store.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
