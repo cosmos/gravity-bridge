@@ -7,6 +7,16 @@ order: 5
 Each abci end block call, the operations to update queues and validator set
 changes are specified to execute.
 
+## Valset Creation
+
+Every endblock, we run the following procedure to determine whether to make a new `Valset` which will then need to be signed by all validators.
+
+1. If there are no valset requests, create a new one.
+2. If there is at least one validator who started unbonding in current block, create a `Valset`. This will make sure the unbonding validator has to provide an attestation to a new Valset that excludes them before they completely Unbond. Otherwise they will be slashed.
+3. If power change between validators of CurrentValset and latest valset request is > 5%, create a new `Valset`.
+
+If the above conditions are met, we create a new `Valset` using the procedure described [here](03_state_transitions.md#valset-creation)
+
 ## Slashing
 
 Slashing groups multiple types of slashing (validator set, batch and claim slashing). We will cover how these work in the following sections.
@@ -31,7 +41,7 @@ This slashing condition is triggered when a validator does not sign a transactio
 1. A validator simply does not bother to keep the correct binaries running on their system,
 2. A cartel of >1/3 validators unbond and then refuse to sign updates, preventing any batches from getting enough signatures to be submitted to the Gravity Ethereum contract.
 
-## Attestation
+## Attestation vote counting
 
 This logic counts up votes on `Attestation`s and kicks off the process of bringing Ethereum events into the Cosmos state;
 
@@ -55,8 +65,16 @@ Cleanup loops through batches and logic calls in order to clean up the timed out
 
 ### Batches
 
-When a batch of transactions are created they have a specified height of the opposing chain for when the batch becomes invalid. When this happens we must remove them from the store. At the end of every block, we loop through the store of logic calls checking the the timeout heights.
+When a batch of transactions are created they have a specified Ethereum block height when the batch becomes invalid. When this happens we must remove them from the store. At the end of every block, we loop through the store of batches checking the the timeout heights.
+
+Here is the procedure:
+
+- Get the `LastObservedEthereumBlockHeight`. This is the Ethereum block height from the last observed attestation, and is the most current information we have available about the current Ethereum block height.
+- Loop through all `OutgoingTxBatches`. For each batch:
+  - If the `BatchTimeout` on that batch is lower than the `LastObservedEthereumBlockHeight`, cancel the batch, freeing its transactions to be included in another batch, or cancelled by the sender.
+
+An important attribute of this procedure is that it is not possible for a batch to be executed on Ethereum AND cleaned up by the above procedure. This would result in double spends. Since the `LastObservedEthereumBlockHeight` can only be updated by observed Ethereum events, and events must be observed in order, it is impossible for the `LastObservedEthereumBlockHeight` to be higher than a given batches `BatchTimeout` AND for that batch to have been executed without the Gravity module having received the batch executed event.
 
 ### Logic Calls
 
-When a logic call is created it consists of a timeout height. This height is used to know when the logic call becomes invalid. At the end of every block, we loop through the store of logic calls checking the the timeout heights.
+Same procedure as batch cleanup above, but with logic calls.
