@@ -43,30 +43,31 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 // These values represent the time in blocks that a validator has to submit
 // a signature for a batch or valset, or to submit a claim for a particular
 // attestation nonce. In the case of attestations this clock starts when the
-// attestation is created, but only allows for slashing once the event has passed
+// attestation is created, but only allows for slashing once the event has
+// passed
 //
 // target_batch_timeout:
 //
-// This is the 'target' value for when batches time out, this is a target becuase
-// Ethereum is a probabalistic chain and you can't say for sure what the block
-// frequency is ahead of time.
+// This is the 'target' value for when batches time out, this is a target
+// becuase Ethereum is a probabalistic chain and you can't say for sure what the
+// block frequency is ahead of time.
 //
 // average_block_time
 // average_ethereum_block_time
 //
-// These values are the average Cosmos block time and Ethereum block time repsectively
-// and they are used to copute what the target batch timeout is. It is important that
-// governance updates these in case of any major, prolonged change in the time it takes
-// to produce a block
+// These values are the average Cosmos block time and Ethereum block time
+// repsectively and they are used to copute what the target batch timeout is. It
+// is important that governance updates these in case of any major, prolonged
+// change in the time it takes to produce a block
 //
 // slash_fraction_valset
 // slash_fraction_batch
 // slash_fraction_claim
 // slash_fraction_conflicting_claim
 //
-// The slashing fractions for the various gravity related slashing conditions. The first three
-// refer to not submitting a particular message, the third for submitting a different claim
-// for the same Ethereum event
+// The slashing fractions for the various gravity related slashing conditions.
+// The first three refer to not submitting a particular message, the third for
+// submitting a different claim for the same Ethereum event
 message Params {
   option (gogoproto.stringer) = false;
 
@@ -80,7 +81,7 @@ message Params {
   uint64 target_batch_timeout = 10;
   uint64 average_block_time = 11;
   uint64 average_ethereum_block_time = 12;
-  bytes  slash_fraction_valset = 13 [
+  bytes slash_fraction_valset = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -101,18 +102,21 @@ message Params {
 
 // GenesisState struct
 message GenesisState {
-  Params                              params = 1;
-  uint64                              last_observed_event_nonce = 2;
-  repeated UpdateSignerSetTx          update_signer_set_txs = 3;
+  Params params = 1;
+  uint64 last_observed_event_nonce = 2;
+  repeated UpdateSignerSetTx update_signer_set_txs = 3;
   repeated UpdateSignerSetTxSignature update_signer_set_tx_signatures = 4;
-  repeated BatchTx                    batch_txs = 5;
-  repeated BatchTxSignature           batch_tx_signatures = 6 [(gogoproto.nullable) = false];
-  repeated ContractCallTx             contract_call_txs = 7;
-  repeated ContractCallTxSignature    contract_call_tx_signatures = 8 [(gogoproto.nullable) = false];
-  repeated EthereumEventVoteRecord    ethereum_event_vote_records = 9 [(gogoproto.nullable) = false];
-  repeated MsgDelegateKeys            delegate_keys = 10;
-  repeated ERC20ToDenom               erc20_to_denoms = 11;
-  repeated SendToEthereumTx           unbatched_send_to_ethereum_txs = 12;
+  repeated BatchTx batch_txs = 5;
+  repeated BatchTxSignature batch_tx_signatures = 6
+      [ (gogoproto.nullable) = false ];
+  repeated ContractCallTx contract_call_txs = 7;
+  repeated ContractCallTxSignature contract_call_tx_signatures = 8
+      [ (gogoproto.nullable) = false ];
+  repeated EthereumEventVoteRecord ethereum_event_vote_records = 9
+      [ (gogoproto.nullable) = false ];
+  repeated MsgDelegateKeys delegate_keys = 10;
+  repeated ERC20ToDenom erc20_to_denoms = 11;
+  repeated SendToEthereumTx unbatched_send_to_ethereum_txs = 12;
 }
 
 // This records the relationship between an ERC20 token and the denom
