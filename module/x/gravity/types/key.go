@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -182,10 +183,11 @@ func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.A
 // GetFeeSecondIndexKey returns the following key format
 // prefix            eth-contract-address            fee_amount
 // [0x9][0xc783df8a850f42e7F7e57013759C285caa701eB6][1000000000]
-func GetFeeSecondIndexKey(fee ERC20Token) []byte {
+func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
 	amount := make([]byte, 32)
 	amount = fee.Amount.BigInt().FillBytes(amount)
-	return bytes.Join([][]byte{{SecondIndexOutgoingTXFeeKey}, []byte(fee.Contract), amount}, []byte{})
+	contract := GravityDenomToERC20Contract(fee.Denom)
+	return bytes.Join([][]byte{{SecondIndexOutgoingTXFeeKey}, []byte(contract), amount}, []byte{})
 }
 
 // GetLastEventNonceByValidatorKey indexes lateset event nonce by validator
