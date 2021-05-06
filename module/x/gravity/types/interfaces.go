@@ -42,6 +42,7 @@ type OutgoingTx interface {
 	// NOTE: currently the function signatures here don't match, figure out how to do this properly
 	// maybe add an interface arg here and typecheck in each implementation?
 	GetCheckpoint([]byte) ([]byte, error)
+	GetStoreIndex() []byte
 }
 
 // _ OutgoingTx = &EthereumSignerSet{}
