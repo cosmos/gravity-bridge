@@ -13,11 +13,11 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 // The event is then attested and executed in the state machine once the required
 // threshold is met.
 message EthereumEventVoteRecord {
-  google.protobuf.Any event  = 1 [
+  google.protobuf.Any event    = 1 [
     (cosmos_proto.accepts_interface) = "EthereumEvent"
   ];  
-  repeated string     votes  = 2;
-  uint64              height = 3;
+  repeated string     votes    = 2;
+  bool                accepted = 3;
 }
 
 // LatestEthereumBlockHeight defines the latest observed ethereum block height and the

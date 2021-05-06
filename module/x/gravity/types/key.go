@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -117,7 +118,7 @@ func GetEthAddressKey(validator sdk.ValAddress) []byte {
 // prefix    nonce
 // [0x0][0 0 0 0 0 0 0 1]
 func GetValsetKey(nonce uint64) []byte {
-	return append([]byte{ValsetRequestKey}, UInt64Bytes(nonce)...)
+	return append([]byte{ValsetRequestKey}, sdk.Uint64ToBigEndian(nonce)...)
 }
 
 // GetValsetConfirmKey returns the following key format
@@ -125,7 +126,7 @@ func GetValsetKey(nonce uint64) []byte {
 // [0x0][0 0 0 0 0 0 0 1][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
 func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
-	return append([]byte{ValsetConfirmKey}, append(UInt64Bytes(nonce), validator.Bytes()...)...)
+	return append([]byte{ValsetConfirmKey}, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
 }
 
 // GetAttestationKey returns the following key format
@@ -136,7 +137,7 @@ func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
 func GetAttestationKey(eventNonce uint64, claimHash []byte) []byte {
-	return bytes.Join([][]byte{{OracleAttestationKey}, UInt64Bytes(eventNonce), claimHash}, []byte{})
+	return bytes.Join([][]byte{{OracleAttestationKey}, sdk.Uint64ToBigEndian(eventNonce), claimHash}, []byte{})
 }
 
 // GetAttestationKeyWithHash returns the following key format
@@ -147,7 +148,7 @@ func GetAttestationKey(eventNonce uint64, claimHash []byte) []byte {
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
 func GetAttestationKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
-	return bytes.Join([][]byte{{OracleAttestationKey}, UInt64Bytes(eventNonce), claimHash} , []byte{})
+	return bytes.Join([][]byte{{OracleAttestationKey}, sdk.Uint64ToBigEndian(eventNonce), claimHash}, []byte{})
 }
 
 // GetOutgoingTxPoolKey returns the following key format
@@ -161,14 +162,14 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
 func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
-	return bytes.Join([][]byte{{OutgoingTXBatchKey}, UInt64Bytes(nonce), []byte(tokenContract)}, []byte{})
+	return bytes.Join([][]byte{{OutgoingTXBatchKey}, sdk.Uint64ToBigEndian(nonce), []byte(tokenContract)}, []byte{})
 }
 
 // GetOutgoingTxBatchBlockKey returns the following key format
 // prefix     blockheight
 // [0xb][0 0 0 0 2 1 4 3]
 func GetOutgoingTxBatchBlockKey(block uint64) []byte {
-	return append([]byte{OutgoingTXBatchBlockKey}, UInt64Bytes(block)...)
+	return append([]byte{OutgoingTXBatchBlockKey}, sdk.Uint64ToBigEndian(block)...)
 }
 
 // GetBatchConfirmKey returns the following key format
@@ -176,7 +177,7 @@ func GetOutgoingTxBatchBlockKey(block uint64) []byte {
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // TODO this should be a sdk.ValAddress
 func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
-	return bytes.Join([][]byte{{BatchConfirmKey}, []byte(tokenContract), UInt64Bytes(batchNonce), validator.Bytes()}, []byte{})
+	return bytes.Join([][]byte{{BatchConfirmKey}, []byte(tokenContract), sdk.Uint64ToBigEndian(batchNonce), validator.Bytes()}, []byte{})
 }
 
 // GetFeeSecondIndexKey returns the following key format
@@ -208,10 +209,10 @@ func GetERC20ToDenomKey(erc20 string) []byte {
 
 func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {
 	a := append([]byte{KeyOutgoingLogicCall}, invalidationId...)
-	return append(a, UInt64Bytes(invalidationNonce)...)
+	return append(a, sdk.Uint64ToBigEndian(invalidationNonce)...)
 }
 
 // prefix    invalidationID  nonce  validatorAddr
 func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
-	return bytes.Join([][]byte{{KeyOutgoingLogicConfirm}, invalidationId, UInt64Bytes(invalidationNonce), validator.Bytes()}, []byte{})
+	return bytes.Join([][]byte{{KeyOutgoingLogicConfirm}, invalidationId, sdk.Uint64ToBigEndian(invalidationNonce), validator.Bytes()}, []byte{})
 }
