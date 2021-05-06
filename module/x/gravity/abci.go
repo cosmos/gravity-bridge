@@ -18,7 +18,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	cleanupTimedOutLogicCalls(ctx, k)
 	createValsets(ctx, k)
 	pruneValsets(ctx, k, params)
-	// TODO: prune claims, attestations when they pass in the handler
+	// TODO: prune claims, attestations when they pass in the handler see issue #342
 }
 
 func createValsets(ctx sdk.Context, k keeper.Keeper) {
@@ -159,6 +159,9 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	// don't slash in the beginning before there aren't even SignedValsetsWindow blocks yet
 	if uint64(ctx.BlockHeight()) > params.SignedValsetsWindow {
 		maxHeight = uint64(ctx.BlockHeight()) - params.SignedValsetsWindow
+	} else {
+		// we can't slash anyone if SignedValsetWindow blocks have not passed
+		return
 	}
 
 	unslashedValsets := k.GetUnSlashedValsets(ctx, maxHeight)
@@ -174,11 +177,12 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			consAddr, _ := val.GetConsAddr()
 			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
 
-			//  Slash validator ONLY if he joined after valset is created
-			if exist && valSigningInfo.StartHeight < int64(vs.Nonce) {
+			//  Slash validator ONLY if he joined before valset is created
+			if exist && valSigningInfo.StartHeight < int64(vs.Height) {
 				// Check if validator has confirmed valset or not
 				found := false
 				for _, conf := range confirms {
+					// TODO this may have an issue if the validator changes their eth address
 					if conf.EthAddress == k.GetEthAddressByValidator(ctx, val.GetOperator()) {
 						found = true
 						break
@@ -204,7 +208,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 		// All unbonding validators
 		for ; unbondingValIterator.Valid(); unbondingValIterator.Next() {
-			unbondingValidators := k.GetUnbondingvalidators(unbondingValIterator.Value())
+			unbondingValidators := k.DeserializeValidatorIterator(unbondingValIterator.Value())
 
 			for _, valAddr := range unbondingValidators.Addresses {
 				addr, err := sdk.ValAddressFromBech32(valAddr)
@@ -216,11 +220,13 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 				valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, valConsAddr)
 
 				// Only slash validators who joined after valset is created and they are unbonding and UNBOND_SLASHING_WINDOW didn't passed
-				if exist && valSigningInfo.StartHeight < int64(vs.Nonce) && validator.IsUnbonding() && vs.Nonce < uint64(validator.UnbondingHeight)+params.UnbondSlashingValsetsWindow {
+				if exist && valSigningInfo.StartHeight < int64(vs.Height) && validator.IsUnbonding() && vs.Height < uint64(validator.UnbondingHeight)+params.UnbondSlashingValsetsWindow {
 					// Check if validator has confirmed valset or not
 					found := false
 					for _, conf := range confirms {
-						if conf.EthAddress == k.GetEthAddressByValidator(ctx, validator.GetOperator()) {
+						// TODO this presents problems for delegate key rotation see issue #344
+						confVal, _ := sdk.AccAddressFromBech32(conf.Orchestrator)
+						if k.GetOrchestratorValidator(ctx, confVal).Equals(validator.GetOperator()) {
 							found = true
 							break
 						}
@@ -243,14 +249,16 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
-	// #2 condition
-	// We look through the full bonded set (not just the active set, include unbonding validators)
+	// We look through the full bonded set (the active set)
 	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
 	maxHeight := uint64(0)
 
 	// don't slash in the beginning before there aren't even SignedBatchesWindow blocks yet
 	if uint64(ctx.BlockHeight()) > params.SignedBatchesWindow {
 		maxHeight = uint64(ctx.BlockHeight()) - params.SignedBatchesWindow
+	} else {
+		// we can't slash anyone if this window has not yet passed
+		return
 	}
 
 	unslashedBatches := k.GetUnSlashedBatches(ctx, maxHeight)
@@ -269,7 +277,7 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 			found := false
 			for _, conf := range confirms {
-				// TODO: double check this logic
+				// TODO this presents problems for delegate key rotation see issue #344
 				confVal, _ := sdk.AccAddressFromBech32(conf.Orchestrator)
 				if k.GetOrchestratorValidator(ctx, confVal).Equals(val.GetOperator()) {
 					found = true

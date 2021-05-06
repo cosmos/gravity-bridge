@@ -741,12 +741,12 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 	return result
 }
 
-// GetUnbondingvalidators returns UnbondingValidators.
-// Adding here in gravity keeper as cdc is available inside endblocker.
-func (k Keeper) GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses {
-	unbondingValidators := stakingtypes.ValAddresses{}
-	k.cdc.MustUnmarshalBinaryBare(unbondingVals, &unbondingValidators)
-	return unbondingValidators
+// DeserializeValidatorIterator returns validators from the validator iterator.
+// Adding here in gravity keeper as cdc is not available inside endblocker.
+func (k Keeper) DeserializeValidatorIterator(vals []byte) stakingtypes.ValAddresses {
+	validators := stakingtypes.ValAddresses{}
+	k.cdc.MustUnmarshalBinaryBare(vals, &validators)
+	return validators
 }
 
 // prefixRange turns a prefix into a (start, end) range. The start is the given prefix value and
