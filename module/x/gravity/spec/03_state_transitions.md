@@ -22,10 +22,11 @@ The first time any validator sees a given Ethereum event on the Ethereum blockch
 
 When other validators see the same event at the same event nonce, and call `DepositClaim`, or one of the other endpoints for other types of ethereum events:
 
+- We check that the event nonce of the submitted event is exactly one higher than that validator's last submitted event. This keeps validators from voting on different events at the same event nonce, which makes tallying votes easier later.
 - We look up the event's Attestation.
 - The validator's address is added to the votes array.
 
-### "Observing" an Attestation
+### Counting Attestation votes
 
 Every endblock, the module attempts to tally up the votes for un-Observed attestations. Which attestations it chooses to tally is covered in the [end blocker spec](05_end_block.md).
 

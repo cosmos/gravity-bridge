@@ -53,17 +53,17 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 	attmap := k.GetAttestationMapping(ctx)
 	// We make a slice with all the event nonces that are in the attestation mapping
-	keys := make([]uint64, 0, len(attmap))
+	nonces := make([]uint64, 0, len(attmap))
 	for k := range attmap {
-		keys = append(keys, k)
+		nonces = append(nonces, k)
 	}
 	// Then we sort it
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	sort.Slice(nonces, func(i, j int) bool { return nonces[i] < nonces[j] })
 
 	// This iterates over all keys (event nonces) in the attestation mapping. Each value contains
 	// a slice with one or more attestations at that event nonce. There can be multiple attestations
 	// at one event nonce when validators disagree about what event happened at that nonce.
-	for _, nonce := range keys {
+	for _, nonce := range nonces {
 		// This iterates over all attestations at a particular event nonce.
 		// They are ordered by when the first attestation at the event nonce was received.
 		// This order is not important.
