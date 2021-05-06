@@ -91,7 +91,7 @@ func (k Keeper) StoreValset(ctx sdk.Context, valset *types.Valset) {
 //  SetLatestValsetNonce sets the latest valset nonce
 func (k Keeper) SetLatestValsetNonce(ctx sdk.Context, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LatestValsetNonce, types.UInt64Bytes(nonce))
+	store.Set([]byte{types.LatestValsetNonce}, types.UInt64Bytes(nonce))
 }
 
 // StoreValsetUnsafe is for storing a valiator set at a given height
@@ -115,7 +115,7 @@ func (k Keeper) DeleteValset(ctx sdk.Context, nonce uint64) {
 // GetLatestValsetNonce returns the latest valset nonce
 func (k Keeper) GetLatestValsetNonce(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LatestValsetNonce)
+	bytes := store.Get([]byte{types.LatestValsetNonce})
 
 	if len(bytes) == 0 {
 		return 0
@@ -137,7 +137,7 @@ func (k Keeper) GetValset(ctx sdk.Context, nonce uint64) *types.Valset {
 
 // IterateValsets retruns all valsetRequests
 func (k Keeper) IterateValsets(ctx sdk.Context, cb func(key []byte, val *types.Valset) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetRequestKey)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.ValsetRequestKey})
 	iter := prefixStore.ReverseIterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -170,13 +170,13 @@ func (k Keeper) GetLatestValset(ctx sdk.Context) (out *types.Valset) {
 // setLastSlashedValsetNonce sets the latest slashed valset nonce
 func (k Keeper) SetLastSlashedValsetNonce(ctx sdk.Context, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastSlashedValsetNonce, types.UInt64Bytes(nonce))
+	store.Set([]byte{types.LastSlashedValsetNonce}, types.UInt64Bytes(nonce))
 }
 
 // GetLastSlashedValsetNonce returns the latest slashed valset nonce
 func (k Keeper) GetLastSlashedValsetNonce(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastSlashedValsetNonce)
+	bytes := store.Get([]byte{types.LastSlashedValsetNonce})
 
 	if len(bytes) == 0 {
 		return 0
@@ -187,13 +187,13 @@ func (k Keeper) GetLastSlashedValsetNonce(ctx sdk.Context) uint64 {
 // SetLastUnBondingBlockHeight sets the last unbonding block height
 func (k Keeper) SetLastUnBondingBlockHeight(ctx sdk.Context, unbondingBlockHeight uint64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastUnBondingBlockHeight, types.UInt64Bytes(unbondingBlockHeight))
+	store.Set([]byte{types.LastUnBondingBlockHeight}, types.UInt64Bytes(unbondingBlockHeight))
 }
 
 // GetLastUnBondingBlockHeight returns the last unbonding block height
 func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastUnBondingBlockHeight)
+	bytes := store.Get([]byte{types.LastUnBondingBlockHeight})
 
 	if len(bytes) == 0 {
 		return 0
@@ -215,7 +215,7 @@ func (k Keeper) GetUnSlashedValsets(ctx sdk.Context, maxHeight uint64) (out []*t
 
 // IterateValsetBySlashedValsetNonce iterates through all valset by last slashed valset nonce in ASC order
 func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedValsetNonce uint64, maxHeight uint64, cb func([]byte, *types.Valset) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetRequestKey)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.ValsetRequestKey})
 	iter := prefixStore.Iterator(types.UInt64Bytes(lastSlashedValsetNonce), types.UInt64Bytes(maxHeight))
 	defer iter.Close()
 
@@ -259,7 +259,7 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 
 // GetValsetConfirms returns all validator set confirmations by nonce
 func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*types.MsgValsetConfirm) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.ValsetConfirmKey})
 	start, end := prefixRange(types.UInt64Bytes(nonce))
 	iterator := prefixStore.Iterator(start, end)
 
@@ -278,7 +278,7 @@ func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*ty
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
 func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgValsetConfirm) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.ValsetConfirmKey})
 	iter := prefixStore.Iterator(prefixRange(types.UInt64Bytes(nonce)))
 	defer iter.Close()
 
@@ -324,7 +324,7 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
 func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string, cb func([]byte, types.MsgConfirmBatch) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchConfirmKey)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.BatchConfirmKey})
 	prefix := append([]byte(tokenContract), types.UInt64Bytes(nonce)...)
 	iter := prefixStore.Iterator(prefixRange(prefix))
 	defer iter.Close()
@@ -443,7 +443,7 @@ func (k Keeper) DeleteOutgoingLogicCall(ctx sdk.Context, invalidationID []byte, 
 
 // IterateOutgoingLogicCalls iterates over outgoing logic calls
 func (k Keeper) IterateOutgoingLogicCalls(ctx sdk.Context, cb func([]byte, *types.OutgoingLogicCall) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicCall)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.KeyOutgoingLogicCall})
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -532,7 +532,7 @@ func (k Keeper) IterateLogicConfirmByInvalidationIDAndNonce(
 	invalidationID []byte,
 	invalidationNonce uint64,
 	cb func([]byte, *types.MsgConfirmLogicCall) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicConfirm)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.KeyOutgoingLogicConfirm})
 	iter := prefixStore.Iterator(prefixRange(append(invalidationID, types.UInt64Bytes(invalidationNonce)...)))
 	defer iter.Close()
 
@@ -641,18 +641,18 @@ func (k Keeper) UnpackAttestationClaim(att *types.Attestation) (types.EthereumCl
 // For the time being this will serve
 func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddress {
 	store := ctx.KVStore(k.storeKey)
-	prefix := []byte(types.EthAddressKey)
-	iter := store.Iterator(prefixRange(prefix))
+	prfx := []byte{types.EthAddressKey}
+	iter := store.Iterator(prefixRange(prfx))
 	defer iter.Close()
 
 	ethAddresses := make(map[string]string)
 
 	for ; iter.Valid(); iter.Next() {
-		// the 'key' contains both the prefix and the value, so we need
+		// the 'key' contains both the prfx and the value, so we need
 		// to cut off the starting bytes, if you don't do this a valid
 		// cosmos key will be made out of EthAddressKey + the startin bytes
 		// of the actual key
-		key := iter.Key()[len(types.EthAddressKey):]
+		key := iter.Key()[1:]
 		value := iter.Value()
 		ethAddress := string(value)
 		valAddress := sdk.ValAddress(key)
@@ -660,14 +660,14 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 	}
 
 	store = ctx.KVStore(k.storeKey)
-	prefix = []byte(types.KeyOrchestratorAddress)
-	iter = store.Iterator(prefixRange(prefix))
+	prfx = []byte{types.KeyOrchestratorAddress}
+	iter = store.Iterator(prefixRange(prfx))
 	defer iter.Close()
 
 	orchAddresses := make(map[string]string)
 
 	for ; iter.Valid(); iter.Next() {
-		key := iter.Key()[len(types.KeyOrchestratorAddress):]
+		key := iter.Key()[1:]
 		value := iter.Value()
 		orchAddress := sdk.AccAddress(key).String()
 		valAddress := sdk.ValAddress(value)

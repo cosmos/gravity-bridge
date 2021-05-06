@@ -13,7 +13,7 @@ import (
 
 const (
 
-	// Valsets
+	// UpdateSignerSetTxs
 
 	// This retrieves a specific validator set by it's nonce
 	// used to compare what's on Ethereum with what's in Cosmos
@@ -43,7 +43,7 @@ const (
 	// bridges
 	QueryGravityID = "gravityID"
 
-	// Batches
+	// BatchTxs
 	// note the current logic here constrains batch throughput to one
 	// batch (of any type) per Cosmos block.
 
@@ -96,7 +96,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err error) {
 		switch path[0] {
 
-		// Valsets
+		// UpdateSignerSetTxs
 		case QueryCurrentValset:
 			return queryCurrentValset(ctx, keeper)
 		case QueryValsetRequest:
@@ -110,7 +110,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case QueryLastPendingValsetRequestByAddr:
 			return lastPendingValsetRequest(ctx, path[1], keeper)
 
-		// Batches
+		// BatchTxs
 		case QueryBatch:
 			return queryBatch(ctx, path[1], path[2], keeper)
 		case QueryBatchConfirms:

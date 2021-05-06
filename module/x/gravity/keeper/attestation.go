@@ -185,7 +185,7 @@ func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.A
 // IterateAttestaions iterates through all attestations
 func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attestation) bool) {
 	store := ctx.KVStore(k.storeKey)
-	prefix := types.OracleAttestationKey
+	prefix := []byte{types.OracleAttestationKey}
 	iter := store.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
@@ -202,7 +202,7 @@ func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attest
 // GetLastObservedEventNonce returns the latest observed event nonce
 func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastObservedEventNonceKey)
+	bytes := store.Get([]byte{types.LastObservedEventNonceKey})
 
 	if len(bytes) == 0 {
 		return 0
@@ -214,7 +214,7 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
 // the store
 func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastObservedEthereumBlockHeight {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastObservedEthereumBlockHeightKey)
+	bytes := store.Get([]byte{types.LastObservedEthereumBlockHeightKey})
 
 	if len(bytes) == 0 {
 		return types.LastObservedEthereumBlockHeight{
@@ -234,13 +234,13 @@ func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeig
 		EthereumBlockHeight: ethereumHeight,
 		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
 	}
-	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&height))
+	store.Set([]byte{types.LastObservedEthereumBlockHeightKey}, k.cdc.MustMarshalBinaryBare(&height))
 }
 
 // setLastObservedEventNonce sets the latest observed event nonce
 func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastObservedEventNonceKey, types.UInt64Bytes(nonce))
+	store.Set([]byte{types.LastObservedEventNonceKey}, types.UInt64Bytes(nonce))
 }
 
 // GetLastEventNonceByValidator returns the latest event nonce for a given validator

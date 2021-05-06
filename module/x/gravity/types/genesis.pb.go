@@ -214,18 +214,18 @@ func (m *Params) GetUnbondSlashingValsetsWindow() uint64 {
 
 // GenesisState struct
 type GenesisState struct {
-	Params             *Params                      `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
-	LastObservedNonce  uint64                       `protobuf:"varint,2,opt,name=last_observed_nonce,json=lastObservedNonce,proto3" json:"last_observed_nonce,omitempty"`
-	Valsets            []*Valset                    `protobuf:"bytes,3,rep,name=valsets,proto3" json:"valsets,omitempty"`
-	ValsetConfirms     []*MsgValsetConfirm          `protobuf:"bytes,4,rep,name=valset_confirms,json=valsetConfirms,proto3" json:"valset_confirms,omitempty"`
-	Batches            []*OutgoingTxBatch           `protobuf:"bytes,5,rep,name=batches,proto3" json:"batches,omitempty"`
-	BatchConfirms      []MsgConfirmBatch            `protobuf:"bytes,6,rep,name=batch_confirms,json=batchConfirms,proto3" json:"batch_confirms"`
-	LogicCalls         []*OutgoingLogicCall         `protobuf:"bytes,7,rep,name=logic_calls,json=logicCalls,proto3" json:"logic_calls,omitempty"`
-	LogicCallConfirms  []MsgConfirmLogicCall        `protobuf:"bytes,8,rep,name=logic_call_confirms,json=logicCallConfirms,proto3" json:"logic_call_confirms"`
-	Attestations       []Attestation                `protobuf:"bytes,9,rep,name=attestations,proto3" json:"attestations"`
-	DelegateKeys       []*MsgSetOrchestratorAddress `protobuf:"bytes,10,rep,name=delegate_keys,json=delegateKeys,proto3" json:"delegate_keys,omitempty"`
-	Erc20ToDenoms      []*ERC20ToDenom              `protobuf:"bytes,11,rep,name=erc20_to_denoms,json=erc20ToDenoms,proto3" json:"erc20_to_denoms,omitempty"`
-	UnbatchedTransfers []*OutgoingTransferTx        `protobuf:"bytes,12,rep,name=unbatched_transfers,json=unbatchedTransfers,proto3" json:"unbatched_transfers,omitempty"`
+	Params                      *Params                      `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
+	LastObservedEventNonce      uint64                       `protobuf:"varint,2,opt,name=last_observed_nonce,json=lastObservedNonce,proto3" json:"last_observed_nonce,omitempty"`
+	UpdateSignerSetTxs          []*Valset                    `protobuf:"bytes,3,rep,name=valsets,proto3" json:"valsets,omitempty"`
+	UpdateSignerSetTxSignatures []*MsgValsetConfirm          `protobuf:"bytes,4,rep,name=valset_confirms,json=valsetConfirms,proto3" json:"valset_confirms,omitempty"`
+	BatchTxs                    []*OutgoingTxBatch           `protobuf:"bytes,5,rep,name=batches,proto3" json:"batches,omitempty"`
+	BatchTxSignatures           []MsgConfirmBatch            `protobuf:"bytes,6,rep,name=batch_confirms,json=batchConfirms,proto3" json:"batch_confirms"`
+	ContractCallTxs             []*OutgoingLogicCall         `protobuf:"bytes,7,rep,name=logic_calls,json=logicCalls,proto3" json:"logic_calls,omitempty"`
+	ContractCallTxSignatures    []MsgConfirmLogicCall        `protobuf:"bytes,8,rep,name=logic_call_confirms,json=logicCallConfirms,proto3" json:"logic_call_confirms"`
+	EthereumEventVoteRecords    []Attestation                `protobuf:"bytes,9,rep,name=attestations,proto3" json:"attestations"`
+	DelegateKeys                []*MsgSetOrchestratorAddress `protobuf:"bytes,10,rep,name=delegate_keys,json=delegateKeys,proto3" json:"delegate_keys,omitempty"`
+	Erc20ToDenoms               []*ERC20ToDenom              `protobuf:"bytes,11,rep,name=erc20_to_denoms,json=erc20ToDenoms,proto3" json:"erc20_to_denoms,omitempty"`
+	UnbatchedSendToEthereumTxs  []*OutgoingTransferTx        `protobuf:"bytes,12,rep,name=unbatched_transfers,json=unbatchedTransfers,proto3" json:"unbatched_transfers,omitempty"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -270,56 +270,56 @@ func (m *GenesisState) GetParams() *Params {
 
 func (m *GenesisState) GetLastObservedNonce() uint64 {
 	if m != nil {
-		return m.LastObservedNonce
+		return m.LastObservedEventNonce
 	}
 	return 0
 }
 
 func (m *GenesisState) GetValsets() []*Valset {
 	if m != nil {
-		return m.Valsets
+		return m.UpdateSignerSetTxs
 	}
 	return nil
 }
 
 func (m *GenesisState) GetValsetConfirms() []*MsgValsetConfirm {
 	if m != nil {
-		return m.ValsetConfirms
+		return m.UpdateSignerSetTxSignatures
 	}
 	return nil
 }
 
 func (m *GenesisState) GetBatches() []*OutgoingTxBatch {
 	if m != nil {
-		return m.Batches
+		return m.BatchTxs
 	}
 	return nil
 }
 
 func (m *GenesisState) GetBatchConfirms() []MsgConfirmBatch {
 	if m != nil {
-		return m.BatchConfirms
+		return m.BatchTxSignatures
 	}
 	return nil
 }
 
 func (m *GenesisState) GetLogicCalls() []*OutgoingLogicCall {
 	if m != nil {
-		return m.LogicCalls
+		return m.ContractCallTxs
 	}
 	return nil
 }
 
 func (m *GenesisState) GetLogicCallConfirms() []MsgConfirmLogicCall {
 	if m != nil {
-		return m.LogicCallConfirms
+		return m.ContractCallTxSignatures
 	}
 	return nil
 }
 
 func (m *GenesisState) GetAttestations() []Attestation {
 	if m != nil {
-		return m.Attestations
+		return m.EthereumEventVoteRecords
 	}
 	return nil
 }
@@ -340,7 +340,7 @@ func (m *GenesisState) GetErc20ToDenoms() []*ERC20ToDenom {
 
 func (m *GenesisState) GetUnbatchedTransfers() []*OutgoingTransferTx {
 	if m != nil {
-		return m.UnbatchedTransfers
+		return m.UnbatchedSendToEthereumTxs
 	}
 	return nil
 }
@@ -561,10 +561,10 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.UnbatchedTransfers) > 0 {
-		for iNdEx := len(m.UnbatchedTransfers) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.UnbatchedSendToEthereumTxs) > 0 {
+		for iNdEx := len(m.UnbatchedSendToEthereumTxs) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.UnbatchedTransfers[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.UnbatchedSendToEthereumTxs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -603,10 +603,10 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x52
 		}
 	}
-	if len(m.Attestations) > 0 {
-		for iNdEx := len(m.Attestations) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.EthereumEventVoteRecords) > 0 {
+		for iNdEx := len(m.EthereumEventVoteRecords) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Attestations[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.EthereumEventVoteRecords[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -617,10 +617,10 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x4a
 		}
 	}
-	if len(m.LogicCallConfirms) > 0 {
-		for iNdEx := len(m.LogicCallConfirms) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.ContractCallTxSignatures) > 0 {
+		for iNdEx := len(m.ContractCallTxSignatures) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.LogicCallConfirms[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.ContractCallTxSignatures[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -631,10 +631,10 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x42
 		}
 	}
-	if len(m.LogicCalls) > 0 {
-		for iNdEx := len(m.LogicCalls) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.ContractCallTxs) > 0 {
+		for iNdEx := len(m.ContractCallTxs) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.LogicCalls[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.ContractCallTxs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -645,10 +645,10 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x3a
 		}
 	}
-	if len(m.BatchConfirms) > 0 {
-		for iNdEx := len(m.BatchConfirms) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.BatchTxSignatures) > 0 {
+		for iNdEx := len(m.BatchTxSignatures) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.BatchConfirms[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.BatchTxSignatures[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -659,10 +659,10 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x32
 		}
 	}
-	if len(m.Batches) > 0 {
-		for iNdEx := len(m.Batches) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.BatchTxs) > 0 {
+		for iNdEx := len(m.BatchTxs) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Batches[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.BatchTxs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -673,10 +673,10 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x2a
 		}
 	}
-	if len(m.ValsetConfirms) > 0 {
-		for iNdEx := len(m.ValsetConfirms) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.UpdateSignerSetTxSignatures) > 0 {
+		for iNdEx := len(m.UpdateSignerSetTxSignatures) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.ValsetConfirms[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.UpdateSignerSetTxSignatures[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -687,10 +687,10 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x22
 		}
 	}
-	if len(m.Valsets) > 0 {
-		for iNdEx := len(m.Valsets) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.UpdateSignerSetTxs) > 0 {
+		for iNdEx := len(m.UpdateSignerSetTxs) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Valsets[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.UpdateSignerSetTxs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -701,8 +701,8 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x1a
 		}
 	}
-	if m.LastObservedNonce != 0 {
-		i = encodeVarintGenesis(dAtA, i, uint64(m.LastObservedNonce))
+	if m.LastObservedEventNonce != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.LastObservedEventNonce))
 		i--
 		dAtA[i] = 0x10
 	}
@@ -795,47 +795,47 @@ func (m *GenesisState) Size() (n int) {
 		l = m.Params.Size()
 		n += 1 + l + sovGenesis(uint64(l))
 	}
-	if m.LastObservedNonce != 0 {
-		n += 1 + sovGenesis(uint64(m.LastObservedNonce))
+	if m.LastObservedEventNonce != 0 {
+		n += 1 + sovGenesis(uint64(m.LastObservedEventNonce))
 	}
-	if len(m.Valsets) > 0 {
-		for _, e := range m.Valsets {
+	if len(m.UpdateSignerSetTxs) > 0 {
+		for _, e := range m.UpdateSignerSetTxs {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
-	if len(m.ValsetConfirms) > 0 {
-		for _, e := range m.ValsetConfirms {
+	if len(m.UpdateSignerSetTxSignatures) > 0 {
+		for _, e := range m.UpdateSignerSetTxSignatures {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
-	if len(m.Batches) > 0 {
-		for _, e := range m.Batches {
+	if len(m.BatchTxs) > 0 {
+		for _, e := range m.BatchTxs {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
-	if len(m.BatchConfirms) > 0 {
-		for _, e := range m.BatchConfirms {
+	if len(m.BatchTxSignatures) > 0 {
+		for _, e := range m.BatchTxSignatures {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
-	if len(m.LogicCalls) > 0 {
-		for _, e := range m.LogicCalls {
+	if len(m.ContractCallTxs) > 0 {
+		for _, e := range m.ContractCallTxs {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
-	if len(m.LogicCallConfirms) > 0 {
-		for _, e := range m.LogicCallConfirms {
+	if len(m.ContractCallTxSignatures) > 0 {
+		for _, e := range m.ContractCallTxSignatures {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
-	if len(m.Attestations) > 0 {
-		for _, e := range m.Attestations {
+	if len(m.EthereumEventVoteRecords) > 0 {
+		for _, e := range m.EthereumEventVoteRecords {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
@@ -852,8 +852,8 @@ func (m *GenesisState) Size() (n int) {
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
-	if len(m.UnbatchedTransfers) > 0 {
-		for _, e := range m.UnbatchedTransfers {
+	if len(m.UnbatchedSendToEthereumTxs) > 0 {
+		for _, e := range m.UnbatchedSendToEthereumTxs {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
@@ -1367,9 +1367,9 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LastObservedNonce", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field LastObservedEventNonce", wireType)
 			}
-			m.LastObservedNonce = 0
+			m.LastObservedEventNonce = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowGenesis
@@ -1379,14 +1379,14 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.LastObservedNonce |= uint64(b&0x7F) << shift
+				m.LastObservedEventNonce |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Valsets", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field UpdateSignerSetTxs", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1413,14 +1413,14 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Valsets = append(m.Valsets, &Valset{})
-			if err := m.Valsets[len(m.Valsets)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.UpdateSignerSetTxs = append(m.UpdateSignerSetTxs, &Valset{})
+			if err := m.UpdateSignerSetTxs[len(m.UpdateSignerSetTxs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValsetConfirms", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field UpdateSignerSetTxSignatures", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1447,14 +1447,14 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValsetConfirms = append(m.ValsetConfirms, &MsgValsetConfirm{})
-			if err := m.ValsetConfirms[len(m.ValsetConfirms)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.UpdateSignerSetTxSignatures = append(m.UpdateSignerSetTxSignatures, &MsgValsetConfirm{})
+			if err := m.UpdateSignerSetTxSignatures[len(m.UpdateSignerSetTxSignatures)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Batches", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field BatchTxs", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1481,14 +1481,14 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Batches = append(m.Batches, &OutgoingTxBatch{})
-			if err := m.Batches[len(m.Batches)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.BatchTxs = append(m.BatchTxs, &OutgoingTxBatch{})
+			if err := m.BatchTxs[len(m.BatchTxs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BatchConfirms", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field BatchTxSignatures", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1515,14 +1515,14 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.BatchConfirms = append(m.BatchConfirms, MsgConfirmBatch{})
-			if err := m.BatchConfirms[len(m.BatchConfirms)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.BatchTxSignatures = append(m.BatchTxSignatures, MsgConfirmBatch{})
+			if err := m.BatchTxSignatures[len(m.BatchTxSignatures)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 7:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LogicCalls", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ContractCallTxs", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1549,14 +1549,14 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.LogicCalls = append(m.LogicCalls, &OutgoingLogicCall{})
-			if err := m.LogicCalls[len(m.LogicCalls)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.ContractCallTxs = append(m.ContractCallTxs, &OutgoingLogicCall{})
+			if err := m.ContractCallTxs[len(m.ContractCallTxs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 8:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LogicCallConfirms", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ContractCallTxSignatures", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1583,14 +1583,14 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.LogicCallConfirms = append(m.LogicCallConfirms, MsgConfirmLogicCall{})
-			if err := m.LogicCallConfirms[len(m.LogicCallConfirms)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.ContractCallTxSignatures = append(m.ContractCallTxSignatures, MsgConfirmLogicCall{})
+			if err := m.ContractCallTxSignatures[len(m.ContractCallTxSignatures)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 9:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Attestations", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field EthereumEventVoteRecords", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1617,8 +1617,8 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Attestations = append(m.Attestations, Attestation{})
-			if err := m.Attestations[len(m.Attestations)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.EthereumEventVoteRecords = append(m.EthereumEventVoteRecords, Attestation{})
+			if err := m.EthereumEventVoteRecords[len(m.EthereumEventVoteRecords)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1692,7 +1692,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 12:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UnbatchedTransfers", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field UnbatchedSendToEthereumTxs", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1719,8 +1719,8 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.UnbatchedTransfers = append(m.UnbatchedTransfers, &OutgoingTransferTx{})
-			if err := m.UnbatchedTransfers[len(m.UnbatchedTransfers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.UnbatchedSendToEthereumTxs = append(m.UnbatchedSendToEthereumTxs, &OutgoingTransferTx{})
+			if err := m.UnbatchedSendToEthereumTxs[len(m.UnbatchedSendToEthereumTxs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

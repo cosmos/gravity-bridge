@@ -10,48 +10,48 @@ import (
 func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	k.SetParams(ctx, *data.Params)
 	// reset valsets in state
-	for _, vs := range data.Valsets {
+	for _, vs := range data.UpdateSignerSetTxs {
 		// TODO: block height?
 		k.StoreValsetUnsafe(ctx, vs)
 	}
 
 	// reset valset confirmations in state
-	for _, conf := range data.ValsetConfirms {
+	for _, conf := range data.UpdateSignerSetTxSignatures {
 		k.SetValsetConfirm(ctx, *conf)
 	}
 
 	// reset batches in state
-	for _, batch := range data.Batches {
+	for _, batch := range data.BatchTxs {
 		// TODO: block height?
 		k.StoreBatchUnsafe(ctx, batch)
 	}
 
 	// reset batch confirmations in state
-	for _, conf := range data.BatchConfirms {
+	for _, conf := range data.BatchTxSignatures {
 		conf := conf
 		k.SetBatchConfirm(ctx, &conf)
 	}
 
 	// reset logic calls in state
-	for _, call := range data.LogicCalls {
+	for _, call := range data.ContractCallTxs {
 		k.SetOutgoingLogicCall(ctx, call)
 	}
 
 	// reset batch confirmations in state
-	for _, conf := range data.LogicCallConfirms {
+	for _, conf := range data.ContractCallTxSignatures {
 		conf := conf
 		k.SetLogicCallConfirm(ctx, &conf)
 	}
 
 	// reset pool transactions in state
-	for _, tx := range data.UnbatchedTransfers {
+	for _, tx := range data.UnbatchedSendToEthereumTxs {
 		if err := k.setPoolEntry(ctx, tx); err != nil {
 			panic(err)
 		}
 	}
 
 	// reset attestations in state
-	for _, att := range data.Attestations {
+	for _, att := range data.EthereumEventVoteRecords {
 		att := att
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
@@ -61,11 +61,11 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// TODO: block height?
 		k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
 	}
-	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
+	k.setLastObservedEventNonce(ctx, data.LastObservedEventNonce)
 
 	// reset attestation state of specific validators
 	// this must be done after the above to be correct
-	for _, att := range data.Attestations {
+	for _, att := range data.EthereumEventVoteRecords {
 		att := att
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
@@ -172,17 +172,17 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	})
 
 	return types.GenesisState{
-		Params:             &p,
-		LastObservedNonce:  lastobserved,
-		Valsets:            valsets,
-		ValsetConfirms:     vsconfs,
-		Batches:            batches,
-		BatchConfirms:      batchconfs,
-		LogicCalls:         calls,
-		LogicCallConfirms:  callconfs,
-		Attestations:       attestations,
-		DelegateKeys:       delegates,
-		Erc20ToDenoms:      erc20ToDenoms,
-		UnbatchedTransfers: unbatchedTransfers,
+		Params:                      &p,
+		LastObservedEventNonce:      lastobserved,
+		UpdateSignerSetTxs:          valsets,
+		UpdateSignerSetTxSignatures: vsconfs,
+		BatchTxs:                    batches,
+		BatchTxSignatures:           batchconfs,
+		ContractCallTxs:             calls,
+		ContractCallTxSignatures:    callconfs,
+		EthereumEventVoteRecords:    attestations,
+		DelegateKeys:                delegates,
+		Erc20ToDenoms:               erc20ToDenoms,
+		UnbatchedSendToEthereumTxs:  unbatchedTransfers,
 	}
 }

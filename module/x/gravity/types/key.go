@@ -185,8 +185,6 @@ func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.A
 func GetFeeSecondIndexKey(fee ERC20Token) []byte {
 	amount := make([]byte, 32)
 	amount = fee.Amount.BigInt().FillBytes(amount)
-	// TODO this won't ever work fix it
-	// TODO figure out what this comment was referencing ^^
 	return bytes.Join([][]byte{{SecondIndexOutgoingTXFeeKey}, []byte(fee.Contract), amount}, []byte{})
 }
 

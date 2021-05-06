@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-// AttestationHandler processes `observed` Attestations
+// AttestationHandler processes `observed` EthereumEventVoteRecords
 type AttestationHandler struct {
 	keeper     Keeper
 	bankKeeper types.BankKeeper

@@ -2364,7 +2364,7 @@ func (c *queryClient) BatchRequestByNonce(ctx context.Context, in *QueryBatchReq
 
 func (c *queryClient) BatchConfirms(ctx context.Context, in *QueryBatchConfirmsRequest, opts ...grpc.CallOption) (*QueryBatchConfirmsResponse, error) {
 	out := new(QueryBatchConfirmsResponse)
-	err := c.cc.Invoke(ctx, "/gravity.v1.Query/BatchConfirms", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gravity.v1.Query/BatchTxSignatures", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2508,7 +2508,7 @@ func (*UnimplementedQueryServer) BatchRequestByNonce(ctx context.Context, req *Q
 	return nil, status.Errorf(codes.Unimplemented, "method BatchRequestByNonce not implemented")
 }
 func (*UnimplementedQueryServer) BatchConfirms(ctx context.Context, req *QueryBatchConfirmsRequest) (*QueryBatchConfirmsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BatchConfirms not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method BatchTxSignatures not implemented")
 }
 func (*UnimplementedQueryServer) LogicConfirms(ctx context.Context, req *QueryLogicConfirmsRequest) (*QueryLogicConfirmsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LogicConfirms not implemented")
@@ -2798,7 +2798,7 @@ func _Query_BatchConfirms_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gravity.v1.Query/BatchConfirms",
+		FullMethod: "/gravity.v1.Query/BatchTxSignatures",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(QueryServer).BatchConfirms(ctx, req.(*QueryBatchConfirmsRequest))
@@ -2993,7 +2993,7 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_BatchRequestByNonce_Handler,
 		},
 		{
-			MethodName: "BatchConfirms",
+			MethodName: "BatchTxSignatures",
 			Handler:    _Query_BatchConfirms_Handler,
 		},
 		{
@@ -5964,7 +5964,7 @@ func (m *QueryLastValsetRequestsResponse) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Valsets", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field UpdateSignerSetTxs", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6136,7 +6136,7 @@ func (m *QueryLastPendingValsetRequestByAddrResponse) Unmarshal(dAtA []byte) err
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Valsets", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field UpdateSignerSetTxs", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6764,7 +6764,7 @@ func (m *QueryOutgoingTxBatchesResponse) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Batches", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field BatchTxs", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8830,7 +8830,7 @@ func (m *QueryPendingSendToEthResponse) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UnbatchedTransfers", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field UnbatchedSendToEthereumTxs", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {

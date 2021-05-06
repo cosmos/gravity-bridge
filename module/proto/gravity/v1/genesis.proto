@@ -70,48 +70,48 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 message Params {
   option (gogoproto.stringer) = false;
 
-  string gravity_id                      = 1;
-  string contract_source_hash            = 2;
-  string bridge_ethereum_address         = 4;
-  uint64 bridge_chain_id                 = 5;
-  uint64 signed_valsets_window           = 6;
-  uint64 signed_batches_window           = 7;
-  uint64 signed_claims_window            = 8;
-  uint64 target_batch_timeout            = 10;
-  uint64 average_block_time              = 11;
-  uint64 average_ethereum_block_time     = 12;
-  bytes  slash_fraction_valset           = 13 [
+  string gravity_id = 1;
+  string contract_source_hash = 2;
+  string bridge_ethereum_address = 4;
+  uint64 bridge_chain_id = 5;
+  uint64 signed_valsets_window = 6;
+  uint64 signed_batches_window = 7;
+  uint64 signed_claims_window = 8;
+  uint64 target_batch_timeout = 10;
+  uint64 average_block_time = 11;
+  uint64 average_ethereum_block_time = 12;
+  bytes  slash_fraction_valset = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
+    (gogoproto.nullable) = false
   ];
-  bytes slash_fraction_batch             = 14 [
+  bytes slash_fraction_batch = 14 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
+    (gogoproto.nullable) = false
   ];
-  bytes slash_fraction_claim             = 15 [
+  bytes slash_fraction_claim = 15 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
+    (gogoproto.nullable) = false
   ];
   bytes slash_fraction_conflicting_claim = 16 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
+    (gogoproto.nullable) = false
   ];
-  uint64 unbond_slashing_valsets_window  = 17;
+  uint64 unbond_slashing_valsets_window = 17;
 }
 
 // GenesisState struct
 message GenesisState {
-  Params                              params                         = 1;
-  uint64                              last_observed_nonce            = 2;
-  repeated UpdateSignerSetTx          valsets                        = 3;
-  repeated UpdateSignerSetTxSignature valset_confirms                = 4;
-  repeated BatchTx                    batches                        = 5;
-  repeated BatchTxSignature           batch_confirms                 = 6 [(gogoproto.nullable) = false];
-  repeated ContractCallTx             logic_calls                    = 7;
-  repeated ContractCallTxSignature    logic_call_confirms            = 8 [(gogoproto.nullable) = false];
-  repeated EthereumEventVoteRecord    ethereum_event_vote_records    = 9 [(gogoproto.nullable) = false];
-  repeated MsgDelegateKeys            delegate_keys                  = 10;
-  repeated ERC20ToDenom               erc20_to_denoms                = 11;
+  Params                              params = 1;
+  uint64                              last_observed_event_nonce = 2;
+  repeated UpdateSignerSetTx          update_signer_set_txs = 3;
+  repeated UpdateSignerSetTxSignature update_signer_set_tx_signatures = 4;
+  repeated BatchTx                    batch_txs = 5;
+  repeated BatchTxSignature           batch_tx_signatures = 6 [(gogoproto.nullable) = false];
+  repeated ContractCallTx             contract_call_txs = 7;
+  repeated ContractCallTxSignature    contract_call_tx_signatures = 8 [(gogoproto.nullable) = false];
+  repeated EthereumEventVoteRecord    ethereum_event_vote_records = 9 [(gogoproto.nullable) = false];
+  repeated MsgDelegateKeys            delegate_keys = 10;
+  repeated ERC20ToDenom               erc20_to_denoms = 11;
   repeated SendToEthereumTx           unbatched_send_to_ethereum_txs = 12;
 }
 
