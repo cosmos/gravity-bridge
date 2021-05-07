@@ -35,6 +35,7 @@ func (gd *GravityDenom) ERC20Token() ERC20Token {
 	return ERC20Token{sdk.Coin{Amount: gd.Amount, Denom: gd.Denom}}
 }
 
+
 // ValidateGravityDenom validates that the given denomination is either:
 //
 //  - A valid base denomination (eg: 'uatom')

@@ -68,6 +68,10 @@ func (e *ERC20Token) GravityCoin() sdk.Coin {
 	return e.Coin
 }
 
+func NewERC20TokenFromCoin(coin sdk.Coin) ERC20Token {
+	return ERC20Token{coin}
+}
+
 func (e *ERC20Token) Contract() string {
 	return strings.TrimPrefix(e.Denom, GravityDenomPrefix + GravityDenomSeparator)
 }

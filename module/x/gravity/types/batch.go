@@ -51,9 +51,9 @@ func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 		txAmounts,
 		txDestinations,
 		txFees,
-		big.NewInt(int64(b.BatchNonce)),
+		big.NewInt(int64(b.Nonce)),
 		gethcommon.HexToAddress(b.TokenContract),
-		big.NewInt(int64(b.BatchTimeout)),
+		big.NewInt(int64(b.Timeout)),
 	)
 
 	// this should never happen outside of test since any case that could crash on encoding
@@ -91,17 +91,19 @@ func (c ContractCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	}
 
 	// Run through the elements of the logic call and serialize them
-	transferAmounts := make([]*big.Int, len(c.Transfers))
-	transferTokenContracts := make([]gethcommon.Address, len(c.Transfers))
+	transferAmounts := make([]*big.Int, len(c.Tokens))
+	transferTokenContracts := make([]gethcommon.Address, len(c.Tokens))
 	feeAmounts := make([]*big.Int, len(c.Fees))
 	feeTokenContracts := make([]gethcommon.Address, len(c.Fees))
-	for i, tx := range c.Transfers {
-		transferAmounts[i] = tx.Amount.BigInt()
-		transferTokenContracts[i] = gethcommon.HexToAddress(tx.Contract)
+	for i, coin := range c.Tokens {
+		transferAmounts[i] = coin.Amount.BigInt()
+		token := NewERC20TokenFromCoin(coin)
+		transferTokenContracts[i] = gethcommon.HexToAddress(token.Contract())
 	}
-	for i, tx := range c.Fees {
-		feeAmounts[i] = tx.Amount.BigInt()
-		feeTokenContracts[i] = gethcommon.HexToAddress(tx.Contract)
+	for i, coin := range c.Fees {
+		feeAmounts[i] = coin.Amount.BigInt()
+		token := NewERC20TokenFromCoin(coin)
+		feeTokenContracts[i] = gethcommon.HexToAddress(token.Contract())
 	}
 	payload := make([]byte, len(c.Payload))
 	copy(payload, c.Payload)
@@ -118,7 +120,7 @@ func (c ContractCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 		transferTokenContracts,
 		feeAmounts,
 		feeTokenContracts,
-		gethcommon.HexToAddress(c.LogicContractAddress),
+		gethcommon.HexToAddress(c.ContractCallAddress),
 		payload,
 		big.NewInt(int64(c.Timeout)),
 		invalidationId,
