@@ -51,9 +51,7 @@ message UpdateSignerSetTx {
 message BatchTx {
   uint64 nonce = 1;
   uint64 timeout = 2;
-  repeated bytes transactions = 3
-      [ (gogoproto.casttype) =
-            "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
+  repeated SendToEthereumTx transactions = 3;
   string token_contract = 4;
   uint64 ethereum_block = 5;
 }

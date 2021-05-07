@@ -9,11 +9,13 @@ import (
 
 var (
 	_ sdk.Msg = &MsgDelegateKeys{}
+
 	_ sdk.Msg = &MsgSendToEthereum{}
+	_ sdk.Msg = &MsgCancelSendToEthereum{}
+
 	_ sdk.Msg = &MsgRequestBatchTx{}
 	_ sdk.Msg = &MsgSubmitEthereumEvent{}
 	_ sdk.Msg = &MsgSubmitEthereumSignature{}
-	_ sdk.Msg = &MsgCancelSendToEthereum{}
 )
 
 // NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress

@@ -641,7 +641,7 @@ func (k Keeper) UnpackAttestationClaim(att *types.Attestation) (types.EthereumCl
 // For the time being this will serve
 func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgDelegateKeys {
 	store := ctx.KVStore(k.storeKey)
-	prfx := []byte{types.EthAddressKey}
+	prfx := []byte{types.EthereumAddressKey}
 	iter := store.Iterator(prefixRange(prfx))
 	defer iter.Close()
 
@@ -650,7 +650,7 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgDelegateKeys {
 	for ; iter.Valid(); iter.Next() {
 		// the 'key' contains both the prfx and the value, so we need
 		// to cut off the starting bytes, if you don't do this a valid
-		// cosmos key will be made out of EthAddressKey + the startin bytes
+		// cosmos key will be made out of EthereumAddressKey + the startin bytes
 		// of the actual key
 		key := iter.Key()[1:]
 		value := iter.Value()

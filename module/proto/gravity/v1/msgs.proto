@@ -128,6 +128,8 @@ message MsgSubmitEthereumEvent {
 // gravity contract. ERC20 representation coins are minted to the cosmosreceiver
 // address.
 message SendToCosmosEvent {
+  option (gogoproto.equal) = true;
+
   uint64 event_nonce = 1;
   string token_contract = 2;
   string amount = 3 [

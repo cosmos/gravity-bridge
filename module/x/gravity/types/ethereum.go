@@ -24,9 +24,7 @@ const (
 	GravityDenomLen = len(GravityDenomPrefix) + len(GravityDenomSeparator) + ETHContractAddressLen
 )
 
-type ERC20Token struct {
-	sdk.Coin
-}
+type ERC20Token sdk.Coin
 
 // EthAddrLessThan migrates the Ethereum address less than function
 func EthAddrLessThan(e, o string) bool {
@@ -54,22 +52,25 @@ func ValidateEthAddress(a string) error {
 // NewERC20Token returns a new instance of an ERC20
 func NewERC20Token(amount uint64, contract string) *ERC20Token {
 	return &ERC20Token{
-		sdk.Coin{
 		Amount: sdk.NewIntFromUint64(amount),
-		Denom: strings.Join([]string{GravityDenomPrefix, contract}, GravityDenomSeparator)}}
+		Denom: strings.Join([]string{GravityDenomPrefix, contract}, GravityDenomSeparator),
+	}
 }
 
 func NewSDKIntERC20Token(amount sdk.Int, contract string) *ERC20Token {
-	return &ERC20Token{sdk.Coin{Amount: amount}}
+	return &ERC20Token{
+		Amount: amount,
+		Denom: strings.Join([]string{GravityDenomPrefix, contract}, GravityDenomSeparator),
+	}
 }
 
 // GravityCoin returns the gravity representation of the ERC20
 func (e *ERC20Token) GravityCoin() sdk.Coin {
-	return e.Coin
+	return sdk.Coin(*e)
 }
 
 func NewERC20TokenFromCoin(coin sdk.Coin) ERC20Token {
-	return ERC20Token{coin}
+	return ERC20Token(coin)
 }
 
 func (e *ERC20Token) Contract() string {

@@ -23,9 +23,9 @@ const (
 const (
 	_ = byte(iota)
 
-	// EthAddressKey indexes cosmos validator account addresses
+	// EthereumAddressKey indexes cosmos validator account addresses
 	// i.e. cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
-	EthAddressKey
+	EthereumAddressKey
 
 	// UpdateSignerSetTxKey indexes valset requests by nonce
 	UpdateSignerSetTxKey
@@ -111,7 +111,7 @@ func GetOrchestratorAddressKey(orc sdk.AccAddress) []byte {
 // prefix              cosmos-validator
 // [0x0][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 func GetEthAddressKey(validator sdk.ValAddress) []byte {
-	return append([]byte{EthAddressKey}, validator.Bytes()...)
+	return append([]byte{EthereumAddressKey}, validator.Bytes()...)
 }
 
 // GetUpdateSignerSetTxKey returns the following key format
@@ -125,7 +125,7 @@ func GetUpdateSignerSetTxKey(nonce uint64) []byte {
 // prefix   nonce                    validator-address
 // [0x0][0 0 0 0 0 0 0 1][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
-func GetUpdateSignerSetTxSignatureKey(nonce uint64, validator sdk.AccAddress) []byte {
+func GetUpdateSignerSetTxSignatureKey(nonce uint64, validator sdk.ValAddress) []byte {
 	return append([]byte{UpdateSignerSetTxSignatureKey}, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
 }
 
@@ -176,7 +176,7 @@ func GetBatchTxBlockKey(block uint64) []byte {
 // prefix           eth-contract-address                BatchNonce                       Validator-address
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // TODO this should be a sdk.ValAddress
-func GetBatchTxSignatureKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
+func GetBatchTxSignatureKey(tokenContract string, batchNonce uint64, validator sdk.ValAddress) []byte {
 	return bytes.Join([][]byte{{BatchTxSignatureKey}, []byte(tokenContract), sdk.Uint64ToBigEndian(batchNonce), validator.Bytes()}, []byte{})
 }
 
@@ -186,7 +186,7 @@ func GetBatchTxSignatureKey(tokenContract string, batchNonce uint64, validator s
 func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
 	amount := make([]byte, 32)
 	amount = fee.Amount.BigInt().FillBytes(amount)
-	token := ERC20Token{fee}
+	token := NewERC20TokenFromCoin(fee)
 	return bytes.Join([][]byte{{SecondIndexOutgoingTXFeeKey}, []byte(token.Contract()), amount}, []byte{})
 }
 
@@ -211,6 +211,6 @@ func GetContractCallTxKey(invalidationId []byte, invalidationNonce uint64) []byt
 }
 
 // prefix    invalidationID  nonce  validatorAddr
-func GetContractCallTxSignatureKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
+func GetContractCallTxSignatureKey(invalidationId []byte, invalidationNonce uint64, validator sdk.ValAddress) []byte {
 	return bytes.Join([][]byte{{ContractCallTxSignatureKey}, invalidationId, sdk.Uint64ToBigEndian(invalidationNonce), validator.Bytes()}, []byte{})
 }
