@@ -33,4 +33,5 @@ message OutgoingLogicCall {
   uint64              timeout                = 5;
   bytes               invalidation_id        = 6;
   uint64              invalidation_nonce     = 7;
+  uint64                      block          = 8;
 }

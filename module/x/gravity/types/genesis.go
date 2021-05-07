@@ -41,6 +41,9 @@ var (
 	// ParamsStoreKeySignedBatchesWindow stores the signed blocks window
 	ParamsStoreKeySignedBatchesWindow = []byte("SignedBatchesWindow")
 
+	// ParamsStoreKeySignedLogicCallsWindow stores the signed blocks window
+	ParamsStoreKeySignedLogicCallsWindow = []byte("SignedLogicCallsWindow")
+
 	// ParamsStoreKeySignedClaimsWindow stores the signed blocks window
 	ParamsStoreKeySignedClaimsWindow = []byte("SignedClaimsWindow")
 
@@ -102,12 +105,14 @@ func DefaultParams() *Params {
 		GravityId:                     "defaultgravityid",
 		SignedValsetsWindow:           10000,
 		SignedBatchesWindow:           10000,
+		SignedLogicCallsWindow:        10000,
 		SignedClaimsWindow:            10000,
 		TargetBatchTimeout:            43200000,
 		AverageBlockTime:              5000,
 		AverageEthereumBlockTime:      15000,
 		SlashFractionValset:           sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionBatch:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		SlashFractionLogicCall:        sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionClaim:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionConflictingClaim: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionBadEthSignature:  sdk.NewDec(1).Quo(sdk.NewDec(1000)),
@@ -140,25 +145,31 @@ func (p Params) ValidateBasic() error {
 		return sdkerrors.Wrap(err, "Ethereum block time")
 	}
 	if err := validateSignedValsetsWindow(p.SignedValsetsWindow); err != nil {
-		return sdkerrors.Wrap(err, "signed blocks window")
+		return sdkerrors.Wrap(err, "signed blocks window valsets")
 	}
 	if err := validateSignedBatchesWindow(p.SignedBatchesWindow); err != nil {
-		return sdkerrors.Wrap(err, "signed blocks window")
+		return sdkerrors.Wrap(err, "signed blocks window batches")
+	}
+	if err := validateSignedLogicCallsWindow(p.SignedLogicCallsWindow); err != nil {
+		return sdkerrors.Wrap(err, "signed blocks window logic calls")
 	}
 	if err := validateSignedClaimsWindow(p.SignedClaimsWindow); err != nil {
-		return sdkerrors.Wrap(err, "signed blocks window")
+		return sdkerrors.Wrap(err, "signed blocks window claims")
 	}
 	if err := validateSlashFractionValset(p.SlashFractionValset); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction valset")
 	}
 	if err := validateSlashFractionBatch(p.SlashFractionBatch); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction valset")
+		return sdkerrors.Wrap(err, "slash fraction batch")
+	}
+	if err := validateSlashFractionLogicCall(p.SlashFractionLogicCall); err != nil {
+		return sdkerrors.Wrap(err, "slash fraction logic call")
 	}
 	if err := validateSlashFractionClaim(p.SlashFractionClaim); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction valset")
+		return sdkerrors.Wrap(err, "slash fraction claim")
 	}
 	if err := validateSlashFractionConflictingClaim(p.SlashFractionConflictingClaim); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction valset")
+		return sdkerrors.Wrap(err, "slash fraction conflicting")
 	}
 	if err := validateSlashFractionBadEthSignature(p.SlashFractionBadEthSignature); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction BadEthSignature")
@@ -308,6 +319,14 @@ func validateSignedBatchesWindow(i interface{}) error {
 	return nil
 }
 
+func validateSignedLogicCallsWindow(i interface{}) error {
+	// TODO: do we want to set some bounds on this value?
+	if _, ok := i.(uint64); !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
+}
+
 func validateSignedClaimsWindow(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(uint64); !ok {
@@ -317,6 +336,14 @@ func validateSignedClaimsWindow(i interface{}) error {
 }
 
 func validateSlashFractionBatch(i interface{}) error {
+	// TODO: do we want to set some bounds on this value?
+	if _, ok := i.(sdk.Dec); !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
+}
+
+func validateSlashFractionLogicCall(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(sdk.Dec); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

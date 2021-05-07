@@ -11,7 +11,6 @@ import (
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
-	// Question: what here can be epoched?
 	slashing(ctx, k)
 	attestationTally(ctx, k)
 	cleanupTimedOutBatches(ctx, k)
@@ -63,10 +62,10 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 
 	params := k.GetParams(ctx)
 
-	// Slash validator for not confirming valset requests, batch requests
+	// Slash validator for not confirming valset requests, batch requests, logic call requests
 	ValsetSlashing(ctx, k, params)
 	BatchSlashing(ctx, k, params)
-	// TODO slashing for arbitrary logic signatures is missing
+	LogicCallSlashing(ctx, k, params)
 
 }
 
@@ -294,6 +293,57 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 		}
 		// then we set the latest slashed batch block
 		k.SetLastSlashedBatchBlock(ctx, batch.Block)
+
+	}
+}
+
+func LogicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
+
+	// We look through the full bonded set (the active set)
+	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
+	maxHeight := uint64(0)
+
+	// don't slash in the beginning before there aren't even SignedBatchesWindow blocks yet
+	if uint64(ctx.BlockHeight()) > params.SignedLogicCallsWindow {
+		maxHeight = uint64(ctx.BlockHeight()) - params.SignedLogicCallsWindow
+	} else {
+		// we can't slash anyone if this window has not yet passed
+		return
+	}
+
+	unslashedLogicCalls := k.GetUnSlashedLogicCalls(ctx, maxHeight)
+	for _, call := range unslashedLogicCalls {
+
+		// SLASH BONDED VALIDTORS who didn't attest batch requests
+		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
+		confirms := k.GetLogicConfirmByInvalidationIDAndNonce(ctx, call.InvalidationId, call.InvalidationNonce)
+		for _, val := range currentBondedSet {
+			// Don't slash validators who joined after batch is created
+			consAddr, _ := val.GetConsAddr()
+			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
+			if exist && valSigningInfo.StartHeight > int64(call.Block) {
+				continue
+			}
+
+			found := false
+			for _, conf := range confirms {
+				// TODO this presents problems for delegate key rotation see issue #344
+				confVal, _ := sdk.AccAddressFromBech32(conf.Orchestrator)
+				if k.GetOrchestratorValidator(ctx, confVal).Equals(val.GetOperator()) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				cons, _ := val.GetConsAddr()
+				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionLogicCall)
+				if !val.IsJailed() {
+					k.StakingKeeper.Jail(ctx, cons)
+				}
+			}
+		}
+		// then we set the latest slashed logic call block
+		k.SetLastSlashedLogicCallBlock(ctx, call.Block)
 
 	}
 }

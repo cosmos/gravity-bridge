@@ -113,6 +113,9 @@ var (
 	// LastSlashedBatchBlock indexes the latest slashed batch block height
 	LastSlashedBatchBlock = []byte{0x19}
 
+	// LastSlashedLogicCallBlock indexes the latest slashed logic call block height
+	LastSlashedLogicCallBlock = []byte{0x20}
+
 	// LastUnBondingBlockHeight indexes the last validator unbonding block height
 	LastUnBondingBlockHeight = []byte{0xf8}
 

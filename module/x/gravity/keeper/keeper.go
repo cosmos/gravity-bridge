@@ -496,7 +496,7 @@ func (k Keeper) IterateOutgoingLogicCalls(ctx sdk.Context, cb func([]byte, *type
 	}
 }
 
-// GetOutgoingLogicCalls returns the outgoing tx batches
+// GetOutgoingLogicCalls returns the outgoing logic calls
 func (k Keeper) GetOutgoingLogicCalls(ctx sdk.Context) (out []*types.OutgoingLogicCall) {
 	k.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
 		out = append(out, call)
@@ -741,13 +741,42 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 	return result
 }
 
-// DeserializeValidatorIterator returns validators from the validator iterator.
-// Adding here in gravity keeper as cdc is not available inside endblocker.
-func (k Keeper) DeserializeValidatorIterator(vals []byte) stakingtypes.ValAddresses {
-	validators := stakingtypes.ValAddresses{}
-	k.cdc.MustUnmarshalBinaryBare(vals, &validators)
-	return validators
+/////////////////////////////
+//   Logic Call Slashing   //
+/////////////////////////////
+
+// SetLastSlashedLogicCallBlock sets the latest slashed logic call block height
+func (k Keeper) SetLastSlashedLogicCallBlock(ctx sdk.Context, blockHeight uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.LastSlashedLogicCallBlock, types.UInt64Bytes(blockHeight))
 }
+
+// GetLastSlashedLogicCallBlock returns the latest slashed logic call block
+func (k Keeper) GetLastSlashedLogicCallBlock(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bytes := store.Get(types.LastSlashedLogicCallBlock)
+
+	if len(bytes) == 0 {
+		return 0
+	}
+	return types.UInt64FromBytes(bytes)
+}
+
+// GetUnSlashedLogicCalls returns all the unslashed logic calls in state
+func (k Keeper) GetUnSlashedLogicCalls(ctx sdk.Context, maxHeight uint64) (out []*types.OutgoingLogicCall) {
+	lastSlashedLogicCallBlock := k.GetLastSlashedLogicCallBlock(ctx)
+	calls := k.GetOutgoingLogicCalls(ctx)
+	for _, call := range calls {
+		if call.Block > lastSlashedLogicCallBlock {
+			out = append(out, call)
+		}
+	}
+	return
+}
+
+/////////////////////////////
+//       Parameters        //
+/////////////////////////////
 
 // prefixRange turns a prefix into a (start, end) range. The start is the given prefix value and
 // the end is calculated by adding 1 bit to the start value. Nil is not allowed as prefix.
@@ -783,4 +812,12 @@ func prefixRange(prefix []byte) ([]byte, []byte) {
 		end = nil
 	}
 	return prefix, end
+}
+
+// DeserializeValidatorIterator returns validators from the validator iterator.
+// Adding here in gravity keeper as cdc is not available inside endblocker.
+func (k Keeper) DeserializeValidatorIterator(vals []byte) stakingtypes.ValAddresses {
+	validators := stakingtypes.ValAddresses{}
+	k.cdc.MustUnmarshalBinaryBare(vals, &validators)
+	return validators
 }

@@ -36,8 +36,9 @@ pub struct Erc20Token {
     #[prost(string, tag="2")]
     pub amount: ::prost::alloc::string::String,
 }
-/// ClaimType is the cosmos type of an event from the counterpart chain that can
-/// be handled
+// ClaimType is the cosmos type of an event from the counterpart chain that can
+// be handled
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum ClaimType {
@@ -106,6 +107,8 @@ pub struct OutgoingLogicCall {
     pub invalidation_id: ::prost::alloc::vec::Vec<u8>,
     #[prost(uint64, tag="7")]
     pub invalidation_nonce: u64,
+    #[prost(uint64, tag="8")]
+    pub block: u64,
 }
 /// SignType defines messages that have been signed by an orchestrator
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -429,63 +432,77 @@ pub struct MsgCancelSendToEth {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgCancelSendToEthResponse {
 }
-# [doc = r" Generated client implementations."] pub mod msg_client { # ! [allow (unused_variables , dead_code , missing_docs)] use tonic :: codegen :: * ; # [doc = " Msg defines the state transitions possible within gravity"] pub struct MsgClient < T > { inner : tonic :: client :: Grpc < T > , } impl MsgClient < tonic :: transport :: Channel > { # [doc = r" Attempt to create a new client by connecting to a given endpoint."] pub async fn connect < D > (dst : D) -> Result < Self , tonic :: transport :: Error > where D : std :: convert :: TryInto < tonic :: transport :: Endpoint > , D :: Error : Into < StdError > , { let conn = tonic :: transport :: Endpoint :: new (dst) ? . connect () . await ? ; Ok (Self :: new (conn)) } } impl < T > MsgClient < T > where T : tonic :: client :: GrpcService < tonic :: body :: BoxBody > , T :: ResponseBody : Body + HttpBody + Send + 'static , T :: Error : Into < StdError > , < T :: ResponseBody as HttpBody > :: Error : Into < StdError > + Send , { pub fn new (inner : T) -> Self { let inner = tonic :: client :: Grpc :: new (inner) ; Self { inner } } pub fn with_interceptor (inner : T , interceptor : impl Into < tonic :: Interceptor >) -> Self { let inner = tonic :: client :: Grpc :: with_interceptor (inner , interceptor) ; Self { inner } } pub async fn valset_confirm (& mut self , request : impl tonic :: IntoRequest < super :: MsgValsetConfirm > ,) -> Result < tonic :: Response < super :: MsgValsetConfirmResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ValsetConfirm") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn send_to_eth (& mut self , request : impl tonic :: IntoRequest < super :: MsgSendToEth > ,) -> Result < tonic :: Response < super :: MsgSendToEthResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/SendToEth") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn request_batch (& mut self , request : impl tonic :: IntoRequest < super :: MsgRequestBatch > ,) -> Result < tonic :: Response < super :: MsgRequestBatchResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/RequestBatch") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn confirm_batch (& mut self , request : impl tonic :: IntoRequest < super :: MsgConfirmBatch > ,) -> Result < tonic :: Response < super :: MsgConfirmBatchResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ConfirmBatch") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn confirm_logic_call (& mut self , request : impl tonic :: IntoRequest < super :: MsgConfirmLogicCall > ,) -> Result < tonic :: Response < super :: MsgConfirmLogicCallResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ConfirmLogicCall") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn deposit_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgDepositClaim > ,) -> Result < tonic :: Response < super :: MsgDepositClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/DepositClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn withdraw_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgWithdrawClaim > ,) -> Result < tonic :: Response < super :: MsgWithdrawClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/WithdrawClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn valset_update_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgValsetUpdatedClaim > ,) -> Result < tonic :: Response < super :: MsgValsetUpdatedClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ValsetUpdateClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn erc20_deployed_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgErc20DeployedClaim > ,) -> Result < tonic :: Response < super :: MsgErc20DeployedClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ERC20DeployedClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn logic_call_executed_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgLogicCallExecutedClaim > ,) -> Result < tonic :: Response < super :: MsgLogicCallExecutedClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/LogicCallExecutedClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn set_orchestrator_address (& mut self , request : impl tonic :: IntoRequest < super :: MsgSetOrchestratorAddress > ,) -> Result < tonic :: Response < super :: MsgSetOrchestratorAddressResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/SetOrchestratorAddress") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn cancel_send_to_eth (& mut self , request : impl tonic :: IntoRequest < super :: MsgCancelSendToEth > ,) -> Result < tonic :: Response < super :: MsgCancelSendToEthResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/CancelSendToEth") ; self . inner . unary (request . into_request () , path , codec) . await } } impl < T : Clone > Clone for MsgClient < T > { fn clone (& self) -> Self { Self { inner : self . inner . clone () , } } } impl < T > std :: fmt :: Debug for MsgClient < T > { fn fmt (& self , f : & mut std :: fmt :: Formatter < '_ >) -> std :: fmt :: Result { write ! (f , "MsgClient {{ ... }}") } } }/// Params represent the Gravity genesis and store parameters
-/// gravity_id:
-/// a random 32 byte value to prevent signature reuse, for example if the
-/// cosmos validators decided to use the same Ethereum keys for another chain
-/// also running Gravity we would not want it to be possible to play a deposit
-/// from chain A back on chain B's Gravity. This value IS USED ON ETHEREUM so
-/// it must be set in your genesis.json before launch and not changed after
-/// deploying Gravity
-///
-/// contract_hash:
-/// the code hash of a known good version of the Gravity contract
-/// solidity code. This can be used to verify the correct version
-/// of the contract has been deployed. This is a reference value for
-/// goernance action only it is never read by any Gravity code
-///
-/// bridge_ethereum_address:
-/// is address of the bridge contract on the Ethereum side, this is a
-/// reference value for governance only and is not actually used by any
-/// Gravity code
-///
-/// bridge_chain_id:
-/// the unique identifier of the Ethereum chain, this is a reference value
-/// only and is not actually used by any Gravity code
-///
-/// These reference values may be used by future Gravity client implemetnations
-/// to allow for saftey features or convenience features like the Gravity address
-/// in your relayer. A relayer would require a configured Gravity address if
-/// governance had not set the address on the chain it was relaying for.
-///
-/// signed_valsets_window
-/// signed_batches_window
-/// signed_claims_window
-///
-/// These values represent the time in blocks that a validator has to submit
-/// a signature for a batch or valset, or to submit a claim for a particular
-/// attestation nonce. In the case of attestations this clock starts when the
-/// attestation is created, but only allows for slashing once the event has passed
-///
-/// target_batch_timeout:
-///
-/// This is the 'target' value for when batches time out, this is a target becuase
-/// Ethereum is a probabalistic chain and you can't say for sure what the block
-/// frequency is ahead of time.
-///
-/// average_block_time
-/// average_ethereum_block_time
-///
-/// These values are the average Cosmos block time and Ethereum block time repsectively
-/// and they are used to copute what the target batch timeout is. It is important that
-/// governance updates these in case of any major, prolonged change in the time it takes
-/// to produce a block
-///
-/// slash_fraction_valset
-/// slash_fraction_batch
-/// slash_fraction_claim
-/// slash_fraction_conflicting_claim
-///
+/// This call allows anyone to submit evidence that a
+/// validator has signed a valset, batch, or logic call that never
+/// existed. Subject contains the batch, valset, or logic call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSubmitBadSignatureEvidence {
+    #[prost(message, optional, tag="1")]
+    pub subject: ::core::option::Option<::prost_types::Any>,
+    #[prost(string, tag="2")]
+    pub signature: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSubmitBadSignatureEvidenceResponse {
+}
+# [doc = r" Generated client implementations."] pub mod msg_client { # ! [allow (unused_variables , dead_code , missing_docs)] use tonic :: codegen :: * ; # [doc = " Msg defines the state transitions possible within gravity"] pub struct MsgClient < T > { inner : tonic :: client :: Grpc < T > , } impl MsgClient < tonic :: transport :: Channel > { # [doc = r" Attempt to create a new client by connecting to a given endpoint."] pub async fn connect < D > (dst : D) -> Result < Self , tonic :: transport :: Error > where D : std :: convert :: TryInto < tonic :: transport :: Endpoint > , D :: Error : Into < StdError > , { let conn = tonic :: transport :: Endpoint :: new (dst) ? . connect () . await ? ; Ok (Self :: new (conn)) } } impl < T > MsgClient < T > where T : tonic :: client :: GrpcService < tonic :: body :: BoxBody > , T :: ResponseBody : Body + HttpBody + Send + 'static , T :: Error : Into < StdError > , < T :: ResponseBody as HttpBody > :: Error : Into < StdError > + Send , { pub fn new (inner : T) -> Self { let inner = tonic :: client :: Grpc :: new (inner) ; Self { inner } } pub fn with_interceptor (inner : T , interceptor : impl Into < tonic :: Interceptor >) -> Self { let inner = tonic :: client :: Grpc :: with_interceptor (inner , interceptor) ; Self { inner } } pub async fn valset_confirm (& mut self , request : impl tonic :: IntoRequest < super :: MsgValsetConfirm > ,) -> Result < tonic :: Response < super :: MsgValsetConfirmResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ValsetConfirm") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn send_to_eth (& mut self , request : impl tonic :: IntoRequest < super :: MsgSendToEth > ,) -> Result < tonic :: Response < super :: MsgSendToEthResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/SendToEth") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn request_batch (& mut self , request : impl tonic :: IntoRequest < super :: MsgRequestBatch > ,) -> Result < tonic :: Response < super :: MsgRequestBatchResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/RequestBatch") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn confirm_batch (& mut self , request : impl tonic :: IntoRequest < super :: MsgConfirmBatch > ,) -> Result < tonic :: Response < super :: MsgConfirmBatchResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ConfirmBatch") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn confirm_logic_call (& mut self , request : impl tonic :: IntoRequest < super :: MsgConfirmLogicCall > ,) -> Result < tonic :: Response < super :: MsgConfirmLogicCallResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ConfirmLogicCall") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn deposit_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgDepositClaim > ,) -> Result < tonic :: Response < super :: MsgDepositClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/DepositClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn withdraw_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgWithdrawClaim > ,) -> Result < tonic :: Response < super :: MsgWithdrawClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/WithdrawClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn valset_update_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgValsetUpdatedClaim > ,) -> Result < tonic :: Response < super :: MsgValsetUpdatedClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ValsetUpdateClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn erc20_deployed_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgErc20DeployedClaim > ,) -> Result < tonic :: Response < super :: MsgErc20DeployedClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/ERC20DeployedClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn logic_call_executed_claim (& mut self , request : impl tonic :: IntoRequest < super :: MsgLogicCallExecutedClaim > ,) -> Result < tonic :: Response < super :: MsgLogicCallExecutedClaimResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/LogicCallExecutedClaim") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn set_orchestrator_address (& mut self , request : impl tonic :: IntoRequest < super :: MsgSetOrchestratorAddress > ,) -> Result < tonic :: Response < super :: MsgSetOrchestratorAddressResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/SetOrchestratorAddress") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn cancel_send_to_eth (& mut self , request : impl tonic :: IntoRequest < super :: MsgCancelSendToEth > ,) -> Result < tonic :: Response < super :: MsgCancelSendToEthResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/CancelSendToEth") ; self . inner . unary (request . into_request () , path , codec) . await } pub async fn submit_bad_signature_evidence (& mut self , request : impl tonic :: IntoRequest < super :: MsgSubmitBadSignatureEvidence > ,) -> Result < tonic :: Response < super :: MsgSubmitBadSignatureEvidenceResponse > , tonic :: Status > { self . inner . ready () . await . map_err (| e | { tonic :: Status :: new (tonic :: Code :: Unknown , format ! ("Service was not ready: {}" , e . into ())) }) ? ; let codec = tonic :: codec :: ProstCodec :: default () ; let path = http :: uri :: PathAndQuery :: from_static ("/gravity.v1.Msg/SubmitBadSignatureEvidence") ; self . inner . unary (request . into_request () , path , codec) . await } } impl < T : Clone > Clone for MsgClient < T > { fn clone (& self) -> Self { Self { inner : self . inner . clone () , } } } impl < T > std :: fmt :: Debug for MsgClient < T > { fn fmt (& self , f : & mut std :: fmt :: Formatter < '_ >) -> std :: fmt :: Result { write ! (f , "MsgClient {{ ... }}") } } }// Params represent the Gravity genesis and store parameters
+// gravity_id:
+// a random 32 byte value to prevent signature reuse, for example if the
+// cosmos validators decided to use the same Ethereum keys for another chain
+// also running Gravity we would not want it to be possible to play a deposit
+// from chain A back on chain B's Gravity. This value IS USED ON ETHEREUM so
+// it must be set in your genesis.json before launch and not changed after
+// deploying Gravity
+
+// contract_hash:
+// the code hash of a known good version of the Gravity contract
+// solidity code. This can be used to verify the correct version
+// of the contract has been deployed. This is a reference value for
+// goernance action only it is never read by any Gravity code
+
+// bridge_ethereum_address:
+// is address of the bridge contract on the Ethereum side, this is a
+// reference value for governance only and is not actually used by any
+// Gravity code
+
+// bridge_chain_id:
+// the unique identifier of the Ethereum chain, this is a reference value
+// only and is not actually used by any Gravity code
+
+// These reference values may be used by future Gravity client implemetnations
+// to allow for saftey features or convenience features like the Gravity address
+// in your relayer. A relayer would require a configured Gravity address if
+// governance had not set the address on the chain it was relaying for.
+
+// signed_valsets_window
+// signed_batches_window
+// signed_logiccall_window
+// signed_claims_window
+
+// These values represent the time in blocks that a validator has to submit
+// a signature for a batch or valset, or to submit a claim for a particular
+// attestation nonce. In the case of attestations this clock starts when the
+// attestation is created, but only allows for slashing once the event has passed
+
+// target_batch_timeout:
+
+// This is the 'target' value for when batches time out, this is a target becuase
+// Ethereum is a probabalistic chain and you can't say for sure what the block
+// frequency is ahead of time.
+
+// average_block_time
+// average_ethereum_block_time
+
+// These values are the average Cosmos block time and Ethereum block time repsectively
+// and they are used to compute what the target batch timeout is. It is important that
+// governance updates these in case of any major, prolonged change in the time it takes
+// to produce a block
+
+// slash_fraction_valset
+// slash_fraction_batch
+// slash_fraction_claim
+// slash_fraction_conflicting_claim
+
 /// The slashing fractions for the various gravity related slashing conditions. The first three
 /// refer to not submitting a particular message, the third for submitting a different claim
 /// for the same Ethereum event
@@ -521,6 +538,8 @@ pub struct Params {
     #[prost(uint64, tag="7")]
     pub signed_batches_window: u64,
     #[prost(uint64, tag="8")]
+    pub signed_logic_calls_window: u64,
+    #[prost(uint64, tag="9")]
     pub signed_claims_window: u64,
     #[prost(uint64, tag="10")]
     pub target_batch_timeout: u64,
@@ -533,12 +552,16 @@ pub struct Params {
     #[prost(bytes="vec", tag="14")]
     pub slash_fraction_batch: ::prost::alloc::vec::Vec<u8>,
     #[prost(bytes="vec", tag="15")]
-    pub slash_fraction_claim: ::prost::alloc::vec::Vec<u8>,
+    pub slash_fraction_logic_call: ::prost::alloc::vec::Vec<u8>,
     #[prost(bytes="vec", tag="16")]
+    pub slash_fraction_claim: ::prost::alloc::vec::Vec<u8>,
+    #[prost(bytes="vec", tag="17")]
     pub slash_fraction_conflicting_claim: ::prost::alloc::vec::Vec<u8>,
-    #[prost(uint64, tag="17")]
+    #[prost(uint64, tag="18")]
     pub unbond_slashing_valsets_window: u64,
-    #[prost(message, optional, tag="18")]
+    #[prost(bytes="vec", tag="19")]
+    pub slash_fraction_bad_eth_signature: ::prost::alloc::vec::Vec<u8>,
+    #[prost(message, optional, tag="20")]
     pub valset_reward: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
 }
 /// GenesisState struct
