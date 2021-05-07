@@ -124,45 +124,46 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p                  = k.GetParams(ctx)
-		calls              = k.GetContractCallTxs(ctx)
-		batches            = k.GetBatchTxes(ctx)
-		valsets            = k.GetValsets(ctx)
-		attmap             = k.GetAttestationMapping(ctx)
-		vsconfs            = []*types.UpdateSignerSetTxSignature{}
-		batchconfs         = []types.MsgConfirmBatch{}
-		callconfs          = []types.MsgConfirmLogicCall{}
-		attestations       = []types.Attestation{}
-		delegates          = k.GetDelegateKeys(ctx)
-		lastobserved       = k.GetLastObservedEventNonce(ctx)
-		erc20ToDenoms      = []*types.ERC20ToDenom{}
-		unbatchedTransfers = k.GetPoolTransactions(ctx)
+		p                           = k.GetParams(ctx)
+		contractCallTxs             = k.GetContractCallTxs(ctx)
+		batchTxs                    = k.GetBatchTxes(ctx)
+		updateSignerSetTxs          = k.GetUpdateSignerSetTx(ctx)
+		attmap                      = k.GetAttestationMapping(ctx)
+		updateSignerSetTxSignatures []*types.UpdateSignerSetTxSignature
+		batchTxSignatures           []types.BatchTxSignature
+		contractCallTxSignatures    []types.ContractCallTxSignature
+		ethereumEventVoteRecords    []types.EthereumEventVoteRecord
+		delegates                   = k.GetDelegateKeys(ctx)
+		lastobserved                = k.GetLastObservedEventNonce(ctx)
+		erc20ToDenoms               []*types.ERC20ToDenom
+		unbatchedTransfers          = k.GetPoolTransactions(ctx)
 	)
 
 	// export valset confirmations from state
-	for _, vs := range valsets {
+	for _, updateSignerSetTx := range updateSignerSetTxs {
 		// TODO: set height = 0?
-		vsconfs = append(vsconfs, k.GetValsetConfirms(ctx, vs.Nonce)...)
+
+		updateSignerSetTxSignatures = append(updateSignerSetTxSignatures, k.GetUpdateSignerSetTxSignatures(ctx, updateSignerSetTx)...)
 	}
 
 	// export batch confirmations from state
-	for _, batch := range batches {
+	for _, batch := range batchTxs {
 		// TODO: set height = 0?
-		batchconfs = append(batchconfs,
-			k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)...)
+		batchTxSignatures = append(batchTxSignatures,
+			k.GetBatchTxSignatureByNonceAndTokenContract(ctx, batch.Nonce, batch.TokenContract)...)
 	}
 
 	// export logic call confirmations from state
-	for _, call := range calls {
+	for _, call := range contractCallTxs {
 		// TODO: set height = 0?
-		callconfs = append(callconfs,
+		contractCallTxSignatures = append(contractCallTxSignatures,
 			k.GetLogicConfirmByInvalidationIDAndNonce(ctx, call.InvalidationId, call.InvalidationNonce)...)
 	}
 
-	// export attestations from state
+	// export ethereumEventVoteRecords from state
 	for _, atts := range attmap {
 		// TODO: set height = 0?
-		attestations = append(attestations, atts...)
+		ethereumEventVoteRecords = append(ethereumEventVoteRecords, atts...)
 	}
 
 	// export erc20 to denom relations
@@ -174,13 +175,13 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	return types.GenesisState{
 		Params:                      &p,
 		LastObservedEventNonce:      lastobserved,
-		UpdateSignerSetTxs:          valsets,
-		UpdateSignerSetTxSignatures: vsconfs,
-		BatchTxs:                    batches,
-		BatchTxSignatures:           batchconfs,
-		ContractCallTxs:             calls,
-		ContractCallTxSignatures:    callconfs,
-		EthereumEventVoteRecords:    attestations,
+		UpdateSignerSetTxs:          updateSignerSetTxs,
+		UpdateSignerSetTxSignatures: updateSignerSetTxSignatures,
+		BatchTxs:                    batchTxs,
+		BatchTxSignatures:           batchTxSignatures,
+		ContractCallTxs:             contractCallTxs,
+		ContractCallTxSignatures:    contractCallTxSignatures,
+		EthereumEventVoteRecords:    ethereumEventVoteRecords,
 		DelegateKeys:                delegates,
 		Erc20ToDenoms:               erc20ToDenoms,
 		UnbatchedSendToEthereumTxs:  unbatchedTransfers,

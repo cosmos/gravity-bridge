@@ -60,7 +60,7 @@ func (k Keeper) ValsetConfirmsByNonce(
 func (k Keeper) LastValsetRequests(
 	c context.Context,
 	req *types.QueryLastValsetRequestsRequest) (*types.QueryLastValsetRequestsResponse, error) {
-	valReq := k.GetValsets(sdk.UnwrapSDKContext(c))
+	valReq := k.GetUpdateSignerSetTx(sdk.UnwrapSDKContext(c))
 	valReqLen := len(valReq)
 	retLen := 0
 	if valReqLen < maxValsetRequestsReturned {

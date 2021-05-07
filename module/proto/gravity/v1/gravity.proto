@@ -29,7 +29,7 @@ message LatestEthereumBlockHeight {
 // EthereumSigner represents a cosmos validator with its corresponding bridge
 // operator ethereum address and its staking consensus power.
 message EthereumSigner {
-  int64 power = 1;
+  uint64 power = 1;
   string ethereum_address = 2;
 }
 

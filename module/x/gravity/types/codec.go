@@ -1,7 +1,6 @@
 package types
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
 	proto "github.com/gogo/protobuf/proto"
 
 	"github.com/cosmos/cosmos-sdk/codec/types"
@@ -23,8 +22,8 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterInterface(
 		"gravity.v1.EthereumEvent",
 		(*EthereumEvent)(nil),
-		&DepositEvent{},
-		&WithdrawEvent{},
+		&SendToCosmosEvent{},
+		&BatchTxExecutedEvent{},
 		&CosmosERC20DeployedEvent{},
 		&ContractCallTxExecutedEvent{},
 	)
@@ -32,9 +31,9 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterInterface(
 		"gravity.v1.Confirm",
 		(*EthereumSignature)(nil),
-		&ConfirmBatch{},
-		&ConfirmLogicCall{},
-		&ConfirmSignerSet{},
+		&BatchTxSignature{},
+		&ContractCallTxSignature{},
+		&UpdateSignerSetTxSignature{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
@@ -97,26 +96,4 @@ func PackSignature(signature EthereumSignature) (*types.Any, error) {
 	}
 
 	return anyEvent, nil
-}
-
-// RegisterCodec registers concrete types on the Amino codec
-func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterInterface((*EthereumSignature)(nil), nil)
-	cdc.RegisterConcrete(&MsgSetOrchestratorAddress{}, "gravity/MsgSetOrchestratorAddress", nil)
-	cdc.RegisterConcrete(&MsgSubmitEthereumSignature{}, "gravity/MsgSubmitEthereumSignature", nil)
-	cdc.RegisterConcrete(&MsgSendToEthereum{}, "gravity/MsgSendToEthereum", nil)
-	cdc.RegisterConcrete(&MsgRequestBatchTx{}, "gravity/MsgRequestBatchTx", nil)
-	cdc.RegisterConcrete(&MsgConfirmBatch{}, "gravity/MsgConfirmBatch", nil)
-	cdc.RegisterConcrete(&MsgConfirmLogicCall{}, "gravity/MsgConfirmLogicCall", nil)
-	cdc.RegisterConcrete(&Valset{}, "gravity/Valset", nil)
-	cdc.RegisterConcrete(&MsgDepositClaim{}, "gravity/MsgDepositClaim", nil)
-	cdc.RegisterConcrete(&MsgWithdrawClaim{}, "gravity/MsgWithdrawClaim", nil)
-	cdc.RegisterConcrete(&MsgERC20DeployedClaim{}, "gravity/MsgERC20DeployedClaim", nil)
-	cdc.RegisterConcrete(&MsgLogicCallExecutedClaim{}, "gravity/MsgLogicCallExecutedClaim", nil)
-	cdc.RegisterConcrete(&BatchTx{}, "gravity/BatchTx", nil)
-	cdc.RegisterConcrete(&MsgCancelSendToEth{}, "gravity/MsgCancelSendToEth", nil)
-	cdc.RegisterConcrete(&OutgoingTransferTx{}, "gravity/OutgoingTransferTx", nil)
-	cdc.RegisterConcrete(&ERC20Token{}, "gravity/ERC20Token", nil)
-	cdc.RegisterConcrete(&IDSet{}, "gravity/IDSet", nil)
-	cdc.RegisterConcrete(&Attestation{}, "gravity/Attestation", nil)
 }

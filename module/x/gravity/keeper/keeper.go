@@ -150,13 +150,13 @@ func (k Keeper) IterateValsets(ctx sdk.Context, cb func(key []byte, val *types.V
 	}
 }
 
-// GetValsets returns all the validator sets in state
-func (k Keeper) GetValsets(ctx sdk.Context) (out []*types.Valset) {
-	k.IterateValsets(ctx, func(_ []byte, val *types.Valset) bool {
+// GetUpdateSignerSetTx returns all the validator sets in state
+func (k Keeper) GetUpdateSignerSetTx(ctx sdk.Context) (out []*types.UpdateSignerSetTxSignature) {
+	k.IterateValsets(ctx, func(_ []byte, val *types.UpdateSignerSetTx) bool {
 		out = append(out, val)
 		return false
 	})
-	sort.Sort(types.Valsets(out))
+	sort.Sort(types.UpdateSignerSetTxs(out))
 	return
 }
 
@@ -257,8 +257,8 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgSubmitEthe
 	return key
 }
 
-// GetValsetConfirms returns all validator set confirmations by nonce
-func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*types.MsgSubmitEthereumSignature) {
+// GetUpdateSignerSetTxSignatures returns all validator set confirmations by nonce
+func (k Keeper) GetUpdateSignerSetTxSignatures(ctx sdk.Context, nonce uint64) (confirms []*types.UpdateSignerSetTxSignature) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.UpdateSignerSetTxSignatureKey})
 	start, end := prefixRange(types.UInt64Bytes(nonce))
 	iterator := prefixStore.Iterator(start, end)
@@ -266,7 +266,7 @@ func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*ty
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		confirm := types.MsgSubmitEthereumSignature{}
+		confirm := types.UpdateSignerSetTxSignature{}
 		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &confirm)
 		confirms = append(confirms, &confirm)
 	}
@@ -339,9 +339,9 @@ func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonc
 	}
 }
 
-// GetBatchConfirmByNonceAndTokenContract returns the batch confirms
-func (k Keeper) GetBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string) (out []types.MsgConfirmBatch) {
-	k.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, msg types.MsgConfirmBatch) bool {
+// GetBatchTxSignatureByNonceAndTokenContract returns the batch confirms
+func (k Keeper) GetBatchTxSignatureByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string) (out []types.BatchTxSignature) {
+	k.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, msg types.BatchTxSignature) bool {
 		out = append(out, msg)
 		return false
 	})

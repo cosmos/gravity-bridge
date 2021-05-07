@@ -22,7 +22,7 @@ func TestValsetCreationIfNotAvailable(t *testing.T) {
 	// EndBlocker should set a new validator set if not available
 	EndBlocker(ctx, pk)
 	require.NotNil(t, pk.GetValset(ctx, uint64(ctx.BlockHeight())))
-	valsets := pk.GetValsets(ctx)
+	valsets := pk.GetUpdateSignerSetTx(ctx)
 	require.True(t, len(valsets) == 1)
 }
 
@@ -231,7 +231,7 @@ func TestValsetEmission(t *testing.T) {
 	// EndBlocker should set a new validator set
 	EndBlocker(ctx, pk)
 	require.NotNil(t, pk.GetValset(ctx, uint64(ctx.BlockHeight())))
-	valsets := pk.GetValsets(ctx)
+	valsets := pk.GetUpdateSignerSetTx(ctx)
 	require.True(t, len(valsets) == 2)
 }
 
@@ -239,7 +239,7 @@ func TestValsetSetting(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
 	pk.SetValsetRequest(ctx)
-	valsets := pk.GetValsets(ctx)
+	valsets := pk.GetUpdateSignerSetTx(ctx)
 	require.True(t, len(valsets) == 1)
 }
 
