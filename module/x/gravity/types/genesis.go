@@ -102,22 +102,19 @@ func DefaultGenesisState() *GenesisState {
 // DefaultParams returns a copy of the default params
 func DefaultParams() *Params {
 	return &Params{
-		GravityId:                     "defaultgravityid",
-		SignedValsetsWindow:           10000,
-		SignedBatchesWindow:           10000,
-		SignedLogicCallsWindow:        10000,
-		SignedClaimsWindow:            10000,
-		TargetBatchTimeout:            43200000,
-		AverageBlockTime:              5000,
-		AverageEthereumBlockTime:      15000,
-		SlashFractionValset:           sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		SlashFractionBatch:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		SlashFractionLogicCall:        sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		SlashFractionClaim:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		SlashFractionConflictingClaim: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		SlashFractionBadEthSignature:  sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		UnbondSlashingValsetsWindow:   10000,
-		ValsetReward:                  nil,
+		GravityId:                    "defaultgravityid",
+		SignedValsetsWindow:          10000,
+		SignedBatchesWindow:          10000,
+		SignedLogicCallsWindow:       10000,
+		TargetBatchTimeout:           43200000,
+		AverageBlockTime:             5000,
+		AverageEthereumBlockTime:     15000,
+		SlashFractionValset:          sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		SlashFractionBatch:           sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		SlashFractionLogicCall:       sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		SlashFractionBadEthSignature: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		UnbondSlashingValsetsWindow:  10000,
+		ValsetReward:                 nil,
 	}
 }
 
@@ -153,9 +150,6 @@ func (p Params) ValidateBasic() error {
 	if err := validateSignedLogicCallsWindow(p.SignedLogicCallsWindow); err != nil {
 		return sdkerrors.Wrap(err, "signed blocks window logic calls")
 	}
-	if err := validateSignedClaimsWindow(p.SignedClaimsWindow); err != nil {
-		return sdkerrors.Wrap(err, "signed blocks window claims")
-	}
 	if err := validateSlashFractionValset(p.SlashFractionValset); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction valset")
 	}
@@ -164,12 +158,6 @@ func (p Params) ValidateBasic() error {
 	}
 	if err := validateSlashFractionLogicCall(p.SlashFractionLogicCall); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction logic call")
-	}
-	if err := validateSlashFractionClaim(p.SlashFractionClaim); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction claim")
-	}
-	if err := validateSlashFractionConflictingClaim(p.SlashFractionConflictingClaim); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction conflicting")
 	}
 	if err := validateSlashFractionBadEthSignature(p.SlashFractionBadEthSignature); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction BadEthSignature")
@@ -196,14 +184,11 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainId, validateBridgeChainID),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedValsetsWindow, &p.SignedValsetsWindow, validateSignedValsetsWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeySignedBatchesWindow, &p.SignedBatchesWindow, validateSignedBatchesWindow),
-		paramtypes.NewParamSetPair(ParamsStoreKeySignedClaimsWindow, &p.SignedClaimsWindow, validateSignedClaimsWindow),
 		paramtypes.NewParamSetPair(ParamsStoreKeyAverageBlockTime, &p.AverageBlockTime, validateAverageBlockTime),
 		paramtypes.NewParamSetPair(ParamsStoreKeyTargetBatchTimeout, &p.TargetBatchTimeout, validateTargetBatchTimeout),
 		paramtypes.NewParamSetPair(ParamsStoreKeyAverageEthereumBlockTime, &p.AverageEthereumBlockTime, validateAverageEthereumBlockTime),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionValset, &p.SlashFractionValset, validateSlashFractionValset),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionBatch, &p.SlashFractionBatch, validateSlashFractionBatch),
-		paramtypes.NewParamSetPair(ParamsStoreSlashFractionClaim, &p.SlashFractionClaim, validateSlashFractionClaim),
-		paramtypes.NewParamSetPair(ParamsStoreSlashFractionConflictingClaim, &p.SlashFractionConflictingClaim, validateSlashFractionConflictingClaim),
 		paramtypes.NewParamSetPair(ParamStoreSlashFractionBadEthSignature, &p.SlashFractionBadEthSignature, validateSlashFractionBadEthSignature),
 		paramtypes.NewParamSetPair(ParamStoreUnbondSlashingValsetsWindow, &p.UnbondSlashingValsetsWindow, validateUnbondSlashingValsetsWindow),
 	}
@@ -327,14 +312,6 @@ func validateSignedLogicCallsWindow(i interface{}) error {
 	return nil
 }
 
-func validateSignedClaimsWindow(i interface{}) error {
-	// TODO: do we want to set some bounds on this value?
-	if _, ok := i.(uint64); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
-}
-
 func validateSlashFractionBatch(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(sdk.Dec); !ok {
@@ -344,22 +321,6 @@ func validateSlashFractionBatch(i interface{}) error {
 }
 
 func validateSlashFractionLogicCall(i interface{}) error {
-	// TODO: do we want to set some bounds on this value?
-	if _, ok := i.(sdk.Dec); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
-}
-
-func validateSlashFractionClaim(i interface{}) error {
-	// TODO: do we want to set some bounds on this value?
-	if _, ok := i.(sdk.Dec); !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
-}
-
-func validateSlashFractionConflictingClaim(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(sdk.Dec); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

@@ -540,28 +540,22 @@ pub struct Params {
     #[prost(uint64, tag="8")]
     pub signed_logic_calls_window: u64,
     #[prost(uint64, tag="9")]
-    pub signed_claims_window: u64,
-    #[prost(uint64, tag="10")]
     pub target_batch_timeout: u64,
-    #[prost(uint64, tag="11")]
+    #[prost(uint64, tag="10")]
     pub average_block_time: u64,
-    #[prost(uint64, tag="12")]
+    #[prost(uint64, tag="11")]
     pub average_ethereum_block_time: u64,
-    #[prost(bytes="vec", tag="13")]
+    #[prost(bytes="vec", tag="12")]
     pub slash_fraction_valset: ::prost::alloc::vec::Vec<u8>,
-    #[prost(bytes="vec", tag="14")]
+    #[prost(bytes="vec", tag="13")]
     pub slash_fraction_batch: ::prost::alloc::vec::Vec<u8>,
-    #[prost(bytes="vec", tag="15")]
+    #[prost(bytes="vec", tag="14")]
     pub slash_fraction_logic_call: ::prost::alloc::vec::Vec<u8>,
-    #[prost(bytes="vec", tag="16")]
-    pub slash_fraction_claim: ::prost::alloc::vec::Vec<u8>,
-    #[prost(bytes="vec", tag="17")]
-    pub slash_fraction_conflicting_claim: ::prost::alloc::vec::Vec<u8>,
-    #[prost(uint64, tag="18")]
+    #[prost(uint64, tag="15")]
     pub unbond_slashing_valsets_window: u64,
-    #[prost(bytes="vec", tag="19")]
+    #[prost(bytes="vec", tag="16")]
     pub slash_fraction_bad_eth_signature: ::prost::alloc::vec::Vec<u8>,
-    #[prost(message, optional, tag="20")]
+    #[prost(message, optional, tag="17")]
     pub valset_reward: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
 }
 /// GenesisState struct

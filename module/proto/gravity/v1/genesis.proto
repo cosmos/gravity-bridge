@@ -98,36 +98,27 @@ message Params {
   uint64 signed_valsets_window       = 6;
   uint64 signed_batches_window       = 7;
   uint64 signed_logic_calls_window   = 8;
-  uint64 signed_claims_window        = 9;
-  uint64 target_batch_timeout        = 10;
-  uint64 average_block_time          = 11;
-  uint64 average_ethereum_block_time = 12;
-  bytes  slash_fraction_valset       = 13 [
+  uint64 target_batch_timeout        = 9;
+  uint64 average_block_time          = 10;
+  uint64 average_ethereum_block_time = 11;
+  bytes  slash_fraction_valset       = 12 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes slash_fraction_batch = 14 [
+  bytes slash_fraction_batch = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes slash_fraction_logic_call = 15 [
+  bytes slash_fraction_logic_call = 14 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes slash_fraction_claim = 16 [
+  uint64 unbond_slashing_valsets_window = 15;
+  bytes slash_fraction_bad_eth_signature = 16 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes slash_fraction_conflicting_claim = 17 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
-  ];
-  uint64 unbond_slashing_valsets_window = 18;
-  bytes slash_fraction_bad_eth_signature = 19 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
-  ];
-  cosmos.base.v1beta1.Coin valset_reward = 20;
+  cosmos.base.v1beta1.Coin valset_reward = 17;
 }
 
 // GenesisState struct

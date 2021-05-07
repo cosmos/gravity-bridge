@@ -293,7 +293,6 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 		}
 		// then we set the latest slashed batch block
 		k.SetLastSlashedBatchBlock(ctx, batch.Block)
-
 	}
 }
 
@@ -344,6 +343,5 @@ func LogicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 		}
 		// then we set the latest slashed logic call block
 		k.SetLastSlashedLogicCallBlock(ctx, call.Block)
-
 	}
 }
