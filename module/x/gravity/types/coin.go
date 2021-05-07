@@ -51,7 +51,7 @@ func ValidateGravityDenom(denom string) error {
 	case strings.TrimSpace(denom) == "",
 		len(denomSplit) == 1 && denomSplit[0] == GravityDenomPrefix,
 		len(denomSplit) == 2 && (denomSplit[0] != GravityDenomPrefix || strings.TrimSpace(denomSplit[1]) == ""):
-		return sdkerrors.Wrapf(fmt.Errorf("invalid gravity denom"), "denomination should be prefixed with the format '%s%s{address}'", GravityDenomPrefix, GravityDenomSeparator)
+		return sdkerrors.Wrapf(ErrInvalidGravityDenom, "denomination should be prefixed with the format '%s%s{address}'", GravityDenomPrefix, GravityDenomSeparator)
 
 	case denomSplit[0] == denom && strings.TrimSpace(denom) != "":
 		// denom source is from the current chain. Return nil as it has already been validated

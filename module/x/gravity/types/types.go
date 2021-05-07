@@ -3,7 +3,7 @@ package types
 import (
 	"encoding/binary"
 	"fmt"
-	math "math"
+	"math"
 	"math/big"
 	"sort"
 	"strconv"
