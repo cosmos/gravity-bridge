@@ -101,6 +101,8 @@ message Params {
 }
 
 // GenesisState struct
+// TODO: this need to be audited and potentially simplified using the new
+// interfaces
 message GenesisState {
   Params params = 1;
   uint64 last_observed_event_nonce = 2;
