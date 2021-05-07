@@ -151,7 +151,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			consAddr, _ := val.GetConsAddr()
 			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
 
-			//  Slash validator ONLY if he joined after valset is created
+			//  Slash validator ONLY if he joined before valset is created
 			if exist && valSigningInfo.StartHeight < int64(vs.Nonce) {
 				// Check if validator has confirmed valset or not
 				found := false

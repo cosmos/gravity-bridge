@@ -32,7 +32,21 @@ To deal with scenario 2, we also need to slash validators who are no longer vali
 
 The current value of `UnbondSlashingValsetsWindow` is 10,000 blocks, or about 12-14 hours. We have determined this to be a safe value based on the following logic. So long as every validator leaving hte validator set signs at least one validator set update that they are not contained in then it is guaranteed to be possible for a relayer to produce a chain of validator set updates to transform the current state on the chain into the present state.
 
-It should be noted that this slashing requirement could be eliminated with no loss of security if it where possible to perform the Ethereum signatures inside the consensus code. This is a pretty limited feature addition to Tendermint.
+#### Slashing currently bonded validators:
+
+- We compare the current Cosmos block height with the `SignedValsetsWindow` parameter. If the current block height is less than `SignedValsetsWindow`, this procedure completes, doing nothing.
+- Get a list of all the valsets that have not yet been processed by this procedure in earlier blocks, up to `SignedValsetsWindow` blocks ago. We only slash for each valset once.
+- For each of these valsets:
+  - Get the current set of bonded validators with `StakingKeeper.GetBondedValidatorsByPower`. For each validator:
+    - Check that the validator started validating before the valset was created.
+    - Check if the validator has signed this valset with a `MsgConfirmBatch`. If not, slash the validator by `SlashFractionValset` and jail them.
+
+#### Slashing recently unbonded validators:
+
+- Get a list of all validators who are currently unbonding. For each of these:
+  - Check that the validator started validating before the valset was created.
+  - Check that the valset was created before the `UnbondSlashingValsetsWindow` for that validator ended. (validators `UnbondingHeight` + `UnbondSlashingValsetsWindow`)
+  - Check if the validator has signed this valset with a `MsgConfirmBatch`. If not, slash the validator by `SlashFractionValset` and jail them.
 
 ### Batch Slashing
 
@@ -40,6 +54,15 @@ This slashing condition is triggered when a validator does not sign a transactio
 
 1. A validator simply does not bother to keep the correct binaries running on their system,
 2. A cartel of >1/3 validators unbond and then refuse to sign updates, preventing any batches from getting enough signatures to be submitted to the Gravity Ethereum contract.
+
+Procedure:
+
+- We compare the current Cosmos block height with the `SignedBatchesWindow` parameter. If the current block height is less than `SignedBatchesWindow`, this procedure completes, doing nothing.
+- Get a list of all the valsets that have not yet been processed by this procedure in earlier blocks, up to `SignedBatchesWindow` blocks ago. We only slash for each valset once.
+- For each of these valsets:
+  - Get the current set of bonded validators with `StakingKeeper.GetBondedValidatorsByPower`. For each validator:
+    - Check that the validator started validating before the valset was created.
+    - Check if the validator has signed this valset with a `MsgValsetConfirm`. If not, slash the validator by `SlashFractionBatch` and jail them.
 
 ## Attestation vote counting
 
