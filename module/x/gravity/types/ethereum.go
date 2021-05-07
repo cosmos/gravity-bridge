@@ -50,10 +50,10 @@ func ValidateEthAddress(a string) error {
 /////////////////////////
 
 // NewERC20Token returns a new instance of an ERC20
-func NewERC20Token(amount uint64, contract string) *ERC20Token {
-	return &ERC20Token{
+func NewERC20Token(amount uint64, contract string) ERC20Token {
+	return ERC20Token{
 		Amount: sdk.NewIntFromUint64(amount),
-		Denom: strings.Join([]string{GravityDenomPrefix, contract}, GravityDenomSeparator),
+		Denom:  strings.Join([]string{GravityDenomPrefix, contract}, GravityDenomSeparator),
 	}
 }
 
@@ -88,7 +88,7 @@ func (e *ERC20Token) ValidateBasic() error {
 
 // Add adds one ERC20 to another
 // TODO: make this return errors instead
-func (e *ERC20Token) Add(o *ERC20Token) *ERC20Token {
+func (e *ERC20Token) Add(o ERC20Token) ERC20Token {
 	if e.Contract() != o.Contract() {
 		panic("invalid contract address")
 	}
