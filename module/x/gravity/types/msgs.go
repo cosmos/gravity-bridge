@@ -223,3 +223,40 @@ func (msg MsgRequestBatchTx) GetSigners() []sdk.AccAddress {
 
 	return []sdk.AccAddress{acc}
 }
+
+// NewMsgCancelSendToEthereum returns a new MsgCancelSendToEthereum
+func NewMsgCancelSendToEthereum(id uint64, orchestrator sdk.AccAddress) *MsgCancelSendToEthereum {
+	return &MsgCancelSendToEthereum{
+		Id: id,
+		Sender: orchestrator.String(),
+	}
+}
+
+// Route should return the name of the module
+func (msg MsgCancelSendToEthereum) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgCancelSendToEthereum) Type() string { return "cancel_send_to_ethereum" }
+
+// ValidateBasic performs stateless checks
+func (msg MsgCancelSendToEthereum) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgCancelSendToEthereum) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgCancelSendToEthereum) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
