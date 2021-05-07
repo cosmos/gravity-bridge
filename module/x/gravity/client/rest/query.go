@@ -49,7 +49,7 @@ func batchByNonceHandler(cliCtx client.Context, storeName string) http.HandlerFu
 			return
 		}
 
-		var out types.OutgoingTxBatch
+		var out types.BatchTx
 		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
@@ -166,7 +166,7 @@ func lastBatchesByAddressHandler(cliCtx client.Context, storeName string) http.H
 			return
 		}
 
-		var out types.OutgoingTxBatch
+		var out types.BatchTx
 		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}

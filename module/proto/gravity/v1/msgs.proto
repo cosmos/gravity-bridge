@@ -60,7 +60,7 @@ message MsgCancelSendToEthereum {
 
 message MsgCancelSendToEthereumResponse {}
 
-// MsgRequestBatch requests a batch of transactions with a given coin
+// MsgRequestBatchTx requests a batch of transactions with a given coin
 // denomination to send across the bridge to Ethereum.
 message MsgRequestBatchTx {
   string denom = 1;

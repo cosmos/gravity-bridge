@@ -2,24 +2,37 @@ package types
 
 import (
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-func IsEthereumERC20Token(denom string) bool {
+type GravityDenom struct {
+	sdk.Coin
+}
+
+func (gd *GravityDenom) IsEthereumERC20Token() bool {
 	prefix := GravityDenomPrefix + GravityDenomSeparator
-	return strings.HasPrefix(denom, prefix)
+	return strings.HasPrefix(gd.Denom, prefix)
 }
 
-func IsCosmosCoin(denom string) bool {
-	return !IsEthereumERC20Token(denom)
+func (gd *GravityDenom) IsCosmosCoin() bool {
+	return !gd.IsEthereumERC20Token()
 }
 
-func GravityDenomToERC20Contract(denom string) string {
+func (gd *GravityDenom) GravityDenomToERC20Contract() common.Address {
 	fullPrefix := GravityDenomPrefix + GravityDenomSeparator
-	return strings.TrimPrefix(denom, fullPrefix)
+	return common.HexToAddress(strings.TrimPrefix(gd.Denom, fullPrefix))
+}
+
+func GravityDenomFromContract(contract string) GravityDenom {
+	return GravityDenom{sdk.Coin{Denom: contract, Amount: sdk.NewIntFromUint64(0)}}
+}
+
+func (gd *GravityDenom) ERC20Token() ERC20Token {
+	return ERC20Token{sdk.Coin{Amount: gd.Amount, Denom: gd.Denom}}
 }
 
 // ValidateGravityDenom validates that the given denomination is either:

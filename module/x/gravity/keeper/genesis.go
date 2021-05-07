@@ -34,7 +34,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 
 	// reset logic calls in state
 	for _, call := range data.ContractCallTxs {
-		k.SetOutgoingLogicCall(ctx, call)
+		k.SetContractCallTx(ctx, call)
 	}
 
 	// reset batch confirmations in state
@@ -125,11 +125,11 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
 		p                  = k.GetParams(ctx)
-		calls              = k.GetOutgoingLogicCalls(ctx)
-		batches            = k.GetOutgoingTxBatches(ctx)
+		calls              = k.GetContractCallTxs(ctx)
+		batches            = k.GetBatchTxes(ctx)
 		valsets            = k.GetValsets(ctx)
 		attmap             = k.GetAttestationMapping(ctx)
-		vsconfs            = []*types.MsgValsetConfirm{}
+		vsconfs            = []*types.UpdateSignerSetTxSignature{}
 		batchconfs         = []types.MsgConfirmBatch{}
 		callconfs          = []types.MsgConfirmLogicCall{}
 		attestations       = []types.Attestation{}

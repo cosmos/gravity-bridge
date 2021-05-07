@@ -62,9 +62,9 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 
 }
 
-// ValsetConfirm handles MsgValsetConfirm
-// TODO: check msgValsetConfirm to have an Orchestrator field instead of a Validator field
-func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm) (*types.MsgValsetConfirmResponse, error) {
+// ValsetConfirm handles MsgSubmitEthereumSignature
+// TODO: check MsgSubmitEthereumSignature to have an Orchestrator field instead of a Validator field
+func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgSubmitEthereumSignature) (*types.MsgSubmitEthereumSignatureResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	valset := k.GetValset(ctx, msg.Nonce)
 	if valset == nil {
@@ -108,11 +108,11 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 		),
 	)
 
-	return &types.MsgValsetConfirmResponse{}, nil
+	return &types.MsgSubmitEthereumSignatureResponse{}, nil
 }
 
-// SendToEth handles MsgSendToEth
-func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types.MsgSendToEthResponse, error) {
+// SendToEth handles MsgSendToEthereum
+func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEthereum) (*types.MsgSendToEthereumResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
@@ -131,11 +131,11 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 		),
 	)
 
-	return &types.MsgSendToEthResponse{}, nil
+	return &types.MsgSendToEthereumResponse{}, nil
 }
 
-// RequestBatch handles MsgRequestBatch
-func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*types.MsgRequestBatchResponse, error) {
+// RequestBatch handles MsgRequestBatchTx
+func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatchTx) (*types.MsgRequestBatchTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Check if the denom is a gravity coin, if not, check if there is a deployed ERC20 representing it.
@@ -145,7 +145,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		return nil, err
 	}
 
-	batchID, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize)
+	batchID, err := k.BuildBatchTx(ctx, tokenContract, BatchTxSize)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		),
 	)
 
-	return &types.MsgRequestBatchResponse{}, nil
+	return &types.MsgRequestBatchTxResponse{}, nil
 }
 
 // ConfirmBatch handles MsgConfirmBatch
@@ -166,7 +166,7 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// fetch the outgoing batch given the nonce
-	batch := k.GetOutgoingTXBatch(ctx, msg.TokenContract, msg.Nonce)
+	batch := k.GetBatchTx(ctx, msg.TokenContract, msg.Nonce)
 	if batch == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
 	}
@@ -224,7 +224,7 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 	}
 
 	// fetch the outgoing logic given the nonce
-	logic := k.GetOutgoingLogicCall(ctx, invalidationIdBytes, msg.InvalidationNonce)
+	logic := k.GetContractCallTx(ctx, invalidationIdBytes, msg.InvalidationNonce)
 	if logic == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find logic")
 	}

@@ -234,19 +234,19 @@ func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedVa
 /////////////////////////////
 
 // GetValsetConfirm returns a valset confirmation by a nonce and validator address
-func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce uint64, validator sdk.AccAddress) *types.MsgValsetConfirm {
+func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce uint64, validator sdk.AccAddress) *types.MsgSubmitEthereumSignature {
 	store := ctx.KVStore(k.storeKey)
 	entity := store.Get(types.GetUpdateSignerSetTxSignatureKey(nonce, validator))
 	if entity == nil {
 		return nil
 	}
-	confirm := types.MsgValsetConfirm{}
+	confirm := types.MsgSubmitEthereumSignature{}
 	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
 	return &confirm
 }
 
 // SetValsetConfirm sets a valset confirmation
-func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) []byte {
+func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgSubmitEthereumSignature) []byte {
 	store := ctx.KVStore(k.storeKey)
 	addr, err := sdk.AccAddressFromBech32(valsetConf.Orchestrator)
 	if err != nil {
@@ -258,7 +258,7 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 }
 
 // GetValsetConfirms returns all validator set confirmations by nonce
-func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*types.MsgValsetConfirm) {
+func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*types.MsgSubmitEthereumSignature) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.UpdateSignerSetTxSignatureKey})
 	start, end := prefixRange(types.UInt64Bytes(nonce))
 	iterator := prefixStore.Iterator(start, end)
@@ -266,7 +266,7 @@ func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*ty
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		confirm := types.MsgValsetConfirm{}
+		confirm := types.MsgSubmitEthereumSignature{}
 		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &confirm)
 		confirms = append(confirms, &confirm)
 	}
@@ -277,13 +277,13 @@ func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*ty
 // IterateValsetConfirmByNonce iterates through all valset confirms by nonce in ASC order
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
-func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgValsetConfirm) bool) {
+func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgSubmitEthereumSignature) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.UpdateSignerSetTxSignatureKey})
 	iter := prefixStore.Iterator(prefixRange(types.UInt64Bytes(nonce)))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgValsetConfirm{}
+		confirm := types.MsgSubmitEthereumSignature{}
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
 		// cb returns true to stop early
 		if cb(iter.Key(), confirm) {
@@ -421,33 +421,33 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 //       LOGICCALLS        //
 /////////////////////////////
 
-// GetOutgoingLogicCall gets an outgoing logic call
-func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) *types.OutgoingLogicCall {
+// GetContractCallTx gets an outgoing logic call
+func (k Keeper) GetContractCallTx(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) *types.ContractCallTx {
 	store := ctx.KVStore(k.storeKey)
-	call := types.OutgoingLogicCall{}
+	call := types.ContractCallTx{}
 	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetContractCallTxKey(invalidationID, invalidationNonce)), &call)
 	return &call
 }
 
 // SetOutogingLogicCall sets an outgoing logic call
-func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, call *types.OutgoingLogicCall) {
+func (k Keeper) SetContractCallTx(ctx sdk.Context, call *types.ContractCallTx) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetContractCallTxKey(call.InvalidationId, call.InvalidationNonce),
 		k.cdc.MustMarshalBinaryBare(call))
 }
 
-// DeleteOutgoingLogicCall deletes outgoing logic calls
-func (k Keeper) DeleteOutgoingLogicCall(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) {
+// DeleteContractCallTx deletes outgoing logic calls
+func (k Keeper) DeleteContractCallTx(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) {
 	ctx.KVStore(k.storeKey).Delete(types.GetContractCallTxKey(invalidationID, invalidationNonce))
 }
 
-// IterateOutgoingLogicCalls iterates over outgoing logic calls
-func (k Keeper) IterateOutgoingLogicCalls(ctx sdk.Context, cb func([]byte, *types.OutgoingLogicCall) bool) {
+// IterateContractCallTxs iterates over outgoing logic calls
+func (k Keeper) IterateContractCallTxs(ctx sdk.Context, cb func([]byte, *types.ContractCallTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.ContractCallTxKey})
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		var call types.OutgoingLogicCall
+		var call types.ContractCallTx
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &call)
 		// cb returns true to stop early
 		if cb(iter.Key(), &call) {
@@ -456,27 +456,27 @@ func (k Keeper) IterateOutgoingLogicCalls(ctx sdk.Context, cb func([]byte, *type
 	}
 }
 
-// GetOutgoingLogicCalls returns the outgoing tx batches
-func (k Keeper) GetOutgoingLogicCalls(ctx sdk.Context) (out []*types.OutgoingLogicCall) {
-	k.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
+// GetContractCallTxs returns the outgoing tx batches
+func (k Keeper) GetContractCallTxs(ctx sdk.Context) (out []*types.ContractCallTx) {
+	k.IterateContractCallTxs(ctx, func(_ []byte, call *types.ContractCallTx) bool {
 		out = append(out, call)
 		return false
 	})
 	return
 }
 
-// CancelOutgoingLogicCalls releases all TX in the batch and deletes the batch
-func (k Keeper) CancelOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) error {
-	call := k.GetOutgoingLogicCall(ctx, invalidationId, invalidationNonce)
+// CancelContractCallTxs releases all TX in the batch and deletes the batch
+func (k Keeper) CancelContractCallTx(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) error {
+	call := k.GetContractCallTx(ctx, invalidationId, invalidationNonce)
 	if call == nil {
 		return types.ErrUnknown
 	}
 	// Delete batch since it is finished
-	k.DeleteOutgoingLogicCall(ctx, call.InvalidationId, call.InvalidationNonce)
+	k.DeleteContractCallTx(ctx, call.InvalidationId, call.InvalidationNonce)
 
 	// a consuming application will have to watch for this event and act on it
 	batchEvent := sdk.NewEvent(
-		types.EventTypeOutgoingLogicCallCanceled,
+		types.EventTypeContractCallTxCanceled,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyInvalidationID, fmt.Sprint(call.InvalidationId)),
 		sdk.NewAttribute(types.AttributeKeyInvalidationNonce, fmt.Sprint(call.InvalidationNonce)),

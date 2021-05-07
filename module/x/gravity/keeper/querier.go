@@ -55,7 +55,7 @@ const (
 	QueryLastPendingBatchRequestByAddr = "lastPendingBatchRequest"
 	// gets the last 100 outgoing batches, regardless of denom, useful
 	// for a relayer to see what is available to relay
-	QueryOutgoingTxBatches = "lastBatches"
+	QueryBatchTxes = "lastBatches"
 	// Used by the relayer to package a batch with signatures required
 	// to submit to Ethereum
 	QueryBatchConfirms = "batchConfirms"
@@ -76,7 +76,7 @@ const (
 	QueryLastPendingLogicCallByAddr = "lastPendingLogicCall"
 	// gets the last 5 outgoing logic calls, regardless of denom, useful
 	// for a relayer to see what is available to relay
-	QueryOutgoingLogicCalls = "lastLogicCalls"
+	QueryContractCallTxs = "lastLogicCalls"
 	// Used by the relayer to package a logic call with signatures required
 	// to submit to Ethereum
 	QueryLogicCallConfirms = "logicCallConfirms"
@@ -117,7 +117,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryAllBatchConfirms(ctx, path[1], path[2], keeper)
 		case QueryLastPendingBatchRequestByAddr:
 			return lastPendingBatchRequest(ctx, path[1], keeper)
-		case QueryOutgoingTxBatches:
+		case QueryBatchTxes:
 			return lastBatchesRequest(ctx, keeper)
 		case QueryBatchFees:
 			return queryBatchFees(ctx, keeper)
@@ -129,7 +129,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryAllLogicCallConfirms(ctx, path[1], path[2], keeper)
 		case QueryLastPendingLogicCallByAddr:
 			return lastPendingLogicCallRequest(ctx, path[1], keeper)
-		case QueryOutgoingLogicCalls:
+		case QueryContractCallTxs:
 			return lastLogicCallRequests(ctx, keeper)
 
 		case QueryGravityID:
@@ -179,8 +179,8 @@ func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	var confirms []*types.MsgValsetConfirm
-	keeper.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
+	var confirms []*types.MsgSubmitEthereumSignature
+	keeper.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c types.MsgSubmitEthereumSignature) bool {
 		confirms = append(confirms, &c)
 		return false
 	})
@@ -322,8 +322,8 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingBatchReq *types.OutgoingTxBatch
-	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
+	var pendingBatchReq *types.BatchTx
+	keeper.IterateBatchTxes(ctx, func(_ []byte, batch *types.BatchTx) bool {
 		foundConfirm := keeper.GetBatchConfirm(ctx, batch.BatchNonce, batch.TokenContract, addr) != nil
 		if !foundConfirm {
 			pendingBatchReq = batch
@@ -345,8 +345,8 @@ const MaxResults = 100 // todo: impl pagination
 
 // Gets MaxResults batches from store. Does not select by token type or anything
 func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	var batches []*types.OutgoingTxBatch
-	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.OutgoingTxBatch) bool {
+	var batches []*types.BatchTx
+	keeper.IterateBatchTxes(ctx, func(_ []byte, batch *types.BatchTx) bool {
 		batches = append(batches, batch)
 		return len(batches) == MaxResults
 	})
@@ -371,8 +371,8 @@ func queryBatchFees(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 
 // Gets MaxResults logic calls from store.
 func lastLogicCallRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	var calls []*types.OutgoingLogicCall
-	keeper.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
+	var calls []*types.ContractCallTx
+	keeper.IterateContractCallTxs(ctx, func(_ []byte, call *types.ContractCallTx) bool {
 		calls = append(calls, call)
 		return len(calls) == MaxResults
 	})
@@ -395,7 +395,7 @@ func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keep
 	if types.ValidateEthAddress(tokenContract) != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-	foundBatch := keeper.GetOutgoingTXBatch(ctx, tokenContract, parsedNonce)
+	foundBatch := keeper.GetBatchTx(ctx, tokenContract, parsedNonce)
 	if foundBatch == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find tx batch")
 	}
@@ -413,8 +413,8 @@ func lastPendingLogicCallRequest(ctx sdk.Context, operatorAddr string, keeper Ke
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingLogicCalls *types.OutgoingLogicCall
-	keeper.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
+	var pendingLogicCalls *types.ContractCallTx
+	keeper.IterateContractCallTxs(ctx, func(_ []byte, call *types.ContractCallTx) bool {
 		foundConfirm := keeper.GetLogicCallConfirm(ctx, call.InvalidationId, call.InvalidationNonce, addr) != nil
 		if !foundConfirm {
 			pendingLogicCalls = call
@@ -439,7 +439,7 @@ func queryLogicCall(ctx sdk.Context, invalidationId string, invalidationNonce st
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	foundCall := keeper.GetOutgoingLogicCall(ctx, []byte(invalidationId), nonce)
+	foundCall := keeper.GetContractCallTx(ctx, []byte(invalidationId), nonce)
 	if foundCall == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find logic call")
 	}
@@ -518,7 +518,7 @@ func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, er
 }
 
 func queryPendingSendToEth(ctx sdk.Context, senderAddr string, k Keeper) ([]byte, error) {
-	batches := k.GetOutgoingTxBatches(ctx)
+	batches := k.GetBatchTxes(ctx)
 	unbatched_tx := k.GetPoolTransactions(ctx)
 	sender_address := senderAddr
 	res := types.QueryPendingSendToEthResponse{}

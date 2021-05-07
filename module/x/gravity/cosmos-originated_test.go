@@ -123,7 +123,7 @@ func lockCoinsInModule(tv *testingVars) {
 	assert.Equal(tv.t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}, balance1)
 
 	// send some coins
-	msg := &types.MsgSendToEth{
+	msg := &types.MsgSendToEthereum{
 		Sender:    userCosmosAddr.String(),
 		EthDest:   ethDestination,
 		Amount:    sendingCoin,

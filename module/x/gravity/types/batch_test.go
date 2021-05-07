@@ -9,14 +9,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
+func TestBatchTxCheckpointGold1(t *testing.T) {
 	senderAddr, err := sdk.AccAddressFromHex("527FBEE652609AB150F0AEE9D61A2F76CFC4A73E")
 	require.NoError(t, err)
 	var (
 		erc20Addr = "0x835973768750b3ED2D5c3EF5AdcD5eDb44d12aD4"
 	)
 
-	src := OutgoingTxBatch{
+	src := BatchTx{
 		BatchNonce: 1,
 		//
 		BatchTimeout: 2111,
@@ -50,7 +50,7 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))
 }
 
-func TestOutgoingLogicCallCheckpointGold1(t *testing.T) {
+func TestContractCallTxCheckpointGold1(t *testing.T) {
 	payload, err := hex.DecodeString("0x74657374696e675061796c6f6164000000000000000000000000000000000000"[2:])
 	require.NoError(t, err)
 	invalidationId, err := hex.DecodeString("0x696e76616c69646174696f6e4964000000000000000000000000000000000000"[2:])
@@ -60,7 +60,7 @@ func TestOutgoingLogicCallCheckpointGold1(t *testing.T) {
 		Contract: "0xC26eFfa98B8A2632141562Ae7E34953Cfe5B4888",
 		Amount:   sdk.NewIntFromUint64(1),
 	}}
-	call := OutgoingLogicCall{
+	call := ContractCallTx{
 		Transfers:            token,
 		Fees:                 token,
 		LogicContractAddress: "0x17c1736CcF692F653c433d7aa2aB45148C016F68",

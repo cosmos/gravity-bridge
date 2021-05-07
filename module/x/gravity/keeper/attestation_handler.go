@@ -53,7 +53,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 			}
 		}
 	case *types.MsgWithdrawClaim:
-		return a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
+		return a.keeper.BatchTxExecuted(ctx, claim.TokenContract, claim.BatchNonce)
 	case *types.MsgERC20DeployedClaim:
 		// Check if it already exists
 		existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.CosmosDenom)

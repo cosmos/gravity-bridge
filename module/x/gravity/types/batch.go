@@ -11,7 +11,7 @@ import (
 )
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 
 	abi, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
 	if err != nil {
@@ -69,9 +69,9 @@ func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (c OutgoingLogicCall) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+func (c ContractCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 
-	abi, err := abi.JSON(strings.NewReader(OutgoingLogicCallABIJSON))
+	abi, err := abi.JSON(strings.NewReader(ContractCallTxABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
 	}

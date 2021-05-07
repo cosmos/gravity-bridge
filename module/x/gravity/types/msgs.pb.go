@@ -243,7 +243,7 @@ func (m *MsgCancelSendToEthereumResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgCancelSendToEthereumResponse proto.InternalMessageInfo
 
-// MsgRequestBatch requests a batch of transactions with a given coin
+// MsgRequestBatchTx requests a batch of transactions with a given coin
 // denomination to send across the bridge to Ethereum.
 type MsgRequestBatchTx struct {
 	Denom  string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`

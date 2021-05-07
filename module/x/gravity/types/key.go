@@ -51,8 +51,8 @@ const (
 	// BatchTxKey indexes outgoing tx batches under a nonce and token address
 	BatchTxKey
 
-	// OutgoingTXBatchBlockKey indexes outgoing tx batches under a block height and token address
-	OutgoingTXBatchBlockKey
+	// BatchTxBlockKey indexes outgoing tx batches under a block height and token address
+	BatchTxBlockKey
 
 	// BatchTxSignatureKey indexes validator confirmations by token contract address
 	BatchTxSignatureKey
@@ -78,8 +78,8 @@ const (
 	// ContractCallTxSignatureKey indexes the outgoing logic confirms
 	ContractCallTxSignatureKey
 
-	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
-	LastObservedEthereumBlockHeightKey
+	// LastEthereumBlockHeightKey indexes the latest Ethereum block height
+	LastEthereumBlockHeightKey
 
 	// DenomToERC20Key prefixes the index of Cosmos originated asset denoms to ERC20s
 	DenomToERC20Key
@@ -165,11 +165,11 @@ func GetBatchTxKey(tokenContract string, nonce uint64) []byte {
 	return bytes.Join([][]byte{{BatchTxKey}, UInt64Bytes(nonce), []byte(tokenContract)}, []byte{})
 }
 
-// GetOutgoingTxBatchBlockKey returns the following key format
+// GetBatchTxBlockKey returns the following key format
 // prefix     blockheight
 // [0xb][0 0 0 0 2 1 4 3]
-func GetOutgoingTxBatchBlockKey(block uint64) []byte {
-	return append([]byte{OutgoingTXBatchBlockKey}, UInt64Bytes(block)...)
+func GetBatchTxBlockKey(block uint64) []byte {
+	return append([]byte{BatchTxBlockKey}, UInt64Bytes(block)...)
 }
 
 // GetBatchTxSignatureKey returns the following key format
@@ -186,8 +186,8 @@ func GetBatchTxSignatureKey(tokenContract string, batchNonce uint64, validator s
 func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
 	amount := make([]byte, 32)
 	amount = fee.Amount.BigInt().FillBytes(amount)
-	contract := GravityDenomToERC20Contract(fee.Denom)
-	return bytes.Join([][]byte{{SecondIndexOutgoingTXFeeKey}, []byte(contract), amount}, []byte{})
+	token := ERC20Token{fee}
+	return bytes.Join([][]byte{{SecondIndexOutgoingTXFeeKey}, []byte(token.Contract()), amount}, []byte{})
 }
 
 // GetLastEventNonceByValidatorKey indexes lateset event nonce by validator

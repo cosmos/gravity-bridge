@@ -214,7 +214,7 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
 // the store
 func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastObservedEthereumBlockHeight {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get([]byte{types.LastObservedEthereumBlockHeightKey})
+	bytes := store.Get([]byte{types.LastEthereumBlockHeightKey})
 
 	if len(bytes) == 0 {
 		return types.LastObservedEthereumBlockHeight{
@@ -234,7 +234,7 @@ func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeig
 		EthereumBlockHeight: ethereumHeight,
 		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
 	}
-	store.Set([]byte{types.LastObservedEthereumBlockHeightKey}, k.cdc.MustMarshalBinaryBare(&height))
+	store.Set([]byte{types.LastEthereumBlockHeightKey}, k.cdc.MustMarshalBinaryBare(&height))
 }
 
 // setLastObservedEventNonce sets the latest observed event nonce

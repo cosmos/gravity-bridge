@@ -24,7 +24,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 	)
 	input := CreateTestEnv(t)
 	ctx := input.Context
-	input.GravityKeeper.SetValsetConfirm(ctx, types.MsgValsetConfirm{
+	input.GravityKeeper.SetValsetConfirm(ctx, types.MsgSubmitEthereumSignature{
 		Nonce:        nonce,
 		Orchestrator: myValidatorCosmosAddr.String(),
 		EthAddress:   myValidatorEthereumAddr.String(),
@@ -40,7 +40,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			srcAddr:  myValidatorCosmosAddr.String(),
-			expResp:  []byte(`{"type":"gravity/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "orchestrator": "cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l",  "signature": "alksdjhflkasjdfoiasjdfiasjdfoiasdj"}}`),
+			expResp:  []byte(`{"type":"gravity/MsgSubmitEthereumSignature", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "orchestrator": "cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l",  "signature": "alksdjhflkasjdfoiasjdfiasjdfoiasdj"}}`),
 		},
 		"unknown nonce": {
 			srcNonce: "999999",
@@ -86,7 +86,7 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 	// seed confirmations
 	for i := 0; i < 3; i++ {
 		addr, _ := sdk.AccAddressFromBech32(addrs[i])
-		msg := types.MsgValsetConfirm{}
+		msg := types.MsgSubmitEthereumSignature{}
 		msg.EthAddress = gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(i + 1)}, 20)).String()
 		msg.Nonce = uint64(1)
 		msg.Orchestrator = addr.String()
@@ -463,7 +463,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 	}{
 		"find batch": {
 			expResp: []byte(`{
-	"type": "gravity/OutgoingTxBatch",
+	"type": "gravity/BatchTx",
 	"value": {
 	"batch_nonce": "1",
 	"block": "1234567",
@@ -539,7 +539,7 @@ func createTestBatch(t *testing.T, input TestInput) {
 	input.Context = input.Context.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	_, err = input.GravityKeeper.BuildOutgoingTXBatch(input.Context, myTokenContractAddr, 2)
+	_, err = input.GravityKeeper.BuildBatchTx(input.Context, myTokenContractAddr, 2)
 	require.NoError(t, err)
 }
 
@@ -599,7 +599,7 @@ func TestQueryLogicCalls(t *testing.T) {
 		Amount:   sdk.NewIntFromUint64(5000),
 	}}
 
-	call := types.OutgoingLogicCall{
+	call := types.ContractCallTx{
 		Transfers:            token,
 		Fees:                 token,
 		LogicContractAddress: logicContract,
@@ -608,9 +608,9 @@ func TestQueryLogicCalls(t *testing.T) {
 		InvalidationId:       invalidationId,
 		InvalidationNonce:    uint64(invalidationNonce),
 	}
-	k.SetOutgoingLogicCall(ctx, &call)
+	k.SetContractCallTx(ctx, &call)
 
-	res := k.GetOutgoingLogicCall(ctx, invalidationId, invalidationNonce)
+	res := k.GetContractCallTx(ctx, invalidationId, invalidationNonce)
 
 	require.Equal(t, call, *res)
 
@@ -655,7 +655,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 		Amount:   sdk.NewIntFromUint64(5000),
 	}}
 
-	call := types.OutgoingLogicCall{
+	call := types.ContractCallTx{
 		Transfers:            token,
 		Fees:                 token,
 		LogicContractAddress: logicContract,
@@ -664,7 +664,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 		InvalidationId:       invalidationId,
 		InvalidationNonce:    uint64(invalidationNonce),
 	}
-	k.SetOutgoingLogicCall(ctx, &call)
+	k.SetContractCallTx(ctx, &call)
 
 	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 
@@ -698,7 +698,7 @@ func TestQueryBatch(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedJSON := []byte(`{
-		"type": "gravity/OutgoingTxBatch",
+		"type": "gravity/BatchTx",
 		"value": {
 		  "transactions": [
 			{
@@ -917,7 +917,7 @@ func TestQueryPendingSendToEth(t *testing.T) {
 	ctx = ctx.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	_, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	_, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	response, err := queryPendingSendToEth(ctx, mySender.String(), input.GravityKeeper)

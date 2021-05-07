@@ -45,14 +45,14 @@ func TestBatches(t *testing.T) {
 	ctx = ctx.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	firstBatch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	firstBatch, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// then batch is persisted
-	gotFirstBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
+	gotFirstBatch := input.GravityKeeper.GetBatchTx(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
 	require.NotNil(t, gotFirstBatch)
 
-	expFirstBatch := &types.OutgoingTxBatch{
+	expFirstBatch := &types.BatchTx{
 		BatchNonce: 1,
 		Transactions: []*types.OutgoingTransferTx{
 			{
@@ -114,11 +114,11 @@ func TestBatches(t *testing.T) {
 	// create the more profitable batch
 	ctx = ctx.WithBlockTime(now)
 	// tx batch size is 2, so that some of them stay behind
-	secondBatch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	secondBatch, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// check that the more profitable batch has the right txs in it
-	expSecondBatch := &types.OutgoingTxBatch{
+	expSecondBatch := &types.BatchTx{
 		BatchNonce: 2,
 		Transactions: []*types.OutgoingTransferTx{
 			{
@@ -146,11 +146,11 @@ func TestBatches(t *testing.T) {
 	// =================================
 
 	// Execute the batch
-	err = input.GravityKeeper.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	err = input.GravityKeeper.BatchTxExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 	require.NoError(t, err)
 
 	// check batch has been deleted
-	gotSecondBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	gotSecondBatch := input.GravityKeeper.GetBatchTx(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 	require.Nil(t, gotSecondBatch)
 
 	// check that txs from first batch have been freed
@@ -231,14 +231,14 @@ func TestBatchesFullCoins(t *testing.T) {
 	ctx = ctx.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	firstBatch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	firstBatch, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// then batch is persisted
-	gotFirstBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
+	gotFirstBatch := input.GravityKeeper.GetBatchTx(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
 	require.NotNil(t, gotFirstBatch)
 
-	expFirstBatch := &types.OutgoingTxBatch{
+	expFirstBatch := &types.BatchTx{
 		BatchNonce: 1,
 		Transactions: []*types.OutgoingTransferTx{
 			{
@@ -300,11 +300,11 @@ func TestBatchesFullCoins(t *testing.T) {
 	// create the more profitable batch
 	ctx = ctx.WithBlockTime(now)
 	// tx batch size is 2, so that some of them stay behind
-	secondBatch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	secondBatch, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// check that the more profitable batch has the right txs in it
-	expSecondBatch := &types.OutgoingTxBatch{
+	expSecondBatch := &types.BatchTx{
 		BatchNonce: 2,
 		Transactions: []*types.OutgoingTransferTx{
 			{
@@ -332,11 +332,11 @@ func TestBatchesFullCoins(t *testing.T) {
 	// =================================
 
 	// Execute the batch
-	err = input.GravityKeeper.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	err = input.GravityKeeper.BatchTxExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 	require.NoError(t, err)
 
 	// check batch has been deleted
-	gotSecondBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	gotSecondBatch := input.GravityKeeper.GetBatchTx(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 	require.Nil(t, gotSecondBatch)
 
 	// check that txs from first batch have been freed
@@ -413,7 +413,7 @@ func TestPoolTxRefund(t *testing.T) {
 	ctx = ctx.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	_, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	_, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// try to refund a tx that's in a batch
