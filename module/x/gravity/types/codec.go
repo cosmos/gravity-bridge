@@ -31,7 +31,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 
 	registry.RegisterInterface(
 		"gravity.v1.Confirm",
-		(*Confirm)(nil),
+		(*EthereumSignature)(nil),
 		&ConfirmBatch{},
 		&ConfirmLogicCall{},
 		&ConfirmSignerSet{},
@@ -69,26 +69,26 @@ func UnpackEvent(any *types.Any) (EthereumEvent, error) {
 	return event, nil
 }
 
-// UnpackConfirm unpacks an Any into a Confirm interface. It returns an error if the
+// UnpackSignature unpacks an Any into a Confirm interface. It returns an error if the
 // confirm can't be unpacked.
-func UnpackConfirm(any *types.Any) (Confirm, error) {
+func UnpackSignature(any *types.Any) (EthereumSignature, error) {
 	if any == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "protobuf Any message cannot be nil")
 	}
 
-	confirm, ok := any.GetCachedValue().(Confirm)
+	confirm, ok := any.GetCachedValue().(EthereumSignature)
 	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into Confirm %T", any)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into EthereumSignature %T", any)
 	}
 
 	return confirm, nil
 }
 
 
-func PackConfirm(confirm Confirm) (*types.Any, error) {
-	msg, ok := confirm.(proto.Message)
+func PackSignature(signature EthereumSignature) (*types.Any, error) {
+	msg, ok := signature.(proto.Message)
 	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", confirm)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", signature)
 	}
 
 	anyEvent, err := types.NewAnyWithValue(msg)
@@ -101,7 +101,7 @@ func PackConfirm(confirm Confirm) (*types.Any, error) {
 
 // RegisterCodec registers concrete types on the Amino codec
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterInterface((*EthereumClaim)(nil), nil)
+	cdc.RegisterInterface((*EthereumSignature)(nil), nil)
 	cdc.RegisterConcrete(&MsgSetOrchestratorAddress{}, "gravity/MsgSetOrchestratorAddress", nil)
 	cdc.RegisterConcrete(&MsgSubmitEthereumSignature{}, "gravity/MsgSubmitEthereumSignature", nil)
 	cdc.RegisterConcrete(&MsgSendToEthereum{}, "gravity/MsgSendToEthereum", nil)

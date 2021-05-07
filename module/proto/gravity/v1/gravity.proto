@@ -16,7 +16,7 @@ message EthereumEventVoteRecord {
   google.protobuf.Any event = 1
       [ (cosmos_proto.accepts_interface) = "EthereumEvent" ];
   repeated string votes = 2;
-  bool                accepted = 3;
+  bool accepted = 3;
 }
 
 // LatestEthereumBlockHeight defines the latest observed ethereum block height
