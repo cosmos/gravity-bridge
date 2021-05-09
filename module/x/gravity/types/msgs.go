@@ -304,6 +304,9 @@ type EthereumClaim interface {
 	// Which type of claim this is
 	GetType() ClaimType
 	ValidateBasic() error
+	// The claim hash of this claim. This is used to store these claims and also used to check if two different
+	// validators claims agree. Therefore it's extremely important that this include all elements of the claim
+	// with the exception of the orchestrator who sent it in, which will be used as a different part of the index
 	ClaimHash() []byte
 }
 
@@ -379,8 +382,12 @@ const (
 )
 
 // Hash implements BridgeDeposit.Hash
+// modify this with care as it is security sensitive. If an element of the claim is not in this hash a single hostile validator
+// could engineer a hash collision and execute a version of the claim with any unhashed data changed to benefit them.
+// note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
+// structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (msg *MsgDepositClaim) ClaimHash() []byte {
-	path := fmt.Sprintf("%s/%s/%s/", msg.TokenContract, string(msg.EthereumSender), msg.CosmosReceiver)
+	path := fmt.Sprintf("%d/%d/%s/%s/%s/%s", msg.EventNonce, msg.BlockHeight, msg.TokenContract, msg.Amount.String(), string(msg.EthereumSender), msg.CosmosReceiver)
 	return tmhash.Sum([]byte(path))
 }
 
@@ -408,7 +415,7 @@ func (e *MsgWithdrawClaim) ValidateBasic() error {
 
 // Hash implements WithdrawBatch.Hash
 func (msg *MsgWithdrawClaim) ClaimHash() []byte {
-	path := fmt.Sprintf("%s/%d/", msg.TokenContract, msg.BatchNonce)
+	path := fmt.Sprintf("%s/%d/%d/%s", msg.TokenContract, msg.BatchNonce, msg.EventNonce, msg.TokenContract)
 	return tmhash.Sum([]byte(path))
 }
 
@@ -500,8 +507,12 @@ func (msg MsgERC20DeployedClaim) Type() string { return "ERC20_deployed_claim" }
 func (msg MsgERC20DeployedClaim) Route() string { return RouterKey }
 
 // Hash implements BridgeDeposit.Hash
+// modify this with care as it is security sensitive. If an element of the claim is not in this hash a single hostile validator
+// could engineer a hash collision and execute a version of the claim with any unhashed data changed to benefit them.
+// note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
+// structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (b *MsgERC20DeployedClaim) ClaimHash() []byte {
-	path := fmt.Sprintf("%s/%s/%s/%s/%d/", b.CosmosDenom, b.TokenContract, b.Name, b.Symbol, b.Decimals)
+	path := fmt.Sprintf("%d/%d/%s/%s/%s/%s/%d", b.EventNonce, b.BlockHeight, b.CosmosDenom, b.TokenContract, b.Name, b.Symbol, b.Decimals)
 	return tmhash.Sum([]byte(path))
 }
 
@@ -556,8 +567,12 @@ func (msg MsgLogicCallExecutedClaim) Type() string { return "Logic_Call_Executed
 func (msg MsgLogicCallExecutedClaim) Route() string { return RouterKey }
 
 // Hash implements BridgeDeposit.Hash
+// modify this with care as it is security sensitive. If an element of the claim is not in this hash a single hostile validator
+// could engineer a hash collision and execute a version of the claim with any unhashed data changed to benefit them.
+// note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
+// structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (b *MsgLogicCallExecutedClaim) ClaimHash() []byte {
-	path := fmt.Sprintf("%s/%d/", b.InvalidationId, b.InvalidationNonce)
+	path := fmt.Sprintf("%d,%d,%s/%d/", b.EventNonce, b.BlockHeight, b.InvalidationId, b.InvalidationNonce)
 	return tmhash.Sum([]byte(path))
 }
 
@@ -625,8 +640,14 @@ func (msg MsgValsetUpdatedClaim) Type() string { return "Valset_Updated_Claim" }
 func (msg MsgValsetUpdatedClaim) Route() string { return RouterKey }
 
 // Hash implements BridgeDeposit.Hash
+// modify this with care as it is security sensitive. If an element of the claim is not in this hash a single hostile validator
+// could engineer a hash collision and execute a version of the claim with any unhashed data changed to benefit them.
+// note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
+// structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (b *MsgValsetUpdatedClaim) ClaimHash() []byte {
-	path := fmt.Sprintf("%d/%d/%d/%s/", b.ValsetNonce, b.EventNonce, b.BlockHeight, b.Members)
+	var members BridgeValidators = b.Members
+	members.Sort()
+	path := fmt.Sprintf("%d/%d/%d/%s/%s/%s", b.EventNonce, b.ValsetNonce, b.BlockHeight, members, b.RewardAmount.String(), b.RewardToken)
 	return tmhash.Sum([]byte(path))
 }
 
