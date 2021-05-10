@@ -75,7 +75,7 @@ message SendToEthereumTx {
 // Cosmos to Ethereum.
 message ContractCallTx {
   uint64                            invalidation_nonce    = 1;
-  bytes                             invalidation_id       = 2 [
+  bytes                             invalidation_scope    = 2 [
     (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
   ];
   string                            contract_call_address = 3;
