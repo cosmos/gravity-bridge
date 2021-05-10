@@ -96,23 +96,26 @@ func (k Keeper) getBatchTimeoutHeight(ctx sdk.Context) uint64 {
 }
 
 // OutgoingTxBatchExecuted is run when the Cosmos chain detects that a batch has been executed on Ethereum
-// It frees all the transactions in the batch, then cancels all earlier batches
-func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, nonce uint64) error {
+// It frees all the transactions in the batch, then cancels all earlier batches, this function panics instead
+// of returning errors because any failure will cause a double spend.
+func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, nonce uint64) {
 	b := k.GetOutgoingTXBatch(ctx, tokenContract, nonce)
 	if b == nil {
-		return sdkerrors.Wrap(types.ErrUnknown, "nonce")
+		panic(fmt.Sprintf("unknown batch nonce for outgoing tx batch %s %d", tokenContract, nonce))
 	}
 
 	// cleanup outgoing TX pool
 	for _, tx := range b.Transactions {
 		k.removePoolEntry(ctx, tx.Id)
 	}
-	var err error
 	// Iterate through remaining batches
 	k.IterateOutgoingTXBatches(ctx, func(key []byte, iter_batch *types.OutgoingTxBatch) bool {
 		// If the iterated batches nonce is lower than the one that was just executed, cancel it
 		if iter_batch.BatchNonce < b.BatchNonce {
-			err = k.CancelOutgoingTXBatch(ctx, tokenContract, iter_batch.BatchNonce)
+			err := k.CancelOutgoingTXBatch(ctx, tokenContract, iter_batch.BatchNonce)
+			if err != nil {
+				panic(fmt.Sprintf("Failed mark outgoing batch %s %d as executed with %s", tokenContract, iter_batch.BatchNonce, err))
+			}
 		}
 		return false
 	})
@@ -120,7 +123,6 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract string, n
 	// Delete batch since it is finished
 	k.DeleteBatch(ctx, *b)
 
-	return err
 }
 
 // StoreBatch stores a transaction batch

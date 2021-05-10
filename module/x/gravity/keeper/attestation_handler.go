@@ -18,6 +18,7 @@ type AttestationHandler struct {
 // Handle is the entry point for Attestation processing.
 func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
+	// deposit in this context means a deposit into the Ethereum side of the bridge
 	case *types.MsgDepositClaim:
 		// Check if coin is Cosmos-originated asset and get denom
 		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.TokenContract)
@@ -51,8 +52,10 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 				return sdkerrors.Wrap(err, "transfer vouchers")
 			}
 		}
+	// withdraw in this context means a withdraw from the Ethereum side of the bridge
 	case *types.MsgWithdrawClaim:
-		return a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
+		a.keeper.OutgoingTxBatchExecuted(ctx, claim.TokenContract, claim.BatchNonce)
+		return nil
 	case *types.MsgERC20DeployedClaim:
 		// Check if it already exists
 		existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.CosmosDenom)
@@ -158,7 +161,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		}
 
 	default:
-		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())
+		panic(fmt.Sprintf("Invalid event type for attestations %s", claim.GetType()))
 	}
 	return nil
 }
