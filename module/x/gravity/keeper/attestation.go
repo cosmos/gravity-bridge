@@ -212,17 +212,17 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
 
 // GetLastObservedEthereumBlockHeight height gets the block height to of the last observed attestation from
 // the store
-func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastObservedEthereumBlockHeight {
+func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LatestEthereumBlockHeight {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get([]byte{types.LastEthereumBlockHeightKey})
 
 	if len(bytes) == 0 {
-		return types.LastObservedEthereumBlockHeight{
-			CosmosBlockHeight:   0,
-			EthereumBlockHeight: 0,
+		return types.LatestEthereumBlockHeight{
+			CosmosHeight:   0,
+			EthereumHeight: 0,
 		}
 	}
-	height := types.LastObservedEthereumBlockHeight{}
+	height := types.LatestEthereumBlockHeight{}
 	k.cdc.MustUnmarshalBinaryBare(bytes, &height)
 	return height
 }
@@ -230,9 +230,9 @@ func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastOb
 // SetLastObservedEthereumBlockHeight sets the block height in the store.
 func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeight uint64) {
 	store := ctx.KVStore(k.storeKey)
-	height := types.LastObservedEthereumBlockHeight{
-		EthereumBlockHeight: ethereumHeight,
-		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
+	height := types.LatestEthereumBlockHeight{
+		EthereumHeight: ethereumHeight,
+		CosmosHeight:   uint64(ctx.BlockHeight()),
 	}
 	store.Set([]byte{types.LastEthereumBlockHeightKey}, k.cdc.MustMarshalBinaryBare(&height))
 }
