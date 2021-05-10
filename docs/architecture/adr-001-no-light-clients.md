@@ -11,7 +11,6 @@ Most cross-chain communication software relies on in-consensus light clients: ea
 
 ## Context
 
-> This section describes the forces at play, including technological, political, social, and project local. These forces are probably in tension, and should be called out as such. The language in this section is value-neutral. It is simply describing facts. It should clearly explain the problem and motivation that the proposal aims to resolve.
 
 Light clients are relatively complicated and computationally expensive compared to oracles and multi-sig systems. They need to verify blockchain headers using a specialized procedure, instead of just verifying some signatures. Headers are also very specific to the underlying blockchain technology, which means that you'd need different light clients to connect Gravity to Ethereum vs Polygon, for example.
 
