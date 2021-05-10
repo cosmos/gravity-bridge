@@ -12,12 +12,12 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	// reset valsets in state
 	for _, vs := range data.UpdateSignerSetTxs {
 		// TODO: block height?
-		k.StoreValsetUnsafe(ctx, vs)
+		k.StoreUpdateSignerSetTxUnsafe(ctx, vs)
 	}
 
 	// reset valset confirmations in state
 	for _, conf := range data.UpdateSignerSetTxSignatures {
-		k.SetValsetConfirm(ctx, *conf)
+		k.SetEthereumSignature(ctx, *conf)
 	}
 
 	// reset batches in state
@@ -40,7 +40,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	// reset batch confirmations in state
 	for _, conf := range data.ContractCallTxSignatures {
 		conf := conf
-		k.SetLogicCallConfirm(ctx, &conf)
+		k.SetContractCallTxSignature(ctx, &conf)
 	}
 
 	// reset pool transactions in state
@@ -53,7 +53,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	// reset attestations in state
 	for _, att := range data.EthereumEventVoteRecords {
 		att := att
-		claim, err := k.UnpackAttestationClaim(&att)
+		claim, err := k.UnpackEthereumEventVoteRecordEvent(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
@@ -67,7 +67,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	// this must be done after the above to be correct
 	for _, att := range data.EthereumEventVoteRecords {
 		att := att
-		claim, err := k.UnpackAttestationClaim(&att)
+		claim, err := k.UnpackEthereumEventVoteRecordEvent(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
@@ -127,7 +127,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		p                           = k.GetParams(ctx)
 		contractCallTxs             = k.GetContractCallTxs(ctx)
 		batchTxs                    = k.GetBatchTxes(ctx)
-		updateSignerSetTxs          = k.GetUpdateSignerSetTx(ctx)
+		updateSignerSetTxs          = k.GetUpdateSignerSetTxs(ctx)
 		attmap                      = k.GetAttestationMapping(ctx)
 		updateSignerSetTxSignatures []*types.UpdateSignerSetTxSignature
 		batchTxSignatures           []types.BatchTxSignature
@@ -157,7 +157,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	for _, call := range contractCallTxs {
 		// TODO: set height = 0?
 		contractCallTxSignatures = append(contractCallTxSignatures,
-			k.GetLogicConfirmByInvalidationIDAndNonce(ctx, call.InvalidationId, call.InvalidationNonce)...)
+			k.GetContractCallTxSignatureByInvalidationIDAndNonce(ctx, call.InvalidationScope, call.InvalidationNonce)...)
 	}
 
 	// export ethereumEventVoteRecords from state

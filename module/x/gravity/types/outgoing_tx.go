@@ -10,10 +10,85 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+var (
+	_ OutgoingTx = &UpdateSignerSetTx{}
+	_ OutgoingTx = &BatchTx{}
+	_ OutgoingTx = &ContractCallTx{}
+)
 
-	abi, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
+///////////////////
+// GetStoreIndex //
+///////////////////
+
+func (usstx *UpdateSignerSetTx) GetStoreIndex() []byte {
+	panic("NOT IMPLEMENTED")
+}
+
+func (btx *BatchTx) GetStoreIndex() []byte {
+	panic("NOT IMPLEMENTED")
+}
+
+func (cctx *ContractCallTx) GetStoreIndex() []byte {
+	panic("NOT IMPLEMENTED")
+}
+
+///////////////////
+// GetCheckpoint //
+///////////////////
+
+// GetCheckpoint returns the checkpoint
+func (u UpdateSignerSetTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
+	// TODO replace hardcoded "foo" here with a getter to retrieve the correct gravityID from the store
+	// this will work for now because 'foo' is the test gravityID we are using
+	// var gravityIDString = "foo"
+
+	// error case here should not occur outside of testing since the above is a constant
+	contractAbi, err := abi.JSON(strings.NewReader(ValsetCheckpointABIJSON))
+	if err != nil {
+		return nil, err
+	}
+
+	// the contract argument is not a arbitrary length array but a fixed length 32 byte
+	// array, therefore we have to utf8 encode the string (the default in this case) and
+	// then copy the variable length encoded data into a fixed length array. This function
+	// will panic if gravityId is too long to fit in 32 bytes
+	gravityIDFixed, err := byteArrayToFixByteArray(gravityID)
+	if err != nil {
+		return nil, err
+	}
+
+	checkpointBytes := []uint8("checkpoint")
+	var checkpoint [32]uint8
+	copy(checkpoint[:], checkpointBytes[:])
+
+	memberAddresses := make([]gethcommon.Address, len(u.Signers))
+	convertedPowers := make([]*big.Int, len(u.Signers))
+	for i, m := range u.Signers {
+		memberAddresses[i] = gethcommon.HexToAddress(m.EthereumAddress)
+		convertedPowers[i] = big.NewInt(int64(m.Power))
+	}
+	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
+	// but other than that it's a constant that has no impact on the output. This is because
+	// it gets encoded as a function name which we must then discard.
+	bytes, packErr := contractAbi.Pack("checkpoint", gravityIDFixed, checkpoint, big.NewInt(int64(u.Nonce)), memberAddresses, convertedPowers)
+
+	// this should never happen outside of test since any case that could crash on encoding
+	// should be filtered above.
+	if packErr != nil {
+		return nil, err
+	}
+
+	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
+	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
+	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
+	hash := crypto.Keccak256Hash(bytes[4:])
+	return hash.Bytes(), nil
+}
+
+// GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
+func (b BatchTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
+
+	encodedBatch, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
 	}
@@ -22,9 +97,9 @@ func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	// array, therefore we have to utf8 encode the string (the default in this case) and
 	// then copy the variable length encoded data into a fixed length array. This function
 	// will panic if gravityId is too long to fit in 32 bytes
-	gravityID, err := strToFixByteArray(gravityIDstring)
+	gravityIDFixed, err := byteArrayToFixByteArray(gravityID)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Create the methodName argument which salts the signature
@@ -45,8 +120,8 @@ func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedBatch, err := abi.Pack("submitBatch",
-		gravityID,
+	abiEncodedBatch, err := encodedBatch.Pack("submitBatch",
+		gravityIDFixed,
 		batchMethodName,
 		txAmounts,
 		txDestinations,
@@ -64,14 +139,14 @@ func (b BatchTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 
 	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
 	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
-	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
+	// then need to adjust how many bytes you truncate off the front to get the output of encodedBatch.encode()
 	return crypto.Keccak256Hash(abiEncodedBatch[4:]).Bytes(), nil
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (c ContractCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
+func (c ContractCallTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 
-	abi, err := abi.JSON(strings.NewReader(ContractCallTxABIJSON))
+	encodedCall, err := abi.JSON(strings.NewReader(ContractCallTxABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
 	}
@@ -85,7 +160,7 @@ func (c ContractCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	// array, therefore we have to utf8 encode the string (the default in this case) and
 	// then copy the variable length encoded data into a fixed length array. This function
 	// will panic if gravityId is too long to fit in 32 bytes
-	gravityID, err := strToFixByteArray(gravityIDstring)
+	gravityIDFixed, err := byteArrayToFixByteArray(gravityID)
 	if err != nil {
 		panic(err)
 	}
@@ -113,8 +188,8 @@ func (c ContractCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	abiEncodedCall, err := abi.Pack("checkpoint",
-		gravityID,
+	abiEncodedCall, err := encodedCall.Pack("checkpoint",
+		gravityIDFixed,
 		logicCallMethodName,
 		transferAmounts,
 		transferTokenContracts,

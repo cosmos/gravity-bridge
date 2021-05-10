@@ -340,3 +340,11 @@ func strToFixByteArray(s string) ([32]byte, error) {
 	copy(out[:], s)
 	return out, nil
 }
+
+func byteArrayToFixByteArray(b []byte) (out [32]byte, err error) {
+	if len(b) > 32 {
+		return out, fmt.Errorf("array too long")
+	}
+	copy(out[:], b)
+	return out, nil
+}

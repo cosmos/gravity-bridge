@@ -25,11 +25,11 @@ func createValsets(ctx sdk.Context, k keeper.Keeper) {
 	//      This will make sure the unbonding validator has to provide an attestation to a new Valset
 	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
 	// 3. If power change between validators of CurrentValset and latest valset request is > 5%
-	latestValset := k.GetLatestValset(ctx)
+	latestValset := k.GetLatestUpdateSignerSetTx(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 
-	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
-		k.SetValsetRequest(ctx)
+	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentUpdateSignerSetTx(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
+		k.SetUpdateSignerSetTxRequest(ctx)
 	}
 }
 
@@ -124,7 +124,7 @@ func cleanupTimedOutLogicCalls(ctx sdk.Context, k keeper.Keeper) {
 	calls := k.GetContractCallTxs(ctx)
 	for _, call := range calls {
 		if call.Timeout < ethereumHeight {
-			k.CancelContractCallTx(ctx, call.InvalidationId, call.InvalidationNonce)
+			k.CancelContractCallTx(ctx, call.InvalidationScope, call.InvalidationNonce)
 		}
 	}
 }
@@ -288,7 +288,7 @@ func TestingEndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			LogicContractAddress: "0x510ab76899430424d209a6c9a5b9951fb8a6f47d",
 			Payload:              []byte("fake bytes"),
 			Timeout:              10000,
-			InvalidationId:       []byte("GravityTesting"),
+			InvalidationScope:       []byte("GravityTesting"),
 			InvalidationNonce:    1,
 		}
 		//k.SetContractCallTx(ctx, &call)

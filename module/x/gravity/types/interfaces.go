@@ -18,10 +18,6 @@ type EthereumSignature interface {
 	Validate() error
 }
 
-// _ EthereumSignature = &UpdateSignerSetTxSignature{}
-// _ EthereumSignature = &ContractCallTxSignature{}
-// _ EthereumSignature = &BatchTxSignature{}
-
 // EthereumEvent represents a event from the gravity contract
 // on the counterparty ethereum chain
 type EthereumEvent interface {
@@ -33,11 +29,6 @@ type EthereumEvent interface {
 	Validate() error
 }
 
-// _ EthereumEvent = &SendToCosmosEvent{}
-// _ EthereumEvent = &BatchTxExecuitedEvent{}
-// _ EthereumEvent = &ContractCallExecutedEvent{}
-// _ EthereumEvent = &ERC20DeployedEvent{}
-
 type OutgoingTx interface {
 	// NOTE: currently the function signatures here don't match, figure out how to do this proprly
 	// maybe add an interface arg here and typecheck in each implementation?
@@ -47,7 +38,3 @@ type OutgoingTx interface {
 	GetCheckpoint([]byte) ([]byte, error)
 	GetStoreIndex() []byte
 }
-
-// _ OutgoingTx = &UpdateSignerSetTx{}
-// _ OutgoingTx = &BatchTx{}
-// _ OutgoingTx = &ContractCallTx{}

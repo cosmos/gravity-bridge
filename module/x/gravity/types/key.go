@@ -90,8 +90,8 @@ const (
 	// LastSlashedValsetNonce indexes the latest slashed valset nonce
 	LastSlashedValsetNonce
 
-	// LatestValsetNonce indexes the latest valset nonce
-	LatestValsetNonce
+	// LatestUpdateSignerSetTxNonce indexes the latest valset nonce
+	LatestUpdateSignerSetTxNonce
 
 	// LastSlashedBatchBlock indexes the latest slashed batch block height
 	LastSlashedBatchBlock

@@ -15,7 +15,7 @@ func (k Keeper) Attest(
 	ctx sdk.Context,
 	claim types.EthereumClaim,
 	anyClaim *codectypes.Any,
-) (*types.Attestation, error) {
+) (*types.EthereumEventVoteRecord, error) {
 	valAddr := k.GetOrchestratorValidator(ctx, claim.GetClaimer())
 	if valAddr == nil {
 		panic("Could not find ValAddr for delegate key, should be checked by now")
@@ -30,15 +30,15 @@ func (k Keeper) Attest(
 	}
 
 	// Tries to get an attestation with the same eventNonce and claim as the claim that was submitted.
-	att := k.GetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash())
+	att := k.GetEthereumEventVoteRecord(ctx, claim.GetEventNonce(), claim.ClaimHash())
 
 	// If it does not exist, create a new one.
 	if att == nil {
-		att = &types.Attestation{
-			Observed: false,
-			Height:   uint64(ctx.BlockHeight()),
-			Claim:    anyClaim,
+		att = &types.EthereumEventVoteRecord{
+			Accepted: false,
+			Event:    anyClaim,
 		}
+
 	}
 
 	// Add the validator's vote to this attestation
@@ -54,7 +54,7 @@ func (k Keeper) Attest(
 // and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
 // and then marks it Observed and emits an event.
 func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
-	claim, err := k.UnpackAttestationClaim(att)
+	claim, err := k.UnpackEthereumEventVoteRecordEvent(att)
 	if err != nil {
 		panic("could not cast to claim")
 	}
@@ -101,7 +101,7 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 }
 
 // processAttestation actually applies the attestation to the consensus state
-func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
+func (k Keeper) processAttestation(ctx sdk.Context, att *types.EthereumEventVoteRecord, claim types.EthereumSignature) {
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
 	if err := k.EthereumEventVoteHandler.Handle(xCtx, *att, claim); err != nil { // execute with a transient storage
@@ -121,7 +121,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 
 // emitObservedEvent emits an event with information about an attestation that has been applied to
 // consensus state.
-func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
+func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.EthereumEventVoteRecord, claim types.EthereumSignature) {
 	observationEvent := sdk.NewEvent(
 		types.EventTypeObservation,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
@@ -144,15 +144,15 @@ func (k Keeper) SetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []b
 	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
 }
 
-// GetAttestation return an attestation given a nonce
-func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte) *types.Attestation {
+// GetEthereumEventVoteRecord return a vote record given a nonce
+func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, claimHash []byte) *types.EthereumEventVoteRecord {
 	store := ctx.KVStore(k.storeKey)
 	aKey := types.GetEthereumEventVoteRecordKey(eventNonce, claimHash)
 	bz := store.Get(aKey)
 	if len(bz) == 0 {
 		return nil
 	}
-	var att types.Attestation
+	var att types.EthereumEventVoteRecord
 	k.cdc.MustUnmarshalBinaryBare(bz, &att)
 	return &att
 }
@@ -167,7 +167,7 @@ func (k Keeper) DeleteAttestation(ctx sdk.Context, eventNonce uint64, claimHash 
 func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.Attestation) {
 	out = make(map[uint64][]types.Attestation)
 	k.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
-		claim, err := k.UnpackAttestationClaim(&att)
+		claim, err := k.UnpackEthereumEventVoteRecordEvent(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}

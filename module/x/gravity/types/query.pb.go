@@ -299,7 +299,7 @@ func (m *BatchTxResponse) GetBatch() *BatchTx {
 
 // rpc ContractCallTx
 type ContractCallTxRequest struct {
-	InvalidationId    []byte `protobuf:"bytes,1,opt,name=invalidation_id,json=invalidationId,proto3" json:"invalidation_id,omitempty"`
+	InvalidationScope    []byte `protobuf:"bytes,1,opt,name=invalidation_id,json=invalidationId,proto3" json:"invalidation_id,omitempty"`
 	InvalidationNonce uint64 `protobuf:"varint,2,opt,name=invalidation_nonce,json=invalidationNonce,proto3" json:"invalidation_nonce,omitempty"`
 }
 
@@ -336,9 +336,9 @@ func (m *ContractCallTxRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ContractCallTxRequest proto.InternalMessageInfo
 
-func (m *ContractCallTxRequest) GetInvalidationId() []byte {
+func (m *ContractCallTxRequest) GetInvalidationScope() []byte {
 	if m != nil {
-		return m.InvalidationId
+		return m.InvalidationScope
 	}
 	return nil
 }
@@ -3187,10 +3187,10 @@ func (m *ContractCallTxRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x10
 	}
-	if len(m.InvalidationId) > 0 {
-		i -= len(m.InvalidationId)
-		copy(dAtA[i:], m.InvalidationId)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.InvalidationId)))
+	if len(m.InvalidationScope) > 0 {
+		i -= len(m.InvalidationScope)
+		copy(dAtA[i:], m.InvalidationScope)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.InvalidationScope)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -4460,7 +4460,7 @@ func (m *ContractCallTxRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.InvalidationId)
+	l = len(m.InvalidationScope)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
@@ -5475,7 +5475,7 @@ func (m *ContractCallTxRequest) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InvalidationId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field InvalidationScope", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -5502,9 +5502,9 @@ func (m *ContractCallTxRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.InvalidationId = append(m.InvalidationId[:0], dAtA[iNdEx:postIndex]...)
-			if m.InvalidationId == nil {
-				m.InvalidationId = []byte{}
+			m.InvalidationScope = append(m.InvalidationScope[:0], dAtA[iNdEx:postIndex]...)
+			if m.InvalidationScope == nil {
+				m.InvalidationScope = []byte{}
 			}
 			iNdEx = postIndex
 		case 2:

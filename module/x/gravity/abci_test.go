@@ -21,15 +21,15 @@ func TestValsetCreationIfNotAvailable(t *testing.T) {
 
 	// EndBlocker should set a new validator set if not available
 	EndBlocker(ctx, pk)
-	require.NotNil(t, pk.GetValset(ctx, uint64(ctx.BlockHeight())))
-	valsets := pk.GetUpdateSignerSetTx(ctx)
+	require.NotNil(t, pk.GetUpdateSignerSetTx(ctx, uint64(ctx.BlockHeight())))
+	valsets := pk.GetUpdateSignerSetTxs(ctx)
 	require.True(t, len(valsets) == 1)
 }
 
 func TestValsetCreationUponUnbonding(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
-	pk.SetValsetRequest(ctx)
+	pk.SetUpdateSignerSetTxRequest(ctx)
 
 	input.Context = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	// begin unbonding
@@ -51,11 +51,11 @@ func TestValsetSlashing_ValsetCreated_Before_ValidatorBonded(t *testing.T) {
 	pk := input.GravityKeeper
 	params := input.GravityKeeper.GetParams(ctx)
 
-	vs := pk.GetCurrentValset(ctx)
+	vs := pk.GetCurrentUpdateSignerSetTx(ctx)
 	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
 	vs.Height = height
 	vs.Nonce = height
-	pk.StoreValsetUnsafe(ctx, vs)
+	pk.StoreUpdateSignerSetTxUnsafe(ctx, vs)
 
 	EndBlocker(ctx, pk)
 
@@ -72,11 +72,11 @@ func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
 	params := input.GravityKeeper.GetParams(ctx)
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
-	vs := pk.GetCurrentValset(ctx)
+	vs := pk.GetCurrentUpdateSignerSetTx(ctx)
 	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
 	vs.Height = height
 	vs.Nonce = height
-	pk.StoreValsetUnsafe(ctx, vs)
+	pk.StoreUpdateSignerSetTxUnsafe(ctx, vs)
 
 	for i, val := range keeper.AccAddrs {
 		if i == 0 {
@@ -84,7 +84,7 @@ func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
 			continue
 		}
 		conf := types.NewMsgSubmitEthereumSignature(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
-		pk.SetValsetConfirm(ctx, *conf)
+		pk.SetEthereumSignature(ctx, *conf)
 	}
 
 	EndBlocker(ctx, pk)
@@ -123,10 +123,10 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 
 	// Create Valset request
 	ctx = ctx.WithBlockHeight(valsetRequestHeight)
-	vs := pk.GetCurrentValset(ctx)
+	vs := pk.GetCurrentUpdateSignerSetTx(ctx)
 	vs.Height = uint64(valsetRequestHeight)
 	vs.Nonce = uint64(valsetRequestHeight)
-	pk.StoreValsetUnsafe(ctx, vs)
+	pk.StoreUpdateSignerSetTxUnsafe(ctx, vs)
 
 	// Start Unbonding validators
 	// Validator-1  Unbond slash window is not expired. if not attested, slash
@@ -144,7 +144,7 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 			continue
 		}
 		conf := types.NewMsgSubmitEthereumSignature(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
-		pk.SetValsetConfirm(ctx, *conf)
+		pk.SetEthereumSignature(ctx, *conf)
 	}
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 
@@ -221,25 +221,25 @@ func TestValsetEmission(t *testing.T) {
 	pk := input.GravityKeeper
 
 	// Store a validator set with a power change as the most recent validator set
-	vs := pk.GetCurrentValset(ctx)
+	vs := pk.GetCurrentUpdateSignerSetTx(ctx)
 	vs.Nonce--
 	delta := float64(types.BridgeValidators(vs.Members).TotalPower()) * 0.05
 	vs.Members[0].Power = uint64(float64(vs.Members[0].Power) - delta/2)
 	vs.Members[1].Power = uint64(float64(vs.Members[1].Power) + delta/2)
-	pk.StoreValset(ctx, vs)
+	pk.StoreUpdateSignerSetTx(ctx, vs)
 
 	// EndBlocker should set a new validator set
 	EndBlocker(ctx, pk)
-	require.NotNil(t, pk.GetValset(ctx, uint64(ctx.BlockHeight())))
-	valsets := pk.GetUpdateSignerSetTx(ctx)
+	require.NotNil(t, pk.GetUpdateSignerSetTx(ctx, uint64(ctx.BlockHeight())))
+	valsets := pk.GetUpdateSignerSetTxs(ctx)
 	require.True(t, len(valsets) == 2)
 }
 
 func TestValsetSetting(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
-	pk.SetValsetRequest(ctx)
-	valsets := pk.GetUpdateSignerSetTx(ctx)
+	pk.SetUpdateSignerSetTxRequest(ctx)
+	valsets := pk.GetUpdateSignerSetTxs(ctx)
 	require.True(t, len(valsets) == 1)
 }
 

@@ -23,14 +23,14 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 func (k Keeper) CurrentValset(
 	c context.Context,
 	req *types.QueryCurrentValsetRequest) (*types.QueryCurrentValsetResponse, error) {
-	return &types.QueryCurrentValsetResponse{Valset: k.GetCurrentValset(sdk.UnwrapSDKContext(c))}, nil
+	return &types.QueryCurrentValsetResponse{Valset: k.GetCurrentUpdateSignerSetTx(sdk.UnwrapSDKContext(c))}, nil
 }
 
 // ValsetRequest queries the ValsetRequest of the gravity module
 func (k Keeper) ValsetRequest(
 	c context.Context,
 	req *types.QueryValsetRequestRequest) (*types.QueryValsetRequestResponse, error) {
-	return &types.QueryValsetRequestResponse{Valset: k.GetValset(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
+	return &types.QueryValsetRequestResponse{Valset: k.GetUpdateSignerSetTx(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
 }
 
 // ValsetConfirm queries the ValsetConfirm of the gravity module
@@ -41,7 +41,7 @@ func (k Keeper) ValsetConfirm(
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
-	return &types.QueryValsetConfirmResponse{Confirm: k.GetValsetConfirm(sdk.UnwrapSDKContext(c), req.Nonce, addr)}, nil
+	return &types.QueryValsetConfirmResponse{Confirm: k.GetEthereumSignature(sdk.UnwrapSDKContext(c), req.Nonce, addr)}, nil
 }
 
 // ValsetConfirmsByNonce queries the ValsetConfirmsByNonce of the gravity module
@@ -60,7 +60,7 @@ func (k Keeper) ValsetConfirmsByNonce(
 func (k Keeper) LastValsetRequests(
 	c context.Context,
 	req *types.QueryLastValsetRequestsRequest) (*types.QueryLastValsetRequestsResponse, error) {
-	valReq := k.GetUpdateSignerSetTx(sdk.UnwrapSDKContext(c))
+	valReq := k.GetUpdateSignerSetTxs(sdk.UnwrapSDKContext(c))
 	valReqLen := len(valReq)
 	retLen := 0
 	if valReqLen < maxValsetRequestsReturned {
@@ -81,9 +81,9 @@ func (k Keeper) LastPendingValsetRequestByAddr(
 	}
 
 	var pendingValsetReq []*types.Valset
-	k.IterateValsets(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
+	k.IterateUpdateSignerSetTxs(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
-		foundConfirm := k.GetValsetConfirm(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
+		foundConfirm := k.GetEthereumSignature(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
 		// and exit the loop
 		if !foundConfirm {
@@ -139,8 +139,8 @@ func (k Keeper) LastPendingLogicCallByAddr(
 
 	var pendingLogicReq *types.ContractCallTx
 	k.IterateContractCallTxs(sdk.UnwrapSDKContext(c), func(_ []byte, logic *types.ContractCallTx) bool {
-		foundConfirm := k.GetLogicCallConfirm(sdk.UnwrapSDKContext(c),
-			logic.InvalidationId, logic.InvalidationNonce, addr) != nil
+		foundConfirm := k.GetContractCallTxSignature(sdk.UnwrapSDKContext(c),
+			logic.InvalidationScope, logic.InvalidationNonce, addr) != nil
 		if !foundConfirm {
 			pendingLogicReq = logic
 			return true
@@ -206,7 +206,7 @@ func (k Keeper) LogicConfirms(
 	c context.Context,
 	req *types.QueryLogicConfirmsRequest) (*types.QueryLogicConfirmsResponse, error) {
 	var confirms []*types.MsgConfirmLogicCall
-	k.IterateLogicConfirmByInvalidationIDAndNonce(sdk.UnwrapSDKContext(c), req.InvalidationId,
+	k.IterateContractCallTxSignatureByInvalidationIDAndNonce(sdk.UnwrapSDKContext(c), req.InvalidationScope,
 		req.InvalidationNonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
 			confirms = append(confirms, c)
 			return false
