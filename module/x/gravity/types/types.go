@@ -2,18 +2,12 @@ package types
 
 import (
 	"encoding/binary"
-	"fmt"
 	"math"
-	"math/big"
 	"sort"
 	"strconv"
-	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // UInt64FromBytes create uint from binary big endian representation
