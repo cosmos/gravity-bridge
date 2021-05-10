@@ -83,8 +83,7 @@ pub async fn get_last_checked_block(
             )
             .await;
 
-        // valset events do not have an event nonce (because they are not relayed to cosmos)
-        // and therefore they are mostly useless to us. But they do have one special property
+        // valset update events have one special property
         // that is useful to us in this handler a valset update event for nonce 0 is emitted
         // in the contract constructor meaning once you find that event you can exit the search
         // with confidence that you have not missed any events without searching the entire blockchain
@@ -109,7 +108,7 @@ pub async fn get_last_checked_block(
         }
         let batch_events = batch_events.unwrap();
         let send_to_cosmos_events = send_to_cosmos_events.unwrap();
-        let valset_events = valset_events.unwrap();
+        let mut valset_events = valset_events.unwrap();
         let erc20_deployed_events = erc20_deployed_events.unwrap();
         let logic_call_executed_events = logic_call_executed_events.unwrap();
 
@@ -120,6 +119,11 @@ pub async fn get_last_checked_block(
         for event in batch_events {
             match TransactionBatchExecutedEvent::from_log(&event) {
                 Ok(batch) => {
+                    trace!(
+                        "{} batch event nonce {} last event nonce",
+                        batch.event_nonce,
+                        last_event_nonce
+                    );
                     if upcast(batch.event_nonce) == last_event_nonce && event.block_number.is_some()
                     {
                         return event.block_number.unwrap();
@@ -131,6 +135,11 @@ pub async fn get_last_checked_block(
         for event in send_to_cosmos_events {
             match SendToCosmosEvent::from_log(&event) {
                 Ok(send) => {
+                    trace!(
+                        "{} send event nonce {} last event nonce",
+                        send.event_nonce,
+                        last_event_nonce
+                    );
                     if upcast(send.event_nonce) == last_event_nonce && event.block_number.is_some()
                     {
                         return event.block_number.unwrap();
@@ -142,6 +151,11 @@ pub async fn get_last_checked_block(
         for event in erc20_deployed_events {
             match Erc20DeployedEvent::from_log(&event) {
                 Ok(deploy) => {
+                    trace!(
+                        "{} deploy event nonce {} last event nonce",
+                        deploy.event_nonce,
+                        last_event_nonce
+                    );
                     if upcast(deploy.event_nonce) == last_event_nonce
                         && event.block_number.is_some()
                     {
@@ -154,6 +168,11 @@ pub async fn get_last_checked_block(
         for event in logic_call_executed_events {
             match LogicCallExecutedEvent::from_log(&event) {
                 Ok(call) => {
+                    trace!(
+                        "{} LogicCall event nonce {} last event nonce",
+                        call.event_nonce,
+                        last_event_nonce
+                    );
                     if upcast(call.event_nonce) == last_event_nonce && event.block_number.is_some()
                     {
                         return event.block_number.unwrap();
@@ -162,13 +181,29 @@ pub async fn get_last_checked_block(
                 Err(e) => error!("Got ERC20Deployed event that we can't parse {}", e),
             }
         }
+
+        // this reverse solves a very specific bug, we use the properties of the first valsets for edgecase
+        // handling here, but events come in chronological order, so if we don't reverse the iterator
+        // we will encounter the first validator sets first and exit early and incorrectly.
+        // note that reversing everything won't actually get you that much of a performance gain
+        // because this only involves events within the searching block range.
+        valset_events.reverse();
         for event in valset_events {
             match ValsetUpdatedEvent::from_log(&event) {
                 Ok(valset) => {
                     // if we've found this event it is the first possible event from the contract
                     // no other events can come before it, therefore either there's been a parsing error
                     // or no events have been submitted on this chain yet.
-                    if valset.valset_nonce == 0 && last_event_nonce == 1u8.into() {
+                    let bootstrapping = valset.valset_nonce == 0 && last_event_nonce == 1u8.into();
+                    // our last event was a valset update event, treat as normal case
+                    let common_case = upcast(valset.event_nonce) == last_event_nonce
+                        && event.block_number.is_some();
+                    trace!(
+                        "{} valset event nonce {} last event nonce",
+                        valset.event_nonce,
+                        last_event_nonce
+                    );
+                    if common_case || bootstrapping {
                         return event.block_number.unwrap();
                     }
                     // if we're looking for a later event nonce and we find the deployment of the contract
