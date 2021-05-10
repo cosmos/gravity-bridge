@@ -28,7 +28,7 @@ type Keeper struct {
 	bankKeeper     types.BankKeeper
 	SlashingKeeper types.SlashingKeeper
 
-	AttestationHandler interface {
+	EthereumEventVoteHandler interface {
 		Handle(sdk.Context, types.Attestation, types.EthereumClaim) error
 	}
 }
@@ -48,7 +48,7 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 		bankKeeper:     bankKeeper,
 		SlashingKeeper: slashingKeeper,
 	}
-	k.AttestationHandler = AttestationHandler{
+	k.EthereumEventVoteHandler = EthereumEventVoteHandler{
 		keeper:     k,
 		bankKeeper: bankKeeper,
 	}
@@ -371,13 +371,13 @@ func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) s
 // SetEthAddress sets the ethereum address for a given validator
 func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.ValAddress, ethAddr string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
+	store.Set(types.GetEthereumAddressKey(validator), []byte(ethAddr))
 }
 
 // GetEthAddress returns the eth address for a given gravity validator
 func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) string {
 	store := ctx.KVStore(k.storeKey)
-	return string(store.Get(types.GetEthAddressKey(validator)))
+	return string(store.Get(types.GetEthereumAddressKey(validator)))
 }
 
 // GetCurrentValset gets powers from the store and normalizes them
@@ -642,6 +642,7 @@ func (k Keeper) UnpackAttestationClaim(att *types.Attestation) (types.EthereumCl
 func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgDelegateKeys {
 	store := ctx.KVStore(k.storeKey)
 	prfx := []byte{types.EthereumAddressKey}
+
 	iter := store.Iterator(prefixRange(prfx))
 	defer iter.Close()
 

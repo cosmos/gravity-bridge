@@ -35,8 +35,8 @@ type EthereumEvent interface {
 
 // _ EthereumEvent = &SendToCosmosEvent{}
 // _ EthereumEvent = &BatchTxExecuitedEvent{}
-// _ EthereumEvent = &ContractCallTxExecutedEvent{}
-// _ EthereumEvent = &CosmosERC20DeployedEvent{}
+// _ EthereumEvent = &ContractCallExecutedEvent{}
+// _ EthereumEvent = &ERC20DeployedEvent{}
 
 type OutgoingTx interface {
 	// NOTE: currently the function signatures here don't match, figure out how to do this proprly

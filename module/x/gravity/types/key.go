@@ -107,10 +107,10 @@ func GetOrchestratorAddressKey(orc sdk.AccAddress) []byte {
 	return append([]byte{KeyOrchestratorAddress}, orc.Bytes()...)
 }
 
-// GetEthAddressKey returns the following key format
+// GetEthereumAddressKey returns the following key format
 // prefix              cosmos-validator
 // [0x0][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
-func GetEthAddressKey(validator sdk.ValAddress) []byte {
+func GetEthereumAddressKey(validator sdk.ValAddress) []byte {
 	return append([]byte{EthereumAddressKey}, validator.Bytes()...)
 }
 

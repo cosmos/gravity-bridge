@@ -108,7 +108,7 @@ func (c ContractCallTx) GetCheckpoint(gravityIDstring string) ([]byte, error) {
 	payload := make([]byte, len(c.Payload))
 	copy(payload, c.Payload)
 	var invalidationId [32]byte
-	copy(invalidationId[:], c.InvalidationId[:])
+	copy(invalidationId[:], c.InvalidationScope[:])
 
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because

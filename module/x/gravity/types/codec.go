@@ -23,9 +23,9 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		"gravity.v1.EthereumEvent",
 		(*EthereumEvent)(nil),
 		&SendToCosmosEvent{},
-		&BatchTxExecutedEvent{},
-		&CosmosERC20DeployedEvent{},
-		&ContractCallTxExecutedEvent{},
+		&BatchExecutedEvent{},
+		&ERC20DeployedEvent{},
+		&ContractCallExecutedEvent{},
 	)
 
 	registry.RegisterInterface(
