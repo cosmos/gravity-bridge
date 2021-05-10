@@ -28,27 +28,27 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// Attestation is an event that is pending of confirmation by 2/3 of the signer set.
-// The event is then attested and executed in the state machine once the required
-// threshold is met.
-type Attestation struct {
-	Event  *types.Any `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
-	Votes  []string   `protobuf:"bytes,2,rep,name=votes,proto3" json:"votes,omitempty"`
-	Height uint64     `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
+// EthereumEventVoteRecord is an event that is pending of confirmation by 2/3 of
+// the signer set. The event is then attested and executed in the state machine
+// once the required threshold is met.
+type EthereumEventVoteRecord struct {
+	Event    *types.Any `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
+	Votes    []string   `protobuf:"bytes,2,rep,name=votes,proto3" json:"votes,omitempty"`
+	Accepted bool       `protobuf:"varint,3,opt,name=accepted,proto3" json:"accepted,omitempty"`
 }
 
-func (m *Attestation) Reset()         { *m = Attestation{} }
-func (m *Attestation) String() string { return proto.CompactTextString(m) }
-func (*Attestation) ProtoMessage()    {}
-func (*Attestation) Descriptor() ([]byte, []int) {
+func (m *EthereumEventVoteRecord) Reset()         { *m = EthereumEventVoteRecord{} }
+func (m *EthereumEventVoteRecord) String() string { return proto.CompactTextString(m) }
+func (*EthereumEventVoteRecord) ProtoMessage()    {}
+func (*EthereumEventVoteRecord) Descriptor() ([]byte, []int) {
 	return fileDescriptor_1715a041eadeb531, []int{0}
 }
-func (m *Attestation) XXX_Unmarshal(b []byte) error {
+func (m *EthereumEventVoteRecord) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *Attestation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *EthereumEventVoteRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_Attestation.Marshal(b, m, deterministic)
+		return xxx_messageInfo_EthereumEventVoteRecord.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -58,58 +58,58 @@ func (m *Attestation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
-func (m *Attestation) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Attestation.Merge(m, src)
+func (m *EthereumEventVoteRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EthereumEventVoteRecord.Merge(m, src)
 }
-func (m *Attestation) XXX_Size() int {
+func (m *EthereumEventVoteRecord) XXX_Size() int {
 	return m.Size()
 }
-func (m *Attestation) XXX_DiscardUnknown() {
-	xxx_messageInfo_Attestation.DiscardUnknown(m)
+func (m *EthereumEventVoteRecord) XXX_DiscardUnknown() {
+	xxx_messageInfo_EthereumEventVoteRecord.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Attestation proto.InternalMessageInfo
+var xxx_messageInfo_EthereumEventVoteRecord proto.InternalMessageInfo
 
-func (m *Attestation) GetEvent() *types.Any {
+func (m *EthereumEventVoteRecord) GetEvent() *types.Any {
 	if m != nil {
 		return m.Event
 	}
 	return nil
 }
 
-func (m *Attestation) GetVotes() []string {
+func (m *EthereumEventVoteRecord) GetVotes() []string {
 	if m != nil {
 		return m.Votes
 	}
 	return nil
 }
 
-func (m *Attestation) GetHeight() uint64 {
+func (m *EthereumEventVoteRecord) GetAccepted() bool {
 	if m != nil {
-		return m.Height
+		return m.Accepted
 	}
-	return 0
+	return false
 }
 
-// EthereumInfo defines the latest observed ethereum block height and the
-// corresponding timestamp value in nanoseconds.
-type EthereumInfo struct {
+// LatestEthereumBlockHeight defines the latest observed ethereum block height
+// and the corresponding timestamp value in nanoseconds.
+type LatestEthereumBlockHeight struct {
 	EthereumHeight uint64 `protobuf:"varint,1,opt,name=ethereum_height,json=ethereumHeight,proto3" json:"ethereum_height,omitempty"`
 	CosmosHeight   uint64 `protobuf:"varint,2,opt,name=cosmos_height,json=cosmosHeight,proto3" json:"cosmos_height,omitempty"`
 }
 
-func (m *EthereumInfo) Reset()         { *m = EthereumInfo{} }
-func (m *EthereumInfo) String() string { return proto.CompactTextString(m) }
-func (*EthereumInfo) ProtoMessage()    {}
-func (*EthereumInfo) Descriptor() ([]byte, []int) {
+func (m *LatestEthereumBlockHeight) Reset()         { *m = LatestEthereumBlockHeight{} }
+func (m *LatestEthereumBlockHeight) String() string { return proto.CompactTextString(m) }
+func (*LatestEthereumBlockHeight) ProtoMessage()    {}
+func (*LatestEthereumBlockHeight) Descriptor() ([]byte, []int) {
 	return fileDescriptor_1715a041eadeb531, []int{1}
 }
-func (m *EthereumInfo) XXX_Unmarshal(b []byte) error {
+func (m *LatestEthereumBlockHeight) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *EthereumInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *LatestEthereumBlockHeight) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_EthereumInfo.Marshal(b, m, deterministic)
+		return xxx_messageInfo_LatestEthereumBlockHeight.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -119,51 +119,51 @@ func (m *EthereumInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *EthereumInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EthereumInfo.Merge(m, src)
+func (m *LatestEthereumBlockHeight) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LatestEthereumBlockHeight.Merge(m, src)
 }
-func (m *EthereumInfo) XXX_Size() int {
+func (m *LatestEthereumBlockHeight) XXX_Size() int {
 	return m.Size()
 }
-func (m *EthereumInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_EthereumInfo.DiscardUnknown(m)
+func (m *LatestEthereumBlockHeight) XXX_DiscardUnknown() {
+	xxx_messageInfo_LatestEthereumBlockHeight.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EthereumInfo proto.InternalMessageInfo
+var xxx_messageInfo_LatestEthereumBlockHeight proto.InternalMessageInfo
 
-func (m *EthereumInfo) GetEthereumHeight() uint64 {
+func (m *LatestEthereumBlockHeight) GetEthereumHeight() uint64 {
 	if m != nil {
 		return m.EthereumHeight
 	}
 	return 0
 }
 
-func (m *EthereumInfo) GetCosmosHeight() uint64 {
+func (m *LatestEthereumBlockHeight) GetCosmosHeight() uint64 {
 	if m != nil {
 		return m.CosmosHeight
 	}
 	return 0
 }
 
-// EthSigner represents a cosmos validator with its corresponding bridge operator
-// ethereum address and its staking consensus power.
-type EthSigner struct {
-	Power           int64  `protobuf:"varint,1,opt,name=power,proto3" json:"power,omitempty"`
+// EthereumSigner represents a cosmos validator with its corresponding bridge
+// operator ethereum address and its staking consensus power.
+type EthereumSigner struct {
+	Power           uint64 `protobuf:"varint,1,opt,name=power,proto3" json:"power,omitempty"`
 	EthereumAddress string `protobuf:"bytes,2,opt,name=ethereum_address,json=ethereumAddress,proto3" json:"ethereum_address,omitempty"`
 }
 
-func (m *EthSigner) Reset()         { *m = EthSigner{} }
-func (m *EthSigner) String() string { return proto.CompactTextString(m) }
-func (*EthSigner) ProtoMessage()    {}
-func (*EthSigner) Descriptor() ([]byte, []int) {
+func (m *EthereumSigner) Reset()         { *m = EthereumSigner{} }
+func (m *EthereumSigner) String() string { return proto.CompactTextString(m) }
+func (*EthereumSigner) ProtoMessage()    {}
+func (*EthereumSigner) Descriptor() ([]byte, []int) {
 	return fileDescriptor_1715a041eadeb531, []int{2}
 }
-func (m *EthSigner) XXX_Unmarshal(b []byte) error {
+func (m *EthereumSigner) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *EthSigner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *EthereumSigner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_EthSigner.Marshal(b, m, deterministic)
+		return xxx_messageInfo_EthereumSigner.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -173,52 +173,53 @@ func (m *EthSigner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *EthSigner) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EthSigner.Merge(m, src)
+func (m *EthereumSigner) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EthereumSigner.Merge(m, src)
 }
-func (m *EthSigner) XXX_Size() int {
+func (m *EthereumSigner) XXX_Size() int {
 	return m.Size()
 }
-func (m *EthSigner) XXX_DiscardUnknown() {
-	xxx_messageInfo_EthSigner.DiscardUnknown(m)
+func (m *EthereumSigner) XXX_DiscardUnknown() {
+	xxx_messageInfo_EthereumSigner.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EthSigner proto.InternalMessageInfo
+var xxx_messageInfo_EthereumSigner proto.InternalMessageInfo
 
-func (m *EthSigner) GetPower() int64 {
+func (m *EthereumSigner) GetPower() uint64 {
 	if m != nil {
 		return m.Power
 	}
 	return 0
 }
 
-func (m *EthSigner) GetEthereumAddress() string {
+func (m *EthereumSigner) GetEthereumAddress() string {
 	if m != nil {
 		return m.EthereumAddress
 	}
 	return ""
 }
 
-// EthSignerSet is the Ethereum Bridge multisig set that relays transactions
-// the two chains. The staking validators keep ethereum keys which are used to
-// check signatures on Ethereum in order to get significant gas savings.
-type EthSignerSet struct {
-	Nonce   uint64      `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	Signers []EthSigner `protobuf:"bytes,2,rep,name=signers,proto3" json:"signers"`
+// UpdateSignerSetTx is the Ethereum Bridge multisig set that relays
+// transactions the two chains. The staking validators keep ethereum keys which
+// are used to check signatures on Ethereum in order to get significant gas
+// savings.
+type UpdateSignerSetTx struct {
+	Nonce   uint64           `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	Signers []EthereumSigner `protobuf:"bytes,2,rep,name=signers,proto3" json:"signers"`
 }
 
-func (m *EthSignerSet) Reset()         { *m = EthSignerSet{} }
-func (m *EthSignerSet) String() string { return proto.CompactTextString(m) }
-func (*EthSignerSet) ProtoMessage()    {}
-func (*EthSignerSet) Descriptor() ([]byte, []int) {
+func (m *UpdateSignerSetTx) Reset()         { *m = UpdateSignerSetTx{} }
+func (m *UpdateSignerSetTx) String() string { return proto.CompactTextString(m) }
+func (*UpdateSignerSetTx) ProtoMessage()    {}
+func (*UpdateSignerSetTx) Descriptor() ([]byte, []int) {
 	return fileDescriptor_1715a041eadeb531, []int{3}
 }
-func (m *EthSignerSet) XXX_Unmarshal(b []byte) error {
+func (m *UpdateSignerSetTx) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *EthSignerSet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *UpdateSignerSetTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_EthSignerSet.Marshal(b, m, deterministic)
+		return xxx_messageInfo_UpdateSignerSetTx.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -228,41 +229,41 @@ func (m *EthSignerSet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *EthSignerSet) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EthSignerSet.Merge(m, src)
+func (m *UpdateSignerSetTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdateSignerSetTx.Merge(m, src)
 }
-func (m *EthSignerSet) XXX_Size() int {
+func (m *UpdateSignerSetTx) XXX_Size() int {
 	return m.Size()
 }
-func (m *EthSignerSet) XXX_DiscardUnknown() {
-	xxx_messageInfo_EthSignerSet.DiscardUnknown(m)
+func (m *UpdateSignerSetTx) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdateSignerSetTx.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EthSignerSet proto.InternalMessageInfo
+var xxx_messageInfo_UpdateSignerSetTx proto.InternalMessageInfo
 
-func (m *EthSignerSet) GetNonce() uint64 {
+func (m *UpdateSignerSetTx) GetNonce() uint64 {
 	if m != nil {
 		return m.Nonce
 	}
 	return 0
 }
 
-func (m *EthSignerSet) GetSigners() []EthSigner {
+func (m *UpdateSignerSetTx) GetSigners() []EthereumSigner {
 	if m != nil {
 		return m.Signers
 	}
 	return nil
 }
 
-// BatchTx represents a batch of transactions going from Cosmos to Ethereum. Batch
-// txs are are identified by a unique hash and the token contract that is shared by
-// all the transfer
+// BatchTx represents a batch of transactions going from Cosmos to Ethereum.
+// Batch txs are are identified by a unique hash and the token contract that is
+// shared by all the SendToEthereum
 type BatchTx struct {
-	Nonce         uint64                                                 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	Timeout       uint64                                                 `protobuf:"varint,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	Transactions  []github_com_tendermint_tendermint_libs_bytes.HexBytes `protobuf:"bytes,3,rep,name=transactions,proto3,casttype=github.com/tendermint/tendermint/libs/bytes.HexBytes" json:"transactions,omitempty"`
-	TokenContract string                                                 `protobuf:"bytes,4,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
-	EthereumBlock uint64                                                 `protobuf:"varint,5,opt,name=ethereum_block,json=ethereumBlock,proto3" json:"ethereum_block,omitempty"`
+	Nonce         uint64              `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	Timeout       uint64              `protobuf:"varint,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	Transactions  []*SendToEthereumTx `protobuf:"bytes,3,rep,name=transactions,proto3" json:"transactions,omitempty"`
+	TokenContract string              `protobuf:"bytes,4,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
+	EthereumBlock uint64              `protobuf:"varint,5,opt,name=ethereum_block,json=ethereumBlock,proto3" json:"ethereum_block,omitempty"`
 }
 
 func (m *BatchTx) Reset()         { *m = BatchTx{} }
@@ -312,7 +313,7 @@ func (m *BatchTx) GetTimeout() uint64 {
 	return 0
 }
 
-func (m *BatchTx) GetTransactions() []github_com_tendermint_tendermint_libs_bytes.HexBytes {
+func (m *BatchTx) GetTransactions() []*SendToEthereumTx {
 	if m != nil {
 		return m.Transactions
 	}
@@ -333,8 +334,9 @@ func (m *BatchTx) GetEthereumBlock() uint64 {
 	return 0
 }
 
-// TransferTx represents an individual transfer from Cosmos to Ethereum
-type TransferTx struct {
+// SendToEthereumTx represents an individual SendToEthereum from Cosmos to
+// Ethereum
+type SendToEthereumTx struct {
 	Id                uint64      `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Sender            string      `protobuf:"bytes,2,opt,name=sender,proto3" json:"sender,omitempty"`
 	EthereumRecipient string      `protobuf:"bytes,3,opt,name=ethereum_recipient,json=ethereumRecipient,proto3" json:"ethereum_recipient,omitempty"`
@@ -342,18 +344,18 @@ type TransferTx struct {
 	Erc20Fee          types1.Coin `protobuf:"bytes,5,opt,name=erc20_fee,json=erc20Fee,proto3" json:"erc20_fee"`
 }
 
-func (m *TransferTx) Reset()         { *m = TransferTx{} }
-func (m *TransferTx) String() string { return proto.CompactTextString(m) }
-func (*TransferTx) ProtoMessage()    {}
-func (*TransferTx) Descriptor() ([]byte, []int) {
+func (m *SendToEthereumTx) Reset()         { *m = SendToEthereumTx{} }
+func (m *SendToEthereumTx) String() string { return proto.CompactTextString(m) }
+func (*SendToEthereumTx) ProtoMessage()    {}
+func (*SendToEthereumTx) Descriptor() ([]byte, []int) {
 	return fileDescriptor_1715a041eadeb531, []int{5}
 }
-func (m *TransferTx) XXX_Unmarshal(b []byte) error {
+func (m *SendToEthereumTx) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *TransferTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *SendToEthereumTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_TransferTx.Marshal(b, m, deterministic)
+		return xxx_messageInfo_SendToEthereumTx.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -363,77 +365,77 @@ func (m *TransferTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *TransferTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TransferTx.Merge(m, src)
+func (m *SendToEthereumTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SendToEthereumTx.Merge(m, src)
 }
-func (m *TransferTx) XXX_Size() int {
+func (m *SendToEthereumTx) XXX_Size() int {
 	return m.Size()
 }
-func (m *TransferTx) XXX_DiscardUnknown() {
-	xxx_messageInfo_TransferTx.DiscardUnknown(m)
+func (m *SendToEthereumTx) XXX_DiscardUnknown() {
+	xxx_messageInfo_SendToEthereumTx.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TransferTx proto.InternalMessageInfo
+var xxx_messageInfo_SendToEthereumTx proto.InternalMessageInfo
 
-func (m *TransferTx) GetId() uint64 {
+func (m *SendToEthereumTx) GetId() uint64 {
 	if m != nil {
 		return m.Id
 	}
 	return 0
 }
 
-func (m *TransferTx) GetSender() string {
+func (m *SendToEthereumTx) GetSender() string {
 	if m != nil {
 		return m.Sender
 	}
 	return ""
 }
 
-func (m *TransferTx) GetEthereumRecipient() string {
+func (m *SendToEthereumTx) GetEthereumRecipient() string {
 	if m != nil {
 		return m.EthereumRecipient
 	}
 	return ""
 }
 
-func (m *TransferTx) GetErc20Token() types1.Coin {
+func (m *SendToEthereumTx) GetErc20Token() types1.Coin {
 	if m != nil {
 		return m.Erc20Token
 	}
 	return types1.Coin{}
 }
 
-func (m *TransferTx) GetErc20Fee() types1.Coin {
+func (m *SendToEthereumTx) GetErc20Fee() types1.Coin {
 	if m != nil {
 		return m.Erc20Fee
 	}
 	return types1.Coin{}
 }
 
-// LogicCallTx represents an individual arbitratry logic call transaction from
-// Cosmos to Ethereum.
-type LogicCallTx struct {
-	InvalidationNonce    uint64                                               `protobuf:"varint,1,opt,name=invalidation_nonce,json=invalidationNonce,proto3" json:"invalidation_nonce,omitempty"`
-	InvalidationId       github_com_tendermint_tendermint_libs_bytes.HexBytes `protobuf:"bytes,2,opt,name=invalidation_id,json=invalidationId,proto3,casttype=github.com/tendermint/tendermint/libs/bytes.HexBytes" json:"invalidation_id,omitempty"`
-	LogicContractAddress string                                               `protobuf:"bytes,3,opt,name=logic_contract_address,json=logicContractAddress,proto3" json:"logic_contract_address,omitempty"`
-	Payload              []byte                                               `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
-	Timeout              uint64                                               `protobuf:"varint,5,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	Tokens               []types1.Coin                                        `protobuf:"bytes,6,rep,name=tokens,proto3" json:"tokens"`
-	Fees                 []types1.Coin                                        `protobuf:"bytes,7,rep,name=fees,proto3" json:"fees"`
+// ContractCallTx represents an individual arbitratry logic call transaction
+// from Cosmos to Ethereum.
+type ContractCallTx struct {
+	InvalidationNonce   uint64                                               `protobuf:"varint,1,opt,name=invalidation_nonce,json=invalidationNonce,proto3" json:"invalidation_nonce,omitempty"`
+	InvalidationScope   github_com_tendermint_tendermint_libs_bytes.HexBytes `protobuf:"bytes,2,opt,name=invalidation_scope,json=invalidationScope,proto3,casttype=github.com/tendermint/tendermint/libs/bytes.HexBytes" json:"invalidation_scope,omitempty"`
+	ContractCallAddress string                                               `protobuf:"bytes,3,opt,name=contract_call_address,json=contractCallAddress,proto3" json:"contract_call_address,omitempty"`
+	Payload             []byte                                               `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
+	Timeout             uint64                                               `protobuf:"varint,5,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	Tokens              []types1.Coin                                        `protobuf:"bytes,6,rep,name=tokens,proto3" json:"tokens"`
+	Fees                []types1.Coin                                        `protobuf:"bytes,7,rep,name=fees,proto3" json:"fees"`
 }
 
-func (m *LogicCallTx) Reset()         { *m = LogicCallTx{} }
-func (m *LogicCallTx) String() string { return proto.CompactTextString(m) }
-func (*LogicCallTx) ProtoMessage()    {}
-func (*LogicCallTx) Descriptor() ([]byte, []int) {
+func (m *ContractCallTx) Reset()         { *m = ContractCallTx{} }
+func (m *ContractCallTx) String() string { return proto.CompactTextString(m) }
+func (*ContractCallTx) ProtoMessage()    {}
+func (*ContractCallTx) Descriptor() ([]byte, []int) {
 	return fileDescriptor_1715a041eadeb531, []int{6}
 }
-func (m *LogicCallTx) XXX_Unmarshal(b []byte) error {
+func (m *ContractCallTx) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *LogicCallTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ContractCallTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_LogicCallTx.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ContractCallTx.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -443,181 +445,135 @@ func (m *LogicCallTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
-func (m *LogicCallTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LogicCallTx.Merge(m, src)
+func (m *ContractCallTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContractCallTx.Merge(m, src)
 }
-func (m *LogicCallTx) XXX_Size() int {
+func (m *ContractCallTx) XXX_Size() int {
 	return m.Size()
 }
-func (m *LogicCallTx) XXX_DiscardUnknown() {
-	xxx_messageInfo_LogicCallTx.DiscardUnknown(m)
+func (m *ContractCallTx) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContractCallTx.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_LogicCallTx proto.InternalMessageInfo
+var xxx_messageInfo_ContractCallTx proto.InternalMessageInfo
 
-func (m *LogicCallTx) GetInvalidationNonce() uint64 {
+func (m *ContractCallTx) GetInvalidationNonce() uint64 {
 	if m != nil {
 		return m.InvalidationNonce
 	}
 	return 0
 }
 
-func (m *LogicCallTx) GetInvalidationId() github_com_tendermint_tendermint_libs_bytes.HexBytes {
+func (m *ContractCallTx) GetInvalidationScope() github_com_tendermint_tendermint_libs_bytes.HexBytes {
 	if m != nil {
-		return m.InvalidationId
+		return m.InvalidationScope
 	}
 	return nil
 }
 
-func (m *LogicCallTx) GetLogicContractAddress() string {
+func (m *ContractCallTx) GetContractCallAddress() string {
 	if m != nil {
-		return m.LogicContractAddress
+		return m.ContractCallAddress
 	}
 	return ""
 }
 
-func (m *LogicCallTx) GetPayload() []byte {
+func (m *ContractCallTx) GetPayload() []byte {
 	if m != nil {
 		return m.Payload
 	}
 	return nil
 }
 
-func (m *LogicCallTx) GetTimeout() uint64 {
+func (m *ContractCallTx) GetTimeout() uint64 {
 	if m != nil {
 		return m.Timeout
 	}
 	return 0
 }
 
-func (m *LogicCallTx) GetTokens() []types1.Coin {
+func (m *ContractCallTx) GetTokens() []types1.Coin {
 	if m != nil {
 		return m.Tokens
 	}
 	return nil
 }
 
-func (m *LogicCallTx) GetFees() []types1.Coin {
+func (m *ContractCallTx) GetFees() []types1.Coin {
 	if m != nil {
 		return m.Fees
 	}
 	return nil
 }
 
-// TransactionIDs defines a protobuf message for storing transfer tx ids.
-type TransactionIDs struct {
-	Ids []github_com_tendermint_tendermint_libs_bytes.HexBytes `protobuf:"bytes,1,rep,name=ids,proto3,casttype=github.com/tendermint/tendermint/libs/bytes.HexBytes" json:"ids,omitempty"`
-}
-
-func (m *TransactionIDs) Reset()         { *m = TransactionIDs{} }
-func (m *TransactionIDs) String() string { return proto.CompactTextString(m) }
-func (*TransactionIDs) ProtoMessage()    {}
-func (*TransactionIDs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1715a041eadeb531, []int{7}
-}
-func (m *TransactionIDs) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *TransactionIDs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_TransactionIDs.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *TransactionIDs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TransactionIDs.Merge(m, src)
-}
-func (m *TransactionIDs) XXX_Size() int {
-	return m.Size()
-}
-func (m *TransactionIDs) XXX_DiscardUnknown() {
-	xxx_messageInfo_TransactionIDs.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TransactionIDs proto.InternalMessageInfo
-
-func (m *TransactionIDs) GetIds() []github_com_tendermint_tendermint_libs_bytes.HexBytes {
-	if m != nil {
-		return m.Ids
-	}
-	return nil
-}
-
 func init() {
-	proto.RegisterType((*Attestation)(nil), "gravity.v1.Attestation")
-	proto.RegisterType((*EthereumInfo)(nil), "gravity.v1.EthereumInfo")
-	proto.RegisterType((*EthSigner)(nil), "gravity.v1.EthSigner")
-	proto.RegisterType((*EthSignerSet)(nil), "gravity.v1.EthSignerSet")
+	proto.RegisterType((*EthereumEventVoteRecord)(nil), "gravity.v1.EthereumEventVoteRecord")
+	proto.RegisterType((*LatestEthereumBlockHeight)(nil), "gravity.v1.LatestEthereumBlockHeight")
+	proto.RegisterType((*EthereumSigner)(nil), "gravity.v1.EthereumSigner")
+	proto.RegisterType((*UpdateSignerSetTx)(nil), "gravity.v1.UpdateSignerSetTx")
 	proto.RegisterType((*BatchTx)(nil), "gravity.v1.BatchTx")
-	proto.RegisterType((*TransferTx)(nil), "gravity.v1.TransferTx")
-	proto.RegisterType((*LogicCallTx)(nil), "gravity.v1.LogicCallTx")
-	proto.RegisterType((*TransactionIDs)(nil), "gravity.v1.TransactionIDs")
+	proto.RegisterType((*SendToEthereumTx)(nil), "gravity.v1.SendToEthereumTx")
+	proto.RegisterType((*ContractCallTx)(nil), "gravity.v1.ContractCallTx")
 }
 
 func init() { proto.RegisterFile("gravity/v1/gravity.proto", fileDescriptor_1715a041eadeb531) }
 
 var fileDescriptor_1715a041eadeb531 = []byte{
-	// 803 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x54, 0xcb, 0x8e, 0xe3, 0x44,
-	0x14, 0x6d, 0xb7, 0xbb, 0x3b, 0xa4, 0xf2, 0x18, 0xba, 0x14, 0x46, 0xee, 0x59, 0x24, 0x91, 0x11,
-	0x22, 0x2c, 0x62, 0x4f, 0xc2, 0x48, 0xb0, 0x00, 0x89, 0x76, 0x68, 0x34, 0x8d, 0x46, 0x48, 0x78,
-	0xb2, 0x42, 0x2d, 0x45, 0x7e, 0xdc, 0x38, 0xa5, 0x76, 0xaa, 0x22, 0x57, 0x25, 0x24, 0x7c, 0x05,
-	0xdf, 0xc1, 0x9a, 0x8f, 0x18, 0xb1, 0x61, 0x96, 0xac, 0x06, 0xd4, 0x11, 0x3f, 0xc1, 0x0a, 0xd5,
-	0xc3, 0x9e, 0x34, 0x08, 0x84, 0x34, 0xac, 0x5c, 0xf7, 0x71, 0x4e, 0x9d, 0xba, 0x0f, 0x23, 0x27,
-	0x2b, 0xa2, 0x0d, 0x11, 0x3b, 0x7f, 0x33, 0xf2, 0xcd, 0xd1, 0x5b, 0x15, 0x4c, 0x30, 0x8c, 0x4a,
-	0x73, 0x33, 0x7a, 0x74, 0x91, 0x30, 0xbe, 0x64, 0x7c, 0xa6, 0x22, 0xbe, 0x36, 0x74, 0xda, 0xa3,
-	0x5e, 0xc6, 0x58, 0x96, 0x83, 0xaf, 0xac, 0x78, 0x3d, 0xf7, 0x05, 0x59, 0x02, 0x17, 0xd1, 0x72,
-	0x65, 0x12, 0x3a, 0x19, 0xcb, 0x98, 0x06, 0xca, 0x93, 0xf1, 0x76, 0x35, 0x89, 0x1f, 0x47, 0x1c,
-	0xfc, 0xcd, 0x28, 0x06, 0x11, 0x8d, 0xfc, 0x84, 0x11, 0x6a, 0xe2, 0x17, 0x7f, 0xa5, 0x8d, 0xa8,
-	0x11, 0xe6, 0x7e, 0x87, 0x1a, 0x97, 0x42, 0xc8, 0x3b, 0x04, 0x61, 0x14, 0x7f, 0x8a, 0x4e, 0x61,
-	0x03, 0x54, 0x38, 0x56, 0xdf, 0x1a, 0x34, 0xc6, 0x1d, 0x4f, 0x23, 0xbd, 0x12, 0xe9, 0x5d, 0xd2,
-	0x5d, 0x70, 0xfe, 0xd3, 0x8f, 0xc3, 0xd6, 0x95, 0x58, 0x40, 0x01, 0xeb, 0xe5, 0x95, 0x4c, 0x0f,
-	0x35, 0x0a, 0x77, 0xd0, 0xe9, 0x86, 0x09, 0xe0, 0xce, 0x71, 0xdf, 0x1e, 0xd4, 0x43, 0x6d, 0xe0,
-	0x87, 0xe8, 0x6c, 0x01, 0x24, 0x5b, 0x08, 0xc7, 0xee, 0x5b, 0x83, 0x93, 0xd0, 0x58, 0xee, 0x0d,
-	0x6a, 0x96, 0x2c, 0xd7, 0x74, 0xce, 0xf0, 0xfb, 0xe8, 0x01, 0x18, 0x7b, 0x66, 0x00, 0x96, 0x02,
-	0xb4, 0x4b, 0xf7, 0x53, 0xe5, 0xc5, 0xef, 0xa2, 0x96, 0xa9, 0xa1, 0x49, 0x3b, 0x56, 0x69, 0x4d,
-	0xed, 0xd4, 0x49, 0xee, 0x33, 0x54, 0xbf, 0x12, 0x8b, 0xe7, 0x24, 0xa3, 0x50, 0x48, 0x61, 0x2b,
-	0xf6, 0x2d, 0x14, 0x8a, 0xd0, 0x0e, 0xb5, 0x81, 0x3f, 0x40, 0x6f, 0x57, 0x17, 0x46, 0x69, 0x5a,
-	0x00, 0xe7, 0x8a, 0xaa, 0x1e, 0x56, 0x42, 0x2e, 0xb5, 0xdb, 0x25, 0x4a, 0xab, 0x66, 0x7b, 0x0e,
-	0xea, 0xa5, 0x94, 0xd1, 0x04, 0x8c, 0x42, 0x6d, 0xe0, 0x09, 0xaa, 0x71, 0x95, 0xa2, 0x2b, 0xd0,
-	0x18, 0xbf, 0xe3, 0xbd, 0x6e, 0xbc, 0x57, 0x11, 0x04, 0xf8, 0xc5, 0xab, 0xde, 0xd1, 0x0f, 0xbf,
-	0xf6, 0x50, 0xe5, 0xe2, 0x61, 0x89, 0x74, 0x7f, 0xb7, 0x50, 0x2d, 0x88, 0x44, 0xb2, 0x98, 0x6e,
-	0xff, 0xe1, 0x1a, 0x07, 0xd5, 0xe4, 0x60, 0xb0, 0x75, 0xf9, 0xf2, 0xd2, 0xc4, 0x37, 0xa8, 0x29,
-	0x8a, 0x88, 0xf2, 0x28, 0x91, 0xed, 0xe4, 0x8e, 0xdd, 0xb7, 0x07, 0xcd, 0xe0, 0xe3, 0x3f, 0x5e,
-	0xf5, 0x9e, 0x64, 0x44, 0x2c, 0xd6, 0xb1, 0x97, 0xb0, 0xa5, 0x2f, 0x80, 0xa6, 0x50, 0x2c, 0x09,
-	0x15, 0x87, 0xc7, 0x9c, 0xc4, 0xdc, 0x8f, 0x77, 0x02, 0xb8, 0xf7, 0x14, 0xb6, 0x81, 0x3c, 0x84,
-	0xf7, 0xd8, 0xf0, 0x7b, 0xa8, 0x2d, 0xd8, 0x2d, 0xd0, 0x59, 0xc2, 0xa8, 0x28, 0xa2, 0x44, 0x38,
-	0x27, 0xaa, 0x5a, 0x2d, 0xe5, 0x9d, 0x18, 0xa7, 0x4c, 0xab, 0xca, 0x1a, 0xe7, 0x2c, 0xb9, 0x75,
-	0x4e, 0x95, 0xca, 0x56, 0xe9, 0x0d, 0xa4, 0xd3, 0xdd, 0x5b, 0x08, 0x4d, 0x25, 0xfd, 0x1c, 0x8a,
-	0xe9, 0x16, 0xb7, 0xd1, 0x31, 0x49, 0xcd, 0x3b, 0x8f, 0x49, 0x2a, 0xa7, 0x86, 0x2b, 0x71, 0xa6,
-	0x25, 0xc6, 0xc2, 0x43, 0x84, 0x2b, 0xf6, 0x02, 0x12, 0xb2, 0x22, 0x72, 0x5e, 0x6d, 0x95, 0x73,
-	0x5e, 0x46, 0xc2, 0x32, 0x80, 0x3f, 0x43, 0x0d, 0x28, 0x92, 0xf1, 0xe3, 0x99, 0xd2, 0xa8, 0x04,
-	0x37, 0xc6, 0x17, 0x9e, 0x59, 0x3b, 0xb9, 0x31, 0x9e, 0xd9, 0x18, 0x6f, 0xc2, 0x08, 0x0d, 0x4e,
-	0x64, 0x6b, 0x42, 0xa4, 0x30, 0x53, 0x09, 0xc1, 0x9f, 0xa0, 0xba, 0x66, 0x98, 0x03, 0xa8, 0x97,
-	0xfc, 0x07, 0xfc, 0x5b, 0x0a, 0xf1, 0x05, 0x80, 0xfb, 0xb3, 0x8d, 0x1a, 0xcf, 0x58, 0x46, 0x92,
-	0x49, 0x94, 0xe7, 0xd3, 0xad, 0x94, 0x4f, 0xe8, 0x26, 0xca, 0x49, 0xaa, 0x36, 0x6e, 0x76, 0xd8,
-	0xde, 0xf3, 0xc3, 0xc8, 0x57, 0xaa, 0xd5, 0x11, 0x7a, 0x70, 0x2f, 0x9d, 0xa4, 0xaa, 0x1c, 0x6f,
-	0xd2, 0xd3, 0xf6, 0x21, 0xe1, 0x75, 0x8a, 0x9f, 0xa0, 0x87, 0xb9, 0x14, 0x58, 0x75, 0xb5, 0xda,
-	0x05, 0x5d, 0xd4, 0x8e, 0x8a, 0x96, 0xdd, 0x35, 0x0b, 0x21, 0x67, 0x70, 0x15, 0xed, 0x72, 0x16,
-	0xa5, 0xaa, 0xa6, 0xcd, 0xb0, 0x34, 0x0f, 0xa7, 0xf3, 0xf4, 0xfe, 0x74, 0x26, 0xe8, 0x4c, 0x75,
-	0x81, 0x3b, 0x67, 0x6a, 0x3b, 0xfe, 0xa5, 0x8c, 0x8f, 0xcd, 0x86, 0x0c, 0x0e, 0x9e, 0x68, 0xfe,
-	0x72, 0xfa, 0x33, 0xe4, 0xe9, 0xad, 0x2f, 0x76, 0x2b, 0xe0, 0x0a, 0xc0, 0x43, 0x43, 0x8d, 0x67,
-	0xe8, 0x64, 0x0e, 0xc0, 0x9d, 0xda, 0xff, 0x7f, 0x85, 0x22, 0x76, 0x6f, 0x50, 0x7b, 0xfa, 0x7a,
-	0x2b, 0xae, 0x3f, 0xe7, 0xf8, 0x4b, 0x64, 0x93, 0x94, 0x3b, 0xd6, 0x1b, 0x2e, 0x9b, 0x24, 0x09,
-	0xbe, 0x7e, 0x71, 0xd7, 0xb5, 0x5e, 0xde, 0x75, 0xad, 0xdf, 0xee, 0xba, 0xd6, 0xf7, 0xfb, 0xee,
-	0xd1, 0xcb, 0x7d, 0xf7, 0xe8, 0x97, 0x7d, 0xf7, 0xe8, 0x9b, 0x8f, 0xfe, 0xae, 0xd3, 0xfc, 0x5c,
-	0x86, 0x71, 0x41, 0xd2, 0x0c, 0xfc, 0x25, 0x4b, 0xd7, 0x39, 0xf8, 0xdb, 0xd2, 0xaf, 0xc5, 0xc7,
-	0x67, 0xea, 0xef, 0xfd, 0xe1, 0x9f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x53, 0x8e, 0x91, 0x6d, 0x9f,
-	0x06, 0x00, 0x00,
+	// 806 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x54, 0xcd, 0x6e, 0x23, 0x45,
+	0x10, 0xce, 0xc4, 0xf9, 0xed, 0x24, 0xde, 0x4d, 0x13, 0xd8, 0x49, 0x84, 0x9c, 0xc8, 0x08, 0x11,
+	0x0e, 0x99, 0x59, 0x1b, 0x24, 0x38, 0x80, 0xb4, 0x3b, 0xd1, 0xa2, 0x3d, 0x00, 0xd2, 0x8e, 0x0d,
+	0x07, 0x2e, 0x56, 0x4f, 0x4f, 0x65, 0xdc, 0xca, 0xb8, 0x7b, 0x34, 0xdd, 0x36, 0xf6, 0x2b, 0x70,
+	0xe2, 0x39, 0x38, 0xf3, 0x10, 0x0b, 0xa7, 0x3d, 0x21, 0x4e, 0x01, 0x25, 0x27, 0x5e, 0x81, 0x13,
+	0xea, 0x3f, 0x33, 0x0e, 0x02, 0x71, 0xd8, 0xd3, 0x74, 0x7d, 0x5d, 0xf5, 0x55, 0xf5, 0x57, 0x55,
+	0x83, 0xc2, 0xa2, 0x26, 0x33, 0xa6, 0x16, 0xf1, 0xac, 0x17, 0xbb, 0x63, 0x54, 0xd5, 0x42, 0x09,
+	0x8c, 0xbc, 0x39, 0xeb, 0x9d, 0x1c, 0x53, 0x21, 0x27, 0x42, 0x8e, 0xcc, 0x4d, 0x6c, 0x0d, 0xeb,
+	0x76, 0x72, 0x5a, 0x08, 0x51, 0x94, 0x10, 0x1b, 0x2b, 0x9b, 0x5e, 0xc5, 0x8a, 0x4d, 0x40, 0x2a,
+	0x32, 0xa9, 0x9c, 0xc3, 0x51, 0x21, 0x0a, 0x61, 0x03, 0xf5, 0xc9, 0xa1, 0x1d, 0x4b, 0x12, 0x67,
+	0x44, 0x42, 0x3c, 0xeb, 0x65, 0xa0, 0x48, 0x2f, 0xa6, 0x82, 0x71, 0x77, 0x7f, 0x7c, 0x9f, 0x96,
+	0x70, 0x57, 0x58, 0xf7, 0xbb, 0x00, 0x3d, 0x7a, 0xa6, 0xc6, 0x50, 0xc3, 0x74, 0xf2, 0x6c, 0x06,
+	0x5c, 0x7d, 0x2d, 0x14, 0xa4, 0x40, 0x45, 0x9d, 0xe3, 0x4f, 0xd1, 0x26, 0x68, 0x28, 0x0c, 0xce,
+	0x82, 0xf3, 0xbd, 0xfe, 0x51, 0x64, 0x69, 0x22, 0x4f, 0x13, 0x3d, 0xe5, 0x8b, 0xe4, 0xf0, 0xe7,
+	0x1f, 0x2f, 0x0e, 0x56, 0x18, 0x52, 0x1b, 0x85, 0x8f, 0xd0, 0xe6, 0x4c, 0x28, 0x90, 0xe1, 0xfa,
+	0x59, 0xeb, 0x7c, 0x37, 0xb5, 0x06, 0x3e, 0x41, 0x3b, 0x84, 0x52, 0xa8, 0x14, 0xe4, 0x61, 0xeb,
+	0x2c, 0x38, 0xdf, 0x49, 0x97, 0x76, 0x97, 0xa1, 0xe3, 0xcf, 0x89, 0x02, 0xa9, 0x3c, 0x5f, 0x52,
+	0x0a, 0x7a, 0xfd, 0x1c, 0x58, 0x31, 0x56, 0xf8, 0x3d, 0xf4, 0x00, 0x1c, 0x3c, 0x1a, 0x1b, 0xc8,
+	0xd4, 0xb5, 0x91, 0xb6, 0x3d, 0xec, 0x1c, 0xdf, 0x41, 0x07, 0x4e, 0x61, 0xe7, 0xb6, 0x6e, 0xdc,
+	0xf6, 0x2d, 0x68, 0x9d, 0xba, 0x2f, 0x50, 0xdb, 0x27, 0x19, 0xb0, 0x82, 0x43, 0xad, 0xcb, 0xad,
+	0xc4, 0xb7, 0x50, 0x3b, 0x56, 0x6b, 0xe0, 0xf7, 0xd1, 0xc3, 0x65, 0x56, 0x92, 0xe7, 0x35, 0x48,
+	0x69, 0xf8, 0x76, 0xd3, 0x65, 0x35, 0x4f, 0x2d, 0xdc, 0x9d, 0xa3, 0xc3, 0xaf, 0xaa, 0x9c, 0x28,
+	0xb0, 0x84, 0x03, 0x50, 0xc3, 0xb9, 0x66, 0xe5, 0x82, 0x53, 0xf0, 0xac, 0xc6, 0xc0, 0x5f, 0xa0,
+	0x6d, 0x69, 0x9c, 0xac, 0x38, 0x7b, 0xfd, 0x93, 0xe8, 0xef, 0x01, 0x89, 0x56, 0x0b, 0x4b, 0x1e,
+	0xbd, 0xbc, 0x39, 0x5d, 0xfb, 0xe1, 0xb7, 0xd3, 0x07, 0xab, 0xb8, 0x4c, 0x3d, 0x47, 0xf7, 0xa7,
+	0x00, 0x6d, 0x27, 0x44, 0xd1, 0xf1, 0xbf, 0x26, 0x0c, 0xd1, 0xb6, 0x1e, 0x25, 0x31, 0xf5, 0x6a,
+	0x78, 0x13, 0x3f, 0x41, 0xfb, 0xaa, 0x26, 0x5c, 0x12, 0xaa, 0x98, 0xe0, 0x32, 0x6c, 0x99, 0x7a,
+	0xde, 0x6e, 0xd6, 0x33, 0x00, 0x9e, 0x0f, 0x85, 0xcf, 0x3e, 0x9c, 0xa7, 0x2b, 0x11, 0xf8, 0x5d,
+	0xd4, 0x56, 0xe2, 0x1a, 0xf8, 0x88, 0x0a, 0xae, 0x6a, 0x42, 0x55, 0xb8, 0x61, 0x04, 0x3a, 0x30,
+	0xe8, 0xa5, 0x03, 0xb5, 0xdb, 0x52, 0xc9, 0x4c, 0xf7, 0x35, 0xdc, 0x34, 0x95, 0x1c, 0x40, 0xb3,
+	0xd9, 0xdd, 0x3f, 0x02, 0xf4, 0xf0, 0x7e, 0x42, 0xdc, 0x46, 0xeb, 0x2c, 0x77, 0x2f, 0x5a, 0x67,
+	0x39, 0x7e, 0x0b, 0x6d, 0x49, 0xe0, 0x39, 0xd4, 0xae, 0x17, 0xce, 0xc2, 0x17, 0x08, 0x2f, 0x73,
+	0xd4, 0x40, 0x59, 0xc5, 0xf4, 0xf8, 0xb6, 0x8c, 0xcf, 0xa1, 0xbf, 0x49, 0xfd, 0x05, 0x7e, 0x82,
+	0xf6, 0xa0, 0xa6, 0xfd, 0xc7, 0x23, 0x53, 0xa9, 0x29, 0x7b, 0xaf, 0x7f, 0x1c, 0xb9, 0x95, 0xd4,
+	0xdb, 0x14, 0xb9, 0x6d, 0x8a, 0x2e, 0x05, 0xe3, 0xc9, 0x86, 0xee, 0x44, 0x8a, 0x4c, 0xcc, 0x50,
+	0x87, 0xe0, 0x4f, 0xd0, 0xae, 0x65, 0xb8, 0x02, 0x30, 0xef, 0xf9, 0x1f, 0xf1, 0x3b, 0x26, 0xe2,
+	0x33, 0x80, 0xee, 0x2f, 0x2d, 0xd4, 0xf6, 0xfa, 0x5c, 0x92, 0xb2, 0x1c, 0xce, 0xf5, 0x0b, 0x18,
+	0x9f, 0x91, 0x92, 0xe5, 0x44, 0xab, 0x3b, 0x6a, 0xf6, 0xf2, 0xb0, 0x79, 0xf3, 0xa5, 0xe9, 0x6b,
+	0x71, 0xcf, 0x5d, 0x52, 0x51, 0x81, 0x11, 0x65, 0x3f, 0xf9, 0xf8, 0xcf, 0x9b, 0xd3, 0x0f, 0x0b,
+	0xa6, 0xc6, 0xd3, 0x2c, 0xa2, 0x62, 0x12, 0x2b, 0xa3, 0xd1, 0x84, 0x71, 0xd5, 0x3c, 0x96, 0x2c,
+	0x93, 0x71, 0xb6, 0x50, 0x20, 0xa3, 0xe7, 0x30, 0x4f, 0xf4, 0x61, 0x35, 0xd1, 0x40, 0x53, 0xe2,
+	0x3e, 0x7a, 0xd3, 0xb7, 0x77, 0x44, 0x49, 0x59, 0x2e, 0x97, 0xc1, 0x8a, 0xfb, 0x06, 0x6d, 0x3c,
+	0xc3, 0x2d, 0x84, 0x1e, 0xba, 0x8a, 0x2c, 0x4a, 0x41, 0x72, 0x23, 0xed, 0x7e, 0xea, 0xcd, 0xe6,
+	0x38, 0x6e, 0xae, 0x8e, 0x23, 0x45, 0x5b, 0xa6, 0x19, 0x32, 0xdc, 0x32, 0x83, 0xf8, 0x1f, 0x6a,
+	0x3e, 0x76, 0x7b, 0x71, 0xde, 0x78, 0xa3, 0xfb, 0x11, 0xda, 0xcf, 0x85, 0xcc, 0xaf, 0x63, 0xb5,
+	0xa8, 0x40, 0x9a, 0x00, 0x99, 0x3a, 0x6a, 0x3c, 0x42, 0x1b, 0x57, 0x00, 0x32, 0xdc, 0x7e, 0xfd,
+	0x29, 0x0c, 0x71, 0xf2, 0xe2, 0xe5, 0x6d, 0x27, 0x78, 0x75, 0xdb, 0x09, 0x7e, 0xbf, 0xed, 0x04,
+	0xdf, 0xdf, 0x75, 0xd6, 0x5e, 0xdd, 0x75, 0xd6, 0x7e, 0xbd, 0xeb, 0xac, 0x7d, 0xf3, 0xd1, 0x3f,
+	0x99, 0xdc, 0xa6, 0x5d, 0x64, 0x35, 0xcb, 0x0b, 0x88, 0x27, 0x22, 0x9f, 0x96, 0x10, 0xcf, 0x3d,
+	0x6e, 0xe9, 0xb3, 0x2d, 0xf3, 0xd7, 0xfd, 0xe0, 0xaf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xeb, 0x13,
+	0x92, 0x42, 0x64, 0x06, 0x00, 0x00,
 }
 
-func (m *Attestation) Marshal() (dAtA []byte, err error) {
+func (m *EthereumEventVoteRecord) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -627,18 +583,23 @@ func (m *Attestation) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Attestation) MarshalTo(dAtA []byte) (int, error) {
+func (m *EthereumEventVoteRecord) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *Attestation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *EthereumEventVoteRecord) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Height != 0 {
-		i = encodeVarintGravity(dAtA, i, uint64(m.Height))
+	if m.Accepted {
+		i--
+		if m.Accepted {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
 		i--
 		dAtA[i] = 0x18
 	}
@@ -666,7 +627,7 @@ func (m *Attestation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *EthereumInfo) Marshal() (dAtA []byte, err error) {
+func (m *LatestEthereumBlockHeight) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -676,12 +637,12 @@ func (m *EthereumInfo) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *EthereumInfo) MarshalTo(dAtA []byte) (int, error) {
+func (m *LatestEthereumBlockHeight) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *EthereumInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *LatestEthereumBlockHeight) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -699,7 +660,7 @@ func (m *EthereumInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *EthSigner) Marshal() (dAtA []byte, err error) {
+func (m *EthereumSigner) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -709,12 +670,12 @@ func (m *EthSigner) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *EthSigner) MarshalTo(dAtA []byte) (int, error) {
+func (m *EthereumSigner) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *EthSigner) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *EthereumSigner) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -734,7 +695,7 @@ func (m *EthSigner) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *EthSignerSet) Marshal() (dAtA []byte, err error) {
+func (m *UpdateSignerSetTx) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -744,12 +705,12 @@ func (m *EthSignerSet) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *EthSignerSet) MarshalTo(dAtA []byte) (int, error) {
+func (m *UpdateSignerSetTx) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *EthSignerSet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *UpdateSignerSetTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -810,9 +771,14 @@ func (m *BatchTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	if len(m.Transactions) > 0 {
 		for iNdEx := len(m.Transactions) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Transactions[iNdEx])
-			copy(dAtA[i:], m.Transactions[iNdEx])
-			i = encodeVarintGravity(dAtA, i, uint64(len(m.Transactions[iNdEx])))
+			{
+				size, err := m.Transactions[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGravity(dAtA, i, uint64(size))
+			}
 			i--
 			dAtA[i] = 0x1a
 		}
@@ -830,7 +796,7 @@ func (m *BatchTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *TransferTx) Marshal() (dAtA []byte, err error) {
+func (m *SendToEthereumTx) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -840,12 +806,12 @@ func (m *TransferTx) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *TransferTx) MarshalTo(dAtA []byte) (int, error) {
+func (m *SendToEthereumTx) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *TransferTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *SendToEthereumTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -892,7 +858,7 @@ func (m *TransferTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *LogicCallTx) Marshal() (dAtA []byte, err error) {
+func (m *ContractCallTx) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -902,12 +868,12 @@ func (m *LogicCallTx) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *LogicCallTx) MarshalTo(dAtA []byte) (int, error) {
+func (m *ContractCallTx) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *LogicCallTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *ContractCallTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -952,17 +918,17 @@ func (m *LogicCallTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.LogicContractAddress) > 0 {
-		i -= len(m.LogicContractAddress)
-		copy(dAtA[i:], m.LogicContractAddress)
-		i = encodeVarintGravity(dAtA, i, uint64(len(m.LogicContractAddress)))
+	if len(m.ContractCallAddress) > 0 {
+		i -= len(m.ContractCallAddress)
+		copy(dAtA[i:], m.ContractCallAddress)
+		i = encodeVarintGravity(dAtA, i, uint64(len(m.ContractCallAddress)))
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.InvalidationId) > 0 {
-		i -= len(m.InvalidationId)
-		copy(dAtA[i:], m.InvalidationId)
-		i = encodeVarintGravity(dAtA, i, uint64(len(m.InvalidationId)))
+	if len(m.InvalidationScope) > 0 {
+		i -= len(m.InvalidationScope)
+		copy(dAtA[i:], m.InvalidationScope)
+		i = encodeVarintGravity(dAtA, i, uint64(len(m.InvalidationScope)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -970,38 +936,6 @@ func (m *LogicCallTx) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintGravity(dAtA, i, uint64(m.InvalidationNonce))
 		i--
 		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *TransactionIDs) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *TransactionIDs) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *TransactionIDs) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Ids) > 0 {
-		for iNdEx := len(m.Ids) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Ids[iNdEx])
-			copy(dAtA[i:], m.Ids[iNdEx])
-			i = encodeVarintGravity(dAtA, i, uint64(len(m.Ids[iNdEx])))
-			i--
-			dAtA[i] = 0xa
-		}
 	}
 	return len(dAtA) - i, nil
 }
@@ -1017,7 +951,7 @@ func encodeVarintGravity(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *Attestation) Size() (n int) {
+func (m *EthereumEventVoteRecord) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1033,13 +967,13 @@ func (m *Attestation) Size() (n int) {
 			n += 1 + l + sovGravity(uint64(l))
 		}
 	}
-	if m.Height != 0 {
-		n += 1 + sovGravity(uint64(m.Height))
+	if m.Accepted {
+		n += 2
 	}
 	return n
 }
 
-func (m *EthereumInfo) Size() (n int) {
+func (m *LatestEthereumBlockHeight) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1054,7 +988,7 @@ func (m *EthereumInfo) Size() (n int) {
 	return n
 }
 
-func (m *EthSigner) Size() (n int) {
+func (m *EthereumSigner) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1070,7 +1004,7 @@ func (m *EthSigner) Size() (n int) {
 	return n
 }
 
-func (m *EthSignerSet) Size() (n int) {
+func (m *UpdateSignerSetTx) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1101,8 +1035,8 @@ func (m *BatchTx) Size() (n int) {
 		n += 1 + sovGravity(uint64(m.Timeout))
 	}
 	if len(m.Transactions) > 0 {
-		for _, b := range m.Transactions {
-			l = len(b)
+		for _, e := range m.Transactions {
+			l = e.Size()
 			n += 1 + l + sovGravity(uint64(l))
 		}
 	}
@@ -1116,7 +1050,7 @@ func (m *BatchTx) Size() (n int) {
 	return n
 }
 
-func (m *TransferTx) Size() (n int) {
+func (m *SendToEthereumTx) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1140,7 +1074,7 @@ func (m *TransferTx) Size() (n int) {
 	return n
 }
 
-func (m *LogicCallTx) Size() (n int) {
+func (m *ContractCallTx) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1149,11 +1083,11 @@ func (m *LogicCallTx) Size() (n int) {
 	if m.InvalidationNonce != 0 {
 		n += 1 + sovGravity(uint64(m.InvalidationNonce))
 	}
-	l = len(m.InvalidationId)
+	l = len(m.InvalidationScope)
 	if l > 0 {
 		n += 1 + l + sovGravity(uint64(l))
 	}
-	l = len(m.LogicContractAddress)
+	l = len(m.ContractCallAddress)
 	if l > 0 {
 		n += 1 + l + sovGravity(uint64(l))
 	}
@@ -1179,28 +1113,13 @@ func (m *LogicCallTx) Size() (n int) {
 	return n
 }
 
-func (m *TransactionIDs) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.Ids) > 0 {
-		for _, b := range m.Ids {
-			l = len(b)
-			n += 1 + l + sovGravity(uint64(l))
-		}
-	}
-	return n
-}
-
 func sovGravity(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozGravity(x uint64) (n int) {
 	return sovGravity(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *Attestation) Unmarshal(dAtA []byte) error {
+func (m *EthereumEventVoteRecord) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1223,10 +1142,10 @@ func (m *Attestation) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Attestation: wiretype end group for non-group")
+			return fmt.Errorf("proto: EthereumEventVoteRecord: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Attestation: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: EthereumEventVoteRecord: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1299,9 +1218,9 @@ func (m *Attestation) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Accepted", wireType)
 			}
-			m.Height = 0
+			var v int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowGravity
@@ -1311,11 +1230,12 @@ func (m *Attestation) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Height |= uint64(b&0x7F) << shift
+				v |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			m.Accepted = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipGravity(dAtA[iNdEx:])
@@ -1337,7 +1257,7 @@ func (m *Attestation) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *EthereumInfo) Unmarshal(dAtA []byte) error {
+func (m *LatestEthereumBlockHeight) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1360,10 +1280,10 @@ func (m *EthereumInfo) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: EthereumInfo: wiretype end group for non-group")
+			return fmt.Errorf("proto: LatestEthereumBlockHeight: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EthereumInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: LatestEthereumBlockHeight: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1425,7 +1345,7 @@ func (m *EthereumInfo) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *EthSigner) Unmarshal(dAtA []byte) error {
+func (m *EthereumSigner) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1448,10 +1368,10 @@ func (m *EthSigner) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: EthSigner: wiretype end group for non-group")
+			return fmt.Errorf("proto: EthereumSigner: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EthSigner: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: EthereumSigner: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1468,7 +1388,7 @@ func (m *EthSigner) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Power |= int64(b&0x7F) << shift
+				m.Power |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1526,7 +1446,7 @@ func (m *EthSigner) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *EthSignerSet) Unmarshal(dAtA []byte) error {
+func (m *UpdateSignerSetTx) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1549,10 +1469,10 @@ func (m *EthSignerSet) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: EthSignerSet: wiretype end group for non-group")
+			return fmt.Errorf("proto: UpdateSignerSetTx: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EthSignerSet: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: UpdateSignerSetTx: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1603,7 +1523,7 @@ func (m *EthSignerSet) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Signers = append(m.Signers, EthSigner{})
+			m.Signers = append(m.Signers, EthereumSigner{})
 			if err := m.Signers[len(m.Signers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1700,7 +1620,7 @@ func (m *BatchTx) Unmarshal(dAtA []byte) error {
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Transactions", wireType)
 			}
-			var byteLen int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowGravity
@@ -1710,23 +1630,25 @@ func (m *BatchTx) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthGravity
 			}
-			postIndex := iNdEx + byteLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthGravity
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Transactions = append(m.Transactions, make([]byte, postIndex-iNdEx))
-			copy(m.Transactions[len(m.Transactions)-1], dAtA[iNdEx:postIndex])
+			m.Transactions = append(m.Transactions, &SendToEthereumTx{})
+			if err := m.Transactions[len(m.Transactions)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
@@ -1800,7 +1722,7 @@ func (m *BatchTx) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *TransferTx) Unmarshal(dAtA []byte) error {
+func (m *SendToEthereumTx) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1823,10 +1745,10 @@ func (m *TransferTx) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: TransferTx: wiretype end group for non-group")
+			return fmt.Errorf("proto: SendToEthereumTx: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: TransferTx: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: SendToEthereumTx: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1999,7 +1921,7 @@ func (m *TransferTx) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *LogicCallTx) Unmarshal(dAtA []byte) error {
+func (m *ContractCallTx) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2022,10 +1944,10 @@ func (m *LogicCallTx) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: LogicCallTx: wiretype end group for non-group")
+			return fmt.Errorf("proto: ContractCallTx: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: LogicCallTx: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ContractCallTx: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2049,7 +1971,7 @@ func (m *LogicCallTx) Unmarshal(dAtA []byte) error {
 			}
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InvalidationId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field InvalidationScope", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -2076,14 +1998,14 @@ func (m *LogicCallTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.InvalidationId = append(m.InvalidationId[:0], dAtA[iNdEx:postIndex]...)
-			if m.InvalidationId == nil {
-				m.InvalidationId = []byte{}
+			m.InvalidationScope = append(m.InvalidationScope[:0], dAtA[iNdEx:postIndex]...)
+			if m.InvalidationScope == nil {
+				m.InvalidationScope = []byte{}
 			}
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LogicContractAddress", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ContractCallAddress", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2111,7 +2033,7 @@ func (m *LogicCallTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.LogicContractAddress = string(dAtA[iNdEx:postIndex])
+			m.ContractCallAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
@@ -2233,88 +2155,6 @@ func (m *LogicCallTx) Unmarshal(dAtA []byte) error {
 			if err := m.Fees[len(m.Fees)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipGravity(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthGravity
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *TransactionIDs) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowGravity
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: TransactionIDs: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: TransactionIDs: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Ids", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGravity
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthGravity
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthGravity
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Ids = append(m.Ids, make([]byte, postIndex-iNdEx))
-			copy(m.Ids[len(m.Ids)-1], dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

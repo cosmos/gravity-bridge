@@ -9,37 +9,31 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
+func TestBatchTxCheckpointGold1(t *testing.T) {
 	senderAddr, err := sdk.AccAddressFromHex("527FBEE652609AB150F0AEE9D61A2F76CFC4A73E")
 	require.NoError(t, err)
 	var (
 		erc20Addr = "0x835973768750b3ED2D5c3EF5AdcD5eDb44d12aD4"
 	)
 
-	src := OutgoingTxBatch{
-		BatchNonce: 1,
+	src := BatchTx{
+		Nonce: 1,
 		//
-		BatchTimeout: 2111,
-		Transactions: []*OutgoingTransferTx{
+		Timeout: 2111,
+		Transactions: []*SendToEthereumTx{
 			{
 				Id:          0x1,
 				Sender:      senderAddr.String(),
-				DestAddress: "0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39",
-				Erc20Token: &ERC20Token{
-					Amount:   sdk.NewInt(0x1),
-					Contract: erc20Addr,
-				},
-				Erc20Fee: &ERC20Token{
-					Amount:   sdk.NewInt(0x1),
-					Contract: erc20Addr,
-				},
+				EthereumRecipient: "0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39",
+				Erc20Token: NewSDKIntERC20Token(sdk.NewInt(0x1), erc20Addr).GravityCoin(),
+				Erc20Fee: NewSDKIntERC20Token(sdk.NewInt(0x1), erc20Addr).GravityCoin(),
 			},
 		},
 		TokenContract: erc20Addr,
 	}
 
 	// TODO: get from params
-	ourHash, err := src.GetCheckpoint("foo")
+	ourHash, err := src.GetCheckpoint([]byte("foo"))
 	require.NoError(t, err)
 
 	// hash from bridge contract
@@ -50,27 +44,24 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))
 }
 
-func TestOutgoingLogicCallCheckpointGold1(t *testing.T) {
+func TestContractCallTxCheckpointGold1(t *testing.T) {
 	payload, err := hex.DecodeString("0x74657374696e675061796c6f6164000000000000000000000000000000000000"[2:])
 	require.NoError(t, err)
 	invalidationId, err := hex.DecodeString("0x696e76616c69646174696f6e4964000000000000000000000000000000000000"[2:])
 	require.NoError(t, err)
 
-	token := []*ERC20Token{{
-		Contract: "0xC26eFfa98B8A2632141562Ae7E34953Cfe5B4888",
-		Amount:   sdk.NewIntFromUint64(1),
-	}}
-	call := OutgoingLogicCall{
-		Transfers:            token,
+	token := sdk.Coins{NewSDKIntERC20Token(sdk.NewIntFromUint64(1), "0xC26eFfa98B8A2632141562Ae7E34953Cfe5B4888").GravityCoin()}
+	call := ContractCallTx{
+		Tokens:            	  token,
 		Fees:                 token,
-		LogicContractAddress: "0x17c1736CcF692F653c433d7aa2aB45148C016F68",
+		ContractCallAddress: "0x17c1736CcF692F653c433d7aa2aB45148C016F68",
 		Payload:              payload,
 		Timeout:              4766922941000,
-		InvalidationId:       invalidationId,
+		InvalidationScope:    invalidationId,
 		InvalidationNonce:    1,
 	}
 
-	ourHash, err := call.GetCheckpoint("foo")
+	ourHash, err := call.GetCheckpoint([]byte("foo"))
 	require.NoError(t, err)
 
 	// hash from bridge contract

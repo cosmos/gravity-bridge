@@ -118,7 +118,7 @@ func CmdSendToEth() *cobra.Command {
 			}
 
 			// Make the message
-			msg := types.MsgSendToEth{
+			msg := types.MsgSendToEthereum{
 				Sender:    cosmosAddr.String(),
 				EthDest:   args[0],
 				Amount:    amount[0],
@@ -148,7 +148,7 @@ func CmdRequestBatch() *cobra.Command {
 			cosmosAddr := cliCtx.GetFromAddress()
 
 			// TODO: better denom searching
-			msg := types.MsgRequestBatch{
+			msg := types.MsgRequestBatchTx{
 				Sender: cosmosAddr.String(),
 				Denom:  fmt.Sprintf("gravity%s", args[0]),
 			}

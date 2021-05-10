@@ -10,50 +10,50 @@ import (
 func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	k.SetParams(ctx, *data.Params)
 	// reset valsets in state
-	for _, vs := range data.Valsets {
+	for _, vs := range data.UpdateSignerSetTxs {
 		// TODO: block height?
-		k.StoreValsetUnsafe(ctx, vs)
+		k.StoreUpdateSignerSetTxUnsafe(ctx, vs)
 	}
 
 	// reset valset confirmations in state
-	for _, conf := range data.ValsetConfirms {
-		k.SetValsetConfirm(ctx, *conf)
+	for _, conf := range data.UpdateSignerSetTxSignatures {
+		k.SetEthereumSignature(ctx, *conf)
 	}
 
 	// reset batches in state
-	for _, batch := range data.Batches {
+	for _, batch := range data.BatchTxs {
 		// TODO: block height?
 		k.StoreBatchUnsafe(ctx, batch)
 	}
 
 	// reset batch confirmations in state
-	for _, conf := range data.BatchConfirms {
+	for _, conf := range data.BatchTxSignatures {
 		conf := conf
 		k.SetBatchConfirm(ctx, &conf)
 	}
 
 	// reset logic calls in state
-	for _, call := range data.LogicCalls {
-		k.SetOutgoingLogicCall(ctx, call)
+	for _, call := range data.ContractCallTxs {
+		k.SetContractCallTx(ctx, call)
 	}
 
 	// reset batch confirmations in state
-	for _, conf := range data.LogicCallConfirms {
+	for _, conf := range data.ContractCallTxSignatures {
 		conf := conf
-		k.SetLogicCallConfirm(ctx, &conf)
+		k.SetContractCallTxSignature(ctx, &conf)
 	}
 
 	// reset pool transactions in state
-	for _, tx := range data.UnbatchedTransfers {
+	for _, tx := range data.UnbatchedSendToEthereumTxs {
 		if err := k.setPoolEntry(ctx, tx); err != nil {
 			panic(err)
 		}
 	}
 
 	// reset attestations in state
-	for _, att := range data.Attestations {
+	for _, att := range data.EthereumEventVoteRecords {
 		att := att
-		claim, err := k.UnpackAttestationClaim(&att)
+		claim, err := k.UnpackEthereumEventVoteRecordEvent(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
@@ -61,13 +61,13 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// TODO: block height?
 		k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
 	}
-	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
+	k.setLastObservedEventNonce(ctx, data.LastObservedEventNonce)
 
 	// reset attestation state of specific validators
 	// this must be done after the above to be correct
-	for _, att := range data.Attestations {
+	for _, att := range data.EthereumEventVoteRecords {
 		att := att
-		claim, err := k.UnpackAttestationClaim(&att)
+		claim, err := k.UnpackEthereumEventVoteRecordEvent(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
@@ -124,45 +124,46 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p                  = k.GetParams(ctx)
-		calls              = k.GetOutgoingLogicCalls(ctx)
-		batches            = k.GetOutgoingTxBatches(ctx)
-		valsets            = k.GetValsets(ctx)
-		attmap             = k.GetAttestationMapping(ctx)
-		vsconfs            = []*types.MsgValsetConfirm{}
-		batchconfs         = []types.MsgConfirmBatch{}
-		callconfs          = []types.MsgConfirmLogicCall{}
-		attestations       = []types.Attestation{}
-		delegates          = k.GetDelegateKeys(ctx)
-		lastobserved       = k.GetLastObservedEventNonce(ctx)
-		erc20ToDenoms      = []*types.ERC20ToDenom{}
-		unbatchedTransfers = k.GetPoolTransactions(ctx)
+		p                           = k.GetParams(ctx)
+		contractCallTxs             = k.GetContractCallTxs(ctx)
+		batchTxs                    = k.GetBatchTxes(ctx)
+		updateSignerSetTxs          = k.GetUpdateSignerSetTxs(ctx)
+		attmap                      = k.GetAttestationMapping(ctx)
+		updateSignerSetTxSignatures []*types.UpdateSignerSetTxSignature
+		batchTxSignatures           []types.BatchTxSignature
+		contractCallTxSignatures    []types.ContractCallTxSignature
+		ethereumEventVoteRecords    []types.EthereumEventVoteRecord
+		delegates                   = k.GetDelegateKeys(ctx)
+		lastobserved                = k.GetLastObservedEventNonce(ctx)
+		erc20ToDenoms               []*types.ERC20ToDenom
+		unbatchedTransfers          = k.GetPoolTransactions(ctx)
 	)
 
 	// export valset confirmations from state
-	for _, vs := range valsets {
+	for _, updateSignerSetTx := range updateSignerSetTxs {
 		// TODO: set height = 0?
-		vsconfs = append(vsconfs, k.GetValsetConfirms(ctx, vs.Nonce)...)
+
+		updateSignerSetTxSignatures = append(updateSignerSetTxSignatures, k.GetUpdateSignerSetTxSignatures(ctx, updateSignerSetTx)...)
 	}
 
 	// export batch confirmations from state
-	for _, batch := range batches {
+	for _, batch := range batchTxs {
 		// TODO: set height = 0?
-		batchconfs = append(batchconfs,
-			k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)...)
+		batchTxSignatures = append(batchTxSignatures,
+			k.GetBatchTxSignatureByNonceAndTokenContract(ctx, batch.Nonce, batch.TokenContract)...)
 	}
 
 	// export logic call confirmations from state
-	for _, call := range calls {
+	for _, call := range contractCallTxs {
 		// TODO: set height = 0?
-		callconfs = append(callconfs,
-			k.GetLogicConfirmByInvalidationIDAndNonce(ctx, call.InvalidationId, call.InvalidationNonce)...)
+		contractCallTxSignatures = append(contractCallTxSignatures,
+			k.GetContractCallTxSignatureByInvalidationIDAndNonce(ctx, call.InvalidationScope, call.InvalidationNonce)...)
 	}
 
-	// export attestations from state
+	// export ethereumEventVoteRecords from state
 	for _, atts := range attmap {
 		// TODO: set height = 0?
-		attestations = append(attestations, atts...)
+		ethereumEventVoteRecords = append(ethereumEventVoteRecords, atts...)
 	}
 
 	// export erc20 to denom relations
@@ -172,17 +173,17 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	})
 
 	return types.GenesisState{
-		Params:             &p,
-		LastObservedNonce:  lastobserved,
-		Valsets:            valsets,
-		ValsetConfirms:     vsconfs,
-		Batches:            batches,
-		BatchConfirms:      batchconfs,
-		LogicCalls:         calls,
-		LogicCallConfirms:  callconfs,
-		Attestations:       attestations,
-		DelegateKeys:       delegates,
-		Erc20ToDenoms:      erc20ToDenoms,
-		UnbatchedTransfers: unbatchedTransfers,
+		Params:                      &p,
+		LastObservedEventNonce:      lastobserved,
+		UpdateSignerSetTxs:          updateSignerSetTxs,
+		UpdateSignerSetTxSignatures: updateSignerSetTxSignatures,
+		BatchTxs:                    batchTxs,
+		BatchTxSignatures:           batchTxSignatures,
+		ContractCallTxs:             contractCallTxs,
+		ContractCallTxSignatures:    contractCallTxSignatures,
+		EthereumEventVoteRecords:    ethereumEventVoteRecords,
+		DelegateKeys:                delegates,
+		Erc20ToDenoms:               erc20ToDenoms,
+		UnbatchedSendToEthereumTxs:  unbatchedTransfers,
 	}
 }

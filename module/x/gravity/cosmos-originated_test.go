@@ -88,7 +88,7 @@ func addDenomToERC20Relation(tv *testingVars) {
 	EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
 	// check if attestation persisted
-	a := tv.input.GravityKeeper.GetAttestation(tv.ctx, myNonce, ethClaim.ClaimHash())
+	a := tv.input.GravityKeeper.GetEthereumEventVoteRecord(tv.ctx, myNonce, ethClaim.ClaimHash())
 	require.NotNil(tv.t, a)
 
 	// check if erc20<>denom relation added to db
@@ -123,7 +123,7 @@ func lockCoinsInModule(tv *testingVars) {
 	assert.Equal(tv.t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}, balance1)
 
 	// send some coins
-	msg := &types.MsgSendToEth{
+	msg := &types.MsgSendToEthereum{
 		Sender:    userCosmosAddr.String(),
 		EthDest:   ethDestination,
 		Amount:    sendingCoin,
@@ -172,7 +172,7 @@ func acceptDepositEvent(tv *testingVars) {
 	EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
 	// check that attestation persisted
-	a := tv.input.GravityKeeper.GetAttestation(tv.ctx, myNonce, ethClaim.ClaimHash())
+	a := tv.input.GravityKeeper.GetEthereumEventVoteRecord(tv.ctx, myNonce, ethClaim.ClaimHash())
 	require.NotNil(tv.t, a)
 
 	// Check that user balance has gone up

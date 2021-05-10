@@ -5,7 +5,7 @@ const (
 	EventTypeOutgoingBatch             = "outgoing_batch"
 	EventTypeMultisigUpdateRequest     = "multisig_update_request"
 	EventTypeOutgoingBatchCanceled     = "outgoing_batch_canceled"
-	EventTypeOutgoingLogicCallCanceled = "outgoing_logic_call_canceled"
+	EventTypeContractCallTxCanceled = "outgoing_logic_call_canceled"
 	EventTypeBridgeWithdrawalReceived  = "withdrawal_received"
 	EventTypeBridgeDepositReceived     = "deposit_received"
 	EventTypeBridgeWithdrawCanceled    = "withdraw_canceled"

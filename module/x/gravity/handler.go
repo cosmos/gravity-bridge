@@ -20,13 +20,13 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgSetOrchestratorAddress:
 			res, err := msgServer.SetOrchestratorAddress(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgValsetConfirm:
+		case *types.MsgSubmitEthereumSignature:
 			res, err := msgServer.ValsetConfirm(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgSendToEth:
+		case *types.MsgSendToEthereum:
 			res, err := msgServer.SendToEth(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgRequestBatch:
+		case *types.MsgRequestBatchTx:
 			res, err := msgServer.RequestBatch(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgConfirmBatch:

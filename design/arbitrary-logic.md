@@ -20,7 +20,7 @@ type OutgoingLogicCall struct {
 	LogicContractAddress string        `protobuf:"bytes,3,opt,name=logic_contract_address,json=logicContractAddress,proto3" json:"logic_contract_address,omitempty"`
 	Payload              []byte        `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
 	Timeout              uint64        `protobuf:"varint,5,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	InvalidationId       []byte        `protobuf:"bytes,6,opt,name=invalidation_id,json=invalidationId,proto3" json:"invalidation_id,omitempty"`
+	InvalidationScope       []byte        `protobuf:"bytes,6,opt,name=invalidation_id,json=invalidationId,proto3" json:"invalidation_id,omitempty"`
 	InvalidationNonce    uint64        `protobuf:"varint,7,opt,name=invalidation_nonce,json=invalidationNonce,proto3" json:"invalidation_nonce,omitempty"`
 }
 ```
@@ -30,7 +30,7 @@ type OutgoingLogicCall struct {
 - LogicContractAddress: This is the address of the logic contract that the core Gravity contract calls to execute the arbitrary logic. NOTE: this could be the actual logic contract, or it could be a batching contract that calls the logic contract a number of times. Examples of this in the `/solidity/test` folder.
 - Payload: This is the Ethereum abi encoded function call that will be executed on the logic contract. If you are using a batching middleware contract, then this abi encoded function call will itself contain an array of abi encoded function calls on the actual logic contract.
 - Timeout: The logic call will not execute if the block timestamp on Ethereum is higher than the value of this timeout. 
-- InvalidationId and InvalidationNonce: More on these below:
+- InvalidationScope and InvalidationNonce: More on these below:
 
 
 ## Invalidation

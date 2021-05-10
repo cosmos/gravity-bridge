@@ -28,9 +28,6 @@ var (
 	// ParamsStoreKeyContractHash stores the contract hash
 	ParamsStoreKeyContractHash = []byte("ContractHash")
 
-	// ParamsStoreKeyStartThreshold stores the start threshold
-	ParamsStoreKeyStartThreshold = []byte("StartThreshold")
-
 	// ParamsStoreKeyBridgeContractAddress stores the contract address
 	ParamsStoreKeyBridgeContractAddress = []byte("BridgeContractAddress")
 
@@ -189,9 +186,15 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // Equal returns a boolean determining if two Params types are identical.
 func (p Params) Equal(p2 Params) bool {
-	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
-	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
-	return bytes.Equal(bz1, bz2)
+	pb, err := p.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	p2b, err := p2.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	return bytes.Equal(pb, p2b)
 }
 
 func validateGravityID(i interface{}) error {
@@ -335,5 +338,13 @@ func strToFixByteArray(s string) ([32]byte, error) {
 		return out, fmt.Errorf("string too long")
 	}
 	copy(out[:], s)
+	return out, nil
+}
+
+func byteArrayToFixByteArray(b []byte) (out [32]byte, err error) {
+	if len(b) > 32 {
+		return out, fmt.Errorf("array too long")
+	}
+	copy(out[:], b)
 	return out, nil
 }

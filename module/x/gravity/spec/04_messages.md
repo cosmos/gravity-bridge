@@ -30,7 +30,7 @@ This message is expected to fail if:
   - Does not start with 0x
 - The validator is not present in the validator set.
 
-### MsgValsetConfirm
+### MsgSubmitEthereumSignature
 
 When the gravity daemon witnesses a complete validator set within the gravity module, the validator submits a signature of a message containing the entire validator set. 
 
@@ -48,7 +48,7 @@ This message is expected to fail if:
   - Bech32 decoding fails
 
 
-### MsgSendToEth
+### MsgSendToEthereum
 
 When a user wants to bridge an asset to an EVM. If the token has originated from the cosmos chain it will be held in a module account. If the token is originally from ethereum it will be burned on the cosmos side.
 
@@ -70,7 +70,7 @@ This message will fail if:
   - If sending to the module account fails
   - If burning of the token fails
 
-### MsgRequestBatch
+### MsgRequestBatchTx
 
 When enough transactions have been added into a batch, a user or validator can call send this message in order to send a batch of transactions across the bridge. 
 
@@ -84,7 +84,7 @@ This message will fail if:
 
 ### MsgConfirmBatch
 
-When a `MsgRequestBatch` is observed, validators need to sign batch request to signify this is not a maliciously created batch and to avoid getting slashed. 
+When a `MsgRequestBatchTx` is observed, validators need to sign batch request to signify this is not a maliciously created batch and to avoid getting slashed. 
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L137-143
 

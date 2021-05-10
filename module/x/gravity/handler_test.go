@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-func TestHandleMsgSendToEth(t *testing.T) {
+func TestHandleMsgSendToEthereum(t *testing.T) {
 	var (
 		userCosmosAddr, _               = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
 		blockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
@@ -38,7 +38,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}, balance1)
 
 	// send some coins
-	msg := &types.MsgSendToEth{
+	msg := &types.MsgSendToEthereum{
 		Sender:    userCosmosAddr.String(),
 		EthDest:   ethDestination,
 		Amount:    sendingCoin,
@@ -50,7 +50,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount.Sub(sendAmount).Sub(feeAmount))}, balance2)
 
 	// do the same thing again and make sure it works twice
-	msg1 := &types.MsgSendToEth{
+	msg1 := &types.MsgSendToEthereum{
 		Sender:    userCosmosAddr.String(),
 		EthDest:   ethDestination,
 		Amount:    sendingCoin,
@@ -63,7 +63,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance3)
 
 	// now we should be out of coins and error
-	msg2 := &types.MsgSendToEth{
+	msg2 := &types.MsgSendToEthereum{
 		Sender:    userCosmosAddr.String(),
 		EthDest:   ethDestination,
 		Amount:    sendingCoin,
@@ -114,7 +114,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	// and attestation persisted
-	a := input.GravityKeeper.GetAttestation(ctx, myNonce, ethClaim.ClaimHash())
+	a := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim.ClaimHash())
 	require.NotNil(t, a)
 	// and vouchers added to the account
 	balance := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
@@ -228,7 +228,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 	// and attestation persisted
-	a1 := input.GravityKeeper.GetAttestation(ctx, myNonce, ethClaim1.ClaimHash())
+	a1 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim1.ClaimHash())
 	require.NotNil(t, a1)
 	// and vouchers not yet added to the account
 	balance1 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
@@ -241,7 +241,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	// and attestation persisted
-	a2 := input.GravityKeeper.GetAttestation(ctx, myNonce, ethClaim1.ClaimHash())
+	a2 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim1.ClaimHash())
 	require.NotNil(t, a2)
 	// and vouchers now added to the account
 	balance2 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
@@ -254,7 +254,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	// and attestation persisted
-	a3 := input.GravityKeeper.GetAttestation(ctx, myNonce, ethClaim1.ClaimHash())
+	a3 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim1.ClaimHash())
 	require.NotNil(t, a3)
 	// and no additional added to the account
 	balance3 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)

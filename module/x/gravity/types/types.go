@@ -2,18 +2,12 @@ package types
 
 import (
 	"encoding/binary"
-	"fmt"
-	math "math"
-	"math/big"
+	"math"
 	"sort"
 	"strconv"
-	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // UInt64FromBytes create uint from binary big endian representation
@@ -32,11 +26,11 @@ func UInt64FromString(s string) (uint64, error) {
 }
 
 //////////////////////////////////////
-//      BRIDGE VALIDATOR(S)         //
+//      Ethereum Signer(S)         //
 //////////////////////////////////////
 
 // ValidateBasic performs stateless checks on validity
-func (b *BridgeValidator) ValidateBasic() error {
+func (b *EthereumSigner) ValidateBasic() error {
 	if b.Power == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "power")
 	}
@@ -49,11 +43,11 @@ func (b *BridgeValidator) ValidateBasic() error {
 	return nil
 }
 
-// BridgeValidators is the sorted set of validator data for Ethereum bridge MultiSig set
-type BridgeValidators []*BridgeValidator
+// EthereumSigners is the sorted set of validator data for Ethereum bridge MultiSig set
+type EthereumSigners []*EthereumSigner
 
 // Sort sorts the validators by power
-func (b BridgeValidators) Sort() {
+func (b EthereumSigners) Sort() {
 	sort.Slice(b, func(i, j int) bool {
 		if b[i].Power == b[j].Power {
 			// Secondary sort on eth address in case powers are equal
@@ -65,7 +59,7 @@ func (b BridgeValidators) Sort() {
 
 // PowerDiff returns the difference in power between two bridge validator sets
 // TODO: this needs to be potentially refactored
-func (b BridgeValidators) PowerDiff(c BridgeValidators) float64 {
+func (b EthereumSigners) PowerDiff(c EthereumSigners) float64 {
 	powers := map[string]int64{}
 	var totalB int64
 	// loop over b and initialize the map with their powers
@@ -94,7 +88,7 @@ func (b BridgeValidators) PowerDiff(c BridgeValidators) float64 {
 }
 
 // TotalPower returns the total power in the bridge validator set
-func (b BridgeValidators) TotalPower() (out uint64) {
+func (b EthereumSigners) TotalPower() (out uint64) {
 	for _, v := range b {
 		out += v.Power
 	}
@@ -102,7 +96,7 @@ func (b BridgeValidators) TotalPower() (out uint64) {
 }
 
 // HasDuplicates returns true if there are duplicates in the set
-func (b BridgeValidators) HasDuplicates() bool {
+func (b EthereumSigners) HasDuplicates() bool {
 	m := make(map[string]struct{}, len(b))
 	for i := range b {
 		m[b[i].EthereumAddress] = struct{}{}
@@ -111,7 +105,7 @@ func (b BridgeValidators) HasDuplicates() bool {
 }
 
 // GetPowers returns only the power values for all members
-func (b BridgeValidators) GetPowers() []uint64 {
+func (b EthereumSigners) GetPowers() []uint64 {
 	r := make([]uint64, len(b))
 	for i := range b {
 		r[i] = b[i].Power
@@ -120,7 +114,7 @@ func (b BridgeValidators) GetPowers() []uint64 {
 }
 
 // ValidateBasic performs stateless checks
-func (b BridgeValidators) ValidateBasic() error {
+func (b EthereumSigners) ValidateBasic() error {
 	// TODO: check if the set is sorted here?
 	if len(b) == 0 {
 		return ErrEmpty
@@ -133,99 +127,51 @@ func (b BridgeValidators) ValidateBasic() error {
 	if b.HasDuplicates() {
 		return sdkerrors.Wrap(ErrDuplicate, "addresses")
 	}
+
 	return nil
 }
 
 // NewValset returns a new valset
-func NewValset(nonce, height uint64, members BridgeValidators) *Valset {
+func NewValset(nonce, height uint64, members EthereumSigners) *UpdateSignerSetTx {
 	members.Sort()
-	var mem []*BridgeValidator
+	var mem []EthereumSigner
 	for _, val := range members {
-		mem = append(mem, val)
+		mem = append(mem, *val)
 	}
-	return &Valset{Nonce: uint64(nonce), Members: mem, Height: height}
-}
-
-// GetCheckpoint returns the checkpoint
-func (v Valset) GetCheckpoint(gravityIDstring string) []byte {
-	// TODO replace hardcoded "foo" here with a getter to retrieve the correct gravityID from the store
-	// this will work for now because 'foo' is the test gravityID we are using
-	// var gravityIDString = "foo"
-
-	// error case here should not occur outside of testing since the above is a constant
-	contractAbi, abiErr := abi.JSON(strings.NewReader(ValsetCheckpointABIJSON))
-	if abiErr != nil {
-		panic("Bad ABI constant!")
-	}
-
-	// the contract argument is not a arbitrary length array but a fixed length 32 byte
-	// array, therefore we have to utf8 encode the string (the default in this case) and
-	// then copy the variable length encoded data into a fixed length array. This function
-	// will panic if gravityId is too long to fit in 32 bytes
-	gravityID, err := strToFixByteArray(gravityIDstring)
-	if err != nil {
-		panic(err)
-	}
-
-	checkpointBytes := []uint8("checkpoint")
-	var checkpoint [32]uint8
-	copy(checkpoint[:], checkpointBytes[:])
-
-	memberAddresses := make([]gethcommon.Address, len(v.Members))
-	convertedPowers := make([]*big.Int, len(v.Members))
-	for i, m := range v.Members {
-		memberAddresses[i] = gethcommon.HexToAddress(m.EthereumAddress)
-		convertedPowers[i] = big.NewInt(int64(m.Power))
-	}
-	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
-	// but other than that it's a constant that has no impact on the output. This is because
-	// it gets encoded as a function name which we must then discard.
-	bytes, packErr := contractAbi.Pack("checkpoint", gravityID, checkpoint, big.NewInt(int64(v.Nonce)), memberAddresses, convertedPowers)
-
-	// this should never happen outside of test since any case that could crash on encoding
-	// should be filtered above.
-	if packErr != nil {
-		panic(fmt.Sprintf("Error packing checkpoint! %s/n", packErr))
-	}
-
-	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
-	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
-	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
-	hash := crypto.Keccak256Hash(bytes[4:])
-	return hash.Bytes()
+	return &UpdateSignerSetTx{Nonce: nonce, Signers: mem}
 }
 
 // WithoutEmptyMembers returns a new Valset without member that have 0 power or an empty Ethereum address.
-func (v *Valset) WithoutEmptyMembers() *Valset {
+func (v *UpdateSignerSetTx) WithoutEmptyMembers() *UpdateSignerSetTx {
 	if v == nil {
 		return nil
 	}
-	r := Valset{Nonce: v.Nonce, Members: make([]*BridgeValidator, 0, len(v.Members))}
-	for i := range v.Members {
-		if err := v.Members[i].ValidateBasic(); err == nil {
-			r.Members = append(r.Members, v.Members[i])
+	r := UpdateSignerSetTx{Nonce: v.Nonce, Signers: make([]EthereumSigner, 0, len(v.Signers))}
+	for i := range v.Signers {
+		if err := v.Signers[i].ValidateBasic(); err == nil {
+			r.Signers = append(r.Signers, v.Signers[i])
 		}
 	}
 	return &r
 }
 
-// Valsets is a collection of valset
-type Valsets []*Valset
+// UpdateSignerSetTxs is a collection of valset
+type UpdateSignerSetTxs []*UpdateSignerSetTx
 
-func (v Valsets) Len() int {
+func (v UpdateSignerSetTxs) Len() int {
 	return len(v)
 }
 
-func (v Valsets) Less(i, j int) bool {
+func (v UpdateSignerSetTxs) Less(i, j int) bool {
 	return v[i].Nonce > v[j].Nonce
 }
 
-func (v Valsets) Swap(i, j int) {
+func (v UpdateSignerSetTxs) Swap(i, j int) {
 	v[i], v[j] = v[j], v[i]
 }
 
 // GetFees returns the total fees contained within a given batch
-func (b OutgoingTxBatch) GetFees() sdk.Int {
+func (b BatchTx) GetFees() sdk.Int {
 	sum := sdk.ZeroInt()
 	for _, t := range b.Transactions {
 		sum.Add(t.Erc20Fee.Amount)

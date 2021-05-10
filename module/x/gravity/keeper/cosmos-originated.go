@@ -71,12 +71,13 @@ func (k Keeper) ERC20ToDenomLookup(ctx sdk.Context, tokenContract string) (bool,
 	}
 
 	// If it is not in there, it is not a cosmos originated token, turn the ERC20 into a gravity denom
-	return false, types.GravityDenom(tokenContract)
+
+	return false, types.NewERC20Token(0, tokenContract).Denom
 }
 
 // IterateERC20ToDenom iterates over erc20 to denom relations
 func (k Keeper) IterateERC20ToDenom(ctx sdk.Context, cb func([]byte, *types.ERC20ToDenom) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ERC20ToDenomKey)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.ERC20ToDenomKey})
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 

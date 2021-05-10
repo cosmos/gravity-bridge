@@ -15,7 +15,7 @@ func (k Keeper) Attest(
 	ctx sdk.Context,
 	claim types.EthereumClaim,
 	anyClaim *codectypes.Any,
-) (*types.Attestation, error) {
+) (*types.EthereumEventVoteRecord, error) {
 	valAddr := k.GetOrchestratorValidator(ctx, claim.GetClaimer())
 	if valAddr == nil {
 		panic("Could not find ValAddr for delegate key, should be checked by now")
@@ -30,15 +30,15 @@ func (k Keeper) Attest(
 	}
 
 	// Tries to get an attestation with the same eventNonce and claim as the claim that was submitted.
-	att := k.GetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash())
+	att := k.GetEthereumEventVoteRecord(ctx, claim.GetEventNonce(), claim.ClaimHash())
 
 	// If it does not exist, create a new one.
 	if att == nil {
-		att = &types.Attestation{
-			Observed: false,
-			Height:   uint64(ctx.BlockHeight()),
-			Claim:    anyClaim,
+		att = &types.EthereumEventVoteRecord{
+			Accepted: false,
+			Event:    anyClaim,
 		}
+
 	}
 
 	// Add the validator's vote to this attestation
@@ -54,7 +54,7 @@ func (k Keeper) Attest(
 // and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
 // and then marks it Observed and emits an event.
 func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
-	claim, err := k.UnpackAttestationClaim(att)
+	claim, err := k.UnpackEthereumEventVoteRecordEvent(att)
 	if err != nil {
 		panic("could not cast to claim")
 	}
@@ -101,17 +101,17 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 }
 
 // processAttestation actually applies the attestation to the consensus state
-func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
+func (k Keeper) processAttestation(ctx sdk.Context, att *types.EthereumEventVoteRecord, claim types.EthereumSignature) {
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
-	if err := k.AttestationHandler.Handle(xCtx, *att, claim); err != nil { // execute with a transient storage
+	if err := k.EthereumEventVoteHandler.Handle(xCtx, *att, claim); err != nil { // execute with a transient storage
 		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
 		k.logger(ctx).Error("attestation failed",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()),
+			"id", types.GetEthereumEventVoteRecordKey(claim.GetEventNonce(), claim.ClaimHash()),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	} else {
@@ -121,7 +121,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 
 // emitObservedEvent emits an event with information about an attestation that has been applied to
 // consensus state.
-func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
+func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.EthereumEventVoteRecord, claim types.EthereumSignature) {
 	observationEvent := sdk.NewEvent(
 		types.EventTypeObservation,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
@@ -130,7 +130,7 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		// todo: serialize with hex/ base64 ?
 		sdk.NewAttribute(types.AttributeKeyAttestationID,
-			string(types.GetAttestationKey(claim.GetEventNonce(), claim.ClaimHash()))),
+			string(types.GetEthereumEventVoteRecordKey(claim.GetEventNonce(), claim.ClaimHash()))),
 		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(claim.GetEventNonce())),
 		// TODO: do we want to emit more information?
 	)
@@ -140,19 +140,19 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 // SetAttestation sets the attestation in the store
 func (k Keeper) SetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
 	store := ctx.KVStore(k.storeKey)
-	aKey := types.GetAttestationKey(eventNonce, claimHash)
+	aKey := types.GetEthereumEventVoteRecordKey(eventNonce, claimHash)
 	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
 }
 
-// GetAttestation return an attestation given a nonce
-func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte) *types.Attestation {
+// GetEthereumEventVoteRecord return a vote record given a nonce
+func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, claimHash []byte) *types.EthereumEventVoteRecord {
 	store := ctx.KVStore(k.storeKey)
-	aKey := types.GetAttestationKey(eventNonce, claimHash)
+	aKey := types.GetEthereumEventVoteRecordKey(eventNonce, claimHash)
 	bz := store.Get(aKey)
 	if len(bz) == 0 {
 		return nil
 	}
-	var att types.Attestation
+	var att types.EthereumEventVoteRecord
 	k.cdc.MustUnmarshalBinaryBare(bz, &att)
 	return &att
 }
@@ -160,14 +160,14 @@ func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []b
 // DeleteAttestation deletes an attestation given an event nonce and claim
 func (k Keeper) DeleteAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetAttestationKeyWithHash(eventNonce, claimHash))
+	store.Delete(types.GetEthereumEventVoteRecordKeyWithHash(eventNonce, claimHash))
 }
 
 // GetAttestationMapping returns a mapping of eventnonce -> attestations at that nonce
 func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.Attestation) {
 	out = make(map[uint64][]types.Attestation)
 	k.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
-		claim, err := k.UnpackAttestationClaim(&att)
+		claim, err := k.UnpackEthereumEventVoteRecordEvent(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
@@ -185,7 +185,7 @@ func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.A
 // IterateAttestaions iterates through all attestations
 func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attestation) bool) {
 	store := ctx.KVStore(k.storeKey)
-	prefix := types.OracleAttestationKey
+	prefix := []byte{types.EthereumEventVoteRecordKey}
 	iter := store.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
@@ -202,7 +202,7 @@ func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attest
 // GetLastObservedEventNonce returns the latest observed event nonce
 func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastObservedEventNonceKey)
+	bytes := store.Get([]byte{types.LastObservedEventNonceKey})
 
 	if len(bytes) == 0 {
 		return 0
@@ -212,17 +212,17 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
 
 // GetLastObservedEthereumBlockHeight height gets the block height to of the last observed attestation from
 // the store
-func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastObservedEthereumBlockHeight {
+func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LatestEthereumBlockHeight {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastObservedEthereumBlockHeightKey)
+	bytes := store.Get([]byte{types.LastEthereumBlockHeightKey})
 
 	if len(bytes) == 0 {
-		return types.LastObservedEthereumBlockHeight{
-			CosmosBlockHeight:   0,
-			EthereumBlockHeight: 0,
+		return types.LatestEthereumBlockHeight{
+			CosmosHeight:   0,
+			EthereumHeight: 0,
 		}
 	}
-	height := types.LastObservedEthereumBlockHeight{}
+	height := types.LatestEthereumBlockHeight{}
 	k.cdc.MustUnmarshalBinaryBare(bytes, &height)
 	return height
 }
@@ -230,17 +230,17 @@ func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastOb
 // SetLastObservedEthereumBlockHeight sets the block height in the store.
 func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeight uint64) {
 	store := ctx.KVStore(k.storeKey)
-	height := types.LastObservedEthereumBlockHeight{
-		EthereumBlockHeight: ethereumHeight,
-		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
+	height := types.LatestEthereumBlockHeight{
+		EthereumHeight: ethereumHeight,
+		CosmosHeight:   uint64(ctx.BlockHeight()),
 	}
-	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&height))
+	store.Set([]byte{types.LastEthereumBlockHeightKey}, k.cdc.MustMarshalBinaryBare(&height))
 }
 
 // setLastObservedEventNonce sets the latest observed event nonce
 func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastObservedEventNonceKey, types.UInt64Bytes(nonce))
+	store.Set([]byte{types.LastObservedEventNonceKey}, types.UInt64Bytes(nonce))
 }
 
 // GetLastEventNonceByValidator returns the latest event nonce for a given validator

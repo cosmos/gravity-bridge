@@ -15,16 +15,19 @@ service Msg {
   rpc SendToEthereum(MsgSendToEthereum) returns (MsgSendToEthereumResponse) {
     option (google.api.http).post = "/gravity/v1/send_to_ethereum";
   }
-  rpc CancelSendToEthereum(MsgCancelSendToEthereum) returns (MsgCancelSendToEthereumResponse) {
+  rpc CancelSendToEthereum(MsgCancelSendToEthereum)
+      returns (MsgCancelSendToEthereumResponse) {
     option (google.api.http).post = "/gravity/v1/send_to_ethereum/cancel";
   }
   rpc RequestBatchTx(MsgRequestBatchTx) returns (MsgRequestBatchTxResponse) {
     option (google.api.http).post = "/gravity/v1/batchtx/request";
   }
-  rpc SubmitEthereumSignature(MsgSubmitEthereumSignature) returns (MsgSubmitEthereumSignatureResponse) {
+  rpc SubmitEthereumSignature(MsgSubmitEthereumSignature)
+      returns (MsgSubmitEthereumSignatureResponse) {
     option (google.api.http).post = "/gravity/v1/ethereum_signature";
   }
-  rpc SubmitEthereumEvent(MsgSubmitEthereumEvent) returns (MsgSubmitEthereumEventResponse) {
+  rpc SubmitEthereumEvent(MsgSubmitEthereumEvent)
+      returns (MsgSubmitEthereumEventResponse) {
     option (google.api.http).post = "/gravity/v1/ethereum_event";
   }
   rpc SetDelegateKeys(MsgDelegateKeys) returns (MsgDelegateKeysResponse) {
@@ -32,77 +35,82 @@ service Msg {
   }
 }
 
-// MsgSendToEthereum submits a SendToEthereum attempt to bridge an asset over to Ethereum.
-// The SendToEthereum will be stored and then included in a batch and then
-// submitted to Ethereum.
+// MsgSendToEthereum submits a SendToEthereum attempt to bridge an asset over to
+// Ethereum. The SendToEthereum will be stored and then included in a batch and
+// then submitted to Ethereum.
 message MsgSendToEthereum {
-  string                   sender        = 1;
-  string                   eth_recipient = 2;
-  cosmos.base.v1beta1.Coin amount        = 3 [(gogoproto.nullable) = false];
-  cosmos.base.v1beta1.Coin bridge_fee    = 4 [(gogoproto.nullable) = false];
+  string sender = 1;
+  string eth_recipient = 2;
+  cosmos.base.v1beta1.Coin amount = 3 [ (gogoproto.nullable) = false ];
+  cosmos.base.v1beta1.Coin bridge_fee = 4 [ (gogoproto.nullable) = false ];
 }
 
-// MsgSendToEthereumResponse returns the SendToEthereum transaction ID which will be included
-// in the batch tx.
+// MsgSendToEthereumResponse returns the SendToEthereum transaction ID which
+// will be included in the batch tx.
 message MsgSendToEthereumResponse { uint64 id = 1; }
 
-// MsgCancelSendToEthereum allows the sender to cancel its own outgoing SendToEthereum tx
-// and recieve a refund of the tokens and bridge fees. This tx will only succeed
-// if the SendToEthereum tx hasn't been batched to be processed and relayed to Ethereum.
+// MsgCancelSendToEthereum allows the sender to cancel its own outgoing
+// SendToEthereum tx and recieve a refund of the tokens and bridge fees. This tx
+// will only succeed if the SendToEthereum tx hasn't been batched to be
+// processed and relayed to Ethereum.
 message MsgCancelSendToEthereum {
-  uint64 id     = 1;
+  uint64 id = 1;
   string sender = 2;
 }
 
 message MsgCancelSendToEthereumResponse {}
 
-// MsgRequestBatch requests a batch of transactions with a given coin denomination to send across
-// the bridge to Ethereum.
+// MsgRequestBatchTx requests a batch of transactions with a given coin
+// denomination to send across the bridge to Ethereum.
 message MsgRequestBatchTx {
-  string denom  = 1;
+  string denom = 1;
   string signer = 2;
 }
 
 message MsgRequestBatchTxResponse {}
 
-// MsgSubmitEthereumSignature submits an ethereum signature for a given validator
+// MsgSubmitEthereumSignature submits an ethereum signature for a given
+// validator
 message MsgSubmitEthereumSignature {
   option (gogoproto.goproto_getters) = false;
 
   // TODO: can we make this take an array?
-  google.protobuf.Any signature = 1 [(cosmos_proto.accepts_interface) = "EthereumSignature"];
-  string              signer    = 2;
+  google.protobuf.Any signature = 1
+      [ (cosmos_proto.accepts_interface) = "EthereumSignature" ];
+  string signer = 2;
 }
 
-// ContractCallTxSignature is a signature on behalf of a validator for a ContractCallTx.
+// ContractCallTxSignature is a signature on behalf of a validator for a
+// ContractCallTx.
 message ContractCallTxSignature {
-  bytes  invalidation_id      = 1 [
-    (gogoproto.casttype)   = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
-  ];
-  uint64 invalidation_nonce   = 2;
-  string eth_signer           = 3;
-  bytes  signature            = 4 [
-    (gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"
-  ];
+  bytes invalidation_id = 1
+      [ (gogoproto.casttype) =
+            "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
+  uint64 invalidation_nonce = 2;
+  string eth_signer = 3;
+  bytes signature = 4
+      [ (gogoproto.casttype) =
+            "github.com/ethereum/go-ethereum/common/hexutil.Bytes" ];
 }
 
 // BatchTxSignature is a signature on behalf of a validator for a BatchTx.
 message BatchTxSignature {
   string token_contract = 1;
-  uint64 nonce          = 2; 
-  string eth_signer     = 3;
-  bytes  signature      = 4 [
-    (gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"
-  ];
+  uint64 nonce = 2;
+  string eth_signer = 3;
+  bytes signature = 4
+      [ (gogoproto.casttype) =
+            "github.com/ethereum/go-ethereum/common/hexutil.Bytes" ];
 }
 
-// UpdateSignerSetTxSignature is a signature on behalf of a validator for a UpdateSignerSetTx
+// UpdateSignerSetTxSignature is a signature on behalf of a validator for a
+// UpdateSignerSetTx
 message UpdateSignerSetTxSignature {
-  uint64 nonce                = 1;
-  string eth_signer           = 2;
-  bytes  signature            = 3 [
-    (gogoproto.casttype) = "github.com/ethereum/go-ethereum/common/hexutil.Bytes"
-  ];
+  uint64 nonce = 1;
+  string eth_signer = 2;
+  bytes signature = 3
+      [ (gogoproto.casttype) =
+            "github.com/ethereum/go-ethereum/common/hexutil.Bytes" ];
 }
 
 message MsgSubmitEthereumSignatureResponse {}
@@ -111,17 +119,21 @@ message MsgSubmitEthereumSignatureResponse {}
 message MsgSubmitEthereumEvent {
   option (gogoproto.goproto_getters) = false;
 
-  google.protobuf.Any event  = 1 [(cosmos_proto.accepts_interface) = "EthereumEvent"];
-  string              signer = 2;
+  google.protobuf.Any event = 1
+      [ (cosmos_proto.accepts_interface) = "EthereumEvent" ];
+  string signer = 2;
 }
 
-// SendToCosmosEvent is submitted when the SendToCosmosEvent is emitted by they gravity contract. 
-// ERC20 representation coins are minted to the cosmosreceiver address.
+// SendToCosmosEvent is submitted when the SendToCosmosEvent is emitted by they
+// gravity contract. ERC20 representation coins are minted to the cosmosreceiver
+// address.
 message SendToCosmosEvent {
-  uint64 event_nonce     = 1;
-  string token_contract  = 2;
-  string amount          = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", 
+  option (gogoproto.equal) = true;
+
+  uint64 event_nonce = 1;
+  string token_contract = 2;
+  string amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
   string ethereum_sender = 4;
@@ -129,36 +141,37 @@ message SendToCosmosEvent {
   uint64 ethereum_height = 6;
 }
 
-// BatchExecutedEvent claims that a batch of BatchTxExecutedal operations on the bridge contract
-// was executed successfully on ETH
+// BatchExecutedEvent claims that a batch of BatchTxExecutedal operations on the
+// bridge contract was executed successfully on ETH
 message BatchExecutedEvent {
-  string token_contract  = 1;
-  uint64 event_nonce     = 2;
+  string token_contract = 1;
+  uint64 event_nonce = 2;
   uint64 ethereum_height = 3;
 }
 
 // ContractCallExecutedEvent describes a contract call that has been
 // successfully executed on Ethereum.
 
-// NOTE: bytes.HexBytes is supposed to "help" with json encoding/decoding investigate?
+// NOTE: bytes.HexBytes is supposed to "help" with json encoding/decoding
+// investigate?
 message ContractCallExecutedEvent {
-  uint64 event_nonce        = 1;
-  bytes  invalidation_id    = 2 [
-    (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"
-  ];
+  uint64 event_nonce = 1;
+  bytes invalidation_id = 2
+      [ (gogoproto.casttype) =
+            "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
   uint64 invalidation_nonce = 3;
-  uint64 ethereum_height    = 4;
+  uint64 ethereum_height = 4;
 }
 
 // ERC20DeployedEvent is submitted when an ERC20 contract
 // for a Cosmos SDK coin has been deployed on Ethereum.
 message ERC20DeployedEvent {
-  uint64 event_nonce     = 1;
-  string cosmos_denom    = 2;
-  string token_contract  = 3;
-  string erc20_name      = 4;
-  string erc20_symbol    = 5;
-  uint64 erc20_decimals  = 6;
+  uint64 event_nonce = 1;
+  string cosmos_denom = 2;
+  string token_contract = 3;
+  string erc20_name = 4;
+  string erc20_symbol = 5;
+  uint64 erc20_decimals = 6;
   uint64 ethereum_height = 7;
 }
 
@@ -168,9 +181,9 @@ message MsgSubmitEthereumEventResponse {}
 // to a given orchestrator address. This key is then used as an optional
 // authentication method for attesting events from Ethereum.
 message MsgDelegateKeys {
-  string validator_address    = 1;
+  string validator_address = 1;
   string orchestrator_address = 2;
-  string eth_address          = 3;
+  string eth_address = 3;
 }
 
 message MsgDelegateKeysResponse {}

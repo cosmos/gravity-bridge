@@ -25,7 +25,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOrchestratorAddress) (*types.MsgSetOrchestratorAddressResponse, error) {
+func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys) (*types.MsgDelegateKeysResponse, error) {
 	// ensure that this passes validation
 	err := msg.ValidateBasic()
 	if err != nil {
@@ -33,8 +33,8 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	val, _ := sdk.ValAddressFromBech32(msg.Validator)
-	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	val, _ := sdk.ValAddressFromBech32(msg.ValidatorAddress)
+	orch, _ := sdk.AccAddressFromBech32(msg.OrchestratorAddress)
 
 	// ensure that the validator exists
 	if k.Keeper.StakingKeeper.Validator(ctx, val) == nil {
@@ -58,15 +58,22 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 		),
 	)
 
-	return &types.MsgSetOrchestratorAddressResponse{}, nil
+	return &types.MsgDelegateKeysResponse{}, nil
 
 }
 
-// ValsetConfirm handles MsgValsetConfirm
-// TODO: check msgValsetConfirm to have an Orchestrator field instead of a Validator field
-func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm) (*types.MsgValsetConfirmResponse, error) {
+// SubmitEthereumSignature handles MsgSubmitEthereumSignature
+// TODO: check MsgSubmitEthereumSignature to have an Orchestrator field instead of a Validator field
+func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubmitEthereumSignature) (*types.MsgSubmitEthereumSignatureResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	valset := k.GetValset(ctx, msg.Nonce)
+
+	signature, err := types.UnpackSignature(msg.Signature)
+	if err != nil {
+		return nil, err
+	}
+	nonce := sdk.BigEndianToUint64(signature.GetStoreIndex())
+
+	valset := k.GetUpdateSignerSetTx(ctx, nonce)
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
 	}
@@ -74,12 +81,12 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 	gravityID := k.GetGravityID(ctx)
 	checkpoint := valset.GetCheckpoint(gravityID)
 
-	sigBytes, err := hex.DecodeString(msg.Signature)
+	sigBytes, err := hex.DecodeString(msg.Signer)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
 	}
 
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	orchaddr, _ := sdk.AccAddressFromBech32(msg.Signer)
 	validator := k.GetOrchestratorValidator(ctx, orchaddr)
 	if validator == nil {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
@@ -95,10 +102,10 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 	}
 
 	// persist signature
-	if k.GetValsetConfirm(ctx, msg.Nonce, orchaddr) != nil {
+	if k.GetEthereumSignature(ctx, nonce, validator) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
-	key := k.SetValsetConfirm(ctx, *msg)
+	key := k.SetEthereumSignature(ctx, *msg)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -108,17 +115,37 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 		),
 	)
 
-	return &types.MsgValsetConfirmResponse{}, nil
+	return &types.MsgSubmitEthereumSignatureResponse{}, nil
 }
 
-// SendToEth handles MsgSendToEth
-func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types.MsgSendToEthResponse, error) {
+
+func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEthereumEvent) (*types.MsgSubmitEthereumEventResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	event, err := types.UnpackEvent(msg.Event)
+	if err != nil {
+		return nil, err
+	}
+
+	switch t := event.(type) {
+	case types.BatchExecutedEvent: {
+
+	}
+	case types.ContractCallExecutedEvent: {
+
+	}
+	}
+}
+
+
+// SendToEthereum handles MsgSendToEthereum
+func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereum) (*types.MsgSendToEthereumResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
 	}
-	txID, err := k.AddToOutgoingPool(ctx, sender, msg.EthDest, msg.Amount, msg.BridgeFee)
+	txID, err := k.AddToOutgoingPool(ctx, sender, msg.EthRecipient, msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
 	}
@@ -131,11 +158,11 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 		),
 	)
 
-	return &types.MsgSendToEthResponse{}, nil
+	return &types.MsgSendToEthereumResponse{}, nil
 }
 
-// RequestBatch handles MsgRequestBatch
-func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*types.MsgRequestBatchResponse, error) {
+// RequestBatchTx handles MsgRequestBatchTx
+func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchTx) (*types.MsgRequestBatchTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Check if the denom is a gravity coin, if not, check if there is a deployed ERC20 representing it.
@@ -145,7 +172,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		return nil, err
 	}
 
-	batchID, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize)
+	batchID, err := k.BuildBatchTx(ctx, tokenContract, BatchTxSize)
 	if err != nil {
 		return nil, err
 	}
@@ -154,19 +181,20 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(batchID.BatchNonce)),
+			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(batchID.Nonce)),
 		),
 	)
 
-	return &types.MsgRequestBatchResponse{}, nil
+	return &types.MsgRequestBatchTxResponse{}, nil
 }
+
 
 // ConfirmBatch handles MsgConfirmBatch
 func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (*types.MsgConfirmBatchResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// fetch the outgoing batch given the nonce
-	batch := k.GetOutgoingTXBatch(ctx, msg.TokenContract, msg.Nonce)
+	batch := k.GetBatchTx(ctx, msg.TokenContract, msg.Nonce)
 	if batch == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
 	}
@@ -218,13 +246,13 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 // ConfirmLogicCall handles MsgConfirmLogicCall
 func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogicCall) (*types.MsgConfirmLogicCallResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	invalidationIdBytes, err := hex.DecodeString(msg.InvalidationId)
+	invalidationIdBytes, err := hex.DecodeString(msg.InvalidationScope)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "invalidation id encoding")
 	}
 
 	// fetch the outgoing logic given the nonce
-	logic := k.GetOutgoingLogicCall(ctx, invalidationIdBytes, msg.InvalidationNonce)
+	logic := k.GetContractCallTx(ctx, invalidationIdBytes, msg.InvalidationNonce)
 	if logic == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find logic")
 	}
@@ -257,11 +285,11 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 	}
 
 	// check if we already have this confirm
-	if k.GetLogicCallConfirm(ctx, invalidationIdBytes, msg.InvalidationNonce, orchaddr) != nil {
+	if k.GetContractCallTxSignature(ctx, invalidationIdBytes, msg.InvalidationNonce, orchaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
 	}
 
-	k.SetLogicCallConfirm(ctx, msg)
+	k.SetContractCallTxSignature(ctx, msg)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -309,7 +337,7 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
 		),
 	)
 
@@ -352,7 +380,7 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
 		),
 	)
 
@@ -392,7 +420,7 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
 		),
 	)
 
@@ -432,20 +460,20 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
 		),
 	)
 
 	return &types.MsgLogicCallExecutedClaimResponse{}, nil
 }
 
-func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
+func (k msgServer) CancelSendToEthereum(c context.Context, msg *types.MsgCancelSendToEthereum) (*types.MsgCancelSendToEthereumResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
 	}
-	err = k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TransactionId, sender)
+	err = k.RemoveFromOutgoingPoolAndRefund(ctx, msg.Id, sender)
 	if err != nil {
 		return nil, err
 	}
@@ -454,9 +482,9 @@ func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendTo
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, fmt.Sprint(msg.TransactionId)),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, fmt.Sprint(msg.Id)),
 		),
 	)
 
-	return &types.MsgCancelSendToEthResponse{}, nil
+	return &types.MsgCancelSendToEthereumResponse{}, nil
 }

@@ -23,14 +23,14 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 func (k Keeper) CurrentValset(
 	c context.Context,
 	req *types.QueryCurrentValsetRequest) (*types.QueryCurrentValsetResponse, error) {
-	return &types.QueryCurrentValsetResponse{Valset: k.GetCurrentValset(sdk.UnwrapSDKContext(c))}, nil
+	return &types.QueryCurrentValsetResponse{Valset: k.GetCurrentUpdateSignerSetTx(sdk.UnwrapSDKContext(c))}, nil
 }
 
 // ValsetRequest queries the ValsetRequest of the gravity module
 func (k Keeper) ValsetRequest(
 	c context.Context,
 	req *types.QueryValsetRequestRequest) (*types.QueryValsetRequestResponse, error) {
-	return &types.QueryValsetRequestResponse{Valset: k.GetValset(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
+	return &types.QueryValsetRequestResponse{Valset: k.GetUpdateSignerSetTx(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
 }
 
 // ValsetConfirm queries the ValsetConfirm of the gravity module
@@ -41,15 +41,15 @@ func (k Keeper) ValsetConfirm(
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
-	return &types.QueryValsetConfirmResponse{Confirm: k.GetValsetConfirm(sdk.UnwrapSDKContext(c), req.Nonce, addr)}, nil
+	return &types.QueryValsetConfirmResponse{Confirm: k.GetEthereumSignature(sdk.UnwrapSDKContext(c), req.Nonce, addr)}, nil
 }
 
 // ValsetConfirmsByNonce queries the ValsetConfirmsByNonce of the gravity module
 func (k Keeper) ValsetConfirmsByNonce(
 	c context.Context,
 	req *types.QueryValsetConfirmsByNonceRequest) (*types.QueryValsetConfirmsByNonceResponse, error) {
-	var confirms []*types.MsgValsetConfirm
-	k.IterateValsetConfirmByNonce(sdk.UnwrapSDKContext(c), req.Nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
+	var confirms []*types.MsgSubmitEthereumSignature
+	k.IterateValsetConfirmByNonce(sdk.UnwrapSDKContext(c), req.Nonce, func(_ []byte, c types.MsgSubmitEthereumSignature) bool {
 		confirms = append(confirms, &c)
 		return false
 	})
@@ -60,7 +60,7 @@ func (k Keeper) ValsetConfirmsByNonce(
 func (k Keeper) LastValsetRequests(
 	c context.Context,
 	req *types.QueryLastValsetRequestsRequest) (*types.QueryLastValsetRequestsResponse, error) {
-	valReq := k.GetValsets(sdk.UnwrapSDKContext(c))
+	valReq := k.GetUpdateSignerSetTxs(sdk.UnwrapSDKContext(c))
 	valReqLen := len(valReq)
 	retLen := 0
 	if valReqLen < maxValsetRequestsReturned {
@@ -81,9 +81,9 @@ func (k Keeper) LastPendingValsetRequestByAddr(
 	}
 
 	var pendingValsetReq []*types.Valset
-	k.IterateValsets(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
+	k.IterateUpdateSignerSetTxs(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
-		foundConfirm := k.GetValsetConfirm(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
+		foundConfirm := k.GetEthereumSignature(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
 		// and exit the loop
 		if !foundConfirm {
@@ -116,8 +116,8 @@ func (k Keeper) LastPendingBatchRequestByAddr(
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingBatchReq *types.OutgoingTxBatch
-	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.OutgoingTxBatch) bool {
+	var pendingBatchReq *types.BatchTx
+	k.IterateBatchTxes(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
 		foundConfirm := k.GetBatchConfirm(sdk.UnwrapSDKContext(c), batch.BatchNonce, batch.TokenContract, addr) != nil
 		if !foundConfirm {
 			pendingBatchReq = batch
@@ -137,10 +137,10 @@ func (k Keeper) LastPendingLogicCallByAddr(
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingLogicReq *types.OutgoingLogicCall
-	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), func(_ []byte, logic *types.OutgoingLogicCall) bool {
-		foundConfirm := k.GetLogicCallConfirm(sdk.UnwrapSDKContext(c),
-			logic.InvalidationId, logic.InvalidationNonce, addr) != nil
+	var pendingLogicReq *types.ContractCallTx
+	k.IterateContractCallTxs(sdk.UnwrapSDKContext(c), func(_ []byte, logic *types.ContractCallTx) bool {
+		foundConfirm := k.GetContractCallTxSignature(sdk.UnwrapSDKContext(c),
+			logic.InvalidationScope, logic.InvalidationNonce, addr) != nil
 		if !foundConfirm {
 			pendingLogicReq = logic
 			return true
@@ -150,28 +150,28 @@ func (k Keeper) LastPendingLogicCallByAddr(
 	return &types.QueryLastPendingLogicCallByAddrResponse{Call: pendingLogicReq}, nil
 }
 
-// OutgoingTxBatches queries the OutgoingTxBatches of the gravity module
-func (k Keeper) OutgoingTxBatches(
+// BatchTxes queries the BatchTxes of the gravity module
+func (k Keeper) BatchTxes(
 	c context.Context,
-	req *types.QueryOutgoingTxBatchesRequest) (*types.QueryOutgoingTxBatchesResponse, error) {
-	var batches []*types.OutgoingTxBatch
-	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.OutgoingTxBatch) bool {
+	req *types.QueryBatchTxesRequest) (*types.QueryBatchTxesResponse, error) {
+	var batches []*types.BatchTx
+	k.IterateBatchTxes(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
 		batches = append(batches, batch)
 		return len(batches) == MaxResults
 	})
-	return &types.QueryOutgoingTxBatchesResponse{Batches: batches}, nil
+	return &types.QueryBatchTxesResponse{Batches: batches}, nil
 }
 
-// OutgoingLogicCalls queries the OutgoingLogicCalls of the gravity module
-func (k Keeper) OutgoingLogicCalls(
+// ContractCallTxs queries the ContractCallTxs of the gravity module
+func (k Keeper) ContractCallTxs(
 	c context.Context,
-	req *types.QueryOutgoingLogicCallsRequest) (*types.QueryOutgoingLogicCallsResponse, error) {
-	var calls []*types.OutgoingLogicCall
-	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), func(_ []byte, call *types.OutgoingLogicCall) bool {
+	req *types.QueryContractCallTxsRequest) (*types.QueryContractCallTxsResponse, error) {
+	var calls []*types.ContractCallTx
+	k.IterateContractCallTxs(sdk.UnwrapSDKContext(c), func(_ []byte, call *types.ContractCallTx) bool {
 		calls = append(calls, call)
 		return len(calls) == MaxResults
 	})
-	return &types.QueryOutgoingLogicCallsResponse{Calls: calls}, nil
+	return &types.QueryContractCallTxsResponse{Calls: calls}, nil
 }
 
 // BatchRequestByNonce queries the BatchRequestByNonce of the gravity module
@@ -181,7 +181,7 @@ func (k Keeper) BatchRequestByNonce(
 	if err := types.ValidateEthAddress(req.ContractAddress); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-	foundBatch := k.GetOutgoingTXBatch(sdk.UnwrapSDKContext(c), req.ContractAddress, req.Nonce)
+	foundBatch := k.GetBatchTx(sdk.UnwrapSDKContext(c), req.ContractAddress, req.Nonce)
 	if foundBatch == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find tx batch")
 	}
@@ -206,7 +206,7 @@ func (k Keeper) LogicConfirms(
 	c context.Context,
 	req *types.QueryLogicConfirmsRequest) (*types.QueryLogicConfirmsResponse, error) {
 	var confirms []*types.MsgConfirmLogicCall
-	k.IterateLogicConfirmByInvalidationIDAndNonce(sdk.UnwrapSDKContext(c), req.InvalidationId,
+	k.IterateContractCallTxSignatureByInvalidationIDAndNonce(sdk.UnwrapSDKContext(c), req.InvalidationScope,
 		req.InvalidationNonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
 			confirms = append(confirms, c)
 			return false
@@ -331,7 +331,7 @@ func (k Keeper) GetPendingSendToEth(
 	c context.Context,
 	req *types.QueryPendingSendToEth) (*types.QueryPendingSendToEthResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	batches := k.GetOutgoingTxBatches(ctx)
+	batches := k.GetBatchTxes(ctx)
 	unbatchedTx := k.GetPoolTransactions(ctx)
 	senderAddress := req.SenderAddress
 	var res *types.QueryPendingSendToEthResponse
