@@ -16,7 +16,6 @@ Light clients are relatively complicated and computationally expensive compared 
 
 ## Decision
 
-> This section describes our response to these forces. It is stated in full sentences, with active voice. "We will ..."
 
 PoS chains, including Cosmos, generally have a small number of validators which make up the 2/3s majority needed to reach quorum. Cosmos also allows us great freedom to design the software that validators run. These two attributes of Cosmos allowed us to implement a design with no in-consensus light clients. In general, our strategy is to lean on the flexibility of Cosmos to make things easier and cheaper on Ethereum.
 
