@@ -66,6 +66,10 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	valset := k.GetCurrentValset(ctx)
 	k.StoreValset(ctx, valset)
 
+	// Store the checkpoint as a legit past valset
+	checkpoint := valset.GetCheckpoint(k.GetGravityID(ctx))
+	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
+
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeMultisigUpdateRequest,
@@ -369,15 +373,26 @@ func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) s
 /////////////////////////////
 
 // SetEthAddress sets the ethereum address for a given validator
-func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.ValAddress, ethAddr string) {
+func (k Keeper) SetEthAddressForValidator(ctx sdk.Context, validator sdk.ValAddress, ethAddr string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetEthAddressKey(validator), []byte(ethAddr))
+	store.Set(types.GetEthAddressByValidatorKey(validator), []byte(ethAddr))
+	store.Set(types.GetValidatorByEthAddressKey(ethAddr), []byte(validator))
 }
 
-// GetEthAddress returns the eth address for a given gravity validator
-func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) string {
+// GetEthAddressByValidator returns the eth address for a given gravity validator
+func (k Keeper) GetEthAddressByValidator(ctx sdk.Context, validator sdk.ValAddress) string {
 	store := ctx.KVStore(k.storeKey)
-	return string(store.Get(types.GetEthAddressKey(validator)))
+	return string(store.Get(types.GetEthAddressByValidatorKey(validator)))
+}
+
+// GetValidatorByEthAddress returns the validator for a given eth address
+func (k Keeper) GetValidatorByEthAddress(ctx sdk.Context, ethAddr string) (validator stakingtypes.Validator, found bool) {
+	store := ctx.KVStore(k.storeKey)
+	valAddr := store.Get(types.GetValidatorByEthAddressKey(ethAddr))
+	if valAddr == nil {
+		return stakingtypes.Validator{}, false
+	}
+	return k.StakingKeeper.GetValidator(ctx, valAddr)
 }
 
 // GetCurrentValset gets powers from the store and normalizes them
@@ -404,7 +419,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		totalPower += p
 
 		bridgeValidators[i] = &types.BridgeValidator{Power: p}
-		if ethAddr := k.GetEthAddress(ctx, val); ethAddr != "" {
+		if ethAddr := k.GetEthAddressByValidator(ctx, val); ethAddr != "" {
 			bridgeValidators[i].EthereumAddress = ethAddr
 		}
 	}
@@ -432,6 +447,11 @@ func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, invalidationID []byte, inv
 // SetOutogingLogicCall sets an outgoing logic call
 func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, call *types.OutgoingLogicCall) {
 	store := ctx.KVStore(k.storeKey)
+
+	// Store checkpoint to prove that this logic call actually happened
+	checkpoint := call.GetCheckpoint(k.GetGravityID(ctx))
+	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
+
 	store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce),
 		k.cdc.MustMarshalBinaryBare(call))
 }
@@ -641,7 +661,7 @@ func (k Keeper) UnpackAttestationClaim(att *types.Attestation) (types.EthereumCl
 // For the time being this will serve
 func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddress {
 	store := ctx.KVStore(k.storeKey)
-	prefix := []byte(types.EthAddressKey)
+	prefix := []byte(types.EthAddressByValidatorKey)
 	iter := store.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
@@ -650,9 +670,9 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 	for ; iter.Valid(); iter.Next() {
 		// the 'key' contains both the prefix and the value, so we need
 		// to cut off the starting bytes, if you don't do this a valid
-		// cosmos key will be made out of EthAddressKey + the startin bytes
+		// cosmos key will be made out of EthAddressByValidatorKey + the startin bytes
 		// of the actual key
-		key := iter.Key()[len(types.EthAddressKey):]
+		key := iter.Key()[len(types.EthAddressByValidatorKey):]
 		value := iter.Value()
 		ethAddress := string(value)
 		valAddress := sdk.ValAddress(key)

@@ -48,7 +48,7 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 	// set the orchestrator address
 	k.SetOrchestratorValidator(ctx, val, orch)
 	// set the ethereum address
-	k.SetEthAddress(ctx, val, msg.EthAddress)
+	k.SetEthAddressForValidator(ctx, val, msg.EthAddress)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -85,7 +85,7 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
-	ethAddress := k.GetEthAddress(ctx, validator)
+	ethAddress := k.GetEthAddressByValidator(ctx, validator)
 	if ethAddress == "" {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
@@ -145,7 +145,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		return nil, err
 	}
 
-	batchID, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize)
+	batch, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(batchID.BatchNonce)),
+			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(batch.BatchNonce)),
 		),
 	)
 
@@ -172,10 +172,7 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	}
 
 	gravityID := k.GetGravityID(ctx)
-	checkpoint, err := batch.GetCheckpoint(gravityID)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
-	}
+	checkpoint := batch.GetCheckpoint(gravityID)
 
 	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
@@ -188,7 +185,7 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
-	ethAddress := k.GetEthAddress(ctx, validator)
+	ethAddress := k.GetEthAddressByValidator(ctx, validator)
 	if ethAddress == "" {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
@@ -230,10 +227,7 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 	}
 
 	gravityID := k.GetGravityID(ctx)
-	checkpoint, err := logic.GetCheckpoint(gravityID)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
-	}
+	checkpoint := logic.GetCheckpoint(gravityID)
 
 	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
@@ -246,7 +240,7 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
-	ethAddress := k.GetEthAddress(ctx, validator)
+	ethAddress := k.GetEthAddressByValidator(ctx, validator)
 	if ethAddress == "" {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
@@ -439,6 +433,46 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 	return &types.MsgLogicCallExecutedClaimResponse{}, nil
 }
 
+// ValsetUpdatedClaim handles claims for executing a validator set update on Ethereum
+func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgValsetUpdatedClaim) (*types.MsgValsetUpdatedClaimResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	validator := k.GetOrchestratorValidator(ctx, orchaddr)
+	if validator == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+	}
+
+	// return an error if the validator isn't in the active set
+	val := k.StakingKeeper.Validator(ctx, validator)
+	if val == nil || !val.IsBonded() {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
+	}
+
+	any, err := codectypes.NewAnyWithValue(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the claim to the store
+	_, err = k.Attest(ctx, msg, any)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "create attestation")
+	}
+
+	// Emit the handle message event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			// TODO: maybe return something better here? is this the right string representation?
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+		),
+	)
+
+	return &types.MsgValsetUpdatedClaimResponse{}, nil
+}
+
 func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
@@ -459,4 +493,21 @@ func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendTo
 	)
 
 	return &types.MsgCancelSendToEthResponse{}, nil
+}
+
+func (k msgServer) SubmitBadSignatureEvidence(c context.Context, msg *types.MsgSubmitBadSignatureEvidence) (*types.MsgSubmitBadSignatureEvidenceResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	err := k.CheckBadSignatureEvidence(ctx, msg)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyBadEthSignature, fmt.Sprint(msg.Signature)),
+			sdk.NewAttribute(types.AttributeKeyBadEthSignatureSubject, fmt.Sprint(msg.Subject)),
+		),
+	)
+
+	return &types.MsgSubmitBadSignatureEvidenceResponse{}, err
 }

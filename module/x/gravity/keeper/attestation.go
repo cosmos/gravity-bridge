@@ -23,7 +23,9 @@ func (k Keeper) Attest(
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
 	// We check the event nonce in processAttestation as well,
 	// but checking it here gives individual eth signers a chance to retry,
-	// and prevents validators from submitting two claims with the same nonce
+	// and prevents validators from submitting two claims with the same nonce.
+	// This prevents there being two attestations with the same nonce that get 2/3s of the votes
+	// in the endBlocker.
 	lastEventNonce := k.GetLastEventNonceByValidator(ctx, valAddr)
 	if claim.GetEventNonce() != lastEventNonce+1 {
 		return nil, types.ErrNonContiguousEventNonce
@@ -235,6 +237,28 @@ func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeig
 		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
 	}
 	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&height))
+}
+
+// GetLastObservedValset retrieves the last observed validator set from the store
+// WARNING: This value is not an up to date validator set on Ethereum, it is a validator set
+// that AT ONE POINT was the one in the Gravity bridge on Ethereum. If you assume that it's up
+// to date you may break the bridge
+func (k Keeper) GetLastObservedValset(ctx sdk.Context) *types.Valset {
+	store := ctx.KVStore(k.storeKey)
+	bytes := store.Get(types.LastObservedValsetKey)
+
+	if len(bytes) == 0 {
+		return nil
+	}
+	valset := types.Valset{}
+	k.cdc.MustUnmarshalBinaryBare(bytes, &valset)
+	return &valset
+}
+
+// SetLastObservedValset updates the last observed validator set in the store
+func (k Keeper) SetLastObservedValset(ctx sdk.Context, valset types.Valset) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.LastObservedValsetKey, k.cdc.MustMarshalBinaryBare(&valset))
 }
 
 // setLastObservedEventNonce sets the latest observed event nonce

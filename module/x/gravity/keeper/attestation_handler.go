@@ -16,7 +16,6 @@ type AttestationHandler struct {
 }
 
 // Handle is the entry point for Attestation processing.
-// TODO-JT add handler for ERC20DeployedEvent
 func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
 	case *types.MsgDepositClaim:
@@ -111,6 +110,14 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 
 		// Add to denom-erc20 mapping
 		a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.CosmosDenom, claim.TokenContract)
+	case *types.MsgValsetUpdatedClaim:
+		// TODO here we should check the contents of the validator set against
+		// the store, if they differ we should take some action to indicate to the
+		// user that bridge highjacking has occurred
+		a.keeper.SetLastObservedValset(ctx, types.Valset{
+			Nonce:   claim.ValsetNonce,
+			Members: claim.Members,
+		})
 
 	default:
 		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())

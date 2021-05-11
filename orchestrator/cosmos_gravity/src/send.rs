@@ -21,6 +21,7 @@ use gravity_proto::gravity::MsgRequestBatch;
 use gravity_proto::gravity::MsgSendToEth;
 use gravity_proto::gravity::MsgSetOrchestratorAddress;
 use gravity_proto::gravity::MsgValsetConfirm;
+use gravity_proto::gravity::MsgValsetUpdatedClaim;
 use gravity_proto::gravity::MsgWithdrawClaim;
 use gravity_utils::message_signatures::{
     encode_logic_call_confirm, encode_tx_batch_confirm, encode_valset_confirm,
@@ -267,6 +268,7 @@ pub async fn send_logic_call_confirm(
         .await
 }
 
+#[allow(clippy::clippy::too_many_arguments)]
 pub async fn send_ethereum_claims(
     contact: &Contact,
     private_key: PrivateKey,
@@ -274,6 +276,7 @@ pub async fn send_ethereum_claims(
     withdraws: Vec<TransactionBatchExecutedEvent>,
     erc20_deploys: Vec<Erc20DeployedEvent>,
     logic_calls: Vec<LogicCallExecutedEvent>,
+    valsets: Vec<ValsetUpdatedEvent>,
     fee: Coin,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
@@ -289,7 +292,7 @@ pub async fn send_ethereum_claims(
     let mut unordered_msgs = HashMap::new();
     for deposit in deposits {
         let claim = MsgDepositClaim {
-            event_nonce: downcast_uint256(deposit.event_nonce.clone()).unwrap(),
+            event_nonce: deposit.event_nonce,
             block_height: downcast_uint256(deposit.block_height).unwrap(),
             token_contract: deposit.erc20.to_string(),
             amount: deposit.amount.to_string(),
@@ -298,22 +301,22 @@ pub async fn send_ethereum_claims(
             orchestrator: our_address.to_string(),
         };
         let msg = Msg::new("/gravity.v1.MsgDepositClaim", claim);
-        unordered_msgs.insert(deposit.event_nonce.clone(), msg);
+        unordered_msgs.insert(deposit.event_nonce, msg);
     }
     for withdraw in withdraws {
         let claim = MsgWithdrawClaim {
-            event_nonce: downcast_uint256(withdraw.event_nonce.clone()).unwrap(),
+            event_nonce: withdraw.event_nonce,
             block_height: downcast_uint256(withdraw.block_height).unwrap(),
             token_contract: withdraw.erc20.to_string(),
-            batch_nonce: downcast_uint256(withdraw.batch_nonce).unwrap(),
+            batch_nonce: withdraw.batch_nonce,
             orchestrator: our_address.to_string(),
         };
         let msg = Msg::new("/gravity.v1.MsgWithdrawClaim", claim);
-        unordered_msgs.insert(withdraw.event_nonce.clone(), msg);
+        unordered_msgs.insert(withdraw.event_nonce, msg);
     }
     for deploy in erc20_deploys {
         let claim = MsgErc20DeployedClaim {
-            event_nonce: downcast_uint256(deploy.event_nonce.clone()).unwrap(),
+            event_nonce: deploy.event_nonce,
             block_height: downcast_uint256(deploy.block_height).unwrap(),
             cosmos_denom: deploy.cosmos_denom,
             token_contract: deploy.erc20_address.to_string(),
@@ -323,24 +326,35 @@ pub async fn send_ethereum_claims(
             orchestrator: our_address.to_string(),
         };
         let msg = Msg::new("/gravity.v1.MsgERC20DeployedClaim", claim);
-        unordered_msgs.insert(deploy.event_nonce.clone(), msg);
+        unordered_msgs.insert(deploy.event_nonce, msg);
     }
     for call in logic_calls {
         let claim = MsgLogicCallExecutedClaim {
-            event_nonce: downcast_uint256(call.event_nonce.clone()).unwrap(),
+            event_nonce: call.event_nonce,
             block_height: downcast_uint256(call.block_height).unwrap(),
             invalidation_id: call.invalidation_id,
-            invalidation_nonce: downcast_uint256(call.invalidation_nonce).unwrap(),
+            invalidation_nonce: call.invalidation_nonce,
             orchestrator: our_address.to_string(),
         };
         let msg = Msg::new("/gravity.v1.MsgLogicCallExecutedClaim", claim);
-        unordered_msgs.insert(call.event_nonce.clone(), msg);
+        unordered_msgs.insert(call.event_nonce, msg);
+    }
+    for valset in valsets {
+        let claim = MsgValsetUpdatedClaim {
+            event_nonce: valset.event_nonce,
+            valset_nonce: valset.valset_nonce,
+            block_height: downcast_uint256(valset.block_height).unwrap(),
+            members: valset.members.iter().map(|v| v.into()).collect(),
+            orchestrator: our_address.to_string(),
+        };
+        let msg = Msg::new("/gravity.v1.MsgValsetUpdatedClaim", claim);
+        unordered_msgs.insert(valset.event_nonce, msg);
     }
     let mut keys = Vec::new();
     for (key, _) in unordered_msgs.iter() {
-        keys.push(key.clone());
+        keys.push(*key);
     }
-    keys.sort();
+    keys.sort_unstable();
 
     let mut msgs = Vec::new();
     for i in keys {

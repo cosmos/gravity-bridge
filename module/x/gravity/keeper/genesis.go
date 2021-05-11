@@ -111,7 +111,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// set the orchestrator address
 		k.SetOrchestratorValidator(ctx, val, orch)
 		// set the ethereum address
-		k.SetEthAddress(ctx, val, keys.EthAddress)
+		k.SetEthAddressForValidator(ctx, val, keys.EthAddress)
 	}
 
 	// populate state with cosmos originated denom-erc20 mapping

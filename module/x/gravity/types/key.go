@@ -19,16 +19,20 @@ const (
 )
 
 var (
-	// EthAddressKey indexes cosmos validator account addresses
+	// EthAddressByValidatorKey indexes cosmos validator account addresses
 	// i.e. cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
-	EthAddressKey = []byte{0x1}
+	EthAddressByValidatorKey = []byte{0x1}
+
+	// ValidatorByEthAddressKey indexes ethereum addresses
+	// i.e. 0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B
+	ValidatorByEthAddressKey = []byte{0x2}
 
 	// ValsetRequestKey indexes valset requests by nonce
-	ValsetRequestKey = []byte{0x2}
+	ValsetRequestKey = []byte{0x3}
 
 	// ValsetConfirmKey indexes valset confirmations by nonce and the validator account address
 	// i.e cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
-	ValsetConfirmKey = []byte{0x3}
+	ValsetConfirmKey = []byte{0x4}
 
 	// OracleClaimKey Claim details by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
@@ -36,7 +40,7 @@ var (
 	// a validator making a claim to have seen something happen. Claims are
 	// attached to attestations which can be thought of as 'the event' that
 	// will eventually be executed.
-	OracleClaimKey = []byte{0x4}
+	OracleClaimKey = []byte{0x5}
 
 	// OracleAttestationKey attestation details by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
@@ -44,10 +48,10 @@ var (
 	// the Claims are an individual validator saying that they saw an event
 	// occur the Attestation is 'the event' that multiple claims vote on and
 	// eventually executes
-	OracleAttestationKey = []byte{0x5}
+	OracleAttestationKey = []byte{0x6}
 
 	// OutgoingTXPoolKey indexes the last nonce for the outgoing tx pool
-	OutgoingTXPoolKey = []byte{0x6}
+	OutgoingTXPoolKey = []byte{0x7}
 
 	// DenomiatorPrefix indexes token contract addresses from ETH on gravity
 	DenomiatorPrefix = []byte{0x8}
@@ -62,19 +66,19 @@ var (
 	OutgoingTXBatchBlockKey = []byte{0xb}
 
 	// BatchConfirmKey indexes validator confirmations by token contract address
-	BatchConfirmKey = []byte{0xe1}
+	BatchConfirmKey = []byte{0xc}
 
 	// SecondIndexNonceByClaimKey indexes latest nonce for a given claim type
-	SecondIndexNonceByClaimKey = []byte{0xf}
+	SecondIndexNonceByClaimKey = []byte{0xd}
 
 	// LastEventNonceByValidatorKey indexes lateset event nonce by validator
-	LastEventNonceByValidatorKey = []byte{0xf1}
+	LastEventNonceByValidatorKey = []byte{0xe}
 
 	// LastObservedEventNonceKey indexes the latest event nonce
-	LastObservedEventNonceKey = []byte{0xf2}
+	LastObservedEventNonceKey = []byte{0xf}
 
 	// SequenceKeyPrefix indexes different txids
-	SequenceKeyPrefix = []byte{0x7}
+	SequenceKeyPrefix = []byte{0x10}
 
 	// KeyLastTXPoolID indexes the lastTxPoolID
 	KeyLastTXPoolID = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
@@ -83,34 +87,43 @@ var (
 	KeyLastOutgoingBatchID = append(SequenceKeyPrefix, []byte("lastBatchId")...)
 
 	// KeyOrchestratorAddress indexes the validator keys for an orchestrator
-	KeyOrchestratorAddress = []byte{0xe8}
+	KeyOrchestratorAddress = []byte{0x11}
 
 	// KeyOutgoingLogicCall indexes the outgoing logic calls
-	KeyOutgoingLogicCall = []byte{0xde}
+	KeyOutgoingLogicCall = []byte{0x12}
 
 	// KeyOutgoingLogicConfirm indexes the outgoing logic confirms
-	KeyOutgoingLogicConfirm = []byte{0xae}
+	KeyOutgoingLogicConfirm = []byte{0x13}
+
+	// DenomToERC20Key prefixes the index of Cosmos originated asset denoms to ERC20s
+	DenomToERC20Key = []byte{0x15}
+
+	// ERC20ToDenomKey prefixes the index of Cosmos originated assets ERC20s to denoms
+	ERC20ToDenomKey = []byte{0x16}
+
+	// LastSlashedValsetNonce indexes the latest slashed valset nonce
+	LastSlashedValsetNonce = []byte{0x17}
+
+	// LatestValsetNonce indexes the latest valset nonce
+	LatestValsetNonce = []byte{0x18}
+
+	// LastSlashedBatchBlock indexes the latest slashed batch block height
+	LastSlashedBatchBlock = []byte{0x19}
+
+	// LastUnBondingBlockHeight indexes the last validator unbonding block height
+	LastUnBondingBlockHeight = []byte{0xf8}
 
 	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
 	LastObservedEthereumBlockHeightKey = []byte{0xf9}
 
-	// DenomToERC20Key prefixes the index of Cosmos originated asset denoms to ERC20s
-	DenomToERC20Key = []byte{0xf3}
+	// LastObservedValsetNonceKey indexes the latest observed valset nonce
+	// HERE THERE BE DRAGONS, do not use this value as an up to date validator set
+	// on Ethereum it will always lag significantly and may be totally wrong at some
+	// times.
+	LastObservedValsetKey = []byte{0xfa}
 
-	// ERC20ToDenomKey prefixes the index of Cosmos originated assets ERC20s to denoms
-	ERC20ToDenomKey = []byte{0xf4}
-
-	// LastSlashedValsetNonce indexes the latest slashed valset nonce
-	LastSlashedValsetNonce = []byte{0xf5}
-
-	// LatestValsetNonce indexes the latest valset nonce
-	LatestValsetNonce = []byte{0xf6}
-
-	// LastSlashedBatchBlock indexes the latest slashed batch block height
-	LastSlashedBatchBlock = []byte{0xf7}
-
-	// LastUnBondingBlockHeight indexes the last validator unbonding block height
-	LastUnBondingBlockHeight = []byte{0xf8}
+	// PastEthSignatureCheckpointKey indexes eth signature checkpoints that have existed
+	PastEthSignatureCheckpointKey = []byte{0x1b}
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -120,11 +133,18 @@ func GetOrchestratorAddressKey(orc sdk.AccAddress) []byte {
 	return append(KeyOrchestratorAddress, orc.Bytes()...)
 }
 
-// GetEthAddressKey returns the following key format
+// GetEthAddressByValidatorKey returns the following key format
 // prefix              cosmos-validator
 // [0x0][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
-func GetEthAddressKey(validator sdk.ValAddress) []byte {
-	return append(EthAddressKey, validator.Bytes()...)
+func GetEthAddressByValidatorKey(validator sdk.ValAddress) []byte {
+	return append(EthAddressByValidatorKey, validator.Bytes()...)
+}
+
+// GetValidatorByEthAddressKey returns the following key format
+// prefix              cosmos-validator
+// [0xf9][0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B]
+func GetValidatorByEthAddressKey(ethAddress string) []byte {
+	return append(ValidatorByEthAddressKey, []byte(ethAddress)...)
 }
 
 // GetValsetKey returns the following key format
@@ -269,4 +289,11 @@ func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validat
 	interm := append(KeyOutgoingLogicConfirm, invalidationId...)
 	interm = append(interm, UInt64Bytes(invalidationNonce)...)
 	return append(interm, validator.Bytes()...)
+}
+
+// GetPastEthSignatureCheckpointKey returns the following key format
+// prefix    checkpoint
+// [0x0][ checkpoint bytes ]
+func GetPastEthSignatureCheckpointKey(checkpoint []byte) []byte {
+	return append(PastEthSignatureCheckpointKey, checkpoint...)
 }

@@ -99,6 +99,10 @@ message Params {
     (gogoproto.nullable)   = false
   ];
   uint64 unbond_slashing_valsets_window = 17;
+  bytes slash_fraction_bad_eth_signature = 18 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
 }
 
 // GenesisState struct
