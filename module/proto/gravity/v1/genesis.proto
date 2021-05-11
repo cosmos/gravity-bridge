@@ -49,7 +49,7 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 // target_batch_timeout:
 //
 // This is the 'target' value for when batches time out, this is a target
-// becuase Ethereum is a probabalistic chain and you can't say for sure what the
+// because Ethereum is a probabalistic chain and you can't say for sure what the
 // block frequency is ahead of time.
 //
 // average_block_time
