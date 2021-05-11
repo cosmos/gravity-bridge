@@ -1,5 +1,6 @@
 use super::*;
 use crate::error::GravityError;
+use clarity::constants::ZERO_ADDRESS;
 use clarity::Address as EthAddress;
 use clarity::Signature as EthSignature;
 use deep_space::error::CosmosGrpcError;
@@ -15,13 +16,6 @@ use std::{
 /// time a validator set is created. This value of up to u32 max is then
 /// stored in a u64 to prevent overflow during computation.
 pub const TOTAL_GRAVITY_POWER: u64 = u32::MAX as u64;
-
-// TODO this should probably be in clarity
-pub fn zero_address() -> EthAddress {
-    "0x0000000000000000000000000000000000000000"
-        .parse()
-        .unwrap()
-}
 
 /// takes in an amount of power in the gravity bridge, returns a percentage of total
 fn gravity_power_to_percent(input: u64) -> f32 {
@@ -343,7 +337,7 @@ impl From<gravity_proto::gravity::Valset> for Valset {
 impl From<&gravity_proto::gravity::Valset> for Valset {
     fn from(input: &gravity_proto::gravity::Valset) -> Self {
         let parsed_reward_token = input.reward_token.parse().unwrap();
-        let reward_token = if parsed_reward_token == zero_address() {
+        let reward_token = if parsed_reward_token == *ZERO_ADDRESS {
             None
         } else {
             Some(parsed_reward_token)

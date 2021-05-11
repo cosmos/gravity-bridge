@@ -732,9 +732,9 @@ dependencies = [
 
 [[package]]
 name = "clarity"
-version = "0.4.7"
+version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3ea03ce3432d6408be0476653a84554474ebe0e48bbd3bbe7bfbc2350a84b45"
+checksum = "36089bad9eb8077b6ca8b5d6343c00a27b8fac62bfba1deddd20b926e27db1c3"
 dependencies = [
  "lazy_static",
  "num-bigint 0.4.0",
@@ -767,7 +767,7 @@ dependencies = [
  "serde_derive",
  "tokio 1.5.0",
  "url",
- "web30",
+ "web30 0.13.0",
 ]
 
 [[package]]
@@ -845,7 +845,7 @@ dependencies = [
  "sha3",
  "tokio 1.5.0",
  "tonic",
- "web30",
+ "web30 0.12.0",
 ]
 
 [[package]]
@@ -1048,7 +1048,7 @@ dependencies = [
  "log",
  "num256",
  "sha3",
- "web30",
+ "web30 0.13.0",
 ]
 
 [[package]]
@@ -1289,7 +1289,7 @@ dependencies = [
  "tokio 1.5.0",
  "tonic",
  "url",
- "web30",
+ "web30 0.13.0",
 ]
 
 [[package]]
@@ -1972,7 +1972,7 @@ dependencies = [
  "serde_json",
  "tokio 1.5.0",
  "tonic",
- "web30",
+ "web30 0.13.0",
 ]
 
 [[package]]
@@ -2387,7 +2387,7 @@ dependencies = [
  "relayer",
  "serde",
  "serde_derive",
- "web30",
+ "web30 0.13.0",
 ]
 
 [[package]]
@@ -2412,7 +2412,7 @@ dependencies = [
  "serde_derive",
  "tokio 1.5.0",
  "tonic",
- "web30",
+ "web30 0.13.0",
 ]
 
 [[package]]
@@ -2861,7 +2861,7 @@ dependencies = [
  "tokio 1.5.0",
  "tonic",
  "url",
- "web30",
+ "web30 0.13.0",
 ]
 
 [[package]]
@@ -3392,6 +3392,25 @@ name = "web30"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8f850cc4c4e1f410fadb41b6898661279a17c1f1c9a1b004dd71294cd7b7306"
+dependencies = [
+ "actix",
+ "awc 3.0.0-beta.4",
+ "clarity",
+ "futures",
+ "log",
+ "num 0.4.0",
+ "num256",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "tokio 1.5.0",
+]
+
+[[package]]
+name = "web30"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94daace2850ef252e8a6f74e1bf46b55915a4b6840ca9293b4b802871188f0c6"
 dependencies = [
  "actix",
  "awc 3.0.0-beta.4",

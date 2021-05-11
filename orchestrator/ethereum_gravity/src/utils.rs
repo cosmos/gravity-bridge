@@ -1,6 +1,6 @@
-use clarity::abi::Token;
 use clarity::Uint256;
 use clarity::{abi::encode_tokens, Address as EthAddress};
+use clarity::{abi::Token, constants::ZERO_ADDRESS};
 use deep_space::address::Address as CosmosAddress;
 use gravity_utils::error::GravityError;
 use gravity_utils::types::*;
@@ -121,6 +121,7 @@ pub async fn get_valset_nonce(
             "state_lastValsetNonce()",
             &[],
             caller_address,
+            None,
         )
         .await?;
     // the go represents all nonces as u64, there's no
@@ -145,6 +146,7 @@ pub async fn get_tx_batch_nonce(
             "lastBatchNonce(address)",
             &[erc20_contract_address.into()],
             caller_address,
+            None,
         )
         .await?;
     // the go represents all nonces as u64, there's no
@@ -169,6 +171,7 @@ pub async fn get_logic_call_nonce(
             "lastLogicCallNonce(bytes32)",
             &[Token::Bytes(invalidation_id)],
             caller_address,
+            None,
         )
         .await?;
     // the go represents all nonces as u64, there's no
@@ -192,6 +195,7 @@ pub async fn get_event_nonce(
             "state_lastEventNonce()",
             &[],
             caller_address,
+            None,
         )
         .await?;
     // the go represents all nonces as u64, there's no
@@ -210,23 +214,15 @@ pub async fn get_gravity_id(
     web3: &Web3,
 ) -> Result<Vec<u8>, Web3Error> {
     let val = web3
-        .contract_call(contract_address, "state_gravityId()", &[], caller_address)
+        .contract_call(
+            contract_address,
+            "state_gravityId()",
+            &[],
+            caller_address,
+            None,
+        )
         .await?;
     Ok(val)
-}
-
-/// Gets the ERC20 symbol, should maybe be upstreamed
-pub async fn get_erc20_symbol(
-    contract_address: EthAddress,
-    caller_address: EthAddress,
-    web3: &Web3,
-) -> Result<String, GravityError> {
-    let val_symbol = web3
-        .contract_call(contract_address, "symbol()", &[], caller_address)
-        .await?;
-    // Pardon the unwrap, but this is temporary code, intended only for the tests, to help them
-    // deal with a deprecated feature (the symbol), which will be removed soon
-    Ok(String::from_utf8(val_symbol).unwrap())
 }
 
 /// Just a helper struct to represent the cost of actions on Ethereum
@@ -259,7 +255,7 @@ pub fn encode_valset_struct(valset: &Valset) -> Token {
     // so that it's easy to identify if this validator set has a reward or not. Now that we're
     // going to encode it for the contract call we need return it to the magic value the contract
     // expects.
-    let reward_token = valset.reward_token.unwrap_or_else(zero_address);
+    let reward_token = valset.reward_token.unwrap_or_else(|| *ZERO_ADDRESS);
     let struct_tokens = &[
         addresses.into(),
         powers.into(),

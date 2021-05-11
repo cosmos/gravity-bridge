@@ -27,7 +27,6 @@ use gravity_utils::connection_prep::{check_for_eth, check_for_fee_denom, create_
 use std::time::Instant;
 use std::{process::exit, time::Duration, u128};
 use tokio::time::sleep as delay_for;
-use web30::{client::Web3, jsonrpc::error::Web3Error};
 
 const TIMEOUT: Duration = Duration::from_secs(60);
 
@@ -285,7 +284,8 @@ async fn main() {
         let ethereum_public_key = ethereum_key.to_public_key().unwrap();
         check_for_eth(ethereum_public_key, &web3).await;
 
-        let res = get_erc20_decimals(&web3, erc20_address, ethereum_public_key)
+        let res = web3
+            .get_erc20_decimals(erc20_address, ethereum_public_key)
             .await
             .expect("Failed to query ERC20 contract");
         let decimals: u8 = res.to_string().parse().unwrap();
@@ -430,23 +430,4 @@ fn even_f32_rounding() {
     assert_eq!(one_point_one_five_eth, res);
     let res = fraction_to_exponent(1.1501f64, 18);
     assert_eq!(a_high_precision_number, res);
-}
-
-pub async fn get_erc20_decimals(
-    web3: &Web3,
-    erc20: EthAddress,
-    caller_address: EthAddress,
-) -> Result<Uint256, Web3Error> {
-    let decimals = web3
-        .contract_call(erc20, "decimals()", &[], caller_address)
-        .await?;
-
-    Ok(Uint256::from_bytes_be(match decimals.get(0..32) {
-        Some(val) => val,
-        None => {
-            return Err(Web3Error::ContractCallError(
-                "Bad response from ERC20 decimals".to_string(),
-            ))
-        }
-    }))
 }

@@ -1,5 +1,6 @@
-use crate::types::{zero_address, LogicCall, TransactionBatch, Valset};
+use crate::types::{LogicCall, TransactionBatch, Valset};
 use clarity::abi::{encode_tokens, Token};
+use clarity::constants::ZERO_ADDRESS;
 use clarity::utils::get_ethereum_msg_hash;
 
 /// takes the required input data and produces the required signature to confirm a validator
@@ -12,7 +13,7 @@ pub fn encode_valset_confirm(gravity_id: String, valset: Valset) -> Vec<u8> {
     let reward_token = if let Some(v) = valset.reward_token {
         v
     } else {
-        zero_address()
+        *ZERO_ADDRESS
     };
     encode_tokens(&[
         Token::FixedString(gravity_id),

@@ -4,8 +4,9 @@
 //! mirror Serde and perhaps even become a serde crate for Ethereum ABI decoding
 //! For now reference the ABI encoding document here https://docs.soliditylang.org/en/v0.8.3/abi-spec.html
 
-use super::{zero_address, ValsetMember};
+use super::ValsetMember;
 use crate::error::GravityError;
+use clarity::constants::ZERO_ADDRESS;
 use clarity::Address as EthAddress;
 use deep_space::utils::bytes_to_hex_str;
 use deep_space::Address as CosmosAddress;
@@ -73,7 +74,7 @@ impl ValsetUpdatedEvent {
         let reward_token = reward_token.unwrap();
         // zero address represents no reward, so we replace it here with a none
         // for ease of checking in the future
-        let reward_token = if reward_token == zero_address() {
+        let reward_token = if reward_token == *ZERO_ADDRESS {
             None
         } else {
             Some(reward_token)
