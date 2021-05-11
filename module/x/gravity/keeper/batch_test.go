@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"math/rand"
 	"testing"
 	"time"
 
@@ -374,6 +375,84 @@ func TestBatchesFullCoins(t *testing.T) {
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
+}
+
+// TestManyBatches handles test cases around batch execution, specifically executing multiple batches
+// out of sequential order, which is exactly what happens on the
+func TestManyBatches(t *testing.T) {
+	input := CreateTestEnv(t)
+	ctx := input.Context
+	var (
+		now                = time.Now().UTC()
+		mySender, _        = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
+		myReceiver         = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
+		tokenContractAddr1 = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
+		tokenContractAddr2 = "0xF815240800ddf3E0be80e0d848B13ecaa504BF37"
+		tokenContractAddr3 = "0xd086dDA7BccEB70e35064f540d07E4baED142cB3"
+		tokenContractAddr4 = "0x384981B9d133701c4bD445F77bF61C3d80e79D46"
+		totalCoins, _      = sdk.NewIntFromString("1500000000000000000000000")
+		oneEth, _          = sdk.NewIntFromString("1000000000000000000")
+		allVouchers        = sdk.NewCoins(
+			types.NewSDKIntERC20Token(totalCoins, tokenContractAddr1).GravityCoin(),
+			types.NewSDKIntERC20Token(totalCoins, tokenContractAddr2).GravityCoin(),
+			types.NewSDKIntERC20Token(totalCoins, tokenContractAddr3).GravityCoin(),
+			types.NewSDKIntERC20Token(totalCoins, tokenContractAddr4).GravityCoin(),
+		)
+	)
+
+	// mint vouchers first
+	require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
+	// set senders balance
+	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
+	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
+
+	// CREATE FIRST BATCH
+	// ==================
+
+	tokens := [4]string{tokenContractAddr1, tokenContractAddr2, tokenContractAddr3, tokenContractAddr4}
+
+	for _, contract := range tokens {
+		for v := 1; v < 500; v++ {
+			vAsSDKInt := sdk.NewIntFromUint64(uint64(v))
+			amount := types.NewSDKIntERC20Token(oneEth.Mul(vAsSDKInt), contract).GravityCoin()
+			fee := types.NewSDKIntERC20Token(oneEth.Mul(vAsSDKInt), contract).GravityCoin()
+			_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+			require.NoError(t, err)
+		}
+	}
+
+	// when
+	ctx = ctx.WithBlockTime(now)
+
+	var batches []types.OutgoingTxBatch
+	for _, contract := range tokens {
+		for v := 1; v < 5; v++ {
+			batch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, contract, 100)
+			batches = append(batches, *batch)
+			require.NoError(t, err)
+		}
+	}
+	for _, batch := range batches {
+		// then batch is persisted
+		gotBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, batch.TokenContract, batch.BatchNonce)
+		require.NotNil(t, gotBatch)
+	}
+
+	// EXECUTE BOTH BATCHES
+	// =================================
+
+	// shuffle batches to simulate out of order execution on Ethereum
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(batches), func(i, j int) { batches[i], batches[j] = batches[j], batches[i] })
+
+	// Execute the batches, if there are any problems OutgoingTxBatchExecuted will panic
+	for _, batch := range batches {
+		gotBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, batch.TokenContract, batch.BatchNonce)
+		// we may have already deleted some of the batches in this list by executing later ones
+		if gotBatch != nil {
+			input.GravityKeeper.OutgoingTxBatchExecuted(ctx, batch.TokenContract, batch.BatchNonce)
+		}
+	}
 }
 
 func TestPoolTxRefund(t *testing.T) {
