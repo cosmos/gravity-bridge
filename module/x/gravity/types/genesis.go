@@ -259,7 +259,7 @@ func validateBridgeContractAddress(i interface{}) error {
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-	if err := ValidateEthAddress(v); err != nil {
+	if err := ValidateEthereumAddress(v); err != nil {
 		// TODO: ensure that empty addresses are valid in params
 		if !strings.Contains(err.Error(), "empty") {
 			return err

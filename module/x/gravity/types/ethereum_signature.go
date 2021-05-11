@@ -13,15 +13,15 @@ var (
 ///////////////
 
 func (u *UpdateSignerSetTxSignature) GetSigner() common.Address {
-	return common.HexToAddress(u.EthSigner)
+	return common.HexToAddress(u.EthereumSigner)
 }
 
 func (u *ContractCallTxSignature) GetSigner() common.Address {
-	return common.HexToAddress(u.EthSigner)
+	return common.HexToAddress(u.EthereumSigner)
 }
 
 func (u *BatchTxSignature) GetSigner() common.Address {
-	return common.HexToAddress(u.EthSigner)
+	return common.HexToAddress(u.EthereumSigner)
 }
 
 ///////////////////

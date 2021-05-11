@@ -23,7 +23,7 @@ func NewMsgSetOrchestratorAddress(val sdk.ValAddress, oper sdk.AccAddress, eth s
 	return &MsgDelegateKeys{
 		ValidatorAddress:    val.String(),
 		OrchestratorAddress: oper.String(),
-		EthAddress:   eth,
+		EthereumAddress:   eth,
 	}
 }
 
@@ -41,7 +41,7 @@ func (msg *MsgDelegateKeys) ValidateBasic() (err error) {
 	if _, err = sdk.AccAddressFromBech32(msg.OrchestratorAddress); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.OrchestratorAddress)
 	}
-	if err := ValidateEthAddress(msg.EthAddress); err != nil {
+	if err := ValidateEthereumAddress(msg.EthereumAddress); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
 	return nil
@@ -137,7 +137,7 @@ func (msg *MsgSubmitEthereumSignature) GetSigners() []sdk.AccAddress {
 func NewMsgSendToEthereum(sender sdk.AccAddress, destAddress string, send sdk.Coin, bridgeFee sdk.Coin) *MsgSendToEthereum {
 	return &MsgSendToEthereum{
 		Sender:    sender.String(),
-		EthRecipient:   destAddress,
+		EthereumRecipient:   destAddress,
 		Amount:    send,
 		BridgeFee: bridgeFee,
 	}
@@ -168,7 +168,7 @@ func (msg MsgSendToEthereum) ValidateBasic() error {
 	if !msg.BridgeFee.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee")
 	}
-	if err := ValidateEthAddress(msg.EthRecipient); err != nil {
+	if err := ValidateEthereumAddress(msg.EthereumRecipient); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
 	// TODO validate fee is sufficient, fixed fee to start

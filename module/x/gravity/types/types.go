@@ -34,7 +34,7 @@ func (b *EthereumSigner) ValidateBasic() error {
 	if b.Power == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "power")
 	}
-	if err := ValidateEthAddress(b.EthereumAddress); err != nil {
+	if err := ValidateEthereumAddress(b.EthereumAddress); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
 	if b.EthereumAddress == "" {

@@ -40,7 +40,7 @@ service Msg {
 // then submitted to Ethereum.
 message MsgSendToEthereum {
   string sender = 1;
-  string eth_recipient = 2;
+  string ethereum_recipient = 2;
   cosmos.base.v1beta1.Coin amount = 3 [ (gogoproto.nullable) = false ];
   cosmos.base.v1beta1.Coin bridge_fee = 4 [ (gogoproto.nullable) = false ];
 }
@@ -87,7 +87,7 @@ message ContractCallTxSignature {
       [ (gogoproto.casttype) =
             "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
   uint64 invalidation_nonce = 2;
-  string eth_signer = 3;
+  string ethereum_signer = 3;
   bytes signature = 4
       [ (gogoproto.casttype) =
             "github.com/ethereum/go-ethereum/common/hexutil.Bytes" ];
@@ -97,7 +97,7 @@ message ContractCallTxSignature {
 message BatchTxSignature {
   string token_contract = 1;
   uint64 nonce = 2;
-  string eth_signer = 3;
+  string ethereum_signer = 3;
   bytes signature = 4
       [ (gogoproto.casttype) =
             "github.com/ethereum/go-ethereum/common/hexutil.Bytes" ];
@@ -107,7 +107,7 @@ message BatchTxSignature {
 // UpdateSignerSetTx
 message UpdateSignerSetTxSignature {
   uint64 nonce = 1;
-  string eth_signer = 2;
+  string ethereum_signer = 2;
   bytes signature = 3
       [ (gogoproto.casttype) =
             "github.com/ethereum/go-ethereum/common/hexutil.Bytes" ];
@@ -183,7 +183,7 @@ message MsgSubmitEthereumEventResponse {}
 message MsgDelegateKeys {
   string validator_address = 1;
   string orchestrator_address = 2;
-  string eth_address = 3;
+  string ethereum_address = 3;
 }
 
 message MsgDelegateKeysResponse {}

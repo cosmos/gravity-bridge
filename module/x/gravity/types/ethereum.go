@@ -31,8 +31,8 @@ func EthAddrLessThan(e, o string) bool {
 	return bytes.Compare([]byte(e)[:], []byte(o)[:]) == -1
 }
 
-// ValidateEthAddress validates the ethereum address strings
-func ValidateEthAddress(a string) error {
+// ValidateEthereumAddress validates the ethereum address strings
+func ValidateEthereumAddress(a string) error {
 	if a == "" {
 		return fmt.Errorf("empty")
 	}
@@ -79,7 +79,7 @@ func (e *ERC20Token) Contract() string {
 
 // ValidateBasic permforms stateless validation
 func (e *ERC20Token) ValidateBasic() error {
-	if err := ValidateEthAddress(e.Contract()); err != nil {
+	if err := ValidateEthereumAddress(e.Contract()); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
 	// TODO: Validate all the things
@@ -105,7 +105,7 @@ func GravityDenomToERC20(denom string) (string, error) {
 		return "", fmt.Errorf("denom prefix(%s) not equal to expected(%s)", denom, fullPrefix)
 	}
 	contract := strings.TrimPrefix(denom, fullPrefix)
-	err := ValidateEthAddress(contract)
+	err := ValidateEthereumAddress(contract)
 	switch {
 	case err != nil:
 		return "", fmt.Errorf("error(%s) validating ethereum contract address", err)

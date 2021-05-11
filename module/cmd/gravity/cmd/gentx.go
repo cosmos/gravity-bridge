@@ -116,7 +116,7 @@ $ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 c
 
 			ethAddress := args[2]
 
-			if err := gravitytypes.ValidateEthAddress(ethAddress); err != nil {
+			if err := gravitytypes.ValidateEthereumAddress(ethAddress); err != nil {
 				return errors.Wrapf(err, "invalid ethereum address")
 			}
 

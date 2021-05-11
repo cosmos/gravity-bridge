@@ -178,7 +178,7 @@ func (k Keeper) ContractCallTxs(
 func (k Keeper) BatchRequestByNonce(
 	c context.Context,
 	req *types.QueryBatchRequestByNonceRequest) (*types.QueryBatchRequestByNonceResponse, error) {
-	if err := types.ValidateEthAddress(req.ContractAddress); err != nil {
+	if err := types.ValidateEthereumAddress(req.ContractAddress); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
 	foundBatch := k.GetBatchTx(sdk.UnwrapSDKContext(c), req.ContractAddress, req.Nonce)
@@ -312,7 +312,7 @@ func (k Keeper) GetDelegateKeyByEth(
 	req *types.QueryDelegateKeysByEthAddress) (*types.QueryDelegateKeysByEthAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	keys := k.GetDelegateKeys(ctx)
-	if err := types.ValidateEthAddress(req.EthAddress); err != nil {
+	if err := types.ValidateEthereumAddress(req.EthAddress); err != nil {
 		return nil, sdkerrors.Wrap(err, "invalid eth address")
 	}
 	for _, key := range keys {
