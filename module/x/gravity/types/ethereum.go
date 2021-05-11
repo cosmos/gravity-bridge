@@ -24,8 +24,6 @@ const (
 	GravityDenomLen = len(GravityDenomPrefix) + len(GravityDenomSeparator) + ETHContractAddressLen
 )
 
-type ERC20Token sdk.Coin
-
 // EthAddrLessThan migrates the Ethereum address less than function
 func EthAddrLessThan(e, o string) bool {
 	return bytes.Compare([]byte(e)[:], []byte(o)[:]) == -1
@@ -53,33 +51,29 @@ func ValidateEthereumAddress(a string) error {
 func NewERC20Token(amount uint64, contract string) ERC20Token {
 	return ERC20Token{
 		Amount: sdk.NewIntFromUint64(amount),
-		Denom:  strings.Join([]string{GravityDenomPrefix, contract}, GravityDenomSeparator),
+		Contract: contract,
 	}
 }
 
-func NewSDKIntERC20Token(amount sdk.Int, contract string) *ERC20Token {
-	return &ERC20Token{
+func NewSDKIntERC20Token(amount sdk.Int, contract string) ERC20Token {
+	return ERC20Token{
 		Amount: amount,
-		Denom: strings.Join([]string{GravityDenomPrefix, contract}, GravityDenomSeparator),
+		Contract: contract,
 	}
 }
 
 // GravityCoin returns the gravity representation of the ERC20
 func (e *ERC20Token) GravityCoin() sdk.Coin {
-	return sdk.Coin(*e)
+	return sdk.Coin{Amount: e.Amount, Denom: strings.Join([]string{GravityDenomPrefix, e.Contract}, GravityDenomSeparator)}
 }
 
 func NewERC20TokenFromCoin(coin sdk.Coin) ERC20Token {
-	return ERC20Token(coin)
-}
-
-func (e *ERC20Token) Contract() string {
-	return strings.TrimPrefix(e.Denom, GravityDenomPrefix + GravityDenomSeparator)
+	return NewSDKIntERC20Token(coin.Amount, strings.TrimPrefix(coin.Denom, GravityDenomPrefix + GravityDenomSeparator))
 }
 
 // ValidateBasic permforms stateless validation
 func (e *ERC20Token) ValidateBasic() error {
-	if err := ValidateEthereumAddress(e.Contract()); err != nil {
+	if err := ValidateEthereumAddress(e.Contract); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
 	// TODO: Validate all the things
@@ -89,14 +83,14 @@ func (e *ERC20Token) ValidateBasic() error {
 // Add adds one ERC20 to another
 // TODO: make this return errors instead
 func (e *ERC20Token) Add(o ERC20Token) ERC20Token {
-	if e.Contract() != o.Contract() {
+	if e.Contract != o.Contract {
 		panic("invalid contract address")
 	}
 	sum := e.Amount.Add(o.Amount)
 	if !sum.IsUint64() {
 		panic("invalid amount")
 	}
-	return NewERC20Token(sum.Uint64(), e.Contract())
+	return NewERC20Token(sum.Uint64(), e.Contract)
 }
 
 func GravityDenomToERC20(denom string) (string, error) {

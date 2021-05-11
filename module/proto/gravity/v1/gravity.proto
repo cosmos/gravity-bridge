@@ -62,8 +62,8 @@ message SendToEthereumTx {
   uint64 id = 1;
   string sender = 2;
   string ethereum_recipient = 3;
-  cosmos.base.v1beta1.Coin erc20_token = 4 [ (gogoproto.nullable) = false ];
-  cosmos.base.v1beta1.Coin erc20_fee = 5 [ (gogoproto.nullable) = false ];
+  ERC20Token erc20_token = 4 [ (gogoproto.nullable) = false ];
+  ERC20Token erc20_fee = 5 [ (gogoproto.nullable) = false ];
 }
 
 // ContractCallTx represents an individual arbitratry logic call transaction
@@ -85,3 +85,13 @@ message ContractCallTx {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
+
+message ERC20Token {
+  string contract = 1;
+  bytes amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message IDSet { repeated uint64 ids = 1; }

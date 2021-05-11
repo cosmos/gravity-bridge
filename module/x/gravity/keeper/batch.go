@@ -41,7 +41,7 @@ func (k Keeper) BuildBatchTx(
 		}
 
 		lastFees := lastBatch.GetFees()
-		if lastFees.GT(currentFees.TotalFees) {
+		if lastFees.GT(currentFees.Amount) {
 			return nil, sdkerrors.Wrap(types.ErrInvalid, "new batch would not be more profitable")
 		}
 	}
@@ -178,8 +178,8 @@ func (k Keeper) GetBatchTx(ctx sdk.Context, tokenContract string, nonce uint64) 
 	var b types.BatchTx
 	k.cdc.MustUnmarshalBinaryBare(bz, &b)
 	for _, tx := range b.Transactions {
-		tx.Erc20Token.Contract = tokenContract
-		tx.Erc20Fee.Contract = tokenContract
+		tx.Erc20Token = sdk.Coin(types.NewERC20Token(tx.Erc20Token.Amount.Uint64(), tokenContract))
+		tx.Erc20Fee = sdk.Coin(types.NewERC20Token(tx.Erc20Fee.Amount.Uint64(), tokenContract))
 	}
 	return &b
 }
@@ -191,7 +191,7 @@ func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract string, nonce uint6
 		return types.ErrUnknown
 	}
 	for _, tx := range batch.Transactions {
-		tx.Erc20Fee.Contract = tokenContract
+		tx.Erc20Fee = sdk.Coin(types.NewERC20Token(tx.Erc20Fee.Amount.Uint64(), tokenContract))
 		k.prependToUnbatchedTXIndex(ctx, tokenContract, *tx.Erc20Fee, tx.Id)
 	}
 

@@ -51,7 +51,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	}
 
 	// get next tx id from keeper
-	nextID := k.autoIncrementID(ctx, types.KeyLastTXPoolID)
+	nextID := k.autoIncrementID(ctx, []byte{types.KeyLastTXPoolID})
 
 	erc20Fee := types.NewSDKIntERC20Token(fee.Amount, tokenContract)
 
@@ -160,7 +160,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 // appendToUnbatchedTXIndex add at the end when tx with same fee exists
 func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee types.ERC20Token, txID uint64) {
 	store := ctx.KVStore(k.storeKey)
-	idxKey := types.GetFeeSecondIndexKey(fee)
+	idxKey := types.GetFeeSecondIndexKey(fee.GravityCoin())
 	var idSet types.IDSet
 	if store.Has(idxKey) {
 		bz := store.Get(idxKey)
@@ -173,7 +173,7 @@ func (k Keeper) appendToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, 
 // appendToUnbatchedTXIndex add at the top when tx with same fee exists
 func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, tokenContract string, fee types.ERC20Token, txID uint64) {
 	store := ctx.KVStore(k.storeKey)
-	idxKey := types.GetFeeSecondIndexKey(fee)
+	idxKey := types.GetFeeSecondIndexKey(fee.GravityCoin())
 	var idSet types.IDSet
 	if store.Has(idxKey) {
 		bz := store.Get(idxKey)
@@ -186,7 +186,7 @@ func (k Keeper) prependToUnbatchedTXIndex(ctx sdk.Context, tokenContract string,
 // removeFromUnbatchedTXIndex removes the tx from the index and makes it implicit no available anymore
 func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, fee types.ERC20Token, txID uint64) error {
 	store := ctx.KVStore(k.storeKey)
-	idxKey := types.GetFeeSecondIndexKey(fee)
+	idxKey := types.GetFeeSecondIndexKey(fee.GravityCoin())
 	var idSet types.IDSet
 	bz := store.Get(idxKey)
 	if bz == nil {
@@ -207,7 +207,7 @@ func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, fee types.ERC20Token
 	return sdkerrors.Wrap(types.ErrUnknown, "tx id")
 }
 
-func (k Keeper) setPoolEntry(ctx sdk.Context, val *types.OutgoingTransferTx) error {
+func (k Keeper) setPoolEntry(ctx sdk.Context, val *types.OutgoingTx) error {
 	bz, err := k.cdc.MarshalBinaryBare(val)
 	if err != nil {
 		return err
@@ -217,14 +217,16 @@ func (k Keeper) setPoolEntry(ctx sdk.Context, val *types.OutgoingTransferTx) err
 	return nil
 }
 
-func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.OutgoingTransferTx, error) {
+func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.OutgoingTx, error) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetOutgoingTxPoolKey(id))
 	if bz == nil {
 		return nil, types.ErrUnknown
 	}
-	var r types.OutgoingTransferTx
-	k.cdc.UnmarshalBinaryBare(bz, &r)
+	var r types.OutgoingTx
+	if err := k.cdc.UnmarshalBinaryBare(bz, &r); err != nil {
+		return nil, err
+	}
 	return &r, nil
 }
 
@@ -234,12 +236,12 @@ func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
 }
 
 // GetPoolTransactions, grabs all transactions from the tx pool, useful for queries or genesis save/load
-func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.OutgoingTransferTx {
+func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.OutgoingTx {
 	prefixStore := ctx.KVStore(k.storeKey)
 	// we must use the second index key here because transactions are left in the store, but removed
 	// from the tx sorting key, while in batches
-	iter := prefixStore.ReverseIterator(prefixRange([]byte(types.SecondIndexOutgoingTXFeeKey)))
-	var ret []*types.OutgoingTransferTx
+	iter := prefixStore.ReverseIterator(prefixRange([]byte{types.SecondIndexOutgoingTXFeeKey}))
+	var ret []*types.OutgoingTx
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var ids types.IDSet
@@ -256,8 +258,8 @@ func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.OutgoingTransferTx
 }
 
 // IterateOutgoingPoolByFee iterates over the outgoing pool which is sorted by fee
-func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.OutgoingTransferTx) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
+func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.OutgoingTx) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SecondIndexOutgoingTXFeeKey})
 	iter := prefixStore.ReverseIterator(prefixRange([]byte(contract)))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -280,14 +282,14 @@ func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb fu
 // have if created. This info is both presented to relayers for the purpose of determining
 // when to request batches and also used by the batch creation process to decide not to create
 // a new batch
-func (k Keeper) GetBatchFeesByTokenType(ctx sdk.Context, tokenContractAddr string) *types.BatchFees {
+func (k Keeper) GetBatchFeesByTokenType(ctx sdk.Context, tokenContractAddr string) *types.ERC20Token {
 	batchFeesMap := k.createBatchFees(ctx)
 	return batchFeesMap[tokenContractAddr]
 }
 
 // GetAllBatchFees creates a fee entry for every batch type currently in the store
 // this can be used by relayers to determine what batch types are desireable to request
-func (k Keeper) GetAllBatchFees(ctx sdk.Context) (batchFees []*types.BatchFees) {
+func (k Keeper) GetAllBatchFees(ctx sdk.Context) (batchFees []*types.ERC20Token) {
 	batchFeesMap := k.createBatchFees(ctx)
 	// create array of batchFees
 	for _, batchFee := range batchFeesMap {
@@ -308,12 +310,12 @@ func (k Keeper) GetAllBatchFees(ctx sdk.Context) (batchFees []*types.BatchFees) 
 }
 
 // CreateBatchFees iterates over the outgoing pool and creates batch token fee map
-func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.BatchFees {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
+func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.ERC20Token{
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SecondIndexOutgoingTXFeeKey})
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 
-	batchFeesMap := make(map[string]*types.BatchFees)
+	batchFeesMap := make(map[string]*types.ERC20Token)
 	txCountMap := make(map[string]int)
 
 	for ; iter.Valid(); iter.Next() {
@@ -337,11 +339,11 @@ func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.BatchFees {
 			} else {
 				// add fee amount
 				if _, ok := batchFeesMap[tokenContractAddr]; ok {
-					batchFeesMap[tokenContractAddr].TotalFees = batchFeesMap[tokenContractAddr].TotalFees.Add(sdk.NewIntFromBigInt(feeAmount))
+					batchFeesMap[tokenContractAddr].Amount = batchFeesMap[tokenContractAddr].Amount.Add(sdk.NewIntFromBigInt(feeAmount))
 				} else {
-					batchFeesMap[tokenContractAddr] = &types.BatchFees{
-						Token:     tokenContractAddr,
-						TotalFees: sdk.NewIntFromBigInt(feeAmount)}
+					token := types.NewSDKIntERC20Token(sdk.NewIntFromBigInt(feeAmount), tokenContractAddr)
+					batchFeesMap[tokenContractAddr] = &token
+
 				}
 
 				txCountMap[tokenContractAddr] = txCountMap[tokenContractAddr] + 1
