@@ -461,6 +461,7 @@ func TestPoolTxRefund(t *testing.T) {
 	var (
 		now                 = time.Now().UTC()
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
+		notMySender, _      = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3km")
 		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
 		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5" // Pickle
 		allVouchers         = sdk.NewCoins(
@@ -497,9 +498,13 @@ func TestPoolTxRefund(t *testing.T) {
 	err1 := input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 1, mySender)
 	require.Error(t, err1)
 
+	// try to refund somebody else's tx
+	err2 := input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 4, notMySender)
+	require.Error(t, err2)
+
 	// try to refund a tx that's in the pool
-	err2 := input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 4, mySender)
-	require.NoError(t, err2)
+	err3 := input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 4, mySender)
+	require.NoError(t, err3)
 
 	// make sure refund was issued
 	balances := input.BankKeeper.GetAllBalances(ctx, mySender)
