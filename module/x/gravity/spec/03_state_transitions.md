@@ -97,6 +97,18 @@ Moving on with the batch creation process:
 
 - Take the `OutgoingTxBatchSize` unbatched transactions with the highest fees for the given token type, add them to the batches `transactions` field, and remove the transactions from the `UnbatchedTXIndex`, so they cannot be cancelled or added to another batch.
 - Increment the `LastOutgoingBatchID` and set the batches `batch_nonce` field to the incremented value.
+- Get the `BatchTimeout`. The batch timeout is an Ethereum block height in the future, after which the batch will no longer be accepted by the Gravity.sol contract. This allows unprofitable batches to time out and free their transactions to be added to a more profitable batch or be cancelled. Gravity has knowledge of the `LastObservedEthereumBlockHeight` which is brought in on every block, but this knowledge is only as recent as the last observed event. For this reason, we estimate the current Ethereum block height using the following procedure:
+  - We estimate how many milliseconds it has been since we recorded the `LastObservedEthereumBlockHeight` by multiplying the number of blocks since then with the average Cosmos block time.
+  - We estimate current Ethereum block height by dividing the product of the multiplication above by the average Ethereum block time, and adding to the `LastObservedEthereumBlockHeight`
+  - We set the `BatchTimeout` by adding the proper number of blocks to the estimated current Ethereum block height.
+  - In more compact notation:
+    - a: Average Cosmos block time in ms
+    - b: Cosmos block height at time of last recorded Ethereum block height
+    - c: Current Cosmos block height
+    - d: Average Ethereum block time in ms
+    - e: Last recorded Ethereum block height
+    - f: Target batch timeout in ms
+    - `BatchTimeout` = ((((c - b) \* a) / d) + e) + (f / d)
 - Store the batch, indexed by the token contract and the batch nonce.
 
 ### Batch signing
