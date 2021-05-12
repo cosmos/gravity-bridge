@@ -66,7 +66,7 @@ func (k Keeper) TryEthereumEventVoteRecord(ctx sdk.Context, att *types.EthereumE
 		// Sum the current powers of all validators who have voted and see if it passes the current threshold
 		// TODO: The different integer types and math here needs a careful review
 		totalPower := k.StakingKeeper.GetLastTotalPower(ctx)
-		requiredPower := types.EthereumEventVoteRecordVotesPowerThreshold.Mul(totalPower).Quo(sdk.NewInt(100))
+		requiredPower := types.EthereumEventVoteRecordPowerThreshold.Mul(totalPower).Quo(sdk.NewInt(100))
 		ethereumEventVoteRecordPower := sdk.NewInt(0)
 		for _, validator := range att.Votes {
 			val, err := sdk.ValAddressFromBech32(validator)

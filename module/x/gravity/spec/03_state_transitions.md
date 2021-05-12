@@ -33,8 +33,8 @@ Every endblock, the module attempts to tally up the votes for un-Observed ethere
 When tallying the votes a given ethereumEventVoteRecord, we follow this algorithm:
 
 - First get `LastTotalPower` from the StakingKeeper
-- `requiredPower` = `EthereumEventVoteRecordVotesPowerThreshold` \* `LastTotalPower` / 100
-  - This effectively calculates `EthereumEventVoteRecordVotesPowerThreshold` percent (usually 66%) of `LastTotalPower`, truncating all decimal points.
+- `requiredPower` = `EthereumEventVoteRecordPowerThreshold` \* `LastTotalPower` / 100
+  - This effectively calculates `EthereumEventVoteRecordPowerThreshold` percent (usually 66%) of `LastTotalPower`, truncating all decimal points.
 - Set `ethereumEventVoteRecordPower` = 0
 
 - For every validator in the ethereumEventVoteRecord's votes field:

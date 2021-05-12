@@ -94,17 +94,17 @@ message Params {
   string contract_source_hash        = 2;
   string bridge_ethereum_address     = 4;
   uint64 bridge_chain_id             = 5;
-  uint64 signed_signer_sets_window       = 6;
-  uint64 signed_batches_window       = 7;
-  uint64 signed_events_window        = 8;
+  uint64 signed_signer_set_txs_window       = 6;
+  uint64 signed_batch_txs_window       = 7;
+  // uint64 signed_events_window        = 8;
   uint64 target_batch_timeout        = 10;
   uint64 average_block_time          = 11;
   uint64 average_ethereum_block_time = 12;
-  bytes  slash_fraction_signer_set       = 13 [
+  bytes  slash_fraction_signer_set_tx       = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes slash_fraction_batch = 14 [
+  bytes slash_fraction_batch_tx = 14 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
@@ -121,7 +121,7 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  cosmos.base.v1beta1.Coin signer_set_reward = 19;
+  cosmos.base.v1beta1.Coin signer_set_tx_reward = 19;
 }
 
 // GenesisState struct
