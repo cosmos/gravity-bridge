@@ -160,9 +160,9 @@ func (k Keeper) pickUnbatchedTX(
 	var selectedTx []*types.SendToEthereum
 	var err error
 	k.IterateOutgoingPoolByFee(ctx, contractAddress, func(txID uint64, tx *types.SendToEthereum) bool {
-		if tx != nil && tx.Erc20Fee != nil {
+		if tx != nil && tx.Fee != nil {
 			selectedTx = append(selectedTx, tx)
-			err = k.removeFromUnbatchedTXIndex(ctx, *tx.Erc20Fee, txID)
+			err = k.removeFromUnbatchedTXIndex(ctx, *tx.Fee, txID)
 			return err != nil || len(selectedTx) == maxElements
 		}
 
@@ -182,8 +182,8 @@ func (k Keeper) GetOutgoingTXBatch(ctx sdk.Context, tokenContract string, nonce 
 	var b types.BatchTx
 	k.cdc.MustUnmarshalBinaryBare(bz, &b)
 	for _, tx := range b.Transactions {
-		tx.Erc20Token.Contract = tokenContract
-		tx.Erc20Fee.Contract = tokenContract
+		tx.Transfer.Contract = tokenContract
+		tx.Fee.Contract = tokenContract
 	}
 	return &b
 }
@@ -195,8 +195,8 @@ func (k Keeper) CancelOutgoingTXBatch(ctx sdk.Context, tokenContract string, non
 		return types.ErrUnknown
 	}
 	for _, tx := range batch.Transactions {
-		tx.Erc20Fee.Contract = tokenContract
-		k.prependToUnbatchedTXIndex(ctx, tokenContract, *tx.Erc20Fee, tx.Id)
+		tx.Fee.Contract = tokenContract
+		k.prependToUnbatchedTXIndex(ctx, tokenContract, *tx.Fee, tx.Id)
 	}
 
 	// Delete batch since it is finished

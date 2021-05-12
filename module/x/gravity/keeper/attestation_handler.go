@@ -115,7 +115,7 @@ func (a EthereumEventVoteRecordHandler) Handle(ctx sdk.Context, att types.Ethere
 		// the store, if they differ we should take some action to indicate to the
 		// user that bridge highjacking has occurred
 		a.keeper.SetLastObservedSignerSetTx(ctx, types.SignerSetTx{
-			Nonce:   claim.SignerSetTxNonce,
+			Nonce:   claim.SignerSetNonce,
 			Members: claim.Members,
 		})
 

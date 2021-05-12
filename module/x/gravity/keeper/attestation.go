@@ -37,9 +37,9 @@ func (k Keeper) Attest(
 	// If it does not exist, create a new one.
 	if att == nil {
 		att = &types.EthereumEventVoteRecord{
-			Observed: false,
+			Accepted: false,
 			Height:   uint64(ctx.BlockHeight()),
-			Claim:    anyClaim,
+			Event:    anyClaim,
 		}
 	}
 
@@ -62,7 +62,7 @@ func (k Keeper) TryEthereumEventVoteRecord(ctx sdk.Context, att *types.EthereumE
 	}
 	// If the ethereumEventVoteRecord has not yet been Observed, sum up the votes and see if it is ready to apply to the state.
 	// This conditional stops the ethereumEventVoteRecord from accidentally being applied twice.
-	if !att.Observed {
+	if !att.Accepted {
 		// Sum the current powers of all validators who have voted and see if it passes the current threshold
 		// TODO: The different integer types and math here needs a careful review
 		totalPower := k.StakingKeeper.GetLastTotalPower(ctx)
@@ -88,7 +88,7 @@ func (k Keeper) TryEthereumEventVoteRecord(ctx sdk.Context, att *types.EthereumE
 				k.setLastObservedEventNonce(ctx, claim.GetEventNonce())
 				k.SetLatestEthereumBlockHeight(ctx, claim.GetBlockHeight())
 
-				att.Observed = true
+				att.Accepted = true
 				k.SetEthereumEventVoteRecord(ctx, claim.GetEventNonce(), claim.ClaimHash(), att)
 
 				k.processEthereumEventVoteRecord(ctx, att, claim)
@@ -297,7 +297,7 @@ func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 		}
 		for nonce, atts := range attmap {
 			for att := range atts {
-				if atts[att].Observed && nonce < lowestObserved {
+				if atts[att].Accepted && nonce < lowestObserved {
 					lowestObserved = nonce
 				}
 			}

@@ -46,31 +46,31 @@ func TestAddToOutgoingPool(t *testing.T) {
 	exp := []*types.SendToEthereum{
 		{
 			Id:          2,
-			Erc20Fee:    types.NewERC20Token(3, myTokenContractAddr),
+			Fee:         types.NewERC20Token(3, myTokenContractAddr),
 			Sender:      mySender.String(),
 			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(101, myTokenContractAddr),
+			Transfer:    types.NewERC20Token(101, myTokenContractAddr),
 		},
 		{
 			Id:          1,
-			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
+			Fee:         types.NewERC20Token(2, myTokenContractAddr),
 			Sender:      mySender.String(),
 			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(100, myTokenContractAddr),
+			Transfer:    types.NewERC20Token(100, myTokenContractAddr),
 		},
 		{
 			Id:          3,
-			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
+			Fee:         types.NewERC20Token(2, myTokenContractAddr),
 			Sender:      mySender.String(),
 			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(102, myTokenContractAddr),
+			Transfer:    types.NewERC20Token(102, myTokenContractAddr),
 		},
 		{
 			Id:          4,
-			Erc20Fee:    types.NewERC20Token(1, myTokenContractAddr),
+			Fee:         types.NewERC20Token(1, myTokenContractAddr),
 			Sender:      mySender.String(),
 			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(103, myTokenContractAddr),
+			Transfer:    types.NewERC20Token(103, myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, exp, got)

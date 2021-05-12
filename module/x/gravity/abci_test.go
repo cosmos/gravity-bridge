@@ -111,12 +111,12 @@ func TestSignerSetTxSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testi
 	params := input.GravityKeeper.GetParams(ctx)
 
 	// Define slashing variables
-	validatorStartHeight := ctx.BlockHeight()                                                             // 0
-	valsetRequestHeight := validatorStartHeight + 1                                                       // 1
-	valUnbondingHeight := valsetRequestHeight + 1                                                         // 2
-	valsetRequestSlashedAt := valsetRequestHeight + int64(params.SignedSignerSetTxsWindow)                // 11
-	validatorUnbondingWindowExpiry := valUnbondingHeight + int64(params.UnbondSlashingSignerSetTxsWindow) // 17
-	currentBlockHeight := valsetRequestSlashedAt + 1                                                      // 12
+	validatorStartHeight := ctx.BlockHeight()                                                          // 0
+	valsetRequestHeight := validatorStartHeight + 1                                                    // 1
+	valUnbondingHeight := valsetRequestHeight + 1                                                      // 2
+	valsetRequestSlashedAt := valsetRequestHeight + int64(params.SignedSignerSetTxsWindow)             // 11
+	validatorUnbondingWindowExpiry := valUnbondingHeight + int64(params.SlashingSignerSetUnbondWindow) // 17
+	currentBlockHeight := valsetRequestSlashedAt + 1                                                   // 12
 
 	assert.True(t, valsetRequestSlashedAt < currentBlockHeight)
 	assert.True(t, valsetRequestHeight < validatorUnbondingWindowExpiry)
@@ -175,7 +175,7 @@ func TestBatchSlashing(t *testing.T) {
 		BatchNonce:    1,
 		Transactions:  []*types.SendToEthereum{},
 		TokenContract: keeper.TokenContractAddrs[0],
-		Block:         uint64(ctx.BlockHeight() - int64(params.SignedBatchesWindow+1)),
+		Block:         uint64(ctx.BlockHeight() - int64(params.SignedBatchTxsWindow+1)),
 	}
 	pk.StoreBatchUnsafe(ctx, batch)
 
