@@ -148,7 +148,7 @@ func CmdRequestBatch() *cobra.Command {
 			cosmosAddr := cliCtx.GetFromAddress()
 
 			// TODO: better denom searching
-			msg := types.MsgRequestBatch{
+			msg := types.MsgRequestBatchTx{
 				Sender: cosmosAddr.String(),
 				Denom:  fmt.Sprintf("gravity%s", args[0]),
 			}

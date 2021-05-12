@@ -51,7 +51,7 @@ This message will fail if:
   - If sending to the module account fails
   - If burning of the token fails
 
-### MsgRequestBatch
+### MsgRequestBatchTx
 
 Anyone can send this message to trigger [creation](03_state_transitions.md#batch-creation) of an `BatchTx`.
 

@@ -134,8 +134,8 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 	return &types.MsgSendToEthereumResponse{}, nil
 }
 
-// RequestBatch handles MsgRequestBatch
-func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*types.MsgRequestBatchResponse, error) {
+// RequestBatch handles MsgRequestBatchTx
+func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatchTx) (*types.MsgRequestBatchTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Check if the denom is a gravity coin, if not, check if there is a deployed ERC20 representing it.
@@ -158,7 +158,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		),
 	)
 
-	return &types.MsgRequestBatchResponse{}, nil
+	return &types.MsgRequestBatchTxResponse{}, nil
 }
 
 // ConfirmBatch handles MsgConfirmBatch
