@@ -32,7 +32,7 @@ func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 	latestSignerSetTx := k.GetLatestSignerSetTx(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 
-	if (latestSignerSetTx == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentSignerSetTx(ctx).Members).PowerDiff(latestSignerSetTx.Members) > 0.05) {
+	if (latestSignerSetTx == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.EthereumSigners(k.GetCurrentSignerSetTx(ctx).Members).PowerDiff(latestSignerSetTx.Members) > 0.05) {
 		// Store valset
 		k.SetSignerSetTxRequest(ctx)
 	}

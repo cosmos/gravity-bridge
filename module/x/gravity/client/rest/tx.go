@@ -84,12 +84,12 @@ func createSignerSetTxSignatureHandler(cliCtx client.Context, storeKey string) h
 }
 
 type bootstrapConfirmReq struct {
-	BaseReq               rest.BaseReq           `json:"base_req"`
-	Orchestrator          sdk.AccAddress         `json:"orchestrator"`
-	EthereumChainID       uint64                 `json:"ethereum_chain_id"`
-	BridgeContractAddress string                 `json:"bridge_contract_address"`
-	Block                 string                 `json:"block"`
-	BridgeValidators      types.BridgeValidators `json:"bridge_validators"`
-	GravityID             string                 `json:"gravity_id"`
-	StartThreshold        uint64                 `json:"start_threshold"`
+	BaseReq               rest.BaseReq          `json:"base_req"`
+	Orchestrator          sdk.AccAddress        `json:"orchestrator"`
+	EthereumChainID       uint64                `json:"ethereum_chain_id"`
+	BridgeContractAddress string                `json:"bridge_contract_address"`
+	Block                 string                `json:"block"`
+	EthereumSigners       types.EthereumSigners `json:"bridge_validators"`
+	GravityID             string                `json:"gravity_id"`
+	StartThreshold        uint64                `json:"start_threshold"`
 }

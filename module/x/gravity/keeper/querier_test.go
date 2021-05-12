@@ -835,8 +835,8 @@ func TestQueryCurrentSignerSetTx(t *testing.T) {
 
 	currentSignerSetTx := input.GravityKeeper.GetCurrentSignerSetTx(ctx)
 
-	bridgeVal := types.BridgeValidator{EthereumAddress: ethAddress, Power: 4294967295}
-	expectedSignerSetTx := types.SignerSetTx{Nonce: 1234567, Height: 1234567, Members: []*types.BridgeValidator{&bridgeVal}}
+	bridgeVal := types.EthereumSigner{EthereumAddress: ethAddress, Power: 4294967295}
+	expectedSignerSetTx := types.SignerSetTx{Nonce: 1234567, Height: 1234567, Members: []*types.EthereumSigner{&bridgeVal}}
 	assert.Equal(t, &expectedSignerSetTx, currentSignerSetTx)
 }
 

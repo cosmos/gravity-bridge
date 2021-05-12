@@ -234,7 +234,7 @@ message SignerSetTx {
   // executed SignerSetTx.
   uint64 nonce = 1;
   // The validators in the valset.
-  repeated BridgeValidator members = 2;
+  repeated EthereumSigner members = 2;
   // TODO: what is this for?
   uint64 height = 3;
 }

@@ -36,7 +36,7 @@ func UInt64FromString(s string) (uint64, error) {
 //////////////////////////////////////
 
 // ValidateBasic performs stateless checks on validity
-func (b *BridgeValidator) ValidateBasic() error {
+func (b *EthereumSigner) ValidateBasic() error {
 	if b.Power == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "power")
 	}
@@ -49,11 +49,11 @@ func (b *BridgeValidator) ValidateBasic() error {
 	return nil
 }
 
-// BridgeValidators is the sorted set of validator data for Ethereum bridge MultiSig set
-type BridgeValidators []*BridgeValidator
+// EthereumSigners is the sorted set of validator data for Ethereum bridge MultiSig set
+type EthereumSigners []*EthereumSigner
 
 // Sort sorts the validators by power
-func (b BridgeValidators) Sort() {
+func (b EthereumSigners) Sort() {
 	sort.Slice(b, func(i, j int) bool {
 		if b[i].Power == b[j].Power {
 			// Secondary sort on eth address in case powers are equal
@@ -77,7 +77,7 @@ func (b BridgeValidators) Sort() {
 // if the total on chain voting power increases by 1% due to inflation, we shouldn't have to generate a new validator
 // set, after all the validators retained their relative percentages during inflation and normalized Gravity bridge power
 // shows no difference.
-func (b BridgeValidators) PowerDiff(c BridgeValidators) float64 {
+func (b EthereumSigners) PowerDiff(c EthereumSigners) float64 {
 	powers := map[string]int64{}
 	// loop over b and initialize the map with their powers
 	for _, bv := range b {
@@ -104,7 +104,7 @@ func (b BridgeValidators) PowerDiff(c BridgeValidators) float64 {
 }
 
 // TotalPower returns the total power in the bridge validator set
-func (b BridgeValidators) TotalPower() (out uint64) {
+func (b EthereumSigners) TotalPower() (out uint64) {
 	for _, v := range b {
 		out += v.Power
 	}
@@ -112,7 +112,7 @@ func (b BridgeValidators) TotalPower() (out uint64) {
 }
 
 // HasDuplicates returns true if there are duplicates in the set
-func (b BridgeValidators) HasDuplicates() bool {
+func (b EthereumSigners) HasDuplicates() bool {
 	m := make(map[string]struct{}, len(b))
 	for i := range b {
 		m[b[i].EthereumAddress] = struct{}{}
@@ -121,7 +121,7 @@ func (b BridgeValidators) HasDuplicates() bool {
 }
 
 // GetPowers returns only the power values for all members
-func (b BridgeValidators) GetPowers() []uint64 {
+func (b EthereumSigners) GetPowers() []uint64 {
 	r := make([]uint64, len(b))
 	for i := range b {
 		r[i] = b[i].Power
@@ -130,7 +130,7 @@ func (b BridgeValidators) GetPowers() []uint64 {
 }
 
 // ValidateBasic performs stateless checks
-func (b BridgeValidators) ValidateBasic() error {
+func (b EthereumSigners) ValidateBasic() error {
 	// TODO: check if the set is sorted here?
 	if len(b) == 0 {
 		return ErrEmpty
@@ -147,9 +147,9 @@ func (b BridgeValidators) ValidateBasic() error {
 }
 
 // NewSignerSetTx returns a new valset
-func NewSignerSetTx(nonce, height uint64, members BridgeValidators) *SignerSetTx {
+func NewSignerSetTx(nonce, height uint64, members EthereumSigners) *SignerSetTx {
 	members.Sort()
-	var mem []*BridgeValidator
+	var mem []*EthereumSigner
 	for _, val := range members {
 		mem = append(mem, val)
 	}
@@ -207,7 +207,7 @@ func (v *SignerSetTx) WithoutEmptyMembers() *SignerSetTx {
 	if v == nil {
 		return nil
 	}
-	r := SignerSetTx{Nonce: v.Nonce, Members: make([]*BridgeValidator, 0, len(v.Members))}
+	r := SignerSetTx{Nonce: v.Nonce, Members: make([]*EthereumSigner, 0, len(v.Members))}
 	for i := range v.Members {
 		if err := v.Members[i].ValidateBasic(); err == nil {
 			r.Members = append(r.Members, v.Members[i])

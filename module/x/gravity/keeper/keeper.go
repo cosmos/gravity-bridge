@@ -60,7 +60,7 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 //     VALSET REQUESTS     //
 /////////////////////////////
 
-// SetSignerSetTxRequest returns a new instance of the Gravity BridgeValidatorSet
+// SetSignerSetTxRequest returns a new instance of the Gravity EthereumSignerSet
 // i.e. {"nonce": 1, "memebers": [{"eth_addr": "foo", "power": 11223}]}
 func (k Keeper) SetSignerSetTxRequest(ctx sdk.Context) *types.SignerSetTx {
 	valset := k.GetCurrentSignerSetTx(ctx)
@@ -408,7 +408,7 @@ func (k Keeper) GetValidatorByEthAddress(ctx sdk.Context, ethAddr string) (valid
 // implementations are involved.
 func (k Keeper) GetCurrentSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-	bridgeValidators := make([]*types.BridgeValidator, len(validators))
+	bridgeValidators := make([]*types.EthereumSigner, len(validators))
 	var totalPower uint64
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
@@ -418,7 +418,7 @@ func (k Keeper) GetCurrentSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, val))
 		totalPower += p
 
-		bridgeValidators[i] = &types.BridgeValidator{Power: p}
+		bridgeValidators[i] = &types.EthereumSigner{Power: p}
 		if ethAddr := k.GetEthAddressByValidator(ctx, val); ethAddr != "" {
 			bridgeValidators[i].EthereumAddress = ethAddr
 		}

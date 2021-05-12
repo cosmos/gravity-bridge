@@ -223,7 +223,7 @@ func TestSignerSetTxEmission(t *testing.T) {
 	// Store a validator set with a power change as the most recent validator set
 	vs := pk.GetCurrentSignerSetTx(ctx)
 	vs.Nonce--
-	delta := float64(types.BridgeValidators(vs.Members).TotalPower()) * 0.05
+	delta := float64(types.EthereumSigners(vs.Members).TotalPower()) * 0.05
 	vs.Members[0].Power = uint64(float64(vs.Members[0].Power) - delta/2)
 	vs.Members[1].Power = uint64(float64(vs.Members[1].Power) + delta/2)
 	pk.StoreSignerSetTx(ctx, vs)

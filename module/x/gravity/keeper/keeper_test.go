@@ -74,7 +74,7 @@ func TestCurrentSignerSetTxNormalization(t *testing.T) {
 			}
 			input.GravityKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
 			r := input.GravityKeeper.GetCurrentSignerSetTx(ctx)
-			assert.Equal(t, spec.expPowers, types.BridgeValidators(r.Members).GetPowers())
+			assert.Equal(t, spec.expPowers, types.EthereumSigners(r.Members).GetPowers())
 		})
 	}
 }
