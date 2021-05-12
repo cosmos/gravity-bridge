@@ -188,7 +188,7 @@ func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
 	amount := make([]byte, 32)
 	amount = fee.Amount.BigInt().FillBytes(amount)
 	token := NewERC20TokenFromCoin(fee)
-	return bytes.Join([][]byte{{SecondIndexOutgoingTXFeeKey}, []byte(token.Contract), amount}, []byte{})
+	return bytes.Join([][]byte{{SecondIndexOutgoingTXFeeKey}, common.HexToAddress(token.Contract).Bytes(), amount}, []byte{})
 }
 
 // GetLastEventNonceByValidatorKey indexes lateset event nonce by validator

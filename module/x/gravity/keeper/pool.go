@@ -260,7 +260,7 @@ func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.OutgoingTx {
 // IterateOutgoingPoolByFee iterates over the outgoing pool which is sorted by fee
 func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.OutgoingTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SecondIndexOutgoingTXFeeKey})
-	iter := prefixStore.ReverseIterator(prefixRange([]byte(contract)))
+	iter := prefixStore.ReverseIterator(prefixRange(common.HexToAddress(contract).Bytes()))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var ids types.IDSet
