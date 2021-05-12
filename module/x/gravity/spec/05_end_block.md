@@ -12,7 +12,7 @@ changes are specified to execute.
 Every endblock, we run the following procedure to determine whether to make a new `Valset` which will then need to be signed by all validators.
 
 1. If there are no valset requests, create a new one.
-2. If there is at least one validator who started unbonding in current block, create a `Valset`. This will make sure the unbonding validator has to provide an attestation to a new Valset that excludes them before they completely Unbond. Otherwise they will be slashed.
+2. If there is at least one validator who started unbonding in current block, create a `Valset`. This will make sure the unbonding validator has to provide an ethereumEventVoteRecord to a new Valset that excludes them before they completely Unbond. Otherwise they will be slashed.
 3. If power change between validators of CurrentValset and latest valset request is > 5%, create a new `Valset`.
 
 If the above conditions are met, we create a new `Valset` using the procedure described [here](03_state_transitions.md#valset-creation)
@@ -68,19 +68,19 @@ Procedure:
 
 This logic counts up votes on `EthereumEventVoteRecord`s and kicks off the process of bringing Ethereum events into the Cosmos state;
 
-- We retrieve all attestations from storage and order them into a map of event nonces to attestations, sorted by nonce: `map[uint64][]types.EthereumEventVoteRecord`.
-  - Note that the only time one nonce will have more than one attestation is when validators are disagreeing about which event happened at which event nonce.
+- We retrieve all ethereumEventVoteRecords from storage and order them into a map of event nonces to ethereumEventVoteRecords, sorted by nonce: `map[uint64][]types.EthereumEventVoteRecord`.
+  - Note that the only time one nonce will have more than one ethereumEventVoteRecord is when validators are disagreeing about which event happened at which event nonce.
 - We then loop over the nonces:
-  - For each attestation, we check that the event nonce is exactly 1 higher than the `LastObservedEventNonce`.
-  - If it is, we count up the votes on that attestation using the procedure described [here](03_state_transitions.md#counting-attestation-votes)
-  - If the attestation passes the `EthereumEventVoteRecordVotesPowerThreshold`, we apply it to the Cosmos state, and increment the `LastObservedEventNonce`. As a result of this, any additional attestations at the same nonce do not have their votes counted, but the first attestation at the next nonce will have its votes counted.
-  - If the attestation does not pass the `EthereumEventVoteRecordVotesPowerThreshold`, it is not applied to the Cosmos state, and `LastObservedEventNonce` is not incremented. As a result of this, the next attestation at that nonce will have its votes counted. If no attestations at that nonce pass the `EthereumEventVoteRecordVotesPowerThreshold`, then all attestations at subsequent nonces will be skipped and this procedure ends.
+  - For each ethereumEventVoteRecord, we check that the event nonce is exactly 1 higher than the `LastObservedEventNonce`.
+  - If it is, we count up the votes on that ethereumEventVoteRecord using the procedure described [here](03_state_transitions.md#counting-ethereumEventVoteRecord-votes)
+  - If the ethereumEventVoteRecord passes the `EthereumEventVoteRecordVotesPowerThreshold`, we apply it to the Cosmos state, and increment the `LastObservedEventNonce`. As a result of this, any additional ethereumEventVoteRecords at the same nonce do not have their votes counted, but the first ethereumEventVoteRecord at the next nonce will have its votes counted.
+  - If the ethereumEventVoteRecord does not pass the `EthereumEventVoteRecordVotesPowerThreshold`, it is not applied to the Cosmos state, and `LastObservedEventNonce` is not incremented. As a result of this, the next ethereumEventVoteRecord at that nonce will have its votes counted. If no ethereumEventVoteRecords at that nonce pass the `EthereumEventVoteRecordVotesPowerThreshold`, then all ethereumEventVoteRecords at subsequent nonces will be skipped and this procedure ends.
 
 This procedure has the following attributes:
 
-- EthereumEventVoteRecords will never be observed and applied to Cosmos state out of order, since to have their votes counted, they must have a nonce exactly one higher than the last observed attestation.
-- It is only possible for one attestation at a given nonce to pass the `EthereumEventVoteRecordVotesPowerThreshold` and become `Observed`, since we have [enforced](03_state_transitions.md#counting-attestation-votes) that validators cannot vote for different attestations at the same height.
-- If there is an attestation that has not passed the `EthereumEventVoteRecordVotesPowerThreshold`, but there are later attestations which have, we do not count the later attestations until the earlier one passes the `EthereumEventVoteRecordVotesPowerThreshold` and is observed. At this point, all later attestations which have passed the `EthereumEventVoteRecordVotesPowerThreshold` will also be counted and be applied to the Cosmos state.
+- EthereumEventVoteRecords will never be observed and applied to Cosmos state out of order, since to have their votes counted, they must have a nonce exactly one higher than the last observed ethereumEventVoteRecord.
+- It is only possible for one ethereumEventVoteRecord at a given nonce to pass the `EthereumEventVoteRecordVotesPowerThreshold` and become `Observed`, since we have [enforced](03_state_transitions.md#counting-ethereumEventVoteRecord-votes) that validators cannot vote for different ethereumEventVoteRecords at the same height.
+- If there is an ethereumEventVoteRecord that has not passed the `EthereumEventVoteRecordVotesPowerThreshold`, but there are later ethereumEventVoteRecords which have, we do not count the later ethereumEventVoteRecords until the earlier one passes the `EthereumEventVoteRecordVotesPowerThreshold` and is observed. At this point, all later ethereumEventVoteRecords which have passed the `EthereumEventVoteRecordVotesPowerThreshold` will also be counted and be applied to the Cosmos state.
 
 ## Cleanup
 
@@ -92,7 +92,7 @@ When a batch of transactions are created they have a specified Ethereum block he
 
 Here is the procedure:
 
-- Get the `LastObservedEthereumBlockHeight`. This is the Ethereum block height from the last observed attestation, and is the most current information we have available about the current Ethereum block height.
+- Get the `LastObservedEthereumBlockHeight`. This is the Ethereum block height from the last observed ethereumEventVoteRecord, and is the most current information we have available about the current Ethereum block height.
 - Loop through all `OutgoingTxBatches`. For each batch:
   - If the `BatchTimeout` on that batch is lower than the `LastObservedEthereumBlockHeight`, cancel the batch, freeing its transactions to be included in another batch, or cancelled by the sender.
 

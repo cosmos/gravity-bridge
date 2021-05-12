@@ -13,12 +13,12 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
 	// Question: what here can be epoched?
 	slashing(ctx, k)
-	attestationTally(ctx, k)
+	ethereumEventVoteRecordTally(ctx, k)
 	cleanupTimedOutBatches(ctx, k)
 	cleanupTimedOutLogicCalls(ctx, k)
 	createValsets(ctx, k)
 	pruneValsets(ctx, k, params)
-	// TODO: prune claims, attestations when they pass in the handler
+	// TODO: prune claims, ethereumEventVoteRecords when they pass in the handler
 }
 
 func createValsets(ctx sdk.Context, k keeper.Keeper) {
@@ -26,7 +26,7 @@ func createValsets(ctx sdk.Context, k keeper.Keeper) {
 	// WARNING: do not use k.GetLastObservedValset in this function, it *will* result in losing control of the bridge
 	// 1. If there are no valset requests, create a new one.
 	// 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
-	//      This will make sure the unbonding validator has to provide an attestation to a new Valset
+	//      This will make sure the unbonding validator has to provide an ethereumEventVoteRecord to a new Valset
 	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
 	// 3. If power change between validators of CurrentValset and latest valset request is > 5%
 	latestValset := k.GetLatestValset(ctx)
@@ -70,12 +70,12 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 
 }
 
-// Iterate over all attestations currently being voted on in order of nonce and
+// Iterate over all ethereumEventVoteRecords currently being voted on in order of nonce and
 // "Observe" those who have passed the threshold. Break the loop once we see
-// an attestation that has not passed the threshold
-func attestationTally(ctx sdk.Context, k keeper.Keeper) {
+// an ethereumEventVoteRecord that has not passed the threshold
+func ethereumEventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 	attmap := k.GetEthereumEventVoteRecordMapping(ctx)
-	// We make a slice with all the event nonces that are in the attestation mapping
+	// We make a slice with all the event nonces that are in the ethereumEventVoteRecord mapping
 	nonces := make([]uint64, 0, len(attmap))
 	for k := range attmap {
 		nonces = append(nonces, k)
@@ -83,29 +83,29 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 	// Then we sort it
 	sort.Slice(nonces, func(i, j int) bool { return nonces[i] < nonces[j] })
 
-	// This iterates over all keys (event nonces) in the attestation mapping. Each value contains
-	// a slice with one or more attestations at that event nonce. There can be multiple attestations
+	// This iterates over all keys (event nonces) in the ethereumEventVoteRecord mapping. Each value contains
+	// a slice with one or more ethereumEventVoteRecords at that event nonce. There can be multiple ethereumEventVoteRecords
 	// at one event nonce when validators disagree about what event happened at that nonce.
 	for _, nonce := range nonces {
-		// This iterates over all attestations at a particular event nonce.
-		// They are ordered by when the first attestation at the event nonce was received.
+		// This iterates over all ethereumEventVoteRecords at a particular event nonce.
+		// They are ordered by when the first ethereumEventVoteRecord at the event nonce was received.
 		// This order is not important.
 		for _, att := range attmap[nonce] {
-			// We check if the event nonce is exactly 1 higher than the last attestation that was
+			// We check if the event nonce is exactly 1 higher than the last ethereumEventVoteRecord that was
 			// observed. If it is not, we just move on to the next nonce. This will skip over all
-			// attestations that have already been observed.
+			// ethereumEventVoteRecords that have already been observed.
 			//
 			// Once we hit an event nonce that is one higher than the last observed event, we stop
 			// skipping over this conditional and start calling tryEthereumEventVoteRecord (counting votes)
-			// Once an attestation at a given event nonce has enough votes and becomes observed,
-			// every other attestation at that nonce will be skipped, since the lastObservedEventNonce
+			// Once an ethereumEventVoteRecord at a given event nonce has enough votes and becomes observed,
+			// every other ethereumEventVoteRecord at that nonce will be skipped, since the lastObservedEventNonce
 			// will be incremented.
 			//
-			// Then we go to the next event nonce in the attestation mapping, if there is one. This
+			// Then we go to the next event nonce in the ethereumEventVoteRecord mapping, if there is one. This
 			// nonce will once again be one higher than the lastObservedEventNonce.
-			// If there is an attestation at this event nonce which has enough votes to be observed,
-			// we skip the other attestations and move on to the next nonce again.
-			// If no attestation becomes observed, when we get to the next nonce, every attestation in
+			// If there is an ethereumEventVoteRecord at this event nonce which has enough votes to be observed,
+			// we skip the other ethereumEventVoteRecords and move on to the next nonce again.
+			// If no ethereumEventVoteRecord becomes observed, when we get to the next nonce, every ethereumEventVoteRecord in
 			// it will be skipped. The same will happen for every nonce after that.
 			if nonce == uint64(k.GetLastObservedEventNonce(ctx))+1 {
 				k.TryEthereumEventVoteRecord(ctx, &att)

@@ -87,7 +87,7 @@ func addDenomToERC20Relation(tv *testingVars) {
 
 	EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
-	// check if attestation persisted
+	// check if ethereumEventVoteRecord persisted
 	a := tv.input.GravityKeeper.GetEthereumEventVoteRecord(tv.ctx, myNonce, ethClaim.ClaimHash())
 	require.NotNil(tv.t, a)
 
@@ -171,7 +171,7 @@ func acceptDepositEvent(tv *testingVars) {
 	require.NoError(tv.t, err)
 	EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
-	// check that attestation persisted
+	// check that ethereumEventVoteRecord persisted
 	a := tv.input.GravityKeeper.GetEthereumEventVoteRecord(tv.ctx, myNonce, ethClaim.ClaimHash())
 	require.NotNil(tv.t, a)
 

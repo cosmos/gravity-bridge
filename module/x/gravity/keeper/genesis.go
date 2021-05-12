@@ -50,7 +50,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		}
 	}
 
-	// reset attestations in state
+	// reset ethereumEventVoteRecords in state
 	for _, att := range data.EthereumEventVoteRecords {
 		att := att
 		claim, err := k.UnpackEthereumEventVoteRecordClaim(&att)
@@ -63,7 +63,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	}
 	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
 
-	// reset attestation state of specific validators
+	// reset ethereumEventVoteRecord state of specific validators
 	// this must be done after the above to be correct
 	for _, att := range data.EthereumEventVoteRecords {
 		att := att
@@ -72,13 +72,13 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 			panic("couldn't cast to claim")
 		}
 		// reconstruct the latest event nonce for every validator
-		// if somehow this genesis state is saved when all attestations
+		// if somehow this genesis state is saved when all ethereumEventVoteRecords
 		// have been cleaned up GetLastEventNonceByValidator handles that case
 		//
 		// if we where to save and load the last event nonce for every validator
 		// then we would need to carry that state forever across all chain restarts
 		// but since we've already had to handle the edge case of new validators joining
-		// while all attestations have already been cleaned up we can do this instead and
+		// while all ethereumEventVoteRecords have already been cleaned up we can do this instead and
 		// not carry around every validators event nonce counter forever.
 		for _, vote := range att.Votes {
 			val, err := sdk.ValAddressFromBech32(vote)
@@ -124,19 +124,19 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p                  = k.GetParams(ctx)
-		calls              = k.GetOutgoingLogicCalls(ctx)
-		batches            = k.GetOutgoingTxBatches(ctx)
-		valsets            = k.GetValsets(ctx)
-		attmap             = k.GetEthereumEventVoteRecordMapping(ctx)
-		vsconfs            = []*types.MsgValsetConfirm{}
-		batchconfs         = []types.MsgConfirmBatch{}
-		callconfs          = []types.MsgConfirmLogicCall{}
-		attestations       = []types.EthereumEventVoteRecord{}
-		delegates          = k.GetDelegateKeys(ctx)
-		lastobserved       = k.GetLastObservedEventNonce(ctx)
-		erc20ToDenoms      = []*types.ERC20ToDenom{}
-		unbatchedTransfers = k.GetPoolTransactions(ctx)
+		p                        = k.GetParams(ctx)
+		calls                    = k.GetOutgoingLogicCalls(ctx)
+		batches                  = k.GetOutgoingTxBatches(ctx)
+		valsets                  = k.GetValsets(ctx)
+		attmap                   = k.GetEthereumEventVoteRecordMapping(ctx)
+		vsconfs                  = []*types.MsgValsetConfirm{}
+		batchconfs               = []types.MsgConfirmBatch{}
+		callconfs                = []types.MsgConfirmLogicCall{}
+		ethereumEventVoteRecords = []types.EthereumEventVoteRecord{}
+		delegates                = k.GetDelegateKeys(ctx)
+		lastobserved             = k.GetLastObservedEventNonce(ctx)
+		erc20ToDenoms            = []*types.ERC20ToDenom{}
+		unbatchedTransfers       = k.GetPoolTransactions(ctx)
 	)
 
 	// export valset confirmations from state
@@ -159,10 +159,10 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 			k.GetLogicConfirmByInvalidationIDAndNonce(ctx, call.InvalidationId, call.InvalidationNonce)...)
 	}
 
-	// export attestations from state
+	// export ethereumEventVoteRecords from state
 	for _, atts := range attmap {
 		// TODO: set height = 0?
-		attestations = append(attestations, atts...)
+		ethereumEventVoteRecords = append(ethereumEventVoteRecords, atts...)
 	}
 
 	// export erc20 to denom relations
@@ -180,7 +180,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		BatchConfirms:            batchconfs,
 		LogicCalls:               calls,
 		LogicCallConfirms:        callconfs,
-		EthereumEventVoteRecords: attestations,
+		EthereumEventVoteRecords: ethereumEventVoteRecords,
 		DelegateKeys:             delegates,
 		Erc20ToDenoms:            erc20ToDenoms,
 		UnbatchedTransfers:       unbatchedTransfers,

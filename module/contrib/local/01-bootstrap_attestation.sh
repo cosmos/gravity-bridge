@@ -14,8 +14,8 @@ nonce=$(date +%s)  # use unix timestamp as fake nonce
 # gravitycli tx gravity observed bootstrap [eth chain id] [eth contract address] [nonce] [allowed_validators] [validator_powers] [gravity_id] [start_threshold]
 gravitycli tx gravity observed bootstrap 1 0x8858eeb3dfffa017d4bce9801d340d36cf895ccf  "$nonce" "0xc783df8a850f42e7f7e57013759c285caa701eb6"  "10" my-gravity-id  0 --from validator --chain-id=testing -b block -y
 
-echo "## View attestation status"
-gravitycli q gravity attestation bridge_bootstrap "$nonce" -o json | jq
+echo "## View ethereumEventVoteRecord status"
+gravitycli q gravity ethereumEventVoteRecord bridge_bootstrap "$nonce" -o json | jq
 
 echo "## Query last observed state"
 gravitycli q gravity observed nonces -o json | jq

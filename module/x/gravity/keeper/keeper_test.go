@@ -82,7 +82,7 @@ func TestCurrentValsetNormalization(t *testing.T) {
 func TestEthereumEventVoteRecordIterator(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
-	// add some attestations to the store
+	// add some ethereumEventVoteRecords to the store
 
 	att1 := &types.EthereumEventVoteRecord{
 		Observed: true,

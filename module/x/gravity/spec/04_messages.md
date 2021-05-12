@@ -122,7 +122,7 @@ This message will fail if:
 
 - The validator is unknown
 - The validator is not in the active set
-- If the creation of attestation fails
+- If the creation of ethereumEventVoteRecord fails
 
 ### MsgWithdrawClaim
 
@@ -134,7 +134,7 @@ This message will fail if:
 
 - The validator is unknown
 - The validator is not in the active set
-- If the creation of attestation fails
+- If the creation of ethereumEventVoteRecord fails
 
 ### MsgERC20DeployedClaim
 
@@ -146,7 +146,7 @@ This message will fail if:
 
 - The validator is unknown
 - The validator is not in the active set
-- If the creation of attestation fails
+- If the creation of ethereumEventVoteRecord fails
 
 ### MsgLogicCallExecutedClaim
 
@@ -158,4 +158,4 @@ This message will fail if:
 
 - The validator submitting the claim is unknown
 - The validator is not in the active set
-- Creation of attestation has failed.
+- Creation of ethereumEventVoteRecord has failed.

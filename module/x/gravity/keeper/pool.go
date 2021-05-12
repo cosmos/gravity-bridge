@@ -136,7 +136,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 			return err
 		}
 	} else {
-		// If it is an ethereum-originated asset we have to mint it (see Handle in attestation_handler.go)
+		// If it is an ethereum-originated asset we have to mint it (see Handle in ethereumEventVoteRecord_handler.go)
 		// mint coins in module for prep to send
 		if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, totalToRefundCoins); err != nil {
 			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", totalToRefundCoins)

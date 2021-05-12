@@ -294,7 +294,7 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 	// Add the claim to the store
 	_, err = k.Attest(ctx, msg, any)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
+		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
 	}
 
 	// Emit the handle message event
@@ -337,7 +337,7 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 	// Add the claim to the store
 	_, err = k.Attest(ctx, msg, any)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
+		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
 	}
 
 	// Emit the handle message event
@@ -377,7 +377,7 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 	// Add the claim to the store
 	_, err = k.Attest(ctx, msg, any)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
+		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
 	}
 
 	// Emit the handle message event
@@ -417,7 +417,7 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 	// Add the claim to the store
 	_, err = k.Attest(ctx, msg, any)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
+		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
 	}
 
 	// Emit the handle message event
@@ -457,7 +457,7 @@ func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgValsetUpda
 	// Add the claim to the store
 	_, err = k.Attest(ctx, msg, any)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
+		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
 	}
 
 	// Emit the handle message event

@@ -212,12 +212,12 @@ message EthereumEventVoteRecord {
   repeated string votes = 2;
   // This is the Cosmos block height that this event was first observed by a validator.
   uint64 height = 3;
-  // The claim is the Ethereum event that this attestation is recording votes for.
+  // The claim is the Ethereum event that this ethereumEventVoteRecord is recording votes for.
   google.protobuf.Any claim = 4;
 }
 ```
 
-+++ <https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/attestation.proto#L38-L43>
++++ <https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/ethereumEventVoteRecord.proto#L38-L43>
 
 ### Valset
 

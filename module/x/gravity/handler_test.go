@@ -113,7 +113,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 
-	// and attestation persisted
+	// and ethereumEventVoteRecord persisted
 	a := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim.ClaimHash())
 	require.NotNil(t, a)
 	// and vouchers added to the account
@@ -227,7 +227,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	_, err := h(ctx, &ethClaim1)
 	EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
-	// and attestation persisted
+	// and ethereumEventVoteRecord persisted
 	a1 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim1.ClaimHash())
 	require.NotNil(t, a1)
 	// and vouchers not yet added to the account
@@ -240,7 +240,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 
-	// and attestation persisted
+	// and ethereumEventVoteRecord persisted
 	a2 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim1.ClaimHash())
 	require.NotNil(t, a2)
 	// and vouchers now added to the account
@@ -253,7 +253,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 
-	// and attestation persisted
+	// and ethereumEventVoteRecord persisted
 	a3 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim1.ClaimHash())
 	require.NotNil(t, a3)
 	// and no additional added to the account

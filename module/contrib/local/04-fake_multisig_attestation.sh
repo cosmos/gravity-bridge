@@ -11,8 +11,8 @@ nonce=$(gravitycli q gravity pending-valset-request $(gravitycli keys show valid
 echo "## Approve pending request"
 gravitycli tx gravity approved valset-confirm  "$nonce" 0xb8662f35f9de8720424e82b232e8c98d15399490adae9ca993f5ef1dc4883690 --from validator --chain-id=testing -b block -y
 
-echo "## View attestations"
-gravitycli q gravity attestation orchestrator_signed_multisig_update $nonce -o json | jq
+echo "## View ethereumEventVoteRecords"
+gravitycli q gravity ethereumEventVoteRecord orchestrator_signed_multisig_update $nonce -o json | jq
 
 echo "## Submit observation"
 # chain id: 1

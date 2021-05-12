@@ -28,23 +28,23 @@ When other validators see the same event at the same event nonce, and call `Depo
 
 ### Counting EthereumEventVoteRecord votes
 
-Every endblock, the module attempts to tally up the votes for un-Observed attestations. Which attestations it chooses to tally is covered in the [end blocker spec](05_end_block.md).
+Every endblock, the module attempts to tally up the votes for un-Observed ethereumEventVoteRecords. Which ethereumEventVoteRecords it chooses to tally is covered in the [end blocker spec](05_end_block.md).
 
-When tallying the votes a given attestation, we follow this algorithm:
+When tallying the votes a given ethereumEventVoteRecord, we follow this algorithm:
 
 - First get `LastTotalPower` from the StakingKeeper
 - `requiredPower` = `EthereumEventVoteRecordVotesPowerThreshold` \* `LastTotalPower` / 100
   - This effectively calculates `EthereumEventVoteRecordVotesPowerThreshold` percent (usually 66%) of `LastTotalPower`, truncating all decimal points.
-- Set `attestationPower` = 0
+- Set `ethereumEventVoteRecordPower` = 0
 
-- For every validator in the attestation's votes field:
-  - Add the validators current power to `attestationPower`.
-  - Check if the `attestationPower` is greater than or equal to `requiredPower`
-    - If so, we first check if the `eventNonce` of the attestation's event is exactly one greater than the global `LastObservedEventNonce`. If it is not, something is very wrong and we panic (this could only be caused by programmer error elsewhere in the module).
-    - We set the `observed` field to true, set the global `LastObservedEventNonce` to the attestation's event's `event_nonce`. This will only ever result in incrementing the `LastObservedEventNonce` by one, given the preceding conditions.
-    - We set the `LastObservedEthereumBlockHeight` to the Ethereum block height from the attestation's event. This is used later when we need a recent Ethereum block height, for example to calculate batch timeouts.
+- For every validator in the ethereumEventVoteRecord's votes field:
+  - Add the validators current power to `ethereumEventVoteRecordPower`.
+  - Check if the `ethereumEventVoteRecordPower` is greater than or equal to `requiredPower`
+    - If so, we first check if the `eventNonce` of the ethereumEventVoteRecord's event is exactly one greater than the global `LastObservedEventNonce`. If it is not, something is very wrong and we panic (this could only be caused by programmer error elsewhere in the module).
+    - We set the `observed` field to true, set the global `LastObservedEventNonce` to the ethereumEventVoteRecord's event's `event_nonce`. This will only ever result in incrementing the `LastObservedEventNonce` by one, given the preceding conditions.
+    - We set the `LastObservedEthereumBlockHeight` to the Ethereum block height from the ethereumEventVoteRecord's event. This is used later when we need a recent Ethereum block height, for example to calculate batch timeouts.
 
-Now we are ready to apply the attestation's event to the Cosmos state. This is different depending on which event we are dealing with, see state transtions for the individual events.
+Now we are ready to apply the ethereumEventVoteRecord's event to the Cosmos state. This is different depending on which event we are dealing with, see state transtions for the individual events.
 
 ## MsgDepositClaim
 
