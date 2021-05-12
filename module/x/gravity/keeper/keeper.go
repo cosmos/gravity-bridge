@@ -278,9 +278,7 @@ func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*ty
 	return confirms
 }
 
-// IterateValsetConfirmByNonce iterates through all valset confirms by nonce in ASC order
-// MARK finish-batches: this is where the key is iterated in the old (presumed working) code
-// TODO: specify which nonce this is
+// IterateValsetConfirmByNonce iterates through all valset confirms by validator set nonce in ASC order
 func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgValsetConfirm) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
 	iter := prefixStore.Iterator(prefixRange(types.UInt64Bytes(nonce)))
