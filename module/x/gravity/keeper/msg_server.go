@@ -137,11 +137,19 @@ func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEt
 
 	switch event.(type) {
 	case *types.BatchExecutedEvent: {
-		return k.confirmBatch(ctx.Context(), signingAddress, event.(*types.BatchExecutedEvent))
+		return k.batchExecuted(ctx.Context(), signingAddress, event.(*types.BatchExecutedEvent))
 	}
 	case *types.ContractCallExecutedEvent: {
-
+		return k.contractCallExecuted(ctx.Context(), signingAddress, event.(*types.ContractCallExecutedEvent))
 	}
+	case *types.SendToCosmosEvent: {
+		return k.sendToCosmosEvent(ctx.Context(), signingAddress, event.(*types.SendToCosmosEvent))
+	}
+	case *types.ERC20DeployedEvent: {
+		return k.erc20DeployedEvent(ctx.Context(), signingAddress, event.(*types.ERC20DeployedEvent))
+	}
+	default:
+		return nil, fmt.Errorf("unknown submit to ethereum case: %T", event)
 	}
 }
 
@@ -196,145 +204,139 @@ func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchT
 	return &types.MsgRequestBatchTxResponse{}, nil
 }
 
+//
+//// ConfirmBatch handles MsgConfirmBatch
+//func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (*types.MsgConfirmBatchResponse, error) {
+//	ctx := sdk.UnwrapSDKContext(c)
+//
+//	// fetch the outgoing batch given the nonce
+//	batch := k.GetBatchTx(ctx, msg.TokenContract, msg.Nonce)
+//	if batch == nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
+//	}
+//
+//	gravityID := k.GetGravityID(ctx)
+//	checkpoint, err := batch.GetCheckpoint(gravityID)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
+//	}
+//
+//	sigBytes, err := hex.DecodeString(msg.Signature)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
+//	}
+//
+//	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+//	validator := k.GetOrchestratorValidator(ctx, orchaddr)
+//	if validator == nil {
+//		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+//	}
+//
+//	ethAddress := k.GetEthAddress(ctx, validator)
+//	if ethAddress == "" {
+//		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
+//	}
+//
+//	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
+//	}
+//
+//	// check if we already have this confirm
+//	if k.GetBatchConfirm(ctx, msg.Nonce, msg.TokenContract, orchaddr) != nil {
+//		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
+//	}
+//	key := k.SetBatchConfirm(ctx, msg)
+//
+//	ctx.EventManager().EmitEvent(
+//		sdk.NewEvent(
+//			sdk.EventTypeMessage,
+//			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+//			sdk.NewAttribute(types.AttributeKeyBatchConfirmKey, string(key)),
+//		),
+//	)
+//
+//	return nil, nil
+//}
+//
+//// ConfirmLogicCall handles MsgConfirmLogicCall
+//func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogicCall) (*types.MsgConfirmLogicCallResponse, error) {
+//	ctx := sdk.UnwrapSDKContext(c)
+//	invalidationIdBytes, err := hex.DecodeString(msg.InvalidationScope)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, "invalidation id encoding")
+//	}
+//
+//	// fetch the outgoing logic given the nonce
+//	logic := k.GetContractCallTx(ctx, invalidationIdBytes, msg.InvalidationNonce)
+//	if logic == nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find logic")
+//	}
+//
+//	gravityID := k.GetGravityID(ctx)
+//	checkpoint, err := logic.GetCheckpoint(gravityID)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
+//	}
+//
+//	sigBytes, err := hex.DecodeString(msg.Signature)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
+//	}
+//
+//	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+//	validator := k.GetOrchestratorValidator(ctx, orchaddr)
+//	if validator == nil {
+//		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
+//	}
+//
+//	ethAddress := k.GetEthAddress(ctx, validator)
+//	if ethAddress == "" {
+//		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
+//	}
+//
+//	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
+//	if err != nil {
+//		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
+//	}
+//
+//	// check if we already have this confirm
+//	if k.GetContractCallTxSignature(ctx, invalidationIdBytes, msg.InvalidationNonce, orchaddr) != nil {
+//		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
+//	}
+//
+//	k.SetContractCallTxSignature(ctx, msg)
+//
+//	ctx.EventManager().EmitEvent(
+//		sdk.NewEvent(
+//			sdk.EventTypeMessage,
+//			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+//		),
+//	)
+//
+//	return nil, nil
+//}
 
-// ConfirmBatch handles MsgConfirmBatch
-func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (*types.MsgConfirmBatchResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	// fetch the outgoing batch given the nonce
-	batch := k.GetBatchTx(ctx, msg.TokenContract, msg.Nonce)
-	if batch == nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
-	}
-
-	gravityID := k.GetGravityID(ctx)
-	checkpoint, err := batch.GetCheckpoint(gravityID)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
-	}
-
-	sigBytes, err := hex.DecodeString(msg.Signature)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
-	}
-
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-	}
-
-	ethAddress := k.GetEthAddress(ctx, validator)
-	if ethAddress == "" {
-		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
-	}
-
-	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
-	}
-
-	// check if we already have this confirm
-	if k.GetBatchConfirm(ctx, msg.Nonce, msg.TokenContract, orchaddr) != nil {
-		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
-	}
-	key := k.SetBatchConfirm(ctx, msg)
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyBatchConfirmKey, string(key)),
-		),
-	)
-
-	return nil, nil
-}
-
-// ConfirmLogicCall handles MsgConfirmLogicCall
-func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogicCall) (*types.MsgConfirmLogicCallResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-	invalidationIdBytes, err := hex.DecodeString(msg.InvalidationScope)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "invalidation id encoding")
-	}
-
-	// fetch the outgoing logic given the nonce
-	logic := k.GetContractCallTx(ctx, invalidationIdBytes, msg.InvalidationNonce)
-	if logic == nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find logic")
-	}
-
-	gravityID := k.GetGravityID(ctx)
-	checkpoint, err := logic.GetCheckpoint(gravityID)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "checkpoint generation")
-	}
-
-	sigBytes, err := hex.DecodeString(msg.Signature)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
-	}
-
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-	}
-
-	ethAddress := k.GetEthAddress(ctx, validator)
-	if ethAddress == "" {
-		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
-	}
-
-	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
-	}
-
-	// check if we already have this confirm
-	if k.GetContractCallTxSignature(ctx, invalidationIdBytes, msg.InvalidationNonce, orchaddr) != nil {
-		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
-	}
-
-	k.SetContractCallTxSignature(ctx, msg)
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-		),
-	)
-
-	return nil, nil
-}
-
-// DepositClaim handles MsgDepositClaim
+// sendToCosmosEvent handles MsgDepositClaim
 // TODO it is possible to submit an old msgDepositClaim (old defined as covering an event nonce that has already been
 // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
 // should not be a security risk as 'old' events can never execute but it does store spam in the chain.
-func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (*types.MsgDepositClaimResponse, error) {
+func (k msgServer) sendToCosmosEvent(c context.Context, signer sdk.ValAddress, event *types.SendToCosmosEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-	}
-
 	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
+	val := k.StakingKeeper.Validator(ctx, signer)
 	if val == nil || !val.IsBonded() {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in active set")
 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
+	any, err := codectypes.NewAnyWithValue(event)
 	if err != nil {
 		return nil, err
 	}
 
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err = k.Attest(ctx, event, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
@@ -343,41 +345,35 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, fmt.Sprintf("%T", event)),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(event.EventNonce, event.Hash()))),
 		),
 	)
 
-	return &types.MsgDepositClaimResponse{}, nil
+	return &types.MsgSubmitEthereumEventResponse{}, nil
 }
 
 // batchExecuted handles MsgWithdrawClaim
 // TODO it is possible to submit an old msgWithdrawClaim (old defined as covering an event nonce that has already been
 // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
 // should not be a security risk as 'old' events can never execute but it does store spam in the chain.
-func (k msgServer) batchExecuted(c context.Context, signer sdk.ValAddress, msg *types.MsgWithdrawClaim) (*types.MsgWithdrawClaimResponse, error) {
+func (k msgServer) batchExecuted(c context.Context, signer sdk.ValAddress, event *types.BatchExecutedEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-	}
-
 	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
+	val := k.StakingKeeper.Validator(ctx, signer)
 	if val == nil || !val.IsBonded() {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in active set")
 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
+	any, err := codectypes.NewAnyWithValue(event)
 	if err != nil {
 		return nil, err
 	}
 
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err = k.Attest(ctx, event, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
@@ -386,38 +382,32 @@ func (k msgServer) batchExecuted(c context.Context, signer sdk.ValAddress, msg *
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, fmt.Sprintf("%T", event)),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(event.EventNonce, event.Hash()))),
 		),
 	)
 
-	return &types.MsgWithdrawClaimResponse{}, nil
+	return &types.MsgSubmitEthereumEventResponse{}, nil
 }
 
 // ERC20Deployed handles MsgERC20Deployed
-func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20DeployedClaim) (*types.MsgERC20DeployedClaimResponse, error) {
+func (k msgServer) erc20DeployedEvent(c context.Context, signer sdk.ValAddress, event *types.ERC20DeployedEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-	}
-
 	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
+	val := k.StakingKeeper.Validator(ctx, signer)
 	if val == nil || !val.IsBonded() {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
+	any, err := codectypes.NewAnyWithValue(event)
 	if err != nil {
 		return nil, err
 	}
 
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err = k.Attest(ctx, event, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
@@ -426,38 +416,32 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, fmt.Sprintf("%T", event)),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(event.EventNonce, event.Hash()))),
 		),
 	)
 
-	return &types.MsgERC20DeployedClaimResponse{}, nil
+	return &types.MsgSubmitEthereumEventResponse{}, nil
 }
 
-// LogicCallExecutedClaim handles claims for executing a logic call on Ethereum
-func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogicCallExecutedClaim) (*types.MsgLogicCallExecutedClaimResponse, error) {
+// contractCallExecuted handles claims for executing a logic call on Ethereum
+func (k msgServer) contractCallExecuted(c context.Context, signer sdk.ValAddress, event *types.ContractCallExecutedEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-	}
-
 	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
+	val := k.StakingKeeper.Validator(ctx, signer)
 	if val == nil || !val.IsBonded() {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
+	any, err := codectypes.NewAnyWithValue(event)
 	if err != nil {
 		return nil, err
 	}
 
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err = k.Attest(ctx, event, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
@@ -466,13 +450,13 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, fmt.Sprintf("%T", event)),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(event.EventNonce, event.Hash()))),
 		),
 	)
 
-	return &types.MsgLogicCallExecutedClaimResponse{}, nil
+	return &types.MsgSubmitEthereumEventResponse{}, nil
 }
 
 func (k msgServer) CancelSendToEthereum(c context.Context, msg *types.MsgCancelSendToEthereum) (*types.MsgCancelSendToEthereumResponse, error) {
