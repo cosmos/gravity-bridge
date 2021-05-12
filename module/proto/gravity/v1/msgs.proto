@@ -37,8 +37,8 @@ service Msg {
       returns (MsgERC20DeployedEventResponse) {
     option (google.api.http).post = "/gravity/v1/erc20_deployed_claim";
   }
-  rpc ContractCallTxExecutedEvent(MsgContractCallTxExecutedEvent)
-      returns (MsgContractCallTxExecutedEventResponse) {
+  rpc ContractCallExecutedEvent(MsgContractCallExecutedEvent)
+      returns (MsgContractCallExecutedEventResponse) {
     option (google.api.http).post = "/gravity/v1/logic_call_executed_claim";
   }
   rpc DelegateKeys(MsgDelegateKeys) returns (MsgDelegateKeysResponse) {
@@ -47,7 +47,7 @@ service Msg {
   rpc CancelSendToEthereum(MsgCancelSendToEthereum) returns (MsgCancelSendToEthereumResponse) {
     option (google.api.http).post = "/gravity/v1/cancel_send_to_eth";
   }
-  rpc SubmitBadEthereumSignatureEvidenc(MsgSubmitBadEthereumSignatureEvidence) returns (MsgSubmitBadEthereumSignatureEvidenceResponse) {
+  rpc SubmitBadEthereumSignatureEvidence(MsgSubmitBadEthereumSignatureEvidence) returns (MsgSubmitBadEthereumSignatureEvidenceResponse) {
     option (google.api.http).post = "/gravity/v1/submit_bad_signature_evidence";
   }
 }
@@ -224,7 +224,7 @@ message MsgERC20DeployedEventResponse {}
 
 // This informs the Cosmos module that a logic
 // call has been executed
-message MsgContractCallTxExecutedEvent {
+message MsgContractCallExecutedEvent {
   uint64 event_nonce        = 1;
   uint64 block_height       = 2;
   bytes  invalidation_id    = 3;
@@ -232,7 +232,7 @@ message MsgContractCallTxExecutedEvent {
   string orchestrator       = 5;
 }
 
-message MsgContractCallTxExecutedEventResponse {}
+message MsgContractCallExecutedEventResponse {}
 
 // This informs the Cosmos module that a validator
 // set has been updated.

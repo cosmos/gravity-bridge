@@ -141,7 +141,7 @@ func CmdGetSignerSetTxRequest() *cobra.Command {
 				Nonce: nonce,
 			}
 
-			res, err := queryClient.SignerSetTxRequest(cmd.Context(), req)
+			res, err := queryClient.SignerSetTx(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
@@ -197,7 +197,7 @@ func CmdGetPendingSignerSetTxRequest() *cobra.Command {
 				Address: args[0],
 			}
 
-			res, err := queryClient.LastPendingSignerSetTxRequestByAddr(cmd.Context(), req)
+			res, err := queryClient.LastPendingSignerSetTxByAddr(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
@@ -222,7 +222,7 @@ func CmdGetPendingOutgoingTXBatchRequest() *cobra.Command {
 				Address: args[0],
 			}
 
-			res, err := queryClient.LastPendingBatchRequestByAddr(cmd.Context(), req)
+			res, err := queryClient.LastPendingBatchTxByAddr(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

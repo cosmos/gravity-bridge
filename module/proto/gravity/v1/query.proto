@@ -114,7 +114,7 @@ message SignerSetTxSignaturesByNonceRequest {
   uint64 nonce = 1;
 }
 message SignerSetTxSignaturesByNonceResponse {
-  repeated MsgSignerSetTxSignature signature_msg = 1;
+  repeated MsgSignerSetTxSignature signature_msgs = 1;
 }
 
 message LastSignerSetTxsRequest {}
@@ -171,7 +171,7 @@ message BatchTxSignaturesRequest {
   string contract_address = 2;
 }
 message BatchTxSignaturesResponse {
-  repeated MsgBatchTxSignature signature_msg = 1;
+  repeated MsgBatchTxSignature signature_msgs = 1;
 }
 
 message ContractCallTxSignaturesRequest {

@@ -1,7 +1,6 @@
 package gravity
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -77,7 +76,8 @@ func (AppModuleBasic) GetTxCmd() *cobra.Command {
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the distribution module.
 // also implements app modeul basic
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
+	// Commenting this out because we don't have a grpc gateway any more
+	// types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
 }
 
 // RegisterInterfaces implements app bmodule basic

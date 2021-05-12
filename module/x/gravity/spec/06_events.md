@@ -112,7 +112,7 @@ The gravity module emits the following events:
 | ------- | ------------- | --------------- |
 | message | module        | confirm_logic   |
 
-### Msg/ContractCallTxExecutedEvent
+### Msg/ContractCallExecutedEvent
 
 | Type    | Attribute Key              | Attribute Value               |
 | ------- | -------------------------- | ----------------------------- |

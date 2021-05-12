@@ -25,7 +25,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgDelegateKeys) (*types.MsgDelegateKeysResponse, error) {
+func (k msgServer) DelegateKeys(c context.Context, msg *types.MsgDelegateKeys) (*types.MsgDelegateKeysResponse, error) {
 	// ensure that this passes validation
 	err := msg.ValidateBasic()
 	if err != nil {
@@ -62,7 +62,6 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgDeleg
 
 }
 
-// SignerSetTxSignature handles MsgSignerSetTxSignature
 // TODO: check msgSignerSetTxSignature to have an Orchestrator field instead of a Validator field
 func (k msgServer) SignerSetTxSignature(c context.Context, msg *types.MsgSignerSetTxSignature) (*types.MsgSignerSetTxSignatureResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -111,7 +110,6 @@ func (k msgServer) SignerSetTxSignature(c context.Context, msg *types.MsgSignerS
 	return &types.MsgSignerSetTxSignatureResponse{}, nil
 }
 
-// SendToEthereum handles MsgSendToEthereum
 func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereum) (*types.MsgSendToEthereumResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
@@ -134,8 +132,7 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 	return &types.MsgSendToEthereumResponse{}, nil
 }
 
-// RequestBatch handles MsgRequestBatchTx
-func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatchTx) (*types.MsgRequestBatchTxResponse, error) {
+func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchTx) (*types.MsgRequestBatchTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Check if the denom is a gravity coin, if not, check if there is a deployed ERC20 representing it.
@@ -393,8 +390,8 @@ func (k msgServer) ERC20DeployedEvent(c context.Context, msg *types.MsgERC20Depl
 	return &types.MsgERC20DeployedEventResponse{}, nil
 }
 
-// ContractCallTxExecutedEvent handles claims for executing a logic call on Ethereum
-func (k msgServer) ContractCallTxExecutedEvent(c context.Context, msg *types.MsgContractCallTxExecutedEvent) (*types.MsgContractCallTxExecutedEventResponse, error) {
+// ContractCallExecutedEvent handles claims for executing a logic call on Ethereum
+func (k msgServer) ContractCallExecutedEvent(c context.Context, msg *types.MsgContractCallExecutedEvent) (*types.MsgContractCallExecutedEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
@@ -430,11 +427,11 @@ func (k msgServer) ContractCallTxExecutedEvent(c context.Context, msg *types.Msg
 		),
 	)
 
-	return &types.MsgContractCallTxExecutedEventResponse{}, nil
+	return &types.MsgContractCallExecutedEventResponse{}, nil
 }
 
-// SignerSetUpdatedEvent handles claims for executing a validator set update on Ethereum
-func (k msgServer) SignerSetTxUpdateClaim(c context.Context, msg *types.MsgSignerSetUpdatedEvent) (*types.MsgSignerSetUpdatedEventResponse, error) {
+// SignerSetUpdatedEvent handles the event that is fired when a signer set is updated
+func (k msgServer) SignerSetUpdatedEvent(c context.Context, msg *types.MsgSignerSetUpdatedEvent) (*types.MsgSignerSetUpdatedEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)

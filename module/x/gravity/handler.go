@@ -18,7 +18,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
 		case *types.MsgDelegateKeys:
-			res, err := msgServer.SetOrchestratorAddress(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.DelegateKeys(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgSignerSetTxSignature:
 			res, err := msgServer.SignerSetTxSignature(sdk.WrapSDKContext(ctx), msg)
@@ -27,7 +27,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			res, err := msgServer.SendToEthereum(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRequestBatchTx:
-			res, err := msgServer.RequestBatch(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.RequestBatchTx(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgBatchTxSignature:
 			res, err := msgServer.BatchTxSignature(sdk.WrapSDKContext(ctx), msg)
@@ -44,11 +44,11 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgERC20DeployedEvent:
 			res, err := msgServer.ERC20DeployedEvent(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgContractCallTxExecutedEvent:
-			res, err := msgServer.ContractCallTxExecutedEvent(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgContractCallExecutedEvent:
+			res, err := msgServer.ContractCallExecutedEvent(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgSignerSetUpdatedEvent:
-			res, err := msgServer.SignerSetTxUpdateClaim(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.SignerSetUpdatedEvent(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 
 		default:

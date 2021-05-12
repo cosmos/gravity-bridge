@@ -19,21 +19,18 @@ func (k Keeper) Params(c context.Context, req *types.ParamsRequest) (*types.Para
 
 }
 
-// CurrentSignerSetTx queries the CurrentSignerSetTx of the gravity module
 func (k Keeper) CurrentSignerSetTx(
 	c context.Context,
-	req *types.CurrentSignerSetTxRequest) (*types.QueryCurrentSignerSetTxResponse, error) {
-	return &types.QueryCurrentSignerSetTxResponse{SignerSetTx: k.GetCurrentSignerSetTx(sdk.UnwrapSDKContext(c))}, nil
+	req *types.CurrentSignerSetTxRequest) (*types.CurrentSignerSetTxResponse, error) {
+	return &types.CurrentSignerSetTxResponse{SignerSetTx: k.GetCurrentSignerSetTx(sdk.UnwrapSDKContext(c))}, nil
 }
 
-// SignerSetTxRequest queries the SignerSetTxRequest of the gravity module
-func (k Keeper) SignerSetTxRequest(
+func (k Keeper) SignerSetTx(
 	c context.Context,
 	req *types.SignerSetTxRequest) (*types.SignerSetTxResponse, error) {
 	return &types.SignerSetTxResponse{SignerSetTx: k.GetSignerSetTx(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
 }
 
-// SignerSetTxSignature queries the SignerSetTxSignature of the gravity module
 func (k Keeper) SignerSetTxSignature(
 	c context.Context,
 	req *types.SignerSetTxSignatureRequest) (*types.SignerSetTxSignatureResponse, error) {
@@ -41,10 +38,9 @@ func (k Keeper) SignerSetTxSignature(
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
-	return &types.SignerSetTxSignatureResponse{Confirm: k.GetSignerSetTxSignature(sdk.UnwrapSDKContext(c), req.Nonce, addr)}, nil
+	return &types.SignerSetTxSignatureResponse{SignatureMsg: k.GetSignerSetTxSignature(sdk.UnwrapSDKContext(c), req.Nonce, addr)}, nil
 }
 
-// SignerSetTxSignaturesByNonce queries the SignerSetTxSignaturesByNonce of the gravity module
 func (k Keeper) SignerSetTxSignaturesByNonce(
 	c context.Context,
 	req *types.SignerSetTxSignaturesByNonceRequest) (*types.SignerSetTxSignaturesByNonceResponse, error) {
@@ -53,11 +49,10 @@ func (k Keeper) SignerSetTxSignaturesByNonce(
 		confirms = append(confirms, &c)
 		return false
 	})
-	return &types.SignerSetTxSignaturesByNonceResponse{Confirms: confirms}, nil
+	return &types.SignerSetTxSignaturesByNonceResponse{SignatureMsgs: confirms}, nil
 }
 
-// LastSignerSetTxRequests queries the LastSignerSetTxRequests of the gravity module
-func (k Keeper) LastSignerSetTxRequests(
+func (k Keeper) LastSignerSetTxs(
 	c context.Context,
 	req *types.LastSignerSetTxsRequest) (*types.LastSignerSetTxsResponse, error) {
 	valReq := k.GetSignerSetTxs(sdk.UnwrapSDKContext(c))
@@ -71,8 +66,7 @@ func (k Keeper) LastSignerSetTxRequests(
 	return &types.LastSignerSetTxsResponse{SignerSetTxs: valReq[0:retLen]}, nil
 }
 
-// LastPendingSignerSetTxRequestByAddr queries the LastPendingSignerSetTxRequestByAddr of the gravity module
-func (k Keeper) LastPendingSignerSetTxRequestByAddr(
+func (k Keeper) LastPendingSignerSetTxByAddr(
 	c context.Context,
 	req *types.LastPendingSignerSetTxByAddrRequest) (*types.LastPendingSignerSetTxByAddrResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
@@ -107,8 +101,7 @@ func (k Keeper) BatchFees(
 	return &types.BatchFeeResponse{BatchFees: k.GetAllBatchFees(sdk.UnwrapSDKContext(c))}, nil
 }
 
-// LastPendingBatchRequestByAddr queries the LastPendingBatchRequestByAddr of the gravity module
-func (k Keeper) LastPendingBatchRequestByAddr(
+func (k Keeper) LastPendingBatchTxByAddr(
 	c context.Context,
 	req *types.LastPendingBatchTxByAddrRequest) (*types.LastPendingBatchTxByAddrResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
@@ -129,7 +122,7 @@ func (k Keeper) LastPendingBatchRequestByAddr(
 	return &types.LastPendingBatchTxByAddrResponse{Batch: pendingBatchReq}, nil
 }
 
-func (k Keeper) LastPendingLogicCallByAddr(
+func (k Keeper) LastPendingContractCallTxByAddr(
 	c context.Context,
 	req *types.LastPendingContractCallTxByAddrRequest) (*types.LastPendingContractCallTxByAddrResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
@@ -150,7 +143,6 @@ func (k Keeper) LastPendingLogicCallByAddr(
 	return &types.LastPendingContractCallTxByAddrResponse{Call: pendingLogicReq}, nil
 }
 
-// BatchTxs queries the BatchTxs of the gravity module
 func (k Keeper) BatchTxs(
 	c context.Context,
 	req *types.BatchTxsRequest) (*types.BatchTxsResponse, error) {
@@ -162,7 +154,6 @@ func (k Keeper) BatchTxs(
 	return &types.BatchTxsResponse{Batches: batches}, nil
 }
 
-// ContractCallTxs queries the ContractCallTxs of the gravity module
 func (k Keeper) ContractCallTxs(
 	c context.Context,
 	req *types.ContractCallTxsRequest) (*types.ContractCallTxsResponse, error) {
@@ -174,8 +165,7 @@ func (k Keeper) ContractCallTxs(
 	return &types.ContractCallTxsResponse{Calls: calls}, nil
 }
 
-// BatchRequestByNonce queries the BatchRequestByNonce of the gravity module
-func (k Keeper) BatchRequestByNonce(
+func (k Keeper) BatchTxByNonce(
 	c context.Context,
 	req *types.BatchTxByNonceRequest) (*types.BatchTxByNonceResponse, error) {
 	if err := types.ValidateEthAddress(req.ContractAddress); err != nil {
@@ -188,8 +178,7 @@ func (k Keeper) BatchRequestByNonce(
 	return &types.BatchTxByNonceResponse{Batch: foundBatch}, nil
 }
 
-// BatchConfirms returns the batch confirmations by nonce and token contract
-func (k Keeper) BatchConfirms(
+func (k Keeper) BatchTxSignatures(
 	c context.Context,
 	req *types.BatchTxSignaturesRequest) (*types.BatchTxSignaturesResponse, error) {
 	var confirms []*types.MsgBatchTxSignature
@@ -198,11 +187,10 @@ func (k Keeper) BatchConfirms(
 			confirms = append(confirms, &c)
 			return false
 		})
-	return &types.BatchTxSignaturesResponse{Confirms: confirms}, nil
+	return &types.BatchTxSignaturesResponse{SignatureMsgs: confirms}, nil
 }
 
-// LogicConfirms returns the Logic confirmations by nonce and token contract
-func (k Keeper) LogicConfirms(
+func (k Keeper) ContractCallTxSignatures(
 	c context.Context,
 	req *types.ContractCallTxSignaturesRequest) (*types.ContractCallTxSignaturesResponse, error) {
 	var confirms []*types.MsgContractCallTxSignature
