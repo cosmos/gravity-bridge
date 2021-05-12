@@ -25,11 +25,11 @@ func TestBatchTxCheckpointGold1(t *testing.T) {
 				Id:          0x1,
 				Sender:      senderAddr.String(),
 				DestAddress: "0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39",
-				Erc20Token: &ERC20Token{
+				Transfer: &ERC20Token{
 					Amount:   sdk.NewInt(0x1),
 					Contract: erc20Addr,
 				},
-				Erc20Fee: &ERC20Token{
+				Fee: &ERC20Token{
 					Amount:   sdk.NewInt(0x1),
 					Contract: erc20Addr,
 				},
@@ -60,13 +60,13 @@ func TestContractCallTxCheckpointGold1(t *testing.T) {
 		Amount:   sdk.NewIntFromUint64(1),
 	}}
 	call := ContractCallTx{
-		Transfers:            token,
-		Fees:                 token,
-		LogicContractAddress: "0x17c1736CcF692F653c433d7aa2aB45148C016F68",
-		Payload:              payload,
-		Timeout:              4766922941000,
-		InvalidationId:       invalidationId,
-		InvalidationNonce:    1,
+		Transfers:           token,
+		Fees:                token,
+		ContractCallAddress: "0x17c1736CcF692F653c433d7aa2aB45148C016F68",
+		ContractCallPayload: payload,
+		Timeout:             4766922941000,
+		InvalidationId:      invalidationId,
+		InvalidationNonce:   1,
 	}
 
 	ourHash := call.GetCheckpoint("foo")

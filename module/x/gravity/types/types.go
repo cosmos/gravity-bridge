@@ -235,7 +235,7 @@ func (v SignerSetTxs) Swap(i, j int) {
 func (b BatchTx) GetFees() sdk.Int {
 	sum := sdk.ZeroInt()
 	for _, t := range b.Transactions {
-		sum.Add(t.Erc20Fee.Amount)
+		sum.Add(t.Fee.Amount)
 	}
 	return sum
 }

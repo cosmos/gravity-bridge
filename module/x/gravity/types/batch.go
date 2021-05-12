@@ -37,9 +37,9 @@ func (b BatchTx) GetCheckpoint(gravityIDstring string) []byte {
 	txDestinations := make([]gethcommon.Address, len(b.Transactions))
 	txFees := make([]*big.Int, len(b.Transactions))
 	for i, tx := range b.Transactions {
-		txAmounts[i] = tx.Erc20Token.Amount.BigInt()
+		txAmounts[i] = tx.Transfer.Amount.BigInt()
 		txDestinations[i] = gethcommon.HexToAddress(tx.DestAddress)
-		txFees[i] = tx.Erc20Fee.Amount.BigInt()
+		txFees[i] = tx.Fee.Amount.BigInt()
 	}
 
 	// the methodName needs to be the same as the 'name' above in the checkpointAbiJson
@@ -103,8 +103,8 @@ func (c ContractCallTx) GetCheckpoint(gravityIDstring string) []byte {
 		feeAmounts[i] = tx.Amount.BigInt()
 		feeTokenContracts[i] = gethcommon.HexToAddress(tx.Contract)
 	}
-	payload := make([]byte, len(c.Payload))
-	copy(payload, c.Payload)
+	payload := make([]byte, len(c.ContractCallPayload))
+	copy(payload, c.ContractCallPayload)
 	var invalidationId [32]byte
 	copy(invalidationId[:], c.InvalidationId[:])
 
@@ -118,7 +118,7 @@ func (c ContractCallTx) GetCheckpoint(gravityIDstring string) []byte {
 		transferTokenContracts,
 		feeAmounts,
 		feeTokenContracts,
-		gethcommon.HexToAddress(c.LogicContractAddress),
+		gethcommon.HexToAddress(c.ContractCallAddress),
 		payload,
 		big.NewInt(int64(c.Timeout)),
 		invalidationId,

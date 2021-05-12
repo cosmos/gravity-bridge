@@ -449,7 +449,7 @@ const (
 
 // GetType returns the type of the claim
 func (e *MsgERC20DeployedEvent) GetType() EventType {
-	return EVENT_TYPE_ERC20_DEPLOYED
+	return EVENT_TYPE_COSMOS_ERC20_DEPLOYED
 }
 
 // ValidateBasic performs stateless checks
@@ -508,7 +508,7 @@ func (b *MsgERC20DeployedEvent) ClaimHash() []byte {
 
 // GetType returns the type of the claim
 func (e *MsgContractCallTxExecutedEvent) GetType() EventType {
-	return EVENT_TYPE_LOGIC_CALL_EXECUTED
+	return EVENT_TYPE_CONTRACT_CALL_EXECUTED
 }
 
 // ValidateBasic performs stateless checks
@@ -564,7 +564,7 @@ func (b *MsgContractCallTxExecutedEvent) ClaimHash() []byte {
 
 // GetType returns the type of the claim
 func (e *MsgSignerSetUpdatedEvent) GetType() EventType {
-	return EVENT_TYPE_VALSET_UPDATED
+	return EVENT_TYPE_SIGNER_SET_UPDATED
 }
 
 // ValidateBasic performs stateless checks
@@ -611,7 +611,7 @@ func (msg MsgSignerSetUpdatedEvent) Route() string { return RouterKey }
 
 // Hash implements BridgeDeposit.Hash
 func (b *MsgSignerSetUpdatedEvent) ClaimHash() []byte {
-	path := fmt.Sprintf("%d/%d/%d/%s/", b.SignerSetTxNonce, b.EventNonce, b.BlockHeight, b.Members)
+	path := fmt.Sprintf("%d/%d/%d/%s/", b.SignerSetNonce, b.EventNonce, b.BlockHeight, b.Members)
 	return tmhash.Sum([]byte(path))
 }
 
