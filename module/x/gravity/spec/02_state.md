@@ -77,13 +77,13 @@ When a validator signs over a validator set this is considered a `valSetConfirma
 | ------------------------------------------- | ---------------------- | ------------------------------- | ---------------- |
 | `[]byte{0x3} + (nonce + []byte(AccAddress)` | Validator Confirmation | `types.MsgSignerSetTxSignature` | Protobuf encoded |
 
-### ConfirmBatch
+### BatchTxSignature
 
 When a validator confirms a batch it is added to the confirm batch store. It is stored using the orchestrator, token contract and nonce as the key.
 
-| Key                                                                 | Value                        | Type                    | Encoding         |
-| ------------------------------------------------------------------- | ---------------------------- | ----------------------- | ---------------- |
-| `[]byte{0xe1} + []byte(tokenContract) + nonce + []byte(AccAddress)` | Validator Batch Confirmation | `types.MsgConfirmBatch` | Protobuf encoded |
+| Key                                                                 | Value                        | Type                        | Encoding         |
+| ------------------------------------------------------------------- | ---------------------------- | --------------------------- | ---------------- |
+| `[]byte{0xe1} + []byte(tokenContract) + nonce + []byte(AccAddress)` | Validator Batch Confirmation | `types.MsgBatchTxSignature` | Protobuf encoded |
 
 ### OrchestratorValidator
 

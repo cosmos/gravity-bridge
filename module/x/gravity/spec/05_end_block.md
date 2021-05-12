@@ -39,14 +39,14 @@ The current value of `UnbondSlashingValsetsWindow` is 10,000 blocks, or about 12
 - For each of these valsets:
   - Get the current set of bonded validators with `StakingKeeper.GetBondedValidatorsByPower`. For each validator:
     - Check that the validator started validating before the valset was created.
-    - Check if the validator has signed this valset with a `MsgConfirmBatch`. If not, slash the validator by `SlashFractionValset` and jail them.
+    - Check if the validator has signed this valset with a `MsgBatchTxSignature`. If not, slash the validator by `SlashFractionValset` and jail them.
 
 #### Slashing recently unbonded validators:
 
 - Get a list of all validators who are currently unbonding. For each of these:
   - Check that the validator started validating before the valset was created.
   - Check that the valset was created before the `UnbondSlashingValsetsWindow` for that validator ended. (validators `UnbondingHeight` + `UnbondSlashingValsetsWindow`)
-  - Check if the validator has signed this valset with a `MsgConfirmBatch`. If not, slash the validator by `SlashFractionValset` and jail them.
+  - Check if the validator has signed this valset with a `MsgBatchTxSignature`. If not, slash the validator by `SlashFractionValset` and jail them.
 
 ### Batch Slashing
 

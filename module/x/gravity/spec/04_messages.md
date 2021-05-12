@@ -63,7 +63,7 @@ This message will fail if:
 - Failure to build a batch of transactions.
 - If the orchestrator address is not present in the validator set
 
-### MsgConfirmBatch
+### MsgBatchTxSignature
 
 Validators sign `BatchTx`'s with their Ethereum keys, and send the signatures to the Gravity module using this message.
 

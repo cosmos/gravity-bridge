@@ -79,7 +79,7 @@ The gravity module emits the following events:
 | outgoing_batch | outgoing_tx_id  | {outgoing_tx_id}  |
 | outgoing_batch | nonce           | {nonce}           |
 
-### Msg/ConfirmBatch
+### Msg/BatchTxSignature
 
 | Type    | Attribute Key     | Attribute Value     |
 | ------- | ----------------- | ------------------- |

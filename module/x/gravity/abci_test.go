@@ -192,7 +192,7 @@ func TestBatchSlashing(t *testing.T) {
 			input.SlashingKeeper.SetValidatorSigningInfo(ctx, valConsAddr, valSigningInfo)
 			continue
 		}
-		pk.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
+		pk.SetBatchConfirm(ctx, &types.MsgBatchTxSignature{
 			Nonce:         batch.BatchNonce,
 			TokenContract: keeper.TokenContractAddrs[0],
 			EthSigner:     keeper.EthAddrs[i].String(),

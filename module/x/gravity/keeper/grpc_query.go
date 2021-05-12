@@ -192,9 +192,9 @@ func (k Keeper) BatchRequestByNonce(
 func (k Keeper) BatchConfirms(
 	c context.Context,
 	req *types.BatchTxSignaturesRequest) (*types.BatchTxSignaturesResponse, error) {
-	var confirms []*types.MsgConfirmBatch
+	var confirms []*types.MsgBatchTxSignature
 	k.IterateBatchConfirmByNonceAndTokenContract(sdk.UnwrapSDKContext(c),
-		req.Nonce, req.ContractAddress, func(_ []byte, c types.MsgConfirmBatch) bool {
+		req.Nonce, req.ContractAddress, func(_ []byte, c types.MsgBatchTxSignature) bool {
 			confirms = append(confirms, &c)
 			return false
 		})

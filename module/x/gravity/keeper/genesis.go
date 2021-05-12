@@ -130,7 +130,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		valsets                  = k.GetValsets(ctx)
 		attmap                   = k.GetEthereumEventVoteRecordMapping(ctx)
 		vsconfs                  = []*types.MsgSignerSetTxSignature{}
-		batchconfs               = []types.MsgConfirmBatch{}
+		batchconfs               = []types.MsgBatchTxSignature{}
 		callconfs                = []types.MsgConfirmLogicCall{}
 		ethereumEventVoteRecords = []types.EthereumEventVoteRecord{}
 		delegates                = k.GetDelegateKeys(ctx)

@@ -113,7 +113,7 @@ Moving on with the batch creation process:
 
 ### Batch signing
 
-Once a batch has been created and stored, it is up to the current validators to sign it with their Ethereum keys so that it can be submitted to the Ethereum chain. They do this with a separate process called the "orchestrator", and send the signatures to the Cosmos chain as `MsgConfirmBatch` messages. The Gravity module then checks that the signature is valid and stores it .
+Once a batch has been created and stored, it is up to the current validators to sign it with their Ethereum keys so that it can be submitted to the Ethereum chain. They do this with a separate process called the "orchestrator", and send the signatures to the Cosmos chain as `MsgBatchTxSignature` messages. The Gravity module then checks that the signature is valid and stores it .
 
 Relayers are then able to get all the signatures for a batch, assemble them into an Ethereum transaction, and send it to the Gravity.sol contract.
 

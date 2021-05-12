@@ -203,8 +203,8 @@ func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContract strin
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	var confirms []types.MsgConfirmBatch
-	keeper.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, c types.MsgConfirmBatch) bool {
+	var confirms []types.MsgBatchTxSignature
+	keeper.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, c types.MsgBatchTxSignature) bool {
 		confirms = append(confirms, c)
 		return false
 	})

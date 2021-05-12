@@ -552,7 +552,7 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 		validatorAddr, _ = sdk.AccAddressFromBech32("cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh")
 	)
 
-	input.GravityKeeper.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
+	input.GravityKeeper.SetBatchConfirm(ctx, &types.MsgBatchTxSignature{
 		Nonce:         1,
 		TokenContract: tokenContract,
 		EthSigner:     "0xf35e2cc8e6523d683ed44870f5b7cc785051a77d",

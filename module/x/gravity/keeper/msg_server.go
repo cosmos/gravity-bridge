@@ -161,8 +161,8 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatchTx)
 	return &types.MsgRequestBatchTxResponse{}, nil
 }
 
-// ConfirmBatch handles MsgConfirmBatch
-func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (*types.MsgConfirmBatchResponse, error) {
+// BatchTxSignature handles MsgBatchTxSignature
+func (k msgServer) BatchTxSignature(c context.Context, msg *types.MsgBatchTxSignature) (*types.MsgBatchTxSignatureResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// fetch the outgoing batch given the nonce
