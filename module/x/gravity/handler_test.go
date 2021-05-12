@@ -290,13 +290,13 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 
 	assert.Equal(t, k.GetOrchestratorValidator(ctx, cosmosAddress), valAddress)
 
-	queryO := types.QueryDelegateKeysByOrchestratorAddress{
+	queryO := types.DelegateKeysByOrchestratorAddress{
 		OrchestratorAddress: cosmosAddress.String(),
 	}
 	_, err = k.GetDelegateKeyByOrchestrator(wctx, &queryO)
 	require.NoError(t, err)
 
-	queryE := types.QueryDelegateKeysByEthAddress{
+	queryE := types.DelegateKeysByEthAddress{
 		EthAddress: ethAddress,
 	}
 	_, err = k.GetDelegateKeyByEth(wctx, &queryE)
@@ -311,13 +311,13 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 
 	assert.Equal(t, k.GetOrchestratorValidator(ctx, cosmosAddress2), valAddress)
 
-	queryO = types.QueryDelegateKeysByOrchestratorAddress{
+	queryO = types.DelegateKeysByOrchestratorAddress{
 		OrchestratorAddress: cosmosAddress2.String(),
 	}
 	_, err = k.GetDelegateKeyByOrchestrator(wctx, &queryO)
 	require.NoError(t, err)
 
-	queryE = types.QueryDelegateKeysByEthAddress{
+	queryE = types.DelegateKeysByEthAddress{
 		EthAddress: ethAddress2,
 	}
 	_, err = k.GetDelegateKeyByEth(wctx, &queryE)

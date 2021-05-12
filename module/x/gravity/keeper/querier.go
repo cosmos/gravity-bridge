@@ -88,7 +88,7 @@ const (
 	QueryDenomToERC20 = "DenomToERC20"
 
 	// Query pending transactions
-	QueryPendingSendToEth = "PendingSendToEth"
+	PendingSendToEthereumRequest = "PendingSendToEth"
 )
 
 // NewQuerier is the module level router for state queries
@@ -142,7 +142,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryERC20ToDenom(ctx, path[1], keeper)
 
 		// Pending transactions
-		case QueryPendingSendToEth:
+		case PendingSendToEthereumRequest:
 			return queryPendingSendToEth(ctx, path[1], keeper)
 
 		default:
@@ -361,7 +361,7 @@ func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 }
 
 func queryBatchFees(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	val := types.QueryBatchFeeResponse{BatchFees: keeper.GetAllBatchFees(ctx)}
+	val := types.BatchFeeResponse{BatchFees: keeper.GetAllBatchFees(ctx)}
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, val)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
@@ -493,7 +493,7 @@ func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, er
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
-	var response types.QueryDenomToERC20Response
+	var response types.DenomToERC20Response
 	response.CosmosOriginated = cosmos_originated
 	response.Erc20 = erc20
 	bytes, err := codec.MarshalJSONIndent(types.ModuleCdc, response)
@@ -506,7 +506,7 @@ func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, er
 
 func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, error) {
 	cosmos_originated, denom := keeper.ERC20ToDenomLookup(ctx, ERC20)
-	var response types.QueryERC20ToDenomResponse
+	var response types.ERC20ToDenomResponse
 	response.CosmosOriginated = cosmos_originated
 	response.Denom = denom
 	bytes, err := codec.MarshalJSONIndent(types.ModuleCdc, response)
@@ -521,7 +521,7 @@ func queryPendingSendToEth(ctx sdk.Context, senderAddr string, k Keeper) ([]byte
 	batches := k.GetOutgoingTxBatches(ctx)
 	unbatched_tx := k.GetPoolTransactions(ctx)
 	sender_address := senderAddr
-	res := types.QueryPendingSendToEthResponse{}
+	res := types.PendingSendToEthereumRequestResponse{}
 	for _, batch := range batches {
 		for _, tx := range batch.Transactions {
 			if tx.Sender == sender_address {

@@ -79,7 +79,7 @@ func CmdGetCurrentValset() *cobra.Command {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryCurrentValsetRequest{}
+			req := &types.CurrentSignerSetTxRequest{}
 
 			res, err := queryClient.CurrentValset(cmd.Context(), req)
 			if err != nil {
@@ -107,7 +107,7 @@ func CmdGetDelegateAddress() *cobra.Command {
 				return err
 			}
 
-			req := &types.QueryDelegateKeysByValidatorAddress{
+			req := &types.DelegateKeysByValidatorAddress{
 				ValidatorAddress: validator.String(),
 			}
 
@@ -137,7 +137,7 @@ func CmdGetValsetRequest() *cobra.Command {
 				return err
 			}
 
-			req := &types.QueryValsetRequestRequest{
+			req := &types.SignerSetTxRequest{
 				Nonce: nonce,
 			}
 
@@ -167,7 +167,7 @@ func CmdGetValsetConfirm() *cobra.Command {
 				return err
 			}
 
-			req := &types.QueryValsetConfirmRequest{
+			req := &types.SignerSetTxSignatureRequest{
 				Nonce:   nonce,
 				Address: args[1],
 			}
@@ -193,7 +193,7 @@ func CmdGetPendingValsetRequest() *cobra.Command {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryLastPendingValsetRequestByAddrRequest{
+			req := &types.LastPendingSignerSetTxByAddrRequest{
 				Address: args[0],
 			}
 
@@ -218,7 +218,7 @@ func CmdGetPendingOutgoingTXBatchRequest() *cobra.Command {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryLastPendingBatchRequestByAddrRequest{
+			req := &types.LastPendingBatchTxByAddrRequest{
 				Address: args[0],
 			}
 
