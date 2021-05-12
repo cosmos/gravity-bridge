@@ -16,44 +16,44 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	ethereumEventVoteRecordTally(ctx, k)
 	cleanupTimedOutBatches(ctx, k)
 	cleanupTimedOutLogicCalls(ctx, k)
-	createValsets(ctx, k)
-	pruneValsets(ctx, k, params)
+	createSignerSetTxs(ctx, k)
+	pruneSignerSetTxs(ctx, k, params)
 	// TODO: prune claims, ethereumEventVoteRecords when they pass in the handler
 }
 
-func createValsets(ctx sdk.Context, k keeper.Keeper) {
-	// Auto ValsetRequest Creation.
-	// WARNING: do not use k.GetLastObservedValset in this function, it *will* result in losing control of the bridge
+func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
+	// Auto SignerSetTxRequest Creation.
+	// WARNING: do not use k.GetLastObservedSignerSetTx in this function, it *will* result in losing control of the bridge
 	// 1. If there are no valset requests, create a new one.
 	// 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
-	//      This will make sure the unbonding validator has to provide an ethereumEventVoteRecord to a new Valset
+	//      This will make sure the unbonding validator has to provide an ethereumEventVoteRecord to a new SignerSetTx
 	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
-	// 3. If power change between validators of CurrentValset and latest valset request is > 5%
-	latestValset := k.GetLatestValset(ctx)
+	// 3. If power change between validators of CurrentSignerSetTx and latest valset request is > 5%
+	latestSignerSetTx := k.GetLatestSignerSetTx(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 
-	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
+	if (latestSignerSetTx == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentSignerSetTx(ctx).Members).PowerDiff(latestSignerSetTx.Members) > 0.05) {
 		// Store valset
-		k.SetValsetRequest(ctx)
+		k.SetSignerSetTxRequest(ctx)
 	}
 }
 
-func pruneValsets(ctx sdk.Context, k keeper.Keeper, params types.Params) {
+func pruneSignerSetTxs(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	// Validator set pruning
 	// prune all validator sets with a nonce less than the
 	// last observed nonce, they can't be submitted any longer
 	//
 	// Only prune valsets after the signed valsets window has passed
 	// so that slashing can occur the block before we remove them
-	lastObserved := k.GetLastObservedValset(ctx)
+	lastObserved := k.GetLastObservedSignerSetTx(ctx)
 	currentBlock := uint64(ctx.BlockHeight())
-	tooEarly := currentBlock < params.SignedValsetsWindow
+	tooEarly := currentBlock < params.SignedSignerSetTxsWindow
 	if lastObserved != nil && !tooEarly {
-		earliestToPrune := currentBlock - params.SignedValsetsWindow
-		sets := k.GetValsets(ctx)
+		earliestToPrune := currentBlock - params.SignedSignerSetTxsWindow
+		sets := k.GetSignerSetTxs(ctx)
 		for _, set := range sets {
 			if set.Nonce < lastObserved.Nonce && set.Height < earliestToPrune {
-				k.DeleteValset(ctx, set.Nonce)
+				k.DeleteSignerSetTx(ctx, set.Nonce)
 			}
 		}
 	}
@@ -64,7 +64,7 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
 
 	// Slash validator for not confirming valset requests, batch requests
-	ValsetSlashing(ctx, k, params)
+	SignerSetTxSlashing(ctx, k, params)
 	BatchSlashing(ctx, k, params)
 	// TODO slashing for arbitrary logic signatures is missing
 
@@ -152,20 +152,20 @@ func cleanupTimedOutLogicCalls(ctx sdk.Context, k keeper.Keeper) {
 	}
 }
 
-func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
+func SignerSetTxSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 	maxHeight := uint64(0)
 
-	// don't slash in the beginning before there aren't even SignedValsetsWindow blocks yet
-	if uint64(ctx.BlockHeight()) > params.SignedValsetsWindow {
-		maxHeight = uint64(ctx.BlockHeight()) - params.SignedValsetsWindow
+	// don't slash in the beginning before there aren't even SignedSignerSetTxsWindow blocks yet
+	if uint64(ctx.BlockHeight()) > params.SignedSignerSetTxsWindow {
+		maxHeight = uint64(ctx.BlockHeight()) - params.SignedSignerSetTxsWindow
 	}
 
-	unslashedValsets := k.GetUnSlashedValsets(ctx, maxHeight)
+	unslashedSignerSetTxs := k.GetUnSlashedSignerSetTxs(ctx, maxHeight)
 
-	// unslashedValsets are sorted by nonce in ASC order
+	// unslashedSignerSetTxs are sorted by nonce in ASC order
 	// Question: do we need to sort each time? See if this can be epoched
-	for _, vs := range unslashedValsets {
+	for _, vs := range unslashedSignerSetTxs {
 		confirms := k.GetSignerSetTxSignatures(ctx, vs.Nonce)
 
 		// SLASH BONDED VALIDTORS who didn't attest valset request
@@ -187,7 +187,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 				// slash validators for not confirming valsets
 				if !found {
 					cons, _ := val.GetConsAddr()
-					k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionValset)
+					k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionSignerSetTx)
 					if !val.IsJailed() {
 						k.StakingKeeper.Jail(ctx, cons)
 					}
@@ -216,7 +216,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 				valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, valConsAddr)
 
 				// Only slash validators who joined after valset is created and they are unbonding and UNBOND_SLASHING_WINDOW didn't passed
-				if exist && valSigningInfo.StartHeight < int64(vs.Nonce) && validator.IsUnbonding() && vs.Nonce < uint64(validator.UnbondingHeight)+params.UnbondSlashingValsetsWindow {
+				if exist && valSigningInfo.StartHeight < int64(vs.Nonce) && validator.IsUnbonding() && vs.Nonce < uint64(validator.UnbondingHeight)+params.UnbondSlashingSignerSetTxsWindow {
 					// Check if validator has confirmed valset or not
 					found := false
 					for _, conf := range confirms {
@@ -228,7 +228,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 					// slash validators for not confirming valsets
 					if !found {
-						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionValset)
+						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionSignerSetTx)
 						if !validator.IsJailed() {
 							k.StakingKeeper.Jail(ctx, valConsAddr)
 						}
@@ -237,7 +237,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			}
 		}
 		// then we set the latest slashed valset  nonce
-		k.SetLastSlashedValsetNonce(ctx, vs.Nonce)
+		k.SetLastSlashedSignerSetTxNonce(ctx, vs.Nonce)
 	}
 }
 

@@ -19,11 +19,11 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	gravityQueryCmd.AddCommand([]*cobra.Command{
-		CmdGetCurrentValset(),
-		CmdGetValsetRequest(),
+		CmdGetCurrentSignerSetTx(),
+		CmdGetSignerSetTxRequest(),
 		CmdGetDelegateAddress(),
 		CmdGetSignerSetTxSignature(),
-		CmdGetPendingValsetRequest(),
+		CmdGetPendingSignerSetTxRequest(),
 		CmdGetPendingOutgoingTXBatchRequest(),
 		// CmdGetAllOutgoingTXBatchRequest(),
 		// CmdGetOutgoingTXBatchByNonceRequest(),
@@ -70,7 +70,7 @@ func QueryApproved() *cobra.Command {
 	return testingTxCmd
 }
 
-func CmdGetCurrentValset() *cobra.Command {
+func CmdGetCurrentSignerSetTx() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "current-valset",
 		Short: "Query current valset",
@@ -81,7 +81,7 @@ func CmdGetCurrentValset() *cobra.Command {
 
 			req := &types.CurrentSignerSetTxRequest{}
 
-			res, err := queryClient.CurrentValset(cmd.Context(), req)
+			res, err := queryClient.CurrentSignerSetTx(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
@@ -123,7 +123,7 @@ func CmdGetDelegateAddress() *cobra.Command {
 	return cmd
 }
 
-func CmdGetValsetRequest() *cobra.Command {
+func CmdGetSignerSetTxRequest() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "valset-request [nonce]",
 		Short: "Get requested valset with a particular nonce",
@@ -141,7 +141,7 @@ func CmdGetValsetRequest() *cobra.Command {
 				Nonce: nonce,
 			}
 
-			res, err := queryClient.ValsetRequest(cmd.Context(), req)
+			res, err := queryClient.SignerSetTxRequest(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
@@ -184,7 +184,7 @@ func CmdGetSignerSetTxSignature() *cobra.Command {
 	return cmd
 }
 
-func CmdGetPendingValsetRequest() *cobra.Command {
+func CmdGetPendingSignerSetTxRequest() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pending-valset-request [bech32 validator address]",
 		Short: "Get the latest valset request which has not been signed by a particular validator",
@@ -197,7 +197,7 @@ func CmdGetPendingValsetRequest() *cobra.Command {
 				Address: args[0],
 			}
 
-			res, err := queryClient.LastPendingValsetRequestByAddr(cmd.Context(), req)
+			res, err := queryClient.LastPendingSignerSetTxRequestByAddr(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

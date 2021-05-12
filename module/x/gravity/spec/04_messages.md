@@ -97,7 +97,7 @@ This message will fail if:
 
 ### MsgSignerSetTxSignature
 
-When a `Valset` is created by the Gravity module, validators sign it with their Ethereum keys, and send the signatures to the Gravity module using this message.
+When a `SignerSetTx` is created by the Gravity module, validators sign it with their Ethereum keys, and send the signatures to the Gravity module using this message.
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L79-84
 

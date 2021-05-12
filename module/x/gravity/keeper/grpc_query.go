@@ -19,18 +19,18 @@ func (k Keeper) Params(c context.Context, req *types.ParamsRequest) (*types.Para
 
 }
 
-// CurrentValset queries the CurrentValset of the gravity module
-func (k Keeper) CurrentValset(
+// CurrentSignerSetTx queries the CurrentSignerSetTx of the gravity module
+func (k Keeper) CurrentSignerSetTx(
 	c context.Context,
-	req *types.CurrentSignerSetTxRequest) (*types.QueryCurrentValsetResponse, error) {
-	return &types.QueryCurrentValsetResponse{Valset: k.GetCurrentValset(sdk.UnwrapSDKContext(c))}, nil
+	req *types.CurrentSignerSetTxRequest) (*types.QueryCurrentSignerSetTxResponse, error) {
+	return &types.QueryCurrentSignerSetTxResponse{SignerSetTx: k.GetCurrentSignerSetTx(sdk.UnwrapSDKContext(c))}, nil
 }
 
-// ValsetRequest queries the ValsetRequest of the gravity module
-func (k Keeper) ValsetRequest(
+// SignerSetTxRequest queries the SignerSetTxRequest of the gravity module
+func (k Keeper) SignerSetTxRequest(
 	c context.Context,
 	req *types.SignerSetTxRequest) (*types.SignerSetTxResponse, error) {
-	return &types.SignerSetTxResponse{Valset: k.GetValset(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
+	return &types.SignerSetTxResponse{SignerSetTx: k.GetSignerSetTx(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
 }
 
 // SignerSetTxSignature queries the SignerSetTxSignature of the gravity module
@@ -56,23 +56,23 @@ func (k Keeper) SignerSetTxSignaturesByNonce(
 	return &types.SignerSetTxSignaturesByNonceResponse{Confirms: confirms}, nil
 }
 
-// LastValsetRequests queries the LastValsetRequests of the gravity module
-func (k Keeper) LastValsetRequests(
+// LastSignerSetTxRequests queries the LastSignerSetTxRequests of the gravity module
+func (k Keeper) LastSignerSetTxRequests(
 	c context.Context,
 	req *types.LastSignerSetTxsRequest) (*types.LastSignerSetTxsResponse, error) {
-	valReq := k.GetValsets(sdk.UnwrapSDKContext(c))
+	valReq := k.GetSignerSetTxs(sdk.UnwrapSDKContext(c))
 	valReqLen := len(valReq)
 	retLen := 0
-	if valReqLen < maxValsetRequestsReturned {
+	if valReqLen < maxSignerSetTxRequestsReturned {
 		retLen = valReqLen
 	} else {
-		retLen = maxValsetRequestsReturned
+		retLen = maxSignerSetTxRequestsReturned
 	}
-	return &types.LastSignerSetTxsResponse{Valsets: valReq[0:retLen]}, nil
+	return &types.LastSignerSetTxsResponse{SignerSetTxs: valReq[0:retLen]}, nil
 }
 
-// LastPendingValsetRequestByAddr queries the LastPendingValsetRequestByAddr of the gravity module
-func (k Keeper) LastPendingValsetRequestByAddr(
+// LastPendingSignerSetTxRequestByAddr queries the LastPendingSignerSetTxRequestByAddr of the gravity module
+func (k Keeper) LastPendingSignerSetTxRequestByAddr(
 	c context.Context,
 	req *types.LastPendingSignerSetTxByAddrRequest) (*types.LastPendingSignerSetTxByAddrResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
@@ -80,24 +80,24 @@ func (k Keeper) LastPendingValsetRequestByAddr(
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingValsetReq []*types.Valset
-	k.IterateValsets(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
+	var pendingSignerSetTxReq []*types.SignerSetTx
+	k.IterateSignerSetTxs(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.SignerSetTx) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
 		foundConfirm := k.GetSignerSetTxSignature(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
-		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
+		// if this valset has NOT been signed by operatorAddr, store it in pendingSignerSetTxReq
 		// and exit the loop
 		if !foundConfirm {
-			pendingValsetReq = append(pendingValsetReq, val)
+			pendingSignerSetTxReq = append(pendingSignerSetTxReq, val)
 		}
 		// if we have more than 100 unconfirmed requests in
 		// our array we should exit, TODO pagination
-		if len(pendingValsetReq) > 100 {
+		if len(pendingSignerSetTxReq) > 100 {
 			return true
 		}
 		// return false to continue the loop
 		return false
 	})
-	return &types.LastPendingSignerSetTxByAddrResponse{Valsets: pendingValsetReq}, nil
+	return &types.LastPendingSignerSetTxByAddrResponse{SignerSetTxs: pendingSignerSetTxReq}, nil
 }
 
 // BatchFees queries the batch fees from unbatched pool

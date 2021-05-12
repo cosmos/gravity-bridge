@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-func getValsetRequestHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
+func getSignerSetTxRequestHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
@@ -26,7 +26,7 @@ func getValsetRequestHandler(cliCtx client.Context, storeName string) http.Handl
 			return
 		}
 
-		var out types.Valset
+		var out types.SignerSetTx
 		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
@@ -114,9 +114,9 @@ func allBatchConfirmsHandler(cliCtx client.Context, storeName string) http.Handl
 	}
 }
 
-func lastValsetRequestsHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
+func lastSignerSetTxRequestsHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastValsetRequests", storeName))
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastSignerSetTxRequests", storeName))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -130,12 +130,12 @@ func lastValsetRequestsHandler(cliCtx client.Context, storeName string) http.Han
 	}
 }
 
-func lastValsetRequestsByAddressHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
+func lastSignerSetTxRequestsByAddressHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		operatorAddr := vars[bech32ValidatorAddress]
 
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingValsetRequest/%s", storeName, operatorAddr))
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingSignerSetTxRequest/%s", storeName, operatorAddr))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -145,7 +145,7 @@ func lastValsetRequestsByAddressHandler(cliCtx client.Context, storeName string)
 			return
 		}
 
-		var out types.Valset
+		var out types.SignerSetTx
 		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}
@@ -172,14 +172,14 @@ func lastBatchesByAddressHandler(cliCtx client.Context, storeName string) http.H
 	}
 }
 
-func currentValsetHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
+func currentSignerSetTxHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/currentValset", storeName))
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/currentSignerSetTx", storeName))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		var out types.Valset
+		var out types.SignerSetTx
 		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &out)
 		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
 	}

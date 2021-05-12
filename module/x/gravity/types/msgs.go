@@ -604,14 +604,14 @@ func (msg MsgSignerSetUpdatedEvent) GetSigners() []sdk.AccAddress {
 }
 
 // Type should return the action
-func (msg MsgSignerSetUpdatedEvent) Type() string { return "Valset_Updated_Claim" }
+func (msg MsgSignerSetUpdatedEvent) Type() string { return "SignerSetTx_Updated_Claim" }
 
 // Route should return the name of the module
 func (msg MsgSignerSetUpdatedEvent) Route() string { return RouterKey }
 
 // Hash implements BridgeDeposit.Hash
 func (b *MsgSignerSetUpdatedEvent) ClaimHash() []byte {
-	path := fmt.Sprintf("%d/%d/%d/%s/", b.ValsetNonce, b.EventNonce, b.BlockHeight, b.Members)
+	path := fmt.Sprintf("%d/%d/%d/%s/", b.SignerSetTxNonce, b.EventNonce, b.BlockHeight, b.Members)
 	return tmhash.Sum([]byte(path))
 }
 

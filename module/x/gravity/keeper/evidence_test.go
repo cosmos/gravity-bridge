@@ -59,11 +59,11 @@ func TestSubmitBadEthereumSignatureEvidenceBatchExists(t *testing.T) {
 	require.EqualError(t, err, "Checkpoint exists, cannot slash: invalid")
 }
 
-func TestSubmitBadEthereumSignatureEvidenceValsetExists(t *testing.T) {
+func TestSubmitBadEthereumSignatureEvidenceSignerSetTxExists(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
-	valset := input.GravityKeeper.SetValsetRequest(ctx)
+	valset := input.GravityKeeper.SetSignerSetTxRequest(ctx)
 
 	any, _ := codectypes.NewAnyWithValue(valset)
 

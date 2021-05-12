@@ -27,7 +27,7 @@ const (
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx client.Context, r *mux.Router, storeName string) {
 
-	/// Valsets
+	/// SignerSetTxs
 
 	// This endpoint gets all of the validator set confirmations for a given nonce. In order to determine if a valset is complete
 	// the relayer queries the latest valsets and then compares the number of members they show versus the length of this endpoints output
@@ -35,15 +35,15 @@ func RegisterRoutes(cliCtx client.Context, r *mux.Router, storeName string) {
 	r.HandleFunc(fmt.Sprintf("/%s/valset_confirm/{%s}", storeName, nonce), allSignerSetTxSignaturesHandler(cliCtx, storeName)).Methods("GET")
 	// gets the latest 5 validator set requests, used heavily by the relayer. Which hits this endpoint before checking which
 	// of these last 5 have sufficient signatures to relay
-	r.HandleFunc(fmt.Sprintf("/%s/valset_requests", storeName), lastValsetRequestsHandler(cliCtx, storeName)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/valset_requests", storeName), lastSignerSetTxRequestsHandler(cliCtx, storeName)).Methods("GET")
 	// Returns the last 'pending' (unsigned) validator set for a given validator address.
-	r.HandleFunc(fmt.Sprintf("/%s/pending_valset_requests/{%s}", storeName, bech32ValidatorAddress), lastValsetRequestsByAddressHandler(cliCtx, storeName)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/pending_valset_requests/{%s}", storeName, bech32ValidatorAddress), lastSignerSetTxRequestsByAddressHandler(cliCtx, storeName)).Methods("GET")
 	// gets valset request by nonce, used to look up a specific valset. This is needed to lookup data about the current validator set on the contract
 	// and determine what can or can not be submitted as a relayer
-	r.HandleFunc(fmt.Sprintf("/%s/valset_request/{%s}", storeName, nonce), getValsetRequestHandler(cliCtx, storeName)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/valset_request/{%s}", storeName, nonce), getSignerSetTxRequestHandler(cliCtx, storeName)).Methods("GET")
 	// Provides the current validator set with powers and eth addresses, useful to check the current validator state
 	// used to deploy the contract by the contract deployer script
-	r.HandleFunc(fmt.Sprintf("/%s/current_valset", storeName), currentValsetHandler(cliCtx, storeName)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/current_valset", storeName), currentSignerSetTxHandler(cliCtx, storeName)).Methods("GET")
 
 	/// Batches
 

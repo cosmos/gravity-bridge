@@ -13,12 +13,12 @@ import (
 
 const (
 
-	// Valsets
+	// SignerSetTxs
 
 	// This retrieves a specific validator set by it's nonce
 	// used to compare what's on Ethereum with what's in Cosmos
 	// to perform slashing / validation of system consistency
-	QueryValsetRequest = "valsetRequest"
+	QuerySignerSetTxRequest = "valsetRequest"
 	// Gets all the confirmation signatures for a given validator
 	// set, used by the relayer to package the validator set and
 	// it's signatures into an Ethereum transaction
@@ -26,12 +26,12 @@ const (
 	// Gets the last N (where N is currently 5) validator sets that
 	// have been produced by the chain. Useful to see if any recently
 	// signed requests can be submitted.
-	QueryLastValsetRequests = "lastValsetRequests"
+	QueryLastSignerSetTxRequests = "lastSignerSetTxRequests"
 	// Gets a list of unsigned valsets for a given validators delegate
 	// orchestrator address. Up to 100 are sent at a time
-	QueryLastPendingValsetRequestByAddr = "lastPendingValsetRequest"
+	QueryLastPendingSignerSetTxRequestByAddr = "lastPendingSignerSetTxRequest"
 
-	QueryCurrentValset = "currentValset"
+	QueryCurrentSignerSetTx = "currentSignerSetTx"
 	// TODO remove this, it's not used, getting one confirm at a time
 	// is mostly useless
 	QuerySignerSetTxSignature = "valsetConfirm"
@@ -96,19 +96,19 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err error) {
 		switch path[0] {
 
-		// Valsets
-		case QueryCurrentValset:
-			return queryCurrentValset(ctx, keeper)
-		case QueryValsetRequest:
-			return queryValsetRequest(ctx, path[1:], keeper)
+		// SignerSetTxs
+		case QueryCurrentSignerSetTx:
+			return queryCurrentSignerSetTx(ctx, keeper)
+		case QuerySignerSetTxRequest:
+			return querySignerSetTxRequest(ctx, path[1:], keeper)
 		case QuerySignerSetTxSignature:
 			return querySignerSetTxSignature(ctx, path[1:], keeper)
 		case QuerySignerSetTxSignaturesByNonce:
 			return queryAllSignerSetTxSignatures(ctx, path[1], keeper)
-		case QueryLastValsetRequests:
-			return lastValsetRequests(ctx, keeper)
-		case QueryLastPendingValsetRequestByAddr:
-			return lastPendingValsetRequest(ctx, path[1], keeper)
+		case QueryLastSignerSetTxRequests:
+			return lastSignerSetTxRequests(ctx, keeper)
+		case QueryLastPendingSignerSetTxRequestByAddr:
+			return lastPendingSignerSetTxRequest(ctx, path[1], keeper)
 
 		// Batches
 		case QueryBatch:
@@ -151,13 +151,13 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	}
 }
 
-func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
+func querySignerSetTxRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(path[0])
 	if err != nil {
 		return nil, err
 	}
 
-	valset := keeper.GetValset(ctx, nonce)
+	valset := keeper.GetSignerSetTx(ctx, nonce)
 	if valset == nil {
 		return nil, nil
 	}
@@ -219,16 +219,16 @@ func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContract strin
 	return res, nil
 }
 
-const maxValsetRequestsReturned = 5
+const maxSignerSetTxRequestsReturned = 5
 
-// lastValsetRequests returns up to maxValsetRequestsReturned valsets from the store
-func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+// lastSignerSetTxRequests returns up to maxSignerSetTxRequestsReturned valsets from the store
+func lastSignerSetTxRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var counter int
-	var valReq []*types.Valset
-	keeper.IterateValsets(ctx, func(_ []byte, val *types.Valset) bool {
+	var valReq []*types.SignerSetTx
+	keeper.IterateSignerSetTxs(ctx, func(_ []byte, val *types.SignerSetTx) bool {
 		valReq = append(valReq, val)
 		counter++
-		return counter >= maxValsetRequestsReturned
+		return counter >= maxSignerSetTxRequestsReturned
 	})
 	if len(valReq) == 0 {
 		return nil, nil
@@ -240,43 +240,43 @@ func lastValsetRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
-// lastPendingValsetRequest gets a list of validator sets that this validator has not signed
+// lastPendingSignerSetTxRequest gets a list of validator sets that this validator has not signed
 // limited by 100 sets per request.
-func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
+func lastPendingSignerSetTxRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
 	addr, err := sdk.AccAddressFromBech32(operatorAddr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingValsetReq []*types.Valset
-	keeper.IterateValsets(ctx, func(_ []byte, val *types.Valset) bool {
+	var pendingSignerSetTxReq []*types.SignerSetTx
+	keeper.IterateSignerSetTxs(ctx, func(_ []byte, val *types.SignerSetTx) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
 		foundConfirm := keeper.GetSignerSetTxSignature(ctx, val.Nonce, addr) != nil
-		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
+		// if this valset has NOT been signed by operatorAddr, store it in pendingSignerSetTxReq
 		// and exit the loop
 		if !foundConfirm {
-			pendingValsetReq = append(pendingValsetReq, val)
+			pendingSignerSetTxReq = append(pendingSignerSetTxReq, val)
 		}
 		// if we have more than 100 unconfirmed requests in
 		// our array we should exit, TODO pagination
-		if len(pendingValsetReq) > 100 {
+		if len(pendingSignerSetTxReq) > 100 {
 			return true
 		}
 		// return false to continue the loop
 		return false
 	})
-	if len(pendingValsetReq) == 0 {
+	if len(pendingSignerSetTxReq) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingValsetReq)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingSignerSetTxReq)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return res, nil
 }
 
-func queryCurrentValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	valset := keeper.GetCurrentValset(ctx)
+func queryCurrentSignerSetTx(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+	valset := keeper.GetCurrentSignerSetTx(ctx)
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, valset)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
@@ -311,8 +311,8 @@ func querySignerSetTxSignature(ctx sdk.Context, path []string, keeper Keeper) ([
 }
 
 type MultiSigUpdateResponse struct {
-	Valset     types.Valset `json:"valset"`
-	Signatures [][]byte     `json:"signatures,omitempty"`
+	SignerSetTx types.SignerSetTx `json:"valset"`
+	Signatures  [][]byte          `json:"signatures,omitempty"`
 }
 
 // lastPendingBatchRequest gets the latest batch that has NOT been signed by operatorAddr

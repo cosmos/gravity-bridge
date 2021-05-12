@@ -21,7 +21,7 @@ func (k Keeper) CheckBadSignatureEvidence(
 	switch subject := subject.(type) {
 	case *types.BatchTx:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
-	case *types.Valset:
+	case *types.SignerSetTx:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
 	case *types.ContractCallTx:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)

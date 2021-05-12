@@ -43,7 +43,7 @@ func TestBatchTxCheckpointGold1(t *testing.T) {
 
 	// hash from bridge contract
 	goldHash := "0xa3a7ee0a363b8ad2514e7ee8f110d7449c0d88f3b0913c28c1751e6e0079a9b2"[2:]
-	// The function used to compute the "gold hash" above is in /solidity/test/updateValsetAndSubmitBatch.ts
+	// The function used to compute the "gold hash" above is in /solidity/test/updateSignerSetTxAndSubmitBatch.ts
 	// Be aware that every time that you run the above .ts file, it will use a different tokenContractAddress and thus compute
 	// a different hash.
 	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))
@@ -73,7 +73,7 @@ func TestContractCallTxCheckpointGold1(t *testing.T) {
 
 	// hash from bridge contract
 	goldHash := "0x1de95c9ace999f8ec70c6dc8d045942da2612950567c4861aca959c0650194da"[2:]
-	// The function used to compute the "gold hash" above is in /solidity/test/updateValsetAndSubmitBatch.ts
+	// The function used to compute the "gold hash" above is in /solidity/test/updateSignerSetTxAndSubmitBatch.ts
 	// Be aware that every time that you run the above .ts file, it will use a different tokenContractAddress and thus compute
 	// a different hash.
 	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))

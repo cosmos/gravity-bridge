@@ -10,9 +10,9 @@ import (
 func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	k.SetParams(ctx, *data.Params)
 	// reset valsets in state
-	for _, vs := range data.Valsets {
+	for _, vs := range data.SignerSetTxs {
 		// TODO: block height?
-		k.StoreValsetUnsafe(ctx, vs)
+		k.StoreSignerSetTxUnsafe(ctx, vs)
 	}
 
 	// reset valset confirmations in state
@@ -127,7 +127,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		p                        = k.GetParams(ctx)
 		calls                    = k.GetContractCallTxs(ctx)
 		batches                  = k.GetBatchTxs(ctx)
-		valsets                  = k.GetValsets(ctx)
+		valsets                  = k.GetSignerSetTxs(ctx)
 		attmap                   = k.GetEthereumEventVoteRecordMapping(ctx)
 		vsconfs                  = []*types.MsgSignerSetTxSignature{}
 		batchconfs               = []types.MsgBatchTxSignature{}
@@ -174,7 +174,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	return types.GenesisState{
 		Params:                   &p,
 		LastObservedNonce:        lastobserved,
-		Valsets:                  valsets,
+		SignerSetTxs:             valsets,
 		SignerSetTxSignatures:    vsconfs,
 		Batches:                  batches,
 		BatchConfirms:            batchconfs,

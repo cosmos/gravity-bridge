@@ -19,7 +19,7 @@ const (
 	AttributeKeyEthereumEventVoteRecordType = "ethereumEventVoteRecord_type"
 	AttributeKeyContract                    = "bridge_contract"
 	AttributeKeyNonce                       = "nonce"
-	AttributeKeyValsetNonce                 = "valset_nonce"
+	AttributeKeySignerSetTxNonce            = "valset_nonce"
 	AttributeKeyBatchNonce                  = "batch_nonce"
 	AttributeKeyBridgeChainID               = "bridge_chain_id"
 	AttributeKeySetOperatorAddr             = "set_operator_address"

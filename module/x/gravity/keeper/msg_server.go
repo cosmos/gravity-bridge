@@ -66,7 +66,7 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgDeleg
 // TODO: check msgSignerSetTxSignature to have an Orchestrator field instead of a Validator field
 func (k msgServer) SignerSetTxSignature(c context.Context, msg *types.MsgSignerSetTxSignature) (*types.MsgSignerSetTxSignatureResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	valset := k.GetValset(ctx, msg.Nonce)
+	valset := k.GetSignerSetTx(ctx, msg.Nonce)
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
 	}
@@ -434,7 +434,7 @@ func (k msgServer) ContractCallTxExecutedEvent(c context.Context, msg *types.Msg
 }
 
 // SignerSetUpdatedEvent handles claims for executing a validator set update on Ethereum
-func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgSignerSetUpdatedEvent) (*types.MsgSignerSetUpdatedEventResponse, error) {
+func (k msgServer) SignerSetTxUpdateClaim(c context.Context, msg *types.MsgSignerSetUpdatedEvent) (*types.MsgSignerSetUpdatedEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)

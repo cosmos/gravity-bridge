@@ -146,21 +146,21 @@ func (b BridgeValidators) ValidateBasic() error {
 	return nil
 }
 
-// NewValset returns a new valset
-func NewValset(nonce, height uint64, members BridgeValidators) *Valset {
+// NewSignerSetTx returns a new valset
+func NewSignerSetTx(nonce, height uint64, members BridgeValidators) *SignerSetTx {
 	members.Sort()
 	var mem []*BridgeValidator
 	for _, val := range members {
 		mem = append(mem, val)
 	}
-	return &Valset{Nonce: uint64(nonce), Members: mem, Height: height}
+	return &SignerSetTx{Nonce: uint64(nonce), Members: mem, Height: height}
 }
 
 // GetCheckpoint returns the checkpoint
-func (v Valset) GetCheckpoint(gravityIDstring string) []byte {
+func (v SignerSetTx) GetCheckpoint(gravityIDstring string) []byte {
 
 	// error case here should not occur outside of testing since the above is a constant
-	contractAbi, abiErr := abi.JSON(strings.NewReader(ValsetCheckpointABIJSON))
+	contractAbi, abiErr := abi.JSON(strings.NewReader(SignerSetTxCheckpointABIJSON))
 	if abiErr != nil {
 		panic("Bad ABI constant!")
 	}
@@ -202,12 +202,12 @@ func (v Valset) GetCheckpoint(gravityIDstring string) []byte {
 	return hash.Bytes()
 }
 
-// WithoutEmptyMembers returns a new Valset without member that have 0 power or an empty Ethereum address.
-func (v *Valset) WithoutEmptyMembers() *Valset {
+// WithoutEmptyMembers returns a new SignerSetTx without member that have 0 power or an empty Ethereum address.
+func (v *SignerSetTx) WithoutEmptyMembers() *SignerSetTx {
 	if v == nil {
 		return nil
 	}
-	r := Valset{Nonce: v.Nonce, Members: make([]*BridgeValidator, 0, len(v.Members))}
+	r := SignerSetTx{Nonce: v.Nonce, Members: make([]*BridgeValidator, 0, len(v.Members))}
 	for i := range v.Members {
 		if err := v.Members[i].ValidateBasic(); err == nil {
 			r.Members = append(r.Members, v.Members[i])
@@ -216,18 +216,18 @@ func (v *Valset) WithoutEmptyMembers() *Valset {
 	return &r
 }
 
-// Valsets is a collection of valset
-type Valsets []*Valset
+// SignerSetTxs is a collection of valset
+type SignerSetTxs []*SignerSetTx
 
-func (v Valsets) Len() int {
+func (v SignerSetTxs) Len() int {
 	return len(v)
 }
 
-func (v Valsets) Less(i, j int) bool {
+func (v SignerSetTxs) Less(i, j int) bool {
 	return v[i].Nonce > v[j].Nonce
 }
 
-func (v Valsets) Swap(i, j int) {
+func (v SignerSetTxs) Swap(i, j int) {
 	v[i], v[j] = v[j], v[i]
 }
 

@@ -239,26 +239,26 @@ func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeig
 	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&height))
 }
 
-// GetLastObservedValset retrieves the last observed validator set from the store
+// GetLastObservedSignerSetTx retrieves the last observed validator set from the store
 // WARNING: This value is not an up to date validator set on Ethereum, it is a validator set
 // that AT ONE POINT was the one in the Gravity bridge on Ethereum. If you assume that it's up
 // to date you may break the bridge
-func (k Keeper) GetLastObservedValset(ctx sdk.Context) *types.Valset {
+func (k Keeper) GetLastObservedSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastObservedValsetKey)
+	bytes := store.Get(types.LastObservedSignerSetTxKey)
 
 	if len(bytes) == 0 {
 		return nil
 	}
-	valset := types.Valset{}
+	valset := types.SignerSetTx{}
 	k.cdc.MustUnmarshalBinaryBare(bytes, &valset)
 	return &valset
 }
 
-// SetLastObservedValset updates the last observed validator set in the store
-func (k Keeper) SetLastObservedValset(ctx sdk.Context, valset types.Valset) {
+// SetLastObservedSignerSetTx updates the last observed validator set in the store
+func (k Keeper) SetLastObservedSignerSetTx(ctx sdk.Context, valset types.SignerSetTx) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastObservedValsetKey, k.cdc.MustMarshalBinaryBare(&valset))
+	store.Set(types.LastObservedSignerSetTxKey, k.cdc.MustMarshalBinaryBare(&valset))
 }
 
 // setLastObservedEventNonce sets the latest observed event nonce

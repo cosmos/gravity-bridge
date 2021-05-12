@@ -49,11 +49,11 @@ This is the validator set of the bridge.
 
 Stored in two possible ways, first with a height and second without (unsafe). Unsafe is used for testing and export and import of state.
 
-| key                                        | Value         | Type           | Encoding         |
-| ------------------------------------------ | ------------- | -------------- | ---------------- |
-| `[]byte{0x2} + nonce (big endian encoded)` | Validator set | `types.Valset` | Protobuf encoded |
+| key                                        | Value         | Type                | Encoding         |
+| ------------------------------------------ | ------------- | ------------------- | ---------------- |
+| `[]byte{0x2} + nonce (big endian encoded)` | Validator set | `types.SignerSetTx` | Protobuf encoded |
 
-### ValsetNonce
+### SignerSetTxNonce
 
 The latest validator set nonce, this value is updated on every write.
 
@@ -219,19 +219,19 @@ message EthereumEventVoteRecord {
 
 +++ <https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/ethereumEventVoteRecord.proto#L38-L43>
 
-### Valset
+### SignerSetTx
 
 This is a record of the Cosmos validator set at a given moment. Can be sent to the Gravity.sol contract to update the signer set.
 
-| Key                                 | Value                      | Type           | Encoding         |
-| ----------------------------------- | -------------------------- | -------------- | ---------------- |
-| `[]byte{0x5} + uint64 valset nonce` | Validator set for Ethereum | `types.Valset` | Protobuf encoded |
+| Key                                 | Value                      | Type                | Encoding         |
+| ----------------------------------- | -------------------------- | ------------------- | ---------------- |
+| `[]byte{0x5} + uint64 valset nonce` | Validator set for Ethereum | `types.SignerSetTx` | Protobuf encoded |
 
 ```
-message Valset {
+message SignerSetTx {
   // This nonce is incremented for each subsequent valset produced by the Gravity module.
   // The Gravity.sol contract will only accept a valset with a higher nonce than the last
-  // executed Valset.
+  // executed SignerSetTx.
   uint64 nonce = 1;
   // The validators in the valset.
   repeated BridgeValidator members = 2;

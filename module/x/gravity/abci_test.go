@@ -15,21 +15,21 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-func TestValsetCreationIfNotAvailable(t *testing.T) {
+func TestSignerSetTxCreationIfNotAvailable(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
 
 	// EndBlocker should set a new validator set if not available
 	EndBlocker(ctx, pk)
-	require.NotNil(t, pk.GetValset(ctx, uint64(ctx.BlockHeight())))
-	valsets := pk.GetValsets(ctx)
+	require.NotNil(t, pk.GetSignerSetTx(ctx, uint64(ctx.BlockHeight())))
+	valsets := pk.GetSignerSetTxs(ctx)
 	require.True(t, len(valsets) == 1)
 }
 
-func TestValsetCreationUponUnbonding(t *testing.T) {
+func TestSignerSetTxCreationUponUnbonding(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
-	pk.SetValsetRequest(ctx)
+	pk.SetSignerSetTxRequest(ctx)
 
 	input.Context = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	// begin unbonding
@@ -41,21 +41,21 @@ func TestValsetCreationUponUnbonding(t *testing.T) {
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 	EndBlocker(input.Context, pk)
 
-	assert.Equal(t, uint64(input.Context.BlockHeight()), pk.GetLatestValsetNonce(ctx))
+	assert.Equal(t, uint64(input.Context.BlockHeight()), pk.GetLatestSignerSetTxNonce(ctx))
 }
 
-func TestValsetSlashing_ValsetCreated_Before_ValidatorBonded(t *testing.T) {
+func TestSignerSetTxSlashing_SignerSetTxCreated_Before_ValidatorBonded(t *testing.T) {
 	//	Don't slash validators if valset is created before he is bonded.
 
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
 	params := input.GravityKeeper.GetParams(ctx)
 
-	vs := pk.GetCurrentValset(ctx)
-	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
+	vs := pk.GetCurrentSignerSetTx(ctx)
+	height := uint64(ctx.BlockHeight()) - (params.SignedSignerSetTxsWindow + 1)
 	vs.Height = height
 	vs.Nonce = height
-	pk.StoreValsetUnsafe(ctx, vs)
+	pk.StoreSignerSetTxUnsafe(ctx, vs)
 
 	EndBlocker(ctx, pk)
 
@@ -64,19 +64,19 @@ func TestValsetSlashing_ValsetCreated_Before_ValidatorBonded(t *testing.T) {
 	require.False(t, val.IsJailed())
 }
 
-func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
+func TestSignerSetTxSlashing_SignerSetTxCreated_After_ValidatorBonded(t *testing.T) {
 	//	Slashing Conditions for Bonded Validator
 
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
 	params := input.GravityKeeper.GetParams(ctx)
 
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
-	vs := pk.GetCurrentValset(ctx)
-	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedSignerSetTxsWindow) + 2)
+	vs := pk.GetCurrentSignerSetTx(ctx)
+	height := uint64(ctx.BlockHeight()) - (params.SignedSignerSetTxsWindow + 1)
 	vs.Height = height
 	vs.Nonce = height
-	pk.StoreValsetUnsafe(ctx, vs)
+	pk.StoreSignerSetTxUnsafe(ctx, vs)
 
 	for i, val := range keeper.AccAddrs {
 		if i == 0 {
@@ -99,7 +99,7 @@ func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
 
 }
 
-func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T) {
+func TestSignerSetTxSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T) {
 	//	Slashing Conditions for Unbonding Validator
 
 	//  Create 5 validators
@@ -111,22 +111,22 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 	params := input.GravityKeeper.GetParams(ctx)
 
 	// Define slashing variables
-	validatorStartHeight := ctx.BlockHeight()                                                        // 0
-	valsetRequestHeight := validatorStartHeight + 1                                                  // 1
-	valUnbondingHeight := valsetRequestHeight + 1                                                    // 2
-	valsetRequestSlashedAt := valsetRequestHeight + int64(params.SignedValsetsWindow)                // 11
-	validatorUnbondingWindowExpiry := valUnbondingHeight + int64(params.UnbondSlashingValsetsWindow) // 17
-	currentBlockHeight := valsetRequestSlashedAt + 1                                                 // 12
+	validatorStartHeight := ctx.BlockHeight()                                                             // 0
+	valsetRequestHeight := validatorStartHeight + 1                                                       // 1
+	valUnbondingHeight := valsetRequestHeight + 1                                                         // 2
+	valsetRequestSlashedAt := valsetRequestHeight + int64(params.SignedSignerSetTxsWindow)                // 11
+	validatorUnbondingWindowExpiry := valUnbondingHeight + int64(params.UnbondSlashingSignerSetTxsWindow) // 17
+	currentBlockHeight := valsetRequestSlashedAt + 1                                                      // 12
 
 	assert.True(t, valsetRequestSlashedAt < currentBlockHeight)
 	assert.True(t, valsetRequestHeight < validatorUnbondingWindowExpiry)
 
-	// Create Valset request
+	// Create SignerSetTx request
 	ctx = ctx.WithBlockHeight(valsetRequestHeight)
-	vs := pk.GetCurrentValset(ctx)
+	vs := pk.GetCurrentSignerSetTx(ctx)
 	vs.Height = uint64(valsetRequestHeight)
 	vs.Nonce = uint64(valsetRequestHeight)
-	pk.StoreValsetUnsafe(ctx, vs)
+	pk.StoreSignerSetTxUnsafe(ctx, vs)
 
 	// Start Unbonding validators
 	// Validator-1  Unbond slash window is not expired. if not attested, slash
@@ -168,7 +168,7 @@ func TestBatchSlashing(t *testing.T) {
 	pk := input.GravityKeeper
 	params := pk.GetParams(ctx)
 
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedSignerSetTxsWindow) + 2)
 
 	// First store a batch
 	batch := &types.BatchTx{
@@ -216,30 +216,30 @@ func TestBatchSlashing(t *testing.T) {
 
 }
 
-func TestValsetEmission(t *testing.T) {
+func TestSignerSetTxEmission(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
 
 	// Store a validator set with a power change as the most recent validator set
-	vs := pk.GetCurrentValset(ctx)
+	vs := pk.GetCurrentSignerSetTx(ctx)
 	vs.Nonce--
 	delta := float64(types.BridgeValidators(vs.Members).TotalPower()) * 0.05
 	vs.Members[0].Power = uint64(float64(vs.Members[0].Power) - delta/2)
 	vs.Members[1].Power = uint64(float64(vs.Members[1].Power) + delta/2)
-	pk.StoreValset(ctx, vs)
+	pk.StoreSignerSetTx(ctx, vs)
 
 	// EndBlocker should set a new validator set
 	EndBlocker(ctx, pk)
-	require.NotNil(t, pk.GetValset(ctx, uint64(ctx.BlockHeight())))
-	valsets := pk.GetValsets(ctx)
+	require.NotNil(t, pk.GetSignerSetTx(ctx, uint64(ctx.BlockHeight())))
+	valsets := pk.GetSignerSetTxs(ctx)
 	require.True(t, len(valsets) == 2)
 }
 
-func TestValsetSetting(t *testing.T) {
+func TestSignerSetTxSetting(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
-	pk.SetValsetRequest(ctx)
-	valsets := pk.GetValsets(ctx)
+	pk.SetSignerSetTxRequest(ctx)
+	valsets := pk.GetSignerSetTxs(ctx)
 	require.True(t, len(valsets) == 1)
 }
 

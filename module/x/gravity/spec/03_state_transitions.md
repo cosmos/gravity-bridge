@@ -129,9 +129,9 @@ Once a logic call has been created and stored, it is up to the current validator
 
 Relayers are then able to get all the signatures for a logic call, assemble them into an Ethereum transaction, and send it to the Gravity.sol contract.
 
-## Valset
+## SignerSetTx
 
-### Valset creation
+### SignerSetTx creation
 
 To create valsets:
 
@@ -139,9 +139,9 @@ To create valsets:
 - We get their Ethereum addresses and powers.
 - We normalize their powers by dividing each validator's power by the sum of powers in the whole validator set.
 
-We save this data in a `Valset`
+We save this data in a `SignerSetTx`
 
-### Valset signing
+### SignerSetTx signing
 
 Once a valset has been created and stored, it is up to the current validators to sign it with their Ethereum keys so that it can be submitted to the Ethereum chain. They do this with a separate process called the "orchestrator", and send the signatures to the Cosmos chain as `MsgSignerSetTxSignature` messages. The Gravity module then checks that the signature is valid and stores it.
 

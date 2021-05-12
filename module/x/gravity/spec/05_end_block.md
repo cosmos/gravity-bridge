@@ -7,46 +7,46 @@ order: 5
 Each abci end block call, the operations to update queues and validator set
 changes are specified to execute.
 
-## Valset Creation
+## SignerSetTx Creation
 
-Every endblock, we run the following procedure to determine whether to make a new `Valset` which will then need to be signed by all validators.
+Every endblock, we run the following procedure to determine whether to make a new `SignerSetTx` which will then need to be signed by all validators.
 
 1. If there are no valset requests, create a new one.
-2. If there is at least one validator who started unbonding in current block, create a `Valset`. This will make sure the unbonding validator has to provide an ethereumEventVoteRecord to a new Valset that excludes them before they completely Unbond. Otherwise they will be slashed.
-3. If power change between validators of CurrentValset and latest valset request is > 5%, create a new `Valset`.
+2. If there is at least one validator who started unbonding in current block, create a `SignerSetTx`. This will make sure the unbonding validator has to provide an ethereumEventVoteRecord to a new SignerSetTx that excludes them before they completely Unbond. Otherwise they will be slashed.
+3. If power change between validators of CurrentSignerSetTx and latest valset request is > 5%, create a new `SignerSetTx`.
 
-If the above conditions are met, we create a new `Valset` using the procedure described [here](03_state_transitions.md#valset-creation)
+If the above conditions are met, we create a new `SignerSetTx` using the procedure described [here](03_state_transitions.md#valset-creation)
 
 ## Slashing
 
 Slashing groups multiple types of slashing (validator set, batch and claim slashing). We will cover how these work in the following sections.
 
-### Valset Slashing
+### SignerSetTx Slashing
 
 This slashing condition is triggered when a validator does not sign a validator set update or transaction batch which is produced by the Gravity Cosmos module. This prevents two bad scenarios-
 
 1. A validator simply does not bother to keep the correct binaries running on their system,
 2. A cartel of >1/3 validators unbond and then refuse to sign updates, preventing any validator set updates from getting enough signatures to be submitted to the Gravity Ethereum contract. If they prevent validator set updates for longer than the Cosmos unbonding period, they can no longer be punished for submitting fake validator set updates and tx batches.
 
-To deal with scenario 2, we also need to slash validators who are no longer validating, but are still in the unbonding period for up to `UnbondSlashingValsetsWindow` blocks. This means that when a validator leaves the validator set, they will need to keep running their equipment for at least `UnbondSlashingValsetsWindow` blocks. This is unusual for a Cosmos chain, and may not be accepted by the validators.
+To deal with scenario 2, we also need to slash validators who are no longer validating, but are still in the unbonding period for up to `UnbondSlashingSignerSetTxsWindow` blocks. This means that when a validator leaves the validator set, they will need to keep running their equipment for at least `UnbondSlashingSignerSetTxsWindow` blocks. This is unusual for a Cosmos chain, and may not be accepted by the validators.
 
-The current value of `UnbondSlashingValsetsWindow` is 10,000 blocks, or about 12-14 hours. We have determined this to be a safe value based on the following logic. So long as every validator leaving hte validator set signs at least one validator set update that they are not contained in then it is guaranteed to be possible for a relayer to produce a chain of validator set updates to transform the current state on the chain into the present state.
+The current value of `UnbondSlashingSignerSetTxsWindow` is 10,000 blocks, or about 12-14 hours. We have determined this to be a safe value based on the following logic. So long as every validator leaving hte validator set signs at least one validator set update that they are not contained in then it is guaranteed to be possible for a relayer to produce a chain of validator set updates to transform the current state on the chain into the present state.
 
 #### Slashing currently bonded validators:
 
-- We compare the current Cosmos block height with the `SignedValsetsWindow` parameter. If the current block height is less than `SignedValsetsWindow`, this procedure completes, doing nothing.
-- Get a list of all the valsets that have not yet been processed by this procedure in earlier blocks, up to `SignedValsetsWindow` blocks ago. We only slash for each valset once.
+- We compare the current Cosmos block height with the `SignedSignerSetTxsWindow` parameter. If the current block height is less than `SignedSignerSetTxsWindow`, this procedure completes, doing nothing.
+- Get a list of all the valsets that have not yet been processed by this procedure in earlier blocks, up to `SignedSignerSetTxsWindow` blocks ago. We only slash for each valset once.
 - For each of these valsets:
   - Get the current set of bonded validators with `StakingKeeper.GetBondedValidatorsByPower`. For each validator:
     - Check that the validator started validating before the valset was created.
-    - Check if the validator has signed this valset with a `MsgBatchTxSignature`. If not, slash the validator by `SlashFractionValset` and jail them.
+    - Check if the validator has signed this valset with a `MsgBatchTxSignature`. If not, slash the validator by `SlashFractionSignerSetTx` and jail them.
 
 #### Slashing recently unbonded validators:
 
 - Get a list of all validators who are currently unbonding. For each of these:
   - Check that the validator started validating before the valset was created.
-  - Check that the valset was created before the `UnbondSlashingValsetsWindow` for that validator ended. (validators `UnbondingHeight` + `UnbondSlashingValsetsWindow`)
-  - Check if the validator has signed this valset with a `MsgBatchTxSignature`. If not, slash the validator by `SlashFractionValset` and jail them.
+  - Check that the valset was created before the `UnbondSlashingSignerSetTxsWindow` for that validator ended. (validators `UnbondingHeight` + `UnbondSlashingSignerSetTxsWindow`)
+  - Check if the validator has signed this valset with a `MsgBatchTxSignature`. If not, slash the validator by `SlashFractionSignerSetTx` and jail them.
 
 ### Batch Slashing
 

@@ -44,7 +44,7 @@ func createSignerSetTxSignatureHandler(cliCtx client.Context, storeKey string) h
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
 			return
 		}
-		var valset types.Valset
+		var valset types.SignerSetTx
 		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &valset)
 
 		// TODO: fix this, need to fetch the gravityID from params here

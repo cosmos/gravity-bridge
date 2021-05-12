@@ -29,7 +29,7 @@ func TestSignerSetTxSignatureHash(t *testing.T) {
 	for _, m := range members {
 		mem = append(mem, m)
 	}
-	v := Valset{Members: mem}
+	v := SignerSetTx{Members: mem}
 	// TODO: this is hardcoded to foo, replace?
 	hash := v.GetCheckpoint("foo")
 	hexHash := hex.EncodeToString(hash)
@@ -37,8 +37,8 @@ func TestSignerSetTxSignatureHash(t *testing.T) {
 	assert.Equal(t, correctHash, hexHash)
 }
 
-func TestValsetCheckpointGold1(t *testing.T) {
-	src := NewValset(0xc, 0xc, BridgeValidators{{
+func TestSignerSetTxCheckpointGold1(t *testing.T) {
+	src := NewSignerSetTx(0xc, 0xc, BridgeValidators{{
 		Power:           0xffffffff,
 		EthereumAddress: gethcommon.Address{0xb4, 0x62, 0x86, 0x4e, 0x39, 0x5d, 0x88, 0xd6, 0xbc, 0x7c, 0x5d, 0xd5, 0xf3, 0xf5, 0xeb, 0x4c, 0xc2, 0x59, 0x92, 0x55}.String(),
 	}})
@@ -51,7 +51,7 @@ func TestValsetCheckpointGold1(t *testing.T) {
 	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))
 }
 
-func TestValsetPowerDiff(t *testing.T) {
+func TestSignerSetTxPowerDiff(t *testing.T) {
 	specs := map[string]struct {
 		start BridgeValidators
 		diff  BridgeValidators
@@ -114,7 +114,7 @@ func TestValsetPowerDiff(t *testing.T) {
 	}
 }
 
-func TestValsetSort(t *testing.T) {
+func TestSignerSetTxSort(t *testing.T) {
 	specs := map[string]struct {
 		src BridgeValidators
 		exp BridgeValidators

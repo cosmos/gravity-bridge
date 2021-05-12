@@ -45,7 +45,7 @@ func TestPrefixRange(t *testing.T) {
 	}
 }
 
-func TestCurrentValsetNormalization(t *testing.T) {
+func TestCurrentSignerSetTxNormalization(t *testing.T) {
 	specs := map[string]struct {
 		srcPowers []uint64
 		expPowers []uint64
@@ -73,7 +73,7 @@ func TestCurrentValsetNormalization(t *testing.T) {
 				}
 			}
 			input.GravityKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
-			r := input.GravityKeeper.GetCurrentValset(ctx)
+			r := input.GravityKeeper.GetCurrentSignerSetTx(ctx)
 			assert.Equal(t, spec.expPowers, types.BridgeValidators(r.Members).GetPowers())
 		})
 	}
@@ -159,48 +159,48 @@ func TestDelegateKeys(t *testing.T) {
 
 }
 
-func TestLastSlashedValsetNonce(t *testing.T) {
+func TestLastSlashedSignerSetTxNonce(t *testing.T) {
 	input := CreateTestEnv(t)
 	k := input.GravityKeeper
 	ctx := input.Context
 
-	vs := k.GetCurrentValset(ctx)
+	vs := k.GetCurrentSignerSetTx(ctx)
 
 	i := 1
 	for ; i < 10; i++ {
 		vs.Height = uint64(i)
 		vs.Nonce = uint64(i)
-		k.StoreValsetUnsafe(ctx, vs)
+		k.StoreSignerSetTxUnsafe(ctx, vs)
 	}
 
-	latestValsetNonce := k.GetLatestValsetNonce(ctx)
-	assert.Equal(t, latestValsetNonce, uint64(i-1))
+	latestSignerSetTxNonce := k.GetLatestSignerSetTxNonce(ctx)
+	assert.Equal(t, latestSignerSetTxNonce, uint64(i-1))
 
-	//  lastSlashedValsetNonce should be zero initially.
-	lastSlashedValsetNonce := k.GetLastSlashedValsetNonce(ctx)
-	assert.Equal(t, lastSlashedValsetNonce, uint64(0))
-	unslashedValsets := k.GetUnSlashedValsets(ctx, uint64(12))
-	assert.Equal(t, len(unslashedValsets), 9)
+	//  lastSlashedSignerSetTxNonce should be zero initially.
+	lastSlashedSignerSetTxNonce := k.GetLastSlashedSignerSetTxNonce(ctx)
+	assert.Equal(t, lastSlashedSignerSetTxNonce, uint64(0))
+	unslashedSignerSetTxs := k.GetUnSlashedSignerSetTxs(ctx, uint64(12))
+	assert.Equal(t, len(unslashedSignerSetTxs), 9)
 
-	// check if last Slashed Valset nonce is set properly or not
-	k.SetLastSlashedValsetNonce(ctx, uint64(3))
-	lastSlashedValsetNonce = k.GetLastSlashedValsetNonce(ctx)
-	assert.Equal(t, lastSlashedValsetNonce, uint64(3))
+	// check if last Slashed SignerSetTx nonce is set properly or not
+	k.SetLastSlashedSignerSetTxNonce(ctx, uint64(3))
+	lastSlashedSignerSetTxNonce = k.GetLastSlashedSignerSetTxNonce(ctx)
+	assert.Equal(t, lastSlashedSignerSetTxNonce, uint64(3))
 
-	// when maxHeight < lastSlashedValsetNonce, len(unslashedValsets) should be zero
-	unslashedValsets = k.GetUnSlashedValsets(ctx, uint64(2))
-	assert.Equal(t, len(unslashedValsets), 0)
+	// when maxHeight < lastSlashedSignerSetTxNonce, len(unslashedSignerSetTxs) should be zero
+	unslashedSignerSetTxs = k.GetUnSlashedSignerSetTxs(ctx, uint64(2))
+	assert.Equal(t, len(unslashedSignerSetTxs), 0)
 
-	// when maxHeight == lastSlashedValsetNonce, len(unslashedValsets) should be zero
-	unslashedValsets = k.GetUnSlashedValsets(ctx, uint64(3))
-	assert.Equal(t, len(unslashedValsets), 0)
+	// when maxHeight == lastSlashedSignerSetTxNonce, len(unslashedSignerSetTxs) should be zero
+	unslashedSignerSetTxs = k.GetUnSlashedSignerSetTxs(ctx, uint64(3))
+	assert.Equal(t, len(unslashedSignerSetTxs), 0)
 
-	// when maxHeight > lastSlashedValsetNonce && maxHeight <= latestValsetNonce
-	unslashedValsets = k.GetUnSlashedValsets(ctx, uint64(6))
-	assert.Equal(t, len(unslashedValsets), 2)
+	// when maxHeight > lastSlashedSignerSetTxNonce && maxHeight <= latestSignerSetTxNonce
+	unslashedSignerSetTxs = k.GetUnSlashedSignerSetTxs(ctx, uint64(6))
+	assert.Equal(t, len(unslashedSignerSetTxs), 2)
 
-	// when maxHeight > latestValsetNonce
-	unslashedValsets = k.GetUnSlashedValsets(ctx, uint64(15))
-	assert.Equal(t, len(unslashedValsets), 6)
-	fmt.Println("unslashedValsetsRange", unslashedValsets)
+	// when maxHeight > latestSignerSetTxNonce
+	unslashedSignerSetTxs = k.GetUnSlashedSignerSetTxs(ctx, uint64(15))
+	assert.Equal(t, len(unslashedSignerSetTxs), 6)
+	fmt.Println("unslashedSignerSetTxsRange", unslashedSignerSetTxs)
 }
