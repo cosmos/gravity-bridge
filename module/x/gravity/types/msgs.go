@@ -314,7 +314,7 @@ var (
 
 // GetType returns the type of the claim
 func (msg *MsgSendToCosmosEvent) GetType() EthereumEventType {
-	return CLAIM_TYPE_DEPOSIT
+	return EVENT_TYPE_DEPOSIT
 }
 
 // ValidateBasic performs stateless checks
@@ -384,7 +384,7 @@ func (msg *MsgSendToCosmosEvent) ClaimHash() []byte {
 
 // GetType returns the claim type
 func (msg *MsgBatchExecutedEvent) GetType() EthereumEventType {
-	return CLAIM_TYPE_WITHDRAW
+	return EVENT_TYPE_WITHDRAW
 }
 
 // ValidateBasic performs stateless checks
@@ -449,7 +449,7 @@ const (
 
 // GetType returns the type of the claim
 func (e *MsgERC20DeployedEvent) GetType() EthereumEventType {
-	return CLAIM_TYPE_ERC20_DEPLOYED
+	return EVENT_TYPE_ERC20_DEPLOYED
 }
 
 // ValidateBasic performs stateless checks
@@ -508,7 +508,7 @@ func (b *MsgERC20DeployedEvent) ClaimHash() []byte {
 
 // GetType returns the type of the claim
 func (e *MsgContractCallTxExecutedEvent) GetType() EthereumEventType {
-	return CLAIM_TYPE_LOGIC_CALL_EXECUTED
+	return EVENT_TYPE_LOGIC_CALL_EXECUTED
 }
 
 // ValidateBasic performs stateless checks
@@ -564,7 +564,7 @@ func (b *MsgContractCallTxExecutedEvent) ClaimHash() []byte {
 
 // GetType returns the type of the claim
 func (e *MsgSignerSetUpdatedEvent) GetType() EthereumEventType {
-	return CLAIM_TYPE_VALSET_UPDATED
+	return EVENT_TYPE_VALSET_UPDATED
 }
 
 // ValidateBasic performs stateless checks
