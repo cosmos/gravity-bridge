@@ -30,7 +30,7 @@ This message is expected to fail if:
   - Does not start with 0x
 - The validator is not present in the validator set.
 
-### MsgSendToEth
+### MsgSendToEthereum
 
 When a user wants to bridge an asset to an EVM. If the token has originated from the cosmos chain it will be held in a module account. If the token is originally from ethereum it will be burned on the cosmos side.
 

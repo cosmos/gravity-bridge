@@ -327,14 +327,14 @@ func (k Keeper) GetDelegateKeyByEth(
 	return nil, sdkerrors.Wrap(types.ErrInvalid, "No validator")
 }
 
-func (k Keeper) GetPendingSendToEth(
+func (k Keeper) GetPendingSendToEthereum(
 	c context.Context,
-	req *types.PendingSendToEthereumRequest) (*types.PendingSendToEthereumRequestResponse, error) {
+	req *types.PendingSendToEthereumRequest) (*types.PendingSendToEthereumResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	batches := k.GetBatchTxs(ctx)
 	unbatchedTx := k.GetPoolTransactions(ctx)
 	senderAddress := req.SenderAddress
-	var res *types.PendingSendToEthereumRequestResponse
+	var res *types.PendingSendToEthereumResponse
 
 	for _, batch := range batches {
 		for _, tx := range batch.Transactions {

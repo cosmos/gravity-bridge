@@ -49,7 +49,7 @@ The gravity module emits the following events:
 | message | module               | valset_confirm     |
 | message | set_operator_address | {operator_address} |
 
-### Msg/SendToEth
+### Msg/SendToEthereum
 
 | Type    | Attribute Key  | Attribute Value |
 | ------- | -------------- | --------------- |

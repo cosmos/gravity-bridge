@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-func TestHandleMsgSendToEth(t *testing.T) {
+func TestHandleMsgSendToEthereum(t *testing.T) {
 	var (
 		userCosmosAddr, _               = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
 		blockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
@@ -38,7 +38,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}, balance1)
 
 	// send some coins
-	msg := &types.MsgSendToEth{
+	msg := &types.MsgSendToEthereum{
 		Sender:    userCosmosAddr.String(),
 		EthDest:   ethDestination,
 		Amount:    sendingCoin,
@@ -50,7 +50,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount.Sub(sendAmount).Sub(feeAmount))}, balance2)
 
 	// do the same thing again and make sure it works twice
-	msg1 := &types.MsgSendToEth{
+	msg1 := &types.MsgSendToEthereum{
 		Sender:    userCosmosAddr.String(),
 		EthDest:   ethDestination,
 		Amount:    sendingCoin,
@@ -63,7 +63,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance3)
 
 	// now we should be out of coins and error
-	msg2 := &types.MsgSendToEth{
+	msg2 := &types.MsgSendToEthereum{
 		Sender:    userCosmosAddr.String(),
 		EthDest:   ethDestination,
 		Amount:    sendingCoin,

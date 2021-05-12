@@ -920,7 +920,7 @@ func TestPendingSendToEthereumRequest(t *testing.T) {
 	_, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
-	response, err := queryPendingSendToEth(ctx, mySender.String(), input.GravityKeeper)
+	response, err := queryPendingSendToEthereum(ctx, mySender.String(), input.GravityKeeper)
 	require.NoError(t, err)
 	expectedJSON := []byte(`{
   "transfers_in_batches": [

@@ -27,7 +27,7 @@ func GetTxCmd(storeKey string) *cobra.Command {
 	}
 
 	gravityTxCmd.AddCommand([]*cobra.Command{
-		CmdSendToEth(),
+		CmdSendToEthereum(),
 		CmdRequestBatch(),
 		CmdSetOrchestratorAddress(),
 		GetUnsafeTestingCmd(),
@@ -92,7 +92,7 @@ func CmdUnsafeETHAddr() *cobra.Command {
 	}
 }
 
-func CmdSendToEth() *cobra.Command {
+func CmdSendToEthereum() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-to-eth [eth-dest] [amount] [bridge-fee]",
 		Short: "Adds a new entry to the transaction pool to withdraw an amount from the Ethereum bridge contract",
@@ -118,7 +118,7 @@ func CmdSendToEth() *cobra.Command {
 			}
 
 			// Make the message
-			msg := types.MsgSendToEth{
+			msg := types.MsgSendToEthereum{
 				Sender:    cosmosAddr.String(),
 				EthDest:   args[0],
 				Amount:    amount[0],

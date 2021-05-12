@@ -59,7 +59,7 @@ const (
 	// Used by the relayer to package a batch with signatures required
 	// to submit to Ethereum
 	QueryBatchConfirms = "batchConfirms"
-	// Used to query all pending SendToEth transactions and fees available for each
+	// Used to query all pending SendToEthereum transactions and fees available for each
 	// token type, a relayer can then estimate their potential profit when requesting
 	// a batch
 	QueryBatchFees = "batchFees"
@@ -88,7 +88,7 @@ const (
 	QueryDenomToERC20 = "DenomToERC20"
 
 	// Query pending transactions
-	PendingSendToEthereumRequest = "PendingSendToEth"
+	PendingSendToEthereumRequest = "PendingSendToEthereum"
 )
 
 // NewQuerier is the module level router for state queries
@@ -143,7 +143,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 
 		// Pending transactions
 		case PendingSendToEthereumRequest:
-			return queryPendingSendToEth(ctx, path[1], keeper)
+			return queryPendingSendToEthereum(ctx, path[1], keeper)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint", types.ModuleName)
@@ -517,7 +517,7 @@ func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, er
 	}
 }
 
-func queryPendingSendToEth(ctx sdk.Context, senderAddr string, k Keeper) ([]byte, error) {
+func queryPendingSendToEthereum(ctx sdk.Context, senderAddr string, k Keeper) ([]byte, error) {
 	batches := k.GetBatchTxs(ctx)
 	unbatched_tx := k.GetPoolTransactions(ctx)
 	sender_address := senderAddr

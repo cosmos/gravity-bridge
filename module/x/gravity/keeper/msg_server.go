@@ -111,8 +111,8 @@ func (k msgServer) SignerSetTxSignature(c context.Context, msg *types.MsgSignerS
 	return &types.MsgSignerSetTxSignatureResponse{}, nil
 }
 
-// SendToEth handles MsgSendToEth
-func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types.MsgSendToEthResponse, error) {
+// SendToEthereum handles MsgSendToEthereum
+func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereum) (*types.MsgSendToEthereumResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
@@ -131,7 +131,7 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 		),
 	)
 
-	return &types.MsgSendToEthResponse{}, nil
+	return &types.MsgSendToEthereumResponse{}, nil
 }
 
 // RequestBatch handles MsgRequestBatch
@@ -473,7 +473,7 @@ func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgValsetUpda
 	return &types.MsgValsetUpdatedClaimResponse{}, nil
 }
 
-func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendToEth) (*types.MsgCancelSendToEthResponse, error) {
+func (k msgServer) CancelSendToEthereum(c context.Context, msg *types.MsgCancelSendToEthereum) (*types.MsgCancelSendToEthereumResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
@@ -492,7 +492,7 @@ func (k msgServer) CancelSendToEth(c context.Context, msg *types.MsgCancelSendTo
 		),
 	)
 
-	return &types.MsgCancelSendToEthResponse{}, nil
+	return &types.MsgCancelSendToEthereumResponse{}, nil
 }
 
 func (k msgServer) SubmitBadSignatureEvidence(c context.Context, msg *types.MsgSubmitBadSignatureEvidence) (*types.MsgSubmitBadSignatureEvidenceResponse, error) {

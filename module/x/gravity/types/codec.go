@@ -18,7 +18,7 @@ func init() {
 func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgSignerSetTxSignature{},
-		&MsgSendToEth{},
+		&MsgSendToEthereum{},
 		&MsgRequestBatch{},
 		&MsgConfirmBatch{},
 		&MsgConfirmLogicCall{},
@@ -28,7 +28,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgDelegateKeys{},
 		&MsgLogicCallExecutedClaim{},
 		&MsgValsetUpdatedClaim{},
-		&MsgCancelSendToEth{},
+		&MsgCancelSendToEthereum{},
 		&MsgSubmitBadSignatureEvidence{},
 	)
 
@@ -50,7 +50,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterInterface((*EthereumClaim)(nil), nil)
 	cdc.RegisterConcrete(&MsgDelegateKeys{}, "gravity/MsgDelegateKeys", nil)
 	cdc.RegisterConcrete(&MsgSignerSetTxSignature{}, "gravity/MsgSignerSetTxSignature", nil)
-	cdc.RegisterConcrete(&MsgSendToEth{}, "gravity/MsgSendToEth", nil)
+	cdc.RegisterConcrete(&MsgSendToEthereum{}, "gravity/MsgSendToEthereum", nil)
 	cdc.RegisterConcrete(&MsgRequestBatch{}, "gravity/MsgRequestBatch", nil)
 	cdc.RegisterConcrete(&MsgConfirmBatch{}, "gravity/MsgConfirmBatch", nil)
 	cdc.RegisterConcrete(&MsgConfirmLogicCall{}, "gravity/MsgConfirmLogicCall", nil)
@@ -61,7 +61,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgLogicCallExecutedClaim{}, "gravity/MsgLogicCallExecutedClaim", nil)
 	cdc.RegisterConcrete(&MsgValsetUpdatedClaim{}, "gravity/MsgValsetUpdatedClaim", nil)
 	cdc.RegisterConcrete(&BatchTx{}, "gravity/BatchTx", nil)
-	cdc.RegisterConcrete(&MsgCancelSendToEth{}, "gravity/MsgCancelSendToEth", nil)
+	cdc.RegisterConcrete(&MsgCancelSendToEthereum{}, "gravity/MsgCancelSendToEthereum", nil)
 	cdc.RegisterConcrete(&SendToEthereum{}, "gravity/SendToEthereum", nil)
 	cdc.RegisterConcrete(&ERC20Token{}, "gravity/ERC20Token", nil)
 	cdc.RegisterConcrete(&IDSet{}, "gravity/IDSet", nil)

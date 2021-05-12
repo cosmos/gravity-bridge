@@ -12,7 +12,7 @@ import (
 var (
 	_ sdk.Msg = &MsgDelegateKeys{}
 	_ sdk.Msg = &MsgSignerSetTxSignature{}
-	_ sdk.Msg = &MsgSendToEth{}
+	_ sdk.Msg = &MsgSendToEthereum{}
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
 	_ sdk.Msg = &MsgERC20DeployedClaim{}
@@ -113,9 +113,9 @@ func (msg *MsgSignerSetTxSignature) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
-// NewMsgSendToEth returns a new msgSendToEth
-func NewMsgSendToEth(sender sdk.AccAddress, destAddress string, send sdk.Coin, bridgeFee sdk.Coin) *MsgSendToEth {
-	return &MsgSendToEth{
+// NewMsgSendToEthereum returns a new msgSendToEthereum
+func NewMsgSendToEthereum(sender sdk.AccAddress, destAddress string, send sdk.Coin, bridgeFee sdk.Coin) *MsgSendToEthereum {
+	return &MsgSendToEthereum{
 		Sender:    sender.String(),
 		EthDest:   destAddress,
 		Amount:    send,
@@ -124,14 +124,14 @@ func NewMsgSendToEth(sender sdk.AccAddress, destAddress string, send sdk.Coin, b
 }
 
 // Route should return the name of the module
-func (msg MsgSendToEth) Route() string { return RouterKey }
+func (msg MsgSendToEthereum) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgSendToEth) Type() string { return "send_to_eth" }
+func (msg MsgSendToEthereum) Type() string { return "send_to_eth" }
 
 // ValidateBasic runs stateless checks on the message
 // Checks if the Eth address is valid
-func (msg MsgSendToEth) ValidateBasic() error {
+func (msg MsgSendToEthereum) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
 	}
@@ -156,12 +156,12 @@ func (msg MsgSendToEth) ValidateBasic() error {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgSendToEth) GetSignBytes() []byte {
+func (msg MsgSendToEthereum) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
+func (msg MsgSendToEthereum) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
@@ -615,21 +615,21 @@ func (b *MsgValsetUpdatedClaim) ClaimHash() []byte {
 	return tmhash.Sum([]byte(path))
 }
 
-// NewMsgCancelSendToEth returns a new msgSetOrchestratorAddress
-func NewMsgCancelSendToEth(val sdk.ValAddress, id uint64) *MsgCancelSendToEth {
-	return &MsgCancelSendToEth{
+// NewMsgCancelSendToEthereum returns a new msgSetOrchestratorAddress
+func NewMsgCancelSendToEthereum(val sdk.ValAddress, id uint64) *MsgCancelSendToEthereum {
+	return &MsgCancelSendToEthereum{
 		TransactionId: id,
 	}
 }
 
 // Route should return the name of the module
-func (msg *MsgCancelSendToEth) Route() string { return RouterKey }
+func (msg *MsgCancelSendToEthereum) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgCancelSendToEth) Type() string { return "cancel_send_to_eth" }
+func (msg *MsgCancelSendToEthereum) Type() string { return "cancel_send_to_eth" }
 
 // ValidateBasic performs stateless checks
-func (msg *MsgCancelSendToEth) ValidateBasic() (err error) {
+func (msg *MsgCancelSendToEthereum) ValidateBasic() (err error) {
 	_, err = sdk.ValAddressFromBech32(msg.Sender)
 	if err != nil {
 		return err
@@ -638,12 +638,12 @@ func (msg *MsgCancelSendToEth) ValidateBasic() (err error) {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg *MsgCancelSendToEth) GetSignBytes() []byte {
+func (msg *MsgCancelSendToEthereum) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
-func (msg *MsgCancelSendToEth) GetSigners() []sdk.AccAddress {
+func (msg *MsgCancelSendToEthereum) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.ValAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
