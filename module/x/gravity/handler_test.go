@@ -261,7 +261,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance3)
 }
 
-func TestMsgSetOrchestratorAddresses(t *testing.T) {
+func TestMsgDelegateKeyses(t *testing.T) {
 	var (
 		ethAddress                    = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
 		cosmosAddress  sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
@@ -281,7 +281,7 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	h := NewHandler(input.GravityKeeper)
 	ctx = ctx.WithBlockTime(blockTime)
 
-	msg := types.NewMsgSetOrchestratorAddress(valAddress, cosmosAddress, ethAddress)
+	msg := types.NewMsgDelegateKeys(valAddress, cosmosAddress, ethAddress)
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
 	_, err := h(ctx, msg)
 	require.NoError(t, err)
@@ -302,7 +302,7 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	_, err = k.GetDelegateKeyByEth(wctx, &queryE)
 	require.NoError(t, err)
 
-	msg = types.NewMsgSetOrchestratorAddress(valAddress, cosmosAddress2, ethAddress2)
+	msg = types.NewMsgDelegateKeys(valAddress, cosmosAddress2, ethAddress2)
 	ctx = ctx.WithBlockTime(blockTime2).WithBlockHeight(blockHeight2)
 	_, err = h(ctx, msg)
 	require.NoError(t, err)

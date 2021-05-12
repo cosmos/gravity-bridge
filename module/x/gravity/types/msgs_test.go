@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestValidateMsgSetOrchestratorAddress(t *testing.T) {
+func TestValidateMsgDelegateKeys(t *testing.T) {
 	var (
 		ethAddress                   = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
 		cosmosAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
@@ -61,7 +61,7 @@ func TestValidateMsgSetOrchestratorAddress(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			msg := NewMsgSetOrchestratorAddress(spec.srcValAddr, spec.srcCosmosAddr, spec.srcETHAddr)
+			msg := NewMsgDelegateKeys(spec.srcValAddr, spec.srcCosmosAddr, spec.srcETHAddr)
 			// when
 			err := msg.ValidateBasic()
 			if spec.expErr {

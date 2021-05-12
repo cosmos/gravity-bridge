@@ -179,7 +179,7 @@ $ %s gentx my-key-name 1000000stake 0x033030FEeBd93E3178487c35A9c8cA80874353C9 c
 				return errors.Wrap(err, "failed to build create-validator message")
 			}
 
-			delegateGravityMsg := &gravitytypes.MsgSetOrchestratorAddress{
+			delegateGravityMsg := &gravitytypes.MsgDelegateKeys{
 				Validator:    sdk.ValAddress(key.GetAddress()).String(),
 				Orchestrator: orchAddress.String(),
 				EthAddress:   ethAddress,

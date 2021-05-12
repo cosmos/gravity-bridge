@@ -650,7 +650,7 @@ func (k Keeper) UnpackEthereumEventVoteRecordClaim(att *types.EthereumEventVoteR
 }
 
 // GetDelegateKeys iterates both the EthAddress and Orchestrator address indexes to produce
-// a vector of MsgSetOrchestratorAddress entires containing all the delgate keys for state
+// a vector of MsgDelegateKeys entires containing all the delgate keys for state
 // export / import. This may seem at first glance to be excessively complicated, why not combine
 // the EthAddress and Orchestrator address indexes and simply iterate one thing? The answer is that
 // even though we set the Eth and Orchestrator address in the same place we use them differently we
@@ -659,7 +659,7 @@ func (k Keeper) UnpackEthereumEventVoteRecordClaim(att *types.EthereumEventVoteR
 // address mapping will mean having to keep two of the same data around just to provide lookups.
 //
 // For the time being this will serve
-func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddress {
+func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgDelegateKeys {
 	store := ctx.KVStore(k.storeKey)
 	prefix := []byte(types.EthAddressByValidatorKey)
 	iter := store.Iterator(prefixRange(prefix))
@@ -694,7 +694,7 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 		orchAddresses[valAddress.String()] = orchAddress
 	}
 
-	var result []*types.MsgSetOrchestratorAddress
+	var result []*types.MsgDelegateKeys
 
 	for valAddr, ethAddr := range ethAddresses {
 		orch, ok := orchAddresses[valAddr]
@@ -703,7 +703,7 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 			// is somehow inconsistent
 			panic("Can't find address")
 		}
-		result = append(result, &types.MsgSetOrchestratorAddress{
+		result = append(result, &types.MsgDelegateKeys{
 			Orchestrator: orch,
 			Validator:    valAddr,
 			EthAddress:   ethAddr,

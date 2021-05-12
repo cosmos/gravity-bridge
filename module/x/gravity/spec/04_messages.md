@@ -6,7 +6,7 @@ order: 4
 
 In this section we describe the processing of the gravity messages and the corresponding updates to the state. All created/modified state objects specified by each message are defined within the [state](./02_state_transitions.md) section.
 
-### MsgSetOrchestratorAddress
+### MsgDelegateKeys
 
 Allows validators to delegate their voting responsibilities to a given key. This Key can be used to authenticate oracle claims.
 

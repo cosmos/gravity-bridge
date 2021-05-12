@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ sdk.Msg = &MsgSetOrchestratorAddress{}
+	_ sdk.Msg = &MsgDelegateKeys{}
 	_ sdk.Msg = &MsgValsetConfirm{}
 	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
@@ -23,9 +23,9 @@ var (
 	_ sdk.Msg = &MsgSubmitBadSignatureEvidence{}
 )
 
-// NewMsgSetOrchestratorAddress returns a new msgSetOrchestratorAddress
-func NewMsgSetOrchestratorAddress(val sdk.ValAddress, oper sdk.AccAddress, eth string) *MsgSetOrchestratorAddress {
-	return &MsgSetOrchestratorAddress{
+// NewMsgDelegateKeys returns a new msgSetOrchestratorAddress
+func NewMsgDelegateKeys(val sdk.ValAddress, oper sdk.AccAddress, eth string) *MsgDelegateKeys {
+	return &MsgDelegateKeys{
 		Validator:    val.String(),
 		Orchestrator: oper.String(),
 		EthAddress:   eth,
@@ -33,13 +33,13 @@ func NewMsgSetOrchestratorAddress(val sdk.ValAddress, oper sdk.AccAddress, eth s
 }
 
 // Route should return the name of the module
-func (msg *MsgSetOrchestratorAddress) Route() string { return RouterKey }
+func (msg *MsgDelegateKeys) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgSetOrchestratorAddress) Type() string { return "set_operator_address" }
+func (msg *MsgDelegateKeys) Type() string { return "set_operator_address" }
 
 // ValidateBasic performs stateless checks
-func (msg *MsgSetOrchestratorAddress) ValidateBasic() (err error) {
+func (msg *MsgDelegateKeys) ValidateBasic() (err error) {
 	if _, err = sdk.ValAddressFromBech32(msg.Validator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
 	}
@@ -53,12 +53,12 @@ func (msg *MsgSetOrchestratorAddress) ValidateBasic() (err error) {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg *MsgSetOrchestratorAddress) GetSignBytes() []byte {
+func (msg *MsgDelegateKeys) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
-func (msg *MsgSetOrchestratorAddress) GetSigners() []sdk.AccAddress {
+func (msg *MsgDelegateKeys) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.ValAddressFromBech32(msg.Validator)
 	if err != nil {
 		panic(err)
