@@ -17,7 +17,7 @@ var (
 	_ sdk.Msg = &MsgBatchTxSignature{}
 	_ sdk.Msg = &MsgERC20DeployedEvent{}
 	_ sdk.Msg = &MsgContractCallTxSignature{}
-	_ sdk.Msg = &MsgLogicCallExecutedClaim{}
+	_ sdk.Msg = &MsgContractCallTxExecutedEvent{}
 	_ sdk.Msg = &MsgSendToCosmosEvent{}
 	_ sdk.Msg = &MsgBatchExecutedEvent{}
 	_ sdk.Msg = &MsgSubmitBadSignatureEvidence{}
@@ -309,7 +309,7 @@ var (
 	_ EthereumClaim = &MsgSendToCosmosEvent{}
 	_ EthereumClaim = &MsgBatchExecutedEvent{}
 	_ EthereumClaim = &MsgERC20DeployedEvent{}
-	_ EthereumClaim = &MsgLogicCallExecutedClaim{}
+	_ EthereumClaim = &MsgContractCallTxExecutedEvent{}
 )
 
 // GetType returns the type of the claim
@@ -503,16 +503,16 @@ func (b *MsgERC20DeployedEvent) ClaimHash() []byte {
 	return tmhash.Sum([]byte(path))
 }
 
-// EthereumClaim implementation for MsgLogicCallExecutedClaim
+// EthereumClaim implementation for MsgContractCallTxExecutedEvent
 // ======================================================
 
 // GetType returns the type of the claim
-func (e *MsgLogicCallExecutedClaim) GetType() ClaimType {
+func (e *MsgContractCallTxExecutedEvent) GetType() ClaimType {
 	return CLAIM_TYPE_LOGIC_CALL_EXECUTED
 }
 
 // ValidateBasic performs stateless checks
-func (e *MsgLogicCallExecutedClaim) ValidateBasic() error {
+func (e *MsgContractCallTxExecutedEvent) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(e.Orchestrator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, e.Orchestrator)
 	}
@@ -523,11 +523,11 @@ func (e *MsgLogicCallExecutedClaim) ValidateBasic() error {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgLogicCallExecutedClaim) GetSignBytes() []byte {
+func (msg MsgContractCallTxExecutedEvent) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgLogicCallExecutedClaim) GetClaimer() sdk.AccAddress {
+func (msg MsgContractCallTxExecutedEvent) GetClaimer() sdk.AccAddress {
 	err := msg.ValidateBasic()
 	if err != nil {
 		panic("MsgERC20DeployedEvent failed ValidateBasic! Should have been handled earlier")
@@ -538,7 +538,7 @@ func (msg MsgLogicCallExecutedClaim) GetClaimer() sdk.AccAddress {
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgLogicCallExecutedClaim) GetSigners() []sdk.AccAddress {
+func (msg MsgContractCallTxExecutedEvent) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)
@@ -548,13 +548,13 @@ func (msg MsgLogicCallExecutedClaim) GetSigners() []sdk.AccAddress {
 }
 
 // Type should return the action
-func (msg MsgLogicCallExecutedClaim) Type() string { return "Logic_Call_Executed_Claim" }
+func (msg MsgContractCallTxExecutedEvent) Type() string { return "Logic_Call_Executed_Claim" }
 
 // Route should return the name of the module
-func (msg MsgLogicCallExecutedClaim) Route() string { return RouterKey }
+func (msg MsgContractCallTxExecutedEvent) Route() string { return RouterKey }
 
 // Hash implements BridgeDeposit.Hash
-func (b *MsgLogicCallExecutedClaim) ClaimHash() []byte {
+func (b *MsgContractCallTxExecutedEvent) ClaimHash() []byte {
 	path := fmt.Sprintf("%s/%d/", b.InvalidationId, b.InvalidationNonce)
 	return tmhash.Sum([]byte(path))
 }

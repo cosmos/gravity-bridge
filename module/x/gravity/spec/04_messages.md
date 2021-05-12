@@ -148,7 +148,7 @@ This message will fail if:
 - The validator is not in the active set
 - If the creation of ethereumEventVoteRecord fails
 
-### MsgLogicCallExecutedClaim
+### MsgContractCallTxExecutedEvent
 
 When a logic call is executed by the Gravity.sol Ethereum contract, an event is emitted by the contract. When validators observe this event, they send this message.
 

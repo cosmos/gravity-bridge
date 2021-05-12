@@ -44,8 +44,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgERC20DeployedEvent:
 			res, err := msgServer.ERC20DeployedEvent(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgLogicCallExecutedClaim:
-			res, err := msgServer.LogicCallExecutedClaim(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgContractCallTxExecutedEvent:
+			res, err := msgServer.ContractCallTxExecutedEvent(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgValsetUpdatedClaim:
 			res, err := msgServer.ValsetUpdateClaim(sdk.WrapSDKContext(ctx), msg)

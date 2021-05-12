@@ -393,8 +393,8 @@ func (k msgServer) ERC20DeployedEvent(c context.Context, msg *types.MsgERC20Depl
 	return &types.MsgERC20DeployedEventResponse{}, nil
 }
 
-// LogicCallExecutedClaim handles claims for executing a logic call on Ethereum
-func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogicCallExecutedClaim) (*types.MsgLogicCallExecutedClaimResponse, error) {
+// ContractCallTxExecutedEvent handles claims for executing a logic call on Ethereum
+func (k msgServer) ContractCallTxExecutedEvent(c context.Context, msg *types.MsgContractCallTxExecutedEvent) (*types.MsgContractCallTxExecutedEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
@@ -430,7 +430,7 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 		),
 	)
 
-	return &types.MsgLogicCallExecutedClaimResponse{}, nil
+	return &types.MsgContractCallTxExecutedEventResponse{}, nil
 }
 
 // ValsetUpdatedClaim handles claims for executing a validator set update on Ethereum

@@ -26,7 +26,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgBatchExecutedEvent{},
 		&MsgERC20DeployedEvent{},
 		&MsgDelegateKeys{},
-		&MsgLogicCallExecutedClaim{},
+		&MsgContractCallTxExecutedEvent{},
 		&MsgValsetUpdatedClaim{},
 		&MsgCancelSendToEthereum{},
 		&MsgSubmitBadSignatureEvidence{},
@@ -38,7 +38,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgSendToCosmosEvent{},
 		&MsgBatchExecutedEvent{},
 		&MsgERC20DeployedEvent{},
-		&MsgLogicCallExecutedClaim{},
+		&MsgContractCallTxExecutedEvent{},
 		&MsgValsetUpdatedClaim{},
 	)
 
@@ -58,7 +58,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgSendToCosmosEvent{}, "gravity/MsgSendToCosmosEvent", nil)
 	cdc.RegisterConcrete(&MsgBatchExecutedEvent{}, "gravity/MsgBatchExecutedEvent", nil)
 	cdc.RegisterConcrete(&MsgERC20DeployedEvent{}, "gravity/MsgERC20DeployedEvent", nil)
-	cdc.RegisterConcrete(&MsgLogicCallExecutedClaim{}, "gravity/MsgLogicCallExecutedClaim", nil)
+	cdc.RegisterConcrete(&MsgContractCallTxExecutedEvent{}, "gravity/MsgContractCallTxExecutedEvent", nil)
 	cdc.RegisterConcrete(&MsgValsetUpdatedClaim{}, "gravity/MsgValsetUpdatedClaim", nil)
 	cdc.RegisterConcrete(&BatchTx{}, "gravity/BatchTx", nil)
 	cdc.RegisterConcrete(&MsgCancelSendToEthereum{}, "gravity/MsgCancelSendToEthereum", nil)
