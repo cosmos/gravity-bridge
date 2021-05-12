@@ -3,13 +3,15 @@
 
 use std::time::Duration;
 
-use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
+use clarity::{address::Address as EthAddress, utils::bytes_to_hex_str};
 use cosmos_gravity::query::get_latest_valsets;
 use cosmos_gravity::query::{get_all_valset_confirms, get_valset};
 use ethereum_gravity::{
-    one_eth, utils::downcast_to_u128, utils::get_valset_nonce,
-    valset_update::send_eth_valset_update,
+    one_eth,
+    utils::downcast_to_u128,
+    utils::get_valset_nonce,
+    valset_update::{encode_valset_update_payload, send_eth_valset_update},
 };
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::{message_signatures::encode_valset_confirm_hashed, types::Valset};
@@ -123,6 +125,26 @@ pub async fn relay_valsets(
                     "Valset cost estimate for Nonce {} failed with {:?}, current valset {} / {}",
                     latest_cosmos_valset.nonce, cost, current_valset.nonce, current_valset_from_eth
                 );
+                let hash =
+                    encode_valset_confirm_hashed(gravity_id.clone(), latest_cosmos_valset.clone());
+                // there are two possible encoding problems that could cause the very rare sig failure bug,
+                // one of them is that the hash is incorrect, that's not probable considering that
+                // both Geth and Clarity agree on it. but this lets us check
+                error!(
+                    "New valset hash {} new valset data {:?} old valset data {:?}",
+                    bytes_to_hex_str(&hash),
+                    latest_cosmos_valset,
+                    current_valset,
+                );
+                // the other is the encoding of the payload itself, which I believe to be more probable.
+                let payload = encode_valset_update_payload(
+                    latest_cosmos_valset,
+                    current_valset,
+                    &latest_cosmos_confirmed,
+                    gravity_id,
+                )
+                .unwrap();
+                error!("New valset payload {}", bytes_to_hex_str(&payload));
             }
             return;
         }

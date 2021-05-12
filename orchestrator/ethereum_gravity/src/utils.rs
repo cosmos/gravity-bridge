@@ -228,11 +228,15 @@ pub async fn get_gravity_id(
 /// Just a helper struct to represent the cost of actions on Ethereum
 #[derive(Debug, Default, Clone)]
 pub struct GasCost {
+    /// The amount of gas spent
     pub gas: Uint256,
+    /// The price of the gas
     pub gas_price: Uint256,
 }
 
 impl GasCost {
+    /// Gets the total cost in Eth (or other EVM chain native token)
+    /// of executing the batch
     pub fn get_total(&self) -> Uint256 {
         self.gas.clone() * self.gas_price.clone()
     }
