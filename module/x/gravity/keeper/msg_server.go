@@ -495,7 +495,7 @@ func (k msgServer) CancelSendToEthereum(c context.Context, msg *types.MsgCancelS
 	return &types.MsgCancelSendToEthereumResponse{}, nil
 }
 
-func (k msgServer) SubmitBadSignatureEvidence(c context.Context, msg *types.MsgSubmitBadSignatureEvidence) (*types.MsgSubmitBadSignatureEvidenceResponse, error) {
+func (k msgServer) SubmitBadEthereumSignatureEvidence(c context.Context, msg *types.MsgSubmitBadEthereumSignatureEvidence) (*types.MsgSubmitBadEthereumSignatureEvidenceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	err := k.CheckBadSignatureEvidence(ctx, msg)
@@ -509,5 +509,5 @@ func (k msgServer) SubmitBadSignatureEvidence(c context.Context, msg *types.MsgS
 		),
 	)
 
-	return &types.MsgSubmitBadSignatureEvidenceResponse{}, err
+	return &types.MsgSubmitBadEthereumSignatureEvidenceResponse{}, err
 }

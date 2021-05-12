@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSubmitBadSignatureEvidenceBatchExists(t *testing.T) {
+func TestSubmitBadEthereumSignatureEvidenceBatchExists(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
@@ -50,7 +50,7 @@ func TestSubmitBadSignatureEvidenceBatchExists(t *testing.T) {
 
 	any, _ := codectypes.NewAnyWithValue(goodBatch)
 
-	msg := types.MsgSubmitBadSignatureEvidence{
+	msg := types.MsgSubmitBadEthereumSignatureEvidence{
 		Subject:   any,
 		Signature: "foo",
 	}
@@ -59,7 +59,7 @@ func TestSubmitBadSignatureEvidenceBatchExists(t *testing.T) {
 	require.EqualError(t, err, "Checkpoint exists, cannot slash: invalid")
 }
 
-func TestSubmitBadSignatureEvidenceValsetExists(t *testing.T) {
+func TestSubmitBadEthereumSignatureEvidenceValsetExists(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
@@ -67,7 +67,7 @@ func TestSubmitBadSignatureEvidenceValsetExists(t *testing.T) {
 
 	any, _ := codectypes.NewAnyWithValue(valset)
 
-	msg := types.MsgSubmitBadSignatureEvidence{
+	msg := types.MsgSubmitBadEthereumSignatureEvidence{
 		Subject:   any,
 		Signature: "foo",
 	}
@@ -76,7 +76,7 @@ func TestSubmitBadSignatureEvidenceValsetExists(t *testing.T) {
 	require.EqualError(t, err, "Checkpoint exists, cannot slash: invalid")
 }
 
-func TestSubmitBadSignatureEvidenceLogicCallExists(t *testing.T) {
+func TestSubmitBadEthereumSignatureEvidenceLogicCallExists(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
@@ -88,7 +88,7 @@ func TestSubmitBadSignatureEvidenceLogicCallExists(t *testing.T) {
 
 	any, _ := codectypes.NewAnyWithValue(&logicCall)
 
-	msg := types.MsgSubmitBadSignatureEvidence{
+	msg := types.MsgSubmitBadEthereumSignatureEvidence{
 		Subject:   any,
 		Signature: "foo",
 	}
@@ -97,7 +97,7 @@ func TestSubmitBadSignatureEvidenceLogicCallExists(t *testing.T) {
 	require.EqualError(t, err, "Checkpoint exists, cannot slash: invalid")
 }
 
-func TestSubmitBadSignatureEvidenceSlash(t *testing.T) {
+func TestSubmitBadEthereumSignatureEvidenceSlash(t *testing.T) {
 	input, ctx := SetupFiveValChain(t)
 
 	batch := types.BatchTx{
@@ -119,7 +119,7 @@ func TestSubmitBadSignatureEvidenceSlash(t *testing.T) {
 	ethSignature, err := types.NewEthereumSignature(checkpoint, privKey)
 	require.NoError(t, err)
 
-	msg := types.MsgSubmitBadSignatureEvidence{
+	msg := types.MsgSubmitBadEthereumSignatureEvidence{
 		Subject:   any,
 		Signature: hex.EncodeToString(ethSignature),
 	}

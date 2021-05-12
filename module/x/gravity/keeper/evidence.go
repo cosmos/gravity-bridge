@@ -13,7 +13,7 @@ import (
 
 func (k Keeper) CheckBadSignatureEvidence(
 	ctx sdk.Context,
-	msg *types.MsgSubmitBadSignatureEvidence) error {
+	msg *types.MsgSubmitBadEthereumSignatureEvidence) error {
 	var subject types.EthereumSigned
 
 	k.cdc.UnpackAny(msg.Subject, &subject)

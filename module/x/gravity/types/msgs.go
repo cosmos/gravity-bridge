@@ -20,7 +20,7 @@ var (
 	_ sdk.Msg = &MsgContractCallTxExecutedEvent{}
 	_ sdk.Msg = &MsgSendToCosmosEvent{}
 	_ sdk.Msg = &MsgBatchExecutedEvent{}
-	_ sdk.Msg = &MsgSubmitBadSignatureEvidence{}
+	_ sdk.Msg = &MsgSubmitBadEthereumSignatureEvidence{}
 )
 
 // NewMsgDelegateKeys returns a new msgSetOrchestratorAddress
@@ -651,26 +651,28 @@ func (msg *MsgCancelSendToEthereum) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(acc)}
 }
 
-// MsgSubmitBadSignatureEvidence
+// MsgSubmitBadEthereumSignatureEvidence
 // ======================================================
 
 // ValidateBasic performs stateless checks
-func (e *MsgSubmitBadSignatureEvidence) ValidateBasic() error {
+func (e *MsgSubmitBadEthereumSignatureEvidence) ValidateBasic() error {
 	return nil
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgSubmitBadSignatureEvidence) GetSignBytes() []byte {
+func (msg MsgSubmitBadEthereumSignatureEvidence) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgSubmitBadSignatureEvidence) GetSigners() []sdk.AccAddress {
+func (msg MsgSubmitBadEthereumSignatureEvidence) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{}
 }
 
 // Type should return the action
-func (msg MsgSubmitBadSignatureEvidence) Type() string { return "Submit_Bad_Signature_Evidence" }
+func (msg MsgSubmitBadEthereumSignatureEvidence) Type() string {
+	return "Submit_Bad_Signature_Evidence"
+}
 
 // Route should return the name of the module
-func (msg MsgSubmitBadSignatureEvidence) Route() string { return RouterKey }
+func (msg MsgSubmitBadEthereumSignatureEvidence) Route() string { return RouterKey }

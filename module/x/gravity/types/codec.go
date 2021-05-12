@@ -29,7 +29,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgContractCallTxExecutedEvent{},
 		&MsgSignerSetUpdatedEvent{},
 		&MsgCancelSendToEthereum{},
-		&MsgSubmitBadSignatureEvidence{},
+		&MsgSubmitBadEthereumSignatureEvidence{},
 	)
 
 	registry.RegisterInterface(
@@ -66,5 +66,5 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&ERC20Token{}, "gravity/ERC20Token", nil)
 	cdc.RegisterConcrete(&IDSet{}, "gravity/IDSet", nil)
 	cdc.RegisterConcrete(&EthereumEventVoteRecord{}, "gravity/EthereumEventVoteRecord", nil)
-	cdc.RegisterConcrete(&MsgSubmitBadSignatureEvidence{}, "gravity/MsgSubmitBadSignatureEvidence", nil)
+	cdc.RegisterConcrete(&MsgSubmitBadEthereumSignatureEvidence{}, "gravity/MsgSubmitBadEthereumSignatureEvidence", nil)
 }
