@@ -1,13 +1,13 @@
 package keeper
 
 import (
-	"encoding/hex"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math"
 	"sort"
 	"strconv"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -31,7 +31,7 @@ type Keeper struct {
 	SlashingKeeper types.SlashingKeeper
 
 	EthereumEventProcessor interface {
-		Handle(sdk.Context, types.EthereumEventVoteRecord) error
+		Handle(sdk.Context, types.EthereumEvent) error
 	}
 }
 
@@ -50,7 +50,7 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 		bankKeeper:     bankKeeper,
 		SlashingKeeper: slashingKeeper,
 	}
-	k.EthereumEventVoteHandler = EthereumEventProcessor{
+	k.EthereumEventProcessor = EthereumEventProcessor{
 		keeper:     k,
 		bankKeeper: bankKeeper,
 	}
@@ -672,7 +672,7 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgDelegateKeys {
 		result = append(result, &types.MsgDelegateKeys{
 			OrchestratorAddress: orch,
 			ValidatorAddress:    valAddr,
-			EthAddress:   ethAddr,
+			EthAddress:          ethAddr,
 		})
 
 	}

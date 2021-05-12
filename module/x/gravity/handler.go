@@ -17,37 +17,24 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
-		case *types.MsgSetOrchestratorAddress:
-			res, err := msgServer.SetOrchestratorAddress(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgSubmitEthereumSignature:
-			res, err := msgServer.ValsetConfirm(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgSendToEthereum:
-			res, err := msgServer.SendToEth(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.SendToEthereum(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgCancelSendToEthereum:
+			res, err := msgServer.CancelSendToEthereum(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRequestBatchTx:
-			res, err := msgServer.RequestBatch(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.RequestBatchTx(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgConfirmBatch:
-			res, err := msgServer.ConfirmBatch(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgSubmitEthereumSignature:
+			res, err := msgServer.SubmitEthereumSignature(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgConfirmLogicCall:
-			res, err := msgServer.ConfirmLogicCall(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgSubmitEthereumEvent:
+			res, err := msgServer.SubmitEthereumEvent(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgDepositClaim:
-			res, err := msgServer.DepositClaim(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgDelegateKeys:
+			res, err := msgServer.SetDelegateKeys(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgWithdrawClaim:
-			res, err := msgServer.WithdrawClaim(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgERC20DeployedClaim:
-			res, err := msgServer.ERC20DeployedClaim(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgLogicCallExecutedClaim:
-			res, err := msgServer.LogicCallExecutedClaim(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, fmt.Sprintf("Unrecognized Gravity Msg type: %v", msg.Type()))
 		}

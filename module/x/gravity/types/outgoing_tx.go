@@ -172,13 +172,11 @@ func (c ContractCallTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 	feeTokenContracts := make([]gethcommon.Address, len(c.Fees))
 	for i, coin := range c.Tokens {
 		transferAmounts[i] = coin.Amount.BigInt()
-		token := NewERC20TokenFromCoin(coin)
-		transferTokenContracts[i] = gethcommon.HexToAddress(token.Contract)
+		transferTokenContracts[i] = gethcommon.HexToAddress(coin.Contract)
 	}
 	for i, coin := range c.Fees {
 		feeAmounts[i] = coin.Amount.BigInt()
-		token := NewERC20TokenFromCoin(coin)
-		feeTokenContracts[i] = gethcommon.HexToAddress(token.Contract)
+		feeTokenContracts[i] = gethcommon.HexToAddress(coin.Contract)
 	}
 	payload := make([]byte, len(c.Payload))
 	copy(payload, c.Payload)

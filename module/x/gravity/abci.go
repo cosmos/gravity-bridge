@@ -28,7 +28,8 @@ func createValsets(ctx sdk.Context, k keeper.Keeper) {
 	latestValset := k.GetLatestSignerSetTx(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 
-	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentSignerSetTx(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
+	powerDiff := types.EthereumSigners(k.GetCurrentSignerSetTx(ctx).Signers).PowerDiff(latestValset.Signers)
+	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (powerDiff > 0.05) {
 		k.SetSignerSetTxRequest(ctx)
 	}
 }
@@ -85,7 +86,7 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 			// If no attestation becomes observed, when we get to the next nonce, every attestation in
 			// it will be skipped. The same will happen for every nonce after that.
 			if nonce == uint64(k.GetLastObservedEventNonce(ctx))+1 {
-				k.TryAttestation(ctx, &att)
+				k.TryEventVoteRecord(ctx, &att)
 			}
 		}
 	}
@@ -101,11 +102,11 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 //    project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 //    AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
-	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumBlockHeight
+	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumHeight
 	batches := k.GetBatchTxes(ctx)
 	for _, batch := range batches {
-		if batch.BatchTimeout < ethereumHeight {
-			k.CancelBatchTx(ctx, batch.TokenContract, batch.BatchNonce)
+		if batch.Timeout < ethereumHeight {
+			k.CancelBatchTx(ctx, batch.TokenContract, batch.Nonce)
 		}
 	}
 }
@@ -120,7 +121,7 @@ func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
 //    project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 //    AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutLogicCalls(ctx sdk.Context, k keeper.Keeper) {
-	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumBlockHeight
+	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumHeight
 	calls := k.GetContractCallTxs(ctx)
 	for _, call := range calls {
 		if call.Timeout < ethereumHeight {
@@ -156,7 +157,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 				// Check if validator has confirmed valset or not
 				found := false
 				for _, conf := range confirms {
-					if conf.EthAddress == k.GetEthAddress(ctx, val.GetOperator()) {
+					if conf.EthereumSigner == k.GetEthAddress(ctx, val.GetOperator()) {
 						found = true
 						break
 					}
@@ -197,7 +198,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 					// Check if validator has confirmed valset or not
 					found := false
 					for _, conf := range confirms {
-						if conf.EthAddress == k.GetEthAddress(ctx, validator.GetOperator()) {
+						if conf.EthereumSigner == k.GetEthAddress(ctx, validator.GetOperator()) {
 							found = true
 							break
 						}
@@ -235,19 +236,21 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 		// SLASH BONDED VALIDTORS who didn't attest batch requests
 		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-		confirms := k.GetBatchTxSignatureByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)
+		confirms := k.GetBatchTxSignatureByNonceAndTokenContract(ctx, batch.Nonce, batch.TokenContract)
 		for _, val := range currentBondedSet {
 			// Don't slash validators who joined after batch is created
 			consAddr, _ := val.GetConsAddr()
 			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
-			if exist && valSigningInfo.StartHeight > int64(batch.Block) {
+			if exist && valSigningInfo.StartHeight > int64(batch.EthereumBlock) {
 				continue
 			}
 
 			found := false
 			for _, conf := range confirms {
-				// TODO: double check this logic
-				confVal, _ := sdk.AccAddressFromBech32(conf.Orchestrator)
+				// TODO: review this thoroughly
+				// TODO: This is currently WRONG! We need to use the EthereumSigner here to
+				// get the validator address.
+				confVal, _ := sdk.AccAddressFromBech32(conf.EthereumSigner)
 				if k.GetOrchestratorValidator(ctx, confVal).Equals(val.GetOperator()) {
 					found = true
 					break
@@ -262,7 +265,7 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			}
 		}
 		// then we set the latest slashed batch block
-		k.SetLastSlashedBatchBlock(ctx, batch.Block)
+		k.SetLastSlashedBatchBlock(ctx, batch.EthereumBlock)
 
 	}
 }
@@ -278,18 +281,18 @@ func TestingEndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		// the full lifecycle of the call. We need to find some way for this to read data
 		// and encode a simple testing call, probably to one of the already deployed ERC20
 		// contracts so that we can get the full lifecycle.
-		token := []*types.ERC20Token{{
+		token := []types.ERC20Token{{
 			Contract: "0x7580bfe88dd3d07947908fae12d95872a260f2d8",
 			Amount:   sdk.NewIntFromUint64(5000),
 		}}
 		_ = types.ContractCallTx{
-			Transfers:            token,
-			Fees:                 token,
-			LogicContractAddress: "0x510ab76899430424d209a6c9a5b9951fb8a6f47d",
-			Payload:              []byte("fake bytes"),
-			Timeout:              10000,
-			InvalidationScope:       []byte("GravityTesting"),
-			InvalidationNonce:    1,
+			Tokens:            token,
+			Fees:              token,
+			Address:           "0x510ab76899430424d209a6c9a5b9951fb8a6f47d",
+			Payload:           []byte("fake bytes"),
+			Timeout:           10000,
+			InvalidationScope: []byte("GravityTesting"),
+			InvalidationNonce: 1,
 		}
 		//k.SetContractCallTx(ctx, &call)
 	}

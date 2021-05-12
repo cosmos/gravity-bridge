@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -72,7 +73,7 @@ func (k Keeper) ERC20ToDenomLookup(ctx sdk.Context, tokenContract string) (bool,
 
 	// If it is not in there, it is not a cosmos originated token, turn the ERC20 into a gravity denom
 
-	return false, types.NewERC20Token(0, tokenContract).Denom
+	return false, types.NewERC20Token(0, tokenContract).Contract
 }
 
 // IterateERC20ToDenom iterates over erc20 to denom relations

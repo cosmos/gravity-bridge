@@ -44,7 +44,7 @@ func (b *EthereumSigner) ValidateBasic() error {
 }
 
 // EthereumSigners is the sorted set of validator data for Ethereum bridge MultiSig set
-type EthereumSigners []*EthereumSigner
+type EthereumSigners []EthereumSigner
 
 // Sort sorts the validators by power
 func (b EthereumSigners) Sort() {
@@ -136,7 +136,7 @@ func NewValset(nonce, height uint64, members EthereumSigners) *SignerSetTx {
 	members.Sort()
 	var mem []EthereumSigner
 	for _, val := range members {
-		mem = append(mem, *val)
+		mem = append(mem, val)
 	}
 	return &SignerSetTx{Nonce: nonce, Signers: mem}
 }

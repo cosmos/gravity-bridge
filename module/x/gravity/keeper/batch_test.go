@@ -49,52 +49,52 @@ func TestBatches(t *testing.T) {
 	require.NoError(t, err)
 
 	// then batch is persisted
-	gotFirstBatch := input.GravityKeeper.GetBatchTx(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
+	gotFirstBatch := input.GravityKeeper.GetBatchTx(ctx, firstBatch.TokenContract, firstBatch.Nonce)
 	require.NotNil(t, gotFirstBatch)
 
 	expFirstBatch := &types.BatchTx{
-		BatchNonce: 1,
-		Transactions: []*types.OutgoingTransferTx{
+		Nonce: 1,
+		Transactions: []*types.SendToEthereum{
 			{
-				Id:          2,
-				Erc20Fee:    types.NewERC20Token(3, myTokenContractAddr),
-				Sender:      mySender.String(),
-				DestAddress: myReceiver,
-				Erc20Token:  types.NewERC20Token(101, myTokenContractAddr),
+				Id:                2,
+				Erc20Fee:          types.NewERC20Token(3, myTokenContractAddr),
+				Sender:            mySender.String(),
+				EthereumRecipient: myReceiver,
+				Erc20Token:        types.NewERC20Token(101, myTokenContractAddr),
 			},
 			{
-				Id:          1,
-				Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
-				Sender:      mySender.String(),
-				DestAddress: myReceiver,
-				Erc20Token:  types.NewERC20Token(100, myTokenContractAddr),
+				Id:                1,
+				Erc20Fee:          types.NewERC20Token(2, myTokenContractAddr),
+				Sender:            mySender.String(),
+				EthereumRecipient: myReceiver,
+				Erc20Token:        types.NewERC20Token(100, myTokenContractAddr),
 			},
 		},
 		TokenContract: myTokenContractAddr,
-		Block:         1234567,
+		EthereumBlock: 1234567,
 	}
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
 	// and verify remaining available Tx in the pool
-	var gotUnbatchedTx []*types.OutgoingTransferTx
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
+	var gotUnbatchedTx []*types.SendToEthereum
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx := []*types.OutgoingTransferTx{
+	expUnbatchedTx := []*types.SendToEthereum{
 		{
-			Id:          3,
-			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(102, myTokenContractAddr),
+			Id:                3,
+			Erc20Fee:          types.NewERC20Token(2, myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewERC20Token(102, myTokenContractAddr),
 		},
 		{
-			Id:          4,
-			Erc20Fee:    types.NewERC20Token(1, myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(103, myTokenContractAddr),
+			Id:                4,
+			Erc20Fee:          types.NewERC20Token(1, myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewERC20Token(103, myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
@@ -122,22 +122,22 @@ func TestBatches(t *testing.T) {
 		BatchNonce: 2,
 		Transactions: []*types.OutgoingTransferTx{
 			{
-				Id:          6,
-				Erc20Fee:    types.NewERC20Token(5, myTokenContractAddr),
-				Sender:      mySender.String(),
-				DestAddress: myReceiver,
-				Erc20Token:  types.NewERC20Token(101, myTokenContractAddr),
+				Id:                6,
+				Erc20Fee:          types.NewERC20Token(5, myTokenContractAddr),
+				Sender:            mySender.String(),
+				EthereumRecipient: myReceiver,
+				Erc20Token:        types.NewERC20Token(101, myTokenContractAddr),
 			},
 			{
-				Id:          5,
-				Erc20Fee:    types.NewERC20Token(4, myTokenContractAddr),
-				Sender:      mySender.String(),
-				DestAddress: myReceiver,
-				Erc20Token:  types.NewERC20Token(100, myTokenContractAddr),
+				Id:                5,
+				Erc20Fee:          types.NewERC20Token(4, myTokenContractAddr),
+				Sender:            mySender.String(),
+				EthereumRecipient: myReceiver,
+				Erc20Token:        types.NewERC20Token(100, myTokenContractAddr),
 			},
 		},
 		TokenContract: myTokenContractAddr,
-		Block:         1234567,
+		EthereumBlock: 1234567,
 	}
 
 	assert.Equal(t, expSecondBatch, secondBatch)
@@ -161,32 +161,32 @@ func TestBatches(t *testing.T) {
 	})
 	expUnbatchedTx = []*types.OutgoingTransferTx{
 		{
-			Id:          2,
-			Erc20Fee:    types.NewERC20Token(3, myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(101, myTokenContractAddr),
+			Id:                2,
+			Erc20Fee:          types.NewERC20Token(3, myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewERC20Token(101, myTokenContractAddr),
 		},
 		{
-			Id:          1,
-			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(100, myTokenContractAddr),
+			Id:                1,
+			Erc20Fee:          types.NewERC20Token(2, myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewERC20Token(100, myTokenContractAddr),
 		},
 		{
-			Id:          3,
-			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(102, myTokenContractAddr),
+			Id:                3,
+			Erc20Fee:          types.NewERC20Token(2, myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewERC20Token(102, myTokenContractAddr),
 		},
 		{
-			Id:          4,
-			Erc20Fee:    types.NewERC20Token(1, myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewERC20Token(103, myTokenContractAddr),
+			Id:                4,
+			Erc20Fee:          types.NewERC20Token(1, myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewERC20Token(103, myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
@@ -242,22 +242,22 @@ func TestBatchesFullCoins(t *testing.T) {
 		BatchNonce: 1,
 		Transactions: []*types.OutgoingTransferTx{
 			{
-				Id:          2,
-				Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
-				Sender:      mySender.String(),
-				DestAddress: myReceiver,
-				Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
+				Id:                2,
+				Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
+				Sender:            mySender.String(),
+				EthereumRecipient: myReceiver,
+				Erc20Token:        types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
 			},
 			{
-				Id:          3,
-				Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr),
-				Sender:      mySender.String(),
-				DestAddress: myReceiver,
-				Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr),
+				Id:                3,
+				Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr),
+				Sender:            mySender.String(),
+				EthereumRecipient: myReceiver,
+				Erc20Token:        types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr),
 			},
 		},
 		TokenContract: myTokenContractAddr,
-		Block:         1234567,
+		EthereumBlock: 1234567,
 	}
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
@@ -269,18 +269,18 @@ func TestBatchesFullCoins(t *testing.T) {
 	})
 	expUnbatchedTx := []*types.OutgoingTransferTx{
 		{
-			Id:          1,
-			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
+			Id:                1,
+			Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
 		},
 		{
-			Id:          4,
-			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr),
+			Id:                4,
+			Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
@@ -308,22 +308,22 @@ func TestBatchesFullCoins(t *testing.T) {
 		BatchNonce: 2,
 		Transactions: []*types.OutgoingTransferTx{
 			{
-				Id:          1,
-				Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
-				Sender:      mySender.String(),
-				DestAddress: myReceiver,
-				Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
+				Id:                1,
+				Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
+				Sender:            mySender.String(),
+				EthereumRecipient: myReceiver,
+				Erc20Token:        types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
 			},
 			{
-				Id:          4,
-				Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr),
-				Sender:      mySender.String(),
-				DestAddress: myReceiver,
-				Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr),
+				Id:                4,
+				Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr),
+				Sender:            mySender.String(),
+				EthereumRecipient: myReceiver,
+				Erc20Token:        types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(10)), myTokenContractAddr),
 			},
 		},
 		TokenContract: myTokenContractAddr,
-		Block:         1234567,
+		EthereumBlock: 1234567,
 	}
 
 	assert.Equal(t, expSecondBatch, secondBatch)
@@ -347,32 +347,32 @@ func TestBatchesFullCoins(t *testing.T) {
 	})
 	expUnbatchedTx = []*types.OutgoingTransferTx{
 		{
-			Id:          2,
-			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
+			Id:                2,
+			Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
 		},
 		{
-			Id:          3,
-			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr),
+			Id:                3,
+			Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(25)), myTokenContractAddr),
 		},
 		{
-			Id:          6,
-			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(5)), myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(5)), myTokenContractAddr),
+			Id:                6,
+			Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(5)), myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(5)), myTokenContractAddr),
 		},
 		{
-			Id:          5,
-			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(4)), myTokenContractAddr),
-			Sender:      mySender.String(),
-			DestAddress: myReceiver,
-			Erc20Token:  types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(4)), myTokenContractAddr),
+			Id:                5,
+			Erc20Fee:          types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(4)), myTokenContractAddr),
+			Sender:            mySender.String(),
+			EthereumRecipient: myReceiver,
+			Erc20Token:        types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(4)), myTokenContractAddr),
 		},
 	}
 	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)

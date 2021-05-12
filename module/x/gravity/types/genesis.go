@@ -14,13 +14,13 @@ import (
 // DefaultParamspace defines the default auth module parameter subspace
 const (
 	// todo: implement oracle constants as params
-	DefaultParamspace = ModuleName
-	AttestationPeriod = 24 * time.Hour // TODO: value????
+	DefaultParamspace     = ModuleName
+	EventVoteRecordPeriod = 24 * time.Hour // TODO: value????
 )
 
 var (
-	// AttestationVotesPowerThreshold threshold of votes power to succeed
-	AttestationVotesPowerThreshold = sdk.NewInt(66)
+	// EventVoteRecordPowerThreshold threshold of votes power to succeed
+	// EventVoteRecordPowerThreshold = sdk.NewInt(66)
 
 	// ParamsStoreKeyGravityID stores the gravity id
 	ParamsStoreKeyGravityID = []byte("GravityID")
@@ -70,6 +70,10 @@ var (
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
 )
+
+func EventVoteRecordPowerThreshold(totalPower sdk.Int) sdk.Int {
+	return sdk.NewInt(66).Mul(totalPower).Quo(sdk.NewInt(100))
+}
 
 // ValidateBasic validates genesis state by looping through the params and
 // calling their validation functions

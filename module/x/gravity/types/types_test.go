@@ -19,7 +19,7 @@ func TestValsetConfirmHash(t *testing.T) {
 	}
 	members := make(EthereumSigners, len(powers))
 	for i := range powers {
-		members[i] = &EthereumSigner{
+		members[i] = EthereumSigner{
 			Power:           powers[i],
 			EthereumAddress: ethAddresses[i],
 		}
@@ -27,7 +27,7 @@ func TestValsetConfirmHash(t *testing.T) {
 
 	var mem []EthereumSigner
 	for _, m := range members {
-		mem = append(mem, *m)
+		mem = append(mem, m)
 	}
 	v := SignerSetTx{Signers: mem}
 	// TODO: this is hardcoded to foo, replace?

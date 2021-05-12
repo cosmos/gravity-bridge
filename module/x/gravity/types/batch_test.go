@@ -22,11 +22,11 @@ func TestBatchTxCheckpointGold1(t *testing.T) {
 		Timeout: 2111,
 		Transactions: []*SendToEthereum{
 			{
-				Id:          0x1,
-				Sender:      senderAddr.String(),
+				Id:                0x1,
+				Sender:            senderAddr.String(),
 				EthereumRecipient: "0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39",
-				Erc20Token: NewSDKIntERC20Token(sdk.NewInt(0x1), erc20Addr),
-				Erc20Fee: NewSDKIntERC20Token(sdk.NewInt(0x1), erc20Addr),
+				Erc20Token:        NewSDKIntERC20Token(sdk.NewInt(0x1), erc20Addr),
+				Erc20Fee:          NewSDKIntERC20Token(sdk.NewInt(0x1), erc20Addr),
 			},
 		},
 		TokenContract: erc20Addr,
@@ -50,15 +50,15 @@ func TestContractCallTxCheckpointGold1(t *testing.T) {
 	invalidationId, err := hex.DecodeString("0x696e76616c69646174696f6e4964000000000000000000000000000000000000"[2:])
 	require.NoError(t, err)
 
-	token := sdk.Coins{NewSDKIntERC20Token(sdk.NewIntFromUint64(1), "0xC26eFfa98B8A2632141562Ae7E34953Cfe5B4888").GravityCoin()}
+	token := []ERC20Token{NewSDKIntERC20Token(sdk.NewIntFromUint64(1), "0xC26eFfa98B8A2632141562Ae7E34953Cfe5B4888")}
 	call := ContractCallTx{
-		Tokens:            	  token,
-		Fees:                 token,
-		Address: "0x17c1736CcF692F653c433d7aa2aB45148C016F68",
-		Payload:              payload,
-		Timeout:              4766922941000,
-		InvalidationScope:    invalidationId,
-		InvalidationNonce:    1,
+		Tokens:            token,
+		Fees:              token,
+		Address:           "0x17c1736CcF692F653c433d7aa2aB45148C016F68",
+		Payload:           payload,
+		Timeout:           4766922941000,
+		InvalidationScope: invalidationId,
+		InvalidationNonce: 1,
 	}
 
 	ourHash, err := call.GetCheckpoint([]byte("foo"))

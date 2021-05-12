@@ -9,50 +9,31 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-// EthereumEventProcessor processes `observed` EthereumEventVoteRecords
+// EthereumEventProcessor processes `accepted` EthereumEvents
 type EthereumEventProcessor struct {
 	keeper     Keeper
 	bankKeeper types.BankKeeper
 }
 
-// Handle is the entry point for Attestation processing.
-// TODO-JT add handler for ERC20DeployedEvent
-func (a EthereumEventProcessor) Handle(ctx sdk.Context, eventVoteRecord types.EthereumEventVoteRecord) error {
-	eve, err := types.UnpackEvent(eventVoteRecord.Event)
-	if err != nil {
-		return err
-	}
-	
+// Handle is the entry point for EthereumEvent processing
+func (a EthereumEventProcessor) Handle(ctx sdk.Context, eve types.EthereumEvent) (err error) {
 	switch event := eve.(type) {
 	case *types.SendToCosmosEvent:
 		// Check if coin is Cosmos-originated asset and get denom
-		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, event.TokenContract)
-
-		if isCosmosOriginated {
+		if isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, event.TokenContract); isCosmosOriginated {
 			// If it is cosmos originated, unlock the coins
-			coins := sdk.Coins{sdk.NewCoin(denom, event.Amount)}
-
-			addr, err := sdk.AccAddressFromBech32(event.CosmosReceiver)
-			if err != nil {
-				return sdkerrors.Wrap(err, "invalid receiver address")
-			}
-
-			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
+			addr, _ := sdk.AccAddressFromBech32(event.CosmosReceiver)
+			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, sdk.Coins{sdk.NewCoin(denom, event.Amount)}); err != nil {
 				return sdkerrors.Wrap(err, "transfer vouchers")
 			}
 		} else {
 			// If it is not cosmos originated, mint the coins (aka vouchers)
 			coins := sdk.Coins{sdk.NewCoin(denom, event.Amount)}
-
 			if err := a.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
 				return sdkerrors.Wrapf(err, "mint vouchers coins: %s", coins)
 			}
 
-			addr, err := sdk.AccAddressFromBech32(event.CosmosReceiver)
-			if err != nil {
-				return sdkerrors.Wrap(err, "invalid receiver address")
-			}
-
+			addr, _ := sdk.AccAddressFromBech32(event.CosmosReceiver)
 			if err = a.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {
 				return sdkerrors.Wrap(err, "transfer vouchers")
 			}
@@ -61,14 +42,14 @@ func (a EthereumEventProcessor) Handle(ctx sdk.Context, eventVoteRecord types.Et
 		return a.keeper.BatchTxExecuted(ctx, event.TokenContract, event.GetNonce())
 	case *types.ERC20DeployedEvent:
 		// Check if it already exists
-		existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, event.CosmosDenom)
-		if exists {
+		if existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, event.CosmosDenom); exists {
 			return sdkerrors.Wrap(
 				types.ErrInvalid,
 				fmt.Sprintf("ERC20 %s already exists for denom %s", existingERC20, event.CosmosDenom))
 		}
 
 		// Check if denom exists
+		// TODO: document that peggy chains require denom metadata set
 		metadata := a.keeper.bankKeeper.GetDenomMetaData(ctx, event.CosmosDenom)
 		if metadata.Base == "" {
 			return sdkerrors.Wrap(types.ErrUnknown, fmt.Sprintf("denom not found %s", event.CosmosDenom))

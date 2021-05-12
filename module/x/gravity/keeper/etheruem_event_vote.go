@@ -17,15 +17,15 @@ func (k Keeper) RecordEventVote(
 	val sdk.ValAddress,
 ) (*types.EthereumEventVoteRecord, error) {
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
-	// We check the event nonce in processAttestation as well,
+	// We check the event nonce in processEthereumEvent as well,
 	// but checking it here gives individual eth signers a chance to retry,
 	// and prevents validators from submitting two claims with the same nonce
 	lastEventNonce := k.GetLastEventNonceByValidator(ctx, val)
-	if event.GetNonce() != lastEventNonce + 1 {
+	if event.GetNonce() != lastEventNonce+1 {
 		return nil, types.ErrNonContiguousEventNonce
 	}
 
-	// Tries to get an attestation with the same eventNonce and event as the event that was submitted.
+	// Tries to get an EthereumEventVoteRecord with the same eventNonce and event as the event that was submitted.
 	eventVoteRecord := k.GetEthereumEventVoteRecord(ctx, event.GetNonce(), event.Hash())
 
 	// If it does not exist, create a new one.
@@ -34,14 +34,13 @@ func (k Keeper) RecordEventVote(
 		if err != nil {
 			return nil, err
 		}
-
 		eventVoteRecord = &types.EthereumEventVoteRecord{
 			Accepted: false,
 			Event:    any,
 		}
 	}
 
-	// Add the validator's vote to this attestation
+	// Add the validator's vote to this EthereumEventVoteRecord
 	eventVoteRecord.Votes = append(eventVoteRecord.Votes, val.String())
 
 	k.SetEthereumEventVoteRecord(ctx, event.GetNonce(), event.Hash(), eventVoteRecord)
@@ -50,47 +49,44 @@ func (k Keeper) RecordEventVote(
 	return eventVoteRecord, nil
 }
 
-// TryAttestation checks if an attestation has enough votes to be applied to the consensus state
-// and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
+// TryEventVoteRecord checks if an event vote record has enough votes to be applied to the consensus state
+// and has not already been marked Observed, then calls processEthereumEvent to actually apply it to the state,
 // and then marks it Observed and emits an event.
-func (k Keeper) TryAttestation(ctx sdk.Context, eventVoteRecord *types.EthereumEventVoteRecord) {
-	claim, err := k.UnpackEthereumEventVoteRecordEvent(eventVoteRecord)
-	if err != nil {
-		panic("could not cast to claim")
-	}
-	// If the attestation has not yet been Observed, sum up the votes and see if it is ready to apply to the state.
-	// This conditional stops the attestation from accidentally being applied twice.
+func (k Keeper) TryEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.EthereumEventVoteRecord) {
+	// If the event vote record has not yet been Observed, sum up the votes and see if it is ready to apply to the state.
+	// This conditional stops the event vote record from accidentally being applied twice.
 	if !eventVoteRecord.Accepted {
+		var event types.EthereumEvent
+		if err := k.cdc.UnpackAny(eventVoteRecord.Event, event); err != nil {
+			panic("unpacking packed any")
+		}
 		// Sum the current powers of all validators who have voted and see if it passes the current threshold
 		// TODO: The different integer types and math here needs a careful review
-		totalPower := k.StakingKeeper.GetLastTotalPower(ctx)
-		requiredPower := types.AttestationVotesPowerThreshold.Mul(totalPower).Quo(sdk.NewInt(100))
-		attestationPower := sdk.NewInt(0)
+		requiredPower := types.EventVoteRecordPowerThreshold(k.StakingKeeper.GetLastTotalPower(ctx))
+		eventVotePower := sdk.NewInt(0)
 		for _, validator := range eventVoteRecord.Votes {
-			val, err := sdk.ValAddressFromBech32(validator)
-			if err != nil {
-				panic(err)
-			}
+			val, _ := sdk.ValAddressFromBech32(validator)
+
 			validatorPower := k.StakingKeeper.GetLastValidatorPower(ctx, val)
 			// Add it to the attestation power's sum
-			attestationPower = attestationPower.Add(sdk.NewInt(validatorPower))
+			eventVotePower = eventVotePower.Add(sdk.NewInt(validatorPower))
 			// If the power of all the validators that have voted on the attestation is higher or equal to the threshold,
 			// process the attestation, set Observed to true, and break
-			if attestationPower.GTE(requiredPower) {
+			if eventVotePower.GTE(requiredPower) {
 				lastEventNonce := k.GetLastObservedEventNonce(ctx)
 				// this check is performed at the next level up so this should never panic
 				// outside of programmer error.
-				if claim.GetEventNonce() != lastEventNonce+1 {
+				if event.GetNonce() != lastEventNonce+1 {
 					panic("attempting to apply events to state out of order")
 				}
-				k.setLastObservedEventNonce(ctx, claim.GetEventNonce())
-				k.SetLastObservedEthereumBlockHeight(ctx, claim.GetBlockHeight())
+				k.setLastObservedEventNonce(ctx, event.GetNonce())
+				k.SetLastObservedEthereumBlockHeight(ctx, event.GetEthereumHeight())
 
-				eventVoteRecord.Observed = true
-				k.SetEthereumEventVoteRecord(ctx, claim.GetEventNonce(), claim.ClaimHash(), eventVoteRecord)
+				eventVoteRecord.Accepted = true
+				k.SetEthereumEventVoteRecord(ctx, event.GetNonce(), event.Hash(), eventVoteRecord)
 
-				k.processAttestation(ctx, eventVoteRecord, claim)
-				k.emitObservedEvent(ctx, eventVoteRecord, claim)
+				k.processEthereumEvent(ctx, event)
+				k.emitObservedEvent(ctx, eventVoteRecord, event)
 				break
 			}
 		}
@@ -100,14 +96,11 @@ func (k Keeper) TryAttestation(ctx sdk.Context, eventVoteRecord *types.EthereumE
 	}
 }
 
-// processAttestation actually applies the attestation to the consensus state
-func (k Keeper) processAttestation(ctx sdk.Context, eventVoteRecord *types.EthereumEventVoteRecord) {
+// processEthereumEvent actually applies the attestation to the consensus state
+func (k Keeper) processEthereumEvent(ctx sdk.Context, event types.EthereumEvent) {
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
-	event, err := types.UnpackEvent(eventVoteRecord.Event)
-
-	// todo: panic or return err?
-	if err := k.EthereumEventProcessor.Handle(xCtx, *eventVoteRecord); err != nil { // execute with a transient storage
+	if err := k.EthereumEventProcessor.Handle(xCtx, event); err != nil { // execute with a transient storage
 		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
@@ -142,9 +135,7 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.EthereumEventVoteR
 
 // SetEthereumEventVoteRecord sets the attestation in the store
 func (k Keeper) SetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, claimHash []byte, eventVoteRecord *types.EthereumEventVoteRecord) {
-	store := ctx.KVStore(k.storeKey)
-	aKey := types.GetEthereumEventVoteRecordKey(eventNonce, claimHash)
-	store.Set(aKey, k.cdc.MustMarshalBinaryBare(eventVoteRecord))
+	ctx.KVStore(k.storeKey).Set(types.GetEthereumEventVoteRecordKey(eventNonce, claimHash), k.cdc.MustMarshalBinaryBare(eventVoteRecord))
 }
 
 // GetEthereumEventVoteRecord return a vote record given a nonce
@@ -161,24 +152,24 @@ func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, c
 }
 
 // DeleteAttestation deletes an attestation given an event nonce and claim
-func (k Keeper) DeleteAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
+func (k Keeper) DeleteAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.EthereumEventVoteRecord) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetEthereumEventVoteRecordKeyWithHash(eventNonce, claimHash))
 }
 
 // GetAttestationMapping returns a mapping of eventnonce -> attestations at that nonce
-func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.Attestation) {
-	out = make(map[uint64][]types.Attestation)
-	k.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
+func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.EthereumEventVoteRecord) {
+	out = make(map[uint64][]types.EthereumEventVoteRecord)
+	k.IterateAttestaions(ctx, func(_ []byte, att types.EthereumEventVoteRecord) bool {
 		claim, err := k.UnpackEthereumEventVoteRecordEvent(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
 
-		if val, ok := out[claim.GetEventNonce()]; !ok {
-			out[claim.GetEventNonce()] = []types.Attestation{att}
+		if val, ok := out[claim.GetNonce()]; !ok {
+			out[claim.GetNonce()] = []types.EthereumEventVoteRecord{att}
 		} else {
-			out[claim.GetEventNonce()] = append(val, att)
+			out[claim.GetNonce()] = append(val, att)
 		}
 		return false
 	})
@@ -186,14 +177,14 @@ func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.A
 }
 
 // IterateAttestaions iterates through all attestations
-func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attestation) bool) {
+func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.EthereumEventVoteRecord) bool) {
 	store := ctx.KVStore(k.storeKey)
 	prefix := []byte{types.EthereumEventVoteRecordKey}
 	iter := store.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		att := types.Attestation{}
+		att := types.EthereumEventVoteRecord{}
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &att)
 		// cb returns true to stop early
 		if cb(iter.Key(), att) {
@@ -276,7 +267,7 @@ func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 		}
 		for nonce, atts := range attmap {
 			for att := range atts {
-				if atts[att].Observed && nonce < lowestObserved {
+				if atts[att].Accepted && nonce < lowestObserved {
 					lowestObserved = nonce
 				}
 			}

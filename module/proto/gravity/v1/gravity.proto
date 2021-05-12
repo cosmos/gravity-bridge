@@ -76,14 +76,8 @@ message ContractCallTx {
   string address = 3;
   bytes payload = 4;
   uint64 timeout = 5;
-  repeated cosmos.base.v1beta1.Coin tokens = 6 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
-  repeated cosmos.base.v1beta1.Coin fees = 7 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
+  repeated ERC20Token tokens = 6 [(gogoproto.nullable) = false];
+  repeated ERC20Token fees = 7 [(gogoproto.nullable) = false];
 }
 
 message ERC20Token {
