@@ -33,8 +33,8 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	)
 
 	registry.RegisterInterface(
-		"gravity.v1beta1.EthereumClaim",
-		(*EthereumClaim)(nil),
+		"gravity.v1beta1.EthereumEvent",
+		(*EthereumEvent)(nil),
 		&MsgSendToCosmosEvent{},
 		&MsgBatchExecutedEvent{},
 		&MsgERC20DeployedEvent{},
@@ -47,7 +47,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 
 // RegisterCodec registers concrete types on the Amino codec
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterInterface((*EthereumClaim)(nil), nil)
+	cdc.RegisterInterface((*EthereumEvent)(nil), nil)
 	cdc.RegisterConcrete(&MsgDelegateKeys{}, "gravity/MsgDelegateKeys", nil)
 	cdc.RegisterConcrete(&MsgSignerSetTxSignature{}, "gravity/MsgSignerSetTxSignature", nil)
 	cdc.RegisterConcrete(&MsgSendToEthereum{}, "gravity/MsgSendToEthereum", nil)

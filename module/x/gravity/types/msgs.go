@@ -283,8 +283,8 @@ func (msg MsgContractCallTxSignature) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
-// EthereumClaim represents a claim on ethereum state
-type EthereumClaim interface {
+// EthereumEvent represents a claim on ethereum state
+type EthereumEvent interface {
 	// All Ethereum claims that we relay from the Gravity contract and into the module
 	// have a nonce that is monotonically increasing and unique, since this nonce is
 	// issued by the Ethereum contract it is immutable and must be agreed on by all validators
@@ -306,10 +306,10 @@ type EthereumClaim interface {
 }
 
 var (
-	_ EthereumClaim = &MsgSendToCosmosEvent{}
-	_ EthereumClaim = &MsgBatchExecutedEvent{}
-	_ EthereumClaim = &MsgERC20DeployedEvent{}
-	_ EthereumClaim = &MsgContractCallTxExecutedEvent{}
+	_ EthereumEvent = &MsgSendToCosmosEvent{}
+	_ EthereumEvent = &MsgBatchExecutedEvent{}
+	_ EthereumEvent = &MsgERC20DeployedEvent{}
+	_ EthereumEvent = &MsgContractCallTxExecutedEvent{}
 )
 
 // GetType returns the type of the claim
@@ -444,7 +444,7 @@ const (
 	TypeMsgSendToCosmosEvent = "deposit_claim"
 )
 
-// EthereumClaim implementation for MsgERC20DeployedEvent
+// EthereumEvent implementation for MsgERC20DeployedEvent
 // ======================================================
 
 // GetType returns the type of the claim
@@ -503,7 +503,7 @@ func (b *MsgERC20DeployedEvent) ClaimHash() []byte {
 	return tmhash.Sum([]byte(path))
 }
 
-// EthereumClaim implementation for MsgContractCallTxExecutedEvent
+// EthereumEvent implementation for MsgContractCallTxExecutedEvent
 // ======================================================
 
 // GetType returns the type of the claim
@@ -559,7 +559,7 @@ func (b *MsgContractCallTxExecutedEvent) ClaimHash() []byte {
 	return tmhash.Sum([]byte(path))
 }
 
-// EthereumClaim implementation for MsgSignerSetUpdatedEvent
+// EthereumEvent implementation for MsgSignerSetUpdatedEvent
 // ======================================================
 
 // GetType returns the type of the claim

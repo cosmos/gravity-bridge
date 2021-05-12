@@ -13,7 +13,7 @@ import (
 // TODO-JT: carefully look at atomicity of this function
 func (k Keeper) Attest(
 	ctx sdk.Context,
-	claim types.EthereumClaim,
+	claim types.EthereumEvent,
 	anyClaim *codectypes.Any,
 ) (*types.EthereumEventVoteRecord, error) {
 	valAddr := k.GetOrchestratorValidator(ctx, claim.GetClaimer())
@@ -103,7 +103,7 @@ func (k Keeper) TryEthereumEventVoteRecord(ctx sdk.Context, att *types.EthereumE
 }
 
 // processEthereumEventVoteRecord actually applies the ethereumEventVoteRecord to the consensus state
-func (k Keeper) processEthereumEventVoteRecord(ctx sdk.Context, att *types.EthereumEventVoteRecord, claim types.EthereumClaim) {
+func (k Keeper) processEthereumEventVoteRecord(ctx sdk.Context, att *types.EthereumEventVoteRecord, claim types.EthereumEvent) {
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
 	if err := k.EthereumEventVoteRecordHandler.Handle(xCtx, *att, claim); err != nil { // execute with a transient storage
@@ -123,7 +123,7 @@ func (k Keeper) processEthereumEventVoteRecord(ctx sdk.Context, att *types.Ether
 
 // emitObservedEvent emits an event with information about an ethereumEventVoteRecord that has been applied to
 // consensus state.
-func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.EthereumEventVoteRecord, claim types.EthereumClaim) {
+func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.EthereumEventVoteRecord, claim types.EthereumEvent) {
 	observationEvent := sdk.NewEvent(
 		types.EventTypeObservation,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
