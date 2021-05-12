@@ -18,7 +18,7 @@ Happy path implementations
 - Nonces are not unique without a context (withdrawal nonce and MultiSig Set update can have same nonce (=height))
 - A nonce is unique in it's context and never reused
 - Multiple claims by an orchestrator for the same ETH event are forbidden
-- We know the ETH event types beforehand (and handle them as ClaimTypes)
+- We know the ETH event types beforehand (and handle them as EthereumEventTypes)
 - For an **observation** status in EthereumEventVoteRecord the power AND count thresholds must be exceeded
 - Fraction type allows higher precision math than %. For example with 2/3
 
