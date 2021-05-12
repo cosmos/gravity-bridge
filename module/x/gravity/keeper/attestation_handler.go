@@ -53,7 +53,7 @@ func (a EthereumEventVoteRecordHandler) Handle(ctx sdk.Context, att types.Ethere
 		}
 	case *types.MsgBatchExecutedEvent:
 		return a.keeper.BatchTxExecuted(ctx, claim.TokenContract, claim.BatchNonce)
-	case *types.MsgERC20DeployedClaim:
+	case *types.MsgERC20DeployedEvent:
 		// Check if it already exists
 		existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.CosmosDenom)
 		if exists {

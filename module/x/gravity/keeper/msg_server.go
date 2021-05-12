@@ -354,7 +354,7 @@ func (k msgServer) BatchExecutedEvent(c context.Context, msg *types.MsgBatchExec
 }
 
 // ERC20Deployed handles MsgERC20Deployed
-func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20DeployedClaim) (*types.MsgERC20DeployedClaimResponse, error) {
+func (k msgServer) ERC20DeployedEvent(c context.Context, msg *types.MsgERC20DeployedEvent) (*types.MsgERC20DeployedEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
@@ -390,7 +390,7 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 		),
 	)
 
-	return &types.MsgERC20DeployedClaimResponse{}, nil
+	return &types.MsgERC20DeployedEventResponse{}, nil
 }
 
 // LogicCallExecutedClaim handles claims for executing a logic call on Ethereum

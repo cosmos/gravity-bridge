@@ -99,7 +99,7 @@ The gravity module emits the following events:
 | ------- | ------------- | --------------- |
 | message | module        | confirm_logic   |
 
-### Msg/ERC20DeployedClaim
+### Msg/ERC20DeployedEvent
 
 | Type    | Attribute Key              | Attribute Value               |
 | ------- | -------------------------- | ----------------------------- |

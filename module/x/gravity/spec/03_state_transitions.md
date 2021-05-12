@@ -65,9 +65,9 @@ This event is fired when a `BatchTx` is executed on Ethereum, sending the tokens
 - Delete all the transactions in the batch from the `OutgoingTxPool`, since they have been spent on Ethereum.
 - For all batches with a `BatchNonce` lower than this one, put their transactions back into the `UnbatchedTXIndex`, which allows them to either be put into a new batch, or canceled by their sender using `MsgCancelSendToEthereum`. This is because the Gravity.sol Ethereum contract does not allow batches to be executed with a lower nonce than the last executed batch, meaning that the transactions in these batches can never be spent, making it safe to cancel them or put them in a new batch.
 
-## MsgERC20DeployedClaim
+## MsgERC20DeployedEvent
 
-Cosmos originated assets are represented by ERC20 contracts deployed on Ethereum by the Gravity.sol contract. This deployment can cost over $100, and somebody needs to pay for the gas. Gravity allows anybody to pay for this, as long as they deploy the contract with the correct parameters. Once this happens, the `MsgERC20DeployedClaim` event is fired and picked up by the Gravity module.
+Cosmos originated assets are represented by ERC20 contracts deployed on Ethereum by the Gravity.sol contract. This deployment can cost over $100, and somebody needs to pay for the gas. Gravity allows anybody to pay for this, as long as they deploy the contract with the correct parameters. Once this happens, the `MsgERC20DeployedEvent` event is fired and picked up by the Gravity module.
 
 ### On event observed:
 
