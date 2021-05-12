@@ -521,7 +521,7 @@ func queryPendingSendToEthereum(ctx sdk.Context, senderAddr string, k Keeper) ([
 	batches := k.GetBatchTxs(ctx)
 	unbatched_tx := k.GetPoolTransactions(ctx)
 	sender_address := senderAddr
-	res := types.PendingSendToEthereumRequestResponse{}
+	res := types.PendingSendToEthereumResponse{}
 	for _, batch := range batches {
 		for _, tx := range batch.Transactions {
 			if tx.Sender == sender_address {

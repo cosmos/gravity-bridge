@@ -85,7 +85,7 @@ func TestEthereumEventVoteRecordIterator(t *testing.T) {
 	// add some ethereumEventVoteRecords to the store
 
 	att1 := &types.EthereumEventVoteRecord{
-		Observed: true,
+		Accepted: true,
 		Votes:    []string{},
 	}
 	dep1 := &types.MsgSendToCosmosEvent{
@@ -97,7 +97,7 @@ func TestEthereumEventVoteRecordIterator(t *testing.T) {
 		Orchestrator:   AccAddrs[0].String(),
 	}
 	att2 := &types.EthereumEventVoteRecord{
-		Observed: true,
+		Accepted: true,
 		Votes:    []string{},
 	}
 	dep2 := &types.MsgSendToCosmosEvent{

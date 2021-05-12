@@ -641,7 +641,7 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 
 func (k Keeper) UnpackEthereumEventVoteRecordClaim(att *types.EthereumEventVoteRecord) (types.EthereumEvent, error) {
 	var msg types.EthereumEvent
-	err := k.cdc.UnpackAny(att.Claim, &msg)
+	err := k.cdc.UnpackAny(att.Event, &msg)
 	if err != nil {
 		return nil, err
 	} else {

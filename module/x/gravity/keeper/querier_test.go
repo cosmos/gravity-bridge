@@ -573,11 +573,11 @@ func TestQueryLogicCalls(t *testing.T) {
 	ctx := input.Context
 	k := input.GravityKeeper
 	var (
-		logicContract            = "0x510ab76899430424d209a6c9a5b9951fb8a6f47d"
-		payload                  = []byte("fake bytes")
-		tokenContract            = "0x7580bfe88dd3d07947908fae12d95872a260f2d8"
-		invalidationId           = []byte("GravityTesting")
-		invalidationNonce uint64 = 1
+		contractCallAddress        = "0x510ab76899430424d209a6c9a5b9951fb8a6f47d"
+		payload                    = []byte("fake bytes")
+		tokenContract              = "0x7580bfe88dd3d07947908fae12d95872a260f2d8"
+		invalidationId             = []byte("GravityTesting")
+		invalidationNonce   uint64 = 1
 	)
 
 	// seed with valset requests and eth addresses to make validators
@@ -600,13 +600,13 @@ func TestQueryLogicCalls(t *testing.T) {
 	}}
 
 	call := types.ContractCallTx{
-		Transfers:            token,
-		Fees:                 token,
-		LogicContractAddress: logicContract,
-		Payload:              payload,
-		Timeout:              10000,
-		InvalidationId:       invalidationId,
-		InvalidationNonce:    uint64(invalidationNonce),
+		Transfers:           token,
+		Fees:                token,
+		ContractCallAddress: contractCallAddress,
+		ContractCallPayload: payload,
+		Timeout:             10000,
+		InvalidationId:      invalidationId,
+		InvalidationNonce:   uint64(invalidationNonce),
 	}
 	k.SetContractCallTx(ctx, &call)
 
@@ -629,11 +629,11 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 	ctx := input.Context
 	k := input.GravityKeeper
 	var (
-		logicContract            = "0x510ab76899430424d209a6c9a5b9951fb8a6f47d"
-		payload                  = []byte("fake bytes")
-		tokenContract            = "0x7580bfe88dd3d07947908fae12d95872a260f2d8"
-		invalidationId           = []byte("GravityTesting")
-		invalidationNonce uint64 = 1
+		contractCallAddress        = "0x510ab76899430424d209a6c9a5b9951fb8a6f47d"
+		payload                    = []byte("fake bytes")
+		tokenContract              = "0x7580bfe88dd3d07947908fae12d95872a260f2d8"
+		invalidationId             = []byte("GravityTesting")
+		invalidationNonce   uint64 = 1
 	)
 
 	// seed with valset requests and eth addresses to make validators
@@ -656,13 +656,13 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 	}}
 
 	call := types.ContractCallTx{
-		Transfers:            token,
-		Fees:                 token,
-		LogicContractAddress: logicContract,
-		Payload:              payload,
-		Timeout:              10000,
-		InvalidationId:       invalidationId,
-		InvalidationNonce:    uint64(invalidationNonce),
+		Transfers:           token,
+		Fees:                token,
+		ContractCallAddress: contractCallAddress,
+		ContractCallPayload: payload,
+		Timeout:             10000,
+		InvalidationId:      invalidationId,
+		InvalidationNonce:   uint64(invalidationNonce),
 	}
 	k.SetContractCallTx(ctx, &call)
 
