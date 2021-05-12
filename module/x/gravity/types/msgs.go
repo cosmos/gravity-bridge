@@ -300,7 +300,7 @@ type EthereumEvent interface {
 	// to disambiguate this into a sdk.ValAddress
 	GetClaimer() sdk.AccAddress
 	// Which type of claim this is
-	GetType() EthereumEventType
+	GetType() EventType
 	ValidateBasic() error
 	ClaimHash() []byte
 }
@@ -313,7 +313,7 @@ var (
 )
 
 // GetType returns the type of the claim
-func (msg *MsgSendToCosmosEvent) GetType() EthereumEventType {
+func (msg *MsgSendToCosmosEvent) GetType() EventType {
 	return EVENT_TYPE_DEPOSIT
 }
 
@@ -383,7 +383,7 @@ func (msg *MsgSendToCosmosEvent) ClaimHash() []byte {
 }
 
 // GetType returns the claim type
-func (msg *MsgBatchExecutedEvent) GetType() EthereumEventType {
+func (msg *MsgBatchExecutedEvent) GetType() EventType {
 	return EVENT_TYPE_WITHDRAW
 }
 
@@ -448,7 +448,7 @@ const (
 // ======================================================
 
 // GetType returns the type of the claim
-func (e *MsgERC20DeployedEvent) GetType() EthereumEventType {
+func (e *MsgERC20DeployedEvent) GetType() EventType {
 	return EVENT_TYPE_ERC20_DEPLOYED
 }
 
@@ -507,7 +507,7 @@ func (b *MsgERC20DeployedEvent) ClaimHash() []byte {
 // ======================================================
 
 // GetType returns the type of the claim
-func (e *MsgContractCallTxExecutedEvent) GetType() EthereumEventType {
+func (e *MsgContractCallTxExecutedEvent) GetType() EventType {
 	return EVENT_TYPE_LOGIC_CALL_EXECUTED
 }
 
@@ -563,7 +563,7 @@ func (b *MsgContractCallTxExecutedEvent) ClaimHash() []byte {
 // ======================================================
 
 // GetType returns the type of the claim
-func (e *MsgSignerSetUpdatedEvent) GetType() EthereumEventType {
+func (e *MsgSignerSetUpdatedEvent) GetType() EventType {
 	return EVENT_TYPE_VALSET_UPDATED
 }
 
