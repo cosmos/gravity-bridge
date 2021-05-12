@@ -69,9 +69,9 @@ func (b BatchTx) GetCheckpoint(gravityIDstring string) []byte {
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (c OutgoingLogicCall) GetCheckpoint(gravityIDstring string) []byte {
+func (c ContractCallTx) GetCheckpoint(gravityIDstring string) []byte {
 
-	abi, err := abi.JSON(strings.NewReader(OutgoingLogicCallABIJSON))
+	abi, err := abi.JSON(strings.NewReader(ContractCallTxABIJSON))
 	if err != nil {
 		panic("Bad ABI constant!")
 	}

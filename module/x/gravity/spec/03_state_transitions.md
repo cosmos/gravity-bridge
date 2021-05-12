@@ -117,11 +117,11 @@ Once a batch has been created and stored, it is up to the current validators to 
 
 Relayers are then able to get all the signatures for a batch, assemble them into an Ethereum transaction, and send it to the Gravity.sol contract.
 
-## OutgoingLogicCall
+## ContractCallTx
 
 ### Logic call creation
 
-Another module on the same Cosmos chain can call `SetOutgoingLogicCall` to create a logic call. All setting of parameters is left up to the external module.
+Another module on the same Cosmos chain can call `SetContractCallTx` to create a logic call. All setting of parameters is left up to the external module.
 
 ### Logic call signing
 

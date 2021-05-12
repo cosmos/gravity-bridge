@@ -101,10 +101,10 @@ A validator has an associated Ethereum address.
 | ---------------------------------- | ---------------------------------------- | -------- | ---------------- |
 | `[]byte{0x1} + []byte(ValAddress)` | Ethereum address assigned by a validator | `[]byte` | Protobuf encoded |
 
-### OutgoingLogicCall
+### ContractCallTx
 
 ```
-message OutgoingLogicCall {
+message ContractCallTx {
   // This is the address of the logic contract that Gravity.sol will call
   string              logic_contract_address = 3;
   // This is the content of the function call on the logic contract. It is formatted
@@ -135,9 +135,9 @@ message OutgoingLogicCall {
 
 When another module requests a logic call to be executed on Ethereum it is stored in a store within the gravity module.
 
-| Key                                                                  | Value                                                | Type                      | Encoding         |
-| -------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------- | ---------------- |
-| `[]byte{0xde} + []byte(invalidationId) + nonce (big endian encoded)` | A user created logic call to be sent to the Ethereum | `types.OutgoingLogicCall` | Protobuf encoded |
+| Key                                                                  | Value                                                | Type                   | Encoding         |
+| -------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------- | ---------------- |
+| `[]byte{0xde} + []byte(invalidationId) + nonce (big endian encoded)` | A user created logic call to be sent to the Ethereum | `types.ContractCallTx` | Protobuf encoded |
 
 ### ConfirmLogicCall
 

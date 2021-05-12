@@ -76,7 +76,7 @@ const (
 	QueryLastPendingLogicCallByAddr = "lastPendingLogicCall"
 	// gets the last 5 outgoing logic calls, regardless of denom, useful
 	// for a relayer to see what is available to relay
-	QueryOutgoingLogicCalls = "lastLogicCalls"
+	QueryContractCallTxs = "lastLogicCalls"
 	// Used by the relayer to package a logic call with signatures required
 	// to submit to Ethereum
 	QueryLogicCallConfirms = "logicCallConfirms"
@@ -129,7 +129,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryAllLogicCallConfirms(ctx, path[1], path[2], keeper)
 		case QueryLastPendingLogicCallByAddr:
 			return lastPendingLogicCallRequest(ctx, path[1], keeper)
-		case QueryOutgoingLogicCalls:
+		case QueryContractCallTxs:
 			return lastLogicCallRequests(ctx, keeper)
 
 		case QueryGravityID:
@@ -371,8 +371,8 @@ func queryBatchFees(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 
 // Gets MaxResults logic calls from store.
 func lastLogicCallRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	var calls []*types.OutgoingLogicCall
-	keeper.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
+	var calls []*types.ContractCallTx
+	keeper.IterateContractCallTxs(ctx, func(_ []byte, call *types.ContractCallTx) bool {
 		calls = append(calls, call)
 		return len(calls) == MaxResults
 	})
@@ -413,8 +413,8 @@ func lastPendingLogicCallRequest(ctx sdk.Context, operatorAddr string, keeper Ke
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingLogicCalls *types.OutgoingLogicCall
-	keeper.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
+	var pendingLogicCalls *types.ContractCallTx
+	keeper.IterateContractCallTxs(ctx, func(_ []byte, call *types.ContractCallTx) bool {
 		foundConfirm := keeper.GetLogicCallConfirm(ctx, call.InvalidationId, call.InvalidationNonce, addr) != nil
 		if !foundConfirm {
 			pendingLogicCalls = call
@@ -439,7 +439,7 @@ func queryLogicCall(ctx sdk.Context, invalidationId string, invalidationNonce st
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	foundCall := keeper.GetOutgoingLogicCall(ctx, []byte(invalidationId), nonce)
+	foundCall := keeper.GetContractCallTx(ctx, []byte(invalidationId), nonce)
 	if foundCall == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find logic call")
 	}

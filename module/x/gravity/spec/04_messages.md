@@ -80,7 +80,7 @@ This message will fail if:
 
 ### MsgConfirmLogicCall
 
-Validators sign `OutgoingLogicCall`'s with their Ethereum keys, and send the signatures to the Gravity module using this message.
+Validators sign `ContractCallTx`'s with their Ethereum keys, and send the signatures to the Gravity module using this message.
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L155-161
 

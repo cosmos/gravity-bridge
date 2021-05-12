@@ -436,38 +436,38 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 //       LOGICCALLS        //
 /////////////////////////////
 
-// GetOutgoingLogicCall gets an outgoing logic call
-func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) *types.OutgoingLogicCall {
+// GetContractCallTx gets an outgoing logic call
+func (k Keeper) GetContractCallTx(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) *types.ContractCallTx {
 	store := ctx.KVStore(k.storeKey)
-	call := types.OutgoingLogicCall{}
-	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetOutgoingLogicCallKey(invalidationID, invalidationNonce)), &call)
+	call := types.ContractCallTx{}
+	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetContractCallTxKey(invalidationID, invalidationNonce)), &call)
 	return &call
 }
 
 // SetOutogingLogicCall sets an outgoing logic call
-func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, call *types.OutgoingLogicCall) {
+func (k Keeper) SetContractCallTx(ctx sdk.Context, call *types.ContractCallTx) {
 	store := ctx.KVStore(k.storeKey)
 
 	// Store checkpoint to prove that this logic call actually happened
 	checkpoint := call.GetCheckpoint(k.GetGravityID(ctx))
 	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
 
-	store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce),
+	store.Set(types.GetContractCallTxKey(call.InvalidationId, call.InvalidationNonce),
 		k.cdc.MustMarshalBinaryBare(call))
 }
 
-// DeleteOutgoingLogicCall deletes outgoing logic calls
-func (k Keeper) DeleteOutgoingLogicCall(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) {
-	ctx.KVStore(k.storeKey).Delete(types.GetOutgoingLogicCallKey(invalidationID, invalidationNonce))
+// DeleteContractCallTx deletes outgoing logic calls
+func (k Keeper) DeleteContractCallTx(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) {
+	ctx.KVStore(k.storeKey).Delete(types.GetContractCallTxKey(invalidationID, invalidationNonce))
 }
 
-// IterateOutgoingLogicCalls iterates over outgoing logic calls
-func (k Keeper) IterateOutgoingLogicCalls(ctx sdk.Context, cb func([]byte, *types.OutgoingLogicCall) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicCall)
+// IterateContractCallTxs iterates over outgoing logic calls
+func (k Keeper) IterateContractCallTxs(ctx sdk.Context, cb func([]byte, *types.ContractCallTx) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyContractCallTx)
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		var call types.OutgoingLogicCall
+		var call types.ContractCallTx
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &call)
 		// cb returns true to stop early
 		if cb(iter.Key(), &call) {
@@ -476,27 +476,27 @@ func (k Keeper) IterateOutgoingLogicCalls(ctx sdk.Context, cb func([]byte, *type
 	}
 }
 
-// GetOutgoingLogicCalls returns the outgoing tx batches
-func (k Keeper) GetOutgoingLogicCalls(ctx sdk.Context) (out []*types.OutgoingLogicCall) {
-	k.IterateOutgoingLogicCalls(ctx, func(_ []byte, call *types.OutgoingLogicCall) bool {
+// GetContractCallTxs returns the outgoing tx batches
+func (k Keeper) GetContractCallTxs(ctx sdk.Context) (out []*types.ContractCallTx) {
+	k.IterateContractCallTxs(ctx, func(_ []byte, call *types.ContractCallTx) bool {
 		out = append(out, call)
 		return false
 	})
 	return
 }
 
-// CancelOutgoingLogicCalls releases all TX in the batch and deletes the batch
-func (k Keeper) CancelOutgoingLogicCall(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) error {
-	call := k.GetOutgoingLogicCall(ctx, invalidationId, invalidationNonce)
+// CancelContractCallTxs releases all TX in the batch and deletes the batch
+func (k Keeper) CancelContractCallTx(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) error {
+	call := k.GetContractCallTx(ctx, invalidationId, invalidationNonce)
 	if call == nil {
 		return types.ErrUnknown
 	}
 	// Delete batch since it is finished
-	k.DeleteOutgoingLogicCall(ctx, call.InvalidationId, call.InvalidationNonce)
+	k.DeleteContractCallTx(ctx, call.InvalidationId, call.InvalidationNonce)
 
 	// a consuming application will have to watch for this event and act on it
 	batchEvent := sdk.NewEvent(
-		types.EventTypeOutgoingLogicCallCanceled,
+		types.EventTypeContractCallTxCanceled,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyInvalidationID, fmt.Sprint(call.InvalidationId)),
 		sdk.NewAttribute(types.AttributeKeyInvalidationNonce, fmt.Sprint(call.InvalidationNonce)),

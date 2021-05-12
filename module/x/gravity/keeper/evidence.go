@@ -23,7 +23,7 @@ func (k Keeper) CheckBadSignatureEvidence(
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
 	case *types.Valset:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
-	case *types.OutgoingLogicCall:
+	case *types.ContractCallTx:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
 
 	default:

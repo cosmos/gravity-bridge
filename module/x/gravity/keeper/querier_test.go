@@ -599,7 +599,7 @@ func TestQueryLogicCalls(t *testing.T) {
 		Amount:   sdk.NewIntFromUint64(5000),
 	}}
 
-	call := types.OutgoingLogicCall{
+	call := types.ContractCallTx{
 		Transfers:            token,
 		Fees:                 token,
 		LogicContractAddress: logicContract,
@@ -608,9 +608,9 @@ func TestQueryLogicCalls(t *testing.T) {
 		InvalidationId:       invalidationId,
 		InvalidationNonce:    uint64(invalidationNonce),
 	}
-	k.SetOutgoingLogicCall(ctx, &call)
+	k.SetContractCallTx(ctx, &call)
 
-	res := k.GetOutgoingLogicCall(ctx, invalidationId, invalidationNonce)
+	res := k.GetContractCallTx(ctx, invalidationId, invalidationNonce)
 
 	require.Equal(t, call, *res)
 
@@ -655,7 +655,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 		Amount:   sdk.NewIntFromUint64(5000),
 	}}
 
-	call := types.OutgoingLogicCall{
+	call := types.ContractCallTx{
 		Transfers:            token,
 		Fees:                 token,
 		LogicContractAddress: logicContract,
@@ -664,7 +664,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 		InvalidationId:       invalidationId,
 		InvalidationNonce:    uint64(invalidationNonce),
 	}
-	k.SetOutgoingLogicCall(ctx, &call)
+	k.SetContractCallTx(ctx, &call)
 
 	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 

@@ -80,11 +80,11 @@ func TestSubmitBadSignatureEvidenceLogicCallExists(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
-	logicCall := types.OutgoingLogicCall{
+	logicCall := types.ContractCallTx{
 		Timeout: 420,
 	}
 
-	input.GravityKeeper.SetOutgoingLogicCall(ctx, &logicCall)
+	input.GravityKeeper.SetContractCallTx(ctx, &logicCall)
 
 	any, _ := codectypes.NewAnyWithValue(&logicCall)
 

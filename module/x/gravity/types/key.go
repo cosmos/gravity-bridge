@@ -89,8 +89,8 @@ var (
 	// KeyOrchestratorAddress indexes the validator keys for an orchestrator
 	KeyOrchestratorAddress = []byte{0x11}
 
-	// KeyOutgoingLogicCall indexes the outgoing logic calls
-	KeyOutgoingLogicCall = []byte{0x12}
+	// KeyContractCallTx indexes the outgoing logic calls
+	KeyContractCallTx = []byte{0x12}
 
 	// KeyOutgoingLogicConfirm indexes the outgoing logic confirms
 	KeyOutgoingLogicConfirm = []byte{0x13}
@@ -280,8 +280,8 @@ func GetERC20ToDenomKey(erc20 string) []byte {
 	return append(ERC20ToDenomKey, []byte(erc20)...)
 }
 
-func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {
-	a := append(KeyOutgoingLogicCall, invalidationId...)
+func GetContractCallTxKey(invalidationId []byte, invalidationNonce uint64) []byte {
+	a := append(KeyContractCallTx, invalidationId...)
 	return append(a, UInt64Bytes(invalidationNonce)...)
 }
 

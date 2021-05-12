@@ -137,8 +137,8 @@ func (k Keeper) LastPendingLogicCallByAddr(
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingLogicReq *types.OutgoingLogicCall
-	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), func(_ []byte, logic *types.OutgoingLogicCall) bool {
+	var pendingLogicReq *types.ContractCallTx
+	k.IterateContractCallTxs(sdk.UnwrapSDKContext(c), func(_ []byte, logic *types.ContractCallTx) bool {
 		foundConfirm := k.GetLogicCallConfirm(sdk.UnwrapSDKContext(c),
 			logic.InvalidationId, logic.InvalidationNonce, addr) != nil
 		if !foundConfirm {
@@ -162,12 +162,12 @@ func (k Keeper) BatchTxs(
 	return &types.BatchTxsResponse{Batches: batches}, nil
 }
 
-// OutgoingLogicCalls queries the OutgoingLogicCalls of the gravity module
-func (k Keeper) OutgoingLogicCalls(
+// ContractCallTxs queries the ContractCallTxs of the gravity module
+func (k Keeper) ContractCallTxs(
 	c context.Context,
 	req *types.ContractCallTxsRequest) (*types.ContractCallTxsResponse, error) {
-	var calls []*types.OutgoingLogicCall
-	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), func(_ []byte, call *types.OutgoingLogicCall) bool {
+	var calls []*types.ContractCallTx
+	k.IterateContractCallTxs(sdk.UnwrapSDKContext(c), func(_ []byte, call *types.ContractCallTx) bool {
 		calls = append(calls, call)
 		return len(calls) == MaxResults
 	})

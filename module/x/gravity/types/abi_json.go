@@ -51,8 +51,8 @@ const (
 		]
 	}]`
 
-	// OutgoingLogicCallABIJSON checks the ETH ABI for compatability of the logic call message
-	OutgoingLogicCallABIJSON = `[{
+	// ContractCallTxABIJSON checks the ETH ABI for compatability of the logic call message
+	ContractCallTxABIJSON = `[{
 	  "name": "checkpoint",
       "outputs": [],
       "stateMutability": "pure",
