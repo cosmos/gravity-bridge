@@ -195,7 +195,7 @@ func (c ContractCallTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 		transferTokenContracts,
 		feeAmounts,
 		feeTokenContracts,
-		gethcommon.HexToAddress(c.ContractCallAddress),
+		gethcommon.HexToAddress(c.Address),
 		payload,
 		big.NewInt(int64(c.Timeout)),
 		invalidationId,

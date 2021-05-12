@@ -54,7 +54,7 @@ func TestContractCallTxCheckpointGold1(t *testing.T) {
 	call := ContractCallTx{
 		Tokens:            	  token,
 		Fees:                 token,
-		ContractCallAddress: "0x17c1736CcF692F653c433d7aa2aB45148C016F68",
+		Address: "0x17c1736CcF692F653c433d7aa2aB45148C016F68",
 		Payload:              payload,
 		Timeout:              4766922941000,
 		InvalidationScope:    invalidationId,
