@@ -36,19 +36,19 @@ var (
 
 	// OracleClaimKey Claim details by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
-	// A claim is named more intuitively than an Attestation, it is literally
+	// A claim is named more intuitively than an EthereumEventVoteRecord, it is literally
 	// a validator making a claim to have seen something happen. Claims are
 	// attached to attestations which can be thought of as 'the event' that
 	// will eventually be executed.
 	OracleClaimKey = []byte{0x5}
 
-	// OracleAttestationKey attestation details by nonce and validator address
+	// OracleEthereumEventVoteRecordKey attestation details by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	// An attestation can be thought of as the 'event to be executed' while
 	// the Claims are an individual validator saying that they saw an event
-	// occur the Attestation is 'the event' that multiple claims vote on and
+	// occur the EthereumEventVoteRecord is 'the event' that multiple claims vote on and
 	// eventually executes
-	OracleAttestationKey = []byte{0x6}
+	OracleEthereumEventVoteRecordKey = []byte{0x6}
 
 	// OutgoingTXPoolKey indexes the last nonce for the outgoing tx pool
 	OutgoingTXPoolKey = []byte{0x7}
@@ -186,33 +186,33 @@ func GetClaimKey(details EthereumClaim) []byte {
 	return key
 }
 
-// GetAttestationKey returns the following key format
+// GetEthereumEventVoteRecordKey returns the following key format
 // prefix     nonce                             claim-details-hash
 // [0x5][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
 // An attestation is an event multiple people are voting on, this function needs the claim
-// details because each Attestation is aggregating all claims of a specific event, lets say
+// details because each EthereumEventVoteRecord is aggregating all claims of a specific event, lets say
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
-func GetAttestationKey(eventNonce uint64, claimHash []byte) []byte {
-	key := make([]byte, len(OracleAttestationKey)+len(UInt64Bytes(0))+len(claimHash))
-	copy(key[0:], OracleAttestationKey)
-	copy(key[len(OracleAttestationKey):], UInt64Bytes(eventNonce))
-	copy(key[len(OracleAttestationKey)+len(UInt64Bytes(0)):], claimHash)
+func GetEthereumEventVoteRecordKey(eventNonce uint64, claimHash []byte) []byte {
+	key := make([]byte, len(OracleEthereumEventVoteRecordKey)+len(UInt64Bytes(0))+len(claimHash))
+	copy(key[0:], OracleEthereumEventVoteRecordKey)
+	copy(key[len(OracleEthereumEventVoteRecordKey):], UInt64Bytes(eventNonce))
+	copy(key[len(OracleEthereumEventVoteRecordKey)+len(UInt64Bytes(0)):], claimHash)
 	return key
 }
 
-// GetAttestationKeyWithHash returns the following key format
+// GetEthereumEventVoteRecordKeyWithHash returns the following key format
 // prefix     nonce                             claim-details-hash
 // [0x5][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
 // An attestation is an event multiple people are voting on, this function needs the claim
-// details because each Attestation is aggregating all claims of a specific event, lets say
+// details because each EthereumEventVoteRecord is aggregating all claims of a specific event, lets say
 // validator X and validator y where making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
-func GetAttestationKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
-	key := make([]byte, len(OracleAttestationKey)+len(UInt64Bytes(0))+len(claimHash))
-	copy(key[0:], OracleAttestationKey)
-	copy(key[len(OracleAttestationKey):], UInt64Bytes(eventNonce))
-	copy(key[len(OracleAttestationKey)+len(UInt64Bytes(0)):], claimHash)
+func GetEthereumEventVoteRecordKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
+	key := make([]byte, len(OracleEthereumEventVoteRecordKey)+len(UInt64Bytes(0))+len(claimHash))
+	copy(key[0:], OracleEthereumEventVoteRecordKey)
+	copy(key[len(OracleEthereumEventVoteRecordKey):], UInt64Bytes(eventNonce))
+	copy(key[len(OracleEthereumEventVoteRecordKey)+len(UInt64Bytes(0)):], claimHash)
 	return key
 }
 

@@ -14,13 +14,13 @@ import (
 // DefaultParamspace defines the default auth module parameter subspace
 const (
 	// todo: implement oracle constants as params
-	DefaultParamspace = ModuleName
-	AttestationPeriod = 24 * time.Hour // TODO: value????
+	DefaultParamspace             = ModuleName
+	EthereumEventVoteRecordPeriod = 24 * time.Hour // TODO: value????
 )
 
 var (
-	// AttestationVotesPowerThreshold threshold of votes power to succeed
-	AttestationVotesPowerThreshold = sdk.NewInt(66)
+	// EthereumEventVoteRecordVotesPowerThreshold threshold of votes power to succeed
+	EthereumEventVoteRecordVotesPowerThreshold = sdk.NewInt(66)
 
 	// ParamsStoreKeyGravityID stores the gravity id
 	ParamsStoreKeyGravityID = []byte("GravityID")

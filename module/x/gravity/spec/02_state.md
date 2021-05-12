@@ -179,7 +179,7 @@ This is how we associate the ERC20 contracts representing Cosmos originated asse
 
 ### LastEventNonce
 
-The last observed event nonce. This is set when `TryAttestation()` is called. There is always only a single value held in this store.
+The last observed event nonce. This is set when `TryEthereumEventVoteRecord()` is called. There is always only a single value held in this store.
 
 | Key            | Value                     | Type     | Encoding           |
 | -------------- | ------------------------- | -------- | ------------------ |
@@ -193,17 +193,17 @@ This is the last observed height on ethereum. There will always only be a single
 | -------------- | ----------------------------- | -------- | ---------------- |
 | `[]byte{0xf9}` | Last observed Ethereum Height | `uint64` | Protobuf encoded |
 
-### Attestation
+### EthereumEventVoteRecord
 
 This is a record of all the votes for a given claim (Ethereum event).
 
-| Key                                                                 | Value                                 | Type                | Encoding         |
-| ------------------------------------------------------------------- | ------------------------------------- | ------------------- | ---------------- |
-| `[]byte{0x5} + eventNonce (big endian encoded) + []byte(claimHash)` | Attestation of occurred events/claims | `types.Attestation` | Protobuf encoded |
+| Key                                                                 | Value                                             | Type                            | Encoding         |
+| ------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------- | ---------------- |
+| `[]byte{0x5} + eventNonce (big endian encoded) + []byte(claimHash)` | EthereumEventVoteRecord of occurred events/claims | `types.EthereumEventVoteRecord` | Protobuf encoded |
 
 ```
-message Attestation {
-  // This field stores whether the Attestation has had its event applied to the Cosmos state. This happens when
+message EthereumEventVoteRecord {
+  // This field stores whether the EthereumEventVoteRecord has had its event applied to the Cosmos state. This happens when
   // enough (usually >2/3s) of the validator power votes that they saw the event on Ethereum.
   // For example, once a DepositClaim has modified the token balance of the account that it was deposited to,
   // this boolean will be set to true.

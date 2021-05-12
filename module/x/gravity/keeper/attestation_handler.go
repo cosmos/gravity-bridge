@@ -9,14 +9,14 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-// AttestationHandler processes `observed` Attestations
-type AttestationHandler struct {
+// EthereumEventVoteRecordHandler processes `observed` EthereumEventVoteRecords
+type EthereumEventVoteRecordHandler struct {
 	keeper     Keeper
 	bankKeeper types.BankKeeper
 }
 
-// Handle is the entry point for Attestation processing.
-func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
+// Handle is the entry point for EthereumEventVoteRecord processing.
+func (a EthereumEventVoteRecordHandler) Handle(ctx sdk.Context, att types.EthereumEventVoteRecord, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
 	case *types.MsgDepositClaim:
 		// Check if coin is Cosmos-originated asset and get denom

@@ -303,7 +303,7 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
 		),
 	)
 
@@ -346,7 +346,7 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
 		),
 	)
 
@@ -386,7 +386,7 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
 		),
 	)
 
@@ -426,7 +426,7 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
 		),
 	)
 
@@ -466,7 +466,7 @@ func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgValsetUpda
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
 		),
 	)
 

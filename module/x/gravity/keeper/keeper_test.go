@@ -79,12 +79,12 @@ func TestCurrentValsetNormalization(t *testing.T) {
 	}
 }
 
-func TestAttestationIterator(t *testing.T) {
+func TestEthereumEventVoteRecordIterator(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 	// add some attestations to the store
 
-	att1 := &types.Attestation{
+	att1 := &types.EthereumEventVoteRecord{
 		Observed: true,
 		Votes:    []string{},
 	}
@@ -96,7 +96,7 @@ func TestAttestationIterator(t *testing.T) {
 		CosmosReceiver: AccAddrs[0].String(),
 		Orchestrator:   AccAddrs[0].String(),
 	}
-	att2 := &types.Attestation{
+	att2 := &types.EthereumEventVoteRecord{
 		Observed: true,
 		Votes:    []string{},
 	}
@@ -108,11 +108,11 @@ func TestAttestationIterator(t *testing.T) {
 		CosmosReceiver: AccAddrs[0].String(),
 		Orchestrator:   AccAddrs[0].String(),
 	}
-	input.GravityKeeper.SetAttestation(ctx, dep1.EventNonce, dep1.ClaimHash(), att1)
-	input.GravityKeeper.SetAttestation(ctx, dep2.EventNonce, dep2.ClaimHash(), att2)
+	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, dep1.EventNonce, dep1.ClaimHash(), att1)
+	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, dep2.EventNonce, dep2.ClaimHash(), att2)
 
-	atts := []types.Attestation{}
-	input.GravityKeeper.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
+	atts := []types.EthereumEventVoteRecord{}
+	input.GravityKeeper.IterateAttestaions(ctx, func(_ []byte, att types.EthereumEventVoteRecord) bool {
 		atts = append(atts, att)
 		return false
 	})

@@ -74,7 +74,7 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 // "Observe" those who have passed the threshold. Break the loop once we see
 // an attestation that has not passed the threshold
 func attestationTally(ctx sdk.Context, k keeper.Keeper) {
-	attmap := k.GetAttestationMapping(ctx)
+	attmap := k.GetEthereumEventVoteRecordMapping(ctx)
 	// We make a slice with all the event nonces that are in the attestation mapping
 	nonces := make([]uint64, 0, len(attmap))
 	for k := range attmap {
@@ -96,7 +96,7 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 			// attestations that have already been observed.
 			//
 			// Once we hit an event nonce that is one higher than the last observed event, we stop
-			// skipping over this conditional and start calling tryAttestation (counting votes)
+			// skipping over this conditional and start calling tryEthereumEventVoteRecord (counting votes)
 			// Once an attestation at a given event nonce has enough votes and becomes observed,
 			// every other attestation at that nonce will be skipped, since the lastObservedEventNonce
 			// will be incremented.
@@ -108,7 +108,7 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 			// If no attestation becomes observed, when we get to the next nonce, every attestation in
 			// it will be skipped. The same will happen for every nonce after that.
 			if nonce == uint64(k.GetLastObservedEventNonce(ctx))+1 {
-				k.TryAttestation(ctx, &att)
+				k.TryEthereumEventVoteRecord(ctx, &att)
 			}
 		}
 	}

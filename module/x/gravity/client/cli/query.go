@@ -27,8 +27,8 @@ func GetQueryCmd() *cobra.Command {
 		CmdGetPendingOutgoingTXBatchRequest(),
 		// CmdGetAllOutgoingTXBatchRequest(),
 		// CmdGetOutgoingTXBatchByNonceRequest(),
-		// CmdGetAllAttestationsRequest(),
-		// CmdGetAttestationRequest(),
+		// CmdGetAllEthereumEventVoteRecordsRequest(),
+		// CmdGetEthereumEventVoteRecordRequest(),
 		QueryObserved(),
 		QueryApproved(),
 	}...)

@@ -64,23 +64,23 @@ Procedure:
     - Check that the validator started validating before the valset was created.
     - Check if the validator has signed this valset with a `MsgValsetConfirm`. If not, slash the validator by `SlashFractionBatch` and jail them.
 
-## Attestation vote counting
+## EthereumEventVoteRecord vote counting
 
-This logic counts up votes on `Attestation`s and kicks off the process of bringing Ethereum events into the Cosmos state;
+This logic counts up votes on `EthereumEventVoteRecord`s and kicks off the process of bringing Ethereum events into the Cosmos state;
 
-- We retrieve all attestations from storage and order them into a map of event nonces to attestations, sorted by nonce: `map[uint64][]types.Attestation`.
+- We retrieve all attestations from storage and order them into a map of event nonces to attestations, sorted by nonce: `map[uint64][]types.EthereumEventVoteRecord`.
   - Note that the only time one nonce will have more than one attestation is when validators are disagreeing about which event happened at which event nonce.
 - We then loop over the nonces:
   - For each attestation, we check that the event nonce is exactly 1 higher than the `LastObservedEventNonce`.
   - If it is, we count up the votes on that attestation using the procedure described [here](03_state_transitions.md#counting-attestation-votes)
-  - If the attestation passes the `AttestationVotesPowerThreshold`, we apply it to the Cosmos state, and increment the `LastObservedEventNonce`. As a result of this, any additional attestations at the same nonce do not have their votes counted, but the first attestation at the next nonce will have its votes counted.
-  - If the attestation does not pass the `AttestationVotesPowerThreshold`, it is not applied to the Cosmos state, and `LastObservedEventNonce` is not incremented. As a result of this, the next attestation at that nonce will have its votes counted. If no attestations at that nonce pass the `AttestationVotesPowerThreshold`, then all attestations at subsequent nonces will be skipped and this procedure ends.
+  - If the attestation passes the `EthereumEventVoteRecordVotesPowerThreshold`, we apply it to the Cosmos state, and increment the `LastObservedEventNonce`. As a result of this, any additional attestations at the same nonce do not have their votes counted, but the first attestation at the next nonce will have its votes counted.
+  - If the attestation does not pass the `EthereumEventVoteRecordVotesPowerThreshold`, it is not applied to the Cosmos state, and `LastObservedEventNonce` is not incremented. As a result of this, the next attestation at that nonce will have its votes counted. If no attestations at that nonce pass the `EthereumEventVoteRecordVotesPowerThreshold`, then all attestations at subsequent nonces will be skipped and this procedure ends.
 
 This procedure has the following attributes:
 
-- Attestations will never be observed and applied to Cosmos state out of order, since to have their votes counted, they must have a nonce exactly one higher than the last observed attestation.
-- It is only possible for one attestation at a given nonce to pass the `AttestationVotesPowerThreshold` and become `Observed`, since we have [enforced](03_state_transitions.md#counting-attestation-votes) that validators cannot vote for different attestations at the same height.
-- If there is an attestation that has not passed the `AttestationVotesPowerThreshold`, but there are later attestations which have, we do not count the later attestations until the earlier one passes the `AttestationVotesPowerThreshold` and is observed. At this point, all later attestations which have passed the `AttestationVotesPowerThreshold` will also be counted and be applied to the Cosmos state.
+- EthereumEventVoteRecords will never be observed and applied to Cosmos state out of order, since to have their votes counted, they must have a nonce exactly one higher than the last observed attestation.
+- It is only possible for one attestation at a given nonce to pass the `EthereumEventVoteRecordVotesPowerThreshold` and become `Observed`, since we have [enforced](03_state_transitions.md#counting-attestation-votes) that validators cannot vote for different attestations at the same height.
+- If there is an attestation that has not passed the `EthereumEventVoteRecordVotesPowerThreshold`, but there are later attestations which have, we do not count the later attestations until the earlier one passes the `EthereumEventVoteRecordVotesPowerThreshold` and is observed. At this point, all later attestations which have passed the `EthereumEventVoteRecordVotesPowerThreshold` will also be counted and be applied to the Cosmos state.
 
 ## Cleanup
 

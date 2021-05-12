@@ -19,7 +19,7 @@ Happy path implementations
 - A nonce is unique in it's context and never reused
 - Multiple claims by an orchestrator for the same ETH event are forbidden
 - We know the ETH event types beforehand (and handle them as ClaimTypes)
-- For an **observation** status in Attestation the power AND count thresholds must be exceeded
+- For an **observation** status in EthereumEventVoteRecord the power AND count thresholds must be exceeded
 - Fraction type allows higher precision math than %. For example with 2/3
 
 A good start to follow the process would be the `x/gravity/handler_test.go` file

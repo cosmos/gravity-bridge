@@ -42,7 +42,7 @@ This is a term for the difference between the validator set currently in the Gra
 
 An Ethereum event signed and submitted to cosmos by a single `Orchestrator` instance.
 
-### Attestation
+### EthereumEventVoteRecord
 
 Aggregate of claims that eventually becomes `observed` by all orchestrators.
 

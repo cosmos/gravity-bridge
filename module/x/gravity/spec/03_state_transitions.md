@@ -6,14 +6,14 @@ order: 3
 
 This document describes the state transition operations pertaining to:
 
-## Attestation
+## EthereumEventVoteRecord
 
 ### First vote
 
 The first time any validator sees a given Ethereum event on the Ethereum blockchain, and calls `DepositClaim`, or one of the other endpoints for other types of ethereum events (claims):
 
 - We check that the event nonce of the submitted event is exactly one higher than that validator's last submitted event. This keeps validators from voting on different events at the same event nonce, which makes tallying votes easier later.
-- An Attestation is created for that event at that event nonce. Event nonces are created by the Gravity.sol Ethereum contract, and increment every time it fires an event. It is possible for validators to disagree about what event happened at a given event nonce, but only in the case of an attempted attack by Cosmos validators, or in the case of serious issues with Ethereum (like a hard fork).
+- An EthereumEventVoteRecord is created for that event at that event nonce. Event nonces are created by the Gravity.sol Ethereum contract, and increment every time it fires an event. It is possible for validators to disagree about what event happened at a given event nonce, but only in the case of an attempted attack by Cosmos validators, or in the case of serious issues with Ethereum (like a hard fork).
 - That validator's address is added to the votes array.
 - The observed field is initialized to false.
 - The height field is filled with the current Cosmos block height.
@@ -23,18 +23,18 @@ The first time any validator sees a given Ethereum event on the Ethereum blockch
 When other validators see the same event at the same event nonce, and call `DepositClaim`, or one of the other endpoints for other types of ethereum events:
 
 - We check that the event nonce of the submitted event is exactly one higher than that validator's last submitted event. This keeps validators from voting on different events at the same event nonce, which makes tallying votes easier later.
-- We look up the event's Attestation.
+- We look up the event's EthereumEventVoteRecord.
 - The validator's address is added to the votes array.
 
-### Counting Attestation votes
+### Counting EthereumEventVoteRecord votes
 
 Every endblock, the module attempts to tally up the votes for un-Observed attestations. Which attestations it chooses to tally is covered in the [end blocker spec](05_end_block.md).
 
 When tallying the votes a given attestation, we follow this algorithm:
 
 - First get `LastTotalPower` from the StakingKeeper
-- `requiredPower` = `AttestationVotesPowerThreshold` \* `LastTotalPower` / 100
-  - This effectively calculates `AttestationVotesPowerThreshold` percent (usually 66%) of `LastTotalPower`, truncating all decimal points.
+- `requiredPower` = `EthereumEventVoteRecordVotesPowerThreshold` \* `LastTotalPower` / 100
+  - This effectively calculates `EthereumEventVoteRecordVotesPowerThreshold` percent (usually 66%) of `LastTotalPower`, truncating all decimal points.
 - Set `attestationPower` = 0
 
 - For every validator in the attestation's votes field:

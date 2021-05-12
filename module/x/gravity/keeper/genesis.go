@@ -51,23 +51,23 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	}
 
 	// reset attestations in state
-	for _, att := range data.Attestations {
+	for _, att := range data.EthereumEventVoteRecords {
 		att := att
-		claim, err := k.UnpackAttestationClaim(&att)
+		claim, err := k.UnpackEthereumEventVoteRecordClaim(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
 
 		// TODO: block height?
-		k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
+		k.SetEthereumEventVoteRecord(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
 	}
 	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
 
 	// reset attestation state of specific validators
 	// this must be done after the above to be correct
-	for _, att := range data.Attestations {
+	for _, att := range data.EthereumEventVoteRecords {
 		att := att
-		claim, err := k.UnpackAttestationClaim(&att)
+		claim, err := k.UnpackEthereumEventVoteRecordClaim(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
@@ -128,11 +128,11 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		calls              = k.GetOutgoingLogicCalls(ctx)
 		batches            = k.GetOutgoingTxBatches(ctx)
 		valsets            = k.GetValsets(ctx)
-		attmap             = k.GetAttestationMapping(ctx)
+		attmap             = k.GetEthereumEventVoteRecordMapping(ctx)
 		vsconfs            = []*types.MsgValsetConfirm{}
 		batchconfs         = []types.MsgConfirmBatch{}
 		callconfs          = []types.MsgConfirmLogicCall{}
-		attestations       = []types.Attestation{}
+		attestations       = []types.EthereumEventVoteRecord{}
 		delegates          = k.GetDelegateKeys(ctx)
 		lastobserved       = k.GetLastObservedEventNonce(ctx)
 		erc20ToDenoms      = []*types.ERC20ToDenom{}
@@ -172,17 +172,17 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	})
 
 	return types.GenesisState{
-		Params:             &p,
-		LastObservedNonce:  lastobserved,
-		Valsets:            valsets,
-		ValsetConfirms:     vsconfs,
-		Batches:            batches,
-		BatchConfirms:      batchconfs,
-		LogicCalls:         calls,
-		LogicCallConfirms:  callconfs,
-		Attestations:       attestations,
-		DelegateKeys:       delegates,
-		Erc20ToDenoms:      erc20ToDenoms,
-		UnbatchedTransfers: unbatchedTransfers,
+		Params:                   &p,
+		LastObservedNonce:        lastobserved,
+		Valsets:                  valsets,
+		ValsetConfirms:           vsconfs,
+		Batches:                  batches,
+		BatchConfirms:            batchconfs,
+		LogicCalls:               calls,
+		LogicCallConfirms:        callconfs,
+		EthereumEventVoteRecords: attestations,
+		DelegateKeys:             delegates,
+		Erc20ToDenoms:            erc20ToDenoms,
+		UnbatchedTransfers:       unbatchedTransfers,
 	}
 }

@@ -65,6 +65,6 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&OutgoingTransferTx{}, "gravity/OutgoingTransferTx", nil)
 	cdc.RegisterConcrete(&ERC20Token{}, "gravity/ERC20Token", nil)
 	cdc.RegisterConcrete(&IDSet{}, "gravity/IDSet", nil)
-	cdc.RegisterConcrete(&Attestation{}, "gravity/Attestation", nil)
+	cdc.RegisterConcrete(&EthereumEventVoteRecord{}, "gravity/EthereumEventVoteRecord", nil)
 	cdc.RegisterConcrete(&MsgSubmitBadSignatureEvidence{}, "gravity/MsgSubmitBadSignatureEvidence", nil)
 }

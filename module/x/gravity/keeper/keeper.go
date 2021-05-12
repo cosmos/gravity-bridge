@@ -28,8 +28,8 @@ type Keeper struct {
 	bankKeeper     types.BankKeeper
 	SlashingKeeper types.SlashingKeeper
 
-	AttestationHandler interface {
-		Handle(sdk.Context, types.Attestation, types.EthereumClaim) error
+	EthereumEventVoteRecordHandler interface {
+		Handle(sdk.Context, types.EthereumEventVoteRecord, types.EthereumClaim) error
 	}
 }
 
@@ -48,7 +48,7 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 		bankKeeper:     bankKeeper,
 		SlashingKeeper: slashingKeeper,
 	}
-	k.AttestationHandler = AttestationHandler{
+	k.EthereumEventVoteRecordHandler = EthereumEventVoteRecordHandler{
 		keeper:     k,
 		bankKeeper: bankKeeper,
 	}
@@ -639,7 +639,7 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) UnpackAttestationClaim(att *types.Attestation) (types.EthereumClaim, error) {
+func (k Keeper) UnpackEthereumEventVoteRecordClaim(att *types.EthereumEventVoteRecord) (types.EthereumClaim, error) {
 	var msg types.EthereumClaim
 	err := k.cdc.UnpackAny(att.Claim, &msg)
 	if err != nil {
