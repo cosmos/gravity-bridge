@@ -433,8 +433,8 @@ func (k msgServer) ContractCallTxExecutedEvent(c context.Context, msg *types.Msg
 	return &types.MsgContractCallTxExecutedEventResponse{}, nil
 }
 
-// ValsetUpdatedClaim handles claims for executing a validator set update on Ethereum
-func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgValsetUpdatedClaim) (*types.MsgValsetUpdatedClaimResponse, error) {
+// SignerSetUpdatedEvent handles claims for executing a validator set update on Ethereum
+func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgSignerSetUpdatedEvent) (*types.MsgSignerSetUpdatedEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
@@ -470,7 +470,7 @@ func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgValsetUpda
 		),
 	)
 
-	return &types.MsgValsetUpdatedClaimResponse{}, nil
+	return &types.MsgSignerSetUpdatedEventResponse{}, nil
 }
 
 func (k msgServer) CancelSendToEthereum(c context.Context, msg *types.MsgCancelSendToEthereum) (*types.MsgCancelSendToEthereumResponse, error) {

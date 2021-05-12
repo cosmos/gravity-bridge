@@ -110,7 +110,7 @@ func (a EthereumEventVoteRecordHandler) Handle(ctx sdk.Context, att types.Ethere
 
 		// Add to denom-erc20 mapping
 		a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.CosmosDenom, claim.TokenContract)
-	case *types.MsgValsetUpdatedClaim:
+	case *types.MsgSignerSetUpdatedEvent:
 		// TODO here we should check the contents of the validator set against
 		// the store, if they differ we should take some action to indicate to the
 		// user that bridge highjacking has occurred

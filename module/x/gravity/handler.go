@@ -47,7 +47,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgContractCallTxExecutedEvent:
 			res, err := msgServer.ContractCallTxExecutedEvent(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgValsetUpdatedClaim:
+		case *types.MsgSignerSetUpdatedEvent:
 			res, err := msgServer.ValsetUpdateClaim(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 
