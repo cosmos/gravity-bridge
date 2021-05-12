@@ -86,7 +86,7 @@ func (k Keeper) TryEthereumEventVoteRecord(ctx sdk.Context, att *types.EthereumE
 					panic("attempting to apply events to state out of order")
 				}
 				k.setLastObservedEventNonce(ctx, claim.GetEventNonce())
-				k.SetLastObservedEthereumBlockHeight(ctx, claim.GetBlockHeight())
+				k.SetLatestEthereumBlockHeight(ctx, claim.GetBlockHeight())
 
 				att.Observed = true
 				k.SetEthereumEventVoteRecord(ctx, claim.GetEventNonce(), claim.ClaimHash(), att)
@@ -212,31 +212,31 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
 	return types.UInt64FromBytes(bytes)
 }
 
-// GetLastObservedEthereumBlockHeight height gets the block height to of the last observed ethereumEventVoteRecord from
+// GetLatestEthereumBlockHeight height gets the block height to of the last observed ethereumEventVoteRecord from
 // the store
-func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastObservedEthereumBlockHeight {
+func (k Keeper) GetLatestEthereumBlockHeight(ctx sdk.Context) types.LatestEthereumBlockHeight {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastObservedEthereumBlockHeightKey)
+	bytes := store.Get(types.LatestEthereumBlockHeightKey)
 
 	if len(bytes) == 0 {
-		return types.LastObservedEthereumBlockHeight{
+		return types.LatestEthereumBlockHeight{
 			CosmosBlockHeight:   0,
 			EthereumBlockHeight: 0,
 		}
 	}
-	height := types.LastObservedEthereumBlockHeight{}
+	height := types.LatestEthereumBlockHeight{}
 	k.cdc.MustUnmarshalBinaryBare(bytes, &height)
 	return height
 }
 
-// SetLastObservedEthereumBlockHeight sets the block height in the store.
-func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeight uint64) {
+// SetLatestEthereumBlockHeight sets the block height in the store.
+func (k Keeper) SetLatestEthereumBlockHeight(ctx sdk.Context, ethereumHeight uint64) {
 	store := ctx.KVStore(k.storeKey)
-	height := types.LastObservedEthereumBlockHeight{
+	height := types.LatestEthereumBlockHeight{
 		EthereumBlockHeight: ethereumHeight,
 		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
 	}
-	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&height))
+	store.Set(types.LatestEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&height))
 }
 
 // GetLastObservedSignerSetTx retrieves the last observed validator set from the store

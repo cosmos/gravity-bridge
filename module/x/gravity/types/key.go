@@ -113,8 +113,8 @@ var (
 	// LastUnBondingBlockHeight indexes the last validator unbonding block height
 	LastUnBondingBlockHeight = []byte{0xf8}
 
-	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
-	LastObservedEthereumBlockHeightKey = []byte{0xf9}
+	// LatestEthereumBlockHeightKey indexes the latest Ethereum block height
+	LatestEthereumBlockHeightKey = []byte{0xf9}
 
 	// LastObservedSignerSetTxNonceKey indexes the latest observed valset nonce
 	// HERE THERE BE DRAGONS, do not use this value as an up to date validator set
