@@ -21,24 +21,24 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	}
 
 	// reset batches in state
-	for _, batch := range data.Batches {
+	for _, batch := range data.BatchTxs {
 		// TODO: block height?
 		k.StoreBatchUnsafe(ctx, batch)
 	}
 
 	// reset batch confirmations in state
-	for _, conf := range data.BatchConfirms {
+	for _, conf := range data.BatchTxSignatures {
 		conf := conf
 		k.SetBatchConfirm(ctx, &conf)
 	}
 
 	// reset logic calls in state
-	for _, call := range data.LogicCalls {
+	for _, call := range data.ContractCallTxs {
 		k.SetContractCallTx(ctx, call)
 	}
 
 	// reset batch confirmations in state
-	for _, conf := range data.LogicCallConfirms {
+	for _, conf := range data.ContractCallTxSignatures {
 		conf := conf
 		k.SetLogicCallConfirm(ctx, &conf)
 	}
@@ -176,10 +176,10 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		LastObservedNonce:        lastobserved,
 		SignerSetTxs:             valsets,
 		SignerSetTxSignatures:    vsconfs,
-		Batches:                  batches,
-		BatchConfirms:            batchconfs,
-		LogicCalls:               calls,
-		LogicCallConfirms:        callconfs,
+		BatchTxs:                 batches,
+		BatchTxSignatures:        batchconfs,
+		ContractCallTxs:          calls,
+		ContractCallTxSignatures: callconfs,
 		EthereumEventVoteRecords: ethereumEventVoteRecords,
 		DelegateKeys:             delegates,
 		Erc20ToDenoms:            erc20ToDenoms,
