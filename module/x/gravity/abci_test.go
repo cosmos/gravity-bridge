@@ -89,11 +89,11 @@ func TestSignerSetTxSlashing_SignerSetTxCreated_After_ValidatorBonded(t *testing
 
 	EndBlocker(ctx, pk)
 
-	// ensure that the  validator who is bonded before valset is created is slashed
+	// ensure that the validator who is bonded before signer set is created is slashed
 	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	require.True(t, val.IsJailed())
 
-	// ensure that the  validator who attested the valset is not slashed.
+	// ensure that the validator who voted for the valset is not slashed.
 	val = input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
 	require.False(t, val.IsJailed())
 
@@ -129,8 +129,8 @@ func TestSignerSetTxSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testi
 	pk.StoreSignerSetTxUnsafe(ctx, vs)
 
 	// Start Unbonding validators
-	// Validator-1  Unbond slash window is not expired. if not attested, slash
-	// Validator-2  Unbond slash window is not expired. if attested, don't slash
+	// Validator-1  Unbond slash window is not expired.
+	// Validator-2  Unbond slash window is not expired.
 	input.Context = ctx.WithBlockHeight(valUnbondingHeight)
 	sh := staking.NewHandler(input.StakingKeeper)
 	undelegateMsg1 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[0], keeper.StakingAmount)

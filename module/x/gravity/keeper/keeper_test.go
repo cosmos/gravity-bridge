@@ -84,11 +84,11 @@ func TestEthereumEventVoteRecordIterator(t *testing.T) {
 	ctx := input.Context
 	// add some ethereumEventVoteRecords to the store
 
-	att1 := &types.EthereumEventVoteRecord{
+	voteRecord1 := &types.EthereumEventVoteRecord{
 		Accepted: true,
 		Votes:    []string{},
 	}
-	dep1 := &types.MsgSendToCosmosEvent{
+	send1 := &types.MsgSendToCosmosEvent{
 		EventNonce:     1,
 		TokenContract:  TokenContractAddrs[0],
 		Amount:         sdk.NewInt(100),
@@ -96,11 +96,11 @@ func TestEthereumEventVoteRecordIterator(t *testing.T) {
 		CosmosReceiver: AccAddrs[0].String(),
 		Orchestrator:   AccAddrs[0].String(),
 	}
-	att2 := &types.EthereumEventVoteRecord{
+	voteRecord2 := &types.EthereumEventVoteRecord{
 		Accepted: true,
 		Votes:    []string{},
 	}
-	dep2 := &types.MsgSendToCosmosEvent{
+	send2 := &types.MsgSendToCosmosEvent{
 		EventNonce:     2,
 		TokenContract:  TokenContractAddrs[0],
 		Amount:         sdk.NewInt(100),
@@ -108,16 +108,16 @@ func TestEthereumEventVoteRecordIterator(t *testing.T) {
 		CosmosReceiver: AccAddrs[0].String(),
 		Orchestrator:   AccAddrs[0].String(),
 	}
-	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, dep1.EventNonce, dep1.ClaimHash(), att1)
-	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, dep2.EventNonce, dep2.ClaimHash(), att2)
+	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, send1.EventNonce, send1.ClaimHash(), voteRecord1)
+	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, send2.EventNonce, send2.ClaimHash(), voteRecord2)
 
-	atts := []types.EthereumEventVoteRecord{}
-	input.GravityKeeper.IterateAttestaions(ctx, func(_ []byte, att types.EthereumEventVoteRecord) bool {
-		atts = append(atts, att)
+	voteRecords := []types.EthereumEventVoteRecord{}
+	input.GravityKeeper.IterateEthereumVoteRecords(ctx, func(_ []byte, voteRecord types.EthereumEventVoteRecord) bool {
+		voteRecords = append(voteRecords, voteRecord)
 		return false
 	})
 
-	require.Len(t, atts, 2)
+	require.Len(t, voteRecords, 2)
 }
 
 func TestDelegateKeys(t *testing.T) {

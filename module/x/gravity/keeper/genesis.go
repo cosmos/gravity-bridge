@@ -51,23 +51,23 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	}
 
 	// reset ethereumEventVoteRecords in state
-	for _, att := range data.EthereumEventVoteRecords {
-		att := att
-		claim, err := k.UnpackEthereumEventVoteRecordClaim(&att)
+	for _, voteRecord := range data.EthereumEventVoteRecords {
+		voteRecord := voteRecord
+		claim, err := k.UnpackEthereumEventVoteRecordClaim(&voteRecord)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
 
 		// TODO: block height?
-		k.SetEthereumEventVoteRecord(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
+		k.SetEthereumEventVoteRecord(ctx, claim.GetEventNonce(), claim.ClaimHash(), &voteRecord)
 	}
 	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
 
 	// reset ethereumEventVoteRecord state of specific validators
 	// this must be done after the above to be correct
-	for _, att := range data.EthereumEventVoteRecords {
-		att := att
-		claim, err := k.UnpackEthereumEventVoteRecordClaim(&att)
+	for _, voteRecord := range data.EthereumEventVoteRecords {
+		voteRecord := voteRecord
+		claim, err := k.UnpackEthereumEventVoteRecordClaim(&voteRecord)
 		if err != nil {
 			panic("couldn't cast to claim")
 		}
@@ -80,7 +80,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// but since we've already had to handle the edge case of new validators joining
 		// while all ethereumEventVoteRecords have already been cleaned up we can do this instead and
 		// not carry around every validators event nonce counter forever.
-		for _, vote := range att.Votes {
+		for _, vote := range voteRecord.Votes {
 			val, err := sdk.ValAddressFromBech32(vote)
 			if err != nil {
 				panic(err)
@@ -128,7 +128,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		calls                    = k.GetContractCallTxs(ctx)
 		batches                  = k.GetBatchTxs(ctx)
 		valsets                  = k.GetSignerSetTxs(ctx)
-		attmap                   = k.GetEthereumEventVoteRecordMapping(ctx)
+		voteRecordMap            = k.GetEthereumEventVoteRecordMapping(ctx)
 		vsconfs                  = []*types.MsgSignerSetTxSignature{}
 		batchconfs               = []types.MsgBatchTxSignature{}
 		callconfs                = []types.MsgContractCallTxSignature{}
@@ -160,9 +160,9 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	}
 
 	// export ethereumEventVoteRecords from state
-	for _, atts := range attmap {
+	for _, voteRecords := range voteRecordMap {
 		// TODO: set height = 0?
-		ethereumEventVoteRecords = append(ethereumEventVoteRecords, atts...)
+		ethereumEventVoteRecords = append(ethereumEventVoteRecords, voteRecords...)
 	}
 
 	// export erc20 to denom relations

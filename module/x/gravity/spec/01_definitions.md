@@ -32,7 +32,7 @@ Is a transaction pool like structure that exists in the chains to store, separat
 
 ### Observed
 
-Events on Ethereum are considered `Observed` when the `Eth Signers` of 66% of the active Cosmos validator set during a given block has submitted an oracle message attesting to seeing the event.
+Events on Ethereum are considered `Observed` when the `Eth Signers` of 66% of the active Cosmos validator set during a given block has submitted an oracle message voting for the event.
 
 ### Validator Set Delta
 

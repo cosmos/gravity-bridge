@@ -74,10 +74,10 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 // "Observe" those who have passed the threshold. Break the loop once we see
 // an ethereumEventVoteRecord that has not passed the threshold
 func ethereumEventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
-	attmap := k.GetEthereumEventVoteRecordMapping(ctx)
+	voteRecordMap := k.GetEthereumEventVoteRecordMapping(ctx)
 	// We make a slice with all the event nonces that are in the ethereumEventVoteRecord mapping
-	nonces := make([]uint64, 0, len(attmap))
-	for k := range attmap {
+	nonces := make([]uint64, 0, len(voteRecordMap))
+	for k := range voteRecordMap {
 		nonces = append(nonces, k)
 	}
 	// Then we sort it
@@ -90,7 +90,7 @@ func ethereumEventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 		// This iterates over all ethereumEventVoteRecords at a particular event nonce.
 		// They are ordered by when the first ethereumEventVoteRecord at the event nonce was received.
 		// This order is not important.
-		for _, att := range attmap[nonce] {
+		for _, voteRecord := range voteRecordMap[nonce] {
 			// We check if the event nonce is exactly 1 higher than the last ethereumEventVoteRecord that was
 			// observed. If it is not, we just move on to the next nonce. This will skip over all
 			// ethereumEventVoteRecords that have already been observed.
@@ -108,7 +108,7 @@ func ethereumEventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 			// If no ethereumEventVoteRecord becomes observed, when we get to the next nonce, every ethereumEventVoteRecord in
 			// it will be skipped. The same will happen for every nonce after that.
 			if nonce == uint64(k.GetLastObservedEventNonce(ctx))+1 {
-				k.TryEthereumEventVoteRecord(ctx, &att)
+				k.TryEthereumEventVoteRecord(ctx, &voteRecord)
 			}
 		}
 	}
@@ -168,7 +168,7 @@ func SignerSetTxSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 	for _, vs := range unslashedSignerSetTxs {
 		confirms := k.GetSignerSetTxSignatures(ctx, vs.Nonce)
 
-		// SLASH BONDED VALIDTORS who didn't attest valset request
+		// SLASH BONDED VALIDTORS who didn't sign signer set tx
 		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 		for _, val := range currentBondedSet {
 			consAddr, _ := val.GetConsAddr()
@@ -196,7 +196,7 @@ func SignerSetTxSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 			}
 		}
 
-		// SLASH UNBONDING VALIDATORS who didn't attest valset request
+		// SLASH UNBONDING VALIDATORS who didn't sign signer set tx
 		blockTime := ctx.BlockTime().Add(k.StakingKeeper.GetParams(ctx).UnbondingTime)
 		blockHeight := ctx.BlockHeight()
 		unbondingValIterator := k.StakingKeeper.ValidatorQueueIterator(ctx, blockTime, blockHeight)
@@ -256,7 +256,7 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	unslashedBatches := k.GetUnSlashedBatches(ctx, maxHeight)
 	for _, batch := range unslashedBatches {
 
-		// SLASH BONDED VALIDTORS who didn't attest batch requests
+		// SLASH BONDED VALIDTORS who didn't sign batch tx
 		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 		confirms := k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)
 		for _, val := range currentBondedSet {
