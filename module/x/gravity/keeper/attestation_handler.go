@@ -18,7 +18,7 @@ type EthereumEventVoteRecordHandler struct {
 // Handle is the entry point for EthereumEventVoteRecord processing.
 func (a EthereumEventVoteRecordHandler) Handle(ctx sdk.Context, att types.EthereumEventVoteRecord, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
-	case *types.MsgDepositClaim:
+	case *types.MsgSendToCosmosEvent:
 		// Check if coin is Cosmos-originated asset and get denom
 		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.TokenContract)
 

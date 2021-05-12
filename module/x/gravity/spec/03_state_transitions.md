@@ -10,7 +10,7 @@ This document describes the state transition operations pertaining to:
 
 ### First vote
 
-The first time any validator sees a given Ethereum event on the Ethereum blockchain, and calls `DepositClaim`, or one of the other endpoints for other types of ethereum events (claims):
+The first time any validator sees a given Ethereum event on the Ethereum blockchain, and calls `SendToCosmosEvent`, or one of the other endpoints for other types of ethereum events (claims):
 
 - We check that the event nonce of the submitted event is exactly one higher than that validator's last submitted event. This keeps validators from voting on different events at the same event nonce, which makes tallying votes easier later.
 - An EthereumEventVoteRecord is created for that event at that event nonce. Event nonces are created by the Gravity.sol Ethereum contract, and increment every time it fires an event. It is possible for validators to disagree about what event happened at a given event nonce, but only in the case of an attempted attack by Cosmos validators, or in the case of serious issues with Ethereum (like a hard fork).
@@ -20,7 +20,7 @@ The first time any validator sees a given Ethereum event on the Ethereum blockch
 
 ### Subsequent votes
 
-When other validators see the same event at the same event nonce, and call `DepositClaim`, or one of the other endpoints for other types of ethereum events:
+When other validators see the same event at the same event nonce, and call `SendToCosmosEvent`, or one of the other endpoints for other types of ethereum events:
 
 - We check that the event nonce of the submitted event is exactly one higher than that validator's last submitted event. This keeps validators from voting on different events at the same event nonce, which makes tallying votes easier later.
 - We look up the event's EthereumEventVoteRecord.
@@ -46,11 +46,11 @@ When tallying the votes a given ethereumEventVoteRecord, we follow this algorith
 
 Now we are ready to apply the ethereumEventVoteRecord's event to the Cosmos state. This is different depending on which event we are dealing with, see state transtions for the individual events.
 
-## MsgDepositClaim
+## MsgSendToCosmosEvent
 
 ### On event observed:
 
-- Check if deposited token is Ethereum or Cosmos originated, and get it's Cosmos denom, using the `MsgDepositClaim`'s `token_contract` field.
+- Check if deposited token is Ethereum or Cosmos originated, and get it's Cosmos denom, using the `MsgSendToCosmosEvent`'s `token_contract` field.
 - If it is Cosmos originated:
   - Send the number of coins in the `amount` field to the Cosmos address in the `cosmos_receiver` field, from the Gravity module's wallet. This works because any Cosmos originated tokens that are circulating on Ethereum must have been created by depositing into the Gravity module at some point in the past.
 - If it is Ethereum originated:

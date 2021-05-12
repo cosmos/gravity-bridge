@@ -112,7 +112,7 @@ This message is expected to fail if:
   - Not a length of 20
   - Bech32 decoding fails
 
-### MsgDepositClaim
+### MsgSendToCosmosEvent
 
 When a user deposits funds into the Gravity.sol Ethereum contract an event is emitted by the contract. When validators observe this event, they send this message.
 

@@ -75,7 +75,7 @@ func TestHandleMsgSendToEthereum(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance4)
 }
 
-func TestMsgDepositClaimSingleValidator(t *testing.T) {
+func TestMsgSendToCosmosEventSingleValidator(t *testing.T) {
 	var (
 		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
 		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
@@ -98,7 +98,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 		Contract: tokenETHAddr,
 	}
 
-	ethClaim := types.MsgDepositClaim{
+	ethClaim := types.MsgSendToCosmosEvent{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -131,7 +131,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to reject skipped nonce
-	ethClaim = types.MsgDepositClaim{
+	ethClaim = types.MsgSendToCosmosEvent{
 		EventNonce:     uint64(3),
 		TokenContract:  tokenETHAddr,
 		Amount:         amountA,
@@ -150,7 +150,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to finally accept consecutive nonce
-	ethClaim = types.MsgDepositClaim{
+	ethClaim = types.MsgSendToCosmosEvent{
 		EventNonce:     uint64(2),
 		Amount:         amountA,
 		TokenContract:  tokenETHAddr,
@@ -170,7 +170,7 @@ func TestMsgDepositClaimSingleValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountB)}, balance)
 }
 
-func TestMsgDepositClaimsMultiValidator(t *testing.T) {
+func TestMsgSendToCosmosEventsMultiValidator(t *testing.T) {
 	var (
 		orchestratorAddr1, _ = sdk.AccAddressFromBech32("cosmos1dg55rtevlfxh46w88yjpdd08sqhh5cc3xhkcej")
 		orchestratorAddr2, _ = sdk.AccAddressFromBech32("cosmos164knshrzuuurf05qxf3q5ewpfnwzl4gj4m4dfy")
@@ -197,7 +197,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 		Contract: tokenETHAddr,
 	}
 
-	ethClaim1 := types.MsgDepositClaim{
+	ethClaim1 := types.MsgSendToCosmosEvent{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -205,7 +205,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 		CosmosReceiver: myCosmosAddr.String(),
 		Orchestrator:   orchestratorAddr1.String(),
 	}
-	ethClaim2 := types.MsgDepositClaim{
+	ethClaim2 := types.MsgSendToCosmosEvent{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -213,7 +213,7 @@ func TestMsgDepositClaimsMultiValidator(t *testing.T) {
 		CosmosReceiver: myCosmosAddr.String(),
 		Orchestrator:   orchestratorAddr2.String(),
 	}
-	ethClaim3 := types.MsgDepositClaim{
+	ethClaim3 := types.MsgSendToCosmosEvent{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,

@@ -18,7 +18,7 @@ var (
 	_ sdk.Msg = &MsgERC20DeployedClaim{}
 	_ sdk.Msg = &MsgContractCallTxSignature{}
 	_ sdk.Msg = &MsgLogicCallExecutedClaim{}
-	_ sdk.Msg = &MsgDepositClaim{}
+	_ sdk.Msg = &MsgSendToCosmosEvent{}
 	_ sdk.Msg = &MsgWithdrawClaim{}
 	_ sdk.Msg = &MsgSubmitBadSignatureEvidence{}
 )
@@ -295,7 +295,7 @@ type EthereumClaim interface {
 	// when we go to create a new batch we set the timeout some number of batches out from the last
 	// known height plus projected block progress since then.
 	GetBlockHeight() uint64
-	// the delegate address of the claimer, for MsgDepositClaim and MsgWithdrawClaim
+	// the delegate address of the claimer, for MsgSendToCosmosEvent and MsgWithdrawClaim
 	// this is sent in as the sdk.AccAddress of the delegated key. it is up to the user
 	// to disambiguate this into a sdk.ValAddress
 	GetClaimer() sdk.AccAddress
@@ -306,19 +306,19 @@ type EthereumClaim interface {
 }
 
 var (
-	_ EthereumClaim = &MsgDepositClaim{}
+	_ EthereumClaim = &MsgSendToCosmosEvent{}
 	_ EthereumClaim = &MsgWithdrawClaim{}
 	_ EthereumClaim = &MsgERC20DeployedClaim{}
 	_ EthereumClaim = &MsgLogicCallExecutedClaim{}
 )
 
 // GetType returns the type of the claim
-func (msg *MsgDepositClaim) GetType() ClaimType {
+func (msg *MsgSendToCosmosEvent) GetType() ClaimType {
 	return CLAIM_TYPE_DEPOSIT
 }
 
 // ValidateBasic performs stateless checks
-func (msg *MsgDepositClaim) ValidateBasic() error {
+func (msg *MsgSendToCosmosEvent) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.CosmosReceiver); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.CosmosReceiver)
 	}
@@ -338,14 +338,14 @@ func (msg *MsgDepositClaim) ValidateBasic() error {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgDepositClaim) GetSignBytes() []byte {
+func (msg MsgSendToCosmosEvent) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgDepositClaim) GetClaimer() sdk.AccAddress {
+func (msg MsgSendToCosmosEvent) GetClaimer() sdk.AccAddress {
 	err := msg.ValidateBasic()
 	if err != nil {
-		panic("MsgDepositClaim failed ValidateBasic! Should have been handled earlier")
+		panic("MsgSendToCosmosEvent failed ValidateBasic! Should have been handled earlier")
 	}
 
 	val, err := sdk.AccAddressFromBech32(msg.Orchestrator)
@@ -357,7 +357,7 @@ func (msg MsgDepositClaim) GetClaimer() sdk.AccAddress {
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgDepositClaim) GetSigners() []sdk.AccAddress {
+func (msg MsgSendToCosmosEvent) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)
@@ -367,17 +367,17 @@ func (msg MsgDepositClaim) GetSigners() []sdk.AccAddress {
 }
 
 // Type should return the action
-func (msg MsgDepositClaim) Type() string { return "deposit_claim" }
+func (msg MsgSendToCosmosEvent) Type() string { return "deposit_claim" }
 
 // Route should return the name of the module
-func (msg MsgDepositClaim) Route() string { return RouterKey }
+func (msg MsgSendToCosmosEvent) Route() string { return RouterKey }
 
 const (
 	TypeMsgWithdrawClaim = "withdraw_claim"
 )
 
 // Hash implements BridgeDeposit.Hash
-func (msg *MsgDepositClaim) ClaimHash() []byte {
+func (msg *MsgSendToCosmosEvent) ClaimHash() []byte {
 	path := fmt.Sprintf("%s/%s/%s/", msg.TokenContract, string(msg.EthereumSender), msg.CosmosReceiver)
 	return tmhash.Sum([]byte(path))
 }
@@ -441,7 +441,7 @@ func (msg MsgWithdrawClaim) Route() string { return RouterKey }
 func (msg MsgWithdrawClaim) Type() string { return "withdraw_claim" }
 
 const (
-	TypeMsgDepositClaim = "deposit_claim"
+	TypeMsgSendToCosmosEvent = "deposit_claim"
 )
 
 // EthereumClaim implementation for MsgERC20DeployedClaim

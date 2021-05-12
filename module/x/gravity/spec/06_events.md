@@ -119,7 +119,7 @@ The gravity module emits the following events:
 | message | module                     | Logic_Call_Executed_Claim     |
 | message | ethereumEventVoteRecord_id | {ethereumEventVoteRecord_key} |
 
-### Msg/DepositClaim
+### Msg/SendToCosmosEvent
 
 | Type    | Attribute Key              | Attribute Value               |
 | ------- | -------------------------- | ----------------------------- |

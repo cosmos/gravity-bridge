@@ -267,11 +267,11 @@ func (k msgServer) ContractCallTxSignature(c context.Context, msg *types.MsgCont
 	return nil, nil
 }
 
-// DepositClaim handles MsgDepositClaim
-// TODO it is possible to submit an old msgDepositClaim (old defined as covering an event nonce that has already been
+// SendToCosmosEvent handles MsgSendToCosmosEvent
+// TODO it is possible to submit an old msgSendToCosmosEvent (old defined as covering an event nonce that has already been
 // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
 // should not be a security risk as 'old' events can never execute but it does store spam in the chain.
-func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (*types.MsgDepositClaimResponse, error) {
+func (k msgServer) SendToCosmosEvent(c context.Context, msg *types.MsgSendToCosmosEvent) (*types.MsgSendToCosmosEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
@@ -307,7 +307,7 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 		),
 	)
 
-	return &types.MsgDepositClaimResponse{}, nil
+	return &types.MsgSendToCosmosEventResponse{}, nil
 }
 
 // WithdrawClaim handles MsgWithdrawClaim

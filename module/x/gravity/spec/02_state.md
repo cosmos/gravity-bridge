@@ -205,7 +205,7 @@ This is a record of all the votes for a given claim (Ethereum event).
 message EthereumEventVoteRecord {
   // This field stores whether the EthereumEventVoteRecord has had its event applied to the Cosmos state. This happens when
   // enough (usually >2/3s) of the validator power votes that they saw the event on Ethereum.
-  // For example, once a DepositClaim has modified the token balance of the account that it was deposited to,
+  // For example, once a SendToCosmosEvent has modified the token balance of the account that it was deposited to,
   // this boolean will be set to true.
   bool observed = 1;
   // This is an array of the addresses of the validators which have voted that they saw the event on Ethereum.
