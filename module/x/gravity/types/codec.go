@@ -33,7 +33,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		(*EthereumSignature)(nil),
 		&BatchTxSignature{},
 		&ContractCallTxSignature{},
-		&UpdateSignerSetTxSignature{},
+		&SignerSetTxSignature{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

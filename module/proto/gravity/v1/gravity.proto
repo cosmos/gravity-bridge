@@ -33,11 +33,11 @@ message EthereumSigner {
   string ethereum_address = 2;
 }
 
-// UpdateSignerSetTx is the Ethereum Bridge multisig set that relays
+// SignerSetTx is the Ethereum Bridge multisig set that relays
 // transactions the two chains. The staking validators keep ethereum keys which
 // are used to check signatures on Ethereum in order to get significant gas
 // savings.
-message UpdateSignerSetTx {
+message SignerSetTx {
   uint64 nonce = 1;
   repeated EthereumSigner signers = 2 [
     (gogoproto.castrepeated) = "EthereumSigners",
@@ -51,14 +51,14 @@ message UpdateSignerSetTx {
 message BatchTx {
   uint64 nonce = 1;
   uint64 timeout = 2;
-  repeated SendToEthereumTx transactions = 3;
+  repeated SendToEthereum transactions = 3;
   string token_contract = 4;
   uint64 ethereum_block = 5;
 }
 
-// SendToEthereumTx represents an individual SendToEthereum from Cosmos to
+// SendToEthereum represents an individual SendToEthereum from Cosmos to
 // Ethereum
-message SendToEthereumTx {
+message SendToEthereum {
   uint64 id = 1;
   string sender = 2;
   string ethereum_recipient = 3;

@@ -25,11 +25,11 @@ func createValsets(ctx sdk.Context, k keeper.Keeper) {
 	//      This will make sure the unbonding validator has to provide an attestation to a new Valset
 	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
 	// 3. If power change between validators of CurrentValset and latest valset request is > 5%
-	latestValset := k.GetLatestUpdateSignerSetTx(ctx)
+	latestValset := k.GetLatestSignerSetTx(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 
-	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentUpdateSignerSetTx(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
-		k.SetUpdateSignerSetTxRequest(ctx)
+	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentSignerSetTx(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
+		k.SetSignerSetTxRequest(ctx)
 	}
 }
 
@@ -143,7 +143,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	// unslashedValsets are sorted by nonce in ASC order
 	// Question: do we need to sort each time? See if this can be epoched
 	for _, vs := range unslashedValsets {
-		confirms := k.GetUpdateSignerSetTxSignatures(ctx, vs.Nonce)
+		confirms := k.GetSignerSetTxSignatures(ctx, vs.Nonce)
 
 		// SLASH BONDED VALIDTORS who didn't attest valset request
 		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)

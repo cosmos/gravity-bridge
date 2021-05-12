@@ -103,9 +103,9 @@ message BatchTxSignature {
             "github.com/ethereum/go-ethereum/common/hexutil.Bytes" ];
 }
 
-// UpdateSignerSetTxSignature is a signature on behalf of a validator for a
-// UpdateSignerSetTx
-message UpdateSignerSetTxSignature {
+// SignerSetTxSignature is a signature on behalf of a validator for a
+// SignerSetTx
+message SignerSetTxSignature {
   uint64 nonce = 1;
   string ethereum_signer = 2;
   bytes signature = 3

@@ -132,21 +132,21 @@ func (b EthereumSigners) ValidateBasic() error {
 }
 
 // NewValset returns a new valset
-func NewValset(nonce, height uint64, members EthereumSigners) *UpdateSignerSetTx {
+func NewValset(nonce, height uint64, members EthereumSigners) *SignerSetTx {
 	members.Sort()
 	var mem []EthereumSigner
 	for _, val := range members {
 		mem = append(mem, *val)
 	}
-	return &UpdateSignerSetTx{Nonce: nonce, Signers: mem}
+	return &SignerSetTx{Nonce: nonce, Signers: mem}
 }
 
 // WithoutEmptyMembers returns a new Valset without member that have 0 power or an empty Ethereum address.
-func (v *UpdateSignerSetTx) WithoutEmptyMembers() *UpdateSignerSetTx {
+func (v *SignerSetTx) WithoutEmptyMembers() *SignerSetTx {
 	if v == nil {
 		return nil
 	}
-	r := UpdateSignerSetTx{Nonce: v.Nonce, Signers: make([]EthereumSigner, 0, len(v.Signers))}
+	r := SignerSetTx{Nonce: v.Nonce, Signers: make([]EthereumSigner, 0, len(v.Signers))}
 	for i := range v.Signers {
 		if err := v.Signers[i].ValidateBasic(); err == nil {
 			r.Signers = append(r.Signers, v.Signers[i])
@@ -155,18 +155,18 @@ func (v *UpdateSignerSetTx) WithoutEmptyMembers() *UpdateSignerSetTx {
 	return &r
 }
 
-// UpdateSignerSetTxs is a collection of valset
-type UpdateSignerSetTxs []*UpdateSignerSetTx
+// SignerSetTxs is a collection of valset
+type SignerSetTxs []*SignerSetTx
 
-func (v UpdateSignerSetTxs) Len() int {
+func (v SignerSetTxs) Len() int {
 	return len(v)
 }
 
-func (v UpdateSignerSetTxs) Less(i, j int) bool {
+func (v SignerSetTxs) Less(i, j int) bool {
 	return v[i].Nonce > v[j].Nonce
 }
 
-func (v UpdateSignerSetTxs) Swap(i, j int) {
+func (v SignerSetTxs) Swap(i, j int) {
 	v[i], v[j] = v[j], v[i]
 }
 

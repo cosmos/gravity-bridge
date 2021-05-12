@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	_ OutgoingTx = &UpdateSignerSetTx{}
+	_ OutgoingTx = &SignerSetTx{}
 	_ OutgoingTx = &BatchTx{}
 	_ OutgoingTx = &ContractCallTx{}
 )
@@ -20,7 +20,7 @@ var (
 // GetStoreIndex //
 ///////////////////
 
-func (usstx *UpdateSignerSetTx) GetStoreIndex() []byte {
+func (usstx *SignerSetTx) GetStoreIndex() []byte {
 	panic("NOT IMPLEMENTED")
 }
 
@@ -37,7 +37,7 @@ func (cctx *ContractCallTx) GetStoreIndex() []byte {
 ///////////////////
 
 // GetCheckpoint returns the checkpoint
-func (u UpdateSignerSetTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
+func (u SignerSetTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 	// TODO replace hardcoded "foo" here with a getter to retrieve the correct gravityID from the store
 	// this will work for now because 'foo' is the test gravityID we are using
 	// var gravityIDString = "foo"

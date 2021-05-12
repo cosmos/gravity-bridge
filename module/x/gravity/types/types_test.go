@@ -29,7 +29,7 @@ func TestValsetConfirmHash(t *testing.T) {
 	for _, m := range members {
 		mem = append(mem, *m)
 	}
-	v := UpdateSignerSetTx{Signers: mem}
+	v := SignerSetTx{Signers: mem}
 	// TODO: this is hardcoded to foo, replace?
 	hash, err := v.GetCheckpoint([]byte("foo"))
 	assert.NoError(t, err, "failed to get checkpoint")

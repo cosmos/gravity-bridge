@@ -48,7 +48,7 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 	// set the orchestrator address
 	k.SetOrchestratorValidator(ctx, val, orch)
 	// set the ethereum address
-	k.SetEthAddress(ctx, val, msg.EthAddress)
+	k.SetEthAddress(ctx, val, msg.EthereumAddress)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -73,13 +73,16 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 	}
 	nonce := sdk.BigEndianToUint64(signature.GetStoreIndex())
 
-	valset := k.GetUpdateSignerSetTx(ctx, nonce)
+	valset := k.GetSignerSetTx(ctx, nonce)
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
 	}
 
 	gravityID := k.GetGravityID(ctx)
-	checkpoint := valset.GetCheckpoint(gravityID)
+	checkpoint, err := valset.GetCheckpoint([]byte(gravityID))
+	if err != nil {
+		return nil, err
+	}
 
 	sigBytes, err := hex.DecodeString(msg.Signer)
 	if err != nil {
@@ -127,11 +130,16 @@ func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEt
 		return nil, err
 	}
 
-	switch t := event.(type) {
-	case types.BatchExecutedEvent: {
-
+	signingAddress, err := sdk.ValAddressFromBech32(msg.Signer)
+	if err != nil {
+		return nil, err
 	}
-	case types.ContractCallExecutedEvent: {
+
+	switch event.(type) {
+	case *types.BatchExecutedEvent: {
+		return k.confirmBatch(ctx.Context(), signingAddress, event.(*types.BatchExecutedEvent))
+	}
+	case *types.ContractCallExecutedEvent: {
 
 	}
 	}
@@ -145,7 +153,7 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 	if err != nil {
 		return nil, err
 	}
-	txID, err := k.AddToOutgoingPool(ctx, sender, msg.EthRecipient, msg.Amount, msg.BridgeFee)
+	txID, err := k.AddToOutgoingPool(ctx, sender, msg.EthereumRecipient, msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
 	}
@@ -344,11 +352,11 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 	return &types.MsgDepositClaimResponse{}, nil
 }
 
-// WithdrawClaim handles MsgWithdrawClaim
+// batchExecuted handles MsgWithdrawClaim
 // TODO it is possible to submit an old msgWithdrawClaim (old defined as covering an event nonce that has already been
 // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
 // should not be a security risk as 'old' events can never execute but it does store spam in the chain.
-func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim) (*types.MsgWithdrawClaimResponse, error) {
+func (k msgServer) batchExecuted(c context.Context, signer sdk.ValAddress, msg *types.MsgWithdrawClaim) (*types.MsgWithdrawClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)

@@ -20,7 +20,7 @@ Stored in two possible ways, first with a height and second without (unsafe). Un
 
 | key          | Value | Type   | Encoding               |
 |--------------|-------|--------|------------------------|
-| `[]byte{0xa} + []byte(tokenContract) + nonce (big endian encoded)` | A batch of outgoing transactions | `types.BatchTx` | Protobuf encoded |
+| `[]byte{0xa} + common.HexToAddress(tokenContract).Bytes() + nonce (big endian encoded)` | A batch of outgoing transactions | `types.BatchTx` | Protobuf encoded |
 
 ### ValidatorSet
 
@@ -63,7 +63,7 @@ When a validator confirms a batch it is added to the confirm batch store. It is 
 
 | Key                                                                 | Value                        | Type                    | Encoding         |
 |---------------------------------------------------------------------|------------------------------|-------------------------|------------------|
-| `[]byte{0xe1} + []byte(tokenContract) + nonce + []byte(AccAddress)` | Validator Batch Confirmation | `types.MsgConfirmBatch` | Protobuf encoded |
+| `[]byte{0xe1} + common.HexToAddress(tokenContract).Bytes() + nonce + []byte(AccAddress)` | Validator Batch Confirmation | `types.MsgConfirmBatch` | Protobuf encoded |
 
 ### OrchestratorValidator
 
@@ -126,7 +126,7 @@ A denom that is originally from a counter chain will be from a contract. The tok
 
 | Key                                 | Value                                        | Type     | Encoding         |
 |-------------------------------------|----------------------------------------------|----------|------------------|
-| `[]byte{0xf4} + []byte(tokenContract)` | Latest height a batch slashing occurred | `[]byte` | stored in byte format |
+| `[]byte{0xf4} + common.HexToAddress(tokenContract).Bytes()` | Latest height a batch slashing occurred | `[]byte` | stored in byte format |
 
 ### LastEventNonce
 

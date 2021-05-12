@@ -27,7 +27,7 @@ const (
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx client.Context, r *mux.Router, storeName string) {
 
-	/// UpdateSignerSetTxs
+	/// SignerSetTxs
 
 	// This endpoint gets all of the validator set confirmations for a given nonce. In order to determine if a valset is complete
 	// the relayer queries the latest valsets and then compares the number of members they show versus the length of this endpoints output

@@ -23,14 +23,14 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 func (k Keeper) CurrentValset(
 	c context.Context,
 	req *types.QueryCurrentValsetRequest) (*types.QueryCurrentValsetResponse, error) {
-	return &types.QueryCurrentValsetResponse{Valset: k.GetCurrentUpdateSignerSetTx(sdk.UnwrapSDKContext(c))}, nil
+	return &types.QueryCurrentValsetResponse{Valset: k.GetCurrentSignerSetTx(sdk.UnwrapSDKContext(c))}, nil
 }
 
 // ValsetRequest queries the ValsetRequest of the gravity module
 func (k Keeper) ValsetRequest(
 	c context.Context,
 	req *types.QueryValsetRequestRequest) (*types.QueryValsetRequestResponse, error) {
-	return &types.QueryValsetRequestResponse{Valset: k.GetUpdateSignerSetTx(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
+	return &types.QueryValsetRequestResponse{Valset: k.GetSignerSetTx(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
 }
 
 // ValsetConfirm queries the ValsetConfirm of the gravity module
@@ -60,7 +60,7 @@ func (k Keeper) ValsetConfirmsByNonce(
 func (k Keeper) LastValsetRequests(
 	c context.Context,
 	req *types.QueryLastValsetRequestsRequest) (*types.QueryLastValsetRequestsResponse, error) {
-	valReq := k.GetUpdateSignerSetTxs(sdk.UnwrapSDKContext(c))
+	valReq := k.GetSignerSetTxs(sdk.UnwrapSDKContext(c))
 	valReqLen := len(valReq)
 	retLen := 0
 	if valReqLen < maxValsetRequestsReturned {
@@ -81,7 +81,7 @@ func (k Keeper) LastPendingValsetRequestByAddr(
 	}
 
 	var pendingValsetReq []*types.Valset
-	k.IterateUpdateSignerSetTxs(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
+	k.IterateSignerSetTxs(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
 		foundConfirm := k.GetEthereumSignature(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq

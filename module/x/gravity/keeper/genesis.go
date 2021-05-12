@@ -10,13 +10,13 @@ import (
 func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	k.SetParams(ctx, *data.Params)
 	// reset valsets in state
-	for _, vs := range data.UpdateSignerSetTxs {
+	for _, vs := range data.SignerSetTxs {
 		// TODO: block height?
-		k.StoreUpdateSignerSetTxUnsafe(ctx, vs)
+		k.StoreSignerSetTxUnsafe(ctx, vs)
 	}
 
 	// reset valset confirmations in state
-	for _, conf := range data.UpdateSignerSetTxSignatures {
+	for _, conf := range data.SignerSetTxSignatures {
 		k.SetEthereumSignature(ctx, *conf)
 	}
 
@@ -44,7 +44,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	}
 
 	// reset pool transactions in state
-	for _, tx := range data.UnbatchedSendToEthereumTxs {
+	for _, tx := range data.UnbatchedSendToEthereums {
 		if err := k.setPoolEntry(ctx, tx); err != nil {
 			panic(err)
 		}
@@ -127,9 +127,9 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		p                           = k.GetParams(ctx)
 		contractCallTxs             = k.GetContractCallTxs(ctx)
 		batchTxs                    = k.GetBatchTxes(ctx)
-		updateSignerSetTxs          = k.GetUpdateSignerSetTxs(ctx)
+		updateSignerSetTxs          = k.GetSignerSetTxs(ctx)
 		attmap                      = k.GetAttestationMapping(ctx)
-		updateSignerSetTxSignatures []*types.UpdateSignerSetTxSignature
+		updateSignerSetTxSignatures []*types.SignerSetTxSignature
 		batchTxSignatures           []types.BatchTxSignature
 		contractCallTxSignatures    []types.ContractCallTxSignature
 		ethereumEventVoteRecords    []types.EthereumEventVoteRecord
@@ -143,7 +143,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	for _, updateSignerSetTx := range updateSignerSetTxs {
 		// TODO: set height = 0?
 
-		updateSignerSetTxSignatures = append(updateSignerSetTxSignatures, k.GetUpdateSignerSetTxSignatures(ctx, updateSignerSetTx)...)
+		updateSignerSetTxSignatures = append(updateSignerSetTxSignatures, k.GetSignerSetTxSignatures(ctx, updateSignerSetTx)...)
 	}
 
 	// export batch confirmations from state
@@ -175,8 +175,8 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	return types.GenesisState{
 		Params:                      &p,
 		LastObservedEventNonce:      lastobserved,
-		UpdateSignerSetTxs:          updateSignerSetTxs,
-		UpdateSignerSetTxSignatures: updateSignerSetTxSignatures,
+		SignerSetTxs:          updateSignerSetTxs,
+		SignerSetTxSignatures: updateSignerSetTxSignatures,
 		BatchTxs:                    batchTxs,
 		BatchTxSignatures:           batchTxSignatures,
 		ContractCallTxs:             contractCallTxs,
@@ -184,6 +184,6 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		EthereumEventVoteRecords:    ethereumEventVoteRecords,
 		DelegateKeys:                delegates,
 		Erc20ToDenoms:               erc20ToDenoms,
-		UnbatchedSendToEthereumTxs:  unbatchedTransfers,
+		UnbatchedSendToEthereums:  unbatchedTransfers,
 	}
 }

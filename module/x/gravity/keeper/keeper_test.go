@@ -73,7 +73,7 @@ func TestCurrentValsetNormalization(t *testing.T) {
 				}
 			}
 			input.GravityKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
-			r := input.GravityKeeper.GetCurrentUpdateSignerSetTx(ctx)
+			r := input.GravityKeeper.GetCurrentSignerSetTx(ctx)
 			assert.Equal(t, spec.expPowers, types.BridgeValidators(r.Members).GetPowers())
 		})
 	}
@@ -164,13 +164,13 @@ func TestLastSlashedValsetNonce(t *testing.T) {
 	k := input.GravityKeeper
 	ctx := input.Context
 
-	vs := k.GetCurrentUpdateSignerSetTx(ctx)
+	vs := k.GetCurrentSignerSetTx(ctx)
 
 	i := 1
 	for ; i < 10; i++ {
 		vs.Height = uint64(i)
 		vs.Nonce = uint64(i)
-		k.StoreUpdateSignerSetTxUnsafe(ctx, vs)
+		k.StoreSignerSetTxUnsafe(ctx, vs)
 	}
 
 	latestValsetNonce := k.GetLatestValsetNonce(ctx)

@@ -3,7 +3,7 @@ package types
 import "github.com/ethereum/go-ethereum/common"
 
 var (
-	_ EthereumSignature = &UpdateSignerSetTxSignature{}
+	_ EthereumSignature = &SignerSetTxSignature{}
 	_ EthereumSignature = &ContractCallTxSignature{}
 	_ EthereumSignature = &BatchTxSignature{}
 )
@@ -12,7 +12,7 @@ var (
 // GetSigner //
 ///////////////
 
-func (u *UpdateSignerSetTxSignature) GetSigner() common.Address {
+func (u *SignerSetTxSignature) GetSigner() common.Address {
 	return common.HexToAddress(u.EthereumSigner)
 }
 
@@ -28,7 +28,7 @@ func (u *BatchTxSignature) GetSigner() common.Address {
 // GetStoreIndex //
 ///////////////////
 
-func (u *UpdateSignerSetTxSignature) GetStoreIndex() []byte {
+func (u *SignerSetTxSignature) GetStoreIndex() []byte {
 	panic("NOT IMPLEMENTED")
 }
 
@@ -44,7 +44,7 @@ func (u *BatchTxSignature) GetStoreIndex() []byte {
 // Validate //
 //////////////
 
-func (u *UpdateSignerSetTxSignature) Validate() error {
+func (u *SignerSetTxSignature) Validate() error {
 	panic("NOT IMPLEMENTED")
 }
 

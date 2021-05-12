@@ -19,8 +19,7 @@ service Query {
   }
 
   // get info on individual outgoing data
-  rpc UpdateSignerSetTx(UpdateSignerSetTxRequest)
-      returns (UpdateSignerSetTxResponse) {
+  rpc SignerSetTx(SignerSetTxRequest) returns (SignerSetTxResponse) {
     option (google.api.http).get = "/gravity/v1/signer_set";
   }
   rpc BatchTx(BatchTxRequest) returns (BatchTxResponse) {
@@ -33,8 +32,7 @@ service Query {
   }
 
   // get collections of outgoing traffic from the bridge
-  rpc UpdateSignerSetTxs(UpdateSignerSetTxsRequest)
-      returns (UpdateSignerSetTxsResponse) {
+  rpc SignerSetTxs(SignerSetTxsRequest) returns (SignerSetTxsResponse) {
     option (google.api.http).get = "/gravity/v1/signer_sets";
   }
   rpc BatchTxs(BatchTxsRequest) returns (BatchTxsResponse) {
@@ -48,9 +46,8 @@ service Query {
   // ethereum signature queries so validators can construct valid etherum
   // transactions
   // TODO: can/should we group these into one endpoint?
-  rpc UpdateSignerSetTxEthereumSignatures(
-      UpdateSignerSetTxEthereumSignaturesRequest)
-      returns (UpdateSignerSetTxEthereumSignaturesResponse) {
+  rpc SignerSetTxEthereumSignatures(SignerSetTxEthereumSignaturesRequest)
+      returns (SignerSetTxEthereumSignaturesResponse) {
     option (google.api.http).get = "/gravity/v1/signer_sets/EthereumSignatures";
   }
   rpc BatchTxEthereumSignatures(BatchTxEthereumSignaturesRequest)
@@ -65,11 +62,10 @@ service Query {
   // pending ethereum signature queries for orchestrators to figure out which
   // signatures they are missing
   // TODO: can/should we group this into one endpoint?
-  rpc PendingUpdateSignerSetTxEthereumSignatures(
-      PendingUpdateSignerSetTxEthereumSignaturesRequest)
-      returns (PendingUpdateSignerSetTxEthereumSignaturesResponse) {
-    option (google.api.http).get =
-        "/gravity/v1/UpdateSignerSetTxs/{address}/pending";
+  rpc PendingSignerSetTxEthereumSignatures(
+      PendingSignerSetTxEthereumSignaturesRequest)
+      returns (PendingSignerSetTxEthereumSignaturesResponse) {
+    option (google.api.http).get = "/gravity/v1/SignerSetTxs/{address}/pending";
   }
   rpc PendingBatchTxEthereumSignatures(PendingBatchTxEthereumSignaturesRequest)
       returns (PendingBatchTxEthereumSignaturesResponse) {
@@ -104,8 +100,8 @@ service Query {
         "/gravity/v1/cosmos_originated/denom_to_erc20";
   }
   // Query for pending tranfertxs
-  rpc PendingSendToEthereumTxs(PendingSendToEthereumTxsRequest)
-      returns (PendingSendToEthereumTxsResponse) {
+  rpc PendingSendToEthereums(PendingSendToEthereumsRequest)
+      returns (PendingSendToEthereumsResponse) {
     option (google.api.http).get = "/gravity/v1/query_pending_send_to_eth";
   }
 
@@ -131,12 +127,12 @@ service Query {
 message ParamsRequest {}
 message ParamsResponse { Params params = 1 [ (gogoproto.nullable) = false ]; }
 
-// rpc UpdateSignerSetTx
-message UpdateSignerSetTxRequest {
+// rpc SignerSetTx
+message SignerSetTxRequest {
   // NOTE: if nonce is not passed, then return the current
   uint64 nonce = 1;
 }
-message UpdateSignerSetTxResponse { UpdateSignerSetTx signer_set = 1; }
+message SignerSetTxResponse { SignerSetTx signer_set = 1; }
 
 // rpc BatchTx
 message BatchTxRequest {
@@ -153,30 +149,28 @@ message ContractCallTxRequest {
 
 message ContractCallTxResponse { ContractCallTx logic_call = 1; }
 
-// rpc UpdateSignerSetTxEthereumSignatures
-message UpdateSignerSetTxEthereumSignaturesRequest {
+// rpc SignerSetTxEthereumSignatures
+message SignerSetTxEthereumSignaturesRequest {
   uint64 nonce = 1;
   // NOTE: if address is passed, return only the signature from that validator
   string address = 2;
 }
-message UpdateSignerSetTxEthereumSignaturesResponse {
-  repeated UpdateSignerSetTxSignature confirm = 1;
+message SignerSetTxEthereumSignaturesResponse {
+  repeated SignerSetTxSignature confirm = 1;
 }
 
-// rpc UpdateSignerSetTxs
-message UpdateSignerSetTxsRequest { int64 count = 1; }
-message UpdateSignerSetTxsResponse {
-  repeated UpdateSignerSetTx signer_sets = 1;
-}
+// rpc SignerSetTxs
+message SignerSetTxsRequest { int64 count = 1; }
+message SignerSetTxsResponse { repeated SignerSetTx signer_sets = 1; }
 
-// rpc PendingUpdateSignerSetTxEthereumSignatures
-message PendingUpdateSignerSetTxEthereumSignaturesRequest {
+// rpc PendingSignerSetTxEthereumSignatures
+message PendingSignerSetTxEthereumSignaturesRequest {
   // NOTE: this is an sdk.AccAddress and can represent either the
   // orchestartor address or the cooresponding validator address
   string address = 1;
 }
-message PendingUpdateSignerSetTxEthereumSignaturesResponse {
-  repeated UpdateSignerSetTx signer_sets = 1;
+message PendingSignerSetTxEthereumSignaturesResponse {
+  repeated SignerSetTx signer_sets = 1;
 }
 
 message PendingBatchTxEthereumSignaturesRequest {
@@ -257,8 +251,8 @@ message DelegateKeysByOrchestratorAddressResponse {
 
 // NOTE: if there is no sender address, return all
 // TODO: pagination
-message PendingSendToEthereumTxsRequest { string sender_address = 1; }
-message PendingSendToEthereumTxsResponse {
-  repeated SendToEthereumTx batched_send_to_ethereum_txs = 1;
-  repeated SendToEthereumTx unbatched_send_to_ethereum_txs = 2;
+message PendingSendToEthereumsRequest { string sender_address = 1; }
+message PendingSendToEthereumsResponse {
+  repeated SendToEthereum batched_send_to_ethereum_txs = 1;
+  repeated SendToEthereum unbatched_send_to_ethereum_txs = 2;
 }

@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"math"
 	"sort"
 	"strconv"
@@ -60,11 +61,11 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 //     VALSET REQUESTS     //
 /////////////////////////////
 
-// SetUpdateSignerSetTxRequest returns a new instance of the Gravity BridgeValidatorSet
+// SetSignerSetTxRequest returns a new instance of the Gravity BridgeValidatorSet
 // i.e. {"nonce": 1, "memebers": [{"eth_addr": "foo", "power": 11223}]}
-func (k Keeper) SetUpdateSignerSetTxRequest(ctx sdk.Context) *types.UpdateSignerSetTx {
-	valset := k.GetCurrentUpdateSignerSetTx(ctx)
-	k.StoreUpdateSignerSetTx(ctx, valset)
+func (k Keeper) SetSignerSetTxRequest(ctx sdk.Context) *types.SignerSetTx {
+	valset := k.GetCurrentSignerSetTx(ctx)
+	k.StoreSignerSetTx(ctx, valset)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -80,41 +81,41 @@ func (k Keeper) SetUpdateSignerSetTxRequest(ctx sdk.Context) *types.UpdateSigner
 	return valset
 }
 
-// StoreUpdateSignerSetTx is for storing a validator set at a given height
-func (k Keeper) StoreUpdateSignerSetTx(ctx sdk.Context, valset *types.UpdateSignerSetTx) {
+// StoreSignerSetTx is for storing a validator set at a given height
+func (k Keeper) StoreSignerSetTx(ctx sdk.Context, valset *types.SignerSetTx) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetUpdateSignerSetTxKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
-	k.SetLatestUpdateSignerSetTxNonce(ctx, valset.Nonce)
+	store.Set(types.GetSignerSetTxKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
+	k.SetLatestSignerSetTxNonce(ctx, valset.Nonce)
 }
 
-// SetLatestUpdateSignerSetTxNonce sets the latest valset nonce
-func (k Keeper) SetLatestUpdateSignerSetTxNonce(ctx sdk.Context, nonce uint64) {
+// SetLatestSignerSetTxNonce sets the latest valset nonce
+func (k Keeper) SetLatestSignerSetTxNonce(ctx sdk.Context, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set([]byte{types.LatestUpdateSignerSetTxNonce}, types.UInt64Bytes(nonce))
+	store.Set([]byte{types.LatestSignerSetTxNonce}, types.UInt64Bytes(nonce))
 }
 
-// StoreUpdateSignerSetTxUnsafe is for storing a valiator set at a given height
-func (k Keeper) StoreUpdateSignerSetTxUnsafe(ctx sdk.Context, ussTx *types.UpdateSignerSetTx) {
+// StoreSignerSetTxUnsafe is for storing a valiator set at a given height
+func (k Keeper) StoreSignerSetTxUnsafe(ctx sdk.Context, ussTx *types.SignerSetTx) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetUpdateSignerSetTxKey(ussTx.Nonce), k.cdc.MustMarshalBinaryBare(ussTx))
-	k.SetLatestUpdateSignerSetTxNonce(ctx, ussTx.Nonce)
+	store.Set(types.GetSignerSetTxKey(ussTx.Nonce), k.cdc.MustMarshalBinaryBare(ussTx))
+	k.SetLatestSignerSetTxNonce(ctx, ussTx.Nonce)
 }
 
 // HasValsetRequest returns true if a valset defined by a nonce exists
 func (k Keeper) HasValsetRequest(ctx sdk.Context, nonce uint64) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetUpdateSignerSetTxKey(nonce))
+	return store.Has(types.GetSignerSetTxKey(nonce))
 }
 
 // DeleteValset deletes the valset at a given nonce from state
 func (k Keeper) DeleteValset(ctx sdk.Context, nonce uint64) {
-	ctx.KVStore(k.storeKey).Delete(types.GetUpdateSignerSetTxKey(nonce))
+	ctx.KVStore(k.storeKey).Delete(types.GetSignerSetTxKey(nonce))
 }
 
 // GetLatestValsetNonce returns the latest valset nonce
 func (k Keeper) GetLatestValsetNonce(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get([]byte{types.LatestUpdateSignerSetTxNonce})
+	bytes := store.Get([]byte{types.LatestSignerSetTxNonce})
 
 	if len(bytes) == 0 {
 		return 0
@@ -122,25 +123,25 @@ func (k Keeper) GetLatestValsetNonce(ctx sdk.Context) uint64 {
 	return types.UInt64FromBytes(bytes)
 }
 
-// GetUpdateSignerSetTx returns a valset by nonce
-func (k Keeper) GetUpdateSignerSetTx(ctx sdk.Context, nonce uint64) *types.UpdateSignerSetTx {
+// GetSignerSetTx returns a valset by nonce
+func (k Keeper) GetSignerSetTx(ctx sdk.Context, nonce uint64) *types.SignerSetTx {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetUpdateSignerSetTxKey(nonce))
+	bz := store.Get(types.GetSignerSetTxKey(nonce))
 	if bz == nil {
 		return nil
 	}
-	var ussTx types.UpdateSignerSetTx
+	var ussTx types.SignerSetTx
 	k.cdc.MustUnmarshalBinaryBare(bz, &ussTx)
 	return &ussTx
 }
 
-// IterateUpdateSignerSetTxs retruns all valsetRequests
-func (k Keeper) IterateUpdateSignerSetTxs(ctx sdk.Context, cb func(key []byte, ussTx *types.UpdateSignerSetTx) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.UpdateSignerSetTxKey})
+// IterateSignerSetTxs retruns all valsetRequests
+func (k Keeper) IterateSignerSetTxs(ctx sdk.Context, cb func(key []byte, ussTx *types.SignerSetTx) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SignerSetTxKey})
 	iter := prefixStore.ReverseIterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		var ussTx types.UpdateSignerSetTx
+		var ussTx types.SignerSetTx
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ussTx)
 		// cb returns true to stop early
 		if cb(iter.Key(), &ussTx) {
@@ -149,20 +150,20 @@ func (k Keeper) IterateUpdateSignerSetTxs(ctx sdk.Context, cb func(key []byte, u
 	}
 }
 
-// GetUpdateSignerSetTxs returns all the validator sets in state
-func (k Keeper) GetUpdateSignerSetTxs(ctx sdk.Context) (out []*types.UpdateSignerSetTx) {
-	k.IterateUpdateSignerSetTxs(ctx, func(_ []byte, val *types.UpdateSignerSetTx) bool {
+// GetSignerSetTxs returns all the validator sets in state
+func (k Keeper) GetSignerSetTxs(ctx sdk.Context) (out []*types.SignerSetTx) {
+	k.IterateSignerSetTxs(ctx, func(_ []byte, val *types.SignerSetTx) bool {
 		out = append(out, val)
 		return false
 	})
-	sort.Sort(types.UpdateSignerSetTxs(out))
+	sort.Sort(types.SignerSetTxs(out))
 	return
 }
 
-// GetLatestUpdateSignerSetTx returns the latest validator set in state
-func (k Keeper) GetLatestUpdateSignerSetTx(ctx sdk.Context) (out *types.UpdateSignerSetTx) {
+// GetLatestSignerSetTx returns the latest validator set in state
+func (k Keeper) GetLatestSignerSetTx(ctx sdk.Context) (out *types.SignerSetTx) {
 	latestValsetNonce := k.GetLatestValsetNonce(ctx)
-	out = k.GetUpdateSignerSetTx(ctx, latestValsetNonce)
+	out = k.GetSignerSetTx(ctx, latestValsetNonce)
 	return
 }
 
@@ -201,9 +202,9 @@ func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
 }
 
 // GetUnSlashedValsets returns all the unslashed validator sets in state
-func (k Keeper) GetUnSlashedValsets(ctx sdk.Context, maxHeight uint64) (out []*types.UpdateSignerSetTx) {
+func (k Keeper) GetUnSlashedValsets(ctx sdk.Context, maxHeight uint64) (out []*types.SignerSetTx) {
 	lastSlashedValsetNonce := k.GetLastSlashedValsetNonce(ctx)
-	k.IterateValsetBySlashedValsetNonce(ctx, lastSlashedValsetNonce, maxHeight, func(_ []byte, valset *types.UpdateSignerSetTx) bool {
+	k.IterateValsetBySlashedValsetNonce(ctx, lastSlashedValsetNonce, maxHeight, func(_ []byte, valset *types.SignerSetTx) bool {
 		if valset.Nonce > lastSlashedValsetNonce {
 			out = append(out, valset)
 		}
@@ -213,13 +214,13 @@ func (k Keeper) GetUnSlashedValsets(ctx sdk.Context, maxHeight uint64) (out []*t
 }
 
 // IterateValsetBySlashedValsetNonce iterates through all valset by last slashed valset nonce in ASC order
-func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedValsetNonce uint64, maxHeight uint64, cb func([]byte, *types.UpdateSignerSetTx) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.UpdateSignerSetTxKey})
+func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedValsetNonce uint64, maxHeight uint64, cb func([]byte, *types.SignerSetTx) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SignerSetTxKey})
 	iter := prefixStore.Iterator(types.UInt64Bytes(lastSlashedValsetNonce), types.UInt64Bytes(maxHeight))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		var valset types.UpdateSignerSetTx
+		var valset types.SignerSetTx
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &valset)
 		// cb returns true to stop early
 		if cb(iter.Key(), &valset) {
@@ -235,7 +236,7 @@ func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedVa
 // GetEthereumSignature returns a valset confirmation by a nonce and validator address
 func (k Keeper) GetEthereumSignature(ctx sdk.Context, nonce uint64, validator sdk.ValAddress) *types.MsgSubmitEthereumSignature {
 	store := ctx.KVStore(k.storeKey)
-	entity := store.Get(types.GetUpdateSignerSetTxSignatureKey(nonce, validator))
+	entity := store.Get(types.GetSignerSetTxSignatureKey(nonce, validator))
 	if entity == nil {
 		return nil
 	}
@@ -256,16 +257,16 @@ func (k Keeper) SetEthereumSignature(ctx sdk.Context, msgSignature types.MsgSubm
 	return key
 }
 
-// GetUpdateSignerSetTxSignatures returns all validator set confirmations by nonce
-func (k Keeper) GetUpdateSignerSetTxSignatures(ctx sdk.Context, nonce uint64) (confirms []*types.UpdateSignerSetTxSignature) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.UpdateSignerSetTxSignatureKey})
+// GetSignerSetTxSignatures returns all validator set confirmations by nonce
+func (k Keeper) GetSignerSetTxSignatures(ctx sdk.Context, nonce uint64) (confirms []*types.SignerSetTxSignature) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SignerSetTxSignatureKey})
 	start, end := prefixRange(types.UInt64Bytes(nonce))
 	iterator := prefixStore.Iterator(start, end)
 
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		confirm := types.UpdateSignerSetTxSignature{}
+		confirm := types.SignerSetTxSignature{}
 		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &confirm)
 		confirms = append(confirms, &confirm)
 	}
@@ -277,7 +278,7 @@ func (k Keeper) GetUpdateSignerSetTxSignatures(ctx sdk.Context, nonce uint64) (c
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
 func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgSubmitEthereumSignature) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.UpdateSignerSetTxSignatureKey})
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SignerSetTxSignatureKey})
 	iter := prefixStore.Iterator(prefixRange(types.UInt64Bytes(nonce)))
 	defer iter.Close()
 
@@ -324,7 +325,7 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.BatchTxSignature) 
 // TODO: specify which nonce this is
 func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string, cb func([]byte, types.MsgConfirmBatch) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.BatchTxSignatureKey})
-	prfx := append([]byte(tokenContract), types.UInt64Bytes(nonce)...)
+	prfx := append(common.HexToAddress(tokenContract).Bytes(), types.UInt64Bytes(nonce)...)
 	iter := prefixStore.Iterator(prefixRange(prfx))
 	defer iter.Close()
 
@@ -379,7 +380,7 @@ func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) string 
 	return string(store.Get(types.GetEthereumAddressKey(validator)))
 }
 
-// GetCurrentUpdateSignerSetTx gets powers from the store and normalizes them
+// GetCurrentSignerSetTx gets powers from the store and normalizes them
 // into an integer percentage with a resolution of uint32 Max meaning
 // a given validators 'gravity power' is computed as
 // Cosmos power / total cosmos power = x / uint32 Max
@@ -390,7 +391,7 @@ func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) string 
 // total voting power. This is an acceptable rounding error since floating
 // point may cause consensus problems if different floating point unit
 // implementations are involved.
-func (k Keeper) GetCurrentUpdateSignerSetTx(ctx sdk.Context) *types.UpdateSignerSetTx {
+func (k Keeper) GetCurrentSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 	ethereumSigners := make([]*types.EthereumSigner, len(validators))
 	var totalPower uint64

@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"github.com/ethereum/go-ethereum/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -27,12 +28,12 @@ const (
 	// i.e. cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	EthereumAddressKey
 
-	// UpdateSignerSetTxKey indexes valset requests by nonce
-	UpdateSignerSetTxKey
+	// SignerSetTxKey indexes valset requests by nonce
+	SignerSetTxKey
 
-	// UpdateSignerSetTxSignatureKey indexes valset confirmations by nonce and the validator account address
+	// SignerSetTxSignatureKey indexes valset confirmations by nonce and the validator account address
 	// i.e cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
-	UpdateSignerSetTxSignatureKey
+	SignerSetTxSignatureKey
 
 	// EthereumEventVoteRecordKey attestation details by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
@@ -90,8 +91,8 @@ const (
 	// LastSlashedValsetNonce indexes the latest slashed valset nonce
 	LastSlashedValsetNonce
 
-	// LatestUpdateSignerSetTxNonce indexes the latest valset nonce
-	LatestUpdateSignerSetTxNonce
+	// LatestSignerSetTxNonce indexes the latest valset nonce
+	LatestSignerSetTxNonce
 
 	// LastSlashedBatchBlock indexes the latest slashed batch block height
 	LastSlashedBatchBlock
@@ -114,19 +115,19 @@ func GetEthereumAddressKey(validator sdk.ValAddress) []byte {
 	return append([]byte{EthereumAddressKey}, validator.Bytes()...)
 }
 
-// GetUpdateSignerSetTxKey returns the following key format
+// GetSignerSetTxKey returns the following key format
 // prefix    nonce
 // [0x0][0 0 0 0 0 0 0 1]
-func GetUpdateSignerSetTxKey(nonce uint64) []byte {
-	return append([]byte{UpdateSignerSetTxKey}, sdk.Uint64ToBigEndian(nonce)...)
+func GetSignerSetTxKey(nonce uint64) []byte {
+	return append([]byte{SignerSetTxKey}, sdk.Uint64ToBigEndian(nonce)...)
 }
 
-// GetUpdateSignerSetTxSignatureKey returns the following key format
+// GetSignerSetTxSignatureKey returns the following key format
 // prefix   nonce                    validator-address
 // [0x0][0 0 0 0 0 0 0 1][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
-func GetUpdateSignerSetTxSignatureKey(nonce uint64, validator sdk.ValAddress) []byte {
-	return append([]byte{UpdateSignerSetTxSignatureKey}, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
+func GetSignerSetTxSignatureKey(nonce uint64, validator sdk.ValAddress) []byte {
+	return append([]byte{SignerSetTxSignatureKey}, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
 }
 
 // GetEthereumEventVoteRecordKey returns the following key format
@@ -162,7 +163,7 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
 func GetBatchTxKey(tokenContract string, nonce uint64) []byte {
-	return bytes.Join([][]byte{{BatchTxKey}, sdk.Uint64ToBigEndian(nonce), []byte(tokenContract)}, []byte{})
+	return bytes.Join([][]byte{{BatchTxKey}, sdk.Uint64ToBigEndian(nonce), common.HexToAddress(tokenContract).Bytes()}, []byte{})
 }
 
 // GetBatchTxBlockKey returns the following key format
@@ -177,7 +178,7 @@ func GetBatchTxBlockKey(block uint64) []byte {
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // TODO this should be a sdk.ValAddress
 func GetBatchTxSignatureKey(tokenContract string, batchNonce uint64, validator sdk.ValAddress) []byte {
-	return bytes.Join([][]byte{{BatchTxSignatureKey}, []byte(tokenContract), sdk.Uint64ToBigEndian(batchNonce), validator.Bytes()}, []byte{})
+	return bytes.Join([][]byte{{BatchTxSignatureKey}, common.HexToAddress(tokenContract).Bytes(), sdk.Uint64ToBigEndian(batchNonce), validator.Bytes()}, []byte{})
 }
 
 // GetFeeSecondIndexKey returns the following key format
@@ -187,7 +188,7 @@ func GetFeeSecondIndexKey(fee sdk.Coin) []byte {
 	amount := make([]byte, 32)
 	amount = fee.Amount.BigInt().FillBytes(amount)
 	token := NewERC20TokenFromCoin(fee)
-	return bytes.Join([][]byte{{SecondIndexOutgoingTXFeeKey}, []byte(token.Contract()), amount}, []byte{})
+	return bytes.Join([][]byte{{SecondIndexOutgoingTXFeeKey}, []byte(token.Contract), amount}, []byte{})
 }
 
 // GetLastEventNonceByValidatorKey indexes lateset event nonce by validator

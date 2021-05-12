@@ -20,13 +20,13 @@ func TestBatchTxCheckpointGold1(t *testing.T) {
 		Nonce: 1,
 		//
 		Timeout: 2111,
-		Transactions: []*SendToEthereumTx{
+		Transactions: []*SendToEthereum{
 			{
 				Id:          0x1,
 				Sender:      senderAddr.String(),
 				EthereumRecipient: "0x9FC9C2DfBA3b6cF204C37a5F690619772b926e39",
-				Erc20Token: NewSDKIntERC20Token(sdk.NewInt(0x1), erc20Addr).GravityCoin(),
-				Erc20Fee: NewSDKIntERC20Token(sdk.NewInt(0x1), erc20Addr).GravityCoin(),
+				Erc20Token: NewSDKIntERC20Token(sdk.NewInt(0x1), erc20Addr),
+				Erc20Fee: NewSDKIntERC20Token(sdk.NewInt(0x1), erc20Addr),
 			},
 		},
 		TokenContract: erc20Addr,
