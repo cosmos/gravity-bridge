@@ -20,13 +20,13 @@ service Query {
   rpc CurrentSignerSetTx(QueryCurrentSignerSetTxRequest) returns (QueryCurrentSignerSetTxResponse) {
     option (google.api.http).get = "/gravity/v1beta/valset/current";
   }
-  rpc SignerSetTxRequest(QuerySignerSetTxRequest) returns (QuerySignerSetTxResponse) {
+  rpc SignerSetTx(QuerySignerSetTxRequest) returns (QuerySignerSetTxResponse) {
     option (google.api.http).get = "/gravity/v1beta/valset";
   }
   rpc SignerSetTxSignature(QuerySignerSetTxSignatureRequest) returns (QuerySignerSetTxSignatureResponse) {
     option (google.api.http).get = "/gravity/v1beta/valset/confirm";
   }
-  rpc SignerSetTxSignaturesByNonce(QuerySignerSetTxSignaturesByNonceRequest) returns (QuerySignerSetTxSignaturesByNonceRequest) {
+  rpc SignerSetTxSignaturesByNonce(QuerySignerSetTxSignaturesByNonceRequest) returns (QuerySignerSetTxSignaturesByNonceResponse) {
     option (google.api.http).get = "/gravity/v1beta/confirms/{nonce}";
   }
   rpc LastSignerSetTxs(QueryLastSignerSetTxsRequest) returns (QueryLastSignerSetTxsResponse) {

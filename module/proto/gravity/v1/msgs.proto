@@ -9,45 +9,45 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
 // Msg defines the state transitions possible within gravity
 service Msg {
-  rpc ValsetConfirm(MsgSignerSetTxSignature) returns (MsgSignerSetTxSignatureResponse) {
+  rpc SignerSetTxSignature(MsgSignerSetTxSignature) returns (MsgSignerSetTxSignatureResponse) {
     option (google.api.http).post = "/gravity/v1/valset_confirm";
   }
-  rpc SendToEth(MsgSendToEthereum) returns (MsgSendToEthereumResponse) {
+  rpc SendToEthereum(MsgSendToEthereum) returns (MsgSendToEthereumResponse) {
     option (google.api.http).post = "/gravity/v1/send_to_eth";
   }
-  rpc RequestBatch(MsgRequestBatchTx) returns (MsgRequestBatchTxResponse) {
+  rpc RequestBatchTx(MsgRequestBatchTx) returns (MsgRequestBatchTxResponse) {
     option (google.api.http).post = "/gravity/v1/request_batch";
   }
-  rpc ConfirmBatch(MsgBatchTxSignature) returns (MsgBatchTxSignatureResponse) {
+  rpc BatchTxSignature(MsgBatchTxSignature) returns (MsgBatchTxSignatureResponse) {
     option (google.api.http).post = "/gravity/v1/confirm_batch";
   }
-  rpc ConfirmLogicCall(MsgContractCallTxSignature) returns (MsgContractCallTxSignatureResponse) {
+  rpc ContractCallTxSignature(MsgContractCallTxSignature) returns (MsgContractCallTxSignatureResponse) {
     option (google.api.http).post = "/gravity/v1/confim_logic";
   }
-  rpc DepositClaim(MsgSendToCosmosEvent) returns (MsgSendToCosmosEventResponse) {
+  rpc SendToCosmosEvent(MsgSendToCosmosEvent) returns (MsgSendToCosmosEventResponse) {
     option (google.api.http).post = "/gravity/v1/deposit_claim";
   }
-  rpc WithdrawClaim(MsgBatchExecutedvent) returns (MsgBatchExecutedventResponse) {
+  rpc BatchExecutedEvent(MsgBatchExecutedEvent) returns (MsgBatchExecutedEventResponse) {
     option (google.api.http).post = "/gravity/v1/withdraw_claim";
   }
-  rpc ValsetUpdateClaim(MsgSignerSetUpdatedEvent) returns (MsgSignerSetUpdatedEventResponse) {
+  rpc SignerSetUpdatedEvent(MsgSignerSetUpdatedEvent) returns (MsgSignerSetUpdatedEventResponse) {
     option (google.api.http).post = "/gravity/v1/valset_updated_claim";
   }
-  rpc ERC20DeployedClaim(MsgCosmosERC20DeployedEvent)
+  rpc CosmosERC20DeployedEvent(MsgCosmosERC20DeployedEvent)
       returns (MsgCosmosERC20DeployedEventResponse) {
     option (google.api.http).post = "/gravity/v1/erc20_deployed_claim";
   }
-  rpc LogicCallExecutedClaim(MsgContractCallTxExecutedEvent)
+  rpc ContractCallTxExecutedEvent(MsgContractCallTxExecutedEvent)
       returns (MsgContractCallTxExecutedEventResponse) {
     option (google.api.http).post = "/gravity/v1/logic_call_executed_claim";
   }
-  rpc SetOrchestratorAddress(MsgDelegateKeys) returns (MsgDelegateKeysResponse) {
+  rpc DelegateKeys(MsgDelegateKeys) returns (MsgDelegateKeysResponse) {
     option (google.api.http).post = "/gravity/v1/set_orchestrator_address";
   }
-  rpc CancelSendToEth(MsgCancelSendToEthereum) returns (MsgCancelSendToEthereumResponse) {
+  rpc CancelSendToEthereum(MsgCancelSendToEthereum) returns (MsgCancelSendToEthereumResponse) {
     option (google.api.http).post = "/gravity/v1/cancel_send_to_eth";
   }
-  rpc SubmitBadSignatureEvidence(MsgSubmitBadEthereumSignatureEvidence) returns (MsgSubmitBadEthereumSignatureEvidenceResponse) {
+  rpc SubmitBadEthereumSignatureEvidenc(MsgSubmitBadEthereumSignatureEvidence) returns (MsgSubmitBadEthereumSignatureEvidenceResponse) {
     option (google.api.http).post = "/gravity/v1/submit_bad_signature_evidence";
   }
 }
@@ -133,7 +133,7 @@ message MsgSendToEthereumResponse {}
 // -------------
 message MsgRequestBatchTx {
   string sender = 1;
-  string denom        = 2;
+  string denom  = 2;
 }
 
 message MsgRequestBatchTxResponse {}
@@ -196,7 +196,7 @@ message MsgSendToCosmosEventResponse {}
 
 // WithdrawClaim claims that a batch of withdrawal
 // operations on the bridge contract was executed.
-message MsgBatchExecutedvent {
+message MsgBatchExecutedEvent {
   uint64 event_nonce    = 1;
   uint64 block_height   = 2;
   uint64 batch_nonce    = 3;
@@ -204,7 +204,7 @@ message MsgBatchExecutedvent {
   string orchestrator   = 5;
 }
 
-message MsgBatchExecutedventResponse {}
+message MsgBatchExecutedEventResponse {}
 
 // ERC20DeployedClaim allows the Cosmos module
 // to learn about an ERC20 that someone deployed
