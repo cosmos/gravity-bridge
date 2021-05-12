@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math"
 	"sort"
 	"strconv"
@@ -29,8 +30,8 @@ type Keeper struct {
 	bankKeeper     types.BankKeeper
 	SlashingKeeper types.SlashingKeeper
 
-	EthereumEventVoteHandler interface {
-		Handle(sdk.Context, types.EthereumEventVoteRecord, types.EthereumSignature) error
+	EthereumEventProcessor interface {
+		Handle(sdk.Context, types.EthereumEventVoteRecord) error
 	}
 }
 
@@ -49,7 +50,7 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 		bankKeeper:     bankKeeper,
 		SlashingKeeper: slashingKeeper,
 	}
-	k.EthereumEventVoteHandler = EthereumEventVoteHandler{
+	k.EthereumEventVoteHandler = EthereumEventProcessor{
 		keeper:     k,
 		bankKeeper: bankKeeper,
 	}
@@ -234,32 +235,21 @@ func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedVa
 ///////////////////////////////
 
 // GetEthereumSignature returns a valset confirmation by a nonce and validator address
-func (k Keeper) GetEthereumSignature(ctx sdk.Context, nonce uint64, validator sdk.ValAddress) *types.MsgSubmitEthereumSignature {
-	store := ctx.KVStore(k.storeKey)
-	entity := store.Get(types.GetSignerSetTxSignatureKey(nonce, validator))
-	if entity == nil {
-		return nil
-	}
-	confirm := types.MsgSubmitEthereumSignature{}
-	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
-	return &confirm
+func (k Keeper) GetEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) hexutil.Bytes {
+	return ctx.KVStore(k.storeKey).Get(types.GetEthereumSignatureKey(storeIndex, validator))
 }
 
 // SetEthereumSignature sets a valset confirmation
-func (k Keeper) SetEthereumSignature(ctx sdk.Context, msgSignature types.MsgSubmitEthereumSignature) []byte {
+func (k Keeper) SetEthereumSignature(ctx sdk.Context, sig types.EthereumSignature, val sdk.ValAddress) []byte {
 	store := ctx.KVStore(k.storeKey)
-	signature, err := types.UnpackSignature(msgSignature.Signature)
-	if err != nil {
-		panic(err)
-	}
-	key := signature.GetStoreIndex()
-	store.Set(key, k.cdc.MustMarshalBinaryBare(&msgSignature))
+	key := append(sig.GetStoreIndex(), val.Bytes()...)
+	store.Set(key, sig.GetSignature())
 	return key
 }
 
 // GetSignerSetTxSignatures returns all validator set confirmations by nonce
 func (k Keeper) GetSignerSetTxSignatures(ctx sdk.Context, nonce uint64) (confirms []*types.SignerSetTxSignature) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SignerSetTxSignatureKey})
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.EthereumSignatureKey})
 	start, end := prefixRange(types.UInt64Bytes(nonce))
 	iterator := prefixStore.Iterator(start, end)
 
@@ -278,7 +268,7 @@ func (k Keeper) GetSignerSetTxSignatures(ctx sdk.Context, nonce uint64) (confirm
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
 func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgSubmitEthereumSignature) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SignerSetTxSignatureKey})
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.EthereumSignatureKey})
 	iter := prefixStore.Iterator(prefixRange(types.UInt64Bytes(nonce)))
 	defer iter.Close()
 

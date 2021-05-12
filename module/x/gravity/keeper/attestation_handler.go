@@ -9,25 +9,30 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-// EthereumEventVoteHandler processes `observed` EthereumEventVoteRecords
-type EthereumEventVoteHandler struct {
+// EthereumEventProcessor processes `observed` EthereumEventVoteRecords
+type EthereumEventProcessor struct {
 	keeper     Keeper
 	bankKeeper types.BankKeeper
 }
 
 // Handle is the entry point for Attestation processing.
 // TODO-JT add handler for ERC20DeployedEvent
-func (a EthereumEventVoteHandler) Handle(ctx sdk.Context, att types.EthereumEventVoteRecord, claim types.EthereumClaim) error {
-	switch claim := claim.(type) {
-	case *types.MsgDepositClaim:
+func (a EthereumEventProcessor) Handle(ctx sdk.Context, eventVoteRecord types.EthereumEventVoteRecord) error {
+	eve, err := types.UnpackEvent(eventVoteRecord.Event)
+	if err != nil {
+		return err
+	}
+	
+	switch event := eve.(type) {
+	case *types.SendToCosmosEvent:
 		// Check if coin is Cosmos-originated asset and get denom
-		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.TokenContract)
+		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, event.TokenContract)
 
 		if isCosmosOriginated {
 			// If it is cosmos originated, unlock the coins
-			coins := sdk.Coins{sdk.NewCoin(denom, claim.Amount)}
+			coins := sdk.Coins{sdk.NewCoin(denom, event.Amount)}
 
-			addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
+			addr, err := sdk.AccAddressFromBech32(event.CosmosReceiver)
 			if err != nil {
 				return sdkerrors.Wrap(err, "invalid receiver address")
 			}
@@ -37,13 +42,13 @@ func (a EthereumEventVoteHandler) Handle(ctx sdk.Context, att types.EthereumEven
 			}
 		} else {
 			// If it is not cosmos originated, mint the coins (aka vouchers)
-			coins := sdk.Coins{sdk.NewCoin(denom, claim.Amount)}
+			coins := sdk.Coins{sdk.NewCoin(denom, event.Amount)}
 
 			if err := a.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
 				return sdkerrors.Wrapf(err, "mint vouchers coins: %s", coins)
 			}
 
-			addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
+			addr, err := sdk.AccAddressFromBech32(event.CosmosReceiver)
 			if err != nil {
 				return sdkerrors.Wrap(err, "invalid receiver address")
 			}
@@ -52,34 +57,34 @@ func (a EthereumEventVoteHandler) Handle(ctx sdk.Context, att types.EthereumEven
 				return sdkerrors.Wrap(err, "transfer vouchers")
 			}
 		}
-	case *types.MsgWithdrawClaim:
-		return a.keeper.BatchTxExecuted(ctx, claim.TokenContract, claim.BatchNonce)
-	case *types.MsgERC20DeployedClaim:
+	case *types.BatchExecutedEvent:
+		return a.keeper.BatchTxExecuted(ctx, event.TokenContract, event.GetNonce())
+	case *types.ERC20DeployedEvent:
 		// Check if it already exists
-		existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.CosmosDenom)
+		existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, event.CosmosDenom)
 		if exists {
 			return sdkerrors.Wrap(
 				types.ErrInvalid,
-				fmt.Sprintf("ERC20 %s already exists for denom %s", existingERC20, claim.CosmosDenom))
+				fmt.Sprintf("ERC20 %s already exists for denom %s", existingERC20, event.CosmosDenom))
 		}
 
 		// Check if denom exists
-		metadata := a.keeper.bankKeeper.GetDenomMetaData(ctx, claim.CosmosDenom)
+		metadata := a.keeper.bankKeeper.GetDenomMetaData(ctx, event.CosmosDenom)
 		if metadata.Base == "" {
-			return sdkerrors.Wrap(types.ErrUnknown, fmt.Sprintf("denom not found %s", claim.CosmosDenom))
+			return sdkerrors.Wrap(types.ErrUnknown, fmt.Sprintf("denom not found %s", event.CosmosDenom))
 		}
 
 		// Check if attributes of ERC20 match Cosmos denom
-		if claim.Name != metadata.Display {
+		if event.Erc20Name != metadata.Display {
 			return sdkerrors.Wrap(
 				types.ErrInvalid,
-				fmt.Sprintf("ERC20 name %s does not match denom display %s", claim.Name, metadata.Description))
+				fmt.Sprintf("ERC20 name %s does not match denom display %s", event.Erc20Name, metadata.Description))
 		}
 
-		if claim.Symbol != metadata.Display {
+		if event.Erc20Symbol != metadata.Display {
 			return sdkerrors.Wrap(
 				types.ErrInvalid,
-				fmt.Sprintf("ERC20 symbol %s does not match denom display %s", claim.Symbol, metadata.Display))
+				fmt.Sprintf("ERC20 symbol %s does not match denom display %s", event.Erc20Symbol, metadata.Display))
 		}
 
 		// ERC20 tokens use a very simple mechanism to tell you where to display the decimal point.
@@ -103,17 +108,19 @@ func (a EthereumEventVoteHandler) Handle(ctx sdk.Context, att types.EthereumEven
 			}
 		}
 
-		if decimals != uint32(claim.Decimals) {
+		if decimals != uint32(event.Erc20Decimals) {
 			return sdkerrors.Wrap(
 				types.ErrInvalid,
-				fmt.Sprintf("ERC20 decimals %d does not match denom decimals %d", claim.Decimals, decimals))
+				fmt.Sprintf("ERC20 decimals %d does not match denom decimals %d", event.Erc20Decimals, decimals))
 		}
 
 		// Add to denom-erc20 mapping
-		a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.CosmosDenom, claim.TokenContract)
+		a.keeper.setCosmosOriginatedDenomToERC20(ctx, event.CosmosDenom, event.TokenContract)
 
+	case *types.ContractCallExecutedEvent:
+		// todo: issue event hook for consumer modules
 	default:
-		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %s", claim.GetType())
+		return sdkerrors.Wrapf(types.ErrInvalid, "event type: %T", event)
 	}
 	return nil
 }

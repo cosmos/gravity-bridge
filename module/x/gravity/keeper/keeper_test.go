@@ -108,8 +108,8 @@ func TestAttestationIterator(t *testing.T) {
 		CosmosReceiver: AccAddrs[0].String(),
 		Orchestrator:   AccAddrs[0].String(),
 	}
-	input.GravityKeeper.SetAttestation(ctx, dep1.EventNonce, dep1.ClaimHash(), att1)
-	input.GravityKeeper.SetAttestation(ctx, dep2.EventNonce, dep2.ClaimHash(), att2)
+	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, dep1.EventNonce, dep1.ClaimHash(), att1)
+	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, dep2.EventNonce, dep2.ClaimHash(), att2)
 
 	atts := []types.Attestation{}
 	input.GravityKeeper.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {

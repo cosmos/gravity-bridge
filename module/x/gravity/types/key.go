@@ -31,9 +31,9 @@ const (
 	// SignerSetTxKey indexes valset requests by nonce
 	SignerSetTxKey
 
-	// SignerSetTxSignatureKey indexes valset confirmations by nonce and the validator account address
+	// EthereumSignatureKey indexes valset confirmations by nonce and the validator account address
 	// i.e cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
-	SignerSetTxSignatureKey
+	EthereumSignatureKey
 
 	// EthereumEventVoteRecordKey attestation details by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
@@ -122,12 +122,12 @@ func GetSignerSetTxKey(nonce uint64) []byte {
 	return append([]byte{SignerSetTxKey}, sdk.Uint64ToBigEndian(nonce)...)
 }
 
-// GetSignerSetTxSignatureKey returns the following key format
+// GetEthereumSignatureKey returns the following key format
 // prefix   nonce                    validator-address
 // [0x0][0 0 0 0 0 0 0 1][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
-func GetSignerSetTxSignatureKey(nonce uint64, validator sdk.ValAddress) []byte {
-	return append([]byte{SignerSetTxSignatureKey}, append(sdk.Uint64ToBigEndian(nonce), validator.Bytes()...)...)
+func GetEthereumSignatureKey(storeIndex []byte, validator sdk.ValAddress) []byte {
+	return bytes.Join([][]byte{{EthereumSignatureKey}, storeIndex, validator.Bytes()}, []byte{})
 }
 
 // GetEthereumEventVoteRecordKey returns the following key format

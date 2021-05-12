@@ -15,4 +15,5 @@ var (
 	ErrUnsupported             = sdkerrors.Register(ModuleName, 8, "unsupported")
 	ErrNonContiguousEventNonce = sdkerrors.Register(ModuleName, 9, "non contiguous event nonce")
 	ErrInvalidGravityDenom     = sdkerrors.Register(ModuleName, 10, "invalid gravity denom")
+	ErrUnbonded                = sdkerrors.Register(ModuleName, 11, "signing validator not bonded")
 )

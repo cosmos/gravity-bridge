@@ -84,7 +84,7 @@ func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
 			continue
 		}
 		conf := types.NewMsgSubmitEthereumSignature(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
-		pk.SetEthereumSignature(ctx, *conf)
+		pk.SetEthereumSignature(ctx, *conf, nil)
 	}
 
 	EndBlocker(ctx, pk)
@@ -144,7 +144,7 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 			continue
 		}
 		conf := types.NewMsgSubmitEthereumSignature(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
-		pk.SetEthereumSignature(ctx, *conf)
+		pk.SetEthereumSignature(ctx, *conf, nil)
 	}
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 

@@ -17,7 +17,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 
 	// reset valset confirmations in state
 	for _, conf := range data.SignerSetTxSignatures {
-		k.SetEthereumSignature(ctx, *conf)
+		k.SetEthereumSignature(ctx, *conf, nil)
 	}
 
 	// reset batches in state
@@ -59,7 +59,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		}
 
 		// TODO: block height?
-		k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
+		k.SetEthereumEventVoteRecord(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
 	}
 	k.setLastObservedEventNonce(ctx, data.LastObservedEventNonce)
 
