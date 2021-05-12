@@ -156,10 +156,10 @@ func (k Keeper) DeleteBatch(ctx sdk.Context, batch types.BatchTx) {
 func (k Keeper) pickUnbatchedTX(
 	ctx sdk.Context,
 	contractAddress string,
-	maxElements int) ([]*types.OutgoingTransferTx, error) {
-	var selectedTx []*types.OutgoingTransferTx
+	maxElements int) ([]*types.SendToEthereum, error) {
+	var selectedTx []*types.SendToEthereum
 	var err error
-	k.IterateOutgoingPoolByFee(ctx, contractAddress, func(txID uint64, tx *types.OutgoingTransferTx) bool {
+	k.IterateOutgoingPoolByFee(ctx, contractAddress, func(txID uint64, tx *types.SendToEthereum) bool {
 		if tx != nil && tx.Erc20Fee != nil {
 			selectedTx = append(selectedTx, tx)
 			err = k.removeFromUnbatchedTXIndex(ctx, *tx.Erc20Fee, txID)

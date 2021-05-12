@@ -35,7 +35,7 @@ message BatchTx {
   // or cancelled by their sender.
   uint64                      batch_timeout  = 2;
   // These are the transactions sending tokens to destinations on Ethereum.
-  repeated OutgoingTransferTx transactions   = 3;
+  repeated SendToEthereum transactions   = 3;
   // This is the token contract of the tokens that are being sent in this batch.
   string                      token_contract = 4;
   // The Cosmos block height that this batch was created. This is used in slashing.

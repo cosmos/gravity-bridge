@@ -38,12 +38,12 @@ func TestAddToOutgoingPool(t *testing.T) {
 		t.Logf("___ response: %#v", r)
 	}
 	// then
-	var got []*types.OutgoingTransferTx
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
+	var got []*types.SendToEthereum
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		got = append(got, tx)
 		return false
 	})
-	exp := []*types.OutgoingTransferTx{
+	exp := []*types.SendToEthereum{
 		{
 			Id:          2,
 			Erc20Fee:    types.NewERC20Token(3, myTokenContractAddr),

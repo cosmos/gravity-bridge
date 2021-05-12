@@ -54,7 +54,7 @@ func TestBatches(t *testing.T) {
 
 	expFirstBatch := &types.BatchTx{
 		BatchNonce: 1,
-		Transactions: []*types.OutgoingTransferTx{
+		Transactions: []*types.SendToEthereum{
 			{
 				Id:          2,
 				Erc20Fee:    types.NewERC20Token(3, myTokenContractAddr),
@@ -76,12 +76,12 @@ func TestBatches(t *testing.T) {
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
 	// and verify remaining available Tx in the pool
-	var gotUnbatchedTx []*types.OutgoingTransferTx
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
+	var gotUnbatchedTx []*types.SendToEthereum
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx := []*types.OutgoingTransferTx{
+	expUnbatchedTx := []*types.SendToEthereum{
 		{
 			Id:          3,
 			Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr),
@@ -120,7 +120,7 @@ func TestBatches(t *testing.T) {
 	// check that the more profitable batch has the right txs in it
 	expSecondBatch := &types.BatchTx{
 		BatchNonce: 2,
-		Transactions: []*types.OutgoingTransferTx{
+		Transactions: []*types.SendToEthereum{
 			{
 				Id:          6,
 				Erc20Fee:    types.NewERC20Token(5, myTokenContractAddr),
@@ -155,11 +155,11 @@ func TestBatches(t *testing.T) {
 
 	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx = []*types.OutgoingTransferTx{
+	expUnbatchedTx = []*types.SendToEthereum{
 		{
 			Id:          2,
 			Erc20Fee:    types.NewERC20Token(3, myTokenContractAddr),
@@ -240,7 +240,7 @@ func TestBatchesFullCoins(t *testing.T) {
 
 	expFirstBatch := &types.BatchTx{
 		BatchNonce: 1,
-		Transactions: []*types.OutgoingTransferTx{
+		Transactions: []*types.SendToEthereum{
 			{
 				Id:          2,
 				Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),
@@ -262,12 +262,12 @@ func TestBatchesFullCoins(t *testing.T) {
 	assert.Equal(t, expFirstBatch, gotFirstBatch)
 
 	// and verify remaining available Tx in the pool
-	var gotUnbatchedTx []*types.OutgoingTransferTx
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
+	var gotUnbatchedTx []*types.SendToEthereum
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx := []*types.OutgoingTransferTx{
+	expUnbatchedTx := []*types.SendToEthereum{
 		{
 			Id:          1,
 			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
@@ -306,7 +306,7 @@ func TestBatchesFullCoins(t *testing.T) {
 	// check that the more profitable batch has the right txs in it
 	expSecondBatch := &types.BatchTx{
 		BatchNonce: 2,
-		Transactions: []*types.OutgoingTransferTx{
+		Transactions: []*types.SendToEthereum{
 			{
 				Id:          1,
 				Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(20)), myTokenContractAddr),
@@ -341,11 +341,11 @@ func TestBatchesFullCoins(t *testing.T) {
 
 	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.OutgoingTransferTx) bool {
+	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
-	expUnbatchedTx = []*types.OutgoingTransferTx{
+	expUnbatchedTx = []*types.SendToEthereum{
 		{
 			Id:          2,
 			Erc20Fee:    types.NewSDKIntERC20Token(oneEth.Mul(sdk.NewIntFromUint64(300)), myTokenContractAddr),

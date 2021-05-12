@@ -20,7 +20,7 @@ func TestBatchTxCheckpointGold1(t *testing.T) {
 		BatchNonce: 1,
 		//
 		BatchTimeout: 2111,
-		Transactions: []*OutgoingTransferTx{
+		Transactions: []*SendToEthereum{
 			{
 				Id:          0x1,
 				Sender:      senderAddr.String(),

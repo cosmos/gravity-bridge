@@ -43,7 +43,7 @@ A good start to follow the process would be the `x/gravity/handler_test.go` file
 
 #### Features
 
-- `BatchTx` type with `OutgoingTransferTx` and `TransferCoin`
+- `BatchTx` type with `SendToEthereum` and `TransferCoin`
 - Logic to build batch from pending TXs based on fee desc order
 - Logic to cancel a batch and revert TXs back to pending pool
 - Incremental and unique IDs for batches to be used for `nonces`

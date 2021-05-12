@@ -173,7 +173,7 @@ func TestBatchSlashing(t *testing.T) {
 	// First store a batch
 	batch := &types.BatchTx{
 		BatchNonce:    1,
-		Transactions:  []*types.OutgoingTransferTx{},
+		Transactions:  []*types.SendToEthereum{},
 		TokenContract: keeper.TokenContractAddrs[0],
 		Block:         uint64(ctx.BlockHeight() - int64(params.SignedBatchesWindow+1)),
 	}
