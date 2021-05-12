@@ -564,7 +564,7 @@ func (s *StakingKeeperMock) IterateLastValidators(ctx sdk.Context, cb func(index
 	}
 }
 
-// Validator staisfies the interface
+// Validator satisfies the interface
 func (s *StakingKeeperMock) Validator(ctx sdk.Context, addr sdk.ValAddress) stakingtypes.ValidatorI {
 	for _, val := range s.BondedValidators {
 		if val.GetOperator().Equals(addr) {
@@ -593,7 +593,12 @@ func (s *StakingKeeperMock) GetParams(ctx sdk.Context) stakingtypes.Params {
 }
 
 func (s *StakingKeeperMock) GetValidator(ctx sdk.Context, addr sdk.ValAddress) (validator stakingtypes.Validator, found bool) {
-	panic("unexpected call")
+	for _, val := range s.BondedValidators {
+		if val.GetOperator().Equals(addr) {
+			return val, true
+		}
+	}
+	return stakingtypes.Validator{}, false
 }
 
 func (s *StakingKeeperMock) ValidatorQueueIterator(ctx sdk.Context, endTime time.Time, endHeight int64) sdk.Iterator {

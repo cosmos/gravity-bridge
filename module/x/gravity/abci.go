@@ -181,8 +181,9 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 				// Check if validator has confirmed valset or not
 				found := false
 				for _, conf := range confirms {
-					// TODO this may have an issue if the validator changes their eth address
-					if conf.EthAddress == k.GetEthAddressByValidator(ctx, val.GetOperator()) {
+					// problem site for delegate key rotation, see issue #344
+					ethAddress, foundEthAddress := k.GetEthAddressByValidator(ctx, val.GetOperator())
+					if foundEthAddress && conf.EthAddress == ethAddress {
 						found = true
 						break
 					}
@@ -225,7 +226,8 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 					for _, conf := range confirms {
 						// TODO this presents problems for delegate key rotation see issue #344
 						confVal, _ := sdk.AccAddressFromBech32(conf.Orchestrator)
-						if k.GetOrchestratorValidator(ctx, confVal).Equals(validator.GetOperator()) {
+						valAddr, foundValidator := k.GetOrchestratorValidator(ctx, confVal)
+						if foundValidator && valAddr.GetOperator().Equals(validator.GetOperator()) {
 							found = true
 							break
 						}
@@ -278,7 +280,8 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			for _, conf := range confirms {
 				// TODO this presents problems for delegate key rotation see issue #344
 				confVal, _ := sdk.AccAddressFromBech32(conf.Orchestrator)
-				if k.GetOrchestratorValidator(ctx, confVal).Equals(val.GetOperator()) {
+				valAddr, foundValidator := k.GetOrchestratorValidator(ctx, confVal)
+				if foundValidator && valAddr.GetOperator().Equals(val.GetOperator()) {
 					found = true
 					break
 				}
@@ -328,7 +331,8 @@ func LogicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			for _, conf := range confirms {
 				// TODO this presents problems for delegate key rotation see issue #344
 				confVal, _ := sdk.AccAddressFromBech32(conf.Orchestrator)
-				if k.GetOrchestratorValidator(ctx, confVal).Equals(val.GetOperator()) {
+				valAddr, foundValidator := k.GetOrchestratorValidator(ctx, confVal)
+				if foundValidator && valAddr.GetOperator().Equals(val.GetOperator()) {
 					found = true
 					break
 				}

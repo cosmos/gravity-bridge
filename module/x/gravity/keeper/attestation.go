@@ -16,10 +16,11 @@ func (k Keeper) Attest(
 	claim types.EthereumClaim,
 	anyClaim *codectypes.Any,
 ) (*types.Attestation, error) {
-	valAddr := k.GetOrchestratorValidator(ctx, claim.GetClaimer())
-	if valAddr == nil {
+	val, found := k.GetOrchestratorValidator(ctx, claim.GetClaimer())
+	if !found {
 		panic("Could not find ValAddr for delegate key, should be checked by now")
 	}
+	valAddr := val.GetOperator()
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
 	// We check the event nonce in processAttestation as well,
 	// but checking it here gives individual eth signers a chance to retry,

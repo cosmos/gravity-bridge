@@ -281,15 +281,24 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	h := NewHandler(input.GravityKeeper)
 	ctx = ctx.WithBlockTime(blockTime)
 
+	// test setting keys
 	msg := types.NewMsgSetOrchestratorAddress(valAddress, cosmosAddress, ethAddress)
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
 	_, err := h(ctx, msg)
 	require.NoError(t, err)
 
-	assert.Equal(t, k.GetEthAddressByValidator(ctx, valAddress), ethAddress)
+	// test all lookup methods
 
-	assert.Equal(t, k.GetOrchestratorValidator(ctx, cosmosAddress), valAddress)
+	// individual lookups
+	ethLookup, found := k.GetEthAddressByValidator(ctx, valAddress)
+	assert.True(t, found)
+	assert.Equal(t, ethLookup, ethAddress)
 
+	valLookup, found := k.GetOrchestratorValidator(ctx, cosmosAddress)
+	assert.True(t, found)
+	assert.Equal(t, valLookup.GetOperator(), valAddress)
+
+	// query endpoints
 	queryO := types.QueryDelegateKeysByOrchestratorAddress{
 		OrchestratorAddress: cosmosAddress.String(),
 	}
@@ -302,24 +311,10 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	_, err = k.GetDelegateKeyByEth(wctx, &queryE)
 	require.NoError(t, err)
 
+	// try to set values again. This should fail see issue #344 for why allowing this
+	// would require keeping a history of all validators delegate keys forever
 	msg = types.NewMsgSetOrchestratorAddress(valAddress, cosmosAddress2, ethAddress2)
 	ctx = ctx.WithBlockTime(blockTime2).WithBlockHeight(blockHeight2)
 	_, err = h(ctx, msg)
-	require.NoError(t, err)
-
-	assert.Equal(t, k.GetEthAddressByValidator(ctx, valAddress), ethAddress2)
-
-	assert.Equal(t, k.GetOrchestratorValidator(ctx, cosmosAddress2), valAddress)
-
-	queryO = types.QueryDelegateKeysByOrchestratorAddress{
-		OrchestratorAddress: cosmosAddress2.String(),
-	}
-	_, err = k.GetDelegateKeyByOrchestrator(wctx, &queryO)
-	require.NoError(t, err)
-
-	queryE = types.QueryDelegateKeysByEthAddress{
-		EthAddress: ethAddress2,
-	}
-	_, err = k.GetDelegateKeyByEth(wctx, &queryE)
-	require.NoError(t, err)
+	require.Error(t, err)
 }

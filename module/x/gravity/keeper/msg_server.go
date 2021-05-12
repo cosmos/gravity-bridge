@@ -26,7 +26,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 var _ types.MsgServer = msgServer{}
 
 func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOrchestratorAddress) (*types.MsgSetOrchestratorAddressResponse, error) {
-	// ensure that this passes validation
+	// ensure that this passes validation, checks the key validity
 	err := msg.ValidateBasic()
 	if err != nil {
 		return nil, err
@@ -36,14 +36,15 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 	val, _ := sdk.ValAddressFromBech32(msg.Validator)
 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 
+	_, foundExistingOrchestratorKey := k.GetOrchestratorValidator(ctx, orch)
+	_, foundExistingEthAddress := k.GetEthAddressByValidator(ctx, val)
+
 	// ensure that the validator exists
 	if k.Keeper.StakingKeeper.Validator(ctx, val) == nil {
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, val.String())
+	} else if foundExistingOrchestratorKey || foundExistingEthAddress {
+		return nil, sdkerrors.Wrap(types.ErrResetDelegateKeys, val.String())
 	}
-
-	// TODO consider impact of maliciously setting duplicate delegate
-	// addresses since no signatures from the private keys of these addresses
-	// are required for this message it could be sent in a hostile way.
 
 	// set the orchestrator address
 	k.SetOrchestratorValidator(ctx, val, orch)
@@ -80,13 +81,13 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 	}
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
+	if !found {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
-	ethAddress := k.GetEthAddressByValidator(ctx, validator)
-	if ethAddress == "" {
+	ethAddress, found := k.GetEthAddressByValidator(ctx, validator.GetOperator())
+	if !found {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
 
@@ -180,13 +181,13 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	}
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
+	if !found {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
-	ethAddress := k.GetEthAddressByValidator(ctx, validator)
-	if ethAddress == "" {
+	ethAddress, found := k.GetEthAddressByValidator(ctx, validator.GetOperator())
+	if !found {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
 
@@ -235,13 +236,13 @@ func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogi
 	}
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
+	if !found {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
-	ethAddress := k.GetEthAddressByValidator(ctx, validator)
-	if ethAddress == "" {
+	ethAddress, found := k.GetEthAddressByValidator(ctx, validator.GetOperator())
+	if !found {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
 
@@ -275,13 +276,13 @@ func (k msgServer) DepositClaim(c context.Context, msg *types.MsgDepositClaim) (
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
+	if !found {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
 	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
+	val := k.StakingKeeper.Validator(ctx, validator.GetOperator())
 	if val == nil || !val.IsBonded() {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in active set")
 	}
@@ -318,13 +319,13 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
+	if !found {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
 	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
+	val := k.StakingKeeper.Validator(ctx, validator.GetOperator())
 	if val == nil || !val.IsBonded() {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
 	}
@@ -358,13 +359,13 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
+	if !found {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
 	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
+	val := k.StakingKeeper.Validator(ctx, validator.GetOperator())
 	if val == nil || !val.IsBonded() {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
 	}
@@ -398,13 +399,13 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
+	if !found {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
 	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
+	val := k.StakingKeeper.Validator(ctx, validator.GetOperator())
 	if val == nil || !val.IsBonded() {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
 	}
@@ -438,13 +439,13 @@ func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgValsetUpda
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
+	validator, found := k.GetOrchestratorValidator(ctx, orchaddr)
+	if !found {
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
 	}
 
 	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator)
+	val := k.StakingKeeper.Validator(ctx, validator.GetOperator())
 	if val == nil || !val.IsBonded() {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in acitve set")
 	}

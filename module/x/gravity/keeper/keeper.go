@@ -361,9 +361,18 @@ func (k Keeper) SetOrchestratorValidator(ctx sdk.Context, val sdk.ValAddress, or
 }
 
 // GetOrchestratorValidator returns the validator key associated with an orchestrator key
-func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) sdk.ValAddress {
+func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) (validator stakingtypes.Validator, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	return sdk.ValAddress(store.Get(types.GetOrchestratorAddressKey(orch)))
+	valAddr := store.Get(types.GetOrchestratorAddressKey(orch))
+	if valAddr == nil {
+		return stakingtypes.Validator{}, false
+	}
+	validator, found = k.StakingKeeper.GetValidator(ctx, valAddr)
+	if !found {
+		return stakingtypes.Validator{}, false
+	}
+
+	return validator, true
 }
 
 /////////////////////////////
@@ -378,9 +387,14 @@ func (k Keeper) SetEthAddressForValidator(ctx sdk.Context, validator sdk.ValAddr
 }
 
 // GetEthAddressByValidator returns the eth address for a given gravity validator
-func (k Keeper) GetEthAddressByValidator(ctx sdk.Context, validator sdk.ValAddress) string {
+func (k Keeper) GetEthAddressByValidator(ctx sdk.Context, validator sdk.ValAddress) (ethAddress string, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	return string(store.Get(types.GetEthAddressByValidatorKey(validator)))
+	ethAddr := store.Get(types.GetEthAddressByValidatorKey(validator))
+	if ethAddr == nil {
+		return "", false
+	} else {
+		return string(ethAddr), true
+	}
 }
 
 // GetValidatorByEthAddress returns the validator for a given eth address
@@ -422,7 +436,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		totalPower += p
 
 		bridgeValidators[i] = &types.BridgeValidator{Power: p}
-		if ethAddr := k.GetEthAddressByValidator(ctx, val); ethAddr != "" {
+		if ethAddr, found := k.GetEthAddressByValidator(ctx, val); found {
 			bridgeValidators[i].EthereumAddress = ethAddr
 		}
 	}
