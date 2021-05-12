@@ -17,28 +17,28 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/gravity/v1beta/params";
   }
-  rpc CurrentValset(QueryCurrentValsetRequest) returns (QueryCurrentValsetResponse) {
+  rpc CurrentSignerSetTx(QueryCurrentSignerSetTxRequest) returns (QueryCurrentSignerSetTxResponse) {
     option (google.api.http).get = "/gravity/v1beta/valset/current";
   }
-  rpc ValsetRequest(QueryValsetRequestRequest) returns (QueryValsetRequestResponse) {
+  rpc SignerSetTxRequest(QuerySignerSetTxRequest) returns (QuerySignerSetTxResponse) {
     option (google.api.http).get = "/gravity/v1beta/valset";
   }
-  rpc ValsetConfirm(QueryValsetConfirmRequest) returns (QueryValsetConfirmResponse) {
+  rpc SignerSetTxSignature(QuerySignerSetTxSignatureRequest) returns (QuerySignerSetTxSignatureResponse) {
     option (google.api.http).get = "/gravity/v1beta/valset/confirm";
   }
-  rpc ValsetConfirmsByNonce(QueryValsetConfirmsByNonceRequest) returns (QueryValsetConfirmsByNonceResponse) {
+  rpc SignerSetTxSignaturesByNonce(QuerySignerSetTxSignaturesByNonceRequest) returns (QuerySignerSetTxSignaturesByNonceRequest) {
     option (google.api.http).get = "/gravity/v1beta/confirms/{nonce}";
   }
-  rpc LastValsetRequests(QueryLastValsetRequestsRequest) returns (QueryLastValsetRequestsResponse) {
+  rpc LastSignerSetTxs(QueryLastSignerSetTxsRequest) returns (QueryLastSignerSetTxsResponse) {
     option (google.api.http).get = "/gravity/v1beta/valset/requests";
   }
-  rpc LastPendingValsetRequestByAddr(QueryLastPendingValsetRequestByAddrRequest) returns (QueryLastPendingValsetRequestByAddrResponse) {
+  rpc LastPendingSignerSetTxByAddr(QueryLastPendingSignerSetTxByAddrRequest) returns (QueryLastPendingSignerSetTxByAddrResponse) {
     option (google.api.http).get = "/gravity/v1beta/valset/last";
   }
-  rpc LastPendingBatchRequestByAddr(QueryLastPendingBatchRequestByAddrRequest) returns (QueryLastPendingBatchRequestByAddrResponse) {
+  rpc LastPendingBatchTxByAddr(QueryLastPendingBatchTxByAddrRequest) returns (QueryLastPendingBatchTxByAddrResponse) {
     option (google.api.http).get = "/gravity/v1beta/batch/{address}";
   }
-  rpc LastPendingLogicCallByAddr(QueryLastPendingLogicCallByAddrRequest) returns (QueryLastPendingLogicCallByAddrResponse) {
+  rpc LastPendingContractCallTxByAddr(QueryLastPendingContractCallTxByAddrRequest) returns (QueryLastPendingContractCallTxByAddrResponse) {
     option (google.api.http).get = "/gravity/v1beta/logic/{address}";
   }
   rpc LastEventNonceByAddr(QueryLastEventNonceByAddrRequest) returns (QueryLastEventNonceByAddrResponse) {
@@ -48,19 +48,19 @@ service Query {
     option (google.api.http).get = "/gravity/v1beta/batchfees";
   }
 
-  rpc OutgoingTxBatches(QueryOutgoingTxBatchesRequest) returns (QueryOutgoingTxBatchesResponse) {
+  rpc BatchTxs(QueryBatchTxsRequest) returns (QueryBatchTxsResponse) {
     option (google.api.http).get = "/gravity/v1beta/batch/outgoingtx";
   }
-  rpc OutgoingLogicCalls(QueryOutgoingLogicCallsRequest) returns (QueryOutgoingLogicCallsResponse) {
+  rpc ContractCallTxs(QueryContractCallTxsRequest) returns (QueryContractCallTxsResponse) {
     option (google.api.http).get = "/gravity/v1beta/batch/outgoinglogic";
   }
-  rpc BatchRequestByNonce(QueryBatchRequestByNonceRequest) returns (QueryBatchRequestByNonceResponse) {
+  rpc BatchTxByNonce(QueryBatchTxByNonceRequest) returns (QueryBatchTxByNonceResponse) {
     option (google.api.http).get = "/gravity/v1beta/batch/{nonce}";
   }
-  rpc BatchConfirms(QueryBatchConfirmsRequest) returns (QueryBatchConfirmsResponse) {
+  rpc BatchTxSignatures(QueryBatchTxSignaturesRequest) returns (QueryBatchTxSignaturesResponse) {
     option (google.api.http).get = "/gravity/v1beta/batch/confirms";
   }
-  rpc LogicConfirms(QueryLogicConfirmsRequest) returns (QueryLogicConfirmsResponse) {
+  rpc ContractCallTxSignatures(QueryContractCallTxSignaturesRequest) returns (QueryContractCallTxSignaturesResponse) {
     option (google.api.http).get = "/gravity/v1beta/logic/confirms";
   }
   rpc ERC20ToDenom(QueryERC20ToDenomRequest) returns (QueryERC20ToDenomResponse) {
@@ -80,7 +80,7 @@ service Query {
     option (google.api.http).get = "/gravity/v1beta/query_delegate_keys_by_orchestrator";
   }
 
-  rpc GetPendingSendToEth(QueryPendingSendToEth) returns (QueryPendingSendToEthResponse) {
+  rpc GetPendingSendToEthereum(QueryPendingSendToEthereumRequest) returns (QueryPendingSendToEthereumResponse) {
     option (google.api.http).get = "/gravity/v1beta/query_pending_send_to_eth";
   }
 }
@@ -90,43 +90,43 @@ message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
-message QueryCurrentValsetRequest {}
-message QueryCurrentValsetResponse {
-  Valset valset = 1;
+message QueryCurrentSignerSetTxRequest {}
+message QueryCurrentSignerSetTxResponse {
+  SignerSetTx signer_set_tx = 1;
 }
 
-message QueryValsetRequestRequest {
+message QuerySignerSetTxRequest {
   uint64 nonce = 1;
 }
-message QueryValsetRequestResponse {
-  Valset valset = 1;
+message QuerySignerSetTxResponse {
+  SignerSetTx signer_set_tx = 1;
 }
 
-message QueryValsetConfirmRequest {
+message QuerySignerSetTxSignatureRequest {
   uint64 nonce   = 1;
   string address = 2;
 }
-message QueryValsetConfirmResponse {
-  MsgValsetConfirm confirm = 1;
+message QuerySignerSetTxSignatureResponse {
+  MsgSignerSetTxSignature signature_msg = 1;
 }
 
-message QueryValsetConfirmsByNonceRequest {
+message QuerySignerSetTxSignaturesByNonceRequest {
   uint64 nonce = 1;
 }
-message QueryValsetConfirmsByNonceResponse {
-  repeated MsgValsetConfirm confirms = 1;
+message QuerySignerSetTxSignaturesByNonceResponse {
+  repeated MsgSignerSetTxSignature signature_msg = 1;
 }
 
-message QueryLastValsetRequestsRequest {}
-message QueryLastValsetRequestsResponse {
-  repeated Valset valsets = 1;
+message QueryLastSignerSetTxsRequest {}
+message QueryLastSignerSetTxsResponse {
+  repeated SignerSetTx signer_set_txs = 1;
 }
 
-message QueryLastPendingValsetRequestByAddrRequest {
+message QueryLastPendingSignerSetTxByAddrRequest {
   string address = 1;
 }
-message QueryLastPendingValsetRequestByAddrResponse {
-  repeated Valset valsets = 1;
+message QueryLastPendingSignerSetTxByAddrResponse {
+  repeated SignerSetTx signer_set_txs = 1;
 }
 
 message QueryBatchFeeRequest {}
@@ -134,52 +134,52 @@ message QueryBatchFeeResponse {
   repeated BatchFees batch_fees = 1;
 }
 
-message QueryLastPendingBatchRequestByAddrRequest {
+message QueryLastPendingBatchTxByAddrRequest {
   string address = 1;
 }
-message QueryLastPendingBatchRequestByAddrResponse {
-  OutgoingTxBatch batch = 1;
+message QueryLastPendingBatchTxByAddrResponse {
+  BatchTx batch = 1;
 }
 
-message QueryLastPendingLogicCallByAddrRequest {
+message QueryLastPendingContractCallTxByAddrRequest {
   string address = 1;
 }
-message QueryLastPendingLogicCallByAddrResponse {
-  OutgoingLogicCall call = 1;
+message QueryLastPendingContractCallTxByAddrResponse {
+  ContractCallTx call = 1;
 }
 
-message QueryOutgoingTxBatchesRequest {}
-message QueryOutgoingTxBatchesResponse {
-  repeated OutgoingTxBatch batches = 1;
+message QueryBatchTxsRequest {}
+message QueryBatchTxsResponse {
+  repeated BatchTx batches = 1;
 }
 
-message QueryOutgoingLogicCallsRequest {}
-message QueryOutgoingLogicCallsResponse {
-  repeated OutgoingLogicCall calls = 1;
+message QueryContractCallTxsRequest {}
+message QueryContractCallTxsResponse {
+  repeated ContractCallTx calls = 1;
 }
 
-message QueryBatchRequestByNonceRequest {
+message QueryBatchTxByNonceRequest {
   uint64 nonce            = 1;
   string contract_address = 2;
 }
-message QueryBatchRequestByNonceResponse {
-  OutgoingTxBatch batch = 1;
+message QueryBatchTxByNonceResponse {
+  BatchTx batch = 1;
 }
 
-message QueryBatchConfirmsRequest {
+message QueryBatchTxSignaturesRequest {
   uint64 nonce            = 1;
   string contract_address = 2;
 }
-message QueryBatchConfirmsResponse {
-  repeated MsgConfirmBatch confirms = 1;
+message QueryBatchTxSignaturesResponse {
+  repeated MsgBatchTxSignature signature_msg = 1;
 }
 
-message QueryLogicConfirmsRequest {
+message QueryContractCallTxSignaturesRequest {
   bytes  invalidation_id    = 1;
   uint64 invalidation_nonce = 2;
 }
-message QueryLogicConfirmsResponse {
-  repeated MsgConfirmLogicCall confirms = 1;
+message QueryContractCallTxSignaturesResponse {
+  repeated MsgContractCallTxSignature confirms = 1;
 }
 
 message QueryLastEventNonceByAddrRequest {
@@ -229,10 +229,10 @@ message QueryDelegateKeysByOrchestratorAddressResponse {
   string eth_address       = 2;
 }
 
-message QueryPendingSendToEth {
+message QueryPendingSendToEthereumRequest {
   string sender_address = 1;
 }
-message QueryPendingSendToEthResponse {
-  repeated OutgoingTransferTx transfers_in_batches = 1;
-  repeated OutgoingTransferTx unbatched_transfers  = 2;
+message QueryPendingSendToEthereumResponse {
+  repeated SendToEthereum transfers_in_batches = 1;
+  repeated SendToEthereum unbatched_transfers  = 2;
 }

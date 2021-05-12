@@ -10,13 +10,13 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 message BatchTx {
   uint64                      batch_nonce    = 1;
   uint64                      batch_timeout  = 2;
-  repeated SendToEthereumTx   transactions   = 3;
+  repeated SendToEthereum   transactions   = 3;
   string                      token_contract = 4;
   uint64                      block          = 5;
 }
 
-// SendToEthereumTx represents an individual send from gravity to ETH
-message SendToEthereumTx {
+// SendToEthereum represents an individual send from gravity to ETH
+message SendToEthereum {
   uint64     id           = 1;
   string     sender       = 2;
   string     dest_address = 3;

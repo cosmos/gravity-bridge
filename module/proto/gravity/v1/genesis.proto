@@ -129,13 +129,13 @@ message GenesisState {
   Params                             params              = 1;
   uint64                             last_observed_nonce = 2;
   repeated SignerSetTx               signer_set_txs             = 3;
-  repeated SignerSetTxSignature      signer_set_tx_signatures     = 4;
+  repeated MsgSignerSetTxSignature      signer_set_tx_signatures     = 4;
   repeated BatchTx                   batch_txs             = 5;
-  repeated BatchTxSignature          batch_tx_signatures      = 6 [(gogoproto.nullable) = false];
+  repeated MsgBatchTxSignature          batch_tx_signatures      = 6 [(gogoproto.nullable) = false];
   repeated ContractCallTx            contract_call_txs         = 7;
-  repeated ContractCallTxSignature   contract_call_tx_signatures = 8 [(gogoproto.nullable) = false];
+  repeated MsgContractCallTxSignature   contract_call_tx_signatures = 8 [(gogoproto.nullable) = false];
   repeated EthereumEventVoteRecord   ethereum_event_vote_records        = 9 [(gogoproto.nullable) = false];
   repeated MsgDelegateKeys           delegate_keys       = 10;
   repeated ERC20ToDenom              erc20_to_denoms     = 11;
-  repeated SendToEthereumTx          unbatched_transfers = 12;
+  repeated SendToEthereum          unbatched_transfers = 12;
 }

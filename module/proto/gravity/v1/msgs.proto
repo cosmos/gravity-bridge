@@ -47,7 +47,7 @@ service Msg {
   rpc CancelSendToEth(MsgCancelSendToEthereum) returns (MsgCancelSendToEthereumResponse) {
     option (google.api.http).post = "/gravity/v1/cancel_send_to_eth";
   }
-  rpc SubmitBadSignatureEvidence(MsgSubmitBadSignatureEvidence) returns (MsgSubmitBadSignatureEvidenceResponse) {
+  rpc SubmitBadSignatureEvidence(MsgSubmitBadEthereumSignatureEvidence) returns (MsgSubmitBadEthereumSignatureEvidenceResponse) {
     option (google.api.http).post = "/gravity/v1/submit_bad_signature_evidence";
   }
 }
