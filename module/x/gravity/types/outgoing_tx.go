@@ -4,8 +4,10 @@ import (
 	"math/big"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -20,16 +22,16 @@ var (
 // GetStoreIndex //
 ///////////////////
 
-func (usstx *SignerSetTx) GetStoreIndex() []byte {
-	panic("NOT IMPLEMENTED")
+func (sstx *SignerSetTx) GetStoreIndex() []byte {
+	return sdk.Uint64ToBigEndian(sstx.Nonce)
 }
 
 func (btx *BatchTx) GetStoreIndex() []byte {
-	panic("NOT IMPLEMENTED")
+	return append(sdk.Uint64ToBigEndian(btx.Nonce), common.Hex2Bytes(btx.TokenContract)...)
 }
 
 func (cctx *ContractCallTx) GetStoreIndex() []byte {
-	panic("NOT IMPLEMENTED")
+	return append(sdk.Uint64ToBigEndian(cctx.InvalidationNonce), cctx.InvalidationScope.Bytes()...)
 }
 
 ///////////////////
@@ -43,7 +45,7 @@ func (u SignerSetTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 	// var gravityIDString = "foo"
 
 	// error case here should not occur outside of testing since the above is a constant
-	contractAbi, err := abi.JSON(strings.NewReader(ValsetCheckpointABIJSON))
+	contractAbi, err := abi.JSON(strings.NewReader(SignerSetTxCheckpointABIJSON))
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +90,7 @@ func (u SignerSetTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
 func (b BatchTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 
-	encodedBatch, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
+	encodedBatch, err := abi.JSON(strings.NewReader(BatchTxCheckpointABIJSON))
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
 	}
