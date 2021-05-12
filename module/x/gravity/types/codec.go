@@ -21,7 +21,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgSendToEthereum{},
 		&MsgRequestBatchTx{},
 		&MsgBatchTxSignature{},
-		&MsgConfirmLogicCall{},
+		&MsgContractCallTxSignature{},
 		&MsgDepositClaim{},
 		&MsgWithdrawClaim{},
 		&MsgERC20DeployedClaim{},
@@ -53,7 +53,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgSendToEthereum{}, "gravity/MsgSendToEthereum", nil)
 	cdc.RegisterConcrete(&MsgRequestBatchTx{}, "gravity/MsgRequestBatchTx", nil)
 	cdc.RegisterConcrete(&MsgBatchTxSignature{}, "gravity/MsgBatchTxSignature", nil)
-	cdc.RegisterConcrete(&MsgConfirmLogicCall{}, "gravity/MsgConfirmLogicCall", nil)
+	cdc.RegisterConcrete(&MsgContractCallTxSignature{}, "gravity/MsgContractCallTxSignature", nil)
 	cdc.RegisterConcrete(&Valset{}, "gravity/Valset", nil)
 	cdc.RegisterConcrete(&MsgDepositClaim{}, "gravity/MsgDepositClaim", nil)
 	cdc.RegisterConcrete(&MsgWithdrawClaim{}, "gravity/MsgWithdrawClaim", nil)

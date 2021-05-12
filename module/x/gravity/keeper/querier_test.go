@@ -668,7 +668,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 
 	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 
-	confirm := types.MsgConfirmLogicCall{
+	confirm := types.MsgContractCallTxSignature{
 		InvalidationId:    hex.EncodeToString(invalidationId),
 		InvalidationNonce: 1,
 		EthSigner:         "test",

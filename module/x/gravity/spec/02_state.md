@@ -139,13 +139,13 @@ When another module requests a logic call to be executed on Ethereum it is store
 | -------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------- | ---------------- |
 | `[]byte{0xde} + []byte(invalidationId) + nonce (big endian encoded)` | A user created logic call to be sent to the Ethereum | `types.ContractCallTx` | Protobuf encoded |
 
-### ConfirmLogicCall
+### ContractCallTxSignature
 
 When a logic call is executed validators confirm the execution.
 
-| Key                                                                                       | Value                                       | Type                        | Encoding         |
-| ----------------------------------------------------------------------------------------- | ------------------------------------------- | --------------------------- | ---------------- |
-| `[]byte{0xae} + []byte(invalidationId) + nonce (big endian encoded) + []byte(AccAddress)` | Confirmation of execution of the logic call | `types.MsgConfirmLogicCall` | Protobuf encoded |
+| Key                                                                                       | Value                                       | Type                               | Encoding         |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------- | ---------------- |
+| `[]byte{0xae} + []byte(invalidationId) + nonce (big endian encoded) + []byte(AccAddress)` | Confirmation of execution of the logic call | `types.MsgContractCallTxSignature` | Protobuf encoded |
 
 ### OutgoingTx
 

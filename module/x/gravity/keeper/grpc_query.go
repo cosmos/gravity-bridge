@@ -205,9 +205,9 @@ func (k Keeper) BatchConfirms(
 func (k Keeper) LogicConfirms(
 	c context.Context,
 	req *types.ContractCallTxSignaturesRequest) (*types.ContractCallTxSignaturesResponse, error) {
-	var confirms []*types.MsgConfirmLogicCall
+	var confirms []*types.MsgContractCallTxSignature
 	k.IterateLogicConfirmByInvalidationIDAndNonce(sdk.UnwrapSDKContext(c), req.InvalidationId,
-		req.InvalidationNonce, func(_ []byte, c *types.MsgConfirmLogicCall) bool {
+		req.InvalidationNonce, func(_ []byte, c *types.MsgContractCallTxSignature) bool {
 			confirms = append(confirms, c)
 			return false
 		})

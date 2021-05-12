@@ -32,8 +32,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgBatchTxSignature:
 			res, err := msgServer.BatchTxSignature(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgConfirmLogicCall:
-			res, err := msgServer.ConfirmLogicCall(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgContractCallTxSignature:
+			res, err := msgServer.ContractCallTxSignature(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgDepositClaim:
 			res, err := msgServer.DepositClaim(sdk.WrapSDKContext(ctx), msg)

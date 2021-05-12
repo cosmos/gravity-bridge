@@ -93,7 +93,7 @@ The gravity module emits the following events:
 | message | module               | set_operator_address |
 | message | set_operator_address | {operator_address}   |
 
-### MsgConfirmLogicCall
+### MsgContractCallTxSignature
 
 | Type    | Attribute Key | Attribute Value |
 | ------- | ------------- | --------------- |
@@ -106,7 +106,7 @@ The gravity module emits the following events:
 | message | module                     | ERC20_deployed_claim          |
 | message | ethereumEventVoteRecord_id | {ethereumEventVoteRecord_key} |
 
-### Msg/ConfirmLogicCall
+### Msg/ContractCallTxSignature
 
 | Type    | Attribute Key | Attribute Value |
 | ------- | ------------- | --------------- |

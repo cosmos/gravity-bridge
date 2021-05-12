@@ -510,7 +510,7 @@ func (k Keeper) CancelContractCallTx(ctx sdk.Context, invalidationId []byte, inv
 /////////////////////////////
 
 // SetLogicCallConfirm sets a logic confirm in the store
-func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, msg *types.MsgConfirmLogicCall) {
+func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, msg *types.MsgContractCallTxSignature) {
 	bytes, err := hex.DecodeString(msg.InvalidationId)
 	if err != nil {
 		panic(err)
@@ -526,13 +526,13 @@ func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, msg *types.MsgConfirmLogicC
 }
 
 // GetLogicCallConfirm gets a logic confirm from the store
-func (k Keeper) GetLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) *types.MsgConfirmLogicCall {
+func (k Keeper) GetLogicCallConfirm(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) *types.MsgContractCallTxSignature {
 	store := ctx.KVStore(k.storeKey)
 	data := store.Get(types.GetLogicConfirmKey(invalidationId, invalidationNonce, val))
 	if data == nil {
 		return nil
 	}
-	out := types.MsgConfirmLogicCall{}
+	out := types.MsgContractCallTxSignature{}
 	k.cdc.MustUnmarshalBinaryBare(data, &out)
 	return &out
 }
@@ -551,13 +551,13 @@ func (k Keeper) IterateLogicConfirmByInvalidationIDAndNonce(
 	ctx sdk.Context,
 	invalidationID []byte,
 	invalidationNonce uint64,
-	cb func([]byte, *types.MsgConfirmLogicCall) bool) {
+	cb func([]byte, *types.MsgContractCallTxSignature) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyOutgoingLogicConfirm)
 	iter := prefixStore.Iterator(prefixRange(append(invalidationID, types.UInt64Bytes(invalidationNonce)...)))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgConfirmLogicCall{}
+		confirm := types.MsgContractCallTxSignature{}
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
 		// cb returns true to stop early
 		if cb(iter.Key(), &confirm) {
@@ -567,8 +567,8 @@ func (k Keeper) IterateLogicConfirmByInvalidationIDAndNonce(
 }
 
 // GetLogicConfirmsByInvalidationIdAndNonce returns the logic call confirms
-func (k Keeper) GetLogicConfirmByInvalidationIDAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) (out []types.MsgConfirmLogicCall) {
-	k.IterateLogicConfirmByInvalidationIDAndNonce(ctx, invalidationId, invalidationNonce, func(_ []byte, msg *types.MsgConfirmLogicCall) bool {
+func (k Keeper) GetLogicConfirmByInvalidationIDAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) (out []types.MsgContractCallTxSignature) {
+	k.IterateLogicConfirmByInvalidationIDAndNonce(ctx, invalidationId, invalidationNonce, func(_ []byte, msg *types.MsgContractCallTxSignature) bool {
 		out = append(out, *msg)
 		return false
 	})

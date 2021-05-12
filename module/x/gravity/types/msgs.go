@@ -16,7 +16,7 @@ var (
 	_ sdk.Msg = &MsgRequestBatchTx{}
 	_ sdk.Msg = &MsgBatchTxSignature{}
 	_ sdk.Msg = &MsgERC20DeployedClaim{}
-	_ sdk.Msg = &MsgConfirmLogicCall{}
+	_ sdk.Msg = &MsgContractCallTxSignature{}
 	_ sdk.Msg = &MsgLogicCallExecutedClaim{}
 	_ sdk.Msg = &MsgDepositClaim{}
 	_ sdk.Msg = &MsgWithdrawClaim{}
@@ -245,13 +245,13 @@ func (msg MsgBatchTxSignature) GetSigners() []sdk.AccAddress {
 }
 
 // Route should return the name of the module
-func (msg MsgConfirmLogicCall) Route() string { return RouterKey }
+func (msg MsgContractCallTxSignature) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgConfirmLogicCall) Type() string { return "confirm_logic" }
+func (msg MsgContractCallTxSignature) Type() string { return "confirm_logic" }
 
 // ValidateBasic performs stateless checks
-func (msg MsgConfirmLogicCall) ValidateBasic() error {
+func (msg MsgContractCallTxSignature) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
@@ -270,12 +270,12 @@ func (msg MsgConfirmLogicCall) ValidateBasic() error {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgConfirmLogicCall) GetSignBytes() []byte {
+func (msg MsgContractCallTxSignature) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgConfirmLogicCall) GetSigners() []sdk.AccAddress {
+func (msg MsgContractCallTxSignature) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)

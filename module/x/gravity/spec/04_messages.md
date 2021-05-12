@@ -78,7 +78,7 @@ This message will fail if:
 - If counter chain address fails signature validation
 - If the signature was already presented in a previous message
 
-### MsgConfirmLogicCall
+### MsgContractCallTxSignature
 
 Validators sign `ContractCallTx`'s with their Ethereum keys, and send the signatures to the Gravity module using this message.
 

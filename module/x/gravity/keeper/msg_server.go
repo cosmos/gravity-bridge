@@ -212,8 +212,8 @@ func (k msgServer) BatchTxSignature(c context.Context, msg *types.MsgBatchTxSign
 	return nil, nil
 }
 
-// ConfirmLogicCall handles MsgConfirmLogicCall
-func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogicCall) (*types.MsgConfirmLogicCallResponse, error) {
+// ContractCallTxSignature handles MsgContractCallTxSignature
+func (k msgServer) ContractCallTxSignature(c context.Context, msg *types.MsgContractCallTxSignature) (*types.MsgContractCallTxSignatureResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	invalidationIdBytes, err := hex.DecodeString(msg.InvalidationId)
 	if err != nil {
