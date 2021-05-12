@@ -33,8 +33,8 @@ service Msg {
   rpc SignerSetUpdatedEvent(MsgSignerSetUpdatedEvent) returns (MsgSignerSetUpdatedEventResponse) {
     option (google.api.http).post = "/gravity/v1/valset_updated_claim";
   }
-  rpc CosmosERC20DeployedEvent(MsgCosmosERC20DeployedEvent)
-      returns (MsgCosmosERC20DeployedEventResponse) {
+  rpc ERC20DeployedEvent(MsgERC20DeployedEvent)
+      returns (MsgERC20DeployedEventResponse) {
     option (google.api.http).post = "/gravity/v1/erc20_deployed_claim";
   }
   rpc ContractCallTxExecutedEvent(MsgContractCallTxExecutedEvent)
@@ -209,7 +209,7 @@ message MsgBatchExecutedEventResponse {}
 // ERC20DeployedClaim allows the Cosmos module
 // to learn about an ERC20 that someone deployed
 // to represent a Cosmos asset
-message MsgCosmosERC20DeployedEvent {
+message MsgERC20DeployedEvent {
   uint64 event_nonce    = 1;
   uint64 block_height   = 2;
   string cosmos_denom   = 3;
@@ -220,7 +220,7 @@ message MsgCosmosERC20DeployedEvent {
   string orchestrator   = 8;
 }
 
-message MsgCosmosERC20DeployedEventResponse {}
+message MsgERC20DeployedEventResponse {}
 
 // This informs the Cosmos module that a logic
 // call has been executed
