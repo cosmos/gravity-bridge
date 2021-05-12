@@ -46,8 +46,6 @@ struct SignatureStatus {
     number_of_unset_key_validators: usize,
     power_of_nonvoters: u64,
     number_of_nonvoters: usize,
-    power_of_invalid_signers: u64,
-    number_of_invalid_signers: usize,
     num_validators: usize,
 }
 
@@ -147,8 +145,6 @@ impl Valset {
         let mut number_of_unset_key_validators = 0;
         let mut power_of_nonvoters = 0;
         let mut number_of_nonvoters = 0;
-        let mut power_of_invalid_signers = 0;
-        let mut number_of_invalid_signers = 0;
         for member in self.members.iter() {
             if let Some(eth_address) = member.eth_address {
                 if let Some(sig) = signatures_hashmap.get(&eth_address) {
@@ -165,15 +161,13 @@ impl Valset {
                         });
                         power_of_good_sigs += member.power;
                     } else {
-                        out.push(GravitySignature {
-                            power: member.power,
-                            eth_address,
-                            v: 0u8.into(),
-                            r: 0u8.into(),
-                            s: 0u8.into(),
-                        });
-                        power_of_invalid_signers += member.power;
-                        number_of_invalid_signers += 1;
+                        // the go code verifies signatures, if we ever see this it means
+                        // that something has gone horribly wrong with our parsing or ordering
+                        // in the orchestrator, therefore we panic.
+                        panic!(
+                            "Found invalid signature for {} how did this get here?",
+                            sig.get_eth_address()
+                        )
                     }
                 } else {
                     out.push(GravitySignature {
@@ -207,8 +201,6 @@ impl Valset {
             power_of_unset_keys,
             num_validators,
             number_of_nonvoters,
-            power_of_invalid_signers,
-            number_of_invalid_signers,
             number_of_unset_key_validators,
         })
     }
@@ -228,7 +220,6 @@ impl Valset {
                 has {}/{} or {:.2}% power voting! Can not execute on Ethereum!
                 {}/{} validators have unset Ethereum keys representing {}/{} or {:.2}% of the power required
                 {}/{} validators have Ethereum keys set but have not voted representing {}/{} or {:.2}% of the power required
-                {}/{} validators have Invalid signatures {}/{} or {:.2}% of the power required
                 This valset probably just needs to accumulate signatures for a moment.",
                 status.power_of_good_sigs,
                 TOTAL_GRAVITY_POWER,
@@ -243,11 +234,6 @@ impl Valset {
                 status.power_of_nonvoters,
                 TOTAL_GRAVITY_POWER,
                 gravity_power_to_percent(status.power_of_nonvoters),
-                status.number_of_invalid_signers,
-                status.num_validators,
-                status.power_of_invalid_signers,
-                TOTAL_GRAVITY_POWER,
-                gravity_power_to_percent(status.power_of_invalid_signers),
             );
             Err(GravityError::InsufficientVotingPowerToPass(message))
         } else {
