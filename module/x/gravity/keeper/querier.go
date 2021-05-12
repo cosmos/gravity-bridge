@@ -55,7 +55,7 @@ const (
 	QueryLastPendingBatchRequestByAddr = "lastPendingBatchRequest"
 	// gets the last 100 outgoing batches, regardless of denom, useful
 	// for a relayer to see what is available to relay
-	QueryBatchTxes = "lastBatches"
+	QueryBatchTxs = "lastBatches"
 	// Used by the relayer to package a batch with signatures required
 	// to submit to Ethereum
 	QueryBatchConfirms = "batchConfirms"
@@ -117,7 +117,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryAllBatchConfirms(ctx, path[1], path[2], keeper)
 		case QueryLastPendingBatchRequestByAddr:
 			return lastPendingBatchRequest(ctx, path[1], keeper)
-		case QueryBatchTxes:
+		case QueryBatchTxs:
 			return lastBatchesRequest(ctx, keeper)
 		case QueryBatchFees:
 			return queryBatchFees(ctx, keeper)
@@ -518,7 +518,7 @@ func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, er
 }
 
 func queryPendingSendToEth(ctx sdk.Context, senderAddr string, k Keeper) ([]byte, error) {
-	batches := k.GetBatchTxes(ctx)
+	batches := k.GetBatchTxs(ctx)
 	unbatched_tx := k.GetPoolTransactions(ctx)
 	sender_address := senderAddr
 	res := types.PendingSendToEthereumRequestResponse{}

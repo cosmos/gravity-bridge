@@ -150,8 +150,8 @@ func (k Keeper) LastPendingLogicCallByAddr(
 	return &types.LastPendingContractCallTxByAddrResponse{Call: pendingLogicReq}, nil
 }
 
-// BatchTxes queries the BatchTxes of the gravity module
-func (k Keeper) BatchTxes(
+// BatchTxs queries the BatchTxs of the gravity module
+func (k Keeper) BatchTxs(
 	c context.Context,
 	req *types.BatchTxsRequest) (*types.BatchTxsResponse, error) {
 	var batches []*types.BatchTx
@@ -331,7 +331,7 @@ func (k Keeper) GetPendingSendToEth(
 	c context.Context,
 	req *types.PendingSendToEthereumRequest) (*types.PendingSendToEthereumRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	batches := k.GetBatchTxes(ctx)
+	batches := k.GetBatchTxs(ctx)
 	unbatchedTx := k.GetPoolTransactions(ctx)
 	senderAddress := req.SenderAddress
 	var res *types.PendingSendToEthereumRequestResponse

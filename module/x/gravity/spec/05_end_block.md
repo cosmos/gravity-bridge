@@ -93,7 +93,7 @@ When a batch of transactions are created they have a specified Ethereum block he
 Here is the procedure:
 
 - Get the `LastObservedEthereumBlockHeight`. This is the Ethereum block height from the last observed ethereumEventVoteRecord, and is the most current information we have available about the current Ethereum block height.
-- Loop through all `BatchTxes`. For each batch:
+- Loop through all `BatchTxs`. For each batch:
   - If the `BatchTimeout` on that batch is lower than the `LastObservedEthereumBlockHeight`, cancel the batch, freeing its transactions to be included in another batch, or cancelled by the sender.
 
 An important attribute of this procedure is that it is not possible for a batch to be executed on Ethereum AND cleaned up by the above procedure. This would result in double spends. Since the `LastObservedEthereumBlockHeight` can only be updated by observed Ethereum events, and events must be observed in order, it is impossible for the `LastObservedEthereumBlockHeight` to be higher than a given batches `BatchTimeout` AND for that batch to have been executed without the Gravity module having received the batch executed event.
