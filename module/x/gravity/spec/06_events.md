@@ -126,7 +126,7 @@ The gravity module emits the following events:
 | message | module                     | deposit_claim                 |
 | message | ethereumEventVoteRecord_id | {ethereumEventVoteRecord_key} |
 
-### Msg/WithdrawClaim
+### Msg/BatchExecutedEvent
 
 | Type    | Attribute Key              | Attribute Value               |
 | ------- | -------------------------- | ----------------------------- |

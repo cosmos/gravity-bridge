@@ -38,8 +38,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgSendToCosmosEvent:
 			res, err := msgServer.SendToCosmosEvent(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgWithdrawClaim:
-			res, err := msgServer.WithdrawClaim(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgBatchExecutedEvent:
+			res, err := msgServer.BatchExecutedEvent(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgERC20DeployedClaim:
 			res, err := msgServer.ERC20DeployedClaim(sdk.WrapSDKContext(ctx), msg)

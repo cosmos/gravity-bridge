@@ -310,11 +310,11 @@ func (k msgServer) SendToCosmosEvent(c context.Context, msg *types.MsgSendToCosm
 	return &types.MsgSendToCosmosEventResponse{}, nil
 }
 
-// WithdrawClaim handles MsgWithdrawClaim
-// TODO it is possible to submit an old msgWithdrawClaim (old defined as covering an event nonce that has already been
+// BatchExecutedEvent handles MsgBatchExecutedEvent
+// TODO it is possible to submit an old msgBatchExecutedEvent (old defined as covering an event nonce that has already been
 // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
 // should not be a security risk as 'old' events can never execute but it does store spam in the chain.
-func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim) (*types.MsgWithdrawClaimResponse, error) {
+func (k msgServer) BatchExecutedEvent(c context.Context, msg *types.MsgBatchExecutedEvent) (*types.MsgBatchExecutedEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
@@ -350,7 +350,7 @@ func (k msgServer) WithdrawClaim(c context.Context, msg *types.MsgWithdrawClaim)
 		),
 	)
 
-	return &types.MsgWithdrawClaimResponse{}, nil
+	return &types.MsgBatchExecutedEventResponse{}, nil
 }
 
 // ERC20Deployed handles MsgERC20Deployed

@@ -51,7 +51,7 @@ func (a EthereumEventVoteRecordHandler) Handle(ctx sdk.Context, att types.Ethere
 				return sdkerrors.Wrap(err, "transfer vouchers")
 			}
 		}
-	case *types.MsgWithdrawClaim:
+	case *types.MsgBatchExecutedEvent:
 		return a.keeper.BatchTxExecuted(ctx, claim.TokenContract, claim.BatchNonce)
 	case *types.MsgERC20DeployedClaim:
 		// Check if it already exists

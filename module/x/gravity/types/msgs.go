@@ -19,7 +19,7 @@ var (
 	_ sdk.Msg = &MsgContractCallTxSignature{}
 	_ sdk.Msg = &MsgLogicCallExecutedClaim{}
 	_ sdk.Msg = &MsgSendToCosmosEvent{}
-	_ sdk.Msg = &MsgWithdrawClaim{}
+	_ sdk.Msg = &MsgBatchExecutedEvent{}
 	_ sdk.Msg = &MsgSubmitBadSignatureEvidence{}
 )
 
@@ -295,7 +295,7 @@ type EthereumClaim interface {
 	// when we go to create a new batch we set the timeout some number of batches out from the last
 	// known height plus projected block progress since then.
 	GetBlockHeight() uint64
-	// the delegate address of the claimer, for MsgSendToCosmosEvent and MsgWithdrawClaim
+	// the delegate address of the claimer, for MsgSendToCosmosEvent and MsgBatchExecutedEvent
 	// this is sent in as the sdk.AccAddress of the delegated key. it is up to the user
 	// to disambiguate this into a sdk.ValAddress
 	GetClaimer() sdk.AccAddress
@@ -307,7 +307,7 @@ type EthereumClaim interface {
 
 var (
 	_ EthereumClaim = &MsgSendToCosmosEvent{}
-	_ EthereumClaim = &MsgWithdrawClaim{}
+	_ EthereumClaim = &MsgBatchExecutedEvent{}
 	_ EthereumClaim = &MsgERC20DeployedClaim{}
 	_ EthereumClaim = &MsgLogicCallExecutedClaim{}
 )
@@ -373,7 +373,7 @@ func (msg MsgSendToCosmosEvent) Type() string { return "deposit_claim" }
 func (msg MsgSendToCosmosEvent) Route() string { return RouterKey }
 
 const (
-	TypeMsgWithdrawClaim = "withdraw_claim"
+	TypeMsgBatchExecutedEvent = "withdraw_claim"
 )
 
 // Hash implements BridgeDeposit.Hash
@@ -383,12 +383,12 @@ func (msg *MsgSendToCosmosEvent) ClaimHash() []byte {
 }
 
 // GetType returns the claim type
-func (msg *MsgWithdrawClaim) GetType() ClaimType {
+func (msg *MsgBatchExecutedEvent) GetType() ClaimType {
 	return CLAIM_TYPE_WITHDRAW
 }
 
 // ValidateBasic performs stateless checks
-func (e *MsgWithdrawClaim) ValidateBasic() error {
+func (e *MsgBatchExecutedEvent) ValidateBasic() error {
 	if e.EventNonce == 0 {
 		return fmt.Errorf("event_nonce == 0")
 	}
@@ -405,27 +405,27 @@ func (e *MsgWithdrawClaim) ValidateBasic() error {
 }
 
 // Hash implements WithdrawBatch.Hash
-func (msg *MsgWithdrawClaim) ClaimHash() []byte {
+func (msg *MsgBatchExecutedEvent) ClaimHash() []byte {
 	path := fmt.Sprintf("%s/%d/", msg.TokenContract, msg.BatchNonce)
 	return tmhash.Sum([]byte(path))
 }
 
 // GetSignBytes encodes the message for signing
-func (msg MsgWithdrawClaim) GetSignBytes() []byte {
+func (msg MsgBatchExecutedEvent) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgWithdrawClaim) GetClaimer() sdk.AccAddress {
+func (msg MsgBatchExecutedEvent) GetClaimer() sdk.AccAddress {
 	err := msg.ValidateBasic()
 	if err != nil {
-		panic("MsgWithdrawClaim failed ValidateBasic! Should have been handled earlier")
+		panic("MsgBatchExecutedEvent failed ValidateBasic! Should have been handled earlier")
 	}
 	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
 	return val
 }
 
 // GetSigners defines whose signature is required
-func (msg MsgWithdrawClaim) GetSigners() []sdk.AccAddress {
+func (msg MsgBatchExecutedEvent) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {
 		panic(err)
@@ -435,10 +435,10 @@ func (msg MsgWithdrawClaim) GetSigners() []sdk.AccAddress {
 }
 
 // Route should return the name of the module
-func (msg MsgWithdrawClaim) Route() string { return RouterKey }
+func (msg MsgBatchExecutedEvent) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgWithdrawClaim) Type() string { return "withdraw_claim" }
+func (msg MsgBatchExecutedEvent) Type() string { return "withdraw_claim" }
 
 const (
 	TypeMsgSendToCosmosEvent = "deposit_claim"

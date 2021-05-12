@@ -56,7 +56,7 @@ Now we are ready to apply the ethereumEventVoteRecord's event to the Cosmos stat
 - If it is Ethereum originated:
   - Mint the number of coins in the `amount` field and send to the Cosmos address in the `cosmos_receiver` field.
 
-## MsgWithdrawClaim
+## MsgBatchExecutedEvent
 
 This event is fired when a `BatchTx` is executed on Ethereum, sending the tokens in that `OutgoingTXBatch` to their destinations on Ethereum.
 
