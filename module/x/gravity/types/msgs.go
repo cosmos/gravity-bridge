@@ -11,7 +11,7 @@ import (
 
 var (
 	_ sdk.Msg = &MsgDelegateKeys{}
-	_ sdk.Msg = &MsgValsetConfirm{}
+	_ sdk.Msg = &MsgSignerSetTxSignature{}
 	_ sdk.Msg = &MsgSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
@@ -66,14 +66,14 @@ func (msg *MsgDelegateKeys) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(acc)}
 }
 
-// NewMsgValsetConfirm returns a new msgValsetConfirm
-func NewMsgValsetConfirm(
+// NewMsgSignerSetTxSignature returns a new msgSignerSetTxSignature
+func NewMsgSignerSetTxSignature(
 	nonce uint64,
 	ethAddress string,
 	validator sdk.AccAddress,
 	signature string,
-) *MsgValsetConfirm {
-	return &MsgValsetConfirm{
+) *MsgSignerSetTxSignature {
+	return &MsgSignerSetTxSignature{
 		Nonce:        nonce,
 		Orchestrator: validator.String(),
 		EthAddress:   ethAddress,
@@ -82,13 +82,13 @@ func NewMsgValsetConfirm(
 }
 
 // Route should return the name of the module
-func (msg *MsgValsetConfirm) Route() string { return RouterKey }
+func (msg *MsgSignerSetTxSignature) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgValsetConfirm) Type() string { return "valset_confirm" }
+func (msg *MsgSignerSetTxSignature) Type() string { return "valset_confirm" }
 
 // ValidateBasic performs stateless checks
-func (msg *MsgValsetConfirm) ValidateBasic() (err error) {
+func (msg *MsgSignerSetTxSignature) ValidateBasic() (err error) {
 	if _, err = sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
@@ -99,12 +99,12 @@ func (msg *MsgValsetConfirm) ValidateBasic() (err error) {
 }
 
 // GetSignBytes encodes the message for signing
-func (msg *MsgValsetConfirm) GetSignBytes() []byte {
+func (msg *MsgSignerSetTxSignature) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
-func (msg *MsgValsetConfirm) GetSigners() []sdk.AccAddress {
+func (msg *MsgSignerSetTxSignature) GetSigners() []sdk.AccAddress {
 	// TODO: figure out how to convert between AccAddress and ValAddress properly
 	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
 	if err != nil {

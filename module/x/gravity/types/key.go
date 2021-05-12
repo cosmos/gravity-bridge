@@ -30,9 +30,9 @@ var (
 	// ValsetRequestKey indexes valset requests by nonce
 	ValsetRequestKey = []byte{0x3}
 
-	// ValsetConfirmKey indexes valset confirmations by nonce and the validator account address
+	// SignerSetTxSignatureKey indexes valset confirmations by nonce and the validator account address
 	// i.e cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
-	ValsetConfirmKey = []byte{0x4}
+	SignerSetTxSignatureKey = []byte{0x4}
 
 	// OracleClaimKey Claim details by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
@@ -154,12 +154,12 @@ func GetValsetKey(nonce uint64) []byte {
 	return append(ValsetRequestKey, UInt64Bytes(nonce)...)
 }
 
-// GetValsetConfirmKey returns the following key format
+// GetSignerSetTxSignatureKey returns the following key format
 // prefix   nonce                    validator-address
 // [0x0][0 0 0 0 0 0 0 1][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
-func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
-	return append(ValsetConfirmKey, append(UInt64Bytes(nonce), validator.Bytes()...)...)
+func GetSignerSetTxSignatureKey(nonce uint64, validator sdk.AccAddress) []byte {
+	return append(SignerSetTxSignatureKey, append(UInt64Bytes(nonce), validator.Bytes()...)...)
 }
 
 // GetClaimKey returns the following key format

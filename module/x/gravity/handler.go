@@ -20,8 +20,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgDelegateKeys:
 			res, err := msgServer.SetOrchestratorAddress(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgValsetConfirm:
-			res, err := msgServer.ValsetConfirm(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgSignerSetTxSignature:
+			res, err := msgServer.SignerSetTxSignature(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgSendToEth:
 			res, err := msgServer.SendToEth(sdk.WrapSDKContext(ctx), msg)

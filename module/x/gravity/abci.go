@@ -166,7 +166,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	// unslashedValsets are sorted by nonce in ASC order
 	// Question: do we need to sort each time? See if this can be epoched
 	for _, vs := range unslashedValsets {
-		confirms := k.GetValsetConfirms(ctx, vs.Nonce)
+		confirms := k.GetSignerSetTxSignatures(ctx, vs.Nonce)
 
 		// SLASH BONDED VALIDTORS who didn't attest valset request
 		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)

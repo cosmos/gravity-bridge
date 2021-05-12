@@ -32,7 +32,7 @@ func RegisterRoutes(cliCtx client.Context, r *mux.Router, storeName string) {
 	// This endpoint gets all of the validator set confirmations for a given nonce. In order to determine if a valset is complete
 	// the relayer queries the latest valsets and then compares the number of members they show versus the length of this endpoints output
 	// if they match every validator has submitted a signature and we can go forward with relaying that validator set update.
-	r.HandleFunc(fmt.Sprintf("/%s/valset_confirm/{%s}", storeName, nonce), allValsetConfirmsHandler(cliCtx, storeName)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/valset_confirm/{%s}", storeName, nonce), allSignerSetTxSignaturesHandler(cliCtx, storeName)).Methods("GET")
 	// gets the latest 5 validator set requests, used heavily by the relayer. Which hits this endpoint before checking which
 	// of these last 5 have sufficient signatures to relay
 	r.HandleFunc(fmt.Sprintf("/%s/valset_requests", storeName), lastValsetRequestsHandler(cliCtx, storeName)).Methods("GET")

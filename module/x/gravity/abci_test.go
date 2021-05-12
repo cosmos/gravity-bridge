@@ -83,8 +83,8 @@ func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
 			// don't sign with first validator
 			continue
 		}
-		conf := types.NewMsgValsetConfirm(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
-		pk.SetValsetConfirm(ctx, *conf)
+		conf := types.NewMsgSignerSetTxSignature(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
+		pk.SetSignerSetTxSignature(ctx, *conf)
 	}
 
 	EndBlocker(ctx, pk)
@@ -143,8 +143,8 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 			// don't sign with first validator
 			continue
 		}
-		conf := types.NewMsgValsetConfirm(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
-		pk.SetValsetConfirm(ctx, *conf)
+		conf := types.NewMsgSignerSetTxSignature(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
+		pk.SetSignerSetTxSignature(ctx, *conf)
 	}
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 

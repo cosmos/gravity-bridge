@@ -22,7 +22,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdGetCurrentValset(),
 		CmdGetValsetRequest(),
 		CmdGetDelegateAddress(),
-		CmdGetValsetConfirm(),
+		CmdGetSignerSetTxSignature(),
 		CmdGetPendingValsetRequest(),
 		CmdGetPendingOutgoingTXBatchRequest(),
 		// CmdGetAllOutgoingTXBatchRequest(),
@@ -153,7 +153,7 @@ func CmdGetValsetRequest() *cobra.Command {
 	return cmd
 }
 
-func CmdGetValsetConfirm() *cobra.Command {
+func CmdGetSignerSetTxSignature() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "valset-confirm [nonce] [bech32 validator address]",
 		Short: "Get valset confirmation with a particular nonce from a particular validator",
@@ -172,7 +172,7 @@ func CmdGetValsetConfirm() *cobra.Command {
 				Address: args[1],
 			}
 
-			res, err := queryClient.ValsetConfirm(cmd.Context(), req)
+			res, err := queryClient.SignerSetTxSignature(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

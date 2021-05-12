@@ -74,7 +74,7 @@ func lastBatchesHandler(cliCtx client.Context, storeName string) http.HandlerFun
 }
 
 // gets all the confirm messages for a given validator set nonce
-func allValsetConfirmsHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
+func allSignerSetTxSignaturesHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]

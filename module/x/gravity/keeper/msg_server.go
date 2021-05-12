@@ -62,9 +62,9 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgDeleg
 
 }
 
-// ValsetConfirm handles MsgValsetConfirm
-// TODO: check msgValsetConfirm to have an Orchestrator field instead of a Validator field
-func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm) (*types.MsgValsetConfirmResponse, error) {
+// SignerSetTxSignature handles MsgSignerSetTxSignature
+// TODO: check msgSignerSetTxSignature to have an Orchestrator field instead of a Validator field
+func (k msgServer) SignerSetTxSignature(c context.Context, msg *types.MsgSignerSetTxSignature) (*types.MsgSignerSetTxSignatureResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	valset := k.GetValset(ctx, msg.Nonce)
 	if valset == nil {
@@ -95,20 +95,20 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 	}
 
 	// persist signature
-	if k.GetValsetConfirm(ctx, msg.Nonce, orchaddr) != nil {
+	if k.GetSignerSetTxSignature(ctx, msg.Nonce, orchaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
-	key := k.SetValsetConfirm(ctx, *msg)
+	key := k.SetSignerSetTxSignature(ctx, *msg)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyValsetConfirmKey, string(key)),
+			sdk.NewAttribute(types.AttributeKeySignerSetTxSignatureKey, string(key)),
 		),
 	)
 
-	return &types.MsgValsetConfirmResponse{}, nil
+	return &types.MsgSignerSetTxSignatureResponse{}, nil
 }
 
 // SendToEth handles MsgSendToEth

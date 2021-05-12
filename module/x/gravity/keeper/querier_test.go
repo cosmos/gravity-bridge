@@ -16,7 +16,7 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-func TestQueryValsetConfirm(t *testing.T) {
+func TestQuerySignerSetTxSignature(t *testing.T) {
 	var (
 		nonce                                       = uint64(1)
 		myValidatorCosmosAddr, _                    = sdk.AccAddressFromBech32("cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l")
@@ -24,7 +24,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 	)
 	input := CreateTestEnv(t)
 	ctx := input.Context
-	input.GravityKeeper.SetValsetConfirm(ctx, types.MsgValsetConfirm{
+	input.GravityKeeper.SetSignerSetTxSignature(ctx, types.MsgSignerSetTxSignature{
 		Nonce:        nonce,
 		Orchestrator: myValidatorCosmosAddr.String(),
 		EthAddress:   myValidatorEthereumAddr.String(),
@@ -40,7 +40,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 		"all good": {
 			srcNonce: "1",
 			srcAddr:  myValidatorCosmosAddr.String(),
-			expResp:  []byte(`{"type":"gravity/MsgValsetConfirm", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "orchestrator": "cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l",  "signature": "alksdjhflkasjdfoiasjdfiasjdfoiasdj"}}`),
+			expResp:  []byte(`{"type":"gravity/MsgSignerSetTxSignature", "value":{"eth_address":"0x3232323232323232323232323232323232323232", "nonce": "1", "orchestrator": "cosmos1ees2tqhhhm9ahlhceh2zdguww9lqn2ckukn86l",  "signature": "alksdjhflkasjdfoiasjdfiasjdfoiasdj"}}`),
 		},
 		"unknown nonce": {
 			srcNonce: "999999",
@@ -59,7 +59,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := queryValsetConfirm(ctx, []string{spec.srcNonce, spec.srcAddr}, input.GravityKeeper)
+			got, err := querySignerSetTxSignature(ctx, []string{spec.srcNonce, spec.srcAddr}, input.GravityKeeper)
 			if spec.expErr {
 				require.Error(t, err)
 				return
@@ -74,7 +74,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 	}
 }
 
-func TestAllValsetConfirmsBynonce(t *testing.T) {
+func TestAllSignerSetTxSignaturesBynonce(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
@@ -86,12 +86,12 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 	// seed confirmations
 	for i := 0; i < 3; i++ {
 		addr, _ := sdk.AccAddressFromBech32(addrs[i])
-		msg := types.MsgValsetConfirm{}
+		msg := types.MsgSignerSetTxSignature{}
 		msg.EthAddress = gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(i + 1)}, 20)).String()
 		msg.Nonce = uint64(1)
 		msg.Orchestrator = addr.String()
 		msg.Signature = fmt.Sprintf("signature %d", i+1)
-		input.GravityKeeper.SetValsetConfirm(ctx, msg)
+		input.GravityKeeper.SetSignerSetTxSignature(ctx, msg)
 	}
 
 	specs := map[string]struct {
@@ -118,7 +118,7 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := queryAllValsetConfirms(ctx, spec.srcNonce, input.GravityKeeper)
+			got, err := queryAllSignerSetTxSignatures(ctx, spec.srcNonce, input.GravityKeeper)
 			if spec.expErr {
 				require.Error(t, err)
 				return

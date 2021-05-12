@@ -62,7 +62,7 @@ Procedure:
 - For each of these valsets:
   - Get the current set of bonded validators with `StakingKeeper.GetBondedValidatorsByPower`. For each validator:
     - Check that the validator started validating before the valset was created.
-    - Check if the validator has signed this valset with a `MsgValsetConfirm`. If not, slash the validator by `SlashFractionBatch` and jail them.
+    - Check if the validator has signed this valset with a `MsgSignerSetTxSignature`. If not, slash the validator by `SlashFractionBatch` and jail them.
 
 ## EthereumEventVoteRecord vote counting
 

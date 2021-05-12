@@ -42,7 +42,7 @@ The gravity module emits the following events:
 
 ## Service Messages
 
-### Msg/ValsetConfirm
+### Msg/SignerSetTxSignature
 
 | Type    | Attribute Key        | Attribute Value    |
 | ------- | -------------------- | ------------------ |

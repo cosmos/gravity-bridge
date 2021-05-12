@@ -95,7 +95,7 @@ This message will fail if:
 - Counter party signature verification failed
 - A duplicate signature is observed
 
-### MsgValsetConfirm
+### MsgSignerSetTxSignature
 
 When a `Valset` is created by the Gravity module, validators sign it with their Ethereum keys, and send the signatures to the Gravity module using this message.
 

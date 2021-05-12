@@ -33,23 +33,23 @@ func (k Keeper) ValsetRequest(
 	return &types.SignerSetTxResponse{Valset: k.GetValset(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
 }
 
-// ValsetConfirm queries the ValsetConfirm of the gravity module
-func (k Keeper) ValsetConfirm(
+// SignerSetTxSignature queries the SignerSetTxSignature of the gravity module
+func (k Keeper) SignerSetTxSignature(
 	c context.Context,
 	req *types.SignerSetTxSignatureRequest) (*types.SignerSetTxSignatureResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
-	return &types.SignerSetTxSignatureResponse{Confirm: k.GetValsetConfirm(sdk.UnwrapSDKContext(c), req.Nonce, addr)}, nil
+	return &types.SignerSetTxSignatureResponse{Confirm: k.GetSignerSetTxSignature(sdk.UnwrapSDKContext(c), req.Nonce, addr)}, nil
 }
 
-// ValsetConfirmsByNonce queries the ValsetConfirmsByNonce of the gravity module
-func (k Keeper) ValsetConfirmsByNonce(
+// SignerSetTxSignaturesByNonce queries the SignerSetTxSignaturesByNonce of the gravity module
+func (k Keeper) SignerSetTxSignaturesByNonce(
 	c context.Context,
 	req *types.SignerSetTxSignaturesByNonceRequest) (*types.SignerSetTxSignaturesByNonceResponse, error) {
-	var confirms []*types.MsgValsetConfirm
-	k.IterateValsetConfirmByNonce(sdk.UnwrapSDKContext(c), req.Nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
+	var confirms []*types.MsgSignerSetTxSignature
+	k.IterateSignerSetTxSignatureByNonce(sdk.UnwrapSDKContext(c), req.Nonce, func(_ []byte, c types.MsgSignerSetTxSignature) bool {
 		confirms = append(confirms, &c)
 		return false
 	})
@@ -83,7 +83,7 @@ func (k Keeper) LastPendingValsetRequestByAddr(
 	var pendingValsetReq []*types.Valset
 	k.IterateValsets(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
-		foundConfirm := k.GetValsetConfirm(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
+		foundConfirm := k.GetSignerSetTxSignature(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
 		// and exit the loop
 		if !foundConfirm {

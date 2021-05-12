@@ -143,6 +143,6 @@ We save this data in a `Valset`
 
 ### Valset signing
 
-Once a valset has been created and stored, it is up to the current validators to sign it with their Ethereum keys so that it can be submitted to the Ethereum chain. They do this with a separate process called the "orchestrator", and send the signatures to the Cosmos chain as `MsgValsetConfirm` messages. The Gravity module then checks that the signature is valid and stores it.
+Once a valset has been created and stored, it is up to the current validators to sign it with their Ethereum keys so that it can be submitted to the Ethereum chain. They do this with a separate process called the "orchestrator", and send the signatures to the Cosmos chain as `MsgSignerSetTxSignature` messages. The Gravity module then checks that the signature is valid and stores it.
 
 Relayers are then able to get all the signatures for a valset, assemble them into an Ethereum transaction, and send it to the Gravity.sol contract.

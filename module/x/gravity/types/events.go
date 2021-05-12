@@ -12,7 +12,7 @@ const (
 
 	AttributeKeyEthereumEventVoteRecordID   = "ethereumEventVoteRecord_id"
 	AttributeKeyBatchConfirmKey             = "batch_confirm_key"
-	AttributeKeyValsetConfirmKey            = "valset_confirm_key"
+	AttributeKeySignerSetTxSignatureKey     = "valset_confirm_key"
 	AttributeKeyMultisigID                  = "multisig_id"
 	AttributeKeyOutgoingBatchID             = "batch_id"
 	AttributeKeyOutgoingTXID                = "outgoing_tx_id"

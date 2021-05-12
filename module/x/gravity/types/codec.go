@@ -17,7 +17,7 @@ func init() {
 // RegisterInterfaces registers the interfaces for the proto stuff
 func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgValsetConfirm{},
+		&MsgSignerSetTxSignature{},
 		&MsgSendToEth{},
 		&MsgRequestBatch{},
 		&MsgConfirmBatch{},
@@ -49,7 +49,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterInterface((*EthereumClaim)(nil), nil)
 	cdc.RegisterConcrete(&MsgDelegateKeys{}, "gravity/MsgDelegateKeys", nil)
-	cdc.RegisterConcrete(&MsgValsetConfirm{}, "gravity/MsgValsetConfirm", nil)
+	cdc.RegisterConcrete(&MsgSignerSetTxSignature{}, "gravity/MsgSignerSetTxSignature", nil)
 	cdc.RegisterConcrete(&MsgSendToEth{}, "gravity/MsgSendToEth", nil)
 	cdc.RegisterConcrete(&MsgRequestBatch{}, "gravity/MsgRequestBatch", nil)
 	cdc.RegisterConcrete(&MsgConfirmBatch{}, "gravity/MsgConfirmBatch", nil)

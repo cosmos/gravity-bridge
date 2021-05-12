@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestValsetConfirmHash(t *testing.T) {
+func TestSignerSetTxSignatureHash(t *testing.T) {
 	powers := []uint64{3333, 3333, 3333}
 	ethAddresses := []string{
 		"0xc783df8a850f42e7F7e57013759C285caa701eB6",

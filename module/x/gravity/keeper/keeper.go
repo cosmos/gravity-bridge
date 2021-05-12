@@ -237,40 +237,40 @@ func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedVa
 //     VALSET CONFIRMS     //
 /////////////////////////////
 
-// GetValsetConfirm returns a valset confirmation by a nonce and validator address
-func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce uint64, validator sdk.AccAddress) *types.MsgValsetConfirm {
+// GetSignerSetTxSignature returns a valset confirmation by a nonce and validator address
+func (k Keeper) GetSignerSetTxSignature(ctx sdk.Context, nonce uint64, validator sdk.AccAddress) *types.MsgSignerSetTxSignature {
 	store := ctx.KVStore(k.storeKey)
-	entity := store.Get(types.GetValsetConfirmKey(nonce, validator))
+	entity := store.Get(types.GetSignerSetTxSignatureKey(nonce, validator))
 	if entity == nil {
 		return nil
 	}
-	confirm := types.MsgValsetConfirm{}
+	confirm := types.MsgSignerSetTxSignature{}
 	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
 	return &confirm
 }
 
-// SetValsetConfirm sets a valset confirmation
-func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConfirm) []byte {
+// SetSignerSetTxSignature sets a valset confirmation
+func (k Keeper) SetSignerSetTxSignature(ctx sdk.Context, valsetConf types.MsgSignerSetTxSignature) []byte {
 	store := ctx.KVStore(k.storeKey)
 	addr, err := sdk.AccAddressFromBech32(valsetConf.Orchestrator)
 	if err != nil {
 		panic(err)
 	}
-	key := types.GetValsetConfirmKey(valsetConf.Nonce, addr)
+	key := types.GetSignerSetTxSignatureKey(valsetConf.Nonce, addr)
 	store.Set(key, k.cdc.MustMarshalBinaryBare(&valsetConf))
 	return key
 }
 
-// GetValsetConfirms returns all validator set confirmations by nonce
-func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*types.MsgValsetConfirm) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
+// GetSignerSetTxSignatures returns all validator set confirmations by nonce
+func (k Keeper) GetSignerSetTxSignatures(ctx sdk.Context, nonce uint64) (confirms []*types.MsgSignerSetTxSignature) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SignerSetTxSignatureKey)
 	start, end := prefixRange(types.UInt64Bytes(nonce))
 	iterator := prefixStore.Iterator(start, end)
 
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		confirm := types.MsgValsetConfirm{}
+		confirm := types.MsgSignerSetTxSignature{}
 		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &confirm)
 		confirms = append(confirms, &confirm)
 	}
@@ -278,16 +278,16 @@ func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*ty
 	return confirms
 }
 
-// IterateValsetConfirmByNonce iterates through all valset confirms by nonce in ASC order
+// IterateSignerSetTxSignatureByNonce iterates through all valset confirms by nonce in ASC order
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
-func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgValsetConfirm) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValsetConfirmKey)
+func (k Keeper) IterateSignerSetTxSignatureByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgSignerSetTxSignature) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SignerSetTxSignatureKey)
 	iter := prefixStore.Iterator(prefixRange(types.UInt64Bytes(nonce)))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgValsetConfirm{}
+		confirm := types.MsgSignerSetTxSignature{}
 		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
 		// cb returns true to stop early
 		if cb(iter.Key(), confirm) {

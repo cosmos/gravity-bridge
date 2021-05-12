@@ -73,9 +73,9 @@ The latest validator set slash nonce. This is used to track which validator set 
 
 When a validator signs over a validator set this is considered a `valSetConfirmation`, these are saved via the current nonce and the orchestrator address.
 
-| Key                                         | Value                  | Type                     | Encoding         |
-| ------------------------------------------- | ---------------------- | ------------------------ | ---------------- |
-| `[]byte{0x3} + (nonce + []byte(AccAddress)` | Validator Confirmation | `types.MsgValsetConfirm` | Protobuf encoded |
+| Key                                         | Value                  | Type                            | Encoding         |
+| ------------------------------------------- | ---------------------- | ------------------------------- | ---------------- |
+| `[]byte{0x3} + (nonce + []byte(AccAddress)` | Validator Confirmation | `types.MsgSignerSetTxSignature` | Protobuf encoded |
 
 ### ConfirmBatch
 

@@ -16,8 +16,8 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	}
 
 	// reset valset confirmations in state
-	for _, conf := range data.ValsetConfirms {
-		k.SetValsetConfirm(ctx, *conf)
+	for _, conf := range data.SignerSetTxSignatures {
+		k.SetSignerSetTxSignature(ctx, *conf)
 	}
 
 	// reset batches in state
@@ -129,7 +129,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		batches                  = k.GetBatchTxs(ctx)
 		valsets                  = k.GetValsets(ctx)
 		attmap                   = k.GetEthereumEventVoteRecordMapping(ctx)
-		vsconfs                  = []*types.MsgValsetConfirm{}
+		vsconfs                  = []*types.MsgSignerSetTxSignature{}
 		batchconfs               = []types.MsgConfirmBatch{}
 		callconfs                = []types.MsgConfirmLogicCall{}
 		ethereumEventVoteRecords = []types.EthereumEventVoteRecord{}
@@ -142,7 +142,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	// export valset confirmations from state
 	for _, vs := range valsets {
 		// TODO: set height = 0?
-		vsconfs = append(vsconfs, k.GetValsetConfirms(ctx, vs.Nonce)...)
+		vsconfs = append(vsconfs, k.GetSignerSetTxSignatures(ctx, vs.Nonce)...)
 	}
 
 	// export batch confirmations from state
@@ -175,7 +175,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		Params:                   &p,
 		LastObservedNonce:        lastobserved,
 		Valsets:                  valsets,
-		ValsetConfirms:           vsconfs,
+		SignerSetTxSignatures:    vsconfs,
 		Batches:                  batches,
 		BatchConfirms:            batchconfs,
 		LogicCalls:               calls,

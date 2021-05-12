@@ -24,7 +24,7 @@ type valsetConfirmReq struct {
 // check the ethereum sig on a particular valset and broadcast a transaction containing
 // it if correct. The nonce / block height is used to determine what valset to look up
 // locally and verify
-func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.HandlerFunc {
+func createSignerSetTxSignatureHandler(cliCtx client.Context, storeKey string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req valsetConfirmReq
 
@@ -72,7 +72,7 @@ func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.Han
 		}
 
 		cosmosAddr := cliCtx.GetFromAddress()
-		msg := types.NewMsgValsetConfirm(valset.Nonce, req.EthAddress, cosmosAddr, req.EthSig)
+		msg := types.NewMsgSignerSetTxSignature(valset.Nonce, req.EthAddress, cosmosAddr, req.EthSig)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")

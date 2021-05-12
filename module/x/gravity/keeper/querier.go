@@ -22,7 +22,7 @@ const (
 	// Gets all the confirmation signatures for a given validator
 	// set, used by the relayer to package the validator set and
 	// it's signatures into an Ethereum transaction
-	QueryValsetConfirmsByNonce = "valsetConfirms"
+	QuerySignerSetTxSignaturesByNonce = "valsetConfirms"
 	// Gets the last N (where N is currently 5) validator sets that
 	// have been produced by the chain. Useful to see if any recently
 	// signed requests can be submitted.
@@ -34,7 +34,7 @@ const (
 	QueryCurrentValset = "currentValset"
 	// TODO remove this, it's not used, getting one confirm at a time
 	// is mostly useless
-	QueryValsetConfirm = "valsetConfirm"
+	QuerySignerSetTxSignature = "valsetConfirm"
 
 	// used by the contract deployer script. GravityID is set in the Genesis
 	// file, then read by the contract deployer and deployed to Ethereum
@@ -101,10 +101,10 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryCurrentValset(ctx, keeper)
 		case QueryValsetRequest:
 			return queryValsetRequest(ctx, path[1:], keeper)
-		case QueryValsetConfirm:
-			return queryValsetConfirm(ctx, path[1:], keeper)
-		case QueryValsetConfirmsByNonce:
-			return queryAllValsetConfirms(ctx, path[1], keeper)
+		case QuerySignerSetTxSignature:
+			return querySignerSetTxSignature(ctx, path[1:], keeper)
+		case QuerySignerSetTxSignaturesByNonce:
+			return queryAllSignerSetTxSignatures(ctx, path[1], keeper)
 		case QueryLastValsetRequests:
 			return lastValsetRequests(ctx, keeper)
 		case QueryLastPendingValsetRequestByAddr:
@@ -171,16 +171,16 @@ func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 	return res, nil
 }
 
-// allValsetConfirmsByNonce returns all the confirm messages for a given nonce
+// allSignerSetTxSignaturesByNonce returns all the confirm messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
-func queryAllValsetConfirms(ctx sdk.Context, nonceStr string, keeper Keeper) ([]byte, error) {
+func queryAllSignerSetTxSignatures(ctx sdk.Context, nonceStr string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(nonceStr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	var confirms []*types.MsgValsetConfirm
-	keeper.IterateValsetConfirmByNonce(ctx, nonce, func(_ []byte, c types.MsgValsetConfirm) bool {
+	var confirms []*types.MsgSignerSetTxSignature
+	keeper.IterateSignerSetTxSignatureByNonce(ctx, nonce, func(_ []byte, c types.MsgSignerSetTxSignature) bool {
 		confirms = append(confirms, &c)
 		return false
 	})
@@ -251,7 +251,7 @@ func lastPendingValsetRequest(ctx sdk.Context, operatorAddr string, keeper Keepe
 	var pendingValsetReq []*types.Valset
 	keeper.IterateValsets(ctx, func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
-		foundConfirm := keeper.GetValsetConfirm(ctx, val.Nonce, addr) != nil
+		foundConfirm := keeper.GetSignerSetTxSignature(ctx, val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
 		// and exit the loop
 		if !foundConfirm {
@@ -285,9 +285,9 @@ func queryCurrentValset(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
-// queryValsetConfirm returns the confirm msg for single orchestrator address and nonce
+// querySignerSetTxSignature returns the confirm msg for single orchestrator address and nonce
 // When nothing found a nil value is returned
-func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
+func querySignerSetTxSignature(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(path[0])
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
@@ -298,7 +298,7 @@ func queryValsetConfirm(ctx sdk.Context, path []string, keeper Keeper) ([]byte, 
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	valset := keeper.GetValsetConfirm(ctx, nonce, accAddress)
+	valset := keeper.GetSignerSetTxSignature(ctx, nonce, accAddress)
 	if valset == nil {
 		return nil, nil
 	}
