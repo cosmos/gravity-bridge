@@ -332,7 +332,7 @@ func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.BatchFees {
 		feeAmount := big.NewInt(0).SetBytes(feeAmountBytes)
 
 		for i := 0; i < len(ids.Ids); i++ {
-			if txCountMap[tokenContractAddr] >= OutgoingTxBatchSize {
+			if txCountMap[tokenContractAddr] >= BatchTxSize {
 				break
 			} else {
 				// add fee amount

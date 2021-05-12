@@ -19,7 +19,7 @@ func (k Keeper) CheckBadSignatureEvidence(
 	k.cdc.UnpackAny(msg.Subject, &subject)
 
 	switch subject := subject.(type) {
-	case *types.OutgoingTxBatch:
+	case *types.BatchTx:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
 	case *types.Valset:
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)

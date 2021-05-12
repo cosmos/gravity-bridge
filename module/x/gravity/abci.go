@@ -125,7 +125,7 @@ func ethereumEventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 //    AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
 	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumBlockHeight
-	batches := k.GetOutgoingTxBatches(ctx)
+	batches := k.GetBatchTxes(ctx)
 	for _, batch := range batches {
 		if batch.BatchTimeout < ethereumHeight {
 			k.CancelOutgoingTXBatch(ctx, batch.TokenContract, batch.BatchNonce)

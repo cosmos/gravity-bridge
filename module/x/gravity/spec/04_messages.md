@@ -53,7 +53,7 @@ This message will fail if:
 
 ### MsgRequestBatch
 
-Anyone can send this message to trigger [creation](03_state_transitions.md#batch-creation) of an `OutgoingTxBatch`.
+Anyone can send this message to trigger [creation](03_state_transitions.md#batch-creation) of an `BatchTx`.
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L122-125
 
@@ -65,7 +65,7 @@ This message will fail if:
 
 ### MsgConfirmBatch
 
-Validators sign `OutgoingTxBatch`'s with their Ethereum keys, and send the signatures to the Gravity module using this message.
+Validators sign `BatchTx`'s with their Ethereum keys, and send the signatures to the Gravity module using this message.
 
 +++ https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/msgs.proto#L137-143
 

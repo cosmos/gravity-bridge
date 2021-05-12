@@ -171,7 +171,7 @@ func TestBatchSlashing(t *testing.T) {
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
 
 	// First store a batch
-	batch := &types.OutgoingTxBatch{
+	batch := &types.BatchTx{
 		BatchNonce:    1,
 		Transactions:  []*types.OutgoingTransferTx{},
 		TokenContract: keeper.TokenContractAddrs[0],

@@ -11,7 +11,7 @@ import (
 )
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (b OutgoingTxBatch) GetCheckpoint(gravityIDstring string) []byte {
+func (b BatchTx) GetCheckpoint(gravityIDstring string) []byte {
 
 	abi, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
 	if err != nil {

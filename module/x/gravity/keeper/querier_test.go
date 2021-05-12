@@ -463,7 +463,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 	}{
 		"find batch": {
 			expResp: []byte(`{
-	"type": "gravity/OutgoingTxBatch",
+	"type": "gravity/BatchTx",
 	"value": {
 	"batch_nonce": "1",
 	"block": "1234567",
@@ -698,7 +698,7 @@ func TestQueryBatch(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedJSON := []byte(`{
-		"type": "gravity/OutgoingTxBatch",
+		"type": "gravity/BatchTx",
 		"value": {
 		  "transactions": [
 			{

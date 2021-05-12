@@ -58,7 +58,7 @@ Now we are ready to apply the ethereumEventVoteRecord's event to the Cosmos stat
 
 ## MsgWithdrawClaim
 
-This event is fired when a `OutgoingTxBatch` is executed on Ethereum, sending the tokens in that `OutgoingTXBatch` to their destinations on Ethereum.
+This event is fired when a `BatchTx` is executed on Ethereum, sending the tokens in that `OutgoingTXBatch` to their destinations on Ethereum.
 
 ### On event observed:
 
@@ -76,7 +76,7 @@ Cosmos originated assets are represented by ERC20 contracts deployed on Ethereum
 - Check if the ERC20 parameters, Name, Symbol, and Decimals match the equivalent attributes in the `DenomMetaData`. If not, error out.
 - If the previous checks all passed, associate the ERC20's contract address with the denom using the `CosmosOriginatedDenomToERC20` index
 
-## OutgoingTxBatch
+## BatchTx
 
 ### Batch creation
 
@@ -95,7 +95,7 @@ By making it so that every new batch must be more profitable than any other batc
 
 Moving on with the batch creation process:
 
-- Take the `OutgoingTxBatchSize` unbatched transactions with the highest fees for the given token type, add them to the batches `transactions` field, and remove the transactions from the `UnbatchedTXIndex`, so they cannot be cancelled or added to another batch.
+- Take the `BatchTxSize` unbatched transactions with the highest fees for the given token type, add them to the batches `transactions` field, and remove the transactions from the `UnbatchedTXIndex`, so they cannot be cancelled or added to another batch.
 - Increment the `LastOutgoingBatchID` and set the batches `batch_nonce` field to the incremented value.
 - Get the `BatchTimeout`. The batch timeout is an Ethereum block height in the future, after which the batch will no longer be accepted by the Gravity.sol contract. This allows unprofitable batches to time out and free their transactions to be added to a more profitable batch or be cancelled. Gravity has knowledge of the `LastObservedEthereumBlockHeight` which is brought in on every block, but this knowledge is only as recent as the last observed event. For this reason, we estimate the current Ethereum block height using the following procedure:
   - We estimate how many milliseconds it has been since we recorded the `LastObservedEthereumBlockHeight` by multiplying the number of blocks since then with the average Cosmos block time.

@@ -100,7 +100,7 @@ func TestSubmitBadSignatureEvidenceLogicCallExists(t *testing.T) {
 func TestSubmitBadSignatureEvidenceSlash(t *testing.T) {
 	input, ctx := SetupFiveValChain(t)
 
-	batch := types.OutgoingTxBatch{
+	batch := types.BatchTx{
 		BatchTimeout: 420,
 	}
 

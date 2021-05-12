@@ -223,17 +223,17 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 	return append(OutgoingTXPoolKey, sdk.Uint64ToBigEndian(id)...)
 }
 
-// GetOutgoingTxBatchKey returns the following key format
+// GetBatchTxKey returns the following key format
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
-func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
+func GetBatchTxKey(tokenContract string, nonce uint64) []byte {
 	return append(append(OutgoingTXBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
 }
 
-// GetOutgoingTxBatchBlockKey returns the following key format
+// GetBatchTxBlockKey returns the following key format
 // prefix     blockheight
 // [0xb][0 0 0 0 2 1 4 3]
-func GetOutgoingTxBatchBlockKey(block uint64) []byte {
+func GetBatchTxBlockKey(block uint64) []byte {
 	return append(OutgoingTXBatchBlockKey, UInt64Bytes(block)...)
 }
 

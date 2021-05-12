@@ -60,7 +60,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgERC20DeployedClaim{}, "gravity/MsgERC20DeployedClaim", nil)
 	cdc.RegisterConcrete(&MsgLogicCallExecutedClaim{}, "gravity/MsgLogicCallExecutedClaim", nil)
 	cdc.RegisterConcrete(&MsgValsetUpdatedClaim{}, "gravity/MsgValsetUpdatedClaim", nil)
-	cdc.RegisterConcrete(&OutgoingTxBatch{}, "gravity/OutgoingTxBatch", nil)
+	cdc.RegisterConcrete(&BatchTx{}, "gravity/BatchTx", nil)
 	cdc.RegisterConcrete(&MsgCancelSendToEth{}, "gravity/MsgCancelSendToEth", nil)
 	cdc.RegisterConcrete(&OutgoingTransferTx{}, "gravity/OutgoingTransferTx", nil)
 	cdc.RegisterConcrete(&ERC20Token{}, "gravity/ERC20Token", nil)

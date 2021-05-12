@@ -116,8 +116,8 @@ func (k Keeper) LastPendingBatchRequestByAddr(
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingBatchReq *types.OutgoingTxBatch
-	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.OutgoingTxBatch) bool {
+	var pendingBatchReq *types.BatchTx
+	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
 		foundConfirm := k.GetBatchConfirm(sdk.UnwrapSDKContext(c), batch.BatchNonce, batch.TokenContract, addr) != nil
 		if !foundConfirm {
 			pendingBatchReq = batch
@@ -150,12 +150,12 @@ func (k Keeper) LastPendingLogicCallByAddr(
 	return &types.LastPendingContractCallTxByAddrResponse{Call: pendingLogicReq}, nil
 }
 
-// OutgoingTxBatches queries the OutgoingTxBatches of the gravity module
-func (k Keeper) OutgoingTxBatches(
+// BatchTxes queries the BatchTxes of the gravity module
+func (k Keeper) BatchTxes(
 	c context.Context,
 	req *types.BatchTxsRequest) (*types.BatchTxsResponse, error) {
-	var batches []*types.OutgoingTxBatch
-	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.OutgoingTxBatch) bool {
+	var batches []*types.BatchTx
+	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
 		batches = append(batches, batch)
 		return len(batches) == MaxResults
 	})
@@ -331,7 +331,7 @@ func (k Keeper) GetPendingSendToEth(
 	c context.Context,
 	req *types.PendingSendToEthereumRequest) (*types.PendingSendToEthereumRequestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	batches := k.GetOutgoingTxBatches(ctx)
+	batches := k.GetBatchTxes(ctx)
 	unbatchedTx := k.GetPoolTransactions(ctx)
 	senderAddress := req.SenderAddress
 	var res *types.PendingSendToEthereumRequestResponse

@@ -52,7 +52,7 @@ func TestBatches(t *testing.T) {
 	gotFirstBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
 	require.NotNil(t, gotFirstBatch)
 
-	expFirstBatch := &types.OutgoingTxBatch{
+	expFirstBatch := &types.BatchTx{
 		BatchNonce: 1,
 		Transactions: []*types.OutgoingTransferTx{
 			{
@@ -118,7 +118,7 @@ func TestBatches(t *testing.T) {
 	require.NoError(t, err)
 
 	// check that the more profitable batch has the right txs in it
-	expSecondBatch := &types.OutgoingTxBatch{
+	expSecondBatch := &types.BatchTx{
 		BatchNonce: 2,
 		Transactions: []*types.OutgoingTransferTx{
 			{
@@ -146,7 +146,7 @@ func TestBatches(t *testing.T) {
 	// =================================
 
 	// Execute the batch
-	err = input.GravityKeeper.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	err = input.GravityKeeper.BatchTxExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 	require.NoError(t, err)
 
 	// check batch has been deleted
@@ -238,7 +238,7 @@ func TestBatchesFullCoins(t *testing.T) {
 	gotFirstBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
 	require.NotNil(t, gotFirstBatch)
 
-	expFirstBatch := &types.OutgoingTxBatch{
+	expFirstBatch := &types.BatchTx{
 		BatchNonce: 1,
 		Transactions: []*types.OutgoingTransferTx{
 			{
@@ -304,7 +304,7 @@ func TestBatchesFullCoins(t *testing.T) {
 	require.NoError(t, err)
 
 	// check that the more profitable batch has the right txs in it
-	expSecondBatch := &types.OutgoingTxBatch{
+	expSecondBatch := &types.BatchTx{
 		BatchNonce: 2,
 		Transactions: []*types.OutgoingTransferTx{
 			{
@@ -332,7 +332,7 @@ func TestBatchesFullCoins(t *testing.T) {
 	// =================================
 
 	// Execute the batch
-	err = input.GravityKeeper.OutgoingTxBatchExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	err = input.GravityKeeper.BatchTxExecuted(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 	require.NoError(t, err)
 
 	// check batch has been deleted

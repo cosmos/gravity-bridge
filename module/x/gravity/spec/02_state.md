@@ -13,16 +13,16 @@ and defines overall functioning of the staking module.
 
 +++ <https://github.com/althea-net/cosmos-gravity-bridge/blob/main/module/proto/gravity/v1/genesis.proto#L72-L104>
 
-### OutgoingTxBatch
+### BatchTx
 
 Stored in two possible ways, first with a height and second without (unsafe). Unsafe is used for testing and export and import of state.
 
-| key                                                                | Value                            | Type                    | Encoding         |
-| ------------------------------------------------------------------ | -------------------------------- | ----------------------- | ---------------- |
-| `[]byte{0xa} + []byte(tokenContract) + nonce (big endian encoded)` | A batch of outgoing transactions | `types.OutgoingTxBatch` | Protobuf encoded |
+| key                                                                | Value                            | Type            | Encoding         |
+| ------------------------------------------------------------------ | -------------------------------- | --------------- | ---------------- |
+| `[]byte{0xa} + []byte(tokenContract) + nonce (big endian encoded)` | A batch of outgoing transactions | `types.BatchTx` | Protobuf encoded |
 
 ```
-message OutgoingTxBatch {
+message BatchTx {
   // The batch_nonce is an incrementing nonce which is assigned to a batch on creation.
   // The Gravity.sol Ethereum contract stores the last executed batch nonce for each token type
   // and it will only execute batches with a lower nonce. Note that the nonce sequence is
