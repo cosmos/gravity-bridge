@@ -72,7 +72,7 @@ func addDenomToERC20Relation(tv *testingVars) {
 		myNonce = uint64(1)
 	)
 
-	ethClaim := types.MsgERC20DeployedEvent{
+	event := types.MsgERC20DeployedEvent{
 		CosmosDenom:   tv.denom,
 		TokenContract: tv.erc20,
 		Name:          "atom",
@@ -82,13 +82,13 @@ func addDenomToERC20Relation(tv *testingVars) {
 		Orchestrator:  tv.myOrchestratorAddr.String(),
 	}
 
-	_, err := tv.h(tv.ctx, &ethClaim)
+	_, err := tv.h(tv.ctx, &event)
 	require.NoError(tv.t, err)
 
 	EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
 	// check if ethereumEventVoteRecord persisted
-	a := tv.input.GravityKeeper.GetEthereumEventVoteRecord(tv.ctx, myNonce, ethClaim.ClaimHash())
+	a := tv.input.GravityKeeper.GetEthereumEventVoteRecord(tv.ctx, myNonce, event.EventHash())
 	require.NotNil(tv.t, a)
 
 	// check if erc20<>denom relation added to db
@@ -158,7 +158,7 @@ func acceptDepositEvent(tv *testingVars) {
 		Contract: tv.erc20,
 	}
 
-	ethClaim := types.MsgSendToCosmosEvent{
+	event := types.MsgSendToCosmosEvent{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -167,12 +167,12 @@ func acceptDepositEvent(tv *testingVars) {
 		Orchestrator:   myOrchestratorAddr.String(),
 	}
 
-	_, err := tv.h(tv.ctx, &ethClaim)
+	_, err := tv.h(tv.ctx, &event)
 	require.NoError(tv.t, err)
 	EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
 	// check that ethereumEventVoteRecord persisted
-	a := tv.input.GravityKeeper.GetEthereumEventVoteRecord(tv.ctx, myNonce, ethClaim.ClaimHash())
+	a := tv.input.GravityKeeper.GetEthereumEventVoteRecord(tv.ctx, myNonce, event.EventHash())
 	require.NotNil(tv.t, a)
 
 	// Check that user balance has gone up

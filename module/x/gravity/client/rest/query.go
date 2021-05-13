@@ -122,7 +122,7 @@ func lastSignerSetTxsHandler(cliCtx client.Context, storeName string) http.Handl
 			return
 		}
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, "valset requests not found")
+			rest.WriteErrorResponse(w, http.StatusNotFound, "signer set tx not found")
 			return
 		}
 
@@ -141,7 +141,7 @@ func lastSignerSetTxsByAddressHandler(cliCtx client.Context, storeName string) h
 			return
 		}
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, "no pending valset requests found")
+			rest.WriteErrorResponse(w, http.StatusNotFound, "no pending signer set tx found")
 			return
 		}
 
@@ -156,13 +156,13 @@ func lastBatchesByAddressHandler(cliCtx client.Context, storeName string) http.H
 		vars := mux.Vars(r)
 		operatorAddr := vars[bech32ValidatorAddress]
 
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingBatchRequest/%s", storeName, operatorAddr))
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingBatchTx/%s", storeName, operatorAddr))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, "no pending valset requests found")
+			rest.WriteErrorResponse(w, http.StatusNotFound, "no pending signer set tx found")
 			return
 		}
 

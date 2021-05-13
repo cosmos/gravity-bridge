@@ -11,7 +11,7 @@ changes are specified to execute.
 
 Every endblock, we run the following procedure to determine whether to make a new `SignerSetTx` which will then need to be signed by all validators.
 
-1. If there are no valset requests, create a new one.
+1. If there are no signer set tx, create a new one.
 2. If there is at least one validator who started unbonding in current block, create a `SignerSetTx`. This will make sure the unbonding validator has to provide an ethereumEventVoteRecord to a new SignerSetTx that excludes them before they completely Unbond. Otherwise they will be slashed.
 3. If power change between validators of CurrentSignerSetTx and latest valset request is > 5%, create a new `SignerSetTx`.
 

@@ -24,11 +24,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdGetDelegateAddress(),
 		CmdGetSignerSetTxSignature(),
 		CmdGetPendingSignerSetTx(),
-		CmdGetPendingOutgoingTxBatchRequest(),
-		// CmdGetAllOutgoingTXBatchRequest(),
-		// CmdGetOutgoingTXBatchByNonceRequest(),
-		// CmdGetAllEthereumEventVoteRecordsRequest(),
-		// CmdGetEthereumEventVoteRecordRequest(),
+		CmdGetPendingBatchTx(),
 		QueryObserved(),
 		QueryApproved(),
 	}...)
@@ -209,7 +205,7 @@ func CmdGetPendingSignerSetTx() *cobra.Command {
 	return cmd
 }
 
-func CmdGetPendingOutgoingTxBatchRequest() *cobra.Command {
+func CmdGetPendingBatchTx() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pending-batch-request [bech32 validator address]",
 		Short: "Get the latest outgoing TX batch request which has not been signed by a particular validator",

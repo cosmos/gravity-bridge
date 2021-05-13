@@ -63,12 +63,12 @@ func (EventType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_e3205613bbab7525, []int{0}
 }
 
-// EthereumEventVoteRecord is an aggregate of `claims` that eventually becomes `accepted` by
+// EthereumEventVoteRecord is an aggregate of `events` that eventually becomes `accepted` by
 // all orchestrators
 type EthereumEventVoteRecord struct {
 	// This field stores whether the EthereumEventVoteRecord has had its event applied to the Cosmos state. This happens when
 	// enough (usually >2/3s) of the validator power votes that they saw the event on Ethereum.
-	// For example, once a DepositClaim has modified the token balance of the account that it was deposited to,
+	// For example, once a SendTo has modified the token balance of the account that it was deposited to,
 	// this boolean will be set to true.
 	Accepted bool `protobuf:"varint,1,opt,name=accepted,proto3" json:"accepted,omitempty"`
 	// This is an array of the addresses of the validators which have voted that they saw the event on Ethereum.

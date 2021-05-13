@@ -139,7 +139,7 @@ func (k Keeper) GetSignerSetTx(ctx sdk.Context, nonce uint64) *types.SignerSetTx
 	return &valset
 }
 
-// IterateSignerSetTxs retruns all valsetRequests
+// IterateSignerSetTxs retruns all signer set txs
 func (k Keeper) IterateSignerSetTxs(ctx sdk.Context, cb func(key []byte, val *types.SignerSetTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SignerSetTxKey)
 	iter := prefixStore.ReverseIterator(nil, nil)
@@ -639,7 +639,7 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) UnpackEthereumEventVoteRecordClaim(voteRecord *types.EthereumEventVoteRecord) (types.EthereumEvent, error) {
+func (k Keeper) UnpackEthereumEventVoteRecordEvent(voteRecord *types.EthereumEventVoteRecord) (types.EthereumEvent, error) {
 	var msg types.EthereumEvent
 	err := k.cdc.UnpackAny(voteRecord.Event, &msg)
 	if err != nil {

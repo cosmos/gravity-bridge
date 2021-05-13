@@ -53,13 +53,13 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	// reset ethereumEventVoteRecords in state
 	for _, voteRecord := range data.EthereumEventVoteRecords {
 		voteRecord := voteRecord
-		claim, err := k.UnpackEthereumEventVoteRecordClaim(&voteRecord)
+		event, err := k.UnpackEthereumEventVoteRecordEvent(&voteRecord)
 		if err != nil {
-			panic("couldn't cast to claim")
+			panic("couldn't cast to event")
 		}
 
 		// TODO: block height?
-		k.SetEthereumEventVoteRecord(ctx, claim.GetEventNonce(), claim.ClaimHash(), &voteRecord)
+		k.SetEthereumEventVoteRecord(ctx, event.GetEventNonce(), event.EventHash(), &voteRecord)
 	}
 	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
 
@@ -67,9 +67,9 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	// this must be done after the above to be correct
 	for _, voteRecord := range data.EthereumEventVoteRecords {
 		voteRecord := voteRecord
-		claim, err := k.UnpackEthereumEventVoteRecordClaim(&voteRecord)
+		event, err := k.UnpackEthereumEventVoteRecordEvent(&voteRecord)
 		if err != nil {
-			panic("couldn't cast to claim")
+			panic("couldn't cast to event")
 		}
 		// reconstruct the latest event nonce for every validator
 		// if somehow this genesis state is saved when all ethereumEventVoteRecords
@@ -86,8 +86,8 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 				panic(err)
 			}
 			last := k.GetLastEventNonceByValidator(ctx, val)
-			if claim.GetEventNonce() > last {
-				k.setLastEventNonceByValidator(ctx, val, claim.GetEventNonce())
+			if event.GetEventNonce() > last {
+				k.setLastEventNonceByValidator(ctx, val, event.GetEventNonce())
 			}
 		}
 	}

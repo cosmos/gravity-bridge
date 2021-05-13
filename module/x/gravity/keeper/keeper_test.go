@@ -108,8 +108,8 @@ func TestEthereumEventVoteRecordIterator(t *testing.T) {
 		CosmosReceiver: AccAddrs[0].String(),
 		Orchestrator:   AccAddrs[0].String(),
 	}
-	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, send1.EventNonce, send1.ClaimHash(), voteRecord1)
-	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, send2.EventNonce, send2.ClaimHash(), voteRecord2)
+	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, send1.EventNonce, send1.EventHash(), voteRecord1)
+	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, send2.EventNonce, send2.EventHash(), voteRecord2)
 
 	voteRecords := []types.EthereumEventVoteRecord{}
 	input.GravityKeeper.IterateEthereumVoteRecords(ctx, func(_ []byte, voteRecord types.EthereumEventVoteRecord) bool {

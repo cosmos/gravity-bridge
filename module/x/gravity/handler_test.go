@@ -98,7 +98,7 @@ func TestMsgSendToCosmosEventSingleValidator(t *testing.T) {
 		Contract: tokenETHAddr,
 	}
 
-	ethClaim := types.MsgSendToCosmosEvent{
+	event := types.MsgSendToCosmosEvent{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -109,12 +109,12 @@ func TestMsgSendToCosmosEventSingleValidator(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err := h(ctx, &ethClaim)
+	_, err := h(ctx, &event)
 	EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 
 	// and ethereumEventVoteRecord persisted
-	a := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim.ClaimHash())
+	a := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, event.EventHash())
 	require.NotNil(t, a)
 	// and vouchers added to the account
 	balance := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
@@ -123,7 +123,7 @@ func TestMsgSendToCosmosEventSingleValidator(t *testing.T) {
 	// Test to reject duplicate deposit
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, &ethClaim)
+	_, err = h(ctx, &event)
 	EndBlocker(ctx, input.GravityKeeper)
 	// then
 	require.Error(t, err)
@@ -131,7 +131,7 @@ func TestMsgSendToCosmosEventSingleValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to reject skipped nonce
-	ethClaim = types.MsgSendToCosmosEvent{
+	event = types.MsgSendToCosmosEvent{
 		EventNonce:     uint64(3),
 		TokenContract:  tokenETHAddr,
 		Amount:         amountA,
@@ -142,7 +142,7 @@ func TestMsgSendToCosmosEventSingleValidator(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, &ethClaim)
+	_, err = h(ctx, &event)
 	EndBlocker(ctx, input.GravityKeeper)
 	// then
 	require.Error(t, err)
@@ -150,7 +150,7 @@ func TestMsgSendToCosmosEventSingleValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountA)}, balance)
 
 	// Test to finally accept consecutive nonce
-	ethClaim = types.MsgSendToCosmosEvent{
+	event = types.MsgSendToCosmosEvent{
 		EventNonce:     uint64(2),
 		Amount:         amountA,
 		TokenContract:  tokenETHAddr,
@@ -161,7 +161,7 @@ func TestMsgSendToCosmosEventSingleValidator(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, &ethClaim)
+	_, err = h(ctx, &event)
 	EndBlocker(ctx, input.GravityKeeper)
 
 	// then
@@ -197,7 +197,7 @@ func TestMsgSendToCosmosEventsMultiValidator(t *testing.T) {
 		Contract: tokenETHAddr,
 	}
 
-	ethClaim1 := types.MsgSendToCosmosEvent{
+	event1 := types.MsgSendToCosmosEvent{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -205,7 +205,7 @@ func TestMsgSendToCosmosEventsMultiValidator(t *testing.T) {
 		CosmosReceiver: myCosmosAddr.String(),
 		Orchestrator:   orchestratorAddr1.String(),
 	}
-	ethClaim2 := types.MsgSendToCosmosEvent{
+	event2 := types.MsgSendToCosmosEvent{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -213,7 +213,7 @@ func TestMsgSendToCosmosEventsMultiValidator(t *testing.T) {
 		CosmosReceiver: myCosmosAddr.String(),
 		Orchestrator:   orchestratorAddr2.String(),
 	}
-	ethClaim3 := types.MsgSendToCosmosEvent{
+	event3 := types.MsgSendToCosmosEvent{
 		EventNonce:     myNonce,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
@@ -224,11 +224,11 @@ func TestMsgSendToCosmosEventsMultiValidator(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err := h(ctx, &ethClaim1)
+	_, err := h(ctx, &event1)
 	EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 	// and ethereumEventVoteRecord persisted
-	a1 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim1.ClaimHash())
+	a1 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, event1.EventHash())
 	require.NotNil(t, a1)
 	// and vouchers not yet added to the account
 	balance1 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
@@ -236,12 +236,12 @@ func TestMsgSendToCosmosEventsMultiValidator(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, &ethClaim2)
+	_, err = h(ctx, &event2)
 	EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 
 	// and ethereumEventVoteRecord persisted
-	a2 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim1.ClaimHash())
+	a2 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, event1.EventHash())
 	require.NotNil(t, a2)
 	// and vouchers now added to the account
 	balance2 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
@@ -249,12 +249,12 @@ func TestMsgSendToCosmosEventsMultiValidator(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(myBlockTime)
-	_, err = h(ctx, &ethClaim3)
+	_, err = h(ctx, &event3)
 	EndBlocker(ctx, input.GravityKeeper)
 	require.NoError(t, err)
 
 	// and ethereumEventVoteRecord persisted
-	a3 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, ethClaim1.ClaimHash())
+	a3 := input.GravityKeeper.GetEthereumEventVoteRecord(ctx, myNonce, event1.EventHash())
 	require.NotNil(t, a3)
 	// and no additional added to the account
 	balance3 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)

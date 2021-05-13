@@ -283,26 +283,26 @@ func (msg MsgContractCallTxSignature) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
-// EthereumEvent represents a claim on ethereum state
+// EthereumEvent represents a event on ethereum state
 type EthereumEvent interface {
-	// All Ethereum claims that we relay from the Gravity contract and into the module
+	// All Ethereum events that we relay from the Gravity contract and into the module
 	// have a nonce that is monotonically increasing and unique, since this nonce is
 	// issued by the Ethereum contract it is immutable and must be agreed on by all validators
-	// any disagreement on what claim goes to what nonce means someone is lying.
+	// any disagreement on what event goes to what nonce means someone is lying.
 	GetEventNonce() uint64
-	// The block height that the claimed event occurred on. This EventNonce provides sufficient
-	// ordering for the execution of all claims. The block height is used only for batchTimeouts + logicTimeouts
+	// The block height that the evented event occurred on. This EventNonce provides sufficient
+	// ordering for the execution of all events. The block height is used only for batchTimeouts + logicTimeouts
 	// when we go to create a new batch we set the timeout some number of batches out from the last
 	// known height plus projected block progress since then.
 	GetBlockHeight() uint64
-	// the delegate address of the claimer, for MsgSendToCosmosEvent and MsgBatchExecutedEvent
+	// the delegate address of the eventer, for MsgSendToCosmosEvent and MsgBatchExecutedEvent
 	// this is sent in as the sdk.AccAddress of the delegated key. it is up to the user
 	// to disambiguate this into a sdk.ValAddress
-	GetClaimer() sdk.AccAddress
-	// Which type of claim this is
+	GetValidator() sdk.AccAddress
+	// Which type of event this is
 	GetType() EventType
 	ValidateBasic() error
-	ClaimHash() []byte
+	EventHash() []byte
 }
 
 var (
@@ -312,7 +312,7 @@ var (
 	_ EthereumEvent = &MsgContractCallExecutedEvent{}
 )
 
-// GetType returns the type of the claim
+// GetType returns the type of the event
 func (msg *MsgSendToCosmosEvent) GetType() EventType {
 	return EVENT_TYPE_DEPOSIT
 }
@@ -342,7 +342,7 @@ func (msg MsgSendToCosmosEvent) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgSendToCosmosEvent) GetClaimer() sdk.AccAddress {
+func (msg MsgSendToCosmosEvent) GetValidator() sdk.AccAddress {
 	err := msg.ValidateBasic()
 	if err != nil {
 		panic("MsgSendToCosmosEvent failed ValidateBasic! Should have been handled earlier")
@@ -367,22 +367,22 @@ func (msg MsgSendToCosmosEvent) GetSigners() []sdk.AccAddress {
 }
 
 // Type should return the action
-func (msg MsgSendToCosmosEvent) Type() string { return "deposit_claim" }
+func (msg MsgSendToCosmosEvent) Type() string { return "send_to_cosmos_event" }
 
 // Route should return the name of the module
 func (msg MsgSendToCosmosEvent) Route() string { return RouterKey }
 
 const (
-	TypeMsgBatchExecutedEvent = "withdraw_claim"
+	TypeMsgBatchExecutedEvent = "batch_executed_event"
 )
 
 // Hash implements BridgeDeposit.Hash
-func (msg *MsgSendToCosmosEvent) ClaimHash() []byte {
+func (msg *MsgSendToCosmosEvent) EventHash() []byte {
 	path := fmt.Sprintf("%s/%s/%s/", msg.TokenContract, string(msg.EthereumSender), msg.CosmosReceiver)
 	return tmhash.Sum([]byte(path))
 }
 
-// GetType returns the claim type
+// GetType returns the event type
 func (msg *MsgBatchExecutedEvent) GetType() EventType {
 	return EVENT_TYPE_WITHDRAW
 }
@@ -405,7 +405,7 @@ func (e *MsgBatchExecutedEvent) ValidateBasic() error {
 }
 
 // Hash implements WithdrawBatch.Hash
-func (msg *MsgBatchExecutedEvent) ClaimHash() []byte {
+func (msg *MsgBatchExecutedEvent) EventHash() []byte {
 	path := fmt.Sprintf("%s/%d/", msg.TokenContract, msg.BatchNonce)
 	return tmhash.Sum([]byte(path))
 }
@@ -415,7 +415,7 @@ func (msg MsgBatchExecutedEvent) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgBatchExecutedEvent) GetClaimer() sdk.AccAddress {
+func (msg MsgBatchExecutedEvent) GetValidator() sdk.AccAddress {
 	err := msg.ValidateBasic()
 	if err != nil {
 		panic("MsgBatchExecutedEvent failed ValidateBasic! Should have been handled earlier")
@@ -438,16 +438,16 @@ func (msg MsgBatchExecutedEvent) GetSigners() []sdk.AccAddress {
 func (msg MsgBatchExecutedEvent) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgBatchExecutedEvent) Type() string { return "withdraw_claim" }
+func (msg MsgBatchExecutedEvent) Type() string { return "withdraw_event" }
 
 const (
-	TypeMsgSendToCosmosEvent = "deposit_claim"
+	TypeMsgSendToCosmosEvent = "deposit_event"
 )
 
 // EthereumEvent implementation for MsgERC20DeployedEvent
 // ======================================================
 
-// GetType returns the type of the claim
+// GetType returns the type of the event
 func (e *MsgERC20DeployedEvent) GetType() EventType {
 	return EVENT_TYPE_COSMOS_ERC20_DEPLOYED
 }
@@ -471,7 +471,7 @@ func (msg MsgERC20DeployedEvent) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgERC20DeployedEvent) GetClaimer() sdk.AccAddress {
+func (msg MsgERC20DeployedEvent) GetValidator() sdk.AccAddress {
 	err := msg.ValidateBasic()
 	if err != nil {
 		panic("MsgERC20DeployedEvent failed ValidateBasic! Should have been handled earlier")
@@ -492,13 +492,13 @@ func (msg MsgERC20DeployedEvent) GetSigners() []sdk.AccAddress {
 }
 
 // Type should return the action
-func (msg MsgERC20DeployedEvent) Type() string { return "ERC20_deployed_claim" }
+func (msg MsgERC20DeployedEvent) Type() string { return "ERC20_deployed_event" }
 
 // Route should return the name of the module
 func (msg MsgERC20DeployedEvent) Route() string { return RouterKey }
 
 // Hash implements BridgeDeposit.Hash
-func (b *MsgERC20DeployedEvent) ClaimHash() []byte {
+func (b *MsgERC20DeployedEvent) EventHash() []byte {
 	path := fmt.Sprintf("%s/%s/%s/%s/%d/", b.CosmosDenom, b.TokenContract, b.Name, b.Symbol, b.Decimals)
 	return tmhash.Sum([]byte(path))
 }
@@ -506,7 +506,7 @@ func (b *MsgERC20DeployedEvent) ClaimHash() []byte {
 // EthereumEvent implementation for MsgContractCallExecutedEvent
 // ======================================================
 
-// GetType returns the type of the claim
+// GetType returns the type of the event
 func (e *MsgContractCallExecutedEvent) GetType() EventType {
 	return EVENT_TYPE_CONTRACT_CALL_EXECUTED
 }
@@ -527,7 +527,7 @@ func (msg MsgContractCallExecutedEvent) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgContractCallExecutedEvent) GetClaimer() sdk.AccAddress {
+func (msg MsgContractCallExecutedEvent) GetValidator() sdk.AccAddress {
 	err := msg.ValidateBasic()
 	if err != nil {
 		panic("MsgERC20DeployedEvent failed ValidateBasic! Should have been handled earlier")
@@ -548,13 +548,13 @@ func (msg MsgContractCallExecutedEvent) GetSigners() []sdk.AccAddress {
 }
 
 // Type should return the action
-func (msg MsgContractCallExecutedEvent) Type() string { return "Logic_Call_Executed_Claim" }
+func (msg MsgContractCallExecutedEvent) Type() string { return "MsgContractCallExecutedEvent" }
 
 // Route should return the name of the module
 func (msg MsgContractCallExecutedEvent) Route() string { return RouterKey }
 
 // Hash implements BridgeDeposit.Hash
-func (b *MsgContractCallExecutedEvent) ClaimHash() []byte {
+func (b *MsgContractCallExecutedEvent) EventHash() []byte {
 	path := fmt.Sprintf("%s/%d/", b.InvalidationId, b.InvalidationNonce)
 	return tmhash.Sum([]byte(path))
 }
@@ -562,7 +562,7 @@ func (b *MsgContractCallExecutedEvent) ClaimHash() []byte {
 // EthereumEvent implementation for MsgSignerSetUpdatedEvent
 // ======================================================
 
-// GetType returns the type of the claim
+// GetType returns the type of the event
 func (e *MsgSignerSetUpdatedEvent) GetType() EventType {
 	return EVENT_TYPE_SIGNER_SET_UPDATED
 }
@@ -583,7 +583,7 @@ func (msg MsgSignerSetUpdatedEvent) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgSignerSetUpdatedEvent) GetClaimer() sdk.AccAddress {
+func (msg MsgSignerSetUpdatedEvent) GetValidator() sdk.AccAddress {
 	err := msg.ValidateBasic()
 	if err != nil {
 		panic("MsgERC20DeployedEvent failed ValidateBasic! Should have been handled earlier")
@@ -610,7 +610,7 @@ func (msg MsgSignerSetUpdatedEvent) Type() string { return "SignerSetTx_Updated_
 func (msg MsgSignerSetUpdatedEvent) Route() string { return RouterKey }
 
 // Hash implements BridgeDeposit.Hash
-func (b *MsgSignerSetUpdatedEvent) ClaimHash() []byte {
+func (b *MsgSignerSetUpdatedEvent) EventHash() []byte {
 	path := fmt.Sprintf("%d/%d/%d/%s/", b.SignerSetNonce, b.EventNonce, b.BlockHeight, b.Members)
 	return tmhash.Sum([]byte(path))
 }

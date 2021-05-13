@@ -52,7 +52,7 @@ const (
 	QueryBatch = "batch"
 	// Get the last unsigned batch (of any denom) for the validators
 	// orchestrator to sign
-	QueryLastPendingBatchRequestByAddr = "lastPendingBatchRequest"
+	QueryLastPendingBatchTxByAddr = "lastPendingBatchTx"
 	// gets the last 100 outgoing batches, regardless of denom, useful
 	// for a relayer to see what is available to relay
 	QueryBatchTxs = "lastBatches"
@@ -115,8 +115,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryBatch(ctx, path[1], path[2], keeper)
 		case QueryBatchTxSignatures:
 			return queryAllBatchTxSignatures(ctx, path[1], path[2], keeper)
-		case QueryLastPendingBatchRequestByAddr:
-			return lastPendingBatchRequest(ctx, path[1], keeper)
+		case QueryLastPendingBatchTxByAddr:
+			return lastPendingBatchTx(ctx, path[1], keeper)
 		case QueryBatchTxs:
 			return lastBatchesRequest(ctx, keeper)
 		case QueryBatchFees:
@@ -315,8 +315,8 @@ type MultiSigUpdateResponse struct {
 	Signatures  [][]byte          `json:"signatures,omitempty"`
 }
 
-// lastPendingBatchRequest gets the latest batch that has NOT been signed by operatorAddr
-func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
+// lastPendingBatchTx gets the latest batch that has NOT been signed by operatorAddr
+func lastPendingBatchTx(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
 	addr, err := sdk.AccAddressFromBech32(operatorAddr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")

@@ -288,7 +288,7 @@ func (k msgServer) SendToCosmosEvent(c context.Context, msg *types.MsgSendToCosm
 		return nil, err
 	}
 
-	// Add the claim to the store
+	// Add the event to the store
 	_, err = k.Vote(ctx, msg, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
@@ -300,7 +300,7 @@ func (k msgServer) SendToCosmosEvent(c context.Context, msg *types.MsgSendToCosm
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.EventHash()))),
 		),
 	)
 
@@ -331,7 +331,7 @@ func (k msgServer) BatchExecutedEvent(c context.Context, msg *types.MsgBatchExec
 		return nil, err
 	}
 
-	// Add the claim to the store
+	// Add the event to the store
 	_, err = k.Vote(ctx, msg, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
@@ -343,7 +343,7 @@ func (k msgServer) BatchExecutedEvent(c context.Context, msg *types.MsgBatchExec
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.EventHash()))),
 		),
 	)
 
@@ -371,7 +371,7 @@ func (k msgServer) ERC20DeployedEvent(c context.Context, msg *types.MsgERC20Depl
 		return nil, err
 	}
 
-	// Add the claim to the store
+	// Add the event to the store
 	_, err = k.Vote(ctx, msg, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
@@ -383,14 +383,14 @@ func (k msgServer) ERC20DeployedEvent(c context.Context, msg *types.MsgERC20Depl
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.EventHash()))),
 		),
 	)
 
 	return &types.MsgERC20DeployedEventResponse{}, nil
 }
 
-// ContractCallExecutedEvent handles claims for executing a logic call on Ethereum
+// ContractCallExecutedEvent handles events for executing a logic call on Ethereum
 func (k msgServer) ContractCallExecutedEvent(c context.Context, msg *types.MsgContractCallExecutedEvent) (*types.MsgContractCallExecutedEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
@@ -411,7 +411,7 @@ func (k msgServer) ContractCallExecutedEvent(c context.Context, msg *types.MsgCo
 		return nil, err
 	}
 
-	// Add the claim to the store
+	// Add the event to the store
 	_, err = k.Vote(ctx, msg, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
@@ -423,7 +423,7 @@ func (k msgServer) ContractCallExecutedEvent(c context.Context, msg *types.MsgCo
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.EventHash()))),
 		),
 	)
 
@@ -451,7 +451,7 @@ func (k msgServer) SignerSetUpdatedEvent(c context.Context, msg *types.MsgSigner
 		return nil, err
 	}
 
-	// Add the claim to the store
+	// Add the event to the store
 	_, err = k.Vote(ctx, msg, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
@@ -463,7 +463,7 @@ func (k msgServer) SignerSetUpdatedEvent(c context.Context, msg *types.MsgSigner
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(msg.EventNonce, msg.EventHash()))),
 		),
 	)
 

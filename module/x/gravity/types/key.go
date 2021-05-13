@@ -18,6 +18,7 @@ const (
 	QuerierRoute = ModuleName
 )
 
+// TODO: go over these key names to fix the find and replace carnage
 var (
 	// EthAddressByValidatorKey indexes cosmos validator account addresses
 	// i.e. cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
@@ -27,28 +28,28 @@ var (
 	// i.e. 0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B
 	ValidatorByEthAddressKey = []byte{0x2}
 
-	// SignerSetTxKey indexes valset requests by nonce
+	// SignerSetTxKey indexes signer set tx by nonce
 	SignerSetTxKey = []byte{0x3}
 
 	// SignerSetTxSignatureKey indexes signer set tx signatures by nonce and the validator account address
 	// i.e cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	SignerSetTxSignatureKey = []byte{0x4}
 
-	// OracleClaimKey Claim details by nonce and validator address
+	// EthereumEventKey by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
-	// A claim is named more intuitively than an EthereumEventVoteRecord, it is literally
-	// a validator making a claim to have seen something happen. Claims are
+	// A event is named more intuitively than an EthereumEventVoteRecord, it is literally
+	// a validator making a event to have seen something happen. Claims are
 	// attached to ethereumEventVoteRecords which can be thought of as 'the event' that
 	// will eventually be executed.
-	OracleClaimKey = []byte{0x5}
+	EthereumEventKey = []byte{0x5}
 
-	// OracleEthereumEventVoteRecordKey ethereumEventVoteRecord details by nonce and validator address
+	// EthereumEventVoteRecordKey ethereumEventVoteRecord details by nonce and validator address
 	// i.e. cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	// An ethereumEventVoteRecord can be thought of as the 'event to be executed' while
 	// the Claims are an individual validator saying that they saw an event
-	// occur the EthereumEventVoteRecord is 'the event' that multiple claims vote on and
+	// occur the EthereumEventVoteRecord is 'the event' that multiple events vote on and
 	// eventually executes
-	OracleEthereumEventVoteRecordKey = []byte{0x6}
+	EthereumEventVoteRecordKey = []byte{0x6}
 
 	// OutgoingTXPoolKey indexes the last nonce for the outgoing tx pool
 	OutgoingTXPoolKey = []byte{0x7}
@@ -68,7 +69,8 @@ var (
 	// BatchTxSignatureKey indexes batch tx signatures by token contract address
 	BatchTxSignatureKey = []byte{0xc}
 
-	// SecondIndexNonceByClaimKey indexes latest nonce for a given claim type
+	// SecondIndexNonceByClaimKey indexes latest nonce for a given event type
+	// TOOD: this isn't being used
 	SecondIndexNonceByClaimKey = []byte{0xd}
 
 	// LastEventNonceByValidatorKey indexes lateset event nonce by validator
@@ -166,53 +168,54 @@ func GetSignerSetTxSignatureKey(nonce uint64, validator sdk.AccAddress) []byte {
 // prefix type               cosmos-validator-address                       nonce                             ethereumEventVoteRecord-details-hash
 // [0x0][0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
 // The Claim hash identifies a unique event, for example it would have a event nonce, a sender and a receiver. Or an event nonce and a batch nonce. But
-// the Claim is stored indexed with the claimer key to make sure that it is unique.
+// the Claim is stored indexed with the eventer key to make sure that it is unique.
+// TODO: This is dead
 func GetClaimKey(details EthereumEvent) []byte {
 	var detailsHash []byte
 	if details != nil {
-		detailsHash = details.ClaimHash()
+		detailsHash = details.EventHash()
 	} else {
-		panic("No claim without details!")
+		panic("No event without details!")
 	}
-	claimTypeLen := len([]byte{byte(details.GetType())})
+	eventTypeLen := len([]byte{byte(details.GetType())})
 	nonceBz := UInt64Bytes(details.GetEventNonce())
-	key := make([]byte, len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz)+len(detailsHash))
-	copy(key[0:], OracleClaimKey)
-	copy(key[len(OracleClaimKey):], []byte{byte(details.GetType())})
+	key := make([]byte, len(EthereumEventKey)+eventTypeLen+sdk.AddrLen+len(nonceBz)+len(detailsHash))
+	copy(key[0:], EthereumEventKey)
+	copy(key[len(EthereumEventKey):], []byte{byte(details.GetType())})
 	// TODO this is the delegate address, should be stored by the valaddress
-	copy(key[len(OracleClaimKey)+claimTypeLen:], details.GetClaimer())
-	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen:], nonceBz)
-	copy(key[len(OracleClaimKey)+claimTypeLen+sdk.AddrLen+len(nonceBz):], detailsHash)
+	copy(key[len(EthereumEventKey)+eventTypeLen:], details.GetValidator())
+	copy(key[len(EthereumEventKey)+eventTypeLen+sdk.AddrLen:], nonceBz)
+	copy(key[len(EthereumEventKey)+eventTypeLen+sdk.AddrLen+len(nonceBz):], detailsHash)
 	return key
 }
 
 // GetEthereumEventVoteRecordKey returns the following key format
-// prefix     nonce                             claim-details-hash
+// prefix     nonce                             event-details-hash
 // [0x5][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
-// An ethereumEventVoteRecord is an event multiple people are voting on, this function needs the claim
-// details because each EthereumEventVoteRecord is aggregating all claims of a specific event, lets say
-// validator X and validator y where making different claims about the same event nonce
-// Note that the claim hash does NOT include the claimer address and only identifies an event
-func GetEthereumEventVoteRecordKey(eventNonce uint64, claimHash []byte) []byte {
-	key := make([]byte, len(OracleEthereumEventVoteRecordKey)+len(UInt64Bytes(0))+len(claimHash))
-	copy(key[0:], OracleEthereumEventVoteRecordKey)
-	copy(key[len(OracleEthereumEventVoteRecordKey):], UInt64Bytes(eventNonce))
-	copy(key[len(OracleEthereumEventVoteRecordKey)+len(UInt64Bytes(0)):], claimHash)
+// An ethereumEventVoteRecord is an event multiple people are voting on, this function needs the event
+// details because each EthereumEventVoteRecord is aggregating all events of a specific event, lets say
+// validator X and validator y where making different events about the same event nonce
+// Note that the event hash does NOT include the eventer address and only identifies an event
+func GetEthereumEventVoteRecordKey(eventNonce uint64, eventHash []byte) []byte {
+	key := make([]byte, len(EthereumEventVoteRecordKey)+len(UInt64Bytes(0))+len(eventHash))
+	copy(key[0:], EthereumEventVoteRecordKey)
+	copy(key[len(EthereumEventVoteRecordKey):], UInt64Bytes(eventNonce))
+	copy(key[len(EthereumEventVoteRecordKey)+len(UInt64Bytes(0)):], eventHash)
 	return key
 }
 
 // GetEthereumEventVoteRecordKeyWithHash returns the following key format
-// prefix     nonce                             claim-details-hash
+// prefix     nonce                             event-details-hash
 // [0x5][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
-// An ethereumEventVoteRecord is an event multiple people are voting on, this function needs the claim
-// details because each EthereumEventVoteRecord is aggregating all claims of a specific event, lets say
-// validator X and validator y where making different claims about the same event nonce
-// Note that the claim hash does NOT include the claimer address and only identifies an event
-func GetEthereumEventVoteRecordKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
-	key := make([]byte, len(OracleEthereumEventVoteRecordKey)+len(UInt64Bytes(0))+len(claimHash))
-	copy(key[0:], OracleEthereumEventVoteRecordKey)
-	copy(key[len(OracleEthereumEventVoteRecordKey):], UInt64Bytes(eventNonce))
-	copy(key[len(OracleEthereumEventVoteRecordKey)+len(UInt64Bytes(0)):], claimHash)
+// An ethereumEventVoteRecord is an event multiple people are voting on, this function needs the event
+// details because each EthereumEventVoteRecord is aggregating all events of a specific event, lets say
+// validator X and validator y where making different events about the same event nonce
+// Note that the event hash does NOT include the eventer address and only identifies an event
+func GetEthereumEventVoteRecordKeyWithHash(eventNonce uint64, eventHash []byte) []byte {
+	key := make([]byte, len(EthereumEventVoteRecordKey)+len(UInt64Bytes(0))+len(eventHash))
+	copy(key[0:], EthereumEventVoteRecordKey)
+	copy(key[len(EthereumEventVoteRecordKey):], UInt64Bytes(eventNonce))
+	copy(key[len(EthereumEventVoteRecordKey)+len(UInt64Bytes(0)):], eventHash)
 	return key
 }
 

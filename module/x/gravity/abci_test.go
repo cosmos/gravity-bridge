@@ -22,8 +22,8 @@ func TestSignerSetTxCreationIfNotAvailable(t *testing.T) {
 	// EndBlocker should set a new validator set if not available
 	EndBlocker(ctx, pk)
 	require.NotNil(t, pk.GetSignerSetTx(ctx, uint64(ctx.BlockHeight())))
-	valsets := pk.GetSignerSetTxs(ctx)
-	require.True(t, len(valsets) == 1)
+	signerSetTxs := pk.GetSignerSetTxs(ctx)
+	require.True(t, len(signerSetTxs) == 1)
 }
 
 func TestSignerSetTxCreationUponUnbonding(t *testing.T) {
@@ -37,7 +37,7 @@ func TestSignerSetTxCreationUponUnbonding(t *testing.T) {
 	undelegateMsg := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[0], keeper.StakingAmount)
 	sh(input.Context, undelegateMsg)
 
-	// Run the staking endblocker to ensure valset is set in state
+	// Run the staking endblocker to ensure signer set tx is set in state
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 	EndBlocker(input.Context, pk)
 
@@ -45,7 +45,7 @@ func TestSignerSetTxCreationUponUnbonding(t *testing.T) {
 }
 
 func TestSignerSetTxSlashing_SignerSetTxCreated_Before_ValidatorBonded(t *testing.T) {
-	//	Don't slash validators if valset is created before he is bonded.
+	//	Don't slash validators if signer set tx is created before he is bonded.
 
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
@@ -59,7 +59,7 @@ func TestSignerSetTxSlashing_SignerSetTxCreated_Before_ValidatorBonded(t *testin
 
 	EndBlocker(ctx, pk)
 
-	// ensure that the  validator who is bonded after valset is created is not slashed
+	// ensure that the  validator who is bonded after signer set tx is created is not slashed
 	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	require.False(t, val.IsJailed())
 }
@@ -93,7 +93,7 @@ func TestSignerSetTxSlashing_SignerSetTxCreated_After_ValidatorBonded(t *testing
 	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	require.True(t, val.IsJailed())
 
-	// ensure that the validator who voted for the valset is not slashed.
+	// ensure that the validator who voted for the signer set tx is not slashed.
 	val = input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
 	require.False(t, val.IsJailed())
 
@@ -112,20 +112,20 @@ func TestSignerSetTxSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testi
 
 	// Define slashing variables
 	validatorStartHeight := ctx.BlockHeight()                                                          // 0
-	valsetRequestHeight := validatorStartHeight + 1                                                    // 1
-	valUnbondingHeight := valsetRequestHeight + 1                                                      // 2
-	valsetRequestSlashedAt := valsetRequestHeight + int64(params.SignedSignerSetTxsWindow)             // 11
+	signerSetTxHeight := validatorStartHeight + 1                                                      // 1
+	valUnbondingHeight := signerSetTxHeight + 1                                                        // 2
+	signerSetTxSlashedAt := signerSetTxHeight + int64(params.SignedSignerSetTxsWindow)                 // 11
 	validatorUnbondingWindowExpiry := valUnbondingHeight + int64(params.SlashingSignerSetUnbondWindow) // 17
-	currentBlockHeight := valsetRequestSlashedAt + 1                                                   // 12
+	currentBlockHeight := signerSetTxSlashedAt + 1                                                     // 12
 
-	assert.True(t, valsetRequestSlashedAt < currentBlockHeight)
-	assert.True(t, valsetRequestHeight < validatorUnbondingWindowExpiry)
+	assert.True(t, signerSetTxSlashedAt < currentBlockHeight)
+	assert.True(t, signerSetTxHeight < validatorUnbondingWindowExpiry)
 
 	// Create SignerSetTx request
-	ctx = ctx.WithBlockHeight(valsetRequestHeight)
+	ctx = ctx.WithBlockHeight(signerSetTxHeight)
 	vs := pk.CreateSignerSetTx(ctx)
-	vs.Height = uint64(valsetRequestHeight)
-	vs.Nonce = uint64(valsetRequestHeight)
+	vs.Height = uint64(signerSetTxHeight)
+	vs.Nonce = uint64(signerSetTxHeight)
 	pk.StoreSignerSetTxUnsafe(ctx, vs)
 
 	// Start Unbonding validators
@@ -210,7 +210,7 @@ func TestBatchSlashing(t *testing.T) {
 	val2 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
 	require.False(t, val2.IsJailed())
 
-	// Ensure that the last slashed valset nonce is set properly
+	// Ensure that the last slashed signer set tx nonce is set properly
 	lastSlashedBatchBlock := input.GravityKeeper.GetLastSlashedBatchBlock(ctx)
 	assert.Equal(t, lastSlashedBatchBlock, batch.Block)
 
@@ -231,16 +231,16 @@ func TestSignerSetTxEmission(t *testing.T) {
 	// EndBlocker should set a new validator set
 	EndBlocker(ctx, pk)
 	require.NotNil(t, pk.GetSignerSetTx(ctx, uint64(ctx.BlockHeight())))
-	valsets := pk.GetSignerSetTxs(ctx)
-	require.True(t, len(valsets) == 2)
+	signerSetTxs := pk.GetSignerSetTxs(ctx)
+	require.True(t, len(signerSetTxs) == 2)
 }
 
 func TestSignerSetTxSetting(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
 	pk.SetSignerSetTx(ctx)
-	valsets := pk.GetSignerSetTxs(ctx)
-	require.True(t, len(valsets) == 1)
+	signerSetTxs := pk.GetSignerSetTxs(ctx)
+	require.True(t, len(signerSetTxs) == 1)
 }
 
 /// Test batch timeout

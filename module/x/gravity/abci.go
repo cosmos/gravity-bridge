@@ -18,13 +18,13 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	cleanupTimedOutLogicCalls(ctx, k)
 	createSignerSetTxs(ctx, k)
 	pruneSignerSetTxs(ctx, k, params)
-	// TODO: prune claims, ethereumEventVoteRecords when they pass in the handler
+	// TODO: prune events, ethereumEventVoteRecords when they pass in the handler
 }
 
 func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 	// Auto SignerSetTx Creation.
 	// WARNING: do not use k.GetLastObservedSignerSetTx in this function, it *will* result in losing control of the bridge
-	// 1. If there are no valset requests, create a new one.
+	// 1. If there are no signer set txs, create a new one.
 	// 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
 	//      This will make sure the unbonding validator has to provide an ethereumEventVoteRecord to a new SignerSetTx
 	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed

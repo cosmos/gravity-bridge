@@ -437,11 +437,11 @@ func TestPendingSignerSetTxs(t *testing.T) {
 }
 
 // TODO: check that it actually returns a batch that has NOT been signed, not just any batch
-func TestLastPendingBatchRequest(t *testing.T) {
+func TestLastPendingBatchTx(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
-	// seed with valset requests and eth addresses to make validators
+	// seed with signer set tx and eth addresses to make validators
 	// that we will later use to lookup batches to be signed
 	for i := 0; i < 6; i++ {
 		var validators []sdk.ValAddress
@@ -504,7 +504,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
-			got, err := lastPendingBatchRequest(ctx, valAddr.String(), input.GravityKeeper)
+			got, err := lastPendingBatchTx(ctx, valAddr.String(), input.GravityKeeper)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
 		})
@@ -580,7 +580,7 @@ func TestQueryLogicCalls(t *testing.T) {
 		invalidationNonce   uint64 = 1
 	)
 
-	// seed with valset requests and eth addresses to make validators
+	// seed with signer set tx and eth addresses to make validators
 	// that we will later use to lookup calls to be signed
 	for i := 0; i < 6; i++ {
 		var validators []sdk.ValAddress
@@ -636,7 +636,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 		invalidationNonce   uint64 = 1
 	)
 
-	// seed with valset requests and eth addresses to make validators
+	// seed with signer set tx and eth addresses to make validators
 	// that we will later use to lookup calls to be signed
 	for i := 0; i < 6; i++ {
 		var validators []sdk.ValAddress

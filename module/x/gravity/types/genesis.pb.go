@@ -46,26 +46,17 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // will be vulnerable to highjacking. For these paramaters the zero values are special and indicate
 // not to attempt any reward. This is the default for bootstrapping.
 type Params struct {
-	GravityId                string `protobuf:"bytes,1,opt,name=gravity_id,json=gravityId,proto3" json:"gravity_id,omitempty"`
-	ContractSourceHash       string `protobuf:"bytes,2,opt,name=contract_source_hash,json=contractSourceHash,proto3" json:"contract_source_hash,omitempty"`
-	BridgeEthereumAddress    string `protobuf:"bytes,4,opt,name=bridge_ethereum_address,json=bridgeEthereumAddress,proto3" json:"bridge_ethereum_address,omitempty"`
-	BridgeChainId            uint64 `protobuf:"varint,5,opt,name=bridge_chain_id,json=bridgeChainId,proto3" json:"bridge_chain_id,omitempty"`
-	SignedSignerSetTxsWindow uint64 `protobuf:"varint,6,opt,name=signed_signer_set_txs_window,json=signedSignerSetTxsWindow,proto3" json:"signed_signer_set_txs_window,omitempty"`
-	SignedBatchTxsWindow     uint64 `protobuf:"varint,7,opt,name=signed_batch_txs_window,json=signedBatchTxsWindow,proto3" json:"signed_batch_txs_window,omitempty"`
-	// uint64 signed_events_window        = 8;
-	TargetBatchTimeout       uint64                                 `protobuf:"varint,10,opt,name=target_batch_timeout,json=targetBatchTimeout,proto3" json:"target_batch_timeout,omitempty"`
-	AverageBlockTime         uint64                                 `protobuf:"varint,11,opt,name=average_block_time,json=averageBlockTime,proto3" json:"average_block_time,omitempty"`
-	AverageEthereumBlockTime uint64                                 `protobuf:"varint,12,opt,name=average_ethereum_block_time,json=averageEthereumBlockTime,proto3" json:"average_ethereum_block_time,omitempty"`
-	SlashFractionSignerSetTx github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,13,opt,name=slash_fraction_signer_set_tx,json=slashFractionSignerSetTx,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_signer_set_tx"`
-	SlashFractionBatchTx     github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,14,opt,name=slash_fraction_batch_tx,json=slashFractionBatchTx,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_batch_tx"`
-	// bytes slash_fraction_claim = 15 [
-	//   (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-	//   (gogoproto.nullable)   = false
-	// ];
-	// bytes slash_fraction_conflicting_claim = 16 [
-	//   (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-	//   (gogoproto.nullable)   = false
-	// ];
+	GravityId                     string                                 `protobuf:"bytes,1,opt,name=gravity_id,json=gravityId,proto3" json:"gravity_id,omitempty"`
+	ContractSourceHash            string                                 `protobuf:"bytes,2,opt,name=contract_source_hash,json=contractSourceHash,proto3" json:"contract_source_hash,omitempty"`
+	BridgeEthereumAddress         string                                 `protobuf:"bytes,4,opt,name=bridge_ethereum_address,json=bridgeEthereumAddress,proto3" json:"bridge_ethereum_address,omitempty"`
+	BridgeChainId                 uint64                                 `protobuf:"varint,5,opt,name=bridge_chain_id,json=bridgeChainId,proto3" json:"bridge_chain_id,omitempty"`
+	SignedSignerSetTxsWindow      uint64                                 `protobuf:"varint,6,opt,name=signed_signer_set_txs_window,json=signedSignerSetTxsWindow,proto3" json:"signed_signer_set_txs_window,omitempty"`
+	SignedBatchTxsWindow          uint64                                 `protobuf:"varint,7,opt,name=signed_batch_txs_window,json=signedBatchTxsWindow,proto3" json:"signed_batch_txs_window,omitempty"`
+	TargetBatchTimeout            uint64                                 `protobuf:"varint,10,opt,name=target_batch_timeout,json=targetBatchTimeout,proto3" json:"target_batch_timeout,omitempty"`
+	AverageBlockTime              uint64                                 `protobuf:"varint,11,opt,name=average_block_time,json=averageBlockTime,proto3" json:"average_block_time,omitempty"`
+	AverageEthereumBlockTime      uint64                                 `protobuf:"varint,12,opt,name=average_ethereum_block_time,json=averageEthereumBlockTime,proto3" json:"average_ethereum_block_time,omitempty"`
+	SlashFractionSignerSetTx      github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,13,opt,name=slash_fraction_signer_set_tx,json=slashFractionSignerSetTx,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_signer_set_tx"`
+	SlashFractionBatchTx          github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,14,opt,name=slash_fraction_batch_tx,json=slashFractionBatchTx,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_batch_tx"`
 	SlashingSignerSetUnbondWindow uint64                                 `protobuf:"varint,17,opt,name=slashing_signer_set_unbond_window,json=slashingSignerSetUnbondWindow,proto3" json:"slashing_signer_set_unbond_window,omitempty"`
 	SlashFractionBadEthSignature  github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,18,opt,name=slash_fraction_bad_eth_signature,json=slashFractionBadEthSignature,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_bad_eth_signature"`
 	SignerSetTxReward             *types.Coin                            `protobuf:"bytes,19,opt,name=signer_set_tx_reward,json=signerSetTxReward,proto3" json:"signer_set_tx_reward,omitempty"`
