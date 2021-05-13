@@ -63,7 +63,7 @@ func TestSubmitBadEthereumSignatureEvidenceSignerSetTxExists(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
-	valset := input.GravityKeeper.SetSignerSetTxRequest(ctx)
+	valset := input.GravityKeeper.SetSignerSetTx(ctx)
 
 	any, _ := codectypes.NewAnyWithValue(valset)
 

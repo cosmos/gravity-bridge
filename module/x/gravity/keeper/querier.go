@@ -18,7 +18,7 @@ const (
 	// This retrieves a specific validator set by it's nonce
 	// used to compare what's on Ethereum with what's in Cosmos
 	// to perform slashing / validation of system consistency
-	QuerySignerSetTxRequest = "valsetRequest"
+	QuerySignerSetTx = "valsetRequest"
 	// Gets all the confirmation signatures for a given validator
 	// set, used by the relayer to package the validator set and
 	// it's signatures into an Ethereum transaction
@@ -26,10 +26,10 @@ const (
 	// Gets the last N (where N is currently 5) validator sets that
 	// have been produced by the chain. Useful to see if any recently
 	// signed requests can be submitted.
-	QueryLastSignerSetTxRequests = "lastSignerSetTxRequests"
+	QueryLastSignerSetTxs = "lastSignerSetTxs"
 	// Gets a list of unsigned valsets for a given validators delegate
 	// orchestrator address. Up to 100 are sent at a time
-	QueryLastPendingSignerSetTxRequestByAddr = "lastPendingSignerSetTxRequest"
+	QueryLastPendingSignerSetTxByAddr = "lastPendingSignerSetTx"
 
 	QueryCurrentSignerSetTx = "currentSignerSetTx"
 	// TODO remove this, it's not used, getting one confirm at a time
@@ -58,7 +58,7 @@ const (
 	QueryBatchTxs = "lastBatches"
 	// Used by the relayer to package a batch with signatures required
 	// to submit to Ethereum
-	QueryBatchConfirms = "batchConfirms"
+	QueryBatchTxSignatures = "batchConfirms"
 	// Used to query all pending SendToEthereum transactions and fees available for each
 	// token type, a relayer can then estimate their potential profit when requesting
 	// a batch
@@ -99,22 +99,22 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		// SignerSetTxs
 		case QueryCurrentSignerSetTx:
 			return queryCurrentSignerSetTx(ctx, keeper)
-		case QuerySignerSetTxRequest:
-			return querySignerSetTxRequest(ctx, path[1:], keeper)
+		case QuerySignerSetTx:
+			return querySignerSetTx(ctx, path[1:], keeper)
 		case QuerySignerSetTxSignature:
 			return querySignerSetTxSignature(ctx, path[1:], keeper)
 		case QuerySignerSetTxSignaturesByNonce:
 			return queryAllSignerSetTxSignatures(ctx, path[1], keeper)
-		case QueryLastSignerSetTxRequests:
-			return lastSignerSetTxRequests(ctx, keeper)
-		case QueryLastPendingSignerSetTxRequestByAddr:
-			return lastPendingSignerSetTxRequest(ctx, path[1], keeper)
+		case QueryLastSignerSetTxs:
+			return lastSignerSetTxs(ctx, keeper)
+		case QueryLastPendingSignerSetTxByAddr:
+			return lastPendingSignerSetTx(ctx, path[1], keeper)
 
 		// Batches
 		case QueryBatch:
 			return queryBatch(ctx, path[1], path[2], keeper)
-		case QueryBatchConfirms:
-			return queryAllBatchConfirms(ctx, path[1], path[2], keeper)
+		case QueryBatchTxSignatures:
+			return queryAllBatchTxSignatures(ctx, path[1], path[2], keeper)
 		case QueryLastPendingBatchRequestByAddr:
 			return lastPendingBatchRequest(ctx, path[1], keeper)
 		case QueryBatchTxs:
@@ -151,7 +151,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	}
 }
 
-func querySignerSetTxRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
+func querySignerSetTx(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(path[0])
 	if err != nil {
 		return nil, err
@@ -195,16 +195,16 @@ func queryAllSignerSetTxSignatures(ctx sdk.Context, nonceStr string, keeper Keep
 	return res, nil
 }
 
-// allBatchConfirms returns all the confirm messages for a given nonce
+// allBatchTxSignatures returns all the confirm messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
-func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContract string, keeper Keeper) ([]byte, error) {
+func queryAllBatchTxSignatures(ctx sdk.Context, nonceStr string, tokenContract string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(nonceStr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
 	var confirms []types.MsgBatchTxSignature
-	keeper.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, c types.MsgBatchTxSignature) bool {
+	keeper.IterateBatchTxSignaturesByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, c types.MsgBatchTxSignature) bool {
 		confirms = append(confirms, c)
 		return false
 	})
@@ -219,16 +219,16 @@ func queryAllBatchConfirms(ctx sdk.Context, nonceStr string, tokenContract strin
 	return res, nil
 }
 
-const maxSignerSetTxRequestsReturned = 5
+const maxSignerSetTxsReturned = 5
 
-// lastSignerSetTxRequests returns up to maxSignerSetTxRequestsReturned valsets from the store
-func lastSignerSetTxRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
+// lastSignerSetTxs returns up to maxSignerSetTxsReturned valsets from the store
+func lastSignerSetTxs(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var counter int
 	var valReq []*types.SignerSetTx
 	keeper.IterateSignerSetTxs(ctx, func(_ []byte, val *types.SignerSetTx) bool {
 		valReq = append(valReq, val)
 		counter++
-		return counter >= maxSignerSetTxRequestsReturned
+		return counter >= maxSignerSetTxsReturned
 	})
 	if len(valReq) == 0 {
 		return nil, nil
@@ -240,9 +240,9 @@ func lastSignerSetTxRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
-// lastPendingSignerSetTxRequest gets a list of validator sets that this validator has not signed
+// lastPendingSignerSetTx gets a list of validator sets that this validator has not signed
 // limited by 100 sets per request.
-func lastPendingSignerSetTxRequest(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
+func lastPendingSignerSetTx(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {
 	addr, err := sdk.AccAddressFromBech32(operatorAddr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
@@ -276,7 +276,7 @@ func lastPendingSignerSetTxRequest(ctx sdk.Context, operatorAddr string, keeper 
 }
 
 func queryCurrentSignerSetTx(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	valset := keeper.GetCurrentSignerSetTx(ctx)
+	valset := keeper.CreateSignerSetTx(ctx)
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, valset)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
@@ -324,7 +324,7 @@ func lastPendingBatchRequest(ctx sdk.Context, operatorAddr string, keeper Keeper
 
 	var pendingBatchReq *types.BatchTx
 	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.BatchTx) bool {
-		foundConfirm := keeper.GetBatchConfirm(ctx, batch.BatchNonce, batch.TokenContract, addr) != nil
+		foundConfirm := keeper.GetBatchTxSignature(ctx, batch.BatchNonce, batch.TokenContract, addr) != nil
 		if !foundConfirm {
 			pendingBatchReq = batch
 			return true
@@ -415,7 +415,7 @@ func lastPendingLogicCallRequest(ctx sdk.Context, operatorAddr string, keeper Ke
 
 	var pendingLogicCalls *types.ContractCallTx
 	keeper.IterateContractCallTxs(ctx, func(_ []byte, call *types.ContractCallTx) bool {
-		foundConfirm := keeper.GetLogicCallConfirm(ctx, call.InvalidationId, call.InvalidationNonce, addr) != nil
+		foundConfirm := keeper.GetContractCallTxSignature(ctx, call.InvalidationId, call.InvalidationNonce, addr) != nil
 		if !foundConfirm {
 			pendingLogicCalls = call
 			return true
@@ -463,7 +463,7 @@ func queryAllLogicCallConfirms(ctx sdk.Context, invalidationId string, invalidat
 	}
 
 	var confirms []*types.MsgContractCallTxSignature
-	keeper.IterateLogicConfirmByInvalidationIDAndNonce(ctx, invalidationIdBytes, nonce, func(_ []byte, c *types.MsgContractCallTxSignature) bool {
+	keeper.IterateContractCallSignaturesByInvalidationIDAndNonce(ctx, invalidationIdBytes, nonce, func(_ []byte, c *types.MsgContractCallTxSignature) bool {
 		confirms = append(confirms, c)
 		return false
 	})

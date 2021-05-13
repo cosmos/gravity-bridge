@@ -22,7 +22,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 }
 
 func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
-	// Auto SignerSetTxRequest Creation.
+	// Auto SignerSetTx Creation.
 	// WARNING: do not use k.GetLastObservedSignerSetTx in this function, it *will* result in losing control of the bridge
 	// 1. If there are no valset requests, create a new one.
 	// 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
@@ -32,9 +32,9 @@ func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 	latestSignerSetTx := k.GetLatestSignerSetTx(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 
-	if (latestSignerSetTx == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.EthereumSigners(k.GetCurrentSignerSetTx(ctx).Members).PowerDiff(latestSignerSetTx.Members) > 0.05) {
+	if (latestSignerSetTx == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.EthereumSigners(k.CreateSignerSetTx(ctx).Members).PowerDiff(latestSignerSetTx.Members) > 0.05) {
 		// Store valset
-		k.SetSignerSetTxRequest(ctx)
+		k.SetSignerSetTx(ctx)
 	}
 }
 
@@ -63,10 +63,10 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 
 	params := k.GetParams(ctx)
 
-	// Slash validator for not confirming valset requests, batch requests
+	// Slash validator for not signing signer set txs, batch txs
 	SignerSetTxSlashing(ctx, k, params)
 	BatchSlashing(ctx, k, params)
-	// TODO slashing for arbitrary logic signatures is missing
+	// TODO slashing for contract call tx signatures is missing
 
 }
 
@@ -166,7 +166,7 @@ func SignerSetTxSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 	// unslashedSignerSetTxs are sorted by nonce in ASC order
 	// Question: do we need to sort each time? See if this can be epoched
 	for _, vs := range unslashedSignerSetTxs {
-		confirms := k.GetSignerSetTxSignatures(ctx, vs.Nonce)
+		sigMsgs := k.GetSignerSetTxSignatures(ctx, vs.Nonce)
 
 		// SLASH BONDED VALIDTORS who didn't sign signer set tx
 		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
@@ -176,15 +176,15 @@ func SignerSetTxSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 
 			//  Slash validator ONLY if he joined before valset is created
 			if exist && valSigningInfo.StartHeight < int64(vs.Nonce) {
-				// Check if validator has confirmed valset or not
+				// Check if validator has signed signer set tx or not
 				found := false
-				for _, conf := range confirms {
-					if conf.EthAddress == k.GetEthAddressByValidator(ctx, val.GetOperator()) {
+				for _, sigMsg := range sigMsgs {
+					if sigMsg.EthAddress == k.GetEthAddressByValidator(ctx, val.GetOperator()) {
 						found = true
 						break
 					}
 				}
-				// slash validators for not confirming valsets
+				// slash validators for not signing signer set txs
 				if !found {
 					cons, _ := val.GetConsAddr()
 					k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionSignerSetTx)
@@ -217,16 +217,16 @@ func SignerSetTxSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 
 				// Only slash validators who joined after valset is created and they are unbonding and UNBOND_SLASHING_WINDOW didn't passed
 				if exist && valSigningInfo.StartHeight < int64(vs.Nonce) && validator.IsUnbonding() && vs.Nonce < uint64(validator.UnbondingHeight)+params.SlashingSignerSetUnbondWindow {
-					// Check if validator has confirmed valset or not
+					// Check if validator has signed signer set tx or not
 					found := false
-					for _, conf := range confirms {
-						if conf.EthAddress == k.GetEthAddressByValidator(ctx, validator.GetOperator()) {
+					for _, sigMsg := range sigMsgs {
+						if sigMsg.EthAddress == k.GetEthAddressByValidator(ctx, validator.GetOperator()) {
 							found = true
 							break
 						}
 					}
 
-					// slash validators for not confirming valsets
+					// slash validators for not signing signer set txs
 					if !found {
 						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionSignerSetTx)
 						if !validator.IsJailed() {
@@ -245,7 +245,7 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 	// #2 condition
 	// We look through the full bonded set (not just the active set, include unbonding validators)
-	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
+	// and we slash users who haven't signed a batch tx that is >15hrs in blocks old
 	maxHeight := uint64(0)
 
 	// don't slash in the beginning before there aren't even SignedBatchTxsWindow blocks yet
@@ -258,7 +258,7 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 		// SLASH BONDED VALIDTORS who didn't sign batch tx
 		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-		confirms := k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)
+		sigMsgs := k.GetBatchTxSignaturesByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)
 		for _, val := range currentBondedSet {
 			// Don't slash validators who joined after batch is created
 			consAddr, _ := val.GetConsAddr()
@@ -268,10 +268,10 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			}
 
 			found := false
-			for _, conf := range confirms {
+			for _, sigMsg := range sigMsgs {
 				// TODO: double check this logic
-				confVal, _ := sdk.AccAddressFromBech32(conf.Orchestrator)
-				if k.GetOrchestratorValidator(ctx, confVal).Equals(val.GetOperator()) {
+				validator, _ := sdk.AccAddressFromBech32(sigMsg.Orchestrator)
+				if k.GetOrchestratorValidator(ctx, validator).Equals(val.GetOperator()) {
 					found = true
 					break
 				}

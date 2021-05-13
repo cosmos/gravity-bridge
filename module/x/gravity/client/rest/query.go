@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-func getSignerSetTxRequestHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
+func getSignerSetTxHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
@@ -73,7 +73,7 @@ func lastBatchesHandler(cliCtx client.Context, storeName string) http.HandlerFun
 	}
 }
 
-// gets all the confirm messages for a given validator set nonce
+// gets all the signer set signatures for a given validator set nonce
 func allSignerSetTxSignaturesHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -85,7 +85,7 @@ func allSignerSetTxSignaturesHandler(cliCtx client.Context, storeName string) ht
 			return
 		}
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, "valset confirms not found")
+			rest.WriteErrorResponse(w, http.StatusNotFound, "signer set signatures not found")
 			return
 		}
 
@@ -93,8 +93,8 @@ func allSignerSetTxSignaturesHandler(cliCtx client.Context, storeName string) ht
 	}
 }
 
-// gets all the confirm messages for a given transaction batch
-func allBatchConfirmsHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
+// gets all the signature msgs for a given transaction batch
+func allBatchTxSignaturesHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		nonce := vars[nonce]
@@ -106,7 +106,7 @@ func allBatchConfirmsHandler(cliCtx client.Context, storeName string) http.Handl
 			return
 		}
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, "valset confirms not found")
+			rest.WriteErrorResponse(w, http.StatusNotFound, "batch tx signatures not found")
 			return
 		}
 
@@ -114,9 +114,9 @@ func allBatchConfirmsHandler(cliCtx client.Context, storeName string) http.Handl
 	}
 }
 
-func lastSignerSetTxRequestsHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
+func lastSignerSetTxsHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastSignerSetTxRequests", storeName))
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastSignerSetTxs", storeName))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -130,12 +130,12 @@ func lastSignerSetTxRequestsHandler(cliCtx client.Context, storeName string) htt
 	}
 }
 
-func lastSignerSetTxRequestsByAddressHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
+func lastSignerSetTxsByAddressHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		operatorAddr := vars[bech32ValidatorAddress]
 
-		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingSignerSetTxRequest/%s", storeName, operatorAddr))
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastPendingSignerSetTx/%s", storeName, operatorAddr))
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

@@ -85,7 +85,7 @@ func NewMsgSignerSetTxSignature(
 func (msg *MsgSignerSetTxSignature) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg *MsgSignerSetTxSignature) Type() string { return "valset_confirm" }
+func (msg *MsgSignerSetTxSignature) Type() string { return "signer_set_tx_signature" }
 
 // ValidateBasic performs stateless checks
 func (msg *MsgSignerSetTxSignature) ValidateBasic() (err error) {
@@ -210,7 +210,7 @@ func (msg MsgRequestBatchTx) GetSigners() []sdk.AccAddress {
 func (msg MsgBatchTxSignature) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgBatchTxSignature) Type() string { return "confirm_batch" }
+func (msg MsgBatchTxSignature) Type() string { return "batch_tx_signature" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgBatchTxSignature) ValidateBasic() error {
@@ -248,7 +248,7 @@ func (msg MsgBatchTxSignature) GetSigners() []sdk.AccAddress {
 func (msg MsgContractCallTxSignature) Route() string { return RouterKey }
 
 // Type should return the action
-func (msg MsgContractCallTxSignature) Type() string { return "confirm_logic" }
+func (msg MsgContractCallTxSignature) Type() string { return "contract_call_tx_signature" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgContractCallTxSignature) ValidateBasic() error {

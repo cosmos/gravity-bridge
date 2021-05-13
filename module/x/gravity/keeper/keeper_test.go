@@ -73,7 +73,7 @@ func TestCurrentSignerSetTxNormalization(t *testing.T) {
 				}
 			}
 			input.GravityKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
-			r := input.GravityKeeper.GetCurrentSignerSetTx(ctx)
+			r := input.GravityKeeper.CreateSignerSetTx(ctx)
 			assert.Equal(t, spec.expPowers, types.EthereumSigners(r.Members).GetPowers())
 		})
 	}
@@ -164,7 +164,7 @@ func TestLastSlashedSignerSetTxNonce(t *testing.T) {
 	k := input.GravityKeeper
 	ctx := input.Context
 
-	vs := k.GetCurrentSignerSetTx(ctx)
+	vs := k.CreateSignerSetTx(ctx)
 
 	i := 1
 	for ; i < 10; i++ {

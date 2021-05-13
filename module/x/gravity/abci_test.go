@@ -29,7 +29,7 @@ func TestSignerSetTxCreationIfNotAvailable(t *testing.T) {
 func TestSignerSetTxCreationUponUnbonding(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
-	pk.SetSignerSetTxRequest(ctx)
+	pk.SetSignerSetTx(ctx)
 
 	input.Context = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	// begin unbonding
@@ -51,7 +51,7 @@ func TestSignerSetTxSlashing_SignerSetTxCreated_Before_ValidatorBonded(t *testin
 	pk := input.GravityKeeper
 	params := input.GravityKeeper.GetParams(ctx)
 
-	vs := pk.GetCurrentSignerSetTx(ctx)
+	vs := pk.CreateSignerSetTx(ctx)
 	height := uint64(ctx.BlockHeight()) - (params.SignedSignerSetTxsWindow + 1)
 	vs.Height = height
 	vs.Nonce = height
@@ -72,7 +72,7 @@ func TestSignerSetTxSlashing_SignerSetTxCreated_After_ValidatorBonded(t *testing
 	params := input.GravityKeeper.GetParams(ctx)
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedSignerSetTxsWindow) + 2)
-	vs := pk.GetCurrentSignerSetTx(ctx)
+	vs := pk.CreateSignerSetTx(ctx)
 	height := uint64(ctx.BlockHeight()) - (params.SignedSignerSetTxsWindow + 1)
 	vs.Height = height
 	vs.Nonce = height
@@ -83,8 +83,8 @@ func TestSignerSetTxSlashing_SignerSetTxCreated_After_ValidatorBonded(t *testing
 			// don't sign with first validator
 			continue
 		}
-		conf := types.NewMsgSignerSetTxSignature(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
-		pk.SetSignerSetTxSignature(ctx, *conf)
+		sigMsg := types.NewMsgSignerSetTxSignature(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
+		pk.SetSignerSetTxSignature(ctx, *sigMsg)
 	}
 
 	EndBlocker(ctx, pk)
@@ -123,7 +123,7 @@ func TestSignerSetTxSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testi
 
 	// Create SignerSetTx request
 	ctx = ctx.WithBlockHeight(valsetRequestHeight)
-	vs := pk.GetCurrentSignerSetTx(ctx)
+	vs := pk.CreateSignerSetTx(ctx)
 	vs.Height = uint64(valsetRequestHeight)
 	vs.Nonce = uint64(valsetRequestHeight)
 	pk.StoreSignerSetTxUnsafe(ctx, vs)
@@ -143,8 +143,8 @@ func TestSignerSetTxSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testi
 			// don't sign with first validator
 			continue
 		}
-		conf := types.NewMsgSignerSetTxSignature(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
-		pk.SetSignerSetTxSignature(ctx, *conf)
+		sigMsg := types.NewMsgSignerSetTxSignature(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
+		pk.SetSignerSetTxSignature(ctx, *sigMsg)
 	}
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 
@@ -192,7 +192,7 @@ func TestBatchSlashing(t *testing.T) {
 			input.SlashingKeeper.SetValidatorSigningInfo(ctx, valConsAddr, valSigningInfo)
 			continue
 		}
-		pk.SetBatchConfirm(ctx, &types.MsgBatchTxSignature{
+		pk.SetBatchTxSignature(ctx, &types.MsgBatchTxSignature{
 			Nonce:         batch.BatchNonce,
 			TokenContract: keeper.TokenContractAddrs[0],
 			EthSigner:     keeper.EthAddrs[i].String(),
@@ -221,7 +221,7 @@ func TestSignerSetTxEmission(t *testing.T) {
 	pk := input.GravityKeeper
 
 	// Store a validator set with a power change as the most recent validator set
-	vs := pk.GetCurrentSignerSetTx(ctx)
+	vs := pk.CreateSignerSetTx(ctx)
 	vs.Nonce--
 	delta := float64(types.EthereumSigners(vs.Members).TotalPower()) * 0.05
 	vs.Members[0].Power = uint64(float64(vs.Members[0].Power) - delta/2)
@@ -238,7 +238,7 @@ func TestSignerSetTxEmission(t *testing.T) {
 func TestSignerSetTxSetting(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	pk := input.GravityKeeper
-	pk.SetSignerSetTxRequest(ctx)
+	pk.SetSignerSetTx(ctx)
 	valsets := pk.GetSignerSetTxs(ctx)
 	require.True(t, len(valsets) == 1)
 }

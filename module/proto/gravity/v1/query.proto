@@ -179,7 +179,7 @@ message ContractCallTxSignaturesRequest {
   uint64 invalidation_nonce = 2;
 }
 message ContractCallTxSignaturesResponse {
-  repeated MsgContractCallTxSignature confirms = 1;
+  repeated MsgContractCallTxSignature signature_msgs = 1;
 }
 
 message LastEventNonceByAddrRequest {

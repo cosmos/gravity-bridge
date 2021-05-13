@@ -22,7 +22,7 @@ func (k Keeper) Params(c context.Context, req *types.ParamsRequest) (*types.Para
 func (k Keeper) CurrentSignerSetTx(
 	c context.Context,
 	req *types.CurrentSignerSetTxRequest) (*types.CurrentSignerSetTxResponse, error) {
-	return &types.CurrentSignerSetTxResponse{SignerSetTx: k.GetCurrentSignerSetTx(sdk.UnwrapSDKContext(c))}, nil
+	return &types.CurrentSignerSetTxResponse{SignerSetTx: k.CreateSignerSetTx(sdk.UnwrapSDKContext(c))}, nil
 }
 
 func (k Keeper) SignerSetTx(
@@ -44,12 +44,12 @@ func (k Keeper) SignerSetTxSignature(
 func (k Keeper) SignerSetTxSignaturesByNonce(
 	c context.Context,
 	req *types.SignerSetTxSignaturesByNonceRequest) (*types.SignerSetTxSignaturesByNonceResponse, error) {
-	var confirms []*types.MsgSignerSetTxSignature
+	var sigMsgs []*types.MsgSignerSetTxSignature
 	k.IterateSignerSetTxSignatureByNonce(sdk.UnwrapSDKContext(c), req.Nonce, func(_ []byte, c types.MsgSignerSetTxSignature) bool {
-		confirms = append(confirms, &c)
+		sigMsgs = append(sigMsgs, &c)
 		return false
 	})
-	return &types.SignerSetTxSignaturesByNonceResponse{SignatureMsgs: confirms}, nil
+	return &types.SignerSetTxSignaturesByNonceResponse{SignatureMsgs: sigMsgs}, nil
 }
 
 func (k Keeper) LastSignerSetTxs(
@@ -58,10 +58,10 @@ func (k Keeper) LastSignerSetTxs(
 	valReq := k.GetSignerSetTxs(sdk.UnwrapSDKContext(c))
 	valReqLen := len(valReq)
 	retLen := 0
-	if valReqLen < maxSignerSetTxRequestsReturned {
+	if valReqLen < maxSignerSetTxsReturned {
 		retLen = valReqLen
 	} else {
-		retLen = maxSignerSetTxRequestsReturned
+		retLen = maxSignerSetTxsReturned
 	}
 	return &types.LastSignerSetTxsResponse{SignerSetTxs: valReq[0:retLen]}, nil
 }
@@ -76,14 +76,14 @@ func (k Keeper) LastPendingSignerSetTxByAddr(
 
 	var pendingSignerSetTxReq []*types.SignerSetTx
 	k.IterateSignerSetTxs(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.SignerSetTx) bool {
-		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
-		foundConfirm := k.GetSignerSetTxSignature(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
+		// foundSig is true if the operatorAddr has signed the valset we are currently looking at
+		foundSig := k.GetSignerSetTxSignature(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingSignerSetTxReq
 		// and exit the loop
-		if !foundConfirm {
+		if !foundSig {
 			pendingSignerSetTxReq = append(pendingSignerSetTxReq, val)
 		}
-		// if we have more than 100 unconfirmed requests in
+		// if we have more than 100 unsigned requests in
 		// our array we should exit, TODO pagination
 		if len(pendingSignerSetTxReq) > 100 {
 			return true
@@ -111,8 +111,8 @@ func (k Keeper) LastPendingBatchTxByAddr(
 
 	var pendingBatchReq *types.BatchTx
 	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
-		foundConfirm := k.GetBatchConfirm(sdk.UnwrapSDKContext(c), batch.BatchNonce, batch.TokenContract, addr) != nil
-		if !foundConfirm {
+		foundSig := k.GetBatchTxSignature(sdk.UnwrapSDKContext(c), batch.BatchNonce, batch.TokenContract, addr) != nil
+		if !foundSig {
 			pendingBatchReq = batch
 			return true
 		}
@@ -132,9 +132,9 @@ func (k Keeper) LastPendingContractCallTxByAddr(
 
 	var pendingLogicReq *types.ContractCallTx
 	k.IterateContractCallTxs(sdk.UnwrapSDKContext(c), func(_ []byte, logic *types.ContractCallTx) bool {
-		foundConfirm := k.GetLogicCallConfirm(sdk.UnwrapSDKContext(c),
+		foundSig := k.GetContractCallTxSignature(sdk.UnwrapSDKContext(c),
 			logic.InvalidationId, logic.InvalidationNonce, addr) != nil
-		if !foundConfirm {
+		if !foundSig {
 			pendingLogicReq = logic
 			return true
 		}
@@ -181,26 +181,26 @@ func (k Keeper) BatchTxByNonce(
 func (k Keeper) BatchTxSignatures(
 	c context.Context,
 	req *types.BatchTxSignaturesRequest) (*types.BatchTxSignaturesResponse, error) {
-	var confirms []*types.MsgBatchTxSignature
-	k.IterateBatchConfirmByNonceAndTokenContract(sdk.UnwrapSDKContext(c),
+	var sigMsgs []*types.MsgBatchTxSignature
+	k.IterateBatchTxSignaturesByNonceAndTokenContract(sdk.UnwrapSDKContext(c),
 		req.Nonce, req.ContractAddress, func(_ []byte, c types.MsgBatchTxSignature) bool {
-			confirms = append(confirms, &c)
+			sigMsgs = append(sigMsgs, &c)
 			return false
 		})
-	return &types.BatchTxSignaturesResponse{SignatureMsgs: confirms}, nil
+	return &types.BatchTxSignaturesResponse{SignatureMsgs: sigMsgs}, nil
 }
 
 func (k Keeper) ContractCallTxSignatures(
 	c context.Context,
 	req *types.ContractCallTxSignaturesRequest) (*types.ContractCallTxSignaturesResponse, error) {
-	var confirms []*types.MsgContractCallTxSignature
-	k.IterateLogicConfirmByInvalidationIDAndNonce(sdk.UnwrapSDKContext(c), req.InvalidationId,
+	var sigMsgs []*types.MsgContractCallTxSignature
+	k.IterateContractCallSignaturesByInvalidationIDAndNonce(sdk.UnwrapSDKContext(c), req.InvalidationId,
 		req.InvalidationNonce, func(_ []byte, c *types.MsgContractCallTxSignature) bool {
-			confirms = append(confirms, c)
+			sigMsgs = append(sigMsgs, c)
 			return false
 		})
 
-	return &types.ContractCallTxSignaturesResponse{Confirms: confirms}, nil
+	return &types.ContractCallTxSignaturesResponse{SignatureMsgs: sigMsgs}, nil
 }
 
 // LastEventNonceByAddr returns the last event nonce for the given validator address,

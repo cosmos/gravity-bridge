@@ -134,7 +134,7 @@ func TestAllSignerSetTxSignaturesBynonce(t *testing.T) {
 }
 
 // TODO: Check failure modes
-func TestLastSignerSetTxRequests(t *testing.T) {
+func TestLastSignerSetTxs(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 	// seed with requests
@@ -148,7 +148,7 @@ func TestLastSignerSetTxRequests(t *testing.T) {
 		}
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
 		ctx = ctx.WithBlockHeight(int64(100 + i))
-		input.GravityKeeper.SetSignerSetTxRequest(ctx)
+		input.GravityKeeper.SetSignerSetTx(ctx)
 	}
 
 	specs := map[string]struct {
@@ -271,7 +271,7 @@ func TestLastSignerSetTxRequests(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := lastSignerSetTxRequests(ctx, input.GravityKeeper)
+			got, err := lastSignerSetTxs(ctx, input.GravityKeeper)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
 		})
@@ -280,7 +280,7 @@ func TestLastSignerSetTxRequests(t *testing.T) {
 
 // TODO: check that it doesn't accidently return a valset that HAS been signed
 // Right now it is basically just testing that any valset comes back
-func TestPendingSignerSetTxRequests(t *testing.T) {
+func TestPendingSignerSetTxs(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
@@ -295,7 +295,7 @@ func TestPendingSignerSetTxRequests(t *testing.T) {
 		}
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
 		ctx = ctx.WithBlockHeight(int64(100 + i))
-		input.GravityKeeper.SetSignerSetTxRequest(ctx)
+		input.GravityKeeper.SetSignerSetTx(ctx)
 	}
 
 	specs := map[string]struct {
@@ -429,7 +429,7 @@ func TestPendingSignerSetTxRequests(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
-			got, err := lastPendingSignerSetTxRequest(ctx, valAddr.String(), input.GravityKeeper)
+			got, err := lastPendingSignerSetTx(ctx, valAddr.String(), input.GravityKeeper)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
 		})
@@ -453,7 +453,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 			validators = append(validators, valAddr)
 		}
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
-		input.GravityKeeper.SetSignerSetTxRequest(ctx)
+		input.GravityKeeper.SetSignerSetTx(ctx)
 	}
 
 	createTestBatch(t, input)
@@ -543,7 +543,7 @@ func createTestBatch(t *testing.T, input TestInput) {
 	require.NoError(t, err)
 }
 
-func TestQueryAllBatchConfirms(t *testing.T) {
+func TestQueryAllBatchTxSignatures(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
@@ -552,7 +552,7 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 		validatorAddr, _ = sdk.AccAddressFromBech32("cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh")
 	)
 
-	input.GravityKeeper.SetBatchConfirm(ctx, &types.MsgBatchTxSignature{
+	input.GravityKeeper.SetBatchTxSignature(ctx, &types.MsgBatchTxSignature{
 		Nonce:         1,
 		TokenContract: tokenContract,
 		EthSigner:     "0xf35e2cc8e6523d683ed44870f5b7cc785051a77d",
@@ -560,7 +560,7 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 		Signature:     "signature",
 	})
 
-	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract, input.GravityKeeper)
+	batchConfirms, err := queryAllBatchTxSignatures(ctx, "1", tokenContract, input.GravityKeeper)
 	require.NoError(t, err)
 
 	expectedJSON := []byte(`[{"eth_signer":"0xf35e2cc8e6523d683ed44870f5b7cc785051a77d", "nonce":"1", "signature":"signature", "token_contract":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "orchestrator":"cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh"}]`)
@@ -676,9 +676,9 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 		Signature:         "test",
 	}
 
-	k.SetLogicCallConfirm(ctx, &confirm)
+	k.SetContractCallTxSignature(ctx, &confirm)
 
-	res := k.GetLogicConfirmByInvalidationIDAndNonce(ctx, invalidationId, 1)
+	res := k.GetContractCallTxSignaturesByInvalidationIDAndNonce(ctx, invalidationId, 1)
 	assert.Equal(t, len(res), 1)
 }
 
@@ -833,7 +833,7 @@ func TestQueryCurrentSignerSetTx(t *testing.T) {
 	ctx := input.Context
 	input.GravityKeeper.SetEthAddressForValidator(ctx, valAddress, ethAddress)
 
-	currentSignerSetTx := input.GravityKeeper.GetCurrentSignerSetTx(ctx)
+	currentSignerSetTx := input.GravityKeeper.CreateSignerSetTx(ctx)
 
 	bridgeVal := types.EthereumSigner{EthereumAddress: ethAddress, Power: 4294967295}
 	expectedSignerSetTx := types.SignerSetTx{Nonce: 1234567, Height: 1234567, Members: []*types.EthereumSigner{&bridgeVal}}

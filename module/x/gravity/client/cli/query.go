@@ -20,10 +20,10 @@ func GetQueryCmd() *cobra.Command {
 	}
 	gravityQueryCmd.AddCommand([]*cobra.Command{
 		CmdGetCurrentSignerSetTx(),
-		CmdGetSignerSetTxRequest(),
+		CmdGetSignerSetTx(),
 		CmdGetDelegateAddress(),
 		CmdGetSignerSetTxSignature(),
-		CmdGetPendingSignerSetTxRequest(),
+		CmdGetPendingSignerSetTx(),
 		CmdGetPendingOutgoingTXBatchRequest(),
 		// CmdGetAllOutgoingTXBatchRequest(),
 		// CmdGetOutgoingTXBatchByNonceRequest(),
@@ -123,7 +123,7 @@ func CmdGetDelegateAddress() *cobra.Command {
 	return cmd
 }
 
-func CmdGetSignerSetTxRequest() *cobra.Command {
+func CmdGetSignerSetTx() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "valset-request [nonce]",
 		Short: "Get requested valset with a particular nonce",
@@ -155,8 +155,8 @@ func CmdGetSignerSetTxRequest() *cobra.Command {
 
 func CmdGetSignerSetTxSignature() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "valset-confirm [nonce] [bech32 validator address]",
-		Short: "Get valset confirmation with a particular nonce from a particular validator",
+		Use:   "signer-set-tx-signatures [nonce] [bech32 validator address]",
+		Short: "Get signer set tx signature with a particular nonce from a particular validator",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -184,7 +184,7 @@ func CmdGetSignerSetTxSignature() *cobra.Command {
 	return cmd
 }
 
-func CmdGetPendingSignerSetTxRequest() *cobra.Command {
+func CmdGetPendingSignerSetTx() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pending-valset-request [bech32 validator address]",
 		Short: "Get the latest valset request which has not been signed by a particular validator",

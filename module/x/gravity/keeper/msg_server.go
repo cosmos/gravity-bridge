@@ -193,16 +193,16 @@ func (k msgServer) BatchTxSignature(c context.Context, msg *types.MsgBatchTxSign
 	}
 
 	// check if we already have this confirm
-	if k.GetBatchConfirm(ctx, msg.Nonce, msg.TokenContract, orchaddr) != nil {
+	if k.GetBatchTxSignature(ctx, msg.Nonce, msg.TokenContract, orchaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
 	}
-	key := k.SetBatchConfirm(ctx, msg)
+	key := k.SetBatchTxSignature(ctx, msg)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyBatchConfirmKey, string(key)),
+			sdk.NewAttribute(types.AttributeKeyBatchTxSignatureKey, string(key)),
 		),
 	)
 
@@ -248,11 +248,11 @@ func (k msgServer) ContractCallTxSignature(c context.Context, msg *types.MsgCont
 	}
 
 	// check if we already have this confirm
-	if k.GetLogicCallConfirm(ctx, invalidationIdBytes, msg.InvalidationNonce, orchaddr) != nil {
+	if k.GetContractCallTxSignature(ctx, invalidationIdBytes, msg.InvalidationNonce, orchaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
 	}
 
-	k.SetLogicCallConfirm(ctx, msg)
+	k.SetContractCallTxSignature(ctx, msg)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -289,7 +289,7 @@ func (k msgServer) SendToCosmosEvent(c context.Context, msg *types.MsgSendToCosm
 	}
 
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err = k.Vote(ctx, msg, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
 	}
@@ -332,7 +332,7 @@ func (k msgServer) BatchExecutedEvent(c context.Context, msg *types.MsgBatchExec
 	}
 
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err = k.Vote(ctx, msg, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
 	}
@@ -372,7 +372,7 @@ func (k msgServer) ERC20DeployedEvent(c context.Context, msg *types.MsgERC20Depl
 	}
 
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err = k.Vote(ctx, msg, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
 	}
@@ -412,7 +412,7 @@ func (k msgServer) ContractCallExecutedEvent(c context.Context, msg *types.MsgCo
 	}
 
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err = k.Vote(ctx, msg, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
 	}
@@ -452,7 +452,7 @@ func (k msgServer) SignerSetUpdatedEvent(c context.Context, msg *types.MsgSigner
 	}
 
 	// Add the claim to the store
-	_, err = k.Attest(ctx, msg, any)
+	_, err = k.Vote(ctx, msg, any)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create ethereumEventVoteRecord")
 	}

@@ -27,10 +27,10 @@ var (
 	// i.e. 0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B
 	ValidatorByEthAddressKey = []byte{0x2}
 
-	// SignerSetTxRequestKey indexes valset requests by nonce
-	SignerSetTxRequestKey = []byte{0x3}
+	// SignerSetTxKey indexes valset requests by nonce
+	SignerSetTxKey = []byte{0x3}
 
-	// SignerSetTxSignatureKey indexes valset confirmations by nonce and the validator account address
+	// SignerSetTxSignatureKey indexes signer set tx signatures by nonce and the validator account address
 	// i.e cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn
 	SignerSetTxSignatureKey = []byte{0x4}
 
@@ -65,8 +65,8 @@ var (
 	// OutgoingTXBatchBlockKey indexes outgoing tx batches under a block height and token address
 	OutgoingTXBatchBlockKey = []byte{0xb}
 
-	// BatchConfirmKey indexes validator confirmations by token contract address
-	BatchConfirmKey = []byte{0xc}
+	// BatchTxSignatureKey indexes batch tx signatures by token contract address
+	BatchTxSignatureKey = []byte{0xc}
 
 	// SecondIndexNonceByClaimKey indexes latest nonce for a given claim type
 	SecondIndexNonceByClaimKey = []byte{0xd}
@@ -92,8 +92,8 @@ var (
 	// KeyContractCallTx indexes the outgoing logic calls
 	KeyContractCallTx = []byte{0x12}
 
-	// KeyOutgoingLogicConfirm indexes the outgoing logic confirms
-	KeyOutgoingLogicConfirm = []byte{0x13}
+	// KeyContractCallTxSignature indexes the contract call tx signatures
+	KeyContractCallTxSignature = []byte{0x13}
 
 	// DenomToERC20Key prefixes the index of Cosmos originated asset denoms to ERC20s
 	DenomToERC20Key = []byte{0x15}
@@ -151,7 +151,7 @@ func GetValidatorByEthAddressKey(ethAddress string) []byte {
 // prefix    nonce
 // [0x0][0 0 0 0 0 0 0 1]
 func GetSignerSetTxKey(nonce uint64) []byte {
-	return append(SignerSetTxRequestKey, UInt64Bytes(nonce)...)
+	return append(SignerSetTxKey, UInt64Bytes(nonce)...)
 }
 
 // GetSignerSetTxSignatureKey returns the following key format
@@ -237,14 +237,14 @@ func GetBatchTxBlockKey(block uint64) []byte {
 	return append(OutgoingTXBatchBlockKey, UInt64Bytes(block)...)
 }
 
-// GetBatchConfirmKey returns the following key format
+// GetBatchTxSignatureKey returns the following key format
 // prefix           eth-contract-address                BatchNonce                       Validator-address
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // TODO this should be a sdk.ValAddress
-func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
+func GetBatchTxSignatureKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
 	a := append(UInt64Bytes(batchNonce), validator.Bytes()...)
 	b := append([]byte(tokenContract), a...)
-	c := append(BatchConfirmKey, b...)
+	c := append(BatchTxSignatureKey, b...)
 	return c
 }
 
@@ -286,7 +286,7 @@ func GetContractCallTxKey(invalidationId []byte, invalidationNonce uint64) []byt
 }
 
 func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
-	interm := append(KeyOutgoingLogicConfirm, invalidationId...)
+	interm := append(KeyContractCallTxSignature, invalidationId...)
 	interm = append(interm, UInt64Bytes(invalidationNonce)...)
 	return append(interm, validator.Bytes()...)
 }
