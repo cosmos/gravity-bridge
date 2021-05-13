@@ -83,7 +83,7 @@ func TestAllSignerSetTxSignaturesBynonce(t *testing.T) {
 		"cosmos1krtcsrxhadj54px0vy6j33pjuzcd3jj8kmsazv",
 		"cosmos1u94xef3cp9thkcpxecuvhtpwnmg8mhlja8hzkd",
 	}
-	// seed confirmations
+	// seed signatures
 	for i := 0; i < 3; i++ {
 		addr, _ := sdk.AccAddressFromBech32(addrs[i])
 		msg := types.MsgSignerSetTxSignature{}
@@ -668,7 +668,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 
 	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 
-	confirm := types.MsgContractCallTxSignature{
+	sigMsg := types.MsgContractCallTxSignature{
 		InvalidationId:    hex.EncodeToString(invalidationId),
 		InvalidationNonce: 1,
 		EthSigner:         "test",
@@ -676,7 +676,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 		Signature:         "test",
 	}
 
-	k.SetContractCallTxSignature(ctx, &confirm)
+	k.SetContractCallTxSignature(ctx, &sigMsg)
 
 	res := k.GetContractCallTxSignaturesByInvalidationIDAndNonce(ctx, invalidationId, 1)
 	assert.Equal(t, len(res), 1)

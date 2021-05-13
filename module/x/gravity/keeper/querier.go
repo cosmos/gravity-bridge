@@ -19,7 +19,7 @@ const (
 	// used to compare what's on Ethereum with what's in Cosmos
 	// to perform slashing / validation of system consistency
 	QuerySignerSetTx = "valsetRequest"
-	// Gets all the confirmation signatures for a given validator
+	// Gets all the signatures for a given signer
 	// set, used by the relayer to package the validator set and
 	// it's signatures into an Ethereum transaction
 	QuerySignerSetTxSignaturesByNonce = "valsetConfirms"
@@ -32,7 +32,7 @@ const (
 	QueryLastPendingSignerSetTxByAddr = "lastPendingSignerSetTx"
 
 	QueryCurrentSignerSetTx = "currentSignerSetTx"
-	// TODO remove this, it's not used, getting one confirm at a time
+	// TODO remove this, it's not used, getting one signature at a time
 	// is mostly useless
 	QuerySignerSetTxSignature = "valsetConfirm"
 
@@ -171,7 +171,7 @@ func querySignerSetTx(ctx sdk.Context, path []string, keeper Keeper) ([]byte, er
 	return res, nil
 }
 
-// allSignerSetTxSignaturesByNonce returns all the confirm messages for a given nonce
+// allSignerSetTxSignaturesByNonce returns all the signature messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
 func queryAllSignerSetTxSignatures(ctx sdk.Context, nonceStr string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(nonceStr)
@@ -179,15 +179,15 @@ func queryAllSignerSetTxSignatures(ctx sdk.Context, nonceStr string, keeper Keep
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	var confirms []*types.MsgSignerSetTxSignature
+	var sigMsgs []*types.MsgSignerSetTxSignature
 	keeper.IterateSignerSetTxSignatureByNonce(ctx, nonce, func(_ []byte, c types.MsgSignerSetTxSignature) bool {
-		confirms = append(confirms, &c)
+		sigMsgs = append(sigMsgs, &c)
 		return false
 	})
-	if len(confirms) == 0 {
+	if len(sigMsgs) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, confirms)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, sigMsgs)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -195,7 +195,7 @@ func queryAllSignerSetTxSignatures(ctx sdk.Context, nonceStr string, keeper Keep
 	return res, nil
 }
 
-// allBatchTxSignatures returns all the confirm messages for a given nonce
+// allBatchTxSignatures returns all the signature messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
 func queryAllBatchTxSignatures(ctx sdk.Context, nonceStr string, tokenContract string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(nonceStr)
@@ -203,15 +203,15 @@ func queryAllBatchTxSignatures(ctx sdk.Context, nonceStr string, tokenContract s
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	var confirms []types.MsgBatchTxSignature
+	var sigMsgs []types.MsgBatchTxSignature
 	keeper.IterateBatchTxSignaturesByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, c types.MsgBatchTxSignature) bool {
-		confirms = append(confirms, c)
+		sigMsgs = append(sigMsgs, c)
 		return false
 	})
-	if len(confirms) == 0 {
+	if len(sigMsgs) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, confirms)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, sigMsgs)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -248,27 +248,27 @@ func lastPendingSignerSetTx(ctx sdk.Context, operatorAddr string, keeper Keeper)
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingSignerSetTxReq []*types.SignerSetTx
+	var pendingSignerSetTxs []*types.SignerSetTx
 	keeper.IterateSignerSetTxs(ctx, func(_ []byte, val *types.SignerSetTx) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
 		foundConfirm := keeper.GetSignerSetTxSignature(ctx, val.Nonce, addr) != nil
-		// if this valset has NOT been signed by operatorAddr, store it in pendingSignerSetTxReq
+		// if this valset has NOT been signed by operatorAddr, store it in pendingSignerSetTxs
 		// and exit the loop
 		if !foundConfirm {
-			pendingSignerSetTxReq = append(pendingSignerSetTxReq, val)
+			pendingSignerSetTxs = append(pendingSignerSetTxs, val)
 		}
-		// if we have more than 100 unconfirmed requests in
+		// if we have more than 100 unsigned requests in
 		// our array we should exit, TODO pagination
-		if len(pendingSignerSetTxReq) > 100 {
+		if len(pendingSignerSetTxs) > 100 {
 			return true
 		}
 		// return false to continue the loop
 		return false
 	})
-	if len(pendingSignerSetTxReq) == 0 {
+	if len(pendingSignerSetTxs) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingSignerSetTxReq)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, pendingSignerSetTxs)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -285,7 +285,7 @@ func queryCurrentSignerSetTx(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
-// querySignerSetTxSignature returns the confirm msg for single orchestrator address and nonce
+// querySignerSetTxSignature returns the signature msg for single orchestrator address and nonce
 // When nothing found a nil value is returned
 func querySignerSetTxSignature(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(path[0])
@@ -450,7 +450,7 @@ func queryLogicCall(ctx sdk.Context, invalidationId string, invalidationNonce st
 	return res, nil
 }
 
-// allLogicCallConfirms returns all the confirm messages for a given nonce
+// allLogicCallConfirms returns all the signature messages for a given nonce
 // When nothing found an empty json array is returned. No pagination.
 func queryAllLogicCallConfirms(ctx sdk.Context, invalidationId string, invalidationNonce string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(invalidationNonce)
@@ -462,15 +462,15 @@ func queryAllLogicCallConfirms(ctx sdk.Context, invalidationId string, invalidat
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	var confirms []*types.MsgContractCallTxSignature
+	var sigMsgs []*types.MsgContractCallTxSignature
 	keeper.IterateContractCallSignaturesByInvalidationIDAndNonce(ctx, invalidationIdBytes, nonce, func(_ []byte, c *types.MsgContractCallTxSignature) bool {
-		confirms = append(confirms, c)
+		sigMsgs = append(sigMsgs, c)
 		return false
 	})
-	if len(confirms) == 0 {
+	if len(sigMsgs) == 0 {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, confirms)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, sigMsgs)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

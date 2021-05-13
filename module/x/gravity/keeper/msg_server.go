@@ -192,7 +192,7 @@ func (k msgServer) BatchTxSignature(c context.Context, msg *types.MsgBatchTxSign
 		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
 	}
 
-	// check if we already have this confirm
+	// check if we already have this signature
 	if k.GetBatchTxSignature(ctx, msg.Nonce, msg.TokenContract, orchaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
 	}
@@ -247,7 +247,7 @@ func (k msgServer) ContractCallTxSignature(c context.Context, msg *types.MsgCont
 		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
 	}
 
-	// check if we already have this confirm
+	// check if we already have this signature
 	if k.GetContractCallTxSignature(ctx, invalidationIdBytes, msg.InvalidationNonce, orchaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
 	}
