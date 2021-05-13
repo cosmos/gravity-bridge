@@ -160,16 +160,16 @@ func (k Keeper) DeleteAttestation(ctx sdk.Context, eventNonce uint64, claimHash 
 // GetAttestationMapping returns a mapping of eventnonce -> attestations at that nonce
 func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.EthereumEventVoteRecord) {
 	out = make(map[uint64][]types.EthereumEventVoteRecord)
-	k.IterateAttestaions(ctx, func(_ []byte, att types.EthereumEventVoteRecord) bool {
-		claim, err := k.UnpackEthereumEventVoteRecordEvent(&att)
+	k.IterateAttestaions(ctx, func(_ []byte, eventVoteRecord types.EthereumEventVoteRecord) bool {
+		event, err := types.UnpackEvent(eventVoteRecord.Event)
 		if err != nil {
-			panic("couldn't cast to claim")
+			panic("couldn't cast to event")
 		}
 
-		if val, ok := out[claim.GetNonce()]; !ok {
-			out[claim.GetNonce()] = []types.EthereumEventVoteRecord{att}
+		if val, ok := out[event.GetNonce()]; !ok {
+			out[event.GetNonce()] = []types.EthereumEventVoteRecord{eventVoteRecord}
 		} else {
-			out[claim.GetNonce()] = append(val, att)
+			out[event.GetNonce()] = append(val, eventVoteRecord)
 		}
 		return false
 	})

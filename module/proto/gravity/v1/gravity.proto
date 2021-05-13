@@ -76,8 +76,8 @@ message ContractCallTx {
   string address = 3;
   bytes payload = 4;
   uint64 timeout = 5;
-  repeated ERC20Token tokens = 6 [(gogoproto.nullable) = false];
-  repeated ERC20Token fees = 7 [(gogoproto.nullable) = false];
+  repeated ERC20Token tokens = 6 [ (gogoproto.nullable) = false ];
+  repeated ERC20Token fees = 7 [ (gogoproto.nullable) = false ];
 }
 
 message ERC20Token {

@@ -191,8 +191,8 @@ func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract string, nonce uint6
 		return types.ErrUnknown
 	}
 	for _, tx := range batch.Transactions {
-		tx.Erc20Fee = sdk.Coin(types.NewERC20Token(tx.Erc20Fee.Amount.Uint64(), tokenContract))
-		k.prependToUnbatchedTXIndex(ctx, tokenContract, *tx.Erc20Fee, tx.Id)
+		tx.Erc20Fee = types.NewERC20Token(tx.Erc20Fee.Amount.Uint64(), tokenContract)
+		k.prependToUnbatchedTXIndex(ctx, tokenContract, tx.Erc20Fee, tx.Id)
 	}
 
 	// Delete batch since it is finished

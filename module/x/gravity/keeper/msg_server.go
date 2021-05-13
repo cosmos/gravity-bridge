@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -344,16 +343,11 @@ func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchT
 // TODO it is possible to submit an old msgDepositClaim (old defined as covering an event nonce that has already been
 // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
 // should not be a security risk as 'old' events can never execute but it does store spam in the chain.
-func (k msgServer) sendToCosmosEvent(c context.Context, signer sdk.ValAddress, event *types.SendToCosmosEvent) (*types.MsgSubmitEthereumEventResponse, error) {
+func (k msgServer) sendToCosmosEvent(c context.Context, validator sdk.ValAddress, event *types.SendToCosmosEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	any, err := codectypes.NewAnyWithValue(event)
-	if err != nil {
-		return nil, err
-	}
-
 	// Add the claim to the store
-	_, err = k.RecordEventVote(ctx, event, any)
+	_, err := k.RecordEventVote(ctx, event, validator)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
@@ -378,13 +372,8 @@ func (k msgServer) sendToCosmosEvent(c context.Context, signer sdk.ValAddress, e
 func (k msgServer) batchExecuted(c context.Context, validator sdk.ValAddress, event *types.BatchExecutedEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	any, err := codectypes.NewAnyWithValue(event)
-	if err != nil {
-		return nil, err
-	}
-
 	// Add the claim to the store
-	_, err = k.RecordEventVote(ctx, event, any)
+	_, err := k.RecordEventVote(ctx, event, validator)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}
@@ -403,7 +392,7 @@ func (k msgServer) batchExecuted(c context.Context, validator sdk.ValAddress, ev
 }
 
 // ERC20Deployed handles MsgERC20Deployed
-func (k msgServer) erc20DeployedEvent(c context.Context, signer sdk.ValAddress, event *types.ERC20DeployedEvent) (*types.MsgSubmitEthereumEventResponse, error) {
+func (k msgServer) erc20DeployedEvent(c context.Context, validator sdk.ValAddress, event *types.ERC20DeployedEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 
@@ -411,16 +400,11 @@ func (k msgServer) erc20DeployedEvent(c context.Context, signer sdk.ValAddress, 
 }
 
 // contractCallExecuted handles claims for executing a logic call on Ethereum
-func (k msgServer) contractCallExecuted(c context.Context, signer sdk.ValAddress, event *types.ContractCallExecutedEvent) (*types.MsgSubmitEthereumEventResponse, error) {
+func (k msgServer) contractCallExecuted(c context.Context, validator sdk.ValAddress, event *types.ContractCallExecutedEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	any, err := codectypes.NewAnyWithValue(event)
-	if err != nil {
-		return nil, err
-	}
-
 	// Add the claim to the store
-	_, err = k.RecordEventVote(ctx, event, any)
+	_, err := k.RecordEventVote(ctx, event, validator)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create attestation")
 	}

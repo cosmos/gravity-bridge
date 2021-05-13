@@ -383,7 +383,7 @@ func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) string 
 // implementations are involved.
 func (k Keeper) GetCurrentSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
-	ethereumSigners := make([]*types.EthereumSigner, len(validators))
+	ethereumSigners := make([]types.EthereumSigner, len(validators))
 	var totalPower uint64
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
@@ -393,7 +393,7 @@ func (k Keeper) GetCurrentSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, val))
 		totalPower += p
 
-		ethereumSigners[i] = &types.EthereumSigner{Power: p}
+		ethereumSigners[i] = types.EthereumSigner{Power: p}
 		if ethAddr := k.GetEthAddress(ctx, val); ethAddr != "" {
 			ethereumSigners[i].EthereumAddress = ethAddr
 		}
@@ -487,7 +487,7 @@ func (k Keeper) SetContractCallTxSignature(ctx sdk.Context, msg *types.ContractC
 	}
 
 	ctx.KVStore(k.storeKey).
-		Set(types.GetContractCallTxSignatureKey(msg.InvalidationScope, msg.InvalidationNonce, val), k.cdc.MustMarshalBinaryBare(msg))
+		Set(types.GetContractCallTxSignatureKey(msg.InvalidationId, msg.InvalidationNonce, val), k.cdc.MustMarshalBinaryBare(msg))
 }
 
 // GetContractCallTxSignature gets a logic confirm from the store
@@ -672,7 +672,7 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgDelegateKeys {
 		result = append(result, &types.MsgDelegateKeys{
 			OrchestratorAddress: orch,
 			ValidatorAddress:    valAddr,
-			EthAddress:          ethAddr,
+			EthereumAddress:          ethAddr,
 		})
 
 	}
@@ -681,7 +681,7 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgDelegateKeys {
 	// output here is deterministic, eth address chosen for no particular
 	// reason
 	sort.Slice(result[:], func(i, j int) bool {
-		return result[i].EthAddress < result[j].EthAddress
+		return result[i].EthereumAddress < result[j].EthereumAddress
 	})
 
 	return result

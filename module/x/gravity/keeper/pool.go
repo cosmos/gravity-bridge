@@ -236,7 +236,7 @@ func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
 	store.Delete(types.GetOutgoingTxPoolKey(id))
 }
 
-// GetPoolTransactions, grabs all transactions from the tx pool, useful for queries or genesis save/load
+// GetPoolTransactions grabs all transactions from the tx pool, useful for queries or genesis save/load
 func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.OutgoingTx {
 	prefixStore := ctx.KVStore(k.storeKey)
 	// we must use the second index key here because transactions are left in the store, but removed
@@ -304,7 +304,7 @@ func (k Keeper) GetAllBatchFees(ctx sdk.Context) (batchFees []*types.ERC20Token)
 	// quick sort by token to make this function safe for use
 	// in consensus computations
 	sort.Slice(batchFees, func(i, j int) bool {
-		return batchFees[i].Token < batchFees[j].Token
+		return batchFees[i].Contract < batchFees[j].Contract
 	})
 
 	return batchFees

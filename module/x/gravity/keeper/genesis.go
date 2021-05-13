@@ -17,7 +17,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 
 	// reset valset confirmations in state
 	for _, conf := range data.SignerSetTxSignatures {
-		k.SetEthereumSignature(ctx, *conf, nil)
+		k.SetEthereumSignature(ctx, conf, nil)
 	}
 
 	// reset batches in state
@@ -44,32 +44,31 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	}
 
 	// reset pool transactions in state
-	for _, tx := range data.UnbatchedSendToEthereums {
+	for _, tx := range data.UnbatchedSendToEthereumTxs {
 		if err := k.setPoolEntry(ctx, tx); err != nil {
 			panic(err)
 		}
 	}
 
 	// reset attestations in state
-	for _, att := range data.EthereumEventVoteRecords {
-		att := att
-		claim, err := k.UnpackEthereumEventVoteRecordEvent(&att)
+	for _, eventVoteRecord := range data.EthereumEventVoteRecords {
+		att := eventVoteRecord
+		event, err := types.UnpackEvent(att.Event)
 		if err != nil {
-			panic("couldn't cast to claim")
+			panic("couldn't cast to event")
 		}
 
 		// TODO: block height?
-		k.SetEthereumEventVoteRecord(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
+		k.SetEthereumEventVoteRecord(ctx, event.GetNonce(), event.Hash(), &att)
 	}
 	k.setLastObservedEventNonce(ctx, data.LastObservedEventNonce)
 
 	// reset attestation state of specific validators
 	// this must be done after the above to be correct
-	for _, att := range data.EthereumEventVoteRecords {
-		att := att
-		claim, err := k.UnpackEthereumEventVoteRecordEvent(&att)
+	for _, eventVoteRecord := range data.EthereumEventVoteRecords {
+		event, err := k.UnpackEthereumEventVoteRecordEvent(&eventVoteRecord)
 		if err != nil {
-			panic("couldn't cast to claim")
+			panic("couldn't cast to event")
 		}
 		// reconstruct the latest event nonce for every validator
 		// if somehow this genesis state is saved when all attestations
@@ -80,14 +79,14 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// but since we've already had to handle the edge case of new validators joining
 		// while all attestations have already been cleaned up we can do this instead and
 		// not carry around every validators event nonce counter forever.
-		for _, vote := range att.Votes {
+		for _, vote := range eventVoteRecord.Votes {
 			val, err := sdk.ValAddressFromBech32(vote)
 			if err != nil {
 				panic(err)
 			}
 			last := k.GetLastEventNonceByValidator(ctx, val)
-			if claim.GetEventNonce() > last {
-				k.setLastEventNonceByValidator(ctx, val, claim.GetEventNonce())
+			if event.GetNonce() > last {
+				k.setLastEventNonceByValidator(ctx, val, event.GetNonce())
 			}
 		}
 	}
@@ -98,12 +97,12 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		if err != nil {
 			panic("Invalid delegate key in Genesis!")
 		}
-		val, err := sdk.ValAddressFromBech32(keys.Validator)
+		val, err := sdk.ValAddressFromBech32(keys.ValidatorAddress)
 		if err != nil {
 			panic(err)
 		}
 
-		orch, err := sdk.AccAddressFromBech32(keys.Orchestrator)
+		orch, err := sdk.AccAddressFromBech32(keys.OrchestratorAddress)
 		if err != nil {
 			panic(err)
 		}
@@ -111,7 +110,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// set the orchestrator address
 		k.SetOrchestratorValidator(ctx, val, orch)
 		// set the ethereum address
-		k.SetEthAddress(ctx, val, keys.EthAddress)
+		k.SetEthAddress(ctx, val, keys.EthereumAddress)
 	}
 
 	// populate state with cosmos originated denom-erc20 mapping
@@ -184,6 +183,6 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		EthereumEventVoteRecords:    ethereumEventVoteRecords,
 		DelegateKeys:                delegates,
 		Erc20ToDenoms:               erc20ToDenoms,
-		UnbatchedSendToEthereums:  unbatchedTransfers,
+		UnbatchedSendToEthereumTxs:  unbatchedTransfers,
 	}
 }
