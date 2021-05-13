@@ -61,7 +61,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// TODO: block height?
 		k.SetEthereumEventVoteRecord(ctx, event.GetEventNonce(), event.EventHash(), &voteRecord)
 	}
-	k.setLastAcceptedEventNonce(ctx, data.LastAcceptedNonce)
+	k.setLastAcceptedEventNonce(ctx, data.LastAcceptedEventNonce)
 
 	// reset ethereumEventVoteRecord state of specific validators
 	// this must be done after the above to be correct
@@ -173,7 +173,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 
 	return types.GenesisState{
 		Params:                   &p,
-		LastAcceptedNonce:        lastAcceptedEventNonce,
+		LastAcceptedEventNonce:   lastAcceptedEventNonce,
 		SignerSetTxs:             signerSetTx,
 		SignerSetTxSignatures:    signerSetTxSigs,
 		BatchTxs:                 batchTxs,

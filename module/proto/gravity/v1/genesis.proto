@@ -127,7 +127,7 @@ message Params {
 // GenesisState struct
 message GenesisState {
   Params                             params              = 1;
-  uint64                             last_observed_nonce = 2;
+  uint64                             last_accepted_event_nonce = 2;
   repeated SignerSetTx               signer_set_txs             = 3;
   repeated MsgSignerSetTxSignature      signer_set_tx_signatures     = 4;
   repeated BatchTx                   batch_txs             = 5;

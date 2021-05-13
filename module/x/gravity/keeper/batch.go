@@ -79,13 +79,13 @@ func (k Keeper) BuildBatchTx(
 func (k Keeper) getBatchTimeoutHeight(ctx sdk.Context) uint64 {
 	params := k.GetParams(ctx)
 	currentCosmosHeight := ctx.BlockHeight()
-	// we store the last observed Cosmos and Ethereum heights, we do not concern ourselves if these values are zero because
+	// we store the last accepted Cosmos and Ethereum heights, we do not concern ourselves if these values are zero because
 	// no batch can be produced if the last Ethereum block height is not first populated by a deposit event.
 	heights := k.GetLatestEthereumBlockHeight(ctx)
 	if heights.CosmosBlockHeight == 0 || heights.EthereumBlockHeight == 0 {
 		return 0
 	}
-	// we project how long it has been in milliseconds since the last Ethereum block height was observed
+	// we project how long it has been in milliseconds since the last Ethereum block height was accepted
 	projectedMillis := (uint64(currentCosmosHeight) - heights.CosmosBlockHeight) * params.AverageBlockTime
 	// we convert that projection into the current Ethereum height using the average Ethereum block time in millis
 	projectedCurrentEthereumHeight := (projectedMillis / params.AverageEthereumBlockTime) + heights.EthereumBlockHeight
