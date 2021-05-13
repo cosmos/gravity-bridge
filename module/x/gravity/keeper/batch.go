@@ -152,13 +152,13 @@ func (k Keeper) DeleteBatch(ctx sdk.Context, batch types.BatchTx) {
 func (k Keeper) pickUnbatchedTX(
 	ctx sdk.Context,
 	contractAddress string,
-	maxElements int) ([]*types.OutgoingTx, error) {
-	var selectedTx []*types.OutgoingTx
+	maxElements int) ([]*types.SendToEthereum, error) {
+	var selectedTx []*types.SendToEthereum
 	var err error
-	k.IterateOutgoingPoolByFee(ctx, contractAddress, func(txID uint64, tx *types.OutgoingTx) bool {
+	k.IterateOutgoingPoolByFee(ctx, contractAddress, func(txID uint64, tx *types.SendToEthereum) bool {
 		if tx != nil && tx.Erc20Fee != nil {
 			selectedTx = append(selectedTx, tx)
-			err = k.removeFromUnbatchedTXIndex(ctx, *tx.Erc20Fee, txID)
+			err = k.removeFromUnbatchedTXIndex(ctx, tx.Erc20Fee, txID)
 			return err != nil || len(selectedTx) == maxElements
 		}
 
@@ -178,8 +178,8 @@ func (k Keeper) GetBatchTx(ctx sdk.Context, tokenContract string, nonce uint64) 
 	var b types.BatchTx
 	k.cdc.MustUnmarshalBinaryBare(bz, &b)
 	for _, tx := range b.Transactions {
-		tx.Erc20Token = sdk.Coin(types.NewERC20Token(tx.Erc20Token.Amount.Uint64(), tokenContract))
-		tx.Erc20Fee = sdk.Coin(types.NewERC20Token(tx.Erc20Fee.Amount.Uint64(), tokenContract))
+		tx.Erc20Token = types.NewERC20Token(tx.Erc20Token.Amount.Uint64(), tokenContract)
+		tx.Erc20Fee = types.NewERC20Token(tx.Erc20Fee.Amount.Uint64(), tokenContract)
 	}
 	return &b
 }
