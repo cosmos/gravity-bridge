@@ -66,7 +66,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	// reset attestation state of specific validators
 	// this must be done after the above to be correct
 	for _, eventVoteRecord := range data.EthereumEventVoteRecords {
-		event, err := k.UnpackEthereumEventVoteRecordEvent(&eventVoteRecord)
+		event, err := types.UnpackEvent(eventVoteRecord.Event)
 		if err != nil {
 			panic("couldn't cast to event")
 		}

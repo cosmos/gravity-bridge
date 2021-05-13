@@ -604,16 +604,6 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) UnpackEthereumEventVoteRecordEvent(att *types.EthereumEventVoteRecord) (types.EthereumEvent, error) {
-	var msg types.EthereumEvent
-	err := k.cdc.UnpackAny(att.Event, &msg)
-	if err != nil {
-		return nil, err
-	} else {
-		return msg, nil
-	}
-}
-
 // GetDelegateKeys iterates both the EthAddress and Orchestrator address indexes to produce
 // a vector of MsgSetOrchestratorAddress entires containing all the delgate keys for state
 // export / import. This may seem at first glance to be excessively complicated, why not combine
