@@ -25,30 +25,32 @@ func GetQueryCmd() *cobra.Command {
 		CmdGetSignerSetTxSignature(),
 		CmdGetPendingSignerSetTx(),
 		CmdGetPendingBatchTx(),
-		QueryObserved(),
+		QueryAccepted(),
 		QueryApproved(),
 	}...)
 
 	return gravityQueryCmd
 }
 
-func QueryObserved() *cobra.Command {
+func QueryAccepted() *cobra.Command {
 	testingTxCmd := &cobra.Command{
-		Use:                        "observed",
-		Short:                      "observed ETH events",
+		Use:                        "accepted",
+		Short:                      "accepted ETH events",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
 	testingTxCmd.AddCommand([]*cobra.Command{
-		// CmdGetLastObservedNonceRequest(storeKey, cdc),
-		// CmdGetLastObservedNoncesRequest(storeKey, cdc),
-		// CmdGetLastObservedMultiSigUpdateRequest(storeKey, cdc),
+		// CmdGetLastAcceptedNonceRequest(storeKey, cdc),
+		// CmdGetLastAcceptedNoncesRequest(storeKey, cdc),
+		// CmdGetLastAcceptedMultiSigUpdateRequest(storeKey, cdc),
 		// CmdGetAllBridgedDenominatorsRequest(storeKey, cdc),
 	}...)
 
 	return testingTxCmd
 }
+
+// TODO: wtf does this do
 func QueryApproved() *cobra.Command {
 	testingTxCmd := &cobra.Command{
 		Use:                        "approved",

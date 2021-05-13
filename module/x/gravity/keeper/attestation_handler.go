@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-// EthereumEventVoteRecordHandler processes `observed` EthereumEventVoteRecords
+// EthereumEventVoteRecordHandler processes `accepted` EthereumEventVoteRecords
 type EthereumEventVoteRecordHandler struct {
 	keeper     Keeper
 	bankKeeper types.BankKeeper
@@ -114,7 +114,7 @@ func (a EthereumEventVoteRecordHandler) Handle(ctx sdk.Context, voteRecord types
 		// TODO here we should check the contents of the validator set against
 		// the store, if they differ we should take some action to indicate to the
 		// user that bridge highjacking has occurred
-		a.keeper.SetLastObservedSignerSetTx(ctx, types.SignerSetTx{
+		a.keeper.SetLastAcceptedSignerSetTx(ctx, types.SignerSetTx{
 			Nonce:   event.SignerSetNonce,
 			Members: event.Members,
 		})

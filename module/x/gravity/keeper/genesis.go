@@ -61,7 +61,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// TODO: block height?
 		k.SetEthereumEventVoteRecord(ctx, event.GetEventNonce(), event.EventHash(), &voteRecord)
 	}
-	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
+	k.setLastAcceptedEventNonce(ctx, data.LastAcceptedNonce)
 
 	// reset ethereumEventVoteRecord state of specific validators
 	// this must be done after the above to be correct
@@ -134,7 +134,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		contractCallTxSigs       = []types.MsgContractCallTxSignature{}
 		ethereumEventVoteRecords = []types.EthereumEventVoteRecord{}
 		delegates                = k.GetDelegateKeys(ctx)
-		lastobserved             = k.GetLastObservedEventNonce(ctx)
+		lastAcceptedEventNonce   = k.GetLastAcceptedEventNonce(ctx)
 		erc20ToDenoms            = []*types.ERC20ToDenom{}
 		unbatchedTransfers       = k.GetPoolTransactions(ctx)
 	)
@@ -173,7 +173,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 
 	return types.GenesisState{
 		Params:                   &p,
-		LastObservedNonce:        lastobserved,
+		LastAcceptedNonce:        lastAcceptedEventNonce,
 		SignerSetTxs:             signerSetTx,
 		SignerSetTxSignatures:    signerSetTxSigs,
 		BatchTxs:                 batchTxs,

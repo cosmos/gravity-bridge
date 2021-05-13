@@ -30,9 +30,9 @@ A transaction batch is a set of Ethereum transactions to be sent from the Gravit
 
 Is a transaction pool like structure that exists in the chains to store, separate from the `Gravity Tx Pool` it stores transactions that have been placed in batches that are in the process of being signed or being submitted by the `Orchestrator Set`
 
-### Observed
+### Accepted
 
-Events on Ethereum are considered `Observed` when the `Eth Signers` of 66% of the active Cosmos validator set during a given block has submitted an oracle message voting for the event.
+Events on Ethereum are considered `Accepted` when the `Eth Signers` of 66% of the active Cosmos validator set during a given block has submitted an oracle message voting for the event.
 
 ### Validator Set Delta
 
@@ -44,7 +44,7 @@ An Ethereum event signed and submitted to cosmos by a single `Orchestrator` inst
 
 ### EthereumEventVoteRecord
 
-Aggregate of claims that eventually becomes `observed` by all orchestrators.
+Aggregate of claims that eventually becomes `accepted` by all orchestrators.
 
 ### Voucher
 

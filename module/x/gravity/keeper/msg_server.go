@@ -266,7 +266,7 @@ func (k msgServer) ContractCallTxSignature(c context.Context, msg *types.MsgCont
 
 // SendToCosmosEvent handles MsgSendToCosmosEvent
 // TODO it is possible to submit an old msgSendToCosmosEvent (old defined as covering an event nonce that has already been
-// executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
+// executed aka 'accepted' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
 // should not be a security risk as 'old' events can never execute but it does store spam in the chain.
 func (k msgServer) SendToCosmosEvent(c context.Context, msg *types.MsgSendToCosmosEvent) (*types.MsgSendToCosmosEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -309,7 +309,7 @@ func (k msgServer) SendToCosmosEvent(c context.Context, msg *types.MsgSendToCosm
 
 // BatchExecutedEvent handles MsgBatchExecutedEvent
 // TODO it is possible to submit an old msgBatchExecutedEvent (old defined as covering an event nonce that has already been
-// executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
+// executed aka 'accepted' and had it's slashing window expire) that will never be cleaned up in the endblocker. This
 // should not be a security risk as 'old' events can never execute but it does store spam in the chain.
 func (k msgServer) BatchExecutedEvent(c context.Context, msg *types.MsgBatchExecutedEvent) (*types.MsgBatchExecutedEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)

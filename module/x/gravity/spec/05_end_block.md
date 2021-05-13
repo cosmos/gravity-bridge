@@ -71,15 +71,15 @@ This logic counts up votes on `EthereumEventVoteRecord`s and kicks off the proce
 - We retrieve all ethereumEventVoteRecords from storage and order them into a map of event nonces to ethereumEventVoteRecords, sorted by nonce: `map[uint64][]types.EthereumEventVoteRecord`.
   - Note that the only time one nonce will have more than one ethereumEventVoteRecord is when validators are disagreeing about which event happened at which event nonce.
 - We then loop over the nonces:
-  - For each ethereumEventVoteRecord, we check that the event nonce is exactly 1 higher than the `LastObservedEventNonce`.
+  - For each ethereumEventVoteRecord, we check that the event nonce is exactly 1 higher than the `LastAcceptedEventNonce`.
   - If it is, we count up the votes on that ethereumEventVoteRecord using the procedure described [here](03_state_transitions.md#counting-ethereumEventVoteRecord-votes)
-  - If the ethereumEventVoteRecord passes the `EthereumEventVoteRecordPowerThreshold`, we apply it to the Cosmos state, and increment the `LastObservedEventNonce`. As a result of this, any additional ethereumEventVoteRecords at the same nonce do not have their votes counted, but the first ethereumEventVoteRecord at the next nonce will have its votes counted.
-  - If the ethereumEventVoteRecord does not pass the `EthereumEventVoteRecordPowerThreshold`, it is not applied to the Cosmos state, and `LastObservedEventNonce` is not incremented. As a result of this, the next ethereumEventVoteRecord at that nonce will have its votes counted. If no ethereumEventVoteRecords at that nonce pass the `EthereumEventVoteRecordPowerThreshold`, then all ethereumEventVoteRecords at subsequent nonces will be skipped and this procedure ends.
+  - If the ethereumEventVoteRecord passes the `EthereumEventVoteRecordPowerThreshold`, we apply it to the Cosmos state, and increment the `LastAcceptedEventNonce`. As a result of this, any additional ethereumEventVoteRecords at the same nonce do not have their votes counted, but the first ethereumEventVoteRecord at the next nonce will have its votes counted.
+  - If the ethereumEventVoteRecord does not pass the `EthereumEventVoteRecordPowerThreshold`, it is not applied to the Cosmos state, and `LastAcceptedEventNonce` is not incremented. As a result of this, the next ethereumEventVoteRecord at that nonce will have its votes counted. If no ethereumEventVoteRecords at that nonce pass the `EthereumEventVoteRecordPowerThreshold`, then all ethereumEventVoteRecords at subsequent nonces will be skipped and this procedure ends.
 
 This procedure has the following attributes:
 
 - EthereumEventVoteRecords will never be observed and applied to Cosmos state out of order, since to have their votes counted, they must have a nonce exactly one higher than the last observed ethereumEventVoteRecord.
-- It is only possible for one ethereumEventVoteRecord at a given nonce to pass the `EthereumEventVoteRecordPowerThreshold` and become `Observed`, since we have [enforced](03_state_transitions.md#counting-ethereumEventVoteRecord-votes) that validators cannot vote for different ethereumEventVoteRecords at the same height.
+- It is only possible for one ethereumEventVoteRecord at a given nonce to pass the `EthereumEventVoteRecordPowerThreshold` and become `Accepted`, since we have [enforced](03_state_transitions.md#counting-ethereumEventVoteRecord-votes) that validators cannot vote for different ethereumEventVoteRecords at the same height.
 - If there is an ethereumEventVoteRecord that has not passed the `EthereumEventVoteRecordPowerThreshold`, but there are later ethereumEventVoteRecords which have, we do not count the later ethereumEventVoteRecords until the earlier one passes the `EthereumEventVoteRecordPowerThreshold` and is observed. At this point, all later ethereumEventVoteRecords which have passed the `EthereumEventVoteRecordPowerThreshold` will also be counted and be applied to the Cosmos state.
 
 ## Cleanup

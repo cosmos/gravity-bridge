@@ -23,7 +23,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 	// Auto SignerSetTx Creation.
-	// WARNING: do not use k.GetLastObservedSignerSetTx in this function, it *will* result in losing control of the bridge
+	// WARNING: do not use k.GetLastAcceptedSignerSetTx in this function, it *will* result in losing control of the bridge
 	// 1. If there are no signer set txs, create a new one.
 	// 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
 	//      This will make sure the unbonding validator has to provide an ethereumEventVoteRecord to a new SignerSetTx
@@ -41,18 +41,18 @@ func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 func pruneSignerSetTxs(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	// Validator set pruning
 	// prune all validator sets with a nonce less than the
-	// last observed nonce, they can't be submitted any longer
+	// last accepted nonce, they can't be submitted any longer
 	//
 	// Only prune signer set txs after the signed signer set txs window has passed
 	// so that slashing can occur the block before we remove them
-	lastObserved := k.GetLastObservedSignerSetTx(ctx)
+	lastAccepted := k.GetLastAcceptedSignerSetTx(ctx)
 	currentBlock := uint64(ctx.BlockHeight())
 	tooEarly := currentBlock < params.SignedSignerSetTxsWindow
-	if lastObserved != nil && !tooEarly {
+	if lastAccepted != nil && !tooEarly {
 		earliestToPrune := currentBlock - params.SignedSignerSetTxsWindow
 		sets := k.GetSignerSetTxs(ctx)
 		for _, set := range sets {
-			if set.Nonce < lastObserved.Nonce && set.Height < earliestToPrune {
+			if set.Nonce < lastAccepted.Nonce && set.Height < earliestToPrune {
 				k.DeleteSignerSetTx(ctx, set.Nonce)
 			}
 		}
@@ -71,7 +71,7 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 }
 
 // Iterate over all ethereumEventVoteRecords currently being voted on in order of nonce and
-// "Observe" those who have passed the threshold. Break the loop once we see
+// "Accept" those who have passed the threshold. Break the loop once we see
 // an ethereumEventVoteRecord that has not passed the threshold
 func ethereumEventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 	voteRecordMap := k.GetEthereumEventVoteRecordMapping(ctx)
@@ -92,22 +92,22 @@ func ethereumEventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 		// This order is not important.
 		for _, voteRecord := range voteRecordMap[nonce] {
 			// We check if the event nonce is exactly 1 higher than the last ethereumEventVoteRecord that was
-			// observed. If it is not, we just move on to the next nonce. This will skip over all
-			// ethereumEventVoteRecords that have already been observed.
+			// accepted. If it is not, we just move on to the next nonce. This will skip over all
+			// ethereumEventVoteRecords that have already been accepted.
 			//
-			// Once we hit an event nonce that is one higher than the last observed event, we stop
+			// Once we hit an event nonce that is one higher than the last accepted event, we stop
 			// skipping over this conditional and start calling tryEthereumEventVoteRecord (counting votes)
-			// Once an ethereumEventVoteRecord at a given event nonce has enough votes and becomes observed,
-			// every other ethereumEventVoteRecord at that nonce will be skipped, since the lastObservedEventNonce
+			// Once an ethereumEventVoteRecord at a given event nonce has enough votes and becomes accepted,
+			// every other ethereumEventVoteRecord at that nonce will be skipped, since the lastAcceptedEventNonce
 			// will be incremented.
 			//
 			// Then we go to the next event nonce in the ethereumEventVoteRecord mapping, if there is one. This
-			// nonce will once again be one higher than the lastObservedEventNonce.
-			// If there is an ethereumEventVoteRecord at this event nonce which has enough votes to be observed,
+			// nonce will once again be one higher than the lastAcceptedEventNonce.
+			// If there is an ethereumEventVoteRecord at this event nonce which has enough votes to be accepted,
 			// we skip the other ethereumEventVoteRecords and move on to the next nonce again.
-			// If no ethereumEventVoteRecord becomes observed, when we get to the next nonce, every ethereumEventVoteRecord in
+			// If no ethereumEventVoteRecord becomes accepted, when we get to the next nonce, every ethereumEventVoteRecord in
 			// it will be skipped. The same will happen for every nonce after that.
-			if nonce == uint64(k.GetLastObservedEventNonce(ctx))+1 {
+			if nonce == uint64(k.GetLastAcceptedEventNonce(ctx))+1 {
 				k.TryEthereumEventVoteRecord(ctx, &voteRecord)
 			}
 		}
@@ -120,7 +120,7 @@ func ethereumEventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 //    this means that we MUST only cleanup a single batch at a time
 // B) it is possible for ethereumHeight to be zero if no events have ever occurred, make sure your code accounts for this
 // C) When we compute the timeout we do our best to estimate the Ethereum block height at that very second. But what we work with
-//    here is the Ethereum block height at the time of the last Deposit or Withdraw to be observed. It's very important we do not
+//    here is the Ethereum block height at the time of the last Deposit or Withdraw to be accepted. It's very important we do not
 //    project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 //    AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
@@ -139,7 +139,7 @@ func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
 //    this means that we MUST only cleanup a single call at a time
 // B) it is possible for ethereumHeight to be zero if no events have ever occurred, make sure your code accounts for this
 // C) When we compute the timeout we do our best to estimate the Ethereum block height at that very second. But what we work with
-//    here is the Ethereum block height at the time of the last Deposit or Withdraw to be observed. It's very important we do not
+//    here is the Ethereum block height at the time of the last Deposit or Withdraw to be accepted. It's very important we do not
 //    project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 //    AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutLogicCalls(ctx sdk.Context, k keeper.Keeper) {

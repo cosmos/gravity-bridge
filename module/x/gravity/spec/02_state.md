@@ -185,7 +185,7 @@ The last observed event nonce. This is set when `TryEthereumEventVoteRecord()` i
 | -------------- | ------------------------- | -------- | ------------------ |
 | `[]byte{0xf2}` | Last observed event nonce | `uint64` | Big endian encoded |
 
-### LastObservedEthereumHeight
+### LastAcceptedEthereumHeight
 
 This is the last observed height on ethereum. There will always only be a single value stored in this store.
 

@@ -53,14 +53,14 @@ func (k Keeper) Vote(
 }
 
 // TryEthereumEventVoteRecord checks if an ethereumEventVoteRecord has enough votes to be applied to the consensus state
-// and has not already been marked Observed, then calls processEthereumEventVoteRecord to actually apply it to the state,
-// and then marks it Observed and emits an event.
+// and has not already been marked Accepted, then calls processEthereumEventVoteRecord to actually apply it to the state,
+// and then marks it Accepted and emits an event.
 func (k Keeper) TryEthereumEventVoteRecord(ctx sdk.Context, voteRecord *types.EthereumEventVoteRecord) {
 	event, err := k.UnpackEthereumEventVoteRecordEvent(voteRecord)
 	if err != nil {
 		panic("could not cast to event")
 	}
-	// If the ethereumEventVoteRecord has not yet been Observed, sum up the votes and see if it is ready to apply to the state.
+	// If the ethereumEventVoteRecord has not yet been Accepted, sum up the votes and see if it is ready to apply to the state.
 	// This conditional stops the ethereumEventVoteRecord from accidentally being applied twice.
 	if !voteRecord.Accepted {
 		// Sum the current powers of all validators who have voted and see if it passes the current threshold
@@ -77,28 +77,28 @@ func (k Keeper) TryEthereumEventVoteRecord(ctx sdk.Context, voteRecord *types.Et
 			// Add it to the ethereumEventVoteRecord power's sum
 			ethereumEventVoteRecordPower = ethereumEventVoteRecordPower.Add(sdk.NewInt(validatorPower))
 			// If the power of all the validators that have voted on the ethereumEventVoteRecord is higher or equal to the threshold,
-			// process the ethereumEventVoteRecord, set Observed to true, and break
+			// process the ethereumEventVoteRecord, set Accepted to true, and break
 			if ethereumEventVoteRecordPower.GTE(requiredPower) {
-				lastEventNonce := k.GetLastObservedEventNonce(ctx)
+				lastEventNonce := k.GetLastAcceptedEventNonce(ctx)
 				// this check is performed at the next level up so this should never panic
 				// outside of programmer error.
 				if event.GetEventNonce() != lastEventNonce+1 {
 					panic("attempting to apply events to state out of order")
 				}
-				k.setLastObservedEventNonce(ctx, event.GetEventNonce())
+				k.setLastAcceptedEventNonce(ctx, event.GetEventNonce())
 				k.SetLatestEthereumBlockHeight(ctx, event.GetBlockHeight())
 
 				voteRecord.Accepted = true
 				k.SetEthereumEventVoteRecord(ctx, event.GetEventNonce(), event.EventHash(), voteRecord)
 
 				k.processEthereumEventVoteRecord(ctx, voteRecord, event)
-				k.emitObservedEvent(ctx, voteRecord, event)
+				k.emitAcceptedEvent(ctx, voteRecord, event)
 				break
 			}
 		}
 	} else {
 		// We panic here because this should never happen
-		panic("attempting to process observed ethereumEventVoteRecord")
+		panic("attempting to process accepted ethereumEventVoteRecord")
 	}
 }
 
@@ -108,7 +108,7 @@ func (k Keeper) processEthereumEventVoteRecord(ctx sdk.Context, voteRecord *type
 	xCtx, commit := ctx.CacheContext()
 	if err := k.EthereumEventVoteRecordHandler.Handle(xCtx, *voteRecord, event); err != nil { // execute with a transient storage
 		// If the ethereumEventVoteRecord fails, something has gone wrong and we can't recover it. Log and move on
-		// The ethereumEventVoteRecord will still be marked "Observed", and validators can still be slashed for not
+		// The ethereumEventVoteRecord will still be marked "Accepted", and validators can still be slashed for not
 		// having voted for it.
 		k.logger(ctx).Error("ethereumEventVoteRecord failed",
 			"cause", err.Error(),
@@ -121,9 +121,9 @@ func (k Keeper) processEthereumEventVoteRecord(ctx sdk.Context, voteRecord *type
 	}
 }
 
-// emitObservedEvent emits an event with information about an ethereumEventVoteRecord that has been applied to
+// emitAcceptedEvent emits an event with information about an ethereumEventVoteRecord that has been applied to
 // consensus state.
-func (k Keeper) emitObservedEvent(ctx sdk.Context, voteRecord *types.EthereumEventVoteRecord, event types.EthereumEvent) {
+func (k Keeper) emitAcceptedEvent(ctx sdk.Context, voteRecord *types.EthereumEventVoteRecord, event types.EthereumEvent) {
 	observationEvent := sdk.NewEvent(
 		types.EventTypeObservation,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
@@ -201,10 +201,10 @@ func (k Keeper) IterateEthereumVoteRecords(ctx sdk.Context, cb func([]byte, type
 	}
 }
 
-// GetLastObservedEventNonce returns the latest observed event nonce
-func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
+// GetLastAcceptedEventNonce returns the latest accepted event nonce
+func (k Keeper) GetLastAcceptedEventNonce(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastObservedEventNonceKey)
+	bytes := store.Get(types.LastAcceptedEventNonceKey)
 
 	if len(bytes) == 0 {
 		return 0
@@ -212,7 +212,7 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
 	return types.UInt64FromBytes(bytes)
 }
 
-// GetLatestEthereumBlockHeight height gets the block height to of the last observed ethereumEventVoteRecord from
+// GetLatestEthereumBlockHeight height gets the block height to of the last accepted ethereumEventVoteRecord from
 // the store
 func (k Keeper) GetLatestEthereumBlockHeight(ctx sdk.Context) types.LatestEthereumBlockHeight {
 	store := ctx.KVStore(k.storeKey)
@@ -239,13 +239,13 @@ func (k Keeper) SetLatestEthereumBlockHeight(ctx sdk.Context, ethereumHeight uin
 	store.Set(types.LatestEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&height))
 }
 
-// GetLastObservedSignerSetTx retrieves the last observed validator set from the store
+// GetLastAcceptedSignerSetTx retrieves the last accepted validator set from the store
 // WARNING: This value is not an up to date validator set on Ethereum, it is a validator set
 // that AT ONE POINT was the one in the Gravity bridge on Ethereum. If you assume that it's up
 // to date you may break the bridge
-func (k Keeper) GetLastObservedSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
+func (k Keeper) GetLastAcceptedSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastObservedSignerSetTxKey)
+	bytes := store.Get(types.LastAcceptedSignerSetTxKey)
 
 	if len(bytes) == 0 {
 		return nil
@@ -255,16 +255,16 @@ func (k Keeper) GetLastObservedSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	return &signerSetTx
 }
 
-// SetLastObservedSignerSetTx updates the last observed validator set in the store
-func (k Keeper) SetLastObservedSignerSetTx(ctx sdk.Context, signerSetTx types.SignerSetTx) {
+// SetLastAcceptedSignerSetTx updates the last accepted validator set in the store
+func (k Keeper) SetLastAcceptedSignerSetTx(ctx sdk.Context, signerSetTx types.SignerSetTx) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastObservedSignerSetTxKey, k.cdc.MustMarshalBinaryBare(&signerSetTx))
+	store.Set(types.LastAcceptedSignerSetTxKey, k.cdc.MustMarshalBinaryBare(&signerSetTx))
 }
 
-// setLastObservedEventNonce sets the latest observed event nonce
-func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
+// setLastAcceptedEventNonce sets the latest accepted event nonce
+func (k Keeper) setLastAcceptedEventNonce(ctx sdk.Context, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastObservedEventNonceKey, types.UInt64Bytes(nonce))
+	store.Set(types.LastAcceptedEventNonceKey, types.UInt64Bytes(nonce))
 }
 
 // GetLastEventNonceByValidator returns the latest event nonce for a given validator
@@ -279,16 +279,16 @@ func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 		// them to replay the entire history of all events ever we can't start
 		// at zero
 		//
-		// We could start at the LastObservedEventNonce but if we do that this
+		// We could start at the LastAcceptedEventNonce but if we do that this
 		// validator will be slashed, because they are responsible for making a event
 		// on any ethereumEventVoteRecord that has not yet passed the slashing window.
 		//
 		// Therefore we need to return to them the lowest ethereumEventVoteRecord that is still within
 		// the slashing window. Since we delete ethereumEventVoteRecords after the slashing window that's
-		// just the lowest observed event in the store. If no events have been submitted in for
+		// just the lowest accepted event in the store. If no events have been submitted in for
 		// params.SignedClaimsWindow we may have no ethereumEventVoteRecords in our nonce. At which point
-		// the last observed which is a persistent and never cleaned counter will suffice.
-		lowestAccepted := k.GetLastObservedEventNonce(ctx)
+		// the last accepted which is a persistent and never cleaned counter will suffice.
+		lowestAccepted := k.GetLastAcceptedEventNonce(ctx)
 		voteRecordMap := k.GetEthereumEventVoteRecordMapping(ctx)
 		// no new events in params.SignedClaimsWindow, we can return the current value
 		// because the validator can't be slashed for an event that has already passed.

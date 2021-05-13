@@ -76,8 +76,8 @@ var (
 	// LastEventNonceByValidatorKey indexes lateset event nonce by validator
 	LastEventNonceByValidatorKey = []byte{0xe}
 
-	// LastObservedEventNonceKey indexes the latest event nonce
-	LastObservedEventNonceKey = []byte{0xf}
+	// LastAcceptedEventNonceKey indexes the latest event nonce
+	LastAcceptedEventNonceKey = []byte{0xf}
 
 	// SequenceKeyPrefix indexes different txids
 	SequenceKeyPrefix = []byte{0x10}
@@ -118,11 +118,11 @@ var (
 	// LatestEthereumBlockHeightKey indexes the latest Ethereum block height
 	LatestEthereumBlockHeightKey = []byte{0xf9}
 
-	// LastObservedSignerSetTxNonceKey indexes the latest observed signer set nonce
+	// LastAcceptedSignerSetTxNonceKey indexes the latest accepted signer set nonce
 	// HERE THERE BE DRAGONS, do not use this value as an up to date validator set
 	// on Ethereum it will always lag significantly and may be totally wrong at some
 	// times.
-	LastObservedSignerSetTxKey = []byte{0xfa}
+	LastAcceptedSignerSetTxKey = []byte{0xfa}
 
 	// PastEthSignatureCheckpointKey indexes eth signature checkpoints that have existed
 	PastEthSignatureCheckpointKey = []byte{0x1b}
