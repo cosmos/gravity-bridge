@@ -14,8 +14,8 @@ package types
 // truncate the first several bytes where the call name is encoded to finally get the equal of the
 
 const (
-	// OutgoingBatchTxCheckpointABIJSON checks the ETH ABI for compatability of the OutgoingBatchTx message
-	OutgoingBatchTxCheckpointABIJSON = `[{
+	// BatchTxCheckpointABIJSON checks the ETH ABI for compatability of the BatchTx message
+	BatchTxCheckpointABIJSON = `[{
 		"name": "submitBatch",
 		"stateMutability": "pure",
 		"type": "function",
@@ -51,7 +51,7 @@ const (
 		]
 	}]`
 
-	// ContractCallTxABIJSON checks the ETH ABI for compatability of the logic call message
+	// ContractCallTxABIJSON checks the ETH ABI for compatability of the contract call message
 	ContractCallTxABIJSON = `[{
 	  "name": "checkpoint",
       "outputs": [],

@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-func TestAddToOutgoingPool(t *testing.T) {
+func TestAddToSendToEthereumPool(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 	var (
@@ -33,13 +33,13 @@ func TestAddToOutgoingPool(t *testing.T) {
 	for i, v := range []uint64{2, 3, 2, 1} {
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		r, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		r, err := input.GravityKeeper.AddToSendToEthereumPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 		t.Logf("___ response: %#v", r)
 	}
 	// then
 	var got []*types.SendToEthereum
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
+	input.GravityKeeper.IterateSendToEthereumPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		got = append(got, tx)
 		return false
 	})
@@ -96,11 +96,11 @@ func TestTotalBatchFeeInPool(t *testing.T) {
 	err = input.BankKeeper.SetBalances(ctx, mySender, allVouchers)
 	require.NoError(t, err)
 
-	// create outgoing pool
+	// create pool
 	for i, v := range []uint64{2, 3, 2, 1} {
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		r, err2 := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		r, err2 := input.GravityKeeper.AddToSendToEthereumPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err2)
 		t.Logf("___ response: %#v", r)
 	}
@@ -121,11 +121,11 @@ func TestTotalBatchFeeInPool(t *testing.T) {
 
 	// Add
 
-	// create outgoing pool
+	// create pool
 	for i := 0; i < 110; i++ {
 		amount := types.NewERC20Token(uint64(i+100), myToken2ContractAddr).GravityCoin()
 		fee := types.NewERC20Token(uint64(5), myToken2ContractAddr).GravityCoin()
-		r, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		r, err := input.GravityKeeper.AddToSendToEthereumPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 		t.Logf("___ response: %#v", r)
 	}

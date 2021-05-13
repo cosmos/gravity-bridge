@@ -14,12 +14,12 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-// AddToOutgoingPool
-// - checks a counterpart denominator exists for the given voucher type
+// AddToSendToEthereumPool
+// - checks a ethereum address exists for the given voucher type
 // - burns the voucher for transfer amount and fees
-// - persists an OutgoingTx
+// - persists an SendToEthereum
 // - adds the TX to the `available` TX pool via a second index
-func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counterpartReceiver string, amount sdk.Coin, fee sdk.Coin) (uint64, error) {
+func (k Keeper) AddToSendToEthereumPool(ctx sdk.Context, sender sdk.AccAddress, ethereumDestination string, amount sdk.Coin, fee sdk.Coin) (uint64, error) {
 	totalAmount := amount.Add(fee)
 	totalInVouchers := sdk.Coins{totalAmount}
 
@@ -55,19 +55,19 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 
 	erc20Fee := types.NewSDKIntERC20Token(fee.Amount, tokenContract)
 
-	// construct outgoing tx, as part of this process we represent
+	// construct sendToEthereum tx, as part of this process we represent
 	// the token as an ERC20 token since it is preparing to go to ETH
 	// rather than the denom that is the input to this function.
-	outgoing := &types.SendToEthereum{
+	sendToEthereum := &types.SendToEthereum{
 		Id:          nextID,
 		Sender:      sender.String(),
-		DestAddress: counterpartReceiver,
+		DestAddress: ethereumDestination,
 		Transfer:    types.NewSDKIntERC20Token(amount.Amount, tokenContract),
 		Fee:         erc20Fee,
 	}
 
-	// set the outgoing tx in the pool index
-	if err := k.setPoolEntry(ctx, outgoing); err != nil {
+	// set the sendToEthereum tx in the pool index
+	if err := k.setPoolEntry(ctx, sendToEthereum); err != nil {
 		return 0, err
 	}
 
@@ -82,7 +82,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-		sdk.NewAttribute(types.AttributeKeyOutgoingTXID, strconv.Itoa(int(nextID))),
+		sdk.NewAttribute(types.AttributeKeySendToEthereumID, strconv.Itoa(int(nextID))),
 		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nextID)),
 	)
 	ctx.EventManager().EmitEvent(poolEvent)
@@ -90,11 +90,11 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	return nextID, nil
 }
 
-// RemoveFromOutgoingPoolAndRefund
+// RemoveFromAddToSendToEthereumPoolAndRefund
 // - checks that the provided tx actually exists
 // - deletes the unbatched tx from the pool
 // - issues the tokens back to the sender
-func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, sender sdk.AccAddress) error {
+func (k Keeper) RemoveFromAddToSendToEthereumPoolAndRefund(ctx sdk.Context, txId uint64, sender sdk.AccAddress) error {
 	// check that we actually have a tx with that id and what it's details are
 	tx, err := k.getPoolEntry(ctx, txId)
 	if err != nil {
@@ -130,7 +130,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 
 	isCosmosOriginated, _ := k.ERC20ToDenomLookup(ctx, tx.Transfer.Contract)
 
-	// If it is a cosmos-originated the coins are in the module (see AddToOutgoingPool) so we can just take them out
+	// If it is a cosmos-originated the coins are in the module (see AddToSendToEthereumPool) so we can just take them out
 	if isCosmosOriginated {
 		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
 			return err
@@ -213,13 +213,13 @@ func (k Keeper) setPoolEntry(ctx sdk.Context, val *types.SendToEthereum) error {
 		return err
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOutgoingTxPoolKey(val.Id), bz)
+	store.Set(types.GetSendToEthereumPoolKey(val.Id), bz)
 	return nil
 }
 
 func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.SendToEthereum, error) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetOutgoingTxPoolKey(id))
+	bz := store.Get(types.GetSendToEthereumPoolKey(id))
 	if bz == nil {
 		return nil, types.ErrUnknown
 	}
@@ -230,7 +230,7 @@ func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.SendToEthereum,
 
 func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetOutgoingTxPoolKey(id))
+	store.Delete(types.GetSendToEthereumPoolKey(id))
 }
 
 // GetPoolTransactions, grabs all transactions from the tx pool, useful for queries or genesis save/load
@@ -238,7 +238,7 @@ func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.SendToEthereum {
 	prefixStore := ctx.KVStore(k.storeKey)
 	// we must use the second index key here because transactions are left in the store, but removed
 	// from the tx sorting key, while in batches
-	iter := prefixStore.ReverseIterator(prefixRange([]byte(types.SecondIndexOutgoingTXFeeKey)))
+	iter := prefixStore.ReverseIterator(prefixRange([]byte(types.SecondIndexSendToEthereumFeeKey)))
 	var ret []*types.SendToEthereum
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -255,9 +255,9 @@ func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.SendToEthereum {
 	return ret
 }
 
-// IterateOutgoingPoolByFee iterates over the outgoing pool which is sorted by fee
-func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.SendToEthereum) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
+// IterateSendToEthereumPoolByFee iterates over the send to ethereum pool which is sorted by fee
+func (k Keeper) IterateSendToEthereumPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.SendToEthereum) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexSendToEthereumFeeKey)
 	iter := prefixStore.ReverseIterator(prefixRange([]byte(contract)))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -307,9 +307,9 @@ func (k Keeper) GetAllBatchFees(ctx sdk.Context) (batchFees []*types.BatchFees) 
 	return batchFees
 }
 
-// CreateBatchFees iterates over the outgoing pool and creates batch token fee map
+// CreateBatchFees iterates over the send to ethereum pool and creates batch token fee map
 func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.BatchFees {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexSendToEthereumFeeKey)
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 

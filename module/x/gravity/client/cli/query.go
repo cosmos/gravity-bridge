@@ -68,8 +68,8 @@ func QueryApproved() *cobra.Command {
 
 func CmdGetCurrentSignerSetTx() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "current-valset",
-		Short: "Query current valset",
+		Use:   "current-signer-set-tx",
+		Short: "Query current signer set tx",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -121,8 +121,8 @@ func CmdGetDelegateAddress() *cobra.Command {
 
 func CmdGetSignerSetTx() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "valset-request [nonce]",
-		Short: "Get requested valset with a particular nonce",
+		Use:   "signer-set-tx [nonce]",
+		Short: "Get requested signer set tx with a particular nonce",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -182,8 +182,8 @@ func CmdGetSignerSetTxSignature() *cobra.Command {
 
 func CmdGetPendingSignerSetTx() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pending-valset-request [bech32 validator address]",
-		Short: "Get the latest valset request which has not been signed by a particular validator",
+		Use:   "pending-signer-set-tx [bech32 validator address]",
+		Short: "Get the latest signer set tx which has not been signed by a particular validator",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -207,8 +207,8 @@ func CmdGetPendingSignerSetTx() *cobra.Command {
 
 func CmdGetPendingBatchTx() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pending-batch-request [bech32 validator address]",
-		Short: "Get the latest outgoing TX batch request which has not been signed by a particular validator",
+		Use:   "pending-batch-tx [bech32 validator address]",
+		Short: "Get the latest batch tx which has not been signed by a particular validator",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)

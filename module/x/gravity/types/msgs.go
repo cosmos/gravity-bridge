@@ -291,7 +291,7 @@ type EthereumEvent interface {
 	// any disagreement on what event goes to what nonce means someone is lying.
 	GetEventNonce() uint64
 	// The block height that the evented event occurred on. This EventNonce provides sufficient
-	// ordering for the execution of all events. The block height is used only for batchTimeouts + logicTimeouts
+	// ordering for the execution of all events. The block height is used only for batch timeouts + contractCall timeouts
 	// when we go to create a new batch we set the timeout some number of batches out from the last
 	// known height plus projected block progress since then.
 	GetBlockHeight() uint64

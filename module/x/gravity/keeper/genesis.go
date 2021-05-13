@@ -20,7 +20,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		k.SetSignerSetTxSignature(ctx, *sigMsg)
 	}
 
-	// reset batches in state
+	// reset batchTxs in state
 	for _, batch := range data.BatchTxs {
 		// TODO: block height?
 		k.StoreBatchUnsafe(ctx, batch)
@@ -32,7 +32,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		k.SetBatchTxSignature(ctx, &sigMsg)
 	}
 
-	// reset logic calls in state
+	// reset contract calls in state
 	for _, call := range data.ContractCallTxs {
 		k.SetContractCallTx(ctx, call)
 	}
@@ -126,12 +126,12 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
 		p                        = k.GetParams(ctx)
 		calls                    = k.GetContractCallTxs(ctx)
-		batches                  = k.GetBatchTxs(ctx)
-		valsets                  = k.GetSignerSetTxs(ctx)
+		batchTxs                 = k.GetBatchTxs(ctx)
+		signerSetTx              = k.GetSignerSetTxs(ctx)
 		voteRecordMap            = k.GetEthereumEventVoteRecordMapping(ctx)
-		signerSetSigs            = []*types.MsgSignerSetTxSignature{}
-		batchSigs                = []types.MsgBatchTxSignature{}
-		contractCallSigs         = []types.MsgContractCallTxSignature{}
+		signerSetTxSigs          = []*types.MsgSignerSetTxSignature{}
+		batchTxSigs              = []types.MsgBatchTxSignature{}
+		contractCallTxSigs       = []types.MsgContractCallTxSignature{}
 		ethereumEventVoteRecords = []types.EthereumEventVoteRecord{}
 		delegates                = k.GetDelegateKeys(ctx)
 		lastobserved             = k.GetLastObservedEventNonce(ctx)
@@ -140,22 +140,22 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	)
 
 	// export signer set tx signatures from state
-	for _, vs := range valsets {
+	for _, vs := range signerSetTx {
 		// TODO: set height = 0?
-		signerSetSigs = append(signerSetSigs, k.GetSignerSetTxSignatures(ctx, vs.Nonce)...)
+		signerSetTxSigs = append(signerSetTxSigs, k.GetSignerSetTxSignatures(ctx, vs.Nonce)...)
 	}
 
 	// export batch tx signatures from state
-	for _, batch := range batches {
+	for _, batch := range batchTxs {
 		// TODO: set height = 0?
-		batchSigs = append(batchSigs,
+		batchTxSigs = append(batchTxSigs,
 			k.GetBatchTxSignaturesByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)...)
 	}
 
-	// export logic call tx signatures from state
+	// export contract call tx signatures from state
 	for _, call := range calls {
 		// TODO: set height = 0?
-		contractCallSigs = append(contractCallSigs,
+		contractCallTxSigs = append(contractCallTxSigs,
 			k.GetContractCallTxSignaturesByInvalidationIDAndNonce(ctx, call.InvalidationId, call.InvalidationNonce)...)
 	}
 
@@ -174,12 +174,12 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	return types.GenesisState{
 		Params:                   &p,
 		LastObservedNonce:        lastobserved,
-		SignerSetTxs:             valsets,
-		SignerSetTxSignatures:    signerSetSigs,
-		BatchTxs:                 batches,
-		BatchTxSignatures:        batchSigs,
+		SignerSetTxs:             signerSetTx,
+		SignerSetTxSignatures:    signerSetTxSigs,
+		BatchTxs:                 batchTxs,
+		BatchTxSignatures:        batchTxSigs,
 		ContractCallTxs:          calls,
-		ContractCallTxSignatures: contractCallSigs,
+		ContractCallTxSignatures: contractCallTxSigs,
 		EthereumEventVoteRecords: ethereumEventVoteRecords,
 		DelegateKeys:             delegates,
 		Erc20ToDenoms:            erc20ToDenoms,

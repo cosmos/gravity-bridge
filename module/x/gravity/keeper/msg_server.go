@@ -65,13 +65,13 @@ func (k msgServer) DelegateKeys(c context.Context, msg *types.MsgDelegateKeys) (
 // TODO: check msgSignerSetTxSignature to have an Orchestrator field instead of a Validator field
 func (k msgServer) SignerSetTxSignature(c context.Context, msg *types.MsgSignerSetTxSignature) (*types.MsgSignerSetTxSignatureResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	valset := k.GetSignerSetTx(ctx, msg.Nonce)
-	if valset == nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
+	signerSetTx := k.GetSignerSetTx(ctx, msg.Nonce)
+	if signerSetTx == nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find signerSetTx")
 	}
 
 	gravityID := k.GetGravityID(ctx)
-	checkpoint := valset.GetCheckpoint(gravityID)
+	checkpoint := signerSetTx.GetCheckpoint(gravityID)
 
 	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
@@ -116,7 +116,7 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 	if err != nil {
 		return nil, err
 	}
-	txID, err := k.AddToOutgoingPool(ctx, sender, msg.EthDest, msg.Amount, msg.BridgeFee)
+	txID, err := k.AddToSendToEthereumPool(ctx, sender, msg.EthDest, msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, fmt.Sprint(txID)),
+			sdk.NewAttribute(types.AttributeKeySendToEthereumID, fmt.Sprint(txID)),
 		),
 	)
 
@@ -142,7 +142,7 @@ func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchT
 		return nil, err
 	}
 
-	batch, err := k.BuildOutgoingTXBatch(ctx, tokenContract, BatchTxSize)
+	batch, err := k.BuildBatchTx(ctx, tokenContract, BatchTxSize)
 	if err != nil {
 		return nil, err
 	}
@@ -162,8 +162,8 @@ func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchT
 func (k msgServer) BatchTxSignature(c context.Context, msg *types.MsgBatchTxSignature) (*types.MsgBatchTxSignatureResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// fetch the outgoing batch given the nonce
-	batch := k.GetOutgoingTXBatch(ctx, msg.TokenContract, msg.Nonce)
+	// fetch the batch tx the nonce
+	batch := k.GetBatchTx(ctx, msg.TokenContract, msg.Nonce)
 	if batch == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
 	}
@@ -217,14 +217,14 @@ func (k msgServer) ContractCallTxSignature(c context.Context, msg *types.MsgCont
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "invalidation id encoding")
 	}
 
-	// fetch the outgoing logic given the nonce
-	logic := k.GetContractCallTx(ctx, invalidationIdBytes, msg.InvalidationNonce)
-	if logic == nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find logic")
+	// fetch the contract call given the nonce
+	contractCall := k.GetContractCallTx(ctx, invalidationIdBytes, msg.InvalidationNonce)
+	if contractCall == nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find contractCall")
 	}
 
 	gravityID := k.GetGravityID(ctx)
-	checkpoint := logic.GetCheckpoint(gravityID)
+	checkpoint := contractCall.GetCheckpoint(gravityID)
 
 	sigBytes, err := hex.DecodeString(msg.Signature)
 	if err != nil {
@@ -390,7 +390,7 @@ func (k msgServer) ERC20DeployedEvent(c context.Context, msg *types.MsgERC20Depl
 	return &types.MsgERC20DeployedEventResponse{}, nil
 }
 
-// ContractCallExecutedEvent handles events for executing a logic call on Ethereum
+// ContractCallExecutedEvent handles events for executing a contract call on Ethereum
 func (k msgServer) ContractCallExecutedEvent(c context.Context, msg *types.MsgContractCallExecutedEvent) (*types.MsgContractCallExecutedEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
@@ -476,7 +476,7 @@ func (k msgServer) CancelSendToEthereum(c context.Context, msg *types.MsgCancelS
 	if err != nil {
 		return nil, err
 	}
-	err = k.RemoveFromOutgoingPoolAndRefund(ctx, msg.TransactionId, sender)
+	err = k.RemoveFromAddToSendToEthereumPoolAndRefund(ctx, msg.TransactionId, sender)
 	if err != nil {
 		return nil, err
 	}
@@ -485,7 +485,7 @@ func (k msgServer) CancelSendToEthereum(c context.Context, msg *types.MsgCancelS
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, fmt.Sprint(msg.TransactionId)),
+			sdk.NewAttribute(types.AttributeKeySendToEthereumID, fmt.Sprint(msg.TransactionId)),
 		),
 	)
 

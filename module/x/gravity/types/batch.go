@@ -10,10 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
+// GetCheckpoint gets the checkpoint signature from the given batch tx
 func (b BatchTx) GetCheckpoint(gravityIDstring string) []byte {
 
-	abi, err := abi.JSON(strings.NewReader(OutgoingBatchTxCheckpointABIJSON))
+	abi, err := abi.JSON(strings.NewReader(BatchTxCheckpointABIJSON))
 	if err != nil {
 		panic("Bad ABI constant!")
 	}
@@ -68,7 +68,7 @@ func (b BatchTx) GetCheckpoint(gravityIDstring string) []byte {
 	return crypto.Keccak256Hash(abiEncodedBatch[4:]).Bytes()
 }
 
-// GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
+// GetCheckpoint gets the checkpoint signature from the given batch tx
 func (c ContractCallTx) GetCheckpoint(gravityIDstring string) []byte {
 
 	abi, err := abi.JSON(strings.NewReader(ContractCallTxABIJSON))
@@ -90,7 +90,7 @@ func (c ContractCallTx) GetCheckpoint(gravityIDstring string) []byte {
 		panic(err)
 	}
 
-	// Run through the elements of the logic call and serialize them
+	// Run through the elements of the contract call and serialize them
 	transferAmounts := make([]*big.Int, len(c.Transfers))
 	transferTokenContracts := make([]gethcommon.Address, len(c.Transfers))
 	feeAmounts := make([]*big.Int, len(c.Fees))

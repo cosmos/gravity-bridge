@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
+// TODO: check strings
 const (
 
 	// SignerSetTxs
@@ -27,7 +28,7 @@ const (
 	// have been produced by the chain. Useful to see if any recently
 	// signed requests can be submitted.
 	QueryLastSignerSetTxs = "lastSignerSetTxs"
-	// Gets a list of unsigned valsets for a given validators delegate
+	// Gets a list of unsigned signer set txs for a given validators delegate
 	// orchestrator address. Up to 100 are sent at a time
 	QueryLastPendingSignerSetTxByAddr = "lastPendingSignerSetTx"
 
@@ -53,7 +54,7 @@ const (
 	// Get the last unsigned batch (of any denom) for the validators
 	// orchestrator to sign
 	QueryLastPendingBatchTxByAddr = "lastPendingBatchTx"
-	// gets the last 100 outgoing batches, regardless of denom, useful
+	// gets the last 100 batch txs, regardless of denom, useful
 	// for a relayer to see what is available to relay
 	QueryBatchTxs = "lastBatches"
 	// Used by the relayer to package a batch with signatures required
@@ -68,16 +69,16 @@ const (
 	// note the current logic here constrains logic call throughput to one
 	// call (of any type) per Cosmos block.
 
-	// This retrieves a specific logic call by it's nonce and token contract
+	// This retrieves a specific contract call by it's nonce and token contract
 	// or in the case of a Cosmos originated address it's denom
 	QueryLogicCall = "logicCall"
-	// Get the last unsigned logic call for the validators orchestrator
+	// Get the last unsigned contract call for the validators orchestrator
 	// to sign
 	QueryLastPendingLogicCallByAddr = "lastPendingLogicCall"
-	// gets the last 5 outgoing logic calls, regardless of denom, useful
+	// gets the last 5 contract call txs, regardless of denom, useful
 	// for a relayer to see what is available to relay
 	QueryContractCallTxs = "lastLogicCalls"
-	// Used by the relayer to package a logic call with signatures required
+	// Used by the relayer to package a contract call with signatures required
 	// to submit to Ethereum
 	QueryLogicCallConfirms = "logicCallConfirms"
 
@@ -157,13 +158,13 @@ func querySignerSetTx(ctx sdk.Context, path []string, keeper Keeper) ([]byte, er
 		return nil, err
 	}
 
-	valset := keeper.GetSignerSetTx(ctx, nonce)
-	if valset == nil {
+	signerSetTx := keeper.GetSignerSetTx(ctx, nonce)
+	if signerSetTx == nil {
 		return nil, nil
 	}
 	// TODO: replace these with the GRPC response types
 	// TODO: fix the use of module codec here
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, valset)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, signerSetTx)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -221,7 +222,7 @@ func queryAllBatchTxSignatures(ctx sdk.Context, nonceStr string, tokenContract s
 
 const maxSignerSetTxsReturned = 5
 
-// lastSignerSetTxs returns up to maxSignerSetTxsReturned valsets from the store
+// lastSignerSetTxs returns up to maxSignerSetTxsReturned signerSetTxs from the store
 func lastSignerSetTxs(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var counter int
 	var valReq []*types.SignerSetTx
@@ -250,9 +251,9 @@ func lastPendingSignerSetTx(ctx sdk.Context, operatorAddr string, keeper Keeper)
 
 	var pendingSignerSetTxs []*types.SignerSetTx
 	keeper.IterateSignerSetTxs(ctx, func(_ []byte, val *types.SignerSetTx) bool {
-		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
+		// foundConfirm is true if the operatorAddr has signed the signerSetTx we are currently looking at
 		foundConfirm := keeper.GetSignerSetTxSignature(ctx, val.Nonce, addr) != nil
-		// if this valset has NOT been signed by operatorAddr, store it in pendingSignerSetTxs
+		// if this signerSetTx has NOT been signed by operatorAddr, store it in pendingSignerSetTxs
 		// and exit the loop
 		if !foundConfirm {
 			pendingSignerSetTxs = append(pendingSignerSetTxs, val)
@@ -276,8 +277,8 @@ func lastPendingSignerSetTx(ctx sdk.Context, operatorAddr string, keeper Keeper)
 }
 
 func queryCurrentSignerSetTx(ctx sdk.Context, keeper Keeper) ([]byte, error) {
-	valset := keeper.CreateSignerSetTx(ctx)
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, valset)
+	signerSetTx := keeper.CreateSignerSetTx(ctx)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, signerSetTx)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -298,11 +299,11 @@ func querySignerSetTxSignature(ctx sdk.Context, path []string, keeper Keeper) ([
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, err.Error())
 	}
 
-	valset := keeper.GetSignerSetTxSignature(ctx, nonce, accAddress)
-	if valset == nil {
+	signerSetTx := keeper.GetSignerSetTxSignature(ctx, nonce, accAddress)
+	if signerSetTx == nil {
 		return nil, nil
 	}
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, *valset)
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, *signerSetTx)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -311,7 +312,7 @@ func querySignerSetTxSignature(ctx sdk.Context, path []string, keeper Keeper) ([
 }
 
 type MultiSigUpdateResponse struct {
-	SignerSetTx types.SignerSetTx `json:"valset"`
+	SignerSetTx types.SignerSetTx `json:"signerSetTx"`
 	Signatures  [][]byte          `json:"signatures,omitempty"`
 }
 
@@ -323,7 +324,7 @@ func lastPendingBatchTx(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]
 	}
 
 	var pendingBatchReq *types.BatchTx
-	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.BatchTx) bool {
+	keeper.IterateBatchTxs(ctx, func(_ []byte, batch *types.BatchTx) bool {
 		foundConfirm := keeper.GetBatchTxSignature(ctx, batch.BatchNonce, batch.TokenContract, addr) != nil
 		if !foundConfirm {
 			pendingBatchReq = batch
@@ -346,7 +347,7 @@ const MaxResults = 100 // todo: impl pagination
 // Gets MaxResults batches from store. Does not select by token type or anything
 func lastBatchesRequest(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var batches []*types.BatchTx
-	keeper.IterateOutgoingTXBatches(ctx, func(_ []byte, batch *types.BatchTx) bool {
+	keeper.IterateBatchTxs(ctx, func(_ []byte, batch *types.BatchTx) bool {
 		batches = append(batches, batch)
 		return len(batches) == MaxResults
 	})
@@ -369,7 +370,7 @@ func queryBatchFees(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	return res, nil
 }
 
-// Gets MaxResults logic calls from store.
+// Gets MaxResults contract calls from store.
 func lastLogicCallRequests(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var calls []*types.ContractCallTx
 	keeper.IterateContractCallTxs(ctx, func(_ []byte, call *types.ContractCallTx) bool {
@@ -395,7 +396,7 @@ func queryBatch(ctx sdk.Context, nonce string, tokenContract string, keeper Keep
 	if types.ValidateEthAddress(tokenContract) != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-	foundBatch := keeper.GetOutgoingTXBatch(ctx, tokenContract, parsedNonce)
+	foundBatch := keeper.GetBatchTx(ctx, tokenContract, parsedNonce)
 	if foundBatch == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find tx batch")
 	}
@@ -432,7 +433,7 @@ func lastPendingLogicCallRequest(ctx sdk.Context, operatorAddr string, keeper Ke
 	return res, nil
 }
 
-// queryLogicCall gets a logic call by nonce and invalidation id
+// queryLogicCall gets a contract call by nonce and invalidation id
 func queryLogicCall(ctx sdk.Context, invalidationId string, invalidationNonce string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(invalidationNonce)
 	if err != nil {
@@ -441,7 +442,7 @@ func queryLogicCall(ctx sdk.Context, invalidationId string, invalidationNonce st
 
 	foundCall := keeper.GetContractCallTx(ctx, []byte(invalidationId), nonce)
 	if foundCall == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find logic call")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find contract call")
 	}
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, foundCall)
 	if err != nil {

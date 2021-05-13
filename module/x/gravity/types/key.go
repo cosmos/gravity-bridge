@@ -51,20 +51,20 @@ var (
 	// eventually executes
 	EthereumEventVoteRecordKey = []byte{0x6}
 
-	// OutgoingTXPoolKey indexes the last nonce for the outgoing tx pool
-	OutgoingTXPoolKey = []byte{0x7}
+	// SendToEthereumPoolKey indexes the last nonce for the send to ethereum tx pool
+	SendToEthereumPoolKey = []byte{0x7}
 
 	// DenomiatorPrefix indexes token contract addresses from ETH on gravity
 	DenomiatorPrefix = []byte{0x8}
 
-	// SecondIndexOutgoingTXFeeKey indexes fee amounts by token contract address
-	SecondIndexOutgoingTXFeeKey = []byte{0x9}
+	// SecondIndexSendToEthereumFeeKey indexes fee amounts by token contract address
+	SecondIndexSendToEthereumFeeKey = []byte{0x9}
 
-	// OutgoingTXBatchKey indexes outgoing tx batches under a nonce and token address
-	OutgoingTXBatchKey = []byte{0xa}
+	// BatchTxKey indexes batch txs under a nonce and token address
+	BatchTxKey = []byte{0xa}
 
-	// OutgoingTXBatchBlockKey indexes outgoing tx batches under a block height and token address
-	OutgoingTXBatchBlockKey = []byte{0xb}
+	// BatchTxBlockKey indexes batch txs under a block height and token address
+	BatchTxBlockKey = []byte{0xb}
 
 	// BatchTxSignatureKey indexes batch tx signatures by token contract address
 	BatchTxSignatureKey = []byte{0xc}
@@ -85,13 +85,13 @@ var (
 	// KeyLastTXPoolID indexes the lastTxPoolID
 	KeyLastTXPoolID = append(SequenceKeyPrefix, []byte("lastTxPoolId")...)
 
-	// KeyLastOutgoingBatchID indexes the lastBatchID
-	KeyLastOutgoingBatchID = append(SequenceKeyPrefix, []byte("lastBatchId")...)
+	// KeyLastBatchTxID indexes the lastBatchID
+	KeyLastBatchTxID = append(SequenceKeyPrefix, []byte("lastBatchId")...)
 
 	// KeyOrchestratorAddress indexes the validator keys for an orchestrator
 	KeyOrchestratorAddress = []byte{0x11}
 
-	// KeyContractCallTx indexes the outgoing logic calls
+	// KeyContractCallTx indexes the contract call txs
 	KeyContractCallTx = []byte{0x12}
 
 	// KeyContractCallTxSignature indexes the contract call tx signatures
@@ -103,10 +103,10 @@ var (
 	// ERC20ToDenomKey prefixes the index of Cosmos originated assets ERC20s to denoms
 	ERC20ToDenomKey = []byte{0x16}
 
-	// LastSlashedSignerSetTxNonce indexes the latest slashed valset nonce
+	// LastSlashedSignerSetTxNonce indexes the latest slashed signer set nonce
 	LastSlashedSignerSetTxNonce = []byte{0x17}
 
-	// LatestSignerSetTxNonce indexes the latest valset nonce
+	// LatestSignerSetTxNonce indexes the latest signer set nonce
 	LatestSignerSetTxNonce = []byte{0x18}
 
 	// LastSlashedBatchBlock indexes the latest slashed batch block height
@@ -118,7 +118,7 @@ var (
 	// LatestEthereumBlockHeightKey indexes the latest Ethereum block height
 	LatestEthereumBlockHeightKey = []byte{0xf9}
 
-	// LastObservedSignerSetTxNonceKey indexes the latest observed valset nonce
+	// LastObservedSignerSetTxNonceKey indexes the latest observed signer set nonce
 	// HERE THERE BE DRAGONS, do not use this value as an up to date validator set
 	// on Ethereum it will always lag significantly and may be totally wrong at some
 	// times.
@@ -219,25 +219,25 @@ func GetEthereumEventVoteRecordKeyWithHash(eventNonce uint64, eventHash []byte) 
 	return key
 }
 
-// GetOutgoingTxPoolKey returns the following key format
+// GetSendToEthereumPoolKey returns the following key format
 // prefix     id
 // [0x6][0 0 0 0 0 0 0 1]
-func GetOutgoingTxPoolKey(id uint64) []byte {
-	return append(OutgoingTXPoolKey, sdk.Uint64ToBigEndian(id)...)
+func GetSendToEthereumPoolKey(id uint64) []byte {
+	return append(SendToEthereumPoolKey, sdk.Uint64ToBigEndian(id)...)
 }
 
 // GetBatchTxKey returns the following key format
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
 func GetBatchTxKey(tokenContract string, nonce uint64) []byte {
-	return append(append(OutgoingTXBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
+	return append(append(BatchTxKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
 }
 
 // GetBatchTxBlockKey returns the following key format
 // prefix     blockheight
 // [0xb][0 0 0 0 2 1 4 3]
 func GetBatchTxBlockKey(block uint64) []byte {
-	return append(OutgoingTXBatchBlockKey, UInt64Bytes(block)...)
+	return append(BatchTxBlockKey, UInt64Bytes(block)...)
 }
 
 // GetBatchTxSignatureKey returns the following key format
@@ -261,9 +261,9 @@ func GetFeeSecondIndexKey(fee ERC20Token) []byte {
 	amount := make([]byte, 32)
 	amount = fee.Amount.BigInt().FillBytes(amount)
 	// TODO this won't ever work fix it
-	copy(r[0:], SecondIndexOutgoingTXFeeKey)
-	copy(r[len(SecondIndexOutgoingTXFeeKey):], []byte(fee.Contract))
-	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(fee.Contract):], amount)
+	copy(r[0:], SecondIndexSendToEthereumFeeKey)
+	copy(r[len(SecondIndexSendToEthereumFeeKey):], []byte(fee.Contract))
+	copy(r[len(SecondIndexSendToEthereumFeeKey)+len(fee.Contract):], amount)
 	return r
 }
 

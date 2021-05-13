@@ -28,12 +28,12 @@ func createSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 	// 2. If there is at least one validator who started unbonding in current block. (we persist last unbonded block height in hooks.go)
 	//      This will make sure the unbonding validator has to provide an ethereumEventVoteRecord to a new SignerSetTx
 	//	    that excludes him before he completely Unbonds.  Otherwise he will be slashed
-	// 3. If power change between validators of CurrentSignerSetTx and latest valset request is > 5%
+	// 3. If power change between validators of CurrentSignerSetTx and latest signer set tx is > 5%
 	latestSignerSetTx := k.GetLatestSignerSetTx(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 
 	if (latestSignerSetTx == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.EthereumSigners(k.CreateSignerSetTx(ctx).Members).PowerDiff(latestSignerSetTx.Members) > 0.05) {
-		// Store valset
+		// Store signer set tx
 		k.SetSignerSetTx(ctx)
 	}
 }
@@ -43,7 +43,7 @@ func pruneSignerSetTxs(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	// prune all validator sets with a nonce less than the
 	// last observed nonce, they can't be submitted any longer
 	//
-	// Only prune valsets after the signed valsets window has passed
+	// Only prune signer set txs after the signed signer set txs window has passed
 	// so that slashing can occur the block before we remove them
 	lastObserved := k.GetLastObservedSignerSetTx(ctx)
 	currentBlock := uint64(ctx.BlockHeight())
@@ -128,12 +128,12 @@ func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
 	batches := k.GetBatchTxs(ctx)
 	for _, batch := range batches {
 		if batch.BatchTimeout < ethereumHeight {
-			k.CancelOutgoingTXBatch(ctx, batch.TokenContract, batch.BatchNonce)
+			k.CancelBatchTx(ctx, batch.TokenContract, batch.BatchNonce)
 		}
 	}
 }
 
-// cleanupTimedOutBatches deletes logic calls that have passed their expiration on Ethereum
+// cleanupTimedOutBatches deletes contract calls that have passed their expiration on Ethereum
 // keep in mind several things when modifying this function
 // A) unlike nonces timeouts are not monotonically increasing, meaning call 5 can have a later timeout than batch 6
 //    this means that we MUST only cleanup a single call at a time
@@ -174,7 +174,7 @@ func SignerSetTxSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 			consAddr, _ := val.GetConsAddr()
 			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
 
-			//  Slash validator ONLY if he joined before valset is created
+			//  Slash validator ONLY if he joined before signer set tx is created
 			if exist && valSigningInfo.StartHeight < int64(vs.Nonce) {
 				// Check if validator has signed signer set tx or not
 				found := false
@@ -215,7 +215,7 @@ func SignerSetTxSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 				valConsAddr, _ := validator.GetConsAddr()
 				valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, valConsAddr)
 
-				// Only slash validators who joined after valset is created and they are unbonding and UNBOND_SLASHING_WINDOW didn't passed
+				// Only slash validators who joined after signer set tx is created and they are unbonding and UNBOND_SLASHING_WINDOW didn't passed
 				if exist && valSigningInfo.StartHeight < int64(vs.Nonce) && validator.IsUnbonding() && vs.Nonce < uint64(validator.UnbondingHeight)+params.SlashingSignerSetUnbondWindow {
 					// Check if validator has signed signer set tx or not
 					found := false
@@ -236,7 +236,7 @@ func SignerSetTxSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) 
 				}
 			}
 		}
-		// then we set the latest slashed valset  nonce
+		// then we set the latest slashed signer set tx  nonce
 		k.SetLastSlashedSignerSetTxNonce(ctx, vs.Nonce)
 	}
 }
@@ -291,10 +291,10 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 }
 
 // TestingEndBlocker is a second endblocker function only imported in the Gravity codebase itself
-// if you are a consuming Cosmos chain DO NOT IMPORT THIS, it simulates a chain using the arbitrary
-// logic API to request logic calls
+// if you are a consuming Cosmos chain DO NOT IMPORT THIS, it simulates a chain using the
+// contract call API
 func TestingEndBlocker(ctx sdk.Context, k keeper.Keeper) {
-	// if this is nil we have not set our test outgoing logic call yet
+	// if this is nil we have not set our test contract call yet
 	if k.GetContractCallTx(ctx, []byte("GravityTesting"), 0).ContractCallPayload == nil {
 		// TODO this call isn't actually very useful for testing, since it always
 		// throws, being just junk data that's expected. But it prevents us from checking

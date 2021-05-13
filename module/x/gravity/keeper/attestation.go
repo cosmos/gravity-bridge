@@ -250,15 +250,15 @@ func (k Keeper) GetLastObservedSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 	if len(bytes) == 0 {
 		return nil
 	}
-	valset := types.SignerSetTx{}
-	k.cdc.MustUnmarshalBinaryBare(bytes, &valset)
-	return &valset
+	signerSetTx := types.SignerSetTx{}
+	k.cdc.MustUnmarshalBinaryBare(bytes, &signerSetTx)
+	return &signerSetTx
 }
 
 // SetLastObservedSignerSetTx updates the last observed validator set in the store
-func (k Keeper) SetLastObservedSignerSetTx(ctx sdk.Context, valset types.SignerSetTx) {
+func (k Keeper) SetLastObservedSignerSetTx(ctx sdk.Context, signerSetTx types.SignerSetTx) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastObservedSignerSetTxKey, k.cdc.MustMarshalBinaryBare(&valset))
+	store.Set(types.LastObservedSignerSetTxKey, k.cdc.MustMarshalBinaryBare(&signerSetTx))
 }
 
 // setLastObservedEventNonce sets the latest observed event nonce

@@ -247,7 +247,7 @@ func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 		require.NoError(t, err)
 	}
 
-	// Run the staking endblocker to ensure valset is correct in state
+	// Run the staking endblocker to ensure signer set tx is correct in state
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 
 	// Register eth addresses for each validator

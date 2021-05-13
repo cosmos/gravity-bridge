@@ -22,7 +22,7 @@ func getSignerSetTxHandler(cliCtx client.Context, storeName string) http.Handler
 			return
 		}
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, "valset not found")
+			rest.WriteErrorResponse(w, http.StatusNotFound, "signer set tx not found")
 			return
 		}
 
@@ -45,7 +45,7 @@ func batchByNonceHandler(cliCtx client.Context, storeName string) http.HandlerFu
 			return
 		}
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, "valset not found")
+			rest.WriteErrorResponse(w, http.StatusNotFound, "signer set tx not found")
 			return
 		}
 
@@ -65,7 +65,7 @@ func lastBatchesHandler(cliCtx client.Context, storeName string) http.HandlerFun
 			return
 		}
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusNotFound, "valset not found")
+			rest.WriteErrorResponse(w, http.StatusNotFound, "signer set tx not found")
 			return
 		}
 

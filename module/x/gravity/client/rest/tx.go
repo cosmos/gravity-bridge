@@ -14,19 +14,19 @@ import (
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
 
-type valsetConfirmReq struct {
+type signerSetSignatureReq struct {
 	BaseReq    rest.BaseReq `json:"base_req"`
 	EthAddress string       `json:"eth_address"`
 	Nonce      string       `json:"nonce"`
 	EthSig     string       `json:"ethSig"`
 }
 
-// check the ethereum sig on a particular valset and broadcast a transaction containing
-// it if correct. The nonce / block height is used to determine what valset to look up
+// check the ethereum sig on a particular signer set and broadcast a transaction containing
+// it if correct. The nonce / block height is used to determine what signer set to look up
 // locally and verify
 func createSignerSetTxSignatureHandler(cliCtx client.Context, storeKey string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req valsetConfirmReq
+		var req signerSetSignatureReq
 
 		if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
@@ -40,15 +40,15 @@ func createSignerSetTxSignatureHandler(cliCtx client.Context, storeKey string) h
 
 		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, req.Nonce), nil)
 		if err != nil {
-			fmt.Printf("could not get valset")
+			fmt.Printf("could not get signerSetTx")
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
 			return
 		}
-		var valset types.SignerSetTx
-		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &valset)
+		var signerSetTx types.SignerSetTx
+		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &signerSetTx)
 
 		// TODO: fix this, need to fetch the gravityID from params here
-		checkpoint := valset.GetCheckpoint("fetch-gravity-id-from-params-please-this-should-panic")
+		checkpoint := signerSetTx.GetCheckpoint("fetch-gravity-id-from-params-please-this-should-panic")
 
 		// the signed message should be the hash of the checkpoint at the given nonce
 		ethHash := ethCrypto.Keccak256Hash(checkpoint)
@@ -72,7 +72,7 @@ func createSignerSetTxSignatureHandler(cliCtx client.Context, storeKey string) h
 		}
 
 		cosmosAddr := cliCtx.GetFromAddress()
-		msg := types.NewMsgSignerSetTxSignature(valset.Nonce, req.EthAddress, cosmosAddr, req.EthSig)
+		msg := types.NewMsgSignerSetTxSignature(signerSetTx.Nonce, req.EthAddress, cosmosAddr, req.EthSig)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")

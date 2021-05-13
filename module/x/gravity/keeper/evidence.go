@@ -27,12 +27,12 @@ func (k Keeper) CheckBadSignatureEvidence(
 		return k.checkBadSignatureEvidenceInternal(ctx, subject, msg.Signature)
 
 	default:
-		return sdkerrors.Wrap(types.ErrInvalid, "Bad signature must be over a batch, valset, or logic call")
+		return sdkerrors.Wrap(types.ErrInvalid, "Bad signature must be over a batch, signer set, or contract call")
 	}
 }
 
 func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, subject types.EthereumSigned, signature string) error {
-	// Get checkpoint of the supposed bad signature (fake valset, batch, or logic call submitted to eth)
+	// Get checkpoint of the supposed bad signature (fake signer set, batch, or contract call submitted to eth)
 	gravityID := k.GetGravityID(ctx)
 	checkpoint := subject.GetCheckpoint(gravityID)
 
@@ -75,7 +75,7 @@ func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, subject types
 	return nil
 }
 
-// SetPastEthSignatureCheckpoint puts the checkpoint of a valset, batch, or logic call into a set
+// SetPastEthSignatureCheckpoint puts the checkpoint of a signer set, batch, or contract call into a set
 // in order to prove later that it existed at one point.
 func (k Keeper) SetPastEthSignatureCheckpoint(ctx sdk.Context, checkpoint []byte) {
 	store := ctx.KVStore(k.storeKey)

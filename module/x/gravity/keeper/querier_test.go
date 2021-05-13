@@ -278,8 +278,8 @@ func TestLastSignerSetTxs(t *testing.T) {
 	}
 }
 
-// TODO: check that it doesn't accidently return a valset that HAS been signed
-// Right now it is basically just testing that any valset comes back
+// TODO: check that it doesn't accidently return a signer set tx that HAS been signed
+// Right now it is basically just testing that any signer set tx comes back
 func TestPendingSignerSetTxs(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
@@ -301,7 +301,7 @@ func TestPendingSignerSetTxs(t *testing.T) {
 	specs := map[string]struct {
 		expResp []byte
 	}{
-		"find valset": {
+		"find signer set tx": {
 			expResp: []byte(`[
                                   {
                                     "nonce": "105",
@@ -532,14 +532,14 @@ func createTestBatch(t *testing.T, input TestInput) {
 	for i, v := range []uint64{2, 3, 2, 1} {
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		_, err = input.GravityKeeper.AddToOutgoingPool(input.Context, mySender, myReceiver, amount, fee)
+		_, err = input.GravityKeeper.AddToSendToEthereumPool(input.Context, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 	// when
 	input.Context = input.Context.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	_, err = input.GravityKeeper.BuildOutgoingTXBatch(input.Context, myTokenContractAddr, 2)
+	_, err = input.GravityKeeper.BuildBatchTx(input.Context, myTokenContractAddr, 2)
 	require.NoError(t, err)
 }
 
@@ -735,7 +735,7 @@ func TestQueryBatch(t *testing.T) {
 	  }
 	  `)
 
-	// TODO: this test is failing on the empty representation of valset members
+	// TODO: this test is failing on the empty representation of signer set tx members
 	assert.JSONEq(t, string(expectedJSON), string(batch), string(batch))
 }
 
@@ -909,7 +909,7 @@ func TestPendingSendToEthereumRequest(t *testing.T) {
 	for i, v := range []uint64{2, 3, 2, 1} {
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		_, err := input.GravityKeeper.AddToSendToEthereumPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 
@@ -917,7 +917,7 @@ func TestPendingSendToEthereumRequest(t *testing.T) {
 	ctx = ctx.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	_, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	_, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	response, err := queryPendingSendToEthereum(ctx, mySender.String(), input.GravityKeeper)

@@ -63,11 +63,11 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 // SetSignerSetTx returns a new instance of the Gravity EthereumSignerSet
 // i.e. {"nonce": 1, "memebers": [{"eth_addr": "foo", "power": 11223}]}
 func (k Keeper) SetSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
-	valset := k.CreateSignerSetTx(ctx)
-	k.StoreSignerSetTx(ctx, valset)
+	signerSetTx := k.CreateSignerSetTx(ctx)
+	k.StoreSignerSetTx(ctx, signerSetTx)
 
-	// Store the checkpoint as a legit past valset
-	checkpoint := valset.GetCheckpoint(k.GetGravityID(ctx))
+	// Store the checkpoint as a legit past signerSetTx
+	checkpoint := signerSetTx.GetCheckpoint(k.GetGravityID(ctx))
 	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
 
 	ctx.EventManager().EmitEvent(
@@ -76,47 +76,47 @@ func (k Keeper) SetSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
 			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
-			sdk.NewAttribute(types.AttributeKeyMultisigID, fmt.Sprint(valset.Nonce)),
-			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(valset.Nonce)),
+			sdk.NewAttribute(types.AttributeKeyMultisigID, fmt.Sprint(signerSetTx.Nonce)),
+			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(signerSetTx.Nonce)),
 		),
 	)
 
-	return valset
+	return signerSetTx
 }
 
 // StoreSignerSetTx is for storing a valiator set at a given height
-func (k Keeper) StoreSignerSetTx(ctx sdk.Context, valset *types.SignerSetTx) {
+func (k Keeper) StoreSignerSetTx(ctx sdk.Context, signerSetTx *types.SignerSetTx) {
 	store := ctx.KVStore(k.storeKey)
-	valset.Height = uint64(ctx.BlockHeight())
-	store.Set(types.GetSignerSetTxKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
-	k.SetLatestSignerSetTxNonce(ctx, valset.Nonce)
+	signerSetTx.Height = uint64(ctx.BlockHeight())
+	store.Set(types.GetSignerSetTxKey(signerSetTx.Nonce), k.cdc.MustMarshalBinaryBare(signerSetTx))
+	k.SetLatestSignerSetTxNonce(ctx, signerSetTx.Nonce)
 }
 
-//  SetLatestSignerSetTxNonce sets the latest valset nonce
+//  SetLatestSignerSetTxNonce sets the latest signerSetTx nonce
 func (k Keeper) SetLatestSignerSetTxNonce(ctx sdk.Context, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.LatestSignerSetTxNonce, types.UInt64Bytes(nonce))
 }
 
 // StoreSignerSetTxUnsafe is for storing a valiator set at a given height
-func (k Keeper) StoreSignerSetTxUnsafe(ctx sdk.Context, valset *types.SignerSetTx) {
+func (k Keeper) StoreSignerSetTxUnsafe(ctx sdk.Context, signerSetTx *types.SignerSetTx) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetSignerSetTxKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
-	k.SetLatestSignerSetTxNonce(ctx, valset.Nonce)
+	store.Set(types.GetSignerSetTxKey(signerSetTx.Nonce), k.cdc.MustMarshalBinaryBare(signerSetTx))
+	k.SetLatestSignerSetTxNonce(ctx, signerSetTx.Nonce)
 }
 
-// HasSignerSetTx returns true if a valset defined by a nonce exists
+// HasSignerSetTx returns true if a signerSetTx defined by a nonce exists
 func (k Keeper) HasSignerSetTx(ctx sdk.Context, nonce uint64) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(types.GetSignerSetTxKey(nonce))
 }
 
-// DeleteSignerSetTx deletes the valset at a given nonce from state
+// DeleteSignerSetTx deletes the signerSetTx at a given nonce from state
 func (k Keeper) DeleteSignerSetTx(ctx sdk.Context, nonce uint64) {
 	ctx.KVStore(k.storeKey).Delete(types.GetSignerSetTxKey(nonce))
 }
 
-// GetLatestSignerSetTxNonce returns the latest valset nonce
+// GetLatestSignerSetTxNonce returns the latest signerSetTx nonce
 func (k Keeper) GetLatestSignerSetTxNonce(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get(types.LatestSignerSetTxNonce)
@@ -127,16 +127,16 @@ func (k Keeper) GetLatestSignerSetTxNonce(ctx sdk.Context) uint64 {
 	return types.UInt64FromBytes(bytes)
 }
 
-// GetSignerSetTx returns a valset by nonce
+// GetSignerSetTx returns a signerSetTx by nonce
 func (k Keeper) GetSignerSetTx(ctx sdk.Context, nonce uint64) *types.SignerSetTx {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetSignerSetTxKey(nonce))
 	if bz == nil {
 		return nil
 	}
-	var valset types.SignerSetTx
-	k.cdc.MustUnmarshalBinaryBare(bz, &valset)
-	return &valset
+	var signerSetTx types.SignerSetTx
+	k.cdc.MustUnmarshalBinaryBare(bz, &signerSetTx)
+	return &signerSetTx
 }
 
 // IterateSignerSetTxs retruns all signer set txs
@@ -145,10 +145,10 @@ func (k Keeper) IterateSignerSetTxs(ctx sdk.Context, cb func(key []byte, val *ty
 	iter := prefixStore.ReverseIterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		var valset types.SignerSetTx
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &valset)
+		var signerSetTx types.SignerSetTx
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &signerSetTx)
 		// cb returns true to stop early
-		if cb(iter.Key(), &valset) {
+		if cb(iter.Key(), &signerSetTx) {
 			break
 		}
 	}
@@ -171,13 +171,13 @@ func (k Keeper) GetLatestSignerSetTx(ctx sdk.Context) (out *types.SignerSetTx) {
 	return
 }
 
-// setLastSlashedSignerSetTxNonce sets the latest slashed valset nonce
+// setLastSlashedSignerSetTxNonce sets the latest slashed signerSetTx nonce
 func (k Keeper) SetLastSlashedSignerSetTxNonce(ctx sdk.Context, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.LastSlashedSignerSetTxNonce, types.UInt64Bytes(nonce))
 }
 
-// GetLastSlashedSignerSetTxNonce returns the latest slashed valset nonce
+// GetLastSlashedSignerSetTxNonce returns the latest slashed signerSetTx nonce
 func (k Keeper) GetLastSlashedSignerSetTxNonce(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get(types.LastSlashedSignerSetTxNonce)
@@ -208,26 +208,26 @@ func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
 // GetUnSlashedSignerSetTxs returns all the unslashed validator sets in state
 func (k Keeper) GetUnSlashedSignerSetTxs(ctx sdk.Context, maxHeight uint64) (out []*types.SignerSetTx) {
 	lastSlashedSignerSetTxNonce := k.GetLastSlashedSignerSetTxNonce(ctx)
-	k.IterateSignerSetTxBySlashedSignerSetTxNonce(ctx, lastSlashedSignerSetTxNonce, maxHeight, func(_ []byte, valset *types.SignerSetTx) bool {
-		if valset.Nonce > lastSlashedSignerSetTxNonce {
-			out = append(out, valset)
+	k.IterateSignerSetTxBySlashedSignerSetTxNonce(ctx, lastSlashedSignerSetTxNonce, maxHeight, func(_ []byte, signerSetTx *types.SignerSetTx) bool {
+		if signerSetTx.Nonce > lastSlashedSignerSetTxNonce {
+			out = append(out, signerSetTx)
 		}
 		return false
 	})
 	return
 }
 
-// IterateSignerSetTxBySlashedSignerSetTxNonce iterates through all valset by last slashed valset nonce in ASC order
+// IterateSignerSetTxBySlashedSignerSetTxNonce iterates through all signerSetTx by last slashed signerSetTx nonce in ASC order
 func (k Keeper) IterateSignerSetTxBySlashedSignerSetTxNonce(ctx sdk.Context, lastSlashedSignerSetTxNonce uint64, maxHeight uint64, cb func([]byte, *types.SignerSetTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SignerSetTxKey)
 	iter := prefixStore.Iterator(types.UInt64Bytes(lastSlashedSignerSetTxNonce), types.UInt64Bytes(maxHeight))
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		var valset types.SignerSetTx
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &valset)
+		var signerSetTx types.SignerSetTx
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &signerSetTx)
 		// cb returns true to stop early
-		if cb(iter.Key(), &valset) {
+		if cb(iter.Key(), &signerSetTx) {
 			break
 		}
 	}
@@ -436,7 +436,7 @@ func (k Keeper) CreateSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 //       LOGICCALLS        //
 /////////////////////////////
 
-// GetContractCallTx gets an outgoing logic call
+// GetContractCallTx gets an contract call
 func (k Keeper) GetContractCallTx(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) *types.ContractCallTx {
 	store := ctx.KVStore(k.storeKey)
 	call := types.ContractCallTx{}
@@ -444,11 +444,11 @@ func (k Keeper) GetContractCallTx(ctx sdk.Context, invalidationID []byte, invali
 	return &call
 }
 
-// SetOutogingLogicCall sets an outgoing logic call
+// SetOutogingLogicCall sets an contract call
 func (k Keeper) SetContractCallTx(ctx sdk.Context, call *types.ContractCallTx) {
 	store := ctx.KVStore(k.storeKey)
 
-	// Store checkpoint to prove that this logic call actually happened
+	// Store checkpoint to prove that this contract call actually happened
 	checkpoint := call.GetCheckpoint(k.GetGravityID(ctx))
 	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
 
@@ -456,12 +456,12 @@ func (k Keeper) SetContractCallTx(ctx sdk.Context, call *types.ContractCallTx) {
 		k.cdc.MustMarshalBinaryBare(call))
 }
 
-// DeleteContractCallTx deletes outgoing logic calls
+// DeleteContractCallTx deletes contract calls
 func (k Keeper) DeleteContractCallTx(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) {
 	ctx.KVStore(k.storeKey).Delete(types.GetContractCallTxKey(invalidationID, invalidationNonce))
 }
 
-// IterateContractCallTxs iterates over outgoing logic calls
+// IterateContractCallTxs iterates over contract calls
 func (k Keeper) IterateContractCallTxs(ctx sdk.Context, cb func([]byte, *types.ContractCallTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyContractCallTx)
 	iter := prefixStore.Iterator(nil, nil)
@@ -476,7 +476,7 @@ func (k Keeper) IterateContractCallTxs(ctx sdk.Context, cb func([]byte, *types.C
 	}
 }
 
-// GetContractCallTxs returns the outgoing tx batches
+// GetContractCallTxs returns the batch txs
 func (k Keeper) GetContractCallTxs(ctx sdk.Context) (out []*types.ContractCallTx) {
 	k.IterateContractCallTxs(ctx, func(_ []byte, call *types.ContractCallTx) bool {
 		out = append(out, call)

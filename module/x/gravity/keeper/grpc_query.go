@@ -76,9 +76,9 @@ func (k Keeper) LastPendingSignerSetTxByAddr(
 
 	var pendingSignerSetTxReq []*types.SignerSetTx
 	k.IterateSignerSetTxs(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.SignerSetTx) bool {
-		// foundSig is true if the operatorAddr has signed the valset we are currently looking at
+		// foundSig is true if the operatorAddr has signed the signer set we are currently looking at
 		foundSig := k.GetSignerSetTxSignature(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
-		// if this valset has NOT been signed by operatorAddr, store it in pendingSignerSetTxReq
+		// if this signer set has NOT been signed by operatorAddr, store it in pendingSignerSetTxReq
 		// and exit the loop
 		if !foundSig {
 			pendingSignerSetTxReq = append(pendingSignerSetTxReq, val)
@@ -110,7 +110,7 @@ func (k Keeper) LastPendingBatchTxByAddr(
 	}
 
 	var pendingBatchReq *types.BatchTx
-	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
+	k.IterateBatchTxs(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
 		foundSig := k.GetBatchTxSignature(sdk.UnwrapSDKContext(c), batch.BatchNonce, batch.TokenContract, addr) != nil
 		if !foundSig {
 			pendingBatchReq = batch
@@ -131,11 +131,11 @@ func (k Keeper) LastPendingContractCallTxByAddr(
 	}
 
 	var pendingLogicReq *types.ContractCallTx
-	k.IterateContractCallTxs(sdk.UnwrapSDKContext(c), func(_ []byte, logic *types.ContractCallTx) bool {
+	k.IterateContractCallTxs(sdk.UnwrapSDKContext(c), func(_ []byte, contractCallTx *types.ContractCallTx) bool {
 		foundSig := k.GetContractCallTxSignature(sdk.UnwrapSDKContext(c),
-			logic.InvalidationId, logic.InvalidationNonce, addr) != nil
+			contractCallTx.InvalidationId, contractCallTx.InvalidationNonce, addr) != nil
 		if !foundSig {
-			pendingLogicReq = logic
+			pendingLogicReq = contractCallTx
 			return true
 		}
 		return false
@@ -147,7 +147,7 @@ func (k Keeper) BatchTxs(
 	c context.Context,
 	req *types.BatchTxsRequest) (*types.BatchTxsResponse, error) {
 	var batches []*types.BatchTx
-	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
+	k.IterateBatchTxs(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.BatchTx) bool {
 		batches = append(batches, batch)
 		return len(batches) == MaxResults
 	})
@@ -171,7 +171,7 @@ func (k Keeper) BatchTxByNonce(
 	if err := types.ValidateEthAddress(req.ContractAddress); err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-	foundBatch := k.GetOutgoingTXBatch(sdk.UnwrapSDKContext(c), req.ContractAddress, req.Nonce)
+	foundBatch := k.GetBatchTx(sdk.UnwrapSDKContext(c), req.ContractAddress, req.Nonce)
 	if foundBatch == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find tx batch")
 	}

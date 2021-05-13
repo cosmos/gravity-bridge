@@ -38,14 +38,14 @@ func TestSubmitBadEthereumSignatureEvidenceBatchExists(t *testing.T) {
 	for i, v := range []uint64{2, 3, 2, 1} {
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		_, err := input.GravityKeeper.AddToSendToEthereumPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 
 	// when
 	ctx = ctx.WithBlockTime(now)
 
-	goodBatch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	goodBatch, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	any, _ := codectypes.NewAnyWithValue(goodBatch)
@@ -63,9 +63,9 @@ func TestSubmitBadEthereumSignatureEvidenceSignerSetTxExists(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
-	valset := input.GravityKeeper.SetSignerSetTx(ctx)
+	signerSetTx := input.GravityKeeper.SetSignerSetTx(ctx)
 
-	any, _ := codectypes.NewAnyWithValue(valset)
+	any, _ := codectypes.NewAnyWithValue(signerSetTx)
 
 	msg := types.MsgSubmitBadEthereumSignatureEvidence{
 		Subject:   any,
@@ -80,13 +80,13 @@ func TestSubmitBadEthereumSignatureEvidenceLogicCallExists(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
-	logicCall := types.ContractCallTx{
+	contractCall := types.ContractCallTx{
 		Timeout: 420,
 	}
 
-	input.GravityKeeper.SetContractCallTx(ctx, &logicCall)
+	input.GravityKeeper.SetContractCallTx(ctx, &contractCall)
 
-	any, _ := codectypes.NewAnyWithValue(&logicCall)
+	any, _ := codectypes.NewAnyWithValue(&contractCall)
 
 	msg := types.MsgSubmitBadEthereumSignatureEvidence{
 		Subject:   any,

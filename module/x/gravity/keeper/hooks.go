@@ -18,8 +18,8 @@ func (k Keeper) Hooks() Hooks { return Hooks{k} }
 func (h Hooks) AfterValidatorBeginUnbonding(ctx sdk.Context, _ sdk.ConsAddress, _ sdk.ValAddress) {
 
 	// When Validator starts Unbonding, Persist the block height in the store
-	// Later in endblocker, check if there is atleast one validator who started unbonding and create a valset request.
-	// The reason for creating signer set tx in endblock is to create only one valset request per block,
+	// Later in endblocker, check if there is atleast one validator who started unbonding and create a signer set tx.
+	// The reason for creating signer set tx in endblock is to create only one signer set tx per block,
 	// if multiple validators starts unbonding at same block.
 
 	h.k.SetLastUnBondingBlockHeight(ctx, uint64(ctx.BlockHeight()))

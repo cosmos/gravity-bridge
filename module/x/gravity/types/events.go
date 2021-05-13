@@ -1,11 +1,12 @@
 package types
 
+// TODO: check strings and check for dead code
 const (
 	EventTypeObservation              = "observation"
-	EventTypeOutgoingBatch            = "outgoing_batch"
+	EventTypeBatchTx                  = "batch_tx"
 	EventTypeMultisigUpdateRequest    = "multisig_update_request"
-	EventTypeOutgoingBatchCanceled    = "outgoing_batch_canceled"
-	EventTypeContractCallTxCanceled   = "outgoing_contract_call_canceled"
+	EventTypeBatchTxCanceled          = "batch_tx_canceled"
+	EventTypeContractCallTxCanceled   = "contract_call_canceled"
 	EventTypeBridgeWithdrawalReceived = "withdrawal_received"
 	EventTypeBridgeDepositReceived    = "deposit_received"
 	EventTypeBridgeWithdrawCanceled   = "withdraw_canceled"
@@ -14,8 +15,8 @@ const (
 	AttributeKeyBatchTxSignatureKey         = "batch_tx_signature_key"
 	AttributeKeySignerSetTxSignatureKey     = "signer_set_tx_signature_key"
 	AttributeKeyMultisigID                  = "multisig_id"
-	AttributeKeyOutgoingBatchID             = "batch_id"
-	AttributeKeyOutgoingTXID                = "outgoing_tx_id"
+	AttributeKeyBatchTxID                   = "batch_id"
+	AttributeKeySendToEthereumID            = "send_to_ethereum_id"
 	AttributeKeyEthereumEventVoteRecordType = "ethereumEventVoteRecord_type"
 	AttributeKeyContract                    = "bridge_contract"
 	AttributeKeyNonce                       = "nonce"

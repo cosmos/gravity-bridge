@@ -98,16 +98,16 @@ func (p Params) ValidateBasic() error {
 		return sdkerrors.Wrap(err, "signed blocks window")
 	}
 	if err := validateSlashFractionSignerSetTx(p.SlashFractionSignerSetTx); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction valset")
+		return sdkerrors.Wrap(err, "slash fraction signer set")
 	}
 	if err := validateSlashFractionBatchTx(p.SlashFractionBatchTx); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction valset")
+		return sdkerrors.Wrap(err, "slash fraction signer set")
 	}
 	if err := validateSlashFractionBadEthSignature(p.SlashFractionBadEthSignature); err != nil {
 		return sdkerrors.Wrap(err, "slash fraction BadEthSignature")
 	}
 	if err := validateUnbondSlashingSignerSetUnbondWindow(p.SlashingSignerSetUnbondWindow); err != nil {
-		return sdkerrors.Wrap(err, "unbond Slashing valset window")
+		return sdkerrors.Wrap(err, "unbond Slashing signer set window")
 	}
 
 	return nil

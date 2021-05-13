@@ -37,7 +37,7 @@ func TestBatches(t *testing.T) {
 	for i, v := range []uint64{2, 3, 2, 1} {
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		_, err := input.GravityKeeper.AddToSendToEthereumPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 
@@ -45,11 +45,11 @@ func TestBatches(t *testing.T) {
 	ctx = ctx.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	firstBatch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	firstBatch, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// then batch is persisted
-	gotFirstBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
+	gotFirstBatch := input.GravityKeeper.GetBatchTx(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
 	require.NotNil(t, gotFirstBatch)
 
 	expFirstBatch := &types.BatchTx{
@@ -77,7 +77,7 @@ func TestBatches(t *testing.T) {
 
 	// and verify remaining available Tx in the pool
 	var gotUnbatchedTx []*types.SendToEthereum
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
+	input.GravityKeeper.IterateSendToEthereumPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
@@ -107,14 +107,14 @@ func TestBatches(t *testing.T) {
 
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		_, err = input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		_, err = input.GravityKeeper.AddToSendToEthereumPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 
 	// create the more profitable batch
 	ctx = ctx.WithBlockTime(now)
 	// tx batch size is 2, so that some of them stay behind
-	secondBatch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	secondBatch, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// check that the more profitable batch has the right txs in it
@@ -150,12 +150,12 @@ func TestBatches(t *testing.T) {
 	require.NoError(t, err)
 
 	// check batch has been deleted
-	gotSecondBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	gotSecondBatch := input.GravityKeeper.GetBatchTx(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 	require.Nil(t, gotSecondBatch)
 
 	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
+	input.GravityKeeper.IterateSendToEthereumPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
@@ -223,7 +223,7 @@ func TestBatchesFullCoins(t *testing.T) {
 		vAsSDKInt := sdk.NewIntFromUint64(v)
 		amount := types.NewSDKIntERC20Token(oneEth.Mul(vAsSDKInt), myTokenContractAddr).GravityCoin()
 		fee := types.NewSDKIntERC20Token(oneEth.Mul(vAsSDKInt), myTokenContractAddr).GravityCoin()
-		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		_, err := input.GravityKeeper.AddToSendToEthereumPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 
@@ -231,11 +231,11 @@ func TestBatchesFullCoins(t *testing.T) {
 	ctx = ctx.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	firstBatch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	firstBatch, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// then batch is persisted
-	gotFirstBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
+	gotFirstBatch := input.GravityKeeper.GetBatchTx(ctx, firstBatch.TokenContract, firstBatch.BatchNonce)
 	require.NotNil(t, gotFirstBatch)
 
 	expFirstBatch := &types.BatchTx{
@@ -263,7 +263,7 @@ func TestBatchesFullCoins(t *testing.T) {
 
 	// and verify remaining available Tx in the pool
 	var gotUnbatchedTx []*types.SendToEthereum
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
+	input.GravityKeeper.IterateSendToEthereumPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
@@ -293,14 +293,14 @@ func TestBatchesFullCoins(t *testing.T) {
 		vAsSDKInt := sdk.NewIntFromUint64(v)
 		amount := types.NewSDKIntERC20Token(oneEth.Mul(vAsSDKInt), myTokenContractAddr).GravityCoin()
 		fee := types.NewSDKIntERC20Token(oneEth.Mul(vAsSDKInt), myTokenContractAddr).GravityCoin()
-		_, err = input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		_, err = input.GravityKeeper.AddToSendToEthereumPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 
 	// create the more profitable batch
 	ctx = ctx.WithBlockTime(now)
 	// tx batch size is 2, so that some of them stay behind
-	secondBatch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	secondBatch, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// check that the more profitable batch has the right txs in it
@@ -336,12 +336,12 @@ func TestBatchesFullCoins(t *testing.T) {
 	require.NoError(t, err)
 
 	// check batch has been deleted
-	gotSecondBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
+	gotSecondBatch := input.GravityKeeper.GetBatchTx(ctx, secondBatch.TokenContract, secondBatch.BatchNonce)
 	require.Nil(t, gotSecondBatch)
 
 	// check that txs from first batch have been freed
 	gotUnbatchedTx = nil
-	input.GravityKeeper.IterateOutgoingPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
+	input.GravityKeeper.IterateSendToEthereumPoolByFee(ctx, myTokenContractAddr, func(_ uint64, tx *types.SendToEthereum) bool {
 		gotUnbatchedTx = append(gotUnbatchedTx, tx)
 		return false
 	})
@@ -405,7 +405,7 @@ func TestPoolTxRefund(t *testing.T) {
 	for i, v := range []uint64{2, 3, 2, 1} {
 		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
 		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		_, err := input.GravityKeeper.AddToSendToEthereumPool(ctx, mySender, myReceiver, amount, fee)
 		require.NoError(t, err)
 	}
 
@@ -413,15 +413,15 @@ func TestPoolTxRefund(t *testing.T) {
 	ctx = ctx.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	_, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	_, err := input.GravityKeeper.BuildBatchTx(ctx, myTokenContractAddr, 2)
 	require.NoError(t, err)
 
 	// try to refund a tx that's in a batch
-	err1 := input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 1, mySender)
+	err1 := input.GravityKeeper.RemoveFromAddToSendToEthereumPoolAndRefund(ctx, 1, mySender)
 	require.Error(t, err1)
 
 	// try to refund a tx that's in the pool
-	err2 := input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 4, mySender)
+	err2 := input.GravityKeeper.RemoveFromAddToSendToEthereumPoolAndRefund(ctx, 4, mySender)
 	require.NoError(t, err2)
 
 	// make sure refund was issued
