@@ -29,11 +29,19 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	)
 
 	registry.RegisterInterface(
-		"gravity.v1.Confirm",
+		"gravity.v1.EthereumSignature",
 		(*EthereumSignature)(nil),
 		&BatchTxSignature{},
 		&ContractCallTxSignature{},
 		&SignerSetTxSignature{},
+	)
+
+	registry.RegisterInterface(
+		"gravity.v1.OutgoingTx",
+		(*OutgoingTx)(nil),
+		&SignerSetTx{},
+		&BatchTx{},
+		&ContractCallTx{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
@@ -97,3 +105,32 @@ func PackSignature(signature EthereumSignature) (*types.Any, error) {
 
 	return anyEvent, nil
 }
+
+
+func PackOutgoingTx(outgoing OutgoingTx) (*types.Any, error) {
+	msg, ok := outgoing.(proto.Message)
+	if !ok {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", outgoing)
+	}
+
+	anyEvent, err := types.NewAnyWithValue(msg)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrPackAny, err.Error())
+	}
+
+	return anyEvent, nil
+}
+
+func UnpackOutgoingTx(any *types.Any) (OutgoingTx, error) {
+	if any == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "protobuf Any message cannot be nil")
+	}
+
+	confirm, ok := any.GetCachedValue().(OutgoingTx)
+	if !ok {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into OutgoingTx %T", any)
+	}
+
+	return confirm, nil
+}
+

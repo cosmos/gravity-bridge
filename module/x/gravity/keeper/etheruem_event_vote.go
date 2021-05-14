@@ -92,7 +92,7 @@ func (k Keeper) TryEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.Ether
 		}
 	} else {
 		// We panic here because this should never happen
-		panic("attempting to process observed attestation")
+		panic("attempting to process observed ethereum event")
 	}
 }
 
@@ -104,7 +104,7 @@ func (k Keeper) processEthereumEvent(ctx sdk.Context, event types.EthereumEvent)
 		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
-		k.logger(ctx).Error("attestation failed",
+		k.logger(ctx).Error("ethereum event vote record failed",
 			"cause", err.Error(),
 			"event type", fmt.Sprintf("%T", event),
 			"id", types.GetEthereumEventVoteRecordKey(event.GetNonce(), event.Hash()),
@@ -121,11 +121,11 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.EthereumEventVoteR
 	observationEvent := sdk.NewEvent(
 		types.EventTypeObservation,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyAttestationType, fmt.Sprintf("%T", event)),
+		sdk.NewAttribute(types.AttributeKeyEthereumEventType, fmt.Sprintf("%T", event)),
 		sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		// todo: serialize with hex/ base64 ?
-		sdk.NewAttribute(types.AttributeKeyAttestationID,
+		sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID,
 			string(types.GetEthereumEventVoteRecordKey(event.GetNonce(), event.Hash()))),
 		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(event.GetNonce())),
 		// TODO: do we want to emit more information?
@@ -151,16 +151,16 @@ func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, c
 	return &att
 }
 
-// DeleteAttestation deletes an attestation given an event nonce and claim
-func (k Keeper) DeleteAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.EthereumEventVoteRecord) {
+// DeleteEthereumEventVoteRecord deletes an attestation given an event nonce and claim
+func (k Keeper) DeleteEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.EthereumEventVoteRecord) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetEthereumEventVoteRecordKeyWithHash(eventNonce, claimHash))
 }
 
-// GetAttestationMapping returns a mapping of eventnonce -> attestations at that nonce
-func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.EthereumEventVoteRecord) {
+// GetEthereumEventVoteRecordMapping returns a mapping of eventnonce -> attestations at that nonce
+func (k Keeper) GetEthereumEventVoteRecordMapping(ctx sdk.Context) (out map[uint64][]types.EthereumEventVoteRecord) {
 	out = make(map[uint64][]types.EthereumEventVoteRecord)
-	k.IterateAttestaions(ctx, func(_ []byte, eventVoteRecord types.EthereumEventVoteRecord) bool {
+	k.IterateEthereumEventVoteRecords(ctx, func(_ []byte, eventVoteRecord types.EthereumEventVoteRecord) bool {
 		event, err := types.UnpackEvent(eventVoteRecord.Event)
 		if err != nil {
 			panic("couldn't cast to event")
@@ -176,8 +176,8 @@ func (k Keeper) GetAttestationMapping(ctx sdk.Context) (out map[uint64][]types.E
 	return
 }
 
-// IterateAttestaions iterates through all attestations
-func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.EthereumEventVoteRecord) bool) {
+// IterateEthereumEventVoteRecords iterates through all attestations
+func (k Keeper) IterateEthereumEventVoteRecords(ctx sdk.Context, cb func([]byte, types.EthereumEventVoteRecord) bool) {
 	store := ctx.KVStore(k.storeKey)
 	prefix := []byte{types.EthereumEventVoteRecordKey}
 	iter := store.Iterator(prefixRange(prefix))
@@ -258,7 +258,7 @@ func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 		// params.SignedClaimsWindow we may have no attestations in our nonce. At which point
 		// the last observed which is a persistent and never cleaned counter will suffice.
 		lowestObserved := k.GetLastObservedEventNonce(ctx)
-		attmap := k.GetAttestationMapping(ctx)
+		attmap := k.GetEthereumEventVoteRecordMapping(ctx)
 		// no new claims in params.SignedClaimsWindow, we can return the current value
 		// because the validator can't be slashed for an event that has already passed.
 		// so they only have to worry about the *next* event to occur

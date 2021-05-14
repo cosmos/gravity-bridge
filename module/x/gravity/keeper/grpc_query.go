@@ -49,7 +49,7 @@ func (k Keeper) ValsetConfirmsByNonce(
 	c context.Context,
 	req *types.QueryValsetConfirmsByNonceRequest) (*types.QueryValsetConfirmsByNonceResponse, error) {
 	var confirms []*types.MsgSubmitEthereumSignature
-	k.IterateValsetConfirmByNonce(sdk.UnwrapSDKContext(c), req.Nonce, func(_ []byte, c types.MsgSubmitEthereumSignature) bool {
+	k.IterateEthereumSignatures(sdk.UnwrapSDKContext(c), req.Nonce, func(_ []byte, c types.MsgSubmitEthereumSignature) bool {
 		confirms = append(confirms, &c)
 		return false
 	})

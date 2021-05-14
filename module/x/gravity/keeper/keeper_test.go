@@ -112,7 +112,7 @@ func TestAttestationIterator(t *testing.T) {
 	input.GravityKeeper.SetEthereumEventVoteRecord(ctx, dep2.EventNonce, dep2.ClaimHash(), att2)
 
 	atts := []types.Attestation{}
-	input.GravityKeeper.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
+	input.GravityKeeper.IterateEthereumEventVoteRecords(ctx, func(_ []byte, att types.Attestation) bool {
 		atts = append(atts, att)
 		return false
 	})

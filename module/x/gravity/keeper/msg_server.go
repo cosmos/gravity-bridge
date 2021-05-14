@@ -72,16 +72,13 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 	}
 	nonce := sdk.BigEndianToUint64(signature.GetStoreIndex())
 
-	valset := k.GetSignerSetTx(ctx, nonce)
+	valset := k.GetOutgoingTx(ctx, signature.GetStoreIndex())
 	if valset == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
 	}
 
 	gravityID := k.GetGravityID(ctx)
-	checkpoint, err := valset.GetCheckpoint([]byte(gravityID))
-	if err != nil {
-		return nil, err
-	}
+	checkpoint := valset.GetCheckpoint([]byte(gravityID))
 
 	sigBytes, err := hex.DecodeString(msg.Signer)
 	if err != nil {
@@ -113,7 +110,7 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyValsetConfirmKey, string(key)),
+			sdk.NewAttribute(types.AttributeKeyEthereumSignatureKey, string(key)),
 		),
 	)
 
@@ -157,7 +154,7 @@ func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEt
 	// Add the claim to the store
 	_, err = k.RecordEventVote(ctx, event, val)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "create attestation")
+		return nil, sdkerrors.Wrap(err, "create event vote record")
 	}
 
 
@@ -167,7 +164,7 @@ func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEt
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, fmt.Sprintf("%T", event)),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetEthereumEventVoteRecordKey(event.GetNonce(), event.Hash()))),
+			sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID, string(types.GetEthereumEventVoteRecordKey(event.GetNonce(), event.Hash()))),
 		),
 	)
 

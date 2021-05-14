@@ -22,6 +22,7 @@ var (
 // GetStoreIndex //
 ///////////////////
 
+// TODO: do we need a prefix byte for the different types?
 func (sstx *SignerSetTx) GetStoreIndex() []byte {
 	return sdk.Uint64ToBigEndian(sstx.Nonce)
 }
@@ -39,7 +40,7 @@ func (cctx *ContractCallTx) GetStoreIndex() []byte {
 ///////////////////
 
 // GetCheckpoint returns the checkpoint
-func (u SignerSetTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
+func (u SignerSetTx) GetCheckpoint(gravityID []byte) []byte {
 	// TODO replace hardcoded "foo" here with a getter to retrieve the correct gravityID from the store
 	// this will work for now because 'foo' is the test gravityID we are using
 	// var gravityIDString = "foo"
@@ -47,7 +48,7 @@ func (u SignerSetTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 	// error case here should not occur outside of testing since the above is a constant
 	contractAbi, err := abi.JSON(strings.NewReader(SignerSetTxCheckpointABIJSON))
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	// the contract argument is not a arbitrary length array but a fixed length 32 byte
@@ -56,7 +57,7 @@ func (u SignerSetTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 	// will panic if gravityId is too long to fit in 32 bytes
 	gravityIDFixed, err := byteArrayToFixByteArray(gravityID)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	checkpointBytes := []uint8("checkpoint")
@@ -77,22 +78,22 @@ func (u SignerSetTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if packErr != nil {
-		return nil, err
+		panic(packErr)
 	}
 
 	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
 	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
 	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
 	hash := crypto.Keccak256Hash(bytes[4:])
-	return hash.Bytes(), nil
+	return hash.Bytes()
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (b BatchTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
+func (b BatchTx) GetCheckpoint(gravityID []byte) []byte {
 
 	encodedBatch, err := abi.JSON(strings.NewReader(BatchTxCheckpointABIJSON))
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
+		panic(sdkerrors.Wrap(err, "bad ABI definition in code"))
 	}
 
 	// the contract argument is not a arbitrary length array but a fixed length 32 byte
@@ -101,7 +102,7 @@ func (b BatchTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 	// will panic if gravityId is too long to fit in 32 bytes
 	gravityIDFixed, err := byteArrayToFixByteArray(gravityID)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	// Create the methodName argument which salts the signature
@@ -136,21 +137,21 @@ func (b BatchTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "packing checkpoint")
+		panic(sdkerrors.Wrap(err, "packing checkpoint"))
 	}
 
 	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
 	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
 	// then need to adjust how many bytes you truncate off the front to get the output of encodedBatch.encode()
-	return crypto.Keccak256Hash(abiEncodedBatch[4:]).Bytes(), nil
+	return crypto.Keccak256Hash(abiEncodedBatch[4:]).Bytes()
 }
 
 // GetCheckpoint gets the checkpoint signature from the given outgoing tx batch
-func (c ContractCallTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
+func (c ContractCallTx) GetCheckpoint(gravityID []byte) []byte {
 
 	encodedCall, err := abi.JSON(strings.NewReader(ContractCallTxABIJSON))
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "bad ABI definition in code")
+		panic(sdkerrors.Wrap(err, "bad ABI definition in code"))
 	}
 
 	// Create the methodName argument which salts the signature
@@ -205,8 +206,8 @@ func (c ContractCallTx) GetCheckpoint(gravityID []byte) ([]byte, error) {
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "packing checkpoint")
+		panic(sdkerrors.Wrap(err, "packing checkpoint"))
 	}
 
-	return crypto.Keccak256Hash(abiEncodedCall[4:]).Bytes(), nil
+	return crypto.Keccak256Hash(abiEncodedCall[4:]).Bytes()
 }

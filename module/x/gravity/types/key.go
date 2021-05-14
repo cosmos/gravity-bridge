@@ -99,6 +99,9 @@ const (
 
 	// LastUnBondingBlockHeight indexes the last validator unbonding block height
 	LastUnBondingBlockHeight
+
+	// OutgoingTxKey indexez OutgoingTx interface types
+	OutgoingTxKey
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -214,4 +217,8 @@ func GetContractCallTxKey(invalidationId []byte, invalidationNonce uint64) []byt
 // prefix    invalidationID  nonce  validatorAddr
 func GetContractCallTxSignatureKey(invalidationId []byte, invalidationNonce uint64, validator sdk.ValAddress) []byte {
 	return bytes.Join([][]byte{{ContractCallTxSignatureKey}, invalidationId, sdk.Uint64ToBigEndian(invalidationNonce), validator.Bytes()}, []byte{})
+}
+
+func GetOutgoingTxKey(storeIndex []byte) []byte {
+	return append([]byte{OutgoingTxKey}, storeIndex...)
 }

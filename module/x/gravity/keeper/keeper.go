@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	types2 "github.com/cosmos/cosmos-sdk/codec/types"
 	"math"
 	"sort"
 	"strconv"
@@ -59,7 +60,7 @@ func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace para
 }
 
 /////////////////////////////
-//     VALSET REQUESTS     //
+//     SignerSetTx REQUESTS     //
 /////////////////////////////
 
 // SetSignerSetTxRequest returns a new instance of the Gravity BridgeValidatorSet
@@ -247,36 +248,35 @@ func (k Keeper) SetEthereumSignature(ctx sdk.Context, sig types.EthereumSignatur
 	return key
 }
 
-// GetSignerSetTxSignatures returns all validator set confirmations by nonce
-func (k Keeper) GetSignerSetTxSignatures(ctx sdk.Context, nonce uint64) (confirms []*types.SignerSetTxSignature) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.EthereumSignatureKey})
-	start, end := prefixRange(types.UInt64Bytes(nonce))
-	iterator := prefixStore.Iterator(start, end)
-
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		confirm := types.SignerSetTxSignature{}
-		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &confirm)
-		confirms = append(confirms, &confirm)
-	}
-
-	return confirms
+func (k Keeper) DeleteEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) {
+	ctx.KVStore(k.storeKey).Delete(types.GetEthereumSignatureKey(storeIndex, validator))
 }
 
-// IterateValsetConfirmByNonce iterates through all valset confirms by nonce in ASC order
+func (k Keeper) HasEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) bool {
+	return ctx.KVStore(k.storeKey).Has(types.GetEthereumSignatureKey(storeIndex, validator))
+}
+
+// GetEthereumSignatures returns all validator set confirmations by nonce
+func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) (signatures map[string]hexutil.Bytes) {
+	k.IterateEthereumSignatures(ctx, storeIndex, func(val sdk.ValAddress, h hexutil.Bytes) bool {
+		signatures[val.String()] = h
+		return false
+	})
+
+	return
+}
+
+// IterateEthereumSignatures iterates through all valset confirms by nonce in ASC order
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
-func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb func([]byte, types.MsgSubmitEthereumSignature) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.EthereumSignatureKey})
-	iter := prefixStore.Iterator(prefixRange(types.UInt64Bytes(nonce)))
+func (k Keeper) IterateEthereumSignatures(ctx sdk.Context, storeIndex []byte, cb func(sdk.ValAddress, hexutil.Bytes) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), append([]byte{types.EthereumSignatureKey}, storeIndex...))
+	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgSubmitEthereumSignature{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
 		// cb returns true to stop early
-		if cb(iter.Key(), confirm) {
+		if cb(iter.Key(), iter.Value()) {
 			break
 		}
 	}
@@ -720,3 +720,60 @@ func prefixRange(prefix []byte) ([]byte, []byte) {
 	}
 	return prefix, end
 }
+
+/////////////////
+// OUTGOING TX //
+/////////////////
+
+// todo: outgoingTx prefix byte
+func (k Keeper) GetOutgoingTx(ctx sdk.Context, storeIndex []byte) (out types.OutgoingTx) {
+	bz := ctx.KVStore(k.storeKey).Get(types.GetOutgoingTxKey(storeIndex))
+
+	var any *types2.Any
+	k.cdc.MustUnmarshalBinaryBare(bz, any)
+
+	out, err := types.UnpackOutgoingTx(any)
+	if err != nil {
+		panic(err)
+	}
+	return
+}
+
+func (k Keeper) SetOutgoingTx(ctx sdk.Context, outgoing types.OutgoingTx) {
+	any, err := types.PackOutgoingTx(outgoing)
+	if err != nil {
+		panic(err)
+	}
+
+	ctx.KVStore(k.storeKey).Set(types.GetOutgoingTxKey(outgoing.GetStoreIndex()), k.cdc.MustMarshalBinaryBare(any))
+}
+
+func (k Keeper) HasOutgoingTx(ctx sdk.Context, storeIndex []byte) bool {
+	return ctx.KVStore(k.storeKey).Has(types.GetOutgoingTxKey(storeIndex))
+}
+
+func (k Keeper) IterateOutgoingTx(ctx sdk.Context, storeIndex []byte,  cb func(key []byte, outgoing types.OutgoingTx) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetOutgoingTxKey(storeIndex))
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+
+	}
+}
+
+
+// IterateSignerSetTxs retruns all valsetRequests
+//func (k Keeper) IterateSignerSetTxs(ctx sdk.Context, cb func(key []byte, ussTx *types.SignerSetTx) bool) {
+//	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SignerSetTxKey})
+//	iter := prefixStore.ReverseIterator(nil, nil)
+//	defer iter.Close()
+//	for ; iter.Valid(); iter.Next() {
+//		var ussTx types.SignerSetTx
+//		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ussTx)
+//		// cb returns true to stop early
+//		if cb(iter.Key(), &ussTx) {
+//			break
+//		}
+//	}
+//}

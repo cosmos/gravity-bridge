@@ -52,7 +52,7 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 // "Observe" those who have passed the threshold. Break the loop once we see
 // an attestation that has not passed the threshold
 func attestationTally(ctx sdk.Context, k keeper.Keeper) {
-	attmap := k.GetAttestationMapping(ctx)
+	attmap := k.GetEthereumEventVoteRecordMapping(ctx)
 	// We make a slice with all the event nonces that are in the attestation mapping
 	keys := make([]uint64, 0, len(attmap))
 	for k := range attmap {
@@ -144,7 +144,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	// unslashedValsets are sorted by nonce in ASC order
 	// Question: do we need to sort each time? See if this can be epoched
 	for _, vs := range unslashedValsets {
-		confirms := k.GetSignerSetTxSignatures(ctx, vs.Nonce)
+		confirms := k.GetEthereumSignatures(ctx, vs.Nonce)
 
 		// SLASH BONDED VALIDTORS who didn't attest valset request
 		currentBondedSet := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
