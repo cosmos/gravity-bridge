@@ -1,12 +1,13 @@
 syntax = "proto3";
 package gravity.v1;
 
+// import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
 import "gravity/v1/genesis.proto";
 import "gravity/v1/gravity.proto";
 import "gravity/v1/msgs.proto";
-import "cosmos/base/v1beta1/coin.proto";
-import "google/api/annotations.proto";
-import "gogoproto/gogo.proto";
 
 option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 
@@ -18,9 +19,12 @@ service Query {
     option (google.api.http).get = "/gravity/v1/params";
   }
 
+  // TODO(levi) ensure routes are REST-ish:
+
   // get info on individual outgoing data
   rpc SignerSetTx(SignerSetTxRequest) returns (SignerSetTxResponse) {
     option (google.api.http).get = "/gravity/v1/signer_set";
+    // TODO(levi) propose:         "/gravity/v1/signer_sets/{nonce}";
   }
   rpc BatchTx(BatchTxRequest) returns (BatchTxResponse) {
     option (google.api.http).get =
@@ -28,7 +32,7 @@ service Query {
   }
   rpc ContractCallTx(ContractCallTxRequest) returns (ContractCallTxResponse) {
     option (google.api.http).get =
-        "/gravity/v1/batch_txs/{contract_address}/{nonce}";
+        "/gravity/v1/contract_call_txs/{invalidation_id}/{invalidation_nonce}";
   }
 
   // get collections of outgoing traffic from the bridge
@@ -37,27 +41,34 @@ service Query {
   }
   rpc BatchTxs(BatchTxsRequest) returns (BatchTxsResponse) {
     option (google.api.http).get = "/gravity/v1/batch/batch_txs";
+    // TODO(levi) propose:         "/gravity/v1/batch_txs";
   }
   rpc ContractCallTxs(ContractCallTxsRequest)
       returns (ContractCallTxsResponse) {
-    option (google.api.http).get = "/gravity/v1/batch/logic_calls";
+    option (google.api.http).get = "/gravity/v1/batch/contract_call_txs";
+    // TODO(levi) propose:         "/gravity/v1/contract_call_txs";
   }
 
   // ethereum signature queries so validators can construct valid etherum
   // transactions
+
   // TODO: can/should we group these into one endpoint?
   rpc SignerSetTxEthereumSignatures(SignerSetTxEthereumSignaturesRequest)
       returns (SignerSetTxEthereumSignaturesResponse) {
-    option (google.api.http).get = "/gravity/v1/signer_sets/EthereumSignatures";
+    option (google.api.http).get =
+        "/gravity/v1/signer_sets/ethereum_signatures";
   }
   rpc BatchTxEthereumSignatures(BatchTxEthereumSignaturesRequest)
       returns (BatchTxEthereumSignaturesResponse) {
-    option (google.api.http).get = "/gravity/v1/batch_txs/EthereumSignatures";
+    option (google.api.http).get = "/gravity/v1/batch_txs/ethereum_signatures";
   }
   rpc ContractCallTxEthereumSignatures(ContractCallTxEthereumSignaturesRequest)
       returns (ContractCallTxEthereumSignaturesResponse) {
-    option (google.api.http).get = "/gravity/v1/logic_calls/EthereumSignatures";
+    option (google.api.http).get =
+        "/gravity/v1/logic_calls/ethereum_signatures";
   }
+
+  // ^^^^^^^^^^^^ seem okay for now ^^^^^^
 
   // pending ethereum signature queries for orchestrators to figure out which
   // signatures they are missing
@@ -123,45 +134,71 @@ service Query {
   }
 }
 
-// rpc Params
+//  rpc Params
 message ParamsRequest {}
 message ParamsResponse { Params params = 1 [ (gogoproto.nullable) = false ]; }
 
-// rpc SignerSetTx
+//  rpc SignerSetTx
 message SignerSetTxRequest {
-  // NOTE: if nonce is not passed, then return the current
-  uint64 nonce = 1;
+  uint64 nonce = 1; // NOTE: if nonce is zero then return the current
 }
 message SignerSetTxResponse { SignerSetTx signer_set = 1; }
 
-// rpc BatchTx
+//  rpc BatchTx
 message BatchTxRequest {
-  uint64 nonce = 1;
-  string contract_address = 2;
+  // NOTE: if nonce is zero then return the current / last batch
+  string contract_address = 1;
+  // TODO(levi) propose rename to 'token_contract' since that's what
+  // BatchTx uses or rename BatchTx.token_contract to contract_address
+  uint64 nonce = 2;
 }
 message BatchTxResponse { BatchTx batch = 1; }
 
-// rpc ContractCallTx
+//  rpc ContractCallTx
 message ContractCallTxRequest {
   bytes invalidation_id = 1;
   uint64 invalidation_nonce = 2;
 }
-
 message ContractCallTxResponse { ContractCallTx logic_call = 1; }
 
 // rpc SignerSetTxEthereumSignatures
 message SignerSetTxEthereumSignaturesRequest {
-  uint64 nonce = 1;
   // NOTE: if address is passed, return only the signature from that validator
-  string address = 2;
+  uint64 nonce = 1;
+  string address = 2; // TODO(levi) propose rename: ethereum_address
 }
 message SignerSetTxEthereumSignaturesResponse {
-  repeated SignerSetTxSignature confirm = 1;
+  // repeated SignerSetTxSignature confirm = 1;
+  // TODO(levi) confirm orchestrator just needs the sigs from all the
+  // validators:
+  repeated bytes signature = 1;
 }
 
-// rpc SignerSetTxs
-message SignerSetTxsRequest { int64 count = 1; }
+//  rpc SignerSetTxs
+message SignerSetTxsRequest {
+  int64 count = 1;
+  // TODO(levi) propose we drop count or replace it with:
+  // cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
 message SignerSetTxsResponse { repeated SignerSetTx signer_sets = 1; }
+
+//  rpc BatchTxs
+message BatchTxsRequest {
+  // TODO(levi) propose consistency: add count or
+  // cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+message BatchTxsResponse { repeated BatchTx batches = 1; }
+
+//  rpc ContractCallTxs
+message ContractCallTxsRequest {
+  // TODO(levi) propose consistency: add count or
+  // cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+message ContractCallTxsResponse { repeated ContractCallTx calls = 1; }
+
+// NOTE(levi) pending queries: this is my address; what do I need to sign??
+// why orchestrator key? hot, signing thing all the time so validator key can be
+// safer
 
 // rpc PendingSignerSetTxEthereumSignatures
 message PendingSignerSetTxEthereumSignaturesRequest {
@@ -183,6 +220,7 @@ message PendingBatchTxEthereumSignaturesResponse {
   repeated BatchTx batches = 1;
 }
 
+//  rpc PendingContractCallTxEthereumSignatures
 message PendingContractCallTxEthereumSignaturesRequest { string address = 1; }
 message PendingContractCallTxEthereumSignaturesResponse {
   repeated ContractCallTx calls = 1;
@@ -199,21 +237,19 @@ message BatchTxFeesResponse {
 message ContractCallTxEthereumSignaturesRequest { string address = 1; }
 message ContractCallTxEthereumSignaturesResponse {
   // Note these are returned with the signature empty
-  repeated ContractCallTx logic_call_confirms = 1;
+  // TODO(levi) review rust to ensure we can have bytes repeated ContractCallTx
+  // logic_call_confirms = 1;
+  repeated bytes signature = 1;
 }
-
-message BatchTxsRequest {}
-message BatchTxsResponse { repeated BatchTx batches = 1; }
-
-message ContractCallTxsRequest {}
-message ContractCallTxsResponse { repeated ContractCallTx calls = 1; }
 
 message BatchTxEthereumSignaturesRequest {
   uint64 nonce = 1;
   string contract_address = 2;
 }
 message BatchTxEthereumSignaturesResponse {
-  repeated BatchTxSignature confirms = 1;
+  // TODO(levi) review rust to ensure we can have bytes repeated
+  // BatchTxSignature confirms = 1;
+  repeated bytes signature = 1;
 }
 
 message LastSubmittedEthereumEventRequest { string address = 1; }
