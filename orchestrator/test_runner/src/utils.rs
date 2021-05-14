@@ -201,8 +201,8 @@ pub fn get_user_key() -> BridgeUserKey {
         eth_key,
         cosmos_address,
         cosmos_key,
-        eth_dest_key,
         eth_dest_address,
+        eth_dest_key,
     }
 }
 #[derive(Debug)]

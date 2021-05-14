@@ -26,10 +26,7 @@ pub async fn get_valset(
         .valset_request(QueryValsetRequestRequest { nonce })
         .await?;
     let valset = request.into_inner().valset;
-    let valset = match valset {
-        Some(v) => Some(v.into()),
-        None => None,
-    };
+    let valset = valset.map(|v| v.into());
     Ok(valset)
 }
 
