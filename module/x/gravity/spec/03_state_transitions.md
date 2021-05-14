@@ -10,12 +10,12 @@ This document describes the state transition operations pertaining to:
 
 ### First vote
 
-The first time any validator sees a given Ethereum event on the Ethereum blockchain, and calls `SendToCosmosEvent`, or one of the other endpoints for other types of ethereum events (claims):
+The first time any validator sees a given Ethereum event on the Ethereum blockchain, and calls `SendToCosmosEvent`, or one of the other endpoints for other types of ethereum events:
 
 - We check that the event nonce of the submitted event is exactly one higher than that validator's last submitted event. This keeps validators from voting on different events at the same event nonce, which makes tallying votes easier later.
-- An EthereumEventVoteRecord is created for that event at that event nonce. Event nonces are created by the Gravity.sol Ethereum contract, and increment every time it fires an event. It is possible for validators to disagree about what event happened at a given event nonce, but only in the case of an attempted attack by Cosmos validators, or in the case of serious issues with Ethereum (like a hard fork).
+- An `EthereumEventVoteRecord` is created for that event at that event nonce. Event nonces are created by the Gravity.sol Ethereum contract, and increment every time it fires an event. It is possible for validators to disagree about what event happened at a given event nonce, but only in the case of an attempted attack by Cosmos validators, or in the case of serious issues with Ethereum (like a hard fork).
 - That validator's address is added to the votes array.
-- The observed field is initialized to false.
+- The accepted field is initialized to false.
 - The height field is filled with the current Cosmos block height.
 
 ### Subsequent votes
@@ -23,32 +23,32 @@ The first time any validator sees a given Ethereum event on the Ethereum blockch
 When other validators see the same event at the same event nonce, and call `SendToCosmosEvent`, or one of the other endpoints for other types of ethereum events:
 
 - We check that the event nonce of the submitted event is exactly one higher than that validator's last submitted event. This keeps validators from voting on different events at the same event nonce, which makes tallying votes easier later.
-- We look up the event's EthereumEventVoteRecord.
+- We look up the event's `EthereumEventVoteRecord`.
 - The validator's address is added to the votes array.
 
 ### Counting EthereumEventVoteRecord votes
 
-Every endblock, the module attempts to tally up the votes for un-Accepted ethereumEventVoteRecords. Which ethereumEventVoteRecords it chooses to tally is covered in the [end blocker spec](05_end_block.md).
+Every endblock, the module attempts to tally up the votes for un-Accepted `EthereumEventVoteRecord`s. Which `EthereumEventVoteRecord`s it chooses to tally is covered in the [end blocker spec](05_end_block.md).
 
-When tallying the votes a given ethereumEventVoteRecord, we follow this algorithm:
+When tallying the votes a given `EthereumEventVoteRecord`, we follow this algorithm:
 
 - First get `LastTotalPower` from the StakingKeeper
 - `requiredPower` = `EthereumEventVoteRecordPowerThreshold` \* `LastTotalPower` / 100
   - This effectively calculates `EthereumEventVoteRecordPowerThreshold` percent (usually 66%) of `LastTotalPower`, truncating all decimal points.
 - Set `ethereumEventVoteRecordPower` = 0
 
-- For every validator in the ethereumEventVoteRecord's votes field:
+- For every validator in the `EthereumEventVoteRecord`s `votes` field:
   - Add the validators current power to `ethereumEventVoteRecordPower`.
   - Check if the `ethereumEventVoteRecordPower` is greater than or equal to `requiredPower`
     - If so, we first check if the `eventNonce` of the ethereumEventVoteRecord's event is exactly one greater than the global `LastAcceptedEventNonce`. If it is not, something is very wrong and we panic (this could only be caused by programmer error elsewhere in the module).
-    - We set the `observed` field to true, set the global `LastAcceptedEventNonce` to the ethereumEventVoteRecord's event's `event_nonce`. This will only ever result in incrementing the `LastAcceptedEventNonce` by one, given the preceding conditions.
+    - We set the `accepted` field to true, set the global `LastAcceptedEventNonce` to the `EthereumEventVoteRecord`s event's `event_nonce`. This will only ever result in incrementing the `LastAcceptedEventNonce` by one, given the preceding conditions.
     - We set the `LatestEthereumBlockHeight` to the Ethereum block height from the ethereumEventVoteRecord's event. This is used later when we need a recent Ethereum block height, for example to calculate batch timeouts.
 
-Now we are ready to apply the ethereumEventVoteRecord's event to the Cosmos state. This is different depending on which event we are dealing with, see state transtions for the individual events.
+Now we are ready to apply the `EthereumEventVoteRecord`s event to the Cosmos state. This is different depending on which event we are dealing with, see state transtions for the individual events.
 
 ## MsgSendToCosmosEvent
 
-### On event observed:
+### On event accepted:
 
 - Check if deposited token is Ethereum or Cosmos originated, and get it's Cosmos denom, using the `MsgSendToCosmosEvent`'s `token_contract` field.
 - If it is Cosmos originated:
@@ -58,9 +58,9 @@ Now we are ready to apply the ethereumEventVoteRecord's event to the Cosmos stat
 
 ## MsgBatchExecutedEvent
 
-This event is fired when a `BatchTx` is executed on Ethereum, sending the tokens in that `OutgoingTXBatch` to their destinations on Ethereum.
+This event is fired when a `BatchTx` is executed on Ethereum, sending the tokens in that `BatchTx` to their destinations on Ethereum.
 
-### On event observed:
+### On event accepted:
 
 - Delete all the transactions in the batch from the `SendToEthereumPool`, since they have been spent on Ethereum.
 - For all batches with a `BatchNonce` lower than this one, put their transactions back into the `UnbatchedTXIndex`, which allows them to either be put into a new batch, or canceled by their sender using `MsgCancelSendToEthereum`. This is because the Gravity.sol Ethereum contract does not allow batches to be executed with a lower nonce than the last executed batch, meaning that the transactions in these batches can never be spent, making it safe to cancel them or put them in a new batch.
@@ -69,7 +69,7 @@ This event is fired when a `BatchTx` is executed on Ethereum, sending the tokens
 
 Cosmos originated assets are represented by ERC20 contracts deployed on Ethereum by the Gravity.sol contract. This deployment can cost over $100, and somebody needs to pay for the gas. Gravity allows anybody to pay for this, as long as they deploy the contract with the correct parameters. Once this happens, the `MsgERC20DeployedEvent` event is fired and picked up by the Gravity module.
 
-### On event observed:
+### On event accepted:
 
 - Check if a contract has already been deployed for this asset. If so, error out.
 - Check if the Cosmos denom that the contract was deployed even exists. If not, error out.
@@ -96,8 +96,8 @@ By making it so that every new batch must be more profitable than any other batc
 Moving on with the batch creation process:
 
 - Take the `BatchTxSize` unbatched transactions with the highest fees for the given token type, add them to the batches `transactions` field, and remove the transactions from the `UnbatchedTXIndex`, so they cannot be cancelled or added to another batch.
-- Increment the `LastOutgoingBatchID` and set the batches `batch_nonce` field to the incremented value.
-- Get the `BatchTimeout`. The batch timeout is an Ethereum block height in the future, after which the batch will no longer be accepted by the Gravity.sol contract. This allows unprofitable batches to time out and free their transactions to be added to a more profitable batch or be cancelled. Gravity has knowledge of the `LatestEthereumBlockHeight` which is brought in on every block, but this knowledge is only as recent as the last observed event. For this reason, we estimate the current Ethereum block height using the following procedure:
+- Increment the `LastOutgoingBatchID` and set the batch's `batch_nonce` field to the incremented value.
+- Get the `BatchTimeout`. The batch timeout is an Ethereum block height in the future, after which the batch will no longer be accepted by the Gravity.sol contract. This allows unprofitable batches to time out and free their transactions to be added to a more profitable batch or be cancelled. Gravity has knowledge of the `LatestEthereumBlockHeight` which is brought in on every block, but this knowledge is only as recent as the last accepted event. For this reason, we estimate the current Ethereum block height using the following procedure:
   - We estimate how many milliseconds it has been since we recorded the `LatestEthereumBlockHeight` by multiplying the number of blocks since then with the average Cosmos block time.
   - We estimate current Ethereum block height by dividing the product of the multiplication above by the average Ethereum block time, and adding to the `LatestEthereumBlockHeight`
   - We set the `BatchTimeout` by adding the proper number of blocks to the estimated current Ethereum block height.
