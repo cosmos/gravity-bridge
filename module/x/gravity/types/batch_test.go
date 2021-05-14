@@ -33,8 +33,7 @@ func TestBatchTxCheckpointGold1(t *testing.T) {
 	}
 
 	// TODO: get from params
-	ourHash, err := src.GetCheckpoint([]byte("foo"))
-	require.NoError(t, err)
+	ourHash := src.GetCheckpoint([]byte("foo"))
 
 	// hash from bridge contract
 	goldHash := "0xa3a7ee0a363b8ad2514e7ee8f110d7449c0d88f3b0913c28c1751e6e0079a9b2"[2:]
@@ -61,8 +60,7 @@ func TestContractCallTxCheckpointGold1(t *testing.T) {
 		InvalidationNonce: 1,
 	}
 
-	ourHash, err := call.GetCheckpoint([]byte("foo"))
-	require.NoError(t, err)
+	ourHash := call.GetCheckpoint([]byte("foo"))
 
 	// hash from bridge contract
 	goldHash := "0x1de95c9ace999f8ec70c6dc8d045942da2612950567c4861aca959c0650194da"[2:]

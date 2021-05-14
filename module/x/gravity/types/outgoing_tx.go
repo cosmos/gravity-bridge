@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"math/big"
 	"strings"
 
@@ -18,21 +19,28 @@ var (
 	_ OutgoingTx = &ContractCallTx{}
 )
 
+const (
+	_ = iota
+	SignerSetTxPrefixByte
+	BatchTxPrefixByte
+	ContractCallTxPrefixByte
+)
+
 ///////////////////
 // GetStoreIndex //
 ///////////////////
 
 // TODO: do we need a prefix byte for the different types?
 func (sstx *SignerSetTx) GetStoreIndex() []byte {
-	return sdk.Uint64ToBigEndian(sstx.Nonce)
+	return append([]byte{SignerSetTxPrefixByte}, sdk.Uint64ToBigEndian(sstx.Nonce)...)
 }
 
 func (btx *BatchTx) GetStoreIndex() []byte {
-	return append(sdk.Uint64ToBigEndian(btx.Nonce), common.Hex2Bytes(btx.TokenContract)...)
+	return bytes.Join([][]byte{{BatchTxPrefixByte}, common.Hex2Bytes(btx.TokenContract), sdk.Uint64ToBigEndian(btx.Nonce)}, []byte{})
 }
 
 func (cctx *ContractCallTx) GetStoreIndex() []byte {
-	return append(sdk.Uint64ToBigEndian(cctx.InvalidationNonce), cctx.InvalidationScope.Bytes()...)
+	return bytes.Join([][]byte{{ContractCallTxPrefixByte}, cctx.InvalidationScope.Bytes(), sdk.Uint64ToBigEndian(cctx.InvalidationNonce)}, []byte{})
 }
 
 ///////////////////

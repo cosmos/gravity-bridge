@@ -31,8 +31,7 @@ func TestValsetConfirmHash(t *testing.T) {
 	}
 	v := SignerSetTx{Signers: mem}
 	// TODO: this is hardcoded to foo, replace?
-	hash, err := v.GetCheckpoint([]byte("foo"))
-	assert.NoError(t, err, "failed to get checkpoint")
+	hash := v.GetCheckpoint([]byte("foo"))
 	hexHash := hex.EncodeToString(hash)
 	correctHash := "88165860d955aee7dc3e83d9d1156a5864b708841965585d206dbef6e9e1a499"
 	assert.Equal(t, correctHash, hexHash)
@@ -45,8 +44,7 @@ func TestValsetCheckpointGold1(t *testing.T) {
 	}})
 
 	// TODO: this is hardcoded to foo, replace
-	ourHash, err := src.GetCheckpoint([]byte("foo"))
-	assert.NoError(t, err, "unable to get checkpoint")
+	ourHash := src.GetCheckpoint([]byte("foo"))
 
 	// hash from bridge contract
 	goldHash := "0xf024ab7404464494d3919e5a7f0d8ac40804fb9bd39ad5d16cdb3e66aa219b64"[2:]

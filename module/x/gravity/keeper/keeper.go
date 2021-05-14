@@ -2,12 +2,12 @@ package keeper
 
 import (
 	"fmt"
-	types2 "github.com/cosmos/cosmos-sdk/codec/types"
 	"math"
 	"sort"
 	"strconv"
 
-	"github.com/ethereum/go-ethereum/common"
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -243,7 +243,7 @@ func (k Keeper) GetEthereumSignature(ctx sdk.Context, storeIndex []byte, validat
 // SetEthereumSignature sets a valset confirmation
 func (k Keeper) SetEthereumSignature(ctx sdk.Context, sig types.EthereumSignature, val sdk.ValAddress) []byte {
 	store := ctx.KVStore(k.storeKey)
-	key := append(sig.GetStoreIndex(), val.Bytes()...)
+	key := append(sig.GetStoreIndex(val))
 	store.Set(key, sig.GetSignature())
 	return key
 }
@@ -280,62 +280,6 @@ func (k Keeper) IterateEthereumSignatures(ctx sdk.Context, storeIndex []byte, cb
 			break
 		}
 	}
-}
-
-/////////////////////////////
-//      BATCH CONFIRMS     //
-/////////////////////////////
-
-// GetBatchConfirm returns a batch confirmation given its nonce, the token contract, and a validator address
-func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce uint64, tokenContract string, validator sdk.ValAddress) *types.BatchTxSignature {
-	store := ctx.KVStore(k.storeKey)
-	entity := store.Get(types.GetBatchTxSignatureKey(tokenContract, nonce, validator))
-	if entity == nil {
-		return nil
-	}
-	confirm := types.BatchTxSignature{}
-	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
-	return &confirm
-}
-
-// SetBatchConfirm sets a batch confirmation by a validator
-func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.BatchTxSignature) []byte {
-	store := ctx.KVStore(k.storeKey)
-	acc, err := sdk.AccAddressFromBech32(batch.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-	key := types.GetBatchTxSignatureKey(batch.TokenContract, batch.Nonce, acc)
-	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
-	return key
-}
-
-// IterateBatchConfirmByNonceAndTokenContract iterates through all batch confirmations
-// MARK finish-batches: this is where the key is iterated in the old (presumed working) code
-// TODO: specify which nonce this is
-func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string, cb func([]byte, types.MsgConfirmBatch) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.BatchTxSignatureKey})
-	prfx := append(common.HexToAddress(tokenContract).Bytes(), types.UInt64Bytes(nonce)...)
-	iter := prefixStore.Iterator(prefixRange(prfx))
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		confirm := types.BatchTxSignature{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
-		// cb returns true to stop early
-		if cb(iter.Key(), confirm) {
-			break
-		}
-	}
-}
-
-// GetBatchTxSignatureByNonceAndTokenContract returns the batch confirms
-func (k Keeper) GetBatchTxSignatureByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string) (out []types.BatchTxSignature) {
-	k.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, msg types.BatchTxSignature) bool {
-		out = append(out, msg)
-		return false
-	})
-	return
 }
 
 /////////////////////////////
@@ -405,139 +349,6 @@ func (k Keeper) GetCurrentSignerSetTx(ctx sdk.Context) *types.SignerSetTx {
 
 	// TODO: make the nonce an incrementing one (i.e. fetch last nonce from state, increment, set here)
 	return types.NewValset(uint64(ctx.BlockHeight()), uint64(ctx.BlockHeight()), ethereumSigners)
-}
-
-/////////////////////////////
-//       LOGICCALLS        //
-/////////////////////////////
-
-// GetContractCallTx gets an outgoing logic call
-func (k Keeper) GetContractCallTx(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) *types.ContractCallTx {
-	store := ctx.KVStore(k.storeKey)
-	call := types.ContractCallTx{}
-	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetContractCallTxKey(invalidationID, invalidationNonce)), &call)
-	return &call
-}
-
-// SetOutogingLogicCall sets an outgoing logic call
-func (k Keeper) SetContractCallTx(ctx sdk.Context, call *types.ContractCallTx) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetContractCallTxKey(call.InvalidationScope, call.InvalidationNonce),
-		k.cdc.MustMarshalBinaryBare(call))
-}
-
-// DeleteContractCallTx deletes outgoing logic calls
-func (k Keeper) DeleteContractCallTx(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) {
-	ctx.KVStore(k.storeKey).Delete(types.GetContractCallTxKey(invalidationID, invalidationNonce))
-}
-
-// IterateContractCallTxs iterates over outgoing logic calls
-func (k Keeper) IterateContractCallTxs(ctx sdk.Context, cb func([]byte, *types.ContractCallTx) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.ContractCallTxKey})
-	iter := prefixStore.Iterator(nil, nil)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var call types.ContractCallTx
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &call)
-		// cb returns true to stop early
-		if cb(iter.Key(), &call) {
-			break
-		}
-	}
-}
-
-// GetContractCallTxs returns the outgoing tx batches
-func (k Keeper) GetContractCallTxs(ctx sdk.Context) (out []*types.ContractCallTx) {
-	k.IterateContractCallTxs(ctx, func(_ []byte, call *types.ContractCallTx) bool {
-		out = append(out, call)
-		return false
-	})
-	return
-}
-
-// CancelContractCallTxs releases all TX in the batch and deletes the batch
-func (k Keeper) CancelContractCallTx(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) error {
-	call := k.GetContractCallTx(ctx, invalidationId, invalidationNonce)
-	if call == nil {
-		return types.ErrUnknown
-	}
-	// Delete batch since it is finished
-	k.DeleteContractCallTx(ctx, call.InvalidationScope, call.InvalidationNonce)
-
-	// a consuming application will have to watch for this event and act on it
-	batchEvent := sdk.NewEvent(
-		types.EventTypeContractCallTxCanceled,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyInvalidationID, fmt.Sprint(call.InvalidationScope)),
-		sdk.NewAttribute(types.AttributeKeyInvalidationNonce, fmt.Sprint(call.InvalidationNonce)),
-	)
-	ctx.EventManager().EmitEvent(batchEvent)
-	return nil
-}
-
-/////////////////////////////
-//       LOGICCONFIRMS     //
-/////////////////////////////
-
-// SetContractCallTxSignature sets a logic confirm in the store
-func (k Keeper) SetContractCallTxSignature(ctx sdk.Context, msg *types.ContractCallTxSignature) {
-	val, err := sdk.ValAddressFromBech32(msg.Orchestrator)
-	if err != nil {
-		panic(err)
-	}
-
-	ctx.KVStore(k.storeKey).
-		Set(types.GetContractCallTxSignatureKey(msg.InvalidationId, msg.InvalidationNonce, val), k.cdc.MustMarshalBinaryBare(msg))
-}
-
-// GetContractCallTxSignature gets a logic confirm from the store
-func (k Keeper) GetContractCallTxSignature(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64, val sdk.AccAddress) *types.ContractCallTxSignature {
-	store := ctx.KVStore(k.storeKey)
-	data := store.Get(types.GetContractCallTxSignatureKey(invalidationId, invalidationNonce, val))
-	if data == nil {
-		return nil
-	}
-	out := types.ContractCallTxSignature{}
-	k.cdc.MustUnmarshalBinaryBare(data, &out)
-	return &out
-}
-
-// DeleteContractCallTxSignature deletes a logic confirm from the store
-func (k Keeper) DeleteContractCallTxSignature(
-	ctx sdk.Context,
-	invalidationID []byte,
-	invalidationNonce uint64,
-	val sdk.ValAddress) {
-	ctx.KVStore(k.storeKey).Delete(types.GetContractCallTxSignatureKey(invalidationID, invalidationNonce, val))
-}
-
-// IterateContractCallTxSignatureByInvalidationIDAndNonce iterates over all logic confirms stored by nonce
-func (k Keeper) IterateContractCallTxSignatureByInvalidationIDAndNonce(
-	ctx sdk.Context,
-	invalidationID []byte,
-	invalidationNonce uint64,
-	cb func([]byte, *types.ContractCallTxSignature) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.ContractCallTxSignatureKey})
-	iter := prefixStore.Iterator(prefixRange(append(invalidationID, types.UInt64Bytes(invalidationNonce)...)))
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		confirm := types.ContractCallTxSignature{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
-		// cb returns true to stop early
-		if cb(iter.Key(), &confirm) {
-			break
-		}
-	}
-}
-
-// GetLogicConfirmsByInvalidationScopeAndNonce returns the logic call confirms
-func (k Keeper) GetContractCallTxSignatureByInvalidationIDAndNonce(ctx sdk.Context, invalidationId []byte, invalidationNonce uint64) (out []types.ContractCallTxSignature) {
-	k.IterateContractCallTxSignatureByInvalidationIDAndNonce(ctx, invalidationId, invalidationNonce, func(_ []byte, msg *types.ContractCallTxSignature) bool {
-		out = append(out, *msg)
-		return false
-	})
-	return
 }
 
 /////////////////////////////
@@ -662,7 +473,7 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgDelegateKeys {
 		result = append(result, &types.MsgDelegateKeys{
 			OrchestratorAddress: orch,
 			ValidatorAddress:    valAddr,
-			EthereumAddress:          ethAddr,
+			EthereumAddress:     ethAddr,
 		})
 
 	}
@@ -726,10 +537,11 @@ func prefixRange(prefix []byte) ([]byte, []byte) {
 /////////////////
 
 // todo: outgoingTx prefix byte
+// GetOutgoingTx
 func (k Keeper) GetOutgoingTx(ctx sdk.Context, storeIndex []byte) (out types.OutgoingTx) {
 	bz := ctx.KVStore(k.storeKey).Get(types.GetOutgoingTxKey(storeIndex))
 
-	var any *types2.Any
+	var any *cdctypes.Any
 	k.cdc.MustUnmarshalBinaryBare(bz, any)
 
 	out, err := types.UnpackOutgoingTx(any)
@@ -739,6 +551,7 @@ func (k Keeper) GetOutgoingTx(ctx sdk.Context, storeIndex []byte) (out types.Out
 	return
 }
 
+// SetOutgoingTx
 func (k Keeper) SetOutgoingTx(ctx sdk.Context, outgoing types.OutgoingTx) {
 	any, err := types.PackOutgoingTx(outgoing)
 	if err != nil {
@@ -748,32 +561,27 @@ func (k Keeper) SetOutgoingTx(ctx sdk.Context, outgoing types.OutgoingTx) {
 	ctx.KVStore(k.storeKey).Set(types.GetOutgoingTxKey(outgoing.GetStoreIndex()), k.cdc.MustMarshalBinaryBare(any))
 }
 
+// HasOutgoingTx
 func (k Keeper) HasOutgoingTx(ctx sdk.Context, storeIndex []byte) bool {
 	return ctx.KVStore(k.storeKey).Has(types.GetOutgoingTxKey(storeIndex))
 }
 
-func (k Keeper) IterateOutgoingTx(ctx sdk.Context, storeIndex []byte,  cb func(key []byte, outgoing types.OutgoingTx) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetOutgoingTxKey(storeIndex))
-	iter := prefixStore.Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-
-	}
+// DeleteOutgoingTx deletes a given outgoingtx
+func (k Keeper) DeleteOutgoingTx(ctx sdk.Context, storeIndex []byte) {
+	ctx.KVStore(k.storeKey).Delete(types.GetOutgoingTxKey(storeIndex))
 }
 
-
-// IterateSignerSetTxs retruns all valsetRequests
-//func (k Keeper) IterateSignerSetTxs(ctx sdk.Context, cb func(key []byte, ussTx *types.SignerSetTx) bool) {
-//	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SignerSetTxKey})
-//	iter := prefixStore.ReverseIterator(nil, nil)
-//	defer iter.Close()
-//	for ; iter.Valid(); iter.Next() {
-//		var ussTx types.SignerSetTx
-//		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &ussTx)
-//		// cb returns true to stop early
-//		if cb(iter.Key(), &ussTx) {
-//			break
-//		}
-//	}
-//}
+// IterateOutgoingTxs iterates over a specific type of outgoing transaction denoted by the chosen prefix byte
+func (k Keeper) IterateOutgoingTxs(ctx sdk.Context, prefixByte byte, cb func(key []byte, outgoing types.OutgoingTx) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetOutgoingTxKey([]byte{prefixByte}))
+	iter := prefixStore.ReverseIterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var any *cdctypes.Any
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), any)
+		otx, _ := types.UnpackOutgoingTx(any)
+		if cb(iter.Key(), otx) {
+			break
+		}
+	}
+}

@@ -83,7 +83,7 @@ message MsgSubmitEthereumSignature {
 // ContractCallTxSignature is a signature on behalf of a validator for a
 // ContractCallTx.
 message ContractCallTxSignature {
-  bytes invalidation_id = 1
+  bytes invalidation_scope = 1
       [ (gogoproto.casttype) =
             "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
   uint64 invalidation_nonce = 2;

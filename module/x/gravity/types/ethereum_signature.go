@@ -1,6 +1,12 @@
 package types
 
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"bytes"
+	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
+)
 
 var (
 	_ EthereumSignature = &SignerSetTxSignature{}
@@ -28,16 +34,16 @@ func (u *BatchTxSignature) GetSigner() common.Address {
 // GetStoreIndex //
 ///////////////////
 
-func (u *SignerSetTxSignature) GetStoreIndex() []byte {
-	panic("NOT IMPLEMENTED")
+func (sstx *SignerSetTxSignature) GetStoreIndex(val sdk.ValAddress) []byte {
+	return bytes.Join([][]byte{{SignerSetTxPrefixByte}, sdk.Uint64ToBigEndian(sstx.Nonce), val.Bytes()}, []byte{})
 }
 
-func (u *ContractCallTxSignature) GetStoreIndex() []byte {
-	panic("NOT IMPLEMENTED")
+func (btx *BatchTxSignature) GetStoreIndex(val sdk.ValAddress) []byte {
+	return bytes.Join([][]byte{{BatchTxPrefixByte}, common.Hex2Bytes(btx.TokenContract), sdk.Uint64ToBigEndian(btx.Nonce), val.Bytes()}, []byte{})
 }
 
-func (u *BatchTxSignature) GetStoreIndex() []byte {
-	panic("NOT IMPLEMENTED")
+func (cctx *ContractCallTxSignature) GetStoreIndex(val sdk.ValAddress) []byte {
+	return bytes.Join([][]byte{{ContractCallTxPrefixByte}, cctx.InvalidationScope.Bytes(), sdk.Uint64ToBigEndian(cctx.InvalidationNonce)}, []byte{})
 }
 
 //////////////
@@ -45,13 +51,46 @@ func (u *BatchTxSignature) GetStoreIndex() []byte {
 //////////////
 
 func (u *SignerSetTxSignature) Validate() error {
-	panic("NOT IMPLEMENTED")
+	if !(u.Nonce > 0) {
+		return fmt.Errorf("nonce must be set")
+	}
+	if u.EthereumSigner == "" {
+		return fmt.Errorf("ethereum signer must be set")
+	}
+	if u.Signature == nil {
+		return fmt.Errorf("signature must be set")
+	}
+	return nil
 }
 
 func (u *ContractCallTxSignature) Validate() error {
-	panic("NOT IMPLEMENTED")
+	if !(u.InvalidationNonce > 0) {
+		return fmt.Errorf("invalidation nonce must be set")
+	}
+	if u.InvalidationScope == nil {
+		return fmt.Errorf("invalidation scope must be set")
+	}
+	if u.EthereumSigner == "" {
+		return fmt.Errorf("ethereum signer must be set")
+	}
+	if u.Signature == nil {
+		return fmt.Errorf("signature must be set")
+	}
+	return nil
 }
 
 func (u *BatchTxSignature) Validate() error {
-	panic("NOT IMPLEMENTED")
+	if !(u.Nonce > 0) {
+		return fmt.Errorf("nonce must be set")
+	}
+	if !common.IsHexAddress(u.TokenContract) {
+		return fmt.Errorf("token contract address must be valid ethereum address")
+	}
+	if u.EthereumSigner == "" {
+		return fmt.Errorf("ethereum signer must be set")
+	}
+	if u.Signature == nil {
+		return fmt.Errorf("signature must be set")
+	}
+	return nil
 }

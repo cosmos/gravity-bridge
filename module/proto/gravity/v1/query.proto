@@ -156,7 +156,7 @@ message BatchTxResponse { BatchTx batch = 1; }
 
 //  rpc ContractCallTx
 message ContractCallTxRequest {
-  bytes invalidation_id = 1;
+  bytes invalidation_scope = 1;
   uint64 invalidation_nonce = 2;
 }
 message ContractCallTxResponse { ContractCallTx logic_call = 1; }
