@@ -99,7 +99,7 @@ func (k Keeper) BatchTxs(c context.Context, req *types.BatchTxsRequest) (*types.
 		batches = append(batches, batch)
 		return false
 	})
-	return &types.BatchTxsResponse{}, nil
+	return &types.BatchTxsResponse{batches}, nil
 }
 
 func (k Keeper) ContractCallTxs(c context.Context, req *types.ContractCallTxsRequest) (*types.ContractCallTxsResponse, error) {
