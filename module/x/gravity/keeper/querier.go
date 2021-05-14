@@ -311,10 +311,10 @@ func querySignerSetTxSignature(ctx sdk.Context, path []string, keeper Keeper) ([
 	return res, nil
 }
 
-type MultiSigUpdateResponse struct {
-	SignerSetTx types.SignerSetTx `json:"signerSetTx"`
-	Signatures  [][]byte          `json:"signatures,omitempty"`
-}
+// type MultiSigUpdateResponse struct {
+// 	SignerSetTx types.SignerSetTx `json:"signerSetTx"`
+// 	Signatures  [][]byte          `json:"signatures,omitempty"`
+// }
 
 // lastPendingBatchTx gets the latest batch that has NOT been signed by operatorAddr
 func lastPendingBatchTx(ctx sdk.Context, operatorAddr string, keeper Keeper) ([]byte, error) {

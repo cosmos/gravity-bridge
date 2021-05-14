@@ -160,10 +160,10 @@ func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, e
 }
 
 // DeleteEthereumEventVoteRecord deletes an ethereumEventVoteRecord given an event nonce and event
-func (k Keeper) DeleteEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, eventHash []byte, voteRecord *types.EthereumEventVoteRecord) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetEthereumEventVoteRecordKeyWithHash(eventNonce, eventHash))
-}
+// func (k Keeper) DeleteEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, eventHash []byte, voteRecord *types.EthereumEventVoteRecord) {
+// 	store := ctx.KVStore(k.storeKey)
+// 	store.Delete(types.GetEthereumEventVoteRecordKeyWithHash(eventNonce, eventHash))
+// }
 
 // GetEthereumEventVoteRecordMapping returns a mapping of eventnonce -> ethereumEventVoteRecords at that nonce
 func (k Keeper) GetEthereumEventVoteRecordMapping(ctx sdk.Context) (out map[uint64][]types.EthereumEventVoteRecord) {

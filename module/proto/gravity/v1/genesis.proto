@@ -2,10 +2,8 @@ syntax = "proto3";
 package gravity.v1;
 
 import "gogoproto/gogo.proto";
-import "gravity/v1/types.proto";
+import "gravity/v1/gravity.proto";
 import "gravity/v1/msgs.proto";
-import "gravity/v1/batch.proto";
-import "gravity/v1/attestation.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";

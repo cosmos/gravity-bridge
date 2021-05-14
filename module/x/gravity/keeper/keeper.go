@@ -106,10 +106,10 @@ func (k Keeper) StoreSignerSetTxUnsafe(ctx sdk.Context, signerSetTx *types.Signe
 }
 
 // HasSignerSetTx returns true if a signerSetTx defined by a nonce exists
-func (k Keeper) HasSignerSetTx(ctx sdk.Context, nonce uint64) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.GetSignerSetTxKey(nonce))
-}
+// func (k Keeper) HasSignerSetTx(ctx sdk.Context, nonce uint64) bool {
+// 	store := ctx.KVStore(k.storeKey)
+// 	return store.Has(types.GetSignerSetTxKey(nonce))
+// }
 
 // DeleteSignerSetTx deletes the signerSetTx at a given nonce from state
 func (k Keeper) DeleteSignerSetTx(ctx sdk.Context, nonce uint64) {
@@ -538,13 +538,13 @@ func (k Keeper) GetContractCallTxSignature(ctx sdk.Context, invalidationId []byt
 }
 
 // DeleteLogicCallConfirm deletes a contract call tx signature from the store
-func (k Keeper) DeleteLogicCallConfirm(
-	ctx sdk.Context,
-	invalidationID []byte,
-	invalidationNonce uint64,
-	val sdk.AccAddress) {
-	ctx.KVStore(k.storeKey).Delete(types.GetLogicConfirmKey(invalidationID, invalidationNonce, val))
-}
+// func (k Keeper) DeleteLogicCallConfirm(
+// 	ctx sdk.Context,
+// 	invalidationID []byte,
+// 	invalidationNonce uint64,
+// 	val sdk.AccAddress) {
+// 	ctx.KVStore(k.storeKey).Delete(types.GetLogicConfirmKey(invalidationID, invalidationNonce, val))
+// }
 
 // IterateContractCallSignaturesByInvalidationIDAndNonce iterates over all contract call tx signatures stored by nonce
 func (k Keeper) IterateContractCallSignaturesByInvalidationIDAndNonce(
@@ -630,9 +630,9 @@ func (k Keeper) GetGravityID(ctx sdk.Context) string {
 // is deployed the GravityID CAN NOT BE CHANGED. Meaning that it can't just be the
 // same as the chain id since the chain id may be changed many times with each
 // successive chain in charge of the same bridge
-func (k Keeper) SetGravityID(ctx sdk.Context, v string) {
-	k.paramSpace.Set(ctx, types.ParamsStoreKeyGravityID, v)
-}
+// func (k Keeper) SetGravityID(ctx sdk.Context, v string) {
+// 	k.paramSpace.Set(ctx, types.ParamsStoreKeyGravityID, v)
+// }
 
 // logger returns a module-specific logger.
 func (k Keeper) logger(ctx sdk.Context) log.Logger {
