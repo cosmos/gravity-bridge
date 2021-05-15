@@ -168,7 +168,7 @@ func TestLastSlashedValsetNonce(t *testing.T) {
 	i := 1
 	for ; i < 10; i++ {
 		vs.Nonce = uint64(i)
-		k.StoreSignerSetTxUnsafe(ctx, vs)
+		k.SetOutgoingTx(ctx, vs)
 	}
 
 	latestValsetNonce := k.GetLatestValsetNonce(ctx)

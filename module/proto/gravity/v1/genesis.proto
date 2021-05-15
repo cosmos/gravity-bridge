@@ -37,12 +37,12 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 // in your relayer. A relayer would require a configured Gravity address if
 // governance had not set the address on the chain it was relaying for.
 //
-// signed_valsets_window
+// signed_signer_set_txs_window
 // signed_batches_window
-// signed_claims_window
+// signed_ethereum_signatures_window
 //
 // These values represent the time in blocks that a validator has to submit
-// a signature for a batch or valset, or to submit a claim for a particular
+// a signature for a batch or valset, or to submit a ethereum_signature for a particular
 // attestation nonce. In the case of attestations this clock starts when the
 // attestation is created, but only allows for slashing once the event has
 // passed
@@ -61,14 +61,14 @@ option go_package = "github.com/cosmos/gravity-bridge/module/x/gravity/types";
 // is important that governance updates these in case of any major, prolonged
 // change in the time it takes to produce a block
 //
-// slash_fraction_valset
+// slash_fraction_signer_set_tx
 // slash_fraction_batch
-// slash_fraction_claim
-// slash_fraction_conflicting_claim
+// slash_fraction_ethereum_signature
+// slash_fraction_conflicting_ethereum_signature
 //
 // The slashing fractions for the various gravity related slashing conditions.
 // The first three refer to not submitting a particular message, the third for
-// submitting a different claim for the same Ethereum event
+// submitting a different ethereum_signature for the same Ethereum event
 message Params {
   option (gogoproto.stringer) = false;
 
@@ -76,13 +76,14 @@ message Params {
   string contract_source_hash = 2;
   string bridge_ethereum_address = 4;
   uint64 bridge_chain_id = 5;
-  uint64 signed_valsets_window = 6;
+  uint64 signed_signer_set_txs_window = 6;
   uint64 signed_batches_window = 7;
-  uint64 signed_claims_window = 8;
+  uint64 ethereum_signatures_window = 8;
   uint64 target_batch_timeout = 10;
   uint64 average_block_time = 11;
   uint64 average_ethereum_block_time = 12;
-  bytes slash_fraction_valset = 13 [
+  // TODO: slash fraction for contract call txs too
+  bytes slash_fraction_signer_set_tx = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -90,15 +91,15 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  bytes slash_fraction_claim = 15 [
+  bytes slash_fraction_ethereum_signature = 15 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  bytes slash_fraction_conflicting_claim = 16 [
+  bytes slash_fraction_conflicting_ethereum_signature = 16 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  uint64 unbond_slashing_valsets_window = 17;
+  uint64 unbond_slashing_signer_set_txs_window = 17;
 }
 
 // GenesisState struct

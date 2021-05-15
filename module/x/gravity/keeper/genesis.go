@@ -15,7 +15,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 
 	// reset pool transactions in state
 	for _, tx := range data.UnbatchedSendToEthereumTxs {
-		k.setPoolEntry(ctx, tx)
+		k.SetPoolEntry(ctx, tx)
 	}
 
 	// reset ethereum event vote recoreds in state

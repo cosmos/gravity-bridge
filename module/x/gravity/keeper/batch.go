@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -88,20 +89,22 @@ func (k Keeper) getBatchTimeoutHeight(ctx sdk.Context) uint64 {
 
 // BatchTxExecuted is run when the Cosmos chain detects that a batch has been executed on Ethereum
 // It frees all the transactions in the batch, then cancels all earlier batches
-func (k Keeper) BatchTxExecuted(ctx sdk.Context, tokenContract string, nonce uint64) error {
-	batchTx := k.GetBatchTx(ctx, tokenContract, nonce)
-	if batchTx == nil {
+func (k Keeper) BatchTxExecuted(ctx sdk.Context, tokenContract common.Address, nonce uint64) error {
+	otx := k.GetOutgoingTx(ctx, types.MakeBatchTxKey(tokenContract, nonce))
+	if otx == nil {
 		return sdkerrors.Wrap(types.ErrUnknown, "nonce")
 	}
+	batchTx, _ := otx.(*types.BatchTx)
 
 	// cleanup outgoing TX pool
 	for _, tx := range batchTx.Transactions {
-		k.removePoolEntry(ctx, tx.Id)
+		k.DeletePoolEntry(ctx, tx.Id)
 	}
 	var err error
 	// Iterate through remaining batches
-	k.IterateBatchTxes(ctx, func(key []byte, iter_batch *types.BatchTx) bool {
+	k.IterateOutgoingTxs(ctx, types.BatchTxPrefixByte, func(key []byte, otx types.OutgoingTx) bool {
 		// If the iterated batches nonce is lower than the one that was just executed, cancel it
+		iter_batch, _ := otx.(*types.BatchTx)
 		if iter_batch.Nonce < batchTx.Nonce {
 			err = k.CancelBatchTx(ctx, tokenContract, iter_batch.Nonce)
 		}
@@ -109,38 +112,9 @@ func (k Keeper) BatchTxExecuted(ctx sdk.Context, tokenContract string, nonce uin
 	})
 
 	// Delete batch since it is finished
-	k.DeleteBatch(ctx, *batchTx)
+	k.DeleteOutgoingTx(ctx, batchTx.GetStoreIndex())
 
 	return err
-}
-
-// StoreBatch stores a transaction batch
-func (k Keeper) StoreBatch(ctx sdk.Context, batch *types.BatchTx) {
-	store := ctx.KVStore(k.storeKey)
-	// set the current block height when storing the batch
-	batch.EthereumBlock = uint64(ctx.BlockHeight())
-	key := types.GetBatchTxKey(batch.TokenContract, batch.Nonce)
-	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
-
-	blockKey := types.GetBatchTxBlockKey(batch.EthereumBlock)
-	store.Set(blockKey, k.cdc.MustMarshalBinaryBare(batch))
-}
-
-// StoreBatchUnsafe stores a transaction batch w/o setting the height
-func (k Keeper) StoreBatchUnsafe(ctx sdk.Context, batch *types.BatchTx) {
-	store := ctx.KVStore(k.storeKey)
-	key := types.GetBatchTxKey(batch.TokenContract, batch.Nonce)
-	store.Set(key, k.cdc.MustMarshalBinaryBare(batch))
-
-	blockKey := types.GetBatchTxBlockKey(batch.EthereumBlock)
-	store.Set(blockKey, k.cdc.MustMarshalBinaryBare(batch))
-}
-
-// DeleteBatch deletes an outgoing transaction batch
-func (k Keeper) DeleteBatch(ctx sdk.Context, batch types.BatchTx) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetBatchTxKey(batch.TokenContract, batch.Nonce))
-	store.Delete(types.GetBatchTxBlockKey(batch.EthereumBlock))
 }
 
 // pickUnbatchedTX find TX in pool and remove from "available" second index
@@ -162,36 +136,20 @@ func (k Keeper) pickUnbatchedTX(
 	return selectedTx, err
 }
 
-// GetBatchTx loads a batch object. Returns nil when not exists.
-func (k Keeper) GetBatchTx(ctx sdk.Context, tokenContract string, nonce uint64) *types.BatchTx {
-	store := ctx.KVStore(k.storeKey)
-	key := types.GetBatchTxKey(tokenContract, nonce)
-	bz := store.Get(key)
-	if len(bz) == 0 {
-		return nil
-	}
-	var b types.BatchTx
-	k.cdc.MustUnmarshalBinaryBare(bz, &b)
-	for _, tx := range b.Transactions {
-		tx.Erc20Token = types.NewERC20Token(tx.Erc20Token.Amount.Uint64(), tokenContract)
-		tx.Erc20Fee = types.NewERC20Token(tx.Erc20Fee.Amount.Uint64(), tokenContract)
-	}
-	return &b
-}
-
 // CancelBatchTx releases all TX in the batch and deletes the batch
-func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract string, nonce uint64) error {
-	batch := k.GetBatchTx(ctx, tokenContract, nonce)
-	if batch == nil {
+func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract common.Address, nonce uint64) error {
+	otx := k.GetOutgoingTx(ctx, types.MakeBatchTxKey(tokenContract, nonce))
+	if otx == nil {
 		return types.ErrUnknown
 	}
+	batch, _ := otx.(*types.BatchTx)
 	for _, tx := range batch.Transactions {
-		tx.Erc20Fee = types.NewERC20Token(tx.Erc20Fee.Amount.Uint64(), tokenContract)
-		k.prependToUnbatchedTXIndex(ctx, tokenContract, tx.Erc20Fee, tx.Id)
+		tx.Erc20Fee = types.NewERC20Token(tx.Erc20Fee.Amount.Uint64(), tokenContract.String())
+		k.prependToUnbatchedTXIndex(ctx, tokenContract.String(), tx.Erc20Fee, tx.Id)
 	}
 
 	// Delete batch since it is finished
-	k.DeleteBatch(ctx, *batch)
+	k.DeleteOutgoingTx(ctx, batch.GetStoreIndex())
 
 	batchEvent := sdk.NewEvent(
 		types.EventTypeOutgoingBatchCanceled,

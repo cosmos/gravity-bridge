@@ -131,8 +131,8 @@ func (b EthereumSigners) ValidateBasic() error {
 	return nil
 }
 
-// NewValset returns a new valset
-func NewValset(nonce, height uint64, members EthereumSigners) *SignerSetTx {
+// NewSignerSetTx returns a new valset
+func NewSignerSetTx(nonce, height uint64, members EthereumSigners) *SignerSetTx {
 	members.Sort()
 	var mem []EthereumSigner
 	for _, val := range members {

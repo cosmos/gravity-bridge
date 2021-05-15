@@ -34,7 +34,7 @@ const (
 		]
 	}]`
 
-	// SignerSetTxCheckpointABIJSON checks the ETH ABI for compatability of the Valset update message
+	// SignerSetTxCheckpointABIJSON checks the ETH ABI for compatability of the signer set update message
 	SignerSetTxCheckpointABIJSON = `[{
 		"name": "checkpoint",
 		"stateMutability": "pure",

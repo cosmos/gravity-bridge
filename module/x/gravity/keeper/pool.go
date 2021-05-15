@@ -3,10 +3,11 @@ package keeper
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 	"sort"
 	"strconv"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -60,17 +61,15 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	// the token as an ERC20 token since it is preparing to go to ETH
 	// rather than the denom that is the input to this function.
 	outgoing := &types.SendToEthereum{
-		Id:          nextID,
-		Sender:      sender.String(),
+		Id:                nextID,
+		Sender:            sender.String(),
 		EthereumRecipient: counterpartReceiver,
-		Erc20Token:  types.NewSDKIntERC20Token(amount.Amount, tokenContract),
-		Erc20Fee:    erc20Fee,
+		Erc20Token:        types.NewSDKIntERC20Token(amount.Amount, tokenContract),
+		Erc20Fee:          erc20Fee,
 	}
 
 	// set the outgoing tx in the pool index
-	if err := k.setPoolEntry(ctx, outgoing); err != nil {
-		return 0, err
-	}
+	k.SetPoolEntry(ctx, outgoing)
 
 	// add a second index with the fee
 	k.appendToUnbatchedTXIndex(ctx, tokenContract, erc20Fee, nextID)
@@ -97,9 +96,9 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 // - issues the tokens back to the sender
 func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, sender sdk.AccAddress) error {
 	// check that we actually have a tx with that id and what it's details are
-	tx, err := k.getPoolEntry(ctx, txId)
-	if err != nil {
-		return err
+	tx := k.GetPoolEntry(ctx, txId)
+	if tx == nil {
+		return sdkerrors.Wrap(types.ErrUnknown, "tx")
 	}
 
 	found := false
@@ -120,7 +119,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 	}
 
 	// delete this tx from both indexes
-	k.removePoolEntry(ctx, txId)
+	k.DeletePoolEntry(ctx, txId)
 	if err := k.removeFromUnbatchedTXIndex(ctx, tx.Erc20Fee, txId); err != nil {
 		return err
 	}
@@ -144,7 +143,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 		if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, totalToRefundCoins); err != nil {
 			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", totalToRefundCoins)
 		}
-		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
+		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
 			return sdkerrors.Wrap(err, "transfer vouchers")
 		}
 	}
@@ -210,40 +209,37 @@ func (k Keeper) removeFromUnbatchedTXIndex(ctx sdk.Context, fee types.ERC20Token
 	return sdkerrors.Wrap(types.ErrUnknown, "tx id")
 }
 
-func (k Keeper) setPoolEntry(ctx sdk.Context, val *types.SendToEthereum) error {
-	bz, err := k.cdc.MarshalBinaryBare(val)
-	if err != nil {
-		return err
-	}
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetOutgoingTxPoolKey(val.Id), bz)
-	return nil
+func (k Keeper) SetPoolEntry(ctx sdk.Context, val *types.SendToEthereum) {
+	ctx.KVStore(k.storeKey).Set(types.GetSendToEthereumKey(val.Id), k.cdc.MustMarshalBinaryBare(val))
 }
 
-func (k Keeper) getPoolEntry(ctx sdk.Context, id uint64) (*types.SendToEthereum, error) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetOutgoingTxPoolKey(id))
-	if bz == nil {
-		return nil, types.ErrUnknown
-	}
-	var r types.SendToEthereum
-	if err := k.cdc.UnmarshalBinaryBare(bz, &r); err != nil {
-		return nil, err
-	}
-	return &r, nil
+func (k Keeper) GetPoolEntry(ctx sdk.Context, id uint64) (out *types.SendToEthereum) {
+	bz := ctx.KVStore(k.storeKey).Get(types.GetSendToEthereumKey(id))
+	k.cdc.MustUnmarshalBinaryBare(bz, out)
+	return
 }
 
-func (k Keeper) removePoolEntry(ctx sdk.Context, id uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetOutgoingTxPoolKey(id))
+func (k Keeper) DeletePoolEntry(ctx sdk.Context, id uint64) {
+	ctx.KVStore(k.storeKey).Delete(types.GetSendToEthereumKey(id))
+}
+
+func (k Keeper) IteratePoolEntries(ctx sdk.Context, cb func(id uint64, ste *types.SendToEthereum) bool) {
+	iter := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SendToEthereumKey}).ReverseIterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var ste *types.SendToEthereum
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), ste)
+		if cb(binary.BigEndian.Uint64(iter.Key()), ste) {
+			break
+		}
+	}
 }
 
 // GetPoolTransactions grabs all transactions from the tx pool, useful for queries or genesis save/load
 func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.SendToEthereum {
-	prefixStore := ctx.KVStore(k.storeKey)
 	// we must use the second index key here because transactions are left in the store, but removed
 	// from the tx sorting key, while in batches
-	iter := prefixStore.ReverseIterator(prefixRange([]byte{types.SecondIndexOutgoingTXFeeKey}))
+	iter := ctx.KVStore(k.storeKey).ReverseIterator(prefixRange([]byte{types.SecondIndexOutgoingTXFeeKey}))
 	var ret []*types.SendToEthereum
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -313,7 +309,7 @@ func (k Keeper) GetAllBatchFees(ctx sdk.Context) (batchFees []*types.ERC20Token)
 }
 
 // CreateBatchFees iterates over the outgoing pool and creates batch token fee map
-func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.ERC20Token{
+func (k Keeper) createBatchFees(ctx sdk.Context) map[string]*types.ERC20Token {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.SecondIndexOutgoingTXFeeKey})
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
