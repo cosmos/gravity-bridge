@@ -52,8 +52,8 @@ func (k Keeper) BuildBatchTx(
 	}
 	nextID := k.autoIncrementID(ctx, []byte{types.KeyLastOutgoingBatchID})
 	batch := &types.BatchTx{
-		Nonce:    nextID,
-		Timeout:  k.getBatchTimeoutHeight(ctx),
+		Nonce:         nextID,
+		Timeout:       k.getBatchTimeoutHeight(ctx),
 		Transactions:  selectedTx,
 		TokenContract: contractAddress,
 	}
@@ -156,7 +156,7 @@ func (k Keeper) pickUnbatchedTX(
 	var selectedTx []*types.SendToEthereum
 	var err error
 	k.IterateOutgoingPoolByFee(ctx, contractAddress, func(txID uint64, tx *types.SendToEthereum) bool {
-		if tx != nil && tx.Erc20Fee != nil {
+		if tx != nil && tx.Erc20Fee.GravityCoin().IsZero() {
 			selectedTx = append(selectedTx, tx)
 			err = k.removeFromUnbatchedTXIndex(ctx, tx.Erc20Fee, txID)
 			return err != nil || len(selectedTx) == maxElements

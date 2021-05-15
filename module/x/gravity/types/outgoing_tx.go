@@ -30,17 +30,27 @@ const (
 // GetStoreIndex //
 ///////////////////
 
+func MakeSignerSetTxKey(nonce uint64) []byte {
+	return append([]byte{SignerSetTxPrefixByte}, sdk.Uint64ToBigEndian(nonce)...)
+}
+func MakeBatchTxKey(addr common.Address, nonce uint64) []byte {
+	return bytes.Join([][]byte{{BatchTxPrefixByte}, addr.Bytes(), sdk.Uint64ToBigEndian(nonce)}, []byte{})
+}
+func MakeContractCallTxKey(invalscope []byte, invalnonce uint64) []byte {
+	return bytes.Join([][]byte{{ContractCallTxPrefixByte}, invalscope, sdk.Uint64ToBigEndian(invalnonce)}, []byte{})
+}
+
 // TODO: do we need a prefix byte for the different types?
 func (sstx *SignerSetTx) GetStoreIndex() []byte {
-	return append([]byte{SignerSetTxPrefixByte}, sdk.Uint64ToBigEndian(sstx.Nonce)...)
+	return MakeSignerSetTxKey(sstx.Nonce)
 }
 
 func (btx *BatchTx) GetStoreIndex() []byte {
-	return bytes.Join([][]byte{{BatchTxPrefixByte}, common.Hex2Bytes(btx.TokenContract), sdk.Uint64ToBigEndian(btx.Nonce)}, []byte{})
+	return MakeBatchTxKey(common.HexToAddress(btx.TokenContract), btx.Nonce)
 }
 
 func (cctx *ContractCallTx) GetStoreIndex() []byte {
-	return bytes.Join([][]byte{{ContractCallTxPrefixByte}, cctx.InvalidationScope.Bytes(), sdk.Uint64ToBigEndian(cctx.InvalidationNonce)}, []byte{})
+	return MakeContractCallTxKey(cctx.InvalidationScope.Bytes(), cctx.InvalidationNonce)
 }
 
 ///////////////////

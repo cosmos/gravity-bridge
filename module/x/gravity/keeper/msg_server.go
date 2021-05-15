@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 )
@@ -47,7 +48,8 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 	// set the orchestrator address
 	k.SetOrchestratorValidator(ctx, val, orch)
 	// set the ethereum address
-	k.SetEthAddress(ctx, val, msg.EthereumAddress)
+	k.SetEthAddress(ctx, val, common.HexToAddress(msg.EthereumAddress))
+	// TODO: set the third index from eth addr -> orch addr so we can query all of them
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -62,7 +64,6 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 }
 
 // SubmitEthereumSignature handles MsgSubmitEthereumSignature
-// TODO: check MsgSubmitEthereumSignature to have an Orchestrator field instead of a Validator field
 func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubmitEthereumSignature) (*types.MsgSubmitEthereumSignatureResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
@@ -70,41 +71,35 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 	if err != nil {
 		return nil, err
 	}
-	nonce := sdk.BigEndianToUint64(signature.GetStoreIndex())
 
-	valset := k.GetOutgoingTx(ctx, signature.GetStoreIndex())
-	if valset == nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find valset")
+	val, err := k.getSignerValidator(ctx, msg.Signer)
+	if err != nil {
+		return nil, err
+	}
+
+	otx := k.GetOutgoingTx(ctx, signature.GetStoreIndex())
+	if otx == nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find outgoing tx")
 	}
 
 	gravityID := k.GetGravityID(ctx)
-	checkpoint := valset.GetCheckpoint([]byte(gravityID))
+	checkpoint := otx.GetCheckpoint([]byte(gravityID))
 
-	sigBytes, err := hex.DecodeString(msg.Signer)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "signature decoding")
-	}
-
-	orchaddr, _ := sdk.AccAddressFromBech32(msg.Signer)
-	validator := k.GetOrchestratorValidator(ctx, orchaddr)
-	if validator == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "validator")
-	}
-
-	ethAddress := k.GetEthAddress(ctx, validator)
-	if ethAddress == "" {
+	ethAddress := k.GetEthAddress(ctx, val)
+	if ethAddress == "" || ethAddress != signature.GetSigner().String() {
 		return nil, sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
 
-	if err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress); err != nil {
+	if err = types.ValidateEthereumSignature(checkpoint, signature.GetSignature(), ethAddress); err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with gravity-id %s with checkpoint %s found %s", ethAddress, gravityID, hex.EncodeToString(checkpoint), msg.Signature))
 	}
 
-	// persist signature
-	if k.GetEthereumSignature(ctx, signature.GetStoreIndex(), validator) != nil {
+	// TODO: should validators be able to overwrite their signatures?
+	if k.GetEthereumSignature(ctx, signature.GetStoreIndex(), val) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "signature duplicate")
 	}
-	key := k.SetEthereumSignature(ctx, signature, validator)
+
+	key := k.SetEthereumSignature(ctx, signature, val)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -117,26 +112,6 @@ func (k msgServer) SubmitEthereumSignature(c context.Context, msg *types.MsgSubm
 	return &types.MsgSubmitEthereumSignatureResponse{}, nil
 }
 
-func (k msgServer) getMsgValidator(ctx sdk.Context, signerString string) (sdk.ValAddress, error) {
-	signer, _ := sdk.AccAddressFromBech32(signerString)
-
-	var validatorI stakingtypes.ValidatorI
-	validator := k.GetOrchestratorValidator(ctx, signer)
-	if validator == nil {
-		validatorI = k.StakingKeeper.Validator(ctx, sdk.ValAddress(signer))
-	} else {
-		validatorI = k.StakingKeeper.Validator(ctx, validator)
-	}
-
-	if validatorI == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "not orchestrator or validator")
-	} else if !validatorI.IsBonded() {
-		return nil, sdkerrors.Wrap(types.ErrUnbonded, fmt.Sprintf("validator: %s", validatorI.GetOperator()))
-	}
-
-	return validatorI.GetOperator(), nil
-}
-
 func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEthereumEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
@@ -146,7 +121,7 @@ func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEt
 	}
 
 	// return an error if the validator isn't in the active set
-	val, err  := k.getMsgValidator(ctx, msg.Signer)
+	val, err := k.getSignerValidator(ctx, msg.Signer)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +131,6 @@ func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEt
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "create event vote record")
 	}
-
 
 	// Emit the handle message event
 	ctx.EventManager().EmitEvent(
@@ -214,6 +188,7 @@ func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchT
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
+			sdk.NewAttribute(types.AttributeKeyContract, tokenContract),
 			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(batchID.Nonce)),
 		),
 	)
@@ -241,4 +216,24 @@ func (k msgServer) CancelSendToEthereum(c context.Context, msg *types.MsgCancelS
 	)
 
 	return &types.MsgCancelSendToEthereumResponse{}, nil
+}
+
+func (k Keeper) getSignerValidator(ctx sdk.Context, signerString string) (sdk.ValAddress, error) {
+	signer, _ := sdk.AccAddressFromBech32(signerString)
+
+	var validatorI stakingtypes.ValidatorI
+	validator := k.GetOrchestratorValidator(ctx, signer)
+	if validator == nil {
+		validatorI = k.StakingKeeper.Validator(ctx, sdk.ValAddress(signer))
+	} else {
+		validatorI = k.StakingKeeper.Validator(ctx, validator)
+	}
+
+	if validatorI == nil {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "not orchestrator or validator")
+	} else if !validatorI.IsBonded() {
+		return nil, sdkerrors.Wrap(types.ErrUnbonded, fmt.Sprintf("validator: %s", validatorI.GetOperator()))
+	}
+
+	return validatorI.GetOperator(), nil
 }

@@ -1,7 +1,6 @@
 package types
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/gogo/protobuf/proto"
@@ -15,7 +14,7 @@ type EthereumSignature interface {
 
 	GetSigner() common.Address
 	GetSignature() hexutil.Bytes
-	GetStoreIndex(sdk.ValAddress) []byte
+	GetStoreIndex() []byte
 	Validate() error
 }
 

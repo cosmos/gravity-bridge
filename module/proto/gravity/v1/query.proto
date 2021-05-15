@@ -165,7 +165,9 @@ message ContractCallTxResponse { ContractCallTx logic_call = 1; }
 message SignerSetTxEthereumSignaturesRequest {
   // NOTE: if address is passed, return only the signature from that validator
   uint64 nonce = 1;
-  string address = 2; // TODO(levi) propose rename: ethereum_address
+
+  // NOTE: this address can be either a validator or an orchestrator address to filter by
+  string address = 2; 
 }
 message SignerSetTxEthereumSignaturesResponse {
   // repeated SignerSetTxSignature confirm = 1;
@@ -234,7 +236,13 @@ message BatchTxFeesResponse {
   ];
 }
 
-message ContractCallTxEthereumSignaturesRequest { string address = 1; }
+message ContractCallTxEthereumSignaturesRequest { 
+  bytes invalidation_scope = 1;
+  uint64 invalidation_nonce = 2;
+    // NOTE: this is an sdk.AccAddress and can represent either the
+  // orchestartor address or the cooresponding validator address
+  string address = 3; 
+}
 message ContractCallTxEthereumSignaturesResponse {
   // Note these are returned with the signature empty
   // TODO(levi) review rust to ensure we can have bytes repeated ContractCallTx
@@ -245,6 +253,9 @@ message ContractCallTxEthereumSignaturesResponse {
 message BatchTxEthereumSignaturesRequest {
   uint64 nonce = 1;
   string contract_address = 2;
+  // note if this address is empty return all sigs for a given batch.
+  // if not return only the signature for the give validator or orchestrator key
+  string address = 3;
 }
 message BatchTxEthereumSignaturesResponse {
   // TODO(levi) review rust to ensure we can have bytes repeated

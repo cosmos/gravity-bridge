@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gravity-bridge/module/x/gravity/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 var _ types.QueryServer = Keeper{}
@@ -118,17 +119,66 @@ func (k Keeper) ContractCallTxs(c context.Context, req *types.ContractCallTxsReq
 }
 
 func (k Keeper) SignerSetTxEthereumSignatures(c context.Context, req *types.SignerSetTxEthereumSignaturesRequest) (*types.SignerSetTxEthereumSignaturesResponse, error) {
-	return &types.SignerSetTxEthereumSignaturesResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	key := types.MakeSignerSetTxKey(req.Nonce)
+	if req.Address == "" {
+		val, err := k.getSignerValidator(ctx, req.Address)
+		if err != nil {
+			return nil, err
+		}
+		return &types.SignerSetTxEthereumSignaturesResponse{[][]byte{k.GetEthereumSignature(ctx, key, val)}}, nil
+	}
+
+	var out [][]byte
+	k.IterateEthereumSignatures(ctx, key, func(_ sdk.ValAddress, sig hexutil.Bytes) bool {
+		out = append(out, sig)
+		return false
+	})
+	return &types.SignerSetTxEthereumSignaturesResponse{out}, nil
 }
+
 func (k Keeper) BatchTxEthereumSignatures(c context.Context, req *types.BatchTxEthereumSignaturesRequest) (*types.BatchTxEthereumSignaturesResponse, error) {
-	return &types.BatchTxEthereumSignaturesResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	key := types.MakeBatchTxKey(common.HexToAddress(req.ContractAddress), req.Nonce)
+	if req.Address == "" {
+		val, err := k.getSignerValidator(ctx, req.Address)
+		if err != nil {
+			return nil, err
+		}
+		return &types.BatchTxEthereumSignaturesResponse{[][]byte{k.GetEthereumSignature(ctx, key, val)}}, nil
+	}
+
+	var out [][]byte
+	k.IterateEthereumSignatures(ctx, key, func(_ sdk.ValAddress, sig hexutil.Bytes) bool {
+		out = append(out, sig)
+		return false
+	})
+	return &types.BatchTxEthereumSignaturesResponse{out}, nil
 }
+
 func (k Keeper) ContractCallTxEthereumSignatures(c context.Context, req *types.ContractCallTxEthereumSignaturesRequest) (*types.ContractCallTxEthereumSignaturesResponse, error) {
-	return &types.ContractCallTxEthereumSignaturesResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	key := types.MakeContractCallTxKey(req.InvalidationScope, req.InvalidationNonce)
+	if req.Address == "" {
+		val, err := k.getSignerValidator(ctx, req.Address)
+		if err != nil {
+			return nil, err
+		}
+		return &types.ContractCallTxEthereumSignaturesResponse{[][]byte{k.GetEthereumSignature(ctx, key, val)}}, nil
+	}
+
+	var out [][]byte
+	k.IterateEthereumSignatures(ctx, key, func(_ sdk.ValAddress, sig hexutil.Bytes) bool {
+		out = append(out, sig)
+		return false
+	})
+	return &types.ContractCallTxEthereumSignaturesResponse{out}, nil
 }
+
 func (k Keeper) PendingSignerSetTxEthereumSignatures(c context.Context, req *types.PendingSignerSetTxEthereumSignaturesRequest) (*types.PendingSignerSetTxEthereumSignaturesResponse, error) {
 	return &types.PendingSignerSetTxEthereumSignaturesResponse{}, nil
 }
+
 func (k Keeper) PendingBatchTxEthereumSignatures(c context.Context, req *types.PendingBatchTxEthereumSignaturesRequest) (*types.PendingBatchTxEthereumSignaturesResponse, error) {
 	return &types.PendingBatchTxEthereumSignaturesResponse{}, nil
 }

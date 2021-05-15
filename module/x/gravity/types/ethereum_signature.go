@@ -1,10 +1,8 @@
 package types
 
 import (
-	"bytes"
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -34,16 +32,16 @@ func (u *BatchTxSignature) GetSigner() common.Address {
 // GetStoreIndex //
 ///////////////////
 
-func (sstx *SignerSetTxSignature) GetStoreIndex(val sdk.ValAddress) []byte {
-	return bytes.Join([][]byte{{SignerSetTxPrefixByte}, sdk.Uint64ToBigEndian(sstx.Nonce), val.Bytes()}, []byte{})
+func (sstx *SignerSetTxSignature) GetStoreIndex() []byte {
+	return MakeSignerSetTxKey(sstx.Nonce)
 }
 
-func (btx *BatchTxSignature) GetStoreIndex(val sdk.ValAddress) []byte {
-	return bytes.Join([][]byte{{BatchTxPrefixByte}, common.Hex2Bytes(btx.TokenContract), sdk.Uint64ToBigEndian(btx.Nonce), val.Bytes()}, []byte{})
+func (btx *BatchTxSignature) GetStoreIndex() []byte {
+	return MakeBatchTxKey(common.HexToAddress(btx.TokenContract), btx.Nonce)
 }
 
-func (cctx *ContractCallTxSignature) GetStoreIndex(val sdk.ValAddress) []byte {
-	return bytes.Join([][]byte{{ContractCallTxPrefixByte}, cctx.InvalidationScope.Bytes(), sdk.Uint64ToBigEndian(cctx.InvalidationNonce)}, []byte{})
+func (cctx *ContractCallTxSignature) GetStoreIndex() []byte {
+	return MakeContractCallTxKey(cctx.InvalidationScope, cctx.InvalidationNonce)
 }
 
 //////////////

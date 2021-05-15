@@ -8,6 +8,7 @@ import (
 
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -242,9 +243,8 @@ func (k Keeper) GetEthereumSignature(ctx sdk.Context, storeIndex []byte, validat
 
 // SetEthereumSignature sets a valset confirmation
 func (k Keeper) SetEthereumSignature(ctx sdk.Context, sig types.EthereumSignature, val sdk.ValAddress) []byte {
-	store := ctx.KVStore(k.storeKey)
-	key := append(sig.GetStoreIndex(val))
-	store.Set(key, sig.GetSignature())
+	key := types.GetEthereumSignatureKey(sig.GetStoreIndex(), val)
+	ctx.KVStore(k.storeKey).Set(key, sig.GetSignature())
 	return key
 }
 
@@ -303,12 +303,14 @@ func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) s
 /////////////////////////////
 
 // SetEthAddress sets the ethereum address for a given validator
-func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.ValAddress, ethAddr string) {
+// TODO: take common.Address
+func (k Keeper) SetEthAddress(ctx sdk.Context, validator sdk.ValAddress, ethAddr common.Address) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetEthereumAddressKey(validator), []byte(ethAddr))
+	store.Set(types.GetEthereumAddressKey(validator), ethAddr.Bytes())
 }
 
 // GetEthAddress returns the eth address for a given gravity validator
+// TODO: return common.Address
 func (k Keeper) GetEthAddress(ctx sdk.Context, validator sdk.ValAddress) string {
 	store := ctx.KVStore(k.storeKey)
 	return string(store.Get(types.GetEthereumAddressKey(validator)))
